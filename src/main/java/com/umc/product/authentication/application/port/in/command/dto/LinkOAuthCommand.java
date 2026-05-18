@@ -9,7 +9,8 @@ public record LinkOAuthCommand(
     Long memberId,
     OAuthProvider provider,
     String providerId,
-    String appleRefreshToken
+    String appleRefreshToken,
+    String appleClientId
 ) {
     public static MemberOAuth toEntity(LinkOAuthCommand command) {
         return MemberOAuth.builder()
@@ -17,6 +18,7 @@ public record LinkOAuthCommand(
             .provider(command.provider())
             .providerId(command.providerId())
             .appleRefreshToken(command.appleRefreshToken())
+                .appleClientId(command.appleClientId())
             .build();
     }
 }

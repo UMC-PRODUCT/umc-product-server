@@ -1,6 +1,7 @@
 package com.umc.product.organization.application.port.out.query;
 
 import com.umc.product.organization.domain.Gisu;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -22,4 +23,6 @@ public interface LoadGisuPort {
     Page<Gisu> findAll(Pageable pageable);
 
     boolean existsByGeneration(Long generation);
+
+    Optional<Gisu> findGisuByDate(Instant targetDate);
 }

@@ -1,6 +1,6 @@
 package com.umc.product.organization.application.port.in.query;
 
-import com.umc.product.organization.application.port.in.query.dto.SchoolAccessContext;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolAccessContext;
 
 /**
  * 학교 기반 접근 컨텍스트 추출 UseCase

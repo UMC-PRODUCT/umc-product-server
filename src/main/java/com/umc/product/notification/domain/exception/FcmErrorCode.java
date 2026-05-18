@@ -15,6 +15,7 @@ public enum FcmErrorCode implements BaseCode {
     TOPIC_SUBSCRIBE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FCM-0004", "FCM 토픽 구독에 실패했습니다."),
     TOPIC_UNSUBSCRIBE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FCM-0005", "FCM 토픽 구독 해제에 실패했습니다."),
     TOPIC_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FCM-0006", "FCM 토픽 메시지 전송에 실패했습니다."),
+    RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "FCM-0007", "FCM API 요청 한도를 초과했습니다."),
     ;
 
     private final HttpStatus httpStatus;

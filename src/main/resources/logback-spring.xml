@@ -8,6 +8,10 @@
     <property name="LOG_DIR" value="./logs"/>
     <property name="LOG_NAME" value="umc-product"/>
 
+    <!-- ========== 구조화 로그용 메타 (ADR-016) ========== -->
+    <springProperty name="APP_NAME" source="spring.application.name" defaultValue="umc-product-api"/>
+    <springProperty name="ENV" source="spring.profiles.active" defaultValue="local"/>
+
     <!-- ========== 콘솔 로깅 패턴 정의 ========== -->
     <property name="LOCAL_CONSOLE_LOG_PATTERN"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} %customHighlight(%-5level) [%-4.-4X{traceId}] [%thread] %logger{40} : %msg%n"/>
@@ -24,7 +28,7 @@
 
     <appender class="ch.qos.logback.core.ConsoleAppender" name="ECS_CONSOLE">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>WARN</level>
+            <level>INFO</level>
         </filter>
 
         <encoder>
@@ -32,7 +36,55 @@
         </encoder>
     </appender>
 
-    <!-- Loki -->
+    <!--
+        ========== JSON 구조화 로그 어펜더 (ADR-016) ==========
+        dev / staging / prod 환경의 stdout 을 JSON 한 줄로 출력.
+        본 커밋(#2)에서는 정의만 하고 어떤 root 에도 연결하지 않는다 (dead-code).
+        root 연결은 Commit #3 에서 수행한다.
+    -->
+    <appender class="ch.qos.logback.core.ConsoleAppender" name="CONSOLE_JSON">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <timeZone>Asia/Seoul</timeZone>
+                </timestamp>
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+                <loggerName>
+                    <fieldName>logger</fieldName>
+                </loggerName>
+                <threadName>
+                    <fieldName>thread</fieldName>
+                </threadName>
+                <message>
+                    <fieldName>message</fieldName>
+                </message>
+                <mdc/>
+                <arguments/>
+                <stackTrace>
+                    <fieldName>stackTrace</fieldName>
+                </stackTrace>
+                <globalCustomFields>
+                    {"service":"${APP_NAME}","environment":"${ENV}"}
+                </globalCustomFields>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!--
+        ========== LOKI APPENDER (ADR-016) ==========
+        Grafana dashboard 의 LogQL 은 `| json | event="..." | unwrap durationMs` 형태로
+        구조화 필드를 직접 참조한다. 따라서 LOKI 송신도 CONSOLE_JSON 과 동일한 한 줄 JSON
+        스키마로 맞춘다 (MDC + arguments 포함). loki4j 의 <message class="..."> 슬롯에
+        logstash-logback-encoder 의 JsonLayout 을 끼워 KVP (StructuredArguments.kv) 까지
+        함께 직렬화한다.
+    -->
     <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
         <http>
             <url>${LOKI_URL:-http://localhost:3100/loki/api/v1/push}</url>
@@ -43,10 +95,41 @@
         </http>
         <format>
             <label>
-                <pattern>application=${SPRING_APPLICATION_NAME},level=%level</pattern>
+                <!--
+                    application 라벨은 위에서 선언한 springProperty APP_NAME (source=spring.application.name,
+                    defaultValue=umc-product-api) 을 그대로 사용한다. SPRING_APPLICATION_NAME 환경변수를
+                    직접 참조하면 미설정 환경에서 라벨이 빈 문자열이 되어 LogQL `{application=~".*umc-product-api"}`
+                    매칭이 실패한다.
+                -->
+                <pattern>application=${APP_NAME},level=%level</pattern>
             </label>
-            <message>
-                <pattern>${FULL_LOG_PATTERN}</pattern>
+            <message class="net.logstash.logback.layout.LoggingEventCompositeJsonLayout">
+                <providers>
+                    <timestamp>
+                        <fieldName>timestamp</fieldName>
+                        <timeZone>Asia/Seoul</timeZone>
+                    </timestamp>
+                    <logLevel>
+                        <fieldName>level</fieldName>
+                    </logLevel>
+                    <loggerName>
+                        <fieldName>logger</fieldName>
+                    </loggerName>
+                    <threadName>
+                        <fieldName>thread</fieldName>
+                    </threadName>
+                    <message>
+                        <fieldName>message</fieldName>
+                    </message>
+                    <mdc/>
+                    <arguments/>
+                    <stackTrace>
+                        <fieldName>stackTrace</fieldName>
+                    </stackTrace>
+                    <globalCustomFields>
+                        {"service":"${APP_NAME}","environment":"${ENV}"}
+                    </globalCustomFields>
+                </providers>
             </message>
         </format>
     </appender>
@@ -55,40 +138,41 @@
     <springProfile name="local">
         <root level="INFO">
             <appender-ref ref="LOCAL_CONSOLE"/>
-            <appender-ref ref="LOKI"/>
         </root>
     </springProfile>
 
 
+    <!--
+        ========== dev: stdout JSON + LOKI (ADR-016) ==========
+        dev stdout 과 Loki 모두 동일한 한 줄 JSON 스키마 (MDC + arguments 포함) 로 송신한다.
+        ADR-014 의 OTel Collector 이관은 후속 작업이지만, 그때까지는 loki4j 가 JsonLayout 으로
+        직접 Loki 에 push 한다.
+    -->
     <springProfile name="dev">
-        <!-- dev용 파일 appender -->
-        <!--        <appender class="ch.qos.logback.core.rolling.RollingFileAppender" name="FILE">-->
-        <!--            <encoder>-->
-        <!--                <pattern>${FULL_LOG_PATTERN}</pattern>-->
-        <!--            </encoder>-->
-
-        <!--            <file>${LOG_DIR}/${LOG_NAME}.log</file>-->
-
-        <!--            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">-->
-        <!--                <fileNamePattern>${LOG_DIR}/${LOG_NAME}-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>-->
-
-        <!--                <maxFileSize>50MB</maxFileSize>-->
-        <!--                <maxHistory>30</maxHistory>-->
-        <!--                <totalSizeCap>2GB</totalSizeCap>-->
-        <!--            </rollingPolicy>-->
-        <!--        </appender>-->
-
         <!-- 우리 앱 패키지만 DEBUG -->
         <logger name="com.umc.product" level="DEBUG"/>
 
         <root level="INFO">
-            <appender-ref ref="ECS_CONSOLE"/>
+            <appender-ref ref="CONSOLE_JSON"/>
             <appender-ref ref="LOKI"/>
-            <!--            <appender-ref ref="FILE"/>-->
         </root>
     </springProfile>
 
-    <!-- ========== prod용은 ECS인 관계로 stdout으로 내보내기 (CloudWatch) ========== -->
+    <!--
+        ========== staging: dev 와 동일 구성 (ADR-016) ==========
+        Sentry 는 prod 전용. staging 은 트래픽 / 데이터 패턴 검증 환경이므로
+        dev 와 동일하게 JSON stdout + Loki 만 둔다.
+    -->
+    <springProfile name="staging">
+        <logger name="com.umc.product" level="${LOGGING_APP_LEVEL:-INFO}"/>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_JSON"/>
+            <appender-ref ref="LOKI"/>
+        </root>
+    </springProfile>
+
+    <!-- ========== 프로덕션: stdout JSON + LOKI + SENTRY (CloudWatch) ========== -->
     <springProfile name="prod">
         <!-- Sentry Appender -->
         <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
@@ -99,11 +183,11 @@
             <minimumBreadcrumbLevel>INFO</minimumBreadcrumbLevel>
         </appender>
 
-        <!-- 우리 앱 패키지만 DEBUG -->
+        <!-- 우리 앱에 대한 로그 기록 수준은 환경변수에 따름 -->
         <logger name="com.umc.product" level="${LOGGING_APP_LEVEL:-INFO}"/>
 
         <root level="INFO">
-            <appender-ref ref="ECS_CONSOLE"/>
+            <appender-ref ref="CONSOLE_JSON"/>
             <appender-ref ref="LOKI"/>
             <appender-ref ref="SENTRY"/>
         </root>

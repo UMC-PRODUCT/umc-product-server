@@ -1,19 +1,14 @@
 package com.umc.product.notice.domain;
 
 import com.umc.product.common.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import com.umc.product.notice.domain.enums.VoteStatus;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.Instant;
 
 @Entity
 @Getter
@@ -32,16 +27,51 @@ public class NoticeVote extends BaseEntity {
     @Column(name = "vote_id", nullable = false)
     private Long voteId;
 
+    // 시작일 00:00(KST) ~ 마감일 23:59(KST) = (마감일+1) 00:00(KST) exclusive
+    // 투표는 반드시 기간이 설정되어야 합니다.
+    @Column(name = "starts_at", nullable = false)
+    private Instant startsAt;
+
+    @Column(name = "ends_at_exclusive", nullable = false)
+    private Instant endsAtExclusive;
+
     @Builder
-    private NoticeVote(Notice notice, Long voteId) {
+    private NoticeVote(
+        Notice notice,
+        Long voteId,
+        Instant startsAt,
+        Instant endsAtExclusive
+    ) {
         this.notice = notice;
         this.voteId = voteId;
+        this.startsAt = startsAt;
+        this.endsAtExclusive = endsAtExclusive;
     }
 
-    public static NoticeVote create(Long voteId, Notice notice) {
+    public static NoticeVote create(
+        Long voteId,
+        Notice notice,
+        Instant startsAt,
+        Instant endsAtExclusive
+    ) {
         return NoticeVote.builder()
             .voteId(voteId)
             .notice(notice)
+            .startsAt(startsAt)
+            .endsAtExclusive(endsAtExclusive)
             .build();
+    }
+
+    /**
+     * 현재 시각 기준으로 투표 가능 상태를 반환합니다.
+     */
+    public VoteStatus getOpenStatus(Instant now) {
+        if (now.isBefore(startsAt)) {
+            return VoteStatus.NOT_STARTED;
+        }
+        if (!now.isBefore(endsAtExclusive)) {
+            return VoteStatus.CLOSED;
+        }
+        return VoteStatus.OPEN;
     }
 }

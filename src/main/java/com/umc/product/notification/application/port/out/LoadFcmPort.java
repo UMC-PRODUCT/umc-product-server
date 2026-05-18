@@ -1,12 +1,15 @@
 package com.umc.product.notification.application.port.out;
 
 import com.umc.product.notification.domain.FcmToken;
+import java.util.List;
 import java.util.Optional;
 
 public interface LoadFcmPort {
 
-    FcmToken findByMemberId(Long memberId);
+    Optional<FcmToken> findByMemberIdAndToken(Long memberId, String fcmToken);
 
-    Optional<FcmToken> findOptionalByMemberId(Long memberId);
+    List<FcmToken> findAllActiveByMemberId(Long memberId);
+
+    List<FcmToken> findAllActiveByMemberIds(List<Long> memberIds);
 
 }

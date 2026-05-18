@@ -13,9 +13,10 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.domain.Notice;
+import com.umc.product.notice.domain.NoticeTargetInfo;
+import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import com.umc.product.notice.dto.NoticeTargetInfo;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +50,6 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
 
         // WRITE는 별도로 지원하지 않음, Service에서 직접 확인함
 
-        // ResourcePermission에 나와 있는 공지사항의 타겟 정보를 먼저 조회함
         NoticeTargetInfo targetInfo =
             getNoticeTargetUseCase.findByNoticeId(resourcePermission.getResourceIdAsLong());
 
@@ -61,13 +61,16 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
             default -> throw new AuthorizationDomainException(AuthorizationErrorCode.PERMISSION_TYPE_NOT_IMPLEMENTED,
                 "NoticePE에서 해당 PermissionType을 지원하지 않습니다: " + resourcePermission.permission());
         };
-
     }
 
     private boolean canReadNotice(SubjectAttributes subjectAttributes, NoticeTargetInfo targetInfo) {
         // 총괄/부총괄: 모든 공지 읽기 가능
         if (subjectAttributes.roleAttributes().stream().anyMatch(r -> r.roleType().isAtLeastCentralCore())) {
             return true;
+        }
+
+        if (targetInfo.isStaffNotice()) {
+            return canReadStaffNotice(subjectAttributes, targetInfo);
         }
 
         // 기본 챌린저 권한 체크 (본인의 part, gisu, chapter 기반)
@@ -82,13 +85,43 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
             }
         }
 
-        // 역할 기반 추가 권한 체크
-        if (subjectAttributes.roleAttributes().stream()
-            .anyMatch(role -> canReadByRole(role, targetInfo, subjectAttributes))) {
-            return true;
-        }
+        // 역할 기반 추가 읽기 권한 체크
+        return subjectAttributes.roleAttributes().stream()
+            .anyMatch(role -> canReadByRole(role, targetInfo, subjectAttributes));
+    }
 
-        return false;
+    private boolean canReadStaffNotice(SubjectAttributes subjectAttributes, NoticeTargetInfo targetInfo) {
+        return subjectAttributes.roleAttributes().stream()
+            .anyMatch(role -> {
+                NoticeTab viewerRole = NoticeTab.findFrom(role.roleType()).orElse(null);
+                if (viewerRole == null) {
+                    return false;
+                }
+                // 역할 레벨 확인: 공지의 minTargetRole이 viewerRole을 포함하는지 (하한선 체크)
+                if (!targetInfo.targetNoticeTab().includes(viewerRole)) {
+                    return false;
+                }
+                // 기수 범위 확인
+                if (targetInfo.targetGisuId() != null && !targetInfo.targetGisuId().equals(role.gisuId())) {
+                    return false;
+                }
+                // 학교 범위 확인 (교내운영진 공지)
+                if (targetInfo.targetSchoolId() != null
+                    && !targetInfo.targetSchoolId().equals(role.organizationId())) {
+                    return false;
+                }
+                // 파트 범위 확인: 파트장만 담당 파트로 필터링 (회장단/중앙운영진은 파트 무관)
+                // ADMIN 파트(기타 교내 운영진)는 파트 구분 없이 열람 가능
+                if (viewerRole == NoticeTab.SCHOOL_PART_LEADER
+                    && targetInfo.targetParts() != null && !targetInfo.targetParts().isEmpty()) {
+                    boolean isPartFree = role.responsiblePart() == null
+                        || role.responsiblePart() == ChallengerPart.ADMIN;
+                    if (!isPartFree && !targetInfo.targetParts().contains(role.responsiblePart())) {
+                        return false;
+                    }
+                }
+                return true;
+            });
     }
 
     /**
@@ -98,7 +131,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
      */
     private boolean canReadByRole(RoleAttribute role, NoticeTargetInfo targetInfo, SubjectAttributes subject) {
         return switch (role.roleType()) {
-            // 중앙운영진(운영국원, 교육국원): 본인 기수 범위의 모든 공지를 파트 무관하게 읽기 가능
+            // 중앙운영진: 본인 기수 범위의 모든 챌린저 공지를 파트 무관하게 읽기 가능
             case CENTRAL_OPERATING_TEAM_MEMBER, CENTRAL_EDUCATION_TEAM_MEMBER -> targetInfo.targetGisuId() == null ||
                 targetInfo.targetGisuId().equals(role.gisuId());
             case CHAPTER_PRESIDENT -> chapterPresidentCanRead(role, targetInfo, subject);
@@ -107,7 +140,6 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
             default -> false;
         };
     }
-
 
     private boolean canDeleteOrEditNotice(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
         if (subjectAttributes.roleAttributes().stream().anyMatch(r -> r.roleType().isSuperAdmin())) {
@@ -124,45 +156,34 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
      * 공지사항 관리 권한 확인 (수신 현황 조회 등) - 총괄/부총괄: 항상 허용 - School 레벨 공지: 해당 학교 운영진 - Chapter 레벨 공지: 해당 지부장 - Gisu 레벨 공지: 중앙 멤버
      */
     private boolean canManageNotice(Long memberId, NoticeTargetInfo targetInfo) {
-        // 총괄/부총괄은 항상 허용
         if (getChallengerRoleUseCase.isCentralCore(memberId)) {
             return true;
         }
 
-        // School 레벨 공지: 해당 학교 운영진
         if (targetInfo.targetSchoolId() != null) {
             return getChallengerRoleUseCase.isSchoolAdmin(memberId, targetInfo.targetSchoolId());
         }
 
-        // Chapter 레벨 공지: 해당 지부장
         if (targetInfo.targetChapterId() != null) {
             return getChallengerRoleUseCase.isChapterPresident(memberId, targetInfo.targetChapterId());
         }
 
-        // Gisu 레벨 공지 (전체): 중앙 멤버
         return getChallengerRoleUseCase.isCentralMember(memberId);
     }
 
-    /**
-     * Role별 Read권한 검증
-     */
-    // 지부장: 본인 지부 또는 본인 학교 대상 공지를 파트 무관하게 읽기 가능
     private boolean chapterPresidentCanRead(RoleAttribute role, NoticeTargetInfo targetInfo,
                                             SubjectAttributes subject) {
         Long myChapterId = role.organizationId();
         if (myChapterId == null) {
             return false;
         }
-        // 지부가 명시된 경우 본인 지부이어야 함
         if (targetInfo.targetChapterId() != null && !myChapterId.equals(targetInfo.targetChapterId())) {
             return false;
         }
-        // 학교가 명시된 경우 본인 학교이어야 함
         if (targetInfo.targetSchoolId() != null
             && (subject.schoolId() == null || !subject.schoolId().equals(targetInfo.targetSchoolId()))) {
             return false;
         }
-        // 지부·학교가 모두 미지정인 기수 범위 공지는 기본 체크에서 처리
         if (targetInfo.targetChapterId() == null && targetInfo.targetSchoolId() == null) {
             return false;
         }
@@ -173,7 +194,6 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
                 || targetInfo.targetGisuId().equals(info.gisuId()));
     }
 
-    // 학교 회장단: 본인 학교 대상 공지를 파트 무관하게 읽기 가능
     private boolean schoolCoreCanRead(RoleAttribute role, NoticeTargetInfo targetInfo, SubjectAttributes subject) {
         Long mySchoolId = role.organizationId();
         if (mySchoolId == null) {
@@ -185,7 +205,6 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
         return isInGisuAndChapter(role, targetInfo, subject);
     }
 
-    // 교내 파트장: 담당 파트 공지를 본인 학교 범위 내에서 읽기 가능
     private boolean schoolPartLeaderCanRead(RoleAttribute role, NoticeTargetInfo targetInfo,
                                             SubjectAttributes subject) {
         ChallengerPart responsiblePart = role.responsiblePart();
@@ -213,5 +232,4 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
                 (targetInfo.targetGisuId() == null || targetInfo.targetGisuId().equals(info.gisuId()))
                     && (targetInfo.targetChapterId() == null || targetInfo.targetChapterId().equals(info.chapterId())));
     }
-
 }

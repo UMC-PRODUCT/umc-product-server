@@ -32,41 +32,34 @@ public class StudyGroupMember extends BaseEntity {
     private StudyGroup studyGroup;
 
     @Column(nullable = false)
-    private Long challengerId;
+    private Long memberId;
 
     @Column(nullable = false)
     private boolean isLeader;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private StudyGroupMember(StudyGroup studyGroup, Long challengerId, boolean isLeader) {
-        validate(studyGroup, challengerId);
+    private StudyGroupMember(StudyGroup studyGroup, Long memberId, boolean isLeader) {
+        validate(studyGroup, memberId);
         this.studyGroup = studyGroup;
-        this.challengerId = challengerId;
+        this.memberId = memberId;
         this.isLeader = isLeader;
     }
 
-    public static StudyGroupMember create(StudyGroup studyGroup, Long challengerId, boolean isLeader) {
+    public static StudyGroupMember create(StudyGroup studyGroup, Long memberId) {
         return StudyGroupMember.builder()
             .studyGroup(studyGroup)
-            .challengerId(challengerId)
-            .isLeader(isLeader)
+            .memberId(memberId)
+            .isLeader(false)
             .build();
     }
 
-    private static void validate(StudyGroup studyGroup, Long challengerId) {
+    private static void validate(StudyGroup studyGroup, Long memberId) {
         if (studyGroup == null) {
             throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_REQUIRED);
         }
-        if (challengerId == null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.CHALLENGER_ID_REQUIRED);
+        if (memberId == null) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_ID_REQUIRED);
         }
     }
 
-    public void assignAsLeader() {
-        this.isLeader = true;
-    }
-
-    public void removeAsLeader() {
-        this.isLeader = false;
-    }
 }

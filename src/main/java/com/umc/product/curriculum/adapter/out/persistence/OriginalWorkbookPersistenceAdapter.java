@@ -1,11 +1,9 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.application.port.in.query.dto.CurriculumInfo.WorkbookInfo;
-import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookPort;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
+import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import java.time.Instant;
@@ -21,44 +19,33 @@ public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookP
     private final CurriculumQueryRepository curriculumQueryRepository;
 
     @Override
-    public OriginalWorkbook findById(Long id) {
+    public OriginalWorkbook getById(Long id) {
         return originalWorkbookJpaRepository.findById(id)
             .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_NOT_FOUND));
     }
 
     @Override
-    public List<OriginalWorkbook> findByCurriculumId(Long curriculumId) {
-        return originalWorkbookJpaRepository.findByCurriculumId(curriculumId);
+    public List<OriginalWorkbook> batchGetByIds(List<Long> ids) {
+        List<OriginalWorkbook> result = originalWorkbookJpaRepository.findAllById(ids);
+        if (result.size() != ids.size()) {
+            throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_NOT_FOUND);
+        }
+        return result;
     }
 
     @Override
-    public List<OriginalWorkbook> findByCurriculumIdOrderByWeekNo(Long curriculumId) {
-        return originalWorkbookJpaRepository.findByCurriculumIdOrderByWeekNoAsc(curriculumId);
+    public List<OriginalWorkbook> findReleasedByWeeklyCurriculumId(Long weeklyCurriculumId) {
+        return originalWorkbookJpaRepository.findByWeeklyCurriculumIdAndOriginalWorkbookStatus(
+            weeklyCurriculumId, OriginalWorkbookStatus.RELEASED);
     }
 
     @Override
-    public List<Integer> findDistinctWeekNoByGisuId(Long gisuId) {
-        return originalWorkbookJpaRepository.findDistinctWeekNoByGisuId(gisuId);
-    }
-
-    @Override
-    public List<CurriculumWeekInfo> findWeekInfoByActiveGisuAndPart(ChallengerPart part) {
-        return curriculumQueryRepository.findWeekInfoByActiveGisuAndPart(part);
-    }
-
-    @Override
-    public List<Integer> findReleasedWeekNos(ChallengerPart part) {
-        return curriculumQueryRepository.findReleasedWeekNos(part);
-    }
-
-    @Override
-    public List<WorkbookInfo> findWorkbookInfos(Long curriculumId, Integer weekNo) {
-        return curriculumQueryRepository.fetchWorkbooks(curriculumId, weekNo);
-    }
-
-    @Override
-    public OriginalWorkbook save(OriginalWorkbook workbook) {
-        return originalWorkbookJpaRepository.save(workbook);
+    public List<OriginalWorkbook> findReleasedByWeeklyCurriculumIdIn(List<Long> weeklyCurriculumIds) {
+        if (weeklyCurriculumIds.isEmpty()) {
+            return List.of();
+        }
+        return originalWorkbookJpaRepository.findByWeeklyCurriculumIdInAndOriginalWorkbookStatus(
+            weeklyCurriculumIds, OriginalWorkbookStatus.RELEASED);
     }
 
     @Override
@@ -67,10 +54,17 @@ public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookP
     }
 
     @Override
-    public List<OriginalWorkbook> findByCurriculumIdIn(List<Long> curriculumIds) {
-        if (curriculumIds == null || curriculumIds.isEmpty()) {
-            return List.of();
-        }
-        return originalWorkbookJpaRepository.findByCurriculumIdIn(curriculumIds);
+    public OriginalWorkbook save(OriginalWorkbook workbook) {
+        return originalWorkbookJpaRepository.save(workbook);
+    }
+
+    @Override
+    public List<OriginalWorkbook> saveAll(List<OriginalWorkbook> workbooks) {
+        return originalWorkbookJpaRepository.saveAll(workbooks);
+    }
+
+    @Override
+    public void delete(OriginalWorkbook workbook) {
+        originalWorkbookJpaRepository.delete(workbook);
     }
 }

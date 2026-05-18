@@ -13,6 +13,7 @@ import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,7 +31,7 @@ public class EmailAuthenticationController {
     private final VerifyOAuthTokenPort verifyOAuthTokenPort;
     private final JwtTokenProvider jwtTokenProvider;
 
-    @Operation(summary = "6자리 인증코드로 이메일 인증",
+    @Operation(summary = "[EMAIL-001] 6자리 인증코드로 이메일 인증",
         description = """
             이메일로 발송된 인증코드를 통해서 이메일 인증을 완료합니다.
 
@@ -45,7 +46,7 @@ public class EmailAuthenticationController {
             .validateEmailVerificationSession(
                 ValidateEmailVerificationSessionCommand
                     .builder()
-                    .sessionId(request.emailVerificationId().toString())
+                    .sessionId(request.emailVerificationId())
                     .code(request.verificationCode())
                     .build()
             );
@@ -56,26 +57,32 @@ public class EmailAuthenticationController {
             .build();
     }
 
-    @Operation(summary = "이메일 인증 코드 발송",
+    @Operation(summary = "[EMAIL-002] 이메일 인증 코드 발송",
         description = """
             인증을 요청하는 이메일로 인증 코드를 발송합니다.
 
             이메일 인증코드는 6자리의 숫자로만 구성되어 있습니다.
+
+            purpose 는 회원가입(REGISTER) 또는 비밀번호 초기화(PASSWORD_RESET) 중 하나여야 하며,
+            cross-purpose 공격 방어를 위해 세션 단위로 고정됩니다.
             """)
     @PostMapping("email-verification")
     @Public
     public SendEmailVerificationResponse sendEmailVerification(
-        @RequestBody SendEmailVerificationRequest request
+        @Valid @RequestBody SendEmailVerificationRequest request
     ) {
-        Long sessionId = manageAuthenticationUseCase.createEmailVerificationSession(request.email());
+        Long sessionId = manageAuthenticationUseCase.createEmailVerificationSession(
+            request.email(),
+            request.purpose()
+        );
 
         return SendEmailVerificationResponse
             .builder()
-            .emailVerificationId(sessionId.toString())
+            .emailVerificationId(sessionId)
             .build();
     }
 
-    @Operation(summary = "이메일 인증 코드 재전송",
+    @Operation(summary = "[EMAIL-003] 이메일 인증 코드 재전송",
         description = """
             기존 이메일 인증 세션의 인증 코드를 재발급하고 이메일을 재전송합니다.
 

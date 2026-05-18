@@ -1,8 +1,9 @@
 package com.umc.product.authentication.application.service;
 
-import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
+import com.umc.product.authentication.domain.OAuthAttributes;
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
+import com.umc.product.authentication.application.port.in.command.dto.AuthorizationCodeLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthCommand;
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
@@ -38,34 +39,34 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public OAuthTokenLoginResult loginWithOAuth2Attributes(OAuth2Attributes oAuth2Attributes) {
-        log.info("OAuth2Attributes 기반 로그인 시도: provider={}, providerId={}",
-            oAuth2Attributes.getProvider(), oAuth2Attributes.getProviderId());
+    public OAuthTokenLoginResult loginWithOAuthAttributes(OAuthAttributes oAuthAttributes) {
+        log.info("OAuthAttributes 기반 로그인 시도: provider={}, providerId={}",
+            oAuthAttributes.provider(), oAuthAttributes.providerId());
 
         return loadMemberOAuthPort
             // OAuth 정보로 기존 회원이 존재하는지 확인
             .findByProviderAndProviderId(
-                oAuth2Attributes.getProvider(),
-                oAuth2Attributes.getProviderId()
+                oAuthAttributes.provider(),
+                oAuthAttributes.providerId()
             )
             // 기존 회원이 존재하는지 확인
             .map(memberOAuth -> {
                 log.info("기존 회원 로그인 성공: memberId={}", memberOAuth.getMemberId());
                 return OAuthTokenLoginResult.existingMember(
                     memberOAuth.getMemberId(),
-                    oAuth2Attributes.getProvider(),
-                    oAuth2Attributes.getProviderId(),
-                    oAuth2Attributes.getEmail()
+                    oAuthAttributes.provider(),
+                    oAuthAttributes.providerId(),
+                    oAuthAttributes.email()
                 );
             })
             // 존재하지 않는 회원인 경우에 대한 처리
             .orElseGet(() -> {
                 log.info("신규 회원 - 회원가입 필요: provider={}, providerId={}",
-                    oAuth2Attributes.getProvider(), oAuth2Attributes.getProviderId());
+                    oAuthAttributes.provider(), oAuthAttributes.providerId());
                 return OAuthTokenLoginResult.newMember(
-                    oAuth2Attributes.getProvider(),
-                    oAuth2Attributes.getProviderId(),
-                    oAuth2Attributes.getEmail()
+                    oAuthAttributes.provider(),
+                    oAuthAttributes.providerId(),
+                    oAuthAttributes.email()
                 );
             });
     }
@@ -75,19 +76,40 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
         log.info("ID 토큰 기반 OAuth 로그인 시도: provider={}", command.provider());
 
         // 1. ID 토큰 검증 및 사용자 정보 추출 (Port Out 호출)
-        OAuth2Attributes oauthAttrs = verifyIdTokenPort.verify(
+        OAuthAttributes oauthAttrs = verifyIdTokenPort.verify(
             command.provider(),
             command.token()
         );
 
         log.info("OAuth 토큰 검증 성공: provider={}, providerId={}, email={}",
-            oauthAttrs.getProvider(),
-            oauthAttrs.getProviderId(),
-            oauthAttrs.getEmail()
+            oauthAttrs.provider(),
+            oauthAttrs.providerId(),
+            oauthAttrs.email()
         );
 
         // 2. 공통 비즈니스 로직 재사용
-        return loginWithOAuth2Attributes(oauthAttrs);
+        return loginWithOAuthAttributes(oauthAttrs);
+    }
+
+    @Override
+    public OAuthTokenLoginResult authorizationCodeLogin(AuthorizationCodeLoginCommand command) {
+        log.info("Authorization Code 기반 OAuth 로그인 시도: provider={}", command.provider());
+
+        // 1. Authorization Code 교환 및 사용자 정보 추출 (Port Out 호출)
+        OAuthAttributes oauthAttrs = verifyIdTokenPort.verifyAuthorizationCode(
+            command.provider(),
+            command.authorizationCode(),
+            command.redirectUri()
+        );
+
+        log.info("OAuth Authorization Code 교환 성공: provider={}, providerId={}, email={}",
+            oauthAttrs.provider(),
+            oauthAttrs.providerId(),
+            oauthAttrs.email()
+        );
+
+        // 2. 공통 비즈니스 로직 재사용
+        return loginWithOAuthAttributes(oauthAttrs);
     }
 
     @Override
@@ -177,11 +199,17 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
     private void revokeProviderToken(MemberOAuth memberOAuth, UnlinkOAuthCommand command) {
         switch (memberOAuth.getProvider()) {
             case APPLE -> {
-                if (memberOAuth.getAppleRefreshToken() != null) {
-                    revokeOAuthTokenPort.revokeAppleToken(memberOAuth.getAppleRefreshToken());
+                if (memberOAuth.getAppleRefreshToken() != null && memberOAuth.getAppleClientId() != null) {
+                    revokeOAuthTokenPort.revokeAppleToken(
+                            memberOAuth.getAppleRefreshToken(),
+                            memberOAuth.getAppleClientId()
+                    );
                 } else {
-                    log.warn("[Apple 계정 연동 해제] refresh token이 없어 revoke를 skip합니다: memberId={} memberOAuthId={}",
-                        memberOAuth.getMemberId(), memberOAuth.getId());
+                    log.warn("[Apple 계정 연동 해제] refresh token 또는 client_id가 없어 revoke를 skip합니다: "
+                                    + "memberId={} memberOAuthId={} hasRefreshToken={} hasClientId={}",
+                            memberOAuth.getMemberId(), memberOAuth.getId(),
+                            memberOAuth.getAppleRefreshToken() != null,
+                            memberOAuth.getAppleClientId() != null);
                 }
             }
             case KAKAO -> {
@@ -204,11 +232,12 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
     }
 
     @Override
-    public void updateAppleRefreshToken(OAuthProvider provider, String providerId, String refreshToken) {
+    public void updateAppleRefreshToken(OAuthProvider provider, String providerId, String refreshToken,
+                                        String clientId) {
         MemberOAuth memberOAuth = loadMemberOAuthPort.findByProviderAndProviderId(provider, providerId)
             .orElseThrow(() -> new AuthenticationDomainException(AuthenticationErrorCode.MEMBER_OAUTH_NOT_FOUND));
 
-        memberOAuth.updateRefreshToken(refreshToken);
+        memberOAuth.updateAppleCredentials(refreshToken, clientId);
         saveMemberOAuthPort.save(memberOAuth);
     }
 }

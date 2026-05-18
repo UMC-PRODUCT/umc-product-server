@@ -49,6 +49,11 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     }
 
     @Override
+    public Set<Long> findAllIdsBySchoolId(Long schoolId) {
+        return memberJpaRepository.findAllIdsBySchoolId(schoolId);
+    }
+
+    @Override
     public boolean existsById(Long id) {
         return memberJpaRepository.existsById(id);
     }
@@ -81,5 +86,19 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     @Override
     public Page<Challenger> search(SearchMemberQuery query, Pageable pageable) {
         return memberQueryRepository.searchBy(query, pageable);
+    }
+
+    @Override
+    public List<Long> findAllIdsCursor(Long lastId, Pageable pageable) {
+        return memberJpaRepository.findIdsCursor(lastId, pageable);
+    }
+
+    @Override
+    public long countMembersByIds(Set<Long> memberIds) {
+
+        if (memberIds == null || memberIds.isEmpty()) {
+            return 0L;
+        }
+        return memberJpaRepository.countByIdIn(memberIds);
     }
 }

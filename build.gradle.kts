@@ -7,8 +7,8 @@ plugins {
 }
 
 group = "com.umc"
-version = "0.0.1"
-description = "umc-product"
+version = "2.0.0"
+description = "UMC PRODUCT API by Server Team"
 
 java {
     toolchain {
@@ -29,10 +29,11 @@ repositories {
 }
 
 // 의존성 버전
-val springDocVersion = "2.8.14"
-val queryDslVersion = "5.0.0"
+val springDocVersion = "2.8.17"
+val queryDslVersion = "5.1.0"
 val jwtVersion = "0.12.5"
 val awsVersion = "2.40.12"
+val springAiVersion = "1.1.5"
 
 // REST DOCS
 val snippetsDir = file("build/generated-snippets")
@@ -59,7 +60,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")  // OAuth2 Client
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
@@ -101,9 +101,11 @@ dependencies {
     // --- Utils ---
     // 서버 시작 시 자동으로 Docker Compose 실행
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+
     // 다들 잘 아는 그 lombok
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
+
     // SQL 출력용 P6Spy
     implementation("com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.10.0")
 
@@ -126,6 +128,10 @@ dependencies {
     implementation("com.github.loki4j:loki-logback-appender:1.5.2")
     implementation("io.micrometer:micrometer-registry-otlp")
 
+    // --- Structured Logging (ADR-016) ---
+    // dev/staging/prod 환경의 JSON 단일 라인 로그 encoder. local 은 텍스트 유지.
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
+
     // --- Sentry ---
     implementation(platform("io.sentry:sentry-bom:8.31.0"))
     implementation("io.sentry:sentry-spring-boot-starter-jakarta")
@@ -140,6 +146,16 @@ dependencies {
     // Firebase Admin SDK
     implementation("com.google.firebase:firebase-admin:9.7.1")
 
+    // --- Spring AI (LLM provider 통합) ---
+    implementation(platform("org.springframework.ai:spring-ai-bom:${springAiVersion}"))
+    implementation("org.springframework.ai:spring-ai-starter-model-openai")
+    implementation("org.springframework.ai:spring-ai-starter-model-vertex-ai-gemini")
+    implementation("org.springframework.ai:spring-ai-starter-model-google-genai")
+
+    // --- Cache ---
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("com.github.ben-manes.caffeine:caffeine")
+
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -147,10 +163,18 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
+    testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.19") // Fixture 생성에 도움을 주는 친구
+
+    testCompileOnly("org.projectlombok:lombok")
+    testAnnotationProcessor("org.projectlombok:lombok")
 
     // --- Spring REST Docs ---
     "asciidoctorExt"("org.springframework.restdocs:spring-restdocs-asciidoctor")
     testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
+}
+
+springBoot {
+    buildInfo()
 }
 
 tasks.withType<JavaCompile>().configureEach {

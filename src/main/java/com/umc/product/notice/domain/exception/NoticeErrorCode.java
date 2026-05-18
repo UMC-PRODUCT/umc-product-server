@@ -18,6 +18,7 @@ public enum NoticeErrorCode implements BaseCode {
     NOTICE_SCOPE_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-0007", "공지사항 대상 범위는 필수입니다."),
     NOTICE_AUTHOR_MISMATCH(HttpStatus.FORBIDDEN, "NOTICE-0008", "공지사항 작성자가 아닙니다."),
     NO_WRITE_PERMISSION(HttpStatus.FORBIDDEN, "NOTICE-0009", "해당 공지사항을 작성할 권한이 없습니다."),
+    NO_READ_PERMISSION(HttpStatus.FORBIDDEN, "NOTICE-0012", "해당 공지사항을 조회할 권한이 없습니다."),
     INVALID_TARGET_SETTING(HttpStatus.BAD_REQUEST, "NOTICE-0010", "공지사항 수신자 설정이 잘못되었습니다."),
     NO_TARGET_FOUND(HttpStatus.NOT_FOUND, "NOTICE-0011", "해당 공지사항에 설정된 수신 대상이 존재하지 않습니다."),
 
@@ -30,6 +31,11 @@ public enum NoticeErrorCode implements BaseCode {
     NOTICE_LINK_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTICE-CONTENTS-0006", "공지사항 링크를 찾을 수 없습니다."),
     IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0007", "공지사항 이미지는 최대 10장까지 등록할 수 있습니다."),
     VOTE_ALREADY_EXISTS(HttpStatus.CONFLICT, "NOTICE-CONTENTS-0008", "해당 공지사항에 이미 투표가 존재합니다."),
+    INVALID_VOTE_OPTION_COUNT(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0009", "투표 항목은 2개 이상 5개 이하여야 합니다."),
+    INVALID_VOTE_OPTION_CONTENT(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0010", "투표 항목에 빈 값이 포함될 수 없습니다."),
+    VOTE_NOT_STARTED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0011", "아직 투표 기간이 시작되지 않았습니다."),
+    VOTE_CLOSED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0012", "이미 종료된 투표입니다."),
+    SELECTED_OPTION_IDS_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0013", "선택한 투표 항목 ID 목록은 필수입니다."),
 
 
     NOT_IMPLEMENTED_YET(HttpStatus.NOT_IMPLEMENTED, "NOTICE-9999", "아직 구현되지 않은 기능입니다.");

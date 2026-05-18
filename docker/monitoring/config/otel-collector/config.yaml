@@ -1,0 +1,70 @@
+# OTel Collector — 자체 호스팅 OTLP 게이트웨이 (ADR-014 Phase 0~1)
+#
+# 앱은 OTLP 송신 URL (PROM_URL / TEMPO_URL) 만 본 Collector 의 endpoint 로 바꾸면
+# metrics / traces 가 자동으로 prometheus / tempo 로 분배된다. 로그도 OTLP 로 보내면
+# Loki 의 OTLP receiver 로 전달된다.
+#
+#   앱 ──OTLP──▶ otel-collector ─┬─▶ prometheus  (metrics, /api/v1/otlp)
+#                                  ├─▶ tempo       (traces,  4318)
+#                                  └─▶ loki        (logs,    /otlp)
+#
+# 향후 Cloud + Self dual-write (ADR-014 Phase 2) 가 필요해지면 본 파일의 exporters
+# 섹션에 otlphttp/cloud 를 추가하고, service.pipelines 의 exporters 리스트에 끼워
+# 넣으면 된다.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    send_batch_size: 1024
+    timeout: 5s
+  resource:
+    # 본 스택을 통과한 모든 신호에 cluster 라벨을 붙여, Phase 2 의 dual-write 비교
+    # 시점에 Cloud / Self 데이터를 구분 가능하게 한다.
+    attributes:
+      - key: cluster
+        value: umc-product-self-hosted
+        action: upsert
+
+exporters:
+  # Metrics → Prometheus 의 OTLP write receiver
+  otlphttp/prometheus:
+    endpoint: http://prometheus:9090/api/v1/otlp
+    tls:
+      insecure: true
+
+  # Traces → Tempo 의 OTLP HTTP (4318)
+  otlphttp/tempo:
+    endpoint: http://tempo:4318
+    tls:
+      insecure: true
+
+  # Logs → Loki 의 OTLP logs receiver
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    metrics:
+      receivers: [ otlp ]
+      processors: [ resource, batch ]
+      exporters: [ otlphttp/prometheus ]
+    traces:
+      receivers: [ otlp ]
+      processors: [ resource, batch ]
+      exporters: [ otlphttp/tempo ]
+    logs:
+      receivers: [ otlp ]
+      processors: [ resource, batch ]
+      exporters: [ otlphttp/loki ]
+  telemetry:
+    logs:
+      level: info

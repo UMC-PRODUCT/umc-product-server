@@ -1,5 +1,6 @@
 package com.umc.product.member.adapter.in.web;
 
+import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -12,18 +13,22 @@ import com.umc.product.member.adapter.in.web.assembler.MemberInfoResponseAssembl
 import com.umc.product.member.adapter.in.web.dto.request.DeleteMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberInfoRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberProfileRequest;
-import com.umc.product.member.adapter.in.web.dto.request.RegisterMemberRequest;
+import com.umc.product.member.adapter.in.web.dto.request.EmailRegisterMemberRequest;
+import com.umc.product.member.adapter.in.web.dto.request.OAuthRegisterMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
 import com.umc.product.member.application.port.in.command.ManageMemberProfileUseCase;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
+import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
+import com.umc.product.member.application.port.in.command.RegisterOAuthMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
-import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
 import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -42,27 +47,36 @@ public class MemberCommandController {
     private final MemberInfoResponseAssembler assembler;
 
     private final JwtTokenProvider jwtTokenProvider;
+
     private final ManageMemberUseCase manageMemberUseCase;
     private final ManageMemberProfileUseCase manageMemberProfileUseCase;
 
+    private final RegisterOAuthMemberUseCase registerOAuthMemberUseCase;
+    private final RegisterEmailMemberUseCase registerEmailMemberUseCase;
 
-    // 로그인은 OAuth를 통해서만 진행됨!!
+
     @Public
-    @Operation(summary = "회원가입",
+    @Operation(summary = "[REGISTER-001] OAuth 회원가입",
         description = """
+            ### ⚠️ `register/oauth` 엔드포인트를 사용해주셔야 합니다. 기존 엔트포인트는 `v2.0.0`이 Production에 배포될 때 제거될 예정입니다.
+
+
             OAuth2 로그인을 통해서 oAuthVerificationToken 및 Email 인증을 통한 emailVerificationToken을 발급받은 후,
             해당 토큰들을 첨부해서 회원가입을 진행해주세요.
             """)
-    @PostMapping("register")
+    @PostMapping({"/register", "/register/oauth"})
     @WebhookAlarm(
         title = "'새로운 회원이 가입했어요!'",
         content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
     )
-    RegisterResponse registerMember(@RequestBody RegisterMemberRequest request) {
+    RegisterResponse registerMemberByOAuth(@RequestBody OAuthRegisterMemberRequest request) {
         OAuthVerificationClaims claims = jwtTokenProvider.parseOAuthVerificationToken(request.oAuthVerificationToken());
-        String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
+        String email = jwtTokenProvider.parseEmailVerificationToken(
+            request.emailVerificationToken(),
+            EmailVerificationPurpose.REGISTER
+        );
 
-        RegisterMemberCommand command = RegisterMemberCommand
+        OAuthRegisterMemberCommand command = OAuthRegisterMemberCommand
             .builder()
             .provider(claims.provider())
             .providerId(claims.providerId())
@@ -73,21 +87,45 @@ public class MemberCommandController {
             .profileImageId(request.profileImageId())
             .termConsents(request.termsAgreements().stream().map(TermConsents::fromRequest).toList())
             .appleRefreshToken(request.appleRefreshToken())
+            .appleClientId(request.appleClientId())
             .build();
 
-        Long createdMemberId = manageMemberUseCase.registerMember(command);
+        Long createdMemberId = registerOAuthMemberUseCase.register(command);
 
         String accessToken = jwtTokenProvider.createAccessToken(createdMemberId, null);
         String refreshToken = jwtTokenProvider.createRefreshToken(createdMemberId);
 
-        return RegisterResponse.builder()
-            .memberId(createdMemberId)
-            .accessToken(accessToken)
-            .refreshToken(refreshToken)
-            .build();
+        return RegisterResponse.of(createdMemberId, accessToken, refreshToken);
     }
 
-    @Operation(summary = "내 회원 정보 수정")
+    @Operation(summary = "[REGISTER-003] 이메일/PW 이용 회원가입",
+        description = """
+            ADR-017 에 따라 도입된 이메일 기반 회원가입 엔드포인트입니다.
+
+            로그인 식별자를 별도로 받지 않으며, `emailVerificationToken` 으로 검증된 이메일이
+            그대로 로그인 식별자로 사용됩니다.
+            """)
+    @PostMapping("/register/email")
+    @Public
+    @WebhookAlarm(
+        title = "'새로운 회원이 가입했어요!'",
+        content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
+    )
+    RegisterResponse registerMemberByEmail(@Valid @RequestBody EmailRegisterMemberRequest request) {
+        String email = jwtTokenProvider.parseEmailVerificationToken(
+            request.emailVerificationToken(),
+            EmailVerificationPurpose.REGISTER
+        );
+
+        Long createdMemberId = registerEmailMemberUseCase.register(request.toCommand(email));
+
+        String accessToken = jwtTokenProvider.createAccessToken(createdMemberId, null);
+        String refreshToken = jwtTokenProvider.createRefreshToken(createdMemberId);
+
+        return RegisterResponse.of(createdMemberId, accessToken, refreshToken);
+    }
+
+    @Operation(summary = "[MEMBER-001] 내 회원 정보 수정")
     @PatchMapping
     MemberInfoResponse editMemberInfo(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -101,7 +139,7 @@ public class MemberCommandController {
         return assembler.fromMemberId(memberPrincipal.getMemberId());
     }
 
-    @Operation(summary = "내 회원 프로필 링크 수정")
+    @Operation(summary = "[MEMBER-002] 내 회원 프로필 링크 수정")
     @PatchMapping("/profile/links")
     MemberInfoResponse editMemberProfile(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -115,7 +153,7 @@ public class MemberCommandController {
     }
 
     @DeleteMapping
-    @Operation(summary = "회원 탈퇴",
+    @Operation(summary = "[MEMBER-003] 회원 탈퇴",
         description = "Google/Kakao OAuth 연동이 있는 경우 해당 Provider의 Access Token을 함께 전달하면 Provider측 연결도 해제됩니다.")
     @WebhookAlarm(
         title = "'회원이 탈퇴하였습니다'",
@@ -128,7 +166,7 @@ public class MemberCommandController {
         return deleteMemberById(memberPrincipal.getMemberId(), request);
     }
 
-    @Operation(summary = "관리자 권한으로 회원 게정 삭제 (Hard Delete)", description = "총괄단 권한이 필요합니다. (적용 전)")
+    @Operation(summary = "[MEMBER-004] 관리자 권한으로 회원 게정 삭제 (Hard Delete)", description = "총괄단 권한이 필요합니다. (적용 전)")
     @DeleteMapping("{memberId}")
     @CheckAccess(
         resourceType = ResourceType.MEMBER,

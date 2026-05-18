@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Authorization | 리소스 접근 권한 확인", description = "특정 리소스에 대한 접근 권한 여부 확인")
+@Tag(name = "Authorization | 접근 권한 확인", description = "유형 및 각 리소스별 CRUD 권한 체크")
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -25,7 +25,7 @@ public class ResourcePermissionController {
     private final ResourcePermissionUseCase resourcePermissionUseCase;
 
     @GetMapping
-    @Operation(summary = "리소스 권한 조회", description = "특정 리소스에 대해 현재 사용자가 가진 권한 목록을 조회합니다.")
+    @Operation(summary = "[PERMISSION-001] 리소스 권한 조회", description = "특정 리소스에 대해 현재 사용자가 가진 권한 목록을 조회합니다.")
     ResourcePermissionResponse getResourcePermission(
         @RequestParam ResourceType resourceType,
         @RequestParam(required = false) Long resourceId,

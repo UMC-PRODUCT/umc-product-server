@@ -1,278 +1,87 @@
 package com.umc.product.survey.application.service;
 
-import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
-import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
-import com.umc.product.survey.application.port.in.command.SubmitVoteResponseUseCase;
-import com.umc.product.survey.application.port.in.command.UpdateVoteResponseUseCase;
+import com.umc.product.survey.application.port.in.command.ManageFormUseCase;
+import com.umc.product.survey.application.port.in.command.ManageVoteUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateVoteCommand;
-import com.umc.product.survey.application.port.in.command.dto.DeleteVoteCommand;
-import com.umc.product.survey.application.port.in.command.dto.SubmitVoteResponseCommand;
-import com.umc.product.survey.application.port.in.command.dto.UpdateVoteResponseCommand;
-import com.umc.product.survey.application.port.out.LoadFormPort;
-import com.umc.product.survey.application.port.out.LoadFormResponsePort;
-import com.umc.product.survey.application.port.out.SaveFormPort;
-import com.umc.product.survey.application.port.out.SaveFormResponsePort;
-import com.umc.product.survey.application.port.out.SaveSingleAnswerPort;
+import com.umc.product.survey.application.port.in.command.dto.DeleteFormCommand;
+import com.umc.product.survey.application.port.out.*;
 import com.umc.product.survey.domain.Form;
-import com.umc.product.survey.domain.FormResponse;
+import com.umc.product.survey.domain.FormSection;
 import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.QuestionOption;
-import com.umc.product.survey.domain.enums.FormOpenStatus;
-import com.umc.product.survey.domain.enums.FormResponseStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
-import com.umc.product.survey.domain.exception.SurveyDomainException;
-import com.umc.product.survey.domain.exception.SurveyErrorCode;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
 @Slf4j
+@Service
 @Transactional
 @RequiredArgsConstructor
-public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, SubmitVoteResponseUseCase,
-    UpdateVoteResponseUseCase {
+public class VoteService implements ManageVoteUseCase {
 
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final SaveFormPort saveFormPort;
-    private final LoadFormPort loadFormPort;
-    private final LoadFormResponsePort loadFormResponsePort;
-    private final SaveFormResponsePort saveFormResponsePort;
-    private final SaveSingleAnswerPort saveSingleAnswerPort;
+    private final SaveFormSectionPort saveFormSectionPort;
+    private final SaveQuestionPort saveQuestionPort;
+    private final SaveQuestionOptionPort saveQuestionOptionPort;
+    private final ManageFormUseCase manageFormUseCase;
 
     @Override
-    public Long create(CreateVoteCommand command) {
-        validate(command);
-
+    public Long createVote(CreateVoteCommand command) {
         QuestionType qType = command.allowMultipleChoice()
             ? QuestionType.CHECKBOX
             : QuestionType.RADIO;
 
-        Form form = Form.createPublished(
-            command.createdMemberId(),
-            command.title()
+        // 1. 순수한 Form 생성 (상태는 무조건 PUBLISHED)
+        Form form = Form.createPublished(command.createdMemberId(), command.title(), command.isAnonymous());
+        Form savedForm = saveFormPort.save(form);
+
+        // 2. 단일 섹션 생성
+        FormSection section = FormSection.create(
+            savedForm,
+            command.title(),
+            null,
+            1L
         );
 
-        form.setVotePolicy(command.isAnonymous(), command.startsAt(), command.endsAtExclusive());
+        FormSection savedSection = saveFormSectionPort.save(section);
 
-        // 섹션/질문/옵션 조립
-        form.appendSingleQuestion(
-            command.title(), // 투표 제목 그대로 questionText로 사용
+        // 3. 단일 질문 생성
+        Question question = Question.create(
+            command.title(),
             qType,
-            command.options()
+            true, // isRequired
+            1L    // orderNo
         );
+        question.assignTo(savedSection);
+        Question savedQuestion = saveQuestionPort.save(question);
 
-        return saveFormPort.save(form).getId();
-    }
+        // 4. 질문에 대한 선택지(옵션) 생성
+        AtomicInteger order = new AtomicInteger(1);
+        List<QuestionOption> options = command.options().stream()
+            .map(optContent -> {
+                QuestionOption opt = QuestionOption.create(optContent, order.getAndIncrement(), false);
+                opt.assignTo(savedQuestion);
+                return opt;
+            })
+            .collect(Collectors.toList());
+        saveQuestionOptionPort.saveAll(options);
 
-    private void validate(CreateVoteCommand cmd) {
-        List<String> options = cmd.options();
-        if (options == null || options.size() < 2 || options.size() > 5) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_OPTION_COUNT);
-        }
-        if (options.stream().anyMatch(s -> s == null || s.trim().isEmpty())) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_OPTION_CONTENT);
-        }
-
-        Instant startsAt = cmd.startsAt();
-        Instant endsAtExclusive = cmd.endsAtExclusive();
-
-        if (startsAt == null || endsAtExclusive == null) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_FORM_ACTIVE_PERIOD);
-        }
-
-        // 기본 기간 검증: end > start
-        if (!endsAtExclusive.isAfter(startsAt)) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_FORM_ACTIVE_PERIOD);
-        }
-
-        // 시작일: 오늘부터 선택 가능 (KST 기준 오늘 00:00 이상)
-        Instant todayStartKst = LocalDate.now(KST).atStartOfDay(KST).toInstant();
-        if (startsAt.isBefore(todayStartKst)) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_START_DATE);
-        }
-
-        // 마감일: 시작일 하루 뒤부터 선택 가능
-        // startsAt = startDate 00:00(KST)
-        // endsAtExclusive = (endDate + 1) 00:00(KST)
-        // endDate >= startDate + 1  <=>  endsAtExclusive >= startsAt + 2 days
-        Instant minEndsAtExclusive = startsAt.plus(2, ChronoUnit.DAYS);
-        if (endsAtExclusive.isBefore(minEndsAtExclusive)) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_END_DATE);
-        }
+        // 조립된 Form의 ID 반환 (이 ID를 NoticeVote가 voteId라는 이름으로 가집니다)
+        return savedForm.getId();
     }
 
     @Override
-    public void delete(DeleteVoteCommand cmd) {
-        Form form = loadFormPort.findById(cmd.voteId())
-            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
-
-        // todo: 권한 검증 추가
-
-        List<Long> draftIds = loadFormResponsePort.findDraftIdsByFormId(form.getId());
-        if (draftIds != null && !draftIds.isEmpty()) {
-            saveSingleAnswerPort.deleteAllByFormResponseIds(draftIds);
-            saveFormResponsePort.deleteAllByIds(draftIds);
-        }
-
-        FormResponseStatus st = FormResponseStatus.SUBMITTED;
-        List<Long> responseIds = loadFormResponsePort.findIdsByFormIdAndStatus(form.getId(), st);
-        if (responseIds != null && !responseIds.isEmpty()) {
-            saveSingleAnswerPort.deleteAllByFormResponseIds(responseIds);
-            saveFormResponsePort.deleteByFormIdAndStatus(form.getId(), st);
-        }
-
-        saveFormPort.deleteById(form.getId());
-    }
-
-    @Override
-    public void submit(SubmitVoteResponseCommand cmd) {
-        Instant now = Instant.now();
-
-        Form form = loadFormPort.findById(cmd.voteId())
-            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
-
-        // 1) 기간 체크
-        FormOpenStatus openStatus = form.getOpenStatus(now);
-        if (openStatus == FormOpenStatus.NOT_STARTED) {
-            throw new SurveyDomainException(SurveyErrorCode.VOTE_NOT_STARTED);
-        }
-        if (openStatus == FormOpenStatus.CLOSED) {
-            throw new SurveyDomainException(SurveyErrorCode.VOTE_CLOSED);
-        }
-
-        // 2) 중복 투표 체크
-        if (loadFormResponsePort.existsByFormIdAndMemberId(form.getId(), cmd.memberId())) {
-            throw new SurveyDomainException(SurveyErrorCode.VOTE_ALREADY_RESPONDED);
-        }
-
-        // 3) 투표 구조에서 Question 1개 꺼내기
-        Question question = extractSingleQuestion(form);
-
-        // 4) 선택 검증
-        List<Long> optionIds = cmd.optionIds();
-        if (optionIds == null || optionIds.isEmpty()) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
-        }
-
-        // 중복 제거
-        Set<Long> uniqueOptionIds = new LinkedHashSet<>(optionIds);
-
-        if (question.getType() == QuestionType.RADIO) {
-            if (uniqueOptionIds.size() != 1) {
-                throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
-            }
-        } else if (question.getType() == QuestionType.CHECKBOX) {
-            // 추가 검증 x
-        } else {
-            // 투표 질문은 RADIO/CHECKBOX만 와야 함
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
-        }
-
-        // 5) optionIds가 이 question의 옵션인지 검증
-        Set<Long> allowedOptionIds = new HashSet<>();
-        for (QuestionOption opt : question.getOptions()) {
-            allowedOptionIds.add(opt.getId());
-        }
-        if (!allowedOptionIds.containsAll(new HashSet<>(uniqueOptionIds))) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
-        }
-
-        // 6) 응답 저장
-        FormResponse formResponse = FormResponse.createVoteResponse(
-            form,
-            cmd.memberId(),
-            question,
-            uniqueOptionIds.stream().toList(),
-            now
+    public void deleteVote(Long formId) {
+        manageFormUseCase.deleteForm(
+            DeleteFormCommand.builder()
+                .formId(formId)
+                .build()
         );
-
-        saveFormResponsePort.save(formResponse);
-    }
-
-    @Override
-    public void update(UpdateVoteResponseCommand cmd) {
-        Instant now = Instant.now();
-
-        Form form = loadFormPort.findById(cmd.voteId())
-            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
-
-        // 1) 기간 체크
-        FormOpenStatus openStatus = form.getOpenStatus(now);
-        if (openStatus == FormOpenStatus.NOT_STARTED) {
-            throw new SurveyDomainException(SurveyErrorCode.VOTE_NOT_STARTED);
-        }
-        if (openStatus == FormOpenStatus.CLOSED) {
-            throw new SurveyDomainException(SurveyErrorCode.VOTE_CLOSED);
-        }
-
-        // 2) 기존 응답 조회
-        FormResponse formResponse = loadFormResponsePort
-            .findSubmittedByFormIdAndRespondentMemberId(form.getId(), cmd.memberId())
-            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.VOTE_RESPONSE_NOT_FOUND));
-
-        // 3) 투표 구조에서 Question 1개 꺼내기
-        Question question = extractSingleQuestion(form);
-
-        // 4) 선택 검증
-        List<Long> optionIds = cmd.optionIds();
-        if (optionIds == null) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION,
-                "기존에 선택한 응답을 삭제하려면 null이 아닌 빈 배열을 보내야 합니다.");
-        }
-
-        if (optionIds.isEmpty()) {
-            cancelVoteResponse(formResponse);
-            return;
-        }
-
-        Set<Long> uniqueOptionIds = new LinkedHashSet<>(optionIds);
-
-        if (question.getType() == QuestionType.RADIO) {
-            if (uniqueOptionIds.size() != 1) {
-                throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
-            }
-        } else if (question.getType() == QuestionType.CHECKBOX) {
-            // pass
-        } else {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
-        }
-
-        Set<Long> allowedOptionIds = new HashSet<>();
-        for (QuestionOption opt : question.getOptions()) {
-            allowedOptionIds.add(opt.getId());
-        }
-        if (!allowedOptionIds.containsAll(uniqueOptionIds)) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
-        }
-
-        formResponse.updateVoteResponse(question, uniqueOptionIds.stream().toList(), now);
-        saveFormResponsePort.save(formResponse);
-    }
-
-    private Question extractSingleQuestion(Form form) {
-        if (form.getSections().isEmpty()) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
-        }
-        // 섹션 1개 전제
-        var section = form.getSections().iterator().next();
-        if (section.getQuestions().isEmpty()) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
-        }
-        return section.getQuestions().iterator().next();
-    }
-
-    private void cancelVoteResponse(FormResponse formResponse) {
-        saveSingleAnswerPort.deleteAllByFormResponseIds(List.of(formResponse.getId()));
-        saveFormResponsePort.deleteById(formResponse.getId());
     }
 }

@@ -52,7 +52,7 @@ public class PostController {
     private final GetChallengerUseCase getChallengerUseCase;
 
     @PostMapping
-    @Operation(summary = "일반 게시글 생성", description = "일반 게시글을 생성합니다. 번개글은 별도 API를 사용하세요.")
+    @Operation(summary = "[POST-001] 일반 게시글 생성", description = "일반 게시글을 생성합니다. 번개글은 별도 API를 사용하세요.")
     public PostResponse createPost(
         @RequestBody CreatePostRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -63,7 +63,7 @@ public class PostController {
     }
 
     @PostMapping("/lightning")
-    @Operation(summary = "번개글 생성", description = "번개 모임 게시글을 생성합니다.")
+    @Operation(summary = "[POST-002] 번개글 생성", description = "번개 모임 게시글을 생성합니다.")
     public PostResponse createLightningPost(
         @RequestBody CreateLightningRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -80,7 +80,7 @@ public class PostController {
         message = "게시글 수정 권한이 없습니다."
     )
     @PatchMapping("/{postId}")
-    @Operation(summary = "일반 게시글 수정", description = "일반 게시글의 제목, 내용, 카테고리를 수정합니다.")
+    @Operation(summary = "[POST-003] 일반 게시글 수정", description = "일반 게시글의 제목, 내용, 카테고리를 수정합니다.")
     public PostResponse updatePost(
         @PathVariable Long postId,
         @RequestBody UpdatePostRequest request
@@ -95,7 +95,7 @@ public class PostController {
         message = "번개 게시글 수정 권한이 없습니다."
     )
     @PatchMapping("/{postId}/lightning")
-    @Operation(summary = "번개글 수정", description = "번개 게시글의 제목, 내용, 모임 정보를 수정합니다.")
+    @Operation(summary = "[POST-004] 번개글 수정", description = "번개 게시글의 제목, 내용, 모임 정보를 수정합니다.")
     public PostResponse updateLightningPost(
         @PathVariable Long postId,
         @RequestBody UpdateLightningRequest request
@@ -110,7 +110,7 @@ public class PostController {
         message = "게시글 삭제 권한이 없습니다."
     )
     @DeleteMapping("/{postId}")
-    @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다.")
+    @Operation(summary = "[POST-005] 게시글 삭제", description = "게시글을 삭제합니다.")
     public void deletePost(
         @PathVariable Long postId
     ) {
@@ -118,7 +118,7 @@ public class PostController {
     }
 
     @PostMapping("/{postId}/like")
-    @Operation(summary = "게시글 좋아요 토글", description = "게시글 좋아요를 토글합니다. 이미 좋아요한 경우 취소됩니다.")
+    @Operation(summary = "[POST-006] 게시글 좋아요 토글", description = "게시글 좋아요를 토글합니다. 이미 좋아요한 경우 취소됩니다.")
     public LikeResponse toggleLike(
         @PathVariable Long postId,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -129,7 +129,7 @@ public class PostController {
     }
 
     @PostMapping("/{postId}/scrap")
-    @Operation(summary = "게시글 스크랩 토글", description = "게시글 스크랩을 토글합니다. 이미 스크랩한 경우 취소됩니다.")
+    @Operation(summary = "[POST-007] 게시글 스크랩 토글", description = "게시글 스크랩을 토글합니다. 이미 스크랩한 경우 취소됩니다.")
     public ScrapResponse toggleScrap(
         @PathVariable Long postId,
         @CurrentMember MemberPrincipal memberPrincipal

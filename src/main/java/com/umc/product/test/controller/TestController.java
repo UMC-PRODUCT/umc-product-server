@@ -2,7 +2,10 @@ package com.umc.product.test.controller;
 
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.authentication.adapter.out.external.AppleOAuthProperties;
 import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier;
+import com.umc.product.authentication.domain.EmailVerificationPurpose;
+import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.response.ApiResponse;
@@ -10,8 +13,8 @@ import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
-import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.SendEmailUseCase;
+import com.umc.product.notification.application.port.in.SendNotificationToAudienceUseCase;
 import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
 import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
 import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;
@@ -40,22 +43,23 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("local | dev")
 @RestController
 @RequestMapping("/test")
-@Tag(name = "000 Test | 일반 테스트", description = "개발 및 테스트 용 API 입니다. 잘못 호출했을 떄 Dev 서버가 어떻게 되어버릴지도 몰라요")
+@Tag(name = "Test | 일반 테스트", description = "개발 및 테스트 용 API 입니다. 잘못 호출하면 우리의 작고 소중한 서버가 어떻게 되어버릴지도 몰라요 \uD83E\uDEE2")
 @Slf4j
 @Public
 public class TestController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AppleTokenVerifier appleTokenVerifier;
+    private final AppleOAuthProperties appleOAuthProperties;
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
     private final GetFileUseCase getFileUseCase;
     private final SendEmailUseCase sendEmailUseCase;
-    private final ManageFcmUseCase manageFcmUseCase;
+    private final SendNotificationToAudienceUseCase sendNotificationToAudienceUseCase;
 
     /**
      * 파일 정보 및 접근 URL을 조회합니다.
      */
-    @Operation(summary = "[개발용] 파일 ID를 기반으로 접근 가능한 URL을 조회합니다.", description = """
+    @Operation(summary = "[TEST-001] [개발용] 파일 ID를 기반으로 접근 가능한 URL을 조회합니다.", description = """
         local 및 development 환경에서만 사용 가능합니다.
 
         크롤링을 방지하기 위한 절차입니다. 파일이 정상적으로 업로드되었는지 확인하는 용도로만 사용하세요.
@@ -67,10 +71,10 @@ public class TestController {
         return ApiResponse.onSuccess(FileResponse.from(fileInfo));
     }
 
-    @Operation(summary = "FCM 푸시 알림 테스트 전송")
+    @Operation(summary = "[TEST-002] FCM 푸시 알림 테스트 전송")
     @PostMapping("/fcm/test-send")
     public void sendTestNotification(@RequestBody FcmTestSendRequest request) {
-        manageFcmUseCase.sendMessageByToken(request.toCommand());
+        sendNotificationToAudienceUseCase.sendToMember(request.toCommand());
     }
 
     @PostMapping("/email/send-test")
@@ -94,7 +98,7 @@ public class TestController {
         description = "'내용 : ' + #result.content"
     )
     @GetMapping("webhook/aop-test")
-    @Operation(summary = "AOP로 전송하는 알람 테스트")
+    @Operation(summary = "[TEST-003] AOP로 전송하는 알람 테스트")
     public TestAopAlarmResponse sendAopWebhookAlarm(
         @RequestParam String title,
         @RequestParam String content
@@ -107,7 +111,7 @@ public class TestController {
     }
 
     @PostMapping("webhook/alarm")
-    @Operation(summary = "웹훅 알람 전송 테스트")
+    @Operation(summary = "[TEST-004] 웹훅 알람 전송 테스트")
     public void sendWebhookAlarm(
         @RequestParam String title,
         @RequestParam String content
@@ -123,7 +127,7 @@ public class TestController {
 
     // buffer alarm test
     @PostMapping("webhook/alarm/buffer")
-    @Operation(summary = "웹훅 알람 버퍼 전송 테스트")
+    @Operation(summary = "[TEST-005] 웹훅 알람 버퍼 전송 테스트")
     public void sendBufferedWebhookAlarm(
         @RequestParam String title,
         @RequestParam String content,
@@ -144,13 +148,13 @@ public class TestController {
     }
 
     @GetMapping("apple-client-secret")
-    @Operation(summary = "Apple Client Secret 생성")
-    String getAppleClientSecret() {
-        return appleTokenVerifier.generateClientSecret();
+    @Operation(summary = "[TEST-006] Apple Client Secret 생성")
+    String getAppleClientSecret(@RequestParam ClientType clientType) {
+        return appleTokenVerifier.generateClientSecret(appleOAuthProperties.resolveClientId(clientType));
     }
 
     @Public
-    @Operation(summary = "AccessToken 발급")
+    @Operation(summary = "[TEST-007] AccessToken 발급")
     @GetMapping("/token/access")
     public String getAccessToken(
         @RequestParam Long memberId,
@@ -163,21 +167,24 @@ public class TestController {
             jwtTokenProvider.createAccessToken(memberId, null, expirationInMinutes * 60);
     }
 
-    @Operation(summary = "RefreshToken 발급")
+    @Operation(summary = "[TEST-008] RefreshToken 발급")
     @Public
     @GetMapping("/token/refresh")
     public String getRefreshToken(@RequestParam Long memberId) {
         return jwtTokenProvider.createRefreshToken(memberId);
     }
 
-    @Operation(summary = "EmailVerificationToken 발급")
+    @Operation(summary = "[TEST-009] EmailVerificationToken 발급")
     @Public
     @GetMapping("/token/email")
-    public String getEmailVerification(@RequestParam String email) {
-        return jwtTokenProvider.createEmailVerificationToken(email);
+    public String getEmailVerification(
+        @RequestParam String email,
+        @RequestParam(required = false, defaultValue = "REGISTER") EmailVerificationPurpose purpose
+    ) {
+        return jwtTokenProvider.createEmailVerificationToken(email, purpose);
     }
 
-    @Operation(summary = "oAuthVerificationToken 발급")
+    @Operation(summary = "[TEST-010] oAuthVerificationToken 발급")
     @Public
     @GetMapping("/token/oauth")
     public String getOAuthVerificationToken(OAuthProvider provider, String providerId, String email) {
@@ -185,14 +192,14 @@ public class TestController {
     }
 
 
-    @Operation(summary = "헬스 체크 API")
+    @Operation(summary = "[TEST-011] 헬스 체크 API")
     @Public
     @GetMapping("/health-check")
     public String healthCheck() {
         return "OK";
     }
 
-    @Operation(summary = "인증된 사용자인지 여부를 확인합니다.", description = "인증되지 않은 사용자인 경우 401을 반환합니다.")
+    @Operation(summary = "[TEST-012] 인증된 사용자인지 여부를 확인합니다.", description = "인증되지 않은 사용자인 경우 401을 반환합니다.")
     @GetMapping("/check-authenticated")
     public ApiResponse<String> checkAuthenticated(@CurrentMember MemberPrincipal currentUser) {
         return ApiResponse.onSuccess(currentUser.toString());

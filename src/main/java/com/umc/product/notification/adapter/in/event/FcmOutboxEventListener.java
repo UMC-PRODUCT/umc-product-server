@@ -1,5 +1,6 @@
 package com.umc.product.notification.adapter.in.event;
 
+import com.umc.product.global.config.FcmProperties;
 import com.umc.product.notification.application.port.in.ProcessFcmOutboxUseCase;
 import com.umc.product.notification.domain.FcmOutboxEvent;
 import lombok.RequiredArgsConstructor;
@@ -14,11 +15,15 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class FcmOutboxEventListener {
 
+    private final FcmProperties fcmProperties;
     private final ProcessFcmOutboxUseCase processFcmOutboxUseCase;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleFcmOutboxEvent(FcmOutboxEvent event) {
+        if (!fcmProperties.enabled()) {
+            return;
+        }
         log.debug("FCM outbox 즉시 처리 시작");
         processFcmOutboxUseCase.process();
     }

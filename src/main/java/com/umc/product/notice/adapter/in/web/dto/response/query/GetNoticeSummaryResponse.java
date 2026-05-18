@@ -1,7 +1,7 @@
 package com.umc.product.notice.adapter.in.web.dto.response.query;
 
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
-import com.umc.product.notice.dto.NoticeTargetInfo;
+import com.umc.product.notice.domain.NoticeTargetInfo;
 import java.time.Instant;
 import lombok.Builder;
 
@@ -17,6 +17,7 @@ public record GetNoticeSummaryResponse(
     String content,
     // UI에서 빨간 점 표시 용; 알람을 전송하는 것인지에 대한 내용
     Boolean shouldSendNotification,
+    boolean mustRead,
     Long viewCount,
     Instant createdAt,
     NoticeTargetInfo targetInfo,
@@ -33,6 +34,7 @@ public record GetNoticeSummaryResponse(
             .title(noticeSummary.title())
             .content(noticeSummary.content())
             .shouldSendNotification(noticeSummary.shouldSendNotification())
+            .mustRead(noticeSummary.mustRead())
             .viewCount(noticeSummary.viewCount())
             .createdAt(noticeSummary.createdAt())
             .targetInfo(noticeSummary.targetInfo())

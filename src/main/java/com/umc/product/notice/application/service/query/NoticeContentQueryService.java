@@ -4,22 +4,25 @@ package com.umc.product.notice.application.service.query;
 import com.umc.product.notice.application.port.in.query.GetNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.query.dto.NoticeImageInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeLinkInfo;
+import com.umc.product.notice.application.port.in.query.dto.NoticeVoteInfo;
 import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
 import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
 import com.umc.product.notice.domain.NoticeImage;
 import com.umc.product.notice.domain.NoticeLink;
+import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
-import com.umc.product.survey.application.port.in.query.GetVoteDetailUseCase;
-import com.umc.product.survey.application.port.in.query.dto.GetVoteDetailsQuery;
+import com.umc.product.survey.application.port.in.query.GetVoteUseCase;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -30,8 +33,8 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
     private final LoadNoticeVotePort loadNoticeVotePort;
     private final LoadNoticeImagePort loadNoticeImagePort;
     private final LoadNoticeLinkPort loadNoticeLinkPort;
-    private final GetVoteDetailUseCase getVoteDetailUseCase;
     private final GetFileUseCase getFileUseCase;
+    private final GetVoteUseCase getVoteUseCase;
 
     @Override
     public List<NoticeLinkInfo> findLinkByNoticeId(Long noticeId) {
@@ -48,10 +51,39 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
     }
 
     @Override
-    public VoteInfo findVoteByNoticeId(Long noticeId, Long memberId) {
-        return loadNoticeVotePort.findVoteByNoticeId(noticeId)
-            .map(vote -> getVoteDetailUseCase.get(new GetVoteDetailsQuery(vote.getVoteId(), memberId)))
-            .orElse(null);
+    public NoticeVoteInfo findVoteByNoticeId(Long noticeId, Long memberId) {
+        NoticeVote vote = loadNoticeVotePort.findVoteByNoticeId(noticeId).orElse(null);
+        if (vote == null) {
+            return null;
+        }
+
+        VoteInfo surveyInfo = getVoteUseCase.getVoteInfo(vote.getVoteId(), memberId);
+        if (surveyInfo == null) {
+            return null;
+        }
+
+        List<NoticeVoteInfo.VoteOptionInfo> options = surveyInfo.options().stream()
+            .map(opt -> new NoticeVoteInfo.VoteOptionInfo(
+                opt.optionId(),
+                opt.content(),
+                opt.voteCount(),
+                opt.voteRate(),
+                opt.selectedMemberIds()
+            ))
+            .toList();
+
+        return new NoticeVoteInfo(
+            surveyInfo.formId(),
+            surveyInfo.title(),
+            surveyInfo.isAnonymous(),
+            surveyInfo.allowMultipleChoice(),
+            vote.getOpenStatus(Instant.now()),
+            vote.getStartsAt(),
+            vote.getEndsAtExclusive(),
+            surveyInfo.totalParticipants(),
+            options,
+            surveyInfo.mySelectedOptionIds()
+        );
     }
 
     @Override

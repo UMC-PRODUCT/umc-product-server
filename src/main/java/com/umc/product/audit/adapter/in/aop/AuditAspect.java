@@ -2,6 +2,7 @@ package com.umc.product.audit.adapter.in.aop;
 
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditLogEvent;
+import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.security.MemberPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
@@ -11,7 +12,6 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.expression.MethodBasedEvaluationContext;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
@@ -35,7 +35,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @RequiredArgsConstructor
 public class AuditAspect {
 
-    private final ApplicationEventPublisher eventPublisher;
+    private final DomainEventPublisher eventPublisher;
     private final ExpressionParser parser = new SpelExpressionParser();
     private final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
 
@@ -60,7 +60,7 @@ public class AuditAspect {
                 .ipAddress(ipAddress)
                 .build();
 
-            eventPublisher.publishEvent(event);
+            eventPublisher.publish(event);
         } catch (Exception e) {
             log.error("감사 로그 이벤트 발행 중 오류: method={}, error={}",
                 joinPoint.getSignature().toShortString(), e.getMessage(), e);

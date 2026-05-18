@@ -21,32 +21,54 @@ public interface FormResponseJpaRepository extends JpaRepository<FormResponse, L
         FormResponseStatus status
     );
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    /**
+     * 특정 폼의 특정 상태 응답을 일괄 삭제
+     */
+    @Modifying(clearAutomatically = true)
     @Query("""
-            delete from FormResponse fr
-            where fr.form.id = :formId
-              and fr.status = :status
+            DELETE FROM FormResponse fr
+            WHERE fr.form.id = :formId
+              AND fr.status = :status
         """)
-    int deleteByFormIdAndStatus(@Param("formId") Long formId,
-                                @Param("status") FormResponseStatus status);
+    int deleteByFormIdAndStatus(
+        @Param("formId") Long formId,
+        @Param("status") FormResponseStatus status
+    );
 
+    /**
+     * 특정 폼의 특정 상태 응답 ID 목록 조회
+     */
     @Query("""
-            select fr.id
-            from FormResponse fr
-            where fr.form.id = :formId
-              and fr.status = :status
+            SELECT fr.id
+            FROM FormResponse fr
+            WHERE fr.form.id = :formId
+              AND fr.status = :status
         """)
-    List<Long> findIdsByFormIdAndStatus(@Param("formId") Long formId,
-                                        @Param("status") FormResponseStatus status);
+    List<Long> findIdsByFormIdAndStatus(
+        @Param("formId") Long formId,
+        @Param("status") FormResponseStatus status
+    );
 
     boolean existsByForm_IdAndRespondentMemberId(Long formId, Long respondentMemberId);
 
+    /**
+     * 특정 폼의 특정 상태 응답 수 조회
+     */
     @Query("""
-            select count(fr)
-            from FormResponse fr
-            where fr.form.id = :formId
-              and fr.status = :status
+            SELECT count(fr)
+            FROM FormResponse fr
+            WHERE fr.form.id = :formId
+              AND fr.status = :status
         """)
-    int countByFormIdAndStatus(@Param("formId") Long formId,
-                               @Param("status") FormResponseStatus status);
+    long countByFormIdAndStatus(
+        @Param("formId") Long formId,
+        @Param("status") FormResponseStatus status
+    );
+
+    /**
+     * 특정 폼의 모든 응답 삭제 (deleteForm cascade 용)
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM FormResponse fr WHERE fr.form.id = :formId")
+    int deleteByFormId(@Param("formId") Long formId);
 }

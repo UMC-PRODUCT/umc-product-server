@@ -10,7 +10,7 @@ import static org.mockito.Mockito.times;
 
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.common.domain.enums.OAuthProvider;
-import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
 import com.umc.product.member.application.port.out.LoadMemberPort;
@@ -78,7 +78,7 @@ class ManageMemberUseCaseTest {
     @DisplayName("일반적인 회원가입 성공")
     void 일반_회원가입_성공() {
         // given
-        RegisterMemberCommand command = createCommand(1L, null, List.of(
+        OAuthRegisterMemberCommand command = createCommand(1L, null, List.of(
             new TermConsents(1L, true),
             new TermConsents(2L, true)
         ));
@@ -95,7 +95,7 @@ class ManageMemberUseCaseTest {
         });
 
         // when
-        Long memberId = memberService.registerMember(command);
+        Long memberId = memberService.register(command);
 
         // then
         assertThat(memberId).isEqualTo(1L);
@@ -107,14 +107,14 @@ class ManageMemberUseCaseTest {
     @Test
     void 학교가_존재하지_않으면_예외() {
         // given
-        RegisterMemberCommand command = createCommand(999L, null, List.of(
+        OAuthRegisterMemberCommand command = createCommand(999L, null, List.of(
             new TermConsents(1L, true)
         ));
 
         given(loadSchoolPort.existsById(999L)).willReturn(false);
 
         // when & then
-        assertThatThrownBy(() -> memberService.registerMember(command))
+        assertThatThrownBy(() -> memberService.register(command))
             .isInstanceOf(OrganizationDomainException.class)
             .extracting("baseCode")
             .isEqualTo(OrganizationErrorCode.SCHOOL_NOT_FOUND);
@@ -126,7 +126,7 @@ class ManageMemberUseCaseTest {
     @DisplayName("제공된 프로필 이미지가 존재하지 않으면 에러 발생")
     void 프로필_이미지가_존재하지_않으면_예외() {
         // given
-        RegisterMemberCommand command = createCommand(1L, "profile_image_id", List.of(
+        OAuthRegisterMemberCommand command = createCommand(1L, "profile_image_id", List.of(
             new TermConsents(1L, true)
         ));
 
@@ -134,7 +134,7 @@ class ManageMemberUseCaseTest {
         given(loadFileMetadataPort.existsByFileId("profile_image_id")).willReturn(false);
 
         // when & then
-        assertThatThrownBy(() -> memberService.registerMember(command))
+        assertThatThrownBy(() -> memberService.register(command))
             .isInstanceOf(StorageException.class)
             .extracting("baseCode")
             .isEqualTo(StorageErrorCode.FILE_NOT_FOUND);
@@ -145,7 +145,7 @@ class ManageMemberUseCaseTest {
     @Test
     void 프로필_이미지_ID가_null이면_검증_스킵() {
         // given
-        RegisterMemberCommand command = createCommand(1L, null, List.of(
+        OAuthRegisterMemberCommand command = createCommand(1L, null, List.of(
             new TermConsents(1L, true)
         ));
 
@@ -158,7 +158,7 @@ class ManageMemberUseCaseTest {
         });
 
         // when
-        Long memberId = memberService.registerMember(command);
+        Long memberId = memberService.register(command);
 
         // then
         assertThat(memberId).isEqualTo(1L);
@@ -168,7 +168,7 @@ class ManageMemberUseCaseTest {
     @Test
     void 필수_약관_미동의시_예외() {
         // given
-        RegisterMemberCommand command = createCommand(1L, null, List.of(
+        OAuthRegisterMemberCommand command = createCommand(1L, null, List.of(
             new TermConsents(1L, false),
             new TermConsents(2L, false)
         ));
@@ -177,7 +177,7 @@ class ManageMemberUseCaseTest {
         given(getTermUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));
 
         // when & then
-        assertThatThrownBy(() -> memberService.registerMember(command))
+        assertThatThrownBy(() -> memberService.register(command))
             .isInstanceOf(TermDomainException.class)
             .extracting("baseCode")
             .isEqualTo(TermErrorCode.MANDATORY_TERMS_NOT_AGREED);
@@ -188,7 +188,7 @@ class ManageMemberUseCaseTest {
     @Test
     void 필수_약관_일부만_동의시_예외() {
         // given
-        RegisterMemberCommand command = createCommand(1L, null, List.of(
+        OAuthRegisterMemberCommand command = createCommand(1L, null, List.of(
             new TermConsents(1L, true),
             new TermConsents(2L, false)
         ));
@@ -197,7 +197,7 @@ class ManageMemberUseCaseTest {
         given(getTermUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));
 
         // when & then
-        assertThatThrownBy(() -> memberService.registerMember(command))
+        assertThatThrownBy(() -> memberService.register(command))
             .isInstanceOf(TermDomainException.class)
             .extracting("baseCode")
             .isEqualTo(TermErrorCode.MANDATORY_TERMS_NOT_AGREED);
@@ -208,7 +208,7 @@ class ManageMemberUseCaseTest {
     @Test
     void 선택_약관만_미동의해도_성공() {
         // given
-        RegisterMemberCommand command = createCommand(1L, null, List.of(
+        OAuthRegisterMemberCommand command = createCommand(1L, null, List.of(
             new TermConsents(1L, true),   // 필수 약관 동의
             new TermConsents(2L, true),   // 필수 약관 동의
             new TermConsents(3L, false)   // 선택 약관 미동의
@@ -223,10 +223,38 @@ class ManageMemberUseCaseTest {
         });
 
         // when
-        Long memberId = memberService.registerMember(command);
+        Long memberId = memberService.register(command);
 
         // then
         assertThat(memberId).isEqualTo(1L);
+    }
+
+    private Member createMember(Long id) {
+        Member member = Member.builder()
+            .name("홍길동")
+            .nickname("길동")
+            .email("test@example.com")
+            .schoolId(1L)
+            .profileImageId("old_image_id")
+            .build();
+        ReflectionTestUtils.setField(member, "id", id);
+        return member;
+    }
+
+    // ── 헬퍼 메서드 ──
+
+    private OAuthRegisterMemberCommand createCommand(Long schoolId, String profileImageId,
+                                                     List<TermConsents> termConsents) {
+        return OAuthRegisterMemberCommand.builder()
+            .provider(OAuthProvider.KAKAO)
+            .providerId("some_kakao_provider_id")
+            .name("홍길동")
+            .nickname("길동")
+            .email("test@example.com")
+            .schoolId(schoolId)
+            .profileImageId(profileImageId)
+            .termConsents(termConsents)
+            .build();
     }
 
     @Nested
@@ -293,32 +321,5 @@ class ManageMemberUseCaseTest {
             // then
             then(getFileUseCase).should(never()).existsById(any());
         }
-    }
-
-    // ── 헬퍼 메서드 ──
-
-    private Member createMember(Long id) {
-        Member member = Member.builder()
-            .name("홍길동")
-            .nickname("길동")
-            .email("test@example.com")
-            .schoolId(1L)
-            .profileImageId("old_image_id")
-            .build();
-        ReflectionTestUtils.setField(member, "id", id);
-        return member;
-    }
-
-    private RegisterMemberCommand createCommand(Long schoolId, String profileImageId, List<TermConsents> termConsents) {
-        return RegisterMemberCommand.builder()
-            .provider(OAuthProvider.KAKAO)
-            .providerId("some_kakao_provider_id")
-            .name("홍길동")
-            .nickname("길동")
-            .email("test@example.com")
-            .schoolId(schoolId)
-            .profileImageId(profileImageId)
-            .termConsents(termConsents)
-            .build();
     }
 }

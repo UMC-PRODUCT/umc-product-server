@@ -1,53 +1,30 @@
 package com.umc.product.curriculum.application.port.out;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.application.port.in.query.dto.CurriculumInfo;
-import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import java.time.Instant;
 import java.util.List;
 
 public interface LoadOriginalWorkbookPort {
 
-    OriginalWorkbook findById(Long id);
-
-    List<OriginalWorkbook> findByCurriculumId(Long curriculumId);
-
-    List<OriginalWorkbook> findByCurriculumIdOrderByWeekNo(Long curriculumId);
-
-    List<CurriculumInfo.WorkbookInfo> findWorkbookInfos(Long curriculumId, Integer weekNo);
+    OriginalWorkbook getById(Long id);
 
     /**
-     * 기수의 모든 주차 번호 조회 (드롭다운용)
+     * 배치 조회 — IDs 중 하나라도 없으면 예외 던짐
      */
-    List<Integer> findDistinctWeekNoByGisuId(Long gisuId);
+    List<OriginalWorkbook> batchGetByIds(List<Long> ids);
 
     /**
-     * 활성 기수의 파트별 커리큘럼 주차 정보 조회 (weekNo, title만 projection)
+     * 해당 주차별 커리큘럼에 배포(RELEASED)된 원본 워크북 목록 조회
      */
-    List<CurriculumWeekInfo> findWeekInfoByActiveGisuAndPart(ChallengerPart part);
+    List<OriginalWorkbook> findReleasedByWeeklyCurriculumId(Long weeklyCurriculumId);
 
     /**
-     * 활성 기수에서 배포된 주차 번호 목록 조회 (드롭다운 필터용)
-     *
-     * @param part 파트 (null이면 모든 파트)
-     * @return 배포된 주차 번호 목록 (오름차순)
+     * 여러 주차별 커리큘럼에 배포(RELEASED)된 원본 워크북 목록 일괄 조회 (N+1 방지)
      */
-    List<Integer> findReleasedWeekNos(ChallengerPart part);
+    List<OriginalWorkbook> findReleasedByWeeklyCurriculumIdIn(List<Long> weeklyCurriculumIds);
 
     /**
      * 미배포 상태이면서 시작일이 지난 워크북 목록 조회 (자동 배포 대상)
-     *
-     * @param now 현재 시간
-     * @return 자동 배포 후보 워크북 목록
      */
     List<OriginalWorkbook> findUnreleasedWithStartDateBefore(Instant now);
-
-    /**
-     * 여러 커리큘럼의 워크북 일괄 조회 (N+1 방지용)
-     *
-     * @param curriculumIds 커리큘럼 ID 목록
-     * @return 해당 커리큘럼들의 모든 워크북
-     */
-    List<OriginalWorkbook> findByCurriculumIdIn(List<Long> curriculumIds);
 }

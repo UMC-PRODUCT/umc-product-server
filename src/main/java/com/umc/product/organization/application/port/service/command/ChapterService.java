@@ -2,8 +2,8 @@ package com.umc.product.organization.application.port.service.command;
 
 import com.umc.product.organization.application.port.in.command.ManageChapterUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateChapterCommand;
-import com.umc.product.organization.application.port.out.command.ManageChapterPort;
-import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
+import com.umc.product.organization.application.port.out.command.SaveChapterPort;
+import com.umc.product.organization.application.port.out.command.SaveChapterSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
@@ -31,8 +31,8 @@ public class ChapterService implements ManageChapterUseCase {
     private final LoadChapterPort loadChapterPort;
     private final LoadSchoolPort loadSchoolPort;
     private final LoadChapterSchoolPort loadChapterSchoolPort;
-    private final ManageChapterPort manageChapterPort;
-    private final ManageChapterSchoolPort manageChapterSchoolPort;
+    private final SaveChapterPort saveChapterPort;
+    private final SaveChapterSchoolPort saveChapterSchoolPort;
 
     @Override
     public Long create(CreateChapterCommand command) {
@@ -41,7 +41,7 @@ public class ChapterService implements ManageChapterUseCase {
 
         Chapter chapter = Chapter.create(gisu, command.name());
 
-        Chapter savedChapter = manageChapterPort.save(chapter);
+        Chapter savedChapter = saveChapterPort.save(chapter);
 
         if (!command.schoolIds().isEmpty()) {
             List<School> schools = loadSchoolPort.findAllByIds(command.schoolIds());
@@ -50,7 +50,7 @@ public class ChapterService implements ManageChapterUseCase {
 
             for (School school : schools) {
                 ChapterSchool chapterSchool = ChapterSchool.create(savedChapter, school);
-                manageChapterSchoolPort.save(chapterSchool);
+                saveChapterSchoolPort.save(chapterSchool);
             }
         }
 
@@ -61,8 +61,8 @@ public class ChapterService implements ManageChapterUseCase {
     public void delete(Long chapterId) {
         Chapter chapter = loadChapterPort.findById(chapterId);
 
-        manageChapterSchoolPort.deleteAllByChapterId(chapterId);
-        manageChapterPort.delete(chapter);
+        saveChapterSchoolPort.deleteAllByChapterId(chapterId);
+        saveChapterPort.delete(chapter);
     }
 
     private void validateAllSchoolsExist(List<Long> requestedIds, List<School> foundSchools) {

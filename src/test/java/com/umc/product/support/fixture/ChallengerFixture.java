@@ -1,12 +1,14 @@
 package com.umc.product.support.fixture;
 
+import static com.umc.product.support.CommonFixture.MONKEY;
+
 import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ChallengerFixture {
+public class ChallengerFixture extends FixtureSupport {
 
     private final SaveChallengerPort saveChallengerPort;
 
@@ -15,14 +17,19 @@ public class ChallengerFixture {
     }
 
     public Challenger 챌린저(Long memberId, ChallengerPart part, Long gisuId) {
-        return saveChallengerPort.save(new Challenger(memberId, part, gisuId));
+        Challenger challenger = MONKEY.giveMeBuilder(Challenger.class)
+            .set("memberId", memberId)
+            .set("part", part)
+            .set("gisuId", gisuId)
+            .sample();
+        return saveChallengerPort.save(challenger);
     }
 
-    public Challenger 웹_챌린저(Long memberId, Long gisuId) {
+    public Challenger 웹(Long memberId, Long gisuId) {
         return saveChallengerPort.save(new Challenger(memberId, ChallengerPart.WEB, gisuId));
     }
 
-    public Challenger 스프링_챌린저(Long memberId, Long gisuId) {
+    public Challenger 스프링(Long memberId, Long gisuId) {
         return saveChallengerPort.save(new Challenger(memberId, ChallengerPart.SPRINGBOOT, gisuId));
     }
 }

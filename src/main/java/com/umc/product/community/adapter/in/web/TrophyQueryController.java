@@ -21,7 +21,7 @@ public class TrophyQueryController {
     private final GetTrophyListUseCase getTrophyListUseCase;
 
     @GetMapping
-    @Operation(summary = "상장 목록 조회", description = "주차, 학교, 파트로 상장 목록을 조회합니다.")
+    @Operation(summary = "[TROPHY-101] 상장 목록 조회", description = "주차, 학교, 파트로 상장 목록을 조회합니다.")
     public List<TrophyResponse> getTrophies(
         @RequestParam(required = false) Integer week,
         @RequestParam(required = false) String school,

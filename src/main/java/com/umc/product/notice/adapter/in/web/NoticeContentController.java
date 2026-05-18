@@ -1,6 +1,5 @@
 package com.umc.product.notice.adapter.in.web;
 
-import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notice.adapter.in.web.dto.request.AddNoticeImagesRequest;
@@ -36,7 +35,7 @@ public class NoticeContentController implements NoticeContentApi {
 
     // 공지사항에 이미지 추가
     @PostMapping("/{noticeId}/images")
-    public ApiResponse<AddNoticeImagesResponse> addNoticeImages(
+    public AddNoticeImagesResponse addNoticeImages(
         @PathVariable Long noticeId,
         @RequestBody @Valid AddNoticeImagesRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -45,12 +44,12 @@ public class NoticeContentController implements NoticeContentApi {
         List<Long> imageIds = manageNoticeContentUseCase.addImages(
             request.toCommand(), noticeId, memberPrincipal.getMemberId());
 
-        return ApiResponse.onSuccess(new AddNoticeImagesResponse(imageIds));
+        return new AddNoticeImagesResponse(imageIds);
     }
 
     // 공지사항에 링크 추가
     @PostMapping("/{noticeId}/links")
-    public ApiResponse<AddNoticeLinksResponse> addNoticeLinks(
+    public AddNoticeLinksResponse addNoticeLinks(
         @PathVariable Long noticeId,
         @RequestBody @Valid AddNoticeLinksRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -59,12 +58,12 @@ public class NoticeContentController implements NoticeContentApi {
         List<Long> linkIds = manageNoticeContentUseCase.addLinks(
             request.toCommand(), noticeId, memberPrincipal.getMemberId());
 
-        return ApiResponse.onSuccess(new AddNoticeLinksResponse(linkIds));
+        return new AddNoticeLinksResponse(linkIds);
     }
 
     // 공지사항에 투표 추가
     @PostMapping("/{noticeId}/votes")
-    public ApiResponse<AddNoticeVoteResponse> addNoticeVote(
+    public AddNoticeVoteResponse addNoticeVote(
         @PathVariable Long noticeId,
         @RequestBody @Valid AddNoticeVoteRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -73,7 +72,7 @@ public class NoticeContentController implements NoticeContentApi {
         AddNoticeVoteResult result = manageNoticeContentUseCase.addVote(
             request.toCommand(memberPrincipal.getMemberId()), noticeId);
 
-        return ApiResponse.onSuccess(AddNoticeVoteResponse.from(result));
+        return AddNoticeVoteResponse.from(result);
     }
 
     // 공지사항 이미지 전체 수정
