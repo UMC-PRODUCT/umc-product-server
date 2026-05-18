@@ -33,6 +33,9 @@ public record MaintenanceWindowResponse(
     @Schema(description = "강제 종료 시각. 종료되지 않았으면 null")
     Instant forcedEndedAt,
 
+    @Schema(description = "강제 종료를 수행한 운영자 memberId. 강제 종료되지 않았으면 null")
+    Long forcedEndedBy,
+
     @Schema(description = "생성자 memberId")
     Long createdBy,
 
@@ -50,6 +53,7 @@ public record MaintenanceWindowResponse(
             info.title(),
             info.message(),
             info.forcedEndedAt(),
+            info.forcedEndedBy(),
             info.createdBy(),
             info.createdAt()
         );

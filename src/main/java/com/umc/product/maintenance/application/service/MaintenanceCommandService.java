@@ -69,7 +69,7 @@ public class MaintenanceCommandService implements ManageMaintenanceUseCase {
     public void forceEnd(Long windowId, Long requestedBy) {
         MaintenanceWindow window = loadPort.findById(windowId)
             .orElseThrow(() -> new MaintenanceDomainException(MaintenanceErrorCode.MAINTENANCE_WINDOW_NOT_FOUND));
-        window.forceEnd(clock.instant());
+        window.forceEnd(clock.instant(), requestedBy);
         savePort.save(window);
         stateHolder.refresh();
     }

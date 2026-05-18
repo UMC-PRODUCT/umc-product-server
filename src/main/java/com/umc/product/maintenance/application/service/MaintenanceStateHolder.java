@@ -51,7 +51,7 @@ public class MaintenanceStateHolder {
                 .orElse(MaintenanceSnapshot.none());
             snapshot.set(next);
         } catch (Exception e) {
-            log.warn("[MAINTENANCE] failed to refresh snapshot. keep previous. cause={}", e.getMessage());
+            log.warn("[MAINTENANCE] failed to refresh snapshot. keep previous.", e);
         }
     }
 

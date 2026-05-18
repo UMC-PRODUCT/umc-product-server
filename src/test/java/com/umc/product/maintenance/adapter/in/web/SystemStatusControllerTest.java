@@ -66,6 +66,7 @@ class SystemStatusControllerTest {
             "긴급 점검",
             "잠시만 기다려주세요",
             null,
+            null,
             1L,
             now.minusSeconds(120)
         );

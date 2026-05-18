@@ -97,13 +97,6 @@ public class SecurityConfig {
     }
 
     /**
-     * 메인 Security 체인
-     *
-     * @param http
-     * @return
-     * @throws Exception
-     */
-    /**
      * 점검 모드 필터. JWT 다음에 동작해서 점검 중 일반 사용자 요청을 503 으로 차단한다.
      * {@code @Component} 가 아닌 명시 {@code @Bean} 으로 두는 이유: 슬라이스 테스트
      * ({@code @WebMvcTest}) 의 자동 Filter 디스커버리가 본 필터의 의존성까지 끌어와 컨텍스트 로딩을
@@ -118,6 +111,9 @@ public class SecurityConfig {
         return new MaintenanceFilter(stateHolder, bypassPolicy, objectMapper);
     }
 
+    /**
+     * 메인 Security 체인. JWT → MaintenanceFilter → 인가 순서로 동작한다.
+     */
     @Bean
     @Order(2)
     public SecurityFilterChain filterChain(HttpSecurity http, MaintenanceFilter maintenanceFilter) throws Exception {

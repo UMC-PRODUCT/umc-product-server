@@ -55,6 +55,9 @@ public class MaintenanceWindow extends BaseEntity {
     @Column(name = "forced_ended_at")
     private Instant forcedEndedAt;
 
+    @Column(name = "forced_ended_by")
+    private Long forcedEndedBy;
+
     @Column(nullable = false, name = "created_by")
     private Long createdBy;
 
@@ -121,8 +124,11 @@ public class MaintenanceWindow extends BaseEntity {
 
     /**
      * 강제 종료. 이미 종료된 윈도우라면 예외.
+     *
+     * @param now           현재 시각
+     * @param requestedBy   종료를 요청한 운영자 memberId (감사 목적). null 허용
      */
-    public void forceEnd(Instant now) {
+    public void forceEnd(Instant now, Long requestedBy) {
         if (forcedEndedAt != null) {
             throw new MaintenanceDomainException(MaintenanceErrorCode.ALREADY_ENDED);
         }
@@ -130,6 +136,7 @@ public class MaintenanceWindow extends BaseEntity {
             throw new MaintenanceDomainException(MaintenanceErrorCode.ALREADY_ENDED);
         }
         this.forcedEndedAt = now;
+        this.forcedEndedBy = requestedBy;
     }
 
     /**

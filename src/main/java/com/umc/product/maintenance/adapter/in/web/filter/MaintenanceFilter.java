@@ -48,9 +48,14 @@ public class MaintenanceFilter extends OncePerRequestFilter {
         "/api/v1/admin/maintenance/**",
         "/api/v1/auth/**",
         "/actuator/**",
-        "/api-docs/**",
+        // Swagger / OpenAPI 경로는 SecurityConfig.STATIC_FILE_PATHS 와 동일하게 맞춘다.
         "/swagger-ui/**",
-        "/swagger-ui.html"
+        "/swagger-ui.html",
+        "/docs/**",
+        "/v3/api-docs/**",
+        "/docs-json/**",
+        "/swagger-resources/**",
+        "/webjars/**"
     );
 
     private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
@@ -146,6 +151,7 @@ public class MaintenanceFilter extends OncePerRequestFilter {
                 snapshot.endAt(),
                 snapshot.title(),
                 snapshot.message(),
+                null,
                 null,
                 null,
                 null

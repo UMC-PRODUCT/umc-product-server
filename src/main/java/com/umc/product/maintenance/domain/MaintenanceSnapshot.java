@@ -32,14 +32,23 @@ public record MaintenanceSnapshot(
             true,
             window.getId(),
             window.getScope(),
-            window.getTargetDomains() == null
-                ? EnumSet.noneOf(MaintenanceDomain.class)
-                : EnumSet.copyOf(window.getTargetDomains()),
+            copyDomains(window.getTargetDomains()),
             window.getStartAt(),
             window.getEndAt(),
             window.getTitle(),
             window.getMessage()
         );
+    }
+
+    /**
+     * Hibernate PersistentSet 처럼 비어 있을 수 있는 컬렉션에 대해
+     * {@link EnumSet#copyOf(java.util.Collection)} 가 던지는 {@link IllegalArgumentException} 을 방어한다.
+     */
+    private static Set<MaintenanceDomain> copyDomains(Set<MaintenanceDomain> source) {
+        if (source == null || source.isEmpty()) {
+            return EnumSet.noneOf(MaintenanceDomain.class);
+        }
+        return EnumSet.copyOf(source);
     }
 
     public boolean blocks(String requestUri) {

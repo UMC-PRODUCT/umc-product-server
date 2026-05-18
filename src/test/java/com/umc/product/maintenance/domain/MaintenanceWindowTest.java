@@ -147,11 +147,12 @@ class MaintenanceWindowTest {
                 MaintenanceScope.FULL, null, START, END, "t", "m", 1L, NOW
             );
             Instant middle = START.plus(Duration.ofMinutes(30));
-            window.forceEnd(middle);
+            window.forceEnd(middle, 99L);
 
             assertThat(window.isActiveAt(middle)).isFalse();
             assertThat(window.isUpcomingAt(middle)).isFalse();
             assertThat(window.getForcedEndedAt()).isEqualTo(middle);
+            assertThat(window.getForcedEndedBy()).isEqualTo(99L);
         }
     }
 
@@ -164,9 +165,9 @@ class MaintenanceWindowTest {
             MaintenanceWindow window = MaintenanceWindow.of(
                 MaintenanceScope.FULL, null, START, END, "t", "m", 1L, NOW
             );
-            window.forceEnd(START.plus(Duration.ofMinutes(30)));
+            window.forceEnd(START.plus(Duration.ofMinutes(30)), 99L);
 
-            assertThatThrownBy(() -> window.forceEnd(START.plus(Duration.ofMinutes(45))))
+            assertThatThrownBy(() -> window.forceEnd(START.plus(Duration.ofMinutes(45)), 99L))
                 .isInstanceOf(MaintenanceDomainException.class)
                 .hasFieldOrPropertyWithValue("baseCode", MaintenanceErrorCode.ALREADY_ENDED);
         }
@@ -177,9 +178,22 @@ class MaintenanceWindowTest {
                 MaintenanceScope.FULL, null, START, END, "t", "m", 1L, NOW
             );
 
-            assertThatThrownBy(() -> window.forceEnd(END.plus(Duration.ofMinutes(5))))
+            assertThatThrownBy(() -> window.forceEnd(END.plus(Duration.ofMinutes(5)), 99L))
                 .isInstanceOf(MaintenanceDomainException.class)
                 .hasFieldOrPropertyWithValue("baseCode", MaintenanceErrorCode.ALREADY_ENDED);
+        }
+
+        @Test
+        void 강제_종료_시_요청자_memberId_가_기록된다() {
+            MaintenanceWindow window = MaintenanceWindow.of(
+                MaintenanceScope.FULL, null, START, END, "t", "m", 1L, NOW
+            );
+            Instant middle = START.plus(Duration.ofMinutes(15));
+
+            window.forceEnd(middle, 42L);
+
+            assertThat(window.getForcedEndedAt()).isEqualTo(middle);
+            assertThat(window.getForcedEndedBy()).isEqualTo(42L);
         }
     }
 
