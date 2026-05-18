@@ -19,19 +19,23 @@ import java.util.List;
  */
 public record MemberSummaryV2Response(
     Long id,
+
     String name,
     String nickname,
+
     String email,
+
     Long schoolId,
     String schoolName,
     String profileImageLink,
     MemberStatus status,
     MemberProfileInfo profile,
-    @Schema(description = "ACTIVE/GRADUATED 챌린저로 활동한 총 일수의 합산")
+
+    @Schema(description = "챌린저로 활동한 총 일수")
     long totalActivityDays,
-    @Schema(description = "현재 활성 기수의 멤버십 스냅샷. 휴지기에는 null", nullable = true)
-    CurrentGisuMembership currentGisuMembership,
-    @Schema(description = "회원이 가진 모든 챌린저 이력. 최신 기수가 먼저")
+    @Schema(description = "현재 활성 기수에 대한 챌린저 정보", nullable = true)
+    CurrentGisuMemberInfo currentGisuMemberInfo,
+    @Schema(description = "모든 챌린저 기록 (최신 기수 우선)")
     List<ChallengerHistoryV2> challengerHistory
 ) {
 
@@ -50,22 +54,25 @@ public record MemberSummaryV2Response(
             m.status(),
             p,
             info.totalActivityDays(),
-            info.currentGisuMembership() == null ? null : CurrentGisuMembership.from(info.currentGisuMembership()),
+            info.currentGisuMembership() == null ? null : CurrentGisuMemberInfo.from(info.currentGisuMembership()),
             info.challengerHistory().stream().map(ChallengerHistoryV2::from).toList()
         );
     }
 
-    public record CurrentGisuMembership(
+    public record CurrentGisuMemberInfo(
         Long gisuId,
         Long generation,
+
         @Schema(description = "활성 기수에서 현재 ACTIVE 상태인 챌린저 신분. ACTIVE가 아니면 null", nullable = true)
         ActiveChallenger challenger,
+
         @Schema(description = "활성 기수에 운영진 ChallengerRole이 하나라도 존재하는지")
         boolean isAdmin,
+        @Schema(description = "활성 기수에 가지고 있는 역할 목록")
         List<ChallengerRoleType> roleTypes
     ) {
-        public static CurrentGisuMembership from(MemberSummaryV2Info.CurrentGisuMembership info) {
-            return new CurrentGisuMembership(
+        public static CurrentGisuMemberInfo from(MemberSummaryV2Info.CurrentGisuMembership info) {
+            return new CurrentGisuMemberInfo(
                 info.gisuId(),
                 info.generation(),
                 info.challenger() == null ? null : ActiveChallenger.from(info.challenger()),
@@ -97,11 +104,14 @@ public record MemberSummaryV2Response(
         Long challengerId,
         Long gisuId,
         Long generation,
+
         Long chapterId,
         String chapterName,
+
         ChallengerPart part,
         ChallengerStatus challengerStatus,
         List<ChallengerPointInfo> points,
+
         Double totalPoints,
         List<ChallengerRoleType> roleTypes
     ) {
