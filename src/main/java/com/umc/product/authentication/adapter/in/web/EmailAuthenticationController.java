@@ -13,6 +13,7 @@ import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -61,13 +62,19 @@ public class EmailAuthenticationController {
             인증을 요청하는 이메일로 인증 코드를 발송합니다.
 
             이메일 인증코드는 6자리의 숫자로만 구성되어 있습니다.
+
+            purpose 는 회원가입(REGISTER) 또는 비밀번호 초기화(PASSWORD_RESET) 중 하나여야 하며,
+            cross-purpose 공격 방어를 위해 세션 단위로 고정됩니다.
             """)
     @PostMapping("email-verification")
     @Public
     public SendEmailVerificationResponse sendEmailVerification(
-        @RequestBody SendEmailVerificationRequest request
+        @Valid @RequestBody SendEmailVerificationRequest request
     ) {
-        Long sessionId = manageAuthenticationUseCase.createEmailVerificationSession(request.email());
+        Long sessionId = manageAuthenticationUseCase.createEmailVerificationSession(
+            request.email(),
+            request.purpose()
+        );
 
         return SendEmailVerificationResponse
             .builder()

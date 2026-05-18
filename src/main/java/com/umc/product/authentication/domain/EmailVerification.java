@@ -5,6 +5,8 @@ import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -20,6 +22,12 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class EmailVerification extends BaseEntity {
+
+    /**
+     * 인증 코드 brute-force 방어를 위한 최대 시도 횟수. 초과 시 세션을 즉시 무효화한다.
+     */
+    public static final int MAX_ATTEMPT_COUNT = 5;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -52,14 +60,30 @@ public class EmailVerification extends BaseEntity {
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
+    /**
+     * 인증 세션의 용도 (REGISTER / PASSWORD_RESET). cross-purpose 공격 방어를 위해 세션 단위로 고정한다.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "purpose", nullable = false, length = 20)
+    private EmailVerificationPurpose purpose;
+
+    /**
+     * 인증 코드 검증 시도 횟수. MAX_ATTEMPT_COUNT 도달 시 즉시 만료(세션 무효화)한다.
+     * regenerate 시 0 으로 초기화한다.
+     */
+    @Column(name = "attempt_count", nullable = false)
+    private int attemptCount;
+
 
     @Builder
-    public EmailVerification(String email, String token, String code) {
+    public EmailVerification(String email, String token, String code, EmailVerificationPurpose purpose) {
         this.email = email;
         this.token = token;
         this.code = code;
+        this.purpose = purpose;
         this.expiresAt = Instant.now().plusSeconds(10 * 60); // 10분 후 만료
         this.isVerified = false;
+        this.attemptCount = 0;
     }
 
     public boolean isExpired() {
@@ -67,9 +91,21 @@ public class EmailVerification extends BaseEntity {
     }
 
     public void verifyCode(String code) {
+        // 임계치 초과로 이미 무효화된 세션은 즉시 거부 (시도 횟수도 더 이상 증가시키지 않음)
+        if (this.attemptCount >= MAX_ATTEMPT_COUNT) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
+        }
+
+        this.attemptCount++;
+
         if (this.code.equals(code) && !isExpired()) {
             setVerified("CODE");
             return;
+        }
+
+        // 이번 시도로 임계치에 도달했다면 즉시 세션 만료시켜 후속 시도를 차단한다.
+        if (this.attemptCount >= MAX_ATTEMPT_COUNT) {
+            this.expiresAt = Instant.now();
         }
 
         throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
@@ -92,6 +128,7 @@ public class EmailVerification extends BaseEntity {
         this.code = newCode;
         this.token = newToken;
         this.expiresAt = Instant.now().plusSeconds(10 * 60);
+        this.attemptCount = 0;
     }
 
     private void setVerified(String method) {

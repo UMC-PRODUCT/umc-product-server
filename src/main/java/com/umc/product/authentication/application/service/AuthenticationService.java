@@ -6,7 +6,9 @@ import com.umc.product.authentication.application.port.in.command.dto.RenewAcces
 import com.umc.product.authentication.application.port.in.command.dto.ValidateEmailVerificationSessionCommand;
 import com.umc.product.authentication.application.port.out.LoadEmailVerificationPort;
 import com.umc.product.authentication.application.port.out.SaveEmailVerificationPort;
+import com.umc.product.authentication.domain.CredentialPolicy;
 import com.umc.product.authentication.domain.EmailVerification;
+import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -53,7 +55,10 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
 
     @Override
     @Transactional
-    public Long createEmailVerificationSession(String email) {
+    public Long createEmailVerificationSession(String email, EmailVerificationPurpose purpose) {
+        // DTO 단계 검증을 통과해도, Service 진입 시 도메인 SSOT 인 CredentialPolicy 로 한번 더 검증한다.
+        CredentialPolicy.validateEmail(email);
+
         String code = generateRandomCode();
         String token = UUID.randomUUID().toString();
 
@@ -61,6 +66,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
             .email(email)
             .code(code)
             .token(token)
+            .purpose(purpose)
             .build();
 
         Long sessionId = saveEmailVerificationPort.save(emailVerification).getId();
@@ -84,7 +90,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = AuthenticationDomainException.class)
     public String validateEmailVerificationSession(ValidateEmailVerificationSessionCommand command) {
         // code가 주어지면 토큰이 우선 순위
         if (command.code() != null) {
@@ -92,9 +98,14 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
                 Long.valueOf(command.sessionId())
             );
 
+            // verifyCode 가 실패해도 attempt_count 증가/세션 무효화는 영속되어야 하므로
+            // AuthenticationDomainException 에 대해서는 트랜잭션을 롤백하지 않는다.
             emailVerification.verifyCode(command.code());
 
-            return jwtTokenProvider.createEmailVerificationToken(emailVerification.getEmail());
+            return jwtTokenProvider.createEmailVerificationToken(
+                emailVerification.getEmail(),
+                emailVerification.getPurpose()
+            );
         }
 
         if (command.token() != null) {

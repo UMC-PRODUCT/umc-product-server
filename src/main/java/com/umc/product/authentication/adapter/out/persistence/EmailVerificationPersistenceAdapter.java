@@ -3,6 +3,8 @@ package com.umc.product.authentication.adapter.out.persistence;
 import com.umc.product.authentication.application.port.out.LoadEmailVerificationPort;
 import com.umc.product.authentication.application.port.out.SaveEmailVerificationPort;
 import com.umc.product.authentication.domain.EmailVerification;
+import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,12 +17,16 @@ public class EmailVerificationPersistenceAdapter implements LoadEmailVerificatio
 
     @Override
     public EmailVerification getById(Long id) {
-        return emailVerificationQueryRepository.findById(id);
+        return emailVerificationQueryRepository.findById(id)
+            .orElseThrow(() -> new AuthenticationDomainException(
+                AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION));
     }
 
     @Override
     public EmailVerification getByToken(String token) {
-        return emailVerificationQueryRepository.findByToken(token);
+        return emailVerificationQueryRepository.findByToken(token)
+            .orElseThrow(() -> new AuthenticationDomainException(
+                AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION));
     }
 
     @Override
