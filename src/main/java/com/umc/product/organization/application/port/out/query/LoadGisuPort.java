@@ -12,6 +12,11 @@ public interface LoadGisuPort {
 
     Gisu findActiveGisu();
 
+    /**
+     * 활성 기수가 없을 수도 있는 경우(휴지기 등)에 사용합니다.
+     */
+    Optional<Gisu> findActiveGisuOptional();
+
     Optional<Gisu> findActiveGisuWithLock();
 
     Gisu findById(Long gisuId);
