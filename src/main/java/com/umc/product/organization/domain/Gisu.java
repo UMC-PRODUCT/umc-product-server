@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Duration;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -58,5 +59,26 @@ public class Gisu extends BaseEntity {
 
     public void inactive() {
         this.isActive = false;
+    }
+
+    /**
+     * 주어진 시점(now)을 기준으로 이 기수에서의 활동일 수를 계산합니다.
+     * <p>
+     * - now < startAt : 0 (아직 시작 전)
+     * <p>
+     * - startAt ≤ now < endAt : now - startAt (진행 중인 기수는 현재까지)
+     * <p>
+     * - now ≥ endAt : endAt - startAt (종료된 기수는 전체 기간)
+     */
+    public long activityDays(Instant now) {
+        Instant start = getStartAt();
+        Instant end = getEndAt();
+
+        if (now.isBefore(start)) {
+            return 0L;
+        }
+
+        Instant effectiveEnd = now.isBefore(end) ? now : end;
+        return Duration.between(start, effectiveEnd).toDays();
     }
 }

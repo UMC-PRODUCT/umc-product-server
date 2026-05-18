@@ -73,10 +73,9 @@ public class ChallengerQueryService implements GetChallengerUseCase {
 
     @Override
     public List<ChallengerInfo> getAllByMemberId(Long memberId) {
-        List<Challenger> challengers = loadChallengerPort.getAllByMemberId(memberId);
-        return challengers.stream()
-            .map(this::getChallengerInfoFromChallenger)
-            .toList();
+        // 챌린저별로 상벌점을 따로 조회하면 N(챌린저 수) 만큼 쿼리가 발생하므로,
+        // IN 쿼리 1회로 일괄 조회하는 batch 헬퍼를 사용합니다.
+        return toChallengerInfoListBatch(loadChallengerPort.getAllByMemberId(memberId));
     }
 
     @Override
