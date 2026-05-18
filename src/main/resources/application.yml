@@ -312,6 +312,14 @@ app:
     username: ${SWAGGER_AUTH_USERNAME:username}
     password: ${SWAGGER_AUTH_PASSWORD:password}
 
+  # test 도메인 시딩 API 설정. ADR-017 참조.
+  # 기본값은 비활성. prod 가 아닌 환경에서 APP_SEED_ENABLED=true 로 켜야 시딩 API 가 노출된다.
+  seed:
+    enabled: ${APP_SEED_ENABLED:false}
+    skip-if-member-count-greater-than: ${APP_SEED_SKIP_THRESHOLD:0}
+    email-domain: ${APP_SEED_EMAIL_DOMAIN:alpha.umc.test}
+    default-password: ${APP_SEED_DEFAULT_PASSWORD:Alpha!Pass2026}
+
   oauth2:
     google:
       client-id-list: ${GOOGLE_CLIENT_ID_LIST:}
@@ -401,3 +409,18 @@ sentry:
   max-request-body-size: none
   send-default-pii: false
   traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.1}
+
+# ==================================================================
+# profile=alpha 전용 오버라이드. ADR-007 참조.
+# .gitignore 가 application-{profile}.yml 을 제외하므로 multi-document 로 둔다.
+# ==================================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: alpha
+
+app:
+  seed:
+    # alpha 에서는 기본 활성. 일시 비활성하고 싶다면 APP_SEED_ENABLED=false 로 설정.
+    enabled: ${APP_SEED_ENABLED:true}
