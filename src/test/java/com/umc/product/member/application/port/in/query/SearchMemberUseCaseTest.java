@@ -211,6 +211,29 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
         }
 
         @Test
+        void 닉네임으로_검색한다() {
+            // given
+            Member member1 = saveMember("홍길동", "hong123", "hong@test.com", school1.getId());
+            Member member2 = saveMember("김철수", "kim456", "kim@test.com", school1.getId());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId())
+                    .build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId())
+                    .build());
+
+            SearchMemberQuery query = new SearchMemberQuery("hong123", null, null, null, null);
+            PageRequest pageable = PageRequest.of(0, 10);
+
+            // when
+            SearchMemberResult result = searchMemberUseCase.searchBy(query, pageable);
+
+            // then
+            assertThat(result.page().getContent()).hasSize(1);
+            assertThat(result.page().getContent().get(0).nickname()).isEqualTo("hong123");
+        }
+
+        @Test
         void 검색_결과가_없으면_빈_페이지를_반환한다() {
             // given
             Member member = saveMember("홍길동", "hong", "hong@test.com", school1.getId());

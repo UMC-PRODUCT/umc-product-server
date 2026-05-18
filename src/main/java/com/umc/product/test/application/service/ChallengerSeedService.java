@@ -3,7 +3,7 @@ package com.umc.product.test.application.service;
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerCommand;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.member.application.port.in.command.RegisterIdPwMemberUseCase;
+import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
@@ -44,7 +44,7 @@ public class ChallengerSeedService implements SeedChallengersUseCase {
 
     private final DummyMemberFactory dummyMemberFactory;
     private final GetMemberUseCase getMemberUseCase;
-    private final RegisterIdPwMemberUseCase registerIdPwMemberUseCase;
+    private final RegisterEmailMemberUseCase registerEmailMemberUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final GetChapterUseCase getChapterUseCase;
     private final ManageChallengerUseCase manageChallengerUseCase;
@@ -137,8 +137,8 @@ public class ChallengerSeedService implements SeedChallengersUseCase {
         for (int i = 0; i < countPerCell; i++) {
             long seq = sequence.getAndIncrement();
             try {
-                Long memberId = registerIdPwMemberUseCase.register(
-                    dummyMemberFactory.nextIdPwCommandWithSchool(seq, schoolId)
+                Long memberId = registerEmailMemberUseCase.register(
+                    dummyMemberFactory.nextEmailCommandWithSchool(seq, schoolId)
                 );
                 createdMemberIds.add(memberId);
             } catch (Exception e) {

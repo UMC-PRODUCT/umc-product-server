@@ -110,6 +110,7 @@ public class MemberQueryRepository {
             .exists();
 
         return member.name.containsIgnoreCase(keyword)
+            .or(member.nickname.containsIgnoreCase(keyword))
             .or(member.email.containsIgnoreCase(keyword))
             .or(schoolNameExists);
     }

@@ -186,21 +186,23 @@ Response:
 }
 ```
 
-- **ID/PW 회원만 시딩한다**. OAuth 회원 시딩은 제거되었다(아래 "OAuth 제거" 참조).
+- **이메일 회원만 시딩한다**. OAuth 회원 시딩은 제거되었다(아래 "OAuth 제거" 참조).
+  develop 의 [#877 로그인 ID 파기 및 이메일 로그인 구현] 머지 이후 `loginId` 가 없어지고
+  `email` 이 유일 식별자가 되었으므로, 본 시딩도 `RegisterEmailMemberUseCase` 를 호출한다.
 - 모든 더미 회원은 동일한 비밀번호 (`app.seed.default-password`)를 사용해 테스트 편의를
-  최적화한다. loginId 만 시퀀스로 구분된다.
+  최적화한다. email 만 시퀀스로 구분된다 (`alpha_user_0001@{emailDomain}` 형식).
 - `force=false`(기본) — 기존 회원 수가 `properties.skipIfMemberCountGreaterThan`
   초과면 `skipped=true` 로 반환(기존 멱등성 유지).
 - `force=true` — 멱등성 체크 무시.
 - 각 register 호출은 자체 트랜잭션이며, 외부 트랜잭션이 묶이지 않도록 서비스 메서드는
   `@Transactional(propagation = NOT_SUPPORTED)` 로 의도를 명시한다(실패 격리).
-- loginId 시퀀스 오프셋은 `GetMemberUseCase.countAll()` 기반.
+- email 시퀀스 오프셋은 `GetMemberUseCase.countAll()` 기반.
 
 #### OAuth 제거
 
 초기 ADR 안은 ID/PW · OAuth 양쪽 시딩을 모두 포함했으나, 실 운영 외 사용 시나리오에서
 - 더미 OAuth provider 응답을 가짜로 만드는 비용이 크고,
-- QA/시연용으로는 ID/PW 단일 경로로도 충분하며,
+- QA/시연용으로는 단일 경로(현재는 이메일)로도 충분하며,
 - OAuth 시딩의 sequence 가 호출마다 1부터 다시 시작해 UNIQUE 제약 충돌이 발생하는 한계가
   있었기 때문에 OAuth 경로 자체를 제거한다.
 
@@ -233,7 +235,7 @@ Response:
 - `chapterIds == null` → 해당 기수의 모든 Chapter.
 - `parts == null` → ADMIN 제외 모든 파트.
 - 처리: `getChaptersWithSchoolsByGisuId(gisuId)` 로 (Chapter, School) 셀 목록 확보 →
-  각 (Chapter, School, Part) 셀마다 `DummyMemberFactory.nextIdPwCommandWithSchool(seq, schoolId)`
+  각 (Chapter, School, Part) 셀마다 `DummyMemberFactory.nextEmailCommandWithSchool(seq, schoolId)`
   로 Member 생성 → `ManageChallengerUseCase.createChallengerBulk` 로 Challenger 생성.
 - 셀 단위 트랜잭션(실패 격리).
 
@@ -338,7 +340,7 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
 
 - 기존 alpha 부팅 시 자동 시딩이 사라진다. alpha 환경 초기화 시 운영진이 명시적으로
   `/test/seed/*` 를 호출해야 한다. 운영 가이드 문서가 별도로 필요할 수 있다.
-- 시딩 서비스가 다수의 외부 UseCase(`GetMemberUseCase`, `RegisterIdPwMemberUseCase`,
+- 시딩 서비스가 다수의 외부 UseCase(`GetMemberUseCase`, `RegisterEmailMemberUseCase`,
   `ManageChallengerUseCase`, `CreateDraftProjectUseCase`, `AddProjectMemberUseCase`,
   `GetChapterUseCase`, `GetGisuUseCase`, `GetTermUseCase`) 를 조립한다. 의존이
   많지만, 그 본질은 "여러 도메인을 조합하는 운영 외 도구"라는 정체성과 일치한다.
@@ -384,14 +386,13 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
 
 - `SeedMembersUseCase` (in-port) + `MemberSeedService` 신설.
 - `SeedController.POST /test/seed/members` + `SeedMembersRequest/Response`.
-- `force` 플래그 처리, 시퀀스 오프셋 계산, 트랜잭션 정책(ID/PW per-call, OAuth batch)
-  반영.
+- `force` 플래그 처리, 시퀀스 오프셋 계산, 트랜잭션 정책(per-call) 반영.
 - 활성 환경: `@Profile("!prod") + @ConditionalOnProperty("app.seed.enabled")`.
 
 #### Commit 4. `feat: test 도메인 챌린저 분포 시딩 API 추가`
 
 - `SeedChallengersUseCase` + `ChallengerSeedService` 신설.
-- `DummyMemberFactory.nextIdPwCommandWithSchool(seq, schoolId)` 추가(기존 무작위
+- `DummyMemberFactory.nextEmailCommandWithSchool(seq, schoolId)` 추가(기존 무작위
   schoolId 변형의 schoolId 지정 가능 형).
 - `SeedController.POST /test/seed/challengers` + DTO.
 - `GetChapterUseCase.getChaptersWithSchoolsByGisuId` 로 셀 목록 확보, 셀 단위
@@ -425,7 +426,7 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
 
 ### 주의점
 
-- ID/PW 시딩 loginId 시퀀스는 `GetMemberUseCase.countAll()` 결과를 오프셋으로 삼는다.
+- 이메일 시딩 email 시퀀스는 `GetMemberUseCase.countAll()` 결과를 오프셋으로 삼는다.
   여러 번 호출되어도 충돌하지 않는다(기존 `alpha_user_0001` prefix 컨벤션은 유지).
 - 프로젝트 시딩에서 `CreateDraftProjectCommand` 는 `gisuId`, `productOwnerMemberId`,
   `requesterMemberId` 만 받는다. Project 의 `chapterId` 와 `productOwnerSchoolId` 는
@@ -545,7 +546,7 @@ curl -X POST $BASE/test/seed/notice -H 'Content-Type: application/json' \
     - `src/main/java/com/umc/product/global/seed/AlphaSeedProperties.java`
 - 활용 UseCase
     - `src/main/java/com/umc/product/member/application/port/in/query/GetMemberUseCase.java`
-    - `src/main/java/com/umc/product/member/application/port/in/command/RegisterIdPwMemberUseCase.java`
+    - `src/main/java/com/umc/product/member/application/port/in/command/RegisterEmailMemberUseCase.java`
     - `src/main/java/com/umc/product/challenger/application/port/in/command/ManageChallengerUseCase.java`
     - `src/main/java/com/umc/product/project/application/port/in/command/CreateDraftProjectUseCase.java`
     - `src/main/java/com/umc/product/project/application/port/in/command/AddProjectMemberUseCase.java`

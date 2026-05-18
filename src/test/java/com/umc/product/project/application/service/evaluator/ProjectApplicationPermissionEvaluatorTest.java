@@ -450,7 +450,7 @@ class ProjectApplicationPermissionEvaluatorTest {
             Project project = constructor.newInstance();
             ReflectionTestUtils.setField(project, "id", id);
             ReflectionTestUtils.setField(project, "productOwnerMemberId", ownerMemberId);
-            ReflectionTestUtils.setField(project, "createdByMemberId", ownerMemberId);
+            ReflectionTestUtils.setField(project, "creatorMemberId", ownerMemberId);
             ReflectionTestUtils.setField(project, "status", status);
             ReflectionTestUtils.setField(project, "gisuId", PROJECT_GISU_ID);
             ReflectionTestUtils.setField(project, "chapterId", PROJECT_CHAPTER_ID);

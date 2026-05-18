@@ -8,7 +8,6 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.Project;
-import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.util.Objects;
@@ -84,30 +83,26 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
     }
 
     /**
-     * 단건 EDIT 분기.
+     * 단건 EDIT 분기. EDIT 을 쓰는 모든 액션(기본정보 수정 · 제출 · 소유권 양도 · 팀원 추가/제거)의
+     * "누가" 를 여기서 일원화해 판정한다.
      * <ul>
-     *   <li>PO: DRAFT / PENDING_REVIEW / IN_PROGRESS 단계 모두 허용</li>
-     *   <li>Creator (운영진이 만든 경우): DRAFT 단계만 허용 (작성 보조). 제출 후엔 PO 만 관리.</li>
-     *   <li>그 외: 거부. 외부 운영진 분기 없음 — 정책상 기본정보 수정은 PO 전용.</li>
+     *   <li>DRAFT: creator 만 — 임시저장 단계는 작성자의 작업 공간.</li>
+     *   <li>PENDING_REVIEW / IN_PROGRESS: PO 또는 운영진(해당 기수 총괄단 / 본인 지부장).</li>
      *   <li>COMPLETED / ABORTED: 절대 차단 (도메인 레벨 가드 {@code Project#validateMutable} 와 정합)</li>
      * </ul>
      */
     private boolean canEdit(SubjectAttributes subject, ResourcePermission permission) {
         Project project = loadProject(permission);
-        if (isOwner(subject, project)) {
-            return switch (project.getStatus()) {
-                case DRAFT, PENDING_REVIEW, IN_PROGRESS -> true;
-                case COMPLETED, ABORTED -> false;
-            };
-        }
-        if (project.getStatus() == ProjectStatus.DRAFT && isCreator(subject, project)) {
-            return true;
-        }
-        return false;
+        return switch (project.getStatus()) {
+            case DRAFT -> isCreator(subject, project);
+            case PENDING_REVIEW, IN_PROGRESS ->
+                isOwner(subject, project) || isProjectAdmin(subject, project);
+            case COMPLETED, ABORTED -> false;
+        };
     }
 
     private boolean isCreator(SubjectAttributes subject, Project project) {
-        return Objects.equals(subject.memberId(), project.getCreatedByMemberId());
+        return Objects.equals(subject.memberId(), project.getCreatorMemberId());
     }
 
     /**
@@ -119,11 +114,18 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
     private boolean canManage(SubjectAttributes subject, ResourcePermission permission) {
         Project project = loadProject(permission);
         return switch (project.getStatus()) {
-            case PENDING_REVIEW, IN_PROGRESS ->
-                isCentralCoreInGisu(subject, project.getGisuId())
-                    || isChapterPresidentOf(subject, project.getChapterId(), project.getGisuId());
+            case PENDING_REVIEW, IN_PROGRESS -> isProjectAdmin(subject, project);
             case DRAFT, COMPLETED, ABORTED -> false;
         };
+    }
+
+    /**
+     * 해당 프로젝트에 대한 운영진 권한 보유 여부. 해당 기수 총괄단(SUPER_ADMIN 은 글로벌)
+     * 또는 해당 프로젝트 지부의 지부장(해당 기수)이면 true.
+     */
+    private boolean isProjectAdmin(SubjectAttributes subject, Project project) {
+        return isCentralCoreInGisu(subject, project.getGisuId())
+            || isChapterPresidentOf(subject, project.getChapterId(), project.getGisuId());
     }
 
     private boolean isChapterPresidentOf(SubjectAttributes subject, Long chapterId, Long gisuId) {

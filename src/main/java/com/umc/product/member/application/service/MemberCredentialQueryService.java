@@ -16,13 +16,13 @@ public class MemberCredentialQueryService implements GetMemberCredentialUseCase 
     private final LoadMemberPort loadMemberPort;
 
     @Override
-    public Optional<MemberCredentialInfo> findCredentialByLoginId(String loginId) {
-        if (loginId == null || loginId.isBlank()) {
+    public Optional<MemberCredentialInfo> findCredentialByEmail(String email) {
+        if (email == null || email.isBlank()) {
             return Optional.empty();
         }
-        return loadMemberPort.findByLoginId(loginId)
-            // 자격증명이 미등록된 (loginId/passwordHash 가 없는) 회원은 무시
-            .filter(member -> member.getLoginId() != null && member.getPasswordHash() != null)
+        return loadMemberPort.findByEmail(email)
+            // 자격증명이 미등록된 (비밀번호가 없는) 회원은 무시
+            .filter(member -> member.getPasswordHash() != null)
             .map(MemberCredentialInfo::from);
     }
 
@@ -32,15 +32,15 @@ public class MemberCredentialQueryService implements GetMemberCredentialUseCase 
             return Optional.empty();
         }
         return loadMemberPort.findById(memberId)
-            .filter(member -> member.getLoginId() != null && member.getPasswordHash() != null)
+            .filter(member -> member.getPasswordHash() != null)
             .map(MemberCredentialInfo::from);
     }
 
     @Override
-    public boolean existsByLoginId(String loginId) {
-        if (loginId == null || loginId.isBlank()) {
+    public boolean existsByEmail(String email) {
+        if (email == null || email.isBlank()) {
             return false;
         }
-        return loadMemberPort.existsByLoginId(loginId);
+        return loadMemberPort.existsByEmail(email);
     }
 }

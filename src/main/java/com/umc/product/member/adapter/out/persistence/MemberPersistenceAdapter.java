@@ -43,11 +43,6 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     }
 
     @Override
-    public Optional<Member> findByLoginId(String loginId) {
-        return memberJpaRepository.findByLoginId(loginId);
-    }
-
-    @Override
     public List<Member> findAllByIds(Set<Long> ids) {
         return memberJpaRepository.findAllById(ids)
             .stream().toList();
@@ -71,11 +66,6 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     @Override
     public boolean existsByNickname(String nickname) {
         return memberJpaRepository.existsByNickname(nickname);
-    }
-
-    @Override
-    public boolean existsByLoginId(String loginId) {
-        return memberJpaRepository.existsByLoginId(loginId);
     }
 
     @Override

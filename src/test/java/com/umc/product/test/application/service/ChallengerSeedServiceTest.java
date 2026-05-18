@@ -11,8 +11,8 @@ import static org.mockito.Mockito.verify;
 
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.member.application.port.in.command.RegisterIdPwMemberUseCase;
-import com.umc.product.member.application.port.in.command.dto.IdPwRegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
+import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
@@ -37,7 +37,7 @@ class ChallengerSeedServiceTest {
     @Mock
     GetMemberUseCase getMemberUseCase;
     @Mock
-    RegisterIdPwMemberUseCase registerIdPwMemberUseCase;
+    RegisterEmailMemberUseCase registerEmailMemberUseCase;
     @Mock
     GetGisuUseCase getGisuUseCase;
     @Mock
@@ -51,10 +51,10 @@ class ChallengerSeedServiceTest {
     @BeforeEach
     void setUp() {
         lenient().when(getMemberUseCase.countAll()).thenReturn(0L);
-        lenient().when(dummyMemberFactory.nextIdPwCommandWithSchool(anyLong(), anyLong()))
-            .thenReturn(mock(IdPwRegisterMemberCommand.class));
+        lenient().when(dummyMemberFactory.nextEmailCommandWithSchool(anyLong(), anyLong()))
+            .thenReturn(mock(EmailRegisterMemberCommand.class));
         AtomicLong memberIdCounter = new AtomicLong(1L);
-        lenient().when(registerIdPwMemberUseCase.register(any()))
+        lenient().when(registerEmailMemberUseCase.register(any()))
             .thenAnswer(inv -> memberIdCounter.getAndIncrement());
     }
 
@@ -145,7 +145,7 @@ class ChallengerSeedServiceTest {
             1L, "서울", List.of(new ChapterWithSchoolsInfo.SchoolInfo(101L, "건국대"))
         );
         given(getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId)).willReturn(List.of(chapter));
-        given(registerIdPwMemberUseCase.register(any()))
+        given(registerEmailMemberUseCase.register(any()))
             .willThrow(new RuntimeException("member boom"))
             .willReturn(500L);
         given(manageChallengerUseCase.createChallengerBulk(any()))

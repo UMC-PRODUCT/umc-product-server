@@ -453,24 +453,9 @@ class ProjectCommandServiceTest {
 
             sut.submit(SubmitProjectCommand.builder()
                 .projectId(1L)
-                .requesterMemberId(100L)
                 .build());
 
             assertThat(project.getStatus()).isEqualTo(ProjectStatus.PENDING_REVIEW);
-        }
-
-        @Test
-        void 작성자가_아니면_예외() {
-            Project project = createProject(ProjectStatus.DRAFT);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-
-            assertThatThrownBy(() -> sut.submit(SubmitProjectCommand.builder()
-                .projectId(1L)
-                .requesterMemberId(999L)
-                .build()))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
 
         @Test
@@ -482,7 +467,6 @@ class ProjectCommandServiceTest {
 
             assertThatThrownBy(() -> sut.submit(SubmitProjectCommand.builder()
                 .projectId(1L)
-                .requesterMemberId(100L)
                 .build()))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -502,22 +486,11 @@ class ProjectCommandServiceTest {
             given(getMemberUseCase.getById(200L)).willReturn(memberInfo(8L));
             given(getChapterUseCase.byGisuAndSchool(1L, 8L)).willReturn(new ChapterInfo(3L, "인천"));
 
-            sut.transfer(transferCommand(100L, 200L));
+            sut.transfer(transferCommand(200L));
 
             assertThat(project.getProductOwnerMemberId()).isEqualTo(200L);
             assertThat(project.getProductOwnerSchoolId()).isEqualTo(8L);
             assertThat(project.getChapterId()).isEqualTo(3L);
-        }
-
-        @Test
-        void 현재_PM이_아니면_예외() {
-            Project project = createProject(ProjectStatus.DRAFT);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-
-            assertThatThrownBy(() -> sut.transfer(transferCommand(999L, 200L)))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
 
         @Test
@@ -527,7 +500,7 @@ class ProjectCommandServiceTest {
             given(getChallengerUseCase.getByMemberIdAndGisuId(200L, 1L))
                 .willReturn(challengerInfo(200L, ChallengerPart.WEB));
 
-            assertThatThrownBy(() -> sut.transfer(transferCommand(100L, 200L)))
+            assertThatThrownBy(() -> sut.transfer(transferCommand(200L)))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_OWNER_NOT_PLAN_CHALLENGER);
@@ -540,7 +513,7 @@ class ProjectCommandServiceTest {
             given(getChallengerUseCase.getByMemberIdAndGisuId(200L, 1L))
                 .willReturn(challengerInfo(200L, ChallengerPart.PLAN));
 
-            assertThatThrownBy(() -> sut.transfer(transferCommand(100L, 200L)))
+            assertThatThrownBy(() -> sut.transfer(transferCommand(200L)))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
@@ -557,16 +530,15 @@ class ProjectCommandServiceTest {
             given(getMemberUseCase.getById(200L)).willReturn(memberInfo(8L));
             given(getChapterUseCase.byGisuAndSchool(1L, 8L)).willReturn(new ChapterInfo(3L, "인천"));
 
-            sut.transfer(transferCommand(100L, 200L));
+            sut.transfer(transferCommand(200L));
 
             assertThat(project.getProductOwnerMemberId()).isEqualTo(200L);
             then(loadProjectPort).should(never()).existsByOwnerAndGisu(any(), any());
         }
 
-        private TransferProjectOwnershipCommand transferCommand(Long requester, Long newOwner) {
+        private TransferProjectOwnershipCommand transferCommand(Long newOwner) {
             return TransferProjectOwnershipCommand.builder()
                 .projectId(1L)
-                .requesterMemberId(requester)
                 .newOwnerMemberId(newOwner)
                 .build();
         }

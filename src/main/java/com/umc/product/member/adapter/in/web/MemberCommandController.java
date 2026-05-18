@@ -12,13 +12,13 @@ import com.umc.product.member.adapter.in.web.assembler.MemberInfoResponseAssembl
 import com.umc.product.member.adapter.in.web.dto.request.DeleteMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberInfoRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberProfileRequest;
-import com.umc.product.member.adapter.in.web.dto.request.IdPwRegisterMemberRequest;
+import com.umc.product.member.adapter.in.web.dto.request.EmailRegisterMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.request.OAuthRegisterMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
 import com.umc.product.member.application.port.in.command.ManageMemberProfileUseCase;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
-import com.umc.product.member.application.port.in.command.RegisterIdPwMemberUseCase;
+import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
 import com.umc.product.member.application.port.in.command.RegisterOAuthMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMemberCommand;
@@ -27,6 +27,7 @@ import com.umc.product.member.application.port.in.command.dto.UpdateMemberComman
 import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -50,7 +51,7 @@ public class MemberCommandController {
     private final ManageMemberProfileUseCase manageMemberProfileUseCase;
 
     private final RegisterOAuthMemberUseCase registerOAuthMemberUseCase;
-    private final RegisterIdPwMemberUseCase registerIdPwMemberUseCase;
+    private final RegisterEmailMemberUseCase registerEmailMemberUseCase;
 
 
     @Public
@@ -93,21 +94,23 @@ public class MemberCommandController {
         return RegisterResponse.of(createdMemberId, accessToken, refreshToken);
     }
 
-    @Operation(summary = "[REGISTER-002] ID/PW 이용 회원가입",
+    @Operation(summary = "[REGISTER-003] 이메일/PW 이용 회원가입",
         description = """
-            OAuth가 아닌, ID/PW를 이용해서 하는 회원가입 입니다.
+            ADR-017 에 따라 도입된 이메일 기반 회원가입 엔드포인트입니다.
 
-            OAuth Provider 및 Provider ID를 받지 않는 부분을 제외하면 동일하게 동작합니다.
-            회원가입 전 ID 중복 검사를 진행할 수 있도록 해주세요.
+            로그인 식별자를 별도로 받지 않으며, `emailVerificationToken` 으로 검증된 이메일이
+            그대로 로그인 식별자로 사용됩니다.
             """)
-    @PostMapping("/register/id-pw")
+    @PostMapping("/register/email")
     @Public
-    RegisterResponse registerMemberByIdPw(@RequestBody IdPwRegisterMemberRequest request) {
+    @WebhookAlarm(
+        title = "'새로운 회원이 가입했어요!'",
+        content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
+    )
+    RegisterResponse registerMemberByEmail(@Valid @RequestBody EmailRegisterMemberRequest request) {
         String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
 
-        Long createdMemberId = registerIdPwMemberUseCase.register(
-            request.toCommand(email, request.termsAgreements())
-        );
+        Long createdMemberId = registerEmailMemberUseCase.register(request.toCommand(email));
 
         String accessToken = jwtTokenProvider.createAccessToken(createdMemberId, null);
         String refreshToken = jwtTokenProvider.createRefreshToken(createdMemberId);

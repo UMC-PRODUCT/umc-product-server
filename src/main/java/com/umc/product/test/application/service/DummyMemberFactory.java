@@ -1,6 +1,6 @@
 package com.umc.product.test.application.service;
 
-import com.umc.product.member.application.port.in.command.dto.IdPwRegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.term.application.port.in.query.GetTermUseCase;
 import java.util.List;
@@ -14,10 +14,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * datafaker 를 사용해 test 도메인 시딩용 더미 ID/PW 회원 Command 를 생성한다. ADR-017 참조.
+ * datafaker 를 사용해 test 도메인 시딩용 더미 이메일 회원 Command 를 생성한다. ADR-017 참조.
  * <p>
  * V2026.02.28.06.00 마이그레이션이 school 1~38 을 시딩하므로 schoolId 무작위 추출은 그 범위에서 고른다.
- * loginId 는 sequence 번호로 고정해 멱등성과 유일성을 동시에 만족시킨다. 모든 더미 회원은
+ * email 은 sequence 번호로 고정해 멱등성과 유일성을 동시에 만족시킨다. 모든 더미 회원은
  * 같은 비밀번호({@link SeedProperties#defaultPassword()})를 사용한다.
  */
 @Component
@@ -36,22 +36,20 @@ public class DummyMemberFactory {
     private final Faker faker = new Faker(Locale.KOREAN);
 
     /**
-     * ID/PW 회원가입용 Command 를 만든다. loginId 는 alpha_user_0001 형식(CredentialPolicy 정규식 만족).
+     * 이메일 회원가입용 Command 를 만든다. email 은 alpha_user_0001@{properties.emailDomain} 형식.
      * schoolId 는 1~38 범위 무작위.
      */
-    public IdPwRegisterMemberCommand nextIdPwCommand(long sequence) {
-        return nextIdPwCommandWithSchool(sequence, randomSchoolId());
+    public EmailRegisterMemberCommand nextEmailCommand(long sequence) {
+        return nextEmailCommandWithSchool(sequence, randomSchoolId());
     }
 
     /**
-     * 지정한 schoolId 로 ID/PW 회원가입 Command 를 만든다. 챌린저/프로젝트 분포 시딩처럼 학교 정합성이
+     * 지정한 schoolId 로 이메일 회원가입 Command 를 만든다. 챌린저/프로젝트 분포 시딩처럼 학교 정합성이
      * 필요한 케이스에서 사용한다.
      */
-    public IdPwRegisterMemberCommand nextIdPwCommandWithSchool(long sequence, Long schoolId) {
-        String loginId = "alpha_user_%04d".formatted(sequence);
-        String email = "%s@%s".formatted(loginId, properties.emailDomain());
-        return IdPwRegisterMemberCommand.builder()
-            .loginId(loginId)
+    public EmailRegisterMemberCommand nextEmailCommandWithSchool(long sequence, Long schoolId) {
+        String email = "alpha_user_%04d@%s".formatted(sequence, properties.emailDomain());
+        return EmailRegisterMemberCommand.builder()
             .rawPassword(properties.defaultPassword())
             .name(faker.name().fullName())
             .nickname(safeNickname(faker.name().firstName(), sequence))
