@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * EmailVerification 도메인 단위 테스트.
@@ -111,6 +113,24 @@ class EmailVerificationTest {
         }
 
         @Test
+        @DisplayName("이미 검증된 세션에 재호출하면 verifiedAt 을 덮어쓰지 않고 INVALID_EMAIL_VERIFICATION 으로 거부한다")
+        void 이미_검증된_세션_재호출_거부() {
+            // given
+            EmailVerification session = newSession(EmailVerificationPurpose.REGISTER);
+            session.verifyCode(CODE);
+            java.time.Instant firstVerifiedAt = session.getVerifiedAt();
+            int countBefore = session.getAttemptCount();
+
+            // when / then
+            assertThatThrownBy(() -> session.verifyCode(CODE))
+                .isInstanceOf(AuthenticationDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
+            assertThat(session.getVerifiedAt()).isEqualTo(firstVerifiedAt);
+            assertThat(session.getAttemptCount()).isEqualTo(countBefore);
+        }
+
+        @Test
         @DisplayName("임계치 도달 후에는 정답을 입력해도 검증되지 않으며 attemptCount 가 더 이상 증가하지 않는다")
         void 임계치_도달_후_정답도_거부() {
             // given
@@ -128,6 +148,46 @@ class EmailVerificationTest {
                 .isEqualTo(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
             assertThat(session.getAttemptCount()).isEqualTo(countBefore);
             assertThat(session.isVerified()).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("isSendThrottled / markSent")
+    class Throttle {
+
+        @Test
+        @DisplayName("lastSentAt 이 null 이면 throttle 대상이 아니다")
+        void 미발송_세션은_throttle_아님() {
+            // given
+            EmailVerification session = newSession(EmailVerificationPurpose.REGISTER);
+
+            // then
+            assertThat(session.isSendThrottled()).isFalse();
+            assertThat(session.getLastSentAt()).isNull();
+        }
+
+        @Test
+        @DisplayName("markSent 직후 60초 미만 경과 시 throttle 위반")
+        void markSent_직후_throttle() {
+            // given
+            EmailVerification session = newSession(EmailVerificationPurpose.REGISTER);
+            session.markSent();
+
+            // then
+            assertThat(session.isSendThrottled()).isTrue();
+            assertThat(session.getLastSentAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("lastSentAt 이 60초 이전이면 throttle 해제")
+        void 일정시간_경과시_throttle_해제() {
+            // given
+            EmailVerification session = newSession(EmailVerificationPurpose.REGISTER);
+            ReflectionTestUtils.setField(session, "lastSentAt",
+                Instant.now().minusSeconds(EmailVerification.MIN_SEND_INTERVAL_SECONDS + 1));
+
+            // then
+            assertThat(session.isSendThrottled()).isFalse();
         }
     }
 

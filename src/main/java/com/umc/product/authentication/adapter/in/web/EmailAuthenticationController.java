@@ -46,7 +46,7 @@ public class EmailAuthenticationController {
             .validateEmailVerificationSession(
                 ValidateEmailVerificationSessionCommand
                     .builder()
-                    .sessionId(request.emailVerificationId().toString())
+                    .sessionId(request.emailVerificationId())
                     .code(request.verificationCode())
                     .build()
             );
@@ -78,7 +78,7 @@ public class EmailAuthenticationController {
 
         return SendEmailVerificationResponse
             .builder()
-            .emailVerificationId(sessionId.toString())
+            .emailVerificationId(sessionId)
             .build();
     }
 
