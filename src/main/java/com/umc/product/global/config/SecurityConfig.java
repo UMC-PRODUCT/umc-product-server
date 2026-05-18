@@ -3,8 +3,12 @@ package com.umc.product.global.config;
 
 import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.security.JwtAuthenticationFilter;
 import com.umc.product.global.security.util.PublicEndpointCollector;
+import com.umc.product.maintenance.adapter.in.web.filter.MaintenanceFilter;
+import com.umc.product.maintenance.application.port.out.MaintenanceBypassPolicy;
+import com.umc.product.maintenance.application.service.MaintenanceStateHolder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,15 +91,26 @@ public class SecurityConfig {
     }
 
     /**
-     * 메인 Security 체인
-     *
-     * @param http
-     * @return
-     * @throws Exception
+     * 점검 모드 필터. JWT 다음에 동작해서 점검 중 일반 사용자 요청을 503 으로 차단한다.
+     * {@code @Component} 가 아닌 명시 {@code @Bean} 으로 두는 이유: 슬라이스 테스트
+     * ({@code @WebMvcTest}) 의 자동 Filter 디스커버리가 본 필터의 의존성까지 끌어와 컨텍스트 로딩을
+     * 실패시키는 것을 막기 위함이다. SecurityConfig 는 슬라이스 테스트에 포함되지 않으므로 본 빈도 함께 제외된다.
+     */
+    @Bean
+    public MaintenanceFilter maintenanceFilter(
+        MaintenanceStateHolder stateHolder,
+        MaintenanceBypassPolicy bypassPolicy,
+        ObjectMapper objectMapper
+    ) {
+        return new MaintenanceFilter(stateHolder, bypassPolicy, objectMapper);
+    }
+
+    /**
+     * 메인 Security 체인. JWT → MaintenanceFilter → 인가 순서로 동작한다.
      */
     @Bean
     @Order(2)
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, MaintenanceFilter maintenanceFilter) throws Exception {
         List<PublicEndpointCollector.EndpointMatcher> publicEndpoints = PublicEndpointCollector
             .collectPublicEndpoints(requestMappingHandlerMapping);
 
@@ -144,6 +159,8 @@ public class SecurityConfig {
             })
             // Spring 기본 로그인 필터 동작 전에 JWT 동작
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            // JWT 로 SecurityContext 가 채워진 뒤 점검 필터에서 bypass 판정
+            .addFilterAfter(maintenanceFilter, JwtAuthenticationFilter.class)
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(authenticationEntryPoint) // 인증 실패 시
                 .accessDeniedHandler(accessDeniedHandler)           // 인가 실패 시
