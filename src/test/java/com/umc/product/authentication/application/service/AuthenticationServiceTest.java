@@ -16,11 +16,11 @@ import com.umc.product.authentication.domain.EmailVerification;
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
 import java.util.Optional;
-import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -60,7 +60,7 @@ class AuthenticationServiceTest {
     GetMemberCredentialUseCase getMemberCredentialUseCase;
 
     @Mock
-    ApplicationEventPublisher eventPublisher;
+    DomainEventPublisher eventPublisher;
 
     @InjectMocks
     AuthenticationService service;
@@ -90,7 +90,7 @@ class AuthenticationServiceTest {
                 .isEqualTo(AuthenticationErrorCode.INVALID_EMAIL_FORMAT);
 
             then(saveEmailVerificationPort).should(never()).save(any());
-            then(eventPublisher).should(never()).publishEvent(any(SendVerificationEmailEvent.class));
+            then(eventPublisher).should(never()).publish(any(SendVerificationEmailEvent.class));
         }
 
         @Test
@@ -107,7 +107,7 @@ class AuthenticationServiceTest {
 
             // then
             assertThat(sessionId).isEqualTo(SESSION_ID);
-            then(eventPublisher).should().publishEvent(any(SendVerificationEmailEvent.class));
+            then(eventPublisher).should().publish(any(SendVerificationEmailEvent.class));
         }
 
         @Test
@@ -124,7 +124,7 @@ class AuthenticationServiceTest {
                 .isEqualTo(AuthenticationErrorCode.EMAIL_ALREADY_EXISTS);
 
             then(saveEmailVerificationPort).should(never()).save(any());
-            then(eventPublisher).should(never()).publishEvent(any(SendVerificationEmailEvent.class));
+            then(eventPublisher).should(never()).publish(any(SendVerificationEmailEvent.class));
         }
 
         @Test
@@ -142,7 +142,7 @@ class AuthenticationServiceTest {
 
             // then
             assertThat(sessionId).isEqualTo(SESSION_ID);
-            then(eventPublisher).should().publishEvent(any(SendVerificationEmailEvent.class));
+            then(eventPublisher).should().publish(any(SendVerificationEmailEvent.class));
         }
 
         @Test
@@ -163,7 +163,7 @@ class AuthenticationServiceTest {
                 .isEqualTo(AuthenticationErrorCode.EMAIL_VERIFICATION_THROTTLED);
 
             then(saveEmailVerificationPort).should(never()).save(any());
-            then(eventPublisher).should(never()).publishEvent(any(SendVerificationEmailEvent.class));
+            then(eventPublisher).should(never()).publish(any(SendVerificationEmailEvent.class));
         }
 
         @Test
@@ -180,7 +180,7 @@ class AuthenticationServiceTest {
 
             // then: 응답은 정상이지만 메일 이벤트는 발행되지 않음 (이메일 열거 방어)
             assertThat(sessionId).isEqualTo(SESSION_ID);
-            then(eventPublisher).should(never()).publishEvent(any(SendVerificationEmailEvent.class));
+            then(eventPublisher).should(never()).publish(any(SendVerificationEmailEvent.class));
         }
     }
 
