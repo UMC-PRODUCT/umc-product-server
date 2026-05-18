@@ -12,13 +12,13 @@ import com.umc.product.authentication.domain.EmailVerification;
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import java.security.SecureRandom;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +36,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
     private final SaveEmailVerificationPort saveEmailVerificationPort;
     private final JwtTokenProvider jwtTokenProvider;
     private final GetMemberCredentialUseCase getMemberCredentialUseCase;
-    private final ApplicationEventPublisher eventPublisher;
+    private final DomainEventPublisher eventPublisher;
 
     // TODO: EmailSendUseCase와 구분할 필요가 있습니다.
     @Override
@@ -158,7 +158,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
      * AFTER_COMMIT 단계에서 SendVerificationEmailEventListener 가 메일을 발송한다.
      */
     private void publishSendEmailEvent(String email, String code) {
-        eventPublisher.publishEvent(new SendVerificationEmailEvent(email, code));
+        eventPublisher.publish(SendVerificationEmailEvent.of(email, code));
     }
 
     private String generateRandomCode() {
