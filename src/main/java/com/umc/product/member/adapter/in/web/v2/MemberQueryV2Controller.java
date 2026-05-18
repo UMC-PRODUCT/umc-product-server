@@ -68,6 +68,9 @@ public class MemberQueryV2Controller {
             - `isAdminInActiveGisu` : 회원이 현재 활성 기수에 운영진 ChallengerRole을 하나라도 보유하는지
 
             검색 조건/필터는 v1과 동일합니다.
+
+            검색 결과에는 본인 외 회원이 포함되므로, 로그인 식별자인 이메일은 평문 노출을 피하기 위해
+            컨트롤러 단에서 마스킹 처리되어 응답됩니다.
             """
     )
     @GetMapping("search")
@@ -77,6 +80,6 @@ public class MemberQueryV2Controller {
     ) {
         return SearchMemberV2Response.from(
             searchMemberUseCase.searchByV2(searchRequest.toQuery(), pageable)
-        );
+        ).withMaskedEmails();
     }
 }
