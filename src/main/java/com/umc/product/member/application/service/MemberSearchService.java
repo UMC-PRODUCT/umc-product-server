@@ -7,6 +7,8 @@ import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.SearchMemberUseCase;
+import com.umc.product.member.application.port.in.query.dto.ChallengerSearchItemV2Info;
+import com.umc.product.member.application.port.in.query.dto.ChallengerSearchV2Result;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberItemInfo;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberItemV2Info;
@@ -57,6 +59,30 @@ public class MemberSearchService implements SearchMemberUseCase {
         );
 
         return new SearchMemberResult(items);
+    }
+
+    @Override
+    public ChallengerSearchV2Result searchChallengersByV2(SearchMemberQuery query, Pageable pageable) {
+        Page<Challenger> challengers = searchMemberPort.search(query, pageable);
+        List<Challenger> content = challengers.getContent();
+
+        Map<Long, MemberInfo> memberProfiles = loadMemberProfiles(content);
+        Map<Long, List<ChallengerRoleType>> roleTypes = loadRoleTypes(content);
+        Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(content);
+
+        // 활성 기수 + 해당 회원이 활성 기수에 운영진 ChallengerRole을 보유하는지 회원 단위로 산출
+        Long activeGisuId = getGisuUseCase.findActiveGisu()
+            .map(GisuInfo::gisuId)
+            .orElse(null);
+        Set<Long> adminChallengerIdsInActiveGisu =
+            collectAdminChallengerIdsInActiveGisu(content, activeGisuId);
+
+        Page<ChallengerSearchItemV2Info> items = challengers.map(challenger ->
+            toChallengerSearchItemV2(challenger, memberProfiles, roleTypes, gisuGenerationMap,
+                adminChallengerIdsInActiveGisu)
+        );
+
+        return new ChallengerSearchV2Result(items);
     }
 
     @Override
@@ -165,7 +191,76 @@ public class MemberSearchService implements SearchMemberUseCase {
             .collect(Collectors.toMap(GisuInfo::gisuId, GisuInfo::generation));
     }
 
-    // ======= PRIVATE — v2 helpers =========
+    // ======= PRIVATE — challenger search v2 helpers =========
+
+    /**
+     * 검색 결과 챌린저 행들 가운데, 같은 회원이 활성 기수에 운영진 ChallengerRole을 보유하면
+     * 그 회원이 가진 모든 챌린저 행에 대해 isAdminInActiveGisu=true가 되도록 챌린저 ID 집합을 만듭니다.
+     */
+    private Set<Long> collectAdminChallengerIdsInActiveGisu(
+        List<Challenger> content,
+        Long activeGisuId
+    ) {
+        if (activeGisuId == null || content.isEmpty()) {
+            return Set.of();
+        }
+
+        Set<Long> activeGisuChallengerIds = content.stream()
+            .filter(c -> Objects.equals(c.getGisuId(), activeGisuId))
+            .map(Challenger::getId)
+            .collect(Collectors.toSet());
+
+        if (activeGisuChallengerIds.isEmpty()) {
+            return Set.of();
+        }
+
+        Map<Long, List<ChallengerRoleType>> activeGisuRoleTypes =
+            getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(activeGisuChallengerIds);
+
+        Set<Long> adminChallengerIds = activeGisuRoleTypes.entrySet().stream()
+            .filter(e -> !e.getValue().isEmpty())
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
+
+        Set<Long> adminMemberIds = content.stream()
+            .filter(c -> adminChallengerIds.contains(c.getId()))
+            .map(Challenger::getMemberId)
+            .collect(Collectors.toSet());
+
+        return content.stream()
+            .filter(c -> adminMemberIds.contains(c.getMemberId()))
+            .map(Challenger::getId)
+            .collect(Collectors.toSet());
+    }
+
+    private ChallengerSearchItemV2Info toChallengerSearchItemV2(
+        Challenger challenger,
+        Map<Long, MemberInfo> memberProfiles,
+        Map<Long, List<ChallengerRoleType>> roleTypes,
+        Map<Long, Long> gisuGenerationMap,
+        Set<Long> adminChallengerIdsInActiveGisu
+    ) {
+        MemberInfo profile = memberProfiles.get(challenger.getMemberId());
+
+        return new ChallengerSearchItemV2Info(
+            challenger.getMemberId(),
+            profile != null ? profile.name() : null,
+            profile != null ? profile.nickname() : null,
+            profile != null ? profile.email() : null,
+            profile != null ? profile.schoolId() : null,
+            profile != null ? profile.schoolName() : null,
+            profile != null ? profile.profileImageLink() : null,
+            challenger.getId(),
+            challenger.getGisuId(),
+            gisuGenerationMap.get(challenger.getGisuId()),
+            challenger.getPart(),
+            challenger.getStatus(),
+            roleTypes.getOrDefault(challenger.getId(), List.of()),
+            adminChallengerIdsInActiveGisu.contains(challenger.getId())
+        );
+    }
+
+    // ======= PRIVATE — member search v2 helpers =========
 
     private Map<Long, Long> loadGenerationMap(Map<Long, List<ChallengerInfo>> challengersByMemberId) {
         Set<Long> gisuIds = challengersByMemberId.values().stream()
