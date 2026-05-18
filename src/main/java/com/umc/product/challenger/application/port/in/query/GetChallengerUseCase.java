@@ -46,6 +46,13 @@ public interface GetChallengerUseCase {
     List<ChallengerInfo> getAllByMemberId(Long memberId);
 
     /**
+     * 여러 memberId로 회원별 모든 챌린저 정보를 IN 쿼리 1회로 일괄 조회합니다.
+     * <p>
+     * 챌린저 이력이 없는 회원은 결과 Map에 키로 등장하지 않습니다.
+     */
+    Map<Long, List<ChallengerInfo>> getAllByMemberIds(Set<Long> memberIds);
+
+    /**
      * 여러 challengerId로 챌린저 정보 배치 조회
      *
      * @param challengerIds 챌린저 ID 목록

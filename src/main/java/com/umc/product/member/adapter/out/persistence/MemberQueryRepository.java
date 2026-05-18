@@ -50,7 +50,7 @@ public class MemberQueryRepository {
     }
 
     /**
-     * 검색 로직
+     * 검색 로직 (v1) — 챌린저 단위 row.
      */
     public Page<Challenger> searchBy(SearchMemberQuery query, Pageable pageable) {
         QChallenger challenger = QChallenger.challenger;
@@ -69,6 +69,38 @@ public class MemberQueryRepository {
 
         Long total = queryFactory
             .select(challenger.count())
+            .from(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .where(condition)
+            .fetchOne();
+
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    /**
+     * 검색 로직 (v2) — 회원 단위 distinct memberId.
+     * <p>
+     * 같은 회원이 여러 챌린저 이력을 가져도 1개 row로만 반환됩니다.
+     * gisuId/part 같은 챌린저 필터는 "회원이 한 번이라도 그 조건을 만족하는 챌린저를 가졌는가"로 매칭됩니다.
+     */
+    public Page<Long> searchMemberIdsBy(SearchMemberQuery query, Pageable pageable) {
+        QChallenger challenger = QChallenger.challenger;
+        QMember member = QMember.member;
+
+        BooleanBuilder condition = buildSearchCondition(query, challenger, member);
+
+        List<Long> content = queryFactory
+            .selectDistinct(member.id)
+            .from(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .where(condition)
+            .orderBy(member.schoolId.asc(), member.name.asc(), member.id.asc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        Long total = queryFactory
+            .select(member.id.countDistinct())
             .from(challenger)
             .join(member).on(challenger.memberId.eq(member.id))
             .where(condition)

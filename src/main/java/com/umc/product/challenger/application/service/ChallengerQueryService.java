@@ -79,6 +79,20 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     }
 
     @Override
+    public Map<Long, List<ChallengerInfo>> getAllByMemberIds(Set<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Challenger> challengers = loadChallengerPort.listAllByMemberIds(memberIds);
+        if (challengers.isEmpty()) {
+            return Map.of();
+        }
+        List<ChallengerInfo> infos = toChallengerInfoListBatch(challengers);
+        return infos.stream()
+            .collect(Collectors.groupingBy(ChallengerInfo::memberId));
+    }
+
+    @Override
     public ChallengerInfoWithStatus getLatestActiveChallengerByMemberId(Long memberId) {
         Challenger challenger = loadChallengerPort.findTopByMemberIdOrderByCreatedAtDesc(memberId);
         if (challenger.getStatus() == ChallengerStatus.WITHDRAWN

@@ -6,7 +6,8 @@ import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.BDDMockito.given;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.challenger.domain.Challenger;
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
@@ -33,31 +34,20 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("MemberSearchService.searchByV2 — v2 검색")
+@DisplayName("MemberSearchService.searchByV2 — 회원 단위 v2 검색")
 class MemberSearchServiceV2Test {
 
     @Mock SearchMemberPort searchMemberPort;
     @Mock GetMemberUseCase getMemberUseCase;
+    @Mock GetChallengerUseCase getChallengerUseCase;
     @Mock GetChallengerRoleUseCase getChallengerRoleUseCase;
     @Mock GetGisuUseCase getGisuUseCase;
 
     @InjectMocks MemberSearchService memberSearchService;
 
-    private Challenger createChallenger(Long id, Long memberId, ChallengerPart part, Long gisuId) {
-        Challenger c = Challenger.builder()
-            .memberId(memberId)
-            .part(part)
-            .gisuId(gisuId)
-            .build();
-        ReflectionTestUtils.setField(c, "id", id);
-        // status는 builder가 ACTIVE로 기본 세팅하므로 별도 ReflectionTestUtils 호출은 불요
-        return c;
-    }
-
-    private MemberInfo createProfile(Long id, String name) {
+    private MemberInfo profile(Long id, String name) {
         return MemberInfo.builder()
             .id(id)
             .name(name)
@@ -69,51 +59,78 @@ class MemberSearchServiceV2Test {
             .build();
     }
 
+    private ChallengerInfo challenger(Long id, Long memberId, Long gisuId, ChallengerPart part, ChallengerStatus status) {
+        return ChallengerInfo.builder()
+            .challengerId(id)
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(part)
+            .challengerPoints(List.of())
+            .totalPoints(0.0)
+            .challengerStatus(status)
+            .build();
+    }
+
+    private GisuInfo gisu(Long gisuId, Long generation, boolean active) {
+        return new GisuInfo(gisuId, generation, Instant.now(), Instant.now().plusSeconds(100), active);
+    }
+
     @Test
-    void v2_검색은_challengerStatus를_매핑한다() {
+    void 같은_회원의_여러_기수_챌린저는_하나의_row로_묶여_반환된다() {
+        // given: memberId=10 한 명이 3개 기수 챌린저 보유, 검색 결과 = 회원 1명
         Pageable pageable = PageRequest.of(0, 10);
+        Page<Long> memberIdPage = new PageImpl<>(List.of(10L), pageable, 1);
 
-        Challenger c1 = createChallenger(1L, 10L, ChallengerPart.WEB, 7L);
-        Page<Challenger> page = new PageImpl<>(List.of(c1), pageable, 1);
-
-        given(searchMemberPort.search(any(), any())).willReturn(page);
-        given(getMemberUseCase.findAllByIds(anySet())).willReturn(Map.of(10L, createProfile(10L, "홍길동")));
-        given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
-        given(getGisuUseCase.getByIds(anySet())).willReturn(List.of(
-            new GisuInfo(7L, 8L, Instant.now(), Instant.now().plusSeconds(100), true)
+        given(searchMemberPort.searchMemberIds(any(), any())).willReturn(memberIdPage);
+        given(getMemberUseCase.findAllByIds(anySet())).willReturn(Map.of(10L, profile(10L, "홍길동")));
+        given(getChallengerUseCase.getAllByMemberIds(anySet())).willReturn(Map.of(
+            10L, List.of(
+                challenger(101L, 10L, 6L, ChallengerPart.WEB, ChallengerStatus.GRADUATED),
+                challenger(102L, 10L, 7L, ChallengerPart.SPRINGBOOT, ChallengerStatus.GRADUATED),
+                challenger(103L, 10L, 8L, ChallengerPart.SPRINGBOOT, ChallengerStatus.ACTIVE)
+            )
         ));
-        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.empty());
+        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.of(gisu(8L, 9L, true)));
+        given(getGisuUseCase.getByIds(anySet())).willReturn(List.of(
+            gisu(6L, 7L, false),
+            gisu(7L, 8L, false),
+            gisu(8L, 9L, true)
+        ));
+        given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
 
+        // when
         SearchMemberV2Result result = memberSearchService.searchByV2(
             new SearchMemberQuery(null, null, null, null, null), pageable
         );
 
+        // then: 회원 1명 = row 1개, participations에 3개 챌린저 요약
         List<SearchMemberItemV2Info> content = result.page().getContent();
         assertThat(content).hasSize(1);
-        assertThat(content.get(0).challengerStatus()).isEqualTo(ChallengerStatus.ACTIVE);
-        // 활성 기수 정보가 없으므로(휴지기) isAdminInActiveGisu는 항상 false
-        assertThat(content.get(0).isAdminInActiveGisu()).isFalse();
+        assertThat(content.get(0).memberId()).isEqualTo(10L);
+        assertThat(content.get(0).participations()).hasSize(3);
+        // primaryChallenger는 활성 기수(8L) 챌린저인 103번
+        assertThat(content.get(0).primaryChallenger().challengerId()).isEqualTo(103L);
+        assertThat(content.get(0).primaryChallenger().gisuId()).isEqualTo(8L);
     }
 
     @Test
-    void 활성기수_챌린저가_운영진이면_isAdminInActiveGisu가_true다() {
+    void 활성_기수_챌린저가_없으면_가장_최신_기수_챌린저가_대표로_선택된다() {
         Pageable pageable = PageRequest.of(0, 10);
+        Page<Long> memberIdPage = new PageImpl<>(List.of(10L), pageable, 1);
 
-        Long activeGisuId = 7L;
-        Challenger activeRow = createChallenger(1L, 10L, ChallengerPart.SPRINGBOOT, activeGisuId);
-        Page<Challenger> page = new PageImpl<>(List.of(activeRow), pageable, 1);
-
-        given(searchMemberPort.search(any(), any())).willReturn(page);
-        given(getMemberUseCase.findAllByIds(anySet())).willReturn(Map.of(10L, createProfile(10L, "운영진")));
-        // 검색결과 전체 운영진 매핑 (toItemInfoV2가 한 번, collectAdmin이 한 번 더 호출됨)
-        given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of(
-            1L, List.of(ChallengerRoleType.SCHOOL_PRESIDENT)
+        given(searchMemberPort.searchMemberIds(any(), any())).willReturn(memberIdPage);
+        given(getMemberUseCase.findAllByIds(anySet())).willReturn(Map.of(10L, profile(10L, "졸업자")));
+        given(getChallengerUseCase.getAllByMemberIds(anySet())).willReturn(Map.of(
+            10L, List.of(
+                challenger(101L, 10L, 6L, ChallengerPart.WEB, ChallengerStatus.GRADUATED),
+                challenger(102L, 10L, 7L, ChallengerPart.SPRINGBOOT, ChallengerStatus.GRADUATED)
+            )
         ));
+        // 활성 기수가 9L이지만 이 회원은 9L 챌린저가 없음 → 활성 기수 챌린저 부재로 운영진 조회가 호출되지 않음
+        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.of(gisu(9L, 10L, true)));
         given(getGisuUseCase.getByIds(anySet())).willReturn(List.of(
-            new GisuInfo(activeGisuId, 8L, Instant.now(), Instant.now().plusSeconds(100), true)
-        ));
-        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.of(
-            new GisuInfo(activeGisuId, 8L, Instant.now(), Instant.now().plusSeconds(100), true)
+            gisu(6L, 7L, false),
+            gisu(7L, 8L, false)
         ));
 
         SearchMemberV2Result result = memberSearchService.searchByV2(
@@ -121,39 +138,67 @@ class MemberSearchServiceV2Test {
         );
 
         SearchMemberItemV2Info item = result.page().getContent().get(0);
-        assertThat(item.isAdminInActiveGisu()).isTrue();
-        assertThat(item.roleTypes()).containsExactly(ChallengerRoleType.SCHOOL_PRESIDENT);
+        // 가장 큰 generation(8) 챌린저가 대표 = 102L
+        assertThat(item.primaryChallenger().challengerId()).isEqualTo(102L);
+        assertThat(item.primaryChallenger().generation()).isEqualTo(8L);
+        assertThat(item.isAdminInActiveGisu()).isFalse();
     }
 
     @Test
-    void 다른_기수_챌린저_행이지만_같은_회원이_활성기수에_운영진이면_isAdminInActiveGisu_true() {
+    void 활성_기수_챌린저가_운영진이면_isAdminInActiveGisu가_true다() {
         Pageable pageable = PageRequest.of(0, 10);
+        Page<Long> memberIdPage = new PageImpl<>(List.of(10L), pageable, 1);
 
-        Long activeGisuId = 7L;
-        Challenger pastRow = createChallenger(1L, 10L, ChallengerPart.WEB, 6L); // 과거 기수 행
-        Challenger activeRow = createChallenger(2L, 10L, ChallengerPart.SPRINGBOOT, activeGisuId);
-        Page<Challenger> page = new PageImpl<>(List.of(pastRow, activeRow), pageable, 2);
-
-        given(searchMemberPort.search(any(), any())).willReturn(page);
-        given(getMemberUseCase.findAllByIds(anySet())).willReturn(Map.of(10L, createProfile(10L, "운영진")));
-        given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of(
-            2L, List.of(ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER)
+        given(searchMemberPort.searchMemberIds(any(), any())).willReturn(memberIdPage);
+        given(getMemberUseCase.findAllByIds(anySet())).willReturn(Map.of(10L, profile(10L, "운영진")));
+        given(getChallengerUseCase.getAllByMemberIds(anySet())).willReturn(Map.of(
+            10L, List.of(
+                challenger(101L, 10L, 8L, ChallengerPart.SPRINGBOOT, ChallengerStatus.ACTIVE)
+            )
         ));
-        given(getGisuUseCase.getByIds(anySet())).willReturn(List.of(
-            new GisuInfo(6L, 7L, Instant.now().minusSeconds(1000), Instant.now().minusSeconds(500), false),
-            new GisuInfo(activeGisuId, 8L, Instant.now(), Instant.now().plusSeconds(100), true)
-        ));
-        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.of(
-            new GisuInfo(activeGisuId, 8L, Instant.now(), Instant.now().plusSeconds(100), true)
-        ));
+        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.of(gisu(8L, 9L, true)));
+        given(getGisuUseCase.getByIds(anySet())).willReturn(List.of(gisu(8L, 9L, true)));
+        given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet()))
+            .willReturn(Map.of(101L, List.of(ChallengerRoleType.SCHOOL_PRESIDENT)));
 
         SearchMemberV2Result result = memberSearchService.searchByV2(
             new SearchMemberQuery(null, null, null, null, null), pageable
         );
 
-        List<SearchMemberItemV2Info> content = result.page().getContent();
-        // 두 행 모두 isAdminInActiveGisu=true (회원 단위로 확장)
-        assertThat(content).extracting(SearchMemberItemV2Info::isAdminInActiveGisu)
-            .containsExactly(true, true);
+        assertThat(result.page().getContent().get(0).isAdminInActiveGisu()).isTrue();
+    }
+
+    @Test
+    void 휴지기에는_isAdminInActiveGisu가_항상_false이다() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Long> memberIdPage = new PageImpl<>(List.of(10L), pageable, 1);
+
+        given(searchMemberPort.searchMemberIds(any(), any())).willReturn(memberIdPage);
+        given(getMemberUseCase.findAllByIds(anySet())).willReturn(Map.of(10L, profile(10L, "회원")));
+        given(getChallengerUseCase.getAllByMemberIds(anySet())).willReturn(Map.of(
+            10L, List.of(challenger(101L, 10L, 7L, ChallengerPart.WEB, ChallengerStatus.GRADUATED))
+        ));
+        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.empty()); // 휴지기
+        given(getGisuUseCase.getByIds(anySet())).willReturn(List.of(gisu(7L, 8L, false)));
+
+        SearchMemberV2Result result = memberSearchService.searchByV2(
+            new SearchMemberQuery(null, null, null, null, null), pageable
+        );
+
+        assertThat(result.page().getContent().get(0).isAdminInActiveGisu()).isFalse();
+    }
+
+    @Test
+    void 검색결과가_비어있으면_빈_페이지를_반환한다() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Long> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+        given(searchMemberPort.searchMemberIds(any(), any())).willReturn(emptyPage);
+
+        SearchMemberV2Result result = memberSearchService.searchByV2(
+            new SearchMemberQuery(null, null, null, null, null), pageable
+        );
+
+        assertThat(result.page().getContent()).isEmpty();
+        assertThat(result.page().getTotalElements()).isZero();
     }
 }
