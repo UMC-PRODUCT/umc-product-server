@@ -36,7 +36,7 @@ public class ChapterService implements ManageChapterUseCase {
 
     @Override
     public Long create(CreateChapterCommand command) {
-        Gisu gisu = loadGisuPort.findById(command.gisuId());
+        Gisu gisu = loadGisuPort.getById(command.gisuId());
         validateChapterNameNotDuplicated(command.gisuId(), command.name());
 
         Chapter chapter = Chapter.create(gisu, command.name());
