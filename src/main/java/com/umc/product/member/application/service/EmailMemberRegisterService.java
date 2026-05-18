@@ -4,6 +4,7 @@ import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.audit.domain.AuditLogEvent;
 import com.umc.product.authentication.application.port.in.command.CredentialAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialByEmailCommand;
+import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
@@ -12,7 +13,6 @@ import com.umc.product.member.domain.Member;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 /**
@@ -31,7 +31,7 @@ public class EmailMemberRegisterService implements RegisterEmailMemberUseCase {
     private final CredentialAuthenticationUseCase credentialAuthenticationUseCase;
     private final GetSchoolUseCase getSchoolUseCase;
 
-    private final ApplicationEventPublisher eventPublisher;
+    private final DomainEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -49,7 +49,7 @@ public class EmailMemberRegisterService implements RegisterEmailMemberUseCase {
             + "소속 " + command.nickname() + "/" + command.name()
             + " 님이 회원 가입하셨습니다.";
 
-        eventPublisher.publishEvent(
+        eventPublisher.publish(
             AuditLogEvent.builder()
                 .domain(Domain.MEMBER)
                 .action(AuditAction.REGISTER)
