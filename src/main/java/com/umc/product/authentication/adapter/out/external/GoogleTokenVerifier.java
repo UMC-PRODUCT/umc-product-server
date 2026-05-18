@@ -1,6 +1,6 @@
 package com.umc.product.authentication.adapter.out.external;
 
-import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
+import com.umc.product.authentication.adapter.out.external.OAuthAttributes;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import java.util.HashMap;
@@ -35,14 +35,14 @@ public class GoogleTokenVerifier {
     private List<String> googleClientIdList;
 
     /**
-     * Google ID 토큰을 검증하고 OAuth2Attributes로 변환합니다.
+     * Google ID 토큰을 검증하고 OAuthAttributes로 변환합니다.
      *
      * @param idToken Google에서 발급받은 ID 토큰
-     * @return OAuth2Attributes
+     * @return OAuthAttributes
      * @throws AuthenticationDomainException 토큰 검증 실패 시
      */
     @Deprecated
-    public OAuth2Attributes verifyIdToken(String idToken) {
+    public OAuthAttributes verifyIdToken(String idToken) {
         log.debug("Google ID Token 검증 시작");
 
         try {
@@ -68,14 +68,14 @@ public class GoogleTokenVerifier {
 
             log.info("Google ID 토큰 검증 성공: sub={}, email={}", response.sub(), response.email());
 
-            // OAuth2Attributes 형식에 맞게 Map 생성
+            // OAuthAttributes 형식에 맞게 Map 생성
             Map<String, Object> attributes = new HashMap<>();
             attributes.put("sub", response.sub());
             attributes.put("email", response.email());
             attributes.put("name", response.name());
             attributes.put("picture", response.picture());
 
-            return OAuth2Attributes.of("google", attributes);
+            return OAuthAttributes.of("google", attributes);
 
         } catch (AuthenticationDomainException e) {
             throw e;
@@ -85,7 +85,7 @@ public class GoogleTokenVerifier {
         }
     }
 
-    public OAuth2Attributes verifyAccessToken(String accessToken) {
+    public OAuthAttributes verifyAccessToken(String accessToken) {
         log.debug("Google Access Token 검증 시작");
 
         try {
@@ -111,12 +111,12 @@ public class GoogleTokenVerifier {
 
             log.info("Google Access Token 검증 성공: sub={}, email={}", response.sub(), response.email());
 
-            // OAuth2Attributes 형식에 맞게 Map 생성
+            // OAuthAttributes 형식에 맞게 Map 생성
             Map<String, Object> attributes = new HashMap<>();
             attributes.put("sub", response.sub());
             attributes.put("email", response.email());
 
-            return OAuth2Attributes.of("google", attributes);
+            return OAuthAttributes.of("google", attributes);
 
         } catch (AuthenticationDomainException e) {
             throw e;

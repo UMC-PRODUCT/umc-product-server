@@ -77,7 +77,7 @@ public class AuthenticationController implements AuthenticationControllerInterfa
         AppleAuthorizationCodeResult codeResult = verifyOAuthTokenPort.verifyAppleAuthorizationCode(
             request.authorizationCode(), request.clientType()
         );
-        OAuthTokenLoginResult result = oAuthAuthenticationUseCase.loginWithOAuth2Attributes(codeResult.attrs());
+        OAuthTokenLoginResult result = oAuthAuthenticationUseCase.loginWithOAuthAttributes(codeResult.attrs());
 
         if (result.isExistingMember() && codeResult.refreshToken() != null) {
             // 기존 회원: MemberOAuth에 appleRefreshToken과 appleClientId 갱신

@@ -1,7 +1,7 @@
 package com.umc.product.authentication.adapter.out.external;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
+import com.umc.product.authentication.adapter.out.external.OAuthAttributes;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import java.util.HashMap;
@@ -37,7 +37,7 @@ public class KakaoTokenVerifier {
     private String kakaoAdminKey;
 
     /**
-     * Kakao Authorization Code를 교환하고 OAuth2Attributes로 변환합니다.
+     * Kakao Authorization Code를 교환하고 OAuthAttributes로 변환합니다.
      * <p>
      * 동작:
      * <ol>
@@ -48,10 +48,10 @@ public class KakaoTokenVerifier {
      *
      * @param authorizationCode Kakao에서 발급받은 authorization code
      * @param redirectUri       클라이언트가 Kakao 인가 요청에 사용한 redirect URI (화이트리스트와 일치해야 함)
-     * @return OAuth2Attributes
+     * @return OAuthAttributes
      * @throws AuthenticationDomainException redirect URI 불일치, 토큰 교환 실패, 또는 사용자 정보 조회 실패 시
      */
-    public OAuth2Attributes verifyAuthorizationCode(String authorizationCode, String redirectUri) {
+    public OAuthAttributes verifyAuthorizationCode(String authorizationCode, String redirectUri) {
         log.debug("Kakao Authorization Code 교환 시작");
 
         if (!kakaoOAuthProperties.isAllowedRedirectUri(redirectUri)) {
@@ -106,15 +106,15 @@ public class KakaoTokenVerifier {
     }
 
     /**
-     * Kakao Access Token을 검증하고 OAuth2Attributes로 변환합니다.
+     * Kakao Access Token을 검증하고 OAuthAttributes로 변환합니다.
      * <p>
      * Kakao API를 호출하여 사용자 정보를 조회함으로써 토큰의 유효성을 검증합니다.
      *
      * @param accessToken Kakao에서 발급받은 Access Token
-     * @return OAuth2Attributes
+     * @return OAuthAttributes
      * @throws AuthenticationDomainException 토큰 검증 실패 시
      */
-    public OAuth2Attributes verifyAccessToken(String accessToken) {
+    public OAuthAttributes verifyAccessToken(String accessToken) {
         log.debug("Kakao Access Token 검증 시작");
 
         try {
@@ -139,10 +139,10 @@ public class KakaoTokenVerifier {
                 response.kakaoAccount() != null ? response.kakaoAccount().email() : "N/A"
             );
 
-            // OAuth2Attributes.of("kakao", ...) 형식에 맞게 Map 생성
+            // OAuthAttributes.of("kakao", ...) 형식에 맞게 Map 생성
             Map<String, Object> attributes = buildAttributesMap(response);
 
-            return OAuth2Attributes.of("kakao", attributes);
+            return OAuthAttributes.of("kakao", attributes);
 
         } catch (AuthenticationDomainException e) {
             throw e;

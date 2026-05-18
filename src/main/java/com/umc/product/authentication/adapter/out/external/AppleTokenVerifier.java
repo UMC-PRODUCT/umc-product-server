@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
+import com.umc.product.authentication.adapter.out.external.OAuthAttributes;
 import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
@@ -62,16 +62,16 @@ public class AppleTokenVerifier {
     private PrivateKey cachedPrivateKey;
 
     /**
-     * Apple ID Token(JWT)을 검증하고 OAuth2Attributes로 변환합니다.
+     * Apple ID Token(JWT)을 검증하고 OAuthAttributes로 변환합니다.
      * <p>
      * Apple JWKS 공개키로 서명을 검증하고, issuer/audience를 확인합니다.
      *
      * @param idToken  Apple에서 발급받은 identity token (JWT)
      * @param clientId audience 검증에 사용할 client_id (플랫폼별로 다름)
-     * @return OAuth2Attributes
+     * @return OAuthAttributes
      * @throws AuthenticationDomainException 토큰 검증 실패 시
      */
-    public OAuth2Attributes verifyIdToken(String idToken, String clientId) {
+    public OAuthAttributes verifyIdToken(String idToken, String clientId) {
         log.debug("Apple ID Token 검증 시작: clientId={}", clientId);
 
         try {
@@ -99,7 +99,7 @@ public class AppleTokenVerifier {
             attributes.put("sub", sub);
             attributes.put("email", email);
 
-            return OAuth2Attributes.of("apple", attributes);
+            return OAuthAttributes.of("apple", attributes);
 
         } catch (AuthenticationDomainException e) {
             throw e;
@@ -116,7 +116,7 @@ public class AppleTokenVerifier {
      *
      * @param authorizationCode Apple에서 발급받은 authorization code
      * @param clientType        클라이언트 플랫폼 (Apple client_id 매칭용)
-     * @return OAuth2Attributes, refresh token, 그리고 사용된 client_id (DB에 저장하기 위함)
+     * @return OAuthAttributes, refresh token, 그리고 사용된 client_id (DB에 저장하기 위함)
      * @throws AuthenticationDomainException 코드 교환 또는 토큰 검증 실패 시
      */
     public AppleAuthorizationCodeResult verifyAuthorizationCode(String authorizationCode, ClientType clientType) {
@@ -159,7 +159,7 @@ public class AppleTokenVerifier {
             log.info("Apple Authorization Code 교환 성공, ID Token 검증 진행");
 
             // 3. 받은 id_token을 검증
-            OAuth2Attributes attrs = verifyIdToken(response.idToken(), clientId);
+            OAuthAttributes attrs = verifyIdToken(response.idToken(), clientId);
             return new AppleAuthorizationCodeResult(attrs, response.refreshToken(), clientId);
 
         } catch (AuthenticationDomainException e) {

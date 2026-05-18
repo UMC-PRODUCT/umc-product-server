@@ -1,6 +1,6 @@
 package com.umc.product.authentication.application.port.out;
 
-import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
+import com.umc.product.authentication.adapter.out.external.OAuthAttributes;
 import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 
@@ -15,10 +15,10 @@ public interface VerifyOAuthTokenPort {
      *
      * @param provider OAuth Provider (GOOGLE, KAKAO 등)
      * @param token    검증할 토큰 (Google: ID Token, Kakao: Access Token)
-     * @return OAuth2Attributes (기존 클래스 재사용)
+     * @return OAuthAttributes (기존 클래스 재사용)
      * @throws com.umc.product.authentication.domain.exception.AuthenticationDomainException 토큰 검증 실패 시
      */
-    OAuth2Attributes verify(OAuthProvider provider, String token);
+    OAuthAttributes verify(OAuthProvider provider, String token);
 
     /**
      * Authorization Code를 교환하여 사용자 정보를 추출합니다.
@@ -29,11 +29,11 @@ public interface VerifyOAuthTokenPort {
      * @param provider          OAuth Provider (현재는 KAKAO만 지원)
      * @param authorizationCode 발급받은 authorization code
      * @param redirectUri       인가 요청에 사용한 redirect URI (token 교환 시 동일 값이어야 함)
-     * @return OAuth2Attributes
+     * @return OAuthAttributes
      * @throws com.umc.product.authentication.domain.exception.AuthenticationDomainException
      *     지원하지 않는 provider이거나 코드 교환 실패 시
      */
-    OAuth2Attributes verifyAuthorizationCode(OAuthProvider provider, String authorizationCode, String redirectUri);
+    OAuthAttributes verifyAuthorizationCode(OAuthProvider provider, String authorizationCode, String redirectUri);
 
     /**
      * Apple Authorization Code를 교환하여 사용자 정보를 추출합니다.
