@@ -2,6 +2,7 @@ package com.umc.product.member.application.service;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
@@ -74,8 +75,10 @@ public class MemberSearchService implements SearchMemberUseCase {
         Long activeGisuId = getGisuUseCase.findActiveGisu()
             .map(GisuInfo::gisuId)
             .orElse(null);
+        Map<Long, ChallengerBasicInfo> activeGisuChallengerByMemberId =
+            loadActiveGisuChallengerByMemberId(content, activeGisuId);
         Set<Long> adminChallengerIdsInActiveGisu =
-            collectAdminChallengerIdsInActiveGisu(content, activeGisuId);
+            collectAdminChallengerIdsInActiveGisu(content, roleTypes, activeGisuChallengerByMemberId);
 
         Page<ChallengerSearchItemV2Info> items = challengers.map(challenger ->
             toChallengerSearchItemV2(challenger, memberProfiles, roleTypes, gisuGenerationMap,
@@ -100,8 +103,8 @@ public class MemberSearchService implements SearchMemberUseCase {
         Map<Long, MemberInfo> memberInfoMap = getMemberUseCase.findAllByIds(memberIdSet);
 
         // 회원별 모든 챌린저 batch 로딩 (IN 쿼리 1회)
-        Map<Long, List<ChallengerInfo>> challengersByMemberId =
-            getChallengerUseCase.getAllByMemberIds(memberIdSet);
+        Map<Long, List<ChallengerBasicInfo>> challengersByMemberId =
+            getChallengerUseCase.getAllBasicByMemberIds(memberIdSet);
 
         // 활성 기수 한 번 조회 (휴지기에는 Optional.empty)
         Optional<GisuInfo> activeGisuOpt = getGisuUseCase.findActiveGisu();
@@ -197,34 +200,54 @@ public class MemberSearchService implements SearchMemberUseCase {
      * 검색 결과 챌린저 행들 가운데, 같은 회원이 활성 기수에 운영진 ChallengerRole을 보유하면
      * 그 회원이 가진 모든 챌린저 행에 대해 isAdminInActiveGisu=true가 되도록 챌린저 ID 집합을 만듭니다.
      */
-    private Set<Long> collectAdminChallengerIdsInActiveGisu(
+    private Map<Long, ChallengerBasicInfo> loadActiveGisuChallengerByMemberId(
         List<Challenger> content,
         Long activeGisuId
     ) {
         if (activeGisuId == null || content.isEmpty()) {
-            return Set.of();
+            return Map.of();
         }
 
-        Set<Long> activeGisuChallengerIds = content.stream()
-            .filter(c -> Objects.equals(c.getGisuId(), activeGisuId))
-            .map(Challenger::getId)
-            .collect(Collectors.toSet());
-
-        if (activeGisuChallengerIds.isEmpty()) {
-            return Set.of();
-        }
-
-        Map<Long, List<ChallengerRoleType>> activeGisuRoleTypes =
-            getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(activeGisuChallengerIds);
-
-        Set<Long> adminChallengerIds = activeGisuRoleTypes.entrySet().stream()
-            .filter(e -> !e.getValue().isEmpty())
-            .map(Map.Entry::getKey)
-            .collect(Collectors.toSet());
-
-        Set<Long> adminMemberIds = content.stream()
-            .filter(c -> adminChallengerIds.contains(c.getId()))
+        Set<Long> memberIds = content.stream()
             .map(Challenger::getMemberId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        if (memberIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return getChallengerUseCase.listBasicByMemberIdsAndGisuId(memberIds, activeGisuId).stream()
+            .collect(Collectors.toMap(ChallengerBasicInfo::memberId, c -> c, (a, b) -> a));
+    }
+
+    private Set<Long> collectAdminChallengerIdsInActiveGisu(
+        List<Challenger> content,
+        Map<Long, List<ChallengerRoleType>> roleTypes,
+        Map<Long, ChallengerBasicInfo> activeGisuChallengerByMemberId
+    ) {
+        if (content.isEmpty() || activeGisuChallengerByMemberId.isEmpty()) {
+            return Set.of();
+        }
+
+        Set<Long> activeGisuChallengerIds = activeGisuChallengerByMemberId.values().stream()
+            .map(ChallengerBasicInfo::challengerId)
+            .collect(Collectors.toSet());
+
+        Set<Long> missingRoleChallengerIds = activeGisuChallengerIds.stream()
+            .filter(challengerId -> !roleTypes.containsKey(challengerId))
+            .collect(Collectors.toSet());
+
+        Map<Long, List<ChallengerRoleType>> missingRoleTypes = missingRoleChallengerIds.isEmpty()
+            ? Map.of()
+            : getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(missingRoleChallengerIds);
+
+        Set<Long> adminMemberIds = activeGisuChallengerByMemberId.values().stream()
+            .filter(c -> !roleTypes.getOrDefault(
+                c.challengerId(),
+                missingRoleTypes.getOrDefault(c.challengerId(), List.of())
+            ).isEmpty())
+            .map(ChallengerBasicInfo::memberId)
             .collect(Collectors.toSet());
 
         return content.stream()
@@ -262,10 +285,10 @@ public class MemberSearchService implements SearchMemberUseCase {
 
     // ======= PRIVATE — member search v2 helpers =========
 
-    private Map<Long, Long> loadGenerationMap(Map<Long, List<ChallengerInfo>> challengersByMemberId) {
+    private Map<Long, Long> loadGenerationMap(Map<Long, List<ChallengerBasicInfo>> challengersByMemberId) {
         Set<Long> gisuIds = challengersByMemberId.values().stream()
             .flatMap(List::stream)
-            .map(ChallengerInfo::gisuId)
+            .map(ChallengerBasicInfo::gisuId)
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
 
@@ -278,7 +301,7 @@ public class MemberSearchService implements SearchMemberUseCase {
     }
 
     private Set<Long> computeMembersWithAdminInActiveGisu(
-        Map<Long, List<ChallengerInfo>> challengersByMemberId,
+        Map<Long, List<ChallengerBasicInfo>> challengersByMemberId,
         Long activeGisuId
     ) {
         if (activeGisuId == null) {
@@ -288,7 +311,7 @@ public class MemberSearchService implements SearchMemberUseCase {
         Set<Long> activeGisuChallengerIds = challengersByMemberId.values().stream()
             .flatMap(List::stream)
             .filter(c -> Objects.equals(c.gisuId(), activeGisuId))
-            .map(ChallengerInfo::challengerId)
+            .map(ChallengerBasicInfo::challengerId)
             .collect(Collectors.toSet());
 
         if (activeGisuChallengerIds.isEmpty()) {
@@ -313,7 +336,7 @@ public class MemberSearchService implements SearchMemberUseCase {
     private SearchMemberItemV2Info toItemV2Info(
         Long memberId,
         Map<Long, MemberInfo> memberInfoMap,
-        List<ChallengerInfo> myChallengers,
+        List<ChallengerBasicInfo> myChallengers,
         Map<Long, Long> generationByGisuId,
         Long activeGisuId,
         boolean isAdminInActiveGisu
@@ -323,8 +346,8 @@ public class MemberSearchService implements SearchMemberUseCase {
         PrimaryChallenger primary = selectPrimaryChallenger(myChallengers, generationByGisuId, activeGisuId);
         List<Participation> participations = myChallengers.stream()
             .sorted(Comparator
-                .comparing((ChallengerInfo c) -> generationByGisuId.getOrDefault(c.gisuId(), 0L)).reversed()
-                .thenComparing(ChallengerInfo::challengerId))
+                .comparing((ChallengerBasicInfo c) -> generationByGisuId.getOrDefault(c.gisuId(), 0L)).reversed()
+                .thenComparing(ChallengerBasicInfo::challengerId))
             .map(c -> new Participation(
                 c.challengerId(),
                 c.gisuId(),
@@ -352,7 +375,7 @@ public class MemberSearchService implements SearchMemberUseCase {
      * 활성 기수 챌린저가 있으면 그것을, 없으면 가장 최신 기수의 챌린저를 대표로 선택합니다.
      */
     private PrimaryChallenger selectPrimaryChallenger(
-        List<ChallengerInfo> challengers,
+        List<ChallengerBasicInfo> challengers,
         Map<Long, Long> generationByGisuId,
         Long activeGisuId
     ) {
@@ -360,12 +383,12 @@ public class MemberSearchService implements SearchMemberUseCase {
             return null;
         }
 
-        Optional<ChallengerInfo> active = activeGisuId == null ? Optional.empty()
+        Optional<ChallengerBasicInfo> active = activeGisuId == null ? Optional.empty()
             : challengers.stream()
                 .filter(c -> Objects.equals(c.gisuId(), activeGisuId))
                 .findFirst();
 
-        ChallengerInfo picked = active.orElseGet(() -> challengers.stream()
+        ChallengerBasicInfo picked = active.orElseGet(() -> challengers.stream()
             .max(Comparator.comparing(c -> generationByGisuId.getOrDefault(c.gisuId(), 0L)))
             .orElseThrow());
 

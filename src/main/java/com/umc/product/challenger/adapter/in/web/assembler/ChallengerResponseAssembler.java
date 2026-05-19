@@ -62,8 +62,19 @@ public class ChallengerResponseAssembler {
                 challengerInfo,
                 memberInfo,
                 gisuByGisuId.get(challengerInfo.gisuId()),
-                chapterByGisuAndSchool.getOrDefault(challengerInfo.gisuId(), Map.of()).get(memberInfo.schoolId())
+                getChapterInfo(chapterByGisuAndSchool, challengerInfo.gisuId(), memberInfo.schoolId())
             ))
             .toList();
+    }
+
+    private ChapterInfo getChapterInfo(
+        Map<Long, Map<Long, ChapterInfo>> chapterByGisuAndSchool,
+        Long gisuId,
+        Long schoolId
+    ) {
+        if (schoolId == null) {
+            return null;
+        }
+        return chapterByGisuAndSchool.getOrDefault(gisuId, Map.of()).get(schoolId);
     }
 }

@@ -102,7 +102,7 @@ public class MemberSummaryV2QueryService implements GetMemberSummaryV2UseCase {
             .map(c -> ChallengerHistoryItem.of(
                 c,
                 gisuByGisuId.get(c.gisuId()),
-                chapterByGisuAndSchool.getOrDefault(c.gisuId(), Map.of()).get(memberInfo.schoolId()),
+                getChapterInfo(chapterByGisuAndSchool, c.gisuId(), memberInfo.schoolId()),
                 roleTypesByChallengerId
             ))
             .toList();
@@ -126,6 +126,17 @@ public class MemberSummaryV2QueryService implements GetMemberSummaryV2UseCase {
         );
     }
 
+    private ChapterInfo getChapterInfo(
+        Map<Long, Map<Long, ChapterInfo>> chapterByGisuAndSchool,
+        Long gisuId,
+        Long schoolId
+    ) {
+        if (schoolId == null) {
+            return null;
+        }
+        return chapterByGisuAndSchool.getOrDefault(gisuId, Map.of()).get(schoolId);
+    }
+
     private CurrentGisuMembership buildCurrentMembership(
         GisuInfo activeGisu,
         List<ChallengerInfo> challengers,
@@ -140,7 +151,6 @@ public class MemberSummaryV2QueryService implements GetMemberSummaryV2UseCase {
             .findFirst();
 
         // 활성 기수에 속한 챌린저 행(상태 불문)의 역할 타입을 모두 모읍니다.
-        // 활성 기수에 챌린저 레코드는 없고 운영진 기록만 있는 케이스를 위해 빈 챌린저도 포함되는 식으로 처리.
         List<ChallengerRoleType> roleTypes = challengers.stream()
             .filter(c -> Objects.equals(c.gisuId(), activeGisuId))
             .flatMap(c -> roleTypesByChallengerId.getOrDefault(c.challengerId(), List.of()).stream())

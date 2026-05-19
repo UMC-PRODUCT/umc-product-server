@@ -9,7 +9,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.Duration;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -73,12 +72,6 @@ public class Gisu extends BaseEntity {
     public long activityDays(Instant now) {
         Instant start = getStartAt();
         Instant end = getEndAt();
-
-        if (now.isBefore(start)) {
-            return 0L;
-        }
-
-        Instant effectiveEnd = now.isBefore(end) ? now : end;
-        return Duration.between(start, effectiveEnd).toDays();
+        return GisuActivityDays.calculate(start, end, now);
     }
 }

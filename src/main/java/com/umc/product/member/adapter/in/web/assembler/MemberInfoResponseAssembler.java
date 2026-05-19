@@ -55,7 +55,7 @@ public class MemberInfoResponseAssembler {
                 info,
                 memberInfo,
                 gisuByGisuId.get(info.gisuId()),
-                chapterByGisuAndSchool.getOrDefault(info.gisuId(), Map.of()).get(memberInfo.schoolId())
+                getChapterInfo(chapterByGisuAndSchool, info.gisuId(), memberInfo.schoolId())
             ))
             .toList();
 
@@ -66,5 +66,16 @@ public class MemberInfoResponseAssembler {
 
     public MemberInfoResponse fromMemberIdToPublic(Long memberId) {
         return fromMemberId(memberId).toPublic();
+    }
+
+    private ChapterInfo getChapterInfo(
+        Map<Long, Map<Long, ChapterInfo>> chapterByGisuAndSchool,
+        Long gisuId,
+        Long schoolId
+    ) {
+        if (schoolId == null) {
+            return null;
+        }
+        return chapterByGisuAndSchool.getOrDefault(gisuId, Map.of()).get(schoolId);
     }
 }

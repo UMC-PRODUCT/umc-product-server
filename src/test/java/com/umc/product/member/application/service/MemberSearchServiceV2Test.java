@@ -7,7 +7,7 @@ import static org.mockito.BDDMockito.given;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
@@ -59,16 +59,14 @@ class MemberSearchServiceV2Test {
             .build();
     }
 
-    private ChallengerInfo challenger(Long id, Long memberId, Long gisuId, ChallengerPart part, ChallengerStatus status) {
-        return ChallengerInfo.builder()
-            .challengerId(id)
-            .memberId(memberId)
-            .gisuId(gisuId)
-            .part(part)
-            .challengerPoints(List.of())
-            .totalPoints(0.0)
-            .challengerStatus(status)
-            .build();
+    private ChallengerBasicInfo challenger(
+        Long id,
+        Long memberId,
+        Long gisuId,
+        ChallengerPart part,
+        ChallengerStatus status
+    ) {
+        return new ChallengerBasicInfo(id, memberId, gisuId, part, status);
     }
 
     private GisuInfo gisu(Long gisuId, Long generation, boolean active) {
@@ -83,7 +81,7 @@ class MemberSearchServiceV2Test {
 
         given(searchMemberPort.searchMemberIds(any(), any())).willReturn(memberIdPage);
         given(getMemberUseCase.findAllByIds(anySet())).willReturn(Map.of(10L, profile(10L, "홍길동")));
-        given(getChallengerUseCase.getAllByMemberIds(anySet())).willReturn(Map.of(
+        given(getChallengerUseCase.getAllBasicByMemberIds(anySet())).willReturn(Map.of(
             10L, List.of(
                 challenger(101L, 10L, 6L, ChallengerPart.WEB, ChallengerStatus.GRADUATED),
                 challenger(102L, 10L, 7L, ChallengerPart.SPRINGBOOT, ChallengerStatus.GRADUATED),
@@ -120,7 +118,7 @@ class MemberSearchServiceV2Test {
 
         given(searchMemberPort.searchMemberIds(any(), any())).willReturn(memberIdPage);
         given(getMemberUseCase.findAllByIds(anySet())).willReturn(Map.of(10L, profile(10L, "졸업자")));
-        given(getChallengerUseCase.getAllByMemberIds(anySet())).willReturn(Map.of(
+        given(getChallengerUseCase.getAllBasicByMemberIds(anySet())).willReturn(Map.of(
             10L, List.of(
                 challenger(101L, 10L, 6L, ChallengerPart.WEB, ChallengerStatus.GRADUATED),
                 challenger(102L, 10L, 7L, ChallengerPart.SPRINGBOOT, ChallengerStatus.GRADUATED)
@@ -151,7 +149,7 @@ class MemberSearchServiceV2Test {
 
         given(searchMemberPort.searchMemberIds(any(), any())).willReturn(memberIdPage);
         given(getMemberUseCase.findAllByIds(anySet())).willReturn(Map.of(10L, profile(10L, "운영진")));
-        given(getChallengerUseCase.getAllByMemberIds(anySet())).willReturn(Map.of(
+        given(getChallengerUseCase.getAllBasicByMemberIds(anySet())).willReturn(Map.of(
             10L, List.of(
                 challenger(101L, 10L, 8L, ChallengerPart.SPRINGBOOT, ChallengerStatus.ACTIVE)
             )
@@ -175,7 +173,7 @@ class MemberSearchServiceV2Test {
 
         given(searchMemberPort.searchMemberIds(any(), any())).willReturn(memberIdPage);
         given(getMemberUseCase.findAllByIds(anySet())).willReturn(Map.of(10L, profile(10L, "회원")));
-        given(getChallengerUseCase.getAllByMemberIds(anySet())).willReturn(Map.of(
+        given(getChallengerUseCase.getAllBasicByMemberIds(anySet())).willReturn(Map.of(
             10L, List.of(challenger(101L, 10L, 7L, ChallengerPart.WEB, ChallengerStatus.GRADUATED))
         ));
         given(getGisuUseCase.findActiveGisu()).willReturn(Optional.empty()); // 휴지기

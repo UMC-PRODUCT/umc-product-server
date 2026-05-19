@@ -2,6 +2,7 @@ package com.umc.product.challenger.application.service;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerPointUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
@@ -90,6 +91,27 @@ public class ChallengerQueryService implements GetChallengerUseCase {
         List<ChallengerInfo> infos = toChallengerInfoListBatch(challengers);
         return infos.stream()
             .collect(Collectors.groupingBy(ChallengerInfo::memberId));
+    }
+
+    @Override
+    public Map<Long, List<ChallengerBasicInfo>> getAllBasicByMemberIds(Set<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Challenger> challengers = loadChallengerPort.listAllByMemberIds(memberIds);
+        if (challengers.isEmpty()) {
+            return Map.of();
+        }
+        return challengers.stream()
+            .map(ChallengerBasicInfo::from)
+            .collect(Collectors.groupingBy(ChallengerBasicInfo::memberId));
+    }
+
+    @Override
+    public List<ChallengerBasicInfo> listBasicByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId) {
+        return loadChallengerPort.listByMemberIdsAndGisuId(memberIds, gisuId).stream()
+            .map(ChallengerBasicInfo::from)
+            .toList();
     }
 
     @Override

@@ -43,12 +43,12 @@ public class MemberQueryV2Controller {
 
             - 기본 프로필 및 소셜 링크
             - 모든 참여 기수의 활동 기간을 합산한 `totalActivityDays`
-            - `currentGisuMembership`
+            - `currentGisuMemberInfo`
               - 활성 기수 정보 (gisuId, generation)
               - 활성 기수에 ACTIVE 상태인 챌린저 신분 (없으면 null)
               - 활성 기수에 운영진 ChallengerRole 하나라도 보유 여부 (`isAdmin`)
               - 보유 운영진 RoleType 목록
-              - 휴지기에는 `currentGisuMembership = null`
+              - 휴지기에는 `currentGisuMemberInfo = null`
             - `challengerHistory` : 모든 기수의 챌린저 이력 (최신 기수 우선). 기수별 상벌점 포함.
             """
     )
@@ -62,9 +62,10 @@ public class MemberQueryV2Controller {
     @Operation(
         summary = "[MEMBER-202] 회원 검색 v2",
         description = """
-            v1 검색 응답에 추가로 다음 두 필드를 제공합니다.
+            회원 단위 검색 결과를 반환합니다.
 
-            - `challengerStatus` : 해당 행 챌린저의 상태 (ACTIVE/GRADUATED/EXPELLED/WITHDRAWN)
+            - `currentChallenger` : 활성 기수 챌린저 우선, 없으면 최신 기수 챌린저
+            - `challengerRecords` : 회원이 보유한 모든 챌린저 이력 요약
             - `isAdminInActiveGisu` : 회원이 현재 활성 기수에 운영진 ChallengerRole을 하나라도 보유하는지
 
             검색 조건/필터는 v1과 동일합니다.

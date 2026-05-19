@@ -94,7 +94,7 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
 
     @Override
     public List<Challenger> listByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId) {
-        if (memberIds == null || memberIds.isEmpty()) {
+        if (memberIds == null || memberIds.isEmpty() || gisuId == null) {
             return List.of();
         }
         return repository.findByMemberIdInAndGisuId(memberIds, gisuId);

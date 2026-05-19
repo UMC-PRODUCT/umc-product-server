@@ -12,7 +12,7 @@ public interface SearchMemberUseCase {
 
     /**
      * v2 회원 검색 — 같은 회원의 여러 기수 챌린저 이력은 1개 row로 묶입니다.
-     * primaryChallenger와 participations 요약을 함께 제공합니다.
+     * currentChallenger와 challengerRecords 요약을 함께 제공합니다.
      */
     SearchMemberV2Result searchByV2(SearchMemberQuery query, Pageable pageable);
 
