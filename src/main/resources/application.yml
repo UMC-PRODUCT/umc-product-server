@@ -65,7 +65,8 @@ spring:
       auto-commit: true
 
       maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:10}
-      minimum-idle: ${HIKARI_MIN_IDLE:10}
+      minimum-idle: ${HIKARI_MIN_IDLE:2}
+      initialization-fail-timeout: ${HIKARI_INITIALIZATION_FAIL_TIMEOUT:-1}
 
       # 3. 수명 및 타임아웃
       max-lifetime: 1800000       # 30분
@@ -81,8 +82,7 @@ spring:
     out-of-order: ${FLYWAY_OUT_OF_ORDER:false}
 
   jpa:
-    # database-platform은 SpringBoot가 hibernate-spatial 의존성을 기반으로 자동으로 선택함
-    # 따라서 포함하지 않도록 함.
+    database-platform: org.hibernate.spatial.dialect.postgis.PostgisPG10Dialect
     hibernate:
       ddl-auto: validate
     open-in-view: false
@@ -90,7 +90,10 @@ spring:
       hibernate:
         default_schema: public
         format_sql: true
-        # dialect는 명시가 불필요해서 생략
+        boot:
+          allow_jdbc_metadata_access: false
+        temp:
+          use_jdbc_metadata_defaults: false
         show_sql: false # p6spy가 있어서 꺼둠
 
   # ====================================================================
@@ -428,3 +431,14 @@ spring:
 app:
   seed:
     enabled: ${APP_SEED_ENABLED:true}
+
+# ==================================================================
+# local 환경에 대한 default override
+# ==================================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  main:
+    lazy-initialization: true
