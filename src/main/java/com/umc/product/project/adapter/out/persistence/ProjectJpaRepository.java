@@ -9,8 +9,6 @@ public interface ProjectJpaRepository extends JpaRepository<Project, Long> {
 
     boolean existsByProductOwnerMemberIdAndGisuId(Long productOwnerMemberId, Long gisuId);
 
-    boolean existsByProductOwnerMemberIdAndGisuIdAndChapterId(Long productOwnerMemberId, Long gisuId, Long chapterId);
-
     Optional<Project> findByCreatorMemberIdAndGisuIdAndStatus(
         Long creatorMemberId, Long gisuId, ProjectStatus status);
 

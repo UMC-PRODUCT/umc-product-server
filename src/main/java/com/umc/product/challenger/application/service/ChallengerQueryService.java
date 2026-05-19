@@ -4,7 +4,6 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerPointUs
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerPartInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
@@ -157,13 +156,6 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     @Override
     public List<ChallengerInfo> getAllByGisuId(Long gisuId) {
         return toChallengerInfoListBatch(loadChallengerPort.getAllByGisuId(gisuId));
-    }
-
-    @Override
-    public List<ChallengerPartInfo> getPartsByGisuId(Long gisuId) {
-        return loadChallengerPort.getAllByGisuId(gisuId).stream()
-            .map(c -> new ChallengerPartInfo(c.getMemberId(), c.getPart()))
-            .toList();
     }
 
     @Override
