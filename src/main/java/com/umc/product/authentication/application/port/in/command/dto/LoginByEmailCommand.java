@@ -1,5 +1,7 @@
 package com.umc.product.authentication.application.port.in.command.dto;
 
+import com.umc.product.common.domain.enums.ClientType;
+
 /**
  * 이메일/PW 로그인 커맨드.
  * <p>
@@ -8,14 +10,19 @@ package com.umc.product.authentication.application.port.in.command.dto;
  */
 public record LoginByEmailCommand(
     String email,
-    String rawPassword
+    String rawPassword,
+    ClientType clientType
 ) {
     public static LoginByEmailCommand of(String email, String rawPassword) {
-        return new LoginByEmailCommand(email, rawPassword);
+        return of(email, rawPassword, null);
+    }
+
+    public static LoginByEmailCommand of(String email, String rawPassword, ClientType clientType) {
+        return new LoginByEmailCommand(email, rawPassword, clientType);
     }
 
     @Override
     public String toString() {
-        return "LoginByEmailCommand[email=" + email + ", rawPassword=***]";
+        return "LoginByEmailCommand[email=" + email + ", rawPassword=***, clientType=" + clientType + "]";
     }
 }

@@ -12,12 +12,13 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
 import com.umc.product.authentication.application.port.in.command.dto.ChangePasswordCommand;
-import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
+import com.umc.product.authentication.application.port.in.command.dto.LocalLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.ResetPasswordByEmailCommand;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.member.application.port.in.command.ManageMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswordCommand;
@@ -210,23 +211,27 @@ class CredentialAuthenticationServiceTest {
     class LoginByEmail {
 
         @Test
-        @DisplayName("정상 로그인 시 토큰을 발급하고, 별도 트랜잭션의 rehashService.rehashIfNeeded 를 호출한다")
-        void 로그인_성공_rehash호출_확인() {
+        @DisplayName("정상 로그인 시 clientType 을 포함해 토큰을 발급하고, 별도 트랜잭션의 rehashService.rehashIfNeeded 를 호출한다")
+        void 로그인_성공_clientType_토큰_발급_rehash호출_확인() {
             // given
             MemberCredentialInfo credential = new MemberCredentialInfo(MEMBER_ID, ENCODED_PASSWORD);
             given(getMemberCredentialUseCase.findCredentialByEmail(EMAIL))
                 .willReturn(Optional.of(credential));
             given(passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
-            given(jwtTokenProvider.createAccessToken(eq(MEMBER_ID), anyList())).willReturn("access-token");
+            given(jwtTokenProvider.createAccessToken(eq(MEMBER_ID), anyList(), eq(ClientType.IOS)))
+                .willReturn("access-token");
             given(jwtTokenProvider.createRefreshToken(MEMBER_ID)).willReturn("refresh-token");
 
             // when
-            IdPwLoginResult result = service.loginByEmail(LoginByEmailCommand.of(EMAIL, RAW_PASSWORD));
+            LocalLoginResult result = service.loginByEmail(
+                LoginByEmailCommand.of(EMAIL, RAW_PASSWORD, ClientType.IOS)
+            );
 
             // then
             assertThat(result.memberId()).isEqualTo(MEMBER_ID);
             assertThat(result.accessToken()).isEqualTo("access-token");
             assertThat(result.refreshToken()).isEqualTo("refresh-token");
+            then(jwtTokenProvider).should().createAccessToken(eq(MEMBER_ID), anyList(), eq(ClientType.IOS));
             then(rehashService).should().rehashIfNeeded(credential, RAW_PASSWORD);
         }
 
@@ -246,6 +251,7 @@ class CredentialAuthenticationServiceTest {
             // 매칭/토큰 발급은 호출되지 않아야 한다
             then(passwordEncoder).should(never()).matches(anyString(), anyString());
             then(jwtTokenProvider).should(never()).createAccessToken(anyLong(), anyList());
+            then(jwtTokenProvider).should(never()).createAccessToken(anyLong(), anyList(), any(ClientType.class));
         }
 
         @Test
@@ -264,6 +270,7 @@ class CredentialAuthenticationServiceTest {
                 .isEqualTo(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL);
 
             then(jwtTokenProvider).should(never()).createAccessToken(anyLong(), anyList());
+            then(jwtTokenProvider).should(never()).createAccessToken(anyLong(), anyList(), any(ClientType.class));
             then(manageMemberCredentialUseCase).should(never()).changePassword(any());
         }
     }
