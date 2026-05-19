@@ -1,7 +1,7 @@
 package com.umc.product.authentication.application.port.in.command;
 
 import com.umc.product.authentication.application.port.in.command.dto.ChangePasswordCommand;
-import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
+import com.umc.product.authentication.application.port.in.command.dto.LocalLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.ResetPasswordByEmailCommand;
@@ -38,5 +38,5 @@ public interface CredentialAuthenticationUseCase {
      * 이메일/PW 로그인. 성공 시 JWT 토큰 쌍을 발급하며,
      * 해시 파라미터가 갱신 대상이면 transparent rehash 를 수행한다.
      */
-    IdPwLoginResult loginByEmail(LoginByEmailCommand command);
+    LocalLoginResult loginByEmail(LoginByEmailCommand command);
 }

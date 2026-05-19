@@ -12,7 +12,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
 import com.umc.product.authentication.application.port.in.command.dto.ChangePasswordCommand;
-import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
+import com.umc.product.authentication.application.port.in.command.dto.LocalLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.ResetPasswordByEmailCommand;
@@ -223,7 +223,7 @@ class CredentialAuthenticationServiceTest {
             given(jwtTokenProvider.createRefreshToken(MEMBER_ID)).willReturn("refresh-token");
 
             // when
-            IdPwLoginResult result = service.loginByEmail(
+            LocalLoginResult result = service.loginByEmail(
                 LoginByEmailCommand.of(EMAIL, RAW_PASSWORD, ClientType.IOS)
             );
 
