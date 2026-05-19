@@ -343,8 +343,8 @@ app:
   seed:
     enabled: ${APP_SEED_ENABLED:false}
     skip-if-member-count-greater-than: ${APP_SEED_SKIP_THRESHOLD:0}
-    email-domain: ${APP_SEED_EMAIL_DOMAIN:alpha.umc.test}
-    default-password: ${APP_SEED_DEFAULT_PASSWORD:Alpha!Pass2026}
+    email-domain: ${APP_SEED_EMAIL_DOMAIN:test.umc.it.kr}
+    default-password: ${APP_SEED_DEFAULT_PASSWORD:password12!}
 
   oauth2:
     google:
@@ -438,16 +438,14 @@ sentry:
   traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.1}
 
 # ==================================================================
-# profile=alpha 전용 오버라이드. ADR-007 참조.
-# .gitignore 가 application-{profile}.yml 을 제외하므로 multi-document 로 둔다.
+# dev 환경에 대한 default override
 # ==================================================================
 ---
 spring:
   config:
     activate:
-      on-profile: alpha
+      on-profile: dev
 
 app:
   seed:
-    # alpha 에서는 기본 활성. 일시 비활성하고 싶다면 APP_SEED_ENABLED=false 로 설정.
     enabled: ${APP_SEED_ENABLED:true}
