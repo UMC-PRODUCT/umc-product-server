@@ -12,7 +12,7 @@ package com.umc.product.global.util;
  * <p>
  * - 로컬 파트 길이 2~3: 앞 1글자 + 나머지 `*` (예: `ab@x` → `a*@x`)
  * <p>
- * - 로컬 파트 길이 4 이상: 앞 3글자 + 나머지 `*` (예: `donggukcd200@x` → `don*********@x`)
+ * - 로컬 파트 길이 4 이상: 앞 3글자 + 나머지 `*` (예: `university@x` → `uni*******@x`)
  */
 public final class EmailMasker {
 
