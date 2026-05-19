@@ -61,11 +61,11 @@ public record SearchMemberV2Response(
         String schoolName,
         String profileImageLink,
         @Schema(description = "대표 챌린저. 활성 기수 챌린저 우선, 없으면 최신 기수", nullable = true)
-        PrimaryChallengerResponse primaryChallenger,
+        CurrentChallengerResponse currentChallenger,
         @Schema(description = "이 회원이 현재 활성 기수에 운영진 ChallengerRole을 하나라도 보유하는지")
         boolean isAdminInActiveGisu,
         @Schema(description = "회원이 보유한 모든 챌린저 이력 요약 (최신 기수 우선)")
-        List<ParticipationResponse> participations
+        List<ChallengerRecordResponse> challengerRecords
     ) {
         public static SearchMemberV2ItemResponse from(SearchMemberItemV2Info info) {
             return new SearchMemberV2ItemResponse(
@@ -76,9 +76,9 @@ public record SearchMemberV2Response(
                 info.schoolId(),
                 info.schoolName(),
                 info.profileImageLink(),
-                info.primaryChallenger() == null ? null : PrimaryChallengerResponse.from(info.primaryChallenger()),
+                info.primaryChallenger() == null ? null : CurrentChallengerResponse.from(info.primaryChallenger()),
                 info.isAdminInActiveGisu(),
-                info.participations().stream().map(ParticipationResponse::from).toList()
+                info.participations().stream().map(ChallengerRecordResponse::from).toList()
             );
         }
 
@@ -87,20 +87,20 @@ public record SearchMemberV2Response(
                 memberId, name, nickname,
                 EmailMasker.mask(email),
                 schoolId, schoolName, profileImageLink,
-                primaryChallenger, isAdminInActiveGisu, participations
+                currentChallenger, isAdminInActiveGisu, challengerRecords
             );
         }
     }
 
-    public record PrimaryChallengerResponse(
+    public record CurrentChallengerResponse(
         Long challengerId,
         Long gisuId,
         Long generation,
         ChallengerPart part,
         ChallengerStatus challengerStatus
     ) {
-        public static PrimaryChallengerResponse from(PrimaryChallenger info) {
-            return new PrimaryChallengerResponse(
+        public static CurrentChallengerResponse from(PrimaryChallenger info) {
+            return new CurrentChallengerResponse(
                 info.challengerId(),
                 info.gisuId(),
                 info.generation(),
@@ -110,15 +110,15 @@ public record SearchMemberV2Response(
         }
     }
 
-    public record ParticipationResponse(
+    public record ChallengerRecordResponse(
         Long challengerId,
         Long gisuId,
         Long generation,
         ChallengerPart part,
         ChallengerStatus challengerStatus
     ) {
-        public static ParticipationResponse from(Participation info) {
-            return new ParticipationResponse(
+        public static ChallengerRecordResponse from(Participation info) {
+            return new ChallengerRecordResponse(
                 info.challengerId(),
                 info.gisuId(),
                 info.generation(),
