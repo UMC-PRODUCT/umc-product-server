@@ -3,6 +3,7 @@ package com.umc.product.global.security;
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component;
 public class JwtTokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth"; // 권한 정보를 저장할 키
+    private static final String CLIENT_TYPE_KEY = "clientType"; // 클라이언트 플랫폼(ANDROID/IOS/WEB) 정보를 저장할 키
     private final SecretKey accessTokenSecret;
     private final SecretKey refreshTokenSecret;
     private final SecretKey oAuthVerificationTokenSecret;
@@ -97,17 +99,31 @@ public class JwtTokenProvider {
      * AccessToken 생성 메소드
      */
     public String createAccessToken(Long memberId, List<String> roles) {
+        return createAccessToken(memberId, roles, (ClientType) null);
+    }
+
+    /**
+     * AccessToken 생성 메소드 (clientType 포함)
+     * <p>
+     * clientType 은 트래픽 분포 분석용 optional claim. null 인 경우 claim 자체를 추가하지 않으며,
+     * 다운스트림(MDC, 통계)에서는 미설정으로 간주된다.
+     */
+    public String createAccessToken(Long memberId, List<String> roles, ClientType clientType) {
         Date now = new Date();
         Date validityDate = new Date(now.getTime() + accessTokenValidityInMilliseconds);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
             .subject(String.valueOf(memberId)) // 사용자 식별자 (ID)
             .claim(AUTHORITIES_KEY, roles)     // 권한 정보 저장
             .issuedAt(now)
             .expiration(validityDate)
-            .signWith(accessTokenSecret)
-            .compact()
-            ;
+            .signWith(accessTokenSecret);
+
+        if (clientType != null) {
+            builder.claim(CLIENT_TYPE_KEY, clientType.name());
+        }
+
+        return builder.compact();
     }
 
     public String createAccessToken(Long memberId, List<String> roles, Long expiresInSeconds) {
@@ -147,6 +163,28 @@ public class JwtTokenProvider {
             return (List<String>) roles;
         }
         return Collections.emptyList();
+    }
+
+    /**
+     * AccessToken 에서 clientType claim 을 추출한다.
+     * <p>
+     * 도입 이전에 발급된 토큰 / 비-OAuth 로그인 경로로 발급된 토큰에는 claim 이 존재하지 않으므로,
+     * 그 경우엔 {@code null} 을 반환한다. 호출자는 null-safe 하게 다루어야 하며 (예: MDC 미기록,
+     * 통계에서 "UNKNOWN" 으로 집계), 절대 예외를 던지지 않는다.
+     */
+    public ClientType getClientTypeFromAccessToken(String token) {
+        Claims claims = parseClaims(token, accessTokenSecret);
+        String clientTypeStr = claims.get(CLIENT_TYPE_KEY, String.class);
+        if (clientTypeStr == null) {
+            return null;
+        }
+        try {
+            return ClientType.valueOf(clientTypeStr);
+        } catch (IllegalArgumentException e) {
+            // 알 수 없는 enum 값이 들어와도 통계 집계가 깨지지 않도록 null 처리.
+            log.warn("AccessToken 의 clientType claim 값을 해석할 수 없습니다: {}", clientTypeStr);
+            return null;
+        }
     }
 
     public boolean validateAccessToken(String token) {

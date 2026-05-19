@@ -2,6 +2,7 @@ package com.umc.product.global.security;
 
 
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.common.domain.enums.ClientType;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,13 +39,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (jwtTokenProvider.validateAccessToken(token)) {
                     Long memberId = jwtTokenProvider.parseAccessToken(token);
                     List<String> roles = jwtTokenProvider.getRolesFromAccessToken(token);
+                    // clientType 은 도입 이전 토큰이나 비-OAuth 경로로 발급된 토큰에서는 null 일 수 있다.
+                    ClientType clientType = jwtTokenProvider.getClientTypeFromAccessToken(token);
 
                     // ADR-016: 모든 요청은 LoggingInterceptor 가 api_request_completed JSON 라인에
                     // userId(=memberId) 를 MDC 로 포함하므로 인증 한 줄 텍스트 로그는 중복이다.
                     // 토큰 검증 흐름 디버깅이 필요한 경우에만 보이도록 DEBUG 로 강등.
                     log.debug("JWT authenticated: memberId={}", memberId);
 
-                    MemberPrincipal memberPrincipal = new MemberPrincipal(memberId);
+                    MemberPrincipal memberPrincipal = new MemberPrincipal(memberId, clientType);
 
                     List<SimpleGrantedAuthority> authorities = roles.stream()
                         .map(role -> new SimpleGrantedAuthority("ROLE_" + role))

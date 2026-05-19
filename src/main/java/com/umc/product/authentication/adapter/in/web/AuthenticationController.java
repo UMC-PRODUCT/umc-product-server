@@ -12,6 +12,7 @@ import com.umc.product.authentication.application.port.in.command.dto.Authorizat
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
 import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
+import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
@@ -38,7 +39,7 @@ public class AuthenticationController implements AuthenticationControllerInterfa
     public OAuthLoginResponse googleOAuthLogin(
         @RequestBody GoogleLoginRequest request
     ) {
-        return processAccessTokenLogin(OAuthProvider.GOOGLE, request.accessToken());
+        return processAccessTokenLogin(OAuthProvider.GOOGLE, request.accessToken(), request.clientType());
     }
 
     @Override
@@ -47,7 +48,7 @@ public class AuthenticationController implements AuthenticationControllerInterfa
     public OAuthLoginResponse kakaoOAuthLogin(
         @RequestBody KakaoLoginRequest request
     ) {
-        return processAccessTokenLogin(OAuthProvider.KAKAO, request.accessToken());
+        return processAccessTokenLogin(OAuthProvider.KAKAO, request.accessToken(), request.clientType());
     }
 
     @Override
@@ -64,7 +65,7 @@ public class AuthenticationController implements AuthenticationControllerInterfa
             )
         );
 
-        return buildLoginResponse(OAuthProvider.KAKAO, result);
+        return buildLoginResponse(OAuthProvider.KAKAO, result, null, request.clientType());
     }
 
     @Override
@@ -86,34 +87,36 @@ public class AuthenticationController implements AuthenticationControllerInterfa
             );
         }
 
-        return buildLoginResponse(OAuthProvider.APPLE, result, codeResult.refreshToken());
+        return buildLoginResponse(OAuthProvider.APPLE, result, codeResult.refreshToken(), request.clientType());
     }
 
     /**
-     * Access Token 기반 OAuth 로그인 처리
+     * Access Token 기반 OAuth 로그인 처리.
+     *
+     * @param clientType 클라이언트 플랫폼. 도입 이전 클라이언트 호환을 위해 nullable.
      */
-    private OAuthLoginResponse processAccessTokenLogin(OAuthProvider provider, String token) {
+    private OAuthLoginResponse processAccessTokenLogin(OAuthProvider provider, String token, ClientType clientType) {
         OAuthTokenLoginResult result = oAuthAuthenticationUseCase.accessTokenLogin(
             new AccessTokenLoginCommand(provider, token)
         );
 
-        return buildLoginResponse(provider, result);
+        return buildLoginResponse(provider, result, null, clientType);
     }
 
     /**
-     * OAuthTokenLoginResult를 기반으로 OAuthLoginResponse를 생성합니다.
+     * OAuthTokenLoginResult 를 기반으로 OAuthLoginResponse 를 생성합니다.
+     *
+     * @param clientType 클라이언트 플랫폼. nullable — null 인 경우 AT claim 에 포함되지 않으며
+     *                   다운스트림 통계에서는 "UNKNOWN" 으로 집계된다.
      */
-    private OAuthLoginResponse buildLoginResponse(OAuthProvider provider, OAuthTokenLoginResult result) {
-        return buildLoginResponse(provider, result, null);
-    }
-
     private OAuthLoginResponse buildLoginResponse(OAuthProvider provider, OAuthTokenLoginResult result,
-                                                  String appleRefreshToken) {
+                                                  String appleRefreshToken, ClientType clientType) {
         if (result.isExistingMember()) {
             // 기존 회원: JWT 발급
             String accessToken = jwtTokenProvider.createAccessToken(
                 result.memberId(),
-                Collections.emptyList()
+                Collections.emptyList(),
+                clientType
             );
             String refreshToken = jwtTokenProvider.createRefreshToken(result.memberId());
 
