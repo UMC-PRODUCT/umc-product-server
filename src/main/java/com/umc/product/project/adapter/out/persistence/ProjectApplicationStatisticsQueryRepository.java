@@ -6,7 +6,7 @@ import static com.umc.product.project.domain.QProjectApplicationForm.projectAppl
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.project.application.port.in.query.dto.RoundMemberInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectApplicantMatchingRoundInfo;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -25,14 +25,13 @@ public class ProjectApplicationStatisticsQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     /**
-     * gisuId + chapterId 범위 내 (projectId, roundId, applicantMemberId) 목록.
-     * 한 지원자가 같은 차수에 여러 프로젝트에 지원한 경우 projectId별로 각각 포함된다.
-     * 서비스에서 roundId·(projectId,roundId)·(schoolId,roundId) 집계를 인메모리로 파생한다.
+     * gisuId + chapterId 범위 내 (projectId, roundId, applicantMemberId) 목록. 한 지원자가 같은 차수에 여러 프로젝트에 지원한 경우 projectId별로 각각
+     * 포함된다. 서비스에서 roundId·(projectId,roundId)·(schoolId,roundId) 집계를 인메모리로 파생한다.
      */
-    public List<RoundMemberInfo> listApplicantsByRound(Long gisuId, Long chapterId) {
+    public List<ProjectApplicantMatchingRoundInfo> listApplicantsByRound(Long gisuId, Long chapterId) {
         return queryFactory
             .select(Projections.constructor(
-                RoundMemberInfo.class,
+                ProjectApplicantMatchingRoundInfo.class,
                 project.id,
                 projectApplication.appliedMatchingRound.id,
                 projectApplication.applicantMemberId
@@ -52,10 +51,11 @@ public class ProjectApplicationStatisticsQueryRepository {
      * PM챌린저: ownerMemberId 소유 프로젝트(gisuId + chapterId 범위)의 (projectId, roundId, applicantMemberId) 목록.
      * project.productOwnerMemberId 기준으로 필터링하므로 chapterId 검증도 겸한다.
      */
-    public List<RoundMemberInfo> listApplicantsByRoundForOwner(Long ownerMemberId, Long gisuId, Long chapterId) {
+    public List<ProjectApplicantMatchingRoundInfo> listApplicantsByRoundForOwner(Long ownerMemberId, Long gisuId,
+                                                                                 Long chapterId) {
         return queryFactory
             .select(Projections.constructor(
-                RoundMemberInfo.class,
+                ProjectApplicantMatchingRoundInfo.class,
                 project.id,
                 projectApplication.appliedMatchingRound.id,
                 projectApplication.applicantMemberId

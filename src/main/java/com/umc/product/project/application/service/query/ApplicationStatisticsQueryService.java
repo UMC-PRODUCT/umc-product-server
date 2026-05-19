@@ -7,7 +7,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.project.application.port.in.query.GetApplicationStatisticsUseCase;
-import com.umc.product.project.application.port.in.query.dto.RoundMemberInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectApplicantMatchingRoundInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ApplicantSchoolStatistics;
 import com.umc.product.project.application.port.in.query.dto.statistics.ApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.MatchingRoundStatistics;
@@ -71,10 +71,10 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
     private ApplicationStatisticsInfo buildManagerStats(
         Long gisuId, Long chapterId, Set<Long> eligibleMemberIds
     ) {
-        List<RoundMemberInfo> appEntries =
+        List<ProjectApplicantMatchingRoundInfo> appEntries =
             loadApplicationStatisticsPort.listApplicantsByRound(gisuId, chapterId).stream()
                 .filter(e -> eligibleMemberIds.contains(e.memberId())).toList();
-        List<RoundMemberInfo> matchEntries =
+        List<ProjectApplicantMatchingRoundInfo> matchEntries =
             loadMatchingStatisticsPort.getMembersByRound(gisuId, chapterId).stream()
                 .filter(e -> eligibleMemberIds.contains(e.memberId())).toList();
 
@@ -99,10 +99,10 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
 
-        List<RoundMemberInfo> appEntries =
+        List<ProjectApplicantMatchingRoundInfo> appEntries =
             loadApplicationStatisticsPort.listApplicantsByRoundForOwner(callerMemberId, gisuId, chapterId).stream()
                 .filter(e -> eligibleMemberIds.contains(e.memberId())).toList();
-        List<RoundMemberInfo> matchEntries =
+        List<ProjectApplicantMatchingRoundInfo> matchEntries =
             loadMatchingStatisticsPort.getMembersByRoundForOwner(callerMemberId, gisuId, chapterId).stream()
                 .filter(e -> eligibleMemberIds.contains(e.memberId())).toList();
 
@@ -132,9 +132,10 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
      * 챌린저 memberIds + 지원자 memberIds를 합산해 단일 getMemberUseCase 호출로 memberId → schoolId 맵을 반환한다. 두 집합을 합쳐 한 번만 호출함으로써 크로스
      * 도메인 호출을 최소화한다.
      */
-    private Map<Long, Long> fetchSchoolMap(Set<Long> eligibleMemberIds, List<RoundMemberInfo> entries) {
+    private Map<Long, Long> fetchSchoolMap(Set<Long> eligibleMemberIds,
+                                           List<ProjectApplicantMatchingRoundInfo> entries) {
         Set<Long> allMemberIds = new HashSet<>(eligibleMemberIds);
-        entries.stream().map(RoundMemberInfo::memberId).forEach(allMemberIds::add);
+        entries.stream().map(ProjectApplicantMatchingRoundInfo::memberId).forEach(allMemberIds::add);
         return allMemberIds.isEmpty() ? Map.of() : getMemberUseCase.findAllSchoolIdsByIds(allMemberIds);
     }
 
@@ -153,17 +154,17 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
      * matchEntries를 별도로 받아 계산한다. Set으로 중복 제거하는 이유: 한 지원자가 같은 차수에 여러 프로젝트에 지원할 수 있어 entries에 복수 row가 존재하기 때문.
      */
     private List<MatchingRoundStatistics> buildRoundStats(
-        List<RoundMemberInfo> appEntries,
-        List<RoundMemberInfo> matchEntries,
+        List<ProjectApplicantMatchingRoundInfo> appEntries,
+        List<ProjectApplicantMatchingRoundInfo> matchEntries,
         long totalEligible
     ) {
         Map<Long, Set<Long>> roundApplicants = new HashMap<>();
-        for (RoundMemberInfo e : appEntries) {
+        for (ProjectApplicantMatchingRoundInfo e : appEntries) {
             roundApplicants.computeIfAbsent(e.roundId(), k -> new HashSet<>()).add(e.memberId());
         }
 
         Map<Long, Set<Long>> roundMatched = new HashMap<>();
-        for (RoundMemberInfo e : matchEntries) {
+        for (ProjectApplicantMatchingRoundInfo e : matchEntries) {
             roundMatched.computeIfAbsent(e.roundId(), k -> new HashSet<>()).add(e.memberId());
         }
 
@@ -181,12 +182,12 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
      * 학교별로 그룹핑한 뒤 차수별 고유 지원자 수를 중첩 구조로 반환한다. Set으로 중복 제거하는 이유: 한 지원자가 같은 차수에 여러 프로젝트에 지원한 경우 중복 방지.
      */
     private List<ApplicantSchoolStatistics> buildSchoolStats(
-        List<RoundMemberInfo> entries,
+        List<ProjectApplicantMatchingRoundInfo> entries,
         Map<Long, Long> memberSchoolMap,
         Map<Long, Long> schoolTotals
     ) {
         Map<Long, Map<Long, Set<Long>>> schoolRoundApplicants = new HashMap<>();
-        for (RoundMemberInfo e : entries) {
+        for (ProjectApplicantMatchingRoundInfo e : entries) {
             Long schoolId = memberSchoolMap.get(e.memberId());
             if (schoolId == null) {
                 continue;
@@ -214,11 +215,11 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
      * PM챌린저 경로 전용. buildSchoolStats와 동일하지만 total을 null로 반환한다.
      */
     private List<ApplicantSchoolStatistics> buildSchoolStatsWithoutTotal(
-        List<RoundMemberInfo> entries,
+        List<ProjectApplicantMatchingRoundInfo> entries,
         Map<Long, Long> memberSchoolMap
     ) {
         Map<Long, Map<Long, Set<Long>>> schoolRoundApplicants = new HashMap<>();
-        for (RoundMemberInfo e : entries) {
+        for (ProjectApplicantMatchingRoundInfo e : entries) {
             Long schoolId = memberSchoolMap.get(e.memberId());
             if (schoolId == null) {
                 continue;
@@ -244,9 +245,9 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
     /**
      * 프로젝트별로 그룹핑한 뒤 차수별 지원자 수를 중첩 구조로 반환한다. 프로젝트별로는 지원자가 중복 지원할 수 없으므로 단순 count로 집계한다.
      */
-    private List<ProjectApplicantStatistics> buildProjectRoundStats(List<RoundMemberInfo> entries) {
+    private List<ProjectApplicantStatistics> buildProjectRoundStats(List<ProjectApplicantMatchingRoundInfo> entries) {
         Map<Long, Map<Long, Long>> projectRoundCounts = new HashMap<>();
-        for (RoundMemberInfo e : entries) {
+        for (ProjectApplicantMatchingRoundInfo e : entries) {
             projectRoundCounts
                 .computeIfAbsent(e.projectId(), k -> new HashMap<>())
                 .merge(e.roundId(), 1L, Long::sum);
