@@ -132,6 +132,28 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     }
 
     @Override
+    public Map<Long, ChallengerInfo> listByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Challenger> challengers = loadChallengerPort.listByMemberIdsAndGisuId(memberIds, gisuId);
+        if (challengers.isEmpty()) {
+            return Map.of();
+        }
+        Set<Long> challengerIds = challengers.stream()
+            .map(Challenger::getId)
+            .collect(Collectors.toSet());
+        Map<Long, List<ChallengerPointInfo>> pointsMap =
+            getChallengerPointUseCase.getMapByChallengerIds(challengerIds);
+
+        return challengers.stream()
+            .collect(Collectors.toMap(
+                Challenger::getMemberId,
+                c -> ChallengerInfo.from(c, pointsMap.getOrDefault(c.getId(), List.of()))
+            ));
+    }
+
+    @Override
     public List<ChallengerInfo> getAllByGisuId(Long gisuId) {
         return toChallengerInfoListBatch(loadChallengerPort.getAllByGisuId(gisuId));
     }

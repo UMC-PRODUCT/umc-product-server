@@ -67,6 +67,15 @@ public interface GetChallengerUseCase {
     Map<Long, ChallengerInfo> batchGetByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId);
 
     /**
+     * 특정 기수 내 여러 memberId 에 해당하는 챌린저 정보를 조회한다.
+     * <p>
+     * 챌린저가 없는 memberId 는 결과 Map 에 포함하지 않는다.
+     *
+     * @return memberId -> ChallengerInfo Map
+     */
+    Map<Long, ChallengerInfo> listByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId);
+
+    /**
      * 기수 ID로 해당 기수의 모든 챌린저 정보 조회
      *
      * @param gisuId 기수 ID

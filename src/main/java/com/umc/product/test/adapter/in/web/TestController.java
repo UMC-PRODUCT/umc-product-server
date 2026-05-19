@@ -1,4 +1,4 @@
-package com.umc.product.test.controller;
+package com.umc.product.test.adapter.in.web;
 
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;

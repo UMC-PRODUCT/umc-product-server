@@ -90,7 +90,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
         List<StudyGroupViewScope> scopes = new ArrayList<>();
 
         if (getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, gisuId, schoolId)) {
-            Set<Long> schoolMemberIds = getMemberUseCase.findAllIdsBySchoolId(schoolId);
+            Set<Long> schoolMemberIds = getMemberUseCase.listIdsBySchoolId(schoolId);
             if (!schoolMemberIds.isEmpty()) {
                 scopes.add(new StudyGroupViewScope.AsSchoolCore(schoolMemberIds));
             }

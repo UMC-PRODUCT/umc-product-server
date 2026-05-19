@@ -12,6 +12,8 @@ import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import jakarta.transaction.Transactional;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +38,28 @@ public class EmailMemberRegisterService implements RegisterEmailMemberUseCase {
     @Override
     @Transactional
     public Long register(EmailRegisterMemberCommand command) {
+        return registerInternal(command);
+    }
+
+    /**
+     * atomic batch 등록. 한 트랜잭션 안에서 N 건을 순차 처리하므로 동일 schoolId 의 검증 SELECT 는
+     * 1 차 캐시에 의해 1 회로 묶이고, 트랜잭션 commit 도 N → 1 회로 감소한다. 도메인 검증과 자격증명
+     * 등록은 단건과 동일하게 매 command 별로 수행된다. 한 건 실패 시 전체 롤백.
+     */
+    @Override
+    @Transactional
+    public List<Long> batchRegister(List<EmailRegisterMemberCommand> commands) {
+        if (commands.isEmpty()) {
+            return List.of();
+        }
+        List<Long> registeredIds = new ArrayList<>(commands.size());
+        for (EmailRegisterMemberCommand command : commands) {
+            registeredIds.add(registerInternal(command));
+        }
+        return registeredIds;
+    }
+
+    private Long registerInternal(EmailRegisterMemberCommand command) {
         registrationValidator.validateSchoolExists(command.schoolId());
         registrationValidator.validateMandatoryTermsAgreed(command.termConsents());
 

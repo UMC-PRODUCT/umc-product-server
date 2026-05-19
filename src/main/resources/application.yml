@@ -312,6 +312,14 @@ app:
     username: ${SWAGGER_AUTH_USERNAME:username}
     password: ${SWAGGER_AUTH_PASSWORD:password}
 
+  # test 도메인 시딩 API 설정. ADR-017 참조.
+  # 기본값은 비활성. prod 가 아닌 환경에서 APP_SEED_ENABLED=true 로 켜야 시딩 API 가 노출된다.
+  seed:
+    enabled: ${APP_SEED_ENABLED:false}
+    skip-if-member-count-greater-than: ${APP_SEED_SKIP_THRESHOLD:0}
+    email-domain: ${APP_SEED_EMAIL_DOMAIN:test.umc.it.kr}
+    default-password: ${APP_SEED_DEFAULT_PASSWORD:password12!}
+
   oauth2:
     google:
       client-id-list: ${GOOGLE_CLIENT_ID_LIST:}
@@ -401,3 +409,16 @@ sentry:
   max-request-body-size: none
   send-default-pii: false
   traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.1}
+
+# ==================================================================
+# dev 환경에 대한 default override
+# ==================================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+app:
+  seed:
+    enabled: ${APP_SEED_ENABLED:true}
