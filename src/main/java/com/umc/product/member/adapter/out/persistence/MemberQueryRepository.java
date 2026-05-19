@@ -1,6 +1,7 @@
 package com.umc.product.member.adapter.out.persistence;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -89,8 +90,13 @@ public class MemberQueryRepository {
 
         BooleanBuilder condition = buildSearchCondition(query, challenger, member);
 
-        List<Long> content = queryFactory
-            .selectDistinct(member.id)
+        // PostgreSQL은 SELECT DISTINCT 사용 시 ORDER BY 표현식이 SELECT 목록에 포함되어 있어야 합니다.
+        // member 테이블의 컬럼은 같은 member.id 행에서 항상 동일한 값을 가지므로,
+        // (id, schoolId, name) 묶음에 distinct를 걸어도 결과는 member.id 단위 distinct와 동일하면서
+        // 표준 SQL 규칙도 만족합니다.
+        List<Tuple> rows = queryFactory
+            .select(member.id, member.schoolId, member.name)
+            .distinct()
             .from(challenger)
             .join(member).on(challenger.memberId.eq(member.id))
             .where(condition)
@@ -98,6 +104,10 @@ public class MemberQueryRepository {
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();
+
+        List<Long> content = rows.stream()
+            .map(t -> t.get(member.id))
+            .toList();
 
         Long total = queryFactory
             .select(member.id.countDistinct())
