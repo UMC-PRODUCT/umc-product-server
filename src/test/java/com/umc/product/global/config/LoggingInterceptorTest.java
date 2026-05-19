@@ -6,6 +6,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.global.security.MemberPrincipal;
 import java.util.Collections;
 import java.util.List;
@@ -147,8 +148,8 @@ class LoggingInterceptorTest {
     }
 
     @Test
-    @DisplayName("인증된 MemberPrincipal 이 있으면 memberId 가 MDC 에 채워진다")
-    void preHandle_인증된_사용자_memberId_MDC_등록() {
+    @DisplayName("인증된 MemberPrincipal 의 clientType 이 없으면 MDC clientType 을 UNKNOWN 으로 채운다")
+    void preHandle_인증된_사용자_clientType_UNKNOWN_등록() {
         // given
         MemberPrincipal principal = new MemberPrincipal(42L);
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
@@ -164,8 +165,30 @@ class LoggingInterceptorTest {
 
         // then
         assertThat(MDC.get("memberId")).isEqualTo("42");
+        assertThat(MDC.get("clientType")).isEqualTo("UNKNOWN");
         // 서비스 도메인 명명을 사용하므로 userId 는 사용하지 않는다
         assertThat(MDC.get("userId")).isNull();
+    }
+
+    @Test
+    @DisplayName("인증된 MemberPrincipal 의 clientType 이 있으면 해당 값을 MDC 에 채운다")
+    void preHandle_인증된_사용자_clientType_MDC_등록() {
+        // given
+        MemberPrincipal principal = new MemberPrincipal(42L, ClientType.IOS);
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+            principal, null, Collections.emptyList()
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/forms/123");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        // when
+        interceptor.preHandle(request, response, new Object());
+
+        // then
+        assertThat(MDC.get("memberId")).isEqualTo("42");
+        assertThat(MDC.get("clientType")).isEqualTo("IOS");
     }
 
     @Test
@@ -180,6 +203,7 @@ class LoggingInterceptorTest {
 
         // then
         assertThat(MDC.get("memberId")).isNull();
+        assertThat(MDC.get("clientType")).isEqualTo("UNKNOWN");
     }
 
     @Test

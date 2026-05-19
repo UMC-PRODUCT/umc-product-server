@@ -24,8 +24,6 @@ public enum AuthenticationErrorCode implements BaseCode {
         "잘못된 이메일 요청 인증입니다."),
     INVALID_EMAIL_VERIFICATION(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0004",
         "이메일 인증 정보가 일치하지 않습니다."),
-    UNSUPPORTED_EMAIL_VERIFICATION_METHOD(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0005",
-        "지원하지 않는 이메일 인증 방식입니다."),
 
     // OAUTH 관련 에러
     OAUTH_SUCCESS_BUT_NO_MEMBER(HttpStatus.NOT_FOUND, "AUTHENTICATION-0006",
@@ -50,6 +48,8 @@ public enum AuthenticationErrorCode implements BaseCode {
         "이미 인증이 완료된 이메일 인증 세션입니다."),
     EMAIL_VERIFICATION_SESSION_EXPIRED(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0018",
         "만료된 이메일 인증 세션입니다. 새로운 인증을 요청해주세요."),
+    EMAIL_VERIFICATION_THROTTLED(HttpStatus.TOO_MANY_REQUESTS, "AUTHENTICATION-0027",
+        "이메일 인증 발송 빈도가 너무 잦습니다. 잠시 후 다시 시도해주세요."),
 
     // ID/PW 자격증명 관련 에러
     LOGIN_ID_ALREADY_EXISTS(HttpStatus.CONFLICT, "AUTHENTICATION-0019", "이미 사용 중인 로그인 ID입니다."),

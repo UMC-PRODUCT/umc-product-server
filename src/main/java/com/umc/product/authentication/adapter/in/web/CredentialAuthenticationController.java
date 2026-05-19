@@ -5,10 +5,11 @@ import com.umc.product.authentication.adapter.in.web.dto.request.LoginByEmailReq
 import com.umc.product.authentication.adapter.in.web.dto.request.RegisterCredentialRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.ResetPasswordByEmailRequest;
 import com.umc.product.authentication.adapter.in.web.dto.response.EmailAvailabilityResponse;
-import com.umc.product.authentication.adapter.in.web.dto.response.IdPwLoginResponse;
+import com.umc.product.authentication.adapter.in.web.dto.response.LocalLoginResponse;
 import com.umc.product.authentication.application.port.in.command.CredentialAuthenticationUseCase;
-import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
+import com.umc.product.authentication.application.port.in.command.dto.LocalLoginResult;
 import com.umc.product.authentication.application.port.in.query.CheckCredentialAvailabilityUseCase;
+import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -74,7 +75,10 @@ public class CredentialAuthenticationController {
     public void resetPasswordByEmail(
         @Valid @RequestBody ResetPasswordByEmailRequest request
     ) {
-        String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
+        String email = jwtTokenProvider.parseEmailVerificationToken(
+            request.emailVerificationToken(),
+            EmailVerificationPurpose.PASSWORD_RESET
+        );
         credentialAuthenticationUseCase.resetPasswordByEmail(request.toCommand(email));
     }
 
@@ -92,11 +96,12 @@ public class CredentialAuthenticationController {
     @Public
     @PostMapping("/login/email")
     @Operation(summary = "[LOGIN-006] 이메일/PW 로그인",
-        description = "email/password 로 인증하여 AccessToken/RefreshToken 을 발급받습니다.")
-    public IdPwLoginResponse loginByEmail(
+        description = "email/password 로 인증하여 AccessToken/RefreshToken 을 발급받습니다. "
+            + "clientType(ANDROID, IOS, WEB)을 함께 전달하면 AccessToken claim 으로 반영됩니다.")
+    public LocalLoginResponse loginByEmail(
         @Valid @RequestBody LoginByEmailRequest request
     ) {
-        IdPwLoginResult result = credentialAuthenticationUseCase.loginByEmail(request.toCommand());
-        return IdPwLoginResponse.from(result);
+        LocalLoginResult result = credentialAuthenticationUseCase.loginByEmail(request.toCommand());
+        return LocalLoginResponse.from(result);
     }
 }

@@ -1,6 +1,6 @@
 package com.umc.product.authentication.adapter.out.external;
 
-import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
+import com.umc.product.authentication.domain.OAuthAttributes;
 import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.application.port.out.RevokeOAuthTokenPort;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
@@ -28,7 +28,7 @@ public class OAuthTokenVerificationAdapter implements VerifyOAuthTokenPort, Revo
     private final AppleOAuthProperties appleOAuthProperties;
 
     @Override
-    public OAuth2Attributes verify(OAuthProvider provider, String token) {
+    public OAuthAttributes verify(OAuthProvider provider, String token) {
         log.info("OAuth 토큰 검증 시작: provider={}", provider);
 
         return switch (provider) {
@@ -41,7 +41,7 @@ public class OAuthTokenVerificationAdapter implements VerifyOAuthTokenPort, Revo
     }
 
     @Override
-    public OAuth2Attributes verifyAuthorizationCode(OAuthProvider provider, String authorizationCode,
+    public OAuthAttributes verifyAuthorizationCode(OAuthProvider provider, String authorizationCode,
                                                     String redirectUri) {
         log.info("OAuth Authorization Code 교환 시작: provider={}", provider);
 

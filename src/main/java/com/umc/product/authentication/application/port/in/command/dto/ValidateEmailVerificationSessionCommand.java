@@ -4,8 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record ValidateEmailVerificationSessionCommand(
-    String sessionId,
-    String code,
-    String token
+    Long sessionId,
+    String code
 ) {
 }

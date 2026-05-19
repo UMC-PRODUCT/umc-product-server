@@ -14,6 +14,8 @@ import static org.mockito.Mockito.verify;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.application.access.ProjectApplicationAccessScope;
+import com.umc.product.project.application.access.ProjectApplicationAccessScopeResolver;
 import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplicationsQuery;
 import com.umc.product.project.application.port.in.query.dto.GetProjectApplicationDetailQuery;
 import com.umc.product.project.application.port.in.query.dto.ManagedProjectApplicationCardStatus;
@@ -86,6 +88,8 @@ class ProjectApplicationQueryServiceTest {
     GetFormUseCase getFormUseCase;
     @Mock
     GetFormResponseUseCase getFormResponseUseCase;
+    @Mock
+    ProjectApplicationAccessScopeResolver accessScopeResolver;
     @InjectMocks
     ProjectApplicationQueryService sut;
 
@@ -593,10 +597,32 @@ class ProjectApplicationQueryServiceTest {
     void searchByProject_DRAFT_필터_금지() {
         // given & when & then -- Query record compact constructor 에서 차단된다
         assertThatThrownBy(() -> SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(REQUESTER_ID)
             .projectId(1L)
             .status(ProjectApplicationStatus.DRAFT)
             .build())
             .isInstanceOf(ProjectDomainException.class);
+    }
+
+    @Test
+    @DisplayName("searchByProject_권한_scope_가_None_이면_빈_리스트_위장")
+    void searchByProject_권한_없음_빈_리스트() {
+        // given
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(REQUESTER_ID).projectId(1L).build();
+
+        given(loadProjectPort.getById(1L)).willReturn(project);
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.None());
+
+        // when
+        List<ProjectApplicationCardInfo> result = sut.searchByProject(query);
+
+        // then
+        assertThat(result).isEmpty();
+        verify(loadProjectApplicationPort, never())
+            .searchProjectApplications(any(), any(), any());
     }
 
     @Test
@@ -605,9 +631,11 @@ class ProjectApplicationQueryServiceTest {
         // given
         Project project = createProject(1L, "프로젝트A", null, 99L);
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
-            .projectId(1L).build();
+            .requesterMemberId(REQUESTER_ID).projectId(1L).build();
 
         given(loadProjectPort.getById(1L)).willReturn(project);
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectApplicationPort.searchProjectApplications(1L, null, null))
             .willReturn(List.of());
 
@@ -631,9 +659,11 @@ class ProjectApplicationQueryServiceTest {
             55L, project, round, 200L, ProjectApplicationStatus.APPROVED);
 
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
-            .projectId(1L).build();
+            .requesterMemberId(REQUESTER_ID).projectId(1L).build();
 
         given(loadProjectPort.getById(1L)).willReturn(project);
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectApplicationPort.searchProjectApplications(1L, null, null))
             .willReturn(List.of(application));
         given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(eq(Set.of(200L)), eq(GISU_ID)))
@@ -667,11 +697,14 @@ class ProjectApplicationQueryServiceTest {
             56L, project, round, 201L, ProjectApplicationStatus.SUBMITTED);
 
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(REQUESTER_ID)
             .projectId(1L)
             .part(ChallengerPart.WEB)
             .build();
 
         given(loadProjectPort.getById(1L)).willReturn(project);
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectApplicationPort.searchProjectApplications(1L, null, null))
             .willReturn(List.of(webApp, androidApp));
         given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), eq(GISU_ID)))
@@ -695,12 +728,15 @@ class ProjectApplicationQueryServiceTest {
         // given
         Project project = createProject(1L, "프로젝트A", null, 99L);
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(REQUESTER_ID)
             .projectId(1L)
             .matchingRoundId(7L)
             .status(ProjectApplicationStatus.APPROVED)
             .build();
 
         given(loadProjectPort.getById(1L)).willReturn(project);
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectApplicationPort.searchProjectApplications(
             1L, 7L, ProjectApplicationStatus.APPROVED))
             .willReturn(List.of());
@@ -890,26 +926,9 @@ class ProjectApplicationQueryServiceTest {
         assertThat(result.filesByFileId().get("f-abc").originalFileName()).isEqualTo("포트폴리오.pdf");
     }
 
-    @Test
-    @DisplayName("getDetail_DRAFT_상태인데_지원자_본인이_아니면_NOT_FOUND_위장")
-    void getDetail_DRAFT_타인_차단() {
-        // given - 지원자 본인은 200L, 호출자는 300L (다른 챌린저/운영진)
-        Project project = createProject(1L, "프로젝트A", null, 99L);
-        ProjectMatchingRound round = createMatchingRound(
-            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
-        ProjectApplication application = createApplicationWithFormResponse(
-            55L, project, round, 200L, ProjectApplicationStatus.DRAFT, 123L);
-
-        GetProjectApplicationDetailQuery query = detailQuery(1L, 55L, 300L);
-        given(loadProjectApplicationPort.findByIdWithDetails(55L))
-            .willReturn(Optional.of(application));
-
-        // when & then
-        assertThatThrownBy(() -> sut.getDetail(query))
-            .isInstanceOf(ProjectDomainException.class)
-            .hasFieldOrPropertyWithValue("baseCode", ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
-        verify(getChallengerUseCase, never()).findByMemberIdAndGisuId(any(), any());
-    }
+    // DRAFT 본인 한정 위반(타인 차단) 케이스는 컨트롤러의 @CheckAccess (L2 evaluator.canRead) 가
+    // 처리하므로 service 단위 테스트에서는 다루지 않는다. 해당 분기 검증은
+    // ProjectApplicationPermissionEvaluatorTest 의 READ는_DRAFT_지원서를_PO여도_거부 등에서 보장.
 
     @Test
     @DisplayName("getDetail_DRAFT_상태이지만_지원자_본인_호출이면_정상_조회")

@@ -4,6 +4,7 @@ import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authentication.adapter.out.external.AppleOAuthProperties;
 import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier;
+import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.exception.constant.Domain;
@@ -176,8 +177,11 @@ public class TestController {
     @Operation(summary = "[TEST-009] EmailVerificationToken 발급")
     @Public
     @GetMapping("/token/email")
-    public String getEmailVerification(@RequestParam String email) {
-        return jwtTokenProvider.createEmailVerificationToken(email);
+    public String getEmailVerification(
+        @RequestParam String email,
+        @RequestParam(required = false, defaultValue = "REGISTER") EmailVerificationPurpose purpose
+    ) {
+        return jwtTokenProvider.createEmailVerificationToken(email, purpose);
     }
 
     @Operation(summary = "[TEST-010] oAuthVerificationToken 발급")

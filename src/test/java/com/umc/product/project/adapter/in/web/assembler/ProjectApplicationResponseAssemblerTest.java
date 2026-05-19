@@ -216,6 +216,7 @@ class ProjectApplicationResponseAssemblerTest {
     void applicantsFor_정상_조립() {
         // given
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(100L)
             .projectId(1L).build();
         ProjectApplicationCardInfo card = applicantCardOf(55L, 200L, ChallengerPart.WEB);
 
@@ -247,6 +248,7 @@ class ProjectApplicationResponseAssemblerTest {
     void applicantsFor_빈_리스트() {
         // given
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(100L)
             .projectId(1L).build();
         given(searchProjectApplicationsUseCase.searchByProject(query))
             .willReturn(List.of());
@@ -264,6 +266,7 @@ class ProjectApplicationResponseAssemblerTest {
     void applicantsFor_member_누락_시_null() {
         // given
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(100L)
             .projectId(1L).build();
         ProjectApplicationCardInfo card = applicantCardOf(55L, 200L, ChallengerPart.WEB);
 
