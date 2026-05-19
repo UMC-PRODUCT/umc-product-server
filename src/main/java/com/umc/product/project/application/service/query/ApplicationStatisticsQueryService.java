@@ -8,11 +8,11 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.project.application.port.in.query.GetApplicationStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.dto.RoundMemberInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ApplicantSchoolStatistics;
 import com.umc.product.project.application.port.in.query.dto.statistics.ApplicationStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectRoundStat;
-import com.umc.product.project.application.port.in.query.dto.statistics.RoundCount;
-import com.umc.product.project.application.port.in.query.dto.statistics.RoundStat;
-import com.umc.product.project.application.port.in.query.dto.statistics.SchoolStat;
+import com.umc.product.project.application.port.in.query.dto.statistics.MatchingRoundStatistics;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicantStatistics;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicantStatistics.ProjectApplicantCountPerRound;
 import com.umc.product.project.application.port.out.LoadApplicationStatisticsPort;
 import com.umc.product.project.application.port.out.LoadMatchingStatisticsPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
@@ -46,8 +46,11 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
 
     /**
      * 호출자 역할에 따라 운영진 또는 PM챌린저 경로로 분기한다. ChallengerRole 보유 여부로 운영진을 판단한다. ADMIN 파트 외에 프로젝트에 참여하는 운영진도 있으므로
-     * ChallengerPart 대신 ChallengerRole 기준을 사용한다. - 운영진: ChallengerRole 1회 + Challenger 1회 + DB 1회 + Member 1회 = 4회 -
-     * PM챌린저: ChallengerRole 1회 + Challenger 1회 + DB 2회(chapter 검증 + entries) + Member 1회 = 5회
+     * ChallengerPart 대신 ChallengerRole 기준을 사용한다.
+     * <p>
+     * - 운영진: ChallengerRole 1회 + Challenger 1회 + DB 1회 + Member 1회 = 4회
+     * <p>
+     * - PM챌린저: ChallengerRole 1회 + Challenger 1회 + DB 2회(chapter 검증 + entries) + Member 1회 = 5회
      */
     @Override
     public ApplicationStatisticsInfo getStats(Long gisuId, Long chapterId, Long callerMemberId) {
@@ -149,7 +152,7 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
      * roundId별 고유 지원자 수를 집계해 RoundStat 목록을 반환한다. quota는 차수별 슬라이딩 분모: 총 인원 - (이전 차수까지 누적 매칭 인원). 분모는 매칭 기준이므로
      * matchEntries를 별도로 받아 계산한다. Set으로 중복 제거하는 이유: 한 지원자가 같은 차수에 여러 프로젝트에 지원할 수 있어 entries에 복수 row가 존재하기 때문.
      */
-    private List<RoundStat> buildRoundStats(
+    private List<MatchingRoundStatistics> buildRoundStats(
         List<RoundMemberInfo> appEntries,
         List<RoundMemberInfo> matchEntries,
         long totalEligible
@@ -164,11 +167,11 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
             roundMatched.computeIfAbsent(e.roundId(), k -> new HashSet<>()).add(e.memberId());
         }
 
-        List<RoundStat> result = new ArrayList<>();
+        List<MatchingRoundStatistics> result = new ArrayList<>();
         Set<Long> cumulativeMatched = new HashSet<>();
         for (Long roundId : roundApplicants.keySet().stream().sorted().toList()) {
             long quota = totalEligible - cumulativeMatched.size();
-            result.add(new RoundStat(roundId, roundApplicants.get(roundId).size(), quota));
+            result.add(new MatchingRoundStatistics(roundId, roundApplicants.get(roundId).size(), quota));
             cumulativeMatched.addAll(roundMatched.getOrDefault(roundId, Set.of()));
         }
         return result;
@@ -177,7 +180,7 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
     /**
      * 학교별로 그룹핑한 뒤 차수별 고유 지원자 수를 중첩 구조로 반환한다. Set으로 중복 제거하는 이유: 한 지원자가 같은 차수에 여러 프로젝트에 지원한 경우 중복 방지.
      */
-    private List<SchoolStat> buildSchoolStats(
+    private List<ApplicantSchoolStatistics> buildSchoolStats(
         List<RoundMemberInfo> entries,
         Map<Long, Long> memberSchoolMap,
         Map<Long, Long> schoolTotals
@@ -197,20 +200,20 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
         return schoolRoundApplicants.entrySet().stream()
             .map(schoolEntry -> {
                 Long schoolId = schoolEntry.getKey();
-                List<RoundCount> rounds = schoolEntry.getValue().entrySet().stream()
-                    .map(re -> new RoundCount(re.getKey(), re.getValue().size()))
-                    .sorted(Comparator.comparing(RoundCount::roundId))
+                List<ProjectApplicantCountPerRound> rounds = schoolEntry.getValue().entrySet().stream()
+                    .map(re -> new ProjectApplicantCountPerRound(re.getKey(), re.getValue().size()))
+                    .sorted(Comparator.comparing(ProjectApplicantCountPerRound::matchingRoundId))
                     .toList();
-                return new SchoolStat(schoolId, schoolTotals.getOrDefault(schoolId, 0L), rounds);
+                return new ApplicantSchoolStatistics(schoolId, schoolTotals.getOrDefault(schoolId, 0L), rounds);
             })
-            .sorted(Comparator.comparing(SchoolStat::schoolId))
+            .sorted(Comparator.comparing(ApplicantSchoolStatistics::schoolId))
             .toList();
     }
 
     /**
      * PM챌린저 경로 전용. buildSchoolStats와 동일하지만 total을 null로 반환한다.
      */
-    private List<SchoolStat> buildSchoolStatsWithoutTotal(
+    private List<ApplicantSchoolStatistics> buildSchoolStatsWithoutTotal(
         List<RoundMemberInfo> entries,
         Map<Long, Long> memberSchoolMap
     ) {
@@ -228,20 +231,20 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
 
         return schoolRoundApplicants.entrySet().stream()
             .map(schoolEntry -> {
-                List<RoundCount> rounds = schoolEntry.getValue().entrySet().stream()
-                    .map(re -> new RoundCount(re.getKey(), re.getValue().size()))
-                    .sorted(Comparator.comparing(RoundCount::roundId))
+                List<ProjectApplicantCountPerRound> rounds = schoolEntry.getValue().entrySet().stream()
+                    .map(re -> new ProjectApplicantCountPerRound(re.getKey(), re.getValue().size()))
+                    .sorted(Comparator.comparing(ProjectApplicantCountPerRound::matchingRoundId))
                     .toList();
-                return new SchoolStat(schoolEntry.getKey(), null, rounds);
+                return new ApplicantSchoolStatistics(schoolEntry.getKey(), null, rounds);
             })
-            .sorted(Comparator.comparing(SchoolStat::schoolId))
+            .sorted(Comparator.comparing(ApplicantSchoolStatistics::schoolId))
             .toList();
     }
 
     /**
      * 프로젝트별로 그룹핑한 뒤 차수별 지원자 수를 중첩 구조로 반환한다. 프로젝트별로는 지원자가 중복 지원할 수 없으므로 단순 count로 집계한다.
      */
-    private List<ProjectRoundStat> buildProjectRoundStats(List<RoundMemberInfo> entries) {
+    private List<ProjectApplicantStatistics> buildProjectRoundStats(List<RoundMemberInfo> entries) {
         Map<Long, Map<Long, Long>> projectRoundCounts = new HashMap<>();
         for (RoundMemberInfo e : entries) {
             projectRoundCounts
@@ -250,13 +253,13 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
         }
         return projectRoundCounts.entrySet().stream()
             .map(e -> {
-                List<RoundCount> rounds = e.getValue().entrySet().stream()
-                    .map(re -> new RoundCount(re.getKey(), re.getValue()))
-                    .sorted(Comparator.comparing(RoundCount::roundId))
+                List<ProjectApplicantCountPerRound> rounds = e.getValue().entrySet().stream()
+                    .map(re -> new ProjectApplicantCountPerRound(re.getKey(), re.getValue()))
+                    .sorted(Comparator.comparing(ProjectApplicantCountPerRound::matchingRoundId))
                     .toList();
-                return new ProjectRoundStat(e.getKey(), rounds);
+                return new ProjectApplicantStatistics(e.getKey(), rounds);
             })
-            .sorted(Comparator.comparing(ProjectRoundStat::projectId))
+            .sorted(Comparator.comparing(ProjectApplicantStatistics::projectId))
             .toList();
     }
 }

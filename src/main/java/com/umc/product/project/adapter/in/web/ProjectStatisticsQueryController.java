@@ -44,10 +44,6 @@ public class ProjectStatisticsQueryController {
             **schoolStats.count**: 해당 학교 소속 챌린저 중 해당 차수에 지원한 고유 인원 수(중복 지원 제거).
             """
     )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "성공"),
-        @ApiResponse(responseCode = "403", description = "운영진·PM챌린저가 아닌 경우 또는 PM챌린저가 소유 프로젝트 없는 경우", content = @Content(schema = @Schema(hidden = true)))
-    })
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
         permission = PermissionType.READ,
@@ -77,10 +73,6 @@ public class ProjectStatisticsQueryController {
             **schoolStats.count**: 해당 학교 소속 챌린저 중 해당 차수에 매칭된 인원 수.
             """
     )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "성공"),
-        @ApiResponse(responseCode = "403", description = "운영진·PM챌린저가 아닌 경우 또는 PM챌린저가 소유 프로젝트 없는 경우", content = @Content(schema = @Schema(hidden = true)))
-    })
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
         permission = PermissionType.READ,

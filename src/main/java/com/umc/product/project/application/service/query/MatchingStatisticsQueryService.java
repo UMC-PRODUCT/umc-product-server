@@ -9,10 +9,10 @@ import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.project.application.port.in.query.GetMatchingStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.dto.RoundMemberInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.MatchingStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectRoundStat;
-import com.umc.product.project.application.port.in.query.dto.statistics.RoundCount;
-import com.umc.product.project.application.port.in.query.dto.statistics.RoundStat;
-import com.umc.product.project.application.port.in.query.dto.statistics.SchoolStat;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicantStatistics;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicantStatistics.ProjectApplicantCountPerRound;
+import com.umc.product.project.application.port.in.query.dto.statistics.MatchingRoundStatistics;
+import com.umc.product.project.application.port.in.query.dto.statistics.ApplicantSchoolStatistics;
 import com.umc.product.project.application.port.out.LoadMatchingStatisticsPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.exception.ProjectDomainException;
@@ -140,17 +140,17 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
      * roundId별 매칭 인원 수를 집계해 RoundStat 목록을 반환한다. quota는 차수별 슬라이딩 분모: 총 인원 - (이전 차수까지 누적 매칭 인원). 매칭된 멤버는 pool에서 영구 이탈하므로
      * 이전 차수 매칭 인원을 누적 차감한다.
      */
-    private List<RoundStat> buildRoundStats(List<RoundMemberInfo> entries, long totalEligible) {
+    private List<MatchingRoundStatistics> buildRoundStats(List<RoundMemberInfo> entries, long totalEligible) {
         Map<Long, Set<Long>> roundMatched = new HashMap<>();
         for (RoundMemberInfo e : entries) {
             roundMatched.computeIfAbsent(e.roundId(), k -> new HashSet<>()).add(e.memberId());
         }
 
-        List<RoundStat> result = new ArrayList<>();
+        List<MatchingRoundStatistics> result = new ArrayList<>();
         long remaining = totalEligible;
         for (Long roundId : roundMatched.keySet().stream().sorted().toList()) {
             Set<Long> matched = roundMatched.get(roundId);
-            result.add(new RoundStat(roundId, matched.size(), remaining));
+            result.add(new MatchingRoundStatistics(roundId, matched.size(), remaining));
             remaining -= matched.size();
         }
         return result;
@@ -159,7 +159,7 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
     /**
      * 학교별로 그룹핑한 뒤 차수별 매칭 인원 수를 중첩 구조로 반환한다.
      */
-    private List<SchoolStat> buildSchoolStats(
+    private List<ApplicantSchoolStatistics> buildSchoolStats(
         List<RoundMemberInfo> entries,
         Map<Long, Long> memberSchoolMap,
         Map<Long, Long> schoolTotals
@@ -178,20 +178,20 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
         return schoolRoundCounts.entrySet().stream()
             .map(schoolEntry -> {
                 Long schoolId = schoolEntry.getKey();
-                List<RoundCount> rounds = schoolEntry.getValue().entrySet().stream()
-                    .map(re -> new RoundCount(re.getKey(), re.getValue()))
-                    .sorted(Comparator.comparing(RoundCount::roundId))
+                List<ProjectApplicantCountPerRound> rounds = schoolEntry.getValue().entrySet().stream()
+                    .map(re -> new ProjectApplicantCountPerRound(re.getKey(), re.getValue()))
+                    .sorted(Comparator.comparing(ProjectApplicantCountPerRound::matchingRoundId))
                     .toList();
-                return new SchoolStat(schoolId, schoolTotals.getOrDefault(schoolId, 0L), rounds);
+                return new ApplicantSchoolStatistics(schoolId, schoolTotals.getOrDefault(schoolId, 0L), rounds);
             })
-            .sorted(Comparator.comparing(SchoolStat::schoolId))
+            .sorted(Comparator.comparing(ApplicantSchoolStatistics::schoolId))
             .toList();
     }
 
     /**
      * PM챌린저 경로 전용. buildSchoolStats와 동일하지만 total을 null로 반환한다.
      */
-    private List<SchoolStat> buildSchoolStatsWithoutTotal(
+    private List<ApplicantSchoolStatistics> buildSchoolStatsWithoutTotal(
         List<RoundMemberInfo> entries,
         Map<Long, Long> memberSchoolMap
     ) {
@@ -208,20 +208,20 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
 
         return schoolRoundCounts.entrySet().stream()
             .map(schoolEntry -> {
-                List<RoundCount> rounds = schoolEntry.getValue().entrySet().stream()
-                    .map(re -> new RoundCount(re.getKey(), re.getValue()))
-                    .sorted(Comparator.comparing(RoundCount::roundId))
+                List<ProjectApplicantCountPerRound> rounds = schoolEntry.getValue().entrySet().stream()
+                    .map(re -> new ProjectApplicantCountPerRound(re.getKey(), re.getValue()))
+                    .sorted(Comparator.comparing(ProjectApplicantCountPerRound::matchingRoundId))
                     .toList();
-                return new SchoolStat(schoolEntry.getKey(), null, rounds);
+                return new ApplicantSchoolStatistics(schoolEntry.getKey(), null, rounds);
             })
-            .sorted(Comparator.comparing(SchoolStat::schoolId))
+            .sorted(Comparator.comparing(ApplicantSchoolStatistics::schoolId))
             .toList();
     }
 
     /**
      * 프로젝트별로 그룹핑한 뒤 차수별 매칭 인원 수를 중첩 구조로 반환한다. 한 멤버는 프로젝트당 하나의 ProjectMember만 존재하므로 단순 count로 집계한다.
      */
-    private List<ProjectRoundStat> buildProjectRoundStats(List<RoundMemberInfo> entries) {
+    private List<ProjectApplicantStatistics> buildProjectRoundStats(List<RoundMemberInfo> entries) {
         Map<Long, Map<Long, Long>> projectRoundCounts = new HashMap<>();
         for (RoundMemberInfo e : entries) {
             projectRoundCounts
@@ -230,13 +230,13 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
         }
         return projectRoundCounts.entrySet().stream()
             .map(e -> {
-                List<RoundCount> rounds = e.getValue().entrySet().stream()
-                    .map(re -> new RoundCount(re.getKey(), re.getValue()))
-                    .sorted(Comparator.comparing(RoundCount::roundId))
+                List<ProjectApplicantCountPerRound> rounds = e.getValue().entrySet().stream()
+                    .map(re -> new ProjectApplicantCountPerRound(re.getKey(), re.getValue()))
+                    .sorted(Comparator.comparing(ProjectApplicantCountPerRound::matchingRoundId))
                     .toList();
-                return new ProjectRoundStat(e.getKey(), rounds);
+                return new ProjectApplicantStatistics(e.getKey(), rounds);
             })
-            .sorted(Comparator.comparing(ProjectRoundStat::projectId))
+            .sorted(Comparator.comparing(ProjectApplicantStatistics::projectId))
             .toList();
     }
 }
