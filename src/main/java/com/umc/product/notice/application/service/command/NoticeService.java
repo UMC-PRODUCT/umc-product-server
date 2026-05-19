@@ -22,6 +22,7 @@ import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notification.application.port.in.SendNotificationToAudienceUseCase;
 import com.umc.product.notification.application.port.in.dto.AudienceNotificationCommand;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,6 +58,18 @@ public class NoticeService implements ManageNoticeUseCase {
     private final GetChallengerUseCase getChallengerUseCase;
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
     private final SendNotificationToAudienceUseCase sendNotificationToAudienceUseCase;
+
+    @Override
+    public List<Long> createNoticeBulk(List<CreateNoticeCommand> commands) {
+        if (commands.isEmpty()) {
+            return List.of();
+        }
+        List<Long> ids = new ArrayList<>(commands.size());
+        for (CreateNoticeCommand command : commands) {
+            ids.add(createNotice(command));
+        }
+        return ids;
+    }
 
     @Override
     public Long createNotice(CreateNoticeCommand command) {

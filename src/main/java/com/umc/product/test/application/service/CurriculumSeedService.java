@@ -5,7 +5,9 @@ import com.umc.product.curriculum.application.port.in.command.ManageCurriculumUs
 import com.umc.product.curriculum.application.port.in.command.ManageOriginalWorkbookMissionUseCase;
 import com.umc.product.curriculum.application.port.in.command.ManageOriginalWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.ManageWeeklyCurriculumUseCase;
+import com.umc.product.curriculum.application.port.in.command.dto.curriculum.CreateWeeklyCurriculumCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.ChangeOriginalWorkbookStatusCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.CreateOriginalWorkbookCommand;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.test.application.port.in.command.SeedCurriculumUseCase;
@@ -82,19 +84,16 @@ public class CurriculumSeedService implements SeedCurriculumUseCase {
             }
             counters.curriculumIds.add(curriculumId);
 
-            for (long week = 1; week <= weeks; week++) {
-                Long weeklyId = tryCreateWeeklyCurriculum(curriculumId, week, counters);
-                if (weeklyId == null) {
-                    continue;
-                }
-                counters.weeklyIds.add(weeklyId);
+            List<Long> weeklyIds = tryCreateWeeklyCurriculaBulk(curriculumId, weeks, counters);
+            if (weeklyIds.isEmpty()) {
+                continue;
+            }
+            counters.weeklyIds.addAll(weeklyIds);
 
-                Long workbookId = tryCreateOriginalWorkbook(weeklyId, week, counters);
-                if (workbookId == null) {
-                    continue;
-                }
-                counters.workbookIds.add(workbookId);
+            List<Long> workbookIds = tryCreateOriginalWorkbooksBulk(weeklyIds, counters);
+            counters.workbookIds.addAll(workbookIds);
 
+            for (Long workbookId : workbookIds) {
                 tryCreateMissions(workbookId, missionsPerWorkbook, counters);
             }
         }
@@ -148,33 +147,47 @@ public class CurriculumSeedService implements SeedCurriculumUseCase {
         }
     }
 
-    private Long tryCreateWeeklyCurriculum(Long curriculumId, long week, Counters counters) {
+    private List<Long> tryCreateWeeklyCurriculaBulk(Long curriculumId, int weeks, Counters counters) {
+        if (weeks <= 0) {
+            return List.of();
+        }
+        List<CreateWeeklyCurriculumCommand> commands = new ArrayList<>(weeks);
+        for (long week = 1; week <= weeks; week++) {
+            commands.add(dummyCurriculumFactory.nextWeeklyCurriculumCommand(curriculumId, week));
+        }
         try {
-            return manageWeeklyCurriculumUseCase.create(
-                dummyCurriculumFactory.nextWeeklyCurriculumCommand(curriculumId, week)
-            );
+            List<Long> ids = manageWeeklyCurriculumUseCase.createBulk(commands);
+            counters.weeklyFailed += Math.max(0, weeks - ids.size());
+            return ids;
         } catch (Exception e) {
-            counters.weeklyFailed++;
+            counters.weeklyFailed += weeks;
             log.error(
-                "curriculum seed: create weekly failed (curriculumId={}, week={}): {}",
-                curriculumId, week, e.toString()
+                "curriculum seed: create weekly bulk failed (curriculumId={}, weeks={}): {}",
+                curriculumId, weeks, e.toString()
             );
-            return null;
+            return List.of();
         }
     }
 
-    private Long tryCreateOriginalWorkbook(Long weeklyId, long week, Counters counters) {
+    private List<Long> tryCreateOriginalWorkbooksBulk(List<Long> weeklyIds, Counters counters) {
+        if (weeklyIds.isEmpty()) {
+            return List.of();
+        }
+        List<CreateOriginalWorkbookCommand> commands = new ArrayList<>(weeklyIds.size());
+        for (int i = 0; i < weeklyIds.size(); i++) {
+            commands.add(dummyCurriculumFactory.nextOriginalWorkbookCommand(weeklyIds.get(i), i + 1L));
+        }
         try {
-            return manageOriginalWorkbookUseCase.create(
-                dummyCurriculumFactory.nextOriginalWorkbookCommand(weeklyId, week)
-            );
+            List<Long> ids = manageOriginalWorkbookUseCase.createBulk(commands);
+            counters.workbookFailed += Math.max(0, weeklyIds.size() - ids.size());
+            return ids;
         } catch (Exception e) {
-            counters.workbookFailed++;
+            counters.workbookFailed += weeklyIds.size();
             log.error(
-                "curriculum seed: create workbook failed (weeklyId={}, week={}): {}",
-                weeklyId, week, e.toString()
+                "curriculum seed: create workbook bulk failed (weeklyCount={}): {}",
+                weeklyIds.size(), e.toString()
             );
-            return null;
+            return List.of();
         }
     }
 

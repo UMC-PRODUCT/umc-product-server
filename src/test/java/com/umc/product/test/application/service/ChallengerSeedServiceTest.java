@@ -13,6 +13,7 @@ import com.umc.product.challenger.application.port.in.command.ManageChallengerUs
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
@@ -47,15 +48,18 @@ class ChallengerSeedServiceTest {
 
     @InjectMocks
     ChallengerSeedService sut;
+    List<TermConsents> consents;
 
     @BeforeEach
     void setUp() {
+        consents = List.of();
         lenient().when(getMemberUseCase.countAll()).thenReturn(0L);
-        lenient().when(dummyMemberFactory.nextEmailCommandWithSchool(anyLong(), anyLong()))
+        lenient().when(dummyMemberFactory.snapshotMandatoryConsents()).thenReturn(consents);
+        lenient().when(dummyMemberFactory.nextEmailCommandWithSchool(anyLong(), anyLong(), any()))
             .thenReturn(mock(EmailRegisterMemberCommand.class));
         AtomicLong memberIdCounter = new AtomicLong(1L);
-        lenient().when(registerEmailMemberUseCase.register(any()))
-            .thenAnswer(inv -> memberIdCounter.getAndIncrement());
+        lenient().when(registerEmailMemberUseCase.batchRegister(any()))
+            .thenAnswer(inv -> nextIds(memberIdCounter, inv.getArgument(0, List.class).size()));
     }
 
     @Test
@@ -137,19 +141,16 @@ class ChallengerSeedServiceTest {
     }
 
     @Test
-    @DisplayName("멤버 생성 실패는 memberFailed, 챌린저 bulk 실패는 challengerFailed 로 분리 보고된다")
-    void 실패_단계_분리_보고() {
-        // Given - 1셀, count=2, 멤버 1명 실패 + 1명 성공 → 챌린저 bulk 실패
+    @DisplayName("멤버 batch 생성 실패는 memberFailed 로 보고되고 챌린저 생성은 호출하지 않는다")
+    void 멤버_batch_실패_보고() {
+        // Given
         Long gisuId = 9L;
         ChapterWithSchoolsInfo chapter = new ChapterWithSchoolsInfo(
             1L, "서울", List.of(new ChapterWithSchoolsInfo.SchoolInfo(101L, "건국대"))
         );
         given(getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId)).willReturn(List.of(chapter));
-        given(registerEmailMemberUseCase.register(any()))
-            .willThrow(new RuntimeException("member boom"))
-            .willReturn(500L);
-        given(manageChallengerUseCase.createChallengerBulk(any()))
-            .willThrow(new RuntimeException("challenger boom"));
+        org.mockito.Mockito.doThrow(new RuntimeException("member boom"))
+            .when(registerEmailMemberUseCase).batchRegister(any());
 
         // When
         SeedChallengersResult result = sut.seed(new SeedChallengersCommand(
@@ -160,8 +161,8 @@ class ChallengerSeedServiceTest {
         assertThat(result.perCellSummary()).hasSize(1);
         SeedChallengersResult.PerCellSummary cell = result.perCellSummary().get(0);
         assertThat(cell.created()).isZero();
-        assertThat(cell.memberFailed()).isEqualTo(1);
-        assertThat(cell.challengerFailed()).isEqualTo(1);
+        assertThat(cell.memberFailed()).isEqualTo(2);
+        assertThat(cell.challengerFailed()).isZero();
         assertThat(cell.totalFailed()).isEqualTo(2);
     }
 
@@ -179,5 +180,13 @@ class ChallengerSeedServiceTest {
 
         // Then
         assertThat(result.gisuId()).isEqualTo(10L);
+    }
+
+    private static List<Long> nextIds(AtomicLong sequence, int count) {
+        List<Long> ids = new java.util.ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            ids.add(sequence.getAndIncrement());
+        }
+        return ids;
     }
 }

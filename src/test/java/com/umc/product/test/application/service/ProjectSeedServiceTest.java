@@ -23,7 +23,7 @@ import com.umc.product.test.application.port.in.command.dto.SeedProjectsCommand;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectsResult;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.BeforeEach;
@@ -77,7 +77,8 @@ class ProjectSeedServiceTest {
             1L, "서울", List.of(new ChapterWithSchoolsInfo.SchoolInfo(101L, "건국대"))
         );
         given(getChapterUseCase.getChaptersWithSchoolsByGisuId(9L)).willReturn(List.of(chapter));
-        given(getMemberUseCase.findAllIdsBySchoolId(101L)).willReturn(Set.of(1L, 2L, 3L));
+        given(getMemberUseCase.listIdsBySchoolIds(Set.of(101L))).willReturn(Map.of(101L, Set.of(1L, 2L, 3L)));
+        given(getChallengerUseCase.listByMemberIdsAndGisuId(Set.of(1L, 2L, 3L), 9L)).willReturn(Map.of());
 
         // When
         SeedProjectsResult result = sut.seed(new SeedProjectsCommand(5, 9L));
@@ -100,9 +101,9 @@ class ProjectSeedServiceTest {
         );
         Set<Long> pool = bigPool(13);
         given(getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId)).willReturn(List.of(chapter));
-        given(getMemberUseCase.findAllIdsBySchoolId(101L)).willReturn(pool);
-        given(getChallengerUseCase.findByMemberIdAndGisuId(anyLong(), eq(gisuId)))
-            .willReturn(Optional.empty());
+        given(getMemberUseCase.listIdsBySchoolIds(Set.of(101L))).willReturn(Map.of(101L, pool));
+        given(getChallengerUseCase.listByMemberIdsAndGisuId(pool, gisuId)).willReturn(Map.of());
+        given(manageChallengerUseCase.createChallenger(any())).willReturn(9000L);
         given(createDraftProjectUseCase.create(any())).willReturn(1000L);
 
         // When
@@ -126,9 +127,9 @@ class ProjectSeedServiceTest {
         );
         Set<Long> pool = bigPool(30);
         given(getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId)).willReturn(List.of(chapter));
-        given(getMemberUseCase.findAllIdsBySchoolId(101L)).willReturn(pool);
-        given(getChallengerUseCase.findByMemberIdAndGisuId(anyLong(), eq(gisuId)))
-            .willReturn(Optional.empty());
+        given(getMemberUseCase.listIdsBySchoolIds(Set.of(101L))).willReturn(Map.of(101L, pool));
+        given(getChallengerUseCase.listByMemberIdsAndGisuId(pool, gisuId)).willReturn(Map.of());
+        given(manageChallengerUseCase.createChallenger(any())).willReturn(9000L, 9001L);
         AtomicLong projectIdSeq = new AtomicLong(1000L);
         given(createDraftProjectUseCase.create(any())).willAnswer(inv -> projectIdSeq.getAndIncrement());
 
@@ -155,10 +156,11 @@ class ProjectSeedServiceTest {
         ChapterWithSchoolsInfo chapter = new ChapterWithSchoolsInfo(
             1L, "서울", List.of(new ChapterWithSchoolsInfo.SchoolInfo(101L, "건국대"))
         );
+        Set<Long> pool = bigPool(13);
         given(getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId)).willReturn(List.of(chapter));
-        given(getMemberUseCase.findAllIdsBySchoolId(101L)).willReturn(bigPool(13));
-        given(getChallengerUseCase.findByMemberIdAndGisuId(anyLong(), eq(gisuId)))
-            .willReturn(Optional.empty());
+        given(getMemberUseCase.listIdsBySchoolIds(Set.of(101L))).willReturn(Map.of(101L, pool));
+        given(getChallengerUseCase.listByMemberIdsAndGisuId(pool, gisuId)).willReturn(Map.of());
+        given(manageChallengerUseCase.createChallenger(any())).willReturn(9000L);
         given(createDraftProjectUseCase.create(any())).willReturn(2000L);
         given(addProjectMemberUseCase.add(any()))
             .willReturn(1L)
@@ -185,10 +187,11 @@ class ProjectSeedServiceTest {
         ChapterWithSchoolsInfo chapter = new ChapterWithSchoolsInfo(
             1L, "서울", List.of(new ChapterWithSchoolsInfo.SchoolInfo(101L, "건국대"))
         );
+        Set<Long> pool = bigPool(13);
         given(getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId)).willReturn(List.of(chapter));
-        given(getMemberUseCase.findAllIdsBySchoolId(101L)).willReturn(bigPool(13));
-        given(getChallengerUseCase.findByMemberIdAndGisuId(anyLong(), eq(gisuId)))
-            .willReturn(Optional.empty());
+        given(getMemberUseCase.listIdsBySchoolIds(Set.of(101L))).willReturn(Map.of(101L, pool));
+        given(getChallengerUseCase.listByMemberIdsAndGisuId(pool, gisuId)).willReturn(Map.of());
+        given(manageChallengerUseCase.createChallenger(any())).willReturn(9000L);
         given(createDraftProjectUseCase.create(any()))
             .willThrow(new RuntimeException("create boom"));
 
@@ -200,6 +203,40 @@ class ProjectSeedServiceTest {
         assertThat(result.partialProjects()).isEmpty();
         assertThat(result.failedCount()).isGreaterThanOrEqualTo(1);
         verify(addProjectMemberUseCase, never()).add(any());
+    }
+
+    @Test
+    @DisplayName("school 풀과 후보 챌린저는 batch 로 한 번만 조회하고 캐시를 재사용한다")
+    void 프로젝트_시딩_batch_preload_캐시() {
+        // Given
+        Long gisuId = 9L;
+        Set<Long> schoolOnePool = bigPoolRange(1, 13);
+        Set<Long> schoolTwoPool = bigPoolRange(101, 113);
+        Set<Long> allMemberIds = new HashSet<>();
+        allMemberIds.addAll(schoolOnePool);
+        allMemberIds.addAll(schoolTwoPool);
+        ChapterWithSchoolsInfo chapter = new ChapterWithSchoolsInfo(
+            1L, "서울", List.of(
+            new ChapterWithSchoolsInfo.SchoolInfo(101L, "건국대"),
+            new ChapterWithSchoolsInfo.SchoolInfo(102L, "숭실대")
+        ));
+        given(getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId)).willReturn(List.of(chapter));
+        given(getMemberUseCase.listIdsBySchoolIds(Set.of(101L, 102L)))
+            .willReturn(Map.of(101L, schoolOnePool, 102L, schoolTwoPool));
+        given(getChallengerUseCase.listByMemberIdsAndGisuId(allMemberIds, gisuId)).willReturn(Map.of());
+        given(manageChallengerUseCase.createChallenger(any())).willReturn(9000L, 9001L);
+        AtomicLong projectIds = new AtomicLong(1000L);
+        given(createDraftProjectUseCase.create(any())).willAnswer(inv -> projectIds.getAndIncrement());
+
+        // When
+        SeedProjectsResult result = sut.seed(new SeedProjectsCommand(2, gisuId));
+
+        // Then
+        assertThat(result.createdProjectIds()).hasSize(2);
+        verify(getMemberUseCase, times(1)).listIdsBySchoolIds(Set.of(101L, 102L));
+        verify(getMemberUseCase, never()).listIdsBySchoolId(anyLong());
+        verify(getChallengerUseCase, times(1)).listByMemberIdsAndGisuId(allMemberIds, gisuId);
+        verify(getChallengerUseCase, never()).findByMemberIdAndGisuId(anyLong(), eq(gisuId));
     }
 
     @Test
@@ -220,6 +257,14 @@ class ProjectSeedServiceTest {
     private static Set<Long> bigPool(int size) {
         Set<Long> pool = new HashSet<>();
         for (long i = 1; i <= size; i++) {
+            pool.add(i);
+        }
+        return pool;
+    }
+
+    private static Set<Long> bigPoolRange(long startInclusive, long endInclusive) {
+        Set<Long> pool = new HashSet<>();
+        for (long i = startInclusive; i <= endInclusive; i++) {
             pool.add(i);
         }
         return pool;

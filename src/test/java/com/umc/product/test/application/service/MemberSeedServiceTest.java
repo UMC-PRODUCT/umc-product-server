@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -11,9 +12,11 @@ import static org.mockito.Mockito.verify;
 
 import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.test.application.port.in.command.dto.SeedMembersCommand;
 import com.umc.product.test.application.port.in.command.dto.SeedMembersResult;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,9 +36,11 @@ class MemberSeedServiceTest {
 
     MemberSeedService sut;
     SeedProperties properties;
+    List<TermConsents> consents;
 
     @BeforeEach
     void setUp() {
+        consents = List.of();
         properties = new SeedProperties(
             true,
             0L,
@@ -48,6 +53,7 @@ class MemberSeedServiceTest {
             getMemberUseCase,
             registerEmailMemberUseCase
         );
+        lenient().when(dummyMemberFactory.snapshotMandatoryConsents()).thenReturn(consents);
     }
 
     @Test
@@ -62,7 +68,7 @@ class MemberSeedServiceTest {
         // Then
         assertThat(result.skipped()).isTrue();
         assertThat(result.reason()).contains("threshold");
-        verify(registerEmailMemberUseCase, never()).register(any());
+        verify(registerEmailMemberUseCase, never()).batchRegister(any());
     }
 
     @Test
@@ -70,7 +76,8 @@ class MemberSeedServiceTest {
     void force_true_면_임계값_무시() {
         // Given
         given(getMemberUseCase.countAll()).willReturn(100L);
-        given(dummyMemberFactory.nextEmailCommand(anyLong())).willReturn(mock(EmailRegisterMemberCommand.class));
+        given(dummyMemberFactory.nextEmailCommand(anyLong(), any())).willReturn(mock(EmailRegisterMemberCommand.class));
+        given(registerEmailMemberUseCase.batchRegister(any())).willReturn(List.of(1L, 2L));
 
         // When
         SeedMembersResult result = sut.seed(new SeedMembersCommand(2, true));
@@ -81,36 +88,35 @@ class MemberSeedServiceTest {
     }
 
     @Test
-    @DisplayName("정상 시딩 시 email register 가 count 번 호출된다")
+    @DisplayName("정상 시딩 시 email batchRegister 가 1번 호출된다")
     void 정상_시딩_호출_횟수() {
         // Given
         given(getMemberUseCase.countAll()).willReturn(0L);
-        given(dummyMemberFactory.nextEmailCommand(anyLong())).willReturn(mock(EmailRegisterMemberCommand.class));
+        given(dummyMemberFactory.nextEmailCommand(anyLong(), any())).willReturn(mock(EmailRegisterMemberCommand.class));
+        given(registerEmailMemberUseCase.batchRegister(any())).willReturn(List.of(1L, 2L, 3L, 4L, 5L));
 
         // When
         sut.seed(new SeedMembersCommand(5, false));
 
         // Then
-        verify(registerEmailMemberUseCase, times(5)).register(any());
+        verify(registerEmailMemberUseCase, times(1)).batchRegister(any());
     }
 
     @Test
-    @DisplayName("이메일 단건 실패는 다음 시딩 호출을 막지 않는다")
-    void email_실패_격리() {
+    @DisplayName("email batchRegister 실패 시 등록 수는 0으로 반환된다")
+    void email_batch_실패_시_0_반환() {
         // Given
         given(getMemberUseCase.countAll()).willReturn(0L);
-        given(dummyMemberFactory.nextEmailCommand(anyLong())).willReturn(mock(EmailRegisterMemberCommand.class));
-        given(registerEmailMemberUseCase.register(any()))
-            .willReturn(1L)
-            .willThrow(new RuntimeException("boom"))
-            .willReturn(3L);
+        given(dummyMemberFactory.nextEmailCommand(anyLong(), any())).willReturn(mock(EmailRegisterMemberCommand.class));
+        given(registerEmailMemberUseCase.batchRegister(any()))
+            .willThrow(new RuntimeException("boom"));
 
         // When
         SeedMembersResult result = sut.seed(new SeedMembersCommand(3, false));
 
         // Then
-        verify(registerEmailMemberUseCase, times(3)).register(any());
-        assertThat(result.registered()).isEqualTo(2);
+        verify(registerEmailMemberUseCase, times(1)).batchRegister(any());
+        assertThat(result.registered()).isZero();
     }
 
     @Test
@@ -125,7 +131,7 @@ class MemberSeedServiceTest {
         // Then
         assertThat(result.skipped()).isFalse();
         assertThat(result.registered()).isZero();
-        verify(registerEmailMemberUseCase, never()).register(any());
+        verify(registerEmailMemberUseCase, never()).batchRegister(any());
     }
 
     @Test
@@ -133,13 +139,14 @@ class MemberSeedServiceTest {
     void 시퀀스_오프셋_확인() {
         // Given
         given(getMemberUseCase.countAll()).willReturn(42L);
-        given(dummyMemberFactory.nextEmailCommand(anyLong())).willReturn(mock(EmailRegisterMemberCommand.class));
+        given(dummyMemberFactory.nextEmailCommand(anyLong(), any())).willReturn(mock(EmailRegisterMemberCommand.class));
+        given(registerEmailMemberUseCase.batchRegister(any())).willReturn(List.of(1L, 2L));
 
         // When
         sut.seed(new SeedMembersCommand(2, true));
 
         // Then
-        verify(dummyMemberFactory).nextEmailCommand(43L);
-        verify(dummyMemberFactory).nextEmailCommand(44L);
+        verify(dummyMemberFactory).nextEmailCommand(43L, consents);
+        verify(dummyMemberFactory).nextEmailCommand(44L, consents);
     }
 }

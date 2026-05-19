@@ -127,9 +127,11 @@ class CurriculumSeedServiceTest {
             .willThrow(new RuntimeException("first part boom"))
             .willAnswer(inv -> cId.getAndIncrement());
         AtomicLong wId = new AtomicLong(200L);
-        given(manageWeeklyCurriculumUseCase.create(any())).willAnswer(inv -> wId.getAndIncrement());
+        given(manageWeeklyCurriculumUseCase.createBulk(any()))
+            .willAnswer(inv -> nextIds(wId, inv.getArgument(0, List.class).size()));
         AtomicLong oId = new AtomicLong(300L);
-        given(manageOriginalWorkbookUseCase.create(any())).willAnswer(inv -> oId.getAndIncrement());
+        given(manageOriginalWorkbookUseCase.createBulk(any()))
+            .willAnswer(inv -> nextIds(oId, inv.getArgument(0, List.class).size()));
 
         // When - 2 파트 시딩
         SeedCurriculumResult result = sut.seed(new SeedCurriculumCommand(
@@ -157,6 +159,27 @@ class CurriculumSeedServiceTest {
         // Then
         assertThat(result.released()).isTrue();
         verify(manageOriginalWorkbookUseCase, times(1)).changeStatusForRelease(any());
+    }
+
+    @Test
+    @DisplayName("WeeklyCurriculum 과 OriginalWorkbook 은 파트별 bulk UseCase 로 생성한다")
+    void 주차와_워크북_bulk_생성() {
+        // Given
+        Long gisuId = 9L;
+        givenSequentialIds();
+
+        // When
+        SeedCurriculumResult result = sut.seed(new SeedCurriculumCommand(
+            gisuId, 3, 0, List.of(ChallengerPart.WEB, ChallengerPart.SPRINGBOOT), null
+        ));
+
+        // Then
+        assertThat(result.createdWeeklyCurriculumIds()).hasSize(6);
+        assertThat(result.createdOriginalWorkbookIds()).hasSize(6);
+        verify(manageWeeklyCurriculumUseCase, times(2)).createBulk(any());
+        verify(manageOriginalWorkbookUseCase, times(2)).createBulk(any());
+        verify(manageWeeklyCurriculumUseCase, never()).create(any());
+        verify(manageOriginalWorkbookUseCase, never()).create(any());
     }
 
     @Test
@@ -252,9 +275,19 @@ class CurriculumSeedServiceTest {
         AtomicLong oId = new AtomicLong(300L);
         AtomicLong mId = new AtomicLong(400L);
         given(manageCurriculumUseCase.create(any())).willAnswer(inv -> cId.getAndIncrement());
-        given(manageWeeklyCurriculumUseCase.create(any())).willAnswer(inv -> wId.getAndIncrement());
-        given(manageOriginalWorkbookUseCase.create(any())).willAnswer(inv -> oId.getAndIncrement());
+        given(manageWeeklyCurriculumUseCase.createBulk(any()))
+            .willAnswer(inv -> nextIds(wId, inv.getArgument(0, List.class).size()));
+        given(manageOriginalWorkbookUseCase.createBulk(any()))
+            .willAnswer(inv -> nextIds(oId, inv.getArgument(0, List.class).size()));
         lenient().when(manageOriginalWorkbookMissionUseCase.create(any()))
             .thenAnswer(inv -> mId.getAndIncrement());
+    }
+
+    private static List<Long> nextIds(AtomicLong sequence, int count) {
+        List<Long> ids = new java.util.ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            ids.add(sequence.getAndIncrement());
+        }
+        return ids;
     }
 }

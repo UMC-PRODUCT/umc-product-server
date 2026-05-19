@@ -4,6 +4,7 @@ import com.umc.product.challenger.application.port.in.command.ManageChallengerUs
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerCommand;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
+import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
@@ -62,6 +63,7 @@ public class ChallengerSeedService implements SeedChallengersUseCase {
         );
 
         AtomicLong sequence = new AtomicLong(getMemberUseCase.countAll() + 1);
+        List<TermConsents> consents = dummyMemberFactory.snapshotMandatoryConsents();
         List<PerCellSummary> summaries = new ArrayList<>();
         int totalCreated = 0;
         int totalFailed = 0;
@@ -75,7 +77,8 @@ public class ChallengerSeedService implements SeedChallengersUseCase {
                         part,
                         gisuId,
                         command.countPerPartPerSchool(),
-                        sequence
+                        sequence,
+                        consents
                     );
                     summaries.add(summary);
                     totalCreated += summary.created();
@@ -127,27 +130,30 @@ public class ChallengerSeedService implements SeedChallengersUseCase {
         ChallengerPart part,
         Long gisuId,
         int countPerCell,
-        AtomicLong sequence
+        AtomicLong sequence,
+        List<TermConsents> consents
     ) {
         if (countPerCell <= 0) {
             return new PerCellSummary(chapterId, schoolId, part, 0, 0, 0);
         }
-        List<Long> createdMemberIds = new ArrayList<>(countPerCell);
-        int memberFailed = 0;
+        List<com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand> memberCommands =
+            new ArrayList<>(countPerCell);
         for (int i = 0; i < countPerCell; i++) {
             long seq = sequence.getAndIncrement();
-            try {
-                Long memberId = registerEmailMemberUseCase.register(
-                    dummyMemberFactory.nextEmailCommandWithSchool(seq, schoolId)
-                );
-                createdMemberIds.add(memberId);
-            } catch (Exception e) {
-                memberFailed++;
-                log.error(
-                    "challenger seed member create failed at seq {} (chapterId={}, schoolId={}, part={}): {}",
-                    seq, chapterId, schoolId, part, e.toString()
-                );
-            }
+            memberCommands.add(dummyMemberFactory.nextEmailCommandWithSchool(seq, schoolId, consents));
+        }
+
+        List<Long> createdMemberIds;
+        int memberFailed;
+        try {
+            createdMemberIds = registerEmailMemberUseCase.batchRegister(memberCommands);
+            memberFailed = countPerCell - createdMemberIds.size();
+        } catch (Exception e) {
+            log.error(
+                "challenger seed member batchRegister failed (chapterId={}, schoolId={}, part={}, count={}): {}",
+                chapterId, schoolId, part, countPerCell, e.toString()
+            );
+            return new PerCellSummary(chapterId, schoolId, part, 0, countPerCell, 0);
         }
 
         if (createdMemberIds.isEmpty()) {
