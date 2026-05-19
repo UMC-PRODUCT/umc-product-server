@@ -29,7 +29,7 @@ public class ChallengerSearchV2Controller {
     private final SearchMemberUseCase searchMemberUseCase;
 
     @Operation(
-        summary = "[CHALLENGER-V2-101] 챌린저 검색 v2",
+        summary = "[CHALLENGER-201] 챌린저 검색 v2",
         description = """
             챌린저 단위 페이지네이션 검색입니다.
 
