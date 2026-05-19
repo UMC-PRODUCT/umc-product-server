@@ -106,7 +106,7 @@ public class JwtTokenProvider {
      * AccessToken 생성 메소드 (clientType 포함)
      * <p>
      * clientType 은 트래픽 분포 분석용 optional claim. null 인 경우 claim 자체를 추가하지 않으며,
-     * 다운스트림(MDC, 통계)에서는 미설정으로 간주된다.
+     * 다운스트림(MDC, 통계)에서는 UNKNOWN 으로 집계된다.
      */
     public String createAccessToken(Long memberId, List<String> roles, ClientType clientType) {
         Date now = new Date();
@@ -168,9 +168,9 @@ public class JwtTokenProvider {
     /**
      * AccessToken 에서 clientType claim 을 추출한다.
      * <p>
-     * 도입 이전에 발급된 토큰 / 비-OAuth 로그인 경로로 발급된 토큰에는 claim 이 존재하지 않으므로,
-     * 그 경우엔 {@code null} 을 반환한다. 호출자는 null-safe 하게 다루어야 하며 (예: MDC 미기록,
-     * 통계에서 "UNKNOWN" 으로 집계), 절대 예외를 던지지 않는다.
+     * 도입 이전에 발급된 토큰 / clientType 미전달 로그인 경로로 발급된 토큰에는 claim 이 존재하지 않으므로,
+     * 그 경우엔 {@code null} 을 반환한다. 호출자는 null-safe 하게 다루어야 하며
+     * 통계에서는 "UNKNOWN" 으로 집계한다. 절대 예외를 던지지 않는다.
      */
     public ClientType getClientTypeFromAccessToken(String token) {
         Claims claims = parseClaims(token, accessTokenSecret);

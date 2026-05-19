@@ -51,6 +51,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
 
     private static final String EVENT_REQUEST_STARTED = "api_request_started";
     private static final String EVENT_REQUEST_COMPLETED = "api_request_completed";
+    private static final String UNKNOWN = "UNKNOWN";
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
@@ -65,6 +66,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
 
         MDC.put(MDC_METHOD, request.getMethod());
         MDC.put(MDC_PATH, request.getRequestURI());
+        MDC.put(MDC_CLIENT_TYPE, UNKNOWN);
 
         // Micrometer Tracing 이 채워 둔 traceId 를 FE 디버깅용으로 응답 헤더에 노출.
         // 별도 requestId UUID 는 발급하지 않는다 (FE 호환성 — X-Trace-Id 가 이미 사용 중).
@@ -74,8 +76,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
         }
 
         // 인증된 사용자라면 memberId / clientType 을 MDC 에 등록.
-        // 익명 사용자 또는 도입 이전 발급 토큰은 키를 비워둔다 —
-        // Loki 에서 `memberId is null` / `clientType is null` 로 식별 가능.
+        // clientType 이 없으면 UNKNOWN 으로 남겨 메트릭에서 누락 트래픽을 집계할 수 있게 한다.
         putMemberContextToMdcIfAuthenticated();
 
         // ADR-016 §MDC 키 표준: api_request_completed 와 동일하게 event 필드를 채워
@@ -97,9 +98,9 @@ public class LoggingInterceptor implements HandlerInterceptor {
      *
      * <p>서비스 도메인 명명을 그대로 사용 (`userId` 가 아니라 `memberId`).
      *
-     * <p>{@code clientType} 은 OAuth 로그인 시 클라이언트가 선택적으로 전달한 플랫폼 정보를
-     * AT claim 으로 받아온 값이다. 도입 이전 발급 토큰 / 비-OAuth 경로 토큰의 경우 null 이며,
-     * 이 때는 MDC 키 자체를 비워두어 Loki/대시보드에서 미설정 트래픽을 구분 집계할 수 있게 한다.
+     * <p>{@code clientType} 은 로그인 시 클라이언트가 선택적으로 전달한 플랫폼 정보를
+     * AT claim 으로 받아온 값이다. 도입 이전 발급 토큰 / 누락된 클라이언트는 UNKNOWN 으로 남겨
+     * Loki/대시보드에서 미설정 트래픽을 구분 집계할 수 있게 한다.
      *
      * <p>Filter 가 아니라 Interceptor 에서 채우는 이유:
      * <ul>

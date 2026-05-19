@@ -110,7 +110,11 @@ public class CredentialAuthenticationService implements CredentialAuthentication
 
         // 4) 토큰 발급
         Long memberId = credential.memberId();
-        String accessToken = jwtTokenProvider.createAccessToken(memberId, Collections.emptyList());
+        String accessToken = jwtTokenProvider.createAccessToken(
+            memberId,
+            Collections.emptyList(),
+            command.clientType()
+        );
         String refreshToken = jwtTokenProvider.createRefreshToken(memberId);
 
         return IdPwLoginResult.builder()
