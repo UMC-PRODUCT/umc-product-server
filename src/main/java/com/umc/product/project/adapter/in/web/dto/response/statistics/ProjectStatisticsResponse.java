@@ -5,6 +5,9 @@ import com.umc.product.project.application.port.in.query.dto.statistics.ProjectM
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMemberApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMemberStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.RoundApplicationStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.RoundSchoolApplicationStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.SchoolApplicationStatisticsInfo;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
@@ -17,13 +20,23 @@ public record ProjectStatisticsResponse(
     @Schema(description = "프로젝트 ID")
     Long projectId,
     @Schema(description = "프로젝트에 최종 합류한 활성 멤버 목록")
-    List<ProjectMemberStatisticsResponse> projectMembers
+    List<ProjectMemberStatisticsResponse> projectMembers,
+    @Schema(description = "매칭 차수별 지원 완료 인원 수와 지원 가능 인원 수")
+    List<RoundApplicationStatisticsResponse> roundApplicationStatistics,
+    @Schema(description = "매칭 차수별 지원자 학교 인원 수")
+    List<RoundSchoolApplicationStatisticsResponse> schoolApplicationStatistics
 ) {
     public static ProjectStatisticsResponse from(ProjectStatisticsInfo info) {
         return new ProjectStatisticsResponse(
             info.projectId(),
             info.projectMembers().stream()
                 .map(ProjectMemberStatisticsResponse::from)
+                .toList(),
+            info.roundApplicationStatistics().stream()
+                .map(RoundApplicationStatisticsResponse::from)
+                .toList(),
+            info.schoolApplicationStatistics().stream()
+                .map(RoundSchoolApplicationStatisticsResponse::from)
                 .toList()
         );
     }
@@ -89,6 +102,53 @@ public record ProjectStatisticsResponse(
                 info.type(),
                 info.phase()
             );
+        }
+    }
+
+    @Schema(description = "매칭 차수별 지원 완료 인원 수와 지원 가능 인원 수")
+    public record RoundApplicationStatisticsResponse(
+        @Schema(description = "매칭 차수")
+        ProjectMatchingRoundStatisticsResponse matchingRound,
+        @Schema(description = "지원 완료 인원 수")
+        long appliedMemberCount,
+        @Schema(description = "지원 가능 인원 수")
+        long availableMemberCount
+    ) {
+        static RoundApplicationStatisticsResponse from(RoundApplicationStatisticsInfo info) {
+            return new RoundApplicationStatisticsResponse(
+                ProjectMatchingRoundStatisticsResponse.from(info.matchingRound()),
+                info.appliedMemberCount(),
+                info.availableMemberCount()
+            );
+        }
+    }
+
+    @Schema(description = "매칭 차수별 지원자 학교 인원 수")
+    public record RoundSchoolApplicationStatisticsResponse(
+        @Schema(description = "매칭 차수")
+        ProjectMatchingRoundStatisticsResponse matchingRound,
+        @Schema(description = "학교별 지원자 수")
+        List<SchoolApplicationStatisticsResponse> schools
+    ) {
+        static RoundSchoolApplicationStatisticsResponse from(RoundSchoolApplicationStatisticsInfo info) {
+            return new RoundSchoolApplicationStatisticsResponse(
+                ProjectMatchingRoundStatisticsResponse.from(info.matchingRound()),
+                info.schools().stream()
+                    .map(SchoolApplicationStatisticsResponse::from)
+                    .toList()
+            );
+        }
+    }
+
+    @Schema(description = "학교별 지원자 수")
+    public record SchoolApplicationStatisticsResponse(
+        @Schema(description = "학교 ID")
+        Long schoolId,
+        @Schema(description = "지원자 수")
+        long applicantCount
+    ) {
+        static SchoolApplicationStatisticsResponse from(SchoolApplicationStatisticsInfo info) {
+            return new SchoolApplicationStatisticsResponse(info.schoolId(), info.applicantCount());
         }
     }
 }

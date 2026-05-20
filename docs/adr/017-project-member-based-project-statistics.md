@@ -40,12 +40,16 @@ Accepted (2026-05-19)
 5. 같은 멤버가 같은 프로젝트에 여러 차수로 지원한 경우 각 지원서를 모두 `applications[]` 에 포함한다.
 6. 지원서 없이 합류한 멤버는 `applications: []` 로 반환한다.
 7. 각 지원서에는 연결된 `ProjectMatchingRound` 의 `id`, `type`, `phase` 를 포함한다.
+8. BFF 응답에는 기존 `Project -> ProjectMember -> applications` 필드를 유지하면서, 같은 조회 모델에서 화면용 집계 필드를 함께 조립한다.
+9. 차수별 지원 가능 인원은 `gisuId` 기준 전체 챌린저 중 `ADMIN`, `PLAN` 파트를 제외한 인원을 시작 분모로 삼고, 이전 차수까지의 매칭 완료 인원을 누적 차감하는 슬라이딩 분모로 계산한다.
+10. 지원자 학교 통계와 지부 요약 통계는 `Member` 도메인을 직접 조인하지 않고 `GetMemberUseCase.findAllSchoolIdsByIds(...)` 로 `memberId -> schoolId` 매핑을 받아 조립한다.
 
 ### 단계적 진행 / PR 분할
 
 - **Phase 1 (이 PR / 본 ADR)**: 기존 분리 통계 구현을 제거하고 `ProjectStatistics` 단일 UseCase, Port, QueryRepository, Controller, Response DTO 를 추가한다.
-- **Phase 2 (별도 PR 후보)**: 권한 정책이 확정되면 `chapterId` 전체 조회에 대해 중앙 운영진/지부장 scope 를 더 엄격히 적용한다.
-- **Phase 3 (시점 미정)**: 최종 팀원 조회 화면에서 멤버 상세 정보가 필요해지면 `Member` / `Challenger` Query UseCase 를 조합한 별도 assembler 응답을 추가한다.
+- **Phase 2 (이후 확장)**: 단건 프로젝트와 지부 전체 조회에 BFF 집계 필드를 추가한다.
+- **Phase 3 (별도 PR 후보)**: 권한 정책이 확정되면 `chapterId` 전체 조회에 대해 중앙 운영진/지부장 scope 를 더 엄격히 적용한다.
+- **Phase 4 (시점 미정)**: 최종 팀원 조회 화면에서 멤버 상세 정보가 필요해지면 `Member` / `Challenger` Query UseCase 를 조합한 별도 assembler 응답을 추가한다.
 
 ## Alternatives Considered
 
@@ -118,7 +122,7 @@ Accepted (2026-05-19)
 
 - 기존 `/statistics/applications`, `/statistics/matchings` API 는 제거되므로 클라이언트 전환이 필요하다.
 - chapter 단위 조회는 프로젝트와 멤버 수에 따라 응답 크기가 커질 수 있다.
-- count 기반 통계가 다시 필요해지면 새 응답을 기반으로 별도 집계 API 를 재설계해야 한다.
+- 단건 프로젝트와 지부 전체 조회에 BFF 집계가 함께 포함되므로 응답 DTO 변경 시 클라이언트 영향 범위가 커질 수 있다.
 
 ### Neutral / Trade-offs
 
@@ -131,9 +135,12 @@ Accepted (2026-05-19)
 
 1. **응용 / Port**
    - 추가: `GetProjectStatisticsUseCase`
-   - 추가: `ProjectStatisticsInfo`, `ProjectMemberStatisticsInfo`, `ProjectMemberApplicationStatisticsInfo`, `ProjectMatchingRoundStatisticsInfo`
+   - 추가: `ProjectStatisticsInfo`, `ChapterProjectStatisticsInfo`
+   - 추가: `ProjectMemberStatisticsInfo`, `ProjectMemberApplicationStatisticsInfo`, `ProjectMatchingRoundStatisticsInfo`
+   - 추가: `RoundApplicationStatisticsInfo`, `RoundSchoolApplicationStatisticsInfo`, `SchoolApplicationStatisticsInfo`, `SchoolMatchingStatisticsInfo`
+   - 추가: `ProjectRoundMemberStatisticsInfo`, `ProjectRoundMemberCountInfo`
    - 추가: `LoadProjectStatisticsPort`
-   - 추가: `ProjectStatisticsMemberRow`, `ProjectStatisticsApplicationRow`
+   - 추가: `ProjectStatisticsProjectRow`, `ProjectStatisticsMatchingRoundRow`, `ProjectStatisticsMemberRow`, `ProjectStatisticsApplicationRow`
    - 제거: `GetApplicationStatisticsUseCase`, `GetMatchingStatisticsUseCase`, `LoadApplicationStatisticsPort`, `LoadMatchingStatisticsPort`
 
 2. **응용 / Service**
@@ -144,6 +151,7 @@ Accepted (2026-05-19)
    - 변경: `ProjectStatisticsQueryController`
    - 변경: `ProjectResponseAssembler`
    - 추가: `ProjectStatisticsResponse`
+   - 추가: `ChapterProjectStatisticsResponse`
    - 제거: `ApplicationStatisticsResponse`, `MatchingStatisticsResponse`
 
 4. **어댑터 (out)**

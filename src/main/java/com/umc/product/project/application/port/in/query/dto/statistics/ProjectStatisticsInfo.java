@@ -7,6 +7,8 @@ import java.util.List;
  */
 public record ProjectStatisticsInfo(
     Long projectId,
-    List<ProjectMemberStatisticsInfo> projectMembers
+    List<ProjectMemberStatisticsInfo> projectMembers,
+    List<RoundApplicationStatisticsInfo> roundApplicationStatistics,
+    List<RoundSchoolApplicationStatisticsInfo> schoolApplicationStatistics
 ) {
 }

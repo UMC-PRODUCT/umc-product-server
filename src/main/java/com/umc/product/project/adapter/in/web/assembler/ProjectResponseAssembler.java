@@ -15,6 +15,7 @@ import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse.PartGroup;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
@@ -223,10 +224,8 @@ public class ProjectResponseAssembler {
     /**
      * PROJECT-STAT-002 지부 전체 프로젝트 지원/매칭 현황.
      */
-    public List<ProjectStatisticsResponse> statisticsForChapter(Long chapterId) {
-        return getProjectStatisticsUseCase.listByChapterId(chapterId).stream()
-            .map(ProjectStatisticsResponse::from)
-            .toList();
+    public ChapterProjectStatisticsResponse statisticsForChapter(Long chapterId) {
+        return ChapterProjectStatisticsResponse.from(getProjectStatisticsUseCase.getByChapterId(chapterId));
     }
 
     private ProjectMembersResponse buildMembersResponse(

@@ -6,11 +6,11 @@ import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.project.adapter.in.web.assembler.ProjectResponseAssembler;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,9 +30,13 @@ public class ProjectStatisticsQueryController {
     @Operation(
         summary = "[PROJECT-STAT-001] 단건 프로젝트 지원/매칭 현황 조회",
         description = """
-            단건 프로젝트의 ACTIVE ProjectMember 목록을 기준으로,
-            각 멤버가 해당 프로젝트에 작성한 지원서와 연결된 matchingRound(type/phase)를 반환합니다.
-            강제 배정 등으로 지원서가 없는 멤버는 applications 빈 목록으로 반환됩니다.
+            프로젝트 ID와 함께 멤버 목록을 포함하고 있고, FE단 재가공을 최소화해드리기 위해서 `roundApplicationStatistics` 및 `schoolApplicationStatistics` 필드를 두고 있습니다.
+
+            각 항목이 매칭 차수별 지원률, N차 매칭에서의 학교별 및 총 지원자 수를 포함하고 있습니다.
+            프로젝트 멤버 목록의 경우 각 멤버가 해당 프로젝트에 작성한 지원 이력을 포함하고 있으며,
+            없거나 (강제배정/랜덤매칭) 여러 건 (떨어지고 재 지원하는 경우) 이 존재할 수 있어 배열로 구성되어 있습니다.
+
+            지원자 목록은(특정 프로젝트에 대한 지원서 조회) `/api/v1/projects/{projectId}/applications`를 호출하셔서 활용하셔야 합니다.
             """
     )
     @CheckAccess(
@@ -54,6 +58,20 @@ public class ProjectStatisticsQueryController {
         description = """
             chapterId에 속한 전체 프로젝트를 대상으로 ACTIVE ProjectMember 목록과
             각 멤버가 해당 프로젝트에 작성한 지원 이력을 프로젝트별로 반환합니다.
+            summary에는 차수별 지원 완료 인원/지원 가능 총원, 학교 순위, 학교별 매칭 인원,
+            프로젝트별 차수 인원 수를 함께 반환합니다.
+
+            지부 내 회장단 이상의 운영진이 매칭 통계를 조회할 때 활용합니다.
+
+            지부 내 모든 프로젝트 목록 및 각 프로젝트에 대한 프로젝트 멤버를 포함하고 있으며,
+            이는 `/api/v1/projects/{projectId}/statistics` 에서 제공하는 것과 동일한 형태입니다.
+
+            추가로 BFF 패턴을 적용하여 FE단 데이터 가공 책임을 줄이기 위해 `summary` 필드를 제공하고 있습니다.
+
+            - roundApplicationStatistics: N차 매칭 지원 현황 카드에 활용합니다. 각 매칭 차수별 정보 (매칭 종류 및 차수) 와 각 차수별 지원자 수 & 지원 가능했던 인원
+            - roundSchoolRankings: N차 매칭 지원 Top N에 활용합니다. 각 차수별로, 각 학교별 지원자 수
+            - schoolMatchingStatistics: 총원 N명 카드에 활용합니다. 차수와 무관하게, 각 학교별 총 매칭 완료 인원 & 지원 가능 총원
+            - projectRoundStatistics: 프로젝트별 지원 현황 필드에 활용합니다. 각 프로젝트별로, 각 매칭 차수별 정보 (매칭 종류 & 차수) 와 지원자 수
             """
     )
     @CheckAccess(
@@ -61,7 +79,7 @@ public class ProjectStatisticsQueryController {
         permission = PermissionType.READ,
         message = "프로젝트 지원/매칭 현황 조회 권한이 없습니다."
     )
-    public List<ProjectStatisticsResponse> listChapterProjectStatistics(
+    public ChapterProjectStatisticsResponse listChapterProjectStatistics(
         @CurrentMember MemberPrincipal memberPrincipal,
         @Parameter(description = "지부 ID", required = true) @RequestParam Long chapterId
     ) {

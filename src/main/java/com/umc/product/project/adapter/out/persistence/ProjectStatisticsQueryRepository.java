@@ -9,11 +9,14 @@ import static com.umc.product.project.domain.QProjectMember.projectMember;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsApplicationRow;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -28,6 +31,49 @@ public class ProjectStatisticsQueryRepository {
     );
 
     private final JPAQueryFactory queryFactory;
+
+    public Optional<ProjectStatisticsProjectRow> findProjectById(Long projectId) {
+        ProjectStatisticsProjectRow row = queryFactory
+            .select(Projections.constructor(
+                ProjectStatisticsProjectRow.class,
+                project.id,
+                project.gisuId,
+                project.chapterId
+            ))
+            .from(project)
+            .where(project.id.eq(projectId))
+            .fetchOne();
+
+        return Optional.ofNullable(row);
+    }
+
+    public List<ProjectStatisticsProjectRow> listProjectsByChapterId(Long chapterId) {
+        return queryFactory
+            .select(Projections.constructor(
+                ProjectStatisticsProjectRow.class,
+                project.id,
+                project.gisuId,
+                project.chapterId
+            ))
+            .from(project)
+            .where(project.chapterId.eq(chapterId))
+            .orderBy(project.id.asc())
+            .fetch();
+    }
+
+    public List<ProjectStatisticsMatchingRoundRow> listMatchingRoundsByChapterId(Long chapterId) {
+        return queryFactory
+            .select(Projections.constructor(
+                ProjectStatisticsMatchingRoundRow.class,
+                projectMatchingRound.id,
+                projectMatchingRound.type,
+                projectMatchingRound.phase
+            ))
+            .from(projectMatchingRound)
+            .where(projectMatchingRound.chapterId.eq(chapterId))
+            .orderBy(projectMatchingRound.startsAt.asc(), projectMatchingRound.id.asc())
+            .fetch();
+    }
 
     public List<ProjectStatisticsMemberRow> listActiveMembersByProjectId(Long projectId) {
         return queryFactory
@@ -69,11 +115,8 @@ public class ProjectStatisticsQueryRepository {
             .fetch();
     }
 
-    public List<ProjectStatisticsApplicationRow> listCountedApplicationsByProjectIdsAndMemberIds(
-        Collection<Long> projectIds,
-        Collection<Long> memberIds
-    ) {
-        if (projectIds == null || projectIds.isEmpty() || memberIds == null || memberIds.isEmpty()) {
+    public List<ProjectStatisticsApplicationRow> listCountedApplicationsByProjectIds(Collection<Long> projectIds) {
+        if (projectIds == null || projectIds.isEmpty()) {
             return List.of();
         }
 
@@ -94,7 +137,6 @@ public class ProjectStatisticsQueryRepository {
             .join(projectApplication.appliedMatchingRound, projectMatchingRound)
             .where(
                 project.id.in(projectIds),
-                projectApplication.applicantMemberId.in(memberIds),
                 projectApplication.status.in(COUNTED_STATUSES)
             )
             .orderBy(
