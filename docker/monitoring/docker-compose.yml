@@ -26,7 +26,7 @@ services:
       - --web.enable-otlp-receiver
       - --web.enable-lifecycle
     ports:
-      - "${PROMETHEUS_PORT:-19090}:9090"
+      - "${MONITORING_BIND_ADDRESS:-127.0.0.1}:${PROMETHEUS_PORT:-19090}:9090"
     networks: [monitoring]
     restart: unless-stopped
 
@@ -41,9 +41,9 @@ services:
       - ./config/tempo/tempo.yml:/etc/tempo.yml:ro
       - tempo-data:/var/tempo
     ports:
-      - "${TEMPO_HTTP_PORT:-13200}:3200"
-      - "${TEMPO_OTLP_GRPC_PORT:-14317}:4317"
-      - "${TEMPO_OTLP_HTTP_PORT:-14318}:4318"
+      - "${MONITORING_BIND_ADDRESS:-127.0.0.1}:${TEMPO_HTTP_PORT:-13200}:3200"
+      - "${MONITORING_BIND_ADDRESS:-127.0.0.1}:${TEMPO_OTLP_GRPC_PORT:-14317}:4317"
+      - "${MONITORING_BIND_ADDRESS:-127.0.0.1}:${TEMPO_OTLP_HTTP_PORT:-14318}:4318"
     networks: [monitoring]
     restart: unless-stopped
 
@@ -54,11 +54,13 @@ services:
     image: otel/opentelemetry-collector-contrib:0.152.0
     container_name: umc-product-otel-collector
     command: [ "--config=/etc/otel-collector/config.yaml" ]
+    environment:
+      OTEL_INGEST_TOKEN: ${OTEL_INGEST_TOKEN:?OTEL_INGEST_TOKEN must be set}
     volumes:
       - ./config/otel-collector/config.yaml:/etc/otel-collector/config.yaml:ro
     ports:
-      - "${OTEL_OTLP_GRPC_PORT:-4317}:4317"
-      - "${OTEL_OTLP_HTTP_PORT:-4318}:4318"
+      - "${OTEL_BIND_ADDRESS:-127.0.0.1}:${OTEL_OTLP_GRPC_PORT:-4317}:4317"
+      - "${OTEL_BIND_ADDRESS:-127.0.0.1}:${OTEL_OTLP_HTTP_PORT:-4318}:4318"
     depends_on:
       - prometheus
       - tempo
@@ -77,7 +79,7 @@ services:
       - ./config/loki/loki.yml:/etc/loki/local-config.yaml:ro
       - loki-data:/loki
     ports:
-      - "${LOKI_PORT:-13100}:3100"
+      - "${MONITORING_BIND_ADDRESS:-127.0.0.1}:${LOKI_PORT:-13100}:3100"
     networks: [monitoring]
     restart: unless-stopped
 
@@ -97,7 +99,7 @@ services:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
     ports:
-      - "${GRAFANA_PORT:-13000}:3000"
+      - "${MONITORING_BIND_ADDRESS:-127.0.0.1}:${GRAFANA_PORT:-13000}:3000"
     depends_on:
       - prometheus
       - tempo
@@ -120,7 +122,7 @@ services:
       - ./config/alertmanager/config.yml:/etc/alertmanager/config.yml:ro
       - alertmanager-data:/alertmanager
     ports:
-      - "${ALERTMANAGER_PORT:-19093}:9093"
+      - "${MONITORING_BIND_ADDRESS:-127.0.0.1}:${ALERTMANAGER_PORT:-19093}:9093"
     networks: [monitoring]
     restart: unless-stopped
 
@@ -138,7 +140,7 @@ services:
     volumes:
       - /:/host:ro,rslave
     ports:
-      - "${NODE_EXPORTER_PORT:-19100}:9100"
+      - "${MONITORING_BIND_ADDRESS:-127.0.0.1}:${NODE_EXPORTER_PORT:-19100}:9100"
     networks: [monitoring]
     restart: unless-stopped
 

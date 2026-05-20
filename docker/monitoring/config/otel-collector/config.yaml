@@ -11,13 +11,23 @@
 # 섹션에 otlphttp/cloud 를 추가하고, service.pipelines 의 exporters 리스트에 끼워
 # 넣으면 된다.
 
+extensions:
+  # 앱 → Collector OTLP 수신부 인증.
+  # 실제 값은 docker-compose.yml 의 OTEL_INGEST_TOKEN 환경변수로 주입한다.
+  bearertokenauth/otel_ingest:
+    token: ${env:OTEL_INGEST_TOKEN}
+
 receivers:
   otlp:
     protocols:
       grpc:
         endpoint: 0.0.0.0:4317
+        auth:
+          authenticator: bearertokenauth/otel_ingest
       http:
         endpoint: 0.0.0.0:4318
+        auth:
+          authenticator: bearertokenauth/otel_ingest
 
 processors:
   batch:
@@ -51,6 +61,7 @@ exporters:
       insecure: true
 
 service:
+  extensions: [ bearertokenauth/otel_ingest ]
   pipelines:
     metrics:
       receivers: [ otlp ]

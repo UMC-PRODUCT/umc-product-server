@@ -81,9 +81,8 @@
     <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
         <captureExperimentalAttributes>true</captureExperimentalAttributes>
         <captureKeyValuePairAttributes>true</captureKeyValuePairAttributes>
-        <!-- Micrometer Tracing이 semantic convention으로 자동 추가하는 trace_id/span_id와
-             MDC의 traceId/spanId는 동일 값이므로 중복 제거 (trace_id/span_id만 유지). -->
-        <captureMdcAttributes>*,-traceId,-spanId</captureMdcAttributes>
+        <captureLogstashStructuredArguments>true</captureLogstashStructuredArguments>
+        <captureMdcAttributes>*</captureMdcAttributes>
     </appender>
 
     <!-- ========== 로컬: 컬러 + 축약 traceId ========== -->

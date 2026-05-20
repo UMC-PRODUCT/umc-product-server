@@ -13,6 +13,8 @@
 ```bash
 cd docker/monitoring
 cp env.example .env
+OTEL_INGEST_TOKEN=$(openssl rand -hex 32)
+sed -i.bak "s/^OTEL_INGEST_TOKEN=.*/OTEL_INGEST_TOKEN=$OTEL_INGEST_TOKEN/" .env
 docker compose up -d
 ```
 
@@ -40,11 +42,13 @@ docker compose --profile linux up -d
 | `PROM_URL` | `https://otlp-gateway-*.grafana.net/.../v1/metrics` | 미설정 시 `${OTEL_URL}/v1/metrics` 사용 |
 | `TEMPO_URL` | `https://otlp-gateway-*.grafana.net/.../v1/traces` | 미설정 시 `${OTEL_URL}/v1/traces` 사용 |
 | `OTEL_LOGS_URL` | 별도 구성 없음 | 미설정 시 `${OTEL_URL}/v1/logs` 사용 |
-| `OTEL_AUTH` / `PROM_AUTH` / `TEMPO_AUTH` | `Basic ...` | Phase 1 미사용 (Phase 2 에서 Basic Auth + TLS 추가) |
+| `OTEL_AUTH_HEADER` | `Basic ...` 또는 `Bearer ...` | `Bearer <OTEL_INGEST_TOKEN>` |
+| `PROM_AUTH_HEADER` / `TEMPO_AUTH_HEADER` / `OTEL_LOGS_AUTH_HEADER` | 신호별 override | 미설정 시 `OTEL_AUTH_HEADER` 사용 |
 
 - `<host>` 는 운영 서버에서 본 스택에 도달 가능한 hostname. Phase 1 로컬 검증 단계에서는 `localhost`, 운영 이관 단계에서는 Cloudflare Tunnel 의 public hostname (예: `otel.umc.it.kr`) 으로 교체.
-- 앱은 기본적으로 `OTEL_URL` 하나만 설정하면 metrics / traces / logs 를 모두 Collector 로 보낸다.
+- 앱은 기본적으로 `OTEL_URL` 과 `OTEL_AUTH_HEADER` 만 설정하면 metrics / traces / logs 를 모두 Collector 로 보낸다.
 - 개별 신호별 endpoint 를 분리해야 할 때만 `PROM_URL`, `TEMPO_URL`, `OTEL_LOGS_URL` 을 override 한다.
+- compose 의 host port 는 기본적으로 `127.0.0.1` 에만 bind 된다. 외부 앱 서버에서 보내야 하면 Cloudflare Tunnel / Tailscale / WireGuard / reverse proxy 등으로 TLS 와 접근 제어를 먼저 둔다.
 
 ## 디렉터리 구조
 
@@ -80,7 +84,7 @@ docker/monitoring/
 
 ## 운영 주의사항
 
-- 본 스택은 **Phase 1 로컬 검증용** 이다. Phase 2 에서는 Basic Auth / TLS / Cloudflare Tunnel / object storage backend 등이 추가된다 (ADR-014 §Phase 2~3).
+- 본 스택은 **Phase 1 로컬 검증용** 이다. Phase 2 에서는 TLS / Cloudflare Tunnel / object storage backend 등이 추가된다 (ADR-014 §Phase 2~3).
 - Grafana 의 `GRAFANA_ADMIN_PASSWORD` 는 운영 전 반드시 강한 값으로 교체.
 - Loki / Tempo / Prometheus 의 retention 은 docker volume 디스크 크기에 직결된다. 운영 노드의 디스크 모니터링 (`node-exporter` 의 `node_filesystem_avail_bytes`) 필수.
 
