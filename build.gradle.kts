@@ -132,11 +132,6 @@ dependencies {
     // dev/staging/prod 환경의 JSON 단일 라인 로그 encoder. local 은 텍스트 유지.
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
-    // --- Sentry ---
-    implementation(platform("io.sentry:sentry-bom:8.31.0"))
-    implementation("io.sentry:sentry-spring-boot-starter-jakarta")
-    implementation("io.sentry:sentry-logback")
-
     // --- Tracing ---
     implementation("io.micrometer:micrometer-observation") // 관측 기능: metrics + tracing
     implementation("io.micrometer:micrometer-tracing-bridge-otel") // OpenTelemetry 연동

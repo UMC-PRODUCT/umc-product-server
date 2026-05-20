@@ -15,6 +15,7 @@ application-*.yml
 
 .env
 .env.*
+!.env.example
 
 .gradle
 build/
