@@ -109,11 +109,7 @@
         </root>
     </springProfile>
 
-    <!--
-        ========== staging: dev 와 동일 구성 ==========
-        Sentry 는 prod 전용. staging 은 트래픽 / 데이터 패턴 검증 환경이므로
-        dev 와 동일하게 JSON stdout + OTLP logs 만 둔다.
-    -->
+    <!-- ========== staging: dev 와 동일 구성 ========== -->
     <springProfile name="staging">
         <logger name="com.umc.product" level="${LOGGING_APP_LEVEL:-INFO}"/>
 
@@ -123,24 +119,14 @@
         </root>
     </springProfile>
 
-    <!-- ========== 프로덕션: stdout JSON + OTLP logs + SENTRY (CloudWatch) ========== -->
+    <!-- ========== 프로덕션: stdout JSON + OTLP logs (CloudWatch) ========== -->
     <springProfile name="prod">
-        <!-- Sentry Appender -->
-        <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
-            <options>
-                <dsn>${SENTRY_DSN:-}</dsn>
-            </options>
-            <minimumEventLevel>WARN</minimumEventLevel>
-            <minimumBreadcrumbLevel>INFO</minimumBreadcrumbLevel>
-        </appender>
-
         <!-- 우리 앱에 대한 로그 기록 수준은 환경변수에 따름 -->
         <logger name="com.umc.product" level="${LOGGING_APP_LEVEL:-INFO}"/>
 
         <root level="INFO">
             <appender-ref ref="CONSOLE_JSON"/>
             <appender-ref ref="OTEL"/>
-            <appender-ref ref="SENTRY"/>
         </root>
     </springProfile>
 </configuration>

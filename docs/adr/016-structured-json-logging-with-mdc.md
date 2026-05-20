@@ -22,7 +22,7 @@ Accepted (2026-05-12)
 
 - `local` 프로필은 `LOCAL_CONSOLE` (컬러 + 축약 traceId) + `LOKI` 두 어펜더.
 - `dev` 프로필은 `ECS_CONSOLE` + `LOKI`.
-- `prod` 프로필은 `ECS_CONSOLE` + `LOKI` + `SENTRY` (WARN 이상).
+- `prod` 프로필은 `ECS_CONSOLE` + `LOKI`.
 
 #### 1.2 LoggingInterceptor 의 현행 로그 두 줄
 
@@ -50,7 +50,6 @@ Accepted (2026-05-12)
 
 - `io.micrometer:micrometer-registry-prometheus`, `micrometer-registry-otlp`
 - `com.github.loki4j:loki-logback-appender:1.5.2`
-- `io.sentry:sentry-bom:8.31.0` + `sentry-spring-boot-starter-jakarta` + `sentry-logback`
 - `io.micrometer:micrometer-tracing-bridge-otel`, `opentelemetry-exporter-otlp`, `context-propagation`
 
 `net.logstash.logback:logstash-logback-encoder` 는 아직 추가되어 있지 않다.
@@ -59,7 +58,7 @@ Accepted (2026-05-12)
 
 - 특정 `traceId` 가 아니라 임의의 키워드 (`durationMs > 1000`, `statusCode >= 500`, 특정 `userId`) 로 필터링하려면 LogQL `| regexp` 가 필요하다. cardinality 가 큰 정규식 추출은 Loki 에서 query latency 가 크다.
 - ADR-014 에서 결정한 자체 호스팅 Grafana 스택으로 이관하면, Loki 의 chunk 가 자체 인프라에 누적된다. 텍스트 로그를 1년치 쌓으면 같은 정보를 JSON 으로 쌓는 것보다 검색 비용이 누적적으로 더 커진다.
-- Sentry / OpenTelemetry breadcrumb 에 들어가는 로그 message 도 텍스트 한 줄이라, Sentry 의 issue grouping 이나 attribute 기반 search 에서 효용이 떨어진다.
+- OpenTelemetry 로그에 들어가는 message 도 텍스트 한 줄이라 attribute 기반 search 에서 효용이 떨어진다.
 
 ### 2. 결정이 필요한 이유
 
@@ -309,17 +308,10 @@ dependencies {
 </springProfile>
 
 <springProfile name="prod">
-    <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
-        <options><dsn>${SENTRY_DSN:-}</dsn></options>
-        <minimumEventLevel>WARN</minimumEventLevel>
-        <minimumBreadcrumbLevel>INFO</minimumBreadcrumbLevel>
-    </appender>
-
     <logger name="com.umc.product" level="${LOGGING_APP_LEVEL:-INFO}"/>
     <root level="INFO">
         <appender-ref ref="CONSOLE_JSON"/>
         <appender-ref ref="LOKI"/>
-        <appender-ref ref="SENTRY"/>
     </root>
 </springProfile>
 ```

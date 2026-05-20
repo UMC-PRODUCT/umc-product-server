@@ -43,11 +43,6 @@ logging:
     testcontainers:
       level: DEBUG
 
-sentry:
-  dsn:
-  logging:
-    enabled: false
-
 app:
   base-url: http://localhost:8080
   cors:
