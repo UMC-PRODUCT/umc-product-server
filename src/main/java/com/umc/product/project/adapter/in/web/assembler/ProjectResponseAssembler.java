@@ -15,6 +15,9 @@ import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse.PartGroup;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectStatisticsResponse;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
+import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchManagedProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
@@ -56,6 +59,7 @@ public class ProjectResponseAssembler {
     private final GetMemberUseCase getMemberUseCase;
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
+    private final GetProjectStatisticsUseCase getProjectStatisticsUseCase;
     private final CheckPermissionUseCase checkPermissionUseCase;
 
     /**
@@ -208,6 +212,20 @@ public class ProjectResponseAssembler {
             .toList();
 
         return DraftProjectResponse.from(info, owner, coOwners, resolveApplicationFormId(info.id()));
+    }
+
+    /**
+     * PROJECT-STAT-001 단건 프로젝트 지원/매칭 현황.
+     */
+    public ProjectStatisticsResponse statisticsForProject(Long projectId) {
+        return ProjectStatisticsResponse.from(getProjectStatisticsUseCase.getByProjectId(projectId));
+    }
+
+    /**
+     * PROJECT-STAT-002 지부 전체 프로젝트 지원/매칭 현황.
+     */
+    public ChapterProjectStatisticsResponse statisticsForChapter(Long chapterId) {
+        return ChapterProjectStatisticsResponse.from(getProjectStatisticsUseCase.getByChapterId(chapterId));
     }
 
     private ProjectMembersResponse buildMembersResponse(
