@@ -1,11 +1,8 @@
 # Loki config — 자체 호스팅 로그 백엔드 (ADR-014 Phase 1, ADR-016)
 #
-# 두 수신 경로를 모두 지원한다.
-#   1) Loki push API: /loki/api/v1/push    ← 기존 loki4j 어펜더
-#   2) OTLP logs:     /otlp/v1/logs         ← otel-collector 경유
-#
-# 앱이 ADR-016 의 JSON 한 줄 로그를 송신하면, `| json` 파서로 traceId / uriTemplate /
-# durationMs 등을 필드 기반으로 검색할 수 있다.
+# 앱 로그는 OTel Collector 에서 OTLP logs 로 들어오며, Loki 의 /otlp/v1/logs
+# receiver 가 저장한다. Loki OTLP 기본 라벨은 service_name 등을 사용하고,
+# uriTemplate / statusCode / durationMs 같은 로그 속성은 structured metadata 로 검색한다.
 
 auth_enabled: false
 

@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "ADR-016 의 api_request_completed JSON 라인을 uriTemplate / statusCode / durationMs 기준으로 집계하는 성능 개선용 대시보드. LogQL `| json` 파서를 사용한다.",
+  "description": "ADR-016 의 api_request_completed OTLP 로그를 uriTemplate / statusCode / durationMs 기준으로 집계하는 성능 개선용 대시보드. LogQL selector 는 Loki OTLP 기본 라벨 service_name 을 사용하고, 필터 / unwrap 은 structured metadata 를 사용한다.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -25,7 +25,7 @@
         {
           "datasource": { "type": "loki", "uid": "loki" },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.95, {application=~\".*umc-product-api\"} | json | event=\"api_request_completed\" | unwrap durationMs [5m]) by (uriTemplate)",
+          "expr": "quantile_over_time(0.95, {service_name=~\".*umc-product.*\"} | event=\"api_request_completed\" | unwrap durationMs [5m]) by (uriTemplate)",
           "legendFormat": "{{uriTemplate}}",
           "queryType": "range",
           "refId": "A"
@@ -47,7 +47,7 @@
         {
           "datasource": { "type": "loki", "uid": "loki" },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.99, {application=~\".*umc-product-api\"} | json | event=\"api_request_completed\" | unwrap durationMs [5m]) by (uriTemplate)",
+          "expr": "quantile_over_time(0.99, {service_name=~\".*umc-product.*\"} | event=\"api_request_completed\" | unwrap durationMs [5m]) by (uriTemplate)",
           "legendFormat": "{{uriTemplate}}",
           "queryType": "range",
           "refId": "A"
@@ -69,7 +69,7 @@
         {
           "datasource": { "type": "loki", "uid": "loki" },
           "editorMode": "code",
-          "expr": "sum by (uriTemplate) (count_over_time({application=~\".*umc-product-api\"} | json | event=\"api_request_completed\" | statusCode >= 500 [5m]))",
+          "expr": "sum by (uriTemplate) (count_over_time({service_name=~\".*umc-product.*\"} | event=\"api_request_completed\" | statusCode=~\"5..\" [5m]))",
           "legendFormat": "{{uriTemplate}}",
           "queryType": "range",
           "refId": "A"
@@ -91,7 +91,7 @@
         {
           "datasource": { "type": "loki", "uid": "loki" },
           "editorMode": "code",
-          "expr": "sum by (uriTemplate) (count_over_time({application=~\".*umc-product-api\"} | json | event=\"api_request_completed\" | durationMs > 1000 [5m]))",
+          "expr": "sum by (uriTemplate) (count_over_time({service_name=~\".*umc-product.*\"} | event=\"api_request_completed\" | durationMs > 1000 [5m]))",
           "legendFormat": "{{uriTemplate}}",
           "queryType": "range",
           "refId": "A"
@@ -113,7 +113,7 @@
         {
           "datasource": { "type": "loki", "uid": "loki" },
           "editorMode": "code",
-          "expr": "sum by (provider, operation) (count_over_time({application=~\".*umc-product-api\"} | json | logger=\"external_api\" | result=\"FAILURE\" [5m])) / sum by (provider, operation) (count_over_time({application=~\".*umc-product-api\"} | json | logger=\"external_api\" [5m]))",
+          "expr": "sum by (provider, operation) (count_over_time({service_name=~\".*umc-product.*\"} |= \"external_api_called\" | result=\"FAILURE\" [5m])) / sum by (provider, operation) (count_over_time({service_name=~\".*umc-product.*\"} |= \"external_api_called\" [5m]))",
           "legendFormat": "{{provider}}/{{operation}}",
           "queryType": "range",
           "refId": "A"
@@ -126,7 +126,7 @@
   "refresh": "30s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["umc-product", "api", "performance", "adr-016"],
+  "tags": ["umc-product", "api", "performance", "adr-016", "otlp-logs"],
   "templating": { "list": [] },
   "time": { "from": "now-6h", "to": "now" },
   "timepicker": {},
