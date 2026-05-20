@@ -34,7 +34,7 @@ val queryDslVersion = "5.1.0"
 val jwtVersion = "0.12.5"
 val awsVersion = "2.40.12"
 val springAiVersion = "1.1.5"
-val otelInstrumentationVersion = "2.21.0-alpha"
+val otelInstrumentationVersion = "2.27.0-alpha"
 
 // REST DOCS
 val snippetsDir = file("build/generated-snippets")
