@@ -34,6 +34,7 @@ val queryDslVersion = "5.1.0"
 val jwtVersion = "0.12.5"
 val awsVersion = "2.40.12"
 val springAiVersion = "1.1.5"
+val otelInstrumentationVersion = "2.21.0-alpha"
 
 // REST DOCS
 val snippetsDir = file("build/generated-snippets")
@@ -125,7 +126,6 @@ dependencies {
 
     // --- Metrics ---
     implementation("io.micrometer:micrometer-registry-prometheus")
-    implementation("com.github.loki4j:loki-logback-appender:1.5.2")
     implementation("io.micrometer:micrometer-registry-otlp")
 
     // --- Structured Logging (ADR-016) ---
@@ -141,6 +141,7 @@ dependencies {
     implementation("io.micrometer:micrometer-observation") // 관측 기능: metrics + tracing
     implementation("io.micrometer:micrometer-tracing-bridge-otel") // OpenTelemetry 연동
     implementation("io.opentelemetry:opentelemetry-exporter-otlp") // OTLP Exporter
+    implementation("io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:${otelInstrumentationVersion}")
     implementation("io.micrometer:context-propagation") // 비동기 작업에서 context를 잃어버리지 않도록 함
 
     // Firebase Admin SDK

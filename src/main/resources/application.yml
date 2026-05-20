@@ -242,20 +242,31 @@ management:
       probability: ${TRACE_SAMPLING_PROBABILITY:1.0}
 
   otlp:
-    tracing:
-      endpoint: ${TEMPO_URL:http://localhost:4318}
+    logging:
+      endpoint: ${OTEL_LOGS_URL:${OTEL_URL:http://localhost:4318}/v1/logs}
       headers:
-        Authorization: "Basic ${TEMPO_AUTH}"
+        Authorization: "Basic ${OTEL_AUTH:}"
+    tracing:
+      endpoint: ${TEMPO_URL:${OTEL_URL:http://localhost:4318}/v1/traces}
+      headers:
+        Authorization: "Basic ${TEMPO_AUTH:${OTEL_AUTH:}}"
     metrics:
       export:
-        url: ${PROM_URL}
+        url: ${PROM_URL:${OTEL_URL:http://localhost:4318}/v1/metrics}
         headers:
-          Authorization: "Basic ${PROM_AUTH}"
+          Authorization: "Basic ${PROM_AUTH:${OTEL_AUTH:}}"
         step: 30s
+
+  opentelemetry:
+    resource-attributes:
+      service.name: ${spring.application.name}
+      environment: ${spring.profiles.active}
+      # Loki 에서 service.name 을 라벨로 승격시켜 Grafana 변수에서도 조회 가능하게 한다 (ADR-016, ADR-014 Phase 2).
+      # service.name 이 structured metadata 가 아니라 라벨로 들어가야 label_values(service_name) 쿼리가 동작한다.
+      loki.resource.labels: service.name
 
   metrics:
     tags:
-      application: ${SPRING_PROFILES_ACTIVE}-umc-product-api
       instance: ${HOSTNAME:unknown-host}
 
     enable:
