@@ -6,8 +6,6 @@
 앱 ──OTLP──▶ otel-collector ─┬─▶ prometheus  (metrics)
                               ├─▶ tempo       (traces)
                               └─▶ loki        (logs, OTLP receiver)
-
-앱 ──Loki push API──▶ loki    (기존 loki4j 어펜더, URL 만 바꿔 사용 가능)
 ```
 
 ## 빠른 시작
@@ -15,15 +13,23 @@
 ```bash
 cd docker/monitoring
 cp env.example .env
+OTEL_INGEST_TOKEN=$(openssl rand -hex 32)
+sed -i.bak "s/^OTEL_INGEST_TOKEN=.*/OTEL_INGEST_TOKEN=$OTEL_INGEST_TOKEN/" .env
 docker compose up -d
+```
+
+Linux 호스트에서 `node-exporter`까지 함께 띄울 때:
+
+```bash
+docker compose --profile linux up -d
 ```
 
 기본 접속:
 
-- Grafana: <http://localhost:3000> (`.env` 의 `GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD`)
-- Prometheus: <http://localhost:9090>
-- Loki: <http://localhost:3100>
-- Tempo: <http://localhost:3200>
+- Grafana: <http://localhost:13000> (`.env` 의 `GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD`)
+- Prometheus: <http://localhost:19090>
+- Loki: <http://localhost:13100>
+- Tempo: <http://localhost:13200>
 - OTel Collector OTLP: gRPC `:4317`, HTTP `:4318`
 
 ## 앱 환경변수 매핑
@@ -32,17 +38,17 @@ docker compose up -d
 
 | 앱 환경변수 | Grafana Cloud (기존) | Self-hosted (본 스택) |
 |---|---|---|
-| `PROM_URL` | `https://otlp-gateway-*.grafana.net/.../v1/metrics` | `http://<host>:4318/v1/metrics` |
-| `TEMPO_URL` | `https://otlp-gateway-*.grafana.net/...` | `http://<host>:4318` |
-| `LOKI_URL` | `https://logs-*.grafana.net/loki/api/v1/push` | `http://<host>:3100/loki/api/v1/push` |
-| `PROM_AUTH` / `TEMPO_AUTH` | `Basic ...` | Phase 1 미사용 (Phase 2 에서 Basic Auth + TLS 추가) |
-| `LOKI_USERNAME` / `GRAFANA_API_KEY` | Cloud credential | Phase 1 미사용 |
+| `OTEL_URL` | `https://otlp-gateway-*.grafana.net/otlp` | `http://<host>:4318` |
+| `PROM_URL` | `https://otlp-gateway-*.grafana.net/.../v1/metrics` | 미설정 시 `${OTEL_URL}/v1/metrics` 사용 |
+| `TEMPO_URL` | `https://otlp-gateway-*.grafana.net/.../v1/traces` | 미설정 시 `${OTEL_URL}/v1/traces` 사용 |
+| `OTEL_LOGS_URL` | 별도 구성 없음 | 미설정 시 `${OTEL_URL}/v1/logs` 사용 |
+| `OTEL_AUTH_HEADER` | `Basic ...` 또는 `Bearer ...` | `Bearer <OTEL_INGEST_TOKEN>` |
+| `PROM_AUTH_HEADER` / `TEMPO_AUTH_HEADER` / `OTEL_LOGS_AUTH_HEADER` | 신호별 override | 미설정 시 `OTEL_AUTH_HEADER` 사용 |
 
 - `<host>` 는 운영 서버에서 본 스택에 도달 가능한 hostname. Phase 1 로컬 검증 단계에서는 `localhost`, 운영 이관 단계에서는 Cloudflare Tunnel 의 public hostname (예: `otel.umc.it.kr`) 으로 교체.
-- **Metrics / Traces** 는 OTel Collector (`4318/v1/metrics` / `4318` ) 로 직접 송신. Collector 가 내부에서 prometheus / tempo 로 분배한다.
-- **Logs** 는 두 가지 경로:
-    1. 기존 `loki4j` 어펜더 그대로 — `LOKI_URL` 만 `http://<host>:3100/loki/api/v1/push` 로 변경.
-    2. OTLP 로 보내려면 OTel Collector 의 `4318/v1/logs` 로 보내면 Loki 의 OTLP receiver (`/otlp/v1/logs`) 가 받는다.
+- 앱은 기본적으로 `OTEL_URL` 과 `OTEL_AUTH_HEADER` 만 설정하면 metrics / traces / logs 를 모두 Collector 로 보낸다.
+- 개별 신호별 endpoint 를 분리해야 할 때만 `PROM_URL`, `TEMPO_URL`, `OTEL_LOGS_URL` 을 override 한다.
+- compose 의 host port 는 기본적으로 `127.0.0.1` 에만 bind 된다. 외부 앱 서버에서 보내야 하면 Cloudflare Tunnel / Tailscale / WireGuard / reverse proxy 등으로 TLS 와 접근 제어를 먼저 둔다.
 
 ## 디렉터리 구조
 
@@ -68,21 +74,36 @@ docker/monitoring/
 
 | 컴포넌트 | 역할 |
 |---|---|
-| `otel-collector` | 앱의 OTLP 송신을 받아 prometheus / tempo / loki 로 분배. 향후 Cloud + Self dual-write 가 필요해지면 exporter 추가만 하면 된다. |
+| `otel-collector` | 앱의 OTLP metrics / traces / logs 송신을 받아 prometheus / tempo / loki 로 분배. 향후 Cloud + Self dual-write 가 필요해지면 exporter 추가만 하면 된다. |
 | `prometheus` | OTLP write receiver (`/api/v1/otlp/v1/metrics`) 활성. 자체 scrape 는 prometheus / node-exporter 만. |
 | `tempo` | OTLP 4317/4318 native 수신. 로컬 디스크 backend, 기본 7일 보존. |
-| `loki` | Loki push API + OTLP logs receiver 양쪽 지원. 기본 30일 보존. |
+| `loki` | OTLP logs receiver 를 통해 Collector 에서 들어온 로그 저장. 기본 30일 보존. |
 | `grafana` | 3종 datasource 와 ADR-016 의 api-performance dashboard 자동 provisioning. |
 | `alertmanager` | Prometheus alerting rule 의 라우팅. Discord webhook 으로 송신. |
-| `node-exporter` | 호스트 메트릭 (CPU / disk / network) 노출, prometheus 가 scrape. |
+| `node-exporter` | Linux 호스트 메트릭 (CPU / disk / network) 노출, `linux` profile 에서만 실행. prometheus 가 scrape. |
 
 ## 운영 주의사항
 
-- 본 스택은 **Phase 1 로컬 검증용** 이다. Phase 2 에서는 Basic Auth / TLS / Cloudflare Tunnel / object storage backend 등이 추가된다 (ADR-014 §Phase 2~3).
+- 본 스택은 **Phase 1 로컬 검증용** 이다. Phase 2 에서는 TLS / Cloudflare Tunnel / object storage backend 등이 추가된다 (ADR-014 §Phase 2~3).
 - Grafana 의 `GRAFANA_ADMIN_PASSWORD` 는 운영 전 반드시 강한 값으로 교체.
 - Loki / Tempo / Prometheus 의 retention 은 docker volume 디스크 크기에 직결된다. 운영 노드의 디스크 모니터링 (`node-exporter` 의 `node_filesystem_avail_bytes`) 필수.
+
+## 서비스 식별자 통일 (OTel service.name)
+
+모든 signal (metrics / traces / logs) 은 **`service.name`을 단일 식별자**로 사용한다 (Phase 2 정책).
+
+| 설정 | 값 |
+|---|---|
+| `management.opentelemetry.resource-attributes.service.name` | `${spring.application.name}` (기본 `x-umc-product`) |
+| `management.opentelemetry.resource-attributes.loki.resource.labels` | `service.name` (Loki 에서 라벨로 승격) |
+| `management.metrics.tags` | `instance` 만 (instance 는 유지) |
+
+이렇게 하면:
+- Prometheus 메트릭도 `service_name` 라벨 보유.
+- Loki 로그도 `service_name` 라벨 보유 (structured metadata 가 아니라 라벨로 승격).
+- Grafana 대시보드가 Prometheus / Loki / Tempo 모두 `service_name` 기준으로 필터링 가능.
 
 ## 참고
 
 - [ADR-014: 모니터링 스택을 Grafana Cloud 에서 자체 홈서버로 이관한다](../../docs/adr/014-self-hosted-monitoring-stack-migration.md)
-- [ADR-016: API 로그를 MDC 기반 JSON 구조화 로그로 전환한다](../../docs/adr/016-structured-json-logging-with-mdc.md) — Loki 의 `| json` 쿼리 / dashboard 의 LogQL 룰
+- [ADR-016: API 로그를 MDC 기반 JSON 구조화 로그로 전환한다](../../docs/adr/016-structured-json-logging-with-mdc.md) — OTLP log attributes / dashboard 의 LogQL 룰

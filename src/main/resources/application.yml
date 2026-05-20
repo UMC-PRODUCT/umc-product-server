@@ -242,21 +242,35 @@ management:
       probability: ${TRACE_SAMPLING_PROBABILITY:1.0}
 
   otlp:
-    tracing:
-      endpoint: ${TEMPO_URL:http://localhost:4318}
+    logging:
+      endpoint: ${OTEL_LOGS_URL:${OTEL_URL:http://localhost:4318}/v1/logs}
       headers:
-        Authorization: "Basic ${TEMPO_AUTH}"
+        Authorization: ${OTEL_LOGS_AUTH_HEADER:${OTEL_AUTH_HEADER:}}
+    tracing:
+      endpoint: ${TEMPO_URL:${OTEL_URL:http://localhost:4318}/v1/traces}
+      headers:
+        Authorization: ${TEMPO_AUTH_HEADER:${OTEL_AUTH_HEADER:}}
     metrics:
       export:
-        url: ${PROM_URL}
+        url: ${PROM_URL:${OTEL_URL:http://localhost:4318}/v1/metrics}
         headers:
-          Authorization: "Basic ${PROM_AUTH}"
+          Authorization: ${PROM_AUTH_HEADER:${OTEL_AUTH_HEADER:}}
         step: 30s
+
+  opentelemetry:
+    resource-attributes:
+      service.name: ${spring.application.name}
+      environment: ${spring.profiles.active}
+      service.instance.id: ${LOCAL_DEVELOPER_ID:${USER:${USERNAME:unknown}}}
+
+      # structured field에는 값이 적고 고정적인 것만 넣어야 한다.
+      loki.resource.labels: service.name, environment
 
   metrics:
     tags:
-      application: ${SPRING_PROFILES_ACTIVE}-umc-product-api
-      instance: ${HOSTNAME:unknown-host}
+      application: ${spring.application.name}
+      instance: ${HOSTNAME:${LOCAL_DEVELOPER_ID:${USER:${USERNAME:unknown}}}}
+      environment: ${spring.profiles.active}
 
     enable:
       spring.security: false # Spring Security 인증 메트릭
