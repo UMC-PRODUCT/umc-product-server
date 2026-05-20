@@ -261,13 +261,15 @@ management:
     resource-attributes:
       service.name: ${spring.application.name}
       environment: ${spring.profiles.active}
+      service.instance.id: ${LOCAL_DEVELOPER_ID:${USER:${USERNAME:unknown}}}
+
       # structured field에는 값이 적고 고정적인 것만 넣어야 한다.
       loki.resource.labels: service.name, environment
 
   metrics:
     tags:
       application: ${spring.application.name}
-      instance: ${HOSTNAME:unknown-host}
+      instance: ${HOSTNAME:${LOCAL_DEVELOPER_ID:${USER:${USERNAME:unknown}}}}
       environment: ${spring.profiles.active}
 
     enable:
