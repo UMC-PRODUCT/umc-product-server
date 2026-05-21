@@ -1,5 +1,6 @@
 package com.umc.product.challenger.application.port.in.query;
 
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import java.util.List;
@@ -44,6 +45,27 @@ public interface GetChallengerUseCase {
      * memberId로 해당 사용자가 가지고 있는 모든 챌린저 정보 조회
      */
     List<ChallengerInfo> getAllByMemberId(Long memberId);
+
+    /**
+     * 여러 memberId로 회원별 모든 챌린저 정보를 IN 쿼리 1회로 일괄 조회합니다.
+     * <p>
+     * 챌린저 이력이 없는 회원은 결과 Map에 키로 등장하지 않습니다.
+     */
+    Map<Long, List<ChallengerInfo>> getAllByMemberIds(Set<Long> memberIds);
+
+    /**
+     * 여러 memberId로 회원별 모든 챌린저 기본 정보를 IN 쿼리 1회로 일괄 조회합니다.
+     * <p>
+     * 상벌점이 필요 없는 검색/목록 조립에서 사용합니다.
+     */
+    Map<Long, List<ChallengerBasicInfo>> getAllBasicByMemberIds(Set<Long> memberIds);
+
+    /**
+     * 특정 기수 내 여러 memberId의 챌린저 기본 정보를 조회합니다.
+     * <p>
+     * 해당 기수 챌린저가 없는 회원은 결과에서 제외합니다.
+     */
+    List<ChallengerBasicInfo> listBasicByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId);
 
     /**
      * 여러 challengerId로 챌린저 정보 배치 조회

@@ -19,6 +19,11 @@ public interface ChallengerJpaRepository extends JpaRepository<Challenger, Long>
     List<Challenger> findByMemberId(Long memberId);
 
     /**
+     * 여러 memberId로 챌린저 목록 IN 쿼리 1회 조회
+     */
+    List<Challenger> findByMemberIdIn(Set<Long> memberIds);
+
+    /**
      * gisuId로 챌린저 목록 조회
      */
     List<Challenger> findByGisuId(Long gisuId);

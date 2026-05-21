@@ -104,6 +104,11 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     }
 
     @Override
+    public Page<Long> searchMemberIds(SearchMemberQuery query, Pageable pageable) {
+        return memberQueryRepository.searchMemberIdsBy(query, pageable);
+    }
+
+    @Override
     public List<Long> findAllIdsCursor(Long lastId, Pageable pageable) {
         return memberJpaRepository.findIdsCursor(lastId, pageable);
     }
