@@ -38,14 +38,13 @@ public class SesEmailAdapter implements SendEmailPort {
         try {
             sesV2Client.sendEmail(request);
         } catch (SesV2Exception e) {
-            // 예외 삼킴 방지: SDK 예외는 stacktrace 까지 로그에 남기고 도메인 예외로 변환한다.
-            // cause chain 일원화는 EmailDomainException 생성자 확장과 함께 다음 커밋에서 처리된다.
+            // 예외 삼킴 방지: AWS error code 까지 컨텍스트에 남기고 cause 를 포함해 도메인 예외로 변환한다.
             String awsErrorCode = e.awsErrorDetails() != null ? e.awsErrorDetails().errorCode() : null;
             log.error("SES 발송 실패: to={}, awsErrorCode={}", message.to(), awsErrorCode, e);
-            throw new EmailDomainException(EmailErrorCode.EMAIL_MESSAGING_ERROR);
+            throw new EmailDomainException(EmailErrorCode.EMAIL_SEND_FAILED, e);
         } catch (RuntimeException e) {
             log.error("SES 발송 중 예기치 못한 예외: to={}", message.to(), e);
-            throw new EmailDomainException(EmailErrorCode.EMAIL_GENERAL_ERROR);
+            throw new EmailDomainException(EmailErrorCode.EMAIL_SEND_FAILED, e);
         }
     }
 

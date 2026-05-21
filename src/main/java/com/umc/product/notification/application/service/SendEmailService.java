@@ -31,6 +31,23 @@ public class SendEmailService implements SendEmailUseCase {
     @Async("emailTaskExecutor")
     @Override
     public void sendVerificationEmail(SendVerificationEmailCommand command) {
+        String htmlContent = renderVerificationTemplate(command);
+        dispatch(command, htmlContent);
+    }
+
+    private String renderVerificationTemplate(SendVerificationEmailCommand command) {
+        try {
+            Context context = new Context();
+            context.setVariable("verificationToken", command.verificationCode());
+            return templateEngine.process("email/verification", context);
+        } catch (RuntimeException e) {
+            // 예외 삼킴 방지: 비동기 컨텍스트에서도 원인 추적이 가능하도록 stacktrace 와 컨텍스트를 로그에 남긴다.
+            log.error("이메일 템플릿 렌더링 실패: to={}", command.to(), e);
+            throw new EmailDomainException(EmailErrorCode.EMAIL_TEMPLATE_RENDER_FAILED, e);
+        }
+    }
+
+    private void dispatch(SendVerificationEmailCommand command, String htmlContent) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -39,22 +56,15 @@ public class SendEmailService implements SendEmailUseCase {
             helper.setFrom(fromAddress, "University MakeUs Challenge");
             helper.setTo(command.to());
             helper.setSubject("이메일 인증 코드: " + command.verificationCode());
-
-            // Thymeleaf 템플릿 렌더링
-            Context context = new Context();
-            context.setVariable("verificationToken", command.verificationCode());
-
-            String htmlContent = templateEngine.process("email/verification", context);
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
-        } catch (MessagingException e) {
-            throw new EmailDomainException(EmailErrorCode.EMAIL_MESSAGING_ERROR);
-        } catch (UnsupportedEncodingException e) {
-            throw new EmailDomainException(EmailErrorCode.EMAIL_ENCODING_ERROR);
-        } catch (Exception e) {
-            throw new EmailDomainException(EmailErrorCode.EMAIL_GENERAL_ERROR);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            log.error("이메일 발송 실패(SMTP): to={}", command.to(), e);
+            throw new EmailDomainException(EmailErrorCode.EMAIL_SEND_FAILED, e);
+        } catch (RuntimeException e) {
+            log.error("이메일 발송 중 예기치 못한 예외: to={}", command.to(), e);
+            throw new EmailDomainException(EmailErrorCode.EMAIL_SEND_FAILED, e);
         }
-
     }
 }
