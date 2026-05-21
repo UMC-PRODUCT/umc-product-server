@@ -13,4 +13,11 @@ class CacheNamespaceTest {
     void cache_namespace_중복_없음() {
         assertThatCode(CacheNamespace::validateUniqueValues).doesNotThrowAnyException();
     }
+
+    @Test
+    @DisplayName("Figma 분류 캐시는 기존 Prometheus metric name을 유지한다")
+    void figma_cache_metric_name() {
+        org.assertj.core.api.Assertions.assertThat(CacheNamespace.FIGMA_CLASSIFICATION.metricName())
+            .isEqualTo("figma.classifier.l1");
+    }
 }

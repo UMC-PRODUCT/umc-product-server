@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.figma.application.port.out.FigmaClassificationCachePort;
 import com.umc.product.figma.application.port.out.LoadFigmaCommentClassificationPort;
 import com.umc.product.figma.application.port.out.SaveFigmaCommentClassificationPort;
 import com.umc.product.figma.application.port.out.dto.FigmaCommentInfo;
@@ -20,8 +21,10 @@ import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
 import com.umc.product.llm.domain.exception.LlmDomainException;
 import com.umc.product.llm.domain.exception.LlmErrorCode;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,14 +49,15 @@ class FigmaCommentDomainClassifierTest {
     private SaveFigmaCommentClassificationPort saveClassificationPort;
 
     private FigmaCommentDomainClassifier classifier;
+    private InMemoryFigmaClassificationCachePort cachePort;
 
     @BeforeEach
     void setUp() {
-        FigmaClassifierProperties properties = new FigmaClassifierProperties(FigmaClassifierProperties.Cache.defaults());
+        cachePort = new InMemoryFigmaClassificationCachePort();
         classifier = new FigmaCommentDomainClassifier(
             chatCompleteUseCase, new ObjectMapper(),
             loadClassificationPort, saveClassificationPort,
-            properties
+            cachePort
         );
         // 기본은 DB 미스 (영구 캐시 비어 있음)
         lenient().when(loadClassificationPort.findClassifications(anyCollection())).thenReturn(Map.of());
@@ -329,5 +333,25 @@ class FigmaCommentDomainClassifierTest {
 
     private FigmaCommentInfo comment(String id, String message) {
         return new FigmaCommentInfo(id, message, "tester", "1:1", Instant.parse("2026-05-07T00:00:00Z"));
+    }
+
+    private static class InMemoryFigmaClassificationCachePort implements FigmaClassificationCachePort {
+
+        private final Map<String, Optional<String>> storage = new HashMap<>();
+
+        @Override
+        public Optional<String> get(String commentId) {
+            return storage.getOrDefault(commentId, Optional.empty());
+        }
+
+        @Override
+        public boolean contains(String commentId) {
+            return storage.containsKey(commentId);
+        }
+
+        @Override
+        public void put(String commentId, Optional<String> domainKey) {
+            storage.put(commentId, domainKey);
+        }
     }
 }

@@ -6,16 +6,22 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public enum CacheNamespace {
-    FIGMA_CLASSIFICATION("figma.classification");
+    FIGMA_CLASSIFICATION("figma.classification", "figma.classifier.l1");
 
     private final String value;
+    private final String metricName;
 
-    CacheNamespace(String value) {
+    CacheNamespace(String value, String metricName) {
         this.value = value;
+        this.metricName = metricName;
     }
 
     public String value() {
         return value;
+    }
+
+    public String metricName() {
+        return metricName;
     }
 
     public static void validateUniqueValues() {

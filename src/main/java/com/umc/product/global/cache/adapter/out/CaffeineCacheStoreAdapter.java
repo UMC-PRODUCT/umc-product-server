@@ -7,18 +7,33 @@ import com.umc.product.global.cache.domain.CacheKey;
 import com.umc.product.global.cache.domain.CacheLookup;
 import com.umc.product.global.cache.domain.CacheNamespace;
 import com.umc.product.global.cache.domain.CacheSpec;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CaffeineCacheStoreAdapter implements CacheStorePort {
 
     private final CacheKeyFormatter keyFormatter;
+    private final MeterRegistry meterRegistry;
     private final Map<CacheNamespace, Cache<String, Object>> caches = new ConcurrentHashMap<>();
+    private final Set<CacheNamespace> monitoredNamespaces = ConcurrentHashMap.newKeySet();
 
-    public CaffeineCacheStoreAdapter(CacheKeyFormatter keyFormatter) {
+    public CaffeineCacheStoreAdapter(
+        CacheKeyFormatter keyFormatter,
+        ObjectProvider<MeterRegistry> meterRegistryProvider
+    ) {
         this.keyFormatter = keyFormatter;
+        this.meterRegistry = meterRegistryProvider.getIfAvailable();
+    }
+
+    CaffeineCacheStoreAdapter(CacheKeyFormatter keyFormatter) {
+        this.keyFormatter = keyFormatter;
+        this.meterRegistry = null;
     }
 
     @Override
@@ -48,10 +63,21 @@ public class CaffeineCacheStoreAdapter implements CacheStorePort {
     }
 
     private Cache<String, Object> getCache(CacheSpec<?> spec) {
-        return caches.computeIfAbsent(spec.namespace(), ignored -> Caffeine.newBuilder()
-            .expireAfterWrite(spec.ttl())
-            .maximumSize(spec.maximumSize())
-            .recordStats()
-            .build());
+        return caches.computeIfAbsent(spec.namespace(), ignored -> {
+            Cache<String, Object> cache = Caffeine.newBuilder()
+                .expireAfterWrite(spec.ttl())
+                .maximumSize(spec.maximumSize())
+                .recordStats()
+                .build();
+            monitorIfNecessary(spec.namespace(), cache);
+            return cache;
+        });
+    }
+
+    private void monitorIfNecessary(CacheNamespace namespace, Cache<String, Object> cache) {
+        if (meterRegistry == null || !monitoredNamespaces.add(namespace)) {
+            return;
+        }
+        CaffeineCacheMetrics.monitor(meterRegistry, cache, namespace.metricName());
     }
 }
