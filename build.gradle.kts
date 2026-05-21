@@ -114,6 +114,7 @@ dependencies {
     implementation(platform("software.amazon.awssdk:bom:${awsVersion}"))
     implementation("software.amazon.awssdk:s3")
     implementation("software.amazon.awssdk:cloudfront")  // CloudFront Signed URL
+    implementation("software.amazon.awssdk:sesv2")       // AWS SES v2 (인증 이메일 발송)
     implementation("com.google.cloud:google-cloud-storage")
 
     // --- Email ---
