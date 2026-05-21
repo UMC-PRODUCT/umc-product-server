@@ -20,6 +20,7 @@ class EventOutboxTest {
 
         assertThat(outbox.getEventId()).isEqualTo(event.eventId());
         assertThat(outbox.getEventType()).isEqualTo("test.created");
+        assertThat(outbox.getEventClass()).isEqualTo(TestEvent.class.getName());
         assertThat(outbox.getPayload()).isEqualTo("{\"name\":\"test\"}");
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
         assertThat(outbox.getAttempts()).isZero();

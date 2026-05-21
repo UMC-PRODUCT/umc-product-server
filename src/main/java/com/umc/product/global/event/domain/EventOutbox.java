@@ -33,6 +33,9 @@ public class EventOutbox extends BaseEntity {
     @Column(name = "event_type", nullable = false, length = 150)
     private String eventType;
 
+    @Column(name = "event_class", nullable = false, length = 300)
+    private String eventClass;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
     private String payload;
@@ -53,9 +56,10 @@ public class EventOutbox extends BaseEntity {
     @Column(name = "published_at")
     private Instant publishedAt;
 
-    private EventOutbox(UUID eventId, String eventType, String payload, Instant nextAttemptAt) {
+    private EventOutbox(UUID eventId, String eventType, String eventClass, String payload, Instant nextAttemptAt) {
         this.eventId = eventId;
         this.eventType = eventType;
+        this.eventClass = eventClass;
         this.payload = payload;
         this.status = EventOutboxStatus.PENDING;
         this.attempts = 0;
@@ -69,7 +73,13 @@ public class EventOutbox extends BaseEntity {
         if (payload == null || payload.isBlank()) {
             throw new IllegalArgumentException("event outbox payload는 비어 있을 수 없습니다.");
         }
-        return new EventOutbox(event.eventId(), event.eventType(), payload, Instant.now());
+        return new EventOutbox(
+            event.eventId(),
+            event.eventType(),
+            event.getClass().getName(),
+            payload,
+            Instant.now()
+        );
     }
 
     public void markPublished() {
