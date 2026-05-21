@@ -12,6 +12,7 @@ import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,7 @@ public class CaffeineCacheStoreAdapter implements CacheStorePort {
     private final Map<CacheNamespace, Cache<String, Object>> caches = new ConcurrentHashMap<>();
     private final Set<CacheNamespace> monitoredNamespaces = ConcurrentHashMap.newKeySet();
 
+    @Autowired
     public CaffeineCacheStoreAdapter(
         CacheKeyFormatter keyFormatter,
         ObjectProvider<MeterRegistry> meterRegistryProvider
