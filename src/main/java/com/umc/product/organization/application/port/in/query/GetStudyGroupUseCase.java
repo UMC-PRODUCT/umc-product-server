@@ -5,7 +5,9 @@ import com.umc.product.organization.application.port.in.query.dto.OrganizationRo
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupWithMemberAndMentorInfo;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -28,7 +30,7 @@ public interface GetStudyGroupUseCase {
      * @param size     페이지 크기
      * @return 조회된 스터디 그룹 요약 목록 (권한 없으면 빈 리스트)
      */
-    List<StudyGroupInfo> getMyStudyGroups(Long memberId, Long cursor, int size);
+    List<StudyGroupWithMemberAndMentorInfo> getMyStudyGroups(Long memberId, Long cursor, int size);
 
     /**
      * 스터디 그룹 이름 목록 조회 - memberId 기반으로 schoolId/part를 자동 resolve
@@ -36,6 +38,10 @@ public interface GetStudyGroupUseCase {
     List<StudyGroupNameInfo> getStudyGroupNames(Long memberId);
 
     StudyGroupInfo getById(Long studyGroupId);
+
+    Optional<StudyGroupInfo> findById(Long studyGroupId);
+
+    StudyGroupWithMemberAndMentorInfo getWithMemberAndMentorInfoById(Long studyGroupId);
 
     /**
      * 스터디 그룹 ID 로 소속 스터디원 목록 조회.

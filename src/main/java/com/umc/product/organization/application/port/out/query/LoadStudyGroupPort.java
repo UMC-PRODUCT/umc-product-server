@@ -8,12 +8,15 @@ import com.umc.product.organization.domain.StudyGroup;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public interface LoadStudyGroupPort {
     // TODO: 의존성 역전 있음, 수정 필요
 
-    StudyGroup getById(Long id);
+    StudyGroup getEntityById(Long id);
+
+    Optional<StudyGroup> findEntityById(Long id);
 
     StudyGroup getByName(String name);
 

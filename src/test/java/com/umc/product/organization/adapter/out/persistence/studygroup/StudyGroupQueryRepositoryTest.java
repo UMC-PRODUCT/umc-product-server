@@ -246,7 +246,7 @@ class StudyGroupQueryRepositoryTest {
     }
 
     @Test
-    void findById_mentors와_members_컬렉션을_초기화한_상태로_반환() {
+    void findEntityById_mentors와_members_컬렉션을_초기화한_상태로_반환() {
         // given
         Long gisuId = 1L;
         StudyGroup target = persistGroup("target", gisuId, ChallengerPart.SPRINGBOOT,
@@ -255,7 +255,7 @@ class StudyGroupQueryRepositoryTest {
         em.clear();
 
         // when
-        Optional<StudyGroup> result = sut.findById(target.getId());
+        Optional<StudyGroup> result = sut.findEntityById(target.getId());
         em.clear();   // 영속성 컨텍스트 비움 — fetch join 안 됐다면 이후 컬렉션 접근에서 LazyInitException
 
         // then
@@ -272,9 +272,9 @@ class StudyGroupQueryRepositoryTest {
     }
 
     @Test
-    void findById_존재하지_않으면_Optional_empty() {
+    void findEntityById_존재하지_않으면_Optional_empty() {
         // when
-        Optional<StudyGroup> result = sut.findById(99999L);
+        Optional<StudyGroup> result = sut.findEntityById(99999L);
 
         // then
         assertThat(result).isEmpty();

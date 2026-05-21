@@ -45,7 +45,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     @Override
     public void update(UpdateStudyGroupCommand command) {
-        StudyGroup studyGroup = loadStudyGroupPort.getById(command.groupId());
+        StudyGroup studyGroup = loadStudyGroupPort.getEntityById(command.groupId());
 
         studyGroup.updateName(command.name());
         studyGroup.updatePart(command.part());
@@ -55,7 +55,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     @Override
     public void addMember(AddStudyMemberCommand command) {
-        StudyGroup studyGroup = loadStudyGroupPort.getById(command.groupId());
+        StudyGroup studyGroup = loadStudyGroupPort.getEntityById(command.groupId());
 
         validateNoPartStudyConflict(
             studyGroup.getGisuId(), studyGroup.getPart(), Set.of(command.memberId()), studyGroup.getId()
@@ -66,7 +66,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     @Override
     public void addMentor(AddStudyMentorCommand command) {
-        StudyGroup studyGroup = loadStudyGroupPort.getById(command.groupId());
+        StudyGroup studyGroup = loadStudyGroupPort.getEntityById(command.groupId());
 
         studyGroup.assignMentor(command.mentorId());
         saveStudyGroupPort.save(studyGroup);
@@ -74,7 +74,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     @Override
     public void deleteMember(DeleteStudyMemberCommand command) {
-        StudyGroup studyGroup = loadStudyGroupPort.getById(command.groupId());
+        StudyGroup studyGroup = loadStudyGroupPort.getEntityById(command.groupId());
 
         studyGroup.removeMember(command.memberId());
         saveStudyGroupPort.save(studyGroup);
@@ -82,7 +82,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     @Override
     public void deleteMentor(DeleteStudyMentorCommand command) {
-        StudyGroup studyGroup = loadStudyGroupPort.getById(command.groupId());
+        StudyGroup studyGroup = loadStudyGroupPort.getEntityById(command.groupId());
 
         studyGroup.removeMentor(command.mentorId());
         saveStudyGroupPort.save(studyGroup);
@@ -90,7 +90,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     @Override
     public void delete(Long studyGroupId) {
-        StudyGroup studyGroup = loadStudyGroupPort.getById(studyGroupId);
+        StudyGroup studyGroup = loadStudyGroupPort.getEntityById(studyGroupId);
 
         saveStudyGroupPort.delete(studyGroup);
     }

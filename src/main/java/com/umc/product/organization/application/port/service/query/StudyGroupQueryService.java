@@ -11,6 +11,7 @@ import com.umc.product.organization.application.port.in.query.dto.studygroup.Stu
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupWithMemberAndMentorInfo;
 import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.StudyGroup;
@@ -21,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -54,12 +56,12 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
      *   <li>{@link LoadStudyGroupPort#findMemberIdsByStudyGroupIds} / {@code findMentorIdsByStudyGroupIds}
      *       — 헤더 groupId 들로 batch 조회 (cross-domain JOIN 없음)</li>
      *   <li>{@link GetMemberUseCase#findAllByIds} — 전체 memberId 집합으로 이름/학교/프로필 batch 합성</li>
-     *   <li>헤더별로 mentor/member 리스트를 조립해 {@link StudyGroupInfo} 생성</li>
+     *   <li>헤더별로 mentor/member 리스트를 조립해 {@link StudyGroupWithMemberAndMentorInfo} 생성</li>
      * </ol>
      * fetchSize 는 Controller 의 hasNext 판단 위해 size + 1 로 조회.
      */
     @Override
-    public List<StudyGroupInfo> getMyStudyGroups(Long memberId, Long cursor, int size) {
+    public List<StudyGroupWithMemberAndMentorInfo> getMyStudyGroups(Long memberId, Long cursor, int size) {
         Long schoolId = getMemberUseCase.getById(memberId).schoolId();
         Long activeGisuId = getGisuUseCase.getActiveGisuId();
 
@@ -82,7 +84,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
         Map<Long, MemberInfo> memberMap = batchGetMembers(collectAllMemberIds(memberIdsByGroup, mentorIdsByGroup));
 
         return headers.stream()
-            .map(header -> StudyGroupInfo.create(
+            .map(header -> StudyGroupWithMemberAndMentorInfo.create(
                 header.groupId(), header.name(),
                 header.gisuId(), header.part(), header.createdAt(),
                 assembleStudyGroupMembers(header.groupId(),
@@ -154,13 +156,24 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
         return loadStudyGroupPort.findStudyGroupNames(scopes, activeGisuId);
     }
 
+    @Override
+    public StudyGroupInfo getById(Long studyGroupId) {
+        return StudyGroupInfo.from(loadStudyGroupPort.getEntityById(studyGroupId));
+    }
+
+    @Override
+    public Optional<StudyGroupInfo> findById(Long studyGroupId) {
+        return loadStudyGroupPort.findEntityById(studyGroupId)
+            .map(StudyGroupInfo::from);
+    }
+
     /**
      * 스터디 그룹 단건 조회 — Aggregate root 를 fetch join 으로 통째로 로드, Member 도메인 batch 호출로 이름/학교/프로필 합성.
      * Member 가 존재하지 않는 memberId 는 결과에서 제외 (INNER JOIN 의 silent drop 과 동일 동작).
      */
     @Override
-    public StudyGroupInfo getById(Long studyGroupId) {
-        StudyGroup group = loadStudyGroupPort.getById(studyGroupId);
+    public StudyGroupWithMemberAndMentorInfo getWithMemberAndMentorInfoById(Long studyGroupId) {
+        StudyGroup group = loadStudyGroupPort.getEntityById(studyGroupId);
 
         List<Long> mentorIds = group.getMentors().stream()
             .map(StudyGroupMentor::getMemberId)
@@ -174,7 +187,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
         allIds.addAll(memberIds);
         Map<Long, MemberInfo> memberMap = batchGetMembers(allIds);
 
-        return StudyGroupInfo.create(
+        return StudyGroupWithMemberAndMentorInfo.create(
             group.getId(), group.getName(),
             group.getGisuId(), group.getPart(), group.getCreatedAt(),
             assembleStudyGroupMembers(studyGroupId, mentorIds, memberMap),
@@ -193,7 +206,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
      */
     @Override
     public List<StudyGroupMemberInfo> getStudyGroupMembers(Long groupId) {
-        StudyGroup group = loadStudyGroupPort.getById(groupId);
+        StudyGroup group = loadStudyGroupPort.getEntityById(groupId);
         List<Long> memberIds = group.getMembers().stream()
             .map(StudyGroupMember::getMemberId)
             .toList();

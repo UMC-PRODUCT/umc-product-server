@@ -13,6 +13,7 @@ import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,9 +26,14 @@ public class StudyGroupPersistenceAdapter implements SaveStudyGroupPort, LoadStu
     private final StudyGroupQueryRepository studyGroupQueryRepository;
 
     @Override
-    public StudyGroup getById(Long id) {
-        return studyGroupQueryRepository.findById(id).orElseThrow(
+    public StudyGroup getEntityById(Long id) {
+        return findEntityById(id).orElseThrow(
             () -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NOT_FOUND));
+    }
+
+    @Override
+    public Optional<StudyGroup> findEntityById(Long id) {
+        return studyGroupQueryRepository.findEntityById(id);
     }
 
     @Override

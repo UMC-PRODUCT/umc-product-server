@@ -52,7 +52,7 @@ public class StudyGroupQueryRepository {
      * Hibernate 의 영속성 컨텍스트(1차 캐시)는 한 트랜잭션 안에서 같은 (Entity Class, PK) 조합에 대해 *동일 자바 인스턴스* 를 보장한다. 두 번째 쿼리의 결과는
      * 첫 쿼리에서 들고있는 그 인스턴스의 mentors 컬렉션을 부수효과로 초기화한다.
      */
-    public Optional<StudyGroup> findById(Long id) {
+    public Optional<StudyGroup> findEntityById(Long id) {
         StudyGroup group = queryFactory
             .selectFrom(studyGroup)
             .leftJoin(studyGroup.members).fetchJoin()

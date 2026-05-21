@@ -60,9 +60,9 @@ class StudyGroupPersistenceAdapterTest {
     }
 
     @Test
-    void getById_존재하지_않으면_OrganizationDomainException_STUDY_GROUP_NOT_FOUND() {
+    void getEntityById_존재하지_않으면_OrganizationDomainException_STUDY_GROUP_NOT_FOUND() {
         // when & then
-        assertThatThrownBy(() -> sut.getById(99999L))
+        assertThatThrownBy(() -> sut.getEntityById(99999L))
             .isInstanceOf(OrganizationDomainException.class)
             .extracting("baseCode")
             .isEqualTo(OrganizationErrorCode.STUDY_GROUP_NOT_FOUND);

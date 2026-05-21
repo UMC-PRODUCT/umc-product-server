@@ -20,6 +20,7 @@ import com.umc.product.organization.application.port.in.query.dto.OrganizationRo
 import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope.AsPartLeader;
 import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope.AsSchoolCore;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupWithMemberAndMentorInfo;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.application.port.service.query.StudyGroupQueryService;
 import com.umc.product.organization.domain.StudyGroup;
@@ -28,6 +29,7 @@ import com.umc.product.organization.domain.StudyGroupMentor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -147,7 +149,7 @@ class StudyGroupQueryServiceTest {
             .willReturn(false);
 
         // when
-        List<StudyGroupInfo> result = sut.getMyStudyGroups(memberId, null, 20);
+        List<StudyGroupWithMemberAndMentorInfo> result = sut.getMyStudyGroups(memberId, null, 20);
 
         // then
         assertThat(result).isEmpty();
@@ -204,7 +206,30 @@ class StudyGroupQueryServiceTest {
     }
 
     @Test
-    void getById_헤더와_멘토_멤버를_조립한다() {
+    void getById_StudyGroupInfo에_기본_정보와_멘토_멤버_ID를_담는다() {
+        // given
+        Long groupId = 42L;
+        Long mentorId = 10L;
+        Long memberId = 20L;
+        StudyGroup group = studyGroup(
+            groupId, "스프링 스터디", 1L, ChallengerPart.SPRINGBOOT,
+            List.of(mentorId), List.of(memberId)
+        );
+        given(loadStudyGroupPort.getEntityById(groupId)).willReturn(group);
+
+        // when
+        StudyGroupInfo result = sut.getById(groupId);
+
+        // then
+        assertThat(result.groupId()).isEqualTo(groupId);
+        assertThat(result.name()).isEqualTo("스프링 스터디");
+        assertThat(result.mentorIds()).containsExactly(mentorId);
+        assertThat(result.memberIds()).containsExactly(memberId);
+        verify(getMemberUseCase, never()).findAllByIds(any());
+    }
+
+    @Test
+    void getWithMemberAndMentorInfoById_헤더와_멘토_멤버를_조립한다() {
         // given — Aggregate 가 자식 mentor/member 를 캡슐화. Service 는 group.getMentors/getMembers 로 접근.
         Long groupId = 42L;
         Long mentor1 = 10L;
@@ -216,7 +241,7 @@ class StudyGroupQueryServiceTest {
             groupId, "스프링 스터디", 1L, ChallengerPart.SPRINGBOOT,
             List.of(mentor1, mentor2), List.of(member1, member2)
         );
-        given(loadStudyGroupPort.getById(groupId)).willReturn(group);
+        given(loadStudyGroupPort.getEntityById(groupId)).willReturn(group);
         given(getMemberUseCase.findAllByIds(Set.of(mentor1, mentor2, member1, member2)))
             .willReturn(Map.of(
                 mentor1, memberInfo(mentor1, 100L),
@@ -226,7 +251,7 @@ class StudyGroupQueryServiceTest {
             ));
 
         // when
-        StudyGroupInfo result = sut.getById(groupId);
+        StudyGroupWithMemberAndMentorInfo result = sut.getWithMemberAndMentorInfoById(groupId);
 
         // then
         assertThat(result.groupId()).isEqualTo(groupId);
@@ -246,7 +271,7 @@ class StudyGroupQueryServiceTest {
     }
 
     @Test
-    void getById_Member_조회_누락분은_결과에서_제외된다() {
+    void getWithMemberAndMentorInfoById_Member_조회_누락분은_결과에서_제외된다() {
         // given — INNER JOIN 의 silent drop 과 동일 동작: memberMap 에 없는 ID 는 결과 리스트에서 빠진다.
         Long groupId = 42L;
         Long existing = 10L;
@@ -256,12 +281,12 @@ class StudyGroupQueryServiceTest {
             groupId, "g", 1L, ChallengerPart.SPRINGBOOT,
             List.of(), List.of(existing, withdrawn)
         );
-        given(loadStudyGroupPort.getById(groupId)).willReturn(group);
+        given(loadStudyGroupPort.getEntityById(groupId)).willReturn(group);
         given(getMemberUseCase.findAllByIds(Set.of(existing, withdrawn)))
             .willReturn(Map.of(existing, memberInfo(existing, 100L)));   // withdrawn 누락
 
         // when
-        StudyGroupInfo result = sut.getById(groupId);
+        StudyGroupWithMemberAndMentorInfo result = sut.getWithMemberAndMentorInfoById(groupId);
 
         // then
         assertThat(result.members())
@@ -271,22 +296,57 @@ class StudyGroupQueryServiceTest {
     }
 
     @Test
-    void getById_mentor와_member_둘다_없으면_findAllByIds_호출없이_빈_리스트() {
+    void getWithMemberAndMentorInfoById_mentor와_member_둘다_없으면_findAllByIds_호출없이_빈_리스트() {
         // given
         Long groupId = 42L;
         StudyGroup group = studyGroup(
             groupId, "g", 1L, ChallengerPart.SPRINGBOOT,
             List.of(), List.of()
         );
-        given(loadStudyGroupPort.getById(groupId)).willReturn(group);
+        given(loadStudyGroupPort.getEntityById(groupId)).willReturn(group);
 
         // when
-        StudyGroupInfo result = sut.getById(groupId);
+        StudyGroupWithMemberAndMentorInfo result = sut.getWithMemberAndMentorInfoById(groupId);
 
         // then
         assertThat(result.mentors()).isEmpty();
         assertThat(result.members()).isEmpty();
         verify(getMemberUseCase, never()).findAllByIds(any());
+    }
+
+    @Test
+    void findById_존재하면_StudyGroupInfo를_반환한다() {
+        // given
+        Long groupId = 42L;
+        Long mentorId = 10L;
+        Long memberId = 20L;
+        StudyGroup group = studyGroup(
+            groupId, "g", 1L, ChallengerPart.SPRINGBOOT,
+            List.of(mentorId), List.of(memberId)
+        );
+        given(loadStudyGroupPort.findEntityById(groupId)).willReturn(Optional.of(group));
+
+        // when
+        Optional<StudyGroupInfo> result = sut.findById(groupId);
+
+        // then
+        assertThat(result).isPresent();
+        assertThat(result.get().mentorIds()).containsExactly(mentorId);
+        assertThat(result.get().memberIds()).containsExactly(memberId);
+        verify(getMemberUseCase, never()).findAllByIds(any());
+    }
+
+    @Test
+    void findById_존재하지_않으면_Optional_empty를_반환한다() {
+        // given
+        Long groupId = 999L;
+        given(loadStudyGroupPort.findEntityById(groupId)).willReturn(Optional.empty());
+
+        // when
+        Optional<StudyGroupInfo> result = sut.findById(groupId);
+
+        // then
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -300,7 +360,7 @@ class StudyGroupQueryServiceTest {
             groupId, "g", 1L, ChallengerPart.SPRINGBOOT,
             List.of(), List.of(member1, member2)
         );
-        given(loadStudyGroupPort.getById(groupId)).willReturn(group);
+        given(loadStudyGroupPort.getEntityById(groupId)).willReturn(group);
         given(getMemberUseCase.findAllByIds(Set.of(member1, member2)))
             .willReturn(Map.of(
                 member1, memberInfo(member1, 200L),
@@ -329,7 +389,7 @@ class StudyGroupQueryServiceTest {
             groupId, "g", 1L, ChallengerPart.SPRINGBOOT,
             List.of(), List.of()
         );
-        given(loadStudyGroupPort.getById(groupId)).willReturn(group);
+        given(loadStudyGroupPort.getEntityById(groupId)).willReturn(group);
 
         // when
         List<StudyGroupMemberInfo> result = sut.getStudyGroupMembers(groupId);
@@ -350,7 +410,7 @@ class StudyGroupQueryServiceTest {
             groupId, "g", 1L, ChallengerPart.SPRINGBOOT,
             List.of(), List.of(existing, withdrawn)
         );
-        given(loadStudyGroupPort.getById(groupId)).willReturn(group);
+        given(loadStudyGroupPort.getEntityById(groupId)).willReturn(group);
         given(getMemberUseCase.findAllByIds(Set.of(existing, withdrawn)))
             .willReturn(Map.of(existing, memberInfo(existing, 200L)));
 
