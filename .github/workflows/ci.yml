@@ -8,6 +8,8 @@ on:
     paths:
       - 'src/**'
       - 'build.gradle.kts'
+      - 'config/checkstyle/**'
+      - '.editorconfig'
       - 'docker/**'
       - '.github/workflows/ci.yml'
       #      - '.github/workflows/cd.yml'
@@ -78,6 +80,8 @@ jobs:
     steps:
       - name: 📦 코드베이스 체크아웃
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: 🎯 배포 환경 설정
         id: set-env
@@ -119,6 +123,9 @@ jobs:
 
       - name: 🔑 Gradlew 실행 권한 부여
         run: chmod +x gradlew
+
+      - name: 🧹 코드 컨벤션 검증
+        run: ./gradlew spotlessCheck checkstyleMain checkstyleTest
 
       - name: 🔍 컴파일 체크
         run: ./gradlew compileJava compileTestJava

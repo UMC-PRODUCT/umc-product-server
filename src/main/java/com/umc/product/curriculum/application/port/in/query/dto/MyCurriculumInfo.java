@@ -1,15 +1,18 @@
 package com.umc.product.curriculum.application.port.in.query.dto;
 
-import com.umc.product.curriculum.domain.*;
+import com.umc.product.curriculum.domain.MissionFeedback;
+import com.umc.product.curriculum.domain.MissionSubmission;
+import com.umc.product.curriculum.domain.OriginalWorkbook;
+import com.umc.product.curriculum.domain.OriginalWorkbookMission;
+import com.umc.product.curriculum.domain.WeeklyCurriculum;
 import com.umc.product.curriculum.domain.enums.FeedbackResult;
 import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
 import com.umc.product.curriculum.domain.enums.SubmissionStatus;
-import lombok.Builder;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import lombok.Builder;
 
 @Builder
 public record MyCurriculumInfo(
