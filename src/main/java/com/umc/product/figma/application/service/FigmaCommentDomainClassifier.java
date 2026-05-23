@@ -2,8 +2,7 @@ package com.umc.product.figma.application.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+import com.umc.product.figma.application.port.out.FigmaClassificationCachePort;
 import com.umc.product.figma.application.port.out.LoadFigmaCommentClassificationPort;
 import com.umc.product.figma.application.port.out.SaveFigmaCommentClassificationPort;
 import com.umc.product.figma.application.port.out.dto.FigmaCommentInfo;
@@ -77,25 +76,20 @@ public class FigmaCommentDomainClassifier {
     private final ObjectMapper objectMapper;
     private final LoadFigmaCommentClassificationPort loadClassificationPort;
     private final SaveFigmaCommentClassificationPort saveClassificationPort;
-    private final Cache<String, Optional<String>> cache;
+    private final FigmaClassificationCachePort cachePort;
 
     public FigmaCommentDomainClassifier(
         ChatCompleteUseCase chatCompleteUseCase,
         ObjectMapper objectMapper,
         LoadFigmaCommentClassificationPort loadClassificationPort,
         SaveFigmaCommentClassificationPort saveClassificationPort,
-        FigmaClassifierProperties properties
+        FigmaClassificationCachePort cachePort
     ) {
         this.chatCompleteUseCase = chatCompleteUseCase;
         this.objectMapper = objectMapper;
         this.loadClassificationPort = loadClassificationPort;
         this.saveClassificationPort = saveClassificationPort;
-        FigmaClassifierProperties.Cache cacheProps = properties.cache();
-        this.cache = Caffeine.newBuilder()
-            .maximumSize(cacheProps.maxSize())
-            .expireAfterWrite(cacheProps.ttl())
-            .recordStats()
-            .build();
+        this.cachePort = cachePort;
     }
 
     private static String stripMarkdownFence(String raw) {
@@ -114,21 +108,14 @@ public class FigmaCommentDomainClassifier {
     }
 
     /**
-     * L1 Caffeine 캐시 인스턴스를 메트릭 binder 에 노출하기 위한 패키지-비공개 getter. 외부에서는 메트릭/관측 목적으로만 사용해야 하며, 캐시를 직접 조작하지 않는다.
-     */
-    Cache<String, Optional<String>> getCache() {
-        return cache;
-    }
-
-    /**
      * @return 매칭된 domain_key, 분류 실패 또는 후보 외 응답이면 null
      */
     public String classify(FigmaCommentInfo comment, List<String> candidateDomainKeys) {
         if (candidateDomainKeys == null || candidateDomainKeys.isEmpty()) {
             return null;
         }
-        Optional<String> cached = cache.getIfPresent(comment.commentId());
-        if (cached != null) {
+        if (cachePort.contains(comment.commentId())) {
+            Optional<String> cached = cachePort.get(comment.commentId());
             log.debug("LLM 분류 L1 캐시 히트: commentId={}, cached={}", comment.commentId(), cached.orElse(null));
             return cached.orElse(null);
         }
@@ -136,14 +123,14 @@ public class FigmaCommentDomainClassifier {
         String fromDb = persisted.get(comment.commentId());
         if (fromDb != null) {
             log.debug("LLM 분류 L2 DB 히트: commentId={}, domainKey={}", comment.commentId(), fromDb);
-            cache.put(comment.commentId(), Optional.of(fromDb));
+            cachePort.put(comment.commentId(), Optional.of(fromDb));
             return fromDb;
         }
         SingleClassifyOutcome outcome = doClassify(comment, candidateDomainKeys);
         // 호출 자체가 성공한 경우에만 결과를 캐싱한다 (positive 든 후보 외 응답이든).
         // 호출이 transient 예외로 실패한 경우는 캐싱하지 않아 다음 호출에서 즉시 재시도된다.
         if (outcome.callSucceeded()) {
-            cache.put(comment.commentId(), Optional.ofNullable(outcome.picked()));
+            cachePort.put(comment.commentId(), Optional.ofNullable(outcome.picked()));
         }
         return outcome.picked();
     }
@@ -161,9 +148,8 @@ public class FigmaCommentDomainClassifier {
         Map<String, String> results = new LinkedHashMap<>();
         List<FigmaCommentInfo> afterMemoryCache = new ArrayList<>();
         for (FigmaCommentInfo c : comments) {
-            Optional<String> cached = cache.getIfPresent(c.commentId());
-            if (cached != null) {
-                cached.ifPresent(domain -> results.put(c.commentId(), domain));
+            if (cachePort.contains(c.commentId())) {
+                cachePort.get(c.commentId()).ifPresent(domain -> results.put(c.commentId(), domain));
             } else {
                 afterMemoryCache.add(c);
             }
@@ -176,7 +162,7 @@ public class FigmaCommentDomainClassifier {
             for (FigmaCommentInfo c : afterMemoryCache) {
                 String dbDomain = fromDb.get(c.commentId());
                 if (dbDomain != null) {
-                    cache.put(c.commentId(), Optional.of(dbDomain));
+                    cachePort.put(c.commentId(), Optional.of(dbDomain));
                     results.put(c.commentId(), dbDomain);
                 } else {
                     uncached.add(c);
@@ -191,7 +177,7 @@ public class FigmaCommentDomainClassifier {
                     for (FigmaCommentInfo c : chunk) {
                         String domain = bulk.results().get(c.commentId());
                         if (callSucceeded) {
-                            cache.put(c.commentId(), Optional.ofNullable(domain));
+                            cachePort.put(c.commentId(), Optional.ofNullable(domain));
                         }
                         if (domain != null) {
                             results.put(c.commentId(), domain);
