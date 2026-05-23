@@ -371,19 +371,19 @@ app:
         max-size: ${FIGMA_CLASSIFIER_CACHE_MAX_SIZE:10000}
         ttl: ${FIGMA_CLASSIFIER_CACHE_TTL:PT5M}
 
-notification:
-  # 인증 이메일 등 SES v2 발송 설정.
-  # access-key/secret을 비워두면 DefaultCredentialsProvider 체인(IAM Role / IRSA / 환경변수 등)으로 폴백한다.
-  # from-address 는 SES 콘솔에서 verified 처리된 identity 여야 한다.
-  # configuration-set 은 바운스/컴플레인트 트래킹이 필요할 때만 주입한다 (미설정 시 SendEmail 요청에 미포함).
-  email:
-    ses:
-      region: ${SES_REGION:ap-northeast-2}
-      access-key-id: ${SES_ACCESS_KEY_ID:}
-      secret-access-key: ${SES_SECRET_ACCESS_KEY:}
-      from-address: ${SES_FROM_ADDRESS}
-      from-display-name: ${SES_FROM_DISPLAY_NAME:University MakeUs Challenge}
-      configuration-set: ${SES_CONFIGURATION_SET:}
+  notification:
+    # 인증 이메일 등 SES v2 발송 설정.
+    # access-key/secret을 비워두면 DefaultCredentialsProvider 체인(IAM Role / IRSA / 환경변수 등)으로 폴백한다.
+    # from-address 는 SES 콘솔에서 verified 처리된 identity 여야 한다.
+    # configuration-set 은 바운스/컴플레인트 트래킹이 필요할 때만 주입한다 (미설정 시 SendEmail 요청에 미포함).
+    email:
+      ses:
+        region: ${SES_REGION:ap-northeast-2}
+        access-key-id: ${SES_ACCESS_KEY_ID:}
+        secret-access-key: ${SES_SECRET_ACCESS_KEY:}
+        from-address: ${SES_FROM_ADDRESS}
+        from-display-name: ${SES_FROM_DISPLAY_NAME:University MakeUs Challenge}
+        configuration-set: ${SES_CONFIGURATION_SET:}
 
 storage:
   provider: ${STORAGE_PROVIDER:s3}

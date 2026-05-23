@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * <p>{@code configurationSet}은 운영 환경에서 바운스/컴플레인트 트래킹을 활성화할 때만 주입한다.
  * 미설정 시 {@link SesEmailAdapter}는 SendEmail 요청에 해당 필드를 붙이지 않는다.
  */
-@ConfigurationProperties(prefix = "notification.email.ses")
+@ConfigurationProperties(prefix = "app.notification.email.ses")
 public record SesProperties(
     String region,
     String accessKeyId,
