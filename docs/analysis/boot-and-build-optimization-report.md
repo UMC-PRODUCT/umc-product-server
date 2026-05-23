@@ -63,7 +63,7 @@ UMC PRODUCT 백엔드의 **SpringBoot 부팅 시간**과 **Docker 빌드 시간*
 
 #### 2.2.3 Hibernate JDBC metadata 호출 차단 — P1
 - **현황**: `application.yml:83-94`에서 `hibernate.boot.allow_jdbc_metadata_access`, `hibernate.temp.use_jdbc_metadata_defaults` 모두 **미설정**. dialect 자동 판별을 위해 부팅 시 JDBC connection을 열고 metadata 1회 round-trip. PostgreSQL 18 + JTS extension lookup 포함 시 +0.3~0.6초.
-- **기대 효과**: `spring.jpa.properties.hibernate.boot.allow_jdbc_metadata_access=false` + `hibernate.temp.use_jdbc_metadata_defaults=false` 설정 시 **-0.3~0.6초**. dialect는 `org.hibernate.spatial.dialect.postgis.PostgisPG10Dialect`로 명시.
+- **기대 효과**: `spring.jpa.properties.hibernate.boot.allow_jdbc_metadata_access=false` + `hibernate.temp.use_jdbc_metadata_defaults=false` 설정 시 **-0.3~0.6초**. dialect는 Hibernate 6의 공간 타입 지원이 통합된 `org.hibernate.dialect.PostgreSQLDialect`로 명시.
 - **적용 난이도**: Low (dialect 명시 한 줄 추가)
 - **리스크**: PostgreSQL 버전 업그레이드 시 dialect 갱신 누락 가능.
 - **우선순위**: **P1**

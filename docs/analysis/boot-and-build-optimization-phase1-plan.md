@@ -14,7 +14,7 @@
    - 운영에서 시작 직후 burst 트래픽을 우선해야 하면 환경 변수로 즉시 원복 가능하다.
 
 2. Hibernate JDBC metadata 접근 차단
-   - PostGIS dialect를 명시한다.
+   - Hibernate 6의 공간 타입 지원이 통합된 PostgreSQL dialect를 명시한다.
    - `hibernate.boot.allow_jdbc_metadata_access=false`를 설정한다.
    - `hibernate.temp.use_jdbc_metadata_defaults=false`를 설정한다.
 
@@ -80,7 +80,7 @@ compile/build verification
 | 항목 | 판단 | 이유 | 결정 |
 |---|---|---|---|
 | Hikari 기본값 축소 | 적합 | 환경 변수로 되돌릴 수 있고 변경 범위가 작다. 첫 요청 burst 지연만 확인하면 된다. | 진행 |
-| Hibernate metadata 차단 | 적합 | PostGIS dialect 존재를 로컬 Gradle cache의 `hibernate-spatial-6.6.39.Final.jar`에서 확인했다. | 진행 |
+| Hibernate metadata 차단 | 적합 | Hibernate Spatial 6.6.39에서 `PostgisPG10Dialect`는 deprecated 호환 클래스라 `org.hibernate.dialect.PostgreSQLDialect`를 사용한다. | 진행 |
 | local lazy init | 적합 | 운영 프로필이 아니라 로컬 DX에만 영향을 준다. | 진행 |
 | layered jar Dockerfile | 적합 | Spring Boot 3.5 공식 Dockerfile 가이드의 `-Djarmode=tools ... extract --layers` 흐름과 일치한다. | 진행 |
 | JRE 전환 | 적합 | runtime container에서 JDK toolchain은 쓰지 않는다. `amazoncorretto:21-alpine-jre` 태그는 존재하지 않아 기존 dev Dockerfile과 같은 Temurin JRE Alpine을 사용한다. | 진행 |
