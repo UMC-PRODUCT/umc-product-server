@@ -21,6 +21,7 @@ import software.amazon.awssdk.services.sesv2.model.SesV2Exception;
  * AWS SES v2 기반 이메일 발송 어댑터.
  *
  * <p>{@link SendEmailPort} 의 인프라 측 구현. application 레이어가 SDK 타입에 노출되지 않도록 격리한다.
+ * 발신자(From) 는 {@link EmailMessage} 가 전달하는 값을 사용하며,
  * Configuration Set 은 {@link SesProperties#hasConfigurationSet()} 일 때만 요청에 부착한다.
  */
 @Slf4j
@@ -60,7 +61,7 @@ public class SesEmailAdapter implements SendEmailPort {
             .build();
 
         SendEmailRequest.Builder builder = SendEmailRequest.builder()
-            .fromEmailAddress(formatFromAddress())
+            .fromEmailAddress(formatFromAddress(message.fromAddress(), message.fromDisplayName()))
             .destination(Destination.builder().toAddresses(message.to()).build())
             .content(EmailContent.builder().simple(sesMessage).build());
 
@@ -73,8 +74,14 @@ public class SesEmailAdapter implements SendEmailPort {
 
     /**
      * RFC 5322 형식의 발신 주소 문자열을 구성한다. (예: {@code "University MakeUs Challenge" <noreply@umc.it.kr>})
+     *
+     * <p>display-name 에 포함된 백슬래시와 쌍따옴표는 RFC 5322 quoted-string 규칙에 따라 이스케이프한다.
+     * 백슬래시를 먼저 치환해야 이후 쌍따옴표 치환에서 삽입되는 백슬래시가 중복 이스케이프되지 않는다.
      */
-    private String formatFromAddress() {
-        return String.format("\"%s\" <%s>", properties.fromDisplayName(), properties.fromAddress());
+    private String formatFromAddress(String fromAddress, String fromDisplayName) {
+        String escapedDisplayName = fromDisplayName
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"");
+        return String.format("\"%s\" <%s>", escapedDisplayName, fromAddress);
     }
 }

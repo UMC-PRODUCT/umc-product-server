@@ -23,12 +23,16 @@ public class SendEmailService implements SendEmailUseCase {
 
     private final TemplateEngine templateEngine;
     private final SendEmailPort sendEmailPort;
+    private final EmailSenderProperties senderProperties;
 
     @Async("emailTaskExecutor")
     @Override
     public void sendVerificationEmail(SendVerificationEmailCommand command) {
         String htmlContent = renderVerificationTemplate(command);
+        // 인증 이메일은 no-reply 발신자로 고정. 향후 다른 case (예: support) 가 추가되면 분기한다.
         EmailMessage message = new EmailMessage(
+            senderProperties.noReplyAddress(),
+            senderProperties.noReplyDisplayName(),
             command.to(),
             SUBJECT_PREFIX + command.verificationCode(),
             htmlContent
