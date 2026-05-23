@@ -152,6 +152,8 @@ jobs:
           ENVIRONMENT: ${{ env.ENVIRONMENT }}
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
           SERVER_APP_DIRECTORY: ${{ secrets.SERVER_APP_DIRECTORY }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         with:
           host: ${{ secrets.SERVER_SSH_HOST }}
           username: ${{ secrets.SERVER_SSH_USERNAME }}
@@ -166,22 +168,29 @@ jobs:
             echo "Image: ${ECR_IMAGE_NAME}:${IMAGE_TAG}"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-            export XDG_RUNTIME_DIR="/run/user/$(id -u)"
-            export DOCKER_HOST="unix://${XDG_RUNTIME_DIR}/docker.sock"
-            export PATH="$PATH:/usr/local/bin"
+            export PATH="$PATH:/usr/local/bin:/opt/homebrew/bin"
+
+            DOCKER_BIN="$(command -v docker || true)"
+
+            if [ -z "${DOCKER_BIN}" ]; then
+              echo "docker 명령어를 찾을 수 없습니다."
+              exit 1
+            fi
+
+            unset DOCKER_HOST
+            unset XDG_RUNTIME_DIR
 
             echo "[1] Docker 환경 확인"
-            echo "DOCKER_HOST=${DOCKER_HOST}"
-            echo "Docker Path=$(which docker)"
+            echo "Docker Path=${DOCKER_BIN}"
 
-            if ! docker info >/dev/null 2>&1; then
+            if ! "${DOCKER_BIN}" info >/dev/null 2>&1; then
               echo "Docker daemon에 연결할 수 없습니다."
-              systemctl --user status docker || true
+              "${DOCKER_BIN}" context ls || true
               exit 1
             fi
 
             echo "[2] ECR 로그인"
-            printf '%s' "${ECR_PASSWORD}" | docker login --username AWS --password-stdin "${ECR_REGISTRY}"
+            printf '%s' "${ECR_PASSWORD}" | "${DOCKER_BIN}" login --username AWS --password-stdin "${ECR_REGISTRY}"
 
             echo "[3] 애플리케이션 디렉토리 확인"
             if [ ! -d "${SERVER_APP_DIRECTORY}" ]; then
@@ -204,23 +213,23 @@ jobs:
               echo "MANAGEMENT_PORT=9090"
               echo "SPRING_PROFILES_ACTIVE=dev"
               echo "POSTGRES_CONTAINER_NAME=umc-product-postgres-dev"
-              echo "POSTGRES_DB=umc_product"
-              echo "POSTGRES_USER=umc_product"
-              echo "POSTGRES_PASSWORD=umc_product_dev"
+              echo "POSTGRES_DB=development"
+              echo "POSTGRES_USER=${POSTGRES_USER}"
+              echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
               echo "VALKEY_CONTAINER_NAME=umc-product-valkey-dev"
             } > .env
 
             echo "[6] Docker 이미지 Pull"
-            docker compose pull
+            "${DOCKER_BIN}" compose pull
 
             echo "[7] 기존 컨테이너 중지"
-            docker compose down
+            "${DOCKER_BIN}" compose down
 
             echo "[8] 새 컨테이너 시작"
-            docker compose up -d --remove-orphans
+            "${DOCKER_BIN}" compose up -d --remove-orphans
 
             echo "[9] 컨테이너 상태"
-            docker compose ps
+            "${DOCKER_BIN}" compose ps
 
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "develop 홈서버 배포 완료"
