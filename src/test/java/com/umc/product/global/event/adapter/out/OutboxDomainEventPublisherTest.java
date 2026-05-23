@@ -8,6 +8,7 @@ import com.umc.product.global.event.domain.DomainEvent;
 import com.umc.product.global.event.domain.EventOutbox;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +37,7 @@ class OutboxDomainEventPublisherTest {
     }
 
     @Test
-    @DisplayName("publishAll은 입력 순서대로 모든 이벤트를 저장한다")
+    @DisplayName("publishAll은 입력 순서대로 모든 이벤트를 일괄 저장한다")
     void publishAll_저장() {
         FakeSaveEventOutboxPort savePort = new FakeSaveEventOutboxPort();
         OutboxDomainEventPublisher publisher = new OutboxDomainEventPublisher(
@@ -51,6 +52,7 @@ class OutboxDomainEventPublisherTest {
         assertThat(savePort.saved)
             .extracting(EventOutbox::getEventId)
             .containsExactly(first.eventId(), second.eventId());
+        assertThat(savePort.saveAllCalled).isTrue();
     }
 
     private static class FakeSaveEventOutboxPort implements SaveEventOutboxPort {
@@ -61,6 +63,14 @@ class OutboxDomainEventPublisherTest {
         public void save(EventOutbox eventOutbox) {
             saved.add(eventOutbox);
         }
+
+        @Override
+        public void saveAll(Collection<EventOutbox> eventOutboxes) {
+            saveAllCalled = true;
+            saved.addAll(eventOutboxes);
+        }
+
+        private boolean saveAllCalled;
     }
 
     private record TestEvent(

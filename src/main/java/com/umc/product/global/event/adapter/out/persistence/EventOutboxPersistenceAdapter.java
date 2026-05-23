@@ -4,6 +4,7 @@ import com.umc.product.global.event.application.port.out.LoadEventOutboxPort;
 import com.umc.product.global.event.application.port.out.SaveEventOutboxPort;
 import com.umc.product.global.event.domain.EventOutbox;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,11 @@ public class EventOutboxPersistenceAdapter implements SaveEventOutboxPort, LoadE
     @Override
     public void save(EventOutbox eventOutbox) {
         eventOutboxJpaRepository.save(eventOutbox);
+    }
+
+    @Override
+    public void saveAll(Collection<EventOutbox> eventOutboxes) {
+        eventOutboxJpaRepository.saveAll(eventOutboxes);
     }
 
     @Override

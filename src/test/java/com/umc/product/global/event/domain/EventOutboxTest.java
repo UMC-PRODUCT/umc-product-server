@@ -49,6 +49,18 @@ class EventOutboxTest {
     }
 
     @Test
+    @DisplayName("처리 시작 시 processing 상태와 lease 만료 시간을 기록한다")
+    void 처리_시작() {
+        EventOutbox outbox = EventOutbox.record(TestEvent.create("test.created"), "{}");
+        Instant leaseUntil = Instant.parse("2026-05-21T00:05:00Z");
+
+        outbox.markProcessing(leaseUntil);
+
+        assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PROCESSING);
+        assertThat(outbox.getNextAttemptAt()).isEqualTo(leaseUntil);
+    }
+
+    @Test
     @DisplayName("발행 실패 시 attempts를 증가시키고 다음 시도 시간을 기록한다")
     void 발행_실패_재시도() {
         EventOutbox outbox = EventOutbox.record(TestEvent.create("test.created"), "{}");

@@ -12,7 +12,7 @@ public interface EventOutboxJpaRepository extends JpaRepository<EventOutbox, Lon
     @Query(value = """
         SELECT *
         FROM event_outbox
-        WHERE status = 'PENDING'
+        WHERE status IN ('PENDING', 'PROCESSING')
           AND next_attempt_at <= :now
         ORDER BY id
         FOR UPDATE SKIP LOCKED

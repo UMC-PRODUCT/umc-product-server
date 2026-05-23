@@ -55,13 +55,14 @@ CommandService @Transactional
           -> event_outbox INSERT
 
 EventOutboxPoller
-  -> PENDING row 조회
+  -> PENDING / lease 만료 PROCESSING row를 짧은 transaction에서 claim
+  -> PROCESSING 상태와 lease deadline 저장
   -> event_class + payload로 DomainEvent 역직렬화
-  -> ApplicationEventPublisher.publishEvent(event)
-  -> PUBLISHED / retry / FAILED 상태 전환
+  -> 별도 dispatch transaction에서 ApplicationEventPublisher.publishEvent(event)
+  -> 별도 status transaction에서 PUBLISHED / retry / FAILED 상태 전환
 ```
 
-현재 `PUBLISHED`는 “local Spring event bus로 디스패치가 예외 없이 완료됨”을 의미한다. 기존 listener가 `@TransactionalEventListener(AFTER_COMMIT)`이면 listener의 실제 side effect는 relay transaction commit 이후에 실행된다. downstream side effect까지 outbox retry 범위에 넣으려면 listener를 동기 `@EventListener` 또는 broker consumer 형태로 별도 전환해야 한다.
+현재 `PUBLISHED`는 “local Spring event bus dispatch transaction이 예외 없이 commit됨”을 의미한다. 기존 listener가 `@TransactionalEventListener(AFTER_COMMIT)`이면 listener의 실제 side effect는 dispatch transaction commit 이후에 실행된다. downstream side effect까지 outbox retry 범위에 넣으려면 listener를 동기 `@EventListener` 또는 broker consumer 형태로 별도 전환해야 한다.
 
 ## PR 1: 전역 캐시와 local pub/sub 검증
 
@@ -144,7 +145,7 @@ PR title: `[Feat] 범용 이벤트 outbox 릴레이 도입`
 - `EventOutboxRelayService`
 - `EventOutboxPoller`
 - `app.event-outbox.*` 설정 추가
-- relay 성공/실패/최대 재시도 단위 테스트
+- `PROCESSING` claim, relay 성공/실패/최대 재시도 단위 테스트
 
 ### Commit 8
 

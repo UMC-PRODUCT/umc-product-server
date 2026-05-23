@@ -16,6 +16,7 @@ import com.umc.product.global.event.domain.EventOutbox;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -86,6 +87,11 @@ class SendVerificationEmailOutboxFlowTest {
         @Override
         public void save(EventOutbox eventOutbox) {
             saved.add(eventOutbox);
+        }
+
+        @Override
+        public void saveAll(Collection<EventOutbox> eventOutboxes) {
+            saved.addAll(eventOutboxes);
         }
     }
 }

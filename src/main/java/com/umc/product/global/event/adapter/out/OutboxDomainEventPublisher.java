@@ -5,6 +5,7 @@ import com.umc.product.global.event.application.port.out.SaveEventOutboxPort;
 import com.umc.product.global.event.domain.DomainEvent;
 import com.umc.product.global.event.domain.EventOutbox;
 import java.util.Collection;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,9 @@ public class OutboxDomainEventPublisher implements DomainEventPublisher {
 
     @Override
     public void publishAll(Collection<? extends DomainEvent> events) {
-        events.forEach(this::publish);
+        List<EventOutbox> outboxes = events.stream()
+            .map(event -> EventOutbox.record(event, serializer.serialize(event)))
+            .toList();
+        saveEventOutboxPort.saveAll(outboxes);
     }
 }

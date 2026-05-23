@@ -88,6 +88,14 @@ public class EventOutbox extends BaseEntity {
         this.lastError = null;
     }
 
+    public void markProcessing(Instant leaseUntil) {
+        if (leaseUntil == null) {
+            throw new IllegalArgumentException("event outbox processing leaseUntil은 필수입니다.");
+        }
+        this.status = EventOutboxStatus.PROCESSING;
+        this.nextAttemptAt = leaseUntil;
+    }
+
     public void recordFailure(String errorMessage, Instant nextAttemptAt, int maxAttempts) {
         this.attempts++;
         this.lastError = errorMessage;
