@@ -51,6 +51,18 @@ class ProjectCommandServiceTest {
     @Mock
     com.umc.product.project.application.port.out.LoadProjectPartQuotaPort loadProjectPartQuotaPort;
     @Mock
+    com.umc.product.project.application.port.out.LoadProjectMemberPort loadProjectMemberPort;
+    @Mock
+    com.umc.product.project.application.port.out.LoadProjectApplicationPort loadProjectApplicationPort;
+    @Mock
+    com.umc.product.project.application.port.out.SaveProjectMemberPort saveProjectMemberPort;
+    @Mock
+    com.umc.product.project.application.port.out.SaveProjectPartQuotaPort saveProjectPartQuotaPort;
+    @Mock
+    com.umc.product.project.application.port.out.SaveProjectApplicationFormPort saveProjectApplicationFormPort;
+    @Mock
+    com.umc.product.project.application.port.out.SaveProjectApplicationFormPolicyPort saveProjectApplicationFormPolicyPort;
+    @Mock
     GetMemberUseCase getMemberUseCase;
     @Mock
     GetChallengerUseCase getChallengerUseCase;
@@ -620,6 +632,113 @@ class ProjectCommandServiceTest {
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.APPLICATION_FORM_NOT_FOUND);
+        }
+    }
+
+    @Nested
+    class delete {
+
+        @Test
+        void DRAFT_상태에서_form이_없으면_자식만_정리하고_삭제() {
+            Project project = createProject(ProjectStatus.DRAFT);
+            given(loadProjectPort.getById(1L)).willReturn(project);
+            given(loadProjectApplicationFormPort.findByProjectId(1L))
+                .willReturn(java.util.Optional.empty());
+
+            sut.delete(com.umc.product.project.application.port.in.command.dto.DeleteProjectCommand.builder()
+                .projectId(1L).requesterMemberId(99L).build());
+
+            then(saveProjectApplicationFormPolicyPort).should(never()).deleteAllByApplicationFormId(any());
+            then(saveProjectApplicationFormPort).should(never()).deleteAllByProjectId(any());
+            then(manageFormUseCase).should(never()).deleteForm(any());
+            then(saveProjectPartQuotaPort).should().deleteAllByProjectId(1L);
+            then(saveProjectMemberPort).should().deleteAllByProjectId(1L);
+            then(saveProjectPort).should().delete(project);
+        }
+
+        @Test
+        void PENDING_REVIEW_상태에서_form이_있으면_Form까지_cascade_삭제() {
+            Project project = createProject(ProjectStatus.PENDING_REVIEW);
+            com.umc.product.project.domain.ProjectApplicationForm form =
+                com.umc.product.project.domain.ProjectApplicationForm.create(project, 777L);
+            ReflectionTestUtils.setField(form, "id", 55L);
+
+            given(loadProjectPort.getById(1L)).willReturn(project);
+            given(loadProjectApplicationFormPort.findByProjectId(1L))
+                .willReturn(java.util.Optional.of(form));
+
+            sut.delete(com.umc.product.project.application.port.in.command.dto.DeleteProjectCommand.builder()
+                .projectId(1L).requesterMemberId(99L).build());
+
+            then(saveProjectApplicationFormPolicyPort).should().deleteAllByApplicationFormId(55L);
+            then(saveProjectApplicationFormPort).should().deleteAllByProjectId(1L);
+            then(manageFormUseCase).should().deleteForm(any());
+            then(saveProjectPartQuotaPort).should().deleteAllByProjectId(1L);
+            then(saveProjectMemberPort).should().deleteAllByProjectId(1L);
+            then(saveProjectPort).should().delete(project);
+        }
+
+        @Test
+        void IN_PROGRESS_상태이면_PROJECT_DELETE_NOT_ALLOWED_IN_STATUS() {
+            Project project = createProject(ProjectStatus.IN_PROGRESS);
+            given(loadProjectPort.getById(1L)).willReturn(project);
+
+            assertThatThrownBy(() -> sut.delete(
+                com.umc.product.project.application.port.in.command.dto.DeleteProjectCommand.builder()
+                    .projectId(1L).requesterMemberId(99L).build()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_DELETE_NOT_ALLOWED_IN_STATUS);
+
+            then(saveProjectPort).should(never()).delete(any());
+        }
+    }
+
+    @Nested
+    class abort {
+
+        @Test
+        void IN_PROGRESS_상태에서_멤버_WITHDRAWN_application_CANCELLED() {
+            Project project = createProject(ProjectStatus.IN_PROGRESS);
+            com.umc.product.project.domain.ProjectMember activeMember =
+                com.umc.product.project.domain.ProjectMember.create(project, 500L, ChallengerPart.WEB, 100L);
+
+            given(loadProjectPort.getById(1L)).willReturn(project);
+            given(loadProjectMemberPort.listByProjectId(1L)).willReturn(java.util.List.of(activeMember));
+            given(loadProjectApplicationPort.listInProgressByProjectId(1L))
+                .willReturn(java.util.List.of());
+
+            sut.abort(com.umc.product.project.application.port.in.command.dto.AbortProjectCommand.builder()
+                .projectId(1L).requesterMemberId(99L).reason("팀 와해").build());
+
+            assertThat(project.getStatus()).isEqualTo(ProjectStatus.ABORTED);
+            assertThat(project.getStatusChangedReason()).isEqualTo("팀 와해");
+            assertThat(activeMember.getStatus())
+                .isEqualTo(com.umc.product.project.domain.enums.ProjectMemberStatus.WITHDRAWN);
+            assertThat(activeMember.getStatusChangeReason()).isEqualTo("팀 와해");
+        }
+
+        @Test
+        void COMPLETED_상태이면_PROJECT_ABORT_UNAVAILABLE() {
+            Project project = createProject(ProjectStatus.COMPLETED);
+            given(loadProjectPort.getById(1L)).willReturn(project);
+
+            assertThatThrownBy(() -> sut.abort(
+                com.umc.product.project.application.port.in.command.dto.AbortProjectCommand.builder()
+                    .projectId(1L).requesterMemberId(99L).reason("사유").build()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_ABORT_UNAVAILABLE);
+        }
+
+        @Test
+        void 사유가_blank이면_Command_생성_단계에서_PROJECT_ABORT_REASON_REQUIRED() {
+            assertThatThrownBy(() ->
+                com.umc.product.project.application.port.in.command.dto.AbortProjectCommand.builder()
+                    .projectId(1L).requesterMemberId(99L).reason("  ").build())
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_ABORT_REASON_REQUIRED);
         }
     }
 }

@@ -119,4 +119,12 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     ) {
         return projectApplicationQueryRepository.searchProjectApplications(projectId, matchingRoundId, status);
     }
+
+    @Override
+    public List<ProjectApplication> listInProgressByProjectId(Long projectId) {
+        return projectApplicationJpaRepository.findAllByProjectIdAndStatusIn(
+            projectId,
+            List.of(ProjectApplicationStatus.DRAFT, ProjectApplicationStatus.SUBMITTED)
+        );
+    }
 }

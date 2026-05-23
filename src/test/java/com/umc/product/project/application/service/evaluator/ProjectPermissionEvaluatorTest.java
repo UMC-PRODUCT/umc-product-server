@@ -690,17 +690,99 @@ class ProjectPermissionEvaluatorTest {
     // --- DELETE ---
 
     @Test
-    void DELETE는_중앙총괄만_허용() {
-        SubjectAttributes subject = subjectWith(1L, List.of(), List.of(centralCoreRole()));
-        ResourcePermission permission = ResourcePermission.ofType(ResourceType.PROJECT, PermissionType.DELETE);
+    void DELETE는_DRAFT_프로젝트를_PO_본인이면_허용() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.DRAFT)));
+
+        SubjectAttributes subject = subjectWith(10L, List.of(), List.of());
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.DELETE);
 
         assertThat(sut.evaluate(subject, permission)).isTrue();
     }
 
     @Test
-    void DELETE는_일반_사용자_거부() {
-        SubjectAttributes subject = subjectWith(1L, List.of(), List.of());
-        ResourcePermission permission = ResourcePermission.ofType(ResourceType.PROJECT, PermissionType.DELETE);
+    void DELETE는_PENDING_REVIEW_프로젝트를_PO_본인이면_허용() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.PENDING_REVIEW)));
+
+        SubjectAttributes subject = subjectWith(10L, List.of(), List.of());
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.DELETE);
+
+        assertThat(sut.evaluate(subject, permission)).isTrue();
+    }
+
+    @Test
+    void DELETE는_DRAFT_프로젝트를_본인_지부장이면_허용() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.DRAFT)));
+
+        SubjectAttributes subject = subjectWith(20L, List.of(),
+            List.of(chapterPresidentRole(1L, 1L)));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.DELETE);
+
+        assertThat(sut.evaluate(subject, permission)).isTrue();
+    }
+
+    @Test
+    void DELETE는_DRAFT_프로젝트를_해당_기수_중앙총괄단이면_허용() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.DRAFT)));
+
+        SubjectAttributes subject = subjectWith(20L, List.of(), List.of(centralCoreRole()));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.DELETE);
+
+        assertThat(sut.evaluate(subject, permission)).isTrue();
+    }
+
+    @Test
+    void DELETE는_DRAFT_프로젝트를_다른_지부장이면_거부() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.DRAFT)));
+
+        SubjectAttributes subject = subjectWith(20L, List.of(),
+            List.of(chapterPresidentRole(999L, 1L)));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.DELETE);
+
+        assertThat(sut.evaluate(subject, permission)).isFalse();
+    }
+
+    @Test
+    void DELETE는_DRAFT_프로젝트를_일반_사용자면_거부() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.DRAFT)));
+
+        SubjectAttributes subject = subjectWith(20L, List.of(), List.of());
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.DELETE);
+
+        assertThat(sut.evaluate(subject, permission)).isFalse();
+    }
+
+    @Test
+    void DELETE는_IN_PROGRESS_프로젝트에는_누구도_거부() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.IN_PROGRESS)));
+
+        SubjectAttributes subject = subjectWith(10L, List.of(), List.of(centralCoreRole()));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.DELETE);
+
+        assertThat(sut.evaluate(subject, permission)).isFalse();
+    }
+
+    @Test
+    void DELETE는_COMPLETED_프로젝트에는_누구도_거부() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.COMPLETED)));
+
+        SubjectAttributes subject = subjectWith(10L, List.of(), List.of(centralCoreRole()));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.DELETE);
 
         assertThat(sut.evaluate(subject, permission)).isFalse();
     }
