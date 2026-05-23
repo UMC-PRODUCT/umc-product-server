@@ -40,4 +40,10 @@ public class ProjectApplicationFormPolicyPersistenceAdapter
     public void deleteByFormSectionId(Long formSectionId) {
         repository.deleteByFormSectionId(formSectionId);
     }
+
+    @Override
+    @Transactional
+    public void deleteAllByApplicationFormId(Long applicationFormId) {
+        repository.deleteAllByApplicationFormId(applicationFormId);
+    }
 }

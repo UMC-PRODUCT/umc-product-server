@@ -38,6 +38,11 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     }
 
     @Override
+    public void deleteAllByProjectId(Long projectId) {
+        repository.deleteAllByProjectId(projectId);
+    }
+
+    @Override
     public List<ProjectMember> listByProjectId(Long projectId) {
         return repository.findByProjectIdAndStatus(projectId, ProjectMemberStatus.ACTIVE);
     }
