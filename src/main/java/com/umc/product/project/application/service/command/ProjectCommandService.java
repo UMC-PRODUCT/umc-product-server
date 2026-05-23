@@ -11,12 +11,14 @@ import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import com.umc.product.project.application.port.in.command.AbortProjectUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
 import com.umc.product.project.application.port.in.command.DeleteProjectUseCase;
 import com.umc.product.project.application.port.in.command.PublishProjectUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
 import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
+import com.umc.product.project.application.port.in.command.dto.AbortProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.DeleteProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.PublishProjectCommand;
@@ -24,6 +26,8 @@ import com.umc.product.project.application.port.in.command.dto.SubmitProjectComm
 import com.umc.product.project.application.port.in.command.dto.TransferProjectOwnershipCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectCommand;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
+import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationFormPolicyPort;
@@ -32,7 +36,9 @@ import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.application.port.out.SaveProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.SaveProjectPort;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
+import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
@@ -55,12 +61,15 @@ public class ProjectCommandService implements
     SubmitProjectUseCase,
     TransferProjectOwnershipUseCase,
     PublishProjectUseCase,
-    DeleteProjectUseCase {
+    DeleteProjectUseCase,
+    AbortProjectUseCase {
 
     private final LoadProjectPort loadProjectPort;
     private final SaveProjectPort saveProjectPort;
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
+    private final LoadProjectMemberPort loadProjectMemberPort;
+    private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final SaveProjectMemberPort saveProjectMemberPort;
     private final SaveProjectPartQuotaPort saveProjectPartQuotaPort;
     private final SaveProjectApplicationFormPort saveProjectApplicationFormPort;
@@ -254,5 +263,31 @@ public class ProjectCommandService implements
         saveProjectPartQuotaPort.deleteAllByProjectId(project.getId());
         saveProjectMemberPort.deleteAllByProjectId(project.getId());
         saveProjectPort.delete(project);
+    }
+
+    /**
+     * 프로젝트 중단(abort). IN_PROGRESS → ABORTED 상태 전이 + 자식 도메인 일괄 동기화.
+     * <ul>
+     *   <li>{@link Project#abort} 로 상태 전이 (COMPLETED/ABORTED 는 도메인 가드가 거부)</li>
+     *   <li>ACTIVE 인 ProjectMember 는 모두 WITHDRAWN, statusChangeReason 에 중단 사유 기록</li>
+     *   <li>진행 중(DRAFT/SUBMITTED) ProjectApplication 은 모두 CANCELLED</li>
+     * </ul>
+     * 권한 검증은 Controller 단의 {@code @CheckAccess(MANAGE)} 가 담당.
+     */
+    @Override
+    public void abort(AbortProjectCommand command) {
+        Project project = loadProjectPort.getById(command.projectId());
+        project.abort(command.reason(), command.requesterMemberId());
+
+        List<ProjectMember> activeMembers = loadProjectMemberPort.listByProjectId(project.getId());
+        for (ProjectMember member : activeMembers) {
+            member.withdraw(command.reason(), command.requesterMemberId());
+        }
+
+        List<ProjectApplication> inProgressApplications =
+            loadProjectApplicationPort.listInProgressByProjectId(project.getId());
+        for (ProjectApplication application : inProgressApplications) {
+            application.cancel(command.requesterMemberId(), command.reason());
+        }
     }
 }
