@@ -194,8 +194,17 @@ jobs:
               exit 1
             fi
 
-            echo "[2] ECR 로그인"
-            printf '%s' "${ECR_PASSWORD}" | "${DOCKER_BIN}" login --username AWS --password-stdin "${ECR_REGISTRY}"
+            echo "[2] ECR 인증 설정"
+            ECR_AUTH="$(printf 'AWS:%s' "${ECR_PASSWORD}" | base64 | tr -d '\n')"
+            cat > "${DOCKER_CONFIG}/config.json" << EOF
+            {
+              "auths": {
+                "${ECR_REGISTRY}": {
+                  "auth": "${ECR_AUTH}"
+                }
+              }
+            }
+            EOF
 
             echo "[3] 애플리케이션 디렉토리 확인"
             if [ ! -d "${SERVER_APP_DIRECTORY}" ]; then
