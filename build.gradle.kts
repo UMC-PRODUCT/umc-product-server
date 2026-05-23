@@ -217,29 +217,27 @@ checkstyle {
 
 val lintBaseRef = providers.gradleProperty("lintBase").orElse("origin/develop")
 
-fun changedJavaFiles(vararg sourceRoots: String) = providers.provider {
-    val paths = linkedSetOf<String>()
-    val diffCommands = listOf(
-        listOf("git", "diff", "--name-only", "--diff-filter=ACMR", "${lintBaseRef.get()}...HEAD", "--") + sourceRoots,
-        listOf("git", "diff", "--name-only", "--diff-filter=ACMR", "HEAD", "--") + sourceRoots
-    )
+fun changedJavaFiles(vararg sourceRoots: String) = lintBaseRef.flatMap { baseRef ->
+    val diffAgainstBaseProvider = providers.exec {
+        commandLine("git", "diff", "--name-only", "--diff-filter=ACMR", "$baseRef...HEAD", "--", *sourceRoots)
+        isIgnoreExitValue = true
+    }.standardOutput.asText
 
-    diffCommands.forEach { command ->
-        val output = providers.exec {
-            commandLine(command)
-            isIgnoreExitValue = true
-        }.standardOutput.asText.get()
+    val localDiffProvider = providers.exec {
+        commandLine("git", "diff", "--name-only", "--diff-filter=ACMR", "HEAD", "--", *sourceRoots)
+        isIgnoreExitValue = true
+    }.standardOutput.asText
 
-        output
-            .lineSequence()
+    diffAgainstBaseProvider.zip(localDiffProvider) { baseOutput, localOutput ->
+        (baseOutput.lines() + localOutput.lines())
+            .asSequence()
             .map(String::trim)
-            .filter { it.endsWith(".java") }
-            .forEach(paths::add)
+            .filter { it.endsWith(".java") && it.isNotBlank() }
+            .distinct()
+            .map(::file)
+            .filter(File::exists)
+            .toList()
     }
-
-    paths
-        .map(::file)
-        .filter(File::exists)
 }
 
 tasks.withType<Checkstyle>().configureEach {
