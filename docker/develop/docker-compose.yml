@@ -1,0 +1,66 @@
+# .env는 Docker Compose 치환 전용, app.env는 애플리케이션 런타임 환경변수 전용입니다.
+
+services:
+  app:
+    container_name: ${CONTAINER_NAME}
+    image: ${IMAGE_NAME}:${IMAGE_TAG}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    ports:
+      - "${SERVICE_PORT:-8080}:8080"
+      - "${MANAGEMENT_PORT:-9090}:9090"
+    env_file:
+      - app.env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      DATABASE_USERNAME: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: [ "CMD", "curl", "-sf", "http://localhost:${MANAGEMENT_PORT:-9090}/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgres:
+    container_name: ${POSTGRES_CONTAINER_NAME}
+    image: postgres:18.2
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: Asia/Seoul
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\"" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  valkey:
+    container_name: ${VALKEY_CONTAINER_NAME}
+    image: valkey/valkey:9.1
+    restart: unless-stopped
+    command: [ "valkey-server", "--appendonly", "yes" ]
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: [ "CMD", "valkey-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  postgres-data:
+  valkey-data:

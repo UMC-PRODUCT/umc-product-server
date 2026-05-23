@@ -1,0 +1,238 @@
+name: CD [Develop Home Server]
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - "src/**"
+      - "build.gradle.kts"
+      - "docker/**"
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/cd-dev-home.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: cd-dev-home-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci-and-build:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+      issues: write
+      packages: write
+      statuses: write
+      deployments: write
+    secrets: inherit
+    with:
+      environment: Development
+
+  deploy:
+    name: Deploy to Develop Home Server
+    needs: ci-and-build
+    if: github.ref == 'refs/heads/develop' && needs.ci-and-build.outputs.environment == 'Development'
+    runs-on: ubuntu-latest
+    environment: Development
+
+    env:
+      ENVIRONMENT: ${{ needs.ci-and-build.outputs.environment }}
+      IMAGE_TAG: ${{ needs.ci-and-build.outputs.image_tag }}
+      AWS_REGION: ap-northeast-2
+      ECR_REPOSITORY: umc-product-server
+      S3_APP_ENV_URI: ${{ secrets.AWS_S3_APP_ENV_URI }}
+
+    steps:
+      - name: 환경변수 검증
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SERVER_APP_DIRECTORY: ${{ secrets.SERVER_APP_DIRECTORY }}
+          SERVER_SSH_HOST: ${{ secrets.SERVER_SSH_HOST }}
+          SERVER_SSH_USERNAME: ${{ secrets.SERVER_SSH_USERNAME }}
+          SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "필수 환경 변수 검증 시작"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          MISSING_VARS=()
+
+          [[ -z "$AWS_ACCESS_KEY_ID" ]] && MISSING_VARS+=("AWS_ACCESS_KEY_ID")
+          [[ -z "$AWS_SECRET_ACCESS_KEY" ]] && MISSING_VARS+=("AWS_SECRET_ACCESS_KEY")
+          [[ -z "$SERVER_APP_DIRECTORY" ]] && MISSING_VARS+=("SERVER_APP_DIRECTORY")
+          [[ -z "$SERVER_SSH_HOST" ]] && MISSING_VARS+=("SERVER_SSH_HOST")
+          [[ -z "$SERVER_SSH_USERNAME" ]] && MISSING_VARS+=("SERVER_SSH_USERNAME")
+          [[ -z "$SERVER_SSH_PRIVATE_KEY" ]] && MISSING_VARS+=("SERVER_SSH_PRIVATE_KEY")
+          [[ -z "$SERVER_SSH_PORT" ]] && MISSING_VARS+=("SERVER_SSH_PORT")
+          [[ -z "$IMAGE_TAG" ]] && MISSING_VARS+=("IMAGE_TAG")
+          [[ -z "$S3_APP_ENV_URI" ]] && MISSING_VARS+=("S3_APP_ENV_URI")
+
+          if [ ${#MISSING_VARS[@]} -gt 0 ]; then
+            echo "다음 환경 변수들이 설정되지 않았습니다:"
+            printf ' - %s\n' "${MISSING_VARS[@]}"
+            exit 1
+          fi
+
+          echo "모든 필수 환경 변수가 설정되었습니다."
+
+      - name: 코드베이스 체크아웃
+        uses: actions/checkout@v4
+
+      - name: AWS 인증
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: ECR 및 S3 secret 준비
+        run: |
+          set -euo pipefail
+
+          AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+          ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          ECR_PASSWORD="$(aws ecr get-login-password --region "${AWS_REGION}")"
+          APP_ENV_B64="$(aws s3 cp "${S3_APP_ENV_URI}" - | base64 -w 0)"
+
+          echo "::add-mask::${ECR_PASSWORD}"
+          echo "::add-mask::${APP_ENV_B64}"
+          {
+            echo "ECR_REGISTRY=${ECR_REGISTRY}"
+            echo "ECR_IMAGE_NAME=${ECR_REGISTRY}/${ECR_REPOSITORY}"
+            echo "ECR_PASSWORD=${ECR_PASSWORD}"
+            echo "APP_ENV_B64=${APP_ENV_B64}"
+          } >> "$GITHUB_ENV"
+
+      - name: 배포 정보 출력
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Develop 홈서버 배포 정보"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Environment: ${ENVIRONMENT}"
+          echo "Image: ${ECR_IMAGE_NAME}:${IMAGE_TAG}"
+          echo "App Env: ${S3_APP_ENV_URI}"
+          echo "App Directory: ${{ secrets.SERVER_APP_DIRECTORY }}"
+          echo "Server: ${{ secrets.SERVER_SSH_HOST }}"
+          echo "User: ${{ secrets.SERVER_SSH_USERNAME }}"
+          echo "Port: ${{ secrets.SERVER_SSH_PORT }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Docker Compose 파일 전송
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SERVER_SSH_HOST }}
+          username: ${{ secrets.SERVER_SSH_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          source: "docker/develop/docker-compose.yml"
+          target: "${{ secrets.SERVER_APP_DIRECTORY }}/"
+          strip_components: 2
+          overwrite: true
+
+      - name: SSH 접속 및 develop 배포 실행
+        uses: appleboy/ssh-action@v1
+        env:
+          ENVIRONMENT: ${{ env.ENVIRONMENT }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          SERVER_APP_DIRECTORY: ${{ secrets.SERVER_APP_DIRECTORY }}
+        with:
+          host: ${{ secrets.SERVER_SSH_HOST }}
+          username: ${{ secrets.SERVER_SSH_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          envs: ENVIRONMENT,IMAGE_TAG,ECR_REGISTRY,ECR_IMAGE_NAME,ECR_PASSWORD,SERVER_APP_DIRECTORY,APP_ENV_B64
+          script: |
+            set -euo pipefail
+
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "develop 홈서버 배포 시작"
+            echo "Image: ${ECR_IMAGE_NAME}:${IMAGE_TAG}"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+            export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+            export DOCKER_HOST="unix://${XDG_RUNTIME_DIR}/docker.sock"
+            export PATH="$PATH:/usr/local/bin"
+
+            echo "[1] Docker 환경 확인"
+            echo "DOCKER_HOST=${DOCKER_HOST}"
+            echo "Docker Path=$(which docker)"
+
+            if ! docker info >/dev/null 2>&1; then
+              echo "Docker daemon에 연결할 수 없습니다."
+              systemctl --user status docker || true
+              exit 1
+            fi
+
+            echo "[2] ECR 로그인"
+            printf '%s' "${ECR_PASSWORD}" | docker login --username AWS --password-stdin "${ECR_REGISTRY}"
+
+            echo "[3] 애플리케이션 디렉토리 확인"
+            if [ ! -d "${SERVER_APP_DIRECTORY}" ]; then
+              echo "애플리케이션 디렉토리가 존재하지 않습니다: ${SERVER_APP_DIRECTORY}"
+              exit 1
+            fi
+
+            cd "${SERVER_APP_DIRECTORY}"
+
+            echo "[4] 애플리케이션 런타임 환경 파일 갱신"
+            printf '%s' "${APP_ENV_B64}" | base64 -d > app.env
+
+            echo "[5] Docker Compose 치환 전용 환경 파일 갱신"
+            {
+              echo "# GitHub Actions develop deployment compose variables"
+              echo "CONTAINER_NAME=umc-product-server-dev"
+              echo "IMAGE_NAME=${ECR_IMAGE_NAME}"
+              echo "IMAGE_TAG=${IMAGE_TAG}"
+              echo "SERVICE_PORT=8080"
+              echo "MANAGEMENT_PORT=9090"
+              echo "SPRING_PROFILES_ACTIVE=dev"
+              echo "POSTGRES_CONTAINER_NAME=umc-product-postgres-dev"
+              echo "POSTGRES_DB=umc_product"
+              echo "POSTGRES_USER=umc_product"
+              echo "POSTGRES_PASSWORD=umc_product_dev"
+              echo "VALKEY_CONTAINER_NAME=umc-product-valkey-dev"
+            } > .env
+
+            echo "[6] Docker 이미지 Pull"
+            docker compose pull
+
+            echo "[7] 기존 컨테이너 중지"
+            docker compose down
+
+            echo "[8] 새 컨테이너 시작"
+            docker compose up -d --remove-orphans
+
+            echo "[9] 컨테이너 상태"
+            docker compose ps
+
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "develop 홈서버 배포 완료"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          {
+            echo "### Develop Home Server Deployment Summary"
+            echo ""
+            echo "| 항목 | 값 |"
+            echo "|------|-----|"
+            echo "| Environment | \`${{ env.ENVIRONMENT }}\` |"
+            echo "| Branch | \`${{ github.ref_name }}\` |"
+            echo "| Image | \`${ECR_IMAGE_NAME}:${{ env.IMAGE_TAG }}\` |"
+            echo "| App Env | \`${S3_APP_ENV_URI}\` |"
+            echo "| Server | \`${{ secrets.SERVER_SSH_HOST }}\` |"
+            echo "| Directory | \`${{ secrets.SERVER_APP_DIRECTORY }}\` |"
+            echo "| Status | \`${{ job.status }}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 배포 실패 알림
+        if: failure()
+        run: |
+          echo "::error::Develop home server deployment failed."
+          echo "GitHub Actions 로그와 홈서버 Docker 로그를 확인해주세요."
