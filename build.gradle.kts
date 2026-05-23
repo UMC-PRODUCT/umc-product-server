@@ -6,6 +6,8 @@ plugins {
     jacoco
 }
 
+apply(from = "gradle/documentation-catalog.gradle.kts")
+
 group = "com.umc"
 version = "2.0.0"
 description = "UMC PRODUCT API by Server Team"
