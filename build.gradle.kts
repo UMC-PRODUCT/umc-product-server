@@ -182,7 +182,7 @@ spotless {
 
     java {
         target("src/**/*.java")
-        importOrder("\\#", "")
+        importOrder("\\#", "java", "javax", "org", "net", "com", "")
         removeUnusedImports()
         forbidWildcardImports()
         trimTrailingWhitespace()
@@ -208,6 +208,8 @@ spotless {
 checkstyle {
     toolVersion = "13.4.2"
     configDirectory.set(layout.projectDirectory.dir("config/checkstyle"))
+    configProperties["suppressionFile"] =
+        layout.projectDirectory.file("config/checkstyle/naver-checkstyle-suppressions.xml").asFile.absolutePath
     isIgnoreFailures = false
     maxErrors = 0
     maxWarnings = Int.MAX_VALUE
