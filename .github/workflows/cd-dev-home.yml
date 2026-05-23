@@ -180,8 +180,13 @@ jobs:
             unset DOCKER_HOST
             unset XDG_RUNTIME_DIR
 
+            DOCKER_CONFIG="$(mktemp -d)"
+            export DOCKER_CONFIG
+            trap 'rm -rf "${DOCKER_CONFIG}"' EXIT
+
             echo "[1] Docker 환경 확인"
             echo "Docker Path=${DOCKER_BIN}"
+            echo "Docker Config=${DOCKER_CONFIG}"
 
             if ! "${DOCKER_BIN}" info >/dev/null 2>&1; then
               echo "Docker daemon에 연결할 수 없습니다."
