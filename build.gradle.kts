@@ -118,7 +118,6 @@ dependencies {
     implementation("com.google.cloud:google-cloud-storage")
 
     // --- Email ---
-    implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
     // BOM으로 버전 강제 정렬
