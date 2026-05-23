@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.sesv2.model.Destination;
 import software.amazon.awssdk.services.sesv2.model.EmailContent;
 import software.amazon.awssdk.services.sesv2.model.Message;
 import software.amazon.awssdk.services.sesv2.model.SendEmailRequest;
+import software.amazon.awssdk.services.sesv2.model.SendEmailResponse;
 import software.amazon.awssdk.services.sesv2.model.SesV2Exception;
 
 /**
@@ -36,7 +37,8 @@ public class SesEmailAdapter implements SendEmailPort {
     public void send(EmailMessage message) {
         SendEmailRequest request = buildRequest(message);
         try {
-            sesV2Client.sendEmail(request);
+            SendEmailResponse response = sesV2Client.sendEmail(request);
+            log.info("SES 이메일 발송 성공: to={}, messageId={}", message.to(), response.messageId());
         } catch (SesV2Exception e) {
             // 예외 삼킴 방지: AWS error code 까지 컨텍스트에 남기고 cause 를 포함해 도메인 예외로 변환한다.
             String awsErrorCode = e.awsErrorDetails() != null ? e.awsErrorDetails().errorCode() : null;
