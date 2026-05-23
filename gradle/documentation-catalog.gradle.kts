@@ -650,3 +650,7 @@ tasks.register("nextErrorCode") {
         println("$prefix-${next.toString().padStart(width, '0')}")
     }
 }
+
+tasks.named("check") {
+    dependsOn("checkDocumentationCatalogs")
+}
