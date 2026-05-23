@@ -301,6 +301,16 @@ app:
   # spring.profiles.active 가 콤마 구분 다중 profile 일 수 있으므로 운영자가 단일 라벨을 명시적으로 override 가능.
   environment: ${APP_ENVIRONMENT:${SPRING_PROFILES_ACTIVE:local}}
 
+  observability:
+    tracing:
+      enabled: ${APP_OBSERVABILITY_TRACING_ENABLED:true}
+      use-case-spans: ${APP_OBSERVABILITY_USE_CASE_SPANS:true}
+      adapter-spans: ${APP_OBSERVABILITY_ADAPTER_SPANS:true}
+      db-spans: ${APP_OBSERVABILITY_DB_SPANS:true}
+      # SQL 원문에는 개인정보/토큰성 값이 포함될 수 있으므로 기본값은 비활성화한다.
+      include-sql: ${APP_OBSERVABILITY_INCLUDE_SQL:false}
+      max-sql-length: ${APP_OBSERVABILITY_MAX_SQL_LENGTH:500}
+
   fcm:
     enabled: ${FCM_ENABLED:false}
     outbox-interval-ms: ${FCM_OUTBOX_INTERVAL_MS:60000}
