@@ -38,7 +38,7 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
             case WRITE -> canWrite(subject);
             case EDIT -> canEdit(subject, permission);
             case MANAGE -> canManage(subject, permission);
-            case DELETE -> isCentralCore(subject);
+            case DELETE -> canDelete(subject, permission);
             default -> false;
         };
     }
@@ -106,6 +106,21 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
     }
 
     /**
+     * 단건 DELETE 분기. 프로젝트 hard delete 액션의 권한 판정.
+     * <ul>
+     *   <li>DRAFT / PENDING_REVIEW: PO 본인 또는 운영진(해당 기수 총괄단 / 본인 지부장)만 통과.</li>
+     *   <li>IN_PROGRESS / COMPLETED / ABORTED: 절대 차단 — abort() 로 상태 전이만 허용.</li>
+     * </ul>
+     */
+    private boolean canDelete(SubjectAttributes subject, ResourcePermission permission) {
+        Project project = loadProject(permission);
+        return switch (project.getStatus()) {
+            case DRAFT, PENDING_REVIEW -> isOwner(subject, project) || isProjectAdmin(subject, project);
+            case IN_PROGRESS, COMPLETED, ABORTED -> false;
+        };
+    }
+
+    /**
      * 운영진 전용 액션 (publish / abort / complete / 정원 설정 등). PM 은 차단 — Admin 검토 우회 방지.
      * <p>
      * 해당 기수의 총괄단(SUPER_ADMIN 은 글로벌) 또는 본인 지부장(해당 기수)만 통과.
@@ -141,6 +156,7 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
                 && Objects.equals(role.gisuId(), gisuId));
     }
 
+    @SuppressWarnings("unused")
     private boolean isCentralCore(SubjectAttributes subject) {
         return subject.roleAttributes().stream()
             .anyMatch(role -> role.roleType().isAtLeastCentralCore());
