@@ -12,7 +12,7 @@
 
 | 계층 | 위치 | 키 | 값 | 수명 |
 |------|------|----|----|------|
-| **L1** | `FigmaCommentDomainClassifier.cache` (Caffeine) | `commentId` | `Optional<domainKey>` (positive + negative) | 5 분 (yaml 조정) |
+| **L1** | `FigmaClassificationCachePort` → 전역 `CacheUseCase` → Caffeine adapter | `commentId` | `ClassificationCacheValue` (positive + negative) | 5 분 (yaml 조정) |
 | **L2** | `figma_comment_classification` 테이블 | `comment_id` UNIQUE | `domain_key` + `provider` + `classified_at` | 영구 (positive + non-mock 만) |
 | **L3** | LLM batch 호출 (`ChatCompleteUseCase`) | — | LLM 응답 | 단발 |
 
@@ -23,7 +23,7 @@
 | `LlmRateLimiter` | `llm` 도메인 | 사전 페이싱 (token bucket, 분당 RPM + burst). 토큰 부족 시 `Thread.sleep`. |
 | `LlmCallGuard` | `llm` 도메인 | 회로 차단. 연속 실패 N 회 → 일정 시간 호출 자체 거부. |
 | `LlmFallbackConfig` | `llm` 도메인 | 활성 어댑터가 없으면 mock 으로 자동 fallback. |
-| Caffeine `recordStats` + `CaffeineCacheMetrics` | `figma` 도메인 | hit/miss/eviction 메트릭을 `figma.classifier.l1.*` 로 노출. |
+| Caffeine `recordStats` + `CaffeineCacheMetrics` | `global/cache` adapter | hit/miss/eviction 메트릭을 `figma.classifier.l1.*` 로 노출. |
 
 ## 1. 도메인 경계와 책임
 
@@ -32,7 +32,8 @@ figma 도메인                                    llm 도메인
 ┌─────────────────────────────────────────┐    ┌──────────────────────────────────────┐
 │ FigmaCommentSummaryService              │    │ ChatCompleteUseCase                  │
 │   └─ FigmaCommentDomainClassifier ──────┼───▶│   └─ ChatCompletionService           │
-│      ├ L1: Caffeine cache               │    │      ├ LlmCallGuard.allow()          │
+│      ├ L1: FigmaClassificationCachePort │    │      ├ LlmCallGuard.allow()          │
+│      │       → global CacheUseCase      │    │                                      │
 │      ├ L2: LoadFigmaCommentClassPort   │    │      ├ LlmRateLimiter.acquire()      │
 │      │       (DB)                       │    │      ├ ChatCompletionPort.complete() │
 │      └ L3: chatCompleteUseCase          │    │      │   (Mock | Gemini | OpenAI |   │
@@ -45,7 +46,7 @@ figma 도메인                                    llm 도메인
 
 **경계의 핵심 규칙:**
 
-1. `figma` 가 캐시 정책의 주체다. L1 / L2 모두 `figma` 도메인이 소유한다.
+1. `figma` 가 캐시 정책의 주체다. L1 도메인 정책은 `FigmaClassificationCachePort` wrapper가 소유하고, 저장소 구현은 `global/cache` adapter가 맡는다. L2 는 `figma` 도메인이 소유한다.
 2. `llm` 도메인은 캐시를 모른다 — 항상 LLM 호출을 수행한다는 가정에서 동작한다 (`ChatCompletionService` 안에는 결과 캐시 자체가 없다).
 3. `figma` → `llm` 의 입력은 `ChatCompleteCommand` (system + user prompt + 선택적 maxTokens override). prompt 내용 자체는 figma 가 완전히 완성해 보낸다.
 4. `llm` → `figma` 의 출력은 `ChatCompletionResult(text, provider, promptTokens, completionTokens)`. `provider` 가 캐시 정책 (mock 응답 영구 저장 차단) 의 결정 신호로 쓰인다.
@@ -62,7 +63,7 @@ FigmaCommentSyncScheduler.poll()
      └─ FigmaCommentSummaryService.summarize(...)
         └─ for each watched file:
            └─ FigmaCommentDomainClassifier.classifyBatch(filtered, candidateKeys)
-              ├─ L1 lookup (Caffeine)         ← cache.getIfPresent(commentId)
+              ├─ L1 lookup (Figma cache port) ← cachePort.contains/get(commentId)
               │      hit (Optional present)  → results 에 put
               │      hit (Optional empty)    → "negative cache" — results 에 안 들어감, LLM 미호출
               │      miss                    → afterMemoryCache 에 추가
@@ -92,7 +93,7 @@ FigmaCommentSyncScheduler.poll()
 
 각 응답 종류가 L1 / L2 어디에 쓰이는지를 한 표로 정리.
 
-| 응답 종류 | provider 값 | L1 (Caffeine) | L2 (DB) | 다음 사이클 동작 |
+| 응답 종류 | provider 값 | L1 (`FigmaClassificationCachePort`) | L2 (DB) | 다음 사이클 동작 |
 |-----------|-------------|---------------|---------|------------------|
 | 후보 매칭 (정상 분류) | non-mock (e.g. `vertexai-gemini`) | positive 적재 | positive 적재 | L1/L2 hit 으로 LLM 미호출 |
 | 후보 매칭 (mock provider) | `mock` | positive 적재 | **저장 안 함** | 5분 내 L1 hit, 이후엔 L1 expire → L2 miss → LLM 재호출 |
@@ -192,7 +193,7 @@ DELETE FROM figma_comment_classification WHERE comment_id = '...';
 -- 도메인 키 변경 / fallback 배치가 잘못 학습된 경우 운영자가 직접 정리.
 ```
 
-L1 (Caffeine) 은 in-memory 라 process 재시작 외에 무효화 수단이 현재 없다 (admin endpoint 미도입 — 점검 보고서 §3.4 참조).
+현재 L1 저장소는 in-memory Caffeine 이라 운영자가 직접 호출할 수 있는 무효화 수단은 process 재시작뿐이다. 전역 `CacheUseCase.evict`는 이미 있으므로, admin endpoint가 도입되면 `CacheNamespace.FIGMA_CLASSIFICATION` + `commentId`로 단건 무효화를 연결할 수 있다.
 
 ## 6. cross-domain 의 미세한 결합 지점
 
@@ -214,7 +215,7 @@ L1 (Caffeine) 은 in-memory 라 process 재시작 외에 무효화 수단이 현
 
 이는 의도된 동작이다 — mock 모드에서 운영자가 figma flow 의 fallback path 자체를 검증할 수 있다. 다만 운영자가 fallback 도메인 / mock 모드 / 캐시 효과 셋을 한 번에 눈으로 구분하기 어려워, gauge 메트릭 (`llm_active_provider_info`) 으로 mock 활성 여부를 별도 채널로 노출한 것이다.
 
-## 7. 최근 개선 (2026-05-08)
+## 7. 최근 개선
 
 다음 4 개 커밋이 본 구조의 운영 가시성과 안정성을 끌어올렸다.
 
@@ -224,6 +225,14 @@ L1 (Caffeine) 은 in-memory 라 process 재시작 외에 무효화 수단이 현
 | `aafa867e` | Caffeine `recordStats()` + `CaffeineCacheMetrics` 로 `figma.classifier.l1.*` 메트릭 노출. |
 | `02ab5e24` | `FigmaClassifierProperties` 로 cache.max-size / cache.ttl 외부화. |
 | `2733abec` | `llm.active.provider.info{provider, fallback}` gauge 로 활성 provider / fallback 진입 여부 상시 노출. |
+
+2026-05-21 작업에서는 L1 캐시가 전역 cache adapter 위로 이동했다.
+
+| 커밋 | 변경 |
+|------|------|
+| `8a5cb539` | `CacheUseCase`, `CacheStorePort`, `CacheNamespace`, `CacheSpec` 전역 캐시 계약 추가. |
+| `6dce2c18` | Caffeine 저장소 adapter 추가. TTL, maximum size, namespace별 metric 등록을 전역 adapter에서 처리. |
+| `54b9592a` | Figma classification 캐시를 `FigmaClassificationCachePort` wrapper를 통해 전역 cache usecase로 이전. |
 
 본 구조는 ADR-008 (LLM 도메인 provider 전략) 의 비용 가정 (일 ~500 호출) 을 토대로 설계되었다. 호출량이 일 1000+ 로 늘어나면 후보 외 응답의 영구 negative 캐싱 / 분산 L1 / admin invalidate endpoint 같은 후속 작업이 필요해진다 (점검 보고서 §3.2, §3.4, §3.5).
 
@@ -251,7 +260,7 @@ L1 (Caffeine) 은 in-memory 라 process 재시작 외에 무효화 수단이 현
 ```sql
 DELETE FROM figma_comment_classification WHERE comment_id = '<id>';
 ```
-+ application 재시작 (L1 invalidate). admin endpoint 가 도입되기 전까지의 우회.
++ application 재시작 (현재 L1 invalidate 우회). 이후 admin endpoint 가 생기면 `CacheUseCase.evict(CacheNamespace.FIGMA_CLASSIFICATION, CacheKey.from(commentId))`로 단건 무효화 가능.
 
 ## 9. 참고
 
@@ -265,7 +274,9 @@ DELETE FROM figma_comment_classification WHERE comment_id = '<id>';
 - 핵심 코드
     - [FigmaCommentDomainClassifier](../../src/main/java/com/umc/product/figma/application/service/FigmaCommentDomainClassifier.java)
     - [FigmaClassifierProperties](../../src/main/java/com/umc/product/figma/application/service/FigmaClassifierProperties.java)
-    - [FigmaClassifierMetricsConfig](../../src/main/java/com/umc/product/figma/application/service/FigmaClassifierMetricsConfig.java)
+    - [FigmaClassificationCacheAdapter](../../src/main/java/com/umc/product/figma/adapter/out/cache/FigmaClassificationCacheAdapter.java)
+    - [CaffeineCacheStoreAdapter](../../src/main/java/com/umc/product/global/cache/adapter/out/CaffeineCacheStoreAdapter.java)
+    - [CacheNamespace](../../src/main/java/com/umc/product/global/cache/domain/CacheNamespace.java)
     - [FigmaCommentClassificationPersistenceAdapter](../../src/main/java/com/umc/product/figma/adapter/out/persistence/FigmaCommentClassificationPersistenceAdapter.java)
     - [ChatCompletionService](../../src/main/java/com/umc/product/llm/application/service/ChatCompletionService.java)
     - [LlmMetrics](../../src/main/java/com/umc/product/llm/application/service/LlmMetrics.java)

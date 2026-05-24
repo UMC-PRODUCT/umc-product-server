@@ -173,6 +173,12 @@ springBoot {
     buildInfo()
 }
 
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    layered {
+        enabled.set(true)
+    }
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.add("-Xlint:deprecation")
     options.generatedSourceOutputDirectory.set(querydslDir)
