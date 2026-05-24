@@ -56,6 +56,8 @@ jobs:
           SERVER_SSH_USERNAME: ${{ secrets.SERVER_SSH_USERNAME }}
           SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
           SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         run: |
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "필수 환경 변수 검증 시작"
@@ -70,6 +72,8 @@ jobs:
           [[ -z "$SERVER_SSH_USERNAME" ]] && MISSING_VARS+=("SERVER_SSH_USERNAME")
           [[ -z "$SERVER_SSH_PRIVATE_KEY" ]] && MISSING_VARS+=("SERVER_SSH_PRIVATE_KEY")
           [[ -z "$SERVER_SSH_PORT" ]] && MISSING_VARS+=("SERVER_SSH_PORT")
+          [[ -z "$POSTGRES_USER" ]] && MISSING_VARS+=("POSTGRES_USER")
+          [[ -z "$POSTGRES_PASSWORD" ]] && MISSING_VARS+=("POSTGRES_PASSWORD")
           [[ -z "$IMAGE_TAG" ]] && MISSING_VARS+=("IMAGE_TAG")
           [[ -z "$S3_APP_ENV_URI" ]] && MISSING_VARS+=("S3_APP_ENV_URI")
 
@@ -159,7 +163,7 @@ jobs:
           username: ${{ secrets.SERVER_SSH_USERNAME }}
           key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_SSH_PORT }}
-          envs: ENVIRONMENT,IMAGE_TAG,ECR_REGISTRY,ECR_IMAGE_NAME,ECR_PASSWORD,SERVER_APP_DIRECTORY,APP_ENV_B64
+          envs: ENVIRONMENT,IMAGE_TAG,ECR_REGISTRY,ECR_IMAGE_NAME,ECR_PASSWORD,SERVER_APP_DIRECTORY,APP_ENV_B64,POSTGRES_USER,POSTGRES_PASSWORD
           script: |
             set -euo pipefail
 
