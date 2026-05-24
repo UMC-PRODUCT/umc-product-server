@@ -1,7 +1,10 @@
-package com.umc.product.global.security;
+package com.umc.product.global.websocket.interceptor;
 
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.common.domain.enums.ClientType;
+import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.global.security.MemberPrincipal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +22,7 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class StompChannelInterceptor implements ChannelInterceptor {
+public class StompPrincipalInterceptor implements ChannelInterceptor {
 
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -45,7 +48,11 @@ public class StompChannelInterceptor implements ChannelInterceptor {
         Long memberId = jwtTokenProvider.parseAccessToken(token);
         List<String> roles = jwtTokenProvider.getRolesFromAccessToken(token);
 
-        MemberPrincipal principal = new MemberPrincipal(memberId);
+        ClientType clientType = jwtTokenProvider.getClientTypeFromAccessToken(token);
+        MemberPrincipal principal = MemberPrincipal.builder()
+            .memberId(memberId)
+            .clientType(clientType)
+            .build();
         List<SimpleGrantedAuthority> authorities = roles.stream()
             .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
             .toList();
@@ -53,10 +60,9 @@ public class StompChannelInterceptor implements ChannelInterceptor {
         UsernamePasswordAuthenticationToken authentication =
             new UsernamePasswordAuthenticationToken(principal, null, authorities);
 
-        // WebSocket 세션에 인증 정보 바인딩 - 이후 메시지에서 Principal로 접근 가능
         accessor.setUser(authentication);
 
-        log.info("WebSocket CONNECT 인증 성공: memberId={}", memberId);
+        log.debug("WebSocket CONNECT 인증 성공: memberId={}", memberId);
 
         return message;
     }
