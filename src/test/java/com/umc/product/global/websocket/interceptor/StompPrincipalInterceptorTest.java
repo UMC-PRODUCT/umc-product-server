@@ -10,6 +10,7 @@ import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.ParsedAccessToken;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,10 +41,8 @@ class StompPrincipalInterceptorTest {
     @Test
     @DisplayName("유효한 JWT 토큰으로 CONNECT 시 Principal이 설정된다")
     void connect_with_valid_token_sets_principal() {
-        when(jwtTokenProvider.validateAccessToken("valid-token")).thenReturn(true);
-        when(jwtTokenProvider.parseAccessToken("valid-token")).thenReturn(1L);
-        when(jwtTokenProvider.getRolesFromAccessToken("valid-token")).thenReturn(List.of("USER"));
-        when(jwtTokenProvider.getClientTypeFromAccessToken("valid-token")).thenReturn(ClientType.ANDROID);
+        when(jwtTokenProvider.parseAndValidateAccessToken("valid-token"))
+            .thenReturn(new ParsedAccessToken(1L, List.of("USER"), ClientType.ANDROID));
 
         Message<?> result = sut.preSend(connectMessage("Bearer valid-token"), channel);
 
@@ -57,10 +56,8 @@ class StompPrincipalInterceptorTest {
     @Test
     @DisplayName("roles가 여러 개일 때 ROLE_ 접두사가 붙은 권한으로 변환된다")
     void connect_with_multiple_roles_prefixes_role() {
-        when(jwtTokenProvider.validateAccessToken("multi-role-token")).thenReturn(true);
-        when(jwtTokenProvider.parseAccessToken("multi-role-token")).thenReturn(2L);
-        when(jwtTokenProvider.getRolesFromAccessToken("multi-role-token")).thenReturn(List.of("USER", "ADMIN"));
-        when(jwtTokenProvider.getClientTypeFromAccessToken("multi-role-token")).thenReturn(ClientType.WEB);
+        when(jwtTokenProvider.parseAndValidateAccessToken("multi-role-token"))
+            .thenReturn(new ParsedAccessToken(2L, List.of("USER", "ADMIN"), ClientType.WEB));
 
         Message<?> result = sut.preSend(connectMessage("Bearer multi-role-token"), channel);
 
@@ -91,7 +88,7 @@ class StompPrincipalInterceptorTest {
     @Test
     @DisplayName("JWT 검증 실패 시 예외가 그대로 전파된다")
     void connect_with_invalid_token_propagates_exception() {
-        when(jwtTokenProvider.validateAccessToken(anyString()))
+        when(jwtTokenProvider.parseAndValidateAccessToken(anyString()))
             .thenThrow(new AuthenticationDomainException(AuthenticationErrorCode.EXPIRED_JWT_TOKEN));
 
         assertThatThrownBy(() -> sut.preSend(connectMessage("Bearer expired-token"), channel))

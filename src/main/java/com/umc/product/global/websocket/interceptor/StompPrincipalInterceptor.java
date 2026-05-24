@@ -2,9 +2,9 @@ package com.umc.product.global.websocket.interceptor;
 
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
-import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.ParsedAccessToken;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,17 +43,13 @@ public class StompPrincipalInterceptor implements ChannelInterceptor {
         String token = authHeader.substring(7);
 
         // TODO: 인증 실패 시 STOMP ERROR 프레임을 ApiResponse 형식으로 포맷팅하는 StompSubProtocolErrorHandler 구현 필요
-        jwtTokenProvider.validateAccessToken(token);
+        ParsedAccessToken parsed = jwtTokenProvider.parseAndValidateAccessToken(token);
 
-        Long memberId = jwtTokenProvider.parseAccessToken(token);
-        List<String> roles = jwtTokenProvider.getRolesFromAccessToken(token);
-
-        ClientType clientType = jwtTokenProvider.getClientTypeFromAccessToken(token);
         MemberPrincipal principal = MemberPrincipal.builder()
-            .memberId(memberId)
-            .clientType(clientType)
+            .memberId(parsed.memberId())
+            .clientType(parsed.clientType())
             .build();
-        List<SimpleGrantedAuthority> authorities = roles.stream()
+        List<SimpleGrantedAuthority> authorities = parsed.roles().stream()
             .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
             .toList();
 
@@ -62,7 +58,7 @@ public class StompPrincipalInterceptor implements ChannelInterceptor {
 
         accessor.setUser(authentication);
 
-        log.debug("WebSocket CONNECT 인증 성공: memberId={}", memberId);
+        log.debug("WebSocket CONNECT 인증 성공: memberId={}", parsed.memberId());
 
         return message;
     }

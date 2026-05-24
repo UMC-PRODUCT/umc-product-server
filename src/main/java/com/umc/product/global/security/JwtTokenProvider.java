@@ -78,8 +78,8 @@ public class JwtTokenProvider {
     /**
      * emailVerificationToken 발급
      * <p>
-     * purpose claim 으로 회원가입(REGISTER) 과 비밀번호 초기화(PASSWORD_RESET) 흐름을 구분한다.
-     * 한 흐름에서 발급된 토큰이 다른 흐름에 재사용되지 않도록, 파싱 시 expectedPurpose 와 비교한다.
+     * purpose claim 으로 회원가입(REGISTER) 과 비밀번호 초기화(PASSWORD_RESET) 흐름을 구분한다. 한 흐름에서 발급된 토큰이 다른 흐름에 재사용되지 않도록, 파싱 시
+     * expectedPurpose 와 비교한다.
      */
     public String createEmailVerificationToken(String email, EmailVerificationPurpose purpose) {
         Date now = new Date();
@@ -105,8 +105,7 @@ public class JwtTokenProvider {
     /**
      * AccessToken 생성 메소드 (clientType 포함)
      * <p>
-     * clientType 은 트래픽 분포 분석용 optional claim. null 인 경우 claim 자체를 추가하지 않으며,
-     * 다운스트림(MDC, 통계)에서는 UNKNOWN 으로 집계된다.
+     * clientType 은 트래픽 분포 분석용 optional claim. null 인 경우 claim 자체를 추가하지 않으며, 다운스트림(MDC, 통계)에서는 UNKNOWN 으로 집계된다.
      */
     public String createAccessToken(Long memberId, List<String> roles, ClientType clientType) {
         Date now = new Date();
@@ -168,9 +167,8 @@ public class JwtTokenProvider {
     /**
      * AccessToken 에서 clientType claim 을 추출한다.
      * <p>
-     * 도입 이전에 발급된 토큰 / clientType 미전달 로그인 경로로 발급된 토큰에는 claim 이 존재하지 않으므로,
-     * 그 경우엔 {@code null} 을 반환한다. 호출자는 null-safe 하게 다루어야 하며
-     * 통계에서는 "UNKNOWN" 으로 집계한다. 절대 예외를 던지지 않는다.
+     * 도입 이전에 발급된 토큰 / clientType 미전달 로그인 경로로 발급된 토큰에는 claim 이 존재하지 않으므로, 그 경우엔 {@code null} 을 반환한다. 호출자는 null-safe 하게
+     * 다루어야 하며 통계에서는 "UNKNOWN" 으로 집계한다. 절대 예외를 던지지 않는다.
      */
     public ClientType getClientTypeFromAccessToken(String token) {
         Claims claims = parseClaims(token, accessTokenSecret);
@@ -184,6 +182,45 @@ public class JwtTokenProvider {
             // 알 수 없는 enum 값이 들어와도 통계 집계가 깨지지 않도록 null 처리.
             log.warn("AccessToken 의 clientType claim 값을 해석할 수 없습니다: {}", clientTypeStr);
             return null;
+        }
+    }
+
+    /**
+     * JWT 서명 검증(HMAC-SHA)을 요청당 1회로 한정하여 memberId, roles, clientType을 반환한다. clientType claim이 없거나 알 수 없는 값이면 null을
+     * 반환한다.
+     */
+    @SuppressWarnings("unchecked")
+    public ParsedAccessToken parseAndValidateAccessToken(String token) {
+        try {
+            Claims claims = parseClaims(token, accessTokenSecret);
+            Long memberId = Long.parseLong(claims.getSubject());
+
+            Object rolesObj = claims.get(AUTHORITIES_KEY);
+            List<String> roles = (rolesObj instanceof List<?>) ? (List<String>) rolesObj : Collections.emptyList();
+
+            String clientTypeStr = claims.get(CLIENT_TYPE_KEY, String.class);
+            ClientType clientType = null;
+            if (clientTypeStr != null) {
+                try {
+                    clientType = ClientType.valueOf(clientTypeStr);
+                } catch (IllegalArgumentException e) {
+                    log.warn("AccessToken 의 clientType claim 값을 해석할 수 없습니다: {}", clientTypeStr);
+                }
+            }
+
+            return new ParsedAccessToken(memberId, roles, clientType);
+        } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
+            log.info("잘못된 JWT 서명입니다.");
+            throw new AuthenticationDomainException(AuthenticationErrorCode.WRONG_JWT_SIGNATURE);
+        } catch (ExpiredJwtException e) {
+            log.info("만료된 JWT 토큰입니다.");
+            throw new AuthenticationDomainException(AuthenticationErrorCode.EXPIRED_JWT_TOKEN);
+        } catch (UnsupportedJwtException e) {
+            log.info("지원되지 않는 JWT 토큰입니다.");
+            throw new AuthenticationDomainException(AuthenticationErrorCode.UNSUPPORTED_JWT);
+        } catch (IllegalArgumentException e) {
+            log.info("JWT 토큰이 잘못되었습니다.");
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_JWT);
         }
     }
 
@@ -259,8 +296,8 @@ public class JwtTokenProvider {
     /**
      * emailVerificationToken 파싱 및 검증
      * <p>
-     * 토큰의 purpose claim 이 expectedPurpose 와 일치하지 않으면 INVALID_EMAIL_VERIFICATION 예외를 던진다.
-     * 예) 회원가입(REGISTER) 흐름에서 발급된 토큰을 비밀번호 초기화에 사용하려는 cross-purpose 공격 방어.
+     * 토큰의 purpose claim 이 expectedPurpose 와 일치하지 않으면 INVALID_EMAIL_VERIFICATION 예외를 던진다. 예) 회원가입(REGISTER) 흐름에서 발급된 토큰을
+     * 비밀번호 초기화에 사용하려는 cross-purpose 공격 방어.
      */
     public String parseEmailVerificationToken(String token, EmailVerificationPurpose expectedPurpose) {
         validateToken(token, emailVerificationTokenSecret);
