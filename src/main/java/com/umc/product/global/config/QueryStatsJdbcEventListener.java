@@ -24,7 +24,10 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class QueryStatsJdbcEventListener extends JdbcEventListener {
 
-    private static final Pattern SQL_OPERATION_PATTERN = Pattern.compile("^\\s*(\\w+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SQL_OPERATION_PATTERN = Pattern.compile(
+        "^\\s*(?:/\\*.*?\\*/\\s*)*(\\w+)",
+        Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+    );
     private static final String DB_SYSTEM = "postgresql";
 
     private final Tracer tracer;

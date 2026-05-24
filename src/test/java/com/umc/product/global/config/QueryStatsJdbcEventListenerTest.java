@@ -65,6 +65,18 @@ class QueryStatsJdbcEventListenerTest {
     }
 
     @Test
+    @DisplayName("SQL 앞에 주석이 있어도 실제 DB operation을 기록한다")
+    void sql_앞_주석_무시하고_operation_기록() {
+        PreparedStatementInformation info = mock(PreparedStatementInformation.class);
+        given(info.getSql()).willReturn("/* trace-id: abc */\nselect * from member where id = ?");
+
+        sut.onBeforeExecuteQuery(info);
+        sut.onAfterExecuteQuery(info, 1_000_000L, null);
+
+        then(span).should().tag("db.operation", "SELECT");
+    }
+
+    @Test
     @DisplayName("DB 쿼리 실패 시 span에 예외를 기록하고 요청 통계에는 성공 쿼리만 반영한다")
     void db_쿼리_실패_span_error_기록() {
         PreparedStatementInformation info = mock(PreparedStatementInformation.class);
