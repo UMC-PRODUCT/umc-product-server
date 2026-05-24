@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - develop
-      - kyeoungwoon/dev-cd-ecr-ssh
     paths:
       - "src/**"
       - "build.gradle.kts"
@@ -35,7 +34,7 @@ jobs:
   deploy:
     name: Deploy to Develop Home Server
     needs: ci-and-build
-    # if: github.ref == 'refs/heads/develop' && needs.ci-and-build.outputs.environment == 'Development'
+    if: github.ref == 'refs/heads/develop' && needs.ci-and-build.outputs.environment == 'Development'
     runs-on: ubuntu-latest
     environment: Development
 
