@@ -3,7 +3,7 @@
 services:
   nginx:
     container_name: ${NGINX_CONTAINER_NAME}
-    image: nginx:1.29-alpine
+    image: nginx:1.31.1
     restart: unless-stopped
     depends_on:
       app:
