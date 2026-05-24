@@ -23,6 +23,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
+        registry.addRedirectViewController("/docs", "/docs/scalar.html");
+        registry.addRedirectViewController("/docs/", "/docs/scalar.html");
         registry.addRedirectViewController("/docs/catalog/api", "/docs/catalog/api/");
         registry.addRedirectViewController("/docs/catalog/error", "/docs/catalog/error/");
     }
