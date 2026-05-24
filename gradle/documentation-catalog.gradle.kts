@@ -63,6 +63,12 @@ val apiCatalogMarkdownFile = file("docs/guides/API_목록.md")
 val errorCodeCatalogMarkdownFile = file("docs/guides/ErrorCode_목록.md")
 val apiCatalogJsonFile = file("docs/guides/API_목록.json")
 val errorCodeCatalogJsonFile = file("docs/guides/ErrorCode_목록.json")
+val staticApiCatalogMarkdownFile = file("src/main/resources/static/catalog/api/catalog.md")
+val staticApiCatalogJsonFile = file("src/main/resources/static/catalog/api/catalog.json")
+val staticApiCatalogIndexFile = file("src/main/resources/static/catalog/api/index.html")
+val staticErrorCodeCatalogMarkdownFile = file("src/main/resources/static/catalog/error/catalog.md")
+val staticErrorCodeCatalogJsonFile = file("src/main/resources/static/catalog/error/catalog.json")
+val staticErrorCodeCatalogIndexFile = file("src/main/resources/static/catalog/error/index.html")
 
 fun String.escapeMarkdownCell(): String = replace("|", "\\|").replace("\n", "<br>")
 
@@ -505,6 +511,257 @@ fun buildErrorCodeCatalogJson(entries: List<ErrorCodeDocumentationEntry>): Strin
     appendLine("]")
 }
 
+fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName: String, activePath: String): String {
+    return """
+        <!doctype html>
+        <html lang="ko">
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>$title</title>
+            <style>
+                :root {
+                    color-scheme: light;
+                    --bg: #f6f7f9;
+                    --panel: #ffffff;
+                    --border: #d9dee7;
+                    --text: #18202f;
+                    --muted: #5d6878;
+                    --accent: #1f6feb;
+                    --code-bg: #eef2f7;
+                    --table-head: #f1f4f8;
+                }
+
+                * {
+                    box-sizing: border-box;
+                }
+
+                body {
+                    margin: 0;
+                    background: var(--bg);
+                    color: var(--text);
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                    line-height: 1.55;
+                }
+
+                header {
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 24px;
+                    min-height: 64px;
+                    padding: 14px 28px;
+                    border-bottom: 1px solid var(--border);
+                    background: rgba(255, 255, 255, 0.96);
+                    backdrop-filter: blur(10px);
+                }
+
+                .brand {
+                    min-width: 0;
+                }
+
+                .brand h1 {
+                    margin: 0;
+                    font-size: 18px;
+                    font-weight: 700;
+                    letter-spacing: 0;
+                }
+
+                .brand p {
+                    margin: 2px 0 0;
+                    color: var(--muted);
+                    font-size: 13px;
+                }
+
+                nav {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                    justify-content: flex-end;
+                }
+
+                nav a {
+                    color: var(--muted);
+                    border: 1px solid transparent;
+                    border-radius: 6px;
+                    padding: 7px 10px;
+                    text-decoration: none;
+                    font-size: 14px;
+                    white-space: nowrap;
+                }
+
+                nav a:hover,
+                nav a.active {
+                    color: var(--accent);
+                    border-color: #bfdbfe;
+                    background: #eff6ff;
+                }
+
+                main {
+                    width: min(1280px, calc(100vw - 32px));
+                    margin: 28px auto 56px;
+                    padding: 28px;
+                    border: 1px solid var(--border);
+                    border-radius: 8px;
+                    background: var(--panel);
+                    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.07);
+                    overflow-x: auto;
+                }
+
+                .loading,
+                .error {
+                    margin: 0;
+                    color: var(--muted);
+                    font-size: 15px;
+                }
+
+                .error {
+                    color: #b42318;
+                }
+
+                h1,
+                h2,
+                h3 {
+                    line-height: 1.25;
+                    letter-spacing: 0;
+                }
+
+                h1 {
+                    margin: 0 0 16px;
+                    font-size: 28px;
+                }
+
+                h2 {
+                    margin: 34px 0 12px;
+                    padding-top: 10px;
+                    border-top: 1px solid var(--border);
+                    font-size: 22px;
+                }
+
+                p {
+                    margin: 10px 0;
+                }
+
+                a {
+                    color: var(--accent);
+                }
+
+                blockquote {
+                    margin: 18px 0;
+                    padding: 12px 16px;
+                    border-left: 4px solid #93c5fd;
+                    background: #f8fbff;
+                    color: var(--muted);
+                }
+
+                code {
+                    padding: 2px 5px;
+                    border-radius: 4px;
+                    background: var(--code-bg);
+                    font-family: "SFMono-Regular", Consolas, monospace;
+                    font-size: 0.92em;
+                }
+
+                table {
+                    width: max-content;
+                    min-width: 100%;
+                    border-collapse: collapse;
+                    margin: 16px 0 28px;
+                    font-size: 14px;
+                }
+
+                th,
+                td {
+                    border: 1px solid var(--border);
+                    padding: 8px 10px;
+                    text-align: left;
+                    vertical-align: top;
+                }
+
+                th {
+                    position: sticky;
+                    top: 64px;
+                    z-index: 2;
+                    background: var(--table-head);
+                    font-weight: 700;
+                }
+
+                tr:nth-child(even) td {
+                    background: #fbfcfe;
+                }
+
+                @media (max-width: 720px) {
+                    header {
+                        align-items: flex-start;
+                        flex-direction: column;
+                        padding: 14px 16px;
+                    }
+
+                    nav {
+                        justify-content: flex-start;
+                    }
+
+                    main {
+                        width: calc(100vw - 16px);
+                        margin-top: 8px;
+                        padding: 18px 14px;
+                    }
+
+                    th {
+                        top: 112px;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <header>
+                <div class="brand">
+                    <h1>$title</h1>
+                    <p>Gradle 문서 카탈로그에서 생성된 정적 문서입니다.</p>
+                </div>
+                <nav aria-label="문서 이동">
+                    <a href="/catalog/api/" class="${if (activePath == "api") "active" else ""}">API</a>
+                    <a href="/catalog/error/" class="${if (activePath == "error") "active" else ""}">ErrorCode</a>
+                    <a href="$markdownFileName">Markdown</a>
+                    <a href="$jsonFileName">JSON</a>
+                </nav>
+            </header>
+            <main id="content">
+                <p class="loading">문서를 불러오는 중입니다.</p>
+            </main>
+            <script src="/webjars/markdown-it/14.1.0/dist/markdown-it.min.js"></script>
+            <script>
+                const content = document.getElementById("content");
+                const markdownSource = "$markdownFileName";
+                const md = window.markdownit({
+                    html: false,
+                    linkify: true,
+                    typographer: false
+                });
+
+                fetch(markdownSource, { cache: "no-cache" })
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error("HTTP " + response.status);
+                        }
+                        return response.text();
+                    })
+                    .then((markdown) => {
+                        content.innerHTML = md.render(markdown);
+                    })
+                    .catch((error) => {
+                        content.innerHTML = '<p class="error">문서를 불러오지 못했어요. ' + error.message + '</p>';
+                    });
+            </script>
+        </body>
+        </html>
+    """.trimIndent() + "\n"
+}
+
 fun writeIfChanged(target: File, content: String) {
     target.parentFile.mkdirs()
     if (!target.exists() || target.readText() != content) {
@@ -545,8 +802,14 @@ tasks.register("generateApiCatalog") {
 
     doLast {
         val entries = buildApiDocumentationEntries()
-        writeIfChanged(apiCatalogMarkdownFile, buildApiCatalogMarkdown(entries))
-        writeIfChanged(apiCatalogJsonFile, buildApiCatalogJson(entries))
+        val markdown = buildApiCatalogMarkdown(entries)
+        val json = buildApiCatalogJson(entries)
+
+        writeIfChanged(apiCatalogMarkdownFile, markdown)
+        writeIfChanged(apiCatalogJsonFile, json)
+        writeIfChanged(staticApiCatalogMarkdownFile, markdown)
+        writeIfChanged(staticApiCatalogJsonFile, json)
+        writeIfChanged(staticApiCatalogIndexFile, buildCatalogIndexHtml("UMC PRODUCT API Catalog", "catalog.md", "catalog.json", "api"))
         println("[generateApiCatalog] ${entries.size}개 API를 문서화했습니다.")
     }
 }
@@ -557,8 +820,14 @@ tasks.register("generateErrorCodeCatalog") {
 
     doLast {
         val entries = extractErrorCodeEntries()
-        writeIfChanged(errorCodeCatalogMarkdownFile, buildErrorCodeCatalogMarkdown(entries))
-        writeIfChanged(errorCodeCatalogJsonFile, buildErrorCodeCatalogJson(entries))
+        val markdown = buildErrorCodeCatalogMarkdown(entries)
+        val json = buildErrorCodeCatalogJson(entries)
+
+        writeIfChanged(errorCodeCatalogMarkdownFile, markdown)
+        writeIfChanged(errorCodeCatalogJsonFile, json)
+        writeIfChanged(staticErrorCodeCatalogMarkdownFile, markdown)
+        writeIfChanged(staticErrorCodeCatalogJsonFile, json)
+        writeIfChanged(staticErrorCodeCatalogIndexFile, buildCatalogIndexHtml("UMC PRODUCT ErrorCode Catalog", "catalog.md", "catalog.json", "error"))
         println("[generateErrorCodeCatalog] ${entries.size}개 ErrorCode를 문서화했습니다.")
     }
 }
@@ -580,7 +849,13 @@ tasks.register("checkDocumentationCatalogs") {
             apiCatalogMarkdownFile to buildApiCatalogMarkdown(apiEntries),
             apiCatalogJsonFile to buildApiCatalogJson(apiEntries),
             errorCodeCatalogMarkdownFile to buildErrorCodeCatalogMarkdown(errorCodeEntries),
-            errorCodeCatalogJsonFile to buildErrorCodeCatalogJson(errorCodeEntries)
+            errorCodeCatalogJsonFile to buildErrorCodeCatalogJson(errorCodeEntries),
+            staticApiCatalogMarkdownFile to buildApiCatalogMarkdown(apiEntries),
+            staticApiCatalogJsonFile to buildApiCatalogJson(apiEntries),
+            staticApiCatalogIndexFile to buildCatalogIndexHtml("UMC PRODUCT API Catalog", "catalog.md", "catalog.json", "api"),
+            staticErrorCodeCatalogMarkdownFile to buildErrorCodeCatalogMarkdown(errorCodeEntries),
+            staticErrorCodeCatalogJsonFile to buildErrorCodeCatalogJson(errorCodeEntries),
+            staticErrorCodeCatalogIndexFile to buildCatalogIndexHtml("UMC PRODUCT ErrorCode Catalog", "catalog.md", "catalog.json", "error")
         )
 
         val staleFiles = expectedFiles.filter { (file, expected) -> !file.exists() || file.readText() != expected }.keys
