@@ -348,11 +348,11 @@ fun buildApiDocumentationEntries(): List<ApiDocumentationEntry> {
 }
 
 fun buildApiCatalogMarkdown(entries: List<ApiDocumentationEntry>): String = buildString {
-    appendLine("# UMC PRODUCT API 목록")
+    appendLine("# API Catalog")
     appendLine()
-    appendLine("UMC PRODUCT 서버에서 제공하는 모든 API의 ID, 엔드포인트, HTTP 메서드, 역할, deprecated 여부를 정리한 표입니다.")
+    appendLine("운영 중인 API의 ID, 엔드포인트, 메서드, 역할, deprecated 상태를 도메인별로 정리합니다.")
     appendLine()
-    appendLine("> 본 문서는 `./gradlew generateApiCatalog` 또는 `./gradlew generateDocumentationCatalogs`로 자동 생성합니다. API ID는 `@Operation(operationId = \"...\")`를 우선 사용하고, 없으면 `summary`의 `[XXX-000]` prefix를 사용합니다.")
+    appendLine("> 소스 기준: `@Operation(operationId = \"...\")`를 우선 사용하고, 없으면 `summary`의 `[XXX-000]` prefix를 API ID로 읽습니다. 갱신: `./gradlew generateDocumentationCatalogs`")
     appendLine()
 
     entries.groupBy { it.domain }.forEach { (domain, domainEntries) ->
@@ -473,11 +473,11 @@ fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
 }
 
 fun buildErrorCodeCatalogMarkdown(entries: List<ErrorCodeDocumentationEntry>): String = buildString {
-    appendLine("# UMC PRODUCT ErrorCode 목록")
+    appendLine("# ErrorCode Catalog")
     appendLine()
-    appendLine("UMC PRODUCT 서버에서 사용하는 `BaseCode` 기반 ErrorCode enum을 정리한 표입니다.")
+    appendLine("서버가 반환하는 ErrorCode를 도메인, HTTP 상태, 코드, 메시지 기준으로 정리합니다.")
     appendLine()
-    appendLine("> 본 문서는 `./gradlew generateErrorCodeCatalog` 또는 `./gradlew generateDocumentationCatalogs`로 자동 생성합니다. ErrorCode의 원본은 각 `*ErrorCode.java` enum입니다.")
+    appendLine("> 소스 기준: 각 도메인의 `*ErrorCode.java` enum을 스캔합니다. 갱신: `./gradlew generateDocumentationCatalogs`")
     appendLine()
 
     entries.groupBy { it.domain }.forEach { (domain, domainEntries) ->
@@ -514,6 +514,25 @@ fun buildErrorCodeCatalogJson(entries: List<ErrorCodeDocumentationEntry>): Strin
 }
 
 fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName: String, activePath: String): String {
+    val isApiCatalog = activePath == "api"
+    val pageLabel = if (isApiCatalog) "API Catalog" else "ErrorCode Catalog"
+    val eyebrow = if (isApiCatalog) "Endpoint Inventory" else "Failure Contract"
+    val lead = if (isApiCatalog) {
+        "API ID, 경로, 메서드, 담당 도메인을 한 화면에서 확인합니다."
+    } else {
+        "클라이언트와 서버가 공유하는 실패 응답 계약을 빠르게 찾습니다."
+    }
+    val searchPlaceholder = if (isApiCatalog) {
+        "도메인, API ID, endpoint, 역할로 검색"
+    } else {
+        "도메인, ErrorCode, HTTP status, 메시지로 검색"
+    }
+    val emptyMessage = if (isApiCatalog) {
+        "일치하는 API가 없습니다."
+    } else {
+        "일치하는 ErrorCode가 없습니다."
+    }
+
     return """
         <!doctype html>
         <html lang="ko">
@@ -525,14 +544,22 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
             <style>
                 :root {
                     color-scheme: light;
-                    --bg: #f6f7f9;
+                    --bg: #f7f8fb;
                     --panel: #ffffff;
-                    --border: #d9dee7;
-                    --text: #18202f;
-                    --muted: #5d6878;
-                    --accent: #1f6feb;
-                    --code-bg: #eef2f7;
-                    --table-head: #f1f4f8;
+                    --panel-soft: #f1f5f9;
+                    --border: #d9e1ec;
+                    --border-strong: #b9c5d6;
+                    --text: #111827;
+                    --muted: #64748b;
+                    --muted-strong: #475569;
+                    --accent: #2563eb;
+                    --accent-strong: #1d4ed8;
+                    --success: #047857;
+                    --danger: #b42318;
+                    --warning: #b45309;
+                    --code-bg: #edf2f7;
+                    --table-head: #eef3f9;
+                    --shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
                 }
 
                 * {
@@ -544,32 +571,51 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     background: var(--bg);
                     color: var(--text);
                     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-                    line-height: 1.55;
+                    line-height: 1.5;
                 }
 
                 header {
                     position: sticky;
                     top: 0;
-                    z-index: 10;
+                    z-index: 20;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
                     gap: 24px;
-                    min-height: 64px;
-                    padding: 14px 28px;
+                    min-height: 72px;
+                    padding: 14px clamp(16px, 4vw, 48px);
                     border-bottom: 1px solid var(--border);
-                    background: rgba(255, 255, 255, 0.96);
-                    backdrop-filter: blur(10px);
+                    background: rgba(255, 255, 255, 0.92);
+                    backdrop-filter: blur(14px);
                 }
 
                 .brand {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
                     min-width: 0;
+                }
+
+                .brand-mark {
+                    display: grid;
+                    place-items: center;
+                    width: 38px;
+                    height: 38px;
+                    border: 1px solid var(--border);
+                    border-radius: 8px;
+                    background: #fff;
+                    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+                }
+
+                .brand-mark img {
+                    width: 26px;
+                    height: 26px;
                 }
 
                 .brand h1 {
                     margin: 0;
                     font-size: 18px;
-                    font-weight: 700;
+                    font-weight: 750;
                     letter-spacing: 0;
                 }
 
@@ -591,7 +637,7 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     color: var(--muted);
                     border: 1px solid transparent;
                     border-radius: 6px;
-                    padding: 7px 10px;
+                    padding: 8px 11px;
                     text-decoration: none;
                     font-size: 14px;
                     white-space: nowrap;
@@ -604,15 +650,183 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     background: #eff6ff;
                 }
 
-                main {
-                    width: min(1280px, calc(100vw - 32px));
-                    margin: 28px auto 56px;
-                    padding: 28px;
+                .page {
+                    width: min(1440px, calc(100vw - 32px));
+                    margin: 0 auto 64px;
+                }
+
+                .hero {
+                    display: grid;
+                    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+                    gap: 24px;
+                    padding: 42px 0 24px;
+                    align-items: end;
+                }
+
+                .eyebrow {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    margin: 0 0 12px;
+                    color: var(--accent-strong);
+                    font-size: 13px;
+                    font-weight: 750;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                }
+
+                .eyebrow::before {
+                    content: "";
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                    background: var(--success);
+                }
+
+                .hero h2 {
+                    margin: 0;
+                    border: 0;
+                    padding: 0;
+                    color: var(--text);
+                    font-size: clamp(36px, 5vw, 68px);
+                    line-height: 1;
+                    font-weight: 800;
+                    letter-spacing: 0;
+                }
+
+                .hero-copy {
+                    max-width: 720px;
+                    margin: 18px 0 0;
+                    color: var(--muted-strong);
+                    font-size: 18px;
+                }
+
+                .hero-aside {
                     border: 1px solid var(--border);
                     border-radius: 8px;
                     background: var(--panel);
-                    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.07);
-                    overflow-x: auto;
+                    padding: 18px;
+                    box-shadow: var(--shadow);
+                }
+
+                .hero-aside strong {
+                    display: block;
+                    margin-bottom: 6px;
+                    font-size: 14px;
+                }
+
+                .hero-aside p {
+                    margin: 0;
+                    color: var(--muted);
+                    font-size: 14px;
+                }
+
+                .toolbar {
+                    position: sticky;
+                    top: 72px;
+                    z-index: 15;
+                    display: grid;
+                    grid-template-columns: minmax(260px, 1fr) auto;
+                    gap: 14px;
+                    align-items: center;
+                    margin-bottom: 18px;
+                    padding: 14px;
+                    border: 1px solid var(--border);
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.94);
+                    backdrop-filter: blur(14px);
+                    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+                }
+
+                .search {
+                    position: relative;
+                    min-width: 0;
+                }
+
+                .search input {
+                    width: 100%;
+                    min-height: 44px;
+                    border: 1px solid var(--border-strong);
+                    border-radius: 8px;
+                    padding: 0 14px 0 42px;
+                    background: #fff;
+                    color: var(--text);
+                    font: inherit;
+                    outline: none;
+                }
+
+                .search input:focus {
+                    border-color: var(--accent);
+                    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+                }
+
+                .search::before {
+                    content: "";
+                    position: absolute;
+                    left: 15px;
+                    top: 50%;
+                    width: 14px;
+                    height: 14px;
+                    border: 2px solid var(--muted);
+                    border-radius: 50%;
+                    transform: translateY(-56%);
+                }
+
+                .search::after {
+                    content: "";
+                    position: absolute;
+                    left: 28px;
+                    top: 27px;
+                    width: 8px;
+                    height: 2px;
+                    border-radius: 999px;
+                    background: var(--muted);
+                    transform: rotate(45deg);
+                }
+
+                .result-count {
+                    color: var(--muted);
+                    font-size: 14px;
+                    white-space: nowrap;
+                }
+
+                .stats {
+                    display: grid;
+                    grid-template-columns: repeat(4, minmax(0, 1fr));
+                    gap: 12px;
+                    margin-bottom: 18px;
+                }
+
+                .stat {
+                    min-width: 0;
+                    border: 1px solid var(--border);
+                    border-radius: 8px;
+                    background: var(--panel);
+                    padding: 16px;
+                    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
+                }
+
+                .stat span {
+                    display: block;
+                    color: var(--muted);
+                    font-size: 13px;
+                }
+
+                .stat strong {
+                    display: block;
+                    margin-top: 8px;
+                    font-size: 26px;
+                    line-height: 1;
+                    letter-spacing: 0;
+                }
+
+                main {
+                    padding: 24px;
+                    border: 1px solid var(--border);
+                    border-radius: 8px;
+                    background: var(--panel);
+                    box-shadow: var(--shadow);
+                    overflow: hidden;
                 }
 
                 .loading,
@@ -623,7 +837,18 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                 }
 
                 .error {
-                    color: #b42318;
+                    color: var(--danger);
+                }
+
+                .no-results {
+                    display: none;
+                    margin: 18px 0 0;
+                    padding: 14px 16px;
+                    border: 1px solid #fed7aa;
+                    border-radius: 8px;
+                    background: #fff7ed;
+                    color: #9a3412;
+                    font-size: 14px;
                 }
 
                 h1,
@@ -634,19 +859,25 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                 }
 
                 h1 {
-                    margin: 0 0 16px;
+                    margin: 0 0 10px;
                     font-size: 28px;
                 }
 
                 h2 {
-                    margin: 34px 0 12px;
-                    padding-top: 10px;
-                    border-top: 1px solid var(--border);
-                    font-size: 22px;
+                    display: inline-flex;
+                    align-items: center;
+                    margin: 32px 0 12px;
+                    padding: 7px 10px;
+                    border: 1px solid var(--border);
+                    border-radius: 8px;
+                    background: var(--panel-soft);
+                    font-size: 15px;
+                    font-weight: 750;
                 }
 
                 p {
                     margin: 10px 0;
+                    color: var(--muted-strong);
                 }
 
                 a {
@@ -655,9 +886,11 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
 
                 blockquote {
                     margin: 18px 0;
-                    padding: 12px 16px;
-                    border-left: 4px solid #93c5fd;
-                    background: #f8fbff;
+                    padding: 12px 14px;
+                    border: 1px solid #bfdbfe;
+                    border-left: 4px solid #60a5fa;
+                    border-radius: 8px;
+                    background: #eff6ff;
                     color: var(--muted);
                 }
 
@@ -669,32 +902,70 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     font-size: 0.92em;
                 }
 
-                table {
-                    width: max-content;
-                    min-width: 100%;
+                .table-wrap {
+                    width: 100%;
+                    margin: 12px 0 28px;
+                    border: 1px solid var(--border);
+                    border-radius: 8px;
+                    overflow: auto;
+                    background: #fff;
+                }
+
+                .catalog-table {
+                    width: 100%;
+                    min-width: 1040px;
                     border-collapse: collapse;
-                    margin: 16px 0 28px;
-                    font-size: 14px;
+                    margin: 0;
+                    font-size: 13px;
                 }
 
                 th,
                 td {
-                    border: 1px solid var(--border);
-                    padding: 8px 10px;
+                    border-bottom: 1px solid var(--border);
+                    padding: 10px 12px;
                     text-align: left;
-                    vertical-align: top;
+                    vertical-align: middle;
                 }
 
                 th {
                     position: sticky;
-                    top: 64px;
-                    z-index: 2;
+                    top: 0;
+                    z-index: 1;
                     background: var(--table-head);
-                    font-weight: 700;
+                    color: var(--muted-strong);
+                    font-size: 12px;
+                    font-weight: 750;
+                    letter-spacing: 0.04em;
+                    text-transform: uppercase;
                 }
 
-                tr:nth-child(even) td {
-                    background: #fbfcfe;
+                td {
+                    color: var(--text);
+                }
+
+                tbody tr:hover td {
+                    background: #f8fbff;
+                }
+
+                tbody tr:last-child td {
+                    border-bottom: 0;
+                }
+
+                td:nth-child(1) {
+                    color: var(--muted);
+                    font-variant-numeric: tabular-nums;
+                    width: 64px;
+                }
+
+                td:nth-child(3) code,
+                td:nth-child(4) code,
+                td:nth-child(6) code {
+                    color: #0f172a;
+                    font-weight: 650;
+                }
+
+                .is-hidden {
+                    display: none !important;
                 }
 
                 @media (max-width: 720px) {
@@ -704,18 +975,44 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                         padding: 14px 16px;
                     }
 
+                    .page {
+                        width: calc(100vw - 16px);
+                    }
+
+                    .hero {
+                        grid-template-columns: 1fr;
+                        padding: 26px 0 16px;
+                    }
+
+                    .hero h2 {
+                        font-size: 40px;
+                    }
+
+                    .hero-copy {
+                        font-size: 16px;
+                    }
+
+                    .toolbar {
+                        top: 127px;
+                        grid-template-columns: 1fr;
+                    }
+
+                    .stats {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                    }
+
                     nav {
                         justify-content: flex-start;
                     }
 
                     main {
-                        width: calc(100vw - 16px);
-                        margin-top: 8px;
-                        padding: 18px 14px;
+                        padding: 16px;
                     }
+                }
 
-                    th {
-                        top: 112px;
+                @media (max-width: 480px) {
+                    .stats {
+                        grid-template-columns: 1fr;
                     }
                 }
             </style>
@@ -723,8 +1020,11 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
         <body>
             <header>
                 <div class="brand">
-                    <h1>$title</h1>
-                    <p>Gradle 문서 카탈로그에서 생성된 정적 문서입니다.</p>
+                    <span class="brand-mark" aria-hidden="true"><img src="/umc-logo.svg" alt=""></span>
+                    <div>
+                        <h1>UMC PRODUCT Docs</h1>
+                        <p>서버 계약을 소스에서 바로 읽어옵니다.</p>
+                    </div>
                 </div>
                 <nav aria-label="문서 이동">
                     <a href="/docs/catalog/api/" class="${if (activePath == "api") "active" else ""}">API</a>
@@ -733,31 +1033,150 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     <a href="$jsonFileName">JSON</a>
                 </nav>
             </header>
-            <main id="content">
-                <p class="loading">문서를 불러오는 중입니다.</p>
-            </main>
+            <div class="page">
+                <section class="hero" aria-labelledby="catalog-title">
+                    <div>
+                        <p class="eyebrow">$eyebrow</p>
+                        <h2 id="catalog-title">$pageLabel</h2>
+                        <p class="hero-copy">$lead</p>
+                    </div>
+                    <aside class="hero-aside">
+                        <strong>자동 생성 문서</strong>
+                        <p>소스 변경 후 `./gradlew generateDocumentationCatalogs`로 갱신합니다.</p>
+                    </aside>
+                </section>
+                <section class="stats" id="stats" aria-label="카탈로그 요약"></section>
+                <section class="toolbar" aria-label="카탈로그 검색">
+                    <label class="search" for="catalog-search">
+                        <input id="catalog-search" type="search" placeholder="$searchPlaceholder" autocomplete="off">
+                    </label>
+                    <span class="result-count" id="result-count"></span>
+                </section>
+                <main id="content">
+                    <p class="loading">카탈로그를 불러오는 중입니다.</p>
+                </main>
+                <p class="no-results" id="no-results">$emptyMessage</p>
+            </div>
             <script src="/webjars/markdown-it/14.1.0/dist/markdown-it.min.js"></script>
             <script>
                 const content = document.getElementById("content");
+                const stats = document.getElementById("stats");
+                const searchInput = document.getElementById("catalog-search");
+                const resultCount = document.getElementById("result-count");
+                const noResults = document.getElementById("no-results");
                 const markdownSource = "$markdownFileName";
+                const jsonSource = "$jsonFileName";
+                const pageKind = "$activePath";
                 const md = window.markdownit({
                     html: false,
                     linkify: true,
                     typographer: false
                 });
 
-                fetch(markdownSource, { cache: "no-cache" })
-                    .then((response) => {
+                function fetchText(path) {
+                    return fetch(path, { cache: "no-cache" }).then((response) => {
                         if (!response.ok) {
                             throw new Error("HTTP " + response.status);
                         }
                         return response.text();
-                    })
-                    .then((markdown) => {
+                    });
+                }
+
+                function fetchJson(path) {
+                    return fetch(path, { cache: "no-cache" }).then((response) => {
+                        if (!response.ok) {
+                            throw new Error("HTTP " + response.status);
+                        }
+                        return response.json();
+                    });
+                }
+
+                function uniqueCount(rows, key) {
+                    return new Set(rows.map((row) => row[key]).filter(Boolean)).size;
+                }
+
+                function renderStats(rows) {
+                    const values = pageKind === "api"
+                        ? [
+                            ["등록된 API", rows.length],
+                            ["도메인", uniqueCount(rows, "domain")],
+                            ["ID 미지정", rows.filter((row) => row.apiId === "<미지정>").length],
+                            ["Deprecated", rows.filter((row) => row.deprecated).length]
+                        ]
+                        : [
+                            ["ErrorCode", rows.length],
+                            ["도메인", uniqueCount(rows, "domain")],
+                            ["HTTP Status", uniqueCount(rows, "httpStatus")],
+                            ["Enum", uniqueCount(rows, "enumName")]
+                        ];
+
+                    stats.innerHTML = values.map((item) => (
+                        '<article class="stat"><span>' + item[0] + '</span><strong>' + item[1].toLocaleString("ko-KR") + '</strong></article>'
+                    )).join("");
+                }
+
+                function enhanceTables() {
+                    const firstHeading = content.querySelector("h1");
+                    if (firstHeading) {
+                        firstHeading.remove();
+                    }
+
+                    content.querySelectorAll("table").forEach((table) => {
+                        table.classList.add("catalog-table");
+                        const wrapper = document.createElement("div");
+                        wrapper.className = "table-wrap";
+                        table.parentNode.insertBefore(wrapper, table);
+                        wrapper.appendChild(table);
+
+                        table.querySelectorAll("tbody tr").forEach((row) => {
+                            row.dataset.search = row.textContent.toLowerCase();
+                        });
+                    });
+                }
+
+                function updateResultCount(visible, total) {
+                    resultCount.textContent = visible.toLocaleString("ko-KR") + " / " + total.toLocaleString("ko-KR") + "개 표시";
+                    noResults.style.display = visible === 0 ? "block" : "none";
+                }
+
+                function applyFilter() {
+                    const query = searchInput.value.trim().toLowerCase();
+                    let total = 0;
+                    let visible = 0;
+
+                    content.querySelectorAll(".catalog-table tbody tr").forEach((row) => {
+                        total += 1;
+                        const matched = query === "" || row.dataset.search.includes(query);
+                        row.classList.toggle("is-hidden", !matched);
+                        if (matched) {
+                            visible += 1;
+                        }
+                    });
+
+                    content.querySelectorAll(".table-wrap").forEach((wrapper) => {
+                        const visibleRows = wrapper.querySelectorAll("tbody tr:not(.is-hidden)").length;
+                        wrapper.classList.toggle("is-hidden", visibleRows === 0 && query !== "");
+                        const heading = wrapper.previousElementSibling;
+                        if (heading && heading.tagName === "H2") {
+                            heading.classList.toggle("is-hidden", visibleRows === 0 && query !== "");
+                        }
+                    });
+
+                    updateResultCount(visible, total);
+                }
+
+                Promise.all([fetchText(markdownSource), fetchJson(jsonSource)])
+                    .then(([markdown, rows]) => {
                         content.innerHTML = md.render(markdown);
+                        renderStats(rows);
+                        enhanceTables();
+                        applyFilter();
+                        searchInput.addEventListener("input", applyFilter);
                     })
                     .catch((error) => {
-                        content.innerHTML = '<p class="error">문서를 불러오지 못했어요. ' + error.message + '</p>';
+                        content.innerHTML = '<p class="error">카탈로그를 불러오지 못했습니다. ' + error.message + '</p>';
+                        stats.innerHTML = "";
+                        updateResultCount(0, 0);
                     });
             </script>
         </body>

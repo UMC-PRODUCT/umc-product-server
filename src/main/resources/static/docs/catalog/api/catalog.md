@@ -1,8 +1,8 @@
-# UMC PRODUCT API 목록
+# API Catalog
 
-UMC PRODUCT 서버에서 제공하는 모든 API의 ID, 엔드포인트, HTTP 메서드, 역할, deprecated 여부를 정리한 표입니다.
+운영 중인 API의 ID, 엔드포인트, 메서드, 역할, deprecated 상태를 도메인별로 정리합니다.
 
-> 본 문서는 `./gradlew generateApiCatalog` 또는 `./gradlew generateDocumentationCatalogs`로 자동 생성합니다. API ID는 `@Operation(operationId = "...")`를 우선 사용하고, 없으면 `summary`의 `[XXX-000]` prefix를 사용합니다.
+> 소스 기준: `@Operation(operationId = "...")`를 우선 사용하고, 없으면 `summary`의 `[XXX-000]` prefix를 API ID로 읽습니다. 갱신: `./gradlew generateDocumentationCatalogs`
 
 ## analytics
 

@@ -1,8 +1,8 @@
-# UMC PRODUCT ErrorCode 목록
+# ErrorCode Catalog
 
-UMC PRODUCT 서버에서 사용하는 `BaseCode` 기반 ErrorCode enum을 정리한 표입니다.
+서버가 반환하는 ErrorCode를 도메인, HTTP 상태, 코드, 메시지 기준으로 정리합니다.
 
-> 본 문서는 `./gradlew generateErrorCodeCatalog` 또는 `./gradlew generateDocumentationCatalogs`로 자동 생성합니다. ErrorCode의 원본은 각 `*ErrorCode.java` enum입니다.
+> 소스 기준: 각 도메인의 `*ErrorCode.java` enum을 스캔합니다. 갱신: `./gradlew generateDocumentationCatalogs`
 
 ## analytics
 
