@@ -68,13 +68,13 @@ public class SecurityConfig {
     private List<String> allowedOriginPatterns;
 
     /**
-     * Swagger용 SecurityFilterChain (dev에서만 활성화, local은 따로 제약을 걸지 않음)
+     * Swagger용 SecurityFilterChain (local을 제외한 환경에서 활성화)
      * <p>
      * HTTP Basic 인증 적용 - 순서가 먼저라서 Swagger 경로는 이 체인이 처리
      */
     @Bean
     @Order(1)
-    @Profile("dev")
+    @Profile("!local")
     public SecurityFilterChain swaggerSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher(STATIC_FILE_PATHS)
@@ -170,10 +170,10 @@ public class SecurityConfig {
     }
 
     /**
-     * Swagger Basic Auth용 InMemoryUserDetailsManager (dev 프로필)
+     * Swagger Basic Auth용 InMemoryUserDetailsManager (local 제외)
      */
     @Bean
-    @Profile("dev")
+    @Profile("!local")
     public UserDetailsService swaggerUserDetailsService(
         @Value("${app.swagger-auth.username:username}") String username,
         @Value("${app.swagger-auth.password:password}") String password,
