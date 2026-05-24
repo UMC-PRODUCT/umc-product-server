@@ -51,7 +51,8 @@ public class SeedController {
     private final SeedNoticeUseCase seedNoticeUseCase;
 
     @Operation(
-        summary = "[SEED-001] 더미 멤버 시딩",
+        operationId = "SEED-001",
+        summary = "더미 멤버 시딩",
         description = """
             ID/PW 더미 멤버를 N 명 즉시 생성합니다. 모든 더미 회원은 동일한 비밀번호
             (app.seed.default-password)를 사용합니다.
@@ -66,7 +67,8 @@ public class SeedController {
     }
 
     @Operation(
-        summary = "[SEED-002] 챌린저 분포 시딩",
+        operationId = "SEED-002",
+        summary = "챌린저 분포 시딩",
         description = """
             특정 기수에 대해 (Chapter, School, Part) 셀마다 countPerPartPerSchool 명의 더미 회원 +
             챌린저를 함께 생성합니다.
@@ -80,7 +82,8 @@ public class SeedController {
     }
 
     @Operation(
-        summary = "[SEED-003] 프로젝트 시딩",
+        operationId = "SEED-003",
+        summary = "프로젝트 시딩",
         description = """
             활성 기수(또는 지정 기수)의 같은 school 멤버 풀에서 PLAN 1 + 프론트엔드 5~6 +
             백엔드 5~6 의 멤버 슬롯을 추출해 프로젝트를 N 개 생성합니다.
@@ -95,7 +98,8 @@ public class SeedController {
     }
 
     @Operation(
-        summary = "[SEED-004] Curriculum 시딩 (Curriculum · WeeklyCurriculum · OriginalWorkbook · Mission)",
+        operationId = "SEED-004",
+        summary = "Curriculum 시딩 (Curriculum · WeeklyCurriculum · OriginalWorkbook · Mission)",
         description = """
             활성 기수(또는 지정 기수)에 대해 ADMIN 제외 파트별로 다음 골격을 시딩합니다.
             Curriculum (1/파트) → WeeklyCurriculum (1~N 주차) → OriginalWorkbook (MAIN, READY) → Mission (M개).
@@ -109,7 +113,8 @@ public class SeedController {
     }
 
     @Operation(
-        summary = "[SEED-005] Notice 시딩 (지부 · 학교 · 파트 분포)",
+        operationId = "SEED-005",
+        summary = "Notice 시딩 (지부 · 학교 · 파트 분포)",
         description = """
             활성 기수(또는 지정 기수)에 대해 다음 4 가지 scope 로 공지를 분포 시딩합니다.
               GLOBAL  : 기수 전체 대상 (작성자에게 중앙 총괄단 권한 필요)

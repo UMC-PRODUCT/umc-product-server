@@ -269,7 +269,9 @@ fun extractOperationDocumentation(method: DocumentationMethod, source: String): 
     val summary = extractStringAttribute(operationAnnotation.text, "summary").orEmpty()
     val operationId = extractStringAttribute(operationAnnotation.text, "operationId")?.takeIf { it.isNotBlank() }
 
-    val summaryMatch = Regex("^\\[([^\\]]+)]\\s*(.*)$", RegexOption.DOT_MATCHES_ALL).find(summary)
+    val summaryMatch = Regex("^\\[([A-Z][A-Z0-9_]*(?:-[A-Z0-9_]+)+)]\\s*(.*)$", RegexOption.DOT_MATCHES_ALL)
+        .find(summary)
+        ?.takeIf { match -> match.groupValues[1].any { it.isDigit() } }
     val summaryApiId = summaryMatch?.groupValues?.get(1)
     val role = summaryMatch?.groupValues?.get(2)?.trim()?.ifBlank { summary } ?: summary
 

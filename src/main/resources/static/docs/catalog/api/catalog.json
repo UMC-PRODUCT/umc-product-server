@@ -2877,7 +2877,7 @@
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/SeedController.java",
     "line": 53,
-    "operationId": null
+    "operationId": "SEED-001"
   },
   {
     "sequence": 241,
@@ -2888,8 +2888,8 @@
     "role": "챌린저 분포 시딩",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/SeedController.java",
-    "line": 68,
-    "operationId": null
+    "line": 69,
+    "operationId": "SEED-002"
   },
   {
     "sequence": 242,
@@ -2900,8 +2900,8 @@
     "role": "프로젝트 시딩",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/SeedController.java",
-    "line": 82,
-    "operationId": null
+    "line": 84,
+    "operationId": "SEED-003"
   },
   {
     "sequence": 243,
@@ -2912,8 +2912,8 @@
     "role": "Curriculum 시딩 (Curriculum · WeeklyCurriculum · OriginalWorkbook · Mission)",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/SeedController.java",
-    "line": 97,
-    "operationId": null
+    "line": 100,
+    "operationId": "SEED-004"
   },
   {
     "sequence": 244,
@@ -2924,8 +2924,8 @@
     "role": "Notice 시딩 (지부 · 학교 · 파트 분포)",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/SeedController.java",
-    "line": 111,
-    "operationId": null
+    "line": 115,
+    "operationId": "SEED-005"
   },
   {
     "sequence": 245,
@@ -2937,7 +2937,7 @@
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
     "line": 62,
-    "operationId": null
+    "operationId": "TEST-001"
   },
   {
     "sequence": 246,
@@ -2949,7 +2949,7 @@
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
     "line": 74,
-    "operationId": null
+    "operationId": "TEST-002"
   },
   {
     "sequence": 247,
@@ -2961,7 +2961,7 @@
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
     "line": 101,
-    "operationId": null
+    "operationId": "TEST-003"
   },
   {
     "sequence": 248,
@@ -2973,7 +2973,7 @@
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
     "line": 114,
-    "operationId": null
+    "operationId": "TEST-004"
   },
   {
     "sequence": 249,
@@ -2985,7 +2985,7 @@
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
     "line": 130,
-    "operationId": null
+    "operationId": "TEST-005"
   },
   {
     "sequence": 250,
@@ -2997,7 +2997,7 @@
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
     "line": 151,
-    "operationId": null
+    "operationId": "TEST-006"
   },
   {
     "sequence": 251,
@@ -3009,7 +3009,7 @@
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
     "line": 157,
-    "operationId": null
+    "operationId": "TEST-007"
   },
   {
     "sequence": 252,
@@ -3021,7 +3021,7 @@
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
     "line": 170,
-    "operationId": null
+    "operationId": "TEST-008"
   },
   {
     "sequence": 253,
@@ -3033,7 +3033,7 @@
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
     "line": 177,
-    "operationId": null
+    "operationId": "TEST-009"
   },
   {
     "sequence": 254,
@@ -3045,7 +3045,7 @@
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
     "line": 187,
-    "operationId": null
+    "operationId": "TEST-010"
   },
   {
     "sequence": 255,
@@ -3057,7 +3057,7 @@
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
     "line": 195,
-    "operationId": null
+    "operationId": "TEST-011"
   },
   {
     "sequence": 256,
@@ -3069,6 +3069,6 @@
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
     "line": 202,
-    "operationId": null
+    "operationId": "TEST-012"
   }
 ]
