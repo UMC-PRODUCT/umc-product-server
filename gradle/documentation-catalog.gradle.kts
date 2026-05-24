@@ -63,12 +63,12 @@ val apiCatalogMarkdownFile = file("docs/guides/API_목록.md")
 val errorCodeCatalogMarkdownFile = file("docs/guides/ErrorCode_목록.md")
 val apiCatalogJsonFile = file("docs/guides/API_목록.json")
 val errorCodeCatalogJsonFile = file("docs/guides/ErrorCode_목록.json")
-val staticApiCatalogMarkdownFile = file("src/main/resources/static/catalog/api/catalog.md")
-val staticApiCatalogJsonFile = file("src/main/resources/static/catalog/api/catalog.json")
-val staticApiCatalogIndexFile = file("src/main/resources/static/catalog/api/index.html")
-val staticErrorCodeCatalogMarkdownFile = file("src/main/resources/static/catalog/error/catalog.md")
-val staticErrorCodeCatalogJsonFile = file("src/main/resources/static/catalog/error/catalog.json")
-val staticErrorCodeCatalogIndexFile = file("src/main/resources/static/catalog/error/index.html")
+val staticApiCatalogMarkdownFile = file("src/main/resources/static/docs/catalog/api/catalog.md")
+val staticApiCatalogJsonFile = file("src/main/resources/static/docs/catalog/api/catalog.json")
+val staticApiCatalogIndexFile = file("src/main/resources/static/docs/catalog/api/index.html")
+val staticErrorCodeCatalogMarkdownFile = file("src/main/resources/static/docs/catalog/error/catalog.md")
+val staticErrorCodeCatalogJsonFile = file("src/main/resources/static/docs/catalog/error/catalog.json")
+val staticErrorCodeCatalogIndexFile = file("src/main/resources/static/docs/catalog/error/index.html")
 
 fun String.escapeMarkdownCell(): String = replace("|", "\\|").replace("\n", "<br>")
 
@@ -724,8 +724,8 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     <p>Gradle 문서 카탈로그에서 생성된 정적 문서입니다.</p>
                 </div>
                 <nav aria-label="문서 이동">
-                    <a href="/catalog/api/" class="${if (activePath == "api") "active" else ""}">API</a>
-                    <a href="/catalog/error/" class="${if (activePath == "error") "active" else ""}">ErrorCode</a>
+                    <a href="/docs/catalog/api/" class="${if (activePath == "api") "active" else ""}">API</a>
+                    <a href="/docs/catalog/error/" class="${if (activePath == "error") "active" else ""}">ErrorCode</a>
                     <a href="$markdownFileName">Markdown</a>
                     <a href="$jsonFileName">JSON</a>
                 </nav>
