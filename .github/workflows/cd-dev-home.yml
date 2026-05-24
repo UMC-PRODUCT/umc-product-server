@@ -275,7 +275,22 @@ jobs:
             docker_compose down
 
             echo "[8] 새 컨테이너 시작"
-            docker_compose up -d --remove-orphans
+            if ! docker_compose up -d --remove-orphans; then
+              echo "컨테이너 시작 또는 healthcheck 대기 중 실패했습니다."
+              echo ""
+              echo "Docker Compose 상태:"
+              docker_compose ps || true
+              echo ""
+              echo "PostgreSQL 로그:"
+              docker_compose logs --tail=100 postgres || true
+              echo ""
+              echo "Valkey 로그:"
+              docker_compose logs --tail=100 valkey || true
+              echo ""
+              echo "App 로그:"
+              docker_compose logs --tail=100 app || true
+              exit 1
+            fi
 
             echo "[9] 컨테이너 상태"
             docker_compose ps
