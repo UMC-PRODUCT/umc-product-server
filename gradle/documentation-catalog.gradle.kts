@@ -519,6 +519,7 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <title>$title</title>
+            <link href="/umc-logo.svg" rel="icon" type="image/svg+xml">
             <style>
                 :root {
                     color-scheme: light;
