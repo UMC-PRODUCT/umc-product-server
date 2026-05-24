@@ -6,6 +6,8 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -27,6 +29,7 @@ public class TraceFlowAspect {
 
     private final Tracer tracer;
     private final ObservabilityTracingProperties properties;
+    private final ConcurrentMap<TraceSpanKey, TraceSpanMetadata> metadataCache = new ConcurrentHashMap<>();
 
     @Autowired
     public TraceFlowAspect(ObjectProvider<Tracer> tracerProvider, ObservabilityTracingProperties properties) {
@@ -51,7 +54,7 @@ public class TraceFlowAspect {
             return joinPoint.proceed();
         }
 
-        TraceSpanMetadata metadata = TraceSpanMetadata.from(joinPoint);
+        TraceSpanMetadata metadata = metadata(joinPoint);
         if (!shouldTrace(metadata)) {
             return joinPoint.proceed();
         }
@@ -82,6 +85,14 @@ public class TraceFlowAspect {
         }
     }
 
+    private TraceSpanMetadata metadata(ProceedingJoinPoint joinPoint) {
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        Class<?> targetClass = TraceSpanMetadata.targetClass(joinPoint);
+        Method method = TraceSpanMetadata.mostSpecificMethod(signature.getMethod(), targetClass);
+        TraceSpanKey key = new TraceSpanKey(targetClass, method);
+        return metadataCache.computeIfAbsent(key, ignored -> TraceSpanMetadata.from(targetClass, method));
+    }
+
     private boolean shouldTrace(TraceSpanMetadata metadata) {
         if (metadata.kind() == TraceSpanKind.USECASE) {
             return properties.isUseCaseSpans();
@@ -97,6 +108,9 @@ public class TraceFlowAspect {
         ADAPTER
     }
 
+    private record TraceSpanKey(Class<?> targetClass, Method method) {
+    }
+
     private record TraceSpanMetadata(
         TraceSpanKind kind,
         String spanName,
@@ -108,10 +122,7 @@ public class TraceFlowAspect {
         String adapterType
     ) {
 
-        private static TraceSpanMetadata from(ProceedingJoinPoint joinPoint) {
-            MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-            Class<?> targetClass = targetClass(joinPoint);
-            Method method = mostSpecificMethod(signature.getMethod(), targetClass);
+        private static TraceSpanMetadata from(Class<?> targetClass, Method method) {
             String packageName = targetClass.getPackageName();
             String methodName = method.getName();
             String className = targetClass.getSimpleName();
