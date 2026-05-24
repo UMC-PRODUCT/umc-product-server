@@ -184,9 +184,18 @@ jobs:
             unset DOCKER_HOST
             unset XDG_RUNTIME_DIR
 
+            ORIGINAL_DOCKER_CONFIG="${DOCKER_CONFIG:-${HOME:-}/.docker}"
             DOCKER_CONFIG="$(mktemp -d)"
             export DOCKER_CONFIG
             trap 'rm -rf "${DOCKER_CONFIG}"' EXIT
+
+            if [ -d "${ORIGINAL_DOCKER_CONFIG}/cli-plugins" ]; then
+              mkdir -p "${DOCKER_CONFIG}/cli-plugins"
+              for plugin in "${ORIGINAL_DOCKER_CONFIG}"/cli-plugins/*; do
+                [ -e "${plugin}" ] || continue
+                ln -s "${plugin}" "${DOCKER_CONFIG}/cli-plugins/$(basename "${plugin}")"
+              done
+            fi
 
             echo "[1] Docker 환경 확인"
             echo "Docker Path=${DOCKER_BIN}"
@@ -197,6 +206,28 @@ jobs:
               "${DOCKER_BIN}" context ls || true
               exit 1
             fi
+
+            if "${DOCKER_BIN}" compose version >/dev/null 2>&1; then
+              COMPOSE_MODE="docker-plugin"
+            elif command -v docker-compose >/dev/null 2>&1; then
+              COMPOSE_MODE="standalone"
+              DOCKER_COMPOSE_BIN="$(command -v docker-compose)"
+            else
+              echo "docker compose 플러그인을 찾을 수 없습니다."
+              echo "기존 Docker config: ${ORIGINAL_DOCKER_CONFIG}"
+              find "${ORIGINAL_DOCKER_CONFIG}" -maxdepth 3 -type f -name 'docker-compose' 2>/dev/null || true
+              exit 1
+            fi
+
+            docker_compose() {
+              if [ "${COMPOSE_MODE}" = "docker-plugin" ]; then
+                "${DOCKER_BIN}" compose "$@"
+              else
+                "${DOCKER_COMPOSE_BIN}" "$@"
+              fi
+            }
+
+            echo "Docker Compose Mode=${COMPOSE_MODE}"
 
             echo "[2] ECR 인증 설정"
             ECR_AUTH="$(printf 'AWS:%s' "${ECR_PASSWORD}" | base64 | tr -d '\n')"
@@ -238,16 +269,16 @@ jobs:
             } > .env
 
             echo "[6] Docker 이미지 Pull"
-            "${DOCKER_BIN}" compose pull
+            docker_compose pull
 
             echo "[7] 기존 컨테이너 중지"
-            "${DOCKER_BIN}" compose down
+            docker_compose down
 
             echo "[8] 새 컨테이너 시작"
-            "${DOCKER_BIN}" compose up -d --remove-orphans
+            docker_compose up -d --remove-orphans
 
             echo "[9] 컨테이너 상태"
-            "${DOCKER_BIN}" compose ps
+            docker_compose ps
 
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "develop 홈서버 배포 완료"
