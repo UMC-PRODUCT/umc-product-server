@@ -1,7 +1,6 @@
 package com.umc.product.chat.domain;
 
 import com.umc.product.common.BaseEntity;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;

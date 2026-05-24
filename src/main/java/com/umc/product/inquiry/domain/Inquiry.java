@@ -55,6 +55,9 @@ public class Inquiry extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private InquiryStatus status;
 
+    @Column(name = "chat_room_id", nullable = false)
+    private Long chatRoomId;
+
     // 수정/삭제는 정책상 전면 불가
     @Column(name = "author_member_id", nullable = false)
     private Long authorMemberId;
@@ -80,6 +83,7 @@ public class Inquiry extends BaseEntity {
         String content,
         InquiryCategory category,
         InquiryTarget target,
+        Long chatRoomId,
         Long authorMemberId
     ) {
         return Inquiry.builder()
@@ -88,6 +92,7 @@ public class Inquiry extends BaseEntity {
             .category(category)
             .target(target)
             .status(InquiryStatus.RECEIVED)
+            .chatRoomId(chatRoomId)
             .authorMemberId(authorMemberId)
             .assignedMemberIds(new ArrayList<>())
             .fileMetadataIds(new ArrayList<>())
@@ -143,7 +148,7 @@ public class Inquiry extends BaseEntity {
     /**
      * CLOSED → IN_PROGRESS 전환.
      * <p>
-     * 카카오톡 채널 방식을 따름: 문의자/운영진 구분 없이 메시지 전송 시 자동 호출. 수동 재오픈 API는 제공하지 않으며, SendInquiryMessageUseCase에서 처리한다.
+     * 카카오톡 채널 방식을 따름: 문의자/운영진 구분 없이 채팅 메시지 전송 시 자동 호출. 수동 재오픈 API는 제공하지 않는다.
      */
     public void reopen() {
         if (this.status != InquiryStatus.CLOSED) {
