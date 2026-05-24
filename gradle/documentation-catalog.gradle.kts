@@ -515,12 +515,12 @@ fun buildErrorCodeCatalogJson(entries: List<ErrorCodeDocumentationEntry>): Strin
 
 fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName: String, activePath: String): String {
     val isApiCatalog = activePath == "api"
-    val pageLabel = if (isApiCatalog) "API Catalog" else "ErrorCode Catalog"
+    val pageLabel = if (isApiCatalog) "API 카탈로그" else "ErrorCode 카탈로그"
     val eyebrow = if (isApiCatalog) "Endpoint Inventory" else "Failure Contract"
     val lead = if (isApiCatalog) {
-        "API ID, 경로, 메서드, 담당 도메인을 한 화면에서 확인합니다."
+        "API ID, endpoint, 역할, deprecated 상태를 한 곳에서 찾습니다."
     } else {
-        "클라이언트와 서버가 공유하는 실패 응답 계약을 빠르게 찾습니다."
+        "클라이언트와 서버가 함께 보는 실패 응답 계약입니다."
     }
     val searchPlaceholder = if (isApiCatalog) {
         "도메인, API ID, endpoint, 역할로 검색"
@@ -541,6 +541,7 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <title>$title</title>
             <link href="/umc-logo.svg" rel="icon" type="image/svg+xml">
+            <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
             <style>
                 :root {
                     color-scheme: light;
@@ -559,7 +560,7 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     --warning: #b45309;
                     --code-bg: #edf2f7;
                     --table-head: #eef3f9;
-                    --shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+                    --shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
                 }
 
                 * {
@@ -570,7 +571,7 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     margin: 0;
                     background: var(--bg);
                     color: var(--text);
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
                     line-height: 1.5;
                 }
 
@@ -582,8 +583,8 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     align-items: center;
                     justify-content: space-between;
                     gap: 24px;
-                    min-height: 72px;
-                    padding: 14px clamp(16px, 4vw, 48px);
+                    min-height: 64px;
+                    padding: 12px clamp(16px, 4vw, 40px);
                     border-bottom: 1px solid var(--border);
                     background: rgba(255, 255, 255, 0.92);
                     backdrop-filter: blur(14px);
@@ -599,8 +600,8 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                 .brand-mark {
                     display: grid;
                     place-items: center;
-                    width: 38px;
-                    height: 38px;
+                    width: 34px;
+                    height: 34px;
                     border: 1px solid var(--border);
                     border-radius: 8px;
                     background: #fff;
@@ -608,13 +609,13 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                 }
 
                 .brand-mark img {
-                    width: 26px;
-                    height: 26px;
+                    width: 23px;
+                    height: 23px;
                 }
 
                 .brand h1 {
                     margin: 0;
-                    font-size: 18px;
+                    font-size: 17px;
                     font-weight: 750;
                     letter-spacing: 0;
                 }
@@ -651,25 +652,25 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                 }
 
                 .page {
-                    width: min(1440px, calc(100vw - 32px));
-                    margin: 0 auto 64px;
+                    width: min(1320px, calc(100vw - 32px));
+                    margin: 0 auto 48px;
                 }
 
                 .hero {
-                    display: grid;
-                    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
-                    gap: 24px;
-                    padding: 42px 0 24px;
-                    align-items: end;
+                    display: flex;
+                    align-items: flex-end;
+                    justify-content: space-between;
+                    gap: 20px;
+                    padding: 24px 0 14px;
                 }
 
                 .eyebrow {
                     display: inline-flex;
                     align-items: center;
                     gap: 8px;
-                    margin: 0 0 12px;
+                    margin: 0 0 8px;
                     color: var(--accent-strong);
-                    font-size: 13px;
+                    font-size: 12px;
                     font-weight: 750;
                     letter-spacing: 0.08em;
                     text-transform: uppercase;
@@ -688,25 +689,25 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     border: 0;
                     padding: 0;
                     color: var(--text);
-                    font-size: clamp(36px, 5vw, 68px);
-                    line-height: 1;
-                    font-weight: 800;
+                    font-size: 30px;
+                    line-height: 1.12;
+                    font-weight: 780;
                     letter-spacing: 0;
                 }
 
                 .hero-copy {
                     max-width: 720px;
-                    margin: 18px 0 0;
+                    margin: 8px 0 0;
                     color: var(--muted-strong);
-                    font-size: 18px;
+                    font-size: 15px;
                 }
 
                 .hero-aside {
                     border: 1px solid var(--border);
                     border-radius: 8px;
                     background: var(--panel);
-                    padding: 18px;
-                    box-shadow: var(--shadow);
+                    padding: 12px 14px;
+                    min-width: 300px;
                 }
 
                 .hero-aside strong {
@@ -723,19 +724,19 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
 
                 .toolbar {
                     position: sticky;
-                    top: 72px;
+                    top: 64px;
                     z-index: 15;
                     display: grid;
                     grid-template-columns: minmax(260px, 1fr) auto;
                     gap: 14px;
                     align-items: center;
-                    margin-bottom: 18px;
-                    padding: 14px;
+                    margin-bottom: 14px;
+                    padding: 10px;
                     border: 1px solid var(--border);
                     border-radius: 8px;
                     background: rgba(255, 255, 255, 0.94);
                     backdrop-filter: blur(14px);
-                    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+                    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
                 }
 
                 .search {
@@ -745,7 +746,7 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
 
                 .search input {
                     width: 100%;
-                    min-height: 44px;
+                    min-height: 40px;
                     border: 1px solid var(--border-strong);
                     border-radius: 8px;
                     padding: 0 14px 0 42px;
@@ -794,7 +795,7 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     display: grid;
                     grid-template-columns: repeat(4, minmax(0, 1fr));
                     gap: 12px;
-                    margin-bottom: 18px;
+                    margin-bottom: 14px;
                 }
 
                 .stat {
@@ -802,8 +803,7 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     border: 1px solid var(--border);
                     border-radius: 8px;
                     background: var(--panel);
-                    padding: 16px;
-                    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
+                    padding: 12px 14px;
                 }
 
                 .stat span {
@@ -814,14 +814,14 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
 
                 .stat strong {
                     display: block;
-                    margin-top: 8px;
-                    font-size: 26px;
+                    margin-top: 6px;
+                    font-size: 22px;
                     line-height: 1;
                     letter-spacing: 0;
                 }
 
                 main {
-                    padding: 24px;
+                    padding: 18px;
                     border: 1px solid var(--border);
                     border-radius: 8px;
                     background: var(--panel);
@@ -907,13 +907,15 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     margin: 12px 0 28px;
                     border: 1px solid var(--border);
                     border-radius: 8px;
-                    overflow: auto;
+                    overflow-x: auto;
+                    overflow-y: visible;
                     background: #fff;
                 }
 
                 .catalog-table {
                     width: 100%;
-                    min-width: 1040px;
+                    min-width: 1240px;
+                    table-layout: fixed;
                     border-collapse: collapse;
                     margin: 0;
                     font-size: 13px;
@@ -924,7 +926,7 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     border-bottom: 1px solid var(--border);
                     padding: 10px 12px;
                     text-align: left;
-                    vertical-align: middle;
+                    vertical-align: top;
                 }
 
                 th {
@@ -941,6 +943,8 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
 
                 td {
                     color: var(--text);
+                    overflow-wrap: anywhere;
+                    word-break: keep-all;
                 }
 
                 tbody tr:hover td {
@@ -957,11 +961,95 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     width: 64px;
                 }
 
+                .catalog-table th:nth-child(1),
+                .catalog-table td:nth-child(1) {
+                    width: 56px;
+                    text-align: right;
+                }
+
+                .catalog-table th:nth-child(2),
+                .catalog-table td:nth-child(2) {
+                    width: 92px;
+                }
+
+                .catalog-table th:nth-child(3),
+                .catalog-table td:nth-child(3) {
+                    width: 150px;
+                }
+
+                .catalog-table th:nth-child(4),
+                .catalog-table td:nth-child(4) {
+                    width: 250px;
+                }
+
+                .catalog-table th:nth-child(5),
+                .catalog-table td:nth-child(5) {
+                    width: 90px;
+                }
+
+                .catalog-table th:nth-child(6),
+                .catalog-table td:nth-child(6) {
+                    width: auto;
+                }
+
+                .catalog-table th:nth-child(7),
+                .catalog-table td:nth-child(7) {
+                    width: 112px;
+                    text-align: center;
+                }
+
+                .catalog-table th:nth-child(8),
+                .catalog-table td:nth-child(8) {
+                    width: 190px;
+                }
+
                 td:nth-child(3) code,
                 td:nth-child(4) code,
                 td:nth-child(6) code {
                     color: #0f172a;
                     font-weight: 650;
+                    white-space: normal;
+                    overflow-wrap: anywhere;
+                    word-break: break-word;
+                }
+
+                .source-cell code {
+                    display: block;
+                    max-width: 100%;
+                    overflow: hidden;
+                    color: var(--muted-strong);
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
+                .error-catalog .catalog-table th:nth-child(3),
+                .error-catalog .catalog-table td:nth-child(3) {
+                    width: 180px;
+                }
+
+                .error-catalog .catalog-table th:nth-child(4),
+                .error-catalog .catalog-table td:nth-child(4) {
+                    width: 220px;
+                }
+
+                .error-catalog .catalog-table th:nth-child(5),
+                .error-catalog .catalog-table td:nth-child(5) {
+                    width: 120px;
+                }
+
+                .error-catalog .catalog-table th:nth-child(6),
+                .error-catalog .catalog-table td:nth-child(6) {
+                    width: 170px;
+                }
+
+                .error-catalog .catalog-table th:nth-child(7),
+                .error-catalog .catalog-table td:nth-child(7) {
+                    width: auto;
+                    text-align: left;
+                }
+
+                .error-catalog .catalog-table {
+                    min-width: 1320px;
                 }
 
                 .is-hidden {
@@ -980,8 +1068,14 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     }
 
                     .hero {
-                        grid-template-columns: 1fr;
+                        align-items: stretch;
+                        flex-direction: column;
                         padding: 26px 0 16px;
+                    }
+
+                    .hero-aside {
+                        min-width: 0;
+                        width: 100%;
                     }
 
                     .hero h2 {
@@ -1017,7 +1111,7 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                 }
             </style>
         </head>
-        <body>
+        <body class="${if (isApiCatalog) "api-catalog" else "error-catalog"}">
             <header>
                 <div class="brand">
                     <span class="brand-mark" aria-hidden="true"><img src="/umc-logo.svg" alt=""></span>
@@ -1130,6 +1224,14 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
 
                         table.querySelectorAll("tbody tr").forEach((row) => {
                             row.dataset.search = row.textContent.toLowerCase();
+                            const sourceCell = row.cells[row.cells.length - 1];
+                            const sourceCode = sourceCell?.querySelector("code");
+                            if (sourceCell && sourceCode) {
+                                const fullSource = sourceCode.textContent.trim();
+                                sourceCell.classList.add("source-cell");
+                                sourceCode.title = fullSource;
+                                sourceCode.textContent = fullSource.split("/").pop() || fullSource;
+                            }
                         });
                     });
                 }
