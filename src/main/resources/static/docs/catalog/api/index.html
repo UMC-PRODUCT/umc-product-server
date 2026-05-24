@@ -9,10 +9,10 @@
     <style>
         :root {
             color-scheme: light;
-            --bg: #f7f8fb;
+            --bg: #ffffff;
             --panel: #ffffff;
             --panel-soft: #f1f5f9;
-            --border: #d9e1ec;
+            --border: #e2e8f0;
             --border-strong: #b9c5d6;
             --text: #111827;
             --muted: #64748b;
@@ -50,7 +50,7 @@
             min-height: 64px;
             padding: 12px clamp(16px, 4vw, 40px);
             border-bottom: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.92);
+            background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(14px);
         }
 
@@ -116,8 +116,8 @@
         }
 
         .page {
-            width: min(1320px, calc(100vw - 32px));
-            margin: 0 auto 48px;
+            width: min(1440px, calc(100vw - 48px));
+            margin: 0 auto 56px;
         }
 
         .hero {
@@ -125,7 +125,7 @@
             align-items: flex-end;
             justify-content: space-between;
             gap: 20px;
-            padding: 24px 0 14px;
+            padding: 28px 0 18px;
         }
 
         .eyebrow {
@@ -167,10 +167,8 @@
         }
 
         .hero-aside {
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--panel);
-            padding: 12px 14px;
+            border-left: 1px solid var(--border);
+            padding: 4px 0 4px 18px;
             min-width: 300px;
         }
 
@@ -194,13 +192,12 @@
             grid-template-columns: minmax(260px, 1fr) auto;
             gap: 14px;
             align-items: center;
-            margin-bottom: 14px;
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.94);
+            margin: 8px 0 22px;
+            padding: 12px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(14px);
-            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
         }
 
         .search {
@@ -211,8 +208,8 @@
         .search input {
             width: 100%;
             min-height: 40px;
-            border: 1px solid var(--border-strong);
-            border-radius: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
             padding: 0 14px 0 42px;
             background: #fff;
             color: var(--text);
@@ -257,17 +254,19 @@
 
         .stats {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 12px;
-            margin-bottom: 14px;
+            grid-template-columns: repeat(4, max-content);
+            gap: 32px;
+            margin: 0 0 18px;
+            padding: 12px 0 18px;
+            border-bottom: 1px solid var(--border);
         }
 
         .stat {
             min-width: 0;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--panel);
-            padding: 12px 14px;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            padding: 0;
         }
 
         .stat span {
@@ -285,12 +284,12 @@
         }
 
         main {
-            padding: 18px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--panel);
-            box-shadow: var(--shadow);
-            overflow: hidden;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            overflow: visible;
         }
 
         .loading,
@@ -347,12 +346,12 @@
         }
 
         blockquote {
-            margin: 18px 0;
-            padding: 12px 14px;
-            border: 1px solid #bfdbfe;
-            border-left: 4px solid #60a5fa;
-            border-radius: 8px;
-            background: #eff6ff;
+            margin: 14px 0 22px;
+            padding: 0 0 0 12px;
+            border: 0;
+            border-left: 3px solid #60a5fa;
+            border-radius: 0;
+            background: transparent;
             color: var(--muted);
         }
 
@@ -366,12 +365,14 @@
 
         .table-wrap {
             width: 100%;
-            margin: 12px 0 28px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            margin: 10px 0 34px;
+            border: 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            border-radius: 0;
             overflow-x: auto;
             overflow-y: visible;
-            background: #fff;
+            background: transparent;
         }
 
         .catalog-table {
@@ -381,6 +382,7 @@
             border-collapse: collapse;
             margin: 0;
             font-size: 13px;
+            background: transparent;
         }
 
         th,
@@ -395,7 +397,7 @@
             position: sticky;
             top: 0;
             z-index: 1;
-            background: var(--table-head);
+            background: rgba(248, 250, 252, 0.96);
             color: var(--muted-strong);
             font-size: 12px;
             font-weight: 750;
@@ -410,7 +412,7 @@
         }
 
         tbody tr:hover td {
-            background: #f8fbff;
+            background: #f8fafc;
         }
 
         tbody tr:last-child td {
@@ -509,10 +511,10 @@
             z-index: 30;
             max-width: min(420px, calc(100vw - 32px));
             padding: 10px 12px;
-            border: 1px solid #bbf7d0;
+            border: 0;
             border-radius: 8px;
-            background: #f0fdf4;
-            color: #166534;
+            background: #111827;
+            color: #ffffff;
             box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
             font-size: 14px;
             opacity: 0;
@@ -568,7 +570,7 @@
             }
 
             .page {
-                width: calc(100vw - 16px);
+                width: calc(100vw - 24px);
             }
 
             .hero {
@@ -578,7 +580,10 @@
             }
 
             .hero-aside {
+                border-left: 0;
+                border-top: 1px solid var(--border);
                 min-width: 0;
+                padding: 12px 0 0;
                 width: 100%;
             }
 
@@ -597,6 +602,7 @@
 
             .stats {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 16px 24px;
             }
 
             nav {
@@ -604,7 +610,7 @@
             }
 
             main {
-                padding: 16px;
+                padding: 0;
             }
         }
 
