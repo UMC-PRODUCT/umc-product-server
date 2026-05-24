@@ -4,5 +4,5 @@ import com.umc.product.chat.application.port.in.command.dto.JoinChatRoomCommand;
 
 public interface JoinChatRoomUseCase {
 
-    void join(JoinChatRoomCommand command);
+    void joinChatRoom(JoinChatRoomCommand command);
 }
