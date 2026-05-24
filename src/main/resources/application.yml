@@ -301,6 +301,12 @@ app:
   # spring.profiles.active 가 콤마 구분 다중 profile 일 수 있으므로 운영자가 단일 라벨을 명시적으로 override 가능.
   environment: ${APP_ENVIRONMENT:${SPRING_PROFILES_ACTIVE:local}}
 
+  event-outbox:
+    enabled: ${EVENT_OUTBOX_ENABLED:false}
+    poll-interval-ms: ${EVENT_OUTBOX_POLL_INTERVAL_MS:5000}
+    batch-size: ${EVENT_OUTBOX_BATCH_SIZE:100}
+    max-attempts: ${EVENT_OUTBOX_MAX_ATTEMPTS:5}
+
   fcm:
     enabled: ${FCM_ENABLED:false}
     outbox-interval-ms: ${FCM_OUTBOX_INTERVAL_MS:60000}
