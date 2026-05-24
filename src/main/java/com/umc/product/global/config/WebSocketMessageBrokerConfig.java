@@ -69,10 +69,8 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
             .queueCapacity(2048);
     }
 
-    @Override
-    public void configureClientOutboundChannel(ChannelRegistration registration) {
-        registration.interceptors(webSocketOutboundMetricInterceptor);
-
+    @Bean
+    public ThreadPoolTaskExecutor webSocketOutboundExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(16);
         executor.setMaxPoolSize(16);
@@ -92,7 +90,12 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
                 }
             });
         });
-        executor.initialize();
-        registration.taskExecutor(executor);
+        return executor;
+    }
+
+    @Override
+    public void configureClientOutboundChannel(ChannelRegistration registration) {
+        registration.interceptors(webSocketOutboundMetricInterceptor);
+        registration.taskExecutor(webSocketOutboundExecutor());
     }
 }
