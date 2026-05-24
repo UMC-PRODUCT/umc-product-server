@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
@@ -15,6 +16,7 @@ import com.umc.product.authorization.application.port.out.ResourcePermissionEval
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import java.util.List;
@@ -53,6 +55,12 @@ class CheckResourcePermissionServiceTest {
 
     private static final Long MEMBER_ID = 1L;
     private static final Long RESOURCE_ID = 100L;
+    private static final SubjectAttributes SUBJECT_ATTRIBUTES = SubjectAttributes.builder()
+        .memberId(MEMBER_ID)
+        .schoolId(10L)
+        .gisuChallengerInfos(List.of())
+        .roleAttributes(List.of())
+        .build();
 
     @Nested
     @DisplayName("권한이 있나요?")
@@ -64,16 +72,17 @@ class CheckResourcePermissionServiceTest {
             ResourceType resourceType = ResourceType.NOTICE;
             // NOTICE supports: READ, EDIT, DELETE, CHECK
 
-            given(checkPermissionUseCase.check(eq(MEMBER_ID),
+            given(checkPermissionUseCase.loadSubject(MEMBER_ID)).willReturn(SUBJECT_ATTRIBUTES);
+            given(checkPermissionUseCase.check(eq(SUBJECT_ATTRIBUTES),
                 eq(ResourcePermission.of(resourceType, String.valueOf(RESOURCE_ID), PermissionType.READ))))
                 .willReturn(true);
-            given(checkPermissionUseCase.check(eq(MEMBER_ID),
+            given(checkPermissionUseCase.check(eq(SUBJECT_ATTRIBUTES),
                 eq(ResourcePermission.of(resourceType, String.valueOf(RESOURCE_ID), PermissionType.EDIT))))
                 .willReturn(false);
-            given(checkPermissionUseCase.check(eq(MEMBER_ID),
+            given(checkPermissionUseCase.check(eq(SUBJECT_ATTRIBUTES),
                 eq(ResourcePermission.of(resourceType, String.valueOf(RESOURCE_ID), PermissionType.DELETE))))
                 .willReturn(false);
-            given(checkPermissionUseCase.check(eq(MEMBER_ID),
+            given(checkPermissionUseCase.check(eq(SUBJECT_ATTRIBUTES),
                 eq(ResourcePermission.of(resourceType, String.valueOf(RESOURCE_ID), PermissionType.CHECK))))
                 .willReturn(false);
 
@@ -87,6 +96,7 @@ class CheckResourcePermissionServiceTest {
             assertThat(result.permissions()).containsEntry(PermissionType.EDIT, false);
             assertThat(result.permissions()).containsEntry(PermissionType.DELETE, false);
             assertThat(result.permissions()).containsEntry(PermissionType.CHECK, false);
+            verify(checkPermissionUseCase, times(1)).loadSubject(MEMBER_ID);
         }
 
         @Test
@@ -94,7 +104,8 @@ class CheckResourcePermissionServiceTest {
             // given
             ResourceType resourceType = ResourceType.NOTICE;
 
-            given(checkPermissionUseCase.check(eq(MEMBER_ID), any(ResourcePermission.class)))
+            given(checkPermissionUseCase.loadSubject(MEMBER_ID)).willReturn(SUBJECT_ATTRIBUTES);
+            given(checkPermissionUseCase.check(eq(SUBJECT_ATTRIBUTES), any(ResourcePermission.class)))
                 .willReturn(true);
 
             // when
@@ -102,6 +113,7 @@ class CheckResourcePermissionServiceTest {
 
             // then
             assertThat(result.permissions().values()).allMatch(hasPermission -> hasPermission);
+            verify(checkPermissionUseCase, times(1)).loadSubject(MEMBER_ID);
         }
 
         @Test
@@ -110,7 +122,8 @@ class CheckResourcePermissionServiceTest {
             ResourceType resourceType = ResourceType.WORKBOOK_SUBMISSION;
             // WORKBOOK_SUBMISSION supports: READ
 
-            given(checkPermissionUseCase.check(eq(MEMBER_ID),
+            given(checkPermissionUseCase.loadSubject(MEMBER_ID)).willReturn(SUBJECT_ATTRIBUTES);
+            given(checkPermissionUseCase.check(eq(SUBJECT_ATTRIBUTES),
                 eq(ResourcePermission.ofType(resourceType, PermissionType.READ))))
                 .willReturn(true);
 
@@ -120,6 +133,7 @@ class CheckResourcePermissionServiceTest {
             // then
             assertThat(result.resourceId()).isNull();
             assertThat(result.permissions()).containsEntry(PermissionType.READ, true);
+            verify(checkPermissionUseCase, times(1)).loadSubject(MEMBER_ID);
         }
 
         @Test
@@ -128,7 +142,8 @@ class CheckResourcePermissionServiceTest {
             ResourceType resourceType = ResourceType.NOTICE;
             // NOTICE supports: READ, EDIT, DELETE, CHECK (4개)
 
-            given(checkPermissionUseCase.check(eq(MEMBER_ID), any(ResourcePermission.class)))
+            given(checkPermissionUseCase.loadSubject(MEMBER_ID)).willReturn(SUBJECT_ATTRIBUTES);
+            given(checkPermissionUseCase.check(eq(SUBJECT_ATTRIBUTES), any(ResourcePermission.class)))
                 .willReturn(false);
 
             // when
@@ -136,6 +151,7 @@ class CheckResourcePermissionServiceTest {
 
             // then
             assertThat(result.permissions()).hasSize(resourceType.getSupportedPermissions().size());
+            verify(checkPermissionUseCase, times(1)).loadSubject(MEMBER_ID);
         }
 
         @Test
@@ -144,7 +160,8 @@ class CheckResourcePermissionServiceTest {
             // given
             ResourceType resourceType = ResourceType.NOTICE;
 
-            given(checkPermissionUseCase.check(eq(MEMBER_ID),
+            given(checkPermissionUseCase.loadSubject(MEMBER_ID)).willReturn(SUBJECT_ATTRIBUTES);
+            given(checkPermissionUseCase.check(eq(SUBJECT_ATTRIBUTES),
                 eq(ResourcePermission.of(resourceType, String.valueOf(RESOURCE_ID), PermissionType.READ))))
                 .willReturn(true);
 
@@ -161,8 +178,9 @@ class CheckResourcePermissionServiceTest {
             assertThat(result.resourceId()).isEqualTo(RESOURCE_ID);
             assertThat(result.permissions()).containsOnlyKeys(PermissionType.READ);
             assertThat(result.permissions()).containsEntry(PermissionType.READ, true);
-            verify(checkPermissionUseCase, never()).check(eq(MEMBER_ID),
+            verify(checkPermissionUseCase, never()).check(eq(SUBJECT_ATTRIBUTES),
                 eq(ResourcePermission.of(resourceType, String.valueOf(RESOURCE_ID), PermissionType.EDIT)));
+            verify(checkPermissionUseCase, times(1)).loadSubject(MEMBER_ID);
         }
 
         @Test
@@ -171,7 +189,8 @@ class CheckResourcePermissionServiceTest {
             // given
             ResourceType resourceType = ResourceType.NOTICE;
 
-            given(checkPermissionUseCase.check(eq(MEMBER_ID),
+            given(checkPermissionUseCase.loadSubject(MEMBER_ID)).willReturn(SUBJECT_ATTRIBUTES);
+            given(checkPermissionUseCase.check(eq(SUBJECT_ATTRIBUTES),
                 eq(ResourcePermission.ofType(resourceType, PermissionType.CHECK))))
                 .willReturn(false);
 
@@ -187,6 +206,7 @@ class CheckResourcePermissionServiceTest {
             assertThat(result.resourceId()).isNull();
             assertThat(result.permissions()).containsOnlyKeys(PermissionType.CHECK);
             assertThat(result.permissions()).containsEntry(PermissionType.CHECK, false);
+            verify(checkPermissionUseCase, times(1)).loadSubject(MEMBER_ID);
         }
 
         @Test
@@ -202,7 +222,8 @@ class CheckResourcePermissionServiceTest {
                 .isInstanceOf(AuthorizationDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(AuthorizationErrorCode.INVALID_INPUT_VALUE);
-            verify(checkPermissionUseCase, never()).check(eq(MEMBER_ID), any(ResourcePermission.class));
+            verify(checkPermissionUseCase, never()).loadSubject(MEMBER_ID);
+            verify(checkPermissionUseCase, never()).check(eq(SUBJECT_ATTRIBUTES), any(ResourcePermission.class));
         }
 
         @Test
@@ -224,13 +245,14 @@ class CheckResourcePermissionServiceTest {
         @DisplayName("여러 리소스에 대한 특정 권한을 요청 순서대로 조회한다")
         void 여러_리소스에_대한_특정_권한을_요청_순서대로_조회한다() {
             // given
-            given(checkPermissionUseCase.check(eq(MEMBER_ID),
+            given(checkPermissionUseCase.loadSubject(MEMBER_ID)).willReturn(SUBJECT_ATTRIBUTES);
+            given(checkPermissionUseCase.check(eq(SUBJECT_ATTRIBUTES),
                 eq(ResourcePermission.of(ResourceType.NOTICE, 100L, PermissionType.READ))))
                 .willReturn(true);
-            given(checkPermissionUseCase.check(eq(MEMBER_ID),
+            given(checkPermissionUseCase.check(eq(SUBJECT_ATTRIBUTES),
                 eq(ResourcePermission.of(ResourceType.NOTICE, 101L, PermissionType.READ))))
                 .willReturn(false);
-            given(checkPermissionUseCase.check(eq(MEMBER_ID),
+            given(checkPermissionUseCase.check(eq(SUBJECT_ATTRIBUTES),
                 eq(ResourcePermission.of(ResourceType.WORKBOOK_SUBMISSION, 200L, PermissionType.READ))))
                 .willReturn(true);
 
@@ -253,6 +275,7 @@ class CheckResourcePermissionServiceTest {
             assertThat(result.get(2).resourceType()).isEqualTo(ResourceType.WORKBOOK_SUBMISSION);
             assertThat(result.get(2).resourceId()).isEqualTo(200L);
             assertThat(result.get(2).permissions()).containsEntry(PermissionType.READ, true);
+            verify(checkPermissionUseCase, times(1)).loadSubject(MEMBER_ID);
         }
 
         @Test
@@ -269,14 +292,16 @@ class CheckResourcePermissionServiceTest {
                 .isInstanceOf(AuthorizationDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(AuthorizationErrorCode.INVALID_INPUT_VALUE);
-            verify(checkPermissionUseCase, never()).check(eq(MEMBER_ID), any(ResourcePermission.class));
+            verify(checkPermissionUseCase, never()).loadSubject(MEMBER_ID);
+            verify(checkPermissionUseCase, never()).check(eq(SUBJECT_ATTRIBUTES), any(ResourcePermission.class));
         }
 
         @Test
         @DisplayName("resourceIds가 null이면 타입 단위 권한을 배치로 조회한다")
         void resourceIds가_null이면_타입_단위_권한을_배치로_조회한다() {
             // given
-            given(checkPermissionUseCase.check(eq(MEMBER_ID),
+            given(checkPermissionUseCase.loadSubject(MEMBER_ID)).willReturn(SUBJECT_ATTRIBUTES);
+            given(checkPermissionUseCase.check(eq(SUBJECT_ATTRIBUTES),
                 eq(ResourcePermission.ofType(ResourceType.NOTICE, PermissionType.CHECK))))
                 .willReturn(true);
 
@@ -292,6 +317,7 @@ class CheckResourcePermissionServiceTest {
             assertThat(result.getFirst().resourceType()).isEqualTo(ResourceType.NOTICE);
             assertThat(result.getFirst().resourceId()).isNull();
             assertThat(result.getFirst().permissions()).containsEntry(PermissionType.CHECK, true);
+            verify(checkPermissionUseCase, times(1)).loadSubject(MEMBER_ID);
         }
     }
 }

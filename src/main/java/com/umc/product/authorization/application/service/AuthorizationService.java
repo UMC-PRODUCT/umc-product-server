@@ -58,14 +58,13 @@ public class AuthorizationService implements CheckPermissionUseCase {
 
     @Override
     public boolean check(Long memberId, ResourcePermission permission) {
-        log.info("권한 평가 시작");
+        SubjectAttributes subjectAttributes = loadSubject(memberId);
+        return check(subjectAttributes, permission);
+    }
 
-        // 리소스 유형에 맞는 권한 평가기를 선택함. 없다면 에러 발생
-        ResourcePermissionEvaluator evaluator = evaluators.get(permission.resourceType());
-        if (evaluator == null) {
-            throw new AuthorizationDomainException(AuthorizationErrorCode.NO_EVALUATOR_MATCHING_RESOURCE_TYPE,
-                "Evaluator for Resource Type [" + permission.resourceType() + "] not found.");
-        }
+    @Override
+    public SubjectAttributes loadSubject(Long memberId) {
+        log.info("권한 평가 시작");
 
         // 사용자가 활동한 모든 기수를 확인
         // 해당 기수마다 chapterId, challengerRoleId를 가져옴
@@ -98,11 +97,24 @@ public class AuthorizationService implements CheckPermissionUseCase {
 
         log.info("Subject Attribute {}가 평가를 요청했습니다.", subjectAttributes.toString());
 
+        return subjectAttributes;
+    }
+
+    @Override
+    public boolean check(SubjectAttributes subjectAttributes, ResourcePermission permission) {
+        // 리소스 유형에 맞는 권한 평가기를 선택함. 없다면 에러 발생
+        ResourcePermissionEvaluator evaluator = evaluators.get(permission.resourceType());
+        if (evaluator == null) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.NO_EVALUATOR_MATCHING_RESOURCE_TYPE,
+                "Evaluator for Resource Type [" + permission.resourceType() + "] not found.");
+        }
+
         // 평가기로 평가
         boolean hasPermission = evaluator.evaluate(subjectAttributes, permission);
 
         log.debug("Permission check - memberId: {}, roles: {}, resource: {}:{}, permission: {}, result: {}",
-            memberId, roles, permission.resourceType(), permission.resourceId(),
+            subjectAttributes.memberId(), subjectAttributes.roleAttributes(), permission.resourceType(),
+            permission.resourceId(),
             permission.permission(), hasPermission);
 
         return hasPermission;

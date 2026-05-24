@@ -6,6 +6,7 @@ import com.umc.product.authorization.domain.ResourceType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 
 public record BatchResourcePermissionRequest(
@@ -22,7 +23,9 @@ public record BatchResourcePermissionRequest(
     public record ResourcePermissionQueryRequest(
         @NotNull(message = "resourceType은 필수입니다.")
         ResourceType resourceType,
+        @Size(min = 1, message = "resourceIds는 비어 있을 수 없습니다.")
         List<@NotNull(message = "resourceIds는 null 값을 포함할 수 없습니다.") Long> resourceIds,
+        @Size(min = 1, message = "permissionTypes는 비어 있을 수 없습니다.")
         List<@NotNull(message = "permissionTypes는 null 값을 포함할 수 없습니다.") PermissionType> permissionTypes
     ) {
 

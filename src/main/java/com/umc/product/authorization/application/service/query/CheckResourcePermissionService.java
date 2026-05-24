@@ -8,6 +8,7 @@ import com.umc.product.authorization.application.port.out.ResourcePermissionEval
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import java.util.ArrayList;
@@ -51,38 +52,42 @@ public class CheckResourcePermissionService implements ResourcePermissionUseCase
         PermissionType permissionType
     ) {
         validateResourceTypeSupported(resourceType);
-
-        Map<PermissionType, Boolean> permissions = new LinkedHashMap<>();
-
         if (permissionType != null) {
             validatePermissionSupported(resourceType, permissionType);
-            putPermissionResult(memberId, resourceType, resourceId, permissionType, permissions);
-            return new ResourcePermissionInfo(resourceType, resourceId, permissions);
         }
 
-        resourceType.getSupportedPermissions().stream()
-            .sorted(Comparator.comparingInt(Enum::ordinal))
-            .forEach(supportedPermission ->
-                putPermissionResult(memberId, resourceType, resourceId, supportedPermission, permissions)
-            );
+        SubjectAttributes subjectAttributes = checkPermissionUseCase.loadSubject(memberId);
+        return hasPermission(subjectAttributes, resourceType, resourceId, permissionType);
+    }
 
-        return new ResourcePermissionInfo(resourceType, resourceId, permissions);
+    private ResourcePermissionInfo hasPermission(
+        SubjectAttributes subjectAttributes,
+        ResourceType resourceType,
+        Long resourceId,
+        PermissionType permissionType
+    ) {
+        if (permissionType != null) {
+            return hasPermission(subjectAttributes, resourceType, resourceId, List.of(permissionType));
+        }
+
+        return hasPermission(subjectAttributes, resourceType, resourceId, getSortedSupportedPermissions(resourceType));
     }
 
     @Override
     public List<ResourcePermissionInfo> batchHasPermission(Long memberId, List<ResourcePermissionQuery> queries) {
         List<ResourcePermissionQuery> validQueries = validateBatchQueries(queries);
+        SubjectAttributes subjectAttributes = checkPermissionUseCase.loadSubject(memberId);
 
         List<ResourcePermissionInfo> results = new ArrayList<>();
         for (ResourcePermissionQuery query : validQueries) {
             List<Long> resourceIds = query.resourceIds();
             if (resourceIds == null) {
-                results.add(hasPermission(memberId, query.resourceType(), null, query.permissionTypes()));
+                results.add(hasPermission(subjectAttributes, query.resourceType(), null, query.permissionTypes()));
                 continue;
             }
 
             for (Long resourceId : resourceIds) {
-                results.add(hasPermission(memberId, query.resourceType(), resourceId, query.permissionTypes()));
+                results.add(hasPermission(subjectAttributes, query.resourceType(), resourceId, query.permissionTypes()));
             }
         }
 
@@ -90,21 +95,17 @@ public class CheckResourcePermissionService implements ResourcePermissionUseCase
     }
 
     private ResourcePermissionInfo hasPermission(
-        Long memberId,
+        SubjectAttributes subjectAttributes,
         ResourceType resourceType,
         Long resourceId,
         List<PermissionType> permissionTypes
     ) {
         if (permissionTypes == null) {
-            return hasPermission(memberId, resourceType, resourceId);
+            return hasPermission(subjectAttributes, resourceType, resourceId, getSortedSupportedPermissions(resourceType));
         }
 
         Map<PermissionType, Boolean> permissions = new LinkedHashMap<>();
-        permissionTypes.stream()
-            .sorted(Comparator.comparingInt(Enum::ordinal))
-            .forEach(permissionType ->
-                putPermissionResult(memberId, resourceType, resourceId, permissionType, permissions)
-            );
+        evaluateAndPutPermissions(subjectAttributes, resourceType, resourceId, permissionTypes, permissions);
 
         return new ResourcePermissionInfo(resourceType, resourceId, permissions);
     }
@@ -158,7 +159,7 @@ public class CheckResourcePermissionService implements ResourcePermissionUseCase
             return;
         }
 
-        if (resourceIds.isEmpty() || resourceIds.stream().anyMatch(resourceId -> resourceId == null)) {
+        if (resourceIds.isEmpty() || new ArrayList<>(resourceIds).contains(null)) {
             throw new AuthorizationDomainException(
                 AuthorizationErrorCode.INVALID_INPUT_VALUE,
                 "resourceIds는 비어 있거나 null 값을 포함할 수 없습니다."
@@ -171,7 +172,7 @@ public class CheckResourcePermissionService implements ResourcePermissionUseCase
             return;
         }
 
-        if (permissionTypes.isEmpty() || permissionTypes.stream().anyMatch(permissionType -> permissionType == null)) {
+        if (permissionTypes.isEmpty() || new ArrayList<>(permissionTypes).contains(null)) {
             throw new AuthorizationDomainException(
                 AuthorizationErrorCode.INVALID_INPUT_VALUE,
                 "permissionTypes는 비어 있거나 null 값을 포함할 수 없습니다."
@@ -190,8 +191,28 @@ public class CheckResourcePermissionService implements ResourcePermissionUseCase
         }
     }
 
+    private List<PermissionType> getSortedSupportedPermissions(ResourceType resourceType) {
+        return resourceType.getSupportedPermissions().stream()
+            .sorted(Comparator.comparingInt(Enum::ordinal))
+            .toList();
+    }
+
+    private void evaluateAndPutPermissions(
+        SubjectAttributes subjectAttributes,
+        ResourceType resourceType,
+        Long resourceId,
+        List<PermissionType> permissionTypes,
+        Map<PermissionType, Boolean> permissions
+    ) {
+        permissionTypes.stream()
+            .sorted(Comparator.comparingInt(Enum::ordinal))
+            .forEach(permissionType ->
+                putPermissionResult(subjectAttributes, resourceType, resourceId, permissionType, permissions)
+            );
+    }
+
     private void putPermissionResult(
-        Long memberId,
+        SubjectAttributes subjectAttributes,
         ResourceType resourceType,
         Long resourceId,
         PermissionType permissionType,
@@ -201,7 +222,7 @@ public class CheckResourcePermissionService implements ResourcePermissionUseCase
             ? ResourcePermission.of(resourceType, resourceId, permissionType)
             : ResourcePermission.ofType(resourceType, permissionType);
 
-        boolean hasAccess = checkPermissionUseCase.check(memberId, permission);
+        boolean hasAccess = checkPermissionUseCase.check(subjectAttributes, permission);
         permissions.put(permissionType, hasAccess);
     }
 }

@@ -221,4 +221,58 @@ class ResourcePermissionControllerTest {
 
         verifyNoInteractions(resourcePermissionUseCase);
     }
+
+    @Test
+    @DisplayName("배치 요청에 resourceIds가 빈 배열이면 실패한다")
+    void 배치_요청에_resourceIds가_빈_배열이면_실패한다() throws Exception {
+        // given
+        String requestBody = """
+            {
+              "queries": [
+                {
+                  "resourceType": "NOTICE",
+                  "resourceIds": [],
+                  "permissionTypes": ["READ"]
+                }
+              ]
+            }
+            """;
+
+        // when & then
+        mockMvc.perform(post("/api/v1/authorization/resource-permissions/batch")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.code").value("COMMON-400"));
+
+        verifyNoInteractions(resourcePermissionUseCase);
+    }
+
+    @Test
+    @DisplayName("배치 요청에 permissionTypes가 빈 배열이면 실패한다")
+    void 배치_요청에_permissionTypes가_빈_배열이면_실패한다() throws Exception {
+        // given
+        String requestBody = """
+            {
+              "queries": [
+                {
+                  "resourceType": "NOTICE",
+                  "resourceIds": [100],
+                  "permissionTypes": []
+                }
+              ]
+            }
+            """;
+
+        // when & then
+        mockMvc.perform(post("/api/v1/authorization/resource-permissions/batch")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.code").value("COMMON-400"));
+
+        verifyNoInteractions(resourcePermissionUseCase);
+    }
 }
