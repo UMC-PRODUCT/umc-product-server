@@ -328,14 +328,12 @@
         }
 
         h2 {
-            display: inline-flex;
-            align-items: center;
-            margin: 32px 0 12px;
-            padding: 7px 10px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--panel-soft);
-            font-size: 15px;
+            margin: 30px 0 10px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: var(--text);
+            font-size: 18px;
             font-weight: 750;
         }
 
@@ -486,6 +484,48 @@
             white-space: nowrap;
         }
 
+        .copy-cell {
+            cursor: copy;
+            position: relative;
+        }
+
+        .copy-cell:hover {
+            background: #eff6ff;
+        }
+
+        .copy-cell:focus-visible {
+            outline: 3px solid rgba(37, 99, 235, 0.24);
+            outline-offset: -3px;
+        }
+
+        .copy-cell.copied {
+            background: #f0fdf4;
+        }
+
+        .copy-toast {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 30;
+            max-width: min(420px, calc(100vw - 32px));
+            padding: 10px 12px;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            background: #f0fdf4;
+            color: #166534;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+            font-size: 14px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px);
+            transition: opacity 0.16s ease, transform 0.16s ease;
+        }
+
+        .copy-toast.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         .error-catalog .catalog-table th:nth-child(3),
         .error-catalog .catalog-table td:nth-child(3) {
             width: 180px;
@@ -615,6 +655,7 @@
         </main>
         <p class="no-results" id="no-results">일치하는 API가 없습니다.</p>
     </div>
+    <div class="copy-toast" id="copy-toast" role="status" aria-live="polite"></div>
     <script src="/webjars/markdown-it/14.1.0/dist/markdown-it.min.js"></script>
     <script>
         const content = document.getElementById("content");
@@ -622,6 +663,7 @@
         const searchInput = document.getElementById("catalog-search");
         const resultCount = document.getElementById("result-count");
         const noResults = document.getElementById("no-results");
+        const copyToast = document.getElementById("copy-toast");
         const markdownSource = "catalog.md";
         const jsonSource = "catalog.json";
         const pageKind = "api";
@@ -673,6 +715,57 @@
             )).join("");
         }
 
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text);
+            }
+
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.setAttribute("readonly", "");
+            textarea.style.position = "fixed";
+            textarea.style.left = "-9999px";
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            textarea.remove();
+            return Promise.resolve();
+        }
+
+        function markCopied(cell, value) {
+            cell.classList.add("copied");
+            window.setTimeout(() => cell.classList.remove("copied"), 900);
+            copyToast.textContent = "복사했습니다: " + value;
+            copyToast.classList.add("visible");
+            window.clearTimeout(copyToast.hideTimer);
+            copyToast.hideTimer = window.setTimeout(() => copyToast.classList.remove("visible"), 1400);
+        }
+
+        function bindCopyCell(cell, value) {
+            if (!value) {
+                return;
+            }
+
+            cell.classList.add("copy-cell");
+            cell.dataset.copyValue = value;
+            cell.tabIndex = 0;
+            cell.setAttribute("role", "button");
+            cell.setAttribute("aria-label", value + " 복사");
+            cell.title = value + " 복사";
+
+            const handleCopy = () => {
+                copyToClipboard(value).then(() => markCopied(cell, value));
+            };
+
+            cell.addEventListener("click", handleCopy);
+            cell.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    handleCopy();
+                }
+            });
+        }
+
         function enhanceTables() {
             const firstHeading = content.querySelector("h1");
             if (firstHeading) {
@@ -681,6 +774,12 @@
 
             content.querySelectorAll("table").forEach((table) => {
                 table.classList.add("catalog-table");
+                const headers = Array.from(table.querySelectorAll("thead th"))
+                    .map((cell) => cell.textContent.trim().toLowerCase());
+                const copyColumnIndexes = headers
+                    .map((header, index) => ({ header, index }))
+                    .filter(({ header }) => ["api id", "endpoint", "source"].includes(header))
+                    .map(({ index }) => index);
                 const wrapper = document.createElement("div");
                 wrapper.className = "table-wrap";
                 table.parentNode.insertBefore(wrapper, table);
@@ -696,6 +795,16 @@
                         sourceCode.title = fullSource;
                         sourceCode.textContent = fullSource.split("/").pop() || fullSource;
                     }
+
+                    copyColumnIndexes.forEach((index) => {
+                        const cell = row.cells[index];
+                        if (!cell) {
+                            return;
+                        }
+
+                        const code = cell.querySelector("code");
+                        bindCopyCell(cell, code?.title || code?.textContent.trim() || cell.textContent.trim());
+                    });
                 });
             });
         }
