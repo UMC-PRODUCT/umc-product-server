@@ -45,6 +45,7 @@ jobs:
       AWS_REGION: ap-northeast-2
       ECR_REPOSITORY: umc-product-server
       S3_APP_ENV_URI: ${{ secrets.AWS_S3_APP_ENV_URI }}
+      APP_REPLICAS: ${{ vars.DEV_APP_REPLICAS || '1' }}
 
     steps:
       - name: 환경변수 검증
@@ -76,6 +77,7 @@ jobs:
           [[ -z "$POSTGRES_PASSWORD" ]] && MISSING_VARS+=("POSTGRES_PASSWORD")
           [[ -z "$IMAGE_TAG" ]] && MISSING_VARS+=("IMAGE_TAG")
           [[ -z "$S3_APP_ENV_URI" ]] && MISSING_VARS+=("S3_APP_ENV_URI")
+          [[ -z "$APP_REPLICAS" ]] && MISSING_VARS+=("APP_REPLICAS")
 
           if [ ${#MISSING_VARS[@]} -gt 0 ]; then
             echo "다음 환경 변수들이 설정되지 않았습니다:"
@@ -120,6 +122,7 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Environment: ${ENVIRONMENT}"
           echo "Image: ${ECR_IMAGE_NAME}:${IMAGE_TAG}"
+          echo "App Replicas: ${APP_REPLICAS}"
           echo "App Env: ${S3_APP_ENV_URI}"
           echo "App Directory: ${{ secrets.SERVER_APP_DIRECTORY }}"
           echo "Server: ${{ secrets.SERVER_SSH_HOST }}"
@@ -137,6 +140,7 @@ jobs:
           script: |
             mkdir -p "${{ secrets.SERVER_APP_DIRECTORY }}"
             rm -f "${{ secrets.SERVER_APP_DIRECTORY }}/docker-compose.yml"
+            rm -f "${{ secrets.SERVER_APP_DIRECTORY }}/nginx.conf"
 
       - name: Docker Compose 파일 전송
         uses: appleboy/scp-action@v1
@@ -145,10 +149,10 @@ jobs:
           username: ${{ secrets.SERVER_SSH_USERNAME }}
           key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_SSH_PORT }}
-          source: "docker/develop/docker-compose.yml"
+          source: "docker/develop/docker-compose.yml,docker/develop/nginx.conf"
           target: "${{ secrets.SERVER_APP_DIRECTORY }}/"
           strip_components: 2
-          overwrite: false
+          overwrite: true
 
       - name: SSH 접속 및 develop 배포 실행
         uses: appleboy/ssh-action@v1
@@ -156,6 +160,7 @@ jobs:
           ENVIRONMENT: ${{ env.ENVIRONMENT }}
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
           SERVER_APP_DIRECTORY: ${{ secrets.SERVER_APP_DIRECTORY }}
+          APP_REPLICAS: ${{ env.APP_REPLICAS }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         with:
@@ -163,7 +168,7 @@ jobs:
           username: ${{ secrets.SERVER_SSH_USERNAME }}
           key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_SSH_PORT }}
-          envs: ENVIRONMENT,IMAGE_TAG,ECR_REGISTRY,ECR_IMAGE_NAME,ECR_PASSWORD,SERVER_APP_DIRECTORY,APP_ENV_B64,POSTGRES_USER,POSTGRES_PASSWORD
+          envs: ENVIRONMENT,IMAGE_TAG,ECR_REGISTRY,ECR_IMAGE_NAME,ECR_PASSWORD,SERVER_APP_DIRECTORY,APP_ENV_B64,APP_REPLICAS,POSTGRES_USER,POSTGRES_PASSWORD
           script: |
             set -euo pipefail
 
@@ -255,12 +260,13 @@ jobs:
             echo "[5] Docker Compose 치환 전용 환경 파일 갱신"
             {
               echo "# GitHub Actions develop deployment compose variables"
-              echo "CONTAINER_NAME=umc-product-server-dev"
+              echo "NGINX_CONTAINER_NAME=umc-product-nginx-dev"
               echo "IMAGE_NAME=${ECR_IMAGE_NAME}"
               echo "IMAGE_TAG=${IMAGE_TAG}"
-              echo "SERVICE_PORT=8080"
+              echo "HTTP_PORT=8080"
               echo "MANAGEMENT_PORT=9090"
               echo "SPRING_PROFILES_ACTIVE=dev"
+              echo "APP_REPLICAS=${APP_REPLICAS}"
               echo "POSTGRES_CONTAINER_NAME=umc-product-postgres-dev"
               echo "POSTGRES_DB=development"
               echo "POSTGRES_USER=${POSTGRES_USER}"
@@ -268,14 +274,14 @@ jobs:
               echo "VALKEY_CONTAINER_NAME=umc-product-valkey-dev"
             } > .env
 
-            echo "[6] Docker 이미지 Pull"
-            docker_compose pull
+            echo "[6] App 이미지 Pull"
+            docker_compose pull app
 
             echo "[7] 기존 컨테이너 중지"
             docker_compose down
 
             echo "[8] 새 컨테이너 시작"
-            if ! docker_compose up -d --remove-orphans; then
+            if ! docker_compose up -d --scale "app=${APP_REPLICAS}" --remove-orphans; then
               echo "컨테이너 시작 또는 healthcheck 대기 중 실패했습니다."
               echo ""
               echo "Docker Compose 상태:"
@@ -286,6 +292,9 @@ jobs:
               echo ""
               echo "Valkey 로그:"
               docker_compose logs --tail=100 valkey || true
+              echo ""
+              echo "Nginx 로그:"
+              docker_compose logs --tail=100 nginx || true
               echo ""
               echo "App 로그:"
               docker_compose logs --tail=100 app || true

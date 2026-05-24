@@ -125,7 +125,7 @@ jobs:
           username: ${{ secrets.SERVER_SSH_USERNAME }}
           key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_SSH_PORT }}
-          source: "docker/develop/docker-compose.yml"
+          source: "docker/develop/docker-compose.yml,docker/develop/nginx.conf"
           target: "${{ secrets.SERVER_APP_DIRECTORY }}/"
           strip_components: 2
           overwrite: true
@@ -203,12 +203,13 @@ jobs:
             echo "📝 Docker Compose 치환 전용 .env 파일 생성 중..."
             {
               echo "# GitHub Actions deployment compose variables"
-              echo "CONTAINER_NAME=umc-product-server-${PROFILE}"
+              echo "NGINX_CONTAINER_NAME=umc-product-nginx-${PROFILE}"
               echo "IMAGE_NAME=${{ secrets.DOCKERHUB_REPOSITORY_NAME }}"
               echo "IMAGE_TAG=${{ env.IMAGE_TAG }}"
-              echo "SERVICE_PORT=8080"
+              echo "HTTP_PORT=8080"
               echo "MANAGEMENT_PORT=9090"
               echo "SPRING_PROFILES_ACTIVE=${PROFILE}"
+              echo "APP_REPLICAS=1"
               echo "POSTGRES_CONTAINER_NAME=umc-product-postgres-${PROFILE}"
               echo "POSTGRES_DB=umc_product"
               echo "POSTGRES_USER=umc_product"
@@ -228,13 +229,13 @@ jobs:
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "📥 Docker 이미지 Pull"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            docker compose pull
+            docker compose pull app
 
             echo "🛑 기존 컨테이너 중지 중..."
             docker compose down
 
             echo "🚀 새 컨테이너 시작 중..."
-            docker compose up -d --remove-orphans
+            docker compose up -d --scale app=1 --remove-orphans
 
             if [ $? -ne 0 ]; then
               echo "❌ 컨테이너 시작 실패"
