@@ -173,7 +173,7 @@ public class TraceFlowAspect {
 
         private static boolean isApplicationService(String packageName, Class<?> targetClass) {
             return packageName.contains(APPLICATION_SERVICE_PACKAGE)
-                || Arrays.stream(targetClass.getInterfaces())
+                || Arrays.stream(ClassUtils.getAllInterfacesForClass(targetClass))
                 .anyMatch(type -> type.getSimpleName().endsWith("UseCase"));
         }
 
@@ -183,7 +183,7 @@ public class TraceFlowAspect {
                 return declaringClass.getSimpleName();
             }
 
-            return Arrays.stream(targetClass.getInterfaces())
+            return Arrays.stream(ClassUtils.getAllInterfacesForClass(targetClass))
                 .filter(type -> type.getSimpleName().endsWith("UseCase"))
                 .filter(type -> hasSameMethod(type, method))
                 .min(Comparator.comparing(Class::getSimpleName))

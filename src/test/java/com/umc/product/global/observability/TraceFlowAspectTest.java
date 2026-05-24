@@ -90,6 +90,19 @@ class TraceFlowAspectTest {
         assertThat(metadataCache).hasSize(1);
     }
 
+    @Test
+    @DisplayName("상위 클래스가 구현한 UseCase interface도 UseCase span으로 감싼다")
+    void 상위_클래스_usecase_interface_탐색() throws Throwable {
+        Method method = DemoUseCase.class.getMethod("getById", Long.class);
+        ProceedingJoinPoint joinPoint = joinPoint(method, new InheritedDemoQueryService(), "result");
+
+        Object result = sut.traceUseCaseAndAdapter(joinPoint);
+
+        assertThat(result).isEqualTo("result");
+        then(span).should().name("usecase.DemoUseCase.getById");
+        then(span).should().tag("app.usecase", "DemoUseCase");
+    }
+
     private ProceedingJoinPoint joinPoint(Method method, Object target, Object result) throws Throwable {
         MethodSignature signature = mock(MethodSignature.class);
         given(signature.getMethod()).willReturn(method);
@@ -113,6 +126,17 @@ class TraceFlowAspectTest {
         public String getById(Long id) {
             return "result";
         }
+    }
+
+    static class BaseDemoQueryService implements DemoUseCase {
+
+        @Override
+        public String getById(Long id) {
+            return "result";
+        }
+    }
+
+    static class InheritedDemoQueryService extends BaseDemoQueryService {
     }
 
     static class DemoPersistenceAdapter {
