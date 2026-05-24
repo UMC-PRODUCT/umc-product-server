@@ -1,6 +1,10 @@
 package com.umc.product.global.config;
 
-import com.umc.product.global.security.StompChannelInterceptor;
+import com.umc.product.global.websocket.interceptor.ShutdownAwareHandshakeInterceptor;
+import com.umc.product.global.websocket.interceptor.StompPrincipalInterceptor;
+import com.umc.product.global.websocket.interceptor.WebSocketInboundMetricInterceptor;
+import com.umc.product.global.websocket.interceptor.WebSocketOutboundMetricInterceptor;
+import com.umc.product.global.websocket.interceptor.WebSocketRateLimitInterceptor;
 import io.micrometer.context.ContextSnapshot;
 import io.micrometer.context.ContextSnapshotFactory;
 import io.micrometer.observation.Observation;
@@ -21,15 +25,13 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final StompChannelInterceptor stompChannelInterceptor;
+    private final StompPrincipalInterceptor stompPrincipalInterceptor;
+    private final WebSocketRateLimitInterceptor webSocketRateLimitInterceptor;
+    private final WebSocketInboundMetricInterceptor webSocketInboundMetricInterceptor;
+    private final WebSocketOutboundMetricInterceptor webSocketOutboundMetricInterceptor;
+    private final ShutdownAwareHandshakeInterceptor shutdownAwareHandshakeInterceptor;
     private final ObservationRegistry observationRegistry;
     private final ContextSnapshotFactory snapshotFactory;
-
-    @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
-            .withSockJS();
-    }
 
     @Bean
     public ThreadPoolTaskScheduler webSocketHeartbeatScheduler() {
@@ -37,6 +39,13 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
         scheduler.setPoolSize(1);
         scheduler.setThreadNamePrefix("ws-heartbeat-");
         return scheduler;
+    }
+
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws")
+            .addInterceptors(shutdownAwareHandshakeInterceptor)
+            .withSockJS();
     }
 
     @Override
@@ -49,21 +58,25 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(stompChannelInterceptor);
+        registration.interceptors(
+            stompPrincipalInterceptor,
+            webSocketRateLimitInterceptor,
+            webSocketInboundMetricInterceptor
+        );
         registration.taskExecutor()
             .corePoolSize(32)
             .maxPoolSize(32)
-            .queueCapacity(2048)
-            .keepAliveSeconds(60);
+            .queueCapacity(2048);
     }
 
     @Override
     public void configureClientOutboundChannel(ChannelRegistration registration) {
+        registration.interceptors(webSocketOutboundMetricInterceptor);
+
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(16);
         executor.setMaxPoolSize(16);
         executor.setQueueCapacity(4096);
-        executor.setKeepAliveSeconds(60);
         executor.setThreadNamePrefix("ws-outbound-");
         executor.setTaskDecorator(runnable -> {
             ContextSnapshot snapshot = snapshotFactory.captureAll();
