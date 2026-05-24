@@ -60,8 +60,8 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(
             stompPrincipalInterceptor,
-            webSocketRateLimitInterceptor,
-            webSocketInboundMetricInterceptor
+            webSocketInboundMetricInterceptor,
+            webSocketRateLimitInterceptor
         );
         registration.taskExecutor()
             .corePoolSize(32)
