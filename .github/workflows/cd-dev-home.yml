@@ -152,7 +152,7 @@ jobs:
           source: "docker/develop/docker-compose.yml,docker/develop/nginx.conf"
           target: "${{ secrets.SERVER_APP_DIRECTORY }}/"
           strip_components: 2
-          overwrite: true
+          overwrite: false
 
       - name: SSH 접속 및 develop 배포 실행
         uses: appleboy/ssh-action@v1
