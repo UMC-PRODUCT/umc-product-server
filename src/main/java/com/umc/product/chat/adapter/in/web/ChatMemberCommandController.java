@@ -45,6 +45,6 @@ public class ChatMemberCommandController {
         @PathVariable Long roomId,
         @PathVariable Long memberId
     ) {
-        leaveChatRoomUseCase.leaveChatRoom(new LeaveChatRoomCommand(roomId, memberId));
+        leaveChatRoomUseCase.leaveChatRoom(LeaveChatRoomCommand.of(roomId, memberId));
     }
 }
