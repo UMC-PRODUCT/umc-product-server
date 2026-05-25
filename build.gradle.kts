@@ -1,8 +1,12 @@
+import org.gradle.api.plugins.quality.Checkstyle
+
 plugins {
     java
     id("org.springframework.boot") version "3.5.9"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.asciidoctor.jvm.convert") version "4.0.5"
+    id("com.diffplug.spotless") version "8.5.1"
+    checkstyle
     jacoco
 }
 
@@ -171,6 +175,87 @@ dependencies {
 
 springBoot {
     buildInfo()
+}
+
+spotless {
+    ratchetFrom("origin/develop")
+
+    java {
+        target("src/**/*.java")
+        importOrder("\\#", "java", "javax", "org", "net", "com", "")
+        removeUnusedImports()
+        forbidWildcardImports()
+        trimTrailingWhitespace()
+        leadingTabsToSpaces(4)
+        endWithNewline()
+        formatAnnotations()
+    }
+
+    format("misc") {
+        target(
+            "*.gradle.kts",
+            ".editorconfig",
+            ".github/**/*.yml",
+            ".github/**/*.yaml",
+            "config/**/*.xml"
+        )
+        trimTrailingWhitespace()
+        leadingTabsToSpaces(4)
+        endWithNewline()
+    }
+}
+
+checkstyle {
+    toolVersion = "13.4.2"
+    configDirectory.set(layout.projectDirectory.dir("config/checkstyle"))
+    configProperties["suppressionFile"] =
+        layout.projectDirectory.file("config/checkstyle/naver-checkstyle-suppressions.xml").asFile.absolutePath
+    isIgnoreFailures = false
+    maxErrors = 0
+    maxWarnings = Int.MAX_VALUE
+}
+
+val lintBaseRef = providers.gradleProperty("lintBase").orElse("origin/develop")
+
+fun changedJavaFiles(vararg sourceRoots: String) = lintBaseRef.flatMap { baseRef ->
+    val diffAgainstBaseProvider = providers.exec {
+        commandLine("git", "diff", "--name-only", "--diff-filter=ACMR", "$baseRef...HEAD", "--", *sourceRoots)
+        isIgnoreExitValue = true
+    }.standardOutput.asText
+
+    val localDiffProvider = providers.exec {
+        commandLine("git", "diff", "--name-only", "--diff-filter=ACMR", "HEAD", "--", *sourceRoots)
+        isIgnoreExitValue = true
+    }.standardOutput.asText
+
+    diffAgainstBaseProvider.zip(localDiffProvider) { baseOutput, localOutput ->
+        (baseOutput.lines() + localOutput.lines())
+            .asSequence()
+            .map(String::trim)
+            .filter { it.endsWith(".java") && it.isNotBlank() }
+            .distinct()
+            .map(::file)
+            .filter(File::exists)
+            .toList()
+    }
+}
+
+tasks.withType<Checkstyle>().configureEach {
+    classpath = files()
+    exclude("**/Q*.java")
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+tasks.named<Checkstyle>("checkstyleMain") {
+    setSource(files(changedJavaFiles("src/main/java")))
+}
+
+tasks.named<Checkstyle>("checkstyleTest") {
+    setSource(files(changedJavaFiles("src/test/java")))
 }
 
 tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
