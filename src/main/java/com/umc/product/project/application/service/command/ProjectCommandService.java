@@ -98,6 +98,10 @@ public class ProjectCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_DRAFT_ALREADY_IN_PROGRESS);
         }
 
+        if (loadProjectPort.existsDraftByOwnerAndGisu(command.productOwnerMemberId(), command.gisuId())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DRAFT_ALREADY_IN_PROGRESS);
+        }
+
         MemberInfo member = getMemberUseCase.getById(command.productOwnerMemberId());
         ChapterInfo chapter = getChapterUseCase.byGisuAndSchool(command.gisuId(), member.schoolId());
 
