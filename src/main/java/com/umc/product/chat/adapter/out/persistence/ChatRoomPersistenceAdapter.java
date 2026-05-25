@@ -21,6 +21,7 @@ public class ChatRoomPersistenceAdapter implements
     LoadChatMemberPort {
 
     private final ChatRoomJpaRepository chatRoomJpaRepository;
+    private final ChatRoomQueryRepository chatRoomQueryRepository;
     private final ChatMemberJpaRepository chatMemberJpaRepository;
 
     // ========== ChatRoom ====================
@@ -43,10 +44,7 @@ public class ChatRoomPersistenceAdapter implements
 
     @Override
     public List<ChatRoom> listByMemberId(Long memberId) {
-        List<Long> roomIds = chatMemberJpaRepository.findAllByMemberId(memberId).stream()
-            .map(ChatMember::getRoomId)
-            .toList();
-        return chatRoomJpaRepository.findAllById(roomIds);
+        return chatRoomQueryRepository.findAllByMemberId(memberId);
     }
 
     // ===== ChatMember ====================================
