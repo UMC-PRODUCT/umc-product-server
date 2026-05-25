@@ -52,4 +52,9 @@ public class ProjectPartQuotaPersistenceAdapter
         }
         repository.deleteByProjectIdAndPartIn(projectId, parts);
     }
+
+    @Override
+    public void deleteAllByProjectId(Long projectId) {
+        repository.deleteAllByProjectId(projectId);
+    }
 }

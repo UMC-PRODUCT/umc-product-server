@@ -4,6 +4,7 @@ import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.event.domain.DomainEvent;
 import java.util.Collection;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.event-outbox.enabled", havingValue = "false", matchIfMissing = true)
 public class SpringDomainEventPublisher implements DomainEventPublisher {
 
     private final ApplicationEventPublisher delegate;

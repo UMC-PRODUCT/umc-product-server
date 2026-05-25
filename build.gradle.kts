@@ -258,6 +258,12 @@ tasks.named<Checkstyle>("checkstyleTest") {
     setSource(files(changedJavaFiles("src/test/java")))
 }
 
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    layered {
+        enabled.set(true)
+    }
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.add("-Xlint:deprecation")
     options.generatedSourceOutputDirectory.set(querydslDir)

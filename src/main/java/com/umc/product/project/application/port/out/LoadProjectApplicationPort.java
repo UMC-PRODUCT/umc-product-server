@@ -103,4 +103,10 @@ public interface LoadProjectApplicationPort {
         Long matchingRoundId,
         ProjectApplicationStatus status
     );
+
+    /**
+     * 프로젝트 abort 시 일괄 취소 대상 application 조회용. DRAFT/SUBMITTED 상태 application 만 반환합니다.
+     * APPROVED/REJECTED/CANCELLED 는 이미 종결되어 추가 정리가 필요 없습니다.
+     */
+    List<ProjectApplication> listInProgressByProjectId(Long projectId);
 }

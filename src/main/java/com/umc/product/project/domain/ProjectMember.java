@@ -112,4 +112,17 @@ public class ProjectMember extends BaseEntity {
         this.statusChangeReason = reason;
         this.statusChangedMemberId = removedByMemberId;
     }
+
+    /**
+     * 멤버 활동을 자진 종료 처리합니다 (soft delete).
+     * status 를 {@link ProjectMemberStatus#WITHDRAWN} 으로 바꾸고 변경 메타데이터를 기록합니다.
+     * <p>
+     * 프로젝트 중단(abort) 시 일괄 처리에도 동일 메서드를 사용하며, 사유에 명시합니다.
+     */
+    public void withdraw(String reason, Long decidedByMemberId) {
+        this.status = ProjectMemberStatus.WITHDRAWN;
+        this.statusUpdatedAt = Instant.now();
+        this.statusChangeReason = reason;
+        this.statusChangedMemberId = decidedByMemberId;
+    }
 }
