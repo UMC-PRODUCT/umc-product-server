@@ -14,4 +14,7 @@ public interface ProjectJpaRepository extends JpaRepository<Project, Long> {
 
     boolean existsByCreatorMemberIdAndGisuIdAndStatus(
         Long creatorMemberId, Long gisuId, ProjectStatus status);
+
+    boolean existsByProductOwnerMemberIdAndGisuIdAndStatus(
+        Long productOwnerMemberId, Long gisuId, ProjectStatus status);
 }

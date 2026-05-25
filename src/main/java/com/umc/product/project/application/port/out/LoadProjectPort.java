@@ -44,6 +44,13 @@ public interface LoadProjectPort {
     boolean existsDraftByCreatorAndGisu(Long creatorMemberId, Long gisuId);
 
     /**
+     * 특정 PO 가 특정 기수에 활성 DRAFT 프로젝트를 보유하고 있는지 확인합니다.
+     * 운영진이 다른 챌린저를 PO 로 임명하는 경로에서 PO 의 DRAFT 중복을 차단하기 위한 체크.
+     * (owner, gisu) DRAFT 1 개 partial unique index 와 짝.
+     */
+    boolean existsDraftByOwnerAndGisu(Long productOwnerMemberId, Long gisuId);
+
+    /**
      * 동적 조건으로 프로젝트 목록을 페이지 조회합니다.
      */
     Page<Project> search(SearchProjectQuery query);
