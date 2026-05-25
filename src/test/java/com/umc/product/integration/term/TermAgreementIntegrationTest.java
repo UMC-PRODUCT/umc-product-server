@@ -62,7 +62,7 @@ class TermAgreementIntegrationTest extends IntegrationTestSupport {
         manageTermAgreementUseCase.createTermConsent(command);
 
         // then: Port 로 직접 조회해 영속 상태 검증
-        assertThat(loadTermConsentPort.existsByMemberIdAndTermType(member.getId(), TermType.SERVICE))
+        assertThat(loadTermConsentPort.existsByMemberIdAndTermId(member.getId(), term.getId()))
             .isTrue();
 
         // and: Query UseCase 도 동일하게 동의 약관을 반환
@@ -77,7 +77,7 @@ class TermAgreementIntegrationTest extends IntegrationTestSupport {
         // given
         Member member = memberFixture.일반("이몽룡");
         Term term = termFixture.필수_약관(TermType.PRIVACY);
-        termFixture.약관_동의(member.getId(), TermType.PRIVACY);
+        termFixture.약관_동의(member.getId(), term);
 
         CreateTermConsentCommand command = CreateTermConsentCommand.builder()
             .memberId(member.getId())
@@ -90,6 +90,30 @@ class TermAgreementIntegrationTest extends IntegrationTestSupport {
             .isInstanceOf(TermDomainException.class)
             .extracting("baseCode")
             .isEqualTo(TermErrorCode.TERMS_CONSENT_ALREADY_EXISTS);
+    }
+
+    @Test
+    void 같은_타입의_새_약관에는_재동의할_수_있다() {
+        // given
+        Member member = memberFixture.일반("변사또");
+        Term oldTerm = termFixture.필수_약관(TermType.SERVICE);
+        termFixture.약관_동의(member.getId(), oldTerm);
+
+        Term newTerm = termFixture.필수_약관(TermType.SERVICE);
+        CreateTermConsentCommand command = CreateTermConsentCommand.builder()
+            .memberId(member.getId())
+            .termId(newTerm.getId())
+            .isAgreed(true)
+            .build();
+
+        // when
+        manageTermAgreementUseCase.createTermConsent(command);
+
+        // then
+        List<TermInfo> agreed = getTermAgreementUseCase.getAgreedTermsByMemberId(member.getId());
+        assertThat(agreed)
+            .extracting(TermInfo::id)
+            .containsExactlyInAnyOrder(oldTerm.getId(), newTerm.getId());
     }
 
     @Test

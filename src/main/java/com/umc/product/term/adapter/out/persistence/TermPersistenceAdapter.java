@@ -36,6 +36,11 @@ public class TermPersistenceAdapter implements LoadTermPort, SaveTermPort {
         return repository.findAllByTypeInAndActiveIsTrue(types);
     }
 
+    @Override
+    public List<Term> listByIds(List<Long> ids) {
+        return repository.findAllById(ids);
+    }
+
     public List<Term> findAllActiveRequired() {
         return queryRepository.findAllActiveRequired();
     }

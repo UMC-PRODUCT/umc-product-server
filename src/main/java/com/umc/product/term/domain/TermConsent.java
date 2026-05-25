@@ -29,6 +29,9 @@ public class TermConsent extends BaseEntity {
     @Column(name = "member_id", nullable = false)
     private Long memberId;  // ID 참조만
 
+    @Column(name = "term_id", nullable = false)
+    private Long termId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "term_type", nullable = false, length = 20)
     private TermType termType;
@@ -37,8 +40,9 @@ public class TermConsent extends BaseEntity {
     private Instant agreedAt;
 
     @Builder
-    private TermConsent(Long memberId, TermType termType, Instant agreedAt) {
+    private TermConsent(Long memberId, Long termId, TermType termType, Instant agreedAt) {
         this.memberId = memberId;
+        this.termId = termId;
         this.termType = termType;
         this.agreedAt = agreedAt != null ? agreedAt : Instant.now();
     }

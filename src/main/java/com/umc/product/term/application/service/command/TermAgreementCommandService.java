@@ -37,12 +37,13 @@ public class TermAgreementCommandService implements ManageTermAgreementUseCase {
         if (command.isAgreed()) {
             // 동의 처리
             // 이미 동의했는지 확인
-            if (loadTermConsentPort.existsByMemberIdAndTermType(command.memberId(), term.getType())) {
+            if (loadTermConsentPort.existsByMemberIdAndTermId(command.memberId(), term.getId())) {
                 throw new TermDomainException(TermErrorCode.TERMS_CONSENT_ALREADY_EXISTS);
             }
 
             TermConsent termConsent = TermConsent.builder()
                 .memberId(command.memberId())
+                .termId(term.getId())
                 .termType(term.getType())
                 .agreedAt(Instant.now())
                 .build();
@@ -50,16 +51,17 @@ public class TermAgreementCommandService implements ManageTermAgreementUseCase {
             saveTermConsentPort.save(termConsent);
 
             // 동의 로그 기록
-            saveConsentLog(command.memberId(), term.getType(), TermConsentStatus.AGREED);
+            saveConsentLog(command.memberId(), term.getId(), term.getType(), TermConsentStatus.AGREED);
         }
         // 미동의 시 아무것도 하지 않음 (회원가입 시나리오에서 기존 동의 기록이 없음)
         // TODO: 동의 철회의 경우에 대한 처리 로직을 추가할 것
     }
 
-    private void saveConsentLog(Long memberId, TermType termType, TermConsentStatus status) {
+    private void saveConsentLog(Long memberId, Long termId, TermType termType, TermConsentStatus status) {
         saveTermConsentLogPort.save(
             TermConsentLog.builder()
                 .memberId(memberId)
+                .termId(termId)
                 .termType(termType)
                 .status(status)
                 .build()

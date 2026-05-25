@@ -43,7 +43,7 @@
 
 `docs/superpowers/plans/2026-05-26-terms-consent-reconsent.md`에 PR 분할과 커밋 단위 계획을 저장한다.
 
-- [ ] **Step 3: 문서 커밋**
+- [x] **Step 3: 문서 커밋**
 
 Run:
 
@@ -61,11 +61,11 @@ Expected: commit succeeds.
 - Modify: `src/main/java/com/umc/product/member/application/service/EmailMemberRegisterService.java`
 - Modify: `src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java`
 
-- [ ] **Step 1: 실패 테스트 작성**
+- [x] **Step 1: 실패 테스트 작성**
 
 `EmailMemberRegisterServiceTest`에 이메일 회원가입 성공 시 전달된 약관 동의마다 `ManageTermAgreementUseCase#createTermConsent`가 호출되는 테스트를 추가한다.
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run:
 
@@ -75,11 +75,11 @@ Run:
 
 Expected: compile 또는 test failure. 원인은 `EmailMemberRegisterService`가 `ManageTermAgreementUseCase`를 주입받지 않거나 호출하지 않기 때문이다.
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `EmailMemberRegisterService`에 `ManageTermAgreementUseCase`를 주입하고 `created.getId()` 기준으로 `command.termConsents()`를 저장한다. OAuth 회원가입 요청에도 `@Valid`를 추가한다.
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run:
 
@@ -104,14 +104,15 @@ Expected: PASS.
 - Modify: `src/main/java/com/umc/product/term/adapter/out/persistence/TermConsentRepository.java`
 - Modify: `src/main/java/com/umc/product/term/adapter/out/persistence/TermConsentPersistenceAdapter.java`
 - Modify: `src/test/java/com/umc/product/term/application/port/in/command/ManageTermAgreementUseCaseTest.java`
+- Create: `src/test/java/com/umc/product/term/application/port/in/query/TermAgreementQueryServiceTest.java`
 - Modify: `src/test/java/com/umc/product/integration/term/TermAgreementIntegrationTest.java`
 - Modify: `src/test/java/com/umc/product/support/fixture/TermFixture.java`
 
-- [ ] **Step 1: 실패 테스트 작성**
+- [x] **Step 1: 실패 테스트 작성**
 
 `ManageTermAgreementUseCaseTest`에서 저장되는 `TermConsent`와 `TermConsentLog`가 `termId`를 포함하는지 검증한다. 통합 테스트에서는 같은 `TermType`의 새 약관에 재동의할 수 있는지 검증한다.
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run:
 
@@ -121,7 +122,7 @@ Run:
 
 Expected: compile 또는 test failure. 원인은 `TermConsent`/`TermConsentLog`에 `termId`가 없고 중복 검사가 `termType` 기준이기 때문이다.
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `termId` 필드, repository 조회 메서드, service 저장/조회 로직, Flyway migration을 추가한다.
 
@@ -134,6 +135,12 @@ Run:
 ```
 
 Expected: PASS.
+
+현 작업 환경에서는 `TermAgreementIntegrationTest`가 Testcontainers Docker 클라이언트 초기화 실패로 실행되지 않았다. Docker가 준비된 CI 또는 로컬 환경에서 재실행해야 한다. 대신 아래 Docker 비의존 단위 테스트는 통과했다.
+
+```bash
+./gradlew test --tests "com.umc.product.member.application.service.EmailMemberRegisterServiceTest" --tests "com.umc.product.term.application.port.in.command.ManageTermAgreementUseCaseTest" --tests "com.umc.product.term.application.port.in.query.TermAgreementQueryServiceTest"
+```
 
 - [ ] **Step 5: PR 1 범위 전체 검증**
 

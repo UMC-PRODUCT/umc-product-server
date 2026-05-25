@@ -26,8 +26,18 @@ public class TermConsentPersistenceAdapter implements LoadTermConsentPort, SaveT
     }
 
     @Override
+    public Optional<TermConsent> findByMemberIdAndTermId(Long memberId, Long termId) {
+        return repository.findByMemberIdAndTermId(memberId, termId);
+    }
+
+    @Override
     public boolean existsByMemberIdAndTermType(Long memberId, TermType termType) {
         return repository.existsByMemberIdAndTermType(memberId, termType);
+    }
+
+    @Override
+    public boolean existsByMemberIdAndTermId(Long memberId, Long termId) {
+        return repository.existsByMemberIdAndTermId(memberId, termId);
     }
 
     @Override

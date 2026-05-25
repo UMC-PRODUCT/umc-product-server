@@ -27,6 +27,11 @@ public interface LoadTermPort {
     List<Term> findAllActiveByTypes(List<TermType> types);
 
     /**
+     * 전달받은 ID에 해당하는 약관을 한 번에 조회합니다.
+     */
+    List<Term> listByIds(List<Long> ids);
+
+    /**
      * 현재 활성화된 필수 약관 목록을 조회합니다.
      */
     List<Term> findAllActiveRequired();

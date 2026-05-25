@@ -30,6 +30,9 @@ public class TermConsentLog extends BaseEntity {
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
+    @Column(name = "term_id", nullable = false)
+    private Long termId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "term_type", nullable = false, length = 20)
     private TermType termType;
@@ -42,8 +45,9 @@ public class TermConsentLog extends BaseEntity {
     private Instant occurredAt;
 
     @Builder
-    private TermConsentLog(Long memberId, TermType termType, TermConsentStatus status) {
+    private TermConsentLog(Long memberId, Long termId, TermType termType, TermConsentStatus status) {
         this.memberId = memberId;
+        this.termId = termId;
         this.termType = termType;
         this.status = status;
         this.occurredAt = Instant.now();
