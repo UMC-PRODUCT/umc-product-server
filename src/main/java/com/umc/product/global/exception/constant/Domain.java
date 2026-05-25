@@ -29,5 +29,6 @@ public enum Domain {
     LLM,
     ANALYTICS,
     INQUIRY,
+    CHAT,
     MAINTENANCE
 }
