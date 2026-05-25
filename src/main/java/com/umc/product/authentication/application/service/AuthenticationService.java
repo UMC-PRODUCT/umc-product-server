@@ -1,5 +1,12 @@
 package com.umc.product.authentication.application.service;
 
+import java.security.SecureRandom;
+import java.util.Collections;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authentication.application.event.SendVerificationEmailEvent;
 import com.umc.product.authentication.application.port.in.command.ManageAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
@@ -15,12 +22,11 @@ import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
-import java.security.SecureRandom;
-import java.util.UUID;
+import com.umc.product.term.application.port.in.query.GetRequiredTermConsentStatusUseCase;
+import com.umc.product.term.application.port.in.query.dto.RequiredTermConsentStatusInfo;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -37,6 +43,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
     private final JwtTokenProvider jwtTokenProvider;
     private final GetMemberCredentialUseCase getMemberCredentialUseCase;
     private final DomainEventPublisher eventPublisher;
+    private final GetRequiredTermConsentStatusUseCase getRequiredTermConsentStatusUseCase;
 
     // TODO: EmailSendUseCase와 구분할 필요가 있습니다.
     @Override
@@ -48,12 +55,20 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
             단, RT의 마지막 사용으로부터 5분 이내에는 사용 가능하도록 함.
 
             이는 네트워크 이슈로 인해서 Server에 요청이 접수되었지만 클라이언트에게는 응답이 가지 않은 경우를 대비하기 위함임
-         */
-        
+        */
+
         Long memberId = jwtTokenProvider.parseRefreshToken(command.refreshToken());
+        RequiredTermConsentStatusInfo requiredTermConsentStatus =
+            getRequiredTermConsentStatusUseCase.getRequiredTermConsentStatus(memberId);
 
         return NewTokens.builder()
-            .accessToken(jwtTokenProvider.createAccessToken(memberId, null))
+            .accessToken(jwtTokenProvider.createAccessToken(
+                memberId,
+                Collections.emptyList(),
+                null,
+                !requiredTermConsentStatus.needsReconsent(),
+                requiredTermConsentStatus.agreedRequiredTermIds()
+            ))
             .refreshToken(jwtTokenProvider.createRefreshToken(memberId))
             .build();
     }

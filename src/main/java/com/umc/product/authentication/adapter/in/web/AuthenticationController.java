@@ -1,5 +1,12 @@
 package com.umc.product.authentication.adapter.in.web;
 
+import java.util.Collections;
+
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.authentication.adapter.in.web.dto.request.AppleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.GoogleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.KakaoCodeLoginRequest;
@@ -16,13 +23,11 @@ import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
+import com.umc.product.term.application.port.in.query.GetRequiredTermConsentStatusUseCase;
+import com.umc.product.term.application.port.in.query.dto.RequiredTermConsentStatusInfo;
+
 import jakarta.validation.Valid;
-import java.util.Collections;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,6 +37,7 @@ public class AuthenticationController implements AuthenticationControllerInterfa
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
     private final VerifyOAuthTokenPort verifyOAuthTokenPort;
     private final JwtTokenProvider jwtTokenProvider;
+    private final GetRequiredTermConsentStatusUseCase getRequiredTermConsentStatusUseCase;
 
     @Override
     @PostMapping("login/google")
@@ -113,10 +119,14 @@ public class AuthenticationController implements AuthenticationControllerInterfa
                                                   String appleRefreshToken, ClientType clientType) {
         if (result.isExistingMember()) {
             // 기존 회원: JWT 발급
+            RequiredTermConsentStatusInfo requiredTermConsentStatus =
+                getRequiredTermConsentStatusUseCase.getRequiredTermConsentStatus(result.memberId());
             String accessToken = jwtTokenProvider.createAccessToken(
                 result.memberId(),
                 Collections.emptyList(),
-                clientType
+                clientType,
+                !requiredTermConsentStatus.needsReconsent(),
+                requiredTermConsentStatus.agreedRequiredTermIds()
             );
             String refreshToken = jwtTokenProvider.createRefreshToken(result.memberId());
 

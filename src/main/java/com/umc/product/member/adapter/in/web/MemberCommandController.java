@@ -1,5 +1,7 @@
 package com.umc.product.member.adapter.in.web;
 
+import java.util.Collections;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,6 +36,8 @@ import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMembe
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
 import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
+import com.umc.product.term.application.port.in.query.GetRequiredTermConsentStatusUseCase;
+import com.umc.product.term.application.port.in.query.dto.RequiredTermConsentStatusInfo;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -55,7 +59,7 @@ public class MemberCommandController {
 
     private final RegisterOAuthMemberUseCase registerOAuthMemberUseCase;
     private final RegisterEmailMemberUseCase registerEmailMemberUseCase;
-
+    private final GetRequiredTermConsentStatusUseCase getRequiredTermConsentStatusUseCase;
 
     @Public
     @Operation(summary = "[REGISTER-001] OAuth 회원가입",
@@ -69,7 +73,8 @@ public class MemberCommandController {
     @PostMapping({"/register", "/register/oauth"})
     @WebhookAlarm(
         title = "'새로운 회원이 가입했어요!'",
-        content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
+        content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name"
+            + " + '\n학교: ' + #request.schoolId"
     )
     RegisterResponse registerMemberByOAuth(@Valid @RequestBody OAuthRegisterMemberRequest request) {
         OAuthVerificationClaims claims = jwtTokenProvider.parseOAuthVerificationToken(request.oAuthVerificationToken());
@@ -94,7 +99,7 @@ public class MemberCommandController {
 
         Long createdMemberId = registerOAuthMemberUseCase.register(command);
 
-        String accessToken = jwtTokenProvider.createAccessToken(createdMemberId, null);
+        String accessToken = createAccessToken(createdMemberId);
         String refreshToken = jwtTokenProvider.createRefreshToken(createdMemberId);
 
         return RegisterResponse.of(createdMemberId, accessToken, refreshToken);
@@ -111,7 +116,8 @@ public class MemberCommandController {
     @Public
     @WebhookAlarm(
         title = "'새로운 회원이 가입했어요!'",
-        content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
+        content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name"
+            + " + '\n학교: ' + #request.schoolId"
     )
     RegisterResponse registerMemberByEmail(@Valid @RequestBody EmailRegisterMemberRequest request) {
         String email = jwtTokenProvider.parseEmailVerificationToken(
@@ -121,7 +127,7 @@ public class MemberCommandController {
 
         Long createdMemberId = registerEmailMemberUseCase.register(request.toCommand(email));
 
-        String accessToken = jwtTokenProvider.createAccessToken(createdMemberId, null);
+        String accessToken = createAccessToken(createdMemberId);
         String refreshToken = jwtTokenProvider.createRefreshToken(createdMemberId);
 
         return RegisterResponse.of(createdMemberId, accessToken, refreshToken);
@@ -156,10 +162,12 @@ public class MemberCommandController {
 
     @DeleteMapping
     @Operation(summary = "[MEMBER-003] 회원 탈퇴",
-        description = "Google/Kakao OAuth 연동이 있는 경우 해당 Provider의 Access Token을 함께 전달하면 Provider측 연결도 해제됩니다.")
+        description = "Google/Kakao OAuth 연동이 있는 경우 해당 Provider의 Access Token을 함께 전달하면 "
+            + "Provider측 연결도 해제됩니다.")
     @WebhookAlarm(
         title = "'회원이 탈퇴하였습니다'",
-        content = "'회원 ID: ' + #memberPrincipal.getMemberId() + '\n닉네임/이름: ' + #result.nickname() + '/' + #result.name() + '\n학교: ' + #result.schoolName()"
+        content = "'회원 ID: ' + #memberPrincipal.getMemberId() + '\n닉네임/이름: '"
+            + " + #result.nickname() + '/' + #result.name() + '\n학교: ' + #result.schoolName()"
     )
     public MemberInfoResponse deleteMember(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -168,7 +176,10 @@ public class MemberCommandController {
         return deleteMemberById(memberPrincipal.getMemberId(), request);
     }
 
-    @Operation(summary = "[MEMBER-004] 관리자 권한으로 회원 게정 삭제 (Hard Delete)", description = "총괄단 권한이 필요합니다. (적용 전)")
+    @Operation(
+        summary = "[MEMBER-004] 관리자 권한으로 회원 게정 삭제 (Hard Delete)",
+        description = "총괄단 권한이 필요합니다. (적용 전)"
+    )
     @DeleteMapping("{memberId}")
     @CheckAccess(
         resourceType = ResourceType.MEMBER,
@@ -177,7 +188,8 @@ public class MemberCommandController {
     )
     @WebhookAlarm(
         title = "'관리자가 계정을 삭제하였습니다.'",
-        content = "'회원 ID: ' + #memberId + '\n닉네임/이름: ' + #result.nickname() + '/' + #result.name() + '\n학교: ' + #result.schoolName()"
+        content = "'회원 ID: ' + #memberId + '\n닉네임/이름: ' + #result.nickname() + '/'"
+            + " + #result.name() + '\n학교: ' + #result.schoolName()"
     )
     public MemberInfoResponse deleteMember(@PathVariable Long memberId) {
         return deleteMemberById(memberId, null);
@@ -196,5 +208,17 @@ public class MemberCommandController {
         );
 
         return deletedMemberInfoResponse;
+    }
+
+    private String createAccessToken(Long memberId) {
+        RequiredTermConsentStatusInfo requiredTermConsentStatus =
+            getRequiredTermConsentStatusUseCase.getRequiredTermConsentStatus(memberId);
+        return jwtTokenProvider.createAccessToken(
+            memberId,
+            Collections.emptyList(),
+            null,
+            !requiredTermConsentStatus.needsReconsent(),
+            requiredTermConsentStatus.agreedRequiredTermIds()
+        );
     }
 }

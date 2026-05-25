@@ -3,6 +3,7 @@ package com.umc.product.authentication.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -10,6 +11,19 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.umc.product.authentication.application.port.in.command.dto.ChangePasswordCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LocalLoginResult;
@@ -25,16 +39,8 @@ import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswo
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialByEmailCommand;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
-import java.util.Optional;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.umc.product.term.application.port.in.query.GetRequiredTermConsentStatusUseCase;
+import com.umc.product.term.application.port.in.query.dto.RequiredTermConsentStatusInfo;
 
 /**
  * CredentialAuthenticationService 단위 테스트. ADR-017 흐름.
@@ -59,6 +65,8 @@ class CredentialAuthenticationServiceTest {
     ManageMemberCredentialUseCase manageMemberCredentialUseCase;
     @Mock
     CredentialRehashService rehashService;
+    @Mock
+    GetRequiredTermConsentStatusUseCase getRequiredTermConsentStatusUseCase;
     @InjectMocks
     CredentialAuthenticationService service;
 
@@ -218,7 +226,15 @@ class CredentialAuthenticationServiceTest {
             given(getMemberCredentialUseCase.findCredentialByEmail(EMAIL))
                 .willReturn(Optional.of(credential));
             given(passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
-            given(jwtTokenProvider.createAccessToken(eq(MEMBER_ID), anyList(), eq(ClientType.IOS)))
+            given(getRequiredTermConsentStatusUseCase.getRequiredTermConsentStatus(MEMBER_ID))
+                .willReturn(new RequiredTermConsentStatusInfo(false, List.of(), List.of(10L, 20L)));
+            given(jwtTokenProvider.createAccessToken(
+                eq(MEMBER_ID),
+                anyList(),
+                eq(ClientType.IOS),
+                eq(true),
+                eq(List.of(10L, 20L))
+            ))
                 .willReturn("access-token");
             given(jwtTokenProvider.createRefreshToken(MEMBER_ID)).willReturn("refresh-token");
 
@@ -231,7 +247,13 @@ class CredentialAuthenticationServiceTest {
             assertThat(result.memberId()).isEqualTo(MEMBER_ID);
             assertThat(result.accessToken()).isEqualTo("access-token");
             assertThat(result.refreshToken()).isEqualTo("refresh-token");
-            then(jwtTokenProvider).should().createAccessToken(eq(MEMBER_ID), anyList(), eq(ClientType.IOS));
+            then(jwtTokenProvider).should().createAccessToken(
+                eq(MEMBER_ID),
+                anyList(),
+                eq(ClientType.IOS),
+                eq(true),
+                eq(List.of(10L, 20L))
+            );
             then(rehashService).should().rehashIfNeeded(credential, RAW_PASSWORD);
         }
 
@@ -252,6 +274,10 @@ class CredentialAuthenticationServiceTest {
             then(passwordEncoder).should(never()).matches(anyString(), anyString());
             then(jwtTokenProvider).should(never()).createAccessToken(anyLong(), anyList());
             then(jwtTokenProvider).should(never()).createAccessToken(anyLong(), anyList(), any(ClientType.class));
+            then(jwtTokenProvider).should(never())
+                .createAccessToken(anyLong(), anyList(), any(ClientType.class), anyBoolean());
+            then(jwtTokenProvider).should(never())
+                .createAccessToken(anyLong(), anyList(), any(ClientType.class), anyBoolean(), anyList());
         }
 
         @Test
@@ -271,6 +297,10 @@ class CredentialAuthenticationServiceTest {
 
             then(jwtTokenProvider).should(never()).createAccessToken(anyLong(), anyList());
             then(jwtTokenProvider).should(never()).createAccessToken(anyLong(), anyList(), any(ClientType.class));
+            then(jwtTokenProvider).should(never())
+                .createAccessToken(anyLong(), anyList(), any(ClientType.class), anyBoolean());
+            then(jwtTokenProvider).should(never())
+                .createAccessToken(anyLong(), anyList(), any(ClientType.class), anyBoolean(), anyList());
             then(manageMemberCredentialUseCase).should(never()).changePassword(any());
         }
     }

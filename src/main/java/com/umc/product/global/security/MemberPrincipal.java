@@ -1,11 +1,15 @@
 package com.umc.product.global.security;
 
-import com.umc.product.common.domain.enums.ClientType;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
+
+import com.umc.product.common.domain.enums.ClientType;
+
 import lombok.Builder;
 import lombok.Getter;
-import org.springframework.security.core.GrantedAuthority;
 
 @Getter
 public class MemberPrincipal {
@@ -16,10 +20,26 @@ public class MemberPrincipal {
     // 통계/로그 컨텍스트용 메타데이터이며, 인가 결정에는 영향을 주지 않는다.
     private final ClientType clientType;
 
+    private final boolean requiredTermsAgreed;
+    private final List<Long> agreedRequiredTermIds;
+
     @Builder
-    public MemberPrincipal(Long memberId, ClientType clientType) {
+    public MemberPrincipal(
+        Long memberId,
+        ClientType clientType,
+        Boolean requiredTermsAgreed,
+        List<Long> agreedRequiredTermIds
+    ) {
         this.memberId = memberId;
         this.clientType = clientType;
+        this.requiredTermsAgreed = requiredTermsAgreed == null || requiredTermsAgreed;
+        this.agreedRequiredTermIds = agreedRequiredTermIds == null
+            ? List.of()
+            : List.copyOf(agreedRequiredTermIds);
+    }
+
+    public MemberPrincipal(Long memberId, ClientType clientType) {
+        this(memberId, clientType, true, List.of());
     }
 
     public MemberPrincipal(Long memberId) {
@@ -32,9 +52,11 @@ public class MemberPrincipal {
 
     @Override
     public String toString() {
-        return "MemberPrincipal{" +
-                "memberId=" + memberId +
-                ", clientType=" + clientType +
-                '}';
+        return "MemberPrincipal{"
+            + "memberId=" + memberId
+            + ", clientType=" + clientType
+            + ", requiredTermsAgreed=" + requiredTermsAgreed
+            + ", agreedRequiredTermIds=" + agreedRequiredTermIds
+            + '}';
     }
 }

@@ -1,5 +1,12 @@
 package com.umc.product.authentication.application.service;
 
+import java.util.Collections;
+import java.util.Optional;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authentication.application.port.in.command.CredentialAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.ChangePasswordCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LocalLoginResult;
@@ -14,13 +21,11 @@ import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswo
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialByEmailCommand;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
-import java.util.Collections;
-import java.util.Optional;
+import com.umc.product.term.application.port.in.query.GetRequiredTermConsentStatusUseCase;
+import com.umc.product.term.application.port.in.query.dto.RequiredTermConsentStatusInfo;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 이메일/PW 자격증명 등록/변경/로그인을 담당하는 Service. ADR-017 흐름.
@@ -39,6 +44,7 @@ public class CredentialAuthenticationService implements CredentialAuthentication
     private final GetMemberCredentialUseCase getMemberCredentialUseCase;
     private final ManageMemberCredentialUseCase manageMemberCredentialUseCase;
     private final CredentialRehashService rehashService;
+    private final GetRequiredTermConsentStatusUseCase getRequiredTermConsentStatusUseCase;
 
     @Override
     public void registerCredentialByEmail(RegisterCredentialByEmailCommand command) {
@@ -110,10 +116,14 @@ public class CredentialAuthenticationService implements CredentialAuthentication
 
         // 4) 토큰 발급
         Long memberId = credential.memberId();
+        RequiredTermConsentStatusInfo requiredTermConsentStatus =
+            getRequiredTermConsentStatusUseCase.getRequiredTermConsentStatus(memberId);
         String accessToken = jwtTokenProvider.createAccessToken(
             memberId,
             Collections.emptyList(),
-            command.clientType()
+            command.clientType(),
+            !requiredTermConsentStatus.needsReconsent(),
+            requiredTermConsentStatus.agreedRequiredTermIds()
         );
         String refreshToken = jwtTokenProvider.createRefreshToken(memberId);
 

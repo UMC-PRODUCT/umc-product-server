@@ -1,9 +1,11 @@
 package com.umc.product.term.domain.exception;
 
+import org.springframework.http.HttpStatus;
+
 import com.umc.product.global.response.code.BaseCode;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
@@ -22,7 +24,7 @@ public enum TermErrorCode implements BaseCode {
     MANDATORY_TERMS_NOT_AGREED(HttpStatus.BAD_REQUEST, "TERMS-0010", "필수 약관에 모두 동의해야 합니다."),
 
     TERM_PERMISSION_DENIED(HttpStatus.FORBIDDEN, "TERMS-0011", "해당 작업을 수행할 권한이 없습니다."),
-    ;
+    TERMS_RECONSENT_REQUIRED(HttpStatus.FORBIDDEN, "TERMS-0012", "변경된 필수 약관에 동의해야 합니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

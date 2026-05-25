@@ -3,12 +3,28 @@ package com.umc.product.authentication.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.authentication.application.event.SendVerificationEmailEvent;
+import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
+import com.umc.product.authentication.application.port.in.command.dto.RenewAccessTokenCommand;
 import com.umc.product.authentication.application.port.in.command.dto.ValidateEmailVerificationSessionCommand;
 import com.umc.product.authentication.application.port.out.LoadEmailVerificationPort;
 import com.umc.product.authentication.application.port.out.SaveEmailVerificationPort;
@@ -20,15 +36,8 @@ import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
-import java.util.Optional;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+import com.umc.product.term.application.port.in.query.GetRequiredTermConsentStatusUseCase;
+import com.umc.product.term.application.port.in.query.dto.RequiredTermConsentStatusInfo;
 
 /**
  * AuthenticationService 단위 테스트.
@@ -62,6 +71,9 @@ class AuthenticationServiceTest {
     @Mock
     DomainEventPublisher eventPublisher;
 
+    @Mock
+    GetRequiredTermConsentStatusUseCase getRequiredTermConsentStatusUseCase;
+
     @InjectMocks
     AuthenticationService service;
 
@@ -72,6 +84,37 @@ class AuthenticationServiceTest {
             .token(TOKEN)
             .purpose(purpose)
             .build();
+    }
+
+    @Nested
+    @DisplayName("renewAccessToken")
+    class RenewAccessToken {
+
+        @Test
+        @DisplayName("RefreshToken 으로 AccessToken 재발급 시 최신 필수 약관 동의 상태를 claim 에 반영한다")
+        void 최신_필수_약관_동의_상태를_claim에_반영() {
+            // given
+            Long memberId = 1L;
+            given(jwtTokenProvider.parseRefreshToken("refresh-token")).willReturn(memberId);
+            given(getRequiredTermConsentStatusUseCase.getRequiredTermConsentStatus(memberId))
+                .willReturn(new RequiredTermConsentStatusInfo(true, List.of(), List.of(10L)));
+            given(jwtTokenProvider.createAccessToken(eq(memberId), anyList(), eq(null), eq(false), eq(List.of(10L))))
+                .willReturn("new-access-token");
+            given(jwtTokenProvider.createRefreshToken(memberId)).willReturn("new-refresh-token");
+
+            // when
+            NewTokens result = service.renewAccessToken(
+                RenewAccessTokenCommand.builder()
+                    .refreshToken("refresh-token")
+                    .build()
+            );
+
+            // then
+            assertThat(result.accessToken()).isEqualTo("new-access-token");
+            assertThat(result.refreshToken()).isEqualTo("new-refresh-token");
+            then(jwtTokenProvider).should()
+                .createAccessToken(eq(memberId), anyList(), eq(null), eq(false), eq(List.of(10L)));
+        }
     }
 
     @Nested
