@@ -3,7 +3,6 @@ package com.umc.product.chat.adapter.in.web;
 import com.umc.product.chat.application.port.in.command.CreateChatRoomUseCase;
 import com.umc.product.chat.application.port.in.command.DeleteChatRoomUseCase;
 import com.umc.product.chat.application.port.in.command.dto.CreateChatRoomCommand;
-import com.umc.product.chat.application.port.in.query.GetChatRoomUseCase;
 import com.umc.product.chat.adapter.in.web.dto.response.ChatRoomResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -26,15 +25,13 @@ public class ChatRoomCommandController {
 
     private final CreateChatRoomUseCase createChatRoomUseCase;
     private final DeleteChatRoomUseCase deleteChatRoomUseCase;
-    private final GetChatRoomUseCase getChatRoomUseCase;
 
     // NOTE: 이 엔드포인트는 클라이언트가 채팅방을 직접 생성하는 경우를 위한 것입니다.
     // Inquiry 등 내부 도메인은 이 API를 거치지 않고 CreateChatRoomUseCase를 직접 호출합니다.
     @PostMapping
     @Operation(summary = "[CHAT-101] 채팅방 생성", description = "새 채팅방을 생성합니다. 생성자는 자동으로 채팅방 멤버에 추가됩니다.")
     public ChatRoomResponse create(@CurrentMember MemberPrincipal principal) {
-        Long roomId = createChatRoomUseCase.create(new CreateChatRoomCommand(principal.getMemberId()));
-        return ChatRoomResponse.from(getChatRoomUseCase.getById(roomId));
+        return ChatRoomResponse.from(createChatRoomUseCase.create(CreateChatRoomCommand.from(principal.getMemberId())));
     }
 
     // TODO: 채팅 기능 확정 시 삭제 권한 정책 결정 필요 (예: 방장만 삭제 가능 여부)
