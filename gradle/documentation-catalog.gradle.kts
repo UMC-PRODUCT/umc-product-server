@@ -358,11 +358,11 @@ fun buildApiCatalogMarkdown(entries: List<ApiDocumentationEntry>): String = buil
     entries.groupBy { it.domain }.forEach { (domain, domainEntries) ->
         appendLine("## $domain")
         appendLine()
-        appendLine("| 순번 | 도메인 | API ID | Endpoint | HTTP Method | 역할 | Deprecated | Source |")
+        appendLine("| 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |")
         appendLine("|---:|---|---|---|---|---|:---:|---|")
         domainEntries.forEach { entry ->
             appendLine(
-                "| ${entry.sequence} | ${entry.domain.escapeMarkdownCell()} | ${entry.apiId.escapeMarkdownCell()} | `${entry.endpoint.escapeMarkdownCell()}` | ${entry.httpMethod.escapeMarkdownCell()} | ${entry.role.escapeMarkdownCell()} | ${if (entry.deprecated) "O" else "X"} | `${entry.source}:${entry.line}` |"
+                "| ${entry.sequence} | ${entry.domain.escapeMarkdownCell()} | ${entry.apiId.escapeMarkdownCell()} | ${entry.httpMethod.escapeMarkdownCell()} | `${entry.endpoint.escapeMarkdownCell()}` | ${entry.role.escapeMarkdownCell()} | ${if (entry.deprecated) "O" else "X"} | `${entry.source}:${entry.line}` |"
             )
         }
         appendLine()
@@ -974,17 +974,17 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
 
                 .catalog-table th:nth-child(3),
                 .catalog-table td:nth-child(3) {
-                    width: 150px;
+                    width: 180px;
                 }
 
                 .catalog-table th:nth-child(4),
                 .catalog-table td:nth-child(4) {
-                    width: 250px;
+                    width: 90px;
                 }
 
                 .catalog-table th:nth-child(5),
                 .catalog-table td:nth-child(5) {
-                    width: 90px;
+                    width: 430px;
                 }
 
                 .catalog-table th:nth-child(6),
@@ -1004,7 +1004,7 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                 }
 
                 td:nth-child(3) code,
-                td:nth-child(4) code,
+                td:nth-child(5) code,
                 td:nth-child(6) code {
                     color: #0f172a;
                     font-weight: 650;
@@ -1023,8 +1023,9 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                 }
 
                 .copy-cell {
-                    cursor: copy;
+                    cursor: pointer;
                     position: relative;
+                    padding-right: 32px;
                 }
 
                 .copy-cell:hover {
@@ -1038,6 +1039,43 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
 
                 .copy-cell.copied {
                     background: #f0fdf4;
+                }
+
+                .copy-icon {
+                    position: absolute;
+                    right: 11px;
+                    top: 50%;
+                    display: block;
+                    width: 13px;
+                    height: 13px;
+                    opacity: 0.45;
+                    transform: translateY(-50%);
+                }
+
+                .copy-icon::before,
+                .copy-icon::after {
+                    content: "";
+                    position: absolute;
+                    width: 8px;
+                    height: 9px;
+                    border: 1.5px solid var(--muted);
+                    border-radius: 2px;
+                    background: #ffffff;
+                }
+
+                .copy-icon::before {
+                    left: 1px;
+                    top: 3px;
+                }
+
+                .copy-icon::after {
+                    left: 4px;
+                    top: 0;
+                }
+
+                .copy-cell:hover .copy-icon,
+                .copy-cell:focus-visible .copy-icon {
+                    opacity: 0.9;
                 }
 
                 .copy-toast {
@@ -1092,6 +1130,14 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
 
                 .error-catalog .catalog-table {
                     min-width: 1320px;
+                }
+
+                .error-catalog .catalog-table td:nth-child(4) code {
+                    color: #0f172a;
+                    font-weight: 650;
+                    white-space: normal;
+                    overflow-wrap: anywhere;
+                    word-break: break-word;
                 }
 
                 .is-hidden {
@@ -1294,6 +1340,12 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     cell.setAttribute("role", "button");
                     cell.setAttribute("aria-label", value + " 복사");
                     cell.title = value + " 복사";
+                    if (!cell.querySelector(".copy-icon")) {
+                        const icon = document.createElement("span");
+                        icon.className = "copy-icon";
+                        icon.setAttribute("aria-hidden", "true");
+                        cell.appendChild(icon);
+                    }
 
                     const handleCopy = () => {
                         copyToClipboard(value).then(() => markCopied(cell, value));
