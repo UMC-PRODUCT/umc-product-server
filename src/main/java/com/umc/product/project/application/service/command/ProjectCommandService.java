@@ -1,5 +1,11 @@
 package com.umc.product.project.application.service.command;
 
+import java.util.List;
+import java.util.Objects;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
@@ -46,11 +52,8 @@ import com.umc.product.project.domain.exception.ProjectErrorCode;
 import com.umc.product.survey.application.port.in.command.ManageFormUseCase;
 import com.umc.product.survey.application.port.in.command.dto.DeleteFormCommand;
 import com.umc.product.survey.application.port.in.command.dto.PublishFormCommand;
-import java.util.List;
-import java.util.Objects;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -95,6 +98,10 @@ public class ProjectCommandService implements
         }
 
         if (loadProjectPort.existsDraftByCreatorAndGisu(command.requesterMemberId(), command.gisuId())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DRAFT_ALREADY_IN_PROGRESS);
+        }
+
+        if (loadProjectPort.existsDraftByOwnerAndGisu(command.productOwnerMemberId(), command.gisuId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_DRAFT_ALREADY_IN_PROGRESS);
         }
 

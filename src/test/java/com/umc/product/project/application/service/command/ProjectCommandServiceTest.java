@@ -7,6 +7,14 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
@@ -31,13 +39,6 @@ import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectCommandServiceTest {
@@ -207,10 +208,10 @@ class ProjectCommandServiceTest {
         }
 
         @Test
-        void creator_DRAFT_미보유면_PO_기수_중복은_검증하지_않고_생성_성공() {
-            // PO 룰 제거 검증: 기존엔 existsByOwnerAndGisu 로 PO 중복을 검사했지만
-            // 이제는 호출 자체가 사라졌다. PM 이 같은 기수에 PENDING_REVIEW 등 다른 프로젝트를
-            // 보유한 채 새 DRAFT 를 시작해도 차단되지 않는다.
+        void status_무관_PO_중복은_검사하지_않고_DRAFT_한정으로만_검사한다() {
+            // PM 이 같은 기수에 PENDING_REVIEW / IN_PROGRESS / COMPLETED 등 DRAFT 가 아닌 상태의
+            // 다른 프로젝트를 보유한 채 새 DRAFT 를 시작해도 차단되지 않는다.
+            // status 무관 existsByOwnerAndGisu 는 호출되지 않고, DRAFT 한정 existsDraftByOwnerAndGisu 만 호출된다.
             var command = CreateDraftProjectCommand.builder()
                 .gisuId(1L)
                 .productOwnerMemberId(100L)
@@ -221,6 +222,7 @@ class ProjectCommandServiceTest {
             given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
                 .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
             given(loadProjectPort.existsDraftByCreatorAndGisu(any(), any())).willReturn(false);
+            given(loadProjectPort.existsDraftByOwnerAndGisu(100L, 1L)).willReturn(false);
             given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
             given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
             given(saveProjectPort.save(any())).willAnswer(inv -> {
@@ -232,6 +234,29 @@ class ProjectCommandServiceTest {
             sut.create(command);
 
             then(loadProjectPort).should(never()).existsByOwnerAndGisu(any(), any());
+            then(loadProjectPort).should().existsDraftByOwnerAndGisu(100L, 1L);
+        }
+
+        @Test
+        void PO가_같은_기수에_DRAFT_보유시_예외() {
+            // 운영진(requester=200)이 PM(productOwner=100)을 임명할 때, PM 이 이미 같은 기수에
+            // DRAFT 프로젝트를 보유하고 있으면 creator 검증을 통과해도 owner 검증에서 막힌다.
+            var command = CreateDraftProjectCommand.builder()
+                .gisuId(1L)
+                .productOwnerMemberId(100L)
+                .requesterMemberId(200L)
+                .build();
+
+            given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
+            given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
+                .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
+            given(loadProjectPort.existsDraftByCreatorAndGisu(200L, 1L)).willReturn(false);
+            given(loadProjectPort.existsDraftByOwnerAndGisu(100L, 1L)).willReturn(true);
+
+            assertThatThrownBy(() -> sut.create(command))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_DRAFT_ALREADY_IN_PROGRESS);
         }
 
         @Test
