@@ -1,6 +1,7 @@
 package com.umc.product.authorization.application.port.in;
 
 import com.umc.product.authorization.domain.ResourcePermission;
+import com.umc.product.authorization.domain.SubjectAttributes;
 
 /**
  * 특정 주체가 권한이 있는지를 평가합니다.
@@ -12,6 +13,14 @@ import com.umc.product.authorization.domain.ResourcePermission;
 public interface CheckPermissionUseCase {
 
     /**
+     * 사용자 권한 평가에 필요한 주체 속성을 조회
+     *
+     * @param memberId 사용자 ID
+     * @return 권한 평가에 사용할 주체 속성
+     */
+    SubjectAttributes loadSubject(Long memberId);
+
+    /**
      * 사용자가 특정 리소스에 대한 권한이 있는지 확인
      *
      * @param memberId   사용자 ID
@@ -19,6 +28,15 @@ public interface CheckPermissionUseCase {
      * @return 권한 있으면 true, 없으면 false
      */
     boolean check(Long memberId, ResourcePermission permission);
+
+    /**
+     * 이미 조회된 주체 속성으로 특정 리소스에 대한 권한이 있는지 확인
+     *
+     * @param subjectAttributes 권한 평가에 사용할 주체 속성
+     * @param permission        확인할 권한
+     * @return 권한 있으면 true, 없으면 false
+     */
+    boolean check(SubjectAttributes subjectAttributes, ResourcePermission permission);
 
     /**
      * 권한이 없으면 예외를 발생시키는 메서드
