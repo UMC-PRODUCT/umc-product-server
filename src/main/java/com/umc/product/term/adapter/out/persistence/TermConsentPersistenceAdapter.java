@@ -24,6 +24,11 @@ public class TermConsentPersistenceAdapter implements LoadTermConsentPort, SaveT
     }
 
     @Override
+    public List<TermConsent> listByMemberIdAndTermIds(Long memberId, List<Long> termIds) {
+        return repository.findByMemberIdAndTermIdIn(memberId, termIds);
+    }
+
+    @Override
     public Optional<TermConsent> findByMemberIdAndTermType(Long memberId, TermType termType) {
         return repository.findByMemberIdAndTermType(memberId, termType);
     }
