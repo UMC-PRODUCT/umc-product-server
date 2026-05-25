@@ -69,7 +69,7 @@ public class MemberCommandController {
         title = "'새로운 회원이 가입했어요!'",
         content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
     )
-    RegisterResponse registerMemberByOAuth(@RequestBody OAuthRegisterMemberRequest request) {
+    RegisterResponse registerMemberByOAuth(@Valid @RequestBody OAuthRegisterMemberRequest request) {
         OAuthVerificationClaims claims = jwtTokenProvider.parseOAuthVerificationToken(request.oAuthVerificationToken());
         String email = jwtTokenProvider.parseEmailVerificationToken(
             request.emailVerificationToken(),
