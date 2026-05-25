@@ -9,12 +9,15 @@ import com.umc.product.test.adapter.in.web.dto.SeedMembersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedMembersResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedNoticeRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedNoticeResponse;
+import com.umc.product.test.adapter.in.web.dto.SeedProjectScenariosRequest;
+import com.umc.product.test.adapter.in.web.dto.SeedProjectScenariosResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectsRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectsResponse;
 import com.umc.product.test.application.port.in.command.SeedChallengersUseCase;
 import com.umc.product.test.application.port.in.command.SeedCurriculumUseCase;
 import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
 import com.umc.product.test.application.port.in.command.SeedNoticeUseCase;
+import com.umc.product.test.application.port.in.command.SeedProjectScenariosUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,6 +50,7 @@ public class SeedController {
     private final SeedMembersUseCase seedMembersUseCase;
     private final SeedChallengersUseCase seedChallengersUseCase;
     private final SeedProjectsUseCase seedProjectsUseCase;
+    private final SeedProjectScenariosUseCase seedProjectScenariosUseCase;
     private final SeedCurriculumUseCase seedCurriculumUseCase;
     private final SeedNoticeUseCase seedNoticeUseCase;
 
@@ -92,6 +96,26 @@ public class SeedController {
     @PostMapping("/projects")
     public SeedProjectsResponse seedProjects(@RequestBody @Valid SeedProjectsRequest request) {
         return SeedProjectsResponse.from(seedProjectsUseCase.seed(request.toCommand()));
+    }
+
+    @Operation(
+        summary = "[SEED-003-S] 프로젝트 시나리오 시딩",
+        description = """
+            활성 기수에 대해 DRAFT / PENDING_REVIEW / IN_PROGRESS 중 하나의 상태까지 도달한
+            프로젝트를 N 개 생성합니다. SQL 직접 주입이 아니라 도메인 UseCase 시퀀스 호출로 만들기 때문에
+            도메인 가드를 모두 통과한 데이터가 됩니다.
+            productOwnerMemberIds 를 명시하면 그 리스트로만 PO 를 사용하고(size 가 projectCount 와
+            같아야 하며 각각 활성 기수 PLAN 챌린저여야 함), null 이면 활성 기수 PLAN 챌린저 풀에서
+            랜덤 픽 합니다. 시딩 측에서 챌린저를 강제로 만들지는 않습니다.
+            IN_PROGRESS 단계에서는 DESIGN×1~2 + FE 1 개×3~4 + BE 1 개×3~4 의 partQuota 가 자동 분배되고,
+            각 파트마다 PO 학교의 해당 파트 챌린저 풀에서 random(0, quota) 만큼 멤버가 충원됩니다.
+            """
+    )
+    @PostMapping("/projects/scenarios")
+    public SeedProjectScenariosResponse seedProjectScenarios(
+        @RequestBody @Valid SeedProjectScenariosRequest request
+    ) {
+        return SeedProjectScenariosResponse.from(seedProjectScenariosUseCase.seed(request.toCommand()));
     }
 
     @Operation(
