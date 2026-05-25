@@ -483,15 +483,33 @@ fun buildErrorCodeCatalogMarkdown(entries: List<ErrorCodeDocumentationEntry>): S
     entries.groupBy { it.domain }.forEach { (domain, domainEntries) ->
         appendLine("## $domain")
         appendLine()
-        appendLine("| 순번 | 도메인 | Enum | Constant | HTTP Status | Code | Message | Source |")
+        appendLine("| 순번 | 도메인 | Code | HTTP Status | Message | Enum | Constant | Source |")
         appendLine("|---:|---|---|---|---|---|---|---|")
         domainEntries.forEach { entry ->
             appendLine(
-                "| ${entry.sequence} | ${entry.domain.escapeMarkdownCell()} | ${entry.enumName.escapeMarkdownCell()} | `${entry.constantName.escapeMarkdownCell()}` | ${entry.httpStatus.escapeMarkdownCell()} | `${entry.code.escapeMarkdownCell()}` | ${entry.message.escapeMarkdownCell()} | `${entry.source}:${entry.line}` |"
+                "| ${entry.sequence} | ${entry.domain.escapeMarkdownCell()} | `${entry.code.escapeMarkdownCell()}` | ${entry.httpStatus.displayHttpStatus().escapeMarkdownCell()} | ${entry.message.escapeMarkdownCell()} | ${entry.enumName.escapeMarkdownCell()} | `${entry.constantName.escapeMarkdownCell()}` | `${entry.source}:${entry.line}` |"
             )
         }
         appendLine()
     }
+}
+
+fun String.displayHttpStatus(): String {
+    val code = mapOf(
+        "BAD_REQUEST" to 400,
+        "UNAUTHORIZED" to 401,
+        "FORBIDDEN" to 403,
+        "NOT_FOUND" to 404,
+        "CONFLICT" to 409,
+        "PRECONDITION_FAILED" to 412,
+        "TOO_MANY_REQUESTS" to 429,
+        "INTERNAL_SERVER_ERROR" to 500,
+        "NOT_IMPLEMENTED" to 501,
+        "BAD_GATEWAY" to 502,
+        "SERVICE_UNAVAILABLE" to 503
+    )[this]
+
+    return code?.let { "$it $this" } ?: this
 }
 
 fun buildErrorCodeCatalogJson(entries: List<ErrorCodeDocumentationEntry>): String = buildString {
@@ -1109,35 +1127,40 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
 
                 .error-catalog .catalog-table th:nth-child(3),
                 .error-catalog .catalog-table td:nth-child(3) {
-                    width: 180px;
+                    width: 200px;
                 }
 
                 .error-catalog .catalog-table th:nth-child(4),
                 .error-catalog .catalog-table td:nth-child(4) {
-                    width: 220px;
+                    width: 150px;
                 }
 
                 .error-catalog .catalog-table th:nth-child(5),
                 .error-catalog .catalog-table td:nth-child(5) {
-                    width: 120px;
+                    width: auto;
                 }
 
                 .error-catalog .catalog-table th:nth-child(6),
                 .error-catalog .catalog-table td:nth-child(6) {
-                    width: 170px;
+                    width: 210px;
                 }
 
                 .error-catalog .catalog-table th:nth-child(7),
                 .error-catalog .catalog-table td:nth-child(7) {
-                    width: auto;
-                    text-align: left;
+                    width: 260px;
                 }
 
                 .error-catalog .catalog-table {
-                    min-width: 1320px;
+                    min-width: 1500px;
                 }
 
-                .error-catalog .catalog-table td:nth-child(4) code {
+                .error-catalog .catalog-table th:nth-child(2),
+                .error-catalog .catalog-table td:nth-child(2) {
+                    width: 150px;
+                }
+
+                .error-catalog .catalog-table td:nth-child(3) code,
+                .error-catalog .catalog-table td:nth-child(7) code {
                     color: #0f172a;
                     font-weight: 650;
                     white-space: normal;
@@ -1375,9 +1398,12 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                         table.classList.add("catalog-table");
                         const headers = Array.from(table.querySelectorAll("thead th"))
                             .map((cell) => cell.textContent.trim().toLowerCase());
+                        const copyHeaders = pageKind === "api"
+                            ? ["api id", "endpoint", "source"]
+                            : ["code", "constant"];
                         const copyColumnIndexes = headers
                             .map((header, index) => ({ header, index }))
-                            .filter(({ header }) => ["api id", "endpoint", "source"].includes(header))
+                            .filter(({ header }) => copyHeaders.includes(header))
                             .map(({ index }) => index);
                         const wrapper = document.createElement("div");
                         wrapper.className = "table-wrap";
