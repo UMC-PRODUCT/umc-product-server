@@ -1025,7 +1025,6 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                 .copy-cell {
                     cursor: pointer;
                     position: relative;
-                    padding-right: 32px;
                 }
 
                 .copy-cell:hover {
@@ -1046,10 +1045,16 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     right: 11px;
                     top: 50%;
                     display: block;
-                    width: 13px;
-                    height: 13px;
-                    opacity: 0.45;
+                    width: 22px;
+                    height: 22px;
+                    border: 1px solid var(--border);
+                    border-radius: 6px;
+                    background: rgba(255, 255, 255, 0.96);
+                    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+                    opacity: 0;
+                    pointer-events: none;
                     transform: translateY(-50%);
+                    transition: opacity 0.12s ease;
                 }
 
                 .copy-icon::before,
@@ -1064,18 +1069,18 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                 }
 
                 .copy-icon::before {
-                    left: 1px;
-                    top: 3px;
+                    left: 6px;
+                    top: 8px;
                 }
 
                 .copy-icon::after {
-                    left: 4px;
-                    top: 0;
+                    left: 9px;
+                    top: 5px;
                 }
 
                 .copy-cell:hover .copy-icon,
                 .copy-cell:focus-visible .copy-icon {
-                    opacity: 0.9;
+                    opacity: 1;
                 }
 
                 .copy-toast {
