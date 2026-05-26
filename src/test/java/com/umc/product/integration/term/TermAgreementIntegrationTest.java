@@ -3,6 +3,11 @@ package com.umc.product.integration.term;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.umc.product.member.domain.Member;
 import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.support.fixture.MemberFixture;
@@ -16,9 +21,6 @@ import com.umc.product.term.domain.Term;
 import com.umc.product.term.domain.enums.TermType;
 import com.umc.product.term.domain.exception.TermDomainException;
 import com.umc.product.term.domain.exception.TermErrorCode;
-import java.util.List;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * {@link IntegrationTestSupport} + Fixture 결합 사용 예시.

@@ -3,15 +3,9 @@ package com.umc.product.term.application.port.in.query;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
-import com.umc.product.term.application.port.in.query.dto.TermInfo;
-import com.umc.product.term.application.port.out.LoadTermConsentPort;
-import com.umc.product.term.application.port.out.LoadTermPort;
-import com.umc.product.term.application.service.query.TermAgreementQueryService;
-import com.umc.product.term.domain.Term;
-import com.umc.product.term.domain.TermConsent;
-import com.umc.product.term.domain.enums.TermType;
 import java.time.Instant;
 import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +13,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.umc.product.term.application.port.in.query.dto.TermInfo;
+import com.umc.product.term.application.port.out.LoadTermConsentPort;
+import com.umc.product.term.application.port.out.LoadTermPort;
+import com.umc.product.term.application.service.query.TermAgreementQueryService;
+import com.umc.product.term.domain.Term;
+import com.umc.product.term.domain.TermConsent;
+import com.umc.product.term.domain.enums.TermType;
 
 @ExtendWith(MockitoExtension.class)
 class TermAgreementQueryServiceTest {

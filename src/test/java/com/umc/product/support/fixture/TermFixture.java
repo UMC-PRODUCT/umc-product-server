@@ -1,12 +1,14 @@
 package com.umc.product.support.fixture;
 
+import java.time.Instant;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.term.application.port.out.SaveTermConsentPort;
 import com.umc.product.term.application.port.out.SaveTermPort;
 import com.umc.product.term.domain.Term;
 import com.umc.product.term.domain.TermConsent;
 import com.umc.product.term.domain.enums.TermType;
-import java.time.Instant;
-import org.springframework.stereotype.Component;
 
 /**
  * 약관(Term) / 약관 동의(TermConsent) 테스트용 Fixture.

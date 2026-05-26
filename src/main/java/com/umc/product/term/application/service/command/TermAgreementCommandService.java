@@ -1,5 +1,10 @@
 package com.umc.product.term.application.service.command;
 
+import java.time.Instant;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.term.application.port.in.command.ManageTermAgreementUseCase;
 import com.umc.product.term.application.port.in.command.dto.CreateTermConsentCommand;
 import com.umc.product.term.application.port.out.LoadTermConsentPort;
@@ -13,10 +18,8 @@ import com.umc.product.term.domain.enums.TermConsentStatus;
 import com.umc.product.term.domain.enums.TermType;
 import com.umc.product.term.domain.exception.TermDomainException;
 import com.umc.product.term.domain.exception.TermErrorCode;
-import java.time.Instant;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

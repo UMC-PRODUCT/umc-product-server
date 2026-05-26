@@ -1,10 +1,12 @@
 package com.umc.product.term.adapter.out.persistence;
 
-import com.umc.product.term.domain.TermConsent;
-import com.umc.product.term.domain.enums.TermType;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.umc.product.term.domain.TermConsent;
+import com.umc.product.term.domain.enums.TermType;
 
 public interface TermConsentRepository extends JpaRepository<TermConsent, Long> {
 

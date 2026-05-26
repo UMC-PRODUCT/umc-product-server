@@ -1,13 +1,16 @@
 package com.umc.product.term.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.term.application.port.out.LoadTermConsentPort;
 import com.umc.product.term.application.port.out.SaveTermConsentPort;
 import com.umc.product.term.domain.TermConsent;
 import com.umc.product.term.domain.enums.TermType;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor

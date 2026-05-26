@@ -1,9 +1,10 @@
 package com.umc.product.term.application.port.out;
 
-import com.umc.product.term.domain.TermConsent;
-import com.umc.product.term.domain.enums.TermType;
 import java.util.List;
 import java.util.Optional;
+
+import com.umc.product.term.domain.TermConsent;
+import com.umc.product.term.domain.enums.TermType;
 
 public interface LoadTermConsentPort {
     /**
