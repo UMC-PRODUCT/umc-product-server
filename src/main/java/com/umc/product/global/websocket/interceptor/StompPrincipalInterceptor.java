@@ -1,7 +1,10 @@
-package com.umc.product.global.security;
+package com.umc.product.global.websocket.interceptor;
 
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.ParsedAccessToken;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +22,7 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class StompChannelInterceptor implements ChannelInterceptor {
+public class StompPrincipalInterceptor implements ChannelInterceptor {
 
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -40,23 +43,22 @@ public class StompChannelInterceptor implements ChannelInterceptor {
         String token = authHeader.substring(7);
 
         // TODO: 인증 실패 시 STOMP ERROR 프레임을 ApiResponse 형식으로 포맷팅하는 StompSubProtocolErrorHandler 구현 필요
-        jwtTokenProvider.validateAccessToken(token);
+        ParsedAccessToken parsed = jwtTokenProvider.parseAndValidateAccessToken(token);
 
-        Long memberId = jwtTokenProvider.parseAccessToken(token);
-        List<String> roles = jwtTokenProvider.getRolesFromAccessToken(token);
-
-        MemberPrincipal principal = new MemberPrincipal(memberId);
-        List<SimpleGrantedAuthority> authorities = roles.stream()
+        MemberPrincipal principal = MemberPrincipal.builder()
+            .memberId(parsed.memberId())
+            .clientType(parsed.clientType())
+            .build();
+        List<SimpleGrantedAuthority> authorities = parsed.roles().stream()
             .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
             .toList();
 
         UsernamePasswordAuthenticationToken authentication =
             new UsernamePasswordAuthenticationToken(principal, null, authorities);
 
-        // WebSocket 세션에 인증 정보 바인딩 - 이후 메시지에서 Principal로 접근 가능
         accessor.setUser(authentication);
 
-        log.info("WebSocket CONNECT 인증 성공: memberId={}", memberId);
+        log.debug("WebSocket CONNECT 인증 성공: memberId={}", parsed.memberId());
 
         return message;
     }
