@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -45,7 +44,7 @@ public class WebSocketRateLimitInterceptor implements ChannelInterceptor {
         AtomicInteger count = rateLimitCache.get(cacheKey, key -> new AtomicInteger(0));
         if (count.incrementAndGet() > MAX_SEND_PER_SECOND) {
             log.warn("WebSocket 메시지 전송 빈도 초과: memberId={}", memberId);
-            throw new MessageDeliveryException(message, "WebSocket 메시지 전송 빈도가 초과되었습니다.");
+            return null; // 세션 유지, 해당 메시지만 무시
         }
 
         return message;
