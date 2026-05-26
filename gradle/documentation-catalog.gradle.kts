@@ -1062,34 +1062,22 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                     position: absolute;
                     right: 11px;
                     top: 50%;
-                    display: block;
-                    width: 14px;
-                    height: 14px;
+                    display: grid;
+                    place-items: center;
+                    width: 16px;
+                    height: 16px;
+                    color: var(--muted);
                     opacity: 0;
                     pointer-events: none;
                     transform: translateY(-50%);
                     transition: opacity 0.12s ease;
                 }
 
-                .copy-icon::before,
-                .copy-icon::after {
-                    content: "";
-                    position: absolute;
-                    width: 8px;
-                    height: 9px;
-                    border: 1.5px solid var(--muted);
-                    border-radius: 2px;
-                    background: transparent;
-                }
-
-                .copy-icon::before {
-                    left: 1px;
-                    top: 4px;
-                }
-
-                .copy-icon::after {
-                    left: 4px;
-                    top: 1px;
+                .copy-icon svg {
+                    display: block;
+                    width: 16px;
+                    height: 16px;
+                    stroke: currentColor;
                 }
 
                 .copy-cell:hover .copy-icon,
@@ -1368,6 +1356,7 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
                         const icon = document.createElement("span");
                         icon.className = "copy-icon";
                         icon.setAttribute("aria-hidden", "true");
+                        icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 7.5h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z"/><path d="M5.5 14.5h-.5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5"/></svg>';
                         cell.appendChild(icon);
                     }
 
