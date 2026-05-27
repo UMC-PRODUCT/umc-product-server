@@ -39,6 +39,9 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_OWNER_NOT_PLAN_CHALLENGER(HttpStatus.BAD_REQUEST, "PROJECT-0010", "프로젝트 PO는 PLAN 파트 챌린저여야 합니다."),
     PROJECT_SUBMIT_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "PROJECT-0011", "제출에 필요한 필수 정보가 누락되었습니다."),
     PROJECT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PROJECT-0012", "해당 프로젝트에 대한 접근 권한이 없습니다."),
+    PROJECT_DELETE_NOT_ALLOWED_IN_STATUS(HttpStatus.CONFLICT, "PROJECT-0022",
+        "현재 상태에서는 프로젝트를 삭제할 수 없습니다. (DRAFT, PENDING_REVIEW 상태만 가능)"),
+    PROJECT_ABORT_REASON_REQUIRED(HttpStatus.BAD_REQUEST, "PROJECT-0023", "프로젝트 중단 사유는 필수입니다."),
 
     // ProjectMember (PROJECT-003/004/005)
     PROJECT_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0100", "프로젝트 멤버를 찾을 수 없습니다."),

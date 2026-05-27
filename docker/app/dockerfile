@@ -1,30 +1,40 @@
-FROM amazoncorretto:21-alpine
+FROM eclipse-temurin:21-jre-alpine AS builder
+WORKDIR /builder
+
+ARG JAR_FILE=build/libs/*.jar
+COPY ${JAR_FILE} application.jar
+
+# Spring Boot 3.5.x 기준
+# jarmode=tools extract --layers는 최종 실행용 application.jar를 포함한 layer들을 만든다.
+RUN java -Djarmode=tools -jar application.jar extract --layers --destination extracted
+
+
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 LABEL maintainer="UMC PRODUCT SERVER TEAM"
 LABEL description="UMC PRODUCT Official SpringBoot Backend Server"
 
-# curl 설치 (헬스체크용) + non-root 유저 생성
 RUN apk add --no-cache curl && \
     addgroup -S spring && \
     adduser -S spring -G spring && \
     mkdir -p /app/logs && \
     chown -R spring:spring /app
 
-# 이미 build된 jar 파일을 docker 안으로 복사
-COPY --chown=spring:spring build/libs/*.jar app.jar
-RUN chmod 444 app.jar
+# Spring Boot layer 순서대로 복사
+# dependencies: 외부 라이브러리
+# spring-boot-loader: Spring Boot 실행 로더 관련 파일
+# snapshot-dependencies: SNAPSHOT 의존성
+# application: 실제 애플리케이션 jar/application 파일
+COPY --from=builder --chown=spring:spring /builder/extracted/dependencies/ ./
+COPY --from=builder --chown=spring:spring /builder/extracted/spring-boot-loader/ ./
+COPY --from=builder --chown=spring:spring /builder/extracted/snapshot-dependencies/ ./
+COPY --from=builder --chown=spring:spring /builder/extracted/application/ ./
 
-# 로그 디렉토리 생성 및 권한 설정
-RUN mkdir -p /app/logs && chown -R spring:spring /app/logs
-
-# Switch to non-root user
 USER spring:spring
 
-# Expose application port
 EXPOSE 8080
 
-# JVM options
 ENV JAVA_OPTS="-XX:+UseContainerSupport \
                -XX:MaxRAMPercentage=75.0 \
                -XX:+UseG1GC \
@@ -34,8 +44,9 @@ ENV JAVA_OPTS="-XX:+UseContainerSupport \
                -Duser.timezone=Asia/Seoul \
                -Djava.security.egd=file:/dev/./urandom"
 
-# Use exec form with sh -c so JAVA_OPTS is expanded and signals forwarded
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]
+# Spring Boot 3.5 + jarmode=tools extract --layers 방식에서는
+# 최종 이미지 안의 application.jar를 실행한다.
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar application.jar"]
 
-# Optional healthcheck (uncomment if actuator/health endpoint exists)
-# HEALTHCHECK --interval=30s --timeout=5s CMD curl -f http://localhost:8080/actuator/health || exit 1
+# HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+#   CMD curl -f http://localhost:8080/actuator/health || exit 1

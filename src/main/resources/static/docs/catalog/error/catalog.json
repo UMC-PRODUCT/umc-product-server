@@ -2830,15 +2830,37 @@
     "sequence": 258,
     "domain": "project",
     "enumName": "ProjectErrorCode",
+    "constantName": "PROJECT_DELETE_NOT_ALLOWED_IN_STATUS",
+    "httpStatus": "CONFLICT",
+    "code": "PROJECT-0022",
+    "message": "현재 상태에서는 프로젝트를 삭제할 수 없습니다. (DRAFT, PENDING_REVIEW 상태만 가능)",
+    "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
+    "line": 42
+  },
+  {
+    "sequence": 259,
+    "domain": "project",
+    "enumName": "ProjectErrorCode",
+    "constantName": "PROJECT_ABORT_REASON_REQUIRED",
+    "httpStatus": "BAD_REQUEST",
+    "code": "PROJECT-0023",
+    "message": "프로젝트 중단 사유는 필수입니다.",
+    "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
+    "line": 44
+  },
+  {
+    "sequence": 260,
+    "domain": "project",
+    "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MEMBER_NOT_FOUND",
     "httpStatus": "NOT_FOUND",
     "code": "PROJECT-0100",
     "message": "프로젝트 멤버를 찾을 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 44
+    "line": 47
   },
   {
-    "sequence": 259,
+    "sequence": 261,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MEMBER_ALREADY_EXISTS",
@@ -2846,10 +2868,10 @@
     "code": "PROJECT-0101",
     "message": "이미 해당 프로젝트의 멤버입니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 45
+    "line": 48
   },
   {
-    "sequence": 260,
+    "sequence": 262,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER",
@@ -2857,10 +2879,10 @@
     "code": "PROJECT-0102",
     "message": "메인 PM 은 팀원 제거가 아닌 소유권 양도 API 로 변경해야 합니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 46
+    "line": 49
   },
   {
-    "sequence": 261,
+    "sequence": 263,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_PART_QUOTA_INVALID",
@@ -2868,10 +2890,10 @@
     "code": "PROJECT-0200",
     "message": "파트 정원은 1 이상이어야 합니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 49
+    "line": 52
   },
   {
-    "sequence": 262,
+    "sequence": 264,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_PART_QUOTA_REQUIRED",
@@ -2879,10 +2901,10 @@
     "code": "PROJECT-0202",
     "message": "공개하려면 파트별 정원이 1개 이상 등록되어 있어야 합니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 50
+    "line": 53
   },
   {
-    "sequence": 263,
+    "sequence": 265,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_PART_QUOTA_DUPLICATE",
@@ -2890,10 +2912,10 @@
     "code": "PROJECT-0203",
     "message": "동일 파트가 중복으로 입력되었습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 51
+    "line": 54
   },
   {
-    "sequence": 264,
+    "sequence": 266,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_DRAFT_APPLICATION_NOT_FOUND",
@@ -2901,10 +2923,10 @@
     "code": "PROJECT-0204",
     "message": "작성 중인 지원서를 찾을 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 73
+    "line": 76
   },
   {
-    "sequence": 265,
+    "sequence": 267,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_PART_NOT_ALLOWED",
@@ -2912,10 +2934,10 @@
     "code": "PROJECT-0205",
     "message": "해당 프로젝트에 지원 가능한 파트가 아닙니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 74
+    "line": 77
   },
   {
-    "sequence": 266,
+    "sequence": 268,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM",
@@ -2923,10 +2945,10 @@
     "code": "PROJECT-0206",
     "message": "이미 해당 기수에 소속된 팀이 있어 지원할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 75
+    "line": 78
   },
   {
-    "sequence": 267,
+    "sequence": 269,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_DUPLICATE_SUBMISSION",
@@ -2934,10 +2956,10 @@
     "code": "PROJECT-0207",
     "message": "동일한 매칭 차수에 이미 제출된 지원서가 있습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 76
+    "line": 79
   },
   {
-    "sequence": 268,
+    "sequence": 270,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_ROUND_NOT_OPEN",
@@ -2945,10 +2967,10 @@
     "code": "PROJECT-0208",
     "message": "해당 매칭 차수의 지원 기간이 아닙니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 77
+    "line": 80
   },
   {
-    "sequence": 269,
+    "sequence": 271,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_ROUND_TYPE_MISMATCH",
@@ -2956,10 +2978,10 @@
     "code": "PROJECT-0209",
     "message": "선택한 매칭 차수가 본인 파트에 해당하지 않습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 78
+    "line": 81
   },
   {
-    "sequence": 270,
+    "sequence": 272,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_ALREADY_EXISTS",
@@ -2967,10 +2989,10 @@
     "code": "PROJECT-0210",
     "message": "이미 작성 중인 지원서가 있습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 79
+    "line": 82
   },
   {
-    "sequence": 271,
+    "sequence": 273,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_SELF_APPLY_NOT_ALLOWED",
@@ -2978,10 +3000,10 @@
     "code": "PROJECT-0211",
     "message": "본인이 운영하는 프로젝트에는 지원할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 80
+    "line": 83
   },
   {
-    "sequence": 272,
+    "sequence": 274,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_DECISION_INVALID_TRANSITION",
@@ -2989,10 +3011,10 @@
     "code": "PROJECT-0212",
     "message": "현재 상태에서는 합/불 결정을 변경할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 81
+    "line": 84
   },
   {
-    "sequence": 273,
+    "sequence": 275,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_QUOTA_EXCEEDED",
@@ -3000,10 +3022,10 @@
     "code": "PROJECT-0213",
     "message": "해당 파트의 남은 자리를 초과하여 합격 처리할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 83
+    "line": 86
   },
   {
-    "sequence": 274,
+    "sequence": 276,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_CANCEL_NOT_ALLOWED",
@@ -3011,10 +3033,10 @@
     "code": "PROJECT-0214",
     "message": "이미 종결된 지원서는 철회할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 85
+    "line": 88
   },
   {
-    "sequence": 275,
+    "sequence": 277,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_CANCEL_ROUND_CLOSED",
@@ -3022,10 +3044,10 @@
     "code": "PROJECT-0215",
     "message": "매칭 차수가 종료되어 지원서를 철회할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 86
+    "line": 89
   },
   {
-    "sequence": 276,
+    "sequence": 278,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_NOT_FOUND",
@@ -3033,10 +3055,10 @@
     "code": "PROJECT-0300",
     "message": "매칭 차수를 찾을 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 54
+    "line": 57
   },
   {
-    "sequence": 277,
+    "sequence": 279,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_INVALID_PERIOD",
@@ -3044,10 +3066,10 @@
     "code": "PROJECT-0301",
     "message": "매칭 차수 기간은 startsAt < endsAt < decisionDeadline 순서여야 합니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 55
+    "line": 58
   },
   {
-    "sequence": 278,
+    "sequence": 280,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED",
@@ -3055,10 +3077,10 @@
     "code": "PROJECT-0302",
     "message": "같은 지부 내에서는 매칭 차수 기간이 중복될 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 57
+    "line": 60
   },
   {
-    "sequence": 279,
+    "sequence": 281,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_ACCESS_DENIED",
@@ -3066,10 +3088,10 @@
     "code": "PROJECT-0303",
     "message": "해당 매칭 차수에 대한 관리 권한이 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 59
+    "line": 62
   },
   {
-    "sequence": 280,
+    "sequence": 282,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_DELETE_CONFLICT",
@@ -3077,10 +3099,10 @@
     "code": "PROJECT-0304",
     "message": "연관된 지원서가 있는 매칭 차수는 삭제할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 61
+    "line": 64
   },
   {
-    "sequence": 281,
+    "sequence": 283,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_TIME_REQUIRES_CHAPTER",
@@ -3088,10 +3110,10 @@
     "code": "PROJECT-0305",
     "message": "time 기준 조회는 chapterId와 함께 요청해야 합니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 63
+    "line": 66
   },
   {
-    "sequence": 282,
+    "sequence": 284,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_LOCKED",
@@ -3099,10 +3121,10 @@
     "code": "PROJECT-0306",
     "message": "매칭 차수가 종료되어 더 이상 결정을 변경할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 65
+    "line": 68
   },
   {
-    "sequence": 283,
+    "sequence": 285,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_NOT_FINALIZABLE",
@@ -3110,10 +3132,10 @@
     "code": "PROJECT-0307",
     "message": "결정 마감 시각이 지나기 전에는 자동 선발을 실행할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 67
+    "line": 70
   },
   {
-    "sequence": 284,
+    "sequence": 286,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_POLICY_NOT_FOUND",
@@ -3121,10 +3143,10 @@
     "code": "PROJECT-0308",
     "message": "해당 매칭 종류에 대한 자동 선발 정책이 정의되지 않았습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 69
+    "line": 72
   },
   {
-    "sequence": 285,
+    "sequence": 287,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "INVALID_TIME_RANGE",
@@ -3135,7 +3157,7 @@
     "line": 12
   },
   {
-    "sequence": 286,
+    "sequence": 288,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "SCHEDULE_NOT_FOUND",
@@ -3146,7 +3168,7 @@
     "line": 14
   },
   {
-    "sequence": 287,
+    "sequence": 289,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "TAG_REQUIRED",
@@ -3157,7 +3179,7 @@
     "line": 16
   },
   {
-    "sequence": 288,
+    "sequence": 290,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "NOT_FIRST_ATTENDANCE_REQUEST",
@@ -3168,7 +3190,7 @@
     "line": 18
   },
   {
-    "sequence": 289,
+    "sequence": 291,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "NO_ATTENDANCE_RECORD",
@@ -3179,7 +3201,7 @@
     "line": 20
   },
   {
-    "sequence": 290,
+    "sequence": 292,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "INVALID_ATTENDANCE_STATUS_FOR_EXCUSE",
@@ -3190,7 +3212,7 @@
     "line": 22
   },
   {
-    "sequence": 291,
+    "sequence": 293,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "INVALID_ATTENDANCE_STATUS_FOR_APPROVAL",
@@ -3201,7 +3223,7 @@
     "line": 25
   },
   {
-    "sequence": 292,
+    "sequence": 294,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "INVALID_ATTENDANCE_STATUS_FOR_REJECT",
@@ -3212,7 +3234,7 @@
     "line": 27
   },
   {
-    "sequence": 293,
+    "sequence": 295,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "NO_EXCUSE_REASON_GIVEN",
@@ -3223,7 +3245,7 @@
     "line": 29
   },
   {
-    "sequence": 294,
+    "sequence": 296,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "ATTENDANCE_NOT_REQUIRES_CONFIRM",
@@ -3234,7 +3256,7 @@
     "line": 31
   },
   {
-    "sequence": 295,
+    "sequence": 297,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "SCHEDULE_ENDED",
@@ -3245,7 +3267,7 @@
     "line": 34
   },
   {
-    "sequence": 296,
+    "sequence": 298,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "CHECK_IN_TOO_EARLY",
@@ -3256,7 +3278,7 @@
     "line": 36
   },
   {
-    "sequence": 297,
+    "sequence": 299,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "OFFLINE_SCHEDULE_REQUIRES_LOCATION",
@@ -3267,7 +3289,7 @@
     "line": 38
   },
   {
-    "sequence": 298,
+    "sequence": 300,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST",
@@ -3278,7 +3300,7 @@
     "line": 40
   },
   {
-    "sequence": 299,
+    "sequence": 301,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "PARTICIPANT_NOT_FOUND",
@@ -3289,7 +3311,7 @@
     "line": 42
   },
   {
-    "sequence": 300,
+    "sequence": 302,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "LOCATION_NOT_VERIFIED",
@@ -3300,7 +3322,7 @@
     "line": 44
   },
   {
-    "sequence": 301,
+    "sequence": 303,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "ONLINE_SCHEDULE_SHOULD_NOT_HAVE_LOCATION",
@@ -3311,7 +3333,7 @@
     "line": 46
   },
   {
-    "sequence": 302,
+    "sequence": 304,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "NOT_ACTIVE_GISU_SCHEDULE",
@@ -3322,7 +3344,7 @@
     "line": 49
   },
   {
-    "sequence": 303,
+    "sequence": 305,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "NOT_SCHEDULE_PARTICIPANT",
@@ -3333,7 +3355,7 @@
     "line": 52
   },
   {
-    "sequence": 304,
+    "sequence": 306,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "ATTENDANCE_POLICY_REQUIRED",
@@ -3344,7 +3366,7 @@
     "line": 54
   },
   {
-    "sequence": 305,
+    "sequence": 307,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "STARTED_SCHEDULE_CANT_BE_EDITED",
@@ -3355,7 +3377,7 @@
     "line": 56
   },
   {
-    "sequence": 306,
+    "sequence": 308,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "CANNOT_CREATE_SCHEDULE",
@@ -3366,7 +3388,7 @@
     "line": 58
   },
   {
-    "sequence": 307,
+    "sequence": 309,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "EXCEEDED_MAX_PARTICIPANTS",
@@ -3377,7 +3399,7 @@
     "line": 60
   },
   {
-    "sequence": 308,
+    "sequence": 310,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "CANNOT_CREATE_ATTENDANCE_REQUIRED_SCHEDULE",
@@ -3388,7 +3410,7 @@
     "line": 62
   },
   {
-    "sequence": 309,
+    "sequence": 311,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "INVALID_MEMBER_INVITE",
@@ -3399,7 +3421,7 @@
     "line": 64
   },
   {
-    "sequence": 310,
+    "sequence": 312,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "SCHEDULE_HAS_ATTENDANCE_RECORD",
@@ -3410,7 +3432,7 @@
     "line": 66
   },
   {
-    "sequence": 311,
+    "sequence": 313,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "FILE_NOT_FOUND",
@@ -3421,7 +3443,7 @@
     "line": 13
   },
   {
-    "sequence": 312,
+    "sequence": 314,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "FILE_UPLOAD_NOT_COMPLETED",
@@ -3432,7 +3454,7 @@
     "line": 14
   },
   {
-    "sequence": 313,
+    "sequence": 315,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "FILE_ALREADY_UPLOADED",
@@ -3443,7 +3465,7 @@
     "line": 15
   },
   {
-    "sequence": 314,
+    "sequence": 316,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "INVALID_FILE_EXTENSION",
@@ -3454,7 +3476,7 @@
     "line": 18
   },
   {
-    "sequence": 315,
+    "sequence": 317,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "FILE_SIZE_EXCEEDED",
@@ -3465,7 +3487,7 @@
     "line": 19
   },
   {
-    "sequence": 316,
+    "sequence": 318,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "INVALID_CONTENT_TYPE",
@@ -3476,7 +3498,7 @@
     "line": 20
   },
   {
-    "sequence": 317,
+    "sequence": 319,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "STORAGE_UPLOAD_FAILED",
@@ -3487,7 +3509,7 @@
     "line": 23
   },
   {
-    "sequence": 318,
+    "sequence": 320,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "STORAGE_DELETE_FAILED",
@@ -3498,7 +3520,7 @@
     "line": 24
   },
   {
-    "sequence": 319,
+    "sequence": 321,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "STORAGE_URL_GENERATION_FAILED",
@@ -3509,7 +3531,7 @@
     "line": 25
   },
   {
-    "sequence": 320,
+    "sequence": 322,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "CDN_SIGNING_FAILED",
@@ -3520,7 +3542,7 @@
     "line": 28
   },
   {
-    "sequence": 321,
+    "sequence": 323,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "NO_ENV_KEYS",
@@ -3531,7 +3553,7 @@
     "line": 29
   },
   {
-    "sequence": 322,
+    "sequence": 324,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "INVALID_SPRING_PROFILE",
@@ -3542,7 +3564,7 @@
     "line": 30
   },
   {
-    "sequence": 323,
+    "sequence": 325,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "SURVEY_NOT_FOUND",
@@ -3553,7 +3575,7 @@
     "line": 12
   },
   {
-    "sequence": 324,
+    "sequence": 326,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "SURVEY_NOT_DRAFT",
@@ -3564,7 +3586,7 @@
     "line": 13
   },
   {
-    "sequence": 325,
+    "sequence": 327,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "QUESTION_NOT_FOUND",
@@ -3575,7 +3597,7 @@
     "line": 14
   },
   {
-    "sequence": 326,
+    "sequence": 328,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "FORM_RESPONSE_NOT_FOUND",
@@ -3586,7 +3608,7 @@
     "line": 16
   },
   {
-    "sequence": 327,
+    "sequence": 329,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "QUESTION_IS_NOT_OWNED_BY_FORM",
@@ -3597,7 +3619,7 @@
     "line": 17
   },
   {
-    "sequence": 328,
+    "sequence": 330,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "FORM_RESPONSE_FORBIDDEN",
@@ -3608,7 +3630,7 @@
     "line": 18
   },
   {
-    "sequence": 329,
+    "sequence": 331,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "QUESTION_TYPE_MISMATCH",
@@ -3619,7 +3641,7 @@
     "line": 19
   },
   {
-    "sequence": 330,
+    "sequence": 332,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "REQUIRED_QUESTION_NOT_ANSWERED",
@@ -3630,7 +3652,7 @@
     "line": 20
   },
   {
-    "sequence": 331,
+    "sequence": 333,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "INVALID_ANSWER_FORMAT",
@@ -3641,7 +3663,7 @@
     "line": 21
   },
   {
-    "sequence": 332,
+    "sequence": 334,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "OTHER_OPTION_DUPLICATED",
@@ -3652,7 +3674,7 @@
     "line": 22
   },
   {
-    "sequence": 333,
+    "sequence": 335,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "OPTION_NOT_IN_QUESTION",
@@ -3663,7 +3685,7 @@
     "line": 23
   },
   {
-    "sequence": 334,
+    "sequence": 336,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "OPTION_TEXT_REQUIRED",
@@ -3674,7 +3696,7 @@
     "line": 24
   },
   {
-    "sequence": 335,
+    "sequence": 337,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "INVALID_FORM_ACTIVE_PERIOD",
@@ -3685,7 +3707,7 @@
     "line": 25
   },
   {
-    "sequence": 336,
+    "sequence": 338,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "INVALID_VOTE_SELECTION",
@@ -3696,7 +3718,7 @@
     "line": 27
   },
   {
-    "sequence": 337,
+    "sequence": 339,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "INVALID_VOTE_FORM_STRUCTURE",
@@ -3707,7 +3729,7 @@
     "line": 29
   },
   {
-    "sequence": 338,
+    "sequence": 340,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "FORM_RESPONSE_ALREADY_EXISTS",
@@ -3718,7 +3740,7 @@
     "line": 31
   },
   {
-    "sequence": 339,
+    "sequence": 341,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "SURVEY_NOT_PUBLISHED",
@@ -3729,7 +3751,7 @@
     "line": 32
   },
   {
-    "sequence": 340,
+    "sequence": 342,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "QUESTION_OPTION_NOT_FOUND",
@@ -3740,7 +3762,7 @@
     "line": 33
   },
   {
-    "sequence": 341,
+    "sequence": 343,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "ANSWER_NOT_FOUND",
@@ -3751,7 +3773,7 @@
     "line": 34
   },
   {
-    "sequence": 342,
+    "sequence": 344,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "FORM_RESPONSE_NOT_DRAFT",
@@ -3762,7 +3784,7 @@
     "line": 35
   },
   {
-    "sequence": 343,
+    "sequence": 345,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "ANSWER_ALREADY_EXISTS",
@@ -3773,7 +3795,7 @@
     "line": 36
   },
   {
-    "sequence": 344,
+    "sequence": 346,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "SURVEY_ALREADY_PUBLISHED",
@@ -3784,7 +3806,7 @@
     "line": 15
   },
   {
-    "sequence": 345,
+    "sequence": 347,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_NOT_FOUND",
@@ -3795,7 +3817,7 @@
     "line": 12
   },
   {
-    "sequence": 346,
+    "sequence": 348,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_TYPE_REQUIRED",
@@ -3806,7 +3828,7 @@
     "line": 13
   },
   {
-    "sequence": 347,
+    "sequence": 349,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_TITLE_REQUIRED",
@@ -3817,7 +3839,7 @@
     "line": 14
   },
   {
-    "sequence": 348,
+    "sequence": 350,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_CONTENT_REQUIRED",
@@ -3828,7 +3850,7 @@
     "line": 15
   },
   {
-    "sequence": 349,
+    "sequence": 351,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_VERSION_REQUIRED",
@@ -3839,7 +3861,7 @@
     "line": 16
   },
   {
-    "sequence": 350,
+    "sequence": 352,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_CONSENT_NOT_FOUND",
@@ -3850,7 +3872,7 @@
     "line": 18
   },
   {
-    "sequence": 351,
+    "sequence": 353,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_CONSENT_ALREADY_EXISTS",
@@ -3861,7 +3883,7 @@
     "line": 19
   },
   {
-    "sequence": 352,
+    "sequence": 354,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "MEMBER_ID_REQUIRED",
@@ -3872,7 +3894,7 @@
     "line": 20
   },
   {
-    "sequence": 353,
+    "sequence": 355,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERM_ID_REQUIRED",
@@ -3883,7 +3905,7 @@
     "line": 21
   },
   {
-    "sequence": 354,
+    "sequence": 356,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "MANDATORY_TERMS_NOT_AGREED",
@@ -3894,7 +3916,7 @@
     "line": 22
   },
   {
-    "sequence": 355,
+    "sequence": 357,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERM_PERMISSION_DENIED",

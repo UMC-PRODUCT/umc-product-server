@@ -3,7 +3,6 @@
 # 환경변수 변경 시에는 반드시 GitHub Actions에 업데이트 할 것
 # ==================================================================
 
-
 server:
   port: ${SERVER_PORT:8080}
   shutdown: graceful
@@ -53,7 +52,7 @@ spring:
     suffix: .html
     mode: HTML
     encoding: UTF-8
-    cache: false  # 개발 환경에서는 캐시 비활성화, 운영에서는 true로 변경 필요
+    cache: false # 개발 환경에서는 캐시 비활성화, 운영에서는 true로 변경 필요
 
   datasource:
     url: ${DATABASE_URL}
@@ -65,14 +64,15 @@ spring:
       auto-commit: true
 
       maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:10}
-      minimum-idle: ${HIKARI_MIN_IDLE:10}
+      minimum-idle: ${HIKARI_MIN_IDLE:2}
+      initialization-fail-timeout: ${HIKARI_INITIALIZATION_FAIL_TIMEOUT:-1}
 
       # 3. 수명 및 타임아웃
-      max-lifetime: 1800000       # 30분
-      connection-timeout: 30000   # 30초
-      validation-timeout: 5000    # 5초
+      max-lifetime: 1800000 # 30분
+      connection-timeout: 30000 # 30초
+      validation-timeout: 5000 # 5초
 
-      keepalive-time: 60000       # DB에 1분마다 생존 신고 (유휴 커넥션 방지)
+      keepalive-time: 60000 # DB에 1분마다 생존 신고 (유휴 커넥션 방지)
 
   flyway:
     enabled: true
@@ -81,16 +81,13 @@ spring:
     out-of-order: ${FLYWAY_OUT_OF_ORDER:false}
 
   jpa:
-    # database-platform은 SpringBoot가 hibernate-spatial 의존성을 기반으로 자동으로 선택함
-    # 따라서 포함하지 않도록 함.
     hibernate:
       ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
         default_schema: public
-        format_sql: true
-        # dialect는 명시가 불필요해서 생략
+        format_sql: false
         show_sql: false # p6spy가 있어서 꺼둠
 
   # ====================================================================
@@ -175,23 +172,23 @@ springdoc:
     enabled: ${SWAGGER_ENABLE:false} # Swagger는 기본적으로 비활성화
 
     # 정렬 옵션
-    groups-order: DESC  # 그룹 정렬 (ASC/DESC)
-    tags-sorter: alpha  # 태그(컨트롤러) 정렬
-    operations-sorter: method  # API 메소드 정렬
+    groups-order: DESC # 그룹 정렬 (ASC/DESC)
+    tags-sorter: alpha # 태그(컨트롤러) 정렬
+    operations-sorter: method # API 메소드 정렬
 
     # UI 설정
-    doc-expansion: none  # API 펼침 상태 (none/list/full)
-    disable-swagger-default-url: true  # petstore 기본 URL 비활성화
-    display-request-duration: true  # 요청 소요 시간 표시
-    display-operation-id: false  # operation ID 표시 여부
+    doc-expansion: none # API 펼침 상태 (none/list/full)
+    disable-swagger-default-url: true # petstore 기본 URL 비활성화
+    display-request-duration: true # 요청 소요 시간 표시
+    display-operation-id: false # operation ID 표시 여부
 
     filter: true
     #    default-models-expand-depth: -1  # 스키마 모델도 접힌 상태로
 
     # 기타
-    deep-linking: true  # URL 딥링킹 지원
-    show-extensions: true  # 확장 속성 표시
-    show-common-extensions: true  # 공통 확장 속성 표시
+    deep-linking: true # URL 딥링킹 지원
+    show-extensions: true # 확장 속성 표시
+    show-common-extensions: true # 공통 확장 속성 표시
 
   api-docs:
     path: /docs-json # API 문서 경로
@@ -212,7 +209,7 @@ logging:
 
     # JPA/Hibernate
     org.hibernate.SQL: WARN
-    org.hibernate.orm.jdbc.bind: WARN  # 파라미터 숨김
+    org.hibernate.orm.jdbc.bind: WARN # 파라미터 숨김
 
     # 트랜잭션
     org.springframework.transaction: INFO
@@ -296,16 +293,30 @@ management:
       enabled: false
 
 app:
-  base-url: ${APP_BASE_URL:http://localhost:${SERVER_PORT:8080}}
   # Figma_댓글_dev_prod_중복_방지_계획 §L4: Discord embed footer 의 환경 라벨 ([ENV: ...]) 으로 노출됨.
   # spring.profiles.active 가 콤마 구분 다중 profile 일 수 있으므로 운영자가 단일 라벨을 명시적으로 override 가능.
   environment: ${APP_ENVIRONMENT:${SPRING_PROFILES_ACTIVE:local}}
+
+  observability:
+    tracing:
+      enabled: ${APP_OBSERVABILITY_TRACING_ENABLED:true}
+      use-case-spans: ${APP_OBSERVABILITY_USE_CASE_SPANS:true}
+      adapter-spans: ${APP_OBSERVABILITY_ADAPTER_SPANS:true}
+      db-spans: ${APP_OBSERVABILITY_DB_SPANS:true}
+      # SQL 원문에는 개인정보/토큰성 값이 포함될 수 있으므로 기본값은 비활성화한다.
+      include-sql: ${APP_OBSERVABILITY_INCLUDE_SQL:false}
+      max-sql-length: ${APP_OBSERVABILITY_MAX_SQL_LENGTH:500}
+
+  event-outbox:
+    enabled: ${EVENT_OUTBOX_ENABLED:false}
+    poll-interval-ms: ${EVENT_OUTBOX_POLL_INTERVAL_MS:5000}
+    batch-size: ${EVENT_OUTBOX_BATCH_SIZE:100}
+    max-attempts: ${EVENT_OUTBOX_MAX_ATTEMPTS:5}
 
   fcm:
     enabled: ${FCM_ENABLED:false}
     outbox-interval-ms: ${FCM_OUTBOX_INTERVAL_MS:60000}
     firebase-configuration: ${FIREBASE_CONFIGURATION}
-    topic-prefix: ${SPRING_PROFILES_ACTIVE:local}
 
   cors:
     allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:}
@@ -376,7 +387,7 @@ app:
       authorize-uri: https://www.figma.com/oauth
       token-uri: https://api.figma.com/v1/oauth/token
       refresh-uri: https://api.figma.com/v1/oauth/refresh
-      token-encryption-key: ${FIGMA_TOKEN_ENCRYPTION_KEY}  # 필수 — 기본값 없음. 미설정 시 애플리케이션 기동 실패.
+      token-encryption-key: ${FIGMA_TOKEN_ENCRYPTION_KEY} # 필수 — 기본값 없음. 미설정 시 애플리케이션 기동 실패.
     sync:
       enabled: ${FIGMA_SYNC_ENABLED:false}
       poll-interval: ${FIGMA_SYNC_POLL_INTERVAL:PT5M}
@@ -415,6 +426,7 @@ storage:
       base-url: https://cdn.example.com
       key-name: ${CDN_KEY_NAME}
       private-key: ${CDN_PRIVATE_KEY}
+
 
 # ==================================================================
 # dev 환경에 대한 default override

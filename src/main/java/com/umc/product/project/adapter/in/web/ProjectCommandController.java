@@ -5,20 +5,24 @@ import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.project.adapter.in.web.dto.request.AbortProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.request.AddProjectMemberRequest;
 import com.umc.product.project.adapter.in.web.dto.request.CreateDraftProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.request.TransferProjectOwnershipRequest;
 import com.umc.product.project.adapter.in.web.dto.request.UpdatePartQuotasRequest;
 import com.umc.product.project.adapter.in.web.dto.request.UpdateProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectStatusResponse;
+import com.umc.product.project.application.port.in.command.AbortProjectUseCase;
 import com.umc.product.project.application.port.in.command.AddProjectMemberUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
+import com.umc.product.project.application.port.in.command.DeleteProjectUseCase;
 import com.umc.product.project.application.port.in.command.PublishProjectUseCase;
 import com.umc.product.project.application.port.in.command.RemoveProjectMemberUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
 import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
 import com.umc.product.project.application.port.in.command.UpdatePartQuotasUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
+import com.umc.product.project.application.port.in.command.dto.DeleteProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.PublishProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.RemoveProjectMemberCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
@@ -51,6 +55,8 @@ public class ProjectCommandController {
     private final RemoveProjectMemberUseCase removeProjectMemberUseCase;
     private final UpdatePartQuotasUseCase updatePartQuotasUseCase;
     private final PublishProjectUseCase publishProjectUseCase;
+    private final DeleteProjectUseCase deleteProjectUseCase;
+    private final AbortProjectUseCase abortProjectUseCase;
 
     @PostMapping
     @Operation(
@@ -192,6 +198,46 @@ public class ProjectCommandController {
     ) {
         updatePartQuotasUseCase.update(
             request.toCommand(projectId, memberPrincipal.getMemberId()));
+    }
+
+    @DeleteMapping("/{projectId}")
+    @Operation(
+        summary = "[PROJECT-109] 프로젝트 삭제",
+        description = "DRAFT / PENDING_REVIEW 상태의 프로젝트를 hard delete 합니다. 연관 ProjectMember / PartQuota / ApplicationForm + survey Form 까지 cascade 삭제. PO 본인 또는 운영진(본인 지부장 / 해당 기수 총괄단)만 호출 가능. IN_PROGRESS 이상은 abort 엔드포인트 사용."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.DELETE,
+        message = "프로젝트 삭제 권한이 없습니다."
+    )
+    public void delete(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId
+    ) {
+        deleteProjectUseCase.delete(DeleteProjectCommand.builder()
+            .projectId(projectId)
+            .requesterMemberId(memberPrincipal.getMemberId())
+            .build());
+    }
+
+    @PostMapping("/{projectId}/abort")
+    @Operation(
+        summary = "[PROJECT-110] 프로젝트 중단",
+        description = "IN_PROGRESS 상태의 프로젝트를 ABORTED 로 전이합니다. ACTIVE ProjectMember 는 WITHDRAWN, 진행 중(DRAFT/SUBMITTED) ProjectApplication 은 CANCELLED 로 일괄 동기화. 운영진(본인 지부장 또는 Central Core) 만 호출 가능."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.MANAGE,
+        message = "프로젝트 중단 권한이 없습니다."
+    )
+    public void abort(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @Valid @RequestBody AbortProjectRequest request
+    ) {
+        abortProjectUseCase.abort(request.toCommand(projectId, memberPrincipal.getMemberId()));
     }
 
     @DeleteMapping("/{projectId}/members/{memberId}")
