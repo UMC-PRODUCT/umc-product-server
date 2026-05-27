@@ -11,6 +11,7 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewQuery;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSchoolsInfo;
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
 import com.umc.product.challenger.domain.QChallenger;
 import com.umc.product.challenger.domain.QChallengerPoint;
@@ -44,6 +45,25 @@ public class AdminOperationsAnalyticsQueryRepository {
     private static final ZoneId DASHBOARD_ZONE = ZoneId.of("Asia/Seoul");
 
     private final JPAQueryFactory queryFactory;
+
+    public AdminOperationsSchoolsInfo getOperationsSchools(AdminAnalyticsScope scope) {
+        return AdminOperationsSchoolsInfo.from(
+            listChapterSchoolStatuses(scope).stream()
+                .map(s -> AdminOperationsSchoolsInfo.ChapterStatusInfo.of(
+                    s.chapterId(),
+                    s.chapterName(),
+                    s.schools().stream()
+                        .map(school -> AdminOperationsSchoolsInfo.SchoolChallengerStatusInfo.of(
+                            school.schoolId(),
+                            school.schoolName(),
+                            school.totalChallengerCount(),
+                            school.challengerPartCounts()
+                        ))
+                        .toList()
+                ))
+                .toList()
+        );
+    }
 
     public AdminOperationsOverviewInfo getOperationsOverview(
         AdminAnalyticsScope scope,
