@@ -1,5 +1,10 @@
 package com.umc.product.member.application.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.audit.domain.AuditLogEvent;
 import com.umc.product.authentication.application.port.in.command.CredentialAuthenticationUseCase;
@@ -11,11 +16,10 @@ import com.umc.product.member.application.port.in.command.dto.EmailRegisterMembe
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
+import com.umc.product.term.application.port.in.command.ManageTermAgreementUseCase;
+
 import jakarta.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 /**
  * 이메일 기반 회원가입 서비스. ADR-017 흐름.
@@ -31,6 +35,7 @@ public class EmailMemberRegisterService implements RegisterEmailMemberUseCase {
     private final MemberRegistrationValidator registrationValidator;
 
     private final CredentialAuthenticationUseCase credentialAuthenticationUseCase;
+    private final ManageTermAgreementUseCase manageTermAgreementUseCase;
     private final GetSchoolUseCase getSchoolUseCase;
 
     private final DomainEventPublisher eventPublisher;
@@ -67,6 +72,10 @@ public class EmailMemberRegisterService implements RegisterEmailMemberUseCase {
 
         credentialAuthenticationUseCase.registerCredentialByEmail(
             RegisterCredentialByEmailCommand.of(created.getId(), command.rawPassword())
+        );
+
+        command.termConsents().forEach(termConsent ->
+            manageTermAgreementUseCase.createTermConsent(termConsent.toCommand(created.getId()))
         );
 
         String logDescription = getSchoolUseCase.getSchoolDetail(command.schoolId()).schoolName()

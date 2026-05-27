@@ -1,12 +1,14 @@
 package com.umc.product.support.fixture;
 
+import java.time.Instant;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.term.application.port.out.SaveTermConsentPort;
 import com.umc.product.term.application.port.out.SaveTermPort;
 import com.umc.product.term.domain.Term;
 import com.umc.product.term.domain.TermConsent;
 import com.umc.product.term.domain.enums.TermType;
-import java.time.Instant;
-import org.springframework.stereotype.Component;
 
 /**
  * 약관(Term) / 약관 동의(TermConsent) 테스트용 Fixture.
@@ -49,12 +51,13 @@ public class TermFixture extends FixtureSupport {
     }
 
     /**
-     * 회원이 특정 타입의 약관에 동의한 상태(고정 시각).
+     * 회원이 특정 약관 row 에 동의한 상태(고정 시각).
      */
-    public TermConsent 약관_동의(Long memberId, TermType type) {
+    public TermConsent 약관_동의(Long memberId, Term term) {
         return saveTermConsentPort.save(TermConsent.builder()
             .memberId(memberId)
-            .termType(type)
+            .termId(term.getId())
+            .termType(term.getType())
             .agreedAt(DEFAULT_AGREED_AT)
             .build());
     }

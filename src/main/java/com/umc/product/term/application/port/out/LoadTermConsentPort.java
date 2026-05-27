@@ -1,9 +1,10 @@
 package com.umc.product.term.application.port.out;
 
-import com.umc.product.term.domain.TermConsent;
-import com.umc.product.term.domain.enums.TermType;
 import java.util.List;
 import java.util.Optional;
+
+import com.umc.product.term.domain.TermConsent;
+import com.umc.product.term.domain.enums.TermType;
 
 public interface LoadTermConsentPort {
     /**
@@ -17,7 +18,17 @@ public interface LoadTermConsentPort {
     Optional<TermConsent> findByMemberIdAndTermType(Long memberId, TermType termType);
 
     /**
+     * 회원 ID와 약관 ID로 동의 정보를 조회합니다.
+     */
+    Optional<TermConsent> findByMemberIdAndTermId(Long memberId, Long termId);
+
+    /**
      * 회원이 특정 타입의 약관에 동의했는지 확인합니다.
      */
     boolean existsByMemberIdAndTermType(Long memberId, TermType termType);
+
+    /**
+     * 회원이 특정 약관 row 에 동의했는지 확인합니다.
+     */
+    boolean existsByMemberIdAndTermId(Long memberId, Long termId);
 }

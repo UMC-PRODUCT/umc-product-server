@@ -1,10 +1,12 @@
 package com.umc.product.term.adapter.out.persistence;
 
-import com.umc.product.term.domain.TermConsent;
-import com.umc.product.term.domain.enums.TermType;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.umc.product.term.domain.TermConsent;
+import com.umc.product.term.domain.enums.TermType;
 
 public interface TermConsentRepository extends JpaRepository<TermConsent, Long> {
 
@@ -19,7 +21,17 @@ public interface TermConsentRepository extends JpaRepository<TermConsent, Long> 
     Optional<TermConsent> findByMemberIdAndTermType(Long memberId, TermType termType);
 
     /**
+     * 회원 ID와 약관 ID로 동의 정보를 조회합니다.
+     */
+    Optional<TermConsent> findByMemberIdAndTermId(Long memberId, Long termId);
+
+    /**
      * 회원이 특정 타입의 약관에 동의했는지 확인합니다.
      */
     boolean existsByMemberIdAndTermType(Long memberId, TermType termType);
+
+    /**
+     * 회원이 특정 약관 row 에 동의했는지 확인합니다.
+     */
+    boolean existsByMemberIdAndTermId(Long memberId, Long termId);
 }
