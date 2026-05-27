@@ -91,6 +91,11 @@ public class ProjectMatchingRoundPersistenceAdapter
     }
 
     @Override
+    public List<ProjectMatchingRound> listAllNotAutoDecided() {
+        return jpaRepository.findAllByAutoDecisionExecutedAtIsNullOrderByDecisionDeadlineAsc();
+    }
+
+    @Override
     public ProjectMatchingRound save(ProjectMatchingRound matchingRound) {
         return jpaRepository.save(matchingRound);
     }

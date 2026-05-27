@@ -1,8 +1,12 @@
+import org.gradle.api.plugins.quality.Checkstyle
+
 plugins {
     java
     id("org.springframework.boot") version "3.5.9"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.asciidoctor.jvm.convert") version "4.0.5"
+    id("com.diffplug.spotless") version "8.5.1"
+    checkstyle
     jacoco
 }
 
@@ -29,10 +33,12 @@ repositories {
 }
 
 // 의존성 버전
-val springDocVersion = "2.8.14"
-val queryDslVersion = "5.0.0"
+val springDocVersion = "2.8.17"
+val queryDslVersion = "5.1.0"
 val jwtVersion = "0.12.5"
 val awsVersion = "2.40.12"
+val springAiVersion = "1.1.5"
+val otelInstrumentationVersion = "2.27.0-alpha"
 
 // REST DOCS
 val snippetsDir = file("build/generated-snippets")
@@ -59,7 +65,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")  // OAuth2 Client
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
@@ -125,22 +130,31 @@ dependencies {
 
     // --- Metrics ---
     implementation("io.micrometer:micrometer-registry-prometheus")
-    implementation("com.github.loki4j:loki-logback-appender:1.5.2")
     implementation("io.micrometer:micrometer-registry-otlp")
 
-    // --- Sentry ---
-    implementation(platform("io.sentry:sentry-bom:8.31.0"))
-    implementation("io.sentry:sentry-spring-boot-starter-jakarta")
-    implementation("io.sentry:sentry-logback")
+    // --- Structured Logging (ADR-016) ---
+    // dev/staging/prod 환경의 JSON 단일 라인 로그 encoder. local 은 텍스트 유지.
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
     // --- Tracing ---
     implementation("io.micrometer:micrometer-observation") // 관측 기능: metrics + tracing
     implementation("io.micrometer:micrometer-tracing-bridge-otel") // OpenTelemetry 연동
     implementation("io.opentelemetry:opentelemetry-exporter-otlp") // OTLP Exporter
+    implementation("io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:${otelInstrumentationVersion}")
     implementation("io.micrometer:context-propagation") // 비동기 작업에서 context를 잃어버리지 않도록 함
 
     // Firebase Admin SDK
     implementation("com.google.firebase:firebase-admin:9.7.1")
+
+    // --- Spring AI (LLM provider 통합) ---
+    implementation(platform("org.springframework.ai:spring-ai-bom:${springAiVersion}"))
+    implementation("org.springframework.ai:spring-ai-starter-model-openai")
+    implementation("org.springframework.ai:spring-ai-starter-model-vertex-ai-gemini")
+    implementation("org.springframework.ai:spring-ai-starter-model-google-genai")
+
+    // --- Cache ---
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("com.github.ben-manes.caffeine:caffeine")
 
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -161,6 +175,93 @@ dependencies {
 
 springBoot {
     buildInfo()
+}
+
+spotless {
+    ratchetFrom("origin/develop")
+
+    java {
+        target("src/**/*.java")
+        importOrder("\\#", "java", "javax", "org", "net", "com", "")
+        removeUnusedImports()
+        forbidWildcardImports()
+        trimTrailingWhitespace()
+        leadingTabsToSpaces(4)
+        endWithNewline()
+        formatAnnotations()
+    }
+
+    format("misc") {
+        target(
+            "*.gradle.kts",
+            ".editorconfig",
+            ".github/**/*.yml",
+            ".github/**/*.yaml",
+            "config/**/*.xml"
+        )
+        trimTrailingWhitespace()
+        leadingTabsToSpaces(4)
+        endWithNewline()
+    }
+}
+
+checkstyle {
+    toolVersion = "13.4.2"
+    configDirectory.set(layout.projectDirectory.dir("config/checkstyle"))
+    configProperties["suppressionFile"] =
+        layout.projectDirectory.file("config/checkstyle/naver-checkstyle-suppressions.xml").asFile.absolutePath
+    isIgnoreFailures = false
+    maxErrors = 0
+    maxWarnings = Int.MAX_VALUE
+}
+
+val lintBaseRef = providers.gradleProperty("lintBase").orElse("origin/develop")
+
+fun changedJavaFiles(vararg sourceRoots: String) = lintBaseRef.flatMap { baseRef ->
+    val diffAgainstBaseProvider = providers.exec {
+        commandLine("git", "diff", "--name-only", "--diff-filter=ACMR", "$baseRef...HEAD", "--", *sourceRoots)
+        isIgnoreExitValue = true
+    }.standardOutput.asText
+
+    val localDiffProvider = providers.exec {
+        commandLine("git", "diff", "--name-only", "--diff-filter=ACMR", "HEAD", "--", *sourceRoots)
+        isIgnoreExitValue = true
+    }.standardOutput.asText
+
+    diffAgainstBaseProvider.zip(localDiffProvider) { baseOutput, localOutput ->
+        (baseOutput.lines() + localOutput.lines())
+            .asSequence()
+            .map(String::trim)
+            .filter { it.endsWith(".java") && it.isNotBlank() }
+            .distinct()
+            .map(::file)
+            .filter(File::exists)
+            .toList()
+    }
+}
+
+tasks.withType<Checkstyle>().configureEach {
+    classpath = files()
+    exclude("**/Q*.java")
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+tasks.named<Checkstyle>("checkstyleMain") {
+    setSource(files(changedJavaFiles("src/main/java")))
+}
+
+tasks.named<Checkstyle>("checkstyleTest") {
+    setSource(files(changedJavaFiles("src/test/java")))
+}
+
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    layered {
+        enabled.set(true)
+    }
 }
 
 tasks.withType<JavaCompile>().configureEach {

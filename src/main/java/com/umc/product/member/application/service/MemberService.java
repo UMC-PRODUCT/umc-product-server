@@ -7,6 +7,7 @@ import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthC
 import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
 import com.umc.product.authentication.application.port.in.query.GetMemberOAuthUseCase;
 import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
+import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
 import com.umc.product.member.application.port.in.command.RegisterOAuthMemberUseCase;
@@ -26,7 +27,6 @@ import com.umc.product.term.application.port.in.command.ManageTermAgreementUseCa
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +44,7 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
     private final ManageTermAgreementUseCase manageTermAgreementUseCase;
     private final GetSchoolUseCase getSchoolUseCase;
 
-    private final ApplicationEventPublisher eventPublisher;
+    private final DomainEventPublisher eventPublisher;
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
 
     @Override
@@ -86,7 +86,7 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
                 .build()
         );
 
-        eventPublisher.publishEvent(
+        eventPublisher.publish(
             AuditLogEvent.builder()
                 .domain(Domain.MEMBER)
                 .action(AuditAction.REGISTER)
@@ -176,7 +176,7 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
 
         saveMemberPort.delete(memberToDelete);
 
-        eventPublisher.publishEvent(
+        eventPublisher.publish(
             AuditLogEvent.builder()
                 .domain(Domain.MEMBER)
                 .action(AuditAction.WITHDRAW)

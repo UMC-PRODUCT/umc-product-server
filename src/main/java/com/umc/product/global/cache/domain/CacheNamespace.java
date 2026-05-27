@@ -1,0 +1,37 @@
+package com.umc.product.global.cache.domain;
+
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+public enum CacheNamespace {
+    FIGMA_CLASSIFICATION("figma.classification", "figma.classifier.l1");
+
+    private final String value;
+    private final String metricName;
+
+    CacheNamespace(String value, String metricName) {
+        this.value = value;
+        this.metricName = metricName;
+    }
+
+    public String value() {
+        return value;
+    }
+
+    public String metricName() {
+        return metricName;
+    }
+
+    public static void validateUniqueValues() {
+        Map<String, Long> counts = Arrays.stream(values())
+            .map(CacheNamespace::value)
+            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        counts.forEach((namespace, count) -> {
+            if (count > 1) {
+                throw new IllegalStateException("중복 cache namespace 입니다. namespace=" + namespace);
+            }
+        });
+    }
+}

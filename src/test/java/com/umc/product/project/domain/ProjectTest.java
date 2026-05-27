@@ -239,21 +239,28 @@ class ProjectTest {
         @Test
         void DRAFT_상태에서는_통과() {
             // setUp 의 project 가 DRAFT
-            project.validateApplicationFormEditable();
+            project.validateApplicationFormEditable(false);
         }
 
         @Test
         void PENDING_REVIEW_상태에서는_통과() {
             setStatus(project, ProjectStatus.PENDING_REVIEW);
 
-            project.validateApplicationFormEditable();
+            project.validateApplicationFormEditable(false);
         }
 
         @Test
-        void IN_PROGRESS_상태에서는_PROJECT_INVALID_STATE() {
+        void IN_PROGRESS_차수_사이에는_통과() {
             setStatus(project, ProjectStatus.IN_PROGRESS);
 
-            assertThatThrownBy(() -> project.validateApplicationFormEditable())
+            project.validateApplicationFormEditable(false);
+        }
+
+        @Test
+        void IN_PROGRESS_활성_차수_중에는_PROJECT_INVALID_STATE() {
+            setStatus(project, ProjectStatus.IN_PROGRESS);
+
+            assertThatThrownBy(() -> project.validateApplicationFormEditable(true))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
@@ -263,7 +270,7 @@ class ProjectTest {
         void COMPLETED_상태에서는_PROJECT_INVALID_STATE() {
             setStatus(project, ProjectStatus.COMPLETED);
 
-            assertThatThrownBy(() -> project.validateApplicationFormEditable())
+            assertThatThrownBy(() -> project.validateApplicationFormEditable(false))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
@@ -273,10 +280,106 @@ class ProjectTest {
         void ABORTED_상태에서는_PROJECT_INVALID_STATE() {
             setStatus(project, ProjectStatus.ABORTED);
 
-            assertThatThrownBy(() -> project.validateApplicationFormEditable())
+            assertThatThrownBy(() -> project.validateApplicationFormEditable(false))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+    }
+
+    @Nested
+    class validateApplicable {
+
+        @Test
+        void IN_PROGRESS_상태에서는_통과() {
+            setStatus(project, ProjectStatus.IN_PROGRESS);
+
+            project.validateApplicable();
+        }
+
+        @Test
+        void DRAFT_상태에서는_PROJECT_INVALID_STATE() {
+            // setUp 의 project 가 DRAFT
+            assertThatThrownBy(() -> project.validateApplicable())
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+
+        @Test
+        void PENDING_REVIEW_상태에서는_PROJECT_INVALID_STATE() {
+            setStatus(project, ProjectStatus.PENDING_REVIEW);
+
+            assertThatThrownBy(() -> project.validateApplicable())
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+
+        @Test
+        void COMPLETED_상태에서는_PROJECT_INVALID_STATE() {
+            setStatus(project, ProjectStatus.COMPLETED);
+
+            assertThatThrownBy(() -> project.validateApplicable())
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+
+        @Test
+        void ABORTED_상태에서는_PROJECT_INVALID_STATE() {
+            setStatus(project, ProjectStatus.ABORTED);
+
+            assertThatThrownBy(() -> project.validateApplicable())
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+    }
+
+    @Nested
+    class validateDeletable {
+
+        @Test
+        void DRAFT_상태에서는_통과() {
+            project.validateDeletable();
+        }
+
+        @Test
+        void PENDING_REVIEW_상태에서는_통과() {
+            setStatus(project, ProjectStatus.PENDING_REVIEW);
+
+            project.validateDeletable();
+        }
+
+        @Test
+        void IN_PROGRESS_상태에서는_DELETE_NOT_ALLOWED() {
+            setStatus(project, ProjectStatus.IN_PROGRESS);
+
+            assertThatThrownBy(() -> project.validateDeletable())
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_DELETE_NOT_ALLOWED_IN_STATUS);
+        }
+
+        @Test
+        void COMPLETED_상태에서는_DELETE_NOT_ALLOWED() {
+            setStatus(project, ProjectStatus.COMPLETED);
+
+            assertThatThrownBy(() -> project.validateDeletable())
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_DELETE_NOT_ALLOWED_IN_STATUS);
+        }
+
+        @Test
+        void ABORTED_상태에서는_DELETE_NOT_ALLOWED() {
+            setStatus(project, ProjectStatus.ABORTED);
+
+            assertThatThrownBy(() -> project.validateDeletable())
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_DELETE_NOT_ALLOWED_IN_STATUS);
         }
     }
 

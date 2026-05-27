@@ -6,7 +6,10 @@ import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.application.port.out.SearchMemberPort;
 import com.umc.product.member.domain.Member;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -43,19 +46,26 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     }
 
     @Override
-    public Optional<Member> findByLoginId(String loginId) {
-        return memberJpaRepository.findByLoginId(loginId);
-    }
-
-    @Override
     public List<Member> findAllByIds(Set<Long> ids) {
         return memberJpaRepository.findAllById(ids)
             .stream().toList();
     }
 
     @Override
-    public Set<Long> findAllIdsBySchoolId(Long schoolId) {
+    public Set<Long> listIdsBySchoolId(Long schoolId) {
         return memberJpaRepository.findAllIdsBySchoolId(schoolId);
+    }
+
+    @Override
+    public Map<Long, Set<Long>> listIdsBySchoolIds(Set<Long> schoolIds) {
+        if (schoolIds == null || schoolIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Set<Long>> result = new HashMap<>();
+        for (MemberJpaRepository.SchoolMemberIdRow row : memberJpaRepository.findAllIdsBySchoolIds(schoolIds)) {
+            result.computeIfAbsent(row.getSchoolId(), ignored -> new HashSet<>()).add(row.getMemberId());
+        }
+        return result;
     }
 
     @Override
@@ -71,11 +81,6 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     @Override
     public boolean existsByNickname(String nickname) {
         return memberJpaRepository.existsByNickname(nickname);
-    }
-
-    @Override
-    public boolean existsByLoginId(String loginId) {
-        return memberJpaRepository.existsByLoginId(loginId);
     }
 
     @Override
@@ -99,6 +104,11 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     }
 
     @Override
+    public Page<Long> searchMemberIds(SearchMemberQuery query, Pageable pageable) {
+        return memberQueryRepository.searchMemberIdsBy(query, pageable);
+    }
+
+    @Override
     public List<Long> findAllIdsCursor(Long lastId, Pageable pageable) {
         return memberJpaRepository.findIdsCursor(lastId, pageable);
     }
@@ -110,5 +120,10 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
             return 0L;
         }
         return memberJpaRepository.countByIdIn(memberIds);
+    }
+
+    @Override
+    public long countAllMembers() {
+        return memberJpaRepository.count();
     }
 }

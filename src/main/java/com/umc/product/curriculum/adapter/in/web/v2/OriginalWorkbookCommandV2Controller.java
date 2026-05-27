@@ -1,26 +1,31 @@
 package com.umc.product.curriculum.adapter.in.web.v2;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.request.ChangeOriginalWorkbookStatusRequest;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.request.CreateOriginalWorkbookRequest;
-import com.umc.product.global.exception.NotImplementedException;
+import com.umc.product.curriculum.adapter.in.web.v2.dto.request.EditOriginalWorkbookRequest;
+import com.umc.product.curriculum.application.port.in.command.ManageOriginalWorkbookUseCase;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.ChangeOriginalWorkbookStatusCommand;
+import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v2/curriculums/original-workbooks")
 @RequiredArgsConstructor
 @Tag(name = "Curriculum V2 | Original Workbook Command", description = "중앙운영사무국 교육국 소속 파트장용. 주차별 원본 워크북 생성/수정/삭제 등")
 public class OriginalWorkbookCommandV2Controller {
+
+    private final ManageOriginalWorkbookUseCase manageOriginalWorkbookUseCase;
 
     @Operation(
         summary = "[ORIGINAL-WORKBOOK-001] 중앙파트장용: 원본 워크북 추가 (READY 상태)",
@@ -31,11 +36,16 @@ public class OriginalWorkbookCommandV2Controller {
             임시저장이 필요한 경우 `/draft` 엔드포인트를 사용하세요.
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.ORIGINAL_WORKBOOK,
+        permission = PermissionType.MANAGE,
+        message = "원본 워크북 생성은 중앙파트장이상 권한이 필요합니다."
+    )
     @PostMapping
     public Long createOriginalWorkbook(
         @Valid @RequestBody CreateOriginalWorkbookRequest request
     ) {
-        throw new NotImplementedException();
+        return manageOriginalWorkbookUseCase.create(request.toCommand(OriginalWorkbookStatus.READY));
     }
 
     @Operation(
@@ -49,11 +59,16 @@ public class OriginalWorkbookCommandV2Controller {
             상태 전환 흐름: `DRAFT` → `READY` → `RELEASED`
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.ORIGINAL_WORKBOOK,
+        permission = PermissionType.MANAGE,
+        message = "중앙파트장이상 권한만 원본 워크북 임시저장이 가능합니다."
+    )
     @PostMapping("/draft")
     public Long createOriginalWorkbookAsDraft(
         @Valid @RequestBody CreateOriginalWorkbookRequest request
     ) {
-        throw new NotImplementedException();
+        return manageOriginalWorkbookUseCase.create(request.toCommand(OriginalWorkbookStatus.DRAFT));
     }
 
     @Operation(
@@ -63,11 +78,18 @@ public class OriginalWorkbookCommandV2Controller {
             따로 제한 없이 수정이 가능하며, 수정에 따른 책임은 중앙 파트장에게 있습니다.
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.ORIGINAL_WORKBOOK,
+        resourceId = "#originalWorkbookId",
+        permission = PermissionType.MANAGE,
+        message = "중앙파트장 이상 권한만 원본 워크북 수정이 가능합니다."
+    )
     @PatchMapping("/{originalWorkbookId}")
     public void editOriginalWorkbook(
-        @PathVariable Long originalWorkbookId
+        @PathVariable Long originalWorkbookId,
+        @RequestBody EditOriginalWorkbookRequest request
     ) {
-        throw new NotImplementedException();
+        manageOriginalWorkbookUseCase.edit(request.toCommand(originalWorkbookId));
     }
 
     @Operation(
@@ -76,11 +98,17 @@ public class OriginalWorkbookCommandV2Controller {
             배포받은 사용자가 존재하는 경우에는 삭제가 불가능합니다.
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.ORIGINAL_WORKBOOK,
+        resourceId = "#originalWorkbookId",
+        permission = PermissionType.MANAGE,
+        message = "중앙파트장 이상만 원본 워크북 삭제가 가능합니다."
+    )
     @DeleteMapping("/{originalWorkbookId}")
     public void deleteOriginalWorkbook(
         @PathVariable Long originalWorkbookId
     ) {
-        throw new NotImplementedException();
+        manageOriginalWorkbookUseCase.delete(originalWorkbookId);
     }
 
     @Operation(
@@ -99,10 +127,19 @@ public class OriginalWorkbookCommandV2Controller {
             | DRAFT | RELEASED | ❌ (READY 경유 필수) |
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.ORIGINAL_WORKBOOK,
+        permission = PermissionType.RELEASE,
+        message = "중앙파트장 이상 권한만 원본 워크북 상태 수정이 가능합니다."
+    )
     @PatchMapping("/status")
     public void changeOriginalWorkbookStatus(
-        @Valid @RequestBody List<ChangeOriginalWorkbookStatusRequest> requests
+        @Valid @RequestBody List<ChangeOriginalWorkbookStatusRequest> requests,
+        @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        throw new NotImplementedException();
+        List<ChangeOriginalWorkbookStatusCommand> commands = requests.stream()
+            .map(r -> r.toCommand(memberPrincipal.getMemberId()))
+            .toList();
+        manageOriginalWorkbookUseCase.changeStatusForRelease(commands);
     }
 }

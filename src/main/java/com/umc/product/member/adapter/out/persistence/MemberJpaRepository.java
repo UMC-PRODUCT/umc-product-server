@@ -15,19 +15,24 @@ public interface MemberJpaRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findByNickname(String nickname);
 
-    Optional<Member> findByLoginId(String loginId);
-
     boolean existsByEmail(String email);
 
     boolean existsByNickname(String nickname);
 
-    boolean existsByLoginId(String loginId);
-
     @Query("select m.id from Member m where m.schoolId = :schoolId")
     Set<Long> findAllIdsBySchoolId(Long schoolId);
+
+    @Query("select m.schoolId as schoolId, m.id as memberId from Member m where m.schoolId in :schoolIds")
+    List<SchoolMemberIdRow> findAllIdsBySchoolIds(@Param("schoolIds") Collection<Long> schoolIds);
 
     @Query("SELECT m.id FROM Member m WHERE m.id > :lastId ORDER BY m.id ASC")
     List<Long> findIdsCursor(@Param("lastId") Long lastId, Pageable pageable);
 
     long countByIdIn(Collection<Long> ids);
+
+    interface SchoolMemberIdRow {
+        Long getSchoolId();
+
+        Long getMemberId();
+    }
 }

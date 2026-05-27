@@ -1,13 +1,14 @@
 package com.umc.product.global.config;
 
 
-import com.umc.product.authentication.adapter.in.oauth.OAuth2AuthenticationFailureHandler;
-import com.umc.product.authentication.adapter.in.oauth.OAuth2AuthenticationSuccessHandler;
-import com.umc.product.authentication.application.service.UmcProductOAuth2UserService;
 import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.security.JwtAuthenticationFilter;
 import com.umc.product.global.security.util.PublicEndpointCollector;
+import com.umc.product.maintenance.adapter.in.web.filter.MaintenanceFilter;
+import com.umc.product.maintenance.application.port.out.MaintenanceBypassPolicy;
+import com.umc.product.maintenance.application.service.MaintenanceStateHolder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,9 +61,6 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ApiAuthenticationEntryPoint authenticationEntryPoint;
     private final ApiAccessDeniedHandler accessDeniedHandler;
-    private final UmcProductOAuth2UserService umcProductOAuth2UserService;
-    private final OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler;
-    private final OAuth2AuthenticationFailureHandler oAuth2FailureHandler;
     private final RequestMappingHandlerMapping requestMappingHandlerMapping;
 
     // application.yml에서 cors.allowed-origin-patterns 값을 List 형태로 주입받음
@@ -93,15 +91,26 @@ public class SecurityConfig {
     }
 
     /**
-     * 메인 Security 체인
-     *
-     * @param http
-     * @return
-     * @throws Exception
+     * 점검 모드 필터. JWT 다음에 동작해서 점검 중 일반 사용자 요청을 503 으로 차단한다.
+     * {@code @Component} 가 아닌 명시 {@code @Bean} 으로 두는 이유: 슬라이스 테스트
+     * ({@code @WebMvcTest}) 의 자동 Filter 디스커버리가 본 필터의 의존성까지 끌어와 컨텍스트 로딩을
+     * 실패시키는 것을 막기 위함이다. SecurityConfig 는 슬라이스 테스트에 포함되지 않으므로 본 빈도 함께 제외된다.
+     */
+    @Bean
+    public MaintenanceFilter maintenanceFilter(
+        MaintenanceStateHolder stateHolder,
+        MaintenanceBypassPolicy bypassPolicy,
+        ObjectMapper objectMapper
+    ) {
+        return new MaintenanceFilter(stateHolder, bypassPolicy, objectMapper);
+    }
+
+    /**
+     * 메인 Security 체인. JWT → MaintenanceFilter → 인가 순서로 동작한다.
      */
     @Bean
     @Order(2)
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, MaintenanceFilter maintenanceFilter) throws Exception {
         List<PublicEndpointCollector.EndpointMatcher> publicEndpoints = PublicEndpointCollector
             .collectPublicEndpoints(requestMappingHandlerMapping);
 
@@ -125,32 +134,12 @@ public class SecurityConfig {
             .httpBasic(AbstractHttpConfigurer::disable)   // HTTP Basic 비활성
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // OAuth2 로그인 설정
-            .oauth2Login(oauth2 -> oauth2
-                .authorizationEndpoint(authorization -> authorization
-                    .baseUri("/api/v1/auth/oauth2/authorization") // 기본: /oauth2/authorization
-                )
-                .redirectionEndpoint(redirection -> redirection
-                    .baseUri("/api/v1/auth/oauth2/callback/*")  // 기본: /login/oauth2/code/*
-                )
-                // 우리 DB랑 비교해서 사용자 정보를 저장함
-                // 여기서 실패한 요청도 failure로 들어감
-                .userInfoEndpoint(userInfo ->
-                    userInfo.userService(umcProductOAuth2UserService))
-                // OAuth 로그인이 성공했을 때 핸들링하는 곳
-                .successHandler(oAuth2SuccessHandler)
-                // OAuth 로그인이 실패했을 때 핸들링하는 곳 (그냥 실패한거)
-                .failureHandler(oAuth2FailureHandler)
-            )
             .authorizeHttpRequests(auth -> {
                 // 공개 엔드포인트
                 auth.requestMatchers(
                     // Health Check & Error
                     "/actuator/**",
-                    "/error",
-                    // OAuth2
-                    "/api/v1/auth/oauth2/authorization/**",
-                    "/api/v1/auth/oauth2/callback/**"
+                    "/error"
                 ).permitAll();
 
                 // Swagger
@@ -170,6 +159,8 @@ public class SecurityConfig {
             })
             // Spring 기본 로그인 필터 동작 전에 JWT 동작
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            // JWT 로 SecurityContext 가 채워진 뒤 점검 필터에서 bypass 판정
+            .addFilterAfter(maintenanceFilter, JwtAuthenticationFilter.class)
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(authenticationEntryPoint) // 인증 실패 시
                 .accessDeniedHandler(accessDeniedHandler)           // 인가 실패 시

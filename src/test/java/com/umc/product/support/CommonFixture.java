@@ -30,9 +30,8 @@ public class CommonFixture {
                 public StringArbitrary strings() {
                     // 💡 2. 기본 생성 문자열을 방금 만든 풀(KOR_ENG_CHARS) 안에서만 뽑도록 제한!
                     return Arbitraries.strings()
-                        .withChars(KOR_ENG_CHARS);
-                    // .ofMinLength(1)
-                    // .ofMaxLength(10); // 길이 조절 시 사용할 것
+                        .withChars(KOR_ENG_CHARS)
+                        .ofMinLength(1);
                 }
             })
         )

@@ -34,7 +34,7 @@ public class GisuService implements ManageGisuUseCase {
 
     @Override
     public void deleteGisu(Long gisuId) {
-        Gisu gisu = loadGisuPort.findById(gisuId);
+        Gisu gisu = loadGisuPort.getById(gisuId);
         if (loadChapterPort.existsByGisuId(gisuId)) {
             throw new OrganizationDomainException(OrganizationErrorCode.GISU_HAS_ASSOCIATED_CHAPTERS);
         }
@@ -55,7 +55,7 @@ public class GisuService implements ManageGisuUseCase {
         oldActiveGisuOptional.ifPresent(Gisu::inactive);
 
         // 새로운 기수를 활성화
-        Gisu newGisu = loadGisuPort.findById(gisuId);
+        Gisu newGisu = loadGisuPort.getById(gisuId);
         newGisu.active();
     }
 

@@ -1,5 +1,11 @@
 package com.umc.product.project.application.service.command;
 
+import java.util.List;
+import java.util.Objects;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
@@ -11,33 +17,43 @@ import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import com.umc.product.project.application.port.in.command.AbortProjectUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
+import com.umc.product.project.application.port.in.command.DeleteProjectUseCase;
 import com.umc.product.project.application.port.in.command.PublishProjectUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
 import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
+import com.umc.product.project.application.port.in.command.dto.AbortProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectCommand;
+import com.umc.product.project.application.port.in.command.dto.DeleteProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.PublishProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.TransferProjectOwnershipCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectCommand;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
+import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.application.port.out.SaveProjectApplicationFormPolicyPort;
+import com.umc.product.project.application.port.out.SaveProjectApplicationFormPort;
+import com.umc.product.project.application.port.out.SaveProjectMemberPort;
+import com.umc.product.project.application.port.out.SaveProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.SaveProjectPort;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
+import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import com.umc.product.survey.application.port.in.command.ManageFormUseCase;
+import com.umc.product.survey.application.port.in.command.dto.DeleteFormCommand;
 import com.umc.product.survey.application.port.in.command.dto.PublishFormCommand;
-import java.util.List;
-import java.util.Objects;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -47,12 +63,20 @@ public class ProjectCommandService implements
     UpdateProjectUseCase,
     SubmitProjectUseCase,
     TransferProjectOwnershipUseCase,
-    PublishProjectUseCase {
+    PublishProjectUseCase,
+    DeleteProjectUseCase,
+    AbortProjectUseCase {
 
     private final LoadProjectPort loadProjectPort;
     private final SaveProjectPort saveProjectPort;
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
+    private final LoadProjectMemberPort loadProjectMemberPort;
+    private final LoadProjectApplicationPort loadProjectApplicationPort;
+    private final SaveProjectMemberPort saveProjectMemberPort;
+    private final SaveProjectPartQuotaPort saveProjectPartQuotaPort;
+    private final SaveProjectApplicationFormPort saveProjectApplicationFormPort;
+    private final SaveProjectApplicationFormPolicyPort saveProjectApplicationFormPolicyPort;
 
     // Cross-domain UseCases
     private final GetMemberUseCase getMemberUseCase;
@@ -73,8 +97,12 @@ public class ProjectCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_OWNER_NOT_PLAN_CHALLENGER);
         }
 
-        if (loadProjectPort.existsByOwnerAndGisu(command.productOwnerMemberId(), command.gisuId())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DUPLICATE_IN_GISU);
+        if (loadProjectPort.existsDraftByCreatorAndGisu(command.requesterMemberId(), command.gisuId())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DRAFT_ALREADY_IN_PROGRESS);
+        }
+
+        if (loadProjectPort.existsDraftByOwnerAndGisu(command.productOwnerMemberId(), command.gisuId())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DRAFT_ALREADY_IN_PROGRESS);
         }
 
         MemberInfo member = getMemberUseCase.getById(command.productOwnerMemberId());
@@ -153,10 +181,6 @@ public class ProjectCommandService implements
     public void submit(SubmitProjectCommand command) {
         Project project = loadProjectPort.getById(command.projectId());
 
-        if (!project.getProductOwnerMemberId().equals(command.requesterMemberId())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
-        }
-
         if (!loadProjectApplicationFormPort.existsByProjectId(project.getId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_SUBMIT_VALIDATION_FAILED);
         }
@@ -168,19 +192,11 @@ public class ProjectCommandService implements
     public ProjectStatus transfer(TransferProjectOwnershipCommand command) {
         Project project = loadProjectPort.getById(command.projectId());
 
-        if (!project.getProductOwnerMemberId().equals(command.requesterMemberId())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
-        }
-
         ChallengerInfo newOwner = getChallengerUseCase.getByMemberIdAndGisuId(
             command.newOwnerMemberId(), project.getGisuId()
         );
         if (newOwner.part() != ChallengerPart.PLAN) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_OWNER_NOT_PLAN_CHALLENGER);
-        }
-
-        if (loadProjectPort.existsByOwnerAndGisu(command.newOwnerMemberId(), project.getGisuId())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DUPLICATE_IN_GISU);
         }
 
         // 도메인 가드 fail-fast — COMPLETED/ABORTED 시 cross-domain 호출 회피
@@ -222,5 +238,63 @@ public class ProjectCommandService implements
             .build());
 
         return project.getStatus();
+    }
+
+    /**
+     * 프로젝트 hard delete. DRAFT/PENDING_REVIEW 상태에서만 호출 가능하며 자식 row 들을 순서대로 정리한다.
+     * <ol>
+     *   <li>ProjectApplicationForm 이 등록되어 있으면 Policy → ApplicationForm row → survey Form 순으로 정리.
+     *       (Form 삭제는 survey 도메인의 cascade 가 보장)</li>
+     *   <li>ProjectPartQuota 일괄 삭제</li>
+     *   <li>ProjectMember 일괄 삭제</li>
+     *   <li>Project 삭제</li>
+     * </ol>
+     * 권한 검증은 Controller 단의 {@code @CheckAccess(DELETE)} + {@link com.umc.product.project.application.service.evaluator.ProjectPermissionEvaluator}
+     * 가 담당. 본 Service 는 도메인 상태 invariant 만 책임진다.
+     */
+    @Override
+    public void delete(DeleteProjectCommand command) {
+        Project project = loadProjectPort.getById(command.projectId());
+        project.validateDeletable();
+
+        loadProjectApplicationFormPort.findByProjectId(project.getId())
+            .ifPresent(form -> {
+                saveProjectApplicationFormPolicyPort.deleteAllByApplicationFormId(form.getId());
+                saveProjectApplicationFormPort.deleteAllByProjectId(project.getId());
+                manageFormUseCase.deleteForm(DeleteFormCommand.builder()
+                    .formId(form.getFormId())
+                    .requesterMemberId(command.requesterMemberId())
+                    .build());
+            });
+
+        saveProjectPartQuotaPort.deleteAllByProjectId(project.getId());
+        saveProjectMemberPort.deleteAllByProjectId(project.getId());
+        saveProjectPort.delete(project);
+    }
+
+    /**
+     * 프로젝트 중단(abort). IN_PROGRESS → ABORTED 상태 전이 + 자식 도메인 일괄 동기화.
+     * <ul>
+     *   <li>{@link Project#abort} 로 상태 전이 (COMPLETED/ABORTED 는 도메인 가드가 거부)</li>
+     *   <li>ACTIVE 인 ProjectMember 는 모두 WITHDRAWN, statusChangeReason 에 중단 사유 기록</li>
+     *   <li>진행 중(DRAFT/SUBMITTED) ProjectApplication 은 모두 CANCELLED</li>
+     * </ul>
+     * 권한 검증은 Controller 단의 {@code @CheckAccess(MANAGE)} 가 담당.
+     */
+    @Override
+    public void abort(AbortProjectCommand command) {
+        Project project = loadProjectPort.getById(command.projectId());
+        project.abort(command.reason(), command.requesterMemberId());
+
+        List<ProjectMember> activeMembers = loadProjectMemberPort.listByProjectId(project.getId());
+        for (ProjectMember member : activeMembers) {
+            member.withdraw(command.reason(), command.requesterMemberId());
+        }
+
+        List<ProjectApplication> inProgressApplications =
+            loadProjectApplicationPort.listInProgressByProjectId(project.getId());
+        for (ProjectApplication application : inProgressApplications) {
+            application.cancel(command.requesterMemberId(), command.reason());
+        }
     }
 }

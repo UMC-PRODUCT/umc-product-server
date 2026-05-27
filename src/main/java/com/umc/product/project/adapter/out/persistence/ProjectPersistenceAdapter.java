@@ -1,16 +1,20 @@
 package com.umc.product.project.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Component;
+
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.SaveProjectPort;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -31,13 +35,26 @@ public class ProjectPersistenceAdapter implements LoadProjectPort, SaveProjectPo
     }
 
     @Override
-    public Optional<Project> findByOwnerAndGisu(Long productOwnerMemberId, Long gisuId) {
-        return jpaRepository.findByProductOwnerMemberIdAndGisuId(productOwnerMemberId, gisuId);
+    public boolean existsByOwnerAndGisu(Long productOwnerMemberId, Long gisuId) {
+        return jpaRepository.existsByProductOwnerMemberIdAndGisuId(productOwnerMemberId, gisuId);
     }
 
     @Override
-    public boolean existsByOwnerAndGisu(Long productOwnerMemberId, Long gisuId) {
-        return jpaRepository.existsByProductOwnerMemberIdAndGisuId(productOwnerMemberId, gisuId);
+    public Optional<Project> findDraftByCreatorAndGisu(Long creatorMemberId, Long gisuId) {
+        return jpaRepository.findByCreatorMemberIdAndGisuIdAndStatus(
+            creatorMemberId, gisuId, ProjectStatus.DRAFT);
+    }
+
+    @Override
+    public boolean existsDraftByCreatorAndGisu(Long creatorMemberId, Long gisuId) {
+        return jpaRepository.existsByCreatorMemberIdAndGisuIdAndStatus(
+            creatorMemberId, gisuId, ProjectStatus.DRAFT);
+    }
+
+    @Override
+    public boolean existsDraftByOwnerAndGisu(Long productOwnerMemberId, Long gisuId) {
+        return jpaRepository.existsByProductOwnerMemberIdAndGisuIdAndStatus(
+            productOwnerMemberId, gisuId, ProjectStatus.DRAFT);
     }
 
     @Override

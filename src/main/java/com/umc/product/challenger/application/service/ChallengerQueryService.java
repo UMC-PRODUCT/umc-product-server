@@ -2,6 +2,7 @@ package com.umc.product.challenger.application.service;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerPointUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
@@ -73,9 +74,43 @@ public class ChallengerQueryService implements GetChallengerUseCase {
 
     @Override
     public List<ChallengerInfo> getAllByMemberId(Long memberId) {
-        List<Challenger> challengers = loadChallengerPort.getAllByMemberId(memberId);
+        // 챌린저별로 상벌점을 따로 조회하면 N(챌린저 수) 만큼 쿼리가 발생하므로,
+        // IN 쿼리 1회로 일괄 조회하는 batch 헬퍼를 사용합니다.
+        return toChallengerInfoListBatch(loadChallengerPort.getAllByMemberId(memberId));
+    }
+
+    @Override
+    public Map<Long, List<ChallengerInfo>> getAllByMemberIds(Set<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Challenger> challengers = loadChallengerPort.listAllByMemberIds(memberIds);
+        if (challengers.isEmpty()) {
+            return Map.of();
+        }
+        List<ChallengerInfo> infos = toChallengerInfoListBatch(challengers);
+        return infos.stream()
+            .collect(Collectors.groupingBy(ChallengerInfo::memberId));
+    }
+
+    @Override
+    public Map<Long, List<ChallengerBasicInfo>> getAllBasicByMemberIds(Set<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Challenger> challengers = loadChallengerPort.listAllByMemberIds(memberIds);
+        if (challengers.isEmpty()) {
+            return Map.of();
+        }
         return challengers.stream()
-            .map(this::getChallengerInfoFromChallenger)
+            .map(ChallengerBasicInfo::from)
+            .collect(Collectors.groupingBy(ChallengerBasicInfo::memberId));
+    }
+
+    @Override
+    public List<ChallengerBasicInfo> listBasicByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId) {
+        return loadChallengerPort.listByMemberIdsAndGisuId(memberIds, gisuId).stream()
+            .map(ChallengerBasicInfo::from)
             .toList();
     }
 
@@ -108,6 +143,49 @@ public class ChallengerQueryService implements GetChallengerUseCase {
         }
         return loadChallengerPort.getAllByIds(challengerIds).stream()
             .map(this::getChallengerInfoFromChallenger).toList();
+    }
+
+    @Override
+    public Map<Long, ChallengerInfo> batchGetByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+        // Adapter 가 size 검증 후 던지므로 Service 에서 추가 검증 없이 변환만 수행한다.
+        // 챌린저별 포인트는 IN 쿼리 1번으로 일괄 조회한다 -> N+1 회피.
+        List<Challenger> challengers = loadChallengerPort.batchGetByMemberIdsAndGisuId(memberIds, gisuId);
+        Set<Long> challengerIds = challengers.stream()
+            .map(Challenger::getId)
+            .collect(Collectors.toSet());
+        Map<Long, List<ChallengerPointInfo>> pointsMap =
+            getChallengerPointUseCase.getMapByChallengerIds(challengerIds);
+
+        return challengers.stream()
+            .collect(Collectors.toMap(
+                Challenger::getMemberId,
+                c -> ChallengerInfo.from(c, pointsMap.getOrDefault(c.getId(), List.of()))
+            ));
+    }
+
+    @Override
+    public Map<Long, ChallengerInfo> listByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Challenger> challengers = loadChallengerPort.listByMemberIdsAndGisuId(memberIds, gisuId);
+        if (challengers.isEmpty()) {
+            return Map.of();
+        }
+        Set<Long> challengerIds = challengers.stream()
+            .map(Challenger::getId)
+            .collect(Collectors.toSet());
+        Map<Long, List<ChallengerPointInfo>> pointsMap =
+            getChallengerPointUseCase.getMapByChallengerIds(challengerIds);
+
+        return challengers.stream()
+            .collect(Collectors.toMap(
+                Challenger::getMemberId,
+                c -> ChallengerInfo.from(c, pointsMap.getOrDefault(c.getId(), List.of()))
+            ));
     }
 
     @Override

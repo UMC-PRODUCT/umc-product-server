@@ -1,5 +1,6 @@
 package com.umc.product.authentication.domain;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -12,55 +13,71 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * CredentialPolicy 단위 테스트.
+ * CredentialPolicy 단위 테스트. ADR-017 흐름.
  * <p>
  * 형식/길이/카테고리/공백 정책에 대한 SSOT 의 동작을 검증한다.
  */
 class CredentialPolicyTest {
 
     @Nested
-    @DisplayName("validateLoginId")
-    class ValidateLoginId {
+    @DisplayName("validateEmail")
+    class ValidateEmail {
 
         @ParameterizedTest
         @ValueSource(strings = {
-            "alice",            // 5자 영문
-            "alice01",          // 영문 + 숫자
-            "user.name",        // 점 허용
-            "user_name",        // 밑줄 허용
-            "user-name",        // 하이픈 허용
-            "ABCDE12345abcde12345" // 정확히 20자 경계값
+            "user@example.com",
+            "user.name@example.com",
+            "user+tag@example.co.kr",
+            "user_name@example.com",
+            "user-name@sub.example.com",
+            "u@a.io"
         })
-        @DisplayName("정상 형식의 로그인 ID 는 통과한다")
-        void 정상_형식_통과(String loginId) {
-            assertThatCode(() -> CredentialPolicy.validateLoginId(loginId))
+        @DisplayName("정상 형식의 이메일은 통과한다")
+        void 정상_형식_통과(String email) {
+            assertThatCode(() -> CredentialPolicy.validateEmail(email))
                 .doesNotThrowAnyException();
         }
 
         @ParameterizedTest
         @ValueSource(strings = {
-            "ab",                  // 너무 짧음 (2자)
-            "abcd",                // 너무 짧음 (4자)
-            "abcdefghij1234567890_", // 21자 초과
-            "user@name",           // 허용되지 않는 특수문자
-            "user name",           // 공백 포함
-            "한글닉네임"            // 비ASCII
+            "user",                     // @ 없음
+            "user@",                    // 도메인 없음
+            "@example.com",             // 로컬 파트 없음
+            "user@example",             // TLD 없음
+            "user@.com",                // 도메인 시작이 점
+            "user name@example.com",    // 공백 포함
+            "user@exa mple.com",        // 도메인에 공백
+            "user@@example.com",        // @ 중복
+            "한글@example.com"          // 비ASCII 로컬 파트
         })
-        @DisplayName("형식이 어긋나면 INVALID_LOGIN_ID_FORMAT 예외를 던진다")
-        void 잘못된_형식이면_예외(String loginId) {
-            assertThatThrownBy(() -> CredentialPolicy.validateLoginId(loginId))
+        @DisplayName("형식이 어긋나면 INVALID_EMAIL_FORMAT 예외를 던진다")
+        void 잘못된_형식이면_예외(String email) {
+            assertThatThrownBy(() -> CredentialPolicy.validateEmail(email))
                 .isInstanceOf(AuthenticationDomainException.class)
                 .extracting("baseCode")
-                .isEqualTo(AuthenticationErrorCode.INVALID_LOGIN_ID_FORMAT);
+                .isEqualTo(AuthenticationErrorCode.INVALID_EMAIL_FORMAT);
         }
 
         @Test
-        @DisplayName("null 로그인 ID 는 예외를 던진다")
+        @DisplayName("null 이메일은 예외를 던진다")
         void null이면_예외() {
-            assertThatThrownBy(() -> CredentialPolicy.validateLoginId(null))
+            assertThatThrownBy(() -> CredentialPolicy.validateEmail(null))
                 .isInstanceOf(AuthenticationDomainException.class)
                 .extracting("baseCode")
-                .isEqualTo(AuthenticationErrorCode.INVALID_LOGIN_ID_FORMAT);
+                .isEqualTo(AuthenticationErrorCode.INVALID_EMAIL_FORMAT);
+        }
+
+        @Test
+        @DisplayName("EMAIL_MAX_LENGTH 를 초과하는 이메일은 예외를 던진다")
+        void 길이_초과면_예외() {
+            // "@a.io" 가 5자이므로 (EMAIL_MAX_LENGTH - 4) 의 'a' 를 붙이면 EMAIL_MAX_LENGTH + 1 자가 된다.
+            String tooLong = "a".repeat(CredentialPolicy.EMAIL_MAX_LENGTH - 4) + "@a.io";
+            assertThat(tooLong.length()).isEqualTo(CredentialPolicy.EMAIL_MAX_LENGTH + 1);
+
+            assertThatThrownBy(() -> CredentialPolicy.validateEmail(tooLong))
+                .isInstanceOf(AuthenticationDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(AuthenticationErrorCode.INVALID_EMAIL_FORMAT);
         }
     }
 

@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,11 +35,6 @@ public class CurriculumQueryService implements GetCurriculumUseCase {
     private final LoadMissionSubmissionPort loadMissionSubmissionPort;
     private final LoadMissionFeedbackPort loadMissionFeedbackPort;
 
-    /**
-     * 기수(gisuId)와 파트(part)에 해당하는 커리큘럼의 주차 목록을 반환합니다.
-     * <p>
-     * weekNo가 null이면 전체 주차를, 지정하면 해당 주차만 반환합니다.
-     */
     @Override
     public CurriculumOverviewInfo getCurriculumOverview(Long gisuId, ChallengerPart part, Long weekNo) {
         CurriculumProjection projection = loadCurriculumPort.getByGisuIdAndPart(gisuId, part);
@@ -53,81 +47,87 @@ public class CurriculumQueryService implements GetCurriculumUseCase {
         return CurriculumOverviewInfo.of(projection, weeks);
     }
 
-    /**
-     * 특정 멤버의 커리큘럼 진행 현황을 반환합니다.
-     * <p>
-     * 커리큘럼 내 전체 주차에 대해 배포된 워크북, 미션, 제출물, 피드백을 포함합니다.
-     * 챌린저 파트를 기반으로 커리큘럼을 식별합니다.
-     */
     @Override
     public MyCurriculumInfo getMyProgress(Long memberId, Long gisuId) {
         ChallengerInfo challengerInfo = getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId);
         CurriculumProjection projection = loadCurriculumPort.getByGisuIdAndPart(gisuId, challengerInfo.part());
 
         List<WeeklyCurriculum> weeklyCurriculums = loadWeeklyCurriculumPort.findByCurriculumId(projection.id(), null);
+        if (weeklyCurriculums.isEmpty()) {
+            return MyCurriculumInfo.of(projection, List.of());
+        }
+
+        // 배치 조회 — 주차 수에 무관하게 6번의 고정 쿼리
+        List<Long> weeklyCurriculumIds = weeklyCurriculums.stream().map(WeeklyCurriculum::getId).toList();
+        List<OriginalWorkbook> allWorkbooks =
+            loadOriginalWorkbookPort.findReleasedByWeeklyCurriculumIdIn(weeklyCurriculumIds);
+
+        List<Long> originalWorkbookIds = allWorkbooks.stream().map(OriginalWorkbook::getId).toList();
+        List<OriginalWorkbookMission> allMissions =
+            loadOriginalWorkbookMissionPort.findByOriginalWorkbookIdIn(originalWorkbookIds);
+        List<ChallengerWorkbook> allChallengerWorkbooks =
+            loadChallengerWorkbookPort.findByMemberIdAndOriginalWorkbookIdIn(memberId, originalWorkbookIds);
+
+        List<Long> challengerWorkbookIds = allChallengerWorkbooks.stream().map(ChallengerWorkbook::getId).toList();
+        List<MissionSubmission> allSubmissions =
+            loadMissionSubmissionPort.findByChallengerWorkbookIdIn(challengerWorkbookIds);
+
+        List<Long> submissionIds = allSubmissions.stream().map(MissionSubmission::getId).toList();
+        List<MissionFeedback> allFeedbacks =
+            loadMissionFeedbackPort.findByMissionSubmissionIdIn(submissionIds);
+
+        // 인메모리 조립용 Map
+        Map<Long, List<OriginalWorkbook>> workbooksByWcId = allWorkbooks.stream()
+            .collect(Collectors.groupingBy(wb -> wb.getWeeklyCurriculum().getId()));
+        Map<Long, List<OriginalWorkbookMission>> missionsByWbId = allMissions.stream()
+            .collect(Collectors.groupingBy(m -> m.getOriginalWorkbook().getId()));
+        Map<Long, ChallengerWorkbook> cwByWbId = allChallengerWorkbooks.stream()
+            .collect(Collectors.toMap(cw -> cw.getOriginalWorkbook().getId(), cw -> cw));
+        Map<Long, MissionSubmissionInfo> submissionInfoByMissionId =
+            buildSubmissionInfoMap(allSubmissions, allFeedbacks);
 
         List<MyWeeklyCurriculumInfo> weeks = weeklyCurriculums.stream()
-            .map(wc -> buildWeeklyCurriculumInfo(wc, memberId))
+            .map(wc -> {
+                List<OriginalWorkbook> workbooks = workbooksByWcId.getOrDefault(wc.getId(), List.of());
+                List<MyOriginalWorkbookInfo> workbookInfos = workbooks.stream()
+                    .map(wb -> buildMyOriginalWorkbookInfo(wb, missionsByWbId, cwByWbId, submissionInfoByMissionId))
+                    .toList();
+                return MyWeeklyCurriculumInfo.of(wc, workbookInfos);
+            })
             .toList();
 
         return MyCurriculumInfo.of(projection, weeks);
     }
 
-    /**
-     * 주차별 커리큘럼에서 배포된 원본 워크북 목록을 조회하고 멤버 관점의 진행 정보를 구성합니다.
-     */
-    private MyWeeklyCurriculumInfo buildWeeklyCurriculumInfo(WeeklyCurriculum wc, Long memberId) {
-        List<OriginalWorkbook> releasedWorkbooks = loadOriginalWorkbookPort.findReleasedByWeeklyCurriculumId(wc.getId());
-
-        List<MyOriginalWorkbookInfo> workbookItems = releasedWorkbooks.stream()
-            .map(wb -> buildMyOriginalWorkbookInfo(wb, memberId))
-            .toList();
-
-        return MyWeeklyCurriculumInfo.of(wc, workbookItems);
-    }
-
-    /**
-     * 원본 워크북에 대한 멤버의 진행 정보를 구성합니다.
-     * <p>
-     * 미션 제출 여부와 챌린저 워크북 배포 여부를 함께 반영합니다.
-     */
-    private MyOriginalWorkbookInfo buildMyOriginalWorkbookInfo(OriginalWorkbook wb, Long memberId) {
-        List<OriginalWorkbookMission> missions = loadOriginalWorkbookMissionPort.findByOriginalWorkbookId(wb.getId());
-
-        Optional<ChallengerWorkbook> challengerWorkbook = loadChallengerWorkbookPort
-            .findByMemberIdAndOriginalWorkbookId(memberId, wb.getId());
-
-        Map<Long, MissionSubmissionInfo> submissionByMissionId = buildSubmissionMap(challengerWorkbook);
+    private MyOriginalWorkbookInfo buildMyOriginalWorkbookInfo(
+        OriginalWorkbook wb,
+        Map<Long, List<OriginalWorkbookMission>> missionsByWbId,
+        Map<Long, ChallengerWorkbook> cwByWbId,
+        Map<Long, MissionSubmissionInfo> submissionInfoByMissionId
+    ) {
+        List<OriginalWorkbookMission> missions = missionsByWbId.getOrDefault(wb.getId(), List.of());
+        ChallengerWorkbook cw = cwByWbId.get(wb.getId());
 
         List<MyOriginalWorkbookMissionInfo> missionInfos = missions.stream()
-            .map(m -> MyOriginalWorkbookMissionInfo.of(m, submissionByMissionId.get(m.getId())))
+            .map(m -> MyOriginalWorkbookMissionInfo.of(m, submissionInfoByMissionId.get(m.getId())))
             .toList();
 
-        return MyOriginalWorkbookInfo.of(wb, missionInfos, challengerWorkbook.map(ChallengerWorkbook::getId));
+        return MyOriginalWorkbookInfo.of(
+            wb,
+            missionInfos,
+            cw != null ? java.util.Optional.of(cw.getId()) : java.util.Optional.empty()
+        );
     }
 
-    /**
-     * 챌린저 워크북에 속한 제출물과 피드백을 일괄 조회해 미션 ID 기준 Map으로 반환합니다.
-     * <p>
-     * 제출물별로 피드백을 개별 조회하지 않고 한 번에 불러온 뒤 그룹핑하여 N+1 문제를 방지합니다.
-     * 챌린저 워크북이 없거나 제출물이 없으면 빈 Map을 반환합니다.
-     */
-    private Map<Long, MissionSubmissionInfo> buildSubmissionMap(Optional<ChallengerWorkbook> challengerWorkbook) {
-        if (challengerWorkbook.isEmpty()) {
-            return Map.of();
-        }
-
-        List<MissionSubmission> submissions = loadMissionSubmissionPort
-            .findByChallengerWorkbookId(challengerWorkbook.get().getId());
-
+    private Map<Long, MissionSubmissionInfo> buildSubmissionInfoMap(
+        List<MissionSubmission> submissions,
+        List<MissionFeedback> feedbacks
+    ) {
         if (submissions.isEmpty()) {
             return Map.of();
         }
 
-        List<Long> submissionIds = submissions.stream().map(MissionSubmission::getId).toList();
-        List<MissionFeedback> allFeedbacks = loadMissionFeedbackPort.findByMissionSubmissionIdIn(submissionIds);
-
-        Map<Long, List<MissionFeedback>> feedbacksBySubmissionId = allFeedbacks.stream()
+        Map<Long, List<MissionFeedback>> feedbacksBySubmissionId = feedbacks.stream()
             .collect(Collectors.groupingBy(f -> f.getMissionSubmission().getId()));
 
         return submissions.stream().collect(Collectors.toMap(
@@ -136,9 +136,6 @@ public class CurriculumQueryService implements GetCurriculumUseCase {
         ));
     }
 
-    /**
-     * 제출물 엔티티와 해당 피드백 목록으로 MissionSubmissionInfo를 생성합니다.
-     */
     private MissionSubmissionInfo toSubmissionInfo(MissionSubmission s, List<MissionFeedback> feedbacks) {
         List<MissionFeedbackInfo> feedbackInfos = feedbacks.stream()
             .map(MissionFeedbackInfo::of)
@@ -147,11 +144,6 @@ public class CurriculumQueryService implements GetCurriculumUseCase {
         return MissionSubmissionInfo.of(s, resolveSubmissionStatus(feedbacks), feedbackInfos);
     }
 
-    /**
-     * 피드백 목록으로 최종 제출 상태를 결정합니다.
-     * <p>
-     * 피드백이 없으면 PENDING, PASS 피드백이 하나라도 있으면 PASS, 모두 FAIL이면 FAIL을 반환합니다.
-     */
     private SubmissionStatus resolveSubmissionStatus(List<MissionFeedback> feedbacks) {
         if (feedbacks.isEmpty()) {
             return SubmissionStatus.PENDING;

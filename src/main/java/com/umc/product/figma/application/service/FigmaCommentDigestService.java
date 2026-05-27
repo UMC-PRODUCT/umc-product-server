@@ -1,0 +1,57 @@
+package com.umc.product.figma.application.service;
+
+import com.umc.product.figma.application.port.in.DigestFigmaCommentsUseCase;
+import com.umc.product.figma.application.port.in.SummarizeFigmaCommentsUseCase;
+import com.umc.product.figma.application.port.in.dto.DigestFigmaCommentsCommand;
+import com.umc.product.figma.application.port.in.dto.FigmaDigestSummary;
+import com.umc.product.figma.application.port.in.dto.FigmaSummaryResult;
+import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;
+import com.umc.product.figma.domain.exception.FigmaDomainException;
+import com.umc.product.figma.domain.exception.FigmaErrorCode;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+/**
+ * 운영진의 catch-up digest 진입점의 thin shim (ADR-004 §Decision 2).
+ * <p>
+ * 시간창 단일 본체 ({@link SummarizeFigmaCommentsUseCase}) 로 위임하며, force=true 로 dispatch 행이 있는 댓글도 재발송한다. cursor 는 변경하지 않는다.
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class FigmaCommentDigestService implements DigestFigmaCommentsUseCase {
+
+    private final SummarizeFigmaCommentsUseCase summarizeFigmaCommentsUseCase;
+
+    @Override
+    public FigmaDigestSummary digest(DigestFigmaCommentsCommand command) {
+        if (command.from() == null || command.to() == null) {
+            throw new FigmaDomainException(FigmaErrorCode.DIGEST_RANGE_INVALID, "from / to 둘 다 필수입니다.");
+        }
+        if (command.from().isAfter(command.to())) {
+            throw new FigmaDomainException(FigmaErrorCode.DIGEST_RANGE_INVALID, "from 이 to 보다 이후일 수 없습니다.");
+        }
+
+        FigmaSummaryResult result = summarizeFigmaCommentsUseCase.summarize(
+            SummarizeFigmaCommentsCommand.digest(command.from(), command.to())
+        );
+
+        List<FigmaDigestSummary.DomainResult> domainResults = result.domains().stream()
+            .map(d -> new FigmaDigestSummary.DomainResult(d.domainKey(), d.comments().size(), d.sent()))
+            .toList();
+
+        log.info("Figma digest 완료: from={}, to={}, total={}, unmatched={}, skippedDispatched={}, domains={}",
+            result.from(), result.to(), result.totalComments(), result.unmatchedCount(),
+            result.skippedAlreadyDispatchedCount(), domainResults.size());
+
+        return new FigmaDigestSummary(
+            result.from(),
+            result.to(),
+            result.totalComments(),
+            result.unmatchedCount(),
+            domainResults
+        );
+    }
+}

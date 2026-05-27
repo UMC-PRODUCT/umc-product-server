@@ -17,6 +17,11 @@ public enum ProjectErrorCode implements BaseCode {
     // ProjectApplication
     APPLICATION_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "PROJECT-0004", "요청하신 조작은 지원서가 제출된 상태에서만 가능합니다."),
     APPLICATION_SUBMIT_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "PROJECT-0005", "이미 지원서가 제출되었거나 평가가 완료된 상태입니다."),
+    APPLICATION_DRAFT_NOT_EXPOSABLE(HttpStatus.INTERNAL_SERVER_ERROR, "PROJECT-0019",
+        "임시저장 상태의 지원서는 PM/운영진 응답에 매핑할 수 없습니다."),
+    APPLICATION_DRAFT_FILTER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROJECT-0020",
+        "임시저장(DRAFT)은 PM/운영진 지원자 목록 조회 필터로 사용할 수 없습니다."),
+    PROJECT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0021", "지원서를 찾을 수 없습니다."),
 
     // ProjectApplicationForm
     APPLICATION_FORM_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0006", "프로젝트에서 해당 지원용 폼을 찾을 수 없습니다."),
@@ -29,11 +34,14 @@ public enum ProjectErrorCode implements BaseCode {
     APPLICATION_FORM_OPTIONS_REQUIRED(HttpStatus.BAD_REQUEST, "PROJECT-0018", "선택지 타입 질문에는 1개 이상의 옵션이 필요합니다."),
 
     // Project Draft flow (PROJECT-101, 102, 107)
-    PROJECT_DUPLICATE_IN_GISU(HttpStatus.CONFLICT, "PROJECT-0008", "이미 해당 기수에 등록한 프로젝트가 있습니다."),
+    PROJECT_DRAFT_ALREADY_IN_PROGRESS(HttpStatus.CONFLICT, "PROJECT-0008", "작성 중인 DRAFT 프로젝트가 있어 새로 시작할 수 없습니다."),
     PROJECT_INVALID_STATE(HttpStatus.BAD_REQUEST, "PROJECT-0009", "현재 상태에서 수행할 수 없는 작업입니다."),
     PROJECT_OWNER_NOT_PLAN_CHALLENGER(HttpStatus.BAD_REQUEST, "PROJECT-0010", "프로젝트 PO는 PLAN 파트 챌린저여야 합니다."),
     PROJECT_SUBMIT_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "PROJECT-0011", "제출에 필요한 필수 정보가 누락되었습니다."),
     PROJECT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PROJECT-0012", "해당 프로젝트에 대한 접근 권한이 없습니다."),
+    PROJECT_DELETE_NOT_ALLOWED_IN_STATUS(HttpStatus.CONFLICT, "PROJECT-0022",
+        "현재 상태에서는 프로젝트를 삭제할 수 없습니다. (DRAFT, PENDING_REVIEW 상태만 가능)"),
+    PROJECT_ABORT_REASON_REQUIRED(HttpStatus.BAD_REQUEST, "PROJECT-0023", "프로젝트 중단 사유는 필수입니다."),
 
     // ProjectMember (PROJECT-003/004/005)
     PROJECT_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0100", "프로젝트 멤버를 찾을 수 없습니다."),
@@ -57,6 +65,28 @@ public enum ProjectErrorCode implements BaseCode {
         "연관된 지원서가 있는 매칭 차수는 삭제할 수 없습니다."),
     PROJECT_MATCHING_ROUND_TIME_REQUIRES_CHAPTER(HttpStatus.BAD_REQUEST, "PROJECT-0305",
         "time 기준 조회는 chapterId와 함께 요청해야 합니다."),
+    PROJECT_MATCHING_ROUND_LOCKED(HttpStatus.BAD_REQUEST, "PROJECT-0306",
+        "매칭 차수가 종료되어 더 이상 결정을 변경할 수 없습니다."),
+    PROJECT_MATCHING_ROUND_NOT_FINALIZABLE(HttpStatus.BAD_REQUEST, "PROJECT-0307",
+        "결정 마감 시각이 지나기 전에는 자동 선발을 실행할 수 없습니다."),
+    PROJECT_MATCHING_ROUND_POLICY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "PROJECT-0308",
+        "해당 매칭 종류에 대한 자동 선발 정책이 정의되지 않았습니다."),
+
+    // ProjectApplication (APPLY-001/002/003)
+    PROJECT_DRAFT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0204", "작성 중인 지원서를 찾을 수 없습니다."),
+    PROJECT_APPLICATION_PART_NOT_ALLOWED(HttpStatus.FORBIDDEN, "PROJECT-0205", "해당 프로젝트에 지원 가능한 파트가 아닙니다."),
+    PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM(HttpStatus.CONFLICT, "PROJECT-0206", "이미 해당 기수에 소속된 팀이 있어 지원할 수 없습니다."),
+    PROJECT_APPLICATION_DUPLICATE_SUBMISSION(HttpStatus.CONFLICT, "PROJECT-0207", "동일한 매칭 차수에 이미 제출된 지원서가 있습니다."),
+    PROJECT_APPLICATION_ROUND_NOT_OPEN(HttpStatus.BAD_REQUEST, "PROJECT-0208", "해당 매칭 차수의 지원 기간이 아닙니다."),
+    PROJECT_APPLICATION_ROUND_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "PROJECT-0209", "선택한 매칭 차수가 본인 파트에 해당하지 않습니다."),
+    PROJECT_APPLICATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "PROJECT-0210", "이미 작성 중인 지원서가 있습니다."),
+    PROJECT_APPLICATION_SELF_APPLY_NOT_ALLOWED(HttpStatus.FORBIDDEN, "PROJECT-0211", "본인이 운영하는 프로젝트에는 지원할 수 없습니다."),
+    PROJECT_APPLICATION_DECISION_INVALID_TRANSITION(HttpStatus.BAD_REQUEST, "PROJECT-0212",
+        "현재 상태에서는 합/불 결정을 변경할 수 없습니다."),
+    PROJECT_APPLICATION_QUOTA_EXCEEDED(HttpStatus.CONFLICT, "PROJECT-0213",
+        "해당 파트의 남은 자리를 초과하여 합격 처리할 수 없습니다."),
+    PROJECT_APPLICATION_CANCEL_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROJECT-0214", "이미 종결된 지원서는 철회할 수 없습니다."),
+    PROJECT_APPLICATION_CANCEL_ROUND_CLOSED(HttpStatus.BAD_REQUEST, "PROJECT-0215", "매칭 차수가 종료되어 지원서를 철회할 수 없습니다."),
 
     ;
 

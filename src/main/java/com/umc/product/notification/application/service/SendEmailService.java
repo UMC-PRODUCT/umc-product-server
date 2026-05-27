@@ -43,7 +43,6 @@ public class SendEmailService implements SendEmailUseCase {
             // Thymeleaf 템플릿 렌더링
             Context context = new Context();
             context.setVariable("verificationToken", command.verificationCode());
-//            context.setVariable("verificationLink", command.verificationLink());
 
             String htmlContent = templateEngine.process("email/verification", context);
             helper.setText(htmlContent, true);

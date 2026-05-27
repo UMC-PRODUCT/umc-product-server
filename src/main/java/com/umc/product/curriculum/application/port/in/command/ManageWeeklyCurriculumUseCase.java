@@ -2,6 +2,7 @@ package com.umc.product.curriculum.application.port.in.command;
 
 import com.umc.product.curriculum.application.port.in.command.dto.curriculum.CreateWeeklyCurriculumCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.curriculum.EditWeeklyCurriculumCommand;
+import java.util.List;
 
 public interface ManageWeeklyCurriculumUseCase {
 
@@ -16,6 +17,17 @@ public interface ManageWeeklyCurriculumUseCase {
      * @return 생성된 주차별 커리큘럼 ID
      */
     Long create(CreateWeeklyCurriculumCommand command);
+
+    /**
+     * 주차별 커리큘럼 일괄 생성 (atomic batch).
+     * <p>
+     * 동일 트랜잭션 안에서 N 건을 순차 처리해 동일 curriculumId 의 검증 SELECT 가 1 차 캐시 활용으로
+     * 1 회로 묶이고, 트랜잭션 commit 횟수도 N → 1 회로 감소한다. 도메인 검증은 단건 {@link #create}
+     * 와 동일하게 매 command 별로 수행되며, 한 건 실패 시 전체 롤백된다.
+     *
+     * @return 생성된 주차별 커리큘럼 ID 목록 (입력 순서 보존)
+     */
+    List<Long> createBulk(List<CreateWeeklyCurriculumCommand> commands);
 
     /**
      * 주차별 커리큘럼 수정

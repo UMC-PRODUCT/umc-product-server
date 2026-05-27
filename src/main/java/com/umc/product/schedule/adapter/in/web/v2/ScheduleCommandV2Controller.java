@@ -13,6 +13,7 @@ import com.umc.product.schedule.adapter.in.web.v2.dto.request.ScheduleAttendance
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleParticipantAttendanceInfoResponse;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleParticipantUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
+import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleParticipantUseCase;
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
@@ -29,6 +30,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,6 +46,7 @@ public class ScheduleCommandV2Controller {
 
     private final CreateScheduleUseCase createScheduleUseCase;
     private final UpdateScheduleUseCase updateScheduleUseCase;
+    private final DeleteScheduleUseCase deleteScheduleUseCase;
 
     private final CreateScheduleParticipantUseCase createScheduleParticipantAttendanceUseCase;
     private final UpdateScheduleParticipantUseCase updateScheduleParticipantUseCase;
@@ -172,6 +175,81 @@ public class ScheduleCommandV2Controller {
         EditScheduleCommand command = request.toCommand(scheduleId, memberPrincipal.getMemberId());
 
         return updateScheduleUseCase.update(command);
+    }
+
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.DELETE,
+        message = "'생성자 본인' 또는 '해당 일정 기수의 최고 운영 관리자'만 가능합니다."
+    )
+    @Operation(summary = "[SCHEDULE-C006] 일정 삭제", description = """
+        일정을 삭제합니다.
+
+        - 일정에 연결된 모든 참여자(ScheduleParticipant) 정보도 함께 삭제됩니다.
+        - 일정 참여자 중 출석 기록(`attendance.status`)이 존재하는 사용자가 한 명이라도 있는 경우 삭제할 수 없습니다.
+          (이 경우, 강제 삭제 API를 사용해야 합니다.)
+
+        삭제 가능 권한:
+        - 일정 생성자 본인
+        - 해당 일정이 진행되는 기수의 최고 운영 관리자(`SUPER_ADMIN`)
+        """
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "400", description = """
+            SCHEDULE-0033 : 출석 기록이 존재하는 일정은 삭제할 수 없습니다.
+            """,
+            content = @Content
+        ),
+        @ApiResponse(responseCode = "403", description = """
+            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            """,
+            content = @Content
+        ),
+        @ApiResponse(responseCode = "404", description = """
+            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            """,
+            content = @Content
+        )
+    })
+    @DeleteMapping("/{scheduleId}")
+    public void delete(@PathVariable Long scheduleId) {
+        deleteScheduleUseCase.delete(scheduleId);
+    }
+
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.FORCE_DELETE,
+        message = "'해당 일정 기수의 최고 운영 관리자'만 가능합니다."
+    )
+    @Operation(summary = "[SCHEDULE-C007] 일정 강제 삭제", description = """
+        출석 기록 존재 여부와 관계 없이 일정을 강제로 삭제합니다.
+
+        - 일정에 연결된 모든 참여자(ScheduleParticipant) 정보도 함께 삭제됩니다.
+        - 출석 기록이 있는 일정 또한 삭제 가능합니다.
+
+        강제 삭제 가능 권한:
+        - 해당 일정이 진행되는 기수의 최고 운영 관리자(`SUPER_ADMIN`)
+        """
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "403", description = """
+            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            """,
+            content = @Content
+        ),
+        @ApiResponse(responseCode = "404", description = """
+            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            """,
+            content = @Content
+        )
+    })
+    @DeleteMapping("/{scheduleId}/force")
+    public void forceDelete(@PathVariable Long scheduleId) {
+        deleteScheduleUseCase.forceDelete(scheduleId);
     }
 
     // ========================= 출석 관련 =========================

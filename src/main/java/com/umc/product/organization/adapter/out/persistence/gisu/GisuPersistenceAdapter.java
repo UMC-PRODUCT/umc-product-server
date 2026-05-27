@@ -22,9 +22,14 @@ public class GisuPersistenceAdapter implements SaveGisuPort, LoadGisuPort {
     private final GisuJpaRepository gisuJpaRepository;
     private final GisuQueryRepository gisuQueryRepository;
 
-    public Gisu findActiveGisu() {
+    public Gisu getActiveGisu() {
         return gisuJpaRepository.findByIsActiveTrue().orElseThrow(
             () -> new OrganizationDomainException(OrganizationErrorCode.GISU_IS_ACTIVE_NOT_FOUND));
+    }
+
+    @Override
+    public Optional<Gisu> findActiveGisu() {
+        return gisuJpaRepository.findByIsActiveTrue();
     }
 
     @Override
@@ -33,13 +38,13 @@ public class GisuPersistenceAdapter implements SaveGisuPort, LoadGisuPort {
     }
 
     @Override
-    public Gisu findById(Long gisuId) {
+    public Gisu getById(Long gisuId) {
         return gisuJpaRepository.findById(gisuId).orElseThrow(
             () -> new OrganizationDomainException(OrganizationErrorCode.GISU_NOT_FOUND));
     }
 
     @Override
-    public List<Gisu> findByIds(Set<Long> gisuIds) {
+    public List<Gisu> listByIds(Set<Long> gisuIds) {
         return gisuJpaRepository.findByIdIn(gisuIds);
     }
 

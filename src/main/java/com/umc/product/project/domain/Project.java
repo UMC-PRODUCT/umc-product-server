@@ -72,7 +72,7 @@ public class Project extends BaseEntity {
      * {@code productOwnerMemberId} 와 다를 수 있다. DRAFT 단계 EDIT 권한 분기 + audit 용도.
      */
     @Column(nullable = false, name = "created_by_member_id")
-    private Long createdByMemberId;
+    private Long creatorMemberId;
 
     private Long statusChangedByMemberId; // 프로젝트 상태를 변경한 멤버의 ID입니다. (예: ABORTED로 변경한 멤버)
     private String statusChangedReason; // 프로젝트 상태를 변경한 이유입니다. (예: ABORTED로 변경한 이유)
@@ -99,7 +99,7 @@ public class Project extends BaseEntity {
         String thumbnailFileId,
         Long productOwnerMemberId,
         Long productOwnerSchoolId,
-        Long createdByMemberId
+        Long creatorMemberId
     ) {
         this.gisuId = gisuId;
         this.chapterId = chapterId;
@@ -111,7 +111,7 @@ public class Project extends BaseEntity {
         this.thumbnailFileId = thumbnailFileId;
         this.productOwnerMemberId = productOwnerMemberId;
         this.productOwnerSchoolId = productOwnerSchoolId;
-        this.createdByMemberId = createdByMemberId;
+        this.creatorMemberId = creatorMemberId;
     }
 
     /**
@@ -122,7 +122,7 @@ public class Project extends BaseEntity {
      * @param chapterId            프로젝트가 속한 지부 ID (PO의 소속 지부에서 결정)
      * @param productOwnerMemberId PO Member ID (PLAN 파트 챌린저여야 함)
      * @param productOwnerSchoolId PO 의 학교 ID 비정규화 (학교 운영진 scope 및 학교 필터에서 사용)
-     * @param createdByMemberId    호출자(생성자) Member ID. PM 본인 등록 시엔 PO 와 동일,
+     * @param creatorMemberId      호출자(생성자) Member ID. PM 본인 등록 시엔 PO 와 동일,
      *                             운영진이 다른 챌린저를 PO 로 지정한 경우엔 다름.
      * @return DRAFT 상태의 프로젝트
      */
@@ -131,14 +131,14 @@ public class Project extends BaseEntity {
         Long chapterId,
         Long productOwnerMemberId,
         Long productOwnerSchoolId,
-        Long createdByMemberId
+        Long creatorMemberId
     ) {
         return Project.builder()
             .gisuId(gisuId)
             .chapterId(chapterId)
             .productOwnerMemberId(productOwnerMemberId)
             .productOwnerSchoolId(productOwnerSchoolId)
-            .createdByMemberId(createdByMemberId)
+            .creatorMemberId(creatorMemberId)
             .status(ProjectStatus.DRAFT)
             .build();
     }
@@ -201,12 +201,25 @@ public class Project extends BaseEntity {
     /**
      * 지원 폼을 편집 가능한 상태인지 검증한다.
      * <p>
-     * Form 은 Project 가 IN_PROGRESS 로 전이되는 시점(PROJECT-108)에 PUBLISHED 로 같이 전이되므로,
-     * 편집은 {@code DRAFT} / {@code PENDING_REVIEW} 단계에서만 허용된다.
-     * Survey 단의 {@code SURVEY_ALREADY_PUBLISHED} 가드와 2단 방어 관계.
+     * - {@code DRAFT} / {@code PENDING_REVIEW}: 항상 허용.
+     * - {@code IN_PROGRESS}: 활성 매칭 차수가 없을 때(차수 사이)만 허용. 차수 진행 중에는 금지.
+     * - 그 외 상태: 금지.
+     *
+     * @param hasActiveRound 현재 시점에 활성화된 매칭 차수 존재 여부
      */
-    public void validateApplicationFormEditable() {
-        if (this.status != ProjectStatus.DRAFT && this.status != ProjectStatus.PENDING_REVIEW) {
+    public void validateApplicationFormEditable(boolean hasActiveRound) {
+        if (this.status == ProjectStatus.DRAFT || this.status == ProjectStatus.PENDING_REVIEW) return;
+        if (this.status == ProjectStatus.IN_PROGRESS && !hasActiveRound) return;
+        throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
+    }
+
+    /**
+     * 챌린저가 본 프로젝트에 지원 가능한 상태인지 검증한다.
+     * 모집 단계({@link ProjectStatus#IN_PROGRESS})에서만 허용한다.
+     * 권한 레이어({@code ProjectApplicationPermissionEvaluator}) 와 분리된 도메인 가드 — 스케줄러 등 권한 우회 경로에서도 invariant 보호.
+     */
+    public void validateApplicable() {
+        if (this.status != ProjectStatus.IN_PROGRESS) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
         }
     }
@@ -241,6 +254,16 @@ public class Project extends BaseEntity {
     public void complete() {
         validateStatus(ProjectStatus.IN_PROGRESS);
         this.status = ProjectStatus.COMPLETED;
+    }
+
+    /**
+     * 프로젝트 hard delete 가능 상태인지 검증한다. DRAFT/PENDING_REVIEW 단계에서만 허용.
+     * IN_PROGRESS 이상은 모집/매칭 데이터가 누적되므로 {@link #abort} 로 상태 전이해야 한다.
+     */
+    public void validateDeletable() {
+        if (this.status != ProjectStatus.DRAFT && this.status != ProjectStatus.PENDING_REVIEW) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DELETE_NOT_ALLOWED_IN_STATUS);
+        }
     }
 
     /**

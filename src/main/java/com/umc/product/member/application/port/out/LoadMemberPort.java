@@ -2,6 +2,7 @@ package com.umc.product.member.application.port.out;
 
 import com.umc.product.member.domain.Member;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.data.domain.Pageable;
@@ -15,11 +16,11 @@ public interface LoadMemberPort {
 
     Optional<Member> findByNickname(String nickname);
 
-    Optional<Member> findByLoginId(String loginId);
-
     List<Member> findAllByIds(Set<Long> ids);
 
-    Set<Long> findAllIdsBySchoolId(Long schoolId);
+    Set<Long> listIdsBySchoolId(Long schoolId);
+
+    Map<Long, Set<Long>> listIdsBySchoolIds(Set<Long> schoolIds);
 
     boolean existsById(Long id);
 
@@ -27,9 +28,9 @@ public interface LoadMemberPort {
 
     boolean existsByNickname(String nickname);
 
-    boolean existsByLoginId(String loginId);
-
     List<Long> findAllIdsCursor(Long lastId, Pageable pageable);
 
     long countMembersByIds(Set<Long> memberIds);
+
+    long countAllMembers();
 }

@@ -6,6 +6,7 @@ import com.umc.product.project.adapter.in.web.dto.request.CreateProjectMatchingR
 import com.umc.product.project.adapter.in.web.dto.request.UpdateProjectMatchingRoundRequest;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMatchingRoundCreateResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMatchingRoundResponse;
+import com.umc.product.project.application.port.in.command.AutoDecideProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.in.command.CreateProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.in.command.DeleteProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectMatchingRoundUseCase;
@@ -37,6 +38,7 @@ public class ProjectMatchingRoundController {
     private final CreateProjectMatchingRoundUseCase createProjectMatchingRoundUseCase;
     private final UpdateProjectMatchingRoundUseCase updateProjectMatchingRoundUseCase;
     private final DeleteProjectMatchingRoundUseCase deleteProjectMatchingRoundUseCase;
+    private final AutoDecideProjectMatchingRoundUseCase autoDecideProjectMatchingRoundUseCase;
 
     @GetMapping
     @Operation(
@@ -119,5 +121,25 @@ public class ProjectMatchingRoundController {
         @PathVariable Long matchingRoundId
     ) {
         deleteProjectMatchingRoundUseCase.delete(matchingRoundId, memberPrincipal.getMemberId());
+    }
+
+    @PostMapping("/{matchingRoundId}/auto-decide")
+    @Operation(
+        summary = "[PROJECT-MATCHING-201] 매칭 차수 자동 선발 실행 (운영진 수동 트리거)",
+        description = """
+            결정 마감(decisionDeadline) 이후 매칭 차수의 자동 선발을 실행합니다.
+            - 중앙운영사무국 총괄단 이상은 모든 지부의 매칭 차수에 대해 실행할 수 있습니다.
+            - 지부장은 본인 지부의 매칭 차수만 실행할 수 있습니다.
+            - 결정 마감 시각이 지나기 전에는 실행할 수 없으며 400을 반환합니다.
+            - 이미 자동 선발이 실행된 매칭 차수에 대해서는 멱등 (no-op).
+            - 정책 매트릭스(디자이너 / 개발자)에 따라 SUBMITTED 우선 random 보충 후 부족하면 REJECTED 까지 override 합니다.
+            - 합격자에게는 ProjectMember 가 자동으로 생성됩니다.
+            """
+    )
+    public void autoDecide(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long matchingRoundId
+    ) {
+        autoDecideProjectMatchingRoundUseCase.autoDecide(matchingRoundId, memberPrincipal.getMemberId());
     }
 }

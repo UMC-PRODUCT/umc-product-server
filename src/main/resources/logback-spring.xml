@@ -8,6 +8,10 @@
     <property name="LOG_DIR" value="./logs"/>
     <property name="LOG_NAME" value="umc-product"/>
 
+    <!-- ========== 구조화 로그용 메타 (ADR-016) ========== -->
+    <springProperty name="APP_NAME" source="spring.application.name" defaultValue="umc-product-api"/>
+    <springProperty name="ENV" source="spring.profiles.active" defaultValue="local"/>
+
     <!-- ========== 콘솔 로깅 패턴 정의 ========== -->
     <property name="LOCAL_CONSOLE_LOG_PATTERN"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} %customHighlight(%-5level) [%-4.-4X{traceId}] [%thread] %logger{40} : %msg%n"/>
@@ -32,80 +36,97 @@
         </encoder>
     </appender>
 
-    <!-- Loki -->
-    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-        <http>
-            <url>${LOKI_URL:-http://localhost:3100/loki/api/v1/push}</url>
-            <auth>
-                <username>${LOKI_USERNAME:-}</username>
-                <password>${GRAFANA_API_KEY:-}</password>
-            </auth>
-        </http>
-        <format>
-            <label>
-                <pattern>application=${SPRING_APPLICATION_NAME},level=%level</pattern>
-            </label>
-            <message>
-                <pattern>${FULL_LOG_PATTERN}</pattern>
-            </message>
-        </format>
+    <!--
+        ========== JSON 구조화 로그 어펜더 (ADR-016) ==========
+        dev / staging / prod 환경의 stdout 을 JSON 한 줄로 출력.
+        본 커밋(#2)에서는 정의만 하고 어떤 root 에도 연결하지 않는다 (dead-code).
+        root 연결은 Commit #3 에서 수행한다.
+    -->
+    <appender class="ch.qos.logback.core.ConsoleAppender" name="CONSOLE_JSON">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <timeZone>Asia/Seoul</timeZone>
+                </timestamp>
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+                <loggerName>
+                    <fieldName>logger</fieldName>
+                </loggerName>
+                <threadName>
+                    <fieldName>thread</fieldName>
+                </threadName>
+                <message>
+                    <fieldName>message</fieldName>
+                </message>
+                <mdc/>
+                <arguments/>
+                <stackTrace>
+                    <fieldName>stackTrace</fieldName>
+                </stackTrace>
+                <globalCustomFields>
+                    {"service":"${APP_NAME}","environment":"${ENV}"}
+                </globalCustomFields>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- ========== OTLP LOGS APPENDER ========== -->
+    <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
+        <captureExperimentalAttributes>true</captureExperimentalAttributes>
+        <captureKeyValuePairAttributes>true</captureKeyValuePairAttributes>
+        <captureLogstashStructuredArguments>true</captureLogstashStructuredArguments>
+        <captureMdcAttributes>*</captureMdcAttributes>
     </appender>
 
     <!-- ========== 로컬: 컬러 + 축약 traceId ========== -->
     <springProfile name="local">
         <root level="INFO">
             <appender-ref ref="LOCAL_CONSOLE"/>
-            <appender-ref ref="LOKI"/>
+            <appender-ref ref="OTEL"/>
         </root>
     </springProfile>
 
 
+    <!--
+        ========== dev: stdout JSON + OTLP logs ==========
+        dev stdout 은 한 줄 JSON 으로 유지하고, 원격 로그는 OpenTelemetryAppender 가
+        OTLP logs 로 Collector 에 송신한다.
+    -->
     <springProfile name="dev">
-        <!-- dev용 파일 appender -->
-        <!--        <appender class="ch.qos.logback.core.rolling.RollingFileAppender" name="FILE">-->
-        <!--            <encoder>-->
-        <!--                <pattern>${FULL_LOG_PATTERN}</pattern>-->
-        <!--            </encoder>-->
-
-        <!--            <file>${LOG_DIR}/${LOG_NAME}.log</file>-->
-
-        <!--            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">-->
-        <!--                <fileNamePattern>${LOG_DIR}/${LOG_NAME}-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>-->
-
-        <!--                <maxFileSize>50MB</maxFileSize>-->
-        <!--                <maxHistory>30</maxHistory>-->
-        <!--                <totalSizeCap>2GB</totalSizeCap>-->
-        <!--            </rollingPolicy>-->
-        <!--        </appender>-->
-
         <!-- 우리 앱 패키지만 DEBUG -->
         <logger name="com.umc.product" level="DEBUG"/>
 
         <root level="INFO">
-            <appender-ref ref="ECS_CONSOLE"/>
-            <appender-ref ref="LOKI"/>
-            <!--            <appender-ref ref="FILE"/>-->
+            <appender-ref ref="CONSOLE_JSON"/>
+            <appender-ref ref="OTEL"/>
         </root>
     </springProfile>
 
-    <!-- ========== prod용은 ECS인 관계로 stdout으로 내보내기 (CloudWatch) ========== -->
-    <springProfile name="prod">
-        <!-- Sentry Appender -->
-        <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
-            <options>
-                <dsn>${SENTRY_DSN:-}</dsn>
-            </options>
-            <minimumEventLevel>WARN</minimumEventLevel>
-            <minimumBreadcrumbLevel>INFO</minimumBreadcrumbLevel>
-        </appender>
-
-        <!-- 우리 앱 패키지만 DEBUG -->
+    <!-- ========== staging: dev 와 동일 구성 ========== -->
+    <springProfile name="staging">
         <logger name="com.umc.product" level="${LOGGING_APP_LEVEL:-INFO}"/>
 
         <root level="INFO">
-            <appender-ref ref="ECS_CONSOLE"/>
-            <appender-ref ref="LOKI"/>
-            <appender-ref ref="SENTRY"/>
+            <appender-ref ref="CONSOLE_JSON"/>
+            <appender-ref ref="OTEL"/>
+        </root>
+    </springProfile>
+
+    <!-- ========== 프로덕션: stdout JSON + OTLP logs (CloudWatch) ========== -->
+    <springProfile name="prod">
+        <!-- 우리 앱에 대한 로그 기록 수준은 환경변수에 따름 -->
+        <logger name="com.umc.product" level="${LOGGING_APP_LEVEL:-INFO}"/>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_JSON"/>
+            <appender-ref ref="OTEL"/>
         </root>
     </springProfile>
 </configuration>

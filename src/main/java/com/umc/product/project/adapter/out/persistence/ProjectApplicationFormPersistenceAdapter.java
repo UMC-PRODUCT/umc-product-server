@@ -39,4 +39,9 @@ public class ProjectApplicationFormPersistenceAdapter
     public void delete(ProjectApplicationForm form) {
         repository.delete(form);
     }
+
+    @Override
+    public void deleteAllByProjectId(Long projectId) {
+        repository.deleteAllByProjectId(projectId);
+    }
 }
