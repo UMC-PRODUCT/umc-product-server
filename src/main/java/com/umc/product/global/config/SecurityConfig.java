@@ -1,9 +1,9 @@
 package com.umc.product.global.config;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.security.JwtAuthenticationFilter;
 import com.umc.product.global.security.util.PublicEndpointCollector;
 import com.umc.product.maintenance.adapter.in.web.filter.MaintenanceFilter;
@@ -15,6 +15,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -91,10 +92,9 @@ public class SecurityConfig {
     }
 
     /**
-     * 점검 모드 필터. JWT 다음에 동작해서 점검 중 일반 사용자 요청을 503 으로 차단한다.
-     * {@code @Component} 가 아닌 명시 {@code @Bean} 으로 두는 이유: 슬라이스 테스트
-     * ({@code @WebMvcTest}) 의 자동 Filter 디스커버리가 본 필터의 의존성까지 끌어와 컨텍스트 로딩을
-     * 실패시키는 것을 막기 위함이다. SecurityConfig 는 슬라이스 테스트에 포함되지 않으므로 본 빈도 함께 제외된다.
+     * 점검 모드 필터. JWT 다음에 동작해서 점검 중 일반 사용자 요청을 503 으로 차단한다. {@code @Component} 가 아닌 명시 {@code @Bean} 으로 두는 이유: 슬라이스 테스트
+     * ({@code @WebMvcTest}) 의 자동 Filter 디스커버리가 본 필터의 의존성까지 끌어와 컨텍스트 로딩을 실패시키는 것을 막기 위함이다. SecurityConfig 는 슬라이스 테스트에
+     * 포함되지 않으므로 본 빈도 함께 제외된다.
      */
     @Bean
     public MaintenanceFilter maintenanceFilter(
@@ -193,7 +193,7 @@ public class SecurityConfig {
      * Spring Security가 "인증 체계가 구성되어 있다"고 인식하도록 하기 위한 더미 Bean
      */
     @Bean
-    @Profile("!dev")
+    @ConditionalOnMissingBean(UserDetailsService.class) // Dummy Bean이라서 Conditional로 변경
     public UserDetailsService userDetailsService() {
         return username -> {
             throw new UsernameNotFoundException(
@@ -204,9 +204,8 @@ public class SecurityConfig {
     /**
      * 비밀번호 해시는 password_hash 단일 컬럼에 "{id}encoded" prefix 형태로 저장한다.
      * <p>
-     * 신규 저장은 Argon2 를 기본으로 하고, 기존/외부 호환을 위해 bcrypt 검증도 함께 등록한다.
-     * 알고리즘/파라미터가 갱신되더라도 기존 해시를 그대로 검증할 수 있으며,
-     * 로그인 성공 시 {@link PasswordEncoder#upgradeEncoding} 으로 점진적 rehash 를 수행한다.
+     * 신규 저장은 Argon2 를 기본으로 하고, 기존/외부 호환을 위해 bcrypt 검증도 함께 등록한다. 알고리즘/파라미터가 갱신되더라도 기존 해시를 그대로 검증할 수 있으며, 로그인 성공 시
+     * {@link PasswordEncoder#upgradeEncoding} 으로 점진적 rehash 를 수행한다.
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
