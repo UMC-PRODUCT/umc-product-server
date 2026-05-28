@@ -32,7 +32,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
     @Override
     public void create(CreateStudyGroupCommand command) {
         // 생성하고자 하는 기수에 스터디를 생성
-        Gisu gisu = loadGisuPort.findById(command.gisuId());
+        Gisu gisu = loadGisuPort.getById(command.gisuId());
         validateNoPartStudyConflict(gisu.getId(), command.part(), command.memberIds(), null);
 
         saveStudyGroupPort.save(
