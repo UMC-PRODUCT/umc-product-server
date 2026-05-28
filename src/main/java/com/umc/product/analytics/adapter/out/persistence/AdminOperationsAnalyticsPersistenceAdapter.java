@@ -2,10 +2,13 @@ package com.umc.product.analytics.adapter.out.persistence;
 
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewQuery;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsPointsInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSchoolsInfo;
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsAnalyticsPort;
+import com.umc.product.analytics.application.port.out.LoadAdminOperationsPointsPort;
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsSchoolsPort;
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +16,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AdminOperationsAnalyticsPersistenceAdapter implements
     LoadAdminOperationsAnalyticsPort,
-    LoadAdminOperationsSchoolsPort {
+    LoadAdminOperationsSchoolsPort,
+    LoadAdminOperationsPointsPort {
 
     private final AdminOperationsAnalyticsQueryRepository queryRepository;
 
@@ -28,5 +32,10 @@ public class AdminOperationsAnalyticsPersistenceAdapter implements
     @Override
     public AdminOperationsSchoolsInfo getOperationsSchools(AdminAnalyticsScope scope) {
         return queryRepository.getOperationsSchools(scope);
+    }
+
+    @Override
+    public AdminOperationsPointsInfo getOperationsPoints(AdminAnalyticsScope scope, Instant from, Instant to) {
+        return queryRepository.getOperationsPoints(scope, from, to);
     }
 }

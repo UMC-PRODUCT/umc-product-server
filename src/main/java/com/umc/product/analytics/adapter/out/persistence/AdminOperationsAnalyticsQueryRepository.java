@@ -11,6 +11,7 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewQuery;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsPointsInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSchoolsInfo;
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
 import com.umc.product.challenger.domain.QChallenger;
@@ -45,6 +46,43 @@ public class AdminOperationsAnalyticsQueryRepository {
     private static final ZoneId DASHBOARD_ZONE = ZoneId.of("Asia/Seoul");
 
     private final JPAQueryFactory queryFactory;
+
+    public AdminOperationsPointsInfo getOperationsPoints(AdminAnalyticsScope scope, Instant from, Instant to) {
+        QChallengerPoint point = new QChallengerPoint("operationsPoint");
+        QChallenger challenger = new QChallenger("operationsPointChallenger");
+        QMember member = new QMember("operationsPointMember");
+        QChapterSchool chapterSchool = new QChapterSchool("operationsPointChapterSchool");
+        QChapter chapter = new QChapter("operationsPointChapter");
+        NumberExpression<Long> grantCount = point.id.count();
+        NumberExpression<Double> pointSum = pointScore(point).sum().coalesce(0.0);
+
+        List<com.querydsl.core.Tuple> rows = queryFactory
+            .select(chapter.id, chapter.name, challenger.part, grantCount, pointSum)
+            .from(point)
+            .join(point.challenger, challenger)
+            .join(member).on(member.id.eq(challenger.memberId))
+            .leftJoin(chapterSchool).on(chapterSchool.school.id.eq(member.schoolId))
+            .leftJoin(chapter).on(chapter.id.eq(chapterSchool.chapter.id)
+                .and(chapter.gisu.id.eq(challenger.gisuId)))
+            .where(challengerScopeCondition(scope, challenger, member, chapterSchool, chapter)
+                .and(periodCondition(point.createdAt, from, to))
+                .and(chapter.id.isNotNull()))
+            .groupBy(chapter.id, chapter.name, challenger.part)
+            .orderBy(chapter.name.asc(), challenger.part.asc())
+            .fetch();
+
+        return AdminOperationsPointsInfo.from(
+            rows.stream()
+                .map(row -> AdminOperationsPointsInfo.ChapterPartPointGrantStatusInfo.of(
+                    row.get(chapter.id),
+                    row.get(chapter.name),
+                    row.get(challenger.part),
+                    defaultLong(row.get(grantCount)),
+                    defaultDouble(row.get(pointSum))
+                ))
+                .toList()
+        );
+    }
 
     public AdminOperationsSchoolsInfo getOperationsSchools(AdminAnalyticsScope scope) {
         return AdminOperationsSchoolsInfo.from(
@@ -444,9 +482,13 @@ public class AdminOperationsAnalyticsQueryRepository {
     }
 
     private BooleanBuilder periodCondition(DateTimePath<Instant> path, AdminOperationsOverviewQuery query) {
+        return periodCondition(path, query.from(), query.to());
+    }
+
+    private BooleanBuilder periodCondition(DateTimePath<Instant> path, Instant from, Instant to) {
         return new BooleanBuilder()
-            .and(path.goe(query.from()))
-            .and(path.lt(query.to()));
+            .and(path.goe(from))
+            .and(path.lt(to));
     }
 
     private Map<ChallengerPart, Long> emptyPartCounts() {

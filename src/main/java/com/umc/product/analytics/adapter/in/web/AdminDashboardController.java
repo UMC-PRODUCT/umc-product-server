@@ -3,18 +3,21 @@ package com.umc.product.analytics.adapter.in.web;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminDashboardActionQueueRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminDashboardRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsOverviewRequest;
+import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsPointsRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsSchoolsRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminRiskChallengerRequest;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminDashboardActionQueueResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminDashboardContextResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminDashboardSummaryResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsOverviewResponse;
+import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsPointsResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsSchoolsResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminRiskChallengerResponse;
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardActionQueueUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardContextUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardSummaryUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsOverviewUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsPointsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSchoolsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminRiskChallengerUseCase;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
@@ -44,6 +47,7 @@ public class AdminDashboardController {
     private final GetAdminRiskChallengerUseCase getAdminRiskChallengerUseCase;
     private final GetAdminOperationsOverviewUseCase getAdminOperationsOverviewUseCase;
     private final GetAdminOperationsSchoolsUseCase getAdminOperationsSchoolsUseCase;
+    private final GetAdminOperationsPointsUseCase getAdminOperationsPointsUseCase;
 
     @Operation(summary = "[DASHBOARD-001] 운영진 대시보드 요약 조회")
     @GetMapping("summary")
@@ -101,6 +105,18 @@ public class AdminDashboardController {
     ) {
         return AdminOperationsSchoolsResponse.from(
             getAdminOperationsSchoolsUseCase.getOperationsSchools(request.toQuery(memberPrincipal.getMemberId()))
+        );
+    }
+
+    @Operation(summary = "[DASHBOARD-007] 운영 현황 - 지부 내 파트별 상벌점 부여 현황 조회")
+    @GetMapping("operations/points")
+    @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
+    public AdminOperationsPointsResponse getOperationsPoints(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @ParameterObject AdminOperationsPointsRequest request
+    ) {
+        return AdminOperationsPointsResponse.from(
+            getAdminOperationsPointsUseCase.getOperationsPoints(request.toQuery(memberPrincipal.getMemberId()))
         );
     }
 

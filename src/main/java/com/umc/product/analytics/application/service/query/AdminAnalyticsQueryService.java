@@ -4,6 +4,7 @@ import com.umc.product.analytics.application.port.in.query.GetAdminDashboardActi
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardContextUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardSummaryUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsOverviewUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsPointsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSchoolsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminRiskChallengerUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminSchoolSummaryUseCase;
@@ -14,6 +15,8 @@ import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardQue
 import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardSummaryInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewQuery;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsPointsInfo;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsPointsQuery;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSchoolsInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSchoolsQuery;
 import com.umc.product.analytics.application.port.in.query.dto.AdminRiskChallengerInfo;
@@ -22,6 +25,7 @@ import com.umc.product.analytics.application.port.in.query.dto.AdminSchoolSummar
 import com.umc.product.analytics.application.port.in.query.dto.AdminSchoolSummaryQuery;
 import com.umc.product.analytics.application.port.out.LoadAdminDashboardAnalyticsPort;
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsAnalyticsPort;
+import com.umc.product.analytics.application.port.out.LoadAdminOperationsPointsPort;
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsSchoolsPort;
 import com.umc.product.analytics.application.port.out.LoadAdminRiskChallengerAnalyticsPort;
 import com.umc.product.analytics.application.port.out.LoadAdminSchoolAnalyticsPort;
@@ -41,7 +45,8 @@ public class AdminAnalyticsQueryService implements
     GetAdminSchoolSummaryUseCase,
     GetAdminRiskChallengerUseCase,
     GetAdminOperationsOverviewUseCase,
-    GetAdminOperationsSchoolsUseCase {
+    GetAdminOperationsSchoolsUseCase,
+    GetAdminOperationsPointsUseCase {
 
     private final AdminAnalyticsScopeResolver scopeResolver;
     private final LoadAdminDashboardAnalyticsPort loadAdminDashboardAnalyticsPort;
@@ -49,6 +54,7 @@ public class AdminAnalyticsQueryService implements
     private final LoadAdminRiskChallengerAnalyticsPort loadAdminRiskChallengerAnalyticsPort;
     private final LoadAdminOperationsAnalyticsPort loadAdminOperationsAnalyticsPort;
     private final LoadAdminOperationsSchoolsPort loadAdminOperationsSchoolsPort;
+    private final LoadAdminOperationsPointsPort loadAdminOperationsPointsPort;
 
     @Override
     public AdminDashboardSummaryInfo getSummary(AdminDashboardQuery query) {
@@ -107,5 +113,11 @@ public class AdminAnalyticsQueryService implements
     public AdminOperationsSchoolsInfo getOperationsSchools(AdminOperationsSchoolsQuery query) {
         AdminAnalyticsScope scope = scopeResolver.resolve(query.requesterMemberId(), query.gisuId(), null, null, null);
         return loadAdminOperationsSchoolsPort.getOperationsSchools(scope);
+    }
+
+    @Override
+    public AdminOperationsPointsInfo getOperationsPoints(AdminOperationsPointsQuery query) {
+        AdminAnalyticsScope scope = scopeResolver.resolve(query.requesterMemberId(), query.gisuId(), null, null, null);
+        return loadAdminOperationsPointsPort.getOperationsPoints(scope, query.from(), query.to());
     }
 }
