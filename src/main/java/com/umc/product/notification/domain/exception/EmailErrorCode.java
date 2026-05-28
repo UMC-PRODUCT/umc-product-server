@@ -8,9 +8,8 @@ import org.springframework.http.HttpStatus;
 @Getter
 @AllArgsConstructor
 public enum EmailErrorCode implements BaseCode {
-    EMAIL_GENERAL_ERROR(HttpStatus.BAD_REQUEST, "EMAIL-0001", "알 수 없는 사유로 이메일 전송에 실패했습니다."),
-    EMAIL_ENCODING_ERROR(HttpStatus.BAD_REQUEST, "EMAIL-0002", "인코딩 과정에서 오류가 발생했습니다."),
-    EMAIL_MESSAGING_ERROR(HttpStatus.BAD_REQUEST, "EMAIL-0003", "메일 전송 과정에서 오류가 발생했습니다."),
+    EMAIL_TEMPLATE_RENDER_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "EMAIL-0004", "이메일 본문 템플릿 렌더링에 실패했습니다."),
+    EMAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "EMAIL-0005", "이메일 발송에 실패했습니다."),
     ;
 
     private final HttpStatus httpStatus;
