@@ -95,7 +95,7 @@ public class CredentialAuthenticationController {
 
     @Public
     @PostMapping("/login/email")
-    @Operation(summary = "[LOGIN-006] 이메일/PW 로그인",
+    @Operation(summary = "[LOGIN-011] 이메일/PW 로그인",
         description = "email/password 로 인증하여 AccessToken/RefreshToken 을 발급받습니다. "
             + "clientType(ANDROID, IOS, WEB)을 함께 전달하면 AccessToken claim 으로 반영됩니다.")
     public LocalLoginResponse loginByEmail(

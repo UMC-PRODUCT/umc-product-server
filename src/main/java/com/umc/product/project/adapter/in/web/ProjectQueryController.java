@@ -96,7 +96,7 @@ public class ProjectQueryController {
 
     @GetMapping("/members")
     @Operation(
-        summary = "[PROJECT-004] 프로젝트 팀원 구성 일괄 조회",
+        summary = "[PROJECT-007] 프로젝트 팀원 구성 일괄 조회",
         description = "복수의 projectId에 대한 팀원 구성을 조회합니다. 권한이 없거나 조회에 실패한 프로젝트는 결과에서 제외됩니다."
     )
     @CheckAccess(

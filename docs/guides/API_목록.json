@@ -195,18 +195,6 @@
     "sequence": 17,
     "domain": "authentication",
     "apiId": "LOGIN-006",
-    "endpoint": "/api/v1/auth/login/email",
-    "httpMethod": "POST",
-    "role": "이메일/PW 로그인",
-    "deprecated": false,
-    "source": "src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java",
-    "line": 98,
-    "operationId": null
-  },
-  {
-    "sequence": 18,
-    "domain": "authentication",
-    "apiId": "LOGIN-006",
     "endpoint": "/api/v1/auth/login/kakao/code",
     "httpMethod": "POST",
     "role": "Kakao 로그인 (Authorization Code 흐름)",
@@ -216,7 +204,7 @@
     "operationId": null
   },
   {
-    "sequence": 19,
+    "sequence": 18,
     "domain": "authentication",
     "apiId": "LOGIN-010",
     "endpoint": "/api/v1/auth/login/apple",
@@ -225,6 +213,18 @@
     "deprecated": false,
     "source": "src/main/java/com/umc/product/authentication/adapter/in/web/swagger/AuthenticationControllerInterface.java",
     "line": 68,
+    "operationId": null
+  },
+  {
+    "sequence": 19,
+    "domain": "authentication",
+    "apiId": "LOGIN-011",
+    "endpoint": "/api/v1/auth/login/email",
+    "httpMethod": "POST",
+    "role": "이메일/PW 로그인",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java",
+    "line": 98,
     "operationId": null
   },
   {

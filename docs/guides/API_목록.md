@@ -34,9 +34,9 @@
 | 14 | authentication | EMAIL-003 | POST | `/api/v1/auth/email-verification/resend` | 이메일 인증 코드 재전송 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/EmailAuthenticationController.java:85` |
 | 15 | authentication | LOGIN-001 | POST | `/api/v1/auth/login/google` | Google 로그인 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/swagger/AuthenticationControllerInterface.java:14` |
 | 16 | authentication | LOGIN-005 | POST | `/api/v1/auth/login/kakao` | Kakao 로그인 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/swagger/AuthenticationControllerInterface.java:32` |
-| 17 | authentication | LOGIN-006 | POST | `/api/v1/auth/login/email` | 이메일/PW 로그인 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java:98` |
-| 18 | authentication | LOGIN-006 | POST | `/api/v1/auth/login/kakao/code` | Kakao 로그인 (Authorization Code 흐름) | X | `src/main/java/com/umc/product/authentication/adapter/in/web/swagger/AuthenticationControllerInterface.java:50` |
-| 19 | authentication | LOGIN-010 | POST | `/api/v1/auth/login/apple` | Apple 로그인 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/swagger/AuthenticationControllerInterface.java:68` |
+| 17 | authentication | LOGIN-006 | POST | `/api/v1/auth/login/kakao/code` | Kakao 로그인 (Authorization Code 흐름) | X | `src/main/java/com/umc/product/authentication/adapter/in/web/swagger/AuthenticationControllerInterface.java:50` |
+| 18 | authentication | LOGIN-010 | POST | `/api/v1/auth/login/apple` | Apple 로그인 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/swagger/AuthenticationControllerInterface.java:68` |
+| 19 | authentication | LOGIN-011 | POST | `/api/v1/auth/login/email` | 이메일/PW 로그인 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java:98` |
 | 20 | authentication | OAUTH-001 | POST | `/api/v1/member-oauth` | 로그인용 OAuth 수단 추가 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/MemberOAuthController.java:37` |
 | 21 | authentication | OAUTH-002 | DELETE | `/api/v1/member-oauth/{memberOAuthId}` | 로그인용 OAuth 수단 제거 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/MemberOAuthController.java:58` |
 | 22 | authentication | OAUTH-101 | GET | `/api/v1/member-oauth/me` | 현재 회원 계정과 연동된 OAuth 정보 조회 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/MemberOAuthController.java:81` |
