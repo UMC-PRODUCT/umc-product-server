@@ -13,6 +13,11 @@ public interface LoadTermConsentPort {
     List<TermConsent> findByMemberId(Long memberId);
 
     /**
+     * 회원 ID와 약관 ID 목록으로 동의한 약관 목록을 조회합니다.
+     */
+    List<TermConsent> listByMemberIdAndTermIds(Long memberId, List<Long> termIds);
+
+    /**
      * 회원 ID와 약관 타입으로 동의 정보를 조회합니다.
      */
     Optional<TermConsent> findByMemberIdAndTermType(Long memberId, TermType termType);
