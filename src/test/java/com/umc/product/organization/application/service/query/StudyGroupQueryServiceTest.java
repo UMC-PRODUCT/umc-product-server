@@ -65,7 +65,7 @@ class StudyGroupQueryServiceTest {
         given(getMemberUseCase.getById(memberId)).willReturn(memberInfo(memberId, schoolId));
         given(getGisuUseCase.getActiveGisuId()).willReturn(gisuId);
         given(getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, gisuId, schoolId)).willReturn(true);
-        given(getMemberUseCase.findAllIdsBySchoolId(schoolId)).willReturn(schoolMemberIds);
+        given(getMemberUseCase.listIdsBySchoolId(schoolId)).willReturn(schoolMemberIds);
         given(getChallengerRoleUseCase.hasRoleTypeInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER))
             .willReturn(false);
         given(loadStudyGroupPort.findStudyGroupHeaders(any(), eq(gisuId), eq(null), anyInt()))
@@ -118,7 +118,7 @@ class StudyGroupQueryServiceTest {
         given(getMemberUseCase.getById(memberId)).willReturn(memberInfo(memberId, schoolId));
         given(getGisuUseCase.getActiveGisuId()).willReturn(gisuId);
         given(getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, gisuId, schoolId)).willReturn(true);
-        given(getMemberUseCase.findAllIdsBySchoolId(schoolId)).willReturn(schoolMemberIds);
+        given(getMemberUseCase.listIdsBySchoolId(schoolId)).willReturn(schoolMemberIds);
         given(getChallengerRoleUseCase.hasRoleTypeInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER))
             .willReturn(true);
 
@@ -167,7 +167,7 @@ class StudyGroupQueryServiceTest {
         given(getMemberUseCase.getById(memberId)).willReturn(memberInfo(memberId, schoolId));
         given(getGisuUseCase.getActiveGisuId()).willReturn(gisuId);
         given(getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, gisuId, schoolId)).willReturn(true);
-        given(getMemberUseCase.findAllIdsBySchoolId(schoolId)).willReturn(Set.of());
+        given(getMemberUseCase.listIdsBySchoolId(schoolId)).willReturn(Set.of());
         given(getChallengerRoleUseCase.hasRoleTypeInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER))
             .willReturn(true);
         given(loadStudyGroupPort.findStudyGroupHeaders(any(), eq(gisuId), eq(null), anyInt()))
@@ -435,7 +435,7 @@ class StudyGroupQueryServiceTest {
         given(getMemberUseCase.getById(memberId)).willReturn(memberInfo(memberId, schoolId));
         given(getGisuUseCase.getActiveGisuId()).willReturn(gisuId);
         given(getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, gisuId, schoolId)).willReturn(true);
-        given(getMemberUseCase.findAllIdsBySchoolId(schoolId)).willReturn(schoolMemberIds);
+        given(getMemberUseCase.listIdsBySchoolId(schoolId)).willReturn(schoolMemberIds);
         given(getChallengerRoleUseCase.hasRoleTypeInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER))
             .willReturn(true);
 
