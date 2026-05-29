@@ -1,5 +1,12 @@
 package com.umc.product.test.adapter.in.web;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersResponse;
@@ -19,23 +26,18 @@ import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
 import com.umc.product.test.application.port.in.command.SeedNoticeUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectScenariosUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Profile;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * test 도메인 시딩 API. ADR-017 참조.
  * <p>
- * @Profile("!prod") + app.seed.enabled=true 두 조건을 모두 만족할 때만 빈으로 등록된다.
- * prod 환경에서는 빈 등록 자체가 차단되어 외부 노출 가능성이 없다.
+ *
+ * @Profile("!prod") + app.seed.enabled=true 두 조건을 모두 만족할 때만 빈으로 등록된다. prod 환경에서는 빈 등록 자체가 차단되어 외부 노출 가능성이 없다.
  */
 @RestController
 @RequestMapping("/test/seed")
@@ -55,7 +57,8 @@ public class SeedController {
     private final SeedNoticeUseCase seedNoticeUseCase;
 
     @Operation(
-        summary = "[SEED-001] 더미 멤버 시딩",
+        operationId = "SEED-001",
+        summary = "더미 멤버 시딩",
         description = """
             ID/PW 더미 멤버를 N 명 즉시 생성합니다. 모든 더미 회원은 동일한 비밀번호
             (app.seed.default-password)를 사용합니다.
@@ -70,7 +73,8 @@ public class SeedController {
     }
 
     @Operation(
-        summary = "[SEED-002] 챌린저 분포 시딩",
+        operationId = "SEED-002",
+        summary = "챌린저 분포 시딩",
         description = """
             특정 기수에 대해 (Chapter, School, Part) 셀마다 countPerPartPerSchool 명의 더미 회원 +
             챌린저를 함께 생성합니다.
@@ -84,7 +88,8 @@ public class SeedController {
     }
 
     @Operation(
-        summary = "[SEED-003] 프로젝트 시딩",
+        operationId = "SEED-003",
+        summary = "프로젝트 시딩",
         description = """
             활성 기수(또는 지정 기수)의 같은 school 멤버 풀에서 PLAN 1 + 프론트엔드 5~6 +
             백엔드 5~6 의 멤버 슬롯을 추출해 프로젝트를 N 개 생성합니다.
@@ -99,7 +104,8 @@ public class SeedController {
     }
 
     @Operation(
-        summary = "[SEED-003-S] 프로젝트 시나리오 시딩",
+        operationId = "SEED-003-S",
+        summary = "프로젝트 시나리오 시딩",
         description = """
             활성 기수에 대해 DRAFT / PENDING_REVIEW / IN_PROGRESS 중 하나의 상태까지 도달한
             프로젝트를 N 개 생성합니다. SQL 직접 주입이 아니라 도메인 UseCase 시퀀스 호출로 만들기 때문에
@@ -119,7 +125,8 @@ public class SeedController {
     }
 
     @Operation(
-        summary = "[SEED-004] Curriculum 시딩 (Curriculum · WeeklyCurriculum · OriginalWorkbook · Mission)",
+        operationId = "SEED-004",
+        summary = "Curriculum 시딩 (Curriculum · WeeklyCurriculum · OriginalWorkbook · Mission)",
         description = """
             활성 기수(또는 지정 기수)에 대해 ADMIN 제외 파트별로 다음 골격을 시딩합니다.
             Curriculum (1/파트) → WeeklyCurriculum (1~N 주차) → OriginalWorkbook (MAIN, READY) → Mission (M개).
@@ -133,7 +140,8 @@ public class SeedController {
     }
 
     @Operation(
-        summary = "[SEED-005] Notice 시딩 (지부 · 학교 · 파트 분포)",
+        operationId = "SEED-005",
+        summary = "Notice 시딩 (지부 · 학교 · 파트 분포)",
         description = """
             활성 기수(또는 지정 기수)에 대해 다음 4 가지 scope 로 공지를 분포 시딩합니다.
               GLOBAL  : 기수 전체 대상 (작성자에게 중앙 총괄단 권한 필요)

@@ -10,6 +10,8 @@ plugins {
     jacoco
 }
 
+apply(from = "gradle/documentation-catalog.gradle.kts")
+
 group = "com.umc"
 version = "2.0.0"
 description = "UMC PRODUCT API by Server Team"
@@ -142,6 +144,7 @@ dependencies {
 
     // --- OpenAPI / Swagger ---
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${springDocVersion}")
+    implementation("org.webjars.npm:markdown-it:14.1.0")
 
     // --- Utils ---
     // 서버 시작 시 자동으로 Docker Compose 실행

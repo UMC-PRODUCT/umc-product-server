@@ -1,5 +1,13 @@
 package com.umc.product.authentication.adapter.in.web;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.authentication.adapter.in.web.dto.request.ChangePasswordRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.LoginByEmailRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.RegisterCredentialRequest;
@@ -14,17 +22,11 @@ import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * ID/PW 자격증명 등록/변경/조회/로그인 컨트롤러.
@@ -95,7 +97,7 @@ public class CredentialAuthenticationController {
 
     @Public
     @PostMapping("/login/email")
-    @Operation(summary = "[LOGIN-006] 이메일/PW 로그인",
+    @Operation(summary = "[LOGIN-011] 이메일/PW 로그인",
         description = "email/password 로 인증하여 AccessToken/RefreshToken 을 발급받습니다. "
             + "clientType(ANDROID, IOS, WEB)을 함께 전달하면 AccessToken claim 으로 반영됩니다.")
     public LocalLoginResponse loginByEmail(
