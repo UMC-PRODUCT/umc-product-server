@@ -9,6 +9,8 @@ import com.umc.product.test.adapter.in.web.dto.SeedMembersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedMembersResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedNoticeRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedNoticeResponse;
+import com.umc.product.test.adapter.in.web.dto.SeedProjectApplicationsRequest;
+import com.umc.product.test.adapter.in.web.dto.SeedProjectApplicationsResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectScenariosRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectScenariosResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectsRequest;
@@ -17,6 +19,7 @@ import com.umc.product.test.application.port.in.command.SeedChallengersUseCase;
 import com.umc.product.test.application.port.in.command.SeedCurriculumUseCase;
 import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
 import com.umc.product.test.application.port.in.command.SeedNoticeUseCase;
+import com.umc.product.test.application.port.in.command.SeedProjectApplicationsUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectScenariosUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,6 +54,7 @@ public class SeedController {
     private final SeedChallengersUseCase seedChallengersUseCase;
     private final SeedProjectsUseCase seedProjectsUseCase;
     private final SeedProjectScenariosUseCase seedProjectScenariosUseCase;
+    private final SeedProjectApplicationsUseCase seedProjectApplicationsUseCase;
     private final SeedCurriculumUseCase seedCurriculumUseCase;
     private final SeedNoticeUseCase seedNoticeUseCase;
 
@@ -116,6 +120,29 @@ public class SeedController {
         @RequestBody @Valid SeedProjectScenariosRequest request
     ) {
         return SeedProjectScenariosResponse.from(seedProjectScenariosUseCase.seed(request.toCommand()));
+    }
+
+    @Operation(
+        summary = "[SEED-006] 지원서 시나리오 시딩",
+        description = """
+            지정 매칭 차수 + 지부를 기준으로, 아직 팀에 합류하지 않은 ACTIVE 챌린저들이
+            랜덤 프로젝트에 지원서를 제출하고 합불 결정까지 완료하는 시나리오를 실행합니다.
+
+            전제 조건:
+            - 매칭차수가 현재 OPEN 상태(startsAt <= now <= endsAt)여야 합니다.
+            - 지부 내 IN_PROGRESS 프로젝트가 존재해야 합니다. (SEED-003-S 선행 필요)
+            - 챌린저가 시딩되어 있어야 합니다. (SEED-002 선행 필요)
+
+            APPROVED 처리된 챌린저는 ProjectMember로도 등록되어 매칭현황 통계에 반영됩니다.
+            """
+    )
+    @PostMapping("/project-applications")
+    public SeedProjectApplicationsResponse seedProjectApplications(
+        @RequestBody @Valid SeedProjectApplicationsRequest request
+    ) {
+        return SeedProjectApplicationsResponse.from(
+            seedProjectApplicationsUseCase.seed(request.toCommand())
+        );
     }
 
     @Operation(
