@@ -145,6 +145,12 @@ jobs:
           use-actions-summary: 'true'
           fail-on-error: 'false'
 
+      - name: 🚨 테스트 실패 시 중단
+        if: steps.test.outcome == 'failure'
+        run: |
+          echo "::error::테스트가 실패하여 빌드 및 배포를 중단합니다."
+          exit 1
+
       - name: 🏗️ Build JAR
         run: ./gradlew bootJar
 

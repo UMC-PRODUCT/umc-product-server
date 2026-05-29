@@ -60,9 +60,13 @@ echo "[5] .env 파일 생성"
 echo "[6] 이미지 Pull"
 ${COMPOSE_CMD} pull app
 
-echo "[7] 컨테이너 시작"
-if ! ${COMPOSE_CMD} up -d --scale "app=${APP_REPLICAS}" --remove-orphans; then
-  ${COMPOSE_CMD} logs --tail=100 || true
+echo "[7] 컨테이너 시작 및 헬스체크 대기"
+if ! ${COMPOSE_CMD} up -d --scale "app=${APP_REPLICAS}" --remove-orphans --wait; then
+  echo "컨테이너 헬스체크 실패. 로그:"
+  ${COMPOSE_CMD} logs --tail=100 postgres || true
+  ${COMPOSE_CMD} logs --tail=100 valkey   || true
+  ${COMPOSE_CMD} logs --tail=100 app      || true
+  ${COMPOSE_CMD} logs --tail=100 nginx    || true
   exit 1
 fi
 
