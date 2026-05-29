@@ -83,7 +83,7 @@ jobs:
           } >> "$GITHUB_ENV"
 
           # EC2 배포 스크립트에서 사용할 환경변수 파일 생성
-          # DB 자격증명은 포함하지 않음 — EC2에서 Secrets Manager로 직접 조회
+          # DB 자격증명은 포함하지 않음 — EC2에서 S3의 app.env를 통해 직접 조회
           cat > .env.deploy << EOF
           ECR_REGISTRY=${ECR_REGISTRY}
           ECR_IMAGE_NAME=${ECR_IMAGE_NAME}
