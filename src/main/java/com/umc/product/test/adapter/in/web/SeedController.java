@@ -37,8 +37,8 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * test 도메인 시딩 API. ADR-017 참조.
  * <p>
- * @Profile("!prod") + app.seed.enabled=true 두 조건을 모두 만족할 때만 빈으로 등록된다.
- * prod 환경에서는 빈 등록 자체가 차단되어 외부 노출 가능성이 없다.
+ *
+ * @Profile("!prod") + app.seed.enabled=true 두 조건을 모두 만족할 때만 빈으로 등록된다. prod 환경에서는 빈 등록 자체가 차단되어 외부 노출 가능성이 없다.
  */
 @RestController
 @RequestMapping("/test/seed")
@@ -122,28 +122,6 @@ public class SeedController {
         return SeedProjectScenariosResponse.from(seedProjectScenariosUseCase.seed(request.toCommand()));
     }
 
-    @Operation(
-        summary = "[SEED-006] 지원서 시나리오 시딩",
-        description = """
-            지정 매칭 차수 + 지부를 기준으로, 아직 팀에 합류하지 않은 ACTIVE 챌린저들이
-            랜덤 프로젝트에 지원서를 제출하고 합불 결정까지 완료하는 시나리오를 실행합니다.
-
-            전제 조건:
-            - 매칭차수가 현재 OPEN 상태(startsAt <= now <= endsAt)여야 합니다.
-            - 지부 내 IN_PROGRESS 프로젝트가 존재해야 합니다. (SEED-003-S 선행 필요)
-            - 챌린저가 시딩되어 있어야 합니다. (SEED-002 선행 필요)
-
-            APPROVED 처리된 챌린저는 ProjectMember로도 등록되어 매칭현황 통계에 반영됩니다.
-            """
-    )
-    @PostMapping("/project-applications")
-    public SeedProjectApplicationsResponse seedProjectApplications(
-        @RequestBody @Valid SeedProjectApplicationsRequest request
-    ) {
-        return SeedProjectApplicationsResponse.from(
-            seedProjectApplicationsUseCase.seed(request.toCommand())
-        );
-    }
 
     @Operation(
         summary = "[SEED-004] Curriculum 시딩 (Curriculum · WeeklyCurriculum · OriginalWorkbook · Mission)",
@@ -175,5 +153,28 @@ public class SeedController {
     @PostMapping("/notice")
     public SeedNoticeResponse seedNotice(@RequestBody @Valid SeedNoticeRequest request) {
         return SeedNoticeResponse.from(seedNoticeUseCase.seed(request.toCommand()));
+    }
+
+    @Operation(
+        summary = "[SEED-006] 지원서 시나리오 시딩",
+        description = """
+            지정 매칭 차수 + 지부를 기준으로, 아직 팀에 합류하지 않은 ACTIVE 챌린저들이
+            랜덤 프로젝트에 지원서를 제출하고 합불 결정까지 완료하는 시나리오를 실행합니다.
+
+            전제 조건:
+            - 매칭차수가 현재 OPEN 상태(startsAt <= now <= endsAt)여야 합니다.
+            - 지부 내 IN_PROGRESS 프로젝트가 존재해야 합니다. (SEED-003-S 선행 필요)
+            - 챌린저가 시딩되어 있어야 합니다. (SEED-002 선행 필요)
+
+            APPROVED 처리된 챌린저는 ProjectMember로도 등록되어 매칭현황 통계에 반영됩니다.
+            """
+    )
+    @PostMapping("/project-applications")
+    public SeedProjectApplicationsResponse seedProjectApplications(
+        @RequestBody @Valid SeedProjectApplicationsRequest request
+    ) {
+        return SeedProjectApplicationsResponse.from(
+            seedProjectApplicationsUseCase.seed(request.toCommand())
+        );
     }
 }
