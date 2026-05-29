@@ -1,7 +1,7 @@
 package com.umc.product.organization.adapter.in.web.dto.response.studygroup;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupWithMemberAndMentorInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
@@ -27,7 +27,7 @@ public record StudyGroupResponse(
     List<StudyGroupMemberResponse> members
 ) {
 
-    public static StudyGroupResponse from(StudyGroupInfo info) {
+    public static StudyGroupResponse from(StudyGroupWithMemberAndMentorInfo info) {
         return new StudyGroupResponse(
             info.groupId(),
             info.name(),

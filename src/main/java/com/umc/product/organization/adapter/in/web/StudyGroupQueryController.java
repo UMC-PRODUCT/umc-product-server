@@ -9,7 +9,7 @@ import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.organization.adapter.in.web.dto.response.studygroup.StudyGroupResponse;
 import com.umc.product.organization.adapter.in.web.swagger.StudyGroupQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupWithMemberAndMentorInfo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,14 +36,14 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
         @RequestParam(defaultValue = "20") int size
     ) {
 
-        List<StudyGroupInfo> content = getStudyGroupUseCase.getMyStudyGroups(
+        List<StudyGroupWithMemberAndMentorInfo> content = getStudyGroupUseCase.getMyStudyGroups(
             memberPrincipal.getMemberId(), cursor, size
         );
 
         return CursorResponse.of(
             content,
             size,
-            StudyGroupInfo::groupId,
+            StudyGroupWithMemberAndMentorInfo::groupId,
             StudyGroupResponse::from
         );
     }
@@ -59,7 +59,7 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     @GetMapping("/{studyGroupId}")
     public StudyGroupResponse getStudyGroupInfo(@PathVariable Long studyGroupId) {
         return StudyGroupResponse.from(
-            getStudyGroupUseCase.getById(studyGroupId)
+            getStudyGroupUseCase.getWithMemberAndMentorInfoById(studyGroupId)
         );
     }
 }

@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -45,7 +46,7 @@ public class StudyGroupMember extends BaseEntity {
         this.isLeader = isLeader;
     }
 
-    public static StudyGroupMember create(StudyGroup studyGroup, Long memberId) {
+    static StudyGroupMember create(StudyGroup studyGroup, Long memberId) {
         return StudyGroupMember.builder()
             .studyGroup(studyGroup)
             .memberId(memberId)
@@ -62,4 +63,7 @@ public class StudyGroupMember extends BaseEntity {
         }
     }
 
+    boolean isSameMember(Long memberId) {
+        return Objects.equals(this.memberId, memberId);
+    }
 }
