@@ -1,5 +1,12 @@
 package com.umc.product.test.adapter.in.web;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersResponse;
@@ -19,23 +26,18 @@ import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
 import com.umc.product.test.application.port.in.command.SeedNoticeUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectScenariosUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Profile;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * test 도메인 시딩 API. ADR-017 참조.
  * <p>
- * @Profile("!prod") + app.seed.enabled=true 두 조건을 모두 만족할 때만 빈으로 등록된다.
- * prod 환경에서는 빈 등록 자체가 차단되어 외부 노출 가능성이 없다.
+ *
+ * @Profile("!prod") + app.seed.enabled=true 두 조건을 모두 만족할 때만 빈으로 등록된다. prod 환경에서는 빈 등록 자체가 차단되어 외부 노출 가능성이 없다.
  */
 @RestController
 @RequestMapping("/test/seed")
