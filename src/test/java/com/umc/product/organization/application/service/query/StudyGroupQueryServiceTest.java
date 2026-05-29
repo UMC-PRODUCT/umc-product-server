@@ -8,29 +8,12 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.MemberStatus;
-import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.dto.MemberInfo;
-import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
-import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope;
-import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope.AsPartLeader;
-import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope.AsSchoolCore;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupWithMemberAndMentorInfo;
-import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
-import com.umc.product.organization.application.port.service.query.StudyGroupQueryService;
-import com.umc.product.organization.domain.StudyGroup;
-import com.umc.product.organization.domain.StudyGroupMember;
-import com.umc.product.organization.domain.StudyGroupMentor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -38,6 +21,25 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.MemberStatus;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope.AsPartLeader;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope.AsSchoolCore;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupWithMemberAndMentorInfo;
+import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
+import com.umc.product.organization.application.port.service.query.StudyGroupQueryService;
+import com.umc.product.organization.domain.StudyGroup;
+import com.umc.product.organization.domain.StudyGroupMember;
+import com.umc.product.organization.domain.StudyGroupMentor;
 
 @ExtendWith(MockitoExtension.class)
 class StudyGroupQueryServiceTest {
