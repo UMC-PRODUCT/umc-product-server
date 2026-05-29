@@ -27,8 +27,8 @@ else
 fi
 
 echo "[1] ECR 인증 (IAM Role)"
-ECR_PASSWORD="$(aws ecr get-login-password --region "${AWS_DEFAULT_REGION}")"
-"${DOCKER_BIN}" login --username AWS --password "${ECR_PASSWORD}" "${ECR_REGISTRY}"
+aws ecr get-login-password --region "${AWS_DEFAULT_REGION}" \
+  | "${DOCKER_BIN}" login --username AWS --password-stdin "${ECR_REGISTRY}"
 
 echo "[2] 앱 디렉토리 준비"
 mkdir -p "${SERVER_APP_DIRECTORY}"
@@ -41,7 +41,16 @@ cp "${DEPLOY_ROOT}/docker/develop/nginx.conf" ./nginx.conf
 echo "[4] S3에서 app.env 다운로드"
 aws s3 cp "${S3_APP_ENV_URI}" app.env
 
-echo "[5] .env 파일 생성"
+echo "[5] app.env에서 DB 자격증명 읽기"
+POSTGRES_USER=$(grep '^POSTGRES_USER=' app.env | cut -d'=' -f2)
+POSTGRES_PASSWORD=$(grep '^POSTGRES_PASSWORD=' app.env | cut -d'=' -f2)
+
+if [[ -z "${POSTGRES_USER}" || -z "${POSTGRES_PASSWORD}" ]]; then
+  echo "app.env에 POSTGRES_USER 또는 POSTGRES_PASSWORD가 없습니다." >&2
+  exit 1
+fi
+
+echo "[6] .env 파일 생성"
 {
   echo "NGINX_CONTAINER_NAME=umc-product-nginx-dev"
   echo "IMAGE_NAME=${ECR_IMAGE_NAME}"
@@ -57,10 +66,10 @@ echo "[5] .env 파일 생성"
   echo "VALKEY_CONTAINER_NAME=umc-product-valkey-dev"
 } > .env
 
-echo "[6] 이미지 Pull"
+echo "[7] 이미지 Pull"
 ${COMPOSE_CMD} pull app
 
-echo "[7] 컨테이너 시작 및 헬스체크 대기"
+echo "[8] 컨테이너 시작 및 헬스체크 대기"
 if ! ${COMPOSE_CMD} up -d --scale "app=${APP_REPLICAS}" --remove-orphans --wait; then
   echo "컨테이너 헬스체크 실패. 로그:"
   ${COMPOSE_CMD} logs --tail=100 postgres || true
@@ -72,8 +81,8 @@ fi
 
 ${COMPOSE_CMD} ps
 
-echo "[8] 배포 메타데이터 저장"
-cp "${DEPLOY_ROOT}/.env.deploy" /etc/codedeploy-app.env
+echo "[9] 배포 메타데이터 저장 (시크릿 제외)"
+echo "SERVER_APP_DIRECTORY=${SERVER_APP_DIRECTORY}" > /etc/codedeploy-app.env
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "배포 완료"
