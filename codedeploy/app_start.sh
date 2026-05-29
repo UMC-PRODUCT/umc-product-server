@@ -3,6 +3,7 @@ set -euo pipefail
 
 DEPLOY_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${DEPLOY_ROOT}/.env.deploy"
+APP_REPLICAS="${APP_REPLICAS:-1}"
 
 export PATH="$PATH:/usr/local/bin:/usr/bin"
 
