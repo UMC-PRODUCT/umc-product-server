@@ -5,7 +5,7 @@ set -euo pipefail
 
 source /etc/codedeploy-app.env
 
-cd "${SERVER_APP_DIRECTORY}" 2>/dev/null || exit 0
+cd "${SERVER_APP_DIRECTORY:-}" 2>/dev/null || exit 0
 
 if docker compose version >/dev/null 2>&1; then
   docker compose down 2>/dev/null || true
