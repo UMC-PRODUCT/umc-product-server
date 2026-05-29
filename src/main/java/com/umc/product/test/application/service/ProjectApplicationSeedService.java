@@ -146,12 +146,13 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
             .map(ProjectApplication::getApplicantMemberId)
             .collect(Collectors.toSet());
 
-        // 6. 매칭차수 type에 맞는 ACTIVE 챌린저 풀 구성
+        // 6. 매칭차수 type에 맞는 ACTIVE 챌린저 풀 구성 (이미 팀원이거나 이미 지원한 챌린저 제외)
         Set<ChallengerPart> eligibleParts = eligibleParts(round.type());
         List<ChallengerInfo> challengers = getChallengerUseCase.getAllByGisuId(gisuId).stream()
             .filter(c -> c.challengerStatus() == ChallengerStatus.ACTIVE)
             .filter(c -> eligibleParts.contains(c.part()))
             .filter(c -> !alreadyApplied.contains(c.memberId()))
+            .filter(c -> !loadProjectMemberPort.existsByGisuAndMember(gisuId, c.memberId()))
             .toList();
 
         log.info(
