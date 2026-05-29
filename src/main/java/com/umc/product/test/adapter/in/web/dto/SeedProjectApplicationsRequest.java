@@ -1,6 +1,7 @@
 package com.umc.product.test.adapter.in.web.dto;
 
 import com.umc.product.test.application.port.in.command.dto.SeedProjectApplicationsCommand;
+
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;

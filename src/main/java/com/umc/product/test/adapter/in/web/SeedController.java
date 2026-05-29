@@ -1,5 +1,12 @@
 package com.umc.product.test.adapter.in.web;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersResponse;
@@ -22,17 +29,12 @@ import com.umc.product.test.application.port.in.command.SeedNoticeUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectApplicationsUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectScenariosUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Profile;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * test 도메인 시딩 API. ADR-017 참조.

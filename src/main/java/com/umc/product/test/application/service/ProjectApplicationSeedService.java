@@ -1,5 +1,21 @@
 package com.umc.product.test.application.service;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -26,28 +42,16 @@ import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
 import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.test.application.port.in.command.SeedProjectApplicationsUseCase;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectApplicationsCommand;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectApplicationsResult;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectApplicationsResult.FailedApplication;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 지원서 시나리오 시딩 서비스.
@@ -140,6 +144,12 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
                     HashMap::new
                 ));
 
+        // 4-2. 이미 팀원인 memberId Set 배치 조회 (N+1 방지 — 챌린저 풀 필터링에 사용)
+        Set<Long> alreadyMemberIds = loadProjectMemberPort.listByProjectIds(projectIds).values().stream()
+            .flatMap(List::stream)
+            .map(ProjectMember::getMemberId)
+            .collect(Collectors.toSet());
+
         // 5. 이미 해당 차수에 지원한 memberId Set (중복 지원 방지)
         Set<Long> alreadyApplied = loadProjectApplicationPort
             .listByMatchingRoundId(command.matchingRoundId()).stream()
@@ -152,7 +162,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
             .filter(c -> c.challengerStatus() == ChallengerStatus.ACTIVE)
             .filter(c -> eligibleParts.contains(c.part()))
             .filter(c -> !alreadyApplied.contains(c.memberId()))
-            .filter(c -> !loadProjectMemberPort.existsByGisuAndMember(gisuId, c.memberId()))
+            .filter(c -> !alreadyMemberIds.contains(c.memberId()))
             .toList();
 
         log.info(
