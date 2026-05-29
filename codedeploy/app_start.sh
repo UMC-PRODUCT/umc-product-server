@@ -10,6 +10,10 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "배포 시작: ${ECR_IMAGE_NAME}:${IMAGE_TAG}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+if ! command -v docker >/dev/null 2>&1; then
+  echo "docker를 찾을 수 없습니다." >&2
+  exit 1
+fi
 DOCKER_BIN="$(command -v docker)"
 
 if "${DOCKER_BIN}" compose version >/dev/null 2>&1; then
@@ -17,7 +21,8 @@ if "${DOCKER_BIN}" compose version >/dev/null 2>&1; then
 elif command -v docker-compose >/dev/null 2>&1; then
   COMPOSE_CMD="docker-compose"
 else
-  echo "docker compose를 찾을 수 없습니다." && exit 1
+  echo "docker compose를 찾을 수 없습니다." >&2
+  exit 1
 fi
 
 echo "[1] ECR 인증 (IAM Role)"
