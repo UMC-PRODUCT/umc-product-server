@@ -11,9 +11,11 @@ on:
       - 'config/checkstyle/**'
       - '.editorconfig'
       - 'docker/**'
+      - 'codedeploy/**'
       - '.github/workflows/ci.yml'
       #      - '.github/workflows/cd.yml'
       - '.github/workflows/cd-ecr.yml'
+      - '.github/workflows/cd-ec2.yml'
 
   workflow_dispatch:
     inputs:
