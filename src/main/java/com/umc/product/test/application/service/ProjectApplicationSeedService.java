@@ -21,6 +21,7 @@ import com.umc.product.project.application.port.in.query.GetProjectUseCase;
 import com.umc.product.project.application.port.in.query.dto.ApplicationFormInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRoundInfo;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
@@ -34,6 +35,7 @@ import com.umc.product.test.application.port.in.command.dto.SeedProjectApplicati
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,8 +52,8 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 지원서 시나리오 시딩 서비스.
  * <p>
- * 지정 매칭 차수 + 지부를 기준으로, 아직 팀에 합류하지 않은 ACTIVE 챌린저들이 랜덤 프로젝트에
- * Draft 생성 → 더미 답변 → Submit → 합불 결정 → APPROVED 시 ProjectMember 등록까지 실행한다.
+ * 지정 매칭 차수 + 지부를 기준으로, 아직 팀에 합류하지 않은 ACTIVE 챌린저들이 랜덤 프로젝트에 Draft 생성 → 더미 답변 → Submit → 합불 결정 → APPROVED 시 ProjectMember
+ * 등록까지 실행한다.
  * <p>
  * <b>전제 조건</b>: 매칭차수가 현재 OPEN 상태(startsAt <= now <= endsAt)여야 한다.
  * <p>
@@ -82,6 +84,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
     private final LoadProjectStatisticsPort loadProjectStatisticsPort;
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
+    private final LoadProjectMemberPort loadProjectMemberPort;
 
     @Override
     public SeedProjectApplicationsResult seed(SeedProjectApplicationsCommand command) {
@@ -127,6 +130,16 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
                         Collectors.toMap(ProjectPartQuota::getPart, ProjectPartQuota::getQuota))
                 ));
 
+        // 4-1. 프로젝트별·파트별 현재 ACTIVE 멤버 수 캐시 (쿼터 초과 방지용, 시딩 중 인메모리 갱신)
+        Map<Long, Map<ChallengerPart, Long>> currentMemberCounts =
+            loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(projectIds).entrySet().stream()
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    e -> new HashMap<>(e.getValue()),
+                    (a, b) -> a,
+                    HashMap::new
+                ));
+
         // 5. 이미 해당 차수에 지원한 memberId Set (중복 지원 방지)
         Set<Long> alreadyApplied = loadProjectApplicationPort
             .listByMatchingRoundId(command.matchingRoundId()).stream()
@@ -155,15 +168,25 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
         int rejectedCount = 0;
 
         for (ChallengerInfo challenger : challengers) {
+            // 쿼터 여유분이 있는 프로젝트만 후보로 포함 (현재 ACTIVE 수 < 쿼터)
             List<Long> candidates = projectIds.stream()
-                .filter(pid -> quotaByProject.getOrDefault(pid, Map.of()).containsKey(challenger.part()))
+                .filter(pid -> {
+                    Long quota = quotaByProject.getOrDefault(pid, Map.of()).get(challenger.part());
+                    if (quota == null) {
+                        return false;
+                    }
+                    long current = currentMemberCounts
+                        .getOrDefault(pid, Map.of())
+                        .getOrDefault(challenger.part(), 0L);
+                    return current < quota;
+                })
                 .filter(pid -> !ownerByProjectId.get(pid).equals(challenger.memberId()))
                 .collect(Collectors.toList());
 
             if (candidates.isEmpty()) {
                 failures.add(new FailedApplication(
                     challenger.memberId(), null, "NO_PROJECT",
-                    "파트=%s 를 모집하는 프로젝트가 없습니다.".formatted(challenger.part())
+                    "파트=%s 를 모집하는 프로젝트가 없거나 모든 프로젝트의 쿼터가 소진되었습니다.".formatted(challenger.part())
                 ));
                 continue;
             }
@@ -181,6 +204,10 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
                 case "APPROVED" -> {
                     submittedCount++;
                     approvedCount++;
+                    // ADD_MEMBER 성공 → 인메모리 카운트 갱신 (다음 챌린저의 쿼터 여유분 계산에 반영)
+                    currentMemberCounts
+                        .computeIfAbsent(projectId, k -> new HashMap<>())
+                        .merge(challenger.part(), 1L, Long::sum);
                 }
                 case "REJECTED" -> {
                     submittedCount++;
@@ -203,7 +230,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
 
     private ApplicationOutcome runApplicationScenario(
         ChallengerInfo challenger, Long projectId, Long poMemberId,
-        Long matchingRoundId, double approveRatio
+        Long matchingRoundId, Double approveRatio
     ) {
         // DRAFT 생성
         Long applicationId;
@@ -290,8 +317,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
     }
 
     /**
-     * isRequired=true 인 질문만 추려 더미 텍스트 답변을 구성한다.
-     * 챌린저 시점으로 form 조회 — COMMON 섹션 + 본인 파트 PART 섹션만 노출되어 마스킹된 섹션은 자동 제외된다.
+     * isRequired=true 인 질문만 추려 더미 텍스트 답변을 구성한다. 챌린저 시점으로 form 조회 — COMMON 섹션 + 본인 파트 PART 섹션만 노출되어 마스킹된 섹션은 자동 제외된다.
      */
     private List<UpdateProjectApplicationDraftCommand.AnswerEntry> buildDummyAnswers(
         Long projectId, Long challengerMemberId

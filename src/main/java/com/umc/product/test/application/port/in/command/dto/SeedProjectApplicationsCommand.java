@@ -8,13 +8,13 @@ package com.umc.product.test.application.port.in.command.dto;
  *
  * @param matchingRoundId 지원할 매칭 차수 ID. 반드시 현재 OPEN 상태여야 한다.
  * @param chapterId       대상 지부 ID. 해당 지부의 IN_PROGRESS 프로젝트가 지원 대상이 된다.
- * @param approveRatio    SUBMITTED 지원서 중 APPROVED 처리할 비율 (0.0 ~ 1.0).
+ * @param approveRatio    SUBMITTED 지원서 중 APPROVED 처리할 비율 (0.0 ~ 1.0, 기본값 0.5).
  *                        나머지는 REJECTED 처리된다.
  */
 public record SeedProjectApplicationsCommand(
     Long matchingRoundId,
     Long chapterId,
-    double approveRatio
+    Double approveRatio
 ) {
 
 }

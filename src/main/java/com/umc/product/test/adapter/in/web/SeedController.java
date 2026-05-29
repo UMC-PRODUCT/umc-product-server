@@ -166,6 +166,10 @@ public class SeedController {
             - 지부 내 IN_PROGRESS 프로젝트가 존재해야 합니다. (SEED-003-S 선행 필요)
             - 챌린저가 시딩되어 있어야 합니다. (SEED-002 선행 필요)
 
+            파라미터:
+            - approveRatio: 제출된 지원서 중 APPROVED 처리할 비율 (0.0 ~ 1.0, 생략 시 기본값 0.5).
+              예) 0.7 이면 지원자의 약 70%가 APPROVED, 나머지 30%는 REJECTED 처리됩니다.
+
             APPROVED 처리된 챌린저는 ProjectMember로도 등록되어 매칭현황 통계에 반영됩니다.
             """
     )
