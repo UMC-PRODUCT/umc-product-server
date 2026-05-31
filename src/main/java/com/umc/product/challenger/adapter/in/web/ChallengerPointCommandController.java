@@ -35,7 +35,7 @@ public class ChallengerPointCommandController {
         permission = PermissionType.WRITE,
         message = "중앙운영사무국 소속이거나 부여하고자 하는 챌린저의 학교 회장단만 상벌점을 부여할 수 있습니다."
     )
-    @Operation(summary = "챌린저 상벌점 부여", description = "회장단 이상 가능합니다.")
+    @Operation(summary = "[POINT-001] 챌린저 상벌점 부여", description = "회장단 이상 가능합니다.")
     @PostMapping("{challengerId}/points")
     ChallengerInfoResponse grantChallengerPoints(
         @PathVariable Long challengerId,
@@ -52,7 +52,7 @@ public class ChallengerPointCommandController {
         permission = PermissionType.EDIT,
         message = "중앙운영사무국 소속이거나 부여하고자 하는 챌린저의 학교 회장단만 상벌점 사유를 수정할 수 있습니다."
     )
-    @Operation(summary = "챌린저 상벌점 사유 수정", description = "회장단 이상 가능합니다.")
+    @Operation(summary = "[POINT-002] 챌린저 상벌점 사유 수정", description = "회장단 이상 가능합니다.")
     @PatchMapping("points/{challengerPointId}")
     void editChallengerPoints(
         @PathVariable Long challengerPointId,
@@ -67,7 +67,7 @@ public class ChallengerPointCommandController {
         permission = PermissionType.DELETE,
         message = "중앙운영사무국 총괄단만 상벌점 부여 기록을 삭제할 수 있습니다."
     )
-    @Operation(summary = "챌린저 상벌점 삭제", description = "총괄단만 가능합니다.")
+    @Operation(summary = "[POINT-003] 챌린저 상벌점 삭제", description = "총괄단만 가능합니다.")
     @DeleteMapping("points/{challengerPointId}")
     void deleteChallengerPoint(@PathVariable Long challengerPointId) {
         manageChallengerUseCase.deleteChallengerPoint(

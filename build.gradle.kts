@@ -1,14 +1,20 @@
+import org.gradle.api.plugins.quality.Checkstyle
+
 plugins {
     java
     id("org.springframework.boot") version "3.5.9"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.asciidoctor.jvm.convert") version "4.0.5"
+    id("com.diffplug.spotless") version "8.5.1"
+    checkstyle
     jacoco
 }
 
+apply(from = "gradle/documentation-catalog.gradle.kts")
+
 group = "com.umc"
-version = "0.0.1"
-description = "umc-product"
+version = "2.0.0"
+description = "UMC PRODUCT API by Server Team"
 
 java {
     toolchain {
@@ -29,10 +35,52 @@ repositories {
 }
 
 // 의존성 버전
-val springDocVersion = "2.8.14"
-val queryDslVersion = "5.0.0"
+val springDocVersion = "2.8.17"
+val queryDslVersion = "5.1.0"
 val jwtVersion = "0.12.5"
 val awsVersion = "2.40.12"
+val springAiVersion = "1.1.5"
+val otelVersion = "1.61.0"
+val otelInstrumentationVersion = "2.27.0-alpha"
+
+/*
+ * OpenTelemetry 의존성 정리
+ *
+ * 장애 원인:
+ * - opentelemetry-logback-appender-1.0:2.27.0-alpha 는
+ *   LogRecordBuilder#setException(Throwable) API 를 호출한다.
+ * - 이 API 는 opentelemetry-api:1.61.0 에 존재하지만, Spring Boot 기본 관리 버전인
+ *   1.49.0 에는 없다.
+ * - 런타임 classpath 가 1.49.0 으로 잡히면, 예외 로그를 내보내는 순간
+ *   NoSuchMethodError 가 발생한다. Tomcat 이 요청 처리 예외를 error 로그로 남기려는
+ *   시점에 다시 로깅 예외가 터져 response/exception handling 흐름까지 깨진다.
+ *
+ * 주요 의존성 역할:
+ * - spring-boot-starter-actuator: actuator, metrics 자동 설정의 Spring Boot 진입점.
+ * - micrometer-observation: Spring 관측 추상화. HTTP/DB/custom observation 을
+ *   metrics/tracing 과 연결하는 기반.
+ * - micrometer-tracing-bridge-otel: Micrometer Tracing 을 OpenTelemetry SDK 로 연결.
+ * - opentelemetry-exporter-otlp: trace/log/metric 을 OTLP 로 Collector 에 전송.
+ * - opentelemetry-logback-appender-1.0: Logback 이벤트를 OpenTelemetry Logs 로 변환.
+ * - micrometer-registry-prometheus: /actuator/prometheus scrape 용 metrics registry.
+ * - micrometer-registry-otlp: Micrometer metrics 를 OTLP endpoint 로 push.
+ * - logstash-logback-encoder: stdout JSON 로그 포맷. OpenTelemetryAppender 는 여기서
+ *   제공하는 structured arguments 도 capture 한다.
+ * - context-propagation: 비동기 작업에서 trace/span context 손실을 줄인다.
+ * - p6spy-spring-boot-starter, firebase-admin, google-cloud-storage/firestore 는
+ *   transitive dependency 로 Spring Boot BOM 또는 OTel 관련 모듈을 추가 요청할 수 있어
+ *   dependencyInsight 에 함께 나타난다.
+ * - opentelemetry-bom: OTel API/SDK/exporter 모듈 버전을 같은 축으로 정렬한다.
+ *
+ * 런타임 흐름:
+ * Tomcat 요청 처리 중 예외 발생 -> Logback error 로그 기록 -> OTEL appender 실행
+ * -> Throwable 을 OTel LogRecord 로 매핑 -> setException(Throwable) 호출
+ * -> 런타임 OTel API 버전이 낮으면 NoSuchMethodError 발생.
+ *
+ * 따라서 Spring Boot 의 opentelemetry.version 관리 속성과 명시 OTel BOM 을
+ * appender 가 컴파일된 API 버전(1.61.0)으로 정렬한다.
+ */
+extra["opentelemetry.version"] = otelVersion
 
 // REST DOCS
 val snippetsDir = file("build/generated-snippets")
@@ -59,7 +107,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")  // OAuth2 Client
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
@@ -97,13 +144,16 @@ dependencies {
 
     // --- OpenAPI / Swagger ---
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${springDocVersion}")
+    implementation("org.webjars.npm:markdown-it:14.1.0")
 
     // --- Utils ---
     // 서버 시작 시 자동으로 Docker Compose 실행
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+
     // 다들 잘 아는 그 lombok
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
+
     // SQL 출력용 P6Spy
     implementation("com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.10.0")
 
@@ -111,34 +161,43 @@ dependencies {
     implementation(platform("software.amazon.awssdk:bom:${awsVersion}"))
     implementation("software.amazon.awssdk:s3")
     implementation("software.amazon.awssdk:cloudfront")  // CloudFront Signed URL
+    implementation("software.amazon.awssdk:sesv2")       // AWS SES v2 (인증 이메일 발송)
     implementation("com.google.cloud:google-cloud-storage")
 
     // --- Email ---
-    implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
     // BOM으로 버전 강제 정렬
     implementation(platform("com.google.protobuf:protobuf-bom:4.29.3"))
-    implementation(platform("io.opentelemetry:opentelemetry-bom:1.44.1"))
+    implementation(platform("io.opentelemetry:opentelemetry-bom:${otelVersion}"))
 
     // --- Metrics ---
     implementation("io.micrometer:micrometer-registry-prometheus")
-    implementation("com.github.loki4j:loki-logback-appender:1.5.2")
     implementation("io.micrometer:micrometer-registry-otlp")
 
-    // --- Sentry ---
-    implementation(platform("io.sentry:sentry-bom:8.31.0"))
-    implementation("io.sentry:sentry-spring-boot-starter-jakarta")
-    implementation("io.sentry:sentry-logback")
+    // --- Structured Logging (ADR-016) ---
+    // dev/staging/prod 환경의 JSON 단일 라인 로그 encoder. local 은 텍스트 유지.
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
     // --- Tracing ---
     implementation("io.micrometer:micrometer-observation") // 관측 기능: metrics + tracing
     implementation("io.micrometer:micrometer-tracing-bridge-otel") // OpenTelemetry 연동
     implementation("io.opentelemetry:opentelemetry-exporter-otlp") // OTLP Exporter
+    implementation("io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:${otelInstrumentationVersion}")
     implementation("io.micrometer:context-propagation") // 비동기 작업에서 context를 잃어버리지 않도록 함
 
     // Firebase Admin SDK
     implementation("com.google.firebase:firebase-admin:9.7.1")
+
+    // --- Spring AI (LLM provider 통합) ---
+    implementation(platform("org.springframework.ai:spring-ai-bom:${springAiVersion}"))
+    implementation("org.springframework.ai:spring-ai-starter-model-openai")
+    implementation("org.springframework.ai:spring-ai-starter-model-vertex-ai-gemini")
+    implementation("org.springframework.ai:spring-ai-starter-model-google-genai")
+
+    // --- Cache ---
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("com.github.ben-manes.caffeine:caffeine")
 
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -147,10 +206,106 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
+    testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.19") // Fixture 생성에 도움을 주는 친구
+    testRuntimeOnly("jakarta.mail:jakarta.mail-api") // JavaMailSender MockitoBean 초기화에 필요
+
+    testCompileOnly("org.projectlombok:lombok")
+    testAnnotationProcessor("org.projectlombok:lombok")
 
     // --- Spring REST Docs ---
     "asciidoctorExt"("org.springframework.restdocs:spring-restdocs-asciidoctor")
     testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
+}
+
+springBoot {
+    buildInfo()
+}
+
+spotless {
+    ratchetFrom("origin/develop")
+
+    java {
+        target("src/**/*.java")
+        importOrder("\\#", "java", "javax", "org", "net", "com", "")
+        removeUnusedImports()
+        forbidWildcardImports()
+        trimTrailingWhitespace()
+        leadingTabsToSpaces(4)
+        endWithNewline()
+        formatAnnotations()
+    }
+
+    format("misc") {
+        target(
+            "*.gradle.kts",
+            ".editorconfig",
+            ".github/**/*.yml",
+            ".github/**/*.yaml",
+            "config/**/*.xml"
+        )
+        trimTrailingWhitespace()
+        leadingTabsToSpaces(4)
+        endWithNewline()
+    }
+}
+
+checkstyle {
+    toolVersion = "13.4.2"
+    configDirectory.set(layout.projectDirectory.dir("config/checkstyle"))
+    configProperties["suppressionFile"] =
+        layout.projectDirectory.file("config/checkstyle/naver-checkstyle-suppressions.xml").asFile.absolutePath
+    isIgnoreFailures = false
+    maxErrors = 0
+    maxWarnings = Int.MAX_VALUE
+}
+
+val lintBaseRef = providers.gradleProperty("lintBase").orElse("origin/develop")
+
+fun changedJavaFiles(vararg sourceRoots: String) = lintBaseRef.flatMap { baseRef ->
+    val diffAgainstBaseProvider = providers.exec {
+        commandLine("git", "diff", "--name-only", "--diff-filter=ACMR", "$baseRef...HEAD", "--", *sourceRoots)
+        isIgnoreExitValue = true
+    }.standardOutput.asText
+
+    val localDiffProvider = providers.exec {
+        commandLine("git", "diff", "--name-only", "--diff-filter=ACMR", "HEAD", "--", *sourceRoots)
+        isIgnoreExitValue = true
+    }.standardOutput.asText
+
+    diffAgainstBaseProvider.zip(localDiffProvider) { baseOutput, localOutput ->
+        (baseOutput.lines() + localOutput.lines())
+            .asSequence()
+            .map(String::trim)
+            .filter { it.endsWith(".java") && it.isNotBlank() }
+            .distinct()
+            .map(::file)
+            .filter(File::exists)
+            .toList()
+    }
+}
+
+tasks.withType<Checkstyle>().configureEach {
+    classpath = files()
+    exclude("**/Q*.java")
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+tasks.named<Checkstyle>("checkstyleMain") {
+    setSource(files(changedJavaFiles("src/main/java")))
+}
+
+tasks.named<Checkstyle>("checkstyleTest") {
+    setSource(files(changedJavaFiles("src/test/java")))
+}
+
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    layered {
+        enabled.set(true)
+    }
 }
 
 tasks.withType<JavaCompile>().configureEach {

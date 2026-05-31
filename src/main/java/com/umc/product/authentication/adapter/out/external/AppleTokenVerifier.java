@@ -1,15 +1,20 @@
 package com.umc.product.authentication.adapter.out.external;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.authentication.domain.OAuthAttributes;
 import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.common.domain.enums.ClientType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.Jwts.SIG;
 import java.io.StringReader;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -30,12 +35,16 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestClient;
 
 /**
  * Apple Sign-In 토큰 검증 Adapter
  * <p>
  * Apple ID Token(JWT) 서명 검증과 Authorization Code 교환을 담당합니다.
+ * <p>
+ * Apple Sign-In은 플랫폼별로 다른 client_id를 사용하므로(iOS Bundle ID vs Web Services ID),
+ * authorization code 교환 / token revoke 시 클라이언트 플랫폼에 맞는 client_id를 사용해야 합니다.
  */
 @Slf4j
 @Component
@@ -49,19 +58,21 @@ public class AppleTokenVerifier {
 
     private final AppleOAuthProperties appleProperties;
     private final RestClient restClient;
+    private final ObjectMapper objectMapper;
     private PrivateKey cachedPrivateKey;
 
     /**
-     * Apple ID Token(JWT)을 검증하고 OAuth2Attributes로 변환합니다.
+     * Apple ID Token(JWT)을 검증하고 OAuthAttributes로 변환합니다.
      * <p>
      * Apple JWKS 공개키로 서명을 검증하고, issuer/audience를 확인합니다.
      *
-     * @param idToken Apple에서 발급받은 identity token (JWT)
-     * @return OAuth2Attributes
+     * @param idToken  Apple에서 발급받은 identity token (JWT)
+     * @param clientId audience 검증에 사용할 client_id (플랫폼별로 다름)
+     * @return OAuthAttributes
      * @throws AuthenticationDomainException 토큰 검증 실패 시
      */
-    public OAuth2Attributes verifyIdToken(String idToken) {
-        log.debug("Apple ID Token 검증 시작");
+    public OAuthAttributes verifyIdToken(String idToken, String clientId) {
+        log.debug("Apple ID Token 검증 시작: clientId={}", clientId);
 
         try {
             // 1. ID Token의 header에서 kid 추출
@@ -74,7 +85,7 @@ public class AppleTokenVerifier {
             Claims claims = Jwts.parser()
                 .verifyWith(publicKey)
                 .requireIssuer(APPLE_ISSUER)
-                .requireAudience(appleProperties.clientId())
+                .requireAudience(clientId)
                 .build()
                 .parseSignedClaims(idToken)
                 .getPayload();
@@ -88,7 +99,7 @@ public class AppleTokenVerifier {
             attributes.put("sub", sub);
             attributes.put("email", email);
 
-            return OAuth2Attributes.of("apple", attributes);
+            return OAuthAttributes.of("apple", attributes);
 
         } catch (AuthenticationDomainException e) {
             throw e;
@@ -104,19 +115,22 @@ public class AppleTokenVerifier {
      * Authorization Code로 Apple token endpoint에 요청하여 id_token을 받은 뒤, 해당 토큰을 검증합니다.
      *
      * @param authorizationCode Apple에서 발급받은 authorization code
-     * @return OAuth2Attributes
+     * @param clientType        클라이언트 플랫폼 (Apple client_id 매칭용)
+     * @return OAuthAttributes, refresh token, 그리고 사용된 client_id (DB에 저장하기 위함)
      * @throws AuthenticationDomainException 코드 교환 또는 토큰 검증 실패 시
      */
-    public AppleAuthorizationCodeResult verifyAuthorizationCode(String authorizationCode) {
-        log.debug("Apple Authorization Code 교환 시작");
+    public AppleAuthorizationCodeResult verifyAuthorizationCode(String authorizationCode, ClientType clientType) {
+        log.debug("Apple Authorization Code 교환 시작: clientType={}", clientType);
 
         try {
+            String clientId = appleProperties.resolveClientId(clientType);
+
             // 1. client_secret 생성
-            String clientSecret = generateClientSecret();
+            String clientSecret = generateClientSecret(clientId);
 
             // 2. Apple token endpoint에 authorization code 교환 요청
             MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-            formData.add("client_id", appleProperties.clientId());
+            formData.add("client_id", clientId);
             formData.add("client_secret", clientSecret);
             formData.add("code", authorizationCode);
             formData.add("grant_type", "authorization_code");
@@ -127,7 +141,13 @@ public class AppleTokenVerifier {
                 .body(formData)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.error("Apple token endpoint 호출 실패: status={}", res.getStatusCode());
+                    // ADR-016 §민감 필드 정책: 성공 응답 body 에는 access_token / id_token / refresh_token
+                    // 이 포함되어 있어 통째로 로깅하면 토큰이 stdout / Loki 에 남는다. 에러 응답이라도
+                    // 잘못된 분기로 성공 body 가 흘러올 수 있으므로 status / errorCode 만 남긴다.
+                    String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
+                    String errorCode = extractAppleErrorCode(body);
+                    log.error("Apple token endpoint 호출 실패: status={}, errorCode={}, bodyLength={}",
+                        res.getStatusCode(), errorCode, body.length());
                     throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
                 })
                 .body(AppleTokenResponse.class);
@@ -139,8 +159,8 @@ public class AppleTokenVerifier {
             log.info("Apple Authorization Code 교환 성공, ID Token 검증 진행");
 
             // 3. 받은 id_token을 검증
-            OAuth2Attributes attrs = verifyIdToken(response.idToken());
-            return new AppleAuthorizationCodeResult(attrs, response.refreshToken());
+            OAuthAttributes attrs = verifyIdToken(response.idToken(), clientId);
+            return new AppleAuthorizationCodeResult(attrs, response.refreshToken(), clientId);
 
         } catch (AuthenticationDomainException e) {
             throw e;
@@ -154,15 +174,16 @@ public class AppleTokenVerifier {
      * Apple refresh token을 revoke합니다.
      *
      * @param refreshToken Apple에서 발급받은 refresh token
+     * @param clientId     해당 refresh token을 발급받을 때 사용한 client_id (DB에 저장된 값)
      */
-    public void revokeToken(String refreshToken) {
-        log.info("Apple token revoke 시작");
+    public void revokeToken(String refreshToken, String clientId) {
+        log.info("Apple token revoke 시작: clientId={}", clientId);
 
         try {
-            String clientSecret = generateClientSecret();
+            String clientSecret = generateClientSecret(clientId);
 
             MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-            formData.add("client_id", appleProperties.clientId());
+            formData.add("client_id", clientId);
             formData.add("client_secret", clientSecret);
             formData.add("token", refreshToken);
             formData.add("token_type_hint", "refresh_token");
@@ -173,7 +194,11 @@ public class AppleTokenVerifier {
                 .body(formData)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.error("Apple token revoke 실패: status={}", res.getStatusCode());
+                    // ADR-016 §민감 필드 정책: revoke 응답 본문 통째로 로깅하지 않는다.
+                    String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
+                    String errorCode = extractAppleErrorCode(body);
+                    log.error("Apple token revoke 실패: status={}, errorCode={}, bodyLength={}",
+                        res.getStatusCode(), errorCode, body.length());
                     throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
                 })
                 .toBodilessEntity();
@@ -191,13 +216,15 @@ public class AppleTokenVerifier {
     /**
      * Apple client_secret JWT를 생성합니다.
      * <p>
-     * Apple Developer 문서에 따라 ES256으로 서명된 JWT를 생성합니다.
+     * Apple Developer 문서에 따라 ES256으로 서명된 JWT를 생성하며,
+     * subject claim에는 호출 시 전달된 client_id가 들어갑니다.
      *
+     * @param clientId client_secret JWT의 subject claim으로 사용할 client_id
      * @see <a
      * href="https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret">Creating
      * a client secret</a>
      */
-    public String generateClientSecret() {
+    public String generateClientSecret(String clientId) {
         try {
             Instant now = Instant.now();
             Instant expiration = now.plusSeconds(3600);
@@ -209,13 +236,33 @@ public class AppleTokenVerifier {
                 .issuer(appleProperties.teamId())
                 .issuedAt(Date.from(now)).expiration(Date.from(expiration))
                 .audience().add(APPLE_ISSUER).and()
-                .subject(appleProperties.clientId())
+                .subject(clientId)
                 .signWith(getPrivateKey(), SIG.ES256)
                 .compact();
 
         } catch (Exception e) {
             log.error("Failed to generate Apple client secret", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+        }
+    }
+
+    /**
+     * Apple token endpoint 의 에러 응답 JSON 에서 {@code error} 코드만 안전하게 꺼낸다.
+     *
+     * <p>응답 본문 전체를 로그에 남기면 잘못 분기되어 성공 응답이 흘러왔을 때 access_token /
+     * id_token / refresh_token 이 stdout 으로 새어나갈 수 있다. 따라서 Jackson 으로 트리를
+     * 파싱한 뒤 {@code error} 필드 값만 추출하고, 파싱 실패 또는 필드 부재 시 {@code "unknown"}
+     * 으로 대체한다 (수동 indexOf 파싱은 공백·필드 순서·유사 키 변화에 취약하므로 사용하지 않는다).
+     */
+    private String extractAppleErrorCode(String body) {
+        if (body == null || body.isEmpty()) {
+            return "unknown";
+        }
+        try {
+            JsonNode error = objectMapper.readTree(body).path("error");
+            return error.isTextual() ? error.asText() : "unknown";
+        } catch (JsonProcessingException e) {
+            return "unknown";
         }
     }
 

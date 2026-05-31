@@ -1,13 +1,16 @@
 package com.umc.product.term.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.term.application.port.out.LoadTermPort;
 import com.umc.product.term.application.port.out.SaveTermPort;
 import com.umc.product.term.domain.Term;
 import com.umc.product.term.domain.enums.TermType;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -34,6 +37,11 @@ public class TermPersistenceAdapter implements LoadTermPort, SaveTermPort {
     @Override
     public List<Term> findAllActiveByTypes(List<TermType> types) {
         return repository.findAllByTypeInAndActiveIsTrue(types);
+    }
+
+    @Override
+    public List<Term> listByIds(List<Long> ids) {
+        return repository.findAllById(ids);
     }
 
     public List<Term> findAllActiveRequired() {

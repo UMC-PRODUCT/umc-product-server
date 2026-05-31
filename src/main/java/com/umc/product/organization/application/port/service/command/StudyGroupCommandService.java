@@ -1,18 +1,20 @@
 package com.umc.product.organization.application.port.service.command;
 
-import com.umc.product.challenger.application.port.out.LoadChallengerPort;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.command.ManageStudyGroupUseCase;
+import com.umc.product.organization.application.port.in.command.dto.AddStudyMemberCommand;
+import com.umc.product.organization.application.port.in.command.dto.AddStudyMentorCommand;
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupCommand;
+import com.umc.product.organization.application.port.in.command.dto.DeleteStudyMemberCommand;
+import com.umc.product.organization.application.port.in.command.dto.DeleteStudyMentorCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupCommand;
-import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupMembersCommand;
-import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
+import com.umc.product.organization.application.port.out.command.SaveStudyGroupPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
-import java.util.HashSet;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,71 +27,88 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     private final LoadStudyGroupPort loadStudyGroupPort;
     private final LoadGisuPort loadGisuPort;
-    private final ManageStudyGroupPort manageStudyGroupPort;
-    private final LoadChallengerPort loadChallengerPort;
+    private final SaveStudyGroupPort saveStudyGroupPort;
 
     @Override
     public void create(CreateStudyGroupCommand command) {
-        validateChallengerIdsExist(command.leaderId(), command.memberIds());
+        // 생성하고자 하는 기수에 스터디를 생성
+        Gisu gisu = loadGisuPort.getById(command.gisuId());
+        validateNoPartStudyConflict(gisu.getId(), command.part(), command.memberIds(), null);
 
-        Gisu gisu = loadGisuPort.findActiveGisu();
-
-        StudyGroup studyGroup = StudyGroup.create(command.name(), gisu, command.part());
-
-        studyGroup.addLeader(command.leaderId());
-
-        if (command.memberIds() != null) {
-            command.memberIds().forEach(studyGroup::addMember);
-        }
-
-        manageStudyGroupPort.save(studyGroup);
+        saveStudyGroupPort.save(
+            StudyGroup.create(
+                command.name(), gisu.getId(), command.part(),
+                command.memberIds(), command.mentorIds()
+            )
+        );
     }
 
     @Override
     public void update(UpdateStudyGroupCommand command) {
-        StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
+        StudyGroup studyGroup = loadStudyGroupPort.getEntityById(command.groupId());
 
         studyGroup.updateName(command.name());
         studyGroup.updatePart(command.part());
 
-        manageStudyGroupPort.save(studyGroup);
+        saveStudyGroupPort.save(studyGroup);
     }
 
     @Override
-    public void updateMembers(UpdateStudyGroupMembersCommand command) {
-        validateChallengerIdsExist(command.challengerIds());
+    public void addMember(AddStudyMemberCommand command) {
+        StudyGroup studyGroup = loadStudyGroupPort.getEntityById(command.groupId());
 
-        StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
-        studyGroup.replaceMembersExcludingLeader(command.challengerIds());
-
-        manageStudyGroupPort.save(studyGroup);
+        validateNoPartStudyConflict(
+            studyGroup.getGisuId(), studyGroup.getPart(), Set.of(command.memberId()), studyGroup.getId()
+        );
+        studyGroup.addMember(command.memberId());
+        saveStudyGroupPort.save(studyGroup);
     }
 
     @Override
-    public void delete(Long groupId) {
-        StudyGroup studyGroup = loadStudyGroupPort.findById(groupId);
+    public void addMentor(AddStudyMentorCommand command) {
+        StudyGroup studyGroup = loadStudyGroupPort.getEntityById(command.groupId());
 
-        manageStudyGroupPort.delete(studyGroup);
+        studyGroup.assignMentor(command.mentorId());
+        saveStudyGroupPort.save(studyGroup);
     }
 
-    private void validateChallengerIdsExist(Long leaderId, Set<Long> memberIds) {
-        Set<Long> challengerIds = new HashSet<>();
-        challengerIds.add(leaderId);
-        if (memberIds != null) {
-            challengerIds.addAll(memberIds);
-        }
-        validateChallengerIdsExist(challengerIds);
+    @Override
+    public void deleteMember(DeleteStudyMemberCommand command) {
+        StudyGroup studyGroup = loadStudyGroupPort.getEntityById(command.groupId());
+
+        studyGroup.removeMember(command.memberId());
+        saveStudyGroupPort.save(studyGroup);
     }
 
-    private void validateChallengerIdsExist(Set<Long> challengerIds) {
-        if (challengerIds == null || challengerIds.isEmpty()) {
+    @Override
+    public void deleteMentor(DeleteStudyMentorCommand command) {
+        StudyGroup studyGroup = loadStudyGroupPort.getEntityById(command.groupId());
+
+        studyGroup.removeMentor(command.mentorId());
+        saveStudyGroupPort.save(studyGroup);
+    }
+
+    @Override
+    public void delete(Long studyGroupId) {
+        StudyGroup studyGroup = loadStudyGroupPort.getEntityById(studyGroupId);
+
+        saveStudyGroupPort.delete(studyGroup);
+    }
+
+    private void validateNoPartStudyConflict(
+        Long gisuId, ChallengerPart part, Set<Long> memberIds, Long excludedStudyGroupId
+    ) {
+        if (memberIds == null || memberIds.isEmpty()) {
             return;
         }
 
-        Long count = loadChallengerPort.countByIdIn(challengerIds);
-
-        if (count != challengerIds.size()) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_CHALLENGER_INVALID);
+        // memberId의 목록에 들어있는 회원이 해당 기수에, 동일한 파트의 스터디에 참여하고 있는지를 검사
+        Set<Long> conflictMemberIds =
+            loadStudyGroupPort.findConflictedMemberIds(gisuId, part, memberIds, excludedStudyGroupId);
+        if (!conflictMemberIds.isEmpty()) {
+            throw new OrganizationDomainException(
+                OrganizationErrorCode.STUDY_GROUP_MEMBER_ALREADY_IN_PART_STUDY,
+                "제공된 회원 중에서 동일한 기수에 동일한 파트의 스터디에 참여하고 있는 회원이 있습니다. ID LIST: " + conflictMemberIds);
         }
     }
 }

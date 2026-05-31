@@ -1,51 +1,40 @@
 package com.umc.product.global.security;
 
+import com.umc.product.common.domain.enums.ClientType;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 
 @Getter
-@Slf4j
-public class MemberPrincipal implements OAuth2User {
+public class MemberPrincipal {
 
     private final Long memberId;
 
+    // AT claim 으로 전달된 클라이언트 플랫폼. 도입 이전 토큰 / claim 누락 토큰은 null.
+    // 통계/로그 컨텍스트용 메타데이터이며, 인가 결정에는 영향을 주지 않는다.
+    private final ClientType clientType;
+
     @Builder
-    public MemberPrincipal(Long memberId) {
+    public MemberPrincipal(Long memberId, ClientType clientType) {
         this.memberId = memberId;
+        this.clientType = clientType;
     }
 
-    // OAuth2User 메서드 구현
-
-    @Override
-    public Map<String, Object> getAttributes() {
-//        log.warn("OAuth2User의 getAttributes()가 호출되었습니다.");
-        return Collections.emptyMap();
+    public MemberPrincipal(Long memberId) {
+        this(memberId, null);
     }
 
-    @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-//        log.warn("OAuth2User의 getAuthorities()가 호출되었습니다.");
         return Collections.emptyList();
     }
-
-    @Override
-    public String getName() {
-//        log.warn("OAuth2User의 getName()가 호출되었습니다.");
-        return String.valueOf(memberId);
-    }
-
-    // toString 메서드 오버라이드
 
     @Override
     public String toString() {
         return "MemberPrincipal{" +
                 "memberId=" + memberId +
+                ", clientType=" + clientType +
                 '}';
     }
 }

@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.organization.application.port.in.command.dto.CreateGisuCommand;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import com.umc.product.support.UseCaseTestSupport;
 import com.umc.product.support.fixture.GisuFixture;

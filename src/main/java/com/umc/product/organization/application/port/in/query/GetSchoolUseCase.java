@@ -1,9 +1,9 @@
 package com.umc.product.organization.application.port.in.query;
 
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolLinkInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
-import com.umc.product.organization.application.port.in.query.dto.UnassignedSchoolInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolLinkInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.UnassignedSchoolInfo;
 import java.util.List;
 
 

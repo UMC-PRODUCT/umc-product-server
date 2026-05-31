@@ -2,6 +2,7 @@ package com.umc.product.curriculum.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.curriculum.domain.enums.MissionType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,9 +17,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "workbook_mission")
+@Table(name = "legacy_workbook_mission")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Deprecated
 public class WorkbookMission extends BaseEntity {
 
     @Id

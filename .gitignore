@@ -1,4 +1,5 @@
 .claude
+.codex
 
 src/main/generated/
 
@@ -10,8 +11,11 @@ logs/
 /.run/
 
 application-*.yml
+!application-test.yml
+
 .env
 .env.*
+!.env.example
 
 .gradle
 build/
@@ -253,3 +257,8 @@ http-client.private.env.json
 
 # K6
 k6/*.js
+
+# Harness engineering (local only)
+docs/harness/
+phases/
+scripts/

@@ -1,8 +1,11 @@
 package com.umc.product.term.domain;
 
+import java.time.Instant;
+
 import com.umc.product.common.BaseEntity;
 import com.umc.product.term.domain.enums.TermConsentStatus;
 import com.umc.product.term.domain.enums.TermType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,7 +14,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -30,6 +32,9 @@ public class TermConsentLog extends BaseEntity {
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
+    @Column(name = "term_id", nullable = false)
+    private Long termId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "term_type", nullable = false, length = 20)
     private TermType termType;
@@ -42,8 +47,9 @@ public class TermConsentLog extends BaseEntity {
     private Instant occurredAt;
 
     @Builder
-    private TermConsentLog(Long memberId, TermType termType, TermConsentStatus status) {
+    private TermConsentLog(Long memberId, Long termId, TermType termType, TermConsentStatus status) {
         this.memberId = memberId;
+        this.termId = termId;
         this.termType = termType;
         this.status = status;
         this.occurredAt = Instant.now();

@@ -3,7 +3,6 @@
 # 환경변수 변경 시에는 반드시 GitHub Actions에 업데이트 할 것
 # ==================================================================
 
-
 server:
   port: ${SERVER_PORT:8080}
   shutdown: graceful
@@ -30,30 +29,13 @@ spring:
       enabled: false
       lifecycle-management: start_and_stop
 
-  # 메일 서버 설정
-  mail:
-    host: ${MAIL_HOST}
-    port: ${MAIL_PORT}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true # 연결 후 TLS 암호화 시작 (보안 연결)
-            required: true # TLS 암호화 필수 (실패시 연결 차단)
-          connectiontimeout: 5000 # SMTP 서버 연결 대기 시간 5초
-          timeout: 5000 # 읽기(Read) 타임아웃 5초
-          writetimeout: 5000 # 메일 쓰기 전송 타임아웃 5초
-
   # Thymeleaf 템플릿 엔진 설정
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html
     mode: HTML
     encoding: UTF-8
-    cache: false  # 개발 환경에서는 캐시 비활성화, 운영에서는 true로 변경 필요
+    cache: false # 개발 환경에서는 캐시 비활성화, 운영에서는 true로 변경 필요
 
   datasource:
     url: ${DATABASE_URL}
@@ -65,14 +47,15 @@ spring:
       auto-commit: true
 
       maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:10}
-      minimum-idle: ${HIKARI_MIN_IDLE:10}
+      minimum-idle: ${HIKARI_MIN_IDLE:2}
+      initialization-fail-timeout: ${HIKARI_INITIALIZATION_FAIL_TIMEOUT:-1}
 
       # 3. 수명 및 타임아웃
-      max-lifetime: 1800000       # 30분
-      connection-timeout: 30000   # 30초
-      validation-timeout: 5000    # 5초
+      max-lifetime: 1800000 # 30분
+      connection-timeout: 30000 # 30초
+      validation-timeout: 5000 # 5초
 
-      keepalive-time: 60000       # DB에 1분마다 생존 신고 (유휴 커넥션 방지)
+      keepalive-time: 60000 # DB에 1분마다 생존 신고 (유휴 커넥션 방지)
 
   flyway:
     enabled: true
@@ -81,43 +64,80 @@ spring:
     out-of-order: ${FLYWAY_OUT_OF_ORDER:false}
 
   jpa:
-    # database-platform은 SpringBoot가 hibernate-spatial 의존성을 기반으로 자동으로 선택함
-    # 따라서 포함하지 않도록 함.
     hibernate:
       ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
         default_schema: public
-        format_sql: true
-        # dialect는 명시가 불필요해서 생략
+        format_sql: false
         show_sql: false # p6spy가 있어서 꺼둠
 
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
-            scope: profile, email
-            redirect-uri: "{baseUrl}/api/v1/auth/oauth2/callback/{registrationId}"
-
-          kakao:
-            client-id: ${KAKAO_CLIENT_ID}
-            client-secret: ${KAKAO_CLIENT_SECRET}
-            client-authentication-method: client_secret_post
-            authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/api/v1/auth/oauth2/callback/{registrationId}"
-            scope: profile_nickname, account_email
-            client-name: Kakao
-
-        provider:
-          kakao:
-            authorization-uri: https://kauth.kakao.com/oauth/authorize
-            token-uri: https://kauth.kakao.com/oauth/token
-            user-info-uri: https://kapi.kakao.com/v2/user/me
-            user-name-attribute: id
+  # ====================================================================
+  # Spring AI / LLM provider 설정
+  # ====================================================================
+  # 단 하나의 환경 변수 LLM_PROVIDER 가 다음 두 키를 동시에 결정한다.
+  #   - app.llm.provider           : 활성 어댑터 (ConditionalOnProperty 매칭 키)
+  #   - spring.ai.model.chat       : ChatModel 자동구성 활성화 키
+  # 따라서 두 키를 따로 신경 쓸 필요 없이 LLM_PROVIDER 만 정확히 주입하면 된다.
+  #
+  # LLM_PROVIDER 후보값과 함께 주입해야 하는 환경 변수:
+  #   ┌────────────────────┬──────────────────────────────────────────────────────────┐
+  #   │ LLM_PROVIDER       │ 추가로 주입해야 하는 환경 변수                           │
+  #   ├────────────────────┼──────────────────────────────────────────────────────────┤
+  #   │ mock (기본)        │ 없음 (외부 호출 없음, 운영 활성화 전 검증용)            │
+  #   │ openai             │ LLM_OPENAI_API_KEY                                       │
+  #   │                    │ OPENAI_BASE_URL (선택, 기본값 https://api.openai.com)    │
+  #   │                    │  → LMStudio: http://localhost:1234                       │
+  #   │                    │  → Ollama:   http://localhost:11434/v1                   │
+  #   │ vertexai-gemini    │ VERTEX_PROJECT_ID, VERTEX_LOCATION,                      │
+  #   │                    │ GOOGLE_APPLICATION_CREDENTIALS (service account JSON)    │
+  #   │ google-genai       │ LLM_GEMINI_API_KEY (Google AI Studio 무료 티어)         │
+  #   │                    │ ── 또는 ──                                               │
+  #   │                    │ LLM_GOOGLE_GENAI_VERTEX_AI=true + VERTEX_PROJECT_ID +    │
+  #   │                    │ VERTEX_LOCATION + GOOGLE_APPLICATION_CREDENTIALS         │
+  #   └────────────────────┴──────────────────────────────────────────────────────────┘
+  #
+  # LLM_PROVIDER 가 위 후보값이 아니거나 활성 provider 의 ChatModel 빈이 만들어지지 않으면
+  # LlmFallbackConfig 가 mock 어댑터로 fallback 하고 WARN 로그를 남긴다 (부팅 자체는 성공).
+  # 부팅 직후 INFO 로그 "LLM 활성 provider=..." 를 통해 실제 활성 provider 를 확인할 수 있다.
+  #
+  # 본 시스템은 chat 카테고리만 사용하므로 embedding/image/moderation/audio 자동구성은 항상 비활성화한다.
+  # ====================================================================
+  ai:
+    model:
+      chat: ${LLM_PROVIDER:mock}
+      embedding: none
+      image: none
+      moderation: none
+      audio:
+        speech: none
+        transcription: none
+    openai:
+      # LMStudio (http://localhost:1234) 또는 Ollama (http://localhost:11434/v1) 사용 시
+      # OPENAI_BASE_URL 환경변수를 해당 주소로 설정한다. api-key 는 임의 문자열을 주입하면 된다.
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      api-key: ${LLM_OPENAI_API_KEY:}
+    vertex:
+      ai:
+        gemini:
+          project-id: ${VERTEX_PROJECT_ID:}
+          location: ${VERTEX_LOCATION:asia-northeast3}
+          # 인증 자격은 GOOGLE_APPLICATION_CREDENTIALS 환경 변수를 통해 주입한다.
+    google:
+      genai:
+        # Google AI Studio (Gemini Developer API) 무료 티어 사용 시 api-key 만 주입한다.
+        # Vertex AI 모드로 전환하려면 vertex-ai=true + project-id/location/credentials 를 주입한다.
+        api-key: ${LLM_GEMINI_API_KEY:}
+        vertex-ai: ${LLM_GOOGLE_GENAI_VERTEX_AI:false}
+        project-id: ${VERTEX_PROJECT_ID:}
+        location: ${VERTEX_LOCATION:asia-northeast3}
+    # 일시 실패 retry 는 Spring AI 자동구성된 RetryTemplate 에 위임한다.
+    # app.llm.retry 와 동일한 환경변수를 공유해 두 곳의 정책이 어긋나지 않도록 한다.
+    retry:
+      max-attempts: ${LLM_RETRY_MAX_ATTEMPTS:3}
+      backoff:
+        initial-interval: ${LLM_RETRY_BACKOFF_MILLIS:200}
 
 jwt:
   access-token-secret: ${JWT_ACCESS_TOKEN_SECRET}
@@ -135,23 +155,23 @@ springdoc:
     enabled: ${SWAGGER_ENABLE:false} # Swagger는 기본적으로 비활성화
 
     # 정렬 옵션
-    groups-order: DESC  # 그룹 정렬 (ASC/DESC)
-    tags-sorter: alpha  # 태그(컨트롤러) 정렬
-    operations-sorter: method  # API 메소드 정렬
+    groups-order: DESC # 그룹 정렬 (ASC/DESC)
+    tags-sorter: alpha # 태그(컨트롤러) 정렬
+    operations-sorter: method # API 메소드 정렬
 
     # UI 설정
-    doc-expansion: none  # API 펼침 상태 (none/list/full)
-    disable-swagger-default-url: true  # petstore 기본 URL 비활성화
-    display-request-duration: true  # 요청 소요 시간 표시
-    display-operation-id: false  # operation ID 표시 여부
+    doc-expansion: none # API 펼침 상태 (none/list/full)
+    disable-swagger-default-url: true # petstore 기본 URL 비활성화
+    display-request-duration: true # 요청 소요 시간 표시
+    display-operation-id: false # operation ID 표시 여부
 
     filter: true
     #    default-models-expand-depth: -1  # 스키마 모델도 접힌 상태로
 
     # 기타
-    deep-linking: true  # URL 딥링킹 지원
-    show-extensions: true  # 확장 속성 표시
-    show-common-extensions: true  # 공통 확장 속성 표시
+    deep-linking: true # URL 딥링킹 지원
+    show-extensions: true # 확장 속성 표시
+    show-common-extensions: true # 공통 확장 속성 표시
 
   api-docs:
     path: /docs-json # API 문서 경로
@@ -172,7 +192,7 @@ logging:
 
     # JPA/Hibernate
     org.hibernate.SQL: WARN
-    org.hibernate.orm.jdbc.bind: WARN  # 파라미터 숨김
+    org.hibernate.orm.jdbc.bind: WARN # 파라미터 숨김
 
     # 트랜잭션
     org.springframework.transaction: INFO
@@ -202,21 +222,35 @@ management:
       probability: ${TRACE_SAMPLING_PROBABILITY:1.0}
 
   otlp:
-    tracing:
-      endpoint: ${TEMPO_URL:http://localhost:4318}
+    logging:
+      endpoint: ${OTEL_LOGS_URL:${OTEL_URL:http://localhost:4318}/v1/logs}
       headers:
-        Authorization: "Basic ${TEMPO_AUTH}"
+        Authorization: ${OTEL_LOGS_AUTH_HEADER:${OTEL_AUTH_HEADER:}}
+    tracing:
+      endpoint: ${TEMPO_URL:${OTEL_URL:http://localhost:4318}/v1/traces}
+      headers:
+        Authorization: ${TEMPO_AUTH_HEADER:${OTEL_AUTH_HEADER:}}
     metrics:
       export:
-        url: ${PROM_URL}
+        url: ${PROM_URL:${OTEL_URL:http://localhost:4318}/v1/metrics}
         headers:
-          Authorization: "Basic ${PROM_AUTH}"
+          Authorization: ${PROM_AUTH_HEADER:${OTEL_AUTH_HEADER:}}
         step: 30s
+
+  opentelemetry:
+    resource-attributes:
+      service.name: ${spring.application.name}
+      environment: ${spring.profiles.active}
+      service.instance.id: ${LOCAL_DEVELOPER_ID:${USER:${USERNAME:unknown}}}
+
+      # structured field에는 값이 적고 고정적인 것만 넣어야 한다.
+      loki.resource.labels: service.name, environment
 
   metrics:
     tags:
-      application: ${SPRING_PROFILES_ACTIVE}-umc-product-api
-      instance: ${HOSTNAME:unknown-host}
+      application: ${spring.application.name}
+      instance: ${HOSTNAME:${LOCAL_DEVELOPER_ID:${USER:${USERNAME:unknown}}}}
+      environment: ${spring.profiles.active}
 
     enable:
       spring.security: false # Spring Security 인증 메트릭
@@ -237,14 +271,29 @@ management:
       export:
         enabled: true
 
-  health:
-    mail:
-      enabled: false
-
 app:
-  base-url: ${APP_BASE_URL:http://localhost:${SERVER_PORT:8080}}
+  # Figma_댓글_dev_prod_중복_방지_계획 §L4: Discord embed footer 의 환경 라벨 ([ENV: ...]) 으로 노출됨.
+  # spring.profiles.active 가 콤마 구분 다중 profile 일 수 있으므로 운영자가 단일 라벨을 명시적으로 override 가능.
+  environment: ${APP_ENVIRONMENT:${SPRING_PROFILES_ACTIVE:local}}
+
+  observability:
+    tracing:
+      enabled: ${APP_OBSERVABILITY_TRACING_ENABLED:true}
+      use-case-spans: ${APP_OBSERVABILITY_USE_CASE_SPANS:true}
+      adapter-spans: ${APP_OBSERVABILITY_ADAPTER_SPANS:true}
+      db-spans: ${APP_OBSERVABILITY_DB_SPANS:true}
+      # SQL 원문에는 개인정보/토큰성 값이 포함될 수 있으므로 기본값은 비활성화한다.
+      include-sql: ${APP_OBSERVABILITY_INCLUDE_SQL:false}
+      max-sql-length: ${APP_OBSERVABILITY_MAX_SQL_LENGTH:500}
+
+  event-outbox:
+    enabled: ${EVENT_OUTBOX_ENABLED:false}
+    poll-interval-ms: ${EVENT_OUTBOX_POLL_INTERVAL_MS:5000}
+    batch-size: ${EVENT_OUTBOX_BATCH_SIZE:100}
+    max-attempts: ${EVENT_OUTBOX_MAX_ATTEMPTS:5}
 
   fcm:
+    enabled: ${FCM_ENABLED:false}
     outbox-interval-ms: ${FCM_OUTBOX_INTERVAL_MS:60000}
     firebase-configuration: ${FIREBASE_CONFIGURATION}
 
@@ -267,17 +316,86 @@ app:
     username: ${SWAGGER_AUTH_USERNAME:username}
     password: ${SWAGGER_AUTH_PASSWORD:password}
 
+  # test 도메인 시딩 API 설정. ADR-017 참조.
+  # 기본값은 비활성. prod 가 아닌 환경에서 APP_SEED_ENABLED=true 로 켜야 시딩 API 가 노출된다.
+  seed:
+    enabled: ${APP_SEED_ENABLED:false}
+    skip-if-member-count-greater-than: ${APP_SEED_SKIP_THRESHOLD:0}
+    email-domain: ${APP_SEED_EMAIL_DOMAIN:test.umc.it.kr}
+    default-password: ${APP_SEED_DEFAULT_PASSWORD:password12!}
+
   oauth2:
     google:
       client-id-list: ${GOOGLE_CLIENT_ID_LIST:}
     apple:
-      client-id: ${APPLE_CLIENT_ID}
+      ios-client-id: ${APPLE_IOS_CLIENT_ID}
+      web-client-id: ${APPLE_WEB_CLIENT_ID}
       team-id: ${APPLE_TEAM_ID}
       key-id: ${APPLE_KEY_ID}
       private-key: ${APPLE_PRIVATE_KEY}
     kakao:
+      client-id: ${KAKAO_CLIENT_ID:}
+      client-secret: ${KAKAO_CLIENT_SECRET:}
       admin-key: ${KAKAO_ADMIN_KEY:}
-    frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT_URL}
+      allowed-redirect-uris: ${KAKAO_ALLOWED_REDIRECT_URIS:}
+
+  llm:
+    provider: ${LLM_PROVIDER:mock}
+    model: ${LLM_MODEL:gemini-2.5-flash-lite}
+    temperature: ${LLM_TEMPERATURE:0.0}
+    max-output-tokens: ${LLM_MAX_OUTPUT_TOKENS:32}
+    retry:
+      max-attempts: ${LLM_RETRY_MAX_ATTEMPTS:3}
+      backoff-millis: ${LLM_RETRY_BACKOFF_MILLIS:200}
+    circuit-breaker:
+      failure-threshold: ${LLM_CIRCUIT_BREAKER_FAILURE_THRESHOLD:5}
+      open-duration-millis: ${LLM_CIRCUIT_BREAKER_OPEN_DURATION_MILLIS:60000}
+    # token bucket 기반 사전 페이싱.
+    # Google AI Studio 무료 티어 (gemini-2.5-flash-lite, ~15 RPM) 기준 안전 마진으로 기본값 10 RPM / burst 5.
+    # 0 으로 설정하면 페이싱 비활성화.
+    rate-limit:
+      requests-per-minute: ${LLM_RATE_LIMIT_RPM:10}
+      burst: ${LLM_RATE_LIMIT_BURST:5}
+
+  figma:
+    oauth:
+      client-id: ${FIGMA_OAUTH_CLIENT_ID:}
+      client-secret: ${FIGMA_OAUTH_CLIENT_SECRET:}
+      redirect-uri: ${FIGMA_OAUTH_REDIRECT_URI:http://localhost:8080/api/v1/admin/figma/oauth/callback}
+      scope: ${FIGMA_OAUTH_SCOPE:}
+      authorize-uri: https://www.figma.com/oauth
+      token-uri: https://api.figma.com/v1/oauth/token
+      refresh-uri: https://api.figma.com/v1/oauth/refresh
+      token-encryption-key: ${FIGMA_TOKEN_ENCRYPTION_KEY} # 필수 — 기본값 없음. 미설정 시 애플리케이션 기동 실패.
+    sync:
+      enabled: ${FIGMA_SYNC_ENABLED:false}
+      poll-interval: ${FIGMA_SYNC_POLL_INTERVAL:PT5M}
+      max-files-per-run: ${FIGMA_SYNC_MAX_FILES_PER_RUN:50}
+    summary:
+      # ADR-004 §Implementation Plan §7: dispatch 회수 보존 기간 (90일 기본)
+      dispatch-retention: ${FIGMA_DISPATCH_RETENTION:P90D}
+      # 회수 잡 실행 주기 (기본 24시간)
+      retention-poll-interval: ${FIGMA_RETENTION_POLL_INTERVAL:PT24H}
+    classifier:
+      # LLM_분류_캐시_점검_보고서 §3.7: 운영 중 튜닝을 위한 외부화 (기본값은 보고서 §1.3 과 동일)
+      cache:
+        max-size: ${FIGMA_CLASSIFIER_CACHE_MAX_SIZE:10000}
+        ttl: ${FIGMA_CLASSIFIER_CACHE_TTL:PT5M}
+
+  notification:
+    # 인증 이메일 등 SES v2 발송 설정.
+    # access-key/secret을 비워두면 DefaultCredentialsProvider 체인(IAM Role / IRSA / 환경변수 등)으로 폴백한다.
+    # configuration-set 은 바운스/컴플레인트 트래킹이 필요할 때만 주입한다 (미설정 시 SendEmail 요청에 미포함).
+    # sender.* 는 발송 case 별 발신자 식별자. SES 콘솔에서 verified 처리된 identity 여야 한다.
+    email:
+      ses:
+        region: ${SES_REGION:ap-northeast-2}
+        access-key-id: ${SES_ACCESS_KEY_ID:}
+        secret-access-key: ${SES_SECRET_ACCESS_KEY:}
+        configuration-set: ${SES_CONFIGURATION_SET:}
+      sender:
+        no-reply-address: ${EMAIL_NO_REPLY_ADDRESS}
+        no-reply-display-name: ${EMAIL_NO_REPLY_DISPLAY_NAME:University MakeUs Challenge}
 
 storage:
   provider: ${STORAGE_PROVIDER:s3}
@@ -303,10 +421,16 @@ storage:
       key-name: ${CDN_KEY_NAME}
       private-key: ${CDN_PRIVATE_KEY}
 
-sentry:
-  dsn: ${SENTRY_DSN:-}
-  environment: ${spring.profiles.active}
-  exception-resolver-order: -2147483647
-  max-request-body-size: none
-  send-default-pii: false
-  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.1}
+
+# ==================================================================
+# dev 환경에 대한 default override
+# ==================================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+app:
+  seed:
+    enabled: ${APP_SEED_ENABLED:true}

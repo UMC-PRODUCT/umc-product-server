@@ -5,20 +5,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.notice.adapter.in.web.NoticeCommandController;
 import com.umc.product.notice.adapter.in.web.NoticeContentController;
-import com.umc.product.notice.adapter.in.web.NoticeController;
 import com.umc.product.notice.adapter.in.web.NoticeQueryController;
 import com.umc.product.notice.adapter.in.web.assembler.NoticeViewerInfoAssembler;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeReadUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
-import com.umc.product.organization.adapter.in.web.AdminChapterController;
-import com.umc.product.organization.adapter.in.web.AdminGisuController;
-import com.umc.product.organization.adapter.in.web.AdminGisuQueryController;
-import com.umc.product.organization.adapter.in.web.AdminSchoolController;
-import com.umc.product.organization.adapter.in.web.AdminSchoolQueryController;
+import com.umc.product.organization.adapter.in.web.ChapterCommandController;
 import com.umc.product.organization.adapter.in.web.ChapterQueryController;
+import com.umc.product.organization.adapter.in.web.GisuCommandController;
+import com.umc.product.organization.adapter.in.web.GisuQueryController;
+import com.umc.product.organization.adapter.in.web.SchoolCommandController;
 import com.umc.product.organization.adapter.in.web.SchoolQueryController;
 import com.umc.product.organization.application.port.in.command.ManageChapterUseCase;
 import com.umc.product.organization.application.port.in.command.ManageGisuUseCase;
@@ -40,14 +39,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = {
-    AdminSchoolController.class,
+    SchoolCommandController.class,
     SchoolQueryController.class,
-    AdminSchoolQueryController.class,
-    AdminChapterController.class,
+    ChapterCommandController.class,
     ChapterQueryController.class,
-    AdminGisuController.class,
-    AdminGisuQueryController.class,
-    NoticeController.class,
+    GisuCommandController.class,
+    GisuQueryController.class,
+    NoticeCommandController.class,
+    NoticeQueryController.class,
     NoticeQueryController.class,
     NoticeContentController.class,
 })
@@ -63,16 +62,6 @@ public class DocumentationTest {
     // =================================================
 
     protected static final Long TEST_MEMBER_ID = 1L;
-
-    @BeforeEach
-    void setUpSecurityContext() {
-        MemberPrincipal principal = MemberPrincipal.builder()
-            .memberId(TEST_MEMBER_ID)
-            .build();
-        UsernamePasswordAuthenticationToken authentication =
-            new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-    }
 
     @Autowired
     protected MockMvc mockMvc;
@@ -118,7 +107,17 @@ public class DocumentationTest {
 
     @MockitoBean
     protected GetNoticeUseCase getNoticeUseCase;
-
+    
     @MockitoBean
     protected NoticeViewerInfoAssembler noticeViewerInfoAssembler;
+
+    @BeforeEach
+    void setUpSecurityContext() {
+        MemberPrincipal principal = MemberPrincipal.builder()
+            .memberId(TEST_MEMBER_ID)
+            .build();
+        UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
 }

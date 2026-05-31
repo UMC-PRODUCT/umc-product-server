@@ -1,19 +1,12 @@
 package com.umc.product.curriculum.application.service.query;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.GetChallengerWorkbookUseCase;
-import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
-import com.umc.product.curriculum.application.port.in.query.dto.StudyGroupFilterInfo;
-import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionDetailInfo;
-import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.ChallengerWorkbookInfo;
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadWorkbookSubmissionPort;
+import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupListQuery;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,42 +22,8 @@ public class ChallengerWorkbookQueryService implements GetChallengerWorkbookUseC
     private final GetFileUseCase getFileUseCase;
 
     @Override
-    public List<WorkbookSubmissionInfo> getSubmissions(GetWorkbookSubmissionsQuery query) {
-        List<WorkbookSubmissionInfo> submissions = loadWorkbookSubmissionPort.findSubmissions(query);
-
-        Map<String, String> urlMap = submissions.stream()
-                .map(WorkbookSubmissionInfo::profileImageUrl)
-                .filter(id -> id != null)
-                .distinct()
-                .collect(Collectors.toMap(id -> id, id -> getFileUseCase.getById(id).fileLink()));
-
-        return submissions.stream()
-                .map(s -> new WorkbookSubmissionInfo(
-                        s.challengerWorkbookId(),
-                        s.challengerId(),
-                        s.memberName(),
-                        s.challengerName(),
-                        urlMap.getOrDefault(s.profileImageUrl(), s.profileImageUrl()),
-                        s.schoolName(),
-                        s.part(),
-                        s.workbookTitle(),
-                        s.status()
-                ))
-                .toList();
+    public ChallengerWorkbookInfo getById(Long challengerWorkbookId) {
+        throw new NotImplementedException();
     }
 
-    @Override
-    public WorkbookSubmissionDetailInfo getSubmissionDetail(Long challengerWorkbookId) {
-        return WorkbookSubmissionDetailInfo.from(
-                loadChallengerWorkbookPort.findById(challengerWorkbookId)
-        );
-    }
-
-    @Override
-    public List<StudyGroupFilterInfo> getStudyGroupsForFilter(Long schoolId, ChallengerPart part) {
-        StudyGroupListQuery query = new StudyGroupListQuery(schoolId, part, null, 100);
-        return getStudyGroupUseCase.getStudyGroups(query).stream()
-                .map(info -> new StudyGroupFilterInfo(info.groupId(), info.name()))
-                .toList();
-    }
 }

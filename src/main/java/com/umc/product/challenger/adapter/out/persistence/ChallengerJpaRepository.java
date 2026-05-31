@@ -19,6 +19,11 @@ public interface ChallengerJpaRepository extends JpaRepository<Challenger, Long>
     List<Challenger> findByMemberId(Long memberId);
 
     /**
+     * 여러 memberId로 챌린저 목록 IN 쿼리 1회 조회
+     */
+    List<Challenger> findByMemberIdIn(Set<Long> memberIds);
+
+    /**
      * gisuId로 챌린저 목록 조회
      */
     List<Challenger> findByGisuId(Long gisuId);
@@ -31,4 +36,9 @@ public interface ChallengerJpaRepository extends JpaRepository<Challenger, Long>
     Optional<Challenger> findTopByMemberIdOrderByCreatedAtDesc(Long memberId);
 
     List<Challenger> findByIdIn(Set<Long> ids);
+
+    /**
+     * 특정 기수 내에서 여러 멤버 ID 에 해당하는 챌린저들을 일괄 조회한다.
+     */
+    List<Challenger> findByMemberIdInAndGisuId(Set<Long> memberIds, Long gisuId);
 }

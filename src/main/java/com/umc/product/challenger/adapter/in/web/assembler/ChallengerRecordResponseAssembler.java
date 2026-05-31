@@ -5,8 +5,8 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerRecordU
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerRecordInfo;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
-import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -1,21 +1,23 @@
 package com.umc.product.notice.application.port.out;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.domain.Notice;
-import com.umc.product.notice.dto.NoticeClassification;
+import com.umc.product.notice.domain.NoticeClassification;
 import java.util.Optional;
-import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface LoadNoticePort {
     Optional<Notice> findNoticeById(Long id);
 
-    Page<Notice> findNoticesByClassification(NoticeClassification classification, Set<ChallengerPart> memberParts,
+    /**
+     * 챌린저 공지(gisu/chapter/school/part 조건)와 운영진 공지(targetNoticeTab 하한선)를 함께 조회합니다.
+     */
+    Page<Notice> findNoticesByClassification(NoticeClassification classification, NoticeViewerInfo viewerInfo,
                                              Pageable pageable);
 
     Page<Notice> findNoticesByKeyword(String keyword, NoticeClassification classification,
-                                     Set<ChallengerPart> memberParts, Pageable pageable);
+                                      NoticeViewerInfo viewerInfo, Pageable pageable);
 
     Page<Notice> findAllNotices(Pageable pageable);
 

@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Authentication | 토큰", description = "OAuth 로그인 및 JWT 토큰 관련")
+@Tag(name = "Authentication | 로그인")
 public class TokenAuthenticationController {
 
     private final ManageAuthenticationUseCase manageAuthenticationUseCase;
 
-    @Operation(summary = "AccessToken 재발급",
+    @Operation(summary = "[TOKEN-001] AccessToken 재발급",
         description = """
             RefreshToken을 이용해서 AccessToken을 재발급합니다.
             Header에 AccessToken을 포함할 필요는 없지만, 만료된 토큰이나 잘못된 토큰을 401 뜨니까 주의하세요.

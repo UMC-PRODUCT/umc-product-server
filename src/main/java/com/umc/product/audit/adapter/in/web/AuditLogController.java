@@ -30,7 +30,7 @@ public class AuditLogController {
 
     private final GetAuditLogUseCase getAuditLogUseCase;
 
-    @Operation(summary = "감사 로그 검색")
+    @Operation(summary = "[AUDIT-001] 감사 로그 검색")
     @CheckAccess(
         resourceType = ResourceType.AUDIT,
         permission = PermissionType.READ,

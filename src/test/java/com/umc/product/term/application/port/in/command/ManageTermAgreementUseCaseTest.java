@@ -1,10 +1,21 @@
 package com.umc.product.term.application.port.in.command;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
+
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.term.application.port.in.command.dto.CreateTermConsentCommand;
 import com.umc.product.term.application.port.out.LoadTermConsentPort;
@@ -19,13 +30,6 @@ import com.umc.product.term.domain.enums.TermConsentStatus;
 import com.umc.product.term.domain.enums.TermType;
 import com.umc.product.term.domain.exception.TermDomainException;
 import com.umc.product.term.domain.exception.TermErrorCode;
-import java.util.Optional;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class ManageTermAgreementUseCaseTest {
@@ -52,7 +56,7 @@ class ManageTermAgreementUseCaseTest {
         // given
         Term term = createTerms(TermType.SERVICE);
         given(loadTermPort.findById(1L)).willReturn(Optional.of(term));
-        given(loadTermConsentPort.existsByMemberIdAndTermType(100L, TermType.SERVICE)).willReturn(false);
+        given(loadTermConsentPort.existsByMemberIdAndTermId(100L, 1L)).willReturn(false);
 
         CreateTermConsentCommand command = CreateTermConsentCommand.builder()
             .memberId(100L)
@@ -64,16 +68,23 @@ class ManageTermAgreementUseCaseTest {
         sut.createTermConsent(command);
 
         // then
-        then(saveTermConsentPort).should().save(any(TermConsent.class));
+        ArgumentCaptor<TermConsent> consentCaptor = ArgumentCaptor.forClass(TermConsent.class);
+        then(saveTermConsentPort).should().save(consentCaptor.capture());
         then(saveTermConsentPort).should(never()).delete(any());
 
         ArgumentCaptor<TermConsentLog> logCaptor = ArgumentCaptor.forClass(TermConsentLog.class);
         then(saveTermConsentLogPort).should().save(logCaptor.capture());
 
+        TermConsent savedConsent = consentCaptor.getValue();
+        assertThat(savedConsent.getMemberId()).isEqualTo(100L);
+        assertThat(savedConsent.getTermId()).isEqualTo(1L);
+        assertThat(savedConsent.getTermType()).isEqualTo(TermType.SERVICE);
+
         TermConsentLog savedLog = logCaptor.getValue();
-        assert savedLog.getMemberId().equals(100L);
-        assert savedLog.getTermType() == TermType.SERVICE;
-        assert savedLog.getStatus() == TermConsentStatus.AGREED;
+        assertThat(savedLog.getMemberId()).isEqualTo(100L);
+        assertThat(savedLog.getTermId()).isEqualTo(1L);
+        assertThat(savedLog.getTermType()).isEqualTo(TermType.SERVICE);
+        assertThat(savedLog.getStatus()).isEqualTo(TermConsentStatus.AGREED);
     }
 
     @Test
@@ -81,7 +92,7 @@ class ManageTermAgreementUseCaseTest {
         // given
         Term term = createTerms(TermType.SERVICE);
         given(loadTermPort.findById(1L)).willReturn(Optional.of(term));
-        given(loadTermConsentPort.existsByMemberIdAndTermType(100L, TermType.SERVICE)).willReturn(true);
+        given(loadTermConsentPort.existsByMemberIdAndTermId(100L, 1L)).willReturn(true);
 
         CreateTermConsentCommand command = CreateTermConsentCommand.builder()
             .memberId(100L)
@@ -145,10 +156,18 @@ class ManageTermAgreementUseCaseTest {
     }
 
     private Term createTerms(TermType type) {
-        return Term.builder()
+        Term term = Term.builder()
             .type(type)
             .link("http://example.com/terms")
             .required(type == TermType.SERVICE || type == TermType.PRIVACY)
             .build();
+        Long id = switch (type) {
+            case SERVICE -> 1L;
+            case MARKETING -> 2L;
+            case PRIVACY -> 3L;
+            case LOCATION -> 4L;
+        };
+        ReflectionTestUtils.setField(term, "id", id);
+        return term;
     }
 }

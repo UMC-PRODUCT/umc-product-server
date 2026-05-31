@@ -6,7 +6,9 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
+import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class NoticeViewerInfoAssembler {
 
     public NoticeViewerInfo toMemberIdAndGisuId(Long memberId, Long gisuId) {
         Set<ChallengerPart> memberParts = resolveParts(memberId, gisuId);
+        NoticeTab viewerRole = resolveViewerRole(memberId, gisuId);
 
         MemberInfo memberInfo = getMemberUseCase.findAllByIds(Set.of(memberId)).get(memberId);
         Long schoolId = memberInfo != null ? memberInfo.schoolId() : null;
@@ -41,13 +44,9 @@ public class NoticeViewerInfoAssembler {
             }
         }
 
-        return new NoticeViewerInfo(memberParts, schoolId, chapterId);
+        return new NoticeViewerInfo(memberParts, schoolId, chapterId, viewerRole);
     }
 
-    /**
-     * 해당 기수에서 멤버가 볼 수 있는 파트 목록을 조회합니다. - Challenger.part: 챌린저 본인의 소속 파트 - ChallengerRole.responsiblePart: 파트장 역할에서 담당하는
-     * 파트 챌린저 정보가 없으면 빈 Set을 반환하여 파트 조건 없는 공지만 노출합니다.
-     */
     private Set<ChallengerPart> resolveParts(Long memberId, Long gisuId) {
         if (memberId == null || gisuId == null) {
             return Set.of();
@@ -61,5 +60,28 @@ public class NoticeViewerInfoAssembler {
                 return parts;
             })
             .orElse(Set.of());
+    }
+
+    /**
+     * 조회자의 최상위 운영진 역할을 반환합니다. 총괄단 및 중앙운영진은 CENTRAL_MEMBER(레벨 1)로 통합됩니다. 여러 역할을 가진 경우 레벨이 가장 낮은(상위) 역할을 반환합니다.
+     */
+    private NoticeTab resolveViewerRole(Long memberId, Long gisuId) {
+        if (memberId == null || gisuId == null) {
+            return null;
+        }
+
+        return getChallengerRoleUseCase.findAllByMemberId(memberId).stream()
+            .filter(role -> gisuId.equals(role.gisuId()))
+            .filter(role -> role.roleType().isAtLeastCentralMember()
+                || role.roleType().isAtLeastSchoolAdmin())
+            .map(role -> {
+                if (role.roleType().isAtLeastCentralMember()) {
+                    return NoticeTab.CENTRAL_MEMBER;
+                }
+                return NoticeTab.findFrom(role.roleType()).orElse(null);
+            })
+            .filter(role -> role != null && role.isStaffRole())
+            .min(Comparator.comparingInt(NoticeTab::getLevel))
+            .orElse(null);
     }
 }

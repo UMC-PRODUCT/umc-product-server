@@ -1,13 +1,16 @@
 package com.umc.product.term.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.term.application.port.out.LoadTermConsentPort;
 import com.umc.product.term.application.port.out.SaveTermConsentPort;
 import com.umc.product.term.domain.TermConsent;
 import com.umc.product.term.domain.enums.TermType;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -21,13 +24,28 @@ public class TermConsentPersistenceAdapter implements LoadTermConsentPort, SaveT
     }
 
     @Override
+    public List<TermConsent> listByMemberIdAndTermIds(Long memberId, List<Long> termIds) {
+        return repository.findByMemberIdAndTermIdIn(memberId, termIds);
+    }
+
+    @Override
     public Optional<TermConsent> findByMemberIdAndTermType(Long memberId, TermType termType) {
         return repository.findByMemberIdAndTermType(memberId, termType);
     }
 
     @Override
+    public Optional<TermConsent> findByMemberIdAndTermId(Long memberId, Long termId) {
+        return repository.findByMemberIdAndTermId(memberId, termId);
+    }
+
+    @Override
     public boolean existsByMemberIdAndTermType(Long memberId, TermType termType) {
         return repository.existsByMemberIdAndTermType(memberId, termType);
+    }
+
+    @Override
+    public boolean existsByMemberIdAndTermId(Long memberId, Long termId) {
+        return repository.existsByMemberIdAndTermId(memberId, termId);
     }
 
     @Override

@@ -1,0 +1,198 @@
+package com.umc.product.notification.application.service;
+
+import com.google.firebase.messaging.BatchResponse;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.MulticastMessage;
+import com.google.firebase.messaging.Notification;
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.global.config.FcmProperties;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.notice.domain.NoticeTargetInfo;
+import com.umc.product.notification.application.port.in.SendNotificationToAudienceUseCase;
+import com.umc.product.notification.application.port.in.dto.AudienceNotificationCommand;
+import com.umc.product.notification.application.port.in.dto.NotificationCommand;
+import com.umc.product.notification.application.port.out.LoadFcmPort;
+import com.umc.product.notification.domain.FcmToken;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class FcmAudienceService implements SendNotificationToAudienceUseCase {
+
+    private static final int FCM_MULTICAST_BATCH_SIZE = 500;
+
+    private final FcmProperties fcmProperties;
+    private final FirebaseMessaging firebaseMessaging;
+    private final LoadFcmPort loadFcmPort;
+    private final FcmTokenDeactivator fcmTokenDeactivator;
+    private final GetChallengerUseCase getChallengerUseCase;
+    private final GetMemberUseCase getMemberUseCase;
+    private final GetChapterUseCase getChapterUseCase;
+
+    @Override
+    public void sendToAudience(AudienceNotificationCommand command) {
+
+        if (!fcmProperties.enabled()) {
+            log.info("[FCM 비활성화] sendToAudience 스킵");
+            return;
+        }
+
+        List<Long> memberIds = resolveTargetMemberIds(command.targetInfo());
+        if (memberIds.isEmpty()) {
+            log.info("알림 발송 대상 없음. targetInfo={}", command.targetInfo());
+            return;
+        }
+
+        List<FcmToken> tokens = loadFcmPort.findAllActiveByMemberIds(memberIds);
+        if (tokens.isEmpty()) {
+            log.info("활성 FCM 토큰 없음. memberIds count={}", memberIds.size());
+            return;
+        }
+
+        sendBatch(tokens, command.title(), command.body());
+        log.info("대상자 알림 발송 완료 title={}", command.title());
+    }
+
+    @Override
+    public void sendToMember(NotificationCommand command) {
+
+        if (!fcmProperties.enabled()) {
+            log.info("[FCM 비활성화] sendToMember 스킵 memberId={}", command.memberId());
+            return;
+        }
+
+        List<FcmToken> tokens = loadFcmPort.findAllActiveByMemberId(command.memberId());
+        if (tokens.isEmpty()) {
+            log.warn("활성 FCM 토큰 없음. memberId={}", command.memberId());
+            return;
+        }
+
+        sendBatch(tokens, command.title(), command.body());
+    }
+
+    @Override
+    public void sendToMembers(List<Long> memberIds, String title, String body) {
+
+        if (!fcmProperties.enabled()) {
+            log.info("[FCM 비활성화] sendToMembers 스킵 count={}", memberIds == null ? 0 : memberIds.size());
+            return;
+        }
+
+        if (memberIds == null || memberIds.isEmpty()) {
+            return;
+        }
+
+        List<FcmToken> tokens = loadFcmPort.findAllActiveByMemberIds(memberIds);
+        if (tokens.isEmpty()) {
+            log.info("활성 FCM 토큰 없음. memberIds count={}", memberIds.size());
+            return;
+        }
+
+        sendBatch(tokens, title, body);
+        log.info("bulk 알림 발송 완료 title={}, 대상 멤버 수={}", title, memberIds.size());
+    }
+
+    // =========== PRIVATE ===========
+
+    private void sendBatch(List<FcmToken> tokens, String title, String body) {
+        Notification notification = Notification.builder()
+            .setTitle(title)
+            .setBody(body)
+            .build();
+
+        int totalSuccess = 0;
+        int totalFail = 0;
+
+        for (List<FcmToken> batch : partition(tokens, FCM_MULTICAST_BATCH_SIZE)) {
+            List<String> tokenStrings = batch.stream().map(FcmToken::getFcmToken).toList();
+            try {
+                MulticastMessage message = MulticastMessage.builder()
+                    .addAllTokens(tokenStrings)
+                    .setNotification(notification)
+                    .build();
+
+                BatchResponse response = firebaseMessaging.sendEachForMulticast(message);
+                totalSuccess += response.getSuccessCount();
+                totalFail += response.getFailureCount();
+
+                fcmTokenDeactivator.deactivateInvalidTokens(batch, response.getResponses());
+            } catch (FirebaseMessagingException e) {
+                log.error("FCM 배치 발송 실패 batchSize={}", batch.size(), e);
+                totalFail += batch.size();
+            }
+        }
+
+        log.info("FCM 발송 완료 성공={}, 실패={}", totalSuccess, totalFail);
+    }
+
+    private List<Long> resolveTargetMemberIds(NoticeTargetInfo targetInfo) {
+
+        if (targetInfo == null || targetInfo.targetGisuId() == null) {
+            return List.of();
+        }
+
+        List<ChallengerInfo> challengers = getChallengerUseCase.getAllByGisuId(targetInfo.targetGisuId());
+        if (challengers.isEmpty()) {
+            return List.of();
+        }
+
+        // 1. 챌린저의 memberId 목록으로 schoolId 일괄 조회 (쿼리 1회)
+        Set<Long> memberIdSet = challengers.stream()
+            .map(ChallengerInfo::memberId)
+            .collect(Collectors.toSet());
+
+        Map<Long, Long> schoolIdByMemberId = getMemberUseCase.findAllSchoolIdsByIds(memberIdSet);
+
+        // 2. (gisuId, schoolId) 조합으로 chapterId 일괄 조회 (쿼리 1회)
+        Set<Long> gisuIds = Set.of(targetInfo.targetGisuId());
+        Set<Long> schoolIds = new HashSet<>(schoolIdByMemberId.values());
+        schoolIds.remove(null);
+        Map<Long, Map<Long, ChapterInfo>> chapterMap =
+            getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(gisuIds, schoolIds);
+
+        // 3. 필터링
+        List<Long> memberIds = new ArrayList<>();
+        for (ChallengerInfo challenger : challengers) {
+            Long schoolId = schoolIdByMemberId.get(challenger.memberId());
+            if (schoolId == null) {
+                continue;
+            }
+
+            ChapterInfo chapter = chapterMap
+                .getOrDefault(challenger.gisuId(), Map.of())
+                .get(schoolId);
+            if (chapter == null) {
+                continue;
+            }
+
+            if (targetInfo.isTarget(challenger.gisuId(), chapter.id(), schoolId, challenger.part())) {
+                memberIds.add(challenger.memberId());
+            }
+        }
+
+        return memberIds;
+    }
+
+    private <T> List<List<T>> partition(List<T> list, int size) {
+        List<List<T>> result = new ArrayList<>();
+
+        for (int i = 0; i < list.size(); i += size) {
+            result.add(list.subList(i, Math.min(i + size, list.size())));
+        }
+
+        return result;
+    }
+}

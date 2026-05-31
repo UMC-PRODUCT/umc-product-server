@@ -3,9 +3,9 @@ package com.umc.product.organization.application.port.in.query;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
-import com.umc.product.organization.application.port.in.query.dto.GisuNameInfo;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuNameInfo;
+import com.umc.product.organization.application.port.out.command.SaveGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
 import com.umc.product.support.fixture.GisuFixture;
@@ -22,7 +22,7 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
     private GetGisuUseCase getGisuUseCase;
 
     @Autowired
-    private ManageGisuPort manageGisuPort;
+    private SaveGisuPort saveGisuPort;
 
     @Autowired
     private GisuFixture gisuFixture;
@@ -61,7 +61,7 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
         // given
         Instant startAt = Instant.parse("2024-03-01T00:00:00Z");
         Instant endAt = Instant.parse("2024-08-31T23:59:59Z");
-        Gisu gisu = manageGisuPort.save(Gisu.create(8L, startAt, endAt, true));
+        Gisu gisu = saveGisuPort.save(Gisu.create(8L, startAt, endAt, true));
 
         // when
         GisuInfo result = getGisuUseCase.getById(gisu.getId());

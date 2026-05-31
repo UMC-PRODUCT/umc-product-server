@@ -24,6 +24,7 @@ public enum ChallengerErrorCode implements BaseCode {
     INVALID_SCHOOL_FOR_RECORD(HttpStatus.BAD_REQUEST, "CHALLENGER-0014", "코드에 등록된 학교가 요청자 소속과 일치하지 않습니다."),
     INVALID_CHALLENGER_RECORD_CREATE_REQUEST(HttpStatus.BAD_REQUEST, "CHALLENGER-0015", "제공된 정보로 챌린저 기록을 생성할 수 없습니다."),
     NO_CHALLENGER_IN_MEMBER_GISU(HttpStatus.NOT_FOUND, "CHALLENGER-0016", "해당 회원은 주어진 기수에 활동한 챌린저가 아닙니다."),
+    CHALLENGER_PART_NOT_FOUND(HttpStatus.NOT_FOUND, "CHALLENGER-0017", "해당 Challenger의 Part는 존재하지 않습니다."),
     ;
 
     private final HttpStatus httpStatus;

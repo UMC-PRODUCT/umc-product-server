@@ -1,12 +1,14 @@
 package com.umc.product.schedule.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -17,9 +19,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AccessLevel;
@@ -37,14 +37,16 @@ public class Schedule extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "name", length = 100, nullable = false)
     private String name;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    // 복합키로 생성되어, 별도로 PK가 없는 매핑 테이블 생성을 위해서 CollectionTable 사용
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
         name = "schedule_tags",
@@ -55,143 +57,221 @@ public class Schedule extends BaseEntity {
     @BatchSize(size = 100)
     private Set<ScheduleTag> tags = new HashSet<>();
 
-    @Column(nullable = false)
-    private Long authorChallengerId;
+    @Column(name = "author_member_id", nullable = false)
+    private Long authorMemberId;
 
-    @Column(nullable = false)
+    @Column(name = "starts_at", nullable = false)
     private Instant startsAt;
 
-    @Column(nullable = false)
+    @Column(name = "ends_at", nullable = false)
     private Instant endsAt;
 
-    @Column(nullable = false)
-    private boolean isAllDay;
-
+    @Column(name = "location_name", length = 100)
     private String locationName;
 
-    @Column(columnDefinition = "geometry(Point, 4326)")
-    private Point location;
+    @Column(name = "location", columnDefinition = "geometry(Point, 4326)")
+    private Point location; // nullable, 비대면 일정의 경우에 없습니다!
 
-    private Long studyGroupId;
+    @Embedded
+    // policy가 존재하면 출석을 체크하는 일정, 즉 출석부를 생성하는 일정임
+    // 출석부을 트래킹하지 않도록 변경하고 싶다면 policy를 삭제하면 됨.
+    private AttendancePolicy policy;
 
+    // 삭제: authorChallengerId
+
+    // 삭제: isAllDay
+    // 클라이언트 입장에서 기기 시각 기준 00:00에 시작해서, 23:59에 끝나는 일정이면 알아서 "종일"로 표기하기
+
+    // 삭제: studyGroupId
+    // 이건 따로 Entity 만들어서 관리합니다.
+    // Schedule에 둘까 Organization에 둘까 영원한 고민
+    // => Organization에 두도록 합니다. Schedule 도메인의 순수성을 지키고자 ..
+
+    // 생성자에서 AttendancePolicy에 있는 값은 3개 다 주어지거나 아예 안 주어지거나 둘 중 하나로 해야합니다!
+
+    // TODO: Builder 생성자 쓰는 곳 수정 유의해주세요
     @Builder
-    private Schedule(String name, String description, Set<ScheduleTag> tags,
-                     Long authorChallengerId, Instant startsAt, Instant endsAt,
-                     boolean isAllDay, String locationName, Point location, Long studyGroupId) {
+    private Schedule(
+        String name, String description, Set<ScheduleTag> tags,
+        Long authorMemberId, Instant startsAt, Instant endsAt,
+        String locationName, Point location,
+        AttendancePolicy policy
+    ) {
+        // 일정 관련 기본 정보들
         this.name = name;
         this.description = description;
 
-        if (tags == null || tags.isEmpty()) {
-            throw new ScheduleDomainException(ScheduleErrorCode.TAG_REQUIRED);
-        }
+        validateScheduleTags(tags);
         this.tags = new HashSet<>(tags);
 
-        this.authorChallengerId = authorChallengerId;
+        this.authorMemberId = authorMemberId;
 
-        if (startsAt.isAfter(endsAt)) {
-            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
-        }
+        validateScheduleTime(policy, startsAt, endsAt);
         this.startsAt = startsAt;
         this.endsAt = endsAt;
 
-        this.isAllDay = isAllDay;
         this.locationName = locationName;
         this.location = location;
-        this.studyGroupId = studyGroupId;
+
+        this.policy = policy;
     }
+
+    // validate method가 더 많아지고 복잡해질 경우 하나의 validate()로 변경할 것
+
+    private static void validateScheduleTags(Set<ScheduleTag> tags) {
+        if (tags == null || tags.isEmpty()) {
+            throw new ScheduleDomainException(ScheduleErrorCode.TAG_REQUIRED);
+        }
+    }
+
+    // 일정 시작, 종료 시간
+    // (1) 종료 시간은 시작 시간보다 앞서서는 안됨
+    // (2) policy가 있는 경우, 일정 종료 시각은 시작시간 + 출석 인정 시간 + 지각 인정 시간 보다 늦어야 함
+    private static void validateScheduleTime(AttendancePolicy policy, Instant start, Instant end) {
+        if (end.isBefore(start)) {
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE,
+                "일정 종료 시각은 시작 시각보다 늦어야 합니다");
+        }
+
+        // policy가 없으면 출석 체크를 하지 않는 일정이므로 추가 검증 불필요
+        if (policy == null) {
+            return;
+        }
+
+        long totalLateMinutes =
+            policy.getAttendanceGraceMinutes() + policy.getLateToleranceMinutes();
+
+        if (end.isBefore(start.plus(totalLateMinutes, ChronoUnit.MINUTES))) {
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE,
+                "일정 종료 시각은 시작 시각 + 출석 인정 시간 + 지각 인정 시간 보다 늦어야 합니다");
+        }
+    }
+
+    public static AttendancePolicy createAttendancePolicy(
+        Instant checkInStartAt, // 출석 요청 시작 가능 시점
+        Instant onTimeEndAt, // 출석으로 인정하는 마감 시간
+        Instant lateEndAt, // 지각으로 인정하는 마감 시간,
+        Instant startsAt, // 일정 시작 시간
+        Instant endsAt // 일정 종료 시간
+    ) {
+        validateAttendancePolicyTimes(checkInStartAt, onTimeEndAt, lateEndAt, startsAt, endsAt);
+
+        Long earlyCheckInMinutes = ChronoUnit.MINUTES.between(checkInStartAt, startsAt);
+        Long attendanceGraceMinutes = ChronoUnit.MINUTES.between(startsAt, onTimeEndAt);
+        Long lateToleranceMinutes = ChronoUnit.MINUTES.between(onTimeEndAt, lateEndAt);
+
+        return AttendancePolicy.create(earlyCheckInMinutes, attendanceGraceMinutes, lateToleranceMinutes);
+    }
+
+    private static void validateAttendancePolicyTimes(
+        Instant checkInStartAt, // 출석 요청 시작 가능 시점
+        Instant onTimeEndAt, // 출석으로 인정하는 마감 시간
+        Instant lateEndAt, // 지각으로 인정하는 마감 시간,
+        Instant startsAt, // 일정 시작 시간
+        Instant endsAt // 일정 종료 시간
+    ) {
+        // 검증해야 하는 내용: checkInStartAt < startAt < onTimeEndAt < lateEndAt < endsAt
+        if (!checkInStartAt.isBefore(startsAt) ||
+            !startsAt.isBefore(onTimeEndAt) ||
+            !onTimeEndAt.isBefore(lateEndAt) ||
+            !lateEndAt.isBefore(endsAt)
+        ) {
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
+        }
+    }
+
+    // 요청을 받은 시각이 어떤 AttendanceStatus에 해당하는지 판단하는 메소드
 
     public boolean isInProgress(Instant referenceTime) {
         return referenceTime.isAfter(startsAt) && referenceTime.isBefore(endsAt);
-    }
-
-    public String resolveStatus(Instant now) {
-        if (this.isEnded(now)) {
-            return "종료됨";
-        }
-        if (this.isInProgress(now)) {
-            return "진행 중";
-        }
-        return "예정";
     }
 
     public boolean isEnded(Instant referenceTime) {
         return referenceTime.isAfter(endsAt);
     }
 
+    /**
+     * 최초 일정 출석 요청 시, 어떤 상태로 마킹해야 하는지 판단하는 메소드입니다.
+     */
+    public AttendanceStatus getAttendanceStatus() {
+
+        // 출석을 요하지 않는 일정이면 에러 반환
+        if (this.policy == null) {
+            throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST);
+        }
+
+        Instant now = Instant.now();
+
+        if (now.isAfter(this.endsAt)) {
+            throw new ScheduleDomainException(
+                ScheduleErrorCode.SCHEDULE_ENDED,
+                this.name + " 일정은 " + this.endsAt + " 에 이미 종료된 일정입니다."
+            );
+        }
+
+        return this.policy.getAttendanceStatusByPolicy(
+            now, this.startsAt
+        );
+    }
+
+    // 일정 수정 메서드
+    // null인 필드는 기존 값 유지
     public void update(
         String name,
         String description,
         Set<ScheduleTag> tags,
         Instant startsAt,
         Instant endsAt,
-        Boolean isAllDay,
         String locationName,
-        Point location
+        Point location,
+        AttendancePolicy policy
     ) {
+        // 단순 필드 - null이면 기존 값 유지
         if (name != null) {
             this.name = name;
         }
         if (description != null) {
             this.description = description;
         }
+        if (locationName != null) {
+            this.locationName = locationName;
+        }
+        if (location != null) {
+            this.location = location;
+        }
+
+        // 태그 : 검증 필요
         if (tags != null) {
-            if (tags.isEmpty()) {
-                throw new ScheduleDomainException(ScheduleErrorCode.TAG_REQUIRED);
-            }
-            this.tags.clear();
-            this.tags.addAll(tags);
-        }
-        if (locationName != null) {
-            this.locationName = locationName;
-        }
-        if (location != null) {
-            this.location = location;
+            validateScheduleTags(tags);
+            this.tags = new HashSet<>(tags);
         }
 
-        updateTime(startsAt, endsAt, isAllDay);
-    }
+        // 일정 시간/출석 정책 : 연관 검증 필요
+        boolean isTimeChanged = startsAt != null || endsAt != null;
+        boolean isPolicyChanged = policy != null;
 
-    public void updateLocation(
-        String locationName,
-        Point location
-    ) {
-        if (locationName != null) {
-            this.locationName = locationName;
-        }
-        if (location != null) {
-            this.location = location;
+        if (isTimeChanged || isPolicyChanged) {
+            Instant finalStartsAt = startsAt != null ? startsAt : this.startsAt;
+            Instant finalEndsAt = endsAt != null ? endsAt : this.endsAt;
+            AttendancePolicy finalPolicy = policy != null ? policy : this.policy;
+
+            validateScheduleTime(finalPolicy, finalStartsAt, finalEndsAt);
+
+            this.startsAt = finalStartsAt;
+            this.endsAt = finalEndsAt;
+            this.policy = finalPolicy;
         }
     }
 
-    private void updateTime(Instant newStartsAt, Instant newEndsAt, Boolean newIsAllDay) {
-        // 변경할 값이 없으면 기존 값 유지
-        boolean effectiveIsAllDay = (newIsAllDay != null) ? newIsAllDay : this.isAllDay;
-        Instant effectiveStartsAt = (newStartsAt != null) ? newStartsAt : this.startsAt;
-        Instant effectiveEndsAt = (newEndsAt != null) ? newEndsAt : this.endsAt;
-
-        // 종일 일정일 경우 시간 강제 조정 (KST 기준 00:00 ~ 23:59)
-        if (effectiveIsAllDay) {
-            ZoneId kst = ZoneId.of("Asia/Seoul");
-            LocalDate startDate = effectiveStartsAt.atZone(kst).toLocalDate();
-            LocalDate endDate = effectiveEndsAt.atZone(kst).toLocalDate();
-            effectiveStartsAt = startDate.atStartOfDay(kst).toInstant();
-            effectiveEndsAt = endDate.atTime(LocalTime.of(23, 59, 59)).atZone(kst).toInstant();
-        }
-
-        if (effectiveStartsAt.isAfter(effectiveEndsAt)) {
-            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
-        }
-
-        this.isAllDay = effectiveIsAllDay;
-        this.startsAt = effectiveStartsAt;
-        this.endsAt = effectiveEndsAt;
+    // 비대면 일정으로 전환 (대면 -> 비대면)
+    // location만 삭제됨, policy는 유지 (출석 체크 여부는 독립적)
+    public void convertToOnline() {
+        this.location = null;
+        this.locationName = null;
     }
 
-    public boolean hasTag(ScheduleTag tag) {
-        return this.tags.contains(tag);
-    }
-
-    public void assignStudyGroup(Long studyGroupId) {
-        this.studyGroupId = studyGroupId;
+    // 출석을 요하지 않는 일정으로 변환 시 사용
+    public void removeAttendancePolicy() {
+        this.policy = null;
     }
 }

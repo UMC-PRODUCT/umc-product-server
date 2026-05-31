@@ -29,7 +29,7 @@ public class MemberQueryController {
     private final MemberInfoResponseAssembler assembler;
     private final SearchMemberUseCase searchMemberUseCase;
 
-    @Operation(summary = "memberId로 회원 정보 조회")
+    @Operation(summary = "[MEMBER-101] memberId로 회원 정보 조회")
     @GetMapping("profile/{memberId}")
     @CheckAccess(
         resourceType = ResourceType.MEMBER,
@@ -41,13 +41,18 @@ public class MemberQueryController {
         return assembler.fromMemberIdToPublic(memberId);
     }
 
-    @Operation(summary = "내 프로필 조회")
+    @Operation(summary = "[MEMBER-102] 내 프로필 조회")
     @GetMapping("me")
     MemberInfoResponse getMyProfile(@CurrentMember MemberPrincipal memberPrincipal) {
         return assembler.fromMemberId(memberPrincipal.getMemberId());
     }
 
-    @Operation(summary = "회원 검색", description = "이름, 닉네임, 이메일, 학교명으로 검색, 기수/파트/지부/학교별 필터링")
+    @Operation(summary = "[MEMBER-103] 회원 검색", description = """
+        이름, 닉네임, 이메일, 학교명으로 검색하며 기수/파트/지부/학교별 필터링을 지원합니다.
+
+        검색 결과에는 본인 외 회원이 포함되므로, 로그인 식별자인 이메일은 평문 노출을 피하기 위해
+        컨트롤러 단에서 마스킹 처리되어 응답됩니다.
+        """)
     @GetMapping("search")
     SearchMemberResponse searchMembers(
         @ParameterObject Pageable pageable,
@@ -55,7 +60,7 @@ public class MemberQueryController {
     ) {
         return SearchMemberResponse.from(
             searchMemberUseCase.searchBy(searchRequest.toQuery(), pageable)
-        );
+        ).withMaskedEmails();
     }
 
 }

@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
@@ -21,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -116,6 +118,37 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         String detail = simplifiedMessage + " - " + e.getMostSpecificCause().getMessage();
         return buildResponse(e, CommonErrorCode.BAD_REQUEST, headers, request, detail);
+    }
+
+    /**
+     * 필수 Request Parameter 누락 예외 처리
+     */
+    @Override
+    protected ResponseEntity<Object> handleMissingServletRequestParameter(
+        MissingServletRequestParameterException e,
+        HttpHeaders headers,
+        HttpStatusCode status,
+        WebRequest request
+    ) {
+        String detail = String.format("필수 요청 파라미터 '%s'가 누락되었습니다.", e.getParameterName());
+        log.warn("[MISSING REQUEST PARAMETER] {}", detail);
+
+        return buildResponse(e, CommonErrorCode.BAD_REQUEST, headers, request, detail);
+    }
+
+    /**
+     * Request Parameter 타입 변환 실패 예외 처리
+     */
+    @Override
+    protected ResponseEntity<Object> handleTypeMismatch(
+        TypeMismatchException e,
+        HttpHeaders headers,
+        HttpStatusCode status,
+        WebRequest request
+    ) {
+        log.warn("[REQUEST PARAMETER TYPE MISMATCH] {}", e.getMessage());
+
+        return buildResponse(e, CommonErrorCode.BAD_REQUEST, headers, request, "요청 파라미터 값이 올바르지 않습니다.");
     }
 
 

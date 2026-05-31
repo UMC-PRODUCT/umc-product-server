@@ -8,8 +8,8 @@ import static org.springframework.restdocs.request.RequestDocumentation.pathPara
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
 import com.umc.product.organization.domain.enums.SchoolLinkType;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import com.umc.product.storage.domain.enums.FileCategory;

@@ -1,0 +1,20 @@
+package com.umc.product.global.event.adapter.in.scheduler;
+
+import com.umc.product.global.event.application.service.EventOutboxRelayService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.event-outbox.enabled", havingValue = "true")
+public class EventOutboxPoller {
+
+    private final EventOutboxRelayService relayService;
+
+    @Scheduled(fixedDelayString = "${app.event-outbox.poll-interval-ms:5000}")
+    public void poll() {
+        relayService.relay();
+    }
+}

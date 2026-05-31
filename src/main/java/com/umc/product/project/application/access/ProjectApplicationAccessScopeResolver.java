@@ -1,0 +1,112 @@
+package com.umc.product.project.application.access;
+
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.project.application.access.ProjectApplicationAccessScope.All;
+import com.umc.product.project.application.access.ProjectApplicationAccessScope.AllInGisu;
+import com.umc.product.project.application.access.ProjectApplicationAccessScope.ChapterScoped;
+import com.umc.product.project.application.access.ProjectApplicationAccessScope.None;
+import com.umc.product.project.application.access.ProjectApplicationAccessScope.OwnerOnly;
+import com.umc.product.project.application.access.ProjectApplicationAccessScope.ProjectScoped;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
+import com.umc.product.project.domain.Project;
+import java.util.List;
+import java.util.Objects;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+/**
+ * 호출 컨텍스트(본인 지원 내역 vs PO 검토 vs 운영진 모니터링) + 사용자 역할에 따라 {@link ProjectApplicationAccessScope} 를 결정한다.
+ */
+@Component
+@RequiredArgsConstructor
+public class ProjectApplicationAccessScopeResolver {
+
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+    private final LoadProjectMemberPort loadProjectMemberPort;
+
+    /**
+     * 본인 지원 내역 화면. 누구든지 본인 지원서만 본다.
+     */
+    public ProjectApplicationAccessScope resolveForApplicant(Long memberId) {
+        return new OwnerOnly(memberId);
+    }
+
+    /**
+     * 단일 프로젝트 지원자 목록(APPLY-101) 화면. 호출자가 다음 중 하나라도 만족하면 {@link ProjectScoped} 통과:
+     * <ul>
+     *   <li>해당 프로젝트의 PO</li>
+     *   <li>해당 프로젝트의 보조 PM (ACTIVE PLAN 멤버)</li>
+     *   <li>SUPER_ADMIN</li>
+     *   <li>해당 프로젝트 기수의 Central Core (총괄/부총괄)</li>
+     *   <li>해당 프로젝트 지부의 지부장 (같은 기수)</li>
+     *   <li>해당 프로젝트 학교의 회장 (SCHOOL_PRESIDENT, 같은 기수)</li>
+     * </ul>
+     * 그 외엔 {@link None} 반환 — 호출 측이 빈 목록 처리하여 권한 부재를 '지원자 0건' 으로 위장한다.
+     * <p>
+     * {@code project} 는 호출자(서비스 단)가 사전 로드한 인스턴스를 그대로 전달받는다. 동일 트랜잭션 내 중복 조회를 피하기 위함.
+     */
+    public ProjectApplicationAccessScope resolveForProjectApplicantList(Long memberId, Project project) {
+        Long projectId = project.getId();
+
+        if (Objects.equals(project.getProductOwnerMemberId(), memberId)
+            || loadProjectMemberPort.isActivePlanMember(projectId, memberId)) {
+            return new ProjectScoped(projectId);
+        }
+
+        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
+        if (roles.stream().anyMatch(r -> r.roleType().isSuperAdmin())) {
+            return new ProjectScoped(projectId);
+        }
+
+        List<ChallengerRoleInfo> rolesInGisu = roles.stream()
+            .filter(r -> Objects.equals(r.gisuId(), project.getGisuId()))
+            .toList();
+
+        if (rolesInGisu.stream().anyMatch(
+            r -> r.roleType().isAtLeastCentralCore() || (r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
+                && Objects.equals(r.organizationId(), project.getChapterId())) || (
+                r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT && Objects.equals(r.organizationId(),
+                    project.getProductOwnerSchoolId())))) {
+            return new ProjectScoped(projectId);
+        }
+
+        return new None();
+    }
+
+    /**
+     * 운영진 모니터링 화면.
+     * <ol>
+     *   <li>SUPER_ADMIN → {@link All}</li>
+     *   <li>해당 기수 총괄단 → {@link AllInGisu}</li>
+     *   <li>해당 기수 지부장 → {@link ChapterScoped}</li>
+     *   <li>그 외 → {@link None}</li>
+     * </ol>
+     */
+    public ProjectApplicationAccessScope resolveForManagement(Long memberId, Long gisuId) {
+        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
+
+        if (roles.stream().anyMatch(r -> r.roleType().isSuperAdmin())) {
+            return new All();
+        }
+
+        List<ChallengerRoleInfo> rolesInGisu = roles.stream()
+            .filter(r -> Objects.equals(r.gisuId(), gisuId))
+            .toList();
+
+        if (rolesInGisu.stream().anyMatch(r -> r.roleType().isAtLeastCentralCore())) {
+            return new AllInGisu(gisuId);
+        }
+
+        List<Long> chapterIds = rolesInGisu.stream()
+            .filter(r -> r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT)
+            .map(ChallengerRoleInfo::organizationId)
+            .toList();
+        if (!chapterIds.isEmpty()) {
+            return new ChapterScoped(chapterIds, gisuId);
+        }
+
+        return new None();
+    }
+}

@@ -47,6 +47,14 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     }
 
     @Override
+    public List<Challenger> listAllByMemberIds(Set<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return List.of();
+        }
+        return repository.findByMemberIdIn(memberIds);
+    }
+
+    @Override
     public List<Challenger> getAllByGisuId(Long gisuId) {
         return repository.findByGisuId(gisuId);
     }
@@ -70,6 +78,26 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     @Override
     public List<Challenger> getAllByIds(Set<Long> ids) {
         return repository.findByIdIn(ids);
+    }
+
+    @Override
+    public List<Challenger> batchGetByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return List.of();
+        }
+        List<Challenger> challengers = repository.findByMemberIdInAndGisuId(memberIds, gisuId);
+        if (challengers.size() != memberIds.size()) {
+            throw new ChallengerDomainException(ChallengerErrorCode.NO_CHALLENGER_IN_MEMBER_GISU);
+        }
+        return challengers;
+    }
+
+    @Override
+    public List<Challenger> listByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId) {
+        if (memberIds == null || memberIds.isEmpty() || gisuId == null) {
+            return List.of();
+        }
+        return repository.findByMemberIdInAndGisuId(memberIds, gisuId);
     }
 
     @Override

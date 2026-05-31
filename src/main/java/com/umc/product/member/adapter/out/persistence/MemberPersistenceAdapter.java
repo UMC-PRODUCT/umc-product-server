@@ -6,7 +6,10 @@ import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.application.port.out.SearchMemberPort;
 import com.umc.product.member.domain.Member;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +52,23 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     }
 
     @Override
+    public Set<Long> listIdsBySchoolId(Long schoolId) {
+        return memberJpaRepository.findAllIdsBySchoolId(schoolId);
+    }
+
+    @Override
+    public Map<Long, Set<Long>> listIdsBySchoolIds(Set<Long> schoolIds) {
+        if (schoolIds == null || schoolIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Set<Long>> result = new HashMap<>();
+        for (MemberJpaRepository.SchoolMemberIdRow row : memberJpaRepository.findAllIdsBySchoolIds(schoolIds)) {
+            result.computeIfAbsent(row.getSchoolId(), ignored -> new HashSet<>()).add(row.getMemberId());
+        }
+        return result;
+    }
+
+    @Override
     public boolean existsById(Long id) {
         return memberJpaRepository.existsById(id);
     }
@@ -81,5 +101,29 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     @Override
     public Page<Challenger> search(SearchMemberQuery query, Pageable pageable) {
         return memberQueryRepository.searchBy(query, pageable);
+    }
+
+    @Override
+    public Page<Long> searchMemberIds(SearchMemberQuery query, Pageable pageable) {
+        return memberQueryRepository.searchMemberIdsBy(query, pageable);
+    }
+
+    @Override
+    public List<Long> findAllIdsCursor(Long lastId, Pageable pageable) {
+        return memberJpaRepository.findIdsCursor(lastId, pageable);
+    }
+
+    @Override
+    public long countMembersByIds(Set<Long> memberIds) {
+
+        if (memberIds == null || memberIds.isEmpty()) {
+            return 0L;
+        }
+        return memberJpaRepository.countByIdIn(memberIds);
+    }
+
+    @Override
+    public long countAllMembers() {
+        return memberJpaRepository.count();
     }
 }

@@ -25,7 +25,7 @@ public class TrophyController {
     private final GetChallengerUseCase getChallengerUseCase;
 
     @PostMapping
-    @Operation(summary = "베스트 워크북 생성", description = "주차별 베스트 워크북을 생성합니다.")
+    @Operation(summary = "[TROPHY-001] 베스트 워크북 생성", description = "주차별 베스트 워크북을 생성합니다.")
     public TrophyResponse createTrophy(
         @RequestBody CreateTrophyRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
