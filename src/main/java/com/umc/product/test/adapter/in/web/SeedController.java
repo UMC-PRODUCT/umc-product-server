@@ -161,18 +161,20 @@ public class SeedController {
         summary = "[SEED-006] 지원서 시나리오 시딩",
         description = """
             지정 매칭 차수 + 지부를 기준으로, 아직 팀에 합류하지 않은 ACTIVE 챌린저들이
-            랜덤 프로젝트에 지원서를 제출하고 합불 결정까지 완료하는 시나리오를 실행합니다.
+            지부의 IN_PROGRESS 프로젝트에 지원서를 제출하는 시나리오를 실행합니다.
 
             전제 조건:
             - 매칭차수가 현재 OPEN 상태(startsAt <= now <= endsAt)여야 합니다.
             - 지부 내 IN_PROGRESS 프로젝트가 존재해야 합니다. (SEED-003-S 선행 필요)
             - 챌린저가 시딩되어 있어야 합니다. (SEED-002 선행 필요)
 
-            파라미터:
-            - approveRatio: 제출된 지원서 중 APPROVED 처리할 비율 (0.0 ~ 1.0, 생략 시 기본값 0.5).
-              예) 0.7 이면 지원자의 약 70%가 APPROVED, 나머지 30%는 REJECTED 처리됩니다.
+            동작:
+            각 챌린저는 createDraft → fill → submit 까지 진행한 뒤, 최종 상태가
+            SUBMITTED / APPROVED / REJECTED 중 하나로 무작위 결정됩니다 (약 1/3 분포).
+            그 결과로 운영 화면의 "검토 대기 + 합격자 + 불합격자" 분포가 자연스럽게 채워집니다.
 
-            APPROVED 처리된 챌린저는 ProjectMember로도 등록되어 매칭현황 통계에 반영됩니다.
+            ProjectMember 등록은 시딩 책임 밖입니다. 매칭 완료(APPROVED → ProjectMember 일괄 등록)는
+            차수 종료 시점의 autoDecide 가 처리합니다.
             """
     )
     @PostMapping("/project-applications")

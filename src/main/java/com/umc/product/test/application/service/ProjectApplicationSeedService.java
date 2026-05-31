@@ -2,17 +2,15 @@ package com.umc.product.test.application.service;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,17 +30,11 @@ import com.umc.product.project.application.port.in.command.dto.SubmitProjectAppl
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectApplicationDraftCommand;
 import com.umc.product.project.application.port.in.query.GetProjectApplicationFormUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectMatchingRoundUseCase;
-import com.umc.product.project.application.port.in.query.GetProjectUseCase;
+import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
 import com.umc.product.project.application.port.in.query.dto.ApplicationFormInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRoundInfo;
-import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
-import com.umc.product.project.application.port.out.LoadProjectMemberPort;
-import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
-import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
-import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
-import com.umc.product.project.domain.ProjectApplication;
-import com.umc.product.project.domain.ProjectMember;
-import com.umc.product.project.domain.ProjectPartQuota;
+import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.test.application.port.in.command.SeedProjectApplicationsUseCase;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectApplicationsCommand;
@@ -55,13 +47,21 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 지원서 시나리오 시딩 서비스.
  * <p>
- * 지정 매칭 차수 + 지부를 기준으로, 아직 팀에 합류하지 않은 ACTIVE 챌린저들이 랜덤 프로젝트에 Draft 생성 → 더미 답변 → Submit → 합불 결정 → APPROVED 시 ProjectMember
- * 등록까지 실행한다.
+ * 지정 매칭 차수 + 지부를 기준으로, 아직 팀에 합류하지 않은 ACTIVE 챌린저들이 IN_PROGRESS 프로젝트에
+ * Draft → 더미 답변 → Submit 까지 진행한다. 그 뒤 각 챌린저의 최종 상태는
+ * {@code SUBMITTED} / {@code APPROVED} / {@code REJECTED} 중 하나로 무작위 결정된다 (≈ 1/3 분포).
+ * 그 결과로 운영 화면의 "검토 대기 + 합격자 + 불합격자" 분포가 자연스럽게 채워진다.
  * <p>
- * <b>전제 조건</b>: 매칭차수가 현재 OPEN 상태(startsAt <= now <= endsAt)여야 한다.
+ * <b>전제 조건</b>: 매칭 차수가 현재 OPEN 상태(startsAt &lt;= now &lt;= endsAt)여야 한다.
  * <p>
- * <b>트랜잭션 정책</b>: {@link Propagation#NOT_SUPPORTED}. 각 UseCase 가 자체 트랜잭션을 가지므로
- * 한 챌린저 시나리오가 실패해도 이전 성공 건은 commit 된다.
+ * <b>도메인 가드에 위임</b>: 자기지원 / 이미 팀원 / 같은 차수 중복 지원 / 파트 불일치 등은 시딩이 사전
+ * 필터링하지 않고 도메인 UseCase 가 던지는 가드 예외를 그대로 받아 {@code failedApplications} 에 누적한다.
+ * <p>
+ * <b>ProjectMember 등록은 시딩 책임 밖</b>: APPROVED status 만 변경하고 ProjectMember 는 생성하지 않는다.
+ * 매칭 완료 (APPROVED → ProjectMember 일괄 등록) 는 차수 종료 시점의 {@code autoDecide} 가 처리한다.
+ * <p>
+ * <b>트랜잭션 정책</b>: {@link Propagation#NOT_SUPPORTED}. 각 UseCase 가 자체 트랜잭션을 가지므로 한
+ * 챌린저 시나리오가 실패해도 이전 성공 건은 commit 된다.
  */
 @Slf4j
 @Service
@@ -71,28 +71,22 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 public class ProjectApplicationSeedService implements SeedProjectApplicationsUseCase {
 
+    private final GetGisuUseCase getGisuUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetProjectMatchingRoundUseCase getProjectMatchingRoundUseCase;
     private final GetProjectApplicationFormUseCase getProjectApplicationFormUseCase;
-    private final GetProjectUseCase getProjectUseCase;
-    private final GetGisuUseCase getGisuUseCase;
+    private final SearchProjectUseCase searchProjectUseCase;
 
     private final CreateDraftProjectApplicationUseCase createDraftProjectApplicationUseCase;
     private final UpdateProjectApplicationDraftUseCase updateProjectApplicationDraftUseCase;
     private final SubmitProjectApplicationUseCase submitProjectApplicationUseCase;
     private final DecideApplicationUseCase decideApplicationUseCase;
 
-    // 시딩 서비스 특성상 통계/조회용 Port 직접 주입 (UseCase 미존재 or 과도한 데이터 로딩 방지)
-    private final LoadProjectStatisticsPort loadProjectStatisticsPort;
-    private final LoadProjectApplicationPort loadProjectApplicationPort;
-    private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
-    private final LoadProjectMemberPort loadProjectMemberPort;
-
     @Override
     public SeedProjectApplicationsResult seed(SeedProjectApplicationsCommand command) {
         long startedAt = System.currentTimeMillis();
 
-        // 1. 매칭차수 조회 - chapterId 소속 여부 검증 및 type 파악
+        // 1. 매칭차수 조회 — chapterId 소속 + OPEN 검증
         ProjectMatchingRoundInfo round = getProjectMatchingRoundUseCase
             .list(command.chapterId(), null).stream()
             .filter(r -> r.id().equals(command.matchingRoundId()))
@@ -102,7 +96,6 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
                     .formatted(command.matchingRoundId(), command.chapterId())
             ));
 
-        // 1-a. 차수 OPEN 검증 — 닫힌 차수면 모든 챌린저가 도메인 가드에 막혀 의미 없는 N번 실패가 됨
         Instant now = Instant.now();
         if (now.isBefore(round.startsAt()) || now.isAfter(round.endsAt())) {
             throw new IllegalArgumentException(
@@ -111,66 +104,35 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
             );
         }
 
-        // 2. 지부 내 IN_PROGRESS 프로젝트 목록
-        List<ProjectStatisticsProjectRow> projects =
-            loadProjectStatisticsPort.listProjectsByChapterId(command.chapterId());
+        // 2. 차수 type 에 맞는 ACTIVE 챌린저 풀 — 사전 필터링은 part 와 status 만, 나머지는 도메인 가드 위임
+        Long gisuId = getGisuUseCase.getActiveGisuId();
+        Set<ChallengerPart> eligibleParts = eligibleParts(round.type());
+        List<ChallengerInfo> challengers = getChallengerUseCase.getAllByGisuId(gisuId).stream()
+            .filter(c -> c.challengerStatus() == ChallengerStatus.ACTIVE)
+            .filter(c -> eligibleParts.contains(c.part()))
+            .toList();
+
+        if (challengers.isEmpty()) {
+            log.warn("project application seed skipped: gisuId={} 에 type={} 챌린저가 없습니다.",
+                gisuId, round.type());
+            return new SeedProjectApplicationsResult(0, 0, 0, List.of());
+        }
+
+        // 3. 지부의 IN_PROGRESS 프로젝트 목록 — 챌린저 시점 검색 호출자로 풀의 첫 ID 사용
+        Long searcherMemberId = challengers.get(0).memberId();
+        Page<ProjectInfo> projectPage = searchProjectUseCase.search(
+            SearchProjectQuery.forChallenger(
+                gisuId, null, command.chapterId(), null, null, null, Pageable.unpaged()
+            ),
+            searcherMemberId
+        );
+        List<ProjectInfo> projects = projectPage.getContent();
+
         if (projects.isEmpty()) {
             log.warn("project application seed skipped: chapterId={} 에 IN_PROGRESS 프로젝트가 없습니다.",
                 command.chapterId());
             return new SeedProjectApplicationsResult(0, 0, 0, List.of());
         }
-
-        Set<Long> projectIds = projects.stream()
-            .map(ProjectStatisticsProjectRow::projectId)
-            .collect(Collectors.toSet());
-        Long gisuId = getGisuUseCase.getActiveGisuId();
-
-        // 3. 프로젝트별 PO memberId 사전 캐시 (AddProjectMemberUseCase requesterMemberId 용)
-        Map<Long, Long> ownerByProjectId = projectIds.stream()
-            .collect(Collectors.toMap(
-                id -> id,
-                id -> getProjectUseCase.getById(id).productOwnerMemberId()
-            ));
-
-        // 4. 프로젝트별 파트 TO 사전 캐시
-        Map<Long, Map<ChallengerPart, Long>> quotaByProject =
-            loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(projectIds).entrySet().stream()
-                .collect(Collectors.toMap(
-                    Map.Entry::getKey,
-                    e -> e.getValue().stream().collect(
-                        Collectors.toMap(ProjectPartQuota::getPart, ProjectPartQuota::getQuota))
-                ));
-
-        // 4-1. 프로젝트별·파트별 현재 ACTIVE 멤버 수 캐시 (쿼터 초과 방지용, 시딩 중 인메모리 갱신)
-        Map<Long, Map<ChallengerPart, Long>> currentMemberCounts =
-            loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(projectIds).entrySet().stream()
-                .collect(Collectors.toMap(
-                    Map.Entry::getKey,
-                    e -> new HashMap<>(e.getValue()),
-                    (a, b) -> a,
-                    HashMap::new
-                ));
-
-        // 4-2. 이미 팀원인 memberId Set 배치 조회 (N+1 방지 — 챌린저 풀 필터링에 사용)
-        Set<Long> alreadyMemberIds = loadProjectMemberPort.listByProjectIds(projectIds).values().stream()
-            .flatMap(List::stream)
-            .map(ProjectMember::getMemberId)
-            .collect(Collectors.toSet());
-
-        // 5. 이미 해당 차수에 지원한 memberId Set (중복 지원 방지)
-        Set<Long> alreadyApplied = loadProjectApplicationPort
-            .listByMatchingRoundId(command.matchingRoundId()).stream()
-            .map(ProjectApplication::getApplicantMemberId)
-            .collect(Collectors.toSet());
-
-        // 6. 매칭차수 type에 맞는 ACTIVE 챌린저 풀 구성 (이미 팀원이거나 이미 지원한 챌린저 제외)
-        Set<ChallengerPart> eligibleParts = eligibleParts(round.type());
-        List<ChallengerInfo> challengers = getChallengerUseCase.getAllByGisuId(gisuId).stream()
-            .filter(c -> c.challengerStatus() == ChallengerStatus.ACTIVE)
-            .filter(c -> eligibleParts.contains(c.part()))
-            .filter(c -> !alreadyApplied.contains(c.memberId()))
-            .filter(c -> !alreadyMemberIds.contains(c.memberId()))
-            .toList();
 
         log.info(
             "project application seed start: chapterId={}, matchingRoundId={}, roundType={}, "
@@ -179,58 +141,39 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
             projects.size(), challengers.size()
         );
 
-        // 7. 챌린저마다 시나리오 실행
+        // 4. 각 챌린저마다 시나리오 실행
         List<FailedApplication> failures = new ArrayList<>();
         int submittedCount = 0;
         int approvedCount = 0;
         int rejectedCount = 0;
 
         for (ChallengerInfo challenger : challengers) {
-            // 쿼터 여유분이 있는 프로젝트만 후보로 포함 (현재 ACTIVE 수 < 쿼터)
-            List<Long> candidates = projectIds.stream()
-                .filter(pid -> {
-                    Long quota = quotaByProject.getOrDefault(pid, Map.of()).get(challenger.part());
-                    if (quota == null) {
-                        return false;
-                    }
-                    long current = currentMemberCounts
-                        .getOrDefault(pid, Map.of())
-                        .getOrDefault(challenger.part(), 0L);
-                    return current < quota;
-                })
-                .filter(pid -> !ownerByProjectId.get(pid).equals(challenger.memberId()))
-                .collect(Collectors.toList());
+            // 본인 part 모집 중이고 본인이 PO 가 아닌 프로젝트 후보 — 나머지 (이미 팀원/지원 등) 는 도메인 가드 위임
+            List<ProjectInfo> candidates = projects.stream()
+                .filter(p -> p.partQuotas().stream().anyMatch(q -> q.part() == challenger.part()))
+                .filter(p -> !p.productOwnerMemberId().equals(challenger.memberId()))
+                .toList();
 
             if (candidates.isEmpty()) {
                 failures.add(new FailedApplication(
                     challenger.memberId(), null, "NO_PROJECT",
-                    "파트=%s 를 모집하는 프로젝트가 없거나 모든 프로젝트의 쿼터가 소진되었습니다.".formatted(challenger.part())
+                    "파트=%s 를 모집하는 프로젝트가 없습니다.".formatted(challenger.part())
                 ));
                 continue;
             }
 
-            Collections.shuffle(candidates);
-            Long projectId = candidates.get(0);
-            Long poMemberId = ownerByProjectId.get(projectId);
+            ProjectInfo picked = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
+            Long projectId = picked.id();
+            Long poMemberId = picked.productOwnerMemberId();
 
             ApplicationOutcome outcome = runApplicationScenario(
-                challenger, projectId, poMemberId, command.matchingRoundId(), command.approveRatio()
+                challenger, projectId, poMemberId, command.matchingRoundId()
             );
 
             switch (outcome.step()) {
-                case "APPROVED" -> {
-                    submittedCount++;
-                    approvedCount++;
-                    // 이번 호출 안에서 같은 프로젝트·파트 쿼터 여유분이 다음 챌린저 후보 필터에 반영되도록 갱신.
-                    // ProjectMember 직접 추가는 도메인 정상 플로우(autoDecide)가 처리해야 하므로 시딩이 손대지 않는다.
-                    currentMemberCounts
-                        .computeIfAbsent(projectId, k -> new HashMap<>())
-                        .merge(challenger.part(), 1L, Long::sum);
-                }
-                case "REJECTED" -> {
-                    submittedCount++;
-                    rejectedCount++;
-                }
+                case "SUBMITTED" -> submittedCount++;
+                case "APPROVED" -> approvedCount++;
+                case "REJECTED" -> rejectedCount++;
                 default -> failures.add(new FailedApplication(
                     challenger.memberId(), projectId, outcome.step(), outcome.reason()
                 ));
@@ -247,8 +190,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
     }
 
     private ApplicationOutcome runApplicationScenario(
-        ChallengerInfo challenger, Long projectId, Long poMemberId,
-        Long matchingRoundId, Double approveRatio
+        ChallengerInfo challenger, Long projectId, Long poMemberId, Long matchingRoundId
     ) {
         // DRAFT 생성
         Long applicationId;
@@ -299,10 +241,16 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
             return ApplicationOutcome.fail("SUBMIT", e.toString());
         }
 
-        // 합불 결정
-        boolean approve = ThreadLocalRandom.current().nextDouble() < approveRatio;
-        ApplicationDecisionStatus decision =
-            approve ? ApplicationDecisionStatus.APPROVED : ApplicationDecisionStatus.REJECTED;
+        // 최종 상태 무작위 결정: SUBMITTED / APPROVED / REJECTED ≈ 1/3 분포
+        // 도메인이 상태 토글을 자유롭게 허용하므로 어떤 분포든 운영자가 화면에서 보정 가능 (revertToPending 등).
+        int rand = ThreadLocalRandom.current().nextInt(3);
+        if (rand == 0) {
+            return ApplicationOutcome.success("SUBMITTED");
+        }
+
+        ApplicationDecisionStatus decision = (rand == 1)
+            ? ApplicationDecisionStatus.APPROVED
+            : ApplicationDecisionStatus.REJECTED;
         try {
             decideApplicationUseCase.decide(applicationId, decision, null, poMemberId);
         } catch (Exception e) {
@@ -310,12 +258,12 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
                 challenger.memberId(), projectId, decision, e.toString());
             return ApplicationOutcome.fail("DECIDE", e.toString());
         }
-
-        return ApplicationOutcome.success(approve ? "APPROVED" : "REJECTED");
+        return ApplicationOutcome.success(decision.name());
     }
 
     /**
-     * isRequired=true 인 질문만 추려 더미 텍스트 답변을 구성한다. 챌린저 시점으로 form 조회 — COMMON 섹션 + 본인 파트 PART 섹션만 노출되어 마스킹된 섹션은 자동 제외된다.
+     * isRequired=true 인 질문만 추려 더미 텍스트 답변을 구성한다. 챌린저 시점으로 form 조회 — COMMON 섹션 +
+     * 본인 파트 PART 섹션만 노출되어 마스킹된 섹션은 자동 제외된다.
      */
     private List<UpdateProjectApplicationDraftCommand.AnswerEntry> buildDummyAnswers(
         Long projectId, Long challengerMemberId
