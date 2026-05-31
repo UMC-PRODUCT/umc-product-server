@@ -3,7 +3,9 @@ package com.umc.product.test.application.service;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -36,10 +38,14 @@ import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRoundInfo;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.domain.enums.MatchingType;
+import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.test.application.port.in.command.SeedProjectApplicationsUseCase;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectApplicationsCommand;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectApplicationsResult;
+import com.umc.product.test.application.port.in.command.dto.SeedProjectApplicationsResult.ApplicationEntry;
+import com.umc.product.test.application.port.in.command.dto.SeedProjectApplicationsResult.Counts;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectApplicationsResult.FailedApplication;
+import com.umc.product.test.application.port.in.command.dto.SeedProjectApplicationsResult.ProjectApplications;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -115,7 +121,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
         if (challengers.isEmpty()) {
             log.warn("project application seed skipped: gisuId={} 에 type={} 챌린저가 없습니다.",
                 gisuId, round.type());
-            return new SeedProjectApplicationsResult(0, 0, 0, List.of());
+            return emptyResult(command.matchingRoundId());
         }
 
         // 3. 지부의 IN_PROGRESS 프로젝트 목록 — 챌린저 시점 검색 호출자로 풀의 첫 ID 사용
@@ -131,7 +137,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
         if (projects.isEmpty()) {
             log.warn("project application seed skipped: chapterId={} 에 IN_PROGRESS 프로젝트가 없습니다.",
                 command.chapterId());
-            return new SeedProjectApplicationsResult(0, 0, 0, List.of());
+            return emptyResult(command.matchingRoundId());
         }
 
         log.info(
@@ -142,6 +148,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
         );
 
         // 4. 각 챌린저마다 시나리오 실행
+        Map<Long, List<ApplicationEntry>> applicationsByProject = new LinkedHashMap<>();
         List<FailedApplication> failures = new ArrayList<>();
         int submittedCount = 0;
         int approvedCount = 0;
@@ -156,7 +163,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
 
             if (candidates.isEmpty()) {
                 failures.add(new FailedApplication(
-                    challenger.memberId(), null, "NO_PROJECT",
+                    challenger.memberId(), null, null, "NO_PROJECT",
                     "파트=%s 를 모집하는 프로젝트가 없습니다.".formatted(challenger.part())
                 ));
                 continue;
@@ -171,11 +178,24 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
             );
 
             switch (outcome.step()) {
-                case "SUBMITTED" -> submittedCount++;
-                case "APPROVED" -> approvedCount++;
-                case "REJECTED" -> rejectedCount++;
+                case "SUBMITTED" -> {
+                    submittedCount++;
+                    recordApplication(applicationsByProject, projectId, outcome.applicationId(),
+                        challenger, ProjectApplicationStatus.SUBMITTED);
+                }
+                case "APPROVED" -> {
+                    approvedCount++;
+                    recordApplication(applicationsByProject, projectId, outcome.applicationId(),
+                        challenger, ProjectApplicationStatus.APPROVED);
+                }
+                case "REJECTED" -> {
+                    rejectedCount++;
+                    recordApplication(applicationsByProject, projectId, outcome.applicationId(),
+                        challenger, ProjectApplicationStatus.REJECTED);
+                }
                 default -> failures.add(new FailedApplication(
-                    challenger.memberId(), projectId, outcome.step(), outcome.reason()
+                    challenger.memberId(), projectId, outcome.applicationId(),
+                    outcome.step(), outcome.reason()
                 ));
             }
         }
@@ -186,7 +206,28 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
             elapsed, submittedCount, approvedCount, rejectedCount, failures.size()
         );
 
-        return new SeedProjectApplicationsResult(submittedCount, approvedCount, rejectedCount, failures);
+        List<ProjectApplications> createdApplications = applicationsByProject.entrySet().stream()
+            .map(e -> new ProjectApplications(e.getKey(), e.getValue()))
+            .toList();
+        Counts counts = new Counts(submittedCount, approvedCount, rejectedCount, failures.size());
+        return new SeedProjectApplicationsResult(
+            command.matchingRoundId(), createdApplications, failures, counts
+        );
+    }
+
+    private SeedProjectApplicationsResult emptyResult(Long matchingRoundId) {
+        return new SeedProjectApplicationsResult(
+            matchingRoundId, List.of(), List.of(), new Counts(0, 0, 0, 0)
+        );
+    }
+
+    private void recordApplication(
+        Map<Long, List<ApplicationEntry>> byProject,
+        Long projectId, Long applicationId,
+        ChallengerInfo challenger, ProjectApplicationStatus status
+    ) {
+        byProject.computeIfAbsent(projectId, k -> new ArrayList<>())
+            .add(new ApplicationEntry(applicationId, challenger.memberId(), challenger.part(), status));
     }
 
     private ApplicationOutcome runApplicationScenario(
@@ -205,7 +246,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
         } catch (Exception e) {
             log.error("seed DRAFT 실패 (memberId={}, projectId={}): {}",
                 challenger.memberId(), projectId, e.toString());
-            return ApplicationOutcome.fail("DRAFT", e.toString());
+            return ApplicationOutcome.fail("DRAFT", e.toString(), null);
         }
 
         // 더미 답변 채우기 (isRequired=true 질문 대응)
@@ -224,7 +265,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
         } catch (Exception e) {
             log.error("seed FILL 실패 (memberId={}, projectId={}): {}",
                 challenger.memberId(), projectId, e.toString());
-            return ApplicationOutcome.fail("FILL", e.toString());
+            return ApplicationOutcome.fail("FILL", e.toString(), applicationId);
         }
 
         // 제출
@@ -238,14 +279,14 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
         } catch (Exception e) {
             log.error("seed SUBMIT 실패 (memberId={}, projectId={}): {}",
                 challenger.memberId(), projectId, e.toString());
-            return ApplicationOutcome.fail("SUBMIT", e.toString());
+            return ApplicationOutcome.fail("SUBMIT", e.toString(), applicationId);
         }
 
         // 최종 상태 무작위 결정: SUBMITTED / APPROVED / REJECTED ≈ 1/3 분포
         // 도메인이 상태 토글을 자유롭게 허용하므로 어떤 분포든 운영자가 화면에서 보정 가능 (revertToPending 등).
         int rand = ThreadLocalRandom.current().nextInt(3);
         if (rand == 0) {
-            return ApplicationOutcome.success("SUBMITTED");
+            return ApplicationOutcome.success("SUBMITTED", applicationId);
         }
 
         ApplicationDecisionStatus decision = (rand == 1)
@@ -256,9 +297,9 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
         } catch (Exception e) {
             log.error("seed DECIDE 실패 (memberId={}, projectId={}, decision={}): {}",
                 challenger.memberId(), projectId, decision, e.toString());
-            return ApplicationOutcome.fail("DECIDE", e.toString());
+            return ApplicationOutcome.fail("DECIDE", e.toString(), applicationId);
         }
-        return ApplicationOutcome.success(decision.name());
+        return ApplicationOutcome.success(decision.name(), applicationId);
     }
 
     /**
@@ -296,14 +337,14 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
         );
     }
 
-    private record ApplicationOutcome(String step, String reason) {
+    private record ApplicationOutcome(String step, String reason, Long applicationId) {
 
-        static ApplicationOutcome success(String step) {
-            return new ApplicationOutcome(step, null);
+        static ApplicationOutcome success(String step, Long applicationId) {
+            return new ApplicationOutcome(step, null, applicationId);
         }
 
-        static ApplicationOutcome fail(String step, String reason) {
-            return new ApplicationOutcome(step, reason);
+        static ApplicationOutcome fail(String step, String reason, Long applicationId) {
+            return new ApplicationOutcome(step, reason, applicationId);
         }
     }
 }
