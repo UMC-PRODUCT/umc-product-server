@@ -1,5 +1,6 @@
 package com.umc.product.test.application.service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -21,12 +22,10 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import com.umc.product.project.application.port.in.command.AddProjectMemberUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.DecideApplicationUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectApplicationDraftUseCase;
-import com.umc.product.project.application.port.in.command.dto.AddProjectMemberCommand;
 import com.umc.product.project.application.port.in.command.dto.ApplicationDecisionStatus;
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectApplicationCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectApplicationCommand;
@@ -82,7 +81,6 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
     private final UpdateProjectApplicationDraftUseCase updateProjectApplicationDraftUseCase;
     private final SubmitProjectApplicationUseCase submitProjectApplicationUseCase;
     private final DecideApplicationUseCase decideApplicationUseCase;
-    private final AddProjectMemberUseCase addProjectMemberUseCase;
 
     // 시딩 서비스 특성상 통계/조회용 Port 직접 주입 (UseCase 미존재 or 과도한 데이터 로딩 방지)
     private final LoadProjectStatisticsPort loadProjectStatisticsPort;
@@ -103,6 +101,15 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
                 "matchingRoundId=%d 가 chapterId=%d 에 속하지 않습니다."
                     .formatted(command.matchingRoundId(), command.chapterId())
             ));
+
+        // 1-a. 차수 OPEN 검증 — 닫힌 차수면 모든 챌린저가 도메인 가드에 막혀 의미 없는 N번 실패가 됨
+        Instant now = Instant.now();
+        if (now.isBefore(round.startsAt()) || now.isAfter(round.endsAt())) {
+            throw new IllegalArgumentException(
+                "matchingRoundId=%d 는 현재 OPEN 상태가 아닙니다 (now=%s, startsAt=%s, endsAt=%s)."
+                    .formatted(command.matchingRoundId(), now, round.startsAt(), round.endsAt())
+            );
+        }
 
         // 2. 지부 내 IN_PROGRESS 프로젝트 목록
         List<ProjectStatisticsProjectRow> projects =
@@ -211,11 +218,11 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
             );
 
             switch (outcome.step()) {
-                case "SUBMITTED" -> submittedCount++;
                 case "APPROVED" -> {
                     submittedCount++;
                     approvedCount++;
-                    // ADD_MEMBER 성공 → 인메모리 카운트 갱신 (다음 챌린저의 쿼터 여유분 계산에 반영)
+                    // 이번 호출 안에서 같은 프로젝트·파트 쿼터 여유분이 다음 챌린저 후보 필터에 반영되도록 갱신.
+                    // ProjectMember 직접 추가는 도메인 정상 플로우(autoDecide)가 처리해야 하므로 시딩이 손대지 않는다.
                     currentMemberCounts
                         .computeIfAbsent(projectId, k -> new HashMap<>())
                         .merge(challenger.part(), 1L, Long::sum);
@@ -304,27 +311,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
             return ApplicationOutcome.fail("DECIDE", e.toString());
         }
 
-        if (!approve) {
-            return ApplicationOutcome.success("REJECTED");
-        }
-
-        // APPROVED → ProjectMember 추가 (통계의 APPROVED + ACTIVE 교집합 조건 충족용)
-        try {
-            addProjectMemberUseCase.add(
-                AddProjectMemberCommand.builder()
-                    .projectId(projectId)
-                    .memberId(challenger.memberId())
-                    .part(challenger.part())
-                    .requesterMemberId(poMemberId)
-                    .build()
-            );
-        } catch (Exception e) {
-            log.error("seed ADD_MEMBER 실패 (memberId={}, projectId={}): {}",
-                challenger.memberId(), projectId, e.toString());
-            return ApplicationOutcome.fail("ADD_MEMBER", e.toString());
-        }
-
-        return ApplicationOutcome.success("APPROVED");
+        return ApplicationOutcome.success(approve ? "APPROVED" : "REJECTED");
     }
 
     /**
