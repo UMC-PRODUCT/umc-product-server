@@ -16,6 +16,8 @@ import com.umc.product.test.adapter.in.web.dto.SeedMembersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedMembersResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedNoticeRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedNoticeResponse;
+import com.umc.product.test.adapter.in.web.dto.SeedProjectApplicationsRequest;
+import com.umc.product.test.adapter.in.web.dto.SeedProjectApplicationsResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectScenariosRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectScenariosResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectsRequest;
@@ -24,6 +26,7 @@ import com.umc.product.test.application.port.in.command.SeedChallengersUseCase;
 import com.umc.product.test.application.port.in.command.SeedCurriculumUseCase;
 import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
 import com.umc.product.test.application.port.in.command.SeedNoticeUseCase;
+import com.umc.product.test.application.port.in.command.SeedProjectApplicationsUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectScenariosUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
 
@@ -53,6 +56,7 @@ public class SeedController {
     private final SeedChallengersUseCase seedChallengersUseCase;
     private final SeedProjectsUseCase seedProjectsUseCase;
     private final SeedProjectScenariosUseCase seedProjectScenariosUseCase;
+    private final SeedProjectApplicationsUseCase seedProjectApplicationsUseCase;
     private final SeedCurriculumUseCase seedCurriculumUseCase;
     private final SeedNoticeUseCase seedNoticeUseCase;
 
@@ -124,6 +128,7 @@ public class SeedController {
         return SeedProjectScenariosResponse.from(seedProjectScenariosUseCase.seed(request.toCommand()));
     }
 
+
     @Operation(
         operationId = "SEED-004",
         summary = "Curriculum 시딩 (Curriculum · WeeklyCurriculum · OriginalWorkbook · Mission)",
@@ -156,5 +161,34 @@ public class SeedController {
     @PostMapping("/notice")
     public SeedNoticeResponse seedNotice(@RequestBody @Valid SeedNoticeRequest request) {
         return SeedNoticeResponse.from(seedNoticeUseCase.seed(request.toCommand()));
+    }
+
+    @Operation(
+        summary = "[SEED-006] 지원서 시나리오 시딩",
+        description = """
+            지정 매칭 차수 + 지부를 기준으로, 아직 팀에 합류하지 않은 ACTIVE 챌린저들이
+            지부의 IN_PROGRESS 프로젝트에 지원서를 제출하는 시나리오를 실행합니다.
+
+            전제 조건:
+            - 매칭차수가 현재 OPEN 상태(startsAt <= now <= endsAt)여야 합니다.
+            - 지부 내 IN_PROGRESS 프로젝트가 존재해야 합니다. (SEED-003-S 선행 필요)
+            - 챌린저가 시딩되어 있어야 합니다. (SEED-002 선행 필요)
+
+            동작:
+            각 챌린저는 createDraft → fill → submit 까지 진행한 뒤, 최종 상태가
+            SUBMITTED / APPROVED / REJECTED 중 하나로 무작위 결정됩니다 (약 1/3 분포).
+            그 결과로 운영 화면의 "검토 대기 + 합격자 + 불합격자" 분포가 자연스럽게 채워집니다.
+
+            ProjectMember 등록은 시딩 책임 밖입니다. 매칭 완료(APPROVED → ProjectMember 일괄 등록)는
+            차수 종료 시점의 autoDecide 가 처리합니다.
+            """
+    )
+    @PostMapping("/project-applications")
+    public SeedProjectApplicationsResponse seedProjectApplications(
+        @RequestBody @Valid SeedProjectApplicationsRequest request
+    ) {
+        return SeedProjectApplicationsResponse.from(
+            seedProjectApplicationsUseCase.seed(request.toCommand())
+        );
     }
 }

@@ -2,6 +2,12 @@ package com.umc.product.test.adapter.in.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
+
 import com.umc.product.test.application.service.ChallengerSeedService;
 import com.umc.product.test.application.service.CurriculumSeedService;
 import com.umc.product.test.application.service.DummyCurriculumFactory;
@@ -10,13 +16,9 @@ import com.umc.product.test.application.service.DummyNoticeFactory;
 import com.umc.product.test.application.service.MemberSeedService;
 import com.umc.product.test.application.service.NoticeSeedService;
 import com.umc.product.test.application.service.PartAssignmentPolicy;
+import com.umc.product.test.application.service.ProjectApplicationSeedService;
 import com.umc.product.test.application.service.ProjectSeedService;
 import com.umc.product.test.application.service.SeedProperties;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Profile;
 
 /**
  * 시딩 관련 빈들의 가드 어노테이션이 회귀 없이 유지되는지 검증한다.
@@ -33,6 +35,7 @@ class SeedControllerBeanRegistrationTest {
         MemberSeedService.class,
         ChallengerSeedService.class,
         ProjectSeedService.class,
+        ProjectApplicationSeedService.class,
         CurriculumSeedService.class,
         NoticeSeedService.class,
         DummyMemberFactory.class,
