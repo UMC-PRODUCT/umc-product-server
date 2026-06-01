@@ -213,9 +213,13 @@ jobs:
               exit 1
             fi
 
+            ORIGINAL_DOCKER_CONFIG="${DOCKER_CONFIG:-${HOME:-}/.docker}"
+            CURRENT_DOCKER_CONTEXT="$("${DOCKER_BIN}" context show 2>/dev/null || true)"
+            USING_DOCKER_HOST_FALLBACK=false
+
             echo "[1] Docker 환경 확인"
             echo "Docker Path=${DOCKER_BIN}"
-            echo "Docker Context=$("${DOCKER_BIN}" context show 2>/dev/null || echo "unknown")"
+            echo "Docker Context=${CURRENT_DOCKER_CONTEXT:-unknown}"
             echo "Docker Host=${DOCKER_HOST:-context-default}"
 
             if ! "${DOCKER_BIN}" info >/dev/null 2>&1; then
@@ -225,6 +229,7 @@ jobs:
               for docker_socket in "${HOME:-}/.docker/run/docker.sock" "${HOME:-}/.colima/default/docker.sock"; do
                 if [ -S "${docker_socket}" ]; then
                   export DOCKER_HOST="unix://${docker_socket}"
+                  USING_DOCKER_HOST_FALLBACK=true
                   echo "Docker socket fallback 적용: ${DOCKER_HOST}"
                   break
                 fi
@@ -236,6 +241,39 @@ jobs:
               fi
             fi
 
+            DOCKER_CONFIG="$(mktemp -d)"
+            export DOCKER_CONFIG
+
+            if [ -d "${ORIGINAL_DOCKER_CONFIG}/contexts" ]; then
+              cp -R "${ORIGINAL_DOCKER_CONFIG}/contexts" "${DOCKER_CONFIG}/contexts"
+            fi
+
+            if [ -d "${ORIGINAL_DOCKER_CONFIG}/cli-plugins" ]; then
+              mkdir -p "${DOCKER_CONFIG}/cli-plugins"
+              for plugin in "${ORIGINAL_DOCKER_CONFIG}"/cli-plugins/*; do
+                [ -e "${plugin}" ] || continue
+                ln -s "${plugin}" "${DOCKER_CONFIG}/cli-plugins/$(basename "${plugin}")"
+              done
+            fi
+
+            if [ "${USING_DOCKER_HOST_FALLBACK}" = "false" ] && [ -z "${DOCKER_HOST:-}" ] && [ -n "${CURRENT_DOCKER_CONTEXT}" ]; then
+              export DOCKER_CONTEXT="${CURRENT_DOCKER_CONTEXT}"
+            fi
+
+            cleanup() {
+              "${DOCKER_BIN}" logout "${ECR_REGISTRY}" >/dev/null 2>&1 || true
+              rm -rf "${DOCKER_CONFIG}"
+            }
+            trap cleanup EXIT
+
+            echo "Docker Isolated Config=${DOCKER_CONFIG}"
+
+            if ! "${DOCKER_BIN}" info >/dev/null 2>&1; then
+              echo "격리된 Docker config에서 Docker daemon에 연결할 수 없습니다."
+              "${DOCKER_BIN}" context ls || true
+              exit 1
+            fi
+
             if "${DOCKER_BIN}" compose version >/dev/null 2>&1; then
               COMPOSE_MODE="docker-plugin"
             elif command -v docker-compose >/dev/null 2>&1; then
@@ -243,7 +281,7 @@ jobs:
               DOCKER_COMPOSE_BIN="$(command -v docker-compose)"
             else
               echo "docker compose 플러그인을 찾을 수 없습니다."
-              find "${HOME:-}/.docker" -maxdepth 3 -type f -name 'docker-compose' 2>/dev/null || true
+              find "${ORIGINAL_DOCKER_CONFIG}" -maxdepth 3 -type f -name 'docker-compose' 2>/dev/null || true
               exit 1
             fi
 
@@ -258,12 +296,16 @@ jobs:
             echo "Docker Compose Mode=${COMPOSE_MODE}"
 
             echo "[2] ECR 인증 설정"
-            printf '%s' "${ECR_PASSWORD}" | "${DOCKER_BIN}" login --username AWS --password-stdin "${ECR_REGISTRY}" >/dev/null
-
-            cleanup() {
-              "${DOCKER_BIN}" logout "${ECR_REGISTRY}" >/dev/null 2>&1 || true
+            ECR_AUTH="$(printf 'AWS:%s' "${ECR_PASSWORD}" | base64 | tr -d '\n')"
+            cat > "${DOCKER_CONFIG}/config.json" << EOF
+            {
+              "auths": {
+                "${ECR_REGISTRY}": {
+                  "auth": "${ECR_AUTH}"
+                }
+              }
             }
-            trap cleanup EXIT
+            EOF
 
             echo "[3] 애플리케이션 디렉토리 확인"
             if [ ! -d "${SERVER_APP_DIRECTORY}" ]; then
