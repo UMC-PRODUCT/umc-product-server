@@ -41,10 +41,13 @@ jobs:
     env:
       ENVIRONMENT: ${{ needs.ci-and-build.outputs.environment }}
       IMAGE_TAG: ${{ needs.ci-and-build.outputs.image_tag }}
-      AWS_REGION: ap-northeast-2
-      ECR_REPOSITORY: umc-product-server
-      S3_APP_ENV_URI: ${{ secrets.AWS_S3_APP_ENV_URI }}
-      APP_REPLICAS: ${{ vars.DEV_APP_REPLICAS || '1' }}
+      AWS_REGION: ${{ vars.AWS_REGION || 'ap-northeast-2' }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY || 'umc-product-server' }}
+      APP_PORT: ${{ vars.APP_PORT || '8080' }}
+      MANAGEMENT_PORT: ${{ vars.MANAGEMENT_PORT || '9090' }}
+      SECRET_S3_URI: ${{ vars.SECRET_S3_URI }}
+      APP_REPLICAS: ${{ vars.APP_REPLICAS || vars.DEV_APP_REPLICAS || '1' }}
 
     steps:
       - name: 환경변수 검증
@@ -74,8 +77,12 @@ jobs:
           [[ -z "$SERVER_SSH_PORT" ]] && MISSING_VARS+=("SERVER_SSH_PORT")
           [[ -z "$POSTGRES_USER" ]] && MISSING_VARS+=("POSTGRES_USER")
           [[ -z "$POSTGRES_PASSWORD" ]] && MISSING_VARS+=("POSTGRES_PASSWORD")
+          [[ -z "$AWS_REGION" ]] && MISSING_VARS+=("AWS_REGION")
+          [[ -z "$ECR_REPOSITORY" ]] && MISSING_VARS+=("ECR_REPOSITORY")
+          [[ -z "$APP_PORT" ]] && MISSING_VARS+=("APP_PORT")
+          [[ -z "$MANAGEMENT_PORT" ]] && MISSING_VARS+=("MANAGEMENT_PORT")
           [[ -z "$IMAGE_TAG" ]] && MISSING_VARS+=("IMAGE_TAG")
-          [[ -z "$S3_APP_ENV_URI" ]] && MISSING_VARS+=("S3_APP_ENV_URI")
+          [[ -z "$SECRET_S3_URI" ]] && MISSING_VARS+=("SECRET_S3_URI")
           [[ -z "$APP_REPLICAS" ]] && MISSING_VARS+=("APP_REPLICAS")
 
           if [ ${#MISSING_VARS[@]} -gt 0 ]; then
@@ -83,6 +90,14 @@ jobs:
             printf ' - %s\n' "${MISSING_VARS[@]}"
             exit 1
           fi
+
+          for value_name in APP_PORT MANAGEMENT_PORT APP_REPLICAS; do
+            value="${!value_name}"
+            if ! [[ "${value}" =~ ^[0-9]+$ ]]; then
+              echo "::error::${value_name} must be numeric. current=${value}"
+              exit 1
+            fi
+          done
 
           echo "모든 필수 환경 변수가 설정되었습니다."
 
@@ -100,10 +115,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+          if [[ -z "${AWS_ACCOUNT_ID}" ]]; then
+            AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+          fi
+
           ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           ECR_PASSWORD="$(aws ecr get-login-password --region "${AWS_REGION}")"
-          APP_ENV_B64="$(aws s3 cp "${S3_APP_ENV_URI}" - | base64 -w 0)"
+          APP_ENV_B64="$(aws s3 cp "${SECRET_S3_URI}" - | base64 -w 0)"
 
           echo "::add-mask::${ECR_PASSWORD}"
           echo "::add-mask::${APP_ENV_B64}"
@@ -122,7 +140,8 @@ jobs:
           echo "Environment: ${ENVIRONMENT}"
           echo "Image: ${ECR_IMAGE_NAME}:${IMAGE_TAG}"
           echo "App Replicas: ${APP_REPLICAS}"
-          echo "App Env: ${S3_APP_ENV_URI}"
+          echo "App Port: ${APP_PORT}"
+          echo "Management Port: ${MANAGEMENT_PORT}"
           echo "App Directory: ${{ secrets.SERVER_APP_DIRECTORY }}"
           echo "Server: ${{ secrets.SERVER_SSH_HOST }}"
           echo "User: ${{ secrets.SERVER_SSH_USERNAME }}"
@@ -160,6 +179,8 @@ jobs:
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
           SERVER_APP_DIRECTORY: ${{ secrets.SERVER_APP_DIRECTORY }}
           APP_REPLICAS: ${{ env.APP_REPLICAS }}
+          APP_PORT: ${{ env.APP_PORT }}
+          MANAGEMENT_PORT: ${{ env.MANAGEMENT_PORT }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         with:
@@ -167,7 +188,7 @@ jobs:
           username: ${{ secrets.SERVER_SSH_USERNAME }}
           key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_SSH_PORT }}
-          envs: ENVIRONMENT,IMAGE_TAG,ECR_REGISTRY,ECR_IMAGE_NAME,ECR_PASSWORD,SERVER_APP_DIRECTORY,APP_ENV_B64,APP_REPLICAS,POSTGRES_USER,POSTGRES_PASSWORD
+          envs: ENVIRONMENT,IMAGE_TAG,ECR_REGISTRY,ECR_IMAGE_NAME,ECR_PASSWORD,SERVER_APP_DIRECTORY,APP_ENV_B64,APP_REPLICAS,APP_PORT,MANAGEMENT_PORT,POSTGRES_USER,POSTGRES_PASSWORD
           script: |
             set -euo pipefail
 
@@ -262,8 +283,8 @@ jobs:
               echo "NGINX_CONTAINER_NAME=umc-product-nginx-dev"
               echo "IMAGE_NAME=${ECR_IMAGE_NAME}"
               echo "IMAGE_TAG=${IMAGE_TAG}"
-              echo "HTTP_PORT=8080"
-              echo "MANAGEMENT_PORT=9090"
+              echo "HTTP_PORT=${APP_PORT}"
+              echo "MANAGEMENT_PORT=${MANAGEMENT_PORT}"
               echo "SPRING_PROFILES_ACTIVE=dev"
               echo "APP_REPLICAS=${APP_REPLICAS}"
               echo "POSTGRES_CONTAINER_NAME=umc-product-postgres-dev"
@@ -318,7 +339,8 @@ jobs:
             echo "| Environment | \`${{ env.ENVIRONMENT }}\` |"
             echo "| Branch | \`${{ github.ref_name }}\` |"
             echo "| Image | \`${ECR_IMAGE_NAME}:${{ env.IMAGE_TAG }}\` |"
-            echo "| App Env | \`${S3_APP_ENV_URI}\` |"
+            echo "| App Port | \`${{ env.APP_PORT }}\` |"
+            echo "| Management Port | \`${{ env.MANAGEMENT_PORT }}\` |"
             echo "| Server | \`${{ secrets.SERVER_SSH_HOST }}\` |"
             echo "| Directory | \`${{ secrets.SERVER_APP_DIRECTORY }}\` |"
             echo "| Status | \`${{ job.status }}\` |"
