@@ -24,8 +24,22 @@ echo "Spring profile: ${SPRING_PROFILE}"
 echo "Secret source configured"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-apt-get update -y
-apt-get install -y docker.io docker-compose-plugin awscli curl
+ensure_bootstrap_dependencies() {
+  local missing=()
+
+  command -v docker >/dev/null 2>&1 || missing+=("docker")
+  docker compose version >/dev/null 2>&1 || missing+=("docker compose plugin")
+  command -v aws >/dev/null 2>&1 || missing+=("awscli")
+  command -v curl >/dev/null 2>&1 || missing+=("curl")
+
+  if (( ${#missing[@]} > 0 )); then
+    echo "Missing baked AMI dependencies: ${missing[*]}"
+    echo "Bake Docker, Docker Compose plugin, AWS CLI, and curl into the Launch Template AMI."
+    exit 1
+  fi
+}
+
+ensure_bootstrap_dependencies
 
 systemctl enable docker
 systemctl start docker
