@@ -28,11 +28,14 @@ services:
       valkey:
         condition: service_healthy
     expose:
-      - "8080"
+      - "${APP_PORT:-8080}"
+      - "${MANAGEMENT_PORT:-9090}"
     env_file:
       - app.env
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: ${APP_PORT:-8080}
+      MANAGEMENT_PORT: ${MANAGEMENT_PORT:-9090}
       DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       DATABASE_USERNAME: ${POSTGRES_USER}
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
