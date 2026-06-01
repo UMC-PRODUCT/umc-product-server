@@ -3,8 +3,8 @@ package com.umc.product.organization.application.service;
 import com.umc.product.curriculum.application.port.in.query.GetWeeklyCurriculumUseCase;
 import com.umc.product.organization.application.port.in.command.CreateStudyGroupScheduleUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupScheduleCommand;
+import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
 import com.umc.product.organization.application.port.out.command.SaveStudyGroupSchedulePort;
-import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.StudyGroupSchedule;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class StudyGroupScheduleService implements CreateStudyGroupScheduleUseCase {
 
     private final SaveStudyGroupSchedulePort saveStudyGroupSchedulePort;
-    private final LoadStudyGroupPort loadStudyGroupPort;
+    private final GetStudyGroupUseCase getStudyGroupUseCase;
 
     // 외부 useCase
     private final GetScheduleUseCase getScheduleUseCase;
@@ -31,7 +31,8 @@ public class StudyGroupScheduleService implements CreateStudyGroupScheduleUseCas
     public Long create(CreateStudyGroupScheduleCommand command) {
 
         // studyGroup 없으면 에러 반환
-        loadStudyGroupPort.getById(command.studyGroupId());
+        getStudyGroupUseCase.findById(command.studyGroupId())
+            .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NOT_FOUND));
 
         // schedule 존재 여부 및 출석 정책 필수 여부 확인
         ScheduleBaseInfo scheduleInfo = getScheduleUseCase.getScheduleBaseInfo(command.scheduleId());

@@ -8,4 +8,8 @@ public class EmailDomainException extends BusinessException {
     public EmailDomainException(EmailErrorCode emailErrorCode) {
         super(Domain.EMAIL, emailErrorCode);
     }
+
+    public EmailDomainException(EmailErrorCode emailErrorCode, Throwable cause) {
+        super(Domain.EMAIL, emailErrorCode, cause);
+    }
 }

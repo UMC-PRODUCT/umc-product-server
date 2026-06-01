@@ -4,12 +4,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
@@ -26,7 +24,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@Component
 public class TermConsentEnforcementFilter extends OncePerRequestFilter {
 
     private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
@@ -54,7 +51,6 @@ public class TermConsentEnforcementFilter extends OncePerRequestFilter {
     private final RequestMappingHandlerMapping requestMappingHandlerMapping;
     private volatile List<PublicEndpointCollector.EndpointMatcher> publicEndpoints;
 
-    @Autowired
     public TermConsentEnforcementFilter(
         ObjectMapper objectMapper,
         RequestMappingHandlerMapping requestMappingHandlerMapping

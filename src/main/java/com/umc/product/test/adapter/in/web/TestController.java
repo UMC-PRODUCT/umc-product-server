@@ -1,5 +1,16 @@
 package com.umc.product.test.adapter.in.web;
 
+import java.util.List;
+
+import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authentication.adapter.out.external.AppleOAuthProperties;
@@ -25,19 +36,11 @@ import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import com.umc.product.test.dto.FcmTestSendRequest;
 import com.umc.product.test.dto.TestAopAlarmResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @Profile("local | dev")
@@ -59,7 +62,7 @@ public class TestController {
     /**
      * 파일 정보 및 접근 URL을 조회합니다.
      */
-    @Operation(summary = "[TEST-001] [개발용] 파일 ID를 기반으로 접근 가능한 URL을 조회합니다.", description = """
+    @Operation(operationId = "TEST-001", summary = "[개발용] 파일 ID를 기반으로 접근 가능한 URL을 조회합니다.", description = """
         local 및 development 환경에서만 사용 가능합니다.
 
         크롤링을 방지하기 위한 절차입니다. 파일이 정상적으로 업로드되었는지 확인하는 용도로만 사용하세요.
@@ -71,7 +74,7 @@ public class TestController {
         return ApiResponse.onSuccess(FileResponse.from(fileInfo));
     }
 
-    @Operation(summary = "[TEST-002] FCM 푸시 알림 테스트 전송")
+    @Operation(operationId = "TEST-002", summary = "FCM 푸시 알림 테스트 전송")
     @PostMapping("/fcm/test-send")
     public void sendTestNotification(@RequestBody FcmTestSendRequest request) {
         sendNotificationToAudienceUseCase.sendToMember(request.toCommand());
@@ -98,7 +101,7 @@ public class TestController {
         description = "'내용 : ' + #result.content"
     )
     @GetMapping("webhook/aop-test")
-    @Operation(summary = "[TEST-003] AOP로 전송하는 알람 테스트")
+    @Operation(operationId = "TEST-003", summary = "AOP로 전송하는 알람 테스트")
     public TestAopAlarmResponse sendAopWebhookAlarm(
         @RequestParam String title,
         @RequestParam String content
@@ -111,7 +114,7 @@ public class TestController {
     }
 
     @PostMapping("webhook/alarm")
-    @Operation(summary = "[TEST-004] 웹훅 알람 전송 테스트")
+    @Operation(operationId = "TEST-004", summary = "웹훅 알람 전송 테스트")
     public void sendWebhookAlarm(
         @RequestParam String title,
         @RequestParam String content
@@ -127,7 +130,7 @@ public class TestController {
 
     // buffer alarm test
     @PostMapping("webhook/alarm/buffer")
-    @Operation(summary = "[TEST-005] 웹훅 알람 버퍼 전송 테스트")
+    @Operation(operationId = "TEST-005", summary = "웹훅 알람 버퍼 전송 테스트")
     public void sendBufferedWebhookAlarm(
         @RequestParam String title,
         @RequestParam String content,
@@ -148,13 +151,13 @@ public class TestController {
     }
 
     @GetMapping("apple-client-secret")
-    @Operation(summary = "[TEST-006] Apple Client Secret 생성")
+    @Operation(operationId = "TEST-006", summary = "Apple Client Secret 생성")
     String getAppleClientSecret(@RequestParam ClientType clientType) {
         return appleTokenVerifier.generateClientSecret(appleOAuthProperties.resolveClientId(clientType));
     }
 
     @Public
-    @Operation(summary = "[TEST-007] AccessToken 발급")
+    @Operation(operationId = "TEST-007", summary = "AccessToken 발급")
     @GetMapping("/token/access")
     public String getAccessToken(
         @RequestParam Long memberId,
@@ -167,14 +170,14 @@ public class TestController {
             jwtTokenProvider.createAccessToken(memberId, null, expirationInMinutes * 60);
     }
 
-    @Operation(summary = "[TEST-008] RefreshToken 발급")
+    @Operation(operationId = "TEST-008", summary = "RefreshToken 발급")
     @Public
     @GetMapping("/token/refresh")
     public String getRefreshToken(@RequestParam Long memberId) {
         return jwtTokenProvider.createRefreshToken(memberId);
     }
 
-    @Operation(summary = "[TEST-009] EmailVerificationToken 발급")
+    @Operation(operationId = "TEST-009", summary = "EmailVerificationToken 발급")
     @Public
     @GetMapping("/token/email")
     public String getEmailVerification(
@@ -184,7 +187,7 @@ public class TestController {
         return jwtTokenProvider.createEmailVerificationToken(email, purpose);
     }
 
-    @Operation(summary = "[TEST-010] oAuthVerificationToken 발급")
+    @Operation(operationId = "TEST-010", summary = "oAuthVerificationToken 발급")
     @Public
     @GetMapping("/token/oauth")
     public String getOAuthVerificationToken(OAuthProvider provider, String providerId, String email) {
@@ -192,14 +195,14 @@ public class TestController {
     }
 
 
-    @Operation(summary = "[TEST-011] 헬스 체크 API")
+    @Operation(operationId = "TEST-011", summary = "헬스 체크 API")
     @Public
     @GetMapping("/health-check")
     public String healthCheck() {
         return "OK";
     }
 
-    @Operation(summary = "[TEST-012] 인증된 사용자인지 여부를 확인합니다.", description = "인증되지 않은 사용자인 경우 401을 반환합니다.")
+    @Operation(operationId = "TEST-012", summary = "인증된 사용자인지 여부를 확인합니다.", description = "인증되지 않은 사용자인 경우 401을 반환합니다.")
     @GetMapping("/check-authenticated")
     public ApiResponse<String> checkAuthenticated(@CurrentMember MemberPrincipal currentUser) {
         return ApiResponse.onSuccess(currentUser.toString());

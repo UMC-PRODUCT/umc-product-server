@@ -58,6 +58,16 @@ app:
           "private_key_id": "test-private
       }
 
+  notification:
+    email:
+      ses:
+        region: ap-northeast-2
+        access-key-id: test-access-key
+        secret-access-key: test-secret-key
+      sender:
+        no-reply-address: noreply@test.umc.local
+        no-reply-display-name: UMC Test
+
 
   oauth2:
     google:

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -66,20 +67,19 @@ public class SecurityConfig {
     private final ApiAuthenticationEntryPoint authenticationEntryPoint;
     private final ApiAccessDeniedHandler accessDeniedHandler;
     private final RequestMappingHandlerMapping requestMappingHandlerMapping;
-    private final TermConsentEnforcementFilter termConsentEnforcementFilter;
 
     // application.yml에서 cors.allowed-origin-patterns 값을 List 형태로 주입받음
     @Value("${app.cors.allowed-origin-patterns}")
     private List<String> allowedOriginPatterns;
 
     /**
-     * Swagger용 SecurityFilterChain (dev에서만 활성화, local은 따로 제약을 걸지 않음)
+     * Swagger용 SecurityFilterChain (local을 제외한 환경에서 활성화)
      * <p>
      * HTTP Basic 인증 적용 - 순서가 먼저라서 Swagger 경로는 이 체인이 처리
      */
     @Bean
     @Order(1)
-    @Profile("dev")
+    @Profile("!local")
     public SecurityFilterChain swaggerSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher(STATIC_FILE_PATHS)
@@ -96,10 +96,9 @@ public class SecurityConfig {
     }
 
     /**
-     * 점검 모드 필터. JWT 다음에 동작해서 점검 중 일반 사용자 요청을 503 으로 차단한다.
-     * {@code @Component} 가 아닌 명시 {@code @Bean} 으로 두는 이유: 슬라이스 테스트
-     * ({@code @WebMvcTest}) 의 자동 Filter 디스커버리가 본 필터의 의존성까지 끌어와 컨텍스트 로딩을
-     * 실패시키는 것을 막기 위함이다. SecurityConfig 는 슬라이스 테스트에 포함되지 않으므로 본 빈도 함께 제외된다.
+     * 점검 모드 필터. JWT 다음에 동작해서 점검 중 일반 사용자 요청을 503 으로 차단한다. {@code @Component} 가 아닌 명시 {@code @Bean} 으로 두는 이유: 슬라이스 테스트
+     * ({@code @WebMvcTest}) 의 자동 Filter 디스커버리가 본 필터의 의존성까지 끌어와 컨텍스트 로딩을 실패시키는 것을 막기 위함이다. SecurityConfig 는 슬라이스 테스트에
+     * 포함되지 않으므로 본 빈도 함께 제외된다.
      */
     @Bean
     public MaintenanceFilter maintenanceFilter(
@@ -111,11 +110,27 @@ public class SecurityConfig {
     }
 
     /**
+     * 약관 재동의 강제 필터. MaintenanceFilter 와 동일하게 명시 {@code @Bean} 으로 등록해서
+     * {@code @WebMvcTest} 슬라이스가 필터 의존성을 자동 스캔하지 않도록 한다.
+     */
+    @Bean
+    public TermConsentEnforcementFilter termConsentEnforcementFilter(
+        ObjectMapper objectMapper,
+        RequestMappingHandlerMapping requestMappingHandlerMapping
+    ) {
+        return new TermConsentEnforcementFilter(objectMapper, requestMappingHandlerMapping);
+    }
+
+    /**
      * 메인 Security 체인. JWT → MaintenanceFilter → 인가 순서로 동작한다.
      */
     @Bean
     @Order(2)
-    public SecurityFilterChain filterChain(HttpSecurity http, MaintenanceFilter maintenanceFilter) throws Exception {
+    public SecurityFilterChain filterChain(
+        HttpSecurity http,
+        MaintenanceFilter maintenanceFilter,
+        TermConsentEnforcementFilter termConsentEnforcementFilter
+    ) throws Exception {
         List<PublicEndpointCollector.EndpointMatcher> publicEndpoints = PublicEndpointCollector
             .collectPublicEndpoints(requestMappingHandlerMapping);
 
@@ -176,10 +191,10 @@ public class SecurityConfig {
     }
 
     /**
-     * Swagger Basic Auth용 InMemoryUserDetailsManager (dev 프로필)
+     * Swagger Basic Auth용 InMemoryUserDetailsManager (local 제외)
      */
     @Bean
-    @Profile("dev")
+    @Profile("!local")
     public UserDetailsService swaggerUserDetailsService(
         @Value("${app.swagger-auth.username:username}") String username,
         @Value("${app.swagger-auth.password:password}") String password,
@@ -199,7 +214,7 @@ public class SecurityConfig {
      * Spring Security가 "인증 체계가 구성되어 있다"고 인식하도록 하기 위한 더미 Bean
      */
     @Bean
-    @Profile("!dev")
+    @ConditionalOnMissingBean(UserDetailsService.class) // Dummy Bean이라서 Conditional로 변경
     public UserDetailsService userDetailsService() {
         return username -> {
             throw new UsernameNotFoundException(
@@ -210,9 +225,8 @@ public class SecurityConfig {
     /**
      * 비밀번호 해시는 password_hash 단일 컬럼에 "{id}encoded" prefix 형태로 저장한다.
      * <p>
-     * 신규 저장은 Argon2 를 기본으로 하고, 기존/외부 호환을 위해 bcrypt 검증도 함께 등록한다.
-     * 알고리즘/파라미터가 갱신되더라도 기존 해시를 그대로 검증할 수 있으며,
-     * 로그인 성공 시 {@link PasswordEncoder#upgradeEncoding} 으로 점진적 rehash 를 수행한다.
+     * 신규 저장은 Argon2 를 기본으로 하고, 기존/외부 호환을 위해 bcrypt 검증도 함께 등록한다. 알고리즘/파라미터가 갱신되더라도 기존 해시를 그대로 검증할 수 있으며, 로그인 성공 시
+     * {@link PasswordEncoder#upgradeEncoding} 으로 점진적 rehash 를 수행한다.
      */
     @Bean
     public PasswordEncoder passwordEncoder() {

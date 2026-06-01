@@ -11,9 +11,12 @@ on:
       - 'config/checkstyle/**'
       - '.editorconfig'
       - 'docker/**'
+      - 'codedeploy/**'
       - '.github/workflows/ci.yml'
       #      - '.github/workflows/cd.yml'
       - '.github/workflows/cd-ecr.yml'
+      - '.github/workflows/cd-asg.yml'
+      - 'infra/asg/**'
 
   workflow_dispatch:
     inputs:
@@ -144,6 +147,12 @@ jobs:
           reporter: 'java-junit'
           use-actions-summary: 'true'
           fail-on-error: 'false'
+
+      - name: 🚨 테스트 실패 시 중단
+        if: steps.test.outcome == 'failure'
+        run: |
+          echo "::error::테스트가 실패하여 빌드 및 배포를 중단합니다."
+          exit 1
 
       - name: 🏗️ Build JAR
         run: ./gradlew bootJar

@@ -34,17 +34,22 @@ jobs:
   deploy:
     name: Deploy to Develop Home Server
     needs: ci-and-build
-    if: github.ref == 'refs/heads/develop' && needs.ci-and-build.outputs.environment == 'Development'
+    if: (github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch') && needs.ci-and-build.outputs.environment == 'Development'
     runs-on: ubuntu-latest
     environment: Development
 
     env:
       ENVIRONMENT: ${{ needs.ci-and-build.outputs.environment }}
       IMAGE_TAG: ${{ needs.ci-and-build.outputs.image_tag }}
-      AWS_REGION: ap-northeast-2
-      ECR_REPOSITORY: umc-product-server
-      S3_APP_ENV_URI: ${{ secrets.AWS_S3_APP_ENV_URI }}
-      APP_REPLICAS: ${{ vars.DEV_APP_REPLICAS || '1' }}
+      AWS_REGION: ${{ vars.AWS_REGION || 'ap-northeast-2' }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY || 'umc-product-server' }}
+      HTTP_PORT: ${{ vars.HTTP_PORT || '8080' }}
+      APP_PORT: ${{ vars.APP_PORT || '8080' }}
+      MANAGEMENT_PORT: ${{ vars.MANAGEMENT_PORT || '9090' }}
+      SECRET_S3_URI: ${{ vars.SECRET_S3_URI }}
+      APP_REPLICAS: ${{ vars.APP_REPLICAS || '1' }}
+      HEALTHCHECK_TIMEOUT: ${{ vars.HEALTHCHECK_TIMEOUT || '180' }}
 
     steps:
       - name: 환경변수 검증
@@ -74,15 +79,29 @@ jobs:
           [[ -z "$SERVER_SSH_PORT" ]] && MISSING_VARS+=("SERVER_SSH_PORT")
           [[ -z "$POSTGRES_USER" ]] && MISSING_VARS+=("POSTGRES_USER")
           [[ -z "$POSTGRES_PASSWORD" ]] && MISSING_VARS+=("POSTGRES_PASSWORD")
+          [[ -z "$AWS_REGION" ]] && MISSING_VARS+=("AWS_REGION")
+          [[ -z "$ECR_REPOSITORY" ]] && MISSING_VARS+=("ECR_REPOSITORY")
+          [[ -z "$HTTP_PORT" ]] && MISSING_VARS+=("HTTP_PORT")
+          [[ -z "$APP_PORT" ]] && MISSING_VARS+=("APP_PORT")
+          [[ -z "$MANAGEMENT_PORT" ]] && MISSING_VARS+=("MANAGEMENT_PORT")
           [[ -z "$IMAGE_TAG" ]] && MISSING_VARS+=("IMAGE_TAG")
-          [[ -z "$S3_APP_ENV_URI" ]] && MISSING_VARS+=("S3_APP_ENV_URI")
+          [[ -z "$SECRET_S3_URI" ]] && MISSING_VARS+=("SECRET_S3_URI")
           [[ -z "$APP_REPLICAS" ]] && MISSING_VARS+=("APP_REPLICAS")
+          [[ -z "$HEALTHCHECK_TIMEOUT" ]] && MISSING_VARS+=("HEALTHCHECK_TIMEOUT")
 
           if [ ${#MISSING_VARS[@]} -gt 0 ]; then
             echo "다음 환경 변수들이 설정되지 않았습니다:"
             printf ' - %s\n' "${MISSING_VARS[@]}"
             exit 1
           fi
+
+          for value_name in HTTP_PORT APP_PORT MANAGEMENT_PORT APP_REPLICAS HEALTHCHECK_TIMEOUT; do
+            value="${!value_name}"
+            if ! [[ "${value}" =~ ^[0-9]+$ ]]; then
+              echo "::error::${value_name} must be numeric. current=${value}"
+              exit 1
+            fi
+          done
 
           echo "모든 필수 환경 변수가 설정되었습니다."
 
@@ -100,10 +119,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+          if [[ -z "${AWS_ACCOUNT_ID}" ]]; then
+            AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+          fi
+
           ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           ECR_PASSWORD="$(aws ecr get-login-password --region "${AWS_REGION}")"
-          APP_ENV_B64="$(aws s3 cp "${S3_APP_ENV_URI}" - | base64 -w 0)"
+          APP_ENV_B64="$(aws s3 cp "${SECRET_S3_URI}" - | base64 -w 0)"
 
           echo "::add-mask::${ECR_PASSWORD}"
           echo "::add-mask::${APP_ENV_B64}"
@@ -122,7 +144,9 @@ jobs:
           echo "Environment: ${ENVIRONMENT}"
           echo "Image: ${ECR_IMAGE_NAME}:${IMAGE_TAG}"
           echo "App Replicas: ${APP_REPLICAS}"
-          echo "App Env: ${S3_APP_ENV_URI}"
+          echo "HTTP Port: ${HTTP_PORT}"
+          echo "App Port: ${APP_PORT}"
+          echo "Management Port: ${MANAGEMENT_PORT}"
           echo "App Directory: ${{ secrets.SERVER_APP_DIRECTORY }}"
           echo "Server: ${{ secrets.SERVER_SSH_HOST }}"
           echo "User: ${{ secrets.SERVER_SSH_USERNAME }}"
@@ -160,6 +184,10 @@ jobs:
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
           SERVER_APP_DIRECTORY: ${{ secrets.SERVER_APP_DIRECTORY }}
           APP_REPLICAS: ${{ env.APP_REPLICAS }}
+          HTTP_PORT: ${{ env.HTTP_PORT }}
+          APP_PORT: ${{ env.APP_PORT }}
+          MANAGEMENT_PORT: ${{ env.MANAGEMENT_PORT }}
+          HEALTHCHECK_TIMEOUT: ${{ env.HEALTHCHECK_TIMEOUT }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         with:
@@ -167,7 +195,7 @@ jobs:
           username: ${{ secrets.SERVER_SSH_USERNAME }}
           key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_SSH_PORT }}
-          envs: ENVIRONMENT,IMAGE_TAG,ECR_REGISTRY,ECR_IMAGE_NAME,ECR_PASSWORD,SERVER_APP_DIRECTORY,APP_ENV_B64,APP_REPLICAS,POSTGRES_USER,POSTGRES_PASSWORD
+          envs: ENVIRONMENT,IMAGE_TAG,ECR_REGISTRY,ECR_IMAGE_NAME,ECR_PASSWORD,SERVER_APP_DIRECTORY,APP_ENV_B64,APP_REPLICAS,HTTP_PORT,APP_PORT,MANAGEMENT_PORT,HEALTHCHECK_TIMEOUT,POSTGRES_USER,POSTGRES_PASSWORD
           script: |
             set -euo pipefail
 
@@ -176,7 +204,7 @@ jobs:
             echo "Image: ${ECR_IMAGE_NAME}:${IMAGE_TAG}"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-            export PATH="$PATH:/usr/local/bin:/opt/homebrew/bin"
+            export PATH="$PATH:/usr/local/bin:/opt/homebrew/bin:/Applications/Docker.app/Contents/Resources/bin"
 
             DOCKER_BIN="$(command -v docker || true)"
 
@@ -185,13 +213,40 @@ jobs:
               exit 1
             fi
 
-            unset DOCKER_HOST
-            unset XDG_RUNTIME_DIR
-
             ORIGINAL_DOCKER_CONFIG="${DOCKER_CONFIG:-${HOME:-}/.docker}"
+            CURRENT_DOCKER_CONTEXT="$("${DOCKER_BIN}" context show 2>/dev/null || true)"
+            USING_DOCKER_HOST_FALLBACK=false
+
+            echo "[1] Docker 환경 확인"
+            echo "Docker Path=${DOCKER_BIN}"
+            echo "Docker Context=${CURRENT_DOCKER_CONTEXT:-unknown}"
+            echo "Docker Host=${DOCKER_HOST:-context-default}"
+
+            if ! "${DOCKER_BIN}" info >/dev/null 2>&1; then
+              echo "Docker daemon에 연결할 수 없습니다."
+              "${DOCKER_BIN}" context ls || true
+
+              for docker_socket in "${HOME:-}/.docker/run/docker.sock" "${HOME:-}/.colima/default/docker.sock"; do
+                if [ -S "${docker_socket}" ]; then
+                  export DOCKER_HOST="unix://${docker_socket}"
+                  USING_DOCKER_HOST_FALLBACK=true
+                  echo "Docker socket fallback 적용: ${DOCKER_HOST}"
+                  break
+                fi
+              done
+
+              if ! "${DOCKER_BIN}" info >/dev/null 2>&1; then
+                echo "Docker daemon에 연결할 수 없습니다."
+                exit 1
+              fi
+            fi
+
             DOCKER_CONFIG="$(mktemp -d)"
             export DOCKER_CONFIG
-            trap 'rm -rf "${DOCKER_CONFIG}"' EXIT
+
+            if [ -d "${ORIGINAL_DOCKER_CONFIG}/contexts" ]; then
+              cp -R "${ORIGINAL_DOCKER_CONFIG}/contexts" "${DOCKER_CONFIG}/contexts"
+            fi
 
             if [ -d "${ORIGINAL_DOCKER_CONFIG}/cli-plugins" ]; then
               mkdir -p "${DOCKER_CONFIG}/cli-plugins"
@@ -201,12 +256,20 @@ jobs:
               done
             fi
 
-            echo "[1] Docker 환경 확인"
-            echo "Docker Path=${DOCKER_BIN}"
-            echo "Docker Config=${DOCKER_CONFIG}"
+            if [ "${USING_DOCKER_HOST_FALLBACK}" = "false" ] && [ -z "${DOCKER_HOST:-}" ] && [ -n "${CURRENT_DOCKER_CONTEXT}" ]; then
+              export DOCKER_CONTEXT="${CURRENT_DOCKER_CONTEXT}"
+            fi
+
+            cleanup() {
+              "${DOCKER_BIN}" logout "${ECR_REGISTRY}" >/dev/null 2>&1 || true
+              rm -rf "${DOCKER_CONFIG}"
+            }
+            trap cleanup EXIT
+
+            echo "Docker Isolated Config=${DOCKER_CONFIG}"
 
             if ! "${DOCKER_BIN}" info >/dev/null 2>&1; then
-              echo "Docker daemon에 연결할 수 없습니다."
+              echo "격리된 Docker config에서 Docker daemon에 연결할 수 없습니다."
               "${DOCKER_BIN}" context ls || true
               exit 1
             fi
@@ -218,7 +281,6 @@ jobs:
               DOCKER_COMPOSE_BIN="$(command -v docker-compose)"
             else
               echo "docker compose 플러그인을 찾을 수 없습니다."
-              echo "기존 Docker config: ${ORIGINAL_DOCKER_CONFIG}"
               find "${ORIGINAL_DOCKER_CONFIG}" -maxdepth 3 -type f -name 'docker-compose' 2>/dev/null || true
               exit 1
             fi
@@ -254,16 +316,29 @@ jobs:
             cd "${SERVER_APP_DIRECTORY}"
 
             echo "[4] 애플리케이션 런타임 환경 파일 갱신"
-            printf '%s' "${APP_ENV_B64}" | base64 -d > app.env
+            if printf '%s' "${APP_ENV_B64}" | base64 -d > app.env 2>/dev/null; then
+              echo "app.env 디코딩 완료: base64 -d"
+            elif printf '%s' "${APP_ENV_B64}" | base64 -D > app.env 2>/dev/null; then
+              echo "app.env 디코딩 완료: base64 -D"
+            else
+              echo "app.env 디코딩에 실패했습니다."
+              exit 1
+            fi
 
-            echo "[5] Docker Compose 치환 전용 환경 파일 갱신"
+            echo "[5] Nginx 설정 렌더링"
+            TEMP_NGINX_CONFIG="$(mktemp)"
+            sed "s|__APP_PORT__|${APP_PORT}|g" nginx.conf > "${TEMP_NGINX_CONFIG}"
+            mv "${TEMP_NGINX_CONFIG}" nginx.conf
+
+            echo "[6] Docker Compose 치환 전용 환경 파일 갱신"
             {
               echo "# GitHub Actions develop deployment compose variables"
               echo "NGINX_CONTAINER_NAME=umc-product-nginx-dev"
               echo "IMAGE_NAME=${ECR_IMAGE_NAME}"
               echo "IMAGE_TAG=${IMAGE_TAG}"
-              echo "HTTP_PORT=8080"
-              echo "MANAGEMENT_PORT=9090"
+              echo "HTTP_PORT=${HTTP_PORT}"
+              echo "APP_PORT=${APP_PORT}"
+              echo "MANAGEMENT_PORT=${MANAGEMENT_PORT}"
               echo "SPRING_PROFILES_ACTIVE=dev"
               echo "APP_REPLICAS=${APP_REPLICAS}"
               echo "POSTGRES_CONTAINER_NAME=umc-product-postgres-dev"
@@ -273,15 +348,80 @@ jobs:
               echo "VALKEY_CONTAINER_NAME=umc-product-valkey-dev"
             } > .env
 
-            echo "[6] App 이미지 Pull"
+            wait_for_services_health() {
+              deadline=$(( $(date +%s) + HEALTHCHECK_TIMEOUT ))
+
+              while [ "$(date +%s)" -le "${deadline}" ]; do
+                APP_CONTAINER_ID="$(docker_compose ps -q app 2>/dev/null | head -n 1 || true)"
+                NGINX_CONTAINER_ID="$(docker_compose ps -q nginx 2>/dev/null | head -n 1 || true)"
+                APP_HEALTHY=false
+                NGINX_HEALTHY=false
+
+                if [ -n "${APP_CONTAINER_ID}" ] \
+                  && "${DOCKER_BIN}" exec "${APP_CONTAINER_ID}" curl -sf "http://localhost:${MANAGEMENT_PORT}/actuator/health" >/dev/null 2>&1; then
+                  APP_HEALTHY=true
+                fi
+
+                if [ -n "${NGINX_CONTAINER_ID}" ] \
+                  && "${DOCKER_BIN}" exec "${NGINX_CONTAINER_ID}" wget -q --spider "http://localhost/nginx-health" >/dev/null 2>&1; then
+                  NGINX_HEALTHY=true
+                fi
+
+                if [ "${APP_HEALTHY}" = "true" ] && [ "${NGINX_HEALTHY}" = "true" ]; then
+                  echo "App/Nginx healthcheck 성공"
+                  return 0
+                fi
+
+                sleep 5
+              done
+
+              echo "App/Nginx healthcheck 타임아웃: ${HEALTHCHECK_TIMEOUT}s"
+              return 1
+            }
+
+            compose_up_with_wait() {
+              if docker_compose up --help 2>/dev/null | grep -q -- '--wait'; then
+                docker_compose up -d \
+                  --scale "app=${APP_REPLICAS}" \
+                  --remove-orphans \
+                  --wait \
+                  --wait-timeout "${HEALTHCHECK_TIMEOUT}" \
+                  app nginx
+              else
+                echo "docker compose --wait 미지원: app healthcheck를 직접 확인합니다."
+                docker_compose up -d \
+                  --scale "app=${APP_REPLICAS}" \
+                  --remove-orphans \
+                  app nginx
+                wait_for_services_health
+              fi
+            }
+
+            cleanup_old_images() {
+              CURRENT_IMAGE="${ECR_IMAGE_NAME}:${IMAGE_TAG}"
+              LATEST_IMAGE="${ECR_IMAGE_NAME}:development-latest"
+              OLD_IMAGES="$("${DOCKER_BIN}" images "${ECR_IMAGE_NAME}" --format '{{.Repository}}:{{.Tag}}' 2>/dev/null || true)"
+
+              printf '%s\n' "${OLD_IMAGES}" | while IFS= read -r image_ref; do
+                [ -n "${image_ref}" ] || continue
+                case "${image_ref}" in
+                  "${CURRENT_IMAGE}"|"${LATEST_IMAGE}")
+                    continue
+                    ;;
+                esac
+
+                "${DOCKER_BIN}" image rm "${image_ref}" >/dev/null 2>&1 || true
+              done
+
+              "${DOCKER_BIN}" image prune -f >/dev/null 2>&1 || true
+            }
+
+            echo "[7] App 이미지 Pull"
             docker_compose pull app
 
-            echo "[7] 기존 컨테이너 중지"
-            docker_compose down
-
-            echo "[8] 새 컨테이너 시작"
-            if ! docker_compose up -d --scale "app=${APP_REPLICAS}" --remove-orphans; then
-              echo "컨테이너 시작 또는 healthcheck 대기 중 실패했습니다."
+            echo "[8] 서비스 갱신 및 healthcheck 대기"
+            if ! compose_up_with_wait; then
+              echo "서비스 갱신 또는 healthcheck 대기 중 실패했습니다."
               echo ""
               echo "Docker Compose 상태:"
               docker_compose ps || true
@@ -303,6 +443,9 @@ jobs:
             echo "[9] 컨테이너 상태"
             docker_compose ps
 
+            echo "[10] 오래된 app 이미지 정리"
+            cleanup_old_images
+
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "develop 홈서버 배포 완료"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -318,7 +461,9 @@ jobs:
             echo "| Environment | \`${{ env.ENVIRONMENT }}\` |"
             echo "| Branch | \`${{ github.ref_name }}\` |"
             echo "| Image | \`${ECR_IMAGE_NAME}:${{ env.IMAGE_TAG }}\` |"
-            echo "| App Env | \`${S3_APP_ENV_URI}\` |"
+            echo "| HTTP Port | \`${{ env.HTTP_PORT }}\` |"
+            echo "| App Port | \`${{ env.APP_PORT }}\` |"
+            echo "| Management Port | \`${{ env.MANAGEMENT_PORT }}\` |"
             echo "| Server | \`${{ secrets.SERVER_SSH_HOST }}\` |"
             echo "| Directory | \`${{ secrets.SERVER_APP_DIRECTORY }}\` |"
             echo "| Status | \`${{ job.status }}\` |"

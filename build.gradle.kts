@@ -10,6 +10,8 @@ plugins {
     jacoco
 }
 
+apply(from = "gradle/documentation-catalog.gradle.kts")
+
 group = "com.umc"
 version = "2.0.0"
 description = "UMC PRODUCT API by Server Team"
@@ -38,7 +40,47 @@ val queryDslVersion = "5.1.0"
 val jwtVersion = "0.12.5"
 val awsVersion = "2.40.12"
 val springAiVersion = "1.1.5"
+val otelVersion = "1.61.0"
 val otelInstrumentationVersion = "2.27.0-alpha"
+
+/*
+ * OpenTelemetry 의존성 정리
+ *
+ * 장애 원인:
+ * - opentelemetry-logback-appender-1.0:2.27.0-alpha 는
+ *   LogRecordBuilder#setException(Throwable) API 를 호출한다.
+ * - 이 API 는 opentelemetry-api:1.61.0 에 존재하지만, Spring Boot 기본 관리 버전인
+ *   1.49.0 에는 없다.
+ * - 런타임 classpath 가 1.49.0 으로 잡히면, 예외 로그를 내보내는 순간
+ *   NoSuchMethodError 가 발생한다. Tomcat 이 요청 처리 예외를 error 로그로 남기려는
+ *   시점에 다시 로깅 예외가 터져 response/exception handling 흐름까지 깨진다.
+ *
+ * 주요 의존성 역할:
+ * - spring-boot-starter-actuator: actuator, metrics 자동 설정의 Spring Boot 진입점.
+ * - micrometer-observation: Spring 관측 추상화. HTTP/DB/custom observation 을
+ *   metrics/tracing 과 연결하는 기반.
+ * - micrometer-tracing-bridge-otel: Micrometer Tracing 을 OpenTelemetry SDK 로 연결.
+ * - opentelemetry-exporter-otlp: trace/log/metric 을 OTLP 로 Collector 에 전송.
+ * - opentelemetry-logback-appender-1.0: Logback 이벤트를 OpenTelemetry Logs 로 변환.
+ * - micrometer-registry-prometheus: /actuator/prometheus scrape 용 metrics registry.
+ * - micrometer-registry-otlp: Micrometer metrics 를 OTLP endpoint 로 push.
+ * - logstash-logback-encoder: stdout JSON 로그 포맷. OpenTelemetryAppender 는 여기서
+ *   제공하는 structured arguments 도 capture 한다.
+ * - context-propagation: 비동기 작업에서 trace/span context 손실을 줄인다.
+ * - p6spy-spring-boot-starter, firebase-admin, google-cloud-storage/firestore 는
+ *   transitive dependency 로 Spring Boot BOM 또는 OTel 관련 모듈을 추가 요청할 수 있어
+ *   dependencyInsight 에 함께 나타난다.
+ * - opentelemetry-bom: OTel API/SDK/exporter 모듈 버전을 같은 축으로 정렬한다.
+ *
+ * 런타임 흐름:
+ * Tomcat 요청 처리 중 예외 발생 -> Logback error 로그 기록 -> OTEL appender 실행
+ * -> Throwable 을 OTel LogRecord 로 매핑 -> setException(Throwable) 호출
+ * -> 런타임 OTel API 버전이 낮으면 NoSuchMethodError 발생.
+ *
+ * 따라서 Spring Boot 의 opentelemetry.version 관리 속성과 명시 OTel BOM 을
+ * appender 가 컴파일된 API 버전(1.61.0)으로 정렬한다.
+ */
+extra["opentelemetry.version"] = otelVersion
 
 // REST DOCS
 val snippetsDir = file("build/generated-snippets")
@@ -102,6 +144,7 @@ dependencies {
 
     // --- OpenAPI / Swagger ---
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${springDocVersion}")
+    implementation("org.webjars.npm:markdown-it:14.1.0")
 
     // --- Utils ---
     // 서버 시작 시 자동으로 Docker Compose 실행
@@ -118,15 +161,15 @@ dependencies {
     implementation(platform("software.amazon.awssdk:bom:${awsVersion}"))
     implementation("software.amazon.awssdk:s3")
     implementation("software.amazon.awssdk:cloudfront")  // CloudFront Signed URL
+    implementation("software.amazon.awssdk:sesv2")       // AWS SES v2 (인증 이메일 발송)
     implementation("com.google.cloud:google-cloud-storage")
 
     // --- Email ---
-    implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
     // BOM으로 버전 강제 정렬
     implementation(platform("com.google.protobuf:protobuf-bom:4.29.3"))
-    implementation(platform("io.opentelemetry:opentelemetry-bom:1.44.1"))
+    implementation(platform("io.opentelemetry:opentelemetry-bom:${otelVersion}"))
 
     // --- Metrics ---
     implementation("io.micrometer:micrometer-registry-prometheus")
@@ -164,6 +207,7 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
     testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.19") // Fixture 생성에 도움을 주는 친구
+    testRuntimeOnly("jakarta.mail:jakarta.mail-api") // JavaMailSender MockitoBean 초기화에 필요
 
     testCompileOnly("org.projectlombok:lombok")
     testAnnotationProcessor("org.projectlombok:lombok")
