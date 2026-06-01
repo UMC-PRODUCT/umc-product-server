@@ -38,6 +38,8 @@ import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
 import com.umc.product.global.security.JwtAuthenticationFilter;
 import com.umc.product.global.security.util.PublicEndpointCollector;
+import com.umc.product.global.security.util.SecurityEndpoint;
+import com.umc.product.global.security.util.SecurityEndpointAllowlist;
 import com.umc.product.maintenance.adapter.in.web.filter.MaintenanceFilter;
 import com.umc.product.maintenance.application.port.out.MaintenanceBypassPolicy;
 import com.umc.product.maintenance.application.service.MaintenanceStateHolder;
@@ -52,16 +54,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class SecurityConfig {
-
-    private static final String[] STATIC_FILE_PATHS = {
-        "/swagger-ui/**",
-        "/docs/**",
-        "/v3/api-docs/**",
-        "/docs-json/**",
-        "/swagger-resources/**",
-        "/webjars/**",
-        "/umc-logo.svg"
-    };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ApiAuthenticationEntryPoint authenticationEntryPoint;
@@ -82,7 +74,7 @@ public class SecurityConfig {
     @Profile("!local")
     public SecurityFilterChain swaggerSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher(STATIC_FILE_PATHS)
+            .securityMatcher(SecurityEndpointAllowlist.staticFilePaths())
             .cors(Customizer.withDefaults())
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session ->
@@ -131,7 +123,7 @@ public class SecurityConfig {
         MaintenanceFilter maintenanceFilter,
         TermConsentEnforcementFilter termConsentEnforcementFilter
     ) throws Exception {
-        List<PublicEndpointCollector.EndpointMatcher> publicEndpoints = PublicEndpointCollector
+        List<SecurityEndpoint> publicEndpoints = PublicEndpointCollector
             .collectPublicEndpoints(requestMappingHandlerMapping);
 
         // ✅ 디버깅 로그
@@ -155,18 +147,7 @@ public class SecurityConfig {
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> {
-                // 공개 엔드포인트
-                auth.requestMatchers(
-                    // Health Check & Error
-                    "/actuator/**",
-                    "/error"
-                ).permitAll();
-
-                // Swagger
-                auth.requestMatchers(STATIC_FILE_PATHS).permitAll();
-
-                // @Public 어노테이션이 달린 엔드포인트 (HTTP 메서드 포함)
-                for (PublicEndpointCollector.EndpointMatcher endpoint : publicEndpoints) {
+                for (SecurityEndpoint endpoint : SecurityEndpointAllowlist.permitAllEndpoints(publicEndpoints)) {
                     if (endpoint.method() != null) {
                         auth.requestMatchers(endpoint.method(), endpoint.pattern()).permitAll();
                     } else {

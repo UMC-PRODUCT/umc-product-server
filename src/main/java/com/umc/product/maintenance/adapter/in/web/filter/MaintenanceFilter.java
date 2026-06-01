@@ -3,6 +3,8 @@ package com.umc.product.maintenance.adapter.in.web.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.util.SecurityEndpoint;
+import com.umc.product.global.security.util.SecurityEndpointAllowlist;
 import com.umc.product.maintenance.adapter.in.web.dto.response.MaintenanceWindowResponse;
 import com.umc.product.maintenance.application.port.in.query.dto.MaintenanceWindowInfo;
 import com.umc.product.maintenance.application.port.out.MaintenanceBypassPolicy;
@@ -21,13 +23,14 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.UrlPathHelper;
 
 /**
  * 점검 활성 시 요청을 503 으로 차단하는 필터.
@@ -43,22 +46,18 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Slf4j
 public class MaintenanceFilter extends OncePerRequestFilter {
 
-    private static final List<String> ALWAYS_ALLOW_PATTERNS = List.of(
-        "/api/v1/system/status",
-        "/api/v1/admin/maintenance/**",
-        "/api/v1/auth/**",
-        "/actuator/**",
-        // Swagger / OpenAPI 경로는 SecurityConfig.STATIC_FILE_PATHS 와 동일하게 맞춘다.
-        "/swagger-ui/**",
-        "/swagger-ui.html",
-        "/docs/**",
-        "/v3/api-docs/**",
-        "/docs-json/**",
-        "/swagger-resources/**",
-        "/webjars/**"
+    private static final List<SecurityEndpoint> MAINTENANCE_FLOW_ENDPOINTS = List.of(
+        SecurityEndpoint.any("/api/v1/system/status"),
+        SecurityEndpoint.any("/api/v1/admin/maintenance/**"),
+        SecurityEndpoint.any("/api/v1/auth/**")
     );
 
-    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+    private static final List<SecurityEndpoint> ALWAYS_ALLOW_ENDPOINTS = Stream.concat(
+        MAINTENANCE_FLOW_ENDPOINTS.stream(),
+        SecurityEndpointAllowlist.INFRASTRUCTURE_ENDPOINTS.stream()
+    ).toList();
+
+    private static final UrlPathHelper URL_PATH_HELPER = new UrlPathHelper();
 
     private final MaintenanceStateHolder stateHolder;
     private final MaintenanceBypassPolicy bypassPolicy;
@@ -91,8 +90,9 @@ public class MaintenanceFilter extends OncePerRequestFilter {
         HttpServletResponse response,
         FilterChain filterChain
     ) throws ServletException, IOException {
-        String uri = request.getRequestURI();
-        if (isAlwaysAllowed(uri)) {
+        String method = request.getMethod();
+        String uri = URL_PATH_HELPER.getPathWithinApplication(request);
+        if (isAlwaysAllowed(method, uri)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -117,8 +117,8 @@ public class MaintenanceFilter extends OncePerRequestFilter {
         writeMaintenanceResponse(response, snapshot);
     }
 
-    private boolean isAlwaysAllowed(String uri) {
-        return ALWAYS_ALLOW_PATTERNS.stream().anyMatch(p -> PATH_MATCHER.match(p, uri));
+    private boolean isAlwaysAllowed(String method, String uri) {
+        return ALWAYS_ALLOW_ENDPOINTS.stream().anyMatch(endpoint -> endpoint.matches(method, uri));
     }
 
     private boolean isTargetedDomain(String uri, MaintenanceSnapshot snapshot) {

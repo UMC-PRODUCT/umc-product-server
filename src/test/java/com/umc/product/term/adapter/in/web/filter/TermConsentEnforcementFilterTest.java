@@ -22,7 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.security.MemberPrincipal;
-import com.umc.product.global.security.util.PublicEndpointCollector;
+import com.umc.product.global.security.util.SecurityEndpoint;
 import com.umc.product.term.application.port.in.query.GetRequiredTermConsentStatusUseCase;
 
 import jakarta.servlet.ServletException;
@@ -124,9 +124,28 @@ class TermConsentEnforcementFilterTest {
         // given
         authenticate(100L, false);
         TermConsentEnforcementFilter sut = newFilter(List.of(
-            new PublicEndpointCollector.EndpointMatcher(HttpMethod.GET, "/api/v1/public/**")
+            SecurityEndpoint.of(HttpMethod.GET, "/api/v1/public/**")
         ));
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/public/resource");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain filterChain = new MockFilterChain();
+
+        // when
+        sut.doFilter(request, response, filterChain);
+
+        // then
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(filterChain.getRequest()).isSameAs(request);
+        then(getRequiredTermConsentStatusUseCase).should(never()).getRequiredTermConsentStatus(100L);
+    }
+
+    @Test
+    @DisplayName("공용 인프라 엔드포인트는 재동의 필요 상태여도 차단하지 않는다")
+    void 공용_인프라_엔드포인트는_재동의_필요_상태여도_차단하지_않는다() throws ServletException, IOException {
+        // given
+        authenticate(100L, false);
+        TermConsentEnforcementFilter sut = newFilter();
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/swagger-ui.html");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
 
@@ -173,7 +192,7 @@ class TermConsentEnforcementFilterTest {
         return newFilter(List.of());
     }
 
-    private TermConsentEnforcementFilter newFilter(List<PublicEndpointCollector.EndpointMatcher> publicEndpoints) {
+    private TermConsentEnforcementFilter newFilter(List<SecurityEndpoint> publicEndpoints) {
         return new TermConsentEnforcementFilter(
             objectMapper,
             publicEndpoints
