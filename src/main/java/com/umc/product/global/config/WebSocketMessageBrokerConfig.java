@@ -1,5 +1,6 @@
 package com.umc.product.global.config;
 
+import com.umc.product.global.websocket.handler.ApiResponseStompErrorHandler;
 import com.umc.product.global.websocket.interceptor.ShutdownAwareHandshakeInterceptor;
 import com.umc.product.global.websocket.interceptor.StompAuthChannelInterceptor;
 import com.umc.product.global.websocket.interceptor.StompPrincipalInterceptor;
@@ -32,6 +33,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
     private final WebSocketInboundMetricInterceptor webSocketInboundMetricInterceptor;
     private final WebSocketOutboundMetricInterceptor webSocketOutboundMetricInterceptor;
     private final ShutdownAwareHandshakeInterceptor shutdownAwareHandshakeInterceptor;
+    private final ApiResponseStompErrorHandler apiResponseStompErrorHandler;
     private final ObservationRegistry observationRegistry;
     private final ContextSnapshotFactory snapshotFactory;
 
@@ -45,6 +47,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.setErrorHandler(apiResponseStompErrorHandler);
         registry.addEndpoint("/ws")
             .addInterceptors(shutdownAwareHandshakeInterceptor)
             .withSockJS();
