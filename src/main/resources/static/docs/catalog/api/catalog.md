@@ -25,10 +25,10 @@
 
 | 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |
 |---:|---|---|---|---|---|:---:|---|
-| 8 | authentication | CREDENTIAL-002 | POST | `/api/v1/auth/credentials` | 비밀번호 자격증명 최초 등록 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java:45` |
-| 9 | authentication | CREDENTIAL-003 | PATCH | `/api/v1/auth/password` | 비밀번호 변경 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java:58` |
-| 10 | authentication | CREDENTIAL-005 | GET | `/api/v1/auth/email/availability` | 이메일 사용 가능 여부 조회 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java:87` |
-| 11 | authentication | CREDENTIAL-007 | PATCH | `/api/v1/auth/password/reset` | 비밀번호 초기화 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java:71` |
+| 8 | authentication | CREDENTIAL-002 | POST | `/api/v1/auth/credentials` | 비밀번호 자격증명 최초 등록 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java:47` |
+| 9 | authentication | CREDENTIAL-003 | PATCH | `/api/v1/auth/password` | 비밀번호 변경 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java:60` |
+| 10 | authentication | CREDENTIAL-005 | GET | `/api/v1/auth/email/availability` | 이메일 사용 가능 여부 조회 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java:89` |
+| 11 | authentication | CREDENTIAL-007 | PATCH | `/api/v1/auth/password/reset` | 비밀번호 초기화 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java:73` |
 | 12 | authentication | EMAIL-001 | POST | `/api/v1/auth/email-verification/code` | 6자리 인증코드로 이메일 인증 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/EmailAuthenticationController.java:34` |
 | 13 | authentication | EMAIL-002 | POST | `/api/v1/auth/email-verification` | 이메일 인증 코드 발송 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/EmailAuthenticationController.java:60` |
 | 14 | authentication | EMAIL-003 | POST | `/api/v1/auth/email-verification/resend` | 이메일 인증 코드 재전송 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/EmailAuthenticationController.java:85` |
@@ -36,7 +36,7 @@
 | 16 | authentication | LOGIN-005 | POST | `/api/v1/auth/login/kakao` | Kakao 로그인 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/swagger/AuthenticationControllerInterface.java:32` |
 | 17 | authentication | LOGIN-006 | POST | `/api/v1/auth/login/kakao/code` | Kakao 로그인 (Authorization Code 흐름) | X | `src/main/java/com/umc/product/authentication/adapter/in/web/swagger/AuthenticationControllerInterface.java:50` |
 | 18 | authentication | LOGIN-010 | POST | `/api/v1/auth/login/apple` | Apple 로그인 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/swagger/AuthenticationControllerInterface.java:68` |
-| 19 | authentication | LOGIN-011 | POST | `/api/v1/auth/login/email` | 이메일/PW 로그인 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java:98` |
+| 19 | authentication | LOGIN-011 | POST | `/api/v1/auth/login/email` | 이메일/PW 로그인 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java:100` |
 | 20 | authentication | OAUTH-001 | POST | `/api/v1/member-oauth` | 로그인용 OAuth 수단 추가 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/MemberOAuthController.java:37` |
 | 21 | authentication | OAUTH-002 | DELETE | `/api/v1/member-oauth/{memberOAuthId}` | 로그인용 OAuth 수단 제거 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/MemberOAuthController.java:58` |
 | 22 | authentication | OAUTH-101 | GET | `/api/v1/member-oauth/me` | 현재 회원 계정과 연동된 OAuth 정보 조회 | X | `src/main/java/com/umc/product/authentication/adapter/in/web/MemberOAuthController.java:81` |
@@ -183,17 +183,17 @@
 
 | 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |
 |---:|---|---|---|---|---|:---:|---|
-| 126 | member | MEMBER-001 | PATCH | `/api/v1/member` | 내 회원 정보 수정 | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java:128` |
-| 127 | member | MEMBER-002 | PATCH | `/api/v1/member/profile/links` | 내 회원 프로필 링크 수정 | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java:142` |
-| 128 | member | MEMBER-003 | DELETE | `/api/v1/member` | 회원 탈퇴 | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java:156` |
-| 129 | member | MEMBER-004 | DELETE | `/api/v1/member/{memberId}` | 관리자 권한으로 회원 게정 삭제 (Hard Delete) | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java:169` |
+| 126 | member | MEMBER-001 | PATCH | `/api/v1/member` | 내 회원 정보 수정 | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java:130` |
+| 127 | member | MEMBER-002 | PATCH | `/api/v1/member/profile/links` | 내 회원 프로필 링크 수정 | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java:144` |
+| 128 | member | MEMBER-003 | DELETE | `/api/v1/member` | 회원 탈퇴 | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java:158` |
+| 129 | member | MEMBER-004 | DELETE | `/api/v1/member/{memberId}` | 관리자 권한으로 회원 게정 삭제 (Hard Delete) | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java:171` |
 | 130 | member | MEMBER-101 | GET | `/api/v1/member/profile/{memberId}` | memberId로 회원 정보 조회 | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberQueryController.java:32` |
 | 131 | member | MEMBER-102 | GET | `/api/v1/member/me` | 내 프로필 조회 | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberQueryController.java:44` |
 | 132 | member | MEMBER-103 | GET | `/api/v1/member/search` | 회원 검색 | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberQueryController.java:50` |
 | 133 | member | MEMBER-201 | GET | `/api/v2/member/me` | 내 종합 정보 조회 | X | `src/main/java/com/umc/product/member/adapter/in/web/v2/MemberQueryV2Controller.java:39` |
 | 134 | member | MEMBER-202 | GET | `/api/v2/member/search` | 회원 검색 v2 | X | `src/main/java/com/umc/product/member/adapter/in/web/v2/MemberQueryV2Controller.java:62` |
-| 135 | member | REGISTER-001 | POST | `/api/v1/member/register` | OAuth 회원가입 | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java:59` |
-| 136 | member | REGISTER-003 | POST | `/api/v1/member/register/email` | 이메일/PW 이용 회원가입 | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java:101` |
+| 135 | member | REGISTER-001 | POST | `/api/v1/member/register` | OAuth 회원가입 | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java:61` |
+| 136 | member | REGISTER-003 | POST | `/api/v1/member/register/email` | 이메일/PW 이용 회원가입 | X | `src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java:103` |
 
 ## notice
 
@@ -275,16 +275,16 @@
 | 195 | project | APPLY-101 | GET | `/api/v1/projects/{projectId}/applications` | PM/운영진 단일 프로젝트 지원자 목록 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationQueryController.java:76` |
 | 196 | project | APPLY-102 | GET | `/api/v1/projects/{projectId}/applications/{applicationId}` | 지원서 단건 상세 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationQueryController.java:127` |
 | 197 | project | APPLY-103 | PATCH | `/api/v1/projects/{projectId}/applications/{applicationId}/decision` | 지원서 합/불 결정 (단일 PATCH) | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java:118` |
-| 198 | project | PROJECT-001 | GET | `/api/v1/projects` | 프로젝트 목록 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:43` |
-| 199 | project | PROJECT-002 | GET | `/api/v1/projects/{projectId}` | 프로젝트 상세 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:62` |
-| 200 | project | PROJECT-003 | GET | `/api/v1/projects/{projectId}/members` | 프로젝트 팀원 구성 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:80` |
-| 201 | project | PROJECT-004 | GET | `/api/v1/projects/members` | 프로젝트 팀원 구성 일괄 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:98` |
-| 202 | project | PROJECT-004 | POST | `/api/v1/projects/{projectId}/members` | 프로젝트 팀원 추가 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:142` |
-| 203 | project | PROJECT-005 | DELETE | `/api/v1/projects/{projectId}/members/{memberId}` | 프로젝트 팀원 제거 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:244` |
-| 204 | project | PROJECT-006 | GET | `/api/v1/projects/me/managed` | 내가 관리하는 프로젝트 목록 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:115` |
+| 198 | project | PROJECT-001 | GET | `/api/v1/projects` | 프로젝트 목록 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:46` |
+| 199 | project | PROJECT-002 | GET | `/api/v1/projects/{projectId}` | 프로젝트 상세 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:65` |
+| 200 | project | PROJECT-003 | GET | `/api/v1/projects/{projectId}/members` | 프로젝트 팀원 구성 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:83` |
+| 201 | project | PROJECT-004 | POST | `/api/v1/projects/{projectId}/members` | 프로젝트 팀원 추가 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:142` |
+| 202 | project | PROJECT-005 | DELETE | `/api/v1/projects/{projectId}/members/{memberId}` | 프로젝트 팀원 제거 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:244` |
+| 203 | project | PROJECT-006 | GET | `/api/v1/projects/me/managed` | 내가 관리하는 프로젝트 목록 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:118` |
+| 204 | project | PROJECT-007 | GET | `/api/v1/projects/members` | 프로젝트 팀원 구성 일괄 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:101` |
 | 205 | project | PROJECT-101 | POST | `/api/v1/projects` | 프로젝트 Draft 생성 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:62` |
 | 206 | project | PROJECT-102 | PATCH | `/api/v1/projects/{projectId}` | 프로젝트 기본정보 수정 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:81` |
-| 207 | project | PROJECT-103 | GET | `/api/v1/projects/me/draft` | 내 Draft 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:134` |
+| 207 | project | PROJECT-103 | GET | `/api/v1/projects/me/draft` | 내 Draft 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:137` |
 | 208 | project | PROJECT-104 | POST | `/api/v1/projects/{projectId}/transfer-ownership` | 프로젝트 소유권 양도 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:122` |
 | 209 | project | PROJECT-105 | PUT | `/api/v1/projects/{projectId}/part-quotas` | 파트별 정원 일괄 갱신 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:184` |
 | 210 | project | PROJECT-106 | PUT | `/api/v1/projects/{projectId}/application-form` | 지원 폼 저장 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationFormController.java:35` |
@@ -326,36 +326,51 @@
 | 236 | storage | STORAGE-002 | POST | `/api/v1/storage/{fileId}/confirm` | 파일 업로드 완료 처리 | X | `src/main/java/com/umc/product/storage/adapter/in/web/StorageController.java:57` |
 | 237 | storage | STORAGE-003 | DELETE | `/api/v1/storage/{fileId}` | 파일 삭제 | X | `src/main/java/com/umc/product/storage/adapter/in/web/StorageController.java:67` |
 
+## techblog
+
+| 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |
+|---:|---|---|---|---|---|:---:|---|
+| 238 | techblog | ADMIN-TECH-BLOG-001 | DELETE | `/api/v1/admin/tech-blog/comments/{commentId}` | 댓글 관리자 삭제 | X | `src/main/java/com/umc/product/techblog/adapter/in/web/AdminTechBlogCommentController.java:35` |
+| 239 | techblog | TECH-BLOG-001 | GET | `/api/v1/tech-blog/contents/{type}/{slug}/like` | 콘텐츠 좋아요 상태 조회 | X | `src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java:60` |
+| 240 | techblog | TECH-BLOG-002 | POST | `/api/v1/tech-blog/contents/{type}/{slug}/like` | 콘텐츠 좋아요 토글 | X | `src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java:73` |
+| 241 | techblog | TECH-BLOG-003 | GET | `/api/v1/tech-blog/contents/{type}/{slug}/comments` | 댓글 목록 조회 | X | `src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java:86` |
+| 242 | techblog | TECH-BLOG-004 | POST | `/api/v1/tech-blog/contents/{type}/{slug}/comments` | 댓글 작성 | X | `src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java:107` |
+| 243 | techblog | TECH-BLOG-005 | PATCH | `/api/v1/tech-blog/contents/{type}/{slug}/comments/{commentId}` | 댓글 수정 | X | `src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java:126` |
+| 244 | techblog | TECH-BLOG-006 | DELETE | `/api/v1/tech-blog/contents/{type}/{slug}/comments/{commentId}` | 댓글 삭제 | X | `src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java:146` |
+| 245 | techblog | TECH-BLOG-007 | POST | `/api/v1/tech-blog/contents/{type}/{slug}/comments/{commentId}/like` | 댓글 좋아요 토글 | X | `src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java:159` |
+
 ## term
 
 | 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |
 |---:|---|---|---|---|---|:---:|---|
-| 238 | term | TERM-001 | POST | `/api/v1/terms` | 약관 생성 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:48` |
-| 239 | term | TERM-101 | GET | `/api/v1/terms/type/{termType}` | 약관 유형으로 약관 조회 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:35` |
-| 240 | term | TERM-102 | GET | `/api/v1/terms/{termsId}` | 약관 ID로 약관 조회 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:42` |
+| 246 | term | TERM-001 | POST | `/api/v1/terms` | 약관 생성 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:63` |
+| 247 | term | TERM-101 | GET | `/api/v1/terms/type/{termType}` | 약관 유형으로 약관 조회 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:42` |
+| 248 | term | TERM-102 | GET | `/api/v1/terms/{termsId}` | 약관 ID로 약관 조회 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:49` |
+| 249 | term | TERM-103 | GET | `/api/v1/terms/consent-status/me` | 내 필수 약관 재동의 상태 조회 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:55` |
 
 ## test
 
 | 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |
 |---:|---|---|---|---|---|:---:|---|
-| 241 | test | <미지정> | POST | `/test/email/send-test` | <요약 없음> | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:82` |
-| 242 | test | <미지정> | GET | `/test/log-test` | <요약 없음> | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:209` |
-| 243 | test | SEED-001 | POST | `/test/seed/members` | 더미 멤버 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:57` |
-| 244 | test | SEED-002 | POST | `/test/seed/challengers` | 챌린저 분포 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:73` |
-| 245 | test | SEED-003 | POST | `/test/seed/projects` | 프로젝트 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:88` |
-| 246 | test | SEED-003-S | POST | `/test/seed/projects/scenarios` | 프로젝트 시나리오 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:104` |
-| 247 | test | SEED-004 | POST | `/test/seed/curriculum` | Curriculum 시딩 (Curriculum · WeeklyCurriculum · OriginalWorkbook · Mission) | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:125` |
-| 248 | test | SEED-005 | POST | `/test/seed/notice` | Notice 시딩 (지부 · 학교 · 파트 분포) | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:140` |
-| 249 | test | TEST-001 | GET | `/test/file/{fileId}` | [개발용] 파일 ID를 기반으로 접근 가능한 URL을 조회합니다. | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:62` |
-| 250 | test | TEST-002 | POST | `/test/fcm/test-send` | FCM 푸시 알림 테스트 전송 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:74` |
-| 251 | test | TEST-003 | GET | `/test/webhook/aop-test` | AOP로 전송하는 알람 테스트 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:101` |
-| 252 | test | TEST-004 | POST | `/test/webhook/alarm` | 웹훅 알람 전송 테스트 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:114` |
-| 253 | test | TEST-005 | POST | `/test/webhook/alarm/buffer` | 웹훅 알람 버퍼 전송 테스트 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:130` |
-| 254 | test | TEST-006 | GET | `/test/apple-client-secret` | Apple Client Secret 생성 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:151` |
-| 255 | test | TEST-007 | GET | `/test/token/access` | AccessToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:157` |
-| 256 | test | TEST-008 | GET | `/test/token/refresh` | RefreshToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:170` |
-| 257 | test | TEST-009 | GET | `/test/token/email` | EmailVerificationToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:177` |
-| 258 | test | TEST-010 | GET | `/test/token/oauth` | oAuthVerificationToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:187` |
-| 259 | test | TEST-011 | GET | `/test/health-check` | 헬스 체크 API | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:195` |
-| 260 | test | TEST-012 | GET | `/test/check-authenticated` | 인증된 사용자인지 여부를 확인합니다. | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:202` |
+| 250 | test | <미지정> | POST | `/test/email/send-test` | <요약 없음> | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:85` |
+| 251 | test | <미지정> | GET | `/test/log-test` | <요약 없음> | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:212` |
+| 252 | test | SEED-001 | POST | `/test/seed/members` | 더미 멤버 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:63` |
+| 253 | test | SEED-002 | POST | `/test/seed/challengers` | 챌린저 분포 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:79` |
+| 254 | test | SEED-003 | POST | `/test/seed/projects` | 프로젝트 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:94` |
+| 255 | test | SEED-003-S | POST | `/test/seed/projects/scenarios` | 프로젝트 시나리오 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:110` |
+| 256 | test | SEED-004 | POST | `/test/seed/curriculum` | Curriculum 시딩 (Curriculum · WeeklyCurriculum · OriginalWorkbook · Mission) | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:132` |
+| 257 | test | SEED-005 | POST | `/test/seed/notice` | Notice 시딩 (지부 · 학교 · 파트 분포) | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:147` |
+| 258 | test | SEED-006 | POST | `/test/seed/project-applications` | 지원서 시나리오 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:166` |
+| 259 | test | TEST-001 | GET | `/test/file/{fileId}` | [개발용] 파일 ID를 기반으로 접근 가능한 URL을 조회합니다. | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:65` |
+| 260 | test | TEST-002 | POST | `/test/fcm/test-send` | FCM 푸시 알림 테스트 전송 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:77` |
+| 261 | test | TEST-003 | GET | `/test/webhook/aop-test` | AOP로 전송하는 알람 테스트 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:104` |
+| 262 | test | TEST-004 | POST | `/test/webhook/alarm` | 웹훅 알람 전송 테스트 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:117` |
+| 263 | test | TEST-005 | POST | `/test/webhook/alarm/buffer` | 웹훅 알람 버퍼 전송 테스트 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:133` |
+| 264 | test | TEST-006 | GET | `/test/apple-client-secret` | Apple Client Secret 생성 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:154` |
+| 265 | test | TEST-007 | GET | `/test/token/access` | AccessToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:160` |
+| 266 | test | TEST-008 | GET | `/test/token/refresh` | RefreshToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:173` |
+| 267 | test | TEST-009 | GET | `/test/token/email` | EmailVerificationToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:180` |
+| 268 | test | TEST-010 | GET | `/test/token/oauth` | oAuthVerificationToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:190` |
+| 269 | test | TEST-011 | GET | `/test/health-check` | 헬스 체크 API | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:198` |
+| 270 | test | TEST-012 | GET | `/test/check-authenticated` | 인증된 사용자인지 여부를 확인합니다. | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:205` |
 

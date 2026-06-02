@@ -92,7 +92,7 @@
     "role": "비밀번호 자격증명 최초 등록",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java",
-    "line": 45,
+    "line": 47,
     "operationId": null
   },
   {
@@ -104,7 +104,7 @@
     "role": "비밀번호 변경",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java",
-    "line": 58,
+    "line": 60,
     "operationId": null
   },
   {
@@ -116,7 +116,7 @@
     "role": "이메일 사용 가능 여부 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java",
-    "line": 87,
+    "line": 89,
     "operationId": null
   },
   {
@@ -128,7 +128,7 @@
     "role": "비밀번호 초기화",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java",
-    "line": 71,
+    "line": 73,
     "operationId": null
   },
   {
@@ -224,7 +224,7 @@
     "role": "이메일/PW 로그인",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/authentication/adapter/in/web/CredentialAuthenticationController.java",
-    "line": 98,
+    "line": 100,
     "operationId": null
   },
   {
@@ -1508,7 +1508,7 @@
     "role": "내 회원 정보 수정",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java",
-    "line": 128,
+    "line": 130,
     "operationId": null
   },
   {
@@ -1520,7 +1520,7 @@
     "role": "내 회원 프로필 링크 수정",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java",
-    "line": 142,
+    "line": 144,
     "operationId": null
   },
   {
@@ -1532,7 +1532,7 @@
     "role": "회원 탈퇴",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java",
-    "line": 156,
+    "line": 158,
     "operationId": null
   },
   {
@@ -1544,7 +1544,7 @@
     "role": "관리자 권한으로 회원 게정 삭제 (Hard Delete)",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java",
-    "line": 169,
+    "line": 171,
     "operationId": null
   },
   {
@@ -1616,7 +1616,7 @@
     "role": "OAuth 회원가입",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java",
-    "line": 59,
+    "line": 61,
     "operationId": null
   },
   {
@@ -1628,7 +1628,7 @@
     "role": "이메일/PW 이용 회원가입",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/member/adapter/in/web/MemberCommandController.java",
-    "line": 101,
+    "line": 103,
     "operationId": null
   },
   {
@@ -2372,7 +2372,7 @@
     "role": "프로젝트 목록 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java",
-    "line": 43,
+    "line": 46,
     "operationId": null
   },
   {
@@ -2384,7 +2384,7 @@
     "role": "프로젝트 상세 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java",
-    "line": 62,
+    "line": 65,
     "operationId": null
   },
   {
@@ -2396,23 +2396,11 @@
     "role": "프로젝트 팀원 구성 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java",
-    "line": 80,
+    "line": 83,
     "operationId": null
   },
   {
     "sequence": 201,
-    "domain": "project",
-    "apiId": "PROJECT-004",
-    "endpoint": "/api/v1/projects/members",
-    "httpMethod": "GET",
-    "role": "프로젝트 팀원 구성 일괄 조회",
-    "deprecated": false,
-    "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java",
-    "line": 98,
-    "operationId": null
-  },
-  {
-    "sequence": 202,
     "domain": "project",
     "apiId": "PROJECT-004",
     "endpoint": "/api/v1/projects/{projectId}/members",
@@ -2424,7 +2412,7 @@
     "operationId": null
   },
   {
-    "sequence": 203,
+    "sequence": 202,
     "domain": "project",
     "apiId": "PROJECT-005",
     "endpoint": "/api/v1/projects/{projectId}/members/{memberId}",
@@ -2436,7 +2424,7 @@
     "operationId": null
   },
   {
-    "sequence": 204,
+    "sequence": 203,
     "domain": "project",
     "apiId": "PROJECT-006",
     "endpoint": "/api/v1/projects/me/managed",
@@ -2444,7 +2432,19 @@
     "role": "내가 관리하는 프로젝트 목록",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java",
-    "line": 115,
+    "line": 118,
+    "operationId": null
+  },
+  {
+    "sequence": 204,
+    "domain": "project",
+    "apiId": "PROJECT-007",
+    "endpoint": "/api/v1/projects/members",
+    "httpMethod": "GET",
+    "role": "프로젝트 팀원 구성 일괄 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java",
+    "line": 101,
     "operationId": null
   },
   {
@@ -2480,7 +2480,7 @@
     "role": "내 Draft 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java",
-    "line": 134,
+    "line": 137,
     "operationId": null
   },
   {
@@ -2845,6 +2845,102 @@
   },
   {
     "sequence": 238,
+    "domain": "techblog",
+    "apiId": "ADMIN-TECH-BLOG-001",
+    "endpoint": "/api/v1/admin/tech-blog/comments/{commentId}",
+    "httpMethod": "DELETE",
+    "role": "댓글 관리자 삭제",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/techblog/adapter/in/web/AdminTechBlogCommentController.java",
+    "line": 35,
+    "operationId": null
+  },
+  {
+    "sequence": 239,
+    "domain": "techblog",
+    "apiId": "TECH-BLOG-001",
+    "endpoint": "/api/v1/tech-blog/contents/{type}/{slug}/like",
+    "httpMethod": "GET",
+    "role": "콘텐츠 좋아요 상태 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java",
+    "line": 60,
+    "operationId": null
+  },
+  {
+    "sequence": 240,
+    "domain": "techblog",
+    "apiId": "TECH-BLOG-002",
+    "endpoint": "/api/v1/tech-blog/contents/{type}/{slug}/like",
+    "httpMethod": "POST",
+    "role": "콘텐츠 좋아요 토글",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java",
+    "line": 73,
+    "operationId": null
+  },
+  {
+    "sequence": 241,
+    "domain": "techblog",
+    "apiId": "TECH-BLOG-003",
+    "endpoint": "/api/v1/tech-blog/contents/{type}/{slug}/comments",
+    "httpMethod": "GET",
+    "role": "댓글 목록 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java",
+    "line": 86,
+    "operationId": null
+  },
+  {
+    "sequence": 242,
+    "domain": "techblog",
+    "apiId": "TECH-BLOG-004",
+    "endpoint": "/api/v1/tech-blog/contents/{type}/{slug}/comments",
+    "httpMethod": "POST",
+    "role": "댓글 작성",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java",
+    "line": 107,
+    "operationId": null
+  },
+  {
+    "sequence": 243,
+    "domain": "techblog",
+    "apiId": "TECH-BLOG-005",
+    "endpoint": "/api/v1/tech-blog/contents/{type}/{slug}/comments/{commentId}",
+    "httpMethod": "PATCH",
+    "role": "댓글 수정",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java",
+    "line": 126,
+    "operationId": null
+  },
+  {
+    "sequence": 244,
+    "domain": "techblog",
+    "apiId": "TECH-BLOG-006",
+    "endpoint": "/api/v1/tech-blog/contents/{type}/{slug}/comments/{commentId}",
+    "httpMethod": "DELETE",
+    "role": "댓글 삭제",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java",
+    "line": 146,
+    "operationId": null
+  },
+  {
+    "sequence": 245,
+    "domain": "techblog",
+    "apiId": "TECH-BLOG-007",
+    "endpoint": "/api/v1/tech-blog/contents/{type}/{slug}/comments/{commentId}/like",
+    "httpMethod": "POST",
+    "role": "댓글 좋아요 토글",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java",
+    "line": 159,
+    "operationId": null
+  },
+  {
+    "sequence": 246,
     "domain": "term",
     "apiId": "TERM-001",
     "endpoint": "/api/v1/terms",
@@ -2852,11 +2948,11 @@
     "role": "약관 생성",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/term/adapter/in/web/TermController.java",
-    "line": 48,
+    "line": 63,
     "operationId": null
   },
   {
-    "sequence": 239,
+    "sequence": 247,
     "domain": "term",
     "apiId": "TERM-101",
     "endpoint": "/api/v1/terms/type/{termType}",
@@ -2864,11 +2960,11 @@
     "role": "약관 유형으로 약관 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/term/adapter/in/web/TermController.java",
-    "line": 35,
+    "line": 42,
     "operationId": null
   },
   {
-    "sequence": 240,
+    "sequence": 248,
     "domain": "term",
     "apiId": "TERM-102",
     "endpoint": "/api/v1/terms/{termsId}",
@@ -2876,11 +2972,23 @@
     "role": "약관 ID로 약관 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/term/adapter/in/web/TermController.java",
-    "line": 42,
+    "line": 49,
     "operationId": null
   },
   {
-    "sequence": 241,
+    "sequence": 249,
+    "domain": "term",
+    "apiId": "TERM-103",
+    "endpoint": "/api/v1/terms/consent-status/me",
+    "httpMethod": "GET",
+    "role": "내 필수 약관 재동의 상태 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/term/adapter/in/web/TermController.java",
+    "line": 55,
+    "operationId": null
+  },
+  {
+    "sequence": 250,
     "domain": "test",
     "apiId": "<미지정>",
     "endpoint": "/test/email/send-test",
@@ -2888,11 +2996,11 @@
     "role": "<요약 없음>",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
-    "line": 82,
+    "line": 85,
     "operationId": null
   },
   {
-    "sequence": 242,
+    "sequence": 251,
     "domain": "test",
     "apiId": "<미지정>",
     "endpoint": "/test/log-test",
@@ -2900,11 +3008,11 @@
     "role": "<요약 없음>",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
-    "line": 209,
+    "line": 212,
     "operationId": null
   },
   {
-    "sequence": 243,
+    "sequence": 252,
     "domain": "test",
     "apiId": "SEED-001",
     "endpoint": "/test/seed/members",
@@ -2912,11 +3020,11 @@
     "role": "더미 멤버 시딩",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/SeedController.java",
-    "line": 57,
+    "line": 63,
     "operationId": "SEED-001"
   },
   {
-    "sequence": 244,
+    "sequence": 253,
     "domain": "test",
     "apiId": "SEED-002",
     "endpoint": "/test/seed/challengers",
@@ -2924,11 +3032,11 @@
     "role": "챌린저 분포 시딩",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/SeedController.java",
-    "line": 73,
+    "line": 79,
     "operationId": "SEED-002"
   },
   {
-    "sequence": 245,
+    "sequence": 254,
     "domain": "test",
     "apiId": "SEED-003",
     "endpoint": "/test/seed/projects",
@@ -2936,11 +3044,11 @@
     "role": "프로젝트 시딩",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/SeedController.java",
-    "line": 88,
+    "line": 94,
     "operationId": "SEED-003"
   },
   {
-    "sequence": 246,
+    "sequence": 255,
     "domain": "test",
     "apiId": "SEED-003-S",
     "endpoint": "/test/seed/projects/scenarios",
@@ -2948,11 +3056,11 @@
     "role": "프로젝트 시나리오 시딩",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/SeedController.java",
-    "line": 104,
+    "line": 110,
     "operationId": "SEED-003-S"
   },
   {
-    "sequence": 247,
+    "sequence": 256,
     "domain": "test",
     "apiId": "SEED-004",
     "endpoint": "/test/seed/curriculum",
@@ -2960,11 +3068,11 @@
     "role": "Curriculum 시딩 (Curriculum · WeeklyCurriculum · OriginalWorkbook · Mission)",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/SeedController.java",
-    "line": 125,
+    "line": 132,
     "operationId": "SEED-004"
   },
   {
-    "sequence": 248,
+    "sequence": 257,
     "domain": "test",
     "apiId": "SEED-005",
     "endpoint": "/test/seed/notice",
@@ -2972,11 +3080,23 @@
     "role": "Notice 시딩 (지부 · 학교 · 파트 분포)",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/SeedController.java",
-    "line": 140,
+    "line": 147,
     "operationId": "SEED-005"
   },
   {
-    "sequence": 249,
+    "sequence": 258,
+    "domain": "test",
+    "apiId": "SEED-006",
+    "endpoint": "/test/seed/project-applications",
+    "httpMethod": "POST",
+    "role": "지원서 시나리오 시딩",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/test/adapter/in/web/SeedController.java",
+    "line": 166,
+    "operationId": null
+  },
+  {
+    "sequence": 259,
     "domain": "test",
     "apiId": "TEST-001",
     "endpoint": "/test/file/{fileId}",
@@ -2984,11 +3104,11 @@
     "role": "[개발용] 파일 ID를 기반으로 접근 가능한 URL을 조회합니다.",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
-    "line": 62,
+    "line": 65,
     "operationId": "TEST-001"
   },
   {
-    "sequence": 250,
+    "sequence": 260,
     "domain": "test",
     "apiId": "TEST-002",
     "endpoint": "/test/fcm/test-send",
@@ -2996,11 +3116,11 @@
     "role": "FCM 푸시 알림 테스트 전송",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
-    "line": 74,
+    "line": 77,
     "operationId": "TEST-002"
   },
   {
-    "sequence": 251,
+    "sequence": 261,
     "domain": "test",
     "apiId": "TEST-003",
     "endpoint": "/test/webhook/aop-test",
@@ -3008,11 +3128,11 @@
     "role": "AOP로 전송하는 알람 테스트",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
-    "line": 101,
+    "line": 104,
     "operationId": "TEST-003"
   },
   {
-    "sequence": 252,
+    "sequence": 262,
     "domain": "test",
     "apiId": "TEST-004",
     "endpoint": "/test/webhook/alarm",
@@ -3020,11 +3140,11 @@
     "role": "웹훅 알람 전송 테스트",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
-    "line": 114,
+    "line": 117,
     "operationId": "TEST-004"
   },
   {
-    "sequence": 253,
+    "sequence": 263,
     "domain": "test",
     "apiId": "TEST-005",
     "endpoint": "/test/webhook/alarm/buffer",
@@ -3032,11 +3152,11 @@
     "role": "웹훅 알람 버퍼 전송 테스트",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
-    "line": 130,
+    "line": 133,
     "operationId": "TEST-005"
   },
   {
-    "sequence": 254,
+    "sequence": 264,
     "domain": "test",
     "apiId": "TEST-006",
     "endpoint": "/test/apple-client-secret",
@@ -3044,11 +3164,11 @@
     "role": "Apple Client Secret 생성",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
-    "line": 151,
+    "line": 154,
     "operationId": "TEST-006"
   },
   {
-    "sequence": 255,
+    "sequence": 265,
     "domain": "test",
     "apiId": "TEST-007",
     "endpoint": "/test/token/access",
@@ -3056,11 +3176,11 @@
     "role": "AccessToken 발급",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
-    "line": 157,
+    "line": 160,
     "operationId": "TEST-007"
   },
   {
-    "sequence": 256,
+    "sequence": 266,
     "domain": "test",
     "apiId": "TEST-008",
     "endpoint": "/test/token/refresh",
@@ -3068,11 +3188,11 @@
     "role": "RefreshToken 발급",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
-    "line": 170,
+    "line": 173,
     "operationId": "TEST-008"
   },
   {
-    "sequence": 257,
+    "sequence": 267,
     "domain": "test",
     "apiId": "TEST-009",
     "endpoint": "/test/token/email",
@@ -3080,11 +3200,11 @@
     "role": "EmailVerificationToken 발급",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
-    "line": 177,
+    "line": 180,
     "operationId": "TEST-009"
   },
   {
-    "sequence": 258,
+    "sequence": 268,
     "domain": "test",
     "apiId": "TEST-010",
     "endpoint": "/test/token/oauth",
@@ -3092,11 +3212,11 @@
     "role": "oAuthVerificationToken 발급",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
-    "line": 187,
+    "line": 190,
     "operationId": "TEST-010"
   },
   {
-    "sequence": 259,
+    "sequence": 269,
     "domain": "test",
     "apiId": "TEST-011",
     "endpoint": "/test/health-check",
@@ -3104,11 +3224,11 @@
     "role": "헬스 체크 API",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
-    "line": 195,
+    "line": 198,
     "operationId": "TEST-011"
   },
   {
-    "sequence": 260,
+    "sequence": 270,
     "domain": "test",
     "apiId": "TEST-012",
     "endpoint": "/test/check-authenticated",
@@ -3116,7 +3236,7 @@
     "role": "인증된 사용자인지 여부를 확인합니다.",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/test/adapter/in/web/TestController.java",
-    "line": 202,
+    "line": 205,
     "operationId": "TEST-012"
   }
 ]

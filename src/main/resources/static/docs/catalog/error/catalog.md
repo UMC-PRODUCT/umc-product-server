@@ -254,205 +254,220 @@
 
 | 순번 | 도메인 | Code | HTTP Status | Message | Enum | Constant | Source |
 |---:|---|---|---|---|---|---|---|
-| 187 | notification | `EMAIL-0001` | 400 BAD_REQUEST | 알 수 없는 사유로 이메일 전송에 실패했습니다. | EmailErrorCode | `EMAIL_GENERAL_ERROR` | `src/main/java/com/umc/product/notification/domain/exception/EmailErrorCode.java:11` |
-| 188 | notification | `EMAIL-0002` | 400 BAD_REQUEST | 인코딩 과정에서 오류가 발생했습니다. | EmailErrorCode | `EMAIL_ENCODING_ERROR` | `src/main/java/com/umc/product/notification/domain/exception/EmailErrorCode.java:12` |
-| 189 | notification | `EMAIL-0003` | 400 BAD_REQUEST | 메일 전송 과정에서 오류가 발생했습니다. | EmailErrorCode | `EMAIL_MESSAGING_ERROR` | `src/main/java/com/umc/product/notification/domain/exception/EmailErrorCode.java:13` |
-| 190 | notification | `FCM-0001` | 404 NOT_FOUND | FCM 토큰을 찾을 수 없습니다. | FcmErrorCode | `FCM_NOT_FOUND` | `src/main/java/com/umc/product/notification/domain/exception/FcmErrorCode.java:12` |
-| 191 | notification | `FCM-0002` | 404 NOT_FOUND | 해당 유저의 FCM 토큰을 찾을 수 없습니다. | FcmErrorCode | `USER_FCM_NOT_FOUND` | `src/main/java/com/umc/product/notification/domain/exception/FcmErrorCode.java:13` |
-| 192 | notification | `FCM-0003` | 500 INTERNAL_SERVER_ERROR | FCM 메시지 전송에 실패했습니다. | FcmErrorCode | `FCM_SEND_FAILED` | `src/main/java/com/umc/product/notification/domain/exception/FcmErrorCode.java:14` |
-| 193 | notification | `FCM-0004` | 500 INTERNAL_SERVER_ERROR | FCM 토픽 구독에 실패했습니다. | FcmErrorCode | `TOPIC_SUBSCRIBE_FAILED` | `src/main/java/com/umc/product/notification/domain/exception/FcmErrorCode.java:15` |
-| 194 | notification | `FCM-0005` | 500 INTERNAL_SERVER_ERROR | FCM 토픽 구독 해제에 실패했습니다. | FcmErrorCode | `TOPIC_UNSUBSCRIBE_FAILED` | `src/main/java/com/umc/product/notification/domain/exception/FcmErrorCode.java:16` |
-| 195 | notification | `FCM-0006` | 500 INTERNAL_SERVER_ERROR | FCM 토픽 메시지 전송에 실패했습니다. | FcmErrorCode | `TOPIC_SEND_FAILED` | `src/main/java/com/umc/product/notification/domain/exception/FcmErrorCode.java:17` |
-| 196 | notification | `FCM-0007` | 429 TOO_MANY_REQUESTS | FCM API 요청 한도를 초과했습니다. | FcmErrorCode | `RATE_LIMITED` | `src/main/java/com/umc/product/notification/domain/exception/FcmErrorCode.java:18` |
-| 197 | notification | `WEBHOOK-0001` | 500 INTERNAL_SERVER_ERROR | 웹훅 메시지 전송에 실패했습니다. | WebhookErrorCode | `WEBHOOK_SEND_FAILED` | `src/main/java/com/umc/product/notification/domain/exception/WebhookErrorCode.java:12` |
-| 198 | notification | `WEBHOOK-0002` | 400 BAD_REQUEST | 해당 플랫폼의 웹훅 어댑터가 등록되지 않았습니다. | WebhookErrorCode | `WEBHOOK_ADAPTER_NOT_FOUND` | `src/main/java/com/umc/product/notification/domain/exception/WebhookErrorCode.java:13` |
+| 187 | notification | `EMAIL-0004` | 500 INTERNAL_SERVER_ERROR | 이메일 본문 템플릿 렌더링에 실패했습니다. | EmailErrorCode | `EMAIL_TEMPLATE_RENDER_FAILED` | `src/main/java/com/umc/product/notification/domain/exception/EmailErrorCode.java:11` |
+| 188 | notification | `EMAIL-0005` | 500 INTERNAL_SERVER_ERROR | 이메일 발송에 실패했습니다. | EmailErrorCode | `EMAIL_SEND_FAILED` | `src/main/java/com/umc/product/notification/domain/exception/EmailErrorCode.java:12` |
+| 189 | notification | `FCM-0001` | 404 NOT_FOUND | FCM 토큰을 찾을 수 없습니다. | FcmErrorCode | `FCM_NOT_FOUND` | `src/main/java/com/umc/product/notification/domain/exception/FcmErrorCode.java:12` |
+| 190 | notification | `FCM-0002` | 404 NOT_FOUND | 해당 유저의 FCM 토큰을 찾을 수 없습니다. | FcmErrorCode | `USER_FCM_NOT_FOUND` | `src/main/java/com/umc/product/notification/domain/exception/FcmErrorCode.java:13` |
+| 191 | notification | `FCM-0003` | 500 INTERNAL_SERVER_ERROR | FCM 메시지 전송에 실패했습니다. | FcmErrorCode | `FCM_SEND_FAILED` | `src/main/java/com/umc/product/notification/domain/exception/FcmErrorCode.java:14` |
+| 192 | notification | `FCM-0004` | 500 INTERNAL_SERVER_ERROR | FCM 토픽 구독에 실패했습니다. | FcmErrorCode | `TOPIC_SUBSCRIBE_FAILED` | `src/main/java/com/umc/product/notification/domain/exception/FcmErrorCode.java:15` |
+| 193 | notification | `FCM-0005` | 500 INTERNAL_SERVER_ERROR | FCM 토픽 구독 해제에 실패했습니다. | FcmErrorCode | `TOPIC_UNSUBSCRIBE_FAILED` | `src/main/java/com/umc/product/notification/domain/exception/FcmErrorCode.java:16` |
+| 194 | notification | `FCM-0006` | 500 INTERNAL_SERVER_ERROR | FCM 토픽 메시지 전송에 실패했습니다. | FcmErrorCode | `TOPIC_SEND_FAILED` | `src/main/java/com/umc/product/notification/domain/exception/FcmErrorCode.java:17` |
+| 195 | notification | `FCM-0007` | 429 TOO_MANY_REQUESTS | FCM API 요청 한도를 초과했습니다. | FcmErrorCode | `RATE_LIMITED` | `src/main/java/com/umc/product/notification/domain/exception/FcmErrorCode.java:18` |
+| 196 | notification | `WEBHOOK-0001` | 500 INTERNAL_SERVER_ERROR | 웹훅 메시지 전송에 실패했습니다. | WebhookErrorCode | `WEBHOOK_SEND_FAILED` | `src/main/java/com/umc/product/notification/domain/exception/WebhookErrorCode.java:12` |
+| 197 | notification | `WEBHOOK-0002` | 400 BAD_REQUEST | 해당 플랫폼의 웹훅 어댑터가 등록되지 않았습니다. | WebhookErrorCode | `WEBHOOK_ADAPTER_NOT_FOUND` | `src/main/java/com/umc/product/notification/domain/exception/WebhookErrorCode.java:13` |
 
 ## organization
 
 | 순번 | 도메인 | Code | HTTP Status | Message | Enum | Constant | Source |
 |---:|---|---|---|---|---|---|---|
-| 199 | organization | `ORGANIZATION-0001` | 400 BAD_REQUEST | 기수는 필수입니다. | OrganizationErrorCode | `GISU_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:12` |
-| 200 | organization | `ORGANIZATION-0002` | 400 BAD_REQUEST | 조직 이름 설정은 필수입니다. | OrganizationErrorCode | `ORGAN_NAME_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:13` |
-| 201 | organization | `ORGANIZATION-0003` | 400 BAD_REQUEST | 학교는 필수입니다. | OrganizationErrorCode | `SCHOOL_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:14` |
-| 202 | organization | `ORGANIZATION-0004` | 400 BAD_REQUEST | 지부는 필수입니다. | OrganizationErrorCode | `CHAPTER_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:15` |
-| 203 | organization | `ORGANIZATION-0005` | 400 BAD_REQUEST | 기수 시작일은 필수입니다. | OrganizationErrorCode | `GISU_START_AT_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:18` |
-| 204 | organization | `ORGANIZATION-0006` | 400 BAD_REQUEST | 기수 종료일은 필수입니다. | OrganizationErrorCode | `GISU_END_AT_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:19` |
-| 205 | organization | `ORGANIZATION-0007` | 400 BAD_REQUEST | 기수 시작일은 종료일보다 이전이어야 합니다. | OrganizationErrorCode | `GISU_PERIOD_INVALID` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:20` |
-| 206 | organization | `ORGANIZATION-0008` | 400 BAD_REQUEST | 학교 이름은 필수입니다. | OrganizationErrorCode | `SCHOOL_NAME_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:22` |
-| 207 | organization | `ORGANIZATION-0009` | 400 BAD_REQUEST | 학교 이메일 도메인은 필수입니다. | OrganizationErrorCode | `SCHOOL_DOMAIN_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:23` |
-| 208 | organization | `ORGANIZATION-0010` | 400 BAD_REQUEST | 스터디 그룹 이름은 필수입니다. | OrganizationErrorCode | `STUDY_GROUP_NAME_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:25` |
-| 209 | organization | `ORGANIZATION-0011` | 400 BAD_REQUEST | 스터디 그룹 리더는 필수입니다. | OrganizationErrorCode | `STUDY_GROUP_LEADER_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:26` |
-| 210 | organization | `ORGANIZATION-0012` | 400 BAD_REQUEST | 스터디 그룹은 필수입니다. | OrganizationErrorCode | `STUDY_GROUP_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:28` |
-| 211 | organization | `ORGANIZATION-0013` | 400 BAD_REQUEST | 스터디 그룹 멤버는 최소 1명 이상이어야 합니다. | OrganizationErrorCode | `STUDY_GROUP_MEMBER_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:29` |
-| 212 | organization | `ORGANIZATION-0014` | 400 BAD_REQUEST | 스터디 그룹을 만들 때 Member ID는 필수입니다. | OrganizationErrorCode | `STUDY_GROUP_MEMBER_ID_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:30` |
-| 213 | organization | `ORGANIZATION-0015` | 400 BAD_REQUEST | 이미 존재하는 스터디 그룹 멤버입니다. | OrganizationErrorCode | `STUDY_GROUP_MEMBER_ALREADY_EXISTS` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:31` |
-| 214 | organization | `ORGANIZATION-0016` | 404 NOT_FOUND | 스터디 그룹 멤버를 찾을 수 없습니다. | OrganizationErrorCode | `STUDY_GROUP_MEMBER_NOT_FOUND` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:32` |
-| 215 | organization | `ORGANIZATION-0017` | 404 NOT_FOUND | 지부를 찾을 수 없습니다. | OrganizationErrorCode | `CHAPTER_NOT_FOUND` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:34` |
-| 216 | organization | `ORGANIZATION-0018` | 404 NOT_FOUND | 학교를 찾을 수 없습니다. | OrganizationErrorCode | `SCHOOL_NOT_FOUND` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:35` |
-| 217 | organization | `ORGANIZATION-0019` | 404 NOT_FOUND | 활성화된 기수를 찾을 수 없습니다. | OrganizationErrorCode | `GISU_IS_ACTIVE_NOT_FOUND` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:36` |
-| 218 | organization | `ORGANIZATION-0020` | 404 NOT_FOUND | 기수를 찾을 수 없습니다. | OrganizationErrorCode | `GISU_NOT_FOUND` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:37` |
-| 219 | organization | `ORGANIZATION-0021` | 400 BAD_REQUEST | 파트는 필수입니다. | OrganizationErrorCode | `PART_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:38` |
-| 220 | organization | `ORGANIZATION-0022` | 400 BAD_REQUEST | 유효하지 않은 스터디 그룹 이름입니다. | OrganizationErrorCode | `STUDY_GROUP_NAME_INVALID` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:39` |
-| 221 | organization | `ORGANIZATION-0023` | 400 BAD_REQUEST | 스터디 그룹을 찾을 수 없습니다. | OrganizationErrorCode | `STUDY_GROUP_NOT_FOUND` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:40` |
-| 222 | organization | `ORGANIZATION-0024` | 400 BAD_REQUEST | 스터디 그룹의 리더 또는 멤버로 존재하지 않는 챌린저가 포함되어 있습니다. | OrganizationErrorCode | `STUDY_GROUP_CHALLENGER_INVALID` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:42` |
-| 223 | organization | `ORGANIZATION-0025` | 400 BAD_REQUEST | 스터디 그룹의 리더는 멤버가 될 수 없습니다. | OrganizationErrorCode | `LEADER_CANNOT_BE_MEMBER` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:44` |
-| 224 | organization | `ORGANIZATION-0026` | 400 BAD_REQUEST | 스터디 그룹 멤버 ID에 중복이 있습니다. | OrganizationErrorCode | `STUDY_GROUP_MEMBER_DUPLICATED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:45` |
-| 225 | organization | `ORGANIZATION-0027` | 404 NOT_FOUND | 요청하신 학교와 지부와 일치하는 정보가 없습니다. | OrganizationErrorCode | `NO_SUCH_CHAPTER_SCHOOL` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:46` |
-| 226 | organization | `ORGANIZATION-0028` | 409 CONFLICT | 이미 존재하는 기수입니다. | OrganizationErrorCode | `GISU_ALREADY_EXISTS` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:47` |
-| 227 | organization | `ORGANIZATION-0029` | 409 CONFLICT | 해당 기수에서 이미 다른 지부에 배정된 학교가 포함되어 있습니다. | OrganizationErrorCode | `SCHOOL_ALREADY_ASSIGNED_TO_CHAPTER` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:48` |
-| 228 | organization | `ORGANIZATION-0030` | 409 CONFLICT | 해당 기수에 동일한 이름의 지부가 이미 존재합니다. | OrganizationErrorCode | `CHAPTER_NAME_DUPLICATED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:50` |
-| 229 | organization | `ORGANIZATION-0031` | 403 FORBIDDEN | 스터디 그룹 조회 권한이 없습니다. | OrganizationErrorCode | `STUDY_GROUP_ACCESS_DENIED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:52` |
-| 230 | organization | `ORGANIZATION-0032` | 409 CONFLICT | 해당 기수에 연결된 지부 또는 학교가 존재하여 삭제할 수 없습니다. | OrganizationErrorCode | `GISU_HAS_ASSOCIATED_CHAPTERS` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:53` |
-| 231 | organization | `ORGANIZATION-0033` | 400 BAD_REQUEST | 스터디 그룹 파트장은 최소 1명 이상이어야 합니다. | OrganizationErrorCode | `STUDY_GROUP_MENTOR_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:55` |
-| 232 | organization | `ORGANIZATION-0034` | 400 BAD_REQUEST | 스터디 그룹 멘토의 ID는 필수입니다. | OrganizationErrorCode | `STUDY_GROUP_MENTOR_ID_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:56` |
-| 233 | organization | `ORGANIZATION-0035` | 409 CONFLICT | 다른 스터디 그룹과 중복된 멤버가 있습니다. | OrganizationErrorCode | `STUDY_GROUP_MEMBER_ALREADY_IN_PART_STUDY` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:58` |
-| 234 | organization | `ORGANIZATION-0036` | 400 BAD_REQUEST | 이미 해당 스터디에 속한 파트장입니다. | OrganizationErrorCode | `STUDY_GROUP_MENTOR_DUPLICATED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:59` |
-| 235 | organization | `ORGANIZATION-0037` | 404 NOT_FOUND | 스터디 그룹의 파트장 정보를 찾을 수 없습니다. | OrganizationErrorCode | `STUDY_GROUP_MENTOR_NOT_FOUND` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:60` |
-| 236 | organization | `ORGANIZATION-0038` | 400 BAD_REQUEST | 스터디 그룹 일정은 출석 정책이 필수입니다. | OrganizationErrorCode | `STUDY_GROUP_SCHEDULE_ATTENDANCE_POLICY_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:62` |
+| 198 | organization | `ORGANIZATION-0001` | 400 BAD_REQUEST | 기수는 필수입니다. | OrganizationErrorCode | `GISU_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:12` |
+| 199 | organization | `ORGANIZATION-0002` | 400 BAD_REQUEST | 조직 이름 설정은 필수입니다. | OrganizationErrorCode | `ORGAN_NAME_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:13` |
+| 200 | organization | `ORGANIZATION-0003` | 400 BAD_REQUEST | 학교는 필수입니다. | OrganizationErrorCode | `SCHOOL_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:14` |
+| 201 | organization | `ORGANIZATION-0004` | 400 BAD_REQUEST | 지부는 필수입니다. | OrganizationErrorCode | `CHAPTER_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:15` |
+| 202 | organization | `ORGANIZATION-0005` | 400 BAD_REQUEST | 기수 시작일은 필수입니다. | OrganizationErrorCode | `GISU_START_AT_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:18` |
+| 203 | organization | `ORGANIZATION-0006` | 400 BAD_REQUEST | 기수 종료일은 필수입니다. | OrganizationErrorCode | `GISU_END_AT_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:19` |
+| 204 | organization | `ORGANIZATION-0007` | 400 BAD_REQUEST | 기수 시작일은 종료일보다 이전이어야 합니다. | OrganizationErrorCode | `GISU_PERIOD_INVALID` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:20` |
+| 205 | organization | `ORGANIZATION-0008` | 400 BAD_REQUEST | 학교 이름은 필수입니다. | OrganizationErrorCode | `SCHOOL_NAME_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:22` |
+| 206 | organization | `ORGANIZATION-0009` | 400 BAD_REQUEST | 학교 이메일 도메인은 필수입니다. | OrganizationErrorCode | `SCHOOL_DOMAIN_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:23` |
+| 207 | organization | `ORGANIZATION-0010` | 400 BAD_REQUEST | 스터디 그룹 이름은 필수입니다. | OrganizationErrorCode | `STUDY_GROUP_NAME_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:25` |
+| 208 | organization | `ORGANIZATION-0011` | 400 BAD_REQUEST | 스터디 그룹 리더는 필수입니다. | OrganizationErrorCode | `STUDY_GROUP_LEADER_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:26` |
+| 209 | organization | `ORGANIZATION-0012` | 400 BAD_REQUEST | 스터디 그룹은 필수입니다. | OrganizationErrorCode | `STUDY_GROUP_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:28` |
+| 210 | organization | `ORGANIZATION-0013` | 400 BAD_REQUEST | 스터디 그룹 멤버는 최소 1명 이상이어야 합니다. | OrganizationErrorCode | `STUDY_GROUP_MEMBER_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:29` |
+| 211 | organization | `ORGANIZATION-0014` | 400 BAD_REQUEST | 스터디 그룹을 만들 때 Member ID는 필수입니다. | OrganizationErrorCode | `STUDY_GROUP_MEMBER_ID_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:30` |
+| 212 | organization | `ORGANIZATION-0015` | 400 BAD_REQUEST | 이미 존재하는 스터디 그룹 멤버입니다. | OrganizationErrorCode | `STUDY_GROUP_MEMBER_ALREADY_EXISTS` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:31` |
+| 213 | organization | `ORGANIZATION-0016` | 404 NOT_FOUND | 스터디 그룹 멤버를 찾을 수 없습니다. | OrganizationErrorCode | `STUDY_GROUP_MEMBER_NOT_FOUND` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:32` |
+| 214 | organization | `ORGANIZATION-0017` | 404 NOT_FOUND | 지부를 찾을 수 없습니다. | OrganizationErrorCode | `CHAPTER_NOT_FOUND` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:34` |
+| 215 | organization | `ORGANIZATION-0018` | 404 NOT_FOUND | 학교를 찾을 수 없습니다. | OrganizationErrorCode | `SCHOOL_NOT_FOUND` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:35` |
+| 216 | organization | `ORGANIZATION-0019` | 404 NOT_FOUND | 활성화된 기수를 찾을 수 없습니다. | OrganizationErrorCode | `GISU_IS_ACTIVE_NOT_FOUND` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:36` |
+| 217 | organization | `ORGANIZATION-0020` | 404 NOT_FOUND | 기수를 찾을 수 없습니다. | OrganizationErrorCode | `GISU_NOT_FOUND` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:37` |
+| 218 | organization | `ORGANIZATION-0021` | 400 BAD_REQUEST | 파트는 필수입니다. | OrganizationErrorCode | `PART_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:38` |
+| 219 | organization | `ORGANIZATION-0022` | 400 BAD_REQUEST | 유효하지 않은 스터디 그룹 이름입니다. | OrganizationErrorCode | `STUDY_GROUP_NAME_INVALID` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:39` |
+| 220 | organization | `ORGANIZATION-0023` | 400 BAD_REQUEST | 스터디 그룹을 찾을 수 없습니다. | OrganizationErrorCode | `STUDY_GROUP_NOT_FOUND` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:40` |
+| 221 | organization | `ORGANIZATION-0024` | 400 BAD_REQUEST | 스터디 그룹의 리더 또는 멤버로 존재하지 않는 챌린저가 포함되어 있습니다. | OrganizationErrorCode | `STUDY_GROUP_CHALLENGER_INVALID` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:42` |
+| 222 | organization | `ORGANIZATION-0025` | 400 BAD_REQUEST | 스터디 그룹의 리더는 멤버가 될 수 없습니다. | OrganizationErrorCode | `LEADER_CANNOT_BE_MEMBER` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:44` |
+| 223 | organization | `ORGANIZATION-0026` | 400 BAD_REQUEST | 스터디 그룹 멤버 ID에 중복이 있습니다. | OrganizationErrorCode | `STUDY_GROUP_MEMBER_DUPLICATED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:45` |
+| 224 | organization | `ORGANIZATION-0027` | 404 NOT_FOUND | 요청하신 학교와 지부와 일치하는 정보가 없습니다. | OrganizationErrorCode | `NO_SUCH_CHAPTER_SCHOOL` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:46` |
+| 225 | organization | `ORGANIZATION-0028` | 409 CONFLICT | 이미 존재하는 기수입니다. | OrganizationErrorCode | `GISU_ALREADY_EXISTS` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:47` |
+| 226 | organization | `ORGANIZATION-0029` | 409 CONFLICT | 해당 기수에서 이미 다른 지부에 배정된 학교가 포함되어 있습니다. | OrganizationErrorCode | `SCHOOL_ALREADY_ASSIGNED_TO_CHAPTER` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:48` |
+| 227 | organization | `ORGANIZATION-0030` | 409 CONFLICT | 해당 기수에 동일한 이름의 지부가 이미 존재합니다. | OrganizationErrorCode | `CHAPTER_NAME_DUPLICATED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:50` |
+| 228 | organization | `ORGANIZATION-0031` | 403 FORBIDDEN | 스터디 그룹 조회 권한이 없습니다. | OrganizationErrorCode | `STUDY_GROUP_ACCESS_DENIED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:52` |
+| 229 | organization | `ORGANIZATION-0032` | 409 CONFLICT | 해당 기수에 연결된 지부 또는 학교가 존재하여 삭제할 수 없습니다. | OrganizationErrorCode | `GISU_HAS_ASSOCIATED_CHAPTERS` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:53` |
+| 230 | organization | `ORGANIZATION-0033` | 400 BAD_REQUEST | 스터디 그룹 파트장은 최소 1명 이상이어야 합니다. | OrganizationErrorCode | `STUDY_GROUP_MENTOR_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:55` |
+| 231 | organization | `ORGANIZATION-0034` | 400 BAD_REQUEST | 스터디 그룹 멘토의 ID는 필수입니다. | OrganizationErrorCode | `STUDY_GROUP_MENTOR_ID_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:56` |
+| 232 | organization | `ORGANIZATION-0035` | 409 CONFLICT | 다른 스터디 그룹과 중복된 멤버가 있습니다. | OrganizationErrorCode | `STUDY_GROUP_MEMBER_ALREADY_IN_PART_STUDY` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:58` |
+| 233 | organization | `ORGANIZATION-0036` | 400 BAD_REQUEST | 이미 해당 스터디에 속한 파트장입니다. | OrganizationErrorCode | `STUDY_GROUP_MENTOR_DUPLICATED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:59` |
+| 234 | organization | `ORGANIZATION-0037` | 404 NOT_FOUND | 스터디 그룹의 파트장 정보를 찾을 수 없습니다. | OrganizationErrorCode | `STUDY_GROUP_MENTOR_NOT_FOUND` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:60` |
+| 235 | organization | `ORGANIZATION-0038` | 400 BAD_REQUEST | 스터디 그룹 일정은 출석 정책이 필수입니다. | OrganizationErrorCode | `STUDY_GROUP_SCHEDULE_ATTENDANCE_POLICY_REQUIRED` | `src/main/java/com/umc/product/organization/exception/OrganizationErrorCode.java:62` |
 
 ## project
 
 | 순번 | 도메인 | Code | HTTP Status | Message | Enum | Constant | Source |
 |---:|---|---|---|---|---|---|---|
-| 237 | project | `PROJECT-0001` | 404 NOT_FOUND | 프로젝트를 찾을 수 없습니다. | ProjectErrorCode | `PROJECT_NOT_FOUND` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:13` |
-| 238 | project | `PROJECT-0002` | 400 BAD_REQUEST | 이미 완료된 프로젝트입니다. | ProjectErrorCode | `ALREADY_COMPLETED_PROJECT` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:14` |
-| 239 | project | `PROJECT-0003` | 400 BAD_REQUEST | 해당 프로젝트를 해산시킬 수 없습니다. | ProjectErrorCode | `PROJECT_ABORT_UNAVAILABLE` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:15` |
-| 240 | project | `PROJECT-0004` | 400 BAD_REQUEST | 요청하신 조작은 지원서가 제출된 상태에서만 가능합니다. | ProjectErrorCode | `APPLICATION_NOT_SUBMITTED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:18` |
-| 241 | project | `PROJECT-0005` | 400 BAD_REQUEST | 이미 지원서가 제출되었거나 평가가 완료된 상태입니다. | ProjectErrorCode | `APPLICATION_SUBMIT_NOT_AVAILABLE` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:19` |
-| 242 | project | `PROJECT-0006` | 404 NOT_FOUND | 프로젝트에서 해당 지원용 폼을 찾을 수 없습니다. | ProjectErrorCode | `APPLICATION_FORM_NOT_FOUND` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:27` |
-| 243 | project | `PROJECT-0007` | 403 FORBIDDEN | 요청하신 지원용 폼 섹션에 접근 권한이 없습니다. | ProjectErrorCode | `APPLICATION_FORM_ACCESS_NOT_ALLOWED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:28` |
-| 244 | project | `PROJECT-0008` | 409 CONFLICT | 작성 중인 DRAFT 프로젝트가 있어 새로 시작할 수 없습니다. | ProjectErrorCode | `PROJECT_DRAFT_ALREADY_IN_PROGRESS` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:37` |
-| 245 | project | `PROJECT-0009` | 400 BAD_REQUEST | 현재 상태에서 수행할 수 없는 작업입니다. | ProjectErrorCode | `PROJECT_INVALID_STATE` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:38` |
-| 246 | project | `PROJECT-0010` | 400 BAD_REQUEST | 프로젝트 PO는 PLAN 파트 챌린저여야 합니다. | ProjectErrorCode | `PROJECT_OWNER_NOT_PLAN_CHALLENGER` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:39` |
-| 247 | project | `PROJECT-0011` | 400 BAD_REQUEST | 제출에 필요한 필수 정보가 누락되었습니다. | ProjectErrorCode | `PROJECT_SUBMIT_VALIDATION_FAILED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:40` |
-| 248 | project | `PROJECT-0012` | 403 FORBIDDEN | 해당 프로젝트에 대한 접근 권한이 없습니다. | ProjectErrorCode | `PROJECT_ACCESS_DENIED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:41` |
-| 249 | project | `PROJECT-0013` | 400 BAD_REQUEST | PART 타입 섹션은 1개 이상의 파트를 지정해야 합니다. | ProjectErrorCode | `APPLICATION_FORM_POLICY_PARTS_EMPTY` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:29` |
-| 250 | project | `PROJECT-0014` | 400 BAD_REQUEST | 현재 폼에 존재하지 않는 sectionId 입니다. | ProjectErrorCode | `APPLICATION_FORM_INVALID_SECTION_ID` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:30` |
-| 251 | project | `PROJECT-0015` | 400 BAD_REQUEST | 해당 섹션에 속하지 않는 questionId 입니다. | ProjectErrorCode | `APPLICATION_FORM_INVALID_QUESTION_ID` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:31` |
-| 252 | project | `PROJECT-0016` | 400 BAD_REQUEST | 해당 질문에 속하지 않는 optionId 입니다. | ProjectErrorCode | `APPLICATION_FORM_INVALID_OPTION_ID` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:32` |
-| 253 | project | `PROJECT-0017` | 400 BAD_REQUEST | 선택지 타입(RADIO/CHECKBOX/DROPDOWN)이 아닌 질문에는 옵션을 지정할 수 없습니다. | ProjectErrorCode | `APPLICATION_FORM_OPTIONS_NOT_ALLOWED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:33` |
-| 254 | project | `PROJECT-0018` | 400 BAD_REQUEST | 선택지 타입 질문에는 1개 이상의 옵션이 필요합니다. | ProjectErrorCode | `APPLICATION_FORM_OPTIONS_REQUIRED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:34` |
-| 255 | project | `PROJECT-0019` | 500 INTERNAL_SERVER_ERROR | 임시저장 상태의 지원서는 PM/운영진 응답에 매핑할 수 없습니다. | ProjectErrorCode | `APPLICATION_DRAFT_NOT_EXPOSABLE` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:20` |
-| 256 | project | `PROJECT-0020` | 400 BAD_REQUEST | 임시저장(DRAFT)은 PM/운영진 지원자 목록 조회 필터로 사용할 수 없습니다. | ProjectErrorCode | `APPLICATION_DRAFT_FILTER_NOT_ALLOWED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:22` |
-| 257 | project | `PROJECT-0021` | 404 NOT_FOUND | 지원서를 찾을 수 없습니다. | ProjectErrorCode | `PROJECT_APPLICATION_NOT_FOUND` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:24` |
-| 258 | project | `PROJECT-0022` | 409 CONFLICT | 현재 상태에서는 프로젝트를 삭제할 수 없습니다. (DRAFT, PENDING_REVIEW 상태만 가능) | ProjectErrorCode | `PROJECT_DELETE_NOT_ALLOWED_IN_STATUS` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:42` |
-| 259 | project | `PROJECT-0023` | 400 BAD_REQUEST | 프로젝트 중단 사유는 필수입니다. | ProjectErrorCode | `PROJECT_ABORT_REASON_REQUIRED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:44` |
-| 260 | project | `PROJECT-0100` | 404 NOT_FOUND | 프로젝트 멤버를 찾을 수 없습니다. | ProjectErrorCode | `PROJECT_MEMBER_NOT_FOUND` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:47` |
-| 261 | project | `PROJECT-0101` | 409 CONFLICT | 이미 해당 프로젝트의 멤버입니다. | ProjectErrorCode | `PROJECT_MEMBER_ALREADY_EXISTS` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:48` |
-| 262 | project | `PROJECT-0102` | 400 BAD_REQUEST | 메인 PM 은 팀원 제거가 아닌 소유권 양도 API 로 변경해야 합니다. | ProjectErrorCode | `PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:49` |
-| 263 | project | `PROJECT-0200` | 400 BAD_REQUEST | 파트 정원은 1 이상이어야 합니다. | ProjectErrorCode | `PROJECT_PART_QUOTA_INVALID` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:52` |
-| 264 | project | `PROJECT-0202` | 400 BAD_REQUEST | 공개하려면 파트별 정원이 1개 이상 등록되어 있어야 합니다. | ProjectErrorCode | `PROJECT_PART_QUOTA_REQUIRED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:53` |
-| 265 | project | `PROJECT-0203` | 400 BAD_REQUEST | 동일 파트가 중복으로 입력되었습니다. | ProjectErrorCode | `PROJECT_PART_QUOTA_DUPLICATE` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:54` |
-| 266 | project | `PROJECT-0204` | 404 NOT_FOUND | 작성 중인 지원서를 찾을 수 없습니다. | ProjectErrorCode | `PROJECT_DRAFT_APPLICATION_NOT_FOUND` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:76` |
-| 267 | project | `PROJECT-0205` | 403 FORBIDDEN | 해당 프로젝트에 지원 가능한 파트가 아닙니다. | ProjectErrorCode | `PROJECT_APPLICATION_PART_NOT_ALLOWED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:77` |
-| 268 | project | `PROJECT-0206` | 409 CONFLICT | 이미 해당 기수에 소속된 팀이 있어 지원할 수 없습니다. | ProjectErrorCode | `PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:78` |
-| 269 | project | `PROJECT-0207` | 409 CONFLICT | 동일한 매칭 차수에 이미 제출된 지원서가 있습니다. | ProjectErrorCode | `PROJECT_APPLICATION_DUPLICATE_SUBMISSION` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:79` |
-| 270 | project | `PROJECT-0208` | 400 BAD_REQUEST | 해당 매칭 차수의 지원 기간이 아닙니다. | ProjectErrorCode | `PROJECT_APPLICATION_ROUND_NOT_OPEN` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:80` |
-| 271 | project | `PROJECT-0209` | 400 BAD_REQUEST | 선택한 매칭 차수가 본인 파트에 해당하지 않습니다. | ProjectErrorCode | `PROJECT_APPLICATION_ROUND_TYPE_MISMATCH` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:81` |
-| 272 | project | `PROJECT-0210` | 409 CONFLICT | 이미 작성 중인 지원서가 있습니다. | ProjectErrorCode | `PROJECT_APPLICATION_ALREADY_EXISTS` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:82` |
-| 273 | project | `PROJECT-0211` | 403 FORBIDDEN | 본인이 운영하는 프로젝트에는 지원할 수 없습니다. | ProjectErrorCode | `PROJECT_APPLICATION_SELF_APPLY_NOT_ALLOWED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:83` |
-| 274 | project | `PROJECT-0212` | 400 BAD_REQUEST | 현재 상태에서는 합/불 결정을 변경할 수 없습니다. | ProjectErrorCode | `PROJECT_APPLICATION_DECISION_INVALID_TRANSITION` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:84` |
-| 275 | project | `PROJECT-0213` | 409 CONFLICT | 해당 파트의 남은 자리를 초과하여 합격 처리할 수 없습니다. | ProjectErrorCode | `PROJECT_APPLICATION_QUOTA_EXCEEDED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:86` |
-| 276 | project | `PROJECT-0214` | 400 BAD_REQUEST | 이미 종결된 지원서는 철회할 수 없습니다. | ProjectErrorCode | `PROJECT_APPLICATION_CANCEL_NOT_ALLOWED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:88` |
-| 277 | project | `PROJECT-0215` | 400 BAD_REQUEST | 매칭 차수가 종료되어 지원서를 철회할 수 없습니다. | ProjectErrorCode | `PROJECT_APPLICATION_CANCEL_ROUND_CLOSED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:89` |
-| 278 | project | `PROJECT-0300` | 404 NOT_FOUND | 매칭 차수를 찾을 수 없습니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_NOT_FOUND` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:57` |
-| 279 | project | `PROJECT-0301` | 400 BAD_REQUEST | 매칭 차수 기간은 startsAt < endsAt < decisionDeadline 순서여야 합니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_INVALID_PERIOD` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:58` |
-| 280 | project | `PROJECT-0302` | 409 CONFLICT | 같은 지부 내에서는 매칭 차수 기간이 중복될 수 없습니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:60` |
-| 281 | project | `PROJECT-0303` | 403 FORBIDDEN | 해당 매칭 차수에 대한 관리 권한이 없습니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_ACCESS_DENIED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:62` |
-| 282 | project | `PROJECT-0304` | 409 CONFLICT | 연관된 지원서가 있는 매칭 차수는 삭제할 수 없습니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_DELETE_CONFLICT` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:64` |
-| 283 | project | `PROJECT-0305` | 400 BAD_REQUEST | time 기준 조회는 chapterId와 함께 요청해야 합니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_TIME_REQUIRES_CHAPTER` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:66` |
-| 284 | project | `PROJECT-0306` | 400 BAD_REQUEST | 매칭 차수가 종료되어 더 이상 결정을 변경할 수 없습니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_LOCKED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:68` |
-| 285 | project | `PROJECT-0307` | 400 BAD_REQUEST | 결정 마감 시각이 지나기 전에는 자동 선발을 실행할 수 없습니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_NOT_FINALIZABLE` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:70` |
-| 286 | project | `PROJECT-0308` | 500 INTERNAL_SERVER_ERROR | 해당 매칭 종류에 대한 자동 선발 정책이 정의되지 않았습니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_POLICY_NOT_FOUND` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:72` |
+| 236 | project | `PROJECT-0001` | 404 NOT_FOUND | 프로젝트를 찾을 수 없습니다. | ProjectErrorCode | `PROJECT_NOT_FOUND` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:13` |
+| 237 | project | `PROJECT-0002` | 400 BAD_REQUEST | 이미 완료된 프로젝트입니다. | ProjectErrorCode | `ALREADY_COMPLETED_PROJECT` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:14` |
+| 238 | project | `PROJECT-0003` | 400 BAD_REQUEST | 해당 프로젝트를 해산시킬 수 없습니다. | ProjectErrorCode | `PROJECT_ABORT_UNAVAILABLE` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:15` |
+| 239 | project | `PROJECT-0004` | 400 BAD_REQUEST | 요청하신 조작은 지원서가 제출된 상태에서만 가능합니다. | ProjectErrorCode | `APPLICATION_NOT_SUBMITTED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:18` |
+| 240 | project | `PROJECT-0005` | 400 BAD_REQUEST | 이미 지원서가 제출되었거나 평가가 완료된 상태입니다. | ProjectErrorCode | `APPLICATION_SUBMIT_NOT_AVAILABLE` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:19` |
+| 241 | project | `PROJECT-0006` | 404 NOT_FOUND | 프로젝트에서 해당 지원용 폼을 찾을 수 없습니다. | ProjectErrorCode | `APPLICATION_FORM_NOT_FOUND` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:27` |
+| 242 | project | `PROJECT-0007` | 403 FORBIDDEN | 요청하신 지원용 폼 섹션에 접근 권한이 없습니다. | ProjectErrorCode | `APPLICATION_FORM_ACCESS_NOT_ALLOWED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:28` |
+| 243 | project | `PROJECT-0008` | 409 CONFLICT | 작성 중인 DRAFT 프로젝트가 있어 새로 시작할 수 없습니다. | ProjectErrorCode | `PROJECT_DRAFT_ALREADY_IN_PROGRESS` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:37` |
+| 244 | project | `PROJECT-0009` | 400 BAD_REQUEST | 현재 상태에서 수행할 수 없는 작업입니다. | ProjectErrorCode | `PROJECT_INVALID_STATE` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:38` |
+| 245 | project | `PROJECT-0010` | 400 BAD_REQUEST | 프로젝트 PO는 PLAN 파트 챌린저여야 합니다. | ProjectErrorCode | `PROJECT_OWNER_NOT_PLAN_CHALLENGER` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:39` |
+| 246 | project | `PROJECT-0011` | 400 BAD_REQUEST | 제출에 필요한 필수 정보가 누락되었습니다. | ProjectErrorCode | `PROJECT_SUBMIT_VALIDATION_FAILED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:40` |
+| 247 | project | `PROJECT-0012` | 403 FORBIDDEN | 해당 프로젝트에 대한 접근 권한이 없습니다. | ProjectErrorCode | `PROJECT_ACCESS_DENIED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:41` |
+| 248 | project | `PROJECT-0013` | 400 BAD_REQUEST | PART 타입 섹션은 1개 이상의 파트를 지정해야 합니다. | ProjectErrorCode | `APPLICATION_FORM_POLICY_PARTS_EMPTY` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:29` |
+| 249 | project | `PROJECT-0014` | 400 BAD_REQUEST | 현재 폼에 존재하지 않는 sectionId 입니다. | ProjectErrorCode | `APPLICATION_FORM_INVALID_SECTION_ID` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:30` |
+| 250 | project | `PROJECT-0015` | 400 BAD_REQUEST | 해당 섹션에 속하지 않는 questionId 입니다. | ProjectErrorCode | `APPLICATION_FORM_INVALID_QUESTION_ID` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:31` |
+| 251 | project | `PROJECT-0016` | 400 BAD_REQUEST | 해당 질문에 속하지 않는 optionId 입니다. | ProjectErrorCode | `APPLICATION_FORM_INVALID_OPTION_ID` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:32` |
+| 252 | project | `PROJECT-0017` | 400 BAD_REQUEST | 선택지 타입(RADIO/CHECKBOX/DROPDOWN)이 아닌 질문에는 옵션을 지정할 수 없습니다. | ProjectErrorCode | `APPLICATION_FORM_OPTIONS_NOT_ALLOWED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:33` |
+| 253 | project | `PROJECT-0018` | 400 BAD_REQUEST | 선택지 타입 질문에는 1개 이상의 옵션이 필요합니다. | ProjectErrorCode | `APPLICATION_FORM_OPTIONS_REQUIRED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:34` |
+| 254 | project | `PROJECT-0019` | 500 INTERNAL_SERVER_ERROR | 임시저장 상태의 지원서는 PM/운영진 응답에 매핑할 수 없습니다. | ProjectErrorCode | `APPLICATION_DRAFT_NOT_EXPOSABLE` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:20` |
+| 255 | project | `PROJECT-0020` | 400 BAD_REQUEST | 임시저장(DRAFT)은 PM/운영진 지원자 목록 조회 필터로 사용할 수 없습니다. | ProjectErrorCode | `APPLICATION_DRAFT_FILTER_NOT_ALLOWED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:22` |
+| 256 | project | `PROJECT-0021` | 404 NOT_FOUND | 지원서를 찾을 수 없습니다. | ProjectErrorCode | `PROJECT_APPLICATION_NOT_FOUND` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:24` |
+| 257 | project | `PROJECT-0022` | 409 CONFLICT | 현재 상태에서는 프로젝트를 삭제할 수 없습니다. (DRAFT, PENDING_REVIEW 상태만 가능) | ProjectErrorCode | `PROJECT_DELETE_NOT_ALLOWED_IN_STATUS` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:42` |
+| 258 | project | `PROJECT-0023` | 400 BAD_REQUEST | 프로젝트 중단 사유는 필수입니다. | ProjectErrorCode | `PROJECT_ABORT_REASON_REQUIRED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:44` |
+| 259 | project | `PROJECT-0100` | 404 NOT_FOUND | 프로젝트 멤버를 찾을 수 없습니다. | ProjectErrorCode | `PROJECT_MEMBER_NOT_FOUND` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:47` |
+| 260 | project | `PROJECT-0101` | 409 CONFLICT | 이미 해당 프로젝트의 멤버입니다. | ProjectErrorCode | `PROJECT_MEMBER_ALREADY_EXISTS` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:48` |
+| 261 | project | `PROJECT-0102` | 400 BAD_REQUEST | 메인 PM 은 팀원 제거가 아닌 소유권 양도 API 로 변경해야 합니다. | ProjectErrorCode | `PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:49` |
+| 262 | project | `PROJECT-0200` | 400 BAD_REQUEST | 파트 정원은 1 이상이어야 합니다. | ProjectErrorCode | `PROJECT_PART_QUOTA_INVALID` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:52` |
+| 263 | project | `PROJECT-0202` | 400 BAD_REQUEST | 공개하려면 파트별 정원이 1개 이상 등록되어 있어야 합니다. | ProjectErrorCode | `PROJECT_PART_QUOTA_REQUIRED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:53` |
+| 264 | project | `PROJECT-0203` | 400 BAD_REQUEST | 동일 파트가 중복으로 입력되었습니다. | ProjectErrorCode | `PROJECT_PART_QUOTA_DUPLICATE` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:54` |
+| 265 | project | `PROJECT-0204` | 404 NOT_FOUND | 작성 중인 지원서를 찾을 수 없습니다. | ProjectErrorCode | `PROJECT_DRAFT_APPLICATION_NOT_FOUND` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:76` |
+| 266 | project | `PROJECT-0205` | 403 FORBIDDEN | 해당 프로젝트에 지원 가능한 파트가 아닙니다. | ProjectErrorCode | `PROJECT_APPLICATION_PART_NOT_ALLOWED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:77` |
+| 267 | project | `PROJECT-0206` | 409 CONFLICT | 이미 해당 기수에 소속된 팀이 있어 지원할 수 없습니다. | ProjectErrorCode | `PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:78` |
+| 268 | project | `PROJECT-0207` | 409 CONFLICT | 동일한 매칭 차수에 이미 제출된 지원서가 있습니다. | ProjectErrorCode | `PROJECT_APPLICATION_DUPLICATE_SUBMISSION` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:79` |
+| 269 | project | `PROJECT-0208` | 400 BAD_REQUEST | 해당 매칭 차수의 지원 기간이 아닙니다. | ProjectErrorCode | `PROJECT_APPLICATION_ROUND_NOT_OPEN` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:80` |
+| 270 | project | `PROJECT-0209` | 400 BAD_REQUEST | 선택한 매칭 차수가 본인 파트에 해당하지 않습니다. | ProjectErrorCode | `PROJECT_APPLICATION_ROUND_TYPE_MISMATCH` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:81` |
+| 271 | project | `PROJECT-0210` | 409 CONFLICT | 이미 작성 중인 지원서가 있습니다. | ProjectErrorCode | `PROJECT_APPLICATION_ALREADY_EXISTS` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:82` |
+| 272 | project | `PROJECT-0211` | 403 FORBIDDEN | 본인이 운영하는 프로젝트에는 지원할 수 없습니다. | ProjectErrorCode | `PROJECT_APPLICATION_SELF_APPLY_NOT_ALLOWED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:83` |
+| 273 | project | `PROJECT-0212` | 400 BAD_REQUEST | 현재 상태에서는 합/불 결정을 변경할 수 없습니다. | ProjectErrorCode | `PROJECT_APPLICATION_DECISION_INVALID_TRANSITION` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:84` |
+| 274 | project | `PROJECT-0213` | 409 CONFLICT | 해당 파트의 남은 자리를 초과하여 합격 처리할 수 없습니다. | ProjectErrorCode | `PROJECT_APPLICATION_QUOTA_EXCEEDED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:86` |
+| 275 | project | `PROJECT-0214` | 400 BAD_REQUEST | 이미 종결된 지원서는 철회할 수 없습니다. | ProjectErrorCode | `PROJECT_APPLICATION_CANCEL_NOT_ALLOWED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:88` |
+| 276 | project | `PROJECT-0215` | 400 BAD_REQUEST | 매칭 차수가 종료되어 지원서를 철회할 수 없습니다. | ProjectErrorCode | `PROJECT_APPLICATION_CANCEL_ROUND_CLOSED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:89` |
+| 277 | project | `PROJECT-0300` | 404 NOT_FOUND | 매칭 차수를 찾을 수 없습니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_NOT_FOUND` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:57` |
+| 278 | project | `PROJECT-0301` | 400 BAD_REQUEST | 매칭 차수 기간은 startsAt < endsAt < decisionDeadline 순서여야 합니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_INVALID_PERIOD` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:58` |
+| 279 | project | `PROJECT-0302` | 409 CONFLICT | 같은 지부 내에서는 매칭 차수 기간이 중복될 수 없습니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:60` |
+| 280 | project | `PROJECT-0303` | 403 FORBIDDEN | 해당 매칭 차수에 대한 관리 권한이 없습니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_ACCESS_DENIED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:62` |
+| 281 | project | `PROJECT-0304` | 409 CONFLICT | 연관된 지원서가 있는 매칭 차수는 삭제할 수 없습니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_DELETE_CONFLICT` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:64` |
+| 282 | project | `PROJECT-0305` | 400 BAD_REQUEST | time 기준 조회는 chapterId와 함께 요청해야 합니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_TIME_REQUIRES_CHAPTER` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:66` |
+| 283 | project | `PROJECT-0306` | 400 BAD_REQUEST | 매칭 차수가 종료되어 더 이상 결정을 변경할 수 없습니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_LOCKED` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:68` |
+| 284 | project | `PROJECT-0307` | 400 BAD_REQUEST | 결정 마감 시각이 지나기 전에는 자동 선발을 실행할 수 없습니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_NOT_FINALIZABLE` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:70` |
+| 285 | project | `PROJECT-0308` | 500 INTERNAL_SERVER_ERROR | 해당 매칭 종류에 대한 자동 선발 정책이 정의되지 않았습니다. | ProjectErrorCode | `PROJECT_MATCHING_ROUND_POLICY_NOT_FOUND` | `src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java:72` |
 
 ## schedule
 
 | 순번 | 도메인 | Code | HTTP Status | Message | Enum | Constant | Source |
 |---:|---|---|---|---|---|---|---|
-| 287 | schedule | `SCHEDULE-0006` | 400 BAD_REQUEST | 시작 시간은 종료 시간보다 이전이어야 합니다. | ScheduleErrorCode | `INVALID_TIME_RANGE` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:12` |
-| 288 | schedule | `SCHEDULE-0009` | 404 NOT_FOUND | 일정을 찾을 수 없습니다. | ScheduleErrorCode | `SCHEDULE_NOT_FOUND` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:14` |
-| 289 | schedule | `SCHEDULE-0010` | 400 BAD_REQUEST | 태그는 최소 1개 이상 선택해야 합니다. | ScheduleErrorCode | `TAG_REQUIRED` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:16` |
-| 290 | schedule | `SCHEDULE-0011` | 400 BAD_REQUEST | 기존 출석 요청이 존재합니다. | ScheduleErrorCode | `NOT_FIRST_ATTENDANCE_REQUEST` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:18` |
-| 291 | schedule | `SCHEDULE-0012` | 404 NOT_FOUND | 출석 요청이 존재하지 않습니다. 출석 요청을 생성하고 다시 시도해주세요. | ScheduleErrorCode | `NO_ATTENDANCE_RECORD` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:20` |
-| 292 | schedule | `SCHEDULE-0013` | 400 BAD_REQUEST | 출석 사유 제출은 첫 요청, 결석 또는 지각 상태에서만 가능합니다. | ScheduleErrorCode | `INVALID_ATTENDANCE_STATUS_FOR_EXCUSE` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:22` |
-| 293 | schedule | `SCHEDULE-0014` | 400 BAD_REQUEST | 현재 출석 상태에서는 승인이 불가능합니다. | ScheduleErrorCode | `INVALID_ATTENDANCE_STATUS_FOR_APPROVAL` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:25` |
-| 294 | schedule | `SCHEDULE-0015` | 400 BAD_REQUEST | 출석 요청에 대한 거절을 할 수 없는 상태입니다. | ScheduleErrorCode | `INVALID_ATTENDANCE_STATUS_FOR_REJECT` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:27` |
-| 295 | schedule | `SCHEDULE-0016` | 400 BAD_REQUEST | 출석 인정을 요청하는 사유가 제공되지 않았거나 비어있습니다. | ScheduleErrorCode | `NO_EXCUSE_REASON_GIVEN` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:29` |
-| 296 | schedule | `SCHEDULE-0017` | 400 BAD_REQUEST | 해당 출석 요청은 운영진의 승인 또는 기각을 필요로 하는 상태가 아닙니다. | ScheduleErrorCode | `ATTENDANCE_NOT_REQUIRES_CONFIRM` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:31` |
-| 297 | schedule | `SCHEDULE-0018` | 400 BAD_REQUEST | 종료된 일정에 대한 출석 요청은 허용되지 않습니다. | ScheduleErrorCode | `SCHEDULE_ENDED` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:34` |
-| 298 | schedule | `SCHEDULE-0019` | 400 BAD_REQUEST | 출석 가능한 시간 이전입니다. 출석 가능한 시간 이후에 다시 시도해주세요. | ScheduleErrorCode | `CHECK_IN_TOO_EARLY` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:36` |
-| 299 | schedule | `SCHEDULE-0020` | 400 BAD_REQUEST | 대면 일정은 위치 정보가 필수입니다. | ScheduleErrorCode | `OFFLINE_SCHEDULE_REQUIRES_LOCATION` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:38` |
-| 300 | schedule | `SCHEDULE-0021` | 400 BAD_REQUEST | 출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다. | ScheduleErrorCode | `SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:40` |
-| 301 | schedule | `SCHEDULE-0022` | 400 BAD_REQUEST | 일정에 대한 참석자 정보가 존재하지 않습니다. | ScheduleErrorCode | `PARTICIPANT_NOT_FOUND` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:42` |
-| 302 | schedule | `SCHEDULE-0023` | 400 BAD_REQUEST | 사용자의 출석 인증 범위 내의 존재 여부가 확인되지 않습니다. | ScheduleErrorCode | `LOCATION_NOT_VERIFIED` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:44` |
-| 303 | schedule | `SCHEDULE-0024` | 400 BAD_REQUEST | 비대면 일정으로 변경 시 위치 정보를 포함할 수 없습니다. | ScheduleErrorCode | `ONLINE_SCHEDULE_SHOULD_NOT_HAVE_LOCATION` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:46` |
-| 304 | schedule | `SCHEDULE-0025` | 400 BAD_REQUEST | 현재 기수의 일정만 생성할 수 있습니다. | ScheduleErrorCode | `NOT_ACTIVE_GISU_SCHEDULE` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:49` |
-| 305 | schedule | `SCHEDULE-0026` | 400 BAD_REQUEST | 일정의 참여자가 아닙니다. | ScheduleErrorCode | `NOT_SCHEDULE_PARTICIPANT` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:52` |
-| 306 | schedule | `SCHEDULE-0027` | 400 BAD_REQUEST | 출석을 요하는 일정의 출석 정책은 필수입니다. | ScheduleErrorCode | `ATTENDANCE_POLICY_REQUIRED` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:54` |
-| 307 | schedule | `SCHEDULE-0028` | 400 BAD_REQUEST | 시작된 일정은 수정이 불가합니다. | ScheduleErrorCode | `STARTED_SCHEDULE_CANT_BE_EDITED` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:56` |
-| 308 | schedule | `SCHEDULE-0029` | 403 FORBIDDEN | 일정을 생성할 수 없습니다. 챌린저 활동 이력이 필요합니다. | ScheduleErrorCode | `CANNOT_CREATE_SCHEDULE` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:58` |
-| 309 | schedule | `SCHEDULE-0030` | 400 BAD_REQUEST | 초대 가능한 최대 참여자 수를 초과했습니다. | ScheduleErrorCode | `EXCEEDED_MAX_PARTICIPANTS` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:60` |
-| 310 | schedule | `SCHEDULE-0031` | 403 FORBIDDEN | 출석을 요하는 일정을 생성할 권한이 없습니다. | ScheduleErrorCode | `CANNOT_CREATE_ATTENDANCE_REQUIRED_SCHEDULE` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:62` |
-| 311 | schedule | `SCHEDULE-0032` | 400 BAD_REQUEST | 초대하려는 참여자에 유효하지 않은 사용자가 포함되어 있습니다. | ScheduleErrorCode | `INVALID_MEMBER_INVITE` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:64` |
-| 312 | schedule | `SCHEDULE-0033` | 400 BAD_REQUEST | 출석 기록이 존재하는 일정은 삭제할 수 없습니다. | ScheduleErrorCode | `SCHEDULE_HAS_ATTENDANCE_RECORD` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:66` |
+| 286 | schedule | `SCHEDULE-0006` | 400 BAD_REQUEST | 시작 시간은 종료 시간보다 이전이어야 합니다. | ScheduleErrorCode | `INVALID_TIME_RANGE` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:12` |
+| 287 | schedule | `SCHEDULE-0009` | 404 NOT_FOUND | 일정을 찾을 수 없습니다. | ScheduleErrorCode | `SCHEDULE_NOT_FOUND` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:14` |
+| 288 | schedule | `SCHEDULE-0010` | 400 BAD_REQUEST | 태그는 최소 1개 이상 선택해야 합니다. | ScheduleErrorCode | `TAG_REQUIRED` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:16` |
+| 289 | schedule | `SCHEDULE-0011` | 400 BAD_REQUEST | 기존 출석 요청이 존재합니다. | ScheduleErrorCode | `NOT_FIRST_ATTENDANCE_REQUEST` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:18` |
+| 290 | schedule | `SCHEDULE-0012` | 404 NOT_FOUND | 출석 요청이 존재하지 않습니다. 출석 요청을 생성하고 다시 시도해주세요. | ScheduleErrorCode | `NO_ATTENDANCE_RECORD` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:20` |
+| 291 | schedule | `SCHEDULE-0013` | 400 BAD_REQUEST | 출석 사유 제출은 첫 요청, 결석 또는 지각 상태에서만 가능합니다. | ScheduleErrorCode | `INVALID_ATTENDANCE_STATUS_FOR_EXCUSE` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:22` |
+| 292 | schedule | `SCHEDULE-0014` | 400 BAD_REQUEST | 현재 출석 상태에서는 승인이 불가능합니다. | ScheduleErrorCode | `INVALID_ATTENDANCE_STATUS_FOR_APPROVAL` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:25` |
+| 293 | schedule | `SCHEDULE-0015` | 400 BAD_REQUEST | 출석 요청에 대한 거절을 할 수 없는 상태입니다. | ScheduleErrorCode | `INVALID_ATTENDANCE_STATUS_FOR_REJECT` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:27` |
+| 294 | schedule | `SCHEDULE-0016` | 400 BAD_REQUEST | 출석 인정을 요청하는 사유가 제공되지 않았거나 비어있습니다. | ScheduleErrorCode | `NO_EXCUSE_REASON_GIVEN` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:29` |
+| 295 | schedule | `SCHEDULE-0017` | 400 BAD_REQUEST | 해당 출석 요청은 운영진의 승인 또는 기각을 필요로 하는 상태가 아닙니다. | ScheduleErrorCode | `ATTENDANCE_NOT_REQUIRES_CONFIRM` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:31` |
+| 296 | schedule | `SCHEDULE-0018` | 400 BAD_REQUEST | 종료된 일정에 대한 출석 요청은 허용되지 않습니다. | ScheduleErrorCode | `SCHEDULE_ENDED` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:34` |
+| 297 | schedule | `SCHEDULE-0019` | 400 BAD_REQUEST | 출석 가능한 시간 이전입니다. 출석 가능한 시간 이후에 다시 시도해주세요. | ScheduleErrorCode | `CHECK_IN_TOO_EARLY` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:36` |
+| 298 | schedule | `SCHEDULE-0020` | 400 BAD_REQUEST | 대면 일정은 위치 정보가 필수입니다. | ScheduleErrorCode | `OFFLINE_SCHEDULE_REQUIRES_LOCATION` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:38` |
+| 299 | schedule | `SCHEDULE-0021` | 400 BAD_REQUEST | 출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다. | ScheduleErrorCode | `SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:40` |
+| 300 | schedule | `SCHEDULE-0022` | 400 BAD_REQUEST | 일정에 대한 참석자 정보가 존재하지 않습니다. | ScheduleErrorCode | `PARTICIPANT_NOT_FOUND` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:42` |
+| 301 | schedule | `SCHEDULE-0023` | 400 BAD_REQUEST | 사용자의 출석 인증 범위 내의 존재 여부가 확인되지 않습니다. | ScheduleErrorCode | `LOCATION_NOT_VERIFIED` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:44` |
+| 302 | schedule | `SCHEDULE-0024` | 400 BAD_REQUEST | 비대면 일정으로 변경 시 위치 정보를 포함할 수 없습니다. | ScheduleErrorCode | `ONLINE_SCHEDULE_SHOULD_NOT_HAVE_LOCATION` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:46` |
+| 303 | schedule | `SCHEDULE-0025` | 400 BAD_REQUEST | 현재 기수의 일정만 생성할 수 있습니다. | ScheduleErrorCode | `NOT_ACTIVE_GISU_SCHEDULE` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:49` |
+| 304 | schedule | `SCHEDULE-0026` | 400 BAD_REQUEST | 일정의 참여자가 아닙니다. | ScheduleErrorCode | `NOT_SCHEDULE_PARTICIPANT` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:52` |
+| 305 | schedule | `SCHEDULE-0027` | 400 BAD_REQUEST | 출석을 요하는 일정의 출석 정책은 필수입니다. | ScheduleErrorCode | `ATTENDANCE_POLICY_REQUIRED` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:54` |
+| 306 | schedule | `SCHEDULE-0028` | 400 BAD_REQUEST | 시작된 일정은 수정이 불가합니다. | ScheduleErrorCode | `STARTED_SCHEDULE_CANT_BE_EDITED` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:56` |
+| 307 | schedule | `SCHEDULE-0029` | 403 FORBIDDEN | 일정을 생성할 수 없습니다. 챌린저 활동 이력이 필요합니다. | ScheduleErrorCode | `CANNOT_CREATE_SCHEDULE` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:58` |
+| 308 | schedule | `SCHEDULE-0030` | 400 BAD_REQUEST | 초대 가능한 최대 참여자 수를 초과했습니다. | ScheduleErrorCode | `EXCEEDED_MAX_PARTICIPANTS` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:60` |
+| 309 | schedule | `SCHEDULE-0031` | 403 FORBIDDEN | 출석을 요하는 일정을 생성할 권한이 없습니다. | ScheduleErrorCode | `CANNOT_CREATE_ATTENDANCE_REQUIRED_SCHEDULE` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:62` |
+| 310 | schedule | `SCHEDULE-0032` | 400 BAD_REQUEST | 초대하려는 참여자에 유효하지 않은 사용자가 포함되어 있습니다. | ScheduleErrorCode | `INVALID_MEMBER_INVITE` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:64` |
+| 311 | schedule | `SCHEDULE-0033` | 400 BAD_REQUEST | 출석 기록이 존재하는 일정은 삭제할 수 없습니다. | ScheduleErrorCode | `SCHEDULE_HAS_ATTENDANCE_RECORD` | `src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:66` |
 
 ## storage
 
 | 순번 | 도메인 | Code | HTTP Status | Message | Enum | Constant | Source |
 |---:|---|---|---|---|---|---|---|
-| 313 | storage | `STORAGE-0001` | 404 NOT_FOUND | 파일을 찾을 수 없습니다. | StorageErrorCode | `FILE_NOT_FOUND` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:13` |
-| 314 | storage | `STORAGE-0002` | 400 BAD_REQUEST | 파일 업로드가 완료되지 않았습니다. | StorageErrorCode | `FILE_UPLOAD_NOT_COMPLETED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:14` |
-| 315 | storage | `STORAGE-0003` | 400 BAD_REQUEST | 이미 업로드가 완료된 파일입니다. | StorageErrorCode | `FILE_ALREADY_UPLOADED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:15` |
-| 316 | storage | `STORAGE-0004` | 400 BAD_REQUEST | 허용되지 않는 파일 확장자입니다. | StorageErrorCode | `INVALID_FILE_EXTENSION` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:18` |
-| 317 | storage | `STORAGE-0005` | 400 BAD_REQUEST | 파일 크기가 허용 범위를 초과했습니다. | StorageErrorCode | `FILE_SIZE_EXCEEDED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:19` |
-| 318 | storage | `STORAGE-0006` | 400 BAD_REQUEST | 잘못된 Content-Type입니다. | StorageErrorCode | `INVALID_CONTENT_TYPE` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:20` |
-| 319 | storage | `STORAGE-0007` | 500 INTERNAL_SERVER_ERROR | 파일 업로드에 실패했습니다. | StorageErrorCode | `STORAGE_UPLOAD_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:23` |
-| 320 | storage | `STORAGE-0008` | 500 INTERNAL_SERVER_ERROR | 파일 삭제에 실패했습니다. | StorageErrorCode | `STORAGE_DELETE_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:24` |
-| 321 | storage | `STORAGE-0009` | 500 INTERNAL_SERVER_ERROR | 파일 접근 URL 생성에 실패했습니다. | StorageErrorCode | `STORAGE_URL_GENERATION_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:25` |
-| 322 | storage | `STORAGE-0010` | 500 INTERNAL_SERVER_ERROR | CDN Signed URL 생성에 실패했습니다. | StorageErrorCode | `CDN_SIGNING_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:28` |
-| 323 | storage | `STORAGE-0011` | 500 INTERNAL_SERVER_ERROR | CDN이 활성화되어 있지만 관련 환경변수가 설정되어 있지 않습니다. 관리자에게 문의하세요. | StorageErrorCode | `NO_ENV_KEYS` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:29` |
-| 324 | storage | `STORAGE-0012` | 500 INTERNAL_SERVER_ERROR | 올바르지 않은 서버 실행 환경입니다. 관리자에게 문의하세요. | StorageErrorCode | `INVALID_SPRING_PROFILE` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:30` |
+| 312 | storage | `STORAGE-0001` | 404 NOT_FOUND | 파일을 찾을 수 없습니다. | StorageErrorCode | `FILE_NOT_FOUND` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:13` |
+| 313 | storage | `STORAGE-0002` | 400 BAD_REQUEST | 파일 업로드가 완료되지 않았습니다. | StorageErrorCode | `FILE_UPLOAD_NOT_COMPLETED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:14` |
+| 314 | storage | `STORAGE-0003` | 400 BAD_REQUEST | 이미 업로드가 완료된 파일입니다. | StorageErrorCode | `FILE_ALREADY_UPLOADED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:15` |
+| 315 | storage | `STORAGE-0004` | 400 BAD_REQUEST | 허용되지 않는 파일 확장자입니다. | StorageErrorCode | `INVALID_FILE_EXTENSION` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:18` |
+| 316 | storage | `STORAGE-0005` | 400 BAD_REQUEST | 파일 크기가 허용 범위를 초과했습니다. | StorageErrorCode | `FILE_SIZE_EXCEEDED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:19` |
+| 317 | storage | `STORAGE-0006` | 400 BAD_REQUEST | 잘못된 Content-Type입니다. | StorageErrorCode | `INVALID_CONTENT_TYPE` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:20` |
+| 318 | storage | `STORAGE-0007` | 500 INTERNAL_SERVER_ERROR | 파일 업로드에 실패했습니다. | StorageErrorCode | `STORAGE_UPLOAD_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:23` |
+| 319 | storage | `STORAGE-0008` | 500 INTERNAL_SERVER_ERROR | 파일 삭제에 실패했습니다. | StorageErrorCode | `STORAGE_DELETE_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:24` |
+| 320 | storage | `STORAGE-0009` | 500 INTERNAL_SERVER_ERROR | 파일 접근 URL 생성에 실패했습니다. | StorageErrorCode | `STORAGE_URL_GENERATION_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:25` |
+| 321 | storage | `STORAGE-0010` | 500 INTERNAL_SERVER_ERROR | CDN Signed URL 생성에 실패했습니다. | StorageErrorCode | `CDN_SIGNING_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:28` |
+| 322 | storage | `STORAGE-0011` | 500 INTERNAL_SERVER_ERROR | CDN이 활성화되어 있지만 관련 환경변수가 설정되어 있지 않습니다. 관리자에게 문의하세요. | StorageErrorCode | `NO_ENV_KEYS` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:29` |
+| 323 | storage | `STORAGE-0012` | 500 INTERNAL_SERVER_ERROR | 올바르지 않은 서버 실행 환경입니다. 관리자에게 문의하세요. | StorageErrorCode | `INVALID_SPRING_PROFILE` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:30` |
 
 ## survey
 
 | 순번 | 도메인 | Code | HTTP Status | Message | Enum | Constant | Source |
 |---:|---|---|---|---|---|---|---|
-| 325 | survey | `SURVEY-0001` | 404 NOT_FOUND | 폼을 찾을 수 없습니다. | SurveyErrorCode | `SURVEY_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:12` |
-| 326 | survey | `SURVEY-0002` | 409 CONFLICT | 임시저장 상태의 폼만 편집할 수 있습니다. | SurveyErrorCode | `SURVEY_NOT_DRAFT` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:13` |
-| 327 | survey | `SURVEY-0003` | 404 NOT_FOUND | 질문을 찾을 수 없습니다. | SurveyErrorCode | `QUESTION_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:14` |
-| 328 | survey | `SURVEY-0006` | 404 NOT_FOUND | 폼 응답을 찾을 수 없습니다. | SurveyErrorCode | `FORM_RESPONSE_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:16` |
-| 329 | survey | `SURVEY-0007` | 400 BAD_REQUEST | 질문이 해당 폼의 질문이 아닙니다. | SurveyErrorCode | `QUESTION_IS_NOT_OWNED_BY_FORM` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:17` |
-| 330 | survey | `SURVEY-0008` | 403 FORBIDDEN | 해당 폼 응답에 접근할 수 있는 권한이 없습니다. | SurveyErrorCode | `FORM_RESPONSE_FORBIDDEN` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:18` |
-| 331 | survey | `SURVEY-0009` | 400 BAD_REQUEST | 질문 유형이 일치하지 않습니다. | SurveyErrorCode | `QUESTION_TYPE_MISMATCH` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:19` |
-| 332 | survey | `SURVEY-0010` | 400 BAD_REQUEST | 필수 질문에 대한 응답이 누락되었습니다. | SurveyErrorCode | `REQUIRED_QUESTION_NOT_ANSWERED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:20` |
-| 333 | survey | `SURVEY-0011` | 400 BAD_REQUEST | 응답 형식이 올바르지 않습니다. | SurveyErrorCode | `INVALID_ANSWER_FORMAT` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:21` |
-| 334 | survey | `SURVEY-0012` | 400 BAD_REQUEST | '기타' 선택지가 중복되었습니다. | SurveyErrorCode | `OTHER_OPTION_DUPLICATED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:22` |
-| 335 | survey | `SURVEY-0013` | 400 BAD_REQUEST | 선택지가 해당 질문의 선택지에 포함되지 않습니다. | SurveyErrorCode | `OPTION_NOT_IN_QUESTION` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:23` |
-| 336 | survey | `SURVEY-0014` | 400 BAD_REQUEST | '기타' 선택지의 텍스트는 필수입니다. | SurveyErrorCode | `OPTION_TEXT_REQUIRED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:24` |
-| 337 | survey | `SURVEY-0015` | 400 BAD_REQUEST | 폼의 응답 가능 기간이 올바르지 않습니다. | SurveyErrorCode | `INVALID_FORM_ACTIVE_PERIOD` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:25` |
-| 338 | survey | `SURVEY-0023` | 400 BAD_REQUEST | 선택이 올바르지 않습니다. | SurveyErrorCode | `INVALID_VOTE_SELECTION` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:27` |
-| 339 | survey | `SURVEY-0025` | 400 BAD_REQUEST | 투표의 질문 형식이 올바르지 않습니다. | SurveyErrorCode | `INVALID_VOTE_FORM_STRUCTURE` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:29` |
-| 340 | survey | `SURVEY-0027` | 400 BAD_REQUEST | 이미 제출한 응답이 있습니다. | SurveyErrorCode | `FORM_RESPONSE_ALREADY_EXISTS` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:31` |
-| 341 | survey | `SURVEY-0028` | 409 CONFLICT | 발행된 폼만 응답할 수 있습니다. | SurveyErrorCode | `SURVEY_NOT_PUBLISHED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:32` |
-| 342 | survey | `SURVEY-0029` | 404 NOT_FOUND | 선택지를 찾을 수 없습니다. | SurveyErrorCode | `QUESTION_OPTION_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:33` |
-| 343 | survey | `SURVEY-0030` | 404 NOT_FOUND | 답변을 찾을 수 없습니다. | SurveyErrorCode | `ANSWER_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:34` |
-| 344 | survey | `SURVEY-0031` | 409 CONFLICT | 임시저장 상태의 응답에만 가능한 작업입니다. | SurveyErrorCode | `FORM_RESPONSE_NOT_DRAFT` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:35` |
-| 345 | survey | `SURVEY-0032` | 400 BAD_REQUEST | 이미 해당 질문에 대한 답변이 존재합니다. | SurveyErrorCode | `ANSWER_ALREADY_EXISTS` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:36` |
-| 346 | survey | `SURVEY-005` | 400 BAD_REQUEST | 이미 발행된 폼입니다. | SurveyErrorCode | `SURVEY_ALREADY_PUBLISHED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:15` |
+| 324 | survey | `SURVEY-0001` | 404 NOT_FOUND | 폼을 찾을 수 없습니다. | SurveyErrorCode | `SURVEY_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:12` |
+| 325 | survey | `SURVEY-0002` | 409 CONFLICT | 임시저장 상태의 폼만 편집할 수 있습니다. | SurveyErrorCode | `SURVEY_NOT_DRAFT` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:13` |
+| 326 | survey | `SURVEY-0003` | 404 NOT_FOUND | 질문을 찾을 수 없습니다. | SurveyErrorCode | `QUESTION_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:14` |
+| 327 | survey | `SURVEY-0006` | 404 NOT_FOUND | 폼 응답을 찾을 수 없습니다. | SurveyErrorCode | `FORM_RESPONSE_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:16` |
+| 328 | survey | `SURVEY-0007` | 400 BAD_REQUEST | 질문이 해당 폼의 질문이 아닙니다. | SurveyErrorCode | `QUESTION_IS_NOT_OWNED_BY_FORM` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:17` |
+| 329 | survey | `SURVEY-0008` | 403 FORBIDDEN | 해당 폼 응답에 접근할 수 있는 권한이 없습니다. | SurveyErrorCode | `FORM_RESPONSE_FORBIDDEN` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:18` |
+| 330 | survey | `SURVEY-0009` | 400 BAD_REQUEST | 질문 유형이 일치하지 않습니다. | SurveyErrorCode | `QUESTION_TYPE_MISMATCH` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:19` |
+| 331 | survey | `SURVEY-0010` | 400 BAD_REQUEST | 필수 질문에 대한 응답이 누락되었습니다. | SurveyErrorCode | `REQUIRED_QUESTION_NOT_ANSWERED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:20` |
+| 332 | survey | `SURVEY-0011` | 400 BAD_REQUEST | 응답 형식이 올바르지 않습니다. | SurveyErrorCode | `INVALID_ANSWER_FORMAT` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:21` |
+| 333 | survey | `SURVEY-0012` | 400 BAD_REQUEST | '기타' 선택지가 중복되었습니다. | SurveyErrorCode | `OTHER_OPTION_DUPLICATED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:22` |
+| 334 | survey | `SURVEY-0013` | 400 BAD_REQUEST | 선택지가 해당 질문의 선택지에 포함되지 않습니다. | SurveyErrorCode | `OPTION_NOT_IN_QUESTION` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:23` |
+| 335 | survey | `SURVEY-0014` | 400 BAD_REQUEST | '기타' 선택지의 텍스트는 필수입니다. | SurveyErrorCode | `OPTION_TEXT_REQUIRED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:24` |
+| 336 | survey | `SURVEY-0015` | 400 BAD_REQUEST | 폼의 응답 가능 기간이 올바르지 않습니다. | SurveyErrorCode | `INVALID_FORM_ACTIVE_PERIOD` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:25` |
+| 337 | survey | `SURVEY-0023` | 400 BAD_REQUEST | 선택이 올바르지 않습니다. | SurveyErrorCode | `INVALID_VOTE_SELECTION` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:27` |
+| 338 | survey | `SURVEY-0025` | 400 BAD_REQUEST | 투표의 질문 형식이 올바르지 않습니다. | SurveyErrorCode | `INVALID_VOTE_FORM_STRUCTURE` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:29` |
+| 339 | survey | `SURVEY-0027` | 400 BAD_REQUEST | 이미 제출한 응답이 있습니다. | SurveyErrorCode | `FORM_RESPONSE_ALREADY_EXISTS` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:31` |
+| 340 | survey | `SURVEY-0028` | 409 CONFLICT | 발행된 폼만 응답할 수 있습니다. | SurveyErrorCode | `SURVEY_NOT_PUBLISHED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:32` |
+| 341 | survey | `SURVEY-0029` | 404 NOT_FOUND | 선택지를 찾을 수 없습니다. | SurveyErrorCode | `QUESTION_OPTION_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:33` |
+| 342 | survey | `SURVEY-0030` | 404 NOT_FOUND | 답변을 찾을 수 없습니다. | SurveyErrorCode | `ANSWER_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:34` |
+| 343 | survey | `SURVEY-0031` | 409 CONFLICT | 임시저장 상태의 응답에만 가능한 작업입니다. | SurveyErrorCode | `FORM_RESPONSE_NOT_DRAFT` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:35` |
+| 344 | survey | `SURVEY-0032` | 400 BAD_REQUEST | 이미 해당 질문에 대한 답변이 존재합니다. | SurveyErrorCode | `ANSWER_ALREADY_EXISTS` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:36` |
+| 345 | survey | `SURVEY-005` | 400 BAD_REQUEST | 이미 발행된 폼입니다. | SurveyErrorCode | `SURVEY_ALREADY_PUBLISHED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:15` |
+
+## techblog
+
+| 순번 | 도메인 | Code | HTTP Status | Message | Enum | Constant | Source |
+|---:|---|---|---|---|---|---|---|
+| 346 | techblog | `TECH-BLOG-0001` | 404 NOT_FOUND | 콘텐츠를 찾을 수 없습니다. | TechBlogErrorCode | `CONTENT_NOT_FOUND` | `src/main/java/com/umc/product/techblog/domain/TechBlogErrorCode.java:13` |
+| 347 | techblog | `TECH-BLOG-0002` | 404 NOT_FOUND | 댓글을 찾을 수 없습니다. | TechBlogErrorCode | `COMMENT_NOT_FOUND` | `src/main/java/com/umc/product/techblog/domain/TechBlogErrorCode.java:14` |
+| 348 | techblog | `TECH-BLOG-0003` | 400 BAD_REQUEST | 콘텐츠 타입이 유효하지 않습니다. | TechBlogErrorCode | `INVALID_CONTENT_TYPE` | `src/main/java/com/umc/product/techblog/domain/TechBlogErrorCode.java:15` |
+| 349 | techblog | `TECH-BLOG-0004` | 400 BAD_REQUEST | slug가 유효하지 않습니다. | TechBlogErrorCode | `INVALID_SLUG` | `src/main/java/com/umc/product/techblog/domain/TechBlogErrorCode.java:16` |
+| 350 | techblog | `TECH-BLOG-0005` | 400 BAD_REQUEST | ID는 양수여야 합니다. | TechBlogErrorCode | `INVALID_ID` | `src/main/java/com/umc/product/techblog/domain/TechBlogErrorCode.java:17` |
+| 351 | techblog | `TECH-BLOG-0006` | 400 BAD_REQUEST | 댓글 내용이 유효하지 않습니다. | TechBlogErrorCode | `INVALID_COMMENT_CONTENT` | `src/main/java/com/umc/product/techblog/domain/TechBlogErrorCode.java:18` |
+| 352 | techblog | `TECH-BLOG-0007` | 400 BAD_REQUEST | 비회원 닉네임이 유효하지 않습니다. | TechBlogErrorCode | `INVALID_GUEST_NICKNAME` | `src/main/java/com/umc/product/techblog/domain/TechBlogErrorCode.java:19` |
+| 353 | techblog | `TECH-BLOG-0008` | 400 BAD_REQUEST | 대댓글을 달 수 없는 댓글입니다. | TechBlogErrorCode | `INVALID_PARENT_COMMENT` | `src/main/java/com/umc/product/techblog/domain/TechBlogErrorCode.java:20` |
+| 354 | techblog | `TECH-BLOG-0009` | 400 BAD_REQUEST | 삭제된 댓글에는 수행할 수 없습니다. | TechBlogErrorCode | `COMMENT_ALREADY_DELETED` | `src/main/java/com/umc/product/techblog/domain/TechBlogErrorCode.java:21` |
+| 355 | techblog | `TECH-BLOG-0011` | 400 BAD_REQUEST | 댓글 정렬 조건이 유효하지 않습니다. | TechBlogErrorCode | `INVALID_COMMENT_SORT` | `src/main/java/com/umc/product/techblog/domain/TechBlogErrorCode.java:22` |
+| 356 | techblog | `TECH-BLOG-0012` | 400 BAD_REQUEST | 회원 ID가 유효하지 않습니다. | TechBlogErrorCode | `INVALID_MEMBER_ID` | `src/main/java/com/umc/product/techblog/domain/TechBlogErrorCode.java:23` |
 
 ## term
 
 | 순번 | 도메인 | Code | HTTP Status | Message | Enum | Constant | Source |
 |---:|---|---|---|---|---|---|---|
-| 347 | term | `TERMS-0001` | 404 NOT_FOUND | 약관을 찾을 수 없습니다. | TermErrorCode | `TERMS_NOT_FOUND` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:12` |
-| 348 | term | `TERMS-0002` | 400 BAD_REQUEST | 약관 타입은 필수입니다. | TermErrorCode | `TERMS_TYPE_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:13` |
-| 349 | term | `TERMS-0003` | 400 BAD_REQUEST | 약관 제목은 필수입니다. | TermErrorCode | `TERMS_TITLE_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:14` |
-| 350 | term | `TERMS-0004` | 400 BAD_REQUEST | 약관 내용은 필수입니다. | TermErrorCode | `TERMS_CONTENT_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:15` |
-| 351 | term | `TERMS-0005` | 400 BAD_REQUEST | 약관 버전은 필수입니다. | TermErrorCode | `TERMS_VERSION_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:16` |
-| 352 | term | `TERMS-0006` | 404 NOT_FOUND | 약관 동의 정보를 찾을 수 없습니다. | TermErrorCode | `TERMS_CONSENT_NOT_FOUND` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:18` |
-| 353 | term | `TERMS-0007` | 400 BAD_REQUEST | 이미 동의한 약관입니다. | TermErrorCode | `TERMS_CONSENT_ALREADY_EXISTS` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:19` |
-| 354 | term | `TERMS-0008` | 400 BAD_REQUEST | 회원 ID는 필수입니다. | TermErrorCode | `MEMBER_ID_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:20` |
-| 355 | term | `TERMS-0009` | 400 BAD_REQUEST | 약관 ID는 필수입니다. | TermErrorCode | `TERM_ID_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:21` |
-| 356 | term | `TERMS-0010` | 400 BAD_REQUEST | 필수 약관에 모두 동의해야 합니다. | TermErrorCode | `MANDATORY_TERMS_NOT_AGREED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:22` |
-| 357 | term | `TERMS-0011` | 403 FORBIDDEN | 해당 작업을 수행할 권한이 없습니다. | TermErrorCode | `TERM_PERMISSION_DENIED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:24` |
+| 357 | term | `TERMS-0001` | 404 NOT_FOUND | 약관을 찾을 수 없습니다. | TermErrorCode | `TERMS_NOT_FOUND` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:12` |
+| 358 | term | `TERMS-0002` | 400 BAD_REQUEST | 약관 타입은 필수입니다. | TermErrorCode | `TERMS_TYPE_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:13` |
+| 359 | term | `TERMS-0003` | 400 BAD_REQUEST | 약관 제목은 필수입니다. | TermErrorCode | `TERMS_TITLE_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:14` |
+| 360 | term | `TERMS-0004` | 400 BAD_REQUEST | 약관 내용은 필수입니다. | TermErrorCode | `TERMS_CONTENT_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:15` |
+| 361 | term | `TERMS-0005` | 400 BAD_REQUEST | 약관 버전은 필수입니다. | TermErrorCode | `TERMS_VERSION_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:16` |
+| 362 | term | `TERMS-0006` | 404 NOT_FOUND | 약관 동의 정보를 찾을 수 없습니다. | TermErrorCode | `TERMS_CONSENT_NOT_FOUND` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:18` |
+| 363 | term | `TERMS-0007` | 400 BAD_REQUEST | 이미 동의한 약관입니다. | TermErrorCode | `TERMS_CONSENT_ALREADY_EXISTS` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:19` |
+| 364 | term | `TERMS-0008` | 400 BAD_REQUEST | 회원 ID는 필수입니다. | TermErrorCode | `MEMBER_ID_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:20` |
+| 365 | term | `TERMS-0009` | 400 BAD_REQUEST | 약관 ID는 필수입니다. | TermErrorCode | `TERM_ID_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:21` |
+| 366 | term | `TERMS-0010` | 400 BAD_REQUEST | 필수 약관에 모두 동의해야 합니다. | TermErrorCode | `MANDATORY_TERMS_NOT_AGREED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:22` |
+| 367 | term | `TERMS-0011` | 403 FORBIDDEN | 해당 작업을 수행할 권한이 없습니다. | TermErrorCode | `TERM_PERMISSION_DENIED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:24` |
 
