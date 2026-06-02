@@ -1,11 +1,11 @@
 package com.umc.product.global.websocket.interceptor;
 
-import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.chat.application.port.in.query.CheckChatRoomAccessUseCase;
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.websocket.handler.WebSocketErrorPublisher;
 import java.security.Principal;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +28,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private static final String CHAT_TOPIC_PREFIX = "/topic/chat/";
 
     private final CheckChatRoomAccessUseCase checkChatRoomAccessUseCase;
+    private final WebSocketErrorPublisher webSocketErrorPublisher;
 
     /**
      * 클라이언트에서 들어오는 STOMP 프레임 중 채팅방 접근 권한이 필요한 프레임을 검사한다.
@@ -45,12 +46,14 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             return message;
         }
 
-        Long memberId = extractMemberId(accessor);
+        Principal user = accessor.getUser();
+        Long memberId = extractMemberId(user);
         if (memberId == null) {
             throw new CommonException(CommonErrorCode.SECURITY_NOT_GIVEN);
         }
         if (!checkChatRoomAccessUseCase.hasChatRoomAccess(memberId, chatRoomId.get())) {
-            throw new AuthorizationDomainException(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
+            webSocketErrorPublisher.sendErrorToUser(user, AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
+            return null;
         }
 
         return message;
@@ -99,8 +102,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     /**
      * STOMP 사용자 정보에서 인증된 회원 ID를 꺼낸다.
      */
-    private Long extractMemberId(StompHeaderAccessor accessor) {
-        Principal user = accessor.getUser();
+    private Long extractMemberId(Principal user) {
         if (user instanceof UsernamePasswordAuthenticationToken auth
             && auth.getPrincipal() instanceof MemberPrincipal principal) {
             return principal.getMemberId();

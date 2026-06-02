@@ -2,16 +2,18 @@ package com.umc.product.global.websocket.interceptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.chat.application.port.in.query.CheckChatRoomAccessUseCase;
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.websocket.handler.WebSocketErrorPublisher;
+import java.security.Principal;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,9 @@ class StompAuthChannelInterceptorTest {
 
     @Mock
     private CheckChatRoomAccessUseCase checkChatRoomAccessUseCase;
+
+    @Mock
+    private WebSocketErrorPublisher webSocketErrorPublisher;
 
     @Mock
     private MessageChannel channel;
@@ -64,15 +69,29 @@ class StompAuthChannelInterceptorTest {
     }
 
     @Test
-    @DisplayName("채팅방 접근 권한이 없는 멤버의 SEND 프레임은 AuthorizationDomainException이 발생한다")
-    void send_to_app_without_access_throws() {
+    @DisplayName("채팅방 접근 권한이 없는 멤버의 SEND 프레임은 에러 메시지를 전송하고 차단된다")
+    void send_to_app_without_access_publishes_error_and_blocks() {
         when(checkChatRoomAccessUseCase.hasChatRoomAccess(1L, 10L)).thenReturn(false);
         Message<byte[]> message = stompMessage(StompCommand.SEND, "/app/chat/10", 1L);
 
-        assertThatThrownBy(() -> sut.preSend(message, channel))
-            .isInstanceOf(AuthorizationDomainException.class)
-            .extracting("baseCode")
-            .isEqualTo(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
+        Message<?> result = sut.preSend(message, channel);
+
+        Principal user = StompHeaderAccessor.wrap(message).getUser();
+        assertThat(result).isNull();
+        verify(webSocketErrorPublisher).sendErrorToUser(user, AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
+    }
+
+    @Test
+    @DisplayName("채팅방 접근 권한이 없는 멤버의 SUBSCRIBE 프레임은 에러 메시지를 전송하고 차단된다")
+    void subscribe_without_access_publishes_error_and_blocks() {
+        when(checkChatRoomAccessUseCase.hasChatRoomAccess(1L, 10L)).thenReturn(false);
+        Message<byte[]> message = stompMessage(StompCommand.SUBSCRIBE, "/topic/chat/10", 1L);
+
+        Message<?> result = sut.preSend(message, channel);
+
+        Principal user = StompHeaderAccessor.wrap(message).getUser();
+        assertThat(result).isNull();
+        verify(webSocketErrorPublisher).sendErrorToUser(user, AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
     }
 
     @Test
@@ -82,6 +101,8 @@ class StompAuthChannelInterceptorTest {
 
         assertThat(sut.preSend(message, channel)).isSameAs(message);
         verifyNoInteractions(checkChatRoomAccessUseCase);
+        verify(webSocketErrorPublisher, never())
+            .sendErrorToUser(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test
