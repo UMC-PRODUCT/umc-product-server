@@ -82,7 +82,7 @@ public class TechBlogCommentQueryService implements GetTechBlogCommentListUseCas
             likeCounts,
             likedCommentIds,
             query.viewerMemberId(),
-            isCentralCore(query.viewerMemberId())
+            isSuperAdmin(query.viewerMemberId())
         );
 
         Long nextCursor = hasNext ? page.get(page.size() - 1).getId() : null;
@@ -96,7 +96,8 @@ public class TechBlogCommentQueryService implements GetTechBlogCommentListUseCas
         return Math.min(requestedSize, MAX_SIZE);
     }
 
-    private boolean isCentralCore(Long memberId) {
-        return memberId != null && getChallengerRoleUseCase.isCentralCore(memberId);
+    private boolean isSuperAdmin(Long memberId) {
+        return memberId != null && getChallengerRoleUseCase.findAllByMemberId(memberId).stream()
+            .anyMatch(role -> role.roleType().isSuperAdmin());
     }
 }

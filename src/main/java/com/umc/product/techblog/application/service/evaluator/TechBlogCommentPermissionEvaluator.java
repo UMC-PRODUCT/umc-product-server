@@ -41,7 +41,7 @@ public class TechBlogCommentPermissionEvaluator implements ResourcePermissionEva
 
         return switch (permission) {
             case EDIT -> isAuthor(subjectAttributes.memberId(), comment);
-            case DELETE -> isAuthor(subjectAttributes.memberId(), comment) || isCentralCore(subjectAttributes);
+            case DELETE -> isAuthor(subjectAttributes.memberId(), comment) || isSuperAdmin(subjectAttributes);
             default -> {
                 log.warn("TechBlogCommentPermissionEvaluator에서 지원하지 않는 PermissionType: {}", permission);
                 yield false;
@@ -55,9 +55,9 @@ public class TechBlogCommentPermissionEvaluator implements ResourcePermissionEva
             && comment.getAuthorMemberId().equals(memberId);
     }
 
-    private boolean isCentralCore(SubjectAttributes subjectAttributes) {
+    private boolean isSuperAdmin(SubjectAttributes subjectAttributes) {
         return subjectAttributes.roleAttributes().stream()
             .map(RoleAttribute::roleType)
-            .anyMatch(roleType -> roleType != null && roleType.isAtLeastCentralCore());
+            .anyMatch(roleType -> roleType != null && roleType.isSuperAdmin());
     }
 }
