@@ -1,6 +1,7 @@
 package com.umc.product.global.config;
 
 import com.umc.product.global.websocket.interceptor.ShutdownAwareHandshakeInterceptor;
+import com.umc.product.global.websocket.interceptor.StompAuthChannelInterceptor;
 import com.umc.product.global.websocket.interceptor.StompPrincipalInterceptor;
 import com.umc.product.global.websocket.interceptor.WebSocketInboundMetricInterceptor;
 import com.umc.product.global.websocket.interceptor.WebSocketOutboundMetricInterceptor;
@@ -26,6 +27,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfigurer {
 
     private final StompPrincipalInterceptor stompPrincipalInterceptor;
+    private final StompAuthChannelInterceptor stompAuthChannelInterceptor;
     private final WebSocketRateLimitInterceptor webSocketRateLimitInterceptor;
     private final WebSocketInboundMetricInterceptor webSocketInboundMetricInterceptor;
     private final WebSocketOutboundMetricInterceptor webSocketOutboundMetricInterceptor;
@@ -60,6 +62,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(
             stompPrincipalInterceptor,
+            stompAuthChannelInterceptor,
             webSocketInboundMetricInterceptor,
             webSocketRateLimitInterceptor
         );
