@@ -74,7 +74,7 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
         challengerFixture.챌린저(authorMemberId, ChallengerPart.SPRINGBOOT, gisu.getId());
         challengerFixture.챌린저(otherMemberId, ChallengerPart.SPRINGBOOT, gisu.getId());
         Challenger adminChallenger = challengerFixture.챌린저(adminMemberId, ChallengerPart.SPRINGBOOT, gisu.getId());
-        challengerRoleFixture.중앙운영사무국_총괄(adminChallenger.getId(), gisu.getId());
+        challengerRoleFixture.슈퍼_관리자(adminChallenger.getId(), gisu.getId());
 
         authorToken = mockToken("author-token", authorMemberId);
         otherToken = mockToken("other-token", otherMemberId);

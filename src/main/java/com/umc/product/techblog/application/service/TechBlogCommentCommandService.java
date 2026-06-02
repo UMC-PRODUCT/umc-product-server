@@ -60,7 +60,7 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
             0,
             List.of(),
             command.authorMemberId(),
-            isCentralCore(command.authorMemberId())
+            isSuperAdmin(command.authorMemberId())
         );
     }
 
@@ -79,7 +79,7 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
         TechBlogContent content = getContent(command.type(), command.slug());
         TechBlogComment comment = getCommentInContent(command.commentId(), content.getId());
         comment.ensureNotDeleted();
-        deleteResolved(comment, command.memberId(), isCentralCore(command.memberId()));
+        deleteResolved(comment, command.memberId(), isSuperAdmin(command.memberId()));
     }
 
     @Override
@@ -102,9 +102,9 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
         }
     }
 
-    private void deleteResolved(TechBlogComment comment, Long memberId, boolean admin) {
+    private void deleteResolved(TechBlogComment comment, Long memberId, boolean superAdmin) {
         if (loadTechBlogCommentPort.existsVisibleReply(comment.getId())) {
-            saveTechBlogCommentPort.softDelete(comment.getId(), memberId, admin);
+            saveTechBlogCommentPort.softDelete(comment.getId(), memberId, superAdmin);
             return;
         }
         saveTechBlogCommentPort.hardDelete(comment.getId());
@@ -123,12 +123,13 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
             likeCount,
             List.of(),
             viewerMemberId,
-            isCentralCore(viewerMemberId)
+            isSuperAdmin(viewerMemberId)
         );
     }
 
-    private boolean isCentralCore(Long memberId) {
-        return memberId != null && getChallengerRoleUseCase.isCentralCore(memberId);
+    private boolean isSuperAdmin(Long memberId) {
+        return memberId != null && getChallengerRoleUseCase.findAllByMemberId(memberId).stream()
+            .anyMatch(role -> role.roleType().isSuperAdmin());
     }
 
     private TechBlogContent getOrCreateContent(String typeValue, String slug) {
