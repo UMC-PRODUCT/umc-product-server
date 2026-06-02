@@ -1,14 +1,17 @@
 package com.umc.product.techblog.adapter.out.persistence;
 
+import java.time.Instant;
+import java.util.List;
+
+import org.springframework.stereotype.Repository;
+
 import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogCommentJpaEntity;
 import com.umc.product.techblog.domain.TechBlogCommentDeletionType;
 import com.umc.product.techblog.domain.TechBlogCommentSort;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
-import java.time.Instant;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor

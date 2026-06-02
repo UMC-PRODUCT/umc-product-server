@@ -1,5 +1,10 @@
 package com.umc.product.techblog.application.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.techblog.application.port.in.command.CreateTechBlogCommentUseCase;
 import com.umc.product.techblog.application.port.in.command.DeleteTechBlogCommentUseCase;
 import com.umc.product.techblog.application.port.in.command.ToggleTechBlogCommentLikeUseCase;
@@ -18,10 +23,8 @@ import com.umc.product.techblog.domain.TechBlogContent;
 import com.umc.product.techblog.domain.TechBlogContentType;
 import com.umc.product.techblog.domain.TechBlogDomainException;
 import com.umc.product.techblog.domain.TechBlogErrorCode;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

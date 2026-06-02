@@ -1,12 +1,14 @@
 package com.umc.product.techblog.adapter.in.web.dto.response;
 
+import java.time.Instant;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.umc.product.techblog.application.port.in.query.dto.TechBlogAuthorInfo;
 import com.umc.product.techblog.application.port.in.query.dto.TechBlogCommentInfo;
 import com.umc.product.techblog.domain.TechBlogCommentDeletionType;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.Instant;
-import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "테크 블로그 댓글 응답")

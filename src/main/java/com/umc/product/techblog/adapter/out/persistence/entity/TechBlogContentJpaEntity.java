@@ -3,6 +3,7 @@ package com.umc.product.techblog.adapter.out.persistence.entity;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.techblog.domain.TechBlogContent;
 import com.umc.product.techblog.domain.TechBlogContentType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -1,11 +1,13 @@
 package com.umc.product.techblog.adapter.out.persistence;
 
-import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogCommentLikeId;
-import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogCommentLikeJpaEntity;
 import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogCommentLikeId;
+import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogCommentLikeJpaEntity;
 
 public interface TechBlogCommentLikeJpaRepository
     extends JpaRepository<TechBlogCommentLikeJpaEntity, TechBlogCommentLikeId> {

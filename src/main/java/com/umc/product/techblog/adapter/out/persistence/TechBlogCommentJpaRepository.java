@@ -1,10 +1,12 @@
 package com.umc.product.techblog.adapter.out.persistence;
 
-import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogCommentJpaEntity;
-import com.umc.product.techblog.domain.TechBlogCommentDeletionType;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogCommentJpaEntity;
+import com.umc.product.techblog.domain.TechBlogCommentDeletionType;
 
 public interface TechBlogCommentJpaRepository extends JpaRepository<TechBlogCommentJpaEntity, Long> {
 
