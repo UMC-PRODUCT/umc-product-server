@@ -6,7 +6,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
+import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.chat.application.port.in.query.CheckChatRoomAccessUseCase;
+import com.umc.product.common.domain.exception.CommonException;
+import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.security.MemberPrincipal;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +21,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.MessageBuilder;
@@ -61,14 +64,15 @@ class StompAuthChannelInterceptorTest {
     }
 
     @Test
-    @DisplayName("채팅방 접근 권한이 없는 멤버의 SEND 프레임은 MessageDeliveryException이 발생한다")
+    @DisplayName("채팅방 접근 권한이 없는 멤버의 SEND 프레임은 AuthorizationDomainException이 발생한다")
     void send_to_app_without_access_throws() {
         when(checkChatRoomAccessUseCase.hasChatRoomAccess(1L, 10L)).thenReturn(false);
         Message<byte[]> message = stompMessage(StompCommand.SEND, "/app/chat/10", 1L);
 
         assertThatThrownBy(() -> sut.preSend(message, channel))
-            .isInstanceOf(MessageDeliveryException.class)
-            .hasMessageContaining("채팅방 접근 권한");
+            .isInstanceOf(AuthorizationDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
     }
 
     @Test
@@ -81,13 +85,14 @@ class StompAuthChannelInterceptorTest {
     }
 
     @Test
-    @DisplayName("Principal이 없는 채팅방 프레임은 MessageDeliveryException이 발생한다")
+    @DisplayName("Principal이 없는 채팅방 프레임은 CommonException이 발생한다")
     void chat_frame_without_principal_throws() {
         Message<byte[]> message = stompMessage(StompCommand.SUBSCRIBE, "/topic/chat/10", null);
 
         assertThatThrownBy(() -> sut.preSend(message, channel))
-            .isInstanceOf(MessageDeliveryException.class)
-            .hasMessageContaining("채팅방 접근 권한");
+            .isInstanceOf(CommonException.class)
+            .extracting("baseCode")
+            .isEqualTo(CommonErrorCode.SECURITY_NOT_GIVEN);
     }
 
     @Test

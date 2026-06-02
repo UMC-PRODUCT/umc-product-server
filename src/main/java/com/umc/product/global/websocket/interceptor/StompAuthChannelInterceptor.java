@@ -1,13 +1,16 @@
 package com.umc.product.global.websocket.interceptor;
 
+import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
+import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.chat.application.port.in.query.CheckChatRoomAccessUseCase;
+import com.umc.product.common.domain.exception.CommonException;
+import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.security.MemberPrincipal;
 import java.security.Principal;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -43,8 +46,11 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         }
 
         Long memberId = extractMemberId(accessor);
-        if (memberId == null || !checkChatRoomAccessUseCase.hasChatRoomAccess(memberId, chatRoomId.get())) {
-            throw new MessageDeliveryException("채팅방 접근 권한이 없습니다.");
+        if (memberId == null) {
+            throw new CommonException(CommonErrorCode.SECURITY_NOT_GIVEN);
+        }
+        if (!checkChatRoomAccessUseCase.hasChatRoomAccess(memberId, chatRoomId.get())) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
         }
 
         return message;
