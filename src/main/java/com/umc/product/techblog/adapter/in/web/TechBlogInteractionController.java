@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -114,6 +117,12 @@ public class TechBlogInteractionController {
     }
 
     @PatchMapping("/comments/{commentId}")
+    @CheckAccess(
+        resourceType = ResourceType.TECH_BLOG_COMMENT,
+        resourceId = "#commentId",
+        permission = PermissionType.EDIT,
+        message = "본인의 댓글만 수정할 수 있습니다."
+    )
     @Operation(summary = "[TECH-BLOG-005] 댓글 수정", description = "본인이 작성한 댓글을 수정합니다.")
     public TechBlogCommentResponse updateComment(
         @PathVariable String type,
@@ -128,6 +137,12 @@ public class TechBlogInteractionController {
     }
 
     @DeleteMapping("/comments/{commentId}")
+    @CheckAccess(
+        resourceType = ResourceType.TECH_BLOG_COMMENT,
+        resourceId = "#commentId",
+        permission = PermissionType.DELETE,
+        message = "본인의 댓글만 삭제할 수 있습니다."
+    )
     @Operation(summary = "[TECH-BLOG-006] 댓글 삭제", description = "본인이 작성한 댓글을 삭제합니다.")
     public void deleteComment(
         @PathVariable String type,

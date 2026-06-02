@@ -1,18 +1,13 @@
 package com.umc.product.techblog.adapter.out.persistence;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogCommentJpaEntity;
 import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogCommentLikeJpaEntity;
-import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogContentJpaEntity;
 import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogContentLikeJpaEntity;
 import com.umc.product.techblog.application.port.in.query.dto.TechBlogLikeInfo;
 import com.umc.product.techblog.application.port.out.LoadTechBlogCommentPort;
@@ -20,7 +15,6 @@ import com.umc.product.techblog.application.port.out.LoadTechBlogContentPort;
 import com.umc.product.techblog.application.port.out.SaveTechBlogCommentPort;
 import com.umc.product.techblog.application.port.out.SaveTechBlogContentPort;
 import com.umc.product.techblog.domain.TechBlogComment;
-import com.umc.product.techblog.domain.TechBlogCommentDeletionType;
 import com.umc.product.techblog.domain.TechBlogCommentSort;
 import com.umc.product.techblog.domain.TechBlogContent;
 import com.umc.product.techblog.domain.TechBlogContentType;
@@ -39,11 +33,11 @@ public class TechBlogPersistenceAdapter implements LoadTechBlogContentPort, Save
     private final TechBlogCommentJpaRepository commentJpaRepository;
     private final TechBlogCommentLikeJpaRepository commentLikeJpaRepository;
     private final TechBlogCommentQueryRepository commentQueryRepository;
+    private final TechBlogCommentLikeQueryRepository commentLikeQueryRepository;
 
     @Override
     public Optional<TechBlogContent> findByTypeAndSlug(TechBlogContentType type, String slug) {
-        return contentJpaRepository.findByContentTypeAndSlug(type, slug)
-            .map(TechBlogContentJpaEntity::toDomain);
+        return contentJpaRepository.findByContentTypeAndSlug(type, slug);
     }
 
     @Override
@@ -58,7 +52,7 @@ public class TechBlogPersistenceAdapter implements LoadTechBlogContentPort, Save
 
     @Override
     public TechBlogContent save(TechBlogContent content) {
-        return contentJpaRepository.save(TechBlogContentJpaEntity.from(content)).toDomain();
+        return contentJpaRepository.save(content);
     }
 
     @Override
@@ -76,84 +70,61 @@ public class TechBlogPersistenceAdapter implements LoadTechBlogContentPort, Save
 
     @Override
     public Optional<TechBlogComment> findById(Long commentId) {
-        return commentJpaRepository.findById(commentId)
-            .map(TechBlogCommentJpaEntity::toDomain);
+        return commentJpaRepository.findById(commentId);
     }
 
     @Override
     public Optional<TechBlogComment> findByIdAndContentId(Long commentId, Long contentId) {
-        return commentJpaRepository.findByIdAndContentId(commentId, contentId)
-            .map(TechBlogCommentJpaEntity::toDomain);
+        return commentJpaRepository.findByIdAndContentId(commentId, contentId);
     }
 
     @Override
     public List<TechBlogComment> listTopLevel(Long contentId, TechBlogCommentSort sort, Long cursor, int size) {
-        return commentQueryRepository.listTopLevel(contentId, sort, cursor, size).stream()
-            .map(TechBlogCommentJpaEntity::toDomain)
-            .toList();
+        return commentQueryRepository.listTopLevel(contentId, sort, cursor, size);
     }
 
     @Override
     public List<TechBlogComment> listRepliesByParentIds(List<Long> parentCommentIds) {
-        if (parentCommentIds == null || parentCommentIds.isEmpty()) {
-            return List.of();
-        }
-        return commentJpaRepository
-            .findByParentCommentIdInAndDeletionTypeOrderByCreatedAtAscIdAsc(
-                parentCommentIds,
-                TechBlogCommentDeletionType.NONE
-            )
-            .stream()
-            .map(TechBlogCommentJpaEntity::toDomain)
-            .toList();
+        return commentQueryRepository.listRepliesByParentIds(parentCommentIds);
     }
 
     @Override
     public boolean existsVisibleReply(Long parentCommentId) {
-        return commentJpaRepository.existsByParentCommentIdAndDeletionType(
-            parentCommentId,
-            TechBlogCommentDeletionType.NONE
-        );
+        return commentQueryRepository.existsVisibleReply(parentCommentId);
     }
 
     @Override
     public Map<Long, Integer> countLikesByCommentIds(List<Long> commentIds) {
-        if (commentIds == null || commentIds.isEmpty()) {
-            return new HashMap<>();
-        }
-        return commentLikeJpaRepository.countByCommentIds(commentIds).stream()
-            .collect(Collectors.toMap(
-                row -> (Long) row[0],
-                row -> ((Number) row[1]).intValue()
-            ));
+        return commentLikeQueryRepository.countByCommentIds(commentIds);
     }
 
     @Override
     public Set<Long> findLikedCommentIds(List<Long> commentIds, Long memberId) {
-        if (commentIds == null || commentIds.isEmpty() || memberId == null) {
-            return Set.of();
-        }
-        return new HashSet<>(commentLikeJpaRepository.findLikedCommentIds(commentIds, memberId));
+        return commentLikeQueryRepository.findLikedCommentIds(commentIds, memberId);
     }
 
     @Override
     public TechBlogComment save(TechBlogComment comment) {
-        return commentJpaRepository.save(TechBlogCommentJpaEntity.from(comment)).toDomain();
+        return commentJpaRepository.save(comment);
     }
 
     @Override
     public TechBlogComment updateContent(Long commentId, String content) {
-        TechBlogCommentJpaEntity entity = getCommentEntity(commentId);
+        TechBlogComment entity = getCommentEntity(commentId);
         entity.updateContent(content);
-        return entity.toDomain();
+        return entity;
     }
 
     @Override
     public TechBlogComment softDelete(Long commentId, Long deletedByMemberId, boolean admin) {
-        TechBlogCommentJpaEntity entity = getCommentEntity(commentId);
-        entity.softDelete(deletedByMemberId, admin);
+        TechBlogComment entity = getCommentEntity(commentId);
+        if (admin) {
+            entity.deleteByAdmin(deletedByMemberId);
+        } else {
+            entity.deleteByUser(deletedByMemberId);
+        }
         commentLikeJpaRepository.deleteByCommentId(commentId);
-        return entity.toDomain();
+        return entity;
     }
 
     @Override
@@ -174,7 +145,7 @@ public class TechBlogPersistenceAdapter implements LoadTechBlogContentPort, Save
         return new TechBlogLikeInfo(liked, commentLikeJpaRepository.countByCommentId(commentId));
     }
 
-    private TechBlogCommentJpaEntity getCommentEntity(Long commentId) {
+    private TechBlogComment getCommentEntity(Long commentId) {
         return commentJpaRepository.findById(commentId)
             .orElseThrow(() -> new TechBlogDomainException(TechBlogErrorCode.COMMENT_NOT_FOUND));
     }

@@ -5,8 +5,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.techblog.application.port.in.command.DeleteTechBlogCommentUseCase;
@@ -24,27 +25,20 @@ import lombok.RequiredArgsConstructor;
 public class AdminTechBlogCommentController {
 
     private final DeleteTechBlogCommentUseCase deleteTechBlogCommentUseCase;
-    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @DeleteMapping("/{commentId}")
+    @CheckAccess(
+        resourceType = ResourceType.TECH_BLOG_COMMENT,
+        permission = PermissionType.MANAGE,
+        message = "관리자 댓글 삭제 권한이 없습니다."
+    )
     @Operation(summary = "[ADMIN-TECH-BLOG-001] 댓글 관리자 삭제", description = "중앙 총괄단 이상 권한으로 댓글을 삭제합니다.")
     public void deleteCommentByAdmin(
         @PathVariable Long commentId,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         Long adminMemberId = requireMemberId(memberPrincipal);
-        validateAdmin(adminMemberId);
         deleteTechBlogCommentUseCase.deleteByAdmin(commentId, adminMemberId);
-    }
-
-    private void validateAdmin(Long memberId) {
-        boolean allowed = getChallengerRoleUseCase.findAllByMemberId(memberId).stream()
-            .map(ChallengerRoleInfo::roleType)
-            .anyMatch(roleType -> roleType != null && roleType.isAtLeastCentralCore());
-
-        if (!allowed) {
-            throw new TechBlogDomainException(TechBlogErrorCode.ADMIN_DELETE_FORBIDDEN);
-        }
     }
 
     private Long requireMemberId(MemberPrincipal memberPrincipal) {

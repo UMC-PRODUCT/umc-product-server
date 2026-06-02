@@ -1,8 +1,10 @@
 package com.umc.product.authorization.domain;
 
+import java.util.Set;
+
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
-import java.util.Set;
+
 import lombok.Getter;
 
 /**
@@ -57,6 +59,10 @@ public enum ResourceType {
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
     COMMUNITY_COMMENT("community_comment", "커뮤니티 게시글에 대한 댓글",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+
+    // 테크 블로그 도메인
+    TECH_BLOG_COMMENT("tech_blog_comment", "테크 블로그 댓글",
+        Set.of(PermissionType.EDIT, PermissionType.DELETE, PermissionType.MANAGE)),
 
     // UMC 모집 관련
     RECRUITMENT("recruitment", "모집",
