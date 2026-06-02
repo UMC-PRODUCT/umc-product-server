@@ -21,12 +21,17 @@ import org.springframework.http.MediaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.member.application.port.out.SaveMemberPort;
+import com.umc.product.member.domain.Member;
+import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.Gisu;
+import com.umc.product.organization.domain.School;
 import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.support.fixture.ChallengerFixture;
 import com.umc.product.support.fixture.ChallengerRoleFixture;
+import com.umc.product.support.fixture.ChapterFixture;
 import com.umc.product.support.fixture.GisuFixture;
-import com.umc.product.support.fixture.MemberFixture;
+import com.umc.product.support.fixture.SchoolFixture;
 
 @DisplayName("TechBlogInteractionController 통합 테스트")
 class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSupport {
@@ -36,13 +41,19 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
     private static final String ADMIN_DELETE_URL = "/api/v1/admin/tech-blog/comments";
 
     @Autowired
-    MemberFixture memberFixture;
+    SaveMemberPort saveMemberPort;
 
     @Autowired
     ChallengerFixture challengerFixture;
 
     @Autowired
     GisuFixture gisuFixture;
+
+    @Autowired
+    ChapterFixture chapterFixture;
+
+    @Autowired
+    SchoolFixture schoolFixture;
 
     @Autowired
     ChallengerRoleFixture challengerRoleFixture;
@@ -54,17 +65,31 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
     @BeforeEach
     void setUpAuth() {
         Gisu gisu = gisuFixture.비활성_기수(99L);
+        Chapter chapter = chapterFixture.지부(gisu);
+        School adminSchool = schoolFixture.지부에_소속된_학교("tech-blog-admin-school", chapter);
 
-        Long authorMemberId = memberFixture.일반("author").getId();
-        Long otherMemberId = memberFixture.일반("other").getId();
-        Long adminMemberId = memberFixture.일반("admin").getId();
+        Long authorMemberId = createMember("author", adminSchool.getId());
+        Long otherMemberId = createMember("other", adminSchool.getId());
+        Long adminMemberId = createMember("admin", adminSchool.getId());
 
+        challengerFixture.챌린저(authorMemberId, ChallengerPart.SPRINGBOOT, gisu.getId());
+        challengerFixture.챌린저(otherMemberId, ChallengerPart.SPRINGBOOT, gisu.getId());
         Challenger adminChallenger = challengerFixture.챌린저(adminMemberId, ChallengerPart.SPRINGBOOT, gisu.getId());
         challengerRoleFixture.중앙운영사무국_총괄(adminChallenger.getId(), gisu.getId());
 
         authorToken = mockToken("author-token", authorMemberId);
         otherToken = mockToken("other-token", otherMemberId);
         adminToken = mockToken("admin-token", adminMemberId);
+    }
+
+    private Long createMember(String name, Long schoolId) {
+        return saveMemberPort.save(Member.create(
+            name,
+            name,
+            name + "-tech-blog@test.com",
+            schoolId,
+            null
+        )).getId();
     }
 
     @Test
