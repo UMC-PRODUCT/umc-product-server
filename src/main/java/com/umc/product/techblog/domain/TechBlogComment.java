@@ -2,27 +2,74 @@ package com.umc.product.techblog.domain;
 
 import java.time.Instant;
 
+import com.umc.product.common.BaseEntity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-@Builder(access = AccessLevel.PRIVATE)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class TechBlogComment {
+@Entity
+@Table(name = "tech_blog_comment")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class TechBlogComment extends BaseEntity {
 
-    private final Long id;
-    private final Long contentId;
-    private final Long parentCommentId;
-    private final Long authorMemberId;
-    private final boolean anonymous;
-    private final String guestNickname;
-    private final Instant createdAt;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "content_id", nullable = false)
+    private Long contentId;
+
+    @Column(name = "parent_comment_id")
+    private Long parentCommentId;
+
+    @Column(name = "author_member_id")
+    private Long authorMemberId;
+
+    @Column(nullable = false)
+    private boolean anonymous;
+
+    @Column(name = "guest_nickname", length = 20)
+    private String guestNickname;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "deletion_type", nullable = false, length = 30)
     private TechBlogCommentDeletionType deletionType;
+
+    @Column(name = "deleted_at")
     private Instant deletedAt;
+
+    @Column(name = "deleted_by_member_id")
     private Long deletedByMemberId;
+
+    private TechBlogComment(
+        Long contentId,
+        Long parentCommentId,
+        Long authorMemberId,
+        boolean anonymous,
+        String guestNickname,
+        String content
+    ) {
+        this.contentId = contentId;
+        this.parentCommentId = parentCommentId;
+        this.authorMemberId = authorMemberId;
+        this.anonymous = anonymous;
+        this.guestNickname = guestNickname;
+        this.content = content;
+        this.deletionType = TechBlogCommentDeletionType.NONE;
+    }
 
     public static TechBlogComment create(
         Long contentId,
@@ -42,48 +89,14 @@ public class TechBlogComment {
             anonymous = true;
         }
 
-        return TechBlogComment.builder()
-            .contentId(contentId)
-            .parentCommentId(parentCommentId)
-            .authorMemberId(authorMemberId)
-            .anonymous(anonymous)
-            .guestNickname(normalizeGuestNickname(guestNickname))
-            .content(content.trim())
-            .deletionType(TechBlogCommentDeletionType.NONE)
-            .build();
-    }
-
-    public static TechBlogComment reconstruct(
-        Long id,
-        Long contentId,
-        Long parentCommentId,
-        Long authorMemberId,
-        boolean anonymous,
-        String guestNickname,
-        String content,
-        TechBlogCommentDeletionType deletionType,
-        Instant deletedAt,
-        Long deletedByMemberId,
-        Instant createdAt
-    ) {
-        if (id == null || id <= 0) {
-            throw new TechBlogDomainException(TechBlogErrorCode.INVALID_ID);
-        }
-        validateContentId(contentId);
-        validateContent(content);
-        return TechBlogComment.builder()
-            .id(id)
-            .contentId(contentId)
-            .parentCommentId(parentCommentId)
-            .authorMemberId(authorMemberId)
-            .anonymous(anonymous)
-            .guestNickname(guestNickname)
-            .content(content)
-            .deletionType(deletionType == null ? TechBlogCommentDeletionType.NONE : deletionType)
-            .deletedAt(deletedAt)
-            .deletedByMemberId(deletedByMemberId)
-            .createdAt(createdAt)
-            .build();
+        return new TechBlogComment(
+            contentId,
+            parentCommentId,
+            authorMemberId,
+            anonymous,
+            normalizeGuestNickname(guestNickname),
+            content.trim()
+        );
     }
 
     public void updateContent(String content) {

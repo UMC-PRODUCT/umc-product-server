@@ -59,7 +59,6 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
     public TechBlogCommentInfo update(UpdateTechBlogCommentCommand command) {
         TechBlogContent content = getContent(command.type(), command.slug());
         TechBlogComment comment = getCommentInContent(command.commentId(), content.getId());
-        validateOwner(comment, command.memberId());
         comment.updateContent(command.content());
 
         TechBlogComment updated = saveTechBlogCommentPort.updateContent(comment.getId(), comment.getContent());
@@ -70,7 +69,7 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
     public void delete(DeleteTechBlogCommentCommand command) {
         TechBlogContent content = getContent(command.type(), command.slug());
         TechBlogComment comment = getCommentInContent(command.commentId(), content.getId());
-        validateOwner(comment, command.memberId());
+        comment.ensureNotDeleted();
         deleteResolved(comment, command.memberId(), false);
     }
 
@@ -134,12 +133,5 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
     private TechBlogComment getCommentInContent(Long commentId, Long contentId) {
         return loadTechBlogCommentPort.findByIdAndContentId(commentId, contentId)
             .orElseThrow(() -> new TechBlogDomainException(TechBlogErrorCode.COMMENT_NOT_FOUND));
-    }
-
-    private void validateOwner(TechBlogComment comment, Long memberId) {
-        if (comment.getAuthorMemberId() == null || !comment.getAuthorMemberId().equals(memberId)) {
-            throw new TechBlogDomainException(TechBlogErrorCode.COMMENT_NOT_OWNED);
-        }
-        comment.ensureNotDeleted();
     }
 }
