@@ -5,7 +5,6 @@ import static org.mockito.Mockito.verify;
 
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.global.response.ApiResponse;
-import java.security.Principal;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -22,9 +21,12 @@ class WebSocketErrorPublisherTest {
     @DisplayName("사용자의 에러 큐로 ApiResponse 형식의 실패 응답을 전송한다")
     @SuppressWarnings({"unchecked", "rawtypes"})
     void send_error_to_user() {
-        Principal user = () -> "member-1";
+        WebSocketErrorEvent event = new WebSocketErrorEvent(
+            "member-1",
+            AuthorizationErrorCode.RESOURCE_ACCESS_DENIED
+        );
 
-        sut.sendErrorToUser(user, AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
+        sut.sendErrorToUser(event);
 
         ArgumentCaptor<ApiResponse<Object>> responseCaptor = ArgumentCaptor.forClass(ApiResponse.class);
         verify(messagingTemplate).convertAndSendToUser(

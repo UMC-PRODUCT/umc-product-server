@@ -2,7 +2,6 @@ package com.umc.product.global.websocket.interceptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -12,7 +11,7 @@ import com.umc.product.chat.application.port.in.query.CheckChatRoomAccessUseCase
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.security.MemberPrincipal;
-import com.umc.product.global.websocket.handler.WebSocketErrorPublisher;
+import com.umc.product.global.websocket.handler.WebSocketErrorEvent;
 import java.security.Principal;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -36,7 +36,7 @@ class StompAuthChannelInterceptorTest {
     private CheckChatRoomAccessUseCase checkChatRoomAccessUseCase;
 
     @Mock
-    private WebSocketErrorPublisher webSocketErrorPublisher;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Mock
     private MessageChannel channel;
@@ -78,7 +78,9 @@ class StompAuthChannelInterceptorTest {
 
         Principal user = StompHeaderAccessor.wrap(message).getUser();
         assertThat(result).isNull();
-        verify(webSocketErrorPublisher).sendErrorToUser(user, AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
+        verify(applicationEventPublisher).publishEvent(
+            new WebSocketErrorEvent(user.getName(), AuthorizationErrorCode.RESOURCE_ACCESS_DENIED)
+        );
     }
 
     @Test
@@ -91,7 +93,9 @@ class StompAuthChannelInterceptorTest {
 
         Principal user = StompHeaderAccessor.wrap(message).getUser();
         assertThat(result).isNull();
-        verify(webSocketErrorPublisher).sendErrorToUser(user, AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
+        verify(applicationEventPublisher).publishEvent(
+            new WebSocketErrorEvent(user.getName(), AuthorizationErrorCode.RESOURCE_ACCESS_DENIED)
+        );
     }
 
     @Test
@@ -101,8 +105,7 @@ class StompAuthChannelInterceptorTest {
 
         assertThat(sut.preSend(message, channel)).isSameAs(message);
         verifyNoInteractions(checkChatRoomAccessUseCase);
-        verify(webSocketErrorPublisher, never())
-            .sendErrorToUser(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        verifyNoInteractions(applicationEventPublisher);
     }
 
     @Test

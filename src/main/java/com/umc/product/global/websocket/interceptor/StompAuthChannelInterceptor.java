@@ -5,10 +5,11 @@ import com.umc.product.chat.application.port.in.query.CheckChatRoomAccessUseCase
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.security.MemberPrincipal;
-import com.umc.product.global.websocket.handler.WebSocketErrorPublisher;
+import com.umc.product.global.websocket.handler.WebSocketErrorEvent;
 import java.security.Principal;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -28,7 +29,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private static final String CHAT_TOPIC_PREFIX = "/topic/chat/";
 
     private final CheckChatRoomAccessUseCase checkChatRoomAccessUseCase;
-    private final WebSocketErrorPublisher webSocketErrorPublisher;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * 클라이언트에서 들어오는 STOMP 프레임 중 채팅방 접근 권한이 필요한 프레임을 검사한다.
@@ -52,7 +53,9 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             throw new CommonException(CommonErrorCode.SECURITY_NOT_GIVEN);
         }
         if (!checkChatRoomAccessUseCase.hasChatRoomAccess(memberId, chatRoomId.get())) {
-            webSocketErrorPublisher.sendErrorToUser(user, AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
+            applicationEventPublisher.publishEvent(
+                new WebSocketErrorEvent(user.getName(), AuthorizationErrorCode.RESOURCE_ACCESS_DENIED)
+            );
             return null;
         }
 

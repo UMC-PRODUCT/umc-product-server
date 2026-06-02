@@ -2,8 +2,7 @@ package com.umc.product.global.websocket.handler;
 
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.code.BaseCode;
-import java.security.Principal;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
@@ -17,20 +16,25 @@ public class WebSocketErrorPublisher {
 
     private final SimpMessagingTemplate messagingTemplate;
 
-    public WebSocketErrorPublisher(@Lazy SimpMessagingTemplate messagingTemplate) {
+    public WebSocketErrorPublisher(SimpMessagingTemplate messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
     }
 
     /**
-     * 사용자가 구독 중인 /user/queue/errors destination으로 에러 응답을 보낸다.
+     * WebSocket 에러 이벤트를 받아 사용자의 에러 큐로 응답을 보낸다.
      */
-    public void sendErrorToUser(Principal user, BaseCode errorCode) {
+    @EventListener
+    public void sendErrorToUser(WebSocketErrorEvent event) {
+        sendErrorToUser(event.userName(), event.errorCode());
+    }
+
+    private void sendErrorToUser(String userName, BaseCode errorCode) {
         ApiResponse<Object> response = ApiResponse.onFailure(
             errorCode.getCode(),
             errorCode.getMessage(),
             null
         );
 
-        messagingTemplate.convertAndSendToUser(user.getName(), USER_ERROR_DESTINATION, response);
+        messagingTemplate.convertAndSendToUser(userName, USER_ERROR_DESTINATION, response);
     }
 }
