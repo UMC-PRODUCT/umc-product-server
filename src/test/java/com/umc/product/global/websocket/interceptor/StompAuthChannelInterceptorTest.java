@@ -49,14 +49,35 @@ class StompAuthChannelInterceptorTest {
     }
 
     @Test
+    @DisplayName("채팅방 접근 권한이 있는 멤버의 SEND 프레임은 통과된다")
+    void send_with_access_passes() {
+        when(checkChatRoomAccessUseCase.hasChatRoomAccess(1L, 10L)).thenReturn(true);
+        Message<byte[]> message = stompMessage(StompCommand.SEND, "/app/chat/10", 1L);
+
+        Message<?> result = sut.preSend(message, channel);
+
+        assertThat(result).isSameAs(message);
+        verify(checkChatRoomAccessUseCase).hasChatRoomAccess(1L, 10L);
+    }
+
+    @Test
     @DisplayName("채팅방 접근 권한이 없는 멤버의 SEND 프레임은 MessageDeliveryException이 발생한다")
-    void send_without_access_throws() {
+    void send_to_app_without_access_throws() {
         when(checkChatRoomAccessUseCase.hasChatRoomAccess(1L, 10L)).thenReturn(false);
-        Message<byte[]> message = stompMessage(StompCommand.SEND, "/topic/chat/10", 1L);
+        Message<byte[]> message = stompMessage(StompCommand.SEND, "/app/chat/10", 1L);
 
         assertThatThrownBy(() -> sut.preSend(message, channel))
             .isInstanceOf(MessageDeliveryException.class)
             .hasMessageContaining("채팅방 접근 권한");
+    }
+
+    @Test
+    @DisplayName("topic으로 직접 SEND하는 프레임은 채팅 전송 경로가 아니므로 인가 처리 없이 통과된다")
+    void send_to_topic_passes_without_authorization() {
+        Message<byte[]> message = stompMessage(StompCommand.SEND, "/topic/chat/10", 1L);
+
+        assertThat(sut.preSend(message, channel)).isSameAs(message);
+        verifyNoInteractions(checkChatRoomAccessUseCase);
     }
 
     @Test
