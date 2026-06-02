@@ -21,9 +21,8 @@
 | TECH-BLOG-003 | GET | `/comments` | 선택 | 최상위 댓글 cursor 조회와 1단계 대댓글 포함 조회 |
 | TECH-BLOG-004 | POST | `/comments` | 선택 | 댓글 또는 1단계 대댓글 작성 |
 | TECH-BLOG-005 | PATCH | `/comments/{commentId}` | 필수 | 본인 댓글 수정 |
-| TECH-BLOG-006 | DELETE | `/comments/{commentId}` | 필수 | 본인 댓글 삭제 |
+| TECH-BLOG-006 | DELETE | `/comments/{commentId}` | 필수 | 본인/관리자 댓글 삭제 |
 | TECH-BLOG-007 | POST | `/comments/{commentId}/like` | 필수 | 댓글 좋아요 토글 |
-| ADMIN-TECH-BLOG-001 | DELETE | `/api/v1/admin/tech-blog/comments/{commentId}` | 필수 | 관리자 댓글 삭제 |
 
 ## 좋아요
 
@@ -96,6 +95,8 @@ GET /api/v1/tech-blog/contents/blog/spring-boot-tips/comments?cursor=123&size=20
         "likeCount": 3,
         "deletionType": "NONE",
         "canReply": true,
+        "canEdit": true,
+        "canDelete": true,
         "replies": [
           {
             "id": 124,
@@ -111,6 +112,8 @@ GET /api/v1/tech-blog/contents/blog/spring-boot-tips/comments?cursor=123&size=20
             "likeCount": 0,
             "deletionType": "NONE",
             "canReply": false,
+            "canEdit": true,
+            "canDelete": true,
             "replies": []
           }
         ]
@@ -186,6 +189,8 @@ Authorization: Bearer {accessToken}
 
 대댓글이 없는 댓글/답글은 hard delete되어 목록에서 사라집니다. 대댓글이 있는 최상위 댓글은 soft delete되고 placeholder로 내려갑니다.
 
+댓글 본인인지 판단되면 `canEdit`/`canDelete`가 `true`로 내려가며, 관리자(중앙총괄단 이상)는 `canDelete`가 `true`로 내려갑니다.
+
 ### 댓글 좋아요 토글
 
 ```http
@@ -204,23 +209,14 @@ Authorization: Bearer {accessToken}
 
 삭제된 댓글에는 좋아요를 누를 수 없습니다.
 
-## 관리자 댓글 삭제
-
-```http
-DELETE /api/v1/admin/tech-blog/comments/{commentId}
-Authorization: Bearer {accessToken}
-```
-
-중앙 총괄단 이상만 호출할 수 있습니다. 관리자 삭제는 댓글 수정 없이 삭제만 지원합니다.
-
 ## 삭제 댓글 응답 규칙
 
 삭제된 댓글이 대댓글 유지를 위해 목록에 남는 경우 아래 규칙을 따릅니다.
 
-| deletionType | content | author | likedByMe | likeCount | canReply |
-|---|---|---|---:|---:|---:|
-| USER_DELETED | `삭제된 댓글입니다` | 생략 | false | 0 | false |
-| ADMIN_DELETED | `관리자에 의해서 삭제된 댓글입니다` | 생략 | false | 0 | false |
+| deletionType | content | author | likedByMe | likeCount | canReply | canEdit | canDelete |
+|---|---|---|---:|---:|---:|---:|---:|
+| USER_DELETED | `삭제된 댓글입니다` | 생략 | false | 0 | false | false | false |
+| ADMIN_DELETED | `관리자에 의해서 삭제된 댓글입니다` | 생략 | false | 0 | false | false | false |
 
 삭제된 부모 댓글의 모든 대댓글이 삭제되면 부모 댓글도 목록에서 더 이상 내려오지 않습니다.
 

@@ -330,7 +330,6 @@
 
 | 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |
 |---:|---|---|---|---|---|:---:|---|
-| 238 | techblog | ADMIN-TECH-BLOG-001 | DELETE | `/api/v1/admin/tech-blog/comments/{commentId}` | 댓글 관리자 삭제 | X | `src/main/java/com/umc/product/techblog/adapter/in/web/AdminTechBlogCommentController.java:35` |
 | 239 | techblog | TECH-BLOG-001 | GET | `/api/v1/tech-blog/contents/{type}/{slug}/like` | 콘텐츠 좋아요 상태 조회 | X | `src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java:60` |
 | 240 | techblog | TECH-BLOG-002 | POST | `/api/v1/tech-blog/contents/{type}/{slug}/like` | 콘텐츠 좋아요 토글 | X | `src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java:73` |
 | 241 | techblog | TECH-BLOG-003 | GET | `/api/v1/tech-blog/contents/{type}/{slug}/comments` | 댓글 목록 조회 | X | `src/main/java/com/umc/product/techblog/adapter/in/web/TechBlogInteractionController.java:86` |
@@ -373,4 +372,3 @@
 | 268 | test | TEST-010 | GET | `/test/token/oauth` | oAuthVerificationToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:190` |
 | 269 | test | TEST-011 | GET | `/test/health-check` | 헬스 체크 API | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:198` |
 | 270 | test | TEST-012 | GET | `/test/check-authenticated` | 인증된 사용자인지 여부를 확인합니다. | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:205` |
-

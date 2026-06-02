@@ -2844,18 +2844,6 @@
     "operationId": null
   },
   {
-    "sequence": 238,
-    "domain": "techblog",
-    "apiId": "ADMIN-TECH-BLOG-001",
-    "endpoint": "/api/v1/admin/tech-blog/comments/{commentId}",
-    "httpMethod": "DELETE",
-    "role": "댓글 관리자 삭제",
-    "deprecated": false,
-    "source": "src/main/java/com/umc/product/techblog/adapter/in/web/AdminTechBlogCommentController.java",
-    "line": 35,
-    "operationId": null
-  },
-  {
     "sequence": 239,
     "domain": "techblog",
     "apiId": "TECH-BLOG-001",
