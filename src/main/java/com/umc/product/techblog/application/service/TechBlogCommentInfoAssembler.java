@@ -26,17 +26,21 @@ public class TechBlogCommentInfoAssembler {
         TechBlogComment comment,
         boolean likedByMe,
         int likeCount,
-        List<TechBlogCommentInfo> replies
+        List<TechBlogCommentInfo> replies,
+        Long viewerMemberId,
+        boolean viewerIsSuperAdmin
     ) {
         Map<Long, MemberInfo> members = loadMembers(List.of(comment));
-        return assemble(comment, members, likedByMe, likeCount, replies);
+        return assemble(comment, members, likedByMe, likeCount, viewerMemberId, viewerIsSuperAdmin, replies);
     }
 
     public List<TechBlogCommentInfo> assembleTree(
         List<TechBlogComment> topLevelComments,
         Map<Long, List<TechBlogComment>> repliesByParentId,
         Map<Long, Integer> likeCounts,
-        Set<Long> likedCommentIds
+        Set<Long> likedCommentIds,
+        Long viewerMemberId,
+        boolean viewerIsSuperAdmin
     ) {
         List<TechBlogComment> allComments = topLevelComments.stream()
             .flatMap(comment -> {
@@ -55,6 +59,8 @@ public class TechBlogCommentInfoAssembler {
                         members,
                         likedCommentIds.contains(reply.getId()),
                         likeCounts.getOrDefault(reply.getId(), 0),
+                        viewerMemberId,
+                        viewerIsSuperAdmin,
                         List.of()
                     ))
                     .toList();
@@ -64,6 +70,8 @@ public class TechBlogCommentInfoAssembler {
                     members,
                     likedCommentIds.contains(comment.getId()),
                     likeCounts.getOrDefault(comment.getId(), 0),
+                    viewerMemberId,
+                    viewerIsSuperAdmin,
                     replies
                 );
             })
@@ -75,6 +83,8 @@ public class TechBlogCommentInfoAssembler {
         Map<Long, MemberInfo> members,
         boolean likedByMe,
         int likeCount,
+        Long viewerMemberId,
+        boolean viewerIsSuperAdmin,
         List<TechBlogCommentInfo> replies
     ) {
         if (comment.isDeleted()) {
@@ -86,6 +96,8 @@ public class TechBlogCommentInfoAssembler {
                 false,
                 0,
                 comment.getDeletionType(),
+                false,
+                false,
                 false,
                 replies
             );
@@ -100,8 +112,26 @@ public class TechBlogCommentInfoAssembler {
             likeCount,
             TechBlogCommentDeletionType.NONE,
             comment.canReply(),
+            canEdit(comment, viewerMemberId),
+            canDelete(comment, viewerMemberId, viewerIsSuperAdmin),
             replies
         );
+    }
+
+    private boolean canEdit(TechBlogComment comment, Long viewerMemberId) {
+        return !comment.isDeleted()
+            && viewerMemberId != null
+            && viewerMemberId.equals(comment.getAuthorMemberId());
+    }
+
+    private boolean canDelete(
+        TechBlogComment comment,
+        Long viewerMemberId,
+        boolean viewerIsSuperAdmin
+    ) {
+        return !comment.isDeleted()
+            && viewerMemberId != null
+            && (viewerMemberId.equals(comment.getAuthorMemberId()) || viewerIsSuperAdmin);
     }
 
     private Map<Long, MemberInfo> loadMembers(List<TechBlogComment> comments) {

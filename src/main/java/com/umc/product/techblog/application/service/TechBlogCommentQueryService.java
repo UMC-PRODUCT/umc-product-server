@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.techblog.application.port.in.query.GetTechBlogCommentListUseCase;
 import com.umc.product.techblog.application.port.in.query.dto.TechBlogCommentCursorInfo;
 import com.umc.product.techblog.application.port.in.query.dto.TechBlogCommentInfo;
@@ -32,6 +33,7 @@ public class TechBlogCommentQueryService implements GetTechBlogCommentListUseCas
     private final LoadTechBlogContentPort loadTechBlogContentPort;
     private final LoadTechBlogCommentPort loadTechBlogCommentPort;
     private final TechBlogCommentInfoAssembler commentInfoAssembler;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @Override
     public TechBlogCommentCursorInfo getComments(TechBlogCommentListQuery query) {
@@ -78,7 +80,9 @@ public class TechBlogCommentQueryService implements GetTechBlogCommentListUseCas
             page,
             repliesByParentId,
             likeCounts,
-            likedCommentIds
+            likedCommentIds,
+            query.viewerMemberId(),
+            isCentralCore(query.viewerMemberId())
         );
 
         Long nextCursor = hasNext ? page.get(page.size() - 1).getId() : null;
@@ -90,5 +94,9 @@ public class TechBlogCommentQueryService implements GetTechBlogCommentListUseCas
             return DEFAULT_SIZE;
         }
         return Math.min(requestedSize, MAX_SIZE);
+    }
+
+    private boolean isCentralCore(Long memberId) {
+        return memberId != null && getChallengerRoleUseCase.isCentralCore(memberId);
     }
 }

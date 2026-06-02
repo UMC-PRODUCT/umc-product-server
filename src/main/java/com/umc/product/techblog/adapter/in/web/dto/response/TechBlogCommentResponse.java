@@ -37,6 +37,12 @@ public record TechBlogCommentResponse(
     @Schema(description = "대댓글 작성 가능 여부", example = "true")
     boolean canReply,
 
+    @Schema(description = "내가 수정할 수 있는지 여부", example = "true")
+    boolean canEdit,
+
+    @Schema(description = "내가 삭제할 수 있는지 여부", example = "true")
+    boolean canDelete,
+
     @Schema(description = "1단계 대댓글 목록")
     List<TechBlogCommentResponse> replies
 ) {
@@ -51,6 +57,8 @@ public record TechBlogCommentResponse(
             info.likeCount(),
             info.deletionType(),
             info.canReply(),
+            info.canEdit(),
+            info.canDelete(),
             info.replies().stream().map(TechBlogCommentResponse::from).toList()
         );
     }

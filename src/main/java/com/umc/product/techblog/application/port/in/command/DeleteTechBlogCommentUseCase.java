@@ -5,6 +5,4 @@ import com.umc.product.techblog.application.port.in.command.dto.DeleteTechBlogCo
 public interface DeleteTechBlogCommentUseCase {
 
     void delete(DeleteTechBlogCommentCommand command);
-
-    void deleteByAdmin(Long commentId, Long adminMemberId);
 }
