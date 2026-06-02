@@ -1,5 +1,15 @@
 package com.umc.product.techblog.adapter.out.persistence;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogCommentJpaEntity;
 import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogCommentLikeJpaEntity;
 import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogContentJpaEntity;
@@ -16,15 +26,8 @@ import com.umc.product.techblog.domain.TechBlogContent;
 import com.umc.product.techblog.domain.TechBlogContentType;
 import com.umc.product.techblog.domain.TechBlogDomainException;
 import com.umc.product.techblog.domain.TechBlogErrorCode;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor

@@ -1,8 +1,9 @@
 package com.umc.product.techblog.application.port.in.query.dto;
 
-import com.umc.product.techblog.domain.TechBlogCommentDeletionType;
 import java.time.Instant;
 import java.util.List;
+
+import com.umc.product.techblog.domain.TechBlogCommentDeletionType;
 
 public record TechBlogCommentInfo(
     Long id,

@@ -1,5 +1,8 @@
 package com.umc.product.techblog.application.service;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.techblog.application.port.in.command.ToggleTechBlogContentLikeUseCase;
 import com.umc.product.techblog.application.port.in.query.GetTechBlogContentLikeUseCase;
 import com.umc.product.techblog.application.port.in.query.dto.TechBlogLikeInfo;
@@ -7,9 +10,8 @@ import com.umc.product.techblog.application.port.out.LoadTechBlogContentPort;
 import com.umc.product.techblog.application.port.out.SaveTechBlogContentPort;
 import com.umc.product.techblog.domain.TechBlogContent;
 import com.umc.product.techblog.domain.TechBlogContentType;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

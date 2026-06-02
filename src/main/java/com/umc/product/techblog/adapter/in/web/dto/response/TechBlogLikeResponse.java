@@ -1,6 +1,7 @@
 package com.umc.product.techblog.adapter.in.web.dto.response;
 
 import com.umc.product.techblog.application.port.in.query.dto.TechBlogLikeInfo;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "테크 블로그 좋아요 응답")
