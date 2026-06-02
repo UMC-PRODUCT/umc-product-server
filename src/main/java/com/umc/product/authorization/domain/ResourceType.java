@@ -62,7 +62,7 @@ public enum ResourceType {
 
     // 테크 블로그 도메인
     TECH_BLOG_COMMENT("tech_blog_comment", "테크 블로그 댓글",
-        Set.of(PermissionType.EDIT, PermissionType.DELETE, PermissionType.MANAGE)),
+        Set.of(PermissionType.EDIT, PermissionType.DELETE)),
 
     // UMC 모집 관련
     RECRUITMENT("recruitment", "모집",

@@ -14,6 +14,8 @@ public record TechBlogCommentInfo(
     int likeCount,
     TechBlogCommentDeletionType deletionType,
     boolean canReply,
+    boolean canEdit,
+    boolean canDelete,
     List<TechBlogCommentInfo> replies
 ) {
 }

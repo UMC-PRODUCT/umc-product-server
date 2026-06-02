@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.techblog.application.port.in.command.CreateTechBlogCommentUseCase;
 import com.umc.product.techblog.application.port.in.command.DeleteTechBlogCommentUseCase;
 import com.umc.product.techblog.application.port.in.command.ToggleTechBlogCommentLikeUseCase;
@@ -37,6 +38,7 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
     private final LoadTechBlogCommentPort loadTechBlogCommentPort;
     private final SaveTechBlogCommentPort saveTechBlogCommentPort;
     private final TechBlogCommentInfoAssembler commentInfoAssembler;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @Override
     public TechBlogCommentInfo create(CreateTechBlogCommentCommand command) {
@@ -52,7 +54,14 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
             command.content()
         );
         TechBlogComment saved = saveTechBlogCommentPort.save(comment);
-        return commentInfoAssembler.assemble(saved, false, 0, List.of());
+        return commentInfoAssembler.assemble(
+            saved,
+            false,
+            0,
+            List.of(),
+            command.authorMemberId(),
+            isCentralCore(command.authorMemberId())
+        );
     }
 
     @Override
@@ -70,14 +79,7 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
         TechBlogContent content = getContent(command.type(), command.slug());
         TechBlogComment comment = getCommentInContent(command.commentId(), content.getId());
         comment.ensureNotDeleted();
-        deleteResolved(comment, command.memberId(), false);
-    }
-
-    @Override
-    public void deleteByAdmin(Long commentId, Long adminMemberId) {
-        TechBlogComment comment = loadTechBlogCommentPort.findById(commentId)
-            .orElseThrow(() -> new TechBlogDomainException(TechBlogErrorCode.COMMENT_NOT_FOUND));
-        deleteResolved(comment, adminMemberId, true);
+        deleteResolved(comment, command.memberId(), isCentralCore(command.memberId()));
     }
 
     @Override
@@ -115,7 +117,18 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
         boolean likedByMe = loadTechBlogCommentPort.findLikedCommentIds(commentIds, viewerMemberId)
             .contains(comment.getId());
 
-        return commentInfoAssembler.assemble(comment, likedByMe, likeCount, List.of());
+        return commentInfoAssembler.assemble(
+            comment,
+            likedByMe,
+            likeCount,
+            List.of(),
+            viewerMemberId,
+            isCentralCore(viewerMemberId)
+        );
+    }
+
+    private boolean isCentralCore(Long memberId) {
+        return memberId != null && getChallengerRoleUseCase.isCentralCore(memberId);
     }
 
     private TechBlogContent getOrCreateContent(String typeValue, String slug) {

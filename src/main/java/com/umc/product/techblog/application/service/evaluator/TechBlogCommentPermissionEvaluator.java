@@ -29,10 +29,6 @@ public class TechBlogCommentPermissionEvaluator implements ResourcePermissionEva
     @Override
     public boolean evaluate(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
         PermissionType permission = resourcePermission.permission();
-        if (permission == PermissionType.MANAGE) {
-            return isCentralCore(subjectAttributes);
-        }
-
         Long commentId = resourcePermission.getResourceIdAsLong();
         if (commentId == null) {
             return false;
@@ -44,7 +40,8 @@ public class TechBlogCommentPermissionEvaluator implements ResourcePermissionEva
         }
 
         return switch (permission) {
-            case EDIT, DELETE -> isAuthor(subjectAttributes.memberId(), comment);
+            case EDIT -> isAuthor(subjectAttributes.memberId(), comment);
+            case DELETE -> isAuthor(subjectAttributes.memberId(), comment) || isCentralCore(subjectAttributes);
             default -> {
                 log.warn("TechBlogCommentPermissionEvaluator에서 지원하지 않는 PermissionType: {}", permission);
                 yield false;

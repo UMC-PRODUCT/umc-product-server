@@ -38,7 +38,6 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
 
     private static final String CONTENT_URL = "/api/v1/tech-blog/contents/blog/spring-boot-tips";
     private static final String BASE_URL = CONTENT_URL + "/comments";
-    private static final String ADMIN_DELETE_URL = "/api/v1/admin/tech-blog/comments";
 
     @Autowired
     SaveMemberPort saveMemberPort;
@@ -148,13 +147,29 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
             .andExpect(jsonPath("$.result.id").value(commentId))
             .andExpect(jsonPath("$.result.content").value("수정 후 댓글"))
             .andExpect(jsonPath("$.result.likeCount").value(1))
-            .andExpect(jsonPath("$.result.likedByMe").value(false));
+            .andExpect(jsonPath("$.result.likedByMe").value(false))
+            .andExpect(jsonPath("$.result.canEdit").value(true))
+            .andExpect(jsonPath("$.result.canDelete").value(true));
 
-        mockMvc.perform(get(BASE_URL))
+        mockMvc.perform(get(BASE_URL)
+                .header("Authorization", "Bearer " + authorToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.content[0].id").value(commentId))
             .andExpect(jsonPath("$.result.content[0].content").value("수정 후 댓글"))
-            .andExpect(jsonPath("$.result.content[0].likeCount").value(1));
+            .andExpect(jsonPath("$.result.content[0].likeCount").value(1))
+            .andExpect(jsonPath("$.result.content[0].canEdit").value(true))
+            .andExpect(jsonPath("$.result.content[0].canDelete").value(true));
+
+        mockMvc.perform(get(BASE_URL)
+                .header("Authorization", "Bearer " + otherToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.content[0].canEdit").value(false))
+            .andExpect(jsonPath("$.result.content[0].canDelete").value(false));
+
+        mockMvc.perform(get(BASE_URL))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.content[0].canEdit").value(false))
+            .andExpect(jsonPath("$.result.content[0].canDelete").value(false));
     }
 
     @Test
@@ -221,6 +236,8 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
             .andExpect(jsonPath("$.result.content[0].likedByMe").value(false))
             .andExpect(jsonPath("$.result.content[0].likeCount").value(0))
             .andExpect(jsonPath("$.result.content[0].author").doesNotExist())
+            .andExpect(jsonPath("$.result.content[0].canEdit").value(false))
+            .andExpect(jsonPath("$.result.content[0].canDelete").value(false))
             .andExpect(jsonPath("$.result.content[0].replies[0].id").value(replyId))
             .andExpect(jsonPath("$.result.content[0].replies[0].content").value("대댓글"));
 
@@ -252,16 +269,16 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
     }
 
     @Test
-    @DisplayName("관리자 삭제는 관리자 placeholder로 조회되고 일반 사용자는 관리자 삭제 API를 호출할 수 없다")
-    void 관리자_삭제는_관리자_placeholder로_조회되고_일반_사용자는_관리자_삭제_API를_호출할_수_없다() throws Exception {
+    @DisplayName("관리자 삭제는 관리자 placeholder로 조회되고 일반 사용자는 관리자 삭제를 호출할 수 없다")
+    void 관리자_삭제는_관리자_placeholder로_조회되고_일반_사용자는_관리자_삭제를_호출할_수_없다() throws Exception {
         Long parentId = createComment("부모 댓글", null, authorToken);
         createComment("대댓글", parentId, authorToken);
 
-        mockMvc.perform(delete(ADMIN_DELETE_URL + "/" + parentId)
+        mockMvc.perform(delete(BASE_URL + "/" + parentId)
                 .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isForbidden());
 
-        mockMvc.perform(delete(ADMIN_DELETE_URL + "/" + parentId)
+        mockMvc.perform(delete(BASE_URL + "/" + parentId)
                 .header("Authorization", "Bearer " + adminToken))
             .andExpect(status().isOk());
 
@@ -269,7 +286,9 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.content[0].content").value("관리자에 의해서 삭제된 댓글입니다"))
             .andExpect(jsonPath("$.result.content[0].deletionType").value("ADMIN_DELETED"))
-            .andExpect(jsonPath("$.result.content[0].canReply").value(false));
+            .andExpect(jsonPath("$.result.content[0].canReply").value(false))
+            .andExpect(jsonPath("$.result.content[0].canEdit").value(false))
+            .andExpect(jsonPath("$.result.content[0].canDelete").value(false));
     }
 
     private String mockToken(String token, Long memberId) {
