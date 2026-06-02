@@ -28,5 +28,6 @@ public enum Domain {
     FIGMA,
     LLM,
     ANALYTICS,
-    MAINTENANCE
+    MAINTENANCE,
+    TECH_BLOG
 }
