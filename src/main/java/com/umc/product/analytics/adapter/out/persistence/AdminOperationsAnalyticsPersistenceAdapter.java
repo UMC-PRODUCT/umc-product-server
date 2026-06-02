@@ -1,10 +1,12 @@
 package com.umc.product.analytics.adapter.out.persistence;
 
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsAttendanceInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewQuery;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsPointsInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSchoolsInfo;
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsAnalyticsPort;
+import com.umc.product.analytics.application.port.out.LoadAdminOperationsAttendancePort;
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsPointsPort;
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsSchoolsPort;
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
@@ -17,7 +19,8 @@ import org.springframework.stereotype.Component;
 public class AdminOperationsAnalyticsPersistenceAdapter implements
     LoadAdminOperationsAnalyticsPort,
     LoadAdminOperationsSchoolsPort,
-    LoadAdminOperationsPointsPort {
+    LoadAdminOperationsPointsPort,
+    LoadAdminOperationsAttendancePort {
 
     private final AdminOperationsAnalyticsQueryRepository queryRepository;
 
@@ -37,5 +40,10 @@ public class AdminOperationsAnalyticsPersistenceAdapter implements
     @Override
     public AdminOperationsPointsInfo getOperationsPoints(AdminAnalyticsScope scope, Instant from, Instant to) {
         return queryRepository.getOperationsPoints(scope, from, to);
+    }
+
+    @Override
+    public AdminOperationsAttendanceInfo getOperationsAttendance(AdminAnalyticsScope scope, Instant from, Instant to) {
+        return queryRepository.getOperationsAttendance(scope, from, to);
     }
 }

@@ -11,6 +11,7 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewQuery;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsAttendanceInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsPointsInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSchoolsInfo;
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
@@ -46,6 +47,66 @@ public class AdminOperationsAnalyticsQueryRepository {
     private static final ZoneId DASHBOARD_ZONE = ZoneId.of("Asia/Seoul");
 
     private final JPAQueryFactory queryFactory;
+
+    public AdminOperationsAttendanceInfo getOperationsAttendance(AdminAnalyticsScope scope, Instant from, Instant to) {
+        QSchedule schedule = new QSchedule("operationsAttSchedule");
+        QMember author = new QMember("operationsAttAuthor");
+        QChapterSchool chapterSchool = new QChapterSchool("operationsAttChapterSchool");
+        QChapter chapter = new QChapter("operationsAttChapter");
+
+        BooleanBuilder scheduleCondition = scheduleScopeCondition(scope, from, to, schedule, author, chapter);
+        Long scheduleCount = queryFactory
+            .select(schedule.id.countDistinct())
+            .from(schedule)
+            .join(author).on(author.id.eq(schedule.authorMemberId))
+            .leftJoin(chapterSchool).on(chapterSchool.school.id.eq(author.schoolId))
+            .leftJoin(chapter).on(chapter.id.eq(chapterSchool.chapter.id))
+            .where(scheduleCondition)
+            .fetchOne();
+
+        Long attendanceRequiredScheduleCount = queryFactory
+            .select(schedule.id.countDistinct())
+            .from(schedule)
+            .join(author).on(author.id.eq(schedule.authorMemberId))
+            .leftJoin(chapterSchool).on(chapterSchool.school.id.eq(author.schoolId))
+            .leftJoin(chapter).on(chapter.id.eq(chapterSchool.chapter.id))
+            .where(scheduleScopeCondition(scope, from, to, schedule, author, chapter)
+                .and(schedule.policy.attendanceGraceMinutes.isNotNull()))
+            .fetchOne();
+
+        QScheduleParticipant participant = new QScheduleParticipant("operationsAttParticipant");
+        QSchedule attSchedule = new QSchedule("operationsAttAttendanceSchedule");
+        QMember attAuthor = new QMember("operationsAttAttendanceAuthor");
+        QChapterSchool attChapterSchool = new QChapterSchool("operationsAttAttChapterSchool");
+        QChapter attChapter = new QChapter("operationsAttAttChapter");
+        NumberExpression<Long> statusCount = participant.id.count();
+
+        List<Tuple> rows = queryFactory
+            .select(participant.attendance.status, statusCount)
+            .from(participant)
+            .join(participant.schedule, attSchedule)
+            .join(attAuthor).on(attAuthor.id.eq(attSchedule.authorMemberId))
+            .leftJoin(attChapterSchool).on(attChapterSchool.school.id.eq(attAuthor.schoolId))
+            .leftJoin(attChapter).on(attChapter.id.eq(attChapterSchool.chapter.id))
+            .where(scheduleAuthorScopeCondition(scope, attAuthor, attChapter)
+                .and(periodCondition(participant.updatedAt, from, to))
+                .and(participant.attendance.status.isNotNull()))
+            .groupBy(participant.attendance.status)
+            .fetch();
+
+        Map<AttendanceStatus, Long> attendanceStatusCounts = new EnumMap<>(AttendanceStatus.class);
+        for (Tuple row : rows) {
+            attendanceStatusCounts.put(row.get(participant.attendance.status), defaultLong(row.get(statusCount)));
+        }
+        long attendanceRecordCount = attendanceStatusCounts.values().stream().mapToLong(Long::longValue).sum();
+
+        return AdminOperationsAttendanceInfo.of(
+            defaultLong(scheduleCount),
+            defaultLong(attendanceRequiredScheduleCount),
+            attendanceRecordCount,
+            attendanceStatusCounts
+        );
+    }
 
     public AdminOperationsPointsInfo getOperationsPoints(AdminAnalyticsScope scope, Instant from, Instant to) {
         QChallengerPoint point = new QChallengerPoint("operationsPoint");
@@ -427,8 +488,19 @@ public class AdminOperationsAnalyticsQueryRepository {
         QMember author,
         QChapter chapter
     ) {
+        return scheduleScopeCondition(scope, query.from(), query.to(), schedule, author, chapter);
+    }
+
+    private BooleanBuilder scheduleScopeCondition(
+        AdminAnalyticsScope scope,
+        Instant from,
+        Instant to,
+        QSchedule schedule,
+        QMember author,
+        QChapter chapter
+    ) {
         return scheduleAuthorScopeCondition(scope, author, chapter)
-            .and(periodCondition(schedule.createdAt, query));
+            .and(periodCondition(schedule.createdAt, from, to));
     }
 
     private BooleanBuilder scheduleAuthorScopeCondition(
