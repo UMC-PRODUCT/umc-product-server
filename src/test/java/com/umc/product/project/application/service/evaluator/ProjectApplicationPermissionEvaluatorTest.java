@@ -11,6 +11,7 @@ import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.authorization.domain.SubjectAttributes.GisuChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.MemberRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
@@ -180,12 +181,11 @@ class ProjectApplicationPermissionEvaluatorTest {
     }
 
     @Test
-    void READ는_SUBMITTED_지원서를_SUPER_ADMIN_허용_기수_무관() {
+    void READ는_SUBMITTED_지원서를_member_ADMIN_허용_챌린저_기록_무관() {
         givenApplication(ProjectApplicationStatus.SUBMITTED);
         Long outsiderId = 30L;
         given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, outsiderId)).willReturn(false);
-        SubjectAttributes subject = subjectWith(outsiderId, List.of(),
-            List.of(superAdminRoleInGisu(99L)));
+        SubjectAttributes subject = adminSubject(outsiderId);
 
         assertThat(sut.evaluate(subject, readPermission())).isTrue();
     }
@@ -404,8 +404,19 @@ class ProjectApplicationPermissionEvaluatorTest {
         return SubjectAttributes.builder()
             .memberId(memberId)
             .schoolId(1L)
+            .memberRoleType(MemberRoleType.NORMAL)
             .gisuChallengerInfos(gisuInfos)
             .roleAttributes(roles)
+            .build();
+    }
+
+    private SubjectAttributes adminSubject(Long memberId) {
+        return SubjectAttributes.builder()
+            .memberId(memberId)
+            .schoolId(1L)
+            .memberRoleType(MemberRoleType.ADMIN)
+            .gisuChallengerInfos(List.of())
+            .roleAttributes(List.of())
             .build();
     }
 
@@ -422,14 +433,6 @@ class ProjectApplicationPermissionEvaluatorTest {
     private RoleAttribute centralCoreRoleInGisu(Long gisuId) {
         return new RoleAttribute(
             ChallengerRoleType.CENTRAL_PRESIDENT,
-            OrganizationType.CENTRAL,
-            null, null, gisuId
-        );
-    }
-
-    private RoleAttribute superAdminRoleInGisu(Long gisuId) {
-        return new RoleAttribute(
-            ChallengerRoleType.SUPER_ADMIN,
             OrganizationType.CENTRAL,
             null, null, gisuId
         );

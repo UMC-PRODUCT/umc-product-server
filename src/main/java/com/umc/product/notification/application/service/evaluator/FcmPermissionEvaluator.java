@@ -19,7 +19,7 @@ public class FcmPermissionEvaluator implements ResourcePermissionEvaluator {
     public boolean evaluate(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
         // 중앙운영사무국 총괄단 이상만 FCM 토큰 삭제가 가능하도록 제한
         if (resourcePermission.permission().equals(PermissionType.DELETE)) {
-            return subjectAttributes.roleAttributes().stream()
+            return subjectAttributes.isSystemAdmin() || subjectAttributes.roleAttributes().stream()
                 .anyMatch(roleAttribute -> roleAttribute.roleType().isAtLeastCentralCore());
         }
 

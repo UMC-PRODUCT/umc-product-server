@@ -75,7 +75,7 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
      * <ul>
      *   <li>지원자 본인</li>
      *   <li>부모 프로젝트의 PO 또는 보조 PM (Sub-PM, ACTIVE PLAN 멤버)</li>
-     *   <li>(SUBMITTED 이상) 해당 기수의 SUPER_ADMIN/총괄/부총괄 또는 해당 기수+해당 지부의 지부장</li>
+     *   <li>(SUBMITTED 이상) 전역 관리자 또는 해당 기수의 총괄/부총괄 또는 해당 기수+해당 지부의 지부장</li>
      * </ul>
      * DRAFT 는 본인만 노출 — 임시저장은 외부에 보이지 않는다.
      */
@@ -151,9 +151,8 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
     }
 
     private boolean isCentralCoreInGisu(SubjectAttributes subject, Long gisuId) {
-        return subject.roleAttributes().stream()
-            .anyMatch(role -> role.roleType().isSuperAdmin()
-                || (role.roleType().isAtLeastCentralCore() && Objects.equals(role.gisuId(), gisuId)));
+        return subject.isSystemAdmin() || subject.roleAttributes().stream()
+            .anyMatch(role -> role.roleType().isAtLeastCentralCore() && Objects.equals(role.gisuId(), gisuId));
     }
 
     private boolean isChapterPresidentOf(SubjectAttributes subject, Long chapterId, Long gisuId) {

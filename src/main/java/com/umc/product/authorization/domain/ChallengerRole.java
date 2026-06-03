@@ -38,7 +38,6 @@ public class ChallengerRole extends BaseEntity {
 
     // Role을 "어디에서" 하고 있는지를 특정합니다.
     // OrganizationType가 CENTRAL일 경우, organizationId는 주어지지 않습니다.
-    // SUPER_ADMIN은 CENTRAL에서 가져갑니다.
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "organization_type")

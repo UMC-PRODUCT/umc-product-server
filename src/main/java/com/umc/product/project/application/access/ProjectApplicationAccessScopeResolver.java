@@ -3,6 +3,7 @@ package com.umc.product.project.application.access;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.member.application.port.in.query.GetMemberRoleUseCase;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.All;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.AllInGisu;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.ChapterScoped;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component;
 public class ProjectApplicationAccessScopeResolver {
 
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+    private final GetMemberRoleUseCase getMemberRoleUseCase;
     private final LoadProjectMemberPort loadProjectMemberPort;
 
     /**
@@ -38,7 +40,7 @@ public class ProjectApplicationAccessScopeResolver {
      * <ul>
      *   <li>해당 프로젝트의 PO</li>
      *   <li>해당 프로젝트의 보조 PM (ACTIVE PLAN 멤버)</li>
-     *   <li>SUPER_ADMIN</li>
+     *   <li>전역 관리자</li>
      *   <li>해당 프로젝트 기수의 Central Core (총괄/부총괄)</li>
      *   <li>해당 프로젝트 지부의 지부장 (같은 기수)</li>
      *   <li>해당 프로젝트 학교의 회장 (SCHOOL_PRESIDENT, 같은 기수)</li>
@@ -55,11 +57,11 @@ public class ProjectApplicationAccessScopeResolver {
             return new ProjectScoped(projectId);
         }
 
-        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
-        if (roles.stream().anyMatch(r -> r.roleType().isSuperAdmin())) {
+        if (getMemberRoleUseCase.isAdmin(memberId)) {
             return new ProjectScoped(projectId);
         }
 
+        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
         List<ChallengerRoleInfo> rolesInGisu = roles.stream()
             .filter(r -> Objects.equals(r.gisuId(), project.getGisuId()))
             .toList();
@@ -78,19 +80,18 @@ public class ProjectApplicationAccessScopeResolver {
     /**
      * 운영진 모니터링 화면.
      * <ol>
-     *   <li>SUPER_ADMIN → {@link All}</li>
+     *   <li>전역 관리자 → {@link All}</li>
      *   <li>해당 기수 총괄단 → {@link AllInGisu}</li>
      *   <li>해당 기수 지부장 → {@link ChapterScoped}</li>
      *   <li>그 외 → {@link None}</li>
      * </ol>
      */
     public ProjectApplicationAccessScope resolveForManagement(Long memberId, Long gisuId) {
-        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
-
-        if (roles.stream().anyMatch(r -> r.roleType().isSuperAdmin())) {
+        if (getMemberRoleUseCase.isAdmin(memberId)) {
             return new All();
         }
 
+        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
         List<ChallengerRoleInfo> rolesInGisu = roles.stream()
             .filter(r -> Objects.equals(r.gisuId(), gisuId))
             .toList();

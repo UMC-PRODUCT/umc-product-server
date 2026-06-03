@@ -36,7 +36,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * <ol>
  *   <li>ALWAYS_ALLOW 경로 (시스템 상태/점검 관리/인증/헬스체크/스웨거)</li>
  *   <li>스냅샷이 비활성</li>
- *   <li>SUPER_ADMIN 등 bypass 정책 통과</li>
+ *   <li>전역 관리자 등 bypass 정책 통과</li>
  *   <li>PER_DOMAIN 점검이고 요청 URI 가 대상 도메인이 아님</li>
  * </ol>
  */

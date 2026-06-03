@@ -10,6 +10,7 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.member.application.port.in.query.GetMemberRoleUseCase;
 import com.umc.product.project.application.port.in.command.dto.CreateProjectMatchingRoundCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectMatchingRoundCommand;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
@@ -48,6 +49,8 @@ class ProjectMatchingRoundCommandServiceTest {
     ScheduleMatchingRoundDeadlinePort scheduleMatchingRoundDeadlinePort;
     @Mock
     GetChallengerRoleUseCase getChallengerRoleUseCase;
+    @Mock
+    GetMemberRoleUseCase getMemberRoleUseCase;
 
     @InjectMocks
     ProjectMatchingRoundCommandService sut;

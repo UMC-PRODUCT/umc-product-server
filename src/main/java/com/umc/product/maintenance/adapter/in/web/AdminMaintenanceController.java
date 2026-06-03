@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/maintenance")
 @RequiredArgsConstructor
-@Tag(name = "Maintenance | 점검 관리 (어드민)", description = "운영진(SUPER_ADMIN) 전용 점검 윈도우 관리 API")
+@Tag(name = "Maintenance | 점검 관리 (어드민)", description = "전역 관리자 전용 점검 윈도우 관리 API")
 public class AdminMaintenanceController {
 
     private final ManageMaintenanceUseCase manageMaintenanceUseCase;
@@ -35,13 +35,13 @@ public class AdminMaintenanceController {
     @PostMapping
     @Operation(
         summary = "[MAINT-001] 점검 윈도우 생성",
-        description = "즉시 또는 예약 점검 윈도우를 생성합니다. SUPER_ADMIN 만 호출할 수 있습니다."
+        description = "즉시 또는 예약 점검 윈도우를 생성합니다. 전역 관리자만 호출할 수 있습니다."
     )
     public MaintenanceWindowResponse start(
         @CurrentMember MemberPrincipal memberPrincipal,
         @Valid @RequestBody StartMaintenanceRequest request
     ) {
-        Long memberId = requireSuperAdmin(memberPrincipal);
+        Long memberId = requireSystemAdmin(memberPrincipal);
         Long windowId = manageMaintenanceUseCase.start(request.toCommand(memberId));
         return MaintenanceWindowResponse.from(getMaintenanceStatusUseCase.getById(windowId));
     }
@@ -49,13 +49,13 @@ public class AdminMaintenanceController {
     @PatchMapping("/{windowId}/end")
     @Operation(
         summary = "[MAINT-002] 점검 윈도우 강제 종료",
-        description = "지정한 점검 윈도우를 즉시 종료합니다. SUPER_ADMIN 만 호출할 수 있습니다."
+        description = "지정한 점검 윈도우를 즉시 종료합니다. 전역 관리자만 호출할 수 있습니다."
     )
     public MaintenanceWindowResponse forceEnd(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long windowId
     ) {
-        Long memberId = requireSuperAdmin(memberPrincipal);
+        Long memberId = requireSystemAdmin(memberPrincipal);
         manageMaintenanceUseCase.forceEnd(windowId, memberId);
         return MaintenanceWindowResponse.from(getMaintenanceStatusUseCase.getById(windowId));
     }
@@ -66,7 +66,7 @@ public class AdminMaintenanceController {
         description = "활성/예약/종료 모든 점검 윈도우를 최신순으로 조회합니다."
     )
     public List<MaintenanceWindowResponse> listAll(@CurrentMember MemberPrincipal memberPrincipal) {
-        requireSuperAdmin(memberPrincipal);
+        requireSystemAdmin(memberPrincipal);
         return getMaintenanceStatusUseCase.listAll().stream()
             .map(MaintenanceWindowResponse::from)
             .toList();
@@ -80,17 +80,17 @@ public class AdminMaintenanceController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long windowId
     ) {
-        requireSuperAdmin(memberPrincipal);
+        requireSystemAdmin(memberPrincipal);
         return MaintenanceWindowResponse.from(getMaintenanceStatusUseCase.getById(windowId));
     }
 
-    private Long requireSuperAdmin(MemberPrincipal principal) {
+    private Long requireSystemAdmin(MemberPrincipal principal) {
         if (principal == null) {
-            throw new MaintenanceDomainException(MaintenanceErrorCode.NOT_SUPER_ADMIN);
+            throw new MaintenanceDomainException(MaintenanceErrorCode.NOT_SYSTEM_ADMIN);
         }
         Long memberId = principal.getMemberId();
         if (!bypassPolicy.shouldBypass(memberId)) {
-            throw new MaintenanceDomainException(MaintenanceErrorCode.NOT_SUPER_ADMIN);
+            throw new MaintenanceDomainException(MaintenanceErrorCode.NOT_SYSTEM_ADMIN);
         }
         return memberId;
     }

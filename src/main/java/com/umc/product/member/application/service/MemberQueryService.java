@@ -3,6 +3,7 @@ package com.umc.product.member.application.service;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.member.application.port.in.query.GetMemberProfileUseCase;
+import com.umc.product.member.application.port.in.query.GetMemberRoleUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
@@ -27,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUseCase {
+public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUseCase, GetMemberRoleUseCase {
 
     private final LoadMemberPort loadMemberPort;
 
@@ -170,6 +171,13 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
     @Override
     public long countAll() {
         return loadMemberPort.countAllMembers();
+    }
+
+    @Override
+    public boolean isAdmin(Long memberId) {
+        return loadMemberPort.findById(memberId)
+            .map(Member::isAdmin)
+            .orElse(false);
     }
 
     // === Private Methods ===

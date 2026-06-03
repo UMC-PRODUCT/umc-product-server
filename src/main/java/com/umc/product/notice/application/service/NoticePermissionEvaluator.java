@@ -57,7 +57,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
             case READ -> canReadNotice(subjectAttributes, targetInfo);
             case EDIT, DELETE -> canDeleteOrEditNotice(subjectAttributes, resourcePermission);
             // TODO: Check는 임시로 Manage랑 동일하게 적용, 하나야 수정해줘!
-            case MANAGE, CHECK -> canManageNotice(subjectAttributes.memberId(), targetInfo);
+            case MANAGE, CHECK -> canManageNotice(subjectAttributes, targetInfo);
             default -> throw new AuthorizationDomainException(AuthorizationErrorCode.PERMISSION_TYPE_NOT_IMPLEMENTED,
                 "NoticePE에서 해당 PermissionType을 지원하지 않습니다: " + resourcePermission.permission());
         };
@@ -65,7 +65,8 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
 
     private boolean canReadNotice(SubjectAttributes subjectAttributes, NoticeTargetInfo targetInfo) {
         // 총괄/부총괄: 모든 공지 읽기 가능
-        if (subjectAttributes.roleAttributes().stream().anyMatch(r -> r.roleType().isAtLeastCentralCore())) {
+        if (subjectAttributes.isSystemAdmin()
+            || subjectAttributes.roleAttributes().stream().anyMatch(r -> r.roleType().isAtLeastCentralCore())) {
             return true;
         }
 
@@ -142,7 +143,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
     }
 
     private boolean canDeleteOrEditNotice(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
-        if (subjectAttributes.roleAttributes().stream().anyMatch(r -> r.roleType().isSuperAdmin())) {
+        if (subjectAttributes.isSystemAdmin()) {
             return true;
         }
 
@@ -155,7 +156,12 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
     /**
      * 공지사항 관리 권한 확인 (수신 현황 조회 등) - 총괄/부총괄: 항상 허용 - School 레벨 공지: 해당 학교 운영진 - Chapter 레벨 공지: 해당 지부장 - Gisu 레벨 공지: 중앙 멤버
      */
-    private boolean canManageNotice(Long memberId, NoticeTargetInfo targetInfo) {
+    private boolean canManageNotice(SubjectAttributes subjectAttributes, NoticeTargetInfo targetInfo) {
+        if (subjectAttributes.isSystemAdmin()) {
+            return true;
+        }
+
+        Long memberId = subjectAttributes.memberId();
         if (getChallengerRoleUseCase.isCentralCore(memberId)) {
             return true;
         }

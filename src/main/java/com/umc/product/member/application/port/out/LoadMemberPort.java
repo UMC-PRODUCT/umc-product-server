@@ -1,6 +1,7 @@
 package com.umc.product.member.application.port.out;
 
 import com.umc.product.member.domain.Member;
+import com.umc.product.common.domain.enums.MemberRoleType;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,4 +34,6 @@ public interface LoadMemberPort {
     long countMembersByIds(Set<Long> memberIds);
 
     long countAllMembers();
+
+    long countByRoleType(MemberRoleType roleType);
 }

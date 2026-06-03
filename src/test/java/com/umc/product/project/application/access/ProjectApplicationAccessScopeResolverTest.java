@@ -7,6 +7,7 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.member.application.port.in.query.GetMemberRoleUseCase;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.None;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.ProjectScoped;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
@@ -36,6 +37,8 @@ class ProjectApplicationAccessScopeResolverTest {
     @Mock
     GetChallengerRoleUseCase getChallengerRoleUseCase;
     @Mock
+    GetMemberRoleUseCase getMemberRoleUseCase;
+    @Mock
     LoadProjectMemberPort loadProjectMemberPort;
 
     @InjectMocks
@@ -62,8 +65,6 @@ class ProjectApplicationAccessScopeResolverTest {
             throw new RuntimeException(e);
         }
     }
-
-    // --- SUPER_ADMIN (기수 무관) ---
 
     private static ChallengerRoleInfo roleInfo(
         ChallengerRoleType type, OrganizationType orgType, Long orgId, Long gisuId
@@ -107,14 +108,11 @@ class ProjectApplicationAccessScopeResolverTest {
     }
 
     @Test
-    @DisplayName("projectApplicantList_SUPER_ADMIN_이면_기수_무관_ProjectScoped")
-    void projectApplicantList_SUPER_ADMIN_통과() {
+    @DisplayName("projectApplicantList_member_ADMIN_이면_챌린저_기록_없이_ProjectScoped")
+    void projectApplicantList_member_ADMIN_통과() {
         Project project = project(OWNER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
         given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, MEMBER_ID)).willReturn(false);
-        // 역할 레코드의 gisuId 가 프로젝트 기수와 다르더라도 통과해야 함
-        given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
-            roleInfo(ChallengerRoleType.SUPER_ADMIN, OrganizationType.CENTRAL, null, OTHER_GISU_ID)
-        ));
+        given(getMemberRoleUseCase.isAdmin(MEMBER_ID)).willReturn(true);
 
         ProjectApplicationAccessScope scope =
             sut.resolveForProjectApplicantList(MEMBER_ID, project);

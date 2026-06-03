@@ -1,25 +1,17 @@
 package com.umc.product.member.application.service;
 
-import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
-import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import java.util.Objects;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class MemberPermissionEvaluator implements ResourcePermissionEvaluator {
-
-    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
-    private final GetMemberUseCase getMemberUseCase;
 
     @Override
     public ResourceType supportedResourceType() {
@@ -31,6 +23,7 @@ public class MemberPermissionEvaluator implements ResourcePermissionEvaluator {
         return switch (resourcePermission.permission()) {
             case READ -> canReadMember(subjectAttributes, resourcePermission);
             case DELETE -> canDeleteMember(subjectAttributes);
+            case MANAGE -> subjectAttributes.isSystemAdmin();
             default ->
                 throw new CommonException(CommonErrorCode.INTERNAL_SERVER_ERROR, "PE 관련 에러가 발생하였습니다. 관리자에게 문의하세요.");
         };
@@ -39,25 +32,12 @@ public class MemberPermissionEvaluator implements ResourcePermissionEvaluator {
     // === PRIVATE METHODS ===
 
     private boolean canReadMember(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
-        return !subjectAttributes.gisuChallengerInfos().isEmpty();
+        return subjectAttributes.isSystemAdmin() || !subjectAttributes.gisuChallengerInfos().isEmpty();
     }
 
     private boolean canDeleteMember(SubjectAttributes subjectAttributes) {
-        // 회원 강제 삭제는 중앙운영사무국 총괄단만 가능합니다.
-        return getChallengerRoleUseCase.isCentralCore(subjectAttributes.memberId());
-    }
-
-    // ANOTHER PRIVATE METHOD
-
-    private boolean isSelf(SubjectAttributes subject, ResourcePermission resource) {
-        return Objects.equals(subject.memberId().toString(), resource.resourceId());
-    }
-
-    private boolean isSchoolCoreOf(Long memberId, Long schoolId) {
-        return getChallengerRoleUseCase.isSchoolCore(memberId, schoolId);
-    }
-
-    private boolean isCentralCore(Long memberId) {
-        return getChallengerRoleUseCase.isCentralCore(memberId);
+        return subjectAttributes.isSystemAdmin()
+            || subjectAttributes.roleAttributes().stream()
+                .anyMatch(roleAttribute -> roleAttribute.roleType().isAtLeastCentralCore());
     }
 }

@@ -2,6 +2,7 @@ package com.umc.product.support.fixture;
 
 import static com.umc.product.support.CommonFixture.MONKEY;
 
+import com.umc.product.common.domain.enums.MemberRoleType;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ public class MemberFixture extends FixtureSupport {
             .set("email", fixtureName + "@test.com")
             .set("schoolId", null)
             .set("profileImageId", null)
+            .set("roleType", MemberRoleType.NORMAL)
             .sample();
         return saveMemberPort.save(member);
     }

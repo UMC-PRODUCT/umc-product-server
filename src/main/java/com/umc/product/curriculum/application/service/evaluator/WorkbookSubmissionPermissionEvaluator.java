@@ -25,7 +25,7 @@ public class WorkbookSubmissionPermissionEvaluator implements ResourcePermission
                             ResourcePermission resourcePermission) {
         if (resourcePermission.permission() == PermissionType.READ) {
             // 학교 운영진(회장, 부회장, 파트장, 기타 운영진)만 READ 권한
-            return subjectAttributes.roleAttributes().stream()
+            return subjectAttributes.isSystemAdmin() || subjectAttributes.roleAttributes().stream()
                 .anyMatch(role -> role.roleType().isAtLeastSchoolAdmin());
         }
 

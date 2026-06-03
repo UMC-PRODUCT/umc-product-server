@@ -5,6 +5,7 @@ import com.umc.product.authorization.application.port.in.query.dto.ChallengerRol
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.member.application.port.in.query.GetMemberRoleUseCase;
 import com.umc.product.project.application.port.in.command.AutoDecideProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
@@ -58,6 +59,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     private final List<MatchingDecisionPolicy> matchingDecisionPolicies;
     private final Random matchingRandom;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+    private final GetMemberRoleUseCase getMemberRoleUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
 
     @Override
@@ -233,6 +235,10 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     }
 
     private void validateManageAccess(Long memberId, Long chapterId) {
+        if (getMemberRoleUseCase.isAdmin(memberId)) {
+            return;
+        }
+
         List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
         boolean allowed = roles.stream()
             .anyMatch(role -> role.roleType().isAtLeastCentralCore()

@@ -10,6 +10,7 @@ import com.umc.product.authorization.domain.RoleAttribute;
 import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.authorization.domain.SubjectAttributes.GisuChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.MemberRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
@@ -50,9 +51,17 @@ class SchedulePermissionEvaluatorTest {
 
     private void givenScheduleAndGisu() {
         Schedule schedule = schedule();
-        given(loadSchedulePort.findById(SCHEDULE_ID)).willReturn(Optional.of(schedule));
+        givenSchedule(schedule);
         given(getGisuUseCase.getGisuByDate(schedule.getStartsAt()))
             .willReturn(new GisuInfo(SCHEDULE_GISU_ID, 9L, null, null, true));
+    }
+
+    private void givenScheduleOnly() {
+        givenSchedule(schedule());
+    }
+
+    private void givenSchedule(Schedule schedule) {
+        given(loadSchedulePort.findById(SCHEDULE_ID)).willReturn(Optional.of(schedule));
     }
 
     private Schedule schedule() {
@@ -70,17 +79,20 @@ class SchedulePermissionEvaluatorTest {
         return SubjectAttributes.builder()
             .memberId(memberId)
             .schoolId(1L)
+            .memberRoleType(MemberRoleType.NORMAL)
             .gisuChallengerInfos(List.<GisuChallengerInfo>of())
             .roleAttributes(roles)
             .build();
     }
 
-    private RoleAttribute superAdminRoleInGisu(Long gisuId) {
-        return new RoleAttribute(
-            ChallengerRoleType.SUPER_ADMIN,
-            OrganizationType.CENTRAL,
-            null, null, gisuId
-        );
+    private SubjectAttributes adminSubject(Long memberId) {
+        return SubjectAttributes.builder()
+            .memberId(memberId)
+            .schoolId(1L)
+            .memberRoleType(MemberRoleType.ADMIN)
+            .gisuChallengerInfos(List.<GisuChallengerInfo>of())
+            .roleAttributes(List.of())
+            .build();
     }
 
     private RoleAttribute centralCoreRoleInGisu(Long gisuId) {
@@ -108,12 +120,11 @@ class SchedulePermissionEvaluatorTest {
         }
 
         @Test
-        @DisplayName("해당 일정 기수의 SUPER_ADMIN이면 허용")
-        void 해당_기수_SUPER_ADMIN_허용() {
-            givenScheduleAndGisu();
+        @DisplayName("member ADMIN이면 챌린저 기록 없이 허용")
+        void member_ADMIN_허용() {
+            givenScheduleOnly();
 
-            SubjectAttributes subject = subjectWith(20L,
-                List.of(superAdminRoleInGisu(SCHEDULE_GISU_ID)));
+            SubjectAttributes subject = adminSubject(20L);
             ResourcePermission permission = ResourcePermission.of(
                 ResourceType.SCHEDULE, SCHEDULE_ID, PermissionType.DELETE);
 
@@ -121,8 +132,8 @@ class SchedulePermissionEvaluatorTest {
         }
 
         @Test
-        @DisplayName("생성자도 아니고 해당 기수 SUPER_ADMIN도 아니면 거부")
-        void 생성자_아니고_SUPER_ADMIN_아니면_거부() {
+        @DisplayName("생성자도 아니고 해당 기수 중앙총괄도 아니면 거부")
+        void 생성자_아니고_중앙총괄도_아니면_거부() {
             givenScheduleAndGisu();
 
             SubjectAttributes subject = subjectWith(20L, List.of());
@@ -133,12 +144,12 @@ class SchedulePermissionEvaluatorTest {
         }
 
         @Test
-        @DisplayName("다른 기수의 SUPER_ADMIN이면 거부")
-        void 다른_기수_SUPER_ADMIN_거부() {
+        @DisplayName("다른 기수의 중앙총괄이면 거부")
+        void 다른_기수_중앙총괄_거부() {
             givenScheduleAndGisu();
 
             SubjectAttributes subject = subjectWith(20L,
-                List.of(superAdminRoleInGisu(OTHER_GISU_ID)));
+                List.of(centralCoreRoleInGisu(OTHER_GISU_ID)));
             ResourcePermission permission = ResourcePermission.of(
                 ResourceType.SCHEDULE, SCHEDULE_ID, PermissionType.DELETE);
 
@@ -146,8 +157,8 @@ class SchedulePermissionEvaluatorTest {
         }
 
         @Test
-        @DisplayName("해당 기수의 중앙총괄(SUPER_ADMIN 아님)은 생성자가 아니면 거부")
-        void 해당_기수_중앙총괄은_생성자_아니면_거부() {
+        @DisplayName("해당 기수의 중앙총괄이면 생성자가 아니어도 허용")
+        void 해당_기수_중앙총괄은_생성자_아니어도_허용() {
             givenScheduleAndGisu();
 
             SubjectAttributes subject = subjectWith(20L,
@@ -155,7 +166,7 @@ class SchedulePermissionEvaluatorTest {
             ResourcePermission permission = ResourcePermission.of(
                 ResourceType.SCHEDULE, SCHEDULE_ID, PermissionType.DELETE);
 
-            assertThat(sut.evaluate(subject, permission)).isFalse();
+            assertThat(sut.evaluate(subject, permission)).isTrue();
         }
     }
 
@@ -164,12 +175,11 @@ class SchedulePermissionEvaluatorTest {
     class forceDelete {
 
         @Test
-        @DisplayName("해당 일정 기수의 SUPER_ADMIN이면 허용")
-        void 해당_기수_SUPER_ADMIN_허용() {
-            givenScheduleAndGisu();
+        @DisplayName("member ADMIN이면 챌린저 기록 없이 허용")
+        void member_ADMIN_허용() {
+            givenScheduleOnly();
 
-            SubjectAttributes subject = subjectWith(20L,
-                List.of(superAdminRoleInGisu(SCHEDULE_GISU_ID)));
+            SubjectAttributes subject = adminSubject(20L);
             ResourcePermission permission = ResourcePermission.of(
                 ResourceType.SCHEDULE, SCHEDULE_ID, PermissionType.FORCE_DELETE);
 
@@ -177,8 +187,8 @@ class SchedulePermissionEvaluatorTest {
         }
 
         @Test
-        @DisplayName("일정 생성자 본인이라도 SUPER_ADMIN이 아니면 거부")
-        void 생성자_본인이라도_SUPER_ADMIN_아니면_거부() {
+        @DisplayName("일정 생성자 본인이라도 중앙 운영 권한이 아니면 거부")
+        void 생성자_본인이라도_중앙_운영_권한이_아니면_거부() {
             givenScheduleAndGisu();
 
             SubjectAttributes subject = subjectWith(AUTHOR_MEMBER_ID, List.of());
@@ -189,12 +199,12 @@ class SchedulePermissionEvaluatorTest {
         }
 
         @Test
-        @DisplayName("다른 기수의 SUPER_ADMIN이면 거부")
-        void 다른_기수_SUPER_ADMIN_거부() {
+        @DisplayName("다른 기수의 중앙총괄이면 거부")
+        void 다른_기수_중앙총괄_거부() {
             givenScheduleAndGisu();
 
             SubjectAttributes subject = subjectWith(20L,
-                List.of(superAdminRoleInGisu(OTHER_GISU_ID)));
+                List.of(centralCoreRoleInGisu(OTHER_GISU_ID)));
             ResourcePermission permission = ResourcePermission.of(
                 ResourceType.SCHEDULE, SCHEDULE_ID, PermissionType.FORCE_DELETE);
 
@@ -202,8 +212,8 @@ class SchedulePermissionEvaluatorTest {
         }
 
         @Test
-        @DisplayName("해당 기수 중앙총괄(SUPER_ADMIN 아님)이면 거부")
-        void 해당_기수_중앙총괄_거부() {
+        @DisplayName("해당 기수 중앙총괄이면 허용")
+        void 해당_기수_중앙총괄_허용() {
             givenScheduleAndGisu();
 
             SubjectAttributes subject = subjectWith(20L,
@@ -211,7 +221,7 @@ class SchedulePermissionEvaluatorTest {
             ResourcePermission permission = ResourcePermission.of(
                 ResourceType.SCHEDULE, SCHEDULE_ID, PermissionType.FORCE_DELETE);
 
-            assertThat(sut.evaluate(subject, permission)).isFalse();
+            assertThat(sut.evaluate(subject, permission)).isTrue();
         }
 
         @Test

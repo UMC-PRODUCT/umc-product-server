@@ -1,6 +1,7 @@
 package com.umc.product.member.application.port.in.query.dto;
 
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
+import com.umc.product.common.domain.enums.MemberRoleType;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberDomainException;
@@ -24,6 +25,7 @@ public record MemberInfo(
     String profileImageId,
     String profileImageLink,
     MemberStatus status,
+    MemberRoleType roleType,
     List<ChallengerRoleInfo> roles
 ) {
     @Deprecated
@@ -40,6 +42,7 @@ public record MemberInfo(
             member.getProfileImageId(),
             null,
             member.getStatus(),
+            member.getRoleType(),
             null
         );
     }
@@ -58,6 +61,7 @@ public record MemberInfo(
             member.getProfileImageId(),
             profileImageLink,
             member.getStatus(),
+            member.getRoleType(),
             null
         );
     }
@@ -75,6 +79,7 @@ public record MemberInfo(
             .profileImageId(member.getProfileImageId())
             .profileImageLink(profileImageLink)
             .status(member.getStatus())
+            .roleType(member.getRoleType())
             .roles(roles)
             .build();
     }
@@ -96,6 +101,7 @@ public record MemberInfo(
             .profileImageId(this.profileImageId)
             .profileImageLink(this.profileImageLink)
             .status(this.status)
+            .roleType(null)
             .roles(this.roles)
             .build();
     }

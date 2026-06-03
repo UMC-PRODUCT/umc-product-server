@@ -192,7 +192,7 @@ public class ScheduleCommandV2Controller {
 
         삭제 가능 권한:
         - 일정 생성자 본인
-        - 해당 일정이 진행되는 기수의 최고 운영 관리자(`SUPER_ADMIN`)
+        - 전역 관리자 또는 해당 일정이 진행되는 기수의 중앙 총괄단
         """
     )
     @ApiResponses(value = {
@@ -231,7 +231,7 @@ public class ScheduleCommandV2Controller {
         - 출석 기록이 있는 일정 또한 삭제 가능합니다.
 
         강제 삭제 가능 권한:
-        - 해당 일정이 진행되는 기수의 최고 운영 관리자(`SUPER_ADMIN`)
+        - 전역 관리자 또는 해당 일정이 진행되는 기수의 중앙 총괄단
         """
     )
     @ApiResponses(value = {

@@ -8,6 +8,7 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.member.application.port.in.query.GetMemberRoleUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import java.util.Comparator;
 import java.util.List;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class AdminAnalyticsScopeResolver {
 
     private final GetChallengerRoleUseCase getGisuChallengerRoleUseCase;
+    private final GetMemberRoleUseCase getMemberRoleUseCase;
     private final GetGisuUseCase getGisuUseCase;
 
     public AdminAnalyticsScope resolve(
@@ -30,10 +32,14 @@ public class AdminAnalyticsScopeResolver {
         ChallengerPart requestedPart
     ) {
         Long gisuId = requestedGisuId != null ? requestedGisuId : getGisuUseCase.getActiveGisuId();
+        if (getMemberRoleUseCase.isAdmin(memberId)) {
+            return AdminAnalyticsScope.memberAdmin(gisuId, requestedChapterId, requestedSchoolId, requestedPart);
+        }
+
         ChallengerRoleInfo role = highestRole(memberId, gisuId);
 
         ChallengerRoleType roleType = role.roleType();
-        if (roleType.isSuperAdmin() || roleType.isAtLeastCentralMember()) {
+        if (roleType.isAtLeastCentralMember()) {
             return AdminAnalyticsScope.of(
                 AdminAnalyticsScopeType.CENTRAL,
                 gisuId,
@@ -119,9 +125,6 @@ public class AdminAnalyticsScopeResolver {
     }
 
     private int priority(ChallengerRoleType roleType) {
-        if (roleType.isSuperAdmin()) {
-            return 0;
-        }
         if (roleType.isAtLeastCentralMember()) {
             return 1;
         }

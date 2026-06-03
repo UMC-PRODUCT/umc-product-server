@@ -60,7 +60,8 @@ public class CommunityCommentPermissionEvaluator implements ResourcePermissionEv
             }
             case DELETE -> {
                 // 삭제는 게시글 작성자나 총괄단이 가능
-                return getChallengerRoleUseCase.isCentralCore(subjectAttributes.memberId())
+                return subjectAttributes.isSystemAdmin()
+                    || getChallengerRoleUseCase.isCentralCore(subjectAttributes.memberId())
                     || isAuthor;
             }
             default -> {

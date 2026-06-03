@@ -27,13 +27,13 @@ public class ChallengerRecordPermissionController implements ResourcePermissionE
 
     private boolean canRead(SubjectAttributes subjectAttributes) {
         // 교내 회장/부회장 이상만 가능함
-        return subjectAttributes.roleAttributes().stream()
+        return subjectAttributes.isSystemAdmin() || subjectAttributes.roleAttributes().stream()
             .anyMatch(roleAttribute -> roleAttribute.roleType().isAtLeastSchoolCore());
     }
 
     private boolean canWriteOrDelete(SubjectAttributes subjectAttributes) {
         // 중앙운영사무국 총괄단만 가능함
-        return subjectAttributes.roleAttributes().stream()
+        return subjectAttributes.isSystemAdmin() || subjectAttributes.roleAttributes().stream()
             .anyMatch(roleAttribute -> roleAttribute.roleType().isAtLeastCentralCore());
     }
 }

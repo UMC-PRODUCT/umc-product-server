@@ -8,6 +8,7 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.member.application.port.in.query.GetMemberRoleUseCase;
 import com.umc.product.project.application.access.ProjectAccessScope.All;
 import com.umc.product.project.application.access.ProjectAccessScope.ChapterScoped;
 import com.umc.product.project.application.access.ProjectAccessScope.None;
@@ -29,6 +30,8 @@ class ProjectAccessScopeResolverTest {
 
     @Mock
     GetChallengerRoleUseCase getChallengerRoleUseCase;
+    @Mock
+    GetMemberRoleUseCase getMemberRoleUseCase;
     @Mock
     LoadProjectPort loadProjectPort;
 

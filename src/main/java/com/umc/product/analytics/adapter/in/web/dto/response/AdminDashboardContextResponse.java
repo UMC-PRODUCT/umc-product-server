@@ -4,8 +4,10 @@ import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardCon
 import com.umc.product.analytics.domain.AdminAnalyticsScopeType;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.MemberRoleType;
 
 public record AdminDashboardContextResponse(
+    MemberRoleType memberRoleType,
     ChallengerRoleType roleType,
     Long gisuId,
     Long chapterId,
@@ -16,6 +18,7 @@ public record AdminDashboardContextResponse(
 
     public static AdminDashboardContextResponse from(AdminDashboardContextInfo info) {
         return new AdminDashboardContextResponse(
+            info.memberRoleType(),
             info.roleType(),
             info.gisuId(),
             info.chapterId(),

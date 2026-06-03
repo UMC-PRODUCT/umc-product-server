@@ -91,7 +91,7 @@ public class ProjectApplicationQueryController {
             <ul>
               <li>해당 프로젝트의 PO</li>
               <li>해당 프로젝트의 보조 PM (ACTIVE PLAN 멤버)</li>
-              <li>SUPER_ADMIN</li>
+              <li>전역 관리자</li>
               <li>해당 프로젝트 기수의 Central Core (총괄/부총괄)</li>
               <li>해당 프로젝트 지부의 지부장 (같은 기수)</li>
               <li>해당 프로젝트 학교의 회장 (SCHOOL_PRESIDENT, 같은 기수)</li>
@@ -136,7 +136,7 @@ public class ProjectApplicationQueryController {
                   <li>지원자 본인</li>
                   <li>해당 프로젝트의 PO</li>
                   <li>해당 프로젝트의 Sub-PO (ACTIVE PLAN 멤버)</li>
-                  <li>해당 프로젝트 기수의 Central Core (총괄/부총괄/SUPER_ADMIN)</li>
+                  <li>전역 관리자 또는 해당 프로젝트 기수의 Central Core (총괄/부총괄)</li>
                   <li>해당 프로젝트 지부의 지부장 (같은 기수)</li>
                 </ul>
               </li>

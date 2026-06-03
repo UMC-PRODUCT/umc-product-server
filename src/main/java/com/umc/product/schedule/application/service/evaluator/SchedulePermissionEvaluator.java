@@ -38,7 +38,7 @@ public class SchedulePermissionEvaluator implements ResourcePermissionEvaluator 
         // '챌린저 활동 기록이 있는 사용자'만 가능
         if (permission == PermissionType.READ || permission == PermissionType.WRITE) {
             // 챌린저 활동 기록이 있는 사용자인지 확인
-            return !subjectAttributes.gisuChallengerInfos().isEmpty();
+            return subjectAttributes.isSystemAdmin() || !subjectAttributes.gisuChallengerInfos().isEmpty();
         }
 
         // EDIT (일정 수정), DELETE (일정 삭제)
@@ -54,7 +54,7 @@ public class SchedulePermissionEvaluator implements ResourcePermissionEvaluator 
                 .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
             // 해당 일정의 기수에서 최고 운영 관리자 권한이 있다면 즉시 통과
-            if (isSuperAdminOfScheduleGisu(subjectAttributes, schedule)) {
+            if (canManageScheduleGisu(subjectAttributes, schedule)) {
                 return true;
             }
 
@@ -73,16 +73,20 @@ public class SchedulePermissionEvaluator implements ResourcePermissionEvaluator 
             Schedule schedule = loadSchedulePort.findById(resourcePermission.getResourceIdAsLong())
                 .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
-            return isSuperAdminOfScheduleGisu(subjectAttributes, schedule);
+            return canManageScheduleGisu(subjectAttributes, schedule);
         }
 
         return false;
     }
 
-    private boolean isSuperAdminOfScheduleGisu(SubjectAttributes subjectAttributes, Schedule schedule) {
+    private boolean canManageScheduleGisu(SubjectAttributes subjectAttributes, Schedule schedule) {
+        if (subjectAttributes.isSystemAdmin()) {
+            return true;
+        }
+
         Long targetGisuId = getGisuUseCase.getGisuByDate(schedule.getStartsAt()).gisuId();
         return subjectAttributes.roleAttributes().stream()
             .filter(role -> role.gisuId().equals(targetGisuId))
-            .anyMatch(role -> role.roleType().isSuperAdmin());
+            .anyMatch(role -> role.roleType().isAtLeastCentralCore());
     }
 }

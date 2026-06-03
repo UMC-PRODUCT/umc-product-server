@@ -22,6 +22,10 @@ public enum MemberErrorCode implements BaseCode {
     CREDENTIAL_NOT_REGISTERED(HttpStatus.BAD_REQUEST, "MEMBER-0011", "ID/PW 자격증명이 등록되지 않은 사용자입니다."),
     INVALID_LOGIN_ID(HttpStatus.BAD_REQUEST, "MEMBER-0012", "올바르지 않은 로그인 아이디입니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "MEMBER-0013", "올바르지 않은 비밀번호입니다."),
+    INVALID_MEMBER_ROLE(HttpStatus.BAD_REQUEST, "MEMBER-0014", "올바르지 않은 회원 권한입니다."),
+    MEMBER_ROLE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "MEMBER-0015", "회원 권한을 변경할 수 없습니다."),
+    MEMBER_ROLE_SELF_DEMOTION_DENIED(HttpStatus.FORBIDDEN, "MEMBER-0016", "자기 자신의 관리자 권한은 해제할 수 없습니다."),
+    LAST_ADMIN_ROLE_CHANGE_DENIED(HttpStatus.FORBIDDEN, "MEMBER-0017", "마지막 관리자 권한은 해제할 수 없습니다."),
     ;
 
     private final HttpStatus httpStatus;

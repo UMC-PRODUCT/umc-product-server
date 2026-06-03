@@ -23,10 +23,9 @@ public class AdminAnalyticsPermissionEvaluator implements ResourcePermissionEval
             return false;
         }
 
-        return subjectAttributes.roleAttributes().stream()
+        return subjectAttributes.isSystemAdmin() || subjectAttributes.roleAttributes().stream()
             .map(RoleAttribute::roleType)
-            .anyMatch(roleType -> roleType.isSuperAdmin()
-                || roleType.isAtLeastCentralMember()
+            .anyMatch(roleType -> roleType.isAtLeastCentralMember()
                 || roleType == ChallengerRoleType.CHAPTER_PRESIDENT
                 || roleType.isAtLeastSchoolAdmin());
     }

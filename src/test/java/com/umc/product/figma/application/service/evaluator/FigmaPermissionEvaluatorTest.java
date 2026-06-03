@@ -8,6 +8,7 @@ import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.RoleAttribute;
 import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.MemberRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -25,18 +26,18 @@ class FigmaPermissionEvaluatorTest {
     }
 
     @Test
-    @DisplayName("SUPER_ADMIN 은 READ 권한을 통과한다")
-    void SUPER_ADMIN_READ_허용() {
-        SubjectAttributes subject = subjectWithRoles(superAdminRole());
+    @DisplayName("member ADMIN 은 READ 권한을 통과한다")
+    void member_ADMIN_READ_허용() {
+        SubjectAttributes subject = adminSubjectWithRoles();
         ResourcePermission permission = ResourcePermission.ofType(ResourceType.FIGMA, PermissionType.READ);
 
         assertThat(sut.evaluate(subject, permission)).isTrue();
     }
 
     @Test
-    @DisplayName("SUPER_ADMIN 은 MANAGE 권한을 통과한다")
-    void SUPER_ADMIN_MANAGE_허용() {
-        SubjectAttributes subject = subjectWithRoles(superAdminRole());
+    @DisplayName("member ADMIN 은 MANAGE 권한을 통과한다")
+    void member_ADMIN_MANAGE_허용() {
+        SubjectAttributes subject = adminSubjectWithRoles();
         ResourcePermission permission = ResourcePermission.ofType(ResourceType.FIGMA, PermissionType.MANAGE);
 
         assertThat(sut.evaluate(subject, permission)).isTrue();
@@ -70,11 +71,10 @@ class FigmaPermissionEvaluatorTest {
     }
 
     @Test
-    @DisplayName("여러 역할을 가진 사용자 중 하나라도 SUPER_ADMIN 이면 통과한다")
-    void 다중_역할_SUPER_ADMIN_포함_허용() {
-        SubjectAttributes subject = subjectWithRoles(
-            roleOf(ChallengerRoleType.SCHOOL_PART_LEADER),
-            superAdminRole()
+    @DisplayName("member ADMIN 은 challenger 역할이 낮아도 통과한다")
+    void member_ADMIN은_낮은_challenger_역할이어도_허용() {
+        SubjectAttributes subject = adminSubjectWithRoles(
+            roleOf(ChallengerRoleType.SCHOOL_PART_LEADER)
         );
         ResourcePermission permission = ResourcePermission.ofType(ResourceType.FIGMA, PermissionType.MANAGE);
 
@@ -85,13 +85,20 @@ class FigmaPermissionEvaluatorTest {
         return SubjectAttributes.builder()
             .memberId(1L)
             .schoolId(1L)
+            .memberRoleType(MemberRoleType.NORMAL)
             .gisuChallengerInfos(List.of())
             .roleAttributes(List.of(roles))
             .build();
     }
 
-    private RoleAttribute superAdminRole() {
-        return roleOf(ChallengerRoleType.SUPER_ADMIN);
+    private SubjectAttributes adminSubjectWithRoles(RoleAttribute... roles) {
+        return SubjectAttributes.builder()
+            .memberId(1L)
+            .schoolId(1L)
+            .memberRoleType(MemberRoleType.ADMIN)
+            .gisuChallengerInfos(List.of())
+            .roleAttributes(List.of(roles))
+            .build();
     }
 
     private RoleAttribute roleOf(ChallengerRoleType roleType) {

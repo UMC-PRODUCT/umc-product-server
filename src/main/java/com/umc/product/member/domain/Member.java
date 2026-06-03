@@ -1,6 +1,7 @@
 package com.umc.product.member.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.common.domain.enums.MemberRoleType;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
@@ -53,6 +54,10 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 20)
     private MemberStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role_type", nullable = false, length = 20)
+    private MemberRoleType roleType;
+
     // MemberProfile은 Member에서 단방향으로 조회합니다. MemberProfile에서 역으로 올라오는 경우는 없도록 합니다.
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -62,13 +67,15 @@ public class Member extends BaseEntity {
     private MemberProfile profile;
 
     @Builder
-    private Member(String name, String nickname, String email, Long schoolId, String profileImageId) {
+    private Member(String name, String nickname, String email, Long schoolId, String profileImageId,
+                   MemberRoleType roleType) {
         this.name = name;
         this.nickname = nickname;
         this.email = email;
         this.schoolId = schoolId;
         this.profileImageId = profileImageId;
         this.status = MemberStatus.ACTIVE;
+        this.roleType = roleType == null ? MemberRoleType.NORMAL : roleType;
     }
 
     public static Member create(String name, String nickname, String email, Long schoolId, String profileImageId) {
@@ -78,6 +85,7 @@ public class Member extends BaseEntity {
             .email(email)
             .schoolId(schoolId)
             .profileImageId(profileImageId)
+            .roleType(MemberRoleType.NORMAL)
             .build();
     }
 
@@ -158,6 +166,18 @@ public class Member extends BaseEntity {
 
     public boolean hasCredential() {
         return this.passwordHash != null;
+    }
+
+    public boolean isAdmin() {
+        return this.roleType != null && this.roleType.isAdmin();
+    }
+
+    public void changeRole(MemberRoleType roleType) {
+        validateActive();
+        if (roleType == null) {
+            throw new MemberDomainException(MemberErrorCode.INVALID_MEMBER_ROLE);
+        }
+        this.roleType = roleType;
     }
 
     // TODO: 탈퇴 및 휴면 처리에 대한 도메인 로직은 추후 추가

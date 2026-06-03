@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Figma 폴링 대상 파일 관리. ADR-007 에 따라 모든 endpoint 는 SUPER_ADMIN 만 접근 가능하다.
+ * Figma 폴링 대상 파일 관리. 모든 endpoint 는 전역 관리자만 접근 가능하다.
  */
 @RestController
 @RequestMapping("/api/v1/admin/figma/watched-files")

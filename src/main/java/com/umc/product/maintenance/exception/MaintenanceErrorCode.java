@@ -16,7 +16,7 @@ public enum MaintenanceErrorCode implements BaseCode {
     TARGET_DOMAINS_REQUIRED(HttpStatus.BAD_REQUEST, "MAINTENANCE-0005", "PER_DOMAIN 점검은 대상 도메인을 1개 이상 지정해야 합니다."),
     OVERLAPPING_WINDOW(HttpStatus.CONFLICT, "MAINTENANCE-0006", "다른 점검 윈도우와 시간이 겹칩니다."),
     ALREADY_ENDED(HttpStatus.BAD_REQUEST, "MAINTENANCE-0007", "이미 종료된 점검 윈도우입니다."),
-    NOT_SUPER_ADMIN(HttpStatus.FORBIDDEN, "MAINTENANCE-0008", "점검 관리 권한이 없습니다."),
+    NOT_SYSTEM_ADMIN(HttpStatus.FORBIDDEN, "MAINTENANCE-0008", "점검 관리 권한이 없습니다."),
     ;
 
     private final HttpStatus httpStatus;
