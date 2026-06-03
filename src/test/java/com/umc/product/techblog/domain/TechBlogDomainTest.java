@@ -51,6 +51,17 @@ class TechBlogDomainTest {
     }
 
     @Test
+    @DisplayName("회원 댓글도 닉네임이 전달되면 20자 이하만 허용한다")
+    void 회원_댓글도_닉네임이_전달되면_20자_이하만_허용한다() {
+        TechBlogComment comment = TechBlogComment.create(1L, null, 1L, true, "  익명작성자  ", "댓글");
+
+        assertThat(comment.getGuestNickname()).isEqualTo("익명작성자");
+
+        assertThatThrownBy(() -> TechBlogComment.create(1L, null, 1L, true, "a".repeat(21), "댓글"))
+            .isInstanceOf(TechBlogDomainException.class);
+    }
+
+    @Test
     @DisplayName("삭제된 댓글은 삭제 타입별 placeholder를 표시하고 대댓글을 허용하지 않는다")
     void 삭제된_댓글은_삭제_타입별_placeholder를_표시하고_대댓글을_허용하지_않는다() {
         TechBlogComment userDeleted = TechBlogComment.create(1L, null, 1L, false, null, "댓글");

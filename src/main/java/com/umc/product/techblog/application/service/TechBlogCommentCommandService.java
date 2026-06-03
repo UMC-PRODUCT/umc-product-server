@@ -79,7 +79,7 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
         TechBlogContent content = getContent(command.type(), command.slug());
         TechBlogComment comment = getCommentInContent(command.commentId(), content.getId());
         comment.ensureNotDeleted();
-        deleteResolved(comment, command.memberId(), isSuperAdmin(command.memberId()));
+        deleteResolved(comment, command.memberId(), isAdminDeletion(comment, command.memberId()));
     }
 
     @Override
@@ -102,12 +102,22 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
         }
     }
 
-    private void deleteResolved(TechBlogComment comment, Long memberId, boolean superAdmin) {
+    private void deleteResolved(TechBlogComment comment, Long memberId, boolean adminDeletion) {
         if (loadTechBlogCommentPort.existsVisibleReply(comment.getId())) {
-            saveTechBlogCommentPort.softDelete(comment.getId(), memberId, superAdmin);
+            saveTechBlogCommentPort.softDelete(comment.getId(), memberId, adminDeletion);
             return;
         }
         saveTechBlogCommentPort.hardDelete(comment.getId());
+    }
+
+    private boolean isAdminDeletion(TechBlogComment comment, Long memberId) {
+        return !isAuthor(comment, memberId) && isSuperAdmin(memberId);
+    }
+
+    private boolean isAuthor(TechBlogComment comment, Long memberId) {
+        return memberId != null
+            && comment.getAuthorMemberId() != null
+            && memberId.equals(comment.getAuthorMemberId());
     }
 
     private TechBlogCommentInfo assembleSingle(TechBlogComment comment, Long viewerMemberId) {

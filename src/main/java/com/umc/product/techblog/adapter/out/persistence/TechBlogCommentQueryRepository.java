@@ -14,6 +14,8 @@ import com.umc.product.techblog.domain.QTechBlogComment;
 import com.umc.product.techblog.domain.TechBlogComment;
 import com.umc.product.techblog.domain.TechBlogCommentDeletionType;
 import com.umc.product.techblog.domain.TechBlogCommentSort;
+import com.umc.product.techblog.domain.TechBlogDomainException;
+import com.umc.product.techblog.domain.TechBlogErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,9 +32,7 @@ public class TechBlogCommentQueryRepository {
         Long cursor,
         int limit
     ) {
-        TechBlogComment cursorEntity = cursor == null
-            ? null
-            : commentJpaRepository.findByIdAndContentIdAndParentCommentIdIsNull(cursor, contentId).orElse(null);
+        TechBlogComment cursorEntity = getCursorEntity(contentId, cursor);
 
         return queryFactory
             .selectFrom(techBlogComment)
@@ -45,6 +45,14 @@ public class TechBlogCommentQueryRepository {
             .orderBy(orderSpecifiers(sort))
             .limit(limit)
             .fetch();
+    }
+
+    private TechBlogComment getCursorEntity(Long contentId, Long cursor) {
+        if (cursor == null) {
+            return null;
+        }
+        return commentJpaRepository.findByIdAndContentIdAndParentCommentIdIsNull(cursor, contentId)
+            .orElseThrow(() -> new TechBlogDomainException(TechBlogErrorCode.INVALID_COMMENT_CURSOR));
     }
 
     public List<TechBlogComment> listRepliesByParentIds(List<Long> parentCommentIds) {

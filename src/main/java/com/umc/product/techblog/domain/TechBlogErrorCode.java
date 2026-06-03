@@ -20,7 +20,8 @@ public enum TechBlogErrorCode implements BaseCode {
     INVALID_PARENT_COMMENT(HttpStatus.BAD_REQUEST, "TECH-BLOG-0008", "대댓글을 달 수 없는 댓글입니다."),
     COMMENT_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "TECH-BLOG-0009", "삭제된 댓글에는 수행할 수 없습니다."),
     INVALID_COMMENT_SORT(HttpStatus.BAD_REQUEST, "TECH-BLOG-0011", "댓글 정렬 조건이 유효하지 않습니다."),
-    INVALID_MEMBER_ID(HttpStatus.BAD_REQUEST, "TECH-BLOG-0012", "회원 ID가 유효하지 않습니다.");
+    INVALID_MEMBER_ID(HttpStatus.BAD_REQUEST, "TECH-BLOG-0012", "회원 ID가 유효하지 않습니다."),
+    INVALID_COMMENT_CURSOR(HttpStatus.BAD_REQUEST, "TECH-BLOG-0013", "댓글 커서가 유효하지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

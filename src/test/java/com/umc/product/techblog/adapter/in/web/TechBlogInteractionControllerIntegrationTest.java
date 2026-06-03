@@ -207,6 +207,30 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
     }
 
     @Test
+    @DisplayName("삭제된 댓글 ID를 커서로 사용하면 400을 반환한다")
+    void 삭제된_댓글_ID를_커서로_사용하면_400을_반환한다() throws Exception {
+        createComment("첫 번째 댓글", null, authorToken);
+        Long secondId = createComment("두 번째 댓글", null, authorToken);
+        createComment("세 번째 댓글", null, authorToken);
+
+        mockMvc.perform(get(BASE_URL)
+                .queryParam("sort", "createdAt,asc")
+                .queryParam("size", "2"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.nextCursor").value(secondId));
+
+        mockMvc.perform(delete(BASE_URL + "/" + secondId)
+                .header("Authorization", "Bearer " + authorToken))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(get(BASE_URL)
+                .queryParam("sort", "createdAt,asc")
+                .queryParam("size", "2")
+                .queryParam("cursor", secondId.toString()))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("지원하지 않는 댓글 정렬 조건은 400을 반환한다")
     void 지원하지_않는_댓글_정렬_조건은_400을_반환한다() throws Exception {
         createComment("댓글", null, authorToken);
@@ -286,6 +310,26 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.content[0].content").value("관리자에 의해서 삭제된 댓글입니다"))
             .andExpect(jsonPath("$.result.content[0].deletionType").value("ADMIN_DELETED"))
+            .andExpect(jsonPath("$.result.content[0].canReply").value(false))
+            .andExpect(jsonPath("$.result.content[0].canEdit").value(false))
+            .andExpect(jsonPath("$.result.content[0].canDelete").value(false));
+    }
+
+    @Test
+    @DisplayName("슈퍼 관리자가 본인 댓글을 삭제하면 본인 삭제 placeholder로 조회된다")
+    void 슈퍼_관리자가_본인_댓글을_삭제하면_본인_삭제_placeholder로_조회된다() throws Exception {
+        Long parentId = createComment("관리자 본인 댓글", null, adminToken);
+        createComment("관리자 본인 대댓글", parentId, adminToken);
+
+        mockMvc.perform(delete(BASE_URL + "/" + parentId)
+                .header("Authorization", "Bearer " + adminToken))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(get(BASE_URL)
+                .header("Authorization", "Bearer " + adminToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.content[0].content").value("삭제된 댓글입니다"))
+            .andExpect(jsonPath("$.result.content[0].deletionType").value("USER_DELETED"))
             .andExpect(jsonPath("$.result.content[0].canReply").value(false))
             .andExpect(jsonPath("$.result.content[0].canEdit").value(false))
             .andExpect(jsonPath("$.result.content[0].canDelete").value(false));

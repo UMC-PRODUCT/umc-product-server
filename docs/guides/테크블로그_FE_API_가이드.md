@@ -21,7 +21,7 @@
 | TECH-BLOG-003 | GET | `/comments` | 선택 | 최상위 댓글 cursor 조회와 1단계 대댓글 포함 조회 |
 | TECH-BLOG-004 | POST | `/comments` | 선택 | 댓글 또는 1단계 대댓글 작성 |
 | TECH-BLOG-005 | PATCH | `/comments/{commentId}` | 필수 | 본인 댓글 수정 |
-| TECH-BLOG-006 | DELETE | `/comments/{commentId}` | 필수 | 본인/관리자 댓글 삭제 |
+| TECH-BLOG-006 | DELETE | `/comments/{commentId}` | 필수 | 본인/슈퍼 관리자 댓글 삭제 |
 | TECH-BLOG-007 | POST | `/comments/{commentId}/like` | 필수 | 댓글 좋아요 토글 |
 
 ## 좋아요
@@ -75,7 +75,7 @@ GET /api/v1/tech-blog/contents/blog/spring-boot-tips/comments?cursor=123&size=20
 | size | int | 20 | 최상위 댓글 기준 페이지 크기입니다. 최대 50입니다. |
 | sort | string | `createdAt,desc` | `createdAt,desc`, `createdAt,asc`만 지원합니다. |
 
-`cursor`는 최상위 댓글 기준입니다. 각 최상위 댓글의 `replies`에는 1단계 대댓글이 포함되며, 대댓글은 페이지 크기에 포함되지 않습니다.
+`cursor`는 최상위 댓글 기준입니다. 각 최상위 댓글의 `replies`에는 1단계 대댓글이 포함되며, 대댓글은 페이지 크기에 포함되지 않습니다. 존재하지 않거나 현재 콘텐츠의 최상위 댓글이 아닌 `cursor`는 400으로 거부됩니다.
 
 ```json
 {
@@ -189,7 +189,7 @@ Authorization: Bearer {accessToken}
 
 대댓글이 없는 댓글/답글은 hard delete되어 목록에서 사라집니다. 대댓글이 있는 최상위 댓글은 soft delete되고 placeholder로 내려갑니다.
 
-댓글 본인인지 판단되면 `canEdit`/`canDelete`가 `true`로 내려가며, 관리자(중앙총괄단 이상)는 `canDelete`가 `true`로 내려갑니다.
+댓글 본인인지 판단되면 `canEdit`/`canDelete`가 `true`로 내려가며, 슈퍼 관리자(`SUPER_ADMIN`)는 다른 사용자의 댓글에 대해 `canDelete`가 `true`로 내려갑니다.
 
 ### 댓글 좋아요 토글
 
@@ -224,7 +224,7 @@ Authorization: Bearer {accessToken}
 
 | 상태 | 상황 |
 |---:|---|
-| 400 | 지원하지 않는 type, 잘못된 slug/content/nickname, invalid sort, 삭제된 부모에 대댓글 작성 |
+| 400 | 지원하지 않는 type, 잘못된 slug/content/nickname, invalid sort/cursor, 삭제된 부모에 대댓글 작성 |
 | 401 | 인증 필수 API에서 토큰 누락 |
-| 403 | 본인 댓글이 아닌 수정/삭제, 관리자 삭제 권한 없음 |
+| 403 | 본인 댓글이 아닌 수정/삭제, 슈퍼 관리자 삭제 권한 없음 |
 | 404 | 콘텐츠 또는 댓글을 찾을 수 없음 |

@@ -1,5 +1,8 @@
 package com.umc.product.techblog.application.port.in.command.dto;
 
+import com.umc.product.techblog.domain.TechBlogDomainException;
+import com.umc.product.techblog.domain.TechBlogErrorCode;
+
 public record CreateTechBlogCommentCommand(
     String type,
     String slug,
@@ -9,6 +12,10 @@ public record CreateTechBlogCommentCommand(
     boolean anonymous,
     String nickname
 ) {
+
+    public CreateTechBlogCommentCommand {
+        nickname = normalizeNickname(nickname);
+    }
 
     public static CreateTechBlogCommentCommand of(
         String type,
@@ -28,5 +35,16 @@ public record CreateTechBlogCommentCommand(
             anonymous,
             nickname
         );
+    }
+
+    private static String normalizeNickname(String nickname) {
+        if (nickname == null || nickname.isBlank()) {
+            return null;
+        }
+        String normalized = nickname.trim();
+        if (normalized.length() > 20) {
+            throw new TechBlogDomainException(TechBlogErrorCode.INVALID_GUEST_NICKNAME);
+        }
+        return normalized;
     }
 }

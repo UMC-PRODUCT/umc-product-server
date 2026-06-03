@@ -84,9 +84,12 @@ public class TechBlogComment extends BaseEntity {
         if (parentCommentId != null && parentCommentId <= 0) {
             throw new TechBlogDomainException(TechBlogErrorCode.INVALID_PARENT_COMMENT);
         }
+        String normalizedGuestNickname = normalizeGuestNickname(guestNickname);
         if (authorMemberId == null) {
-            validateGuestNickname(guestNickname);
+            validateGuestNickname(normalizedGuestNickname);
             anonymous = true;
+        } else if (normalizedGuestNickname != null && normalizedGuestNickname.length() > 20) {
+            throw new TechBlogDomainException(TechBlogErrorCode.INVALID_GUEST_NICKNAME);
         }
 
         return new TechBlogComment(
@@ -94,7 +97,7 @@ public class TechBlogComment extends BaseEntity {
             parentCommentId,
             authorMemberId,
             anonymous,
-            normalizeGuestNickname(guestNickname),
+            normalizedGuestNickname,
             content.trim()
         );
     }

@@ -52,7 +52,12 @@ public class TechBlogPersistenceAdapter implements LoadTechBlogContentPort, Save
 
     @Override
     public TechBlogContent save(TechBlogContent content) {
-        return contentJpaRepository.save(content);
+        if (content.getId() != null) {
+            return contentJpaRepository.save(content);
+        }
+        contentJpaRepository.insertIgnore(content.getContentType().name(), content.getSlug());
+        return contentJpaRepository.findByContentTypeAndSlug(content.getContentType(), content.getSlug())
+            .orElseThrow(() -> new TechBlogDomainException(TechBlogErrorCode.CONTENT_NOT_FOUND));
     }
 
     @Override
