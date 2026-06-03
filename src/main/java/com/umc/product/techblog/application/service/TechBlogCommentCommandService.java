@@ -75,7 +75,7 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
         TechBlogComment comment = getCommentInContent(command.commentId(), content.getId());
         comment.updateContent(command.content());
 
-        TechBlogComment updated = saveTechBlogCommentPort.updateContent(comment.getId(), comment.getContent());
+        TechBlogComment updated = saveTechBlogCommentPort.save(comment);
         return assembleSingle(updated, command.memberId());
     }
 
@@ -110,7 +110,12 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
 
     private void deleteResolved(TechBlogComment comment, Long memberId, boolean adminDeletion) {
         if (loadTechBlogCommentPort.existsVisibleReply(comment.getId())) {
-            saveTechBlogCommentPort.softDelete(comment.getId(), memberId, adminDeletion);
+            if (adminDeletion) {
+                comment.deleteByAdmin(memberId);
+            } else {
+                comment.deleteByUser(memberId);
+            }
+            saveTechBlogCommentPort.save(comment);
             saveTechBlogLikePort.deleteCommentLikesByCommentId(comment.getId());
             return;
         }
@@ -162,8 +167,7 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
     }
 
     private TechBlogComment getCommentInContent(Long commentId, Long contentId) {
-        return loadTechBlogCommentPort.findByIdAndContentId(commentId, contentId)
-            .orElseThrow(() -> new TechBlogDomainException(TechBlogErrorCode.COMMENT_NOT_FOUND));
+        return loadTechBlogCommentPort.getByIdAndContentId(commentId, contentId);
     }
 
     private boolean toggleCommentLike(Long commentId, Long memberId) {

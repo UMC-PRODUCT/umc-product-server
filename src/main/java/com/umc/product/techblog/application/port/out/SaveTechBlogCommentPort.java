@@ -6,9 +6,5 @@ public interface SaveTechBlogCommentPort {
 
     TechBlogComment save(TechBlogComment comment);
 
-    TechBlogComment updateContent(Long commentId, String content);
-
-    TechBlogComment softDelete(Long commentId, Long deletedByMemberId, boolean admin);
-
     void hardDelete(Long commentId);
 }

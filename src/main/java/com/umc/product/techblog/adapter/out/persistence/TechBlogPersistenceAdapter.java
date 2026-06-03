@@ -77,8 +77,9 @@ public class TechBlogPersistenceAdapter implements LoadTechBlogContentPort, Save
     }
 
     @Override
-    public Optional<TechBlogComment> findByIdAndContentId(Long commentId, Long contentId) {
-        return commentJpaRepository.findByIdAndContentId(commentId, contentId);
+    public TechBlogComment getByIdAndContentId(Long commentId, Long contentId) {
+        return commentJpaRepository.findByIdAndContentId(commentId, contentId)
+            .orElseThrow(() -> new TechBlogDomainException(TechBlogErrorCode.COMMENT_NOT_FOUND));
     }
 
     @Override
@@ -117,24 +118,6 @@ public class TechBlogPersistenceAdapter implements LoadTechBlogContentPort, Save
     }
 
     @Override
-    public TechBlogComment updateContent(Long commentId, String content) {
-        TechBlogComment entity = getCommentEntity(commentId);
-        entity.updateContent(content);
-        return entity;
-    }
-
-    @Override
-    public TechBlogComment softDelete(Long commentId, Long deletedByMemberId, boolean admin) {
-        TechBlogComment entity = getCommentEntity(commentId);
-        if (admin) {
-            entity.deleteByAdmin(deletedByMemberId);
-        } else {
-            entity.deleteByUser(deletedByMemberId);
-        }
-        return entity;
-    }
-
-    @Override
     public void hardDelete(Long commentId) {
         commentJpaRepository.deleteById(commentId);
     }
@@ -159,8 +142,4 @@ public class TechBlogPersistenceAdapter implements LoadTechBlogContentPort, Save
         commentLikeJpaRepository.deleteByCommentId(commentId);
     }
 
-    private TechBlogComment getCommentEntity(Long commentId) {
-        return commentJpaRepository.findById(commentId)
-            .orElseThrow(() -> new TechBlogDomainException(TechBlogErrorCode.COMMENT_NOT_FOUND));
-    }
 }

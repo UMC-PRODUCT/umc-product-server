@@ -10,7 +10,7 @@ public interface LoadTechBlogCommentPort {
 
     Optional<TechBlogComment> findById(Long commentId);
 
-    Optional<TechBlogComment> findByIdAndContentId(Long commentId, Long contentId);
+    TechBlogComment getByIdAndContentId(Long commentId, Long contentId);
 
     List<TechBlogComment> listTopLevel(Long contentId, TechBlogCommentSort sort, Long cursor, int size);
 
