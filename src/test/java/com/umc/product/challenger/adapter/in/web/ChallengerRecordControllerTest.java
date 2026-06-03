@@ -96,4 +96,17 @@ class ChallengerRecordControllerTest {
 
         then(manageChallengerRecordUseCase).should(never()).create(any());
     }
+
+    @Test
+    @DisplayName("기록 bulk 생성 요청 내부 항목의 gisuId가 없으면 400")
+    void 기록_bulk_생성_요청_내부_항목의_gisuId가_없으면_400() throws Exception {
+        mockMvc.perform(post("/api/v1/challenger-record/bulk")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    [{"chapterId":2,"schoolId":3,"part":"SPRINGBOOT","memberName":"홍길동"}]
+                    """))
+            .andExpect(status().isBadRequest());
+
+        then(manageChallengerRecordUseCase).should(never()).createBulk(any());
+    }
 }

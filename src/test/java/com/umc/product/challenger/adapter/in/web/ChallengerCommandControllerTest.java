@@ -92,6 +92,19 @@ class ChallengerCommandControllerTest {
     }
 
     @Test
+    @DisplayName("챌린저 batch 생성 요청 내부 항목의 part가 없으면 400")
+    void 챌린저_batch_생성_요청_내부_항목의_part가_없으면_400() throws Exception {
+        mockMvc.perform(post("/api/v1/challenger/batch")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    [{"memberId":1,"gisuId":9}]
+                    """))
+            .andExpect(status().isBadRequest());
+
+        then(manageChallengerUseCase).should(never()).createChallenger(any());
+    }
+
+    @Test
     @DisplayName("파트 변경 요청의 newPart가 없으면 400")
     void 파트_변경_요청의_newPart가_없으면_400() throws Exception {
         mockMvc.perform(patch("/api/v1/challenger/{challengerId}/part", 100L)

@@ -12,6 +12,7 @@ import com.umc.product.challenger.application.port.in.command.dto.CreateChalleng
 import com.umc.product.challenger.application.port.in.command.dto.DeactivateChallengerCommand;
 import com.umc.product.challenger.application.port.in.command.dto.GrantChallengerPointCommand;
 import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerCommand;
+import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerPointCommand;
 import com.umc.product.challenger.application.port.out.LoadChallengerPointPort;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.application.port.out.SaveChallengerPointPort;
@@ -179,9 +180,7 @@ class ChallengerCommandServiceTest {
         ChallengerPoint point = ChallengerPoint.create(challenger, PointType.CUSTOM, 1, "기존");
         given(loadChallengerPointPort.getById(10L)).willReturn(point);
 
-        sut.updateChallengerPoint(new com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerPointRequest(
-            "수정"
-        ).toCommand(10L));
+        sut.updateChallengerPoint(UpdateChallengerPointCommand.of(10L, "수정"));
 
         assertThat(point.getDescription()).isEqualTo("수정");
         then(saveChallengerPointPort).should().save(point);

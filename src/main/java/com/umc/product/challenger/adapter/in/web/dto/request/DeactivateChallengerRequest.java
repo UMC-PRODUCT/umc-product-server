@@ -16,7 +16,7 @@ public record DeactivateChallengerRequest(
         String reason
 ) {
     public DeactivateChallengerCommand toCommand(Long challengerId) {
-        return new DeactivateChallengerCommand(
+        return DeactivateChallengerCommand.of(
             challengerId,
             deactivationType,
             modifiedBy,

@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/challenger")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Challenger | 챌린저 Command", description = "챌린저 정보를 조회하고, 기록 조회. 검색은 따로 구분되어 있습니다")
 public class ChallengerCommandController {
 

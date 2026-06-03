@@ -10,6 +10,6 @@ public record EditChallengerPointRequest(
         String newDescription
 ) {
     public UpdateChallengerPointCommand toCommand(Long challengerPointId) {
-        return new UpdateChallengerPointCommand(challengerPointId, newDescription);
+        return UpdateChallengerPointCommand.of(challengerPointId, newDescription);
     }
 }
