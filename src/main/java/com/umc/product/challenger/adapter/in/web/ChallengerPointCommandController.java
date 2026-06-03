@@ -11,6 +11,7 @@ import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResp
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -39,7 +40,7 @@ public class ChallengerPointCommandController {
     @PostMapping("{challengerId}/points")
     ChallengerInfoResponse grantChallengerPoints(
         @PathVariable Long challengerId,
-        @RequestBody GrantChallengerPointRequest request
+        @Valid @RequestBody GrantChallengerPointRequest request
     ) {
         manageChallengerUseCase.grantChallengerPoint(request.toCommand(challengerId));
 
@@ -56,7 +57,7 @@ public class ChallengerPointCommandController {
     @PatchMapping("points/{challengerPointId}")
     void editChallengerPoints(
         @PathVariable Long challengerPointId,
-        @RequestBody EditChallengerPointRequest request
+        @Valid @RequestBody EditChallengerPointRequest request
     ) {
         manageChallengerUseCase.updateChallengerPoint(request.toCommand(challengerPointId));
     }

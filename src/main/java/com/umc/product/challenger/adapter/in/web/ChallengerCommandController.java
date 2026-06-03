@@ -14,6 +14,7 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,7 +40,7 @@ public class ChallengerCommandController {
     )
     @Operation(summary = "[CHALLENGER-001] 챌린저 생성")
     @PostMapping
-    ChallengerInfoResponse createChallenger(@RequestBody CreateChallengerInfoRequest request) {
+    ChallengerInfoResponse createChallenger(@Valid @RequestBody CreateChallengerInfoRequest request) {
         Long challengerId = manageChallengerUseCase.createChallenger(request.toCommand());
 
         return assembler.fromChallengerId(challengerId);
@@ -52,7 +53,7 @@ public class ChallengerCommandController {
     @Operation(summary = "[CHALLENGER-002] 챌린저 batch 생성", description = "한 번에 여러 건의 챌린저를 등록합니다. 기존에 `bulk`로 되어 있는 엔드포인트를 수정하였습니다.")
     @PostMapping("batch")
     List<ChallengerInfoResponse> bulkCreateChallenger(
-        @RequestBody List<CreateChallengerInfoRequest> requests
+        @Valid @RequestBody List<@Valid CreateChallengerInfoRequest> requests
     ) {
         return requests.stream()
             .map(request ->
@@ -71,7 +72,7 @@ public class ChallengerCommandController {
     @PostMapping("{challengerId}/deactivate")
     void deactivateChallenger(
         @PathVariable Long challengerId,
-        @RequestBody DeactivateChallengerRequest request
+        @Valid @RequestBody DeactivateChallengerRequest request
     ) {
         manageChallengerUseCase.deactivateChallenger(request.toCommand(challengerId));
     }
@@ -85,7 +86,7 @@ public class ChallengerCommandController {
     ChallengerInfoResponse editChallengerInfo(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long challengerId,
-        @RequestBody EditChallengerPartRequest request
+        @Valid @RequestBody EditChallengerPartRequest request
     ) {
         manageChallengerUseCase.updateChallenger(request.toCommand(challengerId, memberPrincipal.getMemberId()));
 

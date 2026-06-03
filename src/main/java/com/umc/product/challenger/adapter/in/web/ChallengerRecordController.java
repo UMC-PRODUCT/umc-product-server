@@ -14,6 +14,7 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,7 +48,7 @@ public class ChallengerRecordController {
 //    )
     public void addChallengerRecordToMember(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @RequestBody AddChallengerRecordToMemberRequest request) {
+        @Valid @RequestBody AddChallengerRecordToMemberRequest request) {
 
         manageChallengerRecordUseCase.consumeCode(
             ConsumeChallengerRecordCommand.builder()
@@ -94,7 +95,7 @@ public class ChallengerRecordController {
     @PostMapping
     public ChallengerRecordResponse createChallengerRecord(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @RequestBody CreateChallengerRecordRequest request
+        @Valid @RequestBody CreateChallengerRecordRequest request
     ) {
         // TODO: SUPER_ADMIN 만 가능하도록 권한 설정
 
@@ -127,7 +128,7 @@ public class ChallengerRecordController {
     )
     public List<Long> createChallengerRecordBulk(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @RequestBody List<CreateChallengerRecordRequest> request
+        @Valid @RequestBody List<@Valid CreateChallengerRecordRequest> request
     ) {
         List<Long> ids = manageChallengerRecordUseCase.createBulk(
             request.stream()
