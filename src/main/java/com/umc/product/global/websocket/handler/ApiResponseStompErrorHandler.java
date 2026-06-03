@@ -55,7 +55,7 @@ public class ApiResponseStompErrorHandler extends StompSubProtocolErrorHandler {
         if (businessException.isPresent()) {
             BusinessException exception = businessException.get();
             log.warn("[WEBSOCKET BUSINESS EXCEPTION] domain={}, code={}, message={}",
-                exception.getDomain(), exception.getBaseCode().getCode(), exception.getBaseCode().getMessage(), ex);
+                exception.getDomain(), exception.getBaseCode().getCode(), exception.getBaseCode().getMessage());
             return;
         }
 

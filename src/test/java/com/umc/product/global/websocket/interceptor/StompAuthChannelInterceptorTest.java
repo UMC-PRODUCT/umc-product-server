@@ -99,11 +99,53 @@ class StompAuthChannelInterceptorTest {
     }
 
     @Test
-    @DisplayName("topic으로 직접 SEND하는 프레임은 채팅 전송 경로가 아니므로 인가 처리 없이 통과된다")
-    void send_to_topic_passes_without_authorization() {
+    @DisplayName("/topic 하위 경로로 직접 SEND하는 프레임은 CommonException이 발생한다")
+    void send_directly_to_broker_topic_throws() {
         Message<byte[]> message = stompMessage(StompCommand.SEND, "/topic/chat/10", 1L);
 
-        assertThat(sut.preSend(message, channel)).isSameAs(message);
+        assertThatThrownBy(() -> sut.preSend(message, channel))
+            .isInstanceOf(CommonException.class)
+            .extracting("baseCode")
+            .isEqualTo(CommonErrorCode.SECURITY_WEBSOCKET_BROKER_ACCESS);
+        verifyNoInteractions(checkChatRoomAccessUseCase);
+        verifyNoInteractions(applicationEventPublisher);
+    }
+
+    @Test
+    @DisplayName("/topic 경로로 직접 SEND하는 프레임은 CommonException이 발생한다")
+    void send_directly_to_exact_broker_topic_throws() {
+        Message<byte[]> message = stompMessage(StompCommand.SEND, "/topic", 1L);
+
+        assertThatThrownBy(() -> sut.preSend(message, channel))
+            .isInstanceOf(CommonException.class)
+            .extracting("baseCode")
+            .isEqualTo(CommonErrorCode.SECURITY_WEBSOCKET_BROKER_ACCESS);
+        verifyNoInteractions(checkChatRoomAccessUseCase);
+        verifyNoInteractions(applicationEventPublisher);
+    }
+
+    @Test
+    @DisplayName("/queue 하위 경로로 직접 SEND하는 프레임은 CommonException이 발생한다")
+    void send_directly_to_broker_queue_throws() {
+        Message<byte[]> message = stompMessage(StompCommand.SEND, "/queue/errors", 1L);
+
+        assertThatThrownBy(() -> sut.preSend(message, channel))
+            .isInstanceOf(CommonException.class)
+            .extracting("baseCode")
+            .isEqualTo(CommonErrorCode.SECURITY_WEBSOCKET_BROKER_ACCESS);
+        verifyNoInteractions(checkChatRoomAccessUseCase);
+        verifyNoInteractions(applicationEventPublisher);
+    }
+
+    @Test
+    @DisplayName("/queue 경로로 직접 SEND하는 프레임은 CommonException이 발생한다")
+    void send_directly_to_exact_broker_queue_throws() {
+        Message<byte[]> message = stompMessage(StompCommand.SEND, "/queue", 1L);
+
+        assertThatThrownBy(() -> sut.preSend(message, channel))
+            .isInstanceOf(CommonException.class)
+            .extracting("baseCode")
+            .isEqualTo(CommonErrorCode.SECURITY_WEBSOCKET_BROKER_ACCESS);
         verifyNoInteractions(checkChatRoomAccessUseCase);
         verifyNoInteractions(applicationEventPublisher);
     }
@@ -129,12 +171,41 @@ class StompAuthChannelInterceptorTest {
     }
 
     @Test
-    @DisplayName("채팅방 destination으로 파싱할 수 없는 프레임은 인가 처리 없이 통과된다")
-    void invalid_chat_destination_passes() {
-        Message<byte[]> message = stompMessage(StompCommand.SUBSCRIBE, "/topic/chat/not-number", 1L);
+    @DisplayName("SUBSCRIBE의 chat namespace 안에서 잘못된 destination은 CommonException이 발생한다")
+    void subscribe_invalid_chat_destination_throws() {
+        List.of("/topic/chat", "/topic/chat/", "/topic/chat/not-number", "/topic/chat/*", "/topic/chat/10/extra")
+            .forEach(destination -> assertInvalidDestination(StompCommand.SUBSCRIBE, destination));
+
+        verifyNoInteractions(checkChatRoomAccessUseCase);
+        verifyNoInteractions(applicationEventPublisher);
+    }
+
+    @Test
+    @DisplayName("SEND의 chat namespace 안에서 잘못된 destination은 CommonException이 발생한다")
+    void send_invalid_chat_destination_throws() {
+        List.of("/app/chat", "/app/chat/", "/app/chat/not-number", "/app/chat/*", "/app/chat/10/extra")
+            .forEach(destination -> assertInvalidDestination(StompCommand.SEND, destination));
+
+        verifyNoInteractions(checkChatRoomAccessUseCase);
+        verifyNoInteractions(applicationEventPublisher);
+    }
+
+    @Test
+    @DisplayName("chat namespace가 아닌 application destination은 인가 처리 없이 통과된다")
+    void non_chat_application_destination_passes() {
+        Message<byte[]> message = stompMessage(StompCommand.SEND, "/app/inquiry/10", 1L);
 
         assertThat(sut.preSend(message, channel)).isSameAs(message);
         verifyNoInteractions(checkChatRoomAccessUseCase);
+    }
+
+    private void assertInvalidDestination(StompCommand command, String destination) {
+        Message<byte[]> message = stompMessage(command, destination, 1L);
+
+        assertThatThrownBy(() -> sut.preSend(message, channel))
+            .isInstanceOf(CommonException.class)
+            .extracting("baseCode")
+            .isEqualTo(CommonErrorCode.SECURITY_WEBSOCKET_INVALID_DESTINATION);
     }
 
     private Message<byte[]> stompMessage(StompCommand command, String destination, Long memberId) {
