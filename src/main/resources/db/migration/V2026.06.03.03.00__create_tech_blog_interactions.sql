@@ -11,8 +11,10 @@ CREATE TABLE tech_blog_content
 
 CREATE TABLE tech_blog_content_like
 (
-    content_id BIGINT NOT NULL,
-    member_id  BIGINT NOT NULL,
+    content_id BIGINT                     NOT NULL,
+    member_id  BIGINT                     NOT NULL,
+    created_at TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP(6) WITH TIME ZONE NOT NULL,
     CONSTRAINT pk_tech_blog_content_like PRIMARY KEY (content_id, member_id),
     CONSTRAINT fk_tech_blog_content_like_content
         FOREIGN KEY (content_id) REFERENCES tech_blog_content (id) ON DELETE CASCADE
@@ -42,8 +44,10 @@ CREATE TABLE tech_blog_comment
 
 CREATE TABLE tech_blog_comment_like
 (
-    comment_id BIGINT NOT NULL,
-    member_id  BIGINT NOT NULL,
+    comment_id BIGINT                     NOT NULL,
+    member_id  BIGINT                     NOT NULL,
+    created_at TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP(6) WITH TIME ZONE NOT NULL,
     CONSTRAINT pk_tech_blog_comment_like PRIMARY KEY (comment_id, member_id),
     CONSTRAINT fk_tech_blog_comment_like_comment
         FOREIGN KEY (comment_id) REFERENCES tech_blog_comment (id) ON DELETE CASCADE

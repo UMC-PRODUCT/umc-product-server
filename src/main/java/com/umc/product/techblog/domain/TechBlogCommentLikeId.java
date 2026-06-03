@@ -1,4 +1,4 @@
-package com.umc.product.techblog.adapter.out.persistence.entity;
+package com.umc.product.techblog.domain;
 
 import java.io.Serializable;
 
@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class TechBlogContentLikeId implements Serializable {
+public class TechBlogCommentLikeId implements Serializable {
 
-    private Long contentId;
+    private Long commentId;
     private Long memberId;
 }

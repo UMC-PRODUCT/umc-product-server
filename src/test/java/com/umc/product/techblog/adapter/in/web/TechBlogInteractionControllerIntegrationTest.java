@@ -121,6 +121,12 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.likedByMe").value(true))
             .andExpect(jsonPath("$.result.likeCount").value(1));
+
+        mockMvc.perform(post(CONTENT_URL + "/like")
+                .header("Authorization", "Bearer " + authorToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.likedByMe").value(false))
+            .andExpect(jsonPath("$.result.likeCount").value(0));
     }
 
     @Test
@@ -131,6 +137,18 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
         mockMvc.perform(post(BASE_URL + "/" + commentId + "/like")
                 .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.likeCount").value(1));
+
+        mockMvc.perform(post(BASE_URL + "/" + commentId + "/like")
+                .header("Authorization", "Bearer " + otherToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.likedByMe").value(false))
+            .andExpect(jsonPath("$.result.likeCount").value(0));
+
+        mockMvc.perform(post(BASE_URL + "/" + commentId + "/like")
+                .header("Authorization", "Bearer " + otherToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.likedByMe").value(true))
             .andExpect(jsonPath("$.result.likeCount").value(1));
 
         mockMvc.perform(patch(BASE_URL + "/" + commentId)

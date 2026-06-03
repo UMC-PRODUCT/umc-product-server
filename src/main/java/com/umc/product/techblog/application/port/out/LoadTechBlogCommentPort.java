@@ -1,9 +1,7 @@
 package com.umc.product.techblog.application.port.out;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import com.umc.product.techblog.domain.TechBlogComment;
 import com.umc.product.techblog.domain.TechBlogCommentSort;
@@ -19,8 +17,4 @@ public interface LoadTechBlogCommentPort {
     List<TechBlogComment> listRepliesByParentIds(List<Long> parentCommentIds);
 
     boolean existsVisibleReply(Long parentCommentId);
-
-    Map<Long, Integer> countLikesByCommentIds(List<Long> commentIds);
-
-    Set<Long> findLikedCommentIds(List<Long> commentIds, Long memberId);
 }

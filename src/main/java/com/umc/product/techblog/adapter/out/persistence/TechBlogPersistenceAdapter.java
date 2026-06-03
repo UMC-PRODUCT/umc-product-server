@@ -7,16 +7,17 @@ import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
-import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogCommentLikeJpaEntity;
-import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogContentLikeJpaEntity;
-import com.umc.product.techblog.application.port.in.query.dto.TechBlogLikeInfo;
 import com.umc.product.techblog.application.port.out.LoadTechBlogCommentPort;
 import com.umc.product.techblog.application.port.out.LoadTechBlogContentPort;
+import com.umc.product.techblog.application.port.out.LoadTechBlogLikePort;
 import com.umc.product.techblog.application.port.out.SaveTechBlogCommentPort;
 import com.umc.product.techblog.application.port.out.SaveTechBlogContentPort;
+import com.umc.product.techblog.application.port.out.SaveTechBlogLikePort;
 import com.umc.product.techblog.domain.TechBlogComment;
+import com.umc.product.techblog.domain.TechBlogCommentLike;
 import com.umc.product.techblog.domain.TechBlogCommentSort;
 import com.umc.product.techblog.domain.TechBlogContent;
+import com.umc.product.techblog.domain.TechBlogContentLike;
 import com.umc.product.techblog.domain.TechBlogContentType;
 import com.umc.product.techblog.domain.TechBlogDomainException;
 import com.umc.product.techblog.domain.TechBlogErrorCode;
@@ -26,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class TechBlogPersistenceAdapter implements LoadTechBlogContentPort, SaveTechBlogContentPort,
-    LoadTechBlogCommentPort, SaveTechBlogCommentPort {
+    LoadTechBlogCommentPort, SaveTechBlogCommentPort, LoadTechBlogLikePort, SaveTechBlogLikePort {
 
     private final TechBlogContentJpaRepository contentJpaRepository;
     private final TechBlogContentLikeJpaRepository contentLikeJpaRepository;
@@ -41,12 +42,12 @@ public class TechBlogPersistenceAdapter implements LoadTechBlogContentPort, Save
     }
 
     @Override
-    public int countLikesByContentId(Long contentId) {
+    public int countContentLikes(Long contentId) {
         return contentLikeJpaRepository.countByContentId(contentId);
     }
 
     @Override
-    public boolean existsLikeByContentIdAndMemberId(Long contentId, Long memberId) {
+    public boolean existsContentLike(Long contentId, Long memberId) {
         return memberId != null && contentLikeJpaRepository.existsByContentIdAndMemberId(contentId, memberId);
     }
 
@@ -61,16 +62,13 @@ public class TechBlogPersistenceAdapter implements LoadTechBlogContentPort, Save
     }
 
     @Override
-    public TechBlogLikeInfo toggleContentLike(Long contentId, Long memberId) {
-        boolean liked;
-        if (contentLikeJpaRepository.existsByContentIdAndMemberId(contentId, memberId)) {
-            contentLikeJpaRepository.deleteByContentIdAndMemberId(contentId, memberId);
-            liked = false;
-        } else {
-            contentLikeJpaRepository.save(new TechBlogContentLikeJpaEntity(contentId, memberId));
-            liked = true;
-        }
-        return new TechBlogLikeInfo(liked, contentLikeJpaRepository.countByContentId(contentId));
+    public TechBlogContentLike saveContentLike(TechBlogContentLike like) {
+        return contentLikeJpaRepository.save(like);
+    }
+
+    @Override
+    public void deleteContentLike(Long contentId, Long memberId) {
+        contentLikeJpaRepository.deleteByContentIdAndMemberId(contentId, memberId);
     }
 
     @Override
@@ -99,7 +97,12 @@ public class TechBlogPersistenceAdapter implements LoadTechBlogContentPort, Save
     }
 
     @Override
-    public Map<Long, Integer> countLikesByCommentIds(List<Long> commentIds) {
+    public int countCommentLikes(Long commentId) {
+        return commentLikeJpaRepository.countByCommentId(commentId);
+    }
+
+    @Override
+    public Map<Long, Integer> countCommentLikesByCommentIds(List<Long> commentIds) {
         return commentLikeQueryRepository.countByCommentIds(commentIds);
     }
 
@@ -128,7 +131,6 @@ public class TechBlogPersistenceAdapter implements LoadTechBlogContentPort, Save
         } else {
             entity.deleteByUser(deletedByMemberId);
         }
-        commentLikeJpaRepository.deleteByCommentId(commentId);
         return entity;
     }
 
@@ -138,16 +140,23 @@ public class TechBlogPersistenceAdapter implements LoadTechBlogContentPort, Save
     }
 
     @Override
-    public TechBlogLikeInfo toggleCommentLike(Long commentId, Long memberId) {
-        boolean liked;
-        if (commentLikeJpaRepository.existsByCommentIdAndMemberId(commentId, memberId)) {
-            commentLikeJpaRepository.deleteByCommentIdAndMemberId(commentId, memberId);
-            liked = false;
-        } else {
-            commentLikeJpaRepository.save(new TechBlogCommentLikeJpaEntity(commentId, memberId));
-            liked = true;
-        }
-        return new TechBlogLikeInfo(liked, commentLikeJpaRepository.countByCommentId(commentId));
+    public boolean existsCommentLike(Long commentId, Long memberId) {
+        return memberId != null && commentLikeJpaRepository.existsByCommentIdAndMemberId(commentId, memberId);
+    }
+
+    @Override
+    public TechBlogCommentLike saveCommentLike(TechBlogCommentLike like) {
+        return commentLikeJpaRepository.save(like);
+    }
+
+    @Override
+    public void deleteCommentLike(Long commentId, Long memberId) {
+        commentLikeJpaRepository.deleteByCommentIdAndMemberId(commentId, memberId);
+    }
+
+    @Override
+    public void deleteCommentLikesByCommentId(Long commentId) {
+        commentLikeJpaRepository.deleteByCommentId(commentId);
     }
 
     private TechBlogComment getCommentEntity(Long commentId) {

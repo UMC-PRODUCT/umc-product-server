@@ -33,6 +33,7 @@ Proposed
 2. 댓글과 좋아요는 동일한 대상에 붙어야 한다. `tech_blog_comment`, `tech_blog_content_like`, `tech_blog_comment_like`가 각자 `content_type + slug`를 들고 있으면 같은 대상 식별 규칙이 여러 테이블과 쿼리에 반복된다.
 3. slug 직접 저장 방식은 초기 구현은 단순하지만, 댓글/좋아요 데이터가 늘수록 text key 기반 인덱스와 unique key가 반복된다. `BIGINT content_id` 기반 인덱스보다 크고 비교 비용이 높다.
 4. 정적 콘텐츠 자체는 FE가 관리하더라도, 서버의 상호작용 대상에는 운영 상태가 붙을 수 있다. 예를 들어 댓글 잠금, 숨김, 신고 기반 차단, slug migration, 특정 글의 interaction 비활성화 같은 상태는 FE 정적 파일과 별도로 서버가 관리할 수 있다.
+5. 좋아요는 부모 콘텐츠/댓글과 생명주기를 함께하지만, 인기 글이나 댓글에서는 빠르게 늘어나는 관계 데이터다. 이를 부모 row의 배열 필드로 저장하면 좋아요/취소마다 부모 row가 갱신되고, PostgreSQL MVCC row version 증가와 write contention이 발생할 수 있다.
 
 ### 결정이 필요한 이유
 
@@ -50,6 +51,8 @@ Proposed
 4. 댓글과 콘텐츠 좋아요는 `content_type + slug`를 직접 저장하지 않고 `content_id`를 FK로 저장한다.
 5. `tech_blog_content(content_type, slug)` unique key를 통해 외부 식별자의 정합성을 보장한다.
 6. 현재 이름 `TechBlogContent`는 유지한다. 단, 문서와 코드 주석에서는 “본문 콘텐츠 모델”이 아니라 “상호작용 대상”이라는 의미를 명확히 한다.
+7. 좋아요는 `likedMemberIds` 배열이 아니라 `TechBlogContentLike`, `TechBlogCommentLike` dependent domain entity로 모델링한다. 부모 엔티티에는 `@OneToMany` 컬렉션을 두지 않고, `content_id/comment_id + member_id` 복합 PK와 FK로 생명주기를 관리한다.
+8. Like entity는 생성 시각 추적과 repository auditing 컨벤션 유지를 위해 `BaseEntity`를 상속하고 `created_at`, `updated_at`을 저장한다. 다만 현재 단계에서 좋아요는 생성/삭제 중심이라 `updated_at`은 별도 상태 변경 의미가 약하다.
 
 ### 단계적 진행 / PR 분할
 
@@ -143,6 +146,29 @@ Proposed
 
 - 현재 요구의 핵심은 “정적 콘텐츠 본문 관리”가 아니라 “정적 콘텐츠를 대상으로 한 상호작용 관리”다. `TechBlogContent`를 registry로 두면 FE와 BE의 책임 경계를 유지하면서도 댓글/좋아요 저장 모델을 단순하게 유지할 수 있다.
 
+### 대안 E: 부모 엔티티에 `likedMemberIds` 배열 저장
+
+`TechBlogContent`나 `TechBlogComment`에 `likedMemberIds` 배열 컬럼을 두고, 좋아요한 회원 ID를 배열 원소로 관리하는 방식이다.
+
+장점:
+
+- 별도 like entity와 repository가 필요 없다.
+- 특정 콘텐츠나 댓글 한 건만 보면 좋아요 회원 목록을 한 row에서 확인할 수 있다.
+- 부모와 좋아요 생명주기가 객체 필드로 직관적으로 붙어 보인다.
+
+단점:
+
+- 좋아요/취소마다 부모 row 전체가 update된다.
+- 인기 글이나 댓글에 좋아요가 몰리면 같은 parent row에 write contention이 생긴다.
+- PostgreSQL MVCC 특성상 배열 원소 하나를 바꿔도 row version이 새로 생겨 bloat가 커질 수 있다.
+- 배열 원소 단위로 `member_id` FK, unique, cascade 제약을 걸기 어렵다.
+- 여러 댓글의 `likedByMe`, `likeCount`를 batch query로 계산하기가 별도 like 테이블보다 불리하다.
+- 좋아요 생성 시각, 향후 알림/분석/운영 감사 같은 확장 포인트가 약하다.
+
+선택하지 않은 이유:
+
+- 좋아요는 부모와 생명주기는 함께하지만, 부모의 작은 속성이 아니라 다대다 관계 데이터다. 별도 like entity를 두면 parent row hot update를 피하고, DB 제약과 batch query를 더 명확하게 유지할 수 있다.
+
 ## Consequences
 
 ### Positive
@@ -152,11 +178,14 @@ Proposed
 - `tech_blog_content_like` unique key는 `content_id + member_id`로 짧게 유지된다.
 - `content_type + slug` 정합성은 `tech_blog_content` unique key 하나로 관리된다.
 - 향후 댓글 잠금, 숨김, slug migration 같은 서버 상호작용 상태를 붙일 수 있는 anchor가 있다.
+- 좋아요/취소가 부모 콘텐츠나 댓글 row를 갱신하지 않으므로 parent row write contention을 피한다.
+- Like entity의 `created_at`으로 좋아요 생성 시각을 추적할 수 있다.
 
 ### Negative
 
 - `TechBlogContent`가 본문 없는 registry row라는 점을 문서로 설명해야 한다.
 - 단순 slug 직접 저장 방식보다 테이블이 하나 더 많다.
+- 별도 like domain entity와 like port가 추가되어 코드 구조가 조금 늘어난다.
 - 최초 쓰기 시 `type + slug`에 대한 lazy create 경로가 필요하며, 동시 최초 쓰기에 대한 unique 충돌 방어가 필요하다.
 
 ### Neutral / Trade-offs
@@ -164,13 +193,14 @@ Proposed
 - slug 변경을 쉽게 하기 위한 결정만은 아니다. slug 변경은 부가 효과이며, 핵심은 상호작용 대상의 canonical id를 만드는 것이다.
 - 서버가 `TechBlogContent` row를 갖지만, FE 정적 파일의 존재 여부를 강하게 검증하지는 않는다. 존재하지 않는 slug에도 사용자가 쓰기 요청을 보내면 registry row가 생길 수 있다. 필요하면 Phase 3에서 정적 콘텐츠 manifest 검증을 추가한다.
 - 이름은 `TechBlogContent`로 유지한다. `TechBlogContentRef`나 `TechBlogInteractionTarget`이 의미상 더 직접적일 수 있지만, 팀의 현재 도메인 네이밍과 API 문맥에서는 `TechBlogContent`가 더 자연스럽다.
+- Like entity의 `updated_at`은 현재 비즈니스 상태 변경 의미가 약하다. 그래도 `created_at`만 별도로 두는 예외 구조보다 `BaseEntity` 기반 auditing 컨벤션을 따르는 편이 이 코드베이스에서는 읽기 쉽다.
 
 ## Implementation Notes
 
 ### 변경 영역 요약
 
-1. **도메인** (`com.umc.product.techblog.domain.*`): `TechBlogContent`는 `contentType`, `slug`, 내부 `id`를 가진다. 본문/제목/발행 상태는 갖지 않는다.
-2. **응용 / Port** (`...application.service.*`, `...application.port.*`): 쓰기 UseCase는 `type + slug`로 `TechBlogContent`를 조회하고, 없으면 lazy create한 뒤 `content_id`로 댓글/좋아요를 저장한다.
+1. **도메인** (`com.umc.product.techblog.domain.*`): `TechBlogContent`는 `contentType`, `slug`, 내부 `id`를 가진다. 본문/제목/발행 상태는 갖지 않는다. `TechBlogContentLike`, `TechBlogCommentLike`는 `BaseEntity`를 상속하고 복합 PK로 좋아요 관계를 표현한다.
+2. **응용 / Port** (`...application.service.*`, `...application.port.*`): 쓰기 UseCase는 `type + slug`로 `TechBlogContent`를 조회하고, 없으면 lazy create한 뒤 `content_id`로 댓글/좋아요를 저장한다. 좋아요 toggle 판단은 application service가 수행하고, persistence adapter는 저장/삭제/조회만 담당한다.
 3. **어댑터 (in)** (`...adapter.in.web.*`): API path는 계속 `/api/v1/tech-blog/contents/{type}/{slug}`를 사용한다.
 4. **어댑터 (out)** (`...adapter.out.persistence.*`): `TechBlogPersistenceAdapter`는 `content_id` 기반으로 댓글/좋아요를 저장하고 조회한다. 동시 최초 생성은 `INSERT ... ON CONFLICT DO NOTHING`으로 방어한다.
 5. **DB / 마이그레이션** (`src/main/resources/db/migration/V2026.06.03.03.00__create_tech_blog_interactions.sql`): `tech_blog_content`, `tech_blog_content_like`, `tech_blog_comment`, `tech_blog_comment_like`를 생성한다.

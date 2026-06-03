@@ -15,6 +15,7 @@ import com.umc.product.techblog.application.port.in.query.dto.TechBlogCommentInf
 import com.umc.product.techblog.application.port.in.query.dto.TechBlogCommentListQuery;
 import com.umc.product.techblog.application.port.out.LoadTechBlogCommentPort;
 import com.umc.product.techblog.application.port.out.LoadTechBlogContentPort;
+import com.umc.product.techblog.application.port.out.LoadTechBlogLikePort;
 import com.umc.product.techblog.domain.TechBlogComment;
 import com.umc.product.techblog.domain.TechBlogCommentSort;
 import com.umc.product.techblog.domain.TechBlogContent;
@@ -32,6 +33,7 @@ public class TechBlogCommentQueryService implements GetTechBlogCommentListUseCas
 
     private final LoadTechBlogContentPort loadTechBlogContentPort;
     private final LoadTechBlogCommentPort loadTechBlogCommentPort;
+    private final LoadTechBlogLikePort loadTechBlogLikePort;
     private final TechBlogCommentInfoAssembler commentInfoAssembler;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
@@ -74,8 +76,8 @@ public class TechBlogCommentQueryService implements GetTechBlogCommentListUseCas
             .map(TechBlogComment::getId)
             .toList();
 
-        Map<Long, Integer> likeCounts = loadTechBlogCommentPort.countLikesByCommentIds(allCommentIds);
-        Set<Long> likedCommentIds = loadTechBlogCommentPort.findLikedCommentIds(allCommentIds, query.viewerMemberId());
+        Map<Long, Integer> likeCounts = loadTechBlogLikePort.countCommentLikesByCommentIds(allCommentIds);
+        Set<Long> likedCommentIds = loadTechBlogLikePort.findLikedCommentIds(allCommentIds, query.viewerMemberId());
         List<TechBlogCommentInfo> comments = commentInfoAssembler.assembleTree(
             page,
             repliesByParentId,

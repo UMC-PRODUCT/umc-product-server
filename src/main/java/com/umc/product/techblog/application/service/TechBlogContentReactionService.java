@@ -7,8 +7,11 @@ import com.umc.product.techblog.application.port.in.command.ToggleTechBlogConten
 import com.umc.product.techblog.application.port.in.query.GetTechBlogContentLikeUseCase;
 import com.umc.product.techblog.application.port.in.query.dto.TechBlogLikeInfo;
 import com.umc.product.techblog.application.port.out.LoadTechBlogContentPort;
+import com.umc.product.techblog.application.port.out.LoadTechBlogLikePort;
 import com.umc.product.techblog.application.port.out.SaveTechBlogContentPort;
+import com.umc.product.techblog.application.port.out.SaveTechBlogLikePort;
 import com.umc.product.techblog.domain.TechBlogContent;
+import com.umc.product.techblog.domain.TechBlogContentLike;
 import com.umc.product.techblog.domain.TechBlogContentType;
 
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,8 @@ public class TechBlogContentReactionService implements GetTechBlogContentLikeUse
 
     private final LoadTechBlogContentPort loadTechBlogContentPort;
     private final SaveTechBlogContentPort saveTechBlogContentPort;
+    private final LoadTechBlogLikePort loadTechBlogLikePort;
+    private final SaveTechBlogLikePort saveTechBlogLikePort;
 
     @Override
     @Transactional(readOnly = true)
@@ -26,9 +31,8 @@ public class TechBlogContentReactionService implements GetTechBlogContentLikeUse
         TechBlogContentType type = TechBlogContentType.fromPath(typeValue);
         return loadTechBlogContentPort.findByTypeAndSlug(type, slug)
             .map(content -> new TechBlogLikeInfo(
-                viewerMemberId != null && loadTechBlogContentPort.existsLikeByContentIdAndMemberId(
-                    content.getId(), viewerMemberId),
-                loadTechBlogContentPort.countLikesByContentId(content.getId())
+                viewerMemberId != null && loadTechBlogLikePort.existsContentLike(content.getId(), viewerMemberId),
+                loadTechBlogLikePort.countContentLikes(content.getId())
             ))
             .orElseGet(() -> new TechBlogLikeInfo(false, 0));
     }
@@ -39,6 +43,16 @@ public class TechBlogContentReactionService implements GetTechBlogContentLikeUse
         TechBlogContentType type = TechBlogContentType.fromPath(typeValue);
         TechBlogContent content = loadTechBlogContentPort.findByTypeAndSlug(type, slug)
             .orElseGet(() -> saveTechBlogContentPort.save(TechBlogContent.create(type, slug)));
-        return saveTechBlogContentPort.toggleContentLike(content.getId(), memberId);
+        boolean liked = toggleContentLike(content.getId(), memberId);
+        return new TechBlogLikeInfo(liked, loadTechBlogLikePort.countContentLikes(content.getId()));
+    }
+
+    private boolean toggleContentLike(Long contentId, Long memberId) {
+        if (loadTechBlogLikePort.existsContentLike(contentId, memberId)) {
+            saveTechBlogLikePort.deleteContentLike(contentId, memberId);
+            return false;
+        }
+        saveTechBlogLikePort.saveContentLike(TechBlogContentLike.create(contentId, memberId));
+        return true;
     }
 }

@@ -17,9 +17,12 @@ import com.umc.product.techblog.application.port.in.query.dto.TechBlogCommentInf
 import com.umc.product.techblog.application.port.in.query.dto.TechBlogLikeInfo;
 import com.umc.product.techblog.application.port.out.LoadTechBlogCommentPort;
 import com.umc.product.techblog.application.port.out.LoadTechBlogContentPort;
+import com.umc.product.techblog.application.port.out.LoadTechBlogLikePort;
 import com.umc.product.techblog.application.port.out.SaveTechBlogCommentPort;
 import com.umc.product.techblog.application.port.out.SaveTechBlogContentPort;
+import com.umc.product.techblog.application.port.out.SaveTechBlogLikePort;
 import com.umc.product.techblog.domain.TechBlogComment;
+import com.umc.product.techblog.domain.TechBlogCommentLike;
 import com.umc.product.techblog.domain.TechBlogContent;
 import com.umc.product.techblog.domain.TechBlogContentType;
 import com.umc.product.techblog.domain.TechBlogDomainException;
@@ -37,6 +40,8 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
     private final SaveTechBlogContentPort saveTechBlogContentPort;
     private final LoadTechBlogCommentPort loadTechBlogCommentPort;
     private final SaveTechBlogCommentPort saveTechBlogCommentPort;
+    private final LoadTechBlogLikePort loadTechBlogLikePort;
+    private final SaveTechBlogLikePort saveTechBlogLikePort;
     private final TechBlogCommentInfoAssembler commentInfoAssembler;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
@@ -87,7 +92,8 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
         TechBlogContent content = getContent(type, slug);
         TechBlogComment comment = getCommentInContent(commentId, content.getId());
         comment.ensureNotDeleted();
-        return saveTechBlogCommentPort.toggleCommentLike(comment.getId(), memberId);
+        boolean liked = toggleCommentLike(comment.getId(), memberId);
+        return new TechBlogLikeInfo(liked, loadTechBlogLikePort.countCommentLikes(comment.getId()));
     }
 
     private void validateParent(Long contentId, Long parentCommentId) {
@@ -105,6 +111,7 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
     private void deleteResolved(TechBlogComment comment, Long memberId, boolean adminDeletion) {
         if (loadTechBlogCommentPort.existsVisibleReply(comment.getId())) {
             saveTechBlogCommentPort.softDelete(comment.getId(), memberId, adminDeletion);
+            saveTechBlogLikePort.deleteCommentLikesByCommentId(comment.getId());
             return;
         }
         saveTechBlogCommentPort.hardDelete(comment.getId());
@@ -122,9 +129,9 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
 
     private TechBlogCommentInfo assembleSingle(TechBlogComment comment, Long viewerMemberId) {
         List<Long> commentIds = List.of(comment.getId());
-        int likeCount = loadTechBlogCommentPort.countLikesByCommentIds(commentIds)
+        int likeCount = loadTechBlogLikePort.countCommentLikesByCommentIds(commentIds)
             .getOrDefault(comment.getId(), 0);
-        boolean likedByMe = loadTechBlogCommentPort.findLikedCommentIds(commentIds, viewerMemberId)
+        boolean likedByMe = loadTechBlogLikePort.findLikedCommentIds(commentIds, viewerMemberId)
             .contains(comment.getId());
 
         return commentInfoAssembler.assemble(
@@ -157,5 +164,14 @@ public class TechBlogCommentCommandService implements CreateTechBlogCommentUseCa
     private TechBlogComment getCommentInContent(Long commentId, Long contentId) {
         return loadTechBlogCommentPort.findByIdAndContentId(commentId, contentId)
             .orElseThrow(() -> new TechBlogDomainException(TechBlogErrorCode.COMMENT_NOT_FOUND));
+    }
+
+    private boolean toggleCommentLike(Long commentId, Long memberId) {
+        if (loadTechBlogLikePort.existsCommentLike(commentId, memberId)) {
+            saveTechBlogLikePort.deleteCommentLike(commentId, memberId);
+            return false;
+        }
+        saveTechBlogLikePort.saveCommentLike(TechBlogCommentLike.create(commentId, memberId));
+        return true;
     }
 }

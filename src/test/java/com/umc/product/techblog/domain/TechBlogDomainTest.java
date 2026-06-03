@@ -78,4 +78,40 @@ class TechBlogDomainTest {
         assertThat(adminDeleted.displayContent()).isEqualTo("관리자에 의해서 삭제된 댓글입니다");
         assertThat(adminDeleted.canReply()).isFalse();
     }
+
+    @Test
+    @DisplayName("콘텐츠 좋아요는 유효한 콘텐츠 ID와 회원 ID로 생성한다")
+    void 콘텐츠_좋아요는_유효한_콘텐츠_ID와_회원_ID로_생성한다() {
+        TechBlogContentLike like = TechBlogContentLike.create(1L, 2L);
+
+        assertThat(like.getContentId()).isEqualTo(1L);
+        assertThat(like.getMemberId()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("콘텐츠 좋아요는 유효하지 않은 ID를 거부한다")
+    void 콘텐츠_좋아요는_유효하지_않은_ID를_거부한다() {
+        assertThatThrownBy(() -> TechBlogContentLike.create(null, 1L))
+            .isInstanceOf(TechBlogDomainException.class);
+        assertThatThrownBy(() -> TechBlogContentLike.create(1L, 0L))
+            .isInstanceOf(TechBlogDomainException.class);
+    }
+
+    @Test
+    @DisplayName("댓글 좋아요는 유효한 댓글 ID와 회원 ID로 생성한다")
+    void 댓글_좋아요는_유효한_댓글_ID와_회원_ID로_생성한다() {
+        TechBlogCommentLike like = TechBlogCommentLike.create(1L, 2L);
+
+        assertThat(like.getCommentId()).isEqualTo(1L);
+        assertThat(like.getMemberId()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("댓글 좋아요는 유효하지 않은 ID를 거부한다")
+    void 댓글_좋아요는_유효하지_않은_ID를_거부한다() {
+        assertThatThrownBy(() -> TechBlogCommentLike.create(-1L, 1L))
+            .isInstanceOf(TechBlogDomainException.class);
+        assertThatThrownBy(() -> TechBlogCommentLike.create(1L, null))
+            .isInstanceOf(TechBlogDomainException.class);
+    }
 }

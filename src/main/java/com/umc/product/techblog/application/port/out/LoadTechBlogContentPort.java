@@ -8,8 +8,4 @@ import com.umc.product.techblog.domain.TechBlogContentType;
 public interface LoadTechBlogContentPort {
 
     Optional<TechBlogContent> findByTypeAndSlug(TechBlogContentType type, String slug);
-
-    int countLikesByContentId(Long contentId);
-
-    boolean existsLikeByContentIdAndMemberId(Long contentId, Long memberId);
 }

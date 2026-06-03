@@ -1,6 +1,6 @@
 package com.umc.product.techblog.adapter.out.persistence;
 
-import static com.umc.product.techblog.adapter.out.persistence.entity.QTechBlogCommentLikeJpaEntity.techBlogCommentLikeJpaEntity;
+import static com.umc.product.techblog.domain.QTechBlogCommentLike.techBlogCommentLike;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,16 +27,16 @@ public class TechBlogCommentLikeQueryRepository {
         }
 
         List<Tuple> rows = queryFactory
-            .select(techBlogCommentLikeJpaEntity.commentId, techBlogCommentLikeJpaEntity.count())
-            .from(techBlogCommentLikeJpaEntity)
-            .where(techBlogCommentLikeJpaEntity.commentId.in(commentIds))
-            .groupBy(techBlogCommentLikeJpaEntity.commentId)
+            .select(techBlogCommentLike.commentId, techBlogCommentLike.count())
+            .from(techBlogCommentLike)
+            .where(techBlogCommentLike.commentId.in(commentIds))
+            .groupBy(techBlogCommentLike.commentId)
             .fetch();
 
         Map<Long, Integer> result = new HashMap<>();
         for (Tuple row : rows) {
-            Long commentId = row.get(techBlogCommentLikeJpaEntity.commentId);
-            Long count = row.get(techBlogCommentLikeJpaEntity.count());
+            Long commentId = row.get(techBlogCommentLike.commentId);
+            Long count = row.get(techBlogCommentLike.count());
             result.put(commentId, count == null ? 0 : count.intValue());
         }
         return result;
@@ -48,11 +48,11 @@ public class TechBlogCommentLikeQueryRepository {
         }
 
         return new HashSet<>(queryFactory
-            .select(techBlogCommentLikeJpaEntity.commentId)
-            .from(techBlogCommentLikeJpaEntity)
+            .select(techBlogCommentLike.commentId)
+            .from(techBlogCommentLike)
             .where(
-                techBlogCommentLikeJpaEntity.commentId.in(commentIds),
-                techBlogCommentLikeJpaEntity.memberId.eq(memberId)
+                techBlogCommentLike.commentId.in(commentIds),
+                techBlogCommentLike.memberId.eq(memberId)
             )
             .fetch());
     }

@@ -2,11 +2,11 @@ package com.umc.product.techblog.adapter.out.persistence;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogCommentLikeId;
-import com.umc.product.techblog.adapter.out.persistence.entity.TechBlogCommentLikeJpaEntity;
+import com.umc.product.techblog.domain.TechBlogCommentLike;
+import com.umc.product.techblog.domain.TechBlogCommentLikeId;
 
 public interface TechBlogCommentLikeJpaRepository
-    extends JpaRepository<TechBlogCommentLikeJpaEntity, TechBlogCommentLikeId> {
+    extends JpaRepository<TechBlogCommentLike, TechBlogCommentLikeId> {
 
     boolean existsByCommentIdAndMemberId(Long commentId, Long memberId);
 
