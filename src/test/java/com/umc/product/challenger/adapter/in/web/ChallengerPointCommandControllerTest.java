@@ -10,12 +10,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.umc.product.challenger.adapter.in.web.assembler.ChallengerResponseAssembler;
-import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
-import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
-import com.umc.product.challenger.application.port.in.command.dto.GrantChallengerPointCommand;
-import com.umc.product.global.config.JacksonConfig;
-import com.umc.product.global.security.JwtTokenProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +19,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.umc.product.challenger.adapter.in.web.assembler.ChallengerResponseAssembler;
+import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
+import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
+import com.umc.product.challenger.application.port.in.command.dto.GrantChallengerPointCommand;
+import com.umc.product.global.config.JacksonConfig;
+import com.umc.product.global.security.JwtTokenProvider;
 
 @WebMvcTest(controllers = ChallengerPointCommandController.class)
 @Import(JacksonConfig.class)

@@ -9,18 +9,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.umc.product.global.config.JacksonConfig;
-import com.umc.product.global.security.JwtTokenProvider;
-import com.umc.product.global.security.MemberPrincipal;
-import com.umc.product.member.adapter.in.web.assembler.MemberInfoResponseAssembler;
-import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
-import com.umc.product.member.application.port.in.command.ManageMemberProfileUseCase;
-import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
-import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
-import com.umc.product.member.application.port.in.command.RegisterOAuthMemberUseCase;
-import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
-import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,6 +21,19 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.global.config.JacksonConfig;
+import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.member.adapter.in.web.assembler.MemberInfoResponseAssembler;
+import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
+import com.umc.product.member.application.port.in.command.ManageMemberProfileUseCase;
+import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
+import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
+import com.umc.product.member.application.port.in.command.RegisterOAuthMemberUseCase;
+import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
 
 @WebMvcTest(controllers = MemberCommandController.class)
 @Import(JacksonConfig.class)

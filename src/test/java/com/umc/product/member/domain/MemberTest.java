@@ -3,13 +3,14 @@ package com.umc.product.member.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.umc.product.common.domain.enums.MemberStatus;
-import com.umc.product.member.domain.exception.MemberDomainException;
-import com.umc.product.member.domain.exception.MemberErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.umc.product.common.domain.enums.MemberStatus;
+import com.umc.product.member.domain.exception.MemberDomainException;
+import com.umc.product.member.domain.exception.MemberErrorCode;
 
 @DisplayName("Member 도메인")
 class MemberTest {

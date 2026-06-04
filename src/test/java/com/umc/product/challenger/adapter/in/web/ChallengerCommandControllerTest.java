@@ -9,15 +9,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.umc.product.challenger.adapter.in.web.assembler.ChallengerResponseAssembler;
-import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
-import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
-import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerCommand;
-import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerCommand;
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.config.JacksonConfig;
-import com.umc.product.global.security.JwtTokenProvider;
-import com.umc.product.global.security.MemberPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,6 +21,16 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.umc.product.challenger.adapter.in.web.assembler.ChallengerResponseAssembler;
+import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
+import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
+import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerCommand;
+import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerCommand;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.global.config.JacksonConfig;
+import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.global.security.MemberPrincipal;
 
 @WebMvcTest(controllers = ChallengerCommandController.class)
 @Import(JacksonConfig.class)

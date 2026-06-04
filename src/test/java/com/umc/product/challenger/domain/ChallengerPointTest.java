@@ -2,10 +2,11 @@ package com.umc.product.challenger.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.umc.product.challenger.domain.enums.PointType;
-import com.umc.product.common.domain.enums.ChallengerPart;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import com.umc.product.challenger.domain.enums.PointType;
+import com.umc.product.common.domain.enums.ChallengerPart;
 
 @DisplayName("ChallengerPoint 도메인")
 class ChallengerPointTest {

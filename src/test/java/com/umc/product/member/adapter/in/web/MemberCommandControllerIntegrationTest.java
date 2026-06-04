@@ -6,13 +6,24 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.member.adapter.out.persistence.MemberJpaRepository;
 import com.umc.product.member.domain.Member;
+import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
-import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.support.fixture.ChapterFixture;
 import com.umc.product.support.fixture.GisuFixture;
@@ -21,15 +32,6 @@ import com.umc.product.support.fixture.TermFixture;
 import com.umc.product.term.adapter.out.persistence.TermConsentRepository;
 import com.umc.product.term.application.port.in.query.GetTermUseCase;
 import com.umc.product.term.domain.enums.TermType;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.http.MediaType;
 
 @AutoConfigureMockMvc(addFilters = false)
 @DisplayName("MemberCommandController 통합 테스트")

@@ -6,14 +6,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.global.config.JacksonConfig;
-import com.umc.product.global.security.JwtTokenProvider;
-import com.umc.product.member.application.port.in.query.SearchMemberUseCase;
-import com.umc.product.member.application.port.in.query.dto.ChallengerSearchItemV2Info;
-import com.umc.product.member.application.port.in.query.dto.ChallengerSearchV2Result;
 import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +18,14 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
+import com.umc.product.global.config.JacksonConfig;
+import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.member.application.port.in.query.SearchMemberUseCase;
+import com.umc.product.member.application.port.in.query.dto.ChallengerSearchItemV2Info;
+import com.umc.product.member.application.port.in.query.dto.ChallengerSearchV2Result;
 
 @WebMvcTest(controllers = ChallengerSearchV2Controller.class)
 @Import(JacksonConfig.class)

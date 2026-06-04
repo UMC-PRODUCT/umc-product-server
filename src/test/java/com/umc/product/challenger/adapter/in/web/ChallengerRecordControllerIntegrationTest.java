@@ -5,6 +5,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 import com.umc.product.authorization.adapter.out.persistence.ChallengerRoleJpaRepository;
 import com.umc.product.challenger.adapter.out.persistence.ChallengerJpaRepository;
 import com.umc.product.challenger.adapter.out.persistence.ChallengerRecordJpaRepository;
@@ -25,14 +34,6 @@ import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.support.fixture.ChapterFixture;
 import com.umc.product.support.fixture.GisuFixture;
 import com.umc.product.support.fixture.SchoolFixture;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 @AutoConfigureMockMvc(addFilters = false)
 @DisplayName("ChallengerRecordController 통합 테스트")
