@@ -1,5 +1,15 @@
 package com.umc.product.challenger.adapter.in.web;
 
+import java.util.List;
+
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -12,20 +22,16 @@ import com.umc.product.challenger.application.port.in.command.dto.ConsumeChallen
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerRecordCommand;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/challenger-record")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Challenger | 챌린저 기록", description = "챌린저 기록 관련")
 public class ChallengerRecordController {
 
@@ -47,7 +53,7 @@ public class ChallengerRecordController {
 //    )
     public void addChallengerRecordToMember(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @RequestBody AddChallengerRecordToMemberRequest request) {
+        @Valid @RequestBody AddChallengerRecordToMemberRequest request) {
 
         manageChallengerRecordUseCase.consumeCode(
             ConsumeChallengerRecordCommand.builder()
@@ -94,7 +100,7 @@ public class ChallengerRecordController {
     @PostMapping
     public ChallengerRecordResponse createChallengerRecord(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @RequestBody CreateChallengerRecordRequest request
+        @Valid @RequestBody CreateChallengerRecordRequest request
     ) {
         // TODO: SUPER_ADMIN 만 가능하도록 권한 설정
 
@@ -127,7 +133,7 @@ public class ChallengerRecordController {
     )
     public List<Long> createChallengerRecordBulk(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @RequestBody List<CreateChallengerRecordRequest> request
+        @Valid @RequestBody List<@Valid CreateChallengerRecordRequest> request
     ) {
         List<Long> ids = manageChallengerRecordUseCase.createBulk(
             request.stream()
