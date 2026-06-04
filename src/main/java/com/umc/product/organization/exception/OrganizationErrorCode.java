@@ -62,6 +62,25 @@ public enum OrganizationErrorCode implements BaseCode {
     STUDY_GROUP_SCHEDULE_ATTENDANCE_POLICY_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0038",
         "스터디 그룹 일정은 출석 정책이 필수입니다."),
 
+    PRODUCT_TEAM_GENERATION_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0039", "프로덕트팀 기수는 필수입니다."),
+    PRODUCT_TEAM_GENERATION_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGANIZATION-0040", "프로덕트팀 기수를 찾을 수 없습니다."),
+    PRODUCT_TEAM_GENERATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "ORGANIZATION-0041", "이미 존재하는 프로덕트팀 기수입니다."),
+    PRODUCT_TEAM_GENERATION_START_AT_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0042",
+        "프로덕트팀 기수 시작일은 필수입니다."),
+    PRODUCT_TEAM_GENERATION_END_AT_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0043",
+        "프로덕트팀 기수 종료일은 필수입니다."),
+    PRODUCT_TEAM_GENERATION_PERIOD_INVALID(HttpStatus.BAD_REQUEST, "ORGANIZATION-0044",
+        "프로덕트팀 기수 시작일은 종료일보다 이전이어야 합니다."),
+    PRODUCT_TEAM_MEMBER_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0045", "프로덕트팀 인원은 필수입니다."),
+    PRODUCT_TEAM_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGANIZATION-0046", "프로덕트팀 인원을 찾을 수 없습니다."),
+    PRODUCT_TEAM_MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "ORGANIZATION-0047", "이미 등록된 프로덕트팀 인원입니다."),
+    PRODUCT_TEAM_MEMBER_ID_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0048", "회원 ID는 필수입니다."),
+    PRODUCT_TEAM_ACTIVITY_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0049", "프로덕트팀 활동 기록은 필수입니다."),
+    PRODUCT_TEAM_PART_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0050", "프로덕트팀 파트는 필수입니다."),
+    PRODUCT_TEAM_ROLE_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0051", "프로덕트팀 직책은 필수입니다."),
+    PRODUCT_TEAM_POSITION_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0052", "프로덕트팀 포지션은 필수입니다."),
+    PRODUCT_TEAM_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ORGANIZATION-0053", "프로덕트팀 관리 권한이 없습니다."),
+
     ;
 
 
