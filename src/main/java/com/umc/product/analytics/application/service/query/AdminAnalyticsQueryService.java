@@ -7,6 +7,8 @@ import com.umc.product.analytics.application.port.in.query.GetAdminOperationsOve
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsAttendanceUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsPointsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSchoolsUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSignupsUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsStudyGroupsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminRiskChallengerUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminSchoolSummaryUseCase;
 import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardActionQueueInfo;
@@ -22,6 +24,10 @@ import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsPo
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsPointsQuery;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSchoolsInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSchoolsQuery;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSignupsInfo;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSignupsQuery;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsStudyGroupsInfo;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsStudyGroupsQuery;
 import com.umc.product.analytics.application.port.in.query.dto.AdminRiskChallengerInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminRiskChallengerQuery;
 import com.umc.product.analytics.application.port.in.query.dto.AdminSchoolSummaryInfo;
@@ -31,6 +37,8 @@ import com.umc.product.analytics.application.port.out.LoadAdminOperationsAnalyti
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsAttendancePort;
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsPointsPort;
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsSchoolsPort;
+import com.umc.product.analytics.application.port.out.LoadAdminOperationsSignupsPort;
+import com.umc.product.analytics.application.port.out.LoadAdminOperationsStudyGroupsPort;
 import com.umc.product.analytics.application.port.out.LoadAdminRiskChallengerAnalyticsPort;
 import com.umc.product.analytics.application.port.out.LoadAdminSchoolAnalyticsPort;
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
@@ -51,7 +59,9 @@ public class AdminAnalyticsQueryService implements
     GetAdminOperationsOverviewUseCase,
     GetAdminOperationsSchoolsUseCase,
     GetAdminOperationsPointsUseCase,
-    GetAdminOperationsAttendanceUseCase {
+    GetAdminOperationsAttendanceUseCase,
+    GetAdminOperationsStudyGroupsUseCase,
+    GetAdminOperationsSignupsUseCase {
 
     private final AdminAnalyticsScopeResolver scopeResolver;
     private final LoadAdminDashboardAnalyticsPort loadAdminDashboardAnalyticsPort;
@@ -61,6 +71,8 @@ public class AdminAnalyticsQueryService implements
     private final LoadAdminOperationsSchoolsPort loadAdminOperationsSchoolsPort;
     private final LoadAdminOperationsPointsPort loadAdminOperationsPointsPort;
     private final LoadAdminOperationsAttendancePort loadAdminOperationsAttendancePort;
+    private final LoadAdminOperationsStudyGroupsPort loadAdminOperationsStudyGroupsPort;
+    private final LoadAdminOperationsSignupsPort loadAdminOperationsSignupsPort;
 
     @Override
     public AdminDashboardSummaryInfo getSummary(AdminDashboardQuery query) {
@@ -131,5 +143,17 @@ public class AdminAnalyticsQueryService implements
     public AdminOperationsAttendanceInfo getOperationsAttendance(AdminOperationsAttendanceQuery query) {
         AdminAnalyticsScope scope = scopeResolver.resolve(query.requesterMemberId(), query.gisuId(), null, null, null);
         return loadAdminOperationsAttendancePort.getOperationsAttendance(scope, query.from(), query.to());
+    }
+
+    @Override
+    public AdminOperationsStudyGroupsInfo getOperationsStudyGroups(AdminOperationsStudyGroupsQuery query) {
+        AdminAnalyticsScope scope = scopeResolver.resolve(query.requesterMemberId(), query.gisuId(), null, null, null);
+        return loadAdminOperationsStudyGroupsPort.getOperationsStudyGroups(scope, query.from(), query.to());
+    }
+
+    @Override
+    public AdminOperationsSignupsInfo getOperationsSignups(AdminOperationsSignupsQuery query) {
+        AdminAnalyticsScope scope = scopeResolver.resolve(query.requesterMemberId(), query.gisuId(), null, null, null);
+        return loadAdminOperationsSignupsPort.getOperationsSignups(scope, query.from(), query.to());
     }
 }

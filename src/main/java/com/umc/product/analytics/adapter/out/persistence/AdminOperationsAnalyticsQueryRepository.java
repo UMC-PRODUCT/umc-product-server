@@ -14,6 +14,8 @@ import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOv
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsAttendanceInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsPointsInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSchoolsInfo;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSignupsInfo;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsStudyGroupsInfo;
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
 import com.umc.product.challenger.domain.QChallenger;
 import com.umc.product.challenger.domain.QChallengerPoint;
@@ -47,6 +49,63 @@ public class AdminOperationsAnalyticsQueryRepository {
     private static final ZoneId DASHBOARD_ZONE = ZoneId.of("Asia/Seoul");
 
     private final JPAQueryFactory queryFactory;
+
+    public AdminOperationsStudyGroupsInfo getOperationsStudyGroups(AdminAnalyticsScope scope, Instant from, Instant to) {
+        QStudyGroup studyGroup = new QStudyGroup("operationsStudyGroup");
+        JPAQuery<Long> studyGroupCountQuery = queryFactory
+            .select(studyGroup.id.countDistinct())
+            .from(studyGroup);
+        long studyGroupCount = defaultLong(studyGroupCountQuery
+            .where(studyGroupCondition(scope, studyGroup, studyGroupCountQuery))
+            .fetchOne());
+
+        QStudyGroupSchedule studyGroupSchedule = new QStudyGroupSchedule("operationsStudyGroupSchedule");
+        QStudyGroup scheduledStudyGroup = new QStudyGroup("operationsScheduledStudyGroup");
+        JPAQuery<Long> scheduleCountQuery = queryFactory
+            .select(studyGroupSchedule.id.countDistinct())
+            .from(studyGroupSchedule)
+            .join(scheduledStudyGroup).on(scheduledStudyGroup.id.eq(studyGroupSchedule.studyGroupId));
+        long studyGroupScheduleCount = defaultLong(scheduleCountQuery
+            .where(studyGroupCondition(scope, scheduledStudyGroup, scheduleCountQuery)
+                .and(periodCondition(studyGroupSchedule.createdAt, from, to)))
+            .fetchOne());
+
+        return AdminOperationsStudyGroupsInfo.of(studyGroupCount, studyGroupScheduleCount);
+    }
+
+    public AdminOperationsSignupsInfo getOperationsSignups(AdminAnalyticsScope scope, Instant from, Instant to) {
+        QChallenger challenger = new QChallenger("operationsSignupChallenger");
+        QMember member = new QMember("operationsSignupMember");
+        QChapterSchool chapterSchool = new QChapterSchool("operationsSignupChapterSchool");
+        QChapter chapter = new QChapter("operationsSignupChapter");
+
+        List<Tuple> rows = queryFactory
+            .select(member.id, member.createdAt)
+            .from(challenger)
+            .join(member).on(member.id.eq(challenger.memberId))
+            .leftJoin(chapterSchool).on(chapterSchool.school.id.eq(member.schoolId))
+            .leftJoin(chapter).on(chapter.id.eq(chapterSchool.chapter.id)
+                .and(chapter.gisu.id.eq(challenger.gisuId)))
+            .where(challengerScopeCondition(scope, challenger, member, chapterSchool, chapter)
+                .and(periodCondition(member.createdAt, from, to)))
+            .groupBy(member.id, member.createdAt)
+            .fetch();
+
+        Map<LocalDate, Long> countsByDate = rows.stream()
+            .map(row -> row.get(member.createdAt))
+            .filter(createdAt -> createdAt != null)
+            .collect(Collectors.groupingBy(
+                createdAt -> createdAt.atZone(DASHBOARD_ZONE).toLocalDate(),
+                TreeMap::new,
+                Collectors.counting()
+            ));
+
+        return AdminOperationsSignupsInfo.from(
+            countsByDate.entrySet().stream()
+                .map(entry -> AdminOperationsSignupsInfo.SignupBucketInfo.of(entry.getKey(), entry.getValue()))
+                .toList()
+        );
+    }
 
     public AdminOperationsAttendanceInfo getOperationsAttendance(AdminAnalyticsScope scope, Instant from, Instant to) {
         QSchedule schedule = new QSchedule("operationsAttSchedule");

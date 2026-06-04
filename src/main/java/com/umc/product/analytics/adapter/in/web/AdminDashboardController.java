@@ -6,6 +6,8 @@ import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsOverv
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsAttendanceRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsPointsRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsSchoolsRequest;
+import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsSignupsRequest;
+import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsStudyGroupsRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminRiskChallengerRequest;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminDashboardActionQueueResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminDashboardContextResponse;
@@ -14,6 +16,8 @@ import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsOver
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsAttendanceResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsPointsResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsSchoolsResponse;
+import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsSignupsResponse;
+import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsStudyGroupsResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminRiskChallengerResponse;
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardActionQueueUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardContextUseCase;
@@ -22,6 +26,8 @@ import com.umc.product.analytics.application.port.in.query.GetAdminOperationsOve
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsAttendanceUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsPointsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSchoolsUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSignupsUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsStudyGroupsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminRiskChallengerUseCase;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
@@ -52,6 +58,8 @@ public class AdminDashboardController {
     private final GetAdminOperationsSchoolsUseCase getAdminOperationsSchoolsUseCase;
     private final GetAdminOperationsPointsUseCase getAdminOperationsPointsUseCase;
     private final GetAdminOperationsAttendanceUseCase getAdminOperationsAttendanceUseCase;
+    private final GetAdminOperationsStudyGroupsUseCase getAdminOperationsStudyGroupsUseCase;
+    private final GetAdminOperationsSignupsUseCase getAdminOperationsSignupsUseCase;
 
     @Operation(summary = "[DASHBOARD-001] 운영진 대시보드 요약 조회")
     @GetMapping("summary")
@@ -133,6 +141,30 @@ public class AdminDashboardController {
     ) {
         return AdminOperationsAttendanceResponse.from(
             getAdminOperationsAttendanceUseCase.getOperationsAttendance(request.toQuery(memberPrincipal.getMemberId()))
+        );
+    }
+
+    @Operation(summary = "[DASHBOARD-009] 운영 현황 - 스터디 그룹 및 일정 생성 현황 조회")
+    @GetMapping("operations/study-groups")
+    @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
+    public AdminOperationsStudyGroupsResponse getOperationsStudyGroups(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @ParameterObject AdminOperationsStudyGroupsRequest request
+    ) {
+        return AdminOperationsStudyGroupsResponse.from(
+            getAdminOperationsStudyGroupsUseCase.getOperationsStudyGroups(request.toQuery(memberPrincipal.getMemberId()))
+        );
+    }
+
+    @Operation(summary = "[DASHBOARD-010] 운영 현황 - 기간별 신규 가입자 현황 조회")
+    @GetMapping("operations/signups")
+    @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
+    public AdminOperationsSignupsResponse getOperationsSignups(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @ParameterObject AdminOperationsSignupsRequest request
+    ) {
+        return AdminOperationsSignupsResponse.from(
+            getAdminOperationsSignupsUseCase.getOperationsSignups(request.toQuery(memberPrincipal.getMemberId()))
         );
     }
 

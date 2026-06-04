@@ -5,10 +5,14 @@ import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOv
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewQuery;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsPointsInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSchoolsInfo;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSignupsInfo;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsStudyGroupsInfo;
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsAnalyticsPort;
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsAttendancePort;
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsPointsPort;
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsSchoolsPort;
+import com.umc.product.analytics.application.port.out.LoadAdminOperationsSignupsPort;
+import com.umc.product.analytics.application.port.out.LoadAdminOperationsStudyGroupsPort;
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +24,9 @@ public class AdminOperationsAnalyticsPersistenceAdapter implements
     LoadAdminOperationsAnalyticsPort,
     LoadAdminOperationsSchoolsPort,
     LoadAdminOperationsPointsPort,
-    LoadAdminOperationsAttendancePort {
+    LoadAdminOperationsAttendancePort,
+    LoadAdminOperationsStudyGroupsPort,
+    LoadAdminOperationsSignupsPort {
 
     private final AdminOperationsAnalyticsQueryRepository queryRepository;
 
@@ -45,5 +51,15 @@ public class AdminOperationsAnalyticsPersistenceAdapter implements
     @Override
     public AdminOperationsAttendanceInfo getOperationsAttendance(AdminAnalyticsScope scope, Instant from, Instant to) {
         return queryRepository.getOperationsAttendance(scope, from, to);
+    }
+
+    @Override
+    public AdminOperationsStudyGroupsInfo getOperationsStudyGroups(AdminAnalyticsScope scope, Instant from, Instant to) {
+        return queryRepository.getOperationsStudyGroups(scope, from, to);
+    }
+
+    @Override
+    public AdminOperationsSignupsInfo getOperationsSignups(AdminAnalyticsScope scope, Instant from, Instant to) {
+        return queryRepository.getOperationsSignups(scope, from, to);
     }
 }
