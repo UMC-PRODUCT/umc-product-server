@@ -96,7 +96,8 @@ public class AdminDashboardController {
         );
     }
 
-    @Operation(summary = "[DASHBOARD-005] 운영 현황 집계 조회")
+    @Operation(summary = "[DASHBOARD-005] 운영 현황 집계 조회", deprecated = true)
+    @Deprecated
     @GetMapping("operations")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public AdminOperationsOverviewResponse getOperationsOverview(
