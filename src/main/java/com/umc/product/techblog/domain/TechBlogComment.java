@@ -38,8 +38,8 @@ public class TechBlogComment extends BaseEntity {
     @Column(nullable = false)
     private boolean anonymous;
 
-    @Column(name = "guest_nickname", length = 20)
-    private String guestNickname;
+    @Column(length = 20)
+    private String nickname;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
@@ -59,14 +59,14 @@ public class TechBlogComment extends BaseEntity {
         Long parentCommentId,
         Long authorMemberId,
         boolean anonymous,
-        String guestNickname,
+        String nickname,
         String content
     ) {
         this.contentId = contentId;
         this.parentCommentId = parentCommentId;
         this.authorMemberId = authorMemberId;
         this.anonymous = anonymous;
-        this.guestNickname = guestNickname;
+        this.nickname = nickname;
         this.content = content;
         this.deletionType = TechBlogCommentDeletionType.NONE;
     }
@@ -76,7 +76,7 @@ public class TechBlogComment extends BaseEntity {
         Long parentCommentId,
         Long authorMemberId,
         boolean anonymous,
-        String guestNickname,
+        String nickname,
         String content
     ) {
         validateContentId(contentId);
@@ -84,12 +84,12 @@ public class TechBlogComment extends BaseEntity {
         if (parentCommentId != null && parentCommentId <= 0) {
             throw new TechBlogDomainException(TechBlogErrorCode.INVALID_PARENT_COMMENT);
         }
-        String normalizedGuestNickname = normalizeGuestNickname(guestNickname);
+        String normalizedNickname = normalizeNickname(nickname);
         if (authorMemberId == null) {
-            validateGuestNickname(normalizedGuestNickname);
+            validateNickname(normalizedNickname);
             anonymous = true;
-        } else if (normalizedGuestNickname != null && normalizedGuestNickname.length() > 20) {
-            throw new TechBlogDomainException(TechBlogErrorCode.INVALID_GUEST_NICKNAME);
+        } else if (normalizedNickname != null && normalizedNickname.length() > 20) {
+            throw new TechBlogDomainException(TechBlogErrorCode.INVALID_NICKNAME);
         }
 
         return new TechBlogComment(
@@ -97,7 +97,7 @@ public class TechBlogComment extends BaseEntity {
             parentCommentId,
             authorMemberId,
             anonymous,
-            normalizedGuestNickname,
+            normalizedNickname,
             content.trim()
         );
     }
@@ -158,17 +158,17 @@ public class TechBlogComment extends BaseEntity {
         }
     }
 
-    private static void validateGuestNickname(String guestNickname) {
-        String normalized = normalizeGuestNickname(guestNickname);
+    private static void validateNickname(String nickname) {
+        String normalized = normalizeNickname(nickname);
         if (normalized == null || normalized.length() > 20) {
-            throw new TechBlogDomainException(TechBlogErrorCode.INVALID_GUEST_NICKNAME);
+            throw new TechBlogDomainException(TechBlogErrorCode.INVALID_NICKNAME);
         }
     }
 
-    private static String normalizeGuestNickname(String guestNickname) {
-        if (guestNickname == null || guestNickname.isBlank()) {
+    private static String normalizeNickname(String nickname) {
+        if (nickname == null || nickname.isBlank()) {
             return null;
         }
-        return guestNickname.trim();
+        return nickname.trim();
     }
 }

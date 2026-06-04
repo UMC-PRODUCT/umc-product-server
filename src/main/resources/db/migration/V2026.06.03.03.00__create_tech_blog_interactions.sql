@@ -27,7 +27,7 @@ CREATE TABLE tech_blog_comment
     parent_comment_id    BIGINT,
     author_member_id     BIGINT,
     anonymous            BOOLEAN                    NOT NULL,
-    guest_nickname       VARCHAR(20),
+    nickname             VARCHAR(20),
     content              TEXT                       NOT NULL,
     deletion_type        VARCHAR(30)                NOT NULL DEFAULT 'NONE',
     deleted_at           TIMESTAMP(6) WITH TIME ZONE,

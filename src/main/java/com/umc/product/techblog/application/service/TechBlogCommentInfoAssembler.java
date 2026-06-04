@@ -167,7 +167,7 @@ public class TechBlogCommentInfoAssembler {
     }
 
     private TechBlogAuthorInfo guestAuthor(TechBlogComment comment) {
-        String nickname = comment.getGuestNickname() != null ? comment.getGuestNickname() : "익명";
+        String nickname = comment.getNickname() != null ? comment.getNickname() : "익명";
         return new TechBlogAuthorInfo(null, null, nickname, null);
     }
 }

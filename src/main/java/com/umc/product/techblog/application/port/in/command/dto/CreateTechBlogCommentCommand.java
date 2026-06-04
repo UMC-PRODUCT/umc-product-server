@@ -43,7 +43,7 @@ public record CreateTechBlogCommentCommand(
         }
         String normalized = nickname.trim();
         if (normalized.length() > 20) {
-            throw new TechBlogDomainException(TechBlogErrorCode.INVALID_GUEST_NICKNAME);
+            throw new TechBlogDomainException(TechBlogErrorCode.INVALID_NICKNAME);
         }
         return normalized;
     }

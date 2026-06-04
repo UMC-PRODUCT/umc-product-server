@@ -42,7 +42,7 @@ class TechBlogDomainTest {
         TechBlogComment comment = TechBlogComment.create(1L, null, null, true, "  게스트  ", "댓글");
 
         assertThat(comment.isAnonymous()).isTrue();
-        assertThat(comment.getGuestNickname()).isEqualTo("게스트");
+        assertThat(comment.getNickname()).isEqualTo("게스트");
 
         assertThatThrownBy(() -> TechBlogComment.create(1L, null, null, true, null, "댓글"))
             .isInstanceOf(TechBlogDomainException.class);
@@ -55,7 +55,7 @@ class TechBlogDomainTest {
     void 회원_댓글도_닉네임이_전달되면_20자_이하만_허용한다() {
         TechBlogComment comment = TechBlogComment.create(1L, null, 1L, true, "  익명작성자  ", "댓글");
 
-        assertThat(comment.getGuestNickname()).isEqualTo("익명작성자");
+        assertThat(comment.getNickname()).isEqualTo("익명작성자");
 
         assertThatThrownBy(() -> TechBlogComment.create(1L, null, 1L, true, "a".repeat(21), "댓글"))
             .isInstanceOf(TechBlogDomainException.class);

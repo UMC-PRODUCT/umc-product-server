@@ -16,7 +16,7 @@ public enum TechBlogErrorCode implements BaseCode {
     INVALID_SLUG(HttpStatus.BAD_REQUEST, "TECH-BLOG-0004", "slug가 유효하지 않습니다."),
     INVALID_ID(HttpStatus.BAD_REQUEST, "TECH-BLOG-0005", "ID는 양수여야 합니다."),
     INVALID_COMMENT_CONTENT(HttpStatus.BAD_REQUEST, "TECH-BLOG-0006", "댓글 내용이 유효하지 않습니다."),
-    INVALID_GUEST_NICKNAME(HttpStatus.BAD_REQUEST, "TECH-BLOG-0007", "비회원 닉네임이 유효하지 않습니다."),
+    INVALID_NICKNAME(HttpStatus.BAD_REQUEST, "TECH-BLOG-0007", "닉네임이 유효하지 않습니다."),
     INVALID_PARENT_COMMENT(HttpStatus.BAD_REQUEST, "TECH-BLOG-0008", "대댓글을 달 수 없는 댓글입니다."),
     COMMENT_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "TECH-BLOG-0009", "삭제된 댓글에는 수행할 수 없습니다."),
     INVALID_COMMENT_SORT(HttpStatus.BAD_REQUEST, "TECH-BLOG-0011", "댓글 정렬 조건이 유효하지 않습니다."),
