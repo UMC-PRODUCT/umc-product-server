@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
+import com.umc.product.term.application.port.in.query.dto.ActiveTermInfo;
 import com.umc.product.term.application.port.in.query.dto.TermInfo;
 import com.umc.product.term.application.port.out.LoadTermPort;
 import com.umc.product.term.application.service.query.TermQueryService;
@@ -11,12 +12,16 @@ import com.umc.product.term.domain.Term;
 import com.umc.product.term.domain.enums.TermType;
 import com.umc.product.term.domain.exception.TermDomainException;
 import com.umc.product.term.domain.exception.TermErrorCode;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class GetTermUseCaseTest {
@@ -98,11 +103,62 @@ class GetTermUseCaseTest {
             .isEqualTo(TermErrorCode.TERMS_NOT_FOUND);
     }
 
+    @Test
+    @DisplayName("활성 약관 전체 목록을 조회한다")
+    void 활성_약관_전체_목록을_조회한다() {
+        // given
+        Term serviceTerm = createTerms(1L, TermType.SERVICE, true);
+        Term marketingTerm = createTerms(3L, TermType.MARKETING, false);
+        given(loadTermPort.listActive()).willReturn(List.of(serviceTerm, marketingTerm));
+
+        // when
+        List<ActiveTermInfo> result = sut.listActiveTerms();
+
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result)
+            .extracting(ActiveTermInfo::type)
+            .containsExactly(TermType.SERVICE, TermType.MARKETING);
+        assertThat(result)
+            .extracting(ActiveTermInfo::version)
+            .containsExactly(1L, 3L);
+        assertThat(result.get(0).typeDescription()).isEqualTo("서비스 이용약관");
+        assertThat(result.get(0).link()).isEqualTo("http://example.com/terms/service");
+        assertThat(result.get(0).isMandatory()).isTrue();
+        assertThat(result.get(0).createdAt()).isEqualTo(Instant.parse("2026-05-26T00:00:00Z"));
+        assertThat(result.get(0).updatedAt()).isEqualTo(Instant.parse("2026-05-27T00:00:00Z"));
+    }
+
+    @Test
+    @DisplayName("활성 약관이 없으면 빈 목록을 반환한다")
+    void 활성_약관이_없으면_빈_목록을_반환한다() {
+        // given
+        given(loadTermPort.listActive()).willReturn(List.of());
+
+        // when
+        List<ActiveTermInfo> result = sut.listActiveTerms();
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
     private Term createTerms(TermType type, String title, boolean required) {
         return Term.builder()
             .type(type)
             .link("http://example.com/terms/" + type.name().toLowerCase())
             .required(required)
             .build();
+    }
+
+    private Term createTerms(Long id, TermType type, boolean required) {
+        Term term = Term.builder()
+            .type(type)
+            .link("http://example.com/terms/" + type.name().toLowerCase())
+            .required(required)
+            .build();
+        ReflectionTestUtils.setField(term, "id", id);
+        ReflectionTestUtils.setField(term, "createdAt", Instant.parse("2026-05-26T00:00:00Z"));
+        ReflectionTestUtils.setField(term, "updatedAt", Instant.parse("2026-05-27T00:00:00Z"));
+        return term;
     }
 }
