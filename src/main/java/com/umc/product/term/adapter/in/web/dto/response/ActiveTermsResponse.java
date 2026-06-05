@@ -1,9 +1,10 @@
 package com.umc.product.term.adapter.in.web.dto.response;
 
-import com.umc.product.term.application.port.in.query.dto.ActiveTermInfo;
-import com.umc.product.term.domain.enums.TermType;
 import java.time.Instant;
 import java.util.List;
+
+import com.umc.product.term.application.port.in.query.dto.ActiveTermInfo;
+import com.umc.product.term.domain.enums.TermType;
 
 public record ActiveTermsResponse(
     List<ActiveTermResponse> terms

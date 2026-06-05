@@ -5,15 +5,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.umc.product.global.config.JacksonConfig;
-import com.umc.product.global.security.JwtTokenProvider;
-import com.umc.product.term.application.port.in.command.ManageTermUseCase;
-import com.umc.product.term.application.port.in.query.GetRequiredTermConsentStatusUseCase;
-import com.umc.product.term.application.port.in.query.GetTermUseCase;
-import com.umc.product.term.application.port.in.query.dto.ActiveTermInfo;
-import com.umc.product.term.domain.enums.TermType;
 import java.time.Instant;
 import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +16,14 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.umc.product.global.config.JacksonConfig;
+import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.term.application.port.in.command.ManageTermUseCase;
+import com.umc.product.term.application.port.in.query.GetRequiredTermConsentStatusUseCase;
+import com.umc.product.term.application.port.in.query.GetTermUseCase;
+import com.umc.product.term.application.port.in.query.dto.ActiveTermInfo;
+import com.umc.product.term.domain.enums.TermType;
 
 @WebMvcTest(controllers = TermController.class)
 @Import(JacksonConfig.class)

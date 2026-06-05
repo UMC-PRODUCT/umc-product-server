@@ -1,8 +1,9 @@
 package com.umc.product.term.application.port.in.query.dto;
 
+import java.time.Instant;
+
 import com.umc.product.term.domain.Term;
 import com.umc.product.term.domain.enums.TermType;
-import java.time.Instant;
 
 public record ActiveTermInfo(
     Long id,

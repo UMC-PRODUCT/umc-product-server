@@ -1,9 +1,11 @@
 package com.umc.product.term.adapter.out.persistence;
 
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
 import com.umc.product.term.domain.Term;
 import com.umc.product.term.domain.enums.TermType;
-import java.util.List;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TermRepository extends JpaRepository<Term, Long> {
 

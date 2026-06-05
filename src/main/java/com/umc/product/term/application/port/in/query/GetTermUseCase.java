@@ -1,10 +1,11 @@
 package com.umc.product.term.application.port.in.query;
 
+import java.util.List;
+import java.util.Set;
+
 import com.umc.product.term.application.port.in.query.dto.ActiveTermInfo;
 import com.umc.product.term.application.port.in.query.dto.TermInfo;
 import com.umc.product.term.domain.enums.TermType;
-import java.util.List;
-import java.util.Set;
 
 public interface GetTermUseCase {
     /**
