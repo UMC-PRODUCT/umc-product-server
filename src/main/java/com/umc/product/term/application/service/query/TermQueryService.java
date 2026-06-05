@@ -1,12 +1,14 @@
 package com.umc.product.term.application.service.query;
 
 import com.umc.product.term.application.port.in.query.GetTermUseCase;
+import com.umc.product.term.application.port.in.query.dto.ActiveTermInfo;
 import com.umc.product.term.application.port.in.query.dto.TermInfo;
 import com.umc.product.term.application.port.out.LoadTermPort;
 import com.umc.product.term.domain.Term;
 import com.umc.product.term.domain.enums.TermType;
 import com.umc.product.term.domain.exception.TermDomainException;
 import com.umc.product.term.domain.exception.TermErrorCode;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +44,13 @@ public class TermQueryService implements GetTermUseCase {
             .orElseThrow(() -> new TermDomainException(TermErrorCode.TERMS_NOT_FOUND));
 
         return TermInfo.from(term);
+    }
+
+    @Override
+    public List<ActiveTermInfo> listActiveTerms() {
+        return loadTermPort.listActive().stream()
+            .map(ActiveTermInfo::from)
+            .toList();
     }
 
     @Override
