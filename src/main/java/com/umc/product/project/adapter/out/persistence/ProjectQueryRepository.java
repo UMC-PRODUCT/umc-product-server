@@ -23,6 +23,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
@@ -40,14 +41,22 @@ public class ProjectQueryRepository {
      */
     public Page<Project> search(SearchProjectQuery query) {
         BooleanBuilder condition = buildCondition(query);
+        Pageable pageable = query.pageable();
 
-        List<Project> content = queryFactory
+        JPQLQuery<Project> contentQuery = queryFactory
             .selectFrom(project)
             .where(condition)
-            .orderBy(toOrderSpecifiers(query.pageable().getSort()))
-            .offset(query.pageable().getOffset())
-            .limit(query.pageable().getPageSize())
-            .fetch();
+            .orderBy(toOrderSpecifiers(pageable.getSort()));
+
+        // Pageable.unpaged() 는 offset/pageSize 호출 시 UnsupportedOperationException 을 던지므로
+        // 페이징 요청일 때만 offset/limit 을 적용하고, unpaged 면 조건에 맞는 전건을 반환한다.
+        if (pageable.isPaged()) {
+            contentQuery
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize());
+        }
+
+        List<Project> content = contentQuery.fetch();
 
         Long total = queryFactory
             .select(project.count())
@@ -55,7 +64,7 @@ public class ProjectQueryRepository {
             .where(condition)
             .fetchOne();
 
-        return new PageImpl<>(content, query.pageable(), total != null ? total : 0L);
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
     private BooleanBuilder buildCondition(SearchProjectQuery query) {
