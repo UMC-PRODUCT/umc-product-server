@@ -18,3 +18,7 @@ CREATE TABLE user_feedback_template
         'ADMIN'
     ))
 );
+
+CREATE UNIQUE INDEX uq_user_feedback_template_active
+    ON user_feedback_template (context, target_type)
+    WHERE (is_active = TRUE);
