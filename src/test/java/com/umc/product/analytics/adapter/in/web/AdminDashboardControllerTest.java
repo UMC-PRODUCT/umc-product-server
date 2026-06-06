@@ -9,7 +9,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardActionQueueUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardContextUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardSummaryUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsAttendanceUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsOverviewUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsPointsUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSchoolsUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSignupsUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsStudyGroupsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminRiskChallengerUseCase;
 import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardActionQueueInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardContextInfo;
@@ -72,6 +77,21 @@ class AdminDashboardControllerTest {
 
     @MockitoBean
     GetAdminOperationsOverviewUseCase getAdminOperationsOverviewUseCase;
+
+    @MockitoBean
+    GetAdminOperationsSchoolsUseCase getAdminOperationsSchoolsUseCase;
+
+    @MockitoBean
+    GetAdminOperationsPointsUseCase getAdminOperationsPointsUseCase;
+
+    @MockitoBean
+    GetAdminOperationsAttendanceUseCase getAdminOperationsAttendanceUseCase;
+
+    @MockitoBean
+    GetAdminOperationsStudyGroupsUseCase getAdminOperationsStudyGroupsUseCase;
+
+    @MockitoBean
+    GetAdminOperationsSignupsUseCase getAdminOperationsSignupsUseCase;
 
     @BeforeEach
     void setUpSecurityContext() {
