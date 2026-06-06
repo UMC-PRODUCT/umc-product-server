@@ -1,0 +1,29 @@
+package com.umc.product.project.application.port.out;
+
+import com.umc.product.project.domain.UserFeedbackTemplate;
+import com.umc.product.project.domain.enums.UserFeedbackContext;
+import com.umc.product.project.domain.enums.UserFeedbackTargetType;
+
+import java.util.Optional;
+
+/**
+ * UserFeedbackTemplate 조회 Port (Driven / Port Out).
+ * <p>
+ * 메서드 prefix 규칙:
+ * <ul>
+ *   <li>{@code findBy*} — 없어도 정상 ({@link Optional})</li>
+ *   <li>{@code getBy*} — 반드시 있어야 하며 없으면 {@code ProjectDomainException} (USER_FEEDBACK_TEMPLATE_NOT_FOUND)</li>
+ * </ul>
+ */
+public interface LoadUserFeedbackTemplatePort {
+
+    /**
+     * context + targetType 조합으로 활성 템플릿을 단건 조회합니다. 없으면 Optional.empty().
+     */
+    Optional<UserFeedbackTemplate> findByContextAndTargetType(UserFeedbackContext context, UserFeedbackTargetType targetType);
+
+    /**
+     * ID로 UserFeedbackTemplate을 조회합니다. 존재하지 않으면 도메인 예외를 던집니다.
+     */
+    UserFeedbackTemplate getById(Long id);
+}

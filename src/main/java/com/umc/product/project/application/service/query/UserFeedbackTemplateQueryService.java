@@ -1,0 +1,92 @@
+package com.umc.product.project.application.service.query;
+
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.project.application.port.in.query.GetUserFeedbackTemplateUseCase;
+import com.umc.product.project.application.port.in.query.dto.UserFeedbackTemplateInfo;
+import com.umc.product.project.application.port.out.LoadUserFeedbackTemplatePort;
+import com.umc.product.project.domain.enums.UserFeedbackContext;
+import com.umc.product.project.domain.enums.UserFeedbackTargetType;
+import com.umc.product.survey.application.port.in.query.GetFormUseCase;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * 사용자 피드백 템플릿 조회 서비스.
+ * <p>
+ * 요청자의 챌린저 이력과 운영진 역할을 기반으로 UserFeedbackTargetType을 판별하고,
+ * 해당 context + targetType 조합의 활성 UserFeedbackTemplate을 조회하여 Survey 폼 구조와 함께 반환합니다.
+ * <p>
+ * <b>이번 기수 특수 케이스:</b> 신규 PM(기획 파트)은 이번 기수에서 기획-디자인 매칭을 경험했으므로 챌린저 이력이 이번 기수 하나뿐이더라도 EXPERIENCED_CHALLENGER로 분류합니다.
+ * 이 판별 기준은 코드에 하드코딩되어 있어, 기수별 기준 변경 시 배포가 필요합니다.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class UserFeedbackTemplateQueryService implements GetUserFeedbackTemplateUseCase {
+
+    private final LoadUserFeedbackTemplatePort loadUserFeedbackTemplatePort;
+
+    // Cross-domain
+    private final GetGisuUseCase getGisuUseCase;
+    private final GetChallengerUseCase getChallengerUseCase;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+    private final GetFormUseCase getFormUseCase;
+
+    @Override
+    public Optional<UserFeedbackTemplateInfo> findTemplate(Long requesterMemberId, UserFeedbackContext context) {
+        return getGisuUseCase.findActiveGisu()
+            .flatMap(gisu -> {
+                UserFeedbackTargetType targetType = resolveTargetType(requesterMemberId, gisu.gisuId());
+                return loadUserFeedbackTemplatePort.findByContextAndTargetType(context, targetType)
+                    .map(template -> UserFeedbackTemplateInfo.builder()
+                        .templateId(template.getId())
+                        .context(template.getContext())
+                        .targetType(template.getTargetType())
+                        .form(getFormUseCase.getFormWithStructure(template.getFormId()))
+                        .build());
+            });
+    }
+
+    /**
+     * 요청자의 UserFeedbackTargetType을 판별합니다.
+     * <p>
+     * 판별 순서:
+     * <ol>
+     *   <li>현재 기수 중앙 운영진(isCentralMemberInGisu) -> ADMIN</li>
+     *   <li>이번 기수 외 챌린저 이력 보유 -> EXPERIENCED_CHALLENGER</li>
+     *   <li>이번 기수 PM(기획) 파트 -> EXPERIENCED_CHALLENGER (기획-디자인 매칭 경험 특수 케이스)</li>
+     *   <li>그 외 -> NEW_CHALLENGER</li>
+     * </ol>
+     */
+    private UserFeedbackTargetType resolveTargetType(Long memberId, Long activeGisuId) {
+        if (getChallengerRoleUseCase.isCentralMemberInGisu(memberId, activeGisuId)) {
+            return UserFeedbackTargetType.ADMIN;
+        }
+
+        List<ChallengerInfo> allHistory = getChallengerUseCase.getAllByMemberId(memberId);
+
+        boolean hasPreviousGisu = allHistory.stream()
+            .anyMatch(c -> !c.gisuId().equals(activeGisuId));
+        if (hasPreviousGisu) {
+            return UserFeedbackTargetType.EXPERIENCED_CHALLENGER;
+        }
+
+        // 이번 기수 특수 케이스: PM은 기획-디자인 매칭을 경험했으므로 EXPERIENCED_CHALLENGER
+        boolean isPm = allHistory.stream()
+            .filter(c -> c.gisuId().equals(activeGisuId))
+            .anyMatch(c -> c.part() == ChallengerPart.PLAN);
+        if (isPm) {
+            return UserFeedbackTargetType.EXPERIENCED_CHALLENGER;
+        }
+
+        return UserFeedbackTargetType.NEW_CHALLENGER;
+    }
+}
