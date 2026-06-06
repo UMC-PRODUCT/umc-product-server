@@ -1,9 +1,11 @@
 package com.umc.product.analytics.adapter.in.web.dto.response;
 
-import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSchoolsInfo;
-import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.List;
 import java.util.Map;
+
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSchoolsInfo;
+import com.umc.product.common.domain.enums.ChallengerPart;
+
 import lombok.Builder;
 
 @Builder

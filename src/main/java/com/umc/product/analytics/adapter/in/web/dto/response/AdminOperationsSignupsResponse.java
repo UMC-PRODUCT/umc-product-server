@@ -1,8 +1,10 @@
 package com.umc.product.analytics.adapter.in.web.dto.response;
 
-import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSignupsInfo;
 import java.time.LocalDate;
 import java.util.List;
+
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSignupsInfo;
+
 import lombok.Builder;
 
 @Builder

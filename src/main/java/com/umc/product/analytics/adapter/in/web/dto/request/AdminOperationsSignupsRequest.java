@@ -1,7 +1,8 @@
 package com.umc.product.analytics.adapter.in.web.dto.request;
 
-import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSignupsQuery;
 import java.time.Instant;
+
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSignupsQuery;
 
 public record AdminOperationsSignupsRequest(
     Long gisuId,

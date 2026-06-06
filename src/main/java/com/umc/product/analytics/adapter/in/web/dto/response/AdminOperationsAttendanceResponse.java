@@ -1,8 +1,10 @@
 package com.umc.product.analytics.adapter.in.web.dto.response;
 
+import java.util.Map;
+
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsAttendanceInfo;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
-import java.util.Map;
+
 import lombok.Builder;
 
 @Builder

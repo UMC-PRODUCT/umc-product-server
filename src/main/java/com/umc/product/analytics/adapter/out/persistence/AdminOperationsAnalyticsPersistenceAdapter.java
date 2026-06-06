@@ -1,5 +1,9 @@
 package com.umc.product.analytics.adapter.out.persistence;
 
+import java.time.Instant;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsAttendanceInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewQuery;
@@ -14,9 +18,8 @@ import com.umc.product.analytics.application.port.out.LoadAdminOperationsSchools
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsSignupsPort;
 import com.umc.product.analytics.application.port.out.LoadAdminOperationsStudyGroupsPort;
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
-import java.time.Instant;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor

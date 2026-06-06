@@ -2,6 +2,7 @@ package com.umc.product.analytics.application.port.in.query.dto;
 
 import java.time.LocalDate;
 import java.util.List;
+
 import lombok.Builder;
 
 @Builder

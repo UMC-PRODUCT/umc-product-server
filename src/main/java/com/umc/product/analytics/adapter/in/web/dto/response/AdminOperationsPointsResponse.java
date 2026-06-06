@@ -1,8 +1,10 @@
 package com.umc.product.analytics.adapter.in.web.dto.response;
 
+import java.util.List;
+
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsPointsInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import java.util.List;
+
 import lombok.Builder;
 
 @Builder

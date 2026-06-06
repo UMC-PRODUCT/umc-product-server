@@ -1,10 +1,14 @@
 package com.umc.product.analytics.application.service.query;
 
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardActionQueueUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardContextUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardSummaryUseCase;
-import com.umc.product.analytics.application.port.in.query.GetAdminOperationsOverviewUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsAttendanceUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsOverviewUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsPointsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSchoolsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSignupsUseCase;
@@ -16,10 +20,10 @@ import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardAct
 import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardContextInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardQuery;
 import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardSummaryInfo;
-import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewInfo;
-import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewQuery;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsAttendanceInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsAttendanceQuery;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewInfo;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewQuery;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsPointsInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsPointsQuery;
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsSchoolsInfo;
@@ -42,10 +46,8 @@ import com.umc.product.analytics.application.port.out.LoadAdminOperationsStudyGr
 import com.umc.product.analytics.application.port.out.LoadAdminRiskChallengerAnalyticsPort;
 import com.umc.product.analytics.application.port.out.LoadAdminSchoolAnalyticsPort;
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

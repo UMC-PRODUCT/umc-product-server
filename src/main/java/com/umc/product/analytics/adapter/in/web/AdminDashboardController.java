@@ -1,9 +1,15 @@
 package com.umc.product.analytics.adapter.in.web;
 
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminDashboardActionQueueRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminDashboardRequest;
-import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsOverviewRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsAttendanceRequest;
+import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsOverviewRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsPointsRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsSchoolsRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsSignupsRequest;
@@ -12,8 +18,8 @@ import com.umc.product.analytics.adapter.in.web.dto.request.AdminRiskChallengerR
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminDashboardActionQueueResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminDashboardContextResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminDashboardSummaryResponse;
-import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsOverviewResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsAttendanceResponse;
+import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsOverviewResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsPointsResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsSchoolsResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsSignupsResponse;
@@ -22,8 +28,8 @@ import com.umc.product.analytics.adapter.in.web.dto.response.AdminRiskChallenger
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardActionQueueUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardContextUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardSummaryUseCase;
-import com.umc.product.analytics.application.port.in.query.GetAdminOperationsOverviewUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsAttendanceUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsOverviewUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsPointsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSchoolsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSignupsUseCase;
@@ -35,14 +41,10 @@ import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/admin/dashboard")

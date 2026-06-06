@@ -1,6 +1,7 @@
 package com.umc.product.analytics.adapter.in.web.dto.response;
 
 import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsStudyGroupsInfo;
+
 import lombok.Builder;
 
 @Builder

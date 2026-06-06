@@ -1,9 +1,10 @@
 package com.umc.product.analytics.application.port.in.query.dto;
 
-import com.umc.product.analytics.domain.AnalyticsDomainException;
-import com.umc.product.analytics.domain.AnalyticsErrorCode;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+
+import com.umc.product.analytics.domain.AnalyticsDomainException;
+import com.umc.product.analytics.domain.AnalyticsErrorCode;
 
 public record AdminOperationsPointsQuery(
     Long requesterMemberId,
