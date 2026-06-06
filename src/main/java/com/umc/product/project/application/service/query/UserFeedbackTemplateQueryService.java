@@ -45,16 +45,14 @@ public class UserFeedbackTemplateQueryService implements GetUserFeedbackTemplate
     @Override
     public Optional<UserFeedbackTemplateInfo> findTemplate(Long requesterMemberId, UserFeedbackContext context) {
         return getGisuUseCase.findActiveGisu()
-            .flatMap(gisu -> {
-                UserFeedbackTargetType targetType = resolveTargetType(requesterMemberId, gisu.gisuId());
-                return loadUserFeedbackTemplatePort.findByContextAndTargetType(context, targetType)
+            .flatMap(gisu -> resolveTargetType(requesterMemberId, gisu.gisuId())
+                .flatMap(targetType -> loadUserFeedbackTemplatePort.findByContextAndTargetType(context, targetType)
                     .map(template -> UserFeedbackTemplateInfo.builder()
                         .templateId(template.getId())
                         .context(template.getContext())
                         .targetType(template.getTargetType())
                         .form(getFormUseCase.getFormWithStructure(template.getFormId()))
-                        .build());
-            });
+                        .build())));
     }
 
     /**
@@ -63,22 +61,29 @@ public class UserFeedbackTemplateQueryService implements GetUserFeedbackTemplate
      * 판별 순서:
      * <ol>
      *   <li>현재 기수 중앙 운영진(isCentralMemberInGisu) -> ADMIN</li>
+     *   <li>현재 기수 활성 챌린저가 아닌 경우 -> Optional.empty()</li>
      *   <li>이번 기수 외 챌린저 이력 보유 -> EXPERIENCED_CHALLENGER</li>
      *   <li>이번 기수 PM(기획) 파트 -> EXPERIENCED_CHALLENGER (기획-디자인 매칭 경험 특수 케이스)</li>
      *   <li>그 외 -> NEW_CHALLENGER</li>
      * </ol>
      */
-    private UserFeedbackTargetType resolveTargetType(Long memberId, Long activeGisuId) {
+    private Optional<UserFeedbackTargetType> resolveTargetType(Long memberId, Long activeGisuId) {
         if (getChallengerRoleUseCase.isCentralMemberInGisu(memberId, activeGisuId)) {
-            return UserFeedbackTargetType.ADMIN;
+            return Optional.of(UserFeedbackTargetType.ADMIN);
         }
 
         List<ChallengerInfo> allHistory = getChallengerUseCase.getAllByMemberId(memberId);
 
+        boolean isActiveChallenger = allHistory.stream()
+            .anyMatch(c -> c.gisuId().equals(activeGisuId));
+        if (!isActiveChallenger) {
+            return Optional.empty();
+        }
+
         boolean hasPreviousGisu = allHistory.stream()
             .anyMatch(c -> !c.gisuId().equals(activeGisuId));
         if (hasPreviousGisu) {
-            return UserFeedbackTargetType.EXPERIENCED_CHALLENGER;
+            return Optional.of(UserFeedbackTargetType.EXPERIENCED_CHALLENGER);
         }
 
         // 이번 기수 특수 케이스: PM은 기획-디자인 매칭을 경험했으므로 EXPERIENCED_CHALLENGER
@@ -86,9 +91,9 @@ public class UserFeedbackTemplateQueryService implements GetUserFeedbackTemplate
             .filter(c -> c.gisuId().equals(activeGisuId))
             .anyMatch(c -> c.part() == ChallengerPart.PLAN);
         if (isPm) {
-            return UserFeedbackTargetType.EXPERIENCED_CHALLENGER;
+            return Optional.of(UserFeedbackTargetType.EXPERIENCED_CHALLENGER);
         }
 
-        return UserFeedbackTargetType.NEW_CHALLENGER;
+        return Optional.of(UserFeedbackTargetType.NEW_CHALLENGER);
     }
 }
