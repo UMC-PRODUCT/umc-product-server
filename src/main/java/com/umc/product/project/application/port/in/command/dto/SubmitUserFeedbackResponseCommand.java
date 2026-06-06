@@ -1,9 +1,10 @@
 package com.umc.product.project.application.port.in.command.dto;
 
-import com.umc.product.survey.application.port.in.command.dto.AnswerCommand;
-import lombok.Builder;
-
 import java.util.List;
+
+import com.umc.product.survey.application.port.in.command.dto.AnswerCommand;
+
+import lombok.Builder;
 
 @Builder
 public record SubmitUserFeedbackResponseCommand(

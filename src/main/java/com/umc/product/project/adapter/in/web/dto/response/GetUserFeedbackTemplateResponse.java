@@ -1,13 +1,14 @@
 package com.umc.product.project.adapter.in.web.dto.response;
 
+import java.util.List;
+
 import com.umc.product.project.application.port.in.query.dto.UserFeedbackTemplateInfo;
 import com.umc.product.project.domain.enums.UserFeedbackContext;
 import com.umc.product.project.domain.enums.UserFeedbackTargetType;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo;
 import com.umc.product.survey.domain.enums.QuestionType;
-import lombok.Builder;
 
-import java.util.List;
+import lombok.Builder;
 
 /**
  * 사용자 피드백 템플릿 조회 응답.
