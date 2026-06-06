@@ -1,8 +1,8 @@
 package com.umc.product.project.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.project.domain.enums.UtContext;
-import com.umc.product.project.domain.enums.UtTargetType;
+import com.umc.product.project.domain.enums.UserFeedbackContext;
+import com.umc.product.project.domain.enums.UserFeedbackTargetType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,12 +18,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "ut_template")
+@Table(name = "user_feedback_template")
 @Getter
 @Builder(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UtTemplate extends BaseEntity {
+public class UserFeedbackTemplate extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,11 +31,11 @@ public class UtTemplate extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UtContext context;
+    private UserFeedbackContext context;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UtTargetType targetType;
+    private UserFeedbackTargetType targetType;
 
     @Column(nullable = false)
     private Long formId; // Survey Form ID 참조
@@ -43,8 +43,8 @@ public class UtTemplate extends BaseEntity {
     @Column(nullable = false)
     private boolean isActive;
 
-    public static UtTemplate create(UtContext context, UtTargetType targetType, Long formId) {
-        return UtTemplate.builder()
+    public static UserFeedbackTemplate create(UserFeedbackContext context, UserFeedbackTargetType targetType, Long formId) {
+        return UserFeedbackTemplate.builder()
             .context(context)
             .targetType(targetType)
             .formId(formId)
