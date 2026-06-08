@@ -8,6 +8,7 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.websocket.handler.WebSocketErrorEvent;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -19,6 +20,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
@@ -64,6 +66,8 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             throw new CommonException(CommonErrorCode.SECURITY_NOT_GIVEN);
         }
         if (!checkChatRoomAccessUseCase.hasChatRoomAccess(memberId, chatDestination.chatRoomId())) {
+            log.warn("WebSocket 채팅방 접근 거부: memberId={}, chatRoomId={}, command={}, destination={}",
+                memberId, chatDestination.chatRoomId(), accessor.getCommand(), accessor.getDestination());
             applicationEventPublisher.publishEvent(
                 new WebSocketErrorEvent(user.getName(), AuthorizationErrorCode.RESOURCE_ACCESS_DENIED)
             );
