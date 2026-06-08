@@ -1,4 +1,4 @@
-package com.umc.product.project.adapter.in.web.dto.response;
+package com.umc.product.feedback.adapter.in.web.dto.response;
 
 public record UserFeedbackSubmitResponse(
     Long formResponseId

@@ -1,4 +1,4 @@
-package com.umc.product.project.application.port.in.command.dto;
+package com.umc.product.feedback.application.port.in.command.dto;
 
 import java.util.List;
 

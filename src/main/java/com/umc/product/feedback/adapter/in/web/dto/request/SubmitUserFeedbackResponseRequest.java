@@ -1,8 +1,8 @@
-package com.umc.product.project.adapter.in.web.dto.request;
+package com.umc.product.feedback.adapter.in.web.dto.request;
 
 import java.util.List;
 
-import com.umc.product.project.application.port.in.command.dto.SubmitUserFeedbackResponseCommand;
+import com.umc.product.feedback.application.port.in.command.dto.SubmitUserFeedbackResponseCommand;
 import com.umc.product.survey.application.port.in.command.dto.AnswerCommand;
 
 import io.swagger.v3.oas.annotations.media.Schema;

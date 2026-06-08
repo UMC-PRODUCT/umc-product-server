@@ -1,10 +1,10 @@
-package com.umc.product.project.adapter.in.web.dto.response;
+package com.umc.product.feedback.adapter.in.web.dto.response;
 
 import java.util.List;
 
-import com.umc.product.project.application.port.in.query.dto.UserFeedbackTemplateInfo;
-import com.umc.product.project.domain.enums.UserFeedbackContext;
-import com.umc.product.project.domain.enums.UserFeedbackTargetType;
+import com.umc.product.feedback.application.port.in.query.dto.UserFeedbackTemplateInfo;
+import com.umc.product.feedback.domain.enums.UserFeedbackContext;
+import com.umc.product.feedback.domain.enums.UserFeedbackTargetType;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo;
 import com.umc.product.survey.domain.enums.QuestionType;
 

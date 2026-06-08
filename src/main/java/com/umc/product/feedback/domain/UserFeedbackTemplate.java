@@ -1,8 +1,8 @@
-package com.umc.product.project.domain;
+package com.umc.product.feedback.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.project.domain.enums.UserFeedbackContext;
-import com.umc.product.project.domain.enums.UserFeedbackTargetType;
+import com.umc.product.feedback.domain.enums.UserFeedbackContext;
+import com.umc.product.feedback.domain.enums.UserFeedbackTargetType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

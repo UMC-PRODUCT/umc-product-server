@@ -1,4 +1,4 @@
-package com.umc.product.project.application.service.query;
+package com.umc.product.feedback.application.service.query;
 
 import java.util.List;
 import java.util.Optional;
@@ -10,12 +10,12 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.feedback.application.port.in.query.GetUserFeedbackTemplateUseCase;
+import com.umc.product.feedback.application.port.in.query.dto.UserFeedbackTemplateInfo;
+import com.umc.product.feedback.application.port.out.LoadUserFeedbackTemplatePort;
+import com.umc.product.feedback.domain.enums.UserFeedbackContext;
+import com.umc.product.feedback.domain.enums.UserFeedbackTargetType;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import com.umc.product.project.application.port.in.query.GetUserFeedbackTemplateUseCase;
-import com.umc.product.project.application.port.in.query.dto.UserFeedbackTemplateInfo;
-import com.umc.product.project.application.port.out.LoadUserFeedbackTemplatePort;
-import com.umc.product.project.domain.enums.UserFeedbackContext;
-import com.umc.product.project.domain.enums.UserFeedbackTargetType;
 import com.umc.product.survey.application.port.in.query.GetFormUseCase;
 
 import lombok.RequiredArgsConstructor;

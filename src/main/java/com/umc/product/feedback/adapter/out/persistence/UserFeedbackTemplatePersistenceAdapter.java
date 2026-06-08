@@ -1,15 +1,15 @@
-package com.umc.product.project.adapter.out.persistence;
+package com.umc.product.feedback.adapter.out.persistence;
 
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
-import com.umc.product.project.application.port.out.LoadUserFeedbackTemplatePort;
-import com.umc.product.project.domain.UserFeedbackTemplate;
-import com.umc.product.project.domain.enums.UserFeedbackContext;
-import com.umc.product.project.domain.enums.UserFeedbackTargetType;
-import com.umc.product.project.domain.exception.ProjectDomainException;
-import com.umc.product.project.domain.exception.ProjectErrorCode;
+import com.umc.product.feedback.application.port.out.LoadUserFeedbackTemplatePort;
+import com.umc.product.feedback.domain.UserFeedbackTemplate;
+import com.umc.product.feedback.domain.enums.UserFeedbackContext;
+import com.umc.product.feedback.domain.enums.UserFeedbackTargetType;
+import com.umc.product.feedback.domain.exception.FeedbackDomainException;
+import com.umc.product.feedback.domain.exception.FeedbackErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +27,6 @@ public class UserFeedbackTemplatePersistenceAdapter implements LoadUserFeedbackT
     @Override
     public UserFeedbackTemplate getById(Long id) {
         return repository.findById(id)
-            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.USER_FEEDBACK_TEMPLATE_NOT_FOUND));
+            .orElseThrow(() -> new FeedbackDomainException(FeedbackErrorCode.USER_FEEDBACK_TEMPLATE_NOT_FOUND));
     }
 }

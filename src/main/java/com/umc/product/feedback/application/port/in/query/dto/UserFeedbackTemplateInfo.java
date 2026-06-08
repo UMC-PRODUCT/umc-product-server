@@ -1,7 +1,7 @@
-package com.umc.product.project.application.port.in.query.dto;
+package com.umc.product.feedback.application.port.in.query.dto;
 
-import com.umc.product.project.domain.enums.UserFeedbackContext;
-import com.umc.product.project.domain.enums.UserFeedbackTargetType;
+import com.umc.product.feedback.domain.enums.UserFeedbackContext;
+import com.umc.product.feedback.domain.enums.UserFeedbackTargetType;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo;
 
 import lombok.Builder;

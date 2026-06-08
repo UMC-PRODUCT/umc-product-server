@@ -1,9 +1,9 @@
-package com.umc.product.project.application.port.in.query;
+package com.umc.product.feedback.application.port.in.query;
 
 import java.util.Optional;
 
-import com.umc.product.project.application.port.in.query.dto.UserFeedbackTemplateInfo;
-import com.umc.product.project.domain.enums.UserFeedbackContext;
+import com.umc.product.feedback.application.port.in.query.dto.UserFeedbackTemplateInfo;
+import com.umc.product.feedback.domain.enums.UserFeedbackContext;
 
 /**
  * 사용자 피드백 템플릿 조회 UseCase.

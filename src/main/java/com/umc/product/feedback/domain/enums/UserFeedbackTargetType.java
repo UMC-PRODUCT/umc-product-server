@@ -1,4 +1,4 @@
-package com.umc.product.project.domain.enums;
+package com.umc.product.feedback.domain.enums;
 
 public enum UserFeedbackTargetType {
     NEW_CHALLENGER,       // 이번 기수가 첫 활동인 챌린저

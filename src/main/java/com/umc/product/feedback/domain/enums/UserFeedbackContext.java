@@ -1,4 +1,4 @@
-package com.umc.product.project.domain.enums;
+package com.umc.product.feedback.domain.enums;
 
 public enum UserFeedbackContext {
     APPLICATION_SUBMITTED,  // 지원서 제출 후

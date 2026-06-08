@@ -1,12 +1,12 @@
-package com.umc.product.project.application.service.command;
+package com.umc.product.feedback.application.service.command;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.umc.product.project.application.port.in.command.SubmitUserFeedbackResponseUseCase;
-import com.umc.product.project.application.port.in.command.dto.SubmitUserFeedbackResponseCommand;
-import com.umc.product.project.application.port.out.LoadUserFeedbackTemplatePort;
-import com.umc.product.project.domain.UserFeedbackTemplate;
+import com.umc.product.feedback.application.port.in.command.SubmitUserFeedbackResponseUseCase;
+import com.umc.product.feedback.application.port.in.command.dto.SubmitUserFeedbackResponseCommand;
+import com.umc.product.feedback.application.port.out.LoadUserFeedbackTemplatePort;
+import com.umc.product.feedback.domain.UserFeedbackTemplate;
 import com.umc.product.survey.application.port.in.command.ManageFormResponseUseCase;
 import com.umc.product.survey.application.port.in.command.dto.SubmitFormResponseCommand;
 

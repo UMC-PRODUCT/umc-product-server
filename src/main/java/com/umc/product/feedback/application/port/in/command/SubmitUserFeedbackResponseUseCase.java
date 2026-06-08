@@ -1,6 +1,6 @@
-package com.umc.product.project.application.port.in.command;
+package com.umc.product.feedback.application.port.in.command;
 
-import com.umc.product.project.application.port.in.command.dto.SubmitUserFeedbackResponseCommand;
+import com.umc.product.feedback.application.port.in.command.dto.SubmitUserFeedbackResponseCommand;
 
 /**
  * 사용자 피드백 응답 제출 UseCase.

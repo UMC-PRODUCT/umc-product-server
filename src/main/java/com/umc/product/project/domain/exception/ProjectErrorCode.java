@@ -90,9 +90,6 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_APPLICATION_CANCEL_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROJECT-0214", "이미 종결된 지원서는 철회할 수 없습니다."),
     PROJECT_APPLICATION_CANCEL_ROUND_CLOSED(HttpStatus.BAD_REQUEST, "PROJECT-0215", "매칭 차수가 종료되어 지원서를 철회할 수 없습니다."),
 
-    // UserFeedback
-    USER_FEEDBACK_TEMPLATE_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0400", "사용자 피드백 템플릿을 찾을 수 없습니다."),
-
     ;
 
     private final HttpStatus httpStatus;

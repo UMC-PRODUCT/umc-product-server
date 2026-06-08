@@ -1,10 +1,10 @@
-package com.umc.product.project.application.port.out;
+package com.umc.product.feedback.application.port.out;
 
 import java.util.Optional;
 
-import com.umc.product.project.domain.UserFeedbackTemplate;
-import com.umc.product.project.domain.enums.UserFeedbackContext;
-import com.umc.product.project.domain.enums.UserFeedbackTargetType;
+import com.umc.product.feedback.domain.UserFeedbackTemplate;
+import com.umc.product.feedback.domain.enums.UserFeedbackContext;
+import com.umc.product.feedback.domain.enums.UserFeedbackTargetType;
 
 /**
  * UserFeedbackTemplate 조회 Port (Driven / Port Out).
@@ -12,7 +12,7 @@ import com.umc.product.project.domain.enums.UserFeedbackTargetType;
  * 메서드 prefix 규칙:
  * <ul>
  *   <li>{@code findBy*} — 없어도 정상 ({@link Optional})</li>
- *   <li>{@code getBy*} — 반드시 있어야 하며 없으면 {@code ProjectDomainException} (USER_FEEDBACK_TEMPLATE_NOT_FOUND)</li>
+ *   <li>{@code getBy*} — 반드시 있어야 하며 없으면 {@code FeedbackDomainException} (USER_FEEDBACK_TEMPLATE_NOT_FOUND)</li>
  * </ul>
  */
 public interface LoadUserFeedbackTemplatePort {

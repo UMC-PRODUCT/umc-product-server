@@ -1,4 +1,4 @@
-package com.umc.product.project.adapter.in.web;
+package com.umc.product.feedback.adapter.in.web;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -7,14 +7,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.umc.product.feedback.adapter.in.web.dto.request.SubmitUserFeedbackResponseRequest;
+import com.umc.product.feedback.adapter.in.web.dto.response.GetUserFeedbackTemplateResponse;
+import com.umc.product.feedback.adapter.in.web.dto.response.UserFeedbackSubmitResponse;
+import com.umc.product.feedback.application.port.in.command.SubmitUserFeedbackResponseUseCase;
+import com.umc.product.feedback.application.port.in.query.GetUserFeedbackTemplateUseCase;
+import com.umc.product.feedback.domain.enums.UserFeedbackContext;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
-import com.umc.product.project.adapter.in.web.dto.request.SubmitUserFeedbackResponseRequest;
-import com.umc.product.project.adapter.in.web.dto.response.GetUserFeedbackTemplateResponse;
-import com.umc.product.project.adapter.in.web.dto.response.UserFeedbackSubmitResponse;
-import com.umc.product.project.application.port.in.command.SubmitUserFeedbackResponseUseCase;
-import com.umc.product.project.application.port.in.query.GetUserFeedbackTemplateUseCase;
-import com.umc.product.project.domain.enums.UserFeedbackContext;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
