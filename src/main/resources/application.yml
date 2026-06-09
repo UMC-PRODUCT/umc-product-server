@@ -312,10 +312,6 @@ app:
     discord:
       url: ${DISCORD_WEBHOOK_URL:}
 
-  swagger-auth:
-    username: ${SWAGGER_AUTH_USERNAME:username}
-    password: ${SWAGGER_AUTH_PASSWORD:password}
-
   # test 도메인 시딩 API 설정. ADR-017 참조.
   # 기본값은 비활성. prod 가 아닌 환경에서 APP_SEED_ENABLED=true 로 켜야 시딩 API 가 노출된다.
   seed:
