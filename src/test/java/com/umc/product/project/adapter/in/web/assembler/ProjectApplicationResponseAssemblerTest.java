@@ -14,6 +14,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import com.umc.product.project.adapter.in.web.dto.common.MatchingRoundPhaseView;
 import com.umc.product.project.adapter.in.web.dto.response.MyProjectApplicationResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicantResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicationDetailResponse;
@@ -27,7 +28,6 @@ import com.umc.product.project.application.port.in.query.dto.ApplicationFormInfo
 import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplicationsQuery;
 import com.umc.product.project.application.port.in.query.dto.GetProjectApplicationDetailQuery;
 import com.umc.product.project.application.port.in.query.dto.ManagedProjectApplicationCardStatus;
-import com.umc.product.project.application.port.in.query.dto.MatchingRoundPhaseView;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationDetailInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationSummaryInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationViewStatus;
@@ -299,7 +299,7 @@ class ProjectApplicationResponseAssemblerTest {
         assertThat(response.applicant().part()).isEqualTo(ChallengerPart.WEB);
         assertThat(response.matchingRound().id()).isEqualTo(7L);
         assertThat(response.matchingRound().type()).isEqualTo(MatchingType.PLAN_DEVELOPER);
-        assertThat(response.matchingRound().phase()).isEqualTo(MatchingPhase.FIRST);
+        assertThat(response.matchingRound().phase()).isEqualTo(MatchingRoundPhaseView.FIRST);
         assertThat(response.status()).isEqualTo(ManagedProjectApplicationCardStatus.SUBMITTED);
     }
 
