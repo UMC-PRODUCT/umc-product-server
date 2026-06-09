@@ -100,6 +100,9 @@ public class SecurityConfig {
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> {
+                // Swagger UI와 기존 Swagger 문서 경로는 인증 여부와 무관하게 차단
+                auth.requestMatchers(SecurityPathConfig.swaggerBlockedPaths()).denyAll();
+
                 // 공통 공개 경로
                 auth.requestMatchers(SecurityPathConfig.securityPermitAllPaths()).permitAll();
 
