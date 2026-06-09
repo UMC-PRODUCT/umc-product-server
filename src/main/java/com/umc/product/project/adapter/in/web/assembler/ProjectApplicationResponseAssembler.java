@@ -1,5 +1,7 @@
 package com.umc.product.project.adapter.in.web.assembler;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
@@ -14,7 +16,6 @@ import com.umc.product.project.application.port.in.query.GetProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectApplicationsUseCase;
 import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplicationsQuery;
 import com.umc.product.project.application.port.in.query.dto.GetProjectApplicationDetailQuery;
-import com.umc.product.project.application.port.in.query.dto.ProjectApplicationCardInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationDetailInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationSummaryInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
@@ -46,6 +47,7 @@ public class ProjectApplicationResponseAssembler {
     private final GetProjectUseCase getProjectUseCase;
     private final GetProjectMatchingRoundUseCase getProjectMatchingRoundUseCase;
     private final GetMemberUseCase getMemberUseCase;
+    private final GetChallengerUseCase getChallengerUseCase;
 
     /**
      * 본인 지원 내역 카드 목록 조립 (APPLY-004).
@@ -107,25 +109,52 @@ public class ProjectApplicationResponseAssembler {
     }
 
     /**
-     * PM/운영진용 단일 프로젝트 지원자 목록 조회. 지원자(챌린저) 의 닉네임/실명/학교는 member 도메인을 batch 조회해 합성한다.
+     * 단일 프로젝트의 지원자 목록 카드 조립 (APPLY-101).
      * <p>
-     * 권한 scope 결정은 service 단({@code ProjectApplicationQueryService#searchByProject}) 에서
-     * {@code ProjectApplicationAccessScopeResolver#resolveForProjectApplicantList} 로 수행된다.
+     * Service 는 ProjectApplication 자원만 돌려준다. 화면 카드에 필요한 나머지 (지원자의 파트 / 매칭 라운드 / 지원자 닉네임/실명/학교) 는
+     * 여기서 다른 도메인 UseCase 로 batch 조회해 붙인다.
+     * <p>
+     * 파트(part) 필터도 챌린저 도메인 정보라 in-memory 로 적용한다. 권한 scope 결정은 Service 가 이미 처리했으니 (None 이면 빈 리스트 반환)
+     * 여기서는 그 결과를 그대로 신뢰한다.
      */
     public List<ProjectApplicantResponse> applicantsFor(SearchProjectApplicationsQuery query) {
-        List<ProjectApplicationCardInfo> cards = searchProjectApplicationsUseCase.searchByProject(query);
-        if (cards.isEmpty()) {
+        List<ProjectApplicationSummaryInfo> applications =
+            searchProjectApplicationsUseCase.searchByProject(query);
+        if (applications.isEmpty()) {
             return List.of();
         }
 
-        Set<Long> memberIds = cards.stream()
-            .map(ProjectApplicationCardInfo::applicantMemberId)
-            .collect(Collectors.toSet());
-        Map<Long, MemberInfo> memberMap = getMemberUseCase.findAllByIds(memberIds);
+        // 챌린저 조회용 기수 ID 가 필요해서 프로젝트를 한 번 가져온다 (단건).
+        ProjectInfo project = getProjectUseCase.getById(query.projectId());
 
-        return cards.stream()
-            .map(card -> ProjectApplicantResponse.from(card, toBrief(memberMap.get(card.applicantMemberId()))))
-            .toList();
+        Set<Long> applicantMemberIds = applications.stream()
+            .map(ProjectApplicationSummaryInfo::applicantMemberId)
+            .collect(Collectors.toSet());
+        Set<Long> roundIds = applications.stream()
+            .map(ProjectApplicationSummaryInfo::matchingRoundId)
+            .collect(Collectors.toSet());
+
+        // 부가 정보 3종을 IN 쿼리 한 번씩으로 가져와 둔다 (N+1 방지).
+        Map<Long, ChallengerPart> partsByMember = getChallengerUseCase
+            .batchGetByMemberIdsAndGisuId(applicantMemberIds, project.gisuId())
+            .entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().part()));
+        Map<Long, ProjectMatchingRoundInfo> rounds =
+            getProjectMatchingRoundUseCase.listByIds(roundIds);
+        Map<Long, MemberInfo> memberMap = getMemberUseCase.findAllByIds(applicantMemberIds);
+
+        List<ProjectApplicantResponse> result = new ArrayList<>(applications.size());
+        for (ProjectApplicationSummaryInfo application : applications) {
+            ChallengerPart applicantPart = partsByMember.get(application.applicantMemberId());
+            // 파트 필터: 다른 파트는 건너뛴다.
+            if (query.part() != null && query.part() != applicantPart) {
+                continue;
+            }
+            ProjectMatchingRoundInfo round = rounds.get(application.matchingRoundId());
+            MemberBrief brief = toBrief(memberMap.get(application.applicantMemberId()));
+            result.add(ProjectApplicantResponse.from(application, applicantPart, round, brief));
+        }
+        return result;
     }
 
     /**
