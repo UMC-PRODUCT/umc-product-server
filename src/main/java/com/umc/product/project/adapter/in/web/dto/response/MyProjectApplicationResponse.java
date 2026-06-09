@@ -1,9 +1,9 @@
 package com.umc.product.project.adapter.in.web.dto.response;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.adapter.in.web.dto.common.MatchingRoundPhaseView;
 import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
 import com.umc.product.project.adapter.in.web.dto.common.PartQuotaInfo;
-import com.umc.product.project.application.port.in.query.dto.MatchingRoundPhaseView;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationSummaryInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationViewStatus;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;

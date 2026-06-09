@@ -1,12 +1,12 @@
 package com.umc.product.project.adapter.in.web.dto.response;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.adapter.in.web.dto.common.MatchingRoundPhaseView;
 import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
 import com.umc.product.project.application.port.in.query.dto.ApplicationFormInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationDetailInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationViewStatus;
 import com.umc.product.project.domain.enums.FormSectionType;
-import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import com.umc.product.survey.application.port.in.query.dto.AnswerInfo;
@@ -56,7 +56,7 @@ public record ProjectApplicationDetailResponse(
         MatchingRoundBrief round = MatchingRoundBrief.builder()
             .id(info.matchingRoundId())
             .type(info.matchingRoundType())
-            .phase(info.matchingRoundPhase())
+            .phase(MatchingRoundPhaseView.from(info.matchingRoundPhase()))
             .build();
 
         FormResponseView formResponse = FormResponseView.of(
@@ -92,12 +92,15 @@ public record ProjectApplicationDetailResponse(
 
     /**
      * 매칭 라운드 식별 정보. 라벨 합성("기획-개발자 1차 매칭" 등)은 클라이언트가 type/phase 조합으로 처리한다.
+     * <p>
+     * phase 는 도메인 enum 직노출을 피하기 위해 표시용 enum {@link MatchingRoundPhaseView} 로 노출한다.
+     * 본 응답은 실제 라운드 엔티티가 있는 지원서만 다루므로 RANDOM_MATCHING 케이스는 실제로 채워지지 않는다.
      */
     @Builder
     public record MatchingRoundBrief(
         Long id,
         MatchingType type,
-        MatchingPhase phase
+        MatchingRoundPhaseView phase
     ) {
     }
 
