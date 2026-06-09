@@ -14,6 +14,7 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.term.adapter.in.web.dto.request.CreateTermRequest;
+import com.umc.product.term.adapter.in.web.dto.response.ActiveTermsResponse;
 import com.umc.product.term.adapter.in.web.dto.response.RequiredTermConsentStatusResponse;
 import com.umc.product.term.adapter.in.web.dto.response.TermResponse;
 import com.umc.product.term.application.port.in.command.ManageTermUseCase;
@@ -36,6 +37,13 @@ public class TermController {
     private final GetTermUseCase getTermUseCase;
     private final GetRequiredTermConsentStatusUseCase getRequiredTermConsentStatusUseCase;
     private final ManageTermUseCase manageTermUseCase;
+
+    @GetMapping
+    @Public
+    @Operation(summary = "[TERM-104] 활성 약관 전체 조회")
+    ActiveTermsResponse getActiveTerms() {
+        return ActiveTermsResponse.from(getTermUseCase.listActiveTerms());
+    }
 
     @GetMapping("type/{termType}")
     @Public
