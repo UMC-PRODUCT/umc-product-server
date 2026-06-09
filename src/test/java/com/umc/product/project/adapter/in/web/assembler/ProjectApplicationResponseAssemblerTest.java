@@ -3,10 +3,13 @@ package com.umc.product.project.adapter.in.web.assembler;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -25,7 +28,6 @@ import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplica
 import com.umc.product.project.application.port.in.query.dto.GetProjectApplicationDetailQuery;
 import com.umc.product.project.application.port.in.query.dto.ManagedProjectApplicationCardStatus;
 import com.umc.product.project.application.port.in.query.dto.MatchingRoundPhaseView;
-import com.umc.product.project.application.port.in.query.dto.ProjectApplicationCardInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationDetailInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationSummaryInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationViewStatus;
@@ -46,6 +48,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,6 +58,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectApplicationResponseAssemblerTest {
+
+    private static final Long GISU_ID = 10L;
 
     @Mock
     GetMyProjectApplicationsUseCase getMyProjectApplicationsUseCase;
@@ -70,6 +75,8 @@ class ProjectApplicationResponseAssemblerTest {
     GetProjectMatchingRoundUseCase getProjectMatchingRoundUseCase;
     @Mock
     GetMemberUseCase getMemberUseCase;
+    @Mock
+    GetChallengerUseCase getChallengerUseCase;
 
     @InjectMocks
     ProjectApplicationResponseAssembler sut;
@@ -83,7 +90,7 @@ class ProjectApplicationResponseAssemblerTest {
     void PM_정보_조립() {
         // given
         GetMyProjectApplicationsQuery query = queryOf(null);
-        ProjectApplicationSummaryInfo application = applicationSummaryOf(55L, 1L, 7L);
+        ProjectApplicationSummaryInfo application = applicationSummaryOf(55L, 1L, 7L, 100L);
         ProjectInfo project = projectInfoOf(1L, "프로젝트A", 99L);
         ProjectMatchingRoundInfo round = roundInfoOf(7L, MatchingPhase.FIRST);
 
@@ -176,8 +183,8 @@ class ProjectApplicationResponseAssemblerTest {
     void 랜덤매칭_카드_끝에_append() {
         // given
         GetMyProjectApplicationsQuery query = queryOf(null);
-        ProjectApplicationSummaryInfo appA = applicationSummaryOf(55L, 1L, 7L);
-        ProjectApplicationSummaryInfo appB = applicationSummaryOf(56L, 2L, 8L);
+        ProjectApplicationSummaryInfo appA = applicationSummaryOf(55L, 1L, 7L, 100L);
+        ProjectApplicationSummaryInfo appB = applicationSummaryOf(56L, 2L, 8L, 100L);
         ProjectMemberInfo member = projectMemberInfoOf(401L, 3L, ChallengerPart.WEB);
 
         ProjectInfo pA = projectInfoOf(1L, "프로젝트A", 99L);
@@ -234,7 +241,7 @@ class ProjectApplicationResponseAssemblerTest {
     void PM_정보_없음_null() {
         // given
         GetMyProjectApplicationsQuery query = queryOf(null);
-        ProjectApplicationSummaryInfo application = applicationSummaryOf(55L, 1L, 7L);
+        ProjectApplicationSummaryInfo application = applicationSummaryOf(55L, 1L, 7L, 100L);
         ProjectInfo project = projectInfoOf(1L, "프로젝트A", 99L);
 
         given(getMyProjectApplicationsUseCase.listMyApplications(query))
@@ -265,10 +272,16 @@ class ProjectApplicationResponseAssemblerTest {
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
             .requesterMemberId(100L)
             .projectId(1L).build();
-        ProjectApplicationCardInfo card = applicantCardOf(55L, 200L, ChallengerPart.WEB);
+        ProjectApplicationSummaryInfo application = applicationSummaryOf(55L, 1L, 7L, 200L);
+        ProjectInfo project = projectInfoOf(1L, "프로젝트A", 99L);
 
         given(searchProjectApplicationsUseCase.searchByProject(query))
-            .willReturn(List.of(card));
+            .willReturn(List.of(application));
+        given(getProjectUseCase.getById(1L)).willReturn(project);
+        given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(eq(Set.of(200L)), eq(GISU_ID)))
+            .willReturn(Map.of(200L, challengerInfoOf(200L, ChallengerPart.WEB)));
+        given(getProjectMatchingRoundUseCase.listByIds(any()))
+            .willReturn(Map.of(7L, roundInfoOf(7L, MatchingPhase.FIRST)));
         given(getMemberUseCase.findAllByIds(any()))
             .willReturn(Map.of(200L, memberOf(200L, "벨라", "황지원", "중앙대")));
 
@@ -306,6 +319,7 @@ class ProjectApplicationResponseAssemblerTest {
         // then
         assertThat(result).isEmpty();
         verify(getMemberUseCase, never()).findAllByIds(anySet());
+        verify(getChallengerUseCase, never()).batchGetByMemberIdsAndGisuId(any(), any());
     }
 
     @Test
@@ -315,10 +329,16 @@ class ProjectApplicationResponseAssemblerTest {
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
             .requesterMemberId(100L)
             .projectId(1L).build();
-        ProjectApplicationCardInfo card = applicantCardOf(55L, 200L, ChallengerPart.WEB);
+        ProjectApplicationSummaryInfo application = applicationSummaryOf(55L, 1L, 7L, 200L);
+        ProjectInfo project = projectInfoOf(1L, "프로젝트A", 99L);
 
         given(searchProjectApplicationsUseCase.searchByProject(query))
-            .willReturn(List.of(card));
+            .willReturn(List.of(application));
+        given(getProjectUseCase.getById(1L)).willReturn(project);
+        given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), eq(GISU_ID)))
+            .willReturn(Map.of(200L, challengerInfoOf(200L, ChallengerPart.WEB)));
+        given(getProjectMatchingRoundUseCase.listByIds(any()))
+            .willReturn(Map.of(7L, roundInfoOf(7L, MatchingPhase.FIRST)));
         given(getMemberUseCase.findAllByIds(any())).willReturn(Map.of());
 
         // when
@@ -331,8 +351,42 @@ class ProjectApplicationResponseAssemblerTest {
         assertThat(response.applicant().nickname()).isNull();
         assertThat(response.applicant().name()).isNull();
         assertThat(response.applicant().schoolName()).isNull();
-        // part 는 challenger 도메인 -> Service 단에서 채워서 옴 (member 누락과 무관)
+        // part 는 challenger 도메인 -> Assembler 가 batch 조회해 채운다 (member 누락과 무관)
         assertThat(response.applicant().part()).isEqualTo(ChallengerPart.WEB);
+    }
+
+    @Test
+    @DisplayName("applicantsFor_part_필터를_지정하면_해당_파트_지원자만_반환")
+    void applicantsFor_part_필터() {
+        // given - WEB / ANDROID 지원자가 1명씩 있는데 query.part=WEB 으로 필터링
+        SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(100L)
+            .projectId(1L)
+            .part(ChallengerPart.WEB)
+            .build();
+        ProjectApplicationSummaryInfo webApp = applicationSummaryOf(55L, 1L, 7L, 200L);
+        ProjectApplicationSummaryInfo androidApp = applicationSummaryOf(56L, 1L, 7L, 201L);
+        ProjectInfo project = projectInfoOf(1L, "프로젝트A", 99L);
+
+        given(searchProjectApplicationsUseCase.searchByProject(query))
+            .willReturn(List.of(webApp, androidApp));
+        given(getProjectUseCase.getById(1L)).willReturn(project);
+        given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), eq(GISU_ID)))
+            .willReturn(Map.of(
+                200L, challengerInfoOf(200L, ChallengerPart.WEB),
+                201L, challengerInfoOf(201L, ChallengerPart.ANDROID)
+            ));
+        given(getProjectMatchingRoundUseCase.listByIds(any()))
+            .willReturn(Map.of(7L, roundInfoOf(7L, MatchingPhase.FIRST)));
+        given(getMemberUseCase.findAllByIds(any())).willReturn(Map.of());
+
+        // when
+        List<ProjectApplicantResponse> result = sut.applicantsFor(query);
+
+        // then - WEB 1건만
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).applicant().memberId()).isEqualTo(200L);
+        assertThat(result.get(0).applicant().part()).isEqualTo(ChallengerPart.WEB);
     }
 
     // ============================================================
@@ -395,17 +449,17 @@ class ProjectApplicationResponseAssemblerTest {
     private GetMyProjectApplicationsQuery queryOf(ProjectApplicationStatus status) {
         return GetMyProjectApplicationsQuery.builder()
             .requesterMemberId(100L)
-            .gisuId(10L)
+            .gisuId(GISU_ID)
             .status(status)
             .build();
     }
 
     private ProjectApplicationSummaryInfo applicationSummaryOf(
-        Long applicationId, Long projectId, Long matchingRoundId
+        Long applicationId, Long projectId, Long matchingRoundId, Long applicantMemberId
     ) {
         return ProjectApplicationSummaryInfo.builder()
             .id(applicationId)
-            .applicantMemberId(100L)
+            .applicantMemberId(applicantMemberId)
             .applicationFormId(33L)
             .projectId(projectId)
             .matchingRoundId(matchingRoundId)
@@ -419,6 +473,7 @@ class ProjectApplicationResponseAssemblerTest {
             .id(projectId)
             .status(ProjectStatus.IN_PROGRESS)
             .name(name)
+            .gisuId(GISU_ID)
             .thumbnailImageUrl("https://cdn.example.com/thumb-" + projectId)
             .productOwnerMemberId(productOwnerMemberId)
             .coProductOwnerMemberIds(List.of())
@@ -455,19 +510,12 @@ class ProjectApplicationResponseAssemblerTest {
             .build();
     }
 
-    private ProjectApplicationCardInfo applicantCardOf(
-        Long applicationId, Long applicantMemberId, ChallengerPart part
-    ) {
-        return ProjectApplicationCardInfo.builder()
-            .applicationId(applicationId)
-            .applicantMemberId(applicantMemberId)
-            .applicantPart(part)
-            .matchingRoundId(7L)
-            .matchingRoundType(MatchingType.PLAN_DEVELOPER)
-            .matchingRoundPhase(MatchingPhase.FIRST)
-            .status(ManagedProjectApplicationCardStatus.SUBMITTED)
-            .submittedAt(Instant.parse("2026-04-22T01:30:00Z"))
-            .statusChangedAt(null)
+    private ChallengerInfo challengerInfoOf(Long memberId, ChallengerPart part) {
+        return ChallengerInfo.builder()
+            .challengerId(memberId * 10)
+            .memberId(memberId)
+            .gisuId(GISU_ID)
+            .part(part)
             .build();
     }
 
