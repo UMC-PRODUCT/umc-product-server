@@ -47,7 +47,8 @@ public final class SecurityPathConfig {
             "/api/v1/auth/**",
             "/api/v1/terms",
             "/api/v1/terms/**",
-            "/actuator/**"
+            "/actuator/**",
+            "/error"
         ),
         DOCUMENTATION_PATHS.stream()
     ).toList();
