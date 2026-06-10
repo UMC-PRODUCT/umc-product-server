@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
  *   <li>POST /digest — 시간창 강제 발송. Discord 발송 O, cursor 갱신 X, dispatch 무시. 비-멱등.</li>
  *   <li>GET /preview — 분류 결과 조회만. 발송 X, 상태 변경 X.</li>
  * </ul>
- * ADR-007 에 따라 모든 endpoint 는 SUPER_ADMIN 만 접근 가능하다.
+ * 모든 endpoint 는 전역 관리자만 접근 가능하다.
  */
 @RestController
 @RequestMapping("/api/v1/admin/figma")

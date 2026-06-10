@@ -1,6 +1,7 @@
 package com.umc.product.member.adapter.out.persistence;
 
 import com.umc.product.challenger.domain.Challenger;
+import com.umc.product.common.domain.enums.MemberRoleType;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberQuery;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
@@ -125,5 +126,10 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     @Override
     public long countAllMembers() {
         return memberJpaRepository.count();
+    }
+
+    @Override
+    public long countByRoleType(MemberRoleType roleType) {
+        return memberJpaRepository.countByRoleType(roleType);
     }
 }

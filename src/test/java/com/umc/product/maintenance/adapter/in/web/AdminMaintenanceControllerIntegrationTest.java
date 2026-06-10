@@ -7,18 +7,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.umc.product.authorization.application.port.out.SaveChallengerRolePort;
-import com.umc.product.authorization.domain.ChallengerRole;
-import com.umc.product.challenger.domain.Challenger;
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.MemberRoleType;
 import com.umc.product.maintenance.adapter.in.web.dto.request.StartMaintenanceRequest;
 import com.umc.product.maintenance.domain.MaintenanceScope;
+import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
-import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.IntegrationTestSupport;
-import com.umc.product.support.fixture.ChallengerFixture;
-import com.umc.product.support.fixture.GisuFixture;
 import com.umc.product.support.fixture.MemberFixture;
 import java.time.Duration;
 import java.time.Instant;
@@ -33,29 +27,23 @@ import org.springframework.http.MediaType;
 class AdminMaintenanceControllerIntegrationTest extends IntegrationTestSupport {
 
     @Autowired
-    SaveChallengerRolePort saveChallengerRolePort;
-
-    @Autowired
     MemberFixture memberFixture;
 
     @Autowired
-    ChallengerFixture challengerFixture;
+    SaveMemberPort saveMemberPort;
 
-    @Autowired
-    GisuFixture gisuFixture;
-
-    private String superAdminToken;
+    private String systemAdminToken;
     private String normalUserToken;
 
     @BeforeEach
     void setUpAuth() {
-        Long superAdminMemberId = setUpSuperAdmin();
+        Long adminMemberId = setUpSystemAdmin();
         Long normalMemberId = memberFixture.일반("normal-user").getId();
 
-        superAdminToken = "super-admin-token";
-        given(jwtTokenProvider.validateAccessToken(superAdminToken)).willReturn(true);
-        given(jwtTokenProvider.parseAccessToken(superAdminToken)).willReturn(superAdminMemberId);
-        given(jwtTokenProvider.getRolesFromAccessToken(superAdminToken)).willReturn(List.of());
+        systemAdminToken = "system-admin-token";
+        given(jwtTokenProvider.validateAccessToken(systemAdminToken)).willReturn(true);
+        given(jwtTokenProvider.parseAccessToken(systemAdminToken)).willReturn(adminMemberId);
+        given(jwtTokenProvider.getRolesFromAccessToken(systemAdminToken)).willReturn(List.of());
 
         normalUserToken = "normal-user-token";
         given(jwtTokenProvider.validateAccessToken(normalUserToken)).willReturn(true);
@@ -64,7 +52,7 @@ class AdminMaintenanceControllerIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void SUPER_ADMIN_은_점검을_생성하고_종료할_수_있다() throws Exception {
+    void member_ADMIN은_점검을_생성하고_종료할_수_있다() throws Exception {
         Instant now = Instant.now();
         StartMaintenanceRequest body = new StartMaintenanceRequest(
             MaintenanceScope.FULL,
@@ -76,7 +64,7 @@ class AdminMaintenanceControllerIntegrationTest extends IntegrationTestSupport {
         );
 
         String created = mockMvc.perform(post("/api/v1/admin/maintenance")
-                .header("Authorization", "Bearer " + superAdminToken)
+                .header("Authorization", "Bearer " + systemAdminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)))
             .andExpect(status().isOk())
@@ -87,7 +75,7 @@ class AdminMaintenanceControllerIntegrationTest extends IntegrationTestSupport {
         Long createdId = objectMapper.readTree(created).path("result").path("id").asLong();
 
         mockMvc.perform(patch("/api/v1/admin/maintenance/" + createdId + "/end")
-                .header("Authorization", "Bearer " + superAdminToken))
+                .header("Authorization", "Bearer " + systemAdminToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.forcedEndedAt").isNotEmpty());
     }
@@ -118,7 +106,7 @@ class AdminMaintenanceControllerIntegrationTest extends IntegrationTestSupport {
             "first", "m"
         );
         mockMvc.perform(post("/api/v1/admin/maintenance")
-                .header("Authorization", "Bearer " + superAdminToken)
+                .header("Authorization", "Bearer " + systemAdminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(first)))
             .andExpect(status().isOk());
@@ -130,7 +118,7 @@ class AdminMaintenanceControllerIntegrationTest extends IntegrationTestSupport {
             "overlap", "m"
         );
         mockMvc.perform(post("/api/v1/admin/maintenance")
-                .header("Authorization", "Bearer " + superAdminToken)
+                .header("Authorization", "Bearer " + systemAdminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(overlapping)))
             .andExpect(status().isConflict())
@@ -148,7 +136,7 @@ class AdminMaintenanceControllerIntegrationTest extends IntegrationTestSupport {
         );
 
         mockMvc.perform(post("/api/v1/admin/maintenance")
-                .header("Authorization", "Bearer " + superAdminToken)
+                .header("Authorization", "Bearer " + systemAdminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)))
             .andExpect(status().isBadRequest())
@@ -156,9 +144,9 @@ class AdminMaintenanceControllerIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 윈도우_목록은_SUPER_ADMIN_만_조회_가능() throws Exception {
+    void 윈도우_목록은_member_ADMIN만_조회_가능() throws Exception {
         mockMvc.perform(get("/api/v1/admin/maintenance")
-                .header("Authorization", "Bearer " + superAdminToken))
+                .header("Authorization", "Bearer " + systemAdminToken))
             .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/v1/admin/maintenance")
@@ -166,17 +154,9 @@ class AdminMaintenanceControllerIntegrationTest extends IntegrationTestSupport {
             .andExpect(status().isForbidden());
     }
 
-    private Long setUpSuperAdmin() {
-        Gisu gisu = gisuFixture.비활성_기수(99L);
-        Member member = memberFixture.일반("super-admin-fixture");
-        Challenger challenger = challengerFixture.챌린저(member.getId(), ChallengerPart.WEB, gisu.getId());
-        saveChallengerRolePort.save(ChallengerRole.create(
-            challenger.getId(),
-            ChallengerRoleType.SUPER_ADMIN,
-            null,
-            null,
-            gisu.getId()
-        ));
-        return member.getId();
+    private Long setUpSystemAdmin() {
+        Member member = memberFixture.일반("system-admin-fixture");
+        member.changeRole(MemberRoleType.ADMIN);
+        return saveMemberPort.save(member).getId();
     }
 }

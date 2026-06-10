@@ -13,6 +13,7 @@ import com.umc.product.authorization.application.port.in.query.dto.ChallengerRol
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.member.application.port.in.query.GetMemberRoleUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -31,6 +32,9 @@ class AdminAnalyticsScopeResolverTest {
 
     @Mock
     GetChallengerRoleUseCase getChallengerRoleUseCase;
+
+    @Mock
+    GetMemberRoleUseCase getMemberRoleUseCase;
 
     @Mock
     GetGisuUseCase getGisuUseCase;

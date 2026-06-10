@@ -2,6 +2,7 @@ package com.umc.product.member.adapter.in.web.dto.response;
 
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
+import com.umc.product.common.domain.enums.MemberRoleType;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
@@ -27,6 +28,7 @@ public record MemberInfoResponse(
     String schoolName,
     String profileImageLink,
     MemberStatus status,
+    MemberRoleType memberRoleType,
     List<ChallengerRoleInfo> roles, // TODO: 이거 그대로 써도 괜찮은거 맞나?
     List<ChallengerInfoResponse> challengerRecords,
     MemberProfileInfo profile
@@ -42,6 +44,7 @@ public record MemberInfoResponse(
             .schoolName(info.schoolName())
             .profileImageLink(info.profileImageLink())
             .status(info.status())
+            .memberRoleType(info.roleType())
             .roles(info.roles())
             .challengerRecords(challengerRecords)
             .build();
@@ -60,6 +63,7 @@ public record MemberInfoResponse(
             .schoolName(info.schoolName())
             .profileImageLink(info.profileImageLink())
             .status(info.status())
+            .memberRoleType(info.roleType())
             .roles(info.roles())
             .challengerRecords(challengerRecords)
             .profile(profileInfo)
@@ -76,6 +80,7 @@ public record MemberInfoResponse(
             .schoolName(schoolName)
             .profileImageLink(profileImageLink)
             .status(null)
+            .memberRoleType(null)
             .roles(roles)
             .challengerRecords(challengerRecords.stream().map(ChallengerInfoResponse::toPublic).toList())
             .profile(profile)

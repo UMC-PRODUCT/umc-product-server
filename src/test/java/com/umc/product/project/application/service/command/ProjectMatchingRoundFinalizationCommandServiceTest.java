@@ -15,6 +15,7 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.member.application.port.in.query.GetMemberRoleUseCase;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
@@ -77,6 +78,8 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
     @Mock
     GetChallengerRoleUseCase getChallengerRoleUseCase;
     @Mock
+    GetMemberRoleUseCase getMemberRoleUseCase;
+    @Mock
     GetChallengerUseCase getChallengerUseCase;
 
     ProjectMatchingRoundFinalizationCommandService sut;
@@ -93,6 +96,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             List.<MatchingDecisionPolicy>of(new DesignerMatchingPolicy(), new DeveloperMatchingPolicy()),
             new Random(42L),
             getChallengerRoleUseCase,
+            getMemberRoleUseCase,
             getChallengerUseCase
         );
         given(getChallengerRoleUseCase.findAllByMemberId(EXECUTOR_MEMBER_ID))
@@ -311,6 +315,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
                     List.<MatchingDecisionPolicy>of(),
                     new Random(42L),
                     getChallengerRoleUseCase,
+                    getMemberRoleUseCase,
                     getChallengerUseCase
                 );
             ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DESIGN);

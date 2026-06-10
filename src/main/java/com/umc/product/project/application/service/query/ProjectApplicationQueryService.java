@@ -200,7 +200,7 @@ public class ProjectApplicationQueryService
      * <p>
      * 흐름:
      * <ol>
-     *   <li>권한 scope 결정 (PO/Sub-PM/SUPER_ADMIN/CC/지부장/학교장만 통과, 그 외 빈 리스트로 위장)</li>
+     *   <li>권한 scope 결정 (PO/Sub-PM/전역 관리자/CC/지부장/학교장만 통과, 그 외 빈 리스트로 위장)</li>
      *   <li>프로젝트 단건 조회 (없으면 PROJECT_NOT_FOUND)</li>
      *   <li>지원서 동적 검색 (matchingRoundId / status 필터, DRAFT 제외)</li>
      *   <li>지원자들의 challenger.part batch 조회 (해당 기수 invariant)</li>

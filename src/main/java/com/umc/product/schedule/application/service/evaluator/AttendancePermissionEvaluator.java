@@ -95,6 +95,9 @@ public class AttendancePermissionEvaluator implements ResourcePermissionEvaluato
 
     // 특정 일정(scheduleId)이 진행되는 기수의 운영진인지 검사
     private boolean isTargetGisuAdmin(Long scheduleId, SubjectAttributes subjectAttributes) {
+        if (subjectAttributes.isSystemAdmin()) {
+            return true;
+        }
 
         Schedule schedule = loadSchedulePort.findById(scheduleId)
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
@@ -109,7 +112,7 @@ public class AttendancePermissionEvaluator implements ResourcePermissionEvaluato
 
     // 사용자가 가지고 있는 역할 중 하나라도 운영진 역할이 있는지 검사
     private boolean isAnyAdmin(SubjectAttributes subjectAttributes) {
-        return subjectAttributes.roleAttributes().stream()
+        return subjectAttributes.isSystemAdmin() || subjectAttributes.roleAttributes().stream()
             .anyMatch(role -> isOperatingRole(role.roleType()));
     }
 

@@ -3,6 +3,7 @@ package com.umc.product.project.application.access;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.member.application.port.in.query.GetMemberRoleUseCase;
 import com.umc.product.project.application.access.ProjectAccessScope.All;
 import com.umc.product.project.application.access.ProjectAccessScope.ChapterScoped;
 import com.umc.product.project.application.access.ProjectAccessScope.None;
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Component;
 public class ProjectAccessScopeResolver {
 
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+    private final GetMemberRoleUseCase getMemberRoleUseCase;
     private final LoadProjectPort loadProjectPort;
 
     /**
@@ -39,7 +41,7 @@ public class ProjectAccessScopeResolver {
      * <p>
      * 권한 별 노출 가능 status:
      * <ul>
-     *   <li>총괄단(SUPER_ADMIN/총괄/부총괄) ∪ 지부장: DRAFT 제외 전체 (PR/IP/COMPLETED/ABORTED)</li>
+     *   <li>전역 관리자 ∪ 총괄단(총괄/부총괄) ∪ 지부장: DRAFT 제외 전체 (PR/IP/COMPLETED/ABORTED)</li>
      *   <li>그 외(일반 챌린저, 학교 회장단): 공개 status (IN_PROGRESS / COMPLETED)</li>
      * </ul>
      * 호출자가 본인 권한 외 status 를 요청하면 {@link ProjectErrorCode#PROJECT_ACCESS_DENIED} 로 거부한다.
@@ -47,6 +49,13 @@ public class ProjectAccessScopeResolver {
     public ProjectAccessScope resolveForPublicSearch(
         Long memberId, Long gisuId, Set<ProjectStatus> requestedStatuses
     ) {
+        if (getMemberRoleUseCase.isAdmin(memberId)) {
+            if (requestedStatuses.contains(ProjectStatus.DRAFT)) {
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
+            }
+            return new All(requestedStatuses);
+        }
+
         List<ChallengerRoleInfo> rolesInGisu = getChallengerRoleUseCase.findAllByMemberId(memberId).stream()
             .filter(role -> Objects.equals(role.gisuId(), gisuId))
             .toList();
@@ -85,6 +94,10 @@ public class ProjectAccessScopeResolver {
     public ProjectAccessScope resolveForManagement(
         Long memberId, Long gisuId, Set<ProjectStatus> requestedStatuses
     ) {
+        if (getMemberRoleUseCase.isAdmin(memberId)) {
+            return new All(requestedStatuses);
+        }
+
         List<ChallengerRoleInfo> rolesInGisu = getChallengerRoleUseCase.findAllByMemberId(memberId).stream()
             .filter(role -> Objects.equals(role.gisuId(), gisuId))
             .toList();

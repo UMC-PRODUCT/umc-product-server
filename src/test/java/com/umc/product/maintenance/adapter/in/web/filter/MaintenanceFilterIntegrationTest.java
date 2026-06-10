@@ -7,21 +7,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.umc.product.authorization.application.port.out.SaveChallengerRolePort;
-import com.umc.product.authorization.domain.ChallengerRole;
-import com.umc.product.challenger.domain.Challenger;
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.MemberRoleType;
 import com.umc.product.maintenance.application.port.out.SaveMaintenanceWindowPort;
 import com.umc.product.maintenance.application.service.MaintenanceStateHolder;
 import com.umc.product.maintenance.domain.MaintenanceDomain;
 import com.umc.product.maintenance.domain.MaintenanceScope;
 import com.umc.product.maintenance.domain.MaintenanceWindow;
+import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
-import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.IntegrationTestSupport;
-import com.umc.product.support.fixture.ChallengerFixture;
-import com.umc.product.support.fixture.GisuFixture;
 import com.umc.product.support.fixture.MemberFixture;
 import java.time.Duration;
 import java.time.Instant;
@@ -40,16 +34,10 @@ class MaintenanceFilterIntegrationTest extends IntegrationTestSupport {
     MaintenanceStateHolder maintenanceStateHolder;
 
     @Autowired
-    SaveChallengerRolePort saveChallengerRolePort;
-
-    @Autowired
     MemberFixture memberFixture;
 
     @Autowired
-    ChallengerFixture challengerFixture;
-
-    @Autowired
-    GisuFixture gisuFixture;
+    SaveMemberPort saveMemberPort;
 
     @Test
     void 점검중이_아닐_때_시스템_상태_조회는_정상_200() throws Exception {
@@ -80,13 +68,13 @@ class MaintenanceFilterIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void FULL_점검중_SUPER_ADMIN_토큰이면_필터를_통과한다() throws Exception {
+    void FULL_점검중_member_ADMIN_토큰이면_필터를_통과한다() throws Exception {
         saveActiveFullWindow();
-        Long superAdminMemberId = setUpSuperAdmin();
+        Long adminMemberId = setUpSystemAdmin();
 
-        String token = "super-admin-token";
+        String token = "system-admin-token";
         given(jwtTokenProvider.validateAccessToken(token)).willReturn(true);
-        given(jwtTokenProvider.parseAccessToken(token)).willReturn(superAdminMemberId);
+        given(jwtTokenProvider.parseAccessToken(token)).willReturn(adminMemberId);
         given(jwtTokenProvider.getRolesFromAccessToken(token)).willReturn(java.util.List.of());
 
         // 필터를 통과한 뒤의 동작은 컨트롤러 존재 여부에 따라 다르므로
@@ -174,17 +162,9 @@ class MaintenanceFilterIntegrationTest extends IntegrationTestSupport {
         maintenanceStateHolder.refresh();
     }
 
-    private Long setUpSuperAdmin() {
-        Gisu gisu = gisuFixture.비활성_기수(99L);
-        Member member = memberFixture.일반("super-admin-fixture");
-        Challenger challenger = challengerFixture.챌린저(member.getId(), ChallengerPart.WEB, gisu.getId());
-        saveChallengerRolePort.save(ChallengerRole.create(
-            challenger.getId(),
-            ChallengerRoleType.SUPER_ADMIN,
-            null,
-            null,
-            gisu.getId()
-        ));
-        return member.getId();
+    private Long setUpSystemAdmin() {
+        Member member = memberFixture.일반("system-admin-fixture");
+        member.changeRole(MemberRoleType.ADMIN);
+        return saveMemberPort.save(member).getId();
     }
 }

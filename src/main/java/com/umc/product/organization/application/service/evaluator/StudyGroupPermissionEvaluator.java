@@ -26,9 +26,9 @@ public class StudyGroupPermissionEvaluator implements ResourcePermissionEvaluato
     @Override
     public boolean evaluate(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
         return switch (resourcePermission.permission()) {
-            case READ -> getChallengerRoleUseCase.isSchoolAdmin(
+            case READ -> subjectAttributes.isSystemAdmin() || getChallengerRoleUseCase.isSchoolAdmin(
                 subjectAttributes.memberId(), subjectAttributes.schoolId());
-            case WRITE, EDIT, DELETE -> getChallengerRoleUseCase.isSchoolCore(
+            case WRITE, EDIT, DELETE -> subjectAttributes.isSystemAdmin() || getChallengerRoleUseCase.isSchoolCore(
                 subjectAttributes.memberId(), subjectAttributes.schoolId());
             default -> throw new AuthorizationDomainException(AuthorizationErrorCode.PERMISSION_TYPE_NOT_IMPLEMENTED,
                 "StudyGroupPermissionEvaluator에서 해당 PermissionType을 지원하지 않습니다: " + resourcePermission.permission());

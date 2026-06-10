@@ -31,13 +31,13 @@ public sealed interface ProjectApplicationAccessScope {
     }
 
     /**
-     * 해당 기수의 모든 지원서 (총괄단 모니터링). SUPER_ADMIN 은 gisu 무관.
+     * 해당 기수의 모든 지원서 (총괄단 모니터링).
      */
     record AllInGisu(Long gisuId) implements ProjectApplicationAccessScope {
     }
 
     /**
-     * 글로벌 (SUPER_ADMIN).
+     * 글로벌 전역 관리자.
      */
     record All() implements ProjectApplicationAccessScope {
     }

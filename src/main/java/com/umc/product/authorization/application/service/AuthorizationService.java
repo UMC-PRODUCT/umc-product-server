@@ -92,6 +92,7 @@ public class AuthorizationService implements CheckPermissionUseCase {
             .memberId(memberId)
             .schoolId(schoolId)
             .gisuChallengerInfos(chapterIds)
+            .memberRoleType(memberInfo.roleType())
             .roleAttributes(roles)
             .build();
 

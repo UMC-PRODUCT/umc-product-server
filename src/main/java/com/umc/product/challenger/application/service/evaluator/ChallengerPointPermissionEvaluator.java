@@ -53,6 +53,10 @@ public class ChallengerPointPermissionEvaluator implements ResourcePermissionEva
      * 회원 (요청 한 사람), 대상 (상벌점을 부여받는 사람) 대상의 기수에, 회원이 중앙운영사무국 소속이거나, 회원이 해당 학교 Core(회장/부회장)여야 함
      */
     private boolean canCreate(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
+        if (subjectAttributes.isSystemAdmin()) {
+            return true;
+        }
+
         ChallengerInfo grantedChallengerInfo = getGrantedChallengerInfo(resourcePermission.getResourceIdAsLong());
 
         Long targetGisuId = grantedChallengerInfo.gisuId();
@@ -74,6 +78,10 @@ public class ChallengerPointPermissionEvaluator implements ResourcePermissionEva
     }
 
     private boolean canUpdate(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
+        if (subjectAttributes.isSystemAdmin()) {
+            return true;
+        }
+
         // resourceId에는 챌린저 포인트 ID가 담겨있음
 
         // 챌린저 포인트 정보를 가져옴
@@ -103,7 +111,7 @@ public class ChallengerPointPermissionEvaluator implements ResourcePermissionEva
 
     private boolean canDelete(SubjectAttributes subjectAttributes) {
         // 중앙운영사무국 총괄단만 가능함
-        return subjectAttributes.roleAttributes().stream()
+        return subjectAttributes.isSystemAdmin() || subjectAttributes.roleAttributes().stream()
             .anyMatch(roleAttribute -> roleAttribute.roleType().isAtLeastCentralCore());
     }
 }

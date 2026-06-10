@@ -22,6 +22,7 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.member.application.port.in.query.GetMemberRoleUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
@@ -65,6 +66,8 @@ class ProjectCommandServiceTest {
     com.umc.product.project.application.port.out.SaveProjectApplicationFormPolicyPort saveProjectApplicationFormPolicyPort;
     @Mock
     GetMemberUseCase getMemberUseCase;
+    @Mock
+    GetMemberRoleUseCase getMemberRoleUseCase;
     @Mock
     GetChallengerUseCase getChallengerUseCase;
     @Mock

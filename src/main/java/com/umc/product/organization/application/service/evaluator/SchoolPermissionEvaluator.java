@@ -26,7 +26,8 @@ public class SchoolPermissionEvaluator implements ResourcePermissionEvaluator {
     @Override
     public boolean evaluate(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
         return switch (resourcePermission.permission()) {
-            case WRITE, EDIT, DELETE -> getChallengerRoleUseCase.isCentralCore(subjectAttributes.memberId());
+            case WRITE, EDIT, DELETE -> subjectAttributes.isSystemAdmin()
+                || getChallengerRoleUseCase.isCentralCore(subjectAttributes.memberId());
             default -> throw new AuthorizationDomainException(AuthorizationErrorCode.PERMISSION_TYPE_NOT_IMPLEMENTED,
                 "SchoolPermissionEvaluator에서 해당 PermissionType을 지원하지 않습니다: " + resourcePermission.permission());
         };

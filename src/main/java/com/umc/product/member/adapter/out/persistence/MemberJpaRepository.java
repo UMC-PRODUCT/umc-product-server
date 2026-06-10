@@ -1,6 +1,7 @@
 package com.umc.product.member.adapter.out.persistence;
 
 import com.umc.product.member.domain.Member;
+import com.umc.product.common.domain.enums.MemberRoleType;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +30,8 @@ public interface MemberJpaRepository extends JpaRepository<Member, Long> {
     List<Long> findIdsCursor(@Param("lastId") Long lastId, Pageable pageable);
 
     long countByIdIn(Collection<Long> ids);
+
+    long countByRoleType(MemberRoleType roleType);
 
     interface SchoolMemberIdRow {
         Long getSchoolId();

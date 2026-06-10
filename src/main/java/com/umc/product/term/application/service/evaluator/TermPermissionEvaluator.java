@@ -42,7 +42,6 @@ public class TermPermissionEvaluator implements ResourcePermissionEvaluator {
     }
 
     private boolean canWriteTerm(SubjectAttributes subjectAttributes) {
-        return subjectAttributes.roleAttributes().stream()
-            .anyMatch(roles -> roles.roleType().isSuperAdmin());
+        return subjectAttributes.isSystemAdmin();
     }
 }

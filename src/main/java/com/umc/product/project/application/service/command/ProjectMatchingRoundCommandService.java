@@ -3,6 +3,7 @@ package com.umc.product.project.application.service.command;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.member.application.port.in.query.GetMemberRoleUseCase;
 import com.umc.product.project.application.port.in.command.CreateProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.in.command.DeleteProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectMatchingRoundUseCase;
@@ -47,6 +48,7 @@ public class ProjectMatchingRoundCommandService implements
     private final ScheduleMatchingRoundDeadlinePort scheduleMatchingRoundDeadlinePort;
 
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+    private final GetMemberRoleUseCase getMemberRoleUseCase;
 
     @Override
     public Long create(CreateProjectMatchingRoundCommand command) {
@@ -173,6 +175,10 @@ public class ProjectMatchingRoundCommandService implements
     }
 
     private void validateManageAccess(Long memberId, Long chapterId) {
+        if (getMemberRoleUseCase.isAdmin(memberId)) {
+            return;
+        }
+
         List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
         boolean allowed = roles.stream()
             .anyMatch(role -> role.roleType().isAtLeastCentralCore()

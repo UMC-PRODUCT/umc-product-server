@@ -102,8 +102,6 @@ public class ChallengerRecordController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @Valid @RequestBody CreateChallengerRecordRequest request
     ) {
-        // TODO: SUPER_ADMIN 만 가능하도록 권한 설정
-
         Long id = manageChallengerRecordUseCase.create(
             CreateChallengerRecordCommand.builder()
                 .part(request.part())

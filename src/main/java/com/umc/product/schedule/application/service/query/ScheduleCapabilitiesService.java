@@ -4,6 +4,7 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.member.application.port.in.query.GetMemberRoleUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleCapabilitiesUseCase;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleCapabilitiesInfo;
@@ -20,9 +21,13 @@ public class ScheduleCapabilitiesService implements GetScheduleCapabilitiesUseCa
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+    private final GetMemberRoleUseCase getMemberRoleUseCase;
 
     @Override
     public ScheduleCapabilitiesInfo getCapabilities(Long memberId) {
+        if (getMemberRoleUseCase.isAdmin(memberId)) {
+            return ScheduleCapabilitiesInfo.forCentralCore();
+        }
 
         // 챌린저 활동 기록이 없으면 일정 생성 불가
         if (getChallengerUseCase.getAllByMemberId(memberId).isEmpty()) {

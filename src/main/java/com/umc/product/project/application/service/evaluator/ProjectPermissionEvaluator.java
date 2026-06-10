@@ -47,7 +47,7 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
      * 단건 READ 분기. 비공개 상태(DRAFT/PENDING_REVIEW/ABORTED)는 권한자만 노출.
      * <p>
      * 목록 조회는 {@code resourceId} 가 없어 이 분기를 타지 않고 단순 통과 후 L3-A scope 에서 거른다.
-     * PR/ABORTED 는 PO + 해당 기수의 총괄단(SUPER_ADMIN 은 글로벌) ∪ 해당 기수의 지부장(chapter 무관).
+     * PR/ABORTED 는 PO + 전역 관리자 + 해당 기수의 총괄단 ∪ 해당 기수의 지부장(chapter 무관).
      */
     private boolean canRead(SubjectAttributes subject, ResourcePermission permission) {
         if (permission.resourceId() == null) {
@@ -75,7 +75,7 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
         if (isPlanChallenger) {
             return true;
         }
-        return subject.roleAttributes().stream()
+        return subject.isSystemAdmin() || subject.roleAttributes().stream()
             .anyMatch(role -> role.roleType().isAtLeastCentralCore()
                 || role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
                 || role.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
@@ -123,7 +123,7 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
     /**
      * 운영진 전용 액션 (publish / abort / complete / 정원 설정 등). PM 은 차단 — Admin 검토 우회 방지.
      * <p>
-     * 해당 기수의 총괄단(SUPER_ADMIN 은 글로벌) 또는 본인 지부장(해당 기수)만 통과.
+     * 전역 관리자, 해당 기수의 총괄단 또는 본인 지부장(해당 기수)만 통과.
      * 종료 상태(COMPLETED/ABORTED)는 절대 차단.
      */
     private boolean canManage(SubjectAttributes subject, ResourcePermission permission) {
@@ -135,7 +135,7 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
     }
 
     /**
-     * 해당 프로젝트에 대한 운영진 권한 보유 여부. 해당 기수 총괄단(SUPER_ADMIN 은 글로벌)
+     * 해당 프로젝트에 대한 운영진 권한 보유 여부. 전역 관리자, 해당 기수 총괄단
      * 또는 해당 프로젝트 지부의 지부장(해당 기수)이면 true.
      */
     private boolean isProjectAdmin(SubjectAttributes subject, Project project) {
@@ -158,14 +158,13 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
 
     @SuppressWarnings("unused")
     private boolean isCentralCore(SubjectAttributes subject) {
-        return subject.roleAttributes().stream()
+        return subject.isSystemAdmin() || subject.roleAttributes().stream()
             .anyMatch(role -> role.roleType().isAtLeastCentralCore());
     }
 
     private boolean isCentralCoreInGisu(SubjectAttributes subject, Long gisuId) {
-        return subject.roleAttributes().stream()
-            .anyMatch(role -> role.roleType().isSuperAdmin()
-                || (role.roleType().isAtLeastCentralCore() && Objects.equals(role.gisuId(), gisuId)));
+        return subject.isSystemAdmin() || subject.roleAttributes().stream()
+            .anyMatch(role -> role.roleType().isAtLeastCentralCore() && Objects.equals(role.gisuId(), gisuId));
     }
 
     private boolean isOwner(SubjectAttributes subject, Project project) {
