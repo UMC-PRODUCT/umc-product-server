@@ -7,6 +7,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.EnumSet;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.umc.product.authorization.application.port.out.SaveChallengerRolePort;
 import com.umc.product.authorization.domain.ChallengerRole;
 import com.umc.product.challenger.domain.Challenger;
@@ -23,12 +31,6 @@ import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.support.fixture.ChallengerFixture;
 import com.umc.product.support.fixture.GisuFixture;
 import com.umc.product.support.fixture.MemberFixture;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.EnumSet;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @DisplayName("MaintenanceFilter 통합 테스트")
 class MaintenanceFilterIntegrationTest extends IntegrationTestSupport {
@@ -140,6 +142,16 @@ class MaintenanceFilterIntegrationTest extends IntegrationTestSupport {
             .andReturn().getResponse().getStatus();
 
         assertThat(actualStatus).isNotEqualTo(503);
+    }
+
+    @Test
+    @DisplayName("FULL 점검 중에도 약관 조회는 점검 필터를 통과한다")
+    void fullMaintenanceAllowsTermLookup() throws Exception {
+        saveActiveFullWindow();
+
+        mockMvc.perform(get("/api/v1/terms"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.terms").isArray());
     }
 
     private void saveActiveFullWindow() {
