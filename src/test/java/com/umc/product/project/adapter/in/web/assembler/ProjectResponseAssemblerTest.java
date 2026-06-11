@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 
 import java.lang.reflect.RecordComponent;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -155,13 +156,13 @@ class ProjectResponseAssemblerTest {
     }
 
     @Test
-    void membersFor_보조PM_가나다순_정렬() {
+    void membersFor_보조PM_createdAt_오름차순_정렬() {
         ProjectInfo info = projectInfo(42L);
         given(getProjectUseCase.getById(42L)).willReturn(info);
         given(loadProjectMemberPort.listByProjectId(42L)).willReturn(List.of(
-            projectMember(101L, ChallengerPart.PLAN),
-            projectMember(102L, ChallengerPart.PLAN),
-            projectMember(103L, ChallengerPart.PLAN)
+            projectMember(101L, ChallengerPart.PLAN, Instant.parse("2026-01-01T00:00:00Z")),
+            projectMember(102L, ChallengerPart.PLAN, Instant.parse("2026-01-03T00:00:00Z")),
+            projectMember(103L, ChallengerPart.PLAN, Instant.parse("2026-01-02T00:00:00Z"))
         ));
         given(getMemberUseCase.findAllByIds(Set.of(99L, 101L, 102L, 103L))).willReturn(Map.of(
             99L, memberInfoOf(99L, "메인", "김메인"),
@@ -175,7 +176,30 @@ class ProjectResponseAssemblerTest {
         List<String> nicknames = response.coProductOwners().stream()
             .map(ProjectMembersResponse.ProjectMemberBrief::nickname)
             .toList();
-        assertThat(nicknames).containsExactly("가람", "나무", "다람쥐");
+        assertThat(nicknames).containsExactly("다람쥐", "나무", "가람");
+    }
+
+    @Test
+    @DisplayName("membersFor는 파트별 멤버를 ProjectMember createdAt 오름차순으로 응답한다")
+    void membersFor_파트별_멤버_createdAt_오름차순_정렬() {
+        ProjectInfo info = projectInfo(42L);
+        given(getProjectUseCase.getById(42L)).willReturn(info);
+        given(loadProjectMemberPort.listByProjectId(42L)).willReturn(List.of(
+            projectMember(101L, ChallengerPart.SPRINGBOOT, Instant.parse("2026-01-02T00:00:00Z")),
+            projectMember(102L, ChallengerPart.SPRINGBOOT, Instant.parse("2026-01-01T00:00:00Z"))
+        ));
+        given(getMemberUseCase.findAllByIds(Set.of(99L, 101L, 102L))).willReturn(Map.of(
+            99L, memberInfoOf(99L, "메인", "김메인"),
+            101L, memberInfoOf(101L, "가람", "이가람"),
+            102L, memberInfoOf(102L, "다람쥐", "박다람")
+        ));
+
+        ProjectMembersResponse response = sut.membersFor(42L);
+
+        List<Long> memberIds = response.partGroups().get(0).members().stream()
+            .map(ProjectMembersResponse.ProjectMemberBrief::memberId)
+            .toList();
+        assertThat(memberIds).containsExactly(102L, 101L);
     }
 
     @Test
@@ -315,12 +339,17 @@ class ProjectResponseAssemblerTest {
     }
 
     private ProjectMember projectMember(Long memberId, ChallengerPart part) {
+        return projectMember(memberId, part, null);
+    }
+
+    private ProjectMember projectMember(Long memberId, ChallengerPart part, Instant createdAt) {
         try {
             var c = ProjectMember.class.getDeclaredConstructor();
             c.setAccessible(true);
             ProjectMember pm = c.newInstance();
             ReflectionTestUtils.setField(pm, "memberId", memberId);
             ReflectionTestUtils.setField(pm, "part", part);
+            ReflectionTestUtils.setField(pm, "createdAt", createdAt);
             return pm;
         } catch (Exception e) {
             throw new RuntimeException(e);
