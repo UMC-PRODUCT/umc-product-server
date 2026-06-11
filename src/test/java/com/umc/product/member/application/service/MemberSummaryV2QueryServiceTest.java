@@ -14,8 +14,10 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.enums.MemberStatus;
+import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberProfileUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberSummaryV2Info;
@@ -40,6 +42,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class MemberSummaryV2QueryServiceTest {
 
     @Mock GetMemberUseCase getMemberUseCase;
+    @Mock GetMemberCredentialUseCase getMemberCredentialUseCase;
     @Mock GetMemberProfileUseCase getMemberProfileUseCase;
     @Mock GetChallengerUseCase getChallengerUseCase;
     @Mock GetGisuUseCase getGisuUseCase;
@@ -201,5 +204,40 @@ class MemberSummaryV2QueryServiceTest {
         assertThat(info.currentGisuMembership().challenger()).isNull();
         assertThat(info.currentGisuMembership().isAdmin()).isFalse();
         assertThat(info.currentGisuMembership().roleTypes()).isEmpty();
+    }
+
+    @Test
+    void 로컬_자격증명이_있는_회원은_hasLocalCredential이_true이다() {
+        MemberInfo m = member();
+        given(getMemberUseCase.getById(100L)).willReturn(m);
+        given(getMemberCredentialUseCase.findCredentialByMemberId(100L))
+            .willReturn(Optional.of(new MemberCredentialInfo(100L, "{bcrypt}encoded")));
+        given(getMemberProfileUseCase.getMemberProfileById(100L)).willReturn(profile());
+
+        given(getChallengerUseCase.getAllByMemberId(100L)).willReturn(List.of());
+        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.empty());
+        given(getChallengerActivityPeriodUseCase.calculateActivityPeriod(any(), any()))
+            .willReturn(new ActivityPeriodSummary(0L, List.of()));
+
+        MemberSummaryV2Info info = service.getSummaryByMemberId(100L);
+
+        assertThat(info.hasLocalCredential()).isTrue();
+    }
+
+    @Test
+    void 로컬_자격증명이_없는_회원은_hasLocalCredential이_false이다() {
+        MemberInfo m = member();
+        given(getMemberUseCase.getById(100L)).willReturn(m);
+        given(getMemberCredentialUseCase.findCredentialByMemberId(100L)).willReturn(Optional.empty());
+        given(getMemberProfileUseCase.getMemberProfileById(100L)).willReturn(profile());
+
+        given(getChallengerUseCase.getAllByMemberId(100L)).willReturn(List.of());
+        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.empty());
+        given(getChallengerActivityPeriodUseCase.calculateActivityPeriod(any(), any()))
+            .willReturn(new ActivityPeriodSummary(0L, List.of()));
+
+        MemberSummaryV2Info info = service.getSummaryByMemberId(100L);
+
+        assertThat(info.hasLocalCredential()).isFalse();
     }
 }

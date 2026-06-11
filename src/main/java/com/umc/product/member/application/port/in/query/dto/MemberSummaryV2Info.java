@@ -16,6 +16,7 @@ import java.util.Map;
 public record MemberSummaryV2Info(
     MemberInfo member,
     MemberProfileInfo profile,
+    boolean hasLocalCredential,
     long totalActivityDays,
     CurrentGisuMembership currentGisuMembership,
     List<ChallengerHistoryItem> challengerHistory

@@ -24,6 +24,8 @@ public record MemberSummaryV2Response(
     String nickname,
 
     String email,
+    @Schema(description = "로컬 계정 비밀번호 자격증명 보유 여부")
+    boolean hasLocalCredential,
 
     Long schoolId,
     String schoolName,
@@ -48,6 +50,7 @@ public record MemberSummaryV2Response(
             m.name(),
             m.nickname(),
             m.email(),
+            info.hasLocalCredential(),
             m.schoolId(),
             m.schoolName(),
             m.profileImageLink(),

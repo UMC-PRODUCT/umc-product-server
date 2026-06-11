@@ -78,6 +78,7 @@ class MemberQueryV2ControllerTest {
                 .status(MemberStatus.ACTIVE)
                 .build(),
             MemberProfileInfo.builder().github("https://github.com/umc").build(),
+            true,
             30L,
             null,
             List.of()
@@ -86,6 +87,7 @@ class MemberQueryV2ControllerTest {
         mockMvc.perform(get("/api/v2/member/me"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.id").value(99L))
+            .andExpect(jsonPath("$.result.hasLocalCredential").value(true))
             .andExpect(jsonPath("$.result.totalActivityDays").value(30L));
     }
 
