@@ -1222,6 +1222,17 @@
   },
   {
     "sequence": 112,
+    "domain": "feedback",
+    "enumName": "FeedbackErrorCode",
+    "constantName": "USER_FEEDBACK_TEMPLATE_NOT_FOUND",
+    "httpStatus": "NOT_FOUND",
+    "code": "FEEDBACK-0001",
+    "message": "사용자 피드백 템플릿을 찾을 수 없습니다.",
+    "source": "src/main/java/com/umc/product/feedback/domain/exception/FeedbackErrorCode.java",
+    "line": 15
+  },
+  {
+    "sequence": 113,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "INTEGRATION_NOT_FOUND",
@@ -1232,7 +1243,7 @@
     "line": 12
   },
   {
-    "sequence": 113,
+    "sequence": 114,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "OAUTH_TOKEN_EXCHANGE_FAILED",
@@ -1243,7 +1254,7 @@
     "line": 13
   },
   {
-    "sequence": 114,
+    "sequence": 115,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "OAUTH_TOKEN_REFRESH_FAILED",
@@ -1254,7 +1265,7 @@
     "line": 14
   },
   {
-    "sequence": 115,
+    "sequence": 116,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "COMMENT_FETCH_FAILED",
@@ -1265,7 +1276,7 @@
     "line": 15
   },
   {
-    "sequence": 116,
+    "sequence": 117,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "FILE_METADATA_FETCH_FAILED",
@@ -1276,7 +1287,7 @@
     "line": 16
   },
   {
-    "sequence": 117,
+    "sequence": 118,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "WATCHED_FILE_NOT_FOUND",
@@ -1287,7 +1298,7 @@
     "line": 17
   },
   {
-    "sequence": 118,
+    "sequence": 119,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "WATCHED_FILE_ALREADY_EXISTS",
@@ -1298,7 +1309,7 @@
     "line": 18
   },
   {
-    "sequence": 119,
+    "sequence": 120,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "OAUTH_STATE_MISMATCH",
@@ -1309,7 +1320,7 @@
     "line": 19
   },
   {
-    "sequence": 120,
+    "sequence": 121,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "TOKEN_ENCRYPTION_FAILED",
@@ -1320,7 +1331,7 @@
     "line": 20
   },
   {
-    "sequence": 121,
+    "sequence": 122,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "DISCORD_MENTION_SEND_FAILED",
@@ -1331,7 +1342,7 @@
     "line": 21
   },
   {
-    "sequence": 122,
+    "sequence": 123,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "ROUTING_DOMAIN_NOT_FOUND",
@@ -1342,7 +1353,7 @@
     "line": 22
   },
   {
-    "sequence": 123,
+    "sequence": 124,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "ROUTING_DOMAIN_ALREADY_EXISTS",
@@ -1353,7 +1364,7 @@
     "line": 23
   },
   {
-    "sequence": 124,
+    "sequence": 125,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "ROUTING_DOMAIN_MENTION_NOT_FOUND",
@@ -1364,7 +1375,7 @@
     "line": 24
   },
   {
-    "sequence": 125,
+    "sequence": 126,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "ROUTING_DOMAIN_NOT_REGISTERED",
@@ -1375,7 +1386,7 @@
     "line": 25
   },
   {
-    "sequence": 126,
+    "sequence": 127,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "DIGEST_RANGE_INVALID",
@@ -1386,7 +1397,7 @@
     "line": 26
   },
   {
-    "sequence": 127,
+    "sequence": 128,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "INTERNAL_SERVER_ERROR",
@@ -1397,7 +1408,7 @@
     "line": 24
   },
   {
-    "sequence": 128,
+    "sequence": 129,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "BAD_REQUEST",
@@ -1408,7 +1419,7 @@
     "line": 26
   },
   {
-    "sequence": 129,
+    "sequence": 130,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "UNAUTHORIZED",
@@ -1419,7 +1430,7 @@
     "line": 27
   },
   {
-    "sequence": 130,
+    "sequence": 131,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "FORBIDDEN",
@@ -1430,7 +1441,7 @@
     "line": 28
   },
   {
-    "sequence": 131,
+    "sequence": 132,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "NOT_FOUND",
@@ -1441,7 +1452,7 @@
     "line": 29
   },
   {
-    "sequence": 132,
+    "sequence": 133,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "NOT_IMPLEMENTED",
@@ -1452,7 +1463,7 @@
     "line": 30
   },
   {
-    "sequence": 133,
+    "sequence": 134,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "INVALID_ENV",
@@ -1463,7 +1474,7 @@
     "line": 37
   },
   {
-    "sequence": 134,
+    "sequence": 135,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "PERMISSION_TYPE_NOT_IMPLEMENTED",
@@ -1474,7 +1485,7 @@
     "line": 40
   },
   {
-    "sequence": 135,
+    "sequence": 136,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "SECURITY_NOT_GIVEN",
@@ -1485,7 +1496,7 @@
     "line": 33
   },
   {
-    "sequence": 136,
+    "sequence": 137,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "SECURITY_FORBIDDEN",
@@ -1496,7 +1507,7 @@
     "line": 34
   },
   {
-    "sequence": 137,
+    "sequence": 138,
     "domain": "llm",
     "enumName": "LlmErrorCode",
     "constantName": "CHAT_COMPLETION_FAILED",
@@ -1507,7 +1518,7 @@
     "line": 12
   },
   {
-    "sequence": 138,
+    "sequence": 139,
     "domain": "llm",
     "enumName": "LlmErrorCode",
     "constantName": "CHAT_COMPLETION_INVALID_RESPONSE",
@@ -1518,7 +1529,7 @@
     "line": 13
   },
   {
-    "sequence": 139,
+    "sequence": 140,
     "domain": "llm",
     "enumName": "LlmErrorCode",
     "constantName": "PROVIDER_NOT_CONFIGURED",
@@ -1529,7 +1540,7 @@
     "line": 14
   },
   {
-    "sequence": 140,
+    "sequence": 141,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "SERVICE_UNDER_MAINTENANCE",
@@ -1540,7 +1551,7 @@
     "line": 12
   },
   {
-    "sequence": 141,
+    "sequence": 142,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "MAINTENANCE_WINDOW_NOT_FOUND",
@@ -1551,7 +1562,7 @@
     "line": 13
   },
   {
-    "sequence": 142,
+    "sequence": 143,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "INVALID_TIME_RANGE",
@@ -1562,7 +1573,7 @@
     "line": 14
   },
   {
-    "sequence": 143,
+    "sequence": 144,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "START_AT_IN_PAST",
@@ -1573,7 +1584,7 @@
     "line": 15
   },
   {
-    "sequence": 144,
+    "sequence": 145,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "TARGET_DOMAINS_REQUIRED",
@@ -1584,7 +1595,7 @@
     "line": 16
   },
   {
-    "sequence": 145,
+    "sequence": 146,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "OVERLAPPING_WINDOW",
@@ -1595,7 +1606,7 @@
     "line": 17
   },
   {
-    "sequence": 146,
+    "sequence": 147,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "ALREADY_ENDED",
@@ -1606,7 +1617,7 @@
     "line": 18
   },
   {
-    "sequence": 147,
+    "sequence": 148,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "NOT_SUPER_ADMIN",
@@ -1617,7 +1628,7 @@
     "line": 19
   },
   {
-    "sequence": 148,
+    "sequence": 149,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "MEMBER_NOT_FOUND",
@@ -1628,7 +1639,7 @@
     "line": 12
   },
   {
-    "sequence": 149,
+    "sequence": 150,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "MEMBER_ALREADY_EXISTS",
@@ -1639,7 +1650,7 @@
     "line": 13
   },
   {
-    "sequence": 150,
+    "sequence": 151,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "EMAIL_ALREADY_EXISTS",
@@ -1650,7 +1661,7 @@
     "line": 14
   },
   {
-    "sequence": 151,
+    "sequence": 152,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "MEMBER_ALREADY_WITHDRAWN",
@@ -1661,7 +1672,7 @@
     "line": 15
   },
   {
-    "sequence": 152,
+    "sequence": 153,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "INVALID_MEMBER_STATUS",
@@ -1672,7 +1683,7 @@
     "line": 16
   },
   {
-    "sequence": 153,
+    "sequence": 154,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "MEMBER_NOT_ACTIVE",
@@ -1683,7 +1694,7 @@
     "line": 17
   },
   {
-    "sequence": 154,
+    "sequence": 155,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "MEMBER_ALREADY_REGISTERED",
@@ -1694,7 +1705,7 @@
     "line": 18
   },
   {
-    "sequence": 155,
+    "sequence": 156,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "MEMBER_PROFILE_NOT_FOUND",
@@ -1705,7 +1716,7 @@
     "line": 19
   },
   {
-    "sequence": 156,
+    "sequence": 157,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "MEMBER_SCHOOL_NOT_ASSIGNED",
@@ -1716,7 +1727,7 @@
     "line": 20
   },
   {
-    "sequence": 157,
+    "sequence": 158,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "CREDENTIAL_ALREADY_REGISTERED",
@@ -1727,7 +1738,7 @@
     "line": 21
   },
   {
-    "sequence": 158,
+    "sequence": 159,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "CREDENTIAL_NOT_REGISTERED",
@@ -1738,7 +1749,7 @@
     "line": 22
   },
   {
-    "sequence": 159,
+    "sequence": 160,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "INVALID_LOGIN_ID",
@@ -1749,7 +1760,7 @@
     "line": 23
   },
   {
-    "sequence": 160,
+    "sequence": 161,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "INVALID_PASSWORD",
@@ -1760,7 +1771,7 @@
     "line": 24
   },
   {
-    "sequence": 161,
+    "sequence": 162,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NOTICE_NOT_FOUND",
@@ -1771,7 +1782,7 @@
     "line": 12
   },
   {
-    "sequence": 162,
+    "sequence": 163,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "ALREADY_PUBLISHED_NOTICE",
@@ -1782,7 +1793,7 @@
     "line": 13
   },
   {
-    "sequence": 163,
+    "sequence": 164,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "INVALID_NOTICE_TITLE",
@@ -1793,7 +1804,7 @@
     "line": 14
   },
   {
-    "sequence": 164,
+    "sequence": 165,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "INVALID_NOTICE_CONTENT",
@@ -1804,7 +1815,7 @@
     "line": 15
   },
   {
-    "sequence": 165,
+    "sequence": 166,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "INVALID_NOTICE_STATUS_FOR_REMINDER",
@@ -1815,7 +1826,7 @@
     "line": 16
   },
   {
-    "sequence": 166,
+    "sequence": 167,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "AUTHOR_REQUIRED",
@@ -1826,7 +1837,7 @@
     "line": 17
   },
   {
-    "sequence": 167,
+    "sequence": 168,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NOTICE_SCOPE_REQUIRED",
@@ -1837,7 +1848,7 @@
     "line": 18
   },
   {
-    "sequence": 168,
+    "sequence": 169,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NOTICE_AUTHOR_MISMATCH",
@@ -1848,7 +1859,7 @@
     "line": 19
   },
   {
-    "sequence": 169,
+    "sequence": 170,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NO_WRITE_PERMISSION",
@@ -1859,7 +1870,7 @@
     "line": 20
   },
   {
-    "sequence": 170,
+    "sequence": 171,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "INVALID_TARGET_SETTING",
@@ -1870,7 +1881,7 @@
     "line": 22
   },
   {
-    "sequence": 171,
+    "sequence": 172,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NO_TARGET_FOUND",
@@ -1881,7 +1892,7 @@
     "line": 23
   },
   {
-    "sequence": 172,
+    "sequence": 173,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NO_READ_PERMISSION",
@@ -1892,7 +1903,7 @@
     "line": 21
   },
   {
-    "sequence": 173,
+    "sequence": 174,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NOT_IMPLEMENTED_YET",
@@ -1903,7 +1914,7 @@
     "line": 41
   },
   {
-    "sequence": 174,
+    "sequence": 175,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "VOTE_IDS_REQUIRED",
@@ -1914,7 +1925,7 @@
     "line": 26
   },
   {
-    "sequence": 175,
+    "sequence": 176,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "IMAGE_URLS_REQUIRED",
@@ -1925,7 +1936,7 @@
     "line": 27
   },
   {
-    "sequence": 176,
+    "sequence": 177,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "LINK_URLS_REQUIRED",
@@ -1936,7 +1947,7 @@
     "line": 28
   },
   {
-    "sequence": 177,
+    "sequence": 178,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NOTICE_VOTE_NOT_FOUND",
@@ -1947,7 +1958,7 @@
     "line": 29
   },
   {
-    "sequence": 178,
+    "sequence": 179,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NOTICE_IMAGE_NOT_FOUND",
@@ -1958,7 +1969,7 @@
     "line": 30
   },
   {
-    "sequence": 179,
+    "sequence": 180,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NOTICE_LINK_NOT_FOUND",
@@ -1969,7 +1980,7 @@
     "line": 31
   },
   {
-    "sequence": 180,
+    "sequence": 181,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "IMAGE_LIMIT_EXCEEDED",
@@ -1980,7 +1991,7 @@
     "line": 32
   },
   {
-    "sequence": 181,
+    "sequence": 182,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "VOTE_ALREADY_EXISTS",
@@ -1991,7 +2002,7 @@
     "line": 33
   },
   {
-    "sequence": 182,
+    "sequence": 183,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "INVALID_VOTE_OPTION_COUNT",
@@ -2002,7 +2013,7 @@
     "line": 34
   },
   {
-    "sequence": 183,
+    "sequence": 184,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "INVALID_VOTE_OPTION_CONTENT",
@@ -2013,7 +2024,7 @@
     "line": 35
   },
   {
-    "sequence": 184,
+    "sequence": 185,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "VOTE_NOT_STARTED",
@@ -2024,7 +2035,7 @@
     "line": 36
   },
   {
-    "sequence": 185,
+    "sequence": 186,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "VOTE_CLOSED",
@@ -2035,7 +2046,7 @@
     "line": 37
   },
   {
-    "sequence": 186,
+    "sequence": 187,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "SELECTED_OPTION_IDS_REQUIRED",
@@ -2046,37 +2057,26 @@
     "line": 38
   },
   {
-    "sequence": 187,
-    "domain": "notification",
-    "enumName": "EmailErrorCode",
-    "constantName": "EMAIL_GENERAL_ERROR",
-    "httpStatus": "BAD_REQUEST",
-    "code": "EMAIL-0001",
-    "message": "알 수 없는 사유로 이메일 전송에 실패했습니다.",
-    "source": "src/main/java/com/umc/product/notification/domain/exception/EmailErrorCode.java",
-    "line": 11
-  },
-  {
     "sequence": 188,
     "domain": "notification",
     "enumName": "EmailErrorCode",
-    "constantName": "EMAIL_ENCODING_ERROR",
-    "httpStatus": "BAD_REQUEST",
-    "code": "EMAIL-0002",
-    "message": "인코딩 과정에서 오류가 발생했습니다.",
+    "constantName": "EMAIL_TEMPLATE_RENDER_FAILED",
+    "httpStatus": "INTERNAL_SERVER_ERROR",
+    "code": "EMAIL-0004",
+    "message": "이메일 본문 템플릿 렌더링에 실패했습니다.",
     "source": "src/main/java/com/umc/product/notification/domain/exception/EmailErrorCode.java",
-    "line": 12
+    "line": 11
   },
   {
     "sequence": 189,
     "domain": "notification",
     "enumName": "EmailErrorCode",
-    "constantName": "EMAIL_MESSAGING_ERROR",
-    "httpStatus": "BAD_REQUEST",
-    "code": "EMAIL-0003",
-    "message": "메일 전송 과정에서 오류가 발생했습니다.",
+    "constantName": "EMAIL_SEND_FAILED",
+    "httpStatus": "INTERNAL_SERVER_ERROR",
+    "code": "EMAIL-0005",
+    "message": "이메일 발송에 실패했습니다.",
     "source": "src/main/java/com/umc/product/notification/domain/exception/EmailErrorCode.java",
-    "line": 13
+    "line": 12
   },
   {
     "sequence": 190,
@@ -2604,7 +2604,7 @@
     "code": "PROJECT-0001",
     "message": "프로젝트를 찾을 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 13
+    "line": 15
   },
   {
     "sequence": 238,
@@ -2615,7 +2615,7 @@
     "code": "PROJECT-0002",
     "message": "이미 완료된 프로젝트입니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 14
+    "line": 16
   },
   {
     "sequence": 239,
@@ -2626,7 +2626,7 @@
     "code": "PROJECT-0003",
     "message": "해당 프로젝트를 해산시킬 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 15
+    "line": 17
   },
   {
     "sequence": 240,
@@ -2637,7 +2637,7 @@
     "code": "PROJECT-0004",
     "message": "요청하신 조작은 지원서가 제출된 상태에서만 가능합니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 18
+    "line": 20
   },
   {
     "sequence": 241,
@@ -2648,7 +2648,7 @@
     "code": "PROJECT-0005",
     "message": "이미 지원서가 제출되었거나 평가가 완료된 상태입니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 19
+    "line": 21
   },
   {
     "sequence": 242,
@@ -2659,7 +2659,7 @@
     "code": "PROJECT-0006",
     "message": "프로젝트에서 해당 지원용 폼을 찾을 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 27
+    "line": 29
   },
   {
     "sequence": 243,
@@ -2670,7 +2670,7 @@
     "code": "PROJECT-0007",
     "message": "요청하신 지원용 폼 섹션에 접근 권한이 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 28
+    "line": 30
   },
   {
     "sequence": 244,
@@ -2681,7 +2681,7 @@
     "code": "PROJECT-0008",
     "message": "작성 중인 DRAFT 프로젝트가 있어 새로 시작할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 37
+    "line": 39
   },
   {
     "sequence": 245,
@@ -2692,7 +2692,7 @@
     "code": "PROJECT-0009",
     "message": "현재 상태에서 수행할 수 없는 작업입니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 38
+    "line": 40
   },
   {
     "sequence": 246,
@@ -2703,7 +2703,7 @@
     "code": "PROJECT-0010",
     "message": "프로젝트 PO는 PLAN 파트 챌린저여야 합니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 39
+    "line": 41
   },
   {
     "sequence": 247,
@@ -2714,7 +2714,7 @@
     "code": "PROJECT-0011",
     "message": "제출에 필요한 필수 정보가 누락되었습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 40
+    "line": 42
   },
   {
     "sequence": 248,
@@ -2725,7 +2725,7 @@
     "code": "PROJECT-0012",
     "message": "해당 프로젝트에 대한 접근 권한이 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 41
+    "line": 43
   },
   {
     "sequence": 249,
@@ -2736,7 +2736,7 @@
     "code": "PROJECT-0013",
     "message": "PART 타입 섹션은 1개 이상의 파트를 지정해야 합니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 29
+    "line": 31
   },
   {
     "sequence": 250,
@@ -2747,7 +2747,7 @@
     "code": "PROJECT-0014",
     "message": "현재 폼에 존재하지 않는 sectionId 입니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 30
+    "line": 32
   },
   {
     "sequence": 251,
@@ -2758,7 +2758,7 @@
     "code": "PROJECT-0015",
     "message": "해당 섹션에 속하지 않는 questionId 입니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 31
+    "line": 33
   },
   {
     "sequence": 252,
@@ -2769,7 +2769,7 @@
     "code": "PROJECT-0016",
     "message": "해당 질문에 속하지 않는 optionId 입니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 32
+    "line": 34
   },
   {
     "sequence": 253,
@@ -2780,7 +2780,7 @@
     "code": "PROJECT-0017",
     "message": "선택지 타입(RADIO/CHECKBOX/DROPDOWN)이 아닌 질문에는 옵션을 지정할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 33
+    "line": 35
   },
   {
     "sequence": 254,
@@ -2791,7 +2791,7 @@
     "code": "PROJECT-0018",
     "message": "선택지 타입 질문에는 1개 이상의 옵션이 필요합니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 34
+    "line": 36
   },
   {
     "sequence": 255,
@@ -2802,7 +2802,7 @@
     "code": "PROJECT-0019",
     "message": "임시저장 상태의 지원서는 PM/운영진 응답에 매핑할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 20
+    "line": 22
   },
   {
     "sequence": 256,
@@ -2813,7 +2813,7 @@
     "code": "PROJECT-0020",
     "message": "임시저장(DRAFT)은 PM/운영진 지원자 목록 조회 필터로 사용할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 22
+    "line": 24
   },
   {
     "sequence": 257,
@@ -2824,7 +2824,7 @@
     "code": "PROJECT-0021",
     "message": "지원서를 찾을 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 24
+    "line": 26
   },
   {
     "sequence": 258,
@@ -2835,7 +2835,7 @@
     "code": "PROJECT-0022",
     "message": "현재 상태에서는 프로젝트를 삭제할 수 없습니다. (DRAFT, PENDING_REVIEW 상태만 가능)",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 42
+    "line": 44
   },
   {
     "sequence": 259,
@@ -2846,7 +2846,7 @@
     "code": "PROJECT-0023",
     "message": "프로젝트 중단 사유는 필수입니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 44
+    "line": 46
   },
   {
     "sequence": 260,
@@ -2857,7 +2857,7 @@
     "code": "PROJECT-0100",
     "message": "프로젝트 멤버를 찾을 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 47
+    "line": 49
   },
   {
     "sequence": 261,
@@ -2868,7 +2868,7 @@
     "code": "PROJECT-0101",
     "message": "이미 해당 프로젝트의 멤버입니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 48
+    "line": 50
   },
   {
     "sequence": 262,
@@ -2879,7 +2879,7 @@
     "code": "PROJECT-0102",
     "message": "메인 PM 은 팀원 제거가 아닌 소유권 양도 API 로 변경해야 합니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 49
+    "line": 51
   },
   {
     "sequence": 263,
@@ -2890,7 +2890,7 @@
     "code": "PROJECT-0200",
     "message": "파트 정원은 1 이상이어야 합니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 52
+    "line": 54
   },
   {
     "sequence": 264,
@@ -2901,7 +2901,7 @@
     "code": "PROJECT-0202",
     "message": "공개하려면 파트별 정원이 1개 이상 등록되어 있어야 합니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 53
+    "line": 55
   },
   {
     "sequence": 265,
@@ -2912,7 +2912,7 @@
     "code": "PROJECT-0203",
     "message": "동일 파트가 중복으로 입력되었습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 54
+    "line": 56
   },
   {
     "sequence": 266,
@@ -2923,7 +2923,7 @@
     "code": "PROJECT-0204",
     "message": "작성 중인 지원서를 찾을 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 76
+    "line": 78
   },
   {
     "sequence": 267,
@@ -2934,7 +2934,7 @@
     "code": "PROJECT-0205",
     "message": "해당 프로젝트에 지원 가능한 파트가 아닙니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 77
+    "line": 79
   },
   {
     "sequence": 268,
@@ -2945,7 +2945,7 @@
     "code": "PROJECT-0206",
     "message": "이미 해당 기수에 소속된 팀이 있어 지원할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 78
+    "line": 80
   },
   {
     "sequence": 269,
@@ -2956,7 +2956,7 @@
     "code": "PROJECT-0207",
     "message": "동일한 매칭 차수에 이미 제출된 지원서가 있습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 79
+    "line": 81
   },
   {
     "sequence": 270,
@@ -2967,7 +2967,7 @@
     "code": "PROJECT-0208",
     "message": "해당 매칭 차수의 지원 기간이 아닙니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 80
+    "line": 82
   },
   {
     "sequence": 271,
@@ -2978,7 +2978,7 @@
     "code": "PROJECT-0209",
     "message": "선택한 매칭 차수가 본인 파트에 해당하지 않습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 81
+    "line": 83
   },
   {
     "sequence": 272,
@@ -2989,7 +2989,7 @@
     "code": "PROJECT-0210",
     "message": "이미 작성 중인 지원서가 있습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 82
+    "line": 84
   },
   {
     "sequence": 273,
@@ -3000,7 +3000,7 @@
     "code": "PROJECT-0211",
     "message": "본인이 운영하는 프로젝트에는 지원할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 83
+    "line": 85
   },
   {
     "sequence": 274,
@@ -3011,7 +3011,7 @@
     "code": "PROJECT-0212",
     "message": "현재 상태에서는 합/불 결정을 변경할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 84
+    "line": 86
   },
   {
     "sequence": 275,
@@ -3022,7 +3022,7 @@
     "code": "PROJECT-0213",
     "message": "해당 파트의 남은 자리를 초과하여 합격 처리할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 86
+    "line": 88
   },
   {
     "sequence": 276,
@@ -3033,7 +3033,7 @@
     "code": "PROJECT-0214",
     "message": "이미 종결된 지원서는 철회할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 88
+    "line": 90
   },
   {
     "sequence": 277,
@@ -3044,7 +3044,7 @@
     "code": "PROJECT-0215",
     "message": "매칭 차수가 종료되어 지원서를 철회할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 89
+    "line": 91
   },
   {
     "sequence": 278,
@@ -3055,7 +3055,7 @@
     "code": "PROJECT-0300",
     "message": "매칭 차수를 찾을 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 57
+    "line": 59
   },
   {
     "sequence": 279,
@@ -3066,7 +3066,7 @@
     "code": "PROJECT-0301",
     "message": "매칭 차수 기간은 startsAt < endsAt < decisionDeadline 순서여야 합니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 58
+    "line": 60
   },
   {
     "sequence": 280,
@@ -3077,7 +3077,7 @@
     "code": "PROJECT-0302",
     "message": "같은 지부 내에서는 매칭 차수 기간이 중복될 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 60
+    "line": 62
   },
   {
     "sequence": 281,
@@ -3088,7 +3088,7 @@
     "code": "PROJECT-0303",
     "message": "해당 매칭 차수에 대한 관리 권한이 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 62
+    "line": 64
   },
   {
     "sequence": 282,
@@ -3099,7 +3099,7 @@
     "code": "PROJECT-0304",
     "message": "연관된 지원서가 있는 매칭 차수는 삭제할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 64
+    "line": 66
   },
   {
     "sequence": 283,
@@ -3110,7 +3110,7 @@
     "code": "PROJECT-0305",
     "message": "time 기준 조회는 chapterId와 함께 요청해야 합니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 66
+    "line": 68
   },
   {
     "sequence": 284,
@@ -3121,7 +3121,7 @@
     "code": "PROJECT-0306",
     "message": "매칭 차수가 종료되어 더 이상 결정을 변경할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 68
+    "line": 70
   },
   {
     "sequence": 285,
@@ -3132,7 +3132,7 @@
     "code": "PROJECT-0307",
     "message": "결정 마감 시각이 지나기 전에는 자동 선발을 실행할 수 없습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 70
+    "line": 72
   },
   {
     "sequence": 286,
@@ -3143,7 +3143,7 @@
     "code": "PROJECT-0308",
     "message": "해당 매칭 종류에 대한 자동 선발 정책이 정의되지 않았습니다.",
     "source": "src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-    "line": 72
+    "line": 74
   },
   {
     "sequence": 287,
