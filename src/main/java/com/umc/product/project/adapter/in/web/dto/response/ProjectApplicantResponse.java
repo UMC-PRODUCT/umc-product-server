@@ -80,8 +80,8 @@ public record ProjectApplicantResponse(
     /**
      * 매칭 라운드 식별 정보. 라벨 합성("기획-개발자 1차 매칭" 등)은 클라이언트가 type/phase 조합으로 처리한다.
      * <p>
-     * phase 는 도메인 enum 직노출을 피하기 위해 표시용 enum {@link MatchingRoundPhaseView} 로 노출한다.
-     * 본 응답은 실제 라운드 엔티티가 있는 지원서만 다루므로 RANDOM_MATCHING 케이스는 실제로 채워지지 않는다.
+     * phase 는 도메인 enum 직노출을 피하기 위해 표시용 enum {@link MatchingRoundPhaseView} 로 노출한다. 본 응답은 실제 라운드 엔티티가 있는 지원서만 다루므로
+     * RANDOM_MATCHING 케이스는 실제로 채워지지 않는다.
      */
     @Builder
     public record MatchingRoundBrief(
