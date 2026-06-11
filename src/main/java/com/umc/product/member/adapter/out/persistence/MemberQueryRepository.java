@@ -12,7 +12,6 @@ import com.umc.product.member.application.port.in.query.dto.SearchMemberQuery;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.QMember;
 import com.umc.product.organization.domain.QChapterSchool;
-import com.umc.product.organization.domain.QSchool;
 import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
@@ -140,21 +139,9 @@ public class MemberQueryRepository {
             return null;
         }
 
-        QSchool school = QSchool.school;
-
-        BooleanExpression schoolNameExists = JPAExpressions
-            .selectOne()
-            .from(school)
-            .where(
-                school.id.eq(member.schoolId),
-                school.name.containsIgnoreCase(keyword)
-            )
-            .exists();
-
         return member.name.containsIgnoreCase(keyword)
             .or(member.nickname.containsIgnoreCase(keyword))
-            .or(member.email.containsIgnoreCase(keyword))
-            .or(schoolNameExists);
+            .or(member.email.containsIgnoreCase(keyword));
     }
 
     private BooleanExpression chapterIdExists(Long chapterId, QMember member) {
