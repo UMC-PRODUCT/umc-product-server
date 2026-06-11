@@ -9,10 +9,10 @@ import com.umc.product.project.adapter.in.web.dto.response.MyProjectApplicationR
 import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicantResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicationDetailResponse;
 import com.umc.product.project.application.port.in.query.GetMyProjectApplicationsUseCase;
-import com.umc.product.project.application.port.in.query.GetMyRandomMatchedProjectMemberUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectApplicationDetailUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
+import com.umc.product.project.application.port.in.query.GetRandomMatchedProjectMemberUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectApplicationsUseCase;
 import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplicationsQuery;
 import com.umc.product.project.application.port.in.query.dto.GetProjectApplicationDetailQuery;
@@ -41,7 +41,7 @@ import org.springframework.stereotype.Component;
 public class ProjectApplicationResponseAssembler {
 
     private final GetMyProjectApplicationsUseCase getMyProjectApplicationsUseCase;
-    private final GetMyRandomMatchedProjectMemberUseCase getMyRandomMatchedProjectMemberUseCase;
+    private final GetRandomMatchedProjectMemberUseCase getRandomMatchedProjectMemberUseCase;
     private final SearchProjectApplicationsUseCase searchProjectApplicationsUseCase;
     private final GetProjectApplicationDetailUseCase getProjectApplicationDetailUseCase;
     private final GetProjectUseCase getProjectUseCase;
@@ -67,7 +67,7 @@ public class ProjectApplicationResponseAssembler {
         List<ProjectApplicationSummaryInfo> applications =
             getMyProjectApplicationsUseCase.listMyApplications(query);
         Optional<ProjectMemberInfo> randomMatched = (query.status() == null)
-            ? getMyRandomMatchedProjectMemberUseCase.findMyRandomMatched(query.requesterMemberId(), query.gisuId())
+            ? getRandomMatchedProjectMemberUseCase.findRandomMatched(query.requesterMemberId(), query.gisuId())
             : Optional.empty();
 
         if (applications.isEmpty() && randomMatched.isEmpty()) {
@@ -111,11 +111,11 @@ public class ProjectApplicationResponseAssembler {
     /**
      * 단일 프로젝트의 지원자 목록 카드 조립 (APPLY-101).
      * <p>
-     * Service 는 ProjectApplication 자원만 돌려준다. 화면 카드에 필요한 나머지 (지원자의 파트 / 매칭 라운드 / 지원자 닉네임/실명/학교) 는
-     * 여기서 다른 도메인 UseCase 로 batch 조회해 붙인다.
+     * Service 는 ProjectApplication 자원만 돌려준다. 화면 카드에 필요한 나머지 (지원자의 파트 / 매칭 라운드 / 지원자 닉네임/실명/학교) 는 여기서 다른 도메인 UseCase 로
+     * batch 조회해 붙인다.
      * <p>
-     * 파트(part) 필터도 챌린저 도메인 정보라 in-memory 로 적용한다. 권한 scope 결정은 Service 가 이미 처리했으니 (None 이면 빈 리스트 반환)
-     * 여기서는 그 결과를 그대로 신뢰한다.
+     * 파트(part) 필터도 챌린저 도메인 정보라 in-memory 로 적용한다. 권한 scope 결정은 Service 가 이미 처리했으니 (None 이면 빈 리스트 반환) 여기서는 그 결과를 그대로
+     * 신뢰한다.
      */
     public List<ProjectApplicantResponse> applicantsFor(SearchProjectApplicationsQuery query) {
         List<ProjectApplicationSummaryInfo> applications =

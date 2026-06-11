@@ -19,10 +19,10 @@ import com.umc.product.project.adapter.in.web.dto.response.MyProjectApplicationR
 import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicantResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicationDetailResponse;
 import com.umc.product.project.application.port.in.query.GetMyProjectApplicationsUseCase;
-import com.umc.product.project.application.port.in.query.GetMyRandomMatchedProjectMemberUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectApplicationDetailUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
+import com.umc.product.project.application.port.in.query.GetRandomMatchedProjectMemberUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectApplicationsUseCase;
 import com.umc.product.project.application.port.in.query.dto.ApplicationFormInfo;
 import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplicationsQuery;
@@ -64,7 +64,7 @@ class ProjectApplicationResponseAssemblerTest {
     @Mock
     GetMyProjectApplicationsUseCase getMyProjectApplicationsUseCase;
     @Mock
-    GetMyRandomMatchedProjectMemberUseCase getMyRandomMatchedProjectMemberUseCase;
+    GetRandomMatchedProjectMemberUseCase getRandomMatchedProjectMemberUseCase;
     @Mock
     SearchProjectApplicationsUseCase searchProjectApplicationsUseCase;
     @Mock
@@ -96,7 +96,7 @@ class ProjectApplicationResponseAssemblerTest {
 
         given(getMyProjectApplicationsUseCase.listMyApplications(query))
             .willReturn(List.of(application));
-        given(getMyRandomMatchedProjectMemberUseCase.findMyRandomMatched(query.requesterMemberId(), query.gisuId()))
+        given(getRandomMatchedProjectMemberUseCase.findRandomMatched(query.requesterMemberId(), query.gisuId()))
             .willReturn(Optional.empty());
         given(getProjectUseCase.listByIds(any())).willReturn(Map.of(1L, project));
         given(getProjectMatchingRoundUseCase.listByIds(any())).willReturn(Map.of(7L, round));
@@ -133,7 +133,7 @@ class ProjectApplicationResponseAssemblerTest {
         GetMyProjectApplicationsQuery query = queryOf(null);
         given(getMyProjectApplicationsUseCase.listMyApplications(query))
             .willReturn(List.of());
-        given(getMyRandomMatchedProjectMemberUseCase.findMyRandomMatched(query.requesterMemberId(), query.gisuId()))
+        given(getRandomMatchedProjectMemberUseCase.findRandomMatched(query.requesterMemberId(), query.gisuId()))
             .willReturn(Optional.empty());
 
         // when
@@ -154,7 +154,7 @@ class ProjectApplicationResponseAssemblerTest {
 
         given(getMyProjectApplicationsUseCase.listMyApplications(query))
             .willReturn(List.of());
-        given(getMyRandomMatchedProjectMemberUseCase.findMyRandomMatched(query.requesterMemberId(), query.gisuId()))
+        given(getRandomMatchedProjectMemberUseCase.findRandomMatched(query.requesterMemberId(), query.gisuId()))
             .willReturn(Optional.of(member));
         given(getProjectUseCase.listByIds(any())).willReturn(Map.of(2L, project));
         given(getProjectMatchingRoundUseCase.listByIds(any())).willReturn(Map.of());
@@ -193,7 +193,7 @@ class ProjectApplicationResponseAssemblerTest {
 
         given(getMyProjectApplicationsUseCase.listMyApplications(query))
             .willReturn(List.of(appA, appB));
-        given(getMyRandomMatchedProjectMemberUseCase.findMyRandomMatched(query.requesterMemberId(), query.gisuId()))
+        given(getRandomMatchedProjectMemberUseCase.findRandomMatched(query.requesterMemberId(), query.gisuId()))
             .willReturn(Optional.of(member));
         given(getProjectUseCase.listByIds(any()))
             .willReturn(Map.of(1L, pA, 2L, pB, 3L, pC));
@@ -232,8 +232,8 @@ class ProjectApplicationResponseAssemblerTest {
 
         // then
         assertThat(result).isEmpty();
-        verify(getMyRandomMatchedProjectMemberUseCase, never())
-            .findMyRandomMatched(any(), any());
+        verify(getRandomMatchedProjectMemberUseCase, never())
+            .findRandomMatched(any(), any());
     }
 
     @Test
@@ -246,7 +246,7 @@ class ProjectApplicationResponseAssemblerTest {
 
         given(getMyProjectApplicationsUseCase.listMyApplications(query))
             .willReturn(List.of(application));
-        given(getMyRandomMatchedProjectMemberUseCase.findMyRandomMatched(query.requesterMemberId(), query.gisuId()))
+        given(getRandomMatchedProjectMemberUseCase.findRandomMatched(query.requesterMemberId(), query.gisuId()))
             .willReturn(Optional.empty());
         given(getProjectUseCase.listByIds(any())).willReturn(Map.of(1L, project));
         given(getProjectMatchingRoundUseCase.listByIds(any()))

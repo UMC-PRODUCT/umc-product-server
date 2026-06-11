@@ -127,7 +127,7 @@ public class ProjectApplicationQueryService
      * 표준 view 로 반환한다.
      * <p>
      * 본 UseCase 는 자기 자원(ProjectApplication) 만 다룬다. 랜덤 매칭/운영진 강제 배정으로 합류한 {@code ProjectMember(application = null)} 는 별도
-     * UseCase ({@link com.umc.product.project.application.port.in.query.GetMyRandomMatchedProjectMemberUseCase}) 로
+     * UseCase ({@link com.umc.product.project.application.port.in.query.GetRandomMatchedProjectMemberUseCase}) 로
      * 조회하며, 두 데이터원을 한 화면 카드 줄로 합성하는 책임은 Web Assembler 가 진다.
      * <p>
      * 사용자가 해당 기수의 챌린저가 아니거나 매칭 대상 파트가 아닌 경우(PLAN/ADMIN) 빈 리스트를 반환한다.
