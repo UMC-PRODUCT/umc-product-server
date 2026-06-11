@@ -1,5 +1,18 @@
 package com.umc.product.test.application.service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerCommand;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -9,22 +22,16 @@ import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
+import com.umc.product.test.application.port.in.command.CreateSeedChallengerUseCase;
 import com.umc.product.test.application.port.in.command.SeedChallengersUseCase;
+import com.umc.product.test.application.port.in.command.dto.CreateSeedChallengerCommand;
+import com.umc.product.test.application.port.in.command.dto.CreateSeedChallengerResult;
 import com.umc.product.test.application.port.in.command.dto.SeedChallengersCommand;
 import com.umc.product.test.application.port.in.command.dto.SeedChallengersResult;
 import com.umc.product.test.application.port.in.command.dto.SeedChallengersResult.PerCellSummary;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
 
 /**
  * 챌린저 분포 시딩 서비스. ADR-017 참조.
@@ -37,7 +44,7 @@ import org.springframework.stereotype.Service;
 @Profile("!prod")
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
-public class ChallengerSeedService implements SeedChallengersUseCase {
+public class ChallengerSeedService implements SeedChallengersUseCase, CreateSeedChallengerUseCase {
 
     private static final Set<ChallengerPart> DEFAULT_PARTS = Arrays.stream(ChallengerPart.values())
         .filter(p -> p != ChallengerPart.ADMIN)
@@ -94,6 +101,23 @@ public class ChallengerSeedService implements SeedChallengersUseCase {
         );
 
         return new SeedChallengersResult(gisuId, totalCreated, totalFailed, summaries);
+    }
+
+    @Override
+    @Transactional
+    public CreateSeedChallengerResult create(CreateSeedChallengerCommand command) {
+        Long challengerId = manageChallengerUseCase.createChallenger(CreateChallengerCommand.builder()
+            .memberId(command.memberId())
+            .gisuId(command.gisuId())
+            .part(command.part())
+            .build());
+
+        return CreateSeedChallengerResult.of(
+            challengerId,
+            command.memberId(),
+            command.gisuId(),
+            command.part()
+        );
     }
 
     private Long resolveGisuId(Long gisuId) {
