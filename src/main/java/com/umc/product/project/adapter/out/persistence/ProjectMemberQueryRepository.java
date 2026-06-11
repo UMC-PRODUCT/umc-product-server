@@ -2,12 +2,6 @@ package com.umc.product.project.adapter.out.persistence;
 
 import static com.umc.product.project.domain.QProjectMember.projectMember;
 
-import com.querydsl.core.Tuple;
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.project.domain.ProjectMember;
-import com.umc.product.project.domain.enums.MatchingType;
-import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -17,8 +11,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Repository;
+
+import com.querydsl.core.Tuple;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingType;
+import com.umc.product.project.domain.enums.ProjectMemberStatus;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * ProjectMember QueryDSL 기반 조회 구현.
