@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>UMC PRODUCT API Catalog</title>
     <link href="/umc-logo.svg" rel="icon" type="image/svg+xml">
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
@@ -662,252 +662,253 @@
     </style>
 </head>
 <body class="api-catalog">
-<header>
-    <div class="brand">
-        <span aria-hidden="true" class="brand-mark"><img alt="" src="/umc-logo.svg"></span>
-        <div>
-            <h1>UMC PRODUCT Docs</h1>
+    <header>
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true"><img src="/umc-logo.svg" alt=""></span>
+            <div>
+                <h1>UMC PRODUCT Docs</h1>
+                <p>서버 계약을 소스에서 바로 읽어옵니다.</p>
+            </div>
         </div>
+        <nav aria-label="문서 이동">
+            <a href="/docs/catalog/api/" class="active">API</a>
+            <a href="/docs/catalog/error/" class="">ErrorCode</a>
+            <a href="catalog.md">Markdown</a>
+            <a href="catalog.json">JSON</a>
+        </nav>
+    </header>
+    <div class="page">
+        <section class="hero" aria-labelledby="catalog-title">
+            <div>
+                <p class="eyebrow">Endpoint Inventory</p>
+                <h2 id="catalog-title">API 카탈로그</h2>
+                <p class="hero-copy">API ID, endpoint, 역할, deprecated 상태를 한 곳에서 찾습니다.</p>
+            </div>
+            <aside class="hero-aside">
+                <strong>자동 생성 문서</strong>
+                <p>소스 변경 후 `./gradlew generateDocumentationCatalogs`로 갱신합니다.</p>
+            </aside>
+        </section>
+        <section class="stats" id="stats" aria-label="카탈로그 요약"></section>
+        <section class="toolbar" aria-label="카탈로그 검색">
+            <label class="search" for="catalog-search">
+                <input id="catalog-search" type="search" placeholder="도메인, API ID, endpoint, 역할로 검색" autocomplete="off">
+            </label>
+            <span class="result-count" id="result-count"></span>
+        </section>
+        <main id="content">
+            <p class="loading">카탈로그를 불러오는 중입니다.</p>
+        </main>
+        <p class="no-results" id="no-results">일치하는 API가 없습니다.</p>
     </div>
-    <nav aria-label="문서 이동">
-        <a class="active" href="/docs/catalog/api/">API</a>
-        <a class="" href="/docs/catalog/error/">ErrorCode</a>
-        <a href="catalog.md">Markdown</a>
-        <a href="catalog.json">JSON</a>
-    </nav>
-</header>
-<div class="page">
-    <section aria-labelledby="catalog-title" class="hero">
-        <div>
-            <p class="eyebrow">Endpoint Inventory</p>
-            <h2 id="catalog-title">API 카탈로그</h2>
-            <p class="hero-copy">API ID, endpoint, 역할, deprecated 상태를 한 곳에서 찾습니다.</p>
-        </div>
-        <aside class="hero-aside">
-            <strong>자동 생성 문서</strong>
-            <p>소스 변경 후 `./gradlew generateDocumentationCatalogs`로 갱신합니다.</p>
-        </aside>
-    </section>
-    <section aria-label="카탈로그 요약" class="stats" id="stats"></section>
-    <section aria-label="카탈로그 검색" class="toolbar">
-        <label class="search" for="catalog-search">
-            <input autocomplete="off" id="catalog-search" placeholder="도메인, API ID, endpoint, 역할로 검색" type="search">
-        </label>
-        <span class="result-count" id="result-count"></span>
-    </section>
-    <main id="content">
-        <p class="loading">카탈로그를 불러오는 중입니다.</p>
-    </main>
-    <p class="no-results" id="no-results">일치하는 API가 없습니다.</p>
-</div>
-<div aria-live="polite" class="copy-toast" id="copy-toast" role="status"></div>
-<script src="/webjars/markdown-it/14.1.0/dist/markdown-it.min.js"></script>
-<script>
-    const content = document.getElementById("content");
-    const stats = document.getElementById("stats");
-    const searchInput = document.getElementById("catalog-search");
-    const resultCount = document.getElementById("result-count");
-    const noResults = document.getElementById("no-results");
-    const copyToast = document.getElementById("copy-toast");
-    const markdownSource = "catalog.md";
-    const jsonSource = "catalog.json";
-    const pageKind = "api";
-    const md = window.markdownit({
-        html: false,
-        linkify: true,
-        typographer: false
-    });
-
-    function fetchText(path) {
-        return fetch(path, {cache: "no-cache"}).then((response) => {
-            if (!response.ok) {
-                throw new Error("HTTP " + response.status);
-            }
-            return response.text();
+    <div class="copy-toast" id="copy-toast" role="status" aria-live="polite"></div>
+    <script src="/webjars/markdown-it/14.1.0/dist/markdown-it.min.js"></script>
+    <script>
+        const content = document.getElementById("content");
+        const stats = document.getElementById("stats");
+        const searchInput = document.getElementById("catalog-search");
+        const resultCount = document.getElementById("result-count");
+        const noResults = document.getElementById("no-results");
+        const copyToast = document.getElementById("copy-toast");
+        const markdownSource = "catalog.md";
+        const jsonSource = "catalog.json";
+        const pageKind = "api";
+        const md = window.markdownit({
+            html: false,
+            linkify: true,
+            typographer: false
         });
-    }
 
-    function fetchJson(path) {
-        return fetch(path, {cache: "no-cache"}).then((response) => {
-            if (!response.ok) {
-                throw new Error("HTTP " + response.status);
-            }
-            return response.json();
-        });
-    }
-
-    function uniqueCount(rows, key) {
-        return new Set(rows.map((row) => row[key]).filter(Boolean)).size;
-    }
-
-    function renderStats(rows) {
-        const values = pageKind === "api"
-            ? [
-                ["등록된 API", rows.length],
-                ["도메인", uniqueCount(rows, "domain")],
-                ["ID 미지정", rows.filter((row) => row.apiId === "<미지정>").length],
-                ["Deprecated", rows.filter((row) => row.deprecated).length]
-            ]
-            : [
-                ["ErrorCode", rows.length],
-                ["도메인", uniqueCount(rows, "domain")],
-                ["HTTP Status", uniqueCount(rows, "httpStatus")],
-                ["Enum", uniqueCount(rows, "enumName")]
-            ];
-
-        stats.innerHTML = values.map((item) => (
-            '<article class="stat"><span>' + item[0] + '</span><strong>' + item[1].toLocaleString("ko-KR") + '</strong></article>'
-        )).join("");
-    }
-
-    function copyToClipboard(text) {
-        if (navigator.clipboard && window.isSecureContext) {
-            return navigator.clipboard.writeText(text);
-        }
-
-        const textarea = document.createElement("textarea");
-        textarea.value = text;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "fixed";
-        textarea.style.left = "-9999px";
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        textarea.remove();
-        return Promise.resolve();
-    }
-
-    function markCopied(cell, value) {
-        cell.classList.add("copied");
-        window.setTimeout(() => cell.classList.remove("copied"), 900);
-        copyToast.textContent = "복사했습니다: " + value;
-        copyToast.classList.add("visible");
-        window.clearTimeout(copyToast.hideTimer);
-        copyToast.hideTimer = window.setTimeout(() => copyToast.classList.remove("visible"), 1400);
-    }
-
-    function bindCopyCell(cell, value) {
-        if (!value) {
-            return;
-        }
-
-        cell.classList.add("copy-cell");
-        cell.dataset.copyValue = value;
-        cell.tabIndex = 0;
-        cell.setAttribute("role", "button");
-        cell.setAttribute("aria-label", value + " 복사");
-        cell.title = value + " 복사";
-        if (!cell.querySelector(".copy-icon")) {
-            const icon = document.createElement("span");
-            icon.className = "copy-icon";
-            icon.setAttribute("aria-hidden", "true");
-            icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 7.5h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z"/><path d="M5.5 14.5h-.5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5"/></svg>';
-            cell.appendChild(icon);
-        }
-
-        const handleCopy = () => {
-            copyToClipboard(value).then(() => markCopied(cell, value));
-        };
-
-        cell.addEventListener("click", handleCopy);
-        cell.addEventListener("keydown", (event) => {
-            if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                handleCopy();
-            }
-        });
-    }
-
-    function enhanceTables() {
-        const firstHeading = content.querySelector("h1");
-        if (firstHeading) {
-            firstHeading.remove();
-        }
-
-        content.querySelectorAll("table").forEach((table) => {
-            table.classList.add("catalog-table");
-            const headers = Array.from(table.querySelectorAll("thead th"))
-                .map((cell) => cell.textContent.trim().toLowerCase());
-            const copyHeaders = pageKind === "api"
-                ? ["api id", "endpoint", "source"]
-                : ["code", "constant"];
-            const copyColumnIndexes = headers
-                .map((header, index) => ({header, index}))
-                .filter(({header}) => copyHeaders.includes(header))
-                .map(({index}) => index);
-            const wrapper = document.createElement("div");
-            wrapper.className = "table-wrap";
-            table.parentNode.insertBefore(wrapper, table);
-            wrapper.appendChild(table);
-
-            table.querySelectorAll("tbody tr").forEach((row) => {
-                row.dataset.search = row.textContent.toLowerCase();
-                const sourceCell = row.cells[row.cells.length - 1];
-                const sourceCode = sourceCell?.querySelector("code");
-                if (sourceCell && sourceCode) {
-                    const fullSource = sourceCode.textContent.trim();
-                    sourceCell.classList.add("source-cell");
-                    sourceCode.title = fullSource;
-                    sourceCode.textContent = fullSource.split("/").pop() || fullSource;
+        function fetchText(path) {
+            return fetch(path, { cache: "no-cache" }).then((response) => {
+                if (!response.ok) {
+                    throw new Error("HTTP " + response.status);
                 }
+                return response.text();
+            });
+        }
 
-                copyColumnIndexes.forEach((index) => {
-                    const cell = row.cells[index];
-                    if (!cell) {
-                        return;
+        function fetchJson(path) {
+            return fetch(path, { cache: "no-cache" }).then((response) => {
+                if (!response.ok) {
+                    throw new Error("HTTP " + response.status);
+                }
+                return response.json();
+            });
+        }
+
+        function uniqueCount(rows, key) {
+            return new Set(rows.map((row) => row[key]).filter(Boolean)).size;
+        }
+
+        function renderStats(rows) {
+            const values = pageKind === "api"
+                ? [
+                    ["등록된 API", rows.length],
+                    ["도메인", uniqueCount(rows, "domain")],
+                    ["ID 미지정", rows.filter((row) => row.apiId === "<미지정>").length],
+                    ["Deprecated", rows.filter((row) => row.deprecated).length]
+                ]
+                : [
+                    ["ErrorCode", rows.length],
+                    ["도메인", uniqueCount(rows, "domain")],
+                    ["HTTP Status", uniqueCount(rows, "httpStatus")],
+                    ["Enum", uniqueCount(rows, "enumName")]
+                ];
+
+            stats.innerHTML = values.map((item) => (
+                '<article class="stat"><span>' + item[0] + '</span><strong>' + item[1].toLocaleString("ko-KR") + '</strong></article>'
+            )).join("");
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text);
+            }
+
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.setAttribute("readonly", "");
+            textarea.style.position = "fixed";
+            textarea.style.left = "-9999px";
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            textarea.remove();
+            return Promise.resolve();
+        }
+
+        function markCopied(cell, value) {
+            cell.classList.add("copied");
+            window.setTimeout(() => cell.classList.remove("copied"), 900);
+            copyToast.textContent = "복사했습니다: " + value;
+            copyToast.classList.add("visible");
+            window.clearTimeout(copyToast.hideTimer);
+            copyToast.hideTimer = window.setTimeout(() => copyToast.classList.remove("visible"), 1400);
+        }
+
+        function bindCopyCell(cell, value) {
+            if (!value) {
+                return;
+            }
+
+            cell.classList.add("copy-cell");
+            cell.dataset.copyValue = value;
+            cell.tabIndex = 0;
+            cell.setAttribute("role", "button");
+            cell.setAttribute("aria-label", value + " 복사");
+            cell.title = value + " 복사";
+            if (!cell.querySelector(".copy-icon")) {
+                const icon = document.createElement("span");
+                icon.className = "copy-icon";
+                icon.setAttribute("aria-hidden", "true");
+                icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 7.5h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z"/><path d="M5.5 14.5h-.5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5"/></svg>';
+                cell.appendChild(icon);
+            }
+
+            const handleCopy = () => {
+                copyToClipboard(value).then(() => markCopied(cell, value));
+            };
+
+            cell.addEventListener("click", handleCopy);
+            cell.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    handleCopy();
+                }
+            });
+        }
+
+        function enhanceTables() {
+            const firstHeading = content.querySelector("h1");
+            if (firstHeading) {
+                firstHeading.remove();
+            }
+
+            content.querySelectorAll("table").forEach((table) => {
+                table.classList.add("catalog-table");
+                const headers = Array.from(table.querySelectorAll("thead th"))
+                    .map((cell) => cell.textContent.trim().toLowerCase());
+                const copyHeaders = pageKind === "api"
+                    ? ["api id", "endpoint", "source"]
+                    : ["code", "constant"];
+                const copyColumnIndexes = headers
+                    .map((header, index) => ({ header, index }))
+                    .filter(({ header }) => copyHeaders.includes(header))
+                    .map(({ index }) => index);
+                const wrapper = document.createElement("div");
+                wrapper.className = "table-wrap";
+                table.parentNode.insertBefore(wrapper, table);
+                wrapper.appendChild(table);
+
+                table.querySelectorAll("tbody tr").forEach((row) => {
+                    row.dataset.search = row.textContent.toLowerCase();
+                    const sourceCell = row.cells[row.cells.length - 1];
+                    const sourceCode = sourceCell?.querySelector("code");
+                    if (sourceCell && sourceCode) {
+                        const fullSource = sourceCode.textContent.trim();
+                        sourceCell.classList.add("source-cell");
+                        sourceCode.title = fullSource;
+                        sourceCode.textContent = fullSource.split("/").pop() || fullSource;
                     }
 
-                    const code = cell.querySelector("code");
-                    bindCopyCell(cell, code?.title || code?.textContent.trim() || cell.textContent.trim());
+                    copyColumnIndexes.forEach((index) => {
+                        const cell = row.cells[index];
+                        if (!cell) {
+                            return;
+                        }
+
+                        const code = cell.querySelector("code");
+                        bindCopyCell(cell, code?.title || code?.textContent.trim() || cell.textContent.trim());
+                    });
                 });
             });
-        });
-    }
+        }
 
-    function updateResultCount(visible, total) {
-        resultCount.textContent = visible.toLocaleString("ko-KR") + " / " + total.toLocaleString("ko-KR") + "개 표시";
-        noResults.style.display = visible === 0 ? "block" : "none";
-    }
+        function updateResultCount(visible, total) {
+            resultCount.textContent = visible.toLocaleString("ko-KR") + " / " + total.toLocaleString("ko-KR") + "개 표시";
+            noResults.style.display = visible === 0 ? "block" : "none";
+        }
 
-    function applyFilter() {
-        const query = searchInput.value.trim().toLowerCase();
-        let total = 0;
-        let visible = 0;
+        function applyFilter() {
+            const query = searchInput.value.trim().toLowerCase();
+            let total = 0;
+            let visible = 0;
 
-        content.querySelectorAll(".catalog-table tbody tr").forEach((row) => {
-            total += 1;
-            const matched = query === "" || row.dataset.search.includes(query);
-            row.classList.toggle("is-hidden", !matched);
-            if (matched) {
-                visible += 1;
-            }
-        });
+            content.querySelectorAll(".catalog-table tbody tr").forEach((row) => {
+                total += 1;
+                const matched = query === "" || row.dataset.search.includes(query);
+                row.classList.toggle("is-hidden", !matched);
+                if (matched) {
+                    visible += 1;
+                }
+            });
 
-        content.querySelectorAll(".table-wrap").forEach((wrapper) => {
-            const visibleRows = wrapper.querySelectorAll("tbody tr:not(.is-hidden)").length;
-            wrapper.classList.toggle("is-hidden", visibleRows === 0 && query !== "");
-            const heading = wrapper.previousElementSibling;
-            if (heading && heading.tagName === "H2") {
-                heading.classList.toggle("is-hidden", visibleRows === 0 && query !== "");
-            }
-        });
+            content.querySelectorAll(".table-wrap").forEach((wrapper) => {
+                const visibleRows = wrapper.querySelectorAll("tbody tr:not(.is-hidden)").length;
+                wrapper.classList.toggle("is-hidden", visibleRows === 0 && query !== "");
+                const heading = wrapper.previousElementSibling;
+                if (heading && heading.tagName === "H2") {
+                    heading.classList.toggle("is-hidden", visibleRows === 0 && query !== "");
+                }
+            });
 
-        updateResultCount(visible, total);
-    }
+            updateResultCount(visible, total);
+        }
 
-    Promise.all([fetchText(markdownSource), fetchJson(jsonSource)])
-        .then(([markdown, rows]) => {
-            content.innerHTML = md.render(markdown);
-            renderStats(rows);
-            enhanceTables();
-            applyFilter();
-            searchInput.addEventListener("input", applyFilter);
-        })
-        .catch((error) => {
-            content.innerHTML = '<p class="error">카탈로그를 불러오지 못했습니다. ' + error.message + '</p>';
-            stats.innerHTML = "";
-            updateResultCount(0, 0);
-        });
-</script>
+        Promise.all([fetchText(markdownSource), fetchJson(jsonSource)])
+            .then(([markdown, rows]) => {
+                content.innerHTML = md.render(markdown);
+                renderStats(rows);
+                enhanceTables();
+                applyFilter();
+                searchInput.addEventListener("input", applyFilter);
+            })
+            .catch((error) => {
+                content.innerHTML = '<p class="error">카탈로그를 불러오지 못했습니다. ' + error.message + '</p>';
+                stats.innerHTML = "";
+                updateResultCount(0, 0);
+            });
+    </script>
 </body>
 </html>
