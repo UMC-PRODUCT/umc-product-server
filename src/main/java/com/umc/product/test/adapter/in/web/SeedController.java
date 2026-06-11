@@ -8,6 +8,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.umc.product.global.security.annotation.Public;
+import com.umc.product.test.adapter.in.web.dto.CreateSeedChallengerRequest;
+import com.umc.product.test.adapter.in.web.dto.CreateSeedChallengerResponse;
+import com.umc.product.test.adapter.in.web.dto.CreateSeedChallengerRoleRequest;
+import com.umc.product.test.adapter.in.web.dto.CreateSeedChallengerRoleResponse;
+import com.umc.product.test.adapter.in.web.dto.CreateSeedMemberRequest;
+import com.umc.product.test.adapter.in.web.dto.CreateSeedMemberResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedCurriculumRequest;
@@ -22,6 +28,9 @@ import com.umc.product.test.adapter.in.web.dto.SeedProjectScenariosRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectScenariosResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectsRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectsResponse;
+import com.umc.product.test.application.port.in.command.CreateSeedChallengerRoleUseCase;
+import com.umc.product.test.application.port.in.command.CreateSeedChallengerUseCase;
+import com.umc.product.test.application.port.in.command.CreateSeedMemberUseCase;
 import com.umc.product.test.application.port.in.command.SeedChallengersUseCase;
 import com.umc.product.test.application.port.in.command.SeedCurriculumUseCase;
 import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
@@ -53,7 +62,10 @@ import lombok.extern.slf4j.Slf4j;
 public class SeedController {
 
     private final SeedMembersUseCase seedMembersUseCase;
+    private final CreateSeedMemberUseCase createSeedMemberUseCase;
     private final SeedChallengersUseCase seedChallengersUseCase;
+    private final CreateSeedChallengerUseCase createSeedChallengerUseCase;
+    private final CreateSeedChallengerRoleUseCase createSeedChallengerRoleUseCase;
     private final SeedProjectsUseCase seedProjectsUseCase;
     private final SeedProjectScenariosUseCase seedProjectScenariosUseCase;
     private final SeedProjectApplicationsUseCase seedProjectApplicationsUseCase;
@@ -77,6 +89,20 @@ public class SeedController {
     }
 
     @Operation(
+        operationId = "SEED-001-M",
+        summary = "테스트 멤버 단건 생성",
+        description = """
+            이름, 닉네임, 학교 ID, 이메일을 받아 ID/PW 멤버를 1명 생성합니다.
+            rawPassword 를 생략하거나 공백으로 보내면 app.seed.default-password 를 사용합니다.
+            활성 필수 약관은 모두 동의한 것으로 자동 처리합니다.
+            """
+    )
+    @PostMapping("/member")
+    public CreateSeedMemberResponse createMember(@RequestBody @Valid CreateSeedMemberRequest request) {
+        return CreateSeedMemberResponse.from(createSeedMemberUseCase.create(request.toCommand()));
+    }
+
+    @Operation(
         operationId = "SEED-002",
         summary = "챌린저 분포 시딩",
         description = """
@@ -89,6 +115,35 @@ public class SeedController {
     @PostMapping("/challengers")
     public SeedChallengersResponse seedChallengers(@RequestBody @Valid SeedChallengersRequest request) {
         return SeedChallengersResponse.from(seedChallengersUseCase.seed(request.toCommand()));
+    }
+
+    @Operation(
+        operationId = "SEED-002-C",
+        summary = "테스트 챌린저 단건 생성",
+        description = "memberId, gisuId, part 를 받아 챌린저를 1명 생성합니다."
+    )
+    @PostMapping("/challenger")
+    public CreateSeedChallengerResponse createChallenger(
+        @RequestBody @Valid CreateSeedChallengerRequest request
+    ) {
+        return CreateSeedChallengerResponse.from(createSeedChallengerUseCase.create(request.toCommand()));
+    }
+
+    @Operation(
+        operationId = "SEED-002-R",
+        summary = "테스트 챌린저 역할 단건 생성",
+        description = """
+            challengerId, roleType, gisuId 를 받아 운영진 역할을 1개 부여합니다.
+            SUPER_ADMIN 및 중앙 운영진 역할은 organizationId 없이 생성할 수 있고,
+            CHAPTER_PRESIDENT 는 organizationId 에 chapterId, SCHOOL_PRESIDENT 등 학교 역할은
+            organizationId 에 schoolId 를 전달합니다.
+            """
+    )
+    @PostMapping("/challenger-role")
+    public CreateSeedChallengerRoleResponse createChallengerRole(
+        @RequestBody @Valid CreateSeedChallengerRoleRequest request
+    ) {
+        return CreateSeedChallengerRoleResponse.from(createSeedChallengerRoleUseCase.create(request.toCommand()));
     }
 
     @Operation(
