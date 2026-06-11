@@ -101,10 +101,6 @@ public enum ResourceType {
     FIGMA("figma", "Figma 통합",
         Set.of(PermissionType.READ,
             PermissionType.DELETE, PermissionType.MANAGE)),
-
-    PRODUCT_TEAM("product_team", "프로덕트팀",
-        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE,
-            PermissionType.MANAGE)),
     ;
 
     private final String code;

@@ -1,21 +1,32 @@
 package com.umc.product.organization.application.port.in.query.dto.productteam;
 
-import com.umc.product.organization.domain.enums.ProductTeamPart;
+import com.umc.product.organization.domain.enums.ProductTeamFunctionalRole;
+import com.umc.product.organization.domain.enums.ProductTeamFunctionalUnitType;
 import com.umc.product.organization.domain.enums.ProductTeamPosition;
-import com.umc.product.organization.domain.enums.ProductTeamRole;
 
 public record ProductTeamMemberSearchCondition(
     Long productTeamGenerationId,
-    ProductTeamPart part,
-    ProductTeamRole role,
-    ProductTeamPosition position
+    Long functionalUnitId,
+    ProductTeamFunctionalUnitType functionalUnitType,
+    ProductTeamFunctionalRole role,
+    ProductTeamPosition position,
+    Long squadId
 ) {
     public static ProductTeamMemberSearchCondition of(
         Long productTeamGenerationId,
-        ProductTeamPart part,
-        ProductTeamRole role,
-        ProductTeamPosition position
+        Long functionalUnitId,
+        ProductTeamFunctionalUnitType functionalUnitType,
+        ProductTeamFunctionalRole role,
+        ProductTeamPosition position,
+        Long squadId
     ) {
-        return new ProductTeamMemberSearchCondition(productTeamGenerationId, part, role, position);
+        return new ProductTeamMemberSearchCondition(
+            productTeamGenerationId,
+            functionalUnitId,
+            functionalUnitType,
+            role,
+            position,
+            squadId
+        );
     }
 }

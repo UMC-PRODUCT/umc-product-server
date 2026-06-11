@@ -1,8 +1,5 @@
 package com.umc.product.organization.adapter.in.web;
 
-import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
-import com.umc.product.authorization.domain.PermissionType;
-import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateProductTeamGenerationRequest;
@@ -26,11 +23,6 @@ public class ProductTeamGenerationCommandController {
 
     private final ManageProductTeamGenerationUseCase manageProductTeamGenerationUseCase;
 
-    @CheckAccess(
-        resourceType = ResourceType.PRODUCT_TEAM,
-        permission = PermissionType.WRITE,
-        message = "프로덕트팀 기수를 생성할 권한이 없습니다."
-    )
     @PostMapping
     public Long create(
         @CurrentMember MemberPrincipal currentMember,
@@ -39,12 +31,6 @@ public class ProductTeamGenerationCommandController {
         return manageProductTeamGenerationUseCase.create(request.toCommand(currentMemberId(currentMember)));
     }
 
-    @CheckAccess(
-        resourceType = ResourceType.PRODUCT_TEAM,
-        resourceId = "#productTeamGenerationId",
-        permission = PermissionType.EDIT,
-        message = "프로덕트팀 기수를 수정할 권한이 없습니다."
-    )
     @PatchMapping("/{productTeamGenerationId}")
     public void update(
         @PathVariable Long productTeamGenerationId,
@@ -56,12 +42,6 @@ public class ProductTeamGenerationCommandController {
         );
     }
 
-    @CheckAccess(
-        resourceType = ResourceType.PRODUCT_TEAM,
-        resourceId = "#productTeamGenerationId",
-        permission = PermissionType.DELETE,
-        message = "프로덕트팀 기수를 삭제할 권한이 없습니다."
-    )
     @DeleteMapping("/{productTeamGenerationId}")
     public void delete(
         @PathVariable Long productTeamGenerationId,

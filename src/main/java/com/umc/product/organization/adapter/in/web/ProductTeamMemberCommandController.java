@@ -3,7 +3,7 @@ package com.umc.product.organization.adapter.in.web;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateProductTeamMemberRequest;
-import com.umc.product.organization.adapter.in.web.dto.request.ReplaceProductTeamMemberActivitiesRequest;
+import com.umc.product.organization.adapter.in.web.dto.request.ReplaceProductTeamMemberFunctionalMembershipsRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateProductTeamMemberProfileRequest;
 import com.umc.product.organization.application.port.in.command.ManageProductTeamMemberUseCase;
 import jakarta.validation.Valid;
@@ -44,13 +44,13 @@ public class ProductTeamMemberCommandController {
         );
     }
 
-    @PutMapping("/{productTeamMemberId}/activities")
-    public void replaceActivities(
+    @PutMapping("/{productTeamMemberId}/functional-memberships")
+    public void replaceFunctionalMemberships(
         @PathVariable Long productTeamMemberId,
         @CurrentMember MemberPrincipal currentMember,
-        @RequestBody @Valid ReplaceProductTeamMemberActivitiesRequest request
+        @RequestBody @Valid ReplaceProductTeamMemberFunctionalMembershipsRequest request
     ) {
-        manageProductTeamMemberUseCase.replaceActivities(
+        manageProductTeamMemberUseCase.replaceFunctionalMemberships(
             request.toCommand(productTeamMemberId, currentMemberId(currentMember))
         );
     }

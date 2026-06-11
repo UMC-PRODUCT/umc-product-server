@@ -6,9 +6,9 @@ import com.umc.product.organization.adapter.in.web.dto.response.productteam.Prod
 import com.umc.product.organization.adapter.in.web.dto.response.productteam.ProductTeamMemberResponse;
 import com.umc.product.organization.application.port.in.query.GetProductTeamMemberUseCase;
 import com.umc.product.organization.application.port.in.query.dto.productteam.ProductTeamMemberSearchCondition;
-import com.umc.product.organization.domain.enums.ProductTeamPart;
+import com.umc.product.organization.domain.enums.ProductTeamFunctionalRole;
+import com.umc.product.organization.domain.enums.ProductTeamFunctionalUnitType;
 import com.umc.product.organization.domain.enums.ProductTeamPosition;
-import com.umc.product.organization.domain.enums.ProductTeamRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,16 +28,20 @@ public class ProductTeamMemberQueryController {
     @GetMapping
     public ProductTeamMemberPageResponse search(
         @RequestParam(required = false) Long productTeamGenerationId,
-        @RequestParam(required = false) ProductTeamPart part,
-        @RequestParam(required = false) ProductTeamRole role,
+        @RequestParam(required = false) Long functionalUnitId,
+        @RequestParam(required = false) ProductTeamFunctionalUnitType functionalUnitType,
+        @RequestParam(required = false) ProductTeamFunctionalRole role,
         @RequestParam(required = false) ProductTeamPosition position,
+        @RequestParam(required = false) Long squadId,
         Pageable pageable
     ) {
         ProductTeamMemberSearchCondition condition = ProductTeamMemberSearchCondition.of(
             productTeamGenerationId,
-            part,
+            functionalUnitId,
+            functionalUnitType,
             role,
-            position
+            position,
+            squadId
         );
         PageResponse<ProductTeamMemberResponse> pageResponse = PageResponse.of(
             getProductTeamMemberUseCase.search(condition, pageable),

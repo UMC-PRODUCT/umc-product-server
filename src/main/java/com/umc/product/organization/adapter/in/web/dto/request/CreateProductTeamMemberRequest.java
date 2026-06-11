@@ -6,12 +6,14 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
+import java.util.Objects;
 
 public record CreateProductTeamMemberRequest(
     @NotNull Long memberId,
     @Size(max = 2000) String introduction,
     String profileImageId,
-    @NotEmpty List<@Valid ProductTeamActivityRequest> activities
+    @NotEmpty List<@Valid ProductTeamFunctionalMembershipRequest> functionalMemberships,
+    List<@Valid ProductTeamSquadParticipationRequest> squadParticipations
 ) {
     public CreateProductTeamMemberCommand toCommand(Long requesterMemberId) {
         return CreateProductTeamMemberCommand.of(
@@ -19,7 +21,11 @@ public record CreateProductTeamMemberRequest(
             memberId,
             introduction,
             profileImageId,
-            activities.stream().map(ProductTeamActivityRequest::toCommand).toList()
+            functionalMemberships.stream().map(ProductTeamFunctionalMembershipRequest::toCommand).toList(),
+            Objects.requireNonNullElse(squadParticipations, List.<ProductTeamSquadParticipationRequest>of())
+                .stream()
+                .map(ProductTeamSquadParticipationRequest::toCommand)
+                .toList()
         );
     }
 }

@@ -3,16 +3,21 @@ package com.umc.product.organization.application.service;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.command.ManageProductTeamMemberUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateProductTeamMemberCommand;
-import com.umc.product.organization.application.port.in.command.dto.ProductTeamActivityCommand;
-import com.umc.product.organization.application.port.in.command.dto.ReplaceProductTeamMemberActivitiesCommand;
+import com.umc.product.organization.application.port.in.command.dto.ProductTeamFunctionalMembershipCommand;
+import com.umc.product.organization.application.port.in.command.dto.ProductTeamSquadParticipationCommand;
+import com.umc.product.organization.application.port.in.command.dto.ReplaceProductTeamMemberFunctionalMembershipsCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateProductTeamMemberProfileCommand;
+import com.umc.product.organization.application.port.out.command.SaveProductTeamFunctionalMembershipPort;
 import com.umc.product.organization.application.port.out.command.SaveProductTeamMemberPort;
-import com.umc.product.organization.application.port.out.command.SaveProductTeamMembershipPort;
+import com.umc.product.organization.application.port.out.command.SaveProductTeamSquadParticipantPort;
+import com.umc.product.organization.application.port.out.query.LoadProductTeamFunctionalUnitPort;
 import com.umc.product.organization.application.port.out.query.LoadProductTeamGenerationPort;
 import com.umc.product.organization.application.port.out.query.LoadProductTeamMemberPort;
-import com.umc.product.organization.application.port.out.query.LoadProductTeamMembershipPort;
+import com.umc.product.organization.application.port.out.query.LoadProductTeamSquadPort;
+import com.umc.product.organization.domain.ProductTeamFunctionalMembership;
+import com.umc.product.organization.domain.ProductTeamFunctionalUnit;
 import com.umc.product.organization.domain.ProductTeamMember;
-import com.umc.product.organization.domain.ProductTeamMembership;
+import com.umc.product.organization.domain.ProductTeamSquadParticipant;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
@@ -33,22 +38,25 @@ public class ProductTeamMemberCommandService implements ManageProductTeamMemberU
 
     private final LoadProductTeamMemberPort loadProductTeamMemberPort;
     private final SaveProductTeamMemberPort saveProductTeamMemberPort;
-    private final LoadProductTeamMembershipPort loadProductTeamMembershipPort;
-    private final SaveProductTeamMembershipPort saveProductTeamMembershipPort;
+    private final SaveProductTeamFunctionalMembershipPort saveProductTeamFunctionalMembershipPort;
+    private final SaveProductTeamSquadParticipantPort saveProductTeamSquadParticipantPort;
     private final LoadProductTeamGenerationPort loadProductTeamGenerationPort;
+    private final LoadProductTeamFunctionalUnitPort loadProductTeamFunctionalUnitPort;
+    private final LoadProductTeamSquadPort loadProductTeamSquadPort;
     private final GetMemberUseCase getMemberUseCase;
     private final GetFileUseCase getFileUseCase;
     private final ProductTeamAccessPolicy productTeamAccessPolicy;
 
     @Override
     public Long create(CreateProductTeamMemberCommand command) {
-        validateActivities(command.activities());
-        List<Long> generationIds = generationIdsOf(command.activities());
-        validateCanManageAll(command.requesterMemberId(), generationIds);
+        validateCanManage(command.requesterMemberId());
+        validateFunctionalMemberships(command.functionalMemberships());
+        validateSquadParticipations(command.squadParticipations());
         getMemberUseCase.getById(command.memberId());
         validateMemberNotDuplicated(command.memberId());
         validateProfileImage(command.profileImageId());
-        validateGenerationsExist(generationIds);
+        validateFunctionalTargets(command.functionalMemberships());
+        validateSquadTargets(command.squadParticipations());
 
         ProductTeamMember member = ProductTeamMember.create(
             command.memberId(),
@@ -56,17 +64,17 @@ public class ProductTeamMemberCommandService implements ManageProductTeamMemberU
             command.profileImageId()
         );
         ProductTeamMember savedMember = saveProductTeamMemberPort.save(member);
-        saveProductTeamMembershipPort.saveAll(toMemberships(savedMember, command.activities()));
+        saveProductTeamFunctionalMembershipPort.saveAll(
+            toFunctionalMemberships(savedMember, command.functionalMemberships())
+        );
+        saveProductTeamSquadParticipantPort.saveAll(toSquadParticipants(savedMember, command.squadParticipations()));
         return savedMember.getId();
     }
 
     @Override
     public void updateProfile(UpdateProductTeamMemberProfileCommand command) {
         ProductTeamMember member = loadProductTeamMemberPort.getById(command.productTeamMemberId());
-        List<Long> generationIds = loadProductTeamMembershipPort.listGenerationIdsByProductTeamMemberId(member.getId());
-        boolean isSelf = Objects.equals(command.requesterMemberId(), member.getMemberId());
-        if (!isSelf && !productTeamAccessPolicy.canManageMemberProfile(command.requesterMemberId(), member.getMemberId(),
-            generationIds)) {
+        if (!productTeamAccessPolicy.canManageMemberProfile(command.requesterMemberId(), member.getMemberId())) {
             throw new OrganizationDomainException(OrganizationErrorCode.PRODUCT_TEAM_ACCESS_DENIED);
         }
         validateProfileImage(command.profileImageId());
@@ -75,28 +83,27 @@ public class ProductTeamMemberCommandService implements ManageProductTeamMemberU
     }
 
     @Override
-    public void replaceActivities(ReplaceProductTeamMemberActivitiesCommand command) {
+    public void replaceFunctionalMemberships(ReplaceProductTeamMemberFunctionalMembershipsCommand command) {
         ProductTeamMember member = loadProductTeamMemberPort.getById(command.productTeamMemberId());
-        validateActivities(command.activities());
-        List<Long> generationIds = generationIdsOf(command.activities());
-        validateCanManageAll(command.requesterMemberId(), generationIds);
-        validateGenerationsExist(generationIds);
+        validateCanManage(command.requesterMemberId());
+        validateFunctionalMemberships(command.functionalMemberships());
+        validateFunctionalTargets(command.functionalMemberships());
 
-        saveProductTeamMembershipPort.deleteAllByProductTeamMemberId(member.getId());
-        saveProductTeamMembershipPort.saveAll(toMemberships(member, command.activities()));
+        saveProductTeamFunctionalMembershipPort.deleteAllByProductTeamMemberId(member.getId());
+        saveProductTeamFunctionalMembershipPort.saveAll(toFunctionalMemberships(member, command.functionalMemberships()));
     }
 
     @Override
     public void delete(Long productTeamMemberId, Long requesterMemberId) {
         ProductTeamMember member = loadProductTeamMemberPort.getById(productTeamMemberId);
-        List<Long> generationIds = loadProductTeamMembershipPort.listGenerationIdsByProductTeamMemberId(member.getId());
-        validateCanManageAll(requesterMemberId, generationIds);
-        saveProductTeamMembershipPort.deleteAllByProductTeamMemberId(member.getId());
+        validateCanManage(requesterMemberId);
+        saveProductTeamFunctionalMembershipPort.deleteAllByProductTeamMemberId(member.getId());
+        saveProductTeamSquadParticipantPort.deleteAllByProductTeamMemberId(member.getId());
         saveProductTeamMemberPort.delete(member);
     }
 
-    private void validateCanManageAll(Long requesterMemberId, List<Long> generationIds) {
-        if (!productTeamAccessPolicy.canManageAllGenerations(requesterMemberId, generationIds)) {
+    private void validateCanManage(Long requesterMemberId) {
+        if (!productTeamAccessPolicy.canManageProductTeam(requesterMemberId)) {
             throw new OrganizationDomainException(OrganizationErrorCode.PRODUCT_TEAM_ACCESS_DENIED);
         }
     }
@@ -107,25 +114,41 @@ public class ProductTeamMemberCommandService implements ManageProductTeamMemberU
         }
     }
 
-    private void validateActivities(List<ProductTeamActivityCommand> activities) {
-        if (activities == null || activities.isEmpty()) {
-            throw new OrganizationDomainException(OrganizationErrorCode.PRODUCT_TEAM_ACTIVITY_REQUIRED);
+    private void validateFunctionalMemberships(List<ProductTeamFunctionalMembershipCommand> functionalMemberships) {
+        if (functionalMemberships == null || functionalMemberships.isEmpty()) {
+            throw new OrganizationDomainException(OrganizationErrorCode.PRODUCT_TEAM_FUNCTIONAL_MEMBERSHIP_REQUIRED);
         }
-        Set<ProductTeamActivityCommand> uniqueActivities = new HashSet<>(activities);
-        if (uniqueActivities.size() != activities.size()) {
-            throw new OrganizationDomainException(OrganizationErrorCode.PRODUCT_TEAM_ACTIVITY_REQUIRED);
+        Set<ProductTeamFunctionalMembershipCommand> uniqueMemberships = new HashSet<>(functionalMemberships);
+        if (uniqueMemberships.size() != functionalMemberships.size()) {
+            throw new OrganizationDomainException(OrganizationErrorCode.PRODUCT_TEAM_FUNCTIONAL_MEMBERSHIP_REQUIRED);
         }
     }
 
-    private List<Long> generationIdsOf(List<ProductTeamActivityCommand> activities) {
-        return activities.stream()
-            .map(ProductTeamActivityCommand::productTeamGenerationId)
-            .distinct()
-            .toList();
+    private void validateSquadParticipations(List<ProductTeamSquadParticipationCommand> squadParticipations) {
+        if (squadParticipations == null || squadParticipations.isEmpty()) {
+            return;
+        }
+        Set<ProductTeamSquadParticipationCommand> uniqueParticipations = new HashSet<>(squadParticipations);
+        if (uniqueParticipations.size() != squadParticipations.size()) {
+            throw new OrganizationDomainException(OrganizationErrorCode.PRODUCT_TEAM_SQUAD_PARTICIPANT_REQUIRED);
+        }
     }
 
-    private void validateGenerationsExist(List<Long> generationIds) {
-        generationIds.forEach(loadProductTeamGenerationPort::getById);
+    private void validateFunctionalTargets(List<ProductTeamFunctionalMembershipCommand> memberships) {
+        memberships.forEach(membership -> {
+            loadProductTeamGenerationPort.getById(membership.productTeamGenerationId());
+            ProductTeamFunctionalUnit functionalUnit = loadProductTeamFunctionalUnitPort.getById(membership.functionalUnitId());
+            if (!Objects.equals(functionalUnit.getProductTeamGenerationId(), membership.productTeamGenerationId())) {
+                throw new OrganizationDomainException(OrganizationErrorCode.PRODUCT_TEAM_FUNCTIONAL_UNIT_NOT_FOUND);
+            }
+        });
+    }
+
+    private void validateSquadTargets(List<ProductTeamSquadParticipationCommand> squadParticipations) {
+        if (squadParticipations == null) {
+            return;
+        }
+        squadParticipations.forEach(participation -> loadProductTeamSquadPort.getById(participation.squadId()));
     }
 
     private void validateProfileImage(String profileImageId) {
@@ -134,14 +157,38 @@ public class ProductTeamMemberCommandService implements ManageProductTeamMemberU
         }
     }
 
-    private List<ProductTeamMembership> toMemberships(ProductTeamMember member, List<ProductTeamActivityCommand> activities) {
-        return activities.stream()
-            .map(activity -> ProductTeamMembership.create(
+    private List<ProductTeamFunctionalMembership> toFunctionalMemberships(
+        ProductTeamMember member,
+        List<ProductTeamFunctionalMembershipCommand> memberships
+    ) {
+        return memberships.stream()
+            .map(membership -> ProductTeamFunctionalMembership.create(
                 member,
-                activity.productTeamGenerationId(),
-                activity.part(),
-                activity.role(),
-                activity.position()
+                membership.productTeamGenerationId(),
+                membership.functionalUnitId(),
+                membership.role(),
+                membership.position(),
+                membership.responsibilityTitle(),
+                membership.responsibilityDescription()
+            ))
+            .toList();
+    }
+
+    private List<ProductTeamSquadParticipant> toSquadParticipants(
+        ProductTeamMember member,
+        List<ProductTeamSquadParticipationCommand> participations
+    ) {
+        if (participations == null || participations.isEmpty()) {
+            return List.of();
+        }
+        return participations.stream()
+            .map(participation -> ProductTeamSquadParticipant.create(
+                loadProductTeamSquadPort.getById(participation.squadId()),
+                member,
+                participation.role(),
+                participation.position(),
+                participation.responsibilityTitle(),
+                participation.responsibilityDescription()
             ))
             .toList();
     }

@@ -13,6 +13,7 @@ public record ProductTeamMemberInfo(
     String introduction,
     String productTeamProfileImageId,
     String productTeamProfileImageUrl,
-    List<ProductTeamActivityInfo> activities
+    List<ProductTeamFunctionalMembershipInfo> functionalMemberships,
+    List<ProductTeamSquadParticipationInfo> squadParticipations
 ) {
 }

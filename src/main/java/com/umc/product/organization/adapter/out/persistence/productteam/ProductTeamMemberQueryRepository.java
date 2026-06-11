@@ -1,16 +1,18 @@
 package com.umc.product.organization.adapter.out.persistence.productteam;
 
 import static com.umc.product.organization.domain.QProductTeamMember.productTeamMember;
-import static com.umc.product.organization.domain.QProductTeamMembership.productTeamMembership;
+import static com.umc.product.organization.domain.QProductTeamFunctionalMembership.productTeamFunctionalMembership;
+import static com.umc.product.organization.domain.QProductTeamFunctionalUnit.productTeamFunctionalUnit;
+import static com.umc.product.organization.domain.QProductTeamSquadParticipant.productTeamSquadParticipant;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.organization.application.port.in.query.dto.productteam.ProductTeamMemberSearchCondition;
-import com.umc.product.organization.domain.ProductTeamMembership;
-import com.umc.product.organization.domain.enums.ProductTeamPart;
+import com.umc.product.organization.domain.ProductTeamFunctionalMembership;
+import com.umc.product.organization.domain.enums.ProductTeamFunctionalRole;
+import com.umc.product.organization.domain.enums.ProductTeamFunctionalUnitType;
 import com.umc.product.organization.domain.enums.ProductTeamPosition;
-import com.umc.product.organization.domain.enums.ProductTeamRole;
 import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +30,19 @@ public class ProductTeamMemberQueryRepository {
     public Page<Long> searchMemberIds(ProductTeamMemberSearchCondition condition, Pageable pageable) {
         BooleanBuilder where = buildCondition(condition);
         boolean hasMembershipFilter = where.hasValue();
+        boolean hasSquadFilter = condition != null && condition.squadId() != null;
 
-        List<Long> content = hasMembershipFilter
+        List<Long> content = hasMembershipFilter || hasSquadFilter
             ? queryFactory
                 .select(productTeamMember.id)
                 .distinct()
                 .from(productTeamMember)
-                .join(productTeamMembership).on(productTeamMembership.productTeamMember.eq(productTeamMember))
+                .leftJoin(productTeamFunctionalMembership)
+                .on(productTeamFunctionalMembership.productTeamMember.eq(productTeamMember))
+                .leftJoin(productTeamFunctionalUnit)
+                .on(productTeamFunctionalUnit.id.eq(productTeamFunctionalMembership.functionalUnitId))
+                .leftJoin(productTeamSquadParticipant)
+                .on(productTeamSquadParticipant.productTeamMember.eq(productTeamMember))
                 .where(where)
                 .orderBy(productTeamMember.id.desc())
                 .offset(pageable.getOffset())
@@ -48,11 +56,16 @@ public class ProductTeamMemberQueryRepository {
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        Long total = hasMembershipFilter
+        Long total = hasMembershipFilter || hasSquadFilter
             ? queryFactory
                 .select(productTeamMember.id.countDistinct())
                 .from(productTeamMember)
-                .join(productTeamMembership).on(productTeamMembership.productTeamMember.eq(productTeamMember))
+                .leftJoin(productTeamFunctionalMembership)
+                .on(productTeamFunctionalMembership.productTeamMember.eq(productTeamMember))
+                .leftJoin(productTeamFunctionalUnit)
+                .on(productTeamFunctionalUnit.id.eq(productTeamFunctionalMembership.functionalUnitId))
+                .leftJoin(productTeamSquadParticipant)
+                .on(productTeamSquadParticipant.productTeamMember.eq(productTeamMember))
                 .where(where)
                 .fetchOne()
             : queryFactory
@@ -63,7 +76,7 @@ public class ProductTeamMemberQueryRepository {
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
-    public List<ProductTeamMembership> listMembershipsByMemberIds(
+    public List<ProductTeamFunctionalMembership> listFunctionalMembershipsByMemberIds(
         Collection<Long> productTeamMemberIds,
         ProductTeamMemberSearchCondition condition
     ) {
@@ -71,21 +84,24 @@ public class ProductTeamMemberQueryRepository {
             return List.of();
         }
         return queryFactory
-            .selectFrom(productTeamMembership)
-            .join(productTeamMembership.productTeamMember).fetchJoin()
+            .selectFrom(productTeamFunctionalMembership)
+            .join(productTeamFunctionalMembership.productTeamMember).fetchJoin()
+            .leftJoin(productTeamFunctionalUnit)
+            .on(productTeamFunctionalUnit.id.eq(productTeamFunctionalMembership.functionalUnitId))
             .where(
-                productTeamMembership.productTeamMember.id.in(productTeamMemberIds),
+                productTeamFunctionalMembership.productTeamMember.id.in(productTeamMemberIds),
                 productTeamGenerationIdEq(condition == null ? null : condition.productTeamGenerationId()),
-                partEq(condition == null ? null : condition.part()),
+                functionalUnitIdEq(condition == null ? null : condition.functionalUnitId()),
+                functionalUnitTypeEq(condition == null ? null : condition.functionalUnitType()),
                 roleEq(condition == null ? null : condition.role()),
                 positionEq(condition == null ? null : condition.position())
             )
             .orderBy(
-                productTeamMembership.productTeamGenerationId.desc(),
-                productTeamMembership.part.asc(),
-                productTeamMembership.role.desc(),
-                productTeamMembership.position.asc(),
-                productTeamMembership.id.asc()
+                productTeamFunctionalMembership.productTeamGenerationId.desc(),
+                productTeamFunctionalMembership.functionalUnitId.asc(),
+                productTeamFunctionalMembership.role.desc(),
+                productTeamFunctionalMembership.position.asc(),
+                productTeamFunctionalMembership.id.asc()
             )
             .fetch();
     }
@@ -96,27 +112,37 @@ public class ProductTeamMemberQueryRepository {
             return builder;
         }
         builder.and(productTeamGenerationIdEq(condition.productTeamGenerationId()));
-        builder.and(partEq(condition.part()));
+        builder.and(functionalUnitIdEq(condition.functionalUnitId()));
+        builder.and(functionalUnitTypeEq(condition.functionalUnitType()));
         builder.and(roleEq(condition.role()));
         builder.and(positionEq(condition.position()));
+        builder.and(squadIdEq(condition.squadId()));
         return builder;
     }
 
     private BooleanExpression productTeamGenerationIdEq(Long productTeamGenerationId) {
         return productTeamGenerationId == null
             ? null
-            : productTeamMembership.productTeamGenerationId.eq(productTeamGenerationId);
+            : productTeamFunctionalMembership.productTeamGenerationId.eq(productTeamGenerationId);
     }
 
-    private BooleanExpression partEq(ProductTeamPart part) {
-        return part == null ? null : productTeamMembership.part.eq(part);
+    private BooleanExpression functionalUnitIdEq(Long functionalUnitId) {
+        return functionalUnitId == null ? null : productTeamFunctionalMembership.functionalUnitId.eq(functionalUnitId);
     }
 
-    private BooleanExpression roleEq(ProductTeamRole role) {
-        return role == null ? null : productTeamMembership.role.eq(role);
+    private BooleanExpression functionalUnitTypeEq(ProductTeamFunctionalUnitType functionalUnitType) {
+        return functionalUnitType == null ? null : productTeamFunctionalUnit.type.eq(functionalUnitType);
+    }
+
+    private BooleanExpression roleEq(ProductTeamFunctionalRole role) {
+        return role == null ? null : productTeamFunctionalMembership.role.eq(role);
     }
 
     private BooleanExpression positionEq(ProductTeamPosition position) {
-        return position == null ? null : productTeamMembership.position.eq(position);
+        return position == null ? null : productTeamFunctionalMembership.position.eq(position);
+    }
+
+    private BooleanExpression squadIdEq(Long squadId) {
+        return squadId == null ? null : productTeamSquadParticipant.squad.id.eq(squadId);
     }
 }

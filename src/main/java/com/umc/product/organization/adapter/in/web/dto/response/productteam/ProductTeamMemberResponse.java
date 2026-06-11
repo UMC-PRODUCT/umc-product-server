@@ -14,7 +14,8 @@ public record ProductTeamMemberResponse(
     String introduction,
     String productTeamProfileImageId,
     String productTeamProfileImageUrl,
-    List<ProductTeamActivityResponse> activities
+    List<ProductTeamFunctionalMembershipResponse> functionalMemberships,
+    List<ProductTeamSquadParticipationResponse> squadParticipations
 ) {
     public static ProductTeamMemberResponse from(ProductTeamMemberInfo info) {
         return new ProductTeamMemberResponse(
@@ -28,7 +29,8 @@ public record ProductTeamMemberResponse(
             info.introduction(),
             info.productTeamProfileImageId(),
             info.productTeamProfileImageUrl(),
-            info.activities().stream().map(ProductTeamActivityResponse::from).toList()
+            info.functionalMemberships().stream().map(ProductTeamFunctionalMembershipResponse::from).toList(),
+            info.squadParticipations().stream().map(ProductTeamSquadParticipationResponse::from).toList()
         );
     }
 }

@@ -1,11 +1,8 @@
 package com.umc.product.organization.application.service;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.organization.application.port.out.query.LoadProductTeamMembershipPort;
-import com.umc.product.organization.domain.enums.ProductTeamRole;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import com.umc.product.organization.application.port.out.query.LoadProductTeamFunctionalMembershipPort;
+import com.umc.product.organization.domain.enums.ProductTeamFunctionalRole;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -14,14 +11,13 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ProductTeamAccessPolicy {
 
-    public static final Set<ProductTeamRole> MANAGER_ROLES = Set.of(
-        ProductTeamRole.PRODUCT_LEAD,
-        ProductTeamRole.PRODUCT_VICE_LEAD,
-        ProductTeamRole.GENERAL_MANAGER
+    public static final Set<ProductTeamFunctionalRole> MANAGER_ROLES = Set.of(
+        ProductTeamFunctionalRole.PRODUCT_LEAD,
+        ProductTeamFunctionalRole.PRODUCT_VICE_LEAD
     );
 
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
-    private final LoadProductTeamMembershipPort loadProductTeamMembershipPort;
+    private final LoadProductTeamFunctionalMembershipPort loadProductTeamFunctionalMembershipPort;
 
     public boolean canCreateGeneration(Long requesterMemberId) {
         return isCentralCore(requesterMemberId);
@@ -34,47 +30,34 @@ public class ProductTeamAccessPolicy {
         if (requesterMemberId == null || productTeamGenerationId == null) {
             return false;
         }
-        return loadProductTeamMembershipPort.existsByMemberIdAndGenerationIdAndRoles(
+        return loadProductTeamFunctionalMembershipPort.existsByMemberIdAndGenerationIdAndRoles(
             requesterMemberId,
             productTeamGenerationId,
             MANAGER_ROLES
         );
     }
 
-    public boolean canManageAllGenerations(Long requesterMemberId, Collection<Long> productTeamGenerationIds) {
+    public boolean canManageProductTeam(Long requesterMemberId) {
         if (isCentralCore(requesterMemberId)) {
             return true;
         }
-        if (requesterMemberId == null || productTeamGenerationIds == null || productTeamGenerationIds.isEmpty()) {
+        if (requesterMemberId == null) {
             return false;
         }
-        List<Long> generationIds = productTeamGenerationIds.stream()
-            .filter(Objects::nonNull)
-            .distinct()
-            .toList();
-        if (generationIds.isEmpty()) {
-            return false;
-        }
-        return generationIds.stream()
-            .allMatch(generationId -> canManageGeneration(requesterMemberId, generationId));
+        return loadProductTeamFunctionalMembershipPort.existsByMemberIdAndActiveGenerationAndRoles(
+            requesterMemberId,
+            MANAGER_ROLES
+        );
     }
 
     public boolean canManageMemberProfile(
         Long requesterMemberId,
-        Long targetMemberId,
-        Collection<Long> targetGenerationIds
+        Long targetMemberId
     ) {
-        if (Objects.equals(requesterMemberId, targetMemberId)) {
+        if (requesterMemberId != null && requesterMemberId.equals(targetMemberId)) {
             return true;
         }
-        if (isCentralCore(requesterMemberId)) {
-            return true;
-        }
-        return loadProductTeamMembershipPort.existsByMemberIdAndGenerationIdInAndRoles(
-            requesterMemberId,
-            targetGenerationIds,
-            MANAGER_ROLES
-        );
+        return canManageProductTeam(requesterMemberId);
     }
 
     @SuppressWarnings("removal")
