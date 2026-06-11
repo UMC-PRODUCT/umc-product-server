@@ -1,0 +1,17 @@
+[
+  {
+    "email": "alpha_user_0001@test.umc.it.kr",
+    "password": "password12!",
+    "clientType": "WEB"
+  },
+  {
+    "email": "alpha_user_0002@test.umc.it.kr",
+    "password": "password12!",
+    "clientType": "WEB"
+  },
+  {
+    "email": "alpha_user_0003@test.umc.it.kr",
+    "password": "password12!",
+    "clientType": "WEB"
+  }
+]
