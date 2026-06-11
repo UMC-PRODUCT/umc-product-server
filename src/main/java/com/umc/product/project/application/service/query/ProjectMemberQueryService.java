@@ -43,17 +43,12 @@ public class ProjectMemberQueryService implements GetRandomMatchedProjectMemberU
      */
     @Override
     public Optional<ProjectMemberInfo> findRandomMatched(Long memberId, Long gisuId) {
-        Optional<MatchingType> matchingType = getChallengerUseCase
+        return getChallengerUseCase
             .findByMemberIdAndGisuId(memberId, gisuId)
             .map(ChallengerInfo::part)
-            .flatMap(ProjectMemberQueryService::matchingTypeOf);
-
-        if (matchingType.isEmpty()) {
-            return Optional.empty();
-        }
-
-        return loadProjectMemberPort
-            .findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(memberId, gisuId, matchingType.get())
+            .flatMap(ProjectMemberQueryService::matchingTypeOf)
+            .flatMap(matchingType -> loadProjectMemberPort
+                .findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(memberId, gisuId, matchingType))
             .map(ProjectMemberInfo::from);
     }
 }
