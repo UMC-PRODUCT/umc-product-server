@@ -98,8 +98,8 @@ class ProjectApplicationResponseAssemblerTest {
             .willReturn(List.of(application));
         given(getRandomMatchedProjectMemberUseCase.findRandomMatched(query.requesterMemberId(), query.gisuId()))
             .willReturn(Optional.empty());
-        given(getProjectUseCase.listByIds(any())).willReturn(Map.of(1L, project));
-        given(getProjectMatchingRoundUseCase.listByIds(any())).willReturn(Map.of(7L, round));
+        given(getProjectUseCase.findAllByIds(any())).willReturn(Map.of(1L, project));
+        given(getProjectMatchingRoundUseCase.findAllByIds(any())).willReturn(Map.of(7L, round));
         given(getMemberUseCase.findAllByIds(any()))
             .willReturn(Map.of(99L, memberOf(99L, "이방토", "이예원", "한양대 ERICA")));
 
@@ -156,8 +156,8 @@ class ProjectApplicationResponseAssemblerTest {
             .willReturn(List.of());
         given(getRandomMatchedProjectMemberUseCase.findRandomMatched(query.requesterMemberId(), query.gisuId()))
             .willReturn(Optional.of(member));
-        given(getProjectUseCase.listByIds(any())).willReturn(Map.of(2L, project));
-        given(getProjectMatchingRoundUseCase.listByIds(any())).willReturn(Map.of());
+        given(getProjectUseCase.findAllByIds(any())).willReturn(Map.of(2L, project));
+        given(getProjectMatchingRoundUseCase.findAllByIds(any())).willReturn(Map.of());
         given(getMemberUseCase.findAllByIds(any()))
             .willReturn(Map.of(88L, memberOf(88L, "랜덤피엠", "박서은", "이화여대")));
 
@@ -195,9 +195,9 @@ class ProjectApplicationResponseAssemblerTest {
             .willReturn(List.of(appA, appB));
         given(getRandomMatchedProjectMemberUseCase.findRandomMatched(query.requesterMemberId(), query.gisuId()))
             .willReturn(Optional.of(member));
-        given(getProjectUseCase.listByIds(any()))
+        given(getProjectUseCase.findAllByIds(any()))
             .willReturn(Map.of(1L, pA, 2L, pB, 3L, pC));
-        given(getProjectMatchingRoundUseCase.listByIds(any())).willReturn(Map.of(
+        given(getProjectMatchingRoundUseCase.findAllByIds(any())).willReturn(Map.of(
             7L, roundInfoOf(7L, MatchingPhase.FIRST),
             8L, roundInfoOf(8L, MatchingPhase.SECOND)
         ));
@@ -248,8 +248,8 @@ class ProjectApplicationResponseAssemblerTest {
             .willReturn(List.of(application));
         given(getRandomMatchedProjectMemberUseCase.findRandomMatched(query.requesterMemberId(), query.gisuId()))
             .willReturn(Optional.empty());
-        given(getProjectUseCase.listByIds(any())).willReturn(Map.of(1L, project));
-        given(getProjectMatchingRoundUseCase.listByIds(any()))
+        given(getProjectUseCase.findAllByIds(any())).willReturn(Map.of(1L, project));
+        given(getProjectMatchingRoundUseCase.findAllByIds(any()))
             .willReturn(Map.of(7L, roundInfoOf(7L, MatchingPhase.FIRST)));
         given(getMemberUseCase.findAllByIds(any())).willReturn(Map.of());
 
@@ -280,7 +280,7 @@ class ProjectApplicationResponseAssemblerTest {
         given(getProjectUseCase.getById(1L)).willReturn(project);
         given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(eq(Set.of(200L)), eq(GISU_ID)))
             .willReturn(Map.of(200L, challengerInfoOf(200L, ChallengerPart.WEB)));
-        given(getProjectMatchingRoundUseCase.listByIds(any()))
+        given(getProjectMatchingRoundUseCase.findAllByIds(any()))
             .willReturn(Map.of(7L, roundInfoOf(7L, MatchingPhase.FIRST)));
         given(getMemberUseCase.findAllByIds(any()))
             .willReturn(Map.of(200L, memberOf(200L, "벨라", "황지원", "중앙대")));
@@ -337,7 +337,7 @@ class ProjectApplicationResponseAssemblerTest {
         given(getProjectUseCase.getById(1L)).willReturn(project);
         given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), eq(GISU_ID)))
             .willReturn(Map.of(200L, challengerInfoOf(200L, ChallengerPart.WEB)));
-        given(getProjectMatchingRoundUseCase.listByIds(any()))
+        given(getProjectMatchingRoundUseCase.findAllByIds(any()))
             .willReturn(Map.of(7L, roundInfoOf(7L, MatchingPhase.FIRST)));
         given(getMemberUseCase.findAllByIds(any())).willReturn(Map.of());
 
@@ -376,7 +376,7 @@ class ProjectApplicationResponseAssemblerTest {
                 200L, challengerInfoOf(200L, ChallengerPart.WEB),
                 201L, challengerInfoOf(201L, ChallengerPart.ANDROID)
             ));
-        given(getProjectMatchingRoundUseCase.listByIds(any()))
+        given(getProjectMatchingRoundUseCase.findAllByIds(any()))
             .willReturn(Map.of(7L, roundInfoOf(7L, MatchingPhase.FIRST)));
         given(getMemberUseCase.findAllByIds(any())).willReturn(Map.of());
 

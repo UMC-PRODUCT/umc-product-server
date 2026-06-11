@@ -1,10 +1,9 @@
 package com.umc.product.project.application.port.in.query;
 
+import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-
-import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 
 /**
  * 단건 프로젝트 조회 UseCase.
@@ -34,7 +33,7 @@ public interface GetProjectUseCase {
      * @param projectIds 프로젝트 ID 집합
      * @return projectId -> ProjectInfo 매핑. 누락된 ID 는 결과에서 빠집니다.
      */
-    Map<Long, ProjectInfo> listByIds(Collection<Long> projectIds);
+    Map<Long, ProjectInfo> findAllByIds(Collection<Long> projectIds);
 
     /**
      * 특정 creator 가 특정 기수에 작성 중인 Draft 프로젝트를 조회합니다. 등록 화면 재진입용 — creator 본인이 만든 DRAFT 만 노출되며, (creator, gisu) 당 DRAFT 1

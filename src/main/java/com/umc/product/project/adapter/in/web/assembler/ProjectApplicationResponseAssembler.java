@@ -82,8 +82,8 @@ public class ProjectApplicationResponseAssembler {
         }
         randomMatched.ifPresent(member -> projectIds.add(member.projectId()));
 
-        Map<Long, ProjectInfo> projects = getProjectUseCase.listByIds(projectIds);
-        Map<Long, ProjectMatchingRoundInfo> rounds = getProjectMatchingRoundUseCase.listByIds(roundIds);
+        Map<Long, ProjectInfo> projects = getProjectUseCase.findAllByIds(projectIds);
+        Map<Long, ProjectMatchingRoundInfo> rounds = getProjectMatchingRoundUseCase.findAllByIds(roundIds);
 
         Set<Long> ownerIds = projects.values().stream()
             .map(ProjectInfo::productOwnerMemberId)
@@ -140,7 +140,7 @@ public class ProjectApplicationResponseAssembler {
             .entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().part()));
         Map<Long, ProjectMatchingRoundInfo> rounds =
-            getProjectMatchingRoundUseCase.listByIds(roundIds);
+            getProjectMatchingRoundUseCase.findAllByIds(roundIds);
         Map<Long, MemberInfo> memberMap = getMemberUseCase.findAllByIds(applicantMemberIds);
 
         List<ProjectApplicantResponse> result = new ArrayList<>(applications.size());

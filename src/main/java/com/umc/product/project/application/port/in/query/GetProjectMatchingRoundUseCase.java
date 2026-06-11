@@ -1,11 +1,10 @@
 package com.umc.product.project.application.port.in.query;
 
+import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRoundInfo;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRoundInfo;
 
 public interface GetProjectMatchingRoundUseCase {
 
@@ -17,5 +16,5 @@ public interface GetProjectMatchingRoundUseCase {
      * @param ids 매칭 차수 ID 집합
      * @return matchingRoundId -> ProjectMatchingRoundInfo 매핑. 누락된 ID 는 결과에서 빠집니다.
      */
-    Map<Long, ProjectMatchingRoundInfo> listByIds(Collection<Long> ids);
+    Map<Long, ProjectMatchingRoundInfo> findAllByIds(Collection<Long> ids);
 }
