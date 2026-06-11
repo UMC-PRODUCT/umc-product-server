@@ -88,7 +88,8 @@ class ProjectApplicationQueryRepositoryTest {
         persistApplication(memberId, oldApprovedRound, ProjectApplicationStatus.APPROVED);
         ProjectApplication latestApproved = persistApplication(memberId, latestApprovedRound,
             ProjectApplicationStatus.APPROVED);
-        ProjectApplication tieApproved = persistApplication(memberId, tieApprovedRound, ProjectApplicationStatus.APPROVED);
+        ProjectApplication tieApproved = persistApplication(memberId, tieApprovedRound,
+            ProjectApplicationStatus.APPROVED);
         persistApplication(memberId, rejectedRound, ProjectApplicationStatus.REJECTED);
         persistApplication(memberId, submittedRound, ProjectApplicationStatus.SUBMITTED);
         persistApplication(201L, rejectedRound, ProjectApplicationStatus.REJECTED);
@@ -155,7 +156,8 @@ class ProjectApplicationQueryRepositoryTest {
         ProjectMatchingRound round,
         ProjectApplicationStatus status
     ) {
-        ProjectApplication application = ProjectApplication.create(form, applicantMemberId * 10, applicantMemberId, round);
+        ProjectApplication application = ProjectApplication.create(
+            form, applicantMemberId * 10, applicantMemberId, round);
         ReflectionTestUtils.setField(application, "status", status);
         em.persist(application);
         return application;
