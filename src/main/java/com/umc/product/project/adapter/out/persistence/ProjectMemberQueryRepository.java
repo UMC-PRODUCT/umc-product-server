@@ -94,6 +94,7 @@ public class ProjectMemberQueryRepository {
                 projectMember.part.eq(part),
                 projectMember.status.eq(ProjectMemberStatus.ACTIVE)
             )
+            .orderBy(projectMember.createdAt.asc(), projectMember.id.asc())
             .fetch();
 
         Map<Long, List<ProjectMember>> result = new HashMap<>();

@@ -136,7 +136,7 @@ public class ProjectResponseAssembler {
     /**
      * PROJECT-003 프로젝트 팀원 구성 조회.
      * <p>
-     * 메인 PM 별도 노출 + 보조 PM(PLAN 파트의 다른 멤버) + 그 외 파트별 그룹. 각 그룹은 닉네임 가나다순 정렬.
+     * 메인 PM 별도 노출 + 보조 PM(PLAN 파트의 다른 멤버) + 그 외 파트별 그룹. 각 그룹은 ProjectMember 생성일 오름차순 정렬.
      */
     public ProjectMembersResponse membersFor(Long projectId) {
         ProjectInfo info = getProjectUseCase.getById(projectId);
@@ -258,7 +258,12 @@ public class ProjectResponseAssembler {
         );
 
         Map<ChallengerPart, List<ProjectMemberBrief>> partToMembers = new EnumMap<>(ChallengerPart.class);
-        for (ProjectMember m : members) {
+        List<ProjectMember> orderedMembers = members.stream()
+            .sorted(Comparator.comparing(ProjectMember::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(ProjectMember::getId, Comparator.nullsLast(Comparator.naturalOrder())))
+            .toList();
+
+        for (ProjectMember m : orderedMembers) {
             ProjectMemberBrief brief = toProjectMemberBrief(
                 memberMap.get(m.getMemberId()),
                 matchedRoundMap.get(ProjectMemberKey.of(projectId, m.getMemberId()))
@@ -269,18 +274,14 @@ public class ProjectResponseAssembler {
             partToMembers.computeIfAbsent(m.getPart(), p -> new ArrayList<>()).add(brief);
         }
 
-        Comparator<ProjectMemberBrief> byNickname = Comparator.comparing(
-            ProjectMemberBrief::nickname, Comparator.nullsLast(Comparator.naturalOrder()));
-
         List<ProjectMemberBrief> coProductOwners = partToMembers.getOrDefault(ChallengerPart.PLAN, List.of()).stream()
             .filter(b -> !Objects.equals(b.memberId(), info.productOwnerMemberId()))
-            .sorted(byNickname)
             .toList();
 
         List<PartGroup> partGroups = Arrays.stream(ChallengerPart.values())
             .filter(p -> p != ChallengerPart.PLAN)
             .map(p -> new PartGroup(p,
-                partToMembers.getOrDefault(p, List.of()).stream().sorted(byNickname).toList()))
+                partToMembers.getOrDefault(p, List.of())))
             .filter(g -> !g.members().isEmpty())
             .toList();
 

@@ -14,11 +14,15 @@ import org.springframework.data.repository.query.Param;
 // TODO: 프로젝트 전반의 QueryDSL 일관성을 위해 ProjectMemberQueryRepository로 마이그레이션 필요.
 public interface ProjectMemberJpaRepository extends JpaRepository<ProjectMember, Long> {
 
-    List<ProjectMember> findByProjectIdAndPartAndStatus(Long projectId, ChallengerPart part, ProjectMemberStatus status);
+    List<ProjectMember> findByProjectIdAndPartAndStatusOrderByCreatedAtAscIdAsc(
+        Long projectId, ChallengerPart part, ProjectMemberStatus status
+    );
 
-    List<ProjectMember> findByProjectIdAndStatus(Long projectId, ProjectMemberStatus status);
+    List<ProjectMember> findByProjectIdAndStatusOrderByCreatedAtAscIdAsc(Long projectId, ProjectMemberStatus status);
 
-    List<ProjectMember> findByProjectIdInAndStatus(Collection<Long> projectIds, ProjectMemberStatus status);
+    List<ProjectMember> findByProjectIdInAndStatusOrderByCreatedAtAscIdAsc(
+        Collection<Long> projectIds, ProjectMemberStatus status
+    );
 
     Optional<ProjectMember> findByProjectIdAndMemberId(Long projectId, Long memberId);
 
