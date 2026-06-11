@@ -5,6 +5,19 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.BDDMockito.given;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerActivityPeriodUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
@@ -14,8 +27,10 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.enums.MemberStatus;
+import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberProfileUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberSummaryV2Info;
@@ -23,23 +38,13 @@ import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("MemberSummaryV2QueryService — BFF 조립")
 class MemberSummaryV2QueryServiceTest {
 
     @Mock GetMemberUseCase getMemberUseCase;
+    @Mock GetMemberCredentialUseCase getMemberCredentialUseCase;
     @Mock GetMemberProfileUseCase getMemberProfileUseCase;
     @Mock GetChallengerUseCase getChallengerUseCase;
     @Mock GetGisuUseCase getGisuUseCase;
@@ -201,5 +206,40 @@ class MemberSummaryV2QueryServiceTest {
         assertThat(info.currentGisuMembership().challenger()).isNull();
         assertThat(info.currentGisuMembership().isAdmin()).isFalse();
         assertThat(info.currentGisuMembership().roleTypes()).isEmpty();
+    }
+
+    @Test
+    void 로컬_자격증명이_있는_회원은_hasLocalCredential이_true이다() {
+        MemberInfo m = member();
+        given(getMemberUseCase.getById(100L)).willReturn(m);
+        given(getMemberCredentialUseCase.findCredentialByMemberId(100L))
+            .willReturn(Optional.of(new MemberCredentialInfo(100L, "{bcrypt}encoded")));
+        given(getMemberProfileUseCase.getMemberProfileById(100L)).willReturn(profile());
+
+        given(getChallengerUseCase.getAllByMemberId(100L)).willReturn(List.of());
+        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.empty());
+        given(getChallengerActivityPeriodUseCase.calculateActivityPeriod(any(), any()))
+            .willReturn(new ActivityPeriodSummary(0L, List.of()));
+
+        MemberSummaryV2Info info = service.getSummaryByMemberId(100L);
+
+        assertThat(info.hasLocalCredential()).isTrue();
+    }
+
+    @Test
+    void 로컬_자격증명이_없는_회원은_hasLocalCredential이_false이다() {
+        MemberInfo m = member();
+        given(getMemberUseCase.getById(100L)).willReturn(m);
+        given(getMemberCredentialUseCase.findCredentialByMemberId(100L)).willReturn(Optional.empty());
+        given(getMemberProfileUseCase.getMemberProfileById(100L)).willReturn(profile());
+
+        given(getChallengerUseCase.getAllByMemberId(100L)).willReturn(List.of());
+        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.empty());
+        given(getChallengerActivityPeriodUseCase.calculateActivityPeriod(any(), any()))
+            .willReturn(new ActivityPeriodSummary(0L, List.of()));
+
+        MemberSummaryV2Info info = service.getSummaryByMemberId(100L);
+
+        assertThat(info.hasLocalCredential()).isFalse();
     }
 }

@@ -1,5 +1,16 @@
 package com.umc.product.member.application.service;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerActivityPeriodUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
@@ -7,6 +18,7 @@ import com.umc.product.challenger.application.port.in.query.dto.ActivityPeriodSu
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
+import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberProfileUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberSummaryV2UseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -20,16 +32,8 @@ import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * /api/v2/member/me BFF UseCase 구현체.
@@ -43,6 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberSummaryV2QueryService implements GetMemberSummaryV2UseCase {
 
     private final GetMemberUseCase getMemberUseCase;
+    private final GetMemberCredentialUseCase getMemberCredentialUseCase;
     private final GetMemberProfileUseCase getMemberProfileUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
@@ -53,6 +58,7 @@ public class MemberSummaryV2QueryService implements GetMemberSummaryV2UseCase {
     @Override
     public MemberSummaryV2Info getSummaryByMemberId(Long memberId) {
         MemberInfo memberInfo = getMemberUseCase.getById(memberId);
+        boolean hasLocalCredential = getMemberCredentialUseCase.findCredentialByMemberId(memberId).isPresent();
         MemberProfileInfo profileInfo = getMemberProfileUseCase.getMemberProfileById(memberId);
 
         // 챌린저 + 점수 일괄 로딩 (D13에서 batch로 교체됨)
@@ -110,6 +116,7 @@ public class MemberSummaryV2QueryService implements GetMemberSummaryV2UseCase {
         return new MemberSummaryV2Info(
             memberInfo,
             profileInfo,
+            hasLocalCredential,
             activitySummary.totalActivityDays(),
             currentMembership,
             history
