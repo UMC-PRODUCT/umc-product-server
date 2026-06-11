@@ -1,5 +1,7 @@
 package com.umc.product.member.adapter.in.web.v2.dto.response;
 
+import java.util.List;
+
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
@@ -8,8 +10,8 @@ import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberSummaryV2Info;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.List;
 
 /**
  * GET /api/v2/member/me 응답 DTO.

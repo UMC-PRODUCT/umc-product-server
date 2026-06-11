@@ -1,5 +1,8 @@
 package com.umc.product.member.application.port.in.query.dto;
 
+import java.util.List;
+import java.util.Map;
+
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -7,8 +10,6 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
-import java.util.List;
-import java.util.Map;
 
 /**
  * /api/v2/member/me 응답에 사용되는 BFF Info DTO 입니다. 어댑터의 Response 매핑은 단순 위임만 합니다.
