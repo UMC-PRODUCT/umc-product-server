@@ -109,7 +109,9 @@ public class ProjectApplicationQueryRepository {
     /**
      * PM/운영진용 단일 프로젝트의 지원자 목록을 조회한다.
      * <p>
-     * applicationForm 을 통해 projectId 로 필터하고, appliedMatchingRound 를 fetch join 한다. 임시저장(DRAFT)은 항상 제외된다.
+     * applicationForm -> project, appliedMatchingRound 를 fetch join 으로 함께 로드한다.
+     * 호출자({@code ProjectApplicationSummaryInfo#from})가 form.project.id 까지 접근하므로 N+1 방지를 위해 fetch join 이 필요하다.
+     * 임시저장(DRAFT)은 항상 제외된다.
      * <p>
      * 정렬: matchingRound.phase ASC -> projectApplication.submittedAt ASC.
      */
@@ -120,7 +122,8 @@ public class ProjectApplicationQueryRepository {
     ) {
         return queryFactory
             .selectFrom(projectApplication)
-            .innerJoin(projectApplication.applicationForm, projectApplicationForm)
+            .innerJoin(projectApplication.applicationForm, projectApplicationForm).fetchJoin()
+            .innerJoin(projectApplicationForm.project, project).fetchJoin()
             .innerJoin(projectApplication.appliedMatchingRound, projectMatchingRound).fetchJoin()
             .where(
                 projectApplicationForm.project.id.eq(projectId),
