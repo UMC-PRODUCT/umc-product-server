@@ -1,6 +1,5 @@
 package com.umc.product.project.adapter.in.web.dto.response;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.adapter.in.web.dto.common.MatchingRoundPhaseView;
 import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
 import com.umc.product.project.adapter.in.web.dto.common.PartQuotaInfo;
@@ -67,7 +66,7 @@ public record MyProjectApplicationResponse(
             .project(toProjectBrief(project, productOwner))
             .matchingRound(MatchingRoundBrief.builder()
                 .id(null)
-                .type(matchingTypeOf(member.part()))
+                .type(MatchingType.fromPart(member.part()).orElse(null))
                 .phase(MatchingRoundPhaseView.RANDOM_MATCHING)
                 .build())
             .status(ProjectApplicationViewStatus.APPROVED)
@@ -87,17 +86,6 @@ public record MyProjectApplicationResponse(
             .productOwner(productOwner)
             .partQuotas(quotas)
             .build();
-    }
-
-    /**
-     * 본인 챌린저 파트로부터 매칭 종류를 추론한다. 랜덤 매칭 카드 표시 전용.
-     */
-    private static MatchingType matchingTypeOf(ChallengerPart part) {
-        return switch (part) {
-            case DESIGN -> MatchingType.PLAN_DESIGN;
-            case WEB, ANDROID, IOS, NODEJS, SPRINGBOOT -> MatchingType.PLAN_DEVELOPER;
-            case PLAN, ADMIN -> null;
-        };
     }
 
     /**

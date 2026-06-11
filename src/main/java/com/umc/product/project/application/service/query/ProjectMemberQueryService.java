@@ -2,7 +2,6 @@ package com.umc.product.project.application.service.query;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.query.GetRandomMatchedProjectMemberUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectMemberInfo;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
@@ -25,14 +24,6 @@ public class ProjectMemberQueryService implements GetRandomMatchedProjectMemberU
     // Cross-domain
     private final GetChallengerUseCase getChallengerUseCase;
 
-    private static Optional<MatchingType> matchingTypeOf(ChallengerPart part) {
-        return switch (part) {
-            case DESIGN -> Optional.of(MatchingType.PLAN_DESIGN);
-            case WEB, ANDROID, IOS, NODEJS, SPRINGBOOT -> Optional.of(MatchingType.PLAN_DEVELOPER);
-            case PLAN, ADMIN -> Optional.empty();
-        };
-    }
-
     /**
      * 특정 챌린저의 랜덤 매칭/운영진 강제 배정 ProjectMember 단건 조회.
      * <p>
@@ -46,7 +37,7 @@ public class ProjectMemberQueryService implements GetRandomMatchedProjectMemberU
         return getChallengerUseCase
             .findByMemberIdAndGisuId(memberId, gisuId)
             .map(ChallengerInfo::part)
-            .flatMap(ProjectMemberQueryService::matchingTypeOf)
+            .flatMap(MatchingType::fromPart)
             .flatMap(matchingType -> loadProjectMemberPort
                 .findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(memberId, gisuId, matchingType))
             .map(ProjectMemberInfo::from);

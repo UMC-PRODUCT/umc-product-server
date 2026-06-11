@@ -112,14 +112,6 @@ public class ProjectApplicationQueryService
         );
     }
 
-    private static Optional<MatchingType> matchingTypeOf(ChallengerPart part) {
-        return switch (part) {
-            case DESIGN -> Optional.of(MatchingType.PLAN_DESIGN);
-            case WEB, ANDROID, IOS, NODEJS, SPRINGBOOT -> Optional.of(MatchingType.PLAN_DEVELOPER);
-            case PLAN, ADMIN -> Optional.empty();
-        };
-    }
-
     /**
      * 본인 지원 내역 목록 조회.
      * <p>
@@ -195,7 +187,7 @@ public class ProjectApplicationQueryService
         return getChallengerUseCase
             .findByMemberIdAndGisuId(query.requesterMemberId(), query.gisuId())
             .map(ChallengerInfo::part)
-            .flatMap(ProjectApplicationQueryService::matchingTypeOf);
+            .flatMap(MatchingType::fromPart);
     }
 
     /**
