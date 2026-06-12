@@ -1,15 +1,17 @@
 package com.umc.product.survey.adapter.out.persistence;
 
-import com.umc.product.survey.domain.Question;
-import com.umc.product.survey.domain.enums.QuestionType;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.survey.domain.Question;
+import com.umc.product.survey.domain.enums.QuestionType;
 
 public interface QuestionJpaRepository extends JpaRepository<Question, Long> {
     /**
