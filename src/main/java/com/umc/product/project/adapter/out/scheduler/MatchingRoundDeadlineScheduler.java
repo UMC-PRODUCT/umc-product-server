@@ -1,20 +1,23 @@
 package com.umc.product.project.adapter.out.scheduler;
 
-import com.umc.product.project.adapter.in.scheduler.MatchingRoundDeadlineHandler;
-import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
-import com.umc.product.project.application.port.out.ScheduleMatchingRoundDeadlinePort;
-import com.umc.product.project.domain.ProjectMatchingRound;
-import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
+
+import com.umc.product.project.adapter.in.scheduler.MatchingRoundDeadlineHandler;
+import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
+import com.umc.product.project.application.port.out.ScheduleMatchingRoundDeadlinePort;
+import com.umc.product.project.domain.ProjectMatchingRound;
+
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * {@link ScheduleMatchingRoundDeadlinePort} 의 driven adapter 구현.
@@ -41,10 +44,10 @@ public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDead
      * 자동 선발 발화 시점을 deadline 정각이 아닌 buffer 만큼 뒤로 미룬다.
      * <p>
      * - 클럭 정밀도: deadline 정각에 발화 시 {@code isDecisionDeadlinePassed} 가 false 가 돼 NOT_FINALIZABLE 로 종료될 위험 회피
-     * - PM 마지막 토글과의 race 보호
+     * - PM 마지막 토글 커밋과의 짧은 race 보호
      * - 다른 도메인 자정 cron 부하와 분리
      */
-    static final Duration DEADLINE_BUFFER = Duration.ofMinutes(10);
+    private final Duration deadlineBuffer;
 
     private final TaskScheduler taskScheduler;
     private final MatchingRoundDeadlineHandler handler;
@@ -55,11 +58,13 @@ public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDead
     public MatchingRoundDeadlineScheduler(
         @Qualifier("matchingDeadlineTaskScheduler") TaskScheduler taskScheduler,
         MatchingRoundDeadlineHandler handler,
-        LoadProjectMatchingRoundPort loadProjectMatchingRoundPort
+        LoadProjectMatchingRoundPort loadProjectMatchingRoundPort,
+        MatchingRoundDeadlineSchedulerProperties properties
     ) {
         this.taskScheduler = taskScheduler;
         this.handler = handler;
         this.loadProjectMatchingRoundPort = loadProjectMatchingRoundPort;
+        this.deadlineBuffer = properties.deadlineBuffer();
     }
 
     @PostConstruct
@@ -72,7 +77,7 @@ public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDead
         Long roundId = round.getId();
         cancel(roundId);
 
-        Instant runAt = round.getDecisionDeadline().plus(DEADLINE_BUFFER);
+        Instant runAt = round.getDecisionDeadline().plus(deadlineBuffer);
         ScheduledFuture<?> future = taskScheduler.schedule(
             () -> {
                 try {
