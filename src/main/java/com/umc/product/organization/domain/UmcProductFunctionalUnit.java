@@ -4,6 +4,7 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.organization.domain.enums.UmcProductFunctionalUnitType;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

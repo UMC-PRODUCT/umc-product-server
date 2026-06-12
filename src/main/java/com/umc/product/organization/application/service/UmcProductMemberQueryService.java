@@ -1,5 +1,22 @@
 package com.umc.product.organization.application.service;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetUmcProductMemberUseCase;
@@ -17,27 +34,11 @@ import com.umc.product.organization.application.port.out.query.LoadUmcProductMem
 import com.umc.product.organization.application.port.out.query.LoadUmcProductSquadParticipantPort;
 import com.umc.product.organization.application.port.out.query.LoadUmcProductSquadPort;
 import com.umc.product.organization.domain.UmcProductFunctionalMembership;
-import com.umc.product.organization.domain.UmcProductFunctionalUnit;
 import com.umc.product.organization.domain.UmcProductMember;
-import com.umc.product.organization.domain.UmcProductSquad;
 import com.umc.product.organization.domain.UmcProductSquadParticipant;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

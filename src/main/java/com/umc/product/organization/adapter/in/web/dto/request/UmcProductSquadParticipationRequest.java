@@ -3,6 +3,7 @@ package com.umc.product.organization.adapter.in.web.dto.request;
 import com.umc.product.organization.application.port.in.command.dto.UmcProductSquadParticipationCommand;
 import com.umc.product.organization.domain.enums.UmcProductPosition;
 import com.umc.product.organization.domain.enums.UmcProductSquadRole;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 

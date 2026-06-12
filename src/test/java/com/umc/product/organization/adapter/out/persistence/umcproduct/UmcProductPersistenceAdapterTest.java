@@ -3,6 +3,19 @@ package com.umc.product.organization.adapter.out.persistence.umcproduct;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Instant;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.test.context.ActiveProfiles;
+
 import com.umc.product.global.config.JpaConfig;
 import com.umc.product.global.config.QueryDslConfig;
 import com.umc.product.organization.application.port.in.query.dto.umcproduct.UmcProductMemberSearchCondition;
@@ -17,17 +30,6 @@ import com.umc.product.organization.domain.enums.UmcProductFunctionalUnitType;
 import com.umc.product.organization.domain.enums.UmcProductPosition;
 import com.umc.product.organization.domain.enums.UmcProductSquadRole;
 import com.umc.product.support.TestContainersConfig;
-import java.time.Instant;
-import java.util.List;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.context.annotation.Import;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
 @ActiveProfiles("test")

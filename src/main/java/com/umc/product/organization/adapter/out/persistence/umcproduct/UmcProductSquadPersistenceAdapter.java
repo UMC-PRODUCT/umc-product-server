@@ -1,15 +1,18 @@
 package com.umc.product.organization.adapter.out.persistence.umcproduct;
 
+import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.organization.application.port.out.command.SaveUmcProductSquadPort;
 import com.umc.product.organization.application.port.out.query.LoadUmcProductSquadPort;
 import com.umc.product.organization.domain.UmcProductSquad;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
-import java.time.Instant;
-import java.util.Collection;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor

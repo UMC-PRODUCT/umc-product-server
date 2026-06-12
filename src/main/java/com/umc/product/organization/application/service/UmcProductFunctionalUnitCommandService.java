@@ -1,5 +1,10 @@
 package com.umc.product.organization.application.service;
 
+import java.util.Objects;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.organization.application.port.in.command.ManageUmcProductFunctionalUnitUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateUmcProductFunctionalUnitCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateUmcProductFunctionalUnitCommand;
@@ -9,10 +14,8 @@ import com.umc.product.organization.application.port.out.query.LoadUmcProductGen
 import com.umc.product.organization.domain.UmcProductFunctionalUnit;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
-import java.util.Objects;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

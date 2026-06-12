@@ -1,11 +1,22 @@
 package com.umc.product.organization.application.service;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.command.ManageUmcProductMemberUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateUmcProductMemberCommand;
+import com.umc.product.organization.application.port.in.command.dto.ReplaceUmcProductMemberFunctionalMembershipsCommand;
 import com.umc.product.organization.application.port.in.command.dto.UmcProductFunctionalMembershipCommand;
 import com.umc.product.organization.application.port.in.command.dto.UmcProductSquadParticipationCommand;
-import com.umc.product.organization.application.port.in.command.dto.ReplaceUmcProductMemberFunctionalMembershipsCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateUmcProductMemberProfileCommand;
 import com.umc.product.organization.application.port.out.command.SaveUmcProductFunctionalMembershipPort;
 import com.umc.product.organization.application.port.out.command.SaveUmcProductMemberPort;
@@ -25,16 +36,8 @@ import com.umc.product.organization.exception.OrganizationErrorCode;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

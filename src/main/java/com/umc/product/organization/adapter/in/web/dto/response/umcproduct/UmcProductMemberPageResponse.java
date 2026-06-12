@@ -1,7 +1,8 @@
 package com.umc.product.organization.adapter.in.web.dto.response.umcproduct;
 
-import com.umc.product.global.response.PageResponse;
 import java.util.List;
+
+import com.umc.product.global.response.PageResponse;
 
 public record UmcProductMemberPageResponse(
     List<UmcProductMemberResponse> content,

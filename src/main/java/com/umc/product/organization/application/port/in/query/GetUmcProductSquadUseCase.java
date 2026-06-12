@@ -1,7 +1,8 @@
 package com.umc.product.organization.application.port.in.query;
 
-import com.umc.product.organization.application.port.in.query.dto.umcproduct.UmcProductSquadInfo;
 import java.util.List;
+
+import com.umc.product.organization.application.port.in.query.dto.umcproduct.UmcProductSquadInfo;
 
 public interface GetUmcProductSquadUseCase {
 

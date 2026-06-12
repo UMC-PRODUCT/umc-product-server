@@ -1,8 +1,10 @@
 package com.umc.product.organization.adapter.in.web.dto.request;
 
-import com.umc.product.organization.application.port.in.command.dto.CreateUmcProductGenerationCommand;
-import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
+
+import com.umc.product.organization.application.port.in.command.dto.CreateUmcProductGenerationCommand;
+
+import jakarta.validation.constraints.NotNull;
 
 public record CreateUmcProductGenerationRequest(
     @NotNull Long generation,

@@ -1,9 +1,10 @@
 package com.umc.product.organization.application.port.in.query;
 
-import com.umc.product.organization.application.port.in.query.dto.umcproduct.UmcProductMemberInfo;
-import com.umc.product.organization.application.port.in.query.dto.umcproduct.UmcProductMemberSearchCondition;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import com.umc.product.organization.application.port.in.query.dto.umcproduct.UmcProductMemberInfo;
+import com.umc.product.organization.application.port.in.query.dto.umcproduct.UmcProductMemberSearchCondition;
 
 public interface GetUmcProductMemberUseCase {
 

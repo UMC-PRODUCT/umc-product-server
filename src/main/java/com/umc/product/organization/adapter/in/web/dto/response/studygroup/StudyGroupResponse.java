@@ -1,10 +1,12 @@
 package com.umc.product.organization.adapter.in.web.dto.response.studygroup;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupWithMemberAndMentorInfo;
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupWithMemberAndMentorInfo;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "스터디 그룹 요약 정보")
 public record StudyGroupResponse(

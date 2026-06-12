@@ -1,9 +1,20 @@
 package com.umc.product.organization.application.service;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.organization.application.port.in.command.ManageUmcProductSquadUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateUmcProductSquadCommand;
-import com.umc.product.organization.application.port.in.command.dto.UmcProductSquadParticipantCommand;
 import com.umc.product.organization.application.port.in.command.dto.ReplaceUmcProductSquadParticipantsCommand;
+import com.umc.product.organization.application.port.in.command.dto.UmcProductSquadParticipantCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateUmcProductSquadCommand;
 import com.umc.product.organization.application.port.out.command.SaveUmcProductSquadParticipantPort;
 import com.umc.product.organization.application.port.out.command.SaveUmcProductSquadPort;
@@ -14,16 +25,8 @@ import com.umc.product.organization.domain.UmcProductSquad;
 import com.umc.product.organization.domain.UmcProductSquadParticipant;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

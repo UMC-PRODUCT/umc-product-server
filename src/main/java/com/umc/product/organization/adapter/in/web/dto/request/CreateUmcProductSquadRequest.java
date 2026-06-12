@@ -1,9 +1,11 @@
 package com.umc.product.organization.adapter.in.web.dto.request;
 
+import java.time.Instant;
+
 import com.umc.product.organization.application.port.in.command.dto.CreateUmcProductSquadCommand;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.time.Instant;
 
 public record CreateUmcProductSquadRequest(
     @NotNull @Size(max = 64) String code,

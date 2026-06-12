@@ -3,15 +3,17 @@ package com.umc.product.organization.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Instant;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.organization.domain.enums.UmcProductFunctionalRole;
 import com.umc.product.organization.domain.enums.UmcProductFunctionalUnitType;
 import com.umc.product.organization.domain.enums.UmcProductPosition;
 import com.umc.product.organization.domain.enums.UmcProductSquadRole;
 import com.umc.product.organization.exception.OrganizationErrorCode;
-import java.time.Instant;
-import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 class UmcProductFunctionalAndSquadTest {
 

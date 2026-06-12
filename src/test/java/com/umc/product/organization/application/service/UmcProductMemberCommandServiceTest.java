@@ -7,10 +7,20 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
+import java.util.List;
+import java.util.Set;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.organization.application.port.in.command.dto.UmcProductFunctionalMembershipCommand;
 import com.umc.product.organization.application.port.in.command.dto.ReplaceUmcProductMemberFunctionalMembershipsCommand;
+import com.umc.product.organization.application.port.in.command.dto.UmcProductFunctionalMembershipCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateUmcProductMemberProfileCommand;
 import com.umc.product.organization.application.port.out.command.SaveUmcProductFunctionalMembershipPort;
 import com.umc.product.organization.application.port.out.command.SaveUmcProductMemberPort;
@@ -27,14 +37,6 @@ import com.umc.product.organization.domain.enums.UmcProductFunctionalUnitType;
 import com.umc.product.organization.domain.enums.UmcProductPosition;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
-import java.util.List;
-import java.util.Set;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class UmcProductMemberCommandServiceTest {

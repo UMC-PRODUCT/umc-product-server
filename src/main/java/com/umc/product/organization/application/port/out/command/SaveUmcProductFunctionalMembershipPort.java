@@ -1,7 +1,8 @@
 package com.umc.product.organization.application.port.out.command;
 
-import com.umc.product.organization.domain.UmcProductFunctionalMembership;
 import java.util.Collection;
+
+import com.umc.product.organization.domain.UmcProductFunctionalMembership;
 
 public interface SaveUmcProductFunctionalMembershipPort {
 

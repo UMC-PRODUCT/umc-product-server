@@ -1,7 +1,8 @@
 package com.umc.product.organization.adapter.in.web.dto.response.umcproduct;
 
-import com.umc.product.organization.application.port.in.query.dto.umcproduct.UmcProductMemberInfo;
 import java.util.List;
+
+import com.umc.product.organization.application.port.in.query.dto.umcproduct.UmcProductMemberInfo;
 
 public record UmcProductMemberResponse(
     Long umcProductMemberId,

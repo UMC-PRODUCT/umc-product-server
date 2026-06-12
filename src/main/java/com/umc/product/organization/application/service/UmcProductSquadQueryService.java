@@ -1,14 +1,17 @@
 package com.umc.product.organization.application.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.organization.application.port.in.query.GetUmcProductSquadUseCase;
 import com.umc.product.organization.application.port.in.query.dto.umcproduct.UmcProductSquadInfo;
 import com.umc.product.organization.application.port.out.query.LoadUmcProductGenerationPort;
 import com.umc.product.organization.application.port.out.query.LoadUmcProductSquadPort;
 import com.umc.product.organization.domain.UmcProductGeneration;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

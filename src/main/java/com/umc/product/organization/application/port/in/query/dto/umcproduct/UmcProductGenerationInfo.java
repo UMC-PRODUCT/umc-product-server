@@ -1,7 +1,8 @@
 package com.umc.product.organization.application.port.in.query.dto.umcproduct;
 
-import com.umc.product.organization.domain.UmcProductGeneration;
 import java.time.Instant;
+
+import com.umc.product.organization.domain.UmcProductGeneration;
 
 public record UmcProductGenerationInfo(
     Long umcProductGenerationId,

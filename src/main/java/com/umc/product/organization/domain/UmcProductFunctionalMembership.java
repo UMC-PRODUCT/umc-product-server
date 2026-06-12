@@ -5,6 +5,7 @@ import com.umc.product.organization.domain.enums.UmcProductFunctionalRole;
 import com.umc.product.organization.domain.enums.UmcProductPosition;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

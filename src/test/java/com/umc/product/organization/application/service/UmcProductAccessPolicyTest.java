@@ -3,15 +3,17 @@ package com.umc.product.organization.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
-import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.organization.application.port.out.query.LoadUmcProductFunctionalMembershipPort;
-import com.umc.product.organization.domain.enums.UmcProductFunctionalRole;
 import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.organization.application.port.out.query.LoadUmcProductFunctionalMembershipPort;
+import com.umc.product.organization.domain.enums.UmcProductFunctionalRole;
 
 @ExtendWith(MockitoExtension.class)
 class UmcProductAccessPolicyTest {

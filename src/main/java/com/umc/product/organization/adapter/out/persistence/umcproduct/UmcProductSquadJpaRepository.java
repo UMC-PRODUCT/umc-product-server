@@ -1,12 +1,14 @@
 package com.umc.product.organization.adapter.out.persistence.umcproduct;
 
-import com.umc.product.organization.domain.UmcProductSquad;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import com.umc.product.organization.domain.UmcProductSquad;
 
 public interface UmcProductSquadJpaRepository extends JpaRepository<UmcProductSquad, Long> {
 

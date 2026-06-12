@@ -1,11 +1,14 @@
 package com.umc.product.organization.application.service;
 
+import java.util.Set;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.organization.application.port.out.query.LoadUmcProductFunctionalMembershipPort;
 import com.umc.product.organization.domain.enums.UmcProductFunctionalRole;
-import java.util.Set;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor

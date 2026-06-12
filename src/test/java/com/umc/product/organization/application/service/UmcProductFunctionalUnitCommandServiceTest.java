@@ -6,6 +6,13 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.organization.application.port.in.command.dto.UpdateUmcProductFunctionalUnitCommand;
 import com.umc.product.organization.application.port.out.command.SaveUmcProductFunctionalUnitPort;
@@ -14,12 +21,6 @@ import com.umc.product.organization.application.port.out.query.LoadUmcProductGen
 import com.umc.product.organization.domain.UmcProductFunctionalUnit;
 import com.umc.product.organization.domain.enums.UmcProductFunctionalUnitType;
 import com.umc.product.organization.exception.OrganizationErrorCode;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class UmcProductFunctionalUnitCommandServiceTest {

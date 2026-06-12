@@ -1,9 +1,10 @@
 package com.umc.product.organization.application.port.out.query;
 
-import com.umc.product.organization.domain.UmcProductSquad;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+
+import com.umc.product.organization.domain.UmcProductSquad;
 
 public interface LoadUmcProductSquadPort {
 

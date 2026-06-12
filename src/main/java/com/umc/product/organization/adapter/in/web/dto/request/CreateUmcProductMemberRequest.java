@@ -1,12 +1,14 @@
 package com.umc.product.organization.adapter.in.web.dto.request;
 
+import java.util.List;
+import java.util.Objects;
+
 import com.umc.product.organization.application.port.in.command.dto.CreateUmcProductMemberCommand;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.util.List;
-import java.util.Objects;
 
 public record CreateUmcProductMemberRequest(
     @NotNull Long memberId,

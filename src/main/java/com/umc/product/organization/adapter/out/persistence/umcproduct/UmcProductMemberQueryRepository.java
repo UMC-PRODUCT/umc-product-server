@@ -1,9 +1,17 @@
 package com.umc.product.organization.adapter.out.persistence.umcproduct;
 
-import static com.umc.product.organization.domain.QUmcProductMember.umcProductMember;
 import static com.umc.product.organization.domain.QUmcProductFunctionalMembership.umcProductFunctionalMembership;
 import static com.umc.product.organization.domain.QUmcProductFunctionalUnit.umcProductFunctionalUnit;
+import static com.umc.product.organization.domain.QUmcProductMember.umcProductMember;
 import static com.umc.product.organization.domain.QUmcProductSquadParticipant.umcProductSquadParticipant;
+
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -13,13 +21,8 @@ import com.umc.product.organization.domain.UmcProductFunctionalMembership;
 import com.umc.product.organization.domain.enums.UmcProductFunctionalRole;
 import com.umc.product.organization.domain.enums.UmcProductFunctionalUnitType;
 import com.umc.product.organization.domain.enums.UmcProductPosition;
-import java.util.Collection;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor

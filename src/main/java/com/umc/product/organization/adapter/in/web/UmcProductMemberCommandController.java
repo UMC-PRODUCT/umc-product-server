@@ -1,13 +1,5 @@
 package com.umc.product.organization.adapter.in.web;
 
-import com.umc.product.global.security.MemberPrincipal;
-import com.umc.product.global.security.annotation.CurrentMember;
-import com.umc.product.organization.adapter.in.web.dto.request.CreateUmcProductMemberRequest;
-import com.umc.product.organization.adapter.in.web.dto.request.ReplaceUmcProductMemberFunctionalMembershipsRequest;
-import com.umc.product.organization.adapter.in.web.dto.request.UpdateUmcProductMemberProfileRequest;
-import com.umc.product.organization.application.port.in.command.ManageUmcProductMemberUseCase;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -17,6 +9,16 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.organization.adapter.in.web.dto.request.CreateUmcProductMemberRequest;
+import com.umc.product.organization.adapter.in.web.dto.request.ReplaceUmcProductMemberFunctionalMembershipsRequest;
+import com.umc.product.organization.adapter.in.web.dto.request.UpdateUmcProductMemberProfileRequest;
+import com.umc.product.organization.application.port.in.command.ManageUmcProductMemberUseCase;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/umc-product/members")

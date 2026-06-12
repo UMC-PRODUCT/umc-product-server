@@ -1,6 +1,7 @@
 package com.umc.product.organization.adapter.in.web.dto.request;
 
 import com.umc.product.organization.application.port.in.command.dto.UpdateUmcProductMemberProfileCommand;
+
 import jakarta.validation.constraints.Size;
 
 public record UpdateUmcProductMemberProfileRequest(

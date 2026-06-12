@@ -1,14 +1,16 @@
 package com.umc.product.organization.adapter.in.web;
 
-import com.umc.product.global.security.annotation.Public;
-import com.umc.product.organization.adapter.in.web.dto.response.umcproduct.UmcProductGenerationListResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.umcproduct.UmcProductGenerationResponse;
-import com.umc.product.organization.application.port.in.query.GetUmcProductGenerationUseCase;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.umc.product.global.security.annotation.Public;
+import com.umc.product.organization.adapter.in.web.dto.response.umcproduct.UmcProductGenerationListResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.umcproduct.UmcProductGenerationResponse;
+import com.umc.product.organization.application.port.in.query.GetUmcProductGenerationUseCase;
+
+import lombok.RequiredArgsConstructor;
 
 @Public
 @RestController

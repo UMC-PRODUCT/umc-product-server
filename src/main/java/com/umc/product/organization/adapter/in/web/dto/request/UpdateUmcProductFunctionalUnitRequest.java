@@ -2,6 +2,7 @@ package com.umc.product.organization.adapter.in.web.dto.request;
 
 import com.umc.product.organization.application.port.in.command.dto.UpdateUmcProductFunctionalUnitCommand;
 import com.umc.product.organization.domain.enums.UmcProductFunctionalUnitType;
+
 import jakarta.validation.constraints.Size;
 
 public record UpdateUmcProductFunctionalUnitRequest(

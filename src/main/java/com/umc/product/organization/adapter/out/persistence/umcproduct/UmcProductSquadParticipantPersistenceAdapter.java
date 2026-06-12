@@ -1,12 +1,15 @@
 package com.umc.product.organization.adapter.out.persistence.umcproduct;
 
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.organization.application.port.out.command.SaveUmcProductSquadParticipantPort;
 import com.umc.product.organization.application.port.out.query.LoadUmcProductSquadParticipantPort;
 import com.umc.product.organization.domain.UmcProductSquadParticipant;
-import java.util.Collection;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor

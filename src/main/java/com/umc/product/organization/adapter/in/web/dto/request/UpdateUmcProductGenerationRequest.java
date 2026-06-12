@@ -1,7 +1,8 @@
 package com.umc.product.organization.adapter.in.web.dto.request;
 
-import com.umc.product.organization.application.port.in.command.dto.UpdateUmcProductGenerationCommand;
 import java.time.Instant;
+
+import com.umc.product.organization.application.port.in.command.dto.UpdateUmcProductGenerationCommand;
 
 public record UpdateUmcProductGenerationRequest(
     Long generation,

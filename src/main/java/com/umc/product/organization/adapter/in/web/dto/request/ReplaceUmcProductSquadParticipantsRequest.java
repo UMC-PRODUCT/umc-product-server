@@ -1,9 +1,11 @@
 package com.umc.product.organization.adapter.in.web.dto.request;
 
-import com.umc.product.organization.application.port.in.command.dto.ReplaceUmcProductSquadParticipantsCommand;
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Objects;
+
+import com.umc.product.organization.application.port.in.command.dto.ReplaceUmcProductSquadParticipantsCommand;
+
+import jakarta.validation.Valid;
 
 public record ReplaceUmcProductSquadParticipantsRequest(
     List<@Valid UmcProductSquadParticipantRequest> participants

@@ -1,8 +1,10 @@
 package com.umc.product.organization.adapter.in.web.dto.request;
 
-import com.umc.product.organization.application.port.in.command.dto.UpdateUmcProductSquadCommand;
-import jakarta.validation.constraints.Size;
 import java.time.Instant;
+
+import com.umc.product.organization.application.port.in.command.dto.UpdateUmcProductSquadCommand;
+
+import jakarta.validation.constraints.Size;
 
 public record UpdateUmcProductSquadRequest(
     @Size(max = 64) String code,

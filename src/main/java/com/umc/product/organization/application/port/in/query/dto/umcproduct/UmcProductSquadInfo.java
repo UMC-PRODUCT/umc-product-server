@@ -1,7 +1,8 @@
 package com.umc.product.organization.application.port.in.query.dto.umcproduct;
 
-import com.umc.product.organization.domain.UmcProductSquad;
 import java.time.Instant;
+
+import com.umc.product.organization.domain.UmcProductSquad;
 
 public record UmcProductSquadInfo(
     Long squadId,
