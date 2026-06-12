@@ -1,20 +1,25 @@
 package com.umc.product.project.adapter.in.web.dto.response;
 
+import java.util.List;
+
+import com.umc.product.project.adapter.in.web.dto.common.MatchingRoundPhaseView;
 import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
 import com.umc.product.project.adapter.in.web.dto.common.PartQuotaInfo;
-import com.umc.product.project.application.port.in.query.dto.MatchingRoundPhaseView;
-import com.umc.product.project.application.port.in.query.dto.MyProjectApplicationCardInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectApplicationSummaryInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationViewStatus;
+import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRoundInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectMemberInfo;
 import com.umc.product.project.domain.enums.MatchingType;
-import java.util.List;
+
 import lombok.Builder;
 
 /**
  * 본인 지원 내역 카드 1건의 Web Response DTO.
  *
  * @param applicationId application 기반 카드만 값을 가지며 랜덤 매칭 카드는 {@code null}
- * @param status        표시용 지원 상태. {@code DRAFT(임시저장) / SUBMITTED / APPROVED / REJECTED}.
- *                      RANDOM_MATCHING 카드는 {@code APPROVED} 로 고정 표시된다.
+ * @param status        표시용 지원 상태. {@code DRAFT(임시저장) / SUBMITTED / APPROVED / REJECTED}. RANDOM_MATCHING 카드는
+ *                      {@code APPROVED} 로 고정 표시된다.
  */
 @Builder
 public record MyProjectApplicationResponse(
@@ -24,30 +29,64 @@ public record MyProjectApplicationResponse(
     MatchingRoundBrief matchingRound,
     ProjectApplicationViewStatus status
 ) {
-    public static MyProjectApplicationResponse from(MyProjectApplicationCardInfo info, MemberBrief productOwner) {
-        List<PartQuotaInfo> quotas = info.partQuotas().stream()
+    /**
+     * 본인이 제출한 ProjectApplication 기반 카드.
+     */
+    public static MyProjectApplicationResponse fromApplication(
+        ProjectApplicationSummaryInfo application,
+        ProjectInfo project,
+        ProjectMatchingRoundInfo round,
+        MemberBrief productOwner
+    ) {
+        return MyProjectApplicationResponse.builder()
+            .applicationId(application.id())
+            .projectId(application.projectId())
+            .project(toProjectBrief(project, productOwner))
+            .matchingRound(MatchingRoundBrief.builder()
+                .id(round == null ? null : round.id())
+                .type(round == null ? null : round.type())
+                .phase(round == null ? null : MatchingRoundPhaseView.from(round.phase()))
+                .build())
+            .status(ProjectApplicationViewStatus.from(application.status()))
+            .build();
+    }
+
+    /**
+     * 랜덤 매칭/운영진 강제 배정으로 합류한 ProjectMember 기반 카드.
+     * <p>
+     * applicationId/matchingRoundId 는 {@code null}, status 는 {@code APPROVED} 고정, phase 는 {@code RANDOM_MATCHING}, type
+     * 은 본인 챌린저 파트로부터 추론된다.
+     */
+    public static MyProjectApplicationResponse fromRandomMatched(
+        ProjectMemberInfo member,
+        ProjectInfo project,
+        MemberBrief productOwner
+    ) {
+        return MyProjectApplicationResponse.builder()
+            .applicationId(null)
+            .projectId(member.projectId())
+            .project(toProjectBrief(project, productOwner))
+            .matchingRound(MatchingRoundBrief.builder()
+                .id(null)
+                .type(MatchingType.fromPart(member.part()).orElse(null))
+                .phase(MatchingRoundPhaseView.RANDOM_MATCHING)
+                .build())
+            .status(ProjectApplicationViewStatus.APPROVED)
+            .build();
+    }
+
+    private static ProjectBrief toProjectBrief(ProjectInfo project, MemberBrief productOwner) {
+        if (project == null) {
+            return null;
+        }
+        List<PartQuotaInfo> quotas = project.partQuotas().stream()
             .map(PartQuotaInfo::from)
             .toList();
-
-        ProjectBrief project = ProjectBrief.builder()
-            .name(info.projectName())
-            .thumbnailImageUrl(info.projectThumbnailImageUrl())
+        return ProjectBrief.builder()
+            .name(project.name())
+            .thumbnailImageUrl(project.thumbnailImageUrl())
             .productOwner(productOwner)
             .partQuotas(quotas)
-            .build();
-
-        MatchingRoundBrief round = MatchingRoundBrief.builder()
-            .id(info.matchingRoundId())
-            .type(info.matchingRoundType())
-            .phase(info.matchingRoundPhase())
-            .build();
-
-        return MyProjectApplicationResponse.builder()
-            .applicationId(info.applicationId())
-            .projectId(info.projectId())
-            .project(project)
-            .matchingRound(round)
-            .status(info.status())
             .build();
     }
 

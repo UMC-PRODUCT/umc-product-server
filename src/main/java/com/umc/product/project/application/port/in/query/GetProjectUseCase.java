@@ -1,7 +1,10 @@
 package com.umc.product.project.application.port.in.query;
 
-import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
+
+import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 
 /**
  * 단건 프로젝트 조회 UseCase.
@@ -23,9 +26,19 @@ public interface GetProjectUseCase {
     ProjectInfo getById(Long projectId);
 
     /**
-     * 특정 creator 가 특정 기수에 작성 중인 Draft 프로젝트를 조회합니다.
-     * 등록 화면 재진입용 — creator 본인이 만든 DRAFT 만 노출되며,
-     * (creator, gisu) 당 DRAFT 1 개 제약이라 단건이 보장됩니다.
+     * 여러 ID 의 프로젝트를 한 번에 Info 로 조회합니다.
+     * <p>
+     * 각 ProjectInfo 는 thumbnail/logo URL, coPM, partQuota 등 표준 view 의 부가 정보까지 모두 합성된 상태로 반환됩니다. Assembler 가
+     * cross-domain 합성을 수행할 때 N+1 을 피하기 위한 batch 진입점입니다.
+     *
+     * @param projectIds 프로젝트 ID 집합
+     * @return projectId -> ProjectInfo 매핑. 누락된 ID 는 결과에서 빠집니다.
+     */
+    Map<Long, ProjectInfo> findAllByIds(Collection<Long> projectIds);
+
+    /**
+     * 특정 creator 가 특정 기수에 작성 중인 Draft 프로젝트를 조회합니다. 등록 화면 재진입용 — creator 본인이 만든 DRAFT 만 노출되며, (creator, gisu) 당 DRAFT 1
+     * 개 제약이라 단건이 보장됩니다.
      *
      * @param creatorMemberId 작성자(creator) Member ID
      * @param gisuId          기수 ID
