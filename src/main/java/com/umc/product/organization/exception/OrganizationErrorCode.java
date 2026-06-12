@@ -98,6 +98,8 @@ public enum OrganizationErrorCode implements BaseCode {
         "UMC Product Squad 시작일은 종료일보다 이전이어야 합니다."),
     UMC_PRODUCT_SQUAD_PARTICIPANT_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0063",
         "UMC Product Squad 참여자는 필수입니다."),
+    UMC_PRODUCT_FUNCTIONAL_UNIT_PARENT_INVALID(HttpStatus.BAD_REQUEST, "ORGANIZATION-0064",
+        "UMC Product 기능 조직은 자기 자신을 상위 조직으로 지정할 수 없습니다."),
 
     ;
 

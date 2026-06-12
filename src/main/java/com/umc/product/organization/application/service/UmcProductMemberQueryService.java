@@ -86,14 +86,9 @@ public class UmcProductMemberQueryService implements GetUmcProductMemberUseCase 
         Map<Long, UmcProductMember> memberMap = loadUmcProductMemberPort.listByIds(ids).stream()
             .collect(Collectors.toMap(UmcProductMember::getId, Function.identity()));
         List<UmcProductFunctionalMembership> functionalMemberships =
-            loadUmcProductFunctionalMembershipPort.listByUmcProductMemberIds(ids, condition);
+            loadUmcProductFunctionalMembershipPort.listByUmcProductMemberIds(ids);
         List<UmcProductSquadParticipant> squadParticipations =
             loadUmcProductSquadParticipantPort.listByUmcProductMemberIds(ids);
-        if (condition != null && condition.squadId() != null) {
-            squadParticipations = squadParticipations.stream()
-                .filter(participation -> Objects.equals(participation.getSquad().getId(), condition.squadId()))
-                .toList();
-        }
         Map<Long, List<UmcProductFunctionalMembership>> membershipsByMember = functionalMemberships.stream()
             .collect(Collectors.groupingBy(
                 membership -> membership.getUmcProductMember().getId(),

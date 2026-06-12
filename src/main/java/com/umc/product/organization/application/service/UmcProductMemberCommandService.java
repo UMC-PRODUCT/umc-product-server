@@ -16,7 +16,9 @@ import com.umc.product.organization.application.port.out.query.LoadUmcProductMem
 import com.umc.product.organization.application.port.out.query.LoadUmcProductSquadPort;
 import com.umc.product.organization.domain.UmcProductFunctionalMembership;
 import com.umc.product.organization.domain.UmcProductFunctionalUnit;
+import com.umc.product.organization.domain.UmcProductGeneration;
 import com.umc.product.organization.domain.UmcProductMember;
+import com.umc.product.organization.domain.UmcProductSquad;
 import com.umc.product.organization.domain.UmcProductSquadParticipant;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
@@ -25,8 +27,11 @@ import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -135,9 +140,28 @@ public class UmcProductMemberCommandService implements ManageUmcProductMemberUse
     }
 
     private void validateFunctionalTargets(List<UmcProductFunctionalMembershipCommand> memberships) {
+        Set<Long> generationIds = memberships.stream()
+            .map(UmcProductFunctionalMembershipCommand::umcProductGenerationId)
+            .collect(Collectors.toSet());
+        Map<Long, UmcProductGeneration> generationMap = loadUmcProductGenerationPort.listByIds(generationIds).stream()
+            .collect(Collectors.toMap(UmcProductGeneration::getId, Function.identity()));
+        if (generationMap.size() != generationIds.size()) {
+            throw new OrganizationDomainException(OrganizationErrorCode.UMC_PRODUCT_GENERATION_NOT_FOUND);
+        }
+
+        Set<Long> functionalUnitIds = memberships.stream()
+            .map(UmcProductFunctionalMembershipCommand::functionalUnitId)
+            .collect(Collectors.toSet());
+        Map<Long, UmcProductFunctionalUnit> functionalUnitMap = loadUmcProductFunctionalUnitPort
+            .listByIds(functionalUnitIds)
+            .stream()
+            .collect(Collectors.toMap(UmcProductFunctionalUnit::getId, Function.identity()));
+        if (functionalUnitMap.size() != functionalUnitIds.size()) {
+            throw new OrganizationDomainException(OrganizationErrorCode.UMC_PRODUCT_FUNCTIONAL_UNIT_NOT_FOUND);
+        }
+
         memberships.forEach(membership -> {
-            loadUmcProductGenerationPort.getById(membership.umcProductGenerationId());
-            UmcProductFunctionalUnit functionalUnit = loadUmcProductFunctionalUnitPort.getById(membership.functionalUnitId());
+            UmcProductFunctionalUnit functionalUnit = functionalUnitMap.get(membership.functionalUnitId());
             if (!Objects.equals(functionalUnit.getUmcProductGenerationId(), membership.umcProductGenerationId())) {
                 throw new OrganizationDomainException(OrganizationErrorCode.UMC_PRODUCT_FUNCTIONAL_UNIT_NOT_FOUND);
             }
@@ -145,10 +169,10 @@ public class UmcProductMemberCommandService implements ManageUmcProductMemberUse
     }
 
     private void validateSquadTargets(List<UmcProductSquadParticipationCommand> squadParticipations) {
-        if (squadParticipations == null) {
+        if (squadParticipations == null || squadParticipations.isEmpty()) {
             return;
         }
-        squadParticipations.forEach(participation -> loadUmcProductSquadPort.getById(participation.squadId()));
+        getSquadMap(squadParticipations);
     }
 
     private void validateProfileImage(String profileImageId) {
@@ -181,9 +205,10 @@ public class UmcProductMemberCommandService implements ManageUmcProductMemberUse
         if (participations == null || participations.isEmpty()) {
             return List.of();
         }
+        Map<Long, UmcProductSquad> squadMap = getSquadMap(participations);
         return participations.stream()
             .map(participation -> UmcProductSquadParticipant.create(
-                loadUmcProductSquadPort.getById(participation.squadId()),
+                squadMap.get(participation.squadId()),
                 member,
                 participation.role(),
                 participation.position(),
@@ -191,5 +216,17 @@ public class UmcProductMemberCommandService implements ManageUmcProductMemberUse
                 participation.responsibilityDescription()
             ))
             .toList();
+    }
+
+    private Map<Long, UmcProductSquad> getSquadMap(List<UmcProductSquadParticipationCommand> participations) {
+        Set<Long> squadIds = participations.stream()
+            .map(UmcProductSquadParticipationCommand::squadId)
+            .collect(Collectors.toSet());
+        Map<Long, UmcProductSquad> squadMap = loadUmcProductSquadPort.listByIds(squadIds).stream()
+            .collect(Collectors.toMap(UmcProductSquad::getId, Function.identity()));
+        if (squadMap.size() != squadIds.size()) {
+            throw new OrganizationDomainException(OrganizationErrorCode.UMC_PRODUCT_SQUAD_NOT_FOUND);
+        }
+        return squadMap;
     }
 }

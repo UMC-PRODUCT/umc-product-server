@@ -16,8 +16,11 @@ import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,10 +84,11 @@ public class UmcProductSquadCommandService implements ManageUmcProductSquadUseCa
         validateParticipants(participants);
 
         saveUmcProductSquadParticipantPort.deleteAllBySquadId(squad.getId());
+        Map<Long, UmcProductMember> memberMap = getMemberMap(participants);
         saveUmcProductSquadParticipantPort.saveAll(participants.stream()
             .map(participant -> UmcProductSquadParticipant.create(
                 squad,
-                loadUmcProductMemberPort.getById(participant.umcProductMemberId()),
+                memberMap.get(participant.umcProductMemberId()),
                 participant.role(),
                 participant.position(),
                 participant.responsibilityTitle(),
@@ -104,5 +108,17 @@ public class UmcProductSquadCommandService implements ManageUmcProductSquadUseCa
         if (uniqueParticipants.size() != participants.size()) {
             throw new OrganizationDomainException(OrganizationErrorCode.UMC_PRODUCT_SQUAD_PARTICIPANT_REQUIRED);
         }
+    }
+
+    private Map<Long, UmcProductMember> getMemberMap(List<UmcProductSquadParticipantCommand> participants) {
+        Set<Long> memberIds = participants.stream()
+            .map(UmcProductSquadParticipantCommand::umcProductMemberId)
+            .collect(Collectors.toSet());
+        Map<Long, UmcProductMember> memberMap = loadUmcProductMemberPort.listByIds(memberIds).stream()
+            .collect(Collectors.toMap(UmcProductMember::getId, Function.identity()));
+        if (memberMap.size() != memberIds.size()) {
+            throw new OrganizationDomainException(OrganizationErrorCode.UMC_PRODUCT_MEMBER_NOT_FOUND);
+        }
+        return memberMap;
     }
 }

@@ -4,6 +4,9 @@ import com.umc.product.organization.domain.UmcProductSquadParticipant;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface UmcProductSquadParticipantJpaRepository extends JpaRepository<UmcProductSquadParticipant, Long> {
 
@@ -13,7 +16,17 @@ public interface UmcProductSquadParticipantJpaRepository extends JpaRepository<U
 
     List<UmcProductSquadParticipant> findAllByUmcProductMemberIdIn(Collection<Long> umcProductMemberIds);
 
-    void deleteAllBySquadId(Long squadId);
+    @Modifying
+    @Query("""
+        DELETE FROM UmcProductSquadParticipant p
+        WHERE p.squad.id = :squadId
+        """)
+    void deleteAllBySquadId(@Param("squadId") Long squadId);
 
-    void deleteAllByUmcProductMemberId(Long umcProductMemberId);
+    @Modifying
+    @Query("""
+        DELETE FROM UmcProductSquadParticipant p
+        WHERE p.umcProductMember.id = :umcProductMemberId
+        """)
+    void deleteAllByUmcProductMemberId(@Param("umcProductMemberId") Long umcProductMemberId);
 }

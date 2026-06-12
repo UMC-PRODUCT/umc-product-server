@@ -9,8 +9,8 @@ public enum UmcProductFunctionalRole {
     MEMBER("멤버", 0),
     PART_LEAD("파트 리드", 1),
     CHAPTER_LEAD("챕터 리드", 2),
-    UMC_PRODUCT_VICE_LEAD("UMC Product 부리드", 3),
-    UMC_PRODUCT_LEAD("UMC Product 리드", 4);
+    UMC_PRODUCT_VICE_LEAD("UMC PRODUCT 부총괄", 3),
+    UMC_PRODUCT_LEAD("UMC PRODUCT 총괄", 4);
 
     private final String displayName;
     private final int sortOrder;

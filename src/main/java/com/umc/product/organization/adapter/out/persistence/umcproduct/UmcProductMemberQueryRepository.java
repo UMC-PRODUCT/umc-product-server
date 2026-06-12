@@ -77,8 +77,7 @@ public class UmcProductMemberQueryRepository {
     }
 
     public List<UmcProductFunctionalMembership> listFunctionalMembershipsByMemberIds(
-        Collection<Long> umcProductMemberIds,
-        UmcProductMemberSearchCondition condition
+        Collection<Long> umcProductMemberIds
     ) {
         if (umcProductMemberIds == null || umcProductMemberIds.isEmpty()) {
             return List.of();
@@ -88,14 +87,7 @@ public class UmcProductMemberQueryRepository {
             .join(umcProductFunctionalMembership.umcProductMember).fetchJoin()
             .leftJoin(umcProductFunctionalUnit)
             .on(umcProductFunctionalUnit.id.eq(umcProductFunctionalMembership.functionalUnitId))
-            .where(
-                umcProductFunctionalMembership.umcProductMember.id.in(umcProductMemberIds),
-                umcProductGenerationIdEq(condition == null ? null : condition.umcProductGenerationId()),
-                functionalUnitIdEq(condition == null ? null : condition.functionalUnitId()),
-                functionalUnitTypeEq(condition == null ? null : condition.functionalUnitType()),
-                roleEq(condition == null ? null : condition.role()),
-                positionEq(condition == null ? null : condition.position())
-            )
+            .where(umcProductFunctionalMembership.umcProductMember.id.in(umcProductMemberIds))
             .orderBy(
                 umcProductFunctionalMembership.umcProductGenerationId.desc(),
                 umcProductFunctionalMembership.functionalUnitId.asc(),

@@ -2,10 +2,10 @@ package com.umc.product.organization.adapter.out.persistence.umcproduct;
 
 import com.umc.product.organization.domain.UmcProductFunctionalMembership;
 import com.umc.product.organization.domain.enums.UmcProductFunctionalRole;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,7 +14,12 @@ public interface UmcProductFunctionalMembershipJpaRepository
 
     List<UmcProductFunctionalMembership> findAllByUmcProductMemberId(Long umcProductMemberId);
 
-    void deleteAllByUmcProductMemberId(Long umcProductMemberId);
+    @Modifying
+    @Query("""
+        DELETE FROM UmcProductFunctionalMembership m
+        WHERE m.umcProductMember.id = :umcProductMemberId
+        """)
+    void deleteAllByUmcProductMemberId(@Param("umcProductMemberId") Long umcProductMemberId);
 
     boolean existsByUmcProductMember_MemberIdAndUmcProductGenerationIdAndRoleIn(
         Long memberId,

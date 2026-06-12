@@ -28,7 +28,7 @@ public class UmcProductFunctionalUnitCommandService implements ManageUmcProductF
     public Long create(CreateUmcProductFunctionalUnitCommand command) {
         validateCanManage(command.requesterMemberId());
         loadUmcProductGenerationPort.getById(command.umcProductGenerationId());
-        validateParentUnit(command.parentUnitId(), command.umcProductGenerationId());
+        validateParentUnit(command.parentUnitId(), command.umcProductGenerationId(), null);
 
         UmcProductFunctionalUnit functionalUnit = UmcProductFunctionalUnit.create(
             command.umcProductGenerationId(),
@@ -47,7 +47,7 @@ public class UmcProductFunctionalUnitCommandService implements ManageUmcProductF
     public void update(UpdateUmcProductFunctionalUnitCommand command) {
         validateCanManage(command.requesterMemberId());
         UmcProductFunctionalUnit functionalUnit = loadUmcProductFunctionalUnitPort.getById(command.functionalUnitId());
-        validateParentUnit(command.parentUnitId(), functionalUnit.getUmcProductGenerationId());
+        validateParentUnit(command.parentUnitId(), functionalUnit.getUmcProductGenerationId(), functionalUnit.getId());
 
         functionalUnit.update(
             command.parentUnitId(),
@@ -74,9 +74,12 @@ public class UmcProductFunctionalUnitCommandService implements ManageUmcProductF
         }
     }
 
-    private void validateParentUnit(Long parentUnitId, Long umcProductGenerationId) {
+    private void validateParentUnit(Long parentUnitId, Long umcProductGenerationId, Long currentFunctionalUnitId) {
         if (parentUnitId == null) {
             return;
+        }
+        if (Objects.equals(parentUnitId, currentFunctionalUnitId)) {
+            throw new OrganizationDomainException(OrganizationErrorCode.UMC_PRODUCT_FUNCTIONAL_UNIT_PARENT_INVALID);
         }
         UmcProductFunctionalUnit parentUnit = loadUmcProductFunctionalUnitPort.getById(parentUnitId);
         if (!Objects.equals(parentUnit.getUmcProductGenerationId(), umcProductGenerationId)) {

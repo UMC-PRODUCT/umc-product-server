@@ -6,8 +6,8 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum UmcProductSquadRole {
-    MEMBER("멤버", 0),
-    SQUAD_LEAD("Squad 리드", 1);
+    MEMBER("Member", 0),
+    SQUAD_LEAD("Squad Lead", 1);
 
     private final String displayName;
     private final int sortOrder;

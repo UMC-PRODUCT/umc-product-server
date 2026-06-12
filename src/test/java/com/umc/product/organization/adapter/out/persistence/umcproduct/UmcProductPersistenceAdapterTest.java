@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.umc.product.global.config.JpaConfig;
 import com.umc.product.global.config.QueryDslConfig;
+import com.umc.product.organization.application.port.in.query.dto.umcproduct.UmcProductMemberSearchCondition;
 import com.umc.product.organization.domain.UmcProductFunctionalMembership;
 import com.umc.product.organization.domain.UmcProductFunctionalUnit;
 import com.umc.product.organization.domain.UmcProductGeneration;
@@ -25,6 +26,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
@@ -202,6 +204,46 @@ class UmcProductPersistenceAdapterTest {
         assertThat(squadAdapter.listOverlapping(generation.getStartAt(), generation.getEndAt()))
             .extracting(UmcProductSquad::getId)
             .containsExactly(overlapping.getId());
+    }
+
+    @Test
+    void 검색된_멤버의_상세_기능_조직은_검색_필터와_무관하게_전체를_조회한다() {
+        UmcProductGeneration generation = saveGeneration(4L);
+        UmcProductMember member = memberAdapter.save(UmcProductMember.create(105L, "소개", null));
+        UmcProductFunctionalUnit server = saveFunctionalUnit(generation.getId(), UmcProductFunctionalUnitType.PART, "SERVER");
+        UmcProductFunctionalUnit design = saveFunctionalUnit(generation.getId(), UmcProductFunctionalUnitType.PART, "DESIGN");
+
+        functionalMembershipAdapter.saveAll(List.of(
+            UmcProductFunctionalMembership.create(
+                member,
+                generation.getId(),
+                server.getId(),
+                UmcProductFunctionalRole.MEMBER,
+                UmcProductPosition.SERVER_DEVELOPER,
+                "API 개발",
+                null
+            ),
+            UmcProductFunctionalMembership.create(
+                member,
+                generation.getId(),
+                design.getId(),
+                UmcProductFunctionalRole.MEMBER,
+                UmcProductPosition.PRODUCT_DESIGNER,
+                "화면 설계",
+                null
+            )
+        ));
+        em.flush();
+        em.clear();
+
+        List<Long> ids = memberAdapter.searchIds(
+            UmcProductMemberSearchCondition.of(null, null, null, null, UmcProductPosition.SERVER_DEVELOPER, null),
+            PageRequest.of(0, 10)
+        ).getContent();
+
+        assertThat(functionalMembershipAdapter.listByUmcProductMemberIds(ids))
+            .extracting(UmcProductFunctionalMembership::getPosition)
+            .containsExactlyInAnyOrder(UmcProductPosition.SERVER_DEVELOPER, UmcProductPosition.PRODUCT_DESIGNER);
     }
 
     private UmcProductGeneration saveGeneration(Long generation) {

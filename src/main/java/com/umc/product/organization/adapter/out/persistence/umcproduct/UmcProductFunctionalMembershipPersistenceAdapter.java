@@ -1,6 +1,5 @@
 package com.umc.product.organization.adapter.out.persistence.umcproduct;
 
-import com.umc.product.organization.application.port.in.query.dto.umcproduct.UmcProductMemberSearchCondition;
 import com.umc.product.organization.application.port.out.command.SaveUmcProductFunctionalMembershipPort;
 import com.umc.product.organization.application.port.out.query.LoadUmcProductFunctionalMembershipPort;
 import com.umc.product.organization.domain.UmcProductFunctionalMembership;
@@ -25,11 +24,8 @@ public class UmcProductFunctionalMembershipPersistenceAdapter
     }
 
     @Override
-    public List<UmcProductFunctionalMembership> listByUmcProductMemberIds(
-        Collection<Long> umcProductMemberIds,
-        UmcProductMemberSearchCondition condition
-    ) {
-        return umcProductMemberQueryRepository.listFunctionalMembershipsByMemberIds(umcProductMemberIds, condition);
+    public List<UmcProductFunctionalMembership> listByUmcProductMemberIds(Collection<Long> umcProductMemberIds) {
+        return umcProductMemberQueryRepository.listFunctionalMembershipsByMemberIds(umcProductMemberIds);
     }
 
     @Override

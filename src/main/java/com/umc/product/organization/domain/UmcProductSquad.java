@@ -25,6 +25,9 @@ public class UmcProductSquad extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * 운영자가 Squad를 안정적으로 식별하기 위해 사용하는 고유 코드입니다.
+     */
     @Column(nullable = false, length = 64, unique = true)
     private String code;
 

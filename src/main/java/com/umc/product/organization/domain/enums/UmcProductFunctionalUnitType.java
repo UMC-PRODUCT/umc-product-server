@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum UmcProductFunctionalUnitType {
-    UMC_PRODUCT_HQ("UMC Product HQ", 0),
+    UMC_PRODUCT_HQ("UMC PRODUCT HQ", 0),
     CHAPTER("챕터", 1),
     PART("파트", 2);
 
