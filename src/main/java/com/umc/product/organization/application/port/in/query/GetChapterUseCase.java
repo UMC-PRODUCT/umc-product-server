@@ -10,6 +10,8 @@ public interface GetChapterUseCase {
 
     List<ChapterInfo> getAllChapters();
 
+    List<ChapterInfo> listByGisuId(Long gisuId);
+
     /**
      * 기수와 학교 정보로 지부 정보를 조회합니다.
      */

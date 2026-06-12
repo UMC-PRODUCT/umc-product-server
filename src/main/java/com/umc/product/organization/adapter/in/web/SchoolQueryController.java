@@ -32,6 +32,7 @@ public class SchoolQueryController implements SchoolQueryControllerApi {
     }
 
     @Public
+    @Deprecated(since = "v2.0.0", forRemoval = true)
     @GetMapping("/gisu/{gisuId}")
     public List<SchoolDetailInfo> getSchoolListsByGisu(@PathVariable Long gisuId) {
         return getSchoolUseCase.getSchoolListByGisuId(gisuId);

@@ -7,9 +7,13 @@ import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -56,6 +60,41 @@ public class GisuQueryService implements GetGisuUseCase {
     }
 
     @Override
+    public List<GisuInfo> batchGetByIds(List<Long> gisuIds) {
+        List<Long> uniqueIds = unique(gisuIds);
+        if (uniqueIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, GisuInfo> gisuById = loadGisuPort.listByIds(new LinkedHashSet<>(uniqueIds)).stream()
+            .map(GisuInfo::from)
+            .collect(Collectors.toMap(GisuInfo::gisuId, Function.identity()));
+
+        validateAllExist(uniqueIds, gisuById);
+        return uniqueIds.stream()
+            .map(gisuById::get)
+            .toList();
+    }
+
+    @Override
+    public List<GisuInfo> batchGetByGenerations(List<Long> generations) {
+        List<Long> uniqueGenerations = unique(generations);
+        if (uniqueGenerations.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, GisuInfo> gisuByGeneration = loadGisuPort.listByGenerations(new LinkedHashSet<>(uniqueGenerations))
+            .stream()
+            .map(GisuInfo::from)
+            .collect(Collectors.toMap(GisuInfo::generation, Function.identity()));
+
+        validateAllExist(uniqueGenerations, gisuByGeneration);
+        return uniqueGenerations.stream()
+            .map(gisuByGeneration::get)
+            .toList();
+    }
+
+    @Override
     public Long getActiveGisuId() {
         return loadGisuPort.getActiveGisu().getId();
     }
@@ -76,5 +115,24 @@ public class GisuQueryService implements GetGisuUseCase {
             loadGisuPort.findGisuByDate(targetDate)
                 .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.GISU_NOT_FOUND))
         );
+    }
+
+    private List<Long> unique(List<Long> values) {
+        if (values == null) {
+            return List.of();
+        }
+        return new LinkedHashSet<>(values).stream()
+            .toList();
+    }
+
+    private void validateAllExist(List<Long> requestedValues, Map<Long, GisuInfo> resultByValue) {
+        if (resultByValue.size() != requestedValues.size()) {
+            throw new OrganizationDomainException(OrganizationErrorCode.GISU_NOT_FOUND);
+        }
+        for (Long requestedValue : requestedValues) {
+            if (!resultByValue.containsKey(requestedValue)) {
+                throw new OrganizationDomainException(OrganizationErrorCode.GISU_NOT_FOUND);
+            }
+        }
     }
 }

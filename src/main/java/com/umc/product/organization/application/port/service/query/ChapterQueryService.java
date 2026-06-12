@@ -34,6 +34,13 @@ public class ChapterQueryService implements GetChapterUseCase {
     }
 
     @Override
+    public List<ChapterInfo> listByGisuId(Long gisuId) {
+        return loadChapterPort.findByGisuId(gisuId).stream()
+            .map(ChapterInfo::from)
+            .toList();
+    }
+
+    @Override
     public ChapterInfo byGisuAndSchool(Long gisuId, Long schoolId) {
         // 지부 정보를 보여줘야 하면 ChapterSchool을 봐야 함
         // 전체 ChapterSchool 중에서 schoolId에 따라서 필터링하고

@@ -23,6 +23,7 @@ public class GisuQueryController implements AdminGisuQueryControllerApi {
     private final GetGisuUseCase getGisuUseCase;
 
     @Public
+    @Deprecated(since = "v2.0.0", forRemoval = true)
     @GetMapping("/{gisuId}")
     @Override
     public GisuResponse getGisu(@PathVariable Long gisuId) {
@@ -49,6 +50,7 @@ public class GisuQueryController implements AdminGisuQueryControllerApi {
 
     @Public
     @Override
+    @Deprecated(since = "v2.0.0", forRemoval = true)
     @GetMapping("/active")
     public ActiveGisuResponse getActiveGisu() {
         return ActiveGisuResponse.from(getGisuUseCase.getActiveGisu());

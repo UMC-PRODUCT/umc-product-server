@@ -23,6 +23,8 @@ public interface LoadGisuPort {
 
     List<Gisu> listByIds(Set<Long> gisuIds);
 
+    List<Gisu> listByGenerations(Set<Long> generations);
+
     List<Gisu> findAll();
 
     Page<Gisu> findAll(Pageable pageable);

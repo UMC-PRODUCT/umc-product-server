@@ -21,6 +21,10 @@ public interface GetGisuUseCase {
 
     List<GisuInfo> getByIds(Set<Long> gisuIds);
 
+    List<GisuInfo> batchGetByIds(List<Long> gisuIds);
+
+    List<GisuInfo> batchGetByGenerations(List<Long> generations);
+
     Long getActiveGisuId();
 
     GisuInfo getActiveGisu();

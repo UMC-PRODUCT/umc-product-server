@@ -28,6 +28,8 @@ public interface GisuJpaRepository extends Repository<Gisu, Long> {
 
     List<Gisu> findByIdIn(Collection<Long> ids);
 
+    List<Gisu> findByGenerationIn(Collection<Long> generations);
+
     Gisu save(Gisu gisu);
 
     boolean existsByGeneration(Long generation);

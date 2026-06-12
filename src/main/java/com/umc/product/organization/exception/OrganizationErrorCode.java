@@ -61,6 +61,7 @@ public enum OrganizationErrorCode implements BaseCode {
 
     STUDY_GROUP_SCHEDULE_ATTENDANCE_POLICY_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0038",
         "스터디 그룹 일정은 출석 정책이 필수입니다."),
+    GISU_QUERY_CONDITION_INVALID(HttpStatus.BAD_REQUEST, "ORGANIZATION-0039", "기수 조회 조건이 올바르지 않습니다."),
 
     ;
 
