@@ -15,7 +15,7 @@ class CreateBlogCommentCommandTest {
     @DisplayName("닉네임은 trim 후 20자 이하만 허용한다")
     void 닉네임은_trim_후_20자_이하만_허용한다() {
         CreateBlogCommentCommand command = CreateBlogCommentCommand.of(
-            "blog",
+            "engineering",
             "spring-boot-tips",
             null,
             1L,
@@ -27,7 +27,7 @@ class CreateBlogCommentCommandTest {
         assertThat(command.nickname()).isEqualTo("익명작성자");
 
         assertThatThrownBy(() -> CreateBlogCommentCommand.of(
-            "blog",
+            "engineering",
             "spring-boot-tips",
             null,
             1L,

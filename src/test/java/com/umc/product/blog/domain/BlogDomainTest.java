@@ -13,7 +13,7 @@ class BlogDomainTest {
     @DisplayName("콘텐츠는 CMS 필드와 공개 상태를 검증하고 생성한다")
     void 콘텐츠는_CMS_필드와_공개_상태를_검증하고_생성한다() {
         BlogContent content = BlogContent.create(
-            BlogContentType.BLOG,
+            BlogContentType.ENGINEERING,
             "spring-boot-tips",
             "  제목  ",
             "요약",
@@ -32,7 +32,7 @@ class BlogDomainTest {
         assertThat(content.getPublishedAt()).isNotNull();
 
         assertThatThrownBy(() -> BlogContent.create(
-            BlogContentType.BLOG,
+            BlogContentType.ENGINEERING,
             "slug",
             "",
             null,
@@ -50,7 +50,7 @@ class BlogDomainTest {
     @DisplayName("콘텐츠는 DRAFT 전환 시 publishedAt을 제거하고 soft delete된다")
     void 콘텐츠는_DRAFT_전환_시_publishedAt을_제거하고_soft_delete된다() {
         BlogContent content = BlogContent.create(
-            BlogContentType.BLOG,
+            BlogContentType.ENGINEERING,
             "spring-boot-tips",
             "제목",
             null,
@@ -78,7 +78,7 @@ class BlogDomainTest {
     @DisplayName("시리즈는 slug와 작성자를 가진다")
     void 시리즈는_slug와_작성자를_가진다() {
         BlogSeries series = BlogSeries.create(
-            BlogContentType.BLOG,
+            BlogContentType.ENGINEERING,
             "spring-series",
             "Spring Series",
             "설명",
@@ -91,7 +91,7 @@ class BlogDomainTest {
 
         assertThat(series.getSlug()).isEqualTo("spring-series");
         assertThat(series.isAuthor(1L)).isTrue();
-        assertThat(series.canonicalPath()).isEqualTo("/series/blog/spring-series");
+        assertThat(series.canonicalPath()).isEqualTo("/series/engineering/spring-series");
     }
 
     @Test
@@ -120,9 +120,11 @@ class BlogDomainTest {
     }
 
     @Test
-    @DisplayName("blog와 release path 값을 콘텐츠 타입으로 파싱한다")
-    void blog와_release_path_값을_콘텐츠_타입으로_파싱한다() {
-        assertThat(BlogContentType.fromPath("blog")).isEqualTo(BlogContentType.BLOG);
+    @DisplayName("engineering, design, product, release path 값을 콘텐츠 타입으로 파싱한다")
+    void engineering_design_product_release_path_값을_콘텐츠_타입으로_파싱한다() {
+        assertThat(BlogContentType.fromPath("engineering")).isEqualTo(BlogContentType.ENGINEERING);
+        assertThat(BlogContentType.fromPath("design")).isEqualTo(BlogContentType.DESIGN);
+        assertThat(BlogContentType.fromPath("product")).isEqualTo(BlogContentType.PRODUCT);
         assertThat(BlogContentType.fromPath("release")).isEqualTo(BlogContentType.RELEASE);
     }
 

@@ -1,7 +1,9 @@
 package com.umc.product.blog.domain;
 
 public enum BlogContentType {
-    BLOG,
+    ENGINEERING,
+    DESIGN,
+    PRODUCT,
     RELEASE;
 
     public static BlogContentType fromPath(String value) {
@@ -10,7 +12,9 @@ public enum BlogContentType {
         }
 
         return switch (value.trim().toLowerCase()) {
-            case "blog" -> BLOG;
+            case "engineering" -> ENGINEERING;
+            case "design" -> DESIGN;
+            case "product" -> PRODUCT;
             case "release" -> RELEASE;
             default -> throw new BlogDomainException(BlogErrorCode.INVALID_CONTENT_TYPE);
         };

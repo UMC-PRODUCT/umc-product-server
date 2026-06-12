@@ -18,7 +18,7 @@ CREATE TABLE blog_content
     created_at           TIMESTAMP(6) WITH TIME ZONE  NOT NULL,
     updated_at           TIMESTAMP(6) WITH TIME ZONE  NOT NULL,
     CONSTRAINT uk_blog_content_type_slug UNIQUE (content_type, slug),
-    CONSTRAINT blog_content_type_check CHECK (content_type IN ('BLOG', 'RELEASE')),
+    CONSTRAINT blog_content_type_check CHECK (content_type IN ('ENGINEERING', 'DESIGN', 'PRODUCT', 'RELEASE')),
     CONSTRAINT blog_content_status_check CHECK (status IN ('DRAFT', 'PUBLISHED', 'DELETED'))
 );
 
@@ -89,7 +89,7 @@ CREATE TABLE blog_series
     created_at           TIMESTAMP(6) WITH TIME ZONE  NOT NULL,
     updated_at           TIMESTAMP(6) WITH TIME ZONE  NOT NULL,
     CONSTRAINT uk_blog_series_type_slug UNIQUE (content_type, slug),
-    CONSTRAINT blog_series_type_check CHECK (content_type IN ('BLOG', 'RELEASE'))
+    CONSTRAINT blog_series_type_check CHECK (content_type IN ('ENGINEERING', 'DESIGN', 'PRODUCT', 'RELEASE'))
 );
 
 CREATE TABLE blog_series_content

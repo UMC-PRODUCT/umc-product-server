@@ -40,7 +40,7 @@ import com.umc.product.support.fixture.SchoolFixture;
 @DisplayName("BlogInteractionController 통합 테스트")
 class BlogInteractionControllerIntegrationTest extends IntegrationTestSupport {
 
-    private static final String CONTENT_URL = "/api/v1/blog/contents/blog/spring-boot-tips";
+    private static final String CONTENT_URL = "/api/v1/blog/contents/engineering/spring-boot-tips";
     private static final String BASE_URL = CONTENT_URL + "/comments";
 
     @Autowired
@@ -120,10 +120,10 @@ class BlogInteractionControllerIntegrationTest extends IntegrationTestSupport {
             .andExpect(jsonPath("$.result.status").value("PUBLISHED"))
             .andExpect(jsonPath("$.result.hashtags[0].slug").value("springboot"));
 
-        mockMvc.perform(get("/api/v1/blog/contents/blog/cms-post"))
+        mockMvc.perform(get("/api/v1/blog/contents/engineering/cms-post"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.title").value("CMS Post"))
-            .andExpect(jsonPath("$.result.canonicalPath").value("/blog/cms-post"));
+            .andExpect(jsonPath("$.result.canonicalPath").value("/engineering/cms-post"));
 
         mockMvc.perform(get("/api/v1/blog/hashtags/springboot/contents"))
             .andExpect(status().isOk())
@@ -144,7 +144,7 @@ class BlogInteractionControllerIntegrationTest extends IntegrationTestSupport {
     @Test
     @DisplayName("콘텐츠 좋아요는 없는 콘텐츠 조회 시 빈 상태를 반환하고 공개 콘텐츠에서 토글된다")
     void 콘텐츠_좋아요는_없는_콘텐츠_조회_시_빈_상태를_반환하고_공개_콘텐츠에서_토글된다() throws Exception {
-        String missingContentUrl = "/api/v1/blog/contents/blog/missing-content";
+        String missingContentUrl = "/api/v1/blog/contents/engineering/missing-content";
 
         mockMvc.perform(get(missingContentUrl + "/like"))
             .andExpect(status().isOk())
@@ -403,7 +403,7 @@ class BlogInteractionControllerIntegrationTest extends IntegrationTestSupport {
 
     private void savePublishedContent() {
         saveBlogContentPort.save(BlogContent.create(
-            BlogContentType.BLOG,
+            BlogContentType.ENGINEERING,
             "spring-boot-tips",
             "Spring Boot Tips",
             "테스트 콘텐츠 요약",
@@ -449,7 +449,7 @@ class BlogInteractionControllerIntegrationTest extends IntegrationTestSupport {
 
     private Map<String, Object> contentBody(String slug, String title, String status, List<String> hashtags) {
         Map<String, Object> body = new HashMap<>();
-        body.put("type", "blog");
+        body.put("type", "engineering");
         body.put("slug", slug);
         body.put("title", title);
         body.put("summary", "요약");

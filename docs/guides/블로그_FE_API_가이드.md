@@ -16,10 +16,10 @@
 ### 공개 목록
 
 ```http
-GET /api/v1/blog/contents?type=blog&seriesSlug=spring&hashtagSlug=springboot&cursor=10&size=20&sort=publishedAt,desc
+GET /api/v1/blog/contents?type=engineering&seriesSlug=spring&hashtagSlug=springboot&cursor=10&size=20&sort=publishedAt,desc
 ```
 
-- `type`: `blog`, `release`; 생략 가능
+- `type`: `engineering`, `design`, `product`, `release`; 생략 가능
 - `seriesSlug`: 특정 시리즈 필터; 생략 가능
 - `hashtagSlug`: 특정 해시태그 필터; 생략 가능
 - `size`: 기본 20, 최대 50
@@ -43,7 +43,7 @@ POST /api/v1/blog/contents
 
 ```json
 {
-  "type": "blog",
+  "type": "engineering",
   "slug": "spring-boot-tips",
   "title": "Spring Boot Tips",
   "summary": "Spring Boot 운영 팁",
@@ -78,7 +78,7 @@ DELETE /api/v1/blog/contents/{contentId}
 ### 공개 목록 / 상세 / 콘텐츠 목록
 
 ```http
-GET /api/v1/blog/series?type=blog&cursor=10&size=20&sort=createdAt,desc
+GET /api/v1/blog/series?type=engineering&cursor=10&size=20&sort=createdAt,desc
 GET /api/v1/blog/series/{type}/{slug}
 GET /api/v1/blog/series/{type}/{slug}/contents?cursor=10&size=20&sort=displayOrder,asc
 ```
@@ -111,8 +111,8 @@ PUT /api/v1/blog/series/{seriesId}/contents
 ## 해시태그
 
 ```http
-GET /api/v1/blog/hashtags?type=blog&q=spring&cursor=10&size=20&sort=contentCount,desc
-GET /api/v1/blog/hashtags/{slug}/contents?type=blog&cursor=10&size=20&sort=publishedAt,desc
+GET /api/v1/blog/hashtags?type=engineering&q=spring&cursor=10&size=20&sort=contentCount,desc
+GET /api/v1/blog/hashtags/{slug}/contents?type=engineering&cursor=10&size=20&sort=publishedAt,desc
 ```
 
 - 별도 hashtag CRUD는 없습니다.
@@ -130,12 +130,12 @@ GET /api/v1/blog/seo/paths
   "paths": [
     {
       "type": "content",
-      "path": "/blog/spring-boot-tips",
+      "path": "/engineering/spring-boot-tips",
       "updatedAt": "2026-06-13T12:00:00Z"
     },
     {
       "type": "series",
-      "path": "/series/blog/spring",
+      "path": "/series/engineering/spring",
       "updatedAt": "2026-06-13T12:00:00Z"
     },
     {
@@ -148,7 +148,7 @@ GET /api/v1/blog/seo/paths
 ```
 
 - FE SSG/SSR 빌드는 이 path 목록과 상세 API를 이용해 정적 페이지 또는 SSR 페이지를 생성합니다.
-- canonical URL은 항상 content slug 기준입니다. 시리즈/해시태그 페이지에서 같은 게시글을 노출하더라도 게시글 canonical은 `/blog/{slug}` 또는 `/release/{slug}`입니다.
+- canonical URL은 항상 content slug 기준입니다. 시리즈/해시태그 페이지에서 같은 게시글을 노출하더라도 게시글 canonical은 `/engineering/{slug}`, `/design/{slug}`, `/product/{slug}`, `/release/{slug}`입니다.
 
 ## 댓글/좋아요
 
