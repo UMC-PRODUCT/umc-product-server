@@ -1,9 +1,11 @@
 package com.umc.product.storage.domain.exception;
 
+import org.springframework.http.HttpStatus;
+
 import com.umc.product.global.response.code.BaseCode;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
@@ -13,6 +15,7 @@ public enum StorageErrorCode implements BaseCode {
     FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORAGE-0001", "파일을 찾을 수 없습니다."),
     FILE_UPLOAD_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "STORAGE-0002", "파일 업로드가 완료되지 않았습니다."),
     FILE_ALREADY_UPLOADED(HttpStatus.BAD_REQUEST, "STORAGE-0003", "이미 업로드가 완료된 파일입니다."),
+    FILE_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "STORAGE-0013", "파일 삭제 권한이 없습니다."),
 
     // 파일 검증 에러
     INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "STORAGE-0004", "허용되지 않는 파일 확장자입니다."),

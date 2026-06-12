@@ -1,5 +1,6 @@
 package com.umc.product.storage.application.port.in.command;
 
+import com.umc.product.storage.application.port.in.command.dto.DeleteFileCommand;
 import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
 import com.umc.product.storage.application.port.in.command.dto.PrepareFileUploadCommand;
 
@@ -32,7 +33,7 @@ public interface ManageFileUseCase {
      * <p>
      * 메타데이터와 실제 스토리지의 파일을 모두 삭제합니다.
      *
-     * @param fileId 파일 ID
+     * @param command 파일 삭제 요청 정보
      */
-    void deleteFile(String fileId);
+    void deleteFile(DeleteFileCommand command);
 }
