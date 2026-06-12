@@ -49,7 +49,7 @@ public interface QuestionJpaRepository extends JpaRepository<Question, Long> {
     Optional<Question> findFirstByFormIdAndType(@Param("formId") Long formId, @Param("type") QuestionType type);
 
     /**
-     * 특정 폼의 모든 질문을 섹션 순서, 질문 순서대로 조회
+     * 특정 폼의 활성화된 질문을 섹션 순서, 질문 순서대로 조회
      */
     @Query("""
                 SELECT q
@@ -57,6 +57,7 @@ public interface QuestionJpaRepository extends JpaRepository<Question, Long> {
                 JOIN q.formSection fs
                 JOIN fs.form f
                 WHERE f.id = :formId
+                  AND q.isActive = true
                 ORDER BY fs.orderNo ASC, q.orderNo ASC
             """)
     List<Question> findAllByFormId(@Param("formId") Long formId);
