@@ -200,6 +200,19 @@ fun parseSeverityAttribute(text: String): String? {
     return value?.takeUnless { it == "UNSPECIFIED" }
 }
 
+fun parseRetryableAttribute(text: String): Boolean? {
+    val enumMatch = Regex("\\bretryable\\s*=\\s*(?:ErrorCodeRetryable\\.)?([A-Z_]+)").find(text)
+    if (enumMatch != null) {
+        return when (enumMatch.groupValues[1]) {
+            "TRUE" -> true
+            "FALSE" -> false
+            else -> null
+        }
+    }
+
+    return parseBooleanAttribute(text, "retryable")
+}
+
 fun parseStringArrayAttribute(text: String, attributeName: String): List<String> {
     val arrayMatch = Regex(
         "\\b${Regex.escape(attributeName)}\\s*=\\s*\\{([^}]*)}",
@@ -241,7 +254,7 @@ fun extractErrorCodeSpecMetadata(annotations: List<String>): ErrorCodeSpecMetada
     return ErrorCodeSpecMetadata(
         description = parseStringAttribute(annotation, "description"),
         clientAction = parseStringAttribute(annotation, "clientAction"),
-        retryable = parseBooleanAttribute(annotation, "retryable"),
+        retryable = parseRetryableAttribute(annotation),
         severity = parseSeverityAttribute(annotation),
         deprecated = parseBooleanAttribute(annotation, "deprecated") ?: false,
         replacementCode = parseStringAttribute(annotation, "replacementCode"),
