@@ -1,5 +1,10 @@
 package com.umc.product.project.adapter.in.web.dto.response;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.adapter.in.web.dto.common.MatchingRoundPhaseView;
 import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
@@ -14,10 +19,7 @@ import com.umc.product.survey.application.port.in.query.dto.AnswerInfo.SelectedO
 import com.umc.product.survey.application.port.in.query.dto.FormResponseInfo;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+
 import lombok.Builder;
 
 /**

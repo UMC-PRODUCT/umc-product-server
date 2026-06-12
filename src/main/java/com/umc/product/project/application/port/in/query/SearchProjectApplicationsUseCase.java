@@ -1,8 +1,9 @@
 package com.umc.product.project.application.port.in.query;
 
+import java.util.List;
+
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationSummaryInfo;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
-import java.util.List;
 
 /**
  * PM/운영진용 단일 프로젝트 지원자 목록 조회 UseCase.

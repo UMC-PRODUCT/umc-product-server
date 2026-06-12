@@ -1,9 +1,10 @@
 package com.umc.product.project.application.port.in.query;
 
-import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+
+import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 
 /**
  * 단건 프로젝트 조회 UseCase.

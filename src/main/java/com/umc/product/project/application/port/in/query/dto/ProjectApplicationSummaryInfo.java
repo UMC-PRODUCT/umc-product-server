@@ -1,8 +1,10 @@
 package com.umc.product.project.application.port.in.query.dto;
 
+import java.time.Instant;
+
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
-import java.time.Instant;
+
 import lombok.Builder;
 
 /**

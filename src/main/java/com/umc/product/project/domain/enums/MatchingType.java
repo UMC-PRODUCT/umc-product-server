@@ -1,7 +1,9 @@
 package com.umc.product.project.domain.enums;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.Optional;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+
 import lombok.Getter;
 
 @Getter

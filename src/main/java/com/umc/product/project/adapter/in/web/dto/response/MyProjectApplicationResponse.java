@@ -1,5 +1,7 @@
 package com.umc.product.project.adapter.in.web.dto.response;
 
+import java.util.List;
+
 import com.umc.product.project.adapter.in.web.dto.common.MatchingRoundPhaseView;
 import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
 import com.umc.product.project.adapter.in.web.dto.common.PartQuotaInfo;
@@ -9,7 +11,7 @@ import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRoundInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectMemberInfo;
 import com.umc.product.project.domain.enums.MatchingType;
-import java.util.List;
+
 import lombok.Builder;
 
 /**
