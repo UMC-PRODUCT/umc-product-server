@@ -1,12 +1,14 @@
 package com.umc.product.test.adapter.out.persistence;
 
-import com.umc.product.test.application.port.out.DeleteSeedProjectDataPort;
-import com.umc.product.test.application.port.out.dto.ProjectDataDeletionCounts;
-import jakarta.persistence.EntityManager;
-import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+
+import com.umc.product.test.application.port.out.DeleteSeedProjectDataPort;
+import com.umc.product.test.application.port.out.dto.ProjectDataDeletionCounts;
+
+import jakarta.persistence.EntityManager;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @Profile("!prod")

@@ -2,11 +2,8 @@ package com.umc.product.test.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.umc.product.global.config.JpaConfig;
-import com.umc.product.global.config.QueryDslConfig;
-import com.umc.product.support.TestContainersConfig;
-import com.umc.product.test.application.port.out.dto.ProjectDataDeletionCounts;
 import java.time.Instant;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +13,33 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.global.config.JpaConfig;
+import com.umc.product.global.config.QueryDslConfig;
+import com.umc.product.organization.domain.Chapter;
+import com.umc.product.organization.domain.Gisu;
+import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.ProjectApplicationForm;
+import com.umc.product.project.domain.ProjectApplicationFormPolicy;
+import com.umc.product.project.domain.ProjectMatchingRound;
+import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.ProjectPartQuota;
+import com.umc.product.project.domain.enums.MatchingPhase;
+import com.umc.product.project.domain.enums.MatchingType;
+import com.umc.product.support.TestContainersConfig;
+import com.umc.product.survey.domain.Answer;
+import com.umc.product.survey.domain.AnswerChoice;
+import com.umc.product.survey.domain.Form;
+import com.umc.product.survey.domain.FormResponse;
+import com.umc.product.survey.domain.FormSection;
+import com.umc.product.survey.domain.Question;
+import com.umc.product.survey.domain.QuestionOption;
+import com.umc.product.survey.domain.enums.QuestionType;
+import com.umc.product.test.application.port.out.dto.ProjectDataDeletionCounts;
+
+import jakarta.persistence.Query;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -29,6 +53,12 @@ import org.springframework.test.context.TestPropertySource;
 })
 class ProjectSeedDataCleanupPersistenceAdapterTest {
 
+    private static final Instant GISU_START_AT = Instant.parse("2026-01-01T00:00:00Z");
+    private static final Instant GISU_END_AT = Instant.parse("2026-12-31T00:00:00Z");
+    private static final Instant ROUND_STARTS_AT = Instant.parse("2026-03-01T00:00:00Z");
+    private static final Instant ROUND_ENDS_AT = Instant.parse("2026-03-02T00:00:00Z");
+    private static final Instant ROUND_DECISION_DEADLINE = Instant.parse("2026-03-03T00:00:00Z");
+
     @Autowired
     TestEntityManager em;
 
@@ -37,19 +67,19 @@ class ProjectSeedDataCleanupPersistenceAdapterTest {
 
     @Test
     @DisplayName("대상 기수의 프로젝트 관련 데이터만 모두 삭제한다")
-    void 대상_기수_프로젝트_관련_데이터만_삭제() {
+    void deleteOnlyTargetGisuProjectData() {
         // Given
-        Long targetGisuId = insertGisu(11L);
-        Long otherGisuId = insertGisu(12L);
-        Long targetChapterId = insertChapter(targetGisuId, "target");
-        Long otherChapterId = insertChapter(otherGisuId, "other");
-        ProjectGraph target = insertProjectGraph(targetGisuId, targetChapterId, 100L);
-        ProjectGraph other = insertProjectGraph(otherGisuId, otherChapterId, 200L);
+        Gisu targetGisu = persistGisu(11L);
+        Gisu otherGisu = persistGisu(12L);
+        Chapter targetChapter = persistChapter(targetGisu, "target");
+        Chapter otherChapter = persistChapter(otherGisu, "other");
+        ProjectGraph target = persistProjectGraph(targetGisu.getId(), targetChapter.getId(), 100L);
+        ProjectGraph other = persistProjectGraph(otherGisu.getId(), otherChapter.getId(), 200L);
         em.flush();
         em.clear();
 
         // When
-        ProjectDataDeletionCounts result = sut.deleteByGisuId(targetGisuId);
+        ProjectDataDeletionCounts result = sut.deleteByGisuId(targetGisu.getId());
         em.flush();
         em.clear();
 
@@ -74,190 +104,106 @@ class ProjectSeedDataCleanupPersistenceAdapterTest {
         assertGraphExists(other);
     }
 
-    private ProjectGraph insertProjectGraph(Long gisuId, Long chapterId, Long seed) {
-        Long projectId = insertProject(gisuId, chapterId, seed);
-        Long roundId = insertMatchingRound(chapterId, seed);
-        Long formId = insertForm(seed);
-        Long sectionId = insertFormSection(formId, seed);
-        Long questionId = insertQuestion(sectionId, seed);
-        Long optionId = insertQuestionOption(questionId, seed);
-        Long formResponseId = insertFormResponse(formId, seed);
-        Long answerId = insertAnswer(formResponseId, questionId);
-        Long answerChoiceId = insertAnswerChoice(answerId, optionId);
-        Long singleAnswerId = insertSingleAnswer(formResponseId, questionId, optionId);
-        Long applicationFormId = insertProjectApplicationForm(projectId, formId);
-        Long policyId = insertProjectApplicationFormPolicy(applicationFormId, sectionId);
-        Long applicationId = insertProjectApplication(applicationFormId, formResponseId, roundId, seed);
-        Long memberId = insertProjectMember(projectId, applicationId, seed);
-        Long quotaId = insertProjectPartQuota(projectId, seed);
+    private Gisu persistGisu(Long generation) {
+        Gisu gisu = Gisu.create(generation, GISU_START_AT, GISU_END_AT, false);
+        em.persist(gisu);
+        return gisu;
+    }
+
+    private Chapter persistChapter(Gisu gisu, String suffix) {
+        Chapter chapter = Chapter.create(gisu, "chapter-" + suffix);
+        em.persist(chapter);
+        return chapter;
+    }
+
+    private ProjectGraph persistProjectGraph(Long gisuId, Long chapterId, Long seed) {
+        Project project = Project.createDraft(gisuId, chapterId, seed, seed, seed);
+        em.persist(project);
+
+        ProjectMatchingRound round = ProjectMatchingRound.create(
+            "round-" + seed,
+            null,
+            MatchingType.PLAN_DESIGN,
+            MatchingPhase.FIRST,
+            chapterId,
+            ROUND_STARTS_AT,
+            ROUND_ENDS_AT,
+            ROUND_DECISION_DEADLINE
+        );
+        em.persist(round);
+
+        Form form = Form.createPublished(seed, "form-" + seed, false);
+        em.persist(form);
+
+        FormSection section = FormSection.create(form, "section-" + seed, null, 1L);
+        em.persist(section);
+
+        Question question = Question.create("question-" + seed, QuestionType.RADIO, true, 1L);
+        question.assignTo(section);
+        em.persist(question);
+
+        QuestionOption option = QuestionOption.create("option-" + seed, 1L, false);
+        option.assignTo(question);
+        em.persist(option);
+
+        FormResponse formResponse = FormResponse.createDraft(form, seed + 1000);
+        formResponse.submit(Instant.now(), "127.0.0.1");
+        em.persist(formResponse);
+
+        Answer answer = Answer.create(formResponse, question, QuestionType.RADIO, null, null);
+        em.persist(answer);
+
+        AnswerChoice answerChoice = AnswerChoice.create(answer, option);
+        em.persist(answerChoice);
+
+        em.flush();
+        Long singleAnswerId = insertLegacySingleAnswer(formResponse.getId(), question.getId(), option.getId());
+
+        ProjectApplicationForm applicationForm = ProjectApplicationForm.create(project, form.getId());
+        em.persist(applicationForm);
+
+        ProjectApplicationFormPolicy policy = ProjectApplicationFormPolicy.createCommon(
+            applicationForm,
+            section.getId()
+        );
+        em.persist(policy);
+
+        ProjectApplication application = ProjectApplication.create(
+            applicationForm,
+            formResponse.getId(),
+            seed + 1000,
+            round
+        );
+        em.persist(application);
+
+        ProjectMember member = ProjectMember.create(project, seed + 1000, ChallengerPart.WEB, seed);
+        em.persist(member);
+
+        ProjectPartQuota quota = ProjectPartQuota.create(project, ChallengerPart.WEB, 3L, seed);
+        em.persist(quota);
 
         return new ProjectGraph(
-            projectId,
-            memberId,
-            quotaId,
-            roundId,
-            applicationId,
-            applicationFormId,
-            policyId,
-            formId,
-            sectionId,
-            questionId,
-            optionId,
-            formResponseId,
-            answerId,
-            answerChoiceId,
+            project.getId(),
+            member.getId(),
+            quota.getId(),
+            round.getId(),
+            application.getId(),
+            applicationForm.getId(),
+            policy.getId(),
+            form.getId(),
+            section.getId(),
+            question.getId(),
+            option.getId(),
+            formResponse.getId(),
+            answer.getId(),
+            answerChoice.getId(),
             singleAnswerId
         );
     }
 
-    private Long insertGisu(Long generation) {
-        return insertReturningId("""
-            INSERT INTO gisu (created_at, updated_at, generation, start_at, end_at, is_active)
-            VALUES (now(), now(), :generation, :startAt, :endAt, false)
-            RETURNING id
-            """, query -> {
-            query.setParameter("generation", generation);
-            query.setParameter("startAt", Instant.parse("2026-01-01T00:00:00Z"));
-            query.setParameter("endAt", Instant.parse("2026-12-31T00:00:00Z"));
-        });
-    }
-
-    private Long insertChapter(Long gisuId, String suffix) {
-        return insertReturningId("""
-            INSERT INTO chapter (created_at, updated_at, gisu_id, name)
-            VALUES (now(), now(), :gisuId, :name)
-            RETURNING id
-            """, query -> {
-            query.setParameter("gisuId", gisuId);
-            query.setParameter("name", "chapter-" + suffix);
-        });
-    }
-
-    private Long insertProject(Long gisuId, Long chapterId, Long seed) {
-        return insertReturningId("""
-            INSERT INTO project (
-                created_at, updated_at, gisu_id, chapter_id, status, name,
-                product_owner_member_id, product_owner_school_id, created_by_member_id
-            )
-            VALUES (
-                now(), now(), :gisuId, :chapterId, 'IN_PROGRESS', :name,
-                :ownerId, :schoolId, :ownerId
-            )
-            RETURNING id
-            """, query -> {
-            query.setParameter("gisuId", gisuId);
-            query.setParameter("chapterId", chapterId);
-            query.setParameter("name", "project-" + seed);
-            query.setParameter("ownerId", seed);
-            query.setParameter("schoolId", seed);
-        });
-    }
-
-    private Long insertMatchingRound(Long chapterId, Long seed) {
-        return insertReturningId("""
-            INSERT INTO project_matching_round (
-                created_at, updated_at, name, description, type, phase, chapter_id,
-                starts_at, ends_at, decision_deadline
-            )
-            VALUES (
-                now(), now(), :name, null, 'PLAN_DESIGN', 'FIRST', :chapterId,
-                now() - interval '1 hour', now() + interval '1 hour', now() + interval '2 hours'
-            )
-            RETURNING id
-            """, query -> {
-            query.setParameter("chapterId", chapterId);
-            query.setParameter("name", "round-" + seed);
-        });
-    }
-
-    private Long insertForm(Long seed) {
-        return insertReturningId("""
-            INSERT INTO form (created_at, updated_at, created_member_id, title, status, is_anonymous)
-            VALUES (now(), now(), :memberId, :title, 'PUBLISHED', false)
-            RETURNING id
-            """, query -> {
-            query.setParameter("memberId", seed);
-            query.setParameter("title", "form-" + seed);
-        });
-    }
-
-    private Long insertFormSection(Long formId, Long seed) {
-        return insertReturningId("""
-            INSERT INTO form_section (created_at, updated_at, form_id, title, description, order_no)
-            VALUES (now(), now(), :formId, :title, null, 1)
-            RETURNING id
-            """, query -> {
-            query.setParameter("formId", formId);
-            query.setParameter("title", "section-" + seed);
-        });
-    }
-
-    private Long insertQuestion(Long sectionId, Long seed) {
-        return insertReturningId("""
-            INSERT INTO question (
-                created_at, updated_at, form_section_id, title, description, type,
-                is_required, order_no, parent_question_id, is_active
-            )
-            VALUES (now(), now(), :sectionId, :title, null, 'RADIO', true, 1, null, true)
-            RETURNING id
-            """, query -> {
-            query.setParameter("sectionId", sectionId);
-            query.setParameter("title", "question-" + seed);
-        });
-    }
-
-    private Long insertQuestionOption(Long questionId, Long seed) {
-        return insertReturningId("""
-            INSERT INTO question_option (created_at, updated_at, question_id, content, order_no, is_other)
-            VALUES (now(), now(), :questionId, :content, 1, false)
-            RETURNING id
-            """, query -> {
-            query.setParameter("questionId", questionId);
-            query.setParameter("content", "option-" + seed);
-        });
-    }
-
-    private Long insertFormResponse(Long formId, Long seed) {
-        return insertReturningId("""
-            INSERT INTO form_response (
-                created_at, updated_at, form_id, respondent_member_id, status, last_saved_at
-            )
-            VALUES (now(), now(), :formId, :memberId, 'SUBMITTED', now())
-            RETURNING id
-            """, query -> {
-            query.setParameter("formId", formId);
-            query.setParameter("memberId", seed + 1000);
-        });
-    }
-
-    private Long insertAnswer(Long formResponseId, Long questionId) {
-        return insertReturningId("""
-            INSERT INTO answer (
-                created_at, updated_at, form_response_id, question_id, answered_as_type
-            )
-            VALUES (now(), now(), :formResponseId, :questionId, 'RADIO')
-            RETURNING id
-            """, query -> {
-            query.setParameter("formResponseId", formResponseId);
-            query.setParameter("questionId", questionId);
-        });
-    }
-
-    private Long insertAnswerChoice(Long answerId, Long optionId) {
-        return insertReturningId("""
-            INSERT INTO answer_choice (
-                created_at, updated_at, answer_id, answered_as_content, question_option_id
-            )
-            VALUES (now(), now(), :answerId, '선택지', :optionId)
-            RETURNING id
-            """, query -> {
-            query.setParameter("answerId", answerId);
-            query.setParameter("optionId", optionId);
-        });
-    }
-
-    private Long insertSingleAnswer(Long responseId, Long questionId, Long optionId) {
-        return insertReturningId("""
+    private Long insertLegacySingleAnswer(Long responseId, Long questionId, Long optionId) {
+        // single_answer는 현재 JPA 엔티티가 없는 레거시 테이블이라 삭제 경로 검증에 필요한 행만 직접 삽입한다.
+        Query query = em.getEntityManager().createNativeQuery("""
             INSERT INTO single_answer (
                 created_at, updated_at, response_id, question_id, answered_as_type, value
             )
@@ -266,99 +212,20 @@ class ProjectSeedDataCleanupPersistenceAdapterTest {
                 jsonb_build_object('selectedOptionId', :optionId)
             )
             RETURNING id
-            """, query -> {
-            query.setParameter("responseId", responseId);
-            query.setParameter("questionId", questionId);
-            query.setParameter("optionId", optionId);
-        });
-    }
-
-    private Long insertProjectApplicationForm(Long projectId, Long formId) {
-        return insertReturningId("""
-            INSERT INTO project_application_form (created_at, updated_at, project_id, form_id)
-            VALUES (now(), now(), :projectId, :formId)
-            RETURNING id
-            """, query -> {
-            query.setParameter("projectId", projectId);
-            query.setParameter("formId", formId);
-        });
-    }
-
-    private Long insertProjectApplicationFormPolicy(Long applicationFormId, Long sectionId) {
-        return insertReturningId("""
-            INSERT INTO project_application_form_policy (
-                created_at, updated_at, project_application_form_id, form_section_id, type, allowed_parts
-            )
-            VALUES (now(), now(), :applicationFormId, :sectionId, 'COMMON', null)
-            RETURNING id
-            """, query -> {
-            query.setParameter("applicationFormId", applicationFormId);
-            query.setParameter("sectionId", sectionId);
-        });
-    }
-
-    private Long insertProjectApplication(
-        Long applicationFormId, Long formResponseId, Long roundId, Long seed
-    ) {
-        return insertReturningId("""
-            INSERT INTO project_application (
-                created_at, updated_at, project_application_form_id, form_response_id,
-                applicant_member_id, applied_matching_round_id, status, submitted_at, status_changed_at
-            )
-            VALUES (
-                now(), now(), :applicationFormId, :formResponseId,
-                :memberId, :roundId, 'APPROVED', now(), now()
-            )
-            RETURNING id
-            """, query -> {
-            query.setParameter("applicationFormId", applicationFormId);
-            query.setParameter("formResponseId", formResponseId);
-            query.setParameter("memberId", seed + 1000);
-            query.setParameter("roundId", roundId);
-        });
-    }
-
-    private Long insertProjectMember(Long projectId, Long applicationId, Long seed) {
-        return insertReturningId("""
-            INSERT INTO project_member (
-                created_at, updated_at, project_id, project_application_id, member_id,
-                part, is_leader, decided_member_id, decided_at, status
-            )
-            VALUES (
-                now(), now(), :projectId, :applicationId, :memberId,
-                'WEB', false, :decidedMemberId, now(), 'ACTIVE'
-            )
-            RETURNING id
-            """, query -> {
-            query.setParameter("projectId", projectId);
-            query.setParameter("applicationId", applicationId);
-            query.setParameter("memberId", seed + 1000);
-            query.setParameter("decidedMemberId", seed);
-        });
-    }
-
-    private Long insertProjectPartQuota(Long projectId, Long seed) {
-        return insertReturningId("""
-            INSERT INTO project_part_quota (
-                created_at, updated_at, project_id, part, quota, last_edited_member_id
-            )
-            VALUES (now(), now(), :projectId, 'WEB', 3, :memberId)
-            RETURNING id
-            """, query -> {
-            query.setParameter("projectId", projectId);
-            query.setParameter("memberId", seed);
-        });
-    }
-
-    private Long insertReturningId(String sql, QueryBinder binder) {
-        var query = em.getEntityManager().createNativeQuery(sql);
-        binder.bind(query);
+            """);
+        query.setParameter("responseId", responseId);
+        query.setParameter("questionId", questionId);
+        query.setParameter("optionId", optionId);
         return ((Number) query.getSingleResult()).longValue();
     }
 
-    private boolean existsById(String tableName, Long id) {
+    private <T> boolean existsById(Class<T> entityClass, Long id) {
+        return em.find(entityClass, id) != null;
+    }
+
+    private boolean existsLegacySingleAnswerById(Long id) {
         Object result = em.getEntityManager()
-            .createNativeQuery("SELECT EXISTS (SELECT 1 FROM " + tableName + " WHERE id = :id)")
+            .createNativeQuery("SELECT EXISTS (SELECT 1 FROM single_answer WHERE id = :id)")
             .setParameter("id", id)
             .getSingleResult();
         return (Boolean) result;
@@ -373,25 +240,21 @@ class ProjectSeedDataCleanupPersistenceAdapterTest {
     }
 
     private void assertGraphState(ProjectGraph graph, boolean expected) {
-        assertThat(existsById("project", graph.projectId())).isEqualTo(expected);
-        assertThat(existsById("project_member", graph.memberId())).isEqualTo(expected);
-        assertThat(existsById("project_part_quota", graph.quotaId())).isEqualTo(expected);
-        assertThat(existsById("project_matching_round", graph.roundId())).isEqualTo(expected);
-        assertThat(existsById("project_application", graph.applicationId())).isEqualTo(expected);
-        assertThat(existsById("project_application_form", graph.applicationFormId())).isEqualTo(expected);
-        assertThat(existsById("project_application_form_policy", graph.policyId())).isEqualTo(expected);
-        assertThat(existsById("form", graph.formId())).isEqualTo(expected);
-        assertThat(existsById("form_section", graph.sectionId())).isEqualTo(expected);
-        assertThat(existsById("question", graph.questionId())).isEqualTo(expected);
-        assertThat(existsById("question_option", graph.optionId())).isEqualTo(expected);
-        assertThat(existsById("form_response", graph.formResponseId())).isEqualTo(expected);
-        assertThat(existsById("answer", graph.answerId())).isEqualTo(expected);
-        assertThat(existsById("answer_choice", graph.answerChoiceId())).isEqualTo(expected);
-        assertThat(existsById("single_answer", graph.singleAnswerId())).isEqualTo(expected);
-    }
-
-    private interface QueryBinder {
-        void bind(jakarta.persistence.Query query);
+        assertThat(existsById(Project.class, graph.projectId())).isEqualTo(expected);
+        assertThat(existsById(ProjectMember.class, graph.memberId())).isEqualTo(expected);
+        assertThat(existsById(ProjectPartQuota.class, graph.quotaId())).isEqualTo(expected);
+        assertThat(existsById(ProjectMatchingRound.class, graph.roundId())).isEqualTo(expected);
+        assertThat(existsById(ProjectApplication.class, graph.applicationId())).isEqualTo(expected);
+        assertThat(existsById(ProjectApplicationForm.class, graph.applicationFormId())).isEqualTo(expected);
+        assertThat(existsById(ProjectApplicationFormPolicy.class, graph.policyId())).isEqualTo(expected);
+        assertThat(existsById(Form.class, graph.formId())).isEqualTo(expected);
+        assertThat(existsById(FormSection.class, graph.sectionId())).isEqualTo(expected);
+        assertThat(existsById(Question.class, graph.questionId())).isEqualTo(expected);
+        assertThat(existsById(QuestionOption.class, graph.optionId())).isEqualTo(expected);
+        assertThat(existsById(FormResponse.class, graph.formResponseId())).isEqualTo(expected);
+        assertThat(existsById(Answer.class, graph.answerId())).isEqualTo(expected);
+        assertThat(existsById(AnswerChoice.class, graph.answerChoiceId())).isEqualTo(expected);
+        assertThat(existsLegacySingleAnswerById(graph.singleAnswerId())).isEqualTo(expected);
     }
 
     private record ProjectGraph(
