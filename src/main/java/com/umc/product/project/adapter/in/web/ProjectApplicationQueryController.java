@@ -1,5 +1,13 @@
 package com.umc.product.project.adapter.in.web;
 
+import java.util.List;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -14,16 +22,11 @@ import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplica
 import com.umc.product.project.application.port.in.query.dto.GetProjectApplicationDetailQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/projects")
@@ -121,7 +124,7 @@ public class ProjectApplicationQueryController {
         resourceType = ResourceType.PROJECT_APPLICATION,
         resourceId = "#applicationId",
         permission = PermissionType.READ,
-        message = "지원서 상세 조회는 지원자 본인 / PO·Sub-PO / 해당 기수 Central Core / 해당 기수·지부 지부장 만 가능합니다."
+        message = "지원서 상세는 지원자 본인, PO, Sub-PO, 해당 기수 Central Core, 해당 기수 지부장만 볼 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @GetMapping("/{projectId}/applications/{applicationId}")
     @Operation(

@@ -50,7 +50,7 @@ public class ProjectQueryController {
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
         permission = PermissionType.READ,
-        message = "프로젝트 조회 권한이 없습니다."
+        message = "프로젝트를 볼 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public PageResponse<ProjectSummaryResponse> searchProjects(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -70,7 +70,7 @@ public class ProjectQueryController {
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
         permission = PermissionType.READ,
-        message = "프로젝트 조회 권한이 없습니다."
+        message = "프로젝트를 볼 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public ProjectDetailResponse getDetail(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -88,7 +88,7 @@ public class ProjectQueryController {
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
         permission = PermissionType.READ,
-        message = "프로젝트 조회 권한이 없습니다."
+        message = "프로젝트를 볼 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public ProjectMembersResponse getMembers(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -105,7 +105,7 @@ public class ProjectQueryController {
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
         permission = PermissionType.READ,
-        message = "프로젝트 조회 권한이 없습니다."
+        message = "프로젝트를 볼 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public Map<Long, ProjectMembersResponse> getBatchMembers(
         @CurrentMember MemberPrincipal memberPrincipal,

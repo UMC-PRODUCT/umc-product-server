@@ -1,12 +1,5 @@
 package com.umc.product.authorization.adapter.in.aspect;
 
-import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
-import com.umc.product.authorization.domain.ResourcePermission;
-import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
-import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
-import com.umc.product.global.security.MemberPrincipal;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -19,6 +12,15 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+
+import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
+import com.umc.product.authorization.domain.ResourcePermission;
+import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
+import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
+import com.umc.product.global.security.MemberPrincipal;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * {@link CheckAccess} 어노테이션이 붙은 메서드 실행 전 권한을 체크하는 Aspect
@@ -74,7 +76,7 @@ public class AccessControlAspect {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AccessDeniedException("인증이 필요합니다.");
+            throw new AccessDeniedException("로그인이 필요해요. 로그인 후 다시 시도해주세요.");
         }
 
         // MemberPrincipal에서 memberId 추출
@@ -87,7 +89,7 @@ public class AccessControlAspect {
 
         // 근데 일단 Public API에 Permission check를 할 필요가 없으니까 나아아중에 강1이 고칠거임
         // https://www.youtube.com/shorts/p0pGZqC-wUU ; fuck!!!
-        throw new AccessDeniedException("유효하지 않은 인증 정보입니다.");
+        throw new AccessDeniedException("인증 정보가 올바르지 않아요. 다시 로그인해주세요.");
     }
 
     /**

@@ -1,5 +1,7 @@
 package com.umc.product.term.application.service.evaluator;
 
+import org.springframework.stereotype.Component;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
 import com.umc.product.authorization.domain.PermissionType;
@@ -8,9 +10,9 @@ import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.term.domain.exception.TermDomainException;
 import com.umc.product.term.domain.exception.TermErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
@@ -37,7 +39,7 @@ public class TermPermissionEvaluator implements ResourcePermissionEvaluator {
         return switch (permissionType) {
             case WRITE -> canWriteTerm(subjectAttributes);
             default ->
-                throw new TermDomainException(TermErrorCode.TERM_PERMISSION_DENIED, "TermPE - 지원하지 않는 권한 유형입니다.");
+                throw new TermDomainException(TermErrorCode.TERM_PERMISSION_DENIED, "지원하지 않는 약관 권한 유형이에요. 관리자에게 문의해주세요.");
         };
     }
 
