@@ -16,6 +16,36 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProjectSeedDataCleanupPersistenceAdapter implements DeleteSeedProjectDataPort {
 
+    /*
+     * 대상 Project 관련 데이터:
+     * - project: 프로젝트 루트. gisu_id로 대상 기수를 판별한다.
+     * - project_member: project, project_application을 참조하는 프로젝트 멤버.
+     * - project_part_quota: project를 참조하는 파트별 TO.
+     * - project_matching_round: chapter_id를 통해 대상 기수 chapter의 매칭 차수를 판별한다.
+     * - project_application: project_application_form, project_matching_round를 참조하는 지원서 메타데이터.
+     * - project_application_form: project와 survey form을 연결한다. form_id는 현재 DB FK가 아닌 스칼라 ID다.
+     * - project_application_form_policy: project_application_form과 form_section_id를 연결하는 섹션 노출 정책.
+     * - form, form_section, question, question_option: 프로젝트 지원 폼의 설문 구조.
+     * - form_response, answer, answer_choice: 프로젝트 지원 폼에 제출된 신규 설문 응답 구조.
+     * - single_answer: answer/answer_choice로 이관된 뒤에도 남아 있는 레거시 설문 응답 테이블.
+     *
+     * FK 안전 삭제 순서:
+     * 1. project_member: project_application, project보다 먼저 삭제한다.
+     * 2. answer_choice: answer, question_option보다 먼저 삭제한다.
+     * 3. single_answer: form_response, question보다 먼저 삭제한다.
+     * 4. answer: form_response, question보다 먼저 삭제한다.
+     * 5. project_application: project_application_form, project_matching_round보다 먼저 삭제한다.
+     * 6. project_application_form_policy: project_application_form보다 먼저 삭제한다.
+     * 7. question_option: question보다 먼저 삭제한다.
+     * 8. question: form_section보다 먼저 삭제한다.
+     * 9. form_section: form보다 먼저 삭제한다.
+     * 10. form_response: form보다 먼저 삭제한다.
+     * 11. form: project_application_form.form_id가 FK가 아니므로 연결 행보다 먼저 삭제할 수 있다.
+     * 12. project_application_form: project보다 먼저 삭제한다.
+     * 13. project_part_quota: project보다 먼저 삭제한다.
+     * 14. project_matching_round: project_application 삭제 이후 대상 기수 chapter 기준으로 삭제한다.
+     * 15. project: 모든 하위 프로젝트 데이터를 제거한 뒤 마지막에 삭제한다.
+     */
     private final EntityManager entityManager;
 
     @Override
