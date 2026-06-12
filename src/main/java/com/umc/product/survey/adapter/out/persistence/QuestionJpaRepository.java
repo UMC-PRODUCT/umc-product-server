@@ -62,7 +62,7 @@ public interface QuestionJpaRepository extends JpaRepository<Question, Long> {
                   AND q.isActive = true
                 ORDER BY fs.orderNo ASC, q.orderNo ASC
             """)
-    List<Question> findAllByFormId(@Param("formId") Long formId);
+    List<Question> findAllByFormIdAndIsActiveTrue(@Param("formId") Long formId);
 
     /**
      * 특정 폼에 속한 모든 질문 삭제 (deleteForm cascade 용)
