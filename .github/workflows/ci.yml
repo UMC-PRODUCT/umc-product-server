@@ -282,7 +282,7 @@ jobs:
               state: testFailed ? 'failure' : 'success',
               target_url: runUrl,
               description: testFailed ? `테스트 실패 (${kstTime})` : `테스트 성공 (${kstTime})`,
-              context: 'Product Team Server CI'
+              context: 'UMC Product Server CI'
             });
 
       - name: 📝 Build Summary

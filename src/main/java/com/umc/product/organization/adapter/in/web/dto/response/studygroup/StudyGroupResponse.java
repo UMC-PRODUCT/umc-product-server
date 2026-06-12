@@ -11,7 +11,7 @@ public record StudyGroupResponse(
     @Schema(description = "스터디 그룹 ID", example = "1")
     Long studyGroupId,
 
-    @Schema(description = "스터디 그룹명", example = "프로덕트팀 짱짱맨")
+    @Schema(description = "스터디 그룹명", example = "UMC Product 짱짱맨")
     String name,
 
     Long gisuId,
