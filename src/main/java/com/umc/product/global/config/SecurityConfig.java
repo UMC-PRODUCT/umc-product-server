@@ -28,11 +28,11 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
 import com.umc.product.global.security.JwtAuthenticationFilter;
 import com.umc.product.global.security.util.PublicEndpointCollector;
+import com.umc.product.global.response.ApiErrorResponseWriter;
 import com.umc.product.maintenance.adapter.in.web.filter.MaintenanceFilter;
 import com.umc.product.maintenance.application.port.out.MaintenanceBypassPolicy;
 import com.umc.product.maintenance.application.service.MaintenanceStateHolder;
@@ -65,9 +65,9 @@ public class SecurityConfig {
     public MaintenanceFilter maintenanceFilter(
         MaintenanceStateHolder stateHolder,
         MaintenanceBypassPolicy bypassPolicy,
-        ObjectMapper objectMapper
+        ApiErrorResponseWriter errorResponseWriter
     ) {
-        return new MaintenanceFilter(stateHolder, bypassPolicy, objectMapper);
+        return new MaintenanceFilter(stateHolder, bypassPolicy, errorResponseWriter);
     }
 
     /**

@@ -4,6 +4,7 @@ package com.umc.product.global.exception;
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.global.exception.constant.CommonErrorCode;
+import com.umc.product.global.response.ApiErrorResponseFactory;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.code.BaseCode;
 import jakarta.validation.ConstraintViolation;
@@ -20,6 +21,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -41,10 +43,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      * Spring Security 권한 거부 예외 처리 - AuthorizationDeniedException: @PreAuthorize 등 메서드 레벨 보안
      */
     @ExceptionHandler(AuthorizationDeniedException.class)
-    public ResponseEntity<Object> handleAccessDenied(Exception e, WebRequest request) {
+    public ResponseEntity<Object> handleAccessDenied(AuthorizationDeniedException e, WebRequest request) {
         log.warn("[ACCESS DENIED] {}", e.getMessage());
 
-        return buildResponse(e, CommonErrorCode.FORBIDDEN, HttpHeaders.EMPTY, request, e.getMessage());
+        return buildResponse(e, CommonErrorCode.FORBIDDEN, HttpHeaders.EMPTY, request, null);
+    }
+
+    /**
+     * Spring Security 표준 AccessDeniedException 처리 - 커스텀 Aspect 등 MVC 내부에서 발생하는 인가 실패
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Object> handleSpringAccessDenied(AccessDeniedException e, WebRequest request) {
+        log.warn("[ACCESS DENIED] {}", e.getMessage());
+
+        return buildResponse(e, CommonErrorCode.FORBIDDEN, HttpHeaders.EMPTY, request, null);
     }
 
     /**
@@ -101,7 +113,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         WebRequest request
     ) {
 
-        log.error("JSON 파싱 에러: {}", e.getMessage());
+        log.warn("JSON 파싱 에러: {}", e.getMessage());
 
         String errorMessage = e.getMessage();
         String simplifiedMessage = "잘못된 요청 형식입니다";
@@ -116,8 +128,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             }
         }
 
-        String detail = simplifiedMessage + " - " + e.getMostSpecificCause().getMessage();
-        return buildResponse(e, CommonErrorCode.BAD_REQUEST, headers, request, detail);
+        return buildResponse(e, CommonErrorCode.BAD_REQUEST, headers, request, simplifiedMessage);
     }
 
     /**
@@ -173,7 +184,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         if (e instanceof AuthorizationDomainException) {
             if (e.getBaseCode().equals(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED)) {
-                return buildResponse(e, e.getBaseCode(), HttpHeaders.EMPTY, request, e.getMessage(), e.getMessage());
+                String message = ApiErrorResponseFactory.resolveMessage(e.getBaseCode(), e.getMessage());
+                return buildResponse(e, e.getBaseCode(), HttpHeaders.EMPTY, request, message, message);
             }
         }
 
@@ -187,7 +199,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         Exception e, BaseCode code,
         HttpHeaders headers, WebRequest request, Object detail
     ) {
-        ApiResponse<Object> body = ApiResponse.onFailure(code.getCode(), code.getMessage(), detail);
+        ApiResponse<Object> body = ApiErrorResponseFactory.from(code, detail);
         return super.handleExceptionInternal(e, body, headers, code.getHttpStatus(), request);
     }
 
@@ -196,7 +208,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         HttpHeaders headers, WebRequest request, Object detail,
         String message
     ) {
-        ApiResponse<Object> body = ApiResponse.onFailure(code.getCode(), message, detail);
+        ApiResponse<Object> body = ApiErrorResponseFactory.from(code, message, detail);
         return super.handleExceptionInternal(e, body, headers, code.getHttpStatus(), request);
     }
 

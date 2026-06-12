@@ -1,6 +1,7 @@
 package com.umc.product.global.exception;
 
 import com.umc.product.global.exception.constant.CommonErrorCode;
+import com.umc.product.global.response.ApiErrorResponseFactory;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.code.BaseCode;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -39,7 +40,7 @@ public class CustomErrorController implements ErrorController {
 
                 return ResponseEntity
                     .status(code.getHttpStatus())
-                    .body(ApiResponse.onFailure(code.getCode(), code.getMessage(), null));
+                    .body(ApiErrorResponseFactory.from(code));
             }
         }
 
@@ -53,11 +54,7 @@ public class CustomErrorController implements ErrorController {
 
         CommonErrorCode errorCode = resolveErrorCode(status);
 
-        ApiResponse<Object> body = ApiResponse.onFailure(
-            errorCode.getCode(),
-            errorCode.getMessage(),
-            null
-        );
+        ApiResponse<Object> body = ApiErrorResponseFactory.from(errorCode);
 
         return ResponseEntity.status(status).body(body);
     }
