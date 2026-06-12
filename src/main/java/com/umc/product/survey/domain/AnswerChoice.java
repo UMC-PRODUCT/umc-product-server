@@ -1,12 +1,22 @@
 package com.umc.product.survey.domain;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import com.umc.product.common.BaseEntity;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 /**
  * 객관식 응답에서 사용자가 '선택한 하나의 보기'를 나타낸다.
@@ -62,6 +72,10 @@ public class AnswerChoice extends BaseEntity {
     @JoinColumn(name = "question_option_id")
     @OnDelete(action = OnDeleteAction.SET_NULL)
     private QuestionOption questionOption;
+
+    public static AnswerChoice create(Answer answer, QuestionOption questionOption) {
+        return new AnswerChoice(answer, questionOption);
+    }
 
     public AnswerChoice(Answer answer, QuestionOption questionOption) {
         this.answer = answer;

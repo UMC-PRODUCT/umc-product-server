@@ -2,6 +2,7 @@ package com.umc.product.test.adapter.in.web;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +15,8 @@ import com.umc.product.test.adapter.in.web.dto.CreateSeedChallengerRoleRequest;
 import com.umc.product.test.adapter.in.web.dto.CreateSeedChallengerRoleResponse;
 import com.umc.product.test.adapter.in.web.dto.CreateSeedMemberRequest;
 import com.umc.product.test.adapter.in.web.dto.CreateSeedMemberResponse;
+import com.umc.product.test.adapter.in.web.dto.DeleteSeedProjectDataRequest;
+import com.umc.product.test.adapter.in.web.dto.DeleteSeedProjectDataResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedCurriculumRequest;
@@ -31,6 +34,7 @@ import com.umc.product.test.adapter.in.web.dto.SeedProjectsResponse;
 import com.umc.product.test.application.port.in.command.CreateSeedChallengerRoleUseCase;
 import com.umc.product.test.application.port.in.command.CreateSeedChallengerUseCase;
 import com.umc.product.test.application.port.in.command.CreateSeedMemberUseCase;
+import com.umc.product.test.application.port.in.command.DeleteSeedProjectDataUseCase;
 import com.umc.product.test.application.port.in.command.SeedChallengersUseCase;
 import com.umc.product.test.application.port.in.command.SeedCurriculumUseCase;
 import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
@@ -38,6 +42,7 @@ import com.umc.product.test.application.port.in.command.SeedNoticeUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectApplicationsUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectScenariosUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
+import com.umc.product.test.application.port.in.command.dto.DeleteSeedProjectDataCommand;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -67,6 +72,7 @@ public class SeedController {
     private final CreateSeedChallengerUseCase createSeedChallengerUseCase;
     private final CreateSeedChallengerRoleUseCase createSeedChallengerRoleUseCase;
     private final SeedProjectsUseCase seedProjectsUseCase;
+    private final DeleteSeedProjectDataUseCase deleteSeedProjectDataUseCase;
     private final SeedProjectScenariosUseCase seedProjectScenariosUseCase;
     private final SeedProjectApplicationsUseCase seedProjectApplicationsUseCase;
     private final SeedCurriculumUseCase seedCurriculumUseCase;
@@ -160,6 +166,28 @@ public class SeedController {
     @PostMapping("/projects")
     public SeedProjectsResponse seedProjects(@RequestBody @Valid SeedProjectsRequest request) {
         return SeedProjectsResponse.from(seedProjectsUseCase.seed(request.toCommand()));
+    }
+
+    @Operation(
+        operationId = "SEED-003-D",
+        summary = "프로젝트 시딩 데이터 삭제",
+        description = """
+            특정 기수의 프로젝트 관련 데이터를 물리 삭제합니다.
+            삭제 범위는 Project, ProjectMember, ProjectPartQuota, ProjectApplication,
+            ProjectApplicationForm/Policy, 해당 기수 Chapter 의 ProjectMatchingRound,
+            그리고 프로젝트 지원 폼이 생성한 survey Form/FormSection/Question/QuestionOption/
+            FormResponse/Answer/AnswerChoice/legacy SingleAnswer 입니다.
+            gisuId 가 null 이면 활성 기수를 대상으로 합니다. prod 환경에서는 노출되지 않습니다.
+            """
+    )
+    @DeleteMapping("/projects")
+    public DeleteSeedProjectDataResponse deleteProjectData(
+        @RequestBody(required = false) @Valid DeleteSeedProjectDataRequest request
+    ) {
+        DeleteSeedProjectDataCommand command = request == null
+            ? DeleteSeedProjectDataCommand.of(null)
+            : request.toCommand();
+        return DeleteSeedProjectDataResponse.from(deleteSeedProjectDataUseCase.delete(command));
     }
 
     @Operation(

@@ -109,6 +109,6 @@ public enum ChallengerRoleType {
             return OrganizationType.SCHOOL;
         }
 
-        throw new CommonException(CommonErrorCode.INTERNAL_SERVER_ERROR, "해당 역할 유형의 조직 단계를 알 수 없습니다.");
+        throw new CommonException(CommonErrorCode.INTERNAL_SERVER_ERROR, "역할의 조직 단계를 확인하지 못했어요. 관리자에게 문의해주세요.");
     }
 }
