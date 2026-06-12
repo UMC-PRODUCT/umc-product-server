@@ -1,6 +1,6 @@
-# UMC PRODUCT TEAM SERVER
+# UMC PRODUCT SERVER
 
-> UMC 공식 프로덕트팀이 제작하는 웹사이트 및 iOS, Android 애플리케이션에서 공용으로 사용되는 백엔드 서버입니다.
+> UMC Product 팀이 제작하는 웹사이트 및 iOS, Android 애플리케이션에서 공용으로 사용되는 백엔드 서버입니다.
 
 [![codecov](https://codecov.io/gh/UMC-PRODUCT/umc-product-server/graph/badge.svg?token=0GUPQZQ40J)](https://codecov.io/gh/UMC-PRODUCT/umc-product-server)
 ![GitHub Actions](https://github.com/UMC-PRODUCT/umc-product-server/actions/workflows/ci.yml/badge.svg)
@@ -15,7 +15,7 @@
 <img width="1000" alt="tech-stack" src="https://github.com/user-attachments/assets/ec0574ec-d7ac-4a93-ba13-68384b04dc42" />
 
 
-## 👬 프로덕트팀 구성원
+## 👬 UMC Product 구성원
 
 ### 🥈 2nd
 #### 📅 2026.03 ~ 2026.08

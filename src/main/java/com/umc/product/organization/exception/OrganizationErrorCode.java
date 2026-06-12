@@ -1,9 +1,11 @@
 package com.umc.product.organization.exception;
 
+import org.springframework.http.HttpStatus;
+
 import com.umc.product.global.response.code.BaseCode;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
@@ -61,6 +63,45 @@ public enum OrganizationErrorCode implements BaseCode {
 
     STUDY_GROUP_SCHEDULE_ATTENDANCE_POLICY_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0038",
         "스터디 그룹 일정은 출석 정책이 필수입니다."),
+
+    UMC_PRODUCT_GENERATION_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0039", "UMC Product 기수는 필수입니다."),
+    UMC_PRODUCT_GENERATION_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGANIZATION-0040", "UMC Product 기수를 찾을 수 없습니다."),
+    UMC_PRODUCT_GENERATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "ORGANIZATION-0041", "이미 존재하는 UMC Product 기수입니다."),
+    UMC_PRODUCT_GENERATION_START_AT_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0042",
+        "UMC Product 기수 시작일은 필수입니다."),
+    UMC_PRODUCT_GENERATION_END_AT_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0043",
+        "UMC Product 기수 종료일은 필수입니다."),
+    UMC_PRODUCT_GENERATION_PERIOD_INVALID(HttpStatus.BAD_REQUEST, "ORGANIZATION-0044",
+        "UMC Product 기수 시작일은 종료일보다 이전이어야 합니다."),
+    UMC_PRODUCT_MEMBER_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0045", "UMC Product 인원은 필수입니다."),
+    UMC_PRODUCT_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGANIZATION-0046", "UMC Product 인원을 찾을 수 없습니다."),
+    UMC_PRODUCT_MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "ORGANIZATION-0047", "이미 등록된 UMC Product 인원입니다."),
+    UMC_PRODUCT_MEMBER_ID_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0048", "회원 ID는 필수입니다."),
+    UMC_PRODUCT_FUNCTIONAL_MEMBERSHIP_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0049",
+        "UMC Product 기능 조직 활동 기록은 필수입니다."),
+    UMC_PRODUCT_FUNCTIONAL_UNIT_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0050",
+        "UMC Product 기능 조직은 필수입니다."),
+    UMC_PRODUCT_ROLE_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0051", "UMC Product 직책은 필수입니다."),
+    UMC_PRODUCT_POSITION_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0052", "UMC Product 포지션은 필수입니다."),
+    UMC_PRODUCT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ORGANIZATION-0053", "UMC Product 관리 권한이 없습니다."),
+    UMC_PRODUCT_FUNCTIONAL_UNIT_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGANIZATION-0054",
+        "UMC Product 기능 조직을 찾을 수 없습니다."),
+    UMC_PRODUCT_FUNCTIONAL_UNIT_TYPE_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0055",
+        "UMC Product 기능 조직 유형은 필수입니다."),
+    UMC_PRODUCT_FUNCTIONAL_UNIT_CODE_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0056",
+        "UMC Product 기능 조직 코드는 필수입니다."),
+    UMC_PRODUCT_FUNCTIONAL_UNIT_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0057",
+        "UMC Product 기능 조직 이름은 필수입니다."),
+    UMC_PRODUCT_SQUAD_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0058", "UMC Product Squad는 필수입니다."),
+    UMC_PRODUCT_SQUAD_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGANIZATION-0059", "UMC Product Squad를 찾을 수 없습니다."),
+    UMC_PRODUCT_SQUAD_CODE_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0060", "UMC Product Squad 코드는 필수입니다."),
+    UMC_PRODUCT_SQUAD_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0061", "UMC Product Squad 이름은 필수입니다."),
+    UMC_PRODUCT_SQUAD_PERIOD_INVALID(HttpStatus.BAD_REQUEST, "ORGANIZATION-0062",
+        "UMC Product Squad 시작일은 종료일보다 이전이어야 합니다."),
+    UMC_PRODUCT_SQUAD_PARTICIPANT_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0063",
+        "UMC Product Squad 참여자는 필수입니다."),
+    UMC_PRODUCT_FUNCTIONAL_UNIT_PARENT_INVALID(HttpStatus.BAD_REQUEST, "ORGANIZATION-0064",
+        "UMC Product 기능 조직은 자기 자신을 상위 조직으로 지정할 수 없습니다."),
 
     ;
 
