@@ -6,6 +6,19 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
+import java.time.Instant;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
@@ -21,16 +34,6 @@ import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import java.time.Instant;
-import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectMatchingRoundCommandServiceTest {
@@ -109,6 +112,76 @@ class ProjectMatchingRoundCommandServiceTest {
                 .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_DELETE_CONFLICT);
             then(scheduleMatchingRoundDeadlinePort).should(never()).cancel(any());
         }
+
+        @Test
+        @DisplayName("이전 차수 decisionDeadline 이후 다음 차수 startsAt까지 1분 미만이면 생성할 수 없다")
+        void 이전_차수와_다음_차수_간격이_1분_미만이면_생성할_수_없다() {
+            ProjectMatchingRound firstRound = matchingRound(
+                10L,
+                MatchingType.PLAN_DESIGN,
+                MatchingPhase.FIRST,
+                1L,
+                "2026-05-10T00:00:00Z",
+                "2026-05-12T00:00:00Z",
+                "2026-05-13T00:00:00Z"
+            );
+            CreateProjectMatchingRoundCommand command = createCommand(
+                1L,
+                MatchingType.PLAN_DESIGN,
+                MatchingPhase.SECOND,
+                "2026-05-13T00:00:30Z",
+                "2026-05-15T00:00:00Z",
+                "2026-05-16T00:00:00Z"
+            );
+            given(loadProjectMatchingRoundPort.listOverlapping(any(), any(), any())).willReturn(List.of());
+            given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(List.of(firstRound));
+
+            assertThatThrownBy(() -> sut.create(command))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting(e -> ((ProjectDomainException) e).getBaseCode().getCode())
+                .isEqualTo("PROJECT-0309");
+            then(saveProjectMatchingRoundPort).should(never()).save(any());
+        }
+
+        @Test
+        @DisplayName("이전 차수 decisionDeadline 이후 다음 차수 startsAt까지 1분 미만이면 수정할 수 없다")
+        void 이전_차수와_다음_차수_간격이_1분_미만이면_수정할_수_없다() {
+            ProjectMatchingRound firstRound = matchingRound(
+                10L,
+                MatchingType.PLAN_DESIGN,
+                MatchingPhase.FIRST,
+                1L,
+                "2026-05-10T00:00:00Z",
+                "2026-05-12T00:00:00Z",
+                "2026-05-13T00:00:00Z"
+            );
+            ProjectMatchingRound secondRound = matchingRound(
+                ROUND_ID,
+                MatchingType.PLAN_DESIGN,
+                MatchingPhase.SECOND,
+                1L,
+                "2026-05-20T00:00:00Z",
+                "2026-05-22T00:00:00Z",
+                "2026-05-23T00:00:00Z"
+            );
+            UpdateProjectMatchingRoundCommand command = UpdateProjectMatchingRoundCommand.builder()
+                .matchingRoundId(ROUND_ID)
+                .requesterMemberId(EXECUTOR_MEMBER_ID)
+                .startsAt(Instant.parse("2026-05-13T00:00:30Z"))
+                .endsAt(Instant.parse("2026-05-15T00:00:00Z"))
+                .decisionDeadline(Instant.parse("2026-05-16T00:00:00Z"))
+                .build();
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(secondRound);
+            given(loadProjectMatchingRoundPort.listOverlappingExceptId(any(), any(), any(), any()))
+                .willReturn(List.of());
+            given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(List.of(firstRound, secondRound));
+
+            assertThatThrownBy(() -> sut.update(command))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting(e -> ((ProjectDomainException) e).getBaseCode().getCode())
+                .isEqualTo("PROJECT-0309");
+            then(scheduleMatchingRoundDeadlinePort).should(never()).schedule(any());
+        }
     }
 
     private CreateProjectMatchingRoundCommand createCommand(Long chapterId) {
@@ -124,6 +197,27 @@ class ProjectMatchingRoundCommandServiceTest {
             .startsAt(startsAt)
             .endsAt(endsAt)
             .decisionDeadline(decisionDeadline)
+            .requesterMemberId(EXECUTOR_MEMBER_ID)
+            .build();
+    }
+
+    private CreateProjectMatchingRoundCommand createCommand(
+        Long chapterId,
+        MatchingType type,
+        MatchingPhase phase,
+        String startsAt,
+        String endsAt,
+        String decisionDeadline
+    ) {
+        return CreateProjectMatchingRoundCommand.builder()
+            .name("기획-디자인 2차")
+            .description(null)
+            .type(type)
+            .phase(phase)
+            .chapterId(chapterId)
+            .startsAt(Instant.parse(startsAt))
+            .endsAt(Instant.parse(endsAt))
+            .decisionDeadline(Instant.parse(decisionDeadline))
             .requesterMemberId(EXECUTOR_MEMBER_ID)
             .build();
     }
@@ -151,6 +245,29 @@ class ProjectMatchingRoundCommandServiceTest {
             Instant.now().plusSeconds(259_200)
         );
         ReflectionTestUtils.setField(round, "id", ROUND_ID);
+        return round;
+    }
+
+    private ProjectMatchingRound matchingRound(
+        Long id,
+        MatchingType type,
+        MatchingPhase phase,
+        Long chapterId,
+        String startsAt,
+        String endsAt,
+        String decisionDeadline
+    ) {
+        ProjectMatchingRound round = ProjectMatchingRound.create(
+            "테스트 매칭",
+            null,
+            type,
+            phase,
+            chapterId,
+            Instant.parse(startsAt),
+            Instant.parse(endsAt),
+            Instant.parse(decisionDeadline)
+        );
+        ReflectionTestUtils.setField(round, "id", id);
         return round;
     }
 
