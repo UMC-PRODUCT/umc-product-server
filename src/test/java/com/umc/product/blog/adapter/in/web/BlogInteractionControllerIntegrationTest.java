@@ -1,4 +1,4 @@
-package com.umc.product.techblog.adapter.in.web;
+package com.umc.product.blog.adapter.in.web;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -19,6 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.umc.product.blog.application.port.out.SaveBlogContentPort;
+import com.umc.product.blog.domain.BlogContent;
+import com.umc.product.blog.domain.BlogContentStatus;
+import com.umc.product.blog.domain.BlogContentType;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.out.SaveMemberPort;
@@ -33,10 +37,10 @@ import com.umc.product.support.fixture.ChapterFixture;
 import com.umc.product.support.fixture.GisuFixture;
 import com.umc.product.support.fixture.SchoolFixture;
 
-@DisplayName("TechBlogInteractionController 통합 테스트")
-class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSupport {
+@DisplayName("BlogInteractionController 통합 테스트")
+class BlogInteractionControllerIntegrationTest extends IntegrationTestSupport {
 
-    private static final String CONTENT_URL = "/api/v1/tech-blog/contents/blog/spring-boot-tips";
+    private static final String CONTENT_URL = "/api/v1/blog/contents/blog/spring-boot-tips";
     private static final String BASE_URL = CONTENT_URL + "/comments";
 
     @Autowired
@@ -57,17 +61,21 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
     @Autowired
     ChallengerRoleFixture challengerRoleFixture;
 
+    @Autowired
+    SaveBlogContentPort saveBlogContentPort;
+
     private String authorToken;
     private String otherToken;
     private String adminToken;
+    private Long authorMemberId;
 
     @BeforeEach
     void setUpAuth() {
         Gisu gisu = gisuFixture.비활성_기수(99L);
         Chapter chapter = chapterFixture.지부(gisu);
-        School adminSchool = schoolFixture.지부에_소속된_학교("tech-blog-admin-school", chapter);
+        School adminSchool = schoolFixture.지부에_소속된_학교("blog-admin-school", chapter);
 
-        Long authorMemberId = createMember("author", adminSchool.getId());
+        authorMemberId = createMember("author", adminSchool.getId());
         Long otherMemberId = createMember("other", adminSchool.getId());
         Long adminMemberId = createMember("admin", adminSchool.getId());
 
@@ -79,16 +87,47 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
         authorToken = mockToken("author-token", authorMemberId);
         otherToken = mockToken("other-token", otherMemberId);
         adminToken = mockToken("admin-token", adminMemberId);
+        savePublishedContent();
     }
 
     private Long createMember(String name, Long schoolId) {
         return saveMemberPort.save(Member.create(
             name,
             name,
-            name + "-tech-blog@test.com",
+            name + "-blog@test.com",
             schoolId,
             null
         )).getId();
+    }
+
+    @Test
+    @DisplayName("슈퍼 관리자는 콘텐츠를 생성하고 public 상세와 해시태그로 조회할 수 있다")
+    void 슈퍼_관리자는_콘텐츠를_생성하고_public_상세와_해시태그로_조회할_수_있다() throws Exception {
+        Map<String, Object> request = contentBody("cms-post", "CMS Post", "PUBLISHED", List.of("SpringBoot"));
+
+        mockMvc.perform(post("/api/v1/blog/contents")
+                .header("Authorization", "Bearer " + authorToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/v1/blog/contents")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.slug").value("cms-post"))
+            .andExpect(jsonPath("$.result.status").value("PUBLISHED"))
+            .andExpect(jsonPath("$.result.hashtags[0].slug").value("springboot"));
+
+        mockMvc.perform(get("/api/v1/blog/contents/blog/cms-post"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.title").value("CMS Post"))
+            .andExpect(jsonPath("$.result.canonicalPath").value("/blog/cms-post"));
+
+        mockMvc.perform(get("/api/v1/blog/hashtags/springboot/contents"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.content[0].slug").value("cms-post"));
     }
 
     @Test
@@ -103,9 +142,11 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
     }
 
     @Test
-    @DisplayName("콘텐츠 좋아요는 없는 콘텐츠 조회 시 빈 상태를 반환하고 토글 시 콘텐츠를 생성한다")
-    void 콘텐츠_좋아요는_없는_콘텐츠_조회_시_빈_상태를_반환하고_토글_시_콘텐츠를_생성한다() throws Exception {
-        mockMvc.perform(get(CONTENT_URL + "/like"))
+    @DisplayName("콘텐츠 좋아요는 없는 콘텐츠 조회 시 빈 상태를 반환하고 공개 콘텐츠에서 토글된다")
+    void 콘텐츠_좋아요는_없는_콘텐츠_조회_시_빈_상태를_반환하고_공개_콘텐츠에서_토글된다() throws Exception {
+        String missingContentUrl = "/api/v1/blog/contents/blog/missing-content";
+
+        mockMvc.perform(get(missingContentUrl + "/like"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.likedByMe").value(false))
             .andExpect(jsonPath("$.result.likeCount").value(0));
@@ -360,6 +401,22 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
         return token;
     }
 
+    private void savePublishedContent() {
+        saveBlogContentPort.save(BlogContent.create(
+            BlogContentType.BLOG,
+            "spring-boot-tips",
+            "Spring Boot Tips",
+            "테스트 콘텐츠 요약",
+            null,
+            "테스트 콘텐츠 본문",
+            BlogContentStatus.PUBLISHED,
+            authorMemberId,
+            null,
+            null,
+            null
+        ));
+    }
+
     private Long createComment(String content, Long parentCommentId, String token) throws Exception {
         String response = mockMvc.perform(post(BASE_URL)
                 .header("Authorization", "Bearer " + token)
@@ -387,6 +444,18 @@ class TechBlogInteractionControllerIntegrationTest extends IntegrationTestSuppor
     private Map<String, Object> updateBody(String content) {
         Map<String, Object> body = new HashMap<>();
         body.put("content", content);
+        return body;
+    }
+
+    private Map<String, Object> contentBody(String slug, String title, String status, List<String> hashtags) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("type", "blog");
+        body.put("slug", slug);
+        body.put("title", title);
+        body.put("summary", "요약");
+        body.put("content", "본문");
+        body.put("status", status);
+        body.put("hashtags", hashtags);
         return body;
     }
 }
