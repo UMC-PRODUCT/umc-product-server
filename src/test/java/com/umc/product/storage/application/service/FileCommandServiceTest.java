@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 import com.umc.product.storage.application.port.in.command.ManageFileUseCase;
+import com.umc.product.storage.application.port.in.command.dto.DeleteFileCommand;
 import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
 import com.umc.product.storage.application.port.in.command.dto.PrepareFileUploadCommand;
 import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
@@ -182,7 +183,7 @@ class FileCommandServiceTest extends UseCaseTestSupport {
         String fileId = metadata.getId();
 
         // when
-        manageFileUseCase.deleteFile(fileId);
+        manageFileUseCase.deleteFile(deleteCommand(fileId, 1L));
 
         // then: 스토리지에서 파일이 삭제되었는지 확인
         verify(storagePort).delete(metadata.getStorageKey());
@@ -197,8 +198,15 @@ class FileCommandServiceTest extends UseCaseTestSupport {
         String nonExistentFileId = "non-existent-id";
 
         // when & then
-        assertThatThrownBy(() -> manageFileUseCase.deleteFile(nonExistentFileId))
+        assertThatThrownBy(() -> manageFileUseCase.deleteFile(deleteCommand(nonExistentFileId, 1L)))
             .isInstanceOf(StorageException.class);
+    }
+
+    private DeleteFileCommand deleteCommand(String fileId, Long requesterMemberId) {
+        return DeleteFileCommand.builder()
+            .fileId(fileId)
+            .requesterMemberId(requesterMemberId)
+            .build();
     }
 
     /**
