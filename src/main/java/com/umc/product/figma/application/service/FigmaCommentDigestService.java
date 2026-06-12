@@ -1,5 +1,9 @@
 package com.umc.product.figma.application.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.umc.product.figma.application.port.in.DigestFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.SummarizeFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.dto.DigestFigmaCommentsCommand;
@@ -8,10 +12,9 @@ import com.umc.product.figma.application.port.in.dto.FigmaSummaryResult;
 import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;
 import com.umc.product.figma.domain.exception.FigmaDomainException;
 import com.umc.product.figma.domain.exception.FigmaErrorCode;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 /**
  * 운영진의 catch-up digest 진입점의 thin shim (ADR-004 §Decision 2).

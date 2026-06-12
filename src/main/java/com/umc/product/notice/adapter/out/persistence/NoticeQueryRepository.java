@@ -5,6 +5,16 @@ import static com.umc.product.notice.domain.QNotice.notice;
 import static com.umc.product.notice.domain.QNoticeRead.noticeRead;
 import static com.umc.product.notice.domain.QNoticeTarget.noticeTarget;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
@@ -17,16 +27,9 @@ import com.umc.product.notice.domain.NoticeClassification;
 import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor

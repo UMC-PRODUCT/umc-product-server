@@ -1,5 +1,9 @@
 package com.umc.product.member.application.service;
 
+import java.util.Objects;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
 import com.umc.product.authorization.domain.ResourcePermission;
@@ -8,10 +12,9 @@ import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import java.util.Objects;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j

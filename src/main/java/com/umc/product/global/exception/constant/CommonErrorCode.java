@@ -1,10 +1,12 @@
 package com.umc.product.global.exception.constant;
 
 
+import org.springframework.http.HttpStatus;
+
 import com.umc.product.global.response.code.BaseCode;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
 
 /**
  * 프로젝트 전체에서 공통으로 사용되는 COMMON 카테고리의 에러입니다.

@@ -1,6 +1,18 @@
 package com.umc.product.figma.application.service;
 
-import com.umc.product.figma.config.FigmaSyncProperties;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.figma.application.port.in.SummarizeFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.dto.FigmaSummaryResult;
 import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;
@@ -16,25 +28,16 @@ import com.umc.product.figma.application.port.out.SendDiscordMentionPort;
 import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage;
 import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage.CommentEntry;
 import com.umc.product.figma.application.port.out.dto.FigmaCommentInfo;
+import com.umc.product.figma.config.FigmaSyncProperties;
 import com.umc.product.figma.domain.FigmaRoutingDomain;
 import com.umc.product.figma.domain.FigmaRoutingDomainMention;
 import com.umc.product.figma.domain.FigmaSummaryCursor;
 import com.umc.product.figma.domain.FigmaWatchedFile;
 import com.umc.product.figma.domain.exception.FigmaDomainException;
 import com.umc.product.figma.domain.exception.FigmaErrorCode;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 시간창 기반 figma 댓글 동기화의 단일 본체 (ADR-004 §Decision 1·2).

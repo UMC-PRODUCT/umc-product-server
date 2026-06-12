@@ -1,5 +1,7 @@
 package com.umc.product.curriculum.adapter.in.web.v2;
 
+import java.util.List;
+
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -11,13 +13,11 @@ import com.umc.product.curriculum.application.port.in.command.dto.workbook.Chang
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v2/curriculums/original-workbooks")

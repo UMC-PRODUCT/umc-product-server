@@ -1,5 +1,13 @@
 package com.umc.product.organization.adapter.in.web;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -11,15 +19,9 @@ import com.umc.product.organization.application.port.in.command.dto.AddStudyMemb
 import com.umc.product.organization.application.port.in.command.dto.AddStudyMentorCommand;
 import com.umc.product.organization.application.port.in.command.dto.DeleteStudyMemberCommand;
 import com.umc.product.organization.application.port.in.command.dto.DeleteStudyMentorCommand;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/study-groups")

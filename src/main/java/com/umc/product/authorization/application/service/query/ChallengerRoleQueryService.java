@@ -1,5 +1,15 @@
 package com.umc.product.authorization.application.service.query;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
@@ -10,16 +20,9 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 사용자의 역할 정보를 조회하는 Query Service

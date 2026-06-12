@@ -1,5 +1,12 @@
 package com.umc.product.llm.application.service;
 
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.umc.product.llm.adapter.out.external.LlmProperties;
 import com.umc.product.llm.application.port.in.ChatCompleteUseCase;
 import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
@@ -7,13 +14,9 @@ import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
 import com.umc.product.llm.application.port.out.ChatCompletionPort;
 import com.umc.product.llm.domain.exception.LlmDomainException;
 import com.umc.product.llm.domain.exception.LlmErrorCode;
+
 import jakarta.annotation.PostConstruct;
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 /**
  * LLM 호출 진입점. 활성화된 단일 ChatCompletionPort 구현체에 위임한다. provider 교체 (mock → openai → gemini → spring-ai) 는 어댑터 레벨에서만 일어난다.
