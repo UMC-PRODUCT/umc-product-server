@@ -1,18 +1,20 @@
 package com.umc.product.global.exception;
 
-import com.umc.product.global.exception.constant.CommonErrorCode;
-import com.umc.product.global.response.ApiErrorResponseFactory;
-import com.umc.product.global.response.ApiResponse;
-import com.umc.product.global.response.code.BaseCode;
-import io.swagger.v3.oas.annotations.Hidden;
-import jakarta.servlet.RequestDispatcher;
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.umc.product.global.exception.constant.CommonErrorCode;
+import com.umc.product.global.response.ApiErrorResponseFactory;
+import com.umc.product.global.response.ApiResponse;
+import com.umc.product.global.response.code.BaseCode;
+
+import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * GlobalExceptionHandler가 처리하지 못하는 에러를 처리하는 fallback 컨트롤러 - 404 Not Found (존재하지 않는 URL) - Filter에서 발생한 예외 - Servlet 레벨
