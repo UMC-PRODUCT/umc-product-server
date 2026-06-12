@@ -1,10 +1,13 @@
 package com.umc.product.project.application.port.out;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * {@code findBy*} — 없어도 정상 ({@link Optional})
@@ -102,6 +105,17 @@ public interface LoadProjectApplicationPort {
         Long projectId,
         Long matchingRoundId,
         ProjectApplicationStatus status
+    );
+
+    /**
+     * 프로젝트/멤버 쌍별 APPROVED 지원서 중 가장 최신 매칭 차수를 조회합니다.
+     * <p>
+     * 최신 기준: matchingRound.startsAt DESC, 동률이면 application.id DESC.
+     * 지원서가 없는 쌍은 결과에 포함하지 않습니다.
+     */
+    List<ProjectMemberMatchedRoundInfo> listLatestApprovedMatchedRoundsByProjectIdsAndMemberIds(
+        Collection<Long> projectIds,
+        Collection<Long> memberIds
     );
 
     /**
