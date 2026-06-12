@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -35,6 +36,7 @@ public class FileMetadataPersistenceAdapter implements LoadFileMetadataPort, Sav
     }
 
     @Override
+    @Transactional
     public void deleteByFileId(String fileId) {
         fileMetadataRepository.deleteById(fileId);
     }

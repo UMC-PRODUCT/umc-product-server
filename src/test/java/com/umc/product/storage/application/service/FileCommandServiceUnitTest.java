@@ -1,5 +1,6 @@
 package com.umc.product.storage.application.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -20,6 +21,7 @@ import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -28,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.annotation.Transactional;
 
 @ExtendWith(MockitoExtension.class)
 class FileCommandServiceUnitTest {
@@ -46,6 +49,24 @@ class FileCommandServiceUnitTest {
 
     @InjectMocks
     FileCommandService sut;
+
+    @Test
+    @DisplayName("파일 삭제는 클래스 공통 트랜잭션으로 외부 스토리지 I/O를 감싸지 않는다")
+    void 파일_삭제는_클래스_공통_트랜잭션으로_외부_스토리지_IO를_감싸지_않는다() throws NoSuchMethodException {
+        // when
+        Method getFileUploadUrl = FileCommandService.class.getMethod(
+            "getFileUploadUrl",
+            com.umc.product.storage.application.port.in.command.dto.PrepareFileUploadCommand.class
+        );
+        Method confirmUpload = FileCommandService.class.getMethod("confirmUpload", String.class);
+        Method deleteFile = FileCommandService.class.getMethod("deleteFile", DeleteFileCommand.class);
+
+        // then
+        assertThat(FileCommandService.class.getAnnotation(Transactional.class)).isNull();
+        assertThat(getFileUploadUrl.getAnnotation(Transactional.class)).isNotNull();
+        assertThat(confirmUpload.getAnnotation(Transactional.class)).isNotNull();
+        assertThat(deleteFile.getAnnotation(Transactional.class)).isNull();
+    }
 
     @Test
     @DisplayName("작성자가 아니어도 SUPER_ADMIN이면 파일을 삭제한다")

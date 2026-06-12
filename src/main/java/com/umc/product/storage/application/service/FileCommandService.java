@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class FileCommandService implements ManageFileUseCase {
 
     private static final long UPLOAD_URL_DURATION_MINUTES = 15;
@@ -35,6 +34,7 @@ public class FileCommandService implements ManageFileUseCase {
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @Override
+    @Transactional
     public FileUploadInfo getFileUploadUrl(PrepareFileUploadCommand command) {
         // 파일 검증
         validateFile(command);
@@ -85,6 +85,7 @@ public class FileCommandService implements ManageFileUseCase {
     }
 
     @Override
+    @Transactional
     public void confirmUpload(String fileId) {
         FileMetadata metadata = loadFileMetadataPort.findByFileId(fileId)
             .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
