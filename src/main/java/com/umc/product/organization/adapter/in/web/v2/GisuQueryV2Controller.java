@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v2/gisus")
+@RequestMapping("/api/v2/gisu")
 @RequiredArgsConstructor
 @Tag(name = "Organization V2 | 기수 Query", description = "기수 기준 조직 정보를 조회합니다.")
 public class GisuQueryV2Controller {

@@ -64,7 +64,7 @@ class GisuQueryV2ControllerTest {
             gisu(2L, 10L)
         ));
 
-        mockMvc.perform(get("/api/v2/gisus")
+        mockMvc.perform(get("/api/v2/gisu")
                 .param("id", "1", "1", "2")
                 .param("includeChapter", "true")
                 .param("includeSchool", "true"))
@@ -138,7 +138,7 @@ class GisuQueryV2ControllerTest {
             gisu(8L, 10L)
         ));
 
-        mockMvc.perform(get("/api/v2/gisus")
+        mockMvc.perform(get("/api/v2/gisu")
                 .param("generation", "9", "9", "10"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.gisus.length()").value(2))
@@ -156,7 +156,7 @@ class GisuQueryV2ControllerTest {
     void active_true는_활성_기수만_조회한다() throws Exception {
         given(getGisuOrganizationUseCase.get(any())).willReturn(List.of(gisu(10L, 11L)));
 
-        mockMvc.perform(get("/api/v2/gisus")
+        mockMvc.perform(get("/api/v2/gisu")
                 .param("active", "true"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.gisus.length()").value(1))
@@ -170,7 +170,7 @@ class GisuQueryV2ControllerTest {
     @Test
     @DisplayName("조회 기준이 없으면 400을 반환한다")
     void 조회_기준이_없으면_400을_반환한다() throws Exception {
-        mockMvc.perform(get("/api/v2/gisus"))
+        mockMvc.perform(get("/api/v2/gisu"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("ORGANIZATION-0039"));
 
@@ -180,7 +180,7 @@ class GisuQueryV2ControllerTest {
     @Test
     @DisplayName("조회 기준을 둘 이상 보내면 400을 반환한다")
     void 조회_기준을_둘_이상_보내면_400을_반환한다() throws Exception {
-        mockMvc.perform(get("/api/v2/gisus")
+        mockMvc.perform(get("/api/v2/gisu")
                 .param("id", "1")
                 .param("generation", "9"))
             .andExpect(status().isBadRequest())
@@ -192,7 +192,7 @@ class GisuQueryV2ControllerTest {
     @Test
     @DisplayName("active=false는 400을 반환한다")
     void active_false는_400을_반환한다() throws Exception {
-        mockMvc.perform(get("/api/v2/gisus")
+        mockMvc.perform(get("/api/v2/gisu")
                 .param("active", "false"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("ORGANIZATION-0039"));

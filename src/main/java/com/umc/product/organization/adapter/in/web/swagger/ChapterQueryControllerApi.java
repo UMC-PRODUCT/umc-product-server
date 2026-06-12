@@ -26,7 +26,7 @@ public interface ChapterQueryControllerApi {
     @Deprecated(since = "v2.0.0", forRemoval = true)
     ChapterListResponse getAllChapters();
 
-    @Operation(summary = "[CHAPTER-102] 기수별 지부 및 소속 학교 목록 조회", description = "deprecated: `/api/v2/gisus?id={gisuId}&includeChapter=true&includeSchool=true`를 사용해주세요.\n\n특정 기수의 모든 지부와 각 지부에 속한 학교 목록을 조회합니다")
+    @Operation(summary = "[CHAPTER-102] 기수별 지부 및 소속 학교 목록 조회", description = "deprecated: `/api/v2/gisu?id={gisuId}&includeChapter=true&includeSchool=true`를 사용해주세요.\n\n특정 기수의 모든 지부와 각 지부에 속한 학교 목록을 조회합니다")
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
