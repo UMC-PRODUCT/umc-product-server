@@ -14,7 +14,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -52,11 +51,11 @@ class ProjectMatchingRoundCommandServiceTest {
     @Mock
     GetChallengerRoleUseCase getChallengerRoleUseCase;
 
-    @InjectMocks
     ProjectMatchingRoundCommandService sut;
 
     @BeforeEach
     void setUpRoleMock() {
+        sut = sutWithMinPhaseIntervalMinutes(1);
         given(getChallengerRoleUseCase.findAllByMemberId(EXECUTOR_MEMBER_ID))
             .willReturn(List.of(centralCoreRole()));
     }
@@ -130,6 +129,37 @@ class ProjectMatchingRoundCommandServiceTest {
                 MatchingType.PLAN_DESIGN,
                 MatchingPhase.SECOND,
                 "2026-05-13T00:00:30Z",
+                "2026-05-15T00:00:00Z",
+                "2026-05-16T00:00:00Z"
+            );
+            given(loadProjectMatchingRoundPort.listOverlapping(any(), any(), any())).willReturn(List.of());
+            given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(List.of(firstRound));
+
+            assertThatThrownBy(() -> sut.create(command))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting(e -> ((ProjectDomainException) e).getBaseCode().getCode())
+                .isEqualTo("PROJECT-0309");
+            then(saveProjectMatchingRoundPort).should(never()).save(any());
+        }
+
+        @Test
+        @DisplayName("설정된 분 단위 간격보다 짧으면 생성할 수 없다")
+        void 설정된_분_단위_간격보다_짧으면_생성할_수_없다() {
+            sut = sutWithMinPhaseIntervalMinutes(2);
+            ProjectMatchingRound firstRound = matchingRound(
+                10L,
+                MatchingType.PLAN_DESIGN,
+                MatchingPhase.FIRST,
+                1L,
+                "2026-05-10T00:00:00Z",
+                "2026-05-12T00:00:00Z",
+                "2026-05-13T00:00:00Z"
+            );
+            CreateProjectMatchingRoundCommand command = createCommand(
+                1L,
+                MatchingType.PLAN_DESIGN,
+                MatchingPhase.SECOND,
+                "2026-05-13T00:01:30Z",
                 "2026-05-15T00:00:00Z",
                 "2026-05-16T00:00:00Z"
             );
@@ -337,6 +367,17 @@ class ProjectMatchingRoundCommandServiceTest {
         );
         ReflectionTestUtils.setField(round, "id", id);
         return round;
+    }
+
+    private ProjectMatchingRoundCommandService sutWithMinPhaseIntervalMinutes(long minPhaseIntervalMinutes) {
+        return new ProjectMatchingRoundCommandService(
+            loadProjectMatchingRoundPort,
+            saveProjectMatchingRoundPort,
+            loadProjectApplicationPort,
+            scheduleMatchingRoundDeadlinePort,
+            getChallengerRoleUseCase,
+            new ProjectMatchingRoundProperties(minPhaseIntervalMinutes)
+        );
     }
 
     private ChallengerRoleInfo centralCoreRole() {

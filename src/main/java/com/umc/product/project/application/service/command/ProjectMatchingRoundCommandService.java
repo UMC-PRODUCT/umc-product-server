@@ -45,14 +45,13 @@ public class ProjectMatchingRoundCommandService implements
     UpdateProjectMatchingRoundUseCase,
     DeleteProjectMatchingRoundUseCase {
 
-    private static final Duration MIN_PHASE_INTERVAL = Duration.ofMinutes(1);
-
     private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
     private final SaveProjectMatchingRoundPort saveProjectMatchingRoundPort;
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final ScheduleMatchingRoundDeadlinePort scheduleMatchingRoundDeadlinePort;
 
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+    private final ProjectMatchingRoundProperties projectMatchingRoundProperties;
 
     @Override
     public Long create(CreateProjectMatchingRoundCommand command) {
@@ -227,16 +226,17 @@ public class ProjectMatchingRoundCommandService implements
         Instant decisionDeadline
     ) {
         int phaseOrder = existingRound.getPhase().compareTo(phase);
+        Duration minPhaseInterval = projectMatchingRoundProperties.minPhaseInterval();
 
         if (phaseOrder == 0) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
         }
 
-        if (phaseOrder < 0 && startsAt.isBefore(existingRound.getDecisionDeadline().plus(MIN_PHASE_INTERVAL))) {
+        if (phaseOrder < 0 && startsAt.isBefore(existingRound.getDecisionDeadline().plus(minPhaseInterval))) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
         }
 
-        if (phaseOrder > 0 && existingRound.getStartsAt().isBefore(decisionDeadline.plus(MIN_PHASE_INTERVAL))) {
+        if (phaseOrder > 0 && existingRound.getStartsAt().isBefore(decisionDeadline.plus(minPhaseInterval))) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
         }
     }
