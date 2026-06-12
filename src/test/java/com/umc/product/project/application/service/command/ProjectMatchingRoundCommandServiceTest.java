@@ -144,6 +144,36 @@ class ProjectMatchingRoundCommandServiceTest {
         }
 
         @Test
+        @DisplayName("같은 지부와 타입에 동일한 차수가 이미 있으면 생성할 수 없다")
+        void 같은_지부와_타입에_동일한_차수가_이미_있으면_생성할_수_없다() {
+            ProjectMatchingRound existingRound = matchingRound(
+                10L,
+                MatchingType.PLAN_DESIGN,
+                MatchingPhase.FIRST,
+                1L,
+                "2026-05-10T00:00:00Z",
+                "2026-05-12T00:00:00Z",
+                "2026-05-13T00:00:00Z"
+            );
+            CreateProjectMatchingRoundCommand command = createCommand(
+                1L,
+                MatchingType.PLAN_DESIGN,
+                MatchingPhase.FIRST,
+                "2026-05-20T00:00:00Z",
+                "2026-05-22T00:00:00Z",
+                "2026-05-23T00:00:00Z"
+            );
+            given(loadProjectMatchingRoundPort.listOverlapping(any(), any(), any())).willReturn(List.of());
+            given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(List.of(existingRound));
+
+            assertThatThrownBy(() -> sut.create(command))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting(e -> ((ProjectDomainException) e).getBaseCode().getCode())
+                .isEqualTo("PROJECT-0309");
+            then(saveProjectMatchingRoundPort).should(never()).save(any());
+        }
+
+        @Test
         @DisplayName("이전 차수 decisionDeadline 이후 다음 차수 startsAt까지 1분 미만이면 수정할 수 없다")
         void 이전_차수와_다음_차수_간격이_1분_미만이면_수정할_수_없다() {
             ProjectMatchingRound firstRound = matchingRound(
@@ -175,6 +205,44 @@ class ProjectMatchingRoundCommandServiceTest {
             given(loadProjectMatchingRoundPort.listOverlappingExceptId(any(), any(), any(), any()))
                 .willReturn(List.of());
             given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(List.of(firstRound, secondRound));
+
+            assertThatThrownBy(() -> sut.update(command))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting(e -> ((ProjectDomainException) e).getBaseCode().getCode())
+                .isEqualTo("PROJECT-0309");
+            then(scheduleMatchingRoundDeadlinePort).should(never()).schedule(any());
+        }
+
+        @Test
+        @DisplayName("같은 지부와 타입의 기존 차수와 동일한 차수로 수정할 수 없다")
+        void 같은_지부와_타입의_기존_차수와_동일한_차수로_수정할_수_없다() {
+            ProjectMatchingRound existingRound = matchingRound(
+                10L,
+                MatchingType.PLAN_DESIGN,
+                MatchingPhase.FIRST,
+                1L,
+                "2026-05-10T00:00:00Z",
+                "2026-05-12T00:00:00Z",
+                "2026-05-13T00:00:00Z"
+            );
+            ProjectMatchingRound secondRound = matchingRound(
+                ROUND_ID,
+                MatchingType.PLAN_DESIGN,
+                MatchingPhase.SECOND,
+                1L,
+                "2026-05-20T00:00:00Z",
+                "2026-05-22T00:00:00Z",
+                "2026-05-23T00:00:00Z"
+            );
+            UpdateProjectMatchingRoundCommand command = UpdateProjectMatchingRoundCommand.builder()
+                .matchingRoundId(ROUND_ID)
+                .requesterMemberId(EXECUTOR_MEMBER_ID)
+                .phase(MatchingPhase.FIRST)
+                .build();
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(secondRound);
+            given(loadProjectMatchingRoundPort.listOverlappingExceptId(any(), any(), any(), any()))
+                .willReturn(List.of());
+            given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(List.of(existingRound, secondRound));
 
             assertThatThrownBy(() -> sut.update(command))
                 .isInstanceOf(ProjectDomainException.class)

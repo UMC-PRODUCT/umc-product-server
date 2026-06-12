@@ -228,6 +228,10 @@ public class ProjectMatchingRoundCommandService implements
     ) {
         int phaseOrder = existingRound.getPhase().compareTo(phase);
 
+        if (phaseOrder == 0) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
+        }
+
         if (phaseOrder < 0 && startsAt.isBefore(existingRound.getDecisionDeadline().plus(MIN_PHASE_INTERVAL))) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
         }
