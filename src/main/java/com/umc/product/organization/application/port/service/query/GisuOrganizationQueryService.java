@@ -12,7 +12,11 @@ import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrgan
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.SchoolOrganizationInfo;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationQuery;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,11 +32,18 @@ public class GisuOrganizationQueryService implements GetGisuOrganizationUseCase 
 
     @Override
     public List<GisuOrganizationInfo> get(GisuOrganizationQuery query) {
-        return getGisus(query).stream()
+        List<GisuInfo> gisus = getGisus(query);
+        Set<Long> gisuIds = gisus.stream()
+            .map(GisuInfo::gisuId)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+        Map<Long, List<ChapterOrganizationInfo>> chaptersByGisuId = getChapters(gisuIds, query);
+        Map<Long, List<SchoolOrganizationInfo>> schoolsByGisuId = getSchools(gisuIds, query);
+
+        return gisus.stream()
             .map(gisu -> GisuOrganizationInfo.of(
                 gisu,
-                getChapters(gisu.gisuId(), query),
-                getSchools(gisu.gisuId(), query)
+                chaptersByGisuId.getOrDefault(gisu.gisuId(), List.of()),
+                schoolsByGisuId.getOrDefault(gisu.gisuId(), List.of())
             ))
             .toList();
     }
@@ -45,30 +56,41 @@ public class GisuOrganizationQueryService implements GetGisuOrganizationUseCase 
         };
     }
 
-    private List<ChapterOrganizationInfo> getChapters(Long gisuId, GisuOrganizationQuery query) {
-        if (!query.includeChapter()) {
-            return List.of();
+    private Map<Long, List<ChapterOrganizationInfo>> getChapters(Set<Long> gisuIds, GisuOrganizationQuery query) {
+        if (!query.includeChapter() || gisuIds.isEmpty()) {
+            return Map.of();
         }
 
         if (!query.includeSchool()) {
-            return getChapterUseCase.listByGisuId(gisuId).stream()
-                .map(ChapterOrganizationInfo::from)
-                .toList();
+            return getChapterUseCase.listByGisuIds(gisuIds).entrySet().stream()
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    entry -> entry.getValue().stream()
+                        .map(ChapterOrganizationInfo::from)
+                        .toList()
+                ));
         }
 
-        return getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId).stream()
-            .map(ChapterOrganizationInfo::from)
-            .toList();
+        return getChapterUseCase.getChaptersWithSchoolsByGisuIds(gisuIds).entrySet().stream()
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> entry.getValue().stream()
+                    .map(ChapterOrganizationInfo::from)
+                    .toList()
+            ));
     }
 
-    private List<SchoolOrganizationInfo> getSchools(Long gisuId, GisuOrganizationQuery query) {
-        if (!query.includeSchool()) {
-            return List.of();
+    private Map<Long, List<SchoolOrganizationInfo>> getSchools(Set<Long> gisuIds, GisuOrganizationQuery query) {
+        if (!query.includeSchool() || gisuIds.isEmpty()) {
+            return Map.of();
         }
 
-        List<SchoolDetailInfo> schools = getSchoolUseCase.getSchoolListByGisuId(gisuId);
-        return schools.stream()
-            .map(SchoolOrganizationInfo::from)
-            .toList();
+        return getSchoolUseCase.getSchoolListByGisuIds(gisuIds).entrySet().stream()
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> entry.getValue().stream()
+                    .map(SchoolOrganizationInfo::from)
+                    .toList()
+            ));
     }
 }

@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -121,18 +122,15 @@ public class GisuQueryService implements GetGisuUseCase {
         if (values == null) {
             return List.of();
         }
-        return new LinkedHashSet<>(values).stream()
+        return values.stream()
+            .filter(Objects::nonNull)
+            .distinct()
             .toList();
     }
 
     private void validateAllExist(List<Long> requestedValues, Map<Long, GisuInfo> resultByValue) {
         if (resultByValue.size() != requestedValues.size()) {
             throw new OrganizationDomainException(OrganizationErrorCode.GISU_NOT_FOUND);
-        }
-        for (Long requestedValue : requestedValues) {
-            if (!resultByValue.containsKey(requestedValue)) {
-                throw new OrganizationDomainException(OrganizationErrorCode.GISU_NOT_FOUND);
-            }
         }
     }
 }

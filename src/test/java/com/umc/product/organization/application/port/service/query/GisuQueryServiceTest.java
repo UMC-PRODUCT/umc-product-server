@@ -10,6 +10,7 @@ import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +39,7 @@ class GisuQueryServiceTest {
             gisu(2L, 10L, true)
         ));
 
-        List<GisuInfo> result = gisuQueryService.batchGetByIds(List.of(2L, 1L, 2L));
+        List<GisuInfo> result = gisuQueryService.batchGetByIds(Arrays.asList(2L, null, 1L, 2L));
 
         assertThat(result).extracting(GisuInfo::gisuId).containsExactly(2L, 1L);
     }
@@ -64,6 +65,18 @@ class GisuQueryServiceTest {
         ));
 
         assertThatThrownBy(() -> gisuQueryService.batchGetByIds(List.of(1L, 999L)))
+            .isInstanceOf(OrganizationDomainException.class)
+            .hasFieldOrPropertyWithValue("baseCode", OrganizationErrorCode.GISU_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("batchGetByGenerations는 요청한 기수가 하나라도 없으면 GISU_NOT_FOUND를 던진다")
+    void batchGetByGenerations는_요청한_기수가_하나라도_없으면_GISU_NOT_FOUND를_던진다() {
+        given(loadGisuPort.listByGenerations(new LinkedHashSet<>(List.of(9L, 999L)))).willReturn(List.of(
+            gisu(1L, 9L, false)
+        ));
+
+        assertThatThrownBy(() -> gisuQueryService.batchGetByGenerations(List.of(9L, 999L)))
             .isInstanceOf(OrganizationDomainException.class)
             .hasFieldOrPropertyWithValue("baseCode", OrganizationErrorCode.GISU_NOT_FOUND);
     }

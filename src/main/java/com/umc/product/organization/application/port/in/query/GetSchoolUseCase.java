@@ -5,6 +5,8 @@ import com.umc.product.organization.application.port.in.query.dto.school.SchoolL
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.UnassignedSchoolInfo;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 public interface GetSchoolUseCase {
@@ -18,4 +20,6 @@ public interface GetSchoolUseCase {
     List<UnassignedSchoolInfo> getUnassignedSchools(Long gisuId);
 
     List<SchoolDetailInfo> getSchoolListByGisuId(Long gisuId);
+
+    Map<Long, List<SchoolDetailInfo>> getSchoolListByGisuIds(Set<Long> gisuIds);
 }

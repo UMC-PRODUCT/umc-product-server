@@ -4,8 +4,8 @@ import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrgan
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 
 @Schema(description = "기수 조직 조회 조건")
 public record GisuOrganizationQueryRequest(
@@ -58,7 +58,9 @@ public record GisuOrganizationQueryRequest(
         if (values == null) {
             return List.of();
         }
-        return new LinkedHashSet<>(values).stream()
+        return values.stream()
+            .filter(Objects::nonNull)
+            .distinct()
             .toList();
     }
 

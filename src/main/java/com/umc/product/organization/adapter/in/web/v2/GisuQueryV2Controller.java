@@ -6,11 +6,10 @@ import com.umc.product.organization.adapter.in.web.v2.dto.response.GisuOrganizat
 import com.umc.product.organization.application.port.in.query.GetGisuOrganizationUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -33,19 +32,8 @@ public class GisuQueryV2Controller {
         - `includeChapter=true&includeSchool=true`이면 지부 내 학교 정보와 기수 내 학교 정보를 모두 포함합니다.
         """)
     public GisuOrganizationV2Response getGisus(
-        @RequestParam(required = false) List<Long> id,
-        @RequestParam(required = false) List<Long> generation,
-        @RequestParam(required = false) Boolean active,
-        @RequestParam(required = false) Boolean includeChapter,
-        @RequestParam(required = false) Boolean includeSchool
+        @ModelAttribute GisuOrganizationQueryRequest request
     ) {
-        GisuOrganizationQueryRequest request = new GisuOrganizationQueryRequest(
-            id,
-            generation,
-            active,
-            includeChapter,
-            includeSchool
-        );
         return GisuOrganizationV2Response.from(getGisuOrganizationUseCase.get(request.toQuery()));
     }
 }

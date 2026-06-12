@@ -12,6 +12,8 @@ public interface LoadChapterSchoolPort {
     List<ChapterSchool> findBySchoolId(Long schoolId);
     List<ChapterSchool> findByGisuId(Long gisuId);
 
+    List<ChapterSchool> findByGisuIds(Set<Long> gisuIds);
+
     /**
      * 여러 gisuId와 schoolId 조합에 해당하는 ChapterSchool 일괄 조회
      */

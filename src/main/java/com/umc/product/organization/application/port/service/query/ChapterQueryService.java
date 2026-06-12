@@ -41,6 +41,19 @@ public class ChapterQueryService implements GetChapterUseCase {
     }
 
     @Override
+    public Map<Long, List<ChapterInfo>> listByGisuIds(Set<Long> gisuIds) {
+        if (gisuIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return loadChapterPort.findByGisuIds(gisuIds).stream()
+            .collect(Collectors.groupingBy(
+                chapter -> chapter.getGisu().getId(),
+                Collectors.mapping(ChapterInfo::from, Collectors.toList())
+            ));
+    }
+
+    @Override
     public ChapterInfo byGisuAndSchool(Long gisuId, Long schoolId) {
         // 지부 정보를 보여줘야 하면 ChapterSchool을 봐야 함
         // 전체 ChapterSchool 중에서 schoolId에 따라서 필터링하고
@@ -84,6 +97,31 @@ public class ChapterQueryService implements GetChapterUseCase {
                 chapterSchoolMap.getOrDefault(chapter.getId(), List.of())
             ))
             .toList();
+    }
+
+    @Override
+    public Map<Long, List<ChapterWithSchoolsInfo>> getChaptersWithSchoolsByGisuIds(Set<Long> gisuIds) {
+        if (gisuIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Chapter> chapters = loadChapterPort.findByGisuIds(gisuIds);
+        List<ChapterSchool> chapterSchools = loadChapterSchoolPort.findByGisuIds(gisuIds);
+
+        Map<Long, List<ChapterSchool>> chapterSchoolMap = chapterSchools.stream()
+            .collect(Collectors.groupingBy(cs -> cs.getChapter().getId()));
+
+        return chapters.stream()
+            .collect(Collectors.groupingBy(
+                chapter -> chapter.getGisu().getId(),
+                Collectors.mapping(
+                    chapter -> ChapterWithSchoolsInfo.from(
+                        chapter,
+                        chapterSchoolMap.getOrDefault(chapter.getId(), List.of())
+                    ),
+                    Collectors.toList()
+                )
+            ));
     }
 
     @Override

@@ -56,4 +56,21 @@ public class ChapterSchoolQueryRepository {
             )
             .fetch();
     }
+
+    /**
+     * 여러 gisuId에 속한 ChapterSchool을 1번 쿼리로 일괄 조회하고 chapter, chapter.gisu, school을 fetch join합니다.
+     */
+    public List<ChapterSchool> findByGisuIdIn(Set<Long> gisuIds) {
+        QChapter chapter = QChapter.chapter;
+        QGisu gisu = QGisu.gisu;
+        QSchool school = QSchool.school;
+
+        return jpaQueryFactory
+            .selectFrom(chapterSchool)
+            .join(chapterSchool.chapter, chapter).fetchJoin()
+            .join(chapter.gisu, gisu).fetchJoin()
+            .join(chapterSchool.school, school).fetchJoin()
+            .where(gisu.id.in(gisuIds))
+            .fetch();
+    }
 }

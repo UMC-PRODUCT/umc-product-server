@@ -3,6 +3,7 @@ package com.umc.product.organization.application.port.service.query;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolGisuChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolLinkInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.UnassignedSchoolInfo;
@@ -13,6 +14,8 @@ import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,13 +92,78 @@ public class SchoolQueryService implements GetSchoolUseCase {
         return schools.stream()
             .map(school -> toSchoolDetailInfo(
                 school,
-                logoImageUrls.get(school.logoImageId()),
+                logoImageUrl(logoImageUrls, school.logoImageId()),
                 linksMap.getOrDefault(school.schoolId(), List.of())
             ))
             .toList();
     }
 
+    @Override
+    public Map<Long, List<SchoolDetailInfo>> getSchoolListByGisuIds(Set<Long> gisuIds) {
+        if (gisuIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<SchoolGisuChapterInfo> schools = loadSchoolPort.findSchoolDetailsByGisuIds(gisuIds);
+        if (schools.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Long> schoolIds = schools.stream()
+            .map(SchoolGisuChapterInfo::schoolId)
+            .distinct()
+            .toList();
+
+        Map<Long, List<SchoolDetailInfo.SchoolLinkItem>> linksMap = loadSchoolPort.findLinksBySchoolIds(schoolIds);
+
+        List<String> logoImageIds = schools.stream()
+            .map(SchoolGisuChapterInfo::logoImageId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+
+        Map<String, String> logoImageUrls = logoImageIds.isEmpty()
+            ? Map.of()
+            : getFileUseCase.getFileLinks(logoImageIds);
+
+        return schools.stream()
+            .collect(Collectors.groupingBy(
+                SchoolGisuChapterInfo::gisuId,
+                Collectors.mapping(
+                    school -> toSchoolDetailInfo(
+                        school,
+                        logoImageUrl(logoImageUrls, school.logoImageId()),
+                        linksMap.getOrDefault(school.schoolId(), List.of())
+                    ),
+                    Collectors.toList()
+                )
+            ));
+    }
+
     private SchoolDetailInfo toSchoolDetailInfo(SchoolChapterInfo info, String logoImageUrl,
+                                                List<SchoolDetailInfo.SchoolLinkItem> links) {
+        return new SchoolDetailInfo(
+            info.chapterId(),
+            info.chapterName(),
+            info.schoolName(),
+            info.schoolId(),
+            info.remark(),
+            logoImageUrl,
+            links,
+            info.isActive(),
+            info.createdAt(),
+            info.updatedAt()
+        );
+    }
+
+    private String logoImageUrl(Map<String, String> logoImageUrls, String logoImageId) {
+        if (logoImageId == null) {
+            return null;
+        }
+        return logoImageUrls.get(logoImageId);
+    }
+
+    private SchoolDetailInfo toSchoolDetailInfo(SchoolGisuChapterInfo info, String logoImageUrl,
                                                 List<SchoolDetailInfo.SchoolLinkItem> links) {
         return new SchoolDetailInfo(
             info.chapterId(),

@@ -7,6 +7,7 @@ import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -37,6 +38,11 @@ public class ChapterPersistenceAdapter implements LoadChapterPort, SaveChapterPo
     @Override
     public List<Chapter> findByGisuId(Long gisuId) {
         return chapterJpaRepository.findByGisuId(gisuId);
+    }
+
+    @Override
+    public List<Chapter> findByGisuIds(Set<Long> gisuIds) {
+        return chapterJpaRepository.findByGisuIdInWithGisu(gisuIds);
     }
 
     @Override

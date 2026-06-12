@@ -15,12 +15,14 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolGisuChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolSearchCondition;
 import com.umc.product.organization.domain.School;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -142,6 +144,32 @@ public class SchoolQueryRepository {
             .join(chapterSchool.chapter, chapter)
             .join(chapter.gisu, gisu)
             .where(gisu.id.eq(gisuId))
+            .fetch();
+    }
+
+    public List<SchoolGisuChapterInfo> getSchoolDetailsByGisuIds(Set<Long> gisuIds) {
+        if (gisuIds.isEmpty()) {
+            return List.of();
+        }
+
+        return queryFactory
+            .select(Projections.constructor(SchoolGisuChapterInfo.class,
+                gisu.id,
+                chapter.id,
+                chapter.name,
+                school.name,
+                school.id,
+                school.remark,
+                school.logoImageId,
+                gisu.isActive,
+                school.createdAt,
+                school.updatedAt
+            ))
+            .from(school)
+            .join(chapterSchool).on(chapterSchool.school.eq(school))
+            .join(chapterSchool.chapter, chapter)
+            .join(chapter.gisu, gisu)
+            .where(gisu.id.in(gisuIds))
             .fetch();
     }
 
