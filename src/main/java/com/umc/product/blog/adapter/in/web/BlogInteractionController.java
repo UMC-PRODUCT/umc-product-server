@@ -121,7 +121,7 @@ public class BlogInteractionController {
         resourceType = ResourceType.BLOG_COMMENT,
         resourceId = "#commentId",
         permission = PermissionType.EDIT,
-        message = "본인의 댓글만 수정할 수 있습니다."
+        message = "내 댓글만 수정할 수 있어요."
     )
     @Operation(summary = "[BLOG-005] 댓글 수정", description = "본인이 작성한 댓글을 수정합니다.")
     public BlogCommentResponse updateComment(
@@ -141,7 +141,7 @@ public class BlogInteractionController {
         resourceType = ResourceType.BLOG_COMMENT,
         resourceId = "#commentId",
         permission = PermissionType.DELETE,
-        message = "본인 또는 슈퍼 관리자가 댓글을 삭제할 수 있습니다."
+        message = "댓글은 작성자 또는 슈퍼 관리자만 삭제할 수 있어요."
     )
     @Operation(summary = "[BLOG-006] 댓글 삭제", description = "작성자 본인 또는 슈퍼 관리자가 댓글을 삭제합니다.")
     public void deleteComment(

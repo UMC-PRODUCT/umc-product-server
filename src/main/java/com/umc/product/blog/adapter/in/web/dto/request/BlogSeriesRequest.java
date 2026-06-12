@@ -7,21 +7,21 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record BlogSeriesRequest(
-    @NotBlank(message = "type은 필수입니다.") String type,
+    @NotBlank(message = "카테고리를 선택해주세요.") String type,
 
-    @NotBlank(message = "slug는 필수입니다.") @Size(max = 200, message = "slug는 최대 200자까지 입력할 수 있습니다.") String slug,
+    @NotBlank(message = "주소 slug를 입력해주세요.") @Size(max = 200, message = "주소 slug는 200자 이하로 입력해주세요.") String slug,
 
-    @NotBlank(message = "제목은 필수입니다.") @Size(max = 200, message = "제목은 최대 200자까지 입력할 수 있습니다.") String title,
+    @NotBlank(message = "제목을 입력해주세요.") @Size(max = 200, message = "제목은 200자 이하로 입력해주세요.") String title,
 
-    @Size(max = 1000, message = "설명은 최대 1000자까지 입력할 수 있습니다.") String description,
+    @Size(max = 1000, message = "설명은 1,000자 이하로 입력해주세요.") String description,
 
-    @Size(max = 1000, message = "썸네일 URL은 최대 1000자까지 입력할 수 있습니다.") String thumbnailUrl,
+    @Size(max = 1000, message = "썸네일 URL은 1,000자 이하로 입력해주세요.") String thumbnailUrl,
 
-    @Size(max = 200, message = "SEO 제목은 최대 200자까지 입력할 수 있습니다.") String seoTitle,
+    @Size(max = 200, message = "SEO 제목은 200자 이하로 입력해주세요.") String seoTitle,
 
-    @Size(max = 500, message = "SEO 설명은 최대 500자까지 입력할 수 있습니다.") String seoDescription,
+    @Size(max = 500, message = "SEO 설명은 500자 이하로 입력해주세요.") String seoDescription,
 
-    @Size(max = 1000, message = "OG 이미지 URL은 최대 1000자까지 입력할 수 있습니다.") String ogImageUrl
+    @Size(max = 1000, message = "OG 이미지 URL은 1,000자 이하로 입력해주세요.") String ogImageUrl
 ) {
     public BlogSeriesRequest {
         type = normalize(type);

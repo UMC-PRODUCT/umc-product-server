@@ -397,6 +397,294 @@
   },
   {
     "sequence": 34,
+    "domain": "blog",
+    "apiId": "BLOG-001",
+    "endpoint": "/api/v1/blog/contents/{type}/{slug}/like",
+    "httpMethod": "GET",
+    "role": "콘텐츠 좋아요 상태 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogInteractionController.java",
+    "line": 60,
+    "operationId": null
+  },
+  {
+    "sequence": 35,
+    "domain": "blog",
+    "apiId": "BLOG-002",
+    "endpoint": "/api/v1/blog/contents/{type}/{slug}/like",
+    "httpMethod": "POST",
+    "role": "콘텐츠 좋아요 토글",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogInteractionController.java",
+    "line": 73,
+    "operationId": null
+  },
+  {
+    "sequence": 36,
+    "domain": "blog",
+    "apiId": "BLOG-003",
+    "endpoint": "/api/v1/blog/contents/{type}/{slug}/comments",
+    "httpMethod": "GET",
+    "role": "댓글 목록 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogInteractionController.java",
+    "line": 86,
+    "operationId": null
+  },
+  {
+    "sequence": 37,
+    "domain": "blog",
+    "apiId": "BLOG-004",
+    "endpoint": "/api/v1/blog/contents/{type}/{slug}/comments",
+    "httpMethod": "POST",
+    "role": "댓글 작성",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogInteractionController.java",
+    "line": 107,
+    "operationId": null
+  },
+  {
+    "sequence": 38,
+    "domain": "blog",
+    "apiId": "BLOG-005",
+    "endpoint": "/api/v1/blog/contents/{type}/{slug}/comments/{commentId}",
+    "httpMethod": "PATCH",
+    "role": "댓글 수정",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogInteractionController.java",
+    "line": 126,
+    "operationId": null
+  },
+  {
+    "sequence": 39,
+    "domain": "blog",
+    "apiId": "BLOG-006",
+    "endpoint": "/api/v1/blog/contents/{type}/{slug}/comments/{commentId}",
+    "httpMethod": "DELETE",
+    "role": "댓글 삭제",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogInteractionController.java",
+    "line": 146,
+    "operationId": null
+  },
+  {
+    "sequence": 40,
+    "domain": "blog",
+    "apiId": "BLOG-007",
+    "endpoint": "/api/v1/blog/contents/{type}/{slug}/comments/{commentId}/like",
+    "httpMethod": "POST",
+    "role": "댓글 좋아요 토글",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogInteractionController.java",
+    "line": 159,
+    "operationId": null
+  },
+  {
+    "sequence": 41,
+    "domain": "blog",
+    "apiId": "BLOG-CONTENT-001",
+    "endpoint": "/api/v1/blog/contents",
+    "httpMethod": "GET",
+    "role": "공개 콘텐츠 목록 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogContentController.java",
+    "line": 54,
+    "operationId": null
+  },
+  {
+    "sequence": 42,
+    "domain": "blog",
+    "apiId": "BLOG-CONTENT-002",
+    "endpoint": "/api/v1/blog/contents/{type}/{slug}",
+    "httpMethod": "GET",
+    "role": "공개 콘텐츠 상세 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogContentController.java",
+    "line": 75,
+    "operationId": null
+  },
+  {
+    "sequence": 43,
+    "domain": "blog",
+    "apiId": "BLOG-CONTENT-003",
+    "endpoint": "/api/v1/blog/contents/{contentId}/preview",
+    "httpMethod": "GET",
+    "role": "콘텐츠 preview 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogContentController.java",
+    "line": 88,
+    "operationId": null
+  },
+  {
+    "sequence": 44,
+    "domain": "blog",
+    "apiId": "BLOG-CONTENT-004",
+    "endpoint": "/api/v1/blog/contents",
+    "httpMethod": "POST",
+    "role": "콘텐츠 생성",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogContentController.java",
+    "line": 100,
+    "operationId": null
+  },
+  {
+    "sequence": 45,
+    "domain": "blog",
+    "apiId": "BLOG-CONTENT-005",
+    "endpoint": "/api/v1/blog/contents/{contentId}",
+    "httpMethod": "PATCH",
+    "role": "콘텐츠 수정",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogContentController.java",
+    "line": 112,
+    "operationId": null
+  },
+  {
+    "sequence": 46,
+    "domain": "blog",
+    "apiId": "BLOG-CONTENT-006",
+    "endpoint": "/api/v1/blog/contents/{contentId}",
+    "httpMethod": "DELETE",
+    "role": "콘텐츠 삭제",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogContentController.java",
+    "line": 122,
+    "operationId": null
+  },
+  {
+    "sequence": 47,
+    "domain": "blog",
+    "apiId": "BLOG-CONTENT-007",
+    "endpoint": "/api/v1/blog/seo/paths",
+    "httpMethod": "GET",
+    "role": "SEO public path 목록 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogContentController.java",
+    "line": 132,
+    "operationId": null
+  },
+  {
+    "sequence": 48,
+    "domain": "blog",
+    "apiId": "BLOG-HASHTAG-001",
+    "endpoint": "/api/v1/blog/hashtags",
+    "httpMethod": "GET",
+    "role": "공개 해시태그 목록 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogHashtagController.java",
+    "line": 33,
+    "operationId": null
+  },
+  {
+    "sequence": 49,
+    "domain": "blog",
+    "apiId": "BLOG-HASHTAG-002",
+    "endpoint": "/api/v1/blog/hashtags/{slug}/contents",
+    "httpMethod": "GET",
+    "role": "공개 해시태그 콘텐츠 목록 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogHashtagController.java",
+    "line": 50,
+    "operationId": null
+  },
+  {
+    "sequence": 50,
+    "domain": "blog",
+    "apiId": "BLOG-SERIES-001",
+    "endpoint": "/api/v1/blog/series",
+    "httpMethod": "GET",
+    "role": "공개 시리즈 목록 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogSeriesController.java",
+    "line": 59,
+    "operationId": null
+  },
+  {
+    "sequence": 51,
+    "domain": "blog",
+    "apiId": "BLOG-SERIES-002",
+    "endpoint": "/api/v1/blog/series/{type}/{slug}",
+    "httpMethod": "GET",
+    "role": "공개 시리즈 상세 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogSeriesController.java",
+    "line": 78,
+    "operationId": null
+  },
+  {
+    "sequence": 52,
+    "domain": "blog",
+    "apiId": "BLOG-SERIES-003",
+    "endpoint": "/api/v1/blog/series/{type}/{slug}/contents",
+    "httpMethod": "GET",
+    "role": "공개 시리즈 콘텐츠 목록 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogSeriesController.java",
+    "line": 91,
+    "operationId": null
+  },
+  {
+    "sequence": 53,
+    "domain": "blog",
+    "apiId": "BLOG-SERIES-004",
+    "endpoint": "/api/v1/blog/series/{seriesId}/preview",
+    "httpMethod": "GET",
+    "role": "시리즈 preview 조회",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogSeriesController.java",
+    "line": 117,
+    "operationId": null
+  },
+  {
+    "sequence": 54,
+    "domain": "blog",
+    "apiId": "BLOG-SERIES-005",
+    "endpoint": "/api/v1/blog/series",
+    "httpMethod": "POST",
+    "role": "시리즈 생성",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogSeriesController.java",
+    "line": 127,
+    "operationId": null
+  },
+  {
+    "sequence": 55,
+    "domain": "blog",
+    "apiId": "BLOG-SERIES-006",
+    "endpoint": "/api/v1/blog/series/{seriesId}",
+    "httpMethod": "PATCH",
+    "role": "시리즈 수정",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogSeriesController.java",
+    "line": 139,
+    "operationId": null
+  },
+  {
+    "sequence": 56,
+    "domain": "blog",
+    "apiId": "BLOG-SERIES-007",
+    "endpoint": "/api/v1/blog/series/{seriesId}",
+    "httpMethod": "DELETE",
+    "role": "시리즈 삭제",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogSeriesController.java",
+    "line": 149,
+    "operationId": null
+  },
+  {
+    "sequence": 57,
+    "domain": "blog",
+    "apiId": "BLOG-SERIES-008",
+    "endpoint": "/api/v1/blog/series/{seriesId}/contents",
+    "httpMethod": "PUT",
+    "role": "시리즈 콘텐츠 전체 교체",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/blog/adapter/in/web/BlogSeriesController.java",
+    "line": 159,
+    "operationId": null
+  },
+  {
+    "sequence": 58,
     "domain": "challenger",
     "apiId": "CHALLENGER-001",
     "endpoint": "/api/v1/challenger",
@@ -408,7 +696,7 @@
     "operationId": null
   },
   {
-    "sequence": 35,
+    "sequence": 59,
     "domain": "challenger",
     "apiId": "CHALLENGER-002",
     "endpoint": "/api/v1/challenger/batch",
@@ -420,7 +708,7 @@
     "operationId": null
   },
   {
-    "sequence": 36,
+    "sequence": 60,
     "domain": "challenger",
     "apiId": "CHALLENGER-003",
     "endpoint": "/api/v1/challenger/{challengerId}/deactivate",
@@ -432,7 +720,7 @@
     "operationId": null
   },
   {
-    "sequence": 37,
+    "sequence": 61,
     "domain": "challenger",
     "apiId": "CHALLENGER-004",
     "endpoint": "/api/v1/challenger/{challengerId}/part",
@@ -444,7 +732,7 @@
     "operationId": null
   },
   {
-    "sequence": 38,
+    "sequence": 62,
     "domain": "challenger",
     "apiId": "CHALLENGER-005",
     "endpoint": "/api/v1/challenger/{challengerId}",
@@ -456,7 +744,7 @@
     "operationId": null
   },
   {
-    "sequence": 39,
+    "sequence": 63,
     "domain": "challenger",
     "apiId": "CHALLENGER-101",
     "endpoint": "/api/v1/challenger/{challengerId}",
@@ -468,7 +756,7 @@
     "operationId": null
   },
   {
-    "sequence": 40,
+    "sequence": 64,
     "domain": "challenger",
     "apiId": "CHALLENGER-102",
     "endpoint": "/api/v1/challenger/search/cursor",
@@ -480,7 +768,7 @@
     "operationId": null
   },
   {
-    "sequence": 41,
+    "sequence": 65,
     "domain": "challenger",
     "apiId": "CHALLENGER-103",
     "endpoint": "/api/v1/challenger/search/offset",
@@ -492,7 +780,7 @@
     "operationId": null
   },
   {
-    "sequence": 42,
+    "sequence": 66,
     "domain": "challenger",
     "apiId": "CHALLENGER-104",
     "endpoint": "/api/v1/challenger/search/global",
@@ -504,7 +792,7 @@
     "operationId": null
   },
   {
-    "sequence": 43,
+    "sequence": 67,
     "domain": "challenger",
     "apiId": "CHALLENGER-201",
     "endpoint": "/api/v2/challenger/search",
@@ -516,7 +804,7 @@
     "operationId": null
   },
   {
-    "sequence": 44,
+    "sequence": 68,
     "domain": "challenger",
     "apiId": "CHALLENGER-RECORD-001",
     "endpoint": "/api/v1/challenger-record/member",
@@ -528,7 +816,7 @@
     "operationId": null
   },
   {
-    "sequence": 45,
+    "sequence": 69,
     "domain": "challenger",
     "apiId": "CHALLENGER-RECORD-002",
     "endpoint": "/api/v1/challenger-record",
@@ -540,7 +828,7 @@
     "operationId": null
   },
   {
-    "sequence": 46,
+    "sequence": 70,
     "domain": "challenger",
     "apiId": "CHALLENGER-RECORD-003",
     "endpoint": "/api/v1/challenger-record/bulk",
@@ -552,7 +840,7 @@
     "operationId": null
   },
   {
-    "sequence": 47,
+    "sequence": 71,
     "domain": "challenger",
     "apiId": "CHALLENGER-RECORD-101",
     "endpoint": "/api/v1/challenger-record/code/{code}",
@@ -564,7 +852,7 @@
     "operationId": null
   },
   {
-    "sequence": 48,
+    "sequence": 72,
     "domain": "challenger",
     "apiId": "CHALLENGER-RECORD-102",
     "endpoint": "/api/v1/challenger-record/id/{id}",
@@ -576,7 +864,7 @@
     "operationId": null
   },
   {
-    "sequence": 49,
+    "sequence": 73,
     "domain": "challenger",
     "apiId": "POINT-001",
     "endpoint": "/api/v1/challenger/{challengerId}/points",
@@ -588,7 +876,7 @@
     "operationId": null
   },
   {
-    "sequence": 50,
+    "sequence": 74,
     "domain": "challenger",
     "apiId": "POINT-002",
     "endpoint": "/api/v1/challenger/points/{challengerPointId}",
@@ -600,7 +888,7 @@
     "operationId": null
   },
   {
-    "sequence": 51,
+    "sequence": 75,
     "domain": "challenger",
     "apiId": "POINT-003",
     "endpoint": "/api/v1/challenger/points/{challengerPointId}",
@@ -612,7 +900,7 @@
     "operationId": null
   },
   {
-    "sequence": 52,
+    "sequence": 76,
     "domain": "community",
     "apiId": "COMMENT-001",
     "endpoint": "/api/v1/posts/{postId}/comments",
@@ -624,7 +912,7 @@
     "operationId": null
   },
   {
-    "sequence": 53,
+    "sequence": 77,
     "domain": "community",
     "apiId": "COMMENT-002",
     "endpoint": "/api/v1/posts/{postId}/comments/{commentId}",
@@ -636,7 +924,7 @@
     "operationId": null
   },
   {
-    "sequence": 54,
+    "sequence": 78,
     "domain": "community",
     "apiId": "COMMENT-003",
     "endpoint": "/api/v1/posts/{postId}/comments/{commentId}/like",
@@ -648,7 +936,7 @@
     "operationId": null
   },
   {
-    "sequence": 55,
+    "sequence": 79,
     "domain": "community",
     "apiId": "COMMENT-101",
     "endpoint": "/api/v1/posts/{postId}/comments",
@@ -660,7 +948,7 @@
     "operationId": null
   },
   {
-    "sequence": 56,
+    "sequence": 80,
     "domain": "community",
     "apiId": "POST-001",
     "endpoint": "/api/v1/posts",
@@ -672,7 +960,7 @@
     "operationId": null
   },
   {
-    "sequence": 57,
+    "sequence": 81,
     "domain": "community",
     "apiId": "POST-002",
     "endpoint": "/api/v1/posts/lightning",
@@ -684,7 +972,7 @@
     "operationId": null
   },
   {
-    "sequence": 58,
+    "sequence": 82,
     "domain": "community",
     "apiId": "POST-003",
     "endpoint": "/api/v1/posts/{postId}",
@@ -696,7 +984,7 @@
     "operationId": null
   },
   {
-    "sequence": 59,
+    "sequence": 83,
     "domain": "community",
     "apiId": "POST-004",
     "endpoint": "/api/v1/posts/{postId}/lightning",
@@ -708,7 +996,7 @@
     "operationId": null
   },
   {
-    "sequence": 60,
+    "sequence": 84,
     "domain": "community",
     "apiId": "POST-005",
     "endpoint": "/api/v1/posts/{postId}",
@@ -720,7 +1008,7 @@
     "operationId": null
   },
   {
-    "sequence": 61,
+    "sequence": 85,
     "domain": "community",
     "apiId": "POST-006",
     "endpoint": "/api/v1/posts/{postId}/like",
@@ -732,7 +1020,7 @@
     "operationId": null
   },
   {
-    "sequence": 62,
+    "sequence": 86,
     "domain": "community",
     "apiId": "POST-007",
     "endpoint": "/api/v1/posts/{postId}/scrap",
@@ -744,7 +1032,7 @@
     "operationId": null
   },
   {
-    "sequence": 63,
+    "sequence": 87,
     "domain": "community",
     "apiId": "POST-101",
     "endpoint": "/api/v1/posts/{postId}",
@@ -756,7 +1044,7 @@
     "operationId": null
   },
   {
-    "sequence": 64,
+    "sequence": 88,
     "domain": "community",
     "apiId": "POST-102",
     "endpoint": "/api/v1/posts",
@@ -768,7 +1056,7 @@
     "operationId": null
   },
   {
-    "sequence": 65,
+    "sequence": 89,
     "domain": "community",
     "apiId": "POST-103",
     "endpoint": "/api/v1/posts/search",
@@ -780,7 +1068,7 @@
     "operationId": null
   },
   {
-    "sequence": 66,
+    "sequence": 90,
     "domain": "community",
     "apiId": "POST-104",
     "endpoint": "/api/v1/posts/my",
@@ -792,7 +1080,7 @@
     "operationId": null
   },
   {
-    "sequence": 67,
+    "sequence": 91,
     "domain": "community",
     "apiId": "POST-105",
     "endpoint": "/api/v1/posts/commented",
@@ -804,7 +1092,7 @@
     "operationId": null
   },
   {
-    "sequence": 68,
+    "sequence": 92,
     "domain": "community",
     "apiId": "POST-106",
     "endpoint": "/api/v1/posts/scrapped",
@@ -816,7 +1104,7 @@
     "operationId": null
   },
   {
-    "sequence": 69,
+    "sequence": 93,
     "domain": "community",
     "apiId": "REPORT-001",
     "endpoint": "/api/v1/posts/{postId}/reports",
@@ -828,7 +1116,7 @@
     "operationId": null
   },
   {
-    "sequence": 70,
+    "sequence": 94,
     "domain": "community",
     "apiId": "REPORT-002",
     "endpoint": "/api/v1/comments/{commentId}/reports",
@@ -840,7 +1128,7 @@
     "operationId": null
   },
   {
-    "sequence": 71,
+    "sequence": 95,
     "domain": "community",
     "apiId": "TROPHY-001",
     "endpoint": "/api/v1/trophies",
@@ -852,7 +1140,7 @@
     "operationId": null
   },
   {
-    "sequence": 72,
+    "sequence": 96,
     "domain": "community",
     "apiId": "TROPHY-101",
     "endpoint": "/api/v1/trophies",
@@ -864,7 +1152,7 @@
     "operationId": null
   },
   {
-    "sequence": 73,
+    "sequence": 97,
     "domain": "curriculum",
     "apiId": "CHALLENGER-WORKBOOK-001",
     "endpoint": "/api/v2/curriculums/challenger-workbooks/deploy",
@@ -876,7 +1164,7 @@
     "operationId": null
   },
   {
-    "sequence": 74,
+    "sequence": 98,
     "domain": "curriculum",
     "apiId": "CHALLENGER-WORKBOOK-002",
     "endpoint": "/api/v2/curriculums/challenger-workbooks/{challengerWorkbookId}",
@@ -888,7 +1176,7 @@
     "operationId": null
   },
   {
-    "sequence": 75,
+    "sequence": 99,
     "domain": "curriculum",
     "apiId": "CHALLENGER-WORKBOOK-003",
     "endpoint": "/api/v2/curriculums/challenger-workbooks/{challengerWorkbookId}",
@@ -900,7 +1188,7 @@
     "operationId": null
   },
   {
-    "sequence": 76,
+    "sequence": 100,
     "domain": "curriculum",
     "apiId": "CHALLENGER-WORKBOOK-004",
     "endpoint": "/api/v2/curriculums/challenger-workbooks/{challengerWorkbookId}/excuse",
@@ -912,7 +1200,7 @@
     "operationId": null
   },
   {
-    "sequence": 77,
+    "sequence": 101,
     "domain": "curriculum",
     "apiId": "CHALLENGER-WORKBOOK-005",
     "endpoint": "/api/v2/curriculums/challenger-workbooks/weekly-best",
@@ -924,7 +1212,7 @@
     "operationId": null
   },
   {
-    "sequence": 78,
+    "sequence": 102,
     "domain": "curriculum",
     "apiId": "CHALLENGER-WORKBOOK-006",
     "endpoint": "/api/v2/curriculums/challenger-workbooks/weekly-best/{weeklyBestWorkbookId}",
@@ -936,7 +1224,7 @@
     "operationId": null
   },
   {
-    "sequence": 79,
+    "sequence": 103,
     "domain": "curriculum",
     "apiId": "CHALLENGER-WORKBOOK-007",
     "endpoint": "/api/v2/curriculums/challenger-workbooks/weekly-best/{weeklyBestWorkbookId}",
@@ -948,7 +1236,7 @@
     "operationId": null
   },
   {
-    "sequence": 80,
+    "sequence": 104,
     "domain": "curriculum",
     "apiId": "CHALLENGER-WORKBOOK-MISSION-001",
     "endpoint": "/api/v2/curriculums/challenger-workbooks/missions",
@@ -960,7 +1248,7 @@
     "operationId": null
   },
   {
-    "sequence": 81,
+    "sequence": 105,
     "domain": "curriculum",
     "apiId": "CHALLENGER-WORKBOOK-MISSION-002",
     "endpoint": "/api/v2/curriculums/challenger-workbooks/missions/{missionSubmissionId}",
@@ -972,7 +1260,7 @@
     "operationId": null
   },
   {
-    "sequence": 82,
+    "sequence": 106,
     "domain": "curriculum",
     "apiId": "CHALLENGER-WORKBOOK-MISSION-003",
     "endpoint": "/api/v2/curriculums/challenger-workbooks/missions/{missionSubmissionId}",
@@ -984,7 +1272,7 @@
     "operationId": null
   },
   {
-    "sequence": 83,
+    "sequence": 107,
     "domain": "curriculum",
     "apiId": "CHALLENGER-WORKBOOK-MISSION-004",
     "endpoint": "/api/v2/curriculums/challenger-workbooks/missions/feedback",
@@ -996,7 +1284,7 @@
     "operationId": null
   },
   {
-    "sequence": 84,
+    "sequence": 108,
     "domain": "curriculum",
     "apiId": "CHALLENGER-WORKBOOK-MISSION-005",
     "endpoint": "/api/v2/curriculums/challenger-workbooks/missions/feedback/{missionFeedbackId}",
@@ -1008,7 +1296,7 @@
     "operationId": null
   },
   {
-    "sequence": 85,
+    "sequence": 109,
     "domain": "curriculum",
     "apiId": "CHALLENGER-WORKBOOK-MISSION-006",
     "endpoint": "/api/v2/curriculums/challenger-workbooks/missions/feedback/{missionFeedbackId}",
@@ -1020,7 +1308,7 @@
     "operationId": null
   },
   {
-    "sequence": 86,
+    "sequence": 110,
     "domain": "curriculum",
     "apiId": "CURRICULUM-001",
     "endpoint": "/api/v2/curriculums",
@@ -1032,7 +1320,7 @@
     "operationId": null
   },
   {
-    "sequence": 87,
+    "sequence": 111,
     "domain": "curriculum",
     "apiId": "CURRICULUM-002",
     "endpoint": "/api/v2/curriculums/{curriculumId}",
@@ -1044,7 +1332,7 @@
     "operationId": null
   },
   {
-    "sequence": 88,
+    "sequence": 112,
     "domain": "curriculum",
     "apiId": "CURRICULUM-003",
     "endpoint": "/api/v2/curriculums/{curriculumId}",
@@ -1056,7 +1344,7 @@
     "operationId": null
   },
   {
-    "sequence": 89,
+    "sequence": 113,
     "domain": "curriculum",
     "apiId": "CURRICULUM-004",
     "endpoint": "/api/v2/curriculums/weekly",
@@ -1068,7 +1356,7 @@
     "operationId": null
   },
   {
-    "sequence": 90,
+    "sequence": 114,
     "domain": "curriculum",
     "apiId": "CURRICULUM-005",
     "endpoint": "/api/v2/curriculums/weekly/{weeklyCurriculumId}",
@@ -1080,7 +1368,7 @@
     "operationId": null
   },
   {
-    "sequence": 91,
+    "sequence": 115,
     "domain": "curriculum",
     "apiId": "CURRICULUM-006",
     "endpoint": "/api/v2/curriculums/weekly/{weeklyCurriculumId}",
@@ -1092,7 +1380,7 @@
     "operationId": null
   },
   {
-    "sequence": 92,
+    "sequence": 116,
     "domain": "curriculum",
     "apiId": "CURRICULUM-101",
     "endpoint": "/api/v2/curriculums/overview",
@@ -1104,7 +1392,7 @@
     "operationId": null
   },
   {
-    "sequence": 93,
+    "sequence": 117,
     "domain": "curriculum",
     "apiId": "CURRICULUM-102",
     "endpoint": "/api/v2/curriculums/progress/me",
@@ -1116,7 +1404,7 @@
     "operationId": null
   },
   {
-    "sequence": 94,
+    "sequence": 118,
     "domain": "curriculum",
     "apiId": "ORIGINAL-WORKBOOK-001",
     "endpoint": "/api/v2/curriculums/original-workbooks",
@@ -1128,7 +1416,7 @@
     "operationId": null
   },
   {
-    "sequence": 95,
+    "sequence": 119,
     "domain": "curriculum",
     "apiId": "ORIGINAL-WORKBOOK-002",
     "endpoint": "/api/v2/curriculums/original-workbooks/draft",
@@ -1140,7 +1428,7 @@
     "operationId": null
   },
   {
-    "sequence": 96,
+    "sequence": 120,
     "domain": "curriculum",
     "apiId": "ORIGINAL-WORKBOOK-003",
     "endpoint": "/api/v2/curriculums/original-workbooks/{originalWorkbookId}",
@@ -1152,7 +1440,7 @@
     "operationId": null
   },
   {
-    "sequence": 97,
+    "sequence": 121,
     "domain": "curriculum",
     "apiId": "ORIGINAL-WORKBOOK-004",
     "endpoint": "/api/v2/curriculums/original-workbooks/{originalWorkbookId}",
@@ -1164,7 +1452,7 @@
     "operationId": null
   },
   {
-    "sequence": 98,
+    "sequence": 122,
     "domain": "curriculum",
     "apiId": "ORIGINAL-WORKBOOK-005",
     "endpoint": "/api/v2/curriculums/original-workbooks/status",
@@ -1176,7 +1464,7 @@
     "operationId": null
   },
   {
-    "sequence": 99,
+    "sequence": 123,
     "domain": "curriculum",
     "apiId": "ORIGINAL-WORKBOOK-MISSION-001",
     "endpoint": "/api/v2/curriculums/original-workbooks/missions",
@@ -1188,7 +1476,7 @@
     "operationId": null
   },
   {
-    "sequence": 100,
+    "sequence": 124,
     "domain": "curriculum",
     "apiId": "ORIGINAL-WORKBOOK-MISSION-002",
     "endpoint": "/api/v2/curriculums/original-workbooks/missions/{originalWorkbookMissionId}",
@@ -1200,7 +1488,7 @@
     "operationId": null
   },
   {
-    "sequence": 101,
+    "sequence": 125,
     "domain": "curriculum",
     "apiId": "ORIGINAL-WORKBOOK-MISSION-003",
     "endpoint": "/api/v2/curriculums/original-workbooks/missions/{originalWorkbookMissionId}",
@@ -1212,7 +1500,7 @@
     "operationId": null
   },
   {
-    "sequence": 102,
+    "sequence": 126,
     "domain": "curriculum",
     "apiId": "WORKBOOK-101",
     "endpoint": "/api/v2/curriculums/original-workbooks/{originalWorkbookId}",
@@ -1224,7 +1512,7 @@
     "operationId": null
   },
   {
-    "sequence": 103,
+    "sequence": 127,
     "domain": "curriculum",
     "apiId": "WORKBOOK-102",
     "endpoint": "/api/v2/curriculums/challenger-workbooks/{challengerWorkbookId}",
@@ -1236,7 +1524,7 @@
     "operationId": null
   },
   {
-    "sequence": 104,
+    "sequence": 128,
     "domain": "curriculum",
     "apiId": "WORKBOOK-103",
     "endpoint": "/api/v2/curriculums/weekly-best-workbooks",
@@ -1248,7 +1536,7 @@
     "operationId": null
   },
   {
-    "sequence": 105,
+    "sequence": 129,
     "domain": "feedback",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/user-feedbacks/responses",
@@ -1260,7 +1548,7 @@
     "operationId": null
   },
   {
-    "sequence": 106,
+    "sequence": 130,
     "domain": "feedback",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/user-feedbacks/templates",
@@ -1272,7 +1560,7 @@
     "operationId": null
   },
   {
-    "sequence": 107,
+    "sequence": 131,
     "domain": "figma",
     "apiId": "FIGMA-001",
     "endpoint": "/api/v1/admin/figma/oauth",
@@ -1284,7 +1572,7 @@
     "operationId": null
   },
   {
-    "sequence": 108,
+    "sequence": 132,
     "domain": "figma",
     "apiId": "FIGMA-002",
     "endpoint": "/api/v1/admin/figma/oauth/callback",
@@ -1296,7 +1584,7 @@
     "operationId": null
   },
   {
-    "sequence": 109,
+    "sequence": 133,
     "domain": "figma",
     "apiId": "FIGMA-003",
     "endpoint": "/api/v1/admin/figma/watched-files",
@@ -1308,7 +1596,7 @@
     "operationId": null
   },
   {
-    "sequence": 110,
+    "sequence": 134,
     "domain": "figma",
     "apiId": "FIGMA-004",
     "endpoint": "/api/v1/admin/figma/watched-files/{watchedFileId}",
@@ -1320,7 +1608,7 @@
     "operationId": null
   },
   {
-    "sequence": 111,
+    "sequence": 135,
     "domain": "figma",
     "apiId": "FIGMA-005",
     "endpoint": "/api/v1/admin/figma/watched-files/{watchedFileId}/enable",
@@ -1332,7 +1620,7 @@
     "operationId": null
   },
   {
-    "sequence": 112,
+    "sequence": 136,
     "domain": "figma",
     "apiId": "FIGMA-006",
     "endpoint": "/api/v1/admin/figma/sync",
@@ -1344,7 +1632,7 @@
     "operationId": null
   },
   {
-    "sequence": 113,
+    "sequence": 137,
     "domain": "figma",
     "apiId": "FIGMA-007",
     "endpoint": "/api/v1/admin/figma/sync/watched-files/{watchedFileId}",
@@ -1356,7 +1644,7 @@
     "operationId": null
   },
   {
-    "sequence": 114,
+    "sequence": 138,
     "domain": "figma",
     "apiId": "FIGMA-008",
     "endpoint": "/api/v1/admin/figma/watched-files",
@@ -1368,7 +1656,7 @@
     "operationId": null
   },
   {
-    "sequence": 115,
+    "sequence": 139,
     "domain": "figma",
     "apiId": "FIGMA-009",
     "endpoint": "/api/v1/admin/figma/watched-files/{watchedFileId}",
@@ -1380,7 +1668,7 @@
     "operationId": null
   },
   {
-    "sequence": 116,
+    "sequence": 140,
     "domain": "figma",
     "apiId": "FIGMA-010",
     "endpoint": "/api/v1/admin/figma/preview",
@@ -1392,7 +1680,7 @@
     "operationId": null
   },
   {
-    "sequence": 117,
+    "sequence": 141,
     "domain": "figma",
     "apiId": "FIGMA-011",
     "endpoint": "/api/v1/admin/figma/routing-domains",
@@ -1404,7 +1692,7 @@
     "operationId": null
   },
   {
-    "sequence": 118,
+    "sequence": 142,
     "domain": "figma",
     "apiId": "FIGMA-012",
     "endpoint": "/api/v1/admin/figma/routing-domains/{domainId}",
@@ -1416,7 +1704,7 @@
     "operationId": null
   },
   {
-    "sequence": 119,
+    "sequence": 143,
     "domain": "figma",
     "apiId": "FIGMA-013",
     "endpoint": "/api/v1/admin/figma/routing-domains/{domainId}/mentions",
@@ -1428,7 +1716,7 @@
     "operationId": null
   },
   {
-    "sequence": 120,
+    "sequence": 144,
     "domain": "figma",
     "apiId": "FIGMA-014",
     "endpoint": "/api/v1/admin/figma/routing-domains/mentions/{mentionId}",
@@ -1440,7 +1728,7 @@
     "operationId": null
   },
   {
-    "sequence": 121,
+    "sequence": 145,
     "domain": "figma",
     "apiId": "FIGMA-015",
     "endpoint": "/api/v1/admin/figma/digest",
@@ -1452,7 +1740,7 @@
     "operationId": null
   },
   {
-    "sequence": 122,
+    "sequence": 146,
     "domain": "figma",
     "apiId": "FIGMA-016",
     "endpoint": "/api/v1/admin/figma/routing-domains",
@@ -1464,7 +1752,7 @@
     "operationId": null
   },
   {
-    "sequence": 123,
+    "sequence": 147,
     "domain": "figma",
     "apiId": "FIGMA-017",
     "endpoint": "/api/v1/admin/figma/routing-domains/{domainId}",
@@ -1476,7 +1764,7 @@
     "operationId": null
   },
   {
-    "sequence": 124,
+    "sequence": 148,
     "domain": "figma",
     "apiId": "FIGMA-018",
     "endpoint": "/api/v1/admin/figma/routing-domains/{domainId}/mentions",
@@ -1488,7 +1776,7 @@
     "operationId": null
   },
   {
-    "sequence": 125,
+    "sequence": 149,
     "domain": "figma",
     "apiId": "FIGMA-019",
     "endpoint": "/api/v1/admin/figma/routing-domains/{domainId}",
@@ -1500,7 +1788,7 @@
     "operationId": null
   },
   {
-    "sequence": 126,
+    "sequence": 150,
     "domain": "figma",
     "apiId": "FIGMA-020",
     "endpoint": "/api/v1/admin/figma/routing-domains/mentions/{mentionId}",
@@ -1512,7 +1800,7 @@
     "operationId": null
   },
   {
-    "sequence": 127,
+    "sequence": 151,
     "domain": "global",
     "apiId": "<미지정>",
     "endpoint": "/error",
@@ -1524,7 +1812,7 @@
     "operationId": null
   },
   {
-    "sequence": 128,
+    "sequence": 152,
     "domain": "maintenance",
     "apiId": "MAINT-001",
     "endpoint": "/api/v1/admin/maintenance",
@@ -1536,7 +1824,7 @@
     "operationId": null
   },
   {
-    "sequence": 129,
+    "sequence": 153,
     "domain": "maintenance",
     "apiId": "MAINT-002",
     "endpoint": "/api/v1/admin/maintenance/{windowId}/end",
@@ -1548,7 +1836,7 @@
     "operationId": null
   },
   {
-    "sequence": 130,
+    "sequence": 154,
     "domain": "maintenance",
     "apiId": "MAINT-003",
     "endpoint": "/api/v1/admin/maintenance",
@@ -1560,7 +1848,7 @@
     "operationId": null
   },
   {
-    "sequence": 131,
+    "sequence": 155,
     "domain": "maintenance",
     "apiId": "MAINT-004",
     "endpoint": "/api/v1/admin/maintenance/{windowId}",
@@ -1572,7 +1860,7 @@
     "operationId": null
   },
   {
-    "sequence": 132,
+    "sequence": 156,
     "domain": "maintenance",
     "apiId": "SYSTEM-001",
     "endpoint": "/api/v1/system/status",
@@ -1584,7 +1872,7 @@
     "operationId": null
   },
   {
-    "sequence": 133,
+    "sequence": 157,
     "domain": "member",
     "apiId": "MEMBER-001",
     "endpoint": "/api/v1/member",
@@ -1596,7 +1884,7 @@
     "operationId": null
   },
   {
-    "sequence": 134,
+    "sequence": 158,
     "domain": "member",
     "apiId": "MEMBER-002",
     "endpoint": "/api/v1/member/profile/links",
@@ -1608,7 +1896,7 @@
     "operationId": null
   },
   {
-    "sequence": 135,
+    "sequence": 159,
     "domain": "member",
     "apiId": "MEMBER-003",
     "endpoint": "/api/v1/member",
@@ -1620,7 +1908,7 @@
     "operationId": null
   },
   {
-    "sequence": 136,
+    "sequence": 160,
     "domain": "member",
     "apiId": "MEMBER-004",
     "endpoint": "/api/v1/member/{memberId}",
@@ -1632,7 +1920,7 @@
     "operationId": null
   },
   {
-    "sequence": 137,
+    "sequence": 161,
     "domain": "member",
     "apiId": "MEMBER-101",
     "endpoint": "/api/v1/member/profile/{memberId}",
@@ -1644,7 +1932,7 @@
     "operationId": null
   },
   {
-    "sequence": 138,
+    "sequence": 162,
     "domain": "member",
     "apiId": "MEMBER-102",
     "endpoint": "/api/v1/member/me",
@@ -1656,7 +1944,7 @@
     "operationId": null
   },
   {
-    "sequence": 139,
+    "sequence": 163,
     "domain": "member",
     "apiId": "MEMBER-103",
     "endpoint": "/api/v1/member/search",
@@ -1668,7 +1956,7 @@
     "operationId": null
   },
   {
-    "sequence": 140,
+    "sequence": 164,
     "domain": "member",
     "apiId": "MEMBER-201",
     "endpoint": "/api/v2/member/me",
@@ -1680,7 +1968,7 @@
     "operationId": null
   },
   {
-    "sequence": 141,
+    "sequence": 165,
     "domain": "member",
     "apiId": "MEMBER-202",
     "endpoint": "/api/v2/member/search",
@@ -1692,7 +1980,7 @@
     "operationId": null
   },
   {
-    "sequence": 142,
+    "sequence": 166,
     "domain": "member",
     "apiId": "REGISTER-001",
     "endpoint": "/api/v1/member/register",
@@ -1704,7 +1992,7 @@
     "operationId": null
   },
   {
-    "sequence": 143,
+    "sequence": 167,
     "domain": "member",
     "apiId": "REGISTER-003",
     "endpoint": "/api/v1/member/register/email",
@@ -1716,7 +2004,7 @@
     "operationId": null
   },
   {
-    "sequence": 144,
+    "sequence": 168,
     "domain": "notice",
     "apiId": "NOTICE-001",
     "endpoint": "/api/v1/notices",
@@ -1728,7 +2016,7 @@
     "operationId": null
   },
   {
-    "sequence": 145,
+    "sequence": 169,
     "domain": "notice",
     "apiId": "NOTICE-002",
     "endpoint": "/api/v1/notices/search",
@@ -1740,7 +2028,7 @@
     "operationId": null
   },
   {
-    "sequence": 146,
+    "sequence": 170,
     "domain": "notice",
     "apiId": "NOTICE-003",
     "endpoint": "/api/v1/notices/{noticeId}",
@@ -1752,7 +2040,7 @@
     "operationId": null
   },
   {
-    "sequence": 147,
+    "sequence": 171,
     "domain": "notice",
     "apiId": "NOTICE-004",
     "endpoint": "/api/v1/notices/{noticeId}/read-statics",
@@ -1764,7 +2052,7 @@
     "operationId": null
   },
   {
-    "sequence": 148,
+    "sequence": 172,
     "domain": "notice",
     "apiId": "NOTICE-005",
     "endpoint": "/api/v1/notices/{noticeId}/read-status",
@@ -1776,7 +2064,7 @@
     "operationId": null
   },
   {
-    "sequence": 149,
+    "sequence": 173,
     "domain": "notice",
     "apiId": "NOTICE-101",
     "endpoint": "/api/v1/notices/{noticeId}/images",
@@ -1788,7 +2076,7 @@
     "operationId": null
   },
   {
-    "sequence": 150,
+    "sequence": 174,
     "domain": "notice",
     "apiId": "NOTICE-102",
     "endpoint": "/api/v1/notices/{noticeId}/links",
@@ -1800,7 +2088,7 @@
     "operationId": null
   },
   {
-    "sequence": 151,
+    "sequence": 175,
     "domain": "notice",
     "apiId": "NOTICE-103",
     "endpoint": "/api/v1/notices/{noticeId}/votes",
@@ -1812,7 +2100,7 @@
     "operationId": null
   },
   {
-    "sequence": 152,
+    "sequence": 176,
     "domain": "notice",
     "apiId": "NOTICE-104",
     "endpoint": "/api/v1/notices/{noticeId}/images",
@@ -1824,7 +2112,7 @@
     "operationId": null
   },
   {
-    "sequence": 153,
+    "sequence": 177,
     "domain": "notice",
     "apiId": "NOTICE-105",
     "endpoint": "/api/v1/notices/{noticeId}/links",
@@ -1836,7 +2124,7 @@
     "operationId": null
   },
   {
-    "sequence": 154,
+    "sequence": 178,
     "domain": "notice",
     "apiId": "NOTICE-106",
     "endpoint": "/api/v1/notices/{noticeId}/vote",
@@ -1848,7 +2136,7 @@
     "operationId": null
   },
   {
-    "sequence": 155,
+    "sequence": 179,
     "domain": "notice",
     "apiId": "NOTICE-201",
     "endpoint": "/api/v1/notices",
@@ -1860,7 +2148,7 @@
     "operationId": null
   },
   {
-    "sequence": 156,
+    "sequence": 180,
     "domain": "notice",
     "apiId": "NOTICE-202",
     "endpoint": "/api/v1/notices/{noticeId}",
@@ -1872,7 +2160,7 @@
     "operationId": null
   },
   {
-    "sequence": 157,
+    "sequence": 181,
     "domain": "notice",
     "apiId": "NOTICE-203",
     "endpoint": "/api/v1/notices/{noticeId}",
@@ -1884,7 +2172,7 @@
     "operationId": null
   },
   {
-    "sequence": 158,
+    "sequence": 182,
     "domain": "notice",
     "apiId": "NOTICE-204",
     "endpoint": "/api/v1/notices/{noticeId}/reminders",
@@ -1896,7 +2184,7 @@
     "operationId": null
   },
   {
-    "sequence": 159,
+    "sequence": 183,
     "domain": "notice",
     "apiId": "NOTICE-205",
     "endpoint": "/api/v1/notices/{noticeId}/read",
@@ -1908,7 +2196,7 @@
     "operationId": null
   },
   {
-    "sequence": 160,
+    "sequence": 184,
     "domain": "notice",
     "apiId": "NOTICE-VOTE-001",
     "endpoint": "/api/v1/notices/{noticeId}/votes/responses",
@@ -1920,7 +2208,7 @@
     "operationId": null
   },
   {
-    "sequence": 161,
+    "sequence": 185,
     "domain": "notice",
     "apiId": "NOTICE-VOTE-002",
     "endpoint": "/api/v1/notices/{noticeId}/votes/responses",
@@ -1932,7 +2220,7 @@
     "operationId": null
   },
   {
-    "sequence": 162,
+    "sequence": 186,
     "domain": "notification",
     "apiId": "FCM-001",
     "endpoint": "/api/v1/notification/fcm/token",
@@ -1944,7 +2232,7 @@
     "operationId": null
   },
   {
-    "sequence": 163,
+    "sequence": 187,
     "domain": "notification",
     "apiId": "FCM-002",
     "endpoint": "/api/v1/notification/fcm/topics/legacy",
@@ -1956,7 +2244,7 @@
     "operationId": null
   },
   {
-    "sequence": 164,
+    "sequence": 188,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/gisu/{gisuId}",
@@ -1968,7 +2256,7 @@
     "operationId": null
   },
   {
-    "sequence": 165,
+    "sequence": 189,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/schools/gisu/{gisuId}",
@@ -1980,7 +2268,7 @@
     "operationId": null
   },
   {
-    "sequence": 166,
+    "sequence": 190,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/functional-units",
@@ -1992,7 +2280,7 @@
     "operationId": null
   },
   {
-    "sequence": 167,
+    "sequence": 191,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/functional-units",
@@ -2004,7 +2292,7 @@
     "operationId": null
   },
   {
-    "sequence": 168,
+    "sequence": 192,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/functional-units/{functionalUnitId}",
@@ -2016,7 +2304,7 @@
     "operationId": null
   },
   {
-    "sequence": 169,
+    "sequence": 193,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/functional-units/{functionalUnitId}",
@@ -2028,7 +2316,7 @@
     "operationId": null
   },
   {
-    "sequence": 170,
+    "sequence": 194,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/generations",
@@ -2040,7 +2328,7 @@
     "operationId": null
   },
   {
-    "sequence": 171,
+    "sequence": 195,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/generations",
@@ -2052,7 +2340,7 @@
     "operationId": null
   },
   {
-    "sequence": 172,
+    "sequence": 196,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/generations/{umcProductGenerationId}",
@@ -2064,7 +2352,7 @@
     "operationId": null
   },
   {
-    "sequence": 173,
+    "sequence": 197,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/generations/{umcProductGenerationId}",
@@ -2076,7 +2364,7 @@
     "operationId": null
   },
   {
-    "sequence": 174,
+    "sequence": 198,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/generations/{umcProductGenerationId}",
@@ -2088,7 +2376,7 @@
     "operationId": null
   },
   {
-    "sequence": 175,
+    "sequence": 199,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/members",
@@ -2100,7 +2388,7 @@
     "operationId": null
   },
   {
-    "sequence": 176,
+    "sequence": 200,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/members",
@@ -2112,7 +2400,7 @@
     "operationId": null
   },
   {
-    "sequence": 177,
+    "sequence": 201,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/members/{umcProductMemberId}",
@@ -2124,7 +2412,7 @@
     "operationId": null
   },
   {
-    "sequence": 178,
+    "sequence": 202,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/members/{umcProductMemberId}",
@@ -2136,7 +2424,7 @@
     "operationId": null
   },
   {
-    "sequence": 179,
+    "sequence": 203,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/members/{umcProductMemberId}/functional-memberships",
@@ -2148,7 +2436,7 @@
     "operationId": null
   },
   {
-    "sequence": 180,
+    "sequence": 204,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/members/{umcProductMemberId}/profile",
@@ -2160,7 +2448,7 @@
     "operationId": null
   },
   {
-    "sequence": 181,
+    "sequence": 205,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/organization-chart",
@@ -2172,7 +2460,7 @@
     "operationId": null
   },
   {
-    "sequence": 182,
+    "sequence": 206,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/squads",
@@ -2184,7 +2472,7 @@
     "operationId": null
   },
   {
-    "sequence": 183,
+    "sequence": 207,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/squads",
@@ -2196,7 +2484,7 @@
     "operationId": null
   },
   {
-    "sequence": 184,
+    "sequence": 208,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/squads/{squadId}",
@@ -2208,7 +2496,7 @@
     "operationId": null
   },
   {
-    "sequence": 185,
+    "sequence": 209,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/squads/{squadId}",
@@ -2220,7 +2508,7 @@
     "operationId": null
   },
   {
-    "sequence": 186,
+    "sequence": 210,
     "domain": "organization",
     "apiId": "<미지정>",
     "endpoint": "/api/v1/umc-product/squads/{squadId}/participants",
@@ -2232,7 +2520,7 @@
     "operationId": null
   },
   {
-    "sequence": 187,
+    "sequence": 211,
     "domain": "organization",
     "apiId": "CHAPTER-001",
     "endpoint": "/api/v1/chapters",
@@ -2244,7 +2532,7 @@
     "operationId": null
   },
   {
-    "sequence": 188,
+    "sequence": 212,
     "domain": "organization",
     "apiId": "CHAPTER-002",
     "endpoint": "/api/v1/chapters/bulk",
@@ -2256,7 +2544,7 @@
     "operationId": null
   },
   {
-    "sequence": 189,
+    "sequence": 213,
     "domain": "organization",
     "apiId": "CHAPTER-003",
     "endpoint": "/api/v1/chapters/{chapterId}",
@@ -2268,7 +2556,7 @@
     "operationId": null
   },
   {
-    "sequence": 190,
+    "sequence": 214,
     "domain": "organization",
     "apiId": "CHAPTER-101",
     "endpoint": "/api/v1/chapters",
@@ -2280,7 +2568,7 @@
     "operationId": null
   },
   {
-    "sequence": 191,
+    "sequence": 215,
     "domain": "organization",
     "apiId": "CHAPTER-102",
     "endpoint": "/api/v1/chapters/with-schools",
@@ -2292,7 +2580,7 @@
     "operationId": null
   },
   {
-    "sequence": 192,
+    "sequence": 216,
     "domain": "organization",
     "apiId": "CHAPTER-103",
     "endpoint": "/api/v1/chapters/{chapterId}",
@@ -2304,7 +2592,7 @@
     "operationId": null
   },
   {
-    "sequence": 193,
+    "sequence": 217,
     "domain": "organization",
     "apiId": "GISU-001",
     "endpoint": "/api/v1/gisu",
@@ -2316,7 +2604,7 @@
     "operationId": null
   },
   {
-    "sequence": 194,
+    "sequence": 218,
     "domain": "organization",
     "apiId": "GISU-002",
     "endpoint": "/api/v1/gisu/{gisuId}",
@@ -2328,7 +2616,7 @@
     "operationId": null
   },
   {
-    "sequence": 195,
+    "sequence": 219,
     "domain": "organization",
     "apiId": "GISU-003",
     "endpoint": "/api/v1/gisu/{gisuId}/active",
@@ -2340,7 +2628,7 @@
     "operationId": null
   },
   {
-    "sequence": 196,
+    "sequence": 220,
     "domain": "organization",
     "apiId": "GISU-101",
     "endpoint": "/api/v1/gisu",
@@ -2352,7 +2640,7 @@
     "operationId": null
   },
   {
-    "sequence": 197,
+    "sequence": 221,
     "domain": "organization",
     "apiId": "GISU-102",
     "endpoint": "/api/v1/gisu/all",
@@ -2364,7 +2652,7 @@
     "operationId": null
   },
   {
-    "sequence": 198,
+    "sequence": 222,
     "domain": "organization",
     "apiId": "GISU-103",
     "endpoint": "/api/v1/gisu/active",
@@ -2376,7 +2664,7 @@
     "operationId": null
   },
   {
-    "sequence": 199,
+    "sequence": 223,
     "domain": "organization",
     "apiId": "SCHOOL-001",
     "endpoint": "/api/v1/schools",
@@ -2388,7 +2676,7 @@
     "operationId": null
   },
   {
-    "sequence": 200,
+    "sequence": 224,
     "domain": "organization",
     "apiId": "SCHOOL-002",
     "endpoint": "/api/v1/schools/{schoolId}",
@@ -2400,7 +2688,7 @@
     "operationId": null
   },
   {
-    "sequence": 201,
+    "sequence": 225,
     "domain": "organization",
     "apiId": "SCHOOL-003",
     "endpoint": "/api/v1/schools",
@@ -2412,7 +2700,7 @@
     "operationId": null
   },
   {
-    "sequence": 202,
+    "sequence": 226,
     "domain": "organization",
     "apiId": "SCHOOL-004",
     "endpoint": "/api/v1/schools/{schoolId}/assign",
@@ -2424,7 +2712,7 @@
     "operationId": null
   },
   {
-    "sequence": 203,
+    "sequence": 227,
     "domain": "organization",
     "apiId": "SCHOOL-005",
     "endpoint": "/api/v1/schools/{schoolId}/unassign",
@@ -2436,7 +2724,7 @@
     "operationId": null
   },
   {
-    "sequence": 204,
+    "sequence": 228,
     "domain": "organization",
     "apiId": "SCHOOL-101",
     "endpoint": "/api/v1/schools/all",
@@ -2448,7 +2736,7 @@
     "operationId": null
   },
   {
-    "sequence": 205,
+    "sequence": 229,
     "domain": "organization",
     "apiId": "SCHOOL-102",
     "endpoint": "/api/v1/schools/{schoolId}",
@@ -2460,7 +2748,7 @@
     "operationId": null
   },
   {
-    "sequence": 206,
+    "sequence": 230,
     "domain": "organization",
     "apiId": "SCHOOL-103",
     "endpoint": "/api/v1/schools/unassigned",
@@ -2472,7 +2760,7 @@
     "operationId": null
   },
   {
-    "sequence": 207,
+    "sequence": 231,
     "domain": "organization",
     "apiId": "SCHOOL-104",
     "endpoint": "/api/v1/schools/link/{schoolId}",
@@ -2484,7 +2772,7 @@
     "operationId": null
   },
   {
-    "sequence": 208,
+    "sequence": 232,
     "domain": "organization",
     "apiId": "STUDY-GROUP-001",
     "endpoint": "/api/v1/study-groups",
@@ -2496,7 +2784,7 @@
     "operationId": null
   },
   {
-    "sequence": 209,
+    "sequence": 233,
     "domain": "organization",
     "apiId": "STUDY-GROUP-002",
     "endpoint": "/api/v1/study-groups/{studyGroupId}",
@@ -2508,7 +2796,7 @@
     "operationId": null
   },
   {
-    "sequence": 210,
+    "sequence": 234,
     "domain": "organization",
     "apiId": "STUDY-GROUP-003",
     "endpoint": "/api/v1/study-groups/{studyGroupId}/members/{memberId}",
@@ -2520,7 +2808,7 @@
     "operationId": null
   },
   {
-    "sequence": 211,
+    "sequence": 235,
     "domain": "organization",
     "apiId": "STUDY-GROUP-004",
     "endpoint": "/api/v1/study-groups/{studyGroupId}/mentors/{mentorId}",
@@ -2532,7 +2820,7 @@
     "operationId": null
   },
   {
-    "sequence": 212,
+    "sequence": 236,
     "domain": "organization",
     "apiId": "STUDY-GROUP-005",
     "endpoint": "/api/v1/study-groups/{studyGroupId}/members/{memberId}",
@@ -2544,7 +2832,7 @@
     "operationId": null
   },
   {
-    "sequence": 213,
+    "sequence": 237,
     "domain": "organization",
     "apiId": "STUDY-GROUP-006",
     "endpoint": "/api/v1/study-groups/{studyGroupId}/mentors/{mentorId}",
@@ -2556,7 +2844,7 @@
     "operationId": null
   },
   {
-    "sequence": 214,
+    "sequence": 238,
     "domain": "organization",
     "apiId": "STUDY-GROUP-007",
     "endpoint": "/api/v1/study-groups/{studyGroupId}",
@@ -2568,7 +2856,7 @@
     "operationId": null
   },
   {
-    "sequence": 215,
+    "sequence": 239,
     "domain": "organization",
     "apiId": "STUDY-GROUP-101",
     "endpoint": "/api/v1/study-groups/managed",
@@ -2580,7 +2868,7 @@
     "operationId": null
   },
   {
-    "sequence": 216,
+    "sequence": 240,
     "domain": "organization",
     "apiId": "STUDY-GROUP-102",
     "endpoint": "/api/v1/study-groups/{studyGroupId}",
@@ -2592,7 +2880,7 @@
     "operationId": null
   },
   {
-    "sequence": 217,
+    "sequence": 241,
     "domain": "organization",
     "apiId": "STUDY-GROUP-SCHEDULE-001",
     "endpoint": "/api/v1/study-groups/schedules",
@@ -2604,7 +2892,7 @@
     "operationId": null
   },
   {
-    "sequence": 218,
+    "sequence": 242,
     "domain": "project",
     "apiId": "APPLY-001",
     "endpoint": "/api/v1/projects/{projectId}/applications",
@@ -2616,7 +2904,7 @@
     "operationId": null
   },
   {
-    "sequence": 219,
+    "sequence": 243,
     "domain": "project",
     "apiId": "APPLY-002",
     "endpoint": "/api/v1/projects/{projectId}/applications/me",
@@ -2628,7 +2916,7 @@
     "operationId": null
   },
   {
-    "sequence": 220,
+    "sequence": 244,
     "domain": "project",
     "apiId": "APPLY-003",
     "endpoint": "/api/v1/projects/{projectId}/applications/me/submit",
@@ -2640,7 +2928,7 @@
     "operationId": null
   },
   {
-    "sequence": 221,
+    "sequence": 245,
     "domain": "project",
     "apiId": "APPLY-004",
     "endpoint": "/api/v1/projects/me/applications",
@@ -2652,7 +2940,7 @@
     "operationId": null
   },
   {
-    "sequence": 222,
+    "sequence": 246,
     "domain": "project",
     "apiId": "APPLY-005",
     "endpoint": "/api/v1/projects/{projectId}/applications/{applicationId}",
@@ -2664,7 +2952,7 @@
     "operationId": null
   },
   {
-    "sequence": 223,
+    "sequence": 247,
     "domain": "project",
     "apiId": "APPLY-101",
     "endpoint": "/api/v1/projects/{projectId}/applications",
@@ -2676,7 +2964,7 @@
     "operationId": null
   },
   {
-    "sequence": 224,
+    "sequence": 248,
     "domain": "project",
     "apiId": "APPLY-102",
     "endpoint": "/api/v1/projects/{projectId}/applications/{applicationId}",
@@ -2688,7 +2976,7 @@
     "operationId": null
   },
   {
-    "sequence": 225,
+    "sequence": 249,
     "domain": "project",
     "apiId": "APPLY-103",
     "endpoint": "/api/v1/projects/{projectId}/applications/{applicationId}/decision",
@@ -2700,7 +2988,7 @@
     "operationId": null
   },
   {
-    "sequence": 226,
+    "sequence": 250,
     "domain": "project",
     "apiId": "PROJECT-001",
     "endpoint": "/api/v1/projects",
@@ -2712,7 +3000,7 @@
     "operationId": null
   },
   {
-    "sequence": 227,
+    "sequence": 251,
     "domain": "project",
     "apiId": "PROJECT-002",
     "endpoint": "/api/v1/projects/{projectId}",
@@ -2724,7 +3012,7 @@
     "operationId": null
   },
   {
-    "sequence": 228,
+    "sequence": 252,
     "domain": "project",
     "apiId": "PROJECT-003",
     "endpoint": "/api/v1/projects/{projectId}/members",
@@ -2736,7 +3024,7 @@
     "operationId": null
   },
   {
-    "sequence": 229,
+    "sequence": 253,
     "domain": "project",
     "apiId": "PROJECT-004",
     "endpoint": "/api/v1/projects/{projectId}/members",
@@ -2748,7 +3036,7 @@
     "operationId": null
   },
   {
-    "sequence": 230,
+    "sequence": 254,
     "domain": "project",
     "apiId": "PROJECT-005",
     "endpoint": "/api/v1/projects/{projectId}/members/{memberId}",
@@ -2760,7 +3048,7 @@
     "operationId": null
   },
   {
-    "sequence": 231,
+    "sequence": 255,
     "domain": "project",
     "apiId": "PROJECT-006",
     "endpoint": "/api/v1/projects/me/managed",
@@ -2772,7 +3060,7 @@
     "operationId": null
   },
   {
-    "sequence": 232,
+    "sequence": 256,
     "domain": "project",
     "apiId": "PROJECT-007",
     "endpoint": "/api/v1/projects/members",
@@ -2784,7 +3072,7 @@
     "operationId": null
   },
   {
-    "sequence": 233,
+    "sequence": 257,
     "domain": "project",
     "apiId": "PROJECT-101",
     "endpoint": "/api/v1/projects",
@@ -2796,7 +3084,7 @@
     "operationId": null
   },
   {
-    "sequence": 234,
+    "sequence": 258,
     "domain": "project",
     "apiId": "PROJECT-102",
     "endpoint": "/api/v1/projects/{projectId}",
@@ -2808,7 +3096,7 @@
     "operationId": null
   },
   {
-    "sequence": 235,
+    "sequence": 259,
     "domain": "project",
     "apiId": "PROJECT-103",
     "endpoint": "/api/v1/projects/me/draft",
@@ -2820,7 +3108,7 @@
     "operationId": null
   },
   {
-    "sequence": 236,
+    "sequence": 260,
     "domain": "project",
     "apiId": "PROJECT-104",
     "endpoint": "/api/v1/projects/{projectId}/transfer-ownership",
@@ -2832,7 +3120,7 @@
     "operationId": null
   },
   {
-    "sequence": 237,
+    "sequence": 261,
     "domain": "project",
     "apiId": "PROJECT-105",
     "endpoint": "/api/v1/projects/{projectId}/part-quotas",
@@ -2844,7 +3132,7 @@
     "operationId": null
   },
   {
-    "sequence": 238,
+    "sequence": 262,
     "domain": "project",
     "apiId": "PROJECT-106",
     "endpoint": "/api/v1/projects/{projectId}/application-form",
@@ -2856,7 +3144,7 @@
     "operationId": null
   },
   {
-    "sequence": 239,
+    "sequence": 263,
     "domain": "project",
     "apiId": "PROJECT-106-GET",
     "endpoint": "/api/v1/projects/{projectId}/application-form",
@@ -2868,7 +3156,7 @@
     "operationId": null
   },
   {
-    "sequence": 240,
+    "sequence": 264,
     "domain": "project",
     "apiId": "PROJECT-107",
     "endpoint": "/api/v1/projects/{projectId}/submit",
@@ -2880,7 +3168,7 @@
     "operationId": null
   },
   {
-    "sequence": 241,
+    "sequence": 265,
     "domain": "project",
     "apiId": "PROJECT-108",
     "endpoint": "/api/v1/projects/{projectId}/publish",
@@ -2892,7 +3180,7 @@
     "operationId": null
   },
   {
-    "sequence": 242,
+    "sequence": 266,
     "domain": "project",
     "apiId": "PROJECT-109",
     "endpoint": "/api/v1/projects/{projectId}",
@@ -2904,7 +3192,7 @@
     "operationId": null
   },
   {
-    "sequence": 243,
+    "sequence": 267,
     "domain": "project",
     "apiId": "PROJECT-110",
     "endpoint": "/api/v1/projects/{projectId}/abort",
@@ -2916,7 +3204,7 @@
     "operationId": null
   },
   {
-    "sequence": 244,
+    "sequence": 268,
     "domain": "project",
     "apiId": "PROJECT-MATCHING-001",
     "endpoint": "/api/v1/project/matching-rounds",
@@ -2928,7 +3216,7 @@
     "operationId": null
   },
   {
-    "sequence": 245,
+    "sequence": 269,
     "domain": "project",
     "apiId": "PROJECT-MATCHING-101",
     "endpoint": "/api/v1/project/matching-rounds",
@@ -2940,7 +3228,7 @@
     "operationId": null
   },
   {
-    "sequence": 246,
+    "sequence": 270,
     "domain": "project",
     "apiId": "PROJECT-MATCHING-102",
     "endpoint": "/api/v1/project/matching-rounds/{matchingRoundId}",
@@ -2952,7 +3240,7 @@
     "operationId": null
   },
   {
-    "sequence": 247,
+    "sequence": 271,
     "domain": "project",
     "apiId": "PROJECT-MATCHING-103",
     "endpoint": "/api/v1/project/matching-rounds/{matchingRoundId}",
@@ -2964,7 +3252,7 @@
     "operationId": null
   },
   {
-    "sequence": 248,
+    "sequence": 272,
     "domain": "project",
     "apiId": "PROJECT-MATCHING-201",
     "endpoint": "/api/v1/project/matching-rounds/{matchingRoundId}/auto-decide",
@@ -2976,7 +3264,7 @@
     "operationId": null
   },
   {
-    "sequence": 249,
+    "sequence": 273,
     "domain": "project",
     "apiId": "PROJECT-STAT-001",
     "endpoint": "/api/v1/projects/{projectId}/statistics",
@@ -2988,7 +3276,7 @@
     "operationId": null
   },
   {
-    "sequence": 250,
+    "sequence": 274,
     "domain": "project",
     "apiId": "PROJECT-STAT-002",
     "endpoint": "/api/v1/projects/statistics",
@@ -3000,7 +3288,7 @@
     "operationId": null
   },
   {
-    "sequence": 251,
+    "sequence": 275,
     "domain": "schedule",
     "apiId": "SCHEDULE-C001",
     "endpoint": "/api/v2/schedules",
@@ -3012,7 +3300,7 @@
     "operationId": null
   },
   {
-    "sequence": 252,
+    "sequence": 276,
     "domain": "schedule",
     "apiId": "SCHEDULE-C002",
     "endpoint": "/api/v2/schedules/{scheduleId}",
@@ -3024,7 +3312,7 @@
     "operationId": null
   },
   {
-    "sequence": 253,
+    "sequence": 277,
     "domain": "schedule",
     "apiId": "SCHEDULE-C003",
     "endpoint": "/api/v2/schedules/{scheduleId}/attendances/request",
@@ -3036,7 +3324,7 @@
     "operationId": null
   },
   {
-    "sequence": 254,
+    "sequence": 278,
     "domain": "schedule",
     "apiId": "SCHEDULE-C004",
     "endpoint": "/api/v2/schedules/{scheduleId}/attendances/excuse",
@@ -3048,7 +3336,7 @@
     "operationId": null
   },
   {
-    "sequence": 255,
+    "sequence": 279,
     "domain": "schedule",
     "apiId": "SCHEDULE-C005",
     "endpoint": "/api/v2/schedules/{scheduleId}/attendances/decide",
@@ -3060,7 +3348,7 @@
     "operationId": null
   },
   {
-    "sequence": 256,
+    "sequence": 280,
     "domain": "schedule",
     "apiId": "SCHEDULE-C006",
     "endpoint": "/api/v2/schedules/{scheduleId}",
@@ -3072,7 +3360,7 @@
     "operationId": null
   },
   {
-    "sequence": 257,
+    "sequence": 281,
     "domain": "schedule",
     "apiId": "SCHEDULE-C007",
     "endpoint": "/api/v2/schedules/{scheduleId}/force",
@@ -3084,7 +3372,7 @@
     "operationId": null
   },
   {
-    "sequence": 258,
+    "sequence": 282,
     "domain": "schedule",
     "apiId": "SCHEDULE-Q001",
     "endpoint": "/api/v2/schedules/capabilities",
@@ -3096,7 +3384,7 @@
     "operationId": null
   },
   {
-    "sequence": 259,
+    "sequence": 283,
     "domain": "schedule",
     "apiId": "SCHEDULE-Q002",
     "endpoint": "/api/v2/schedules/me",
@@ -3108,7 +3396,7 @@
     "operationId": null
   },
   {
-    "sequence": 260,
+    "sequence": 284,
     "domain": "schedule",
     "apiId": "SCHEDULE-Q003",
     "endpoint": "/api/v2/schedules/{scheduleId}",
@@ -3120,7 +3408,7 @@
     "operationId": null
   },
   {
-    "sequence": 261,
+    "sequence": 285,
     "domain": "schedule",
     "apiId": "SCHEDULE-Q004",
     "endpoint": "/api/v2/schedules/attendance",
@@ -3132,7 +3420,7 @@
     "operationId": null
   },
   {
-    "sequence": 262,
+    "sequence": 286,
     "domain": "schedule",
     "apiId": "SCHEDULE-Q005",
     "endpoint": "/api/v2/schedules/{scheduleId}/attendance",
@@ -3144,7 +3432,7 @@
     "operationId": null
   },
   {
-    "sequence": 263,
+    "sequence": 287,
     "domain": "storage",
     "apiId": "STORAGE-001",
     "endpoint": "/api/v1/storage/prepare-upload",
@@ -3156,7 +3444,7 @@
     "operationId": null
   },
   {
-    "sequence": 264,
+    "sequence": 288,
     "domain": "storage",
     "apiId": "STORAGE-002",
     "endpoint": "/api/v1/storage/{fileId}/confirm",
@@ -3168,7 +3456,7 @@
     "operationId": null
   },
   {
-    "sequence": 265,
+    "sequence": 289,
     "domain": "storage",
     "apiId": "STORAGE-003",
     "endpoint": "/api/v1/storage/{fileId}",
@@ -3180,7 +3468,7 @@
     "operationId": null
   },
   {
-    "sequence": 266,
+    "sequence": 290,
     "domain": "term",
     "apiId": "TERM-001",
     "endpoint": "/api/v1/terms",
@@ -3192,7 +3480,7 @@
     "operationId": null
   },
   {
-    "sequence": 267,
+    "sequence": 291,
     "domain": "term",
     "apiId": "TERM-101",
     "endpoint": "/api/v1/terms/type/{termType}",
@@ -3204,7 +3492,7 @@
     "operationId": null
   },
   {
-    "sequence": 268,
+    "sequence": 292,
     "domain": "term",
     "apiId": "TERM-102",
     "endpoint": "/api/v1/terms/{termsId}",
@@ -3216,7 +3504,7 @@
     "operationId": null
   },
   {
-    "sequence": 269,
+    "sequence": 293,
     "domain": "term",
     "apiId": "TERM-103",
     "endpoint": "/api/v1/terms/consent-status/me",
@@ -3228,7 +3516,7 @@
     "operationId": null
   },
   {
-    "sequence": 270,
+    "sequence": 294,
     "domain": "term",
     "apiId": "TERM-104",
     "endpoint": "/api/v1/terms",
@@ -3240,7 +3528,7 @@
     "operationId": null
   },
   {
-    "sequence": 271,
+    "sequence": 295,
     "domain": "test",
     "apiId": "<미지정>",
     "endpoint": "/test/email/send-test",
@@ -3252,7 +3540,7 @@
     "operationId": null
   },
   {
-    "sequence": 272,
+    "sequence": 296,
     "domain": "test",
     "apiId": "<미지정>",
     "endpoint": "/test/log-test",
@@ -3264,7 +3552,7 @@
     "operationId": null
   },
   {
-    "sequence": 273,
+    "sequence": 297,
     "domain": "test",
     "apiId": "SEED-001",
     "endpoint": "/test/seed/members",
@@ -3276,7 +3564,7 @@
     "operationId": "SEED-001"
   },
   {
-    "sequence": 274,
+    "sequence": 298,
     "domain": "test",
     "apiId": "SEED-001-M",
     "endpoint": "/test/seed/member",
@@ -3288,7 +3576,7 @@
     "operationId": "SEED-001-M"
   },
   {
-    "sequence": 275,
+    "sequence": 299,
     "domain": "test",
     "apiId": "SEED-002",
     "endpoint": "/test/seed/challengers",
@@ -3300,7 +3588,7 @@
     "operationId": "SEED-002"
   },
   {
-    "sequence": 276,
+    "sequence": 300,
     "domain": "test",
     "apiId": "SEED-002-C",
     "endpoint": "/test/seed/challenger",
@@ -3312,7 +3600,7 @@
     "operationId": "SEED-002-C"
   },
   {
-    "sequence": 277,
+    "sequence": 301,
     "domain": "test",
     "apiId": "SEED-002-R",
     "endpoint": "/test/seed/challenger-role",
@@ -3324,7 +3612,7 @@
     "operationId": "SEED-002-R"
   },
   {
-    "sequence": 278,
+    "sequence": 302,
     "domain": "test",
     "apiId": "SEED-003",
     "endpoint": "/test/seed/projects",
@@ -3336,7 +3624,7 @@
     "operationId": "SEED-003"
   },
   {
-    "sequence": 279,
+    "sequence": 303,
     "domain": "test",
     "apiId": "SEED-003-D",
     "endpoint": "/test/seed/projects",
@@ -3348,7 +3636,7 @@
     "operationId": "SEED-003-D"
   },
   {
-    "sequence": 280,
+    "sequence": 304,
     "domain": "test",
     "apiId": "SEED-003-S",
     "endpoint": "/test/seed/projects/scenarios",
@@ -3360,7 +3648,7 @@
     "operationId": "SEED-003-S"
   },
   {
-    "sequence": 281,
+    "sequence": 305,
     "domain": "test",
     "apiId": "SEED-004",
     "endpoint": "/test/seed/curriculum",
@@ -3372,7 +3660,7 @@
     "operationId": "SEED-004"
   },
   {
-    "sequence": 282,
+    "sequence": 306,
     "domain": "test",
     "apiId": "SEED-005",
     "endpoint": "/test/seed/notice",
@@ -3384,7 +3672,7 @@
     "operationId": "SEED-005"
   },
   {
-    "sequence": 283,
+    "sequence": 307,
     "domain": "test",
     "apiId": "SEED-006",
     "endpoint": "/test/seed/project-applications",
@@ -3396,7 +3684,7 @@
     "operationId": null
   },
   {
-    "sequence": 284,
+    "sequence": 308,
     "domain": "test",
     "apiId": "TEST-001",
     "endpoint": "/test/file/{fileId}",
@@ -3408,7 +3696,7 @@
     "operationId": "TEST-001"
   },
   {
-    "sequence": 285,
+    "sequence": 309,
     "domain": "test",
     "apiId": "TEST-002",
     "endpoint": "/test/fcm/test-send",
@@ -3420,7 +3708,7 @@
     "operationId": "TEST-002"
   },
   {
-    "sequence": 286,
+    "sequence": 310,
     "domain": "test",
     "apiId": "TEST-003",
     "endpoint": "/test/webhook/aop-test",
@@ -3432,7 +3720,7 @@
     "operationId": "TEST-003"
   },
   {
-    "sequence": 287,
+    "sequence": 311,
     "domain": "test",
     "apiId": "TEST-004",
     "endpoint": "/test/webhook/alarm",
@@ -3444,7 +3732,7 @@
     "operationId": "TEST-004"
   },
   {
-    "sequence": 288,
+    "sequence": 312,
     "domain": "test",
     "apiId": "TEST-005",
     "endpoint": "/test/webhook/alarm/buffer",
@@ -3456,7 +3744,7 @@
     "operationId": "TEST-005"
   },
   {
-    "sequence": 289,
+    "sequence": 313,
     "domain": "test",
     "apiId": "TEST-006",
     "endpoint": "/test/apple-client-secret",
@@ -3468,7 +3756,7 @@
     "operationId": "TEST-006"
   },
   {
-    "sequence": 290,
+    "sequence": 314,
     "domain": "test",
     "apiId": "TEST-007",
     "endpoint": "/test/token/access",
@@ -3480,7 +3768,7 @@
     "operationId": "TEST-007"
   },
   {
-    "sequence": 291,
+    "sequence": 315,
     "domain": "test",
     "apiId": "TEST-008",
     "endpoint": "/test/token/refresh",
@@ -3492,7 +3780,7 @@
     "operationId": "TEST-008"
   },
   {
-    "sequence": 292,
+    "sequence": 316,
     "domain": "test",
     "apiId": "TEST-009",
     "endpoint": "/test/token/email",
@@ -3504,7 +3792,7 @@
     "operationId": "TEST-009"
   },
   {
-    "sequence": 293,
+    "sequence": 317,
     "domain": "test",
     "apiId": "TEST-010",
     "endpoint": "/test/token/oauth",
@@ -3516,7 +3804,7 @@
     "operationId": "TEST-010"
   },
   {
-    "sequence": 294,
+    "sequence": 318,
     "domain": "test",
     "apiId": "TEST-011",
     "endpoint": "/test/health-check",
@@ -3528,7 +3816,7 @@
     "operationId": "TEST-011"
   },
   {
-    "sequence": 295,
+    "sequence": 319,
     "domain": "test",
     "apiId": "TEST-012",
     "endpoint": "/test/check-authenticated",

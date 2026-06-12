@@ -5,13 +5,13 @@ import com.umc.product.blog.application.port.in.command.dto.CreateBlogCommentCom
 import jakarta.validation.constraints.Size;
 
 public record CreateBlogCommentRequest(
-    @Size(max = 1000, message = "댓글은 최대 1000자까지 입력할 수 있습니다.") String content,
+    @Size(max = 1000, message = "댓글은 1,000자 이하로 입력해주세요.") String content,
 
     Long parentCommentId,
 
     Boolean anonymous,
 
-    @Size(max = 20, message = "닉네임은 최대 20자까지 입력할 수 있습니다.") String nickname
+    @Size(max = 20, message = "닉네임은 20자 이하로 입력해주세요.") String nickname
 ) {
 
     public CreateBlogCommentRequest {

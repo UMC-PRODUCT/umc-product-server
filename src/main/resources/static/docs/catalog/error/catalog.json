@@ -485,6 +485,358 @@
   },
   {
     "sequence": 45,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "CONTENT_NOT_FOUND",
+    "httpStatus": "NOT_FOUND",
+    "code": "BLOG-0001",
+    "message": "글을 찾지 못했어요. 주소를 확인해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 13
+  },
+  {
+    "sequence": 46,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "COMMENT_NOT_FOUND",
+    "httpStatus": "NOT_FOUND",
+    "code": "BLOG-0002",
+    "message": "댓글을 찾지 못했어요. 새로고침 후 다시 시도해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 14
+  },
+  {
+    "sequence": 47,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_CONTENT_TYPE",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0003",
+    "message": "카테고리를 확인해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 15
+  },
+  {
+    "sequence": 48,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_SLUG",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0004",
+    "message": "주소 slug를 확인해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 16
+  },
+  {
+    "sequence": 49,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_ID",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0005",
+    "message": "ID는 1 이상이어야 해요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 17
+  },
+  {
+    "sequence": 50,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_COMMENT_CONTENT",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0006",
+    "message": "댓글은 1자 이상 1,000자 이하로 입력해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 18
+  },
+  {
+    "sequence": 51,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_NICKNAME",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0007",
+    "message": "닉네임은 1자 이상 20자 이하로 입력해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 19
+  },
+  {
+    "sequence": 52,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_PARENT_COMMENT",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0008",
+    "message": "이 댓글에는 답글을 달 수 없어요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 20
+  },
+  {
+    "sequence": 53,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "COMMENT_ALREADY_DELETED",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0009",
+    "message": "삭제된 댓글에는 수정, 삭제, 좋아요를 할 수 없어요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 21
+  },
+  {
+    "sequence": 54,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_COMMENT_SORT",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0011",
+    "message": "댓글 정렬 기준을 확인해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 22
+  },
+  {
+    "sequence": 55,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_MEMBER_ID",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0012",
+    "message": "회원 정보를 확인하지 못했어요. 다시 로그인해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 23
+  },
+  {
+    "sequence": 56,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_COMMENT_CURSOR",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0013",
+    "message": "댓글 목록을 불러오지 못했어요. 새로고침 후 다시 시도해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 24
+  },
+  {
+    "sequence": 57,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_CONTENT_TITLE",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0014",
+    "message": "제목은 1자 이상 200자 이하로 입력해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 25
+  },
+  {
+    "sequence": 58,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_CONTENT_SUMMARY",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0015",
+    "message": "요약은 500자 이하로 입력해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 26
+  },
+  {
+    "sequence": 59,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_THUMBNAIL_URL",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0016",
+    "message": "썸네일 URL은 1,000자 이하로 입력해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 27
+  },
+  {
+    "sequence": 60,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_CONTENT_BODY",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0017",
+    "message": "본문은 1자 이상 100,000자 이하로 입력해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 28
+  },
+  {
+    "sequence": 61,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_CONTENT_STATUS",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0018",
+    "message": "글 상태를 확인해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 29
+  },
+  {
+    "sequence": 62,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "CONTENT_ALREADY_EXISTS",
+    "httpStatus": "CONFLICT",
+    "code": "BLOG-0019",
+    "message": "이미 같은 주소의 글이 있어요. slug를 바꿔주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 30
+  },
+  {
+    "sequence": 63,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "CONTENT_NOT_PUBLISHED",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0020",
+    "message": "글을 공개한 뒤 다시 시도해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 31
+  },
+  {
+    "sequence": 64,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "SERIES_NOT_FOUND",
+    "httpStatus": "NOT_FOUND",
+    "code": "BLOG-0021",
+    "message": "시리즈를 찾지 못했어요. 주소를 확인해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 32
+  },
+  {
+    "sequence": 65,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "SERIES_ALREADY_EXISTS",
+    "httpStatus": "CONFLICT",
+    "code": "BLOG-0022",
+    "message": "이미 같은 주소의 시리즈가 있어요. slug를 바꿔주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 33
+  },
+  {
+    "sequence": 66,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_SERIES_TITLE",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0023",
+    "message": "시리즈 제목은 1자 이상 200자 이하로 입력해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 34
+  },
+  {
+    "sequence": 67,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_SERIES_DESCRIPTION",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0024",
+    "message": "시리즈 설명은 1,000자 이하로 입력해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 35
+  },
+  {
+    "sequence": 68,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_DISPLAY_ORDER",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0025",
+    "message": "표시 순서는 0 이상으로 입력해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 36
+  },
+  {
+    "sequence": 69,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "CONTENT_TYPE_MISMATCH",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0026",
+    "message": "시리즈와 글의 카테고리를 맞춰주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 37
+  },
+  {
+    "sequence": 70,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "HASHTAG_NOT_FOUND",
+    "httpStatus": "NOT_FOUND",
+    "code": "BLOG-0027",
+    "message": "해시태그를 찾지 못했어요. 주소를 확인해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 38
+  },
+  {
+    "sequence": 71,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_HASHTAG",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0028",
+    "message": "해시태그는 공백 없이 1자 이상 30자 이하로 입력해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 39
+  },
+  {
+    "sequence": 72,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "TOO_MANY_HASHTAGS",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0029",
+    "message": "해시태그는 10개 이하로 선택해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 40
+  },
+  {
+    "sequence": 73,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_SORT",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0030",
+    "message": "정렬 기준을 확인해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 41
+  },
+  {
+    "sequence": 74,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "INVALID_CURSOR",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0031",
+    "message": "목록을 불러오지 못했어요. 새로고침 후 다시 시도해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 42
+  },
+  {
+    "sequence": 75,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "CONTENT_ALREADY_DELETED",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0032",
+    "message": "삭제된 글이에요. 목록에서 다시 선택해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 43
+  },
+  {
+    "sequence": 76,
+    "domain": "blog",
+    "enumName": "BlogErrorCode",
+    "constantName": "SERIES_ALREADY_DELETED",
+    "httpStatus": "BAD_REQUEST",
+    "code": "BLOG-0033",
+    "message": "삭제된 시리즈예요. 목록에서 다시 선택해주세요.",
+    "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
+    "line": 44
+  },
+  {
+    "sequence": 77,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "CHALLENGER_NOT_FOUND",
@@ -495,7 +847,7 @@
     "line": 14
   },
   {
-    "sequence": 46,
+    "sequence": 78,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "CHALLENGER_ALREADY_EXISTS",
@@ -506,7 +858,7 @@
     "line": 15
   },
   {
-    "sequence": 47,
+    "sequence": 79,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "CHALLENGER_ALREADY_WITHDRAWN",
@@ -517,7 +869,7 @@
     "line": 16
   },
   {
-    "sequence": 48,
+    "sequence": 80,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "INVALID_CHALLENGER_STATUS",
@@ -528,7 +880,7 @@
     "line": 17
   },
   {
-    "sequence": 49,
+    "sequence": 81,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "CHALLENGER_NOT_ACTIVE",
@@ -539,7 +891,7 @@
     "line": 18
   },
   {
-    "sequence": 50,
+    "sequence": 82,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "CHALLENGER_POINT_NOT_FOUND",
@@ -550,7 +902,7 @@
     "line": 19
   },
   {
-    "sequence": 51,
+    "sequence": 83,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "BAD_CHALLENGER_UPDATE_REQUEST",
@@ -561,7 +913,7 @@
     "line": 20
   },
   {
-    "sequence": 52,
+    "sequence": 84,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "NOT_ALLOWED_AUTHOR",
@@ -572,7 +924,7 @@
     "line": 21
   },
   {
-    "sequence": 53,
+    "sequence": 85,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "MEMBER_PROFILE_NOT_FOUND",
@@ -583,7 +935,7 @@
     "line": 22
   },
   {
-    "sequence": 54,
+    "sequence": 86,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "INVALID_CURSOR_ID",
@@ -594,7 +946,7 @@
     "line": 23
   },
   {
-    "sequence": 55,
+    "sequence": 87,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "USED_CHALLENGER_RECORD_CODE",
@@ -605,7 +957,7 @@
     "line": 24
   },
   {
-    "sequence": 56,
+    "sequence": 88,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "INVALID_MEMBER_NAME_FOR_RECORD",
@@ -616,7 +968,7 @@
     "line": 25
   },
   {
-    "sequence": 57,
+    "sequence": 89,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "INVALID_SCHOOL_FOR_RECORD",
@@ -627,7 +979,7 @@
     "line": 26
   },
   {
-    "sequence": 58,
+    "sequence": 90,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "INVALID_CHALLENGER_RECORD_CREATE_REQUEST",
@@ -638,7 +990,7 @@
     "line": 27
   },
   {
-    "sequence": 59,
+    "sequence": 91,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "NO_CHALLENGER_IN_MEMBER_GISU",
@@ -649,7 +1001,7 @@
     "line": 28
   },
   {
-    "sequence": 60,
+    "sequence": 92,
     "domain": "challenger",
     "enumName": "ChallengerErrorCode",
     "constantName": "CHALLENGER_PART_NOT_FOUND",
@@ -660,7 +1012,7 @@
     "line": 29
   },
   {
-    "sequence": 61,
+    "sequence": 93,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "POST_NOT_FOUND",
@@ -671,7 +1023,7 @@
     "line": 14
   },
   {
-    "sequence": 62,
+    "sequence": 94,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "COMMENT_NOT_FOUND",
@@ -682,7 +1034,7 @@
     "line": 15
   },
   {
-    "sequence": 63,
+    "sequence": 95,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "TROPHY_NOT_FOUND",
@@ -693,7 +1045,7 @@
     "line": 16
   },
   {
-    "sequence": 64,
+    "sequence": 96,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_POST_TITLE",
@@ -704,7 +1056,7 @@
     "line": 18
   },
   {
-    "sequence": 65,
+    "sequence": 97,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_POST_CONTENT",
@@ -715,7 +1067,7 @@
     "line": 19
   },
   {
-    "sequence": 66,
+    "sequence": 98,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_POST_CATEGORY",
@@ -726,7 +1078,7 @@
     "line": 20
   },
   {
-    "sequence": 67,
+    "sequence": 99,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_POST_REGION",
@@ -737,7 +1089,7 @@
     "line": 21
   },
   {
-    "sequence": 68,
+    "sequence": 100,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "CANNOT_CHANGE_TO_LIGHTNING",
@@ -748,7 +1100,7 @@
     "line": 22
   },
   {
-    "sequence": 69,
+    "sequence": 101,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "CANNOT_CHANGE_FROM_LIGHTNING",
@@ -759,7 +1111,7 @@
     "line": 23
   },
   {
-    "sequence": 70,
+    "sequence": 102,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_COMMENT_CONTENT",
@@ -770,7 +1122,7 @@
     "line": 25
   },
   {
-    "sequence": 71,
+    "sequence": 103,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "COMMENT_NOT_OWNED",
@@ -781,7 +1133,7 @@
     "line": 26
   },
   {
-    "sequence": 72,
+    "sequence": 104,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_TROPHY_WEEK",
@@ -792,7 +1144,7 @@
     "line": 28
   },
   {
-    "sequence": 73,
+    "sequence": 105,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_TROPHY_TITLE",
@@ -803,7 +1155,7 @@
     "line": 29
   },
   {
-    "sequence": 74,
+    "sequence": 106,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_TROPHY_CONTENT",
@@ -814,7 +1166,7 @@
     "line": 30
   },
   {
-    "sequence": 75,
+    "sequence": 107,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_TROPHY_URL",
@@ -825,7 +1177,7 @@
     "line": 31
   },
   {
-    "sequence": 76,
+    "sequence": 108,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "REPORT_ALREADY_EXISTS",
@@ -836,7 +1188,7 @@
     "line": 33
   },
   {
-    "sequence": 77,
+    "sequence": 109,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_POST_AUTHOR",
@@ -847,7 +1199,7 @@
     "line": 36
   },
   {
-    "sequence": 78,
+    "sequence": 110,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "NOT_LIGHTNING_POST",
@@ -858,7 +1210,7 @@
     "line": 37
   },
   {
-    "sequence": 79,
+    "sequence": 111,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "USE_LIGHTNING_API",
@@ -869,7 +1221,7 @@
     "line": 38
   },
   {
-    "sequence": 80,
+    "sequence": 112,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "LIGHTNING_INFO_REQUIRED",
@@ -880,7 +1232,7 @@
     "line": 39
   },
   {
-    "sequence": 81,
+    "sequence": 113,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "POST_NOT_OWNED",
@@ -891,7 +1243,7 @@
     "line": 40
   },
   {
-    "sequence": 82,
+    "sequence": 114,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_LIGHTNING_MEET_AT",
@@ -902,7 +1254,7 @@
     "line": 43
   },
   {
-    "sequence": 83,
+    "sequence": 115,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_LIGHTNING_LOCATION",
@@ -913,7 +1265,7 @@
     "line": 44
   },
   {
-    "sequence": 84,
+    "sequence": 116,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_LIGHTNING_MAX_PARTICIPANTS",
@@ -924,7 +1276,7 @@
     "line": 45
   },
   {
-    "sequence": 85,
+    "sequence": 117,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_LIGHTNING_OPEN_CHAT_URL",
@@ -935,7 +1287,7 @@
     "line": 46
   },
   {
-    "sequence": 86,
+    "sequence": 118,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_LIGHTNING_OPEN_CHAT_URL_FORMAT",
@@ -946,7 +1298,7 @@
     "line": 47
   },
   {
-    "sequence": 87,
+    "sequence": 119,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_LIGHTNING_MEET_AT_PAST",
@@ -957,7 +1309,7 @@
     "line": 48
   },
   {
-    "sequence": 88,
+    "sequence": 120,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_COMMENT_POST_ID",
@@ -968,7 +1320,7 @@
     "line": 51
   },
   {
-    "sequence": 89,
+    "sequence": 121,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_COMMENT_CHALLENGER_ID",
@@ -979,7 +1331,7 @@
     "line": 52
   },
   {
-    "sequence": 90,
+    "sequence": 122,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "INVALID_ID",
@@ -990,7 +1342,7 @@
     "line": 55
   },
   {
-    "sequence": 91,
+    "sequence": 123,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "POST_SAVE_REQUIRES_AUTHOR",
@@ -1001,7 +1353,7 @@
     "line": 58
   },
   {
-    "sequence": 92,
+    "sequence": 124,
     "domain": "community",
     "enumName": "CommunityErrorCode",
     "constantName": "POST_UPDATE_INVALID_CALL",
@@ -1012,7 +1364,7 @@
     "line": 59
   },
   {
-    "sequence": 93,
+    "sequence": 125,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "CURRICULUM_NOT_FOUND",
@@ -1023,7 +1375,7 @@
     "line": 14
   },
   {
-    "sequence": 94,
+    "sequence": 126,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "WORKBOOK_NOT_FOUND",
@@ -1034,7 +1386,7 @@
     "line": 15
   },
   {
-    "sequence": 95,
+    "sequence": 127,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "MISSION_NOT_FOUND",
@@ -1045,7 +1397,7 @@
     "line": 16
   },
   {
-    "sequence": 96,
+    "sequence": 128,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "WORKBOOK_HAS_SUBMISSIONS",
@@ -1056,7 +1408,7 @@
     "line": 17
   },
   {
-    "sequence": 97,
+    "sequence": 129,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "WORKBOOK_NOT_IN_CURRICULUM",
@@ -1067,7 +1419,7 @@
     "line": 18
   },
   {
-    "sequence": 98,
+    "sequence": 130,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "CHALLENGER_WORKBOOK_NOT_FOUND",
@@ -1078,7 +1430,7 @@
     "line": 19
   },
   {
-    "sequence": 99,
+    "sequence": 131,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "SUBMISSION_REQUIRED",
@@ -1089,7 +1441,7 @@
     "line": 20
   },
   {
-    "sequence": 100,
+    "sequence": 132,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "INVALID_WORKBOOK_STATUS",
@@ -1100,7 +1452,7 @@
     "line": 21
   },
   {
-    "sequence": 101,
+    "sequence": 133,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "WORKBOOK_SUBMISSION_ALREADY_EXISTS",
@@ -1111,7 +1463,7 @@
     "line": 22
   },
   {
-    "sequence": 102,
+    "sequence": 134,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "CURRICULUM_ALREADY_EXISTS",
@@ -1122,7 +1474,7 @@
     "line": 23
   },
   {
-    "sequence": 103,
+    "sequence": 135,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "WORKBOOK_ACCESS_DENIED",
@@ -1133,7 +1485,7 @@
     "line": 24
   },
   {
-    "sequence": 104,
+    "sequence": 136,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "INVALID_WEEKLY_CURRICULUM_PERIOD",
@@ -1144,7 +1496,7 @@
     "line": 26
   },
   {
-    "sequence": 105,
+    "sequence": 137,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "INVALID_WORKBOOK_STATUS_TRANSITION",
@@ -1155,7 +1507,7 @@
     "line": 27
   },
   {
-    "sequence": 106,
+    "sequence": 138,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "WEEKLY_CURRICULUM_NOT_FOUND",
@@ -1166,7 +1518,7 @@
     "line": 28
   },
   {
-    "sequence": 107,
+    "sequence": 139,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "CURRICULUM_HAS_WEEKLY_CURRICULUMS",
@@ -1177,7 +1529,7 @@
     "line": 29
   },
   {
-    "sequence": 108,
+    "sequence": 140,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "WEEKLY_CURRICULUM_HAS_WORKBOOKS",
@@ -1188,7 +1540,7 @@
     "line": 30
   },
   {
-    "sequence": 109,
+    "sequence": 141,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "WEEKLY_CURRICULUM_DATE_LOCKED",
@@ -1199,7 +1551,7 @@
     "line": 31
   },
   {
-    "sequence": 110,
+    "sequence": 142,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "WEEKLY_CURRICULUM_ALREADY_EXISTS",
@@ -1210,7 +1562,7 @@
     "line": 32
   },
   {
-    "sequence": 111,
+    "sequence": 143,
     "domain": "curriculum",
     "enumName": "CurriculumErrorCode",
     "constantName": "WEEKLY_CURRICULUM_PERIOD_ALREADY_ENDED",
@@ -1221,7 +1573,7 @@
     "line": 33
   },
   {
-    "sequence": 112,
+    "sequence": 144,
     "domain": "feedback",
     "enumName": "FeedbackErrorCode",
     "constantName": "USER_FEEDBACK_TEMPLATE_NOT_FOUND",
@@ -1232,7 +1584,7 @@
     "line": 15
   },
   {
-    "sequence": 113,
+    "sequence": 145,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "INTEGRATION_NOT_FOUND",
@@ -1243,7 +1595,7 @@
     "line": 14
   },
   {
-    "sequence": 114,
+    "sequence": 146,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "OAUTH_TOKEN_EXCHANGE_FAILED",
@@ -1254,7 +1606,7 @@
     "line": 15
   },
   {
-    "sequence": 115,
+    "sequence": 147,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "OAUTH_TOKEN_REFRESH_FAILED",
@@ -1265,7 +1617,7 @@
     "line": 16
   },
   {
-    "sequence": 116,
+    "sequence": 148,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "COMMENT_FETCH_FAILED",
@@ -1276,7 +1628,7 @@
     "line": 17
   },
   {
-    "sequence": 117,
+    "sequence": 149,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "FILE_METADATA_FETCH_FAILED",
@@ -1287,7 +1639,7 @@
     "line": 18
   },
   {
-    "sequence": 118,
+    "sequence": 150,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "WATCHED_FILE_NOT_FOUND",
@@ -1298,7 +1650,7 @@
     "line": 19
   },
   {
-    "sequence": 119,
+    "sequence": 151,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "WATCHED_FILE_ALREADY_EXISTS",
@@ -1309,7 +1661,7 @@
     "line": 20
   },
   {
-    "sequence": 120,
+    "sequence": 152,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "OAUTH_STATE_MISMATCH",
@@ -1320,7 +1672,7 @@
     "line": 21
   },
   {
-    "sequence": 121,
+    "sequence": 153,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "TOKEN_ENCRYPTION_FAILED",
@@ -1331,7 +1683,7 @@
     "line": 22
   },
   {
-    "sequence": 122,
+    "sequence": 154,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "DISCORD_MENTION_SEND_FAILED",
@@ -1342,7 +1694,7 @@
     "line": 23
   },
   {
-    "sequence": 123,
+    "sequence": 155,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "ROUTING_DOMAIN_NOT_FOUND",
@@ -1353,7 +1705,7 @@
     "line": 24
   },
   {
-    "sequence": 124,
+    "sequence": 156,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "ROUTING_DOMAIN_ALREADY_EXISTS",
@@ -1364,7 +1716,7 @@
     "line": 25
   },
   {
-    "sequence": 125,
+    "sequence": 157,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "ROUTING_DOMAIN_MENTION_NOT_FOUND",
@@ -1375,7 +1727,7 @@
     "line": 26
   },
   {
-    "sequence": 126,
+    "sequence": 158,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "ROUTING_DOMAIN_NOT_REGISTERED",
@@ -1386,7 +1738,7 @@
     "line": 27
   },
   {
-    "sequence": 127,
+    "sequence": 159,
     "domain": "figma",
     "enumName": "FigmaErrorCode",
     "constantName": "DIGEST_RANGE_INVALID",
@@ -1397,7 +1749,7 @@
     "line": 28
   },
   {
-    "sequence": 128,
+    "sequence": 160,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "INTERNAL_SERVER_ERROR",
@@ -1408,7 +1760,7 @@
     "line": 26
   },
   {
-    "sequence": 129,
+    "sequence": 161,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "BAD_REQUEST",
@@ -1419,7 +1771,7 @@
     "line": 28
   },
   {
-    "sequence": 130,
+    "sequence": 162,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "UNAUTHORIZED",
@@ -1430,7 +1782,7 @@
     "line": 29
   },
   {
-    "sequence": 131,
+    "sequence": 163,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "FORBIDDEN",
@@ -1441,7 +1793,7 @@
     "line": 30
   },
   {
-    "sequence": 132,
+    "sequence": 164,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "NOT_FOUND",
@@ -1452,7 +1804,7 @@
     "line": 31
   },
   {
-    "sequence": 133,
+    "sequence": 165,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "NOT_IMPLEMENTED",
@@ -1463,7 +1815,7 @@
     "line": 32
   },
   {
-    "sequence": 134,
+    "sequence": 166,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "INVALID_ENV",
@@ -1474,7 +1826,7 @@
     "line": 39
   },
   {
-    "sequence": 135,
+    "sequence": 167,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "PERMISSION_TYPE_NOT_IMPLEMENTED",
@@ -1485,7 +1837,7 @@
     "line": 42
   },
   {
-    "sequence": 136,
+    "sequence": 168,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "SECURITY_NOT_GIVEN",
@@ -1496,7 +1848,7 @@
     "line": 35
   },
   {
-    "sequence": 137,
+    "sequence": 169,
     "domain": "global",
     "enumName": "CommonErrorCode",
     "constantName": "SECURITY_FORBIDDEN",
@@ -1507,7 +1859,7 @@
     "line": 36
   },
   {
-    "sequence": 138,
+    "sequence": 170,
     "domain": "llm",
     "enumName": "LlmErrorCode",
     "constantName": "CHAT_COMPLETION_FAILED",
@@ -1518,7 +1870,7 @@
     "line": 14
   },
   {
-    "sequence": 139,
+    "sequence": 171,
     "domain": "llm",
     "enumName": "LlmErrorCode",
     "constantName": "CHAT_COMPLETION_INVALID_RESPONSE",
@@ -1529,7 +1881,7 @@
     "line": 15
   },
   {
-    "sequence": 140,
+    "sequence": 172,
     "domain": "llm",
     "enumName": "LlmErrorCode",
     "constantName": "PROVIDER_NOT_CONFIGURED",
@@ -1540,7 +1892,7 @@
     "line": 16
   },
   {
-    "sequence": 141,
+    "sequence": 173,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "SERVICE_UNDER_MAINTENANCE",
@@ -1551,7 +1903,7 @@
     "line": 14
   },
   {
-    "sequence": 142,
+    "sequence": 174,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "MAINTENANCE_WINDOW_NOT_FOUND",
@@ -1562,7 +1914,7 @@
     "line": 15
   },
   {
-    "sequence": 143,
+    "sequence": 175,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "INVALID_TIME_RANGE",
@@ -1573,7 +1925,7 @@
     "line": 16
   },
   {
-    "sequence": 144,
+    "sequence": 176,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "START_AT_IN_PAST",
@@ -1584,7 +1936,7 @@
     "line": 17
   },
   {
-    "sequence": 145,
+    "sequence": 177,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "TARGET_DOMAINS_REQUIRED",
@@ -1595,7 +1947,7 @@
     "line": 18
   },
   {
-    "sequence": 146,
+    "sequence": 178,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "OVERLAPPING_WINDOW",
@@ -1606,7 +1958,7 @@
     "line": 19
   },
   {
-    "sequence": 147,
+    "sequence": 179,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "ALREADY_ENDED",
@@ -1617,7 +1969,7 @@
     "line": 20
   },
   {
-    "sequence": 148,
+    "sequence": 180,
     "domain": "maintenance",
     "enumName": "MaintenanceErrorCode",
     "constantName": "NOT_SUPER_ADMIN",
@@ -1628,7 +1980,7 @@
     "line": 21
   },
   {
-    "sequence": 149,
+    "sequence": 181,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "MEMBER_NOT_FOUND",
@@ -1639,7 +1991,7 @@
     "line": 14
   },
   {
-    "sequence": 150,
+    "sequence": 182,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "MEMBER_ALREADY_EXISTS",
@@ -1650,7 +2002,7 @@
     "line": 15
   },
   {
-    "sequence": 151,
+    "sequence": 183,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "EMAIL_ALREADY_EXISTS",
@@ -1661,7 +2013,7 @@
     "line": 16
   },
   {
-    "sequence": 152,
+    "sequence": 184,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "MEMBER_ALREADY_WITHDRAWN",
@@ -1672,7 +2024,7 @@
     "line": 17
   },
   {
-    "sequence": 153,
+    "sequence": 185,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "INVALID_MEMBER_STATUS",
@@ -1683,7 +2035,7 @@
     "line": 18
   },
   {
-    "sequence": 154,
+    "sequence": 186,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "MEMBER_NOT_ACTIVE",
@@ -1694,7 +2046,7 @@
     "line": 19
   },
   {
-    "sequence": 155,
+    "sequence": 187,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "MEMBER_ALREADY_REGISTERED",
@@ -1705,7 +2057,7 @@
     "line": 20
   },
   {
-    "sequence": 156,
+    "sequence": 188,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "MEMBER_PROFILE_NOT_FOUND",
@@ -1716,7 +2068,7 @@
     "line": 21
   },
   {
-    "sequence": 157,
+    "sequence": 189,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "MEMBER_SCHOOL_NOT_ASSIGNED",
@@ -1727,7 +2079,7 @@
     "line": 22
   },
   {
-    "sequence": 158,
+    "sequence": 190,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "CREDENTIAL_ALREADY_REGISTERED",
@@ -1738,7 +2090,7 @@
     "line": 23
   },
   {
-    "sequence": 159,
+    "sequence": 191,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "CREDENTIAL_NOT_REGISTERED",
@@ -1749,7 +2101,7 @@
     "line": 24
   },
   {
-    "sequence": 160,
+    "sequence": 192,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "INVALID_LOGIN_ID",
@@ -1760,7 +2112,7 @@
     "line": 25
   },
   {
-    "sequence": 161,
+    "sequence": 193,
     "domain": "member",
     "enumName": "MemberErrorCode",
     "constantName": "INVALID_PASSWORD",
@@ -1771,7 +2123,7 @@
     "line": 26
   },
   {
-    "sequence": 162,
+    "sequence": 194,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NOTICE_NOT_FOUND",
@@ -1782,7 +2134,7 @@
     "line": 14
   },
   {
-    "sequence": 163,
+    "sequence": 195,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "ALREADY_PUBLISHED_NOTICE",
@@ -1793,7 +2145,7 @@
     "line": 15
   },
   {
-    "sequence": 164,
+    "sequence": 196,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "INVALID_NOTICE_TITLE",
@@ -1804,7 +2156,7 @@
     "line": 16
   },
   {
-    "sequence": 165,
+    "sequence": 197,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "INVALID_NOTICE_CONTENT",
@@ -1815,7 +2167,7 @@
     "line": 17
   },
   {
-    "sequence": 166,
+    "sequence": 198,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "INVALID_NOTICE_STATUS_FOR_REMINDER",
@@ -1826,7 +2178,7 @@
     "line": 18
   },
   {
-    "sequence": 167,
+    "sequence": 199,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "AUTHOR_REQUIRED",
@@ -1837,7 +2189,7 @@
     "line": 19
   },
   {
-    "sequence": 168,
+    "sequence": 200,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NOTICE_SCOPE_REQUIRED",
@@ -1848,7 +2200,7 @@
     "line": 20
   },
   {
-    "sequence": 169,
+    "sequence": 201,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NOTICE_AUTHOR_MISMATCH",
@@ -1859,7 +2211,7 @@
     "line": 21
   },
   {
-    "sequence": 170,
+    "sequence": 202,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NO_WRITE_PERMISSION",
@@ -1870,7 +2222,7 @@
     "line": 22
   },
   {
-    "sequence": 171,
+    "sequence": 203,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "INVALID_TARGET_SETTING",
@@ -1881,7 +2233,7 @@
     "line": 26
   },
   {
-    "sequence": 172,
+    "sequence": 204,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NO_TARGET_FOUND",
@@ -1892,7 +2244,7 @@
     "line": 27
   },
   {
-    "sequence": 173,
+    "sequence": 205,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NO_READ_PERMISSION",
@@ -1903,7 +2255,7 @@
     "line": 24
   },
   {
-    "sequence": 174,
+    "sequence": 206,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NOT_IMPLEMENTED_YET",
@@ -1914,7 +2266,7 @@
     "line": 45
   },
   {
-    "sequence": 175,
+    "sequence": 207,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "VOTE_IDS_REQUIRED",
@@ -1925,7 +2277,7 @@
     "line": 30
   },
   {
-    "sequence": 176,
+    "sequence": 208,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "IMAGE_URLS_REQUIRED",
@@ -1936,7 +2288,7 @@
     "line": 31
   },
   {
-    "sequence": 177,
+    "sequence": 209,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "LINK_URLS_REQUIRED",
@@ -1947,7 +2299,7 @@
     "line": 32
   },
   {
-    "sequence": 178,
+    "sequence": 210,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NOTICE_VOTE_NOT_FOUND",
@@ -1958,7 +2310,7 @@
     "line": 33
   },
   {
-    "sequence": 179,
+    "sequence": 211,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NOTICE_IMAGE_NOT_FOUND",
@@ -1969,7 +2321,7 @@
     "line": 34
   },
   {
-    "sequence": 180,
+    "sequence": 212,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "NOTICE_LINK_NOT_FOUND",
@@ -1980,7 +2332,7 @@
     "line": 35
   },
   {
-    "sequence": 181,
+    "sequence": 213,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "IMAGE_LIMIT_EXCEEDED",
@@ -1991,7 +2343,7 @@
     "line": 36
   },
   {
-    "sequence": 182,
+    "sequence": 214,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "VOTE_ALREADY_EXISTS",
@@ -2002,7 +2354,7 @@
     "line": 37
   },
   {
-    "sequence": 183,
+    "sequence": 215,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "INVALID_VOTE_OPTION_COUNT",
@@ -2013,7 +2365,7 @@
     "line": 38
   },
   {
-    "sequence": 184,
+    "sequence": 216,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "INVALID_VOTE_OPTION_CONTENT",
@@ -2024,7 +2376,7 @@
     "line": 39
   },
   {
-    "sequence": 185,
+    "sequence": 217,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "VOTE_NOT_STARTED",
@@ -2035,7 +2387,7 @@
     "line": 40
   },
   {
-    "sequence": 186,
+    "sequence": 218,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "VOTE_CLOSED",
@@ -2046,7 +2398,7 @@
     "line": 41
   },
   {
-    "sequence": 187,
+    "sequence": 219,
     "domain": "notice",
     "enumName": "NoticeErrorCode",
     "constantName": "SELECTED_OPTION_IDS_REQUIRED",
@@ -2057,7 +2409,7 @@
     "line": 42
   },
   {
-    "sequence": 188,
+    "sequence": 220,
     "domain": "notification",
     "enumName": "EmailErrorCode",
     "constantName": "EMAIL_TEMPLATE_RENDER_FAILED",
@@ -2068,7 +2420,7 @@
     "line": 13
   },
   {
-    "sequence": 189,
+    "sequence": 221,
     "domain": "notification",
     "enumName": "EmailErrorCode",
     "constantName": "EMAIL_SEND_FAILED",
@@ -2079,7 +2431,7 @@
     "line": 14
   },
   {
-    "sequence": 190,
+    "sequence": 222,
     "domain": "notification",
     "enumName": "FcmErrorCode",
     "constantName": "FCM_NOT_FOUND",
@@ -2090,7 +2442,7 @@
     "line": 14
   },
   {
-    "sequence": 191,
+    "sequence": 223,
     "domain": "notification",
     "enumName": "FcmErrorCode",
     "constantName": "USER_FCM_NOT_FOUND",
@@ -2101,7 +2453,7 @@
     "line": 15
   },
   {
-    "sequence": 192,
+    "sequence": 224,
     "domain": "notification",
     "enumName": "FcmErrorCode",
     "constantName": "FCM_SEND_FAILED",
@@ -2112,7 +2464,7 @@
     "line": 16
   },
   {
-    "sequence": 193,
+    "sequence": 225,
     "domain": "notification",
     "enumName": "FcmErrorCode",
     "constantName": "TOPIC_SUBSCRIBE_FAILED",
@@ -2123,7 +2475,7 @@
     "line": 17
   },
   {
-    "sequence": 194,
+    "sequence": 226,
     "domain": "notification",
     "enumName": "FcmErrorCode",
     "constantName": "TOPIC_UNSUBSCRIBE_FAILED",
@@ -2134,7 +2486,7 @@
     "line": 18
   },
   {
-    "sequence": 195,
+    "sequence": 227,
     "domain": "notification",
     "enumName": "FcmErrorCode",
     "constantName": "TOPIC_SEND_FAILED",
@@ -2145,7 +2497,7 @@
     "line": 19
   },
   {
-    "sequence": 196,
+    "sequence": 228,
     "domain": "notification",
     "enumName": "FcmErrorCode",
     "constantName": "RATE_LIMITED",
@@ -2156,7 +2508,7 @@
     "line": 20
   },
   {
-    "sequence": 197,
+    "sequence": 229,
     "domain": "notification",
     "enumName": "WebhookErrorCode",
     "constantName": "WEBHOOK_SEND_FAILED",
@@ -2167,7 +2519,7 @@
     "line": 14
   },
   {
-    "sequence": 198,
+    "sequence": 230,
     "domain": "notification",
     "enumName": "WebhookErrorCode",
     "constantName": "WEBHOOK_ADAPTER_NOT_FOUND",
@@ -2178,7 +2530,7 @@
     "line": 15
   },
   {
-    "sequence": 199,
+    "sequence": 231,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "GISU_REQUIRED",
@@ -2189,7 +2541,7 @@
     "line": 14
   },
   {
-    "sequence": 200,
+    "sequence": 232,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "ORGAN_NAME_REQUIRED",
@@ -2200,7 +2552,7 @@
     "line": 15
   },
   {
-    "sequence": 201,
+    "sequence": 233,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "SCHOOL_REQUIRED",
@@ -2211,7 +2563,7 @@
     "line": 16
   },
   {
-    "sequence": 202,
+    "sequence": 234,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "CHAPTER_REQUIRED",
@@ -2222,7 +2574,7 @@
     "line": 17
   },
   {
-    "sequence": 203,
+    "sequence": 235,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "GISU_START_AT_REQUIRED",
@@ -2233,7 +2585,7 @@
     "line": 20
   },
   {
-    "sequence": 204,
+    "sequence": 236,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "GISU_END_AT_REQUIRED",
@@ -2244,7 +2596,7 @@
     "line": 21
   },
   {
-    "sequence": 205,
+    "sequence": 237,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "GISU_PERIOD_INVALID",
@@ -2255,7 +2607,7 @@
     "line": 22
   },
   {
-    "sequence": 206,
+    "sequence": 238,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "SCHOOL_NAME_REQUIRED",
@@ -2266,7 +2618,7 @@
     "line": 24
   },
   {
-    "sequence": 207,
+    "sequence": 239,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "SCHOOL_DOMAIN_REQUIRED",
@@ -2277,7 +2629,7 @@
     "line": 25
   },
   {
-    "sequence": 208,
+    "sequence": 240,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_NAME_REQUIRED",
@@ -2288,7 +2640,7 @@
     "line": 27
   },
   {
-    "sequence": 209,
+    "sequence": 241,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_LEADER_REQUIRED",
@@ -2299,7 +2651,7 @@
     "line": 28
   },
   {
-    "sequence": 210,
+    "sequence": 242,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_REQUIRED",
@@ -2310,7 +2662,7 @@
     "line": 30
   },
   {
-    "sequence": 211,
+    "sequence": 243,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_MEMBER_REQUIRED",
@@ -2321,7 +2673,7 @@
     "line": 31
   },
   {
-    "sequence": 212,
+    "sequence": 244,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_MEMBER_ID_REQUIRED",
@@ -2332,7 +2684,7 @@
     "line": 32
   },
   {
-    "sequence": 213,
+    "sequence": 245,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_MEMBER_ALREADY_EXISTS",
@@ -2343,7 +2695,7 @@
     "line": 33
   },
   {
-    "sequence": 214,
+    "sequence": 246,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_MEMBER_NOT_FOUND",
@@ -2354,7 +2706,7 @@
     "line": 34
   },
   {
-    "sequence": 215,
+    "sequence": 247,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "CHAPTER_NOT_FOUND",
@@ -2365,7 +2717,7 @@
     "line": 36
   },
   {
-    "sequence": 216,
+    "sequence": 248,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "SCHOOL_NOT_FOUND",
@@ -2376,7 +2728,7 @@
     "line": 37
   },
   {
-    "sequence": 217,
+    "sequence": 249,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "GISU_IS_ACTIVE_NOT_FOUND",
@@ -2387,7 +2739,7 @@
     "line": 38
   },
   {
-    "sequence": 218,
+    "sequence": 250,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "GISU_NOT_FOUND",
@@ -2398,7 +2750,7 @@
     "line": 39
   },
   {
-    "sequence": 219,
+    "sequence": 251,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "PART_REQUIRED",
@@ -2409,7 +2761,7 @@
     "line": 40
   },
   {
-    "sequence": 220,
+    "sequence": 252,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_NAME_INVALID",
@@ -2420,7 +2772,7 @@
     "line": 41
   },
   {
-    "sequence": 221,
+    "sequence": 253,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_NOT_FOUND",
@@ -2431,7 +2783,7 @@
     "line": 42
   },
   {
-    "sequence": 222,
+    "sequence": 254,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_CHALLENGER_INVALID",
@@ -2442,7 +2794,7 @@
     "line": 44
   },
   {
-    "sequence": 223,
+    "sequence": 255,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "LEADER_CANNOT_BE_MEMBER",
@@ -2453,7 +2805,7 @@
     "line": 46
   },
   {
-    "sequence": 224,
+    "sequence": 256,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_MEMBER_DUPLICATED",
@@ -2464,7 +2816,7 @@
     "line": 47
   },
   {
-    "sequence": 225,
+    "sequence": 257,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "NO_SUCH_CHAPTER_SCHOOL",
@@ -2475,7 +2827,7 @@
     "line": 48
   },
   {
-    "sequence": 226,
+    "sequence": 258,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "GISU_ALREADY_EXISTS",
@@ -2486,7 +2838,7 @@
     "line": 49
   },
   {
-    "sequence": 227,
+    "sequence": 259,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "SCHOOL_ALREADY_ASSIGNED_TO_CHAPTER",
@@ -2497,7 +2849,7 @@
     "line": 50
   },
   {
-    "sequence": 228,
+    "sequence": 260,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "CHAPTER_NAME_DUPLICATED",
@@ -2508,7 +2860,7 @@
     "line": 52
   },
   {
-    "sequence": 229,
+    "sequence": 261,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_ACCESS_DENIED",
@@ -2519,7 +2871,7 @@
     "line": 54
   },
   {
-    "sequence": 230,
+    "sequence": 262,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "GISU_HAS_ASSOCIATED_CHAPTERS",
@@ -2530,7 +2882,7 @@
     "line": 56
   },
   {
-    "sequence": 231,
+    "sequence": 263,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_MENTOR_REQUIRED",
@@ -2541,7 +2893,7 @@
     "line": 58
   },
   {
-    "sequence": 232,
+    "sequence": 264,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_MENTOR_ID_REQUIRED",
@@ -2552,7 +2904,7 @@
     "line": 59
   },
   {
-    "sequence": 233,
+    "sequence": 265,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_MEMBER_ALREADY_IN_PART_STUDY",
@@ -2563,7 +2915,7 @@
     "line": 61
   },
   {
-    "sequence": 234,
+    "sequence": 266,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_MENTOR_DUPLICATED",
@@ -2574,7 +2926,7 @@
     "line": 62
   },
   {
-    "sequence": 235,
+    "sequence": 267,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_MENTOR_NOT_FOUND",
@@ -2585,7 +2937,7 @@
     "line": 63
   },
   {
-    "sequence": 236,
+    "sequence": 268,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "STUDY_GROUP_SCHEDULE_ATTENDANCE_POLICY_REQUIRED",
@@ -2596,7 +2948,7 @@
     "line": 65
   },
   {
-    "sequence": 237,
+    "sequence": 269,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_GENERATION_REQUIRED",
@@ -2607,7 +2959,7 @@
     "line": 68
   },
   {
-    "sequence": 238,
+    "sequence": 270,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_GENERATION_NOT_FOUND",
@@ -2618,7 +2970,7 @@
     "line": 69
   },
   {
-    "sequence": 239,
+    "sequence": 271,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_GENERATION_ALREADY_EXISTS",
@@ -2629,7 +2981,7 @@
     "line": 70
   },
   {
-    "sequence": 240,
+    "sequence": 272,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_GENERATION_START_AT_REQUIRED",
@@ -2640,7 +2992,7 @@
     "line": 71
   },
   {
-    "sequence": 241,
+    "sequence": 273,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_GENERATION_END_AT_REQUIRED",
@@ -2651,7 +3003,7 @@
     "line": 73
   },
   {
-    "sequence": 242,
+    "sequence": 274,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_GENERATION_PERIOD_INVALID",
@@ -2662,7 +3014,7 @@
     "line": 75
   },
   {
-    "sequence": 243,
+    "sequence": 275,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_MEMBER_REQUIRED",
@@ -2673,7 +3025,7 @@
     "line": 77
   },
   {
-    "sequence": 244,
+    "sequence": 276,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_MEMBER_NOT_FOUND",
@@ -2684,7 +3036,7 @@
     "line": 78
   },
   {
-    "sequence": 245,
+    "sequence": 277,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_MEMBER_ALREADY_EXISTS",
@@ -2695,7 +3047,7 @@
     "line": 79
   },
   {
-    "sequence": 246,
+    "sequence": 278,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_MEMBER_ID_REQUIRED",
@@ -2706,7 +3058,7 @@
     "line": 80
   },
   {
-    "sequence": 247,
+    "sequence": 279,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_FUNCTIONAL_MEMBERSHIP_REQUIRED",
@@ -2717,7 +3069,7 @@
     "line": 81
   },
   {
-    "sequence": 248,
+    "sequence": 280,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_FUNCTIONAL_UNIT_REQUIRED",
@@ -2728,7 +3080,7 @@
     "line": 83
   },
   {
-    "sequence": 249,
+    "sequence": 281,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_ROLE_REQUIRED",
@@ -2739,7 +3091,7 @@
     "line": 85
   },
   {
-    "sequence": 250,
+    "sequence": 282,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_POSITION_REQUIRED",
@@ -2750,7 +3102,7 @@
     "line": 86
   },
   {
-    "sequence": 251,
+    "sequence": 283,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_ACCESS_DENIED",
@@ -2761,7 +3113,7 @@
     "line": 87
   },
   {
-    "sequence": 252,
+    "sequence": 284,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_FUNCTIONAL_UNIT_NOT_FOUND",
@@ -2772,7 +3124,7 @@
     "line": 88
   },
   {
-    "sequence": 253,
+    "sequence": 285,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_FUNCTIONAL_UNIT_TYPE_REQUIRED",
@@ -2783,7 +3135,7 @@
     "line": 90
   },
   {
-    "sequence": 254,
+    "sequence": 286,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_FUNCTIONAL_UNIT_CODE_REQUIRED",
@@ -2794,7 +3146,7 @@
     "line": 92
   },
   {
-    "sequence": 255,
+    "sequence": 287,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_FUNCTIONAL_UNIT_NAME_REQUIRED",
@@ -2805,7 +3157,7 @@
     "line": 94
   },
   {
-    "sequence": 256,
+    "sequence": 288,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_SQUAD_REQUIRED",
@@ -2816,7 +3168,7 @@
     "line": 96
   },
   {
-    "sequence": 257,
+    "sequence": 289,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_SQUAD_NOT_FOUND",
@@ -2827,7 +3179,7 @@
     "line": 97
   },
   {
-    "sequence": 258,
+    "sequence": 290,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_SQUAD_CODE_REQUIRED",
@@ -2838,7 +3190,7 @@
     "line": 98
   },
   {
-    "sequence": 259,
+    "sequence": 291,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_SQUAD_NAME_REQUIRED",
@@ -2849,7 +3201,7 @@
     "line": 99
   },
   {
-    "sequence": 260,
+    "sequence": 292,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_SQUAD_PERIOD_INVALID",
@@ -2860,7 +3212,7 @@
     "line": 100
   },
   {
-    "sequence": 261,
+    "sequence": 293,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_SQUAD_PARTICIPANT_REQUIRED",
@@ -2871,7 +3223,7 @@
     "line": 102
   },
   {
-    "sequence": 262,
+    "sequence": 294,
     "domain": "organization",
     "enumName": "OrganizationErrorCode",
     "constantName": "UMC_PRODUCT_FUNCTIONAL_UNIT_PARENT_INVALID",
@@ -2882,7 +3234,7 @@
     "line": 104
   },
   {
-    "sequence": 263,
+    "sequence": 295,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_NOT_FOUND",
@@ -2893,7 +3245,7 @@
     "line": 15
   },
   {
-    "sequence": 264,
+    "sequence": 296,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "ALREADY_COMPLETED_PROJECT",
@@ -2904,7 +3256,7 @@
     "line": 16
   },
   {
-    "sequence": 265,
+    "sequence": 297,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_ABORT_UNAVAILABLE",
@@ -2915,7 +3267,7 @@
     "line": 17
   },
   {
-    "sequence": 266,
+    "sequence": 298,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "APPLICATION_NOT_SUBMITTED",
@@ -2926,7 +3278,7 @@
     "line": 20
   },
   {
-    "sequence": 267,
+    "sequence": 299,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "APPLICATION_SUBMIT_NOT_AVAILABLE",
@@ -2937,7 +3289,7 @@
     "line": 21
   },
   {
-    "sequence": 268,
+    "sequence": 300,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "APPLICATION_FORM_NOT_FOUND",
@@ -2948,7 +3300,7 @@
     "line": 29
   },
   {
-    "sequence": 269,
+    "sequence": 301,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "APPLICATION_FORM_ACCESS_NOT_ALLOWED",
@@ -2959,7 +3311,7 @@
     "line": 30
   },
   {
-    "sequence": 270,
+    "sequence": 302,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_DRAFT_ALREADY_IN_PROGRESS",
@@ -2970,7 +3322,7 @@
     "line": 40
   },
   {
-    "sequence": 271,
+    "sequence": 303,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_INVALID_STATE",
@@ -2981,7 +3333,7 @@
     "line": 41
   },
   {
-    "sequence": 272,
+    "sequence": 304,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_OWNER_NOT_PLAN_CHALLENGER",
@@ -2992,7 +3344,7 @@
     "line": 42
   },
   {
-    "sequence": 273,
+    "sequence": 305,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_SUBMIT_VALIDATION_FAILED",
@@ -3003,7 +3355,7 @@
     "line": 43
   },
   {
-    "sequence": 274,
+    "sequence": 306,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_ACCESS_DENIED",
@@ -3014,7 +3366,7 @@
     "line": 44
   },
   {
-    "sequence": 275,
+    "sequence": 307,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "APPLICATION_FORM_POLICY_PARTS_EMPTY",
@@ -3025,7 +3377,7 @@
     "line": 32
   },
   {
-    "sequence": 276,
+    "sequence": 308,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "APPLICATION_FORM_INVALID_SECTION_ID",
@@ -3036,7 +3388,7 @@
     "line": 33
   },
   {
-    "sequence": 277,
+    "sequence": 309,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "APPLICATION_FORM_INVALID_QUESTION_ID",
@@ -3047,7 +3399,7 @@
     "line": 34
   },
   {
-    "sequence": 278,
+    "sequence": 310,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "APPLICATION_FORM_INVALID_OPTION_ID",
@@ -3058,7 +3410,7 @@
     "line": 35
   },
   {
-    "sequence": 279,
+    "sequence": 311,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "APPLICATION_FORM_OPTIONS_NOT_ALLOWED",
@@ -3069,7 +3421,7 @@
     "line": 36
   },
   {
-    "sequence": 280,
+    "sequence": 312,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "APPLICATION_FORM_OPTIONS_REQUIRED",
@@ -3080,7 +3432,7 @@
     "line": 37
   },
   {
-    "sequence": 281,
+    "sequence": 313,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "APPLICATION_DRAFT_NOT_EXPOSABLE",
@@ -3091,7 +3443,7 @@
     "line": 22
   },
   {
-    "sequence": 282,
+    "sequence": 314,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "APPLICATION_DRAFT_FILTER_NOT_ALLOWED",
@@ -3102,7 +3454,7 @@
     "line": 24
   },
   {
-    "sequence": 283,
+    "sequence": 315,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_NOT_FOUND",
@@ -3113,7 +3465,7 @@
     "line": 26
   },
   {
-    "sequence": 284,
+    "sequence": 316,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_DELETE_NOT_ALLOWED_IN_STATUS",
@@ -3124,7 +3476,7 @@
     "line": 46
   },
   {
-    "sequence": 285,
+    "sequence": 317,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_ABORT_REASON_REQUIRED",
@@ -3135,7 +3487,7 @@
     "line": 48
   },
   {
-    "sequence": 286,
+    "sequence": 318,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MEMBER_NOT_FOUND",
@@ -3146,7 +3498,7 @@
     "line": 51
   },
   {
-    "sequence": 287,
+    "sequence": 319,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MEMBER_ALREADY_EXISTS",
@@ -3157,7 +3509,7 @@
     "line": 52
   },
   {
-    "sequence": 288,
+    "sequence": 320,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER",
@@ -3168,7 +3520,7 @@
     "line": 53
   },
   {
-    "sequence": 289,
+    "sequence": 321,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_PART_QUOTA_INVALID",
@@ -3179,7 +3531,7 @@
     "line": 56
   },
   {
-    "sequence": 290,
+    "sequence": 322,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_PART_QUOTA_REQUIRED",
@@ -3190,7 +3542,7 @@
     "line": 57
   },
   {
-    "sequence": 291,
+    "sequence": 323,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_PART_QUOTA_DUPLICATE",
@@ -3201,7 +3553,7 @@
     "line": 58
   },
   {
-    "sequence": 292,
+    "sequence": 324,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_DRAFT_APPLICATION_NOT_FOUND",
@@ -3212,7 +3564,7 @@
     "line": 82
   },
   {
-    "sequence": 293,
+    "sequence": 325,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_PART_NOT_ALLOWED",
@@ -3223,7 +3575,7 @@
     "line": 83
   },
   {
-    "sequence": 294,
+    "sequence": 326,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM",
@@ -3234,7 +3586,7 @@
     "line": 84
   },
   {
-    "sequence": 295,
+    "sequence": 327,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_DUPLICATE_SUBMISSION",
@@ -3245,7 +3597,7 @@
     "line": 85
   },
   {
-    "sequence": 296,
+    "sequence": 328,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_ROUND_NOT_OPEN",
@@ -3256,7 +3608,7 @@
     "line": 86
   },
   {
-    "sequence": 297,
+    "sequence": 329,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_ROUND_TYPE_MISMATCH",
@@ -3267,7 +3619,7 @@
     "line": 87
   },
   {
-    "sequence": 298,
+    "sequence": 330,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_ALREADY_EXISTS",
@@ -3278,7 +3630,7 @@
     "line": 88
   },
   {
-    "sequence": 299,
+    "sequence": 331,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_SELF_APPLY_NOT_ALLOWED",
@@ -3289,7 +3641,7 @@
     "line": 89
   },
   {
-    "sequence": 300,
+    "sequence": 332,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_DECISION_INVALID_TRANSITION",
@@ -3300,7 +3652,7 @@
     "line": 90
   },
   {
-    "sequence": 301,
+    "sequence": 333,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_QUOTA_EXCEEDED",
@@ -3311,7 +3663,7 @@
     "line": 92
   },
   {
-    "sequence": 302,
+    "sequence": 334,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_CANCEL_NOT_ALLOWED",
@@ -3322,7 +3674,7 @@
     "line": 94
   },
   {
-    "sequence": 303,
+    "sequence": 335,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_APPLICATION_CANCEL_ROUND_CLOSED",
@@ -3333,7 +3685,7 @@
     "line": 95
   },
   {
-    "sequence": 304,
+    "sequence": 336,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_NOT_FOUND",
@@ -3344,7 +3696,7 @@
     "line": 61
   },
   {
-    "sequence": 305,
+    "sequence": 337,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_INVALID_PERIOD",
@@ -3355,7 +3707,7 @@
     "line": 62
   },
   {
-    "sequence": 306,
+    "sequence": 338,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED",
@@ -3366,7 +3718,7 @@
     "line": 64
   },
   {
-    "sequence": 307,
+    "sequence": 339,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_ACCESS_DENIED",
@@ -3377,7 +3729,7 @@
     "line": 66
   },
   {
-    "sequence": 308,
+    "sequence": 340,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_DELETE_CONFLICT",
@@ -3388,7 +3740,7 @@
     "line": 68
   },
   {
-    "sequence": 309,
+    "sequence": 341,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_TIME_REQUIRES_CHAPTER",
@@ -3399,7 +3751,7 @@
     "line": 70
   },
   {
-    "sequence": 310,
+    "sequence": 342,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_LOCKED",
@@ -3410,7 +3762,7 @@
     "line": 72
   },
   {
-    "sequence": 311,
+    "sequence": 343,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_NOT_FINALIZABLE",
@@ -3421,7 +3773,7 @@
     "line": 74
   },
   {
-    "sequence": 312,
+    "sequence": 344,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_POLICY_NOT_FOUND",
@@ -3432,7 +3784,7 @@
     "line": 76
   },
   {
-    "sequence": 313,
+    "sequence": 345,
     "domain": "project",
     "enumName": "ProjectErrorCode",
     "constantName": "PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID",
@@ -3443,7 +3795,7 @@
     "line": 78
   },
   {
-    "sequence": 314,
+    "sequence": 346,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "INVALID_TIME_RANGE",
@@ -3454,7 +3806,7 @@
     "line": 14
   },
   {
-    "sequence": 315,
+    "sequence": 347,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "SCHEDULE_NOT_FOUND",
@@ -3465,7 +3817,7 @@
     "line": 16
   },
   {
-    "sequence": 316,
+    "sequence": 348,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "TAG_REQUIRED",
@@ -3476,7 +3828,7 @@
     "line": 18
   },
   {
-    "sequence": 317,
+    "sequence": 349,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "NOT_FIRST_ATTENDANCE_REQUEST",
@@ -3487,7 +3839,7 @@
     "line": 20
   },
   {
-    "sequence": 318,
+    "sequence": 350,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "NO_ATTENDANCE_RECORD",
@@ -3498,7 +3850,7 @@
     "line": 22
   },
   {
-    "sequence": 319,
+    "sequence": 351,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "INVALID_ATTENDANCE_STATUS_FOR_EXCUSE",
@@ -3509,7 +3861,7 @@
     "line": 24
   },
   {
-    "sequence": 320,
+    "sequence": 352,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "INVALID_ATTENDANCE_STATUS_FOR_APPROVAL",
@@ -3520,7 +3872,7 @@
     "line": 27
   },
   {
-    "sequence": 321,
+    "sequence": 353,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "INVALID_ATTENDANCE_STATUS_FOR_REJECT",
@@ -3531,7 +3883,7 @@
     "line": 29
   },
   {
-    "sequence": 322,
+    "sequence": 354,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "NO_EXCUSE_REASON_GIVEN",
@@ -3542,7 +3894,7 @@
     "line": 31
   },
   {
-    "sequence": 323,
+    "sequence": 355,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "ATTENDANCE_NOT_REQUIRES_CONFIRM",
@@ -3553,7 +3905,7 @@
     "line": 33
   },
   {
-    "sequence": 324,
+    "sequence": 356,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "SCHEDULE_ENDED",
@@ -3564,7 +3916,7 @@
     "line": 36
   },
   {
-    "sequence": 325,
+    "sequence": 357,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "CHECK_IN_TOO_EARLY",
@@ -3575,7 +3927,7 @@
     "line": 38
   },
   {
-    "sequence": 326,
+    "sequence": 358,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "OFFLINE_SCHEDULE_REQUIRES_LOCATION",
@@ -3586,7 +3938,7 @@
     "line": 40
   },
   {
-    "sequence": 327,
+    "sequence": 359,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST",
@@ -3597,7 +3949,7 @@
     "line": 42
   },
   {
-    "sequence": 328,
+    "sequence": 360,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "PARTICIPANT_NOT_FOUND",
@@ -3608,7 +3960,7 @@
     "line": 44
   },
   {
-    "sequence": 329,
+    "sequence": 361,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "LOCATION_NOT_VERIFIED",
@@ -3619,7 +3971,7 @@
     "line": 46
   },
   {
-    "sequence": 330,
+    "sequence": 362,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "ONLINE_SCHEDULE_SHOULD_NOT_HAVE_LOCATION",
@@ -3630,7 +3982,7 @@
     "line": 48
   },
   {
-    "sequence": 331,
+    "sequence": 363,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "NOT_ACTIVE_GISU_SCHEDULE",
@@ -3641,7 +3993,7 @@
     "line": 51
   },
   {
-    "sequence": 332,
+    "sequence": 364,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "NOT_SCHEDULE_PARTICIPANT",
@@ -3652,7 +4004,7 @@
     "line": 54
   },
   {
-    "sequence": 333,
+    "sequence": 365,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "ATTENDANCE_POLICY_REQUIRED",
@@ -3663,7 +4015,7 @@
     "line": 56
   },
   {
-    "sequence": 334,
+    "sequence": 366,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "STARTED_SCHEDULE_CANT_BE_EDITED",
@@ -3674,7 +4026,7 @@
     "line": 58
   },
   {
-    "sequence": 335,
+    "sequence": 367,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "CANNOT_CREATE_SCHEDULE",
@@ -3685,7 +4037,7 @@
     "line": 60
   },
   {
-    "sequence": 336,
+    "sequence": 368,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "EXCEEDED_MAX_PARTICIPANTS",
@@ -3696,7 +4048,7 @@
     "line": 62
   },
   {
-    "sequence": 337,
+    "sequence": 369,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "CANNOT_CREATE_ATTENDANCE_REQUIRED_SCHEDULE",
@@ -3707,7 +4059,7 @@
     "line": 64
   },
   {
-    "sequence": 338,
+    "sequence": 370,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "INVALID_MEMBER_INVITE",
@@ -3718,7 +4070,7 @@
     "line": 67
   },
   {
-    "sequence": 339,
+    "sequence": 371,
     "domain": "schedule",
     "enumName": "ScheduleErrorCode",
     "constantName": "SCHEDULE_HAS_ATTENDANCE_RECORD",
@@ -3729,7 +4081,7 @@
     "line": 69
   },
   {
-    "sequence": 340,
+    "sequence": 372,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "FILE_NOT_FOUND",
@@ -3740,7 +4092,7 @@
     "line": 15
   },
   {
-    "sequence": 341,
+    "sequence": 373,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "FILE_UPLOAD_NOT_COMPLETED",
@@ -3751,7 +4103,7 @@
     "line": 16
   },
   {
-    "sequence": 342,
+    "sequence": 374,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "FILE_ALREADY_UPLOADED",
@@ -3762,7 +4114,7 @@
     "line": 17
   },
   {
-    "sequence": 343,
+    "sequence": 375,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "INVALID_FILE_EXTENSION",
@@ -3773,7 +4125,7 @@
     "line": 22
   },
   {
-    "sequence": 344,
+    "sequence": 376,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "FILE_SIZE_EXCEEDED",
@@ -3784,7 +4136,7 @@
     "line": 23
   },
   {
-    "sequence": 345,
+    "sequence": 377,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "INVALID_CONTENT_TYPE",
@@ -3795,7 +4147,7 @@
     "line": 24
   },
   {
-    "sequence": 346,
+    "sequence": 378,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "STORAGE_UPLOAD_FAILED",
@@ -3806,7 +4158,7 @@
     "line": 27
   },
   {
-    "sequence": 347,
+    "sequence": 379,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "STORAGE_DELETE_FAILED",
@@ -3817,7 +4169,7 @@
     "line": 28
   },
   {
-    "sequence": 348,
+    "sequence": 380,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "STORAGE_URL_GENERATION_FAILED",
@@ -3828,7 +4180,7 @@
     "line": 29
   },
   {
-    "sequence": 349,
+    "sequence": 381,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "CDN_SIGNING_FAILED",
@@ -3839,7 +4191,7 @@
     "line": 32
   },
   {
-    "sequence": 350,
+    "sequence": 382,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "NO_ENV_KEYS",
@@ -3850,7 +4202,7 @@
     "line": 33
   },
   {
-    "sequence": 351,
+    "sequence": 383,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "INVALID_SPRING_PROFILE",
@@ -3861,7 +4213,7 @@
     "line": 34
   },
   {
-    "sequence": 352,
+    "sequence": 384,
     "domain": "storage",
     "enumName": "StorageErrorCode",
     "constantName": "FILE_DELETE_FORBIDDEN",
@@ -3872,7 +4224,7 @@
     "line": 18
   },
   {
-    "sequence": 353,
+    "sequence": 385,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "SURVEY_NOT_FOUND",
@@ -3883,7 +4235,7 @@
     "line": 14
   },
   {
-    "sequence": 354,
+    "sequence": 386,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "SURVEY_NOT_DRAFT",
@@ -3894,7 +4246,7 @@
     "line": 15
   },
   {
-    "sequence": 355,
+    "sequence": 387,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "QUESTION_NOT_FOUND",
@@ -3905,7 +4257,7 @@
     "line": 16
   },
   {
-    "sequence": 356,
+    "sequence": 388,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "FORM_RESPONSE_NOT_FOUND",
@@ -3916,7 +4268,7 @@
     "line": 18
   },
   {
-    "sequence": 357,
+    "sequence": 389,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "QUESTION_IS_NOT_OWNED_BY_FORM",
@@ -3927,7 +4279,7 @@
     "line": 19
   },
   {
-    "sequence": 358,
+    "sequence": 390,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "FORM_RESPONSE_FORBIDDEN",
@@ -3938,7 +4290,7 @@
     "line": 20
   },
   {
-    "sequence": 359,
+    "sequence": 391,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "QUESTION_TYPE_MISMATCH",
@@ -3949,7 +4301,7 @@
     "line": 22
   },
   {
-    "sequence": 360,
+    "sequence": 392,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "REQUIRED_QUESTION_NOT_ANSWERED",
@@ -3960,7 +4312,7 @@
     "line": 23
   },
   {
-    "sequence": 361,
+    "sequence": 393,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "INVALID_ANSWER_FORMAT",
@@ -3971,7 +4323,7 @@
     "line": 24
   },
   {
-    "sequence": 362,
+    "sequence": 394,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "OTHER_OPTION_DUPLICATED",
@@ -3982,7 +4334,7 @@
     "line": 25
   },
   {
-    "sequence": 363,
+    "sequence": 395,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "OPTION_NOT_IN_QUESTION",
@@ -3993,7 +4345,7 @@
     "line": 26
   },
   {
-    "sequence": 364,
+    "sequence": 396,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "OPTION_TEXT_REQUIRED",
@@ -4004,7 +4356,7 @@
     "line": 27
   },
   {
-    "sequence": 365,
+    "sequence": 397,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "INVALID_FORM_ACTIVE_PERIOD",
@@ -4015,7 +4367,7 @@
     "line": 28
   },
   {
-    "sequence": 366,
+    "sequence": 398,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "INVALID_VOTE_SELECTION",
@@ -4026,7 +4378,7 @@
     "line": 30
   },
   {
-    "sequence": 367,
+    "sequence": 399,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "INVALID_VOTE_FORM_STRUCTURE",
@@ -4037,7 +4389,7 @@
     "line": 32
   },
   {
-    "sequence": 368,
+    "sequence": 400,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "FORM_RESPONSE_ALREADY_EXISTS",
@@ -4048,7 +4400,7 @@
     "line": 34
   },
   {
-    "sequence": 369,
+    "sequence": 401,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "SURVEY_NOT_PUBLISHED",
@@ -4059,7 +4411,7 @@
     "line": 35
   },
   {
-    "sequence": 370,
+    "sequence": 402,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "QUESTION_OPTION_NOT_FOUND",
@@ -4070,7 +4422,7 @@
     "line": 36
   },
   {
-    "sequence": 371,
+    "sequence": 403,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "ANSWER_NOT_FOUND",
@@ -4081,7 +4433,7 @@
     "line": 37
   },
   {
-    "sequence": 372,
+    "sequence": 404,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "FORM_RESPONSE_NOT_DRAFT",
@@ -4092,7 +4444,7 @@
     "line": 38
   },
   {
-    "sequence": 373,
+    "sequence": 405,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "ANSWER_ALREADY_EXISTS",
@@ -4103,7 +4455,7 @@
     "line": 39
   },
   {
-    "sequence": 374,
+    "sequence": 406,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "SURVEY_ALREADY_PUBLISHED",
@@ -4114,7 +4466,7 @@
     "line": 17
   },
   {
-    "sequence": 375,
+    "sequence": 407,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_NOT_FOUND",
@@ -4125,7 +4477,7 @@
     "line": 14
   },
   {
-    "sequence": 376,
+    "sequence": 408,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_TYPE_REQUIRED",
@@ -4136,7 +4488,7 @@
     "line": 15
   },
   {
-    "sequence": 377,
+    "sequence": 409,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_TITLE_REQUIRED",
@@ -4147,7 +4499,7 @@
     "line": 16
   },
   {
-    "sequence": 378,
+    "sequence": 410,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_CONTENT_REQUIRED",
@@ -4158,7 +4510,7 @@
     "line": 17
   },
   {
-    "sequence": 379,
+    "sequence": 411,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_VERSION_REQUIRED",
@@ -4169,7 +4521,7 @@
     "line": 18
   },
   {
-    "sequence": 380,
+    "sequence": 412,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_CONSENT_NOT_FOUND",
@@ -4180,7 +4532,7 @@
     "line": 20
   },
   {
-    "sequence": 381,
+    "sequence": 413,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_CONSENT_ALREADY_EXISTS",
@@ -4191,7 +4543,7 @@
     "line": 21
   },
   {
-    "sequence": 382,
+    "sequence": 414,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "MEMBER_ID_REQUIRED",
@@ -4202,7 +4554,7 @@
     "line": 22
   },
   {
-    "sequence": 383,
+    "sequence": 415,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERM_ID_REQUIRED",
@@ -4213,7 +4565,7 @@
     "line": 23
   },
   {
-    "sequence": 384,
+    "sequence": 416,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "MANDATORY_TERMS_NOT_AGREED",
@@ -4224,7 +4576,7 @@
     "line": 24
   },
   {
-    "sequence": 385,
+    "sequence": 417,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERM_PERMISSION_DENIED",

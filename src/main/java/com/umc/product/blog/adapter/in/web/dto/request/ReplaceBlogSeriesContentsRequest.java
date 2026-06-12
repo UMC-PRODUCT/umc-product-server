@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 public record ReplaceBlogSeriesContentsRequest(
-    @NotEmpty(message = "contentIds는 비어 있을 수 없습니다.") List<@NotNull(message = "contentId는 null일 수 없습니다.") Long> contentIds
+    @NotEmpty(message = "시리즈에 담을 글을 1개 이상 선택해주세요.") List<@NotNull(message = "글 ID를 확인해주세요.") Long> contentIds
 ) {
     public ReplaceBlogSeriesContentsCommand toCommand(Long seriesId) {
         return ReplaceBlogSeriesContentsCommand.of(seriesId, contentIds);

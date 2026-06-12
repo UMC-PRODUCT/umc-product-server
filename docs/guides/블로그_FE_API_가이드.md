@@ -166,7 +166,7 @@ POST /api/v1/blog/contents/{type}/{slug}/comments/{commentId}/like
 - 각 최상위 댓글에는 1단계 대댓글이 포함됩니다.
 - 삭제된 부모 댓글은 대댓글이 있으면 placeholder로 노출됩니다.
 - placeholder content:
-  - 본인 삭제: `삭제된 댓글입니다`
-  - 관리자 삭제: `관리자에 의해서 삭제된 댓글입니다`
+  - 본인 삭제: `삭제된 댓글이에요`
+  - 관리자 삭제: `관리자가 삭제한 댓글이에요`
 - 댓글 응답에는 `deletionType`, `canReply`, `canEdit`, `canDelete`가 포함됩니다.
 - 삭제된 댓글은 `author=null`, `likedByMe=false`, `likeCount=0`, `canReply=false`, `canEdit=false`, `canDelete=false`입니다.

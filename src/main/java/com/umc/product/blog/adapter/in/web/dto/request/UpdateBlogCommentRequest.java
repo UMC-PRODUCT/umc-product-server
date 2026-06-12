@@ -5,7 +5,7 @@ import com.umc.product.blog.application.port.in.command.dto.UpdateBlogCommentCom
 import jakarta.validation.constraints.Size;
 
 public record UpdateBlogCommentRequest(
-    @Size(max = 1000, message = "댓글은 최대 1000자까지 입력할 수 있습니다.") String content
+    @Size(max = 1000, message = "댓글은 1,000자 이하로 입력해주세요.") String content
 ) {
 
     public UpdateBlogCommentRequest {

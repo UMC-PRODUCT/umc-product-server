@@ -179,7 +179,7 @@ class BlogDomainTest {
         BlogComment userDeleted = BlogComment.create(1L, null, 1L, false, null, "댓글");
         userDeleted.deleteByUser(1L);
 
-        assertThat(userDeleted.displayContent()).isEqualTo("삭제된 댓글입니다");
+        assertThat(userDeleted.displayContent()).isEqualTo("삭제된 댓글이에요");
         assertThat(userDeleted.canReply()).isFalse();
         assertThatThrownBy(userDeleted::ensureNotDeleted)
             .isInstanceOf(BlogDomainException.class);
@@ -187,7 +187,7 @@ class BlogDomainTest {
         BlogComment adminDeleted = BlogComment.create(1L, null, 1L, false, null, "댓글");
         adminDeleted.deleteByAdmin(2L);
 
-        assertThat(adminDeleted.displayContent()).isEqualTo("관리자에 의해서 삭제된 댓글입니다");
+        assertThat(adminDeleted.displayContent()).isEqualTo("관리자가 삭제한 댓글이에요");
         assertThat(adminDeleted.canReply()).isFalse();
     }
 
