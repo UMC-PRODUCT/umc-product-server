@@ -49,5 +49,5 @@ public @interface CheckAccess {
     /**
      * 권한이 없을 때 표시할 메시지
      */
-    String message() default "해당 리소스에 접근할 권한이 없습니다.";
+    String message() default "이 항목에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.";
 }

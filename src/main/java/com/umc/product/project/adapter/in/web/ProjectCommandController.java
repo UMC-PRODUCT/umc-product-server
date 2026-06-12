@@ -66,7 +66,7 @@ public class ProjectCommandController {
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
         permission = PermissionType.WRITE,
-        message = "프로젝트 생성 권한이 없습니다."
+        message = "프로젝트를 만들 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public ProjectStatusResponse createDraft(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -86,7 +86,7 @@ public class ProjectCommandController {
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
         permission = PermissionType.EDIT,
-        message = "프로젝트 수정 권한이 없습니다."
+        message = "프로젝트를 수정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public ProjectStatusResponse update(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -107,7 +107,7 @@ public class ProjectCommandController {
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
         permission = PermissionType.EDIT,
-        message = "프로젝트 제출 권한이 없습니다."
+        message = "프로젝트를 제출할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public ProjectStatusResponse submit(
         @PathVariable Long projectId
@@ -127,7 +127,7 @@ public class ProjectCommandController {
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
         permission = PermissionType.EDIT,
-        message = "프로젝트 소유권 양도 권한이 없습니다."
+        message = "프로젝트 소유권을 양도할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public ProjectStatusResponse transferOwnership(
         @PathVariable Long projectId,
@@ -147,7 +147,7 @@ public class ProjectCommandController {
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
         permission = PermissionType.EDIT,
-        message = "프로젝트 팀원 추가 권한이 없습니다."
+        message = "프로젝트 팀원을 추가할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public Long addMember(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -167,7 +167,7 @@ public class ProjectCommandController {
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
         permission = PermissionType.MANAGE,
-        message = "프로젝트 공개 권한이 없습니다."
+        message = "프로젝트를 공개할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public ProjectStatusResponse publish(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -189,7 +189,7 @@ public class ProjectCommandController {
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
         permission = PermissionType.MANAGE,
-        message = "프로젝트 파트 정원 갱신 권한이 없습니다."
+        message = "프로젝트 파트 정원을 수정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public void updatePartQuotas(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -209,7 +209,7 @@ public class ProjectCommandController {
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
         permission = PermissionType.DELETE,
-        message = "프로젝트 삭제 권한이 없습니다."
+        message = "프로젝트를 삭제할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public void delete(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -230,7 +230,7 @@ public class ProjectCommandController {
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
         permission = PermissionType.MANAGE,
-        message = "프로젝트 중단 권한이 없습니다."
+        message = "프로젝트를 중단할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public void abort(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -249,7 +249,7 @@ public class ProjectCommandController {
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
         permission = PermissionType.EDIT,
-        message = "프로젝트 팀원 제거 권한이 없습니다."
+        message = "프로젝트 팀원을 제거할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public void removeMember(
         @CurrentMember MemberPrincipal memberPrincipal,

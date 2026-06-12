@@ -22,22 +22,22 @@ public enum CommonErrorCode implements BaseCode {
 
     // COMMON: 일반 상태 코드
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON-0001",
-        "알 수 없는 오류입니다. 관리자에게 문의해주세요."),
-    BAD_REQUEST(HttpStatus.BAD_REQUEST, "COMMON-400", "잘못된 요청입니다."),
-    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "COMMON-401", "인증이 필요합니다."),
-    FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON-403", "허용되지 않는 요청입니다."),
-    NOT_FOUND(HttpStatus.NOT_FOUND, "COMMON-404", "요청한 리소스를 찾을 수 없습니다."),
-    NOT_IMPLEMENTED(HttpStatus.NOT_IMPLEMENTED, "COMMON-501", "아직 구현되지 않은 기능입니다. 서버팀에게 문의해주세요."),
+        "요청을 처리하지 못했어요. 잠시 후 다시 시도해주세요."),
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "COMMON-400", "요청 값이 올바르지 않아요. 입력한 값을 확인해주세요."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "COMMON-401", "로그인이 필요해요. 로그인 후 다시 시도해주세요."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON-403", "요청할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."),
+    NOT_FOUND(HttpStatus.NOT_FOUND, "COMMON-404", "요청한 항목을 찾을 수 없어요. 입력한 값을 확인해주세요."),
+    NOT_IMPLEMENTED(HttpStatus.NOT_IMPLEMENTED, "COMMON-501", "아직 사용할 수 없는 기능이에요. 필요한 기능이라면 서버팀에 문의해주세요."),
 
     // SECURITY: Spring Security에서 발생하는 에러
-    SECURITY_NOT_GIVEN(HttpStatus.UNAUTHORIZED, "SECURITY-0001", "인증 정보가 전달되지 않았습니다."),
-    SECURITY_FORBIDDEN(HttpStatus.FORBIDDEN, "SECURITY-0002", "권한이 부족합니다."),
+    SECURITY_NOT_GIVEN(HttpStatus.UNAUTHORIZED, "SECURITY-0001", "인증 정보가 없어요. 로그인 후 다시 시도해주세요."),
+    SECURITY_FORBIDDEN(HttpStatus.FORBIDDEN, "SECURITY-0002", "권한이 부족해요. 필요한 권한이 있다면 운영진에게 문의해주세요."),
 
     // ENVIRONMENT: SpringBoot 실행환경 관련 에러
-    INVALID_ENV(HttpStatus.BAD_REQUEST, "ENV-0001", "현재 실행 환경에서는 사용할 수 없는 기능입니다."),
+    INVALID_ENV(HttpStatus.BAD_REQUEST, "ENV-0001", "현재 실행 환경에서는 사용할 수 없는 기능이에요. 환경 설정을 확인해주세요."),
 
     // Permission Evaluator 관련 에러
-    PERMISSION_TYPE_NOT_IMPLEMENTED(HttpStatus.NOT_IMPLEMENTED, "PE-0001", "요청하신 PE가 존재하지 않습니다. 관리자에게 문의해주세요."),
+    PERMISSION_TYPE_NOT_IMPLEMENTED(HttpStatus.NOT_IMPLEMENTED, "PE-0001", "아직 지원하지 않는 권한 확인이에요. 관리자에게 문의해주세요."),
     ;
 
     private final HttpStatus httpStatus;

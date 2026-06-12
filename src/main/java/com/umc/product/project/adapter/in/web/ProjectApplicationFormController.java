@@ -40,7 +40,7 @@ public class ProjectApplicationFormController {
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
         permission = PermissionType.EDIT,
-        message = "지원 폼 저장 권한이 없습니다."
+        message = "지원 폼을 저장할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public UpsertApplicationFormResponse upsert(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -65,7 +65,7 @@ public class ProjectApplicationFormController {
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
         permission = PermissionType.READ,
-        message = "지원 폼 조회 권한이 없습니다."
+        message = "지원 폼을 볼 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public GetApplicationFormResponse get(
         @CurrentMember MemberPrincipal memberPrincipal,

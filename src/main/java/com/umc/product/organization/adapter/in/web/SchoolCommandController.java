@@ -30,7 +30,7 @@ public class SchoolCommandController implements AdminSchoolControllerApi {
     @CheckAccess(
         resourceType = ResourceType.SCHOOL,
         permission = PermissionType.WRITE,
-        message = "학교를 생성할 권한이 없습니다."
+        message = "학교를 만들 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Override
     @PostMapping
@@ -41,7 +41,7 @@ public class SchoolCommandController implements AdminSchoolControllerApi {
     @CheckAccess(
         resourceType = ResourceType.SCHOOL,
         permission = PermissionType.EDIT,
-        message = "학교를 수정할 권한이 없습니다."
+        message = "학교를 수정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Override
     @PatchMapping("/{schoolId}")
@@ -52,7 +52,7 @@ public class SchoolCommandController implements AdminSchoolControllerApi {
     @CheckAccess(
         resourceType = ResourceType.SCHOOL,
         permission = PermissionType.DELETE,
-        message = "학교를 삭제할 권한이 없습니다."
+        message = "학교를 삭제할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Override
     @DeleteMapping
@@ -63,7 +63,7 @@ public class SchoolCommandController implements AdminSchoolControllerApi {
     @CheckAccess(
         resourceType = ResourceType.SCHOOL,
         permission = PermissionType.EDIT,
-        message = "학교를 지부에 할당할 권한이 없습니다."
+        message = "학교를 지부에 배정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Override
     @PatchMapping("/{schoolId}/assign")
@@ -74,7 +74,7 @@ public class SchoolCommandController implements AdminSchoolControllerApi {
     @CheckAccess(
         resourceType = ResourceType.SCHOOL,
         permission = PermissionType.EDIT,
-        message = "학교를 지부에서 할당 해제할 권한이 없습니다."
+        message = "학교의 지부 배정을 해제할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Override
     @PatchMapping("/{schoolId}/unassign")

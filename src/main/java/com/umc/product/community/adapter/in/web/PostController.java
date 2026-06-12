@@ -77,7 +77,7 @@ public class PostController {
         resourceType = ResourceType.COMMUNITY_POST,
         resourceId = "#postId",
         permission = PermissionType.EDIT,
-        message = "게시글 수정 권한이 없습니다."
+        message = "내가 작성한 게시글만 수정할 수 있어요."
     )
     @PatchMapping("/{postId}")
     @Operation(summary = "[POST-003] 일반 게시글 수정", description = "일반 게시글의 제목, 내용, 카테고리를 수정합니다.")
@@ -92,7 +92,7 @@ public class PostController {
         resourceType = ResourceType.COMMUNITY_POST,
         resourceId = "#postId",
         permission = PermissionType.EDIT,
-        message = "번개 게시글 수정 권한이 없습니다."
+        message = "내가 작성한 번개글만 수정할 수 있어요."
     )
     @PatchMapping("/{postId}/lightning")
     @Operation(summary = "[POST-004] 번개글 수정", description = "번개 게시글의 제목, 내용, 모임 정보를 수정합니다.")
@@ -107,7 +107,7 @@ public class PostController {
         resourceType = ResourceType.COMMUNITY_POST,
         resourceId = "#postId",
         permission = PermissionType.DELETE,
-        message = "게시글 삭제 권한이 없습니다."
+        message = "내가 작성한 게시글만 삭제할 수 있어요."
     )
     @DeleteMapping("/{postId}")
     @Operation(summary = "[POST-005] 게시글 삭제", description = "게시글을 삭제합니다.")
@@ -148,4 +148,3 @@ public class PostController {
         return PostResponse.from(postInfo, memberInfo, challengerInfo);
     }
 }
-

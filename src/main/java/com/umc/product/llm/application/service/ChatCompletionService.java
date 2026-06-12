@@ -88,7 +88,7 @@ public class ChatCompletionService implements ChatCompleteUseCase {
         if (!callGuard.allow()) {
             log.debug("LLM 호출 가드가 차단 상태입니다. 즉시 실패 응답 반환.");
             metrics.recordCall(provider, LlmMetrics.STATUS_CIRCUIT_OPEN, Duration.ZERO);
-            throw new LlmDomainException(LlmErrorCode.CHAT_COMPLETION_FAILED, "회로 차단 상태");
+            throw new LlmDomainException(LlmErrorCode.CHAT_COMPLETION_FAILED, "AI 응답 생성이 잠시 제한됐어요. 잠시 후 다시 시도해주세요.");
         }
         rateLimiter.acquire();
 

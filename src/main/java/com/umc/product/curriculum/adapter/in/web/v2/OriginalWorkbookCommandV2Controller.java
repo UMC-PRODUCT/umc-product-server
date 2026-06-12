@@ -39,7 +39,7 @@ public class OriginalWorkbookCommandV2Controller {
     @CheckAccess(
         resourceType = ResourceType.ORIGINAL_WORKBOOK,
         permission = PermissionType.MANAGE,
-        message = "원본 워크북 생성은 중앙파트장이상 권한이 필요합니다."
+        message = "원본 워크북을 만들려면 중앙 파트장 이상 권한이 필요해요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @PostMapping
     public Long createOriginalWorkbook(
@@ -62,7 +62,7 @@ public class OriginalWorkbookCommandV2Controller {
     @CheckAccess(
         resourceType = ResourceType.ORIGINAL_WORKBOOK,
         permission = PermissionType.MANAGE,
-        message = "중앙파트장이상 권한만 원본 워크북 임시저장이 가능합니다."
+        message = "원본 워크북을 임시저장하려면 중앙 파트장 이상 권한이 필요해요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @PostMapping("/draft")
     public Long createOriginalWorkbookAsDraft(
@@ -82,7 +82,7 @@ public class OriginalWorkbookCommandV2Controller {
         resourceType = ResourceType.ORIGINAL_WORKBOOK,
         resourceId = "#originalWorkbookId",
         permission = PermissionType.MANAGE,
-        message = "중앙파트장 이상 권한만 원본 워크북 수정이 가능합니다."
+        message = "원본 워크북을 수정하려면 중앙 파트장 이상 권한이 필요해요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @PatchMapping("/{originalWorkbookId}")
     public void editOriginalWorkbook(
@@ -102,7 +102,7 @@ public class OriginalWorkbookCommandV2Controller {
         resourceType = ResourceType.ORIGINAL_WORKBOOK,
         resourceId = "#originalWorkbookId",
         permission = PermissionType.MANAGE,
-        message = "중앙파트장 이상만 원본 워크북 삭제가 가능합니다."
+        message = "원본 워크북을 삭제하려면 중앙 파트장 이상 권한이 필요해요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @DeleteMapping("/{originalWorkbookId}")
     public void deleteOriginalWorkbook(
@@ -130,7 +130,7 @@ public class OriginalWorkbookCommandV2Controller {
     @CheckAccess(
         resourceType = ResourceType.ORIGINAL_WORKBOOK,
         permission = PermissionType.RELEASE,
-        message = "중앙파트장 이상 권한만 원본 워크북 상태 수정이 가능합니다."
+        message = "원본 워크북 상태를 수정하려면 중앙 파트장 이상 권한이 필요해요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @PatchMapping("/status")
     public void changeOriginalWorkbookStatus(

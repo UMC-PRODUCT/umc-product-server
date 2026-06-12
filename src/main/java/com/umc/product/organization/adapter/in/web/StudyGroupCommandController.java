@@ -31,7 +31,7 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
     @CheckAccess(
         resourceType = ResourceType.STUDY_GROUP,
         permission = PermissionType.WRITE,
-        message = "스터디 그룹을 생성할 권한이 없습니다."
+        message = "스터디 그룹을 만들 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Override
     @PostMapping
@@ -42,7 +42,7 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
     @CheckAccess(
         resourceType = ResourceType.STUDY_GROUP,
         permission = PermissionType.EDIT,
-        message = "해당 스터디 그룹을 수정할 권한이 없습니다."
+        message = "이 스터디 그룹을 수정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Override
     @PatchMapping("/{studyGroupId}")
@@ -56,7 +56,7 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
     @CheckAccess(
         resourceType = ResourceType.STUDY_GROUP,
         permission = PermissionType.EDIT,
-        message = "해당 스터디 그룹 구성원을 수정할 권한이 없습니다."
+        message = "이 스터디 그룹 구성원을 수정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @PatchMapping("/{studyGroupId}/members/{memberId}")
     @Override
@@ -70,7 +70,7 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
     @CheckAccess(
         resourceType = ResourceType.STUDY_GROUP,
         permission = PermissionType.EDIT,
-        message = "해당 스터디 그룹 구성원을 수정할 권한이 없습니다."
+        message = "이 스터디 그룹 구성원을 수정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @PatchMapping("/{studyGroupId}/mentors/{mentorId}")
     @Override
@@ -84,7 +84,7 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
     @CheckAccess(
         resourceType = ResourceType.STUDY_GROUP,
         permission = PermissionType.EDIT,
-        message = "해당 스터디 그룹 구성원을 수정할 권한이 없습니다."
+        message = "이 스터디 그룹 구성원을 수정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @DeleteMapping("/{studyGroupId}/members/{memberId}")
     @Override
@@ -98,7 +98,7 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
     @CheckAccess(
         resourceType = ResourceType.STUDY_GROUP,
         permission = PermissionType.EDIT,
-        message = "해당 스터디 그룹 구성원을 수정할 권한이 없습니다."
+        message = "이 스터디 그룹 구성원을 수정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @DeleteMapping("/{studyGroupId}/mentors/{mentorId}")
     @Override
@@ -112,7 +112,7 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
     @CheckAccess(
         resourceType = ResourceType.STUDY_GROUP,
         permission = PermissionType.DELETE,
-        message = "해당 스터디 그룹을 삭제할 권한이 없습니다."
+        message = "이 스터디 그룹을 삭제할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Override
     @DeleteMapping("/{studyGroupId}")

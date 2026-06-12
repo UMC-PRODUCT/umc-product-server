@@ -28,10 +28,10 @@ public class FigmaCommentDigestService implements DigestFigmaCommentsUseCase {
     @Override
     public FigmaDigestSummary digest(DigestFigmaCommentsCommand command) {
         if (command.from() == null || command.to() == null) {
-            throw new FigmaDomainException(FigmaErrorCode.DIGEST_RANGE_INVALID, "from / to 둘 다 필수입니다.");
+            throw new FigmaDomainException(FigmaErrorCode.DIGEST_RANGE_INVALID, "요약할 시작 시간과 종료 시간을 모두 입력해주세요.");
         }
         if (command.from().isAfter(command.to())) {
-            throw new FigmaDomainException(FigmaErrorCode.DIGEST_RANGE_INVALID, "from 이 to 보다 이후일 수 없습니다.");
+            throw new FigmaDomainException(FigmaErrorCode.DIGEST_RANGE_INVALID, "요약 시작 시간은 종료 시간보다 빨라야 해요. 기간을 다시 선택해주세요.");
         }
 
         FigmaSummaryResult result = summarizeFigmaCommentsUseCase.summarize(

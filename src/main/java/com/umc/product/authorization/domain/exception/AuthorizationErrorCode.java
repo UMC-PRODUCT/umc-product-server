@@ -9,22 +9,25 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum AuthorizationErrorCode implements BaseCode {
 
-    PERMISSION_DENIED(HttpStatus.FORBIDDEN, "AUTHORIZATION-0001", "권한이 없습니다."),
-    RESOURCE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUTHORIZATION-0002", "해당 리소스에 접근할 권한이 없습니다."),
-    INVALID_PERMISSION(HttpStatus.BAD_REQUEST, "AUTHORIZATION-0003", "유효하지 않은 권한입니다."),
-    POLICY_EVALUATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTHORIZATION-0004", "권한 검증 중 오류가 발생했습니다."),
+    PERMISSION_DENIED(HttpStatus.FORBIDDEN, "AUTHORIZATION-0001",
+        "권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."),
+    RESOURCE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUTHORIZATION-0002",
+        "이 항목에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."),
+    INVALID_PERMISSION(HttpStatus.BAD_REQUEST, "AUTHORIZATION-0003", "권한 값이 올바르지 않아요. 요청 값을 확인해주세요."),
+    POLICY_EVALUATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTHORIZATION-0004",
+        "권한을 확인하지 못했어요. 잠시 후 다시 시도해주세요."),
     NO_EVALUATOR_MATCHING_RESOURCE_TYPE(HttpStatus.INTERNAL_SERVER_ERROR, "AUTHORIZATION-0005",
-        "해당 리소스 타입에 해당하는 Permission Evaluator가 존재하지 않습니다. 관리자에게 문의하세요."),
+        "권한 확인 설정을 찾지 못했어요. 관리자에게 문의해주세요."),
     PERMISSION_TYPE_NOT_SUPPORTED_BY_RESOURCE_TYPE(HttpStatus.INTERNAL_SERVER_ERROR, "AUTHORIZATION-0006",
-        "리소스 유형에서 지원하지 않는 권한 유형을 검사하고자 시도하였습니다. 관리자에게 문의하세요."),
-    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "AUTHORIZATION-0007", "잘못된 권한 확인입니다."),
+        "지원하지 않는 권한 유형이에요. 관리자에게 문의해주세요."),
+    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "AUTHORIZATION-0007", "권한 확인 요청이 올바르지 않아요. 요청 값을 확인해주세요."),
     INVALID_RESOURCE_ID_TYPE(HttpStatus.BAD_REQUEST, "AUTHORIZATION-0008",
-        "권한 평가를 위한 리소스 ID 타입이 잘못 전달되었습니다. 관리자에게 문의하세요."),
+        "권한을 확인할 항목 ID가 올바르지 않아요. 요청 값을 확인해주세요."),
     INVALID_RESOURCE_PERMISSION_GIVEN(HttpStatus.INTERNAL_SERVER_ERROR, "AUTHORIZATION-0009",
-        "잘못된 권한 평가 요청입니다. 관리자에게 문의하세요."),
-    CHALLENGER_ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTHORIZATION-0010", "해당하는 역할을 찾을 수 없습니다."),
+        "권한 확인 요청을 처리하지 못했어요. 관리자에게 문의해주세요."),
+    CHALLENGER_ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTHORIZATION-0010", "역할을 찾을 수 없어요. 역할 정보를 확인해주세요."),
     PERMISSION_TYPE_NOT_IMPLEMENTED(HttpStatus.NOT_IMPLEMENTED, "AUTHORIZATION-0011",
-        "ResourceType이 지원하는 PermissionType에 대해서 PermissionEvaluator가 구현을 하지 않았습니다. 관리자에게 문의하세요."),
+        "아직 지원하지 않는 권한 확인이에요. 관리자에게 문의해주세요."),
     ;
 
     private final HttpStatus httpStatus;

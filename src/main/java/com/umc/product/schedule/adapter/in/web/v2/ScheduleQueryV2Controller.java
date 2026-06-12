@@ -61,7 +61,7 @@ public class ScheduleQueryV2Controller {
     @CheckAccess(
         resourceType = ResourceType.SCHEDULE,
         permission = PermissionType.READ,
-        message = "내 일정 조회는 '챌린저 활동 기록이 있는 사용자'만 가능합니다."
+        message = "내 일정을 보려면 챌린저 활동 기록이 필요해요. 활동 기록을 확인해주세요."
     )
     @Operation(summary = "[SCHEDULE-Q002] 내 일정 조회", description = """
         로그인한 사용자가 참여하는 일정 중 Query Param의 `from`, `to` 사이에 시작일이 있는 일정을 모두 조회합니다.
@@ -74,7 +74,7 @@ public class ScheduleQueryV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0001 : 권한이 없습니다.
+            AUTHORIZATION-0001 : 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         )
@@ -98,7 +98,7 @@ public class ScheduleQueryV2Controller {
     @CheckAccess(
         resourceType = ResourceType.SCHEDULE,
         permission = PermissionType.READ,
-        message = "일정 상세 조회는 '챌린저 활동 기록이 있는 사용자'만 가능합니다."
+        message = "일정 상세를 보려면 챌린저 활동 기록이 필요해요. 활동 기록을 확인해주세요."
     )
     @Operation(summary = "[SCHEDULE-Q003] 일정 상세 조회", description = """
         단일 일정에 대한 정보를 상세하게 조회합니다.
@@ -110,12 +110,12 @@ public class ScheduleQueryV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            AUTHORIZATION-0002 : 이 항목에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "404", description = """
-            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            SCHEDULE-0009 : 일정을 찾을 수 없어요. 선택한 일정을 확인해주세요.
             """,
             content = @Content
         )
@@ -138,7 +138,7 @@ public class ScheduleQueryV2Controller {
     @CheckAccess(
         resourceType = ResourceType.ATTENDANCE,
         permission = PermissionType.READ,
-        message = "일정 목록 출석 현황 조회는 '운영진 활동 이력이 있는 사용자'만 가능합니다."
+        message = "일정 출석 현황은 운영진 활동 이력이 있는 사용자만 볼 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Operation(summary = "[SCHEDULE-Q004] [운영진용] 일정들의 출석 현황 조회", description = """
         Query Param을 이용해서 상세한 필터링을 제공하며, 그 기준은 아래와 같습니다.
@@ -162,17 +162,17 @@ public class ScheduleQueryV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "400", description = """
-            SCHEDULE-0026 : 일정의 참여자가 아닙니다.
+            SCHEDULE-0026 : 일정 참여자만 출석할 수 있어요. 참여자 목록을 확인해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0001 : 권한이 없습니다.
+            AUTHORIZATION-0001 : 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "404", description = """
-            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            SCHEDULE-0009 : 일정을 찾을 수 없어요. 선택한 일정을 확인해주세요.
             """,
             content = @Content
         )
@@ -201,7 +201,7 @@ public class ScheduleQueryV2Controller {
     @CheckAccess(
         resourceType = ResourceType.ATTENDANCE,
         permission = PermissionType.READ,
-        message = "단일 일정 출석 현황 조회는 '해당 일정이 진행되는 기수의 운영진'만 가능합니다."
+        message = "이 일정의 출석 현황은 해당 기수의 운영진만 볼 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Operation(summary = "[SCHEDULE-Q005] [운영진용] 단일 일정 출석 현황 조회", description = """
         Query Param을 이용해서 상세한 필터링을 제공하며, 그 기준은 아래와 같습니다.
@@ -214,13 +214,13 @@ public class ScheduleQueryV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "400", description = """
-            SCHEDULE-0021 : 출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다.<br>
-            SCHEDULE-0026 : 일정의 참여자가 아닙니다.
+            SCHEDULE-0021 : 출석 정책이 없는 일정이에요. 출석 정책을 먼저 설정해주세요.<br>
+            SCHEDULE-0026 : 일정 참여자만 출석할 수 있어요. 참여자 목록을 확인해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            AUTHORIZATION-0002 : 이 항목에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         ),

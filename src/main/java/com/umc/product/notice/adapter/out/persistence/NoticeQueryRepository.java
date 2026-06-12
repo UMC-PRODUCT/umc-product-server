@@ -161,7 +161,7 @@ public class NoticeQueryRepository {
         boolean hasPart = part != null;
 
         if (gisuId == null) {
-            throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING, "기수 ID는 필수입니다");
+            throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING, "공지 대상을 설정하려면 기수를 선택해주세요.");
         }
 
         log.debug("공지사항 조회 조건 제작: gisuId={}, chapterId={}, schoolId={}, part={}, memberParts={}",

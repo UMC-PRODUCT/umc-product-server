@@ -32,7 +32,7 @@ public class MemberPermissionEvaluator implements ResourcePermissionEvaluator {
             case READ -> canReadMember(subjectAttributes, resourcePermission);
             case DELETE -> canDeleteMember(subjectAttributes);
             default ->
-                throw new CommonException(CommonErrorCode.INTERNAL_SERVER_ERROR, "PE 관련 에러가 발생하였습니다. 관리자에게 문의하세요.");
+                throw new CommonException(CommonErrorCode.INTERNAL_SERVER_ERROR, "권한 확인 중 문제가 발생했어요. 관리자에게 문의해주세요.");
         };
     }
 

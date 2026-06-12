@@ -43,7 +43,7 @@ public class ProjectStatisticsQueryController {
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
         permission = PermissionType.READ,
-        message = "프로젝트 지원/매칭 현황 조회 권한이 없습니다."
+        message = "프로젝트 지원/매칭 현황을 볼 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public ProjectStatisticsResponse getProjectStatistics(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -77,7 +77,7 @@ public class ProjectStatisticsQueryController {
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
         permission = PermissionType.READ,
-        message = "프로젝트 지원/매칭 현황 조회 권한이 없습니다."
+        message = "프로젝트 지원/매칭 현황을 볼 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public ChapterProjectStatisticsResponse listChapterProjectStatistics(
         @CurrentMember MemberPrincipal memberPrincipal,

@@ -26,7 +26,7 @@ public class ChapterCommandController implements AdminChapterControllerApi {
     @CheckAccess(
         resourceType = ResourceType.CHAPTER,
         permission = PermissionType.WRITE,
-        message = "지부를 생성할 권한이 없습니다."
+        message = "지부를 만들 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Override
     @PostMapping
@@ -37,7 +37,7 @@ public class ChapterCommandController implements AdminChapterControllerApi {
     @CheckAccess(
         resourceType = ResourceType.CHAPTER,
         permission = PermissionType.WRITE,
-        message = "지부를 생성할 권한이 없습니다."
+        message = "지부를 만들 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Override
     @PostMapping("/bulk")
@@ -51,7 +51,7 @@ public class ChapterCommandController implements AdminChapterControllerApi {
     @CheckAccess(
         resourceType = ResourceType.CHAPTER,
         permission = PermissionType.DELETE,
-        message = "지부를 삭제할 권한이 없습니다."
+        message = "지부를 삭제할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Override
     @DeleteMapping("/{chapterId}")

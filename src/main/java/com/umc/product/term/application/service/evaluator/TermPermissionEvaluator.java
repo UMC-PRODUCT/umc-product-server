@@ -37,7 +37,7 @@ public class TermPermissionEvaluator implements ResourcePermissionEvaluator {
         return switch (permissionType) {
             case WRITE -> canWriteTerm(subjectAttributes);
             default ->
-                throw new TermDomainException(TermErrorCode.TERM_PERMISSION_DENIED, "TermPE - 지원하지 않는 권한 유형입니다.");
+                throw new TermDomainException(TermErrorCode.TERM_PERMISSION_DENIED, "지원하지 않는 약관 권한 유형이에요. 관리자에게 문의해주세요.");
         };
     }
 

@@ -70,7 +70,7 @@ public class CommentController {
     }
 
     @DeleteMapping("/{commentId}")
-    @CheckAccess(resourceType = ResourceType.COMMUNITY_COMMENT, resourceId = "#commentId", permission = PermissionType.DELETE, message = "본인의 댓글만 삭제할 수 있습니다.")
+    @CheckAccess(resourceType = ResourceType.COMMUNITY_COMMENT, resourceId = "#commentId", permission = PermissionType.DELETE, message = "내가 작성한 댓글만 삭제할 수 있어요.")
     @Operation(summary = "[COMMENT-002] 댓글 삭제", description = "본인이 작성한 댓글을 삭제합니다.")
     public void deleteComment(
         @PathVariable Long postId,

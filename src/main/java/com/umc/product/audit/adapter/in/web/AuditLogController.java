@@ -34,7 +34,7 @@ public class AuditLogController {
     @CheckAccess(
         resourceType = ResourceType.AUDIT,
         permission = PermissionType.READ,
-        message = "Audit Log는 중앙운영사무국 국원만 조회 가능합니다."
+        message = "감사 로그는 중앙운영사무국 국원만 조회할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @GetMapping
     public ApiResponse<Page<AuditLogInfo>> search(

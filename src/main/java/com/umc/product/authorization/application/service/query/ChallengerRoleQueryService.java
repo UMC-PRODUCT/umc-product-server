@@ -123,7 +123,7 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
     @Override
     public List<ChallengerRoleType> getAllRoleTypesByMemberIdAndGisuId(Long memberId, Long gisuId) {
         if (gisuId == null) {
-            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE, "gisuId는 null일 수 없습니다.");
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE, "권한을 확인하려면 기수를 선택해주세요.");
         }
 
         List<ChallengerRole> roles = loadChallengerRolePort.findRolesByMemberIdAndGisuId(memberId, gisuId);

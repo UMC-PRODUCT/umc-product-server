@@ -65,10 +65,10 @@ public class FigmaCommentSummaryService implements SummarizeFigmaCommentsUseCase
     @Transactional
     public FigmaSummaryResult summarize(SummarizeFigmaCommentsCommand command) {
         if (command == null) {
-            throw new FigmaDomainException(FigmaErrorCode.DIGEST_RANGE_INVALID, "command 가 null 입니다.");
+            throw new FigmaDomainException(FigmaErrorCode.DIGEST_RANGE_INVALID, "요약 요청 값이 없어요. 요청 값을 확인해주세요.");
         }
         if (command.from() != null && command.to() != null && command.from().isAfter(command.to())) {
-            throw new FigmaDomainException(FigmaErrorCode.DIGEST_RANGE_INVALID, "from 이 to 보다 이후일 수 없습니다.");
+            throw new FigmaDomainException(FigmaErrorCode.DIGEST_RANGE_INVALID, "요약 시작 시간은 종료 시간보다 빨라야 해요. 기간을 다시 선택해주세요.");
         }
 
         List<FigmaWatchedFile> files = resolveTargetFiles(command);
