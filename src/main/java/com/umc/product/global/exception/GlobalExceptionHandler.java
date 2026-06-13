@@ -13,7 +13,6 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -43,20 +42,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private String activeProfile;
 
     /**
-     * Spring Security 권한 거부 예외 처리 - AuthorizationDeniedException: @PreAuthorize 등 메서드 레벨 보안
-     */
-    @ExceptionHandler(AuthorizationDeniedException.class)
-    public ResponseEntity<Object> handleAccessDenied(AuthorizationDeniedException e, WebRequest request) {
-        log.warn("[ACCESS DENIED] {}", e.getMessage());
-
-        return buildResponse(e, CommonErrorCode.FORBIDDEN, HttpHeaders.EMPTY, request, null);
-    }
-
-    /**
-     * Spring Security 표준 AccessDeniedException 처리 - 커스텀 Aspect 등 MVC 내부에서 발생하는 인가 실패
+     * Spring Security 권한 거부 예외 처리 - 메서드 레벨 보안 및 MVC 내부 인가 실패
      */
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Object> handleSpringAccessDenied(AccessDeniedException e, WebRequest request) {
+    public ResponseEntity<Object> handleAccessDenied(AccessDeniedException e, WebRequest request) {
         log.warn("[ACCESS DENIED] {}", e.getMessage());
 
         return buildResponse(e, CommonErrorCode.FORBIDDEN, HttpHeaders.EMPTY, request, null);
