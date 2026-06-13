@@ -6,6 +6,7 @@ import com.umc.product.chat.application.port.in.query.dto.ChatMessageCursorResul
 import com.umc.product.chat.application.port.in.query.dto.ChatMessageInfo;
 import com.umc.product.chat.application.port.in.query.dto.ChatRoomSummaryInfo;
 import com.umc.product.chat.application.port.in.query.dto.GetChatMessagesQuery;
+import com.umc.product.chat.application.policy.ChatRoomAccessPolicy;
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
 import com.umc.product.chat.application.port.out.dto.RoomUnreadCount;
@@ -27,12 +28,17 @@ public class ChatMessageQueryService implements GetChatMessagesUseCase, GetMyCha
 
     private final LoadChatMessagePort loadChatMessagePort;
     private final LoadChatRoomPort loadChatRoomPort;
+    private final ChatRoomAccessPolicy chatRoomAccessPolicy;
 
     /**
      * 방 메시지 내역을 최신순 커서 페이지네이션으로 조회한다. (size + 1 조회 후 hasNext 판별)
+     * <p>
+     * 조회 전 요청자가 해당 방의 멤버인지 검증한다(비멤버는 접근 불가).
      */
     @Override
     public ChatMessageCursorResult getMessages(GetChatMessagesQuery query) {
+        chatRoomAccessPolicy.verifyMember(query.roomId(), query.memberId());
+
         List<ChatMessage> rows = loadChatMessagePort.listByRoomId(query.roomId(), query.cursorId(), query.size() + 1);
 
         boolean hasNext = rows.size() > query.size();

@@ -36,11 +36,12 @@ public class ChatMessageQueryController {
     @Operation(summary = "[CHAT-002] 메시지 내역 조회", description = "방의 메시지를 최신순으로 커서 페이지네이션 조회합니다.")
     public CursorResponse<ChatMessageResponse> getMessages(
         @PathVariable @Positive Long roomId,
+        @CurrentMember MemberPrincipal principal,
         @RequestParam(required = false) @Positive Long cursor,
         @RequestParam(defaultValue = "30") @Min(1) int size
     ) {
         ChatMessageCursorResult result = getChatMessagesUseCase.getMessages(
-            new GetChatMessagesQuery(roomId, cursor, size));
+            new GetChatMessagesQuery(roomId, principal.getMemberId(), cursor, size));
 
         return CursorResponse.of(
             result.content().stream().map(ChatMessageResponse::from).toList(),

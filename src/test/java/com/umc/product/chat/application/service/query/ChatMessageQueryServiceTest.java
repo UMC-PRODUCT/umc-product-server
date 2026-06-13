@@ -1,12 +1,15 @@
 package com.umc.product.chat.application.service.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.times;
 
+import com.umc.product.chat.application.policy.ChatRoomAccessPolicy;
 import com.umc.product.chat.application.port.in.query.dto.ChatMessageCursorResult;
 import com.umc.product.chat.application.port.in.query.dto.ChatRoomSummaryInfo;
 import com.umc.product.chat.application.port.in.query.dto.GetChatMessagesQuery;
@@ -15,6 +18,8 @@ import com.umc.product.chat.application.port.out.LoadChatRoomPort;
 import com.umc.product.chat.application.port.out.dto.RoomUnreadCount;
 import com.umc.product.chat.domain.ChatMessage;
 import com.umc.product.chat.domain.ChatRoom;
+import com.umc.product.chat.domain.exception.ChatDomainException;
+import com.umc.product.chat.domain.exception.ChatErrorCode;
 import com.umc.product.chat.domain.MessageContentType;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -33,6 +38,8 @@ class ChatMessageQueryServiceTest {
     LoadChatMessagePort loadChatMessagePort;
     @Mock
     LoadChatRoomPort loadChatRoomPort;
+    @Mock
+    ChatRoomAccessPolicy chatRoomAccessPolicy;
 
     @InjectMocks
     ChatMessageQueryService sut;
@@ -43,7 +50,7 @@ class ChatMessageQueryServiceTest {
         given(loadChatMessagePort.listByRoomId(eq(1L), eq(null), anyInt()))
             .willReturn(List.of(message(30L, 1L), message(20L, 1L), message(10L, 1L)));
 
-        ChatMessageCursorResult result = sut.getMessages(new GetChatMessagesQuery(1L, null, 2));
+        ChatMessageCursorResult result = sut.getMessages(new GetChatMessagesQuery(1L, 10L, null, 2));
 
         assertThat(result.hasNext()).isTrue();
         assertThat(result.content()).hasSize(2);
@@ -57,11 +64,25 @@ class ChatMessageQueryServiceTest {
         given(loadChatMessagePort.listByRoomId(eq(1L), eq(null), anyInt()))
             .willReturn(List.of(message(30L, 1L), message(20L, 1L)));
 
-        ChatMessageCursorResult result = sut.getMessages(new GetChatMessagesQuery(1L, null, 2));
+        ChatMessageCursorResult result = sut.getMessages(new GetChatMessagesQuery(1L, 10L, null, 2));
 
         assertThat(result.hasNext()).isFalse();
         assertThat(result.content()).hasSize(2);
         assertThat(result.nextCursor()).isNull();
+    }
+
+    @Test
+    @DisplayName("요청자가 방 멤버가 아니면 메시지를 조회하지 않고 접근 거부 예외를 던진다")
+    void getMessages_accessDenied() {
+        willThrow(new ChatDomainException(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED))
+            .given(chatRoomAccessPolicy).verifyMember(1L, 10L);
+
+        assertThatThrownBy(() -> sut.getMessages(new GetChatMessagesQuery(1L, 10L, null, 2)))
+            .isInstanceOf(ChatDomainException.class)
+            .extracting(e -> ((ChatDomainException) e).getBaseCode())
+            .isEqualTo(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED);
+
+        then(loadChatMessagePort).shouldHaveNoInteractions();
     }
 
     @Test

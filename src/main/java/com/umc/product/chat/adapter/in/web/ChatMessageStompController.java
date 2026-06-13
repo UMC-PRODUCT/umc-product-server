@@ -40,6 +40,8 @@ public class ChatMessageStompController {
         sendChatMessageUseCase.send(request.toCommand(roomId, senderMemberId));
     }
 
+    // TODO: STOMP handler가 늘어나면 messaging 전용 ArgumentResolver(addArgumentResolvers 등록,
+    //  accessor.getUser()에서 추출)로 분리해 REST의 @CurrentMember와 인증 주입 방식을 통일한다.
     private Long extractMemberId(Principal principal) {
         if (principal instanceof Authentication auth && auth.getPrincipal() instanceof MemberPrincipal memberPrincipal) {
             return memberPrincipal.getMemberId();

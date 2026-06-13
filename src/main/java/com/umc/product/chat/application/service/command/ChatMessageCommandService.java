@@ -5,6 +5,7 @@ import com.umc.product.chat.application.port.in.command.SendChatMessageUseCase;
 import com.umc.product.chat.application.port.in.command.dto.MarkChatRoomReadCommand;
 import com.umc.product.chat.application.port.in.command.dto.SendChatMessageCommand;
 import com.umc.product.chat.application.port.in.query.dto.ChatMessageInfo;
+import com.umc.product.chat.application.policy.ChatRoomAccessPolicy;
 import com.umc.product.chat.application.port.out.LoadChatMemberPort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.application.port.out.SaveChatMessagePort;
@@ -27,6 +28,7 @@ public class ChatMessageCommandService implements SendChatMessageUseCase, MarkCh
     private final SaveChatMessagePort saveChatMessagePort;
     private final LoadChatMemberPort loadChatMemberPort;
     private final SaveChatMemberPort saveChatMemberPort;
+    private final ChatRoomAccessPolicy chatRoomAccessPolicy;
     private final DomainEventPublisher domainEventPublisher;
 
     /**
@@ -40,10 +42,8 @@ public class ChatMessageCommandService implements SendChatMessageUseCase, MarkCh
     public ChatMessageInfo send(SendChatMessageCommand command) {
         validate(command);
 
-        // SEND 권한 인터셉터 도입 전 임시 가드: 방 멤버만 전송 가능
-        if (!loadChatMemberPort.existsByRoomIdAndMemberId(command.roomId(), command.senderMemberId())) {
-            throw new ChatDomainException(ChatErrorCode.CHAT_MEMBER_NOT_FOUND);
-        }
+        // 방 멤버만 전송 가능
+        chatRoomAccessPolicy.verifyMember(command.roomId(), command.senderMemberId());
 
         ChatMessage saved = saveChatMessagePort.save(ChatMessage.create(
             command.roomId(),

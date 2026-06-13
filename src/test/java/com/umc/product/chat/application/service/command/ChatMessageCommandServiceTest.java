@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 
 import com.umc.product.chat.application.port.in.command.dto.MarkChatRoomReadCommand;
 import com.umc.product.chat.application.port.in.command.dto.SendChatMessageCommand;
@@ -15,6 +16,7 @@ import com.umc.product.chat.application.port.out.SaveChatMessagePort;
 import com.umc.product.chat.domain.ChatMember;
 import com.umc.product.chat.domain.ChatMessage;
 import com.umc.product.chat.domain.MessageContentType;
+import com.umc.product.chat.application.policy.ChatRoomAccessPolicy;
 import com.umc.product.chat.domain.event.ChatMessageCreatedEvent;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
@@ -41,6 +43,8 @@ class ChatMessageCommandServiceTest {
     @Mock
     SaveChatMemberPort saveChatMemberPort;
     @Mock
+    ChatRoomAccessPolicy chatRoomAccessPolicy;
+    @Mock
     DomainEventPublisher domainEventPublisher;
 
     @InjectMocks
@@ -51,8 +55,6 @@ class ChatMessageCommandServiceTest {
     void send_success() {
         SendChatMessageCommand command =
             new SendChatMessageCommand(1L, 10L, MessageContentType.TEXT, "안녕", null);
-        given(loadChatMemberPort.existsByRoomIdAndMemberId(1L, 10L)).willReturn(true);
-
         ChatMessage saved = ChatMessage.create(1L, 10L, MessageContentType.TEXT, "안녕", null);
         ReflectionTestUtils.setField(saved, "id", 100L);
         Instant createdAt = Instant.parse("2026-06-13T00:00:00Z");
@@ -111,12 +113,13 @@ class ChatMessageCommandServiceTest {
     void send_notMember() {
         SendChatMessageCommand command =
             new SendChatMessageCommand(1L, 10L, MessageContentType.TEXT, "안녕", null);
-        given(loadChatMemberPort.existsByRoomIdAndMemberId(1L, 10L)).willReturn(false);
+        willThrow(new ChatDomainException(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED))
+            .given(chatRoomAccessPolicy).verifyMember(1L, 10L);
 
         assertThatThrownBy(() -> sut.send(command))
             .isInstanceOf(ChatDomainException.class)
             .extracting(e -> ((ChatDomainException) e).getBaseCode())
-            .isEqualTo(ChatErrorCode.CHAT_MEMBER_NOT_FOUND);
+            .isEqualTo(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED);
 
         then(saveChatMessagePort).shouldHaveNoInteractions();
         then(domainEventPublisher).shouldHaveNoInteractions();
