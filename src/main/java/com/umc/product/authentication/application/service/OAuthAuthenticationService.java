@@ -15,6 +15,8 @@ import com.umc.product.authentication.domain.MemberOAuth;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
+import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
+import com.umc.product.member.application.port.in.query.dto.MemberCredentialStatusInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,6 +38,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
     private final LoadMemberOAuthPort loadMemberOAuthPort;
     private final SaveMemberOAuthPort saveMemberOAuthPort;
     private final RevokeOAuthTokenPort revokeOAuthTokenPort;
+    private final GetMemberCredentialUseCase getMemberCredentialUseCase;
 
     @Override
     @Transactional(readOnly = true)
@@ -182,18 +185,27 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
         memberOAuth.throwIfNotValidMember(command.memberId());
 
         if (!command.isWithdrawal()) {
-            // 회원에 연결된 OAuth 계정이 최소한 한 개는 있어야 함
-            List<MemberOAuth> linkedOAuth = loadMemberOAuthPort.findAllByMemberId(command.memberId());
-
-            if (linkedOAuth.size() <= 1) {
-                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_CANNOT_UNLINK_LAST_PROVIDER);
-            }
+            validateLoginMethodInvariant(command.memberId());
         }
 
         // Provider별 토큰 revoke / 연결 해제
         revokeProviderToken(memberOAuth, command);
 
         saveMemberOAuthPort.delete(memberOAuth);
+    }
+
+    private void validateLoginMethodInvariant(Long memberId) {
+        // Member row lock 이후 OAuth 개수를 확인해 같은 회원의 동시 OAuth 해제 요청을 직렬화한다.
+        MemberCredentialStatusInfo credentialStatus =
+            getMemberCredentialUseCase.getCredentialStatusForUpdate(memberId);
+        if (credentialStatus.hasCredential()) {
+            return;
+        }
+
+        List<MemberOAuth> linkedOAuth = loadMemberOAuthPort.findAllByMemberId(memberId);
+        if (linkedOAuth.size() <= 1) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_CANNOT_UNLINK_LAST_PROVIDER);
+        }
     }
 
     private void revokeProviderToken(MemberOAuth memberOAuth, UnlinkOAuthCommand command) {

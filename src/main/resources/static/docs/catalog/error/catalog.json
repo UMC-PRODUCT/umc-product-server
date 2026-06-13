@@ -193,7 +193,7 @@
     "constantName": "OAUTH_CANNOT_UNLINK_LAST_PROVIDER",
     "httpStatus": "BAD_REQUEST",
     "code": "AUTHENTICATION-0016",
-    "message": "계정에 연결된 유일한 OAuth는 해제할 수 없어요. 회원 탈퇴를 이용해주세요.",
+    "message": "비밀번호를 등록하지 않은 계정은 연결된 유일한 OAuth를 해제할 수 없어요. 비밀번호를 먼저 등록하거나 회원 탈퇴를 이용해주세요.",
     "source": "src/main/java/com/umc/product/authentication/domain/exception/AuthenticationErrorCode.java",
     "line": 46
   },
