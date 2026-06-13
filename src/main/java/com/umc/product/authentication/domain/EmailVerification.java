@@ -1,8 +1,11 @@
 package com.umc.product.authentication.domain;
 
+import java.time.Instant;
+
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.BaseEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,7 +14,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -71,7 +73,7 @@ public class EmailVerification extends BaseEntity {
     private Instant expiresAt;
 
     /**
-     * 인증 세션의 용도 (REGISTER / PASSWORD_RESET). cross-purpose 공격 방어를 위해 세션 단위로 고정한다.
+     * 인증 세션의 용도. cross-purpose 공격 방어를 위해 세션 단위로 고정한다.
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "purpose", nullable = false, length = 20)

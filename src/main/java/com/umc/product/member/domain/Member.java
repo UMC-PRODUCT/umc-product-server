@@ -4,6 +4,7 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -96,6 +97,11 @@ public class Member extends BaseEntity {
     public void updateProfile(String profileImageId) {
         validateActive();
         this.profileImageId = profileImageId;
+    }
+
+    public void changeEmail(String email) {
+        validateActive();
+        this.email = email;
     }
 
     /**

@@ -18,6 +18,7 @@ import com.umc.product.global.security.OAuthVerificationClaims;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.member.adapter.in.web.assembler.MemberInfoResponseAssembler;
+import com.umc.product.member.adapter.in.web.dto.request.ChangeMemberEmailRequest;
 import com.umc.product.member.adapter.in.web.dto.request.DeleteMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberInfoRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberProfileRequest;
@@ -25,10 +26,12 @@ import com.umc.product.member.adapter.in.web.dto.request.EmailRegisterMemberRequ
 import com.umc.product.member.adapter.in.web.dto.request.OAuthRegisterMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
+import com.umc.product.member.application.port.in.command.ChangeMemberEmailUseCase;
 import com.umc.product.member.application.port.in.command.ManageMemberProfileUseCase;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
 import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
 import com.umc.product.member.application.port.in.command.RegisterOAuthMemberUseCase;
+import com.umc.product.member.application.port.in.command.dto.ChangeMemberEmailCommand;
 import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
@@ -51,6 +54,7 @@ public class MemberCommandController {
     private final JwtTokenProvider jwtTokenProvider;
 
     private final ManageMemberUseCase manageMemberUseCase;
+    private final ChangeMemberEmailUseCase changeMemberEmailUseCase;
     private final ManageMemberProfileUseCase manageMemberProfileUseCase;
 
     private final RegisterOAuthMemberUseCase registerOAuthMemberUseCase;
@@ -136,6 +140,25 @@ public class MemberCommandController {
         manageMemberUseCase.updateMember(UpdateMemberCommand.forProfileUpdate(
             memberPrincipal.getMemberId(),
             request.profileImageId())
+        );
+
+        return assembler.fromMemberId(memberPrincipal.getMemberId());
+    }
+
+    @Operation(summary = "[MEMBER-005] 내 이메일 변경",
+        description = "CHANGE_EMAIL 용도로 발급된 emailVerificationToken 으로 새 이메일 소유를 확인한 뒤 회원 이메일을 변경합니다.")
+    @PatchMapping("/email")
+    MemberInfoResponse changeMemberEmail(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Valid @RequestBody ChangeMemberEmailRequest request
+    ) {
+        String email = jwtTokenProvider.parseEmailVerificationToken(
+            request.emailVerificationToken(),
+            EmailVerificationPurpose.CHANGE_EMAIL
+        );
+
+        changeMemberEmailUseCase.changeEmail(
+            ChangeMemberEmailCommand.of(memberPrincipal.getMemberId(), email)
         );
 
         return assembler.fromMemberId(memberPrincipal.getMemberId());
