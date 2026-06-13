@@ -133,6 +133,15 @@ class BlogInteractionControllerIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    @DisplayName("SEO 경로 목록은 공개 콘텐츠 경로를 반환한다")
+    void SEO_경로_목록은_공개_콘텐츠_경로를_반환한다() throws Exception {
+        mockMvc.perform(get("/api/v1/blog/seo/paths"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.paths[0].type").value("content"))
+            .andExpect(jsonPath("$.result.paths[0].path").value("/engineering/spring-boot-tips"));
+    }
+
+    @Test
     @DisplayName("공개 콘텐츠 목록은 공개되지 않은 콘텐츠 ID 커서를 거부한다")
     void 공개_콘텐츠_목록은_공개되지_않은_콘텐츠_ID_커서를_거부한다() throws Exception {
         BlogContent draft = saveBlogContentPort.save(BlogContent.create(

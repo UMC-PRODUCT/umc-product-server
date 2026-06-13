@@ -3,8 +3,12 @@ package com.umc.product.blog.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 
 @DisplayName("Blog 도메인 테스트")
 class BlogDomainTest {
@@ -168,6 +172,46 @@ class BlogDomainTest {
         assertThat(BlogContentType.fromPath("design")).isEqualTo(BlogContentType.DESIGN);
         assertThat(BlogContentType.fromPath("product")).isEqualTo(BlogContentType.PRODUCT);
         assertThat(BlogContentType.fromPath("release")).isEqualTo(BlogContentType.RELEASE);
+    }
+
+    @Test
+    @ResourceLock(Resources.LOCALE)
+    @DisplayName("영문 path 변환은 시스템 로케일에 영향받지 않는다")
+    void 영문_path_변환은_시스템_로케일에_영향받지_않는다() {
+        Locale originalLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            BlogContent content = BlogContent.create(
+                BlogContentType.ENGINEERING,
+                "locale-safe",
+                "제목",
+                null,
+                null,
+                "본문",
+                BlogContentStatus.PUBLISHED,
+                1L,
+                null,
+                null,
+                null
+            );
+            BlogSeries series = BlogSeries.create(
+                BlogContentType.ENGINEERING,
+                "locale-series",
+                "시리즈",
+                null,
+                null,
+                1L,
+                null,
+                null,
+                null
+            );
+
+            assertThat(BlogContentType.fromPath("ENGINEERING")).isEqualTo(BlogContentType.ENGINEERING);
+            assertThat(content.canonicalPath()).isEqualTo("/engineering/locale-safe");
+            assertThat(series.canonicalPath()).isEqualTo("/series/engineering/locale-series");
+        } finally {
+            Locale.setDefault(originalLocale);
+        }
     }
 
     @Test

@@ -8,14 +8,16 @@ import static com.umc.product.blog.domain.QBlogSeriesContent.blogSeriesContent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.stereotype.Repository;
 
+import com.querydsl.core.Tuple;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.blog.application.port.out.dto.BlogSeoPathRow;
-import com.umc.product.blog.domain.BlogContent;
 import com.umc.product.blog.domain.BlogContentStatus;
+import com.umc.product.blog.domain.BlogContentType;
 import com.umc.product.blog.domain.BlogHashtag;
 import com.umc.product.blog.domain.BlogSeries;
 
@@ -36,15 +38,21 @@ public class BlogSeoQueryRepository {
     }
 
     private List<BlogSeoPathRow> listContentPaths() {
-        return queryFactory
-            .selectFrom(blogContent)
+        List<Tuple> rows = queryFactory
+            .select(blogContent.contentType, blogContent.slug, blogContent.updatedAt)
+            .from(blogContent)
             .where(
                 blogContent.status.eq(BlogContentStatus.PUBLISHED),
                 blogContent.deletedAt.isNull()
             )
-            .fetch()
-            .stream()
-            .map(this::contentPath)
+            .fetch();
+
+        return rows.stream()
+            .map(row -> new BlogSeoPathRow(
+                "content",
+                "/" + typePath(row.get(blogContent.contentType)) + "/" + row.get(blogContent.slug),
+                row.get(blogContent.updatedAt)
+            ))
             .toList();
     }
 
@@ -91,23 +99,19 @@ public class BlogSeoQueryRepository {
             .toList();
     }
 
-    private BlogSeoPathRow contentPath(BlogContent content) {
-        return new BlogSeoPathRow(
-            "content",
-            "/" + content.getContentType().name().toLowerCase() + "/" + content.getSlug(),
-            content.getUpdatedAt()
-        );
-    }
-
     private BlogSeoPathRow seriesPath(BlogSeries series) {
         return new BlogSeoPathRow(
             "series",
-            "/series/" + series.getContentType().name().toLowerCase() + "/" + series.getSlug(),
+            "/series/" + typePath(series.getContentType()) + "/" + series.getSlug(),
             series.getUpdatedAt()
         );
     }
 
     private BlogSeoPathRow hashtagPath(BlogHashtag hashtag) {
         return new BlogSeoPathRow("hashtag", "/hashtags/" + hashtag.getSlug(), hashtag.getUpdatedAt());
+    }
+
+    private String typePath(BlogContentType contentType) {
+        return contentType.name().toLowerCase(Locale.ROOT);
     }
 }

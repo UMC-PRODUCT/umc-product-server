@@ -1,5 +1,7 @@
 package com.umc.product.blog.domain;
 
+import java.util.Locale;
+
 public enum BlogContentType {
     ENGINEERING,
     DESIGN,
@@ -11,7 +13,7 @@ public enum BlogContentType {
             throw new BlogDomainException(BlogErrorCode.INVALID_CONTENT_TYPE);
         }
 
-        return switch (value.trim().toLowerCase()) {
+        return switch (value.trim().toLowerCase(Locale.ROOT)) {
             case "engineering" -> ENGINEERING;
             case "design" -> DESIGN;
             case "product" -> PRODUCT;

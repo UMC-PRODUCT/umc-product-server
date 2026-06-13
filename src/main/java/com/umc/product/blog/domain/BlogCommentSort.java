@@ -1,5 +1,7 @@
 package com.umc.product.blog.domain;
 
+import java.util.Locale;
+
 public enum BlogCommentSort {
     CREATED_AT_DESC(false),
     CREATED_AT_ASC(true);
@@ -15,7 +17,7 @@ public enum BlogCommentSort {
             return CREATED_AT_DESC;
         }
 
-        String normalized = value.trim().replace(" ", "").toLowerCase();
+        String normalized = value.trim().replace(" ", "").toLowerCase(Locale.ROOT);
         return switch (normalized) {
             case "createdat,desc" -> CREATED_AT_DESC;
             case "createdat,asc" -> CREATED_AT_ASC;
