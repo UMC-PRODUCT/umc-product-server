@@ -23,7 +23,7 @@ class CustomErrorControllerTest {
     void businessExceptionDetailIsPreserved() {
         AuthorizationDomainException exception = new AuthorizationDomainException(
             AuthorizationErrorCode.PERMISSION_DENIED,
-            "학교 운영진만 수정할 수 있습니다."
+            "학교 운영진만 수정할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
         );
 
         ResponseEntity<ApiResponse<Object>> response = controller.handleError(errorRequest(exception));
@@ -32,7 +32,8 @@ class CustomErrorControllerTest {
         assertThat(response.getBody()).satisfies(body -> {
             assertThat(body.getCode()).isEqualTo(AuthorizationErrorCode.PERMISSION_DENIED.getCode());
             assertThat(body.getMessage()).isEqualTo(AuthorizationErrorCode.PERMISSION_DENIED.getMessage());
-            assertThat(body.getResult()).isEqualTo("학교 운영진만 수정할 수 있습니다.");
+            assertThat(body.getResult())
+                .isEqualTo("학교 운영진만 수정할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요.");
         });
     }
 

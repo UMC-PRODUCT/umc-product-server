@@ -106,15 +106,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("JSON 파싱 에러: {}", e.getMessage());
 
         String errorMessage = e.getMessage();
-        String simplifiedMessage = "잘못된 요청 형식입니다";
+        String simplifiedMessage = "요청 형식이 올바르지 않아요. 입력한 값을 확인해주세요.";
 
         if (errorMessage != null) {
             if (errorMessage.contains("Cannot deserialize")) {
-                simplifiedMessage = "요청 데이터 타입이 올바르지 않습니다";
+                simplifiedMessage = "요청 값의 형식이 올바르지 않아요. 입력한 값을 확인해주세요.";
             } else if (errorMessage.contains("Required request body is missing")) {
-                simplifiedMessage = "요청 본문이 필요합니다";
+                simplifiedMessage = "요청 내용이 비어 있어요. 입력한 값을 확인해주세요.";
             } else if (errorMessage.contains("JSON parse error")) {
-                simplifiedMessage = "JSON 형식이 올바르지 않습니다";
+                simplifiedMessage = "요청 형식이 올바르지 않아요. 입력한 값을 확인해주세요.";
             }
         }
 
@@ -131,7 +131,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         HttpStatusCode status,
         WebRequest request
     ) {
-        String detail = String.format("필수 요청 파라미터 '%s'가 누락되었습니다.", e.getParameterName());
+        String detail = String.format("필수 요청 값 '%s'가 없어요. 입력한 값을 확인해주세요.", e.getParameterName());
         log.warn("[MISSING REQUEST PARAMETER] {}", detail);
 
         return buildResponse(e, CommonErrorCode.BAD_REQUEST, headers, request, detail);
@@ -149,7 +149,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ) {
         log.warn("[REQUEST PARAMETER TYPE MISMATCH] {}", e.getMessage());
 
-        return buildResponse(e, CommonErrorCode.BAD_REQUEST, headers, request, "요청 파라미터 값이 올바르지 않습니다.");
+        return buildResponse(
+            e,
+            CommonErrorCode.BAD_REQUEST,
+            headers,
+            request,
+            "요청 값의 형식이 올바르지 않아요. 입력한 값을 확인해주세요."
+        );
     }
 
 
@@ -161,7 +167,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.error("[UNHANDLED EXCEPTION] {}", e.getMessage(), e);
 
         String errorDetail = isProductionProfile()
-            ? "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+            ? CommonErrorCode.INTERNAL_SERVER_ERROR.getMessage()
             : e.getMessage();
 
         return buildResponse(e, CommonErrorCode.INTERNAL_SERVER_ERROR, HttpHeaders.EMPTY, request, errorDetail);
