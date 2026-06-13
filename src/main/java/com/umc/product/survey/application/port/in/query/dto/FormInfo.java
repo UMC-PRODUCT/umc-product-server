@@ -16,6 +16,7 @@ public record FormInfo(
     String description,
     FormStatus status,
     boolean isAnonymous,
+    boolean allowDuplicateResponses,
     Instant createdAt,
     Instant updatedAt
 ) {
@@ -28,6 +29,7 @@ public record FormInfo(
             .description(form.getDescription())
             .status(form.getStatus())
             .isAnonymous(form.isAnonymous())
+            .allowDuplicateResponses(form.isAllowDuplicateResponses())
             .createdAt(form.getCreatedAt())
             .updatedAt(form.getUpdatedAt())
             .build();

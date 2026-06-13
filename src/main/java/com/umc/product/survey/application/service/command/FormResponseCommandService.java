@@ -38,9 +38,7 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
     public Long submitImmediately(SubmitFormResponseCommand command) {
         Form form = loadPublishedForm(command.formId());
 
-        if (loadFormResponsePort.existsByFormIdAndMemberId(command.formId(), command.respondentMemberId())) {
-            throw new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_ALREADY_EXISTS);
-        }
+        validateDuplicateResponsePolicy(form, command.respondentMemberId());
 
         validateAnswers(command.formId(), command.answers());
         validateAllRequiredAnswered(command.formId(), extractQuestionIds(command.answers()));
@@ -57,7 +55,8 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
 
     @Override
     public void updateResponse(UpdateFormResponseCommand command) {
-        loadPublishedForm(command.formId());
+        Form form = loadPublishedForm(command.formId());
+        validateSingleResponseLookupPolicy(form);
 
         FormResponse existing = loadFormResponsePort
             .findSubmittedByFormIdAndRespondentMemberId(command.formId(), command.respondentMemberId())
@@ -77,6 +76,9 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
 
     @Override
     public void deleteResponse(DeleteFormResponseCommand command) {
+        Form form = loadPublishedForm(command.formId());
+        validateSingleResponseLookupPolicy(form);
+
         FormResponse existing = loadFormResponsePort
             .findSubmittedByFormIdAndRespondentMemberId(command.formId(), command.respondentMemberId())
             .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
@@ -89,10 +91,7 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
     public Long createDraft(CreateDraftFormResponseCommand command) {
         Form form = loadPublishedForm(command.formId());
 
-        // 같은 폼에 같은 멤버의 응답 (DRAFT/SUBMITTED) 이 이미 있으면 예외
-        if (loadFormResponsePort.existsByFormIdAndMemberId(command.formId(), command.respondentMemberId())) {
-            throw new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_ALREADY_EXISTS);
-        }
+        validateDuplicateResponsePolicy(form, command.respondentMemberId());
 
         FormResponse draft = FormResponse.createDraft(form, command.respondentMemberId());
         return saveFormResponsePort.save(draft).getId();
@@ -161,6 +160,21 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
             throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_PUBLISHED);
         }
         return form;
+    }
+
+    private void validateDuplicateResponsePolicy(Form form, Long respondentMemberId) {
+        if (form.isAllowDuplicateResponses()) {
+            return;
+        }
+        if (loadFormResponsePort.existsByFormIdAndMemberId(form.getId(), respondentMemberId)) {
+            throw new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_ALREADY_EXISTS);
+        }
+    }
+
+    private static void validateSingleResponseLookupPolicy(Form form) {
+        if (form.isAllowDuplicateResponses()) {
+            throw new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_LOOKUP_AMBIGUOUS);
+        }
     }
 
     /**

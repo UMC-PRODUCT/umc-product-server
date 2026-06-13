@@ -46,25 +46,43 @@ public class Form extends BaseEntity {
     @Column(name = "is_anonymous", nullable = false)
     private boolean isAnonymous;
 
+    @Column(name = "allow_duplicate_responses", nullable = false)
+    private boolean allowDuplicateResponses;
+
     /**
      * Draft 생성을 위해서는 제목은 필수로 입력하여야 합니다.
      */
     public static Form createDraft(String title, Long createdMemberId) {
+        return createDraft(title, createdMemberId, false);
+    }
+
+    public static Form createDraft(String title, Long createdMemberId, boolean allowDuplicateResponses) {
         Form form = new Form();
 
         form.title = title;
         form.createdMemberId = createdMemberId;
         form.status = FormStatus.DRAFT;
+        form.allowDuplicateResponses = allowDuplicateResponses;
 
         return form;
     }
 
     public static Form createPublished(Long createdMemberId, String title, boolean isAnonymous) {
+        return createPublished(createdMemberId, title, isAnonymous, false);
+    }
+
+    public static Form createPublished(
+        Long createdMemberId,
+        String title,
+        boolean isAnonymous,
+        boolean allowDuplicateResponses
+    ) {
         Form form = new Form();
         form.createdMemberId = createdMemberId;
         form.title = title;
         form.isAnonymous = isAnonymous;
         form.status = FormStatus.PUBLISHED;
+        form.allowDuplicateResponses = allowDuplicateResponses;
 
         return form;
     }
@@ -86,8 +104,13 @@ public class Form extends BaseEntity {
      * null 인 필드는 기존 값 유지. 임시저장 단계에서 어느 필드든 부분 변경 가능하도록 모든 파라미터 nullable.
      */
     public void update(String title, String description, Boolean isAnonymous) {
+        update(title, description, isAnonymous, null);
+    }
+
+    public void update(String title, String description, Boolean isAnonymous, Boolean allowDuplicateResponses) {
         if (title != null) this.title = title;
         if (description != null) this.description = description;
         if (isAnonymous != null) this.isAnonymous = isAnonymous;
+        if (allowDuplicateResponses != null) this.allowDuplicateResponses = allowDuplicateResponses;
     }
 }

@@ -19,6 +19,7 @@ public record FormWithStructureInfo(
     String description,
     FormStatus status,
     boolean isAnonymous,
+    boolean allowDuplicateResponses,
     Instant createdAt,
     Instant updatedAt,
     List<SectionWithQuestions> sections

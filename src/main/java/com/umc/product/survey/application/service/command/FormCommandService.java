@@ -34,7 +34,11 @@ public class FormCommandService implements ManageFormUseCase {
 
     @Override
     public Long createDraft(CreateDraftFormCommand command) {
-        Form form = Form.createDraft(command.title(), command.createdMemberId());
+        Form form = Form.createDraft(
+            command.title(),
+            command.createdMemberId(),
+            command.allowDuplicateResponses()
+        );
 
         return saveFormPort.save(form).getId();
     }
@@ -44,7 +48,12 @@ public class FormCommandService implements ManageFormUseCase {
         Form form = loadFormPort.findById(command.formId())
             .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
 
-        form.update(command.title(), command.description(), command.isAnonymous());
+        form.update(
+            command.title(),
+            command.description(),
+            command.isAnonymous(),
+            command.allowDuplicateResponses()
+        );
         saveFormPort.save(form);
     }
 

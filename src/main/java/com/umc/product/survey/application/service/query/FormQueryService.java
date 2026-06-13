@@ -97,6 +97,7 @@ public class FormQueryService implements GetFormUseCase {
             .description(form.getDescription())
             .status(form.getStatus())
             .isAnonymous(form.isAnonymous())
+            .allowDuplicateResponses(form.isAllowDuplicateResponses())
             .createdAt(form.getCreatedAt())
             .updatedAt(form.getUpdatedAt())
             .sections(sectionDtos)
