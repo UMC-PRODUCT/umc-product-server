@@ -103,6 +103,22 @@ public class ProjectMember extends BaseEntity {
     }
 
     /**
+     * 지원서 합격 결과로 활성 상태의 신규 멤버를 생성합니다.
+     */
+    public static ProjectMember createFromApplication(
+        ProjectApplication application, ChallengerPart part, Long decidedByMemberId
+    ) {
+        ProjectMember pm = create(
+            application.getApplicationForm().getProject(),
+            application.getApplicantMemberId(),
+            part,
+            decidedByMemberId
+        );
+        pm.application = application;
+        return pm;
+    }
+
+    /**
      * 멤버를 강제 퇴출 처리합니다 (soft delete).
      * status 를 {@link ProjectMemberStatus#DISMISSED} 로 바꾸고 변경 메타데이터를 기록합니다.
      */

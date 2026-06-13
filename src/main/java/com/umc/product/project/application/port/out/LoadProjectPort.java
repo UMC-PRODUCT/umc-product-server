@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.enums.ProjectStatus;
 
 /**
  * Project 조회 Port (Driven / Port Out).
@@ -33,6 +34,11 @@ public interface LoadProjectPort {
      * 여러 ID 에 대해 Project 를 한 번에 조회합니다. 누락된 ID 는 결과에서 빠집니다 (예외 없음).
      */
     List<Project> listByIds(Collection<Long> ids);
+
+    /**
+     * 특정 지부의 특정 상태 프로젝트 목록을 반환합니다.
+     */
+    List<Project> listByChapterIdAndStatus(Long chapterId, ProjectStatus status);
 
     /**
      * 특정 멤버가 특정 기수에 PO 인 프로젝트가 하나라도 존재하는지 확인합니다. Access scope 판정용 (OwnerOnly 부여 여부) — 동일 기수 내 PO 중복은 더 이상 차단되지 않으므로 다중
