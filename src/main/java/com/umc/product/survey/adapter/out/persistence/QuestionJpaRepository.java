@@ -1,15 +1,17 @@
 package com.umc.product.survey.adapter.out.persistence;
 
-import com.umc.product.survey.domain.Question;
-import com.umc.product.survey.domain.enums.QuestionType;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.survey.domain.Question;
+import com.umc.product.survey.domain.enums.QuestionType;
 
 public interface QuestionJpaRepository extends JpaRepository<Question, Long> {
     /**
@@ -49,7 +51,7 @@ public interface QuestionJpaRepository extends JpaRepository<Question, Long> {
     Optional<Question> findFirstByFormIdAndType(@Param("formId") Long formId, @Param("type") QuestionType type);
 
     /**
-     * 특정 폼의 모든 질문을 섹션 순서, 질문 순서대로 조회
+     * 특정 폼의 활성화된 질문을 섹션 순서, 질문 순서대로 조회
      */
     @Query("""
                 SELECT q
@@ -57,9 +59,10 @@ public interface QuestionJpaRepository extends JpaRepository<Question, Long> {
                 JOIN q.formSection fs
                 JOIN fs.form f
                 WHERE f.id = :formId
+                  AND q.isActive = true
                 ORDER BY fs.orderNo ASC, q.orderNo ASC
             """)
-    List<Question> findAllByFormId(@Param("formId") Long formId);
+    List<Question> findAllByFormIdAndIsActiveTrue(@Param("formId") Long formId);
 
     /**
      * 특정 폼에 속한 모든 질문 삭제 (deleteForm cascade 용)
