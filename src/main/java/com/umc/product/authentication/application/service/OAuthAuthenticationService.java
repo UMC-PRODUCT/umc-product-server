@@ -1,6 +1,13 @@
 package com.umc.product.authentication.application.service;
 
-import com.umc.product.authentication.domain.OAuthAttributes;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.AuthorizationCodeLoginCommand;
@@ -12,16 +19,13 @@ import com.umc.product.authentication.application.port.out.RevokeOAuthTokenPort;
 import com.umc.product.authentication.application.port.out.SaveMemberOAuthPort;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
 import com.umc.product.authentication.domain.MemberOAuth;
+import com.umc.product.authentication.domain.OAuthAttributes;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * OAuth 인증 관련 비즈니스 로직을 처리하는 Service
@@ -214,6 +218,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
             }
             case KAKAO -> {
                 if (command.kakaoAccessToken() != null) {
+                    validateAccessTokenOwner(memberOAuth, command.kakaoAccessToken());
                     revokeOAuthTokenPort.revokeKakaoToken(command.kakaoAccessToken());
                 } else {
                     log.warn("[Kakao 계정 연동 해제] access token이 전달되지 않아 revoke를 skip합니다: memberId={} memberOAuthId={}",
@@ -222,12 +227,25 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
             }
             case GOOGLE -> {
                 if (command.googleAccessToken() != null) {
+                    validateAccessTokenOwner(memberOAuth, command.googleAccessToken());
                     revokeOAuthTokenPort.revokeGoogleToken(command.googleAccessToken());
                 } else {
                     log.warn("[Google 계정 연동 해제] access token이 전달되지 않아 revoke를 skip합니다: memberId={} memberOAuthId={}",
                         memberOAuth.getMemberId(), memberOAuth.getId());
                 }
             }
+        }
+    }
+
+    private void validateAccessTokenOwner(MemberOAuth memberOAuth, String accessToken) {
+        OAuthAttributes tokenAttributes = verifyIdTokenPort.verify(memberOAuth.getProvider(), accessToken);
+
+        if (tokenAttributes.provider() != memberOAuth.getProvider()
+            || !Objects.equals(tokenAttributes.providerId(), memberOAuth.getProviderId())) {
+            log.warn("[{} 계정 연동 해제] access token 소유자가 저장된 OAuth 계정과 일치하지 않습니다: "
+                    + "memberId={} memberOAuthId={}",
+                memberOAuth.getProvider(), memberOAuth.getMemberId(), memberOAuth.getId());
+            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
         }
     }
 
