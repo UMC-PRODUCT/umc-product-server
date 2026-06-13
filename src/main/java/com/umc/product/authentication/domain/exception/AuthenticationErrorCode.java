@@ -44,7 +44,7 @@ public enum AuthenticationErrorCode implements BaseCode {
     NOT_VALID_MEMBER(HttpStatus.FORBIDDEN, "AUTHENTICATION-0015",
         "이 작업을 할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."),
     OAUTH_CANNOT_UNLINK_LAST_PROVIDER(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0016",
-        "계정에 연결된 유일한 OAuth는 해제할 수 없어요. 회원 탈퇴를 이용해주세요."),
+        "비밀번호를 등록하지 않은 계정은 연결된 유일한 OAuth를 해제할 수 없어요. 비밀번호를 먼저 등록하거나 회원 탈퇴를 이용해주세요."),
 
     // 이메일 인증 관련
     ALREADY_VERIFIED_EMAIL(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0017",
