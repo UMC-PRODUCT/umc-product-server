@@ -9,6 +9,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.access.AccessDeniedException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.response.ApiErrorResponseWriter;
 
 class ApiAccessDeniedHandlerTest {
@@ -30,8 +31,8 @@ class ApiAccessDeniedHandlerTest {
         assertThat(response.getStatus()).isEqualTo(403);
         assertThat(response.getContentAsString())
             .contains("\"success\":false")
-            .contains("\"code\":\"COMMON-403\"")
-            .contains("\"message\":\"허용되지 않는 요청입니다.\"")
+            .contains("\"code\":\"" + CommonErrorCode.FORBIDDEN.getCode() + "\"")
+            .contains("\"message\":\"" + CommonErrorCode.FORBIDDEN.getMessage() + "\"")
             .doesNotContain("ROLE_ADMIN")
             .doesNotContain("internal policy")
             .doesNotContain("\"result\"");

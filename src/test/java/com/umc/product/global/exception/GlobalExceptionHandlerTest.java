@@ -24,6 +24,7 @@ import org.springframework.web.context.request.ServletWebRequest;
 
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
+import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.response.ApiResponse;
 
 class GlobalExceptionHandlerTest {
@@ -44,9 +45,9 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED.getHttpStatus());
         assertThat(response.getBody())
             .isInstanceOfSatisfying(ApiResponse.class, body -> {
-                assertThat(body.getCode()).isEqualTo("AUTHORIZATION-0002");
-                assertThat(body.getMessage()).isEqualTo("해당 리소스에 접근할 권한이 없습니다.");
-                assertThat(body.getResult()).isEqualTo("해당 리소스에 접근할 권한이 없습니다.");
+                assertThat(body.getCode()).isEqualTo(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED.getCode());
+                assertThat(body.getMessage()).isEqualTo(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED.getMessage());
+                assertThat(body.getResult()).isEqualTo(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED.getMessage());
             });
     }
 
@@ -62,8 +63,8 @@ class GlobalExceptionHandlerTest {
         mockMvc.perform(get("/access-denied"))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.success").value(false))
-            .andExpect(jsonPath("$.code").value("COMMON-403"))
-            .andExpect(jsonPath("$.message").value("허용되지 않는 요청입니다."))
+            .andExpect(jsonPath("$.code").value(CommonErrorCode.FORBIDDEN.getCode()))
+            .andExpect(jsonPath("$.message").value(CommonErrorCode.FORBIDDEN.getMessage()))
             .andExpect(jsonPath("$.result").doesNotExist());
     }
 
