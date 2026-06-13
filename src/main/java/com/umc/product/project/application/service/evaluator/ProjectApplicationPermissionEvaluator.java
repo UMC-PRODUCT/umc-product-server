@@ -1,5 +1,9 @@
 package com.umc.product.project.application.service.evaluator;
 
+import java.util.Objects;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
@@ -13,9 +17,8 @@ import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import java.util.Objects;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 /**
  * ProjectApplication 도메인 단건 액션의 권한 판정 (L2). subject × resource 속성 매칭만 다룬다.

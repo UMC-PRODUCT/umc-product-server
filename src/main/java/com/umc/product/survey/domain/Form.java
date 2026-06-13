@@ -4,6 +4,7 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.survey.domain.enums.FormStatus;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -1,10 +1,12 @@
 package com.umc.product.project.adapter.in.web.dto.request;
 
+import java.util.List;
+
 import com.umc.product.project.adapter.in.web.dto.common.ApplicationAnswerItem;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectApplicationDraftCommand;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
 import lombok.Builder;
 
 /**
@@ -16,8 +18,7 @@ import lombok.Builder;
 @Builder
 public record UpdateApplicationAnswersRequest(
     @NotNull(message = "answers는 null 일 수 없습니다 (빈 리스트는 허용)")
-    @Valid
-    List<ApplicationAnswerItem> answers
+    @Valid List<ApplicationAnswerItem> answers
 ) {
 
     public UpdateProjectApplicationDraftCommand toCommand(
