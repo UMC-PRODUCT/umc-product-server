@@ -34,8 +34,8 @@ class ErrorCodeCatalogQueryServiceTest {
     }
 
     @Test
-    @DisplayName("ErrorCodeSpec optional metadata를 manifest에 반영한다")
-    void ErrorCodeSpec_optional_metadata를_manifest에_반영한다() {
+    @DisplayName("metadata 선언이 없으면 optional field 기본값을 manifest에 반영한다")
+    void metadata_선언이_없으면_optional_field_기본값을_manifest에_반영한다() {
         ErrorCodeCatalogResponse catalog = service.getErrorCodeCatalog();
 
         ErrorCodeCatalogItemResponse item = catalog.items().stream()
@@ -43,15 +43,13 @@ class ErrorCodeCatalogQueryServiceTest {
             .findFirst()
             .orElseThrow();
 
-        assertThat(item.description()).isEqualTo(
-            "Generated ErrorCode catalog resource is missing, unreadable, or invalid."
-        );
-        assertThat(item.clientAction()).isEqualTo(
-            "Retry after the server has regenerated and redeployed the catalog."
-        );
-        assertThat(item.retryable()).isTrue();
-        assertThat(item.severity()).isEqualTo("ERROR");
-        assertThat(item.owners()).containsExactly("server");
-        assertThat(item.tags()).containsExactly("documentation", "backoffice");
+        assertThat(item.description()).isNull();
+        assertThat(item.clientAction()).isNull();
+        assertThat(item.retryable()).isNull();
+        assertThat(item.severity()).isNull();
+        assertThat(item.deprecated()).isFalse();
+        assertThat(item.replacementCode()).isNull();
+        assertThat(item.owners()).isEmpty();
+        assertThat(item.tags()).isEmpty();
     }
 }

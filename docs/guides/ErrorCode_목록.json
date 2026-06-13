@@ -2454,18 +2454,18 @@
       "httpStatus": 500,
       "httpStatusName": "INTERNAL_SERVER_ERROR",
       "message": "ErrorCode 카탈로그를 불러오지 못했어요. 잠시 후 다시 시도해주세요.",
-      "description": "Generated ErrorCode catalog resource is missing, unreadable, or invalid.",
-      "clientAction": "Retry after the server has regenerated and redeployed the catalog.",
-      "retryable": true,
-      "severity": "ERROR",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
       "deprecated": false,
       "replacementCode": null,
-      "owners": ["server"],
-      "tags": ["documentation", "backoffice"],
+      "owners": [],
+      "tags": [],
       "source": {
         "enumName": "DocumentationErrorCode",
         "file": "src/main/java/com/umc/product/documentation/domain/DocumentationErrorCode.java",
-        "line": 25
+        "line": 14
       }
     },
     {

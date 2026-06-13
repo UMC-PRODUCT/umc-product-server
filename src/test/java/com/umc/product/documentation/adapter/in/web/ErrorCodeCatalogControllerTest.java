@@ -54,14 +54,14 @@ class ErrorCodeCatalogControllerTest {
                 500,
                 "INTERNAL_SERVER_ERROR",
                 "ErrorCode 카탈로그를 불러오지 못했어요. 잠시 후 다시 시도해주세요.",
-                "Generated ErrorCode catalog resource is missing, unreadable, or invalid.",
-                "Retry after the server has regenerated and redeployed the catalog.",
-                true,
-                "ERROR",
+                null,
+                null,
+                null,
+                null,
                 false,
                 null,
-                List.of("server"),
-                List.of("documentation", "backoffice"),
+                List.of(),
+                List.of(),
                 new ErrorCodeCatalogSourceResponse(
                     "DocumentationErrorCode",
                     "src/main/java/com/umc/product/documentation/domain/DocumentationErrorCode.java",
@@ -79,10 +79,14 @@ class ErrorCodeCatalogControllerTest {
             .andExpect(jsonPath("$.result.totalCount").value(1))
             .andExpect(jsonPath("$.result.items[0].code").value("DOCS-0001"))
             .andExpect(jsonPath("$.result.items[0].httpStatus").value(500))
-            .andExpect(jsonPath("$.result.items[0].retryable").value(true))
-            .andExpect(jsonPath("$.result.items[0].severity").value("ERROR"))
-            .andExpect(jsonPath("$.result.items[0].owners[0]").value("server"))
-            .andExpect(jsonPath("$.result.items[0].tags[1]").value("backoffice"))
+            .andExpect(jsonPath("$.result.items[0].description").doesNotExist())
+            .andExpect(jsonPath("$.result.items[0].clientAction").doesNotExist())
+            .andExpect(jsonPath("$.result.items[0].retryable").doesNotExist())
+            .andExpect(jsonPath("$.result.items[0].severity").doesNotExist())
+            .andExpect(jsonPath("$.result.items[0].deprecated").value(false))
+            .andExpect(jsonPath("$.result.items[0].replacementCode").doesNotExist())
+            .andExpect(jsonPath("$.result.items[0].owners").isEmpty())
+            .andExpect(jsonPath("$.result.items[0].tags").isEmpty())
             .andExpect(jsonPath("$.result.items[0].source.enumName").value("DocumentationErrorCode"));
     }
 }

@@ -2,7 +2,7 @@
 
 서버가 반환하는 ErrorCode를 독립 규격(v1)으로 정리합니다.
 
-> 소스 기준: 각 도메인의 `*ErrorCode.java` enum과 선택적 `@ErrorCodeSpec` 메타데이터를 스캔합니다. 갱신: `./gradlew generateDocumentationCatalogs`
+> 소스 기준: 각 도메인의 `*ErrorCode.java` enum을 스캔합니다. 갱신: `./gradlew generateDocumentationCatalogs`
 
 ## analytics
 
@@ -149,7 +149,7 @@
 
 | 순번 | 도메인 | Code | Name | HTTP Status | Message | Client Action | Retryable | Severity | Deprecated | Owners | Tags | Source |
 |---:|---|---|---|---|---|---|---|---|---|---|---|---|
-| 112 | documentation | `DOCS-0001` | `ERROR_CODE_CATALOG_UNAVAILABLE` | 500 INTERNAL_SERVER_ERROR | ErrorCode 카탈로그를 불러오지 못했어요. 잠시 후 다시 시도해주세요. | Retry after the server has regenerated and redeployed the catalog. | true | ERROR | false | server | documentation, backoffice | `src/main/java/com/umc/product/documentation/domain/DocumentationErrorCode.java:25` |
+| 112 | documentation | `DOCS-0001` | `ERROR_CODE_CATALOG_UNAVAILABLE` | 500 INTERNAL_SERVER_ERROR | ErrorCode 카탈로그를 불러오지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `src/main/java/com/umc/product/documentation/domain/DocumentationErrorCode.java:14` |
 
 ## feedback
 

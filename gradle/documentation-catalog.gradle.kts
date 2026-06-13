@@ -1,17 +1,6 @@
 import java.io.File
 import java.util.Locale
 
-data class ErrorCodeSpecMetadata(
-    val description: String?,
-    val clientAction: String?,
-    val retryable: Boolean?,
-    val severity: String?,
-    val deprecated: Boolean,
-    val replacementCode: String?,
-    val owners: List<String>,
-    val tags: List<String>
-)
-
 data class ErrorCodeSource(
     val enumName: String,
     val file: String,
@@ -176,93 +165,6 @@ fun httpStatusCode(statusName: String): Int = mapOf(
     "NETWORK_AUTHENTICATION_REQUIRED" to 511
 )[statusName] ?: 0
 
-fun parseStringAttribute(text: String, attributeName: String): String? {
-    val match = Regex(
-        "\\b${Regex.escape(attributeName)}\\s*=\\s*\"((?:\\\\.|[^\"\\\\])*)\"",
-        setOf(RegexOption.DOT_MATCHES_ALL)
-    ).find(text)
-
-    return match
-        ?.groupValues
-        ?.get(1)
-        ?.let(::unescapeJavaString)
-        ?.takeUnless { it.isBlank() }
-}
-
-fun parseBooleanAttribute(text: String, attributeName: String): Boolean? {
-    val match = Regex("\\b${Regex.escape(attributeName)}\\s*=\\s*(true|false)").find(text)
-    return match?.groupValues?.get(1)?.toBooleanStrict()
-}
-
-fun parseSeverityAttribute(text: String): String? {
-    val match = Regex("\\bseverity\\s*=\\s*(?:ErrorCodeSeverity\\.)?([A-Z_]+)").find(text)
-    val value = match?.groupValues?.get(1)
-    return value?.takeUnless { it == "UNSPECIFIED" }
-}
-
-fun parseRetryableAttribute(text: String): Boolean? {
-    val enumMatch = Regex("\\bretryable\\s*=\\s*(?:ErrorCodeRetryable\\.)?([A-Z_]+)").find(text)
-    if (enumMatch != null) {
-        return when (enumMatch.groupValues[1]) {
-            "TRUE" -> true
-            "FALSE" -> false
-            else -> null
-        }
-    }
-
-    return parseBooleanAttribute(text, "retryable")
-}
-
-fun parseStringArrayAttribute(text: String, attributeName: String): List<String> {
-    val arrayMatch = Regex(
-        "\\b${Regex.escape(attributeName)}\\s*=\\s*\\{([^}]*)}",
-        setOf(RegexOption.DOT_MATCHES_ALL)
-    ).find(text)
-
-    if (arrayMatch != null) {
-        return Regex("\"((?:\\\\.|[^\"\\\\])*)\"")
-            .findAll(arrayMatch.groupValues[1])
-            .map { unescapeJavaString(it.groupValues[1]) }
-            .filter { it.isNotBlank() }
-            .toList()
-    }
-
-    val singleMatch = Regex(
-        "\\b${Regex.escape(attributeName)}\\s*=\\s*\"((?:\\\\.|[^\"\\\\])*)\"",
-        setOf(RegexOption.DOT_MATCHES_ALL)
-    ).find(text)
-
-    return singleMatch
-        ?.let { listOf(unescapeJavaString(it.groupValues[1])) }
-        ?.filter { it.isNotBlank() }
-        ?: emptyList()
-}
-
-fun extractErrorCodeSpecMetadata(annotations: List<String>): ErrorCodeSpecMetadata {
-    val annotation = annotations.firstOrNull { it.contains("ErrorCodeSpec") }
-        ?: return ErrorCodeSpecMetadata(
-            description = null,
-            clientAction = null,
-            retryable = null,
-            severity = null,
-            deprecated = false,
-            replacementCode = null,
-            owners = emptyList(),
-            tags = emptyList()
-        )
-
-    return ErrorCodeSpecMetadata(
-        description = parseStringAttribute(annotation, "description"),
-        clientAction = parseStringAttribute(annotation, "clientAction"),
-        retryable = parseRetryableAttribute(annotation),
-        severity = parseSeverityAttribute(annotation),
-        deprecated = parseBooleanAttribute(annotation, "deprecated") ?: false,
-        replacementCode = parseStringAttribute(annotation, "replacementCode"),
-        owners = parseStringArrayAttribute(annotation, "owners"),
-        tags = parseStringArrayAttribute(annotation, "tags")
-    )
-}
-
 fun appendJsonStringOrNull(builder: StringBuilder, property: String, value: String?, trailingComma: Boolean = true) {
     builder.append("      \"$property\": ")
     if (value == null) {
@@ -312,7 +214,6 @@ fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
             var chunk = StringBuilder()
             var chunkStartLine = 0
             var balance = 0
-            var pendingAnnotations = mutableListOf<String>()
             var annotationChunk = StringBuilder()
             var annotationBalance = 0
 
@@ -331,7 +232,6 @@ fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
                     annotationChunk.append(trimmed).append(' ')
                     annotationBalance += trimmed.count { it == '(' } - trimmed.count { it == ')' }
                     if (annotationBalance <= 0) {
-                        pendingAnnotations.add(annotationChunk.toString().trim())
                         annotationChunk = StringBuilder()
                         annotationBalance = 0
                     }
@@ -360,7 +260,6 @@ fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
                     ).find(constantText)
 
                     if (match != null) {
-                        val metadata = extractErrorCodeSpecMetadata(pendingAnnotations)
                         val httpStatusName = match.groupValues[2]
                         entries.add(
                             ErrorCodeDocumentationEntry(
@@ -371,14 +270,14 @@ fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
                                 httpStatus = httpStatusCode(httpStatusName),
                                 httpStatusName = httpStatusName,
                                 message = unescapeJavaString(match.groupValues[4]),
-                                description = metadata.description,
-                                clientAction = metadata.clientAction,
-                                retryable = metadata.retryable,
-                                severity = metadata.severity,
-                                deprecated = metadata.deprecated,
-                                replacementCode = metadata.replacementCode,
-                                owners = metadata.owners,
-                                tags = metadata.tags,
+                                description = null,
+                                clientAction = null,
+                                retryable = null,
+                                severity = null,
+                                deprecated = false,
+                                replacementCode = null,
+                                owners = emptyList(),
+                                tags = emptyList(),
                                 source = ErrorCodeSource(
                                     enumName = enumName,
                                     file = relativePath,
@@ -388,7 +287,6 @@ fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
                         )
                     }
 
-                    pendingAnnotations = mutableListOf()
                     balance = 0
                 }
             }
@@ -404,7 +302,7 @@ fun buildErrorCodeCatalogMarkdown(entries: List<ErrorCodeDocumentationEntry>): S
     appendLine()
     appendLine("서버가 반환하는 ErrorCode를 독립 규격(v1)으로 정리합니다.")
     appendLine()
-    appendLine("> 소스 기준: 각 도메인의 `*ErrorCode.java` enum과 선택적 `@ErrorCodeSpec` 메타데이터를 스캔합니다. 갱신: `./gradlew generateDocumentationCatalogs`")
+    appendLine("> 소스 기준: 각 도메인의 `*ErrorCode.java` enum을 스캔합니다. 갱신: `./gradlew generateDocumentationCatalogs`")
     appendLine()
 
     entries.groupBy { it.domain }.forEach { (domain, domainEntries) ->
