@@ -18,7 +18,8 @@ import org.springframework.stereotype.Controller;
 /**
  * 채팅 메시지 STOMP 수신 컨트롤러.
  * <p>
- * 클라이언트는 {@code /app/chat/rooms/{roomId}}로 전송한다. 이 컨트롤러는 저장만 위임하고 값을 반환하지 않는다.
+ * 클라이언트는 {@code /app/chat/rooms/{roomId}/messages}로 전송하고, broadcast는
+ * {@code /topic/chat/rooms/{roomId}/messages}로 구독한다. 이 컨트롤러는 저장만 위임하고 값을 반환하지 않는다.
  * 실시간 broadcast는 메시지 생성 이벤트를 수신하는 별도 컴포넌트(BroadcastPort)가 처리하므로,
  * 여기서 {@code SimpMessagingTemplate}을 직접 호출하지 않는다(브로커 교체 대비 디커플링).
  */
@@ -29,7 +30,7 @@ public class ChatMessageStompController {
 
     private final SendChatMessageUseCase sendChatMessageUseCase;
 
-    @MessageMapping("/chat/rooms/{roomId}")
+    @MessageMapping("/chat/rooms/{roomId}/messages")
     public void send(
         @DestinationVariable Long roomId,
         @Valid @Payload SendChatMessageRequest request,
