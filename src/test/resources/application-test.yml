@@ -29,6 +29,18 @@ jwt:
 
 
 management:
+  tracing:
+    enabled: false
+  otlp:
+    tracing:
+      export:
+        enabled: false
+    logging:
+      export:
+        enabled: false
+    metrics:
+      export:
+        enabled: false
   health:
     mail:
       enabled: false
@@ -45,6 +57,12 @@ logging:
 
 app:
   base-url: http://localhost:8080
+  observability:
+    tracing:
+      enabled: false
+      use-case-spans: false
+      adapter-spans: false
+      db-spans: false
   cors:
     allowed-origin-patterns: ""
   llm:
