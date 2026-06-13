@@ -17,6 +17,7 @@ public enum AuthenticationErrorCode implements BaseCode {
     EXPIRED_JWT_TOKEN(HttpStatus.UNAUTHORIZED, "JWT-0002", "로그인이 만료됐어요. 다시 로그인해주세요."),
     UNSUPPORTED_JWT(HttpStatus.UNAUTHORIZED, "JWT-0003", "지원하지 않는 인증 정보예요. 다시 로그인해주세요."),
     INVALID_JWT(HttpStatus.UNAUTHORIZED, "JWT-0004", "인증 정보가 올바르지 않아요. 다시 로그인해주세요."),
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "JWT-0005", "유효하지 않거나 폐기된 Refresh Token 입니다."),
 
     // AUTHENTICATION: 인증 관련 에러
     OAUTH_PROVIDER_NOT_FOUND(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0001", "지원하지 않는 로그인 방식이에요. 다른 방식을 선택해주세요."),
@@ -72,8 +73,7 @@ public enum AuthenticationErrorCode implements BaseCode {
     UNSUPPORTED_OAUTH_FLOW(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0023",
         "선택한 OAuth 제공자는 이 인증 방식을 지원하지 않아요. 다른 로그인 방식을 사용해주세요."),
     INVALID_OAUTH_REDIRECT_URI(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0024",
-        "허용되지 않은 OAuth redirect URI예요. 설정을 확인해주세요."),
-    ;
+        "허용되지 않은 OAuth redirect URI예요. 설정을 확인해주세요.");
 
     private final HttpStatus httpStatus;
     private final String code;

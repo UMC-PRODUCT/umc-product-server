@@ -1,14 +1,18 @@
 package com.umc.product.authentication.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
+import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,15 +24,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.authentication.application.event.SendVerificationEmailEvent;
+import com.umc.product.authentication.application.port.in.command.dto.LogoutCommand;
+import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
+import com.umc.product.authentication.application.port.in.command.dto.RenewAccessTokenCommand;
 import com.umc.product.authentication.application.port.in.command.dto.ValidateEmailVerificationSessionCommand;
+import com.umc.product.authentication.application.port.out.DeleteRefreshTokenPort;
 import com.umc.product.authentication.application.port.out.LoadEmailVerificationPort;
+import com.umc.product.authentication.application.port.out.LoadRefreshTokenPort;
 import com.umc.product.authentication.application.port.out.SaveEmailVerificationPort;
 import com.umc.product.authentication.domain.EmailVerification;
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
+import com.umc.product.authentication.domain.RefreshToken;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.global.security.RefreshTokenClaims;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
 
@@ -45,9 +56,13 @@ class AuthenticationServiceTest {
 
     private static final String EMAIL = "alice@example.com";
     private static final Long SESSION_ID = 100L;
+    private static final Long MEMBER_ID = 1L;
     private static final String CODE = "123456";
     private static final String TOKEN = "22222222-2222-2222-2222-222222222222";
     private static final String ISSUED_TOKEN = "issued.jwt.token";
+    private static final String REFRESH_TOKEN = "refresh.jwt.token";
+    private static final UUID REFRESH_JTI = UUID.fromString("33333333-3333-3333-3333-333333333333");
+    private static final Instant REFRESH_EXPIRES_AT = Instant.parse("2026-06-20T00:00:00Z");
 
     @Mock
     LoadEmailVerificationPort loadEmailVerificationPort;
@@ -56,7 +71,16 @@ class AuthenticationServiceTest {
     SaveEmailVerificationPort saveEmailVerificationPort;
 
     @Mock
+    LoadRefreshTokenPort loadRefreshTokenPort;
+
+    @Mock
+    DeleteRefreshTokenPort deleteRefreshTokenPort;
+
+    @Mock
     JwtTokenProvider jwtTokenProvider;
+
+    @Mock
+    AuthenticationTokenIssuer authenticationTokenIssuer;
 
     @Mock
     GetMemberCredentialUseCase getMemberCredentialUseCase;
@@ -74,6 +98,119 @@ class AuthenticationServiceTest {
             .token(TOKEN)
             .purpose(purpose)
             .build();
+    }
+
+    @Nested
+    @DisplayName("renewAccessToken")
+    class RenewAccessToken {
+
+        @Test
+        @DisplayName("allow-list에 있는 RefreshToken이면 기존 jti를 삭제하고 새 토큰을 발급한다")
+        void refresh_token_회전_성공() {
+            // given
+            RefreshTokenClaims claims = new RefreshTokenClaims(MEMBER_ID, REFRESH_JTI, REFRESH_EXPIRES_AT);
+            RefreshToken stored = RefreshToken.create(REFRESH_JTI, MEMBER_ID, REFRESH_EXPIRES_AT);
+            NewTokens newTokens = NewTokens.builder()
+                .accessToken("new-access-token")
+                .refreshToken("new-refresh-token")
+                .build();
+
+            given(jwtTokenProvider.parseRefreshToken(REFRESH_TOKEN)).willReturn(claims);
+            given(loadRefreshTokenPort.findByJti(REFRESH_JTI)).willReturn(Optional.of(stored));
+            given(deleteRefreshTokenPort.deleteByJti(REFRESH_JTI)).willReturn(true);
+            given(authenticationTokenIssuer.issue(eq(MEMBER_ID), eq(null))).willReturn(newTokens);
+
+            // when
+            NewTokens result = service.renewAccessToken(
+                RenewAccessTokenCommand.builder()
+                    .refreshToken(REFRESH_TOKEN)
+                    .build()
+            );
+
+            // then
+            assertThat(result).isSameAs(newTokens);
+            then(deleteRefreshTokenPort).should().deleteByJti(REFRESH_JTI);
+            then(authenticationTokenIssuer).should().issue(MEMBER_ID, null);
+        }
+
+        @Test
+        @DisplayName("조회 후 삭제할 RefreshToken row가 없으면 INVALID_REFRESH_TOKEN 예외를 던진다")
+        void 동시_갱신으로_이미_삭제된_refresh_token_거부() {
+            // given
+            RefreshTokenClaims claims = new RefreshTokenClaims(MEMBER_ID, REFRESH_JTI, REFRESH_EXPIRES_AT);
+            RefreshToken stored = RefreshToken.create(REFRESH_JTI, MEMBER_ID, REFRESH_EXPIRES_AT);
+
+            given(jwtTokenProvider.parseRefreshToken(REFRESH_TOKEN)).willReturn(claims);
+            given(loadRefreshTokenPort.findByJti(REFRESH_JTI)).willReturn(Optional.of(stored));
+            given(deleteRefreshTokenPort.deleteByJti(REFRESH_JTI)).willReturn(false);
+
+            // when / then
+            assertThatThrownBy(() -> service.renewAccessToken(
+                RenewAccessTokenCommand.builder()
+                    .refreshToken(REFRESH_TOKEN)
+                    .build()
+            ))
+                .isInstanceOf(AuthenticationDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(AuthenticationErrorCode.INVALID_REFRESH_TOKEN);
+
+            then(deleteRefreshTokenPort).should().deleteByJti(REFRESH_JTI);
+            then(authenticationTokenIssuer).should(never()).issue(any(), any());
+        }
+
+        @Test
+        @DisplayName("allow-list에 없는 RefreshToken이면 INVALID_REFRESH_TOKEN 예외를 던진다")
+        void 저장되지_않은_refresh_token_거부() {
+            // given
+            RefreshTokenClaims claims = new RefreshTokenClaims(MEMBER_ID, REFRESH_JTI, REFRESH_EXPIRES_AT);
+            given(jwtTokenProvider.parseRefreshToken(REFRESH_TOKEN)).willReturn(claims);
+            given(loadRefreshTokenPort.findByJti(REFRESH_JTI)).willReturn(Optional.empty());
+
+            // when / then
+            assertThatThrownBy(() -> service.renewAccessToken(
+                RenewAccessTokenCommand.builder()
+                    .refreshToken(REFRESH_TOKEN)
+                    .build()
+            ))
+                .isInstanceOf(AuthenticationDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(AuthenticationErrorCode.INVALID_REFRESH_TOKEN);
+
+            then(deleteRefreshTokenPort).should(never()).deleteByJti(any());
+            then(authenticationTokenIssuer).should(never()).issue(any(), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("logout")
+    class Logout {
+
+        @Test
+        @DisplayName("RefreshToken의 jti를 삭제한다")
+        void refresh_token_삭제() {
+            // given
+            RefreshTokenClaims claims = new RefreshTokenClaims(MEMBER_ID, REFRESH_JTI, REFRESH_EXPIRES_AT);
+            given(jwtTokenProvider.parseRefreshToken(REFRESH_TOKEN)).willReturn(claims);
+
+            // when
+            service.logout(LogoutCommand.from(REFRESH_TOKEN));
+
+            // then
+            then(deleteRefreshTokenPort).should().deleteByJti(REFRESH_JTI);
+        }
+
+        @Test
+        @DisplayName("이미 삭제된 RefreshToken이어도 멱등하게 성공한다")
+        void 이미_삭제된_refresh_token_로그아웃_성공() {
+            // given
+            RefreshTokenClaims claims = new RefreshTokenClaims(MEMBER_ID, REFRESH_JTI, REFRESH_EXPIRES_AT);
+            given(jwtTokenProvider.parseRefreshToken(REFRESH_TOKEN)).willReturn(claims);
+
+            // when / then
+            assertThatCode(() -> service.logout(LogoutCommand.from(REFRESH_TOKEN)))
+                .doesNotThrowAnyException();
+            then(deleteRefreshTokenPort).should().deleteByJti(REFRESH_JTI);
+        }
     }
 
     @Nested

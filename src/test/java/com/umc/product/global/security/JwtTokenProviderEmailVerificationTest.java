@@ -137,4 +137,20 @@ class JwtTokenProviderEmailVerificationTest {
             .extracting("baseCode")
             .isEqualTo(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
     }
+
+    @Test
+    @DisplayName("RefreshToken 발급 시 jti와 만료시각을 포함하고 파싱 결과로 반환한다")
+    void refresh_token_claims_파싱() {
+        // given
+        Long memberId = 10L;
+        String token = provider.createRefreshToken(memberId);
+
+        // when
+        RefreshTokenClaims claims = provider.parseRefreshToken(token);
+
+        // then
+        assertThat(claims.memberId()).isEqualTo(memberId);
+        assertThat(claims.jti()).isNotNull();
+        assertThat(claims.expiresAt()).isNotNull();
+    }
 }

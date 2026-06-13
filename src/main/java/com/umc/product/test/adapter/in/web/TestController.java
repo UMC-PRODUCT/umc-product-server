@@ -15,6 +15,8 @@ import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authentication.adapter.out.external.AppleOAuthProperties;
 import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier;
+import com.umc.product.authentication.application.port.in.command.ManageAuthenticationUseCase;
+import com.umc.product.authentication.application.port.in.command.dto.IssueAuthenticationTokensCommand;
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
@@ -52,6 +54,7 @@ import lombok.extern.slf4j.Slf4j;
 public class TestController {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final ManageAuthenticationUseCase manageAuthenticationUseCase;
     private final AppleTokenVerifier appleTokenVerifier;
     private final AppleOAuthProperties appleOAuthProperties;
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
@@ -174,7 +177,7 @@ public class TestController {
     @Public
     @GetMapping("/token/refresh")
     public String getRefreshToken(@RequestParam Long memberId) {
-        return jwtTokenProvider.createRefreshToken(memberId);
+        return manageAuthenticationUseCase.issueTokens(IssueAuthenticationTokensCommand.of(memberId)).refreshToken();
     }
 
     @Operation(operationId = "TEST-009", summary = "EmailVerificationToken 발급")

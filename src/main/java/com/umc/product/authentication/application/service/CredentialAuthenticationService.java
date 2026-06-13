@@ -1,26 +1,28 @@
 package com.umc.product.authentication.application.service;
 
+import java.util.Optional;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authentication.application.port.in.command.CredentialAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.ChangePasswordCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LocalLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
+import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.ResetPasswordByEmailCommand;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
-import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.member.application.port.in.command.ManageMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswordCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialByEmailCommand;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
-import java.util.Collections;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 이메일/PW 자격증명 등록/변경/로그인을 담당하는 Service. ADR-017 흐름.
@@ -35,7 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CredentialAuthenticationService implements CredentialAuthenticationUseCase {
 
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final AuthenticationTokenIssuer authenticationTokenIssuer;
     private final GetMemberCredentialUseCase getMemberCredentialUseCase;
     private final ManageMemberCredentialUseCase manageMemberCredentialUseCase;
     private final CredentialRehashService rehashService;
@@ -87,7 +89,7 @@ public class CredentialAuthenticationService implements CredentialAuthentication
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public LocalLoginResult loginByEmail(LoginByEmailCommand command) {
         // 1) 자격증명 조회: 부재 / 실패 모두 동일 메시지로 처리하여 사용자 열거 공격을 방지한다.
         Optional<MemberCredentialInfo> credentialOpt =
@@ -110,17 +112,15 @@ public class CredentialAuthenticationService implements CredentialAuthentication
 
         // 4) 토큰 발급
         Long memberId = credential.memberId();
-        String accessToken = jwtTokenProvider.createAccessToken(
+        NewTokens newTokens = authenticationTokenIssuer.issue(
             memberId,
-            Collections.emptyList(),
             command.clientType()
         );
-        String refreshToken = jwtTokenProvider.createRefreshToken(memberId);
 
         return LocalLoginResult.builder()
             .memberId(memberId)
-            .accessToken(accessToken)
-            .refreshToken(refreshToken)
+            .accessToken(newTokens.accessToken())
+            .refreshToken(newTokens.refreshToken())
             .build();
     }
 }

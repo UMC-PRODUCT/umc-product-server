@@ -1,7 +1,10 @@
 package com.umc.product.member.application.service;
 
-import com.umc.product.member.application.port.in.command.ManageMemberCredentialUseCase;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.member.application.port.in.command.LockMemberCredentialUseCase;
+import com.umc.product.member.application.port.in.command.ManageMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswordCommand;
 import com.umc.product.member.application.port.in.command.dto.MemberCredentialStatusInfo;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialByEmailCommand;
@@ -9,9 +12,8 @@ import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

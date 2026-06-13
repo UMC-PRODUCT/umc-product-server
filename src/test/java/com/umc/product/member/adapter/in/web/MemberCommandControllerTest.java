@@ -25,6 +25,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.authentication.application.port.in.command.ManageAuthenticationUseCase;
+import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -61,6 +63,9 @@ class MemberCommandControllerTest {
     JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
+    ManageAuthenticationUseCase manageAuthenticationUseCase;
+
+    @MockitoBean
     ManageMemberUseCase manageMemberUseCase;
 
     @MockitoBean
@@ -90,8 +95,11 @@ class MemberCommandControllerTest {
     void 이메일_회원가입_성공시_토큰과_memberId를_반환한다() throws Exception {
         given(jwtTokenProvider.parseEmailVerificationToken(any(), any())).willReturn("gildong@example.com");
         given(registerEmailMemberUseCase.register(any(EmailRegisterMemberCommand.class))).willReturn(100L);
-        given(jwtTokenProvider.createAccessToken(100L, null)).willReturn("access-token");
-        given(jwtTokenProvider.createRefreshToken(100L)).willReturn("refresh-token");
+        given(manageAuthenticationUseCase.issueTokens(any()))
+            .willReturn(NewTokens.builder()
+                .accessToken("access-token")
+                .refreshToken("refresh-token")
+                .build());
 
         mockMvc.perform(post("/api/v1/member/register/email")
                 .contentType(MediaType.APPLICATION_JSON)

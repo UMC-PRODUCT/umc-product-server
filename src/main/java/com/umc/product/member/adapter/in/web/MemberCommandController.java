@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.umc.product.authentication.application.port.in.command.ManageAuthenticationUseCase;
+import com.umc.product.authentication.application.port.in.command.dto.IssueAuthenticationTokensCommand;
+import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
@@ -52,6 +55,7 @@ public class MemberCommandController {
     private final MemberInfoResponseAssembler assembler;
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final ManageAuthenticationUseCase manageAuthenticationUseCase;
 
     private final ManageMemberUseCase manageMemberUseCase;
     private final ChangeMemberEmailUseCase changeMemberEmailUseCase;
@@ -98,10 +102,11 @@ public class MemberCommandController {
 
         Long createdMemberId = registerOAuthMemberUseCase.register(command);
 
-        String accessToken = jwtTokenProvider.createAccessToken(createdMemberId, null);
-        String refreshToken = jwtTokenProvider.createRefreshToken(createdMemberId);
+        NewTokens newTokens = manageAuthenticationUseCase.issueTokens(
+            IssueAuthenticationTokensCommand.of(createdMemberId)
+        );
 
-        return RegisterResponse.of(createdMemberId, accessToken, refreshToken);
+        return RegisterResponse.of(createdMemberId, newTokens.accessToken(), newTokens.refreshToken());
     }
 
     @Operation(summary = "[REGISTER-003] 이메일/PW 이용 회원가입",
@@ -125,10 +130,11 @@ public class MemberCommandController {
 
         Long createdMemberId = registerEmailMemberUseCase.register(request.toCommand(email));
 
-        String accessToken = jwtTokenProvider.createAccessToken(createdMemberId, null);
-        String refreshToken = jwtTokenProvider.createRefreshToken(createdMemberId);
+        NewTokens newTokens = manageAuthenticationUseCase.issueTokens(
+            IssueAuthenticationTokensCommand.of(createdMemberId)
+        );
 
-        return RegisterResponse.of(createdMemberId, accessToken, refreshToken);
+        return RegisterResponse.of(createdMemberId, newTokens.accessToken(), newTokens.refreshToken());
     }
 
     @Operation(summary = "[MEMBER-001] 내 회원 정보 수정")
