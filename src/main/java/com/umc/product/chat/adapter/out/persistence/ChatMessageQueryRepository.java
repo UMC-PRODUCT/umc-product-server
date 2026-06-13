@@ -21,7 +21,7 @@ public class ChatMessageQueryRepository {
     /**
      * 방 단위 메시지 내역을 최신순으로 커서 페이지네이션 조회한다.
      */
-    public List<ChatMessage> findByRoomId(Long roomId, Long cursorId, int size) {
+    public List<ChatMessage> listByRoomId(Long roomId, Long cursorId, int size) {
         return queryFactory.selectFrom(chatMessage)
             .where(
                 chatMessage.roomId.eq(roomId),
@@ -37,7 +37,7 @@ public class ChatMessageQueryRepository {
      * <p>
      * 1) 방별 최대 메시지 id를 집계한 뒤, 2) 해당 id들의 메시지를 조회한다. 방 개수와 무관하게 쿼리 2회.
      */
-    public List<ChatMessage> findLatestPerRoom(List<Long> roomIds) {
+    public List<ChatMessage> listLatestPerRoom(List<Long> roomIds) {
         if (roomIds == null || roomIds.isEmpty()) {
             return List.of();
         }

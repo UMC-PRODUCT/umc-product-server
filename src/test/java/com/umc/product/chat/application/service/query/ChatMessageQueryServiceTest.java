@@ -40,7 +40,7 @@ class ChatMessageQueryServiceTest {
     @Test
     @DisplayName("size+1개가 조회되면 hasNext=true, 초과분을 잘라내고 마지막 id를 다음 커서로 반환한다")
     void getMessages_hasNext() {
-        given(loadChatMessagePort.findByRoomId(eq(1L), eq(null), anyInt()))
+        given(loadChatMessagePort.listByRoomId(eq(1L), eq(null), anyInt()))
             .willReturn(List.of(message(30L, 1L), message(20L, 1L), message(10L, 1L)));
 
         ChatMessageCursorResult result = sut.getMessages(new GetChatMessagesQuery(1L, null, 2));
@@ -54,7 +54,7 @@ class ChatMessageQueryServiceTest {
     @Test
     @DisplayName("size 이하로 조회되면 hasNext=false, nextCursor는 null이다")
     void getMessages_noNext() {
-        given(loadChatMessagePort.findByRoomId(eq(1L), eq(null), anyInt()))
+        given(loadChatMessagePort.listByRoomId(eq(1L), eq(null), anyInt()))
             .willReturn(List.of(message(30L, 1L), message(20L, 1L)));
 
         ChatMessageCursorResult result = sut.getMessages(new GetChatMessagesQuery(1L, null, 2));
@@ -81,7 +81,7 @@ class ChatMessageQueryServiceTest {
         given(loadChatRoomPort.listByMemberId(10L))
             .willReturn(List.of(room(1L), room(2L), room(3L)));
         // room1: 마지막 메시지 100, room2: 마지막 메시지 90, room3: 메시지 없음
-        given(loadChatMessagePort.findLatestPerRoom(List.of(1L, 2L, 3L)))
+        given(loadChatMessagePort.listLatestPerRoom(List.of(1L, 2L, 3L)))
             .willReturn(List.of(message(100L, 1L), message(90L, 2L)));
         // room1만 안 읽은 메시지 5개
         given(loadChatMessagePort.countUnreadByRooms(10L, List.of(1L, 2L, 3L)))
@@ -101,7 +101,7 @@ class ChatMessageQueryServiceTest {
         assertThat(result.get(2).lastMessage()).isNull();
         assertThat(result.get(2).unreadCount()).isZero();
 
-        then(loadChatMessagePort).should(times(1)).findLatestPerRoom(List.of(1L, 2L, 3L));
+        then(loadChatMessagePort).should(times(1)).listLatestPerRoom(List.of(1L, 2L, 3L));
         then(loadChatMessagePort).should(times(1)).countUnreadByRooms(10L, List.of(1L, 2L, 3L));
     }
 

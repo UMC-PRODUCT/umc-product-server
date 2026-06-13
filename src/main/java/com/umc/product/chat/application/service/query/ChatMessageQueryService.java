@@ -33,7 +33,7 @@ public class ChatMessageQueryService implements GetChatMessagesUseCase, GetMyCha
      */
     @Override
     public ChatMessageCursorResult getMessages(GetChatMessagesQuery query) {
-        List<ChatMessage> rows = loadChatMessagePort.findByRoomId(query.roomId(), query.cursorId(), query.size() + 1);
+        List<ChatMessage> rows = loadChatMessagePort.listByRoomId(query.roomId(), query.cursorId(), query.size() + 1);
 
         boolean hasNext = rows.size() > query.size();
         List<ChatMessage> page = hasNext ? rows.subList(0, query.size()) : rows;
@@ -62,7 +62,7 @@ public class ChatMessageQueryService implements GetChatMessagesUseCase, GetMyCha
             return List.of();
         }
 
-        Map<Long, ChatMessage> lastByRoom = loadChatMessagePort.findLatestPerRoom(roomIds).stream()
+        Map<Long, ChatMessage> lastByRoom = loadChatMessagePort.listLatestPerRoom(roomIds).stream()
             .collect(Collectors.toMap(ChatMessage::getRoomId, Function.identity()));
 
         Map<Long, Long> unreadByRoom = loadChatMessagePort.countUnreadByRooms(memberId, roomIds).stream()

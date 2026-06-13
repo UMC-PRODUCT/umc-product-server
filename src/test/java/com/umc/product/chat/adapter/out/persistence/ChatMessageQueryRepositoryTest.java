@@ -45,8 +45,8 @@ class ChatMessageQueryRepositoryTest {
     }
 
     @Test
-    @DisplayName("findByRoomId: 최신순(id desc)으로 limit만큼 조회한다")
-    void findByRoomId_latestFirst() {
+    @DisplayName("listByRoomId: 최신순(id desc)으로 limit만큼 조회한다")
+    void listByRoomId_latestFirst() {
         persistText(roomId, OTHER, "1");
         persistText(roomId, OTHER, "2");
         Long third = persistText(roomId, OTHER, "3");
@@ -54,27 +54,27 @@ class ChatMessageQueryRepositoryTest {
         Long fifth = persistText(roomId, OTHER, "5");
         flushAndClear();
 
-        List<ChatMessage> result = sut.findByRoomId(roomId, null, 3);
+        List<ChatMessage> result = sut.listByRoomId(roomId, null, 3);
 
         assertThat(result).extracting(ChatMessage::getId).containsExactly(fifth, fourth, third);
     }
 
     @Test
-    @DisplayName("findByRoomId: 커서(id 미만)부터 더 과거 메시지를 조회한다")
-    void findByRoomId_withCursor() {
+    @DisplayName("listByRoomId: 커서(id 미만)부터 더 과거 메시지를 조회한다")
+    void listByRoomId_withCursor() {
         Long first = persistText(roomId, OTHER, "1");
         Long second = persistText(roomId, OTHER, "2");
         Long third = persistText(roomId, OTHER, "3");
         flushAndClear();
 
-        List<ChatMessage> result = sut.findByRoomId(roomId, third, 10);
+        List<ChatMessage> result = sut.listByRoomId(roomId, third, 10);
 
         assertThat(result).extracting(ChatMessage::getId).containsExactly(second, first);
     }
 
     @Test
-    @DisplayName("findLatestPerRoom: 방마다 마지막(최신) 메시지 한 건씩만 조회한다")
-    void findLatestPerRoom() {
+    @DisplayName("listLatestPerRoom: 방마다 마지막(최신) 메시지 한 건씩만 조회한다")
+    void listLatestPerRoom() {
         Long otherRoomId = em.persist(ChatRoom.create()).getId();
         persistText(roomId, OTHER, "old");
         Long roomLast = persistText(roomId, OTHER, "new");
@@ -83,7 +83,7 @@ class ChatMessageQueryRepositoryTest {
         Long emptyRoomId = em.persist(ChatRoom.create()).getId();
         flushAndClear();
 
-        List<ChatMessage> result = sut.findLatestPerRoom(List.of(roomId, otherRoomId, emptyRoomId));
+        List<ChatMessage> result = sut.listLatestPerRoom(List.of(roomId, otherRoomId, emptyRoomId));
 
         Map<Long, Long> latestIdByRoom = result.stream()
             .collect(Collectors.toMap(ChatMessage::getRoomId, ChatMessage::getId));

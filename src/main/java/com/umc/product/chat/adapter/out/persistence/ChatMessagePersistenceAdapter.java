@@ -31,13 +31,13 @@ public class ChatMessagePersistenceAdapter implements
     }
 
     @Override
-    public List<ChatMessage> findByRoomId(Long roomId, Long cursorId, int size) {
-        return chatMessageQueryRepository.findByRoomId(roomId, cursorId, size);
+    public List<ChatMessage> listByRoomId(Long roomId, Long cursorId, int size) {
+        return chatMessageQueryRepository.listByRoomId(roomId, cursorId, size);
     }
 
     @Override
-    public List<ChatMessage> findLatestPerRoom(List<Long> roomIds) {
-        return chatMessageQueryRepository.findLatestPerRoom(roomIds);
+    public List<ChatMessage> listLatestPerRoom(List<Long> roomIds) {
+        return chatMessageQueryRepository.listLatestPerRoom(roomIds);
     }
 
     @Override

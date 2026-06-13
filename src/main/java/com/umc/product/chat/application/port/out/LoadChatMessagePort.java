@@ -19,12 +19,12 @@ public interface LoadChatMessagePort {
      * @param cursorId 이 id보다 작은(더 과거) 메시지를 조회. null이면 가장 최신부터.
      * @param size     조회 개수
      */
-    List<ChatMessage> findByRoomId(Long roomId, Long cursorId, int size);
+    List<ChatMessage> listByRoomId(Long roomId, Long cursorId, int size);
 
     /**
      * 여러 방의 마지막(가장 최신) 메시지를 한 번에 조회한다. (채팅방 목록 미리보기용)
      */
-    List<ChatMessage> findLatestPerRoom(List<Long> roomIds);
+    List<ChatMessage> listLatestPerRoom(List<Long> roomIds);
 
     /**
      * 멤버 기준으로 여러 방의 안 읽은 메시지 수를 한 번에 조회한다. 안 읽은 메시지가 0개인 방은 결과에 포함되지 않을 수 있다.
