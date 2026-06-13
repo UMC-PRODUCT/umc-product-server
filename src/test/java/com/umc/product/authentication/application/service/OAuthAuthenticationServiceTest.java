@@ -17,8 +17,8 @@ import com.umc.product.authentication.domain.MemberOAuth;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
-import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
-import com.umc.product.member.application.port.in.query.dto.MemberCredentialStatusInfo;
+import com.umc.product.member.application.port.in.command.LockMemberCredentialUseCase;
+import com.umc.product.member.application.port.in.command.dto.MemberCredentialStatusInfo;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -49,7 +49,7 @@ class OAuthAuthenticationServiceTest {
     RevokeOAuthTokenPort revokeOAuthTokenPort;
 
     @Mock
-    GetMemberCredentialUseCase getMemberCredentialUseCase;
+    LockMemberCredentialUseCase lockMemberCredentialUseCase;
 
     @InjectMocks
     OAuthAuthenticationService sut;
@@ -59,12 +59,12 @@ class OAuthAuthenticationServiceTest {
     void local_credential이_있으면_마지막_OAuth도_해제할_수_있다() {
         MemberOAuth memberOAuth = memberOAuth(MEMBER_OAUTH_ID, OAuthProvider.GOOGLE);
         given(loadMemberOAuthPort.findByMemberOAuthId(MEMBER_OAUTH_ID)).willReturn(Optional.of(memberOAuth));
-        given(getMemberCredentialUseCase.getCredentialStatusForUpdate(MEMBER_ID))
+        given(lockMemberCredentialUseCase.getCredentialStatusForUpdate(MEMBER_ID))
             .willReturn(new MemberCredentialStatusInfo(MEMBER_ID, true));
 
         sut.unlinkOAuth(command(false));
 
-        then(getMemberCredentialUseCase).should().getCredentialStatusForUpdate(MEMBER_ID);
+        then(lockMemberCredentialUseCase).should().getCredentialStatusForUpdate(MEMBER_ID);
         then(loadMemberOAuthPort).should(never()).findAllByMemberId(anyLong());
         then(saveMemberOAuthPort).should().delete(memberOAuth);
         verifyNoInteractions(revokeOAuthTokenPort);
@@ -75,7 +75,7 @@ class OAuthAuthenticationServiceTest {
     void local_credential이_없고_마지막_OAuth이면_해제할_수_없다() {
         MemberOAuth memberOAuth = memberOAuth(MEMBER_OAUTH_ID, OAuthProvider.GOOGLE);
         given(loadMemberOAuthPort.findByMemberOAuthId(MEMBER_OAUTH_ID)).willReturn(Optional.of(memberOAuth));
-        given(getMemberCredentialUseCase.getCredentialStatusForUpdate(MEMBER_ID))
+        given(lockMemberCredentialUseCase.getCredentialStatusForUpdate(MEMBER_ID))
             .willReturn(new MemberCredentialStatusInfo(MEMBER_ID, false));
         given(loadMemberOAuthPort.findAllByMemberId(MEMBER_ID)).willReturn(List.of(memberOAuth));
 
@@ -94,7 +94,7 @@ class OAuthAuthenticationServiceTest {
         MemberOAuth targetOAuth = memberOAuth(MEMBER_OAUTH_ID, OAuthProvider.GOOGLE);
         MemberOAuth remainingOAuth = memberOAuth(11L, OAuthProvider.KAKAO);
         given(loadMemberOAuthPort.findByMemberOAuthId(MEMBER_OAUTH_ID)).willReturn(Optional.of(targetOAuth));
-        given(getMemberCredentialUseCase.getCredentialStatusForUpdate(MEMBER_ID))
+        given(lockMemberCredentialUseCase.getCredentialStatusForUpdate(MEMBER_ID))
             .willReturn(new MemberCredentialStatusInfo(MEMBER_ID, false));
         given(loadMemberOAuthPort.findAllByMemberId(MEMBER_ID)).willReturn(List.of(targetOAuth, remainingOAuth));
 
@@ -112,7 +112,7 @@ class OAuthAuthenticationServiceTest {
 
         sut.unlinkOAuth(command(true));
 
-        then(getMemberCredentialUseCase).should(never()).getCredentialStatusForUpdate(anyLong());
+        then(lockMemberCredentialUseCase).should(never()).getCredentialStatusForUpdate(anyLong());
         then(loadMemberOAuthPort).should(never()).findAllByMemberId(anyLong());
         then(saveMemberOAuthPort).should().delete(memberOAuth);
         verifyNoInteractions(revokeOAuthTokenPort);

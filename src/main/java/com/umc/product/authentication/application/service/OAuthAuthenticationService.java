@@ -15,8 +15,8 @@ import com.umc.product.authentication.domain.MemberOAuth;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
-import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
-import com.umc.product.member.application.port.in.query.dto.MemberCredentialStatusInfo;
+import com.umc.product.member.application.port.in.command.LockMemberCredentialUseCase;
+import com.umc.product.member.application.port.in.command.dto.MemberCredentialStatusInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,7 +38,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
     private final LoadMemberOAuthPort loadMemberOAuthPort;
     private final SaveMemberOAuthPort saveMemberOAuthPort;
     private final RevokeOAuthTokenPort revokeOAuthTokenPort;
-    private final GetMemberCredentialUseCase getMemberCredentialUseCase;
+    private final LockMemberCredentialUseCase lockMemberCredentialUseCase;
 
     @Override
     @Transactional(readOnly = true)
@@ -197,7 +197,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
     private void validateLoginMethodInvariant(Long memberId) {
         // Member row lock 이후 OAuth 개수를 확인해 같은 회원의 동시 OAuth 해제 요청을 직렬화한다.
         MemberCredentialStatusInfo credentialStatus =
-            getMemberCredentialUseCase.getCredentialStatusForUpdate(memberId);
+            lockMemberCredentialUseCase.getCredentialStatusForUpdate(memberId);
         if (credentialStatus.hasCredential()) {
             return;
         }

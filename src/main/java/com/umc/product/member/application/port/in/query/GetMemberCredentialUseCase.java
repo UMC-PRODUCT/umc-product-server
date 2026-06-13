@@ -1,7 +1,6 @@
 package com.umc.product.member.application.port.in.query;
 
 import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
-import com.umc.product.member.application.port.in.query.dto.MemberCredentialStatusInfo;
 import java.util.Optional;
 
 /**
@@ -26,14 +25,6 @@ public interface GetMemberCredentialUseCase {
      * 비밀번호 변경 등 인증된 사용자 흐름에서 사용한다.
      */
     Optional<MemberCredentialInfo> findCredentialByMemberId(Long memberId);
-
-    /**
-     * memberId 로 local credential 등록 여부를 조회한다.
-     * <p>
-     * 같은 회원의 로그인 수단 변경이 동시에 진행될 때 OAuth 최소 1개 보장 규칙이 깨지지 않도록
-     * 회원 row 에 {@code PESSIMISTIC_WRITE} lock 을 잡은 상태에서 조회한다.
-     */
-    MemberCredentialStatusInfo getCredentialStatusForUpdate(Long memberId);
 
     /**
      * email 이 이미 사용 중인지 확인한다. (회원가입 / 자격증명 등록 시 중복 방지)

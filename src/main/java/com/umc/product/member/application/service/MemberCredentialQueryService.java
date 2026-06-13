@@ -2,10 +2,7 @@ package com.umc.product.member.application.service;
 
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
-import com.umc.product.member.application.port.in.query.dto.MemberCredentialStatusInfo;
 import com.umc.product.member.application.port.out.LoadMemberPort;
-import com.umc.product.member.domain.exception.MemberDomainException;
-import com.umc.product.member.domain.exception.MemberErrorCode;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -37,17 +34,6 @@ public class MemberCredentialQueryService implements GetMemberCredentialUseCase 
         return loadMemberPort.findById(memberId)
             .filter(member -> member.getPasswordHash() != null)
             .map(MemberCredentialInfo::from);
-    }
-
-    @Override
-    @Transactional
-    public MemberCredentialStatusInfo getCredentialStatusForUpdate(Long memberId) {
-        if (memberId == null) {
-            throw new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND);
-        }
-        return loadMemberPort.findByIdForUpdate(memberId)
-            .map(MemberCredentialStatusInfo::from)
-            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 
     @Override

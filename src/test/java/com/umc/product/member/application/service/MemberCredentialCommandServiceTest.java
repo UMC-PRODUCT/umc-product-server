@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
-import com.umc.product.member.application.port.in.query.dto.MemberCredentialStatusInfo;
+import com.umc.product.member.application.port.in.command.dto.MemberCredentialStatusInfo;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberDomainException;
@@ -20,14 +20,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("MemberCredentialQueryService")
-class MemberCredentialQueryServiceTest {
+@DisplayName("MemberCredentialCommandService")
+class MemberCredentialCommandServiceTest {
 
     @Mock
     LoadMemberPort loadMemberPort;
 
     @InjectMocks
-    MemberCredentialQueryService sut;
+    MemberCredentialCommandService sut;
 
     @Test
     @DisplayName("credential 상태 조회는 member row를 lock으로 조회한다")
