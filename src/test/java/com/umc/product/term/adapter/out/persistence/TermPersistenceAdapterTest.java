@@ -8,20 +8,15 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
-import com.umc.product.global.config.JpaConfig;
-import com.umc.product.global.config.QueryDslConfig;
-import com.umc.product.support.TestContainersConfig;
+import com.umc.product.support.PersistenceAdapterTest;
 import com.umc.product.term.domain.Term;
 import com.umc.product.term.domain.enums.TermType;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({JpaConfig.class, QueryDslConfig.class, TestContainersConfig.class,
+@PersistenceAdapterTest
+@Import({
     TermPersistenceAdapter.class, TermQueryRepository.class})
 @DisplayName("TermPersistenceAdapter")
 class TermPersistenceAdapterTest {

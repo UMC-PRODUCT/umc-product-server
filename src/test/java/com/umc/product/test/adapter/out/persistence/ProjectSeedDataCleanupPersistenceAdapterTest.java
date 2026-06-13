@@ -7,16 +7,12 @@ import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.config.JpaConfig;
-import com.umc.product.global.config.QueryDslConfig;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.project.domain.Project;
@@ -28,7 +24,7 @@ import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
-import com.umc.product.support.TestContainersConfig;
+import com.umc.product.support.PersistenceAdapterTest;
 import com.umc.product.survey.domain.Answer;
 import com.umc.product.survey.domain.AnswerChoice;
 import com.umc.product.survey.domain.Form;
@@ -41,14 +37,10 @@ import com.umc.product.test.application.port.out.dto.ProjectDataDeletionCounts;
 
 import jakarta.persistence.Query;
 
-@DataJpaTest
+@PersistenceAdapterTest
 @ActiveProfiles("test")
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestPropertySource(properties = "app.seed.enabled=true")
 @Import({
-    JpaConfig.class,
-    QueryDslConfig.class,
-    TestContainersConfig.class,
     ProjectSeedDataCleanupPersistenceAdapter.class
 })
 class ProjectSeedDataCleanupPersistenceAdapterTest {
