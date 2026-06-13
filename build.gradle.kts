@@ -328,9 +328,43 @@ tasks.clean {
     }
 }
 
+val checkDuplicateFlywayMigrationVersions by tasks.registering {
+    group = "verification"
+    description = "Fails when two Flyway versioned migrations share the same version."
+
+    val migrationFiles = fileTree("src/main/resources/db/migration") {
+        include("V*__*.sql")
+    }
+    inputs.files(migrationFiles)
+
+    doLast {
+        val versionPattern = Regex("""^V(.+)__.+\.sql$""")
+        val duplicatedVersions = migrationFiles.files
+            .groupBy { migrationFile ->
+                versionPattern.matchEntire(migrationFile.name)?.groupValues?.get(1)
+                    ?: throw GradleException("Invalid Flyway migration filename: ${migrationFile.name}")
+            }
+            .filterValues { files -> files.size > 1 }
+
+        if (duplicatedVersions.isNotEmpty()) {
+            val details = duplicatedVersions.entries
+                .sortedBy { it.key }
+                .joinToString(System.lineSeparator()) { (version, files) ->
+                    val paths = files
+                        .sortedBy { it.name }
+                        .joinToString(", ") { it.relativeTo(projectDir).path }
+                    "  - $version: $paths"
+                }
+
+            throw GradleException("Duplicate Flyway migration versions found:${System.lineSeparator()}$details")
+        }
+    }
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
     maxHeapSize = "3g"
+    dependsOn(checkDuplicateFlywayMigrationVersions)
 }
 
 tasks.test {
