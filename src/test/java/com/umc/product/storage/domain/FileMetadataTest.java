@@ -3,11 +3,12 @@ package com.umc.product.storage.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.junit.jupiter.api.Test;
+
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
-import org.junit.jupiter.api.Test;
 
 /**
  * FileMetadata Entity의 도메인 로직을 테스트합니다.
