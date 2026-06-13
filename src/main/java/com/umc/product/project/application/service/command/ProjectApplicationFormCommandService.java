@@ -135,6 +135,7 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
                 .title(resolveTitle(project, command))
                 .description(command.description())
                 .isAnonymous(false)
+                .allowDuplicateResponses(true)
                 .build()
         );
         return saveApplicationFormPort.save(ProjectApplicationForm.create(project, formId));
@@ -160,6 +161,7 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
                 .title(resolvedTitle)
                 .description(command.description())
                 .isAnonymous(existing.isAnonymous())
+                .allowDuplicateResponses(existing.allowDuplicateResponses())
                 .build()
         );
     }

@@ -128,6 +128,7 @@ class ProjectApplicationFormCommandServiceTest {
             ArgumentCaptor<CreateDraftFormCommand> captor = ArgumentCaptor.forClass(CreateDraftFormCommand.class);
             then(manageFormUseCase).should().createDraft(captor.capture());
             assertThat(captor.getValue().title()).isEqualTo("Triple");
+            assertThat(captor.getValue().allowDuplicateResponses()).isTrue();
             then(manageFormUseCase).should(never()).updateForm(any());
         }
 
