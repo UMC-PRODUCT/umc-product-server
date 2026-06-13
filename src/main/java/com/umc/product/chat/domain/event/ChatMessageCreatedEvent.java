@@ -4,6 +4,7 @@ import com.umc.product.chat.domain.ChatMessage;
 import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.global.event.domain.DomainEvent;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -14,6 +15,9 @@ import java.util.UUID;
  *     <li>실시간 broadcast — STOMP broadcast 어댑터가 수신.</li>
  *     <li>문의 상태 전환 — inquiry 도메인이 수신하여 운영진 첫 메시지 시 진행 전환 등을 처리.</li>
  * </ul>
+ * <p>
+ * 수신 측이 DB 재조회 없이 이벤트만으로 WebSocket 응답(메시지 전체)을 구성할 수 있도록,
+ * 생성된 메시지의 모든 필드(첨부 {@code fileMetadataIds} 포함)를 그대로 담는다.
  */
 public record ChatMessageCreatedEvent(
     UUID eventId,
@@ -22,7 +26,8 @@ public record ChatMessageCreatedEvent(
     Long roomId,
     Long senderMemberId,
     MessageContentType contentType,
-    String content
+    String content,
+    List<String> fileMetadataIds
 ) implements DomainEvent {
 
     public static ChatMessageCreatedEvent from(ChatMessage message) {
@@ -33,7 +38,8 @@ public record ChatMessageCreatedEvent(
             message.getRoomId(),
             message.getSenderMemberId(),
             message.getContentType(),
-            message.getContent()
+            message.getContent(),
+            message.getFileMetadataIds()
         );
     }
 

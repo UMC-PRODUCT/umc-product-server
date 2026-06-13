@@ -7,6 +7,7 @@ import com.umc.product.chat.domain.ChatMessage;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -38,6 +39,11 @@ public class ChatMessagePersistenceAdapter implements
     @Override
     public List<ChatMessage> listLatestPerRoom(List<Long> roomIds) {
         return chatMessageQueryRepository.listLatestPerRoom(roomIds);
+    }
+
+    @Override
+    public Optional<Long> findLatestMessageId(Long roomId) {
+        return chatMessageQueryRepository.findLatestMessageId(roomId);
     }
 
     @Override

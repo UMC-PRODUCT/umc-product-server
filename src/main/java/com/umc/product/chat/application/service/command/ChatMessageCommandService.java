@@ -7,6 +7,7 @@ import com.umc.product.chat.application.port.in.command.dto.SendChatMessageComma
 import com.umc.product.chat.application.port.in.query.dto.ChatMessageInfo;
 import com.umc.product.chat.application.policy.ChatRoomAccessPolicy;
 import com.umc.product.chat.application.port.out.LoadChatMemberPort;
+import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.application.port.out.SaveChatMessagePort;
 import com.umc.product.chat.domain.ChatMember;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ChatMessageCommandService implements SendChatMessageUseCase, MarkChatRoomReadUseCase {
 
     private final SaveChatMessagePort saveChatMessagePort;
+    private final LoadChatMessagePort loadChatMessagePort;
     private final LoadChatMemberPort loadChatMemberPort;
     private final SaveChatMemberPort saveChatMemberPort;
     private final ChatRoomAccessPolicy chatRoomAccessPolicy;
@@ -58,10 +60,17 @@ public class ChatMessageCommandService implements SendChatMessageUseCase, MarkCh
         return ChatMessageInfo.from(saved);
     }
 
+    /**
+     * 방을 현재 최신 메시지까지 읽음 처리한다.
+     * <p>
+     * 읽음 위치는 클라이언트 값이 아니라 서버가 조회한 방 최신 메시지 id를 기준으로 한다(조작 불가).
+     * 메시지가 아직 없는 방이면 갱신 없이 종료한다.
+     */
     @Override
     public void markRead(MarkChatRoomReadCommand command) {
         ChatMember member = loadChatMemberPort.getByRoomIdAndMemberId(command.roomId(), command.memberId());
-        member.markRead(command.lastReadMessageId());
+        loadChatMessagePort.findLatestMessageId(command.roomId())
+            .ifPresent(member::markRead);
         saveChatMemberPort.save(member);
     }
 

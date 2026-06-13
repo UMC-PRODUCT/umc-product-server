@@ -11,6 +11,7 @@ import com.umc.product.chat.application.port.in.command.dto.MarkChatRoomReadComm
 import com.umc.product.chat.application.port.in.command.dto.SendChatMessageCommand;
 import com.umc.product.chat.application.port.in.query.dto.ChatMessageInfo;
 import com.umc.product.chat.application.port.out.LoadChatMemberPort;
+import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.application.port.out.SaveChatMessagePort;
 import com.umc.product.chat.domain.ChatMember;
@@ -23,6 +24,7 @@ import com.umc.product.chat.domain.exception.ChatErrorCode;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +40,8 @@ class ChatMessageCommandServiceTest {
 
     @Mock
     SaveChatMessagePort saveChatMessagePort;
+    @Mock
+    LoadChatMessagePort loadChatMessagePort;
     @Mock
     LoadChatMemberPort loadChatMemberPort;
     @Mock
@@ -130,8 +134,9 @@ class ChatMessageCommandServiceTest {
     void markRead() {
         ChatMember member = ChatMember.of(1L, 10L);
         given(loadChatMemberPort.getByRoomIdAndMemberId(1L, 10L)).willReturn(member);
+        given(loadChatMessagePort.findLatestMessageId(1L)).willReturn(Optional.of(42L));
 
-        sut.markRead(new MarkChatRoomReadCommand(1L, 10L, 42L));
+        sut.markRead(MarkChatRoomReadCommand.of(1L, 10L));
 
         assertThat(member.getLastReadMessageId()).isEqualTo(42L);
         then(saveChatMemberPort).should().save(member);

@@ -9,6 +9,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.chat.application.port.out.dto.RoomUnreadCount;
 import com.umc.product.chat.domain.ChatMessage;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -56,6 +57,17 @@ public class ChatMessageQueryRepository {
         return queryFactory.selectFrom(chatMessage)
             .where(chatMessage.id.in(latestMessageIds))
             .fetch();
+    }
+
+    /**
+     * 방의 가장 최신 메시지 id. 메시지가 없으면 {@code Optional.empty()}.
+     */
+    public Optional<Long> findLatestMessageId(Long roomId) {
+        return Optional.ofNullable(
+            queryFactory.select(chatMessage.id.max())
+                .from(chatMessage)
+                .where(chatMessage.roomId.eq(roomId))
+                .fetchOne());
     }
 
     /**

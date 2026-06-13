@@ -8,9 +8,8 @@ import com.umc.product.chat.application.port.in.query.dto.ChatMessageCursorResul
 import com.umc.product.chat.application.port.in.query.dto.GetChatMessagesQuery;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.chat.adapter.in.web.swagger.ChatMessageQueryApi;
 import com.umc.product.global.security.annotation.CurrentMember;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
@@ -26,14 +25,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/chat/rooms")
 @RequiredArgsConstructor
 @Validated
-@Tag(name = "Chat | 채팅 메시지 Query", description = "채팅 메시지 내역 및 채팅방 목록 조회")
-public class ChatMessageQueryController {
+public class ChatMessageQueryController implements ChatMessageQueryApi {
 
     private final GetChatMessagesUseCase getChatMessagesUseCase;
     private final GetMyChatRoomsUseCase getMyChatRoomsUseCase;
 
     @GetMapping("/{roomId}/messages")
-    @Operation(summary = "[CHAT-002] 메시지 내역 조회", description = "방의 메시지를 최신순으로 커서 페이지네이션 조회합니다.")
+    @Override
     public CursorResponse<ChatMessageResponse> getMessages(
         @PathVariable @Positive Long roomId,
         @CurrentMember MemberPrincipal principal,
@@ -51,8 +49,7 @@ public class ChatMessageQueryController {
     }
 
     @GetMapping
-    @Operation(summary = "[CHAT-003] 내 채팅방 목록 조회",
-        description = "내가 속한 채팅방 목록을 마지막 메시지 미리보기와 안 읽은 수와 함께 조회합니다.")
+    @Override
     public List<ChatRoomSummaryResponse> getMyChatRooms(@CurrentMember MemberPrincipal principal) {
         return getMyChatRoomsUseCase.getMyChatRooms(principal.getMemberId()).stream()
             .map(ChatRoomSummaryResponse::from)
