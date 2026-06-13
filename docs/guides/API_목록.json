@@ -140,7 +140,7 @@
     "role": "감사 로그 검색",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/audit/adapter/in/web/AuditLogController.java",
-    "line": 33,
+    "line": 36,
     "operationId": null
   },
   {
@@ -620,7 +620,7 @@
     "role": "댓글 작성",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/community/adapter/in/web/CommentController.java",
-    "line": 42,
+    "line": 45,
     "operationId": null
   },
   {
@@ -632,7 +632,7 @@
     "role": "댓글 삭제",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/community/adapter/in/web/CommentController.java",
-    "line": 74,
+    "line": 77,
     "operationId": null
   },
   {
@@ -644,7 +644,7 @@
     "role": "댓글 좋아요 토글",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/community/adapter/in/web/CommentController.java",
-    "line": 86,
+    "line": 89,
     "operationId": null
   },
   {
@@ -656,7 +656,7 @@
     "role": "댓글 목록 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/community/adapter/in/web/CommentController.java",
-    "line": 56,
+    "line": 59,
     "operationId": null
   },
   {
@@ -668,7 +668,7 @@
     "role": "일반 게시글 생성",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/community/adapter/in/web/PostController.java",
-    "line": 55,
+    "line": 57,
     "operationId": null
   },
   {
@@ -680,7 +680,7 @@
     "role": "번개글 생성",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/community/adapter/in/web/PostController.java",
-    "line": 66,
+    "line": 68,
     "operationId": null
   },
   {
@@ -692,7 +692,7 @@
     "role": "일반 게시글 수정",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/community/adapter/in/web/PostController.java",
-    "line": 83,
+    "line": 85,
     "operationId": null
   },
   {
@@ -704,7 +704,7 @@
     "role": "번개글 수정",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/community/adapter/in/web/PostController.java",
-    "line": 98,
+    "line": 100,
     "operationId": null
   },
   {
@@ -716,7 +716,7 @@
     "role": "게시글 삭제",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/community/adapter/in/web/PostController.java",
-    "line": 113,
+    "line": 115,
     "operationId": null
   },
   {
@@ -728,7 +728,7 @@
     "role": "게시글 좋아요 토글",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/community/adapter/in/web/PostController.java",
-    "line": 121,
+    "line": 123,
     "operationId": null
   },
   {
@@ -740,7 +740,7 @@
     "role": "게시글 스크랩 토글",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/community/adapter/in/web/PostController.java",
-    "line": 132,
+    "line": 134,
     "operationId": null
   },
   {
@@ -1124,7 +1124,7 @@
     "role": "중앙파트장용: 원본 워크북 추가 (READY 상태)",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java",
-    "line": 30,
+    "line": 38,
     "operationId": null
   },
   {
@@ -1136,7 +1136,7 @@
     "role": "중앙파트장용: 원본 워크북 임시저장 (DRAFT 상태)",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java",
-    "line": 51,
+    "line": 59,
     "operationId": null
   },
   {
@@ -1148,7 +1148,7 @@
     "role": "중앙파트장용: 원본 워크북 수정",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java",
-    "line": 74,
+    "line": 82,
     "operationId": null
   },
   {
@@ -1160,7 +1160,7 @@
     "role": "중앙파트장용: 원본 워크북 삭제",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java",
-    "line": 95,
+    "line": 103,
     "operationId": null
   },
   {
@@ -1172,7 +1172,7 @@
     "role": "중앙파트장용: 원본 워크북 상태 일괄 변경",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java",
-    "line": 114,
+    "line": 122,
     "operationId": null
   },
   {
@@ -1982,6 +1982,258 @@
   {
     "sequence": 166,
     "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/functional-units",
+    "httpMethod": "GET",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductFunctionalUnitQueryController.java",
+    "line": 24,
+    "operationId": null
+  },
+  {
+    "sequence": 167,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/functional-units",
+    "httpMethod": "POST",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductFunctionalUnitCommandController.java",
+    "line": 29,
+    "operationId": null
+  },
+  {
+    "sequence": 168,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/functional-units/{functionalUnitId}",
+    "httpMethod": "PATCH",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductFunctionalUnitCommandController.java",
+    "line": 37,
+    "operationId": null
+  },
+  {
+    "sequence": 169,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/functional-units/{functionalUnitId}",
+    "httpMethod": "DELETE",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductFunctionalUnitCommandController.java",
+    "line": 48,
+    "operationId": null
+  },
+  {
+    "sequence": 170,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/generations",
+    "httpMethod": "GET",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductGenerationQueryController.java",
+    "line": 24,
+    "operationId": null
+  },
+  {
+    "sequence": 171,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/generations",
+    "httpMethod": "POST",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductGenerationCommandController.java",
+    "line": 29,
+    "operationId": null
+  },
+  {
+    "sequence": 172,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/generations/{umcProductGenerationId}",
+    "httpMethod": "GET",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductGenerationQueryController.java",
+    "line": 29,
+    "operationId": null
+  },
+  {
+    "sequence": 173,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/generations/{umcProductGenerationId}",
+    "httpMethod": "PATCH",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductGenerationCommandController.java",
+    "line": 37,
+    "operationId": null
+  },
+  {
+    "sequence": 174,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/generations/{umcProductGenerationId}",
+    "httpMethod": "DELETE",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductGenerationCommandController.java",
+    "line": 48,
+    "operationId": null
+  },
+  {
+    "sequence": 175,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/members",
+    "httpMethod": "GET",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductMemberQueryController.java",
+    "line": 31,
+    "operationId": null
+  },
+  {
+    "sequence": 176,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/members",
+    "httpMethod": "POST",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductMemberCommandController.java",
+    "line": 31,
+    "operationId": null
+  },
+  {
+    "sequence": 177,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/members/{umcProductMemberId}",
+    "httpMethod": "GET",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductMemberQueryController.java",
+    "line": 56,
+    "operationId": null
+  },
+  {
+    "sequence": 178,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/members/{umcProductMemberId}",
+    "httpMethod": "DELETE",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductMemberCommandController.java",
+    "line": 61,
+    "operationId": null
+  },
+  {
+    "sequence": 179,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/members/{umcProductMemberId}/functional-memberships",
+    "httpMethod": "PUT",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductMemberCommandController.java",
+    "line": 50,
+    "operationId": null
+  },
+  {
+    "sequence": 180,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/members/{umcProductMemberId}/profile",
+    "httpMethod": "PATCH",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductMemberCommandController.java",
+    "line": 39,
+    "operationId": null
+  },
+  {
+    "sequence": 181,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/organization-chart",
+    "httpMethod": "GET",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductOrganizationChartQueryController.java",
+    "line": 23,
+    "operationId": null
+  },
+  {
+    "sequence": 182,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/squads",
+    "httpMethod": "GET",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductSquadQueryController.java",
+    "line": 23,
+    "operationId": null
+  },
+  {
+    "sequence": 183,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/squads",
+    "httpMethod": "POST",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductSquadCommandController.java",
+    "line": 31,
+    "operationId": null
+  },
+  {
+    "sequence": 184,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/squads/{squadId}",
+    "httpMethod": "PATCH",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductSquadCommandController.java",
+    "line": 39,
+    "operationId": null
+  },
+  {
+    "sequence": 185,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/squads/{squadId}",
+    "httpMethod": "DELETE",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductSquadCommandController.java",
+    "line": 48,
+    "operationId": null
+  },
+  {
+    "sequence": 186,
+    "domain": "organization",
+    "apiId": "<미지정>",
+    "endpoint": "/api/v1/umc-product/squads/{squadId}/participants",
+    "httpMethod": "PUT",
+    "role": "<요약 없음>",
+    "deprecated": false,
+    "source": "src/main/java/com/umc/product/organization/adapter/in/web/UmcProductSquadCommandController.java",
+    "line": 56,
+    "operationId": null
+  },
+  {
+    "sequence": 187,
+    "domain": "organization",
     "apiId": "CHAPTER-001",
     "endpoint": "/api/v1/chapters",
     "httpMethod": "POST",
@@ -1992,7 +2244,7 @@
     "operationId": null
   },
   {
-    "sequence": 167,
+    "sequence": 188,
     "domain": "organization",
     "apiId": "CHAPTER-002",
     "endpoint": "/api/v1/chapters/bulk",
@@ -2004,7 +2256,7 @@
     "operationId": null
   },
   {
-    "sequence": 168,
+    "sequence": 189,
     "domain": "organization",
     "apiId": "CHAPTER-003",
     "endpoint": "/api/v1/chapters/{chapterId}",
@@ -2016,7 +2268,7 @@
     "operationId": null
   },
   {
-    "sequence": 169,
+    "sequence": 190,
     "domain": "organization",
     "apiId": "CHAPTER-101",
     "endpoint": "/api/v1/chapters",
@@ -2028,7 +2280,7 @@
     "operationId": null
   },
   {
-    "sequence": 170,
+    "sequence": 191,
     "domain": "organization",
     "apiId": "CHAPTER-102",
     "endpoint": "/api/v1/chapters/with-schools",
@@ -2040,7 +2292,7 @@
     "operationId": null
   },
   {
-    "sequence": 171,
+    "sequence": 192,
     "domain": "organization",
     "apiId": "CHAPTER-103",
     "endpoint": "/api/v1/chapters/{chapterId}",
@@ -2052,7 +2304,7 @@
     "operationId": null
   },
   {
-    "sequence": 172,
+    "sequence": 193,
     "domain": "organization",
     "apiId": "GISU-001",
     "endpoint": "/api/v1/gisu",
@@ -2064,7 +2316,7 @@
     "operationId": null
   },
   {
-    "sequence": 173,
+    "sequence": 194,
     "domain": "organization",
     "apiId": "GISU-002",
     "endpoint": "/api/v1/gisu/{gisuId}",
@@ -2076,7 +2328,7 @@
     "operationId": null
   },
   {
-    "sequence": 174,
+    "sequence": 195,
     "domain": "organization",
     "apiId": "GISU-003",
     "endpoint": "/api/v1/gisu/{gisuId}/active",
@@ -2088,7 +2340,7 @@
     "operationId": null
   },
   {
-    "sequence": 175,
+    "sequence": 196,
     "domain": "organization",
     "apiId": "GISU-101",
     "endpoint": "/api/v1/gisu",
@@ -2100,7 +2352,7 @@
     "operationId": null
   },
   {
-    "sequence": 176,
+    "sequence": 197,
     "domain": "organization",
     "apiId": "GISU-102",
     "endpoint": "/api/v1/gisu/all",
@@ -2112,7 +2364,7 @@
     "operationId": null
   },
   {
-    "sequence": 177,
+    "sequence": 198,
     "domain": "organization",
     "apiId": "GISU-103",
     "endpoint": "/api/v1/gisu/active",
@@ -2124,7 +2376,7 @@
     "operationId": null
   },
   {
-    "sequence": 178,
+    "sequence": 199,
     "domain": "organization",
     "apiId": "SCHOOL-001",
     "endpoint": "/api/v1/schools",
@@ -2136,7 +2388,7 @@
     "operationId": null
   },
   {
-    "sequence": 179,
+    "sequence": 200,
     "domain": "organization",
     "apiId": "SCHOOL-002",
     "endpoint": "/api/v1/schools/{schoolId}",
@@ -2148,7 +2400,7 @@
     "operationId": null
   },
   {
-    "sequence": 180,
+    "sequence": 201,
     "domain": "organization",
     "apiId": "SCHOOL-003",
     "endpoint": "/api/v1/schools",
@@ -2160,7 +2412,7 @@
     "operationId": null
   },
   {
-    "sequence": 181,
+    "sequence": 202,
     "domain": "organization",
     "apiId": "SCHOOL-004",
     "endpoint": "/api/v1/schools/{schoolId}/assign",
@@ -2172,7 +2424,7 @@
     "operationId": null
   },
   {
-    "sequence": 182,
+    "sequence": 203,
     "domain": "organization",
     "apiId": "SCHOOL-005",
     "endpoint": "/api/v1/schools/{schoolId}/unassign",
@@ -2184,7 +2436,7 @@
     "operationId": null
   },
   {
-    "sequence": 183,
+    "sequence": 204,
     "domain": "organization",
     "apiId": "SCHOOL-101",
     "endpoint": "/api/v1/schools/all",
@@ -2196,7 +2448,7 @@
     "operationId": null
   },
   {
-    "sequence": 184,
+    "sequence": 205,
     "domain": "organization",
     "apiId": "SCHOOL-102",
     "endpoint": "/api/v1/schools/{schoolId}",
@@ -2208,7 +2460,7 @@
     "operationId": null
   },
   {
-    "sequence": 185,
+    "sequence": 206,
     "domain": "organization",
     "apiId": "SCHOOL-103",
     "endpoint": "/api/v1/schools/unassigned",
@@ -2220,7 +2472,7 @@
     "operationId": null
   },
   {
-    "sequence": 186,
+    "sequence": 207,
     "domain": "organization",
     "apiId": "SCHOOL-104",
     "endpoint": "/api/v1/schools/link/{schoolId}",
@@ -2232,7 +2484,7 @@
     "operationId": null
   },
   {
-    "sequence": 187,
+    "sequence": 208,
     "domain": "organization",
     "apiId": "STUDY-GROUP-001",
     "endpoint": "/api/v1/study-groups",
@@ -2244,7 +2496,7 @@
     "operationId": null
   },
   {
-    "sequence": 188,
+    "sequence": 209,
     "domain": "organization",
     "apiId": "STUDY-GROUP-002",
     "endpoint": "/api/v1/study-groups/{studyGroupId}",
@@ -2256,7 +2508,7 @@
     "operationId": null
   },
   {
-    "sequence": 189,
+    "sequence": 210,
     "domain": "organization",
     "apiId": "STUDY-GROUP-003",
     "endpoint": "/api/v1/study-groups/{studyGroupId}/members/{memberId}",
@@ -2268,7 +2520,7 @@
     "operationId": null
   },
   {
-    "sequence": 190,
+    "sequence": 211,
     "domain": "organization",
     "apiId": "STUDY-GROUP-004",
     "endpoint": "/api/v1/study-groups/{studyGroupId}/mentors/{mentorId}",
@@ -2280,7 +2532,7 @@
     "operationId": null
   },
   {
-    "sequence": 191,
+    "sequence": 212,
     "domain": "organization",
     "apiId": "STUDY-GROUP-005",
     "endpoint": "/api/v1/study-groups/{studyGroupId}/members/{memberId}",
@@ -2292,7 +2544,7 @@
     "operationId": null
   },
   {
-    "sequence": 192,
+    "sequence": 213,
     "domain": "organization",
     "apiId": "STUDY-GROUP-006",
     "endpoint": "/api/v1/study-groups/{studyGroupId}/mentors/{mentorId}",
@@ -2304,7 +2556,7 @@
     "operationId": null
   },
   {
-    "sequence": 193,
+    "sequence": 214,
     "domain": "organization",
     "apiId": "STUDY-GROUP-007",
     "endpoint": "/api/v1/study-groups/{studyGroupId}",
@@ -2316,7 +2568,7 @@
     "operationId": null
   },
   {
-    "sequence": 194,
+    "sequence": 215,
     "domain": "organization",
     "apiId": "STUDY-GROUP-101",
     "endpoint": "/api/v1/study-groups/managed",
@@ -2328,7 +2580,7 @@
     "operationId": null
   },
   {
-    "sequence": 195,
+    "sequence": 216,
     "domain": "organization",
     "apiId": "STUDY-GROUP-102",
     "endpoint": "/api/v1/study-groups/{studyGroupId}",
@@ -2340,7 +2592,7 @@
     "operationId": null
   },
   {
-    "sequence": 196,
+    "sequence": 217,
     "domain": "organization",
     "apiId": "STUDY-GROUP-SCHEDULE-001",
     "endpoint": "/api/v1/study-groups/schedules",
@@ -2352,7 +2604,7 @@
     "operationId": null
   },
   {
-    "sequence": 197,
+    "sequence": 218,
     "domain": "project",
     "apiId": "APPLY-001",
     "endpoint": "/api/v1/projects/{projectId}/applications",
@@ -2360,11 +2612,11 @@
     "role": "챌린저 지원서 Draft 생성",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java",
-    "line": 47,
+    "line": 48,
     "operationId": null
   },
   {
-    "sequence": 198,
+    "sequence": 219,
     "domain": "project",
     "apiId": "APPLY-002",
     "endpoint": "/api/v1/projects/{projectId}/applications/me",
@@ -2372,11 +2624,11 @@
     "role": "챌린저 지원서 임시저장",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java",
-    "line": 70,
+    "line": 71,
     "operationId": null
   },
   {
-    "sequence": 199,
+    "sequence": 220,
     "domain": "project",
     "apiId": "APPLY-003",
     "endpoint": "/api/v1/projects/{projectId}/applications/me/submit",
@@ -2384,11 +2636,11 @@
     "role": "챌린저 지원서 최종 제출",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java",
-    "line": 93,
+    "line": 94,
     "operationId": null
   },
   {
-    "sequence": 200,
+    "sequence": 221,
     "domain": "project",
     "apiId": "APPLY-004",
     "endpoint": "/api/v1/projects/me/applications",
@@ -2396,11 +2648,11 @@
     "role": "본인 지원 내역 목록 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationQueryController.java",
-    "line": 37,
+    "line": 40,
     "operationId": null
   },
   {
-    "sequence": 201,
+    "sequence": 222,
     "domain": "project",
     "apiId": "APPLY-005",
     "endpoint": "/api/v1/projects/{projectId}/applications/{applicationId}",
@@ -2408,11 +2660,11 @@
     "role": "챌린저 지원서 철회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java",
-    "line": 147,
+    "line": 148,
     "operationId": null
   },
   {
-    "sequence": 202,
+    "sequence": 223,
     "domain": "project",
     "apiId": "APPLY-101",
     "endpoint": "/api/v1/projects/{projectId}/applications",
@@ -2420,11 +2672,11 @@
     "role": "PM/운영진 단일 프로젝트 지원자 목록 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationQueryController.java",
-    "line": 76,
+    "line": 79,
     "operationId": null
   },
   {
-    "sequence": 203,
+    "sequence": 224,
     "domain": "project",
     "apiId": "APPLY-102",
     "endpoint": "/api/v1/projects/{projectId}/applications/{applicationId}",
@@ -2432,11 +2684,11 @@
     "role": "지원서 단건 상세 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationQueryController.java",
-    "line": 127,
+    "line": 130,
     "operationId": null
   },
   {
-    "sequence": 204,
+    "sequence": 225,
     "domain": "project",
     "apiId": "APPLY-103",
     "endpoint": "/api/v1/projects/{projectId}/applications/{applicationId}/decision",
@@ -2444,11 +2696,11 @@
     "role": "지원서 합/불 결정 (단일 PATCH)",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java",
-    "line": 118,
+    "line": 119,
     "operationId": null
   },
   {
-    "sequence": 205,
+    "sequence": 226,
     "domain": "project",
     "apiId": "PROJECT-001",
     "endpoint": "/api/v1/projects",
@@ -2460,7 +2712,7 @@
     "operationId": null
   },
   {
-    "sequence": 206,
+    "sequence": 227,
     "domain": "project",
     "apiId": "PROJECT-002",
     "endpoint": "/api/v1/projects/{projectId}",
@@ -2472,7 +2724,7 @@
     "operationId": null
   },
   {
-    "sequence": 207,
+    "sequence": 228,
     "domain": "project",
     "apiId": "PROJECT-003",
     "endpoint": "/api/v1/projects/{projectId}/members",
@@ -2484,7 +2736,7 @@
     "operationId": null
   },
   {
-    "sequence": 208,
+    "sequence": 229,
     "domain": "project",
     "apiId": "PROJECT-004",
     "endpoint": "/api/v1/projects/{projectId}/members",
@@ -2492,11 +2744,11 @@
     "role": "프로젝트 팀원 추가",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java",
-    "line": 142,
+    "line": 144,
     "operationId": null
   },
   {
-    "sequence": 209,
+    "sequence": 230,
     "domain": "project",
     "apiId": "PROJECT-005",
     "endpoint": "/api/v1/projects/{projectId}/members/{memberId}",
@@ -2504,11 +2756,11 @@
     "role": "프로젝트 팀원 제거",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java",
-    "line": 244,
+    "line": 246,
     "operationId": null
   },
   {
-    "sequence": 210,
+    "sequence": 231,
     "domain": "project",
     "apiId": "PROJECT-006",
     "endpoint": "/api/v1/projects/me/managed",
@@ -2520,7 +2772,7 @@
     "operationId": null
   },
   {
-    "sequence": 211,
+    "sequence": 232,
     "domain": "project",
     "apiId": "PROJECT-007",
     "endpoint": "/api/v1/projects/members",
@@ -2532,7 +2784,7 @@
     "operationId": null
   },
   {
-    "sequence": 212,
+    "sequence": 233,
     "domain": "project",
     "apiId": "PROJECT-101",
     "endpoint": "/api/v1/projects",
@@ -2540,11 +2792,11 @@
     "role": "프로젝트 Draft 생성",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java",
-    "line": 62,
+    "line": 64,
     "operationId": null
   },
   {
-    "sequence": 213,
+    "sequence": 234,
     "domain": "project",
     "apiId": "PROJECT-102",
     "endpoint": "/api/v1/projects/{projectId}",
@@ -2552,11 +2804,11 @@
     "role": "프로젝트 기본정보 수정",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java",
-    "line": 81,
+    "line": 83,
     "operationId": null
   },
   {
-    "sequence": 214,
+    "sequence": 235,
     "domain": "project",
     "apiId": "PROJECT-103",
     "endpoint": "/api/v1/projects/me/draft",
@@ -2568,7 +2820,7 @@
     "operationId": null
   },
   {
-    "sequence": 215,
+    "sequence": 236,
     "domain": "project",
     "apiId": "PROJECT-104",
     "endpoint": "/api/v1/projects/{projectId}/transfer-ownership",
@@ -2576,11 +2828,11 @@
     "role": "프로젝트 소유권 양도",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java",
-    "line": 122,
+    "line": 124,
     "operationId": null
   },
   {
-    "sequence": 216,
+    "sequence": 237,
     "domain": "project",
     "apiId": "PROJECT-105",
     "endpoint": "/api/v1/projects/{projectId}/part-quotas",
@@ -2588,11 +2840,11 @@
     "role": "파트별 정원 일괄 갱신",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java",
-    "line": 184,
+    "line": 186,
     "operationId": null
   },
   {
-    "sequence": 217,
+    "sequence": 238,
     "domain": "project",
     "apiId": "PROJECT-106",
     "endpoint": "/api/v1/projects/{projectId}/application-form",
@@ -2600,11 +2852,11 @@
     "role": "지원 폼 저장",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationFormController.java",
-    "line": 35,
+    "line": 37,
     "operationId": null
   },
   {
-    "sequence": 218,
+    "sequence": 239,
     "domain": "project",
     "apiId": "PROJECT-106-GET",
     "endpoint": "/api/v1/projects/{projectId}/application-form",
@@ -2612,11 +2864,11 @@
     "role": "지원 폼 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationFormController.java",
-    "line": 56,
+    "line": 58,
     "operationId": null
   },
   {
-    "sequence": 219,
+    "sequence": 240,
     "domain": "project",
     "apiId": "PROJECT-107",
     "endpoint": "/api/v1/projects/{projectId}/submit",
@@ -2624,11 +2876,11 @@
     "role": "프로젝트 제출",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java",
-    "line": 102,
+    "line": 104,
     "operationId": null
   },
   {
-    "sequence": 220,
+    "sequence": 241,
     "domain": "project",
     "apiId": "PROJECT-108",
     "endpoint": "/api/v1/projects/{projectId}/publish",
@@ -2636,11 +2888,11 @@
     "role": "프로젝트 공개",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java",
-    "line": 162,
+    "line": 164,
     "operationId": null
   },
   {
-    "sequence": 221,
+    "sequence": 242,
     "domain": "project",
     "apiId": "PROJECT-109",
     "endpoint": "/api/v1/projects/{projectId}",
@@ -2648,11 +2900,11 @@
     "role": "프로젝트 삭제",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java",
-    "line": 204,
+    "line": 206,
     "operationId": null
   },
   {
-    "sequence": 222,
+    "sequence": 243,
     "domain": "project",
     "apiId": "PROJECT-110",
     "endpoint": "/api/v1/projects/{projectId}/abort",
@@ -2660,11 +2912,11 @@
     "role": "프로젝트 중단",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java",
-    "line": 225,
+    "line": 227,
     "operationId": null
   },
   {
-    "sequence": 223,
+    "sequence": 244,
     "domain": "project",
     "apiId": "PROJECT-MATCHING-001",
     "endpoint": "/api/v1/project/matching-rounds",
@@ -2676,7 +2928,7 @@
     "operationId": null
   },
   {
-    "sequence": 224,
+    "sequence": 245,
     "domain": "project",
     "apiId": "PROJECT-MATCHING-101",
     "endpoint": "/api/v1/project/matching-rounds",
@@ -2688,7 +2940,7 @@
     "operationId": null
   },
   {
-    "sequence": 225,
+    "sequence": 246,
     "domain": "project",
     "apiId": "PROJECT-MATCHING-102",
     "endpoint": "/api/v1/project/matching-rounds/{matchingRoundId}",
@@ -2700,7 +2952,7 @@
     "operationId": null
   },
   {
-    "sequence": 226,
+    "sequence": 247,
     "domain": "project",
     "apiId": "PROJECT-MATCHING-103",
     "endpoint": "/api/v1/project/matching-rounds/{matchingRoundId}",
@@ -2712,7 +2964,7 @@
     "operationId": null
   },
   {
-    "sequence": 227,
+    "sequence": 248,
     "domain": "project",
     "apiId": "PROJECT-MATCHING-201",
     "endpoint": "/api/v1/project/matching-rounds/{matchingRoundId}/auto-decide",
@@ -2724,7 +2976,7 @@
     "operationId": null
   },
   {
-    "sequence": 228,
+    "sequence": 249,
     "domain": "project",
     "apiId": "PROJECT-STAT-001",
     "endpoint": "/api/v1/projects/{projectId}/statistics",
@@ -2732,11 +2984,11 @@
     "role": "단건 프로젝트 지원/매칭 현황 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectStatisticsQueryController.java",
-    "line": 30,
+    "line": 32,
     "operationId": null
   },
   {
-    "sequence": 229,
+    "sequence": 250,
     "domain": "project",
     "apiId": "PROJECT-STAT-002",
     "endpoint": "/api/v1/projects/statistics",
@@ -2744,11 +2996,11 @@
     "role": "지부 전체 프로젝트 지원/매칭 현황 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/project/adapter/in/web/ProjectStatisticsQueryController.java",
-    "line": 56,
+    "line": 58,
     "operationId": null
   },
   {
-    "sequence": 230,
+    "sequence": 251,
     "domain": "schedule",
     "apiId": "SCHEDULE-C001",
     "endpoint": "/api/v2/schedules",
@@ -2756,11 +3008,11 @@
     "role": "일정 생성",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java",
-    "line": 59,
+    "line": 62,
     "operationId": null
   },
   {
-    "sequence": 231,
+    "sequence": 252,
     "domain": "schedule",
     "apiId": "SCHEDULE-C002",
     "endpoint": "/api/v2/schedules/{scheduleId}",
@@ -2768,11 +3020,11 @@
     "role": "일정 수정",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java",
-    "line": 125,
+    "line": 128,
     "operationId": null
   },
   {
-    "sequence": 232,
+    "sequence": 253,
     "domain": "schedule",
     "apiId": "SCHEDULE-C003",
     "endpoint": "/api/v2/schedules/{scheduleId}/attendances/request",
@@ -2780,11 +3032,11 @@
     "role": "출석 요청하기",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java",
-    "line": 263,
+    "line": 266,
     "operationId": null
   },
   {
-    "sequence": 233,
+    "sequence": 254,
     "domain": "schedule",
     "apiId": "SCHEDULE-C004",
     "endpoint": "/api/v2/schedules/{scheduleId}/attendances/excuse",
@@ -2792,11 +3044,11 @@
     "role": "출석 요청이 불가능한 경우, 사유 제출하기",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java",
-    "line": 312,
+    "line": 315,
     "operationId": null
   },
   {
-    "sequence": 234,
+    "sequence": 255,
     "domain": "schedule",
     "apiId": "SCHEDULE-C005",
     "endpoint": "/api/v2/schedules/{scheduleId}/attendances/decide",
@@ -2804,11 +3056,11 @@
     "role": "[운영진용] 출석 요청 승인/거절",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java",
-    "line": 359,
+    "line": 362,
     "operationId": null
   },
   {
-    "sequence": 235,
+    "sequence": 256,
     "domain": "schedule",
     "apiId": "SCHEDULE-C006",
     "endpoint": "/api/v2/schedules/{scheduleId}",
@@ -2816,11 +3068,11 @@
     "role": "일정 삭제",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java",
-    "line": 186,
+    "line": 189,
     "operationId": null
   },
   {
-    "sequence": 236,
+    "sequence": 257,
     "domain": "schedule",
     "apiId": "SCHEDULE-C007",
     "endpoint": "/api/v2/schedules/{scheduleId}/force",
@@ -2828,11 +3080,11 @@
     "role": "일정 강제 삭제",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java",
-    "line": 227,
+    "line": 230,
     "operationId": null
   },
   {
-    "sequence": 237,
+    "sequence": 258,
     "domain": "schedule",
     "apiId": "SCHEDULE-Q001",
     "endpoint": "/api/v2/schedules/capabilities",
@@ -2840,11 +3092,11 @@
     "role": "일정 생성, 수정 관련 권한 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java",
-    "line": 42,
+    "line": 45,
     "operationId": null
   },
   {
-    "sequence": 238,
+    "sequence": 259,
     "domain": "schedule",
     "apiId": "SCHEDULE-Q002",
     "endpoint": "/api/v2/schedules/me",
@@ -2852,11 +3104,11 @@
     "role": "내 일정 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java",
-    "line": 66,
+    "line": 69,
     "operationId": null
   },
   {
-    "sequence": 239,
+    "sequence": 260,
     "domain": "schedule",
     "apiId": "SCHEDULE-Q003",
     "endpoint": "/api/v2/schedules/{scheduleId}",
@@ -2864,11 +3116,11 @@
     "role": "일정 상세 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java",
-    "line": 103,
+    "line": 106,
     "operationId": null
   },
   {
-    "sequence": 240,
+    "sequence": 261,
     "domain": "schedule",
     "apiId": "SCHEDULE-Q004",
     "endpoint": "/api/v2/schedules/attendance",
@@ -2876,11 +3128,11 @@
     "role": "[운영진용] 일정들의 출석 현황 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java",
-    "line": 143,
+    "line": 146,
     "operationId": null
   },
   {
-    "sequence": 241,
+    "sequence": 262,
     "domain": "schedule",
     "apiId": "SCHEDULE-Q005",
     "endpoint": "/api/v2/schedules/{scheduleId}/attendance",
@@ -2888,11 +3140,11 @@
     "role": "[운영진용] 단일 일정 출석 현황 조회",
     "deprecated": false,
     "source": "src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java",
-    "line": 206,
+    "line": 209,
     "operationId": null
   },
   {
-    "sequence": 242,
+    "sequence": 263,
     "domain": "storage",
     "apiId": "STORAGE-001",
     "endpoint": "/api/v1/storage/prepare-upload",
@@ -2904,7 +3156,7 @@
     "operationId": null
   },
   {
-    "sequence": 243,
+    "sequence": 264,
     "domain": "storage",
     "apiId": "STORAGE-002",
     "endpoint": "/api/v1/storage/{fileId}/confirm",
@@ -2916,7 +3168,7 @@
     "operationId": null
   },
   {
-    "sequence": 244,
+    "sequence": 265,
     "domain": "storage",
     "apiId": "STORAGE-003",
     "endpoint": "/api/v1/storage/{fileId}",
@@ -2928,7 +3180,7 @@
     "operationId": null
   },
   {
-    "sequence": 245,
+    "sequence": 266,
     "domain": "term",
     "apiId": "TERM-001",
     "endpoint": "/api/v1/terms",
@@ -2940,7 +3192,7 @@
     "operationId": null
   },
   {
-    "sequence": 246,
+    "sequence": 267,
     "domain": "term",
     "apiId": "TERM-101",
     "endpoint": "/api/v1/terms/type/{termType}",
@@ -2952,7 +3204,7 @@
     "operationId": null
   },
   {
-    "sequence": 247,
+    "sequence": 268,
     "domain": "term",
     "apiId": "TERM-102",
     "endpoint": "/api/v1/terms/{termsId}",
@@ -2964,7 +3216,7 @@
     "operationId": null
   },
   {
-    "sequence": 248,
+    "sequence": 269,
     "domain": "term",
     "apiId": "TERM-103",
     "endpoint": "/api/v1/terms/consent-status/me",
@@ -2976,7 +3228,7 @@
     "operationId": null
   },
   {
-    "sequence": 249,
+    "sequence": 270,
     "domain": "term",
     "apiId": "TERM-104",
     "endpoint": "/api/v1/terms",
@@ -2988,7 +3240,7 @@
     "operationId": null
   },
   {
-    "sequence": 250,
+    "sequence": 271,
     "domain": "test",
     "apiId": "<미지정>",
     "endpoint": "/test/email/send-test",
@@ -3000,7 +3252,7 @@
     "operationId": null
   },
   {
-    "sequence": 251,
+    "sequence": 272,
     "domain": "test",
     "apiId": "<미지정>",
     "endpoint": "/test/log-test",
@@ -3012,7 +3264,7 @@
     "operationId": null
   },
   {
-    "sequence": 252,
+    "sequence": 273,
     "domain": "test",
     "apiId": "SEED-001",
     "endpoint": "/test/seed/members",
@@ -3024,7 +3276,7 @@
     "operationId": "SEED-001"
   },
   {
-    "sequence": 253,
+    "sequence": 274,
     "domain": "test",
     "apiId": "SEED-001-M",
     "endpoint": "/test/seed/member",
@@ -3036,7 +3288,7 @@
     "operationId": "SEED-001-M"
   },
   {
-    "sequence": 254,
+    "sequence": 275,
     "domain": "test",
     "apiId": "SEED-002",
     "endpoint": "/test/seed/challengers",
@@ -3048,7 +3300,7 @@
     "operationId": "SEED-002"
   },
   {
-    "sequence": 255,
+    "sequence": 276,
     "domain": "test",
     "apiId": "SEED-002-C",
     "endpoint": "/test/seed/challenger",
@@ -3060,7 +3312,7 @@
     "operationId": "SEED-002-C"
   },
   {
-    "sequence": 256,
+    "sequence": 277,
     "domain": "test",
     "apiId": "SEED-002-R",
     "endpoint": "/test/seed/challenger-role",
@@ -3072,7 +3324,7 @@
     "operationId": "SEED-002-R"
   },
   {
-    "sequence": 257,
+    "sequence": 278,
     "domain": "test",
     "apiId": "SEED-003",
     "endpoint": "/test/seed/projects",
@@ -3084,7 +3336,7 @@
     "operationId": "SEED-003"
   },
   {
-    "sequence": 258,
+    "sequence": 279,
     "domain": "test",
     "apiId": "SEED-003-D",
     "endpoint": "/test/seed/projects",
@@ -3096,7 +3348,7 @@
     "operationId": "SEED-003-D"
   },
   {
-    "sequence": 259,
+    "sequence": 280,
     "domain": "test",
     "apiId": "SEED-003-S",
     "endpoint": "/test/seed/projects/scenarios",
@@ -3108,7 +3360,7 @@
     "operationId": "SEED-003-S"
   },
   {
-    "sequence": 260,
+    "sequence": 281,
     "domain": "test",
     "apiId": "SEED-004",
     "endpoint": "/test/seed/curriculum",
@@ -3120,7 +3372,7 @@
     "operationId": "SEED-004"
   },
   {
-    "sequence": 261,
+    "sequence": 282,
     "domain": "test",
     "apiId": "SEED-005",
     "endpoint": "/test/seed/notice",
@@ -3132,7 +3384,7 @@
     "operationId": "SEED-005"
   },
   {
-    "sequence": 262,
+    "sequence": 283,
     "domain": "test",
     "apiId": "SEED-006",
     "endpoint": "/test/seed/project-applications",
@@ -3144,7 +3396,7 @@
     "operationId": null
   },
   {
-    "sequence": 263,
+    "sequence": 284,
     "domain": "test",
     "apiId": "TEST-001",
     "endpoint": "/test/file/{fileId}",
@@ -3156,7 +3408,7 @@
     "operationId": "TEST-001"
   },
   {
-    "sequence": 264,
+    "sequence": 285,
     "domain": "test",
     "apiId": "TEST-002",
     "endpoint": "/test/fcm/test-send",
@@ -3168,7 +3420,7 @@
     "operationId": "TEST-002"
   },
   {
-    "sequence": 265,
+    "sequence": 286,
     "domain": "test",
     "apiId": "TEST-003",
     "endpoint": "/test/webhook/aop-test",
@@ -3180,7 +3432,7 @@
     "operationId": "TEST-003"
   },
   {
-    "sequence": 266,
+    "sequence": 287,
     "domain": "test",
     "apiId": "TEST-004",
     "endpoint": "/test/webhook/alarm",
@@ -3192,7 +3444,7 @@
     "operationId": "TEST-004"
   },
   {
-    "sequence": 267,
+    "sequence": 288,
     "domain": "test",
     "apiId": "TEST-005",
     "endpoint": "/test/webhook/alarm/buffer",
@@ -3204,7 +3456,7 @@
     "operationId": "TEST-005"
   },
   {
-    "sequence": 268,
+    "sequence": 289,
     "domain": "test",
     "apiId": "TEST-006",
     "endpoint": "/test/apple-client-secret",
@@ -3216,7 +3468,7 @@
     "operationId": "TEST-006"
   },
   {
-    "sequence": 269,
+    "sequence": 290,
     "domain": "test",
     "apiId": "TEST-007",
     "endpoint": "/test/token/access",
@@ -3228,7 +3480,7 @@
     "operationId": "TEST-007"
   },
   {
-    "sequence": 270,
+    "sequence": 291,
     "domain": "test",
     "apiId": "TEST-008",
     "endpoint": "/test/token/refresh",
@@ -3240,7 +3492,7 @@
     "operationId": "TEST-008"
   },
   {
-    "sequence": 271,
+    "sequence": 292,
     "domain": "test",
     "apiId": "TEST-009",
     "endpoint": "/test/token/email",
@@ -3252,7 +3504,7 @@
     "operationId": "TEST-009"
   },
   {
-    "sequence": 272,
+    "sequence": 293,
     "domain": "test",
     "apiId": "TEST-010",
     "endpoint": "/test/token/oauth",
@@ -3264,7 +3516,7 @@
     "operationId": "TEST-010"
   },
   {
-    "sequence": 273,
+    "sequence": 294,
     "domain": "test",
     "apiId": "TEST-011",
     "endpoint": "/test/health-check",
@@ -3276,7 +3528,7 @@
     "operationId": "TEST-011"
   },
   {
-    "sequence": 274,
+    "sequence": 295,
     "domain": "test",
     "apiId": "TEST-012",
     "endpoint": "/test/check-authenticated",

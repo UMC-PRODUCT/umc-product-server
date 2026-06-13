@@ -75,6 +75,8 @@ public enum ProjectErrorCode implements BaseCode {
         "결정 마감 시각이 지난 뒤 자동 선발을 실행할 수 있어요. 마감 시각을 확인해주세요."),
     PROJECT_MATCHING_ROUND_POLICY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "PROJECT-0308",
         "이 매칭 종류의 자동 선발 정책을 찾지 못했어요. 관리자에게 문의해주세요."),
+    PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID(HttpStatus.CONFLICT, "PROJECT-0309",
+        "매칭 차수는 FIRST, SECOND, THIRD 순서로 배치하고 이전 차수 결정 마감 이후 1분 이상 간격을 둬야 해요."),
 
     // ProjectApplication (APPLY-001/002/003)
     PROJECT_DRAFT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0204", "작성 중인 지원서를 찾을 수 없어요. 지원서 목록을 확인해주세요."),
