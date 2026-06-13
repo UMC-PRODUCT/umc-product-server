@@ -28,7 +28,7 @@ public record ChatMessageCreatedEvent(
     public static ChatMessageCreatedEvent from(ChatMessage message) {
         return new ChatMessageCreatedEvent(
             UUID.randomUUID(),
-            Instant.now(),
+            message.getCreatedAt(),
             message.getId(),
             message.getRoomId(),
             message.getSenderMemberId(),

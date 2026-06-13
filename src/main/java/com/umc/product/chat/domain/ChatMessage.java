@@ -9,7 +9,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -73,7 +72,7 @@ public class ChatMessage extends BaseEntity {
             .senderMemberId(senderMemberId)
             .contentType(contentType)
             .content(content)
-            .fileMetadataIds(fileMetadataIds != null ? fileMetadataIds : new ArrayList<>())
+            .fileMetadataIds(fileMetadataIds != null ? List.copyOf(fileMetadataIds) : List.of())
             .build();
     }
 
@@ -86,7 +85,7 @@ public class ChatMessage extends BaseEntity {
             .senderMemberId(null)
             .contentType(MessageContentType.SYSTEM)
             .content(content)
-            .fileMetadataIds(new ArrayList<>())
+            .fileMetadataIds(List.of())
             .build();
     }
 }

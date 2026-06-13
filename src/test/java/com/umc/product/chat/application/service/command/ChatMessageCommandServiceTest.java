@@ -19,6 +19,7 @@ import com.umc.product.chat.domain.event.ChatMessageCreatedEvent;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,8 @@ class ChatMessageCommandServiceTest {
 
         ChatMessage saved = ChatMessage.create(1L, 10L, MessageContentType.TEXT, "안녕", null);
         ReflectionTestUtils.setField(saved, "id", 100L);
+        Instant createdAt = Instant.parse("2026-06-13T00:00:00Z");
+        ReflectionTestUtils.setField(saved, "createdAt", createdAt);
         given(saveChatMessagePort.save(any(ChatMessage.class))).willReturn(saved);
 
         ChatMessageInfo result = sut.send(command);
@@ -69,6 +72,8 @@ class ChatMessageCommandServiceTest {
         assertThat(captor.getValue().messageId()).isEqualTo(100L);
         assertThat(captor.getValue().roomId()).isEqualTo(1L);
         assertThat(captor.getValue().senderMemberId()).isEqualTo(10L);
+        // 이벤트 발생 시각은 메시지의 저장 시각(createdAt)과 일치해야 한다
+        assertThat(captor.getValue().occurredAt()).isEqualTo(createdAt);
     }
 
     @Test
