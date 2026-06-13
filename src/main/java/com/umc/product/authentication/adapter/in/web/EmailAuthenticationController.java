@@ -1,5 +1,10 @@
 package com.umc.product.authentication.adapter.in.web;
 
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.authentication.adapter.in.web.dto.request.CompleteEmailVerificationRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.ResendEmailVerificationRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.SendEmailVerificationRequest;
@@ -11,14 +16,11 @@ import com.umc.product.authentication.application.port.in.command.dto.ValidateEm
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -63,7 +65,7 @@ public class EmailAuthenticationController {
 
             이메일 인증코드는 6자리의 숫자로만 구성되어 있습니다.
 
-            purpose 는 회원가입(REGISTER) 또는 비밀번호 초기화(PASSWORD_RESET) 중 하나여야 하며,
+            purpose 는 회원가입(REGISTER), 비밀번호 초기화(PASSWORD_RESET), 이메일 변경(CHANGE_EMAIL) 중 하나여야 하며,
             cross-purpose 공격 방어를 위해 세션 단위로 고정됩니다.
             """)
     @PostMapping("email-verification")

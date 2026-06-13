@@ -1,11 +1,12 @@
 package com.umc.product.survey.application.port.in.query.dto;
 
-import com.umc.product.survey.domain.enums.FormStatus;
-import com.umc.product.survey.domain.enums.QuestionType;
-import lombok.Builder;
-
 import java.time.Instant;
 import java.util.List;
+
+import com.umc.product.survey.domain.enums.FormStatus;
+import com.umc.product.survey.domain.enums.QuestionType;
+
+import lombok.Builder;
 
 /**
  * 폼의 전체 구조(섹션 -> 질문 -> 옵션)를 중첩 포함한 DTO.
@@ -19,6 +20,7 @@ public record FormWithStructureInfo(
     String description,
     FormStatus status,
     boolean isAnonymous,
+    boolean allowDuplicateResponses,
     Instant createdAt,
     Instant updatedAt,
     List<SectionWithQuestions> sections

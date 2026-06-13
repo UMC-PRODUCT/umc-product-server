@@ -1,5 +1,18 @@
 package com.umc.product.project.application.service.command;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.project.application.port.in.command.UpsertProjectApplicationFormUseCase;
 import com.umc.product.project.application.port.in.command.dto.UpsertApplicationFormCommand;
 import com.umc.product.project.application.port.in.command.dto.UpsertApplicationFormCommand.ApplicationFormSectionEntry;
@@ -27,10 +40,10 @@ import com.umc.product.survey.application.port.in.command.dto.CreateDraftFormCom
 import com.umc.product.survey.application.port.in.command.dto.CreateFormSectionCommand;
 import com.umc.product.survey.application.port.in.command.dto.CreateQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.CreateQuestionOptionCommand;
-import com.umc.product.survey.application.port.in.command.dto.ForkQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteFormSectionCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteQuestionOptionCommand;
+import com.umc.product.survey.application.port.in.command.dto.ForkQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.ReorderFormSectionsCommand;
 import com.umc.product.survey.application.port.in.command.dto.ReorderQuestionOptionsCommand;
 import com.umc.product.survey.application.port.in.command.dto.ReorderQuestionsCommand;
@@ -44,18 +57,8 @@ import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInf
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo.QuestionWithOptions;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo.SectionWithQuestions;
 import com.umc.product.survey.domain.enums.QuestionType;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 지원 폼 upsert 서비스 (PROJECT-106).
@@ -135,6 +138,7 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
                 .title(resolveTitle(project, command))
                 .description(command.description())
                 .isAnonymous(false)
+                .allowDuplicateResponses(true)
                 .build()
         );
         return saveApplicationFormPort.save(ProjectApplicationForm.create(project, formId));
@@ -160,6 +164,7 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
                 .title(resolvedTitle)
                 .description(command.description())
                 .isAnonymous(existing.isAnonymous())
+                .allowDuplicateResponses(existing.allowDuplicateResponses())
                 .build()
         );
     }

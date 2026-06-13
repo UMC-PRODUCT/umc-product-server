@@ -29,6 +29,33 @@ class MemberTest {
     }
 
     @Nested
+    @DisplayName("changeEmail")
+    class ChangeEmail {
+
+        @Test
+        @DisplayName("활성 회원은 이메일을 변경할 수 있다")
+        void changeEmail_activeMember_success() {
+            Member member = Member.create("홍길동", "길동", "old@example.com", 1L, null);
+
+            member.changeEmail("new@example.com");
+
+            assertThat(member.getEmail()).isEqualTo("new@example.com");
+        }
+
+        @Test
+        @DisplayName("비활성 회원은 이메일을 변경할 수 없다")
+        void changeEmail_inactiveMember_rejected() {
+            Member member = Member.create("홍길동", "길동", "old@example.com", 1L, null);
+            ReflectionTestUtils.setField(member, "status", MemberStatus.INACTIVE);
+
+            assertThatThrownBy(() -> member.changeEmail("new@example.com"))
+                .isInstanceOf(MemberDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(MemberErrorCode.MEMBER_NOT_ACTIVE);
+        }
+    }
+
+    @Nested
     @DisplayName("updateProfile")
     class UpdateProfile {
 

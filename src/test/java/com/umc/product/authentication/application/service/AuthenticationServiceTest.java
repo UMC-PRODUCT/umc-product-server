@@ -8,6 +8,17 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
+import java.util.Optional;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.authentication.application.event.SendVerificationEmailEvent;
 import com.umc.product.authentication.application.port.in.command.dto.ValidateEmailVerificationSessionCommand;
 import com.umc.product.authentication.application.port.out.LoadEmailVerificationPort;
@@ -20,15 +31,6 @@ import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
-import java.util.Optional;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * AuthenticationService 단위 테스트.
@@ -143,6 +145,40 @@ class AuthenticationServiceTest {
             // then
             assertThat(sessionId).isEqualTo(SESSION_ID);
             then(eventPublisher).should().publish(any(SendVerificationEmailEvent.class));
+        }
+
+        @Test
+        @DisplayName("CHANGE_EMAIL + 미사용 이메일이면 세션을 저장하고 메일 발송 이벤트를 발행한다")
+        void changeEmailSessionCreated() {
+            // given
+            given(getMemberCredentialUseCase.existsByEmail(EMAIL)).willReturn(false);
+            EmailVerification persisted = newSession(EmailVerificationPurpose.CHANGE_EMAIL);
+            ReflectionTestUtils.setField(persisted, "id", SESSION_ID);
+            given(saveEmailVerificationPort.save(any(EmailVerification.class))).willReturn(persisted);
+
+            // when
+            Long sessionId = service.createEmailVerificationSession(EMAIL, EmailVerificationPurpose.CHANGE_EMAIL);
+
+            // then
+            assertThat(sessionId).isEqualTo(SESSION_ID);
+            then(eventPublisher).should().publish(any(SendVerificationEmailEvent.class));
+        }
+
+        @Test
+        @DisplayName("CHANGE_EMAIL + 이미 사용 중인 이메일이면 EMAIL_ALREADY_EXISTS 예외, 저장/이벤트 발행 모두 차단")
+        void changeEmailDuplicateRejected() {
+            // given
+            given(getMemberCredentialUseCase.existsByEmail(EMAIL)).willReturn(true);
+
+            // when / then
+            assertThatThrownBy(() ->
+                service.createEmailVerificationSession(EMAIL, EmailVerificationPurpose.CHANGE_EMAIL))
+                .isInstanceOf(AuthenticationDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(AuthenticationErrorCode.EMAIL_ALREADY_EXISTS);
+
+            then(saveEmailVerificationPort).should(never()).save(any());
+            then(eventPublisher).should(never()).publish(any(SendVerificationEmailEvent.class));
         }
 
         @Test

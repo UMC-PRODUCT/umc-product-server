@@ -20,6 +20,7 @@ import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
 import com.umc.product.storage.application.port.in.command.dto.PrepareFileUploadCommand;
 import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
 import com.umc.product.storage.application.port.out.SaveFileMetadataPort;
+import com.umc.product.storage.application.port.out.dto.StorageObjectInfo;
 import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
@@ -56,7 +57,7 @@ class FileCommandServiceTest extends UseCaseTestSupport {
         given(storagePort.generateStorageKey(any(FileCategory.class), anyString(), anyString()))
             .willReturn("profile/test-id.jpg");
 
-        given(storagePort.generateUploadUrl(anyString(), anyString(), anyLong()))
+        given(storagePort.generateUploadUrl(anyString(), anyString(), anyLong(), anyLong()))
             .willReturn(new FileUploadInfo(
                 "test-file-id",
                 "https://storage.googleapis.com/signed-upload-url",
@@ -141,7 +142,12 @@ class FileCommandServiceTest extends UseCaseTestSupport {
         FileMetadata metadata = saveTestFile("test-file-1", "document.pdf", false);
 
         // StoragePort Mock 설정 - 파일이 스토리지에 존재한다고 가정
-        given(storagePort.exists(anyString())).willReturn(true);
+        given(storagePort.findObjectInfoByStorageKey(metadata.getStorageKey()))
+            .willReturn(java.util.Optional.of(StorageObjectInfo.of(
+                metadata.getStorageKey(),
+                metadata.getFileSize(),
+                metadata.getContentType()
+            )));
 
         // when: 업로드 완료 처리
         manageFileUseCase.confirmUpload(metadata.getId());
@@ -158,7 +164,8 @@ class FileCommandServiceTest extends UseCaseTestSupport {
         FileMetadata metadata = saveTestFile("test-file-2", "document.pdf", false);
 
         // StoragePort Mock 설정 - 파일이 스토리지에 없음
-        given(storagePort.exists(anyString())).willReturn(false);
+        given(storagePort.findObjectInfoByStorageKey(metadata.getStorageKey()))
+            .willReturn(java.util.Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> manageFileUseCase.confirmUpload(metadata.getId()))
