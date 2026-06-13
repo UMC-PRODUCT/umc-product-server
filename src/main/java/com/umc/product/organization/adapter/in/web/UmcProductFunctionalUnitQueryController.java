@@ -10,17 +10,25 @@ import com.umc.product.organization.adapter.in.web.dto.response.umcproduct.UmcPr
 import com.umc.product.organization.application.port.in.query.GetUmcProductFunctionalUnitUseCase;
 import com.umc.product.organization.domain.enums.UmcProductFunctionalUnitType;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @Public
 @RestController
 @RequestMapping("/api/v1/umc-product/functional-units")
 @RequiredArgsConstructor
+@Tag(name = "Organization | UMC PRODUCT 기능 조직 Query", description = "UMC PRODUCT 기능 조직 목록 조회")
 public class UmcProductFunctionalUnitQueryController {
 
     private final GetUmcProductFunctionalUnitUseCase getUmcProductFunctionalUnitUseCase;
 
     @GetMapping
+    @Operation(
+        operationId = "UMC-PRODUCT-FUNCTIONAL-UNIT-101",
+        summary = "UMC PRODUCT 기능 조직 목록 조회",
+        description = "기수별 UMC PRODUCT 기능 조직 목록을 조회합니다. type 값을 전달하면 기능 조직 유형별로 필터링할 수 있습니다."
+    )
     public UmcProductFunctionalUnitListResponse list(
         @RequestParam Long umcProductGenerationId,
         @RequestParam(required = false) UmcProductFunctionalUnitType type
