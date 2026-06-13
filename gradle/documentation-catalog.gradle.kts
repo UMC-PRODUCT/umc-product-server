@@ -1,12 +1,15 @@
 import java.io.File
 import java.util.Locale
 
+// catalog item의 source 위치를 함께 남겨 Backoffice에서 원본 enum으로 바로 추적할 수 있게 한다.
 data class ErrorCodeSource(
     val enumName: String,
     val file: String,
     val line: Int
 )
 
+// ErrorCode Catalog v1 manifest의 item shape와 1:1로 맞춘 내부 모델이다.
+// optional metadata는 선언 방식이 확정될 때까지 null/false/emptyList 기본값으로 생성한다.
 data class ErrorCodeDocumentationEntry(
     val sequence: Int,
     val domain: String,
@@ -26,6 +29,8 @@ data class ErrorCodeDocumentationEntry(
     val source: ErrorCodeSource
 )
 
+// 생성 산출물은 docs/guides와 Spring static resource 양쪽에 쓴다.
+// docs/guides는 repository 문서용, static resource는 서버/Backoffice 서빙용이다.
 val documentationSourceRoot = file("src/main/java")
 val errorCodeCatalogMarkdownFile = file("docs/guides/ErrorCode_목록.md")
 val errorCodeCatalogJsonFile = file("docs/guides/ErrorCode_목록.json")
@@ -45,6 +50,7 @@ val apiCatalogFilesToRemove = listOf(
 val errorCodeCatalogServiceName = "umc-product-server"
 val errorCodeCatalogSchemaVersion = 1
 
+// Markdown/JSON/HTML을 문자열로 직접 생성하므로 출력 포맷별 escaping을 명시적으로 처리한다.
 fun String.escapeMarkdownCell(): String = replace("|", "\\|").replace("\n", "<br>")
 
 fun String.escapeJson(): String = buildString {
@@ -101,6 +107,8 @@ fun domainFromPackage(packageName: String): String {
         .ifBlank { "unknown" }
 }
 
+// Gradle task가 Spring classpath를 로딩하지 않도록, source parser가 읽은 HttpStatus enum 이름을 숫자로 변환한다.
+// 새 status가 필요해지면 이 map에 추가해야 validateDocumentationCatalogs에서 0으로 잡히지 않는다.
 fun httpStatusCode(statusName: String): Int = mapOf(
     "CONTINUE" to 100,
     "SWITCHING_PROTOCOLS" to 101,
@@ -188,6 +196,8 @@ fun appendJsonStringArray(builder: StringBuilder, property: String, values: List
     builder.appendLine(if (trailingComma) "," else "")
 }
 
+// 현재 generator는 compile 결과가 아니라 Java source를 직접 훑는다.
+// 장점은 문서 생성이 빠르고 source line을 보존한다는 점이고, 단점은 enum 선언 포맷이 parser 규칙을 따라야 한다는 점이다.
 fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
     val entries = mutableListOf<ErrorCodeDocumentationEntry>()
 
@@ -228,6 +238,8 @@ fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
                     return@forEachIndexed
                 }
 
+                // enum constant 위의 annotation은 catalog metadata로 해석하지 않는다.
+                // 다만 @Deprecated 같은 annotation이 붙어도 다음 constant parsing이 깨지지 않도록 block만 건너뛴다.
                 if (chunk.isEmpty() && (trimmed.startsWith("@") || annotationChunk.isNotEmpty())) {
                     annotationChunk.append(trimmed).append(' ')
                     annotationBalance += trimmed.count { it == '(' } - trimmed.count { it == ')' }
@@ -254,6 +266,8 @@ fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
                     val constantText = chunk.toString().trim().removeSuffix(",").removeSuffix(";")
                     chunk = StringBuilder()
 
+                    // Phase 1은 기존 enum constructor 형태만 지원한다.
+                    // ErrorCodeDefinition 도입 시 이 match 지점에 신규 declaration parser를 추가한다.
                     val match = Regex(
                         "^([A-Z0-9_]+)\\s*\\(\\s*HttpStatus\\.([A-Z0-9_]+)\\s*,\\s*\"([^\"]+)\"\\s*,\\s*\"((?:\\\\.|[^\"\\\\])*)\"",
                         RegexOption.DOT_MATCHES_ALL
@@ -319,6 +333,7 @@ fun buildErrorCodeCatalogMarkdown(entries: List<ErrorCodeDocumentationEntry>): S
     }
 }
 
+// Backoffice가 소비하는 canonical manifest다. generatedAt은 noisy diff를 막기 위해 null로 고정한다.
 fun buildErrorCodeCatalogJson(entries: List<ErrorCodeDocumentationEntry>): String = buildString {
     appendLine("{")
     appendLine("  \"schemaVersion\": $errorCodeCatalogSchemaVersion,")
@@ -355,6 +370,7 @@ fun buildErrorCodeCatalogJson(entries: List<ErrorCodeDocumentationEntry>): Strin
     appendLine("}")
 }
 
+// 독자 규격인 ErrorCode Catalog v1의 schema를 함께 생성해 산출물 shape drift를 잡는다.
 fun buildErrorCodeCatalogSchemaJson(): String = """
 {
   "${'$'}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -433,6 +449,8 @@ fun buildErrorCodeCatalogSchemaJson(): String = """
 }
 """.trimIndent() + "\n"
 
+// 정적 viewer는 서버가 단독으로 catalog를 확인할 수 있게 하는 보조 화면이다.
+// Backoffice viewer가 주 사용처이므로 여기서는 가벼운 검색/필터만 제공한다.
 fun buildCatalogIndexHtml(entries: List<ErrorCodeDocumentationEntry>): String {
     val domainOptions = entries.map { it.domain }.distinct().joinToString("\n") {
         """                    <option value="${it.escapeHtml()}">${it.escapeHtml()}</option>"""
@@ -644,6 +662,7 @@ $statusOptions
     """.trimIndent() + "\n"
 }
 
+// generated artifact의 timestamp churn을 막기 위해 내용이 달라진 경우에만 파일을 쓴다.
 fun writeIfChanged(file: File, content: String) {
     file.parentFile.mkdirs()
     if (!file.exists() || file.readText() != content) {
@@ -651,6 +670,7 @@ fun writeIfChanged(file: File, content: String) {
     }
 }
 
+// strict mode에서는 catalog가 운영 계약으로 깨지지 않도록 중복 code와 schema 기본 조건을 실패 처리한다.
 fun collectDocumentationIssues(): List<String> {
     val entries = extractErrorCodeEntries()
     val issues = mutableListOf<String>()
@@ -680,6 +700,7 @@ fun collectDocumentationIssues(): List<String> {
     return issues
 }
 
+// 문서와 서버 static resource를 한 번에 갱신하는 실제 생성 task다.
 tasks.register("generateErrorCodeCatalog") {
     group = "documentation"
     description = "ErrorCode 카탈로그 문서와 v1 JSON manifest/schema를 생성합니다."
@@ -701,6 +722,7 @@ tasks.register("generateErrorCodeCatalog") {
     }
 }
 
+// API 문서는 OpenAPI/Scalar가 담당하므로 이전 custom API catalog 산출물은 재생성하지 않고 제거한다.
 tasks.register("removeApiCatalogArtifacts") {
     group = "documentation"
     description = "삭제된 커스텀 API 카탈로그 산출물을 제거합니다. Scalar/OpenAPI 문서는 유지합니다."
@@ -713,12 +735,14 @@ tasks.register("removeApiCatalogArtifacts") {
     }
 }
 
+// 외부에서 호출할 대표 생성 task. 기존 호출자가 하나만 실행해도 API catalog 제거와 ErrorCode 생성이 함께 일어난다.
 tasks.register("generateDocumentationCatalogs") {
     group = "documentation"
     description = "ErrorCode 카탈로그 문서와 v1 JSON manifest/schema를 생성합니다."
     dependsOn("removeApiCatalogArtifacts", "generateErrorCodeCatalog")
 }
 
+// CI/check에서 generated file이 source와 동기화되어 있는지 확인한다.
 tasks.register("checkDocumentationCatalogs") {
     group = "verification"
     description = "ErrorCode 자동 생성 문서가 최신 상태인지 검증합니다."
@@ -751,6 +775,8 @@ tasks.register("checkDocumentationCatalogs") {
     }
 }
 
+// validate는 문제를 출력하고, strictDocumentationCatalogs=true일 때만 build를 실패시킨다.
+// 로컬 탐색에서는 경고처럼 쓰고 CI에서는 gate처럼 쓰기 위한 분리다.
 tasks.register("validateDocumentationCatalogs") {
     group = "verification"
     description = "ErrorCode의 누락/중복과 v1 규격 위반을 검사합니다. -PstrictDocumentationCatalogs=true 설정 시 실패 처리합니다."
@@ -769,6 +795,7 @@ tasks.register("validateDocumentationCatalogs") {
     }
 }
 
+// 사람이 다음 번호를 직접 세다가 중복을 만들지 않도록 prefix별 다음 code를 계산한다.
 tasks.register("nextErrorCode") {
     group = "documentation"
     description = "다음 ErrorCode를 추천합니다. 예: ./gradlew nextErrorCode -Pprefix=CHALLENGER"
