@@ -32,6 +32,8 @@ public enum CommonErrorCode implements BaseCode {
     // SECURITY: Spring Security에서 발생하는 에러
     SECURITY_NOT_GIVEN(HttpStatus.UNAUTHORIZED, "SECURITY-0001", "인증 정보가 전달되지 않았습니다."),
     SECURITY_FORBIDDEN(HttpStatus.FORBIDDEN, "SECURITY-0002", "권한이 부족합니다."),
+    SECURITY_WEBSOCKET_BROKER_ACCESS(HttpStatus.FORBIDDEN, "SECURITY-0003", "브로커 경로로 직접 메시지를 전송할 수 없습니다."),
+    SECURITY_WEBSOCKET_INVALID_DESTINATION(HttpStatus.FORBIDDEN, "SECURITY-0004", "허용되지 않은 웹소켓 경로입니다."),
 
     // ENVIRONMENT: SpringBoot 실행환경 관련 에러
     INVALID_ENV(HttpStatus.BAD_REQUEST, "ENV-0001", "현재 실행 환경에서는 사용할 수 없는 기능입니다."),

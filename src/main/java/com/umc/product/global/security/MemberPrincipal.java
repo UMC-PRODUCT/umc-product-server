@@ -5,10 +5,11 @@ import java.util.Collection;
 import java.util.Collections;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.security.core.AuthenticatedPrincipal;
 import org.springframework.security.core.GrantedAuthority;
 
 @Getter
-public class MemberPrincipal {
+public class MemberPrincipal implements AuthenticatedPrincipal {
 
     private final Long memberId;
 
@@ -28,6 +29,11 @@ public class MemberPrincipal {
 
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.emptyList();
+    }
+
+    @Override
+    public String getName() {
+        return String.valueOf(memberId);
     }
 
     @Override
