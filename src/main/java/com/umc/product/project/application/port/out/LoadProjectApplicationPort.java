@@ -59,6 +59,14 @@ public interface LoadProjectApplicationPort {
     List<ProjectApplication> listByMatchingRoundId(Long matchingRoundId);
 
     /**
+     * 같은 매칭 차수와 프로젝트에 속한 결정 가능 지원서(SUBMITTED/APPROVED/REJECTED)를 조회합니다.
+     * <p>
+     * applicationForm -> project, appliedMatchingRound 를 fetch join 으로 함께 로드하여 최소선발 검증에서 lazy traversal
+     * 없이 프로젝트/차수 정보를 사용할 수 있게 합니다.
+     */
+    List<ProjectApplication> listDecidableByMatchingRoundIdAndProjectId(Long matchingRoundId, Long projectId);
+
+    /**
      * 지원서 단건을 fetch join 으로 조회한다.
      * <p>
      * applicationForm -> project, appliedMatchingRound 를 한 번에 로드하여 호출자가 lazy 프록시 traversal 없이

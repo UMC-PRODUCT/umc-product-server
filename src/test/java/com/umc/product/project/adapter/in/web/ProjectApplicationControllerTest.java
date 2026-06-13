@@ -202,20 +202,18 @@ class ProjectApplicationControllerTest {
         }
 
         @Test
-        void PENDING_요청시_도메인의_SUBMITTED로_매핑된_응답을_반환한다() throws Exception {
-            UpdateApplicationDecisionRequest request = new UpdateApplicationDecisionRequest(
-                ApplicationDecisionStatus.PENDING, null
-            );
-            given(decideApplicationUseCase.decide(
-                eq(APPLICATION_ID), eq(ApplicationDecisionStatus.PENDING), eq(null), eq(TEST_MEMBER_ID)
-            )).willReturn(ProjectApplicationInfo.of(APPLICATION_ID, ProjectApplicationStatus.SUBMITTED));
+        void PENDING_요청시_400_및_UseCase를_호출하지_않는다() throws Exception {
+            String body = """
+                { "status": "PENDING" }
+                """;
 
             mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",
                     PROJECT_ID, APPLICATION_ID)
-                    .content(objectMapper.writeValueAsString(request))
+                    .content(body)
                     .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.status").value("SUBMITTED"));
+                .andExpect(status().isBadRequest());
+
+            then(decideApplicationUseCase).should(never()).decide(any(), any(), any(), any());
         }
 
         @Test

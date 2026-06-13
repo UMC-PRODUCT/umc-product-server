@@ -157,25 +157,6 @@ public class ProjectApplication extends BaseEntity {
     }
 
     /**
-     * APPROVED / REJECTED 결정을 SUBMITTED ("대기") 로 되돌립니다.
-     * <p>
-     * UI 상의 "대기" 옵션이며, 차수 진행 중에만 호출 가능합니다.
-     *
-     * @param revertedByMemberId 되돌린 PO 또는 운영진 ID
-     */
-    public void revertToPending(Long revertedByMemberId) {
-        if (status != ProjectApplicationStatus.APPROVED && status != ProjectApplicationStatus.REJECTED) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
-        }
-        appliedMatchingRound.validateIsMutableAt(Instant.now());
-
-        this.status = ProjectApplicationStatus.SUBMITTED;
-        this.statusChangedMemberId = revertedByMemberId;
-        this.statusChangeReason = null;
-        this.statusChangedAt = Instant.now();
-    }
-
-    /**
      * 합/불 결정 대상이 되는 status 인지 검증합니다. SUBMITTED / APPROVED / REJECTED 만 통과합니다.
      */
     private void validateCanBeDecided() {

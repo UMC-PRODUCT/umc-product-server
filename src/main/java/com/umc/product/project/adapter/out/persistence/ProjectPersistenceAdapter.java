@@ -44,6 +44,11 @@ public class ProjectPersistenceAdapter implements LoadProjectPort, SaveProjectPo
     }
 
     @Override
+    public List<Project> listByChapterIdAndStatus(Long chapterId, ProjectStatus status) {
+        return jpaRepository.findByChapterIdAndStatus(chapterId, status);
+    }
+
+    @Override
     public boolean existsByOwnerAndGisu(Long productOwnerMemberId, Long gisuId) {
         return jpaRepository.existsByProductOwnerMemberIdAndGisuId(productOwnerMemberId, gisuId);
     }

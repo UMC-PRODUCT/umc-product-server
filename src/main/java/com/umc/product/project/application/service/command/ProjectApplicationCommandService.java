@@ -33,6 +33,7 @@ import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
+import com.umc.product.project.application.service.policy.MatchingDecisionPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
@@ -71,6 +72,7 @@ public class ProjectApplicationCommandService implements
     private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
     private final ManageFormResponseUseCase manageFormResponseUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
+    private final List<MatchingDecisionPolicy> matchingDecisionPolicies;
     private final GetFormUseCase getFormUseCase;
 
     @Override
@@ -236,11 +238,13 @@ public class ProjectApplicationCommandService implements
             && application.getStatus() != ProjectApplicationStatus.APPROVED) {
             validateRemainingQuota(application);
         }
+        if (targetStatus == ApplicationDecisionStatus.REJECTED && isDecidableStatus(application.getStatus())) {
+            validateMinimumSelectionAfterRejection(application);
+        }
 
         switch (targetStatus) {
             case APPROVED -> application.approve(decidedByMemberId, reason);
             case REJECTED -> application.reject(decidedByMemberId, reason);
-            case PENDING -> application.revertToPending(decidedByMemberId);
         }
 
         saveProjectApplicationPort.save(application);
@@ -281,6 +285,78 @@ public class ProjectApplicationCommandService implements
         if (activeMemberCount + currentRoundApproved + 1 > totalQuota) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_QUOTA_EXCEEDED);
         }
+    }
+
+    /**
+     * REJECTED 결정 후에도 매칭 정책의 최소선발 인원을 만족하는지 검증한다.
+     */
+    private void validateMinimumSelectionAfterRejection(ProjectApplication application) {
+        Project project = application.getApplicationForm().getProject();
+        Long projectId = project.getId();
+        Long gisuId = project.getGisuId();
+        Long roundId = application.getAppliedMatchingRound().getId();
+        ChallengerPart targetPart = getChallengerUseCase
+            .getByMemberIdAndGisuId(application.getApplicantMemberId(), gisuId)
+            .part();
+
+        List<ProjectApplication> applicants = loadProjectApplicationPort
+            .listDecidableByMatchingRoundIdAndProjectId(roundId, projectId);
+        List<ProjectApplication> samePartApplicants = filterSamePartApplicants(applicants, targetPart, gisuId);
+
+        int required = resolvePolicy(application.getAppliedMatchingRound().getType())
+            .minimumRequired(samePartApplicants.size(), remainingQuota(projectId, targetPart));
+        int approvedAfterRejection = (int) samePartApplicants.stream()
+            .filter(a -> !a.getId().equals(application.getId()))
+            .filter(a -> a.getStatus() == ProjectApplicationStatus.APPROVED)
+            .count();
+
+        if (approvedAfterRejection < required) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_MINIMUM_SELECTION_REQUIRED);
+        }
+    }
+
+    private List<ProjectApplication> filterSamePartApplicants(
+        List<ProjectApplication> applicants, ChallengerPart targetPart, Long gisuId
+    ) {
+        if (applicants.isEmpty()) {
+            return List.of();
+        }
+        Set<Long> memberIds = applicants.stream()
+            .map(ProjectApplication::getApplicantMemberId)
+            .collect(Collectors.toSet());
+        Map<Long, ChallengerInfo> challengerByMember =
+            getChallengerUseCase.batchGetByMemberIdsAndGisuId(memberIds, gisuId);
+
+        return applicants.stream()
+            .filter(a -> challengerByMember.get(a.getApplicantMemberId()).part() == targetPart)
+            .toList();
+    }
+
+    private int remainingQuota(Long projectId, ChallengerPart part) {
+        int totalQuota = loadProjectPartQuotaPort.listByProjectId(projectId).stream()
+            .filter(q -> q.getPart() == part)
+            .findFirst()
+            .map(q -> q.getQuota().intValue())
+            .orElse(0);
+        int activeMemberCount = loadProjectMemberPort
+            .countByProjectIdGroupByPart(projectId)
+            .getOrDefault(part, 0L)
+            .intValue();
+
+        return Math.max(0, totalQuota - activeMemberCount);
+    }
+
+    private MatchingDecisionPolicy resolvePolicy(MatchingType type) {
+        return matchingDecisionPolicies.stream()
+            .filter(p -> p.supportedType() == type)
+            .findFirst()
+            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_POLICY_NOT_FOUND));
+    }
+
+    private boolean isDecidableStatus(ProjectApplicationStatus status) {
+        return status == ProjectApplicationStatus.SUBMITTED
+            || status == ProjectApplicationStatus.APPROVED
+            || status == ProjectApplicationStatus.REJECTED;
     }
 
     /**

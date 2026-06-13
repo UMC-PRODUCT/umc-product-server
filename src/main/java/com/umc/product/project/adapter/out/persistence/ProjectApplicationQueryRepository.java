@@ -144,6 +144,27 @@ public class ProjectApplicationQueryRepository {
     }
 
     /**
+     * 수동 상태 변경 시 최소선발 검증에 필요한 같은 차수/프로젝트의 결정 가능 지원서를 조회한다.
+     */
+    public List<ProjectApplication> listDecidableByMatchingRoundIdAndProjectId(Long matchingRoundId, Long projectId) {
+        return queryFactory
+            .selectFrom(projectApplication)
+            .innerJoin(projectApplication.applicationForm, projectApplicationForm).fetchJoin()
+            .innerJoin(projectApplicationForm.project, project).fetchJoin()
+            .innerJoin(projectApplication.appliedMatchingRound, projectMatchingRound).fetchJoin()
+            .where(
+                projectMatchingRound.id.eq(matchingRoundId),
+                project.id.eq(projectId),
+                projectApplication.status.in(List.of(
+                    ProjectApplicationStatus.SUBMITTED,
+                    ProjectApplicationStatus.APPROVED,
+                    ProjectApplicationStatus.REJECTED
+                ))
+            )
+            .fetch();
+    }
+
+    /**
      * 프로젝트/멤버 쌍별 APPROVED 지원서 중 가장 최신 매칭 차수를 반환한다.
      * <p>
      * DB 에서 최신 우선 정렬로 가져온 뒤, Java 에서 각 (projectId, memberId) 의 첫 row 만 남겨 DB 벤더별 window function 차이를 피한다.

@@ -284,8 +284,8 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
             return ApplicationOutcome.fail("SUBMIT", e.toString(), applicationId);
         }
 
-        // 최종 상태 무작위 결정: SUBMITTED / APPROVED / REJECTED ≈ 1/3 분포
-        // 도메인이 상태 토글을 자유롭게 허용하므로 어떤 분포든 운영자가 화면에서 보정 가능 (revertToPending 등).
+        // 최종 상태 무작위 결정: SUBMITTED / APPROVED / REJECTED ≈ 1/3 분포.
+        // REJECTED 결정은 매칭 규칙의 최소선발 검증을 통과하는 경우에만 반영된다.
         int rand = ThreadLocalRandom.current().nextInt(3);
         if (rand == 0) {
             return ApplicationOutcome.success("SUBMITTED", applicationId);
