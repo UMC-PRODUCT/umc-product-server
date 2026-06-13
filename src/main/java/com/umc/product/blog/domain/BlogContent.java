@@ -1,6 +1,7 @@
 package com.umc.product.blog.domain;
 
 import java.time.Instant;
+import java.util.regex.Pattern;
 
 import com.umc.product.common.BaseEntity;
 
@@ -31,6 +32,7 @@ public class BlogContent extends BaseEntity {
     private static final int MAX_SUMMARY_LENGTH = 500;
     private static final int MAX_URL_LENGTH = 1000;
     private static final int MAX_CONTENT_LENGTH = 100_000;
+    private static final Pattern SLUG_PATTERN = Pattern.compile("^[a-z0-9]+(?:-[a-z0-9]+)*$");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -237,7 +239,7 @@ public class BlogContent extends BaseEntity {
         if (type == null) {
             throw new BlogDomainException(BlogErrorCode.INVALID_CONTENT_TYPE);
         }
-        if (slug == null || slug.isBlank() || slug.trim().length() > MAX_SLUG_LENGTH) {
+        if (isInvalidSlug(slug)) {
             throw new BlogDomainException(BlogErrorCode.INVALID_SLUG);
         }
         if (title == null || title.isBlank() || title.trim().length() > MAX_TITLE_LENGTH) {
@@ -271,6 +273,16 @@ public class BlogContent extends BaseEntity {
         if (memberId == null || memberId <= 0) {
             throw new BlogDomainException(BlogErrorCode.INVALID_MEMBER_ID);
         }
+    }
+
+    private static boolean isInvalidSlug(String slug) {
+        if (slug == null) {
+            return true;
+        }
+        String normalized = slug.trim();
+        return normalized.isBlank()
+            || normalized.length() > MAX_SLUG_LENGTH
+            || !SLUG_PATTERN.matcher(normalized).matches();
     }
 
     private static String normalizeOptional(String value) {

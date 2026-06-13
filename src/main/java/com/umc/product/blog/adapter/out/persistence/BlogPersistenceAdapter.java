@@ -301,6 +301,11 @@ public class BlogPersistenceAdapter implements LoadBlogContentPort, SaveBlogCont
     }
 
     @Override
+    public Map<Long, Integer> countPublishedContentsByHashtagIds(List<Long> hashtagIds, BlogContentType type) {
+        return hashtagQueryRepository.countPublishedContentsByHashtagIds(hashtagIds, type);
+    }
+
+    @Override
     public BlogHashtag save(BlogHashtag hashtag) {
         return hashtagJpaRepository.save(hashtag);
     }

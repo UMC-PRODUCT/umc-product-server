@@ -1,10 +1,12 @@
 package com.umc.product.blog.adapter.in.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -128,6 +130,107 @@ class BlogInteractionControllerIntegrationTest extends IntegrationTestSupport {
         mockMvc.perform(get("/api/v1/blog/hashtags/springboot/contents"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.content[0].slug").value("cms-post"));
+    }
+
+    @Test
+    @DisplayName("공개 콘텐츠 목록은 공개되지 않은 콘텐츠 ID 커서를 거부한다")
+    void 공개_콘텐츠_목록은_공개되지_않은_콘텐츠_ID_커서를_거부한다() throws Exception {
+        BlogContent draft = saveBlogContentPort.save(BlogContent.create(
+            BlogContentType.ENGINEERING,
+            "draft-cursor",
+            "Draft Cursor",
+            null,
+            null,
+            "본문",
+            BlogContentStatus.DRAFT,
+            authorMemberId,
+            null,
+            null,
+            null
+        ));
+
+        mockMvc.perform(get("/api/v1/blog/contents")
+                .queryParam("cursor", draft.getId().toString()))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("해시태그 목록 커서는 type 필터 기준의 콘텐츠 수로 계산된다")
+    void 해시태그_목록_커서는_type_필터_기준의_콘텐츠_수로_계산된다() throws Exception {
+        createContent("engineering", "engineering-beta", "Engineering Beta", "PUBLISHED", List.of("Beta"));
+        createContent("engineering", "engineering-alpha", "Engineering Alpha", "PUBLISHED", List.of("Alpha"));
+        createContent("release", "release-alpha", "Release Alpha", "PUBLISHED", List.of("Alpha"));
+
+        String firstResponse = mockMvc.perform(get("/api/v1/blog/hashtags")
+                .queryParam("type", "engineering")
+                .queryParam("size", "1")
+                .queryParam("sort", "contentCount,desc"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.content[0].slug").value("alpha"))
+            .andExpect(jsonPath("$.result.content[0].contentCount").value(1))
+            .andExpect(jsonPath("$.result.hasNext").value(true))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        JsonNode firstResult = objectMapper.readTree(firstResponse).path("result");
+        long firstHashtagId = firstResult.path("content").get(0).path("id").asLong();
+        long nextCursor = firstResult.path("nextCursor").asLong();
+
+        String secondResponse = mockMvc.perform(get("/api/v1/blog/hashtags")
+                .queryParam("type", "engineering")
+                .queryParam("size", "1")
+                .queryParam("sort", "contentCount,desc")
+                .queryParam("cursor", Long.toString(nextCursor)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.content[0].slug").value("beta"))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        JsonNode secondResult = objectMapper.readTree(secondResponse).path("result");
+        assertThat(secondResult.path("content").get(0).path("id").asLong()).isNotEqualTo(firstHashtagId);
+    }
+
+    @Test
+    @DisplayName("시리즈 콘텐츠 목록은 공개되지 않은 콘텐츠 ID 커서를 거부한다")
+    void 시리즈_콘텐츠_목록은_공개되지_않은_콘텐츠_ID_커서를_거부한다() throws Exception {
+        Long seriesId = createSeries("cursor-series", "Cursor Series");
+        BlogContent published = saveBlogContentPort.save(BlogContent.create(
+            BlogContentType.ENGINEERING,
+            "series-published-cursor",
+            "Series Published Cursor",
+            null,
+            null,
+            "본문",
+            BlogContentStatus.PUBLISHED,
+            authorMemberId,
+            null,
+            null,
+            null
+        ));
+        BlogContent draft = saveBlogContentPort.save(BlogContent.create(
+            BlogContentType.ENGINEERING,
+            "series-draft-cursor",
+            "Series Draft Cursor",
+            null,
+            null,
+            "본문",
+            BlogContentStatus.DRAFT,
+            authorMemberId,
+            null,
+            null,
+            null
+        ));
+        mockMvc.perform(put("/api/v1/blog/series/" + seriesId + "/contents")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(seriesContentsBody(List.of(published.getId(), draft.getId())))))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/blog/series/engineering/cursor-series/contents")
+                .queryParam("cursor", draft.getId().toString()))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -417,6 +520,28 @@ class BlogInteractionControllerIntegrationTest extends IntegrationTestSupport {
         ));
     }
 
+    private void createContent(String type, String slug, String title, String status, List<String> hashtags)
+        throws Exception {
+        mockMvc.perform(post("/api/v1/blog/contents")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(contentBody(type, slug, title, status, hashtags))))
+            .andExpect(status().isOk());
+    }
+
+    private Long createSeries(String slug, String title) throws Exception {
+        String response = mockMvc.perform(post("/api/v1/blog/series")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(seriesBody(slug, title))))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        return objectMapper.readTree(response).path("result").path("id").asLong();
+    }
+
     private Long createComment(String content, Long parentCommentId, String token) throws Exception {
         String response = mockMvc.perform(post(BASE_URL)
                 .header("Authorization", "Bearer " + token)
@@ -448,14 +573,39 @@ class BlogInteractionControllerIntegrationTest extends IntegrationTestSupport {
     }
 
     private Map<String, Object> contentBody(String slug, String title, String status, List<String> hashtags) {
+        return contentBody("engineering", slug, title, status, hashtags);
+    }
+
+    private Map<String, Object> contentBody(
+        String type,
+        String slug,
+        String title,
+        String status,
+        List<String> hashtags
+    ) {
         Map<String, Object> body = new HashMap<>();
-        body.put("type", "engineering");
+        body.put("type", type);
         body.put("slug", slug);
         body.put("title", title);
         body.put("summary", "요약");
         body.put("content", "본문");
         body.put("status", status);
         body.put("hashtags", hashtags);
+        return body;
+    }
+
+    private Map<String, Object> seriesBody(String slug, String title) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("type", "engineering");
+        body.put("slug", slug);
+        body.put("title", title);
+        body.put("description", "설명");
+        return body;
+    }
+
+    private Map<String, Object> seriesContentsBody(List<Long> contentIds) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("contentIds", contentIds);
         return body;
     }
 }

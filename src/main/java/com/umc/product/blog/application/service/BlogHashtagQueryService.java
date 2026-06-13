@@ -47,7 +47,8 @@ public class BlogHashtagQueryService implements GetBlogHashtagUseCase {
         List<BlogHashtag> page = hasNext ? rows.subList(0, size) : rows;
         Long nextCursor = hasNext && !page.isEmpty() ? page.get(page.size() - 1).getId() : null;
         Map<Long, Integer> counts = loadBlogHashtagPort.countPublishedContentsByHashtagIds(
-            page.stream().map(BlogHashtag::getId).toList()
+            page.stream().map(BlogHashtag::getId).toList(),
+            type
         );
         return new BlogHashtagCursorInfo(
             page.stream()

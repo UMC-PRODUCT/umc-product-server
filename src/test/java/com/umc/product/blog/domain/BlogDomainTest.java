@@ -47,6 +47,48 @@ class BlogDomainTest {
     }
 
     @Test
+    @DisplayName("콘텐츠와 시리즈 slug는 URL-safe 형식만 허용한다")
+    void 콘텐츠와_시리즈_slug는_URL_safe_형식만_허용한다() {
+        assertThatThrownBy(() -> BlogContent.create(
+            BlogContentType.ENGINEERING,
+            "foo/bar",
+            "제목",
+            null,
+            null,
+            "본문",
+            BlogContentStatus.DRAFT,
+            1L,
+            null,
+            null,
+            null
+        )).isInstanceOf(BlogDomainException.class);
+        assertThatThrownBy(() -> BlogContent.create(
+            BlogContentType.ENGINEERING,
+            "Foo",
+            "제목",
+            null,
+            null,
+            "본문",
+            BlogContentStatus.DRAFT,
+            1L,
+            null,
+            null,
+            null
+        )).isInstanceOf(BlogDomainException.class);
+        assertThatThrownBy(() -> BlogSeries.create(
+            BlogContentType.ENGINEERING,
+            "series--slug",
+            "시리즈",
+            null,
+            null,
+            1L,
+            null,
+            null,
+            null
+        )).isInstanceOf(BlogDomainException.class);
+    }
+
+    @Test
     @DisplayName("콘텐츠는 DRAFT 전환 시 publishedAt을 제거하고 soft delete된다")
     void 콘텐츠는_DRAFT_전환_시_publishedAt을_제거하고_soft_delete된다() {
         BlogContent content = BlogContent.create(

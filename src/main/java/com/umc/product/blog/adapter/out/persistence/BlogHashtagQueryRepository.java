@@ -17,6 +17,8 @@ import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.blog.domain.BlogContentStatus;
 import com.umc.product.blog.domain.BlogContentType;
+import com.umc.product.blog.domain.BlogDomainException;
+import com.umc.product.blog.domain.BlogErrorCode;
 import com.umc.product.blog.domain.BlogHashtag;
 import com.umc.product.blog.domain.BlogHashtagSort;
 
@@ -36,9 +38,7 @@ public class BlogHashtagQueryRepository {
         int limit
     ) {
         NumberExpression<Long> contentCount = blogContent.id.countDistinct();
-        Long cursorCount = cursor == null ? null : countPublishedContentsByHashtagIds(List.of(cursor))
-            .getOrDefault(cursor, 0)
-            .longValue();
+        Long cursorCount = getCursorCount(type, q, cursor);
 
         return queryFactory
             .select(blogHashtag)
@@ -88,6 +88,10 @@ public class BlogHashtagQueryRepository {
     }
 
     public Map<Long, Integer> countPublishedContentsByHashtagIds(List<Long> hashtagIds) {
+        return countPublishedContentsByHashtagIds(hashtagIds, null);
+    }
+
+    public Map<Long, Integer> countPublishedContentsByHashtagIds(List<Long> hashtagIds, BlogContentType type) {
         Map<Long, Integer> result = new HashMap<>();
         if (hashtagIds == null || hashtagIds.isEmpty()) {
             return result;
@@ -100,7 +104,8 @@ public class BlogHashtagQueryRepository {
             .where(
                 blogContentHashtag.hashtagId.in(hashtagIds),
                 blogContent.status.eq(BlogContentStatus.PUBLISHED),
-                blogContent.deletedAt.isNull()
+                blogContent.deletedAt.isNull(),
+                type == null ? null : blogContent.contentType.eq(type)
             )
             .groupBy(blogContentHashtag.hashtagId)
             .fetch();
@@ -111,6 +116,29 @@ public class BlogHashtagQueryRepository {
             result.put(hashtagId, count == null ? 0 : count.intValue());
         }
         return result;
+    }
+
+    private Long getCursorCount(BlogContentType type, String q, Long cursor) {
+        if (cursor == null) {
+            return null;
+        }
+        Long cursorCount = queryFactory
+            .select(blogContent.id.countDistinct())
+            .from(blogHashtag)
+            .join(blogContentHashtag).on(blogContentHashtag.hashtagId.eq(blogHashtag.id))
+            .join(blogContent).on(blogContent.id.eq(blogContentHashtag.contentId))
+            .where(
+                blogHashtag.id.eq(cursor),
+                blogContent.status.eq(BlogContentStatus.PUBLISHED),
+                blogContent.deletedAt.isNull(),
+                type == null ? null : blogContent.contentType.eq(type),
+                keywordCondition(q)
+            )
+            .fetchOne();
+        if (cursorCount == null || cursorCount <= 0) {
+            throw new BlogDomainException(BlogErrorCode.INVALID_CURSOR);
+        }
+        return cursorCount;
     }
 
     private BooleanExpression keywordCondition(String q) {

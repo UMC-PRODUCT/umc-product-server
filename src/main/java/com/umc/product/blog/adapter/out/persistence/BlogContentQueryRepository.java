@@ -29,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 public class BlogContentQueryRepository {
 
     private final JPAQueryFactory queryFactory;
-    private final BlogContentJpaRepository contentJpaRepository;
 
     public List<BlogContent> listPublicContents(
         BlogContentType type,
@@ -39,7 +38,7 @@ public class BlogContentQueryRepository {
         Long cursor,
         int limit
     ) {
-        BlogContent cursorEntity = getCursorEntity(cursor);
+        BlogContent cursorEntity = getPublicContentCursor(type, seriesSlug, hashtagSlug, cursor);
         return queryFactory
             .selectFrom(blogContent)
             .where(
@@ -79,7 +78,7 @@ public class BlogContentQueryRepository {
         Long cursor,
         int limit
     ) {
-        BlogContent cursorEntity = getCursorEntity(cursor);
+        BlogContent cursorEntity = getPublicHashtagContentCursor(hashtagId, type, cursor);
         return queryFactory
             .select(blogContent)
             .from(blogContentHashtag)
@@ -96,12 +95,52 @@ public class BlogContentQueryRepository {
             .fetch();
     }
 
-    private BlogContent getCursorEntity(Long cursor) {
+    private BlogContent getPublicContentCursor(
+        BlogContentType type,
+        String seriesSlug,
+        String hashtagSlug,
+        Long cursor
+    ) {
         if (cursor == null) {
             return null;
         }
-        return contentJpaRepository.findById(cursor)
-            .orElseThrow(() -> new BlogDomainException(BlogErrorCode.INVALID_CURSOR));
+        BlogContent cursorEntity = queryFactory
+            .selectFrom(blogContent)
+            .where(
+                blogContent.id.eq(cursor),
+                blogContent.status.eq(BlogContentStatus.PUBLISHED),
+                blogContent.deletedAt.isNull(),
+                type == null ? null : blogContent.contentType.eq(type),
+                seriesFilter(type, seriesSlug),
+                hashtagFilter(hashtagSlug)
+            )
+            .fetchOne();
+        if (cursorEntity == null || cursorEntity.getPublishedAt() == null) {
+            throw new BlogDomainException(BlogErrorCode.INVALID_CURSOR);
+        }
+        return cursorEntity;
+    }
+
+    private BlogContent getPublicHashtagContentCursor(Long hashtagId, BlogContentType type, Long cursor) {
+        if (cursor == null) {
+            return null;
+        }
+        BlogContent cursorEntity = queryFactory
+            .select(blogContent)
+            .from(blogContentHashtag)
+            .join(blogContent).on(blogContent.id.eq(blogContentHashtag.contentId))
+            .where(
+                blogContentHashtag.hashtagId.eq(hashtagId),
+                blogContent.id.eq(cursor),
+                blogContent.status.eq(BlogContentStatus.PUBLISHED),
+                blogContent.deletedAt.isNull(),
+                type == null ? null : blogContent.contentType.eq(type)
+            )
+            .fetchOne();
+        if (cursorEntity == null || cursorEntity.getPublishedAt() == null) {
+            throw new BlogDomainException(BlogErrorCode.INVALID_CURSOR);
+        }
+        return cursorEntity;
     }
 
     private BlogSeriesContent getSeriesContentCursor(Long seriesId, Long cursor) {
@@ -110,9 +149,12 @@ public class BlogContentQueryRepository {
         }
         BlogSeriesContent cursorRelation = queryFactory
             .selectFrom(blogSeriesContent)
+            .join(blogContent).on(blogContent.id.eq(blogSeriesContent.contentId))
             .where(
                 blogSeriesContent.seriesId.eq(seriesId),
-                blogSeriesContent.contentId.eq(cursor)
+                blogSeriesContent.contentId.eq(cursor),
+                blogContent.status.eq(BlogContentStatus.PUBLISHED),
+                blogContent.deletedAt.isNull()
             )
             .fetchOne();
         if (cursorRelation == null) {

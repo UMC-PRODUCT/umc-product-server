@@ -4,12 +4,14 @@ import com.umc.product.blog.application.port.in.command.dto.CreateBlogSeriesComm
 import com.umc.product.blog.application.port.in.command.dto.UpdateBlogSeriesCommand;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record BlogSeriesRequest(
     @NotBlank(message = "카테고리를 선택해주세요.") String type,
 
-    @NotBlank(message = "주소 slug를 입력해주세요.") @Size(max = 200, message = "주소 slug는 200자 이하로 입력해주세요.") String slug,
+    @NotBlank(message = "주소를 입력해주세요.") @Size(max = 200, message = "주소는 200자 이하로 입력해주세요.") @Pattern(regexp = "^[a-z0-9]+(?:-[a-z0-9]+)*$", message = "주소는 영문 소문자, 숫자, 하이픈만 사용할 수 있어요.")
+    String slug,
 
     @NotBlank(message = "제목을 입력해주세요.") @Size(max = 200, message = "제목은 200자 이하로 입력해주세요.") String title,
 

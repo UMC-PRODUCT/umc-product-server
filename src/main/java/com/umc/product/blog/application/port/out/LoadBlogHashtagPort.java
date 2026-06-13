@@ -21,4 +21,6 @@ public interface LoadBlogHashtagPort {
     Map<Long, List<BlogHashtag>> listHashtagsByContentIdsGrouped(List<Long> contentIds);
 
     Map<Long, Integer> countPublishedContentsByHashtagIds(List<Long> hashtagIds);
+
+    Map<Long, Integer> countPublishedContentsByHashtagIds(List<Long> hashtagIds, BlogContentType type);
 }

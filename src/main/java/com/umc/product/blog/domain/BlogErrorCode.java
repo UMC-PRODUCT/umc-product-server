@@ -13,7 +13,7 @@ public enum BlogErrorCode implements BaseCode {
     CONTENT_NOT_FOUND(HttpStatus.NOT_FOUND, "BLOG-0001", "글을 찾지 못했어요. 주소를 확인해주세요."),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "BLOG-0002", "댓글을 찾지 못했어요. 새로고침 후 다시 시도해주세요."),
     INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "BLOG-0003", "카테고리를 확인해주세요."),
-    INVALID_SLUG(HttpStatus.BAD_REQUEST, "BLOG-0004", "주소 slug를 확인해주세요."),
+    INVALID_SLUG(HttpStatus.BAD_REQUEST, "BLOG-0004", "주소는 영문 소문자, 숫자, 하이픈만 사용할 수 있어요."),
     INVALID_ID(HttpStatus.BAD_REQUEST, "BLOG-0005", "ID는 1 이상이어야 해요."),
     INVALID_COMMENT_CONTENT(HttpStatus.BAD_REQUEST, "BLOG-0006", "댓글은 1자 이상 1,000자 이하로 입력해주세요."),
     INVALID_NICKNAME(HttpStatus.BAD_REQUEST, "BLOG-0007", "닉네임은 1자 이상 20자 이하로 입력해주세요."),
