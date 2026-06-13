@@ -67,48 +67,51 @@ public class ProjectApplicationController {
         );
     }
 
-    @PutMapping("/{projectId}/applications/me")
+    @PutMapping("/{projectId}/applications/{applicationId}")
     @Operation(
         summary = "[APPLY-002] 챌린저 지원서 임시저장",
         description = "본문이 곧 답변의 새 전체 상태가 된다. 본인의 DRAFT 지원서에서만 호출 가능."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT_APPLICATION,
-        resourceId = "#projectId",
-        permission = PermissionType.WRITE,
+        resourceId = "#applicationId",
+        permission = PermissionType.EDIT,
         message = "지원서를 임시저장할 권한이 없어요. 지원 가능한 프로젝트인지 확인해주세요."
     )
     public ProjectApplicationStatusResponse updateDraft(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long projectId,
+        @PathVariable Long applicationId,
         @Valid @RequestBody UpdateApplicationAnswersRequest request
     ) {
         return ProjectApplicationStatusResponse.from(
             updateProjectApplicationDraftUseCase.update(
-                request.toCommand(projectId, memberPrincipal.getMemberId())
+                request.toCommand(projectId, applicationId, memberPrincipal.getMemberId())
             )
         );
     }
 
-    @PostMapping("/{projectId}/applications/me/submit")
+    @PostMapping("/{projectId}/applications/{applicationId}/submit")
     @Operation(
         summary = "[APPLY-003] 챌린저 지원서 최종 제출",
         description = "DRAFT -> SUBMITTED 전이. 필수 답변 누락 시 400. 본인의 DRAFT 지원서에서만 호출 가능."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT_APPLICATION,
-        resourceId = "#projectId",
-        permission = PermissionType.WRITE,
+        resourceId = "#applicationId",
+        permission = PermissionType.EDIT,
         message = "지원서를 제출할 권한이 없어요. 지원 가능한 프로젝트인지 확인해주세요."
     )
     public ProjectApplicationStatusResponse submit(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @PathVariable Long projectId
+        @PathVariable Long projectId,
+        @PathVariable Long applicationId
     ) {
         return ProjectApplicationStatusResponse.from(
             submitProjectApplicationUseCase.submit(
                 SubmitProjectApplicationCommand.builder()
                     .projectId(projectId)
+                    .applicationId(applicationId)
                     .requesterMemberId(memberPrincipal.getMemberId())
                     .build()
             )

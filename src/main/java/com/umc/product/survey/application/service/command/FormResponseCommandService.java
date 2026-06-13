@@ -117,11 +117,20 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
     public void submitDraft(SubmitDraftFormResponseCommand command) {
         FormResponse draft = loadDraft(command.formResponseId());
 
-        // 저장된 답변에서 questionId 추출 -> 필수 누락 검증
-        Set<Long> answeredQuestionIds = loadAnswerPort.listByFormResponseId(draft.getId()).stream()
+        List<Answer> savedAnswers = loadAnswerPort.listByFormResponseId(draft.getId());
+        Set<Long> answeredQuestionIds = savedAnswers.stream()
             .map(answer -> answer.getQuestion().getId())
             .collect(Collectors.toSet());
-        validateAllRequiredAnswered(draft.getForm().getId(), answeredQuestionIds);
+
+        if (command.allowedQuestionIds() != null) {
+            validateAnsweredQuestionsAllowed(command.allowedQuestionIds(), answeredQuestionIds);
+        }
+
+        if (command.requiredQuestionIds() != null) {
+            validateRequiredAnswered(command.requiredQuestionIds(), answeredQuestionIds);
+        } else {
+            validateAllRequiredAnswered(draft.getForm().getId(), answeredQuestionIds);
+        }
 
         draft.submit(Instant.now(), command.submittedIp());
         saveFormResponsePort.save(draft);
@@ -215,6 +224,22 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
         for (Question q : formQuestions) {
             if (Boolean.TRUE.equals(q.getIsRequired()) && !answeredQuestionIds.contains(q.getId())) {
                 throw new SurveyDomainException(SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+            }
+        }
+    }
+
+    private void validateRequiredAnswered(Set<Long> requiredQuestionIds, Set<Long> answeredQuestionIds) {
+        for (Long questionId : requiredQuestionIds) {
+            if (!answeredQuestionIds.contains(questionId)) {
+                throw new SurveyDomainException(SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+            }
+        }
+    }
+
+    private void validateAnsweredQuestionsAllowed(Set<Long> allowedQuestionIds, Set<Long> answeredQuestionIds) {
+        for (Long questionId : answeredQuestionIds) {
+            if (!allowedQuestionIds.contains(questionId)) {
+                throw new SurveyDomainException(SurveyErrorCode.QUESTION_IS_NOT_OWNED_BY_FORM);
             }
         }
     }

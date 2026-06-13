@@ -11,6 +11,7 @@ import static org.mockito.Mockito.never;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateDraftFormResponseCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteFormResponseCommand;
+import com.umc.product.survey.application.port.in.command.dto.SubmitDraftFormResponseCommand;
 import com.umc.product.survey.application.port.in.command.dto.SubmitFormResponseCommand;
 import com.umc.product.survey.application.port.in.command.dto.UpdateFormResponseCommand;
 import com.umc.product.survey.application.port.out.LoadAnswerPort;
@@ -20,12 +21,16 @@ import com.umc.product.survey.application.port.out.LoadQuestionOptionPort;
 import com.umc.product.survey.application.port.out.LoadQuestionPort;
 import com.umc.product.survey.application.port.out.SaveAnswerPort;
 import com.umc.product.survey.application.port.out.SaveFormResponsePort;
+import com.umc.product.survey.domain.Answer;
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.FormResponse;
+import com.umc.product.survey.domain.Question;
+import com.umc.product.survey.domain.enums.QuestionType;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -172,10 +177,89 @@ class FormResponseCommandServiceTest {
         then(saveFormResponsePort).should(never()).deleteById(anyLong());
     }
 
+    @Test
+    @DisplayName("draft 제출 scope가 있으면 전달된 required question만 필수 응답 검증한다")
+    void draft_제출_scope가_있으면_전달된_required_question만_검증한다() {
+        FormResponse draft = draftResponse();
+        Question commonRequiredQuestion = question(10L, true);
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(draft));
+        given(loadAnswerPort.listByFormResponseId(FORM_RESPONSE_ID))
+            .willReturn(List.of(answer(draft, commonRequiredQuestion)));
+
+        sut.submitDraft(SubmitDraftFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .requiredQuestionIds(Set.of(commonRequiredQuestion.getId()))
+            .allowedQuestionIds(Set.of(commonRequiredQuestion.getId()))
+            .build());
+
+        then(loadQuestionPort).should(never()).listByFormId(FORM_ID);
+        then(saveFormResponsePort).should().save(draft);
+    }
+
+    @Test
+    @DisplayName("draft 제출 scope가 없으면 기존처럼 form 전체 required question을 검증한다")
+    void draft_제출_scope가_없으면_form_전체_required_question을_검증한다() {
+        FormResponse draft = draftResponse();
+        Question answeredRequiredQuestion = question(10L, true);
+        Question missingRequiredQuestion = question(20L, true);
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(draft));
+        given(loadAnswerPort.listByFormResponseId(FORM_RESPONSE_ID))
+            .willReturn(List.of(answer(draft, answeredRequiredQuestion)));
+        given(loadQuestionPort.listByFormId(FORM_ID))
+            .willReturn(List.of(answeredRequiredQuestion, missingRequiredQuestion));
+
+        assertThatThrownBy(() -> sut.submitDraft(SubmitDraftFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .build()))
+            .isInstanceOf(SurveyDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+    }
+
+    @Test
+    @DisplayName("draft 제출 scope의 allowed question 밖에 저장된 답변이 있으면 실패한다")
+    void draft_제출_scope의_allowed_question_밖에_저장된_답변이면_실패한다() {
+        FormResponse draft = draftResponse();
+        Question hiddenQuestion = question(20L, false);
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(draft));
+        given(loadAnswerPort.listByFormResponseId(FORM_RESPONSE_ID))
+            .willReturn(List.of(answer(draft, hiddenQuestion)));
+
+        assertThatThrownBy(() -> sut.submitDraft(SubmitDraftFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .requiredQuestionIds(Set.of())
+            .allowedQuestionIds(Set.of(10L))
+            .build()))
+            .isInstanceOf(SurveyDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(SurveyErrorCode.QUESTION_IS_NOT_OWNED_BY_FORM);
+
+        then(saveFormResponsePort).should(never()).save(any());
+    }
+
     private Form publishedForm(boolean allowDuplicateResponses) {
         Form form = Form.createDraft("프로젝트 지원서", 1L, allowDuplicateResponses);
         ReflectionTestUtils.setField(form, "id", FORM_ID);
         form.publish();
         return form;
+    }
+
+    private FormResponse draftResponse() {
+        FormResponse response = FormResponse.createDraft(publishedForm(true), MEMBER_ID);
+        ReflectionTestUtils.setField(response, "id", FORM_RESPONSE_ID);
+        return response;
+    }
+
+    private Question question(Long questionId, boolean isRequired) {
+        Question question = Question.create("질문", QuestionType.SHORT_TEXT, isRequired, 1L);
+        ReflectionTestUtils.setField(question, "id", questionId);
+        return question;
+    }
+
+    private Answer answer(FormResponse formResponse, Question question) {
+        return Answer.create(formResponse, question, QuestionType.SHORT_TEXT, "답변", null);
     }
 }

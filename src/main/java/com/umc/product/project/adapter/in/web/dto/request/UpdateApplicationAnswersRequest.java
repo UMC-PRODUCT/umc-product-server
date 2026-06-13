@@ -20,9 +20,14 @@ public record UpdateApplicationAnswersRequest(
     List<ApplicationAnswerItem> answers
 ) {
 
-    public UpdateProjectApplicationDraftCommand toCommand(Long projectId, Long requesterMemberId) {
+    public UpdateProjectApplicationDraftCommand toCommand(
+        Long projectId,
+        Long applicationId,
+        Long requesterMemberId
+    ) {
         return UpdateProjectApplicationDraftCommand.builder()
             .projectId(projectId)
+            .applicationId(applicationId)
             .requesterMemberId(requesterMemberId)
             .answers(answers.stream().map(ApplicationAnswerItem::toEntry).toList())
             .build();

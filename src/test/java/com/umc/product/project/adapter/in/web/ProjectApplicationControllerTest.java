@@ -1,11 +1,14 @@
 package com.umc.product.project.adapter.in.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -20,6 +23,8 @@ import com.umc.product.project.application.port.in.command.DecideApplicationUseC
 import com.umc.product.project.application.port.in.command.SubmitProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectApplicationDraftUseCase;
 import com.umc.product.project.application.port.in.command.dto.ApplicationDecisionStatus;
+import com.umc.product.project.application.port.in.command.dto.SubmitProjectApplicationCommand;
+import com.umc.product.project.application.port.in.command.dto.UpdateProjectApplicationDraftCommand;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationInfo;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
@@ -27,6 +32,7 @@ import com.umc.product.project.domain.exception.ProjectErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -78,6 +84,82 @@ class ProjectApplicationControllerTest {
         SecurityContextHolder.getContext().setAuthentication(
             new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
         );
+    }
+
+    @Nested
+    class updateAndSubmit {
+
+        @Test
+        void PUT_applicationId_경로는_command에_applicationId를_전달한다() throws Exception {
+            given(updateProjectApplicationDraftUseCase.update(any()))
+                .willReturn(ProjectApplicationInfo.of(APPLICATION_ID, ProjectApplicationStatus.DRAFT));
+            String body = """
+                {
+                  "answers": [
+                    {
+                      "questionId": 10,
+                      "textValue": "답변"
+                    }
+                  ]
+                }
+                """;
+
+            mockMvc.perform(put("/api/v1/projects/{projectId}/applications/{applicationId}",
+                    PROJECT_ID, APPLICATION_ID)
+                    .content(body)
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.applicationId").value(APPLICATION_ID))
+                .andExpect(jsonPath("$.result.status").value("DRAFT"));
+
+            ArgumentCaptor<UpdateProjectApplicationDraftCommand> captor =
+                ArgumentCaptor.forClass(UpdateProjectApplicationDraftCommand.class);
+            then(updateProjectApplicationDraftUseCase).should().update(captor.capture());
+            assertThat(captor.getValue().projectId()).isEqualTo(PROJECT_ID);
+            assertThat(captor.getValue().applicationId()).isEqualTo(APPLICATION_ID);
+            assertThat(captor.getValue().requesterMemberId()).isEqualTo(TEST_MEMBER_ID);
+        }
+
+        @Test
+        void POST_applicationId_submit_경로는_command에_applicationId를_전달한다() throws Exception {
+            given(submitProjectApplicationUseCase.submit(any()))
+                .willReturn(ProjectApplicationInfo.of(APPLICATION_ID, ProjectApplicationStatus.SUBMITTED));
+
+            mockMvc.perform(post("/api/v1/projects/{projectId}/applications/{applicationId}/submit",
+                    PROJECT_ID, APPLICATION_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.applicationId").value(APPLICATION_ID))
+                .andExpect(jsonPath("$.result.status").value("SUBMITTED"));
+
+            ArgumentCaptor<SubmitProjectApplicationCommand> captor =
+                ArgumentCaptor.forClass(SubmitProjectApplicationCommand.class);
+            then(submitProjectApplicationUseCase).should().submit(captor.capture());
+            assertThat(captor.getValue().projectId()).isEqualTo(PROJECT_ID);
+            assertThat(captor.getValue().applicationId()).isEqualTo(APPLICATION_ID);
+            assertThat(captor.getValue().requesterMemberId()).isEqualTo(TEST_MEMBER_ID);
+        }
+
+        @Test
+        void 기존_applications_me_update_경로는_usecase를_호출하지_않는다() throws Exception {
+            String body = """
+                { "answers": [] }
+                """;
+
+            mockMvc.perform(put("/api/v1/projects/{projectId}/applications/me", PROJECT_ID)
+                    .content(body)
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is4xxClientError());
+
+            then(updateProjectApplicationDraftUseCase).should(never()).update(any());
+        }
+
+        @Test
+        void 기존_applications_me_submit_경로는_usecase를_호출하지_않는다() throws Exception {
+            mockMvc.perform(post("/api/v1/projects/{projectId}/applications/me/submit", PROJECT_ID))
+                .andExpect(status().is4xxClientError());
+
+            then(submitProjectApplicationUseCase).should(never()).submit(any());
+        }
     }
 
     @Nested

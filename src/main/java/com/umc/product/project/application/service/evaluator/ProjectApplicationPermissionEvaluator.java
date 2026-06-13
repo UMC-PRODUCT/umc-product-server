@@ -55,7 +55,7 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
     }
 
     /**
-     * 지원서 생성/임시저장/제출 진입 권한. subject 가 부모 프로젝트의 기수에 챌린저 레코드를 가져야 한다.
+     * 지원서 생성 진입 권한. subject 가 부모 프로젝트의 기수에 챌린저 레코드를 가져야 한다.
      * <p>
      * IN_PROGRESS 검사 / 자기지원 차단 / 매칭 라운드 OPEN / 폼 정책 파트 / 기수 ACTIVE 멤버 / 중복 등은
      * 도메인 규칙으로 분류되어 {@code Project.validateApplicable()} 와 {@code ProjectApplicationCommandService} 가 검증한다.

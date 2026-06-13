@@ -14,6 +14,7 @@ import com.umc.product.project.application.port.in.command.dto.CreateDraftProjec
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectApplicationCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectApplicationDraftCommand;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationInfo;
+import com.umc.product.project.application.port.out.LoadProjectApplicationFormPolicyPort;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
@@ -23,6 +24,7 @@ import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
+import com.umc.product.project.domain.ProjectApplicationFormPolicy;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
@@ -33,10 +35,15 @@ import com.umc.product.survey.application.port.in.command.dto.AnswerCommand;
 import com.umc.product.survey.application.port.in.command.dto.CreateDraftFormResponseCommand;
 import com.umc.product.survey.application.port.in.command.dto.SubmitDraftFormResponseCommand;
 import com.umc.product.survey.application.port.in.command.dto.UpdateDraftFormResponseCommand;
+import com.umc.product.survey.application.port.in.query.GetFormUseCase;
+import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -55,11 +62,13 @@ public class ProjectApplicationCommandService implements
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final SaveProjectApplicationPort saveProjectApplicationPort;
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
+    private final LoadProjectApplicationFormPolicyPort loadProjectApplicationFormPolicyPort;
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
     private final ManageFormResponseUseCase manageFormResponseUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
+    private final GetFormUseCase getFormUseCase;
 
     @Override
     public ProjectApplicationInfo create(CreateDraftProjectApplicationCommand command) {
@@ -137,8 +146,11 @@ public class ProjectApplicationCommandService implements
 
     @Override
     public ProjectApplicationInfo update(UpdateProjectApplicationDraftCommand command) {
-        ProjectApplication application = loadProjectApplicationPort
-            .getDraftByProjectAndMember(command.projectId(), command.requesterMemberId());
+        ProjectApplication application = loadDraftApplication(
+            command.projectId(), command.applicationId(), command.requesterMemberId()
+        );
+        VisibleQuestionScope questionScope = resolveVisibleQuestionScope(application);
+        validateAnswerQuestionIdsAllowed(command.answers(), questionScope.allowedQuestionIds());
 
         manageFormResponseUseCase.updateDraft(
             UpdateDraftFormResponseCommand.builder()
@@ -153,8 +165,9 @@ public class ProjectApplicationCommandService implements
 
     @Override
     public ProjectApplicationInfo submit(SubmitProjectApplicationCommand command) {
-        ProjectApplication application = loadProjectApplicationPort
-            .getDraftByProjectAndMember(command.projectId(), command.requesterMemberId());
+        ProjectApplication application = loadDraftApplication(
+            command.projectId(), command.applicationId(), command.requesterMemberId()
+        );
 
         // 차수 마감 여부 체크 - 제출 시점에 차수가 닫혀있으면 불가
         if (application.getAppliedMatchingRound() != null
@@ -171,11 +184,15 @@ public class ProjectApplicationCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_DUPLICATE_SUBMISSION);
         }
 
-        // Survey submitDraft — 필수 답변 누락 검증 포함
+        VisibleQuestionScope questionScope = resolveVisibleQuestionScope(application);
+
+        // Survey submitDraft — Project 가 계산한 노출 질문 scope 안에서 필수 답변 누락 검증 포함
         manageFormResponseUseCase.submitDraft(
             SubmitDraftFormResponseCommand.builder()
                 .formResponseId(application.getFormResponseId())
                 .requesterMemberId(command.requesterMemberId())
+                .requiredQuestionIds(questionScope.requiredQuestionIds())
+                .allowedQuestionIds(questionScope.allowedQuestionIds())
                 .build()
         );
 
@@ -292,6 +309,78 @@ public class ProjectApplicationCommandService implements
             .count();
     }
 
+    private ProjectApplication loadDraftApplication(
+        Long projectId,
+        Long applicationId,
+        Long requesterMemberId
+    ) {
+        if (applicationId == null) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+        }
+
+        ProjectApplication application = loadProjectApplicationPort.findByIdWithDetails(applicationId)
+            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND));
+
+        Long actualProjectId = application.getApplicationForm().getProject().getId();
+        if (!Objects.equals(actualProjectId, projectId)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+        }
+        if (!Objects.equals(application.getApplicantMemberId(), requesterMemberId) || !application.isDraft()) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DRAFT_APPLICATION_NOT_FOUND);
+        }
+
+        return application;
+    }
+
+    private VisibleQuestionScope resolveVisibleQuestionScope(ProjectApplication application) {
+        ProjectApplicationForm applicationForm = application.getApplicationForm();
+        Project project = applicationForm.getProject();
+        ChallengerPart applicantPart = getChallengerUseCase
+            .getByMemberIdAndGisuId(application.getApplicantMemberId(), project.getGisuId())
+            .part();
+
+        Map<Long, ProjectApplicationFormPolicy> policyBySectionId =
+            loadProjectApplicationFormPolicyPort.listByApplicationFormId(applicationForm.getId()).stream()
+                .collect(Collectors.toMap(
+                    ProjectApplicationFormPolicy::getFormSectionId,
+                    Function.identity(),
+                    (first, second) -> second
+                ));
+
+        FormWithStructureInfo formStructure = getFormUseCase.getFormWithStructure(applicationForm.getFormId());
+        Set<Long> allowedQuestionIds = new HashSet<>();
+        Set<Long> requiredQuestionIds = new HashSet<>();
+        for (FormWithStructureInfo.SectionWithQuestions section : formStructure.sections()) {
+            ProjectApplicationFormPolicy policy = policyBySectionId.get(section.sectionId());
+            if (policy == null || !policy.canAccess(applicantPart)) {
+                continue;
+            }
+
+            for (FormWithStructureInfo.QuestionWithOptions question : section.questions()) {
+                allowedQuestionIds.add(question.questionId());
+                if (question.isRequired()) {
+                    requiredQuestionIds.add(question.questionId());
+                }
+            }
+        }
+        return new VisibleQuestionScope(allowedQuestionIds, requiredQuestionIds);
+    }
+
+    private void validateAnswerQuestionIdsAllowed(
+        List<UpdateProjectApplicationDraftCommand.AnswerEntry> answers,
+        Set<Long> allowedQuestionIds
+    ) {
+        if (answers == null) {
+            throw new ProjectDomainException(ProjectErrorCode.APPLICATION_FORM_INVALID_QUESTION_ID);
+        }
+
+        for (UpdateProjectApplicationDraftCommand.AnswerEntry answer : answers) {
+            if (answer.questionId() == null || !allowedQuestionIds.contains(answer.questionId())) {
+                throw new ProjectDomainException(ProjectErrorCode.APPLICATION_FORM_INVALID_QUESTION_ID);
+            }
+        }
+    }
+
     private List<AnswerCommand> toAnswerCommands(List<UpdateProjectApplicationDraftCommand.AnswerEntry> entries) {
         return entries.stream()
             .map(e -> AnswerCommand.builder()
@@ -301,5 +390,11 @@ public class ProjectApplicationCommandService implements
                 .fileIds(e.fileIds() == null ? List.of() : e.fileIds())
                 .build())
             .toList();
+    }
+
+    private record VisibleQuestionScope(
+        Set<Long> allowedQuestionIds,
+        Set<Long> requiredQuestionIds
+    ) {
     }
 }
