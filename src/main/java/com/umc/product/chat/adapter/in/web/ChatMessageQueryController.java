@@ -11,8 +11,11 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/chat/rooms")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Chat | 채팅 메시지 Query", description = "채팅 메시지 내역 및 채팅방 목록 조회")
 public class ChatMessageQueryController {
 
@@ -31,9 +35,9 @@ public class ChatMessageQueryController {
     @GetMapping("/{roomId}/messages")
     @Operation(summary = "[CHAT-002] 메시지 내역 조회", description = "방의 메시지를 최신순으로 커서 페이지네이션 조회합니다.")
     public CursorResponse<ChatMessageResponse> getMessages(
-        @PathVariable Long roomId,
-        @RequestParam(required = false) Long cursor,
-        @RequestParam(defaultValue = "30") int size
+        @PathVariable @Positive Long roomId,
+        @RequestParam(required = false) @Positive Long cursor,
+        @RequestParam(defaultValue = "30") @Min(1) int size
     ) {
         ChatMessageCursorResult result = getChatMessagesUseCase.getMessages(
             new GetChatMessagesQuery(roomId, cursor, size));
