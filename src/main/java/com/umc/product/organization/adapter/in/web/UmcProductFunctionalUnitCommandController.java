@@ -15,17 +15,25 @@ import com.umc.product.organization.adapter.in.web.dto.request.CreateUmcProductF
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateUmcProductFunctionalUnitRequest;
 import com.umc.product.organization.application.port.in.command.ManageUmcProductFunctionalUnitUseCase;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/umc-product/functional-units")
 @RequiredArgsConstructor
+@Tag(name = "Organization | UMC Product 기능 조직 Command", description = "UMC Product 기능 조직 생성, 수정, 삭제")
 public class UmcProductFunctionalUnitCommandController {
 
     private final ManageUmcProductFunctionalUnitUseCase manageUmcProductFunctionalUnitUseCase;
 
     @PostMapping
+    @Operation(
+        operationId = "UMC-PRODUCT-FUNCTIONAL-UNIT-001",
+        summary = "[UMC-PRODUCT-FUNCTIONAL-UNIT-001] UMC Product 기능 조직 생성",
+        description = "UMC Product 기수에 속한 기능 조직을 생성합니다. 운영 권한을 가진 요청자만 호출할 수 있으며, 상위 기능 조직을 지정하는 경우 같은 기수 안의 조직이어야 합니다."
+    )
     public Long create(
         @CurrentMember MemberPrincipal currentMember,
         @RequestBody @Valid CreateUmcProductFunctionalUnitRequest request
@@ -34,6 +42,11 @@ public class UmcProductFunctionalUnitCommandController {
     }
 
     @PatchMapping("/{functionalUnitId}")
+    @Operation(
+        operationId = "UMC-PRODUCT-FUNCTIONAL-UNIT-002",
+        summary = "[UMC-PRODUCT-FUNCTIONAL-UNIT-002] UMC Product 기능 조직 수정",
+        description = "UMC Product 기능 조직의 상위 조직, 유형, 코드, 이름, 설명, 정렬 순서, 활성 여부를 수정합니다. 운영 권한을 가진 요청자만 호출할 수 있습니다."
+    )
     public void update(
         @PathVariable Long functionalUnitId,
         @CurrentMember MemberPrincipal currentMember,
@@ -45,6 +58,11 @@ public class UmcProductFunctionalUnitCommandController {
     }
 
     @DeleteMapping("/{functionalUnitId}")
+    @Operation(
+        operationId = "UMC-PRODUCT-FUNCTIONAL-UNIT-003",
+        summary = "[UMC-PRODUCT-FUNCTIONAL-UNIT-003] UMC Product 기능 조직 삭제",
+        description = "UMC Product 기능 조직을 삭제합니다. 운영 권한을 가진 요청자만 호출할 수 있습니다."
+    )
     public void delete(
         @PathVariable Long functionalUnitId,
         @CurrentMember MemberPrincipal currentMember
