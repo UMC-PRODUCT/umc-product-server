@@ -1,5 +1,6 @@
 package com.umc.product.member.adapter.in.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -12,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -23,15 +25,18 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.member.adapter.in.web.assembler.MemberInfoResponseAssembler;
 import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
+import com.umc.product.member.application.port.in.command.ChangeMemberEmailUseCase;
 import com.umc.product.member.application.port.in.command.ManageMemberProfileUseCase;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
 import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
 import com.umc.product.member.application.port.in.command.RegisterOAuthMemberUseCase;
+import com.umc.product.member.application.port.in.command.dto.ChangeMemberEmailCommand;
 import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
 
@@ -57,6 +62,9 @@ class MemberCommandControllerTest {
 
     @MockitoBean
     ManageMemberUseCase manageMemberUseCase;
+
+    @MockitoBean
+    ChangeMemberEmailUseCase changeMemberEmailUseCase;
 
     @MockitoBean
     ManageMemberProfileUseCase manageMemberProfileUseCase;
@@ -142,5 +150,41 @@ class MemberCommandControllerTest {
             .andExpect(jsonPath("$.result.id").value(TEST_MEMBER_ID));
 
         then(manageMemberUseCase).should().updateMember(any(UpdateMemberCommand.class));
+    }
+
+    @Test
+    @DisplayName("내 이메일 변경은 CHANGE_EMAIL 토큰을 검증하고 로그인 회원 ID로 UseCase를 호출한다")
+    void changeEmail_usesChangeEmailPurpose() throws Exception {
+        // given
+        given(jwtTokenProvider.parseEmailVerificationToken(
+            "change-email-token",
+            EmailVerificationPurpose.CHANGE_EMAIL
+        )).willReturn("new@example.com");
+        given(assembler.fromMemberId(TEST_MEMBER_ID)).willReturn(MemberInfoResponse.builder()
+            .id(TEST_MEMBER_ID)
+            .email("new@example.com")
+            .build());
+
+        // when / then
+        mockMvc.perform(patch("/api/v1/member/email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "emailVerificationToken": "change-email-token"
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.id").value(TEST_MEMBER_ID))
+            .andExpect(jsonPath("$.result.email").value("new@example.com"));
+
+        then(jwtTokenProvider).should().parseEmailVerificationToken(
+            "change-email-token",
+            EmailVerificationPurpose.CHANGE_EMAIL
+        );
+
+        ArgumentCaptor<ChangeMemberEmailCommand> captor = ArgumentCaptor.forClass(ChangeMemberEmailCommand.class);
+        then(changeMemberEmailUseCase).should().changeEmail(captor.capture());
+        assertThat(captor.getValue().memberId()).isEqualTo(TEST_MEMBER_ID);
+        assertThat(captor.getValue().email()).isEqualTo("new@example.com");
     }
 }

@@ -70,7 +70,7 @@
 | 45 | blog | `BLOG-0001` | 404 NOT_FOUND | 글을 찾지 못했어요. 주소를 확인해주세요. | BlogErrorCode | `CONTENT_NOT_FOUND` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:13` |
 | 46 | blog | `BLOG-0002` | 404 NOT_FOUND | 댓글을 찾지 못했어요. 새로고침 후 다시 시도해주세요. | BlogErrorCode | `COMMENT_NOT_FOUND` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:14` |
 | 47 | blog | `BLOG-0003` | 400 BAD_REQUEST | 카테고리를 확인해주세요. | BlogErrorCode | `INVALID_CONTENT_TYPE` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:15` |
-| 48 | blog | `BLOG-0004` | 400 BAD_REQUEST | 주소 slug를 확인해주세요. | BlogErrorCode | `INVALID_SLUG` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:16` |
+| 48 | blog | `BLOG-0004` | 400 BAD_REQUEST | 주소는 영문 소문자, 숫자, 하이픈만 사용할 수 있어요. | BlogErrorCode | `INVALID_SLUG` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:16` |
 | 49 | blog | `BLOG-0005` | 400 BAD_REQUEST | ID는 1 이상이어야 해요. | BlogErrorCode | `INVALID_ID` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:17` |
 | 50 | blog | `BLOG-0006` | 400 BAD_REQUEST | 댓글은 1자 이상 1,000자 이하로 입력해주세요. | BlogErrorCode | `INVALID_COMMENT_CONTENT` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:18` |
 | 51 | blog | `BLOG-0007` | 400 BAD_REQUEST | 닉네임은 1자 이상 20자 이하로 입력해주세요. | BlogErrorCode | `INVALID_NICKNAME` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:19` |

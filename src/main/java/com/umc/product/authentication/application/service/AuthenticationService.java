@@ -1,5 +1,11 @@
 package com.umc.product.authentication.application.service;
 
+import java.security.SecureRandom;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authentication.application.event.SendVerificationEmailEvent;
 import com.umc.product.authentication.application.port.in.command.ManageAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
@@ -15,12 +21,9 @@ import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
-import java.security.SecureRandom;
-import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -49,7 +52,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
 
             이는 네트워크 이슈로 인해서 Server에 요청이 접수되었지만 클라이언트에게는 응답이 가지 않은 경우를 대비하기 위함임
          */
-        
+
         Long memberId = jwtTokenProvider.parseRefreshToken(command.refreshToken());
 
         return NewTokens.builder()
@@ -65,13 +68,13 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
         CredentialPolicy.validateEmail(email);
 
         // purpose 별 가입 여부 분기 검증.
-        // - REGISTER: 이미 가입된 이메일이면 인증 진행 자체를 차단 (가입 마지막 단계의 UNIQUE 충돌로 인한
-        //   "인증 다 했는데 실패" UX 방지). 회원가입 흐름에서는 이미 가입 여부 노출이 자연스러움.
+        // - REGISTER / CHANGE_EMAIL: 이미 가입된 이메일이면 인증 진행 자체를 차단 (가입/변경 마지막 단계의
+        //   UNIQUE 충돌로 인한 "인증 다 했는데 실패" UX 방지). 두 흐름에서는 이메일 사용 여부 노출이 자연스러움.
         // - PASSWORD_RESET: 미가입 / 자격증명 미등록 이메일에 대해서는 user enumeration 방어를 위해
         //   응답은 동일하게 내려보내되 실제 메일 발송만 건너뛴다. 후속 reset 흐름에서도 INVALID_LOGIN_CREDENTIAL
         //   단일 메시지로 응답하므로 끝까지 가입 여부가 노출되지 않는다.
         boolean shouldSendEmail = switch (purpose) {
-            case REGISTER -> {
+            case REGISTER, CHANGE_EMAIL -> {
                 if (getMemberCredentialUseCase.existsByEmail(email)) {
                     throw new AuthenticationDomainException(AuthenticationErrorCode.EMAIL_ALREADY_EXISTS);
                 }

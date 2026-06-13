@@ -1,24 +1,28 @@
 package com.umc.product.global.security;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -78,7 +82,7 @@ public class JwtTokenProvider {
     /**
      * emailVerificationToken 발급
      * <p>
-     * purpose claim 으로 회원가입(REGISTER) 과 비밀번호 초기화(PASSWORD_RESET) 흐름을 구분한다.
+     * purpose claim 으로 회원가입(REGISTER), 비밀번호 초기화(PASSWORD_RESET), 이메일 변경(CHANGE_EMAIL) 흐름을 구분한다.
      * 한 흐름에서 발급된 토큰이 다른 흐름에 재사용되지 않도록, 파싱 시 expectedPurpose 와 비교한다.
      */
     public String createEmailVerificationToken(String email, EmailVerificationPurpose purpose) {
@@ -260,7 +264,7 @@ public class JwtTokenProvider {
      * emailVerificationToken 파싱 및 검증
      * <p>
      * 토큰의 purpose claim 이 expectedPurpose 와 일치하지 않으면 INVALID_EMAIL_VERIFICATION 예외를 던진다.
-     * 예) 회원가입(REGISTER) 흐름에서 발급된 토큰을 비밀번호 초기화에 사용하려는 cross-purpose 공격 방어.
+     * 예) 회원가입(REGISTER) 흐름에서 발급된 토큰을 비밀번호 초기화나 이메일 변경에 사용하려는 cross-purpose 공격 방어.
      */
     public String parseEmailVerificationToken(String token, EmailVerificationPurpose expectedPurpose) {
         validateToken(token, emailVerificationTokenSecret);
