@@ -330,7 +330,6 @@ tasks.clean {
 
 tasks.withType<Test> {
     useJUnitPlatform()
-    maxHeapSize = "3g"
 }
 
 tasks.test {

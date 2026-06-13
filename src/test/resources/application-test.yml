@@ -63,16 +63,6 @@ app:
       use-case-spans: false
       adapter-spans: false
       db-spans: false
-  webhook:
-    buffer:
-      enabled: false
-    telegram:
-      bot-token: "false"
-      chat-id: "false"
-    slack:
-      url: "false"
-    discord:
-      url: "false"
   cors:
     allowed-origin-patterns: ""
   llm:
