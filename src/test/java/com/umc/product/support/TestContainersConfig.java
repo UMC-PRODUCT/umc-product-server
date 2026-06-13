@@ -11,12 +11,15 @@ import org.testcontainers.utility.DockerImageName;
 @TestConfiguration
 public class TestContainersConfig {
 
-    @Bean
+    private static final DockerImageName POSTGIS_IMAGE = DockerImageName.parse("postgis/postgis:18-3.6")
+        .asCompatibleSubstituteFor("postgres");
+
+    private static final PostgreSQLContainer<?> POSTGIS_CONTAINER = new PostgreSQLContainer<>(POSTGIS_IMAGE);
+
+    @Bean(destroyMethod = "")
     @ServiceConnection
     PostgreSQLContainer<?> postgisContainer() {
-        return new PostgreSQLContainer<>(
-                DockerImageName.parse("postgis/postgis:18-3.6").asCompatibleSubstituteFor("postgres")
-        );
+        return POSTGIS_CONTAINER;
     }
 
     // 컨테이너가 뜬 뒤, 확장 1회 생성
