@@ -121,8 +121,8 @@ public class ProjectApplicationController {
         description = """
             PM 이 지원서의 status 를 토글합니다.
             - 매칭 차수 진행 중에만 가능 (decisionDeadline 까지)
-            - SUBMITTED ↔ APPROVED ↔ REJECTED 자유 토글 (재토글 허용)
-            - PENDING 입력은 도메인의 SUBMITTED 로 매핑되어 결정을 "대기" 로 되돌림
+            - APPROVED ↔ REJECTED 재토글 허용
+            - REJECTED 처리 후 매칭 규칙의 최소선발 수를 만족하지 못하면 거절
             """
     )
     @CheckAccess(
