@@ -16,7 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import com.umc.product.authentication.application.port.in.command.ManageAuthenticationUseCase;
+import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.member.adapter.out.persistence.MemberJpaRepository;
 import com.umc.product.member.domain.Member;
@@ -61,6 +64,9 @@ class MemberCommandControllerIntegrationTest extends IntegrationTestSupport {
     @Autowired
     private TermConsentRepository termConsentRepository;
 
+    @MockitoBean
+    private ManageAuthenticationUseCase manageAuthenticationUseCase;
+
     @Test
     @DisplayName("이메일 회원가입에 성공하면 회원, 자격증명, 필수 약관 동의가 저장된다")
     void 이메일_회원가입에_성공하면_회원_자격증명_필수_약관_동의가_저장된다() throws Exception {
@@ -71,10 +77,11 @@ class MemberCommandControllerIntegrationTest extends IntegrationTestSupport {
 
         given(jwtTokenProvider.parseEmailVerificationToken("email-token", EmailVerificationPurpose.REGISTER))
             .willReturn(email);
-        given(jwtTokenProvider.createAccessToken(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.isNull()))
-            .willReturn("access-token");
-        given(jwtTokenProvider.createRefreshToken(org.mockito.ArgumentMatchers.anyLong()))
-            .willReturn("refresh-token");
+        given(manageAuthenticationUseCase.issueTokens(org.mockito.ArgumentMatchers.any()))
+            .willReturn(NewTokens.builder()
+                .accessToken("access-token")
+                .refreshToken("refresh-token")
+                .build());
 
         // when & then
         mockMvc.perform(post("/api/v1/member/register/email")
