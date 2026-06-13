@@ -2,6 +2,7 @@ package com.umc.product.storage.adapter.out.s3;
 
 import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
 import com.umc.product.storage.application.port.out.StoragePort;
+import com.umc.product.storage.application.port.out.dto.StorageObjectInfo;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
 import java.io.StringReader;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.io.pem.PemObject;
@@ -30,8 +32,10 @@ import software.amazon.awssdk.services.cloudfront.url.SignedUrl;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -61,12 +65,36 @@ public class S3StorageAdapter implements StoragePort {
         String contentType,
         long durationMinutes
     ) {
+        return generateUploadUrl(storageKey, contentType, null, durationMinutes);
+    }
+
+    @Override
+    public FileUploadInfo generateUploadUrl(
+        String storageKey,
+        String contentType,
+        long fileSize,
+        long durationMinutes
+    ) {
+        return generateUploadUrl(storageKey, contentType, Long.valueOf(fileSize), durationMinutes);
+    }
+
+    private FileUploadInfo generateUploadUrl(
+        String storageKey,
+        String contentType,
+        Long fileSize,
+        long durationMinutes
+    ) {
         try {
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+            PutObjectRequest.Builder putObjectRequestBuilder = PutObjectRequest.builder()
                 .bucket(properties.bucketName())
                 .key(storageKey)
-                .contentType(contentType)
-                .build();
+                .contentType(contentType);
+
+            if (fileSize != null) {
+                putObjectRequestBuilder.contentLength(fileSize);
+            }
+
+            PutObjectRequest putObjectRequest = putObjectRequestBuilder.build();
 
             PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
                 .signatureDuration(Duration.ofMinutes(durationMinutes))
@@ -105,15 +133,29 @@ public class S3StorageAdapter implements StoragePort {
 
     @Override
     public boolean exists(String storageKey) {
+        return findObjectInfoByStorageKey(storageKey).isPresent();
+    }
+
+    @Override
+    public Optional<StorageObjectInfo> findObjectInfoByStorageKey(String storageKey) {
         try {
             HeadObjectRequest headRequest = HeadObjectRequest.builder()
                 .bucket(properties.bucketName())
                 .key(storageKey)
                 .build();
-            s3Client.headObject(headRequest);
-            return true;
+            HeadObjectResponse response = s3Client.headObject(headRequest);
+            return Optional.of(StorageObjectInfo.of(
+                storageKey,
+                response.contentLength(),
+                response.contentType()
+            ));
         } catch (NoSuchKeyException e) {
-            return false;
+            return Optional.empty();
+        } catch (S3Exception e) {
+            if (e.statusCode() == 404) {
+                return Optional.empty();
+            }
+            throw e;
         }
     }
 

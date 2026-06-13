@@ -1,9 +1,12 @@
 package com.umc.product.storage.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
+import com.umc.product.storage.domain.exception.StorageErrorCode;
+import com.umc.product.storage.domain.exception.StorageException;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -35,6 +38,54 @@ class FileMetadataTest {
 
         // then: isUploaded가 true가 되었는지 확인
         assertThat(metadata.isUploaded()).isTrue();
+    }
+
+    @Test
+    void 실제_파일_정보가_일치하면_업로드_완료_처리를_한다() {
+        // given
+        FileMetadata metadata = createFileMetadata("portfolio.pdf", FileCategory.PORTFOLIO, "application/pdf", 1024L);
+
+        // when
+        metadata.confirmUploaded(1024L, "application/pdf");
+
+        // then
+        assertThat(metadata.isUploaded()).isTrue();
+    }
+
+    @Test
+    void 실제_파일_크기가_카테고리_제한을_초과하면_예외가_발생한다() {
+        // given
+        FileMetadata metadata = createFileMetadata("portfolio.pdf", FileCategory.PORTFOLIO, "application/pdf", 1024L);
+
+        // when & then
+        assertThatThrownBy(() -> metadata.confirmUploaded(310L * 1024 * 1024, "application/pdf"))
+            .isInstanceOf(StorageException.class)
+            .extracting("baseCode")
+            .isEqualTo(StorageErrorCode.FILE_SIZE_EXCEEDED);
+    }
+
+    @Test
+    void 실제_파일_크기가_요청_크기와_다르면_예외가_발생한다() {
+        // given
+        FileMetadata metadata = createFileMetadata("portfolio.pdf", FileCategory.PORTFOLIO, "application/pdf", 1024L);
+
+        // when & then
+        assertThatThrownBy(() -> metadata.confirmUploaded(2048L, "application/pdf"))
+            .isInstanceOf(StorageException.class)
+            .extracting("baseCode")
+            .isEqualTo(StorageErrorCode.FILE_SIZE_MISMATCH);
+    }
+
+    @Test
+    void 실제_Content_Type이_요청값과_다르면_예외가_발생한다() {
+        // given
+        FileMetadata metadata = createFileMetadata("portfolio.pdf", FileCategory.PORTFOLIO, "application/pdf", 1024L);
+
+        // when & then
+        assertThatThrownBy(() -> metadata.confirmUploaded(1024L, "text/plain"))
+            .isInstanceOf(StorageException.class)
+            .extracting("baseCode")
+            .isEqualTo(StorageErrorCode.INVALID_CONTENT_TYPE);
     }
 
     /**
@@ -119,12 +170,16 @@ class FileMetadataTest {
      * ✅ 학습 포인트 4: 테스트 헬퍼 메서드 - 반복되는 객체 생성 로직을 메서드로 추출합니다 - 테스트 코드의 가독성이 높아집니다
      */
     private FileMetadata createFileMetadata(String fileName) {
+        return createFileMetadata(fileName, FileCategory.PROFILE_IMAGE, "application/octet-stream", 1024L);
+    }
+
+    private FileMetadata createFileMetadata(String fileName, FileCategory category, String contentType, Long fileSize) {
         return FileMetadata.builder()
             .fileId("test-id")
             .originalFileName(fileName)
-            .category(FileCategory.PROFILE_IMAGE)
-            .contentType("application/octet-stream")
-            .fileSize(1024L)
+            .category(category)
+            .contentType(contentType)
+            .fileSize(fileSize)
             .storageProvider(StorageProvider.GOOGLE_CLOUD_STORAGE)
             .storageKey("test/key")
             .uploadedMemberId(1L)

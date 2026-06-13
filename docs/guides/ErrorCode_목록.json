@@ -523,7 +523,7 @@
     "constantName": "INVALID_SLUG",
     "httpStatus": "BAD_REQUEST",
     "code": "BLOG-0004",
-    "message": "주소 slug를 확인해주세요.",
+    "message": "주소는 영문 소문자, 숫자, 하이픈만 사용할 수 있어요.",
     "source": "src/main/java/com/umc/product/blog/domain/BlogErrorCode.java",
     "line": 16
   },
@@ -4155,7 +4155,7 @@
     "code": "STORAGE-0007",
     "message": "파일을 업로드하지 못했어요. 잠시 후 다시 시도해주세요.",
     "source": "src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-    "line": 27
+    "line": 28
   },
   {
     "sequence": 379,
@@ -4166,7 +4166,7 @@
     "code": "STORAGE-0008",
     "message": "파일을 삭제하지 못했어요. 잠시 후 다시 시도해주세요.",
     "source": "src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-    "line": 28
+    "line": 29
   },
   {
     "sequence": 380,
@@ -4177,7 +4177,7 @@
     "code": "STORAGE-0009",
     "message": "파일 접근 링크를 만들지 못했어요. 잠시 후 다시 시도해주세요.",
     "source": "src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-    "line": 29
+    "line": 30
   },
   {
     "sequence": 381,
@@ -4188,7 +4188,7 @@
     "code": "STORAGE-0010",
     "message": "CDN 접근 링크를 만들지 못했어요. 관리자에게 문의해주세요.",
     "source": "src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-    "line": 32
+    "line": 33
   },
   {
     "sequence": 382,
@@ -4199,7 +4199,7 @@
     "code": "STORAGE-0011",
     "message": "CDN 설정이 누락됐어요. 관리자에게 문의해주세요.",
     "source": "src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-    "line": 33
+    "line": 34
   },
   {
     "sequence": 383,
@@ -4210,7 +4210,7 @@
     "code": "STORAGE-0012",
     "message": "서버 실행 환경이 올바르지 않아요. 관리자에게 문의해주세요.",
     "source": "src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-    "line": 34
+    "line": 35
   },
   {
     "sequence": 384,
@@ -4225,6 +4225,17 @@
   },
   {
     "sequence": 385,
+    "domain": "storage",
+    "enumName": "StorageErrorCode",
+    "constantName": "FILE_SIZE_MISMATCH",
+    "httpStatus": "BAD_REQUEST",
+    "code": "STORAGE-0014",
+    "message": "요청한 파일 크기와 실제 업로드된 파일 크기가 달라요. 다시 업로드해주세요.",
+    "source": "src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
+    "line": 25
+  },
+  {
+    "sequence": 386,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "SURVEY_NOT_FOUND",
@@ -4235,7 +4246,7 @@
     "line": 14
   },
   {
-    "sequence": 386,
+    "sequence": 387,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "SURVEY_NOT_DRAFT",
@@ -4246,7 +4257,7 @@
     "line": 15
   },
   {
-    "sequence": 387,
+    "sequence": 388,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "QUESTION_NOT_FOUND",
@@ -4257,7 +4268,7 @@
     "line": 16
   },
   {
-    "sequence": 388,
+    "sequence": 389,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "FORM_RESPONSE_NOT_FOUND",
@@ -4268,7 +4279,7 @@
     "line": 18
   },
   {
-    "sequence": 389,
+    "sequence": 390,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "QUESTION_IS_NOT_OWNED_BY_FORM",
@@ -4279,7 +4290,7 @@
     "line": 19
   },
   {
-    "sequence": 390,
+    "sequence": 391,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "FORM_RESPONSE_FORBIDDEN",
@@ -4290,7 +4301,7 @@
     "line": 20
   },
   {
-    "sequence": 391,
+    "sequence": 392,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "QUESTION_TYPE_MISMATCH",
@@ -4301,7 +4312,7 @@
     "line": 22
   },
   {
-    "sequence": 392,
+    "sequence": 393,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "REQUIRED_QUESTION_NOT_ANSWERED",
@@ -4312,7 +4323,7 @@
     "line": 23
   },
   {
-    "sequence": 393,
+    "sequence": 394,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "INVALID_ANSWER_FORMAT",
@@ -4323,7 +4334,7 @@
     "line": 24
   },
   {
-    "sequence": 394,
+    "sequence": 395,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "OTHER_OPTION_DUPLICATED",
@@ -4334,7 +4345,7 @@
     "line": 25
   },
   {
-    "sequence": 395,
+    "sequence": 396,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "OPTION_NOT_IN_QUESTION",
@@ -4345,7 +4356,7 @@
     "line": 26
   },
   {
-    "sequence": 396,
+    "sequence": 397,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "OPTION_TEXT_REQUIRED",
@@ -4356,7 +4367,7 @@
     "line": 27
   },
   {
-    "sequence": 397,
+    "sequence": 398,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "INVALID_FORM_ACTIVE_PERIOD",
@@ -4367,7 +4378,7 @@
     "line": 28
   },
   {
-    "sequence": 398,
+    "sequence": 399,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "INVALID_VOTE_SELECTION",
@@ -4378,7 +4389,7 @@
     "line": 30
   },
   {
-    "sequence": 399,
+    "sequence": 400,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "INVALID_VOTE_FORM_STRUCTURE",
@@ -4389,7 +4400,7 @@
     "line": 32
   },
   {
-    "sequence": 400,
+    "sequence": 401,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "FORM_RESPONSE_ALREADY_EXISTS",
@@ -4400,7 +4411,7 @@
     "line": 34
   },
   {
-    "sequence": 401,
+    "sequence": 402,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "SURVEY_NOT_PUBLISHED",
@@ -4411,7 +4422,7 @@
     "line": 35
   },
   {
-    "sequence": 402,
+    "sequence": 403,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "QUESTION_OPTION_NOT_FOUND",
@@ -4422,7 +4433,7 @@
     "line": 36
   },
   {
-    "sequence": 403,
+    "sequence": 404,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "ANSWER_NOT_FOUND",
@@ -4433,7 +4444,7 @@
     "line": 37
   },
   {
-    "sequence": 404,
+    "sequence": 405,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "FORM_RESPONSE_NOT_DRAFT",
@@ -4444,7 +4455,7 @@
     "line": 38
   },
   {
-    "sequence": 405,
+    "sequence": 406,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "ANSWER_ALREADY_EXISTS",
@@ -4455,7 +4466,7 @@
     "line": 39
   },
   {
-    "sequence": 406,
+    "sequence": 407,
     "domain": "survey",
     "enumName": "SurveyErrorCode",
     "constantName": "SURVEY_ALREADY_PUBLISHED",
@@ -4466,7 +4477,7 @@
     "line": 17
   },
   {
-    "sequence": 407,
+    "sequence": 408,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_NOT_FOUND",
@@ -4477,7 +4488,7 @@
     "line": 14
   },
   {
-    "sequence": 408,
+    "sequence": 409,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_TYPE_REQUIRED",
@@ -4488,7 +4499,7 @@
     "line": 15
   },
   {
-    "sequence": 409,
+    "sequence": 410,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_TITLE_REQUIRED",
@@ -4499,7 +4510,7 @@
     "line": 16
   },
   {
-    "sequence": 410,
+    "sequence": 411,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_CONTENT_REQUIRED",
@@ -4510,7 +4521,7 @@
     "line": 17
   },
   {
-    "sequence": 411,
+    "sequence": 412,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_VERSION_REQUIRED",
@@ -4521,7 +4532,7 @@
     "line": 18
   },
   {
-    "sequence": 412,
+    "sequence": 413,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_CONSENT_NOT_FOUND",
@@ -4532,7 +4543,7 @@
     "line": 20
   },
   {
-    "sequence": 413,
+    "sequence": 414,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERMS_CONSENT_ALREADY_EXISTS",
@@ -4543,7 +4554,7 @@
     "line": 21
   },
   {
-    "sequence": 414,
+    "sequence": 415,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "MEMBER_ID_REQUIRED",
@@ -4554,7 +4565,7 @@
     "line": 22
   },
   {
-    "sequence": 415,
+    "sequence": 416,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERM_ID_REQUIRED",
@@ -4565,7 +4576,7 @@
     "line": 23
   },
   {
-    "sequence": 416,
+    "sequence": 417,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "MANDATORY_TERMS_NOT_AGREED",
@@ -4576,7 +4587,7 @@
     "line": 24
   },
   {
-    "sequence": 417,
+    "sequence": 418,
     "domain": "term",
     "enumName": "TermErrorCode",
     "constantName": "TERM_PERMISSION_DENIED",

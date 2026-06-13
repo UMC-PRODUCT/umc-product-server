@@ -22,6 +22,7 @@ public enum StorageErrorCode implements BaseCode {
     INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "STORAGE-0004", "지원하지 않는 파일 형식이에요. 다른 파일을 선택해주세요."),
     FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "STORAGE-0005", "파일 크기가 너무 커요. 더 작은 파일을 선택해주세요."),
     INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "STORAGE-0006", "파일 형식 정보가 올바르지 않아요. 파일을 다시 선택해주세요."),
+    FILE_SIZE_MISMATCH(HttpStatus.BAD_REQUEST, "STORAGE-0014", "요청한 파일 크기와 실제 업로드된 파일 크기가 달라요. 다시 업로드해주세요."),
 
     // 스토리지 에러
     STORAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0007", "파일을 업로드하지 못했어요. 잠시 후 다시 시도해주세요."),

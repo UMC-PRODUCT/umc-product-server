@@ -70,7 +70,7 @@
 | 45 | blog | `BLOG-0001` | 404 NOT_FOUND | 글을 찾지 못했어요. 주소를 확인해주세요. | BlogErrorCode | `CONTENT_NOT_FOUND` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:13` |
 | 46 | blog | `BLOG-0002` | 404 NOT_FOUND | 댓글을 찾지 못했어요. 새로고침 후 다시 시도해주세요. | BlogErrorCode | `COMMENT_NOT_FOUND` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:14` |
 | 47 | blog | `BLOG-0003` | 400 BAD_REQUEST | 카테고리를 확인해주세요. | BlogErrorCode | `INVALID_CONTENT_TYPE` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:15` |
-| 48 | blog | `BLOG-0004` | 400 BAD_REQUEST | 주소 slug를 확인해주세요. | BlogErrorCode | `INVALID_SLUG` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:16` |
+| 48 | blog | `BLOG-0004` | 400 BAD_REQUEST | 주소는 영문 소문자, 숫자, 하이픈만 사용할 수 있어요. | BlogErrorCode | `INVALID_SLUG` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:16` |
 | 49 | blog | `BLOG-0005` | 400 BAD_REQUEST | ID는 1 이상이어야 해요. | BlogErrorCode | `INVALID_ID` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:17` |
 | 50 | blog | `BLOG-0006` | 400 BAD_REQUEST | 댓글은 1자 이상 1,000자 이하로 입력해주세요. | BlogErrorCode | `INVALID_COMMENT_CONTENT` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:18` |
 | 51 | blog | `BLOG-0007` | 400 BAD_REQUEST | 닉네임은 1자 이상 20자 이하로 입력해주세요. | BlogErrorCode | `INVALID_NICKNAME` | `src/main/java/com/umc/product/blog/domain/BlogErrorCode.java:19` |
@@ -475,54 +475,55 @@
 | 375 | storage | `STORAGE-0004` | 400 BAD_REQUEST | 지원하지 않는 파일 형식이에요. 다른 파일을 선택해주세요. | StorageErrorCode | `INVALID_FILE_EXTENSION` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:22` |
 | 376 | storage | `STORAGE-0005` | 400 BAD_REQUEST | 파일 크기가 너무 커요. 더 작은 파일을 선택해주세요. | StorageErrorCode | `FILE_SIZE_EXCEEDED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:23` |
 | 377 | storage | `STORAGE-0006` | 400 BAD_REQUEST | 파일 형식 정보가 올바르지 않아요. 파일을 다시 선택해주세요. | StorageErrorCode | `INVALID_CONTENT_TYPE` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:24` |
-| 378 | storage | `STORAGE-0007` | 500 INTERNAL_SERVER_ERROR | 파일을 업로드하지 못했어요. 잠시 후 다시 시도해주세요. | StorageErrorCode | `STORAGE_UPLOAD_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:27` |
-| 379 | storage | `STORAGE-0008` | 500 INTERNAL_SERVER_ERROR | 파일을 삭제하지 못했어요. 잠시 후 다시 시도해주세요. | StorageErrorCode | `STORAGE_DELETE_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:28` |
-| 380 | storage | `STORAGE-0009` | 500 INTERNAL_SERVER_ERROR | 파일 접근 링크를 만들지 못했어요. 잠시 후 다시 시도해주세요. | StorageErrorCode | `STORAGE_URL_GENERATION_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:29` |
-| 381 | storage | `STORAGE-0010` | 500 INTERNAL_SERVER_ERROR | CDN 접근 링크를 만들지 못했어요. 관리자에게 문의해주세요. | StorageErrorCode | `CDN_SIGNING_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:32` |
-| 382 | storage | `STORAGE-0011` | 500 INTERNAL_SERVER_ERROR | CDN 설정이 누락됐어요. 관리자에게 문의해주세요. | StorageErrorCode | `NO_ENV_KEYS` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:33` |
-| 383 | storage | `STORAGE-0012` | 500 INTERNAL_SERVER_ERROR | 서버 실행 환경이 올바르지 않아요. 관리자에게 문의해주세요. | StorageErrorCode | `INVALID_SPRING_PROFILE` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:34` |
+| 378 | storage | `STORAGE-0007` | 500 INTERNAL_SERVER_ERROR | 파일을 업로드하지 못했어요. 잠시 후 다시 시도해주세요. | StorageErrorCode | `STORAGE_UPLOAD_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:28` |
+| 379 | storage | `STORAGE-0008` | 500 INTERNAL_SERVER_ERROR | 파일을 삭제하지 못했어요. 잠시 후 다시 시도해주세요. | StorageErrorCode | `STORAGE_DELETE_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:29` |
+| 380 | storage | `STORAGE-0009` | 500 INTERNAL_SERVER_ERROR | 파일 접근 링크를 만들지 못했어요. 잠시 후 다시 시도해주세요. | StorageErrorCode | `STORAGE_URL_GENERATION_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:30` |
+| 381 | storage | `STORAGE-0010` | 500 INTERNAL_SERVER_ERROR | CDN 접근 링크를 만들지 못했어요. 관리자에게 문의해주세요. | StorageErrorCode | `CDN_SIGNING_FAILED` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:33` |
+| 382 | storage | `STORAGE-0011` | 500 INTERNAL_SERVER_ERROR | CDN 설정이 누락됐어요. 관리자에게 문의해주세요. | StorageErrorCode | `NO_ENV_KEYS` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:34` |
+| 383 | storage | `STORAGE-0012` | 500 INTERNAL_SERVER_ERROR | 서버 실행 환경이 올바르지 않아요. 관리자에게 문의해주세요. | StorageErrorCode | `INVALID_SPRING_PROFILE` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:35` |
 | 384 | storage | `STORAGE-0013` | 403 FORBIDDEN | 파일을 삭제할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요. | StorageErrorCode | `FILE_DELETE_FORBIDDEN` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:18` |
+| 385 | storage | `STORAGE-0014` | 400 BAD_REQUEST | 요청한 파일 크기와 실제 업로드된 파일 크기가 달라요. 다시 업로드해주세요. | StorageErrorCode | `FILE_SIZE_MISMATCH` | `src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:25` |
 
 ## survey
 
 | 순번 | 도메인 | Code | HTTP Status | Message | Enum | Constant | Source |
 |---:|---|---|---|---|---|---|---|
-| 385 | survey | `SURVEY-0001` | 404 NOT_FOUND | 폼을 찾을 수 없어요. 선택한 폼을 확인해주세요. | SurveyErrorCode | `SURVEY_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:14` |
-| 386 | survey | `SURVEY-0002` | 409 CONFLICT | 임시저장 상태의 폼만 편집할 수 있어요. 폼 상태를 확인해주세요. | SurveyErrorCode | `SURVEY_NOT_DRAFT` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:15` |
-| 387 | survey | `SURVEY-0003` | 404 NOT_FOUND | 질문을 찾을 수 없어요. 선택한 질문을 확인해주세요. | SurveyErrorCode | `QUESTION_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:16` |
-| 388 | survey | `SURVEY-0006` | 404 NOT_FOUND | 폼 응답을 찾을 수 없어요. 응답 목록을 확인해주세요. | SurveyErrorCode | `FORM_RESPONSE_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:18` |
-| 389 | survey | `SURVEY-0007` | 400 BAD_REQUEST | 이 폼에 포함된 질문이 아니에요. 질문을 다시 선택해주세요. | SurveyErrorCode | `QUESTION_IS_NOT_OWNED_BY_FORM` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:19` |
-| 390 | survey | `SURVEY-0008` | 403 FORBIDDEN | 이 폼 응답에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요. | SurveyErrorCode | `FORM_RESPONSE_FORBIDDEN` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:20` |
-| 391 | survey | `SURVEY-0009` | 400 BAD_REQUEST | 질문 유형이 맞지 않아요. 질문 유형을 확인해주세요. | SurveyErrorCode | `QUESTION_TYPE_MISMATCH` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:22` |
-| 392 | survey | `SURVEY-0010` | 400 BAD_REQUEST | 필수 질문에 답변해주세요. | SurveyErrorCode | `REQUIRED_QUESTION_NOT_ANSWERED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:23` |
-| 393 | survey | `SURVEY-0011` | 400 BAD_REQUEST | 응답 형식이 올바르지 않아요. 답변을 확인해주세요. | SurveyErrorCode | `INVALID_ANSWER_FORMAT` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:24` |
-| 394 | survey | `SURVEY-0012` | 400 BAD_REQUEST | '기타' 선택지가 중복됐어요. 선택지를 확인해주세요. | SurveyErrorCode | `OTHER_OPTION_DUPLICATED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:25` |
-| 395 | survey | `SURVEY-0013` | 400 BAD_REQUEST | 해당 질문에 없는 선택지예요. 선택지를 다시 선택해주세요. | SurveyErrorCode | `OPTION_NOT_IN_QUESTION` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:26` |
-| 396 | survey | `SURVEY-0014` | 400 BAD_REQUEST | '기타' 선택지의 내용을 입력해주세요. | SurveyErrorCode | `OPTION_TEXT_REQUIRED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:27` |
-| 397 | survey | `SURVEY-0015` | 400 BAD_REQUEST | 폼 응답 가능 기간이 올바르지 않아요. 기간을 다시 선택해주세요. | SurveyErrorCode | `INVALID_FORM_ACTIVE_PERIOD` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:28` |
-| 398 | survey | `SURVEY-0023` | 400 BAD_REQUEST | 투표 선택이 올바르지 않아요. 선택지를 확인해주세요. | SurveyErrorCode | `INVALID_VOTE_SELECTION` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:30` |
-| 399 | survey | `SURVEY-0025` | 400 BAD_REQUEST | 투표 질문 형식이 올바르지 않아요. 투표 구성을 확인해주세요. | SurveyErrorCode | `INVALID_VOTE_FORM_STRUCTURE` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:32` |
-| 400 | survey | `SURVEY-0027` | 400 BAD_REQUEST | 이미 제출한 응답이 있어요. 제출 내역을 확인해주세요. | SurveyErrorCode | `FORM_RESPONSE_ALREADY_EXISTS` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:34` |
-| 401 | survey | `SURVEY-0028` | 409 CONFLICT | 발행된 폼에만 응답할 수 있어요. 폼 상태를 확인해주세요. | SurveyErrorCode | `SURVEY_NOT_PUBLISHED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:35` |
-| 402 | survey | `SURVEY-0029` | 404 NOT_FOUND | 선택지를 찾을 수 없어요. 선택지를 다시 확인해주세요. | SurveyErrorCode | `QUESTION_OPTION_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:36` |
-| 403 | survey | `SURVEY-0030` | 404 NOT_FOUND | 답변을 찾을 수 없어요. 응답 내용을 확인해주세요. | SurveyErrorCode | `ANSWER_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:37` |
-| 404 | survey | `SURVEY-0031` | 409 CONFLICT | 임시저장 상태의 응답에서만 할 수 있는 작업이에요. 응답 상태를 확인해주세요. | SurveyErrorCode | `FORM_RESPONSE_NOT_DRAFT` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:38` |
-| 405 | survey | `SURVEY-0032` | 400 BAD_REQUEST | 이미 해당 질문에 대한 답변이 있어요. 기존 답변을 수정해주세요. | SurveyErrorCode | `ANSWER_ALREADY_EXISTS` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:39` |
-| 406 | survey | `SURVEY-005` | 400 BAD_REQUEST | 이미 발행된 폼이에요. 폼 상태를 확인해주세요. | SurveyErrorCode | `SURVEY_ALREADY_PUBLISHED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:17` |
+| 386 | survey | `SURVEY-0001` | 404 NOT_FOUND | 폼을 찾을 수 없어요. 선택한 폼을 확인해주세요. | SurveyErrorCode | `SURVEY_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:14` |
+| 387 | survey | `SURVEY-0002` | 409 CONFLICT | 임시저장 상태의 폼만 편집할 수 있어요. 폼 상태를 확인해주세요. | SurveyErrorCode | `SURVEY_NOT_DRAFT` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:15` |
+| 388 | survey | `SURVEY-0003` | 404 NOT_FOUND | 질문을 찾을 수 없어요. 선택한 질문을 확인해주세요. | SurveyErrorCode | `QUESTION_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:16` |
+| 389 | survey | `SURVEY-0006` | 404 NOT_FOUND | 폼 응답을 찾을 수 없어요. 응답 목록을 확인해주세요. | SurveyErrorCode | `FORM_RESPONSE_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:18` |
+| 390 | survey | `SURVEY-0007` | 400 BAD_REQUEST | 이 폼에 포함된 질문이 아니에요. 질문을 다시 선택해주세요. | SurveyErrorCode | `QUESTION_IS_NOT_OWNED_BY_FORM` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:19` |
+| 391 | survey | `SURVEY-0008` | 403 FORBIDDEN | 이 폼 응답에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요. | SurveyErrorCode | `FORM_RESPONSE_FORBIDDEN` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:20` |
+| 392 | survey | `SURVEY-0009` | 400 BAD_REQUEST | 질문 유형이 맞지 않아요. 질문 유형을 확인해주세요. | SurveyErrorCode | `QUESTION_TYPE_MISMATCH` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:22` |
+| 393 | survey | `SURVEY-0010` | 400 BAD_REQUEST | 필수 질문에 답변해주세요. | SurveyErrorCode | `REQUIRED_QUESTION_NOT_ANSWERED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:23` |
+| 394 | survey | `SURVEY-0011` | 400 BAD_REQUEST | 응답 형식이 올바르지 않아요. 답변을 확인해주세요. | SurveyErrorCode | `INVALID_ANSWER_FORMAT` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:24` |
+| 395 | survey | `SURVEY-0012` | 400 BAD_REQUEST | '기타' 선택지가 중복됐어요. 선택지를 확인해주세요. | SurveyErrorCode | `OTHER_OPTION_DUPLICATED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:25` |
+| 396 | survey | `SURVEY-0013` | 400 BAD_REQUEST | 해당 질문에 없는 선택지예요. 선택지를 다시 선택해주세요. | SurveyErrorCode | `OPTION_NOT_IN_QUESTION` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:26` |
+| 397 | survey | `SURVEY-0014` | 400 BAD_REQUEST | '기타' 선택지의 내용을 입력해주세요. | SurveyErrorCode | `OPTION_TEXT_REQUIRED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:27` |
+| 398 | survey | `SURVEY-0015` | 400 BAD_REQUEST | 폼 응답 가능 기간이 올바르지 않아요. 기간을 다시 선택해주세요. | SurveyErrorCode | `INVALID_FORM_ACTIVE_PERIOD` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:28` |
+| 399 | survey | `SURVEY-0023` | 400 BAD_REQUEST | 투표 선택이 올바르지 않아요. 선택지를 확인해주세요. | SurveyErrorCode | `INVALID_VOTE_SELECTION` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:30` |
+| 400 | survey | `SURVEY-0025` | 400 BAD_REQUEST | 투표 질문 형식이 올바르지 않아요. 투표 구성을 확인해주세요. | SurveyErrorCode | `INVALID_VOTE_FORM_STRUCTURE` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:32` |
+| 401 | survey | `SURVEY-0027` | 400 BAD_REQUEST | 이미 제출한 응답이 있어요. 제출 내역을 확인해주세요. | SurveyErrorCode | `FORM_RESPONSE_ALREADY_EXISTS` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:34` |
+| 402 | survey | `SURVEY-0028` | 409 CONFLICT | 발행된 폼에만 응답할 수 있어요. 폼 상태를 확인해주세요. | SurveyErrorCode | `SURVEY_NOT_PUBLISHED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:35` |
+| 403 | survey | `SURVEY-0029` | 404 NOT_FOUND | 선택지를 찾을 수 없어요. 선택지를 다시 확인해주세요. | SurveyErrorCode | `QUESTION_OPTION_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:36` |
+| 404 | survey | `SURVEY-0030` | 404 NOT_FOUND | 답변을 찾을 수 없어요. 응답 내용을 확인해주세요. | SurveyErrorCode | `ANSWER_NOT_FOUND` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:37` |
+| 405 | survey | `SURVEY-0031` | 409 CONFLICT | 임시저장 상태의 응답에서만 할 수 있는 작업이에요. 응답 상태를 확인해주세요. | SurveyErrorCode | `FORM_RESPONSE_NOT_DRAFT` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:38` |
+| 406 | survey | `SURVEY-0032` | 400 BAD_REQUEST | 이미 해당 질문에 대한 답변이 있어요. 기존 답변을 수정해주세요. | SurveyErrorCode | `ANSWER_ALREADY_EXISTS` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:39` |
+| 407 | survey | `SURVEY-005` | 400 BAD_REQUEST | 이미 발행된 폼이에요. 폼 상태를 확인해주세요. | SurveyErrorCode | `SURVEY_ALREADY_PUBLISHED` | `src/main/java/com/umc/product/survey/domain/exception/SurveyErrorCode.java:17` |
 
 ## term
 
 | 순번 | 도메인 | Code | HTTP Status | Message | Enum | Constant | Source |
 |---:|---|---|---|---|---|---|---|
-| 407 | term | `TERMS-0001` | 404 NOT_FOUND | 약관을 찾을 수 없어요. 선택한 약관을 확인해주세요. | TermErrorCode | `TERMS_NOT_FOUND` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:14` |
-| 408 | term | `TERMS-0002` | 400 BAD_REQUEST | 약관 타입을 선택해주세요. | TermErrorCode | `TERMS_TYPE_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:15` |
-| 409 | term | `TERMS-0003` | 400 BAD_REQUEST | 약관 제목을 입력해주세요. | TermErrorCode | `TERMS_TITLE_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:16` |
-| 410 | term | `TERMS-0004` | 400 BAD_REQUEST | 약관 내용을 입력해주세요. | TermErrorCode | `TERMS_CONTENT_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:17` |
-| 411 | term | `TERMS-0005` | 400 BAD_REQUEST | 약관 버전을 입력해주세요. | TermErrorCode | `TERMS_VERSION_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:18` |
-| 412 | term | `TERMS-0006` | 404 NOT_FOUND | 약관 동의 정보를 찾을 수 없어요. 동의 내역을 확인해주세요. | TermErrorCode | `TERMS_CONSENT_NOT_FOUND` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:20` |
-| 413 | term | `TERMS-0007` | 400 BAD_REQUEST | 이미 동의한 약관이에요. 동의 내역을 확인해주세요. | TermErrorCode | `TERMS_CONSENT_ALREADY_EXISTS` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:21` |
-| 414 | term | `TERMS-0008` | 400 BAD_REQUEST | 회원을 선택해주세요. | TermErrorCode | `MEMBER_ID_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:22` |
-| 415 | term | `TERMS-0009` | 400 BAD_REQUEST | 약관을 선택해주세요. | TermErrorCode | `TERM_ID_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:23` |
-| 416 | term | `TERMS-0010` | 400 BAD_REQUEST | 필수 약관에 모두 동의해주세요. | TermErrorCode | `MANDATORY_TERMS_NOT_AGREED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:24` |
-| 417 | term | `TERMS-0011` | 403 FORBIDDEN | 약관을 관리할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요. | TermErrorCode | `TERM_PERMISSION_DENIED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:26` |
+| 408 | term | `TERMS-0001` | 404 NOT_FOUND | 약관을 찾을 수 없어요. 선택한 약관을 확인해주세요. | TermErrorCode | `TERMS_NOT_FOUND` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:14` |
+| 409 | term | `TERMS-0002` | 400 BAD_REQUEST | 약관 타입을 선택해주세요. | TermErrorCode | `TERMS_TYPE_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:15` |
+| 410 | term | `TERMS-0003` | 400 BAD_REQUEST | 약관 제목을 입력해주세요. | TermErrorCode | `TERMS_TITLE_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:16` |
+| 411 | term | `TERMS-0004` | 400 BAD_REQUEST | 약관 내용을 입력해주세요. | TermErrorCode | `TERMS_CONTENT_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:17` |
+| 412 | term | `TERMS-0005` | 400 BAD_REQUEST | 약관 버전을 입력해주세요. | TermErrorCode | `TERMS_VERSION_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:18` |
+| 413 | term | `TERMS-0006` | 404 NOT_FOUND | 약관 동의 정보를 찾을 수 없어요. 동의 내역을 확인해주세요. | TermErrorCode | `TERMS_CONSENT_NOT_FOUND` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:20` |
+| 414 | term | `TERMS-0007` | 400 BAD_REQUEST | 이미 동의한 약관이에요. 동의 내역을 확인해주세요. | TermErrorCode | `TERMS_CONSENT_ALREADY_EXISTS` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:21` |
+| 415 | term | `TERMS-0008` | 400 BAD_REQUEST | 회원을 선택해주세요. | TermErrorCode | `MEMBER_ID_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:22` |
+| 416 | term | `TERMS-0009` | 400 BAD_REQUEST | 약관을 선택해주세요. | TermErrorCode | `TERM_ID_REQUIRED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:23` |
+| 417 | term | `TERMS-0010` | 400 BAD_REQUEST | 필수 약관에 모두 동의해주세요. | TermErrorCode | `MANDATORY_TERMS_NOT_AGREED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:24` |
+| 418 | term | `TERMS-0011` | 403 FORBIDDEN | 약관을 관리할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요. | TermErrorCode | `TERM_PERMISSION_DENIED` | `src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:26` |
 
