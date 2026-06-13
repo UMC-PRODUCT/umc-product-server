@@ -155,7 +155,8 @@ public class S3StorageAdapter implements StoragePort {
             if (e.statusCode() == 404) {
                 return Optional.empty();
             }
-            throw e;
+            log.error("S3 객체 정보 조회 실패: storageKey={}", storageKey, e);
+            throw new StorageException(StorageErrorCode.STORAGE_METADATA_READ_FAILED, e);
         }
     }
 

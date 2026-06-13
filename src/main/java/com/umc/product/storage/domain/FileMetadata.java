@@ -124,7 +124,7 @@ public class FileMetadata extends BaseEntity {
             throw new StorageException(StorageErrorCode.FILE_SIZE_EXCEEDED);
         }
 
-        if (!Objects.equals(fileSize, actualFileSize)) {
+        if (fileSize == null || !Objects.equals(fileSize, actualFileSize)) {
             throw new StorageException(StorageErrorCode.FILE_SIZE_MISMATCH);
         }
 
@@ -150,6 +150,14 @@ public class FileMetadata extends BaseEntity {
         if (contentType == null || actualContentType == null) {
             return Objects.equals(contentType, actualContentType);
         }
-        return contentType.trim().equalsIgnoreCase(actualContentType.trim());
+        return extractMediaType(contentType).equalsIgnoreCase(extractMediaType(actualContentType));
+    }
+
+    private String extractMediaType(String value) {
+        int parameterIndex = value.indexOf(';');
+        if (parameterIndex < 0) {
+            return value.trim();
+        }
+        return value.substring(0, parameterIndex).trim();
     }
 }

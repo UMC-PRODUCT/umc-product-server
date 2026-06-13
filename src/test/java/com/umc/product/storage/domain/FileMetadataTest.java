@@ -77,6 +77,18 @@ class FileMetadataTest {
     }
 
     @Test
+    void 요청_파일_크기가_null이면_예외가_발생한다() {
+        // given
+        FileMetadata metadata = createFileMetadata("portfolio.pdf", FileCategory.PORTFOLIO, "application/pdf", null);
+
+        // when & then
+        assertThatThrownBy(() -> metadata.confirmUploaded(1024L, "application/pdf"))
+            .isInstanceOf(StorageException.class)
+            .extracting("baseCode")
+            .isEqualTo(StorageErrorCode.FILE_SIZE_MISMATCH);
+    }
+
+    @Test
     void 실제_Content_Type이_요청값과_다르면_예외가_발생한다() {
         // given
         FileMetadata metadata = createFileMetadata("portfolio.pdf", FileCategory.PORTFOLIO, "application/pdf", 1024L);
@@ -86,6 +98,35 @@ class FileMetadataTest {
             .isInstanceOf(StorageException.class)
             .extracting("baseCode")
             .isEqualTo(StorageErrorCode.INVALID_CONTENT_TYPE);
+    }
+
+    @Test
+    void 실제_Content_Type에_파라미터가_있어도_미디어_타입이_같으면_업로드_완료_처리를_한다() {
+        // given
+        FileMetadata metadata = createFileMetadata("portfolio.pdf", FileCategory.PORTFOLIO, "application/pdf", 1024L);
+
+        // when
+        metadata.confirmUploaded(1024L, "application/pdf; charset=UTF-8");
+
+        // then
+        assertThat(metadata.isUploaded()).isTrue();
+    }
+
+    @Test
+    void 요청_Content_Type에_파라미터가_있어도_미디어_타입이_같으면_업로드_완료_처리를_한다() {
+        // given
+        FileMetadata metadata = createFileMetadata(
+            "portfolio.pdf",
+            FileCategory.PORTFOLIO,
+            "application/pdf; charset=UTF-8",
+            1024L
+        );
+
+        // when
+        metadata.confirmUploaded(1024L, "application/pdf");
+
+        // then
+        assertThat(metadata.isUploaded()).isTrue();
     }
 
     /**

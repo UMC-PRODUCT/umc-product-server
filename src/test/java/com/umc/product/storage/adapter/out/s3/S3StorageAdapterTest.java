@@ -1,6 +1,7 @@
 package com.umc.product.storage.adapter.out.s3;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
 import java.net.URI;
@@ -16,11 +17,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
 import com.umc.product.storage.application.port.out.dto.StorageObjectInfo;
+import com.umc.product.storage.domain.exception.StorageErrorCode;
+import com.umc.product.storage.domain.exception.StorageException;
 
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -88,6 +92,22 @@ class S3StorageAdapterTest {
         // when & then
         assertThat(sut.findObjectInfoByStorageKey("private/portfolio/missing.pdf")).isEmpty();
         assertThat(sut.exists("private/portfolio/missing.pdf")).isFalse();
+    }
+
+    @Test
+    @DisplayName("HeadObject 조회 중 404가 아닌 S3Exception은 StorageException으로 변환한다")
+    void HeadObject_조회_중_404가_아닌_S3Exception은_StorageException으로_변환한다() {
+        // given
+        S3StorageAdapter sut = new S3StorageAdapter(s3Client, s3Presigner, properties());
+        given(s3Client.headObject(org.mockito.ArgumentMatchers.any(HeadObjectRequest.class)))
+            .willThrow(S3Exception.builder().statusCode(500).build());
+
+        // when & then
+        assertThatThrownBy(() -> sut.findObjectInfoByStorageKey("private/portfolio/file.pdf"))
+            .isInstanceOf(StorageException.class)
+            .hasCauseInstanceOf(S3Exception.class)
+            .extracting("baseCode")
+            .isEqualTo(StorageErrorCode.STORAGE_METADATA_READ_FAILED);
     }
 
     private S3StorageProperties properties() {

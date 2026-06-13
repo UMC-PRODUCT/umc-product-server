@@ -28,6 +28,8 @@ public enum StorageErrorCode implements BaseCode {
     STORAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0007", "파일을 업로드하지 못했어요. 잠시 후 다시 시도해주세요."),
     STORAGE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0008", "파일을 삭제하지 못했어요. 잠시 후 다시 시도해주세요."),
     STORAGE_URL_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0009", "파일 접근 링크를 만들지 못했어요. 잠시 후 다시 시도해주세요."),
+    STORAGE_METADATA_READ_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0015",
+        "파일 정보를 확인하지 못했어요. 잠시 후 다시 시도해주세요."),
 
     // CDN 에러
     CDN_SIGNING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0010", "CDN 접근 링크를 만들지 못했어요. 관리자에게 문의해주세요."),
