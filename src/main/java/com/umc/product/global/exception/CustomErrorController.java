@@ -42,7 +42,7 @@ public class CustomErrorController implements ErrorController {
 
                 return ResponseEntity
                     .status(code.getHttpStatus())
-                    .body(ApiErrorResponseFactory.from(code));
+                    .body(BusinessExceptionResponseResolver.toApiResponse(businessException));
             }
         }
 

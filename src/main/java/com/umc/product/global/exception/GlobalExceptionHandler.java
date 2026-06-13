@@ -21,8 +21,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
-import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.response.ApiErrorResponseFactory;
 import com.umc.product.global.response.ApiResponse;
@@ -174,14 +172,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("[BUSINESS EXCEPTION] domain={}, code={}, message={}", e.getDomain(), e.getBaseCode().getCode(),
             e.getMessage(), e);
 
-        if (e instanceof AuthorizationDomainException) {
-            if (e.getBaseCode().equals(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED)) {
-                String message = ApiErrorResponseFactory.resolveMessage(e.getBaseCode(), e.getMessage());
-                return buildResponse(e, e.getBaseCode(), HttpHeaders.EMPTY, request, message, message);
-            }
-        }
-
-        return buildResponse(e, e.getBaseCode(), HttpHeaders.EMPTY, request, e.getMessage());
+        ApiResponse<Object> body = BusinessExceptionResponseResolver.toApiResponse(e);
+        return super.handleExceptionInternal(
+            e,
+            body,
+            HttpHeaders.EMPTY,
+            e.getBaseCode().getHttpStatus(),
+            request
+        );
     }
 
     /**
