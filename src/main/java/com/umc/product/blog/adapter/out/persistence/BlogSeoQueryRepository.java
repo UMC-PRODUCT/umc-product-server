@@ -8,7 +8,6 @@ import static com.umc.product.blog.domain.QBlogSeriesContent.blogSeriesContent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import org.springframework.stereotype.Repository;
 
@@ -112,6 +111,6 @@ public class BlogSeoQueryRepository {
     }
 
     private String typePath(BlogContentType contentType) {
-        return contentType.name().toLowerCase(Locale.ROOT);
+        return contentType.pathValue();
     }
 }

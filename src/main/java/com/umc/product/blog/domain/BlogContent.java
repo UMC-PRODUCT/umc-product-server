@@ -1,7 +1,6 @@
 package com.umc.product.blog.domain;
 
 import java.time.Instant;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
 import com.umc.product.common.BaseEntity;
@@ -192,7 +191,7 @@ public class BlogContent extends BaseEntity {
     }
 
     public String canonicalPath() {
-        return "/" + contentType.name().toLowerCase(Locale.ROOT) + "/" + slug;
+        return "/" + contentType.pathValue() + "/" + slug;
     }
 
     public String resolvedSeoTitle() {
