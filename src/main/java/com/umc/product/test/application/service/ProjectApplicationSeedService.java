@@ -257,6 +257,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
                 updateProjectApplicationDraftUseCase.update(
                     UpdateProjectApplicationDraftCommand.builder()
                         .projectId(projectId)
+                        .applicationId(applicationId)
                         .requesterMemberId(challenger.memberId())
                         .answers(answers)
                         .build()
@@ -273,6 +274,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
             submitProjectApplicationUseCase.submit(
                 SubmitProjectApplicationCommand.builder()
                     .projectId(projectId)
+                    .applicationId(applicationId)
                     .requesterMemberId(challenger.memberId())
                     .build()
             );

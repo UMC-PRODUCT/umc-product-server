@@ -37,6 +37,8 @@ public enum SurveyErrorCode implements BaseCode {
     ANSWER_NOT_FOUND(HttpStatus.NOT_FOUND, "SURVEY-0030", "답변을 찾을 수 없어요. 응답 내용을 확인해주세요."),
     FORM_RESPONSE_NOT_DRAFT(HttpStatus.CONFLICT, "SURVEY-0031", "임시저장 상태의 응답에서만 할 수 있는 작업이에요. 응답 상태를 확인해주세요."),
     ANSWER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "SURVEY-0032", "이미 해당 질문에 대한 답변이 있어요. 기존 답변을 수정해주세요."),
+    FORM_RESPONSE_LOOKUP_AMBIGUOUS(HttpStatus.CONFLICT, "SURVEY-0033",
+        "중복 응답을 허용하는 폼은 응답을 하나로 특정할 수 없어요. 응답 ID를 사용해주세요."),
     ;
 
     private final HttpStatus httpStatus;

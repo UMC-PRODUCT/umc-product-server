@@ -1,5 +1,9 @@
 package com.umc.product.project.application.service.evaluator;
 
+import java.util.Objects;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
@@ -13,9 +17,8 @@ import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import java.util.Objects;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 /**
  * ProjectApplication 도메인 단건 액션의 권한 판정 (L2). subject × resource 속성 매칭만 다룬다.
@@ -55,7 +58,7 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
     }
 
     /**
-     * 지원서 생성/임시저장/제출 진입 권한. subject 가 부모 프로젝트의 기수에 챌린저 레코드를 가져야 한다.
+     * 지원서 생성 진입 권한. subject 가 부모 프로젝트의 기수에 챌린저 레코드를 가져야 한다.
      * <p>
      * IN_PROGRESS 검사 / 자기지원 차단 / 매칭 라운드 OPEN / 폼 정책 파트 / 기수 ACTIVE 멤버 / 중복 등은
      * 도메인 규칙으로 분류되어 {@code Project.validateApplicable()} 와 {@code ProjectApplicationCommandService} 가 검증한다.
