@@ -127,7 +127,7 @@ class ApiResponseStompErrorHandlerIntegrationTest {
             session.subscribe("/user/queue/errors", new PayloadCollectingFrameHandler(userErrors));
             TimeUnit.MILLISECONDS.sleep(300);
 
-            session.subscribe("/topic/chat/10", new PayloadCollectingFrameHandler(new LinkedBlockingQueue<>()));
+            session.subscribe("/topic/chat/rooms/10/messages", new PayloadCollectingFrameHandler(new LinkedBlockingQueue<>()));
 
             String payload = userErrors.poll(5, TimeUnit.SECONDS);
             assertThat(payload).isNotNull();

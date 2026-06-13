@@ -26,10 +26,11 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
     // 클라이언트가 채팅 메시지를 서버로 보낼 때 사용하는 주소
     private static final String CHAT_APP_DESTINATION = "/app/chat";
-    private static final String CHAT_APP_PREFIX = CHAT_APP_DESTINATION + "/";
+    private static final String CHAT_APP_MESSAGE_PREFIX = CHAT_APP_DESTINATION + "/rooms/";
     // 클라이언트가 채팅방 메시지를 받기 위해 구독하는 주소
     private static final String CHAT_TOPIC_DESTINATION = "/topic/chat";
-    private static final String CHAT_TOPIC_PREFIX = CHAT_TOPIC_DESTINATION + "/";
+    private static final String CHAT_TOPIC_MESSAGE_PREFIX = CHAT_TOPIC_DESTINATION + "/rooms/";
+    private static final String CHAT_MESSAGE_SUFFIX = "/messages";
     // 클라이언트가 직접 SEND할 수 없는 브로커 경로
     private static final String BROKER_TOPIC_PREFIX = "/topic";
     private static final String BROKER_QUEUE_PREFIX = "/queue";
@@ -102,16 +103,16 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
      */
     private ChatDestination parseChatDestination(StompCommand command, String destination) {
         if (StompCommand.SUBSCRIBE.equals(command)) {
-            return parseChatDestination(destination, CHAT_TOPIC_DESTINATION, CHAT_TOPIC_PREFIX);
+            return parseChatDestination(destination, CHAT_TOPIC_DESTINATION, CHAT_TOPIC_MESSAGE_PREFIX);
         }
         if (StompCommand.SEND.equals(command)) {
-            return parseChatDestination(destination, CHAT_APP_DESTINATION, CHAT_APP_PREFIX);
+            return parseChatDestination(destination, CHAT_APP_DESTINATION, CHAT_APP_MESSAGE_PREFIX);
         }
         return ChatDestination.notTarget();
     }
 
     /**
-     * /app/chat/{id}, /topic/chat/{id} 형식이면 id를 파싱하고,
+     * /app/chat/rooms/{id}/messages, /topic/chat/rooms/{id}/messages 형식이면 id를 파싱하고,
      * chat 경로가 아니면 검사 대상에서 제외한다.
      */
     private ChatDestination parseChatDestination(String destination, String namespace, String prefix) {
@@ -122,7 +123,11 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             return ChatDestination.invalid();
         }
 
-        String rawChatRoomId = destination.substring(prefix.length());
+        if (!destination.startsWith(prefix) || !destination.endsWith(CHAT_MESSAGE_SUFFIX)) {
+            return ChatDestination.invalid();
+        }
+
+        String rawChatRoomId = destination.substring(prefix.length(), destination.length() - CHAT_MESSAGE_SUFFIX.length());
         if (rawChatRoomId.isBlank() || rawChatRoomId.contains("/")) {
             return ChatDestination.invalid();
         }

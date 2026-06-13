@@ -74,7 +74,7 @@ class ApiResponseStompErrorHandlerTest {
 
     private Message<byte[]> stompMessageWithReceipt(String receipt) {
         StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
-        accessor.setDestination("/topic/chat/10");
+        accessor.setDestination("/topic/chat/rooms/10/messages");
         accessor.setReceipt(receipt);
         return MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
     }
