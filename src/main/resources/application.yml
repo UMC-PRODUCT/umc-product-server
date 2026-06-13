@@ -256,6 +256,11 @@ app:
   # spring.profiles.active 가 콤마 구분 다중 profile 일 수 있으므로 운영자가 단일 라벨을 명시적으로 override 가능.
   environment: ${APP_ENVIRONMENT:${SPRING_PROFILES_ACTIVE:local}}
 
+  project:
+    matching-round:
+      # FIRST, SECOND, THIRD 차수 사이 최소 간격. 환경변수 단위는 minute.
+      min-phase-interval-minutes: ${PROJECT_MATCHING_ROUND_MIN_PHASE_INTERVAL_MINUTES:1}
+
   observability:
     tracing:
       enabled: ${APP_OBSERVABILITY_TRACING_ENABLED:true}

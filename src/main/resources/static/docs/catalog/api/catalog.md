@@ -24,7 +24,7 @@
 
 | 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |
 |---:|---|---|---|---|---|:---:|---|
-| 12 | audit | AUDIT-001 | GET | `/api/v1/admin/audit-logs` | 감사 로그 검색 | X | `src/main/java/com/umc/product/audit/adapter/in/web/AuditLogController.java:33` |
+| 12 | audit | AUDIT-001 | GET | `/api/v1/admin/audit-logs` | 감사 로그 검색 | X | `src/main/java/com/umc/product/audit/adapter/in/web/AuditLogController.java:36` |
 
 ## authentication
 
@@ -84,17 +84,17 @@
 
 | 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |
 |---:|---|---|---|---|---|:---:|---|
-| 52 | community | COMMENT-001 | POST | `/api/v1/posts/{postId}/comments` | 댓글 작성 | X | `src/main/java/com/umc/product/community/adapter/in/web/CommentController.java:42` |
-| 53 | community | COMMENT-002 | DELETE | `/api/v1/posts/{postId}/comments/{commentId}` | 댓글 삭제 | X | `src/main/java/com/umc/product/community/adapter/in/web/CommentController.java:74` |
-| 54 | community | COMMENT-003 | POST | `/api/v1/posts/{postId}/comments/{commentId}/like` | 댓글 좋아요 토글 | X | `src/main/java/com/umc/product/community/adapter/in/web/CommentController.java:86` |
-| 55 | community | COMMENT-101 | GET | `/api/v1/posts/{postId}/comments` | 댓글 목록 조회 | X | `src/main/java/com/umc/product/community/adapter/in/web/CommentController.java:56` |
-| 56 | community | POST-001 | POST | `/api/v1/posts` | 일반 게시글 생성 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostController.java:55` |
-| 57 | community | POST-002 | POST | `/api/v1/posts/lightning` | 번개글 생성 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostController.java:66` |
-| 58 | community | POST-003 | PATCH | `/api/v1/posts/{postId}` | 일반 게시글 수정 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostController.java:83` |
-| 59 | community | POST-004 | PATCH | `/api/v1/posts/{postId}/lightning` | 번개글 수정 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostController.java:98` |
-| 60 | community | POST-005 | DELETE | `/api/v1/posts/{postId}` | 게시글 삭제 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostController.java:113` |
-| 61 | community | POST-006 | POST | `/api/v1/posts/{postId}/like` | 게시글 좋아요 토글 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostController.java:121` |
-| 62 | community | POST-007 | POST | `/api/v1/posts/{postId}/scrap` | 게시글 스크랩 토글 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostController.java:132` |
+| 52 | community | COMMENT-001 | POST | `/api/v1/posts/{postId}/comments` | 댓글 작성 | X | `src/main/java/com/umc/product/community/adapter/in/web/CommentController.java:45` |
+| 53 | community | COMMENT-002 | DELETE | `/api/v1/posts/{postId}/comments/{commentId}` | 댓글 삭제 | X | `src/main/java/com/umc/product/community/adapter/in/web/CommentController.java:77` |
+| 54 | community | COMMENT-003 | POST | `/api/v1/posts/{postId}/comments/{commentId}/like` | 댓글 좋아요 토글 | X | `src/main/java/com/umc/product/community/adapter/in/web/CommentController.java:89` |
+| 55 | community | COMMENT-101 | GET | `/api/v1/posts/{postId}/comments` | 댓글 목록 조회 | X | `src/main/java/com/umc/product/community/adapter/in/web/CommentController.java:59` |
+| 56 | community | POST-001 | POST | `/api/v1/posts` | 일반 게시글 생성 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostController.java:57` |
+| 57 | community | POST-002 | POST | `/api/v1/posts/lightning` | 번개글 생성 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostController.java:68` |
+| 58 | community | POST-003 | PATCH | `/api/v1/posts/{postId}` | 일반 게시글 수정 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostController.java:85` |
+| 59 | community | POST-004 | PATCH | `/api/v1/posts/{postId}/lightning` | 번개글 수정 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostController.java:100` |
+| 60 | community | POST-005 | DELETE | `/api/v1/posts/{postId}` | 게시글 삭제 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostController.java:115` |
+| 61 | community | POST-006 | POST | `/api/v1/posts/{postId}/like` | 게시글 좋아요 토글 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostController.java:123` |
+| 62 | community | POST-007 | POST | `/api/v1/posts/{postId}/scrap` | 게시글 스크랩 토글 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostController.java:134` |
 | 63 | community | POST-101 | GET | `/api/v1/posts/{postId}` | 게시글 상세 조회 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostQueryController.java:65` |
 | 64 | community | POST-102 | GET | `/api/v1/posts` | 게시글 목록 조회 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostQueryController.java:75` |
 | 65 | community | POST-103 | GET | `/api/v1/posts/search` | 게시글 검색 | X | `src/main/java/com/umc/product/community/adapter/in/web/PostQueryController.java:95` |
@@ -131,11 +131,11 @@
 | 91 | curriculum | CURRICULUM-006 | DELETE | `/api/v2/curriculums/weekly/{weeklyCurriculumId}` | 주차별 커리큘럼 삭제 | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/CurriculumCommandV2Controller.java:140` |
 | 92 | curriculum | CURRICULUM-101 | GET | `/api/v2/curriculums/overview` | 특정 기수의 파트별 커리큘럼 조회 | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/CurriculumQueryV2Controller.java:28` |
 | 93 | curriculum | CURRICULUM-102 | GET | `/api/v2/curriculums/progress/me` | 내 커리큘럼 진행 상황 조회 | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/CurriculumQueryV2Controller.java:55` |
-| 94 | curriculum | ORIGINAL-WORKBOOK-001 | POST | `/api/v2/curriculums/original-workbooks` | 중앙파트장용: 원본 워크북 추가 (READY 상태) | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java:30` |
-| 95 | curriculum | ORIGINAL-WORKBOOK-002 | POST | `/api/v2/curriculums/original-workbooks/draft` | 중앙파트장용: 원본 워크북 임시저장 (DRAFT 상태) | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java:51` |
-| 96 | curriculum | ORIGINAL-WORKBOOK-003 | PATCH | `/api/v2/curriculums/original-workbooks/{originalWorkbookId}` | 중앙파트장용: 원본 워크북 수정 | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java:74` |
-| 97 | curriculum | ORIGINAL-WORKBOOK-004 | DELETE | `/api/v2/curriculums/original-workbooks/{originalWorkbookId}` | 중앙파트장용: 원본 워크북 삭제 | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java:95` |
-| 98 | curriculum | ORIGINAL-WORKBOOK-005 | PATCH | `/api/v2/curriculums/original-workbooks/status` | 중앙파트장용: 원본 워크북 상태 일괄 변경 | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java:114` |
+| 94 | curriculum | ORIGINAL-WORKBOOK-001 | POST | `/api/v2/curriculums/original-workbooks` | 중앙파트장용: 원본 워크북 추가 (READY 상태) | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java:38` |
+| 95 | curriculum | ORIGINAL-WORKBOOK-002 | POST | `/api/v2/curriculums/original-workbooks/draft` | 중앙파트장용: 원본 워크북 임시저장 (DRAFT 상태) | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java:59` |
+| 96 | curriculum | ORIGINAL-WORKBOOK-003 | PATCH | `/api/v2/curriculums/original-workbooks/{originalWorkbookId}` | 중앙파트장용: 원본 워크북 수정 | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java:82` |
+| 97 | curriculum | ORIGINAL-WORKBOOK-004 | DELETE | `/api/v2/curriculums/original-workbooks/{originalWorkbookId}` | 중앙파트장용: 원본 워크북 삭제 | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java:103` |
+| 98 | curriculum | ORIGINAL-WORKBOOK-005 | PATCH | `/api/v2/curriculums/original-workbooks/status` | 중앙파트장용: 원본 워크북 상태 일괄 변경 | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookCommandV2Controller.java:122` |
 | 99 | curriculum | ORIGINAL-WORKBOOK-MISSION-001 | POST | `/api/v2/curriculums/original-workbooks/missions` | 중앙파트장용: 원본 워크북에 미션 추가 | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookMissionCommandV2Controller.java:25` |
 | 100 | curriculum | ORIGINAL-WORKBOOK-MISSION-002 | PATCH | `/api/v2/curriculums/original-workbooks/missions/{originalWorkbookMissionId}` | 중앙파트장용: 원본 워크북의 미션 수정 | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookMissionCommandV2Controller.java:42` |
 | 101 | curriculum | ORIGINAL-WORKBOOK-MISSION-003 | DELETE | `/api/v2/curriculums/original-workbooks/missions/{originalWorkbookMissionId}` | 중앙파트장용: 원본 워크북의 미션 삭제 | X | `src/main/java/com/umc/product/curriculum/adapter/in/web/v2/OriginalWorkbookMissionCommandV2Controller.java:61` |
@@ -243,138 +243,159 @@
 |---:|---|---|---|---|---|:---:|---|
 | 164 | organization | <미지정> | GET | `/api/v1/gisu/{gisuId}` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/GisuQueryController.java:28` |
 | 165 | organization | <미지정> | GET | `/api/v1/schools/gisu/{gisuId}` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/SchoolQueryController.java:36` |
-| 166 | organization | CHAPTER-001 | POST | `/api/v1/chapters` | 지부 생성 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminChapterControllerApi.java:16` |
-| 167 | organization | CHAPTER-002 | POST | `/api/v1/chapters/bulk` | 지부 일괄 생성 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminChapterControllerApi.java:25` |
-| 168 | organization | CHAPTER-003 | DELETE | `/api/v1/chapters/{chapterId}` | 지부 삭제 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminChapterControllerApi.java:28` |
-| 169 | organization | CHAPTER-101 | GET | `/api/v1/chapters` | 지부 목록 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/ChapterQueryControllerApi.java:18` |
-| 170 | organization | CHAPTER-102 | GET | `/api/v1/chapters/with-schools` | 기수별 지부 및 소속 학교 목록 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/ChapterQueryControllerApi.java:29` |
-| 171 | organization | CHAPTER-103 | GET | `/api/v1/chapters/{chapterId}` | 지부 ID로 지부 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/ChapterQueryControllerApi.java:41` |
-| 172 | organization | GISU-001 | POST | `/api/v1/gisu` | 기수 생성 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminGisuControllerApi.java:13` |
-| 173 | organization | GISU-002 | DELETE | `/api/v1/gisu/{gisuId}` | 기수 삭제 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminGisuControllerApi.java:20` |
-| 174 | organization | GISU-003 | POST | `/api/v1/gisu/{gisuId}/active` | 활성 기수 변경 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminGisuControllerApi.java:28` |
-| 175 | organization | GISU-101 | GET | `/api/v1/gisu` | 기수 목록 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminGisuQueryControllerApi.java:25` |
-| 176 | organization | GISU-102 | GET | `/api/v1/gisu/all` | 기수 전체 목록 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminGisuQueryControllerApi.java:35` |
-| 177 | organization | GISU-103 | GET | `/api/v1/gisu/active` | 활성화된 기수 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminGisuQueryControllerApi.java:46` |
-| 178 | organization | SCHOOL-001 | POST | `/api/v1/schools` | 학교 생성 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminSchoolControllerApi.java:17` |
-| 179 | organization | SCHOOL-002 | PATCH | `/api/v1/schools/{schoolId}` | 학교 수정 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminSchoolControllerApi.java:25` |
-| 180 | organization | SCHOOL-003 | DELETE | `/api/v1/schools` | 학교 삭제 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminSchoolControllerApi.java:35` |
-| 181 | organization | SCHOOL-004 | PATCH | `/api/v1/schools/{schoolId}/assign` | 학교 지부 배정 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminSchoolControllerApi.java:42` |
-| 182 | organization | SCHOOL-005 | PATCH | `/api/v1/schools/{schoolId}/unassign` | 학교 지부 배정 해제 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminSchoolControllerApi.java:53` |
-| 183 | organization | SCHOOL-101 | GET | `/api/v1/schools/all` | 학교 전체 목록 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/SchoolQueryControllerApi.java:18` |
-| 184 | organization | SCHOOL-102 | GET | `/api/v1/schools/{schoolId}` | 학교 상세 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/SchoolQueryControllerApi.java:28` |
-| 185 | organization | SCHOOL-103 | GET | `/api/v1/schools/unassigned` | 배정 대기 중인 학교 목록 조회 | O | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/SchoolQueryControllerApi.java:41` |
-| 186 | organization | SCHOOL-104 | GET | `/api/v1/schools/link/{schoolId}` | 학교 링크 조회 | O | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/SchoolQueryControllerApi.java:53` |
-| 187 | organization | STUDY-GROUP-001 | POST | `/api/v1/study-groups` | 스터디 그룹 생성 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupCommandControllerApi.java:15` |
-| 188 | organization | STUDY-GROUP-002 | PATCH | `/api/v1/study-groups/{studyGroupId}` | 스터디 그룹 수정 (이름만 가능) | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupCommandControllerApi.java:29` |
-| 189 | organization | STUDY-GROUP-003 | PATCH | `/api/v1/study-groups/{studyGroupId}/members/{memberId}` | 스터디 그룹에 스터디원 추가 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupCommandControllerApi.java:38` |
-| 190 | organization | STUDY-GROUP-004 | PATCH | `/api/v1/study-groups/{studyGroupId}/mentors/{mentorId}` | 스터디 그룹에 담당 파트장 추가 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupCommandControllerApi.java:44` |
-| 191 | organization | STUDY-GROUP-005 | DELETE | `/api/v1/study-groups/{studyGroupId}/members/{memberId}` | 스터디 그룹에 스터디원 제거 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupCommandControllerApi.java:50` |
-| 192 | organization | STUDY-GROUP-006 | DELETE | `/api/v1/study-groups/{studyGroupId}/mentors/{mentorId}` | 스터디 그룹에 담당 파트장 제거 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupCommandControllerApi.java:56` |
-| 193 | organization | STUDY-GROUP-007 | DELETE | `/api/v1/study-groups/{studyGroupId}` | 스터디 그룹 삭제 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupCommandControllerApi.java:62` |
-| 194 | organization | STUDY-GROUP-101 | GET | `/api/v1/study-groups/managed` | 내가 관리하는 스터디 그룹 목록 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupQueryControllerApi.java:34` |
-| 195 | organization | STUDY-GROUP-102 | GET | `/api/v1/study-groups/{studyGroupId}` | 스터디 그룹 정보 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupQueryControllerApi.java:43` |
-| 196 | organization | STUDY-GROUP-SCHEDULE-001 | POST | `/api/v1/study-groups/schedules` | 스터디 그룹 일정 생성 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupScheduleControllerApi.java:12` |
+| 166 | organization | <미지정> | GET | `/api/v1/umc-product/functional-units` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductFunctionalUnitQueryController.java:24` |
+| 167 | organization | <미지정> | POST | `/api/v1/umc-product/functional-units` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductFunctionalUnitCommandController.java:29` |
+| 168 | organization | <미지정> | PATCH | `/api/v1/umc-product/functional-units/{functionalUnitId}` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductFunctionalUnitCommandController.java:37` |
+| 169 | organization | <미지정> | DELETE | `/api/v1/umc-product/functional-units/{functionalUnitId}` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductFunctionalUnitCommandController.java:48` |
+| 170 | organization | <미지정> | GET | `/api/v1/umc-product/generations` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductGenerationQueryController.java:24` |
+| 171 | organization | <미지정> | POST | `/api/v1/umc-product/generations` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductGenerationCommandController.java:29` |
+| 172 | organization | <미지정> | GET | `/api/v1/umc-product/generations/{umcProductGenerationId}` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductGenerationQueryController.java:29` |
+| 173 | organization | <미지정> | PATCH | `/api/v1/umc-product/generations/{umcProductGenerationId}` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductGenerationCommandController.java:37` |
+| 174 | organization | <미지정> | DELETE | `/api/v1/umc-product/generations/{umcProductGenerationId}` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductGenerationCommandController.java:48` |
+| 175 | organization | <미지정> | GET | `/api/v1/umc-product/members` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductMemberQueryController.java:31` |
+| 176 | organization | <미지정> | POST | `/api/v1/umc-product/members` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductMemberCommandController.java:31` |
+| 177 | organization | <미지정> | GET | `/api/v1/umc-product/members/{umcProductMemberId}` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductMemberQueryController.java:56` |
+| 178 | organization | <미지정> | DELETE | `/api/v1/umc-product/members/{umcProductMemberId}` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductMemberCommandController.java:61` |
+| 179 | organization | <미지정> | PUT | `/api/v1/umc-product/members/{umcProductMemberId}/functional-memberships` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductMemberCommandController.java:50` |
+| 180 | organization | <미지정> | PATCH | `/api/v1/umc-product/members/{umcProductMemberId}/profile` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductMemberCommandController.java:39` |
+| 181 | organization | <미지정> | GET | `/api/v1/umc-product/organization-chart` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductOrganizationChartQueryController.java:23` |
+| 182 | organization | <미지정> | GET | `/api/v1/umc-product/squads` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductSquadQueryController.java:23` |
+| 183 | organization | <미지정> | POST | `/api/v1/umc-product/squads` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductSquadCommandController.java:31` |
+| 184 | organization | <미지정> | PATCH | `/api/v1/umc-product/squads/{squadId}` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductSquadCommandController.java:39` |
+| 185 | organization | <미지정> | DELETE | `/api/v1/umc-product/squads/{squadId}` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductSquadCommandController.java:48` |
+| 186 | organization | <미지정> | PUT | `/api/v1/umc-product/squads/{squadId}/participants` | <요약 없음> | X | `src/main/java/com/umc/product/organization/adapter/in/web/UmcProductSquadCommandController.java:56` |
+| 187 | organization | CHAPTER-001 | POST | `/api/v1/chapters` | 지부 생성 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminChapterControllerApi.java:16` |
+| 188 | organization | CHAPTER-002 | POST | `/api/v1/chapters/bulk` | 지부 일괄 생성 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminChapterControllerApi.java:25` |
+| 189 | organization | CHAPTER-003 | DELETE | `/api/v1/chapters/{chapterId}` | 지부 삭제 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminChapterControllerApi.java:28` |
+| 190 | organization | CHAPTER-101 | GET | `/api/v1/chapters` | 지부 목록 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/ChapterQueryControllerApi.java:18` |
+| 191 | organization | CHAPTER-102 | GET | `/api/v1/chapters/with-schools` | 기수별 지부 및 소속 학교 목록 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/ChapterQueryControllerApi.java:29` |
+| 192 | organization | CHAPTER-103 | GET | `/api/v1/chapters/{chapterId}` | 지부 ID로 지부 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/ChapterQueryControllerApi.java:41` |
+| 193 | organization | GISU-001 | POST | `/api/v1/gisu` | 기수 생성 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminGisuControllerApi.java:13` |
+| 194 | organization | GISU-002 | DELETE | `/api/v1/gisu/{gisuId}` | 기수 삭제 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminGisuControllerApi.java:20` |
+| 195 | organization | GISU-003 | POST | `/api/v1/gisu/{gisuId}/active` | 활성 기수 변경 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminGisuControllerApi.java:28` |
+| 196 | organization | GISU-101 | GET | `/api/v1/gisu` | 기수 목록 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminGisuQueryControllerApi.java:25` |
+| 197 | organization | GISU-102 | GET | `/api/v1/gisu/all` | 기수 전체 목록 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminGisuQueryControllerApi.java:35` |
+| 198 | organization | GISU-103 | GET | `/api/v1/gisu/active` | 활성화된 기수 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminGisuQueryControllerApi.java:46` |
+| 199 | organization | SCHOOL-001 | POST | `/api/v1/schools` | 학교 생성 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminSchoolControllerApi.java:17` |
+| 200 | organization | SCHOOL-002 | PATCH | `/api/v1/schools/{schoolId}` | 학교 수정 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminSchoolControllerApi.java:25` |
+| 201 | organization | SCHOOL-003 | DELETE | `/api/v1/schools` | 학교 삭제 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminSchoolControllerApi.java:35` |
+| 202 | organization | SCHOOL-004 | PATCH | `/api/v1/schools/{schoolId}/assign` | 학교 지부 배정 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminSchoolControllerApi.java:42` |
+| 203 | organization | SCHOOL-005 | PATCH | `/api/v1/schools/{schoolId}/unassign` | 학교 지부 배정 해제 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/AdminSchoolControllerApi.java:53` |
+| 204 | organization | SCHOOL-101 | GET | `/api/v1/schools/all` | 학교 전체 목록 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/SchoolQueryControllerApi.java:18` |
+| 205 | organization | SCHOOL-102 | GET | `/api/v1/schools/{schoolId}` | 학교 상세 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/SchoolQueryControllerApi.java:28` |
+| 206 | organization | SCHOOL-103 | GET | `/api/v1/schools/unassigned` | 배정 대기 중인 학교 목록 조회 | O | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/SchoolQueryControllerApi.java:41` |
+| 207 | organization | SCHOOL-104 | GET | `/api/v1/schools/link/{schoolId}` | 학교 링크 조회 | O | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/SchoolQueryControllerApi.java:53` |
+| 208 | organization | STUDY-GROUP-001 | POST | `/api/v1/study-groups` | 스터디 그룹 생성 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupCommandControllerApi.java:15` |
+| 209 | organization | STUDY-GROUP-002 | PATCH | `/api/v1/study-groups/{studyGroupId}` | 스터디 그룹 수정 (이름만 가능) | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupCommandControllerApi.java:29` |
+| 210 | organization | STUDY-GROUP-003 | PATCH | `/api/v1/study-groups/{studyGroupId}/members/{memberId}` | 스터디 그룹에 스터디원 추가 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupCommandControllerApi.java:38` |
+| 211 | organization | STUDY-GROUP-004 | PATCH | `/api/v1/study-groups/{studyGroupId}/mentors/{mentorId}` | 스터디 그룹에 담당 파트장 추가 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupCommandControllerApi.java:44` |
+| 212 | organization | STUDY-GROUP-005 | DELETE | `/api/v1/study-groups/{studyGroupId}/members/{memberId}` | 스터디 그룹에 스터디원 제거 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupCommandControllerApi.java:50` |
+| 213 | organization | STUDY-GROUP-006 | DELETE | `/api/v1/study-groups/{studyGroupId}/mentors/{mentorId}` | 스터디 그룹에 담당 파트장 제거 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupCommandControllerApi.java:56` |
+| 214 | organization | STUDY-GROUP-007 | DELETE | `/api/v1/study-groups/{studyGroupId}` | 스터디 그룹 삭제 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupCommandControllerApi.java:62` |
+| 215 | organization | STUDY-GROUP-101 | GET | `/api/v1/study-groups/managed` | 내가 관리하는 스터디 그룹 목록 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupQueryControllerApi.java:34` |
+| 216 | organization | STUDY-GROUP-102 | GET | `/api/v1/study-groups/{studyGroupId}` | 스터디 그룹 정보 조회 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupQueryControllerApi.java:43` |
+| 217 | organization | STUDY-GROUP-SCHEDULE-001 | POST | `/api/v1/study-groups/schedules` | 스터디 그룹 일정 생성 | X | `src/main/java/com/umc/product/organization/adapter/in/web/swagger/StudyGroupScheduleControllerApi.java:12` |
 
 ## project
 
 | 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |
 |---:|---|---|---|---|---|:---:|---|
-| 197 | project | APPLY-001 | POST | `/api/v1/projects/{projectId}/applications` | 챌린저 지원서 Draft 생성 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java:47` |
-| 198 | project | APPLY-002 | PUT | `/api/v1/projects/{projectId}/applications/me` | 챌린저 지원서 임시저장 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java:70` |
-| 199 | project | APPLY-003 | POST | `/api/v1/projects/{projectId}/applications/me/submit` | 챌린저 지원서 최종 제출 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java:93` |
-| 200 | project | APPLY-004 | GET | `/api/v1/projects/me/applications` | 본인 지원 내역 목록 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationQueryController.java:37` |
-| 201 | project | APPLY-005 | DELETE | `/api/v1/projects/{projectId}/applications/{applicationId}` | 챌린저 지원서 철회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java:147` |
-| 202 | project | APPLY-101 | GET | `/api/v1/projects/{projectId}/applications` | PM/운영진 단일 프로젝트 지원자 목록 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationQueryController.java:76` |
-| 203 | project | APPLY-102 | GET | `/api/v1/projects/{projectId}/applications/{applicationId}` | 지원서 단건 상세 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationQueryController.java:127` |
-| 204 | project | APPLY-103 | PATCH | `/api/v1/projects/{projectId}/applications/{applicationId}/decision` | 지원서 합/불 결정 (단일 PATCH) | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java:118` |
-| 205 | project | PROJECT-001 | GET | `/api/v1/projects` | 프로젝트 목록 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:46` |
-| 206 | project | PROJECT-002 | GET | `/api/v1/projects/{projectId}` | 프로젝트 상세 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:65` |
-| 207 | project | PROJECT-003 | GET | `/api/v1/projects/{projectId}/members` | 프로젝트 팀원 구성 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:83` |
-| 208 | project | PROJECT-004 | POST | `/api/v1/projects/{projectId}/members` | 프로젝트 팀원 추가 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:142` |
-| 209 | project | PROJECT-005 | DELETE | `/api/v1/projects/{projectId}/members/{memberId}` | 프로젝트 팀원 제거 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:244` |
-| 210 | project | PROJECT-006 | GET | `/api/v1/projects/me/managed` | 내가 관리하는 프로젝트 목록 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:118` |
-| 211 | project | PROJECT-007 | GET | `/api/v1/projects/members` | 프로젝트 팀원 구성 일괄 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:101` |
-| 212 | project | PROJECT-101 | POST | `/api/v1/projects` | 프로젝트 Draft 생성 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:62` |
-| 213 | project | PROJECT-102 | PATCH | `/api/v1/projects/{projectId}` | 프로젝트 기본정보 수정 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:81` |
-| 214 | project | PROJECT-103 | GET | `/api/v1/projects/me/draft` | 내 Draft 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:137` |
-| 215 | project | PROJECT-104 | POST | `/api/v1/projects/{projectId}/transfer-ownership` | 프로젝트 소유권 양도 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:122` |
-| 216 | project | PROJECT-105 | PUT | `/api/v1/projects/{projectId}/part-quotas` | 파트별 정원 일괄 갱신 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:184` |
-| 217 | project | PROJECT-106 | PUT | `/api/v1/projects/{projectId}/application-form` | 지원 폼 저장 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationFormController.java:35` |
-| 218 | project | PROJECT-106-GET | GET | `/api/v1/projects/{projectId}/application-form` | 지원 폼 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationFormController.java:56` |
-| 219 | project | PROJECT-107 | POST | `/api/v1/projects/{projectId}/submit` | 프로젝트 제출 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:102` |
-| 220 | project | PROJECT-108 | POST | `/api/v1/projects/{projectId}/publish` | 프로젝트 공개 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:162` |
-| 221 | project | PROJECT-109 | DELETE | `/api/v1/projects/{projectId}` | 프로젝트 삭제 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:204` |
-| 222 | project | PROJECT-110 | POST | `/api/v1/projects/{projectId}/abort` | 프로젝트 중단 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:225` |
-| 223 | project | PROJECT-MATCHING-001 | GET | `/api/v1/project/matching-rounds` | 매칭 차수 목록 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectMatchingRoundController.java:44` |
-| 224 | project | PROJECT-MATCHING-101 | POST | `/api/v1/project/matching-rounds` | 매칭 차수 생성 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectMatchingRoundController.java:66` |
-| 225 | project | PROJECT-MATCHING-102 | PATCH | `/api/v1/project/matching-rounds/{matchingRoundId}` | 매칭 차수 수정 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectMatchingRoundController.java:87` |
-| 226 | project | PROJECT-MATCHING-103 | DELETE | `/api/v1/project/matching-rounds/{matchingRoundId}` | 매칭 차수 삭제 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectMatchingRoundController.java:110` |
-| 227 | project | PROJECT-MATCHING-201 | POST | `/api/v1/project/matching-rounds/{matchingRoundId}/auto-decide` | 매칭 차수 자동 선발 실행 (운영진 수동 트리거) | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectMatchingRoundController.java:127` |
-| 228 | project | PROJECT-STAT-001 | GET | `/api/v1/projects/{projectId}/statistics` | 단건 프로젝트 지원/매칭 현황 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectStatisticsQueryController.java:30` |
-| 229 | project | PROJECT-STAT-002 | GET | `/api/v1/projects/statistics` | 지부 전체 프로젝트 지원/매칭 현황 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectStatisticsQueryController.java:56` |
+| 218 | project | APPLY-001 | POST | `/api/v1/projects/{projectId}/applications` | 챌린저 지원서 Draft 생성 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java:48` |
+| 219 | project | APPLY-002 | PUT | `/api/v1/projects/{projectId}/applications/me` | 챌린저 지원서 임시저장 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java:71` |
+| 220 | project | APPLY-003 | POST | `/api/v1/projects/{projectId}/applications/me/submit` | 챌린저 지원서 최종 제출 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java:94` |
+| 221 | project | APPLY-004 | GET | `/api/v1/projects/me/applications` | 본인 지원 내역 목록 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationQueryController.java:40` |
+| 222 | project | APPLY-005 | DELETE | `/api/v1/projects/{projectId}/applications/{applicationId}` | 챌린저 지원서 철회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java:148` |
+| 223 | project | APPLY-101 | GET | `/api/v1/projects/{projectId}/applications` | PM/운영진 단일 프로젝트 지원자 목록 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationQueryController.java:79` |
+| 224 | project | APPLY-102 | GET | `/api/v1/projects/{projectId}/applications/{applicationId}` | 지원서 단건 상세 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationQueryController.java:130` |
+| 225 | project | APPLY-103 | PATCH | `/api/v1/projects/{projectId}/applications/{applicationId}/decision` | 지원서 합/불 결정 (단일 PATCH) | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationController.java:119` |
+| 226 | project | PROJECT-001 | GET | `/api/v1/projects` | 프로젝트 목록 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:46` |
+| 227 | project | PROJECT-002 | GET | `/api/v1/projects/{projectId}` | 프로젝트 상세 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:65` |
+| 228 | project | PROJECT-003 | GET | `/api/v1/projects/{projectId}/members` | 프로젝트 팀원 구성 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:83` |
+| 229 | project | PROJECT-004 | POST | `/api/v1/projects/{projectId}/members` | 프로젝트 팀원 추가 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:144` |
+| 230 | project | PROJECT-005 | DELETE | `/api/v1/projects/{projectId}/members/{memberId}` | 프로젝트 팀원 제거 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:246` |
+| 231 | project | PROJECT-006 | GET | `/api/v1/projects/me/managed` | 내가 관리하는 프로젝트 목록 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:118` |
+| 232 | project | PROJECT-007 | GET | `/api/v1/projects/members` | 프로젝트 팀원 구성 일괄 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:101` |
+| 233 | project | PROJECT-101 | POST | `/api/v1/projects` | 프로젝트 Draft 생성 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:64` |
+| 234 | project | PROJECT-102 | PATCH | `/api/v1/projects/{projectId}` | 프로젝트 기본정보 수정 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:83` |
+| 235 | project | PROJECT-103 | GET | `/api/v1/projects/me/draft` | 내 Draft 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectQueryController.java:137` |
+| 236 | project | PROJECT-104 | POST | `/api/v1/projects/{projectId}/transfer-ownership` | 프로젝트 소유권 양도 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:124` |
+| 237 | project | PROJECT-105 | PUT | `/api/v1/projects/{projectId}/part-quotas` | 파트별 정원 일괄 갱신 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:186` |
+| 238 | project | PROJECT-106 | PUT | `/api/v1/projects/{projectId}/application-form` | 지원 폼 저장 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationFormController.java:37` |
+| 239 | project | PROJECT-106-GET | GET | `/api/v1/projects/{projectId}/application-form` | 지원 폼 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectApplicationFormController.java:58` |
+| 240 | project | PROJECT-107 | POST | `/api/v1/projects/{projectId}/submit` | 프로젝트 제출 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:104` |
+| 241 | project | PROJECT-108 | POST | `/api/v1/projects/{projectId}/publish` | 프로젝트 공개 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:164` |
+| 242 | project | PROJECT-109 | DELETE | `/api/v1/projects/{projectId}` | 프로젝트 삭제 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:206` |
+| 243 | project | PROJECT-110 | POST | `/api/v1/projects/{projectId}/abort` | 프로젝트 중단 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectCommandController.java:227` |
+| 244 | project | PROJECT-MATCHING-001 | GET | `/api/v1/project/matching-rounds` | 매칭 차수 목록 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectMatchingRoundController.java:44` |
+| 245 | project | PROJECT-MATCHING-101 | POST | `/api/v1/project/matching-rounds` | 매칭 차수 생성 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectMatchingRoundController.java:66` |
+| 246 | project | PROJECT-MATCHING-102 | PATCH | `/api/v1/project/matching-rounds/{matchingRoundId}` | 매칭 차수 수정 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectMatchingRoundController.java:87` |
+| 247 | project | PROJECT-MATCHING-103 | DELETE | `/api/v1/project/matching-rounds/{matchingRoundId}` | 매칭 차수 삭제 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectMatchingRoundController.java:110` |
+| 248 | project | PROJECT-MATCHING-201 | POST | `/api/v1/project/matching-rounds/{matchingRoundId}/auto-decide` | 매칭 차수 자동 선발 실행 (운영진 수동 트리거) | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectMatchingRoundController.java:127` |
+| 249 | project | PROJECT-STAT-001 | GET | `/api/v1/projects/{projectId}/statistics` | 단건 프로젝트 지원/매칭 현황 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectStatisticsQueryController.java:32` |
+| 250 | project | PROJECT-STAT-002 | GET | `/api/v1/projects/statistics` | 지부 전체 프로젝트 지원/매칭 현황 조회 | X | `src/main/java/com/umc/product/project/adapter/in/web/ProjectStatisticsQueryController.java:58` |
 
 ## schedule
 
 | 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |
 |---:|---|---|---|---|---|:---:|---|
-| 230 | schedule | SCHEDULE-C001 | POST | `/api/v2/schedules` | 일정 생성 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java:59` |
-| 231 | schedule | SCHEDULE-C002 | PATCH | `/api/v2/schedules/{scheduleId}` | 일정 수정 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java:125` |
-| 232 | schedule | SCHEDULE-C003 | POST | `/api/v2/schedules/{scheduleId}/attendances/request` | 출석 요청하기 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java:263` |
-| 233 | schedule | SCHEDULE-C004 | POST | `/api/v2/schedules/{scheduleId}/attendances/excuse` | 출석 요청이 불가능한 경우, 사유 제출하기 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java:312` |
-| 234 | schedule | SCHEDULE-C005 | POST | `/api/v2/schedules/{scheduleId}/attendances/decide` | [운영진용] 출석 요청 승인/거절 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java:359` |
-| 235 | schedule | SCHEDULE-C006 | DELETE | `/api/v2/schedules/{scheduleId}` | 일정 삭제 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java:186` |
-| 236 | schedule | SCHEDULE-C007 | DELETE | `/api/v2/schedules/{scheduleId}/force` | 일정 강제 삭제 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java:227` |
-| 237 | schedule | SCHEDULE-Q001 | GET | `/api/v2/schedules/capabilities` | 일정 생성, 수정 관련 권한 조회 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java:42` |
-| 238 | schedule | SCHEDULE-Q002 | GET | `/api/v2/schedules/me` | 내 일정 조회 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java:66` |
-| 239 | schedule | SCHEDULE-Q003 | GET | `/api/v2/schedules/{scheduleId}` | 일정 상세 조회 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java:103` |
-| 240 | schedule | SCHEDULE-Q004 | GET | `/api/v2/schedules/attendance` | [운영진용] 일정들의 출석 현황 조회 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java:143` |
-| 241 | schedule | SCHEDULE-Q005 | GET | `/api/v2/schedules/{scheduleId}/attendance` | [운영진용] 단일 일정 출석 현황 조회 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java:206` |
+| 251 | schedule | SCHEDULE-C001 | POST | `/api/v2/schedules` | 일정 생성 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java:62` |
+| 252 | schedule | SCHEDULE-C002 | PATCH | `/api/v2/schedules/{scheduleId}` | 일정 수정 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java:128` |
+| 253 | schedule | SCHEDULE-C003 | POST | `/api/v2/schedules/{scheduleId}/attendances/request` | 출석 요청하기 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java:266` |
+| 254 | schedule | SCHEDULE-C004 | POST | `/api/v2/schedules/{scheduleId}/attendances/excuse` | 출석 요청이 불가능한 경우, 사유 제출하기 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java:315` |
+| 255 | schedule | SCHEDULE-C005 | POST | `/api/v2/schedules/{scheduleId}/attendances/decide` | [운영진용] 출석 요청 승인/거절 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java:362` |
+| 256 | schedule | SCHEDULE-C006 | DELETE | `/api/v2/schedules/{scheduleId}` | 일정 삭제 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java:189` |
+| 257 | schedule | SCHEDULE-C007 | DELETE | `/api/v2/schedules/{scheduleId}/force` | 일정 강제 삭제 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleCommandV2Controller.java:230` |
+| 258 | schedule | SCHEDULE-Q001 | GET | `/api/v2/schedules/capabilities` | 일정 생성, 수정 관련 권한 조회 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java:45` |
+| 259 | schedule | SCHEDULE-Q002 | GET | `/api/v2/schedules/me` | 내 일정 조회 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java:69` |
+| 260 | schedule | SCHEDULE-Q003 | GET | `/api/v2/schedules/{scheduleId}` | 일정 상세 조회 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java:106` |
+| 261 | schedule | SCHEDULE-Q004 | GET | `/api/v2/schedules/attendance` | [운영진용] 일정들의 출석 현황 조회 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java:146` |
+| 262 | schedule | SCHEDULE-Q005 | GET | `/api/v2/schedules/{scheduleId}/attendance` | [운영진용] 단일 일정 출석 현황 조회 | X | `src/main/java/com/umc/product/schedule/adapter/in/web/v2/ScheduleQueryV2Controller.java:209` |
 
 ## storage
 
 | 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |
 |---:|---|---|---|---|---|:---:|---|
-| 242 | storage | STORAGE-001 | POST | `/api/v1/storage/prepare-upload` | 파일 업로드를 위한 Signed URL을 생성합니다. | X | `src/main/java/com/umc/product/storage/adapter/in/web/StorageController.java:38` |
-| 243 | storage | STORAGE-002 | POST | `/api/v1/storage/{fileId}/confirm` | 파일 업로드 완료 처리 | X | `src/main/java/com/umc/product/storage/adapter/in/web/StorageController.java:60` |
-| 244 | storage | STORAGE-003 | DELETE | `/api/v1/storage/{fileId}` | 파일 삭제 | X | `src/main/java/com/umc/product/storage/adapter/in/web/StorageController.java:70` |
+| 263 | storage | STORAGE-001 | POST | `/api/v1/storage/prepare-upload` | 파일 업로드를 위한 Signed URL을 생성합니다. | X | `src/main/java/com/umc/product/storage/adapter/in/web/StorageController.java:38` |
+| 264 | storage | STORAGE-002 | POST | `/api/v1/storage/{fileId}/confirm` | 파일 업로드 완료 처리 | X | `src/main/java/com/umc/product/storage/adapter/in/web/StorageController.java:60` |
+| 265 | storage | STORAGE-003 | DELETE | `/api/v1/storage/{fileId}` | 파일 삭제 | X | `src/main/java/com/umc/product/storage/adapter/in/web/StorageController.java:70` |
 
 ## term
 
 | 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |
 |---:|---|---|---|---|---|:---:|---|
-| 245 | term | TERM-001 | POST | `/api/v1/terms` | 약관 생성 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:71` |
-| 246 | term | TERM-101 | GET | `/api/v1/terms/type/{termType}` | 약관 유형으로 약관 조회 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:50` |
-| 247 | term | TERM-102 | GET | `/api/v1/terms/{termsId}` | 약관 ID로 약관 조회 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:57` |
-| 248 | term | TERM-103 | GET | `/api/v1/terms/consent-status/me` | 내 필수 약관 재동의 상태 조회 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:63` |
-| 249 | term | TERM-104 | GET | `/api/v1/terms` | 활성 약관 전체 조회 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:43` |
+| 266 | term | TERM-001 | POST | `/api/v1/terms` | 약관 생성 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:71` |
+| 267 | term | TERM-101 | GET | `/api/v1/terms/type/{termType}` | 약관 유형으로 약관 조회 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:50` |
+| 268 | term | TERM-102 | GET | `/api/v1/terms/{termsId}` | 약관 ID로 약관 조회 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:57` |
+| 269 | term | TERM-103 | GET | `/api/v1/terms/consent-status/me` | 내 필수 약관 재동의 상태 조회 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:63` |
+| 270 | term | TERM-104 | GET | `/api/v1/terms` | 활성 약관 전체 조회 | X | `src/main/java/com/umc/product/term/adapter/in/web/TermController.java:43` |
 
 ## test
 
 | 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |
 |---:|---|---|---|---|---|:---:|---|
-| 250 | test | <미지정> | POST | `/test/email/send-test` | <요약 없음> | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:85` |
-| 251 | test | <미지정> | GET | `/test/log-test` | <요약 없음> | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:212` |
-| 252 | test | SEED-001 | POST | `/test/seed/members` | 더미 멤버 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:81` |
-| 253 | test | SEED-001-M | POST | `/test/seed/member` | 테스트 멤버 단건 생성 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:97` |
-| 254 | test | SEED-002 | POST | `/test/seed/challengers` | 챌린저 분포 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:111` |
-| 255 | test | SEED-002-C | POST | `/test/seed/challenger` | 테스트 챌린저 단건 생성 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:126` |
-| 256 | test | SEED-002-R | POST | `/test/seed/challenger-role` | 테스트 챌린저 역할 단건 생성 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:138` |
-| 257 | test | SEED-003 | POST | `/test/seed/projects` | 프로젝트 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:155` |
-| 258 | test | SEED-003-D | DELETE | `/test/seed/projects` | 프로젝트 시딩 데이터 삭제 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:171` |
-| 259 | test | SEED-003-S | POST | `/test/seed/projects/scenarios` | 프로젝트 시나리오 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:193` |
-| 260 | test | SEED-004 | POST | `/test/seed/curriculum` | Curriculum 시딩 (Curriculum · WeeklyCurriculum · OriginalWorkbook · Mission) | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:215` |
-| 261 | test | SEED-005 | POST | `/test/seed/notice` | Notice 시딩 (지부 · 학교 · 파트 분포) | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:230` |
-| 262 | test | SEED-006 | POST | `/test/seed/project-applications` | 지원서 시나리오 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:249` |
-| 263 | test | TEST-001 | GET | `/test/file/{fileId}` | [개발용] 파일 ID를 기반으로 접근 가능한 URL을 조회합니다. | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:65` |
-| 264 | test | TEST-002 | POST | `/test/fcm/test-send` | FCM 푸시 알림 테스트 전송 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:77` |
-| 265 | test | TEST-003 | GET | `/test/webhook/aop-test` | AOP로 전송하는 알람 테스트 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:104` |
-| 266 | test | TEST-004 | POST | `/test/webhook/alarm` | 웹훅 알람 전송 테스트 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:117` |
-| 267 | test | TEST-005 | POST | `/test/webhook/alarm/buffer` | 웹훅 알람 버퍼 전송 테스트 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:133` |
-| 268 | test | TEST-006 | GET | `/test/apple-client-secret` | Apple Client Secret 생성 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:154` |
-| 269 | test | TEST-007 | GET | `/test/token/access` | AccessToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:160` |
-| 270 | test | TEST-008 | GET | `/test/token/refresh` | RefreshToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:173` |
-| 271 | test | TEST-009 | GET | `/test/token/email` | EmailVerificationToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:180` |
-| 272 | test | TEST-010 | GET | `/test/token/oauth` | oAuthVerificationToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:190` |
-| 273 | test | TEST-011 | GET | `/test/health-check` | 헬스 체크 API | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:198` |
-| 274 | test | TEST-012 | GET | `/test/check-authenticated` | 인증된 사용자인지 여부를 확인합니다. | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:205` |
+| 271 | test | <미지정> | POST | `/test/email/send-test` | <요약 없음> | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:85` |
+| 272 | test | <미지정> | GET | `/test/log-test` | <요약 없음> | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:212` |
+| 273 | test | SEED-001 | POST | `/test/seed/members` | 더미 멤버 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:81` |
+| 274 | test | SEED-001-M | POST | `/test/seed/member` | 테스트 멤버 단건 생성 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:97` |
+| 275 | test | SEED-002 | POST | `/test/seed/challengers` | 챌린저 분포 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:111` |
+| 276 | test | SEED-002-C | POST | `/test/seed/challenger` | 테스트 챌린저 단건 생성 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:126` |
+| 277 | test | SEED-002-R | POST | `/test/seed/challenger-role` | 테스트 챌린저 역할 단건 생성 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:138` |
+| 278 | test | SEED-003 | POST | `/test/seed/projects` | 프로젝트 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:155` |
+| 279 | test | SEED-003-D | DELETE | `/test/seed/projects` | 프로젝트 시딩 데이터 삭제 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:171` |
+| 280 | test | SEED-003-S | POST | `/test/seed/projects/scenarios` | 프로젝트 시나리오 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:193` |
+| 281 | test | SEED-004 | POST | `/test/seed/curriculum` | Curriculum 시딩 (Curriculum · WeeklyCurriculum · OriginalWorkbook · Mission) | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:215` |
+| 282 | test | SEED-005 | POST | `/test/seed/notice` | Notice 시딩 (지부 · 학교 · 파트 분포) | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:230` |
+| 283 | test | SEED-006 | POST | `/test/seed/project-applications` | 지원서 시나리오 시딩 | X | `src/main/java/com/umc/product/test/adapter/in/web/SeedController.java:249` |
+| 284 | test | TEST-001 | GET | `/test/file/{fileId}` | [개발용] 파일 ID를 기반으로 접근 가능한 URL을 조회합니다. | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:65` |
+| 285 | test | TEST-002 | POST | `/test/fcm/test-send` | FCM 푸시 알림 테스트 전송 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:77` |
+| 286 | test | TEST-003 | GET | `/test/webhook/aop-test` | AOP로 전송하는 알람 테스트 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:104` |
+| 287 | test | TEST-004 | POST | `/test/webhook/alarm` | 웹훅 알람 전송 테스트 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:117` |
+| 288 | test | TEST-005 | POST | `/test/webhook/alarm/buffer` | 웹훅 알람 버퍼 전송 테스트 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:133` |
+| 289 | test | TEST-006 | GET | `/test/apple-client-secret` | Apple Client Secret 생성 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:154` |
+| 290 | test | TEST-007 | GET | `/test/token/access` | AccessToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:160` |
+| 291 | test | TEST-008 | GET | `/test/token/refresh` | RefreshToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:173` |
+| 292 | test | TEST-009 | GET | `/test/token/email` | EmailVerificationToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:180` |
+| 293 | test | TEST-010 | GET | `/test/token/oauth` | oAuthVerificationToken 발급 | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:190` |
+| 294 | test | TEST-011 | GET | `/test/health-check` | 헬스 체크 API | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:198` |
+| 295 | test | TEST-012 | GET | `/test/check-authenticated` | 인증된 사용자인지 여부를 확인합니다. | X | `src/main/java/com/umc/product/test/adapter/in/web/TestController.java:205` |
 
