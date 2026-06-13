@@ -1,22 +1,19 @@
 package com.umc.product.maintenance.adapter.in.web.filter;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.config.SecurityPathConfig;
-import com.umc.product.global.response.ApiResponse;
+import com.umc.product.global.response.ApiErrorResponseWriter;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.maintenance.adapter.in.web.dto.response.MaintenanceWindowResponse;
 import com.umc.product.maintenance.application.port.in.query.dto.MaintenanceWindowInfo;
@@ -53,26 +50,26 @@ public class MaintenanceFilter extends OncePerRequestFilter {
 
     private final MaintenanceStateHolder stateHolder;
     private final MaintenanceBypassPolicy bypassPolicy;
-    private final ObjectMapper objectMapper;
+    private final ApiErrorResponseWriter errorResponseWriter;
     private final Clock clock;
 
     public MaintenanceFilter(
         MaintenanceStateHolder stateHolder,
         MaintenanceBypassPolicy bypassPolicy,
-        ObjectMapper objectMapper
+        ApiErrorResponseWriter errorResponseWriter
     ) {
-        this(stateHolder, bypassPolicy, objectMapper, Clock.systemUTC());
+        this(stateHolder, bypassPolicy, errorResponseWriter, Clock.systemUTC());
     }
 
     MaintenanceFilter(
         MaintenanceStateHolder stateHolder,
         MaintenanceBypassPolicy bypassPolicy,
-        ObjectMapper objectMapper,
+        ApiErrorResponseWriter errorResponseWriter,
         Clock clock
     ) {
         this.stateHolder = stateHolder;
         this.bypassPolicy = bypassPolicy;
-        this.objectMapper = objectMapper;
+        this.errorResponseWriter = errorResponseWriter;
         this.clock = clock;
     }
 
@@ -152,14 +149,8 @@ public class MaintenanceFilter extends OncePerRequestFilter {
         Instant now = clock.instant();
         long retryAfterSeconds = Math.max(1L, Duration.between(now, snapshot.endAt()).getSeconds());
 
-        response.setStatus(errorCode.getHttpStatus().value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
 
-        ApiResponse<MaintenanceWindowResponse> payload =
-            ApiResponse.onFailure(errorCode.getCode(), errorCode.getMessage(), body);
-
-        objectMapper.writeValue(response.getWriter(), payload);
+        errorResponseWriter.write(response, errorCode, body);
     }
 }
