@@ -8,4 +8,8 @@ public class StorageException extends BusinessException {
     public StorageException(StorageErrorCode errorCode) {
         super(Domain.STORAGE, errorCode);
     }
+
+    public StorageException(StorageErrorCode errorCode, Throwable cause) {
+        super(Domain.STORAGE, errorCode, cause);
+    }
 }

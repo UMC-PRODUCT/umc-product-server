@@ -39,8 +39,10 @@ public interface LoadProjectApplicationPort {
     );
 
     /**
-     * 본인의 DRAFT 지원서를 반드시 존재하는 것으로 조회합니다. 없으면 {@code PROJECT_DRAFT_APPLICATION_NOT_FOUND} 예외.
-     * update / submit 에서 사용합니다.
+     * (projectId, memberId) 로 단일 DRAFT 지원서를 조회합니다.
+     * <p>
+     * 같은 프로젝트/멤버에 여러 차수의 DRAFT가 공존할 수 있는 지원서 update/submit 흐름에서는 사용하지 않고,
+     * applicationId로 대상을 명시해야 합니다. 없으면 {@code PROJECT_DRAFT_APPLICATION_NOT_FOUND} 예외.
      */
     ProjectApplication getDraftByProjectAndMember(Long projectId, Long memberId);
 
