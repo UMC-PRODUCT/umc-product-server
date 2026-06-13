@@ -4,15 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
-import com.umc.product.organization.application.port.out.query.LoadGisuPort;
-import com.umc.product.organization.domain.Gisu;
-import com.umc.product.organization.exception.OrganizationDomainException;
-import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +16,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
+import com.umc.product.organization.application.port.out.query.LoadGisuPort;
+import com.umc.product.organization.domain.Gisu;
+import com.umc.product.organization.exception.OrganizationDomainException;
+import com.umc.product.organization.exception.OrganizationErrorCode;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GisuQueryService")

@@ -1,10 +1,12 @@
 package com.umc.product.organization.adapter.in.web.v2.dto.response;
 
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo;
-import com.umc.product.organization.domain.enums.SchoolLinkType;
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
+
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo;
+import com.umc.product.organization.domain.enums.SchoolLinkType;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "기수 조직 조회 v2 응답")
 public record GisuOrganizationV2Response(

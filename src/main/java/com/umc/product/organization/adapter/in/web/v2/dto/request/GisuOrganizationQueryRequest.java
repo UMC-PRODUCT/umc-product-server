@@ -1,11 +1,13 @@
 package com.umc.product.organization.adapter.in.web.v2.dto.request;
 
+import java.util.List;
+import java.util.Objects;
+
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationQuery;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.List;
-import java.util.Objects;
 
 @Schema(description = "기수 조직 조회 조건")
 public record GisuOrganizationQueryRequest(

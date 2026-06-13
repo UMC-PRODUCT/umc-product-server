@@ -1,5 +1,14 @@
 package com.umc.product.organization.application.port.service.query;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
@@ -11,14 +20,8 @@ import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.School;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

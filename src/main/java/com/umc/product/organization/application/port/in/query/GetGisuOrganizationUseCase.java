@@ -1,8 +1,9 @@
 package com.umc.product.organization.application.port.in.query;
 
+import java.util.List;
+
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationQuery;
-import java.util.List;
 
 public interface GetGisuOrganizationUseCase {
 

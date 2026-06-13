@@ -1,25 +1,25 @@
 package com.umc.product.organization.application.port.service.query;
 
-import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
-import com.umc.product.organization.application.port.in.query.GetGisuOrganizationUseCase;
-import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
-import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
-import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.ChapterOrganizationInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.SchoolOrganizationInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationQuery;
-import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.GetGisuOrganizationUseCase;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.ChapterOrganizationInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.SchoolOrganizationInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationQuery;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor

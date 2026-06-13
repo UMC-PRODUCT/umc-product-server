@@ -1,12 +1,13 @@
 package com.umc.product.organization.application.port.in.query;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolLinkInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.UnassignedSchoolInfo;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 
 public interface GetSchoolUseCase {

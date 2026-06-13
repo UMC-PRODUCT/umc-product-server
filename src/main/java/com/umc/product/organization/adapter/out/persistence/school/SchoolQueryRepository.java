@@ -6,6 +6,17 @@ import static com.umc.product.organization.domain.QGisu.gisu;
 import static com.umc.product.organization.domain.QSchool.school;
 import static com.umc.product.organization.domain.QSchoolLink.schoolLink;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
+
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -20,16 +31,8 @@ import com.umc.product.organization.application.port.in.query.dto.school.SchoolL
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolSearchCondition;
 import com.umc.product.organization.domain.School;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.support.PageableExecutionUtils;
-import org.springframework.stereotype.Repository;
-import org.springframework.util.StringUtils;
 
 @Repository
 @RequiredArgsConstructor

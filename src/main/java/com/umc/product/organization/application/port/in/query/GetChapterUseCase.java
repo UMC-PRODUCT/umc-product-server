@@ -1,10 +1,11 @@
 package com.umc.product.organization.application.port.in.query;
 
-import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
-import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 
 public interface GetChapterUseCase {
 

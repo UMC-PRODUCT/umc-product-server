@@ -11,19 +11,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.umc.product.global.config.JacksonConfig;
-import com.umc.product.global.security.JwtTokenProvider;
-import com.umc.product.organization.application.port.in.query.GetGisuOrganizationUseCase;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.ChapterOrganizationInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.ChapterSchoolInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.SchoolLinkInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.SchoolOrganizationInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationQuery;
-import com.umc.product.organization.domain.enums.SchoolLinkType;
-import com.umc.product.support.RestDocsConfig;
 import java.time.Instant;
 import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -36,6 +26,18 @@ import org.springframework.restdocs.mockmvc.RestDocumentationResultHandler;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.umc.product.global.config.JacksonConfig;
+import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.organization.application.port.in.query.GetGisuOrganizationUseCase;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.ChapterOrganizationInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.ChapterSchoolInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.SchoolLinkInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.SchoolOrganizationInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationQuery;
+import com.umc.product.organization.domain.enums.SchoolLinkType;
+import com.umc.product.support.RestDocsConfig;
 
 @WebMvcTest(controllers = GisuQueryV2Controller.class)
 @Import({JacksonConfig.class, RestDocsConfig.class})
@@ -172,7 +174,7 @@ class GisuQueryV2ControllerTest {
     void 조회_기준이_없으면_400을_반환한다() throws Exception {
         mockMvc.perform(get("/api/v2/gisu"))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value("ORGANIZATION-0039"));
+            .andExpect(jsonPath("$.code").value("ORGANIZATION-0065"));
 
         then(getGisuOrganizationUseCase).shouldHaveNoInteractions();
     }
@@ -184,7 +186,7 @@ class GisuQueryV2ControllerTest {
                 .param("id", "1")
                 .param("generation", "9"))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value("ORGANIZATION-0039"));
+            .andExpect(jsonPath("$.code").value("ORGANIZATION-0065"));
 
         then(getGisuOrganizationUseCase).shouldHaveNoInteractions();
     }
@@ -195,7 +197,7 @@ class GisuQueryV2ControllerTest {
         mockMvc.perform(get("/api/v2/gisu")
                 .param("active", "false"))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value("ORGANIZATION-0039"));
+            .andExpect(jsonPath("$.code").value("ORGANIZATION-0065"));
 
         then(getGisuOrganizationUseCase).shouldHaveNoInteractions();
     }

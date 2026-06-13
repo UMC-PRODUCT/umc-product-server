@@ -17,6 +17,7 @@ import com.umc.product.test.application.service.MemberSeedService;
 import com.umc.product.test.application.service.NoticeSeedService;
 import com.umc.product.test.application.service.PartAssignmentPolicy;
 import com.umc.product.test.application.service.ProjectApplicationSeedService;
+import com.umc.product.test.application.service.ProjectSeedDataCleanupService;
 import com.umc.product.test.application.service.ProjectSeedService;
 import com.umc.product.test.application.service.SeedProperties;
 
@@ -35,6 +36,7 @@ class SeedControllerBeanRegistrationTest {
         MemberSeedService.class,
         ChallengerSeedService.class,
         ProjectSeedService.class,
+        ProjectSeedDataCleanupService.class,
         ProjectApplicationSeedService.class,
         CurriculumSeedService.class,
         NoticeSeedService.class,
@@ -45,7 +47,7 @@ class SeedControllerBeanRegistrationTest {
         SeedProperties.class
     })
     @DisplayName("모든 시딩 빈은 @Profile(!prod) + @ConditionalOnProperty(app.seed.enabled=true) 가드를 가진다")
-    void 시딩_빈_가드_어노테이션_보유(Class<?> seedBeanClass) {
+    void seedBeanGuardAnnotationsExist(Class<?> seedBeanClass) {
         Profile profile = seedBeanClass.getAnnotation(Profile.class);
         assertThat(profile)
             .as("%s 는 @Profile 가드가 있어야 한다", seedBeanClass.getSimpleName())

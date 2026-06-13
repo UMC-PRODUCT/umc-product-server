@@ -4,6 +4,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
+import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import com.umc.product.organization.application.port.out.query.LoadChapterPort;
@@ -12,17 +25,6 @@ import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
-import java.time.Instant;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChapterQueryService")

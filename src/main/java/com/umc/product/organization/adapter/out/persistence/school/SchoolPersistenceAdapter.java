@@ -1,6 +1,14 @@
 package com.umc.product.organization.adapter.out.persistence.school;
 
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Component;
+
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolGisuChapterInfo;
@@ -12,13 +20,8 @@ import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.School;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor

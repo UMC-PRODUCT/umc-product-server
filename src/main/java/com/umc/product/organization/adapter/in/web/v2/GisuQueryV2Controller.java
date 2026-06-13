@@ -1,16 +1,18 @@
 package com.umc.product.organization.adapter.in.web.v2;
 
-import com.umc.product.global.security.annotation.Public;
-import com.umc.product.organization.adapter.in.web.v2.dto.request.GisuOrganizationQueryRequest;
-import com.umc.product.organization.adapter.in.web.v2.dto.response.GisuOrganizationV2Response;
-import com.umc.product.organization.application.port.in.query.GetGisuOrganizationUseCase;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.umc.product.global.security.annotation.Public;
+import com.umc.product.organization.adapter.in.web.v2.dto.request.GisuOrganizationQueryRequest;
+import com.umc.product.organization.adapter.in.web.v2.dto.response.GisuOrganizationV2Response;
+import com.umc.product.organization.application.port.in.query.GetGisuOrganizationUseCase;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v2/gisu")

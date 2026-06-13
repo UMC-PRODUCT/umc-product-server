@@ -1,5 +1,13 @@
 package com.umc.product.member.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -12,14 +20,9 @@ import com.umc.product.member.application.port.in.query.dto.SearchMemberQuery;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.QMember;
 import com.umc.product.organization.domain.QChapterSchool;
+
 import jakarta.persistence.LockModeType;
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor

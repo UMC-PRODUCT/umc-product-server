@@ -1,6 +1,15 @@
 package com.umc.product.storage.application.service;
 
+import java.util.Objects;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.storage.application.port.in.command.ManageFileUseCase;
+import com.umc.product.storage.application.port.in.command.dto.DeleteFileCommand;
 import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
 import com.umc.product.storage.application.port.in.command.dto.PrepareFileUploadCommand;
 import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
@@ -11,16 +20,13 @@ import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
-import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class FileCommandService implements ManageFileUseCase {
 
     private static final long UPLOAD_URL_DURATION_MINUTES = 15;
@@ -28,8 +34,10 @@ public class FileCommandService implements ManageFileUseCase {
     private final StoragePort storagePort;
     private final LoadFileMetadataPort loadFileMetadataPort;
     private final SaveFileMetadataPort saveFileMetadataPort;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @Override
+    @Transactional
     public FileUploadInfo getFileUploadUrl(PrepareFileUploadCommand command) {
         // 파일 검증
         validateFile(command);
@@ -80,6 +88,7 @@ public class FileCommandService implements ManageFileUseCase {
     }
 
     @Override
+    @Transactional
     public void confirmUpload(String fileId) {
         FileMetadata metadata = loadFileMetadataPort.findByFileId(fileId)
             .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
@@ -100,17 +109,34 @@ public class FileCommandService implements ManageFileUseCase {
     }
 
     @Override
-    public void deleteFile(String fileId) {
-        FileMetadata metadata = loadFileMetadataPort.findByFileId(fileId)
+    public void deleteFile(DeleteFileCommand command) {
+        FileMetadata metadata = loadFileMetadataPort.findByFileId(command.fileId())
             .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
+
+        validateDeletePermission(metadata, command.requesterMemberId());
 
         // 스토리지에서 파일 삭제
         storagePort.delete(metadata.getStorageKey());
 
         // 메타데이터 삭제
-        saveFileMetadataPort.deleteByFileId(fileId);
+        saveFileMetadataPort.deleteByFileId(command.fileId());
 
-        log.info("파일 삭제 완료: fileId={}", fileId);
+        log.info("파일 삭제 완료: fileId={}", command.fileId());
+    }
+
+    private void validateDeletePermission(FileMetadata metadata, Long requesterMemberId) {
+        if (Objects.equals(metadata.getUploadedMemberId(), requesterMemberId) || isSuperAdmin(requesterMemberId)) {
+            return;
+        }
+
+        throw new StorageException(StorageErrorCode.FILE_DELETE_FORBIDDEN);
+    }
+
+    private boolean isSuperAdmin(Long memberId) {
+        return getChallengerRoleUseCase.findAllByMemberId(memberId).stream()
+            .map(ChallengerRoleInfo::roleType)
+            .filter(Objects::nonNull)
+            .anyMatch(roleType -> roleType.isSuperAdmin());
     }
 
     private void validateFile(PrepareFileUploadCommand command) {

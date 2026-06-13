@@ -36,7 +36,7 @@ public class ChallengerPointCommandController {
         resourceType = ResourceType.CHALLENGER_POINT,
         resourceId = "#challengerId",
         permission = PermissionType.WRITE,
-        message = "중앙운영사무국 소속이거나 부여하고자 하는 챌린저의 학교 회장단만 상벌점을 부여할 수 있습니다."
+        message = "상벌점은 중앙운영사무국 또는 해당 학교 회장단만 부여할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Operation(summary = "[POINT-001] 챌린저 상벌점 부여", description = "회장단 이상 가능합니다.")
     @PostMapping("{challengerId}/points")
@@ -53,7 +53,7 @@ public class ChallengerPointCommandController {
         resourceType = ResourceType.CHALLENGER_POINT,
         resourceId = "#challengerPointId",
         permission = PermissionType.EDIT,
-        message = "중앙운영사무국 소속이거나 부여하고자 하는 챌린저의 학교 회장단만 상벌점 사유를 수정할 수 있습니다."
+        message = "상벌점 사유는 중앙운영사무국 또는 해당 학교 회장단만 수정할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Operation(summary = "[POINT-002] 챌린저 상벌점 사유 수정", description = "회장단 이상 가능합니다.")
     @PatchMapping("points/{challengerPointId}")
@@ -68,7 +68,7 @@ public class ChallengerPointCommandController {
         resourceType = ResourceType.CHALLENGER_POINT,
         resourceId = "#challengerPointId",
         permission = PermissionType.DELETE,
-        message = "중앙운영사무국 총괄단만 상벌점 부여 기록을 삭제할 수 있습니다."
+        message = "상벌점 기록은 중앙운영사무국 총괄단만 삭제할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Operation(summary = "[POINT-003] 챌린저 상벌점 삭제", description = "총괄단만 가능합니다.")
     @DeleteMapping("points/{challengerPointId}")

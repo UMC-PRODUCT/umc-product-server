@@ -1,5 +1,15 @@
 package com.umc.product.project.adapter.in.web;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -14,22 +24,13 @@ import com.umc.product.project.application.port.in.command.CreateDraftProjectApp
 import com.umc.product.project.application.port.in.command.DecideApplicationUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectApplicationDraftUseCase;
-import com.umc.product.project.adapter.in.web.dto.request.CreateProjectApplicationRequest;
 import com.umc.product.project.application.port.in.command.dto.CancelProjectApplicationCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectApplicationCommand;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/projects")
@@ -52,7 +53,7 @@ public class ProjectApplicationController {
         resourceType = ResourceType.PROJECT_APPLICATION,
         resourceId = "#projectId",
         permission = PermissionType.WRITE,
-        message = "지원서 생성 권한이 없습니다."
+        message = "지원서를 작성할 권한이 없어요. 지원 가능한 프로젝트인지 확인해주세요."
     )
     public ProjectApplicationStatusResponse createDraft(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -75,7 +76,7 @@ public class ProjectApplicationController {
         resourceType = ResourceType.PROJECT_APPLICATION,
         resourceId = "#projectId",
         permission = PermissionType.WRITE,
-        message = "지원서 임시저장 권한이 없습니다."
+        message = "지원서를 임시저장할 권한이 없어요. 지원 가능한 프로젝트인지 확인해주세요."
     )
     public ProjectApplicationStatusResponse updateDraft(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -98,7 +99,7 @@ public class ProjectApplicationController {
         resourceType = ResourceType.PROJECT_APPLICATION,
         resourceId = "#projectId",
         permission = PermissionType.WRITE,
-        message = "지원서 제출 권한이 없습니다."
+        message = "지원서를 제출할 권한이 없어요. 지원 가능한 프로젝트인지 확인해주세요."
     )
     public ProjectApplicationStatusResponse submit(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -128,7 +129,7 @@ public class ProjectApplicationController {
         resourceType = ResourceType.PROJECT_APPLICATION,
         resourceId = "#applicationId",
         permission = PermissionType.APPROVE,
-        message = "지원서 합/불 결정 권한이 없습니다."
+        message = "지원서 합격 여부는 권한이 있는 운영진만 결정할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public ProjectApplicationStatusResponse decide(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -163,7 +164,7 @@ public class ProjectApplicationController {
         resourceType = ResourceType.PROJECT_APPLICATION,
         resourceId = "#applicationId",
         permission = PermissionType.DELETE,
-        message = "지원서 철회 권한이 없습니다."
+        message = "지원서는 지원자 본인만 철회할 수 있어요."
     )
     public ProjectApplicationStatusResponse cancel(
         @CurrentMember MemberPrincipal memberPrincipal,

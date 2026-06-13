@@ -2,16 +2,19 @@ package com.umc.product.organization.adapter.out.persistence.chapter;
 
 import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.QChapter;
 import com.umc.product.organization.domain.QGisu;
 import com.umc.product.organization.domain.QSchool;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor

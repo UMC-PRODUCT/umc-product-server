@@ -4,21 +4,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
-import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
-import com.umc.product.organization.application.port.in.query.dto.school.SchoolGisuChapterInfo;
-import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
-import com.umc.product.organization.domain.enums.SchoolLinkType;
-import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolGisuChapterInfo;
+import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
+import com.umc.product.organization.domain.enums.SchoolLinkType;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SchoolQueryService")

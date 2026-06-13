@@ -1,11 +1,12 @@
 package com.umc.product.organization.application.port.in.query.dto.gisu;
 
+import java.time.Instant;
+import java.util.List;
+
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.organization.domain.enums.SchoolLinkType;
-import java.time.Instant;
-import java.util.List;
 
 public record GisuOrganizationInfo(
     Long gisuId,
