@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/umc-product/generations")
 @RequiredArgsConstructor
-@Tag(name = "Organization | UMC Product 기수 Command", description = "UMC Product 기수 생성, 수정, 삭제")
+@Tag(name = "Organization | UMC PRODUCT 기수 Command", description = "UMC PRODUCT 기수 생성, 수정, 삭제")
 public class UmcProductGenerationCommandController {
 
     private final ManageUmcProductGenerationUseCase manageUmcProductGenerationUseCase;
@@ -31,8 +31,8 @@ public class UmcProductGenerationCommandController {
     @PostMapping
     @Operation(
         operationId = "UMC-PRODUCT-GENERATION-001",
-        summary = "[UMC-PRODUCT-GENERATION-001] UMC Product 기수 생성",
-        description = "UMC Product 기수를 생성합니다. 기수 생성 권한을 가진 요청자만 호출할 수 있으며, 동일한 기수 번호는 중복 등록할 수 없습니다. active=true로 생성하면 기존 활성 기수는 비활성화됩니다."
+        summary = "UMC PRODUCT 기수 생성",
+        description = "UMC PRODUCT 기수를 생성합니다. 기수 생성 권한을 가진 요청자만 호출할 수 있으며, 동일한 기수 번호는 중복 등록할 수 없습니다. active=true로 생성하면 기존 활성 기수는 비활성화됩니다."
     )
     public Long create(
         @CurrentMember MemberPrincipal currentMember,
@@ -44,8 +44,8 @@ public class UmcProductGenerationCommandController {
     @PatchMapping("/{umcProductGenerationId}")
     @Operation(
         operationId = "UMC-PRODUCT-GENERATION-002",
-        summary = "[UMC-PRODUCT-GENERATION-002] UMC Product 기수 수정",
-        description = "UMC Product 기수의 번호, 운영 기간, 활성 여부를 수정합니다. 해당 기수 관리 권한을 가진 요청자만 호출할 수 있으며, active=true로 수정하면 기존 활성 기수는 비활성화됩니다."
+        summary = "UMC PRODUCT 기수 수정",
+        description = "UMC PRODUCT 기수의 번호, 운영 기간, 활성 여부를 수정합니다. 해당 기수 관리 권한을 가진 요청자만 호출할 수 있으며, active=true로 수정하면 기존 활성 기수는 비활성화됩니다."
     )
     public void update(
         @PathVariable Long umcProductGenerationId,
@@ -60,8 +60,8 @@ public class UmcProductGenerationCommandController {
     @DeleteMapping("/{umcProductGenerationId}")
     @Operation(
         operationId = "UMC-PRODUCT-GENERATION-003",
-        summary = "[UMC-PRODUCT-GENERATION-003] UMC Product 기수 삭제",
-        description = "UMC Product 기수를 삭제합니다. 해당 기수 관리 권한을 가진 요청자만 호출할 수 있습니다."
+        summary = "UMC PRODUCT 기수 삭제",
+        description = "UMC PRODUCT 기수를 삭제합니다. 해당 기수 관리 권한을 가진 요청자만 호출할 수 있습니다."
     )
     public void delete(
         @PathVariable Long umcProductGenerationId,

@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/umc-product/generations")
 @RequiredArgsConstructor
-@Tag(name = "Organization | UMC Product 기수 Query", description = "UMC Product 기수 목록 및 상세 조회")
+@Tag(name = "Organization | UMC PRODUCT 기수 Query", description = "UMC PRODUCT 기수 목록 및 상세 조회")
 public class UmcProductGenerationQueryController {
 
     private final GetUmcProductGenerationUseCase getUmcProductGenerationUseCase;
@@ -26,8 +26,8 @@ public class UmcProductGenerationQueryController {
     @GetMapping
     @Operation(
         operationId = "UMC-PRODUCT-GENERATION-101",
-        summary = "[UMC-PRODUCT-GENERATION-101] UMC Product 기수 목록 조회",
-        description = "등록된 UMC Product 기수 목록을 조회합니다. 각 기수의 번호, 운영 기간, 활성 여부를 반환합니다."
+        summary = "UMC PRODUCT 기수 목록 조회",
+        description = "등록된 UMC PRODUCT 기수 목록을 조회합니다. 각 기수의 번호, 운영 기간, 활성 여부를 반환합니다."
     )
     public UmcProductGenerationListResponse list() {
         return UmcProductGenerationListResponse.from(getUmcProductGenerationUseCase.listAll());
@@ -36,8 +36,8 @@ public class UmcProductGenerationQueryController {
     @GetMapping("/{umcProductGenerationId}")
     @Operation(
         operationId = "UMC-PRODUCT-GENERATION-102",
-        summary = "[UMC-PRODUCT-GENERATION-102] UMC Product 기수 상세 조회",
-        description = "UMC Product 기수 ID로 단건 상세 정보를 조회합니다. 기수 번호, 운영 기간, 활성 여부를 반환합니다."
+        summary = "UMC PRODUCT 기수 상세 조회",
+        description = "UMC PRODUCT 기수 ID로 단건 상세 정보를 조회합니다. 기수 번호, 운영 기간, 활성 여부를 반환합니다."
     )
     public UmcProductGenerationResponse get(@PathVariable Long umcProductGenerationId) {
         return UmcProductGenerationResponse.from(getUmcProductGenerationUseCase.getById(umcProductGenerationId));

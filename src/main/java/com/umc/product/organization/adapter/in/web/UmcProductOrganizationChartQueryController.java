@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/umc-product/organization-chart")
 @RequiredArgsConstructor
-@Tag(name = "Organization | UMC Product 조직도 Query", description = "UMC Product 기수별 조직도 조회")
+@Tag(name = "Organization | UMC PRODUCT 조직도 Query", description = "UMC PRODUCT 기수별 조직도 조회")
 public class UmcProductOrganizationChartQueryController {
 
     private final GetUmcProductOrganizationChartUseCase getUmcProductOrganizationChartUseCase;
@@ -25,8 +25,8 @@ public class UmcProductOrganizationChartQueryController {
     @GetMapping
     @Operation(
         operationId = "UMC-PRODUCT-ORGANIZATION-CHART-101",
-        summary = "[UMC-PRODUCT-ORGANIZATION-CHART-101] UMC Product 조직도 조회",
-        description = "기수 ID 기준으로 UMC Product 조직도를 조회합니다. 기수 정보, 해당 기수의 기능 조직 목록, 운영 기간과 겹치는 스쿼드 목록을 함께 반환합니다."
+        summary = "UMC PRODUCT 조직도 조회",
+        description = "기수 ID 기준으로 UMC PRODUCT 조직도를 조회합니다. 기수 정보, 해당 기수의 기능 조직 목록, 운영 기간과 겹치는 스쿼드 목록을 함께 반환합니다."
     )
     public UmcProductOrganizationChartResponse get(@RequestParam Long umcProductGenerationId) {
         return UmcProductOrganizationChartResponse.from(
