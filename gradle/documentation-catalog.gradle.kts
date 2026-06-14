@@ -32,16 +32,19 @@ data class ErrorCodeDocumentationEntry(
 // 생성 산출물은 docs/guides와 Spring static resource 양쪽에 쓴다.
 // docs/guides는 repository 문서용, static resource는 서버/Backoffice 서빙용이다.
 val documentationSourceRoot = file("src/main/java")
-val errorCodeCatalogMarkdownFile = file("docs/guides/ErrorCode_목록.md")
-val errorCodeCatalogJsonFile = file("docs/guides/ErrorCode_목록.json")
-val errorCodeCatalogSchemaFile = file("docs/guides/ErrorCode_목록.schema.json")
+val errorCodeCatalogMarkdownFile = file("docs/guides/에러_코드_목록.md")
+val errorCodeCatalogJsonFile = file("docs/guides/에러_코드_목록.json")
+val errorCodeCatalogSchemaFile = file("docs/guides/에러_코드_목록.schema.json")
 val staticErrorCodeCatalogMarkdownFile = file("src/main/resources/static/docs/catalog/error/catalog.md")
 val staticErrorCodeCatalogJsonFile = file("src/main/resources/static/docs/catalog/error/catalog.json")
 val staticErrorCodeCatalogSchemaFile = file("src/main/resources/static/docs/catalog/error/catalog.schema.json")
 val staticErrorCodeCatalogIndexFile = file("src/main/resources/static/docs/catalog/error/index.html")
-val apiCatalogFilesToRemove = listOf(
+val staleCatalogFilesToRemove = listOf(
     file("docs/guides/API_목록.md"),
     file("docs/guides/API_목록.json"),
+    file("docs/guides/ErrorCode_목록.md"),
+    file("docs/guides/ErrorCode_목록.json"),
+    file("docs/guides/ErrorCode_목록.schema.json"),
     file("src/main/resources/static/docs/catalog/api/catalog.md"),
     file("src/main/resources/static/docs/catalog/api/catalog.json"),
     file("src/main/resources/static/docs/catalog/api/index.html")
@@ -52,6 +55,8 @@ val errorCodeCatalogSchemaVersion = 1
 
 // Markdown/JSON/HTML을 문자열로 직접 생성하므로 출력 포맷별 escaping을 명시적으로 처리한다.
 fun String.escapeMarkdownCell(): String = replace("|", "\\|").replace("\n", "<br>")
+
+fun String.normalizeLineEndings(): String = replace("\r\n", "\n").replace("\r", "\n")
 
 fun String.escapeJson(): String = buildString {
     this@escapeJson.forEach { ch ->
@@ -312,17 +317,17 @@ fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
 }
 
 fun buildErrorCodeCatalogMarkdown(entries: List<ErrorCodeDocumentationEntry>): String = buildString {
-    appendLine("# ErrorCode Catalog")
+    appendLine("# 에러 코드 목록")
     appendLine()
-    appendLine("서버가 반환하는 ErrorCode를 독립 규격(v1)으로 정리합니다.")
+    appendLine("서버가 응답할 수 있는 에러 코드를 도메인별로 확인할 수 있어요.")
     appendLine()
-    appendLine("> 소스 기준: 각 도메인의 `*ErrorCode.java` enum을 스캔합니다. 갱신: `./gradlew generateDocumentationCatalogs`")
+    appendLine("> 코드를 추가하거나 수정했다면 `./gradlew generateDocumentationCatalogs`를 실행해주세요.")
     appendLine()
 
     entries.groupBy { it.domain }.forEach { (domain, domainEntries) ->
         appendLine("## $domain")
         appendLine()
-        appendLine("| 순번 | 도메인 | Code | Name | HTTP Status | Message | Client Action | Retryable | Severity | Deprecated | Owners | Tags | Source |")
+        appendLine("| 순번 | 도메인 | 코드 | 이름 | HTTP 상태 | 메시지 | 사용자 행동 | 재시도 | 심각도 | 사용 중단 | 담당자 | 태그 | 원본 |")
         appendLine("|---:|---|---|---|---|---|---|---|---|---|---|---|---|")
         domainEntries.forEach { entry ->
             appendLine(
@@ -465,7 +470,7 @@ fun buildCatalogIndexHtml(entries: List<ErrorCodeDocumentationEntry>): String {
         <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>UMC PRODUCT ErrorCode Catalog</title>
+            <title>UMC PRODUCT 에러 코드 목록</title>
             <style>
                 :root {
                     color-scheme: light;
@@ -554,18 +559,18 @@ fun buildCatalogIndexHtml(entries: List<ErrorCodeDocumentationEntry>): String {
         </head>
         <body>
             <header>
-                <h1>ErrorCode Catalog</h1>
-                <p>Generated from server ErrorCode enums. Manifest: <code>catalog.json</code>, schema: <code>catalog.schema.json</code></p>
+                <h1>에러 코드 목록</h1>
+                <p>서버가 응답할 수 있는 에러 코드를 확인할 수 있어요. 원본 데이터는 <code>catalog.json</code>, 규격은 <code>catalog.schema.json</code>에서 확인해주세요.</p>
             </header>
             <main>
                 <div class="toolbar">
-                    <input id="search" type="search" placeholder="code, name, message, action, owner, tag, source">
+                    <input id="search" type="search" placeholder="코드, 이름, 메시지, 행동, 담당자, 태그, 원본 검색">
                     <select id="domain">
-                        <option value="">All domains</option>
+                        <option value="">모든 도메인</option>
 $domainOptions
                     </select>
                     <select id="status">
-                        <option value="">All statuses</option>
+                        <option value="">모든 상태</option>
 $statusOptions
                     </select>
                 </div>
@@ -574,15 +579,15 @@ $statusOptions
                     <table>
                         <thead>
                             <tr>
-                                <th>Code</th>
-                                <th>Domain</th>
-                                <th>Status</th>
-                                <th>Message</th>
-                                <th>Client Action</th>
-                                <th>Retryable</th>
-                                <th>Severity</th>
-                                <th>Tags</th>
-                                <th>Source</th>
+                                <th>코드</th>
+                                <th>도메인</th>
+                                <th>상태</th>
+                                <th>메시지</th>
+                                <th>사용자 행동</th>
+                                <th>재시도</th>
+                                <th>심각도</th>
+                                <th>태그</th>
+                                <th>원본</th>
                             </tr>
                         </thead>
                         <tbody id="rows"></tbody>
@@ -635,7 +640,7 @@ $statusOptions
                             && (!selectedStatus || itemStatus === selectedStatus);
                     });
 
-                    summary.textContent = filtered.length + " / " + manifest.totalCount + " error codes";
+                    summary.textContent = filtered.length + " / " + manifest.totalCount + "개의 에러 코드";
                     rows.innerHTML = filtered.map((item) => {
                         const tags = item.tags.length > 0 ? item.tags.map(badge).join("") : "<span class=\"muted\">-</span>";
                         return "<tr>"
@@ -665,8 +670,9 @@ $statusOptions
 // generated artifact의 timestamp churn을 막기 위해 내용이 달라진 경우에만 파일을 쓴다.
 fun writeIfChanged(file: File, content: String) {
     file.parentFile.mkdirs()
-    if (!file.exists() || file.readText() != content) {
-        file.writeText(content)
+    val normalizedContent = content.normalizeLineEndings()
+    if (!file.exists() || file.readText().normalizeLineEndings() != normalizedContent) {
+        file.writeText(normalizedContent)
     }
 }
 
@@ -703,7 +709,7 @@ fun collectDocumentationIssues(): List<String> {
 // 문서와 서버 static resource를 한 번에 갱신하는 실제 생성 task다.
 tasks.register("generateErrorCodeCatalog") {
     group = "documentation"
-    description = "ErrorCode 카탈로그 문서와 v1 JSON manifest/schema를 생성합니다."
+    description = "에러 코드 목록 문서와 v1 JSON 파일을 생성합니다."
 
     doLast {
         val entries = extractErrorCodeEntries()
@@ -718,17 +724,17 @@ tasks.register("generateErrorCodeCatalog") {
         writeIfChanged(staticErrorCodeCatalogJsonFile, json)
         writeIfChanged(staticErrorCodeCatalogSchemaFile, schema)
         writeIfChanged(staticErrorCodeCatalogIndexFile, buildCatalogIndexHtml(entries))
-        println("[generateErrorCodeCatalog] ${entries.size}개 ErrorCode를 문서화했습니다.")
+        println("[generateErrorCodeCatalog] 에러 코드 ${entries.size}개를 정리했어요.")
     }
 }
 
 // API 문서는 OpenAPI/Scalar가 담당하므로 이전 custom API catalog 산출물은 재생성하지 않고 제거한다.
-tasks.register("removeApiCatalogArtifacts") {
+tasks.register("removeStaleCatalogArtifacts") {
     group = "documentation"
-    description = "삭제된 커스텀 API 카탈로그 산출물을 제거합니다. Scalar/OpenAPI 문서는 유지합니다."
+    description = "더 이상 사용하지 않는 문서 산출물을 제거합니다. Scalar/OpenAPI 문서는 유지합니다."
 
     doLast {
-        apiCatalogFilesToRemove.filter { it.exists() }.forEach { it.delete() }
+        staleCatalogFilesToRemove.filter { it.exists() }.forEach { it.delete() }
         file("src/main/resources/static/docs/catalog/api")
             .takeIf { it.exists() && it.listFiles().isNullOrEmpty() }
             ?.delete()
@@ -738,14 +744,14 @@ tasks.register("removeApiCatalogArtifacts") {
 // 외부에서 호출할 대표 생성 task. 기존 호출자가 하나만 실행해도 API catalog 제거와 ErrorCode 생성이 함께 일어난다.
 tasks.register("generateDocumentationCatalogs") {
     group = "documentation"
-    description = "ErrorCode 카탈로그 문서와 v1 JSON manifest/schema를 생성합니다."
-    dependsOn("removeApiCatalogArtifacts", "generateErrorCodeCatalog")
+    description = "에러 코드 목록 문서와 v1 JSON 파일을 생성합니다."
+    dependsOn("removeStaleCatalogArtifacts", "generateErrorCodeCatalog")
 }
 
 // CI/check에서 generated file이 source와 동기화되어 있는지 확인한다.
 tasks.register("checkDocumentationCatalogs") {
     group = "verification"
-    description = "ErrorCode 자동 생성 문서가 최신 상태인지 검증합니다."
+    description = "에러 코드 목록 문서가 최신 상태인지 확인합니다."
 
     doLast {
         val entries = extractErrorCodeEntries()
@@ -762,16 +768,18 @@ tasks.register("checkDocumentationCatalogs") {
             staticErrorCodeCatalogIndexFile to buildCatalogIndexHtml(entries)
         )
 
-        val staleFiles = expectedFiles.filter { (file, expected) -> !file.exists() || file.readText() != expected }.keys
-        val legacyApiFiles = apiCatalogFilesToRemove.filter { it.exists() }
+        val staleFiles = expectedFiles
+            .filter { (file, expected) -> !file.exists() || file.readText().normalizeLineEndings() != expected.normalizeLineEndings() }
+            .keys
+        val legacyApiFiles = staleCatalogFilesToRemove.filter { it.exists() }
         if (staleFiles.isNotEmpty() || legacyApiFiles.isNotEmpty()) {
             throw GradleException(
-                "ErrorCode 카탈로그가 최신 상태가 아닙니다. ./gradlew generateDocumentationCatalogs 실행 필요: " +
+                "에러 코드 목록이 최신 상태가 아니에요. ./gradlew generateDocumentationCatalogs를 실행해주세요: " +
                     (staleFiles + legacyApiFiles).joinToString { it.relativeTo(project.projectDir).invariantSeparatorsPath }
             )
         }
 
-        println("[checkDocumentationCatalogs] ErrorCode 카탈로그가 최신 상태입니다.")
+        println("[checkDocumentationCatalogs] 에러 코드 목록이 최신 상태예요.")
     }
 }
 
@@ -779,18 +787,18 @@ tasks.register("checkDocumentationCatalogs") {
 // 로컬 탐색에서는 경고처럼 쓰고 CI에서는 gate처럼 쓰기 위한 분리다.
 tasks.register("validateDocumentationCatalogs") {
     group = "verification"
-    description = "ErrorCode의 누락/중복과 v1 규격 위반을 검사합니다. -PstrictDocumentationCatalogs=true 설정 시 실패 처리합니다."
+    description = "에러 코드 누락, 중복, v1 규격 위반을 확인합니다. -PstrictDocumentationCatalogs=true를 지정하면 실패 처리합니다."
 
     doLast {
         val issues = collectDocumentationIssues()
         if (issues.isEmpty()) {
-            println("[validateDocumentationCatalogs] ErrorCode 카탈로그 문제가 없습니다.")
+            println("[validateDocumentationCatalogs] 에러 코드 목록에서 문제가 발견되지 않았어요.")
             return@doLast
         }
 
         issues.forEach { println("[validateDocumentationCatalogs] $it") }
         if (project.findProperty("strictDocumentationCatalogs") == "true") {
-            throw GradleException("ErrorCode 카탈로그 검증 실패: ${issues.size}건")
+            throw GradleException("에러 코드 목록에서 확인이 필요한 문제가 ${issues.size}건 있어요.")
         }
     }
 }
@@ -798,7 +806,7 @@ tasks.register("validateDocumentationCatalogs") {
 // 사람이 다음 번호를 직접 세다가 중복을 만들지 않도록 prefix별 다음 code를 계산한다.
 tasks.register("nextErrorCode") {
     group = "documentation"
-    description = "다음 ErrorCode를 추천합니다. 예: ./gradlew nextErrorCode -Pprefix=CHALLENGER"
+    description = "다음 에러 코드 번호를 추천합니다. 예: ./gradlew nextErrorCode -Pprefix=CHALLENGER"
 
     doLast {
         val prefix = (project.findProperty("prefix") as String?)?.uppercase(Locale.ROOT)

@@ -19,7 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.umc.product.documentation.adapter.in.web.dto.response.ErrorCodeCatalogItemResponse;
 import com.umc.product.documentation.adapter.in.web.dto.response.ErrorCodeCatalogResponse;
 import com.umc.product.documentation.adapter.in.web.dto.response.ErrorCodeCatalogSourceResponse;
-import com.umc.product.documentation.application.service.ErrorCodeCatalogQueryService;
+import com.umc.product.documentation.application.port.in.GetErrorCodeCatalogUseCase;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 
@@ -36,12 +36,12 @@ class ErrorCodeCatalogControllerTest {
     JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
-    ErrorCodeCatalogQueryService errorCodeCatalogQueryService;
+    GetErrorCodeCatalogUseCase getErrorCodeCatalogUseCase;
 
     @Test
-    @DisplayName("GET /api/v1/docs/error-codes ErrorCode 카탈로그를 ApiResponse로 반환한다")
-    void ErrorCode_카탈로그를_ApiResponse로_반환한다() throws Exception {
-        given(errorCodeCatalogQueryService.getErrorCodeCatalog()).willReturn(new ErrorCodeCatalogResponse(
+    @DisplayName("GET /api/v1/docs/error-codes 에러 코드 목록을 ApiResponse로 반환한다")
+    void 에러_코드_목록을_ApiResponse로_반환한다() throws Exception {
+        given(getErrorCodeCatalogUseCase.getErrorCodeCatalog()).willReturn(new ErrorCodeCatalogResponse(
             1,
             "umc-product-server",
             null,
@@ -53,7 +53,7 @@ class ErrorCodeCatalogControllerTest {
                 "ERROR_CODE_CATALOG_UNAVAILABLE",
                 500,
                 "INTERNAL_SERVER_ERROR",
-                "ErrorCode 카탈로그를 불러오지 못했어요. 잠시 후 다시 시도해주세요.",
+                "에러 코드 목록을 불러오지 못했어요. 잠시 후 다시 시도해주세요.",
                 null,
                 null,
                 null,

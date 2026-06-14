@@ -1,6 +1,14 @@
 package com.umc.product.documentation.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
+import java.io.InputStream;
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,5 +59,28 @@ class ErrorCodeCatalogQueryServiceTest {
         assertThat(item.replacementCode()).isNull();
         assertThat(item.owners()).isEmpty();
         assertThat(item.tags()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("생성된 ErrorCode manifest를 한 번만 읽고 캐싱한다")
+    void 생성된_ErrorCode_manifest를_한_번만_읽고_캐싱한다() throws Exception {
+        ObjectMapper objectMapper = mock(ObjectMapper.class);
+        ErrorCodeCatalogResponse response = new ErrorCodeCatalogResponse(
+            1,
+            "umc-product-server",
+            null,
+            0,
+            List.of()
+        );
+        given(objectMapper.readValue(any(InputStream.class), eq(ErrorCodeCatalogResponse.class)))
+            .willReturn(response);
+        ErrorCodeCatalogQueryService cachedService = new ErrorCodeCatalogQueryService(objectMapper);
+
+        ErrorCodeCatalogResponse first = cachedService.getErrorCodeCatalog();
+        ErrorCodeCatalogResponse second = cachedService.getErrorCodeCatalog();
+
+        assertThat(first).isSameAs(response);
+        assertThat(second).isSameAs(response);
+        verify(objectMapper).readValue(any(InputStream.class), eq(ErrorCodeCatalogResponse.class));
     }
 }

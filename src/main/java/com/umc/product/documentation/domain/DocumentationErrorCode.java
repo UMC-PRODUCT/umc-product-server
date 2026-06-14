@@ -12,7 +12,7 @@ import lombok.Getter;
 public enum DocumentationErrorCode implements BaseCode {
 
     ERROR_CODE_CATALOG_UNAVAILABLE(HttpStatus.INTERNAL_SERVER_ERROR, "DOCS-0001",
-        "ErrorCode 카탈로그를 불러오지 못했어요. 잠시 후 다시 시도해주세요."),
+        "에러 코드 목록을 불러오지 못했어요. 잠시 후 다시 시도해주세요."),
     ;
 
     private final HttpStatus httpStatus;

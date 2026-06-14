@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.umc.product.documentation.adapter.in.web.dto.response.ErrorCodeCatalogResponse;
-import com.umc.product.documentation.application.service.ErrorCodeCatalogQueryService;
+import com.umc.product.documentation.application.port.in.GetErrorCodeCatalogUseCase;
 
 import lombok.RequiredArgsConstructor;
 
@@ -14,10 +14,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ErrorCodeCatalogController {
 
-    private final ErrorCodeCatalogQueryService errorCodeCatalogQueryService;
+    private final GetErrorCodeCatalogUseCase getErrorCodeCatalogUseCase;
 
     @GetMapping
     public ErrorCodeCatalogResponse getErrorCodeCatalog() {
-        return errorCodeCatalogQueryService.getErrorCodeCatalog();
+        return getErrorCodeCatalogUseCase.getErrorCodeCatalog();
     }
 }
