@@ -1,16 +1,5 @@
 package com.umc.product.project.application.service.query;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -41,8 +30,16 @@ import com.umc.product.survey.application.port.in.query.GetFormUseCase;
 import com.umc.product.survey.application.port.in.query.dto.AnswerInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormResponseWithAnswersInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo;
-
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
@@ -122,8 +119,8 @@ public class ProjectApplicationQueryService
      * 표준 view 로 반환한다.
      * <p>
      * 본 UseCase 는 자기 자원(ProjectApplication) 만 다룬다. 랜덤 매칭/운영진 강제 배정으로 합류한 {@code ProjectMember(application = null)} 는 별도
-     * UseCase ({@link com.umc.product.project.application.port.in.query.GetRandomMatchedProjectMemberUseCase}) 로
-     * 조회하며, 두 데이터원을 한 화면 카드 줄로 합성하는 책임은 Web Assembler 가 진다.
+     * UseCase ({@link com.umc.product.project.application.port.in.query.GetRandomMatchedProjectMemberUseCase}) 로 조회하며,
+     * 두 데이터원을 한 화면 카드 줄로 합성하는 책임은 Web Assembler 가 진다.
      * <p>
      * 사용자가 해당 기수의 챌린저가 아니거나 매칭 대상 파트가 아닌 경우(PLAN/ADMIN) 빈 리스트를 반환한다.
      */
@@ -145,17 +142,14 @@ public class ProjectApplicationQueryService
             .toList();
     }
 
-    // ==============================================================
-    //                      Helper Method
-    // ==============================================================
-
     /**
      * PM/운영진용 단일 프로젝트 지원자 목록 조회.
      * <p>
-     * 본 메서드는 자기 자원(ProjectApplication) 만 반환한다. 화면 카드에 들어가는 부가 정보 (지원자의 파트 / 매칭 라운드 / 닉네임 등) 는
-     * Web Assembler 가 다른 도메인에서 합쳐 붙인다. 그래서 파트(part) 필터도 챌린저 도메인이 필요한 정보라 Assembler 단계에서 적용한다.
+     * 본 메서드는 자기 자원(ProjectApplication) 만 반환한다. 화면 카드에 들어가는 부가 정보 (지원자의 파트 / 매칭 라운드 / 닉네임 등) 는 Web Assembler 가 다른 도메인에서
+     * 합쳐 붙인다. 그래서 파트(part) 필터도 챌린저 도메인이 필요한 정보라 Assembler 단계에서 적용한다.
      * <p>
-     * 권한이 없으면 (None scope) 존재 자체를 숨기려고 빈 리스트로 위장한다. 정렬은 repository 가 phase ASC → submittedAt ASC 로 보장한다.
+     * 권한이 없으면 (None scope) 존재 자체를 숨기려고 빈 리스트로 위장한다. 정렬: repository 가 phase ASC -> submittedAt ASC 의 DB baseline 만 보장하고,
+     * 최종 화면 정렬(phase -> part -> submittedAt)은 part 가 cross-domain 정보라 Assembler 에서 in-memory 로 마무리된다.
      */
     @Override
     public List<ProjectApplicationSummaryInfo> searchByProject(SearchProjectApplicationsQuery query) {
@@ -176,6 +170,10 @@ public class ProjectApplicationQueryService
             .map(ProjectApplicationSummaryInfo::from)
             .toList();
     }
+
+    // ==============================================================
+    //                      Helper Method
+    // ==============================================================
 
     /**
      * 요청자의 챌린저 파트로부터 매칭 종류를 결정한다.

@@ -5,15 +5,6 @@ import static com.umc.product.project.domain.QProjectApplication.projectApplicat
 import static com.umc.product.project.domain.QProjectApplicationForm.projectApplicationForm;
 import static com.umc.product.project.domain.QProjectMatchingRound.projectMatchingRound;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.springframework.stereotype.Repository;
-
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -21,8 +12,14 @@ import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoun
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
-
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 /**
  * ProjectApplication QueryDSL 동적 검색 구현.
@@ -122,7 +119,8 @@ public class ProjectApplicationQueryRepository {
      * 호출자({@code ProjectApplicationSummaryInfo#from})가 form.project.id 까지 접근하므로 N+1 방지를 위해 fetch join 이 필요하다.
      * 임시저장(DRAFT)은 항상 제외된다.
      * <p>
-     * 정렬: matchingRound.phase ASC -> projectApplication.submittedAt ASC.
+     * 정렬 (DB 단 baseline): matchingRound.phase ASC -> projectApplication.submittedAt ASC. 최종 화면 정렬(phase -> part ->
+     * submittedAt)은 part 가 cross-domain 정보라 Assembler 에서 in-memory 로 마무리한다.
      */
     public List<ProjectApplication> searchProjectApplications(
         Long projectId,

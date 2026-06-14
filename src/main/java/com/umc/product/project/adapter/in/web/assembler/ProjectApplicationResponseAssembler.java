@@ -1,16 +1,5 @@
 package com.umc.product.project.adapter.in.web.assembler;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Component;
-
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -33,8 +22,17 @@ import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRoundInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectMemberInfo;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
-
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 /**
  * Project Application 관련 Response 조립기. Controller에서 여러 UseCase 를 조합하는 로직을 캡슐화한다.
@@ -119,6 +117,9 @@ public class ProjectApplicationResponseAssembler {
      * <p>
      * 파트(part) 필터도 챌린저 도메인 정보라 in-memory 로 적용한다. 권한 scope 결정은 Service 가 이미 처리했으니 (None 이면 빈 리스트 반환) 여기서는 그 결과를 그대로
      * 신뢰한다.
+     * <p>
+     * 정렬: 매칭 차수(phase) ASC -> 파트(part) ASC -> 제출 시각(submittedAt) ASC. phase 는 Service/Repository 가 보장하는 DB 정렬과 겹치지만,
+     * part 가 cross-domain enrichment 산물이라 파트별 묶음은 여기서 in-memory 로 한 번 더 정렬해야 한다.
      */
     public List<ProjectApplicantResponse> applicantsFor(SearchProjectApplicationsQuery query) {
         List<ProjectApplicationSummaryInfo> applications =
@@ -146,18 +147,35 @@ public class ProjectApplicationResponseAssembler {
             getProjectMatchingRoundUseCase.findAllByIds(roundIds);
         Map<Long, MemberInfo> memberMap = getMemberUseCase.findAllByIds(applicantMemberIds);
 
-        List<ProjectApplicantResponse> result = new ArrayList<>(applications.size());
-        for (ProjectApplicationSummaryInfo application : applications) {
-            ChallengerPart applicantPart = partsByMember.get(application.applicantMemberId());
-            // 파트 필터: 다른 파트는 건너뛴다.
-            if (query.part() != null && query.part() != applicantPart) {
-                continue;
-            }
-            ProjectMatchingRoundInfo round = rounds.get(application.matchingRoundId());
-            MemberBrief brief = toBrief(memberMap.get(application.applicantMemberId()));
-            result.add(ProjectApplicantResponse.from(application, applicantPart, round, brief));
-        }
-        return result;
+        return applications.stream()
+            .filter(application -> {
+                ChallengerPart applicantPart = partsByMember.get(application.applicantMemberId());
+                // 파트 필터: 다른 파트는 건너뛴다.
+                return query.part() == null || query.part() == applicantPart;
+            })
+            .sorted(applicantSortOrder(rounds, partsByMember))
+            .map(application -> {
+                ChallengerPart applicantPart = partsByMember.get(application.applicantMemberId());
+                ProjectMatchingRoundInfo round = rounds.get(application.matchingRoundId());
+                MemberBrief brief = toBrief(memberMap.get(application.applicantMemberId()));
+                return ProjectApplicantResponse.from(application, applicantPart, round, brief);
+            })
+            .toList();
+    }
+
+    /**
+     * APPLY-101 지원자 카드 정렬자: 매칭 차수(phase) ASC -> 파트(part) ASC -> 제출 시각(submittedAt) ASC.
+     */
+    private Comparator<ProjectApplicationSummaryInfo> applicantSortOrder(
+        Map<Long, ProjectMatchingRoundInfo> rounds,
+        Map<Long, ChallengerPart> partsByMember
+    ) {
+        return Comparator
+            .comparingInt((ProjectApplicationSummaryInfo application) ->
+                rounds.get(application.matchingRoundId()).phase().ordinal())
+            .thenComparingInt(application ->
+                partsByMember.get(application.applicantMemberId()).getSortOrder())
+            .thenComparing(ProjectApplicationSummaryInfo::submittedAt);
     }
 
     /**
