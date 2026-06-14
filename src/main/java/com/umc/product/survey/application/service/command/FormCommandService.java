@@ -39,6 +39,7 @@ public class FormCommandService implements ManageFormUseCase {
         Form form = Form.createDraft(
             command.title(),
             command.createdMemberId(),
+            command.description(),
             command.allowDuplicateResponses()
         );
 
@@ -54,7 +55,8 @@ public class FormCommandService implements ManageFormUseCase {
             command.title(),
             command.description(),
             command.isAnonymous(),
-            command.allowDuplicateResponses()
+            command.allowDuplicateResponses(),
+            Boolean.TRUE.equals(command.clearDescription())
         );
         saveFormPort.save(form);
     }

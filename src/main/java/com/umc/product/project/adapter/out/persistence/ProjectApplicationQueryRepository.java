@@ -122,7 +122,8 @@ public class ProjectApplicationQueryRepository {
      * 호출자({@code ProjectApplicationSummaryInfo#from})가 form.project.id 까지 접근하므로 N+1 방지를 위해 fetch join 이 필요하다.
      * 임시저장(DRAFT)은 항상 제외된다.
      * <p>
-     * 정렬: matchingRound.phase ASC -> projectApplication.submittedAt ASC.
+     * 정렬 (DB 단 baseline): matchingRound.phase ASC -> projectApplication.submittedAt ASC. 최종 화면 정렬(phase -> part ->
+     * submittedAt)은 part 가 cross-domain 정보라 Assembler 에서 in-memory 로 마무리한다.
      */
     public List<ProjectApplication> searchProjectApplications(
         Long projectId,

@@ -50,6 +50,10 @@ PM은 `PATCH /api/v1/projects/{projectId}/applications/{applicationId}/decision`
 
 BE 확인 기준은 명확하다. `PATCH .../decision`이 `PROJECT-0216` 409를 반환한 직후 동일 `applicationId`를 DB 또는 `GET /api/v1/projects/{projectId}/applications/{applicationId}`로 재조회했을 때 status가 `APPROVED`라면 단건 결정 로직은 의도대로 동작한 것이다. 재조회 결과가 `SUBMITTED`라면 별도 BE 저장 경로, 테스트 seed, 자동 선발, 또는 조회 조건을 추가로 추적해야 한다.
 
+## 상세 문서
+
+- [PLAN_DEVELOPER 3차 종료 후 잔여 TO 자동 배정](../project/plan-developer-third-auto-assignment.md)
+
 ## 경계
 
 프로젝트 참여자의 회원·챌린저·조직 정보는 다른 도메인에서 온다. project는 ID를 보관하고, 조회 응답 조립 시 필요한 정보만 공개 UseCase로 가져온다.

@@ -1,5 +1,15 @@
 package com.umc.product.survey.application.service.command;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.survey.application.port.in.command.ManageFormSectionUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateFormSectionCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteFormSectionCommand;
@@ -14,16 +24,8 @@ import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.FormSection;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional
@@ -55,7 +57,7 @@ public class FormSectionCommandService implements ManageFormSectionUseCase {
         FormSection section = loadFormSectionPort.findById(command.sectionId())
             .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
 
-        section.update(command.title(), command.description());
+        section.update(command.title(), command.description(), Boolean.TRUE.equals(command.clearDescription()));
         saveFormSectionPort.save(section);
     }
 
