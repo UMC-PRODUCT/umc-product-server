@@ -21,10 +21,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
+import com.umc.product.survey.application.port.in.command.dto.AnswerCommand;
 import com.umc.product.survey.application.port.in.command.dto.CreateDraftFormResponseCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteFormResponseCommand;
 import com.umc.product.survey.application.port.in.command.dto.SubmitDraftFormResponseCommand;
 import com.umc.product.survey.application.port.in.command.dto.SubmitFormResponseCommand;
+import com.umc.product.survey.application.port.in.command.dto.UpdateDraftFormResponseCommand;
 import com.umc.product.survey.application.port.in.command.dto.UpdateFormResponseCommand;
 import com.umc.product.survey.application.port.out.LoadAnswerPort;
 import com.umc.product.survey.application.port.out.LoadFormPort;
@@ -242,6 +244,52 @@ class FormResponseCommandServiceTest {
         then(saveFormResponsePort).should(never()).save(any());
     }
 
+    @Test
+    @DisplayName("SHORT_TEXT 답변이 빈 문자열이면 저장하지 않고 INVALID_ANSWER_FORMAT으로 거부한다")
+    void shortText_답변이_빈_문자열이면_INVALID_ANSWER_FORMAT() {
+        FormResponse draft = draftResponse();
+        Question question = question(10L, QuestionType.SHORT_TEXT, false);
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(draft));
+        given(loadQuestionPort.listByFormId(FORM_ID)).willReturn(List.of(question));
+
+        assertThatThrownBy(() -> sut.updateDraft(UpdateDraftFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .answers(List.of(AnswerCommand.builder()
+                .questionId(question.getId())
+                .textValue("")
+                .build()))
+            .build()))
+            .isInstanceOf(SurveyDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(SurveyErrorCode.INVALID_ANSWER_FORMAT);
+
+        then(saveAnswerPort).should(never()).saveAll(any());
+    }
+
+    @Test
+    @DisplayName("LONG_TEXT 답변이 공백 문자열이면 저장하지 않고 INVALID_ANSWER_FORMAT으로 거부한다")
+    void longText_답변이_공백_문자열이면_INVALID_ANSWER_FORMAT() {
+        FormResponse draft = draftResponse();
+        Question question = question(10L, QuestionType.LONG_TEXT, false);
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(draft));
+        given(loadQuestionPort.listByFormId(FORM_ID)).willReturn(List.of(question));
+
+        assertThatThrownBy(() -> sut.updateDraft(UpdateDraftFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .answers(List.of(AnswerCommand.builder()
+                .questionId(question.getId())
+                .textValue("   ")
+                .build()))
+            .build()))
+            .isInstanceOf(SurveyDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(SurveyErrorCode.INVALID_ANSWER_FORMAT);
+
+        then(saveAnswerPort).should(never()).saveAll(any());
+    }
+
     private Form publishedForm(boolean allowDuplicateResponses) {
         Form form = Form.createDraft("프로젝트 지원서", 1L, allowDuplicateResponses);
         ReflectionTestUtils.setField(form, "id", FORM_ID);
@@ -256,7 +304,11 @@ class FormResponseCommandServiceTest {
     }
 
     private Question question(Long questionId, boolean isRequired) {
-        Question question = Question.create("질문", QuestionType.SHORT_TEXT, isRequired, 1L);
+        return question(questionId, QuestionType.SHORT_TEXT, isRequired);
+    }
+
+    private Question question(Long questionId, QuestionType type, boolean isRequired) {
+        Question question = Question.create("질문", type, isRequired, 1L);
         ReflectionTestUtils.setField(question, "id", questionId);
         return question;
     }

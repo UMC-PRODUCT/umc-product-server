@@ -62,6 +62,7 @@ import com.umc.product.survey.application.port.in.command.dto.ForkQuestionComman
 import com.umc.product.survey.application.port.in.command.dto.ReorderFormSectionsCommand;
 import com.umc.product.survey.application.port.in.command.dto.UpdateFormCommand;
 import com.umc.product.survey.application.port.in.command.dto.UpdateFormSectionCommand;
+import com.umc.product.survey.application.port.in.command.dto.UpdateQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.UpdateQuestionOptionCommand;
 import com.umc.product.survey.application.port.in.query.GetFormUseCase;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo;
@@ -181,6 +182,24 @@ class ProjectApplicationFormCommandServiceTest {
             then(manageFormUseCase).should().updateForm(captor.capture());
             assertThat(captor.getValue().title()).isEqualTo("새 제목");
         }
+
+        @Test
+        void 폼_description이_null이면_기존_description_삭제를_요청한다() {
+            stubExistingFormWithEmptyStructure(42L, 100L, 500L, "Triple", "기존 설명");
+
+            UpsertApplicationFormCommand cmd = UpsertApplicationFormCommand.builder()
+                .projectId(42L).requesterMemberId(99L)
+                .title("Triple").description(null)
+                .sections(List.of())
+                .build();
+
+            sut.upsert(cmd);
+
+            ArgumentCaptor<UpdateFormCommand> captor = ArgumentCaptor.forClass(UpdateFormCommand.class);
+            then(manageFormUseCase).should().updateForm(captor.capture());
+            assertThat(captor.getValue().description()).isNull();
+            assertThat(captor.getValue().clearDescription()).isTrue();
+        }
     }
 
     /* =====================================================
@@ -225,8 +244,8 @@ class ProjectApplicationFormCommandServiceTest {
     class forkScenario {
 
         @Test
-        @DisplayName("IN_PROGRESS 차수 사이에 질문 title 변경 시 forkQuestion 호출")
-        void IN_PROGRESS_차수_사이_질문_title_변경시_forkQuestion_호출() {
+        @DisplayName("IN_PROGRESS 차수 사이에 질문 메타 변경 시 fork 후 새 질문에 요청 메타를 반영한다")
+        void IN_PROGRESS_차수_사이_질문_meta_변경시_fork_후_새_질문에_요청_meta를_반영한다() {
             Project project = createProject(42L, ProjectStatus.IN_PROGRESS, "Triple");
             ProjectApplicationForm form = createApplicationForm(project, 100L, 500L);
 
@@ -249,14 +268,30 @@ class ProjectApplicationFormCommandServiceTest {
 
             sut.upsert(commandWithSections(42L, List.of(
                 section(1000L, FormSectionType.COMMON, Set.of(), "공통", 1, List.of(
-                    shortTextQuestion(2000L, "변경된 질문", true)
+                    ApplicationQuestionEntry.builder()
+                        .questionId(2000L)
+                        .type(QuestionType.LONG_TEXT)
+                        .title("변경된 질문")
+                        .description("변경된 설명")
+                        .isRequired(false)
+                        .orderNo(1)
+                        .options(List.of())
+                        .build()
                 ))
             )));
 
             ArgumentCaptor<ForkQuestionCommand> captor = ArgumentCaptor.forClass(ForkQuestionCommand.class);
             then(manageQuestionUseCase).should().forkQuestion(captor.capture());
             assertThat(captor.getValue().originQuestionId()).isEqualTo(2000L);
-            then(manageQuestionUseCase).should(never()).updateQuestion(any());
+
+            ArgumentCaptor<UpdateQuestionCommand> updateCaptor =
+                ArgumentCaptor.forClass(UpdateQuestionCommand.class);
+            then(manageQuestionUseCase).should().updateQuestion(updateCaptor.capture());
+            assertThat(updateCaptor.getValue().questionId()).isEqualTo(9999L);
+            assertThat(updateCaptor.getValue().type()).isEqualTo(QuestionType.LONG_TEXT);
+            assertThat(updateCaptor.getValue().title()).isEqualTo("변경된 질문");
+            assertThat(updateCaptor.getValue().description()).isEqualTo("변경된 설명");
+            assertThat(updateCaptor.getValue().isRequired()).isFalse();
         }
     }
 
@@ -365,6 +400,32 @@ class ProjectApplicationFormCommandServiceTest {
         }
 
         @Test
+        void 섹션_description이_null이면_기존_description_삭제를_요청한다() {
+            Project project = createProject(42L, ProjectStatus.DRAFT, "Triple");
+            ProjectApplicationForm form = createApplicationForm(project, 100L, 500L);
+
+            given(loadProjectPort.getById(42L)).willReturn(project);
+            given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
+            given(getFormUseCase.getFormWithStructure(500L)).willReturn(structure(List.of(
+                existingSection(1000L, "공통", "기존 설명", 1L, List.of())
+            )));
+            given(loadPolicyPort.listByApplicationFormId(100L)).willReturn(List.of(
+                ProjectApplicationFormPolicy.createCommon(form, 1000L)
+            ));
+
+            UpsertApplicationFormCommand cmd = commandWithSections(42L, List.of(
+                section(1000L, FormSectionType.COMMON, Set.of(), "공통", 1, List.of())
+            ));
+
+            sut.upsert(cmd);
+
+            ArgumentCaptor<UpdateFormSectionCommand> captor = ArgumentCaptor.forClass(UpdateFormSectionCommand.class);
+            then(manageFormSectionUseCase).should().updateSection(captor.capture());
+            assertThat(captor.getValue().description()).isNull();
+            assertThat(captor.getValue().clearDescription()).isTrue();
+        }
+
+        @Test
         void 정책_타입이_바뀌면_savePolicy_호출_COMMON_to_PART() {
             Project project = createProject(42L, ProjectStatus.DRAFT, "Triple");
             ProjectApplicationForm form = createApplicationForm(project, 100L, 500L);
@@ -450,6 +511,36 @@ class ProjectApplicationFormCommandServiceTest {
             ArgumentCaptor<DeleteQuestionCommand> captor = ArgumentCaptor.forClass(DeleteQuestionCommand.class);
             then(manageQuestionUseCase).should().deleteQuestion(captor.capture());
             assertThat(captor.getValue().questionId()).isEqualTo(2001L);
+        }
+
+        @Test
+        void 질문_description이_null이면_기존_description_삭제를_요청한다() {
+            Project project = createProject(42L, ProjectStatus.DRAFT, "Triple");
+            ProjectApplicationForm form = createApplicationForm(project, 100L, 500L);
+
+            given(loadProjectPort.getById(42L)).willReturn(project);
+            given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
+            given(getFormUseCase.getFormWithStructure(500L)).willReturn(structure(List.of(
+                existingSection(1000L, "공통", null, 1L, List.of(
+                    existingQuestion(2000L, QuestionType.SHORT_TEXT, "자기소개", "기존 설명", true, 1L, List.of())
+                ))
+            )));
+            given(loadPolicyPort.listByApplicationFormId(100L)).willReturn(List.of(
+                ProjectApplicationFormPolicy.createCommon(form, 1000L)
+            ));
+
+            UpsertApplicationFormCommand cmd = commandWithSections(42L, List.of(
+                section(1000L, FormSectionType.COMMON, Set.of(), "공통", 1, List.of(
+                    shortTextQuestion(2000L, "자기소개", true)
+                ))
+            ));
+
+            sut.upsert(cmd);
+
+            ArgumentCaptor<UpdateQuestionCommand> captor = ArgumentCaptor.forClass(UpdateQuestionCommand.class);
+            then(manageQuestionUseCase).should().updateQuestion(captor.capture());
+            assertThat(captor.getValue().description()).isNull();
+            assertThat(captor.getValue().clearDescription()).isTrue();
         }
 
         @Test
