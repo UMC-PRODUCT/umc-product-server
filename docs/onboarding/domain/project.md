@@ -11,6 +11,10 @@
 - 지원 폼과 지원서를 생성, 임시저장, 제출, 평가한다.
 - 매칭 차수와 파트별 정원, 자동 선발을 관리한다.
 
+## 상세 문서
+
+- [PLAN_DEVELOPER 3차 종료 후 잔여 TO 자동 배정](../project/plan-developer-third-auto-assignment.md)
+
 ## 경계
 
 프로젝트 참여자의 회원·챌린저·조직 정보는 다른 도메인에서 온다. project는 ID를 보관하고, 조회 응답 조립 시 필요한 정보만 공개 UseCase로 가져온다.
