@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://umc-product.dev/schemas/error-code-catalog.v1.schema.json",
+  "title": "ErrorCodeCatalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "service", "generatedAt", "totalCount", "items"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "service": { "const": "umc-product-server" },
+    "generatedAt": { "type": ["string", "null"], "format": "date-time" },
+    "totalCount": { "type": "integer", "minimum": 0 },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ErrorCodeCatalogItem" }
+    }
+  },
+  "$defs": {
+    "ErrorCodeCatalogItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequence",
+        "domain",
+        "code",
+        "name",
+        "httpStatus",
+        "httpStatusName",
+        "message",
+        "description",
+        "clientAction",
+        "retryable",
+        "severity",
+        "deprecated",
+        "replacementCode",
+        "owners",
+        "tags",
+        "source"
+      ],
+      "properties": {
+        "sequence": { "type": "integer", "minimum": 1 },
+        "domain": { "type": "string", "minLength": 1 },
+        "code": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "httpStatus": { "type": "integer", "minimum": 100, "maximum": 599 },
+        "httpStatusName": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 },
+        "description": { "type": ["string", "null"] },
+        "clientAction": { "type": ["string", "null"] },
+        "retryable": { "type": ["boolean", "null"] },
+        "severity": { "enum": ["INFO", "WARNING", "ERROR", "CRITICAL", null] },
+        "deprecated": { "type": "boolean" },
+        "replacementCode": { "type": ["string", "null"] },
+        "owners": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enumName", "file", "line"],
+          "properties": {
+            "enumName": { "type": "string", "minLength": 1 },
+            "file": { "type": "string", "minLength": 1 },
+            "line": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    }
+  }
+}

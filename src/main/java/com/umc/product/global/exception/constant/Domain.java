@@ -30,5 +30,6 @@ public enum Domain {
     ANALYTICS,
     MAINTENANCE,
     FEEDBACK,
-    BLOG
+    BLOG,
+    DOCUMENTATION
 }
