@@ -1,14 +1,19 @@
 package com.umc.product.organization.application.port.in.query;
 
-import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
-import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
+
 public interface GetChapterUseCase {
 
     List<ChapterInfo> getAllChapters();
+
+    List<ChapterInfo> listByGisuId(Long gisuId);
+
+    Map<Long, List<ChapterInfo>> listByGisuIds(Set<Long> gisuIds);
 
     /**
      * 기수와 학교 정보로 지부 정보를 조회합니다.
@@ -18,6 +23,8 @@ public interface GetChapterUseCase {
     List<ChapterInfo> getChaptersBySchool(Long schoolId);
 
     List<ChapterWithSchoolsInfo> getChaptersWithSchoolsByGisuId(Long gisuId);
+
+    Map<Long, List<ChapterWithSchoolsInfo>> getChaptersWithSchoolsByGisuIds(Set<Long> gisuIds);
 
     ChapterInfo getChapterById(Long chapterId);
 

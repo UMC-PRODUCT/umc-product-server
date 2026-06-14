@@ -103,6 +103,7 @@ public enum OrganizationErrorCode implements BaseCode {
         "UMC Product Squad 참여자는 필수입니다."),
     UMC_PRODUCT_FUNCTIONAL_UNIT_PARENT_INVALID(HttpStatus.BAD_REQUEST, "ORGANIZATION-0064",
         "UMC Product 기능 조직은 자기 자신을 상위 조직으로 지정할 수 없습니다."),
+    GISU_QUERY_CONDITION_INVALID(HttpStatus.BAD_REQUEST, "ORGANIZATION-0065", "기수 조회 조건이 올바르지 않습니다."),
 
     ;
 

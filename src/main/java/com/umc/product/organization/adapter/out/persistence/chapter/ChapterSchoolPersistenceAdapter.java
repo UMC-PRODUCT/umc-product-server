@@ -1,15 +1,18 @@
 package com.umc.product.organization.adapter.out.persistence.chapter;
 
 
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.organization.application.port.out.command.SaveChapterSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
-import java.util.List;
-import java.util.Set;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -21,6 +24,11 @@ public class ChapterSchoolPersistenceAdapter implements LoadChapterSchoolPort, S
     @Override
     public List<ChapterSchool> findByGisuId(Long gisuId) {
         return chapterSchoolJpaRepository.findByGisuIdWithChapterAndSchool(gisuId);
+    }
+
+    @Override
+    public List<ChapterSchool> findByGisuIds(Set<Long> gisuIds) {
+        return chapterSchoolQueryRepository.findByGisuIdIn(gisuIds);
     }
 
     @Override

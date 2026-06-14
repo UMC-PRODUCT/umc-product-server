@@ -1,5 +1,13 @@
 package com.umc.product.organization.adapter.in.web;
 
+import java.util.List;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.response.chapter.ChapterListResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.chapter.ChapterListResponse.ChapterItem;
@@ -8,13 +16,8 @@ import com.umc.product.organization.adapter.in.web.swagger.ChapterQueryControlle
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/chapters")
@@ -40,6 +43,7 @@ public class ChapterQueryController implements ChapterQueryControllerApi {
 
     @Public
     @Override
+    @Deprecated(since = "v2.0.0", forRemoval = true)
     @GetMapping("/with-schools")
     public ChapterWithSchoolsResponse getChaptersWithSchoolsByGisuId(@RequestParam Long gisuId) {
         List<ChapterWithSchoolsInfo> chapters = getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId);

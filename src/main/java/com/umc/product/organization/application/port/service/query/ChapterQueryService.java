@@ -1,5 +1,14 @@
 package com.umc.product.organization.application.port.service.query;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
@@ -9,14 +18,8 @@ import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +34,26 @@ public class ChapterQueryService implements GetChapterUseCase {
 
         return loadChapterPort.findAll().stream().map(ChapterInfo::from).toList();
 
+    }
+
+    @Override
+    public List<ChapterInfo> listByGisuId(Long gisuId) {
+        return loadChapterPort.findByGisuId(gisuId).stream()
+            .map(ChapterInfo::from)
+            .toList();
+    }
+
+    @Override
+    public Map<Long, List<ChapterInfo>> listByGisuIds(Set<Long> gisuIds) {
+        if (gisuIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return loadChapterPort.findByGisuIds(gisuIds).stream()
+            .collect(Collectors.groupingBy(
+                chapter -> chapter.getGisu().getId(),
+                Collectors.mapping(ChapterInfo::from, Collectors.toList())
+            ));
     }
 
     @Override
@@ -77,6 +100,31 @@ public class ChapterQueryService implements GetChapterUseCase {
                 chapterSchoolMap.getOrDefault(chapter.getId(), List.of())
             ))
             .toList();
+    }
+
+    @Override
+    public Map<Long, List<ChapterWithSchoolsInfo>> getChaptersWithSchoolsByGisuIds(Set<Long> gisuIds) {
+        if (gisuIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Chapter> chapters = loadChapterPort.findByGisuIds(gisuIds);
+        List<ChapterSchool> chapterSchools = loadChapterSchoolPort.findByGisuIds(gisuIds);
+
+        Map<Long, List<ChapterSchool>> chapterSchoolMap = chapterSchools.stream()
+            .collect(Collectors.groupingBy(cs -> cs.getChapter().getId()));
+
+        return chapters.stream()
+            .collect(Collectors.groupingBy(
+                chapter -> chapter.getGisu().getId(),
+                Collectors.mapping(
+                    chapter -> ChapterWithSchoolsInfo.from(
+                        chapter,
+                        chapterSchoolMap.getOrDefault(chapter.getId(), List.of())
+                    ),
+                    Collectors.toList()
+                )
+            ));
     }
 
     @Override
