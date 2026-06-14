@@ -50,8 +50,19 @@ public class Question extends BaseEntity {
         boolean isRequired,
         long orderNo
     ) {
+        return create(title, null, type, isRequired, orderNo);
+    }
+
+    public static Question create(
+        String title,
+        String description,
+        QuestionType type,
+        boolean isRequired,
+        long orderNo
+    ) {
         return Question.builder()
             .title(title)
+            .description(description)
             .type(type)
             .isRequired(isRequired)
             .orderNo(orderNo)

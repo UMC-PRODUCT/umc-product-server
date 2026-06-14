@@ -50,6 +50,7 @@ public class QuestionCommandService implements ManageQuestionUseCase {
 
         Question question = Question.create(
             command.title(),
+            command.description(),
             command.type(),
             command.isRequired(),
             nextOrderNo

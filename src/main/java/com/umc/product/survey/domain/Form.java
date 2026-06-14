@@ -58,10 +58,20 @@ public class Form extends BaseEntity {
     }
 
     public static Form createDraft(String title, Long createdMemberId, boolean allowDuplicateResponses) {
+        return createDraft(title, createdMemberId, null, allowDuplicateResponses);
+    }
+
+    public static Form createDraft(
+        String title,
+        Long createdMemberId,
+        String description,
+        boolean allowDuplicateResponses
+    ) {
         Form form = new Form();
 
         form.title = title;
         form.createdMemberId = createdMemberId;
+        form.description = description;
         form.status = FormStatus.DRAFT;
         form.allowDuplicateResponses = allowDuplicateResponses;
 
