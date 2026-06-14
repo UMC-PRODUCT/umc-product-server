@@ -182,6 +182,24 @@ class ProjectApplicationFormCommandServiceTest {
             then(manageFormUseCase).should().updateForm(captor.capture());
             assertThat(captor.getValue().title()).isEqualTo("새 제목");
         }
+
+        @Test
+        void 폼_description이_null이면_기존_description_삭제를_요청한다() {
+            stubExistingFormWithEmptyStructure(42L, 100L, 500L, "Triple", "기존 설명");
+
+            UpsertApplicationFormCommand cmd = UpsertApplicationFormCommand.builder()
+                .projectId(42L).requesterMemberId(99L)
+                .title("Triple").description(null)
+                .sections(List.of())
+                .build();
+
+            sut.upsert(cmd);
+
+            ArgumentCaptor<UpdateFormCommand> captor = ArgumentCaptor.forClass(UpdateFormCommand.class);
+            then(manageFormUseCase).should().updateForm(captor.capture());
+            assertThat(captor.getValue().description()).isNull();
+            assertThat(captor.getValue().clearDescription()).isTrue();
+        }
     }
 
     /* =====================================================
@@ -382,6 +400,32 @@ class ProjectApplicationFormCommandServiceTest {
         }
 
         @Test
+        void 섹션_description이_null이면_기존_description_삭제를_요청한다() {
+            Project project = createProject(42L, ProjectStatus.DRAFT, "Triple");
+            ProjectApplicationForm form = createApplicationForm(project, 100L, 500L);
+
+            given(loadProjectPort.getById(42L)).willReturn(project);
+            given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
+            given(getFormUseCase.getFormWithStructure(500L)).willReturn(structure(List.of(
+                existingSection(1000L, "공통", "기존 설명", 1L, List.of())
+            )));
+            given(loadPolicyPort.listByApplicationFormId(100L)).willReturn(List.of(
+                ProjectApplicationFormPolicy.createCommon(form, 1000L)
+            ));
+
+            UpsertApplicationFormCommand cmd = commandWithSections(42L, List.of(
+                section(1000L, FormSectionType.COMMON, Set.of(), "공통", 1, List.of())
+            ));
+
+            sut.upsert(cmd);
+
+            ArgumentCaptor<UpdateFormSectionCommand> captor = ArgumentCaptor.forClass(UpdateFormSectionCommand.class);
+            then(manageFormSectionUseCase).should().updateSection(captor.capture());
+            assertThat(captor.getValue().description()).isNull();
+            assertThat(captor.getValue().clearDescription()).isTrue();
+        }
+
+        @Test
         void 정책_타입이_바뀌면_savePolicy_호출_COMMON_to_PART() {
             Project project = createProject(42L, ProjectStatus.DRAFT, "Triple");
             ProjectApplicationForm form = createApplicationForm(project, 100L, 500L);
@@ -467,6 +511,36 @@ class ProjectApplicationFormCommandServiceTest {
             ArgumentCaptor<DeleteQuestionCommand> captor = ArgumentCaptor.forClass(DeleteQuestionCommand.class);
             then(manageQuestionUseCase).should().deleteQuestion(captor.capture());
             assertThat(captor.getValue().questionId()).isEqualTo(2001L);
+        }
+
+        @Test
+        void 질문_description이_null이면_기존_description_삭제를_요청한다() {
+            Project project = createProject(42L, ProjectStatus.DRAFT, "Triple");
+            ProjectApplicationForm form = createApplicationForm(project, 100L, 500L);
+
+            given(loadProjectPort.getById(42L)).willReturn(project);
+            given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
+            given(getFormUseCase.getFormWithStructure(500L)).willReturn(structure(List.of(
+                existingSection(1000L, "공통", null, 1L, List.of(
+                    existingQuestion(2000L, QuestionType.SHORT_TEXT, "자기소개", "기존 설명", true, 1L, List.of())
+                ))
+            )));
+            given(loadPolicyPort.listByApplicationFormId(100L)).willReturn(List.of(
+                ProjectApplicationFormPolicy.createCommon(form, 1000L)
+            ));
+
+            UpsertApplicationFormCommand cmd = commandWithSections(42L, List.of(
+                section(1000L, FormSectionType.COMMON, Set.of(), "공통", 1, List.of(
+                    shortTextQuestion(2000L, "자기소개", true)
+                ))
+            ));
+
+            sut.upsert(cmd);
+
+            ArgumentCaptor<UpdateQuestionCommand> captor = ArgumentCaptor.forClass(UpdateQuestionCommand.class);
+            then(manageQuestionUseCase).should().updateQuestion(captor.capture());
+            assertThat(captor.getValue().description()).isNull();
+            assertThat(captor.getValue().clearDescription()).isTrue();
         }
 
         @Test

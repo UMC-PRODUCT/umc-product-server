@@ -17,6 +17,7 @@ public record UpdateFormCommand(
     Long requesterMemberId,
     String title,
     String description,
+    Boolean clearDescription,
     Boolean isAnonymous,
     Boolean allowDuplicateResponses
 ) {

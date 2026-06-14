@@ -99,10 +99,16 @@ public class Question extends BaseEntity {
      * null 인 필드는 기존 값 유지. type 변경은 별도 {@link #changeType} 사용.
      */
     public void update(String title, String description, Boolean isRequired) {
+        update(title, description, isRequired, false);
+    }
+
+    public void update(String title, String description, Boolean isRequired, boolean clearDescription) {
         if (title != null) {
             this.title = title;
         }
-        if (description != null) {
+        if (clearDescription) {
+            this.description = null;
+        } else if (description != null) {
             this.description = description;
         }
         if (isRequired != null) {

@@ -70,7 +70,12 @@ public class QuestionCommandService implements ManageQuestionUseCase {
         }
 
         // 나머지 속성 PATCH
-        question.update(command.title(), command.description(), command.isRequired());
+        question.update(
+            command.title(),
+            command.description(),
+            command.isRequired(),
+            Boolean.TRUE.equals(command.clearDescription())
+        );
 
         saveQuestionPort.save(question);
     }

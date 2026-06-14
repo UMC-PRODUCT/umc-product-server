@@ -15,6 +15,7 @@ public record UpdateQuestionCommand(
     QuestionType type,
     String title,
     String description,
+    Boolean clearDescription,
     Boolean isRequired
 ) {
 }

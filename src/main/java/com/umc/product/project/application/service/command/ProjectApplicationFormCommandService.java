@@ -163,6 +163,7 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
                 .requesterMemberId(command.requesterMemberId())
                 .title(resolvedTitle)
                 .description(command.description())
+                .clearDescription(command.description() == null)
                 .isAnonymous(existing.isAnonymous())
                 .allowDuplicateResponses(existing.allowDuplicateResponses())
                 .build()
@@ -286,6 +287,7 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
                     .requesterMemberId(requesterMemberId)
                     .title(entry.title())
                     .description(entry.description())
+                    .clearDescription(entry.description() == null)
                     .build()
             );
         }
@@ -409,6 +411,7 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
                         .type(entry.type())
                         .title(entry.title())
                         .description(entry.description())
+                        .clearDescription(entry.description() == null)
                         .isRequired(entry.isRequired())
                         .build()
                 );
@@ -434,6 +437,7 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
                     .type(entry.type())
                     .title(entry.title())
                     .description(entry.description())
+                    .clearDescription(entry.description() == null)
                     .isRequired(entry.isRequired())
                     .build()
             );

@@ -43,10 +43,16 @@ public class FormSection extends BaseEntity {
      * null 인 필드는 기존 값 유지.
      */
     public void update(String title, String description) {
+        update(title, description, false);
+    }
+
+    public void update(String title, String description, boolean clearDescription) {
         if (title != null) {
             this.title = title;
         }
-        if (description != null) {
+        if (clearDescription) {
+            this.description = null;
+        } else if (description != null) {
             this.description = description;
         }
     }

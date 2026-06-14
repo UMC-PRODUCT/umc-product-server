@@ -55,7 +55,7 @@ public class FormSectionCommandService implements ManageFormSectionUseCase {
         FormSection section = loadFormSectionPort.findById(command.sectionId())
             .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
 
-        section.update(command.title(), command.description());
+        section.update(command.title(), command.description(), Boolean.TRUE.equals(command.clearDescription()));
         saveFormSectionPort.save(section);
     }
 

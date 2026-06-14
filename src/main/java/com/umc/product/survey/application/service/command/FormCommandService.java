@@ -55,7 +55,8 @@ public class FormCommandService implements ManageFormUseCase {
             command.title(),
             command.description(),
             command.isAnonymous(),
-            command.allowDuplicateResponses()
+            command.allowDuplicateResponses(),
+            Boolean.TRUE.equals(command.clearDescription())
         );
         saveFormPort.save(form);
     }

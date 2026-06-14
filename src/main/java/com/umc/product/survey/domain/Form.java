@@ -119,9 +119,29 @@ public class Form extends BaseEntity {
     }
 
     public void update(String title, String description, Boolean isAnonymous, Boolean allowDuplicateResponses) {
-        if (title != null) this.title = title;
-        if (description != null) this.description = description;
-        if (isAnonymous != null) this.isAnonymous = isAnonymous;
-        if (allowDuplicateResponses != null) this.allowDuplicateResponses = allowDuplicateResponses;
+        update(title, description, isAnonymous, allowDuplicateResponses, false);
+    }
+
+    public void update(
+        String title,
+        String description,
+        Boolean isAnonymous,
+        Boolean allowDuplicateResponses,
+        boolean clearDescription
+    ) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (clearDescription) {
+            this.description = null;
+        } else if (description != null) {
+            this.description = description;
+        }
+        if (isAnonymous != null) {
+            this.isAnonymous = isAnonymous;
+        }
+        if (allowDuplicateResponses != null) {
+            this.allowDuplicateResponses = allowDuplicateResponses;
+        }
     }
 }
