@@ -402,6 +402,16 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
                         .requesterMemberId(requesterMemberId)
                         .build()
                 );
+                manageQuestionUseCase.updateQuestion(
+                    UpdateQuestionCommand.builder()
+                        .questionId(newQuestionId)
+                        .requesterMemberId(requesterMemberId)
+                        .type(entry.type())
+                        .title(entry.title())
+                        .description(entry.description())
+                        .isRequired(entry.isRequired())
+                        .build()
+                );
                 List<Long> newOptionIds = new ArrayList<>();
                 for (ApplicationQuestionOptionEntry optionEntry : entry.options()) {
                     newOptionIds.add(createNewOption(newQuestionId, optionEntry, requesterMemberId));
