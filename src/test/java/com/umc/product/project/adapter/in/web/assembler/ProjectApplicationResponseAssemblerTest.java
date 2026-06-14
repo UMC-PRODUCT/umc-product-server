@@ -8,19 +8,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -57,6 +44,17 @@ import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.survey.application.port.in.query.dto.FormResponseInfo;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectApplicationResponseAssemblerTest {
@@ -391,6 +389,75 @@ class ProjectApplicationResponseAssemblerTest {
         assertThat(result.get(0).applicant().part()).isEqualTo(ChallengerPart.WEB);
     }
 
+    @Test
+    @DisplayName("applicantsFor_차수_파트_시간_순으로_정렬되어_반환된다")
+    void applicantsFor_정렬_순서() {
+        // given - 입력은 일부러 셔플된 순서.
+        // 차수(phase) ASC -> 파트(ChallengerPart#sortOrder) ASC -> 제출 시각(submittedAt) ASC 로 정렬되어야 한다.
+        // FIRST/SECOND/THIRD 세 차수, DESIGN(1)/WEB(2)/ANDROID(3)/IOS(4)/NODEJS(5) 다섯 파트, 같은 (차수,파트) 묶음에서 시간이 ASC 인지까지 검증.
+        Long roundFirstId = 11L;
+        Long roundSecondId = 22L;
+        Long roundThirdId = 33L;
+        Instant t06 = Instant.parse("2026-04-22T06:00:00Z");
+        Instant t07 = Instant.parse("2026-04-22T07:00:00Z");
+        Instant t08 = Instant.parse("2026-04-22T08:00:00Z");
+        Instant t09 = Instant.parse("2026-04-22T09:00:00Z");
+        Instant t10 = Instant.parse("2026-04-22T10:00:00Z");
+        Instant t11 = Instant.parse("2026-04-22T11:00:00Z");
+
+        ProjectApplicationSummaryInfo a = applicationSummaryOf(101L, 1L, roundSecondId, 300L, t10); // SECOND / DESIGN
+        ProjectApplicationSummaryInfo b = applicationSummaryOf(102L, 1L, roundFirstId, 301L, t09);  // FIRST / WEB
+        ProjectApplicationSummaryInfo c = applicationSummaryOf(103L, 1L, roundFirstId, 302L, t11);  // FIRST / DESIGN
+        ProjectApplicationSummaryInfo d = applicationSummaryOf(104L, 1L, roundFirstId, 303L, t08);  // FIRST / ANDROID
+        ProjectApplicationSummaryInfo e = applicationSummaryOf(105L, 1L, roundSecondId, 304L, t09); // SECOND / NODEJS
+        ProjectApplicationSummaryInfo f = applicationSummaryOf(106L, 1L, roundFirstId, 305L, t07);  // FIRST / WEB
+        ProjectApplicationSummaryInfo g = applicationSummaryOf(107L, 1L, roundThirdId, 306L, t06);  // THIRD / IOS
+        ProjectApplicationSummaryInfo h = applicationSummaryOf(108L, 1L, roundSecondId, 307L, t09); // SECOND / DESIGN
+
+        SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(100L)
+            .projectId(1L)
+            .build();
+        ProjectInfo project = projectInfoOf(1L, "프로젝트A", 99L);
+
+        given(searchProjectApplicationsUseCase.searchByProject(query))
+            .willReturn(List.of(a, b, c, d, e, f, g, h));
+        given(getProjectUseCase.getById(1L)).willReturn(project);
+        given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), eq(GISU_ID)))
+            .willReturn(Map.of(
+                300L, challengerInfoOf(300L, ChallengerPart.DESIGN),
+                301L, challengerInfoOf(301L, ChallengerPart.WEB),
+                302L, challengerInfoOf(302L, ChallengerPart.DESIGN),
+                303L, challengerInfoOf(303L, ChallengerPart.ANDROID),
+                304L, challengerInfoOf(304L, ChallengerPart.NODEJS),
+                305L, challengerInfoOf(305L, ChallengerPart.WEB),
+                306L, challengerInfoOf(306L, ChallengerPart.IOS),
+                307L, challengerInfoOf(307L, ChallengerPart.DESIGN)
+            ));
+        given(getProjectMatchingRoundUseCase.findAllByIds(any()))
+            .willReturn(Map.of(
+                roundFirstId, roundInfoOf(roundFirstId, MatchingPhase.FIRST),
+                roundSecondId, roundInfoOf(roundSecondId, MatchingPhase.SECOND),
+                roundThirdId, roundInfoOf(roundThirdId, MatchingPhase.THIRD)
+            ));
+        given(getMemberUseCase.findAllByIds(any())).willReturn(Map.of());
+
+        // when
+        List<ProjectApplicantResponse> result = sut.applicantsFor(query);
+
+        // then - 기대 순서:
+        //   FIRST  / DESIGN(1)   / 11:00  -> c (103)
+        //   FIRST  / WEB(2)      / 07:00  -> f (106)
+        //   FIRST  / WEB(2)      / 09:00  -> b (102)
+        //   FIRST  / ANDROID(3)  / 08:00  -> d (104)
+        //   SECOND / DESIGN(1)   / 09:00  -> h (108)
+        //   SECOND / DESIGN(1)   / 10:00  -> a (101)
+        //   SECOND / NODEJS(5)   / 09:00  -> e (105)
+        //   THIRD  / IOS(4)      / 06:00  -> g (107)   // 시간이 가장 빨라도 차수가 가장 늦으면 마지막
+        assertThat(result).extracting(ProjectApplicantResponse::applicationId)
+            .containsExactly(103L, 106L, 102L, 104L, 108L, 101L, 105L, 107L);
+    }
+
     // ============================================================
     //                   detailFor (단건 상세) 테스트
     // ============================================================
@@ -459,6 +526,15 @@ class ProjectApplicationResponseAssemblerTest {
     private ProjectApplicationSummaryInfo applicationSummaryOf(
         Long applicationId, Long projectId, Long matchingRoundId, Long applicantMemberId
     ) {
+        return applicationSummaryOf(
+            applicationId, projectId, matchingRoundId, applicantMemberId,
+            Instant.parse("2026-04-22T01:30:00Z")
+        );
+    }
+
+    private ProjectApplicationSummaryInfo applicationSummaryOf(
+        Long applicationId, Long projectId, Long matchingRoundId, Long applicantMemberId, Instant submittedAt
+    ) {
         return ProjectApplicationSummaryInfo.builder()
             .id(applicationId)
             .applicantMemberId(applicantMemberId)
@@ -466,7 +542,7 @@ class ProjectApplicationResponseAssemblerTest {
             .projectId(projectId)
             .matchingRoundId(matchingRoundId)
             .status(ProjectApplicationStatus.SUBMITTED)
-            .submittedAt(Instant.parse("2026-04-22T01:30:00Z"))
+            .submittedAt(submittedAt)
             .build();
     }
 
