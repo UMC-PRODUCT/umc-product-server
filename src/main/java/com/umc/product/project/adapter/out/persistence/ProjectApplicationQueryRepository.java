@@ -5,6 +5,15 @@ import static com.umc.product.project.domain.QProjectApplication.projectApplicat
 import static com.umc.product.project.domain.QProjectApplicationForm.projectApplicationForm;
 import static com.umc.product.project.domain.QProjectMatchingRound.projectMatchingRound;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -12,14 +21,8 @@ import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoun
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
 /**
  * ProjectApplication QueryDSL 동적 검색 구현.
