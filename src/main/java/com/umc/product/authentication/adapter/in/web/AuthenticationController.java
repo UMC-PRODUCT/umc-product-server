@@ -1,14 +1,22 @@
 package com.umc.product.authentication.adapter.in.web;
 
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.authentication.adapter.in.web.dto.request.AppleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.GoogleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.KakaoCodeLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.KakaoLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.response.OAuthLoginResponse;
 import com.umc.product.authentication.adapter.in.web.swagger.AuthenticationControllerInterface;
+import com.umc.product.authentication.application.port.in.command.ManageAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.AuthorizationCodeLoginCommand;
+import com.umc.product.authentication.application.port.in.command.dto.IssueAuthenticationTokensCommand;
+import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
 import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
@@ -16,13 +24,9 @@ import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
+
 import jakarta.validation.Valid;
-import java.util.Collections;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthenticationController implements AuthenticationControllerInterface {
 
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
+    private final ManageAuthenticationUseCase manageAuthenticationUseCase;
     private final VerifyOAuthTokenPort verifyOAuthTokenPort;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -113,15 +118,12 @@ public class AuthenticationController implements AuthenticationControllerInterfa
                                                   String appleRefreshToken, ClientType clientType) {
         if (result.isExistingMember()) {
             // 기존 회원: JWT 발급
-            String accessToken = jwtTokenProvider.createAccessToken(
-                result.memberId(),
-                Collections.emptyList(),
-                clientType
+            NewTokens newTokens = manageAuthenticationUseCase.issueTokens(
+                IssueAuthenticationTokensCommand.of(result.memberId(), clientType)
             );
-            String refreshToken = jwtTokenProvider.createRefreshToken(result.memberId());
 
             return OAuthLoginResponse.ofLoginSuccess(
-                provider, accessToken, refreshToken
+                provider, newTokens.accessToken(), newTokens.refreshToken()
             );
         } else {
             // 신규 회원: oAuthVerificationToken 발급 (회원가입 시 사용)

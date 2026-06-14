@@ -3,28 +3,28 @@ package com.umc.product.global.security;
 import static com.umc.product.global.security.JwtAuthenticationFilter.JWT_ERROR_ATTRIBUTE;
 import static com.umc.product.global.security.JwtAuthenticationFilter.JWT_UNKNOWN_ERROR_ATTRIBUTE;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
-import com.umc.product.global.exception.constant.CommonErrorCode;
-import com.umc.product.global.response.ApiResponse;
-import com.umc.product.global.response.code.BaseCode;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
+
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
+
+import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.global.exception.constant.CommonErrorCode;
+import com.umc.product.global.response.ApiErrorResponseWriter;
+import com.umc.product.global.response.code.BaseCode;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    private final ObjectMapper objectMapper;
+    private final ApiErrorResponseWriter errorResponseWriter;
 
     @Override
     public void commence(HttpServletRequest req, HttpServletResponse res, AuthenticationException ex)
@@ -38,16 +38,7 @@ public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
             errorCode.getMessage(),
             ex);
 
-        ApiResponse<Object> body = ApiResponse.onFailure(
-            errorCode.getCode(),
-            errorCode.getMessage(),
-            null
-        );
-
-        res.setStatus(errorCode.getHttpStatus().value());
-        res.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        res.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        res.getWriter().write(objectMapper.writeValueAsString(body));
+        errorResponseWriter.write(res, errorCode);
     }
 
     private BaseCode resolveErrorCode(HttpServletRequest req, AuthenticationException ex) {

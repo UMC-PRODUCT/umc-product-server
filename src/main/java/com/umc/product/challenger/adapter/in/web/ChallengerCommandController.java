@@ -1,5 +1,16 @@
 package com.umc.product.challenger.adapter.in.web;
 
+import java.util.List;
+
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -12,21 +23,16 @@ import com.umc.product.challenger.application.port.in.command.ManageChallengerUs
 import com.umc.product.challenger.application.port.in.command.dto.DeleteChallengerCommand;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/challenger")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Challenger | 챌린저 Command", description = "챌린저 정보를 조회하고, 기록 조회. 검색은 따로 구분되어 있습니다")
 public class ChallengerCommandController {
 
@@ -39,7 +45,7 @@ public class ChallengerCommandController {
     )
     @Operation(summary = "[CHALLENGER-001] 챌린저 생성")
     @PostMapping
-    ChallengerInfoResponse createChallenger(@RequestBody CreateChallengerInfoRequest request) {
+    ChallengerInfoResponse createChallenger(@Valid @RequestBody CreateChallengerInfoRequest request) {
         Long challengerId = manageChallengerUseCase.createChallenger(request.toCommand());
 
         return assembler.fromChallengerId(challengerId);
@@ -52,7 +58,7 @@ public class ChallengerCommandController {
     @Operation(summary = "[CHALLENGER-002] 챌린저 batch 생성", description = "한 번에 여러 건의 챌린저를 등록합니다. 기존에 `bulk`로 되어 있는 엔드포인트를 수정하였습니다.")
     @PostMapping("batch")
     List<ChallengerInfoResponse> bulkCreateChallenger(
-        @RequestBody List<CreateChallengerInfoRequest> requests
+        @Valid @RequestBody List<@Valid CreateChallengerInfoRequest> requests
     ) {
         return requests.stream()
             .map(request ->
@@ -71,7 +77,7 @@ public class ChallengerCommandController {
     @PostMapping("{challengerId}/deactivate")
     void deactivateChallenger(
         @PathVariable Long challengerId,
-        @RequestBody DeactivateChallengerRequest request
+        @Valid @RequestBody DeactivateChallengerRequest request
     ) {
         manageChallengerUseCase.deactivateChallenger(request.toCommand(challengerId));
     }
@@ -85,7 +91,7 @@ public class ChallengerCommandController {
     ChallengerInfoResponse editChallengerInfo(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long challengerId,
-        @RequestBody EditChallengerPartRequest request
+        @Valid @RequestBody EditChallengerPartRequest request
     ) {
         manageChallengerUseCase.updateChallenger(request.toCommand(challengerId, memberPrincipal.getMemberId()));
 

@@ -1,6 +1,6 @@
-# UMC PRODUCT Team Backend - AI Agent Guidelines
+# UMC Product Backend - AI Agent Guidelines
 
-This document provides specialized guidelines and instructions for AI Agents when operating within the UMC PRODUCT Team Backend repository. These instructions take absolute precedence over general workflows.
+This document provides specialized guidelines and instructions for AI Agents when operating within the UMC Product Backend repository. These instructions take absolute precedence over general workflows.
 
 ## 1. Role & Persona
 

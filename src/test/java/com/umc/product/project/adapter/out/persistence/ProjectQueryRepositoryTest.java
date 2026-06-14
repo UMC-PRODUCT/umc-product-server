@@ -2,9 +2,19 @@ package com.umc.product.project.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.config.JpaConfig;
-import com.umc.product.global.config.QueryDslConfig;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectMember;
@@ -12,22 +22,10 @@ import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.PartQuotaStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
-import com.umc.product.support.TestContainersConfig;
-import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.test.util.ReflectionTestUtils;
+import com.umc.product.support.PersistenceAdapterTest;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({JpaConfig.class, QueryDslConfig.class, TestContainersConfig.class, ProjectQueryRepository.class})
+@PersistenceAdapterTest
+@Import({ProjectQueryRepository.class})
 class ProjectQueryRepositoryTest {
 
     @Autowired
@@ -124,6 +122,22 @@ class ProjectQueryRepositoryTest {
         assertThat(result.getTotalElements()).isEqualTo(3);
         assertThat(result.getTotalPages()).isEqualTo(2);
         assertThat(result.hasNext()).isTrue();
+    }
+
+    @Test
+    void unpaged_요청시_offset_limit_없이_전건_반환() {
+        // given — Pageable.unpaged() 로 호출 (시딩 등 전체 조회 시나리오)
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            gisuId, null, null, null, null, null, Pageable.unpaged());
+
+        // when — Unpaged 의 getOffset/getPageSize 호출로 인한 UnsupportedOperationException 이 없어야 한다
+        Page<Project> result = sut.search(query);
+
+        // then — 조건에 맞는 전건(기수 1 IN_PROGRESS 3건) 을 페이징 절단 없이 반환
+        assertThat(result.getContent()).hasSize(3);
+        assertThat(result.getTotalElements()).isEqualTo(3);
+        assertThat(result.getContent())
+            .allMatch(p -> p.getStatus() == ProjectStatus.IN_PROGRESS);
     }
 
     @Test

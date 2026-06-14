@@ -18,6 +18,11 @@ public interface LoadTermPort {
     Optional<Term> findActiveByType(TermType type);
 
     /**
+     * 현재 활성화된 모든 약관을 조회합니다.
+     */
+    List<Term> listActive();
+
+    /**
      * ID로 약관이 존재하는지 확인합니다.
      */
     boolean existsById(Long id);

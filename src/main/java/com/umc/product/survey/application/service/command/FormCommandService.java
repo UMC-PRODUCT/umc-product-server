@@ -1,5 +1,8 @@
 package com.umc.product.survey.application.service.command;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.survey.application.port.in.command.ManageFormUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateDraftFormCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteFormCommand;
@@ -15,9 +18,8 @@ import com.umc.product.survey.application.port.out.SaveQuestionPort;
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
@@ -34,7 +36,12 @@ public class FormCommandService implements ManageFormUseCase {
 
     @Override
     public Long createDraft(CreateDraftFormCommand command) {
-        Form form = Form.createDraft(command.title(), command.createdMemberId());
+        Form form = Form.createDraft(
+            command.title(),
+            command.createdMemberId(),
+            command.description(),
+            command.allowDuplicateResponses()
+        );
 
         return saveFormPort.save(form).getId();
     }
@@ -44,7 +51,13 @@ public class FormCommandService implements ManageFormUseCase {
         Form form = loadFormPort.findById(command.formId())
             .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
 
-        form.update(command.title(), command.description(), command.isAnonymous());
+        form.update(
+            command.title(),
+            command.description(),
+            command.isAnonymous(),
+            command.allowDuplicateResponses(),
+            Boolean.TRUE.equals(command.clearDescription())
+        );
         saveFormPort.save(form);
     }
 

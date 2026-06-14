@@ -1,6 +1,14 @@
 package com.umc.product.global.config;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.info.BuildProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.swagger.v3.core.jackson.ModelResolver;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -8,12 +16,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.info.BuildProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 @RequiredArgsConstructor
 @Configuration
@@ -70,13 +73,13 @@ public class OpenApiConfig {
     private List<Server> servers() {
         return List.of(
             new Server()
+                .url("https://dev.api.university.neordinary.com")
+                .description("Development"),
+            new Server()
                 .url("http://localhost:" + serverPort)
                 .description("Local"),
             new Server()
-                .url("https://dev.api.umc.it.kr")
-                .description("Development"),
-            new Server()
-                .url("https://api.umc.it.kr")
+                .url("https://api.university.neordinary.com")
                 .description("Production")
         );
     }
@@ -94,7 +97,7 @@ public class OpenApiConfig {
                     .type(SecurityScheme.Type.HTTP)
                     .scheme("bearer")
                     .bearerFormat("JWT")
-                    .description("발급받은 Access Token을 입력해주세요.")
+                    .description("아래에 Access Token을 넣어주세요.")
             );
     }
 

@@ -1,26 +1,35 @@
 package com.umc.product.authentication.application.service;
 
+import java.security.SecureRandom;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authentication.application.event.SendVerificationEmailEvent;
 import com.umc.product.authentication.application.port.in.command.ManageAuthenticationUseCase;
+import com.umc.product.authentication.application.port.in.command.dto.IssueAuthenticationTokensCommand;
+import com.umc.product.authentication.application.port.in.command.dto.LogoutCommand;
 import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
 import com.umc.product.authentication.application.port.in.command.dto.RenewAccessTokenCommand;
 import com.umc.product.authentication.application.port.in.command.dto.ValidateEmailVerificationSessionCommand;
+import com.umc.product.authentication.application.port.out.DeleteRefreshTokenPort;
 import com.umc.product.authentication.application.port.out.LoadEmailVerificationPort;
+import com.umc.product.authentication.application.port.out.LoadRefreshTokenPort;
 import com.umc.product.authentication.application.port.out.SaveEmailVerificationPort;
 import com.umc.product.authentication.domain.CredentialPolicy;
 import com.umc.product.authentication.domain.EmailVerification;
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
+import com.umc.product.authentication.domain.RefreshToken;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.global.security.RefreshTokenClaims;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
-import java.security.SecureRandom;
-import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -34,28 +43,46 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
 
     private final LoadEmailVerificationPort loadEmailVerificationPort;
     private final SaveEmailVerificationPort saveEmailVerificationPort;
+    private final LoadRefreshTokenPort loadRefreshTokenPort;
+    private final DeleteRefreshTokenPort deleteRefreshTokenPort;
     private final JwtTokenProvider jwtTokenProvider;
+    private final AuthenticationTokenIssuer authenticationTokenIssuer;
     private final GetMemberCredentialUseCase getMemberCredentialUseCase;
     private final DomainEventPublisher eventPublisher;
 
     // TODO: EmailSendUseCase와 구분할 필요가 있습니다.
     @Override
+    public NewTokens issueTokens(IssueAuthenticationTokensCommand command) {
+        return authenticationTokenIssuer.issue(command.memberId(), command.clientType());
+    }
+
+    @Override
+    @Transactional
     public NewTokens renewAccessToken(RenewAccessTokenCommand command) {
         /*
             TODO
             ---
-            refresh token을 검증하는 로직을 추가할 필요성이 있음 + refresh token은 1회만 사용 가능하도록 변경할 것.
-            단, RT의 마지막 사용으로부터 5분 이내에는 사용 가능하도록 함.
+            RT의 마지막 사용으로부터 5분 이내에는 사용 가능하도록 하는 grace window 는 후속 과제.
 
             이는 네트워크 이슈로 인해서 Server에 요청이 접수되었지만 클라이언트에게는 응답이 가지 않은 경우를 대비하기 위함임
          */
-        
-        Long memberId = jwtTokenProvider.parseRefreshToken(command.refreshToken());
+        RefreshTokenClaims claims = jwtTokenProvider.parseRefreshToken(command.refreshToken());
+        RefreshToken storedRefreshToken = loadRefreshTokenPort.findByJti(claims.jti())
+            .orElseThrow(() -> new AuthenticationDomainException(AuthenticationErrorCode.INVALID_REFRESH_TOKEN));
 
-        return NewTokens.builder()
-            .accessToken(jwtTokenProvider.createAccessToken(memberId, null))
-            .refreshToken(jwtTokenProvider.createRefreshToken(memberId))
-            .build();
+        storedRefreshToken.validateActiveFor(claims.memberId());
+        if (!deleteRefreshTokenPort.deleteByJti(claims.jti())) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        return authenticationTokenIssuer.issue(claims.memberId(), null);
+    }
+
+    @Override
+    @Transactional
+    public void logout(LogoutCommand command) {
+        RefreshTokenClaims claims = jwtTokenProvider.parseRefreshToken(command.refreshToken());
+        deleteRefreshTokenPort.deleteByJti(claims.jti());
     }
 
     @Override
@@ -65,13 +92,13 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
         CredentialPolicy.validateEmail(email);
 
         // purpose 별 가입 여부 분기 검증.
-        // - REGISTER: 이미 가입된 이메일이면 인증 진행 자체를 차단 (가입 마지막 단계의 UNIQUE 충돌로 인한
-        //   "인증 다 했는데 실패" UX 방지). 회원가입 흐름에서는 이미 가입 여부 노출이 자연스러움.
+        // - REGISTER / CHANGE_EMAIL: 이미 가입된 이메일이면 인증 진행 자체를 차단 (가입/변경 마지막 단계의
+        //   UNIQUE 충돌로 인한 "인증 다 했는데 실패" UX 방지). 두 흐름에서는 이메일 사용 여부 노출이 자연스러움.
         // - PASSWORD_RESET: 미가입 / 자격증명 미등록 이메일에 대해서는 user enumeration 방어를 위해
         //   응답은 동일하게 내려보내되 실제 메일 발송만 건너뛴다. 후속 reset 흐름에서도 INVALID_LOGIN_CREDENTIAL
         //   단일 메시지로 응답하므로 끝까지 가입 여부가 노출되지 않는다.
         boolean shouldSendEmail = switch (purpose) {
-            case REGISTER -> {
+            case REGISTER, CHANGE_EMAIL -> {
                 if (getMemberCredentialUseCase.existsByEmail(email)) {
                     throw new AuthenticationDomainException(AuthenticationErrorCode.EMAIL_ALREADY_EXISTS);
                 }

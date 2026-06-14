@@ -15,5 +15,10 @@ public enum EmailVerificationPurpose {
     /**
      * 가입된 회원의 비밀번호 초기화를 위한 이메일 인증.
      */
-    PASSWORD_RESET
+    PASSWORD_RESET,
+
+    /**
+     * 기존 회원의 이메일 변경을 위한 새 이메일 소유 인증.
+     */
+    CHANGE_EMAIL
 }

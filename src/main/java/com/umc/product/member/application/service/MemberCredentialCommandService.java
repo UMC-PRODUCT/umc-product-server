@@ -1,20 +1,24 @@
 package com.umc.product.member.application.service;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.member.application.port.in.command.LockMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.command.ManageMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswordCommand;
+import com.umc.product.member.application.port.in.command.dto.MemberCredentialStatusInfo;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialByEmailCommand;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class MemberCredentialCommandService implements ManageMemberCredentialUseCase {
+public class MemberCredentialCommandService implements ManageMemberCredentialUseCase, LockMemberCredentialUseCase {
 
     private final LoadMemberPort loadMemberPort;
 
@@ -34,5 +38,15 @@ public class MemberCredentialCommandService implements ManageMemberCredentialUse
             .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         member.changePassword(command.encodedPassword());
+    }
+
+    @Override
+    public MemberCredentialStatusInfo getCredentialStatusForUpdate(Long memberId) {
+        if (memberId == null) {
+            throw new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND);
+        }
+        return loadMemberPort.findByIdForUpdate(memberId)
+            .map(MemberCredentialStatusInfo::from)
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 }

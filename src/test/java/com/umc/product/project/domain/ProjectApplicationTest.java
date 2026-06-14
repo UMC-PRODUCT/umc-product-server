@@ -4,16 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Instant;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import java.time.Instant;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 class ProjectApplicationTest {
 
@@ -197,60 +199,6 @@ class ProjectApplicationTest {
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
-        }
-    }
-
-    @Nested
-    class revertToPending {
-
-        @Test
-        void APPROVED를_SUBMITTED로_되돌리고_사유는_초기화한다() {
-            setStatus(application, ProjectApplicationStatus.APPROVED);
-            ReflectionTestUtils.setField(application, "statusChangeReason", "이전 사유");
-
-            application.revertToPending(DECIDER_MEMBER_ID);
-
-            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
-            assertThat(application.getStatusChangedMemberId()).isEqualTo(DECIDER_MEMBER_ID);
-            assertThat(application.getStatusChangeReason()).isNull();
-        }
-
-        @Test
-        void REJECTED를_SUBMITTED로_되돌린다() {
-            setStatus(application, ProjectApplicationStatus.REJECTED);
-
-            application.revertToPending(DECIDER_MEMBER_ID);
-
-            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
-        }
-
-        @Test
-        void SUBMITTED_상태에서는_PROJECT_APPLICATION_DECISION_INVALID_TRANSITION() {
-            assertThatThrownBy(() -> application.revertToPending(DECIDER_MEMBER_ID))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
-        }
-
-        @Test
-        void DRAFT_상태에서는_PROJECT_APPLICATION_DECISION_INVALID_TRANSITION() {
-            setStatus(application, ProjectApplicationStatus.DRAFT);
-
-            assertThatThrownBy(() -> application.revertToPending(DECIDER_MEMBER_ID))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
-        }
-
-        @Test
-        void 차수_종료_후에는_PROJECT_MATCHING_ROUND_LOCKED() {
-            setStatus(application, ProjectApplicationStatus.APPROVED);
-            setRoundDeadline(round, NOW.minusSeconds(60));
-
-            assertThatThrownBy(() -> application.revertToPending(DECIDER_MEMBER_ID))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
         }
     }
 

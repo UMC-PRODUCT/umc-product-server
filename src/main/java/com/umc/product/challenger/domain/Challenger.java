@@ -16,6 +16,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -26,7 +27,13 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "challenger")
+@Table(
+    name = "challenger",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_challenger_member_id_gisu_id",
+        columnNames = {"member_id", "gisu_id"}
+    )
+)
 public class Challenger extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

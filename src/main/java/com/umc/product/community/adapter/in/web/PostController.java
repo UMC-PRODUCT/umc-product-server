@@ -1,5 +1,13 @@
 package com.umc.product.community.adapter.in.web;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -24,16 +32,10 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/posts")
@@ -77,7 +79,7 @@ public class PostController {
         resourceType = ResourceType.COMMUNITY_POST,
         resourceId = "#postId",
         permission = PermissionType.EDIT,
-        message = "게시글 수정 권한이 없습니다."
+        message = "내가 작성한 게시글만 수정할 수 있어요."
     )
     @PatchMapping("/{postId}")
     @Operation(summary = "[POST-003] 일반 게시글 수정", description = "일반 게시글의 제목, 내용, 카테고리를 수정합니다.")
@@ -92,7 +94,7 @@ public class PostController {
         resourceType = ResourceType.COMMUNITY_POST,
         resourceId = "#postId",
         permission = PermissionType.EDIT,
-        message = "번개 게시글 수정 권한이 없습니다."
+        message = "내가 작성한 번개글만 수정할 수 있어요."
     )
     @PatchMapping("/{postId}/lightning")
     @Operation(summary = "[POST-004] 번개글 수정", description = "번개 게시글의 제목, 내용, 모임 정보를 수정합니다.")
@@ -107,7 +109,7 @@ public class PostController {
         resourceType = ResourceType.COMMUNITY_POST,
         resourceId = "#postId",
         permission = PermissionType.DELETE,
-        message = "게시글 삭제 권한이 없습니다."
+        message = "내가 작성한 게시글만 삭제할 수 있어요."
     )
     @DeleteMapping("/{postId}")
     @Operation(summary = "[POST-005] 게시글 삭제", description = "게시글을 삭제합니다.")
@@ -148,4 +150,3 @@ public class PostController {
         return PostResponse.from(postInfo, memberInfo, challengerInfo);
     }
 }
-

@@ -11,6 +11,7 @@ public record UpdateFormSectionCommand(
     Long sectionId,
     Long requesterMemberId,
     String title,
-    String description
+    String description,
+    Boolean clearDescription
 ) {
 }

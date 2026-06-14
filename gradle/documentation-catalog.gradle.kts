@@ -1,76 +1,62 @@
 import java.io.File
 import java.util.Locale
 
-data class DocumentationAnnotation(
-    val name: String,
-    val text: String,
+// catalog item의 source 위치를 함께 남겨 Backoffice에서 원본 enum으로 바로 추적할 수 있게 한다.
+data class ErrorCodeSource(
+    val enumName: String,
+    val file: String,
     val line: Int
 )
 
-data class DocumentationMethod(
-    val name: String,
-    val line: Int,
-    val annotations: List<DocumentationAnnotation>
-)
-
-data class DocumentationClass(
-    val packageName: String,
-    val className: String,
-    val sourceFile: File,
-    val relativePath: String,
-    val domain: String,
-    val interfaces: List<String>,
-    val annotations: List<DocumentationAnnotation>,
-    val methods: List<DocumentationMethod>
-)
-
-data class OperationDocumentation(
-    val apiId: String?,
-    val operationId: String?,
-    val summary: String,
-    val role: String,
-    val source: String,
-    val line: Int
-)
-
-data class ApiDocumentationEntry(
-    val sequence: Int,
-    val domain: String,
-    val apiId: String,
-    val endpoint: String,
-    val httpMethod: String,
-    val role: String,
-    val deprecated: Boolean,
-    val source: String,
-    val line: Int,
-    val operationId: String?
-)
-
+// ErrorCode Catalog v1 manifest의 item shape와 1:1로 맞춘 내부 모델이다.
+// optional metadata는 선언 방식이 확정될 때까지 null/false/emptyList 기본값으로 생성한다.
 data class ErrorCodeDocumentationEntry(
     val sequence: Int,
     val domain: String,
-    val enumName: String,
-    val constantName: String,
-    val httpStatus: String,
     val code: String,
+    val name: String,
+    val httpStatus: Int,
+    val httpStatusName: String,
     val message: String,
-    val source: String,
-    val line: Int
+    val description: String?,
+    val clientAction: String?,
+    val retryable: Boolean?,
+    val severity: String?,
+    val deprecated: Boolean,
+    val replacementCode: String?,
+    val owners: List<String>,
+    val tags: List<String>,
+    val source: ErrorCodeSource
 )
 
+// 생성 산출물은 docs/guides와 Spring static resource 양쪽에 쓴다.
+// docs/guides는 repository 문서용, static resource는 서버/Backoffice 서빙용이다.
 val documentationSourceRoot = file("src/main/java")
-val apiCatalogMarkdownFile = file("docs/guides/API_목록.md")
-val errorCodeCatalogMarkdownFile = file("docs/guides/ErrorCode_목록.md")
-val apiCatalogJsonFile = file("docs/guides/API_목록.json")
-val errorCodeCatalogJsonFile = file("docs/guides/ErrorCode_목록.json")
-val staticApiCatalogMarkdownFile = file("src/main/resources/static/docs/catalog/api/catalog.md")
-val staticApiCatalogJsonFile = file("src/main/resources/static/docs/catalog/api/catalog.json")
-val staticApiCatalogIndexFile = file("src/main/resources/static/docs/catalog/api/index.html")
+val errorCodeCatalogMarkdownFile = file("docs/guides/에러_코드_목록.md")
+val errorCodeCatalogJsonFile = file("docs/guides/에러_코드_목록.json")
+val errorCodeCatalogSchemaFile = file("docs/guides/에러_코드_목록.schema.json")
 val staticErrorCodeCatalogMarkdownFile = file("src/main/resources/static/docs/catalog/error/catalog.md")
 val staticErrorCodeCatalogJsonFile = file("src/main/resources/static/docs/catalog/error/catalog.json")
+val staticErrorCodeCatalogSchemaFile = file("src/main/resources/static/docs/catalog/error/catalog.schema.json")
 val staticErrorCodeCatalogIndexFile = file("src/main/resources/static/docs/catalog/error/index.html")
+val staleCatalogFilesToRemove = listOf(
+    file("docs/guides/API_목록.md"),
+    file("docs/guides/API_목록.json"),
+    file("docs/guides/ErrorCode_목록.md"),
+    file("docs/guides/ErrorCode_목록.json"),
+    file("docs/guides/ErrorCode_목록.schema.json"),
+    file("src/main/resources/static/docs/catalog/api/catalog.md"),
+    file("src/main/resources/static/docs/catalog/api/catalog.json"),
+    file("src/main/resources/static/docs/catalog/api/index.html")
+)
 
+val errorCodeCatalogServiceName = "umc-product-server"
+val errorCodeCatalogSchemaVersion = 1
+
+// Markdown/JSON/HTML을 문자열로 직접 생성하므로 출력 포맷별 escaping을 명시적으로 처리한다.
 fun String.escapeMarkdownCell(): String = replace("|", "\\|").replace("\n", "<br>")
+
+fun String.normalizeLineEndings(): String = replace("\r\n", "\n").replace("\r", "\n")
 
 fun String.escapeJson(): String = buildString {
     this@escapeJson.forEach { ch ->
@@ -85,7 +71,39 @@ fun String.escapeJson(): String = buildString {
     }
 }
 
-fun String.simpleJavaName(): String = substringAfterLast('.').trim()
+fun String.escapeHtml(): String = buildString {
+    this@escapeHtml.forEach { ch ->
+        when (ch) {
+            '&' -> append("&amp;")
+            '<' -> append("&lt;")
+            '>' -> append("&gt;")
+            '"' -> append("&quot;")
+            '\'' -> append("&#39;")
+            else -> append(ch)
+        }
+    }
+}
+
+fun unescapeJavaString(value: String): String = buildString {
+    var index = 0
+    while (index < value.length) {
+        val ch = value[index]
+        if (ch == '\\' && index + 1 < value.length) {
+            when (val next = value[index + 1]) {
+                '"' -> append('"')
+                '\\' -> append('\\')
+                'n' -> append('\n')
+                'r' -> append('\r')
+                't' -> append('\t')
+                else -> append(next)
+            }
+            index += 2
+        } else {
+            append(ch)
+            index += 1
+        }
+    }
+}
 
 fun domainFromPackage(packageName: String): String {
     return packageName
@@ -94,301 +112,97 @@ fun domainFromPackage(packageName: String): String {
         .ifBlank { "unknown" }
 }
 
-fun normalizeEndpoint(vararg parts: String): String {
-    val segments = parts
-        .map { it.trim() }
-        .filter { it.isNotBlank() }
-        .map { it.trim('/') }
-        .filter { it.isNotBlank() }
+// Gradle task가 Spring classpath를 로딩하지 않도록, source parser가 읽은 HttpStatus enum 이름을 숫자로 변환한다.
+// 새 status가 필요해지면 이 map에 추가해야 validateDocumentationCatalogs에서 0으로 잡히지 않는다.
+fun httpStatusCode(statusName: String): Int = mapOf(
+    "CONTINUE" to 100,
+    "SWITCHING_PROTOCOLS" to 101,
+    "PROCESSING" to 102,
+    "EARLY_HINTS" to 103,
+    "OK" to 200,
+    "CREATED" to 201,
+    "ACCEPTED" to 202,
+    "NON_AUTHORITATIVE_INFORMATION" to 203,
+    "NO_CONTENT" to 204,
+    "RESET_CONTENT" to 205,
+    "PARTIAL_CONTENT" to 206,
+    "MULTI_STATUS" to 207,
+    "ALREADY_REPORTED" to 208,
+    "IM_USED" to 226,
+    "MULTIPLE_CHOICES" to 300,
+    "MOVED_PERMANENTLY" to 301,
+    "FOUND" to 302,
+    "SEE_OTHER" to 303,
+    "NOT_MODIFIED" to 304,
+    "TEMPORARY_REDIRECT" to 307,
+    "PERMANENT_REDIRECT" to 308,
+    "BAD_REQUEST" to 400,
+    "UNAUTHORIZED" to 401,
+    "PAYMENT_REQUIRED" to 402,
+    "FORBIDDEN" to 403,
+    "NOT_FOUND" to 404,
+    "METHOD_NOT_ALLOWED" to 405,
+    "NOT_ACCEPTABLE" to 406,
+    "PROXY_AUTHENTICATION_REQUIRED" to 407,
+    "REQUEST_TIMEOUT" to 408,
+    "CONFLICT" to 409,
+    "GONE" to 410,
+    "LENGTH_REQUIRED" to 411,
+    "PRECONDITION_FAILED" to 412,
+    "PAYLOAD_TOO_LARGE" to 413,
+    "URI_TOO_LONG" to 414,
+    "UNSUPPORTED_MEDIA_TYPE" to 415,
+    "REQUESTED_RANGE_NOT_SATISFIABLE" to 416,
+    "EXPECTATION_FAILED" to 417,
+    "I_AM_A_TEAPOT" to 418,
+    "UNPROCESSABLE_ENTITY" to 422,
+    "LOCKED" to 423,
+    "FAILED_DEPENDENCY" to 424,
+    "TOO_EARLY" to 425,
+    "UPGRADE_REQUIRED" to 426,
+    "PRECONDITION_REQUIRED" to 428,
+    "TOO_MANY_REQUESTS" to 429,
+    "REQUEST_HEADER_FIELDS_TOO_LARGE" to 431,
+    "UNAVAILABLE_FOR_LEGAL_REASONS" to 451,
+    "INTERNAL_SERVER_ERROR" to 500,
+    "NOT_IMPLEMENTED" to 501,
+    "BAD_GATEWAY" to 502,
+    "SERVICE_UNAVAILABLE" to 503,
+    "GATEWAY_TIMEOUT" to 504,
+    "HTTP_VERSION_NOT_SUPPORTED" to 505,
+    "VARIANT_ALSO_NEGOTIATES" to 506,
+    "INSUFFICIENT_STORAGE" to 507,
+    "LOOP_DETECTED" to 508,
+    "BANDWIDTH_LIMIT_EXCEEDED" to 509,
+    "NOT_EXTENDED" to 510,
+    "NETWORK_AUTHENTICATION_REQUIRED" to 511
+)[statusName] ?: 0
 
-    return if (segments.isEmpty()) {
-        "/"
+fun appendJsonStringOrNull(builder: StringBuilder, property: String, value: String?, trailingComma: Boolean = true) {
+    builder.append("      \"$property\": ")
+    if (value == null) {
+        builder.append("null")
     } else {
-        "/" + segments.joinToString("/")
+        builder.append("\"").append(value.escapeJson()).append("\"")
     }
+    builder.appendLine(if (trailingComma) "," else "")
 }
 
-fun extractFirstStringLiteral(text: String): String? {
-    val match = Regex("\"((?:\\\\.|[^\"\\\\])*)\"", RegexOption.DOT_MATCHES_ALL).find(text)
-    return match?.groupValues?.get(1)?.replace("\\\"", "\"")
+fun appendJsonBooleanOrNull(builder: StringBuilder, property: String, value: Boolean?, trailingComma: Boolean = true) {
+    builder.append("      \"$property\": ")
+    builder.append(value?.toString() ?: "null")
+    builder.appendLine(if (trailingComma) "," else "")
 }
 
-fun extractStringAttribute(text: String, attributeName: String): String? {
-    val match = Regex(
-        "$attributeName\\s*=\\s*\"((?:\\\\.|[^\"\\\\])*)\"",
-        setOf(RegexOption.DOT_MATCHES_ALL)
-    ).find(text)
-
-    return match?.groupValues?.get(1)?.replace("\\\"", "\"")
+fun appendJsonStringArray(builder: StringBuilder, property: String, values: List<String>, trailingComma: Boolean = true) {
+    builder.append("      \"$property\": [")
+    builder.append(values.joinToString(", ") { "\"${it.escapeJson()}\"" })
+    builder.append("]")
+    builder.appendLine(if (trailingComma) "," else "")
 }
 
-fun extractMappingPath(annotation: DocumentationAnnotation): String {
-    val pathValue = extractStringAttribute(annotation.text, "path")
-        ?: extractStringAttribute(annotation.text, "value")
-        ?: extractFirstStringLiteral(annotation.text)
-
-    return pathValue.orEmpty()
-}
-
-fun extractHttpMethod(annotation: DocumentationAnnotation): String {
-    return when (annotation.name) {
-        "GetMapping" -> "GET"
-        "PostMapping" -> "POST"
-        "PutMapping" -> "PUT"
-        "PatchMapping" -> "PATCH"
-        "DeleteMapping" -> "DELETE"
-        "RequestMapping" -> Regex("RequestMethod\\.([A-Z]+)")
-            .findAll(annotation.text)
-            .map { it.groupValues[1] }
-            .distinct()
-            .joinToString(",")
-            .ifBlank { "REQUEST" }
-
-        else -> annotation.name.removeSuffix("Mapping").uppercase(Locale.ROOT)
-    }
-}
-
-fun parseAnnotation(lines: List<String>, startIndex: Int): Pair<DocumentationAnnotation, Int> {
-    val startLine = lines[startIndex]
-    val name = Regex("@([A-Za-z0-9_]+)").find(startLine)?.groupValues?.get(1).orEmpty()
-    val text = StringBuilder(startLine.trim())
-
-    var index = startIndex
-    var balance = startLine.count { it == '(' } - startLine.count { it == ')' }
-
-    while (balance > 0 && index + 1 < lines.size) {
-        index += 1
-        val nextLine = lines[index]
-        text.append('\n').append(nextLine.trim())
-        balance += nextLine.count { it == '(' } - nextLine.count { it == ')' }
-    }
-
-    return DocumentationAnnotation(name, text.toString(), startIndex + 1) to index
-}
-
-fun extractMethodName(line: String): String? {
-    val normalized = line.trim()
-
-    if (normalized.startsWith("if ") ||
-        normalized.startsWith("for ") ||
-        normalized.startsWith("while ") ||
-        normalized.startsWith("switch ") ||
-        normalized.startsWith("catch ") ||
-        normalized.startsWith("return ") ||
-        normalized.startsWith("new ")
-    ) {
-        return null
-    }
-
-    return Regex(
-        "^(?:public|protected|private)?\\s*(?:static\\s+)?(?:final\\s+)?[A-Za-z0-9_<>,.?\\[\\]\\s]+\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\("
-    ).find(normalized)?.groupValues?.get(1)
-}
-
-fun parseDocumentationClass(sourceFile: File): DocumentationClass? {
-    val lines = sourceFile.readLines()
-    val packageName = lines.firstOrNull { it.trim().startsWith("package ") }
-        ?.trim()
-        ?.removePrefix("package ")
-        ?.removeSuffix(";")
-        ?: return null
-
-    val relativePath = sourceFile.relativeTo(project.projectDir).invariantSeparatorsPath
-    val domain = domainFromPackage(packageName)
-
-    val methods = mutableListOf<DocumentationMethod>()
-    var className: String? = null
-    var interfaces = emptyList<String>()
-    var classAnnotations = emptyList<DocumentationAnnotation>()
-    val pendingAnnotations = mutableListOf<DocumentationAnnotation>()
-
-    var index = 0
-    while (index < lines.size) {
-        val line = lines[index]
-        val trimmed = line.trim()
-
-        if (trimmed.startsWith("@")) {
-            val (annotation, endIndex) = parseAnnotation(lines, index)
-            pendingAnnotations.add(annotation)
-            index = endIndex + 1
-            continue
-        }
-
-        if (className == null) {
-            val classMatch = Regex("\\b(?:class|interface|enum)\\s+([A-Za-z_][A-Za-z0-9_]*)").find(trimmed)
-            if (classMatch != null) {
-                className = classMatch.groupValues[1]
-                classAnnotations = pendingAnnotations.toList()
-                pendingAnnotations.clear()
-
-                interfaces = Regex("\\bimplements\\s+([^\\{]+)")
-                    .find(trimmed)
-                    ?.groupValues
-                    ?.get(1)
-                    ?.split(",")
-                    ?.map { it.simpleJavaName() }
-                    ?.filter { it.isNotBlank() }
-                    ?: emptyList()
-            }
-
-            index += 1
-            continue
-        }
-
-        val methodName = extractMethodName(trimmed)
-        if (methodName != null) {
-            methods.add(DocumentationMethod(methodName, index + 1, pendingAnnotations.toList()))
-            pendingAnnotations.clear()
-            index += 1
-            continue
-        }
-
-        if (trimmed.isNotBlank() && !trimmed.startsWith("//") && trimmed.endsWith(";")) {
-            pendingAnnotations.clear()
-        }
-
-        index += 1
-    }
-
-    return className?.let {
-        DocumentationClass(
-            packageName = packageName,
-            className = it,
-            sourceFile = sourceFile,
-            relativePath = relativePath,
-            domain = domain,
-            interfaces = interfaces,
-            annotations = classAnnotations,
-            methods = methods
-        )
-    }
-}
-
-fun extractOperationDocumentation(method: DocumentationMethod, source: String): OperationDocumentation? {
-    val operationAnnotation = method.annotations.firstOrNull { it.name == "Operation" } ?: return null
-    val summary = extractStringAttribute(operationAnnotation.text, "summary").orEmpty()
-    val operationId = extractStringAttribute(operationAnnotation.text, "operationId")?.takeIf { it.isNotBlank() }
-
-    val summaryMatch = Regex("^\\[([A-Z][A-Z0-9_]*(?:-[A-Z0-9_]+)+)]\\s*(.*)$", RegexOption.DOT_MATCHES_ALL)
-        .find(summary)
-        ?.takeIf { match -> match.groupValues[1].any { it.isDigit() } }
-    val summaryApiId = summaryMatch?.groupValues?.get(1)
-    val role = summaryMatch?.groupValues?.get(2)?.trim()?.ifBlank { summary } ?: summary
-
-    return OperationDocumentation(
-        apiId = operationId ?: summaryApiId,
-        operationId = operationId,
-        summary = summary,
-        role = role,
-        source = source,
-        line = operationAnnotation.line
-    )
-}
-
-fun classMappingPath(clazz: DocumentationClass): String {
-    return clazz.annotations.firstOrNull { it.name == "RequestMapping" }?.let(::extractMappingPath).orEmpty()
-}
-
-fun isDeprecated(clazz: DocumentationClass, method: DocumentationMethod): Boolean {
-    return clazz.annotations.any { it.name == "Deprecated" } ||
-        method.annotations.any { it.name == "Deprecated" } ||
-        method.annotations.any { it.name == "Operation" && it.text.contains("deprecated = true") }
-}
-
-fun buildApiDocumentationEntries(): List<ApiDocumentationEntry> {
-    val javaClasses = documentationSourceRoot
-        .walkTopDown()
-        .filter { it.isFile && it.extension == "java" }
-        .mapNotNull(::parseDocumentationClass)
-        .toList()
-
-    val operationByInterface = javaClasses
-        .filter { it.annotations.none { annotation -> annotation.name == "RestController" } }
-        .associate { clazz ->
-            clazz.className to clazz.methods.mapNotNull { method ->
-                extractOperationDocumentation(method, clazz.relativePath)?.let { method.name to it }
-            }.toMap()
-        }
-
-    val entries = mutableListOf<ApiDocumentationEntry>()
-
-    javaClasses
-        .filter { clazz -> clazz.annotations.any { it.name == "RestController" } }
-        .forEach { clazz ->
-            val basePath = classMappingPath(clazz)
-            clazz.methods.forEach methodLoop@{ method ->
-                val mappingAnnotation = method.annotations.firstOrNull { it.name.endsWith("Mapping") } ?: return@methodLoop
-                val methodOperation = extractOperationDocumentation(method, clazz.relativePath)
-                val interfaceOperation = clazz.interfaces
-                    .asSequence()
-                    .mapNotNull { operationByInterface[it]?.get(method.name) }
-                    .firstOrNull()
-                val operation = methodOperation ?: interfaceOperation
-
-                entries.add(
-                    ApiDocumentationEntry(
-                        sequence = 0,
-                        domain = clazz.domain,
-                        apiId = operation?.apiId ?: "<미지정>",
-                        endpoint = normalizeEndpoint(basePath, extractMappingPath(mappingAnnotation)),
-                        httpMethod = extractHttpMethod(mappingAnnotation),
-                        role = operation?.role?.ifBlank { "<요약 없음>" } ?: "<요약 없음>",
-                        deprecated = isDeprecated(clazz, method),
-                        source = operation?.source ?: clazz.relativePath,
-                        line = operation?.line ?: method.line,
-                        operationId = operation?.operationId
-                    )
-                )
-            }
-        }
-
-    return entries
-        .sortedWith(compareBy<ApiDocumentationEntry> { it.domain }.thenBy { it.apiId }.thenBy { it.endpoint })
-        .mapIndexed { index, entry -> entry.copy(sequence = index + 1) }
-}
-
-fun buildApiCatalogMarkdown(entries: List<ApiDocumentationEntry>): String = buildString {
-    appendLine("# API Catalog")
-    appendLine()
-    appendLine("운영 중인 API의 ID, 엔드포인트, 메서드, 역할, deprecated 상태를 도메인별로 정리합니다.")
-    appendLine()
-    appendLine("> 소스 기준: `@Operation(operationId = \"...\")`를 우선 사용하고, 없으면 `summary`의 `[XXX-000]` prefix를 API ID로 읽습니다. 갱신: `./gradlew generateDocumentationCatalogs`")
-    appendLine()
-
-    entries.groupBy { it.domain }.forEach { (domain, domainEntries) ->
-        appendLine("## $domain")
-        appendLine()
-        appendLine("| 순번 | 도메인 | API ID | HTTP Method | Endpoint | 역할 | Deprecated | Source |")
-        appendLine("|---:|---|---|---|---|---|:---:|---|")
-        domainEntries.forEach { entry ->
-            appendLine(
-                "| ${entry.sequence} | ${entry.domain.escapeMarkdownCell()} | ${entry.apiId.escapeMarkdownCell()} | ${entry.httpMethod.escapeMarkdownCell()} | `${entry.endpoint.escapeMarkdownCell()}` | ${entry.role.escapeMarkdownCell()} | ${if (entry.deprecated) "O" else "X"} | `${entry.source}:${entry.line}` |"
-            )
-        }
-        appendLine()
-    }
-}
-
-fun buildApiCatalogJson(entries: List<ApiDocumentationEntry>): String = buildString {
-    appendLine("[")
-    entries.forEachIndexed { index, entry ->
-        appendLine("  {")
-        appendLine("    \"sequence\": ${entry.sequence},")
-        appendLine("    \"domain\": \"${entry.domain.escapeJson()}\",")
-        appendLine("    \"apiId\": \"${entry.apiId.escapeJson()}\",")
-        appendLine("    \"endpoint\": \"${entry.endpoint.escapeJson()}\",")
-        appendLine("    \"httpMethod\": \"${entry.httpMethod.escapeJson()}\",")
-        appendLine("    \"role\": \"${entry.role.escapeJson()}\",")
-        appendLine("    \"deprecated\": ${entry.deprecated},")
-        appendLine("    \"source\": \"${entry.source.escapeJson()}\",")
-        appendLine("    \"line\": ${entry.line},")
-        appendLine("    \"operationId\": ${entry.operationId?.let { "\"${it.escapeJson()}\"" } ?: "null"}")
-        append("  }")
-        appendLine(if (index == entries.lastIndex) "" else ",")
-    }
-    appendLine("]")
-}
-
+// 현재 generator는 compile 결과가 아니라 Java source를 직접 훑는다.
+// 장점은 문서 생성이 빠르고 source line을 보존한다는 점이고, 단점은 enum 선언 포맷이 parser 규칙을 따라야 한다는 점이다.
 fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
     val entries = mutableListOf<ErrorCodeDocumentationEntry>()
 
@@ -397,6 +211,7 @@ fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
         .filter { it.isFile && it.name.endsWith("ErrorCode.java") }
         .forEach { sourceFile ->
             val lines = sourceFile.readLines()
+            val sourceText = lines.joinToString("\n")
             val relativePath = sourceFile.relativeTo(project.projectDir).invariantSeparatorsPath
             val packageName = lines.firstOrNull { it.trim().startsWith("package ") }
                 ?.trim()
@@ -404,7 +219,8 @@ fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
                 ?.removeSuffix(";")
                 .orEmpty()
             val domain = domainFromPackage(packageName)
-            val enumName = Regex("\\benum\\s+([A-Za-z_][A-Za-z0-9_]*)").find(lines.joinToString("\n"))
+            val enumName = Regex("\\benum\\s+([A-Za-z_][A-Za-z0-9_]*)")
+                .find(sourceText)
                 ?.groupValues
                 ?.get(1)
                 ?: sourceFile.nameWithoutExtension
@@ -413,15 +229,29 @@ fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
             var chunk = StringBuilder()
             var chunkStartLine = 0
             var balance = 0
+            var annotationChunk = StringBuilder()
+            var annotationBalance = 0
 
             lines.forEachIndexed { index, line ->
                 val trimmed = line.trim()
-                if (!inConstants && trimmed.startsWith("public enum ")) {
+                if (!inConstants && Regex("\\benum\\s+$enumName\\b").containsMatchIn(trimmed)) {
                     inConstants = true
                     return@forEachIndexed
                 }
 
                 if (!inConstants || trimmed.isBlank() || trimmed.startsWith("//")) {
+                    return@forEachIndexed
+                }
+
+                // enum constant 위의 annotation은 catalog metadata로 해석하지 않는다.
+                // 다만 @Deprecated 같은 annotation이 붙어도 다음 constant parsing이 깨지지 않도록 block만 건너뛴다.
+                if (chunk.isEmpty() && (trimmed.startsWith("@") || annotationChunk.isNotEmpty())) {
+                    annotationChunk.append(trimmed).append(' ')
+                    annotationBalance += trimmed.count { it == '(' } - trimmed.count { it == ')' }
+                    if (annotationBalance <= 0) {
+                        annotationChunk = StringBuilder()
+                        annotationBalance = 0
+                    }
                     return@forEachIndexed
                 }
 
@@ -441,23 +271,37 @@ fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
                     val constantText = chunk.toString().trim().removeSuffix(",").removeSuffix(";")
                     chunk = StringBuilder()
 
+                    // Phase 1은 기존 enum constructor 형태만 지원한다.
+                    // ErrorCodeDefinition 도입 시 이 match 지점에 신규 declaration parser를 추가한다.
                     val match = Regex(
-                        "^([A-Z0-9_]+)\\s*\\(\\s*HttpStatus\\.([A-Z0-9_]+)\\s*,\\s*\"([^\"]+)\"\\s*,\\s*\"((?:\\\\.|[^\"])*)\"",
+                        "^([A-Z0-9_]+)\\s*\\(\\s*HttpStatus\\.([A-Z0-9_]+)\\s*,\\s*\"([^\"]+)\"\\s*,\\s*\"((?:\\\\.|[^\"\\\\])*)\"",
                         RegexOption.DOT_MATCHES_ALL
                     ).find(constantText)
 
                     if (match != null) {
+                        val httpStatusName = match.groupValues[2]
                         entries.add(
                             ErrorCodeDocumentationEntry(
                                 sequence = 0,
                                 domain = domain,
-                                enumName = enumName,
-                                constantName = match.groupValues[1],
-                                httpStatus = match.groupValues[2],
                                 code = match.groupValues[3],
-                                message = match.groupValues[4].replace("\\\"", "\""),
-                                source = relativePath,
-                                line = chunkStartLine
+                                name = match.groupValues[1],
+                                httpStatus = httpStatusCode(httpStatusName),
+                                httpStatusName = httpStatusName,
+                                message = unescapeJavaString(match.groupValues[4]),
+                                description = null,
+                                clientAction = null,
+                                retryable = null,
+                                severity = null,
+                                deprecated = false,
+                                replacementCode = null,
+                                owners = emptyList(),
+                                tags = emptyList(),
+                                source = ErrorCodeSource(
+                                    enumName = enumName,
+                                    file = relativePath,
+                                    line = chunkStartLine
+                                )
                             )
                         )
                     }
@@ -468,87 +312,156 @@ fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
         }
 
     return entries
-        .sortedWith(compareBy<ErrorCodeDocumentationEntry> { it.domain }.thenBy { it.code }.thenBy { it.constantName })
+        .sortedWith(compareBy<ErrorCodeDocumentationEntry> { it.domain }.thenBy { it.code }.thenBy { it.name })
         .mapIndexed { index, entry -> entry.copy(sequence = index + 1) }
 }
 
 fun buildErrorCodeCatalogMarkdown(entries: List<ErrorCodeDocumentationEntry>): String = buildString {
-    appendLine("# ErrorCode Catalog")
+    appendLine("# 에러 코드 목록")
     appendLine()
-    appendLine("서버가 반환하는 ErrorCode를 도메인, HTTP 상태, 코드, 메시지 기준으로 정리합니다.")
+    appendLine("서버가 응답할 수 있는 에러 코드를 도메인별로 확인할 수 있어요.")
     appendLine()
-    appendLine("> 소스 기준: 각 도메인의 `*ErrorCode.java` enum을 스캔합니다. 갱신: `./gradlew generateDocumentationCatalogs`")
+    appendLine("> 코드를 추가하거나 수정했다면 `./gradlew generateDocumentationCatalogs`를 실행해주세요.")
     appendLine()
 
     entries.groupBy { it.domain }.forEach { (domain, domainEntries) ->
         appendLine("## $domain")
         appendLine()
-        appendLine("| 순번 | 도메인 | Code | HTTP Status | Message | Enum | Constant | Source |")
-        appendLine("|---:|---|---|---|---|---|---|---|")
+        appendLine("| 순번 | 도메인 | 코드 | 이름 | HTTP 상태 | 메시지 | 사용자 행동 | 재시도 | 심각도 | 사용 중단 | 담당자 | 태그 | 원본 |")
+        appendLine("|---:|---|---|---|---|---|---|---|---|---|---|---|---|")
         domainEntries.forEach { entry ->
             appendLine(
-                "| ${entry.sequence} | ${entry.domain.escapeMarkdownCell()} | `${entry.code.escapeMarkdownCell()}` | ${entry.httpStatus.displayHttpStatus().escapeMarkdownCell()} | ${entry.message.escapeMarkdownCell()} | ${entry.enumName.escapeMarkdownCell()} | `${entry.constantName.escapeMarkdownCell()}` | `${entry.source}:${entry.line}` |"
+                "| ${entry.sequence} | ${entry.domain.escapeMarkdownCell()} | `${entry.code.escapeMarkdownCell()}` | `${entry.name.escapeMarkdownCell()}` | ${entry.httpStatus} ${entry.httpStatusName.escapeMarkdownCell()} | ${entry.message.escapeMarkdownCell()} | ${(entry.clientAction ?: "").escapeMarkdownCell()} | ${entry.retryable?.toString() ?: ""} | ${entry.severity ?: ""} | ${entry.deprecated} | ${entry.owners.joinToString(", ").escapeMarkdownCell()} | ${entry.tags.joinToString(", ").escapeMarkdownCell()} | `${entry.source.file}:${entry.source.line}` |"
             )
         }
         appendLine()
     }
 }
 
-fun String.displayHttpStatus(): String {
-    val code = mapOf(
-        "BAD_REQUEST" to 400,
-        "UNAUTHORIZED" to 401,
-        "FORBIDDEN" to 403,
-        "NOT_FOUND" to 404,
-        "CONFLICT" to 409,
-        "PRECONDITION_FAILED" to 412,
-        "TOO_MANY_REQUESTS" to 429,
-        "INTERNAL_SERVER_ERROR" to 500,
-        "NOT_IMPLEMENTED" to 501,
-        "BAD_GATEWAY" to 502,
-        "SERVICE_UNAVAILABLE" to 503
-    )[this]
-
-    return code?.let { "$it $this" } ?: this
-}
-
+// Backoffice가 소비하는 canonical manifest다. generatedAt은 noisy diff를 막기 위해 null로 고정한다.
 fun buildErrorCodeCatalogJson(entries: List<ErrorCodeDocumentationEntry>): String = buildString {
-    appendLine("[")
+    appendLine("{")
+    appendLine("  \"schemaVersion\": $errorCodeCatalogSchemaVersion,")
+    appendLine("  \"service\": \"$errorCodeCatalogServiceName\",")
+    appendLine("  \"generatedAt\": null,")
+    appendLine("  \"totalCount\": ${entries.size},")
+    appendLine("  \"items\": [")
     entries.forEachIndexed { index, entry ->
-        appendLine("  {")
-        appendLine("    \"sequence\": ${entry.sequence},")
-        appendLine("    \"domain\": \"${entry.domain.escapeJson()}\",")
-        appendLine("    \"enumName\": \"${entry.enumName.escapeJson()}\",")
-        appendLine("    \"constantName\": \"${entry.constantName.escapeJson()}\",")
-        appendLine("    \"httpStatus\": \"${entry.httpStatus.escapeJson()}\",")
-        appendLine("    \"code\": \"${entry.code.escapeJson()}\",")
-        appendLine("    \"message\": \"${entry.message.escapeJson()}\",")
-        appendLine("    \"source\": \"${entry.source.escapeJson()}\",")
-        appendLine("    \"line\": ${entry.line}")
-        append("  }")
+        appendLine("    {")
+        appendLine("      \"sequence\": ${entry.sequence},")
+        appendLine("      \"domain\": \"${entry.domain.escapeJson()}\",")
+        appendLine("      \"code\": \"${entry.code.escapeJson()}\",")
+        appendLine("      \"name\": \"${entry.name.escapeJson()}\",")
+        appendLine("      \"httpStatus\": ${entry.httpStatus},")
+        appendLine("      \"httpStatusName\": \"${entry.httpStatusName.escapeJson()}\",")
+        appendLine("      \"message\": \"${entry.message.escapeJson()}\",")
+        appendJsonStringOrNull(this, "description", entry.description)
+        appendJsonStringOrNull(this, "clientAction", entry.clientAction)
+        appendJsonBooleanOrNull(this, "retryable", entry.retryable)
+        appendJsonStringOrNull(this, "severity", entry.severity)
+        appendLine("      \"deprecated\": ${entry.deprecated},")
+        appendJsonStringOrNull(this, "replacementCode", entry.replacementCode)
+        appendJsonStringArray(this, "owners", entry.owners)
+        appendJsonStringArray(this, "tags", entry.tags)
+        appendLine("      \"source\": {")
+        appendLine("        \"enumName\": \"${entry.source.enumName.escapeJson()}\",")
+        appendLine("        \"file\": \"${entry.source.file.escapeJson()}\",")
+        appendLine("        \"line\": ${entry.source.line}")
+        appendLine("      }")
+        append("    }")
         appendLine(if (index == entries.lastIndex) "" else ",")
     }
-    appendLine("]")
+    appendLine("  ]")
+    appendLine("}")
 }
 
-fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName: String, activePath: String): String {
-    val isApiCatalog = activePath == "api"
-    val pageLabel = if (isApiCatalog) "API 카탈로그" else "ErrorCode 카탈로그"
-    val eyebrow = if (isApiCatalog) "Endpoint Inventory" else "Failure Contract"
-    val lead = if (isApiCatalog) {
-        "API ID, endpoint, 역할, deprecated 상태를 한 곳에서 찾습니다."
-    } else {
-        "클라이언트와 서버가 함께 보는 실패 응답 계약입니다."
+// 독자 규격인 ErrorCode Catalog v1의 schema를 함께 생성해 산출물 shape drift를 잡는다.
+fun buildErrorCodeCatalogSchemaJson(): String = """
+{
+  "${'$'}schema": "https://json-schema.org/draft/2020-12/schema",
+  "${'$'}id": "https://umc-product.dev/schemas/error-code-catalog.v1.schema.json",
+  "title": "ErrorCodeCatalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "service", "generatedAt", "totalCount", "items"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "service": { "const": "umc-product-server" },
+    "generatedAt": { "type": ["string", "null"], "format": "date-time" },
+    "totalCount": { "type": "integer", "minimum": 0 },
+    "items": {
+      "type": "array",
+      "items": { "${'$'}ref": "#/${'$'}defs/ErrorCodeCatalogItem" }
     }
-    val searchPlaceholder = if (isApiCatalog) {
-        "도메인, API ID, endpoint, 역할로 검색"
-    } else {
-        "도메인, ErrorCode, HTTP status, 메시지로 검색"
+  },
+  "${'$'}defs": {
+    "ErrorCodeCatalogItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequence",
+        "domain",
+        "code",
+        "name",
+        "httpStatus",
+        "httpStatusName",
+        "message",
+        "description",
+        "clientAction",
+        "retryable",
+        "severity",
+        "deprecated",
+        "replacementCode",
+        "owners",
+        "tags",
+        "source"
+      ],
+      "properties": {
+        "sequence": { "type": "integer", "minimum": 1 },
+        "domain": { "type": "string", "minLength": 1 },
+        "code": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "httpStatus": { "type": "integer", "minimum": 100, "maximum": 599 },
+        "httpStatusName": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 },
+        "description": { "type": ["string", "null"] },
+        "clientAction": { "type": ["string", "null"] },
+        "retryable": { "type": ["boolean", "null"] },
+        "severity": { "enum": ["INFO", "WARNING", "ERROR", "CRITICAL", null] },
+        "deprecated": { "type": "boolean" },
+        "replacementCode": { "type": ["string", "null"] },
+        "owners": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enumName", "file", "line"],
+          "properties": {
+            "enumName": { "type": "string", "minLength": 1 },
+            "file": { "type": "string", "minLength": 1 },
+            "line": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
     }
-    val emptyMessage = if (isApiCatalog) {
-        "일치하는 API가 없습니다."
-    } else {
-        "일치하는 ErrorCode가 없습니다."
+  }
+}
+""".trimIndent() + "\n"
+
+// 정적 viewer는 서버가 단독으로 catalog를 확인할 수 있게 하는 보조 화면이다.
+// Backoffice viewer가 주 사용처이므로 여기서는 가벼운 검색/필터만 제공한다.
+fun buildCatalogIndexHtml(entries: List<ErrorCodeDocumentationEntry>): String {
+    val domainOptions = entries.map { it.domain }.distinct().joinToString("\n") {
+        """                    <option value="${it.escapeHtml()}">${it.escapeHtml()}</option>"""
+    }
+    val statusOptions = entries.map { "${it.httpStatus} ${it.httpStatusName}" }.distinct().joinToString("\n") {
+        """                    <option value="${it.escapeHtml()}">${it.escapeHtml()}</option>"""
     }
 
     return """
@@ -557,1066 +470,343 @@ fun buildCatalogIndexHtml(title: String, markdownFileName: String, jsonFileName:
         <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>$title</title>
-            <link href="/umc-logo.svg" rel="icon" type="image/svg+xml">
-            <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+            <title>UMC PRODUCT 에러 코드 목록</title>
             <style>
                 :root {
                     color-scheme: light;
-                    --bg: #ffffff;
-                    --panel: #ffffff;
-                    --panel-soft: #f1f5f9;
-                    --border: #e2e8f0;
-                    --border-strong: #b9c5d6;
-                    --text: #111827;
-                    --muted: #64748b;
-                    --muted-strong: #475569;
-                    --accent: #2563eb;
-                    --accent-strong: #1d4ed8;
-                    --success: #047857;
-                    --danger: #b42318;
-                    --warning: #b45309;
-                    --code-bg: #edf2f7;
-                    --table-head: #eef3f9;
-                    --shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+                    font-family: Inter, Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                    color: #16201f;
+                    background: #f6f8f7;
                 }
-
-                * {
-                    box-sizing: border-box;
-                }
-
-                body {
-                    margin: 0;
-                    background: var(--bg);
-                    color: var(--text);
-                    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-                    line-height: 1.5;
-                }
-
+                * { box-sizing: border-box; }
+                body { margin: 0; }
                 header {
-                    position: sticky;
-                    top: 0;
-                    z-index: 20;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    gap: 24px;
-                    min-height: 64px;
-                    padding: 12px clamp(16px, 4vw, 40px);
-                    border-bottom: 1px solid var(--border);
-                    background: rgba(255, 255, 255, 0.9);
-                    backdrop-filter: blur(14px);
+                    border-bottom: 1px solid #dde6e3;
+                    background: #ffffff;
+                    padding: 28px 32px;
                 }
-
-                .brand {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    min-width: 0;
-                }
-
-                .brand-mark {
-                    display: grid;
-                    place-items: center;
-                    width: 34px;
-                    height: 34px;
-                    border: 1px solid var(--border);
-                    border-radius: 8px;
-                    background: #fff;
-                    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
-                }
-
-                .brand-mark img {
-                    width: 23px;
-                    height: 23px;
-                }
-
-                .brand h1 {
-                    margin: 0;
-                    font-size: 17px;
-                    font-weight: 750;
-                    letter-spacing: 0;
-                }
-
-                .brand p {
-                    margin: 2px 0 0;
-                    color: var(--muted);
-                    font-size: 13px;
-                }
-
-                nav {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    flex-wrap: wrap;
-                    justify-content: flex-end;
-                }
-
-                nav a {
-                    color: var(--muted);
-                    border: 1px solid transparent;
-                    border-radius: 6px;
-                    padding: 8px 11px;
-                    text-decoration: none;
-                    font-size: 14px;
-                    white-space: nowrap;
-                }
-
-                nav a:hover,
-                nav a.active {
-                    color: var(--accent);
-                    border-color: #bfdbfe;
-                    background: #eff6ff;
-                }
-
-                .page {
-                    width: min(1440px, calc(100vw - 48px));
-                    margin: 0 auto 56px;
-                }
-
-                .hero {
-                    display: flex;
-                    align-items: flex-end;
-                    justify-content: space-between;
-                    gap: 20px;
-                    padding: 28px 0 18px;
-                }
-
-                .eyebrow {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    margin: 0 0 8px;
-                    color: var(--accent-strong);
-                    font-size: 12px;
-                    font-weight: 750;
-                    letter-spacing: 0.08em;
-                    text-transform: uppercase;
-                }
-
-                .eyebrow::before {
-                    content: "";
-                    width: 8px;
-                    height: 8px;
-                    border-radius: 50%;
-                    background: var(--success);
-                }
-
-                .hero h2 {
-                    margin: 0;
-                    border: 0;
-                    padding: 0;
-                    color: var(--text);
-                    font-size: 30px;
-                    line-height: 1.12;
-                    font-weight: 780;
-                    letter-spacing: 0;
-                }
-
-                .hero-copy {
-                    max-width: 720px;
-                    margin: 8px 0 0;
-                    color: var(--muted-strong);
-                    font-size: 15px;
-                }
-
-                .hero-aside {
-                    border-left: 1px solid var(--border);
-                    padding: 4px 0 4px 18px;
-                    min-width: 300px;
-                }
-
-                .hero-aside strong {
-                    display: block;
-                    margin-bottom: 6px;
-                    font-size: 14px;
-                }
-
-                .hero-aside p {
-                    margin: 0;
-                    color: var(--muted);
-                    font-size: 14px;
-                }
-
-                .toolbar {
-                    position: sticky;
-                    top: 64px;
-                    z-index: 15;
-                    display: grid;
-                    grid-template-columns: minmax(260px, 1fr) auto;
-                    gap: 14px;
-                    align-items: center;
-                    margin: 8px 0 22px;
-                    padding: 12px 0;
-                    border-top: 1px solid var(--border);
-                    border-bottom: 1px solid var(--border);
-                    background: rgba(255, 255, 255, 0.92);
-                    backdrop-filter: blur(14px);
-                }
-
-                .search {
-                    position: relative;
-                    min-width: 0;
-                }
-
-                .search input {
-                    width: 100%;
-                    min-height: 40px;
-                    border: 1px solid var(--border);
-                    border-radius: 6px;
-                    padding: 0 14px 0 42px;
-                    background: #fff;
-                    color: var(--text);
-                    font: inherit;
-                    outline: none;
-                }
-
-                .search input:focus {
-                    border-color: var(--accent);
-                    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
-                }
-
-                .search::before {
-                    content: "";
-                    position: absolute;
-                    left: 15px;
-                    top: 50%;
-                    width: 14px;
-                    height: 14px;
-                    border: 2px solid var(--muted);
-                    border-radius: 50%;
-                    transform: translateY(-56%);
-                }
-
-                .search::after {
-                    content: "";
-                    position: absolute;
-                    left: 28px;
-                    top: 27px;
-                    width: 8px;
-                    height: 2px;
-                    border-radius: 999px;
-                    background: var(--muted);
-                    transform: rotate(45deg);
-                }
-
-                .result-count {
-                    color: var(--muted);
-                    font-size: 14px;
-                    white-space: nowrap;
-                }
-
-                .stats {
-                    display: grid;
-                    grid-template-columns: repeat(4, max-content);
-                    gap: 32px;
-                    margin: 0 0 18px;
-                    padding: 12px 0 18px;
-                    border-bottom: 1px solid var(--border);
-                }
-
-                .stat {
-                    min-width: 0;
-                    border: 0;
-                    border-radius: 0;
-                    background: transparent;
-                    padding: 0;
-                }
-
-                .stat span {
-                    display: block;
-                    color: var(--muted);
-                    font-size: 13px;
-                }
-
-                .stat strong {
-                    display: block;
-                    margin-top: 6px;
-                    font-size: 22px;
-                    line-height: 1;
-                    letter-spacing: 0;
-                }
-
                 main {
-                    padding: 0;
-                    border: 0;
-                    border-radius: 0;
-                    background: transparent;
-                    box-shadow: none;
-                    overflow: visible;
+                    margin: 0 auto;
+                    max-width: 1440px;
+                    padding: 24px 32px 48px;
                 }
-
-                .loading,
-                .error {
-                    margin: 0;
-                    color: var(--muted);
-                    font-size: 15px;
-                }
-
-                .error {
-                    color: var(--danger);
-                }
-
-                .no-results {
-                    display: none;
-                    margin: 18px 0 0;
-                    padding: 14px 16px;
-                    border: 1px solid #fed7aa;
-                    border-radius: 8px;
-                    background: #fff7ed;
-                    color: #9a3412;
-                    font-size: 14px;
-                }
-
-                h1,
-                h2,
-                h3 {
+                h1 {
+                    margin: 0 0 8px;
+                    font-size: 28px;
                     line-height: 1.25;
                     letter-spacing: 0;
                 }
-
-                h1 {
-                    margin: 0 0 10px;
-                    font-size: 28px;
+                p { margin: 0; color: #52605d; }
+                .toolbar {
+                    display: grid;
+                    grid-template-columns: minmax(240px, 1fr) repeat(2, minmax(180px, 240px));
+                    gap: 12px;
+                    margin-bottom: 18px;
                 }
-
-                h2 {
-                    margin: 30px 0 10px;
-                    padding: 0;
-                    border: 0;
-                    background: transparent;
-                    color: var(--text);
-                    font-size: 18px;
-                    font-weight: 750;
-                }
-
-                p {
-                    margin: 10px 0;
-                    color: var(--muted-strong);
-                }
-
-                a {
-                    color: var(--accent);
-                }
-
-                blockquote {
-                    margin: 14px 0 22px;
-                    padding: 0 0 0 12px;
-                    border: 0;
-                    border-left: 3px solid #60a5fa;
-                    border-radius: 0;
-                    background: transparent;
-                    color: var(--muted);
-                }
-
-                code {
-                    padding: 2px 5px;
-                    border-radius: 4px;
-                    background: var(--code-bg);
-                    font-family: "SFMono-Regular", Consolas, monospace;
-                    font-size: 0.92em;
-                }
-
-                .table-wrap {
+                input, select {
                     width: 100%;
-                    margin: 10px 0 34px;
-                    border: 0;
-                    border-top: 1px solid var(--border);
-                    border-bottom: 1px solid var(--border);
-                    border-radius: 0;
-                    overflow-x: auto;
-                    overflow-y: visible;
-                    background: transparent;
+                    height: 42px;
+                    border: 1px solid #cdd8d5;
+                    border-radius: 8px;
+                    background: #ffffff;
+                    color: #16201f;
+                    padding: 0 12px;
+                    font: inherit;
                 }
-
-                .catalog-table {
+                table {
                     width: 100%;
-                    min-width: 1240px;
-                    table-layout: fixed;
                     border-collapse: collapse;
-                    margin: 0;
-                    font-size: 13px;
-                    background: transparent;
+                    background: #ffffff;
+                    border: 1px solid #dde6e3;
                 }
-
-                th,
-                td {
-                    border-bottom: 1px solid var(--border);
-                    padding: 10px 12px;
+                th, td {
+                    border-bottom: 1px solid #e7eeeb;
+                    padding: 12px 14px;
                     text-align: left;
                     vertical-align: top;
+                    font-size: 14px;
+                    line-height: 1.45;
                 }
-
                 th {
                     position: sticky;
                     top: 0;
-                    z-index: 1;
-                    background: rgba(248, 250, 252, 0.96);
-                    color: var(--muted-strong);
+                    background: #eef5f2;
+                    color: #31403d;
+                    font-weight: 700;
+                }
+                code {
+                    font-family: "SFMono-Regular", Consolas, monospace;
+                    font-size: 13px;
+                }
+                .muted { color: #687773; }
+                .badge {
+                    display: inline-block;
+                    border: 1px solid #cdd8d5;
+                    border-radius: 999px;
+                    padding: 2px 8px;
+                    margin: 0 4px 4px 0;
+                    color: #31403d;
+                    background: #f6f8f7;
                     font-size: 12px;
-                    font-weight: 750;
-                    letter-spacing: 0.04em;
-                    text-transform: uppercase;
                 }
-
-                td {
-                    color: var(--text);
-                    overflow-wrap: anywhere;
-                    word-break: keep-all;
-                }
-
-                tbody tr:hover td {
-                    background: #f8fafc;
-                }
-
-                tbody tr:last-child td {
-                    border-bottom: 0;
-                }
-
-                td:nth-child(1) {
-                    color: var(--muted);
-                    font-variant-numeric: tabular-nums;
-                    width: 64px;
-                }
-
-                .catalog-table th:nth-child(1),
-                .catalog-table td:nth-child(1) {
-                    width: 56px;
-                    text-align: right;
-                }
-
-                .catalog-table th:nth-child(2),
-                .catalog-table td:nth-child(2) {
-                    width: 92px;
-                }
-
-                .catalog-table th:nth-child(3),
-                .catalog-table td:nth-child(3) {
-                    width: 180px;
-                }
-
-                .catalog-table th:nth-child(4),
-                .catalog-table td:nth-child(4) {
-                    width: 90px;
-                }
-
-                .catalog-table th:nth-child(5),
-                .catalog-table td:nth-child(5) {
-                    width: 430px;
-                }
-
-                .catalog-table th:nth-child(6),
-                .catalog-table td:nth-child(6) {
-                    width: auto;
-                }
-
-                .catalog-table th:nth-child(7),
-                .catalog-table td:nth-child(7) {
-                    width: 112px;
-                    text-align: center;
-                }
-
-                .catalog-table th:nth-child(8),
-                .catalog-table td:nth-child(8) {
-                    width: 190px;
-                }
-
-                td:nth-child(3) code,
-                td:nth-child(5) code,
-                td:nth-child(6) code {
-                    color: #0f172a;
-                    font-weight: 650;
-                    white-space: normal;
-                    overflow-wrap: anywhere;
-                    word-break: break-word;
-                }
-
-                .source-cell code {
-                    display: block;
-                    max-width: 100%;
-                    overflow: hidden;
-                    color: var(--muted-strong);
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
-                }
-
-                .copy-cell {
-                    cursor: pointer;
-                    position: relative;
-                }
-
-                .copy-cell:hover {
-                    background: #eff6ff;
-                }
-
-                .copy-cell:focus-visible {
-                    outline: 3px solid rgba(37, 99, 235, 0.24);
-                    outline-offset: -3px;
-                }
-
-                .copy-cell.copied {
-                    background: #f0fdf4;
-                }
-
-                .copy-icon {
-                    position: absolute;
-                    right: 11px;
-                    top: 50%;
-                    display: grid;
-                    place-items: center;
-                    width: 16px;
-                    height: 16px;
-                    color: var(--muted);
-                    opacity: 0;
-                    pointer-events: none;
-                    transform: translateY(-50%);
-                    transition: opacity 0.12s ease;
-                }
-
-                .copy-icon svg {
-                    display: block;
-                    width: 16px;
-                    height: 16px;
-                    stroke: currentColor;
-                }
-
-                .copy-cell:hover .copy-icon,
-                .copy-cell:focus-visible .copy-icon {
-                    opacity: 1;
-                }
-
-                .copy-toast {
-                    position: fixed;
-                    right: 20px;
-                    bottom: 20px;
-                    z-index: 30;
-                    max-width: min(420px, calc(100vw - 32px));
-                    padding: 10px 12px;
-                    border: 0;
-                    border-radius: 8px;
-                    background: #111827;
-                    color: #ffffff;
-                    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
-                    font-size: 14px;
-                    opacity: 0;
-                    pointer-events: none;
-                    transform: translateY(8px);
-                    transition: opacity 0.16s ease, transform 0.16s ease;
-                }
-
-                .copy-toast.visible {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-
-                .error-catalog .catalog-table th:nth-child(3),
-                .error-catalog .catalog-table td:nth-child(3) {
-                    width: 200px;
-                }
-
-                .error-catalog .catalog-table th:nth-child(4),
-                .error-catalog .catalog-table td:nth-child(4) {
-                    width: 150px;
-                }
-
-                .error-catalog .catalog-table th:nth-child(5),
-                .error-catalog .catalog-table td:nth-child(5) {
-                    width: auto;
-                }
-
-                .error-catalog .catalog-table th:nth-child(6),
-                .error-catalog .catalog-table td:nth-child(6) {
-                    width: 210px;
-                }
-
-                .error-catalog .catalog-table th:nth-child(7),
-                .error-catalog .catalog-table td:nth-child(7) {
-                    width: 260px;
-                }
-
-                .error-catalog .catalog-table {
-                    min-width: 1500px;
-                }
-
-                .error-catalog .catalog-table th:nth-child(2),
-                .error-catalog .catalog-table td:nth-child(2) {
-                    width: 150px;
-                }
-
-                .error-catalog .catalog-table td:nth-child(3) code,
-                .error-catalog .catalog-table td:nth-child(7) code {
-                    color: #0f172a;
-                    font-weight: 650;
-                    white-space: normal;
-                    overflow-wrap: anywhere;
-                    word-break: break-word;
-                }
-
-                .is-hidden {
-                    display: none !important;
-                }
-
-                @media (max-width: 720px) {
-                    header {
-                        align-items: flex-start;
-                        flex-direction: column;
-                        padding: 14px 16px;
-                    }
-
-                    .page {
-                        width: calc(100vw - 24px);
-                    }
-
-                    .hero {
-                        align-items: stretch;
-                        flex-direction: column;
-                        padding: 26px 0 16px;
-                    }
-
-                    .hero-aside {
-                        border-left: 0;
-                        border-top: 1px solid var(--border);
-                        min-width: 0;
-                        padding: 12px 0 0;
-                        width: 100%;
-                    }
-
-                    .hero h2 {
-                        font-size: 40px;
-                    }
-
-                    .hero-copy {
-                        font-size: 16px;
-                    }
-
-                    .toolbar {
-                        top: 127px;
-                        grid-template-columns: 1fr;
-                    }
-
-                    .stats {
-                        grid-template-columns: repeat(2, minmax(0, 1fr));
-                        gap: 16px 24px;
-                    }
-
-                    nav {
-                        justify-content: flex-start;
-                    }
-
-                    main {
-                        padding: 0;
-                    }
-                }
-
-                @media (max-width: 480px) {
-                    .stats {
-                        grid-template-columns: 1fr;
-                    }
+                @media (max-width: 900px) {
+                    header, main { padding-left: 16px; padding-right: 16px; }
+                    .toolbar { grid-template-columns: 1fr; }
+                    .table-wrap { overflow-x: auto; }
+                    table { min-width: 1100px; }
                 }
             </style>
         </head>
-        <body class="${if (isApiCatalog) "api-catalog" else "error-catalog"}">
+        <body>
             <header>
-                <div class="brand">
-                    <span class="brand-mark" aria-hidden="true"><img src="/umc-logo.svg" alt=""></span>
-                    <div>
-                        <h1>UMC PRODUCT Docs</h1>
-                        <p>서버 계약을 소스에서 바로 읽어옵니다.</p>
-                    </div>
-                </div>
-                <nav aria-label="문서 이동">
-                    <a href="/docs/catalog/api/" class="${if (activePath == "api") "active" else ""}">API</a>
-                    <a href="/docs/catalog/error/" class="${if (activePath == "error") "active" else ""}">ErrorCode</a>
-                    <a href="$markdownFileName">Markdown</a>
-                    <a href="$jsonFileName">JSON</a>
-                </nav>
+                <h1>에러 코드 목록</h1>
+                <p>서버가 응답할 수 있는 에러 코드를 확인할 수 있어요. 원본 데이터는 <code>catalog.json</code>, 규격은 <code>catalog.schema.json</code>에서 확인해주세요.</p>
             </header>
-            <div class="page">
-                <section class="hero" aria-labelledby="catalog-title">
-                    <div>
-                        <p class="eyebrow">$eyebrow</p>
-                        <h2 id="catalog-title">$pageLabel</h2>
-                        <p class="hero-copy">$lead</p>
-                    </div>
-                    <aside class="hero-aside">
-                        <strong>자동 생성 문서</strong>
-                        <p>소스 변경 후 `./gradlew generateDocumentationCatalogs`로 갱신합니다.</p>
-                    </aside>
-                </section>
-                <section class="stats" id="stats" aria-label="카탈로그 요약"></section>
-                <section class="toolbar" aria-label="카탈로그 검색">
-                    <label class="search" for="catalog-search">
-                        <input id="catalog-search" type="search" placeholder="$searchPlaceholder" autocomplete="off">
-                    </label>
-                    <span class="result-count" id="result-count"></span>
-                </section>
-                <main id="content">
-                    <p class="loading">카탈로그를 불러오는 중입니다.</p>
-                </main>
-                <p class="no-results" id="no-results">$emptyMessage</p>
-            </div>
-            <div class="copy-toast" id="copy-toast" role="status" aria-live="polite"></div>
-            <script src="/webjars/markdown-it/14.1.0/dist/markdown-it.min.js"></script>
+            <main>
+                <div class="toolbar">
+                    <input id="search" type="search" placeholder="코드, 이름, 메시지, 행동, 담당자, 태그, 원본 검색">
+                    <select id="domain">
+                        <option value="">모든 도메인</option>
+$domainOptions
+                    </select>
+                    <select id="status">
+                        <option value="">모든 상태</option>
+$statusOptions
+                    </select>
+                </div>
+                <p id="summary" class="muted"></p>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>코드</th>
+                                <th>도메인</th>
+                                <th>상태</th>
+                                <th>메시지</th>
+                                <th>사용자 행동</th>
+                                <th>재시도</th>
+                                <th>심각도</th>
+                                <th>태그</th>
+                                <th>원본</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rows"></tbody>
+                    </table>
+                </div>
+            </main>
             <script>
-                const content = document.getElementById("content");
-                const stats = document.getElementById("stats");
-                const searchInput = document.getElementById("catalog-search");
-                const resultCount = document.getElementById("result-count");
-                const noResults = document.getElementById("no-results");
-                const copyToast = document.getElementById("copy-toast");
-                const markdownSource = "$markdownFileName";
-                const jsonSource = "$jsonFileName";
-                const pageKind = "$activePath";
-                const md = window.markdownit({
-                    html: false,
-                    linkify: true,
-                    typographer: false
-                });
+                const manifest = ${buildErrorCodeCatalogJson(entries)};
+                const rows = document.getElementById("rows");
+                const search = document.getElementById("search");
+                const domain = document.getElementById("domain");
+                const status = document.getElementById("status");
+                const summary = document.getElementById("summary");
 
-                function fetchText(path) {
-                    return fetch(path, { cache: "no-cache" }).then((response) => {
-                        if (!response.ok) {
-                            throw new Error("HTTP " + response.status);
-                        }
-                        return response.text();
-                    });
+                function text(item) {
+                    return [
+                        item.code,
+                        item.name,
+                        item.message,
+                        item.clientAction,
+                        item.source.enumName,
+                        item.source.file,
+                        String(item.source.line),
+                        ...item.tags,
+                        ...item.owners
+                    ].filter(Boolean).join(" ").toLowerCase();
                 }
 
-                function fetchJson(path) {
-                    return fetch(path, { cache: "no-cache" }).then((response) => {
-                        if (!response.ok) {
-                            throw new Error("HTTP " + response.status);
-                        }
-                        return response.json();
-                    });
+                function badge(value) {
+                    return "<span class=\"badge\">" + escapeHtml(value) + "</span>";
                 }
 
-                function uniqueCount(rows, key) {
-                    return new Set(rows.map((row) => row[key]).filter(Boolean)).size;
+                function escapeHtml(value) {
+                    return String(value ?? "")
+                        .replaceAll("&", "&amp;")
+                        .replaceAll("<", "&lt;")
+                        .replaceAll(">", "&gt;")
+                        .replaceAll("\"", "&quot;")
+                        .replaceAll("'", "&#39;");
                 }
 
-                function renderStats(rows) {
-                    const values = pageKind === "api"
-                        ? [
-                            ["등록된 API", rows.length],
-                            ["도메인", uniqueCount(rows, "domain")],
-                            ["ID 미지정", rows.filter((row) => row.apiId === "<미지정>").length],
-                            ["Deprecated", rows.filter((row) => row.deprecated).length]
-                        ]
-                        : [
-                            ["ErrorCode", rows.length],
-                            ["도메인", uniqueCount(rows, "domain")],
-                            ["HTTP Status", uniqueCount(rows, "httpStatus")],
-                            ["Enum", uniqueCount(rows, "enumName")]
-                        ];
-
-                    stats.innerHTML = values.map((item) => (
-                        '<article class="stat"><span>' + item[0] + '</span><strong>' + item[1].toLocaleString("ko-KR") + '</strong></article>'
-                    )).join("");
-                }
-
-                function copyToClipboard(text) {
-                    if (navigator.clipboard && window.isSecureContext) {
-                        return navigator.clipboard.writeText(text);
-                    }
-
-                    const textarea = document.createElement("textarea");
-                    textarea.value = text;
-                    textarea.setAttribute("readonly", "");
-                    textarea.style.position = "fixed";
-                    textarea.style.left = "-9999px";
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    document.execCommand("copy");
-                    textarea.remove();
-                    return Promise.resolve();
-                }
-
-                function markCopied(cell, value) {
-                    cell.classList.add("copied");
-                    window.setTimeout(() => cell.classList.remove("copied"), 900);
-                    copyToast.textContent = "복사했습니다: " + value;
-                    copyToast.classList.add("visible");
-                    window.clearTimeout(copyToast.hideTimer);
-                    copyToast.hideTimer = window.setTimeout(() => copyToast.classList.remove("visible"), 1400);
-                }
-
-                function bindCopyCell(cell, value) {
-                    if (!value) {
-                        return;
-                    }
-
-                    cell.classList.add("copy-cell");
-                    cell.dataset.copyValue = value;
-                    cell.tabIndex = 0;
-                    cell.setAttribute("role", "button");
-                    cell.setAttribute("aria-label", value + " 복사");
-                    cell.title = value + " 복사";
-                    if (!cell.querySelector(".copy-icon")) {
-                        const icon = document.createElement("span");
-                        icon.className = "copy-icon";
-                        icon.setAttribute("aria-hidden", "true");
-                        icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 7.5h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z"/><path d="M5.5 14.5h-.5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5"/></svg>';
-                        cell.appendChild(icon);
-                    }
-
-                    const handleCopy = () => {
-                        copyToClipboard(value).then(() => markCopied(cell, value));
-                    };
-
-                    cell.addEventListener("click", handleCopy);
-                    cell.addEventListener("keydown", (event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            handleCopy();
-                        }
-                    });
-                }
-
-                function enhanceTables() {
-                    const firstHeading = content.querySelector("h1");
-                    if (firstHeading) {
-                        firstHeading.remove();
-                    }
-
-                    content.querySelectorAll("table").forEach((table) => {
-                        table.classList.add("catalog-table");
-                        const headers = Array.from(table.querySelectorAll("thead th"))
-                            .map((cell) => cell.textContent.trim().toLowerCase());
-                        const copyHeaders = pageKind === "api"
-                            ? ["api id", "endpoint", "source"]
-                            : ["code", "constant"];
-                        const copyColumnIndexes = headers
-                            .map((header, index) => ({ header, index }))
-                            .filter(({ header }) => copyHeaders.includes(header))
-                            .map(({ index }) => index);
-                        const wrapper = document.createElement("div");
-                        wrapper.className = "table-wrap";
-                        table.parentNode.insertBefore(wrapper, table);
-                        wrapper.appendChild(table);
-
-                        table.querySelectorAll("tbody tr").forEach((row) => {
-                            row.dataset.search = row.textContent.toLowerCase();
-                            const sourceCell = row.cells[row.cells.length - 1];
-                            const sourceCode = sourceCell?.querySelector("code");
-                            if (sourceCell && sourceCode) {
-                                const fullSource = sourceCode.textContent.trim();
-                                sourceCell.classList.add("source-cell");
-                                sourceCode.title = fullSource;
-                                sourceCode.textContent = fullSource.split("/").pop() || fullSource;
-                            }
-
-                            copyColumnIndexes.forEach((index) => {
-                                const cell = row.cells[index];
-                                if (!cell) {
-                                    return;
-                                }
-
-                                const code = cell.querySelector("code");
-                                bindCopyCell(cell, code?.title || code?.textContent.trim() || cell.textContent.trim());
-                            });
-                        });
-                    });
-                }
-
-                function updateResultCount(visible, total) {
-                    resultCount.textContent = visible.toLocaleString("ko-KR") + " / " + total.toLocaleString("ko-KR") + "개 표시";
-                    noResults.style.display = visible === 0 ? "block" : "none";
-                }
-
-                function applyFilter() {
-                    const query = searchInput.value.trim().toLowerCase();
-                    let total = 0;
-                    let visible = 0;
-
-                    content.querySelectorAll(".catalog-table tbody tr").forEach((row) => {
-                        total += 1;
-                        const matched = query === "" || row.dataset.search.includes(query);
-                        row.classList.toggle("is-hidden", !matched);
-                        if (matched) {
-                            visible += 1;
-                        }
+                function render() {
+                    const keyword = search.value.trim().toLowerCase();
+                    const selectedDomain = domain.value;
+                    const selectedStatus = status.value;
+                    const filtered = manifest.items.filter((item) => {
+                        const itemStatus = item.httpStatus + " " + item.httpStatusName;
+                        return (!keyword || text(item).includes(keyword))
+                            && (!selectedDomain || item.domain === selectedDomain)
+                            && (!selectedStatus || itemStatus === selectedStatus);
                     });
 
-                    content.querySelectorAll(".table-wrap").forEach((wrapper) => {
-                        const visibleRows = wrapper.querySelectorAll("tbody tr:not(.is-hidden)").length;
-                        wrapper.classList.toggle("is-hidden", visibleRows === 0 && query !== "");
-                        const heading = wrapper.previousElementSibling;
-                        if (heading && heading.tagName === "H2") {
-                            heading.classList.toggle("is-hidden", visibleRows === 0 && query !== "");
-                        }
-                    });
-
-                    updateResultCount(visible, total);
+                    summary.textContent = filtered.length + " / " + manifest.totalCount + "개의 에러 코드";
+                    rows.innerHTML = filtered.map((item) => {
+                        const tags = item.tags.length > 0 ? item.tags.map(badge).join("") : "<span class=\"muted\">-</span>";
+                        return "<tr>"
+                            + "<td><code>" + escapeHtml(item.code) + "</code><br><span class=\"muted\">" + escapeHtml(item.name) + "</span></td>"
+                            + "<td>" + escapeHtml(item.domain) + "</td>"
+                            + "<td>" + item.httpStatus + " " + escapeHtml(item.httpStatusName) + "</td>"
+                            + "<td>" + escapeHtml(item.message) + "</td>"
+                            + "<td>" + escapeHtml(item.clientAction ?? "-") + "</td>"
+                            + "<td>" + escapeHtml(item.retryable ?? "-") + "</td>"
+                            + "<td>" + escapeHtml(item.severity ?? "-") + "</td>"
+                            + "<td>" + tags + "</td>"
+                            + "<td><code>" + escapeHtml(item.source.enumName) + "</code><br><span class=\"muted\">" + escapeHtml(item.source.file) + ":" + item.source.line + "</span></td>"
+                            + "</tr>";
+                    }).join("");
                 }
 
-                Promise.all([fetchText(markdownSource), fetchJson(jsonSource)])
-                    .then(([markdown, rows]) => {
-                        content.innerHTML = md.render(markdown);
-                        renderStats(rows);
-                        enhanceTables();
-                        applyFilter();
-                        searchInput.addEventListener("input", applyFilter);
-                    })
-                    .catch((error) => {
-                        content.innerHTML = '<p class="error">카탈로그를 불러오지 못했습니다. ' + error.message + '</p>';
-                        stats.innerHTML = "";
-                        updateResultCount(0, 0);
-                    });
+                search.addEventListener("input", render);
+                domain.addEventListener("change", render);
+                status.addEventListener("change", render);
+                render();
             </script>
         </body>
         </html>
     """.trimIndent() + "\n"
 }
 
-fun writeIfChanged(target: File, content: String) {
-    target.parentFile.mkdirs()
-    if (!target.exists() || target.readText() != content) {
-        target.writeText(content)
+// generated artifact의 timestamp churn을 막기 위해 내용이 달라진 경우에만 파일을 쓴다.
+fun writeIfChanged(file: File, content: String) {
+    file.parentFile.mkdirs()
+    val normalizedContent = content.normalizeLineEndings()
+    if (!file.exists() || file.readText().normalizeLineEndings() != normalizedContent) {
+        file.writeText(normalizedContent)
     }
 }
 
+// strict mode에서는 catalog가 운영 계약으로 깨지지 않도록 중복 code와 schema 기본 조건을 실패 처리한다.
 fun collectDocumentationIssues(): List<String> {
-    val apiEntries = buildApiDocumentationEntries()
-    val errorCodeEntries = extractErrorCodeEntries()
+    val entries = extractErrorCodeEntries()
     val issues = mutableListOf<String>()
 
-    apiEntries
-        .filter { it.apiId == "<미지정>" }
-        .forEach { issues.add("API ID 누락: ${it.httpMethod} ${it.endpoint} (${it.source}:${it.line})") }
+    entries
+        .filter { it.code.isBlank() }
+        .forEach { issues.add("[ErrorCode] ${it.source.file}:${it.source.line} code is blank") }
 
-    apiEntries
-        .filter { it.apiId != "<미지정>" }
-        .groupBy { it.apiId }
-        .filterValues { it.size > 1 }
-        .forEach { (apiId, duplicated) ->
-            issues.add("API ID 중복: $apiId -> ${duplicated.joinToString { "${it.httpMethod} ${it.endpoint}" }}")
-        }
+    entries
+        .filter { it.httpStatus !in 100..599 }
+        .forEach { issues.add("[ErrorCode] ${it.source.file}:${it.source.line} unknown HttpStatus ${it.httpStatusName}") }
 
-    errorCodeEntries
+    entries
         .groupBy { it.code }
-        .filterValues { it.size > 1 }
-        .forEach { (code, duplicated) ->
-            issues.add("ErrorCode 중복: $code -> ${duplicated.joinToString { "${it.enumName}.${it.constantName}" }}")
+        .filter { (code, duplicates) -> code.isNotBlank() && duplicates.size > 1 }
+        .forEach { (code, duplicates) ->
+            issues.add(
+                "[ErrorCode] 중복 code $code: " +
+                    duplicates.joinToString { "${it.source.file}:${it.source.line}" }
+            )
         }
+
+    entries
+        .filter { it.severity != null && it.severity !in setOf("INFO", "WARNING", "ERROR", "CRITICAL") }
+        .forEach { issues.add("[ErrorCode] ${it.source.file}:${it.source.line} invalid severity ${it.severity}") }
 
     return issues
 }
 
-tasks.register("generateApiCatalog") {
-    group = "documentation"
-    description = "컨트롤러와 OpenAPI 애너테이션을 스캔해 API ID 목록 문서를 생성합니다."
-
-    doLast {
-        val entries = buildApiDocumentationEntries()
-        val markdown = buildApiCatalogMarkdown(entries)
-        val json = buildApiCatalogJson(entries)
-
-        writeIfChanged(apiCatalogMarkdownFile, markdown)
-        writeIfChanged(apiCatalogJsonFile, json)
-        writeIfChanged(staticApiCatalogMarkdownFile, markdown)
-        writeIfChanged(staticApiCatalogJsonFile, json)
-        writeIfChanged(staticApiCatalogIndexFile, buildCatalogIndexHtml("UMC PRODUCT API Catalog", "catalog.md", "catalog.json", "api"))
-        println("[generateApiCatalog] ${entries.size}개 API를 문서화했습니다.")
-    }
-}
-
+// 문서와 서버 static resource를 한 번에 갱신하는 실제 생성 task다.
 tasks.register("generateErrorCodeCatalog") {
     group = "documentation"
-    description = "ErrorCode enum을 스캔해 ErrorCode 목록 문서를 생성합니다."
+    description = "에러 코드 목록 문서와 v1 JSON 파일을 생성합니다."
 
     doLast {
         val entries = extractErrorCodeEntries()
         val markdown = buildErrorCodeCatalogMarkdown(entries)
         val json = buildErrorCodeCatalogJson(entries)
+        val schema = buildErrorCodeCatalogSchemaJson()
 
         writeIfChanged(errorCodeCatalogMarkdownFile, markdown)
         writeIfChanged(errorCodeCatalogJsonFile, json)
+        writeIfChanged(errorCodeCatalogSchemaFile, schema)
         writeIfChanged(staticErrorCodeCatalogMarkdownFile, markdown)
         writeIfChanged(staticErrorCodeCatalogJsonFile, json)
-        writeIfChanged(staticErrorCodeCatalogIndexFile, buildCatalogIndexHtml("UMC PRODUCT ErrorCode Catalog", "catalog.md", "catalog.json", "error"))
-        println("[generateErrorCodeCatalog] ${entries.size}개 ErrorCode를 문서화했습니다.")
+        writeIfChanged(staticErrorCodeCatalogSchemaFile, schema)
+        writeIfChanged(staticErrorCodeCatalogIndexFile, buildCatalogIndexHtml(entries))
+        println("[generateErrorCodeCatalog] 에러 코드 ${entries.size}개를 정리했어요.")
     }
 }
 
-tasks.register("generateDocumentationCatalogs") {
+// API 문서는 OpenAPI/Scalar가 담당하므로 이전 custom API catalog 산출물은 재생성하지 않고 제거한다.
+tasks.register("removeStaleCatalogArtifacts") {
     group = "documentation"
-    description = "API ID와 ErrorCode 목록 문서를 모두 생성합니다."
-    dependsOn("generateApiCatalog", "generateErrorCodeCatalog")
-}
-
-tasks.register("checkDocumentationCatalogs") {
-    group = "verification"
-    description = "API ID와 ErrorCode 자동 생성 문서가 최신 상태인지 검증합니다."
+    description = "더 이상 사용하지 않는 문서 산출물을 제거합니다. Scalar/OpenAPI 문서는 유지합니다."
 
     doLast {
-        val apiEntries = buildApiDocumentationEntries()
-        val errorCodeEntries = extractErrorCodeEntries()
+        staleCatalogFilesToRemove.filter { it.exists() }.forEach { it.delete() }
+        file("src/main/resources/static/docs/catalog/api")
+            .takeIf { it.exists() && it.listFiles().isNullOrEmpty() }
+            ?.delete()
+    }
+}
+
+// 외부에서 호출할 대표 생성 task. 기존 호출자가 하나만 실행해도 API catalog 제거와 ErrorCode 생성이 함께 일어난다.
+tasks.register("generateDocumentationCatalogs") {
+    group = "documentation"
+    description = "에러 코드 목록 문서와 v1 JSON 파일을 생성합니다."
+    dependsOn("removeStaleCatalogArtifacts", "generateErrorCodeCatalog")
+}
+
+// CI/check에서 generated file이 source와 동기화되어 있는지 확인한다.
+tasks.register("checkDocumentationCatalogs") {
+    group = "verification"
+    description = "에러 코드 목록 문서가 최신 상태인지 확인합니다."
+
+    doLast {
+        val entries = extractErrorCodeEntries()
+        val markdown = buildErrorCodeCatalogMarkdown(entries)
+        val json = buildErrorCodeCatalogJson(entries)
+        val schema = buildErrorCodeCatalogSchemaJson()
         val expectedFiles = mapOf(
-            apiCatalogMarkdownFile to buildApiCatalogMarkdown(apiEntries),
-            apiCatalogJsonFile to buildApiCatalogJson(apiEntries),
-            errorCodeCatalogMarkdownFile to buildErrorCodeCatalogMarkdown(errorCodeEntries),
-            errorCodeCatalogJsonFile to buildErrorCodeCatalogJson(errorCodeEntries),
-            staticApiCatalogMarkdownFile to buildApiCatalogMarkdown(apiEntries),
-            staticApiCatalogJsonFile to buildApiCatalogJson(apiEntries),
-            staticApiCatalogIndexFile to buildCatalogIndexHtml("UMC PRODUCT API Catalog", "catalog.md", "catalog.json", "api"),
-            staticErrorCodeCatalogMarkdownFile to buildErrorCodeCatalogMarkdown(errorCodeEntries),
-            staticErrorCodeCatalogJsonFile to buildErrorCodeCatalogJson(errorCodeEntries),
-            staticErrorCodeCatalogIndexFile to buildCatalogIndexHtml("UMC PRODUCT ErrorCode Catalog", "catalog.md", "catalog.json", "error")
+            errorCodeCatalogMarkdownFile to markdown,
+            errorCodeCatalogJsonFile to json,
+            errorCodeCatalogSchemaFile to schema,
+            staticErrorCodeCatalogMarkdownFile to markdown,
+            staticErrorCodeCatalogJsonFile to json,
+            staticErrorCodeCatalogSchemaFile to schema,
+            staticErrorCodeCatalogIndexFile to buildCatalogIndexHtml(entries)
         )
 
-        val staleFiles = expectedFiles.filter { (file, expected) -> !file.exists() || file.readText() != expected }.keys
-        if (staleFiles.isNotEmpty()) {
+        val staleFiles = expectedFiles
+            .filter { (file, expected) -> !file.exists() || file.readText().normalizeLineEndings() != expected.normalizeLineEndings() }
+            .keys
+        val legacyApiFiles = staleCatalogFilesToRemove.filter { it.exists() }
+        if (staleFiles.isNotEmpty() || legacyApiFiles.isNotEmpty()) {
             throw GradleException(
-                "문서 카탈로그가 최신 상태가 아닙니다. ./gradlew generateDocumentationCatalogs 실행 필요: " +
-                    staleFiles.joinToString { it.relativeTo(project.projectDir).invariantSeparatorsPath }
+                "에러 코드 목록이 최신 상태가 아니에요. ./gradlew generateDocumentationCatalogs를 실행해주세요: " +
+                    (staleFiles + legacyApiFiles).joinToString { it.relativeTo(project.projectDir).invariantSeparatorsPath }
             )
         }
 
-        println("[checkDocumentationCatalogs] 문서 카탈로그가 최신 상태입니다.")
+        println("[checkDocumentationCatalogs] 에러 코드 목록이 최신 상태예요.")
     }
 }
 
+// validate는 문제를 출력하고, strictDocumentationCatalogs=true일 때만 build를 실패시킨다.
+// 로컬 탐색에서는 경고처럼 쓰고 CI에서는 gate처럼 쓰기 위한 분리다.
 tasks.register("validateDocumentationCatalogs") {
     group = "verification"
-    description = "API ID와 ErrorCode의 누락/중복을 검사합니다. -PstrictDocumentationCatalogs=true 설정 시 실패 처리합니다."
+    description = "에러 코드 누락, 중복, v1 규격 위반을 확인합니다. -PstrictDocumentationCatalogs=true를 지정하면 실패 처리합니다."
 
     doLast {
         val issues = collectDocumentationIssues()
         if (issues.isEmpty()) {
-            println("[validateDocumentationCatalogs] API ID와 ErrorCode 할당 문제가 없습니다.")
+            println("[validateDocumentationCatalogs] 에러 코드 목록에서 문제가 발견되지 않았어요.")
             return@doLast
         }
 
         issues.forEach { println("[validateDocumentationCatalogs] $it") }
         if (project.findProperty("strictDocumentationCatalogs") == "true") {
-            throw GradleException("문서 카탈로그 검증 실패: ${issues.size}건")
+            throw GradleException("에러 코드 목록에서 확인이 필요한 문제가 ${issues.size}건 있어요.")
         }
     }
 }
 
-tasks.register("nextApiId") {
-    group = "documentation"
-    description = "다음 API ID를 추천합니다. 예: ./gradlew nextApiId -Pprefix=CHALLENGER"
-
-    doLast {
-        val prefix = (project.findProperty("prefix") as String?)?.uppercase(Locale.ROOT)
-            ?: throw GradleException("-Pprefix=CHALLENGER 형식으로 API ID prefix를 지정해주세요.")
-        val width = (project.findProperty("width") as String?)?.toIntOrNull() ?: 3
-        val next = buildApiDocumentationEntries()
-            .map { it.apiId }
-            .mapNotNull { Regex("^${Regex.escape(prefix)}-(\\d+)$").find(it)?.groupValues?.get(1)?.toIntOrNull() }
-            .maxOrNull()
-            ?.plus(1)
-            ?: 1
-
-        println("$prefix-${next.toString().padStart(width, '0')}")
-    }
-}
-
+// 사람이 다음 번호를 직접 세다가 중복을 만들지 않도록 prefix별 다음 code를 계산한다.
 tasks.register("nextErrorCode") {
     group = "documentation"
-    description = "다음 ErrorCode를 추천합니다. 예: ./gradlew nextErrorCode -Pprefix=CHALLENGER"
+    description = "다음 에러 코드 번호를 추천합니다. 예: ./gradlew nextErrorCode -Pprefix=CHALLENGER"
 
     doLast {
         val prefix = (project.findProperty("prefix") as String?)?.uppercase(Locale.ROOT)

@@ -1,11 +1,12 @@
 package com.umc.product.authorization.adapter.in.aspect;
 
-import com.umc.product.authorization.domain.PermissionType;
-import com.umc.product.authorization.domain.ResourceType;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 
 /**
  * 메서드 실행 전 권한 체크를 수행하는 어노테이션
@@ -49,5 +50,5 @@ public @interface CheckAccess {
     /**
      * 권한이 없을 때 표시할 메시지
      */
-    String message() default "해당 리소스에 접근할 권한이 없습니다.";
+    String message() default "이 항목에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.";
 }

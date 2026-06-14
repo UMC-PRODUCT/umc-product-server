@@ -1,38 +1,55 @@
 package com.umc.product.project.application.service.command;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerCursorResult;
+import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerItemInfo;
+import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.project.application.port.in.command.AutoDecideProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
+import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.application.service.policy.AutoDecisionResult;
 import com.umc.product.project.application.service.policy.MatchingDecisionPolicy;
+import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.ProjectPartQuota;
+import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-import java.time.Instant;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 매칭 차수 종료 시점에 자동 선발을 실행하는 서비스 (MATCHING-201 + 스케줄러 공통 진입점).
@@ -49,9 +66,19 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProjectMatchingRoundFinalizationCommandService implements
     AutoDecideProjectMatchingRoundUseCase {
 
+    private static final int RANDOM_ASSIGNMENT_SEARCH_PAGE_SIZE = 500;
+    private static final Set<ChallengerPart> DEVELOPER_PARTS = Set.of(
+        ChallengerPart.WEB,
+        ChallengerPart.ANDROID,
+        ChallengerPart.IOS,
+        ChallengerPart.NODEJS,
+        ChallengerPart.SPRINGBOOT
+    );
+
     private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final SaveProjectApplicationPort saveProjectApplicationPort;
+    private final LoadProjectPort loadProjectPort;
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final SaveProjectMemberPort saveProjectMemberPort;
@@ -59,6 +86,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     private final Random matchingRandom;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
+    private final SearchChallengerUseCase searchChallengerUseCase;
 
     @Override
     public void autoDecide(Long matchingRoundId, Long executedByMemberId) {
@@ -83,29 +111,32 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             .filter(a -> isDecidableStatus(a.getStatus()))
             .toList();
 
-        if (applicants.isEmpty()) {
-            round.executeAutoDecision(executedByMemberId);
-            return;
+        List<ProjectMember> membersToSave = new ArrayList<>();
+        if (!applicants.isEmpty()) {
+            Map<Long, ChallengerPart> applicantPart = resolveApplicantParts(applicants);
+            Map<ProjectPartKey, List<ProjectApplication>> grouped = groupByProjectAndPart(applicants, applicantPart);
+
+            Map<ProjectPartKey, Integer> remainingQuotaByKey = buildRemainingQuotaMap(grouped.keySet());
+
+            Set<Long> approvedIds = new HashSet<>();
+            Set<Long> rejectedIds = new HashSet<>();
+            for (Map.Entry<ProjectPartKey, List<ProjectApplication>> entry : grouped.entrySet()) {
+                int quota = remainingQuotaByKey.getOrDefault(entry.getKey(), 0);
+                AutoDecisionResult result = policy.decideAutomatically(entry.getValue(), quota, matchingRandom);
+                approvedIds.addAll(result.approvedIds());
+                rejectedIds.addAll(result.rejectedIds());
+            }
+
+            applyDecisions(applicants, approvedIds, rejectedIds, executedByMemberId);
+            saveProjectApplicationPort.saveAll(applicants);
+            membersToSave.addAll(buildApprovedMembers(applicants, approvedIds, applicantPart, executedByMemberId));
         }
 
-        Map<Long, ChallengerPart> applicantPart = resolveApplicantParts(applicants);
-        Map<ProjectPartKey, List<ProjectApplication>> grouped = groupByProjectAndPart(applicants, applicantPart);
+        membersToSave.addAll(buildRandomAssignedMembersAfterThirdDeveloperRound(round, membersToSave, executedByMemberId));
 
-        Map<ProjectPartKey, Integer> remainingQuotaByKey = buildRemainingQuotaMap(grouped.keySet());
-
-        Set<Long> approvedIds = new HashSet<>();
-        Set<Long> rejectedIds = new HashSet<>();
-        for (Map.Entry<ProjectPartKey, List<ProjectApplication>> entry : grouped.entrySet()) {
-            int quota = remainingQuotaByKey.getOrDefault(entry.getKey(), 0);
-            AutoDecisionResult result = policy.decideAutomatically(entry.getValue(), quota, matchingRandom);
-            approvedIds.addAll(result.approvedIds());
-            rejectedIds.addAll(result.rejectedIds());
+        if (!membersToSave.isEmpty()) {
+            saveProjectMemberPort.saveAll(membersToSave);
         }
-
-        applyDecisions(applicants, approvedIds, rejectedIds, executedByMemberId);
-        saveProjectApplicationPort.saveAll(applicants);
-
-        registerApprovedMembers(applicants, approvedIds, applicantPart, executedByMemberId);
 
         round.executeAutoDecision(executedByMemberId);
     }
@@ -173,7 +204,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
                 e -> e.getValue().stream().collect(Collectors.toMap(
-                    com.umc.product.project.domain.ProjectPartQuota::getPart,
+                    ProjectPartQuota::getPart,
                     q -> q.getQuota().intValue()
                 ))
             ));
@@ -181,7 +212,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         Map<Long, Map<ChallengerPart, Long>> activeByProject = loadProjectMemberPort
             .countByProjectIdsGroupByProjectIdAndPart(projectIds);
 
-        Map<ProjectPartKey, Integer> result = new java.util.HashMap<>();
+        Map<ProjectPartKey, Integer> result = new HashMap<>();
         for (ProjectPartKey key : keys) {
             int total = totalQuotaByProject
                 .getOrDefault(key.projectId(), Map.of())
@@ -211,25 +242,178 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         }
     }
 
-    private void registerApprovedMembers(
+    private List<ProjectMember> buildApprovedMembers(
         List<ProjectApplication> applicants,
         Set<Long> approvedIds,
         Map<Long, ChallengerPart> applicantPart,
         Long executedByMemberId
     ) {
-        List<ProjectMember> membersToSave = applicants.stream()
+        return applicants.stream()
             .filter(app -> approvedIds.contains(app.getId()))
-            .map(app -> ProjectMember.create(
-                app.getApplicationForm().getProject(),
-                app.getApplicantMemberId(),
+            .map(app -> ProjectMember.createFromApplication(
+                app,
                 applicantPart.get(app.getId()),
                 executedByMemberId
             ))
             .toList();
+    }
 
-        if (!membersToSave.isEmpty()) {
-            saveProjectMemberPort.saveAll(membersToSave);
+    private List<ProjectMember> buildRandomAssignedMembersAfterThirdDeveloperRound(
+        ProjectMatchingRound round,
+        List<ProjectMember> plannedMembers,
+        Long executedByMemberId
+    ) {
+        if (round.getType() != MatchingType.PLAN_DEVELOPER || round.getPhase() != MatchingPhase.THIRD) {
+            return List.of();
         }
+
+        List<Project> projects = loadProjectPort.listByChapterIdAndStatus(
+            round.getChapterId(),
+            ProjectStatus.IN_PROGRESS
+        );
+        if (projects.isEmpty()) {
+            return List.of();
+        }
+
+        Set<Long> projectIds = projects.stream()
+            .map(Project::getId)
+            .collect(Collectors.toSet());
+        Map<Long, Project> projectById = projects.stream()
+            .collect(Collectors.toMap(Project::getId, project -> project));
+        Long gisuId = projects.getFirst().getGisuId();
+
+        Map<ProjectPartKey, Integer> remainingByKey = buildRemainingDeveloperQuotaMap(projects, plannedMembers);
+        if (remainingByKey.values().stream().noneMatch(remaining -> remaining > 0)) {
+            return List.of();
+        }
+
+        Set<Long> alreadyMatchedMemberIds = loadProjectMemberPort.listByProjectIds(projectIds).values().stream()
+            .flatMap(List::stream)
+            .map(ProjectMember::getMemberId)
+            .collect(Collectors.toSet());
+        plannedMembers.stream()
+            .map(ProjectMember::getMemberId)
+            .forEach(alreadyMatchedMemberIds::add);
+
+        List<SearchChallengerItemInfo> candidates = new ArrayList<>(
+            listActiveChallengersInChapter(gisuId, round.getChapterId())
+        );
+        Collections.shuffle(candidates, matchingRandom);
+
+        List<ProjectMember> assignments = new ArrayList<>();
+        for (SearchChallengerItemInfo candidate : candidates) {
+            if (remainingByKey.values().stream().noneMatch(remaining -> remaining > 0)) {
+                break;
+            }
+            if (alreadyMatchedMemberIds.contains(candidate.memberId()) || !isDeveloperPart(candidate.part())) {
+                continue;
+            }
+
+            Optional<ProjectPartKey> targetKey = pickRandomRemainingProjectKey(candidate.part(), remainingByKey);
+            if (targetKey.isEmpty()) {
+                continue;
+            }
+
+            ProjectPartKey key = targetKey.get();
+            Project project = projectById.get(key.projectId());
+            assignments.add(ProjectMember.create(project, candidate.memberId(), candidate.part(), executedByMemberId));
+            alreadyMatchedMemberIds.add(candidate.memberId());
+            remainingByKey.computeIfPresent(key, (ignored, remaining) -> remaining - 1);
+        }
+
+        return assignments;
+    }
+
+    private Map<ProjectPartKey, Integer> buildRemainingDeveloperQuotaMap(
+        List<Project> projects,
+        List<ProjectMember> plannedMembers
+    ) {
+        Set<Long> projectIds = projects.stream()
+            .map(Project::getId)
+            .collect(Collectors.toSet());
+        Map<Long, Map<ChallengerPart, Long>> activeByProject = loadProjectMemberPort
+            .countByProjectIdsGroupByProjectIdAndPart(projectIds);
+        Map<ProjectPartKey, Long> plannedByKey = plannedMembers.stream()
+            .filter(member -> projectIds.contains(member.getProject().getId()))
+            .filter(member -> isDeveloperPart(member.getPart()))
+            .collect(Collectors.groupingBy(
+                member -> new ProjectPartKey(member.getProject().getId(), member.getPart()),
+                Collectors.counting()
+            ));
+
+        Map<ProjectPartKey, Integer> result = new HashMap<>();
+        Map<Long, List<ProjectPartQuota>> quotasByProject = loadProjectPartQuotaPort
+            .listByProjectIdsGroupedByProjectId(projectIds);
+        for (Project project : projects) {
+            Long projectId = project.getId();
+            for (ProjectPartQuota quota : quotasByProject.getOrDefault(projectId, List.of())) {
+                ChallengerPart part = quota.getPart();
+                if (!isDeveloperPart(part)) {
+                    continue;
+                }
+
+                ProjectPartKey key = new ProjectPartKey(projectId, part);
+                int active = activeByProject
+                    .getOrDefault(projectId, Map.of())
+                    .getOrDefault(part, 0L)
+                    .intValue();
+                int planned = plannedByKey.getOrDefault(key, 0L).intValue();
+                int remaining = Math.max(0, quota.getQuota().intValue() - active - planned);
+                if (remaining > 0) {
+                    result.put(key, remaining);
+                }
+            }
+        }
+        return result;
+    }
+
+    private List<SearchChallengerItemInfo> listActiveChallengersInChapter(Long gisuId, Long chapterId) {
+        SearchChallengerQuery query = new SearchChallengerQuery(
+            null,
+            null,
+            null,
+            null,
+            null,
+            chapterId,
+            null,
+            gisuId,
+            List.of(ChallengerStatus.ACTIVE)
+        );
+
+        List<SearchChallengerItemInfo> result = new ArrayList<>();
+        Long cursor = null;
+        boolean hasNext;
+        do {
+            SearchChallengerCursorResult page = searchChallengerUseCase.cursorSearch(
+                query,
+                cursor,
+                RANDOM_ASSIGNMENT_SEARCH_PAGE_SIZE
+            );
+            result.addAll(page.content());
+            cursor = page.nextCursor();
+            hasNext = page.hasNext() && cursor != null;
+        } while (hasNext);
+        return result;
+    }
+
+    private Optional<ProjectPartKey> pickRandomRemainingProjectKey(
+        ChallengerPart part,
+        Map<ProjectPartKey, Integer> remainingByKey
+    ) {
+        List<ProjectPartKey> availableKeys = remainingByKey.entrySet().stream()
+            .filter(entry -> entry.getValue() > 0)
+            .filter(entry -> entry.getKey().part() == part)
+            .map(Map.Entry::getKey)
+            .toList();
+
+        if (availableKeys.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(availableKeys.get(matchingRandom.nextInt(availableKeys.size())));
+    }
+
+    private boolean isDeveloperPart(ChallengerPart part) {
+        return DEVELOPER_PARTS.contains(part);
     }
 
     private void validateManageAccess(Long memberId, Long chapterId) {

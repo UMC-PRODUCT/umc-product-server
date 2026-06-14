@@ -1,21 +1,27 @@
 package com.umc.product.test.application.service;
 
-import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
-import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
-import com.umc.product.member.application.port.in.command.dto.TermConsents;
-import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
-import com.umc.product.test.application.port.in.command.dto.SeedMembersCommand;
-import com.umc.product.test.application.port.in.command.dto.SeedMembersResult;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
+import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.TermConsents;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.test.application.port.in.command.CreateSeedMemberUseCase;
+import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
+import com.umc.product.test.application.port.in.command.dto.CreateSeedMemberCommand;
+import com.umc.product.test.application.port.in.command.dto.CreateSeedMemberResult;
+import com.umc.product.test.application.port.in.command.dto.SeedMembersCommand;
+import com.umc.product.test.application.port.in.command.dto.SeedMembersResult;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 멤버 시딩 서비스. ADR-017 참조.
@@ -33,7 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("!prod")
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
-public class MemberSeedService implements SeedMembersUseCase {
+public class MemberSeedService implements SeedMembersUseCase, CreateSeedMemberUseCase {
 
     private final SeedProperties properties;
     private final DummyMemberFactory dummyMemberFactory;
@@ -67,6 +73,22 @@ public class MemberSeedService implements SeedMembersUseCase {
         return SeedMembersResult.of(created);
     }
 
+    @Override
+    @Transactional
+    public CreateSeedMemberResult create(CreateSeedMemberCommand command) {
+        List<TermConsents> consents = dummyMemberFactory.snapshotMandatoryConsents();
+        Long memberId = registerEmailMemberUseCase.register(EmailRegisterMemberCommand.builder()
+            .rawPassword(resolveRawPassword(command.rawPassword()))
+            .name(command.name())
+            .nickname(command.nickname())
+            .email(command.email())
+            .schoolId(command.schoolId())
+            .termConsents(consents)
+            .build());
+
+        return CreateSeedMemberResult.of(memberId, command.email());
+    }
+
     /**
      * 이메일 회원을 target 만큼 등록한다. 약관 동의는 시딩 시작 시 1 회만 조회해 모든 Command 에
      * 재사용한다. 모든 Command 를 미리 만들어 {@link RegisterEmailMemberUseCase#batchRegister}
@@ -91,5 +113,12 @@ public class MemberSeedService implements SeedMembersUseCase {
             log.error("member seed batchRegister failed (target={}): {}", target, e.toString());
             return 0;
         }
+    }
+
+    private String resolveRawPassword(String rawPassword) {
+        if (rawPassword == null || rawPassword.isBlank()) {
+            return properties.defaultPassword();
+        }
+        return rawPassword;
     }
 }

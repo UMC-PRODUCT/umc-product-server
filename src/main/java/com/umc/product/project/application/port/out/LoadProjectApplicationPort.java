@@ -1,10 +1,13 @@
 package com.umc.product.project.application.port.out;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * {@code findBy*} — 없어도 정상 ({@link Optional})
@@ -36,8 +39,10 @@ public interface LoadProjectApplicationPort {
     );
 
     /**
-     * 본인의 DRAFT 지원서를 반드시 존재하는 것으로 조회합니다. 없으면 {@code PROJECT_DRAFT_APPLICATION_NOT_FOUND} 예외.
-     * update / submit 에서 사용합니다.
+     * (projectId, memberId) 로 단일 DRAFT 지원서를 조회합니다.
+     * <p>
+     * 같은 프로젝트/멤버에 여러 차수의 DRAFT가 공존할 수 있는 지원서 update/submit 흐름에서는 사용하지 않고,
+     * applicationId로 대상을 명시해야 합니다. 없으면 {@code PROJECT_DRAFT_APPLICATION_NOT_FOUND} 예외.
      */
     ProjectApplication getDraftByProjectAndMember(Long projectId, Long memberId);
 
@@ -52,6 +57,14 @@ public interface LoadProjectApplicationPort {
      * 매칭 차수에 속한 모든 지원서를 조회합니다. 자동 선발 알고리즘 입력으로 사용됩니다.
      */
     List<ProjectApplication> listByMatchingRoundId(Long matchingRoundId);
+
+    /**
+     * 같은 매칭 차수와 프로젝트에 속한 결정 가능 지원서(SUBMITTED/APPROVED/REJECTED)를 조회합니다.
+     * <p>
+     * applicationForm -> project, appliedMatchingRound 를 fetch join 으로 함께 로드하여 최소선발 검증에서 lazy traversal
+     * 없이 프로젝트/차수 정보를 사용할 수 있게 합니다.
+     */
+    List<ProjectApplication> listDecidableByMatchingRoundIdAndProjectId(Long matchingRoundId, Long projectId);
 
     /**
      * 지원서 단건을 fetch join 으로 조회한다.
@@ -102,6 +115,17 @@ public interface LoadProjectApplicationPort {
         Long projectId,
         Long matchingRoundId,
         ProjectApplicationStatus status
+    );
+
+    /**
+     * 프로젝트/멤버 쌍별 APPROVED 지원서 중 가장 최신 매칭 차수를 조회합니다.
+     * <p>
+     * 최신 기준: matchingRound.startsAt DESC, 동률이면 application.id DESC.
+     * 지원서가 없는 쌍은 결과에 포함하지 않습니다.
+     */
+    List<ProjectMemberMatchedRoundInfo> listLatestApprovedMatchedRoundsByProjectIdsAndMemberIds(
+        Collection<Long> projectIds,
+        Collection<Long> memberIds
     );
 
     /**

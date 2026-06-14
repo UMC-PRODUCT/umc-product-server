@@ -231,9 +231,10 @@ ProjectApplication:
    → 지원서 단건 상세 (폼 구조 + 답변 + 첨부 파일)
 
 3. [APPLY-103] PATCH /api/v1/projects/{projectId}/applications/{applicationId}/decision   ← PR #840
-   → ApplicationDecisionStatus = APPROVED | REJECTED | PENDING(=재토글)
-   → ProjectApplication.approve()/reject()/revertToPending()
+   → ApplicationDecisionStatus = APPROVED | REJECTED
+   → ProjectApplication.approve()/reject()
    → 잔여 quota 검증 (validateRemainingQuota) → QUOTA_EXCEEDED 시 409
+   → REJECTED 후 최소 선발 규정 미충족 시 → MINIMUM_SELECTION_REQUIRED 409, 기존 status 유지
    → 차수 종료 후 시도 시 → MATCHING_ROUND_LOCKED 400
 ```
 
@@ -598,7 +599,7 @@ PR 의존성을 고려한 추천 순서입니다. 상세 PR 묶음은 §6.5 (구
 | E1 | PO 가 SUBMITTED 지원서를 APPROVED 로 토글 | SUBMITTED + PO 인증 | PATCH /applications/{id}/decision (APPROVED) | 200, `status=APPROVED`, `status_changed_member_id=PO`, `status_changed_at` 기록 | QA-02 (positive) | ✅ |
 | E2 | 잔여 quota 초과 토글 → 409 | TO=2 + 이미 APPROVED 2건 | PATCH (APPROVED) | 409 `QUOTA_EXCEEDED` (PR #840 시나리오 C) | — | ✅ |
 | E3 | **PM 이 차수 종료 후 토글 → 400** | endsAt 경과 또는 auto-decide 완료 + PO 인증 | PATCH | 400 `MATCHING_ROUND_LOCKED` (PR #840 시나리오 D) | **QA-02** | ✅ |
-| E4 | APPROVED → PENDING 재토글 | E1 직후 | PATCH (PENDING) | 200, `status=SUBMITTED`, 사유 저장 | QA-18 | ✅ |
+| E4 | APPROVED → REJECTED 재토글, 단 최소 선발 규정 유지 필요 | E1 직후 + 최소 선발 인원 충족 | PATCH (REJECTED) | 200, `status=REJECTED`, 사유 저장 | QA-18 | ✅ |
 | E5 | 다른 프로젝트 PO 가 토글 시도 → 403 | 다른 PO 토큰 | PATCH | 403 | — | ✅ |
 | E6 | 일반 챌린저가 APPLY-101 로 다른 프로젝트 지원자 목록 조회 → 403 | — | 다른 프로젝트 GET | 403 (**현재는 통과해 버리는 보안 이슈 — RED 로 작성**) | — | 🟡 P1 #1 |
 | E7 | **Admin 이 차수 종료 후에도 합/불 토글 가능 (PM 잠금 우회)** | endsAt 경과 + 중앙 총괄단 / 지부장 인증 | PATCH (APPROVED) | 200, `status=APPROVED`, audit 사유 기록 (`Admin override`) | **QA-11** | 🔴 **미구현** |

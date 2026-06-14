@@ -3,17 +3,18 @@ package com.umc.product.global.security;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.umc.product.authentication.domain.EmailVerificationPurpose;
-import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
-import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.umc.product.authentication.domain.EmailVerificationPurpose;
+import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+
 /**
  * JwtTokenProvider 의 emailVerificationToken purpose claim 검증 단위 테스트.
  * <p>
- * 회원가입(REGISTER) 흐름에서 발급된 토큰이 비밀번호 초기화(PASSWORD_RESET) 에 재사용되지
+ * 회원가입(REGISTER) 흐름에서 발급된 토큰이 비밀번호 초기화(PASSWORD_RESET) 나 이메일 변경(CHANGE_EMAIL) 에 재사용되지
  * 않도록, 발급 시 purpose 를 claim 으로 심고 파싱 시 expectedPurpose 와 일치해야만
  * 통과시키는 동작을 검증한다.
  */
@@ -69,6 +70,19 @@ class JwtTokenProviderEmailVerificationTest {
     }
 
     @Test
+    @DisplayName("CHANGE_EMAIL 로 발급한 토큰은 CHANGE_EMAIL 로 파싱 시 이메일을 반환한다")
+    void purposeMatchesChangeEmail() {
+        // given
+        String token = provider.createEmailVerificationToken(EMAIL, EmailVerificationPurpose.CHANGE_EMAIL);
+
+        // when
+        String parsedEmail = provider.parseEmailVerificationToken(token, EmailVerificationPurpose.CHANGE_EMAIL);
+
+        // then
+        assertThat(parsedEmail).isEqualTo(EMAIL);
+    }
+
+    @Test
     @DisplayName("REGISTER 토큰을 PASSWORD_RESET 로 파싱하면 INVALID_EMAIL_VERIFICATION 예외를 던진다")
     void cross_purpose_REGISTER_to_RESET_거부() {
         // given
@@ -94,5 +108,49 @@ class JwtTokenProviderEmailVerificationTest {
             .isInstanceOf(AuthenticationDomainException.class)
             .extracting("baseCode")
             .isEqualTo(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
+    }
+
+    @Test
+    @DisplayName("REGISTER 토큰을 CHANGE_EMAIL 로 파싱하면 INVALID_EMAIL_VERIFICATION 예외를 던진다")
+    void registerTokenRejectedForChangeEmail() {
+        // given
+        String token = provider.createEmailVerificationToken(EMAIL, EmailVerificationPurpose.REGISTER);
+
+        // when / then
+        assertThatThrownBy(() ->
+            provider.parseEmailVerificationToken(token, EmailVerificationPurpose.CHANGE_EMAIL))
+            .isInstanceOf(AuthenticationDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
+    }
+
+    @Test
+    @DisplayName("PASSWORD_RESET 토큰을 CHANGE_EMAIL 로 파싱하면 INVALID_EMAIL_VERIFICATION 예외를 던진다")
+    void passwordResetTokenRejectedForChangeEmail() {
+        // given
+        String token = provider.createEmailVerificationToken(EMAIL, EmailVerificationPurpose.PASSWORD_RESET);
+
+        // when / then
+        assertThatThrownBy(() ->
+            provider.parseEmailVerificationToken(token, EmailVerificationPurpose.CHANGE_EMAIL))
+            .isInstanceOf(AuthenticationDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
+    }
+
+    @Test
+    @DisplayName("RefreshToken 발급 시 jti와 만료시각을 포함하고 파싱 결과로 반환한다")
+    void refresh_token_claims_파싱() {
+        // given
+        Long memberId = 10L;
+        String token = provider.createRefreshToken(memberId);
+
+        // when
+        RefreshTokenClaims claims = provider.parseRefreshToken(token);
+
+        // then
+        assertThat(claims.memberId()).isEqualTo(memberId);
+        assertThat(claims.jti()).isNotNull();
+        assertThat(claims.expiresAt()).isNotNull();
     }
 }

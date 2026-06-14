@@ -8,20 +8,24 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import java.time.LocalDateTime;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.umc.product.storage.application.port.in.command.ManageFileUseCase;
+import com.umc.product.storage.application.port.in.command.dto.DeleteFileCommand;
 import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
 import com.umc.product.storage.application.port.in.command.dto.PrepareFileUploadCommand;
 import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
 import com.umc.product.storage.application.port.out.SaveFileMetadataPort;
+import com.umc.product.storage.application.port.out.dto.StorageObjectInfo;
 import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
 import com.umc.product.storage.domain.exception.StorageException;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.LocalDateTime;
-import java.util.Map;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * FileCommandService 통합 테스트
@@ -53,7 +57,7 @@ class FileCommandServiceTest extends UseCaseTestSupport {
         given(storagePort.generateStorageKey(any(FileCategory.class), anyString(), anyString()))
             .willReturn("profile/test-id.jpg");
 
-        given(storagePort.generateUploadUrl(anyString(), anyString(), anyLong()))
+        given(storagePort.generateUploadUrl(anyString(), anyString(), anyLong(), anyLong()))
             .willReturn(new FileUploadInfo(
                 "test-file-id",
                 "https://storage.googleapis.com/signed-upload-url",
@@ -138,7 +142,12 @@ class FileCommandServiceTest extends UseCaseTestSupport {
         FileMetadata metadata = saveTestFile("test-file-1", "document.pdf", false);
 
         // StoragePort Mock 설정 - 파일이 스토리지에 존재한다고 가정
-        given(storagePort.exists(anyString())).willReturn(true);
+        given(storagePort.findObjectInfoByStorageKey(metadata.getStorageKey()))
+            .willReturn(java.util.Optional.of(StorageObjectInfo.of(
+                metadata.getStorageKey(),
+                metadata.getFileSize(),
+                metadata.getContentType()
+            )));
 
         // when: 업로드 완료 처리
         manageFileUseCase.confirmUpload(metadata.getId());
@@ -155,7 +164,8 @@ class FileCommandServiceTest extends UseCaseTestSupport {
         FileMetadata metadata = saveTestFile("test-file-2", "document.pdf", false);
 
         // StoragePort Mock 설정 - 파일이 스토리지에 없음
-        given(storagePort.exists(anyString())).willReturn(false);
+        given(storagePort.findObjectInfoByStorageKey(metadata.getStorageKey()))
+            .willReturn(java.util.Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> manageFileUseCase.confirmUpload(metadata.getId()))
@@ -182,7 +192,7 @@ class FileCommandServiceTest extends UseCaseTestSupport {
         String fileId = metadata.getId();
 
         // when
-        manageFileUseCase.deleteFile(fileId);
+        manageFileUseCase.deleteFile(deleteCommand(fileId, 1L));
 
         // then: 스토리지에서 파일이 삭제되었는지 확인
         verify(storagePort).delete(metadata.getStorageKey());
@@ -197,8 +207,15 @@ class FileCommandServiceTest extends UseCaseTestSupport {
         String nonExistentFileId = "non-existent-id";
 
         // when & then
-        assertThatThrownBy(() -> manageFileUseCase.deleteFile(nonExistentFileId))
+        assertThatThrownBy(() -> manageFileUseCase.deleteFile(deleteCommand(nonExistentFileId, 1L)))
             .isInstanceOf(StorageException.class);
+    }
+
+    private DeleteFileCommand deleteCommand(String fileId, Long requesterMemberId) {
+        return DeleteFileCommand.builder()
+            .fileId(fileId)
+            .requesterMemberId(requesterMemberId)
+            .build();
     }
 
     /**

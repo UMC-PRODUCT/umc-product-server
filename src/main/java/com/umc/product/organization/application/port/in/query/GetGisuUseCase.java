@@ -1,13 +1,15 @@
 package com.umc.product.organization.application.port.in.query;
 
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuNameInfo;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuNameInfo;
 
 public interface GetGisuUseCase {
 
@@ -20,6 +22,10 @@ public interface GetGisuUseCase {
     GisuInfo getById(Long gisuId);
 
     List<GisuInfo> getByIds(Set<Long> gisuIds);
+
+    List<GisuInfo> batchGetByIds(List<Long> gisuIds);
+
+    List<GisuInfo> batchGetByGenerations(List<Long> generations);
 
     Long getActiveGisuId();
 

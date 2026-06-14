@@ -1,5 +1,6 @@
 package com.umc.product.project.adapter.out.persistence;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +33,19 @@ public class ProjectPersistenceAdapter implements LoadProjectPort, SaveProjectPo
     public Project getById(Long id) {
         return jpaRepository.findById(id)
             .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_NOT_FOUND));
+    }
+
+    @Override
+    public List<Project> listByIds(Collection<Long> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return jpaRepository.findAllById(ids);
+    }
+
+    @Override
+    public List<Project> listByChapterIdAndStatus(Long chapterId, ProjectStatus status) {
+        return jpaRepository.findByChapterIdAndStatus(chapterId, status);
     }
 
     @Override

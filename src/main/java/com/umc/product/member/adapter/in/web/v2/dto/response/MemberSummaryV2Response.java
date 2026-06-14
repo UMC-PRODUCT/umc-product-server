@@ -1,5 +1,7 @@
 package com.umc.product.member.adapter.in.web.v2.dto.response;
 
+import java.util.List;
+
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
@@ -8,8 +10,8 @@ import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberSummaryV2Info;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.List;
 
 /**
  * GET /api/v2/member/me 응답 DTO.
@@ -24,6 +26,8 @@ public record MemberSummaryV2Response(
     String nickname,
 
     String email,
+    @Schema(description = "로컬 계정 비밀번호 자격증명 보유 여부")
+    boolean hasLocalCredential,
 
     Long schoolId,
     String schoolName,
@@ -48,6 +52,7 @@ public record MemberSummaryV2Response(
             m.name(),
             m.nickname(),
             m.email(),
+            info.hasLocalCredential(),
             m.schoolId(),
             m.schoolName(),
             m.profileImageLink(),

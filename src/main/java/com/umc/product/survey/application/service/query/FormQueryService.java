@@ -1,5 +1,14 @@
 package com.umc.product.survey.application.service.query;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.survey.application.port.in.query.GetFormUseCase;
 import com.umc.product.survey.application.port.in.query.dto.FormInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo;
@@ -16,15 +25,8 @@ import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional(readOnly = true)
@@ -97,6 +99,7 @@ public class FormQueryService implements GetFormUseCase {
             .description(form.getDescription())
             .status(form.getStatus())
             .isAnonymous(form.isAnonymous())
+            .allowDuplicateResponses(form.isAllowDuplicateResponses())
             .createdAt(form.getCreatedAt())
             .updatedAt(form.getUpdatedAt())
             .sections(sectionDtos)
