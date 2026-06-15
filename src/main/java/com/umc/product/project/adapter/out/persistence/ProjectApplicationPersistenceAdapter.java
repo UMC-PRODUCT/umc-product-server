@@ -1,5 +1,6 @@
 package com.umc.product.project.adapter.out.persistence;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -124,9 +125,10 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     public List<ProjectApplication> searchProjectApplications(
         Long projectId,
         Long matchingRoundId,
-        ProjectApplicationStatus status
+        ProjectApplicationStatus status,
+        Instant now
     ) {
-        return projectApplicationQueryRepository.searchProjectApplications(projectId, matchingRoundId, status);
+        return projectApplicationQueryRepository.searchProjectApplications(projectId, matchingRoundId, status, now);
     }
 
     @Override

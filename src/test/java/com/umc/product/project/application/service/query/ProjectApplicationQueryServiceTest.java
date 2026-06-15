@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -285,7 +286,7 @@ class ProjectApplicationQueryServiceTest {
         // then
         assertThat(result).isEmpty();
         verify(loadProjectApplicationPort, never())
-            .searchProjectApplications(any(), any(), any());
+            .searchProjectApplications(any(), any(), any(), any());
     }
 
     @Test
@@ -299,7 +300,7 @@ class ProjectApplicationQueryServiceTest {
         given(loadProjectPort.getById(1L)).willReturn(project);
         given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
             .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
-        given(loadProjectApplicationPort.searchProjectApplications(1L, null, null))
+        given(loadProjectApplicationPort.searchProjectApplications(eq(1L), isNull(), isNull(), any()))
             .willReturn(List.of());
 
         // when
@@ -325,7 +326,7 @@ class ProjectApplicationQueryServiceTest {
         given(loadProjectPort.getById(1L)).willReturn(project);
         given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
             .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
-        given(loadProjectApplicationPort.searchProjectApplications(1L, null, null))
+        given(loadProjectApplicationPort.searchProjectApplications(eq(1L), isNull(), isNull(), any()))
             .willReturn(List.of(application));
 
         // when
@@ -357,7 +358,7 @@ class ProjectApplicationQueryServiceTest {
         given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
             .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectApplicationPort.searchProjectApplications(
-            1L, 7L, ProjectApplicationStatus.APPROVED))
+            eq(1L), eq(7L), eq(ProjectApplicationStatus.APPROVED), any()))
             .willReturn(List.of());
 
         // when
@@ -365,7 +366,7 @@ class ProjectApplicationQueryServiceTest {
 
         // then
         verify(loadProjectApplicationPort).searchProjectApplications(
-            1L, 7L, ProjectApplicationStatus.APPROVED);
+            eq(1L), eq(7L), eq(ProjectApplicationStatus.APPROVED), any());
     }
 
     // ============================================================
@@ -404,6 +405,29 @@ class ProjectApplicationQueryServiceTest {
         assertThatThrownBy(() -> sut.getDetail(query))
             .isInstanceOf(ProjectDomainException.class)
             .hasFieldOrPropertyWithValue("baseCode", ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+        verify(getChallengerUseCase, never()).findByMemberIdAndGisuId(any(), any());
+    }
+
+    @Test
+    @DisplayName("getDetail_지원_진행_중인_차수면_APPLICANTS_NOT_VIEWABLE_로_차단")
+    void getDetail_지원_진행_중_차단() {
+        // given - endsAt 이 미래라 아직 지원 기간 중
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
+        ReflectionTestUtils.setField(round, "endsAt", java.time.Instant.now().plusSeconds(3_600));
+        ProjectApplication application = createSubmittedApplication(
+            55L, project, round, 200L, ProjectApplicationStatus.SUBMITTED);
+
+        GetProjectApplicationDetailQuery query = detailQuery(1L, 55L);
+        given(loadProjectApplicationPort.findByIdWithDetails(55L))
+            .willReturn(Optional.of(application));
+
+        // when & then
+        assertThatThrownBy(() -> sut.getDetail(query))
+            .isInstanceOf(ProjectDomainException.class)
+            .hasFieldOrPropertyWithValue("baseCode",
+                ProjectErrorCode.PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE);
         verify(getChallengerUseCase, never()).findByMemberIdAndGisuId(any(), any());
     }
 
@@ -554,6 +578,40 @@ class ProjectApplicationQueryServiceTest {
     }
 
     @Test
+    @DisplayName("getDetail_지원_진행_중이어도_지원자_본인_호출이면_정상_조회")
+    void getDetail_지원_진행_중_본인_허용() {
+        // given - endsAt 이 미래(지원 진행 중)이지만 본인(200==200) 호출
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
+        ReflectionTestUtils.setField(round, "endsAt", java.time.Instant.now().plusSeconds(3_600));
+        ProjectApplication application = createApplicationWithFormResponse(
+            55L, project, round, 200L, ProjectApplicationStatus.SUBMITTED, 123L);
+
+        GetProjectApplicationDetailQuery query = detailQuery(1L, 55L, 200L);
+        given(loadProjectApplicationPort.findByIdWithDetails(55L))
+            .willReturn(Optional.of(application));
+        given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
+            .willReturn(Optional.of(challengerInfoOf(200L, ChallengerPart.DESIGN)));
+        given(getFormUseCase.getFormWithStructure(7L)).willReturn(
+            FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
+        given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
+            .willReturn(List.of());
+        given(getFormResponseUseCase.findResponseWithAnswers(123L))
+            .willReturn(Optional.of(FormResponseWithAnswersInfo.builder()
+                .id(123L).formId(7L).respondentMemberId(200L)
+                .status(FormResponseStatus.SUBMITTED)
+                .answers(List.of())
+                .build()));
+
+        // when
+        ProjectApplicationDetailInfo result = sut.getDetail(query);
+
+        // then
+        assertThat(result.applicationId()).isEqualTo(55L);
+    }
+
+    @Test
     @DisplayName("getDetail_formResponseId_가_dangling_이면_NOT_FOUND_위장")
     void getDetail_dangling_formResponse() {
         // given
@@ -624,10 +682,12 @@ class ProjectApplicationQueryServiceTest {
     }
 
     private ProjectMatchingRound createMatchingRound(Long id, MatchingType type, MatchingPhase phase) {
+        // getDetail 의 조회 가능 시점 검증을 통과하도록 지원 종료(endsAt)를 과거로 둔다.
         ProjectMatchingRound round = newInstance(ProjectMatchingRound.class);
         ReflectionTestUtils.setField(round, "id", id);
         ReflectionTestUtils.setField(round, "type", type);
         ReflectionTestUtils.setField(round, "phase", phase);
+        ReflectionTestUtils.setField(round, "endsAt", java.time.Instant.now().minusSeconds(3_600));
         return round;
     }
 

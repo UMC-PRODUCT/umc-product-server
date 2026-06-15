@@ -106,6 +106,53 @@ class ProjectApplicationQueryRepositoryTest {
         assertThat(tieApproved.getId()).isGreaterThan(latestApproved.getId());
     }
 
+    @Test
+    @DisplayName("searchProjectApplications_지원_종료(endsAt<now)된_차수의_지원서만_반환한다")
+    void searchProjectApplicationsReturnsOnlyEndedRounds() {
+        // given - endedRound 는 종료, ongoingRound 는 진행 중
+        Instant now = Instant.parse("2026-05-10T00:00:00Z");
+        ProjectMatchingRound endedRound = persistRound(
+            "종료 차수", MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST,
+            now.minusSeconds(7_200)); // endsAt = now - 3600 (과거)
+        ProjectMatchingRound ongoingRound = persistRound(
+            "진행 차수", MatchingType.PLAN_DESIGN, MatchingPhase.FIRST,
+            now.minusSeconds(1_800)); // endsAt = now + 1800 (미래)
+
+        ProjectApplication endedApp = persistApplication(200L, endedRound, ProjectApplicationStatus.SUBMITTED);
+        persistApplication(201L, ongoingRound, ProjectApplicationStatus.SUBMITTED);
+        em.flush();
+        em.clear();
+
+        // when - 전체 조회 (matchingRoundId = null)
+        List<ProjectApplication> result = sut.searchProjectApplications(
+            project.getId(), null, null, now);
+
+        // then - 종료된 차수의 지원서만 반환
+        assertThat(result)
+            .extracting(ProjectApplication::getId)
+            .containsExactly(endedApp.getId());
+    }
+
+    @Test
+    @DisplayName("searchProjectApplications_특정_차수가_아직_진행_중이면_빈_리스트")
+    void searchProjectApplicationsEmptyWhenRoundOngoing() {
+        // given
+        Instant now = Instant.parse("2026-05-10T00:00:00Z");
+        ProjectMatchingRound ongoingRound = persistRound(
+            "진행 차수", MatchingType.PLAN_DESIGN, MatchingPhase.FIRST,
+            now.minusSeconds(1_800)); // endsAt = now + 1800 (미래)
+        persistApplication(200L, ongoingRound, ProjectApplicationStatus.SUBMITTED);
+        em.flush();
+        em.clear();
+
+        // when
+        List<ProjectApplication> result = sut.searchProjectApplications(
+            project.getId(), ongoingRound.getId(), null, now);
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
     private Project persistProject(String name, Long ownerId) {
         Project project;
         try {

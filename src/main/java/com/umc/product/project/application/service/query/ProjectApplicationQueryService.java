@@ -1,5 +1,6 @@
 package com.umc.product.project.application.service.query;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -91,6 +92,12 @@ public class ProjectApplicationQueryService
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
         }
 
+        // 지원자 본인은 시점 제약 없이 조회 가능하며, PM/운영진 등 타인 조회만 지원 종료(endsAt) 이후로 제한한다.
+        boolean isApplicantSelf = Objects.equals(application.getApplicantMemberId(), query.requesterMemberId());
+        if (!isApplicantSelf) {
+            application.getAppliedMatchingRound().validateIsViewableAt(Instant.now());
+        }
+
         ChallengerPart applicantPart = getChallengerUseCase
             .findByMemberIdAndGisuId(application.getApplicantMemberId(), project.getGisuId())
             .map(ChallengerInfo::part)
@@ -167,7 +174,8 @@ public class ProjectApplicationQueryService
         List<ProjectApplication> applications = loadProjectApplicationPort.searchProjectApplications(
             query.projectId(),
             query.matchingRoundId(),
-            query.status()
+            query.status(),
+            Instant.now()
         );
         return applications.stream()
             .map(ProjectApplicationSummaryInfo::from)
