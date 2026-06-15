@@ -19,6 +19,14 @@ public interface GetChallengerRoleUseCase {
     List<ChallengerRoleInfo> findAllByMemberId(Long memberId);
 
     /**
+     * 슈퍼어드민 여부를 확인합니다. 기수와 무관하게 모든 권한을 가집니다.
+     *
+     * @param memberId 사용자 ID
+     * @return 슈퍼어드민 역할을 보유하면 true
+     */
+    boolean isSuperAdmin(Long memberId);
+
+    /**
      * @deprecated {@link #isCentralCoreInGisu}를 사용해주세요.
      */
     @Deprecated(since = "v1.5.0", forRemoval = true)
