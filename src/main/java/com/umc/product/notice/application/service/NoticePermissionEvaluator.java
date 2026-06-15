@@ -1,5 +1,9 @@
 package com.umc.product.notice.application.service;
 
+import java.util.Objects;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
 import com.umc.product.authorization.domain.ResourcePermission;
@@ -17,10 +21,9 @@ import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import java.util.Objects;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 /**
  * Notice(공지사항) 리소스에 대한 권한 평가
@@ -199,7 +202,9 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
         if (mySchoolId == null) {
             return false;
         }
-        if (!mySchoolId.equals(targetInfo.targetSchoolId())) {
+        // 학교 대상 공지는 본인 학교에 한정. 지부/전체 범위 공지(targetSchoolId == null)는
+        // 기수·지부 일치 여부로만 판정하여 회장단이 본인 지부공지를 파트 무관하게 읽을 수 있도록 함.
+        if (targetInfo.targetSchoolId() != null && !mySchoolId.equals(targetInfo.targetSchoolId())) {
             return false;
         }
         return isInGisuAndChapter(role, targetInfo, subject);
