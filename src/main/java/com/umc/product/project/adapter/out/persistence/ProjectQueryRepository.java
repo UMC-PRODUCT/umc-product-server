@@ -68,22 +68,34 @@ public class ProjectQueryRepository {
     }
 
     private BooleanBuilder buildCondition(SearchProjectQuery query) {
-        BooleanBuilder builder = new BooleanBuilder();
-
-        builder
+        BooleanBuilder common = new BooleanBuilder()
             .and(gisuIdEq(query.gisuId()))
             .and(keywordContains(query.keyword()))
+            .and(partAndQuotaFilter(query.parts(), query.partQuotaStatus()));
+
+        BooleanBuilder scoped = new BooleanBuilder()
             .and(chapterIdEq(query.chapterId()))
             .and(productOwnerSchoolIdsIn(query.productOwnerSchoolIds()))
             .and(productOwnerMemberIdEq(query.productOwnerMemberId()))
-            .and(partAndQuotaFilter(query.parts(), query.partQuotaStatus()))
             .and(statusIn(query.statuses()));
 
-        return builder;
+        BooleanExpression includedOwner = includedOwnerCond(query);
+        if (includedOwner != null) {
+            scoped.or(includedOwner);
+        }
+
+        return common.and(scoped);
     }
 
     private BooleanExpression productOwnerMemberIdEq(Long memberId) {
         return memberId != null ? project.productOwnerMemberId.eq(memberId) : null;
+    }
+
+    private BooleanExpression includedOwnerCond(SearchProjectQuery query) {
+        return query.includedOwnerMemberId() != null
+            ? project.productOwnerMemberId.eq(query.includedOwnerMemberId())
+                .and(project.status.in(query.includedOwnerStatuses()))
+            : null;
     }
 
     private BooleanExpression gisuIdEq(Long gisuId) {

@@ -9,6 +9,7 @@ import com.umc.product.project.application.access.ProjectAccessScope.None;
 import com.umc.product.project.application.access.ProjectAccessScope.OwnerOnly;
 import com.umc.product.project.application.access.ProjectAccessScope.PublicOnly;
 import com.umc.product.project.application.access.ProjectAccessScope.SchoolScoped;
+import com.umc.product.project.application.access.ProjectAccessScope.WithOwnerIncluded;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
@@ -90,17 +91,19 @@ public class ProjectAccessScopeResolver {
             .toList();
 
         if (rolesInGisu.stream().anyMatch(r -> r.roleType().isAtLeastCentralCore())) {
-            return new All(requestedStatuses);
+            return includeOwnerProjects(new All(requestedStatuses), memberId, gisuId, requestedStatuses);
         }
 
         Optional<Long> chapterId = chapterPresidentOrgId(rolesInGisu);
         if (chapterId.isPresent()) {
-            return new ChapterScoped(chapterId.get(), requestedStatuses);
+            return includeOwnerProjects(new ChapterScoped(chapterId.get(), requestedStatuses),
+                memberId, gisuId, requestedStatuses);
         }
 
         Optional<Long> schoolId = schoolCoreOrgId(rolesInGisu);
         if (schoolId.isPresent()) {
-            return new SchoolScoped(schoolId.get(), requestedStatuses);
+            return includeOwnerProjects(new SchoolScoped(schoolId.get(), requestedStatuses),
+                memberId, gisuId, requestedStatuses);
         }
 
         if (loadProjectPort.existsByOwnerAndGisu(memberId, gisuId)) {
@@ -112,6 +115,23 @@ public class ProjectAccessScopeResolver {
         }
 
         return new None();
+    }
+
+    private ProjectAccessScope includeOwnerProjects(
+        ProjectAccessScope baseScope,
+        Long memberId,
+        Long gisuId,
+        Set<ProjectStatus> requestedStatuses
+    ) {
+        if (!loadProjectPort.existsByOwnerAndGisu(memberId, gisuId)) {
+            return baseScope;
+        }
+
+        Set<ProjectStatus> ownerStatuses = requestedStatuses.isEmpty()
+            ? EnumSet.allOf(ProjectStatus.class)
+            : EnumSet.copyOf(requestedStatuses);
+        ownerStatuses.add(ProjectStatus.DRAFT);
+        return new WithOwnerIncluded(baseScope, memberId, ownerStatuses);
     }
 
     private Optional<Long> chapterPresidentOrgId(List<ChallengerRoleInfo> rolesInGisu) {

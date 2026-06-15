@@ -14,6 +14,7 @@ import com.umc.product.project.application.access.ProjectAccessScope.None;
 import com.umc.product.project.application.access.ProjectAccessScope.OwnerOnly;
 import com.umc.product.project.application.access.ProjectAccessScope.PublicOnly;
 import com.umc.product.project.application.access.ProjectAccessScope.SchoolScoped;
+import com.umc.product.project.application.access.ProjectAccessScope.WithOwnerIncluded;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import java.util.List;
@@ -225,6 +226,27 @@ class ProjectAccessScopeResolverTest {
         assertThat(scope).isInstanceOf(ChapterScoped.class);
         assertThat(((ChapterScoped) scope).visibleStatuses())
             .doesNotContain(ProjectStatus.DRAFT);
+    }
+
+    @Test
+    void management_은_상위_권한자라도_PO_프로젝트가_있으면_본인_PO_프로젝트를_추가_포함한다() {
+        Long memberId = 10L;
+        Long gisuId = 1L;
+        given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of(
+            roleInfo(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER, 5L, gisuId)
+        ));
+        given(loadProjectPort.existsByOwnerAndGisu(memberId, gisuId)).willReturn(true);
+
+        Set<ProjectStatus> requested = Set.of(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS);
+        ProjectAccessScope scope = sut.resolveForManagement(memberId, gisuId, requested);
+
+        assertThat(scope).isInstanceOf(WithOwnerIncluded.class);
+        WithOwnerIncluded withOwner = (WithOwnerIncluded) scope;
+        assertThat(withOwner.baseScope()).isInstanceOf(ChapterScoped.class);
+        assertThat(withOwner.ownerMemberId()).isEqualTo(memberId);
+        assertThat(withOwner.ownerVisibleStatuses())
+            .contains(ProjectStatus.DRAFT)
+            .containsAll(requested);
     }
 
     @Test

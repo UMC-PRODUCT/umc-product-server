@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -281,6 +282,39 @@ class ProjectQueryServiceTest {
         assertThat(result.getContent()).isEmpty();
         assertThat(result.getTotalElements()).isZero();
         verify(loadProjectMemberPort, never()).listByProjectIdsAndPartGroupedByProjectId(anySet(), any());
+    }
+
+    @Test
+    void searchManaged_상위_scope에서도_본인_PO_프로젝트를_추가_포함하는_query를_전달한다() {
+        PageRequest pageable = PageRequest.of(0, 20);
+        SearchManagedProjectQuery query = SearchManagedProjectQuery.builder()
+            .gisuId(1L).keyword(null).pageable(pageable).build();
+        java.util.Set<ProjectStatus> requested = java.util.Set.of(
+            ProjectStatus.PENDING_REVIEW,
+            ProjectStatus.IN_PROGRESS,
+            ProjectStatus.COMPLETED,
+            ProjectStatus.ABORTED
+        );
+        java.util.Set<ProjectStatus> ownerStatuses = java.util.EnumSet.copyOf(requested);
+        ownerStatuses.add(ProjectStatus.DRAFT);
+
+        given(scopeResolver.resolveForManagement(any(), any(), anySet()))
+            .willReturn(new ProjectAccessScope.WithOwnerIncluded(
+                new ProjectAccessScope.ChapterScoped(5L, requested),
+                99L,
+                ownerStatuses
+            ));
+        given(loadProjectPort.search(any(SearchProjectQuery.class)))
+            .willReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        sut.searchManaged(query, 99L);
+
+        ArgumentCaptor<SearchProjectQuery> captor = ArgumentCaptor.forClass(SearchProjectQuery.class);
+        verify(loadProjectPort).search(captor.capture());
+        SearchProjectQuery actual = captor.getValue();
+        assertThat(actual.chapterId()).isEqualTo(5L);
+        assertThat(actual.includedOwnerMemberId()).isEqualTo(99L);
+        assertThat(actual.includedOwnerStatuses()).contains(ProjectStatus.DRAFT);
     }
 
     // ========== Helper Methods ==========

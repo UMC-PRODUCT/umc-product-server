@@ -404,6 +404,30 @@ class ProjectQueryRepositoryTest {
         assertThat(result.getContent().get(0).getName()).isEqualTo("한양대 프로젝트");
     }
 
+    @Test
+    void 상위_scope_검색에서도_본인_PO_DRAFT는_추가_포함한다() {
+        persistProject("내 초안", ProjectStatus.DRAFT, gisuId, 2L, 99L, 9L);
+        persistProject("다른 사람 초안", ProjectStatus.DRAFT, gisuId, 2L, 100L, 9L);
+        em.flush();
+        em.clear();
+
+        SearchProjectQuery query = SearchProjectQuery.builder()
+            .gisuId(gisuId)
+            .chapterId(1L)
+            .statuses(List.of(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS,
+                ProjectStatus.COMPLETED, ProjectStatus.ABORTED))
+            .pageable(PageRequest.of(0, 20))
+            .build()
+            .withIncludedOwner(99L, java.util.EnumSet.allOf(ProjectStatus.class));
+
+        Page<Project> result = sut.search(query);
+
+        assertThat(result.getContent())
+            .extracting(Project::getName)
+            .contains("내 초안")
+            .doesNotContain("다른 사람 초안");
+    }
+
     // ========== Helper ==========
 
     private Project persistProject(String name, ProjectStatus status, Long gisuId, Long chapterId, Long ownerId) {
