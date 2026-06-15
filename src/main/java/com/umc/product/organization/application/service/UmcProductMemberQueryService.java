@@ -72,7 +72,7 @@ public class UmcProductMemberQueryService implements GetUmcProductMemberUseCase 
             generationMapOf(functionalMemberships),
             functionalUnitMapOf(functionalMemberships),
             squadMapOf(squadParticipations),
-            productProfileLinks.get(member.getProfileImageId())
+            productProfileLinkOf(productProfileLinks, member)
         );
     }
 
@@ -119,7 +119,7 @@ public class UmcProductMemberQueryService implements GetUmcProductMemberUseCase 
                 generationMap,
                 functionalUnitMap,
                 squadMap,
-                productProfileLinks.get(member.getProfileImageId())
+                productProfileLinkOf(productProfileLinks, member)
             ))
             .toList();
 
@@ -242,5 +242,10 @@ public class UmcProductMemberQueryService implements GetUmcProductMemberUseCase 
             return Map.of();
         }
         return getFileUseCase.getFileLinks(new ArrayList<>(imageIds));
+    }
+
+    private String productProfileLinkOf(Map<String, String> productProfileLinks, UmcProductMember member) {
+        String profileImageId = member.getProfileImageId();
+        return profileImageId == null ? null : productProfileLinks.get(profileImageId);
     }
 }
