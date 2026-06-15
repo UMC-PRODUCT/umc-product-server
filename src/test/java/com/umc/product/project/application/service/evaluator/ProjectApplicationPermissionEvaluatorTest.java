@@ -3,6 +3,16 @@ package com.umc.product.project.application.service.evaluator;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
@@ -20,14 +30,6 @@ import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
-import java.util.List;
-import java.util.Optional;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectApplicationPermissionEvaluatorTest {
@@ -46,8 +48,19 @@ class ProjectApplicationPermissionEvaluatorTest {
     @Mock
     LoadProjectMemberPort loadProjectMemberPort;
 
-    @InjectMocks
     ProjectApplicationPermissionEvaluator sut;
+
+    @BeforeEach
+    void setUp() {
+        // 기본은 플래그 OFF. DRAFT 단건 노출 플래그를 켜야 하는 테스트는 sutWithDraftRead() 로 별도 생성.
+        sut = newSut(false);
+    }
+
+    private ProjectApplicationPermissionEvaluator newSut(boolean allowDraftRead) {
+        return new ProjectApplicationPermissionEvaluator(
+            loadProjectPort, loadProjectApplicationPort, loadProjectMemberPort,
+            new SuperAdminProperties(allowDraftRead));
+    }
 
     @Test
     void supportedResourceType은_PROJECT_APPLICATION을_반환한다() {
@@ -119,6 +132,44 @@ class ProjectApplicationPermissionEvaluatorTest {
         SubjectAttributes subject = subjectWith(PO_MEMBER_ID, List.of(), List.of());
 
         assertThat(sut.evaluate(subject, readPermission())).isFalse();
+    }
+
+    @Test
+    void READ는_DRAFT_지원서를_플래그_OFF면_SUPER_ADMIN도_거부() {
+        givenApplication(ProjectApplicationStatus.DRAFT);
+        SubjectAttributes subject = subjectWith(30L, List.of(),
+            List.of(superAdminRoleInGisu(99L)));
+
+        assertThat(sut.evaluate(subject, readPermission())).isFalse();
+    }
+
+    @Test
+    void READ는_DRAFT_지원서를_플래그_ON이면_SUPER_ADMIN_허용() {
+        sut = newSut(true);
+        givenApplication(ProjectApplicationStatus.DRAFT);
+        SubjectAttributes subject = subjectWith(30L, List.of(),
+            List.of(superAdminRoleInGisu(99L)));
+
+        assertThat(sut.evaluate(subject, readPermission())).isTrue();
+    }
+
+    @Test
+    void READ는_DRAFT_지원서를_플래그_ON이라도_비_SUPER_ADMIN_총괄단_거부() {
+        sut = newSut(true);
+        givenApplication(ProjectApplicationStatus.DRAFT);
+        SubjectAttributes subject = subjectWith(30L, List.of(),
+            List.of(centralCoreRoleInGisu(PROJECT_GISU_ID)));
+
+        assertThat(sut.evaluate(subject, readPermission())).isFalse();
+    }
+
+    @Test
+    void READ는_DRAFT_지원서를_플래그_ON이라도_본인은_플래그_무관_허용() {
+        sut = newSut(true);
+        givenApplication(ProjectApplicationStatus.DRAFT);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, readPermission())).isTrue();
     }
 
     @Test
