@@ -52,7 +52,8 @@ public enum NoticeTargetPattern {
     SPECIFIC_GISU_ALL_TARGET(true, false, false, false) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            return useCase.isCentralCore(memberId);
+            // 특정 기수 전체공지는 해당 기수의 중앙운영진(총괄단 + 운영국원 + 교육국원) 모두 작성 가능
+            return useCase.isCentralMemberInGisu(memberId, info.targetGisuId());
         }
     },
 
