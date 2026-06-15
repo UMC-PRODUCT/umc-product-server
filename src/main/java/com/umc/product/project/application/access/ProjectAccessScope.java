@@ -1,7 +1,8 @@
 package com.umc.product.project.application.access;
 
-import com.umc.product.project.domain.enums.ProjectStatus;
 import java.util.Set;
+
+import com.umc.product.project.domain.enums.ProjectStatus;
 
 /**
  * 프로젝트 조회 시 적용되는 가시 범위(scope) typed value.

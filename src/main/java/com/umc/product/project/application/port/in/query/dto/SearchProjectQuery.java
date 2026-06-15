@@ -1,14 +1,17 @@
 package com.umc.product.project.application.port.in.query.dto;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.project.domain.enums.PartQuotaStatus;
-import com.umc.product.project.domain.enums.ProjectStatus;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import lombok.Builder;
+
 import org.springframework.data.domain.Pageable;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.domain.enums.PartQuotaStatus;
+import com.umc.product.project.domain.enums.ProjectStatus;
+
+import lombok.Builder;
 
 /**
  * 프로젝트 목록 검색 Query (PROJECT-001).
