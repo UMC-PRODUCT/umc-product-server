@@ -58,6 +58,13 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
     }
 
     @Override
+    public boolean isSuperAdmin(Long memberId) {
+        return loadChallengerRolePort.findByMemberId(memberId).stream()
+            .map(ChallengerRole::getChallengerRoleType)
+            .anyMatch(ChallengerRoleType::isSuperAdmin);
+    }
+
+    @Override
     public boolean isCentralCore(Long memberId) {
         List<ChallengerRole> roles = loadChallengerRolePort.findByMemberId(memberId);
 
