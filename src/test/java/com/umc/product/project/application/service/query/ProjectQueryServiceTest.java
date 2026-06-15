@@ -8,6 +8,21 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.access.ProjectAccessScope;
 import com.umc.product.project.application.access.ProjectAccessScopeResolver;
@@ -22,18 +37,6 @@ import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectQueryServiceTest {
@@ -281,6 +284,39 @@ class ProjectQueryServiceTest {
         assertThat(result.getContent()).isEmpty();
         assertThat(result.getTotalElements()).isZero();
         verify(loadProjectMemberPort, never()).listByProjectIdsAndPartGroupedByProjectId(anySet(), any());
+    }
+
+    @Test
+    void searchManaged_상위_scope에서도_본인_PO_프로젝트를_추가_포함하는_query를_전달한다() {
+        PageRequest pageable = PageRequest.of(0, 20);
+        SearchManagedProjectQuery query = SearchManagedProjectQuery.builder()
+            .gisuId(1L).keyword(null).pageable(pageable).build();
+        java.util.Set<ProjectStatus> requested = java.util.Set.of(
+            ProjectStatus.PENDING_REVIEW,
+            ProjectStatus.IN_PROGRESS,
+            ProjectStatus.COMPLETED,
+            ProjectStatus.ABORTED
+        );
+        java.util.Set<ProjectStatus> ownerStatuses = java.util.EnumSet.copyOf(requested);
+        ownerStatuses.add(ProjectStatus.DRAFT);
+
+        given(scopeResolver.resolveForManagement(any(), any(), anySet()))
+            .willReturn(new ProjectAccessScope.WithOwnerIncluded(
+                new ProjectAccessScope.ChapterScoped(5L, requested),
+                99L,
+                ownerStatuses
+            ));
+        given(loadProjectPort.search(any(SearchProjectQuery.class)))
+            .willReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        sut.searchManaged(query, 99L);
+
+        ArgumentCaptor<SearchProjectQuery> captor = ArgumentCaptor.forClass(SearchProjectQuery.class);
+        verify(loadProjectPort).search(captor.capture());
+        SearchProjectQuery actual = captor.getValue();
+        assertThat(actual.chapterId()).isEqualTo(5L);
+        assertThat(actual.includedOwnerMemberId()).isEqualTo(99L);
+        assertThat(actual.includedOwnerStatuses()).contains(ProjectStatus.DRAFT);
     }
 
     // ========== Helper Methods ==========

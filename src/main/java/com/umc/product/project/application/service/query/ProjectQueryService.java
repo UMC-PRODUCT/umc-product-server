@@ -156,9 +156,34 @@ public class ProjectQueryService implements
                 loadProjectPort.search(query.withSchoolFilter(schoolId, statuses));
             case OwnerOnly(Long memberId, Set<ProjectStatus> statuses) ->
                 loadProjectPort.search(query.withOwnerFilter(memberId, statuses));
+            case ProjectAccessScope.WithOwnerIncluded(
+                ProjectAccessScope baseScope,
+                Long ownerMemberId,
+                Set<ProjectStatus> ownerStatuses
+            ) -> loadProjectPort.search(toScopedQuery(baseScope, query)
+                .withIncludedOwner(ownerMemberId, ownerStatuses));
             case PublicOnly() -> loadProjectPort.search(query.withStatuses(
                 Set.of(ProjectStatus.IN_PROGRESS, ProjectStatus.COMPLETED)));
             case None() -> new PageImpl<>(List.of(), query.pageable(), 0L);
+        };
+    }
+
+    private SearchProjectQuery toScopedQuery(ProjectAccessScope scope, SearchProjectQuery query) {
+        return switch (scope) {
+            case All(Set<ProjectStatus> statuses) -> query.withStatuses(statuses);
+            case ChapterScoped(Long chapterId, Set<ProjectStatus> statuses) ->
+                query.withChapterFilter(chapterId, statuses);
+            case SchoolScoped(Long schoolId, Set<ProjectStatus> statuses) ->
+                query.withSchoolFilter(schoolId, statuses);
+            case OwnerOnly(Long memberId, Set<ProjectStatus> statuses) ->
+                query.withOwnerFilter(memberId, statuses);
+            case PublicOnly() -> query.withStatuses(Set.of(ProjectStatus.IN_PROGRESS, ProjectStatus.COMPLETED));
+            case None() -> query.withStatuses(Set.of(ProjectStatus.IN_PROGRESS));
+            case ProjectAccessScope.WithOwnerIncluded(
+                ProjectAccessScope baseScope,
+                Long ownerMemberId,
+                Set<ProjectStatus> ownerStatuses
+            ) -> toScopedQuery(baseScope, query).withIncludedOwner(ownerMemberId, ownerStatuses);
         };
     }
 
