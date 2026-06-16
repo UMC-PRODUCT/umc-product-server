@@ -5,7 +5,8 @@
 #      앱 / otel-collector 가 OTLP push 로 메트릭을 보낼 수 있다.
 #      활성화는 docker-compose 의 --enable-feature=otlp-write-receiver 가 담당.
 #   2) Scrape (pull): 본 파일의 scrape_configs.
-#      prometheus 자신과 node-exporter 만 scrape 한다. 앱 메트릭은 OTLP push 로 받는다.
+#      prometheus / node-exporter / 내부 모니터링 컴포넌트를 scrape 한다.
+#      앱 메트릭은 OTLP push 로 받는다.
 
 global:
   scrape_interval: 30s
@@ -24,11 +25,27 @@ scrape_configs:
     static_configs:
       - targets: [ 'node-exporter:9100' ]
 
+  - job_name: alertmanager
+    static_configs:
+      - targets: [ 'alertmanager:9093' ]
+
+  - job_name: grafana
+    static_configs:
+      - targets: [ 'grafana:3000' ]
+
+  - job_name: loki
+    static_configs:
+      - targets: [ 'loki:3100' ]
+
+  - job_name: otel-collector
+    static_configs:
+      - targets: [ 'otel-collector:8888' ]
+
 # alerting / rule_files (Commit 5).
 alerting:
   alertmanagers:
     - static_configs:
         - targets: [ 'alertmanager:9093' ]
 
-# 실제 alerting rule 파일은 운영 정책이 정해지면 ./config/prometheus/rules/ 하위에 두고
-# 본 파일에서 reference 한다 (예: rule_files: [ rules/*.yml ]). Phase 1 범위 밖.
+rule_files:
+  - /etc/prometheus/rules/*.yml

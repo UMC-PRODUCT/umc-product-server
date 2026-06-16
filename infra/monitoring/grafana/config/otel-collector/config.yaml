@@ -76,5 +76,14 @@ service:
       processors: [ resource, batch ]
       exporters: [ otlp_http/loki ]
   telemetry:
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
+                without_type_suffix: true
+                without_units: true
     logs:
       level: info
