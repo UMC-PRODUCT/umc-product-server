@@ -8,14 +8,8 @@ import static org.mockito.BDDMockito.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.umc.product.global.config.JacksonConfig;
-import com.umc.product.global.response.PageResponse;
-import com.umc.product.global.security.JwtTokenProvider;
-import com.umc.product.global.security.MemberPrincipal;
-import com.umc.product.project.adapter.in.web.assembler.ProjectResponseAssembler;
-import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
-import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -28,6 +22,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.umc.product.global.config.JacksonConfig;
+import com.umc.product.global.response.PageResponse;
+import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.project.adapter.in.web.assembler.ProjectResponseAssembler;
+import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
+import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 
 @WebMvcTest(controllers = ProjectQueryController.class)
 @Import(JacksonConfig.class)
