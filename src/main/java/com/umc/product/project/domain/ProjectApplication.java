@@ -99,8 +99,9 @@ public class ProjectApplication extends BaseEntity {
     /**
      * 지원서를 합격 처리합니다.
      * <p>
-     * 매칭 차수가 진행 중인 동안 PM 이 자유롭게 토글할 수 있으며, REJECTED 또는 APPROVED 상태에서도 재호출 가능합니다.
-     * 차수 종료 후엔 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_LOCKED} 가 발생합니다.
+     * 지원 기간이 끝난 뒤부터 결정 마감 전까지 PM 이 자유롭게 토글할 수 있으며, REJECTED 또는 APPROVED 상태에서도 재호출 가능합니다.
+     * 아직 지원 기간 중이면 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_NOT_ENDED},
+     * 결정 마감 후엔 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_LOCKED} 가 발생합니다.
      *
      * @param decidedByMemberId 결정한 PO 또는 운영진 ID
      * @param reason            결정 사유 (필수 아님)
@@ -118,8 +119,9 @@ public class ProjectApplication extends BaseEntity {
     /**
      * 지원서를 불합격 처리합니다.
      * <p>
-     * 매칭 차수가 진행 중인 동안 PM 이 자유롭게 토글할 수 있으며, APPROVED 또는 REJECTED 상태에서도 재호출 가능합니다.
-     * 차수 종료 후엔 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_LOCKED} 가 발생합니다.
+     * 지원 기간이 끝난 뒤부터 결정 마감 전까지 PM 이 자유롭게 토글할 수 있으며, APPROVED 또는 REJECTED 상태에서도 재호출 가능합니다.
+     * 아직 지원 기간 중이면 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_NOT_ENDED},
+     * 결정 마감 후엔 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_LOCKED} 가 발생합니다.
      *
      * @param decidedByMemberId 결정한 PO 또는 운영진 ID
      * @param reason            결정 사유 (필수 아님)
