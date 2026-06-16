@@ -1,5 +1,13 @@
 package com.umc.product.project.application.access;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
@@ -13,13 +21,8 @@ import com.umc.product.project.application.access.ProjectApplicationAccessScope.
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.ProjectScoped;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.domain.Project;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 /**
  * 호출 컨텍스트(본인 지원 내역 vs PO 검토 vs 운영진 모니터링) + 사용자 역할에 따라 {@link ProjectApplicationAccessScope} 를 결정한다.
