@@ -1,7 +1,8 @@
 # Grafana datasource provisioning (ADR-014 Phase 1)
 #
-# 3종 datasource 의 UID 는 ADR-016 의 dashboard JSON (api-performance.json) 이
+# 기존 observability datasource UID 는 ADR-016 의 dashboard JSON (api-performance.json) 이
 # 참조하는 값과 동일하게 유지한다 ("loki", "prometheus", "tempo").
+# Alertmanager UID 는 Grafana alerting datasource 에서 참조하기 쉽게 고정한다.
 apiVersion: 1
 
 datasources:
@@ -13,6 +14,14 @@ datasources:
     isDefault: true
     jsonData:
       timeInterval: 30s
+
+  - name: Alertmanager
+    type: alertmanager
+    uid: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+    jsonData:
+      implementation: prometheus
 
   - name: Loki
     type: loki
