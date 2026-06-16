@@ -1,5 +1,6 @@
 package com.umc.product.project.application.port.out;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -107,14 +108,19 @@ public interface LoadProjectApplicationPort {
      * <p>
      * 파트 필터는 challenger 도메인 속성이라 본 port 에서 다루지 않는다 -- 호출자(Service) 가 challenger 정보를 enrich 한 뒤 in-memory 로 필터링한다.
      *
+     * 지원(모집)이 끝난 차수({@code endsAt < now})의 지원서만 반환한다. matchingRoundId 미지정(전체 조회) 시에도 진행 중인 차수의
+     * 지원서는 자동으로 제외된다.
+     *
      * @param projectId       대상 프로젝트 ID
      * @param matchingRoundId 매칭 차수 필터 (선택). null 이면 전체.
      * @param status          상태 필터 (선택). null 이면 DRAFT 제외 전체.
+     * @param now             조회 기준 시각. 이 시각보다 endsAt 이 이른 차수만 노출된다.
      */
     List<ProjectApplication> searchProjectApplications(
         Long projectId,
         Long matchingRoundId,
-        ProjectApplicationStatus status
+        ProjectApplicationStatus status,
+        Instant now
     );
 
     /**

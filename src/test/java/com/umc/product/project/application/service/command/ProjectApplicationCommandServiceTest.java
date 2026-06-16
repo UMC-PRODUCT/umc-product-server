@@ -85,9 +85,12 @@ class ProjectApplicationCommandServiceTest {
     private static final Long WEB_QUESTION_ID = 201L;
     private static final Long DESIGN_QUESTION_ID = 301L;
 
+    // 합/불(decide)은 지원 종료(endsAt) 후 ~ 결정 마감(decisionDeadline) 전에만 가능하므로
+    // 공용 라운드는 지원이 끝난 상태(endsAt 과거, decisionDeadline 미래)로 둔다.
+    // 지원 진행 중이어야 하는 cancel 성공 케이스는 개별 테스트에서 endsAt 을 미래로 오버라이드한다.
     private static final Instant NOW = Instant.now();
-    private static final Instant ROUND_STARTS_AT = NOW.minusSeconds(86_400);
-    private static final Instant ROUND_ENDS_AT = NOW.plusSeconds(43_200);
+    private static final Instant ROUND_STARTS_AT = NOW.minusSeconds(172_800);
+    private static final Instant ROUND_ENDS_AT = NOW.minusSeconds(43_200);
     private static final Instant ROUND_DECISION_DEADLINE = NOW.plusSeconds(86_400);
 
     @Mock
@@ -196,6 +199,7 @@ class ProjectApplicationCommandServiceTest {
         @DisplayName("submit은 지원자에게 노출되는 required question scope만 Survey에 전달한다")
         void submit은_노출되는_required_question_scope만_Survey에_전달한다() {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.DRAFT);
+            ReflectionTestUtils.setField(application.getAppliedMatchingRound(), "endsAt", NOW.plusSeconds(43_200));
             given(loadProjectApplicationPort.findByIdWithDetails(APPLICATION_ID))
                 .willReturn(Optional.of(application));
             givenVisibleScope(application);
@@ -562,6 +566,7 @@ class ProjectApplicationCommandServiceTest {
         @Test
         void DRAFT를_CANCELLED로_전이하고_저장한다() {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.DRAFT);
+            ReflectionTestUtils.setField(application.getAppliedMatchingRound(), "endsAt", NOW.plusSeconds(43_200));
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
             given(saveProjectApplicationPort.save(any(ProjectApplication.class)))
                 .willAnswer(inv -> inv.getArgument(0));
@@ -577,6 +582,7 @@ class ProjectApplicationCommandServiceTest {
         @Test
         void SUBMITTED를_CANCELLED로_전이하고_저장한다() {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            ReflectionTestUtils.setField(application.getAppliedMatchingRound(), "endsAt", NOW.plusSeconds(43_200));
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
             given(saveProjectApplicationPort.save(any(ProjectApplication.class)))
                 .willAnswer(inv -> inv.getArgument(0));
@@ -616,6 +622,7 @@ class ProjectApplicationCommandServiceTest {
         @Test
         void 이미_CANCELLED라면_도메인이_CANCEL_NOT_ALLOWED() {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.CANCELLED);
+            ReflectionTestUtils.setField(application.getAppliedMatchingRound(), "endsAt", NOW.plusSeconds(43_200));
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
 
             assertThatThrownBy(() -> sut.cancel(cancelCommand(null)))

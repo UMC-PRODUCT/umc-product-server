@@ -2,6 +2,8 @@ package com.umc.product.project.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -141,7 +143,7 @@ class ProjectQueryRepositoryTest {
     }
 
     @Test
-    void 정렬_createdAt_DESC() {
+    void 정렬_createdAt_ASC() {
         SearchProjectQuery query = SearchProjectQuery.forChallenger(
             gisuId, null, null, null, null, null, PageRequest.of(0, 20));
 
@@ -150,8 +152,33 @@ class ProjectQueryRepositoryTest {
         List<Project> content = result.getContent();
         for (int i = 0; i < content.size() - 1; i++) {
             assertThat(content.get(i).getCreatedAt())
-                .isAfterOrEqualTo(content.get(i + 1).getCreatedAt());
+                .isBeforeOrEqualTo(content.get(i + 1).getCreatedAt());
         }
+    }
+
+    @Test
+    void 정렬_createdAt이_같으면_이름_오름차순() {
+        Long targetGisuId = 77L;
+        Project charlie = persistProject("Charlie", ProjectStatus.IN_PROGRESS, targetGisuId, 1L, 301L);
+        Project alpha = persistProject("Alpha", ProjectStatus.IN_PROGRESS, targetGisuId, 1L, 302L);
+        Project bravo = persistProject("Bravo", ProjectStatus.IN_PROGRESS, targetGisuId, 1L, 303L);
+        em.flush();
+
+        Instant sameCreatedAt = Instant.parse("2026-01-01T00:00:00Z");
+        updateAuditTimestamp(charlie.getId(), sameCreatedAt);
+        updateAuditTimestamp(alpha.getId(), sameCreatedAt);
+        updateAuditTimestamp(bravo.getId(), sameCreatedAt);
+        em.flush();
+        em.clear();
+
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            targetGisuId, null, null, null, null, null, PageRequest.of(0, 20));
+
+        Page<Project> result = sut.search(query);
+
+        assertThat(result.getContent())
+            .extracting(Project::getName)
+            .containsExactly("Alpha", "Bravo", "Charlie");
     }
 
     @Test
@@ -486,5 +513,18 @@ class ProjectQueryRepositoryTest {
         ReflectionTestUtils.setField(pm, "part", part);
         ReflectionTestUtils.setField(pm, "status", ProjectMemberStatus.ACTIVE);
         em.persist(pm);
+    }
+
+    private void updateAuditTimestamp(Long projectId, Instant createdAt) {
+        em.getEntityManager()
+            .createNativeQuery("""
+                update project
+                set created_at = :createdAt,
+                    updated_at = :createdAt
+                where id = :id
+                """)
+            .setParameter("createdAt", Timestamp.from(createdAt))
+            .setParameter("id", projectId)
+            .executeUpdate();
     }
 }

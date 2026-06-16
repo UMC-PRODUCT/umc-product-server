@@ -55,7 +55,8 @@ public class ProjectQueryController {
     public PageResponse<ProjectSummaryResponse> searchProjects(
         @CurrentMember MemberPrincipal memberPrincipal,
         @ParameterObject @Valid SearchProjectRequest request,
-        @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+        @ParameterObject @PageableDefault(size = 20, sort = {"createdAt", "name"}, direction = Sort.Direction.ASC)
+        Pageable pageable
     ) {
         SearchProjectQuery query = request.toQuery(pageable);
         return assembler.searchFor(query, memberPrincipal.getMemberId());
@@ -123,7 +124,8 @@ public class ProjectQueryController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam Long gisuId,
         @RequestParam(required = false) String keyword,
-        @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+        @ParameterObject @PageableDefault(size = 20, sort = {"createdAt", "name"}, direction = Sort.Direction.ASC)
+        Pageable pageable
     ) {
         SearchManagedProjectQuery query = SearchManagedProjectQuery.builder()
             .gisuId(gisuId)
