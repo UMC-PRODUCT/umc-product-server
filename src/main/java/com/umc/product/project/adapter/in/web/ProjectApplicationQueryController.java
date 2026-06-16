@@ -98,7 +98,7 @@ public class ProjectApplicationQueryController {
               <li>SUPER_ADMIN</li>
               <li>해당 프로젝트 기수의 Central Core (총괄/부총괄)</li>
               <li>해당 프로젝트 지부의 지부장 (같은 기수)</li>
-              <li>해당 프로젝트 학교의 회장 (SCHOOL_PRESIDENT, 같은 기수)</li>
+              <li>해당 프로젝트 지부에 속한 학교의 회장 (SCHOOL_PRESIDENT, 같은 기수)</li>
             </ul>
             """
     )

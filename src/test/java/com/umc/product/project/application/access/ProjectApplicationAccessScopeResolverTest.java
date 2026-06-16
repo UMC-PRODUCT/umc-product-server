@@ -7,11 +7,15 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.None;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.ProjectScoped;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.domain.Project;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,6 +41,8 @@ class ProjectApplicationAccessScopeResolverTest {
     GetChallengerRoleUseCase getChallengerRoleUseCase;
     @Mock
     LoadProjectMemberPort loadProjectMemberPort;
+    @Mock
+    GetChapterUseCase getChapterUseCase;
 
     @InjectMocks
     ProjectApplicationAccessScopeResolver sut;
@@ -233,13 +239,15 @@ class ProjectApplicationAccessScopeResolverTest {
     }
 
     @Test
-    @DisplayName("projectApplicantList_같은_기수_학교의_회장이면_ProjectScoped")
-    void projectApplicantList_학교회장_통과() {
+    @DisplayName("projectApplicantList_같은_기수_같은_지부_학교_회장이면_ProjectScoped")
+    void projectApplicantList_같은지부_학교회장_통과() {
         Project project = project(OWNER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
         given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, MEMBER_ID)).willReturn(false);
         given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
-            roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, SCHOOL_ID, GISU_ID)
+            roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, OTHER_SCHOOL_ID, GISU_ID)
         ));
+        given(getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(Set.of(GISU_ID), Set.of(OTHER_SCHOOL_ID)))
+            .willReturn(Map.of(GISU_ID, Map.of(OTHER_SCHOOL_ID, new ChapterInfo(CHAPTER_ID, "서울"))));
 
         ProjectApplicationAccessScope scope =
             sut.resolveForProjectApplicantList(MEMBER_ID, project);
@@ -268,13 +276,15 @@ class ProjectApplicationAccessScopeResolverTest {
     // --- helpers ---
 
     @Test
-    @DisplayName("projectApplicantList_타_학교_회장이면_None")
-    void projectApplicantList_타학교_회장_거부() {
+    @DisplayName("projectApplicantList_타_지부_학교_회장이면_None")
+    void projectApplicantList_타지부_학교회장_거부() {
         Project project = project(OWNER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
         given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, MEMBER_ID)).willReturn(false);
         given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
             roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, OTHER_SCHOOL_ID, GISU_ID)
         ));
+        given(getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(Set.of(GISU_ID), Set.of(OTHER_SCHOOL_ID)))
+            .willReturn(Map.of(GISU_ID, Map.of(OTHER_SCHOOL_ID, new ChapterInfo(OTHER_CHAPTER_ID, "인천"))));
 
         ProjectApplicationAccessScope scope =
             sut.resolveForProjectApplicantList(MEMBER_ID, project);
