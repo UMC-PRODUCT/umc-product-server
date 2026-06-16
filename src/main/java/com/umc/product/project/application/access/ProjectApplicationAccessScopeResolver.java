@@ -47,7 +47,7 @@ public class ProjectApplicationAccessScopeResolver {
      *   <li>SUPER_ADMIN</li>
      *   <li>해당 프로젝트 기수의 Central Core (총괄/부총괄)</li>
      *   <li>해당 프로젝트 지부의 지부장 (같은 기수)</li>
-     *   <li>해당 프로젝트 지부에 속한 학교의 회장 (SCHOOL_PRESIDENT, 같은 기수)</li>
+     *   <li>해당 프로젝트 지부에 속한 학교 회장단 (SCHOOL_PRESIDENT/SCHOOL_VICE_PRESIDENT, 같은 기수)</li>
      * </ul>
      * 그 외엔 {@link None} 반환 — 호출 측이 빈 목록 처리하여 권한 부재를 '지원자 0건' 으로 위장한다.
      * <p>
@@ -76,16 +76,17 @@ public class ProjectApplicationAccessScopeResolver {
             return new ProjectScoped(projectId);
         }
 
-        if (isSchoolPresidentInProjectChapter(rolesInGisu, project)) {
+        if (isSchoolCoreInProjectChapter(rolesInGisu, project)) {
             return new ProjectScoped(projectId);
         }
 
         return new None();
     }
 
-    private boolean isSchoolPresidentInProjectChapter(List<ChallengerRoleInfo> rolesInGisu, Project project) {
+    private boolean isSchoolCoreInProjectChapter(List<ChallengerRoleInfo> rolesInGisu, Project project) {
         Set<Long> schoolIds = rolesInGisu.stream()
-            .filter(r -> r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT)
+            .filter(r -> r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
+                || r.roleType() == ChallengerRoleType.SCHOOL_VICE_PRESIDENT)
             .map(ChallengerRoleInfo::organizationId)
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
