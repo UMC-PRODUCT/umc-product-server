@@ -1,5 +1,14 @@
 package com.umc.product.challenger.application.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.challenger.application.port.in.query.GetChallengerPointUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicInfo;
@@ -11,14 +20,8 @@ import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -191,6 +194,13 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     @Override
     public List<ChallengerInfo> getAllByGisuId(Long gisuId) {
         return toChallengerInfoListBatch(loadChallengerPort.getAllByGisuId(gisuId));
+    }
+
+    @Override
+    public List<ChallengerInfo> listByChapterId(Long chapterId) {
+        return loadChallengerPort.listByChapterId(chapterId).stream()
+            .map(c -> ChallengerInfo.from(c, List.of()))
+            .toList();
     }
 
     @Override
