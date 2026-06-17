@@ -1,10 +1,12 @@
 package com.umc.product.community.adapter.in.web.dto.response;
 
+import java.time.Instant;
+
 import com.umc.product.community.application.port.in.query.dto.PostSearchResult;
 import com.umc.product.community.application.port.in.query.dto.PostSearchResult.MatchType;
 import com.umc.product.community.domain.enums.Category;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.Instant;
 
 @Schema(description = "게시글 검색 결과 응답")
 public record PostSearchResponse(

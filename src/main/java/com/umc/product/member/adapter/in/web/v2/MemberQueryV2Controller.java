@@ -1,5 +1,11 @@
 package com.umc.product.member.adapter.in.web.v2;
 
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.member.adapter.in.web.dto.request.SearchMemberRequest;
@@ -7,14 +13,10 @@ import com.umc.product.member.adapter.in.web.v2.dto.response.MemberSummaryV2Resp
 import com.umc.product.member.adapter.in.web.v2.dto.response.SearchMemberV2Response;
 import com.umc.product.member.application.port.in.query.GetMemberSummaryV2UseCase;
 import com.umc.product.member.application.port.in.query.SearchMemberUseCase;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * /api/v2/member 의 Query 엔드포인트.

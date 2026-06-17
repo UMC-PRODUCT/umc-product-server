@@ -1,16 +1,18 @@
 package com.umc.product.challenger.adapter.in.web.v2;
 
-import com.umc.product.challenger.adapter.in.web.v2.dto.response.ChallengerSearchV2Response;
-import com.umc.product.member.adapter.in.web.dto.request.SearchMemberRequest;
-import com.umc.product.member.application.port.in.query.SearchMemberUseCase;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.umc.product.challenger.adapter.in.web.v2.dto.response.ChallengerSearchV2Response;
+import com.umc.product.member.adapter.in.web.dto.request.SearchMemberRequest;
+import com.umc.product.member.application.port.in.query.SearchMemberUseCase;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 /**
  * /api/v2/challenger 의 Query 엔드포인트.

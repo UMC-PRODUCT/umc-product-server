@@ -1,11 +1,13 @@
 package com.umc.product.notice.adapter.in.web.dto.request;
 
+import java.util.List;
+
 import com.umc.product.notice.application.port.in.query.dto.GetNoticeStatusQuery;
 import com.umc.product.notice.domain.enums.NoticeReadStatus;
 import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
 
 @Schema(description = "공지 읽음 현황 조회 요청 (커서 기반 페이징)")
 public record GetNoticeStatusRequest(
@@ -17,8 +19,7 @@ public record GetNoticeStatusRequest(
     @Schema(description = "조직 필터 타입. ALL=전체, CHAPTER=지부, SCHOOL=학교. "
         + "CHAPTER 또는 SCHOOL이면 organizationIds에 대상 ID 목록을 함께 전달",
         example = "ALL")
-    @NotNull(message = "필터 타입은 비어 있을 수 없습니다.")
-    NoticeReadStatusFilterType filterType,
+    @NotNull(message = "필터 타입은 비어 있을 수 없습니다.") NoticeReadStatusFilterType filterType,
 
     @Schema(description = "필터링할 조직(지부/학교) ID 목록. filterType이 ALL이면 null 또는 빈 배열. "
         + "CHAPTER이면 지부 ID 목록, SCHOOL이면 학교 ID 목록을 전달",
@@ -27,8 +28,7 @@ public record GetNoticeStatusRequest(
 
     @Schema(description = "읽음 상태 필터. READ=읽은 사람 목록 조회, UNREAD=안 읽은 사람 목록 조회",
         example = "UNREAD")
-    @NotNull(message = "읽음 상태는 비어 있을 수 없습니다.")
-    NoticeReadStatus status
+    @NotNull(message = "읽음 상태는 비어 있을 수 없습니다.") NoticeReadStatus status
 ) {
     public GetNoticeStatusQuery toQuery(Long noticeId) {
         return new GetNoticeStatusQuery(cursorId, noticeId, filterType, organizationIds, status);

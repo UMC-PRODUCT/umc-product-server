@@ -1,5 +1,11 @@
 package com.umc.product.challenger.adapter.in.web;
 
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.challenger.adapter.in.web.dto.request.GlobalSearchChallengerRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerCursorRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerRequest;
@@ -7,15 +13,11 @@ import com.umc.product.challenger.adapter.in.web.dto.response.CursorSearchChalle
 import com.umc.product.challenger.adapter.in.web.dto.response.GlobalSearchChallengerResponse;
 import com.umc.product.challenger.adapter.in.web.dto.response.SearchChallengerResponse;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/challenger")

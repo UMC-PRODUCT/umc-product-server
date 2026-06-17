@@ -4,6 +4,7 @@ import com.umc.product.organization.adapter.in.web.dto.response.school.SchoolDet
 import com.umc.product.organization.adapter.in.web.dto.response.school.SchoolLinkResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.school.SchoolNameListResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.school.UnassignedSchoolListResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

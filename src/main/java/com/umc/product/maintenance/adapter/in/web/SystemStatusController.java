@@ -1,14 +1,16 @@
 package com.umc.product.maintenance.adapter.in.web;
 
-import com.umc.product.global.security.annotation.Public;
-import com.umc.product.maintenance.adapter.in.web.dto.response.SystemStatusResponse;
-import com.umc.product.maintenance.application.port.in.query.GetMaintenanceStatusUseCase;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.umc.product.global.security.annotation.Public;
+import com.umc.product.maintenance.adapter.in.web.dto.response.SystemStatusResponse;
+import com.umc.product.maintenance.application.port.in.query.GetMaintenanceStatusUseCase;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/system")

@@ -5,6 +5,7 @@ import com.umc.product.organization.adapter.in.web.dto.request.CreateSchoolReque
 import com.umc.product.organization.adapter.in.web.dto.request.DeleteSchoolsRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UnassignSchoolRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateSchoolRequest;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

@@ -1,6 +1,7 @@
 package com.umc.product.organization.adapter.in.web.swagger;
 
 import com.umc.product.organization.adapter.in.web.dto.request.CreateStudyGroupScheduleRequest;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

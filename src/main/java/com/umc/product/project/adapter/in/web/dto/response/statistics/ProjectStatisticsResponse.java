@@ -1,5 +1,7 @@
 package com.umc.product.project.adapter.in.web.dto.response.statistics;
 
+import java.util.List;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingRoundStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMemberApplicationStatisticsInfo;
@@ -12,8 +14,8 @@ import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.List;
 
 @Schema(description = "프로젝트 지원/매칭 현황 응답")
 public record ProjectStatisticsResponse(

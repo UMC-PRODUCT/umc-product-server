@@ -4,6 +4,7 @@ import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.organization.adapter.in.web.dto.response.studygroup.StudyGroupMemberResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.studygroup.StudyGroupResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;

@@ -1,13 +1,15 @@
 package com.umc.product.organization.adapter.in.web.swagger;
 
+import org.springframework.web.bind.annotation.PathVariable;
+
 import com.umc.product.organization.adapter.in.web.dto.request.CreateStudyGroupRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateStudyGroupRequest;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.PathVariable;
 
 @Tag(name = "Organization | 스터디 그룹 Command", description = "")
 public interface StudyGroupCommandControllerApi {

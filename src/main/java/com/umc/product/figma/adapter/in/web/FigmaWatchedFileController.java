@@ -1,18 +1,7 @@
 package com.umc.product.figma.adapter.in.web;
 
-import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
-import com.umc.product.authorization.domain.PermissionType;
-import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.figma.adapter.in.web.dto.request.RegisterFigmaWatchedFileRequest;
-import com.umc.product.figma.adapter.in.web.dto.response.FigmaWatchedFileResponse;
-import com.umc.product.figma.adapter.in.web.dto.response.RegisterFigmaWatchedFileResponse;
-import com.umc.product.figma.application.port.in.GetFigmaWatchedFileUseCase;
-import com.umc.product.figma.application.port.in.ManageFigmaWatchedFileUseCase;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +10,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.figma.adapter.in.web.dto.request.RegisterFigmaWatchedFileRequest;
+import com.umc.product.figma.adapter.in.web.dto.response.FigmaWatchedFileResponse;
+import com.umc.product.figma.adapter.in.web.dto.response.RegisterFigmaWatchedFileResponse;
+import com.umc.product.figma.application.port.in.GetFigmaWatchedFileUseCase;
+import com.umc.product.figma.application.port.in.ManageFigmaWatchedFileUseCase;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Figma 폴링 대상 파일 관리. ADR-007 에 따라 모든 endpoint 는 SUPER_ADMIN 만 접근 가능하다.

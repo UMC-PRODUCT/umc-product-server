@@ -1,11 +1,13 @@
 package com.umc.product.notice.domain;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.domain.enums.NoticeTab;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
 
 /**
  * 역할: "이 공지는 누구를 대상으로 하는가"를 표현하는 공지 대상 범위 데이터.
@@ -35,8 +37,7 @@ public record NoticeTargetInfo(
     @Schema(description = "대상 역할 하한선. CHALLENGER면 일반 챌린저 공지. "
         + "CENTRAL_MEMBER, SCHOOL_CORE, SCHOOL_PART_LEADER면 운영진 공지",
         example = "CHALLENGER")
-    @NotNull(message = "대상 역할은 필수입니다. 챌린저 공지의 경우 CHALLENGER를 입력하세요.")
-    NoticeTab targetNoticeTab
+    @NotNull(message = "대상 역할은 필수입니다. 챌린저 공지의 경우 CHALLENGER를 입력하세요.") NoticeTab targetNoticeTab
 ) {
     /**
      * 엔티티 → DTO 변환 (조회 방향)

@@ -1,13 +1,15 @@
 package com.umc.product.authentication.adapter.in.web.swagger;
 
+import org.springframework.web.bind.annotation.RequestBody;
+
 import com.umc.product.authentication.adapter.in.web.dto.request.AppleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.GoogleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.KakaoCodeLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.KakaoLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.response.OAuthLoginResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Authentication | 토큰", description = "로그인 토큰 재발급과 로그아웃을 다룹니다.")
 public interface AuthenticationControllerInterface {

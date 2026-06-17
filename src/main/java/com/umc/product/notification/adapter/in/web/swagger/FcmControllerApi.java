@@ -3,6 +3,7 @@ package com.umc.product.notification.adapter.in.web.swagger;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

@@ -1,20 +1,7 @@
 package com.umc.product.figma.adapter.in.web;
 
-import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
-import com.umc.product.authorization.domain.PermissionType;
-import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.figma.config.FigmaSyncProperties;
-import com.umc.product.figma.application.port.in.DigestFigmaCommentsUseCase;
-import com.umc.product.figma.application.port.in.SummarizeFigmaCommentsUseCase;
-import com.umc.product.figma.application.port.in.SyncFigmaCommentsUseCase;
-import com.umc.product.figma.application.port.in.dto.DigestFigmaCommentsCommand;
-import com.umc.product.figma.application.port.in.dto.FigmaDigestSummary;
-import com.umc.product.figma.application.port.in.dto.FigmaSummaryResult;
-import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +10,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.figma.application.port.in.DigestFigmaCommentsUseCase;
+import com.umc.product.figma.application.port.in.SummarizeFigmaCommentsUseCase;
+import com.umc.product.figma.application.port.in.SyncFigmaCommentsUseCase;
+import com.umc.product.figma.application.port.in.dto.DigestFigmaCommentsCommand;
+import com.umc.product.figma.application.port.in.dto.FigmaDigestSummary;
+import com.umc.product.figma.application.port.in.dto.FigmaSummaryResult;
+import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;
+import com.umc.product.figma.config.FigmaSyncProperties;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Figma 댓글 동기화 admin API 통합 컨트롤러.
