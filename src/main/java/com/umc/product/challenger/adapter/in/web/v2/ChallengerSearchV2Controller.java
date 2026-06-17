@@ -23,13 +23,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v2/challenger")
 @RequiredArgsConstructor
-@Tag(name = "Challenger V2 | 챌린저 Query", description = "챌린저 단위 검색 등 챌린저 조회 v2 엔드포인트")
+@Tag(name = "Challenger V2 | 챌린저 Query", description = "챌린저 단위 검색 결과를 제공합니다.")
 public class ChallengerSearchV2Controller {
 
     private final SearchMemberUseCase searchMemberUseCase;
 
     @Operation(
-        summary = "[CHALLENGER-201] 챌린저 검색 v2",
+        operationId = "CHALLENGER-201",
+        summary = "챌린저 검색 v2",
         description = """
             챌린저 단위 페이지네이션 검색입니다.
 
