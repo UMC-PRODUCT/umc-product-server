@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Authorization | 운영진 권한 관리", description = "직책 부여, 수정, 삭제 등")
+@Tag(name = "Authorization | 운영진 권한 관리", description = "운영진 역할 기록을 만들고 삭제합니다.")
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -42,7 +42,7 @@ public class ChallengerRoleController {
         permission = PermissionType.WRITE
     )
     @PostMapping
-    @Operation(summary = "[STAFF-001] 운영진 기록 생성", description = "ChallengerRole, 즉 운영진 기록을 생성합니다. 총괄단만 가능합니다.")
+    @Operation(operationId = "STAFF-001", summary = "운영진 기록 생성", description = "운영진 기록을 생성합니다. 총괄단 권한이 필요합니다.")
     public CreateChallengerRoleResponse createChallengerRole(
         @RequestBody CreateChallengerRoleRequest request) {
         Long createdId =
@@ -58,7 +58,7 @@ public class ChallengerRoleController {
         permission = PermissionType.READ
     )
     @Deprecated(since = "v2.0.0", forRemoval = true)
-    @Operation(summary = "[STAFF-101] 운영진 기록 조회", description = "deprecate: 내 프로필 조회 등에서 확인할 수 있는 정보인 관계로 중복 API를 제거합니다.")
+    @Operation(operationId = "STAFF-101", summary = "운영진 기록 조회", description = "사용 중단 예정입니다. 내 프로필 조회에서 같은 정보를 제공합니다.")
     @GetMapping("{challengerRoleId}")
     public ChallengerRoleResponse getChallengerRole(
         @PathVariable Long challengerRoleId
@@ -74,7 +74,7 @@ public class ChallengerRoleController {
         resourceType = ResourceType.CHALLENGER_ROLE,
         permission = PermissionType.DELETE
     )
-    @Operation(summary = "[STAFF-002] 운영진 기록 삭제", description = "부여된 운영진 권한(기록)을 삭제합니다.")
+    @Operation(operationId = "STAFF-002", summary = "운영진 기록 삭제", description = "부여된 운영진 기록을 삭제합니다.")
     @DeleteMapping("{challengerRoleId}")
     public void deleteChallengerRole(
         @PathVariable Long challengerRoleId
