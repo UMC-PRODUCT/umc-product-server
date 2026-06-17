@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
-@Tag(name = "Community | 게시글 Query", description = "게시글 조회 API")
+@Tag(name = "Community | 게시글 Query", description = "커뮤니티 게시글을 조회하고 검색합니다.")
 public class PostQueryController {
 
     private final GetPostDetailUseCase getPostDetailUseCase;
@@ -62,7 +62,7 @@ public class PostQueryController {
     }
 
     @GetMapping("/{postId}")
-    @Operation(summary = "[POST-101] 게시글 상세 조회", description = "게시글 상세 정보를 조회합니다. (댓글 수, 좋아요/스크랩 여부 포함)")
+    @Operation(operationId = "POST-101", summary = "게시글 상세 조회", description = "게시글 상세 정보를 조회합니다. (댓글 수, 좋아요/스크랩 여부 포함)")
     public PostDetailResponse getPostDetail(
         @PathVariable Long postId,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -72,7 +72,7 @@ public class PostQueryController {
     }
 
     @GetMapping
-    @Operation(summary = "[POST-102] 게시글 목록 조회", description = "카테고리별로 게시글 목록을 조회합니다. (최신순 정렬)")
+    @Operation(operationId = "POST-102", summary = "게시글 목록 조회", description = "카테고리별로 게시글 목록을 조회합니다. (최신순 정렬)")
     public PageResponse<PostResponse> getPostList(
         @RequestParam(required = false)
         @Parameter(description = "카테고리 (LIGHTNING: 번개, QUESTION: 질문, FREE: 자유). 미지정시 전체 조회")
@@ -92,7 +92,7 @@ public class PostQueryController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "[POST-103] 게시글 검색", description = "제목과 본문에서 키워드를 검색합니다. 관련도순(제목 시작 > 제목 포함 > 본문 포함)으로 정렬됩니다.")
+    @Operation(operationId = "POST-103", summary = "게시글 검색", description = "제목과 본문에서 키워드를 검색합니다. 관련도순(제목 시작 > 제목 포함 > 본문 포함)으로 정렬됩니다.")
     public PageResponse<PostResponse> search(
         @RequestParam
         @Parameter(description = "검색 키워드", example = "스터디")
@@ -109,7 +109,7 @@ public class PostQueryController {
     }
 
     @GetMapping("/my")
-    @Operation(summary = "[POST-104] 내가 쓴 글 조회", description = "멤버가 작성한 게시글 목록을 조회합니다. (전 기수 포함, 최신순 정렬)")
+    @Operation(operationId = "POST-104", summary = "내가 쓴 글 조회", description = "멤버가 작성한 게시글 목록을 조회합니다. (전 기수 포함, 최신순 정렬)")
     public PageResponse<PostResponse> getMyPosts(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PageableDefault(size = 20)
@@ -122,7 +122,7 @@ public class PostQueryController {
     }
 
     @GetMapping("/commented")
-    @Operation(summary = "[POST-105] 댓글 단 글 조회", description = "멤버가 댓글을 단 게시글 목록을 조회합니다. (전 기수 포함, 최신 댓글 순)")
+    @Operation(operationId = "POST-105", summary = "댓글 단 글 조회", description = "멤버가 댓글을 단 게시글 목록을 조회합니다. (전 기수 포함, 최신 댓글 순)")
     public PageResponse<PostResponse> getCommentedPosts(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PageableDefault(size = 20)
@@ -135,7 +135,7 @@ public class PostQueryController {
     }
 
     @GetMapping("/scrapped")
-    @Operation(summary = "[POST-106] 스크랩한 글 조회", description = "멤버가 스크랩한 게시글 목록을 조회합니다. (전 기수 포함, 최신 스크랩 순)")
+    @Operation(operationId = "POST-106", summary = "스크랩한 글 조회", description = "멤버가 스크랩한 게시글 목록을 조회합니다. (전 기수 포함, 최신 스크랩 순)")
     public PageResponse<PostResponse> getScrappedPosts(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PageableDefault(size = 20)
