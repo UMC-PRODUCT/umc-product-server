@@ -3,6 +3,7 @@ package com.umc.product.project.application.service.query;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -286,7 +287,7 @@ class ProjectApplicationQueryServiceTest {
         // then
         assertThat(result).isEmpty();
         verify(loadProjectApplicationPort, never())
-            .searchProjectApplications(any(), any(), any(), any());
+            .searchProjectApplications(any(), any(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -300,7 +301,7 @@ class ProjectApplicationQueryServiceTest {
         given(loadProjectPort.getById(1L)).willReturn(project);
         given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
             .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
-        given(loadProjectApplicationPort.searchProjectApplications(eq(1L), isNull(), isNull(), any()))
+        given(loadProjectApplicationPort.searchProjectApplications(eq(1L), isNull(), isNull(), any(), eq(false)))
             .willReturn(List.of());
 
         // when
@@ -326,7 +327,7 @@ class ProjectApplicationQueryServiceTest {
         given(loadProjectPort.getById(1L)).willReturn(project);
         given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
             .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
-        given(loadProjectApplicationPort.searchProjectApplications(eq(1L), isNull(), isNull(), any()))
+        given(loadProjectApplicationPort.searchProjectApplications(eq(1L), isNull(), isNull(), any(), eq(false)))
             .willReturn(List.of(application));
 
         // when
@@ -340,6 +341,34 @@ class ProjectApplicationQueryServiceTest {
         assertThat(info.projectId()).isEqualTo(1L);
         assertThat(info.matchingRoundId()).isEqualTo(7L);
         assertThat(info.status()).isEqualTo(ProjectApplicationStatus.APPROVED);
+    }
+
+    @Test
+    @DisplayName("searchByProject_중앙총괄단_scope면_진행_중_차수_지원서까지_조회")
+    void searchByProject_중앙총괄단은_진행중_차수까지_조회() {
+        // given
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST);
+        ReflectionTestUtils.setField(round, "endsAt", java.time.Instant.now().plusSeconds(3_600));
+        ProjectApplication application = createSubmittedApplication(
+            55L, project, round, 200L, ProjectApplicationStatus.SUBMITTED);
+
+        SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(REQUESTER_ID).projectId(1L).build();
+
+        given(loadProjectPort.getById(1L)).willReturn(project);
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L, true));
+        given(loadProjectApplicationPort.searchProjectApplications(eq(1L), isNull(), isNull(), any(), eq(true)))
+            .willReturn(List.of(application));
+
+        // when
+        List<ProjectApplicationSummaryInfo> result = sut.searchByProject(query);
+
+        // then
+        assertThat(result).hasSize(1);
+        verify(loadProjectApplicationPort).searchProjectApplications(eq(1L), isNull(), isNull(), any(), eq(true));
     }
 
     @Test
@@ -358,7 +387,7 @@ class ProjectApplicationQueryServiceTest {
         given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
             .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectApplicationPort.searchProjectApplications(
-            eq(1L), eq(7L), eq(ProjectApplicationStatus.APPROVED), any()))
+            eq(1L), eq(7L), eq(ProjectApplicationStatus.APPROVED), any(), eq(false)))
             .willReturn(List.of());
 
         // when
@@ -366,7 +395,7 @@ class ProjectApplicationQueryServiceTest {
 
         // then
         verify(loadProjectApplicationPort).searchProjectApplications(
-            eq(1L), eq(7L), eq(ProjectApplicationStatus.APPROVED), any());
+            eq(1L), eq(7L), eq(ProjectApplicationStatus.APPROVED), any(), eq(false));
     }
 
     // ============================================================
@@ -429,6 +458,42 @@ class ProjectApplicationQueryServiceTest {
             .hasFieldOrPropertyWithValue("baseCode",
                 ProjectErrorCode.PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE);
         verify(getChallengerUseCase, never()).findByMemberIdAndGisuId(any(), any());
+    }
+
+    @Test
+    @DisplayName("getDetail_중앙총괄단_scope면_지원_진행_중인_차수도_조회")
+    void getDetail_중앙총괄단은_지원_진행_중에도_조회() {
+        // given - endsAt 이 미래라 아직 지원 기간 중이지만 중앙 총괄단 scope 로 통과
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
+        ReflectionTestUtils.setField(round, "endsAt", java.time.Instant.now().plusSeconds(3_600));
+        ProjectApplication application = createApplicationWithFormResponse(
+            55L, project, round, 200L, ProjectApplicationStatus.SUBMITTED, 123L);
+
+        GetProjectApplicationDetailQuery query = detailQuery(1L, 55L);
+        given(loadProjectApplicationPort.findByIdWithDetails(55L))
+            .willReturn(Optional.of(application));
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L, true));
+        given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
+            .willReturn(Optional.of(challengerInfoOf(200L, ChallengerPart.DESIGN)));
+        given(getFormUseCase.getFormWithStructure(7L)).willReturn(
+            FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
+        given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
+            .willReturn(List.of());
+        given(getFormResponseUseCase.findResponseWithAnswers(123L))
+            .willReturn(Optional.of(FormResponseWithAnswersInfo.builder()
+                .id(123L).formId(7L).respondentMemberId(200L)
+                .status(FormResponseStatus.SUBMITTED)
+                .answers(List.of())
+                .build()));
+
+        // when
+        ProjectApplicationDetailInfo result = sut.getDetail(query);
+
+        // then
+        assertThat(result.applicationId()).isEqualTo(55L);
     }
 
     @Test

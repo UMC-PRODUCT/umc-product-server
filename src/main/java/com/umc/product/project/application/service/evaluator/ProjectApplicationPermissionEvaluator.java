@@ -39,6 +39,7 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
     private final LoadProjectPort loadProjectPort;
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
+    private final SuperAdminProperties superAdminProperties;
 
     @Override
     public ResourceType supportedResourceType() {
@@ -80,7 +81,8 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
      *   <li>부모 프로젝트의 PO 또는 보조 PM (Sub-PM, ACTIVE PLAN 멤버)</li>
      *   <li>(SUBMITTED 이상) 해당 기수의 SUPER_ADMIN/총괄/부총괄 또는 해당 기수+해당 지부의 지부장</li>
      * </ul>
-     * DRAFT 는 본인만 노출 — 임시저장은 외부에 보이지 않는다.
+     * DRAFT 는 본인만 노출 — 임시저장은 외부에 보이지 않는다. 단, {@code app.super-admin.allow-draft-read} 가 켜진 동안은
+     * SUPER_ADMIN 도 DRAFT 단건을 조회할 수 있다 (초기 배포 모니터링용).
      */
     private boolean canRead(SubjectAttributes subject, ResourcePermission permission) {
         if (permission.resourceId() == null) {
@@ -93,7 +95,7 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
             return true;
         }
         if (application.getStatus() == ProjectApplicationStatus.DRAFT) {
-            return false;
+            return superAdminProperties.allowDraftRead() && isSuperAdmin(subject);
         }
         if (isOwner(subject, project) || isSubPm(subject, project)) {
             return true;
@@ -151,6 +153,11 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
 
     private boolean isSubPm(SubjectAttributes subject, Project project) {
         return loadProjectMemberPort.isActivePlanMember(project.getId(), subject.memberId());
+    }
+
+    private boolean isSuperAdmin(SubjectAttributes subject) {
+        return subject.roleAttributes().stream()
+            .anyMatch(role -> role.roleType().isSuperAdmin());
     }
 
     private boolean isCentralCoreInGisu(SubjectAttributes subject, Long gisuId) {

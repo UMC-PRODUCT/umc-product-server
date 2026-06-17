@@ -66,16 +66,19 @@ public class ProjectApplicationAccessScopeResolver {
 
         List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
         if (roles.stream().anyMatch(r -> r.roleType().isSuperAdmin())) {
-            return new ProjectScoped(projectId);
+            return new ProjectScoped(projectId, true);
         }
 
         List<ChallengerRoleInfo> rolesInGisu = roles.stream()
             .filter(r -> Objects.equals(r.gisuId(), project.getGisuId()))
             .toList();
 
-        if (rolesInGisu.stream().anyMatch(
-            r -> r.roleType().isAtLeastCentralCore() || (r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
-                && Objects.equals(r.organizationId(), project.getChapterId())))) {
+        if (rolesInGisu.stream().anyMatch(r -> r.roleType().isAtLeastCentralCore())) {
+            return new ProjectScoped(projectId, true);
+        }
+
+        if (rolesInGisu.stream().anyMatch(r -> r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
+            && Objects.equals(r.organizationId(), project.getChapterId()))) {
             return new ProjectScoped(projectId);
         }
 

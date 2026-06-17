@@ -126,9 +126,16 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
         Long projectId,
         Long matchingRoundId,
         ProjectApplicationStatus status,
-        Instant now
+        Instant now,
+        boolean includeOngoingMatchingRounds
     ) {
-        return projectApplicationQueryRepository.searchProjectApplications(projectId, matchingRoundId, status, now);
+        return projectApplicationQueryRepository.searchProjectApplications(
+            projectId,
+            matchingRoundId,
+            status,
+            now,
+            includeOngoingMatchingRounds
+        );
     }
 
     @Override
