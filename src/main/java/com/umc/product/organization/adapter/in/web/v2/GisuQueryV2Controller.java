@@ -24,7 +24,7 @@ public class GisuQueryV2Controller {
 
     @Public
     @GetMapping
-    @Operation(summary = "[GISU-201] 기수 조직 정보 조회", description = """
+    @Operation(operationId = "GISU-201", summary = "기수 조직 정보 조회", description = """
         `id`, `generation`, `active` 중 정확히 하나의 조회 기준으로 기수 조직 정보를 조회합니다.
 
         - `id`, `generation`은 반복 query param으로 여러 값을 전달할 수 있으며 중복 값은 제거됩니다.
