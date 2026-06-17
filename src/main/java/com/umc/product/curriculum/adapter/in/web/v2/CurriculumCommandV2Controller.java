@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v2/curriculums")
 @RequiredArgsConstructor
-@Tag(name = "Curriculum V2 | Curriculum & WeeklyCurriculum Command", description = "중앙운영사무국 교육국 소속 파트장용. 커리큘럼 및 그 주차별 내용 생성, 수정, 삭제 등")
+@Tag(name = "Curriculum V2 | Curriculum & WeeklyCurriculum Command", description = "교육국 파트장이 커리큘럼과 주차별 내용을 관리합니다.")
 public class CurriculumCommandV2Controller {
 
     private final ManageCurriculumUseCase manageCurriculumUseCase;
@@ -28,7 +28,8 @@ public class CurriculumCommandV2Controller {
     // ==== Curriculum CUD ====
 
     @Operation(
-        summary = "[CURRICULUM-001] 커리큘럼 생성",
+        operationId = "CURRICULUM-001",
+        summary = "커리큘럼 생성",
         description = """
             기수, 파트에 대한 상위 객체인 커리큘럼을 생성합니다.
 
@@ -47,7 +48,8 @@ public class CurriculumCommandV2Controller {
     }
 
     @Operation(
-        summary = "[CURRICULUM-002] 커리큘럼 수정",
+        operationId = "CURRICULUM-002",
+        summary = "커리큘럼 수정",
         description = """
             상위 객체인 커리큘럼을 수정합니다.
 
@@ -71,7 +73,8 @@ public class CurriculumCommandV2Controller {
     }
 
     @Operation(
-        summary = "[CURRICULUM-003] 중앙운영사무국 총괄단용: 커리큘럼 삭제",
+        operationId = "CURRICULUM-003",
+        summary = "중앙운영사무국 총괄단용: 커리큘럼 삭제",
         description = """
             - 커리큘럼 내부에 포함된 주차별 커리큘럼이 존재하는 경우 삭제하지 못합니다.
             - 중앙운영사무국 총괄단 이상의 권한을 보유한 경우에만 삭제가 가능합니다.
@@ -92,7 +95,8 @@ public class CurriculumCommandV2Controller {
     // ==== Weekly Curriculum CUD ====
 
     @Operation(
-        summary = "[CURRICULUM-004] 각 커리큘럼에 새로운 주차 생성",
+        operationId = "CURRICULUM-004",
+        summary = "각 커리큘럼에 새로운 주차 생성",
         description = """
             상위 객체인 커리큘럼에 각 주차별 커리큘럼을 생성합니다.
 
@@ -113,7 +117,8 @@ public class CurriculumCommandV2Controller {
     }
 
     @Operation(
-        summary = "[CURRICULUM-005] 주차별 커리큘럼 수정",
+        operationId = "CURRICULUM-005",
+        summary = "주차별 커리큘럼 수정",
         description = """
             주차별 커리큘럼 자체를 수정합니다.
 
@@ -138,7 +143,8 @@ public class CurriculumCommandV2Controller {
     }
 
     @Operation(
-        summary = "[CURRICULUM-006] 주차별 커리큘럼 삭제",
+        operationId = "CURRICULUM-006",
+        summary = "주차별 커리큘럼 삭제",
         description = """
             주차별 커리큘럼을 삭제합니다.
 
