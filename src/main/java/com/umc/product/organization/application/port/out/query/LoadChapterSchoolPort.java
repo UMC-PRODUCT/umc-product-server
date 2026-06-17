@@ -1,5 +1,6 @@
 package com.umc.product.organization.application.port.out.query;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -11,6 +12,8 @@ public interface LoadChapterSchoolPort {
     ChapterSchool findByChapterIdAndSchoolId(Long chapterId, Long schoolId);
 
     List<ChapterSchool> findBySchoolId(Long schoolId);
+
+    List<ChapterSchool> findBySchoolIds(Collection<Long> schoolIds);
     List<ChapterSchool> findByGisuId(Long gisuId);
 
     List<ChapterSchool> findByGisuIds(Set<Long> gisuIds);

@@ -17,11 +17,15 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectStatisticsSummaryInfo;
@@ -35,12 +39,17 @@ import com.umc.product.project.application.port.in.query.dto.statistics.RoundApp
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundSchoolApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.SchoolApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.SchoolMatchingStatisticsInfo;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
+import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsApplicationRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
+import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -52,9 +61,16 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
     private final LoadProjectStatisticsPort loadProjectStatisticsPort;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetMemberUseCase getMemberUseCase;
+    private final LoadProjectPort loadProjectPort;
+    private final LoadProjectMemberPort loadProjectMemberPort;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+    private final GetChapterUseCase getChapterUseCase;
 
     @Override
-    public ProjectStatisticsInfo getByProjectId(Long projectId) {
+    public ProjectStatisticsInfo getByProjectId(Long projectId, Long requesterMemberId) {
+        Project target = loadProjectPort.getById(projectId);
+        validateProjectAccess(requesterMemberId, target);
+
         ProjectStatisticsProjectRow project = loadProjectStatisticsPort.getProjectById(projectId);
         List<ProjectStatisticsMatchingRoundRow> rounds =
             loadProjectStatisticsPort.listMatchingRoundsByChapterId(project.chapterId());
@@ -68,7 +84,9 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
     }
 
     @Override
-    public ChapterProjectStatisticsInfo getByChapterId(Long chapterId) {
+    public ChapterProjectStatisticsInfo getByChapterId(Long chapterId, Long requesterMemberId) {
+        validateChapterAccess(requesterMemberId, chapterId);
+
         List<ProjectStatisticsProjectRow> projects = loadProjectStatisticsPort.listProjectsByChapterId(chapterId);
         if (projects.isEmpty()) {
             return new ChapterProjectStatisticsInfo(chapterId, List.of(), emptySummary());
@@ -119,6 +137,49 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
                 buildProjectRoundStatistics(projects, chapterContext)
             )
         );
+    }
+
+    /**
+     * 단건 프로젝트 통계 접근 권한 검증. 본인 프로젝트의 PO/Sub-PM 이면 통과, 아니면 지부 운영진 판정으로 위임한다.
+     */
+    private void validateProjectAccess(Long memberId, Project project) {
+        boolean isOwner = Objects.equals(project.getProductOwnerMemberId(), memberId);
+        boolean isSubPm = loadProjectMemberPort.isActivePlanMember(project.getId(), memberId);
+        if (isOwner || isSubPm) {
+            return;
+        }
+        validateChapterAccess(memberId, project.getChapterId());
+    }
+
+    /**
+     * 지부 단위 통계 접근 권한 검증. 총괄단(SUPER_ADMIN 포함) / 해당 지부장 / 해당 지부 소속 학교 회장·부회장이면 통과,
+     * 그 외에는 {@code PROJECT_ACCESS_DENIED}.
+     * <p>
+     * 요청 chapterId 는 치환하지 않고 통과/거부만 판정한다(총괄단의 타 지부 조회 보장).
+     */
+    private void validateChapterAccess(Long memberId, Long chapterId) {
+        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
+        boolean allowed = roles.stream().anyMatch(role -> role.roleType().isAtLeastCentralCore()
+                || (role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
+                    && Objects.equals(role.organizationId(), chapterId)))
+            || isSchoolCoreOfChapter(roles, chapterId);
+        if (!allowed) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
+        }
+    }
+
+    private boolean isSchoolCoreOfChapter(List<ChallengerRoleInfo> roles, Long chapterId) {
+        Set<Long> schoolIds = roles.stream()
+            .filter(role -> role.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
+                || role.roleType() == ChallengerRoleType.SCHOOL_VICE_PRESIDENT)
+            .map(ChallengerRoleInfo::organizationId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+        if (schoolIds.isEmpty()) {
+            return false;
+        }
+        return getChapterUseCase.getChaptersBySchoolIds(schoolIds).stream()
+            .anyMatch(chapter -> Objects.equals(chapter.id(), chapterId));
     }
 
     private ProjectStatisticsInfo assembleProject(

@@ -1,6 +1,7 @@
 package com.umc.product.organization.adapter.out.persistence.chapter;
 
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -56,6 +57,11 @@ public class ChapterSchoolPersistenceAdapter implements LoadChapterSchoolPort, S
     @Override
     public List<ChapterSchool> findBySchoolId(Long schoolId) {
         return chapterSchoolQueryRepository.findBySchoolId(schoolId);
+    }
+
+    @Override
+    public List<ChapterSchool> findBySchoolIds(Collection<Long> schoolIds) {
+        return chapterSchoolQueryRepository.findBySchoolIdIn(schoolIds);
     }
 
     @Override
