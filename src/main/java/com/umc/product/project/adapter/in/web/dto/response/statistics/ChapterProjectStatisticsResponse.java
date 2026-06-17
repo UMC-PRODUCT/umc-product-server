@@ -12,7 +12,7 @@ import com.umc.product.project.application.port.in.query.dto.statistics.SchoolMa
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
-@Schema(description = "지부 전체 프로젝트 지원/매칭 현황 BFF 응답")
+@Schema(description = "지부 전체 프로젝트 지원/매칭 현황 응답")
 public record ChapterProjectStatisticsResponse(
     @Schema(description = "지부 ID")
     Long chapterId,

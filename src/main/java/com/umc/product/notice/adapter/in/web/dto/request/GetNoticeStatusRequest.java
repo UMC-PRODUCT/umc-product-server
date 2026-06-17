@@ -10,12 +10,12 @@ import java.util.List;
 @Schema(description = "공지 읽음 현황 조회 요청 (커서 기반 페이징)")
 public record GetNoticeStatusRequest(
     @Schema(description = "페이징 커서 ID. 첫 페이지 요청 시 null. "
-        + "status=READ일 때는 마지막 NoticeRead의 ID, status=UNREAD일 때는 마지막 Challenger의 ID를 넘겨주세요",
+        + "status=READ이면 마지막 NoticeRead ID, status=UNREAD이면 마지막 Challenger ID를 전달",
         nullable = true)
     Long cursorId,
 
-    @Schema(description = "조직 필터 타입. ALL=전체, CHAPTER=지부별 필터, SCHOOL=학교별 필터. "
-        + "CHAPTER/SCHOOL 선택 시 organizationIds에 해당 ID 목록을 함께 전달해야 합니다",
+    @Schema(description = "조직 필터 타입. ALL=전체, CHAPTER=지부, SCHOOL=학교. "
+        + "CHAPTER 또는 SCHOOL이면 organizationIds에 대상 ID 목록을 함께 전달",
         example = "ALL")
     @NotNull(message = "필터 타입은 비어 있을 수 없습니다.")
     NoticeReadStatusFilterType filterType,

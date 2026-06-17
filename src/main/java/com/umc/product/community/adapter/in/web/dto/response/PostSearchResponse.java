@@ -14,7 +14,7 @@ public record PostSearchResponse(
     @Schema(description = "제목", example = "Spring Boot 스터디원 모집")
     String title,
 
-    @Schema(description = "내용 미리보기 (100자)", example = "스프링 부트를 공부할 팀원을 모집합니다...")
+    @Schema(description = "내용 미리보기. 최대 100자", example = "스프링 부트를 공부할 팀원을 모집합니다...")
     String contentPreview,
 
     @Schema(description = "카테고리", example = "FREE")

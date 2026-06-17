@@ -15,7 +15,7 @@ import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
-@Schema(description = "프로젝트 지원/매칭 현황 통합 응답")
+@Schema(description = "프로젝트 지원/매칭 현황 응답")
 public record ProjectStatisticsResponse(
     @Schema(description = "프로젝트 ID")
     Long projectId,
@@ -51,7 +51,7 @@ public record ProjectStatisticsResponse(
         ChallengerPart part,
         @Schema(description = "프로젝트 멤버 상태")
         ProjectMemberStatus status,
-        @Schema(description = "해당 멤버가 이 프로젝트에 작성한 지원 이력. 강제 배정이면 빈 목록입니다.")
+        @Schema(description = "해당 멤버가 이 프로젝트에 작성한 지원 이력. 강제 배정이면 빈 목록")
         List<ProjectMemberApplicationStatisticsResponse> applications
     ) {
         private static ProjectMemberStatisticsResponse from(ProjectMemberStatisticsInfo info) {

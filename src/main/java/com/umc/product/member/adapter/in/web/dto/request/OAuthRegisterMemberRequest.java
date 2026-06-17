@@ -34,7 +34,7 @@ public record OAuthRegisterMemberRequest(
     @NotNull(message = "학교 ID는 필수입니다")
     Long schoolId,
 
-    @Schema(description = "(deprecated) 프로필 이미지 fileId 값, UI에 존재하지 않아 향후 제거 예정입니다.")
+    @Schema(description = "사용 중단 예정 프로필 이미지 fileId. UI에서 사용하지 않아 이후 제거 예정")
     String profileImageId,
 
     @Schema(description = "약관 동의 목록")
