@@ -9,9 +9,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "Authentication | 로그인")
+@Tag(name = "Authentication | 토큰", description = "로그인 토큰 재발급과 로그아웃을 다룹니다.")
 public interface AuthenticationControllerInterface {
-    @Operation(summary = "[LOGIN-001] Google 로그인",
+    @Operation(operationId = "LOGIN-001", summary = "Google 로그인",
         description = """
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 
@@ -29,7 +29,7 @@ public interface AuthenticationControllerInterface {
         @RequestBody GoogleLoginRequest request
     );
 
-    @Operation(summary = "[LOGIN-005] Kakao 로그인",
+    @Operation(operationId = "LOGIN-005", summary = "Kakao 로그인",
         description = """
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 
@@ -47,7 +47,7 @@ public interface AuthenticationControllerInterface {
         @RequestBody KakaoLoginRequest request
     );
 
-    @Operation(summary = "[LOGIN-006] Kakao 로그인 (Authorization Code 흐름)",
+    @Operation(operationId = "LOGIN-006", summary = "Kakao 인가 코드 로그인",
         description = """
             표준 OAuth2 authorization code grant 흐름을 사용하는 클라이언트(주로 웹)를 위한 엔드포인트입니다.
 
@@ -65,7 +65,7 @@ public interface AuthenticationControllerInterface {
         @RequestBody KakaoCodeLoginRequest request
     );
 
-    @Operation(summary = "[LOGIN-010] Apple 로그인",
+    @Operation(operationId = "LOGIN-010", summary = "Apple 로그인",
         description = """
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 
