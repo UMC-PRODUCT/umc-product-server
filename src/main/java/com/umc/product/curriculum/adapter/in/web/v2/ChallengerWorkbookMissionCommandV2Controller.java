@@ -17,13 +17,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v2/curriculums/challenger-workbooks/missions")
 @RequiredArgsConstructor
-@Tag(name = "Curriculum V2 | Challenger Workbook Mission Command", description = "챌린저/파트장용 - 워크북 미션 및 피드백 제출/수정/철회 등")
+@Tag(name = "Curriculum V2 | Challenger Workbook Mission Command", description = "워크북 미션 제출과 운영진 피드백을 다룹니다.")
 public class ChallengerWorkbookMissionCommandV2Controller {
 
     // TODO: @CheckAccess 반드시 추가할 것
 
     @Operation(
-        summary = "[CHALLENGER-WORKBOOK-MISSION-001] 챌린저용: 워크북 내 미션 제출",
+        operationId = "CHALLENGER-WORKBOOK-MISSION-001",
+        summary = "챌린저용: 워크북 내 미션 제출",
         description = """
             미션을 제출합니다.
 
@@ -51,7 +52,8 @@ public class ChallengerWorkbookMissionCommandV2Controller {
 
 
     @Operation(
-        summary = "[CHALLENGER-WORKBOOK-MISSION-002] 챌린저용: 제출한 워크북 미션 수정",
+        operationId = "CHALLENGER-WORKBOOK-MISSION-002",
+        summary = "챌린저용: 제출한 워크북 미션 수정",
         description = """
             이미 제출된 미션의 내용을 수정합니다.
 
@@ -74,7 +76,8 @@ public class ChallengerWorkbookMissionCommandV2Controller {
     }
 
     @Operation(
-        summary = "[CHALLENGER-WORKBOOK-MISSION-003] 챌린저용: 제출한 워크북 미션 철회",
+        operationId = "CHALLENGER-WORKBOOK-MISSION-003",
+        summary = "챌린저용: 제출한 워크북 미션 철회",
         description = """
             이미 제출한 미션을 철회합니다.
 
@@ -91,7 +94,8 @@ public class ChallengerWorkbookMissionCommandV2Controller {
     // ===== 운영진용 ====
 
     @Operation(
-        summary = "[CHALLENGER-WORKBOOK-MISSION-004] 운영진용: 제출된 미션에 대한 피드백 작성",
+        operationId = "CHALLENGER-WORKBOOK-MISSION-004",
+        summary = "운영진용: 제출된 미션에 대한 피드백 작성",
         description = """
             챌린저가 제출한 미션에 대한 피드백을 작성합니다.
 
@@ -115,7 +119,8 @@ public class ChallengerWorkbookMissionCommandV2Controller {
     }
 
     @Operation(
-        summary = "[CHALLENGER-WORKBOOK-MISSION-005] 운영진용: 제출된 미션에 대한 피드백 수정",
+        operationId = "CHALLENGER-WORKBOOK-MISSION-005",
+        summary = "운영진용: 제출된 미션에 대한 피드백 수정",
         description = """
             챌린저에게 제공된 피드백을 수정합니다.
 
@@ -134,7 +139,8 @@ public class ChallengerWorkbookMissionCommandV2Controller {
 
 
     @Operation(
-        summary = "[CHALLENGER-WORKBOOK-MISSION-006] 운영진용: 제출된 미션에 대한 피드백 삭제",
+        operationId = "CHALLENGER-WORKBOOK-MISSION-006",
+        summary = "운영진용: 제출된 미션에 대한 피드백 삭제",
         description = """
             챌린저에게 제공된 피드백을 삭제합니다.
             삭제로 인한 벌점 부과 등의 책임은 삭제한 본인에게 있습니다.
