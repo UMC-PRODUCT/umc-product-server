@@ -5,6 +5,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -26,18 +40,6 @@ import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
-import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = ProjectStatisticsQueryController.class)
 @Import(JacksonConfig.class)
@@ -69,7 +71,7 @@ class ProjectStatisticsQueryControllerTest {
     @DisplayName("GET_projectId_statistics_단건_프로젝트_지원_매칭_현황을_반환한다")
     void 단건_프로젝트_통계_조회() throws Exception {
         // given
-        given(assembler.statisticsForProject(10L))
+        given(assembler.statisticsForProject(10L, TEST_MEMBER_ID))
             .willReturn(response(10L, 101L, 1001L, 201L));
 
         // when & then
@@ -91,7 +93,7 @@ class ProjectStatisticsQueryControllerTest {
     @DisplayName("GET_statistics_chapterId_지부_전체_프로젝트_지원_매칭_현황을_반환한다")
     void 지부_전체_통계_조회() throws Exception {
         // given
-        given(assembler.statisticsForChapter(3L))
+        given(assembler.statisticsForChapter(3L, TEST_MEMBER_ID))
             .willReturn(chapterResponse(3L, List.of(
                 response(10L, 101L, 1001L, 201L),
                 response(11L, 102L, 1002L, 202L)
