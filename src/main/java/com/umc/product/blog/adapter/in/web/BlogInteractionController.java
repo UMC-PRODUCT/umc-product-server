@@ -44,7 +44,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/blog/contents/{type}/{slug}")
 @RequiredArgsConstructor
-@Tag(name = "Blog | 댓글/좋아요", description = "정적 블로그 콘텐츠 댓글 및 좋아요 API")
+@Tag(name = "Blog | 댓글/좋아요", description = "블로그 댓글과 좋아요를 관리합니다.")
 public class BlogInteractionController {
 
     private final GetBlogContentLikeUseCase getBlogContentLikeUseCase;
@@ -57,7 +57,7 @@ public class BlogInteractionController {
 
     @Public
     @GetMapping("/like")
-    @Operation(summary = "[BLOG-001] 콘텐츠 좋아요 상태 조회", description = "콘텐츠 좋아요 수와 현재 사용자의 좋아요 여부를 조회합니다.")
+    @Operation(operationId = "BLOG-001", summary = "콘텐츠 좋아요 상태 조회", description = "콘텐츠 좋아요 수와 현재 사용자의 좋아요 여부를 조회합니다.")
     public BlogLikeResponse getContentLike(
         @PathVariable String type,
         @PathVariable String slug,
@@ -70,7 +70,7 @@ public class BlogInteractionController {
     }
 
     @PostMapping("/like")
-    @Operation(summary = "[BLOG-002] 콘텐츠 좋아요 토글", description = "콘텐츠 좋아요를 토글합니다.")
+    @Operation(operationId = "BLOG-002", summary = "콘텐츠 좋아요 토글", description = "콘텐츠 좋아요를 누르거나 취소합니다.")
     public BlogLikeResponse toggleContentLike(
         @PathVariable String type,
         @PathVariable String slug,
@@ -83,7 +83,7 @@ public class BlogInteractionController {
 
     @Public
     @GetMapping("/comments")
-    @Operation(summary = "[BLOG-003] 댓글 목록 조회", description = "최상위 댓글을 커서 기반으로 조회하고 1단계 대댓글을 포함합니다.")
+    @Operation(operationId = "BLOG-003", summary = "댓글 목록 조회", description = "최상위 댓글을 커서 기반으로 조회하고 1단계 대댓글을 포함합니다.")
     public CursorResponse<BlogCommentResponse> getComments(
         @PathVariable String type,
         @PathVariable String slug,
@@ -104,7 +104,7 @@ public class BlogInteractionController {
 
     @Public
     @PostMapping("/comments")
-    @Operation(summary = "[BLOG-004] 댓글 작성", description = "콘텐츠에 댓글 또는 1단계 대댓글을 작성합니다.")
+    @Operation(operationId = "BLOG-004", summary = "댓글 작성", description = "콘텐츠에 댓글 또는 1단계 대댓글을 작성합니다.")
     public BlogCommentResponse createComment(
         @PathVariable String type,
         @PathVariable String slug,
@@ -123,7 +123,7 @@ public class BlogInteractionController {
         permission = PermissionType.EDIT,
         message = "내 댓글만 수정할 수 있어요."
     )
-    @Operation(summary = "[BLOG-005] 댓글 수정", description = "본인이 작성한 댓글을 수정합니다.")
+    @Operation(operationId = "BLOG-005", summary = "댓글 수정", description = "본인이 작성한 댓글을 수정합니다.")
     public BlogCommentResponse updateComment(
         @PathVariable String type,
         @PathVariable String slug,
@@ -143,7 +143,7 @@ public class BlogInteractionController {
         permission = PermissionType.DELETE,
         message = "댓글은 작성자 또는 슈퍼 관리자만 삭제할 수 있어요."
     )
-    @Operation(summary = "[BLOG-006] 댓글 삭제", description = "작성자 본인 또는 슈퍼 관리자가 댓글을 삭제합니다.")
+    @Operation(operationId = "BLOG-006", summary = "댓글 삭제", description = "작성자 본인 또는 슈퍼 관리자가 댓글을 삭제합니다.")
     public void deleteComment(
         @PathVariable String type,
         @PathVariable String slug,
@@ -156,7 +156,7 @@ public class BlogInteractionController {
     }
 
     @PostMapping("/comments/{commentId}/like")
-    @Operation(summary = "[BLOG-007] 댓글 좋아요 토글", description = "댓글 좋아요를 토글합니다.")
+    @Operation(operationId = "BLOG-007", summary = "댓글 좋아요 토글", description = "댓글 좋아요를 누르거나 취소합니다.")
     public BlogLikeResponse toggleCommentLike(
         @PathVariable String type,
         @PathVariable String slug,
