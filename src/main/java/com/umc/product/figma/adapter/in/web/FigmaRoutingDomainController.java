@@ -37,13 +37,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/figma/routing-domains")
 @RequiredArgsConstructor
-@Tag(name = "Figma | 댓글 분류 카테고리 및 담당자 관리", description = "도메인 키 등록 + 담당자 mention 등록 / 조회")
+@Tag(name = "Figma | 댓글 분류 카테고리 및 담당자 관리", description = "댓글 분류 도메인과 담당자 멘션을 관리합니다.")
 public class FigmaRoutingDomainController {
 
     private final ManageFigmaRoutingDomainUseCase manageFigmaRoutingDomainUseCase;
     private final GetFigmaRoutingDomainUseCase getFigmaRoutingDomainUseCase;
 
-    @Operation(summary = "[FIGMA-011] 라우팅 도메인 등록")
+    @Operation(operationId = "FIGMA-011", summary = "라우팅 도메인 등록")
     @PostMapping
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
     public RegisterFigmaRoutingDomainResponse registerDomain(
@@ -53,7 +53,7 @@ public class FigmaRoutingDomainController {
         return new RegisterFigmaRoutingDomainResponse(id);
     }
 
-    @Operation(summary = "[FIGMA-019] 라우팅 도메인 수정 (설명 · webhook URL · fallback)")
+    @Operation(operationId = "FIGMA-019", summary = "라우팅 도메인 수정 (설명 · webhook URL · fallback)")
     @PatchMapping("/{domainId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
@@ -64,7 +64,7 @@ public class FigmaRoutingDomainController {
         manageFigmaRoutingDomainUseCase.updateDomain(request.toCommand(domainId));
     }
 
-    @Operation(summary = "[FIGMA-012] 라우팅 도메인 삭제 (mention 도 cascade)")
+    @Operation(operationId = "FIGMA-012", summary = "라우팅 도메인 삭제")
     @DeleteMapping("/{domainId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
@@ -72,7 +72,7 @@ public class FigmaRoutingDomainController {
         manageFigmaRoutingDomainUseCase.deleteDomain(domainId);
     }
 
-    @Operation(summary = "[FIGMA-013] 라우팅 도메인에 담당자 mention 추가")
+    @Operation(operationId = "FIGMA-013", summary = "라우팅 도메인 담당자 멘션 추가")
     @PostMapping("/{domainId}/mentions")
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
     public AddFigmaRoutingMentionResponse addMention(
@@ -83,7 +83,7 @@ public class FigmaRoutingDomainController {
         return new AddFigmaRoutingMentionResponse(id);
     }
 
-    @Operation(summary = "[FIGMA-020] 담당자 mention 수정 (Discord ID · 라벨)")
+    @Operation(operationId = "FIGMA-020", summary = "담당자 멘션 수정")
     @PatchMapping("/mentions/{mentionId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
@@ -94,7 +94,7 @@ public class FigmaRoutingDomainController {
         manageFigmaRoutingDomainUseCase.updateMention(request.toCommand(mentionId));
     }
 
-    @Operation(summary = "[FIGMA-014] 담당자 mention 삭제")
+    @Operation(operationId = "FIGMA-014", summary = "담당자 멘션 삭제")
     @DeleteMapping("/mentions/{mentionId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
@@ -102,7 +102,7 @@ public class FigmaRoutingDomainController {
         manageFigmaRoutingDomainUseCase.removeMention(mentionId);
     }
 
-    @Operation(summary = "[FIGMA-016] 라우팅 도메인 목록 조회 (mention 본문 미포함)")
+    @Operation(operationId = "FIGMA-016", summary = "라우팅 도메인 목록 조회")
     @GetMapping
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.READ)
     public List<FigmaRoutingDomainResponse> listDomains() {
@@ -111,14 +111,14 @@ public class FigmaRoutingDomainController {
             .toList();
     }
 
-    @Operation(summary = "[FIGMA-017] 라우팅 도메인 단건 조회 (mention 포함)")
+    @Operation(operationId = "FIGMA-017", summary = "라우팅 도메인 상세 조회")
     @GetMapping("/{domainId}")
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.READ)
     public FigmaRoutingDomainResponse getDomain(@PathVariable Long domainId) {
         return FigmaRoutingDomainResponse.from(getFigmaRoutingDomainUseCase.getDomainById(domainId));
     }
 
-    @Operation(summary = "[FIGMA-018] 라우팅 도메인의 담당자 mention 목록 조회")
+    @Operation(operationId = "FIGMA-018", summary = "라우팅 도메인 담당자 멘션 목록 조회")
     @GetMapping("/{domainId}/mentions")
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.READ)
     public List<FigmaRoutingDomainMentionResponse> listMentions(@PathVariable Long domainId) {
