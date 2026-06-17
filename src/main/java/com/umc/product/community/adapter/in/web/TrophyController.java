@@ -18,14 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/trophies")
 @RequiredArgsConstructor
-@Tag(name = "Community | 명예의 전당 Command", description = "명예의 전당 생성/수정/삭제 API")
+@Tag(name = "Community | 명예의 전당 Command", description = "명예의 전당 항목을 만듭니다.")
 public class TrophyController {
 
     private final CreateTrophyUseCase createTrophyUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
 
     @PostMapping
-    @Operation(summary = "[TROPHY-001] 베스트 워크북 생성", description = "주차별 베스트 워크북을 생성합니다.")
+    @Operation(operationId = "TROPHY-001", summary = "베스트 워크북 생성", description = "주차별 베스트 워크북을 생성합니다.")
     public TrophyResponse createTrophy(
         @RequestBody CreateTrophyRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
