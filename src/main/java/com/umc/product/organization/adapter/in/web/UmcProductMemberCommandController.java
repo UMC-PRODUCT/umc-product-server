@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/umc-product/members")
 @RequiredArgsConstructor
-@Tag(name = "Organization | UMC PRODUCT 멤버 Command", description = "UMC PRODUCT 멤버 생성, 프로필 수정, 소속 관리, 삭제")
+@Tag(name = "Organization | UMC PRODUCT 멤버 Command", description = "UMC PRODUCT 멤버와 소속 정보를 관리합니다.")
 public class UmcProductMemberCommandController {
 
     private final ManageUmcProductMemberUseCase manageUmcProductMemberUseCase;
