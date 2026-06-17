@@ -11,7 +11,7 @@ import com.umc.product.authentication.adapter.in.web.dto.response.OAuthLoginResp
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "Authentication | 토큰", description = "로그인 토큰 재발급과 로그아웃을 다룹니다.")
+@Tag(name = "Authentication | 소셜 로그인", description = "소셜 로그인(OAuth)을 처리합니다.")
 public interface AuthenticationControllerInterface {
     @Operation(operationId = "LOGIN-001", summary = "Google 로그인",
         description = """
