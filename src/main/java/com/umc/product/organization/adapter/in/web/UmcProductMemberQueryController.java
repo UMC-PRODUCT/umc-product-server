@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/umc-product/members")
 @RequiredArgsConstructor
-@Tag(name = "Organization | UMC PRODUCT 멤버 Query", description = "UMC PRODUCT 멤버 목록 및 상세 조회")
+@Tag(name = "Organization | UMC PRODUCT 멤버 Query", description = "UMC PRODUCT 멤버 목록과 상세 정보를 조회합니다.")
 public class UmcProductMemberQueryController {
 
     private final GetUmcProductMemberUseCase getUmcProductMemberUseCase;
@@ -34,7 +34,7 @@ public class UmcProductMemberQueryController {
     @Operation(
         operationId = "UMC-PRODUCT-MEMBER-101",
         summary = "UMC PRODUCT 멤버 검색",
-        description = "기수, 기능 조직, 역할, 포지션, 스쿼드 조건으로 UMC PRODUCT 멤버를 페이지 조회합니다. 멤버 기본 정보와 기능 조직 소속, 스쿼드 참여 정보를 함께 반환합니다."
+        description = "기수, 기능 조직, 역할, 포지션, 스쿼드 조건으로 UMC PRODUCT 멤버를 페이지 조회합니다. 멤버 기본 정보, 기능 조직 소속, 스쿼드 참여 정보를 함께 반환합니다."
     )
     public UmcProductMemberPageResponse search(
         @RequestParam(required = false) Long umcProductGenerationId,
