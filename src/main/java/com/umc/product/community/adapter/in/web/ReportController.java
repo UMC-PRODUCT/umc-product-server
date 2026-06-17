@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-@Tag(name = "Community | 신고", description = "게시글/댓글 신고 API")
+@Tag(name = "Community | 신고", description = "게시글과 댓글 신고를 접수합니다.")
 public class ReportController {
 
     private final ReportPostUseCase reportPostUseCase;
@@ -29,7 +29,7 @@ public class ReportController {
 
     @PostMapping("/posts/{postId}/reports")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "[REPORT-001] 게시글 신고", description = "게시글을 신고합니다. 중복 신고는 불가능합니다.")
+    @Operation(operationId = "REPORT-001", summary = "게시글 신고", description = "게시글을 신고합니다. 같은 게시글은 한 번만 신고할 수 있습니다.")
     public void reportPost(
         @PathVariable Long postId,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -41,7 +41,7 @@ public class ReportController {
 
     @PostMapping("/comments/{commentId}/reports")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "[REPORT-002] 댓글 신고", description = "댓글을 신고합니다. 중복 신고는 불가능합니다.")
+    @Operation(operationId = "REPORT-002", summary = "댓글 신고", description = "댓글을 신고합니다. 같은 댓글은 한 번만 신고할 수 있습니다.")
     public void reportComment(
         @PathVariable Long commentId,
         @CurrentMember MemberPrincipal memberPrincipal
