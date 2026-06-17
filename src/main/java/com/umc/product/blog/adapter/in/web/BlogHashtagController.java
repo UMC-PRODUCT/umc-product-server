@@ -24,13 +24,13 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/blog/hashtags")
 @RequiredArgsConstructor
-@Tag(name = "Blog | 해시태그", description = "블로그 해시태그 public API")
+@Tag(name = "Blog | 해시태그", description = "공개 블로그 해시태그와 연결 콘텐츠를 조회합니다.")
 public class BlogHashtagController {
 
     private final GetBlogHashtagUseCase getBlogHashtagUseCase;
 
     @GetMapping
-    @Operation(summary = "[BLOG-HASHTAG-001] 공개 해시태그 목록 조회")
+    @Operation(operationId = "BLOG-HASHTAG-001", summary = "공개 해시태그 목록 조회")
     public CursorResponse<BlogHashtagResponse> getPublicHashtags(
         @RequestParam(required = false) String type,
         @RequestParam(required = false) String q,
@@ -47,7 +47,7 @@ public class BlogHashtagController {
     }
 
     @GetMapping("/{slug}/contents")
-    @Operation(summary = "[BLOG-HASHTAG-002] 공개 해시태그 콘텐츠 목록 조회")
+    @Operation(operationId = "BLOG-HASHTAG-002", summary = "공개 해시태그 콘텐츠 목록 조회")
     public CursorResponse<BlogContentSummaryResponse> getPublicHashtagContents(
         @PathVariable String slug,
         @RequestParam(required = false) String type,
