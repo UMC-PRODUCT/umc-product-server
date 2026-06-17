@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/maintenance")
 @RequiredArgsConstructor
-@Tag(name = "Maintenance | 점검 관리 (어드민)", description = "운영진(SUPER_ADMIN) 전용 점검 윈도우 관리 API")
+@Tag(name = "Maintenance | 점검 관리 (어드민)", description = "SUPER_ADMIN이 점검 윈도우를 관리합니다.")
 public class AdminMaintenanceController {
 
     private final ManageMaintenanceUseCase manageMaintenanceUseCase;
@@ -34,8 +34,9 @@ public class AdminMaintenanceController {
 
     @PostMapping
     @Operation(
-        summary = "[MAINT-001] 점검 윈도우 생성",
-        description = "즉시 또는 예약 점검 윈도우를 생성합니다. SUPER_ADMIN 만 호출할 수 있습니다."
+        operationId = "MAINT-001",
+        summary = "점검 윈도우 생성",
+        description = "즉시 또는 예약 점검 윈도우를 생성합니다. SUPER_ADMIN 권한이 필요합니다."
     )
     public MaintenanceWindowResponse start(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -48,8 +49,9 @@ public class AdminMaintenanceController {
 
     @PatchMapping("/{windowId}/end")
     @Operation(
-        summary = "[MAINT-002] 점검 윈도우 강제 종료",
-        description = "지정한 점검 윈도우를 즉시 종료합니다. SUPER_ADMIN 만 호출할 수 있습니다."
+        operationId = "MAINT-002",
+        summary = "점검 윈도우 강제 종료",
+        description = "지정한 점검 윈도우를 즉시 종료합니다. SUPER_ADMIN 권한이 필요합니다."
     )
     public MaintenanceWindowResponse forceEnd(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -62,8 +64,9 @@ public class AdminMaintenanceController {
 
     @GetMapping
     @Operation(
-        summary = "[MAINT-003] 점검 윈도우 전체 목록",
-        description = "활성/예약/종료 모든 점검 윈도우를 최신순으로 조회합니다."
+        operationId = "MAINT-003",
+        summary = "점검 윈도우 전체 목록",
+        description = "활성, 예약, 종료 상태의 모든 점검 윈도우를 최신순으로 조회합니다."
     )
     public List<MaintenanceWindowResponse> listAll(@CurrentMember MemberPrincipal memberPrincipal) {
         requireSuperAdmin(memberPrincipal);
@@ -74,7 +77,8 @@ public class AdminMaintenanceController {
 
     @GetMapping("/{windowId}")
     @Operation(
-        summary = "[MAINT-004] 점검 윈도우 단건 조회"
+        operationId = "MAINT-004",
+        summary = "점검 윈도우 단건 조회"
     )
     public MaintenanceWindowResponse getOne(
         @CurrentMember MemberPrincipal memberPrincipal,
