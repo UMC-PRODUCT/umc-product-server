@@ -1,8 +1,26 @@
 package com.umc.product.project.application.service.query;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectStatisticsInfo;
@@ -23,22 +41,8 @@ import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchin
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -141,10 +145,10 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
 
     private StatisticsPopulation resolvePopulation(List<ProjectStatisticsProjectRow> projects) {
         Set<Long> eligibleMemberIds = projects.stream()
-            .map(ProjectStatisticsProjectRow::gisuId)
+            .map(ProjectStatisticsProjectRow::chapterId)
             .filter(Objects::nonNull)
             .distinct()
-            .flatMap(gisuId -> getChallengerUseCase.getAllByGisuId(gisuId).stream())
+            .flatMap(chapterId -> getChallengerUseCase.listByChapterId(chapterId).stream())
             .filter(this::isEligibleChallenger)
             .map(ChallengerInfo::memberId)
             .filter(Objects::nonNull)
@@ -158,7 +162,10 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
     }
 
     private boolean isEligibleChallenger(ChallengerInfo challenger) {
-        return challenger.part() != ChallengerPart.ADMIN && challenger.part() != ChallengerPart.PLAN;
+        // 지원 가능 모집단(지부 인원)은 활동 중인 챌린저만 집계한다. 수료/제명 인원은 제외.
+        return challenger.challengerStatus() == ChallengerStatus.ACTIVE
+            && challenger.part() != ChallengerPart.ADMIN
+            && challenger.part() != ChallengerPart.PLAN;
     }
 
     private StatisticsContext buildContext(

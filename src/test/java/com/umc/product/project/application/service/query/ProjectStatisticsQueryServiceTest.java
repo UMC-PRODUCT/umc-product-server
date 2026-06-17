@@ -5,9 +5,21 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectStatisticsInfo;
@@ -20,15 +32,6 @@ import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectStatisticsQueryServiceTest {
@@ -74,14 +77,17 @@ class ProjectStatisticsQueryServiceTest {
                 applicationRow(projectId, 1004L, 203L, ProjectApplicationStatus.SUBMITTED, 2L,
                     MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND)
             ));
-        given(getChallengerUseCase.getAllByGisuId(gisuId))
+        given(getChallengerUseCase.listByChapterId(chapterId))
             .willReturn(List.of(
                 challenger(1001L, gisuId, ChallengerPart.WEB),
                 challenger(1002L, gisuId, ChallengerPart.DESIGN),
                 challenger(1003L, gisuId, ChallengerPart.WEB),
                 challenger(1004L, gisuId, ChallengerPart.ANDROID),
                 challenger(9001L, gisuId, ChallengerPart.PLAN),
-                challenger(9002L, gisuId, ChallengerPart.ADMIN)
+                challenger(9002L, gisuId, ChallengerPart.ADMIN),
+                // 수료/제명 챌린저는 지부 모집단(지원 가능 인원)에서 제외되어야 한다.
+                challenger(1005L, gisuId, ChallengerPart.WEB, ChallengerStatus.GRADUATED),
+                challenger(1006L, gisuId, ChallengerPart.SPRINGBOOT, ChallengerStatus.EXPELLED)
             ));
         given(getMemberUseCase.findAllSchoolIdsByIds(Set.of(1001L, 1002L, 1003L, 1004L)))
             .willReturn(Map.of(
@@ -173,7 +179,7 @@ class ProjectStatisticsQueryServiceTest {
                 applicationRow(10L, 9001L, 305L, ProjectApplicationStatus.SUBMITTED, 2L,
                     MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND)
             ));
-        given(getChallengerUseCase.getAllByGisuId(gisuId))
+        given(getChallengerUseCase.listByChapterId(chapterId))
             .willReturn(List.of(
                 challenger(1001L, gisuId, ChallengerPart.WEB),
                 challenger(1002L, gisuId, ChallengerPart.DESIGN),
@@ -297,10 +303,17 @@ class ProjectStatisticsQueryServiceTest {
     }
 
     private static ChallengerInfo challenger(Long memberId, Long gisuId, ChallengerPart part) {
+        return challenger(memberId, gisuId, part, ChallengerStatus.ACTIVE);
+    }
+
+    private static ChallengerInfo challenger(
+        Long memberId, Long gisuId, ChallengerPart part, ChallengerStatus status
+    ) {
         return ChallengerInfo.builder()
             .memberId(memberId)
             .gisuId(gisuId)
             .part(part)
+            .challengerStatus(status)
             .build();
     }
 }

@@ -9,6 +9,17 @@ import static com.umc.product.organization.domain.QGisu.gisu;
 import static com.umc.product.organization.domain.QSchool.school;
 import static java.util.Objects.requireNonNull;
 
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -29,22 +40,30 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.member.domain.QMember;
 import com.umc.product.organization.domain.QGisu;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
 public class ChallengerQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+
+    /**
+     * 지부(chapterId)에 속한 챌린저 목록 조회.
+     * <p>
+     * 지부의 기수와 일치하고, 회원의 학교가 해당 지부 소속 학교에 포함되는 챌린저를 반환합니다.
+     */
+    public List<Challenger> listByChapterId(Long chapterId) {
+        if (chapterId == null) {
+            return List.of();
+        }
+        return queryFactory
+            .selectFrom(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .where(chapterIdEq(chapterId))
+            .fetch();
+    }
 
     /**
      * 페이지네이션 검색 구현
