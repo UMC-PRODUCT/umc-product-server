@@ -29,7 +29,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface NoticeQueryApi {
 
     @Operation(
-        summary = "[NOTICE-001] 공지사항 전체 조회",
+        operationId = "NOTICE-001",
+        summary = "공지사항 전체 조회",
         description = """
             `noticeTab` 값으로 챌린저 공지(`CHALLENGER`)와 운영진 공지(`CHALLENGER` 외)를 구분
             CHALLENGER 공지는 운영진 공지가 아닌 일반공지를 의미함. 운영진 공지가 아닌 이상 `noticeTab`은 항상 `CHALLENGER`로 고정되어야 함.
@@ -77,7 +78,8 @@ public interface NoticeQueryApi {
     );
 
     @Operation(
-        summary = "[NOTICE-002] 공지사항 검색",
+        operationId = "NOTICE-002",
+        summary = "공지사항 검색",
         description = """
             키워드로 공지사항을 검색합니다. 제목과 내용에서 검색합니다.
 
@@ -108,7 +110,8 @@ public interface NoticeQueryApi {
     );
 
     @Operation(
-        summary = "[NOTICE-003] 공지사항 상세 조회",
+        operationId = "NOTICE-003",
+        summary = "공지사항 상세 조회",
         description = "특정 공지사항의 상세 정보를 조회합니다. READ 권한이 없으면 403을 반환합니다."
     )
     @ApiResponses({
@@ -132,7 +135,8 @@ public interface NoticeQueryApi {
     );
 
     @Operation(
-        summary = "[NOTICE-004] 공지사항 읽음 통계 조회",
+        operationId = "NOTICE-004",
+        summary = "공지사항 읽음 통계 조회",
         description = "공지사항의 전체 대상자 수, 읽은 수, 안 읽은 수 통계를 조회합니다."
     )
     GetNoticeStaticsResponse getNoticeReadStatics(
@@ -141,7 +145,8 @@ public interface NoticeQueryApi {
     );
 
     @Operation(
-        summary = "[NOTICE-005] 공지사항 읽음 현황 상세 조회",
+        operationId = "NOTICE-005",
+        summary = "공지사항 읽음 현황 상세 조회",
         description = """
             공지사항을 읽은/안읽은 사용자 목록을 커서 기반 페이징으로 조회합니다.
 
