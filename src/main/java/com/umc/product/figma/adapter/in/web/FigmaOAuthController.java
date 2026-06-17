@@ -29,7 +29,7 @@ public class FigmaOAuthController {
     /**
      * 동의 화면으로 이동할 authorize URL 발급. 인증된 운영진만 호출할 수 있고, 발급된 state 에 호출자의 memberId 가 묶인다. 응답을 받은 클라이언트가 직접 redirect 한다.
      */
-    @Operation(summary = "[FIGMA-001] Figma OAuth authorize URL 발급")
+    @Operation(operationId = "FIGMA-001", summary = "Figma OAuth 인증 URL 발급")
     @GetMapping
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
     public FigmaOAuthAuthorizeResponse start(
@@ -44,7 +44,7 @@ public class FigmaOAuthController {
      * Figma 동의 후 redirect 되어 들어오는 콜백. 브라우저 redirect 라 JWT 가 실리지 않으므로 인증 컨텍스트에 의존하지 않고, /start 에서 발급할 때 묶어 둔 memberId 를
      * state 로부터 복원해 사용한다.
      */
-    @Operation(summary = "[FIGMA-002] Figma OAuth 콜백 처리")
+    @Operation(operationId = "FIGMA-002", summary = "Figma OAuth 콜백")
     @GetMapping("/callback")
     @Public
     public FigmaOAuthCallbackResponse callback(
