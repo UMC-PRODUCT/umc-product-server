@@ -13,7 +13,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public interface FcmControllerApi {
 
     @Operation(
-        summary = "[FCM-001] FCM 토큰 등록",
+        operationId = "FCM-001",
+        summary = "FCM 토큰 등록",
         description = "사용자의 FCM 토큰을 등록하거나 업데이트합니다. 이미 등록된 토큰이 있으면 갱신됩니다."
     )
     @ApiResponses({
@@ -28,7 +29,8 @@ public interface FcmControllerApi {
     );
 
     @Operation(
-        summary = "[FCM-002] Legacy 토픽 구독 해제",
+        operationId = "FCM-002",
+        summary = "기존 토픽 구독 해제",
         description = "FCM Topic에 실행 환경 관련 Prefix가 붙기 전에 구독중이던 모든 Legacy Topic을 구독 해제합니다."
     )
     @ApiResponses({
@@ -40,7 +42,8 @@ public interface FcmControllerApi {
     );
 
     @Operation(
-        summary = "[FCM-003] FCM Topic 재구독 처리",
+        operationId = "FCM-003",
+        summary = "FCM 토픽 재구독",
         description = "요청 시점 기준으로 회원이 구독해야 하는 Topic들을 다시 구독처리합니다."
     )
     void resubscribeAllMemberLegacyTopics();
