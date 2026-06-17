@@ -30,14 +30,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v2/member")
 @RequiredArgsConstructor
-@Tag(name = "Member V2 | 회원 Query", description = "BFF 패턴이 적용되었습니다.")
+@Tag(name = "Member V2 | 회원 Query", description = "회원 화면에 필요한 종합 정보를 제공합니다.")
 public class MemberQueryV2Controller {
 
     private final GetMemberSummaryV2UseCase getMemberSummaryV2UseCase;
     private final SearchMemberUseCase searchMemberUseCase;
 
     @Operation(
-        summary = "[MEMBER-201] 내 종합 정보 조회",
+        operationId = "MEMBER-201",
+        summary = "내 종합 정보 조회",
         description = """
             현재 로그인한 사용자의 통합 정보를 반환합니다.
 
@@ -60,7 +61,8 @@ public class MemberQueryV2Controller {
     }
 
     @Operation(
-        summary = "[MEMBER-202] 회원 검색 v2",
+        operationId = "MEMBER-202",
+        summary = "회원 검색 v2",
         description = """
             회원 단위 검색 결과를 반환합니다.
 
