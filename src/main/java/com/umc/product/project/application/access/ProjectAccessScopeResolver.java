@@ -16,8 +16,8 @@ import com.umc.product.project.application.access.ProjectAccessScope.ChapterScop
 import com.umc.product.project.application.access.ProjectAccessScope.None;
 import com.umc.product.project.application.access.ProjectAccessScope.OwnerOnly;
 import com.umc.product.project.application.access.ProjectAccessScope.PublicOnly;
-import com.umc.product.project.application.access.ProjectAccessScope.SchoolScoped;
 import com.umc.product.project.application.access.ProjectAccessScope.WithOwnerIncluded;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
@@ -37,6 +37,7 @@ public class ProjectAccessScopeResolver {
 
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final LoadProjectPort loadProjectPort;
+    private final GetChapterUseCase getChapterUseCase;
 
     /**
      * 공개 검색(PROJECT-001) 컨텍스트.
@@ -79,7 +80,7 @@ public class ProjectAccessScopeResolver {
      * <ol>
      *   <li>Central Core → 전체 (DRAFT 제외)</li>
      *   <li>지부장 → 본인 지부 (DRAFT 제외)</li>
-     *   <li>학교 회장단 → 본인 학교 (DRAFT 제외)</li>
+     *   <li>학교 회장단 → 본인 학교가 속한 지부 전체 (DRAFT 제외) — 정책상 지부장과 동일 범위</li>
      *   <li>PM 챌린저 → 본인이 owner 인 프로젝트만 (DRAFT 포함)</li>
      *   <li>그 외 → 관리 대상 0건</li>
      * </ol>
@@ -105,7 +106,8 @@ public class ProjectAccessScopeResolver {
 
         Optional<Long> schoolId = schoolCoreOrgId(rolesInGisu);
         if (schoolId.isPresent()) {
-            return includeOwnerProjects(new SchoolScoped(schoolId.get(), requestedStatuses),
+            Long schoolChapterId = getChapterUseCase.byGisuAndSchool(gisuId, schoolId.get()).id();
+            return includeOwnerProjects(new ChapterScoped(schoolChapterId, requestedStatuses),
                 memberId, gisuId, requestedStatuses);
         }
 
