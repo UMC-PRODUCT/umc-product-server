@@ -234,15 +234,17 @@ public class ProjectResponseAssembler {
     /**
      * PROJECT-STAT-001 단건 프로젝트 지원/매칭 현황.
      */
-    public ProjectStatisticsResponse statisticsForProject(Long projectId) {
-        return ProjectStatisticsResponse.from(getProjectStatisticsUseCase.getByProjectId(projectId));
+    public ProjectStatisticsResponse statisticsForProject(Long projectId, Long requesterMemberId) {
+        return ProjectStatisticsResponse.from(
+            getProjectStatisticsUseCase.getByProjectId(projectId, requesterMemberId));
     }
 
     /**
      * PROJECT-STAT-002 지부 전체 프로젝트 지원/매칭 현황.
      */
-    public ChapterProjectStatisticsResponse statisticsForChapter(Long chapterId) {
-        return ChapterProjectStatisticsResponse.from(getProjectStatisticsUseCase.getByChapterId(chapterId));
+    public ChapterProjectStatisticsResponse statisticsForChapter(Long chapterId, Long requesterMemberId) {
+        return ChapterProjectStatisticsResponse.from(
+            getProjectStatisticsUseCase.getByChapterId(chapterId, requesterMemberId));
     }
 
     private ProjectMembersResponse buildMembersResponse(

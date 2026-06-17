@@ -6,9 +6,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
-import com.umc.product.authorization.domain.PermissionType;
-import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.project.adapter.in.web.assembler.ProjectResponseAssembler;
@@ -39,19 +36,15 @@ public class ProjectStatisticsQueryController {
             없거나 (강제배정/랜덤매칭) 여러 건 (떨어지고 재 지원하는 경우) 이 존재할 수 있어 배열로 구성되어 있습니다.
 
             지원자 목록은(특정 프로젝트에 대한 지원서 조회) `/api/v1/projects/{projectId}/applications`를 호출하셔서 활용하셔야 합니다.
+
+            권한: 해당 프로젝트의 PO/Sub-PM(본인 프로젝트) 또는 총괄단은 멤버 단위 상세까지, 해당 지부장·해당 지부 소속 학교 회장/부회장은 집계 숫자만 조회할 수 있습니다. 그 외에는 403.
             """
-    )
-    @CheckAccess(
-        resourceType = ResourceType.PROJECT,
-        resourceId = "#projectId",
-        permission = PermissionType.READ,
-        message = "프로젝트 지원/매칭 현황을 볼 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public ProjectStatisticsResponse getProjectStatistics(
         @CurrentMember MemberPrincipal memberPrincipal,
         @Parameter(description = "프로젝트 ID", required = true) @PathVariable Long projectId
     ) {
-        return assembler.statisticsForProject(projectId);
+        return assembler.statisticsForProject(projectId, memberPrincipal.getMemberId());
     }
 
     @GetMapping("/statistics")
@@ -74,17 +67,14 @@ public class ProjectStatisticsQueryController {
             - roundSchoolRankings: N차 매칭 지원 Top N에 활용합니다. 각 차수별로, 각 학교별 지원자 수
             - schoolMatchingStatistics: 총원 N명 카드에 활용합니다. 차수와 무관하게, 각 학교별 총 매칭 완료 인원 & 지원 가능 총원
             - projectRoundStatistics: 프로젝트별 지원 현황 필드에 활용합니다. 각 프로젝트별로, 각 매칭 차수별 정보 (매칭 종류 & 차수) 와 지원자 수
+
+            권한: 총괄단은 모든 지부를 멤버 단위 상세까지, 해당 지부장·해당 지부 소속 학교 회장/부회장은 본인 지부를 집계 숫자만 조회할 수 있습니다. 그 외에는 403. (PO/Sub-PM 은 본인 프로젝트를 단건 조회 API로 확인합니다.)
             """
-    )
-    @CheckAccess(
-        resourceType = ResourceType.PROJECT,
-        permission = PermissionType.READ,
-        message = "프로젝트 지원/매칭 현황을 볼 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public ChapterProjectStatisticsResponse listChapterProjectStatistics(
         @CurrentMember MemberPrincipal memberPrincipal,
         @Parameter(description = "지부 ID", required = true) @RequestParam Long chapterId
     ) {
-        return assembler.statisticsForChapter(chapterId);
+        return assembler.statisticsForChapter(chapterId, memberPrincipal.getMemberId());
     }
 }
