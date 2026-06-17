@@ -1,5 +1,6 @@
 package com.umc.product.organization.application.port.service.query;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +83,19 @@ public class ChapterQueryService implements GetChapterUseCase {
         return chapterSchools.stream()
             .map(ChapterSchool::getChapter)
             .map(ChapterInfo::from)
+            .toList();
+    }
+
+    @Override
+    public List<ChapterInfo> getChaptersBySchoolIds(Collection<Long> schoolIds) {
+        if (schoolIds == null || schoolIds.isEmpty()) {
+            return List.of();
+        }
+
+        return loadChapterSchoolPort.findBySchoolIds(schoolIds).stream()
+            .map(ChapterSchool::getChapter)
+            .map(ChapterInfo::from)
+            .distinct()
             .toList();
     }
 

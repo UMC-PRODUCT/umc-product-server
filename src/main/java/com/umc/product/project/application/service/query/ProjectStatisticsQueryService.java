@@ -68,9 +68,8 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
 
     @Override
     public ProjectStatisticsInfo getByProjectId(Long projectId, Long requesterMemberId) {
-        Project target = loadProjectPort.findById(projectId)
-            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_NOT_FOUND));
-        StatisticsAccessLevel accessLevel = resolveProjectAccess(requesterMemberId, target);
+        Project target = loadProjectPort.getById(projectId);
+        validateProjectAccess(requesterMemberId, target);
 
         ProjectStatisticsProjectRow project = loadProjectStatisticsPort.getProjectById(projectId);
         List<ProjectStatisticsMatchingRoundRow> rounds =
@@ -81,13 +80,12 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             sortApplications(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(Set.of(projectId)));
         StatisticsPopulation population = resolvePopulation(List.of(project));
 
-        ProjectStatisticsInfo info = assembleProject(project, rounds, members, applications, population);
-        return maskIfNumbersOnly(info, accessLevel);
+        return assembleProject(project, rounds, members, applications, population);
     }
 
     @Override
     public ChapterProjectStatisticsInfo getByChapterId(Long chapterId, Long requesterMemberId) {
-        StatisticsAccessLevel accessLevel = resolveChapterAccess(requesterMemberId, chapterId);
+        validateChapterAccess(requesterMemberId, chapterId);
 
         List<ProjectStatisticsProjectRow> projects = loadProjectStatisticsPort.listProjectsByChapterId(chapterId);
         if (projects.isEmpty()) {
@@ -126,7 +124,6 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
                 applicationsByProject.getOrDefault(project.projectId(), List.of()),
                 population
             ))
-            .map(info -> maskIfNumbersOnly(info, accessLevel))
             .toList();
 
         StatisticsContext chapterContext = buildContext(rounds, applications, members, population);
@@ -143,41 +140,32 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
     }
 
     /**
-     * 단건 프로젝트 통계 접근 권한 판정.
-     * <p>
-     * 본인 프로젝트의 PO/Sub-PM 이면 멤버 단위까지 노출(FULL). 그 외에는 지부 운영진 판정으로 위임한다.
+     * 단건 프로젝트 통계 접근 권한 검증. 본인 프로젝트의 PO/Sub-PM 이면 통과, 아니면 지부 운영진 판정으로 위임한다.
      */
-    private StatisticsAccessLevel resolveProjectAccess(Long memberId, Project project) {
+    private void validateProjectAccess(Long memberId, Project project) {
         boolean isOwner = Objects.equals(project.getProductOwnerMemberId(), memberId);
         boolean isSubPm = loadProjectMemberPort.isActivePlanMember(project.getId(), memberId);
         if (isOwner || isSubPm) {
-            return StatisticsAccessLevel.FULL;
+            return;
         }
-        return resolveChapterAccess(memberId, project.getChapterId());
+        validateChapterAccess(memberId, project.getChapterId());
     }
 
     /**
-     * 지부 단위 통계 접근 권한 판정.
-     * <ul>
-     *   <li>총괄단(SUPER_ADMIN 포함) → FULL (멤버 단위 포함)</li>
-     *   <li>해당 지부장 / 해당 지부 소속 학교 회장·부회장 → NUMBERS_ONLY (집계 숫자만)</li>
-     *   <li>그 외 → {@code PROJECT_ACCESS_DENIED}</li>
-     * </ul>
+     * 지부 단위 통계 접근 권한 검증. 총괄단(SUPER_ADMIN 포함) / 해당 지부장 / 해당 지부 소속 학교 회장·부회장이면 통과,
+     * 그 외에는 {@code PROJECT_ACCESS_DENIED}.
+     * <p>
      * 요청 chapterId 는 치환하지 않고 통과/거부만 판정한다(총괄단의 타 지부 조회 보장).
      */
-    private StatisticsAccessLevel resolveChapterAccess(Long memberId, Long chapterId) {
+    private void validateChapterAccess(Long memberId, Long chapterId) {
         List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
-        if (roles.stream().anyMatch(role -> role.roleType().isAtLeastCentralCore())) {
-            return StatisticsAccessLevel.FULL;
-        }
-        boolean isChapterStaff = roles.stream()
-            .anyMatch(role -> role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
-                && Objects.equals(role.organizationId(), chapterId))
+        boolean allowed = roles.stream().anyMatch(role -> role.roleType().isAtLeastCentralCore()
+                || (role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
+                    && Objects.equals(role.organizationId(), chapterId)))
             || isSchoolCoreOfChapter(roles, chapterId);
-        if (isChapterStaff) {
-            return StatisticsAccessLevel.NUMBERS_ONLY;
+        if (!allowed) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
-        throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
     }
 
     private boolean isSchoolCoreOfChapter(List<ChallengerRoleInfo> roles, Long chapterId) {
@@ -190,24 +178,8 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
         if (schoolIds.isEmpty()) {
             return false;
         }
-        return schoolIds.stream()
-            .flatMap(schoolId -> getChapterUseCase.getChaptersBySchool(schoolId).stream())
+        return getChapterUseCase.getChaptersBySchoolIds(schoolIds).stream()
             .anyMatch(chapter -> Objects.equals(chapter.id(), chapterId));
-    }
-
-    /**
-     * NUMBERS_ONLY 면 멤버 단위 데이터(projectMembers)를 제거해 집계 숫자만 남긴다.
-     */
-    private ProjectStatisticsInfo maskIfNumbersOnly(ProjectStatisticsInfo info, StatisticsAccessLevel accessLevel) {
-        if (accessLevel == StatisticsAccessLevel.FULL) {
-            return info;
-        }
-        return new ProjectStatisticsInfo(
-            info.projectId(),
-            List.of(),
-            info.roundApplicationStatistics(),
-            info.schoolApplicationStatistics()
-        );
     }
 
     private ProjectStatisticsInfo assembleProject(
@@ -481,14 +453,6 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
 
     private ChapterProjectStatisticsSummaryInfo emptySummary() {
         return new ChapterProjectStatisticsSummaryInfo(List.of(), List.of(), List.of(), List.of());
-    }
-
-    /**
-     * 통계 조회 시 노출 수준. FULL 은 멤버 단위 포함, NUMBERS_ONLY 는 집계 숫자만.
-     */
-    private enum StatisticsAccessLevel {
-        FULL,
-        NUMBERS_ONLY
     }
 
     private record StatisticsPopulation(

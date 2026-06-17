@@ -37,7 +37,7 @@ public class ProjectStatisticsQueryController {
 
             지원자 목록은(특정 프로젝트에 대한 지원서 조회) `/api/v1/projects/{projectId}/applications`를 호출하셔서 활용하셔야 합니다.
 
-            권한: 해당 프로젝트의 PO/Sub-PM(본인 프로젝트) 또는 총괄단은 멤버 단위 상세까지, 해당 지부장·해당 지부 소속 학교 회장/부회장은 집계 숫자만 조회할 수 있습니다. 그 외에는 403.
+            권한: 해당 프로젝트의 PO/Sub-PM(본인 프로젝트), 총괄단, 해당 지부장, 해당 지부 소속 학교 회장/부회장만 조회할 수 있습니다. 그 외에는 403.
             """
     )
     public ProjectStatisticsResponse getProjectStatistics(
@@ -68,7 +68,7 @@ public class ProjectStatisticsQueryController {
             - schoolMatchingStatistics: 총원 N명 카드에 활용합니다. 차수와 무관하게, 각 학교별 총 매칭 완료 인원 & 지원 가능 총원
             - projectRoundStatistics: 프로젝트별 지원 현황 필드에 활용합니다. 각 프로젝트별로, 각 매칭 차수별 정보 (매칭 종류 & 차수) 와 지원자 수
 
-            권한: 총괄단은 모든 지부를 멤버 단위 상세까지, 해당 지부장·해당 지부 소속 학교 회장/부회장은 본인 지부를 집계 숫자만 조회할 수 있습니다. 그 외에는 403. (PO/Sub-PM 은 본인 프로젝트를 단건 조회 API로 확인합니다.)
+            권한: 총괄단(모든 지부), 해당 지부장, 해당 지부 소속 학교 회장/부회장만 조회할 수 있습니다. 그 외에는 403. (PO/Sub-PM 은 본인 프로젝트를 단건 조회 API로 확인합니다.)
             """
     )
     public ChapterProjectStatisticsResponse listChapterProjectStatistics(

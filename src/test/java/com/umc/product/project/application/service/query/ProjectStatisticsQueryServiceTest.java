@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
@@ -123,8 +122,8 @@ class ProjectStatisticsQueryServiceTest {
             ));
         // 요청자가 해당 프로젝트의 PO → FULL (멤버 단위 포함)
         Long requesterMemberId = 7000L;
-        given(loadProjectPort.findById(projectId))
-            .willReturn(Optional.of(project(projectId, requesterMemberId, chapterId)));
+        given(loadProjectPort.getById(projectId))
+            .willReturn(project(projectId, requesterMemberId, chapterId));
 
         // when
         ProjectStatisticsInfo result = sut.getByProjectId(projectId, requesterMemberId);
@@ -298,8 +297,8 @@ class ProjectStatisticsQueryServiceTest {
     }
 
     @Test
-    @DisplayName("getByChapterId_지부장이면_숫자만_반환하고_멤버_단위를_숨긴다")
-    void 지부_지부장이면_숫자만() {
+    @DisplayName("getByChapterId_지부장이면_조회_가능하다")
+    void 지부_지부장이면_조회_가능() {
         // given
         Long chapterId = 3L;
         Long gisuId = 1L;
@@ -312,16 +311,15 @@ class ProjectStatisticsQueryServiceTest {
         // when
         ChapterProjectStatisticsInfo result = sut.getByChapterId(chapterId, requesterMemberId);
 
-        // then — 멤버 단위(projectMembers)는 비워지고, 집계 숫자(summary)는 그대로
+        // then — 권한 통과: 프로젝트 멤버까지 그대로 노출
         assertThat(result.projects()).hasSize(1);
-        assertThat(result.projects().get(0).projectMembers()).isEmpty();
-        assertThat(result.projects().get(0).roundApplicationStatistics()).isNotNull();
+        assertThat(result.projects().get(0).projectMembers()).hasSize(1);
         assertThat(result.summary()).isNotNull();
     }
 
     @Test
-    @DisplayName("getByChapterId_해당_지부_소속_학교_회장이면_숫자만_반환한다")
-    void 지부_학교_회장이면_숫자만() {
+    @DisplayName("getByChapterId_해당_지부_소속_학교_회장이면_조회_가능하다")
+    void 지부_학교_회장이면_조회_가능() {
         // given
         Long chapterId = 3L;
         Long gisuId = 1L;
@@ -331,7 +329,7 @@ class ProjectStatisticsQueryServiceTest {
         given(getChallengerRoleUseCase.findAllByMemberId(requesterMemberId))
             .willReturn(List.of(roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL,
                 schoolId, gisuId)));
-        given(getChapterUseCase.getChaptersBySchool(schoolId))
+        given(getChapterUseCase.getChaptersBySchoolIds(Set.of(schoolId)))
             .willReturn(List.of(new ChapterInfo(chapterId, "테스트 지부")));
 
         // when
@@ -339,7 +337,7 @@ class ProjectStatisticsQueryServiceTest {
 
         // then
         assertThat(result.projects()).hasSize(1);
-        assertThat(result.projects().get(0).projectMembers()).isEmpty();
+        assertThat(result.projects().get(0).projectMembers()).hasSize(1);
     }
 
     @Test
@@ -365,8 +363,8 @@ class ProjectStatisticsQueryServiceTest {
         Long requesterMemberId = 8300L;
         givenSingleProject(projectId, gisuId, chapterId);
         // PO 는 아니지만 ACTIVE PLAN 멤버(Sub-PM)
-        given(loadProjectPort.findById(projectId))
-            .willReturn(Optional.of(project(projectId, 9999L, chapterId)));
+        given(loadProjectPort.getById(projectId))
+            .willReturn(project(projectId, 9999L, chapterId));
         given(loadProjectMemberPort.isActivePlanMember(projectId, requesterMemberId)).willReturn(true);
 
         // when
@@ -377,16 +375,16 @@ class ProjectStatisticsQueryServiceTest {
     }
 
     @Test
-    @DisplayName("getByProjectId_지부장이면_숫자만_반환한다")
-    void 단건_지부장이면_숫자만() {
+    @DisplayName("getByProjectId_지부장이면_조회_가능하다")
+    void 단건_지부장이면_조회_가능() {
         // given
         Long projectId = 10L;
         Long gisuId = 1L;
         Long chapterId = 3L;
         Long requesterMemberId = 8400L;
         givenSingleProject(projectId, gisuId, chapterId);
-        given(loadProjectPort.findById(projectId))
-            .willReturn(Optional.of(project(projectId, 9999L, chapterId)));
+        given(loadProjectPort.getById(projectId))
+            .willReturn(project(projectId, 9999L, chapterId));
         given(getChallengerRoleUseCase.findAllByMemberId(requesterMemberId))
             .willReturn(List.of(roleInfo(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER,
                 chapterId, gisuId)));
@@ -394,9 +392,8 @@ class ProjectStatisticsQueryServiceTest {
         // when
         ProjectStatisticsInfo result = sut.getByProjectId(projectId, requesterMemberId);
 
-        // then
-        assertThat(result.projectMembers()).isEmpty();
-        assertThat(result.roundApplicationStatistics()).isNotNull();
+        // then — 권한 통과: 프로젝트 멤버까지 그대로 노출
+        assertThat(result.projectMembers()).hasSize(1);
     }
 
     @Test
@@ -406,8 +403,8 @@ class ProjectStatisticsQueryServiceTest {
         Long projectId = 10L;
         Long chapterId = 3L;
         Long requesterMemberId = 8500L;
-        given(loadProjectPort.findById(projectId))
-            .willReturn(Optional.of(project(projectId, 9999L, chapterId)));
+        given(loadProjectPort.getById(projectId))
+            .willReturn(project(projectId, 9999L, chapterId));
         given(getChallengerRoleUseCase.findAllByMemberId(requesterMemberId)).willReturn(List.of());
 
         // when & then
