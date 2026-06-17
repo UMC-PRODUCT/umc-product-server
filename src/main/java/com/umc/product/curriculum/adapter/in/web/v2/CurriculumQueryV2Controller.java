@@ -20,13 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v2/curriculums")
 @RequiredArgsConstructor
-@Tag(name = "Curriculum V2 | 커리큘럼 Query", description = "커리큘럼 및 내 진행상황 등 조회")
+@Tag(name = "Curriculum V2 | 커리큘럼 Query", description = "커리큘럼과 내 진행 상황을 조회합니다.")
 public class CurriculumQueryV2Controller {
 
     private final GetCurriculumUseCase getCurriculumUseCase;
 
     @Operation(
-        summary = "[CURRICULUM-101] 특정 기수의 파트별 커리큘럼 조회",
+        operationId = "CURRICULUM-101",
+        summary = "특정 기수의 파트별 커리큘럼 조회",
         description = """
             요청을 보낸 사람과 관계없이, 해당 기수의 커리큘럼 목록을 조회하기 위해서 사용합니다.
 
@@ -53,7 +54,8 @@ public class CurriculumQueryV2Controller {
     }
 
     @Operation(
-        summary = "[CURRICULUM-102] 내 커리큘럼 진행 상황 조회",
+        operationId = "CURRICULUM-102",
+        summary = "내 커리큘럼 진행 상황 조회",
         description = """
             해당 기수에 사용자가 속한 스터디 그룹에 따라 커리큘럼을 반환합니다.
             커리큘럼에 따라서 각 사용자의 워크북이 존재하는 경우에는 포함됩니다.
