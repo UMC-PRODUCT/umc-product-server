@@ -21,7 +21,7 @@ import lombok.Builder;
  * Controller는 분기 로직을 가지지 않고, Request DTO의 {@code toQuery(...)}에서 팩토리를 선택합니다.
  * <p>
  * Service 계층에서 {@link com.umc.product.project.application.access.ProjectAccessScope} 적용 시
- * {@link #withStatuses}, {@link #withChapterFilter}, {@link #withSchoolFilter}, {@link #withOwnerFilter}
+ * {@link #withStatuses}, {@link #withChapterFilter}, {@link #withOwnerFilter}
  * 헬퍼로 새 인스턴스를 만들어 어댑터에 전달합니다.
  */
 @Builder
@@ -117,14 +117,6 @@ public record SearchProjectQuery(
     public SearchProjectQuery withChapterFilter(Long chapterId, Set<ProjectStatus> newStatuses) {
         return copyBuilder()
             .chapterId(chapterId)
-            .statuses(toList(newStatuses))
-            .build();
-    }
-
-    /** scope 적용 — 학교 한정 + 상태 교체. */
-    public SearchProjectQuery withSchoolFilter(Long schoolId, Set<ProjectStatus> newStatuses) {
-        return copyBuilder()
-            .productOwnerSchoolIds(List.of(schoolId))
             .statuses(toList(newStatuses))
             .build();
     }
