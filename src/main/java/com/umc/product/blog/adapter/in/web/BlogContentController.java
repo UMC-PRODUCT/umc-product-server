@@ -41,7 +41,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/blog")
 @RequiredArgsConstructor
-@Tag(name = "Blog | 콘텐츠", description = "블로그 CMS 콘텐츠 API")
+@Tag(name = "Blog | 콘텐츠", description = "블로그 콘텐츠를 조회하고 관리합니다.")
 public class BlogContentController {
 
     private final GetBlogContentUseCase getBlogContentUseCase;
@@ -51,7 +51,7 @@ public class BlogContentController {
 
     @Public
     @GetMapping("/contents")
-    @Operation(summary = "[BLOG-CONTENT-001] 공개 콘텐츠 목록 조회")
+    @Operation(operationId = "BLOG-CONTENT-001", summary = "공개 콘텐츠 목록 조회")
     public CursorResponse<BlogContentSummaryResponse> getPublicContents(
         @RequestParam(required = false) String type,
         @RequestParam(required = false) String seriesSlug,
@@ -72,7 +72,7 @@ public class BlogContentController {
 
     @Public
     @GetMapping("/contents/{type}/{slug}")
-    @Operation(summary = "[BLOG-CONTENT-002] 공개 콘텐츠 상세 조회")
+    @Operation(operationId = "BLOG-CONTENT-002", summary = "공개 콘텐츠 상세 조회")
     public BlogContentResponse getPublicContent(
         @PathVariable String type,
         @PathVariable String slug,
@@ -85,7 +85,7 @@ public class BlogContentController {
 
     @GetMapping("/contents/{contentId}/preview")
     @CheckAccess(resourceType = ResourceType.BLOG_CONTENT, resourceId = "#contentId", permission = PermissionType.READ)
-    @Operation(summary = "[BLOG-CONTENT-003] 콘텐츠 preview 조회")
+    @Operation(operationId = "BLOG-CONTENT-003", summary = "콘텐츠 미리보기 조회")
     public BlogContentResponse getPreview(
         @PathVariable Long contentId,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -97,7 +97,7 @@ public class BlogContentController {
 
     @PostMapping("/contents")
     @CheckAccess(resourceType = ResourceType.BLOG_CONTENT, permission = PermissionType.WRITE)
-    @Operation(summary = "[BLOG-CONTENT-004] 콘텐츠 생성")
+    @Operation(operationId = "BLOG-CONTENT-004", summary = "콘텐츠 생성")
     public BlogContentResponse create(
         @Valid @RequestBody BlogContentRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -109,7 +109,7 @@ public class BlogContentController {
 
     @PatchMapping("/contents/{contentId}")
     @CheckAccess(resourceType = ResourceType.BLOG_CONTENT, resourceId = "#contentId", permission = PermissionType.EDIT)
-    @Operation(summary = "[BLOG-CONTENT-005] 콘텐츠 수정")
+    @Operation(operationId = "BLOG-CONTENT-005", summary = "콘텐츠 수정")
     public BlogContentResponse update(
         @PathVariable Long contentId,
         @Valid @RequestBody BlogContentRequest request
@@ -119,7 +119,7 @@ public class BlogContentController {
 
     @DeleteMapping("/contents/{contentId}")
     @CheckAccess(resourceType = ResourceType.BLOG_CONTENT, resourceId = "#contentId", permission = PermissionType.DELETE)
-    @Operation(summary = "[BLOG-CONTENT-006] 콘텐츠 삭제")
+    @Operation(operationId = "BLOG-CONTENT-006", summary = "콘텐츠 삭제")
     public void delete(
         @PathVariable Long contentId,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -129,7 +129,7 @@ public class BlogContentController {
 
     @Public
     @GetMapping("/seo/paths")
-    @Operation(summary = "[BLOG-CONTENT-007] SEO public path 목록 조회")
+    @Operation(operationId = "BLOG-CONTENT-007", summary = "SEO public path 목록 조회")
     public BlogSeoPathsResponse getSeoPaths() {
         return BlogSeoPathsResponse.from(getBlogContentUseCase.getSeoPaths());
     }
