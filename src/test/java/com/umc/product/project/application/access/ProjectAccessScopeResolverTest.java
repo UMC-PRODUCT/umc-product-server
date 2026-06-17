@@ -17,12 +17,13 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import com.umc.product.project.application.access.ProjectAccessScope.All;
 import com.umc.product.project.application.access.ProjectAccessScope.ChapterScoped;
 import com.umc.product.project.application.access.ProjectAccessScope.None;
 import com.umc.product.project.application.access.ProjectAccessScope.OwnerOnly;
 import com.umc.product.project.application.access.ProjectAccessScope.PublicOnly;
-import com.umc.product.project.application.access.ProjectAccessScope.SchoolScoped;
 import com.umc.product.project.application.access.ProjectAccessScope.WithOwnerIncluded;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.enums.ProjectStatus;
@@ -34,6 +35,8 @@ class ProjectAccessScopeResolverTest {
     GetChallengerRoleUseCase getChallengerRoleUseCase;
     @Mock
     LoadProjectPort loadProjectPort;
+    @Mock
+    GetChapterUseCase getChapterUseCase;
 
     @InjectMocks
     ProjectAccessScopeResolver sut;
@@ -166,30 +169,35 @@ class ProjectAccessScopeResolverTest {
     }
 
     @Test
-    void management_은_학교_회장이면_SchoolScoped() {
+    void management_은_학교_회장이면_본인_학교가_속한_지부의_ChapterScoped() {
         Long memberId = 10L;
         Long gisuId = 1L;
         given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of(
             roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, 7L, gisuId)
         ));
+        given(getChapterUseCase.byGisuAndSchool(gisuId, 7L))
+            .willReturn(new ChapterInfo(5L, "테스트 지부"));
 
         ProjectAccessScope scope = sut.resolveForManagement(memberId, gisuId, Set.of(ProjectStatus.IN_PROGRESS));
 
-        assertThat(scope).isInstanceOf(SchoolScoped.class);
-        assertThat(((SchoolScoped) scope).schoolId()).isEqualTo(7L);
+        assertThat(scope).isInstanceOf(ChapterScoped.class);
+        assertThat(((ChapterScoped) scope).chapterId()).isEqualTo(5L);
     }
 
     @Test
-    void management_은_학교_부회장도_SchoolScoped() {
+    void management_은_학교_부회장도_본인_학교가_속한_지부의_ChapterScoped() {
         Long memberId = 10L;
         Long gisuId = 1L;
         given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of(
             roleInfo(ChallengerRoleType.SCHOOL_VICE_PRESIDENT, OrganizationType.SCHOOL, 7L, gisuId)
         ));
+        given(getChapterUseCase.byGisuAndSchool(gisuId, 7L))
+            .willReturn(new ChapterInfo(5L, "테스트 지부"));
 
         ProjectAccessScope scope = sut.resolveForManagement(memberId, gisuId, Set.of(ProjectStatus.IN_PROGRESS));
 
-        assertThat(scope).isInstanceOf(SchoolScoped.class);
+        assertThat(scope).isInstanceOf(ChapterScoped.class);
+        assertThat(((ChapterScoped) scope).chapterId()).isEqualTo(5L);
     }
 
     @Test
