@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/umc-product/functional-units")
 @RequiredArgsConstructor
-@Tag(name = "Organization | UMC PRODUCT 기능 조직 Query", description = "UMC PRODUCT 기능 조직 목록 조회")
+@Tag(name = "Organization | UMC PRODUCT 기능 조직 Query", description = "UMC PRODUCT 기능 조직 목록을 조회합니다.")
 public class UmcProductFunctionalUnitQueryController {
 
     private final GetUmcProductFunctionalUnitUseCase getUmcProductFunctionalUnitUseCase;
