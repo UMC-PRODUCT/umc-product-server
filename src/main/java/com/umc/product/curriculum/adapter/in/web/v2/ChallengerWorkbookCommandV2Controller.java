@@ -15,11 +15,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v2/curriculums/challenger-workbooks")
 @RequiredArgsConstructor
-@Tag(name = "Curriculum V2 | Challenger Workbook Command", description = "챌린저/파트장용 - 챌린저 워크북 배포 및 수정, 베스트 워크북 지정 관련")
+@Tag(name = "Curriculum V2 | Challenger Workbook Command", description = "챌린저 워크북 배포, 수정, 베스트 워크북 지정을 다룹니다.")
 public class ChallengerWorkbookCommandV2Controller {
 
     @Operation(
-        summary = "[CHALLENGER-WORKBOOK-001] 챌린저용: 특정 원본 워크북 배포 요청",
+        operationId = "CHALLENGER-WORKBOOK-001",
+        summary = "챌린저용: 특정 원본 워크북 배포 요청",
         description = """
             커리큘럼 조회를 통해 받은 OriginalWorkbookId를 통해서 배포 요청을 합니다.
 
@@ -45,7 +46,8 @@ public class ChallengerWorkbookCommandV2Controller {
     }
 
     @Operation(
-        summary = "[CHALLENGER-WORKBOOK-002] 챌린저 워크북 수정",
+        operationId = "CHALLENGER-WORKBOOK-002",
+        summary = "챌린저 워크북 수정",
         description = """
             자신의 워크북의 내용을 수정합니다.
 
@@ -64,7 +66,8 @@ public class ChallengerWorkbookCommandV2Controller {
     // ============== 운영진용 ==============
 
     @Operation(
-        summary = "[CHALLENGER-WORKBOOK-003] 챌린저 워크북 삭제",
+        operationId = "CHALLENGER-WORKBOOK-003",
+        summary = "챌린저 워크북 삭제",
         description = """
             부정적인 방법으로 배포된 챌린저 워크북을 강제로 삭제합니다.
             챌린저는 본인 워크북이라도 삭제할 수 없습니다.
@@ -82,7 +85,8 @@ public class ChallengerWorkbookCommandV2Controller {
     }
 
     @Operation(
-        summary = "[CHALLENGER-WORKBOOK-004] 회장단용: 특정 워크북 인정 처리",
+        operationId = "CHALLENGER-WORKBOOK-004",
+        summary = "회장단 워크북 인정",
         description = """
             특정 워크북에 대해 미션을 제출하지 않아도 벌점이 부과되지 않도록 인정 처리합니다.
             인정 처리에 대한 철회는 제공하지 않습니다.
@@ -102,7 +106,8 @@ public class ChallengerWorkbookCommandV2Controller {
     // ============== 운영진용: 베스트 워크북 처리 ==============
 
     @Operation(
-        summary = "[CHALLENGER-WORKBOOK-005] 베스트 워크북 선정",
+        operationId = "CHALLENGER-WORKBOOK-005",
+        summary = "베스트 워크북 선정",
         description = """
             스터디 그룹에서 특정 주차의 베스트 워크북을 선정합니다.
 
@@ -124,7 +129,8 @@ public class ChallengerWorkbookCommandV2Controller {
     }
 
     @Operation(
-        summary = "[CHALLENGER-WORKBOOK-006] 베스트 워크북 선정 사유 수정",
+        operationId = "CHALLENGER-WORKBOOK-006",
+        summary = "베스트 워크북 선정 사유 수정",
         description = """
             베스트 워크북으로 선정한 사유를 수정합니다.
 
@@ -143,7 +149,8 @@ public class ChallengerWorkbookCommandV2Controller {
     }
 
     @Operation(
-        summary = "[CHALLENGER-WORKBOOK-007] 베스트 워크북 선정 철회",
+        operationId = "CHALLENGER-WORKBOOK-007",
+        summary = "베스트 워크북 선정 철회",
         description = """
             베스트 워크북 선정을 철회합니다.
             해당 주차가 종료된 이후 1주일 뒤까지만 철회가 가능합니다.
