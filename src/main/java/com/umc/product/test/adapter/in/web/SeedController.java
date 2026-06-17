@@ -63,7 +63,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 @Public
-@Tag(name = "Test | 시딩", description = "운영 외 환경 전용 시딩 API 입니다. prod 환경에서는 활성화되지 않습니다.")
+@Tag(name = "Test | 시딩", description = "운영 외 환경에서 시딩 데이터를 만듭니다. prod 환경에서는 비활성화됩니다.")
 public class SeedController {
 
     private final SeedMembersUseCase seedMembersUseCase;
@@ -126,7 +126,7 @@ public class SeedController {
     @Operation(
         operationId = "SEED-002-C",
         summary = "테스트 챌린저 단건 생성",
-        description = "memberId, gisuId, part 를 받아 챌린저를 1명 생성합니다."
+        description = "memberId, gisuId, part로 챌린저 1명을 만듭니다."
     )
     @PostMapping("/challenger")
     public CreateSeedChallengerResponse createChallenger(
@@ -247,7 +247,8 @@ public class SeedController {
     }
 
     @Operation(
-        summary = "[SEED-006] 지원서 시나리오 시딩",
+        operationId = "SEED-006",
+        summary = "지원서 시나리오 시딩",
         description = """
             지정 매칭 차수 + 지부를 기준으로, 아직 팀에 합류하지 않은 ACTIVE 챌린저들이
             지부의 IN_PROGRESS 프로젝트에 지원서를 제출하는 시나리오를 실행합니다.
