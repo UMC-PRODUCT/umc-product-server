@@ -21,13 +21,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/schools")
 @RequiredArgsConstructor
-@Tag(name = "Analytics | 학교별 현황", description = "운영진 학교별 현황 집계 API")
+@Tag(name = "Analytics | 학교별 현황", description = "운영진이 학교별 운영 현황을 확인합니다.")
 public class AdminSchoolAnalyticsController {
 
     private final GetAdminSchoolSummaryUseCase getAdminSchoolSummaryUseCase;
 
     @GetMapping("summary")
-    @Operation(summary = "[DASHBOARD-100] 학교별 현황 조회")
+    @Operation(operationId = "DASHBOARD-100", summary = "학교별 현황 조회")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public PageResponse<AdminSchoolSummaryResponse> getSchoolSummaries(
         @CurrentMember MemberPrincipal memberPrincipal,
