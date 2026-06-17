@@ -94,7 +94,7 @@ public class ProjectApplicationQueryService
 
         // 지원자 본인은 시점 제약 없이 조회 가능하며, PM/운영진 등 타인 조회만 지원 종료(endsAt) 이후로 제한한다.
         boolean isApplicantSelf = Objects.equals(application.getApplicantMemberId(), query.requesterMemberId());
-        if (!isApplicantSelf) {
+        if (!isApplicantSelf && !canViewOngoingMatchingRoundApplications(query.requesterMemberId(), project)) {
             application.getAppliedMatchingRound().validateIsViewableAt(Instant.now());
         }
 
@@ -170,12 +170,16 @@ public class ProjectApplicationQueryService
         if (scope instanceof ProjectApplicationAccessScope.None) {
             return List.of();
         }
+        boolean includeOngoingMatchingRounds =
+            scope instanceof ProjectApplicationAccessScope.ProjectScoped projectScoped
+                && projectScoped.includeOngoingMatchingRounds();
 
         List<ProjectApplication> applications = loadProjectApplicationPort.searchProjectApplications(
             query.projectId(),
             query.matchingRoundId(),
             query.status(),
-            Instant.now()
+            Instant.now(),
+            includeOngoingMatchingRounds
         );
         return applications.stream()
             .map(ProjectApplicationSummaryInfo::from)
@@ -200,6 +204,13 @@ public class ProjectApplicationQueryService
             .findByMemberIdAndGisuId(query.requesterMemberId(), query.gisuId())
             .map(ChallengerInfo::part)
             .flatMap(MatchingType::fromPart);
+    }
+
+    private boolean canViewOngoingMatchingRoundApplications(Long requesterMemberId, Project project) {
+        ProjectApplicationAccessScope scope =
+            accessScopeResolver.resolveForProjectApplicantList(requesterMemberId, project);
+        return scope instanceof ProjectApplicationAccessScope.ProjectScoped projectScoped
+            && projectScoped.includeOngoingMatchingRounds();
     }
 
     /**

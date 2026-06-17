@@ -125,7 +125,7 @@ class ProjectApplicationQueryRepositoryTest {
 
         // when - 전체 조회 (matchingRoundId = null)
         List<ProjectApplication> result = sut.searchProjectApplications(
-            project.getId(), null, null, now);
+            project.getId(), null, null, now, false);
 
         // then - 종료된 차수의 지원서만 반환
         assertThat(result)
@@ -147,10 +147,32 @@ class ProjectApplicationQueryRepositoryTest {
 
         // when
         List<ProjectApplication> result = sut.searchProjectApplications(
-            project.getId(), ongoingRound.getId(), null, now);
+            project.getId(), ongoingRound.getId(), null, now, false);
 
         // then
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("searchProjectApplications_includeOngoingMatchingRounds_true면_진행_중_차수의_지원서도_반환한다")
+    void searchProjectApplicationsReturnsOngoingRoundsWhenIncluded() {
+        // given
+        Instant now = Instant.parse("2026-05-10T00:00:00Z");
+        ProjectMatchingRound ongoingRound = persistRound(
+            "진행 차수", MatchingType.PLAN_DESIGN, MatchingPhase.FIRST,
+            now.minusSeconds(1_800)); // endsAt = now + 1800 (미래)
+        ProjectApplication ongoingApp = persistApplication(200L, ongoingRound, ProjectApplicationStatus.SUBMITTED);
+        em.flush();
+        em.clear();
+
+        // when
+        List<ProjectApplication> result = sut.searchProjectApplications(
+            project.getId(), ongoingRound.getId(), null, now, true);
+
+        // then
+        assertThat(result)
+            .extracting(ProjectApplication::getId)
+            .containsExactly(ongoingApp.getId());
     }
 
     private Project persistProject(String name, Long ownerId) {
