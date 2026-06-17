@@ -1,8 +1,18 @@
 package com.umc.product.project.application.access;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.All;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.AllInGisu;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.ChapterScoped;
@@ -11,10 +21,8 @@ import com.umc.product.project.application.access.ProjectApplicationAccessScope.
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.ProjectScoped;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.domain.Project;
-import java.util.List;
-import java.util.Objects;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 /**
  * 호출 컨텍스트(본인 지원 내역 vs PO 검토 vs 운영진 모니터링) + 사용자 역할에 따라 {@link ProjectApplicationAccessScope} 를 결정한다.
@@ -25,6 +33,7 @@ public class ProjectApplicationAccessScopeResolver {
 
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final LoadProjectMemberPort loadProjectMemberPort;
+    private final GetChapterUseCase getChapterUseCase;
 
     /**
      * 본인 지원 내역 화면. 누구든지 본인 지원서만 본다.
@@ -41,7 +50,7 @@ public class ProjectApplicationAccessScopeResolver {
      *   <li>SUPER_ADMIN</li>
      *   <li>해당 프로젝트 기수의 Central Core (총괄/부총괄)</li>
      *   <li>해당 프로젝트 지부의 지부장 (같은 기수)</li>
-     *   <li>해당 프로젝트 학교의 회장 (SCHOOL_PRESIDENT, 같은 기수)</li>
+     *   <li>해당 프로젝트 지부에 속한 학교 회장단 (SCHOOL_PRESIDENT/SCHOOL_VICE_PRESIDENT, 같은 기수)</li>
      * </ul>
      * 그 외엔 {@link None} 반환 — 호출 측이 빈 목록 처리하여 권한 부재를 '지원자 0건' 으로 위장한다.
      * <p>
@@ -66,13 +75,37 @@ public class ProjectApplicationAccessScopeResolver {
 
         if (rolesInGisu.stream().anyMatch(
             r -> r.roleType().isAtLeastCentralCore() || (r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
-                && Objects.equals(r.organizationId(), project.getChapterId())) || (
-                r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT && Objects.equals(r.organizationId(),
-                    project.getProductOwnerSchoolId())))) {
+                && Objects.equals(r.organizationId(), project.getChapterId())))) {
+            return new ProjectScoped(projectId);
+        }
+
+        if (isSchoolCoreInProjectChapter(rolesInGisu, project)) {
             return new ProjectScoped(projectId);
         }
 
         return new None();
+    }
+
+    private boolean isSchoolCoreInProjectChapter(List<ChallengerRoleInfo> rolesInGisu, Project project) {
+        Set<Long> schoolIds = rolesInGisu.stream()
+            .filter(r -> r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
+                || r.roleType() == ChallengerRoleType.SCHOOL_VICE_PRESIDENT)
+            .map(ChallengerRoleInfo::organizationId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        if (schoolIds.isEmpty()) {
+            return false;
+        }
+
+        Map<Long, Map<Long, ChapterInfo>> chapterByGisuAndSchool =
+            getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(Set.of(project.getGisuId()), schoolIds);
+        Map<Long, ChapterInfo> chapterBySchool =
+            chapterByGisuAndSchool.getOrDefault(project.getGisuId(), Map.of());
+
+        return chapterBySchool.values().stream()
+            .filter(Objects::nonNull)
+            .anyMatch(chapter -> Objects.equals(chapter.id(), project.getChapterId()));
     }
 
     /**

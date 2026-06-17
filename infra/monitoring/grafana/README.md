@@ -32,6 +32,11 @@ docker compose --profile linux up -d
 - Tempo: <http://localhost:13200>
 - OTel Collector OTLP: gRPC `:4317`, HTTP `:4318`
 
+기본 대시보드의 API 집계 패널은 Grafana 상단 time range 를 기준으로 Prometheus
+HTTP request counter / duration histogram 에서 요청 총량, 요청 수 Top 10,
+p95 latency Top 10 을 계산한다. Top 10 테이블의 행 링크는 해당 `uri` 에 대응하는
+Loki 로그를 열며, 로그의 `traceId` derived field 를 통해 Tempo 요청 flow 로 이동할 수 있다.
+
 ## 앱 환경변수 매핑
 
 운영 / 로컬 앱의 환경변수만 본 스택의 endpoint 로 바꾸면 OTLP 송신이 그대로 자체 호스팅 백엔드로 전달된다.
@@ -59,14 +64,16 @@ docker/monitoring/
 ├── docker-compose.yml        # 스택 정의 (Commit 2 이후)
 └── config/
     ├── prometheus/           # metric backend config
+    │   └── rules/            # Prometheus alerting / recording rules
     ├── tempo/                # trace backend config
     ├── loki/                 # log backend config
+    │   └── rules/fake/       # Loki Ruler LogQL rules (single-tenant tenant id: fake)
     ├── otel-collector/       # OTLP 게이트웨이 config
     ├── alertmanager/         # 알람 라우팅 / Discord webhook
     └── grafana/
         ├── dashboards/       # provisioned dashboards (JSON)
         └── provisioning/
-            ├── datasources/  # prometheus / tempo / loki datasource
+            ├── datasources/  # prometheus / alertmanager / tempo / loki datasource
             └── dashboards/   # dashboard provider 정의
 ```
 
@@ -75,12 +82,32 @@ docker/monitoring/
 | 컴포넌트 | 역할 |
 |---|---|
 | `otel-collector` | 앱의 OTLP metrics / traces / logs 송신을 받아 prometheus / tempo / loki 로 분배. 향후 Cloud + Self dual-write 가 필요해지면 exporter 추가만 하면 된다. |
-| `prometheus` | OTLP write receiver (`/api/v1/otlp/v1/metrics`) 활성. 자체 scrape 는 prometheus / node-exporter 만. |
+| `prometheus` | OTLP write receiver (`/api/v1/otlp/v1/metrics`) 활성. 자체 scrape 는 prometheus / node-exporter / alertmanager / grafana / loki / otel-collector. |
 | `tempo` | OTLP 4317/4318 native 수신. 로컬 디스크 backend, 기본 7일 보존. |
 | `loki` | OTLP logs receiver 를 통해 Collector 에서 들어온 로그 저장. 기본 30일 보존. |
-| `grafana` | 3종 datasource 와 ADR-016 의 api-performance dashboard 자동 provisioning. |
+| `grafana` | Prometheus / Alertmanager / Loki / Tempo datasource 와 ADR-016 의 api-performance dashboard 자동 provisioning. |
 | `alertmanager` | Prometheus alerting rule 의 라우팅. Discord webhook 으로 송신. |
 | `node-exporter` | Linux 호스트 메트릭 (CPU / disk / network) 노출, `linux` profile 에서만 실행. prometheus 가 scrape. |
+
+## 기본 알림 Rule
+
+다음 파일들은 compose 기동 시 자동으로 로드된다. Grafana UI 에서 같은 내용을 수동 등록할 필요가 없다.
+
+- Prometheus rule: `config/prometheus/rules/default-alerts.yml`
+- Loki LogQL rule: `config/loki/rules/fake/default-log-alerts.yml`
+- 현재 Discord 로 전송되는 alert 목록: `docs/alerts.md`
+
+포함 범위:
+- 서버/타깃 down, CPU/메모리/디스크, 컨테이너 재시작
+- API 5xx/4xx, p95/p99 latency, 트래픽 급감/급증
+- HikariCP, PostgreSQL, Redis/Valkey
+- ERROR/Exception, OAuth/login 실패 신호, 이메일 실패 로그
+- OTel Collector, Loki, Prometheus, Alertmanager, Grafana
+- Blackbox exporter 기반 SSL/HTTP health check rule
+
+`up` 기반 API down, PostgreSQL, Redis/Valkey, blackbox rule 은 해당 scrape target 또는 exporter 메트릭이 들어올 때부터 평가된다. 현재 스택이 기본으로 scrape 하는 내부 컴포넌트는 `prometheus`, `node-exporter`, `alertmanager`, `grafana`, `loki`, `otel-collector` 이다.
+
+Discord 알림 본문에는 `환경`, `severity`, `대상`이 함께 표시된다. 환경 값은 `environment` -> `deployment_environment` -> `service_name` -> `application` -> `job` 순서로 선택한다. 앱별 local/dev/prod 구분은 `service.name` 또는 `spring.application.name` 을 `local-umc-product`, `dev-umc-product`, `prod-umc-product` 로 맞추는 방식이 가장 단순하다.
 
 ## 운영 주의사항
 

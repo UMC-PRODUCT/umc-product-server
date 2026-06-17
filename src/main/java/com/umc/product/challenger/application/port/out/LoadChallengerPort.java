@@ -1,9 +1,10 @@
 package com.umc.product.challenger.application.port.out;
 
-import com.umc.product.challenger.domain.Challenger;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import com.umc.product.challenger.domain.Challenger;
 
 public interface LoadChallengerPort {
 
@@ -43,6 +44,13 @@ public interface LoadChallengerPort {
      * 여러 gisuId로 챌린저 목록 조회
      */
     List<Challenger> getAllByGisuIds(List<Long> gisuIds);
+
+    /**
+     * 지부(chapterId)에 속한 챌린저 목록 조회.
+     * <p>
+     * 지부의 기수와 일치하고, 회원의 학교가 해당 지부 소속 학교에 포함되는 챌린저를 반환합니다.
+     */
+    List<Challenger> listByChapterId(Long chapterId);
 
     @Deprecated(since = "v1.5.0", forRemoval = true)
     Long countByIdIn(Set<Long> ids);

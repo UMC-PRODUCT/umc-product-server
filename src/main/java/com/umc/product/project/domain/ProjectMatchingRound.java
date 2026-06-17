@@ -1,10 +1,13 @@
 package com.umc.product.project.domain;
 
+import java.time.Instant;
+
 import com.umc.product.common.BaseEntity;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,7 +17,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -244,14 +246,34 @@ public class ProjectMatchingRound extends BaseEntity {
     /**
      * PM 의 합/불 토글이 허용되는 시점인지 검증합니다.
      * <p>
-     * {@code startsAt <= now <= decisionDeadline} 범위에서만 mutable.
-     * 차수 시작 전이거나 결정 마감을 넘긴 경우 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_LOCKED} 도메인 예외를 던집니다.
+     * {@code endsAt < now <= decisionDeadline} 범위에서만 mutable. 지원(모집)이 끝난 뒤부터 결정 마감 전까지만 합/불을 변경할 수 있습니다.
+     * <ul>
+     *   <li>아직 지원 기간 중({@code now <= endsAt}): {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_NOT_ENDED}</li>
+     *   <li>결정 마감 경과({@code now > decisionDeadline}): {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_LOCKED}</li>
+     * </ul>
      *
      * @param now 기준 시각
      */
     public void validateIsMutableAt(Instant now) {
-        if (now.isBefore(startsAt) || now.isAfter(decisionDeadline)) {
+        if (!now.isAfter(endsAt)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_ENDED);
+        }
+        if (now.isAfter(decisionDeadline)) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
+        }
+    }
+
+    /**
+     * PM/운영진의 지원서 조회가 허용되는 시점인지 검증합니다.
+     * <p>
+     * 지원(모집)이 끝난 뒤({@code endsAt < now})부터 조회할 수 있습니다. 아직 지원 기간 중인 경우
+     * {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE} 도메인 예외를 던집니다.
+     *
+     * @param now 기준 시각
+     */
+    public void validateIsViewableAt(Instant now) {
+        if (!now.isAfter(endsAt)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE);
         }
     }
 }

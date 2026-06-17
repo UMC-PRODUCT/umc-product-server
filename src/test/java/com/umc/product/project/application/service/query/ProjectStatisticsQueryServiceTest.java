@@ -1,34 +1,49 @@
 package com.umc.product.project.application.service.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectStatisticsInfo;
-import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
-import com.umc.product.project.application.port.out.dto.ProjectStatisticsApplicationRow;
-import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
-import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
-import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
-import com.umc.product.project.domain.enums.MatchingPhase;
-import com.umc.product.project.domain.enums.MatchingType;
-import com.umc.product.project.domain.enums.ProjectApplicationStatus;
-import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.ChallengerStatus;
+import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectStatisticsInfo;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
+import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsApplicationRow;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
+import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.enums.MatchingPhase;
+import com.umc.product.project.domain.enums.MatchingType;
+import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import com.umc.product.project.domain.enums.ProjectMemberStatus;
+import com.umc.product.project.domain.exception.ProjectDomainException;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectStatisticsQueryServiceTest {
@@ -41,6 +56,18 @@ class ProjectStatisticsQueryServiceTest {
 
     @Mock
     GetMemberUseCase getMemberUseCase;
+
+    @Mock
+    LoadProjectPort loadProjectPort;
+
+    @Mock
+    LoadProjectMemberPort loadProjectMemberPort;
+
+    @Mock
+    GetChallengerRoleUseCase getChallengerRoleUseCase;
+
+    @Mock
+    GetChapterUseCase getChapterUseCase;
 
     @InjectMocks
     ProjectStatisticsQueryService sut;
@@ -74,14 +101,17 @@ class ProjectStatisticsQueryServiceTest {
                 applicationRow(projectId, 1004L, 203L, ProjectApplicationStatus.SUBMITTED, 2L,
                     MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND)
             ));
-        given(getChallengerUseCase.getAllByGisuId(gisuId))
+        given(getChallengerUseCase.listByChapterId(chapterId))
             .willReturn(List.of(
                 challenger(1001L, gisuId, ChallengerPart.WEB),
                 challenger(1002L, gisuId, ChallengerPart.DESIGN),
                 challenger(1003L, gisuId, ChallengerPart.WEB),
                 challenger(1004L, gisuId, ChallengerPart.ANDROID),
                 challenger(9001L, gisuId, ChallengerPart.PLAN),
-                challenger(9002L, gisuId, ChallengerPart.ADMIN)
+                challenger(9002L, gisuId, ChallengerPart.ADMIN),
+                // 수료/제명 챌린저는 지부 모집단(지원 가능 인원)에서 제외되어야 한다.
+                challenger(1005L, gisuId, ChallengerPart.WEB, ChallengerStatus.GRADUATED),
+                challenger(1006L, gisuId, ChallengerPart.SPRINGBOOT, ChallengerStatus.EXPELLED)
             ));
         given(getMemberUseCase.findAllSchoolIdsByIds(Set.of(1001L, 1002L, 1003L, 1004L)))
             .willReturn(Map.of(
@@ -90,9 +120,13 @@ class ProjectStatisticsQueryServiceTest {
                 1003L, 502L,
                 1004L, 501L
             ));
+        // 요청자가 해당 프로젝트의 PO → FULL (멤버 단위 포함)
+        Long requesterMemberId = 7000L;
+        given(loadProjectPort.getById(projectId))
+            .willReturn(project(projectId, requesterMemberId, chapterId));
 
         // when
-        ProjectStatisticsInfo result = sut.getByProjectId(projectId);
+        ProjectStatisticsInfo result = sut.getByProjectId(projectId, requesterMemberId);
 
         // then
         assertThat(result.projectId()).isEqualTo(projectId);
@@ -173,7 +207,7 @@ class ProjectStatisticsQueryServiceTest {
                 applicationRow(10L, 9001L, 305L, ProjectApplicationStatus.SUBMITTED, 2L,
                     MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND)
             ));
-        given(getChallengerUseCase.getAllByGisuId(gisuId))
+        given(getChallengerUseCase.listByChapterId(chapterId))
             .willReturn(List.of(
                 challenger(1001L, gisuId, ChallengerPart.WEB),
                 challenger(1002L, gisuId, ChallengerPart.DESIGN),
@@ -189,9 +223,13 @@ class ProjectStatisticsQueryServiceTest {
                 1003L, 502L,
                 1004L, 501L
             ));
+        // 요청자가 총괄단 → FULL (멤버 단위 포함)
+        Long requesterMemberId = 7000L;
+        given(getChallengerRoleUseCase.findAllByMemberId(requesterMemberId))
+            .willReturn(List.of(roleInfo(ChallengerRoleType.CENTRAL_PRESIDENT, OrganizationType.CENTRAL, null, gisuId)));
 
         // when
-        ChapterProjectStatisticsInfo result = sut.getByChapterId(chapterId);
+        ChapterProjectStatisticsInfo result = sut.getByChapterId(chapterId, requesterMemberId);
 
         // then
         assertThat(result.chapterId()).isEqualTo(chapterId);
@@ -258,6 +296,174 @@ class ProjectStatisticsQueryServiceTest {
         verify(loadProjectStatisticsPort).listActiveMembersByChapterId(chapterId);
     }
 
+    @Test
+    @DisplayName("getByChapterId_지부장이면_조회_가능하다")
+    void 지부_지부장이면_조회_가능() {
+        // given
+        Long chapterId = 3L;
+        Long gisuId = 1L;
+        Long requesterMemberId = 8000L;
+        givenSingleProjectChapter(chapterId, gisuId);
+        given(getChallengerRoleUseCase.findAllByMemberId(requesterMemberId))
+            .willReturn(List.of(roleInfo(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER,
+                chapterId, gisuId)));
+
+        // when
+        ChapterProjectStatisticsInfo result = sut.getByChapterId(chapterId, requesterMemberId);
+
+        // then — 권한 통과: 프로젝트 멤버까지 그대로 노출
+        assertThat(result.projects()).hasSize(1);
+        assertThat(result.projects().get(0).projectMembers()).hasSize(1);
+        assertThat(result.summary()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("getByChapterId_해당_지부_소속_학교_회장이면_조회_가능하다")
+    void 지부_학교_회장이면_조회_가능() {
+        // given
+        Long chapterId = 3L;
+        Long gisuId = 1L;
+        Long schoolId = 7L;
+        Long requesterMemberId = 8100L;
+        givenSingleProjectChapter(chapterId, gisuId);
+        given(getChallengerRoleUseCase.findAllByMemberId(requesterMemberId))
+            .willReturn(List.of(roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL,
+                schoolId, gisuId)));
+        given(getChapterUseCase.getChaptersBySchoolIds(Set.of(schoolId)))
+            .willReturn(List.of(new ChapterInfo(chapterId, "테스트 지부")));
+
+        // when
+        ChapterProjectStatisticsInfo result = sut.getByChapterId(chapterId, requesterMemberId);
+
+        // then
+        assertThat(result.projects()).hasSize(1);
+        assertThat(result.projects().get(0).projectMembers()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("getByChapterId_권한이_없으면_PROJECT_ACCESS_DENIED")
+    void 지부_권한없으면_거부() {
+        // given
+        Long chapterId = 3L;
+        Long requesterMemberId = 8200L;
+        given(getChallengerRoleUseCase.findAllByMemberId(requesterMemberId)).willReturn(List.of());
+
+        // when & then
+        assertThatThrownBy(() -> sut.getByChapterId(chapterId, requesterMemberId))
+            .isInstanceOf(ProjectDomainException.class);
+    }
+
+    @Test
+    @DisplayName("getByProjectId_보조PM이면_FULL로_멤버_단위를_포함한다")
+    void 단건_보조PM이면_FULL() {
+        // given
+        Long projectId = 10L;
+        Long gisuId = 1L;
+        Long chapterId = 3L;
+        Long requesterMemberId = 8300L;
+        givenSingleProject(projectId, gisuId, chapterId);
+        // PO 는 아니지만 ACTIVE PLAN 멤버(Sub-PM)
+        given(loadProjectPort.getById(projectId))
+            .willReturn(project(projectId, 9999L, chapterId));
+        given(loadProjectMemberPort.isActivePlanMember(projectId, requesterMemberId)).willReturn(true);
+
+        // when
+        ProjectStatisticsInfo result = sut.getByProjectId(projectId, requesterMemberId);
+
+        // then
+        assertThat(result.projectMembers()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("getByProjectId_지부장이면_조회_가능하다")
+    void 단건_지부장이면_조회_가능() {
+        // given
+        Long projectId = 10L;
+        Long gisuId = 1L;
+        Long chapterId = 3L;
+        Long requesterMemberId = 8400L;
+        givenSingleProject(projectId, gisuId, chapterId);
+        given(loadProjectPort.getById(projectId))
+            .willReturn(project(projectId, 9999L, chapterId));
+        given(getChallengerRoleUseCase.findAllByMemberId(requesterMemberId))
+            .willReturn(List.of(roleInfo(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER,
+                chapterId, gisuId)));
+
+        // when
+        ProjectStatisticsInfo result = sut.getByProjectId(projectId, requesterMemberId);
+
+        // then — 권한 통과: 프로젝트 멤버까지 그대로 노출
+        assertThat(result.projectMembers()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("getByProjectId_권한이_없으면_PROJECT_ACCESS_DENIED")
+    void 단건_권한없으면_거부() {
+        // given
+        Long projectId = 10L;
+        Long chapterId = 3L;
+        Long requesterMemberId = 8500L;
+        given(loadProjectPort.getById(projectId))
+            .willReturn(project(projectId, 9999L, chapterId));
+        given(getChallengerRoleUseCase.findAllByMemberId(requesterMemberId)).willReturn(List.of());
+
+        // when & then
+        assertThatThrownBy(() -> sut.getByProjectId(projectId, requesterMemberId))
+            .isInstanceOf(ProjectDomainException.class);
+    }
+
+    /** 멤버 1명짜리 단일 프로젝트 지부 통계 데이터 stub (집계 경로 통과용). */
+    private void givenSingleProjectChapter(Long chapterId, Long gisuId) {
+        given(loadProjectStatisticsPort.listProjectsByChapterId(chapterId))
+            .willReturn(List.of(projectRow(10L, gisuId, chapterId)));
+        given(loadProjectStatisticsPort.listMatchingRoundsByChapterId(chapterId)).willReturn(List.of());
+        given(loadProjectStatisticsPort.listActiveMembersByChapterId(chapterId))
+            .willReturn(List.of(memberRow(10L, 101L, 1001L, ChallengerPart.WEB)));
+        given(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(Set.of(10L))).willReturn(List.of());
+        given(getChallengerUseCase.listByChapterId(chapterId))
+            .willReturn(List.of(challenger(1001L, gisuId, ChallengerPart.WEB)));
+        given(getMemberUseCase.findAllSchoolIdsByIds(Set.of(1001L))).willReturn(Map.of(1001L, 501L));
+    }
+
+    /** 멤버 1명짜리 단건 프로젝트 통계 데이터 stub (집계 경로 통과용). */
+    private void givenSingleProject(Long projectId, Long gisuId, Long chapterId) {
+        given(loadProjectStatisticsPort.getProjectById(projectId))
+            .willReturn(projectRow(projectId, gisuId, chapterId));
+        given(loadProjectStatisticsPort.listMatchingRoundsByChapterId(chapterId)).willReturn(List.of());
+        given(loadProjectStatisticsPort.listActiveMembersByProjectId(projectId))
+            .willReturn(List.of(memberRow(projectId, 101L, 1001L, ChallengerPart.WEB)));
+        given(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(Set.of(projectId)))
+            .willReturn(List.of());
+        given(getChallengerUseCase.listByChapterId(chapterId))
+            .willReturn(List.of(challenger(1001L, gisuId, ChallengerPart.WEB)));
+        given(getMemberUseCase.findAllSchoolIdsByIds(Set.of(1001L))).willReturn(Map.of(1001L, 501L));
+    }
+
+    private static ChallengerRoleInfo roleInfo(
+        ChallengerRoleType roleType, OrganizationType organizationType, Long organizationId, Long gisuId
+    ) {
+        return ChallengerRoleInfo.builder()
+            .roleType(roleType)
+            .organizationType(organizationType)
+            .organizationId(organizationId)
+            .gisuId(gisuId)
+            .build();
+    }
+
+    private static Project project(Long id, Long ownerMemberId, Long chapterId) {
+        try {
+            var constructor = Project.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            Project project = constructor.newInstance();
+            ReflectionTestUtils.setField(project, "id", id);
+            ReflectionTestUtils.setField(project, "productOwnerMemberId", ownerMemberId);
+            ReflectionTestUtils.setField(project, "chapterId", chapterId);
+            return project;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private static ProjectStatisticsProjectRow projectRow(Long projectId, Long gisuId, Long chapterId) {
         return new ProjectStatisticsProjectRow(projectId, gisuId, chapterId);
     }
@@ -297,10 +503,17 @@ class ProjectStatisticsQueryServiceTest {
     }
 
     private static ChallengerInfo challenger(Long memberId, Long gisuId, ChallengerPart part) {
+        return challenger(memberId, gisuId, part, ChallengerStatus.ACTIVE);
+    }
+
+    private static ChallengerInfo challenger(
+        Long memberId, Long gisuId, ChallengerPart part, ChallengerStatus status
+    ) {
         return ChallengerInfo.builder()
             .memberId(memberId)
             .gisuId(gisuId)
             .part(part)
+            .challengerStatus(status)
             .build();
     }
 }

@@ -215,11 +215,11 @@ public class ProjectQueryRepository {
 
     /**
      * Pageable의 Sort를 QueryDSL OrderSpecifier 배열로 변환합니다.
-     * 정렬 조건이 없으면 createdAt 내림차순을 기본으로 사용합니다.
+     * 정렬 조건이 없으면 createdAt 오름차순, name 오름차순을 기본으로 사용합니다.
      */
     private OrderSpecifier<?>[] toOrderSpecifiers(Sort sort) {
         if (sort == null || sort.isUnsorted()) {
-            return new OrderSpecifier<?>[]{project.createdAt.desc()};
+            return new OrderSpecifier<?>[]{project.createdAt.asc(), project.name.asc()};
         }
         PathBuilder<Project> path = new PathBuilder<>(Project.class, project.getMetadata());
         List<OrderSpecifier<?>> specifiers = new ArrayList<>();

@@ -55,7 +55,8 @@ public class ProjectQueryController {
     public PageResponse<ProjectSummaryResponse> searchProjects(
         @CurrentMember MemberPrincipal memberPrincipal,
         @ParameterObject @Valid SearchProjectRequest request,
-        @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+        @ParameterObject @PageableDefault(size = 20, sort = {"createdAt", "name"}, direction = Sort.Direction.ASC)
+        Pageable pageable
     ) {
         SearchProjectQuery query = request.toQuery(pageable);
         return assembler.searchFor(query, memberPrincipal.getMemberId());
@@ -117,13 +118,14 @@ public class ProjectQueryController {
     @GetMapping("/me/managed")
     @Operation(
         summary = "[PROJECT-006] 내가 관리하는 프로젝트 목록",
-        description = "역할별 자동 scope: 중앙 총괄단은 전체, 지부장은 본인 지부, 학교 회장단은 본인 학교, PM 챌린저는 본인 owner 프로젝트. 일반 챌린저는 빈 페이지."
+        description = "역할별 자동 scope: 중앙 총괄단은 전체, 지부장과 학교 회장단은 본인이 속한 지부 전체, PM 챌린저는 본인 owner 프로젝트. 일반 챌린저는 빈 페이지."
     )
     public PageResponse<ManagedProjectSummaryResponse> searchManaged(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam Long gisuId,
         @RequestParam(required = false) String keyword,
-        @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+        @ParameterObject @PageableDefault(size = 20, sort = {"createdAt", "name"}, direction = Sort.Direction.ASC)
+        Pageable pageable
     ) {
         SearchManagedProjectQuery query = SearchManagedProjectQuery.builder()
             .gisuId(gisuId)
