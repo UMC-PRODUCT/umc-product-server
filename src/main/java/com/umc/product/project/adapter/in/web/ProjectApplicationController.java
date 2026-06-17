@@ -35,7 +35,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/projects")
 @RequiredArgsConstructor
-@Tag(name = "Project | 챌린저 지원서", description = "챌린저의 프로젝트 지원서 Draft 생성 / 임시저장 / 제출 / 철회 / 조회 (APPLY-001~005)")
+@Tag(name = "Project | 챌린저 지원서", description = "챌린저의 프로젝트 지원서 초안, 임시저장, 제출, 철회를 다룹니다.")
 public class ProjectApplicationController {
 
     private final CreateDraftProjectApplicationUseCase createDraftProjectApplicationUseCase;
@@ -46,8 +46,9 @@ public class ProjectApplicationController {
 
     @PostMapping("/{projectId}/applications")
     @Operation(
-        summary = "[APPLY-001] 챌린저 지원서 Draft 생성",
-        description = "챌린저가 특정 프로젝트의 지원서를 DRAFT 상태로 생성합니다. 이미 DRAFT 지원서가 있으면 기존 application 정보 반환."
+        operationId = "APPLY-001",
+        summary = "챌린저 지원서 초안 생성",
+        description = "챌린저가 프로젝트 지원서 초안을 생성합니다. 이미 초안이 있으면 기존 지원서 정보를 반환합니다."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT_APPLICATION,
@@ -69,8 +70,9 @@ public class ProjectApplicationController {
 
     @PutMapping("/{projectId}/applications/{applicationId}")
     @Operation(
-        summary = "[APPLY-002] 챌린저 지원서 임시저장",
-        description = "본문이 곧 답변의 새 전체 상태가 된다. 본인의 DRAFT 지원서에서만 호출 가능."
+        operationId = "APPLY-002",
+        summary = "챌린저 지원서 임시저장",
+        description = "요청 본문을 답변의 새 전체 상태로 저장합니다. 본인의 초안 지원서에서만 호출할 수 있습니다."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT_APPLICATION,
@@ -93,8 +95,9 @@ public class ProjectApplicationController {
 
     @PostMapping("/{projectId}/applications/{applicationId}/submit")
     @Operation(
-        summary = "[APPLY-003] 챌린저 지원서 최종 제출",
-        description = "DRAFT -> SUBMITTED 전이. 필수 답변 누락 시 400. 본인의 DRAFT 지원서에서만 호출 가능."
+        operationId = "APPLY-003",
+        summary = "챌린저 지원서 최종 제출",
+        description = "지원서를 초안에서 제출 상태로 변경합니다. 필수 답변이 빠지면 400을 반환합니다. 본인의 초안 지원서에서만 호출할 수 있습니다."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT_APPLICATION,
@@ -120,7 +123,8 @@ public class ProjectApplicationController {
 
     @PatchMapping("/{projectId}/applications/{applicationId}/decision")
     @Operation(
-        summary = "[APPLY-103] 지원서 합/불 결정 (단일 PATCH)",
+        operationId = "APPLY-103",
+        summary = "지원서 합격 여부 결정",
         description = """
             PM 이 지원서의 status 를 토글합니다.
             - 매칭 차수 진행 중에만 가능 (decisionDeadline 까지)
@@ -149,7 +153,8 @@ public class ProjectApplicationController {
 
     @DeleteMapping("/{projectId}/applications/{applicationId}")
     @Operation(
-        summary = "[APPLY-005] 챌린저 지원서 철회",
+        operationId = "APPLY-005",
+        summary = "챌린저 지원서 철회",
         description = """
             지원서를 CANCELLED 로 soft delete 합니다.
 
