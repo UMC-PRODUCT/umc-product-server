@@ -133,7 +133,7 @@ public class ProjectMatchingRoundController {
     @PostMapping("/{matchingRoundId}/auto-decide")
     @Operation(
         operationId = "PROJECT-MATCHING-201",
-        summary = "매칭 차수 자동 선발 실행 (운영진 수동 트리거)",
+        summary = "매칭 차수 자동 선발 수동 실행",
         description = """
             결정 마감(decisionDeadline) 이후 매칭 차수의 자동 선발을 실행합니다.
             - 중앙운영사무국 총괄단 이상은 모든 지부의 매칭 차수에서 자동 선발을 실행할 수 있습니다.
