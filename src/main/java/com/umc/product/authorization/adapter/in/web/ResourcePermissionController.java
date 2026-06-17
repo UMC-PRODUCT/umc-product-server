@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Authorization | 접근 권한 확인", description = "유형 및 각 리소스별 CRUD 권한 체크")
+@Tag(name = "Authorization | 접근 권한 확인", description = "현재 사용자의 리소스별 권한을 확인합니다.")
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -33,8 +33,9 @@ public class ResourcePermissionController {
 
     @GetMapping("/resource-permission")
     @Operation(
-        summary = "[PERMISSION-001] 리소스 권한 조회",
-        description = "특정 리소스에 대해 현재 사용자가 가진 권한을 조회합니다. permissionType을 지정하면 해당 권한만 평가합니다."
+        operationId = "PERMISSION-001",
+        summary = "리소스 권한 조회",
+        description = "현재 사용자의 리소스 권한을 조회합니다. permissionType을 지정하면 해당 권한만 평가합니다."
     )
     ResourcePermissionResponse getResourcePermission(
         @RequestParam ResourceType resourceType,
@@ -55,8 +56,9 @@ public class ResourcePermissionController {
 
     @PostMapping("/resource-permissions/batch")
     @Operation(
-        summary = "[PERMISSION-002] 리소스 권한 배치 조회",
-        description = "여러 리소스에 대해 현재 사용자의 권한을 한 번에 조회합니다. 유효하지 않은 query가 하나라도 있으면 요청 전체가 실패합니다."
+        operationId = "PERMISSION-002",
+        summary = "리소스 권한 배치 조회",
+        description = "여러 리소스의 권한을 한 번에 조회합니다. 유효하지 않은 query가 있으면 요청 전체가 실패합니다."
     )
     BatchResourcePermissionResponse batchGetResourcePermission(
         @RequestBody @Valid BatchResourcePermissionRequest request,
