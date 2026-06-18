@@ -5,27 +5,26 @@
 - 대상: `src/main/java/com/umc/product/**`
 - 패턴: `log.trace/debug/info/warn/error`, `LoggerFactory.getLogger`
 - 기준 브랜치: `feature/logging-hardening`
-- 참고: `feature/remove-gcs-storage`가 병합되면 `storage/adapter/out/gcs` 항목은 제거된다.
 
 ## 요약
 
 | 도메인 | 현재 로그 호출 | 주요 목적 |
 | --- | ---: | --- |
-| authentication | 71 | OAuth/ID/PW 인증 흐름, provider 호출 실패, 토큰 revoke, email verification retention |
+| authentication | 72 | OAuth/ID/PW 인증 흐름, provider 호출 실패, 토큰 revoke, email verification retention |
 | authorization | 6 | 권한 evaluator 등록, 권한 평가, 접근 거부 |
 | audit | 6 | audit event 발행/저장 실패, details 직렬화 실패 |
 | blog | 3 | 지원하지 않는 permission type |
-| challenger | 4 active, 2 commented | ChallengerRecord 생성/대량생성/검증 실패, deprecated API |
+| challenger | 6 | ChallengerRecord 생성/대량생성/검증 실패, deprecated API |
 | community | 2 | 지원하지 않는 permission type |
 | curriculum | 3 | Workbook 자동 배포 스케줄 |
-| figma | 34 | Figma sync/digest/classification, Discord batch 전송, 외부 API 실패 |
-| global | 42 | request logging, exception handling, JWT/Firebase/security/bootstrap |
+| figma | 35 | Figma sync/digest/classification, Discord batch 전송, 외부 API 실패 |
+| global | 36 | request logging, exception handling, JWT/Firebase/security/bootstrap |
 | llm | 16 | LLM provider 선택, 호출 시작/완료/실패, circuit/rate limit |
 | maintenance | 1 | maintenance snapshot refresh 실패 |
 | notice | 2 | 공지 조회 조건, viewer 지부 정보 fallback |
 | notification | 39 | FCM, webhook, SES, server lifecycle |
 | project | 3 | matching round deadline 실패, project response assembly fallback |
-| storage | 29 | file lifecycle, S3/CloudFront, GCS legacy adapter |
+| storage | 12 | file lifecycle, S3/CloudFront |
 | test | 42 | seed/test endpoint diagnostics |
 
 직접 로그 호출이 없는 도메인: `member`, `organization`, `schedule`, `survey`, `term`.
@@ -60,23 +59,24 @@
 
 추가 계획:
 
-- 로그인 성공/실패/계정 연결/해제는 audit 또는 security event로 별도 정리한다.
-- token verification/revoke 성공률과 provider latency는 metric으로 분리한다.
+- 이메일 로그인 성공, OAuth 로그인 성공/회원가입 필요, OAuth 계정 연결/해제는 audit 대상으로 선언했다.
+- 로그인 실패와 비밀번호 재설정 실패는 사용자 열거 방어를 유지하기 위해 security metric으로 집계한다.
+- token verification/revoke 성공률과 provider latency는 `ExternalApiCallLogger`를 통해 metric으로도 기록한다.
 
 ## authorization
 
 | 위치 | 레벨 | 무엇을 남기는가 | 판단 |
 | --- | --- | --- | --- |
 | `AuthorizationService` | INFO | 등록된 evaluator key set | bootstrap 시 1회라 유지 가능 |
-| `AuthorizationService` | INFO | 권한 평가 시작, subject attribute | 요청마다 발생할 수 있어 DEBUG 후보. subject 전체 `toString`은 필드 통제가 어려움 |
+| `AuthorizationService` | DEBUG | 권한 평가 시작, subject memberId/roleCount/challengerCount | 요청마다 발생할 수 있어 DEBUG 유지. subject 전체 `toString`은 제거 완료 |
 | `AuthorizationService` | DEBUG | permission check 상세. `memberId`, roles, resource, permission, result | 디버깅용으로 적절 |
 | `AuthorizationService` | WARN | permission denied | 보안 이벤트. audit/security event 또는 metric 후보 |
 | `AccessControlAspect` | WARN | annotation 기반 접근 거부. `memberId`, resource, permission | 보안 이벤트. audit/security event 후보 |
 
 추가 계획:
 
-- 접근 거부는 `actorMemberId`, `resourceType`, `permission`, `reason`을 표준화해 audit/security event로 남긴다.
-- 정상 권한 평가 시작 로그는 DEBUG로 낮추거나 제거한다.
+- 접근 거부는 WARN 로그와 `OperationalMetrics.recordSecurityEvent`로 집계한다.
+- 정상 권한 평가 시작 로그는 DEBUG로 낮췄다.
 
 ## audit
 
@@ -121,7 +121,7 @@
 추가 계획:
 
 - deprecated API 호출 횟수는 metric으로 분리하면 제거 판단에 유용하다.
-- ChallengerRecord 생성/삭제 audit는 이미 추가됐고, consumeCode 성공/실패 audit도 검토한다.
+- ChallengerRecord 생성/삭제/consumeCode는 audit 대상으로 선언했다. consumeCode audit target은 일회용 코드 원문이 아니라 target member id를 사용한다.
 
 ## community
 
@@ -144,7 +144,7 @@
 
 추가 계획:
 
-- `jobName`, `durationMs`, `result`, `releasedCount` 형태로 표준화하고 metric counter를 추가한다.
+- `jobName`, `durationMs`, `result`, `processed` 형태로 표준화했고 batch metric을 추가했다.
 
 ## figma
 
@@ -171,7 +171,8 @@
 
 추가 계획:
 
-- Figma digest 결과는 metric으로 분리한다. `total`, `unmatched`, `skippedDispatched`, `sent`, `failed`를 태그/카운터로 관리한다.
+- Figma dispatch retention scheduler는 batch metric과 표준 로그를 사용한다.
+- Figma digest 결과는 후속으로 metric 분리를 검토한다. `total`, `unmatched`, `skippedDispatched`, `sent`, `failed`를 태그/카운터로 관리한다.
 - Figma integration 등록은 audit 대상인지 검토한다.
 - LLM classification 실패/후보 외 응답은 metric으로 집계해 품질 추이를 본다.
 
@@ -179,21 +180,21 @@
 
 | 위치 | 레벨 | 무엇을 남기는가 | 판단 |
 | --- | --- | --- | --- |
-| `ExternalApiCallLogger` | INFO/WARN | `external_api_called` structured event. provider, operation, result, durationMs, errorClass | 적절. metric 연계 후보 |
+| `ExternalApiCallLogger` | INFO/WARN | `external_api_called` structured event. provider, operation, result, durationMs, errorClass | structured log schema 유지. `OperationalMetrics` 연계 완료 |
 | `LoggingInterceptor` | INFO/ERROR | request start/end summary, latency, status, 예외 요약 | 운영 요청 추적용. actuator/static 제외 정책 확인 필요 |
 | `GlobalExceptionHandler` | WARN/ERROR | validation, JSON parse, missing parameter, type mismatch, business exception, unhandled exception | 4xx WARN 과다 가능. unhandled ERROR는 적절 |
 | `CustomErrorController` | WARN | error controller fallback, business exception | fallback 진단용 |
-| `JwtTokenProvider` | WARN/INFO | clientType claim 파싱 실패, JWT invalid/expired/unsupported/malformed | 반복 실패는 DEBUG 또는 security metric 후보 |
+| `JwtTokenProvider` | WARN/DEBUG | clientType claim 파싱 실패, JWT invalid/expired/unsupported/malformed | 반복 JWT 실패는 DEBUG로 낮춤. security metric 후보 |
 | `JwtAuthenticationFilter` | DEBUG | JWT 인증 성공 memberId | 디버깅용 |
 | `ApiAuthenticationEntryPoint` | WARN/ERROR | 인증 실패 URI/errorCode/message, unknown JWT error | 보안 이벤트 후보 |
 | `QueryStatsJdbcEventListener` | DEBUG | slow query/query stats 요약 | SQL value 노출 정책 유지 필요 |
 | `AsyncConfig` | ERROR | async method 예외 | 적절 |
 | `SecurityConfig` | INFO | CORS allowed origins | bootstrap 설정 확인용 |
-| `FcmConfig` | INFO/DEBUG/TRACE | Firebase 초기화, service account email, key algorithm/format, credentials length/prefix | credentials 계열은 제거 또는 local profile 제한 필요 |
+| `FcmConfig` | INFO/DEBUG | Firebase 초기화, 기존 FirebaseApp 확인 | credential/email/private key 세부 로그 제거 완료 |
 
 추가 계획:
 
-- `FcmConfig` credential trace/debug 로그를 제거한다.
+- `FcmConfig` credential trace/debug 로그는 제거했다.
 - 4xx validation/business exception은 WARN이 아니라 DEBUG/INFO 또는 request summary와 통합하는 방안을 검토한다.
 - JWT 실패는 security metric으로 집계하고 로그는 샘플링/레벨 조정한다.
 
@@ -242,13 +243,13 @@
 | `ServerLifecycleAlarmListener` | INFO | 서버 시작/종료 알림 전송 완료 시간 | 운영 이벤트 |
 | `FcmOutboxEventListener`, `FcmOutboxScheduler` | DEBUG | outbox 즉시/스케줄 처리 시작 | 디버깅용 |
 | `FcmOutboxService` | WARN | deprecated topic outbox 잔여 이벤트 실패 처리 | migration 상태 추적 |
-| `FcmTopicService` | WARN | deprecated topic API 호출/비활성화 | 제거 전 호출 추적 |
-| `FcmAudienceService` | INFO/WARN/ERROR | FCM 비활성화 skip, 대상 없음, active token 없음, 발송 완료, batch 실패, 성공/실패 수 | metric 후보. title 원문 로그는 축소 후보 |
+| `FcmTopicService` | DEBUG | deprecated topic API 호출/비활성화 | 제거 전 디버깅용. 반복 WARN 제거 완료 |
+| `FcmAudienceService` | INFO/WARN/ERROR | FCM 비활성화 skip, 대상 없음, active token 없음, 발송 완료, batch 실패, 성공/실패 수 | title 원문 제거 완료. notification metric 추가 |
 | `FcmTokenDeactivator` | INFO | invalid token 비활성화 tokenId/memberId | 운영 추적용. metric 후보 |
 | `WebhookAlarmAspect` | DEBUG/ERROR | webhook annotation 감지, 처리 오류 | AOP 진단 |
 | `WebhookAlarmScheduler` | DEBUG | buffer flush 스케줄 실행 | 디버깅용 |
-| `WebhookAlarmService` | DEBUG/INFO/WARN/ERROR | buffer add, flush start, missing adapter, platform send success/failure | 운영 추적용 |
-| `DiscordWebhookAdapter`, `SlackWebhookAdapter`, `TelegramWebhookAdapter` | DEBUG | webhook 전송 완료 title/parts | title 원문 축소 후보 |
+| `WebhookAlarmService` | DEBUG/INFO/WARN/ERROR | buffer add, flush start, missing adapter, platform send success/failure | title/content 원문 제거 완료. notification metric 추가 |
+| `DiscordWebhookAdapter`, `SlackWebhookAdapter`, `TelegramWebhookAdapter` | DEBUG | webhook 전송 완료 parts | title 원문 제거 완료 |
 | `SesEmailAdapter` | INFO/ERROR | SES 성공 messageId, 실패 awsErrorCode, recipientPresent | 원문 수신자 제거 완료. external_api event 적용 |
 | `SendEmailService` | ERROR | template rendering 실패 recipientPresent | 적절 |
 
@@ -261,8 +262,8 @@
 
 추가 계획:
 
-- FCM/웹훅/SES 발송 성공률과 실패율은 metric으로 분리한다.
-- title/content 원문은 사용자 입력 가능성이 있으므로 로그 필드에서 제거하거나 길이/타입으로 대체한다.
+- FCM/웹훅 발송 성공률과 실패율은 metric으로 분리했다.
+- title/content 원문은 로그 필드에서 제거했다.
 
 ## project
 
@@ -273,24 +274,23 @@
 
 추가 계획:
 
-- matching round auto decision은 job result metric과 audit 후보를 검토한다.
+- matching round auto decision은 batch metric과 `FINALIZE` audit 대상으로 선언했다.
 
 ## storage
 
 | 위치 | 레벨 | 무엇을 남기는가 | 판단 |
 | --- | --- | --- | --- |
-| `FileCommandService` | INFO | upload URL 생성 완료, upload confirm, file delete 완료 | 파일 lifecycle 추적. audit 후보 |
+| `FileCommandService` | INFO | upload URL 생성 완료, upload confirm, file delete 완료 | 파일 lifecycle 추적. audit 추가 완료 |
 | `FileCommandService` | WARN | 파일 삭제/confirm 등에서 기대 상태와 다른 경우 | 운영 진단용 |
 | `S3StorageProperties` | WARN | CloudFront 활성화 상태에서 signed URL key 누락 | 설정 오류 |
-| `S3StorageAdapter` | DEBUG | S3 upload URL 생성, CloudFront signed URL 생성 완료 | signed URL 원문은 남기지 않아야 함. 현재 `resourceUrl`은 원문 URL인지 검토 필요 |
-| `S3StorageAdapter` | INFO/WARN/ERROR | S3 삭제 완료, S3/CloudFront/S3 metadata 조회 실패 | 외부 스토리지 장애 추적 |
-| `GcsStorageAdapter` | DEBUG/INFO/WARN/ERROR | GCS upload/download/delete, CDN signed URL 생성 세부 값 | GCS 제거 PR 병합 시 삭제 예정. 현재 signed URL/signature 로그는 부적절 |
+| `S3StorageAdapter` | DEBUG | S3 upload URL 생성, CloudFront signed URL 생성 완료 | signed URL 원문 제거 완료. storage external metric 추가 |
+| `S3StorageAdapter` | INFO/WARN/ERROR | S3 삭제 완료, S3/CloudFront/S3 metadata 조회 실패 | 외부 스토리지 장애 추적. 성공/실패 metric 추가 |
 
 추가 계획:
 
-- 파일 생성/삭제는 audit 대상에 추가한다.
-- S3/CloudFront 호출은 `ExternalApiCallLogger` 또는 metric으로 지연 시간/실패율을 남긴다.
-- signed URL, signature, object URL 원문은 로그 금지 정책 테스트에 포함한다.
+- 파일 생성/확인/삭제는 audit 대상에 추가했다.
+- S3/CloudFront 호출은 metric으로 지연 시간/실패율을 남긴다.
+- signed URL, signature, object URL 원문은 로그 금지 정책 테스트에 포함했다.
 
 ## test
 

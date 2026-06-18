@@ -15,44 +15,73 @@
 - 외부 API 호출 결과와 지연 시간은 `ExternalApiCallLogger`의 `external_api_called` 구조화 이벤트로 남긴다.
 - 생성/수정/삭제처럼 추적 책임이 필요한 사용자/관리자 작업은 일반 로그만으로 끝내지 않고 audit log 대상인지 검토한다.
 - 반복적으로 집계해야 하는 성공률, 실패율, 지연 시간, 처리량은 로그보다 metric 후보로 본다.
+- 운영 metric은 `OperationalMetrics`를 통해 남긴다. 허용 tag는 `domain`, `operation`, `result`, `provider`, `jobName` 계열로 제한하고, URL/email/긴 식별자처럼 cardinality가 높은 값은 `other`로 축약한다.
 
-## 추가 로깅 계획
+## 적용 현황
+
+### 1. 과도한 INFO와 민감 가능 로그 정리
+
+- `AuthorizationService`의 요청별 권한 평가 시작/subject 상세 로그는 DEBUG로 낮췄고, 접근 거부만 WARN과 security metric으로 남긴다.
+- JWT 검증 실패 로그는 반복 발생 가능성을 고려해 DEBUG로 낮췄다.
+- Firebase 초기화 로그에서 service account email, private key algorithm/format, credential 길이/접두어를 제거했다.
+- FCM/webhook 로그에서 title/content/to 원문을 제거하고 대상 수, token 수, platform 수, content length 중심으로 바꿨다.
+- S3/CloudFront 로그에서 signed URL, signature, final URL 원문이 남지 않도록 정리했다.
+
+### 2. Audit action과 command audit 보강
+
+- `AuditAction`에 `LOGIN`, `LINK`, `UNLINK`, `ACCESS_DENIED`, `PUBLISH`, `CANCEL`, `REMIND`, `REORDER`, `FINALIZE`를 추가했다.
+- 인증/인가: 이메일 로그인 성공, OAuth 로그인 성공/회원가입 필요 흐름, OAuth 연결/해제, ChallengerRole 생성/수정/삭제를 audit 대상으로 선언했다.
+- 회원/약관/조직/챌린저: 이메일 변경, 비밀번호 변경, 프로필 수정/삭제, 약관 생성/동의, 기수/조직 멤버/스쿼드/챌린저 기록 변경을 audit 대상으로 선언했다.
+- 커리큘럼/일정/커뮤니티/블로그/공지/설문/피드백/프로젝트/스토리지의 주요 생성, 수정, 삭제, 제출, 배포, 리마인드, 재정렬, 확정 작업을 audit 대상으로 선언했다.
+- audit target/description에는 email, providerId, OAuth subject, command 객체 전체, 사용자 입력 본문을 넣지 않는다.
+
+### 3. Metric 보강
+
+- `OperationalMetrics`를 추가해 외부 호출, batch job, notification, security event metric을 표준화했다.
+- `ExternalApiCallLogger`는 기존 structured log schema를 유지하면서 provider/operation/result/latency metric을 함께 기록한다.
+- email verification retention, workbook auto release, figma dispatch retention, matching round deadline은 `jobName`, `processed`, `durationMs`, `result` 기반 batch metric을 기록한다.
+- FCM audience 발송과 webhook 발송은 provider/operation/result/count 기반 notification metric을 기록한다.
+- S3 upload URL 생성, object metadata 조회, object delete, CloudFront signed URL 생성은 storage external metric을 기록한다.
+- 로그인 실패, 비밀번호 재설정 실패, 접근 거부는 audit log가 아니라 security event metric으로 집계한다.
+
+### 4. 정책 테스트
+
+- 민감 필드 로그 금지 테스트: `email={}`, `body={}`, `providerId={}`, `sub={}`, `signedUrl={}`, `signature={}`, notification title/content/to, storage URL 원문을 검출한다.
+- command 객체 전체 로그 금지 테스트: `command={}`, `commands={}` 직접 로깅을 검출한다.
+- audit coverage 테스트: 주요 CommandService 상태 변경 메서드가 `@Audited`인지 검증한다.
+- metric recorder 테스트: 허용 tag schema와 high-cardinality 값 축약을 검증한다.
+
+## 남은 개선 계획
 
 ### 1. 인증과 인가 audit 보강
 
-- 대상: 로그인 성공/실패, OAuth 계정 연결/해제, 비밀번호 재설정 요청, 접근 거부.
-- 방식: 개인 식별 원문은 제외하고 `actorMemberId`, `provider`, `clientType`, `result`, `reasonCode` 중심으로 audit event 또는 security event를 남긴다.
-- 주의: 사용자 존재 여부를 노출하지 않는 enumeration 방어 흐름은 결과 문구와 필드를 더 엄격히 제한한다.
+- 실패 로그인/접근 거부는 현재 security metric으로 집계한다. 실패까지 audit log에 저장하려면 `@Audited`와 별도로 실패 이벤트 발행 API가 필요하다.
+- 사용자 존재 여부를 노출하지 않는 enumeration 방어 흐름은 audit description에도 reason 원문을 넣지 않는다.
 
 ### 2. 외부 연동 metric 분리
 
-- 대상: OAuth provider, Figma, Discord, Slack, Telegram, SES, S3/CloudFront, LLM provider.
-- 현재: 일부는 `ExternalApiCallLogger`로 `provider`, `operation`, `result`, `durationMs`, `errorClass`를 남긴다.
-- 추가: Micrometer `Timer`/`Counter`로 `provider`, `operation`, `result` 태그를 남겨 대시보드와 알람에 사용한다.
+- OAuth provider, Figma, Discord, Slack, Telegram, SES는 `ExternalApiCallLogger`를 통해 metric까지 기록한다.
+- LLM은 기존 `LlmMetrics`를 유지한다. 필요하면 provider별 latency/token/failure를 `OperationalMetrics`와 같은 naming policy로 맞춘다.
 
 ### 3. 스토리지 audit와 metric 보강
 
-- 대상: 업로드 URL 발급, 업로드 완료 확인, 파일 삭제, 다운로드 URL 발급 실패.
-- audit 후보: 파일 생성/삭제는 actor와 fileId를 남긴다.
-- metric 후보: presigned URL 발급 실패율, S3/CloudFront 호출 지연 시간, 삭제 실패 건수.
-- 보안 기준: signed URL, signature, private key, storage object URL 원문은 로그 금지.
+- 파일 upload URL 발급, upload confirm, delete는 audit 대상으로 선언했다.
+- S3/CloudFront 호출 metric은 어댑터에서 기록한다.
 
 ### 4. 알림 발송 관측성 개선
 
-- 대상: FCM audience 발송, invalid token 비활성화, webhook flush, SES 발송.
-- 추가: 성공/실패 건수를 metric으로 분리하고, 로그에는 batch size와 실패 reason class만 남긴다.
-- 주의: 알림 title/content는 사용자 입력 또는 운영 메시지를 포함할 수 있으므로 장기적으로 원문 로그를 줄인다.
+- FCM과 webhook 성공/실패 건수 metric은 추가했다.
+- invalid token 비활성화와 SES template rendering 실패는 후속으로 별도 counter를 둘 수 있다.
 
 ### 5. 배치와 스케줄러 표준화
 
-- 대상: email verification retention, figma dispatch retention, workbook auto release, matching round deadline.
-- 표준 필드: `jobName`, `trigger`, `threshold`, `processed`, `deleted`, `durationMs`, `result`, `errorClass`.
-- 추가: batch job 공통 helper를 두면 시작/종료/실패 로그와 metric을 일관되게 남길 수 있다.
+- 주요 scheduler/handler는 `jobName`, `processed`, `durationMs`, `result`, `errorClass` 기반 로그와 metric을 사용한다.
+- scheduler가 더 늘어나면 공통 helper로 시작/종료/실패 로그와 metric 호출을 묶는다.
 
 ### 6. 과도한 INFO 정리
 
-- 후보: `AuthorizationService`의 권한 평가 시작/subject attribute, JWT 검증 실패 INFO, Firebase 초기화 세부 로그, FCM topic deprecated warning.
-- 방향: 요청마다 반복되는 진단 로그는 DEBUG로 내리고, 운영자가 즉시 알아야 하는 상태 변화만 INFO/WARN으로 유지한다.
+- 이번 변경에서 주요 후보는 정리했다.
+- 남은 4xx/business exception WARN 과다는 request summary와 통합하거나 sampling을 검토한다.
 
 ### 7. 테스트/시드 로그 격리
 
