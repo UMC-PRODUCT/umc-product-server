@@ -1,10 +1,11 @@
 package com.umc.product.support.fixture;
 
+import org.springframework.stereotype.Component;
+
 import com.umc.product.authorization.application.port.out.SaveChallengerRolePort;
 import com.umc.product.authorization.domain.ChallengerRole;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import org.springframework.stereotype.Component;
 
 @Component
 public class ChallengerRoleFixture extends FixtureSupport {
@@ -28,6 +29,11 @@ public class ChallengerRoleFixture extends FixtureSupport {
     public ChallengerRole 중앙운영사무국_일반_운영진(Long challengerId, Long gisuId) {
         return saveChallengerRolePort.save(
             ChallengerRole.create(challengerId, ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, null, null, gisuId));
+    }
+
+    public ChallengerRole 슈퍼_관리자(Long challengerId, Long gisuId) {
+        return saveChallengerRolePort.save(
+            ChallengerRole.create(challengerId, ChallengerRoleType.SUPER_ADMIN, null, null, gisuId));
     }
 
     // 지부

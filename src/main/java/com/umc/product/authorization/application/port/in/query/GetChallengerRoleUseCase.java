@@ -1,11 +1,12 @@
 package com.umc.product.authorization.application.port.in.query;
 
-import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 
 /**
  * 사용자의 역할 정보를 조회하는 UseCase
@@ -17,6 +18,14 @@ public interface GetChallengerRoleUseCase {
     ChallengerRoleInfo getById(Long challengerRoleId);
 
     List<ChallengerRoleInfo> findAllByMemberId(Long memberId);
+
+    /**
+     * 슈퍼어드민 여부를 확인합니다. 기수와 무관하게 모든 권한을 가집니다.
+     *
+     * @param memberId 사용자 ID
+     * @return 슈퍼어드민 역할을 보유하면 true
+     */
+    boolean isSuperAdmin(Long memberId);
 
     /**
      * @deprecated {@link #isCentralCoreInGisu}를 사용해주세요.

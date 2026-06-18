@@ -1,7 +1,8 @@
 package com.umc.product.curriculum.application.port.out;
 
-import com.umc.product.curriculum.domain.OriginalWorkbookMission;
 import java.util.List;
+
+import com.umc.product.curriculum.domain.OriginalWorkbookMission;
 
 public interface LoadOriginalWorkbookMissionPort {
 

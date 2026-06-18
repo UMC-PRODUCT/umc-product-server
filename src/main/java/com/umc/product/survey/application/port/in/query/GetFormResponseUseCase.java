@@ -1,9 +1,10 @@
 package com.umc.product.survey.application.port.in.query;
 
-import com.umc.product.survey.application.port.in.query.dto.FormResponseInfo;
-import com.umc.product.survey.application.port.in.query.dto.FormResponseWithAnswersInfo;
 import java.util.List;
 import java.util.Optional;
+
+import com.umc.product.survey.application.port.in.query.dto.FormResponseInfo;
+import com.umc.product.survey.application.port.in.query.dto.FormResponseWithAnswersInfo;
 
 /**
  * FormResponse 조회 UseCase.
@@ -39,11 +40,15 @@ public interface GetFormResponseUseCase {
 
     /**
      * 특정 폼에 대한 특정 사용자의 draft 응답을 조회. 없으면 Optional.empty. "작성 중 응답 이어서 보기" 용도.
+     * <p>
+     * 중복 응답을 허용하지 않는 폼 전용 단건 조회다. 중복 허용 폼은 {@code formResponseId} 기준으로 조회해야 한다.
      */
     Optional<FormResponseInfo> findDraftByFormIdAndRespondentMemberId(Long formId, Long respondentMemberId);
 
     /**
      * 특정 폼에 대한 특정 사용자의 SUBMITTED 응답을 조회. 없으면 Optional.empty.
+     * <p>
+     * 중복 응답을 허용하지 않는 폼 전용 단건 조회다. 중복 허용 폼은 {@code formResponseId} 기준으로 조회해야 한다.
      */
     Optional<FormResponseInfo> findSubmittedByFormIdAndRespondentMemberId(Long formId, Long respondentMemberId);
 

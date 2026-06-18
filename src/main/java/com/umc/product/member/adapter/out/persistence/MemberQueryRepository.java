@@ -1,6 +1,15 @@
 package com.umc.product.member.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -11,15 +20,9 @@ import com.umc.product.member.application.port.in.query.dto.SearchMemberQuery;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.QMember;
 import com.umc.product.organization.domain.QChapterSchool;
-import com.umc.product.organization.domain.QSchool;
+
 import jakarta.persistence.LockModeType;
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
@@ -50,7 +53,7 @@ public class MemberQueryRepository {
     }
 
     /**
-     * 검색 로직
+     * 검색 로직 (v1) — 챌린저 단위 row.
      */
     public Page<Challenger> searchBy(SearchMemberQuery query, Pageable pageable) {
         QChallenger challenger = QChallenger.challenger;
@@ -69,6 +72,47 @@ public class MemberQueryRepository {
 
         Long total = queryFactory
             .select(challenger.count())
+            .from(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .where(condition)
+            .fetchOne();
+
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    /**
+     * 검색 로직 (v2) — 회원 단위 distinct memberId.
+     * <p>
+     * 같은 회원이 여러 챌린저 이력을 가져도 1개 row로만 반환됩니다.
+     * gisuId/part 같은 챌린저 필터는 "회원이 한 번이라도 그 조건을 만족하는 챌린저를 가졌는가"로 매칭됩니다.
+     */
+    public Page<Long> searchMemberIdsBy(SearchMemberQuery query, Pageable pageable) {
+        QChallenger challenger = QChallenger.challenger;
+        QMember member = QMember.member;
+
+        BooleanBuilder condition = buildSearchCondition(query, challenger, member);
+
+        // PostgreSQL은 SELECT DISTINCT 사용 시 ORDER BY 표현식이 SELECT 목록에 포함되어 있어야 합니다.
+        // member 테이블의 컬럼은 같은 member.id 행에서 항상 동일한 값을 가지므로,
+        // (id, schoolId, name) 묶음에 distinct를 걸어도 결과는 member.id 단위 distinct와 동일하면서
+        // 표준 SQL 규칙도 만족합니다.
+        List<Tuple> rows = queryFactory
+            .select(member.id, member.schoolId, member.name)
+            .distinct()
+            .from(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .where(condition)
+            .orderBy(member.schoolId.asc(), member.name.asc(), member.id.asc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        List<Long> content = rows.stream()
+            .map(t -> t.get(member.id))
+            .toList();
+
+        Long total = queryFactory
+            .select(member.id.countDistinct())
             .from(challenger)
             .join(member).on(challenger.memberId.eq(member.id))
             .where(condition)
@@ -98,20 +142,9 @@ public class MemberQueryRepository {
             return null;
         }
 
-        QSchool school = QSchool.school;
-
-        BooleanExpression schoolNameExists = JPAExpressions
-            .selectOne()
-            .from(school)
-            .where(
-                school.id.eq(member.schoolId),
-                school.name.containsIgnoreCase(keyword)
-            )
-            .exists();
-
         return member.name.containsIgnoreCase(keyword)
-            .or(member.email.containsIgnoreCase(keyword))
-            .or(schoolNameExists);
+            .or(member.nickname.containsIgnoreCase(keyword))
+            .or(member.email.containsIgnoreCase(keyword));
     }
 
     private BooleanExpression chapterIdExists(Long chapterId, QMember member) {

@@ -1,7 +1,8 @@
 package com.umc.product.project.application.access;
 
-import com.umc.product.project.domain.enums.ProjectStatus;
 import java.util.Set;
+
+import com.umc.product.project.domain.enums.ProjectStatus;
 
 /**
  * 프로젝트 조회 시 적용되는 가시 범위(scope) typed value.
@@ -15,14 +16,22 @@ public sealed interface ProjectAccessScope {
     /** 모든 프로젝트 노출 (Central Core). 상태 필터는 호출자가 요청한 그대로 통과. */
     record All(Set<ProjectStatus> visibleStatuses) implements ProjectAccessScope {}
 
-    /** 특정 지부의 프로젝트만 노출 (지부장). */
+    /** 특정 지부의 프로젝트만 노출 (지부장 / 학교 회장단 — 본인 학교가 속한 지부 전체). */
     record ChapterScoped(Long chapterId, Set<ProjectStatus> visibleStatuses) implements ProjectAccessScope {}
-
-    /** 특정 학교의 프로젝트만 노출 (학교 회장단). */
-    record SchoolScoped(Long schoolId, Set<ProjectStatus> visibleStatuses) implements ProjectAccessScope {}
 
     /** 본인이 PM 인 프로젝트만 노출 (PM 챌린저, 관리 화면). */
     record OwnerOnly(Long memberId, Set<ProjectStatus> visibleStatuses) implements ProjectAccessScope {}
+
+    /**
+     * 상위 권한 scope 결과에 본인 PO 프로젝트를 추가 포함한다.
+     * <p>
+     * 운영진/지부장/학교 회장단 scope 에서 DRAFT 를 전체 공개하지 않으면서, 본인이 PO 인 프로젝트만 별도 OR 조건으로 노출하기 위한 값 객체.
+     */
+    record WithOwnerIncluded(
+        ProjectAccessScope baseScope,
+        Long ownerMemberId,
+        Set<ProjectStatus> ownerVisibleStatuses
+    ) implements ProjectAccessScope {}
 
     /** 일반 챌린저용 공개 목록 ({@link ProjectStatus#IN_PROGRESS} / {@link ProjectStatus#COMPLETED}). */
     record PublicOnly() implements ProjectAccessScope {}

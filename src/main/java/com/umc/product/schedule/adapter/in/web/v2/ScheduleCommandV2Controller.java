@@ -1,5 +1,15 @@
 package com.umc.product.schedule.adapter.in.web.v2;
 
+import java.util.List;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -22,26 +32,19 @@ import com.umc.product.schedule.application.port.in.command.dto.EditScheduleComm
 import com.umc.product.schedule.application.port.in.command.dto.ExcuseScheduleAttendanceCommand;
 import com.umc.product.schedule.application.port.in.command.dto.ScheduleAttendanceCommand;
 import com.umc.product.schedule.application.port.in.command.dto.result.ScheduleParticipantAttendanceResult;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v2/schedules")
 @RequiredArgsConstructor
-@Tag(name = "Schedule V2 | Command", description = "일정을 생성하거나 수정하고, 출석 관련 요청을 처리합니다.")
+@Tag(name = "Schedule V2 | Command", description = "일정 생성, 수정, 삭제와 출석 요청을 다룹니다.")
 public class ScheduleCommandV2Controller {
 
     private final CreateScheduleUseCase createScheduleUseCase;
@@ -54,9 +57,9 @@ public class ScheduleCommandV2Controller {
     @CheckAccess(
         resourceType = ResourceType.SCHEDULE,
         permission = PermissionType.WRITE,
-        message = "일정 생성은 '챌린저 활동 기록이 있는 사용자'만 가능합니다."
+        message = "일정을 만들려면 챌린저 활동 기록이 필요해요. 활동 기록을 확인해주세요."
     )
-    @Operation(summary = "[SCHEDULE-C001] 일정 생성", description = """
+    @Operation(operationId = "SCHEDULE-C001", summary = "일정 생성", description = """
         일정을 생성합니다. `location` 필드를 작성하지 않으실 경우 비대면 일정으로 간주됩니다.
 
         스터디 일정을 생성하고자 하는 경우에는, 반드시 별도의 API를 이용해서 생성해야 합니다.
@@ -89,19 +92,19 @@ public class ScheduleCommandV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "400", description = """
-            SCHEDULE-0006 : 시작 시간은 종료 시간보다 이전이어야 합니다.<br>
-            SCHEDULE-0010 : 태그는 최소 1개 이상 선택해야 합니다.<br>
-            SCHEDULE-0025 : 현재 기수의 일정만 생성할 수 있습니다.<br>
-            SCHEDULE-0030 : 초대 가능한 최대 참여자 수를 초과했습니다.<br>
-            SCHEDULE-0032 : 초대하려는 참여자에 유효하지 않은 사용자가 포함되어 있습니다.<br>
-            CHALLENGER-0009 : 활성 또는 수료 상태의 사용자만 일정 생성이 가능합니다.
+            SCHEDULE-0006 : 시작 시간은 종료 시간보다 빨라야 해요. 시간을 다시 선택해주세요.<br>
+            SCHEDULE-0010 : 태그를 1개 이상 선택해주세요.<br>
+            SCHEDULE-0025 : 현재 기수의 일정만 만들 수 있어요. 기수를 확인해주세요.<br>
+            SCHEDULE-0030 : 초대 가능한 참여자 수를 초과했어요. 참여자를 줄여주세요.<br>
+            SCHEDULE-0032 : 초대할 수 없는 참여자가 포함되어 있어요. 참여자 목록을 확인해주세요.<br>
+            CHALLENGER-0009 : 일정을 만들려면 챌린저 상태가 활동 중이거나 수료여야 해요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0001 : 권한이 없습니다.<br>
-            SCHEDULE-0029 : 일정을 생성할 수 없습니다. 챌린저 활동 이력이 필요합니다.<br>
-            SCHEDULE-0031 : 출석을 요하는 일정을 생성할 권한이 없습니다.
+            AUTHORIZATION-0001 : 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.<br>
+            SCHEDULE-0029 : 일정을 만들려면 챌린저 활동 이력이 필요해요. 활동 기록을 확인해주세요.<br>
+            SCHEDULE-0031 : 출석이 필요한 일정을 만들 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         )
@@ -120,9 +123,9 @@ public class ScheduleCommandV2Controller {
         resourceType = ResourceType.SCHEDULE,
         resourceId = "#scheduleId",
         permission = PermissionType.EDIT,
-        message = "생성자 본인' 또는 '해당 일정 기수의 최고 운영 관리자'만 가능합니다."
+        message = "일정은 생성자 본인 또는 해당 기수의 최고 운영 관리자만 수정할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
-    @Operation(summary = "[SCHEDULE-C002] 일정 수정", description = """
+    @Operation(operationId = "SCHEDULE-C002", summary = "일정 수정", description = """
         일정과 관련된 모든 정보를 수정합니다. 제공되지 않은 필드는 변경하지 않는 것으로 간주합니다.
 
         ---
@@ -143,25 +146,25 @@ public class ScheduleCommandV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "400", description = """
-            SCHEDULE-0006 : 시작 시간은 종료 시간보다 이전이어야 합니다.<br>
-            SCHEDULE-0010 : 태그는 최소 1개 이상 선택해야 합니다.<br>
-            SCHEDULE-0020 : 대면 일정은 위치 정보가 필수입니다.<br>
-            SCHEDULE-0024 : 비대면 일정으로 변경 시 위치 정보를 포함할 수 없습니다.<br>
-            SCHEDULE-0027 : 출석을 요하는 일정의 출석 정책은 필수입니다.<br>
-            SCHEDULE-0028 : 시작된 일정은 수정이 불가합니다.<br>
-            SCHEDULE-0030 : 초대 가능한 최대 참여자 수를 초과했습니다.<br>
-            SCHEDULE-0032 : 초대하려는 참여자에 유효하지 않은 사용자가 포함되어 있습니다.
+            SCHEDULE-0006 : 시작 시간은 종료 시간보다 빨라야 해요. 시간을 다시 선택해주세요.<br>
+            SCHEDULE-0010 : 태그를 1개 이상 선택해주세요.<br>
+            SCHEDULE-0020 : 대면 일정에는 위치 정보가 필요해요. 위치를 입력해주세요.<br>
+            SCHEDULE-0024 : 비대면 일정에는 위치 정보를 포함할 수 없어요. 위치 정보를 제거해주세요.<br>
+            SCHEDULE-0027 : 출석이 필요한 일정에는 출석 정책을 설정해주세요.<br>
+            SCHEDULE-0028 : 이미 시작된 일정은 수정할 수 없어요. 일정 시간을 확인해주세요.<br>
+            SCHEDULE-0030 : 초대 가능한 참여자 수를 초과했어요. 참여자를 줄여주세요.<br>
+            SCHEDULE-0032 : 초대할 수 없는 참여자가 포함되어 있어요. 참여자 목록을 확인해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.<br>
-            SCHEDULE-0031 : 출석을 요하는 일정을 생성할 권한이 없습니다.
+            AUTHORIZATION-0002 : 이 항목에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.<br>
+            SCHEDULE-0031 : 출석이 필요한 일정을 만들 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "404", description = """
-            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            SCHEDULE-0009 : 일정을 찾을 수 없어요. 선택한 일정을 확인해주세요.
             """,
             content = @Content
         )
@@ -181,9 +184,9 @@ public class ScheduleCommandV2Controller {
         resourceType = ResourceType.SCHEDULE,
         resourceId = "#scheduleId",
         permission = PermissionType.DELETE,
-        message = "'생성자 본인' 또는 '해당 일정 기수의 최고 운영 관리자'만 가능합니다."
+        message = "일정은 생성자 본인 또는 해당 기수의 최고 운영 관리자만 삭제할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
-    @Operation(summary = "[SCHEDULE-C006] 일정 삭제", description = """
+    @Operation(operationId = "SCHEDULE-C006", summary = "일정 삭제", description = """
         일정을 삭제합니다.
 
         - 일정에 연결된 모든 참여자(ScheduleParticipant) 정보도 함께 삭제됩니다.
@@ -198,12 +201,12 @@ public class ScheduleCommandV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "400", description = """
-            SCHEDULE-0033 : 출석 기록이 존재하는 일정은 삭제할 수 없습니다.
+            SCHEDULE-0033 : 출석 기록이 있는 일정은 삭제할 수 없어요. 출석 기록을 먼저 확인해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            AUTHORIZATION-0002 : 이 항목에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         ),
@@ -222,9 +225,9 @@ public class ScheduleCommandV2Controller {
         resourceType = ResourceType.SCHEDULE,
         resourceId = "#scheduleId",
         permission = PermissionType.FORCE_DELETE,
-        message = "'해당 일정 기수의 최고 운영 관리자'만 가능합니다."
+        message = "일정 강제 삭제는 해당 기수의 최고 운영 관리자만 할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
-    @Operation(summary = "[SCHEDULE-C007] 일정 강제 삭제", description = """
+    @Operation(operationId = "SCHEDULE-C007", summary = "일정 강제 삭제", description = """
         출석 기록 존재 여부와 관계 없이 일정을 강제로 삭제합니다.
 
         - 일정에 연결된 모든 참여자(ScheduleParticipant) 정보도 함께 삭제됩니다.
@@ -237,12 +240,12 @@ public class ScheduleCommandV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            AUTHORIZATION-0002 : 이 항목에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "404", description = """
-            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            SCHEDULE-0009 : 일정을 찾을 수 없어요. 선택한 일정을 확인해주세요.
             """,
             content = @Content
         )
@@ -258,9 +261,9 @@ public class ScheduleCommandV2Controller {
         resourceType = ResourceType.ATTENDANCE,
         resourceId = "#scheduleId",
         permission = PermissionType.WRITE,
-        message = "출석 요청은 '챌린저 활동 기록이 있는 사용자'면서 '일정에 참여하는 사용자'만 가능합니다."
+        message = "출석은 챌린저 활동 기록이 있고 일정에 참여하는 사용자만 요청할 수 있어요. 참여자 목록을 확인해주세요."
     )
-    @Operation(summary = "[SCHEDULE-C003] 출석 요청하기", description = """
+    @Operation(operationId = "SCHEDULE-C003", summary = "출석 요청하기", description = """
         특정 일정에 대한 출석을 요청합니다. 반환값으로 변경된 출석 상태 및 관련된 정보들을 제공합니다.
 
         - 이미 출석 요청을 한 경우, 에러가 반환됩니다. (사유 출석 요청 및 이미 출석/지각/결석으로 확정된 경우 등)
@@ -270,22 +273,22 @@ public class ScheduleCommandV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "400", description = """
-            SCHEDULE-0011 : 기존 출석 요청이 존재합니다.<br>
-            SCHEDULE-0018 : 종료된 일정에 대한 출석 요청은 허용되지 않습니다.<br>
-            SCHEDULE-0019 : 출석 가능한 시간 이전입니다. 출석 가능한 시간 이후에 다시 시도해주세요.<br>
-            SCHEDULE-0021 : 출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다.<br>
-            SCHEDULE-0022 : 일정에 대한 참석자 정보가 존재하지 않습니다.<br>
-            SCHEDULE-0023 : 사용자의 출석 인증 범위 내의 존재 여부가 확인되지 않습니다.
+            SCHEDULE-0011 : 이미 출석 요청이 있어요. 기존 요청을 확인해주세요.<br>
+            SCHEDULE-0018 : 종료된 일정에는 출석을 요청할 수 없어요. 일정 시간을 확인해주세요.<br>
+            SCHEDULE-0019 : 아직 출석할 수 있는 시간이 아니에요. 출석 가능 시간 이후에 다시 시도해주세요.<br>
+            SCHEDULE-0021 : 출석 정책이 없는 일정이에요. 출석 정책을 먼저 설정해주세요.<br>
+            SCHEDULE-0022 : 일정 참석자 정보를 찾을 수 없어요. 참석자 목록을 확인해주세요.<br>
+            SCHEDULE-0023 : 출석 인증 범위 안에 있는지 확인하지 못했어요. 위치를 확인한 뒤 다시 시도해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            AUTHORIZATION-0002 : 이 항목에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "404", description = """
-            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            SCHEDULE-0009 : 일정을 찾을 수 없어요. 선택한 일정을 확인해주세요.
             """,
             content = @Content
         )
@@ -307,9 +310,9 @@ public class ScheduleCommandV2Controller {
         resourceType = ResourceType.ATTENDANCE,
         resourceId = "#scheduleId",
         permission = PermissionType.WRITE,
-        message = "출석 사유 제출은 '챌린저 활동 기록이 있는 사용자'면서 '일정에 참여하는 사용자'만 가능합니다."
+        message = "출석 사유는 챌린저 활동 기록이 있고 일정에 참여하는 사용자만 제출할 수 있어요. 참여자 목록을 확인해주세요."
     )
-    @Operation(summary = "[SCHEDULE-C004] 출석 요청이 불가능한 경우, 사유 제출하기", description = """
+    @Operation(operationId = "SCHEDULE-C004", summary = "출석 요청이 불가능한 경우, 사유 제출하기", description = """
         위치 인증이 안되거나, 개인 사정이 있어 결석하지만 출석 인정을 요구하는 경우 사유를 제출하기 위하여 사용합니다.
 
         위치 정보는 클라이언트 단에서 잡히는 경우에 한하여 제공하면 됩니다. 단, 사유는 반드시 제출하여야 합니다.
@@ -318,20 +321,20 @@ public class ScheduleCommandV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "400", description = """
-            SCHEDULE-0013 : 출석 사유 제출은 첫 요청, 결석 또는 지각 상태에서만 가능합니다.<br>
-            SCHEDULE-0016 : 출석 인정을 요청하는 사유가 제공되지 않았거나 비어있습니다.<br>
-            SCHEDULE-0021 : 출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다.<br>
-            SCHEDULE-0022 : 일정에 대한 참석자 정보가 존재하지 않습니다.
+            SCHEDULE-0013 : 첫 요청, 결석 또는 지각 상태에서만 출석 사유를 제출할 수 있어요. 출석 상태를 확인해주세요.<br>
+            SCHEDULE-0016 : 출석 인정을 요청하려면 사유를 입력해주세요.<br>
+            SCHEDULE-0021 : 출석 정책이 없는 일정이에요. 출석 정책을 먼저 설정해주세요.<br>
+            SCHEDULE-0022 : 일정 참석자 정보를 찾을 수 없어요. 참석자 목록을 확인해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            AUTHORIZATION-0002 : 이 항목에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "404", description = """
-            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            SCHEDULE-0009 : 일정을 찾을 수 없어요. 선택한 일정을 확인해주세요.
             """,
             content = @Content
         )
@@ -353,10 +356,10 @@ public class ScheduleCommandV2Controller {
         resourceType = ResourceType.ATTENDANCE,
         resourceId = "#scheduleId",
         permission = PermissionType.APPROVE,
-        message = "출석 요청 승인/거절은 '해당 일정이 진행되는 기수의 운영진'만 가능합니다."
+        message = "출석 요청은 해당 일정 기수의 운영진만 승인하거나 거절할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     // 각 일정에 대한 출석 요청을 승인 또는 기각하는 API, Request는 list 형태로 받을 수 있어야 합니다.
-    @Operation(summary = "[SCHEDULE-C005] [운영진용] 출석 요청 승인/거절", description = """
+    @Operation(operationId = "SCHEDULE-C005", summary = "[운영진용] 출석 요청 승인/거절", description = """
         일정에 대한 출석 요청을 승인 또는 거절합니다.
 
         결정 권한은 아래와 같습니다. (기준은, 일정이 포함된 기수 기준입니다)
@@ -369,17 +372,17 @@ public class ScheduleCommandV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "400", description = """
-            SCHEDULE-0012 : 출석 요청이 존재하지 않습니다. 출석 요청을 생성하고 다시 시도해주세요.<br>
-            SCHEDULE-0014 : 현재 출석 상태에서는 승인이 불가능합니다.<br>
-            SCHEDULE-0015 : 출석 요청에 대한 거절을 할 수 없는 상태입니다.<br>
-            SCHEDULE-0017 : 해당 출석 요청은 운영진의 승인 또는 기각을 필요로 하는 상태가 아닙니다.<br>
-            SCHEDULE-0021 : 출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다.<br>
-            SCHEDULE-0022 : 일정에 대한 참석자 정보가 존재하지 않습니다.
+            SCHEDULE-0012 : 출석 요청이 없어요. 출석 요청을 먼저 생성해주세요.<br>
+            SCHEDULE-0014 : 현재 출석 상태에서는 승인할 수 없어요. 출석 상태를 확인해주세요.<br>
+            SCHEDULE-0015 : 현재 출석 상태에서는 거절할 수 없어요. 출석 상태를 확인해주세요.<br>
+            SCHEDULE-0017 : 운영진 확인이 필요한 출석 요청이 아니에요. 출석 상태를 확인해주세요.<br>
+            SCHEDULE-0021 : 출석 정책이 없는 일정이에요. 출석 정책을 먼저 설정해주세요.<br>
+            SCHEDULE-0022 : 일정 참석자 정보를 찾을 수 없어요. 참석자 목록을 확인해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            AUTHORIZATION-0002 : 이 항목에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         ),

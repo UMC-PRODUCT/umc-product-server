@@ -1,5 +1,15 @@
 package com.umc.product.project.adapter.in.web;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -14,27 +24,18 @@ import com.umc.product.project.application.port.in.command.CreateDraftProjectApp
 import com.umc.product.project.application.port.in.command.DecideApplicationUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectApplicationDraftUseCase;
-import com.umc.product.project.adapter.in.web.dto.request.CreateProjectApplicationRequest;
 import com.umc.product.project.application.port.in.command.dto.CancelProjectApplicationCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectApplicationCommand;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/projects")
 @RequiredArgsConstructor
-@Tag(name = "Project | 챌린저 지원서", description = "챌린저의 프로젝트 지원서 Draft 생성 / 임시저장 / 제출 / 철회 / 조회 (APPLY-001~005)")
+@Tag(name = "Project | 챌린저 지원서", description = "챌린저의 프로젝트 지원서 초안, 임시저장, 제출, 철회를 다룹니다.")
 public class ProjectApplicationController {
 
     private final CreateDraftProjectApplicationUseCase createDraftProjectApplicationUseCase;
@@ -45,14 +46,15 @@ public class ProjectApplicationController {
 
     @PostMapping("/{projectId}/applications")
     @Operation(
-        summary = "[APPLY-001] 챌린저 지원서 Draft 생성",
-        description = "챌린저가 특정 프로젝트의 지원서를 DRAFT 상태로 생성합니다. 이미 DRAFT 지원서가 있으면 기존 application 정보 반환."
+        operationId = "APPLY-001",
+        summary = "챌린저 지원서 초안 생성",
+        description = "챌린저가 프로젝트 지원서 초안을 생성합니다. 이미 초안이 있으면 기존 지원서 정보를 반환합니다."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT_APPLICATION,
         resourceId = "#projectId",
         permission = PermissionType.WRITE,
-        message = "지원서 생성 권한이 없습니다."
+        message = "지원서를 작성할 권한이 없어요. 지원 가능한 프로젝트인지 확인해주세요."
     )
     public ProjectApplicationStatusResponse createDraft(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -66,48 +68,53 @@ public class ProjectApplicationController {
         );
     }
 
-    @PutMapping("/{projectId}/applications/me")
+    @PutMapping("/{projectId}/applications/{applicationId}")
     @Operation(
-        summary = "[APPLY-002] 챌린저 지원서 임시저장",
-        description = "본문이 곧 답변의 새 전체 상태가 된다. 본인의 DRAFT 지원서에서만 호출 가능."
+        operationId = "APPLY-002",
+        summary = "챌린저 지원서 임시저장",
+        description = "요청 본문을 답변의 새 전체 상태로 저장합니다. 본인의 초안 지원서에서만 호출할 수 있습니다."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT_APPLICATION,
-        resourceId = "#projectId",
-        permission = PermissionType.WRITE,
-        message = "지원서 임시저장 권한이 없습니다."
+        resourceId = "#applicationId",
+        permission = PermissionType.EDIT,
+        message = "지원서를 임시저장할 권한이 없어요. 지원 가능한 프로젝트인지 확인해주세요."
     )
     public ProjectApplicationStatusResponse updateDraft(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long projectId,
+        @PathVariable Long applicationId,
         @Valid @RequestBody UpdateApplicationAnswersRequest request
     ) {
         return ProjectApplicationStatusResponse.from(
             updateProjectApplicationDraftUseCase.update(
-                request.toCommand(projectId, memberPrincipal.getMemberId())
+                request.toCommand(projectId, applicationId, memberPrincipal.getMemberId())
             )
         );
     }
 
-    @PostMapping("/{projectId}/applications/me/submit")
+    @PostMapping("/{projectId}/applications/{applicationId}/submit")
     @Operation(
-        summary = "[APPLY-003] 챌린저 지원서 최종 제출",
-        description = "DRAFT -> SUBMITTED 전이. 필수 답변 누락 시 400. 본인의 DRAFT 지원서에서만 호출 가능."
+        operationId = "APPLY-003",
+        summary = "챌린저 지원서 최종 제출",
+        description = "지원서를 초안에서 제출 상태로 변경합니다. 필수 답변이 빠지면 400을 반환합니다. 본인의 초안 지원서에서만 호출할 수 있습니다."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT_APPLICATION,
-        resourceId = "#projectId",
-        permission = PermissionType.WRITE,
-        message = "지원서 제출 권한이 없습니다."
+        resourceId = "#applicationId",
+        permission = PermissionType.EDIT,
+        message = "지원서를 제출할 권한이 없어요. 지원 가능한 프로젝트인지 확인해주세요."
     )
     public ProjectApplicationStatusResponse submit(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @PathVariable Long projectId
+        @PathVariable Long projectId,
+        @PathVariable Long applicationId
     ) {
         return ProjectApplicationStatusResponse.from(
             submitProjectApplicationUseCase.submit(
                 SubmitProjectApplicationCommand.builder()
                     .projectId(projectId)
+                    .applicationId(applicationId)
                     .requesterMemberId(memberPrincipal.getMemberId())
                     .build()
             )
@@ -116,19 +123,20 @@ public class ProjectApplicationController {
 
     @PatchMapping("/{projectId}/applications/{applicationId}/decision")
     @Operation(
-        summary = "[APPLY-103] 지원서 합/불 결정 (단일 PATCH)",
+        operationId = "APPLY-103",
+        summary = "지원서 합격 여부 결정",
         description = """
             PM 이 지원서의 status 를 토글합니다.
             - 매칭 차수 진행 중에만 가능 (decisionDeadline 까지)
-            - SUBMITTED ↔ APPROVED ↔ REJECTED 자유 토글 (재토글 허용)
-            - PENDING 입력은 도메인의 SUBMITTED 로 매핑되어 결정을 "대기" 로 되돌림
+            - APPROVED ↔ REJECTED 재토글 허용
+            - REJECTED 처리 후 매칭 규칙의 최소선발 수를 만족하지 못하면 거절
             """
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT_APPLICATION,
         resourceId = "#applicationId",
         permission = PermissionType.APPROVE,
-        message = "지원서 합/불 결정 권한이 없습니다."
+        message = "지원서 합격 여부는 권한이 있는 운영진만 결정할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public ProjectApplicationStatusResponse decide(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -145,7 +153,8 @@ public class ProjectApplicationController {
 
     @DeleteMapping("/{projectId}/applications/{applicationId}")
     @Operation(
-        summary = "[APPLY-005] 챌린저 지원서 철회",
+        operationId = "APPLY-005",
+        summary = "챌린저 지원서 철회",
         description = """
             지원서를 CANCELLED 로 soft delete 합니다.
 
@@ -163,7 +172,7 @@ public class ProjectApplicationController {
         resourceType = ResourceType.PROJECT_APPLICATION,
         resourceId = "#applicationId",
         permission = PermissionType.DELETE,
-        message = "지원서 철회 권한이 없습니다."
+        message = "지원서는 지원자 본인만 철회할 수 있어요."
     )
     public ProjectApplicationStatusResponse cancel(
         @CurrentMember MemberPrincipal memberPrincipal,

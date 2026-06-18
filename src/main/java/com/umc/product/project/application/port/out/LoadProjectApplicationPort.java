@@ -1,10 +1,14 @@
 package com.umc.product.project.application.port.out;
 
+import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * {@code findBy*} — 없어도 정상 ({@link Optional})
@@ -36,8 +40,10 @@ public interface LoadProjectApplicationPort {
     );
 
     /**
-     * 본인의 DRAFT 지원서를 반드시 존재하는 것으로 조회합니다. 없으면 {@code PROJECT_DRAFT_APPLICATION_NOT_FOUND} 예외.
-     * update / submit 에서 사용합니다.
+     * (projectId, memberId) 로 단일 DRAFT 지원서를 조회합니다.
+     * <p>
+     * 같은 프로젝트/멤버에 여러 차수의 DRAFT가 공존할 수 있는 지원서 update/submit 흐름에서는 사용하지 않고,
+     * applicationId로 대상을 명시해야 합니다. 없으면 {@code PROJECT_DRAFT_APPLICATION_NOT_FOUND} 예외.
      */
     ProjectApplication getDraftByProjectAndMember(Long projectId, Long memberId);
 
@@ -52,6 +58,14 @@ public interface LoadProjectApplicationPort {
      * 매칭 차수에 속한 모든 지원서를 조회합니다. 자동 선발 알고리즘 입력으로 사용됩니다.
      */
     List<ProjectApplication> listByMatchingRoundId(Long matchingRoundId);
+
+    /**
+     * 같은 매칭 차수와 프로젝트에 속한 결정 가능 지원서(SUBMITTED/APPROVED/REJECTED)를 조회합니다.
+     * <p>
+     * applicationForm -> project, appliedMatchingRound 를 fetch join 으로 함께 로드하여 최소선발 검증에서 lazy traversal
+     * 없이 프로젝트/차수 정보를 사용할 수 있게 합니다.
+     */
+    List<ProjectApplication> listDecidableByMatchingRoundIdAndProjectId(Long matchingRoundId, Long projectId);
 
     /**
      * 지원서 단건을 fetch join 으로 조회한다.
@@ -94,13 +108,37 @@ public interface LoadProjectApplicationPort {
      * <p>
      * 파트 필터는 challenger 도메인 속성이라 본 port 에서 다루지 않는다 -- 호출자(Service) 가 challenger 정보를 enrich 한 뒤 in-memory 로 필터링한다.
      *
+     * 기본적으로 지원(모집)이 끝난 차수({@code endsAt < now})의 지원서만 반환한다. matchingRoundId 미지정(전체 조회) 시에도 진행 중인 차수의
+     * 지원서는 자동으로 제외된다. 단, {@code includeOngoingMatchingRounds} 가 true 면 진행 중인 차수의 지원서도 함께 반환한다.
+     *
      * @param projectId       대상 프로젝트 ID
      * @param matchingRoundId 매칭 차수 필터 (선택). null 이면 전체.
      * @param status          상태 필터 (선택). null 이면 DRAFT 제외 전체.
+     * @param now                           조회 기준 시각. 이 시각보다 endsAt 이 이른 차수만 노출된다.
+     * @param includeOngoingMatchingRounds 진행 중인 매칭 차수 포함 여부
      */
     List<ProjectApplication> searchProjectApplications(
         Long projectId,
         Long matchingRoundId,
-        ProjectApplicationStatus status
+        ProjectApplicationStatus status,
+        Instant now,
+        boolean includeOngoingMatchingRounds
     );
+
+    /**
+     * 프로젝트/멤버 쌍별 APPROVED 지원서 중 가장 최신 매칭 차수를 조회합니다.
+     * <p>
+     * 최신 기준: matchingRound.startsAt DESC, 동률이면 application.id DESC.
+     * 지원서가 없는 쌍은 결과에 포함하지 않습니다.
+     */
+    List<ProjectMemberMatchedRoundInfo> listLatestApprovedMatchedRoundsByProjectIdsAndMemberIds(
+        Collection<Long> projectIds,
+        Collection<Long> memberIds
+    );
+
+    /**
+     * 프로젝트 abort 시 일괄 취소 대상 application 조회용. DRAFT/SUBMITTED 상태 application 만 반환합니다.
+     * APPROVED/REJECTED/CANCELLED 는 이미 종결되어 추가 정리가 필요 없습니다.
+     */
+    List<ProjectApplication> listInProgressByProjectId(Long projectId);
 }

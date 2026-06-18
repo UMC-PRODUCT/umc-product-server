@@ -1,19 +1,21 @@
 package com.umc.product.organization.adapter.in.web;
 
-import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
-import com.umc.product.authorization.domain.PermissionType;
-import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.organization.adapter.in.web.dto.request.CreateGisuRequest;
-import com.umc.product.organization.adapter.in.web.swagger.AdminGisuControllerApi;
-import com.umc.product.organization.application.port.in.command.ManageGisuUseCase;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.organization.adapter.in.web.dto.request.CreateGisuRequest;
+import com.umc.product.organization.adapter.in.web.swagger.AdminGisuControllerApi;
+import com.umc.product.organization.application.port.in.command.ManageGisuUseCase;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/gisu")
@@ -25,7 +27,7 @@ public class GisuCommandController implements AdminGisuControllerApi {
     @CheckAccess(
         resourceType = ResourceType.GISU,
         permission = PermissionType.WRITE,
-        message = "기수를 생성할 권한이 없습니다."
+        message = "기수를 만들 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Override
     @PostMapping
@@ -36,7 +38,7 @@ public class GisuCommandController implements AdminGisuControllerApi {
     @CheckAccess(
         resourceType = ResourceType.GISU,
         permission = PermissionType.DELETE,
-        message = "기수를 삭제할 권한이 없습니다."
+        message = "기수를 삭제할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Override
     @DeleteMapping("/{gisuId}")
@@ -47,7 +49,7 @@ public class GisuCommandController implements AdminGisuControllerApi {
     @CheckAccess(
         resourceType = ResourceType.GISU,
         permission = PermissionType.EDIT,
-        message = "기수를 수정할 권한이 없습니다."
+        message = "기수를 수정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     @Override
     @PostMapping("/{gisuId}/active")

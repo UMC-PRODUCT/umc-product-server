@@ -1,7 +1,8 @@
 package com.umc.product.curriculum.application.port.out;
 
-import com.umc.product.curriculum.domain.MissionSubmission;
 import java.util.List;
+
+import com.umc.product.curriculum.domain.MissionSubmission;
 
 public interface LoadMissionSubmissionPort {
 

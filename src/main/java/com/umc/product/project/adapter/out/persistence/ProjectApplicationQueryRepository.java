@@ -5,15 +5,25 @@ import static com.umc.product.project.domain.QProjectApplication.projectApplicat
 import static com.umc.product.project.domain.QProjectApplicationForm.projectApplicationForm;
 import static com.umc.product.project.domain.QProjectMatchingRound.projectMatchingRound;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.stereotype.Repository;
+
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
 /**
  * ProjectApplication QueryDSL 동적 검색 구현.
@@ -109,26 +119,110 @@ public class ProjectApplicationQueryRepository {
     /**
      * PM/운영진용 단일 프로젝트의 지원자 목록을 조회한다.
      * <p>
-     * applicationForm 을 통해 projectId 로 필터하고, appliedMatchingRound 를 fetch join 한다. 임시저장(DRAFT)은 항상 제외된다.
+     * applicationForm -> project, appliedMatchingRound 를 fetch join 으로 함께 로드한다.
+     * 호출자({@code ProjectApplicationSummaryInfo#from})가 form.project.id 까지 접근하므로 N+1 방지를 위해 fetch join 이 필요하다.
+     * 임시저장(DRAFT)은 항상 제외된다.
      * <p>
-     * 정렬: matchingRound.phase ASC -> projectApplication.submittedAt ASC.
+     * 정렬 (DB 단 baseline): matchingRound.phase ASC -> projectApplication.submittedAt ASC. 최종 화면 정렬(phase -> part ->
+     * submittedAt)은 part 가 cross-domain 정보라 Assembler 에서 in-memory 로 마무리한다.
+     * <p>
+     * 기본적으로 지원(모집)이 끝난 차수({@code endsAt < now})의 지원서만 노출한다. matchingRoundId 미지정(전체 조회) 시에도 진행 중인 차수의
+     * 지원서는 자동으로 제외된다. {@code includeOngoingMatchingRounds} 가 true 면 이 시간 조건을 적용하지 않는다.
      */
     public List<ProjectApplication> searchProjectApplications(
         Long projectId,
         Long matchingRoundId,
-        ProjectApplicationStatus status
+        ProjectApplicationStatus status,
+        Instant now,
+        boolean includeOngoingMatchingRounds
     ) {
         return queryFactory
             .selectFrom(projectApplication)
-            .innerJoin(projectApplication.applicationForm, projectApplicationForm)
+            .innerJoin(projectApplication.applicationForm, projectApplicationForm).fetchJoin()
+            .innerJoin(projectApplicationForm.project, project).fetchJoin()
             .innerJoin(projectApplication.appliedMatchingRound, projectMatchingRound).fetchJoin()
             .where(
                 projectApplicationForm.project.id.eq(projectId),
                 matchingRoundIdEq(matchingRoundId),
-                managedStatusCond(status)
+                managedStatusCond(status),
+                matchingRoundViewableCond(now, includeOngoingMatchingRounds)
             )
             .orderBy(projectMatchingRound.phase.asc(), projectApplication.submittedAt.asc())
             .fetch();
+    }
+
+    private BooleanExpression matchingRoundViewableCond(Instant now, boolean includeOngoingMatchingRounds) {
+        if (includeOngoingMatchingRounds) {
+            return null;
+        }
+        return projectMatchingRound.endsAt.before(now);
+    }
+
+    /**
+     * 수동 상태 변경 시 최소선발 검증에 필요한 같은 차수/프로젝트의 결정 가능 지원서를 조회한다.
+     */
+    public List<ProjectApplication> listDecidableByMatchingRoundIdAndProjectId(Long matchingRoundId, Long projectId) {
+        return queryFactory
+            .selectFrom(projectApplication)
+            .innerJoin(projectApplication.applicationForm, projectApplicationForm).fetchJoin()
+            .innerJoin(projectApplicationForm.project, project).fetchJoin()
+            .innerJoin(projectApplication.appliedMatchingRound, projectMatchingRound).fetchJoin()
+            .where(
+                projectMatchingRound.id.eq(matchingRoundId),
+                project.id.eq(projectId),
+                projectApplication.status.in(List.of(
+                    ProjectApplicationStatus.SUBMITTED,
+                    ProjectApplicationStatus.APPROVED,
+                    ProjectApplicationStatus.REJECTED
+                ))
+            )
+            .fetch();
+    }
+
+    /**
+     * 프로젝트/멤버 쌍별 APPROVED 지원서 중 가장 최신 매칭 차수를 반환한다.
+     * <p>
+     * DB 에서 최신 우선 정렬로 가져온 뒤, Java 에서 각 (projectId, memberId) 의 첫 row 만 남겨 DB 벤더별 window function 차이를 피한다.
+     */
+    public List<ProjectMemberMatchedRoundInfo> listLatestApprovedMatchedRoundsByProjectIdsAndMemberIds(
+        Collection<Long> projectIds,
+        Collection<Long> memberIds
+    ) {
+        if (projectIds == null || projectIds.isEmpty() || memberIds == null || memberIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<ProjectMemberMatchedRoundInfo> rows = queryFactory
+            .select(Projections.constructor(
+                ProjectMemberMatchedRoundInfo.class,
+                project.id,
+                projectApplication.applicantMemberId,
+                projectMatchingRound.id,
+                projectMatchingRound.type,
+                projectMatchingRound.phase
+            ))
+            .from(projectApplication)
+            .innerJoin(projectApplication.applicationForm, projectApplicationForm)
+            .innerJoin(projectApplicationForm.project, project)
+            .innerJoin(projectApplication.appliedMatchingRound, projectMatchingRound)
+            .where(
+                project.id.in(projectIds),
+                projectApplication.applicantMemberId.in(memberIds),
+                projectApplication.status.eq(ProjectApplicationStatus.APPROVED)
+            )
+            .orderBy(
+                project.id.asc(),
+                projectApplication.applicantMemberId.asc(),
+                projectMatchingRound.startsAt.desc(),
+                projectApplication.id.desc()
+            )
+            .fetch();
+
+        Map<ProjectMemberKey, ProjectMemberMatchedRoundInfo> latestByMember = new LinkedHashMap<>();
+        for (ProjectMemberMatchedRoundInfo row : rows) {
+            latestByMember.putIfAbsent(new ProjectMemberKey(row.projectId(), row.memberId()), row);
+        }
+        return new ArrayList<>(latestByMember.values());
     }
 
     /**
@@ -175,5 +269,8 @@ public class ProjectApplicationQueryRepository {
         return status == null
             ? projectApplication.status.ne(ProjectApplicationStatus.DRAFT)
             : projectApplication.status.eq(status);
+    }
+
+    private record ProjectMemberKey(Long projectId, Long memberId) {
     }
 }

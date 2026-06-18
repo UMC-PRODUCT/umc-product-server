@@ -1,5 +1,15 @@
 package com.umc.product.challenger.adapter.in.web;
 
+import java.util.List;
+
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -12,28 +22,24 @@ import com.umc.product.challenger.application.port.in.command.dto.ConsumeChallen
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerRecordCommand;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/challenger-record")
 @RequiredArgsConstructor
-@Tag(name = "Challenger | 챌린저 기록", description = "챌린저 기록 관련")
+@Validated
+@Tag(name = "Challenger | 챌린저 기록", description = "챌린저 활동 기록과 등록 코드를 관리합니다.")
 public class ChallengerRecordController {
 
     private final ChallengerRecordResponseAssembler assembler;
     private final ManageChallengerRecordUseCase manageChallengerRecordUseCase;
 
     // 코드를 이용해서 Member에 챌린저 기록을 추가하는 API
-    @Operation(summary = "[CHALLENGER-RECORD-001] 6자리 코드를 이용해서 회원(계정)에 챌린저 기록 추가",
+    @Operation(operationId = "CHALLENGER-RECORD-001", summary = "6자리 코드를 이용해서 회원(계정)에 챌린저 기록 추가",
         description = """
             각 챌린저 활동 기록에 대해서 발급된 6자리 코드를 입력하여,
             현재 로그인한 계정에 챌린저 기록 및 권한을 추가하는 기능입니다.
@@ -47,7 +53,7 @@ public class ChallengerRecordController {
 //    )
     public void addChallengerRecordToMember(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @RequestBody AddChallengerRecordToMemberRequest request) {
+        @Valid @RequestBody AddChallengerRecordToMemberRequest request) {
 
         manageChallengerRecordUseCase.consumeCode(
             ConsumeChallengerRecordCommand.builder()
@@ -62,7 +68,7 @@ public class ChallengerRecordController {
         permission = PermissionType.READ
     )
     @GetMapping("code/{code}")
-    @Operation(summary = "[CHALLENGER-RECORD-101] 코드로 ChallengerRecord 조회")
+    @Operation(operationId = "CHALLENGER-RECORD-101", summary = "코드로 ChallengerRecord 조회")
     public ChallengerRecordResponse getChallengerRecordByCode(
         @PathVariable String code
     ) {
@@ -74,7 +80,7 @@ public class ChallengerRecordController {
         permission = PermissionType.READ
     )
     @GetMapping("id/{id}")
-    @Operation(summary = "[CHALLENGER-RECORD-102] ID로 ChallengerRecord 조회")
+    @Operation(operationId = "CHALLENGER-RECORD-102", summary = "ID로 ChallengerRecord 조회")
     public ChallengerRecordResponse getChallengerRecordById(
         @PathVariable Long id
     ) {
@@ -86,7 +92,7 @@ public class ChallengerRecordController {
         resourceType = ResourceType.CHALLENGER_RECORD,
         permission = PermissionType.WRITE
     )
-    @Operation(summary = "[CHALLENGER-RECORD-002] [ADMIN] 과거 챌린저 기록을 위한 코드 생성 기능",
+    @Operation(operationId = "CHALLENGER-RECORD-002", summary = "과거 챌린저 기록용 코드 생성",
         description = """
             중앙운영사무국 총괄단만 사용 가능한 기능입니다. 9기 이전 기수의 챌린저 기록을 업로드하고,
             각 기록을 모든 회원이 추가할 수 있도록 6자리 코드를 생성하여 발급합니다.
@@ -94,7 +100,7 @@ public class ChallengerRecordController {
     @PostMapping
     public ChallengerRecordResponse createChallengerRecord(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @RequestBody CreateChallengerRecordRequest request
+        @Valid @RequestBody CreateChallengerRecordRequest request
     ) {
         // TODO: SUPER_ADMIN 만 가능하도록 권한 설정
 
@@ -113,7 +119,7 @@ public class ChallengerRecordController {
         return assembler.from(id);
     }
 
-    @Operation(summary = "[CHALLENGER-RECORD-003] [ADMIN] 챌린저 기록용 코드 벌크 추가",
+    @Operation(operationId = "CHALLENGER-RECORD-003", summary = "챌린저 기록용 코드 일괄 추가",
         description = """
             Response는 생성된 챌린저 기록의 ID 리스트입니다. (성능 상 이슈로 각각에 대해서는 id 및 code로 조회하는 API 이용)
 
@@ -127,7 +133,7 @@ public class ChallengerRecordController {
     )
     public List<Long> createChallengerRecordBulk(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @RequestBody List<CreateChallengerRecordRequest> request
+        @Valid @RequestBody List<@Valid CreateChallengerRecordRequest> request
     ) {
         List<Long> ids = manageChallengerRecordUseCase.createBulk(
             request.stream()

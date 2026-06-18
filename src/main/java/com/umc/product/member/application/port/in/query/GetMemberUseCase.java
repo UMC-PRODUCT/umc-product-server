@@ -29,7 +29,15 @@ public interface GetMemberUseCase {
      * @param schoolId 학교 ID
      * @return 해당 학교 소속 멤버의 ID 집합 (없으면 빈 집합)
      */
-    Set<Long> findAllIdsBySchoolId(Long schoolId);
+    Set<Long> listIdsBySchoolId(Long schoolId);
+
+    /**
+     * 여러 학교에 소속된 멤버 ID 집합을 학교별로 반환한다.
+     *
+     * @param schoolIds 학교 ID 집합
+     * @return schoolId -> memberId 집합 Map (멤버가 없는 학교는 빈 집합)
+     */
+    Map<Long, Set<Long>> listIdsBySchoolIds(Set<Long> schoolIds);
 
     boolean existsById(Long memberId);
 
@@ -45,4 +53,9 @@ public interface GetMemberUseCase {
      * @return ids 중에 실제로 존재하는 member의 개수
      */
     long countMembersByIds(Set<Long> ids);
+
+    /**
+     * 전체 멤버 수를 반환합니다. 시딩 시퀀스 오프셋 산정 등 운영 외 용도에 사용합니다.
+     */
+    long countAll();
 }

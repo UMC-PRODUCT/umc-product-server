@@ -5,6 +5,16 @@ import static com.umc.product.notice.domain.QNotice.notice;
 import static com.umc.product.notice.domain.QNoticeRead.noticeRead;
 import static com.umc.product.notice.domain.QNoticeTarget.noticeTarget;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
@@ -17,16 +27,9 @@ import com.umc.product.notice.domain.NoticeClassification;
 import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
@@ -101,7 +104,7 @@ public class NoticeQueryRepository {
         NoticeViewerInfo viewerInfo
     ) {
         if (classification.isChallengerQuery()) {
-            return buildClassificationCondition(classification, viewerInfo.memberParts());
+            return buildClassificationCondition(classification, viewerInfo);
         }
         return buildStaffCondition(classification, viewerInfo);
     }
@@ -147,9 +150,21 @@ public class NoticeQueryRepository {
         return targetPartIsEmptyOrContainsAny(viewerInfo.memberParts());
     }
 
+    /**
+     * 챌린저 공지 파트 조건(파트 미지정 조회 시). - 회장단(SCHOOL_CORE)/중앙운영진(CENTRAL_MEMBER): 파트 무관 전체 열람 (본인 지부/학교 공지를 파트 상관없이
+     * 봐야 함, 상세 조회 권한과 동일 규칙) - 그 외(일반 챌린저/파트장): 본인 파트 + 파트 미지정 공지만
+     */
+    private BooleanExpression buildChallengerPartCondition(NoticeViewerInfo viewerInfo) {
+        NoticeTab viewerRole = viewerInfo.viewerRole();
+        if (viewerRole == NoticeTab.CENTRAL_MEMBER || viewerRole == NoticeTab.SCHOOL_CORE) {
+            return Expressions.TRUE;
+        }
+        return targetPartIsEmptyOrContainsAny(viewerInfo.memberParts());
+    }
+
     private BooleanExpression buildClassificationCondition(
         NoticeClassification classification,
-        Set<ChallengerPart> memberParts
+        NoticeViewerInfo viewerInfo
     ) {
         Long gisuId = classification.gisuId();
         Long chapterId = classification.chapterId();
@@ -161,11 +176,11 @@ public class NoticeQueryRepository {
         boolean hasPart = part != null;
 
         if (gisuId == null) {
-            throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING, "기수 ID는 필수입니다");
+            throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING, "공지 대상을 설정하려면 기수를 선택해주세요.");
         }
 
-        log.debug("공지사항 조회 조건 제작: gisuId={}, chapterId={}, schoolId={}, part={}, memberParts={}",
-            gisuId, chapterId, schoolId, part, memberParts);
+        log.debug("공지사항 조회 조건 제작: gisuId={}, chapterId={}, schoolId={}, part={}, memberParts={}, viewerRole={}",
+            gisuId, chapterId, schoolId, part, viewerInfo.memberParts(), viewerInfo.viewerRole());
 
         BooleanExpression challengerNoticeOnly = isChallengerNotice();
         BooleanExpression gisuMatch = noticeTarget.targetGisuId.eq(gisuId)
@@ -184,7 +199,7 @@ public class NoticeQueryRepository {
                 .and(noticeTarget.targetGisuId.eq(gisuId))
                 .and(noticeTarget.targetChapterId.eq(chapterId))
                 .and(noticeTarget.targetSchoolId.isNull())
-                .and(targetPartIsEmptyOrContainsAny(memberParts));
+                .and(buildChallengerPartCondition(viewerInfo));
         }
 
         if (!hasChapter && hasSchool && !hasPart) {
@@ -192,7 +207,7 @@ public class NoticeQueryRepository {
                 .and(gisuMatch)
                 .and(noticeTarget.targetChapterId.isNull())
                 .and(noticeTarget.targetSchoolId.eq(schoolId))
-                .and(targetPartIsEmptyOrContainsAny(memberParts));
+                .and(buildChallengerPartCondition(viewerInfo));
         }
 
         if (hasPart) {

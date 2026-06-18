@@ -1,5 +1,15 @@
 package com.umc.product.project.application.service.command;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
@@ -17,14 +27,8 @@ import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import java.time.Instant;
-import java.util.List;
-import java.util.Objects;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * 매칭 차수의 CRUD lifecycle 만 담당한다.
@@ -47,6 +51,7 @@ public class ProjectMatchingRoundCommandService implements
     private final ScheduleMatchingRoundDeadlinePort scheduleMatchingRoundDeadlinePort;
 
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+    private final ProjectMatchingRoundProperties projectMatchingRoundProperties;
 
     @Override
     public Long create(CreateProjectMatchingRoundCommand command) {
@@ -55,6 +60,14 @@ public class ProjectMatchingRoundCommandService implements
         // 매칭 차수는 중복될 수 없습니다.
         validateNoOverlap(
             command.chapterId(), command.startsAt(), command.endsAt(), command.decisionDeadline());
+        validatePhaseSequence(
+            null,
+            command.chapterId(),
+            command.type(),
+            command.phase(),
+            command.startsAt(),
+            command.decisionDeadline()
+        );
 
         ProjectMatchingRound matchingRound = ProjectMatchingRound.create(
             command.name(),
@@ -92,6 +105,14 @@ public class ProjectMatchingRoundCommandService implements
             matchingRound.getChapterId(),
             startsAt,
             endsAt,
+            decisionDeadline
+        );
+        validatePhaseSequence(
+            matchingRound.getId(),
+            matchingRound.getChapterId(),
+            type,
+            phase,
+            startsAt,
             decisionDeadline
         );
 
@@ -181,6 +202,42 @@ public class ProjectMatchingRoundCommandService implements
 
         if (!allowed) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_ACCESS_DENIED);
+        }
+    }
+
+    private void validatePhaseSequence(
+        Long currentRoundId,
+        Long chapterId,
+        MatchingType type,
+        MatchingPhase phase,
+        Instant startsAt,
+        Instant decisionDeadline
+    ) {
+        loadProjectMatchingRoundPort.listByChapterId(chapterId).stream()
+            .filter(round -> !Objects.equals(round.getId(), currentRoundId))
+            .filter(round -> round.getType() == type)
+            .forEach(round -> validatePhaseSequence(round, phase, startsAt, decisionDeadline));
+    }
+
+    private void validatePhaseSequence(
+        ProjectMatchingRound existingRound,
+        MatchingPhase phase,
+        Instant startsAt,
+        Instant decisionDeadline
+    ) {
+        int phaseOrder = existingRound.getPhase().compareTo(phase);
+        Duration minPhaseInterval = projectMatchingRoundProperties.minPhaseInterval();
+
+        if (phaseOrder == 0) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
+        }
+
+        if (phaseOrder < 0 && startsAt.isBefore(existingRound.getDecisionDeadline().plus(minPhaseInterval))) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
+        }
+
+        if (phaseOrder > 0 && existingRound.getStartsAt().isBefore(decisionDeadline.plus(minPhaseInterval))) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
         }
     }
 }

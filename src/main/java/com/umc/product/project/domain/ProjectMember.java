@@ -1,8 +1,11 @@
 package com.umc.product.project.domain;
 
+import java.time.Instant;
+
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,7 +18,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -103,6 +105,22 @@ public class ProjectMember extends BaseEntity {
     }
 
     /**
+     * 지원서 합격 결과로 활성 상태의 신규 멤버를 생성합니다.
+     */
+    public static ProjectMember createFromApplication(
+        ProjectApplication application, ChallengerPart part, Long decidedByMemberId
+    ) {
+        ProjectMember pm = create(
+            application.getApplicationForm().getProject(),
+            application.getApplicantMemberId(),
+            part,
+            decidedByMemberId
+        );
+        pm.application = application;
+        return pm;
+    }
+
+    /**
      * 멤버를 강제 퇴출 처리합니다 (soft delete).
      * status 를 {@link ProjectMemberStatus#DISMISSED} 로 바꾸고 변경 메타데이터를 기록합니다.
      */
@@ -111,5 +129,18 @@ public class ProjectMember extends BaseEntity {
         this.statusUpdatedAt = Instant.now();
         this.statusChangeReason = reason;
         this.statusChangedMemberId = removedByMemberId;
+    }
+
+    /**
+     * 멤버 활동을 자진 종료 처리합니다 (soft delete).
+     * status 를 {@link ProjectMemberStatus#WITHDRAWN} 으로 바꾸고 변경 메타데이터를 기록합니다.
+     * <p>
+     * 프로젝트 중단(abort) 시 일괄 처리에도 동일 메서드를 사용하며, 사유에 명시합니다.
+     */
+    public void withdraw(String reason, Long decidedByMemberId) {
+        this.status = ProjectMemberStatus.WITHDRAWN;
+        this.statusUpdatedAt = Instant.now();
+        this.statusChangeReason = reason;
+        this.statusChangedMemberId = decidedByMemberId;
     }
 }

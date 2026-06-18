@@ -1,6 +1,7 @@
 package com.umc.product.organization.application.port.in.query.dto.gisu;
 
 import com.umc.product.organization.domain.Gisu;
+import com.umc.product.organization.domain.GisuActivityDays;
 import java.time.Instant;
 
 public record GisuInfo(
@@ -18,5 +19,12 @@ public record GisuInfo(
             gisu.getEndAt(),
             gisu.isActive()
         );
+    }
+
+    /**
+     * 주어진 시점(now) 기준의 활동일을 반환합니다. {@link Gisu#activityDays(Instant)}와 동일한 규칙을 따릅니다.
+     */
+    public long activityDays(Instant now) {
+        return GisuActivityDays.calculate(startAt, endAt, now);
     }
 }

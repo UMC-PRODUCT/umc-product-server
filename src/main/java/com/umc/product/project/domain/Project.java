@@ -72,7 +72,7 @@ public class Project extends BaseEntity {
      * {@code productOwnerMemberId} 와 다를 수 있다. DRAFT 단계 EDIT 권한 분기 + audit 용도.
      */
     @Column(nullable = false, name = "created_by_member_id")
-    private Long createdByMemberId;
+    private Long creatorMemberId;
 
     private Long statusChangedByMemberId; // 프로젝트 상태를 변경한 멤버의 ID입니다. (예: ABORTED로 변경한 멤버)
     private String statusChangedReason; // 프로젝트 상태를 변경한 이유입니다. (예: ABORTED로 변경한 이유)
@@ -99,7 +99,7 @@ public class Project extends BaseEntity {
         String thumbnailFileId,
         Long productOwnerMemberId,
         Long productOwnerSchoolId,
-        Long createdByMemberId
+        Long creatorMemberId
     ) {
         this.gisuId = gisuId;
         this.chapterId = chapterId;
@@ -111,7 +111,7 @@ public class Project extends BaseEntity {
         this.thumbnailFileId = thumbnailFileId;
         this.productOwnerMemberId = productOwnerMemberId;
         this.productOwnerSchoolId = productOwnerSchoolId;
-        this.createdByMemberId = createdByMemberId;
+        this.creatorMemberId = creatorMemberId;
     }
 
     /**
@@ -122,7 +122,7 @@ public class Project extends BaseEntity {
      * @param chapterId            프로젝트가 속한 지부 ID (PO의 소속 지부에서 결정)
      * @param productOwnerMemberId PO Member ID (PLAN 파트 챌린저여야 함)
      * @param productOwnerSchoolId PO 의 학교 ID 비정규화 (학교 운영진 scope 및 학교 필터에서 사용)
-     * @param createdByMemberId    호출자(생성자) Member ID. PM 본인 등록 시엔 PO 와 동일,
+     * @param creatorMemberId      호출자(생성자) Member ID. PM 본인 등록 시엔 PO 와 동일,
      *                             운영진이 다른 챌린저를 PO 로 지정한 경우엔 다름.
      * @return DRAFT 상태의 프로젝트
      */
@@ -131,14 +131,14 @@ public class Project extends BaseEntity {
         Long chapterId,
         Long productOwnerMemberId,
         Long productOwnerSchoolId,
-        Long createdByMemberId
+        Long creatorMemberId
     ) {
         return Project.builder()
             .gisuId(gisuId)
             .chapterId(chapterId)
             .productOwnerMemberId(productOwnerMemberId)
             .productOwnerSchoolId(productOwnerSchoolId)
-            .createdByMemberId(createdByMemberId)
+            .creatorMemberId(creatorMemberId)
             .status(ProjectStatus.DRAFT)
             .build();
     }
@@ -254,6 +254,16 @@ public class Project extends BaseEntity {
     public void complete() {
         validateStatus(ProjectStatus.IN_PROGRESS);
         this.status = ProjectStatus.COMPLETED;
+    }
+
+    /**
+     * 프로젝트 hard delete 가능 상태인지 검증한다. DRAFT/PENDING_REVIEW 단계에서만 허용.
+     * IN_PROGRESS 이상은 모집/매칭 데이터가 누적되므로 {@link #abort} 로 상태 전이해야 한다.
+     */
+    public void validateDeletable() {
+        if (this.status != ProjectStatus.DRAFT && this.status != ProjectStatus.PENDING_REVIEW) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DELETE_NOT_ALLOWED_IN_STATUS);
+        }
     }
 
     /**

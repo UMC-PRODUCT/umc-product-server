@@ -1,5 +1,18 @@
 package com.umc.product.notice.application.service.query;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -31,19 +44,9 @@ import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -289,7 +292,30 @@ public class NoticeQueryService implements GetNoticeUseCase {
     }
 
 
+    /**
+     * 조회 범위(지부/학교) 권한 검증.
+     * <p>
+     * 총괄/중앙운영진(CENTRAL_MEMBER)은 타 학교/지부 공지까지 자유롭게 조회할 수 있습니다. 그 외 역할(회장단/지부장/파트장/일반 챌린저)은 본인 소속 지부/학교 범위만 조회할 수
+     * 있습니다. 목록 조회와 상세 조회(@CheckAccess)의 접근 범위를 일치시켜, 임의의 학교/지부 ID를 넣어 타 범위 공지를 열람하는 우회를 차단합니다.
+     */
+    private void validateViewerScope(NoticeClassification classification, NoticeViewerInfo viewerInfo) {
+        if (viewerInfo.viewerRole() == NoticeTab.CENTRAL_MEMBER) {
+            return;
+        }
+        if (classification.chapterId() != null
+            && !classification.chapterId().equals(viewerInfo.chapterId())) {
+            throw new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION,
+                "본인 소속 지부의 공지만 조회할 수 있습니다.");
+        }
+        if (classification.schoolId() != null
+            && !classification.schoolId().equals(viewerInfo.schoolId())) {
+            throw new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION,
+                "본인 소속 학교의 공지만 조회할 수 있습니다.");
+        }
+    }
+
     private void validateClassification(NoticeClassification classification, NoticeViewerInfo viewerInfo) {
+        validateViewerScope(classification, viewerInfo);
         if (classification.isChallengerQuery()) {
             // 챌린저 공지: 필드 조합 유효성 검증 (지부+학교 동시 지정 등 불가 조합 차단)
             NoticeTargetPattern.from(classification.toTargetInfo());

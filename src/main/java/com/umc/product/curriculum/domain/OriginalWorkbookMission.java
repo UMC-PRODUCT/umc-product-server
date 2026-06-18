@@ -2,6 +2,7 @@ package com.umc.product.curriculum.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.curriculum.domain.enums.MissionType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -17,7 +18,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.util.StringUtils;
 
 @Entity
 @Table(name = "original_workbook_mission")
@@ -77,7 +77,7 @@ public class OriginalWorkbookMission extends BaseEntity {
     }
 
     public void edit(String title, String description, MissionType missionType, Boolean isNecessary) {
-        if (StringUtils.hasText(title)) {
+        if (title != null && !title.isBlank()) {
             this.title = title;
         }
         if (description != null) {

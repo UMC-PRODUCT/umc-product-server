@@ -97,7 +97,7 @@ authentication/
         └── RefreshTokenPersistenceAdapter.java         (추가)
 ```
 
-> **컨트롤러 배치 결정:** RT 발급/재발급/폐기 모두 토큰 라이프사이클이므로 [TokenAuthenticationController.java](src/main/java/com/umc/product/authentication/adapter/in/web/TokenAuthenticationController.java) 에 `POST /token/logout` 으로 묶는다. 별도 컨트롤러를 만들지 않는다.
+> **컨트롤러 배치 결정:** RT 발급/재발급/폐기 모두 인증 라이프사이클이므로 [TokenAuthenticationController.java](src/main/java/com/umc/product/authentication/adapter/in/web/TokenAuthenticationController.java) 에 `POST /logout` 으로 묶는다. 별도 컨트롤러를 만들지 않는다.
 
 ### 2.5 도메인 모델 (`RefreshToken`)
 
@@ -159,11 +159,11 @@ public class RefreshToken extends BaseEntity {
 
 #### 2.6.3 로그아웃 (신규)
 
-- **Endpoint:** `POST /api/v1/auth/token/logout`
-- **인증:** AT 필수 (`@CurrentMember Long memberId` 사용 — 일반 인증 경로). `@Public` 아님.
+- **Endpoint:** `POST /api/v1/auth/logout`
+- **인증:** `@Public`. AccessToken 없이 호출할 수 있으며, 만료된 AccessToken이 Authorization 헤더에 있어도 RefreshToken만으로 처리한다.
 - **Request Body:** `{ "refreshToken": "..." }`
 - **동작:**
-    1. AT 로 식별된 `memberId` 와, RT 의 `subject` 가 일치하는지 검증 (다른 사용자의 RT 를 폐기하는 행위 차단).
+    1. RT 의 서명/만료와 `jti` 존재 여부를 검증한다.
     2. RT 의 `jti` 에 해당하는 row 를 삭제한다.
     3. 행이 존재하지 않더라도(이미 로그아웃) 멱등하게 200 을 반환한다.
 - **Response:** `204 No Content` 또는 `200 OK`(빈 바디).
@@ -172,8 +172,7 @@ public class RefreshToken extends BaseEntity {
 
 [AuthenticationErrorCode.java](src/main/java/com/umc/product/authentication/domain/exception/AuthenticationErrorCode.java) 에 추가:
 
-- `INVALID_REFRESH_TOKEN` (HTTP 401, "JWT-00xx", "유효하지 않거나 폐기된 Refresh Token 입니다.")
-- `REFRESH_TOKEN_OWNER_MISMATCH` (HTTP 403, "AUTHENTICATION-00xx", "본인의 토큰만 폐기할 수 있습니다.")
+- `INVALID_REFRESH_TOKEN` (HTTP 401, "JWT-0005", "유효하지 않거나 폐기된 Refresh Token 입니다.")
 
 > 코드 번호는 기존 enum 끝에 이어서 부여한다.
 
@@ -251,7 +250,7 @@ public class RefreshToken extends BaseEntity {
     1. `RefreshTokenClaims parsed = jwtTokenProvider.parseRefreshToken(rt)`
     2. `RefreshToken stored = loadRefreshTokenPort.findByJti(parsed.jti()).orElseThrow(() -> new AuthenticationDomainException(INVALID_REFRESH_TOKEN));`
     3. `stored.validateNotExpired();` (방어적, JWT 검증으로 이미 거의 보장됨)
-    4. `saveRefreshTokenPort.deleteByJti(parsed.jti());`
+    4. `deleteRefreshTokenPort.deleteByJti(parsed.jti());`
     5. 새 RT 발급 → 새 jti 저장.
     6. 응답.
 - `@Transactional` 추가 (state-changing → CQRS Command).
@@ -264,21 +263,21 @@ public class RefreshToken extends BaseEntity {
 ### Commit 7 — `feat: 로그아웃 API 추가`
 
 - 신규/수정 파일:
-    - [TokenAuthenticationController.java](src/main/java/com/umc/product/authentication/adapter/in/web/TokenAuthenticationController.java) 에 `POST /token/logout` 추가.
+    - [TokenAuthenticationController.java](src/main/java/com/umc/product/authentication/adapter/in/web/TokenAuthenticationController.java) 에 `POST /logout` 추가.
     - `authentication/adapter/in/web/dto/request/LogoutRequest.java` (record + `@NotBlank String refreshToken`).
     - [ManageAuthenticationUseCase.java](src/main/java/com/umc/product/authentication/application/port/in/command/ManageAuthenticationUseCase.java) 에 `void logout(LogoutCommand command)` 추가.
-    - `application/port/in/command/dto/LogoutCommand.java` (record `LogoutCommand(Long memberId, String refreshToken)`).
+    - `application/port/in/command/dto/LogoutCommand.java` (record `LogoutCommand(String refreshToken)`).
     - [AuthenticationService.java](src/main/java/com/umc/product/authentication/application/service/AuthenticationService.java) 에 `logout` 구현.
 - 동작 (§2.6.3):
-    - JwtTokenProvider 로 RT 의 subject(memberId) 와 `command.memberId()` 비교 → 불일치 시 `REFRESH_TOKEN_OWNER_MISMATCH`.
-    - jti 추출 → `saveRefreshTokenPort.deleteByJti(jti)` (멱등).
+    - JwtTokenProvider 로 RT 의 jti 추출.
+    - `deleteRefreshTokenPort.deleteByJti(jti)` 호출 (멱등).
     - `@Transactional` 적용.
-- 신규 에러 코드: `REFRESH_TOKEN_OWNER_MISMATCH`.
+- 신규 에러 코드: `INVALID_REFRESH_TOKEN`.
 - 검증:
-    - `given_로그인된_사용자_when_logout_then_RT_DB삭제_및_204`
-    - `given_타인의_RT_when_logout_then_403`
-    - `given_이미_로그아웃된_RT_when_logout_then_204` (멱등)
-    - `given_AT_없이_요청_when_logout_then_401` (Spring Security 통과 검증)
+    - `given_RT_when_logout_then_RT_DB삭제_및_200`
+    - `given_이미_로그아웃된_RT_when_logout_then_200` (멱등)
+    - `given_AT_없이_요청_when_logout_then_200` (Spring Security 통과 검증)
+    - `given_만료된_AT_헤더_when_logout_then_200`
 
 ### Commit 8 — `docs: refresh token whitelist 및 logout REST Docs 작성`
 

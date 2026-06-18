@@ -1,8 +1,10 @@
 package com.umc.product.survey.application.port.in.query.dto;
 
+import java.time.Instant;
+
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.enums.FormStatus;
-import java.time.Instant;
+
 import lombok.Builder;
 
 /**
@@ -16,6 +18,7 @@ public record FormInfo(
     String description,
     FormStatus status,
     boolean isAnonymous,
+    boolean allowDuplicateResponses,
     Instant createdAt,
     Instant updatedAt
 ) {
@@ -28,6 +31,7 @@ public record FormInfo(
             .description(form.getDescription())
             .status(form.getStatus())
             .isAnonymous(form.isAnonymous())
+            .allowDuplicateResponses(form.isAllowDuplicateResponses())
             .createdAt(form.getCreatedAt())
             .updatedAt(form.getUpdatedAt())
             .build();

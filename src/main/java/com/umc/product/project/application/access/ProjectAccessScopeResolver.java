@@ -1,25 +1,29 @@
 package com.umc.product.project.application.access;
 
-import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.project.application.access.ProjectAccessScope.All;
-import com.umc.product.project.application.access.ProjectAccessScope.ChapterScoped;
-import com.umc.product.project.application.access.ProjectAccessScope.None;
-import com.umc.product.project.application.access.ProjectAccessScope.OwnerOnly;
-import com.umc.product.project.application.access.ProjectAccessScope.PublicOnly;
-import com.umc.product.project.application.access.ProjectAccessScope.SchoolScoped;
-import com.umc.product.project.application.port.out.LoadProjectPort;
-import com.umc.product.project.domain.enums.ProjectStatus;
-import com.umc.product.project.domain.exception.ProjectDomainException;
-import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Component;
+
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.project.application.access.ProjectAccessScope.All;
+import com.umc.product.project.application.access.ProjectAccessScope.ChapterScoped;
+import com.umc.product.project.application.access.ProjectAccessScope.None;
+import com.umc.product.project.application.access.ProjectAccessScope.OwnerOnly;
+import com.umc.product.project.application.access.ProjectAccessScope.PublicOnly;
+import com.umc.product.project.application.access.ProjectAccessScope.WithOwnerIncluded;
+import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.domain.enums.ProjectStatus;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * 호출 컨텍스트(공개 검색 vs 관리 화면) + 사용자 역할에 따라 {@link ProjectAccessScope} 를 결정한다.
@@ -33,6 +37,7 @@ public class ProjectAccessScopeResolver {
 
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final LoadProjectPort loadProjectPort;
+    private final GetChapterUseCase getChapterUseCase;
 
     /**
      * 공개 검색(PROJECT-001) 컨텍스트.
@@ -75,7 +80,7 @@ public class ProjectAccessScopeResolver {
      * <ol>
      *   <li>Central Core → 전체 (DRAFT 제외)</li>
      *   <li>지부장 → 본인 지부 (DRAFT 제외)</li>
-     *   <li>학교 회장단 → 본인 학교 (DRAFT 제외)</li>
+     *   <li>학교 회장단 → 본인 학교가 속한 지부 전체 (DRAFT 제외) — 정책상 지부장과 동일 범위</li>
      *   <li>PM 챌린저 → 본인이 owner 인 프로젝트만 (DRAFT 포함)</li>
      *   <li>그 외 → 관리 대상 0건</li>
      * </ol>
@@ -90,17 +95,20 @@ public class ProjectAccessScopeResolver {
             .toList();
 
         if (rolesInGisu.stream().anyMatch(r -> r.roleType().isAtLeastCentralCore())) {
-            return new All(requestedStatuses);
+            return includeOwnerProjects(new All(requestedStatuses), memberId, gisuId, requestedStatuses);
         }
 
         Optional<Long> chapterId = chapterPresidentOrgId(rolesInGisu);
         if (chapterId.isPresent()) {
-            return new ChapterScoped(chapterId.get(), requestedStatuses);
+            return includeOwnerProjects(new ChapterScoped(chapterId.get(), requestedStatuses),
+                memberId, gisuId, requestedStatuses);
         }
 
         Optional<Long> schoolId = schoolCoreOrgId(rolesInGisu);
         if (schoolId.isPresent()) {
-            return new SchoolScoped(schoolId.get(), requestedStatuses);
+            Long schoolChapterId = getChapterUseCase.byGisuAndSchool(gisuId, schoolId.get()).id();
+            return includeOwnerProjects(new ChapterScoped(schoolChapterId, requestedStatuses),
+                memberId, gisuId, requestedStatuses);
         }
 
         if (loadProjectPort.existsByOwnerAndGisu(memberId, gisuId)) {
@@ -112,6 +120,23 @@ public class ProjectAccessScopeResolver {
         }
 
         return new None();
+    }
+
+    private ProjectAccessScope includeOwnerProjects(
+        ProjectAccessScope baseScope,
+        Long memberId,
+        Long gisuId,
+        Set<ProjectStatus> requestedStatuses
+    ) {
+        if (!loadProjectPort.existsByOwnerAndGisu(memberId, gisuId)) {
+            return baseScope;
+        }
+
+        Set<ProjectStatus> ownerStatuses = requestedStatuses.isEmpty()
+            ? EnumSet.allOf(ProjectStatus.class)
+            : EnumSet.copyOf(requestedStatuses);
+        ownerStatuses.add(ProjectStatus.DRAFT);
+        return new WithOwnerIncluded(baseScope, memberId, ownerStatuses);
     }
 
     private Optional<Long> chapterPresidentOrgId(List<ChallengerRoleInfo> rolesInGisu) {

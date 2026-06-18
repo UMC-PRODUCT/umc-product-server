@@ -1,5 +1,9 @@
 package com.umc.product.member.application.service;
 
+import java.util.Objects;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
 import com.umc.product.authorization.domain.ResourcePermission;
@@ -8,10 +12,9 @@ import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import java.util.Objects;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
@@ -32,7 +35,7 @@ public class MemberPermissionEvaluator implements ResourcePermissionEvaluator {
             case READ -> canReadMember(subjectAttributes, resourcePermission);
             case DELETE -> canDeleteMember(subjectAttributes);
             default ->
-                throw new CommonException(CommonErrorCode.INTERNAL_SERVER_ERROR, "PE 관련 에러가 발생하였습니다. 관리자에게 문의하세요.");
+                throw new CommonException(CommonErrorCode.INTERNAL_SERVER_ERROR, "권한 확인 중 문제가 발생했어요. 관리자에게 문의해주세요.");
         };
     }
 

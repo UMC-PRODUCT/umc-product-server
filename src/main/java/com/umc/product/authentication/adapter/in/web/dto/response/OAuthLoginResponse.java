@@ -1,6 +1,6 @@
 package com.umc.product.authentication.adapter.in.web.dto.response;
 
-import com.umc.product.authentication.domain.enums.OAuth2ResultCode;
+import com.umc.product.authentication.domain.enums.OAuthResultCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import lombok.Builder;
 
@@ -8,7 +8,7 @@ import lombok.Builder;
 public record OAuthLoginResponse(
     OAuthProvider provider,
     boolean success,
-    String code, // OAuth2ResultCode ENUM 이용해서 해야함
+    String code, // OAuthResultCode ENUM 이용해서 해야함
     String oAuthVerificationToken,
     String accessToken,
     String refreshToken
@@ -18,8 +18,8 @@ public record OAuthLoginResponse(
     ) {
         return OAuthLoginResponse.builder()
             .provider(provider)
-            .success(OAuth2ResultCode.SUCCESS.isSuccess())
-            .code(OAuth2ResultCode.SUCCESS.getCode())
+            .success(OAuthResultCode.SUCCESS.isSuccess())
+            .code(OAuthResultCode.SUCCESS.getCode())
             .accessToken(accessToken)
             .refreshToken(refreshToken)
             .build();
@@ -30,8 +30,8 @@ public record OAuthLoginResponse(
     ) {
         return OAuthLoginResponse.builder()
             .provider(provider)
-            .success(OAuth2ResultCode.REGISTER_REQUIRED.isSuccess())
-            .code(OAuth2ResultCode.REGISTER_REQUIRED.getCode())
+            .success(OAuthResultCode.REGISTER_REQUIRED.isSuccess())
+            .code(OAuthResultCode.REGISTER_REQUIRED.getCode())
             .oAuthVerificationToken(oAuthVerificationToken)
             .build();
     }

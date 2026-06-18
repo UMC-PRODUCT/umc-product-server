@@ -12,20 +12,23 @@ import lombok.Builder;
  * <p>
  * 임시저장(DRAFT) 지원서는 본 API 응답에 노출되지 않으므로, {@link #status} 값으로도 DRAFT 는 받지 않는다.
  *
- * @param projectId       대상 프로젝트 ID (path variable)
- * @param matchingRoundId 매칭 차수 필터 (선택). null 이면 전체 차수.
- * @param part            지원 파트 필터 (선택). null 이면 전체 파트.
- * @param status          지원 상태 필터 (선택). null 이면 SUBMITTED/APPROVED/REJECTED 전체. DRAFT(임시저장)이 들어오면 도메인 invariant 위반으로
- *                        즉시 예외를 던진다.
+ * @param requesterMemberId 요청자 Member ID. 권한 scope 결정(L1)에 사용된다.
+ * @param projectId         대상 프로젝트 ID (path variable)
+ * @param matchingRoundId   매칭 차수 필터 (선택). null 이면 전체 차수.
+ * @param part              지원 파트 필터 (선택). null 이면 전체 파트.
+ * @param status            지원 상태 필터 (선택). null 이면 SUBMITTED/APPROVED/REJECTED 전체. DRAFT(임시저장)이 들어오면 도메인 invariant 위반으로
+ *                          즉시 예외를 던진다.
  */
 @Builder
 public record SearchProjectApplicationsQuery(
+    Long requesterMemberId,
     Long projectId,
     Long matchingRoundId,
     ChallengerPart part,
     ProjectApplicationStatus status
 ) {
     public SearchProjectApplicationsQuery {
+        Objects.requireNonNull(requesterMemberId, "requesterMemberId must not be null");
         Objects.requireNonNull(projectId, "projectId must not be null");
         if (status == ProjectApplicationStatus.DRAFT) {
             throw new ProjectDomainException(

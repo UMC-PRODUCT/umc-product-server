@@ -1,31 +1,35 @@
 package com.umc.product.global.exception;
 
 
-import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
-import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
-import com.umc.product.global.exception.constant.CommonErrorCode;
-import com.umc.product.global.response.ApiResponse;
-import com.umc.product.global.response.code.BaseCode;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import com.umc.product.global.exception.constant.CommonErrorCode;
+import com.umc.product.global.response.ApiErrorResponseFactory;
+import com.umc.product.global.response.ApiResponse;
+import com.umc.product.global.response.code.BaseCode;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestControllerAdvice(annotations = {RestController.class})
@@ -36,13 +40,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private String activeProfile;
 
     /**
-     * Spring Security 권한 거부 예외 처리 - AuthorizationDeniedException: @PreAuthorize 등 메서드 레벨 보안
+     * Spring Security 권한 거부 예외 처리 - 메서드 레벨 보안 및 MVC 내부 인가 실패
      */
-    @ExceptionHandler(AuthorizationDeniedException.class)
-    public ResponseEntity<Object> handleAccessDenied(Exception e, WebRequest request) {
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Object> handleAccessDenied(AccessDeniedException e, WebRequest request) {
         log.warn("[ACCESS DENIED] {}", e.getMessage());
 
-        return buildResponse(e, CommonErrorCode.FORBIDDEN, HttpHeaders.EMPTY, request, e.getMessage());
+        return buildResponse(e, CommonErrorCode.FORBIDDEN, HttpHeaders.EMPTY, request, null);
     }
 
     /**
@@ -99,23 +103,59 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         WebRequest request
     ) {
 
-        log.error("JSON 파싱 에러: {}", e.getMessage());
+        log.warn("JSON 파싱 에러: {}", e.getMessage());
 
         String errorMessage = e.getMessage();
-        String simplifiedMessage = "잘못된 요청 형식입니다";
+        String simplifiedMessage = "요청 형식이 올바르지 않아요. 입력한 값을 확인해주세요.";
 
         if (errorMessage != null) {
             if (errorMessage.contains("Cannot deserialize")) {
-                simplifiedMessage = "요청 데이터 타입이 올바르지 않습니다";
+                simplifiedMessage = "요청 값의 형식이 올바르지 않아요. 입력한 값을 확인해주세요.";
             } else if (errorMessage.contains("Required request body is missing")) {
-                simplifiedMessage = "요청 본문이 필요합니다";
+                simplifiedMessage = "요청 내용이 비어 있어요. 입력한 값을 확인해주세요.";
             } else if (errorMessage.contains("JSON parse error")) {
-                simplifiedMessage = "JSON 형식이 올바르지 않습니다";
+                simplifiedMessage = "요청 형식이 올바르지 않아요. 입력한 값을 확인해주세요.";
             }
         }
 
-        String detail = simplifiedMessage + " - " + e.getMostSpecificCause().getMessage();
+        return buildResponse(e, CommonErrorCode.BAD_REQUEST, headers, request, simplifiedMessage);
+    }
+
+    /**
+     * 필수 Request Parameter 누락 예외 처리
+     */
+    @Override
+    protected ResponseEntity<Object> handleMissingServletRequestParameter(
+        MissingServletRequestParameterException e,
+        HttpHeaders headers,
+        HttpStatusCode status,
+        WebRequest request
+    ) {
+        String detail = String.format("필수 요청 값 '%s'가 없어요. 입력한 값을 확인해주세요.", e.getParameterName());
+        log.warn("[MISSING REQUEST PARAMETER] {}", detail);
+
         return buildResponse(e, CommonErrorCode.BAD_REQUEST, headers, request, detail);
+    }
+
+    /**
+     * Request Parameter 타입 변환 실패 예외 처리
+     */
+    @Override
+    protected ResponseEntity<Object> handleTypeMismatch(
+        TypeMismatchException e,
+        HttpHeaders headers,
+        HttpStatusCode status,
+        WebRequest request
+    ) {
+        log.warn("[REQUEST PARAMETER TYPE MISMATCH] {}", e.getMessage());
+
+        return buildResponse(
+            e,
+            CommonErrorCode.BAD_REQUEST,
+            headers,
+            request,
+            "요청 값의 형식이 올바르지 않아요. 입력한 값을 확인해주세요."
+        );
     }
 
 
@@ -127,7 +167,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.error("[UNHANDLED EXCEPTION] {}", e.getMessage(), e);
 
         String errorDetail = isProductionProfile()
-            ? "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+            ? CommonErrorCode.INTERNAL_SERVER_ERROR.getMessage()
             : e.getMessage();
 
         return buildResponse(e, CommonErrorCode.INTERNAL_SERVER_ERROR, HttpHeaders.EMPTY, request, errorDetail);
@@ -138,13 +178,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("[BUSINESS EXCEPTION] domain={}, code={}, message={}", e.getDomain(), e.getBaseCode().getCode(),
             e.getMessage(), e);
 
-        if (e instanceof AuthorizationDomainException) {
-            if (e.getBaseCode().equals(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED)) {
-                return buildResponse(e, e.getBaseCode(), HttpHeaders.EMPTY, request, e.getMessage(), e.getMessage());
-            }
-        }
-
-        return buildResponse(e, e.getBaseCode(), HttpHeaders.EMPTY, request, e.getMessage());
+        ApiResponse<Object> body = BusinessExceptionResponseResolver.toApiResponse(e);
+        return super.handleExceptionInternal(
+            e,
+            body,
+            HttpHeaders.EMPTY,
+            e.getBaseCode().getHttpStatus(),
+            request
+        );
     }
 
     /**
@@ -154,7 +195,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         Exception e, BaseCode code,
         HttpHeaders headers, WebRequest request, Object detail
     ) {
-        ApiResponse<Object> body = ApiResponse.onFailure(code.getCode(), code.getMessage(), detail);
+        ApiResponse<Object> body = ApiErrorResponseFactory.from(code, detail);
         return super.handleExceptionInternal(e, body, headers, code.getHttpStatus(), request);
     }
 
@@ -163,7 +204,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         HttpHeaders headers, WebRequest request, Object detail,
         String message
     ) {
-        ApiResponse<Object> body = ApiResponse.onFailure(code.getCode(), message, detail);
+        ApiResponse<Object> body = ApiErrorResponseFactory.from(code, message, detail);
         return super.handleExceptionInternal(e, body, headers, code.getHttpStatus(), request);
     }
 

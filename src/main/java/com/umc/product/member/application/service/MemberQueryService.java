@@ -128,11 +128,23 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
     }
 
     @Override
-    public Set<Long> findAllIdsBySchoolId(Long schoolId) {
+    public Set<Long> listIdsBySchoolId(Long schoolId) {
         if (schoolId == null) {
             return Set.of();
         }
-        return loadMemberPort.findAllIdsBySchoolId(schoolId);
+        return loadMemberPort.listIdsBySchoolId(schoolId);
+    }
+
+    @Override
+    public Map<Long, Set<Long>> listIdsBySchoolIds(Set<Long> schoolIds) {
+        if (schoolIds == null || schoolIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Set<Long>> result = new HashMap<>(loadMemberPort.listIdsBySchoolIds(schoolIds));
+        for (Long schoolId : schoolIds) {
+            result.putIfAbsent(schoolId, Set.of());
+        }
+        return result;
     }
 
     @Override
@@ -153,6 +165,11 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
     @Override
     public long countMembersByIds(Set<Long> ids) {
         return loadMemberPort.countMembersByIds(ids);
+    }
+
+    @Override
+    public long countAll() {
+        return loadMemberPort.countAllMembers();
     }
 
     // === Private Methods ===

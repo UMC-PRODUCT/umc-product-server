@@ -1,27 +1,30 @@
 package com.umc.product.community.adapter.in.web;
 
-import com.umc.product.community.adapter.in.web.dto.response.TrophyResponse;
-import com.umc.product.community.application.port.in.query.GetTrophyListUseCase;
-import com.umc.product.community.application.port.in.query.dto.TrophySearchQuery;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.umc.product.community.adapter.in.web.dto.response.TrophyResponse;
+import com.umc.product.community.application.port.in.query.GetTrophyListUseCase;
+import com.umc.product.community.application.port.in.query.dto.TrophySearchQuery;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/v1/trophies")
 @RequiredArgsConstructor
-@Tag(name = "Community | 명예의 전당 Query", description = "명예의 전당 조회 API")
+@Tag(name = "Community | 명예의 전당 Query", description = "명예의 전당 항목을 조회합니다.")
 public class TrophyQueryController {
 
     private final GetTrophyListUseCase getTrophyListUseCase;
 
     @GetMapping
-    @Operation(summary = "[TROPHY-101] 상장 목록 조회", description = "주차, 학교, 파트로 상장 목록을 조회합니다.")
+    @Operation(operationId = "TROPHY-101", summary = "상장 목록 조회", description = "주차, 학교, 파트로 상장 목록을 조회합니다.")
     public List<TrophyResponse> getTrophies(
         @RequestParam(required = false) Integer week,
         @RequestParam(required = false) String school,

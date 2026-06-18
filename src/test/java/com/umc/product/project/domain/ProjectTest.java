@@ -337,6 +337,52 @@ class ProjectTest {
         }
     }
 
+    @Nested
+    class validateDeletable {
+
+        @Test
+        void DRAFT_상태에서는_통과() {
+            project.validateDeletable();
+        }
+
+        @Test
+        void PENDING_REVIEW_상태에서는_통과() {
+            setStatus(project, ProjectStatus.PENDING_REVIEW);
+
+            project.validateDeletable();
+        }
+
+        @Test
+        void IN_PROGRESS_상태에서는_DELETE_NOT_ALLOWED() {
+            setStatus(project, ProjectStatus.IN_PROGRESS);
+
+            assertThatThrownBy(() -> project.validateDeletable())
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_DELETE_NOT_ALLOWED_IN_STATUS);
+        }
+
+        @Test
+        void COMPLETED_상태에서는_DELETE_NOT_ALLOWED() {
+            setStatus(project, ProjectStatus.COMPLETED);
+
+            assertThatThrownBy(() -> project.validateDeletable())
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_DELETE_NOT_ALLOWED_IN_STATUS);
+        }
+
+        @Test
+        void ABORTED_상태에서는_DELETE_NOT_ALLOWED() {
+            setStatus(project, ProjectStatus.ABORTED);
+
+            assertThatThrownBy(() -> project.validateDeletable())
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_DELETE_NOT_ALLOWED_IN_STATUS);
+        }
+    }
+
     private void setStatus(Project project, ProjectStatus status) {
         try {
             var field = Project.class.getDeclaredField("status");

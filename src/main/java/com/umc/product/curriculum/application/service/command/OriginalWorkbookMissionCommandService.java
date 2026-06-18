@@ -1,5 +1,8 @@
 package com.umc.product.curriculum.application.service.command;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.curriculum.application.port.in.command.ManageOriginalWorkbookMissionUseCase;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.EditOriginalWorkbookMissionCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.mission.CreateOriginalWorkbookMissionCommand;
@@ -11,9 +14,8 @@ import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.OriginalWorkbookMission;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,8 +30,9 @@ public class OriginalWorkbookMissionCommandService implements ManageOriginalWork
     @Override
     public Long create(CreateOriginalWorkbookMissionCommand command) {
         OriginalWorkbook workbook = loadOriginalWorkbookPort.getById(command.originalWorkbookId());
+        boolean isNecessary = Boolean.TRUE.equals(command.isNecessary());
 
-        if (workbook.getOriginalWorkbookStatus().isReleased() && command.isNecessary() == true) {
+        if (workbook.getOriginalWorkbookStatus().isReleased() && isNecessary) {
             throw new CurriculumDomainException(CurriculumErrorCode.RELEASED_WORKBOOK_NECESSARY_MISSION_FORBIDDEN);
         }
 
@@ -38,7 +41,7 @@ public class OriginalWorkbookMissionCommandService implements ManageOriginalWork
             command.title(),
             command.description(),
             command.missionType(),
-            command.isNecessary()
+            isNecessary
         );
 
         return saveOriginalWorkbookMissionPort.save(mission).getId();
@@ -47,10 +50,10 @@ public class OriginalWorkbookMissionCommandService implements ManageOriginalWork
     @Override
     public void edit(EditOriginalWorkbookMissionCommand command) {
         OriginalWorkbookMission mission = loadOriginalWorkbookMissionPort.getById(command.originalWorkbookMissionId());
-        OriginalWorkbook workbook = loadOriginalWorkbookPort.getById(mission.getOriginalWorkbook().getId());
+        OriginalWorkbook workbook = mission.getOriginalWorkbook();
 
         if (command.isNecessary() != null
-            && command.isNecessary() == true
+            && Boolean.TRUE.equals(command.isNecessary())
             && workbook.getOriginalWorkbookStatus().isReleased()
             && !mission.isNecessary()) {
             throw new CurriculumDomainException(CurriculumErrorCode.RELEASED_WORKBOOK_MISSION_UPGRADE_FORBIDDEN);

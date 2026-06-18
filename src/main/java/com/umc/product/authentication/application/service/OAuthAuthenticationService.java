@@ -1,6 +1,13 @@
 package com.umc.product.authentication.application.service;
 
-import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.AuthorizationCodeLoginCommand;
@@ -12,16 +19,15 @@ import com.umc.product.authentication.application.port.out.RevokeOAuthTokenPort;
 import com.umc.product.authentication.application.port.out.SaveMemberOAuthPort;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
 import com.umc.product.authentication.domain.MemberOAuth;
+import com.umc.product.authentication.domain.OAuthAttributes;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.umc.product.member.application.port.in.command.LockMemberCredentialUseCase;
+import com.umc.product.member.application.port.in.command.dto.MemberCredentialStatusInfo;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * OAuth 인증 관련 비즈니스 로직을 처리하는 Service
@@ -36,37 +42,38 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
     private final LoadMemberOAuthPort loadMemberOAuthPort;
     private final SaveMemberOAuthPort saveMemberOAuthPort;
     private final RevokeOAuthTokenPort revokeOAuthTokenPort;
+    private final LockMemberCredentialUseCase lockMemberCredentialUseCase;
 
     @Override
     @Transactional(readOnly = true)
-    public OAuthTokenLoginResult loginWithOAuth2Attributes(OAuth2Attributes oAuth2Attributes) {
-        log.info("OAuth2Attributes 기반 로그인 시도: provider={}, providerId={}",
-            oAuth2Attributes.getProvider(), oAuth2Attributes.getProviderId());
+    public OAuthTokenLoginResult loginWithOAuthAttributes(OAuthAttributes oAuthAttributes) {
+        log.info("OAuthAttributes 기반 로그인 시도: provider={}, providerId={}",
+            oAuthAttributes.provider(), oAuthAttributes.providerId());
 
         return loadMemberOAuthPort
             // OAuth 정보로 기존 회원이 존재하는지 확인
             .findByProviderAndProviderId(
-                oAuth2Attributes.getProvider(),
-                oAuth2Attributes.getProviderId()
+                oAuthAttributes.provider(),
+                oAuthAttributes.providerId()
             )
             // 기존 회원이 존재하는지 확인
             .map(memberOAuth -> {
                 log.info("기존 회원 로그인 성공: memberId={}", memberOAuth.getMemberId());
                 return OAuthTokenLoginResult.existingMember(
                     memberOAuth.getMemberId(),
-                    oAuth2Attributes.getProvider(),
-                    oAuth2Attributes.getProviderId(),
-                    oAuth2Attributes.getEmail()
+                    oAuthAttributes.provider(),
+                    oAuthAttributes.providerId(),
+                    oAuthAttributes.email()
                 );
             })
             // 존재하지 않는 회원인 경우에 대한 처리
             .orElseGet(() -> {
                 log.info("신규 회원 - 회원가입 필요: provider={}, providerId={}",
-                    oAuth2Attributes.getProvider(), oAuth2Attributes.getProviderId());
+                    oAuthAttributes.provider(), oAuthAttributes.providerId());
                 return OAuthTokenLoginResult.newMember(
-                    oAuth2Attributes.getProvider(),
-                    oAuth2Attributes.getProviderId(),
-                    oAuth2Attributes.getEmail()
+                    oAuthAttributes.provider(),
+                    oAuthAttributes.providerId(),
+                    oAuthAttributes.email()
                 );
             });
     }
@@ -76,19 +83,19 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
         log.info("ID 토큰 기반 OAuth 로그인 시도: provider={}", command.provider());
 
         // 1. ID 토큰 검증 및 사용자 정보 추출 (Port Out 호출)
-        OAuth2Attributes oauthAttrs = verifyIdTokenPort.verify(
+        OAuthAttributes oauthAttrs = verifyIdTokenPort.verify(
             command.provider(),
             command.token()
         );
 
         log.info("OAuth 토큰 검증 성공: provider={}, providerId={}, email={}",
-            oauthAttrs.getProvider(),
-            oauthAttrs.getProviderId(),
-            oauthAttrs.getEmail()
+            oauthAttrs.provider(),
+            oauthAttrs.providerId(),
+            oauthAttrs.email()
         );
 
         // 2. 공통 비즈니스 로직 재사용
-        return loginWithOAuth2Attributes(oauthAttrs);
+        return loginWithOAuthAttributes(oauthAttrs);
     }
 
     @Override
@@ -96,20 +103,20 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
         log.info("Authorization Code 기반 OAuth 로그인 시도: provider={}", command.provider());
 
         // 1. Authorization Code 교환 및 사용자 정보 추출 (Port Out 호출)
-        OAuth2Attributes oauthAttrs = verifyIdTokenPort.verifyAuthorizationCode(
+        OAuthAttributes oauthAttrs = verifyIdTokenPort.verifyAuthorizationCode(
             command.provider(),
             command.authorizationCode(),
             command.redirectUri()
         );
 
         log.info("OAuth Authorization Code 교환 성공: provider={}, providerId={}, email={}",
-            oauthAttrs.getProvider(),
-            oauthAttrs.getProviderId(),
-            oauthAttrs.getEmail()
+            oauthAttrs.provider(),
+            oauthAttrs.providerId(),
+            oauthAttrs.email()
         );
 
         // 2. 공통 비즈니스 로직 재사용
-        return loginWithOAuth2Attributes(oauthAttrs);
+        return loginWithOAuthAttributes(oauthAttrs);
     }
 
     @Override
@@ -182,18 +189,27 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
         memberOAuth.throwIfNotValidMember(command.memberId());
 
         if (!command.isWithdrawal()) {
-            // 회원에 연결된 OAuth 계정이 최소한 한 개는 있어야 함
-            List<MemberOAuth> linkedOAuth = loadMemberOAuthPort.findAllByMemberId(command.memberId());
-
-            if (linkedOAuth.size() <= 1) {
-                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_CANNOT_UNLINK_LAST_PROVIDER);
-            }
+            validateLoginMethodInvariant(command.memberId());
         }
 
         // Provider별 토큰 revoke / 연결 해제
         revokeProviderToken(memberOAuth, command);
 
         saveMemberOAuthPort.delete(memberOAuth);
+    }
+
+    private void validateLoginMethodInvariant(Long memberId) {
+        // Member row lock 이후 OAuth 개수를 확인해 같은 회원의 동시 OAuth 해제 요청을 직렬화한다.
+        MemberCredentialStatusInfo credentialStatus =
+            lockMemberCredentialUseCase.getCredentialStatusForUpdate(memberId);
+        if (credentialStatus.hasCredential()) {
+            return;
+        }
+
+        List<MemberOAuth> linkedOAuth = loadMemberOAuthPort.findAllByMemberId(memberId);
+        if (linkedOAuth.size() <= 1) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_CANNOT_UNLINK_LAST_PROVIDER);
+        }
     }
 
     private void revokeProviderToken(MemberOAuth memberOAuth, UnlinkOAuthCommand command) {
@@ -214,6 +230,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
             }
             case KAKAO -> {
                 if (command.kakaoAccessToken() != null) {
+                    validateAccessTokenOwner(memberOAuth, command.kakaoAccessToken());
                     revokeOAuthTokenPort.revokeKakaoToken(command.kakaoAccessToken());
                 } else {
                     log.warn("[Kakao 계정 연동 해제] access token이 전달되지 않아 revoke를 skip합니다: memberId={} memberOAuthId={}",
@@ -222,12 +239,25 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
             }
             case GOOGLE -> {
                 if (command.googleAccessToken() != null) {
+                    validateAccessTokenOwner(memberOAuth, command.googleAccessToken());
                     revokeOAuthTokenPort.revokeGoogleToken(command.googleAccessToken());
                 } else {
                     log.warn("[Google 계정 연동 해제] access token이 전달되지 않아 revoke를 skip합니다: memberId={} memberOAuthId={}",
                         memberOAuth.getMemberId(), memberOAuth.getId());
                 }
             }
+        }
+    }
+
+    private void validateAccessTokenOwner(MemberOAuth memberOAuth, String accessToken) {
+        OAuthAttributes tokenAttributes = verifyIdTokenPort.verify(memberOAuth.getProvider(), accessToken);
+
+        if (tokenAttributes.provider() != memberOAuth.getProvider()
+            || !Objects.equals(tokenAttributes.providerId(), memberOAuth.getProviderId())) {
+            log.warn("[{} 계정 연동 해제] access token 소유자가 저장된 OAuth 계정과 일치하지 않습니다: "
+                    + "memberId={} memberOAuthId={}",
+                memberOAuth.getProvider(), memberOAuth.getMemberId(), memberOAuth.getId());
+            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
         }
     }
 

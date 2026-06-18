@@ -1,11 +1,13 @@
 package com.umc.product.challenger.application.port.in.query;
 
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 
 public interface GetChallengerUseCase {
     // TODO: 챌린저에 대해서 public/private 정보 구분 필요 시 method 추가해서 진행하여야 함
@@ -46,6 +48,27 @@ public interface GetChallengerUseCase {
     List<ChallengerInfo> getAllByMemberId(Long memberId);
 
     /**
+     * 여러 memberId로 회원별 모든 챌린저 정보를 IN 쿼리 1회로 일괄 조회합니다.
+     * <p>
+     * 챌린저 이력이 없는 회원은 결과 Map에 키로 등장하지 않습니다.
+     */
+    Map<Long, List<ChallengerInfo>> getAllByMemberIds(Set<Long> memberIds);
+
+    /**
+     * 여러 memberId로 회원별 모든 챌린저 기본 정보를 IN 쿼리 1회로 일괄 조회합니다.
+     * <p>
+     * 상벌점이 필요 없는 검색/목록 조립에서 사용합니다.
+     */
+    Map<Long, List<ChallengerBasicInfo>> getAllBasicByMemberIds(Set<Long> memberIds);
+
+    /**
+     * 특정 기수 내 여러 memberId의 챌린저 기본 정보를 조회합니다.
+     * <p>
+     * 해당 기수 챌린저가 없는 회원은 결과에서 제외합니다.
+     */
+    List<ChallengerBasicInfo> listBasicByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId);
+
+    /**
      * 여러 challengerId로 챌린저 정보 배치 조회
      *
      * @param challengerIds 챌린저 ID 목록
@@ -67,12 +90,32 @@ public interface GetChallengerUseCase {
     Map<Long, ChallengerInfo> batchGetByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId);
 
     /**
+     * 특정 기수 내 여러 memberId 에 해당하는 챌린저 정보를 조회한다.
+     * <p>
+     * 챌린저가 없는 memberId 는 결과 Map 에 포함하지 않는다.
+     *
+     * @return memberId -> ChallengerInfo Map
+     */
+    Map<Long, ChallengerInfo> listByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId);
+
+    /**
      * 기수 ID로 해당 기수의 모든 챌린저 정보 조회
      *
      * @param gisuId 기수 ID
      * @return 해당 기수의 챌린저 정보 목록
      */
     List<ChallengerInfo> getAllByGisuId(Long gisuId);
+
+    /**
+     * 지부 ID로 해당 지부에 속한 모든 챌린저 정보 조회 (상벌점 제외)
+     * <p>
+     * 지부의 기수와 일치하고, 회원의 학교가 해당 지부 소속 학교에 포함되는 챌린저를 반환합니다.
+     * 모집단 집계 등 상벌점이 불필요한 경우 사용합니다.
+     *
+     * @param chapterId 지부 ID
+     * @return 해당 지부의 챌린저 정보 목록
+     */
+    List<ChallengerInfo> listByChapterId(Long chapterId);
 
     /**
      * memberId로 해당 사용자가 가지고 있는 가장 최근 챌린저 정보 조회

@@ -18,14 +18,6 @@ spring:
     enabled: true
     out-of-order: true
 
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: google_client_id
-            client-secret: google_client_secret
-
 jwt:
   access-token-secret: access_token_secret
   refresh-token-secret: refresh_token_secret
@@ -37,6 +29,18 @@ jwt:
 
 
 management:
+  tracing:
+    enabled: false
+  otlp:
+    tracing:
+      export:
+        enabled: false
+    logging:
+      export:
+        enabled: false
+    metrics:
+      export:
+        enabled: false
   health:
     mail:
       enabled: false
@@ -51,13 +55,24 @@ logging:
     testcontainers:
       level: DEBUG
 
-sentry:
-  dsn:
-  logging:
-    enabled: false
-
 app:
   base-url: http://localhost:8080
+  observability:
+    tracing:
+      enabled: false
+      use-case-spans: false
+      adapter-spans: false
+      db-spans: false
+  webhook:
+    buffer:
+      enabled: false
+    telegram:
+      bot-token: "false"
+      chat-id: "false"
+    slack:
+      url: "false"
+    discord:
+      url: "false"
   cors:
     allowed-origin-patterns: ""
   llm:
@@ -71,8 +86,17 @@ app:
           "private_key_id": "test-private
       }
 
+  notification:
+    email:
+      ses:
+        region: ap-northeast-2
+        access-key-id: test-access-key
+        secret-access-key: test-secret-key
+      sender:
+        no-reply-address: noreply@test.umc.local
+        no-reply-display-name: UMC Test
+
 
   oauth2:
-    frontend-redirect-url: about:blank
     google:
       client-id-list: apps.googleusercontent.com

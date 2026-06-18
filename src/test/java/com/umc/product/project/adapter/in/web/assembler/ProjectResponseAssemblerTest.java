@@ -1,8 +1,28 @@
 package com.umc.product.project.adapter.in.web.assembler;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 
+import java.lang.reflect.RecordComponent;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
+import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -12,27 +32,22 @@ import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ManagedProjectSummaryResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
+import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchManagedProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
+import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
+import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingPhase;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectStatus;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectResponseAssemblerTest {
@@ -44,11 +59,17 @@ class ProjectResponseAssemblerTest {
     @Mock
     SearchManagedProjectUseCase searchManagedProjectUseCase;
     @Mock
+    GetProjectStatisticsUseCase getProjectStatisticsUseCase;
+    @Mock
     GetMemberUseCase getMemberUseCase;
     @Mock
     LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     @Mock
+    LoadProjectApplicationPort loadProjectApplicationPort;
+    @Mock
     LoadProjectMemberPort loadProjectMemberPort;
+    @Mock
+    CheckPermissionUseCase checkPermissionUseCase;
 
     @InjectMocks
     ProjectResponseAssembler sut;
@@ -126,6 +147,7 @@ class ProjectResponseAssemblerTest {
 
         assertThat(response.productOwner().memberId()).isEqualTo(99L);
         assertThat(response.productOwner().name()).isEqualTo("김메인");
+        assertThat(response.productOwner().matchedRoundInfo()).isNull();
         assertThat(response.coProductOwners()).hasSize(1);
         assertThat(response.coProductOwners().get(0).memberId()).isEqualTo(101L);
         assertThat(response.coProductOwners().get(0).name()).isEqualTo("박가나");
@@ -134,13 +156,13 @@ class ProjectResponseAssemblerTest {
     }
 
     @Test
-    void membersFor_보조PM_가나다순_정렬() {
+    void membersFor_보조PM_createdAt_오름차순_정렬() {
         ProjectInfo info = projectInfo(42L);
         given(getProjectUseCase.getById(42L)).willReturn(info);
         given(loadProjectMemberPort.listByProjectId(42L)).willReturn(List.of(
-            projectMember(101L, ChallengerPart.PLAN),
-            projectMember(102L, ChallengerPart.PLAN),
-            projectMember(103L, ChallengerPart.PLAN)
+            projectMember(101L, ChallengerPart.PLAN, Instant.parse("2026-01-01T00:00:00Z")),
+            projectMember(102L, ChallengerPart.PLAN, Instant.parse("2026-01-03T00:00:00Z")),
+            projectMember(103L, ChallengerPart.PLAN, Instant.parse("2026-01-02T00:00:00Z"))
         ));
         given(getMemberUseCase.findAllByIds(Set.of(99L, 101L, 102L, 103L))).willReturn(Map.of(
             99L, memberInfoOf(99L, "메인", "김메인"),
@@ -151,8 +173,113 @@ class ProjectResponseAssemblerTest {
 
         ProjectMembersResponse response = sut.membersFor(42L);
 
-        List<String> nicknames = response.coProductOwners().stream().map(MemberBrief::nickname).toList();
-        assertThat(nicknames).containsExactly("가람", "나무", "다람쥐");
+        List<String> nicknames = response.coProductOwners().stream()
+            .map(ProjectMembersResponse.ProjectMemberBrief::nickname)
+            .toList();
+        assertThat(nicknames).containsExactly("다람쥐", "나무", "가람");
+    }
+
+    @Test
+    @DisplayName("membersFor는 파트별 멤버를 ProjectMember createdAt 오름차순으로 응답한다")
+    void membersFor_파트별_멤버_createdAt_오름차순_정렬() {
+        ProjectInfo info = projectInfo(42L);
+        given(getProjectUseCase.getById(42L)).willReturn(info);
+        given(loadProjectMemberPort.listByProjectId(42L)).willReturn(List.of(
+            projectMember(101L, ChallengerPart.SPRINGBOOT, Instant.parse("2026-01-02T00:00:00Z")),
+            projectMember(102L, ChallengerPart.SPRINGBOOT, Instant.parse("2026-01-01T00:00:00Z"))
+        ));
+        given(getMemberUseCase.findAllByIds(Set.of(99L, 101L, 102L))).willReturn(Map.of(
+            99L, memberInfoOf(99L, "메인", "김메인"),
+            101L, memberInfoOf(101L, "가람", "이가람"),
+            102L, memberInfoOf(102L, "다람쥐", "박다람")
+        ));
+
+        ProjectMembersResponse response = sut.membersFor(42L);
+
+        List<Long> memberIds = response.partGroups().get(0).members().stream()
+            .map(ProjectMembersResponse.ProjectMemberBrief::memberId)
+            .toList();
+        assertThat(memberIds).containsExactly(102L, 101L);
+    }
+
+    @Test
+    @DisplayName("membersFor는 APPROVED 지원서의 최신 매칭차수를 프로젝트 멤버 응답에만 포함한다")
+    void membersForIncludesLatestApprovedMatchedRoundOnlyInProjectMemberResponse() {
+        ProjectInfo info = projectInfo(42L);
+        given(getProjectUseCase.getById(42L)).willReturn(info);
+        given(loadProjectMemberPort.listByProjectId(42L)).willReturn(List.of(
+            projectMember(101L, ChallengerPart.PLAN),
+            projectMember(102L, ChallengerPart.SPRINGBOOT)
+        ));
+        given(getMemberUseCase.findAllByIds(Set.of(99L, 101L, 102L))).willReturn(Map.of(
+            99L, memberInfoOf(99L, "메인", "김메인"),
+            101L, memberInfoOf(101L, "코PM", "박코피"),
+            102L, memberInfoOf(102L, "백엔드", "이다라")
+        ));
+        given(loadProjectApplicationPort.listLatestApprovedMatchedRoundsByProjectIdsAndMemberIds(any(), any()))
+            .willReturn(List.of(new ProjectMemberMatchedRoundInfo(
+                42L,
+                102L,
+                7L,
+                MatchingType.PLAN_DEVELOPER,
+                MatchingPhase.SECOND
+            )));
+
+        ProjectMembersResponse response = sut.membersFor(42L);
+
+        assertThat(response.coProductOwners().get(0).matchedRoundInfo()).isNull();
+        ProjectMembersResponse.ProjectMemberBrief springMember = response.partGroups().get(0).members().get(0);
+        assertThat(springMember.memberId()).isEqualTo(102L);
+        assertThat(springMember.matchedRoundInfo())
+            .isEqualTo(new ProjectMembersResponse.MatchedRoundInfo(
+                7L,
+                MatchingType.PLAN_DEVELOPER,
+                MatchingPhase.SECOND
+            ));
+
+        List<String> memberBriefFields = Arrays.stream(MemberBrief.class.getRecordComponents())
+            .map(RecordComponent::getName)
+            .toList();
+        assertThat(memberBriefFields).doesNotContain("matchedRoundInfo");
+    }
+
+    @Test
+    @DisplayName("listProjectMembers는 프로젝트와 멤버 쌍별로 APPROVED 매칭차수를 매핑한다")
+    void listProjectMembersMapsApprovedMatchedRoundByProjectAndMember() {
+        ProjectInfo project42 = projectInfo(42L);
+        ProjectInfo project43 = projectInfoWithOwner(43L, 199L);
+        given(checkPermissionUseCase.check(anyLong(), any(ResourcePermission.class))).willReturn(true);
+        given(getProjectUseCase.getById(42L)).willReturn(project42);
+        given(getProjectUseCase.getById(43L)).willReturn(project43);
+        given(loadProjectMemberPort.listByProjectIds(Set.of(42L, 43L))).willReturn(Map.of(
+            42L, List.of(projectMember(102L, ChallengerPart.SPRINGBOOT)),
+            43L, List.of(projectMember(102L, ChallengerPart.SPRINGBOOT))
+        ));
+        given(getMemberUseCase.findAllByIds(Set.of(99L, 199L, 102L))).willReturn(Map.of(
+            99L, memberInfoOf(99L, "메인42", "김메인"),
+            199L, memberInfoOf(199L, "메인43", "이메인"),
+            102L, memberInfoOf(102L, "백엔드", "이다라")
+        ));
+        given(loadProjectApplicationPort.listLatestApprovedMatchedRoundsByProjectIdsAndMemberIds(any(), any()))
+            .willReturn(List.of(
+                new ProjectMemberMatchedRoundInfo(42L, 102L, 7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST),
+                new ProjectMemberMatchedRoundInfo(43L, 102L, 8L, MatchingType.PLAN_DEVELOPER, MatchingPhase.THIRD)
+            ));
+
+        Map<Long, ProjectMembersResponse> responses = sut.listProjectMembers(List.of(42L, 43L), 900L);
+
+        assertThat(responses.get(42L).partGroups().get(0).members().get(0).matchedRoundInfo())
+            .isEqualTo(new ProjectMembersResponse.MatchedRoundInfo(
+                7L,
+                MatchingType.PLAN_DEVELOPER,
+                MatchingPhase.FIRST
+            ));
+        assertThat(responses.get(43L).partGroups().get(0).members().get(0).matchedRoundInfo())
+            .isEqualTo(new ProjectMembersResponse.MatchedRoundInfo(
+                8L,
+                MatchingType.PLAN_DEVELOPER,
+                MatchingPhase.THIRD
+            ));
     }
 
     @Test
@@ -188,6 +315,20 @@ class ProjectResponseAssemblerTest {
             .build();
     }
 
+    private ProjectInfo projectInfoWithOwner(Long projectId, Long ownerMemberId) {
+        return ProjectInfo.builder()
+            .id(projectId)
+            .status(ProjectStatus.DRAFT)
+            .name("Triple")
+            .description(null)
+            .gisuId(1L)
+            .chapterId(1L)
+            .productOwnerMemberId(ownerMemberId)
+            .coProductOwnerMemberIds(List.of())
+            .partQuotas(List.of())
+            .build();
+    }
+
     private MemberInfo memberInfoOf(Long memberId, String nickname, String name) {
         return MemberInfo.builder()
             .id(memberId)
@@ -198,12 +339,17 @@ class ProjectResponseAssemblerTest {
     }
 
     private ProjectMember projectMember(Long memberId, ChallengerPart part) {
+        return projectMember(memberId, part, null);
+    }
+
+    private ProjectMember projectMember(Long memberId, ChallengerPart part, Instant createdAt) {
         try {
             var c = ProjectMember.class.getDeclaredConstructor();
             c.setAccessible(true);
             ProjectMember pm = c.newInstance();
             ReflectionTestUtils.setField(pm, "memberId", memberId);
             ReflectionTestUtils.setField(pm, "part", part);
+            ReflectionTestUtils.setField(pm, "createdAt", createdAt);
             return pm;
         } catch (Exception e) {
             throw new RuntimeException(e);

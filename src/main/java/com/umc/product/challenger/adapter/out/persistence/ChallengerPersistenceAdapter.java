@@ -1,5 +1,14 @@
 package com.umc.product.challenger.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Component;
+
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.application.port.out.SaveChallengerPort;
@@ -9,14 +18,8 @@ import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -47,6 +50,14 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     }
 
     @Override
+    public List<Challenger> listAllByMemberIds(Set<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return List.of();
+        }
+        return repository.findByMemberIdIn(memberIds);
+    }
+
+    @Override
     public List<Challenger> getAllByGisuId(Long gisuId) {
         return repository.findByGisuId(gisuId);
     }
@@ -54,6 +65,11 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     @Override
     public List<Challenger> getAllByGisuIds(List<Long> gisuIds) {
         return repository.findByGisuIdIn(gisuIds);
+    }
+
+    @Override
+    public List<Challenger> listByChapterId(Long chapterId) {
+        return queryRepository.listByChapterId(chapterId);
     }
 
     @Override
@@ -82,6 +98,14 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
             throw new ChallengerDomainException(ChallengerErrorCode.NO_CHALLENGER_IN_MEMBER_GISU);
         }
         return challengers;
+    }
+
+    @Override
+    public List<Challenger> listByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId) {
+        if (memberIds == null || memberIds.isEmpty() || gisuId == null) {
+            return List.of();
+        }
+        return repository.findByMemberIdInAndGisuId(memberIds, gisuId);
     }
 
     @Override

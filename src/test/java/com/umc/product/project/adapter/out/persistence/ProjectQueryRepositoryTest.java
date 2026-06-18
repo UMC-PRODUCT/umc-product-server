@@ -2,9 +2,21 @@ package com.umc.product.project.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.config.JpaConfig;
-import com.umc.product.global.config.QueryDslConfig;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectMember;
@@ -12,22 +24,10 @@ import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.PartQuotaStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
-import com.umc.product.support.TestContainersConfig;
-import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.test.util.ReflectionTestUtils;
+import com.umc.product.support.PersistenceAdapterTest;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({JpaConfig.class, QueryDslConfig.class, TestContainersConfig.class, ProjectQueryRepository.class})
+@PersistenceAdapterTest
+@Import({ProjectQueryRepository.class})
 class ProjectQueryRepositoryTest {
 
     @Autowired
@@ -127,7 +127,23 @@ class ProjectQueryRepositoryTest {
     }
 
     @Test
-    void 정렬_createdAt_DESC() {
+    void unpaged_요청시_offset_limit_없이_전건_반환() {
+        // given — Pageable.unpaged() 로 호출 (시딩 등 전체 조회 시나리오)
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            gisuId, null, null, null, null, null, Pageable.unpaged());
+
+        // when — Unpaged 의 getOffset/getPageSize 호출로 인한 UnsupportedOperationException 이 없어야 한다
+        Page<Project> result = sut.search(query);
+
+        // then — 조건에 맞는 전건(기수 1 IN_PROGRESS 3건) 을 페이징 절단 없이 반환
+        assertThat(result.getContent()).hasSize(3);
+        assertThat(result.getTotalElements()).isEqualTo(3);
+        assertThat(result.getContent())
+            .allMatch(p -> p.getStatus() == ProjectStatus.IN_PROGRESS);
+    }
+
+    @Test
+    void 정렬_createdAt_ASC() {
         SearchProjectQuery query = SearchProjectQuery.forChallenger(
             gisuId, null, null, null, null, null, PageRequest.of(0, 20));
 
@@ -136,8 +152,33 @@ class ProjectQueryRepositoryTest {
         List<Project> content = result.getContent();
         for (int i = 0; i < content.size() - 1; i++) {
             assertThat(content.get(i).getCreatedAt())
-                .isAfterOrEqualTo(content.get(i + 1).getCreatedAt());
+                .isBeforeOrEqualTo(content.get(i + 1).getCreatedAt());
         }
+    }
+
+    @Test
+    void 정렬_createdAt이_같으면_이름_오름차순() {
+        Long targetGisuId = 77L;
+        Project charlie = persistProject("Charlie", ProjectStatus.IN_PROGRESS, targetGisuId, 1L, 301L);
+        Project alpha = persistProject("Alpha", ProjectStatus.IN_PROGRESS, targetGisuId, 1L, 302L);
+        Project bravo = persistProject("Bravo", ProjectStatus.IN_PROGRESS, targetGisuId, 1L, 303L);
+        em.flush();
+
+        Instant sameCreatedAt = Instant.parse("2026-01-01T00:00:00Z");
+        updateAuditTimestamp(charlie.getId(), sameCreatedAt);
+        updateAuditTimestamp(alpha.getId(), sameCreatedAt);
+        updateAuditTimestamp(bravo.getId(), sameCreatedAt);
+        em.flush();
+        em.clear();
+
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            targetGisuId, null, null, null, null, null, PageRequest.of(0, 20));
+
+        Page<Project> result = sut.search(query);
+
+        assertThat(result.getContent())
+            .extracting(Project::getName)
+            .containsExactly("Alpha", "Bravo", "Charlie");
     }
 
     @Test
@@ -390,6 +431,30 @@ class ProjectQueryRepositoryTest {
         assertThat(result.getContent().get(0).getName()).isEqualTo("한양대 프로젝트");
     }
 
+    @Test
+    void 상위_scope_검색에서도_본인_PO_DRAFT는_추가_포함한다() {
+        persistProject("내 초안", ProjectStatus.DRAFT, gisuId, 2L, 99L, 9L);
+        persistProject("다른 사람 초안", ProjectStatus.DRAFT, gisuId, 2L, 100L, 9L);
+        em.flush();
+        em.clear();
+
+        SearchProjectQuery query = SearchProjectQuery.builder()
+            .gisuId(gisuId)
+            .chapterId(1L)
+            .statuses(List.of(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS,
+                ProjectStatus.COMPLETED, ProjectStatus.ABORTED))
+            .pageable(PageRequest.of(0, 20))
+            .build()
+            .withIncludedOwner(99L, java.util.EnumSet.allOf(ProjectStatus.class));
+
+        Page<Project> result = sut.search(query);
+
+        assertThat(result.getContent())
+            .extracting(Project::getName)
+            .contains("내 초안")
+            .doesNotContain("다른 사람 초안");
+    }
+
     // ========== Helper ==========
 
     private Project persistProject(String name, ProjectStatus status, Long gisuId, Long chapterId, Long ownerId) {
@@ -412,7 +477,7 @@ class ProjectQueryRepositoryTest {
         ReflectionTestUtils.setField(project, "name", name);
         ReflectionTestUtils.setField(project, "productOwnerMemberId", ownerId);
         ReflectionTestUtils.setField(project, "productOwnerSchoolId", ownerSchoolId);
-        ReflectionTestUtils.setField(project, "createdByMemberId", ownerId);
+        ReflectionTestUtils.setField(project, "creatorMemberId", ownerId);
         em.persist(project);
         return project;
     }
@@ -448,5 +513,18 @@ class ProjectQueryRepositoryTest {
         ReflectionTestUtils.setField(pm, "part", part);
         ReflectionTestUtils.setField(pm, "status", ProjectMemberStatus.ACTIVE);
         em.persist(pm);
+    }
+
+    private void updateAuditTimestamp(Long projectId, Instant createdAt) {
+        em.getEntityManager()
+            .createNativeQuery("""
+                update project
+                set created_at = :createdAt,
+                    updated_at = :createdAt
+                where id = :id
+                """)
+            .setParameter("createdAt", Timestamp.from(createdAt))
+            .setParameter("id", projectId)
+            .executeUpdate();
     }
 }

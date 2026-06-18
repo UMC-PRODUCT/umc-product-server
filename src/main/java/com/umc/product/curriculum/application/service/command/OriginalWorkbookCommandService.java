@@ -36,6 +36,18 @@ public class OriginalWorkbookCommandService implements ManageOriginalWorkbookUse
     private final LoadChallengerWorkbookPort loadChallengerWorkbookPort;
 
     @Override
+    public List<Long> createBulk(List<CreateOriginalWorkbookCommand> commands) {
+        if (commands.isEmpty()) {
+            return List.of();
+        }
+        List<Long> ids = new ArrayList<>(commands.size());
+        for (CreateOriginalWorkbookCommand command : commands) {
+            ids.add(create(command));
+        }
+        return ids;
+    }
+
+    @Override
     public Long create(CreateOriginalWorkbookCommand command) {
         WeeklyCurriculum weeklyCurriculum = loadWeeklyCurriculumPort.getById(command.weeklyCurriculumId());
 

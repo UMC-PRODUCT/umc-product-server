@@ -11,11 +11,9 @@ import lombok.Builder;
  */
 @Builder
 public record SubmitProjectCommand(
-    Long projectId,
-    Long requesterMemberId
+    Long projectId
 ) {
     public SubmitProjectCommand {
         Objects.requireNonNull(projectId, "projectId must not be null");
-        Objects.requireNonNull(requesterMemberId, "requesterMemberId must not be null");
     }
 }

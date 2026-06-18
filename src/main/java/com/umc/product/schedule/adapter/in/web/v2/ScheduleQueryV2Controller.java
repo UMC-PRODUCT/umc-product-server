@@ -1,5 +1,15 @@
 package com.umc.product.schedule.adapter.in.web.v2;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -13,25 +23,18 @@ import com.umc.product.schedule.application.port.in.query.GetScheduleUseCase;
 import com.umc.product.schedule.application.port.in.query.dto.AdminScheduleInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleInfo;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v2/schedules")
 @RequiredArgsConstructor
-@Tag(name = "Schedule V2 | Query", description = "일정 및 출석 관련 내용들을 조회합니다.")
+@Tag(name = "Schedule V2 | Query", description = "일정과 출석 정보를 조회합니다.")
 public class ScheduleQueryV2Controller {
 
     private final GetScheduleUseCase getScheduleUseCase;
@@ -39,7 +42,7 @@ public class ScheduleQueryV2Controller {
 
     // ========================= 일정 관련 =========================
 
-    @Operation(summary = "[SCHEDULE-Q001] 일정 생성, 수정 관련 권한 조회", description = """
+    @Operation(operationId = "SCHEDULE-Q001", summary = "일정 생성, 수정 관련 권한 조회", description = """
         현재 사용자의 일정 생성, 수정 관련 권한을 조회합니다. 일정 생성, 수정 화면에서 사용하시면 됩니다.
 
         다른 세부적인 생성/수정/삭제 권한 등은 Authorization 도메인의 API를 사용해주세요.
@@ -61,9 +64,9 @@ public class ScheduleQueryV2Controller {
     @CheckAccess(
         resourceType = ResourceType.SCHEDULE,
         permission = PermissionType.READ,
-        message = "내 일정 조회는 '챌린저 활동 기록이 있는 사용자'만 가능합니다."
+        message = "내 일정을 보려면 챌린저 활동 기록이 필요해요. 활동 기록을 확인해주세요."
     )
-    @Operation(summary = "[SCHEDULE-Q002] 내 일정 조회", description = """
+    @Operation(operationId = "SCHEDULE-Q002", summary = "내 일정 조회", description = """
         로그인한 사용자가 참여하는 일정 중 Query Param의 `from`, `to` 사이에 시작일이 있는 일정을 모두 조회합니다.
 
         활동-출석 체크 UI에서 활용하기 위해서는 `isAttendanceRequired` 필드를 `true`로 해서 출석을 트래킹하는 API에 대해서만 조회하면 됩니다.
@@ -74,7 +77,7 @@ public class ScheduleQueryV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0001 : 권한이 없습니다.
+            AUTHORIZATION-0001 : 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         )
@@ -98,9 +101,9 @@ public class ScheduleQueryV2Controller {
     @CheckAccess(
         resourceType = ResourceType.SCHEDULE,
         permission = PermissionType.READ,
-        message = "일정 상세 조회는 '챌린저 활동 기록이 있는 사용자'만 가능합니다."
+        message = "일정 상세를 보려면 챌린저 활동 기록이 필요해요. 활동 기록을 확인해주세요."
     )
-    @Operation(summary = "[SCHEDULE-Q003] 일정 상세 조회", description = """
+    @Operation(operationId = "SCHEDULE-Q003", summary = "일정 상세 조회", description = """
         단일 일정에 대한 정보를 상세하게 조회합니다.
         일정의 기본 정보 및 참여자에 대한 정보를 포함해서 전송합니다.
 
@@ -110,12 +113,12 @@ public class ScheduleQueryV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            AUTHORIZATION-0002 : 이 항목에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "404", description = """
-            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            SCHEDULE-0009 : 일정을 찾을 수 없어요. 선택한 일정을 확인해주세요.
             """,
             content = @Content
         )
@@ -138,9 +141,9 @@ public class ScheduleQueryV2Controller {
     @CheckAccess(
         resourceType = ResourceType.ATTENDANCE,
         permission = PermissionType.READ,
-        message = "일정 목록 출석 현황 조회는 '운영진 활동 이력이 있는 사용자'만 가능합니다."
+        message = "일정 출석 현황은 운영진 활동 이력이 있는 사용자만 볼 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
-    @Operation(summary = "[SCHEDULE-Q004] [운영진용] 일정들의 출석 현황 조회", description = """
+    @Operation(operationId = "SCHEDULE-Q004", summary = "[운영진용] 일정들의 출석 현황 조회", description = """
         Query Param을 이용해서 상세한 필터링을 제공하며, 그 기준은 아래와 같습니다.
 
         #### 기간 필터링 (시작 시간 기준)
@@ -162,17 +165,17 @@ public class ScheduleQueryV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "400", description = """
-            SCHEDULE-0026 : 일정의 참여자가 아닙니다.
+            SCHEDULE-0026 : 일정 참여자만 출석할 수 있어요. 참여자 목록을 확인해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0001 : 권한이 없습니다.
+            AUTHORIZATION-0001 : 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "404", description = """
-            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            SCHEDULE-0009 : 일정을 찾을 수 없어요. 선택한 일정을 확인해주세요.
             """,
             content = @Content
         )
@@ -201,9 +204,9 @@ public class ScheduleQueryV2Controller {
     @CheckAccess(
         resourceType = ResourceType.ATTENDANCE,
         permission = PermissionType.READ,
-        message = "단일 일정 출석 현황 조회는 '해당 일정이 진행되는 기수의 운영진'만 가능합니다."
+        message = "이 일정의 출석 현황은 해당 기수의 운영진만 볼 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
-    @Operation(summary = "[SCHEDULE-Q005] [운영진용] 단일 일정 출석 현황 조회", description = """
+    @Operation(operationId = "SCHEDULE-Q005", summary = "[운영진용] 단일 일정 출석 현황 조회", description = """
         Query Param을 이용해서 상세한 필터링을 제공하며, 그 기준은 아래와 같습니다.
 
         #### 출석 상태 필터링
@@ -214,13 +217,13 @@ public class ScheduleQueryV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "400", description = """
-            SCHEDULE-0021 : 출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다.<br>
-            SCHEDULE-0026 : 일정의 참여자가 아닙니다.
+            SCHEDULE-0021 : 출석 정책이 없는 일정이에요. 출석 정책을 먼저 설정해주세요.<br>
+            SCHEDULE-0026 : 일정 참여자만 출석할 수 있어요. 참여자 목록을 확인해주세요.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            AUTHORIZATION-0002 : 이 항목에 접근할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요.
             """,
             content = @Content
         ),

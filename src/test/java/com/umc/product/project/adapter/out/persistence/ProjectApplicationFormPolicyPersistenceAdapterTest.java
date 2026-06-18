@@ -2,29 +2,26 @@ package com.umc.product.project.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+import java.util.Set;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.config.JpaConfig;
-import com.umc.product.global.config.QueryDslConfig;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.ProjectApplicationFormPolicy;
 import com.umc.product.project.domain.enums.FormSectionType;
 import com.umc.product.project.domain.enums.ProjectStatus;
-import com.umc.product.support.TestContainersConfig;
-import java.util.List;
-import java.util.Set;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.util.ReflectionTestUtils;
+import com.umc.product.support.PersistenceAdapterTest;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({JpaConfig.class, QueryDslConfig.class, TestContainersConfig.class,
+@PersistenceAdapterTest
+@Import({
     ProjectApplicationFormPolicyPersistenceAdapter.class})
 class ProjectApplicationFormPolicyPersistenceAdapterTest {
 
@@ -132,7 +129,7 @@ class ProjectApplicationFormPolicyPersistenceAdapterTest {
         ReflectionTestUtils.setField(project, "name", name);
         ReflectionTestUtils.setField(project, "productOwnerMemberId", ownerId);
         ReflectionTestUtils.setField(project, "productOwnerSchoolId", 1L);
-        ReflectionTestUtils.setField(project, "createdByMemberId", ownerId);
+        ReflectionTestUtils.setField(project, "creatorMemberId", ownerId);
         em.persist(project);
         return project;
     }

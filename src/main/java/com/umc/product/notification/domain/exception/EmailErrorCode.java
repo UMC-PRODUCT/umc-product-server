@@ -1,16 +1,17 @@
 package com.umc.product.notification.domain.exception;
 
+import org.springframework.http.HttpStatus;
+
 import com.umc.product.global.response.code.BaseCode;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
 public enum EmailErrorCode implements BaseCode {
-    EMAIL_GENERAL_ERROR(HttpStatus.BAD_REQUEST, "EMAIL-0001", "알 수 없는 사유로 이메일 전송에 실패했습니다."),
-    EMAIL_ENCODING_ERROR(HttpStatus.BAD_REQUEST, "EMAIL-0002", "인코딩 과정에서 오류가 발생했습니다."),
-    EMAIL_MESSAGING_ERROR(HttpStatus.BAD_REQUEST, "EMAIL-0003", "메일 전송 과정에서 오류가 발생했습니다."),
+    EMAIL_TEMPLATE_RENDER_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "EMAIL-0004", "이메일 본문을 만들지 못했어요. 관리자에게 문의해주세요."),
+    EMAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "EMAIL-0005", "이메일을 보내지 못했어요. 잠시 후 다시 시도해주세요."),
     ;
 
     private final HttpStatus httpStatus;

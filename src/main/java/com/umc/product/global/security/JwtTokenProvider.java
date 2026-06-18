@@ -1,28 +1,37 @@
 package com.umc.product.global.security;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 public class JwtTokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth"; // 권한 정보를 저장할 키
+    private static final String CLIENT_TYPE_KEY = "clientType"; // 클라이언트 플랫폼(ANDROID/IOS/WEB) 정보를 저장할 키
     private final SecretKey accessTokenSecret;
     private final SecretKey refreshTokenSecret;
     private final SecretKey oAuthVerificationTokenSecret;
@@ -74,14 +83,18 @@ public class JwtTokenProvider {
 
     /**
      * emailVerificationToken 발급
+     * <p>
+     * purpose claim 으로 회원가입(REGISTER), 비밀번호 초기화(PASSWORD_RESET), 이메일 변경(CHANGE_EMAIL) 흐름을 구분한다.
+     * 한 흐름에서 발급된 토큰이 다른 흐름에 재사용되지 않도록, 파싱 시 expectedPurpose 와 비교한다.
      */
-    public String createEmailVerificationToken(String email) {
+    public String createEmailVerificationToken(String email, EmailVerificationPurpose purpose) {
         Date now = new Date();
         Date validityDate = new Date(now.getTime() + verificationTokenValidityInMilliseconds); // 10분 유효
 
         return Jwts.builder()
             .subject("EMAIL_VERIFICATION")
             .claim("email", email)
+            .claim("purpose", purpose.name())
             .issuedAt(now)
             .expiration(validityDate)
             .signWith(emailVerificationTokenSecret)
@@ -92,17 +105,31 @@ public class JwtTokenProvider {
      * AccessToken 생성 메소드
      */
     public String createAccessToken(Long memberId, List<String> roles) {
+        return createAccessToken(memberId, roles, (ClientType) null);
+    }
+
+    /**
+     * AccessToken 생성 메소드 (clientType 포함)
+     * <p>
+     * clientType 은 트래픽 분포 분석용 optional claim. null 인 경우 claim 자체를 추가하지 않으며,
+     * 다운스트림(MDC, 통계)에서는 UNKNOWN 으로 집계된다.
+     */
+    public String createAccessToken(Long memberId, List<String> roles, ClientType clientType) {
         Date now = new Date();
         Date validityDate = new Date(now.getTime() + accessTokenValidityInMilliseconds);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
             .subject(String.valueOf(memberId)) // 사용자 식별자 (ID)
             .claim(AUTHORITIES_KEY, roles)     // 권한 정보 저장
             .issuedAt(now)
             .expiration(validityDate)
-            .signWith(accessTokenSecret)
-            .compact()
-            ;
+            .signWith(accessTokenSecret);
+
+        if (clientType != null) {
+            builder.claim(CLIENT_TYPE_KEY, clientType.name());
+        }
+
+        return builder.compact();
     }
 
     public String createAccessToken(Long memberId, List<String> roles, Long expiresInSeconds) {
@@ -115,8 +142,7 @@ public class JwtTokenProvider {
             .issuedAt(now)
             .expiration(validityDate)
             .signWith(accessTokenSecret)
-            .compact()
-            ;
+            .compact();
     }
 
     // 2. Refresh Token 생성
@@ -128,11 +154,11 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
             .subject(String.valueOf(memberId)) // 사용자 식별자 (ID)
+            .id(UUID.randomUUID().toString())
             .issuedAt(now)
             .expiration(validityDate)
             .signWith(refreshTokenSecret)
-            .compact()
-            ;
+            .compact();
     }
 
     public List<String> getRolesFromAccessToken(String token) {
@@ -142,6 +168,28 @@ public class JwtTokenProvider {
             return (List<String>) roles;
         }
         return Collections.emptyList();
+    }
+
+    /**
+     * AccessToken 에서 clientType claim 을 추출한다.
+     * <p>
+     * 도입 이전에 발급된 토큰 / clientType 미전달 로그인 경로로 발급된 토큰에는 claim 이 존재하지 않으므로,
+     * 그 경우엔 {@code null} 을 반환한다. 호출자는 null-safe 하게 다루어야 하며
+     * 통계에서는 "UNKNOWN" 으로 집계한다. 절대 예외를 던지지 않는다.
+     */
+    public ClientType getClientTypeFromAccessToken(String token) {
+        Claims claims = parseClaims(token, accessTokenSecret);
+        String clientTypeStr = claims.get(CLIENT_TYPE_KEY, String.class);
+        if (clientTypeStr == null) {
+            return null;
+        }
+        try {
+            return ClientType.valueOf(clientTypeStr);
+        } catch (IllegalArgumentException e) {
+            // 알 수 없는 enum 값이 들어와도 통계 집계가 깨지지 않도록 null 처리.
+            log.warn("AccessToken 의 clientType claim 값을 해석할 수 없습니다: {}", clientTypeStr);
+            return null;
+        }
     }
 
     public boolean validateAccessToken(String token) {
@@ -187,13 +235,33 @@ public class JwtTokenProvider {
     }
 
     /**
-     * RefreshToken의 정보를 파싱해서 memberId를 반환합니다.
+     * RefreshToken의 정보를 파싱해서 allow-list 식별에 필요한 claims 를 반환합니다.
      */
-    public Long parseRefreshToken(String token) {
+    public RefreshTokenClaims parseRefreshToken(String token) {
         validateToken(token, refreshTokenSecret);
 
         Claims claims = parseClaims(token, refreshTokenSecret);
-        return Long.parseLong(claims.getSubject());
+        String jti = claims.getId();
+        if (jti == null) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        try {
+            return new RefreshTokenClaims(
+                Long.parseLong(claims.getSubject()),
+                UUID.fromString(jti),
+                toInstant(claims.getExpiration())
+            );
+        } catch (IllegalArgumentException e) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_REFRESH_TOKEN);
+        }
+    }
+
+    private Instant toInstant(Date date) {
+        if (date == null) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        return date.toInstant();
     }
 
     /**
@@ -215,11 +283,20 @@ public class JwtTokenProvider {
 
     /**
      * emailVerificationToken 파싱 및 검증
+     * <p>
+     * 토큰의 purpose claim 이 expectedPurpose 와 일치하지 않으면 INVALID_EMAIL_VERIFICATION 예외를 던진다.
+     * 예) 회원가입(REGISTER) 흐름에서 발급된 토큰을 비밀번호 초기화나 이메일 변경에 사용하려는 cross-purpose 공격 방어.
      */
-    public String parseEmailVerificationToken(String token) {
+    public String parseEmailVerificationToken(String token, EmailVerificationPurpose expectedPurpose) {
         validateToken(token, emailVerificationTokenSecret);
 
         Claims claims = parseClaims(token, emailVerificationTokenSecret);
+
+        String purposeClaim = claims.get("purpose", String.class);
+        if (purposeClaim == null || !purposeClaim.equals(expectedPurpose.name())) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
+        }
+
         return claims.get("email", String.class);
     }
 }

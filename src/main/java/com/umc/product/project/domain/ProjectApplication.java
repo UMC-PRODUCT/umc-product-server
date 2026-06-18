@@ -1,11 +1,13 @@
 package com.umc.product.project.domain;
 
+import java.time.Instant;
+
 import com.umc.product.common.BaseEntity;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import com.umc.product.survey.domain.FormResponse;
-import java.time.Instant;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -17,7 +19,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -98,8 +99,9 @@ public class ProjectApplication extends BaseEntity {
     /**
      * 지원서를 합격 처리합니다.
      * <p>
-     * 매칭 차수가 진행 중인 동안 PM 이 자유롭게 토글할 수 있으며, REJECTED 또는 APPROVED 상태에서도 재호출 가능합니다.
-     * 차수 종료 후엔 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_LOCKED} 가 발생합니다.
+     * 지원 기간이 끝난 뒤부터 결정 마감 전까지 PM 이 자유롭게 토글할 수 있으며, REJECTED 또는 APPROVED 상태에서도 재호출 가능합니다.
+     * 아직 지원 기간 중이면 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_NOT_ENDED},
+     * 결정 마감 후엔 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_LOCKED} 가 발생합니다.
      *
      * @param decidedByMemberId 결정한 PO 또는 운영진 ID
      * @param reason            결정 사유 (필수 아님)
@@ -117,8 +119,9 @@ public class ProjectApplication extends BaseEntity {
     /**
      * 지원서를 불합격 처리합니다.
      * <p>
-     * 매칭 차수가 진행 중인 동안 PM 이 자유롭게 토글할 수 있으며, APPROVED 또는 REJECTED 상태에서도 재호출 가능합니다.
-     * 차수 종료 후엔 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_LOCKED} 가 발생합니다.
+     * 지원 기간이 끝난 뒤부터 결정 마감 전까지 PM 이 자유롭게 토글할 수 있으며, APPROVED 또는 REJECTED 상태에서도 재호출 가능합니다.
+     * 아직 지원 기간 중이면 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_NOT_ENDED},
+     * 결정 마감 후엔 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_LOCKED} 가 발생합니다.
      *
      * @param decidedByMemberId 결정한 PO 또는 운영진 ID
      * @param reason            결정 사유 (필수 아님)
@@ -153,25 +156,6 @@ public class ProjectApplication extends BaseEntity {
         this.status = targetStatus;
         this.statusChangedMemberId = executedByMemberId;
         this.statusChangeReason = "auto-decide";
-        this.statusChangedAt = Instant.now();
-    }
-
-    /**
-     * APPROVED / REJECTED 결정을 SUBMITTED ("대기") 로 되돌립니다.
-     * <p>
-     * UI 상의 "대기" 옵션이며, 차수 진행 중에만 호출 가능합니다.
-     *
-     * @param revertedByMemberId 되돌린 PO 또는 운영진 ID
-     */
-    public void revertToPending(Long revertedByMemberId) {
-        if (status != ProjectApplicationStatus.APPROVED && status != ProjectApplicationStatus.REJECTED) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
-        }
-        appliedMatchingRound.validateIsMutableAt(Instant.now());
-
-        this.status = ProjectApplicationStatus.SUBMITTED;
-        this.statusChangedMemberId = revertedByMemberId;
-        this.statusChangeReason = null;
         this.statusChangedAt = Instant.now();
     }
 

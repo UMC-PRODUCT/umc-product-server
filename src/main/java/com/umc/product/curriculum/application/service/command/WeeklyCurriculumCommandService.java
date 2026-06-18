@@ -10,6 +10,8 @@ import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.WeeklyCurriculum;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,18 @@ public class WeeklyCurriculumCommandService implements ManageWeeklyCurriculumUse
     private final LoadCurriculumPort loadCurriculumPort;
     private final LoadWeeklyCurriculumPort loadWeeklyCurriculumPort;
     private final SaveWeeklyCurriculumPort saveWeeklyCurriculumPort;
+
+    @Override
+    public List<Long> createBulk(List<CreateWeeklyCurriculumCommand> commands) {
+        if (commands.isEmpty()) {
+            return List.of();
+        }
+        List<Long> ids = new ArrayList<>(commands.size());
+        for (CreateWeeklyCurriculumCommand command : commands) {
+            ids.add(create(command));
+        }
+        return ids;
+    }
 
     @Override
     public Long create(CreateWeeklyCurriculumCommand command) {

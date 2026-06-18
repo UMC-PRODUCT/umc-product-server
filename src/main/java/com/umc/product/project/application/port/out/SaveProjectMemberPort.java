@@ -25,4 +25,9 @@ public interface SaveProjectMemberPort {
      * IN_PROGRESS 이후 단계에서는 사용 금지 — 매칭/출석 등 외부 도메인 데이터에 영향. soft delete(상태 변경) 사용.
      */
     void hardDelete(Long projectMemberId);
+
+    /**
+     * 특정 프로젝트의 모든 멤버 row 를 일괄 삭제합니다. DRAFT/PENDING_REVIEW 단계 프로젝트 hard delete 시 자식 정리용.
+     */
+    void deleteAllByProjectId(Long projectId);
 }

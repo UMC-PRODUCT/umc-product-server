@@ -1,10 +1,13 @@
 package com.umc.product.organization.application.port.in.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupWithMemberAndMentorInfo;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -27,7 +30,7 @@ public interface GetStudyGroupUseCase {
      * @param size     페이지 크기
      * @return 조회된 스터디 그룹 요약 목록 (권한 없으면 빈 리스트)
      */
-    List<StudyGroupInfo> getMyStudyGroups(Long memberId, Long cursor, int size);
+    List<StudyGroupWithMemberAndMentorInfo> getMyStudyGroups(Long memberId, Long cursor, int size);
 
     /**
      * 스터디 그룹 이름 목록 조회 - memberId 기반으로 schoolId/part를 자동 resolve
@@ -35,6 +38,10 @@ public interface GetStudyGroupUseCase {
     List<StudyGroupNameInfo> getStudyGroupNames(Long memberId);
 
     StudyGroupInfo getById(Long studyGroupId);
+
+    Optional<StudyGroupInfo> findById(Long studyGroupId);
+
+    StudyGroupWithMemberAndMentorInfo getWithMemberAndMentorInfoById(Long studyGroupId);
 
     /**
      * 스터디 그룹 ID 로 소속 스터디원 목록 조회.
@@ -51,4 +58,20 @@ public interface GetStudyGroupUseCase {
      * 특정 기수에서 해당 파트들의 스터디 그룹 ID 목록 조회 (파트장용)
      */
     List<Long> getStudyGroupIdsByParts(Long gisuId, Set<ChallengerPart> parts);
+
+    /**
+     * 사용자의 활성 기수 내 역할을 검사해 {@link OrganizationRoleScope} 리스트를 반환한다.
+     * <p>
+     * 다른 도메인(Schedule, StudyGroupSchedule 등) 이 사용자에게 보이는 데이터를 필터링할 때 이 scope 들을 받아 자기 데이터에 적용한다.
+     * 권한 없는 일반 챌린저는 빈 리스트.
+     */
+    List<OrganizationRoleScope> resolveOrganizationRoleScopes(Long memberId);
+
+    /**
+     * 주어진 scope + 기수로 조회 가능한 스터디 그룹 ID 집합을 반환한다.
+     * <p>
+     * {@link #resolveOrganizationRoleScopes} 의 결과를 그대로 입력하면 됨. Schedule 같은 다른 aggregate 가 "사용자에게 보이는 스터디 그룹" 을
+     * 알아내 schedule 필터링에 사용하는 케이스 등을 위해 분리.
+     */
+    Set<Long> findStudyGroupIds(List<OrganizationRoleScope> scopes, Long gisuId);
 }

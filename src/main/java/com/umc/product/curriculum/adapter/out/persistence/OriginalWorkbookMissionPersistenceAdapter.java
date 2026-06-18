@@ -1,17 +1,21 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookMissionPort;
 import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookMissionPort;
 import com.umc.product.curriculum.domain.OriginalWorkbookMission;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class OriginalWorkbookMissionPersistenceAdapter implements LoadOriginalWorkbookMissionPort, SaveOriginalWorkbookMissionPort {
+public class OriginalWorkbookMissionPersistenceAdapter
+    implements LoadOriginalWorkbookMissionPort, SaveOriginalWorkbookMissionPort {
 
     private final OriginalWorkbookMissionJpaRepository originalWorkbookMissionJpaRepository;
 

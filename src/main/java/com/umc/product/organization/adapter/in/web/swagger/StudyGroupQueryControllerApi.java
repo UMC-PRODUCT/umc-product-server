@@ -4,6 +4,7 @@ import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.organization.adapter.in.web.dto.response.studygroup.StudyGroupMemberResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.studygroup.StudyGroupResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -31,7 +32,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Organization | 스터디 그룹 Query", description = "")
 public interface StudyGroupQueryControllerApi {
 
-    @Operation(summary = "[STUDY-GROUP-101] 내가 관리하는 스터디 그룹 목록 조회", description = "로그인한 유저의 학교/파트 기반으로 스터디 그룹 목록을 조회합니다. cursor 기반 무한스크롤.")
+    @Operation(operationId = "STUDY-GROUP-101", summary = "내가 관리하는 스터디 그룹 목록 조회", description = "로그인한 유저의 학교/파트 기반으로 스터디 그룹 목록을 조회합니다. cursor 기반 무한스크롤.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "조회 성공")
     })
@@ -40,7 +41,7 @@ public interface StudyGroupQueryControllerApi {
         @Parameter(description = "페이지 커서 (첫 페이지는 null)") Long cursor,
         @Parameter(description = "페이지 크기 (기본 20, 최대 100)") int size);
 
-    @Operation(summary = "[STUDY-GROUP-102] 스터디 그룹 정보 조회",
+    @Operation(operationId = "STUDY-GROUP-102", summary = "스터디 그룹 정보 조회",
         description = "`studyGroupId` 에 해당하는 스터디 그룹의 정보를 조회합니다. (그룹명, 파트, 기수, 스터디원, 파트장 정보)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "조회 성공",
