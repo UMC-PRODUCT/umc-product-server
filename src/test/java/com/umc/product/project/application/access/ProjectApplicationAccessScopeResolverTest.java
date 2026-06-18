@@ -100,6 +100,7 @@ class ProjectApplicationAccessScopeResolverTest {
 
         assertThat(scope).isInstanceOf(ProjectScoped.class);
         assertThat(((ProjectScoped) scope).projectId()).isEqualTo(PROJECT_ID);
+        assertThat(((ProjectScoped) scope).includeOngoingMatchingRounds()).isFalse();
     }
 
     @Test
@@ -128,6 +129,7 @@ class ProjectApplicationAccessScopeResolverTest {
             sut.resolveForProjectApplicantList(MEMBER_ID, project);
 
         assertThat(scope).isInstanceOf(ProjectScoped.class);
+        assertThat(((ProjectScoped) scope).includeOngoingMatchingRounds()).isTrue();
     }
 
     @Test
@@ -143,6 +145,7 @@ class ProjectApplicationAccessScopeResolverTest {
             sut.resolveForProjectApplicantList(MEMBER_ID, project);
 
         assertThat(scope).isInstanceOf(ProjectScoped.class);
+        assertThat(((ProjectScoped) scope).includeOngoingMatchingRounds()).isTrue();
     }
 
     // --- 지부장 ---
@@ -160,6 +163,7 @@ class ProjectApplicationAccessScopeResolverTest {
             sut.resolveForProjectApplicantList(MEMBER_ID, project);
 
         assertThat(scope).isInstanceOf(ProjectScoped.class);
+        assertThat(((ProjectScoped) scope).includeOngoingMatchingRounds()).isTrue();
     }
 
     @Test

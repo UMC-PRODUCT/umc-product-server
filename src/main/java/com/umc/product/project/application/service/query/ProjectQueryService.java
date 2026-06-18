@@ -24,7 +24,6 @@ import com.umc.product.project.application.access.ProjectAccessScope.ChapterScop
 import com.umc.product.project.application.access.ProjectAccessScope.None;
 import com.umc.product.project.application.access.ProjectAccessScope.OwnerOnly;
 import com.umc.product.project.application.access.ProjectAccessScope.PublicOnly;
-import com.umc.product.project.application.access.ProjectAccessScope.SchoolScoped;
 import com.umc.product.project.application.access.ProjectAccessScopeResolver;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchManagedProjectUseCase;
@@ -152,8 +151,6 @@ public class ProjectQueryService implements
             case All(Set<ProjectStatus> statuses) -> loadProjectPort.search(query.withStatuses(statuses));
             case ChapterScoped(Long chapterId, Set<ProjectStatus> statuses) ->
                 loadProjectPort.search(query.withChapterFilter(chapterId, statuses));
-            case SchoolScoped(Long schoolId, Set<ProjectStatus> statuses) ->
-                loadProjectPort.search(query.withSchoolFilter(schoolId, statuses));
             case OwnerOnly(Long memberId, Set<ProjectStatus> statuses) ->
                 loadProjectPort.search(query.withOwnerFilter(memberId, statuses));
             case ProjectAccessScope.WithOwnerIncluded(
@@ -173,8 +170,6 @@ public class ProjectQueryService implements
             case All(Set<ProjectStatus> statuses) -> query.withStatuses(statuses);
             case ChapterScoped(Long chapterId, Set<ProjectStatus> statuses) ->
                 query.withChapterFilter(chapterId, statuses);
-            case SchoolScoped(Long schoolId, Set<ProjectStatus> statuses) ->
-                query.withSchoolFilter(schoolId, statuses);
             case OwnerOnly(Long memberId, Set<ProjectStatus> statuses) ->
                 query.withOwnerFilter(memberId, statuses);
             case PublicOnly() -> query.withStatuses(Set.of(ProjectStatus.IN_PROGRESS, ProjectStatus.COMPLETED));

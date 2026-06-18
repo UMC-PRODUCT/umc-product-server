@@ -1,12 +1,13 @@
 package com.umc.product.challenger.application.port.in.query;
 
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicInfo;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 
 public interface GetChallengerUseCase {
     // TODO: 챌린저에 대해서 public/private 정보 구분 필요 시 method 추가해서 진행하여야 함
@@ -104,6 +105,17 @@ public interface GetChallengerUseCase {
      * @return 해당 기수의 챌린저 정보 목록
      */
     List<ChallengerInfo> getAllByGisuId(Long gisuId);
+
+    /**
+     * 지부 ID로 해당 지부에 속한 모든 챌린저 정보 조회 (상벌점 제외)
+     * <p>
+     * 지부의 기수와 일치하고, 회원의 학교가 해당 지부 소속 학교에 포함되는 챌린저를 반환합니다.
+     * 모집단 집계 등 상벌점이 불필요한 경우 사용합니다.
+     *
+     * @param chapterId 지부 ID
+     * @return 해당 지부의 챌린저 정보 목록
+     */
+    List<ChallengerInfo> listByChapterId(Long chapterId);
 
     /**
      * memberId로 해당 사용자가 가지고 있는 가장 최근 챌린저 정보 조회

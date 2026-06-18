@@ -126,14 +126,15 @@ public class ProjectApplicationQueryRepository {
      * 정렬 (DB 단 baseline): matchingRound.phase ASC -> projectApplication.submittedAt ASC. 최종 화면 정렬(phase -> part ->
      * submittedAt)은 part 가 cross-domain 정보라 Assembler 에서 in-memory 로 마무리한다.
      * <p>
-     * 지원(모집)이 끝난 차수({@code endsAt < now})의 지원서만 노출한다. matchingRoundId 미지정(전체 조회) 시에도 진행 중인 차수의
-     * 지원서는 자동으로 제외된다.
+     * 기본적으로 지원(모집)이 끝난 차수({@code endsAt < now})의 지원서만 노출한다. matchingRoundId 미지정(전체 조회) 시에도 진행 중인 차수의
+     * 지원서는 자동으로 제외된다. {@code includeOngoingMatchingRounds} 가 true 면 이 시간 조건을 적용하지 않는다.
      */
     public List<ProjectApplication> searchProjectApplications(
         Long projectId,
         Long matchingRoundId,
         ProjectApplicationStatus status,
-        Instant now
+        Instant now,
+        boolean includeOngoingMatchingRounds
     ) {
         return queryFactory
             .selectFrom(projectApplication)
@@ -144,10 +145,17 @@ public class ProjectApplicationQueryRepository {
                 projectApplicationForm.project.id.eq(projectId),
                 matchingRoundIdEq(matchingRoundId),
                 managedStatusCond(status),
-                projectMatchingRound.endsAt.before(now)
+                matchingRoundViewableCond(now, includeOngoingMatchingRounds)
             )
             .orderBy(projectMatchingRound.phase.asc(), projectApplication.submittedAt.asc())
             .fetch();
+    }
+
+    private BooleanExpression matchingRoundViewableCond(Instant now, boolean includeOngoingMatchingRounds) {
+        if (includeOngoingMatchingRounds) {
+            return null;
+        }
+        return projectMatchingRound.endsAt.before(now);
     }
 
     /**

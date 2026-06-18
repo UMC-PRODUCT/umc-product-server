@@ -4,6 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
@@ -17,14 +27,6 @@ import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
-import java.util.List;
-import java.util.Optional;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectPermissionEvaluatorTest {
@@ -32,8 +34,17 @@ class ProjectPermissionEvaluatorTest {
     @Mock
     LoadProjectPort loadProjectPort;
 
-    @InjectMocks
     ProjectPermissionEvaluator sut;
+
+    @BeforeEach
+    void setUp() {
+        // 기본은 플래그 OFF. DRAFT 단건 노출 플래그를 켜야 하는 테스트는 sut = newSut(true) 로 재생성.
+        sut = newSut(false);
+    }
+
+    private ProjectPermissionEvaluator newSut(boolean allowDraftRead) {
+        return new ProjectPermissionEvaluator(loadProjectPort, new SuperAdminProperties(allowDraftRead));
+    }
 
     @Test
     void supportedResourceType은_PROJECT를_반환한다() {
@@ -111,6 +122,58 @@ class ProjectPermissionEvaluatorTest {
         ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.READ);
 
         assertThat(sut.evaluate(subject, permission)).isFalse();
+    }
+
+    @Test
+    void READ는_DRAFT_프로젝트를_플래그_OFF면_SUPER_ADMIN도_거부() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.DRAFT)));
+
+        SubjectAttributes subject = subjectWith(20L, List.of(), List.of(superAdminRoleInGisu(99L)));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.READ);
+
+        assertThat(sut.evaluate(subject, permission)).isFalse();
+    }
+
+    @Test
+    void READ는_DRAFT_프로젝트를_플래그_ON이면_SUPER_ADMIN_허용() {
+        sut = newSut(true);
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.DRAFT)));
+
+        SubjectAttributes subject = subjectWith(20L, List.of(), List.of(superAdminRoleInGisu(99L)));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.READ);
+
+        assertThat(sut.evaluate(subject, permission)).isTrue();
+    }
+
+    @Test
+    void READ는_DRAFT_프로젝트를_플래그_ON이라도_비_SUPER_ADMIN_중앙총괄_거부() {
+        sut = newSut(true);
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.DRAFT)));
+
+        SubjectAttributes subject = subjectWith(20L, List.of(), List.of(centralCoreRole()));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.READ);
+
+        assertThat(sut.evaluate(subject, permission)).isFalse();
+    }
+
+    @Test
+    void READ는_DRAFT_프로젝트를_플래그_ON이라도_작성자는_플래그_무관_허용() {
+        sut = newSut(true);
+        Long memberId = 10L;
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, memberId, ProjectStatus.DRAFT)));
+
+        SubjectAttributes subject = subjectWith(memberId, List.of(), List.of());
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.READ);
+
+        assertThat(sut.evaluate(subject, permission)).isTrue();
     }
 
     @Test

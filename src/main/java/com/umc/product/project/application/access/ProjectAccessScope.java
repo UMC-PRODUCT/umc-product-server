@@ -16,11 +16,8 @@ public sealed interface ProjectAccessScope {
     /** 모든 프로젝트 노출 (Central Core). 상태 필터는 호출자가 요청한 그대로 통과. */
     record All(Set<ProjectStatus> visibleStatuses) implements ProjectAccessScope {}
 
-    /** 특정 지부의 프로젝트만 노출 (지부장). */
+    /** 특정 지부의 프로젝트만 노출 (지부장 / 학교 회장단 — 본인 학교가 속한 지부 전체). */
     record ChapterScoped(Long chapterId, Set<ProjectStatus> visibleStatuses) implements ProjectAccessScope {}
-
-    /** 특정 학교의 프로젝트만 노출 (학교 회장단). */
-    record SchoolScoped(Long schoolId, Set<ProjectStatus> visibleStatuses) implements ProjectAccessScope {}
 
     /** 본인이 PM 인 프로젝트만 노출 (PM 챌린저, 관리 화면). */
     record OwnerOnly(Long memberId, Set<ProjectStatus> visibleStatuses) implements ProjectAccessScope {}
