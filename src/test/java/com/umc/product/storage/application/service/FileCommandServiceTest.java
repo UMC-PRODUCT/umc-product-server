@@ -228,7 +228,7 @@ class FileCommandServiceTest extends UseCaseTestSupport {
             .category(FileCategory.PROFILE_IMAGE)
             .contentType("application/pdf")
             .fileSize(1024L)
-            .storageProvider(StorageProvider.GOOGLE_CLOUD_STORAGE)
+            .storageProvider(StorageProvider.AWS_S3)
             .storageKey("test/" + fileId + ".pdf")
             .uploadedMemberId(1L)
             .build();

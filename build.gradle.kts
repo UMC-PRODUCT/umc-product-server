@@ -67,7 +67,7 @@ val otelInstrumentationVersion = "2.27.0-alpha"
  * - logstash-logback-encoder: stdout JSON 로그 포맷. OpenTelemetryAppender 는 여기서
  *   제공하는 structured arguments 도 capture 한다.
  * - context-propagation: 비동기 작업에서 trace/span context 손실을 줄인다.
- * - p6spy-spring-boot-starter, firebase-admin, google-cloud-storage/firestore 는
+ * - p6spy-spring-boot-starter, firebase-admin/firestore 는
  *   transitive dependency 로 Spring Boot BOM 또는 OTel 관련 모듈을 추가 요청할 수 있어
  *   dependencyInsight 에 함께 나타난다.
  * - opentelemetry-bom: OTel API/SDK/exporter 모듈 버전을 같은 축으로 정렬한다.
@@ -162,7 +162,6 @@ dependencies {
     implementation("software.amazon.awssdk:s3")
     implementation("software.amazon.awssdk:cloudfront")  // CloudFront Signed URL
     implementation("software.amazon.awssdk:sesv2")       // AWS SES v2 (인증 이메일 발송)
-    implementation("com.google.cloud:google-cloud-storage")
 
     // --- Email ---
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")

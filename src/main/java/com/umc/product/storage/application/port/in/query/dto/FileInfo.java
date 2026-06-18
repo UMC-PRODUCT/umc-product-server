@@ -1,8 +1,9 @@
 package com.umc.product.storage.application.port.in.query.dto;
 
+import java.time.Instant;
+
 import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.enums.FileCategory;
-import java.time.Instant;
 
 /**
  * 파일 정보 DTO
@@ -28,7 +29,7 @@ public record FileInfo(
     Long uploadedMemberId,
     Instant createdAt
 ) {
-    // TODO: fileLink의 경우 S3/GCS 등에 따라서 동적으로 제작해서 제공할 필요가 있음
+    // TODO: fileLink의 경우 S3 설정에 따라서 동적으로 제작해서 제공할 필요가 있음
 
     /**
      * FileMetadata 도메인 객체에서 FileInfo DTO로 변환합니다.

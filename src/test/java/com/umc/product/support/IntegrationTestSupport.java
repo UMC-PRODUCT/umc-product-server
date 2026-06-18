@@ -1,12 +1,5 @@
 package com.umc.product.support;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.cloud.storage.Storage;
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.umc.product.global.security.JwtTokenProvider;
-import com.umc.product.storage.application.port.out.StoragePort;
-import com.umc.product.support.isolation.DatabaseIsolation;
-import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +9,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.storage.application.port.out.StoragePort;
+import com.umc.product.support.isolation.DatabaseIsolation;
+
+import jakarta.persistence.EntityManager;
 
 /**
  * 통합 테스트(Integration Test) 공통 베이스 클래스.
@@ -27,7 +28,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  *   <li>{@code @Import(TestContainersConfig.class)} - PostgreSQL/PostGIS Testcontainer 기동 및 PostGIS 확장 설치</li>
  *   <li>{@code @DatabaseIsolation} - 각 테스트 종료 후 모든 테이블 TRUNCATE 로 격리 (FK CASCADE, IDENTITY RESTART)</li>
  *   <li>{@code @AutoConfigureMockMvc} - 웹 통합 테스트를 위한 {@link MockMvc} 자동 구성</li>
- *   <li>외부 시스템 의존(메일, JWT, FCM, GCS, S3 Storage)은 {@link MockitoBean} 으로 대체</li>
+ *   <li>외부 시스템 의존(메일, JWT, FCM, S3 Storage)은 {@link MockitoBean} 으로 대체</li>
  * </ul>
  *
  * <h2>사용 정책</h2>
@@ -120,9 +121,6 @@ public abstract class IntegrationTestSupport {
 
     @MockitoBean
     protected FirebaseMessaging firebaseMessaging;
-
-    @MockitoBean
-    protected Storage googleCloudStorage;
 
     @MockitoBean
     protected StoragePort storagePort;

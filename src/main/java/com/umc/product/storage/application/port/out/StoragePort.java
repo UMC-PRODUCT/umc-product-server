@@ -9,7 +9,7 @@ import com.umc.product.storage.domain.enums.FileCategory;
 /**
  * 외부 스토리지 접근을 위한 Port
  *
- * <p>실제 구현체는 AWS S3, GCS 등 다양한 스토리지를 지원합니다.
+ * <p>실제 구현체는 AWS S3 기반 스토리지를 지원합니다.
  */
 public interface StoragePort {
 

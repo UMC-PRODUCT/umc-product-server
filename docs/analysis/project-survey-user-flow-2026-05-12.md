@@ -490,7 +490,7 @@ PR 의존성을 고려한 추천 순서입니다. 상세 PR 묶음은 §6.5 (구
 - `@SpringBootTest` + Testcontainers PostgreSQL/PostGIS 로 전체 Spring
   컨텍스트 부트업, MockMvc 자동 구성
 - `@DatabaseIsolation` — 각 테스트 종료 후 모든 테이블 TRUNCATE (FK CASCADE)
-- 외부 시스템(메일/JWT/FCM/GCS/StoragePort) 만 `@MockitoBean` 으로 대체.
+- 외부 시스템(메일/JWT/FCM/StoragePort) 만 `@MockitoBean` 으로 대체.
   **도메인 / 애플리케이션 빈은 모킹 금지**
 
 **Fixture (src/test/java/com/umc/product/support/fixture/)**
