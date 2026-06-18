@@ -249,6 +249,14 @@ public class ProjectResponseAssembler {
     }
 
     /**
+     * PROJECT-STAT-002 프로젝트 목록 지원/매칭 현황.
+     */
+    public ChapterProjectStatisticsResponse statisticsForProjects(List<Long> projectIds, Long requesterMemberId) {
+        return ChapterProjectStatisticsResponse.from(
+            getProjectStatisticsUseCase.getByProjectIds(projectIds, requesterMemberId));
+    }
+
+    /**
      * PROJECT-STAT-003 지부 공개 프로젝트 매칭 요약.
      */
     public ChapterProjectMatchingStatisticsResponse matchingStatisticsForChapter(Long chapterId) {

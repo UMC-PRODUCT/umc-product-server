@@ -41,6 +41,11 @@ public interface LoadProjectStatisticsPort {
     List<ProjectStatisticsMemberRow> listActiveMembersByChapterId(Long chapterId);
 
     /**
+     * 지정한 프로젝트들의 ACTIVE 프로젝트 멤버를 조회합니다.
+     */
+    List<ProjectStatisticsMemberRow> listActiveMembersByProjectIds(Collection<Long> projectIds);
+
+    /**
      * 공개 프로젝트에 속한 ACTIVE 프로젝트 멤버 중 실제 매칭 집계 대상 멤버를 조회합니다.
      */
     List<ProjectStatisticsMemberRow> listPublicActiveMembersByChapterId(Long chapterId);

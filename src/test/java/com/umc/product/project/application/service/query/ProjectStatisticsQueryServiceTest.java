@@ -300,6 +300,76 @@ class ProjectStatisticsQueryServiceTest {
     }
 
     @Test
+    @DisplayName("getByProjectIds_프로젝트_목록을_지부_응답_형태로_반환한다")
+    void 프로젝트_목록_통계_반환() {
+        // given
+        Long chapterId = 3L;
+        Long gisuId = 1L;
+        Long requesterMemberId = 7000L;
+        Set<Long> projectIds = Set.of(10L, 11L);
+        given(loadProjectPort.listByIds(projectIds))
+            .willReturn(List.of(
+                project(10L, requesterMemberId, chapterId),
+                project(11L, requesterMemberId, chapterId)
+            ));
+        given(loadProjectStatisticsPort.listMatchingRoundsByChapterId(chapterId))
+            .willReturn(List.of(
+                roundRow(1L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST),
+                roundRow(2L, MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND)
+            ));
+        given(loadProjectStatisticsPort.listActiveMembersByProjectIds(projectIds))
+            .willReturn(List.of(
+                memberRow(10L, 101L, 1001L, ChallengerPart.WEB),
+                memberRow(11L, 201L, 1004L, ChallengerPart.WEB)
+            ));
+        given(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(projectIds))
+            .willReturn(List.of(
+                applicationRow(10L, 1001L, 301L, ProjectApplicationStatus.APPROVED, 1L,
+                    MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST),
+                applicationRow(11L, 1004L, 304L, ProjectApplicationStatus.APPROVED, 2L,
+                    MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND)
+            ));
+        given(getChallengerUseCase.listByChapterId(chapterId))
+            .willReturn(List.of(
+                challenger(1001L, gisuId, ChallengerPart.WEB),
+                challenger(1002L, gisuId, ChallengerPart.DESIGN),
+                challenger(1003L, gisuId, ChallengerPart.WEB),
+                challenger(1004L, gisuId, ChallengerPart.ANDROID)
+            ));
+        given(getMemberUseCase.findAllSchoolIdsByIds(Set.of(1001L, 1002L, 1003L, 1004L)))
+            .willReturn(Map.of(
+                1001L, 501L,
+                1002L, 502L,
+                1003L, 502L,
+                1004L, 501L
+            ));
+
+        // when
+        ChapterProjectStatisticsInfo result = sut.getByProjectIds(List.of(10L, 11L), requesterMemberId);
+
+        // then
+        assertThat(result.chapterId()).isEqualTo(chapterId);
+        assertThat(result.projects())
+            .extracting(ProjectStatisticsInfo::projectId)
+            .containsExactly(10L, 11L);
+        assertThat(result.summary().roundApplicationStatistics())
+            .extracting(
+                s -> s.matchingRound().matchingRoundId(),
+                s -> s.appliedMemberCount(),
+                s -> s.availableMemberCount()
+            )
+            .containsExactly(
+                tuple(1L, 1L, 4L),
+                tuple(2L, 1L, 3L)
+            );
+        assertThat(result.summary().projectRoundStatistics())
+            .extracting("projectId")
+            .containsExactly(10L, 11L);
+
+        verify(loadProjectStatisticsPort).listActiveMembersByProjectIds(projectIds);
+    }
+
+    @Test
     @DisplayName("getPublicMatchingStatisticsByChapterId_ProjectMember_기준_공개_매칭_요약을_반환한다")
     void 공개_프로젝트_매칭_요약_반환() {
         // given

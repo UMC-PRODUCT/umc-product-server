@@ -97,16 +97,36 @@ class ProjectStatisticsQueryControllerTest {
     @DisplayName("GET_statistics_projectId_단건_프로젝트_지원_매칭_현황을_반환한다")
     void 통합_경로_단건_프로젝트_통계_조회() throws Exception {
         // given
-        given(assembler.statisticsForProject(10L, TEST_MEMBER_ID))
-            .willReturn(response(10L, 101L, 1001L, 201L));
+        given(assembler.statisticsForProjects(List.of(10L), TEST_MEMBER_ID))
+            .willReturn(chapterResponse(3L, List.of(response(10L, 101L, 1001L, 201L))));
 
         // when & then
         mockMvc.perform(get("/api/v1/projects/statistics")
                 .param("projectId", "10"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.result.projectId").value(10L))
-            .andExpect(jsonPath("$.result.projectMembers[0].projectMemberId").value(101L))
-            .andExpect(jsonPath("$.result.roundApplicationStatistics[0].appliedMemberCount").value(1));
+            .andExpect(jsonPath("$.result.chapterId").value(3L))
+            .andExpect(jsonPath("$.result.projects[0].projectId").value(10L))
+            .andExpect(jsonPath("$.result.projects[0].projectMembers[0].projectMemberId").value(101L))
+            .andExpect(jsonPath("$.result.projects[0].roundApplicationStatistics[0].appliedMemberCount").value(1));
+    }
+
+    @Test
+    @DisplayName("GET_statistics_projectIds_여러_프로젝트_지원_매칭_현황을_배열로_반환한다")
+    void 통합_경로_여러_프로젝트_통계_조회() throws Exception {
+        // given
+        given(assembler.statisticsForProjects(List.of(10L, 11L), TEST_MEMBER_ID))
+            .willReturn(chapterResponse(3L, List.of(
+                response(10L, 101L, 1001L, 201L),
+                response(11L, 102L, 1002L, 202L)
+            )));
+
+        // when & then
+        mockMvc.perform(get("/api/v1/projects/statistics")
+                .param("projectIds", "10", "11"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.chapterId").value(3L))
+            .andExpect(jsonPath("$.result.projects[0].projectId").value(10L))
+            .andExpect(jsonPath("$.result.projects[1].projectId").value(11L));
     }
 
     @Test
@@ -141,6 +161,16 @@ class ProjectStatisticsQueryControllerTest {
         mockMvc.perform(get("/api/v1/projects/statistics")
                 .param("projectId", "10")
                 .param("chapterId", "3"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET_statistics_projectId_projectIds_둘_다_제공하면_400을_반환한다")
+    void 통합_통계_조회_프로젝트_조건_중복이면_400() throws Exception {
+        // when & then
+        mockMvc.perform(get("/api/v1/projects/statistics")
+                .param("projectId", "10")
+                .param("projectIds", "11"))
             .andExpect(status().isBadRequest());
     }
 

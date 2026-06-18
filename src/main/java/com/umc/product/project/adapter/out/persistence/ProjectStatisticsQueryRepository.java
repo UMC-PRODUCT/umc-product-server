@@ -143,6 +143,30 @@ public class ProjectStatisticsQueryRepository {
             .fetch();
     }
 
+    public List<ProjectStatisticsMemberRow> listActiveMembersByProjectIds(Collection<Long> projectIds) {
+        if (projectIds == null || projectIds.isEmpty()) {
+            return List.of();
+        }
+
+        return queryFactory
+            .select(Projections.constructor(
+                ProjectStatisticsMemberRow.class,
+                project.id,
+                projectMember.id,
+                projectMember.memberId,
+                projectMember.part,
+                projectMember.status
+            ))
+            .from(projectMember)
+            .join(projectMember.project, project)
+            .where(
+                project.id.in(projectIds),
+                projectMember.status.eq(ProjectMemberStatus.ACTIVE)
+            )
+            .orderBy(project.id.asc(), projectMember.id.asc())
+            .fetch();
+    }
+
     public List<ProjectStatisticsMemberRow> listPublicActiveMembersByChapterId(Long chapterId) {
         return queryFactory
             .select(Projections.constructor(

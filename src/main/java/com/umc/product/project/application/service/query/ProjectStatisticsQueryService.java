@@ -93,6 +93,49 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
         validateChapterAccess(requesterMemberId, chapterId);
 
         List<ProjectStatisticsProjectRow> projects = loadProjectStatisticsPort.listProjectsByChapterId(chapterId);
+        return assembleChapterStatistics(chapterId, projects, loadProjectStatisticsPort.listActiveMembersByChapterId(chapterId));
+    }
+
+    @Override
+    public ChapterProjectStatisticsInfo getByProjectIds(Collection<Long> projectIds, Long requesterMemberId) {
+        if (projectIds == null) {
+            return new ChapterProjectStatisticsInfo(null, List.of(), emptySummary());
+        }
+        Set<Long> distinctProjectIds = projectIds.stream()
+            .filter(Objects::nonNull)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (distinctProjectIds.isEmpty()) {
+            return new ChapterProjectStatisticsInfo(null, List.of(), emptySummary());
+        }
+
+        List<Project> targetProjects = loadProjectPort.listByIds(distinctProjectIds);
+        if (targetProjects.size() != distinctProjectIds.size()) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_NOT_FOUND);
+        }
+
+        targetProjects.forEach(project -> validateProjectAccess(requesterMemberId, project));
+        Long chapterId = resolveSingleChapterId(targetProjects);
+        List<ProjectStatisticsProjectRow> projects = targetProjects.stream()
+            .map(project -> new ProjectStatisticsProjectRow(
+                project.getId(),
+                project.getGisuId(),
+                project.getChapterId()
+            ))
+            .sorted(Comparator.comparing(ProjectStatisticsProjectRow::projectId))
+            .toList();
+
+        return assembleChapterStatistics(
+            chapterId,
+            projects,
+            loadProjectStatisticsPort.listActiveMembersByProjectIds(distinctProjectIds)
+        );
+    }
+
+    private ChapterProjectStatisticsInfo assembleChapterStatistics(
+        Long chapterId,
+        List<ProjectStatisticsProjectRow> projects,
+        List<ProjectStatisticsMemberRow> rawMembers
+    ) {
         if (projects.isEmpty()) {
             return new ChapterProjectStatisticsInfo(chapterId, List.of(), emptySummary());
         }
@@ -103,7 +146,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
         List<ProjectStatisticsMatchingRoundRow> rounds =
             loadProjectStatisticsPort.listMatchingRoundsByChapterId(chapterId);
         List<ProjectStatisticsMemberRow> members =
-            sortMembers(loadProjectStatisticsPort.listActiveMembersByChapterId(chapterId));
+            sortMembers(rawMembers);
         List<ProjectStatisticsApplicationRow> applications =
             sortApplications(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(projectIds));
         StatisticsPopulation population = resolvePopulation(projects);
@@ -142,6 +185,19 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
                 buildProjectRoundStatistics(projects, chapterContext)
             )
         );
+    }
+
+    private Long resolveSingleChapterId(Collection<Project> projects) {
+        Set<Long> chapterIds = projects.stream()
+            .map(Project::getChapterId)
+            .collect(Collectors.toSet());
+        if (chapterIds.size() != 1) {
+            throw new ProjectDomainException(
+                ProjectErrorCode.PROJECT_INVALID_STATE,
+                "프로젝트 통계는 같은 지부의 프로젝트끼리만 한 번에 조회할 수 있어요."
+            );
+        }
+        return chapterIds.iterator().next();
     }
 
     @Override

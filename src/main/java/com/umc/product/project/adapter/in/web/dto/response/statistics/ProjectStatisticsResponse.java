@@ -27,7 +27,7 @@ public record ProjectStatisticsResponse(
     List<RoundApplicationStatisticsResponse> roundApplicationStatistics,
     @Schema(description = "매칭 차수별 지원자 학교 인원 수")
     List<RoundSchoolApplicationStatisticsResponse> schoolApplicationStatistics
-) implements ProjectStatisticsQueryResponse {
+) {
     public static ProjectStatisticsResponse from(ProjectStatisticsInfo info) {
         return new ProjectStatisticsResponse(
             info.projectId(),

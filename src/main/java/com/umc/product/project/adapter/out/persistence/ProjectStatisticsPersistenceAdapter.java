@@ -51,6 +51,11 @@ public class ProjectStatisticsPersistenceAdapter implements LoadProjectStatistic
     }
 
     @Override
+    public List<ProjectStatisticsMemberRow> listActiveMembersByProjectIds(Collection<Long> projectIds) {
+        return queryRepository.listActiveMembersByProjectIds(projectIds);
+    }
+
+    @Override
     public List<ProjectStatisticsMemberRow> listPublicActiveMembersByChapterId(Long chapterId) {
         return queryRepository.listPublicActiveMembersByChapterId(chapterId);
     }

@@ -1,5 +1,7 @@
 package com.umc.product.project.adapter.in.web;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,8 +14,8 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.project.adapter.in.web.assembler.ProjectResponseAssembler;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectMatchingStatisticsResponse;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsQueryResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -60,9 +62,10 @@ public class ProjectStatisticsQueryController {
         operationId = "PROJECT-STAT-002",
         summary = "프로젝트 지원/매칭 현황 통합 조회",
         description = """
-            projectId 또는 chapterId 중 정확히 하나만 query parameter로 제공해야 합니다.
+            projectId, projectIds, chapterId 중 정확히 하나만 query parameter로 제공해야 합니다.
 
-            - projectId 제공: 단건 프로젝트 지원/매칭 현황을 반환합니다.
+            - projectId 제공: 단건 프로젝트 지원/매칭 현황을 `projects` 배열 1개로 반환합니다.
+            - projectIds 제공: 여러 프로젝트 지원/매칭 현황을 `projects` 배열로 반환합니다. 같은 지부 프로젝트만 요청할 수 있습니다.
             - chapterId 제공: 지부 전체 프로젝트 지원/매칭 현황을 반환합니다.
 
             chapterId에 속한 전체 프로젝트를 대상으로 ACTIVE ProjectMember 목록과
@@ -85,16 +88,19 @@ public class ProjectStatisticsQueryController {
             권한: 총괄단(모든 지부), 해당 지부장, 해당 지부 소속 학교 회장/부회장만 조회할 수 있습니다. 그 외에는 403. (PO/Sub-PM 은 본인 프로젝트를 단건 조회 API로 확인합니다.)
             """
     )
-    public ProjectStatisticsQueryResponse getStatistics(
+    public ChapterProjectStatisticsResponse getStatistics(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @Parameter(description = "프로젝트 ID. chapterId와 동시에 제공할 수 없습니다.")
+        @Parameter(description = "프로젝트 ID. projectIds/chapterId와 동시에 제공할 수 없습니다.")
         @RequestParam(required = false) Long projectId,
-        @Parameter(description = "지부 ID. projectId와 동시에 제공할 수 없습니다.")
+        @Parameter(description = "프로젝트 ID 목록. projectId/chapterId와 동시에 제공할 수 없습니다.")
+        @RequestParam(required = false) List<Long> projectIds,
+        @Parameter(description = "지부 ID. projectId/projectIds와 동시에 제공할 수 없습니다.")
         @RequestParam(required = false) Long chapterId
     ) {
-        validateSingleStatisticsTarget(projectId, chapterId);
-        if (projectId != null) {
-            return assembler.statisticsForProject(projectId, memberPrincipal.getMemberId());
+        validateSingleStatisticsTarget(projectId, projectIds, chapterId);
+        if (projectId != null || projectIds != null) {
+            List<Long> requestedProjectIds = projectId != null ? List.of(projectId) : projectIds;
+            return assembler.statisticsForProjects(requestedProjectIds, memberPrincipal.getMemberId());
         }
         return assembler.statisticsForChapter(chapterId, memberPrincipal.getMemberId());
     }
@@ -118,11 +124,16 @@ public class ProjectStatisticsQueryController {
         return assembler.matchingStatisticsForChapter(chapterId);
     }
 
-    private void validateSingleStatisticsTarget(Long projectId, Long chapterId) {
-        if ((projectId == null) == (chapterId == null)) {
+    private void validateSingleStatisticsTarget(Long projectId, List<Long> projectIds, Long chapterId) {
+        boolean hasProjectId = projectId != null;
+        boolean hasProjectIds = projectIds != null && !projectIds.isEmpty();
+        boolean hasChapterId = chapterId != null;
+        int targetCount = (hasProjectId ? 1 : 0) + (hasProjectIds ? 1 : 0) + (hasChapterId ? 1 : 0);
+
+        if (targetCount != 1) {
             throw new CommonException(
                 CommonErrorCode.BAD_REQUEST,
-                "projectId 또는 chapterId 중 하나만 제공해주세요."
+                "projectId, projectIds, chapterId 중 하나만 제공해주세요."
             );
         }
     }
