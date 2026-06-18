@@ -33,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/challenger")
 @RequiredArgsConstructor
 @Validated
-@Tag(name = "Challenger | 챌린저 Command", description = "챌린저 정보를 조회하고, 기록 조회. 검색은 따로 구분되어 있습니다")
+@Tag(name = "Challenger | 챌린저 Command", description = "챌린저 기본 정보와 기록을 다룹니다.")
 public class ChallengerCommandController {
 
     private final ManageChallengerUseCase manageChallengerUseCase;
@@ -43,7 +43,7 @@ public class ChallengerCommandController {
         resourceType = ResourceType.CHALLENGER,
         permission = PermissionType.WRITE
     )
-    @Operation(summary = "[CHALLENGER-001] 챌린저 생성")
+    @Operation(operationId = "CHALLENGER-001", summary = "챌린저 생성")
     @PostMapping
     ChallengerInfoResponse createChallenger(@Valid @RequestBody CreateChallengerInfoRequest request) {
         Long challengerId = manageChallengerUseCase.createChallenger(request.toCommand());
@@ -55,7 +55,7 @@ public class ChallengerCommandController {
         resourceType = ResourceType.CHALLENGER,
         permission = PermissionType.WRITE
     )
-    @Operation(summary = "[CHALLENGER-002] 챌린저 batch 생성", description = "한 번에 여러 건의 챌린저를 등록합니다. 기존에 `bulk`로 되어 있는 엔드포인트를 수정하였습니다.")
+    @Operation(operationId = "CHALLENGER-002", summary = "챌린저 일괄 생성", description = "여러 챌린저를 한 번에 등록합니다.")
     @PostMapping("batch")
     List<ChallengerInfoResponse> bulkCreateChallenger(
         @Valid @RequestBody List<@Valid CreateChallengerInfoRequest> requests
@@ -73,7 +73,7 @@ public class ChallengerCommandController {
         resourceType = ResourceType.CHALLENGER,
         permission = PermissionType.DELETE
     )
-    @Operation(summary = "[CHALLENGER-003] 챌린저 비활성화 (제명/탈부 처리)")
+    @Operation(operationId = "CHALLENGER-003", summary = "챌린저 비활성화")
     @PostMapping("{challengerId}/deactivate")
     void deactivateChallenger(
         @PathVariable Long challengerId,
@@ -86,7 +86,7 @@ public class ChallengerCommandController {
         resourceType = ResourceType.CHALLENGER,
         permission = PermissionType.EDIT
     )
-    @Operation(summary = "[CHALLENGER-004] 챌린저 파트 변경")
+    @Operation(operationId = "CHALLENGER-004", summary = "챌린저 파트 변경")
     @PatchMapping("{challengerId}/part")
     ChallengerInfoResponse editChallengerInfo(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -102,7 +102,7 @@ public class ChallengerCommandController {
         resourceType = ResourceType.CHALLENGER,
         permission = PermissionType.DELETE
     )
-    @Operation(summary = "[CHALLENGER-005] [주의] 챌린저 삭제 (Hard Delete)")
+    @Operation(operationId = "CHALLENGER-005", summary = "챌린저 물리 삭제")
     @DeleteMapping("{challengerId}")
     void deleteChallenger(@PathVariable Long challengerId) {
         DeleteChallengerCommand command = new DeleteChallengerCommand(challengerId, "관리자에 의한 삭제");

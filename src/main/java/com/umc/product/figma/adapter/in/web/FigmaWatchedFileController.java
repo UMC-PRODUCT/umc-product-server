@@ -1,18 +1,7 @@
 package com.umc.product.figma.adapter.in.web;
 
-import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
-import com.umc.product.authorization.domain.PermissionType;
-import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.figma.adapter.in.web.dto.request.RegisterFigmaWatchedFileRequest;
-import com.umc.product.figma.adapter.in.web.dto.response.FigmaWatchedFileResponse;
-import com.umc.product.figma.adapter.in.web.dto.response.RegisterFigmaWatchedFileResponse;
-import com.umc.product.figma.application.port.in.GetFigmaWatchedFileUseCase;
-import com.umc.product.figma.application.port.in.ManageFigmaWatchedFileUseCase;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,19 +11,33 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.figma.adapter.in.web.dto.request.RegisterFigmaWatchedFileRequest;
+import com.umc.product.figma.adapter.in.web.dto.response.FigmaWatchedFileResponse;
+import com.umc.product.figma.adapter.in.web.dto.response.RegisterFigmaWatchedFileResponse;
+import com.umc.product.figma.application.port.in.GetFigmaWatchedFileUseCase;
+import com.umc.product.figma.application.port.in.ManageFigmaWatchedFileUseCase;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
 /**
  * Figma 폴링 대상 파일 관리. ADR-007 에 따라 모든 endpoint 는 SUPER_ADMIN 만 접근 가능하다.
  */
 @RestController
 @RequestMapping("/api/v1/admin/figma/watched-files")
 @RequiredArgsConstructor
-@Tag(name = "Figma | 대상 파일 관리", description = "업데이트 대상 Figma 파일 관리")
+@Tag(name = "Figma | 대상 파일 관리", description = "동기화할 Figma 파일을 관리합니다.")
 public class FigmaWatchedFileController {
 
     private final ManageFigmaWatchedFileUseCase manageFigmaWatchedFileUseCase;
     private final GetFigmaWatchedFileUseCase getFigmaWatchedFileUseCase;
 
-    @Operation(summary = "[FIGMA-003] 폴링 대상 파일 등록")
+    @Operation(operationId = "FIGMA-003", summary = "폴링 대상 파일 등록")
     @PostMapping
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
     public RegisterFigmaWatchedFileResponse register(
@@ -44,21 +47,21 @@ public class FigmaWatchedFileController {
         return new RegisterFigmaWatchedFileResponse(id);
     }
 
-    @Operation(summary = "[FIGMA-004] 폴링 대상 파일 비활성화")
+    @Operation(operationId = "FIGMA-004", summary = "폴링 대상 파일 비활성화")
     @DeleteMapping("/{watchedFileId}")
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
     public void disable(@PathVariable Long watchedFileId) {
         manageFigmaWatchedFileUseCase.disable(watchedFileId);
     }
 
-    @Operation(summary = "[FIGMA-005] 폴링 대상 파일 활성화")
+    @Operation(operationId = "FIGMA-005", summary = "폴링 대상 파일 활성화")
     @PostMapping("/{watchedFileId}/enable")
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
     public void enable(@PathVariable Long watchedFileId) {
         manageFigmaWatchedFileUseCase.enable(watchedFileId);
     }
 
-    @Operation(summary = "[FIGMA-008] 폴링 대상 파일 목록 조회 (enabled 필터)")
+    @Operation(operationId = "FIGMA-008", summary = "폴링 대상 파일 목록 조회")
     @GetMapping
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.READ)
     public List<FigmaWatchedFileResponse> listFiles(
@@ -69,7 +72,7 @@ public class FigmaWatchedFileController {
             .toList();
     }
 
-    @Operation(summary = "[FIGMA-009] 폴링 대상 파일 단건 조회 (sync 상태 포함)")
+    @Operation(operationId = "FIGMA-009", summary = "폴링 대상 파일 상세 조회")
     @GetMapping("/{watchedFileId}")
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.READ)
     public FigmaWatchedFileResponse getFile(@PathVariable Long watchedFileId) {

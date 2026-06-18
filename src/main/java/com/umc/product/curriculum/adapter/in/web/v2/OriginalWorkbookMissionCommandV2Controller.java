@@ -1,11 +1,5 @@
 package com.umc.product.curriculum.adapter.in.web.v2;
 
-import com.umc.product.curriculum.adapter.in.web.v2.dto.request.CreateOriginalWorkbookMissionRequest;
-import com.umc.product.curriculum.adapter.in.web.v2.dto.request.EditOriginalWorkbookMissionRequest;
-import com.umc.product.global.exception.NotImplementedException;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,16 +8,25 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.umc.product.curriculum.adapter.in.web.v2.dto.request.CreateOriginalWorkbookMissionRequest;
+import com.umc.product.curriculum.adapter.in.web.v2.dto.request.EditOriginalWorkbookMissionRequest;
+import com.umc.product.global.exception.NotImplementedException;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/v2/curriculums/original-workbooks/missions")
 @RequiredArgsConstructor
-@Tag(name = "Curriculum V2 | Original Workbook Mission Command", description = "중앙운영사무국 교육국 소속 파트장용. 원본 워크북 내 미션을 생성/수정/삭제 등")
+@Tag(name = "Curriculum V2 | Original Workbook Mission Command", description = "교육국 파트장이 원본 워크북의 미션을 관리합니다.")
 public class OriginalWorkbookMissionCommandV2Controller {
 
     // TODO: @CheckAccess 반드시 추가할 것
 
     @Operation(
-        summary = "[ORIGINAL-WORKBOOK-MISSION-001] 중앙파트장용: 원본 워크북에 미션 추가",
+        operationId = "ORIGINAL-WORKBOOK-MISSION-001",
+        summary = "중앙파트장용: 원본 워크북에 미션 추가",
         description = """
             미션을 추가합니다.
 
@@ -40,7 +43,8 @@ public class OriginalWorkbookMissionCommandV2Controller {
 
 
     @Operation(
-        summary = "[ORIGINAL-WORKBOOK-MISSION-002] 중앙파트장용: 원본 워크북의 미션 수정",
+        operationId = "ORIGINAL-WORKBOOK-MISSION-002",
+        summary = "중앙파트장용: 원본 워크북의 미션 수정",
         description = """
             미션을 수정합니다.
 
@@ -59,7 +63,8 @@ public class OriginalWorkbookMissionCommandV2Controller {
     }
 
     @Operation(
-        summary = "[ORIGINAL-WORKBOOK-MISSION-003] 중앙파트장용: 원본 워크북의 미션 삭제",
+        operationId = "ORIGINAL-WORKBOOK-MISSION-003",
+        summary = "중앙파트장용: 원본 워크북의 미션 삭제",
         description = """
             미션을 삭제합니다.
 

@@ -1,14 +1,5 @@
 package com.umc.product.notice.adapter.in.web;
 
-import com.umc.product.global.security.MemberPrincipal;
-import com.umc.product.global.security.annotation.CurrentMember;
-import com.umc.product.notice.adapter.in.web.dto.request.SubmitNoticeVoteResponseRequest;
-import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeVoteResponseRequest;
-import com.umc.product.notice.application.port.in.command.ManageNoticeVoteResponseUseCase;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,18 +8,30 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.notice.adapter.in.web.dto.request.SubmitNoticeVoteResponseRequest;
+import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeVoteResponseRequest;
+import com.umc.product.notice.application.port.in.command.ManageNoticeVoteResponseUseCase;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
 @Validated
 @RestController
 @RequestMapping("/api/v1/notices")
 @RequiredArgsConstructor
-@Tag(name = "Notice | 공지사항 투표", description = "공지사항 투표에 응답 제출/수정/취소")
+@Tag(name = "Notice | 공지사항 투표", description = "공지사항 투표 응답을 제출하고 수정합니다.")
 public class NoticeVoteResponseController {
 
     private final ManageNoticeVoteResponseUseCase manageNoticeVoteResponseUseCase;
 
     @PostMapping("/{noticeId}/votes/responses")
     @Operation(
-        summary = "[NOTICE-VOTE-001] 공지사항 투표 응답 제출",
+        operationId = "NOTICE-VOTE-001",
+        summary = "공지사항 투표 응답 제출",
         description = """
             공지사항 투표에 응답을 제출합니다.
             - 투표 기간(OPEN) 내에서만 가능합니다. 시작 전이면 `VOTE_NOT_STARTED`, 종료 후면 `VOTE_CLOSED`.
@@ -48,7 +51,8 @@ public class NoticeVoteResponseController {
 
     @PutMapping("/{noticeId}/votes/responses")
     @Operation(
-        summary = "[NOTICE-VOTE-002] 공지사항 투표 응답 수정/취소",
+        operationId = "NOTICE-VOTE-002",
+        summary = "공지사항 투표 응답 수정/취소",
         description = """
             기존에 제출한 공지사항 투표 응답의 선택지를 교체하거나 취소합니다.
             - 투표 기간(OPEN) 내에서만 가능합니다.

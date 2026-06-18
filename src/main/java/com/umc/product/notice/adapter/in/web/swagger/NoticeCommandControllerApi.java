@@ -1,25 +1,28 @@
 package com.umc.product.notice.adapter.in.web.swagger;
 
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notice.adapter.in.web.dto.request.CreateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.SendNoticeReminderRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.response.command.CreateNoticeResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Notice | 공지사항 Command", description = "공지사항 생성, 수정, 삭제")
 public interface NoticeCommandControllerApi {
 
     @Operation(
-        summary = "[NOTICE-201] 공지사항 생성",
+        operationId = "NOTICE-201",
+        summary = "공지사항 생성",
         description = """
             - `mustRead=true`: 필독 공지로 지정 → 목록 최상단 고정 (UPMS에서 사용, 앱공지에서는 false로 설정)
 
@@ -69,7 +72,8 @@ public interface NoticeCommandControllerApi {
 
 
     @Operation(
-        summary = "[NOTICE-202] 공지사항 삭제",
+        operationId = "NOTICE-202",
+        summary = "공지사항 삭제",
         description = "공지사항을 삭제합니다."
     )
     @ApiResponses({
@@ -91,7 +95,8 @@ public interface NoticeCommandControllerApi {
     );
 
     @Operation(
-        summary = "[NOTICE-203] 공지사항 수정",
+        operationId = "NOTICE-203",
+        summary = "공지사항 수정",
         description = "공지사항 내용을 수정합니다. mustRead=true로 설정하면 UPMS 필독 공지로 지정되어 목록 최상단에 고정되며, false로 변경하면 고정이 해제됩니다."
     )
     @ApiResponses({
@@ -120,7 +125,8 @@ public interface NoticeCommandControllerApi {
     );
 
     @Operation(
-        summary = "[NOTICE-204] 공지사항 리마인더 발송",
+        operationId = "NOTICE-204",
+        summary = "공지사항 리마인더 발송",
         description = "공지를 읽지 않은 사용자에게 푸시 알림을 재발송합니다. "
             + "읽음 현황 API(GET /notices/{noticeId}/status)에서 UNREAD 사용자 목록을 먼저 조회한 뒤, "
             + "리마인드할 챌린저 ID들을 targetIds로 전달하세요."
@@ -150,7 +156,8 @@ public interface NoticeCommandControllerApi {
     );
 
     @Operation(
-        summary = "[NOTICE-205] 공지사항 읽음 처리",
+        operationId = "NOTICE-205",
+        summary = "공지사항 읽음 등록",
         description = "공지사항을 읽음 처리합니다."
     )
     @ApiResponses({

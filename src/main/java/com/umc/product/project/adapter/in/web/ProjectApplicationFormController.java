@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/projects")
 @RequiredArgsConstructor
-@Tag(name = "Project | 프로젝트 지원 폼", description = "프로젝트 지원 폼 저장 / 조회 (PROJECT-106)")
+@Tag(name = "Project | 프로젝트 지원 폼", description = "프로젝트 지원 폼을 저장하고 조회합니다.")
 public class ProjectApplicationFormController {
 
     private final UpsertProjectApplicationFormUseCase upsertProjectApplicationFormUseCase;
@@ -35,8 +35,9 @@ public class ProjectApplicationFormController {
 
     @PutMapping("/{projectId}/application-form")
     @Operation(
-        summary = "[PROJECT-106] 지원 폼 저장",
-        description = "본문이 곧 폼의 새 상태가 된다 (PUT 시멘틱). 폼이 없으면 생성하고, 있으면 섹션/질문/옵션을 본문 구조와 일치하도록 동기화한다. DRAFT/PENDING_REVIEW 상태에서만 호출 가능."
+        operationId = "PROJECT-106",
+        summary = "지원 폼 저장",
+        description = "요청 본문을 지원 폼의 새 전체 상태로 저장합니다. 폼이 없으면 생성하고, 있으면 섹션, 질문, 옵션을 본문 구조와 맞춥니다. DRAFT 또는 PENDING_REVIEW 상태에서만 호출할 수 있습니다."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
@@ -56,7 +57,8 @@ public class ProjectApplicationFormController {
 
     @GetMapping("/{projectId}/application-form")
     @Operation(
-        summary = "[PROJECT-106-GET] 지원 폼 조회",
+        operationId = "PROJECT-106-GET",
+        summary = "지원 폼 조회",
         description = """
             프로젝트의 지원 폼 구조를 조회한다.
             호출자가 PM/총괄단/프로젝트 지부의 지부장이면 전체 섹션, 일반 챌린저이면 본인 파트가 매칭된 PART 섹션과 COMMON 섹션만 노출된다.

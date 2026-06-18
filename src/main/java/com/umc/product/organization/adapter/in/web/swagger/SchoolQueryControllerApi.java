@@ -4,6 +4,7 @@ import com.umc.product.organization.adapter.in.web.dto.response.school.SchoolDet
 import com.umc.product.organization.adapter.in.web.dto.response.school.SchoolLinkResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.school.SchoolNameListResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.school.UnassignedSchoolListResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,7 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Organization | 학교 Query", description = "")
 public interface SchoolQueryControllerApi {
 
-    @Operation(summary = "[SCHOOL-101] 학교 전체 목록 조회", description = "전체 학교 목록을 이름순으로 조회합니다. 학교 ID와 이름만 반환합니다.")
+    @Operation(operationId = "SCHOOL-101", summary = "학교 전체 목록 조회", description = "전체 학교 목록을 이름순으로 조회합니다. 학교 ID와 이름만 반환합니다.")
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
@@ -25,7 +26,7 @@ public interface SchoolQueryControllerApi {
     })
     SchoolNameListResponse getAllSchools();
 
-    @Operation(summary = "[SCHOOL-102] 학교 상세 조회 ", description = "학교 상세 정보를 조회합니다")
+    @Operation(operationId = "SCHOOL-102", summary = "학교 상세 조회", description = "학교 상세 정보를 조회합니다")
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
@@ -38,7 +39,7 @@ public interface SchoolQueryControllerApi {
         @Parameter(description = "학교 ID", required = true) Long schoolId
     );
 
-    @Operation(summary = "[SCHOOL-103] 배정 대기 중인 학교 목록 조회", description = "특정 기수에서 어떤 지부에도 속하지 않은 학교 목록을 조회합니다")
+    @Operation(operationId = "SCHOOL-103", summary = "배정 대기 중인 학교 목록 조회", description = "특정 기수에서 어떤 지부에도 속하지 않은 학교 목록을 조회합니다")
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
@@ -50,7 +51,7 @@ public interface SchoolQueryControllerApi {
         @Parameter(description = "기수 ID", required = true, example = "1") Long gisuId
     );
 
-    @Operation(summary = "[SCHOOL-104] 학교 링크 조회 ", description = "학교의 공식 링크 정보를 조회합니다")
+    @Operation(operationId = "SCHOOL-104", summary = "학교 링크 조회", description = "학교의 공식 링크 정보를 조회합니다")
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",

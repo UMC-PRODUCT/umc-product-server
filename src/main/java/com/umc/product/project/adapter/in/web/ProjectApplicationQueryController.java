@@ -31,14 +31,15 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/projects")
 @RequiredArgsConstructor
-@Tag(name = "Project | 프로젝트 지원서 Query", description = "프로젝트 지원서 및 지원자, 본인 지원 내역 조회")
+@Tag(name = "Project | 프로젝트 지원서 Query", description = "프로젝트 지원서, 지원자, 내 지원 내역을 조회합니다.")
 public class ProjectApplicationQueryController {
 
     private final ProjectApplicationResponseAssembler assembler;
 
     @GetMapping("/me/applications")
     @Operation(
-        summary = "[APPLY-004] 본인 지원 내역 목록 조회",
+        operationId = "APPLY-004",
+        summary = "본인 지원 내역 목록 조회",
         description = """
             요청자의 챌린저 파트 기준으로 매칭 종류를 자동 결정해 본인 지원 내역을 조회한다.
             <p>
@@ -77,7 +78,8 @@ public class ProjectApplicationQueryController {
 
     @GetMapping("/{projectId}/applications")
     @Operation(
-        summary = "[APPLY-101] PM/운영진 단일 프로젝트 지원자 목록 조회",
+        operationId = "APPLY-101",
+        summary = "PM/운영진 단일 프로젝트 지원자 목록 조회",
         description = """
             단일 프로젝트의 지원자 목록을 조회한다. 임시저장(DRAFT) 지원서는 제외되며, SUBMITTED/APPROVED/REJECTED 만 노출.
 
@@ -129,7 +131,8 @@ public class ProjectApplicationQueryController {
     )
     @GetMapping("/{projectId}/applications/{applicationId}")
     @Operation(
-        summary = "[APPLY-102] 지원서 단건 상세 조회",
+        operationId = "APPLY-102",
+        summary = "지원서 단건 상세 조회",
         description = """
             지원서 단건의 메타(지원자/매칭 차수/상태/시각) + 폼 구조(지원자 파트 기준 마스킹) + 제출된 답변 본문 + 첨부 파일 메타까지 한 번에 반환한다.
             <p>

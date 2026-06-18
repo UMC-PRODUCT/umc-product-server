@@ -20,7 +20,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Organization | 기수 Query", description = "")
 public interface AdminGisuQueryControllerApi {
 
-    @Operation(summary = "[GISU-100] 기수 단건 조회", description = "deprecated: `/api/v2/gisu?id={gisuId}`를 사용해주세요.")
+    @Operation(operationId = "GISU-100", summary = "기수 단건 조회", description = "deprecated: `/api/v2/gisu?id={gisuId}`를 사용해주세요.")
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
@@ -33,7 +33,7 @@ public interface AdminGisuQueryControllerApi {
     @GetMapping("/{gisuId}")
     GisuResponse getGisu(@PathVariable Long gisuId);
 
-    @Operation(summary = "[GISU-101] 기수 목록 조회 ", description = "기수 목록을 최신순(generation 내림차순)으로 페이징 조회합니다")
+    @Operation(operationId = "GISU-101", summary = "기수 목록 조회", description = "기수 목록을 최신순(generation 내림차순)으로 페이징 조회합니다")
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
@@ -43,7 +43,7 @@ public interface AdminGisuQueryControllerApi {
     })
     GisuPageResponse getGisuList(Pageable pageable);
 
-    @Operation(summary = "[GISU-102] 기수 전체 목록 조회", description = "deprecated: 페이징 조회 API를 사용해주세요. 전체 기수 목록을 최신순(generation 내림차순)으로 조회합니다. 기수 ID와 기수 번호만 반환합니다.")
+    @Operation(operationId = "GISU-102", summary = "기수 전체 목록 조회", description = "deprecated: 페이징 조회 API를 사용해주세요. 전체 기수 목록을 최신순(generation 내림차순)으로 조회합니다. 기수 ID와 기수 번호만 반환합니다.")
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
@@ -54,7 +54,7 @@ public interface AdminGisuQueryControllerApi {
     @Deprecated(since = "v2.0.0", forRemoval = true)
     GisuNameListResponse getAllGisu();
 
-    @Operation(summary = "[GISU-103] 활성화된 기수 조회", description = "deprecated: `/api/v2/gisu?active=true`를 사용해주세요. 현재 활성화된 기수의 ID와 기수 번호를 조회합니다.")
+    @Operation(operationId = "GISU-103", summary = "활성화된 기수 조회", description = "deprecated: `/api/v2/gisu?active=true`를 사용해주세요. 현재 활성화된 기수의 ID와 기수 번호를 조회합니다.")
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",

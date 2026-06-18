@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/umc-product/squads")
 @RequiredArgsConstructor
-@Tag(name = "Organization | UMC PRODUCT 스쿼드 Query", description = "UMC PRODUCT 스쿼드 목록 조회")
+@Tag(name = "Organization | UMC PRODUCT 스쿼드 Query", description = "UMC PRODUCT 스쿼드 목록을 조회합니다.")
 public class UmcProductSquadQueryController {
 
     private final GetUmcProductSquadUseCase getUmcProductSquadUseCase;

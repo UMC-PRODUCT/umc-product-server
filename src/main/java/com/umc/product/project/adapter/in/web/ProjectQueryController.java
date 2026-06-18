@@ -37,14 +37,15 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/projects")
 @RequiredArgsConstructor
-@Tag(name = "Project | 프로젝트 Query", description = "프로젝트 및 관련 정보 조회")
+@Tag(name = "Project | 프로젝트 Query", description = "프로젝트와 관련 정보를 조회합니다.")
 public class ProjectQueryController {
 
     private final ProjectResponseAssembler assembler;
 
     @GetMapping
     @Operation(
-        summary = "[PROJECT-001] 프로젝트 목록 조회",
+        operationId = "PROJECT-001",
+        summary = "프로젝트 목록 조회",
         description = "기수/지부/파트 등으로 필터링된 프로젝트 목록을 페이지 조회합니다."
     )
     @CheckAccess(
@@ -64,7 +65,8 @@ public class ProjectQueryController {
 
     @GetMapping("/{projectId}")
     @Operation(
-        summary = "[PROJECT-002] 프로젝트 상세 조회",
+        operationId = "PROJECT-002",
+        summary = "프로젝트 상세 조회",
         description = "단건 프로젝트 상세 정보를 조회합니다. 권한에 따라 실명 정보가 마스킹됩니다."
     )
     @CheckAccess(
@@ -82,7 +84,8 @@ public class ProjectQueryController {
 
     @GetMapping("/{projectId}/members")
     @Operation(
-        summary = "[PROJECT-003] 프로젝트 팀원 구성 조회",
+        operationId = "PROJECT-003",
+        summary = "프로젝트 팀원 구성 조회",
         description = "프로젝트의 PM/보조 PM/파트별 멤버를 조회합니다. 권한에 따라 실명이 마스킹됩니다."
     )
     @CheckAccess(
@@ -100,7 +103,8 @@ public class ProjectQueryController {
 
     @GetMapping("/members")
     @Operation(
-        summary = "[PROJECT-007] 프로젝트 팀원 구성 일괄 조회",
+        operationId = "PROJECT-007",
+        summary = "프로젝트 팀원 구성 일괄 조회",
         description = "복수의 projectId에 대한 팀원 구성을 조회합니다. 권한이 없거나 조회에 실패한 프로젝트는 결과에서 제외됩니다."
     )
     @CheckAccess(
@@ -117,7 +121,8 @@ public class ProjectQueryController {
 
     @GetMapping("/me/managed")
     @Operation(
-        summary = "[PROJECT-006] 내가 관리하는 프로젝트 목록",
+        operationId = "PROJECT-006",
+        summary = "내가 관리하는 프로젝트 목록",
         description = "역할별 자동 scope: 중앙 총괄단은 전체, 지부장과 학교 회장단은 본인이 속한 지부 전체, PM 챌린저는 본인 owner 프로젝트. 일반 챌린저는 빈 페이지."
     )
     public PageResponse<ManagedProjectSummaryResponse> searchManaged(
@@ -137,7 +142,8 @@ public class ProjectQueryController {
 
     @GetMapping("/me/draft")
     @Operation(
-        summary = "[PROJECT-103] 내 Draft 조회",
+        operationId = "PROJECT-103",
+        summary = "내 초안 프로젝트 조회",
         description = "요청자(PM)가 작성 중인 Draft 프로젝트를 조회합니다. 없으면 null."
     )
     public DraftProjectResponse getMyDraft(

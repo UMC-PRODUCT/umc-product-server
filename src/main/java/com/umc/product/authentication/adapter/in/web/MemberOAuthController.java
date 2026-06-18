@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/member-oauth")
 @RequiredArgsConstructor
-@Tag(name = "Authentication | OAuth 정보 조회, 추가, 삭제", description = "새롭게 OAuth 계정 연동, 제거, 조회")
+@Tag(name = "Authentication | OAuth 정보 조회, 추가, 삭제", description = "회원 계정의 OAuth 로그인 수단을 관리합니다.")
 public class MemberOAuthController {
 
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
@@ -37,7 +37,7 @@ public class MemberOAuthController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping
-    @Operation(summary = "[OAUTH-001] 로그인용 OAuth 수단 추가",
+    @Operation(operationId = "OAUTH-001", summary = "로그인용 OAuth 수단 추가",
         description = """
             로그인용 OAuth 수단을 추가합니다.
             Provider+ProviderId 조합은 시스템 전체에서 고유해야 하며, 한 회원은 같은 Provider를 하나만 연결할 수 있습니다.
@@ -61,7 +61,7 @@ public class MemberOAuthController {
     }
 
     @DeleteMapping("{memberOAuthId}")
-    @Operation(summary = "[OAUTH-002] 로그인용 OAuth 수단 제거",
+    @Operation(operationId = "OAUTH-002", summary = "로그인용 OAuth 수단 제거",
         description = """
                 memberOAuthId로 식별해서 제거 처리를 진행합니다.
                 비밀번호 credential이 등록된 회원은 마지막 OAuth도 제거할 수 있습니다.
@@ -86,7 +86,7 @@ public class MemberOAuthController {
     }
 
     @GetMapping("me")
-    @Operation(summary = "[OAUTH-101] 현재 회원 계정과 연동된 OAuth 정보 조회")
+    @Operation(operationId = "OAUTH-101", summary = "현재 회원 계정과 연동된 OAuth 정보 조회")
     List<MemberOAuthInfo> getMyOAuthInfos(@CurrentMember MemberPrincipal memberPrincipal) {
         return oAuthListUseCase.getOAuthList(memberPrincipal.getMemberId());
     }

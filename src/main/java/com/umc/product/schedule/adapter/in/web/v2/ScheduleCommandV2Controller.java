@@ -44,7 +44,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v2/schedules")
 @RequiredArgsConstructor
-@Tag(name = "Schedule V2 | Command", description = "일정을 생성하거나 수정하고, 출석 관련 요청을 처리합니다.")
+@Tag(name = "Schedule V2 | Command", description = "일정 생성, 수정, 삭제와 출석 요청을 다룹니다.")
 public class ScheduleCommandV2Controller {
 
     private final CreateScheduleUseCase createScheduleUseCase;
@@ -59,7 +59,7 @@ public class ScheduleCommandV2Controller {
         permission = PermissionType.WRITE,
         message = "일정을 만들려면 챌린저 활동 기록이 필요해요. 활동 기록을 확인해주세요."
     )
-    @Operation(summary = "[SCHEDULE-C001] 일정 생성", description = """
+    @Operation(operationId = "SCHEDULE-C001", summary = "일정 생성", description = """
         일정을 생성합니다. `location` 필드를 작성하지 않으실 경우 비대면 일정으로 간주됩니다.
 
         스터디 일정을 생성하고자 하는 경우에는, 반드시 별도의 API를 이용해서 생성해야 합니다.
@@ -125,7 +125,7 @@ public class ScheduleCommandV2Controller {
         permission = PermissionType.EDIT,
         message = "일정은 생성자 본인 또는 해당 기수의 최고 운영 관리자만 수정할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
-    @Operation(summary = "[SCHEDULE-C002] 일정 수정", description = """
+    @Operation(operationId = "SCHEDULE-C002", summary = "일정 수정", description = """
         일정과 관련된 모든 정보를 수정합니다. 제공되지 않은 필드는 변경하지 않는 것으로 간주합니다.
 
         ---
@@ -186,7 +186,7 @@ public class ScheduleCommandV2Controller {
         permission = PermissionType.DELETE,
         message = "일정은 생성자 본인 또는 해당 기수의 최고 운영 관리자만 삭제할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
-    @Operation(summary = "[SCHEDULE-C006] 일정 삭제", description = """
+    @Operation(operationId = "SCHEDULE-C006", summary = "일정 삭제", description = """
         일정을 삭제합니다.
 
         - 일정에 연결된 모든 참여자(ScheduleParticipant) 정보도 함께 삭제됩니다.
@@ -227,7 +227,7 @@ public class ScheduleCommandV2Controller {
         permission = PermissionType.FORCE_DELETE,
         message = "일정 강제 삭제는 해당 기수의 최고 운영 관리자만 할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
-    @Operation(summary = "[SCHEDULE-C007] 일정 강제 삭제", description = """
+    @Operation(operationId = "SCHEDULE-C007", summary = "일정 강제 삭제", description = """
         출석 기록 존재 여부와 관계 없이 일정을 강제로 삭제합니다.
 
         - 일정에 연결된 모든 참여자(ScheduleParticipant) 정보도 함께 삭제됩니다.
@@ -263,7 +263,7 @@ public class ScheduleCommandV2Controller {
         permission = PermissionType.WRITE,
         message = "출석은 챌린저 활동 기록이 있고 일정에 참여하는 사용자만 요청할 수 있어요. 참여자 목록을 확인해주세요."
     )
-    @Operation(summary = "[SCHEDULE-C003] 출석 요청하기", description = """
+    @Operation(operationId = "SCHEDULE-C003", summary = "출석 요청하기", description = """
         특정 일정에 대한 출석을 요청합니다. 반환값으로 변경된 출석 상태 및 관련된 정보들을 제공합니다.
 
         - 이미 출석 요청을 한 경우, 에러가 반환됩니다. (사유 출석 요청 및 이미 출석/지각/결석으로 확정된 경우 등)
@@ -312,7 +312,7 @@ public class ScheduleCommandV2Controller {
         permission = PermissionType.WRITE,
         message = "출석 사유는 챌린저 활동 기록이 있고 일정에 참여하는 사용자만 제출할 수 있어요. 참여자 목록을 확인해주세요."
     )
-    @Operation(summary = "[SCHEDULE-C004] 출석 요청이 불가능한 경우, 사유 제출하기", description = """
+    @Operation(operationId = "SCHEDULE-C004", summary = "출석 요청이 불가능한 경우, 사유 제출하기", description = """
         위치 인증이 안되거나, 개인 사정이 있어 결석하지만 출석 인정을 요구하는 경우 사유를 제출하기 위하여 사용합니다.
 
         위치 정보는 클라이언트 단에서 잡히는 경우에 한하여 제공하면 됩니다. 단, 사유는 반드시 제출하여야 합니다.
@@ -359,7 +359,7 @@ public class ScheduleCommandV2Controller {
         message = "출석 요청은 해당 일정 기수의 운영진만 승인하거나 거절할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     // 각 일정에 대한 출석 요청을 승인 또는 기각하는 API, Request는 list 형태로 받을 수 있어야 합니다.
-    @Operation(summary = "[SCHEDULE-C005] [운영진용] 출석 요청 승인/거절", description = """
+    @Operation(operationId = "SCHEDULE-C005", summary = "[운영진용] 출석 요청 승인/거절", description = """
         일정에 대한 출석 요청을 승인 또는 거절합니다.
 
         결정 권한은 아래와 같습니다. (기준은, 일정이 포함된 기수 기준입니다)

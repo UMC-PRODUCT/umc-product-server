@@ -27,7 +27,8 @@ public class ProjectStatisticsQueryController {
 
     @GetMapping("/{projectId}/statistics")
     @Operation(
-        summary = "[PROJECT-STAT-001] 단건 프로젝트 지원/매칭 현황 조회",
+        operationId = "PROJECT-STAT-001",
+        summary = "단건 프로젝트 지원/매칭 현황 조회",
         description = """
             프로젝트 ID와 함께 멤버 목록을 포함하고 있고, FE단 재가공을 최소화해드리기 위해서 `roundApplicationStatistics` 및 `schoolApplicationStatistics` 필드를 두고 있습니다.
 
@@ -49,7 +50,8 @@ public class ProjectStatisticsQueryController {
 
     @GetMapping("/statistics")
     @Operation(
-        summary = "[PROJECT-STAT-002] 지부 전체 프로젝트 지원/매칭 현황 조회",
+        operationId = "PROJECT-STAT-002",
+        summary = "지부 전체 프로젝트 지원/매칭 현황 조회",
         description = """
             chapterId에 속한 전체 프로젝트를 대상으로 ACTIVE ProjectMember 목록과
             각 멤버가 해당 프로젝트에 작성한 지원 이력을 프로젝트별로 반환합니다.
