@@ -5,6 +5,7 @@ import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage;
 import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage.CommentEntry;
 import com.umc.product.figma.domain.exception.FigmaDomainException;
 import com.umc.product.figma.domain.exception.FigmaErrorCode;
+import com.umc.product.global.logging.ExternalApiCallLogger;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -493,12 +494,14 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
             payload.put("allowed_mentions", Map.of("parse", List.of("roles", "users")));
 
             try {
-                restClient.post()
-                    .uri(message.webhookUrl())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(payload)
-                    .retrieve()
-                    .toBodilessEntity();
+                ExternalApiCallLogger.measure("DISCORD", "SEND_FIGMA_DOMAIN_BATCH", () ->
+                    restClient.post()
+                        .uri(message.webhookUrl())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(payload)
+                        .retrieve()
+                        .toBodilessEntity()
+                );
                 sent.addAll(commentIdsByPage.get(i));
                 log.debug("Discord domain batch 전송 완료: domainKey={}, page={}/{}, comments={}",
                     message.domainKey(), i + 1, pages.size(), message.comments().size());

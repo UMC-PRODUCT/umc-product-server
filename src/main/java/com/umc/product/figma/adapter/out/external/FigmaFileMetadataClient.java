@@ -3,6 +3,7 @@ package com.umc.product.figma.adapter.out.external;
 import com.umc.product.figma.application.port.out.FetchFigmaFileMetadataPort;
 import com.umc.product.figma.domain.exception.FigmaDomainException;
 import com.umc.product.figma.domain.exception.FigmaErrorCode;
+import com.umc.product.global.logging.ExternalApiCallLogger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,11 +34,13 @@ public class FigmaFileMetadataClient implements FetchFigmaFileMetadataPort {
         String idsParam = String.join(",", nodeIds);
         try {
             @SuppressWarnings("unchecked")
-            Map<String, Object> body = restClient.get()
-                .uri(String.format(FILE_NODES_URI_TEMPLATE, fileKey, idsParam))
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                .retrieve()
-                .body(Map.class);
+            Map<String, Object> body = ExternalApiCallLogger.measure("FIGMA", "RESOLVE_FILE_NODES", () ->
+                restClient.get()
+                    .uri(String.format(FILE_NODES_URI_TEMPLATE, fileKey, idsParam))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                    .retrieve()
+                    .body(Map.class)
+            );
 
             return parsePageNames(body, nodeIds);
         } catch (RestClientResponseException e) {

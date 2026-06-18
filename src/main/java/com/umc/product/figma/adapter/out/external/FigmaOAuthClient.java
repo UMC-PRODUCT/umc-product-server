@@ -4,6 +4,7 @@ import com.umc.product.figma.application.port.out.FigmaOAuthPort;
 import com.umc.product.figma.application.port.out.dto.FigmaTokenInfo;
 import com.umc.product.figma.domain.exception.FigmaDomainException;
 import com.umc.product.figma.domain.exception.FigmaErrorCode;
+import com.umc.product.global.logging.ExternalApiCallLogger;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -39,12 +40,14 @@ public class FigmaOAuthClient implements FigmaOAuthPort {
 
         try {
             @SuppressWarnings("unchecked")
-            Map<String, Object> response = restClient.post()
-                .uri(properties.tokenUri())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(form)
-                .retrieve()
-                .body(Map.class);
+            Map<String, Object> response = ExternalApiCallLogger.measure("FIGMA", "EXCHANGE_OAUTH_CODE", () ->
+                restClient.post()
+                    .uri(properties.tokenUri())
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(form)
+                    .retrieve()
+                    .body(Map.class)
+            );
             return toTokenInfo(response, /* fallbackRefreshToken */ null);
         } catch (RestClientResponseException e) {
             log.error("Figma OAuth code 교환 실패: status={}, bodyLength={}",
@@ -62,12 +65,14 @@ public class FigmaOAuthClient implements FigmaOAuthPort {
 
         try {
             @SuppressWarnings("unchecked")
-            Map<String, Object> response = restClient.post()
-                .uri(properties.refreshUri())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(form)
-                .retrieve()
-                .body(Map.class);
+            Map<String, Object> response = ExternalApiCallLogger.measure("FIGMA", "REFRESH_OAUTH_TOKEN", () ->
+                restClient.post()
+                    .uri(properties.refreshUri())
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(form)
+                    .retrieve()
+                    .body(Map.class)
+            );
             return toTokenInfo(response, refreshToken);
         } catch (RestClientResponseException e) {
             log.error("Figma OAuth refresh 실패: status={}, bodyLength={}",

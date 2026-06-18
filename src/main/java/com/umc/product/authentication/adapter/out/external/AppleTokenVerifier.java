@@ -9,6 +9,7 @@ import com.umc.product.authentication.application.port.out.AppleAuthorizationCod
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.ClientType;
+import com.umc.product.global.logging.ExternalApiCallLogger;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.Jwts.SIG;
@@ -135,22 +136,24 @@ public class AppleTokenVerifier {
             formData.add("code", authorizationCode);
             formData.add("grant_type", "authorization_code");
 
-            AppleTokenResponse response = restClient.post()
-                .uri(APPLE_TOKEN_URL)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(formData)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    // ADR-016 §민감 필드 정책: 성공 응답 body 에는 access_token / id_token / refresh_token
-                    // 이 포함되어 있어 통째로 로깅하면 토큰이 stdout / Loki 에 남는다. 에러 응답이라도
-                    // 잘못된 분기로 성공 body 가 흘러올 수 있으므로 status / errorCode 만 남긴다.
-                    String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
-                    String errorCode = extractAppleErrorCode(body);
-                    log.error("Apple token endpoint 호출 실패: status={}, errorCode={}, bodyLength={}",
-                        res.getStatusCode(), errorCode, body.length());
-                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
-                })
-                .body(AppleTokenResponse.class);
+            AppleTokenResponse response = ExternalApiCallLogger.measure("APPLE", "EXCHANGE_AUTHORIZATION_CODE", () ->
+                restClient.post()
+                    .uri(APPLE_TOKEN_URL)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(formData)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (req, res) -> {
+                        // ADR-016 §민감 필드 정책: 성공 응답 body 에는 access_token / id_token / refresh_token
+                        // 이 포함되어 있어 통째로 로깅하면 토큰이 stdout / Loki 에 남는다. 에러 응답이라도
+                        // 잘못된 분기로 성공 body 가 흘러올 수 있으므로 status / errorCode 만 남긴다.
+                        String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
+                        String errorCode = extractAppleErrorCode(body);
+                        log.error("Apple token endpoint 호출 실패: status={}, errorCode={}, bodyLength={}",
+                            res.getStatusCode(), errorCode, body.length());
+                        throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
+                    })
+                    .body(AppleTokenResponse.class)
+            );
 
             if (response == null || response.idToken() == null) {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
@@ -188,20 +191,22 @@ public class AppleTokenVerifier {
             formData.add("token", refreshToken);
             formData.add("token_type_hint", "refresh_token");
 
-            restClient.post()
-                .uri(APPLE_REVOKE_URL)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(formData)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    // ADR-016 §민감 필드 정책: revoke 응답 본문 통째로 로깅하지 않는다.
-                    String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
-                    String errorCode = extractAppleErrorCode(body);
-                    log.error("Apple token revoke 실패: status={}, errorCode={}, bodyLength={}",
-                        res.getStatusCode(), errorCode, body.length());
-                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
-                })
-                .toBodilessEntity();
+            ExternalApiCallLogger.measure("APPLE", "REVOKE_TOKEN", () ->
+                restClient.post()
+                    .uri(APPLE_REVOKE_URL)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(formData)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (req, res) -> {
+                        // ADR-016 §민감 필드 정책: revoke 응답 본문 통째로 로깅하지 않는다.
+                        String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
+                        String errorCode = extractAppleErrorCode(body);
+                        log.error("Apple token revoke 실패: status={}, errorCode={}, bodyLength={}",
+                            res.getStatusCode(), errorCode, body.length());
+                        throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+                    })
+                    .toBodilessEntity()
+            );
 
             log.info("Apple token revoke 성공");
 
@@ -293,14 +298,16 @@ public class AppleTokenVerifier {
      * Apple's public key</a>
      */
     private PublicKey fetchApplePublicKey(String kid) {
-        AppleJwksResponse jwks = restClient.get()
-            .uri(APPLE_JWKS_URL)
-            .retrieve()
-            .onStatus(HttpStatusCode::isError, (req, res) -> {
-                log.error("Apple JWKS 조회 실패: status={}", res.getStatusCode());
-                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
-            })
-            .body(AppleJwksResponse.class);
+        AppleJwksResponse jwks = ExternalApiCallLogger.measure("APPLE", "FETCH_JWKS", () ->
+            restClient.get()
+                .uri(APPLE_JWKS_URL)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    log.error("Apple JWKS 조회 실패: status={}", res.getStatusCode());
+                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+                })
+                .body(AppleJwksResponse.class)
+        );
 
         if (jwks == null || jwks.keys() == null) {
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);

@@ -1,6 +1,7 @@
 package com.umc.product.notification.adapter.out.external.webhook;
 
 import com.umc.product.notification.application.port.out.SendWebhookPort;
+import com.umc.product.global.logging.ExternalApiCallLogger;
 import com.umc.product.notification.domain.WebhookPlatform;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,12 +46,14 @@ public class DiscordWebhookAdapter implements SendWebhookPort {
                 "description", chunks.get(i)
             );
 
-            restClient.post()
-                .uri(webhookUrl)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("embeds", List.of(embed)))
-                .retrieve()
-                .toBodilessEntity();
+            ExternalApiCallLogger.measure("DISCORD", "SEND_WEBHOOK", () ->
+                restClient.post()
+                    .uri(webhookUrl)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("embeds", List.of(embed)))
+                    .retrieve()
+                    .toBodilessEntity()
+            );
         }
 
         log.debug("Discord 웹훅 전송 완료: title={}, parts={}", title, totalParts);

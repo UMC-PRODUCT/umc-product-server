@@ -3,6 +3,7 @@ package com.umc.product.authentication.adapter.out.external;
 import com.umc.product.authentication.domain.OAuthAttributes;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.global.logging.ExternalApiCallLogger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,14 +48,16 @@ public class GoogleTokenVerifier {
 
         try {
             // Google tokeninfo endpoint 호출
-            GoogleTokenInfoResponse response = restClient.get()
-                .uri(GOOGLE_TOKEN_INFO_URL + "?id_token=" + idToken)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.error("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
-                    throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
-                })
-                .body(GoogleTokenInfoResponse.class);
+            GoogleTokenInfoResponse response = ExternalApiCallLogger.measure("GOOGLE", "VERIFY_ID_TOKEN", () ->
+                restClient.get()
+                    .uri(GOOGLE_TOKEN_INFO_URL + "?id_token=" + idToken)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (req, res) -> {
+                        log.error("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
+                        throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
+                    })
+                    .body(GoogleTokenInfoResponse.class)
+            );
 
             if (response == null) {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
@@ -90,14 +93,16 @@ public class GoogleTokenVerifier {
 
         try {
             // Google tokeninfo endpoint 호출
-            GoogleAccessTokenInfoResponse response = restClient.get()
-                .uri(GOOGLE_TOKEN_INFO_URL + "?access_token=" + accessToken)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.error("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
-                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
-                })
-                .body(GoogleAccessTokenInfoResponse.class);
+            GoogleAccessTokenInfoResponse response = ExternalApiCallLogger.measure("GOOGLE", "VERIFY_ACCESS_TOKEN", () ->
+                restClient.get()
+                    .uri(GOOGLE_TOKEN_INFO_URL + "?access_token=" + accessToken)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (req, res) -> {
+                        log.error("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
+                        throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
+                    })
+                    .body(GoogleAccessTokenInfoResponse.class)
+            );
 
             if (response == null) {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
@@ -140,16 +145,18 @@ public class GoogleTokenVerifier {
             MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
             formData.add("token", token);
 
-            restClient.post()
-                .uri(GOOGLE_REVOKE_URL)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(formData)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.error("Google token revoke 실패: status={}", res.getStatusCode());
-                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
-                })
-                .toBodilessEntity();
+            ExternalApiCallLogger.measure("GOOGLE", "REVOKE_TOKEN", () ->
+                restClient.post()
+                    .uri(GOOGLE_REVOKE_URL)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(formData)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (req, res) -> {
+                        log.error("Google token revoke 실패: status={}", res.getStatusCode());
+                        throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+                    })
+                    .toBodilessEntity()
+            );
 
             log.info("Google token revoke 성공");
 

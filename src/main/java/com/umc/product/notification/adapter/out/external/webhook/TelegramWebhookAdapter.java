@@ -1,6 +1,7 @@
 package com.umc.product.notification.adapter.out.external.webhook;
 
 import com.umc.product.notification.application.port.out.SendWebhookPort;
+import com.umc.product.global.logging.ExternalApiCallLogger;
 import com.umc.product.notification.domain.WebhookPlatform;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,16 +49,18 @@ public class TelegramWebhookAdapter implements SendWebhookPort {
                 : "*" + escapedTitle + " \\(" + (i + 1) + "/" + totalParts + "\\)*";
             String text = partTitle + "\n" + chunks.get(i);
 
-            restClient.post()
-                .uri(TELEGRAM_API_URL, botToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of(
-                    "chat_id", chatId,
-                    "text", text,
-                    "parse_mode", "MarkdownV2"
-                ))
-                .retrieve()
-                .toBodilessEntity();
+            ExternalApiCallLogger.measure("TELEGRAM", "SEND_WEBHOOK", () ->
+                restClient.post()
+                    .uri(TELEGRAM_API_URL, botToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of(
+                        "chat_id", chatId,
+                        "text", text,
+                        "parse_mode", "MarkdownV2"
+                    ))
+                    .retrieve()
+                    .toBodilessEntity()
+            );
         }
 
         log.debug("Telegram 웹훅 전송 완료: title={}, parts={}", title, totalParts);

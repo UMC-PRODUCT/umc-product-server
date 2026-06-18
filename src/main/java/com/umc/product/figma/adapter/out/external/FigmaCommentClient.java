@@ -4,6 +4,7 @@ import com.umc.product.figma.application.port.out.FetchFigmaCommentPort;
 import com.umc.product.figma.application.port.out.dto.FigmaCommentInfo;
 import com.umc.product.figma.domain.exception.FigmaDomainException;
 import com.umc.product.figma.domain.exception.FigmaErrorCode;
+import com.umc.product.global.logging.ExternalApiCallLogger;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -55,11 +56,13 @@ public class FigmaCommentClient implements FetchFigmaCommentPort {
             ? String.format(COMMENTS_URI_TEMPLATE, fileKey)
             : String.format(COMMENTS_CURSOR_URI_TEMPLATE, fileKey, cursor);
         try {
-            Map<String, Object> body = restClient.get()
-                .uri(uri)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                .retrieve()
-                .body(Map.class);
+            Map<String, Object> body = ExternalApiCallLogger.measure("FIGMA", "LIST_COMMENTS", () ->
+                restClient.get()
+                    .uri(uri)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                    .retrieve()
+                    .body(Map.class)
+            );
             return body != null ? body : Map.of();
         } catch (RestClientResponseException e) {
             log.warn("Figma 댓글 조회 실패: fileKey={}, cursor={}, status={}, bodyLength={}",

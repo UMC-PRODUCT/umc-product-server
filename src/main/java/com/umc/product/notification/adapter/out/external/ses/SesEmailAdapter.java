@@ -4,6 +4,7 @@ import com.umc.product.notification.application.port.out.SendEmailPort;
 import com.umc.product.notification.application.port.out.dto.EmailMessage;
 import com.umc.product.notification.domain.exception.EmailDomainException;
 import com.umc.product.notification.domain.exception.EmailErrorCode;
+import com.umc.product.global.logging.ExternalApiCallLogger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -38,7 +39,9 @@ public class SesEmailAdapter implements SendEmailPort {
     public void send(EmailMessage message) {
         SendEmailRequest request = buildRequest(message);
         try {
-            SendEmailResponse response = sesV2Client.sendEmail(request);
+            SendEmailResponse response = ExternalApiCallLogger.measure("AWS_SES", "SEND_EMAIL", () ->
+                sesV2Client.sendEmail(request)
+            );
             log.info("SES 이메일 발송 성공: recipientPresent={}, messageId={}",
                 hasRecipient(message.to()), response.messageId());
         } catch (SesV2Exception e) {
