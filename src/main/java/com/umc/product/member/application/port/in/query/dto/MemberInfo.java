@@ -1,11 +1,13 @@
 package com.umc.product.member.application.port.in.query.dto;
 
+import java.util.List;
+
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
-import java.util.List;
+
 import lombok.Builder;
 
 /**

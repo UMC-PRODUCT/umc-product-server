@@ -1,14 +1,8 @@
 package com.umc.product.authentication.adapter.out.external;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.umc.product.authentication.domain.OAuthAttributes;
-import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
-import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
-import com.umc.product.global.logging.ExternalApiCallLogger;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -16,6 +10,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.umc.product.authentication.domain.OAuthAttributes;
+import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.global.logging.ExternalApiCallLogger;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Kakao Access Token 검증 Adapter

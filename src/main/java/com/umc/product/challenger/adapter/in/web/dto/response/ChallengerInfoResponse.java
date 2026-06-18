@@ -1,5 +1,7 @@
 package com.umc.product.challenger.adapter.in.web.dto.response;
 
+import java.util.List;
+
 import com.umc.product.authorization.adapter.in.web.dto.response.ChallengerRoleResponse;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
@@ -10,7 +12,7 @@ import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
-import java.util.List;
+
 import lombok.Builder;
 
 @Builder

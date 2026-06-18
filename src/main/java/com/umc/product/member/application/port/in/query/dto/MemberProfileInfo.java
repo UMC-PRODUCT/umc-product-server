@@ -1,6 +1,7 @@
 package com.umc.product.member.application.port.in.query.dto;
 
 import com.umc.product.member.domain.MemberProfile;
+
 import lombok.Builder;
 
 /**

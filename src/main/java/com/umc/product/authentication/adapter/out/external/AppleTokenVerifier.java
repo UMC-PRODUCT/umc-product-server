@@ -1,18 +1,5 @@
 package com.umc.product.authentication.adapter.out.external;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.umc.product.authentication.domain.OAuthAttributes;
-import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
-import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
-import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
-import com.umc.product.common.domain.enums.ClientType;
-import com.umc.product.global.logging.ExternalApiCallLogger;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.Jwts.SIG;
 import java.io.StringReader;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -26,8 +13,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
@@ -38,6 +24,23 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestClient;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
+import com.umc.product.authentication.domain.OAuthAttributes;
+import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.common.domain.enums.ClientType;
+import com.umc.product.global.logging.ExternalApiCallLogger;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.Jwts.SIG;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Apple Sign-In 토큰 검증 Adapter

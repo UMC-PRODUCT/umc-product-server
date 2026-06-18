@@ -1,17 +1,20 @@
 package com.umc.product.notification.adapter.out.external.webhook;
 
-import com.umc.product.notification.application.port.out.SendWebhookPort;
-import com.umc.product.global.logging.ExternalApiCallLogger;
-import com.umc.product.notification.domain.WebhookPlatform;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+
+import com.umc.product.global.logging.ExternalApiCallLogger;
+import com.umc.product.notification.application.port.out.SendWebhookPort;
+import com.umc.product.notification.domain.WebhookPlatform;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component

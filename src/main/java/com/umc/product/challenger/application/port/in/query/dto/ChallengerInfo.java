@@ -1,9 +1,11 @@
 package com.umc.product.challenger.application.port.in.query.dto;
 
+import java.util.List;
+
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import java.util.List;
+
 import lombok.Builder;
 
 

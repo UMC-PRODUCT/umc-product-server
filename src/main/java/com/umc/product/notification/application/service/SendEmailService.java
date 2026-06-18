@@ -1,17 +1,19 @@
 package com.umc.product.notification.application.service;
 
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+
 import com.umc.product.notification.application.port.in.SendEmailUseCase;
 import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;
 import com.umc.product.notification.application.port.out.SendEmailPort;
 import com.umc.product.notification.application.port.out.dto.EmailMessage;
 import com.umc.product.notification.domain.exception.EmailDomainException;
 import com.umc.product.notification.domain.exception.EmailErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
 
 @Slf4j
 @Service

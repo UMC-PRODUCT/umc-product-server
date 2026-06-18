@@ -1,19 +1,22 @@
 package com.umc.product.figma.adapter.out.external;
 
-import com.umc.product.figma.application.port.out.FetchFigmaFileMetadataPort;
-import com.umc.product.figma.domain.exception.FigmaDomainException;
-import com.umc.product.figma.domain.exception.FigmaErrorCode;
-import com.umc.product.global.logging.ExternalApiCallLogger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+
+import com.umc.product.figma.application.port.out.FetchFigmaFileMetadataPort;
+import com.umc.product.figma.domain.exception.FigmaDomainException;
+import com.umc.product.figma.domain.exception.FigmaErrorCode;
+import com.umc.product.global.logging.ExternalApiCallLogger;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component

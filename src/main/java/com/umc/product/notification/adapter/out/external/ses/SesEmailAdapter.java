@@ -1,13 +1,15 @@
 package com.umc.product.notification.adapter.out.external.ses;
 
+import org.springframework.stereotype.Component;
+
+import com.umc.product.global.logging.ExternalApiCallLogger;
 import com.umc.product.notification.application.port.out.SendEmailPort;
 import com.umc.product.notification.application.port.out.dto.EmailMessage;
 import com.umc.product.notification.domain.exception.EmailDomainException;
 import com.umc.product.notification.domain.exception.EmailErrorCode;
-import com.umc.product.global.logging.ExternalApiCallLogger;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sesv2.SesV2Client;
 import software.amazon.awssdk.services.sesv2.model.Body;
 import software.amazon.awssdk.services.sesv2.model.Content;

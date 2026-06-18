@@ -1,5 +1,9 @@
 package com.umc.product.challenger.application.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.command.ManageChallengerRoleUseCase;
@@ -23,11 +27,10 @@ import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmComm
 import com.umc.product.notification.domain.WebhookPlatform;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+
 import jakarta.transaction.Transactional;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
