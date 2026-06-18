@@ -66,7 +66,7 @@ public class TelegramWebhookAdapter implements SendWebhookPort {
             );
         }
 
-        log.debug("Telegram 웹훅 전송 완료: title={}, parts={}", title, totalParts);
+        log.debug("Telegram 웹훅 전송 완료: parts={}", totalParts);
     }
 
     @Override

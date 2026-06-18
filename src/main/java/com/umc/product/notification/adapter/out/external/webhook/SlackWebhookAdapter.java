@@ -55,7 +55,7 @@ public class SlackWebhookAdapter implements SendWebhookPort {
             );
         }
 
-        log.debug("Slack 웹훅 전송 완료: title={}, parts={}", title, totalParts);
+        log.debug("Slack 웹훅 전송 완료: parts={}", totalParts);
     }
 
     @Override

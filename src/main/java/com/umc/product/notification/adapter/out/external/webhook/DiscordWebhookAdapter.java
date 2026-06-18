@@ -59,7 +59,7 @@ public class DiscordWebhookAdapter implements SendWebhookPort {
             );
         }
 
-        log.debug("Discord 웹훅 전송 완료: title={}, parts={}", title, totalParts);
+        log.debug("Discord 웹훅 전송 완료: parts={}", totalParts);
     }
 
     @Override
