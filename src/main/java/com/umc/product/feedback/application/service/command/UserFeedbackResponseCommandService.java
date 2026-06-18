@@ -6,7 +6,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.umc.product.feedback.application.port.in.command.SubmitUserFeedbackResponseUseCase;
 import com.umc.product.feedback.application.port.in.command.dto.SubmitUserFeedbackResponseCommand;
 import com.umc.product.feedback.application.port.out.LoadUserFeedbackTemplatePort;
+import com.umc.product.feedback.application.service.UserFeedbackAudienceResolver;
 import com.umc.product.feedback.domain.UserFeedbackTemplate;
+import com.umc.product.feedback.domain.exception.FeedbackDomainException;
+import com.umc.product.feedback.domain.exception.FeedbackErrorCode;
 import com.umc.product.survey.application.port.in.command.ManageFormResponseUseCase;
 import com.umc.product.survey.application.port.in.command.dto.SubmitFormResponseCommand;
 
@@ -19,10 +22,12 @@ public class UserFeedbackResponseCommandService implements SubmitUserFeedbackRes
 
     private final LoadUserFeedbackTemplatePort loadUserFeedbackTemplatePort;
     private final ManageFormResponseUseCase manageFormResponseUseCase;
+    private final UserFeedbackAudienceResolver audienceResolver;
 
     @Override
     public Long submit(SubmitUserFeedbackResponseCommand command) {
-        UserFeedbackTemplate template = loadUserFeedbackTemplatePort.getById(command.templateId());
+        UserFeedbackTemplate template = loadUserFeedbackTemplatePort.getActiveById(command.templateId());
+        validateAudience(command.respondentMemberId(), template);
 
         return manageFormResponseUseCase.submitImmediately(
             SubmitFormResponseCommand.builder()
@@ -31,5 +36,14 @@ public class UserFeedbackResponseCommandService implements SubmitUserFeedbackRes
                 .answers(command.answers())
                 .build()
         );
+    }
+
+    private void validateAudience(Long respondentMemberId, UserFeedbackTemplate template) {
+        boolean matched = audienceResolver.resolve(respondentMemberId)
+            .filter(targetType -> targetType == template.getTargetType())
+            .isPresent();
+        if (!matched) {
+            throw new FeedbackDomainException(FeedbackErrorCode.USER_FEEDBACK_TEMPLATE_TARGET_MISMATCH);
+        }
     }
 }
