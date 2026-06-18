@@ -134,10 +134,7 @@ public class KakaoTokenVerifier {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
             }
 
-            log.info("Kakao Access Token 검증 성공: id={}, email={}",
-                response.id(),
-                response.kakaoAccount() != null ? response.kakaoAccount().email() : "N/A"
-            );
+            log.debug("Kakao Access Token 검증 성공: hasEmail={}", hasEmail(response));
 
             // OAuthAttributes.of("kakao", ...) 형식에 맞게 Map 생성
             Map<String, Object> attributes = buildAttributesMap(response);
@@ -214,10 +211,10 @@ public class KakaoTokenVerifier {
      * @see <a href="https://developers.kakao.com/docs/latest/ko/kakaologin/rest-api#unlink">Kakao 연결 끊기</a>
      */
     public void unlinkUserByAdmin(String kakaoUserId) {
-        log.info("Kakao 사용자 연결 끊기 시작: kakaoUserId={}", kakaoUserId);
+        log.info("Kakao 사용자 연결 끊기 시작: targetProvided={}", hasText(kakaoUserId));
 
         if (kakaoAdminKey == null || kakaoAdminKey.isBlank()) {
-            log.warn("Kakao Admin Key가 설정되지 않아 연결 끊기를 skip합니다: kakaoUserId={}", kakaoUserId);
+            log.warn("Kakao Admin Key가 설정되지 않아 연결 끊기를 skip합니다: targetProvided={}", hasText(kakaoUserId));
             return;
         }
 
@@ -233,19 +230,27 @@ public class KakaoTokenVerifier {
                 .body(formData)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.error("Kakao 연결 끊기 실패: status={}, kakaoUserId={}", res.getStatusCode(), kakaoUserId);
+                    log.error("Kakao 연결 끊기 실패: status={}, targetProvided={}", res.getStatusCode(), hasText(kakaoUserId));
                     throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
                 })
                 .toBodilessEntity();
 
-            log.info("Kakao 연결 끊기 성공: kakaoUserId={}", kakaoUserId);
+            log.info("Kakao 연결 끊기 성공: targetProvided={}", hasText(kakaoUserId));
 
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Kakao 연결 끊기 중 오류 발생: kakaoUserId={}", kakaoUserId, e);
+            log.error("Kakao 연결 끊기 중 오류 발생: targetProvided={}", hasText(kakaoUserId), e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
+    }
+
+    private boolean hasEmail(KakaoUserResponse response) {
+        return response.kakaoAccount() != null && hasText(response.kakaoAccount().email());
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     // ===== Response DTOs =====

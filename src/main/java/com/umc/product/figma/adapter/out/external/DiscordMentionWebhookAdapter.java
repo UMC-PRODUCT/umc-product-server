@@ -503,9 +503,9 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
                 log.debug("Discord domain batch 전송 완료: domainKey={}, page={}/{}, comments={}",
                     message.domainKey(), i + 1, pages.size(), message.comments().size());
             } catch (RestClientResponseException e) {
-                log.error("Discord domain batch 전송 실패: domainKey={}, page={}/{}, status={}, body={}",
+                log.error("Discord domain batch 전송 실패: domainKey={}, page={}/{}, status={}, bodyLength={}",
                     message.domainKey(), i + 1, pages.size(),
-                    e.getStatusCode(), e.getResponseBodyAsString());
+                    e.getStatusCode(), e.getResponseBodyAsByteArray().length);
                 if (sent.isEmpty()) {
                     throw new FigmaDomainException(FigmaErrorCode.DISCORD_MENTION_SEND_FAILED);
                 }

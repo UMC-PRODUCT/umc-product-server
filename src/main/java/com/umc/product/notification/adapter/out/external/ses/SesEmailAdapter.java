@@ -39,14 +39,16 @@ public class SesEmailAdapter implements SendEmailPort {
         SendEmailRequest request = buildRequest(message);
         try {
             SendEmailResponse response = sesV2Client.sendEmail(request);
-            log.info("SES 이메일 발송 성공: to={}, messageId={}", message.to(), response.messageId());
+            log.info("SES 이메일 발송 성공: recipientPresent={}, messageId={}",
+                hasRecipient(message.to()), response.messageId());
         } catch (SesV2Exception e) {
             // 예외 삼킴 방지: AWS error code 까지 컨텍스트에 남기고 cause 를 포함해 도메인 예외로 변환한다.
             String awsErrorCode = e.awsErrorDetails() != null ? e.awsErrorDetails().errorCode() : null;
-            log.error("SES 발송 실패: to={}, awsErrorCode={}", message.to(), awsErrorCode, e);
+            log.error("SES 발송 실패: recipientPresent={}, awsErrorCode={}",
+                hasRecipient(message.to()), awsErrorCode, e);
             throw new EmailDomainException(EmailErrorCode.EMAIL_SEND_FAILED, e);
         } catch (RuntimeException e) {
-            log.error("SES 발송 중 예기치 못한 예외: to={}", message.to(), e);
+            log.error("SES 발송 중 예기치 못한 예외: recipientPresent={}", hasRecipient(message.to()), e);
             throw new EmailDomainException(EmailErrorCode.EMAIL_SEND_FAILED, e);
         }
     }
@@ -83,5 +85,9 @@ public class SesEmailAdapter implements SendEmailPort {
             .replace("\\", "\\\\")
             .replace("\"", "\\\"");
         return String.format("\"%s\" <%s>", escapedDisplayName, fromAddress);
+    }
+
+    private boolean hasRecipient(String recipient) {
+        return recipient != null && !recipient.isBlank();
     }
 }

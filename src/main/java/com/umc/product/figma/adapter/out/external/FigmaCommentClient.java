@@ -62,8 +62,8 @@ public class FigmaCommentClient implements FetchFigmaCommentPort {
                 .body(Map.class);
             return body != null ? body : Map.of();
         } catch (RestClientResponseException e) {
-            log.warn("Figma 댓글 조회 실패: fileKey={}, cursor={}, status={}, body={}",
-                fileKey, cursor, e.getStatusCode(), e.getResponseBodyAsString());
+            log.warn("Figma 댓글 조회 실패: fileKey={}, cursor={}, status={}, bodyLength={}",
+                fileKey, cursor, e.getStatusCode(), e.getResponseBodyAsByteArray().length);
             throw new FigmaDomainException(FigmaErrorCode.COMMENT_FETCH_FAILED);
         }
     }

@@ -37,7 +37,7 @@ public class SendEmailService implements SendEmailUseCase {
             SUBJECT_PREFIX + command.verificationCode(),
             htmlContent
         );
-        // 발송 실패 시 SesEmailAdapter 가 to/awsErrorCode 컨텍스트와 cause 를 포함해 도메인 예외로 변환한다.
+        // 발송 실패 시 SesEmailAdapter 가 AWS error code 와 cause 를 포함해 도메인 예외로 변환한다.
         // 비동기 호출이므로 예외는 AsyncUncaughtExceptionHandler 에서 처리된다.
         sendEmailPort.send(message);
     }
@@ -49,8 +49,12 @@ public class SendEmailService implements SendEmailUseCase {
             return templateEngine.process(VERIFICATION_TEMPLATE, context);
         } catch (RuntimeException e) {
             // 예외 삼킴 방지: 비동기 컨텍스트에서도 원인 추적이 가능하도록 stacktrace 와 컨텍스트를 로그에 남긴다.
-            log.error("이메일 템플릿 렌더링 실패: to={}", command.to(), e);
+            log.error("이메일 템플릿 렌더링 실패: recipientPresent={}", hasRecipient(command.to()), e);
             throw new EmailDomainException(EmailErrorCode.EMAIL_TEMPLATE_RENDER_FAILED, e);
         }
+    }
+
+    private boolean hasRecipient(String recipient) {
+        return recipient != null && !recipient.isBlank();
     }
 }

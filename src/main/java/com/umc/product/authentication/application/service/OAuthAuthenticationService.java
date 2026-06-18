@@ -47,8 +47,8 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
     @Override
     @Transactional(readOnly = true)
     public OAuthTokenLoginResult loginWithOAuthAttributes(OAuthAttributes oAuthAttributes) {
-        log.info("OAuthAttributes 기반 로그인 시도: provider={}, providerId={}",
-            oAuthAttributes.provider(), oAuthAttributes.providerId());
+        log.info("OAuthAttributes 기반 로그인 시도: provider={}, hasEmail={}",
+            oAuthAttributes.provider(), hasEmail(oAuthAttributes.email()));
 
         return loadMemberOAuthPort
             // OAuth 정보로 기존 회원이 존재하는지 확인
@@ -68,8 +68,8 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
             })
             // 존재하지 않는 회원인 경우에 대한 처리
             .orElseGet(() -> {
-                log.info("신규 회원 - 회원가입 필요: provider={}, providerId={}",
-                    oAuthAttributes.provider(), oAuthAttributes.providerId());
+                log.info("신규 회원 - 회원가입 필요: provider={}, hasEmail={}",
+                    oAuthAttributes.provider(), hasEmail(oAuthAttributes.email()));
                 return OAuthTokenLoginResult.newMember(
                     oAuthAttributes.provider(),
                     oAuthAttributes.providerId(),
@@ -88,10 +88,9 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
             command.token()
         );
 
-        log.info("OAuth 토큰 검증 성공: provider={}, providerId={}, email={}",
+        log.info("OAuth 토큰 검증 성공: provider={}, hasEmail={}",
             oauthAttrs.provider(),
-            oauthAttrs.providerId(),
-            oauthAttrs.email()
+            hasEmail(oauthAttrs.email())
         );
 
         // 2. 공통 비즈니스 로직 재사용
@@ -109,10 +108,9 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
             command.redirectUri()
         );
 
-        log.info("OAuth Authorization Code 교환 성공: provider={}, providerId={}, email={}",
+        log.info("OAuth Authorization Code 교환 성공: provider={}, hasEmail={}",
             oauthAttrs.provider(),
-            oauthAttrs.providerId(),
-            oauthAttrs.email()
+            hasEmail(oauthAttrs.email())
         );
 
         // 2. 공통 비즈니스 로직 재사용
@@ -269,5 +267,9 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
 
         memberOAuth.updateAppleCredentials(refreshToken, clientId);
         saveMemberOAuthPort.save(memberOAuth);
+    }
+
+    private boolean hasEmail(String email) {
+        return email != null && !email.isBlank();
     }
 }

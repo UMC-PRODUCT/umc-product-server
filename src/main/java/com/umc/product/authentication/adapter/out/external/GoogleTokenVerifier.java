@@ -66,7 +66,7 @@ public class GoogleTokenVerifier {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
 
-            log.info("Google ID 토큰 검증 성공: sub={}, email={}", response.sub(), response.email());
+            log.debug("Google ID 토큰 검증 성공: hasEmail={}", hasEmail(response.email()));
 
             // OAuthAttributes 형식에 맞게 Map 생성
             Map<String, Object> attributes = new HashMap<>();
@@ -109,7 +109,7 @@ public class GoogleTokenVerifier {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
 
-            log.info("Google Access Token 검증 성공: sub={}, email={}", response.sub(), response.email());
+            log.debug("Google Access Token 검증 성공: hasEmail={}", hasEmail(response.email()));
 
             // OAuthAttributes 형식에 맞게 Map 생성
             Map<String, Object> attributes = new HashMap<>();
@@ -185,5 +185,9 @@ public class GoogleTokenVerifier {
         String email,
         String aud         // audience (client ID)
     ) {
+    }
+
+    private boolean hasEmail(String email) {
+        return email != null && !email.isBlank();
     }
 }

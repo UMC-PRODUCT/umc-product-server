@@ -41,8 +41,8 @@ public class FigmaFileMetadataClient implements FetchFigmaFileMetadataPort {
 
             return parsePageNames(body, nodeIds);
         } catch (RestClientResponseException e) {
-            log.warn("Figma 파일 메타데이터 조회 실패: fileKey={}, status={}, body={}",
-                fileKey, e.getStatusCode(), e.getResponseBodyAsString());
+            log.warn("Figma 파일 메타데이터 조회 실패: fileKey={}, status={}, bodyLength={}",
+                fileKey, e.getStatusCode(), e.getResponseBodyAsByteArray().length);
             throw new FigmaDomainException(FigmaErrorCode.FILE_METADATA_FETCH_FAILED);
         }
     }

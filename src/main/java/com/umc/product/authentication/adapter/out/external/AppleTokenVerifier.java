@@ -93,7 +93,7 @@ public class AppleTokenVerifier {
             String sub = claims.getSubject();
             String email = claims.get("email", String.class);
 
-            log.info("Apple ID Token 검증 성공: sub={}, email={}", sub, email);
+            log.debug("Apple ID Token 검증 성공: hasEmail={}", hasEmail(email));
 
             Map<String, Object> attributes = new HashMap<>();
             attributes.put("sub", sub);
@@ -357,6 +357,10 @@ public class AppleTokenVerifier {
 
             return cachedPrivateKey;
         }
+    }
+
+    private boolean hasEmail(String email) {
+        return email != null && !email.isBlank();
     }
 
     // ===== Response DTOs =====

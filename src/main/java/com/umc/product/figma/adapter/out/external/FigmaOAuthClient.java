@@ -47,7 +47,8 @@ public class FigmaOAuthClient implements FigmaOAuthPort {
                 .body(Map.class);
             return toTokenInfo(response, /* fallbackRefreshToken */ null);
         } catch (RestClientResponseException e) {
-            log.error("Figma OAuth code 교환 실패: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("Figma OAuth code 교환 실패: status={}, bodyLength={}",
+                e.getStatusCode(), e.getResponseBodyAsByteArray().length);
             throw new FigmaDomainException(FigmaErrorCode.OAUTH_TOKEN_EXCHANGE_FAILED);
         }
     }
@@ -69,7 +70,8 @@ public class FigmaOAuthClient implements FigmaOAuthPort {
                 .body(Map.class);
             return toTokenInfo(response, refreshToken);
         } catch (RestClientResponseException e) {
-            log.error("Figma OAuth refresh 실패: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("Figma OAuth refresh 실패: status={}, bodyLength={}",
+                e.getStatusCode(), e.getResponseBodyAsByteArray().length);
             throw new FigmaDomainException(FigmaErrorCode.OAUTH_TOKEN_REFRESH_FAILED);
         }
     }
