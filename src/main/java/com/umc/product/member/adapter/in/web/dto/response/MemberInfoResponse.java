@@ -7,7 +7,6 @@ import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
 import java.util.List;
 import lombok.Builder;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * 사용자 정보를 응답하는 DTO 입니다.
@@ -17,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
  * 추후 Public/Private 정보를 구분해서 사용해야 할 경우 분리가 필요합니다.
  */
 @Builder
-@Slf4j
 public record MemberInfoResponse(
     Long id,
     String name,

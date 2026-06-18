@@ -12,9 +12,7 @@ import com.umc.product.organization.application.port.in.query.dto.chapter.Chapte
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import java.util.List;
 import lombok.Builder;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Builder
 public record ChallengerInfoResponse(
     Long challengerId,

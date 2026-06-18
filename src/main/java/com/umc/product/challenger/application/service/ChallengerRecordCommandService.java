@@ -46,24 +46,24 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
 
     @Override
     public Long create(CreateChallengerRecordCommand command) {
-        log.info("ChallengerRecord를 생성합니다. command={}", command.toString());
-
         validateRecord(command.gisuId(), command.schoolId(), command.chapterId());
 
-        return saveChallengerRecordPort.save(command.toEntity()).getId();
+        ChallengerRecord savedRecord = saveChallengerRecordPort.save(command.toEntity());
+        log.info("ChallengerRecord 생성 완료: recordId={}, gisuId={}, schoolId={}, chapterId={}, adminRecord={}",
+            savedRecord.getId(), command.gisuId(), command.schoolId(), command.chapterId(),
+            command.challengerRoleType() != null);
+        return savedRecord.getId();
     }
 
     @Override
     public List<Long> createBulk(List<CreateChallengerRecordCommand> commands) {
-        log.info("ChallengerRecord를 대량으로 생성합니다. commands={}",
-            commands.stream().map(CreateChallengerRecordCommand::toString).toList());
-
         List<ChallengerRecord> records = commands.stream()
             .map(CreateChallengerRecordCommand::toEntity)
             .toList();
 
-        return saveChallengerRecordPort.saveAll(records)
-            .stream().map(ChallengerRecord::getId).toList();
+        List<ChallengerRecord> savedRecords = saveChallengerRecordPort.saveAll(records);
+        log.info("ChallengerRecord 대량 생성 완료: count={}", savedRecords.size());
+        return savedRecords.stream().map(ChallengerRecord::getId).toList();
     }
 
     @Override
