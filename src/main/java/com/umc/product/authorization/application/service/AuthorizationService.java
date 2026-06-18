@@ -1,5 +1,13 @@
 package com.umc.product.authorization.application.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
 import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
@@ -12,16 +20,12 @@ import com.umc.product.authorization.domain.exception.AuthorizationDomainExcepti
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
@@ -34,6 +38,7 @@ public class AuthorizationService implements CheckPermissionUseCase {
     private final GetMemberUseCase getMemberUseCase;
     private final GetChapterUseCase getChapterUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
+    private final OperationalMetrics operationalMetrics;
 
     /**
      * ResourcePermissionEvaluator에 대한 생성자 주입
@@ -42,11 +47,13 @@ public class AuthorizationService implements CheckPermissionUseCase {
      */
     public AuthorizationService(LoadChallengerRolePort loadChallengerRolePort,
                                 List<ResourcePermissionEvaluator> evaluatorList, GetMemberUseCase getMemberUseCase,
-                                GetChapterUseCase getChapterUseCase, GetChallengerUseCase getChallengerUseCase) {
+                                GetChapterUseCase getChapterUseCase, GetChallengerUseCase getChallengerUseCase,
+                                OperationalMetrics operationalMetrics) {
         this.loadChallengerRolePort = loadChallengerRolePort;
         this.getMemberUseCase = getMemberUseCase;
         this.getChapterUseCase = getChapterUseCase;
         this.getChallengerUseCase = getChallengerUseCase;
+        this.operationalMetrics = operationalMetrics;
         this.evaluators = evaluatorList.stream()
             .collect(Collectors.toMap(
                 ResourcePermissionEvaluator::supportedResourceType,
@@ -64,7 +71,7 @@ public class AuthorizationService implements CheckPermissionUseCase {
 
     @Override
     public SubjectAttributes loadSubject(Long memberId) {
-        log.info("권한 평가 시작");
+        log.debug("권한 평가 시작: memberId={}", memberId);
 
         // 사용자가 활동한 모든 기수를 확인
         // 해당 기수마다 chapterId, challengerRoleId를 가져옴
@@ -95,7 +102,9 @@ public class AuthorizationService implements CheckPermissionUseCase {
             .roleAttributes(roles)
             .build();
 
-        log.info("Subject Attribute {}가 평가를 요청했습니다.", subjectAttributes.toString());
+        log.debug("권한 평가 subject 로드 완료: memberId={}, roleCount={}, challengerCount={}",
+            subjectAttributes.memberId(), subjectAttributes.roleAttributes().size(),
+            subjectAttributes.gisuChallengerInfos().size());
 
         return subjectAttributes;
     }
@@ -125,6 +134,7 @@ public class AuthorizationService implements CheckPermissionUseCase {
         if (!check(memberId, permission)) {
             log.warn("Permission denied - memberId: {}, resource: {}:{}, permission: {}",
                 memberId, permission.resourceType(), permission.resourceId(), permission.permission());
+            operationalMetrics.recordSecurityEvent("AUTHORIZATION", "ACCESS_DENIED", "denied");
 
             throw new AuthorizationDomainException(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
         }

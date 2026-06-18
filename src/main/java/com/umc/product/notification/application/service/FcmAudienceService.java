@@ -1,5 +1,14 @@
 package com.umc.product.notification.application.service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
@@ -8,6 +17,7 @@ import com.google.firebase.messaging.Notification;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.global.config.FcmProperties;
+import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notification.application.port.in.SendNotificationToAudienceUseCase;
@@ -17,15 +27,9 @@ import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.domain.FcmToken;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -41,6 +45,7 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChapterUseCase getChapterUseCase;
+    private final OperationalMetrics operationalMetrics;
 
     @Override
     public void sendToAudience(AudienceNotificationCommand command) {
@@ -62,8 +67,9 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
             return;
         }
 
-        sendBatch(tokens, command.title(), command.body());
-        log.info("대상자 알림 발송 완료 title={}", command.title());
+        SendBatchResult result = sendBatch(tokens, command.title(), command.body());
+        recordFcmMetric("SEND_TO_AUDIENCE", result);
+        log.info("대상자 알림 발송 완료: memberCount={}, tokenCount={}", memberIds.size(), tokens.size());
     }
 
     @Override
@@ -80,7 +86,8 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
             return;
         }
 
-        sendBatch(tokens, command.title(), command.body());
+        SendBatchResult result = sendBatch(tokens, command.title(), command.body());
+        recordFcmMetric("SEND_TO_MEMBER", result);
     }
 
     @Override
@@ -101,13 +108,14 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
             return;
         }
 
-        sendBatch(tokens, title, body);
-        log.info("bulk 알림 발송 완료 title={}, 대상 멤버 수={}", title, memberIds.size());
+        SendBatchResult result = sendBatch(tokens, title, body);
+        recordFcmMetric("SEND_TO_MEMBERS", result);
+        log.info("bulk 알림 발송 완료: memberCount={}, tokenCount={}", memberIds.size(), tokens.size());
     }
 
     // =========== PRIVATE ===========
 
-    private void sendBatch(List<FcmToken> tokens, String title, String body) {
+    private SendBatchResult sendBatch(List<FcmToken> tokens, String title, String body) {
         Notification notification = Notification.builder()
             .setTitle(title)
             .setBody(body)
@@ -136,6 +144,12 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
         }
 
         log.info("FCM 발송 완료 성공={}, 실패={}", totalSuccess, totalFail);
+        return new SendBatchResult(totalSuccess, totalFail);
+    }
+
+    private void recordFcmMetric(String operation, SendBatchResult result) {
+        operationalMetrics.recordNotification("FCM", operation, "success", result.successCount());
+        operationalMetrics.recordNotification("FCM", operation, "failure", result.failureCount());
     }
 
     private List<Long> resolveTargetMemberIds(NoticeTargetInfo targetInfo) {
@@ -194,5 +208,8 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
         }
 
         return result;
+    }
+
+    private record SendBatchResult(int successCount, int failureCount) {
     }
 }

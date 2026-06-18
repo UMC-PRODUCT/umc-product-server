@@ -1,10 +1,5 @@
 package com.umc.product.notification.application.service;
 
-import com.umc.product.notification.application.port.in.FlushWebhookBufferUseCase;
-import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
-import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
-import com.umc.product.notification.application.port.out.SendWebhookPort;
-import com.umc.product.notification.domain.WebhookPlatform;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -12,9 +7,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+
+import com.umc.product.global.logging.OperationalMetrics;
+import com.umc.product.notification.application.port.in.FlushWebhookBufferUseCase;
+import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
+import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
+import com.umc.product.notification.application.port.out.SendWebhookPort;
+import com.umc.product.notification.domain.WebhookPlatform;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -23,13 +27,15 @@ public class WebhookAlarmService implements SendWebhookAlarmUseCase, FlushWebhoo
     private final Map<WebhookPlatform, SendWebhookPort> adapterMap;
     private final WebhookAlarmBuffer webhookAlarmBuffer;
     private final String profilePrefix;
+    private final OperationalMetrics operationalMetrics;
 
     public WebhookAlarmService(List<SendWebhookPort> adapters, WebhookAlarmBuffer webhookAlarmBuffer,
-                               Environment environment) {
+                               Environment environment, OperationalMetrics operationalMetrics) {
         this.adapterMap = adapters.stream()
             .collect(Collectors.toMap(SendWebhookPort::platform, Function.identity()));
         this.webhookAlarmBuffer = webhookAlarmBuffer;
         this.profilePrefix = buildProfilePrefix(environment);
+        this.operationalMetrics = operationalMetrics;
     }
 
     @Override
@@ -43,7 +49,8 @@ public class WebhookAlarmService implements SendWebhookAlarmUseCase, FlushWebhoo
     @Override
     public void sendBuffered(SendWebhookAlarmCommand command) {
         webhookAlarmBuffer.add(command);
-        log.debug("웹훅 알람 버퍼에 추가: title={}, platforms={}", command.title(), command.platforms());
+        log.debug("웹훅 알람 버퍼에 추가: platforms={}, contentLength={}",
+            command.platforms(), command.content() == null ? 0 : command.content().length());
     }
 
     @Override
@@ -71,13 +78,16 @@ public class WebhookAlarmService implements SendWebhookAlarmUseCase, FlushWebhoo
         SendWebhookPort adapter = adapterMap.get(platform);
         if (adapter == null) {
             log.warn("웹훅 어댑터가 등록되지 않았습니다: platform={}", platform);
+            operationalMetrics.recordNotification(platform.name(), "SEND_WEBHOOK", "missing_adapter", 1);
             return;
         }
 
         try {
             adapter.send(title, content);
+            operationalMetrics.recordNotification(platform.name(), "SEND_WEBHOOK", "success", 1);
             log.info("웹훅 알람 전송 성공: platform={}", platform);
         } catch (Exception e) {
+            operationalMetrics.recordNotification(platform.name(), "SEND_WEBHOOK", "failure", 1);
             log.error("웹훅 알람 전송 실패: platform={}, error={}", platform, e.getMessage(), e);
         }
     }
