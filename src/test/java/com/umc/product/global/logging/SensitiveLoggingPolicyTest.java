@@ -13,8 +13,19 @@ import org.junit.jupiter.api.Test;
 class SensitiveLoggingPolicyTest {
 
     private static final Path MAIN_SOURCE_ROOT = Path.of("src/main/java");
-    private static final List<String> SENSITIVE_RAW_FIELD_NAMES = List.of("body={}", "email={}", "providerId={}", "sub={}");
+    private static final List<String> SENSITIVE_RAW_FIELD_NAMES = List.of(
+        "body={}",
+        "email={}",
+        "providerId={}",
+        "sub={}",
+        "signedUrl={}",
+        "signature={}",
+        "Signature: {}",
+        "Full URL: {}",
+        "Final URL: {}"
+    );
     private static final String NOTIFICATION_PACKAGE_PATH = "com/umc/product/notification";
+    private static final String STORAGE_PACKAGE_PATH = "com/umc/product/storage";
 
     @Test
     @DisplayName("운영 로그는 민감한 OAuth 식별자와 외부 API 응답 본문을 직접 남기지 않는다")
@@ -51,6 +62,10 @@ class SensitiveLoggingPolicyTest {
         if (SENSITIVE_RAW_FIELD_NAMES.stream().anyMatch(line::contains)) {
             return true;
         }
-        return path.toString().contains(NOTIFICATION_PACKAGE_PATH) && line.contains("to={}");
+        if (path.toString().contains(NOTIFICATION_PACKAGE_PATH)
+            && (line.contains("to={}") || line.contains("title={}") || line.contains("content={}"))) {
+            return true;
+        }
+        return path.toString().contains(STORAGE_PACKAGE_PATH) && line.contains("url={}");
     }
 }
