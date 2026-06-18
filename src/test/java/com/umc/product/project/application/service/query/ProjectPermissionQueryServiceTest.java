@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.times;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -51,6 +53,7 @@ class ProjectPermissionQueryServiceTest {
 
     private static final Long REQUESTER_ID = 10L;
     private static final Long PROJECT_ID = 100L;
+    private static final Long SECOND_PROJECT_ID = 101L;
     private static final Long GISU_ID = 1L;
     private static final Long CHAPTER_ID = 7L;
 
@@ -96,9 +99,17 @@ class ProjectPermissionQueryServiceTest {
         assertThat(result.status().canRequestReview().allowed()).isTrue();
         assertThat(result.applicationForm().canCreate().allowed()).isFalse();
         assertThat(result.applicationForm().canCreate().reasonCode())
-            .isEqualTo(ProjectPermissionReason.APPLICATION_FORM_ALREADY_EXISTS.name());
+            .isEqualTo(ProjectPermissionReason.NOT_IMPLEMENTED.name());
+        assertThat(result.applicationForm().canCreate().reason())
+            .isEqualTo("아직은 프로젝트에 여러 개의 폼을 연결하는 것을 허용하지 않아요.");
+        assertThat(result.applicationForm().canPublish().reason())
+            .isEqualTo("아직은 지원 폼 공개를 별도로 지원하지 않아요.");
+        assertThat(result.applicationForm().canDelete().reason())
+            .isEqualTo("아직은 지원 폼 삭제를 별도로 지원하지 않아요.");
         assertThat(result.status().canComplete().reasonCode())
             .isEqualTo(ProjectPermissionReason.NOT_IMPLEMENTED.name());
+        assertThat(result.status().canComplete().reason())
+            .isEqualTo("아직 프로젝트 완료 처리를 지원하지 않아요.");
     }
 
     @Test
@@ -121,6 +132,7 @@ class ProjectPermissionQueryServiceTest {
         assertThat(result.canEditInfo().reasonCode()).isEqualTo(ProjectPermissionReason.PERMISSION_DENIED.name());
         assertThat(result.status().canRequestReview().reasonCode())
             .isEqualTo(ProjectPermissionReason.PERMISSION_DENIED.name());
+        assertThat(result.statistics().canRead().reason()).isEqualTo("통계를 조회할 권한이 없어요.");
     }
 
     @Test
@@ -144,6 +156,7 @@ class ProjectPermissionQueryServiceTest {
         assertThat(result.status().canPublish().allowed()).isTrue();
         assertThat(result.status().canAbort().allowed()).isFalse();
         assertThat(result.status().canAbort().reasonCode()).isEqualTo(ProjectPermissionReason.INVALID_PROJECT_STATUS.name());
+        assertThat(result.status().canAbort().reason()).isEqualTo("현재 진행 중인 프로젝트만 중단 시킬 수 있어요.");
     }
 
     @Test
@@ -155,7 +168,7 @@ class ProjectPermissionQueryServiceTest {
         givenForms(form);
         givenProjectPermission(subject, PermissionType.READ, true);
         givenProjectPermission(subject, PermissionType.EDIT, true);
-        givenProjectPermission(subject, PermissionType.DELETE, false);
+        givenProjectPermission(subject, PermissionType.DELETE, true);
         givenProjectPermission(subject, PermissionType.MANAGE, true);
         given(loadProjectMatchingRoundPort.listOpenAt(eq(CHAPTER_ID), any(Instant.class)))
             .willReturn(List.of(openRound()));
@@ -169,6 +182,7 @@ class ProjectPermissionQueryServiceTest {
         assertThat(result.applicationForm().canEdit().allowed()).isFalse();
         assertThat(result.applicationForm().canEdit().reasonCode())
             .isEqualTo(ProjectPermissionReason.ACTIVE_MATCHING_ROUND_EXISTS.name());
+        assertThat(result.canDelete().reason()).isEqualTo("진행 중인 프로젝트는 중단 기능을 이용해주세요.");
     }
 
     @Test
@@ -196,6 +210,61 @@ class ProjectPermissionQueryServiceTest {
         ProjectPermissionInfo result = sut.listByProjectIds(REQUESTER_ID, List.of(PROJECT_ID)).get(0);
 
         assertThat(result.application().canCreate().allowed()).isTrue();
+    }
+
+    @Test
+    void 같은_지부와_기수의_프로젝트는_권한_계산용_조회_결과를_캐시한다() {
+        Project firstProject = project(PROJECT_ID, GISU_ID, CHAPTER_ID, ProjectStatus.IN_PROGRESS, 999L, 999L, "서비스 리뉴얼");
+        Project secondProject = project(
+            SECOND_PROJECT_ID,
+            GISU_ID,
+            CHAPTER_ID,
+            ProjectStatus.IN_PROGRESS,
+            998L,
+            998L,
+            "운영 도구"
+        );
+        ProjectApplicationForm firstForm = ProjectApplicationForm.create(firstProject, 500L);
+        ProjectApplicationForm secondForm = ProjectApplicationForm.create(secondProject, 501L);
+        SubjectAttributes subject = subject();
+        given(checkPermissionUseCase.loadSubject(REQUESTER_ID)).willReturn(subject);
+        given(loadProjectPort.listByIds(List.of(PROJECT_ID, SECOND_PROJECT_ID)))
+            .willReturn(List.of(firstProject, secondProject));
+        given(loadProjectApplicationFormPort.findAllByProjectIds(anyCollection()))
+            .willReturn(Map.of(PROJECT_ID, firstForm, SECOND_PROJECT_ID, secondForm));
+        given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(anyCollection()))
+            .willReturn(Map.of(
+                PROJECT_ID,
+                List.of(ProjectPartQuota.create(firstProject, ChallengerPart.WEB, 1L, REQUESTER_ID)),
+                SECOND_PROJECT_ID,
+                List.of(ProjectPartQuota.create(secondProject, ChallengerPart.WEB, 1L, REQUESTER_ID))
+            ));
+        givenApplicationCreatePermissions(subject, PROJECT_ID);
+        givenApplicationCreatePermissions(subject, SECOND_PROJECT_ID);
+        given(getChallengerUseCase.findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID))
+            .willReturn(Optional.of(challenger(ChallengerPart.WEB)));
+        given(loadProjectMemberPort.existsByGisuAndMember(GISU_ID, REQUESTER_ID)).willReturn(false);
+        given(loadProjectMatchingRoundPort.listOpenAt(eq(CHAPTER_ID), any(Instant.class)))
+            .willReturn(List.of(openRound()));
+        given(projectApplicationAccessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, firstProject))
+            .willReturn(new ProjectApplicationAccessScope.None());
+        given(projectApplicationAccessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, secondProject))
+            .willReturn(new ProjectApplicationAccessScope.None());
+        given(projectStatisticsAccessPolicy.canReadProjectStatistics(REQUESTER_ID, firstProject)).willReturn(false);
+        given(projectStatisticsAccessPolicy.canReadProjectStatistics(REQUESTER_ID, secondProject)).willReturn(false);
+
+        List<ProjectPermissionInfo> results = sut.listByProjectIds(
+            REQUESTER_ID,
+            List.of(PROJECT_ID, SECOND_PROJECT_ID)
+        );
+
+        assertThat(results).hasSize(2);
+        assertThat(results)
+            .extracting(result -> result.application().canCreate().allowed())
+            .containsExactly(true, true);
+        then(loadProjectMatchingRoundPort).should(times(1)).listOpenAt(eq(CHAPTER_ID), any(Instant.class));
+        then(getChallengerUseCase).should(times(1)).findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID);
+        then(loadProjectMemberPort).should(times(1)).existsByGisuAndMember(GISU_ID, REQUESTER_ID);
     }
 
     @Test
@@ -234,17 +303,38 @@ class ProjectPermissionQueryServiceTest {
     }
 
     private void givenProjectPermission(SubjectAttributes subject, PermissionType permissionType, boolean allowed) {
+        givenProjectPermission(subject, PROJECT_ID, permissionType, allowed);
+    }
+
+    private void givenProjectPermission(
+        SubjectAttributes subject,
+        Long projectId,
+        PermissionType permissionType,
+        boolean allowed
+    ) {
         given(checkPermissionUseCase.check(
             eq(subject),
-            eq(ResourcePermission.of(ResourceType.PROJECT, PROJECT_ID, permissionType))
+            eq(ResourcePermission.of(ResourceType.PROJECT, projectId, permissionType))
         )).willReturn(allowed);
     }
 
     private void givenApplicationPermission(SubjectAttributes subject, boolean allowed) {
+        givenApplicationPermission(subject, PROJECT_ID, allowed);
+    }
+
+    private void givenApplicationPermission(SubjectAttributes subject, Long projectId, boolean allowed) {
         given(checkPermissionUseCase.check(
             eq(subject),
-            eq(ResourcePermission.of(ResourceType.PROJECT_APPLICATION, PROJECT_ID, PermissionType.WRITE))
+            eq(ResourcePermission.of(ResourceType.PROJECT_APPLICATION, projectId, PermissionType.WRITE))
         )).willReturn(allowed);
+    }
+
+    private void givenApplicationCreatePermissions(SubjectAttributes subject, Long projectId) {
+        givenProjectPermission(subject, projectId, PermissionType.READ, true);
+        givenProjectPermission(subject, projectId, PermissionType.EDIT, false);
+        givenProjectPermission(subject, projectId, PermissionType.DELETE, false);
+        givenProjectPermission(subject, projectId, PermissionType.MANAGE, false);
+        givenApplicationPermission(subject, projectId, true);
     }
 
     private SubjectAttributes subject() {
@@ -257,8 +347,20 @@ class ProjectPermissionQueryServiceTest {
     }
 
     private Project project(ProjectStatus status, Long ownerId, Long creatorId, String name) {
-        Project project = Project.createDraft(GISU_ID, CHAPTER_ID, ownerId, 3L, creatorId);
-        ReflectionTestUtils.setField(project, "id", PROJECT_ID);
+        return project(PROJECT_ID, GISU_ID, CHAPTER_ID, status, ownerId, creatorId, name);
+    }
+
+    private Project project(
+        Long projectId,
+        Long gisuId,
+        Long chapterId,
+        ProjectStatus status,
+        Long ownerId,
+        Long creatorId,
+        String name
+    ) {
+        Project project = Project.createDraft(gisuId, chapterId, ownerId, 3L, creatorId);
+        ReflectionTestUtils.setField(project, "id", projectId);
         ReflectionTestUtils.setField(project, "status", status);
         ReflectionTestUtils.setField(project, "name", name);
         return project;

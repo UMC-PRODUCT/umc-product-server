@@ -57,17 +57,17 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
     private static final ProjectPermissionCapabilityInfo NOT_IMPLEMENTED_FORM_PUBLISH =
         ProjectPermissionCapabilityInfo.denied(
             ProjectPermissionReason.NOT_IMPLEMENTED,
-            "아직 별도 지원 폼 공개 API가 없습니다."
+            "아직은 지원 폼 공개를 별도로 지원하지 않아요."
         );
     private static final ProjectPermissionCapabilityInfo NOT_IMPLEMENTED_FORM_DELETE =
         ProjectPermissionCapabilityInfo.denied(
             ProjectPermissionReason.NOT_IMPLEMENTED,
-            "아직 별도 지원 폼 삭제 API가 없습니다."
+            "아직은 지원 폼 삭제를 별도로 지원하지 않아요."
         );
     private static final ProjectPermissionCapabilityInfo NOT_IMPLEMENTED_PROJECT_COMPLETE =
         ProjectPermissionCapabilityInfo.denied(
             ProjectPermissionReason.NOT_IMPLEMENTED,
-            "아직 프로젝트 완료 API가 없습니다."
+            "아직 프로젝트 완료 처리를 지원하지 않아요."
         );
 
     private final CheckPermissionUseCase checkPermissionUseCase;
@@ -100,6 +100,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         Map<Long, List<ProjectPartQuota>> quotasByProjectId =
             loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(uniqueIds);
         PermissionCache permissionCache = new PermissionCache(subject);
+        Instant now = Instant.now();
 
         return uniqueIds.stream()
             .map(projectId -> {
@@ -111,7 +112,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
                     project,
                     formsByProjectId.get(projectId),
                     quotasByProjectId.getOrDefault(projectId, List.of()),
-                    loadProjectMatchingRoundPort.listOpenAt(project.getChapterId(), Instant.now()),
+                    permissionCache.openMatchingRounds(project.getChapterId(), now),
                     permissionCache
                 );
                 return buildInfo(requesterMemberId, subject, context);
@@ -175,7 +176,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         if (!context.hasForm()) {
             return denied(ProjectPermissionReason.APPLICATION_FORM_NOT_FOUND);
         }
-        if (!canReadApplicationFormPolicy(requesterMemberId, subject, context.project())) {
+        if (!canReadApplicationFormPolicy(requesterMemberId, subject, context)) {
             return denied(ProjectPermissionReason.PERMISSION_DENIED);
         }
         return ProjectPermissionCapabilityInfo.allow();
@@ -184,7 +185,10 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
     private ProjectPermissionCapabilityInfo canCreateApplicationForm(ProjectCapabilityContext context) {
         return requirePermission(context.projectPermission(PermissionType.EDIT), () -> {
             if (context.hasForm()) {
-                return denied(ProjectPermissionReason.APPLICATION_FORM_ALREADY_EXISTS);
+                return ProjectPermissionCapabilityInfo.denied(
+                    ProjectPermissionReason.NOT_IMPLEMENTED,
+                    "아직은 프로젝트에 여러 개의 폼을 연결하는 것을 허용하지 않아요."
+                );
             }
             return formEditable(context);
         });
@@ -265,7 +269,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
             if (context.project().getStatus() != ProjectStatus.IN_PROGRESS) {
                 return ProjectPermissionCapabilityInfo.denied(
                     ProjectPermissionReason.INVALID_PROJECT_STATUS,
-                    "진행 중 프로젝트만 중단할 수 있습니다."
+                    "현재 진행 중인 프로젝트만 중단 시킬 수 있어요."
                 );
             }
             return ProjectPermissionCapabilityInfo.allow();
@@ -299,7 +303,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         }
 
         Optional<ChallengerInfo> challenger =
-            getChallengerUseCase.findByMemberIdAndGisuId(requesterMemberId, project.getGisuId());
+            context.challengerInfo(requesterMemberId);
         if (challenger.isEmpty()) {
             return denied(ProjectPermissionReason.NOT_PROJECT_GISU_CHALLENGER);
         }
@@ -310,7 +314,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         if (context.quotas().stream().noneMatch(quota -> quota.getPart() == challenger.get().part())) {
             return denied(ProjectPermissionReason.PROJECT_APPLICATION_PART_NOT_ALLOWED);
         }
-        if (loadProjectMemberPort.existsByGisuAndMember(project.getGisuId(), requesterMemberId)) {
+        if (context.existsByGisuAndMember(requesterMemberId)) {
             return denied(ProjectPermissionReason.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
         }
         if (context.openMatchingRounds().stream().noneMatch(round -> round.getType() == matchingType.get())) {
@@ -354,7 +358,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         if (!projectStatisticsAccessPolicy.canReadProjectStatistics(requesterMemberId, project)) {
             return new StatisticsPermissions(ProjectPermissionCapabilityInfo.denied(
                 ProjectPermissionReason.PERMISSION_DENIED,
-                "통계를 조회할 권한이 없습니다."
+                "통계를 조회할 권한이 없어요."
             ));
         }
         return new StatisticsPermissions(ProjectPermissionCapabilityInfo.allow());
@@ -363,6 +367,12 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
     private ProjectPermissionCapabilityInfo canDeleteProject(ProjectCapabilityContext context) {
         return requirePermission(context.projectPermission(PermissionType.DELETE), () -> {
             ProjectStatus status = context.project().getStatus();
+            if (status == ProjectStatus.IN_PROGRESS) {
+                return ProjectPermissionCapabilityInfo.denied(
+                    ProjectPermissionReason.INVALID_PROJECT_STATUS,
+                    "진행 중인 프로젝트는 중단 기능을 이용해주세요."
+                );
+            }
             if (status != ProjectStatus.DRAFT && status != ProjectStatus.PENDING_REVIEW) {
                 return ProjectPermissionCapabilityInfo.denied(
                     ProjectPermissionReason.INVALID_PROJECT_STATUS,
@@ -390,8 +400,9 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
     private boolean canReadApplicationFormPolicy(
         Long requesterMemberId,
         SubjectAttributes subject,
-        Project project
+        ProjectCapabilityContext context
     ) {
+        Project project = context.project();
         if (Objects.equals(requesterMemberId, project.getProductOwnerMemberId())) {
             return true;
         }
@@ -403,7 +414,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         }
         return subject.gisuChallengerInfos().stream()
             .anyMatch(info -> Objects.equals(info.gisuId(), project.getGisuId()))
-            || getChallengerUseCase.findByMemberIdAndGisuId(requesterMemberId, project.getGisuId()).isPresent();
+            || context.challengerInfo(requesterMemberId).isPresent();
     }
 
     private boolean isCentralCoreInGisu(SubjectAttributes subject, Long gisuId) {
@@ -436,6 +447,9 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         private final SubjectAttributes subject;
         private final Map<Long, Map<PermissionType, Boolean>> projectPermissions = new LinkedHashMap<>();
         private final Map<Long, Boolean> applicationWritePermissions = new LinkedHashMap<>();
+        private final Map<Long, List<ProjectMatchingRound>> openMatchingRounds = new LinkedHashMap<>();
+        private final Map<Long, Optional<ChallengerInfo>> challengerInfos = new LinkedHashMap<>();
+        private final Map<Long, Boolean> projectMemberExists = new LinkedHashMap<>();
 
         private PermissionCache(SubjectAttributes subject) {
             this.subject = subject;
@@ -455,6 +469,24 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
                 subject,
                 ResourcePermission.of(ResourceType.PROJECT_APPLICATION, id, PermissionType.WRITE)
             ));
+        }
+
+        private List<ProjectMatchingRound> openMatchingRounds(Long chapterId, Instant now) {
+            return openMatchingRounds.computeIfAbsent(chapterId, id ->
+                List.copyOf(loadProjectMatchingRoundPort.listOpenAt(id, now))
+            );
+        }
+
+        private Optional<ChallengerInfo> challengerInfo(Long memberId, Long gisuId) {
+            return challengerInfos.computeIfAbsent(gisuId, id ->
+                getChallengerUseCase.findByMemberIdAndGisuId(memberId, id)
+            );
+        }
+
+        private boolean existsByGisuAndMember(Long gisuId, Long memberId) {
+            return projectMemberExists.computeIfAbsent(gisuId, id ->
+                loadProjectMemberPort.existsByGisuAndMember(id, memberId)
+            );
         }
     }
 
@@ -496,6 +528,14 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
 
         private boolean applicationWritePermission() {
             return permissionCache.applicationWrite(project.getId());
+        }
+
+        private Optional<ChallengerInfo> challengerInfo(Long memberId) {
+            return permissionCache.challengerInfo(memberId, project.getGisuId());
+        }
+
+        private boolean existsByGisuAndMember(Long memberId) {
+            return permissionCache.existsByGisuAndMember(project.getGisuId(), memberId);
         }
     }
 }
