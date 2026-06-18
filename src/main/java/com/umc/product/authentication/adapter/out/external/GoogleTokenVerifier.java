@@ -1,79 +1,91 @@
 package com.umc.product.authentication.adapter.out.external;
 
-import com.umc.product.authentication.domain.OAuthAttributes;
-import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
-import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import java.util.Set;
+
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
+
+import com.umc.product.authentication.domain.OAuthAttributes;
+import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.global.cache.domain.CacheNamespace;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Google ID 토큰 검증 Adapter
  * <p>
- * Google OAuth2 tokeninfo endpoint를 사용하여 ID 토큰을 검증합니다.
+ * Google OIDC ID Token은 JWKS 공개키로 로컬 검증하고, 기존 access token은 tokeninfo endpoint로 검증합니다.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class GoogleTokenVerifier {
 
+    private static final String GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
+    private static final Set<String> GOOGLE_ISSUERS = Set.of("https://accounts.google.com", "accounts.google.com");
     private static final String GOOGLE_TOKEN_INFO_URL = "https://oauth2.googleapis.com/tokeninfo";
     private static final String GOOGLE_REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 
     private final RestClient restClient;
-
-    @Value("${app.oauth2.google.client-id-list}")
-    private List<String> googleClientIdList;
+    private final OidcPublicKeyResolver publicKeyResolver;
+    private final GoogleOAuthProperties googleProperties;
 
     /**
-     * Google ID 토큰을 검증하고 OAuthAttributes로 변환합니다.
+     * Google OAuth 토큰을 검증하고 OAuthAttributes로 변환합니다.
      *
-     * @param idToken Google에서 발급받은 ID 토큰
+     * @param token Google에서 발급받은 ID Token 또는 기존 Access Token
      * @return OAuthAttributes
      * @throws AuthenticationDomainException 토큰 검증 실패 시
      */
-    @Deprecated
+    public OAuthAttributes verify(String token) {
+        if (isJwt(token)) {
+            return verifyIdToken(token);
+        }
+        return verifyAccessToken(token);
+    }
+
     public OAuthAttributes verifyIdToken(String idToken) {
         log.debug("Google ID Token 검증 시작");
 
         try {
-            // Google tokeninfo endpoint 호출
-            GoogleTokenInfoResponse response = restClient.get()
-                .uri(GOOGLE_TOKEN_INFO_URL + "?id_token=" + idToken)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.error("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
-                    throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
-                })
-                .body(GoogleTokenInfoResponse.class);
+            String kid = publicKeyResolver.extractKid(idToken);
+            Claims claims = Jwts.parser()
+                .verifyWith(publicKeyResolver.getPublicKey(googleJwksSpec(), kid))
+                .build()
+                .parseSignedClaims(idToken)
+                .getPayload();
 
-            if (response == null) {
-                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
-            }
-
-            // audience(aud) 검증 - 우리 앱의 client ID와 일치해야 함
-            if (!googleClientIdList.contains(response.aud())) {
-                log.error("Google ID 토큰 audience 불일치: expected={}, actual={}", googleClientIdList, response.aud());
+            if (!GOOGLE_ISSUERS.contains(claims.getIssuer())) {
+                log.error("Google ID 토큰 issuer 불일치: actual={}", claims.getIssuer());
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
 
-            log.info("Google ID 토큰 검증 성공: sub={}, email={}", response.sub(), response.email());
+            if (claims.getAudience().stream().noneMatch(googleProperties.clientIdList()::contains)) {
+                log.error("Google ID 토큰 audience 불일치: expected={}, actual={}",
+                    googleProperties.clientIdList(), claims.getAudience());
+                throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
+            }
 
-            // OAuthAttributes 형식에 맞게 Map 생성
+            String sub = claims.getSubject();
+            String email = claims.get("email", String.class);
+            log.info("Google ID 토큰 검증 성공: sub={}, email={}", sub, email);
+
             Map<String, Object> attributes = new HashMap<>();
-            attributes.put("sub", response.sub());
-            attributes.put("email", response.email());
-            attributes.put("name", response.name());
-            attributes.put("picture", response.picture());
+            attributes.put("sub", sub);
+            attributes.put("email", email);
+            attributes.put("name", claims.get("name", String.class));
+            attributes.put("picture", claims.get("picture", String.class));
 
             return OAuthAttributes.of("google", attributes);
 
@@ -85,7 +97,7 @@ public class GoogleTokenVerifier {
         }
     }
 
-    public OAuthAttributes verifyAccessToken(String accessToken) {
+    private OAuthAttributes verifyAccessToken(String accessToken) {
         log.debug("Google Access Token 검증 시작");
 
         try {
@@ -104,8 +116,9 @@ public class GoogleTokenVerifier {
             }
 
             // audience(aud) 검증 - 우리 앱의 client ID와 일치해야 함
-            if (!googleClientIdList.contains(response.aud())) {
-                log.error("Google ID 토큰 audience 불일치: expected={}, actual={}", googleClientIdList, response.aud());
+            if (!googleProperties.clientIdList().contains(response.aud())) {
+                log.error("Google ID 토큰 audience 불일치: expected={}, actual={}",
+                    googleProperties.clientIdList(), response.aud());
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
 
@@ -161,23 +174,17 @@ public class GoogleTokenVerifier {
         }
     }
 
-    /**
-     * Google tokeninfo endpoint 응답 DTO
-     */
-    private record GoogleTokenInfoResponse(
-        String iss,         // issuer
-        String azp,         // authorized party
-        String aud,         // audience (client ID)
-        String sub,         // subject (사용자 고유 ID)
-        String email,
-        String email_verified,
-        String name,
-        String picture,
-        String given_name,
-        String family_name,
-        String iat,         // issued at
-        String exp          // expiration
-    ) {
+    private boolean isJwt(String token) {
+        return StringUtils.hasText(token) && token.split("\\.").length == 3;
+    }
+
+    private OidcJwksSpec googleJwksSpec() {
+        return new OidcJwksSpec(
+            CacheNamespace.GOOGLE_JWKS,
+            GOOGLE_JWKS_URL,
+            googleProperties.jwksCache().ttl(),
+            googleProperties.jwksCache().maxSize()
+        );
     }
 
     private record GoogleAccessTokenInfoResponse(

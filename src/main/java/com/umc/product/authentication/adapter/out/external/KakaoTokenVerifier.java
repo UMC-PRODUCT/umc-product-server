@@ -1,25 +1,31 @@
 package com.umc.product.authentication.adapter.out.external;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.umc.product.authentication.domain.OAuthAttributes;
-import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
-import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.umc.product.authentication.domain.OAuthAttributes;
+import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.global.cache.domain.CacheNamespace;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
- * Kakao Access Token 검증 Adapter
+ * Kakao OAuth Token 검증 Adapter
  * <p>
- * Kakao는 ID 토큰 검증 API를 제공하지 않으므로, Access Token으로 사용자 정보를 조회하여 토큰 유효성을 검증합니다.
+ * Kakao OIDC ID Token은 JWKS 공개키로 로컬 검증하고, 기존 Access Token은 userinfo API로 검증합니다.
  */
 @Slf4j
 @Component
@@ -27,14 +33,14 @@ import org.springframework.web.client.RestClient;
 public class KakaoTokenVerifier {
 
     private static final String KAKAO_TOKEN_URL = "https://kauth.kakao.com/oauth/token";
+    private static final String KAKAO_JWKS_URL = "https://kauth.kakao.com/.well-known/jwks.json";
+    private static final String KAKAO_ISSUER = "https://kauth.kakao.com";
     private static final String KAKAO_USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
     private static final String KAKAO_UNLINK_URL = "https://kapi.kakao.com/v1/user/unlink";
 
     private final RestClient restClient;
     private final KakaoOAuthProperties kakaoOAuthProperties;
-
-    @Value("${app.oauth2.kakao.admin-key:}")
-    private String kakaoAdminKey;
+    private final OidcPublicKeyResolver publicKeyResolver;
 
     /**
      * Kakao Authorization Code를 교환하고 OAuthAttributes로 변환합니다.
@@ -42,8 +48,8 @@ public class KakaoTokenVerifier {
      * 동작:
      * <ol>
      *     <li>전달받은 redirect URI가 화이트리스트에 포함되는지 검증한다.</li>
-     *     <li>Kakao token endpoint에 grant_type=authorization_code로 POST하여 access token을 교환한다.</li>
-     *     <li>받은 access token으로 기존 verifyAccessToken 흐름을 재사용해 사용자 정보를 조회한다.</li>
+     *     <li>Kakao token endpoint에 grant_type=authorization_code로 POST하여 토큰을 교환한다.</li>
+     *     <li>응답에 id_token이 있으면 OIDC 서명 검증을 사용하고, 없으면 기존 access token userinfo 조회로 fallback한다.</li>
      * </ol>
      *
      * @param authorizationCode Kakao에서 발급받은 authorization code
@@ -59,8 +65,11 @@ public class KakaoTokenVerifier {
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_REDIRECT_URI);
         }
 
-        String accessToken = exchangeAuthorizationCode(authorizationCode, redirectUri);
-        return verifyAccessToken(accessToken);
+        KakaoTokenResponse response = exchangeAuthorizationCode(authorizationCode, redirectUri);
+        if (StringUtils.hasText(response.idToken())) {
+            return verifyIdToken(response.idToken());
+        }
+        return verifyAccessToken(response.accessToken());
     }
 
     /**
@@ -68,7 +77,7 @@ public class KakaoTokenVerifier {
      * <p>
      * client_secret은 Kakao 앱이 보안 모드일 때만 필요하며, 비어 있으면 form data에서 제외합니다.
      */
-    private String exchangeAuthorizationCode(String authorizationCode, String redirectUri) {
+    private KakaoTokenResponse exchangeAuthorizationCode(String authorizationCode, String redirectUri) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", "authorization_code");
         formData.add("client_id", kakaoOAuthProperties.clientId());
@@ -90,12 +99,13 @@ public class KakaoTokenVerifier {
                 })
                 .body(KakaoTokenResponse.class);
 
-            if (response == null || response.accessToken() == null) {
+            if (response == null || (!StringUtils.hasText(response.idToken())
+                && !StringUtils.hasText(response.accessToken()))) {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
             }
 
             log.info("Kakao 토큰 교환 성공");
-            return response.accessToken();
+            return response;
 
         } catch (AuthenticationDomainException e) {
             throw e;
@@ -148,6 +158,48 @@ public class KakaoTokenVerifier {
             throw e;
         } catch (Exception e) {
             log.error("Kakao Access Token 검증 중 오류 발생", e);
+            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+        }
+    }
+
+    public OAuthAttributes verify(String token) {
+        if (isJwt(token)) {
+            return verifyIdToken(token);
+        }
+        return verifyAccessToken(token);
+    }
+
+    public OAuthAttributes verifyIdToken(String idToken) {
+        log.debug("Kakao ID Token 검증 시작");
+
+        try {
+            String kid = publicKeyResolver.extractKid(idToken);
+            Claims claims = Jwts.parser()
+                .verifyWith(publicKeyResolver.getPublicKey(kakaoJwksSpec(), kid))
+                .requireIssuer(KAKAO_ISSUER)
+                .requireAudience(kakaoOAuthProperties.clientId())
+                .build()
+                .parseSignedClaims(idToken)
+                .getPayload();
+
+            log.info("Kakao ID Token 검증 성공: sub={}, email={}",
+                claims.getSubject(), claims.get("email", String.class));
+
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("id", claims.getSubject());
+            Map<String, Object> kakaoAccount = new HashMap<>();
+            kakaoAccount.put("email", claims.get("email", String.class));
+            Map<String, Object> profile = new HashMap<>();
+            profile.put("nickname", claims.get("nickname", String.class));
+            kakaoAccount.put("profile", profile);
+            attributes.put("kakao_account", kakaoAccount);
+
+            return OAuthAttributes.of("kakao", attributes);
+
+        } catch (AuthenticationDomainException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Kakao ID Token 검증 중 오류 발생", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -216,7 +268,7 @@ public class KakaoTokenVerifier {
     public void unlinkUserByAdmin(String kakaoUserId) {
         log.info("Kakao 사용자 연결 끊기 시작: kakaoUserId={}", kakaoUserId);
 
-        if (kakaoAdminKey == null || kakaoAdminKey.isBlank()) {
+        if (kakaoOAuthProperties.adminKey() == null || kakaoOAuthProperties.adminKey().isBlank()) {
             log.warn("Kakao Admin Key가 설정되지 않아 연결 끊기를 skip합니다: kakaoUserId={}", kakaoUserId);
             return;
         }
@@ -228,7 +280,7 @@ public class KakaoTokenVerifier {
 
             restClient.post()
                 .uri(KAKAO_UNLINK_URL)
-                .header("Authorization", "KakaoAK " + kakaoAdminKey)
+                .header("Authorization", "KakaoAK " + kakaoOAuthProperties.adminKey())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(formData)
                 .retrieve()
@@ -248,6 +300,19 @@ public class KakaoTokenVerifier {
         }
     }
 
+    private boolean isJwt(String token) {
+        return StringUtils.hasText(token) && token.split("\\.").length == 3;
+    }
+
+    private OidcJwksSpec kakaoJwksSpec() {
+        return new OidcJwksSpec(
+            CacheNamespace.KAKAO_JWKS,
+            KAKAO_JWKS_URL,
+            kakaoOAuthProperties.jwksCache().ttl(),
+            kakaoOAuthProperties.jwksCache().maxSize()
+        );
+    }
+
     // ===== Response DTOs =====
 
     private record KakaoTokenResponse(
@@ -259,7 +324,9 @@ public class KakaoTokenVerifier {
         String refreshToken,
         @JsonProperty("expires_in")
         Integer expiresIn,
-        String scope
+        String scope,
+        @JsonProperty("id_token")
+        String idToken
     ) {
     }
 

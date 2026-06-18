@@ -314,17 +314,26 @@ app:
   oauth2:
     google:
       client-id-list: ${GOOGLE_CLIENT_ID_LIST:}
+      jwks-cache:
+        ttl: ${GOOGLE_JWKS_CACHE_TTL:PT6H}
+        max-size: ${GOOGLE_JWKS_CACHE_MAX_SIZE:1}
     apple:
       ios-client-id: ${APPLE_IOS_CLIENT_ID}
       web-client-id: ${APPLE_WEB_CLIENT_ID}
       team-id: ${APPLE_TEAM_ID}
       key-id: ${APPLE_KEY_ID}
       private-key: ${APPLE_PRIVATE_KEY}
+      jwks-cache:
+        ttl: ${APPLE_JWKS_CACHE_TTL:PT24H}
+        max-size: ${APPLE_JWKS_CACHE_MAX_SIZE:1}
     kakao:
       client-id: ${KAKAO_CLIENT_ID:}
       client-secret: ${KAKAO_CLIENT_SECRET:}
       admin-key: ${KAKAO_ADMIN_KEY:}
       allowed-redirect-uris: ${KAKAO_ALLOWED_REDIRECT_URIS:}
+      jwks-cache:
+        ttl: ${KAKAO_JWKS_CACHE_TTL:PT24H}
+        max-size: ${KAKAO_JWKS_CACHE_MAX_SIZE:1}
 
   llm:
     provider: ${LLM_PROVIDER:mock}

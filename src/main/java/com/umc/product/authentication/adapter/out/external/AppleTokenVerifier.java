@@ -1,32 +1,14 @@
 package com.umc.product.authentication.adapter.out.external;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.umc.product.authentication.domain.OAuthAttributes;
-import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
-import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
-import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
-import com.umc.product.common.domain.enums.ClientType;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.Jwts.SIG;
 import java.io.StringReader;
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.spec.RSAPublicKeySpec;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
@@ -37,6 +19,23 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestClient;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
+import com.umc.product.authentication.domain.OAuthAttributes;
+import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.common.domain.enums.ClientType;
+import com.umc.product.global.cache.domain.CacheNamespace;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.Jwts.SIG;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Apple Sign-In 토큰 검증 Adapter
@@ -59,6 +58,7 @@ public class AppleTokenVerifier {
     private final AppleOAuthProperties appleProperties;
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
+    private final OidcPublicKeyResolver publicKeyResolver;
     private PrivateKey cachedPrivateKey;
 
     /**
@@ -76,10 +76,10 @@ public class AppleTokenVerifier {
 
         try {
             // 1. ID Token의 header에서 kid 추출
-            String kid = extractKidFromToken(idToken);
+            String kid = publicKeyResolver.extractKid(idToken);
 
             // 2. Apple JWKS에서 매칭되는 공개키 조회
-            PublicKey publicKey = fetchApplePublicKey(kid);
+            PublicKey publicKey = publicKeyResolver.getPublicKey(appleJwksSpec(), kid);
 
             // 3. JWT 서명 검증 및 claims 파싱
             Claims claims = Jwts.parser()
@@ -266,77 +266,6 @@ public class AppleTokenVerifier {
         }
     }
 
-    /**
-     * JWT header에서 kid(Key ID)를 추출합니다.
-     */
-    private String extractKidFromToken(String token) {
-        String header = token.split("\\.")[0];
-        byte[] decoded = Base64.getUrlDecoder().decode(header);
-        String headerJson = new String(decoded);
-
-        // kid 값 추출 (간단한 JSON 파싱)
-        int kidIndex = headerJson.indexOf("\"kid\"");
-        if (kidIndex == -1) {
-            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
-        }
-
-        int valueStart = headerJson.indexOf("\"", headerJson.indexOf(":", kidIndex) + 1) + 1;
-        int valueEnd = headerJson.indexOf("\"", valueStart);
-        return headerJson.substring(valueStart, valueEnd);
-    }
-
-    /**
-     * Apple JWKS endpoint에서 kid에 매칭되는 RSA 공개키를 가져옵니다.
-     *
-     * @see <a
-     * href="https://developer.apple.com/documentation/signinwithapplerestapi/fetch-apple-s-public-key-for-verifying-token-signature">Fetch
-     * Apple's public key</a>
-     */
-    private PublicKey fetchApplePublicKey(String kid) {
-        AppleJwksResponse jwks = restClient.get()
-            .uri(APPLE_JWKS_URL)
-            .retrieve()
-            .onStatus(HttpStatusCode::isError, (req, res) -> {
-                log.error("Apple JWKS 조회 실패: status={}", res.getStatusCode());
-                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
-            })
-            .body(AppleJwksResponse.class);
-
-        if (jwks == null || jwks.keys() == null) {
-            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
-        }
-
-        AppleJwk matchingKey = jwks.keys().stream()
-            .filter(key -> kid.equals(key.kid()))
-            .findFirst()
-            .orElseThrow(() -> {
-                log.error("Apple JWKS에서 kid={}에 매칭되는 키를 찾을 수 없음", kid);
-                return new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
-            });
-
-        return buildRsaPublicKey(matchingKey);
-    }
-
-    /**
-     * JWK의 n, e 값으로 RSA PublicKey를 생성합니다.
-     */
-    private PublicKey buildRsaPublicKey(AppleJwk jwk) {
-        try {
-            byte[] nBytes = Base64.getUrlDecoder().decode(jwk.n());
-            byte[] eBytes = Base64.getUrlDecoder().decode(jwk.e());
-
-            RSAPublicKeySpec spec = new RSAPublicKeySpec(
-                new BigInteger(1, nBytes),
-                new BigInteger(1, eBytes)
-            );
-
-            return KeyFactory.getInstance("RSA").generatePublic(spec);
-        } catch (Exception e) {
-            log.error("Apple RSA 공개키 생성 실패", e);
-            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
-        }
-    }
-
     private PrivateKey getPrivateKey() throws Exception {
         if (cachedPrivateKey != null) {
             return cachedPrivateKey;
@@ -359,6 +288,15 @@ public class AppleTokenVerifier {
         }
     }
 
+    private OidcJwksSpec appleJwksSpec() {
+        return new OidcJwksSpec(
+            CacheNamespace.APPLE_JWKS,
+            APPLE_JWKS_URL,
+            appleProperties.jwksCache().ttl(),
+            appleProperties.jwksCache().maxSize()
+        );
+    }
+
     // ===== Response DTOs =====
 
     private record AppleTokenResponse(
@@ -370,16 +308,4 @@ public class AppleTokenVerifier {
     ) {
     }
 
-    private record AppleJwksResponse(List<AppleJwk> keys) {
-    }
-
-    private record AppleJwk(
-        String kty,
-        String kid,
-        String use,
-        String alg,
-        String n,
-        String e
-    ) {
-    }
 }
