@@ -397,18 +397,6 @@ storage:
       distribution-domain: ${AWS_CLOUDFRONT_DISTRIBUTION_DOMAIN:cdn.umc.it.kr}
       private-key: ${CDN_PRIVATE_KEY}
       key-pair-id: ${CDN_KEY_PAIR_ID}
-
-  gcs:
-    project-id: ${GCS_PROJECT_ID}
-    bucket-name: ${GCS_BUCKET_NAME}
-    credentials-json: ${GCS_CREDENTIALS_JSON:}
-    cdn:
-      enabled: false
-      base-url: https://cdn.example.com
-      key-name: ${CDN_KEY_NAME}
-      private-key: ${CDN_PRIVATE_KEY}
-
-
 # ==================================================================
 # dev 환경에 대한 default override
 # ==================================================================

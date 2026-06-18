@@ -188,7 +188,7 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
             .category(FileCategory.SCHOOL_LOGO)
             .contentType("image/png")
             .fileSize(1024L)
-            .storageProvider(StorageProvider.GOOGLE_CLOUD_STORAGE)
+            .storageProvider(StorageProvider.AWS_S3)
             .storageKey("school-logo/" + fileId + ".png")
             .uploadedMemberId(1L)
             .build();

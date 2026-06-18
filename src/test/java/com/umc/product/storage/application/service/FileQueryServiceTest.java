@@ -92,7 +92,7 @@ class FileQueryServiceTest extends UseCaseTestSupport {
             .category(FileCategory.PROFILE_IMAGE)
             .contentType("image/jpeg")
             .fileSize(1024L)
-            .storageProvider(StorageProvider.GOOGLE_CLOUD_STORAGE)
+            .storageProvider(StorageProvider.AWS_S3)
             .storageKey("profile/" + fileId + ".jpg")
             .uploadedMemberId(1L)
             .build();
