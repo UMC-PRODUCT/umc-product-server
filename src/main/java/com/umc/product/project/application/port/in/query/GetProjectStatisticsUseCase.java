@@ -1,6 +1,7 @@
 package com.umc.product.project.application.port.in.query;
 
 import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectStatisticsInfo;
 
 /**
@@ -23,4 +24,11 @@ public interface GetProjectStatisticsUseCase {
      * 그 외는 {@code PROJECT_ACCESS_DENIED}. (PO/Sub-PM 은 본인 프로젝트만 단건 조회로 본다.)
      */
     ChapterProjectStatisticsInfo getByChapterId(Long chapterId, Long requesterMemberId);
+
+    /**
+     * 로그인 사용자에게 공개할 지부 내 프로젝트 매칭 요약 통계를 조회합니다.
+     * <p>
+     * 멤버/지원서 식별자는 노출하지 않고 ProjectMember 기준 집계 숫자만 반환한다.
+     */
+    ChapterProjectMatchingStatisticsInfo getPublicMatchingStatisticsByChapterId(Long chapterId);
 }

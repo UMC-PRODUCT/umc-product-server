@@ -22,7 +22,7 @@ public record ChapterProjectStatisticsResponse(
     List<ProjectStatisticsResponse> projects,
     @Schema(description = "지부 단위 지원/매칭 요약")
     ChapterProjectStatisticsSummaryResponse summary
-) {
+) implements ProjectStatisticsQueryResponse {
     public static ChapterProjectStatisticsResponse from(ChapterProjectStatisticsInfo info) {
         return new ChapterProjectStatisticsResponse(
             info.chapterId(),
