@@ -1,5 +1,7 @@
 package com.umc.product.challenger.application.service;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.command.ManageChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.command.dto.CreateChallengerRoleCommand;
 import com.umc.product.challenger.application.port.in.command.ManageChallengerRecordUseCase;
@@ -13,6 +15,7 @@ import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.ChallengerRecord;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
@@ -44,6 +47,13 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
 
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
 
+    @Audited(
+        domain = Domain.CHALLENGER,
+        action = AuditAction.CREATE,
+        targetType = "ChallengerRecord",
+        targetId = "#result",
+        description = "'ChallengerRecord가 생성되었습니다.'"
+    )
     @Override
     public Long create(CreateChallengerRecordCommand command) {
         validateRecord(command.gisuId(), command.schoolId(), command.chapterId());
@@ -55,6 +65,12 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
         return savedRecord.getId();
     }
 
+    @Audited(
+        domain = Domain.CHALLENGER,
+        action = AuditAction.CREATE,
+        targetType = "ChallengerRecord",
+        description = "'ChallengerRecord가 대량 생성되었습니다. count=' + #result.size()"
+    )
     @Override
     public List<Long> createBulk(List<CreateChallengerRecordCommand> commands) {
         List<ChallengerRecord> records = commands.stream()
@@ -66,6 +82,13 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
         return savedRecords.stream().map(ChallengerRecord::getId).toList();
     }
 
+    @Audited(
+        domain = Domain.CHALLENGER,
+        action = AuditAction.DELETE,
+        targetType = "ChallengerRecord",
+        targetId = "#id",
+        description = "'ChallengerRecord가 삭제되었습니다.'"
+    )
     @Override
     public void delete(Long id) {
         saveChallengerRecordPort.delete(loadChallengerRecordPort.getById(id));
