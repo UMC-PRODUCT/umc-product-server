@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.umc.product.global.response.RawResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectPermissionsResponse;
@@ -25,7 +24,6 @@ import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 
 @Validated
-@RawResponse
 @RestController
 @RequestMapping("/api/v1/projects")
 @RequiredArgsConstructor

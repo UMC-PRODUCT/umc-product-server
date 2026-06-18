@@ -17,11 +17,6 @@ public class GlobalResponseWrapper implements ResponseBodyAdvice<Object> {
     @Override
     public boolean supports(MethodParameter returnType,
                             Class<? extends HttpMessageConverter<?>> converterType) {
-        if (returnType.hasMethodAnnotation(RawResponse.class)
-                || returnType.getContainingClass().isAnnotationPresent(RawResponse.class)) {
-            return false;
-        }
-
         // 이미 ApiResponse로 래핑된 경우 제외
         if (returnType.getParameterType().equals(ApiResponse.class)) {
             return false;

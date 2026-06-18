@@ -85,10 +85,11 @@ class ProjectPermissionControllerTest {
         mockMvc.perform(get("/api/v1/projects/permissions")
                 .param("ids", "1", "2", "1"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.projects[0].projectId").value(1))
-            .andExpect(jsonPath("$.projects[0].exists").value(true))
-            .andExpect(jsonPath("$.projects[0].canEditInfo.allowed").value(true))
-            .andExpect(jsonPath("$.projects[0].applicationForm.canPublish.reasonCode").value("NOT_IMPLEMENTED"));
+            .andExpect(jsonPath("$.result.projects[0].projectId").value(1))
+            .andExpect(jsonPath("$.result.projects[0].exists").value(true))
+            .andExpect(jsonPath("$.result.projects[0].canEditInfo.allowed").value(true))
+            .andExpect(jsonPath("$.result.projects[0].applicationForm.canPublish.reasonCode")
+                .value("NOT_IMPLEMENTED"));
 
         then(getProjectPermissionsUseCase).should()
             .listByProjectIds(TEST_MEMBER_ID, List.of(1L, 2L));
