@@ -31,7 +31,7 @@ public class UmcProductGenerationCommandService implements ManageUmcProductGener
         action = AuditAction.CREATE,
         targetType = "UmcProductGeneration",
         targetId = "#result",
-        description = "'UMC Product 기수가 생성되었습니다.'"
+        description = "'UMC Product 기수를 생성했습니다.'"
     )
     @Override
     public Long create(CreateUmcProductGenerationCommand command) {
@@ -56,7 +56,7 @@ public class UmcProductGenerationCommandService implements ManageUmcProductGener
         action = AuditAction.UPDATE,
         targetType = "UmcProductGeneration",
         targetId = "#command.umcProductGenerationId()",
-        description = "'UMC Product 기수가 수정되었습니다.'"
+        description = "'UMC Product 기수를 수정했습니다.'"
     )
     @Override
     public void update(UpdateUmcProductGenerationCommand command) {
@@ -79,7 +79,7 @@ public class UmcProductGenerationCommandService implements ManageUmcProductGener
         action = AuditAction.DELETE,
         targetType = "UmcProductGeneration",
         targetId = "#umcProductGenerationId",
-        description = "'UMC Product 기수가 삭제되었습니다.'"
+        description = "'UMC Product 기수를 삭제했습니다.'"
     )
     @Override
     public void delete(Long umcProductGenerationId, Long requesterMemberId) {

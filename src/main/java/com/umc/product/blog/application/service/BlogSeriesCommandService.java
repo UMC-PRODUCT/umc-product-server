@@ -49,7 +49,7 @@ public class BlogSeriesCommandService implements CreateBlogSeriesUseCase, Update
         action = AuditAction.CREATE,
         targetType = "BlogSeries",
         targetId = "#result.id()",
-        description = "'블로그 시리즈가 생성되었습니다.'"
+        description = "'블로그 시리즈를 생성했습니다.'"
     )
     @Override
     public BlogSeriesInfo create(CreateBlogSeriesCommand command) {
@@ -77,7 +77,7 @@ public class BlogSeriesCommandService implements CreateBlogSeriesUseCase, Update
         action = AuditAction.UPDATE,
         targetType = "BlogSeries",
         targetId = "#command.seriesId()",
-        description = "'블로그 시리즈가 수정되었습니다.'"
+        description = "'블로그 시리즈를 수정했습니다.'"
     )
     @Override
     public BlogSeriesInfo update(UpdateBlogSeriesCommand command) {
@@ -102,7 +102,7 @@ public class BlogSeriesCommandService implements CreateBlogSeriesUseCase, Update
         action = AuditAction.DELETE,
         targetType = "BlogSeries",
         targetId = "#command.seriesId()",
-        description = "'블로그 시리즈가 삭제되었습니다.'"
+        description = "'블로그 시리즈를 삭제했습니다.'"
     )
     @Override
     public void delete(DeleteBlogSeriesCommand command) {
@@ -116,7 +116,7 @@ public class BlogSeriesCommandService implements CreateBlogSeriesUseCase, Update
         action = AuditAction.REORDER,
         targetType = "BlogSeries",
         targetId = "#command.seriesId()",
-        description = "'블로그 시리즈 콘텐츠 순서가 변경되었습니다.'"
+        description = "'블로그 시리즈 콘텐츠 순서를 변경했습니다.'"
     )
     @Override
     public BlogSeriesInfo replaceContents(ReplaceBlogSeriesContentsCommand command) {

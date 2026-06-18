@@ -27,7 +27,7 @@ public class TermCommandService implements ManageTermUseCase {
         action = AuditAction.CREATE,
         targetType = "Term",
         targetId = "#result",
-        description = "'약관이 생성되었습니다.'"
+        description = "'약관을 생성했습니다.'"
     )
     @Override
     public Long createTerms(CreateTermCommand command) {

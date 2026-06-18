@@ -44,7 +44,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         action = AuditAction.CREATE,
         targetType = "Post",
         targetId = "#result.postId()",
-        description = "'커뮤니티 게시글이 생성되었습니다.'"
+        description = "'커뮤니티 게시글을 생성했습니다.'"
     )
     @Override
     public PostInfo createPost(CreatePostCommand command) {
@@ -65,7 +65,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         action = AuditAction.CREATE,
         targetType = "Post",
         targetId = "#result.postId()",
-        description = "'커뮤니티 번개 게시글이 생성되었습니다.'"
+        description = "'커뮤니티 번개 게시글을 생성했습니다.'"
     )
     @Override
     public PostInfo createLightningPost(CreateLightningCommand command) {
@@ -96,7 +96,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         action = AuditAction.UPDATE,
         targetType = "Post",
         targetId = "#command.postId()",
-        description = "'커뮤니티 게시글이 수정되었습니다.'"
+        description = "'커뮤니티 게시글을 수정했습니다.'"
     )
     @Override
     public PostInfo updatePost(UpdatePostCommand command) {
@@ -120,7 +120,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         action = AuditAction.UPDATE,
         targetType = "Post",
         targetId = "#command.postId()",
-        description = "'커뮤니티 번개 게시글이 수정되었습니다.'"
+        description = "'커뮤니티 번개 게시글을 수정했습니다.'"
     )
     @Override
     public PostInfo updateLightning(UpdateLightningCommand command) {
@@ -155,7 +155,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         action = AuditAction.DELETE,
         targetType = "Post",
         targetId = "#postId",
-        description = "'커뮤니티 게시글이 삭제되었습니다.'"
+        description = "'커뮤니티 게시글을 삭제했습니다.'"
     )
     @Override
     public void deletePost(Long postId) {

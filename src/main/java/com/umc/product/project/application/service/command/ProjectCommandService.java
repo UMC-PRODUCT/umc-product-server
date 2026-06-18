@@ -94,7 +94,7 @@ public class ProjectCommandService implements
         action = AuditAction.CREATE,
         targetType = "Project",
         targetId = "#result",
-        description = "'프로젝트 초안이 생성되었습니다.'"
+        description = "'프로젝트 초안을 생성했습니다.'"
     )
     @Override
     public Long create(CreateDraftProjectCommand command) {
@@ -233,7 +233,7 @@ public class ProjectCommandService implements
         action = AuditAction.PUBLISH,
         targetType = "Project",
         targetId = "#command.projectId()",
-        description = "'프로젝트가 게시되었습니다.'"
+        description = "'프로젝트를 게시했습니다.'"
     )
     @Override
     public ProjectStatus publish(PublishProjectCommand command) {
@@ -274,7 +274,7 @@ public class ProjectCommandService implements
         action = AuditAction.DELETE,
         targetType = "Project",
         targetId = "#command.projectId()",
-        description = "'프로젝트가 삭제되었습니다.'"
+        description = "'프로젝트를 삭제했습니다.'"
     )
     @Override
     public void delete(DeleteProjectCommand command) {

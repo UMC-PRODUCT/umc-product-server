@@ -40,7 +40,7 @@ public class NoticeVoteResponseCommandService implements ManageNoticeVoteRespons
         action = AuditAction.SUBMIT,
         targetType = "NoticeVoteResponse",
         targetId = "#result",
-        description = "'공지 투표 응답이 제출되었습니다.'"
+        description = "'공지 투표 응답을 제출했습니다.'"
     )
     @Override
     public Long submit(SubmitNoticeVoteResponseCommand command) {

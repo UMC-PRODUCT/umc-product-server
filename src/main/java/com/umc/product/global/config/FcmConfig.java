@@ -31,7 +31,7 @@ public class FcmConfig {
             new ByteArrayInputStream(firebaseCredentials.getBytes(StandardCharsets.UTF_8))
         );
 
-        log.debug("Firebase credentials 로드 완료");
+        log.debug("Firebase credentials를 로드했습니다");
 
         FirebaseApp firebaseApp = null;
         List<FirebaseApp> apps = FirebaseApp.getApps();
@@ -54,10 +54,10 @@ public class FcmConfig {
                     .build();
 
             firebaseApp = FirebaseApp.initializeApp(options);
-            log.info("FirebaseApp 초기화 완료: {}", firebaseApp.getName());
+            log.info("FirebaseApp을 초기화했습니다: name={}", firebaseApp.getName());
         }
 
-        log.info("FirebaseMessaging 인스턴스 생성 완료");
+        log.info("FirebaseMessaging 인스턴스를 생성했습니다");
         return FirebaseMessaging.getInstance(firebaseApp);
     }
 }

@@ -51,7 +51,7 @@ public class BlogCommentCommandService implements CreateBlogCommentUseCase, Upda
         action = AuditAction.CREATE,
         targetType = "BlogComment",
         targetId = "#result.id()",
-        description = "'블로그 댓글이 생성되었습니다.'"
+        description = "'블로그 댓글을 생성했습니다.'"
     )
     @Override
     public BlogCommentInfo create(CreateBlogCommentCommand command) {
@@ -82,7 +82,7 @@ public class BlogCommentCommandService implements CreateBlogCommentUseCase, Upda
         action = AuditAction.UPDATE,
         targetType = "BlogComment",
         targetId = "#command.commentId()",
-        description = "'블로그 댓글이 수정되었습니다.'"
+        description = "'블로그 댓글을 수정했습니다.'"
     )
     @Override
     public BlogCommentInfo update(UpdateBlogCommentCommand command) {
@@ -99,7 +99,7 @@ public class BlogCommentCommandService implements CreateBlogCommentUseCase, Upda
         action = AuditAction.DELETE,
         targetType = "BlogComment",
         targetId = "#command.commentId()",
-        description = "'블로그 댓글이 삭제되었습니다.'"
+        description = "'블로그 댓글을 삭제했습니다.'"
     )
     @Override
     public void delete(DeleteBlogCommentCommand command) {

@@ -100,13 +100,13 @@ public class KakaoTokenVerifier {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
             }
 
-            log.info("Kakao 토큰 교환 성공");
+            log.info("Kakao 토큰을 교환했습니다");
             return response.accessToken();
 
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Kakao 토큰 교환 중 오류 발생", e);
+            log.error("Kakao 토큰 교환 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -142,7 +142,7 @@ public class KakaoTokenVerifier {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
             }
 
-            log.debug("Kakao Access Token 검증 성공: hasEmail={}", hasEmail(response));
+            log.debug("Kakao Access Token을 검증했습니다: hasEmail={}", hasEmail(response));
 
             // OAuthAttributes.of("kakao", ...) 형식에 맞게 Map 생성
             Map<String, Object> attributes = buildAttributesMap(response);
@@ -152,7 +152,7 @@ public class KakaoTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Kakao Access Token 검증 중 오류 발생", e);
+            log.error("Kakao Access Token 검증 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -204,12 +204,12 @@ public class KakaoTokenVerifier {
                     .toBodilessEntity()
             );
 
-            log.info("Kakao 연결 끊기 성공");
+            log.info("Kakao 연결을 끊었습니다");
 
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Kakao 연결 끊기 중 오류 발생", e);
+            log.error("Kakao 연결 끊기 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -224,7 +224,7 @@ public class KakaoTokenVerifier {
         log.info("Kakao 사용자 연결 끊기 시작: targetProvided={}", hasText(kakaoUserId));
 
         if (kakaoAdminKey == null || kakaoAdminKey.isBlank()) {
-            log.warn("Kakao Admin Key가 설정되지 않아 연결 끊기를 skip합니다: targetProvided={}", hasText(kakaoUserId));
+            log.warn("Kakao Admin Key가 없어 연결 끊기를 건너뜁니다: targetProvided={}", hasText(kakaoUserId));
             return;
         }
 
@@ -248,12 +248,12 @@ public class KakaoTokenVerifier {
                     .toBodilessEntity()
             );
 
-            log.info("Kakao 연결 끊기 성공: targetProvided={}", hasText(kakaoUserId));
+            log.info("Kakao 연결을 끊었습니다: targetProvided={}", hasText(kakaoUserId));
 
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Kakao 연결 끊기 중 오류 발생: targetProvided={}", hasText(kakaoUserId), e);
+            log.error("Kakao 연결 끊기 실패: targetProvided={}", hasText(kakaoUserId), e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }

@@ -63,7 +63,7 @@ public class UmcProductMemberCommandService implements ManageUmcProductMemberUse
         action = AuditAction.CREATE,
         targetType = "UmcProductMember",
         targetId = "#result",
-        description = "'UMC Product 멤버가 생성되었습니다.'"
+        description = "'UMC Product 멤버를 생성했습니다.'"
     )
     @Override
     public Long create(CreateUmcProductMemberCommand command) {
@@ -94,7 +94,7 @@ public class UmcProductMemberCommandService implements ManageUmcProductMemberUse
         action = AuditAction.UPDATE,
         targetType = "UmcProductMember",
         targetId = "#command.umcProductMemberId()",
-        description = "'UMC Product 멤버 프로필이 수정되었습니다.'"
+        description = "'UMC Product 멤버 프로필을 수정했습니다.'"
     )
     @Override
     public void updateProfile(UpdateUmcProductMemberProfileCommand command) {

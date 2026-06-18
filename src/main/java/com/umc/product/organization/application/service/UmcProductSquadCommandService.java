@@ -47,7 +47,7 @@ public class UmcProductSquadCommandService implements ManageUmcProductSquadUseCa
         action = AuditAction.CREATE,
         targetType = "UmcProductSquad",
         targetId = "#result",
-        description = "'UMC Product 스쿼드가 생성되었습니다.'"
+        description = "'UMC Product 스쿼드를 생성했습니다.'"
     )
     @Override
     public Long create(CreateUmcProductSquadCommand command) {
@@ -69,7 +69,7 @@ public class UmcProductSquadCommandService implements ManageUmcProductSquadUseCa
         action = AuditAction.UPDATE,
         targetType = "UmcProductSquad",
         targetId = "#command.squadId()",
-        description = "'UMC Product 스쿼드가 수정되었습니다.'"
+        description = "'UMC Product 스쿼드를 수정했습니다.'"
     )
     @Override
     public void update(UpdateUmcProductSquadCommand command) {
@@ -92,7 +92,7 @@ public class UmcProductSquadCommandService implements ManageUmcProductSquadUseCa
         action = AuditAction.DELETE,
         targetType = "UmcProductSquad",
         targetId = "#squadId",
-        description = "'UMC Product 스쿼드가 삭제되었습니다.'"
+        description = "'UMC Product 스쿼드를 삭제했습니다.'"
     )
     @Override
     public void delete(Long squadId, Long requesterMemberId) {
@@ -107,7 +107,7 @@ public class UmcProductSquadCommandService implements ManageUmcProductSquadUseCa
         action = AuditAction.UPDATE,
         targetType = "UmcProductSquad",
         targetId = "#command.squadId()",
-        description = "'UMC Product 스쿼드 참여자가 교체되었습니다.'"
+        description = "'UMC Product 스쿼드 참여자를 교체했습니다.'"
     )
     @Override
     public void replaceParticipants(ReplaceUmcProductSquadParticipantsCommand command) {

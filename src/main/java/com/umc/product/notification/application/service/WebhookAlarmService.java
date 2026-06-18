@@ -85,7 +85,7 @@ public class WebhookAlarmService implements SendWebhookAlarmUseCase, FlushWebhoo
         try {
             adapter.send(title, content);
             operationalMetrics.recordNotification(platform.name(), "SEND_WEBHOOK", "success", 1);
-            log.info("웹훅 알람 전송 성공: platform={}", platform);
+            log.info("웹훅 알람을 전송했습니다: platform={}", platform);
         } catch (Exception e) {
             operationalMetrics.recordNotification(platform.name(), "SEND_WEBHOOK", "failure", 1);
             log.error("웹훅 알람 전송 실패: platform={}, error={}", platform, e.getMessage(), e);

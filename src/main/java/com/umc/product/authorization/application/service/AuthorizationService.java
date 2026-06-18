@@ -102,7 +102,7 @@ public class AuthorizationService implements CheckPermissionUseCase {
             .roleAttributes(roles)
             .build();
 
-        log.debug("권한 평가 subject 로드 완료: memberId={}, roleCount={}, challengerCount={}",
+        log.debug("권한 평가 subject를 로드했습니다: memberId={}, roleCount={}, challengerCount={}",
             subjectAttributes.memberId(), subjectAttributes.roleAttributes().size(),
             subjectAttributes.gisuChallengerInfos().size());
 

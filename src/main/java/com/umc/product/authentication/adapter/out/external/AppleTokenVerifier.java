@@ -97,7 +97,7 @@ public class AppleTokenVerifier {
             String sub = claims.getSubject();
             String email = claims.get("email", String.class);
 
-            log.debug("Apple ID Token 검증 성공: hasEmail={}", hasEmail(email));
+            log.debug("Apple ID Token을 검증했습니다: hasEmail={}", hasEmail(email));
 
             Map<String, Object> attributes = new HashMap<>();
             attributes.put("sub", sub);
@@ -108,7 +108,7 @@ public class AppleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Apple ID Token 검증 중 오류 발생", e);
+            log.error("Apple ID Token 검증 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -162,7 +162,7 @@ public class AppleTokenVerifier {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
             }
 
-            log.info("Apple Authorization Code 교환 성공, ID Token 검증 진행");
+            log.info("Apple Authorization Code를 교환했습니다. ID Token을 검증합니다");
 
             // 3. 받은 id_token을 검증
             OAuthAttributes attrs = verifyIdToken(response.idToken(), clientId);
@@ -171,7 +171,7 @@ public class AppleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Apple Authorization Code 교환 중 오류 발생", e);
+            log.error("Apple Authorization Code 교환 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -211,12 +211,12 @@ public class AppleTokenVerifier {
                     .toBodilessEntity()
             );
 
-            log.info("Apple token revoke 성공");
+            log.info("Apple token revoke를 완료했습니다");
 
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Apple token revoke 중 오류 발생", e);
+            log.error("Apple token revoke 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }

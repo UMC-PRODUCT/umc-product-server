@@ -54,7 +54,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
         action = AuditAction.LOGIN,
         targetType = "OAuthAuthentication",
         targetId = "#result.memberId()",
-        description = "'OAuth 로그인 처리가 완료되었습니다. provider=' + #result.provider() + ', existingMember=' + #result.isExistingMember()"
+        description = "'OAuth 로그인을 처리했습니다. provider=' + #result.provider() + ', existingMember=' + #result.isExistingMember()"
     )
     @Override
     @Transactional(readOnly = true)
@@ -70,7 +70,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
             )
             // 기존 회원이 존재하는지 확인
             .map(memberOAuth -> {
-                log.info("기존 회원 로그인 성공: memberId={}", memberOAuth.getMemberId());
+                log.info("기존 회원이 로그인했습니다: memberId={}", memberOAuth.getMemberId());
                 operationalMetrics.recordSecurityEvent("AUTHENTICATION", "OAUTH_LOGIN", "success");
                 return OAuthTokenLoginResult.existingMember(
                     memberOAuth.getMemberId(),
@@ -81,7 +81,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
             })
             // 존재하지 않는 회원인 경우에 대한 처리
             .orElseGet(() -> {
-                log.info("신규 회원 - 회원가입 필요: provider={}, hasEmail={}",
+                log.info("회원가입이 필요합니다: provider={}, hasEmail={}",
                     oAuthAttributes.provider(), hasEmail(oAuthAttributes.email()));
                 operationalMetrics.recordSecurityEvent("AUTHENTICATION", "OAUTH_LOGIN", "register_required");
                 return OAuthTokenLoginResult.newMember(
@@ -97,7 +97,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
         action = AuditAction.LOGIN,
         targetType = "OAuthAuthentication",
         targetId = "#result.memberId()",
-        description = "'OAuth access token 로그인이 완료되었습니다. provider=' + #result.provider() + ', existingMember=' + #result.isExistingMember()"
+        description = "'OAuth access token 로그인을 완료했습니다. provider=' + #result.provider() + ', existingMember=' + #result.isExistingMember()"
     )
     @Override
     public OAuthTokenLoginResult accessTokenLogin(AccessTokenLoginCommand command) {
@@ -109,7 +109,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
             command.token()
         );
 
-        log.info("OAuth 토큰 검증 성공: provider={}, hasEmail={}",
+        log.info("OAuth 토큰을 검증했습니다: provider={}, hasEmail={}",
             oauthAttrs.provider(),
             hasEmail(oauthAttrs.email())
         );
@@ -123,7 +123,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
         action = AuditAction.LOGIN,
         targetType = "OAuthAuthentication",
         targetId = "#result.memberId()",
-        description = "'OAuth authorization code 로그인이 완료되었습니다. provider=' + #result.provider() + ', existingMember=' + #result.isExistingMember()"
+        description = "'OAuth authorization code 로그인을 완료했습니다. provider=' + #result.provider() + ', existingMember=' + #result.isExistingMember()"
     )
     @Override
     public OAuthTokenLoginResult authorizationCodeLogin(AuthorizationCodeLoginCommand command) {
@@ -136,7 +136,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
             command.redirectUri()
         );
 
-        log.info("OAuth Authorization Code 교환 성공: provider={}, hasEmail={}",
+        log.info("OAuth Authorization Code를 교환했습니다: provider={}, hasEmail={}",
             oauthAttrs.provider(),
             hasEmail(oauthAttrs.email())
         );
@@ -150,7 +150,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
         action = AuditAction.LINK,
         targetType = "MemberOAuth",
         targetId = "#result",
-        description = "'OAuth 계정이 연결되었습니다. provider=' + #command.provider()"
+        description = "'OAuth 계정을 연결했습니다. provider=' + #command.provider()"
     )
     @Override
     public Long linkOAuth(LinkOAuthCommand command) {
@@ -176,7 +176,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
         domain = Domain.AUTHENTICATION,
         action = AuditAction.LINK,
         targetType = "MemberOAuth",
-        description = "'OAuth 계정이 대량 연결되었습니다. count=' + #result.size()"
+        description = "'OAuth 계정을 대량 연결했습니다. count=' + #result.size()"
     )
     @Override
     public List<Long> linkOAuthBulk(List<LinkOAuthCommand> commands) {
@@ -225,7 +225,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
         action = AuditAction.UNLINK,
         targetType = "MemberOAuth",
         targetId = "#command.memberOAuthId()",
-        description = "'OAuth 계정 연결이 해제되었습니다.'"
+        description = "'OAuth 계정 연결을 해제했습니다.'"
     )
     @Override
     public void unlinkOAuth(UnlinkOAuthCommand command) {
@@ -267,7 +267,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
                             memberOAuth.getAppleClientId()
                     );
                 } else {
-                    log.warn("[Apple 계정 연동 해제] refresh token 또는 client_id가 없어 revoke를 skip합니다: "
+                    log.warn("[Apple 계정 연동 해제] refresh token 또는 client_id가 없어 revoke를 건너뜁니다: "
                                     + "memberId={} memberOAuthId={} hasRefreshToken={} hasClientId={}",
                             memberOAuth.getMemberId(), memberOAuth.getId(),
                             memberOAuth.getAppleRefreshToken() != null,
@@ -279,7 +279,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
                     validateAccessTokenOwner(memberOAuth, command.kakaoAccessToken());
                     revokeOAuthTokenPort.revokeKakaoToken(command.kakaoAccessToken());
                 } else {
-                    log.warn("[Kakao 계정 연동 해제] access token이 전달되지 않아 revoke를 skip합니다: memberId={} memberOAuthId={}",
+                    log.warn("[Kakao 계정 연동 해제] access token이 없어 revoke를 건너뜁니다: memberId={} memberOAuthId={}",
                         memberOAuth.getMemberId(), memberOAuth.getId());
                 }
             }
@@ -288,7 +288,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
                     validateAccessTokenOwner(memberOAuth, command.googleAccessToken());
                     revokeOAuthTokenPort.revokeGoogleToken(command.googleAccessToken());
                 } else {
-                    log.warn("[Google 계정 연동 해제] access token이 전달되지 않아 revoke를 skip합니다: memberId={} memberOAuthId={}",
+                    log.warn("[Google 계정 연동 해제] access token이 없어 revoke를 건너뜁니다: memberId={} memberOAuthId={}",
                         memberOAuth.getMemberId(), memberOAuth.getId());
                 }
             }

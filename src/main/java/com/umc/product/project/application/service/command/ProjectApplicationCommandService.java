@@ -83,7 +83,7 @@ public class ProjectApplicationCommandService implements
         action = AuditAction.CREATE,
         targetType = "ProjectApplication",
         targetId = "#result.applicationId()",
-        description = "'프로젝트 지원서 초안이 생성되었습니다.'"
+        description = "'프로젝트 지원서 초안을 생성했습니다.'"
     )
     @Override
     public ProjectApplicationInfo create(CreateDraftProjectApplicationCommand command) {
@@ -183,7 +183,7 @@ public class ProjectApplicationCommandService implements
         action = AuditAction.SUBMIT,
         targetType = "ProjectApplication",
         targetId = "#result.applicationId()",
-        description = "'프로젝트 지원서가 제출되었습니다.'"
+        description = "'프로젝트 지원서를 제출했습니다.'"
     )
     @Override
     public ProjectApplicationInfo submit(SubmitProjectApplicationCommand command) {

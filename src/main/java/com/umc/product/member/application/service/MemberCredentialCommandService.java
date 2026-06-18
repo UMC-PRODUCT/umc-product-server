@@ -30,7 +30,7 @@ public class MemberCredentialCommandService implements ManageMemberCredentialUse
         action = AuditAction.CREATE,
         targetType = "MemberCredential",
         targetId = "#command.memberId()",
-        description = "'회원 자격증명이 등록되었습니다.'"
+        description = "'회원 자격증명을 등록했습니다.'"
     )
     @Override
     public void registerCredentialByEmail(RegisterMemberCredentialByEmailCommand command) {
@@ -47,7 +47,7 @@ public class MemberCredentialCommandService implements ManageMemberCredentialUse
         action = AuditAction.UPDATE,
         targetType = "MemberCredential",
         targetId = "#command.memberId()",
-        description = "'회원 비밀번호가 변경되었습니다.'"
+        description = "'회원 비밀번호를 변경했습니다.'"
     )
     @Override
     public void changePassword(ChangeMemberPasswordCommand command) {

@@ -57,7 +57,7 @@ public class OriginalWorkbookCommandService implements ManageOriginalWorkbookUse
         action = AuditAction.CREATE,
         targetType = "OriginalWorkbook",
         targetId = "#result",
-        description = "'원본 워크북이 생성되었습니다.'"
+        description = "'원본 워크북을 생성했습니다.'"
     )
     @Override
     public Long create(CreateOriginalWorkbookCommand command) {
@@ -83,7 +83,7 @@ public class OriginalWorkbookCommandService implements ManageOriginalWorkbookUse
         action = AuditAction.UPDATE,
         targetType = "OriginalWorkbook",
         targetId = "#command.originalWorkbookId()",
-        description = "'원본 워크북이 수정되었습니다.'"
+        description = "'원본 워크북을 수정했습니다.'"
     )
     @Override
     public void edit(EditOriginalWorkbookCommand command) {
@@ -97,7 +97,7 @@ public class OriginalWorkbookCommandService implements ManageOriginalWorkbookUse
         action = AuditAction.DELETE,
         targetType = "OriginalWorkbook",
         targetId = "#originalWorkbookId",
-        description = "'원본 워크북이 삭제되었습니다.'"
+        description = "'원본 워크북을 삭제했습니다.'"
     )
     @Override
     public void delete(Long originalWorkbookId) {
@@ -131,7 +131,7 @@ public class OriginalWorkbookCommandService implements ManageOriginalWorkbookUse
         domain = Domain.CURRICULUM,
         action = AuditAction.PUBLISH,
         targetType = "OriginalWorkbook",
-        description = "'배포 예정 워크북 자동 배포가 실행되었습니다.'"
+        description = "'배포 예정 워크북 자동 배포를 실행했습니다.'"
     )
     @Override
     public int releaseAllDue() {

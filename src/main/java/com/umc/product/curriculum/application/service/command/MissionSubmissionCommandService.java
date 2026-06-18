@@ -24,7 +24,7 @@ public class MissionSubmissionCommandService implements ManageMissionSubmissionU
         action = AuditAction.SUBMIT,
         targetType = "MissionSubmission",
         targetId = "#result",
-        description = "'미션 제출물이 생성되었습니다.'"
+        description = "'미션 제출물을 생성했습니다.'"
     )
     @Override
     public Long create(CreateMissionSubmissionCommand command) {

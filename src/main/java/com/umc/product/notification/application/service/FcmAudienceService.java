@@ -51,7 +51,7 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
     public void sendToAudience(AudienceNotificationCommand command) {
 
         if (!fcmProperties.enabled()) {
-            log.info("[FCM 비활성화] sendToAudience 스킵");
+            log.info("[FCM 비활성화] sendToAudience를 건너뜁니다");
             return;
         }
 
@@ -69,14 +69,14 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
 
         SendBatchResult result = sendBatch(tokens, command.title(), command.body());
         recordFcmMetric("SEND_TO_AUDIENCE", result);
-        log.info("대상자 알림 발송 완료: memberCount={}, tokenCount={}", memberIds.size(), tokens.size());
+        log.info("대상자 알림을 발송했습니다: memberCount={}, tokenCount={}", memberIds.size(), tokens.size());
     }
 
     @Override
     public void sendToMember(NotificationCommand command) {
 
         if (!fcmProperties.enabled()) {
-            log.info("[FCM 비활성화] sendToMember 스킵 memberId={}", command.memberId());
+            log.info("[FCM 비활성화] sendToMember를 건너뜁니다: memberId={}", command.memberId());
             return;
         }
 
@@ -94,7 +94,7 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
     public void sendToMembers(List<Long> memberIds, String title, String body) {
 
         if (!fcmProperties.enabled()) {
-            log.info("[FCM 비활성화] sendToMembers 스킵 count={}", memberIds == null ? 0 : memberIds.size());
+            log.info("[FCM 비활성화] sendToMembers를 건너뜁니다: count={}", memberIds == null ? 0 : memberIds.size());
             return;
         }
 
@@ -110,7 +110,7 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
 
         SendBatchResult result = sendBatch(tokens, title, body);
         recordFcmMetric("SEND_TO_MEMBERS", result);
-        log.info("bulk 알림 발송 완료: memberCount={}, tokenCount={}", memberIds.size(), tokens.size());
+        log.info("bulk 알림을 발송했습니다: memberCount={}, tokenCount={}", memberIds.size(), tokens.size());
     }
 
     // =========== PRIVATE ===========
@@ -143,7 +143,7 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
             }
         }
 
-        log.info("FCM 발송 완료 성공={}, 실패={}", totalSuccess, totalFail);
+        log.info("FCM 발송 결과: success={}, failure={}", totalSuccess, totalFail);
         return new SendBatchResult(totalSuccess, totalFail);
     }
 

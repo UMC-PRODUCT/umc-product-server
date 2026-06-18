@@ -27,7 +27,7 @@ public class MemberEmailCommandService implements ChangeMemberEmailUseCase {
         action = AuditAction.UPDATE,
         targetType = "MemberEmail",
         targetId = "#command.memberId()",
-        description = "'회원 이메일이 변경되었습니다.'"
+        description = "'회원 이메일을 변경했습니다.'"
     )
     @Override
     public void changeEmail(ChangeMemberEmailCommand command) {

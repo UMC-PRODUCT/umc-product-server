@@ -51,7 +51,7 @@ public class BlogContentCommandService implements CreateBlogContentUseCase, Upda
         action = AuditAction.CREATE,
         targetType = "BlogContent",
         targetId = "#result.id()",
-        description = "'블로그 콘텐츠가 생성되었습니다.'"
+        description = "'블로그 콘텐츠를 생성했습니다.'"
     )
     @Override
     public BlogContentInfo create(CreateBlogContentCommand command) {
@@ -83,7 +83,7 @@ public class BlogContentCommandService implements CreateBlogContentUseCase, Upda
         action = AuditAction.UPDATE,
         targetType = "BlogContent",
         targetId = "#command.contentId()",
-        description = "'블로그 콘텐츠가 수정되었습니다.'"
+        description = "'블로그 콘텐츠를 수정했습니다.'"
     )
     @Override
     public BlogContentInfo update(UpdateBlogContentCommand command) {
@@ -113,7 +113,7 @@ public class BlogContentCommandService implements CreateBlogContentUseCase, Upda
         action = AuditAction.DELETE,
         targetType = "BlogContent",
         targetId = "#command.contentId()",
-        description = "'블로그 콘텐츠가 삭제되었습니다.'"
+        description = "'블로그 콘텐츠를 삭제했습니다.'"
     )
     @Override
     public void delete(DeleteBlogContentCommand command) {

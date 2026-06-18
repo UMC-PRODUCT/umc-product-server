@@ -42,7 +42,7 @@ public class FormCommandService implements ManageFormUseCase {
         action = AuditAction.CREATE,
         targetType = "Form",
         targetId = "#result",
-        description = "'설문 폼 초안이 생성되었습니다.'"
+        description = "'설문 폼 초안을 생성했습니다.'"
     )
     @Override
     public Long createDraft(CreateDraftFormCommand command) {
@@ -76,7 +76,7 @@ public class FormCommandService implements ManageFormUseCase {
         action = AuditAction.PUBLISH,
         targetType = "Form",
         targetId = "#command.formId()",
-        description = "'설문 폼이 게시되었습니다.'"
+        description = "'설문 폼을 게시했습니다.'"
     )
     @Override
     public void publishForm(PublishFormCommand command) {

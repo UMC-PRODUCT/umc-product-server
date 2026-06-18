@@ -28,7 +28,7 @@ public class UserFeedbackResponseCommandService implements SubmitUserFeedbackRes
         action = AuditAction.SUBMIT,
         targetType = "UserFeedbackResponse",
         targetId = "#result",
-        description = "'사용자 피드백 응답이 제출되었습니다.'"
+        description = "'사용자 피드백 응답을 제출했습니다.'"
     )
     @Override
     public Long submit(SubmitUserFeedbackResponseCommand command) {

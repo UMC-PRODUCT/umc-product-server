@@ -31,7 +31,7 @@ public class ChallengerRoleCommandService implements ManageChallengerRoleUseCase
         action = AuditAction.CREATE,
         targetType = "ChallengerRole",
         targetId = "#result",
-        description = "'ChallengerRole이 생성되었습니다.'"
+        description = "'ChallengerRole을 생성했습니다.'"
     )
     @Override
     public Long createChallengerRole(CreateChallengerRoleCommand command) {
@@ -55,7 +55,7 @@ public class ChallengerRoleCommandService implements ManageChallengerRoleUseCase
         action = AuditAction.UPDATE,
         targetType = "ChallengerRole",
         targetId = "#command.challengerRoleId()",
-        description = "'ChallengerRole이 수정되었습니다.'"
+        description = "'ChallengerRole을 수정했습니다.'"
     )
     @Override
     public void updateChallengerRole(UpdateChallengerRoleCommand command) {
@@ -69,7 +69,7 @@ public class ChallengerRoleCommandService implements ManageChallengerRoleUseCase
         action = AuditAction.DELETE,
         targetType = "ChallengerRole",
         targetId = "#command.challengerRoleId()",
-        description = "'ChallengerRole이 삭제되었습니다.'"
+        description = "'ChallengerRole을 삭제했습니다.'"
     )
     @Override
     public void deleteChallengerRole(DeleteChallengerRoleCommand command) {

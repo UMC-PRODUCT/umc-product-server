@@ -32,7 +32,7 @@ public class MemberProfileCommandService implements ManageMemberProfileUseCase {
         action = AuditAction.UPDATE,
         targetType = "MemberProfile",
         targetId = "#command.memberId()",
-        description = "'회원 프로필이 저장되었습니다.'"
+        description = "'회원 프로필을 저장했습니다.'"
     )
     @Override
     public void upsert(UpsertMemberProfileCommand command) {
@@ -56,7 +56,7 @@ public class MemberProfileCommandService implements ManageMemberProfileUseCase {
         action = AuditAction.DELETE,
         targetType = "MemberProfile",
         targetId = "#memberId",
-        description = "'회원 프로필이 삭제되었습니다.'"
+        description = "'회원 프로필을 삭제했습니다.'"
     )
     @Override
     public void delete(Long memberId) {

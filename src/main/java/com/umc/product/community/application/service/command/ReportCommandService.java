@@ -37,7 +37,7 @@ public class ReportCommandService implements ReportPostUseCase, ReportCommentUse
         action = AuditAction.SUBMIT,
         targetType = "PostReport",
         targetId = "#command.postId()",
-        description = "'커뮤니티 게시글 신고가 제출되었습니다.'"
+        description = "'커뮤니티 게시글 신고를 제출했습니다.'"
     )
     @Override
     public void report(ReportPostCommand command) {
@@ -54,7 +54,7 @@ public class ReportCommandService implements ReportPostUseCase, ReportCommentUse
         action = AuditAction.SUBMIT,
         targetType = "CommentReport",
         targetId = "#command.commentId()",
-        description = "'커뮤니티 댓글 신고가 제출되었습니다.'"
+        description = "'커뮤니티 댓글 신고를 제출했습니다.'"
     )
     @Override
     public void report(ReportCommentCommand command) {

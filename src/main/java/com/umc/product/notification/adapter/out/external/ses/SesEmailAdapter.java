@@ -44,7 +44,7 @@ public class SesEmailAdapter implements SendEmailPort {
             SendEmailResponse response = ExternalApiCallLogger.measure("AWS_SES", "SEND_EMAIL", () ->
                 sesV2Client.sendEmail(request)
             );
-            log.info("SES 이메일 발송 성공: recipientPresent={}, messageId={}",
+            log.info("SES 이메일을 발송했습니다: recipientPresent={}, messageId={}",
                 hasRecipient(message.to()), response.messageId());
         } catch (SesV2Exception e) {
             // 예외 삼킴 방지: AWS error code 까지 컨텍스트에 남기고 cause 를 포함해 도메인 예외로 변환한다.

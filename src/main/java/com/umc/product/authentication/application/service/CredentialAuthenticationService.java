@@ -104,7 +104,7 @@ public class CredentialAuthenticationService implements CredentialAuthentication
         action = AuditAction.LOGIN,
         targetType = "MemberCredential",
         targetId = "#result.memberId()",
-        description = "'이메일 로그인에 성공했습니다.'"
+        description = "'이메일 로그인을 완료했습니다.'"
     )
     @Override
     @Transactional

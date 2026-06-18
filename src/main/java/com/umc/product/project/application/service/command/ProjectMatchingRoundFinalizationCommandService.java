@@ -96,7 +96,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         action = AuditAction.FINALIZE,
         targetType = "ProjectMatchingRound",
         targetId = "#matchingRoundId",
-        description = "'프로젝트 매칭 라운드가 자동 확정되었습니다.'"
+        description = "'프로젝트 매칭 라운드를 자동 확정했습니다.'"
     )
     @Override
     public void autoDecide(Long matchingRoundId, Long executedByMemberId) {

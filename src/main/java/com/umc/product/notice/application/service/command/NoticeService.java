@@ -82,7 +82,7 @@ public class NoticeService implements ManageNoticeUseCase {
         action = AuditAction.CREATE,
         targetType = "Notice",
         targetId = "#result",
-        description = "'공지사항이 생성되었습니다.'"
+        description = "'공지사항을 생성했습니다.'"
     )
     @Override
     public Long createNotice(CreateNoticeCommand command) {
@@ -133,7 +133,7 @@ public class NoticeService implements ManageNoticeUseCase {
         action = AuditAction.UPDATE,
         targetType = "Notice",
         targetId = "#command.noticeId()",
-        description = "'공지사항이 수정되었습니다.'"
+        description = "'공지사항을 수정했습니다.'"
     )
     @Override
     public void updateNoticeTitleOrContent(UpdateNoticeCommand command) {
@@ -149,7 +149,7 @@ public class NoticeService implements ManageNoticeUseCase {
         action = AuditAction.DELETE,
         targetType = "Notice",
         targetId = "#command.noticeId()",
-        description = "'공지사항이 삭제되었습니다.'"
+        description = "'공지사항을 삭제했습니다.'"
     )
     @Override
     public void deleteNotice(DeleteNoticeCommand command) {
@@ -171,7 +171,7 @@ public class NoticeService implements ManageNoticeUseCase {
         action = AuditAction.REMIND,
         targetType = "Notice",
         targetId = "#command.noticeId()",
-        description = "'공지사항 리마인드가 발송되었습니다.'"
+        description = "'공지사항 리마인드를 발송했습니다.'"
     )
     @Override
     public void remindNotice(SendNoticeReminderCommand command) {

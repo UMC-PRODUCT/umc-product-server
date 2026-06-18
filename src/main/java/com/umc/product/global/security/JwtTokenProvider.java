@@ -211,7 +211,7 @@ public class JwtTokenProvider {
             log.debug("지원되지 않는 JWT 토큰입니다.");
             throw new AuthenticationDomainException(AuthenticationErrorCode.UNSUPPORTED_JWT);
         } catch (IllegalArgumentException e) {
-            log.debug("JWT 토큰이 잘못되었습니다.");
+            log.debug("JWT token 형식이 올바르지 않습니다.");
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_JWT);
         }
 //        return false;

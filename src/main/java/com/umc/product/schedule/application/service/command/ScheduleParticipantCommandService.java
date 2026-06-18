@@ -145,7 +145,7 @@ public class ScheduleParticipantCommandService implements
         domain = Domain.SCHEDULE,
         action = AuditAction.CHECK,
         targetType = "ScheduleAttendance",
-        description = "'일정 출석 요청이 처리되었습니다. count=' + #commands.size()"
+        description = "'일정 출석 요청을 처리했습니다. count=' + #commands.size()"
     )
     @Override
     public List<ScheduleParticipantAttendanceResult> decideAttendances(List<DecideAttendanceCommand> commands) {

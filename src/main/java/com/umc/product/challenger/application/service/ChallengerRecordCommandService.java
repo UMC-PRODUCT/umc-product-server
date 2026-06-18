@@ -55,14 +55,14 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
         action = AuditAction.CREATE,
         targetType = "ChallengerRecord",
         targetId = "#result",
-        description = "'ChallengerRecord가 생성되었습니다.'"
+        description = "'ChallengerRecord를 생성했습니다.'"
     )
     @Override
     public Long create(CreateChallengerRecordCommand command) {
         validateRecord(command.gisuId(), command.schoolId(), command.chapterId());
 
         ChallengerRecord savedRecord = saveChallengerRecordPort.save(command.toEntity());
-        log.info("ChallengerRecord 생성 완료: recordId={}, gisuId={}, schoolId={}, chapterId={}, adminRecord={}",
+        log.info("ChallengerRecord를 생성했습니다: recordId={}, gisuId={}, schoolId={}, chapterId={}, adminRecord={}",
             savedRecord.getId(), command.gisuId(), command.schoolId(), command.chapterId(),
             command.challengerRoleType() != null);
         return savedRecord.getId();
@@ -72,7 +72,7 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
         domain = Domain.CHALLENGER,
         action = AuditAction.CREATE,
         targetType = "ChallengerRecord",
-        description = "'ChallengerRecord가 대량 생성되었습니다. count=' + #result.size()"
+        description = "'ChallengerRecord를 대량 생성했습니다. count=' + #result.size()"
     )
     @Override
     public List<Long> createBulk(List<CreateChallengerRecordCommand> commands) {
@@ -81,7 +81,7 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
             .toList();
 
         List<ChallengerRecord> savedRecords = saveChallengerRecordPort.saveAll(records);
-        log.info("ChallengerRecord 대량 생성 완료: count={}", savedRecords.size());
+        log.info("ChallengerRecord를 대량 생성했습니다: count={}", savedRecords.size());
         return savedRecords.stream().map(ChallengerRecord::getId).toList();
     }
 
@@ -90,7 +90,7 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
         action = AuditAction.DELETE,
         targetType = "ChallengerRecord",
         targetId = "#id",
-        description = "'ChallengerRecord가 삭제되었습니다.'"
+        description = "'ChallengerRecord를 삭제했습니다.'"
     )
     @Override
     public void delete(Long id) {
@@ -102,7 +102,7 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
         action = AuditAction.CHECK,
         targetType = "ChallengerRecord",
         targetId = "#command.targetMemberId()",
-        description = "'ChallengerRecord 코드가 사용되었습니다.'"
+        description = "'ChallengerRecord 코드를 사용했습니다.'"
     )
     @Override
     public void consumeCode(ConsumeChallengerRecordCommand command) {

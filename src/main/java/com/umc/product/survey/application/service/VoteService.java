@@ -44,7 +44,7 @@ public class VoteService implements ManageVoteUseCase {
         action = AuditAction.CREATE,
         targetType = "Vote",
         targetId = "#result",
-        description = "'투표가 생성되었습니다.'"
+        description = "'투표를 생성했습니다.'"
     )
     @Override
     public Long createVote(CreateVoteCommand command) {

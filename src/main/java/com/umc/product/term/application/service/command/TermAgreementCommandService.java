@@ -39,7 +39,7 @@ public class TermAgreementCommandService implements ManageTermAgreementUseCase {
         action = AuditAction.SUBMIT,
         targetType = "TermConsent",
         targetId = "#command.termId()",
-        description = "'약관 동의가 제출되었습니다.'"
+        description = "'약관 동의를 제출했습니다.'"
     )
     @Override
     public void createTermConsent(CreateTermConsentCommand command) {

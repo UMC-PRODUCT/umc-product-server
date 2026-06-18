@@ -72,7 +72,7 @@ public class GoogleTokenVerifier {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
 
-            log.debug("Google ID 토큰 검증 성공: hasEmail={}", hasEmail(response.email()));
+            log.debug("Google ID Token을 검증했습니다: hasEmail={}", hasEmail(response.email()));
 
             // OAuthAttributes 형식에 맞게 Map 생성
             Map<String, Object> attributes = new HashMap<>();
@@ -86,7 +86,7 @@ public class GoogleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Google ID 토큰 검증 중 오류 발생", e);
+            log.error("Google ID Token 검증 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -117,7 +117,7 @@ public class GoogleTokenVerifier {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
 
-            log.debug("Google Access Token 검증 성공: hasEmail={}", hasEmail(response.email()));
+            log.debug("Google Access Token을 검증했습니다: hasEmail={}", hasEmail(response.email()));
 
             // OAuthAttributes 형식에 맞게 Map 생성
             Map<String, Object> attributes = new HashMap<>();
@@ -129,7 +129,7 @@ public class GoogleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Google Access Token 검증 중 오류 발생", e);
+            log.error("Google Access Token 검증 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -161,12 +161,12 @@ public class GoogleTokenVerifier {
                     .toBodilessEntity()
             );
 
-            log.info("Google token revoke 성공");
+            log.info("Google token revoke를 완료했습니다");
 
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Google token revoke 중 오류 발생", e);
+            log.error("Google token revoke 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }

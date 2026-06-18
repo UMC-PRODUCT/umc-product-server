@@ -183,7 +183,7 @@ public class S3StorageAdapter implements StoragePort {
                 .build();
 
             s3Client.deleteObject(deleteRequest);
-            log.info("S3 파일 삭제 완료: storageKey={}", storageKey);
+            log.info("S3 파일을 삭제했습니다: storageKey={}", storageKey);
             recordStorageMetric("DELETE_OBJECT", "success", startNanos);
         } catch (Exception e) {
             recordStorageMetric("DELETE_OBJECT", "failure", startNanos);
@@ -246,7 +246,7 @@ public class S3StorageAdapter implements StoragePort {
 
             SignedUrl signedUrl = cloudFrontUtilities.getSignedUrlWithCannedPolicy(signerRequest);
 
-            log.debug("CloudFront Signed URL 생성 완료: storageKey={}", storageKey);
+            log.debug("CloudFront Signed URL을 생성했습니다: storageKey={}", storageKey);
             recordStorageMetric("CREATE_DOWNLOAD_URL", "success", startNanos);
 
             return signedUrl.url();

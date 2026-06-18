@@ -101,7 +101,7 @@ public class QuestionCommandService implements ManageQuestionUseCase {
         action = AuditAction.REORDER,
         targetType = "Question",
         targetId = "#command.sectionId()",
-        description = "'설문 질문 순서가 변경되었습니다.'"
+        description = "'설문 질문 순서를 변경했습니다.'"
     )
     @Override
     public void reorderQuestions(ReorderQuestionsCommand command) {

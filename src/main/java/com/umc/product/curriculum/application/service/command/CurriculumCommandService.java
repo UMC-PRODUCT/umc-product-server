@@ -34,7 +34,7 @@ public class CurriculumCommandService implements ManageCurriculumUseCase {
         action = AuditAction.CREATE,
         targetType = "Curriculum",
         targetId = "#result",
-        description = "'커리큘럼이 생성되었습니다.'"
+        description = "'커리큘럼을 생성했습니다.'"
     )
     @Override
     public Long create(CreateCurriculumCommand command) {
@@ -50,7 +50,7 @@ public class CurriculumCommandService implements ManageCurriculumUseCase {
         action = AuditAction.UPDATE,
         targetType = "Curriculum",
         targetId = "#command.curriculumId()",
-        description = "'커리큘럼이 수정되었습니다.'"
+        description = "'커리큘럼을 수정했습니다.'"
     )
     @Override
     public void edit(EditCurriculumCommand command) {
@@ -65,7 +65,7 @@ public class CurriculumCommandService implements ManageCurriculumUseCase {
         action = AuditAction.DELETE,
         targetType = "Curriculum",
         targetId = "#curriculumId",
-        description = "'커리큘럼이 삭제되었습니다.'"
+        description = "'커리큘럼을 삭제했습니다.'"
     )
     @Override
     public void delete(Long curriculumId) {

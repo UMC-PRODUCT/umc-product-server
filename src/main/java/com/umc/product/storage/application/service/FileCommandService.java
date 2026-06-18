@@ -45,7 +45,7 @@ public class FileCommandService implements ManageFileUseCase {
         action = AuditAction.CREATE,
         targetType = "FileMetadata",
         targetId = "#result.fileId()",
-        description = "'파일 업로드 URL이 생성되었습니다.'"
+        description = "'파일 업로드 URL을 생성했습니다.'"
     )
     @Override
     @Transactional
@@ -88,7 +88,7 @@ public class FileCommandService implements ManageFileUseCase {
             UPLOAD_URL_DURATION_MINUTES
         );
 
-        log.info("파일 업로드 URL 생성 완료: fileId={}, category={}", fileId, command.category());
+        log.info("파일 업로드 URL을 생성했습니다: fileId={}, category={}", fileId, command.category());
 
         return new FileUploadInfo(
             fileId,
@@ -104,7 +104,7 @@ public class FileCommandService implements ManageFileUseCase {
         action = AuditAction.CHECK,
         targetType = "FileMetadata",
         targetId = "#fileId",
-        description = "'파일 업로드가 확인되었습니다.'"
+        description = "'파일 업로드를 확인했습니다.'"
     )
     @Override
     @Transactional
@@ -122,7 +122,7 @@ public class FileCommandService implements ManageFileUseCase {
         confirmUploaded(metadata, objectInfo);
         saveFileMetadataPort.save(metadata);
 
-        log.info("파일 업로드 완료 확인: fileId={}", fileId);
+        log.info("파일 업로드를 확인했습니다: fileId={}", fileId);
     }
 
     @Audited(
@@ -130,7 +130,7 @@ public class FileCommandService implements ManageFileUseCase {
         action = AuditAction.DELETE,
         targetType = "FileMetadata",
         targetId = "#command.fileId()",
-        description = "'파일이 삭제되었습니다.'"
+        description = "'파일을 삭제했습니다.'"
     )
     @Override
     public void deleteFile(DeleteFileCommand command) {
@@ -145,7 +145,7 @@ public class FileCommandService implements ManageFileUseCase {
         // 메타데이터 삭제
         saveFileMetadataPort.deleteByFileId(command.fileId());
 
-        log.info("파일 삭제 완료: fileId={}", command.fileId());
+        log.info("파일을 삭제했습니다: fileId={}", command.fileId());
     }
 
     private void validateDeletePermission(FileMetadata metadata, Long requesterMemberId) {

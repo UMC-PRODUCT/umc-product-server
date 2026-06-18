@@ -506,7 +506,7 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
                         .toBodilessEntity()
                 );
                 sent.addAll(commentIdsByPage.get(i));
-                log.debug("Discord domain batch 전송 완료: domainKey={}, page={}/{}, comments={}",
+                log.debug("Discord domain batch를 전송했습니다: domainKey={}, page={}/{}, comments={}",
                     message.domainKey(), i + 1, pages.size(), message.comments().size());
             } catch (RestClientResponseException e) {
                 log.error("Discord domain batch 전송 실패: domainKey={}, page={}/{}, status={}, bodyLength={}",

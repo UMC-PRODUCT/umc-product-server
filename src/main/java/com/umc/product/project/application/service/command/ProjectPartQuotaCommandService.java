@@ -44,7 +44,7 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
         action = AuditAction.UPDATE,
         targetType = "ProjectPartQuota",
         targetId = "#command.projectId()",
-        description = "'프로젝트 파트 정원이 수정되었습니다.'"
+        description = "'프로젝트 파트 정원을 수정했습니다.'"
     )
     @Override
     public void update(UpdatePartQuotasCommand command) {

@@ -62,7 +62,7 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
         action = AuditAction.SUBMIT,
         targetType = "FormResponse",
         targetId = "#result",
-        description = "'설문 응답이 제출되었습니다.'"
+        description = "'설문 응답을 제출했습니다.'"
     )
     @Override
     public Long submitImmediately(SubmitFormResponseCommand command) {

@@ -89,7 +89,7 @@ public class ChatCompletionService implements ChatCompleteUseCase {
         }
         String provider = chatCompletionPort.providerName();
         if (!callGuard.allow()) {
-            log.debug("LLM 호출 가드가 차단 상태입니다. 즉시 실패 응답 반환.");
+            log.debug("LLM 호출 가드가 요청을 차단했습니다. 실패 응답을 반환합니다.");
             metrics.recordCall(provider, LlmMetrics.STATUS_CIRCUIT_OPEN, Duration.ZERO);
             throw new LlmDomainException(LlmErrorCode.CHAT_COMPLETION_FAILED, "AI 응답 생성이 잠시 제한됐어요. 잠시 후 다시 시도해주세요.");
         }
@@ -107,7 +107,7 @@ public class ChatCompletionService implements ChatCompleteUseCase {
             metrics.recordCall(result.provider(), LlmMetrics.STATUS_SUCCESS, latency);
             metrics.recordTokens(result.provider(), result.promptTokens(), result.completionTokens());
             callGuard.recordSuccess();
-            log.info("LLM 호출 완료: provider={}, latencyMs={}, promptTokens={}, completionTokens={}, responseLen={}",
+            log.info("LLM 호출을 완료했습니다: provider={}, latencyMs={}, promptTokens={}, completionTokens={}, responseLen={}",
                 result.provider(),
                 latency.toMillis(),
                 result.promptTokens(),

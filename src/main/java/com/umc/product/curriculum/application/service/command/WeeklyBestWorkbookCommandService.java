@@ -22,7 +22,7 @@ public class WeeklyBestWorkbookCommandService implements ManageWeeklyBestWorkboo
         domain = Domain.CURRICULUM,
         action = AuditAction.APPROVE,
         targetType = "WeeklyBestWorkbook",
-        description = "'주간 베스트 워크북이 선정되었습니다.'"
+        description = "'주간 베스트 워크북을 선정했습니다.'"
     )
     @Override
     public void selectBest(CreateWeeklyBestWorkbookCommand command) {
