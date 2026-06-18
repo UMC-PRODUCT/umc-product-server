@@ -8,6 +8,8 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.blog.application.port.in.command.CreateBlogContentUseCase;
 import com.umc.product.blog.application.port.in.command.DeleteBlogContentUseCase;
 import com.umc.product.blog.application.port.in.command.UpdateBlogContentUseCase;
@@ -26,6 +28,7 @@ import com.umc.product.blog.domain.BlogContentType;
 import com.umc.product.blog.domain.BlogDomainException;
 import com.umc.product.blog.domain.BlogErrorCode;
 import com.umc.product.blog.domain.BlogHashtag;
+import com.umc.product.global.exception.constant.Domain;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,6 +46,13 @@ public class BlogContentCommandService implements CreateBlogContentUseCase, Upda
     private final SaveBlogHashtagPort saveBlogHashtagPort;
     private final BlogContentInfoAssembler contentInfoAssembler;
 
+    @Audited(
+        domain = Domain.BLOG,
+        action = AuditAction.CREATE,
+        targetType = "BlogContent",
+        targetId = "#result.id()",
+        description = "'블로그 콘텐츠가 생성되었습니다.'"
+    )
     @Override
     public BlogContentInfo create(CreateBlogContentCommand command) {
         BlogContentType type = BlogContentType.fromPath(command.type());
@@ -68,6 +78,13 @@ public class BlogContentCommandService implements CreateBlogContentUseCase, Upda
         return contentInfoAssembler.assemble(saved, command.authorMemberId(), true);
     }
 
+    @Audited(
+        domain = Domain.BLOG,
+        action = AuditAction.UPDATE,
+        targetType = "BlogContent",
+        targetId = "#command.contentId()",
+        description = "'블로그 콘텐츠가 수정되었습니다.'"
+    )
     @Override
     public BlogContentInfo update(UpdateBlogContentCommand command) {
         BlogContent content = loadBlogContentPort.findContentById(command.contentId())
@@ -91,6 +108,13 @@ public class BlogContentCommandService implements CreateBlogContentUseCase, Upda
         return contentInfoAssembler.assemble(saved, content.getAuthorMemberId(), false);
     }
 
+    @Audited(
+        domain = Domain.BLOG,
+        action = AuditAction.DELETE,
+        targetType = "BlogContent",
+        targetId = "#command.contentId()",
+        description = "'블로그 콘텐츠가 삭제되었습니다.'"
+    )
     @Override
     public void delete(DeleteBlogContentCommand command) {
         BlogContent content = loadBlogContentPort.findContentById(command.contentId())

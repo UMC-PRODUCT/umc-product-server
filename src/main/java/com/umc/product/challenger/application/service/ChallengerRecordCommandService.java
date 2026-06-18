@@ -97,6 +97,13 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
         saveChallengerRecordPort.delete(loadChallengerRecordPort.getById(id));
     }
 
+    @Audited(
+        domain = Domain.CHALLENGER,
+        action = AuditAction.CHECK,
+        targetType = "ChallengerRecord",
+        targetId = "#command.targetMemberId()",
+        description = "'ChallengerRecord 코드가 사용되었습니다.'"
+    )
     @Override
     public void consumeCode(ConsumeChallengerRecordCommand command) {
         String code = command.code();

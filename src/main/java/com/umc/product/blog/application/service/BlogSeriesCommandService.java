@@ -7,6 +7,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.blog.application.port.in.command.CreateBlogSeriesUseCase;
 import com.umc.product.blog.application.port.in.command.DeleteBlogSeriesUseCase;
 import com.umc.product.blog.application.port.in.command.ReplaceBlogSeriesContentsUseCase;
@@ -26,6 +28,7 @@ import com.umc.product.blog.domain.BlogDomainException;
 import com.umc.product.blog.domain.BlogErrorCode;
 import com.umc.product.blog.domain.BlogSeries;
 import com.umc.product.blog.domain.BlogSeriesContent;
+import com.umc.product.global.exception.constant.Domain;
 
 import lombok.RequiredArgsConstructor;
 
@@ -41,6 +44,13 @@ public class BlogSeriesCommandService implements CreateBlogSeriesUseCase, Update
     private final SaveBlogSeriesContentPort saveBlogSeriesContentPort;
     private final BlogSeriesInfoAssembler seriesInfoAssembler;
 
+    @Audited(
+        domain = Domain.BLOG,
+        action = AuditAction.CREATE,
+        targetType = "BlogSeries",
+        targetId = "#result.id()",
+        description = "'블로그 시리즈가 생성되었습니다.'"
+    )
     @Override
     public BlogSeriesInfo create(CreateBlogSeriesCommand command) {
         BlogContentType type = BlogContentType.fromPath(command.type());
@@ -62,6 +72,13 @@ public class BlogSeriesCommandService implements CreateBlogSeriesUseCase, Update
         return seriesInfoAssembler.assemble(saved, command.authorMemberId(), true);
     }
 
+    @Audited(
+        domain = Domain.BLOG,
+        action = AuditAction.UPDATE,
+        targetType = "BlogSeries",
+        targetId = "#command.seriesId()",
+        description = "'블로그 시리즈가 수정되었습니다.'"
+    )
     @Override
     public BlogSeriesInfo update(UpdateBlogSeriesCommand command) {
         BlogSeries series = getSeries(command.seriesId());
@@ -80,6 +97,13 @@ public class BlogSeriesCommandService implements CreateBlogSeriesUseCase, Update
         return seriesInfoAssembler.assemble(saveBlogSeriesPort.save(series), series.getAuthorMemberId(), false);
     }
 
+    @Audited(
+        domain = Domain.BLOG,
+        action = AuditAction.DELETE,
+        targetType = "BlogSeries",
+        targetId = "#command.seriesId()",
+        description = "'블로그 시리즈가 삭제되었습니다.'"
+    )
     @Override
     public void delete(DeleteBlogSeriesCommand command) {
         BlogSeries series = getSeries(command.seriesId());
@@ -87,6 +111,13 @@ public class BlogSeriesCommandService implements CreateBlogSeriesUseCase, Update
         saveBlogSeriesPort.save(series);
     }
 
+    @Audited(
+        domain = Domain.BLOG,
+        action = AuditAction.REORDER,
+        targetType = "BlogSeries",
+        targetId = "#command.seriesId()",
+        description = "'블로그 시리즈 콘텐츠 순서가 변경되었습니다.'"
+    )
     @Override
     public BlogSeriesInfo replaceContents(ReplaceBlogSeriesContentsCommand command) {
         BlogSeries series = getSeries(command.seriesId());

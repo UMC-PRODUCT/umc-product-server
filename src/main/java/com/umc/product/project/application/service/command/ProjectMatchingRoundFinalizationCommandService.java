@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
@@ -27,6 +29,7 @@ import com.umc.product.challenger.application.port.in.query.dto.SearchChallenger
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.project.application.port.in.command.AutoDecideProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
@@ -88,6 +91,13 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     private final GetChallengerUseCase getChallengerUseCase;
     private final SearchChallengerUseCase searchChallengerUseCase;
 
+    @Audited(
+        domain = Domain.PROJECT,
+        action = AuditAction.FINALIZE,
+        targetType = "ProjectMatchingRound",
+        targetId = "#matchingRoundId",
+        description = "'프로젝트 매칭 라운드가 자동 확정되었습니다.'"
+    )
     @Override
     public void autoDecide(Long matchingRoundId, Long executedByMemberId) {
         ProjectMatchingRound round = loadProjectMatchingRoundPort.getById(matchingRoundId);

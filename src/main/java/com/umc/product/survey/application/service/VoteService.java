@@ -1,23 +1,31 @@
 package com.umc.product.survey.application.service;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.survey.application.port.in.command.ManageFormUseCase;
 import com.umc.product.survey.application.port.in.command.ManageVoteUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateVoteCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteFormCommand;
-import com.umc.product.survey.application.port.out.*;
+import com.umc.product.survey.application.port.out.SaveFormPort;
+import com.umc.product.survey.application.port.out.SaveFormSectionPort;
+import com.umc.product.survey.application.port.out.SaveQuestionOptionPort;
+import com.umc.product.survey.application.port.out.SaveQuestionPort;
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.FormSection;
 import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.enums.QuestionType;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -31,6 +39,13 @@ public class VoteService implements ManageVoteUseCase {
     private final SaveQuestionOptionPort saveQuestionOptionPort;
     private final ManageFormUseCase manageFormUseCase;
 
+    @Audited(
+        domain = Domain.SURVEY,
+        action = AuditAction.CREATE,
+        targetType = "Vote",
+        targetId = "#result",
+        description = "'투표가 생성되었습니다.'"
+    )
     @Override
     public Long createVote(CreateVoteCommand command) {
         QuestionType qType = command.allowMultipleChoice()

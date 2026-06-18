@@ -1,5 +1,10 @@
 package com.umc.product.curriculum.application.service.command;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.curriculum.application.port.in.command.ManageCurriculumUseCase;
 import com.umc.product.curriculum.application.port.in.command.dto.curriculum.CreateCurriculumCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.curriculum.EditCurriculumCommand;
@@ -9,9 +14,9 @@ import com.umc.product.curriculum.application.port.out.SaveCurriculumPort;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
+import com.umc.product.global.exception.constant.Domain;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +29,13 @@ public class CurriculumCommandService implements ManageCurriculumUseCase {
 
     // TODO: 기수(Gisu) 유효성 검사 필요 - organization 도메인의 GetGisuUseCase.getById() 호출로 존재 여부 확인
     //  현재 gisuId가 실제 존재하는 기수인지 검증하지 않음
+    @Audited(
+        domain = Domain.CURRICULUM,
+        action = AuditAction.CREATE,
+        targetType = "Curriculum",
+        targetId = "#result",
+        description = "'커리큘럼이 생성되었습니다.'"
+    )
     @Override
     public Long create(CreateCurriculumCommand command) {
         if (loadCurriculumPort.existsByGisuIdAndPart(command.gisuId(), command.part())) {
@@ -33,6 +45,13 @@ public class CurriculumCommandService implements ManageCurriculumUseCase {
         return saveCurriculumPort.save(curriculum).getId();
     }
 
+    @Audited(
+        domain = Domain.CURRICULUM,
+        action = AuditAction.UPDATE,
+        targetType = "Curriculum",
+        targetId = "#command.curriculumId()",
+        description = "'커리큘럼이 수정되었습니다.'"
+    )
     @Override
     public void edit(EditCurriculumCommand command) {
         Curriculum curriculum = loadCurriculumPort.findById(command.curriculumId())
@@ -41,6 +60,13 @@ public class CurriculumCommandService implements ManageCurriculumUseCase {
         saveCurriculumPort.save(curriculum);
     }
 
+    @Audited(
+        domain = Domain.CURRICULUM,
+        action = AuditAction.DELETE,
+        targetType = "Curriculum",
+        targetId = "#curriculumId",
+        description = "'커리큘럼이 삭제되었습니다.'"
+    )
     @Override
     public void delete(Long curriculumId) {
         Curriculum curriculum = loadCurriculumPort.findById(curriculumId)

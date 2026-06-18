@@ -1,5 +1,12 @@
 package com.umc.product.community.application.service.command;
 
+import java.time.Instant;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.community.application.port.in.command.post.CreatePostUseCase;
 import com.umc.product.community.application.port.in.command.post.DeletePostUseCase;
 import com.umc.product.community.application.port.in.command.post.TogglePostLikeUseCase;
@@ -18,10 +25,9 @@ import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.Post.LightningInfo;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
-import java.time.Instant;
+import com.umc.product.global.exception.constant.Domain;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +39,13 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
     private final SavePostPort savePostPort;
     private final AuthorInfoProvider authorInfoProvider;
 
+    @Audited(
+        domain = Domain.COMMUNITY,
+        action = AuditAction.CREATE,
+        targetType = "Post",
+        targetId = "#result.postId()",
+        description = "'커뮤니티 게시글이 생성되었습니다.'"
+    )
     @Override
     public PostInfo createPost(CreatePostCommand command) {
         Post post = Post.createPost(
@@ -47,6 +60,13 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         return PostInfo.from(savedPost, command.authorChallengerId(), authorName);
     }
 
+    @Audited(
+        domain = Domain.COMMUNITY,
+        action = AuditAction.CREATE,
+        targetType = "Post",
+        targetId = "#result.postId()",
+        description = "'커뮤니티 번개 게시글이 생성되었습니다.'"
+    )
     @Override
     public PostInfo createLightningPost(CreateLightningCommand command) {
         LightningInfo lightningInfo = new LightningInfo(
@@ -71,6 +91,13 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         return PostInfo.from(savedPost, command.authorChallengerId(), authorName);
     }
 
+    @Audited(
+        domain = Domain.COMMUNITY,
+        action = AuditAction.UPDATE,
+        targetType = "Post",
+        targetId = "#command.postId()",
+        description = "'커뮤니티 게시글이 수정되었습니다.'"
+    )
     @Override
     public PostInfo updatePost(UpdatePostCommand command) {
         PostWithAuthor postWithAuthor = loadPostPort.findByIdWithAuthor(command.postId())
@@ -88,6 +115,13 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         return PostInfo.from(savedPost, postWithAuthor.authorChallengerId(), authorName);
     }
 
+    @Audited(
+        domain = Domain.COMMUNITY,
+        action = AuditAction.UPDATE,
+        targetType = "Post",
+        targetId = "#command.postId()",
+        description = "'커뮤니티 번개 게시글이 수정되었습니다.'"
+    )
     @Override
     public PostInfo updateLightning(UpdateLightningCommand command) {
         PostWithAuthor postWithAuthor = loadPostPort.findByIdWithAuthor(command.postId())
@@ -116,6 +150,13 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         return PostInfo.from(savedPost, postWithAuthor.authorChallengerId(), authorName);
     }
 
+    @Audited(
+        domain = Domain.COMMUNITY,
+        action = AuditAction.DELETE,
+        targetType = "Post",
+        targetId = "#postId",
+        description = "'커뮤니티 게시글이 삭제되었습니다.'"
+    )
     @Override
     public void deletePost(Long postId) {
         loadPostPort.findById(postId)

@@ -3,6 +3,9 @@ package com.umc.product.survey.application.service.command;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.survey.application.port.in.command.ManageFormUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateDraftFormCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteFormCommand;
@@ -34,6 +37,13 @@ public class FormCommandService implements ManageFormUseCase {
     private final SaveFormResponsePort saveFormResponsePort;
     private final SaveAnswerPort saveAnswerPort;
 
+    @Audited(
+        domain = Domain.SURVEY,
+        action = AuditAction.CREATE,
+        targetType = "Form",
+        targetId = "#result",
+        description = "'설문 폼 초안이 생성되었습니다.'"
+    )
     @Override
     public Long createDraft(CreateDraftFormCommand command) {
         Form form = Form.createDraft(
@@ -61,6 +71,13 @@ public class FormCommandService implements ManageFormUseCase {
         saveFormPort.save(form);
     }
 
+    @Audited(
+        domain = Domain.SURVEY,
+        action = AuditAction.PUBLISH,
+        targetType = "Form",
+        targetId = "#command.formId()",
+        description = "'설문 폼이 게시되었습니다.'"
+    )
     @Override
     public void publishForm(PublishFormCommand command) {
         Form form = loadFormPort.findById(command.formId())

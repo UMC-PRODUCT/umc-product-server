@@ -10,8 +10,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
@@ -74,6 +77,13 @@ public class NoticeService implements ManageNoticeUseCase {
         return ids;
     }
 
+    @Audited(
+        domain = Domain.NOTICE,
+        action = AuditAction.CREATE,
+        targetType = "Notice",
+        targetId = "#result",
+        description = "'공지사항이 생성되었습니다.'"
+    )
     @Override
     public Long createNotice(CreateNoticeCommand command) {
         if (!validateNoticeWritePermission(command.targetInfo(), command.memberId())) {
@@ -118,6 +128,13 @@ public class NoticeService implements ManageNoticeUseCase {
         return savedNotice.getId();
     }
 
+    @Audited(
+        domain = Domain.NOTICE,
+        action = AuditAction.UPDATE,
+        targetType = "Notice",
+        targetId = "#command.noticeId()",
+        description = "'공지사항이 수정되었습니다.'"
+    )
     @Override
     public void updateNoticeTitleOrContent(UpdateNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
@@ -127,6 +144,13 @@ public class NoticeService implements ManageNoticeUseCase {
 
     }
 
+    @Audited(
+        domain = Domain.NOTICE,
+        action = AuditAction.DELETE,
+        targetType = "Notice",
+        targetId = "#command.noticeId()",
+        description = "'공지사항이 삭제되었습니다.'"
+    )
     @Override
     public void deleteNotice(DeleteNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
@@ -142,6 +166,13 @@ public class NoticeService implements ManageNoticeUseCase {
         saveNoticePort.delete(notice);
     }
 
+    @Audited(
+        domain = Domain.NOTICE,
+        action = AuditAction.REMIND,
+        targetType = "Notice",
+        targetId = "#command.noticeId()",
+        description = "'공지사항 리마인드가 발송되었습니다.'"
+    )
     @Override
     public void remindNotice(SendNoticeReminderCommand command) {
         Notice notice = findNoticeById(command.noticeId());

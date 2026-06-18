@@ -6,12 +6,15 @@ import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
@@ -86,6 +89,13 @@ public class ProjectCommandService implements
     private final GetChapterUseCase getChapterUseCase;
     private final ManageFormUseCase manageFormUseCase;
 
+    @Audited(
+        domain = Domain.PROJECT,
+        action = AuditAction.CREATE,
+        targetType = "Project",
+        targetId = "#result",
+        description = "'프로젝트 초안이 생성되었습니다.'"
+    )
     @Override
     public Long create(CreateDraftProjectCommand command) {
         getGisuUseCase.getById(command.gisuId());
@@ -218,6 +228,13 @@ public class ProjectCommandService implements
      *   <li>같은 트랜잭션에서 Form 도 PUBLISHED 로 전이</li>
      * </ul>
      */
+    @Audited(
+        domain = Domain.PROJECT,
+        action = AuditAction.PUBLISH,
+        targetType = "Project",
+        targetId = "#command.projectId()",
+        description = "'프로젝트가 게시되었습니다.'"
+    )
     @Override
     public ProjectStatus publish(PublishProjectCommand command) {
         Project project = loadProjectPort.getById(command.projectId());
@@ -252,6 +269,13 @@ public class ProjectCommandService implements
      * 권한 검증은 Controller 단의 {@code @CheckAccess(DELETE)} + {@link com.umc.product.project.application.service.evaluator.ProjectPermissionEvaluator}
      * 가 담당. 본 Service 는 도메인 상태 invariant 만 책임진다.
      */
+    @Audited(
+        domain = Domain.PROJECT,
+        action = AuditAction.DELETE,
+        targetType = "Project",
+        targetId = "#command.projectId()",
+        description = "'프로젝트가 삭제되었습니다.'"
+    )
     @Override
     public void delete(DeleteProjectCommand command) {
         Project project = loadProjectPort.getById(command.projectId());

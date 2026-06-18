@@ -1,6 +1,19 @@
 package com.umc.product.project.application.service.command;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.project.application.port.in.command.UpdatePartQuotasUseCase;
 import com.umc.product.project.application.port.in.command.dto.UpdatePartQuotasCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdatePartQuotasCommand.Entry;
@@ -11,15 +24,8 @@ import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +39,13 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
     /**
      * PUT 시멘틱 — 본문에 있는 파트만 유지/갱신, 본문에 없는 기존 파트는 삭제.
      */
+    @Audited(
+        domain = Domain.PROJECT,
+        action = AuditAction.UPDATE,
+        targetType = "ProjectPartQuota",
+        targetId = "#command.projectId()",
+        description = "'프로젝트 파트 정원이 수정되었습니다.'"
+    )
     @Override
     public void update(UpdatePartQuotasCommand command) {
         Project project = loadProjectPort.getById(command.projectId());

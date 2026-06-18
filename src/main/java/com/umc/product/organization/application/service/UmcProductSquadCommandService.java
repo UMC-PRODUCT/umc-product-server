@@ -11,6 +11,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.application.port.in.command.ManageUmcProductSquadUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateUmcProductSquadCommand;
 import com.umc.product.organization.application.port.in.command.dto.ReplaceUmcProductSquadParticipantsCommand;
@@ -39,6 +42,13 @@ public class UmcProductSquadCommandService implements ManageUmcProductSquadUseCa
     private final SaveUmcProductSquadParticipantPort saveUmcProductSquadParticipantPort;
     private final UmcProductAccessPolicy umcProductAccessPolicy;
 
+    @Audited(
+        domain = Domain.ORGANIZATION,
+        action = AuditAction.CREATE,
+        targetType = "UmcProductSquad",
+        targetId = "#result",
+        description = "'UMC Product 스쿼드가 생성되었습니다.'"
+    )
     @Override
     public Long create(CreateUmcProductSquadCommand command) {
         validateCanManage(command.requesterMemberId());
@@ -54,6 +64,13 @@ public class UmcProductSquadCommandService implements ManageUmcProductSquadUseCa
         return saveUmcProductSquadPort.save(squad).getId();
     }
 
+    @Audited(
+        domain = Domain.ORGANIZATION,
+        action = AuditAction.UPDATE,
+        targetType = "UmcProductSquad",
+        targetId = "#command.squadId()",
+        description = "'UMC Product 스쿼드가 수정되었습니다.'"
+    )
     @Override
     public void update(UpdateUmcProductSquadCommand command) {
         validateCanManage(command.requesterMemberId());
@@ -70,6 +87,13 @@ public class UmcProductSquadCommandService implements ManageUmcProductSquadUseCa
         saveUmcProductSquadPort.save(squad);
     }
 
+    @Audited(
+        domain = Domain.ORGANIZATION,
+        action = AuditAction.DELETE,
+        targetType = "UmcProductSquad",
+        targetId = "#squadId",
+        description = "'UMC Product 스쿼드가 삭제되었습니다.'"
+    )
     @Override
     public void delete(Long squadId, Long requesterMemberId) {
         validateCanManage(requesterMemberId);
@@ -78,6 +102,13 @@ public class UmcProductSquadCommandService implements ManageUmcProductSquadUseCa
         saveUmcProductSquadPort.delete(squad);
     }
 
+    @Audited(
+        domain = Domain.ORGANIZATION,
+        action = AuditAction.UPDATE,
+        targetType = "UmcProductSquad",
+        targetId = "#command.squadId()",
+        description = "'UMC Product 스쿼드 참여자가 교체되었습니다.'"
+    )
     @Override
     public void replaceParticipants(ReplaceUmcProductSquadParticipantsCommand command) {
         validateCanManage(command.requesterMemberId());

@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.blog.application.port.in.command.CreateBlogCommentUseCase;
 import com.umc.product.blog.application.port.in.command.DeleteBlogCommentUseCase;
@@ -26,6 +28,7 @@ import com.umc.product.blog.domain.BlogContent;
 import com.umc.product.blog.domain.BlogContentType;
 import com.umc.product.blog.domain.BlogDomainException;
 import com.umc.product.blog.domain.BlogErrorCode;
+import com.umc.product.global.exception.constant.Domain;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,6 +46,13 @@ public class BlogCommentCommandService implements CreateBlogCommentUseCase, Upda
     private final BlogCommentInfoAssembler commentInfoAssembler;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
+    @Audited(
+        domain = Domain.BLOG,
+        action = AuditAction.CREATE,
+        targetType = "BlogComment",
+        targetId = "#result.id()",
+        description = "'블로그 댓글이 생성되었습니다.'"
+    )
     @Override
     public BlogCommentInfo create(CreateBlogCommentCommand command) {
         BlogContent content = getPublishedContent(command.type(), command.slug());
@@ -67,6 +77,13 @@ public class BlogCommentCommandService implements CreateBlogCommentUseCase, Upda
         );
     }
 
+    @Audited(
+        domain = Domain.BLOG,
+        action = AuditAction.UPDATE,
+        targetType = "BlogComment",
+        targetId = "#command.commentId()",
+        description = "'블로그 댓글이 수정되었습니다.'"
+    )
     @Override
     public BlogCommentInfo update(UpdateBlogCommentCommand command) {
         BlogContent content = getPublishedContent(command.type(), command.slug());
@@ -77,6 +94,13 @@ public class BlogCommentCommandService implements CreateBlogCommentUseCase, Upda
         return assembleSingle(updated, command.memberId());
     }
 
+    @Audited(
+        domain = Domain.BLOG,
+        action = AuditAction.DELETE,
+        targetType = "BlogComment",
+        targetId = "#command.commentId()",
+        description = "'블로그 댓글이 삭제되었습니다.'"
+    )
     @Override
     public void delete(DeleteBlogCommentCommand command) {
         BlogContent content = getPublishedContent(command.type(), command.slug());

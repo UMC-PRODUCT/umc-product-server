@@ -1,5 +1,10 @@
 package com.umc.product.community.application.service.command;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.community.application.port.in.command.report.ReportCommentUseCase;
 import com.umc.product.community.application.port.in.command.report.ReportPostUseCase;
 import com.umc.product.community.application.port.in.command.report.dto.ReportCommentCommand;
@@ -13,9 +18,9 @@ import com.umc.product.community.domain.enums.ReportTargetType;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +32,13 @@ public class ReportCommandService implements ReportPostUseCase, ReportCommentUse
     private final LoadReportPort loadReportPort;
     private final SaveReportPort saveReportPort;
 
+    @Audited(
+        domain = Domain.COMMUNITY,
+        action = AuditAction.SUBMIT,
+        targetType = "PostReport",
+        targetId = "#command.postId()",
+        description = "'커뮤니티 게시글 신고가 제출되었습니다.'"
+    )
     @Override
     public void report(ReportPostCommand command) {
         // 게시글 존재 확인
@@ -37,6 +49,13 @@ public class ReportCommandService implements ReportPostUseCase, ReportCommentUse
         checkDuplicateAndSaveReport(command.reporterId(), ReportTargetType.POST, command.postId());
     }
 
+    @Audited(
+        domain = Domain.COMMUNITY,
+        action = AuditAction.SUBMIT,
+        targetType = "CommentReport",
+        targetId = "#command.commentId()",
+        description = "'커뮤니티 댓글 신고가 제출되었습니다.'"
+    )
     @Override
     public void report(ReportCommentCommand command) {
         // 댓글 존재 확인
