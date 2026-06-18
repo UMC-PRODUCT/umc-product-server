@@ -43,9 +43,7 @@ public class ProjectPermissionController {
     public ProjectPermissionsResponse getPermissions(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam(name = "ids")
-        @NotEmpty
-        @Size(max = 100, message = "ids는 최대 100개까지 조회할 수 있습니다.")
-        List<@NotNull Long> ids
+        @NotEmpty @Size(max = 100, message = "ids는 최대 100개까지 조회할 수 있습니다.") List<@NotNull Long> ids
     ) {
         List<Long> deduplicatedIds = new ArrayList<>(new LinkedHashSet<>(ids));
         List<ProjectPermissionInfo> infos = getProjectPermissionsUseCase.listByProjectIds(
