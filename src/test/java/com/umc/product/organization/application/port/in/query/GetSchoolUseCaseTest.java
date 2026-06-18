@@ -3,6 +3,12 @@ package com.umc.product.organization.application.port.in.query;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
@@ -20,10 +26,6 @@ import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
 import com.umc.product.support.UseCaseTestSupport;
 import com.umc.product.support.fixture.GisuFixture;
-import java.util.List;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @Disabled
 class GetSchoolUseCaseTest extends UseCaseTestSupport {

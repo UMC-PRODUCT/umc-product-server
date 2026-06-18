@@ -6,6 +6,9 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
@@ -15,8 +18,6 @@ import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
 import com.umc.product.storage.domain.exception.StorageException;
 import com.umc.product.support.UseCaseTestSupport;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * FileQueryService 통합 테스트

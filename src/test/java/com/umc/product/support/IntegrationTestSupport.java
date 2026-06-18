@@ -1,12 +1,5 @@
 package com.umc.product.support;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.cloud.storage.Storage;
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.umc.product.global.security.JwtTokenProvider;
-import com.umc.product.storage.application.port.out.StoragePort;
-import com.umc.product.support.isolation.DatabaseIsolation;
-import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +9,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.storage.application.port.out.StoragePort;
+import com.umc.product.support.isolation.DatabaseIsolation;
+
+import jakarta.persistence.EntityManager;
 
 /**
  * 통합 테스트(Integration Test) 공통 베이스 클래스.
@@ -120,9 +121,6 @@ public abstract class IntegrationTestSupport {
 
     @MockitoBean
     protected FirebaseMessaging firebaseMessaging;
-
-    @MockitoBean
-    protected Storage googleCloudStorage;
 
     @MockitoBean
     protected StoragePort storagePort;

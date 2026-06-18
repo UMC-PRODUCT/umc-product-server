@@ -2,12 +2,14 @@ package com.umc.product.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.umc.product.storage.domain.enums.StorageProvider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import com.umc.product.storage.domain.enums.StorageProvider;
 
 class StorageProviderPolicyTest {
 
