@@ -1,15 +1,17 @@
 package com.umc.product.maintenance.application.service;
 
-import com.umc.product.maintenance.application.port.out.LoadMaintenanceWindowPort;
-import com.umc.product.maintenance.domain.MaintenanceSnapshot;
-import jakarta.annotation.PostConstruct;
 import java.time.Clock;
 import java.util.concurrent.atomic.AtomicReference;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.maintenance.application.port.out.LoadMaintenanceWindowPort;
+import com.umc.product.maintenance.domain.MaintenanceSnapshot;
+
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 점검 활성 상태의 인메모리 스냅샷. 매 요청마다 DB 를 치지 않기 위함.
@@ -42,7 +44,6 @@ public class MaintenanceStateHolder {
         refresh();
     }
 
-    @Scheduled(fixedDelay = 10_000L)
     @Transactional(readOnly = true)
     public void refresh() {
         try {
