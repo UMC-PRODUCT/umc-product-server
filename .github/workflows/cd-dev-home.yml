@@ -1,3 +1,29 @@
+# Required repository variables:
+# - vars.UMC_GITHUB_APP_CLIENT_ID (used by reusable CI feedback)
+# - vars.SECRET_S3_URI
+# Optional repository variables:
+# - vars.AWS_REGION (default: ap-northeast-2)
+# - vars.ECR_REPOSITORY (default: umc-product-server)
+# - vars.HTTP_PORT (default: 8080)
+# - vars.APP_PORT (default: 8080)
+# - vars.MANAGEMENT_PORT (default: 9090)
+# - vars.APP_REPLICAS (default: 1)
+# - vars.HEALTHCHECK_TIMEOUT (default: 180)
+# Required repository secrets:
+# - secrets.UMC_GITHUB_APP_PRIVATE_KEY (used by reusable CI feedback)
+# - secrets.AWS_ACCESS_KEY_ID
+# - secrets.AWS_SECRET_ACCESS_KEY
+# - secrets.SERVER_APP_DIRECTORY
+# - secrets.SERVER_SSH_HOST
+# - secrets.SERVER_SSH_USERNAME
+# - secrets.SERVER_SSH_PRIVATE_KEY
+# - secrets.SERVER_SSH_PORT
+# - secrets.POSTGRES_USER
+# - secrets.POSTGRES_PASSWORD
+# - secrets.DISCORD_CD_WEBHOOK_URL
+# Optional repository secrets:
+# - secrets.AWS_ACCOUNT_ID (inferred from AWS STS when empty)
+
 name: CD [Develop Home Server]
 
 on:
@@ -474,3 +500,18 @@ jobs:
         run: |
           echo "::error::Develop home server deployment failed."
           echo "GitHub Actions 로그와 홈서버 Docker 로그를 확인해주세요."
+
+      - name: Discord 배포 결과 알림
+        if: always()
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_CD_WEBHOOK_URL }}
+          DEPLOY_WORKFLOW: ${{ github.workflow }}
+          DEPLOY_STATUS: ${{ job.status }}
+          DEPLOY_ENVIRONMENT: ${{ env.ENVIRONMENT }}
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+          DEPLOY_SHA: ${{ github.sha }}
+          DEPLOY_IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          DEPLOY_TARGET: Develop Home Server
+          DEPLOY_RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: node .github/scripts/discord-deploy-notify.mjs

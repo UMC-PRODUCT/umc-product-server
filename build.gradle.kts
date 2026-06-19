@@ -301,6 +301,12 @@ tasks.named<Checkstyle>("checkstyleTest") {
     setSource(files(changedJavaFiles("src/test/java")))
 }
 
+val spotlessTest by tasks.registering {
+    group = "verification"
+    description = "Runs Spotless checks for Java test sources before executing tests."
+    dependsOn(tasks.named("spotlessJavaCheck"))
+}
+
 tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
     layered {
         enabled.set(true)
@@ -363,6 +369,7 @@ val checkDuplicateFlywayMigrationVersions by tasks.registering {
 tasks.withType<Test> {
     useJUnitPlatform()
     maxHeapSize = "3g"
+    dependsOn(spotlessTest)
     dependsOn(checkDuplicateFlywayMigrationVersions)
 }
 
