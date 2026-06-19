@@ -1,10 +1,5 @@
 package com.umc.product.figma.adapter.out.external;
 
-import com.umc.product.figma.application.port.out.SendDiscordMentionPort;
-import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage;
-import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage.CommentEntry;
-import com.umc.product.figma.domain.exception.FigmaDomainException;
-import com.umc.product.figma.domain.exception.FigmaErrorCode;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -16,12 +11,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+
+import com.umc.product.figma.application.port.out.SendDiscordMentionPort;
+import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage;
+import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage.CommentEntry;
+import com.umc.product.figma.domain.exception.FigmaDomainException;
+import com.umc.product.figma.domain.exception.FigmaErrorCode;
+import com.umc.product.global.logging.ExternalApiCallLogger;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 도메인 단위로 묶인 댓글 batch 를 Discord 로 발송하는 webhook 어댑터.
@@ -493,19 +497,21 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
             payload.put("allowed_mentions", Map.of("parse", List.of("roles", "users")));
 
             try {
-                restClient.post()
-                    .uri(message.webhookUrl())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(payload)
-                    .retrieve()
-                    .toBodilessEntity();
+                ExternalApiCallLogger.measure("DISCORD", "SEND_FIGMA_DOMAIN_BATCH", () ->
+                    restClient.post()
+                        .uri(message.webhookUrl())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(payload)
+                        .retrieve()
+                        .toBodilessEntity()
+                );
                 sent.addAll(commentIdsByPage.get(i));
-                log.debug("Discord domain batch 전송 완료: domainKey={}, page={}/{}, comments={}",
+                log.debug("Discord domain batch를 전송했습니다: domainKey={}, page={}/{}, comments={}",
                     message.domainKey(), i + 1, pages.size(), message.comments().size());
             } catch (RestClientResponseException e) {
-                log.error("Discord domain batch 전송 실패: domainKey={}, page={}/{}, status={}, body={}",
+                log.error("Discord domain batch 전송 실패: domainKey={}, page={}/{}, status={}, bodyLength={}",
                     message.domainKey(), i + 1, pages.size(),
-                    e.getStatusCode(), e.getResponseBodyAsString());
+                    e.getStatusCode(), e.getResponseBodyAsByteArray().length);
                 if (sent.isEmpty()) {
                     throw new FigmaDomainException(FigmaErrorCode.DISCORD_MENTION_SEND_FAILED);
                 }

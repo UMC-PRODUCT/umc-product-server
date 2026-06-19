@@ -202,16 +202,16 @@ public class JwtTokenProvider {
             parseClaims(token, secretKey);
             return true;
         } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
-            log.info("잘못된 JWT 서명입니다.");
+            log.debug("잘못된 JWT 서명입니다.");
             throw new AuthenticationDomainException(AuthenticationErrorCode.WRONG_JWT_SIGNATURE);
         } catch (ExpiredJwtException e) {
-            log.info("만료된 JWT 토큰입니다.");
+            log.debug("만료된 JWT 토큰입니다.");
             throw new AuthenticationDomainException(AuthenticationErrorCode.EXPIRED_JWT_TOKEN);
         } catch (UnsupportedJwtException e) {
-            log.info("지원되지 않는 JWT 토큰입니다.");
+            log.debug("지원되지 않는 JWT 토큰입니다.");
             throw new AuthenticationDomainException(AuthenticationErrorCode.UNSUPPORTED_JWT);
         } catch (IllegalArgumentException e) {
-            log.info("JWT 토큰이 잘못되었습니다.");
+            log.debug("JWT token 형식이 올바르지 않습니다.");
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_JWT);
         }
 //        return false;

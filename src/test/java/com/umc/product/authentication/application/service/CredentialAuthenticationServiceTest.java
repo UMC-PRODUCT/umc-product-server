@@ -30,6 +30,7 @@ import com.umc.product.authentication.application.port.in.command.dto.ResetPassw
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.ClientType;
+import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.member.application.port.in.command.ManageMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswordCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialByEmailCommand;
@@ -59,6 +60,8 @@ class CredentialAuthenticationServiceTest {
     ManageMemberCredentialUseCase manageMemberCredentialUseCase;
     @Mock
     CredentialRehashService rehashService;
+    @Mock
+    OperationalMetrics operationalMetrics;
     @InjectMocks
     CredentialAuthenticationService service;
 

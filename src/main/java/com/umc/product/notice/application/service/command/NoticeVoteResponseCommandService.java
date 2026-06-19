@@ -1,5 +1,14 @@
 package com.umc.product.notice.application.service.command;
 
+import java.time.Instant;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.notice.application.port.in.command.ManageNoticeVoteResponseUseCase;
 import com.umc.product.notice.application.port.in.command.dto.SubmitNoticeVoteResponseCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeVoteResponseCommand;
@@ -14,12 +23,8 @@ import com.umc.product.survey.application.port.in.command.dto.DeleteFormResponse
 import com.umc.product.survey.application.port.in.command.dto.SubmitFormResponseCommand;
 import com.umc.product.survey.application.port.in.command.dto.UpdateFormResponseCommand;
 import com.umc.product.survey.application.port.in.query.GetVoteUseCase;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional
@@ -30,6 +35,13 @@ public class NoticeVoteResponseCommandService implements ManageNoticeVoteRespons
     private final GetVoteUseCase getVoteUseCase;
     private final ManageFormResponseUseCase manageFormResponseUseCase;
 
+    @Audited(
+        domain = Domain.NOTICE,
+        action = AuditAction.SUBMIT,
+        targetType = "NoticeVoteResponse",
+        targetId = "#result",
+        description = "'공지 투표 응답을 제출했습니다.'"
+    )
     @Override
     public Long submit(SubmitNoticeVoteResponseCommand command) {
         NoticeVote noticeVote = loadOpenNoticeVote(command.noticeId());

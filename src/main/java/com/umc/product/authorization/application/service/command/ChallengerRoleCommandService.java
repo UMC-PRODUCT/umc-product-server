@@ -1,5 +1,12 @@
 package com.umc.product.authorization.application.service.command;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.command.ManageChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.command.dto.CreateChallengerRoleCommand;
 import com.umc.product.authorization.application.port.in.command.dto.DeleteChallengerRoleCommand;
@@ -7,10 +14,9 @@ import com.umc.product.authorization.application.port.in.command.dto.UpdateChall
 import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
 import com.umc.product.authorization.application.port.out.SaveChallengerRolePort;
 import com.umc.product.authorization.domain.ChallengerRole;
-import java.util.List;
+import com.umc.product.global.exception.constant.Domain;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +26,13 @@ public class ChallengerRoleCommandService implements ManageChallengerRoleUseCase
     private final LoadChallengerRolePort loadChallengerRolePort;
     private final SaveChallengerRolePort saveChallengerRolePort;
 
+    @Audited(
+        domain = Domain.AUTHORIZATION,
+        action = AuditAction.CREATE,
+        targetType = "ChallengerRole",
+        targetId = "#result",
+        description = "'ChallengerRole을 생성했습니다.'"
+    )
     @Override
     public Long createChallengerRole(CreateChallengerRoleCommand command) {
         ChallengerRole challengerRole = command.toEntity();
@@ -37,6 +50,13 @@ public class ChallengerRoleCommandService implements ManageChallengerRoleUseCase
             .toList();
     }
 
+    @Audited(
+        domain = Domain.AUTHORIZATION,
+        action = AuditAction.UPDATE,
+        targetType = "ChallengerRole",
+        targetId = "#command.challengerRoleId()",
+        description = "'ChallengerRole을 수정했습니다.'"
+    )
     @Override
     public void updateChallengerRole(UpdateChallengerRoleCommand command) {
         ChallengerRole challengerRole = loadChallengerRolePort.getById(command.challengerRoleId());
@@ -44,6 +64,13 @@ public class ChallengerRoleCommandService implements ManageChallengerRoleUseCase
         saveChallengerRolePort.save(challengerRole);
     }
 
+    @Audited(
+        domain = Domain.AUTHORIZATION,
+        action = AuditAction.DELETE,
+        targetType = "ChallengerRole",
+        targetId = "#command.challengerRoleId()",
+        description = "'ChallengerRole을 삭제했습니다.'"
+    )
     @Override
     public void deleteChallengerRole(DeleteChallengerRoleCommand command) {
         ChallengerRole challengerRole = loadChallengerRolePort.getById(command.challengerRoleId());

@@ -1,13 +1,17 @@
 package com.umc.product.authentication.adapter.in.scheduler;
 
-import com.umc.product.authentication.application.port.out.DeleteEmailVerificationPort;
 import java.time.Duration;
 import java.time.Instant;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.authentication.application.port.out.DeleteEmailVerificationPort;
+import com.umc.product.global.logging.OperationalMetrics;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * email_verification 의 만료된 세션을 주기적으로 정리하는 회수 잡.
@@ -21,18 +25,33 @@ import org.springframework.transaction.annotation.Transactional;
 public class EmailVerificationRetentionScheduler {
 
     private static final Duration RETENTION = Duration.ofDays(7);
+    private static final String JOB_NAME = "email_verification_retention";
 
     private final DeleteEmailVerificationPort deleteEmailVerificationPort;
+    private final OperationalMetrics operationalMetrics;
 
     @Scheduled(cron = "0 0 3 * * *", zone = "Asia/Seoul")
     @Transactional
     public void purge() {
+        Instant startedAt = Instant.now();
         Instant threshold = Instant.now().minus(RETENTION);
-        int deleted = deleteEmailVerificationPort.deleteExpiredBefore(threshold);
-        if (deleted > 0) {
-            log.info("email_verification 회수 완료: threshold={}, deleted={}", threshold, deleted);
-        } else {
-            log.debug("email_verification 회수: 보존 기간 초과 행 없음. threshold={}", threshold);
+        try {
+            int deleted = deleteEmailVerificationPort.deleteExpiredBefore(threshold);
+            Duration duration = Duration.between(startedAt, Instant.now());
+            operationalMetrics.recordBatchJob(JOB_NAME, "success", duration, deleted);
+            if (deleted > 0) {
+                log.info("batch job completed: jobName={}, threshold={}, processed={}, durationMs={}, result={}",
+                    JOB_NAME, threshold, deleted, duration.toMillis(), "success");
+            } else {
+                log.debug("batch job completed: jobName={}, threshold={}, processed={}, durationMs={}, result={}",
+                    JOB_NAME, threshold, deleted, duration.toMillis(), "success");
+            }
+        } catch (RuntimeException e) {
+            Duration duration = Duration.between(startedAt, Instant.now());
+            operationalMetrics.recordBatchJob(JOB_NAME, "failure", duration, 0);
+            log.error("batch job failed: jobName={}, threshold={}, durationMs={}, result={}, errorClass={}",
+                JOB_NAME, threshold, duration.toMillis(), "failure", e.getClass().getSimpleName(), e);
+            throw e;
         }
     }
 }

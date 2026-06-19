@@ -1,5 +1,11 @@
 package com.umc.product.challenger.application.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.command.ManageChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.command.dto.CreateChallengerRoleCommand;
 import com.umc.product.challenger.application.port.in.command.ManageChallengerRecordUseCase;
@@ -13,6 +19,7 @@ import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.ChallengerRecord;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
@@ -20,11 +27,10 @@ import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmComm
 import com.umc.product.notification.domain.WebhookPlatform;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+
 import jakarta.transaction.Transactional;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -44,33 +50,60 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
 
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
 
+    @Audited(
+        domain = Domain.CHALLENGER,
+        action = AuditAction.CREATE,
+        targetType = "ChallengerRecord",
+        targetId = "#result",
+        description = "'ChallengerRecord를 생성했습니다.'"
+    )
     @Override
     public Long create(CreateChallengerRecordCommand command) {
-        log.info("ChallengerRecord를 생성합니다. command={}", command.toString());
-
         validateRecord(command.gisuId(), command.schoolId(), command.chapterId());
 
-        return saveChallengerRecordPort.save(command.toEntity()).getId();
+        ChallengerRecord savedRecord = saveChallengerRecordPort.save(command.toEntity());
+        log.info("ChallengerRecord를 생성했습니다: recordId={}, gisuId={}, schoolId={}, chapterId={}, adminRecord={}",
+            savedRecord.getId(), command.gisuId(), command.schoolId(), command.chapterId(),
+            command.challengerRoleType() != null);
+        return savedRecord.getId();
     }
 
+    @Audited(
+        domain = Domain.CHALLENGER,
+        action = AuditAction.CREATE,
+        targetType = "ChallengerRecord",
+        description = "'ChallengerRecord를 대량 생성했습니다. count=' + #result.size()"
+    )
     @Override
     public List<Long> createBulk(List<CreateChallengerRecordCommand> commands) {
-        log.info("ChallengerRecord를 대량으로 생성합니다. commands={}",
-            commands.stream().map(CreateChallengerRecordCommand::toString).toList());
-
         List<ChallengerRecord> records = commands.stream()
             .map(CreateChallengerRecordCommand::toEntity)
             .toList();
 
-        return saveChallengerRecordPort.saveAll(records)
-            .stream().map(ChallengerRecord::getId).toList();
+        List<ChallengerRecord> savedRecords = saveChallengerRecordPort.saveAll(records);
+        log.info("ChallengerRecord를 대량 생성했습니다: count={}", savedRecords.size());
+        return savedRecords.stream().map(ChallengerRecord::getId).toList();
     }
 
+    @Audited(
+        domain = Domain.CHALLENGER,
+        action = AuditAction.DELETE,
+        targetType = "ChallengerRecord",
+        targetId = "#id",
+        description = "'ChallengerRecord를 삭제했습니다.'"
+    )
     @Override
     public void delete(Long id) {
         saveChallengerRecordPort.delete(loadChallengerRecordPort.getById(id));
     }
 
+    @Audited(
+        domain = Domain.CHALLENGER,
+        action = AuditAction.CHECK,
+        targetType = "ChallengerRecord",
+        targetId = "#command.targetMemberId()",
+        description = "'ChallengerRecord 코드를 사용했습니다.'"
+    )
     @Override
     public void consumeCode(ConsumeChallengerRecordCommand command) {
         String code = command.code();

@@ -1,5 +1,15 @@
 package com.umc.product.schedule.application.service.command;
 
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.locationtech.jts.geom.Point;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
@@ -27,16 +37,9 @@ import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.ScheduleParticipant;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
-import java.time.Instant;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.geom.Point;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -67,7 +70,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         action = AuditAction.CREATE,
         targetType = "Schedule",
         targetId = "#result",
-        description = "'일정이 생성되었습니다.'"
+        description = "'일정을 생성했습니다.'"
     )
     @Override
     public Long create(CreateScheduleCommand command) {
@@ -132,7 +135,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         action = AuditAction.UPDATE,
         targetType = "Schedule",
         targetId = "#command.scheduleId()",
-        description = "'일정이 수정되었습니다.'"
+        description = "'일정을 수정했습니다.'"
     )
     @Override
     public Long update(EditScheduleCommand command) {
@@ -218,7 +221,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         action = AuditAction.DELETE,
         targetType = "Schedule",
         targetId = "#scheduleId",
-        description = "'일정이 삭제되었습니다.'"
+        description = "'일정을 삭제했습니다.'"
     )
     @Override
     public void delete(Long scheduleId) {
@@ -239,7 +242,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         action = AuditAction.DELETE,
         targetType = "Schedule",
         targetId = "#scheduleId",
-        description = "'일정이 강제 삭제되었습니다.'"
+        description = "'일정을 강제로 삭제했습니다.'"
     )
     @Override
     public void forceDelete(Long scheduleId) {

@@ -1,17 +1,20 @@
 package com.umc.product.notification.adapter.in.event;
 
-import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
-import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
-import com.umc.product.notification.domain.WebhookPlatform;
-import jakarta.annotation.PreDestroy;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+
+import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
+import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
+import com.umc.product.notification.domain.WebhookPlatform;
+
+import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -35,7 +38,7 @@ public class ServerLifecycleAlarmListener {
             .build();
 
         sendWebhookAlarmUseCase.send(command);
-        log.info("서버 시작 알림 전송 완료 [time={}]", time);
+        log.info("서버 시작 알림을 전송했습니다: time={}", time);
     }
 
     @PreDestroy
@@ -49,6 +52,6 @@ public class ServerLifecycleAlarmListener {
             .build();
 
         sendWebhookAlarmUseCase.send(command);
-        log.info("서버 종료 알림 전송 완료 [time={}]", time);
+        log.info("서버 종료 알림을 전송했습니다: time={}", time);
     }
 }
