@@ -6,7 +6,7 @@
 # - secrets.UMC_GITHUB_APP_PRIVATE_KEY
 # - secrets.GEMINI_API_KEY
 
-name: PR 제목 검증
+name: Validate PR Title
 
 on:
   pull_request_target:
@@ -31,7 +31,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.UMC_GITHUB_APP_CLIENT_ID }}
+          client-id: ${{ vars.UMC_GITHUB_APP_CLIENT_ID }}
           private-key: ${{ secrets.UMC_GITHUB_APP_PRIVATE_KEY }}
 
       - name: PR 변경 파일 조회
