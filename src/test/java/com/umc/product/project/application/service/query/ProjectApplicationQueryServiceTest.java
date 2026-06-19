@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
@@ -590,8 +591,6 @@ class ProjectApplicationQueryServiceTest {
             .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L, true));
         given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
             .willReturn(Optional.of(challengerInfoOf(200L, ChallengerPart.DESIGN)));
-        given(getFormUseCase.getFormWithStructure(7L)).willReturn(
-            FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
         given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
             .willReturn(List.of());
         given(getFormResponseUseCase.findResponseWithAnswers(123L))
@@ -600,6 +599,8 @@ class ProjectApplicationQueryServiceTest {
                 .status(FormResponseStatus.SUBMITTED)
                 .answers(List.of())
                 .build()));
+        given(getFormUseCase.getFormWithStructureByQuestionIds(eq(7L), anySet())).willReturn(
+            FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
 
         // when
         ProjectApplicationDetailInfo result = sut.getDetail(query);
@@ -628,7 +629,7 @@ class ProjectApplicationQueryServiceTest {
         assertThatThrownBy(() -> sut.getDetail(query))
             .isInstanceOf(ProjectDomainException.class)
             .hasFieldOrPropertyWithValue("baseCode", ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
-        verify(getFormUseCase, never()).getFormWithStructure(any());
+        verify(getFormUseCase, never()).getFormWithStructureByQuestionIds(any(), any());
     }
 
     @Test
@@ -653,7 +654,6 @@ class ProjectApplicationQueryServiceTest {
             .description(null)
             .sections(List.of())
             .build();
-        given(getFormUseCase.getFormWithStructure(7L)).willReturn(formStructure);
         given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
             .willReturn(List.of());
 
@@ -691,6 +691,8 @@ class ProjectApplicationQueryServiceTest {
             .build();
         given(getFormResponseUseCase.findResponseWithAnswers(123L))
             .willReturn(Optional.of(formResponseWithAnswers));
+        given(getFormUseCase.getFormWithStructureByQuestionIds(eq(7L), anySet()))
+            .willReturn(formStructure);
 
         FileInfo fileInfo = new FileInfo(
             "f-abc", "포트폴리오.pdf", FileCategory.PORTFOLIO,
@@ -735,8 +737,6 @@ class ProjectApplicationQueryServiceTest {
             .willReturn(Optional.of(application));
         given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
             .willReturn(Optional.of(challengerInfoOf(200L, ChallengerPart.DESIGN)));
-        given(getFormUseCase.getFormWithStructure(7L)).willReturn(
-            FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
         given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
             .willReturn(List.of());
         given(getFormResponseUseCase.findResponseWithAnswers(123L))
@@ -745,6 +745,8 @@ class ProjectApplicationQueryServiceTest {
                 .status(FormResponseStatus.DRAFT)
                 .answers(List.of())
                 .build()));
+        given(getFormUseCase.getFormWithStructureByQuestionIds(eq(7L), anySet()))
+            .willReturn(FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
 
         // when
         ProjectApplicationDetailInfo result = sut.getDetail(query);
@@ -770,8 +772,6 @@ class ProjectApplicationQueryServiceTest {
             .willReturn(Optional.of(application));
         given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
             .willReturn(Optional.of(challengerInfoOf(200L, ChallengerPart.DESIGN)));
-        given(getFormUseCase.getFormWithStructure(7L)).willReturn(
-            FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
         given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
             .willReturn(List.of());
         given(getFormResponseUseCase.findResponseWithAnswers(123L))
@@ -780,6 +780,8 @@ class ProjectApplicationQueryServiceTest {
                 .status(FormResponseStatus.SUBMITTED)
                 .answers(List.of())
                 .build()));
+        given(getFormUseCase.getFormWithStructureByQuestionIds(eq(7L), anySet()))
+            .willReturn(FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
 
         // when
         ProjectApplicationDetailInfo result = sut.getDetail(query);
@@ -803,8 +805,6 @@ class ProjectApplicationQueryServiceTest {
             .willReturn(Optional.of(application));
         given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
             .willReturn(Optional.of(challengerInfoOf(200L, ChallengerPart.DESIGN)));
-        given(getFormUseCase.getFormWithStructure(7L)).willReturn(
-            FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
         given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
             .willReturn(List.of());
         given(getFormResponseUseCase.findResponseWithAnswers(123L))
@@ -813,6 +813,8 @@ class ProjectApplicationQueryServiceTest {
                 .status(FormResponseStatus.SUBMITTED)
                 .answers(List.of())
                 .build()));
+        given(getFormUseCase.getFormWithStructureByQuestionIds(eq(7L), anySet()))
+            .willReturn(FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
 
         // when
         ProjectApplicationDetailInfo result = sut.getDetail(query);
@@ -839,8 +841,6 @@ class ProjectApplicationQueryServiceTest {
             .willReturn(Optional.of(application));
         given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
             .willReturn(Optional.of(challengerInfoOf(200L, ChallengerPart.DESIGN)));
-        given(getFormUseCase.getFormWithStructure(7L)).willReturn(
-            FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
         given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
             .willReturn(List.of());
         given(getFormResponseUseCase.findResponseWithAnswers(123L))
@@ -849,6 +849,8 @@ class ProjectApplicationQueryServiceTest {
                 .status(FormResponseStatus.SUBMITTED)
                 .answers(List.of())
                 .build()));
+        given(getFormUseCase.getFormWithStructureByQuestionIds(eq(7L), anySet()))
+            .willReturn(FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
 
         // when
         ProjectApplicationDetailInfo result = sut.getDetail(query);
@@ -874,8 +876,6 @@ class ProjectApplicationQueryServiceTest {
             .willReturn(Optional.of(application));
         given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
             .willReturn(Optional.of(challengerInfoOf(200L, ChallengerPart.DESIGN)));
-        given(getFormUseCase.getFormWithStructure(7L)).willReturn(
-            FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
         given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
             .willReturn(List.of());
         given(getFormResponseUseCase.findResponseWithAnswers(999L))
@@ -885,6 +885,54 @@ class ProjectApplicationQueryServiceTest {
         assertThatThrownBy(() -> sut.getDetail(query))
             .isInstanceOf(ProjectDomainException.class)
             .hasFieldOrPropertyWithValue("baseCode", ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("getDetail_질문_fork_후에도_구_질문의_답변이_answersByQuestionId에_포함됨")
+    void getDetail_fork된_구_질문_답변_노출() {
+        // given
+        // 질문 A(id=10)가 fork되어 비활성화됨. 지원자는 questionId=10에 답변을 제출한 상태.
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
+        ProjectApplication application = createApplicationWithFormResponse(
+            55L, project, round, 200L, ProjectApplicationStatus.SUBMITTED, 123L);
+
+        GetProjectApplicationDetailQuery query = detailQuery(1L, 55L);
+        given(loadProjectApplicationPort.findByIdWithDetails(55L))
+            .willReturn(Optional.of(application));
+        given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
+            .willReturn(Optional.of(challengerInfoOf(200L, ChallengerPart.DESIGN)));
+        given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
+            .willReturn(List.of());
+
+        AnswerInfo forkedQuestionAnswer = AnswerInfo.builder()
+            .id(501L)
+            .formResponseId(123L)
+            .questionId(10L)  // fork로 비활성화된 구 질문 ID
+            .answeredAsType(QuestionType.SHORT_TEXT)
+            .textValue("답변 내용")
+            .selectedOptions(List.of())
+            .fileIds(null)
+            .times(null)
+            .build();
+        given(getFormResponseUseCase.findResponseWithAnswers(123L))
+            .willReturn(Optional.of(FormResponseWithAnswersInfo.builder()
+                .id(123L).formId(7L).respondentMemberId(200L)
+                .status(FormResponseStatus.SUBMITTED)
+                .answers(List.of(forkedQuestionAnswer))
+                .build()));
+        // answeredQuestionIds = {10L} 로 getFormWithStructureByQuestionIds 가 호출되어야 함
+        given(getFormUseCase.getFormWithStructureByQuestionIds(eq(7L), eq(java.util.Set.of(10L))))
+            .willReturn(FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
+
+        // when
+        ProjectApplicationDetailInfo result = sut.getDetail(query);
+
+        // then
+        assertThat(result.answersByQuestionId()).containsOnlyKeys(10L);
+        assertThat(result.answersByQuestionId().get(10L).textValue()).isEqualTo("답변 내용");
+        verify(getFormUseCase).getFormWithStructureByQuestionIds(eq(7L), eq(java.util.Set.of(10L)));
     }
 
     // ============================================================

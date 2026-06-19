@@ -1,9 +1,10 @@
 package com.umc.product.survey.application.port.in.query;
 
+import java.util.Optional;
+import java.util.Set;
+
 import com.umc.product.survey.application.port.in.query.dto.FormInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo;
-
-import java.util.Optional;
 
 /**
  * Form 조회 UseCase.
@@ -29,4 +30,12 @@ public interface GetFormUseCase {
      * 편집기 초기 로딩이나 응답자 UI 렌더링 시 N+1 왕복을 피하기 위한 facade.
      */
     FormWithStructureInfo getFormWithStructure(Long formId);
+
+    /**
+     * 제출된 응답의 questionId 집합을 기준으로 폼 구조를 조립한다 (isActive 무관).
+     * <p>
+     * 질문 fork 이후에도 답변 당시의 질문이 표시되도록 Answer.questionId 역추적 방식으로 구조를 구성한다.
+     * 편집기, 모집문항 보기, 신규 지원 경로에서는 {@link #getFormWithStructure}를 사용할 것.
+     */
+    FormWithStructureInfo getFormWithStructureByQuestionIds(Long formId, Set<Long> questionIds);
 }

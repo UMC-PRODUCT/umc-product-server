@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,7 +105,6 @@ public class ProjectApplicationQueryService
             .map(ChallengerInfo::part)
             .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND));
 
-        FormWithStructureInfo formStructure = getFormUseCase.getFormWithStructure(applicationForm.getFormId());
         List<ProjectApplicationFormPolicy> formPolicies =
             loadProjectApplicationFormPolicyPort.listByApplicationFormId(applicationForm.getId());
         // dangling formResponseId 는 invariant 위반이지만, 클라이언트에는 PROJECT_APPLICATION_NOT_FOUND 로 통일한다.
@@ -112,6 +112,13 @@ public class ProjectApplicationQueryService
         FormResponseWithAnswersInfo formResponseWithAnswers =
             getFormResponseUseCase.findResponseWithAnswers(application.getFormResponseId())
                 .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND));
+        // 답변이 존재하는 questionId 기준으로 폼 구조를 조립한다.
+        // fork로 비활성화된 구 버전 질문도 Answer.questionId 역추적으로 포함하기 위함이다.
+        Set<Long> answeredQuestionIds = formResponseWithAnswers.answers().stream()
+            .map(AnswerInfo::questionId)
+            .collect(Collectors.toSet());
+        FormWithStructureInfo formStructure = getFormUseCase.getFormWithStructureByQuestionIds(
+            applicationForm.getFormId(), answeredQuestionIds);
         Map<String, FileInfo> filesByFileId = resolveFiles(formResponseWithAnswers.answers());
 
         return ProjectApplicationDetailInfo.of(
