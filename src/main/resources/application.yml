@@ -70,8 +70,9 @@ spring:
     properties:
       hibernate:
         default_schema: public
-        format_sql: false
-        show_sql: false # p6spy가 있어서 꺼둠
+        # SQL 출력 포맷은 P6SpyConfig 가 담당하므로 hibernate.format_sql 은 두지 않는다.
+        # show_sql 도 P6Spy 라인 출력과의 중복을 막기 위해 끔.
+        show_sql: false
 
   # ====================================================================
   # Spring AI / LLM provider 설정
@@ -158,6 +159,25 @@ springdoc:
     enabled: ${OPENAPI_ENABLE:${SWAGGER_ENABLE:false}}
 
   show-actuator: ${OPENAPI_ENABLE_ACTUATOR:${SWAGGER_ENABLE_ACTUATOR:false}}
+
+# ====================================================================
+# P6Spy (datasource-decorator) — 라인 단위 SQL 로깅 제어
+# 기본값은 OFF(false) — fail-safe. 트래픽 환경에서 env 주입을 깜빡해도 로그 폭증이 발생하지 않는다.
+#   - 라인 로깅이 꺼져도 QueryStatsJdbcEventListener 통계(queryCount/queryTimeMs)와
+#     DB span 트레이싱은 그대로 동작한다 (SQL 원문 라인만 사라짐).
+#   - SQL 원문이 필요한 로컬에서는 P6SPY_ENABLE_LOGGING=true 를 직접 주입한다.
+#   - include-parameter-values 는 SQL 라인에 바인딩 파라미터 값(민감정보 가능)을 풀어쓸지로 기본 false.
+#     로컬에서 값까지 보려면 P6SPY_INCLUDE_PARAMS=true 를 함께 주입.
+# 환경변수: local=(true,true, 개발자가 직접 주입) / dev·staging·prod·test=(false,false, 기본값)
+# ====================================================================
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: ${P6SPY_ENABLE_LOGGING:false}
+      logging: slf4j
+      multiline: false
+      tracing:
+        include-parameter-values: ${P6SPY_INCLUDE_PARAMS:false}
 
 logging:
   level:

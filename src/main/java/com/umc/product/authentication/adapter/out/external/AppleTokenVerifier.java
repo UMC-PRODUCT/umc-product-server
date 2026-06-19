@@ -1,17 +1,5 @@
 package com.umc.product.authentication.adapter.out.external;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.umc.product.authentication.domain.OAuthAttributes;
-import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
-import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
-import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
-import com.umc.product.common.domain.enums.ClientType;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.Jwts.SIG;
 import java.io.StringReader;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -25,8 +13,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
@@ -37,6 +24,22 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestClient;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
+import com.umc.product.authentication.domain.OAuthAttributes;
+import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.common.domain.enums.ClientType;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.Jwts.SIG;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Apple Sign-In 토큰 검증 Adapter
@@ -104,7 +107,7 @@ public class AppleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Apple ID Token 검증 중 오류 발생", e);
+            log.warn("Apple ID Token 검증 중 오류 발생", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -146,7 +149,7 @@ public class AppleTokenVerifier {
                     // 잘못된 분기로 성공 body 가 흘러올 수 있으므로 status / errorCode 만 남긴다.
                     String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
                     String errorCode = extractAppleErrorCode(body);
-                    log.error("Apple token endpoint 호출 실패: status={}, errorCode={}, bodyLength={}",
+                    log.warn("Apple token endpoint 호출 실패: status={}, errorCode={}, bodyLength={}",
                         res.getStatusCode(), errorCode, body.length());
                     throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
                 })
@@ -165,7 +168,7 @@ public class AppleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Apple Authorization Code 교환 중 오류 발생", e);
+            log.warn("Apple Authorization Code 교환 중 오류 발생", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -197,7 +200,7 @@ public class AppleTokenVerifier {
                     // ADR-016 §민감 필드 정책: revoke 응답 본문 통째로 로깅하지 않는다.
                     String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
                     String errorCode = extractAppleErrorCode(body);
-                    log.error("Apple token revoke 실패: status={}, errorCode={}, bodyLength={}",
+                    log.warn("Apple token revoke 실패: status={}, errorCode={}, bodyLength={}",
                         res.getStatusCode(), errorCode, body.length());
                     throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
                 })
@@ -208,7 +211,7 @@ public class AppleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Apple token revoke 중 오류 발생", e);
+            log.warn("Apple token revoke 중 오류 발생", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -297,7 +300,7 @@ public class AppleTokenVerifier {
             .uri(APPLE_JWKS_URL)
             .retrieve()
             .onStatus(HttpStatusCode::isError, (req, res) -> {
-                log.error("Apple JWKS 조회 실패: status={}", res.getStatusCode());
+                log.warn("Apple JWKS 조회 실패: status={}", res.getStatusCode());
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
             })
             .body(AppleJwksResponse.class);
@@ -310,7 +313,7 @@ public class AppleTokenVerifier {
             .filter(key -> kid.equals(key.kid()))
             .findFirst()
             .orElseThrow(() -> {
-                log.error("Apple JWKS에서 kid={}에 매칭되는 키를 찾을 수 없음", kid);
+                log.warn("Apple JWKS에서 kid={}에 매칭되는 키를 찾을 수 없음", kid);
                 return new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             });
 
