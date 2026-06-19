@@ -27,8 +27,10 @@ import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
+import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectStatisticsSummaryInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingCountInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingRoundStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMemberApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMemberStatisticsInfo;
@@ -36,13 +38,16 @@ import com.umc.product.project.application.port.in.query.dto.statistics.ProjectR
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectRoundMemberStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundApplicationStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.RoundMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundSchoolApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.SchoolApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.SchoolMatchingStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.UnclassifiedMatchingStatisticsInfo;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsApplicationRow;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsApprovedApplicationRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
@@ -88,6 +93,49 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
         validateChapterAccess(requesterMemberId, chapterId);
 
         List<ProjectStatisticsProjectRow> projects = loadProjectStatisticsPort.listProjectsByChapterId(chapterId);
+        return assembleChapterStatistics(chapterId, projects, loadProjectStatisticsPort.listActiveMembersByChapterId(chapterId));
+    }
+
+    @Override
+    public ChapterProjectStatisticsInfo getByProjectIds(Collection<Long> projectIds, Long requesterMemberId) {
+        if (projectIds == null) {
+            return new ChapterProjectStatisticsInfo(null, List.of(), emptySummary());
+        }
+        Set<Long> distinctProjectIds = projectIds.stream()
+            .filter(Objects::nonNull)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (distinctProjectIds.isEmpty()) {
+            return new ChapterProjectStatisticsInfo(null, List.of(), emptySummary());
+        }
+
+        List<Project> targetProjects = loadProjectPort.listByIds(distinctProjectIds);
+        if (targetProjects.size() != distinctProjectIds.size()) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_NOT_FOUND);
+        }
+
+        targetProjects.forEach(project -> validateProjectAccess(requesterMemberId, project));
+        Long chapterId = resolveSingleChapterId(targetProjects);
+        List<ProjectStatisticsProjectRow> projects = targetProjects.stream()
+            .map(project -> new ProjectStatisticsProjectRow(
+                project.getId(),
+                project.getGisuId(),
+                project.getChapterId()
+            ))
+            .sorted(Comparator.comparing(ProjectStatisticsProjectRow::projectId))
+            .toList();
+
+        return assembleChapterStatistics(
+            chapterId,
+            projects,
+            loadProjectStatisticsPort.listActiveMembersByProjectIds(distinctProjectIds)
+        );
+    }
+
+    private ChapterProjectStatisticsInfo assembleChapterStatistics(
+        Long chapterId,
+        List<ProjectStatisticsProjectRow> projects,
+        List<ProjectStatisticsMemberRow> rawMembers
+    ) {
         if (projects.isEmpty()) {
             return new ChapterProjectStatisticsInfo(chapterId, List.of(), emptySummary());
         }
@@ -98,7 +146,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
         List<ProjectStatisticsMatchingRoundRow> rounds =
             loadProjectStatisticsPort.listMatchingRoundsByChapterId(chapterId);
         List<ProjectStatisticsMemberRow> members =
-            sortMembers(loadProjectStatisticsPort.listActiveMembersByChapterId(chapterId));
+            sortMembers(rawMembers);
         List<ProjectStatisticsApplicationRow> applications =
             sortApplications(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(projectIds));
         StatisticsPopulation population = resolvePopulation(projects);
@@ -136,6 +184,53 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
                 buildSchoolMatchingStatistics(chapterContext),
                 buildProjectRoundStatistics(projects, chapterContext)
             )
+        );
+    }
+
+    private Long resolveSingleChapterId(Collection<Project> projects) {
+        Set<Long> chapterIds = projects.stream()
+            .map(Project::getChapterId)
+            .collect(Collectors.toSet());
+        if (chapterIds.size() != 1) {
+            throw new ProjectDomainException(
+                ProjectErrorCode.PROJECT_INVALID_STATE,
+                "프로젝트 통계는 같은 지부의 프로젝트끼리만 한 번에 조회할 수 있어요."
+            );
+        }
+        return chapterIds.iterator().next();
+    }
+
+    @Override
+    public ChapterProjectMatchingStatisticsInfo getPublicMatchingStatisticsByChapterId(Long chapterId) {
+        List<ProjectStatisticsProjectRow> projects =
+            loadProjectStatisticsPort.listPublicProjectsByChapterId(chapterId);
+        if (projects.isEmpty()) {
+            return emptyPublicMatchingStatistics(chapterId);
+        }
+
+        Set<Long> projectIds = projects.stream()
+            .map(ProjectStatisticsProjectRow::projectId)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+        List<ProjectStatisticsMatchingRoundRow> rounds =
+            loadProjectStatisticsPort.listMatchingRoundsByChapterId(chapterId);
+        List<ProjectStatisticsMemberRow> members =
+            sortMembers(loadProjectStatisticsPort.listPublicActiveMembersByChapterId(chapterId));
+        List<ProjectStatisticsApprovedApplicationRow> approvedApplications =
+            sortApprovedApplications(loadProjectStatisticsPort.listApprovedApplicationsByProjectIds(projectIds));
+        StatisticsPopulation population = resolvePopulation(projects);
+
+        PublicMatchingContext context = buildPublicMatchingContext(
+            rounds,
+            members,
+            approvedApplications,
+            population
+        );
+
+        return new ChapterProjectMatchingStatisticsInfo(
+            chapterId,
+            buildRoundMatchingStatistics(context),
+            buildPublicSchoolMatchingStatistics(context),
+            buildUnclassifiedMatchingStatistics(context)
         );
     }
 
@@ -374,6 +469,147 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             .toList();
     }
 
+    private PublicMatchingContext buildPublicMatchingContext(
+        List<ProjectStatisticsMatchingRoundRow> rounds,
+        List<ProjectStatisticsMemberRow> members,
+        List<ProjectStatisticsApprovedApplicationRow> approvedApplications,
+        StatisticsPopulation population
+    ) {
+        Map<ProjectMemberKey, ProjectStatisticsApprovedApplicationRow> earliestApprovedApplicationByMember =
+            new HashMap<>();
+        for (ProjectStatisticsApprovedApplicationRow application : approvedApplications) {
+            earliestApprovedApplicationByMember.putIfAbsent(ProjectMemberKey.from(application), application);
+        }
+
+        List<ProjectMemberMatchingAssignment> classifiedAssignments = new ArrayList<>();
+        List<ProjectStatisticsMemberRow> unclassifiedMembers = new ArrayList<>();
+        for (ProjectStatisticsMemberRow member : members) {
+            ProjectStatisticsApprovedApplicationRow application =
+                earliestApprovedApplicationByMember.get(ProjectMemberKey.from(member));
+            if (application == null) {
+                unclassifiedMembers.add(member);
+                continue;
+            }
+            classifiedAssignments.add(new ProjectMemberMatchingAssignment(member, application));
+        }
+
+        return new PublicMatchingContext(rounds, classifiedAssignments, unclassifiedMembers, members, population);
+    }
+
+    private List<RoundMatchingStatisticsInfo> buildRoundMatchingStatistics(PublicMatchingContext context) {
+        Map<Long, List<ProjectMemberMatchingAssignment>> assignmentsByRound = context.classifiedAssignments().stream()
+            .collect(Collectors.groupingBy(
+                assignment -> assignment.application().matchingRoundId(),
+                LinkedHashMap::new,
+                Collectors.toList()
+            ));
+
+        List<RoundMatchingStatisticsInfo> statistics = new ArrayList<>();
+        Set<Long> cumulativeMatchedMemberIds = new HashSet<>();
+        for (ProjectStatisticsMatchingRoundRow round : context.rounds()) {
+            List<ProjectMemberMatchingAssignment> assignments =
+                assignmentsByRound.getOrDefault(round.matchingRoundId(), List.of());
+            long availableMemberCount = Math.max(
+                0L,
+                context.population().eligibleMemberIds().size() - cumulativeMatchedMemberIds.size()
+            );
+
+            statistics.add(new RoundMatchingStatisticsInfo(
+                toMatchingRoundInfo(round),
+                countDistinctAssignmentMembers(assignments),
+                availableMemberCount,
+                toProjectMatchingCountsFromAssignments(assignments)
+            ));
+
+            assignments.stream()
+                .map(assignment -> assignment.member().memberId())
+                .forEach(cumulativeMatchedMemberIds::add);
+        }
+        return statistics;
+    }
+
+    private List<SchoolMatchingStatisticsInfo> buildPublicSchoolMatchingStatistics(PublicMatchingContext context) {
+        Map<Long, Long> totalMemberCountBySchool = context.population().eligibleMemberIds().stream()
+            .map(context.population().schoolIdByMemberId()::get)
+            .filter(Objects::nonNull)
+            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        Map<Long, Set<Long>> matchedMemberIdsBySchool = new HashMap<>();
+        for (ProjectStatisticsMemberRow member : context.allMembers()) {
+            Long schoolId = context.population().schoolIdByMemberId().get(member.memberId());
+            if (schoolId == null) {
+                continue;
+            }
+            matchedMemberIdsBySchool
+                .computeIfAbsent(schoolId, ignored -> new HashSet<>())
+                .add(member.memberId());
+        }
+
+        return totalMemberCountBySchool.entrySet().stream()
+            .map(entry -> new SchoolMatchingStatisticsInfo(
+                entry.getKey(),
+                matchedMemberIdsBySchool.getOrDefault(entry.getKey(), Set.of()).size(),
+                entry.getValue()
+            ))
+            .sorted(Comparator.comparing(SchoolMatchingStatisticsInfo::schoolId))
+            .toList();
+    }
+
+    private UnclassifiedMatchingStatisticsInfo buildUnclassifiedMatchingStatistics(PublicMatchingContext context) {
+        return new UnclassifiedMatchingStatisticsInfo(
+            countDistinctMembers(context.unclassifiedMembers()),
+            toProjectMatchingCountsFromMembers(context.unclassifiedMembers())
+        );
+    }
+
+    private List<ProjectMatchingCountInfo> toProjectMatchingCountsFromAssignments(
+        Collection<ProjectMemberMatchingAssignment> assignments
+    ) {
+        Map<Long, Set<Long>> memberIdsByProject = new HashMap<>();
+        for (ProjectMemberMatchingAssignment assignment : assignments) {
+            ProjectStatisticsMemberRow member = assignment.member();
+            memberIdsByProject
+                .computeIfAbsent(member.projectId(), ignored -> new HashSet<>())
+                .add(member.memberId());
+        }
+        return toProjectMatchingCounts(memberIdsByProject);
+    }
+
+    private List<ProjectMatchingCountInfo> toProjectMatchingCountsFromMembers(
+        Collection<ProjectStatisticsMemberRow> members
+    ) {
+        Map<Long, Set<Long>> memberIdsByProject = new HashMap<>();
+        for (ProjectStatisticsMemberRow member : members) {
+            memberIdsByProject
+                .computeIfAbsent(member.projectId(), ignored -> new HashSet<>())
+                .add(member.memberId());
+        }
+        return toProjectMatchingCounts(memberIdsByProject);
+    }
+
+    private List<ProjectMatchingCountInfo> toProjectMatchingCounts(Map<Long, Set<Long>> memberIdsByProject) {
+        return memberIdsByProject.entrySet().stream()
+            .map(entry -> new ProjectMatchingCountInfo(entry.getKey(), entry.getValue().size()))
+            .sorted(Comparator.comparing(ProjectMatchingCountInfo::projectId))
+            .toList();
+    }
+
+    private long countDistinctAssignmentMembers(Collection<ProjectMemberMatchingAssignment> assignments) {
+        return assignments.stream()
+            .map(assignment -> assignment.member().memberId())
+            .filter(Objects::nonNull)
+            .distinct()
+            .count();
+    }
+
+    private long countDistinctMembers(Collection<ProjectStatisticsMemberRow> members) {
+        return members.stream()
+            .map(ProjectStatisticsMemberRow::memberId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .count();
+    }
+
     private Map<Long, Set<Long>> groupMemberIdsByRound(Collection<ProjectStatisticsApplicationRow> applications) {
         Map<Long, Set<Long>> memberIdsByRound = new HashMap<>();
         for (ProjectStatisticsApplicationRow application : applications) {
@@ -400,6 +636,21 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             .sorted(Comparator
                 .comparing(ProjectStatisticsMemberRow::projectId)
                 .thenComparing(ProjectStatisticsMemberRow::projectMemberId))
+            .toList();
+    }
+
+    private List<ProjectStatisticsApprovedApplicationRow> sortApprovedApplications(
+        Collection<ProjectStatisticsApprovedApplicationRow> applications
+    ) {
+        return applications.stream()
+            .sorted(Comparator
+                .comparing(ProjectStatisticsApprovedApplicationRow::projectId)
+                .thenComparing(ProjectStatisticsApprovedApplicationRow::applicantMemberId)
+                .thenComparing(
+                    ProjectStatisticsApprovedApplicationRow::matchingRoundStartsAt,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+                )
+                .thenComparing(ProjectStatisticsApprovedApplicationRow::applicationId))
             .toList();
     }
 
@@ -455,6 +706,15 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
         return new ChapterProjectStatisticsSummaryInfo(List.of(), List.of(), List.of(), List.of());
     }
 
+    private ChapterProjectMatchingStatisticsInfo emptyPublicMatchingStatistics(Long chapterId) {
+        return new ChapterProjectMatchingStatisticsInfo(
+            chapterId,
+            List.of(),
+            List.of(),
+            new UnclassifiedMatchingStatisticsInfo(0L, List.of())
+        );
+    }
+
     private record StatisticsPopulation(
         Set<Long> eligibleMemberIds,
         Map<Long, Long> schoolIdByMemberId
@@ -469,6 +729,21 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
     ) {
     }
 
+    private record PublicMatchingContext(
+        List<ProjectStatisticsMatchingRoundRow> rounds,
+        List<ProjectMemberMatchingAssignment> classifiedAssignments,
+        List<ProjectStatisticsMemberRow> unclassifiedMembers,
+        List<ProjectStatisticsMemberRow> allMembers,
+        StatisticsPopulation population
+    ) {
+    }
+
+    private record ProjectMemberMatchingAssignment(
+        ProjectStatisticsMemberRow member,
+        ProjectStatisticsApprovedApplicationRow application
+    ) {
+    }
+
     private record ProjectMemberKey(Long projectId, Long memberId) {
 
         private static ProjectMemberKey from(ProjectStatisticsMemberRow row) {
@@ -476,6 +751,10 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
         }
 
         private static ProjectMemberKey from(ProjectStatisticsApplicationRow row) {
+            return new ProjectMemberKey(row.projectId(), row.applicantMemberId());
+        }
+
+        private static ProjectMemberKey from(ProjectStatisticsApprovedApplicationRow row) {
             return new ProjectMemberKey(row.projectId(), row.applicantMemberId());
         }
     }

@@ -24,6 +24,10 @@ import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.project.adapter.in.web.assembler.ProjectResponseAssembler;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectMatchingStatisticsResponse;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectMatchingStatisticsResponse.ProjectMatchingCountResponse;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectMatchingStatisticsResponse.RoundMatchingStatisticsResponse;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectMatchingStatisticsResponse.UnclassifiedMatchingStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectStatisticsResponse.ChapterProjectStatisticsSummaryResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectStatisticsResponse.ProjectRoundMemberCountResponse;
@@ -90,6 +94,42 @@ class ProjectStatisticsQueryControllerTest {
     }
 
     @Test
+    @DisplayName("GET_statistics_projectIds_단건_프로젝트_지원_매칭_현황을_배열로_반환한다")
+    void 통합_경로_단건_프로젝트_통계_조회() throws Exception {
+        // given
+        given(assembler.statisticsForProjects(List.of(10L), TEST_MEMBER_ID))
+            .willReturn(chapterResponse(3L, List.of(response(10L, 101L, 1001L, 201L))));
+
+        // when & then
+        mockMvc.perform(get("/api/v1/projects/statistics")
+                .param("projectIds", "10"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.chapterId").value(3L))
+            .andExpect(jsonPath("$.result.projects[0].projectId").value(10L))
+            .andExpect(jsonPath("$.result.projects[0].projectMembers[0].projectMemberId").value(101L))
+            .andExpect(jsonPath("$.result.projects[0].roundApplicationStatistics[0].appliedMemberCount").value(1));
+    }
+
+    @Test
+    @DisplayName("GET_statistics_projectIds_여러_프로젝트_지원_매칭_현황을_배열로_반환한다")
+    void 통합_경로_여러_프로젝트_통계_조회() throws Exception {
+        // given
+        given(assembler.statisticsForProjects(List.of(10L, 11L), TEST_MEMBER_ID))
+            .willReturn(chapterResponse(3L, List.of(
+                response(10L, 101L, 1001L, 201L),
+                response(11L, 102L, 1002L, 202L)
+            )));
+
+        // when & then
+        mockMvc.perform(get("/api/v1/projects/statistics")
+                .param("projectIds", "10", "11"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.chapterId").value(3L))
+            .andExpect(jsonPath("$.result.projects[0].projectId").value(10L))
+            .andExpect(jsonPath("$.result.projects[1].projectId").value(11L));
+    }
+
+    @Test
     @DisplayName("GET_statistics_chapterId_지부_전체_프로젝트_지원_매칭_현황을_반환한다")
     void 지부_전체_통계_조회() throws Exception {
         // given
@@ -112,6 +152,52 @@ class ProjectStatisticsQueryControllerTest {
                 .value(2))
             .andExpect(jsonPath("$.result.summary.projectRoundStatistics[0].matchingRounds[0].matchedMemberCount")
                 .value(1));
+    }
+
+    @Test
+    @DisplayName("GET_statistics_projectIds_chapterId_둘_다_제공하면_400을_반환한다")
+    void 통합_통계_조회_조건_중복이면_400() throws Exception {
+        // when & then
+        mockMvc.perform(get("/api/v1/projects/statistics")
+                .param("projectIds", "10")
+                .param("chapterId", "3"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET_statistics_projectId_단독_제공하면_400을_반환한다")
+    void 통합_통계_조회_projectId_query_param이면_400() throws Exception {
+        // when & then
+        mockMvc.perform(get("/api/v1/projects/statistics")
+                .param("projectId", "10"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET_statistics_projectIds_chapterId_둘_다_없으면_400을_반환한다")
+    void 통합_통계_조회_조건_누락이면_400() throws Exception {
+        // when & then
+        mockMvc.perform(get("/api/v1/projects/statistics"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET_statistics_matchings_chapterId_공개_프로젝트_매칭_요약을_반환한다")
+    void 공개_프로젝트_매칭_요약_조회() throws Exception {
+        // given
+        given(assembler.matchingStatisticsForChapter(3L))
+            .willReturn(matchingResponse(3L));
+
+        // when & then
+        mockMvc.perform(get("/api/v1/projects/statistics/matchings")
+                .param("chapterId", "3"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.chapterId").value(3L))
+            .andExpect(jsonPath("$.result.roundMatchingStatistics[0].matchedMemberCount").value(2))
+            .andExpect(jsonPath("$.result.roundMatchingStatistics[0].availableMemberCount").value(4))
+            .andExpect(jsonPath("$.result.roundMatchingStatistics[0].projects[0].projectId").value(10L))
+            .andExpect(jsonPath("$.result.schoolMatchingStatistics[0].matchedMemberCount").value(2))
+            .andExpect(jsonPath("$.result.unclassifiedMatchingStatistics.matchedMemberCount").value(1));
     }
 
     private static ProjectStatisticsResponse response(
@@ -171,6 +257,33 @@ class ProjectStatisticsQueryControllerTest {
                     projects.get(0).projectId(),
                     List.of(new ProjectRoundMemberCountResponse(round, 2L, 1L))
                 ))
+            )
+        );
+    }
+
+    private static ChapterProjectMatchingStatisticsResponse matchingResponse(Long chapterId) {
+        ProjectMatchingRoundStatisticsResponse round = new ProjectMatchingRoundStatisticsResponse(
+            1L,
+            MatchingType.PLAN_DEVELOPER,
+            MatchingPhase.FIRST
+        );
+
+        return new ChapterProjectMatchingStatisticsResponse(
+            chapterId,
+            List.of(new RoundMatchingStatisticsResponse(
+                round,
+                2L,
+                4L,
+                List.of(new ProjectMatchingCountResponse(10L, 2L))
+            )),
+            List.of(new ChapterProjectMatchingStatisticsResponse.SchoolMatchingStatisticsResponse(
+                501L,
+                2L,
+                3L
+            )),
+            new UnclassifiedMatchingStatisticsResponse(
+                1L,
+                List.of(new ProjectMatchingCountResponse(11L, 1L))
             )
         );
     }
