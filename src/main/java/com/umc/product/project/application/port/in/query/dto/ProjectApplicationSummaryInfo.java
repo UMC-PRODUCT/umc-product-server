@@ -31,13 +31,17 @@ public record ProjectApplicationSummaryInfo(
     Instant updatedAt
 ) {
     public static ProjectApplicationSummaryInfo from(ProjectApplication application) {
+        return from(application, true);
+    }
+
+    public static ProjectApplicationSummaryInfo from(ProjectApplication application, boolean statusVisible) {
         return ProjectApplicationSummaryInfo.builder()
             .id(application.getId())
             .applicantMemberId(application.getApplicantMemberId())
             .applicationFormId(application.getApplicationForm().getId())
             .projectId(application.getApplicationForm().getProject().getId())
             .matchingRoundId(application.getAppliedMatchingRound().getId())
-            .status(application.getStatus())
+            .status(statusVisible ? application.getStatus() : null)
             .submittedAt(application.getSubmittedAt())
             .statusChangedAt(application.getStatusChangedAt())
             .createdAt(application.getCreatedAt())

@@ -1,12 +1,13 @@
 package com.umc.product.project.application.port.out;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.project.domain.ProjectMember;
-import com.umc.product.project.domain.enums.MatchingType;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingType;
 
 /**
  * ProjectMember 조회 Port (Driven / Port Out).
@@ -66,6 +67,12 @@ public interface LoadProjectMemberPort {
      * 특정 프로젝트의 ACTIVE PLAN 파트 멤버인지 확인합니다. 보조 PM(Sub-PM) 검사에 사용됩니다.
      */
     boolean isActivePlanMember(Long projectId, Long memberId);
+
+    /**
+     * 지원서 ID 목록 중 ACTIVE ProjectMember 와 연결된 지원서 ID를 조회합니다.
+     * 지원자 본인 화면에서 최종 멤버 반영 전 합불 상태를 숨길 때 사용합니다.
+     */
+    List<Long> listApplicationIdsWithActiveMemberByApplicationIds(Collection<Long> applicationIds);
 
     /**
      * 본인이 ACTIVE 멤버이면서 application 이 null 인 (즉, 지원서 경로가 아닌 랜덤 매칭/운영진 강제 배정으로 합류한) 멤버를 단건 조회한다. APPLY-004(본인 지원 내역 목록

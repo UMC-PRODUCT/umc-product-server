@@ -1,5 +1,11 @@
 package com.umc.product.project.application.port.in.query.dto;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
@@ -12,11 +18,7 @@ import com.umc.product.survey.application.port.in.query.dto.AnswerInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormResponseInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormResponseWithAnswersInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo;
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+
 import lombok.Builder;
 
 /**
@@ -31,7 +33,7 @@ import lombok.Builder;
  * @param matchingRoundId     매칭 차수 ID
  * @param matchingRoundType   매칭 종류
  * @param matchingRoundPhase  매칭 차수
- * @param status              표시용 상태 (DRAFT 포함)
+ * @param status              표시용 상태 (DRAFT 포함). 지원자 본인 조회에서 최종 멤버 반영 전이면 {@code null}
  * @param submittedAt         지원시각 (DRAFT 이면 null)
  * @param statusChangedAt     처리시각 (합/불 결정 전이면 null)
  * @param formStructure       마스킹된 폼 구조 (COMMON + applicantPart 의 PART 섹션만 포함)
@@ -73,6 +75,26 @@ public record ProjectApplicationDetailInfo(
         FormResponseWithAnswersInfo formResponseWithAnswers,
         Map<String, FileInfo> filesByFileId
     ) {
+        return of(
+            application,
+            applicantPart,
+            formStructure,
+            formPolicies,
+            formResponseWithAnswers,
+            filesByFileId,
+            true
+        );
+    }
+
+    public static ProjectApplicationDetailInfo of(
+        ProjectApplication application,
+        ChallengerPart applicantPart,
+        FormWithStructureInfo formStructure,
+        List<ProjectApplicationFormPolicy> formPolicies,
+        FormResponseWithAnswersInfo formResponseWithAnswers,
+        Map<String, FileInfo> filesByFileId,
+        boolean statusVisible
+    ) {
         ProjectApplicationForm applicationForm = application.getApplicationForm();
         ProjectMatchingRound round = application.getAppliedMatchingRound();
 
@@ -102,7 +124,7 @@ public record ProjectApplicationDetailInfo(
             .matchingRoundId(round.getId())
             .matchingRoundType(round.getType())
             .matchingRoundPhase(round.getPhase())
-            .status(ProjectApplicationViewStatus.from(application.getStatus()))
+            .status(statusVisible ? ProjectApplicationViewStatus.from(application.getStatus()) : null)
             .submittedAt(application.getSubmittedAt())
             .statusChangedAt(application.getStatusChangedAt())
             .formStructure(maskedFormStructure)

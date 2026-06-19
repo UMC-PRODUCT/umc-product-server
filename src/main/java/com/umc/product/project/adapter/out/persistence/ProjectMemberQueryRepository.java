@@ -142,4 +142,23 @@ public class ProjectMemberQueryRepository {
         }
         return result;
     }
+
+    /**
+     * 지원서 ID 목록 중 ACTIVE ProjectMember 로 확정 반영된 지원서 ID를 조회한다.
+     */
+    public List<Long> listApplicationIdsWithActiveMemberByApplicationIds(Collection<Long> applicationIds) {
+        if (applicationIds == null || applicationIds.isEmpty()) {
+            return List.of();
+        }
+
+        return queryFactory
+            .select(projectMember.application.id)
+            .distinct()
+            .from(projectMember)
+            .where(
+                projectMember.application.id.in(applicationIds),
+                projectMember.status.eq(ProjectMemberStatus.ACTIVE)
+            )
+            .fetch();
+    }
 }

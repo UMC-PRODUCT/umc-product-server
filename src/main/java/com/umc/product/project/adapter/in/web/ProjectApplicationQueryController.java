@@ -46,8 +46,10 @@ public class ProjectApplicationQueryController {
             응답 카드는 두 데이터원에서 합성된다.
             <ul>
               <li>application 카드 -- 본인이 제출한 지원서. matchingRound.id/type/phase 가 실제 라운드 값으로 채워진다.</li>
-              <li>RANDOM_MATCHING 카드 -- 본인이 ACTIVE 멤버이면서 application 이 없는 케이스 (THIRD 라운드 종료 후 자동 랜덤 매칭 또는 운영진 강제 배정).
-                  matchingRound.id 는 null, phase 는 RANDOM_MATCHING, status 는 ACTIVE = 합격 의미이므로 APPROVED 로 표시된다. 도메인상 0 또는 1 건.</li>
+              <li>RANDOM_MATCHING 카드 -- 본인이 ACTIVE 멤버이면서 application 이 없는 케이스
+                  (THIRD 라운드 종료 후 자동 랜덤 매칭 또는 운영진 강제 배정).
+                  matchingRound.id 는 null, phase 는 RANDOM_MATCHING,
+                  status 는 ACTIVE = 합격 의미이므로 APPROVED 로 표시된다. 도메인상 0 또는 1 건.</li>
             </ul>
             <p>
             정렬: application 카드는 매칭 라운드 시작일 ASC -> 지원서 갱신일 DESC, RANDOM_MATCHING 카드는 결과 리스트 끝에 append.
@@ -55,7 +57,8 @@ public class ProjectApplicationQueryController {
             `status` 파라미터 :
             <ul>
               <li>미지정 -> DRAFT(임시저장) 제외 application 전체 + RANDOM_MATCHING 카드 합성</li>
-              <li>명시 시 해당 상태의 application 만 조회. RANDOM_MATCHING 카드는 application status 시맨틱 외부 데이터원이므로 합성하지 않는다.</li>
+              <li>명시 시 해당 상태가 노출 가능한 application 만 조회.
+                  RANDOM_MATCHING 카드는 application status 시맨틱 외부 데이터원이므로 합성하지 않는다.</li>
             </ul>
             <p>
             요청자가 해당 기수 챌린저가 아니거나 PLAN 또는 ADMIN 이면 빈 리스트를 반환한다.
@@ -90,7 +93,8 @@ public class ProjectApplicationQueryController {
             <ul>
               <li>matchingRoundId -- 매칭 차수 단일 필터</li>
               <li>part -- 지원자(챌린저) 의 파트 필터</li>
-              <li>status -- 지원 상태 (SUBMITTED / APPROVED / REJECTED). 미지정 시 전체. DRAFT 입력 시 도메인 예외(APPLICATION_DRAFT_FILTER_NOT_ALLOWED) 발생.</li>
+              <li>status -- 지원 상태 (SUBMITTED / APPROVED / REJECTED). 미지정 시 전체.
+                  DRAFT 입력 시 도메인 예외(APPLICATION_DRAFT_FILTER_NOT_ALLOWED) 발생.</li>
             </ul>
             <p>
             권한: 다음 호출자만 통과한다. 그 외에는 권한 부재를 '지원자 0건' 으로 위장하여 빈 리스트를 반환한다.
@@ -109,7 +113,10 @@ public class ProjectApplicationQueryController {
         @PathVariable Long projectId,
         @RequestParam(required = false) Long matchingRoundId,
         @RequestParam(required = false) ChallengerPart part,
-        @Parameter(description = "지원 상태 필터 (선택). 허용 값: SUBMITTED / APPROVED / REJECTED. DRAFT 입력 시 도메인 예외(APPLICATION_DRAFT_FILTER_NOT_ALLOWED).")
+        @Parameter(description = """
+            지원 상태 필터 (선택). 허용 값: SUBMITTED / APPROVED / REJECTED.
+            DRAFT 입력 시 도메인 예외(APPLICATION_DRAFT_FILTER_NOT_ALLOWED).
+            """)
         @RequestParam(required = false) ProjectApplicationStatus status
     ) {
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
@@ -134,7 +141,9 @@ public class ProjectApplicationQueryController {
         operationId = "APPLY-102",
         summary = "지원서 단건 상세 조회",
         description = """
-            지원서 단건의 메타(지원자/매칭 차수/상태/시각) + 폼 구조(지원자 파트 기준 마스킹) + 제출된 답변 본문 + 첨부 파일 메타까지 한 번에 반환한다.
+            지원서 단건의 메타(지원자/매칭 차수/상태/시각) + 폼 구조(지원자 파트 기준 마스킹)
+            + 제출된 답변 본문 + 첨부 파일 메타까지 한 번에 반환한다.
+            지원자 본인 조회에서는 최종 결과 노출 전까지 status 가 null 일 수 있다.
             <p>
             권한 (L2 @CheckAccess READ):
             <ul>
@@ -151,7 +160,8 @@ public class ProjectApplicationQueryController {
             </ul>
             권한 부재 시 403(AUTHORIZATION-0002) 반환.
             <p>
-            정합성: path 의 projectId 와 application 의 form.project.id 가 다르면 404(PROJECT-0021) 로 위장하여 다른 프로젝트의 지원서 존재 여부를 은닉한다.
+            정합성: path 의 projectId 와 application 의 form.project.id 가 다르면
+            404(PROJECT-0021) 로 위장하여 다른 프로젝트의 지원서 존재 여부를 은닉한다.
             """
     )
     public ProjectApplicationDetailResponse getApplicationDetail(

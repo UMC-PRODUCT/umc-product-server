@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,12 +28,14 @@ import com.umc.product.project.application.port.in.query.dto.ProjectApplicationS
 import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPolicyPort;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.ProjectApplicationFormPolicy;
 import com.umc.product.project.domain.enums.MatchingType;
+import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
@@ -56,6 +59,7 @@ public class ProjectApplicationQueryService
 
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final LoadProjectPort loadProjectPort;
+    private final LoadProjectMemberPort loadProjectMemberPort;
     private final LoadProjectApplicationFormPolicyPort loadProjectApplicationFormPolicyPort;
     private final ProjectApplicationAccessScopeResolver accessScopeResolver;
 
@@ -106,7 +110,8 @@ public class ProjectApplicationQueryService
         FormWithStructureInfo formStructure = getFormUseCase.getFormWithStructure(applicationForm.getFormId());
         List<ProjectApplicationFormPolicy> formPolicies =
             loadProjectApplicationFormPolicyPort.listByApplicationFormId(applicationForm.getId());
-        // dangling formResponseId 는 invariant 위반이지만, 클라이언트에는 PROJECT_APPLICATION_NOT_FOUND 로 통일하여 다른 도메인 에러 leakage 를 차단한다.
+        // dangling formResponseId 는 invariant 위반이지만, 클라이언트에는 PROJECT_APPLICATION_NOT_FOUND 로 통일한다.
+        // 다른 도메인 에러 leakage 를 차단하기 위함이다.
         FormResponseWithAnswersInfo formResponseWithAnswers =
             getFormResponseUseCase.findResponseWithAnswers(application.getFormResponseId())
                 .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND));
@@ -118,7 +123,8 @@ public class ProjectApplicationQueryService
             formStructure,
             formPolicies,
             formResponseWithAnswers,
-            filesByFileId
+            filesByFileId,
+            !isApplicantSelf || isStatusVisibleToApplicantSelf(application)
         );
     }
 
@@ -147,8 +153,13 @@ public class ProjectApplicationQueryService
             matchingType.get(),
             query.status()
         );
+        Set<Long> activeApplicationIds = listActiveApplicationIdsForStatusVisibility(applications);
         return applications.stream()
-            .map(ProjectApplicationSummaryInfo::from)
+            .map(application -> ProjectApplicationSummaryInfo.from(
+                application,
+                isStatusVisibleToApplicantSelf(application, activeApplicationIds)
+            ))
+            .filter(application -> query.status() == null || application.status() == query.status())
             .toList();
     }
 
@@ -196,7 +207,8 @@ public class ProjectApplicationQueryService
      *   <li>해당 기수에 챌린저 레코드 없음 -> empty</li>
      *   <li>{@code PLAN} / {@code ADMIN} -> empty (지원 대상 아님)</li>
      *   <li>{@code DESIGN} -> {@code PLAN_DESIGN}</li>
-     *   <li>{@code WEB} / {@code ANDROID} / {@code IOS} / {@code NODEJS} / {@code SPRINGBOOT} -> {@code PLAN_DEVELOPER}</li>
+     *   <li>{@code WEB} / {@code ANDROID} / {@code IOS} / {@code NODEJS} / {@code SPRINGBOOT}
+     *       -> {@code PLAN_DEVELOPER}</li>
      * </ul>
      */
     private Optional<MatchingType> resolveMatchingType(GetMyProjectApplicationsQuery query) {
@@ -211,6 +223,51 @@ public class ProjectApplicationQueryService
             accessScopeResolver.resolveForProjectApplicantList(requesterMemberId, project);
         return scope instanceof ProjectApplicationAccessScope.ProjectScoped projectScoped
             && projectScoped.includeOngoingMatchingRounds();
+    }
+
+    private Set<Long> listActiveApplicationIdsForStatusVisibility(List<ProjectApplication> applications) {
+        Set<Long> approvedApplicationIds = applications.stream()
+            .filter(this::requiresActiveMemberForStatusVisibility)
+            .map(ProjectApplication::getId)
+            .collect(Collectors.toSet());
+
+        if (approvedApplicationIds.isEmpty()) {
+            return Set.of();
+        }
+        return new HashSet<>(
+            loadProjectMemberPort.listApplicationIdsWithActiveMemberByApplicationIds(approvedApplicationIds));
+    }
+
+    private boolean isStatusVisibleToApplicantSelf(ProjectApplication application) {
+        if (!requiresActiveMemberForStatusVisibility(application)) {
+            return isStatusVisibleWithoutMember(application);
+        }
+        return loadProjectMemberPort
+            .listApplicationIdsWithActiveMemberByApplicationIds(List.of(application.getId()))
+            .contains(application.getId());
+    }
+
+    private boolean isStatusVisibleToApplicantSelf(
+        ProjectApplication application, Set<Long> activeApplicationIds
+    ) {
+        if (!requiresActiveMemberForStatusVisibility(application)) {
+            return isStatusVisibleWithoutMember(application);
+        }
+        return activeApplicationIds.contains(application.getId());
+    }
+
+    private boolean requiresActiveMemberForStatusVisibility(ProjectApplication application) {
+        return application.getStatus() == ProjectApplicationStatus.APPROVED
+            && application.getAppliedMatchingRound().getAutoDecisionExecutedAt() != null;
+    }
+
+    private boolean isStatusVisibleWithoutMember(ProjectApplication application) {
+        ProjectApplicationStatus status = application.getStatus();
+        if (status == ProjectApplicationStatus.DRAFT || status == ProjectApplicationStatus.CANCELLED) {
+            return true;
+        }
+        return application.getAppliedMatchingRound().getAutoDecisionExecutedAt() != null
+            && status != ProjectApplicationStatus.APPROVED;
     }
 
     /**
