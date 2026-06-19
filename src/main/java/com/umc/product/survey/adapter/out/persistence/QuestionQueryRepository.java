@@ -43,4 +43,19 @@ public class QuestionQueryRepository {
             .orderBy(q.orderNo.asc())
             .fetch();
     }
+
+    /**
+     * questionId 목록으로 질문을 조회한다 (isActive 무관). orderNo 오름차순 정렬.
+     */
+    public List<Question> findAllByIdIn(Set<Long> questionIds) {
+        if (questionIds.isEmpty()) {
+            return List.of();
+        }
+        QQuestion q = QQuestion.question;
+        return queryFactory
+            .selectFrom(q)
+            .where(q.id.in(questionIds))
+            .orderBy(q.orderNo.asc())
+            .fetch();
+    }
 }
