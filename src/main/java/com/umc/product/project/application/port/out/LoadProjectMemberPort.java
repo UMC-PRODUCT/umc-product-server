@@ -70,7 +70,7 @@ public interface LoadProjectMemberPort {
 
     /**
      * 지원서 ID 목록 중 ACTIVE ProjectMember 와 연결된 지원서 ID를 조회합니다.
-     * 지원자 본인 화면에서 최종 멤버 반영 전 합불 상태를 숨길 때 사용합니다.
+     * 지원자 본인 화면에서 결과를 아직 보여주면 안 되는 상태인지 판단할 때 사용합니다.
      */
     List<Long> listApplicationIdsWithActiveMemberByApplicationIds(Collection<Long> applicationIds);
 

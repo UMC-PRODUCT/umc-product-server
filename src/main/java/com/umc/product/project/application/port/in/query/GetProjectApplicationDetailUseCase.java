@@ -6,9 +6,9 @@ import com.umc.product.project.application.port.in.query.dto.ProjectApplicationD
 /**
  * 지원서 단건 상세 조회 UseCase.
  * <p>
- * 메타(지원자/매칭 차수/상태/시각) + 폼 구조(마스킹된 섹션) + 제출된 답변 + 첨부 파일 메타까지 한 번에 조립한다.
+ * 메타(지원자/매칭 차수/상태/시각) + 지원자 파트 기준 폼 구조 + 제출된 답변 + 첨부 파일 메타까지 한 번에 조립한다.
  * <p>
- * 권한 검사는 별도 PR 에서 도입되며, 본 UseCase 는 status 와 무관하게(임시저장 DRAFT 포함) 응답을 그대로 반환한다.
+ * 권한 검사는 Controller 의 {@code @CheckAccess} 에서 처리한다. 지원자 본인 응답은 결과 공개 시점에 따라 status 가 {@code null} 일 수 있다.
  */
 public interface GetProjectApplicationDetailUseCase {
 

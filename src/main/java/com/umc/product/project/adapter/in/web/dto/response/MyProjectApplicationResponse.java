@@ -17,8 +17,8 @@ import lombok.Builder;
 /**
  * 본인 지원 내역 카드 1건의 Web Response DTO.
  *
- * @param applicationId application 기반 카드만 값을 가지며 랜덤 매칭 카드는 {@code null}
- * @param status        표시용 지원 상태. 지원자 본인에게 최종 결과 노출 전이면 {@code null}. RANDOM_MATCHING 카드는 {@code APPROVED} 로 고정 표시된다.
+ * @param applicationId 지원서 기반 카드만 값을 가지며 랜덤 매칭 카드는 {@code null}
+ * @param status        표시용 지원 상태. 지원자 본인이 결과를 아직 확인할 수 없으면 {@code null}. 랜덤 매칭 카드는 {@code APPROVED} 로 고정 표시된다.
  */
 @Builder
 public record MyProjectApplicationResponse(
@@ -104,8 +104,8 @@ public record MyProjectApplicationResponse(
     /**
      * 매칭 라운드 식별 정보. 라벨 합성(예: "기획-개발자 1차 매칭")은 클라이언트가 type/phase 조합으로 처리한다.
      *
-     * @param id    application 기반 카드만 값을 가지며 랜덤 매칭 카드는 {@code null}
-     * @param phase 도메인 enum 노출을 피하기 위한 표시용 enum. 랜덤 매칭/운영진 강제 배정은 {@code RANDOM_MATCHING} 으로 표시된다.
+     * @param id    지원서 기반 카드만 값을 가지며 랜덤 매칭 카드는 {@code null}
+     * @param phase 도메인 enum 대신 사용하는 표시용 enum. 랜덤 매칭/운영진 강제 배정은 {@code RANDOM_MATCHING} 으로 표시된다.
      */
     @Builder
     public record MatchingRoundBrief(

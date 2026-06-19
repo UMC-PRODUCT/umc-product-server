@@ -25,13 +25,13 @@ import lombok.Builder;
 /**
  * 지원서 단건 상세 조회 Web Response DTO.
  * <p>
- * Service 가 모은 cross-domain 컨테이너({@link ProjectApplicationDetailInfo}) 를 화면 친화적 트리(섹션 -> 질문 -> 답변) 로 합성한다. 마스킹된 폼 구조는
- * {@link ApplicationFormInfo} 가 이미 처리한 상태(COMMON + 지원자 파트의 PART 만)로 들어온다.
+ * Service 가 모은 cross-domain 컨테이너({@link ProjectApplicationDetailInfo}) 를 화면 친화적 트리(섹션 -> 질문 -> 답변) 로 합성한다. 지원자 파트 기준으로
+ * 제한된 폼 구조는 {@link ApplicationFormInfo} 가 이미 처리한 상태(COMMON + 지원자 파트의 PART 만)로 들어온다.
  * <p>
  * 답변이 없는 질문은 {@code answer} 필드가 {@code null}. 첨부 파일은 storage 메타에서 누락된 fileId 는 응답에서 제외된다.
  *
- * @param status      표시용 지원 상태. 지원자 본인에게 최종 결과 노출 전이면 {@code null}. DRAFT 는 지원자 본인 호출 시에만 노출되며, 그 외 호출자에게는
- *                    not-found 로 위장되어 본 응답 자체가 반환되지 않는다.
+ * @param status      표시용 지원 상태. 지원자 본인이 결과를 아직 확인할 수 없으면 {@code null}. DRAFT 는 지원자 본인 호출 시에만 포함되며, 그 외 호출자에게는
+ *                    본 응답 자체가 반환되지 않는다.
  * @param submittedAt DRAFT 상태이면 {@code null}.
  */
 @Builder
@@ -95,8 +95,8 @@ public record ProjectApplicationDetailResponse(
     /**
      * 매칭 라운드 식별 정보. 라벨 합성("기획-개발자 1차 매칭" 등)은 클라이언트가 type/phase 조합으로 처리한다.
      * <p>
-     * phase 는 도메인 enum 직노출을 피하기 위해 표시용 enum {@link MatchingRoundPhaseView} 로 노출한다. 본 응답은 실제 라운드 엔티티가 있는 지원서만 다루므로
-     * RANDOM_MATCHING 케이스는 실제로 채워지지 않는다.
+     * phase 는 도메인 enum 대신 표시용 enum {@link MatchingRoundPhaseView} 로 변환한다. 본 응답은 실제 라운드 엔티티가 있는 지원서만 다루므로
+     * RANDOM_MATCHING 경우는 실제로 채워지지 않는다.
      */
     @Builder
     public record MatchingRoundBrief(
@@ -107,7 +107,7 @@ public record ProjectApplicationDetailResponse(
     }
 
     /**
-     * FormResponse 메타 + 마스킹된 섹션 트리. 답변이 없는 질문은 {@link SectionView.QuestionView#answer} 가 {@code null}.
+     * FormResponse 메타 + 지원자 파트 기준 섹션 트리. 답변이 없는 질문은 {@link SectionView.QuestionView#answer} 가 {@code null}.
      */
     @Builder
     public record FormResponseView(

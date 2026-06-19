@@ -10,7 +10,7 @@ import lombok.Builder;
 /**
  * ProjectApplication 자원의 표준 view.
  * <p>
- * 자기 도메인 자원 한 종류만 노출한다 -- 다른 자원({@code Project}, {@code ProjectMatchingRound}, {@code Member} 등) 과의 합성은 Web Assembler
+ * 자기 도메인 자원 한 종류만 담는다 -- 다른 자원({@code Project}, {@code ProjectMatchingRound}, {@code Member} 등) 과의 합성은 Web Assembler
  * 에서 cross-domain UseCase 와 함께 수행한다.
  * <p>
  * 이름 메모: 표준 자원 view 의 컨벤션상 {@code ProjectApplicationInfo} 가 자연스러우나, 해당 이름은 현재 Command 결과용 record

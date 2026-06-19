@@ -56,16 +56,16 @@ public class ProjectApplicationResponseAssembler {
     /**
      * 본인 지원 내역 카드 목록 조립 (APPLY-004).
      * <p>
-     * 두 데이터원을 한 화면에 합성한다:
+     * 두 종류의 카드를 한 화면에 합성한다:
      * <ul>
-     *   <li>application 카드 -- 본인이 제출한 {@code ProjectApplication}</li>
+     *   <li>지원서 카드 -- 본인이 제출한 {@code ProjectApplication}</li>
      *   <li>랜덤 매칭 카드 -- 본인이 ACTIVE 멤버이면서 {@code application = null} 인 {@code ProjectMember} (한 기수 0 또는 1 건)</li>
      * </ul>
      * <p>
-     * 정렬: application 카드는 service 가 반환한 순서(매칭 라운드 시작일 ASC -> 갱신일 DESC) 그대로, 랜덤 매칭 카드는 끝에 1 건 append.
+     * 정렬: 지원서 카드는 service 가 반환한 순서(매칭 라운드 시작일 ASC -> 갱신일 DESC) 그대로, 랜덤 매칭 카드는 마지막에 둔다.
      * <p>
-     * status 필터가 명시된 호출에서는 랜덤 매칭 카드를 합성하지 않는다 -- application status 시맨틱이 적용되지 않는 데이터원이라 좁은 필터(SUBMITTED/REJECTED/DRAFT)
-     * 호출 시 RANDOM_MATCHING 카드가 끼는 것을 방지한다.
+     * status 필터가 명시된 호출에서는 랜덤 매칭 카드를 합성하지 않는다 -- 랜덤 매칭 카드는 지원서 상태 필터에 대응하지 않아, 좁은 필터(SUBMITTED/REJECTED/DRAFT)
+     * 호출 시 함께 내려가지 않게 한다.
      */
     public List<MyProjectApplicationResponse> myApplicationsFor(GetMyProjectApplicationsQuery query) {
         List<ProjectApplicationSummaryInfo> applications =

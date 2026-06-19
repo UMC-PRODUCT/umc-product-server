@@ -24,19 +24,20 @@ import lombok.Builder;
 /**
  * 지원서 단건 상세 Info DTO.
  * <p>
- * Service 가 cross-domain (project/challenger/survey/storage) raw 데이터를 모아 넘기면, {@link #of} 가 마스킹된 폼 구조 / FormResponse 메타
- * / questionId -> 답변 매핑까지 합성한다. 트리(섹션 -> 질문 -> 답변) 구조 합성은 Web Response 레이어가 책임진다 -- Info 는 컨테이너 형태를 유지한다.
+ * Service 가 cross-domain (project/challenger/survey/storage) raw 데이터를 모아 넘기면, {@link #of} 가 지원자 파트 기준 폼 구조 /
+ * FormResponse 메타 / questionId -> 답변 매핑까지 합성한다. 트리(섹션 -> 질문 -> 답변) 구조 합성은 Web Response 레이어가 책임진다 -- Info 는
+ * 컨테이너 형태를 유지한다.
  *
  * @param applicationId       지원서 ID
  * @param applicantMemberId   지원자 Member ID
- * @param applicantPart       지원자(챌린저) 의 파트 — 폼 마스킹과 응답 표시에 모두 사용
+ * @param applicantPart       지원자(챌린저) 의 파트 — 폼 섹션 제한과 응답 표시에 모두 사용
  * @param matchingRoundId     매칭 차수 ID
  * @param matchingRoundType   매칭 종류
  * @param matchingRoundPhase  매칭 차수
- * @param status              표시용 상태 (DRAFT 포함). 지원자 본인 조회에서 최종 멤버 반영 전이면 {@code null}
+ * @param status              표시용 상태 (DRAFT 포함). 지원자 본인 조회에서 결과를 아직 확인할 수 없으면 {@code null}
  * @param submittedAt         지원시각 (DRAFT 이면 null)
  * @param statusChangedAt     처리시각 (합/불 결정 전이면 null)
- * @param formStructure       마스킹된 폼 구조 (COMMON + applicantPart 의 PART 섹션만 포함)
+ * @param formStructure       지원자 파트 기준 폼 구조 (COMMON + applicantPart 의 PART 섹션만 포함)
  * @param formResponse        FormResponse 메타 (제출 시각 / 마지막 저장 시각 등)
  * @param answersByQuestionId 답변이 있는 questionId 만 매핑됨 — 답변 없는 질문은 키 자체가 없음
  * @param filesByFileId       answer.fileIds 들의 메타+URL — 누락된 fileId 는 매핑에서 빠짐
@@ -63,7 +64,7 @@ public record ProjectApplicationDetailInfo(
      * @param application             fetch 된 지원서 (applicationForm/project, appliedMatchingRound 로드 상태)
      * @param applicantPart           지원자 파트 (challenger 도메인 enrichment 결과)
      * @param formStructure           survey 도메인의 폼 구조
-     * @param formPolicies            project 도메인의 섹션 정책 (마스킹용)
+     * @param formPolicies            project 도메인의 섹션 표시 정책
      * @param formResponseWithAnswers survey 도메인의 응답 메타 + 답변
      * @param filesByFileId           storage 도메인의 fileId -> FileInfo 매핑 (batch 조회 결과)
      */
