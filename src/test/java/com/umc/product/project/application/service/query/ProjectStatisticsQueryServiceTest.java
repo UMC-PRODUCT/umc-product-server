@@ -364,6 +364,33 @@ class ProjectStatisticsQueryServiceTest {
     }
 
     @Test
+    @DisplayName("getByChapterId_null_memberId는_학교별_summary_집계에서_무시한다")
+    void 지부_통계_null_memberId_학교별_summary_집계_무시() {
+        // given
+        Long chapterId = 3L;
+        Long gisuId = 1L;
+        Long requesterMemberId = 7000L;
+        given(loadProjectStatisticsPort.listProjectsByChapterId(chapterId))
+            .willReturn(List.of(projectRow(10L, gisuId, chapterId)));
+        given(loadProjectStatisticsPort.listMatchingRoundsByChapterId(chapterId))
+            .willReturn(List.of(roundRow(1L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST)));
+        given(loadProjectStatisticsPort.listActiveMembersByChapterId(chapterId))
+            .willReturn(List.of(memberRow(10L, 101L, null, ChallengerPart.WEB)));
+        given(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(Set.of(10L)))
+            .willReturn(List.of());
+        given(getChallengerUseCase.listByChapterId(chapterId))
+            .willReturn(List.of());
+        given(projectStatisticsAccessPolicy.canReadChapterStatistics(requesterMemberId, chapterId))
+            .willReturn(true);
+
+        // when
+        ChapterProjectStatisticsInfo result = sut.getByChapterId(chapterId, requesterMemberId);
+
+        // then
+        assertThat(result.summary().schoolMatchingStatistics()).isEmpty();
+    }
+
+    @Test
     @DisplayName("getPublicMatchingStatisticsByChapterId_ProjectMember_기준_공개_매칭_요약을_반환한다")
     void 공개_프로젝트_매칭_요약_반환() {
         // given

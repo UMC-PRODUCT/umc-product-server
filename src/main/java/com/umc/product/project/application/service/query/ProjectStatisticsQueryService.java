@@ -344,6 +344,9 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
     ) {
         Map<Long, Map<Long, Set<Long>>> roundSchoolApplicants = new HashMap<>();
         for (ProjectStatisticsApplicationRow application : context.applications()) {
+            if (application.applicantMemberId() == null) {
+                continue;
+            }
             Long schoolId = context.population().schoolIdByMemberId().get(application.applicantMemberId());
             if (schoolId == null) {
                 continue;
@@ -382,6 +385,9 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         Map<Long, Set<Long>> matchedMemberIdsBySchool = new HashMap<>();
         for (ProjectStatisticsMemberRow member : context.members()) {
+            if (member.memberId() == null) {
+                continue;
+            }
             Long schoolId = context.population().schoolIdByMemberId().get(member.memberId());
             if (schoolId == null) {
                 continue;
@@ -393,6 +399,9 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
 
         Map<Long, Set<Long>> appliedMemberIdsBySchool = new HashMap<>();
         for (ProjectStatisticsApplicationRow application : context.applications()) {
+            if (application.applicantMemberId() == null) {
+                continue;
+            }
             Long schoolId = context.population().schoolIdByMemberId().get(application.applicantMemberId());
             if (schoolId == null) {
                 continue;
@@ -521,6 +530,9 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
 
         Map<Long, Set<Long>> matchedMemberIdsBySchool = new HashMap<>();
         for (ProjectStatisticsMemberRow member : context.allMembers()) {
+            if (member.memberId() == null) {
+                continue;
+            }
             Long schoolId = context.population().schoolIdByMemberId().get(member.memberId());
             if (schoolId == null) {
                 continue;
