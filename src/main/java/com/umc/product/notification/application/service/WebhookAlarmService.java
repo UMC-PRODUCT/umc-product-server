@@ -53,7 +53,7 @@ public class WebhookAlarmService implements SendWebhookAlarmUseCase {
     public void sendBuffered(SendWebhookAlarmCommand command) {
         eventPublisher.publish(WebhookAlarmEvent.of(command.platforms(), command.title(), command.content()));
         log.debug("웹훅 알람 이벤트 발행: platforms={}, contentLength={}",
-            command.platforms(), command.content() == null ? 0 : command.content().length());
+            command.platforms(), command.content().length());
     }
 
     private void trySend(WebhookPlatform platform, String title, String content) {

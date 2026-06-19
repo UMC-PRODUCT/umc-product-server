@@ -8,22 +8,22 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.umc.product.maintenance.application.service.MaintenanceStateHolder;
+import com.umc.product.maintenance.application.port.in.command.RefreshMaintenanceStateUseCase;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("MaintenanceStateRefreshScheduler")
 class MaintenanceStateRefreshSchedulerTest {
 
     @Mock
-    MaintenanceStateHolder stateHolder;
+    RefreshMaintenanceStateUseCase refreshMaintenanceStateUseCase;
 
     @Test
     @DisplayName("스케줄 실행 시 maintenance 상태 스냅샷을 refresh한다")
     void 스케줄_실행시_maintenance_상태를_refresh한다() {
-        MaintenanceStateRefreshScheduler sut = new MaintenanceStateRefreshScheduler(stateHolder);
+        MaintenanceStateRefreshScheduler sut = new MaintenanceStateRefreshScheduler(refreshMaintenanceStateUseCase);
 
         sut.refresh();
 
-        then(stateHolder).should().refresh();
+        then(refreshMaintenanceStateUseCase).should().refresh();
     }
 }

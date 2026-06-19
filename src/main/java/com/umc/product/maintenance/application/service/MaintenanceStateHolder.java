@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.maintenance.application.port.in.command.RefreshMaintenanceStateUseCase;
 import com.umc.product.maintenance.application.port.out.LoadMaintenanceWindowPort;
 import com.umc.product.maintenance.domain.MaintenanceSnapshot;
 
@@ -22,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Component
-public class MaintenanceStateHolder {
+public class MaintenanceStateHolder implements RefreshMaintenanceStateUseCase {
 
     private final LoadMaintenanceWindowPort loadPort;
     private final Clock clock;
@@ -44,6 +45,7 @@ public class MaintenanceStateHolder {
         refresh();
     }
 
+    @Override
     @Transactional(readOnly = true)
     public void refresh() {
         try {
