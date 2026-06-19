@@ -211,6 +211,7 @@ public class ProjectApplicationQueryService
     public Map<Long, List<ProjectApplicationSummaryInfo>> searchByProjects(
         SearchProjectApplicationsBatchQuery query
     ) {
+        // 요청한 projectId key 는 응답에서 그대로 보존한다. 권한 없음/미존재 프로젝트도 빈 리스트로 채운다.
         Map<Long, List<ProjectApplicationSummaryInfo>> result = new LinkedHashMap<>();
         for (Long projectId : query.projectIds()) {
             result.put(projectId, new ArrayList<>());
@@ -232,12 +233,14 @@ public class ProjectApplicationQueryService
             return freeze(result);
         }
 
+        // 중앙총괄/SUPER_ADMIN scope 프로젝트만 진행 중 차수 지원서를 함께 조회한다.
         Set<Long> includeOngoingProjectIds = scopes.entrySet().stream()
             .filter(entry -> entry.getValue() instanceof ProjectApplicationAccessScope.ProjectScoped projectScoped
                 && projectScoped.includeOngoingMatchingRounds())
             .map(Map.Entry::getKey)
             .collect(Collectors.toSet());
 
+        // 권한이 확인된 프로젝트만 DB 조회 대상에 넣어 권한 없는 프로젝트의 존재 여부가 결과로 새지 않게 한다.
         List<ProjectApplication> applications = loadProjectApplicationPort.searchProjectApplicationsByProjectIds(
             accessibleProjectIds,
             includeOngoingProjectIds,

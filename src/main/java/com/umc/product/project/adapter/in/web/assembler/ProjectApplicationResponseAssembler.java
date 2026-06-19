@@ -182,6 +182,7 @@ public class ProjectApplicationResponseAssembler {
             return Map.of();
         }
 
+        // Service 가 보존한 요청 projectId key 를 Web 응답에서도 그대로 유지한다.
         Map<Long, List<ProjectApplicantResponse>> result = new LinkedHashMap<>();
         applicationsByProject.keySet().forEach(projectId -> result.put(projectId, List.of()));
 
@@ -210,6 +211,7 @@ public class ProjectApplicationResponseAssembler {
         Map<Long, MemberInfo> memberMap = getMemberUseCase.findAllByIds(applicantMemberIds);
 
         for (Map.Entry<Long, List<ProjectApplicationSummaryInfo>> entry : applicationsByProject.entrySet()) {
+            // 전체 부가 정보는 batch 로 한 번에 가져오고, 마지막 단계에서 프로젝트별 필터/정렬만 적용한다.
             List<ProjectApplicantResponse> responses = entry.getValue().stream()
                 .filter(application -> {
                     ChallengerPart applicantPart = applicantPartOf(application, projects, partsByMemberAndGisu);
@@ -275,6 +277,7 @@ public class ProjectApplicationResponseAssembler {
                 .add(application.applicantMemberId());
         }
 
+        // Challenger part 는 같은 memberId 여도 기수별로 다를 수 있어 gisuId 를 key 에 함께 넣는다.
         Map<MemberGisuKey, ChallengerPart> result = new HashMap<>();
         memberIdsByGisu.forEach((gisuId, memberIds) ->
             getChallengerUseCase.batchGetByMemberIdsAndGisuId(memberIds, gisuId)

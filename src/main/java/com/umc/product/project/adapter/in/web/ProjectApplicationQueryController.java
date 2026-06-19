@@ -5,12 +5,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.validation.annotation.Validated;
 
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
@@ -113,9 +113,7 @@ public class ProjectApplicationQueryController {
     public Map<Long, List<ProjectApplicantResponse>> getProjectApplicantsBatch(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam
-        @NotEmpty(message = "projectIds는 비어 있을 수 없습니다.")
-        @Size(max = 100, message = "projectIds는 최대 100개까지 조회할 수 있습니다.")
-        List<@NotNull Long> projectIds,
+        @NotEmpty(message = "projectIds는 비어 있을 수 없습니다.") @Size(max = 100, message = "projectIds는 최대 100개까지 조회할 수 있습니다.") List<@NotNull Long> projectIds,
         @RequestParam(required = false) Long matchingRoundId,
         @RequestParam(required = false) ChallengerPart part,
         @Parameter(description = """
