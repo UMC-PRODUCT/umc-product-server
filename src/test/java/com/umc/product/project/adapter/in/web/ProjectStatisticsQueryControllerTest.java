@@ -94,7 +94,7 @@ class ProjectStatisticsQueryControllerTest {
     }
 
     @Test
-    @DisplayName("GET_statistics_projectId_단건_프로젝트_지원_매칭_현황을_반환한다")
+    @DisplayName("GET_statistics_projectIds_단건_프로젝트_지원_매칭_현황을_배열로_반환한다")
     void 통합_경로_단건_프로젝트_통계_조회() throws Exception {
         // given
         given(assembler.statisticsForProjects(List.of(10L), TEST_MEMBER_ID))
@@ -102,7 +102,7 @@ class ProjectStatisticsQueryControllerTest {
 
         // when & then
         mockMvc.perform(get("/api/v1/projects/statistics")
-                .param("projectId", "10"))
+                .param("projectIds", "10"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.chapterId").value(3L))
             .andExpect(jsonPath("$.result.projects[0].projectId").value(10L))
@@ -155,27 +155,26 @@ class ProjectStatisticsQueryControllerTest {
     }
 
     @Test
-    @DisplayName("GET_statistics_projectId_chapterId_둘_다_제공하면_400을_반환한다")
+    @DisplayName("GET_statistics_projectIds_chapterId_둘_다_제공하면_400을_반환한다")
     void 통합_통계_조회_조건_중복이면_400() throws Exception {
         // when & then
         mockMvc.perform(get("/api/v1/projects/statistics")
-                .param("projectId", "10")
+                .param("projectIds", "10")
                 .param("chapterId", "3"))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("GET_statistics_projectId_projectIds_둘_다_제공하면_400을_반환한다")
-    void 통합_통계_조회_프로젝트_조건_중복이면_400() throws Exception {
+    @DisplayName("GET_statistics_projectId_단독_제공하면_400을_반환한다")
+    void 통합_통계_조회_projectId_query_param이면_400() throws Exception {
         // when & then
         mockMvc.perform(get("/api/v1/projects/statistics")
-                .param("projectId", "10")
-                .param("projectIds", "11"))
+                .param("projectId", "10"))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("GET_statistics_projectId_chapterId_둘_다_없으면_400을_반환한다")
+    @DisplayName("GET_statistics_projectIds_chapterId_둘_다_없으면_400을_반환한다")
     void 통합_통계_조회_조건_누락이면_400() throws Exception {
         // when & then
         mockMvc.perform(get("/api/v1/projects/statistics"))
