@@ -6,6 +6,12 @@ import static com.umc.product.project.domain.QProjectApplicationForm.projectAppl
 import static com.umc.product.project.domain.QProjectMatchingRound.projectMatchingRound;
 import static com.umc.product.project.domain.QProjectMember.projectMember;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -17,11 +23,8 @@ import com.umc.product.project.application.port.out.dto.ProjectStatisticsProject
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor

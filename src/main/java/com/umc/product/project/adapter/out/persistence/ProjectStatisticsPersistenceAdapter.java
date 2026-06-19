@@ -1,5 +1,10 @@
 package com.umc.product.project.adapter.out.persistence;
 
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsApplicationRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsApprovedApplicationRow;
@@ -8,10 +13,8 @@ import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberR
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import java.util.Collection;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
