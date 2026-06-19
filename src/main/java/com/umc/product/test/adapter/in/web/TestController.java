@@ -48,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 @Profile("local | dev")
 @RestController
 @RequestMapping("/test")
-@Tag(name = "Test | 일반 테스트", description = "개발 및 테스트 용 API 입니다. 잘못 호출하면 우리의 작고 소중한 서버가 어떻게 되어버릴지도 몰라요 \uD83E\uDEE2")
+@Tag(name = "Test | 일반 테스트", description = "개발과 테스트 환경에서만 사용하는 점검 API입니다.")
 @Slf4j
 @Public
 public class TestController {
@@ -65,10 +65,10 @@ public class TestController {
     /**
      * 파일 정보 및 접근 URL을 조회합니다.
      */
-    @Operation(operationId = "TEST-001", summary = "[개발용] 파일 ID를 기반으로 접근 가능한 URL을 조회합니다.", description = """
-        local 및 development 환경에서만 사용 가능합니다.
+    @Operation(operationId = "TEST-001", summary = "파일 접근 URL 조회", description = """
+        local과 development 환경에서만 사용할 수 있습니다.
 
-        크롤링을 방지하기 위한 절차입니다. 파일이 정상적으로 업로드되었는지 확인하는 용도로만 사용하세요.
+        파일 업로드 상태 확인 용도로만 사용합니다.
         """)
     @GetMapping("/file/{fileId}")
     @Public
@@ -109,7 +109,7 @@ public class TestController {
         @RequestParam String title,
         @RequestParam String content
     ) {
-        log.debug("웹훅 알람 AOP 테스트가 호출되었습니다~!");
+        log.debug("웹훅 알람 AOP 테스트를 호출했습니다.");
 
         return TestAopAlarmResponse.builder()
             .content(content)
@@ -198,14 +198,14 @@ public class TestController {
     }
 
 
-    @Operation(operationId = "TEST-011", summary = "헬스 체크 API")
+    @Operation(operationId = "TEST-011", summary = "헬스 체크")
     @Public
     @GetMapping("/health-check")
     public String healthCheck() {
         return "OK";
     }
 
-    @Operation(operationId = "TEST-012", summary = "인증된 사용자인지 여부를 확인합니다.", description = "인증되지 않은 사용자인 경우 401을 반환합니다.")
+    @Operation(operationId = "TEST-012", summary = "인증 상태 확인", description = "인증되지 않은 사용자는 401을 반환합니다.")
     @GetMapping("/check-authenticated")
     public ApiResponse<String> checkAuthenticated(@CurrentMember MemberPrincipal currentUser) {
         return ApiResponse.onSuccess(currentUser.toString());

@@ -45,7 +45,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/blog/series")
 @RequiredArgsConstructor
-@Tag(name = "Blog | 시리즈", description = "블로그 시리즈 API")
+@Tag(name = "Blog | 시리즈", description = "블로그 시리즈를 조회하고 관리합니다.")
 public class BlogSeriesController {
 
     private final GetBlogSeriesUseCase getBlogSeriesUseCase;
@@ -56,7 +56,7 @@ public class BlogSeriesController {
 
     @Public
     @GetMapping
-    @Operation(summary = "[BLOG-SERIES-001] 공개 시리즈 목록 조회")
+    @Operation(operationId = "BLOG-SERIES-001", summary = "공개 시리즈 목록 조회")
     public CursorResponse<BlogSeriesSummaryResponse> getPublicSeries(
         @RequestParam(required = false) String type,
         @RequestParam(required = false) Long cursor,
@@ -75,7 +75,7 @@ public class BlogSeriesController {
 
     @Public
     @GetMapping("/{type}/{slug}")
-    @Operation(summary = "[BLOG-SERIES-002] 공개 시리즈 상세 조회")
+    @Operation(operationId = "BLOG-SERIES-002", summary = "공개 시리즈 상세 조회")
     public BlogSeriesResponse getPublicSeries(
         @PathVariable String type,
         @PathVariable String slug,
@@ -88,7 +88,7 @@ public class BlogSeriesController {
 
     @Public
     @GetMapping("/{type}/{slug}/contents")
-    @Operation(summary = "[BLOG-SERIES-003] 공개 시리즈 콘텐츠 목록 조회")
+    @Operation(operationId = "BLOG-SERIES-003", summary = "공개 시리즈 콘텐츠 목록 조회")
     public CursorResponse<BlogContentSummaryResponse> getPublicSeriesContents(
         @PathVariable String type,
         @PathVariable String slug,
@@ -114,7 +114,7 @@ public class BlogSeriesController {
 
     @GetMapping("/{seriesId}/preview")
     @CheckAccess(resourceType = ResourceType.BLOG_SERIES, resourceId = "#seriesId", permission = PermissionType.READ)
-    @Operation(summary = "[BLOG-SERIES-004] 시리즈 preview 조회")
+    @Operation(operationId = "BLOG-SERIES-004", summary = "시리즈 미리보기 조회")
     public BlogSeriesResponse getPreview(
         @PathVariable Long seriesId,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -124,7 +124,7 @@ public class BlogSeriesController {
 
     @PostMapping
     @CheckAccess(resourceType = ResourceType.BLOG_SERIES, permission = PermissionType.WRITE)
-    @Operation(summary = "[BLOG-SERIES-005] 시리즈 생성")
+    @Operation(operationId = "BLOG-SERIES-005", summary = "시리즈 생성")
     public BlogSeriesResponse create(
         @Valid @RequestBody BlogSeriesRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -136,7 +136,7 @@ public class BlogSeriesController {
 
     @PatchMapping("/{seriesId}")
     @CheckAccess(resourceType = ResourceType.BLOG_SERIES, resourceId = "#seriesId", permission = PermissionType.EDIT)
-    @Operation(summary = "[BLOG-SERIES-006] 시리즈 수정")
+    @Operation(operationId = "BLOG-SERIES-006", summary = "시리즈 수정")
     public BlogSeriesResponse update(
         @PathVariable Long seriesId,
         @Valid @RequestBody BlogSeriesRequest request
@@ -146,7 +146,7 @@ public class BlogSeriesController {
 
     @DeleteMapping("/{seriesId}")
     @CheckAccess(resourceType = ResourceType.BLOG_SERIES, resourceId = "#seriesId", permission = PermissionType.DELETE)
-    @Operation(summary = "[BLOG-SERIES-007] 시리즈 삭제")
+    @Operation(operationId = "BLOG-SERIES-007", summary = "시리즈 삭제")
     public void delete(
         @PathVariable Long seriesId,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -156,7 +156,7 @@ public class BlogSeriesController {
 
     @PutMapping("/{seriesId}/contents")
     @CheckAccess(resourceType = ResourceType.BLOG_SERIES, resourceId = "#seriesId", permission = PermissionType.EDIT)
-    @Operation(summary = "[BLOG-SERIES-008] 시리즈 콘텐츠 전체 교체")
+    @Operation(operationId = "BLOG-SERIES-008", summary = "시리즈 콘텐츠 전체 교체")
     public BlogSeriesResponse replaceContents(
         @PathVariable Long seriesId,
         @Valid @RequestBody ReplaceBlogSeriesContentsRequest request

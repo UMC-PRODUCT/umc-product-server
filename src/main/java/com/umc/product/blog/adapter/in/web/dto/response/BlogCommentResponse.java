@@ -66,7 +66,7 @@ public record BlogCommentResponse(
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Schema(description = "블로그 댓글 작성자 응답")
     public record AuthorResponse(
-        @Schema(description = "회원 ID. 비회원 작성자면 null입니다.", example = "1")
+        @Schema(description = "회원 ID. 비회원 작성자면 null", example = "1")
         Long id,
 
         @Schema(description = "회원 이름", example = "홍길동")

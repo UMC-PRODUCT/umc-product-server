@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Authentication | 이메일 인증", description = "이메일 인증 관련 API")
+@Tag(name = "Authentication | 이메일 인증", description = "이메일 인증 코드를 발송하고 인증합니다.")
 public class EmailAuthenticationController {
 
     private final ManageAuthenticationUseCase manageAuthenticationUseCase;
@@ -33,7 +33,7 @@ public class EmailAuthenticationController {
     private final VerifyOAuthTokenPort verifyOAuthTokenPort;
     private final JwtTokenProvider jwtTokenProvider;
 
-    @Operation(summary = "[EMAIL-001] 6자리 인증코드로 이메일 인증",
+    @Operation(operationId = "EMAIL-001", summary = "6자리 인증코드로 이메일 인증",
         description = """
             이메일로 발송된 인증코드를 통해서 이메일 인증을 완료합니다.
 
@@ -59,7 +59,7 @@ public class EmailAuthenticationController {
             .build();
     }
 
-    @Operation(summary = "[EMAIL-002] 이메일 인증 코드 발송",
+    @Operation(operationId = "EMAIL-002", summary = "이메일 인증 코드 발송",
         description = """
             인증을 요청하는 이메일로 인증 코드를 발송합니다.
 
@@ -84,7 +84,7 @@ public class EmailAuthenticationController {
             .build();
     }
 
-    @Operation(summary = "[EMAIL-003] 이메일 인증 코드 재전송",
+    @Operation(operationId = "EMAIL-003", summary = "이메일 인증 코드 재전송",
         description = """
             기존 이메일 인증 세션의 인증 코드를 재발급하고 이메일을 재전송합니다.
 

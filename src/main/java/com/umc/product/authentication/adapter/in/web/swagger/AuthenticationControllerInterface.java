@@ -1,17 +1,19 @@
 package com.umc.product.authentication.adapter.in.web.swagger;
 
+import org.springframework.web.bind.annotation.RequestBody;
+
 import com.umc.product.authentication.adapter.in.web.dto.request.AppleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.GoogleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.KakaoCodeLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.KakaoLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.response.OAuthLoginResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "Authentication | 로그인")
+@Tag(name = "Authentication | 소셜 로그인", description = "소셜 로그인(OAuth)을 처리합니다.")
 public interface AuthenticationControllerInterface {
-    @Operation(summary = "[LOGIN-001] Google 로그인",
+    @Operation(operationId = "LOGIN-001", summary = "Google 로그인",
         description = """
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 
@@ -29,7 +31,7 @@ public interface AuthenticationControllerInterface {
         @RequestBody GoogleLoginRequest request
     );
 
-    @Operation(summary = "[LOGIN-005] Kakao 로그인",
+    @Operation(operationId = "LOGIN-005", summary = "Kakao 로그인",
         description = """
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 
@@ -47,7 +49,7 @@ public interface AuthenticationControllerInterface {
         @RequestBody KakaoLoginRequest request
     );
 
-    @Operation(summary = "[LOGIN-006] Kakao 로그인 (Authorization Code 흐름)",
+    @Operation(operationId = "LOGIN-006", summary = "Kakao 인가 코드 로그인",
         description = """
             표준 OAuth2 authorization code grant 흐름을 사용하는 클라이언트(주로 웹)를 위한 엔드포인트입니다.
 
@@ -65,7 +67,7 @@ public interface AuthenticationControllerInterface {
         @RequestBody KakaoCodeLoginRequest request
     );
 
-    @Operation(summary = "[LOGIN-010] Apple 로그인",
+    @Operation(operationId = "LOGIN-010", summary = "Apple 로그인",
         description = """
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 

@@ -45,7 +45,7 @@ public class FigmaCommentDigestService implements DigestFigmaCommentsUseCase {
             .map(d -> new FigmaDigestSummary.DomainResult(d.domainKey(), d.comments().size(), d.sent()))
             .toList();
 
-        log.info("Figma digest 완료: from={}, to={}, total={}, unmatched={}, skippedDispatched={}, domains={}",
+        log.info("Figma digest를 생성했습니다: from={}, to={}, total={}, unmatched={}, skippedDispatched={}, domains={}",
             result.from(), result.to(), result.totalComments(), result.unmatchedCount(),
             result.skippedAlreadyDispatchedCount(), domainResults.size());
 

@@ -3,18 +3,23 @@ package com.umc.product.project.adapter.in.scheduler;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
 
-import com.umc.product.project.application.port.in.command.AutoDecideProjectMatchingRoundUseCase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.umc.product.global.logging.OperationalMetrics;
+import com.umc.product.project.application.port.in.command.AutoDecideProjectMatchingRoundUseCase;
+
 @ExtendWith(MockitoExtension.class)
 class MatchingRoundDeadlineHandlerTest {
 
     @Mock
     AutoDecideProjectMatchingRoundUseCase autoDecideUseCase;
+
+    @Mock
+    OperationalMetrics operationalMetrics;
 
     @InjectMocks
     MatchingRoundDeadlineHandler sut;

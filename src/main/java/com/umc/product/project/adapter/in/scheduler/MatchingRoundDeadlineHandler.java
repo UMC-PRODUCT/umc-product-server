@@ -1,9 +1,15 @@
 package com.umc.product.project.adapter.in.scheduler;
 
+import java.time.Duration;
+import java.time.Instant;
+
+import org.springframework.stereotype.Component;
+
+import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.project.application.port.in.command.AutoDecideProjectMatchingRoundUseCase;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 /**
  * 매칭 차수 결정 마감 시점에 트리거되어 자동 선발 UseCase 를 호출하는 driving adapter.
@@ -16,16 +22,25 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class MatchingRoundDeadlineHandler {
 
+    private static final String JOB_NAME = "matching_round_deadline";
+
     private final AutoDecideProjectMatchingRoundUseCase autoDecideUseCase;
+    private final OperationalMetrics operationalMetrics;
 
     /**
      * deadline 시점에 1회 호출되어 자동 선발을 실행한다. 예외는 swallow 하여 다음 task 진행을 막지 않는다.
      */
     public void handle(Long matchingRoundId) {
+        Instant startedAt = Instant.now();
         try {
             autoDecideUseCase.autoDecide(matchingRoundId, null);
+            Duration duration = Duration.between(startedAt, Instant.now());
+            operationalMetrics.recordBatchJob(JOB_NAME, "success", duration, 1);
         } catch (Exception e) {
-            log.error("Failed to auto-decide matching round {}", matchingRoundId, e);
+            Duration duration = Duration.between(startedAt, Instant.now());
+            operationalMetrics.recordBatchJob(JOB_NAME, "failure", duration, 0);
+            log.error("batch job failed: jobName={}, matchingRoundId={}, durationMs={}, result={}, errorClass={}",
+                JOB_NAME, matchingRoundId, duration.toMillis(), "failure", e.getClass().getSimpleName(), e);
         }
     }
 }

@@ -29,7 +29,7 @@
  *       데이터 셋업은 Fixture 컴포넌트에 위임한다.</li>
  *   <li>테스트 메서드 / 클래스에 {@code @Transactional} 을 부여하지 않는다.
  *       격리는 {@code @DatabaseIsolation} 의 TRUNCATE 로 보장된다.</li>
- *   <li>외부 시스템(메일/JWT/FCM/GCS/S3) 외의 도메인 빈을 {@code @MockitoBean} 으로
+ *   <li>외부 시스템(메일/JWT/FCM/S3) 외의 도메인 빈을 {@code @MockitoBean} 으로
  *       덮어쓰지 않는다. 도메인 모킹이 필요한 케이스는 단위 테스트로 분리한다.</li>
  * </ul>
  */

@@ -3,6 +3,9 @@ package com.umc.product.organization.application.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.application.port.in.command.ManageUmcProductGenerationUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateUmcProductGenerationCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateUmcProductGenerationCommand;
@@ -23,6 +26,13 @@ public class UmcProductGenerationCommandService implements ManageUmcProductGener
     private final SaveUmcProductGenerationPort saveUmcProductGenerationPort;
     private final UmcProductAccessPolicy umcProductAccessPolicy;
 
+    @Audited(
+        domain = Domain.ORGANIZATION,
+        action = AuditAction.CREATE,
+        targetType = "UmcProductGeneration",
+        targetId = "#result",
+        description = "'UMC Product 기수를 생성했습니다.'"
+    )
     @Override
     public Long create(CreateUmcProductGenerationCommand command) {
         if (!umcProductAccessPolicy.canCreateGeneration(command.requesterMemberId())) {
@@ -41,6 +51,13 @@ public class UmcProductGenerationCommandService implements ManageUmcProductGener
         return saveUmcProductGenerationPort.save(generation).getId();
     }
 
+    @Audited(
+        domain = Domain.ORGANIZATION,
+        action = AuditAction.UPDATE,
+        targetType = "UmcProductGeneration",
+        targetId = "#command.umcProductGenerationId()",
+        description = "'UMC Product 기수를 수정했습니다.'"
+    )
     @Override
     public void update(UpdateUmcProductGenerationCommand command) {
         if (!umcProductAccessPolicy.canManageGeneration(command.requesterMemberId(), command.umcProductGenerationId())) {
@@ -57,6 +74,13 @@ public class UmcProductGenerationCommandService implements ManageUmcProductGener
         saveUmcProductGenerationPort.save(generation);
     }
 
+    @Audited(
+        domain = Domain.ORGANIZATION,
+        action = AuditAction.DELETE,
+        targetType = "UmcProductGeneration",
+        targetId = "#umcProductGenerationId",
+        description = "'UMC Product 기수를 삭제했습니다.'"
+    )
     @Override
     public void delete(Long umcProductGenerationId, Long requesterMemberId) {
         if (!umcProductAccessPolicy.canManageGeneration(requesterMemberId, umcProductGenerationId)) {

@@ -49,7 +49,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/admin/dashboard")
 @RequiredArgsConstructor
-@Tag(name = "Analytics | 운영진 종합 대시보드", description = "운영진 메인 대시보드 집계 API")
+@Tag(name = "Analytics | 운영진 종합 대시보드", description = "운영진이 주요 운영 지표와 액션 큐를 확인합니다.")
 public class AdminDashboardController {
 
     private final GetAdminDashboardSummaryUseCase getAdminDashboardSummaryUseCase;
@@ -63,7 +63,7 @@ public class AdminDashboardController {
     private final GetAdminOperationsStudyGroupsUseCase getAdminOperationsStudyGroupsUseCase;
     private final GetAdminOperationsSignupsUseCase getAdminOperationsSignupsUseCase;
 
-    @Operation(summary = "[DASHBOARD-001] 운영진 대시보드 요약 조회")
+    @Operation(operationId = "DASHBOARD-001", summary = "운영진 대시보드 요약 조회")
     @GetMapping("summary")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public AdminDashboardSummaryResponse getSummary(
@@ -75,7 +75,7 @@ public class AdminDashboardController {
         );
     }
 
-    @Operation(summary = "[DASHBOARD-002] 운영진 대시보드 액션 큐 조회")
+    @Operation(operationId = "DASHBOARD-002", summary = "운영진 대시보드 액션 큐 조회")
     @GetMapping("action-queue")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public AdminDashboardActionQueueResponse getActionQueue(
@@ -87,7 +87,7 @@ public class AdminDashboardController {
         );
     }
 
-    @Operation(summary = "[DASHBOARD-004] 운영진 대시보드 권한 컨텍스트 조회")
+    @Operation(operationId = "DASHBOARD-004", summary = "운영진 대시보드 권한 컨텍스트 조회")
     @GetMapping("context")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public AdminDashboardContextResponse getContext(
@@ -98,7 +98,7 @@ public class AdminDashboardController {
         );
     }
 
-    @Operation(summary = "[DASHBOARD-005] 운영 현황 집계 조회", deprecated = true)
+    @Operation(operationId = "DASHBOARD-005", summary = "운영 현황 집계 조회", deprecated = true)
     @Deprecated
     @GetMapping("operations")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
@@ -111,7 +111,7 @@ public class AdminDashboardController {
         );
     }
 
-    @Operation(summary = "[DASHBOARD-006] 운영 현황 - 지부별 학교/챌린저 현황 조회")
+    @Operation(operationId = "DASHBOARD-006", summary = "운영 현황 - 지부별 학교/챌린저 현황 조회")
     @GetMapping("operations/schools")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public AdminOperationsSchoolsResponse getOperationsSchools(
@@ -123,7 +123,7 @@ public class AdminDashboardController {
         );
     }
 
-    @Operation(summary = "[DASHBOARD-007] 운영 현황 - 지부 내 파트별 상벌점 부여 현황 조회")
+    @Operation(operationId = "DASHBOARD-007", summary = "운영 현황 - 지부 내 파트별 상벌점 부여 현황 조회")
     @GetMapping("operations/points")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public AdminOperationsPointsResponse getOperationsPoints(
@@ -135,7 +135,7 @@ public class AdminDashboardController {
         );
     }
 
-    @Operation(summary = "[DASHBOARD-008] 운영 현황 - 일정 및 출석 생성 현황 조회")
+    @Operation(operationId = "DASHBOARD-008", summary = "운영 현황 - 일정 및 출석 생성 현황 조회")
     @GetMapping("operations/attendance")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public AdminOperationsAttendanceResponse getOperationsAttendance(
@@ -147,7 +147,7 @@ public class AdminDashboardController {
         );
     }
 
-    @Operation(summary = "[DASHBOARD-009] 운영 현황 - 스터디 그룹 및 일정 생성 현황 조회")
+    @Operation(operationId = "DASHBOARD-009", summary = "운영 현황 - 스터디 그룹 및 일정 생성 현황 조회")
     @GetMapping("operations/study-groups")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public AdminOperationsStudyGroupsResponse getOperationsStudyGroups(
@@ -159,7 +159,7 @@ public class AdminDashboardController {
         );
     }
 
-    @Operation(summary = "[DASHBOARD-010] 운영 현황 - 기간별 신규 가입자 현황 조회")
+    @Operation(operationId = "DASHBOARD-010", summary = "운영 현황 - 기간별 신규 가입자 현황 조회")
     @GetMapping("operations/signups")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public AdminOperationsSignupsResponse getOperationsSignups(
@@ -171,7 +171,7 @@ public class AdminDashboardController {
         );
     }
 
-    @Operation(summary = "[DASHBOARD-003] 운영진 대시보드 위험군 챌린저 조회")
+    @Operation(operationId = "DASHBOARD-003", summary = "운영진 대시보드 위험군 챌린저 조회")
     @GetMapping("risk-challengers")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public PageResponse<AdminRiskChallengerResponse> getRiskChallengers(

@@ -28,12 +28,12 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/admin/audit-logs")
 @RequiredArgsConstructor
-@Tag(name = "Audit | 감사 로그 조회", description = "관리자용 감사 로그 조회 API")
+@Tag(name = "Audit | 감사 로그 조회", description = "관리자가 감사 로그를 검색합니다.")
 public class AuditLogController {
 
     private final GetAuditLogUseCase getAuditLogUseCase;
 
-    @Operation(summary = "[AUDIT-001] 감사 로그 검색")
+    @Operation(operationId = "AUDIT-001", summary = "감사 로그 검색")
     @CheckAccess(
         resourceType = ResourceType.AUDIT,
         permission = PermissionType.READ,

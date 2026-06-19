@@ -11,6 +11,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.command.ManageUmcProductMemberUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateUmcProductMemberCommand;
@@ -55,6 +58,13 @@ public class UmcProductMemberCommandService implements ManageUmcProductMemberUse
     private final GetFileUseCase getFileUseCase;
     private final UmcProductAccessPolicy umcProductAccessPolicy;
 
+    @Audited(
+        domain = Domain.ORGANIZATION,
+        action = AuditAction.CREATE,
+        targetType = "UmcProductMember",
+        targetId = "#result",
+        description = "'UMC Product 멤버를 생성했습니다.'"
+    )
     @Override
     public Long create(CreateUmcProductMemberCommand command) {
         validateCanManage(command.requesterMemberId());
@@ -79,6 +89,13 @@ public class UmcProductMemberCommandService implements ManageUmcProductMemberUse
         return savedMember.getId();
     }
 
+    @Audited(
+        domain = Domain.ORGANIZATION,
+        action = AuditAction.UPDATE,
+        targetType = "UmcProductMember",
+        targetId = "#command.umcProductMemberId()",
+        description = "'UMC Product 멤버 프로필을 수정했습니다.'"
+    )
     @Override
     public void updateProfile(UpdateUmcProductMemberProfileCommand command) {
         UmcProductMember member = loadUmcProductMemberPort.getById(command.umcProductMemberId());

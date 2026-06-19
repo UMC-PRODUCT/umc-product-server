@@ -1,16 +1,18 @@
 package com.umc.product.project.application.port.in.query.dto;
 
+import java.util.Objects;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import java.util.Objects;
+
 import lombok.Builder;
 
 /**
  * PM/운영진용 단일 프로젝트 지원자 목록 조회 Query.
  * <p>
- * 임시저장(DRAFT) 지원서는 본 API 응답에 노출되지 않으므로, {@link #status} 값으로도 DRAFT 는 받지 않는다.
+ * 임시저장(DRAFT) 지원서는 본 API 응답에 포함하지 않으므로, {@link #status} 값으로도 DRAFT 는 받지 않는다.
  *
  * @param requesterMemberId 요청자 Member ID. 권한 scope 결정(L1)에 사용된다.
  * @param projectId         대상 프로젝트 ID (path variable)

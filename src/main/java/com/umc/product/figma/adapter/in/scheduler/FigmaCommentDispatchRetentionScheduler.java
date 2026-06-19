@@ -1,13 +1,18 @@
 package com.umc.product.figma.adapter.in.scheduler;
 
-import com.umc.product.figma.adapter.out.external.FigmaSummaryProperties;
-import com.umc.product.figma.config.FigmaSyncProperties;
-import com.umc.product.figma.application.port.out.SaveFigmaCommentDispatchPort;
+import java.time.Duration;
 import java.time.Instant;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import com.umc.product.figma.adapter.out.external.FigmaSummaryProperties;
+import com.umc.product.figma.application.port.out.SaveFigmaCommentDispatchPort;
+import com.umc.product.figma.config.FigmaSyncProperties;
+import com.umc.product.global.logging.OperationalMetrics;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * figma_comment_dispatch 의 보존 기간 초과 행을 정리하는 회수 잡 (ADR-004 §Implementation Plan §7).
@@ -24,21 +29,37 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class FigmaCommentDispatchRetentionScheduler {
 
+    private static final String JOB_NAME = "figma_comment_dispatch_retention";
+
     private final SaveFigmaCommentDispatchPort saveFigmaCommentDispatchPort;
     private final FigmaSyncProperties figmaSyncProperties;
     private final FigmaSummaryProperties figmaSummaryProperties;
+    private final OperationalMetrics operationalMetrics;
 
     @Scheduled(fixedDelayString = "${app.figma.summary.retention-poll-interval}")
     public void purge() {
         if (!figmaSyncProperties.enabled()) {
             return;
         }
+        Instant startedAt = Instant.now();
         Instant threshold = Instant.now().minus(figmaSummaryProperties.dispatchRetention());
-        int deleted = saveFigmaCommentDispatchPort.deleteOlderThan(threshold);
-        if (deleted > 0) {
-            log.info("figma_comment_dispatch 회수 완료: threshold={}, deleted={}", threshold, deleted);
-        } else {
-            log.debug("figma_comment_dispatch 회수: 보존 기간 초과 행 없음. threshold={}", threshold);
+        try {
+            int deleted = saveFigmaCommentDispatchPort.deleteOlderThan(threshold);
+            Duration duration = Duration.between(startedAt, Instant.now());
+            operationalMetrics.recordBatchJob(JOB_NAME, "success", duration, deleted);
+            if (deleted > 0) {
+                log.info("batch job completed: jobName={}, threshold={}, processed={}, durationMs={}, result={}",
+                    JOB_NAME, threshold, deleted, duration.toMillis(), "success");
+            } else {
+                log.debug("batch job completed: jobName={}, threshold={}, processed={}, durationMs={}, result={}",
+                    JOB_NAME, threshold, deleted, duration.toMillis(), "success");
+            }
+        } catch (RuntimeException e) {
+            Duration duration = Duration.between(startedAt, Instant.now());
+            operationalMetrics.recordBatchJob(JOB_NAME, "failure", duration, 0);
+            log.error("batch job failed: jobName={}, threshold={}, durationMs={}, result={}, errorClass={}",
+                JOB_NAME, threshold, duration.toMillis(), "failure", e.getClass().getSimpleName(), e);
+            throw e;
         }
     }
 }
