@@ -52,8 +52,12 @@ class ProjectApplicationAccessScopeResolverTest {
     // --- PO / Sub-PM (프로젝트 단위 권한) ---
 
     private static Project project(Long ownerMemberId, Long gisuId, Long chapterId, Long schoolId) {
+        return project(PROJECT_ID, ownerMemberId, gisuId, chapterId, schoolId);
+    }
+
+    private static Project project(Long projectId, Long ownerMemberId, Long gisuId, Long chapterId, Long schoolId) {
         Project p = newInstance(Project.class);
-        ReflectionTestUtils.setField(p, "id", PROJECT_ID);
+        ReflectionTestUtils.setField(p, "id", projectId);
         ReflectionTestUtils.setField(p, "productOwnerMemberId", ownerMemberId);
         ReflectionTestUtils.setField(p, "gisuId", gisuId);
         ReflectionTestUtils.setField(p, "chapterId", chapterId);
@@ -342,5 +346,34 @@ class ProjectApplicationAccessScopeResolverTest {
             sut.resolveForProjectApplicantList(MEMBER_ID, project);
 
         assertThat(scope).isInstanceOf(None.class);
+    }
+
+    @Test
+    @DisplayName("projectApplicantLists_batch는_PO_SubPM_중앙총괄_scope를_프로젝트별로_반환")
+    void projectApplicantLists_batch_scope_판정() {
+        // given
+        Project ownerProject = project(100L, MEMBER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
+        Project subPmProject = project(101L, OWNER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
+        Project centralProject = project(102L, OWNER_ID, GISU_ID, OTHER_CHAPTER_ID, SCHOOL_ID);
+        Project deniedProject = project(103L, OWNER_ID, OTHER_GISU_ID, OTHER_CHAPTER_ID, SCHOOL_ID);
+        List<Project> projects = List.of(ownerProject, subPmProject, centralProject, deniedProject);
+
+        given(loadProjectMemberPort.listProjectIdsByActivePlanMember(
+            Set.of(100L, 101L, 102L, 103L), MEMBER_ID))
+            .willReturn(List.of(101L));
+        given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
+            roleInfo(ChallengerRoleType.CENTRAL_PRESIDENT, OrganizationType.CENTRAL, null, GISU_ID)
+        ));
+
+        // when
+        Map<Long, ProjectApplicationAccessScope> result =
+            sut.resolveForProjectApplicantLists(MEMBER_ID, projects);
+
+        // then
+        assertThat(result.keySet()).containsExactly(100L, 101L, 102L, 103L);
+        assertThat(result.get(100L)).isEqualTo(new ProjectScoped(100L));
+        assertThat(result.get(101L)).isEqualTo(new ProjectScoped(101L));
+        assertThat(result.get(102L)).isEqualTo(new ProjectScoped(102L, true));
+        assertThat(result.get(103L)).isInstanceOf(None.class);
     }
 }
