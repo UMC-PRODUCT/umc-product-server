@@ -1,5 +1,6 @@
 package com.umc.product.project.adapter.in.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -45,6 +46,8 @@ import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 
+import io.swagger.v3.oas.annotations.Operation;
+
 @WebMvcTest(controllers = ProjectStatisticsQueryController.class)
 @Import(JacksonConfig.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -69,6 +72,42 @@ class ProjectStatisticsQueryControllerTest {
         SecurityContextHolder.getContext().setAuthentication(
             new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
         );
+    }
+
+    @Test
+    @DisplayName("GET_statistics_Operation_문서는_지원_현황_조회와_필드별_의미를_설명한다")
+    void 통합_통계_조회_Operation_문서() throws Exception {
+        // given
+        var method = ProjectStatisticsQueryController.class.getDeclaredMethod(
+            "getStatistics",
+            MemberPrincipal.class,
+            List.class,
+            Long.class
+        );
+
+        // when
+        Operation operation = method.getAnnotation(Operation.class);
+
+        // then
+        assertThat(operation.summary()).isEqualTo("프로젝트 지원 현황 조회");
+        assertThat(operation.description())
+            .contains(
+                "프로젝트 지원 현황 조회 API입니다.",
+                "projects",
+                "projectMembers",
+                "summary.roundApplicationStatistics",
+                "summary.roundSchoolRankings",
+                "summary.schoolMatchingStatistics",
+                "summary.projectRoundStatistics",
+                "appliedMemberCount",
+                "availableMemberCount",
+                "matchedMemberCount",
+                "totalMemberCount"
+            )
+            .doesNotContain(
+                "지원/매칭 현황",
+                "매칭 통계를 조회"
+            );
     }
 
     @Test
