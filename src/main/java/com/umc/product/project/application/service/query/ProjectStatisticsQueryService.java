@@ -36,6 +36,7 @@ import com.umc.product.project.application.port.in.query.dto.statistics.ProjectS
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundSchoolApplicationStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.SchoolApplicationMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.SchoolApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.SchoolMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.UnclassifiedMatchingStatisticsInfo;
@@ -314,11 +315,11 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             .filter(application -> activeMemberKeys.contains(ProjectMemberKey.from(application)))
             .toList();
 
-        return new StatisticsContext(rounds, eligibleApplications, matchedApplications, population);
+        return new StatisticsContext(rounds, eligibleApplications, matchedApplications, members, population);
     }
 
     private List<RoundApplicationStatisticsInfo> buildRoundApplicationStatistics(StatisticsContext context) {
-        Map<Long, Set<Long>> applicantsByRound = groupMemberIdsByRound(context.applications());
+        Map<Long, Long> applicationCountByRound = countApplicationsByRound(context.applications());
         Map<Long, Set<Long>> matchedByRound = groupMemberIdsByRound(context.matchedApplications());
 
         List<RoundApplicationStatisticsInfo> statistics = new ArrayList<>();
@@ -330,7 +331,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             );
             statistics.add(new RoundApplicationStatisticsInfo(
                 toMatchingRoundInfo(round),
-                applicantsByRound.getOrDefault(round.matchingRoundId(), Set.of()).size(),
+                applicationCountByRound.getOrDefault(round.matchingRoundId(), 0L),
                 availableMemberCount
             ));
             cumulativeMatchedMemberIds.addAll(matchedByRound.getOrDefault(round.matchingRoundId(), Set.of()));
@@ -374,29 +375,41 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             .toList();
     }
 
-    private List<SchoolMatchingStatisticsInfo> buildSchoolMatchingStatistics(StatisticsContext context) {
+    private List<SchoolApplicationMatchingStatisticsInfo> buildSchoolMatchingStatistics(StatisticsContext context) {
         Map<Long, Long> totalMemberCountBySchool = context.population().eligibleMemberIds().stream()
             .map(context.population().schoolIdByMemberId()::get)
             .filter(Objects::nonNull)
             .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         Map<Long, Set<Long>> matchedMemberIdsBySchool = new HashMap<>();
-        for (ProjectStatisticsApplicationRow application : context.matchedApplications()) {
-            Long schoolId = context.population().schoolIdByMemberId().get(application.applicantMemberId());
+        for (ProjectStatisticsMemberRow member : context.members()) {
+            Long schoolId = context.population().schoolIdByMemberId().get(member.memberId());
             if (schoolId == null) {
                 continue;
             }
             matchedMemberIdsBySchool
                 .computeIfAbsent(schoolId, ignored -> new HashSet<>())
+                .add(member.memberId());
+        }
+
+        Map<Long, Set<Long>> appliedMemberIdsBySchool = new HashMap<>();
+        for (ProjectStatisticsApplicationRow application : context.applications()) {
+            Long schoolId = context.population().schoolIdByMemberId().get(application.applicantMemberId());
+            if (schoolId == null) {
+                continue;
+            }
+            appliedMemberIdsBySchool
+                .computeIfAbsent(schoolId, ignored -> new HashSet<>())
                 .add(application.applicantMemberId());
         }
 
         return totalMemberCountBySchool.entrySet().stream()
-            .map(entry -> new SchoolMatchingStatisticsInfo(
+            .map(entry -> new SchoolApplicationMatchingStatisticsInfo(
                 entry.getKey(),
                 matchedMemberIdsBySchool.getOrDefault(entry.getKey(), Set.of()).size(),
-                entry.getValue()
+                entry.getValue(),
+                appliedMemberIdsBySchool.getOrDefault(entry.getKey(), Set.of()).size()
             ))
-            .sorted(Comparator.comparing(SchoolMatchingStatisticsInfo::schoolId))
+            .sorted(Comparator.comparing(SchoolApplicationMatchingStatisticsInfo::schoolId))
             .toList();
     }
 
@@ -582,6 +595,14 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             .count();
     }
 
+    private Map<Long, Long> countApplicationsByRound(Collection<ProjectStatisticsApplicationRow> applications) {
+        return applications.stream()
+            .collect(Collectors.groupingBy(
+                ProjectStatisticsApplicationRow::matchingRoundId,
+                Collectors.counting()
+            ));
+    }
+
     private Map<Long, Set<Long>> groupMemberIdsByRound(Collection<ProjectStatisticsApplicationRow> applications) {
         Map<Long, Set<Long>> memberIdsByRound = new HashMap<>();
         for (ProjectStatisticsApplicationRow application : applications) {
@@ -697,6 +718,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
         List<ProjectStatisticsMatchingRoundRow> rounds,
         List<ProjectStatisticsApplicationRow> applications,
         List<ProjectStatisticsApplicationRow> matchedApplications,
+        List<ProjectStatisticsMemberRow> members,
         StatisticsPopulation population
     ) {
     }

@@ -148,6 +148,7 @@ class ProjectStatisticsQueryControllerTest {
             .andExpect(jsonPath("$.result.projects[1].projectId").value(11L))
             .andExpect(jsonPath("$.result.summary.roundApplicationStatistics[0].appliedMemberCount").value(2))
             .andExpect(jsonPath("$.result.summary.schoolMatchingStatistics[0].matchedMemberCount").value(1))
+            .andExpect(jsonPath("$.result.summary.schoolMatchingStatistics[0].appliedMemberCount").value(1))
             .andExpect(jsonPath("$.result.summary.projectRoundStatistics[0].matchingRounds[0].appliedMemberCount")
                 .value(2))
             .andExpect(jsonPath("$.result.summary.projectRoundStatistics[0].matchingRounds[0].matchedMemberCount")
@@ -252,7 +253,7 @@ class ProjectStatisticsQueryControllerTest {
                     round,
                     List.of(new SchoolApplicationStatisticsResponse(501L, 2L))
                 )),
-                List.of(new SchoolMatchingStatisticsResponse(501L, 1L, 2L)),
+                List.of(new SchoolMatchingStatisticsResponse(501L, 1L, 2L, 1L)),
                 List.of(new ProjectRoundMemberStatisticsResponse(
                     projects.get(0).projectId(),
                     List.of(new ProjectRoundMemberCountResponse(round, 2L, 1L))
