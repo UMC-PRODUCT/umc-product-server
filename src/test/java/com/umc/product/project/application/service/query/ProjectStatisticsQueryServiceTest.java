@@ -335,6 +335,8 @@ class ProjectStatisticsQueryServiceTest {
                 1003L, 502L,
                 1004L, 501L
             ));
+        given(projectStatisticsAccessPolicy.canReadProjectStatistics(eq(requesterMemberId), any(Project.class)))
+            .willReturn(true);
 
         // when
         ChapterProjectStatisticsInfo result = sut.getByProjectIds(List.of(10L, 11L), requesterMemberId);
