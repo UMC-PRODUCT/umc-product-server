@@ -82,7 +82,7 @@ public class ChallengerRoleQueryService implements
     }
 
     @Override
-    public boolean isCentralCore(Long memberId) {
+    public boolean isCentralCoreInAnyGisu(Long memberId) {
         List<ChallengerRole> roles = loadChallengerRolePort.findByMemberId(memberId);
 
         return roles.stream()
@@ -91,7 +91,7 @@ public class ChallengerRoleQueryService implements
     }
 
     @Override
-    public boolean isCentralMember(Long memberId) {
+    public boolean isCentralMemberInAnyGisu(Long memberId) {
         List<ChallengerRole> roles = loadChallengerRolePort.findByMemberId(memberId);
 
         return roles.stream()
@@ -100,7 +100,7 @@ public class ChallengerRoleQueryService implements
     }
 
     @Override
-    public boolean isSchoolCore(Long memberId, Long schoolId) {
+    public boolean isSchoolCoreInAnyGisu(Long memberId, Long schoolId) {
         if (schoolId == null) {
             throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
                 "schoolId는 null일 수 없습니다.");
@@ -116,7 +116,7 @@ public class ChallengerRoleQueryService implements
     }
 
     @Override
-    public boolean isSchoolAdmin(Long memberId, Long schoolId) {
+    public boolean isSchoolAdminInAnyGisu(Long memberId, Long schoolId) {
         if (schoolId == null) {
             throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
                 "schoolId는 null일 수 없습니다.");
@@ -132,7 +132,7 @@ public class ChallengerRoleQueryService implements
     }
 
     @Override
-    public boolean isChapterPresident(Long memberId, Long chapterId) {
+    public boolean isChapterPresidentInAnyGisu(Long memberId, Long chapterId) {
         if (chapterId == null) {
             throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
                 "chapterId는 null일 수 없습니다.");

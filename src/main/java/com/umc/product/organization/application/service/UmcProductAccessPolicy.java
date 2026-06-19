@@ -23,11 +23,11 @@ public class UmcProductAccessPolicy {
     private final LoadUmcProductFunctionalMembershipPort loadUmcProductFunctionalMembershipPort;
 
     public boolean canCreateGeneration(Long requesterMemberId) {
-        return isCentralCore(requesterMemberId);
+        return isCentralCoreInAnyGisu(requesterMemberId);
     }
 
     public boolean canManageGeneration(Long requesterMemberId, Long umcProductGenerationId) {
-        if (isCentralCore(requesterMemberId)) {
+        if (isCentralCoreInAnyGisu(requesterMemberId)) {
             return true;
         }
         if (requesterMemberId == null || umcProductGenerationId == null) {
@@ -41,7 +41,7 @@ public class UmcProductAccessPolicy {
     }
 
     public boolean canManageUmcProduct(Long requesterMemberId) {
-        if (isCentralCore(requesterMemberId)) {
+        if (isCentralCoreInAnyGisu(requesterMemberId)) {
             return true;
         }
         if (requesterMemberId == null) {
@@ -63,8 +63,7 @@ public class UmcProductAccessPolicy {
         return canManageUmcProduct(requesterMemberId);
     }
 
-    @SuppressWarnings("removal")
-    private boolean isCentralCore(Long requesterMemberId) {
-        return requesterMemberId != null && getChallengerRoleUseCase.isCentralCore(requesterMemberId);
+    private boolean isCentralCoreInAnyGisu(Long requesterMemberId) {
+        return requesterMemberId != null && getChallengerRoleUseCase.isCentralCoreInAnyGisu(requesterMemberId);
     }
 }
