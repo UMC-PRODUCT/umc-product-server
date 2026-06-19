@@ -30,8 +30,8 @@ import lombok.Builder;
  * <p>
  * 답변이 없는 질문은 {@code answer} 필드가 {@code null}. 첨부 파일은 storage 메타에서 누락된 fileId 는 응답에서 제외된다.
  *
- * @param status      표시용 지원 상태. 지원자 본인이 결과를 아직 확인할 수 없으면 {@code null}. DRAFT 는 지원자 본인 호출 시에만 포함되며, 그 외 호출자에게는
- *                    본 응답 자체가 반환되지 않는다.
+ * @param status      표시용 지원 상태. 제출한 매칭 차수의 {@code decisionDeadline} 전이면 제출 이후 상태는 {@code null}. DRAFT 는 지원자 본인 호출 시에만
+ *                    포함되며, 그 외 호출자에게는 본 응답 자체가 반환되지 않는다.
  * @param submittedAt DRAFT 상태이면 {@code null}.
  */
 @Builder

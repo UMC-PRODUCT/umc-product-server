@@ -8,8 +8,8 @@ import com.umc.product.project.domain.enums.ProjectApplicationStatus;
  * 도메인 enum ({@link ProjectApplicationStatus}) 과 1:1 로 매핑되지만, 화면 응답 전용으로 분리되어 있어 향후 표시용 상태(예: 매칭 결과 라벨)가 추가되어도 도메인 enum
  * 의 의미를 바꾸지 않는다.
  * <p>
- * 본 enum 은 임시저장(DRAFT)을 그대로 포함한다. 따라서 DRAFT 를 보여줄 수 있는 호출 시점에서 사용하며, 정책상 상태를 아직 보여주면 안 되는 응답에서는 필드 값을 {@code null}
- * 로 내려보낸다. 현재 사용처는 다음과 같다.
+ * 본 enum 은 임시저장(DRAFT)을 그대로 포함한다. 따라서 DRAFT 를 보여줄 수 있는 호출 시점에서 사용하며, 제출한 매칭 차수의 decisionDeadline 전처럼 제출 이후 상태를 아직
+ * 보여주면 안 되는 응답에서는 필드 값을 {@code null} 로 내려보낸다. 현재 사용처는 다음과 같다.
  * <ul>
  *   <li>본인 지원 내역 카드 — 지원자가 자신의 임시저장본을 다시 열어볼 수 있어야 함</li>
  *   <li>지원서 단건 상세 조회 API — PM/운영진/지부장/CC/지원자 본인 모두 동일 응답을 받으며,

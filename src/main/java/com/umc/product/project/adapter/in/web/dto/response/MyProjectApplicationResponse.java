@@ -18,7 +18,8 @@ import lombok.Builder;
  * 본인 지원 내역 카드 1건의 Web Response DTO.
  *
  * @param applicationId 지원서 기반 카드만 값을 가지며 랜덤 매칭 카드는 {@code null}
- * @param status        표시용 지원 상태. 지원자 본인이 결과를 아직 확인할 수 없으면 {@code null}. 랜덤 매칭 카드는 {@code APPROVED} 로 고정 표시된다.
+ * @param status        표시용 지원 상태. 제출한 매칭 차수의 {@code decisionDeadline} 전이면 제출 이후 상태는 {@code null}. 랜덤 매칭 카드는
+ *                      {@code APPROVED} 로 고정 표시된다.
  */
 @Builder
 public record MyProjectApplicationResponse(

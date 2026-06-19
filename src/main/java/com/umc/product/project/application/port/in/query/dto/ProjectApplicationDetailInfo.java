@@ -34,7 +34,7 @@ import lombok.Builder;
  * @param matchingRoundId     매칭 차수 ID
  * @param matchingRoundType   매칭 종류
  * @param matchingRoundPhase  매칭 차수
- * @param status              표시용 상태 (DRAFT 포함). 지원자 본인 조회에서 결과를 아직 확인할 수 없으면 {@code null}
+ * @param status              표시용 상태 (DRAFT 포함). 지원자 본인 조회에서 제출한 매칭 차수의 decisionDeadline 전이면 제출 이후 상태는 {@code null}
  * @param submittedAt         지원시각 (DRAFT 이면 null)
  * @param statusChangedAt     처리시각 (합/불 결정 전이면 null)
  * @param formStructure       지원자 파트 기준 폼 구조 (COMMON + applicantPart 의 PART 섹션만 포함)

@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +27,6 @@ import com.umc.product.project.application.port.in.query.dto.ProjectApplicationS
 import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPolicyPort;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
-import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
@@ -59,7 +57,6 @@ public class ProjectApplicationQueryService
 
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final LoadProjectPort loadProjectPort;
-    private final LoadProjectMemberPort loadProjectMemberPort;
     private final LoadProjectApplicationFormPolicyPort loadProjectApplicationFormPolicyPort;
     private final ProjectApplicationAccessScopeResolver accessScopeResolver;
 
@@ -153,11 +150,10 @@ public class ProjectApplicationQueryService
             matchingType.get(),
             query.status()
         );
-        Set<Long> activeApplicationIds = listActiveApplicationIdsForStatusVisibility(applications);
         return applications.stream()
             .map(application -> ProjectApplicationSummaryInfo.from(
                 application,
-                isStatusVisibleToApplicantSelf(application, activeApplicationIds)
+                isStatusVisibleToApplicantSelf(application)
             ))
             .filter(application -> query.status() == null || application.status() == query.status())
             .toList();
@@ -225,49 +221,12 @@ public class ProjectApplicationQueryService
             && projectScoped.includeOngoingMatchingRounds();
     }
 
-    private Set<Long> listActiveApplicationIdsForStatusVisibility(List<ProjectApplication> applications) {
-        Set<Long> approvedApplicationIds = applications.stream()
-            .filter(this::requiresActiveMemberForStatusVisibility)
-            .map(ProjectApplication::getId)
-            .collect(Collectors.toSet());
-
-        if (approvedApplicationIds.isEmpty()) {
-            return Set.of();
-        }
-        return new HashSet<>(
-            loadProjectMemberPort.listApplicationIdsWithActiveMemberByApplicationIds(approvedApplicationIds));
-    }
-
     private boolean isStatusVisibleToApplicantSelf(ProjectApplication application) {
-        if (!requiresActiveMemberForStatusVisibility(application)) {
-            return isStatusVisibleWithoutMember(application);
-        }
-        return loadProjectMemberPort
-            .listApplicationIdsWithActiveMemberByApplicationIds(List.of(application.getId()))
-            .contains(application.getId());
-    }
-
-    private boolean isStatusVisibleToApplicantSelf(
-        ProjectApplication application, Set<Long> activeApplicationIds
-    ) {
-        if (!requiresActiveMemberForStatusVisibility(application)) {
-            return isStatusVisibleWithoutMember(application);
-        }
-        return activeApplicationIds.contains(application.getId());
-    }
-
-    private boolean requiresActiveMemberForStatusVisibility(ProjectApplication application) {
-        return application.getStatus() == ProjectApplicationStatus.APPROVED
-            && application.getAppliedMatchingRound().getAutoDecisionExecutedAt() != null;
-    }
-
-    private boolean isStatusVisibleWithoutMember(ProjectApplication application) {
         ProjectApplicationStatus status = application.getStatus();
         if (status == ProjectApplicationStatus.DRAFT || status == ProjectApplicationStatus.CANCELLED) {
             return true;
         }
-        return application.getAppliedMatchingRound().getAutoDecisionExecutedAt() != null
-            && status != ProjectApplicationStatus.APPROVED;
+        return application.getAppliedMatchingRound().isDecisionDeadlinePassed(Instant.now());
     }
 
     /**

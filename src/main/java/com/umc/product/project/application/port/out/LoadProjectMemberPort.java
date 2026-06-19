@@ -69,12 +69,6 @@ public interface LoadProjectMemberPort {
     boolean isActivePlanMember(Long projectId, Long memberId);
 
     /**
-     * 지원서 ID 목록 중 ACTIVE ProjectMember 와 연결된 지원서 ID를 조회합니다.
-     * 지원자 본인 화면에서 결과를 아직 보여주면 안 되는 상태인지 판단할 때 사용합니다.
-     */
-    List<Long> listApplicationIdsWithActiveMemberByApplicationIds(Collection<Long> applicationIds);
-
-    /**
      * 본인이 ACTIVE 멤버이면서 application 이 null 인 (즉, 지원서 경로가 아닌 랜덤 매칭/운영진 강제 배정으로 합류한) 멤버를 단건 조회한다. APPLY-004(본인 지원 내역 목록
      * 조회) 의 랜덤 매칭 카드 합성에 사용된다.
      * <p>

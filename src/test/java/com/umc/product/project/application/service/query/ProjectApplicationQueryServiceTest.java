@@ -14,7 +14,6 @@ import static org.mockito.Mockito.verify;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,7 +36,6 @@ import com.umc.product.project.application.port.in.query.dto.ProjectApplicationV
 import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPolicyPort;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
-import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
@@ -69,8 +67,6 @@ class ProjectApplicationQueryServiceTest {
     LoadProjectApplicationPort loadProjectApplicationPort;
     @Mock
     LoadProjectPort loadProjectPort;
-    @Mock
-    LoadProjectMemberPort loadProjectMemberPort;
     @Mock
     LoadProjectApplicationFormPolicyPort loadProjectApplicationFormPolicyPort;
     @Mock
@@ -211,8 +207,8 @@ class ProjectApplicationQueryServiceTest {
     }
 
     @Test
-    @DisplayName("listMyApplications_status_필터가_있어도_상태_비노출_지원서는_결과에서_제외")
-    void filteredHiddenStatusApplicationIsExcluded() {
+    @DisplayName("listMyApplications_status_필터가_있어도_decisionDeadline_전이면_결과에서_제외")
+    void filteredStatusApplicationBeforeDecisionDeadlineIsExcluded() {
         // given
         Project project = createProject(1L, "프로젝트A", "thumb-1", 99L);
         ProjectMatchingRound round = createMatchingRound(
@@ -236,6 +232,33 @@ class ProjectApplicationQueryServiceTest {
     }
 
     @Test
+    @DisplayName("listMyApplications_status_필터가_있고_decisionDeadline_후면_결과에_포함")
+    void filteredStatusApplicationAfterDecisionDeadlineIsIncluded() {
+        // given
+        Project project = createProject(1L, "프로젝트A", "thumb-1", 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST);
+        markDecisionDeadlinePassed(round);
+        ProjectApplication application = createApplication(
+            55L, project, round, ProjectApplicationStatus.APPROVED);
+
+        GetMyProjectApplicationsQuery query = queryOf(ProjectApplicationStatus.APPROVED);
+        given(getChallengerUseCase.findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID))
+            .willReturn(Optional.of(challengerOf(ChallengerPart.WEB)));
+        given(loadProjectApplicationPort.searchMyApplications(
+            eq(REQUESTER_ID), eq(GISU_ID), eq(MatchingType.PLAN_DEVELOPER),
+            eq(ProjectApplicationStatus.APPROVED)))
+            .willReturn(List.of(application));
+
+        // when
+        List<ProjectApplicationSummaryInfo> result = sut.listMyApplications(query);
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).status()).isEqualTo(ProjectApplicationStatus.APPROVED);
+    }
+
+    @Test
     @DisplayName("listMyApplications_지원_내역이_없으면_빈_리스트")
     void 지원_내역_없음_빈_리스트() {
         // given
@@ -253,8 +276,8 @@ class ProjectApplicationQueryServiceTest {
     }
 
     @Test
-    @DisplayName("listMyApplications_자동선발_전이면_지원서_상태를_null_로_마스킹")
-    void masksStatusBeforeAutoDecisionInMyApplications() {
+    @DisplayName("listMyApplications_decisionDeadline_전이면_지원서_상태를_null_로_반환")
+    void masksStatusBeforeDecisionDeadlineInMyApplications() {
         // given
         Project project = createProject(1L, "프로젝트A", "thumb-1", 99L);
         ProjectMatchingRound round = createMatchingRound(
@@ -283,41 +306,47 @@ class ProjectApplicationQueryServiceTest {
     }
 
     @Test
-    @DisplayName("listMyApplications_자동선발_후_APPROVED_지원서가_ACTIVE_멤버와_연결되면_상태_노출")
-    void approvedStatusVisibleAfterAutoDecisionAndActiveMember() {
+    @DisplayName("listMyApplications_decisionDeadline_후면_상태와_무관하게_상태_반환")
+    void statusVisibleAfterDecisionDeadlineRegardlessOfApplicationStatus() {
         // given
         Project project = createProject(1L, "프로젝트A", "thumb-1", 99L);
         ProjectMatchingRound round = createMatchingRound(
             7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST);
-        markAutoDecisionExecuted(round);
-        ProjectApplication application = createApplication(
-            55L, project, round, ProjectApplicationStatus.APPROVED);
+        markDecisionDeadlinePassed(round);
+        ProjectApplication submittedApplication = createApplication(
+            55L, project, round, ProjectApplicationStatus.SUBMITTED);
+        ProjectApplication approvedApplication = createApplication(
+            56L, project, round, ProjectApplicationStatus.APPROVED);
+        ProjectApplication rejectedApplication = createApplication(
+            57L, project, round, ProjectApplicationStatus.REJECTED);
 
         GetMyProjectApplicationsQuery query = queryOf(null);
         given(getChallengerUseCase.findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID))
             .willReturn(Optional.of(challengerOf(ChallengerPart.WEB)));
         given(loadProjectApplicationPort.searchMyApplications(
             eq(REQUESTER_ID), eq(GISU_ID), eq(MatchingType.PLAN_DEVELOPER), eq(null)))
-            .willReturn(List.of(application));
-        given(loadProjectMemberPort.listApplicationIdsWithActiveMemberByApplicationIds(Set.of(55L)))
-            .willReturn(List.of(55L));
+            .willReturn(List.of(submittedApplication, approvedApplication, rejectedApplication));
 
         // when
         List<ProjectApplicationSummaryInfo> result = sut.listMyApplications(query);
 
         // then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).status()).isEqualTo(ProjectApplicationStatus.APPROVED);
+        assertThat(result)
+            .extracting(ProjectApplicationSummaryInfo::status)
+            .containsExactly(
+                ProjectApplicationStatus.SUBMITTED,
+                ProjectApplicationStatus.APPROVED,
+                ProjectApplicationStatus.REJECTED
+            );
     }
 
     @Test
-    @DisplayName("listMyApplications_자동선발_후_APPROVED_지원서라도_ACTIVE_멤버_연결_전이면_상태_null")
-    void approvedStatusHiddenBeforeActiveMember() {
+    @DisplayName("listMyApplications_decisionDeadline_전이면_APPROVED_지원서도_상태_null")
+    void approvedStatusHiddenBeforeDecisionDeadline() {
         // given
         Project project = createProject(1L, "프로젝트A", "thumb-1", 99L);
         ProjectMatchingRound round = createMatchingRound(
             7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST);
-        markAutoDecisionExecuted(round);
         ProjectApplication application = createApplication(
             55L, project, round, ProjectApplicationStatus.APPROVED);
 
@@ -327,8 +356,6 @@ class ProjectApplicationQueryServiceTest {
         given(loadProjectApplicationPort.searchMyApplications(
             eq(REQUESTER_ID), eq(GISU_ID), eq(MatchingType.PLAN_DEVELOPER), eq(null)))
             .willReturn(List.of(application));
-        given(loadProjectMemberPort.listApplicationIdsWithActiveMemberByApplicationIds(Set.of(55L)))
-            .willReturn(List.of());
 
         // when
         List<ProjectApplicationSummaryInfo> result = sut.listMyApplications(query);
@@ -762,8 +789,8 @@ class ProjectApplicationQueryServiceTest {
     }
 
     @Test
-    @DisplayName("getDetail_지원자_본인_호출은_지원서_내용을_보여주되_자동선발_전_상태는_null")
-    void selfDetailMasksStatusBeforeAutoDecision() {
+    @DisplayName("getDetail_지원자_본인_호출은_지원서_내용을_보여주되_decisionDeadline_전_상태는_null")
+    void selfDetailMasksStatusBeforeDecisionDeadline() {
         // given
         Project project = createProject(1L, "프로젝트A", null, 99L);
         ProjectMatchingRound round = createMatchingRound(
@@ -793,6 +820,42 @@ class ProjectApplicationQueryServiceTest {
         // then
         assertThat(result.applicationId()).isEqualTo(55L);
         assertThat(result.status()).isNull();
+        assertThat(result.formResponse().id()).isEqualTo(123L);
+    }
+
+    @Test
+    @DisplayName("getDetail_지원자_본인_호출은_decisionDeadline_후_상태를_반환")
+    void selfDetailReturnsStatusAfterDecisionDeadline() {
+        // given
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
+        markDecisionDeadlinePassed(round);
+        ProjectApplication application = createApplicationWithFormResponse(
+            55L, project, round, 200L, ProjectApplicationStatus.REJECTED, 123L);
+
+        GetProjectApplicationDetailQuery query = detailQuery(1L, 55L, 200L);
+        given(loadProjectApplicationPort.findByIdWithDetails(55L))
+            .willReturn(Optional.of(application));
+        given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
+            .willReturn(Optional.of(challengerInfoOf(200L, ChallengerPart.DESIGN)));
+        given(getFormUseCase.getFormWithStructure(7L)).willReturn(
+            FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
+        given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
+            .willReturn(List.of());
+        given(getFormResponseUseCase.findResponseWithAnswers(123L))
+            .willReturn(Optional.of(FormResponseWithAnswersInfo.builder()
+                .id(123L).formId(7L).respondentMemberId(200L)
+                .status(FormResponseStatus.SUBMITTED)
+                .answers(List.of())
+                .build()));
+
+        // when
+        ProjectApplicationDetailInfo result = sut.getDetail(query);
+
+        // then
+        assertThat(result.applicationId()).isEqualTo(55L);
+        assertThat(result.status()).isEqualTo(ProjectApplicationViewStatus.REJECTED);
         assertThat(result.formResponse().id()).isEqualTo(123L);
     }
 
@@ -873,12 +936,12 @@ class ProjectApplicationQueryServiceTest {
         ReflectionTestUtils.setField(round, "type", type);
         ReflectionTestUtils.setField(round, "phase", phase);
         ReflectionTestUtils.setField(round, "endsAt", java.time.Instant.now().minusSeconds(3_600));
+        ReflectionTestUtils.setField(round, "decisionDeadline", java.time.Instant.now().plusSeconds(3_600));
         return round;
     }
 
-    private void markAutoDecisionExecuted(ProjectMatchingRound round) {
-        ReflectionTestUtils.setField(round, "autoDecisionExecutedAt",
-            java.time.Instant.parse("2026-04-22T04:00:00Z"));
+    private void markDecisionDeadlinePassed(ProjectMatchingRound round) {
+        ReflectionTestUtils.setField(round, "decisionDeadline", java.time.Instant.now().minusSeconds(3_600));
     }
 
     private ProjectApplication createApplication(
