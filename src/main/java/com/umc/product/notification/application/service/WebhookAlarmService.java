@@ -1,10 +1,5 @@
 package com.umc.product.notification.application.service;
 
-import com.umc.product.notification.application.port.in.FlushWebhookBufferUseCase;
-import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
-import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
-import com.umc.product.notification.application.port.out.SendWebhookPort;
-import com.umc.product.notification.domain.WebhookPlatform;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -12,9 +7,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+
+import com.umc.product.notification.application.port.in.FlushWebhookBufferUseCase;
+import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
+import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
+import com.umc.product.notification.application.port.out.SendWebhookPort;
+import com.umc.product.notification.domain.WebhookPlatform;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -78,7 +81,7 @@ public class WebhookAlarmService implements SendWebhookAlarmUseCase, FlushWebhoo
             adapter.send(title, content);
             log.info("웹훅 알람 전송 성공: platform={}", platform);
         } catch (Exception e) {
-            log.error("웹훅 알람 전송 실패: platform={}, error={}", platform, e.getMessage(), e);
+            log.warn("웹훅 알람 전송 실패: platform={}, error={}", platform, e.getMessage(), e);
         }
     }
 

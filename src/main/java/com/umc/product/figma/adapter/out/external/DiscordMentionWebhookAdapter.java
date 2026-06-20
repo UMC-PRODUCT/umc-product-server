@@ -1,10 +1,5 @@
 package com.umc.product.figma.adapter.out.external;
 
-import com.umc.product.figma.application.port.out.SendDiscordMentionPort;
-import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage;
-import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage.CommentEntry;
-import com.umc.product.figma.domain.exception.FigmaDomainException;
-import com.umc.product.figma.domain.exception.FigmaErrorCode;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -16,12 +11,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+
+import com.umc.product.figma.application.port.out.SendDiscordMentionPort;
+import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage;
+import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage.CommentEntry;
+import com.umc.product.figma.domain.exception.FigmaDomainException;
+import com.umc.product.figma.domain.exception.FigmaErrorCode;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 도메인 단위로 묶인 댓글 batch 를 Discord 로 발송하는 webhook 어댑터.
@@ -462,14 +465,14 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
             for (int e = 0; e < embeds.size(); e++) {
                 int embedSize = byteSizeOfEmbed(embeds.get(e));
                 if (embedSize > EMBED_TOTAL_SIZE_MAX) {
-                    log.error("Discord embed 단일 한도 초과: domainKey={}, page={}, embedIdx={}, bytes={}",
+                    log.warn("Discord embed 단일 한도 초과: domainKey={}, page={}, embedIdx={}, bytes={}",
                         domainKey, p + 1, e + 1, embedSize);
                     throw new FigmaDomainException(FigmaErrorCode.DISCORD_MENTION_SEND_FAILED);
                 }
                 pageSize += embedSize;
             }
             if (pageSize > EMBED_TOTAL_SIZE_MAX) {
-                log.error("Discord 메시지 합산 한도 초과: domainKey={}, page={}, bytes={}, embeds={}",
+                log.warn("Discord 메시지 합산 한도 초과: domainKey={}, page={}, bytes={}, embeds={}",
                     domainKey, p + 1, pageSize, embeds.size());
                 throw new FigmaDomainException(FigmaErrorCode.DISCORD_MENTION_SEND_FAILED);
             }
@@ -503,7 +506,7 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
                 log.debug("Discord domain batch 전송 완료: domainKey={}, page={}/{}, comments={}",
                     message.domainKey(), i + 1, pages.size(), message.comments().size());
             } catch (RestClientResponseException e) {
-                log.error("Discord domain batch 전송 실패: domainKey={}, page={}/{}, status={}, body={}",
+                log.warn("Discord domain batch 전송 실패: domainKey={}, page={}/{}, status={}, body={}",
                     message.domainKey(), i + 1, pages.size(),
                     e.getStatusCode(), e.getResponseBodyAsString());
                 if (sent.isEmpty()) {

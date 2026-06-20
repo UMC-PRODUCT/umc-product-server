@@ -1,20 +1,23 @@
 package com.umc.product.figma.adapter.out.external;
 
-import com.umc.product.figma.application.port.out.FigmaOAuthPort;
-import com.umc.product.figma.application.port.out.dto.FigmaTokenInfo;
-import com.umc.product.figma.domain.exception.FigmaDomainException;
-import com.umc.product.figma.domain.exception.FigmaErrorCode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+
+import com.umc.product.figma.application.port.out.FigmaOAuthPort;
+import com.umc.product.figma.application.port.out.dto.FigmaTokenInfo;
+import com.umc.product.figma.domain.exception.FigmaDomainException;
+import com.umc.product.figma.domain.exception.FigmaErrorCode;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -47,7 +50,7 @@ public class FigmaOAuthClient implements FigmaOAuthPort {
                 .body(Map.class);
             return toTokenInfo(response, /* fallbackRefreshToken */ null);
         } catch (RestClientResponseException e) {
-            log.error("Figma OAuth code 교환 실패: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.warn("Figma OAuth code 교환 실패: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new FigmaDomainException(FigmaErrorCode.OAUTH_TOKEN_EXCHANGE_FAILED);
         }
     }
@@ -69,7 +72,7 @@ public class FigmaOAuthClient implements FigmaOAuthPort {
                 .body(Map.class);
             return toTokenInfo(response, refreshToken);
         } catch (RestClientResponseException e) {
-            log.error("Figma OAuth refresh 실패: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.warn("Figma OAuth refresh 실패: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new FigmaDomainException(FigmaErrorCode.OAUTH_TOKEN_REFRESH_FAILED);
         }
     }

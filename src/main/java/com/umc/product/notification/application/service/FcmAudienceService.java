@@ -1,5 +1,14 @@
 package com.umc.product.notification.application.service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
@@ -17,15 +26,9 @@ import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.domain.FcmToken;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -130,7 +133,7 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
 
                 fcmTokenDeactivator.deactivateInvalidTokens(batch, response.getResponses());
             } catch (FirebaseMessagingException e) {
-                log.error("FCM 배치 발송 실패 batchSize={}", batch.size(), e);
+                log.warn("FCM 배치 발송 실패 batchSize={}", batch.size(), e);
                 totalFail += batch.size();
             }
         }

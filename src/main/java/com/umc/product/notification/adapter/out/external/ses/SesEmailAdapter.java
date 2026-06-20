@@ -1,12 +1,14 @@
 package com.umc.product.notification.adapter.out.external.ses;
 
+import org.springframework.stereotype.Component;
+
 import com.umc.product.notification.application.port.out.SendEmailPort;
 import com.umc.product.notification.application.port.out.dto.EmailMessage;
 import com.umc.product.notification.domain.exception.EmailDomainException;
 import com.umc.product.notification.domain.exception.EmailErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sesv2.SesV2Client;
 import software.amazon.awssdk.services.sesv2.model.Body;
 import software.amazon.awssdk.services.sesv2.model.Content;
@@ -43,10 +45,10 @@ public class SesEmailAdapter implements SendEmailPort {
         } catch (SesV2Exception e) {
             // 예외 삼킴 방지: AWS error code 까지 컨텍스트에 남기고 cause 를 포함해 도메인 예외로 변환한다.
             String awsErrorCode = e.awsErrorDetails() != null ? e.awsErrorDetails().errorCode() : null;
-            log.error("SES 발송 실패: to={}, awsErrorCode={}", message.to(), awsErrorCode, e);
+            log.warn("SES 발송 실패: to={}, awsErrorCode={}", message.to(), awsErrorCode, e);
             throw new EmailDomainException(EmailErrorCode.EMAIL_SEND_FAILED, e);
         } catch (RuntimeException e) {
-            log.error("SES 발송 중 예기치 못한 예외: to={}", message.to(), e);
+            log.warn("SES 발송 중 예기치 못한 예외: to={}", message.to(), e);
             throw new EmailDomainException(EmailErrorCode.EMAIL_SEND_FAILED, e);
         }
     }
