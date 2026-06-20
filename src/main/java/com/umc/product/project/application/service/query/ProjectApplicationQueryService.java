@@ -3,6 +3,7 @@ package com.umc.product.project.application.service.query;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,6 +26,7 @@ import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplica
 import com.umc.product.project.application.port.in.query.dto.GetProjectApplicationDetailQuery;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationDetailInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationSummaryInfo;
+import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsBatchQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPolicyPort;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
@@ -200,6 +202,64 @@ public class ProjectApplicationQueryService
             .toList();
     }
 
+    /**
+     * PM/운영진용 복수 프로젝트 지원자 목록 조회.
+     * <p>
+     * 요청한 projectId 는 결과 Map 의 key 로 보존한다. 존재하지 않거나 권한이 없는 프로젝트는 빈 리스트를 반환하여 단건 조회의 권한 없음 위장 정책과 맞춘다.
+     */
+    @Override
+    public Map<Long, List<ProjectApplicationSummaryInfo>> searchByProjects(
+        SearchProjectApplicationsBatchQuery query
+    ) {
+        // 요청한 projectId key 는 응답에서 그대로 보존한다. 권한 없음/미존재 프로젝트도 빈 리스트로 채운다.
+        Map<Long, List<ProjectApplicationSummaryInfo>> result = new LinkedHashMap<>();
+        for (Long projectId : query.projectIds()) {
+            result.put(projectId, new ArrayList<>());
+        }
+
+        List<Project> projects = loadProjectPort.listByIds(query.projectIds());
+        if (projects.isEmpty()) {
+            return freeze(result);
+        }
+
+        Map<Long, ProjectApplicationAccessScope> scopes =
+            accessScopeResolver.resolveForProjectApplicantLists(query.requesterMemberId(), projects);
+
+        Set<Long> accessibleProjectIds = scopes.entrySet().stream()
+            .filter(entry -> entry.getValue() instanceof ProjectApplicationAccessScope.ProjectScoped)
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
+        if (accessibleProjectIds.isEmpty()) {
+            return freeze(result);
+        }
+
+        // 중앙총괄/SUPER_ADMIN scope 프로젝트만 진행 중 차수 지원서를 함께 조회한다.
+        Set<Long> includeOngoingProjectIds = scopes.entrySet().stream()
+            .filter(entry -> entry.getValue() instanceof ProjectApplicationAccessScope.ProjectScoped projectScoped
+                && projectScoped.includeOngoingMatchingRounds())
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
+
+        // 권한이 확인된 프로젝트만 DB 조회 대상에 넣어 권한 없는 프로젝트의 존재 여부가 결과로 새지 않게 한다.
+        List<ProjectApplication> applications = loadProjectApplicationPort.searchProjectApplicationsByProjectIds(
+            accessibleProjectIds,
+            includeOngoingProjectIds,
+            query.matchingRoundId(),
+            query.status(),
+            Instant.now()
+        );
+
+        for (ProjectApplication application : applications) {
+            ProjectApplicationSummaryInfo info = ProjectApplicationSummaryInfo.from(application);
+            List<ProjectApplicationSummaryInfo> projectApplications = result.get(info.projectId());
+            if (projectApplications != null) {
+                projectApplications.add(info);
+            }
+        }
+
+        return freeze(result);
+    }
+
     // ==============================================================
     //                      Helper Method
     // ==============================================================
@@ -234,6 +294,14 @@ public class ProjectApplicationQueryService
             return true;
         }
         return application.getAppliedMatchingRound().isDecisionDeadlinePassed(Instant.now());
+    }
+
+    private Map<Long, List<ProjectApplicationSummaryInfo>> freeze(
+        Map<Long, List<ProjectApplicationSummaryInfo>> source
+    ) {
+        Map<Long, List<ProjectApplicationSummaryInfo>> frozen = new LinkedHashMap<>();
+        source.forEach((projectId, applications) -> frozen.put(projectId, List.copyOf(applications)));
+        return frozen;
     }
 
     /**

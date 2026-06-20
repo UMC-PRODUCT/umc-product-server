@@ -106,6 +106,11 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     }
 
     @Override
+    public List<Long> listProjectIdsByActivePlanMember(Collection<Long> projectIds, Long memberId) {
+        return queryRepository.listProjectIdsByActivePlanMember(projectIds, memberId);
+    }
+
+    @Override
     public Optional<ProjectMember> findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
         Long memberId, Long gisuId, MatchingType matchingType
     ) {
