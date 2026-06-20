@@ -10,6 +10,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.survey.application.port.in.command.ManageFormResponseUseCase;
 import com.umc.product.survey.application.port.in.command.dto.AnswerCommand;
@@ -54,6 +57,13 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
     private final SaveAnswerPort saveAnswerPort;
     private final GetFileUseCase getFileUseCase;
 
+    @Audited(
+        domain = Domain.SURVEY,
+        action = AuditAction.SUBMIT,
+        targetType = "FormResponse",
+        targetId = "#result",
+        description = "'설문 응답을 제출했습니다.'"
+    )
     @Override
     public Long submitImmediately(SubmitFormResponseCommand command) {
         Form form = loadPublishedForm(command.formId());

@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 /**
  * 파일 메타데이터 엔티티
  *
- * <p>실제 파일은 외부 스토리지(S3, GCS 등)에 저장되며,
+ * <p>실제 파일은 AWS S3에 저장되며,
  * 이 엔티티는 파일의 메타 정보와 접근 경로를 관리합니다.
  */
 @Entity
@@ -64,14 +64,14 @@ public class FileMetadata extends BaseEntity {
 
 
     /**
-     * 스토리지 제공자 (S3, GCS 등)
+     * 스토리지 제공자
      */
     @Column(nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
     private StorageProvider storageProvider;
 
     /**
-     * 스토리지 키 (S3 key, GCS object name 등)
+     * 스토리지 키 (S3 key)
      */
     @Column(nullable = false, unique = true, length = 500)
     private String storageKey;

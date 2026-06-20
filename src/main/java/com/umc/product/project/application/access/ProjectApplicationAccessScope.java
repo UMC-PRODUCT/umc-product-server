@@ -19,7 +19,12 @@ public sealed interface ProjectApplicationAccessScope {
     /**
      * 특정 프로젝트의 지원서만 (PO/Sub-PM/CC/지부장/학교장의 "이 프로젝트 지원자 목록")
      */
-    record ProjectScoped(Long projectId) implements ProjectApplicationAccessScope {
+    record ProjectScoped(Long projectId, boolean includeOngoingMatchingRounds)
+        implements ProjectApplicationAccessScope {
+
+        public ProjectScoped(Long projectId) {
+            this(projectId, false);
+        }
     }
 
     /**

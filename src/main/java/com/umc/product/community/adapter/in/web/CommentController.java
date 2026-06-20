@@ -32,7 +32,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/posts/{postId}/comments")
 @RequiredArgsConstructor
-@Tag(name = "Community | 댓글", description = "댓글 관련 API")
+@Tag(name = "Community | 댓글", description = "게시글 댓글을 작성하고 관리합니다.")
 public class CommentController {
 
     private final CreateCommentUseCase createCommentUseCase;
@@ -42,7 +42,7 @@ public class CommentController {
     private final GetChallengerUseCase getChallengerUseCase;
 
     @PostMapping
-    @Operation(summary = "[COMMENT-001] 댓글 작성", description = "게시글에 댓글을 작성합니다.")
+    @Operation(operationId = "COMMENT-001", summary = "댓글 작성", description = "게시글에 댓글을 작성합니다.")
     public CommentResponse createComment(
         @PathVariable Long postId,
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -56,7 +56,7 @@ public class CommentController {
     }
 
     @GetMapping
-    @Operation(summary = "[COMMENT-101] 댓글 목록 조회", description = "게시글의 댓글 목록을 조회합니다.")
+    @Operation(operationId = "COMMENT-101", summary = "댓글 목록 조회", description = "게시글의 댓글 목록을 조회합니다.")
     public List<CommentResponse> getComments(
         @PathVariable Long postId,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -74,7 +74,7 @@ public class CommentController {
 
     @DeleteMapping("/{commentId}")
     @CheckAccess(resourceType = ResourceType.COMMUNITY_COMMENT, resourceId = "#commentId", permission = PermissionType.DELETE, message = "내가 작성한 댓글만 삭제할 수 있어요.")
-    @Operation(summary = "[COMMENT-002] 댓글 삭제", description = "본인이 작성한 댓글을 삭제합니다.")
+    @Operation(operationId = "COMMENT-002", summary = "댓글 삭제", description = "본인이 작성한 댓글을 삭제합니다.")
     public void deleteComment(
         @PathVariable Long postId,
         @PathVariable Long commentId,
@@ -86,7 +86,7 @@ public class CommentController {
     }
 
     @PostMapping("/{commentId}/like")
-    @Operation(summary = "[COMMENT-003] 댓글 좋아요 토글", description = "댓글 좋아요를 토글합니다. 이미 좋아요한 경우 취소됩니다.")
+    @Operation(operationId = "COMMENT-003", summary = "댓글 좋아요 토글", description = "댓글 좋아요를 누르거나 취소합니다.")
     public LikeResponse toggleCommentLike(
         @PathVariable Long postId,
         @PathVariable Long commentId,

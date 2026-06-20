@@ -1,5 +1,14 @@
 package com.umc.product.schedule.application.service.command;
 
+import java.util.List;
+
+import org.locationtech.jts.geom.Point;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -17,11 +26,8 @@ import com.umc.product.schedule.domain.ScheduleParticipant;
 import com.umc.product.schedule.domain.ScheduleParticipantAttendance;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.locationtech.jts.geom.Point;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -135,6 +141,12 @@ public class ScheduleParticipantCommandService implements
     }
 
     // 출석 요청 승인/거절
+    @Audited(
+        domain = Domain.SCHEDULE,
+        action = AuditAction.CHECK,
+        targetType = "ScheduleAttendance",
+        description = "'일정 출석 요청을 처리했습니다. count=' + #commands.size()"
+    )
     @Override
     public List<ScheduleParticipantAttendanceResult> decideAttendances(List<DecideAttendanceCommand> commands) {
         return commands.stream()

@@ -1,10 +1,16 @@
 package com.umc.product.curriculum.adapter.in.scheduler;
 
-import com.umc.product.curriculum.application.port.in.command.AutoReleaseWorkbookUseCase;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Duration;
+import java.time.Instant;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import com.umc.product.curriculum.application.port.in.command.AutoReleaseWorkbookUseCase;
+import com.umc.product.global.logging.OperationalMetrics;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 워크북 자동 배포 스케줄러
@@ -23,7 +29,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class WorkbookAutoReleaseScheduler {
 
+    private static final String JOB_NAME = "workbook_auto_release";
+
     private final AutoReleaseWorkbookUseCase autoReleaseWorkbookUseCase;
+    private final OperationalMetrics operationalMetrics;
 
     /**
      * 매일 자정(KST)에 실행
@@ -32,13 +41,20 @@ public class WorkbookAutoReleaseScheduler {
      */
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
     public void releaseDueWorkbooks() {
-        log.info("[WorkbookAutoRelease] 자동 배포 스케줄 시작");
+        Instant startedAt = Instant.now();
+        log.info("batch job started: jobName={}", JOB_NAME);
 
         try {
             int releasedCount = autoReleaseWorkbookUseCase.releaseAllDue();
-            log.info("[WorkbookAutoRelease] 자동 배포 스케줄 완료: {}건 배포", releasedCount);
+            Duration duration = Duration.between(startedAt, Instant.now());
+            operationalMetrics.recordBatchJob(JOB_NAME, "success", duration, releasedCount);
+            log.info("batch job completed: jobName={}, processed={}, durationMs={}, result={}",
+                JOB_NAME, releasedCount, duration.toMillis(), "success");
         } catch (Exception e) {
-            log.error("[WorkbookAutoRelease] 자동 배포 중 오류 발생", e);
+            Duration duration = Duration.between(startedAt, Instant.now());
+            operationalMetrics.recordBatchJob(JOB_NAME, "failure", duration, 0);
+            log.error("batch job failed: jobName={}, durationMs={}, result={}, errorClass={}",
+                JOB_NAME, duration.toMillis(), "failure", e.getClass().getSimpleName(), e);
         }
     }
 }

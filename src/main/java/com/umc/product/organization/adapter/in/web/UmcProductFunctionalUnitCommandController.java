@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/umc-product/functional-units")
 @RequiredArgsConstructor
-@Tag(name = "Organization | UMC PRODUCT 기능 조직 Command", description = "UMC PRODUCT 기능 조직 생성, 수정, 삭제")
+@Tag(name = "Organization | UMC PRODUCT 기능 조직 Command", description = "UMC PRODUCT 기능 조직을 만들고 관리합니다.")
 public class UmcProductFunctionalUnitCommandController {
 
     private final ManageUmcProductFunctionalUnitUseCase manageUmcProductFunctionalUnitUseCase;

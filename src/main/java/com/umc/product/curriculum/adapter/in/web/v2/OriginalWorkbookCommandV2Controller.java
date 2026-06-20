@@ -30,13 +30,14 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v2/curriculums/original-workbooks")
 @RequiredArgsConstructor
-@Tag(name = "Curriculum V2 | Original Workbook Command", description = "중앙운영사무국 교육국 소속 파트장용. 주차별 원본 워크북 생성/수정/삭제 등")
+@Tag(name = "Curriculum V2 | Original Workbook Command", description = "교육국 파트장이 주차별 원본 워크북을 관리합니다.")
 public class OriginalWorkbookCommandV2Controller {
 
     private final ManageOriginalWorkbookUseCase manageOriginalWorkbookUseCase;
 
     @Operation(
-        summary = "[ORIGINAL-WORKBOOK-001] 중앙파트장용: 원본 워크북 추가 (READY 상태)",
+        operationId = "ORIGINAL-WORKBOOK-001",
+        summary = "중앙파트장용: 원본 워크북 추가 (READY 상태)",
         description = """
             주차별 커리큘럼에 원본 워크북을 추가합니다. 생성 즉시 **배포 준비(READY)** 상태가 됩니다.
 
@@ -57,7 +58,8 @@ public class OriginalWorkbookCommandV2Controller {
     }
 
     @Operation(
-        summary = "[ORIGINAL-WORKBOOK-002] 중앙파트장용: 원본 워크북 임시저장 (DRAFT 상태)",
+        operationId = "ORIGINAL-WORKBOOK-002",
+        summary = "중앙파트장용: 원본 워크북 임시저장 (DRAFT 상태)",
         description = """
             주차별 커리큘럼에 원본 워크북을 **임시저장(DRAFT)** 상태로 추가합니다.
 
@@ -80,7 +82,8 @@ public class OriginalWorkbookCommandV2Controller {
     }
 
     @Operation(
-        summary = "[ORIGINAL-WORKBOOK-003] 중앙파트장용: 원본 워크북 수정",
+        operationId = "ORIGINAL-WORKBOOK-003",
+        summary = "중앙파트장용: 원본 워크북 수정",
         description = """
             원본 워크북의 제목 및 내용 등을 수정할 수 있습니다.
             따로 제한 없이 수정이 가능하며, 수정에 따른 책임은 중앙 파트장에게 있습니다.
@@ -101,7 +104,8 @@ public class OriginalWorkbookCommandV2Controller {
     }
 
     @Operation(
-        summary = "[ORIGINAL-WORKBOOK-004] 중앙파트장용: 원본 워크북 삭제",
+        operationId = "ORIGINAL-WORKBOOK-004",
+        summary = "중앙파트장용: 원본 워크북 삭제",
         description = """
             배포받은 사용자가 존재하는 경우에는 삭제가 불가능합니다.
             """
@@ -120,7 +124,8 @@ public class OriginalWorkbookCommandV2Controller {
     }
 
     @Operation(
-        summary = "[ORIGINAL-WORKBOOK-005] 중앙파트장용: 원본 워크북 상태 일괄 변경",
+        operationId = "ORIGINAL-WORKBOOK-005",
+        summary = "중앙파트장용: 원본 워크북 상태 일괄 변경",
         description = """
             여러 원본 워크북의 상태를 한 번에 변경합니다.
             요청 중 하나라도 실패하면 **모든 요청이 함께 롤백**됩니다.

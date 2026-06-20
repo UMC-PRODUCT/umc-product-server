@@ -2,6 +2,7 @@ package com.umc.product.notification.adapter.out.external.ses;
 
 import org.springframework.stereotype.Component;
 
+import com.umc.product.global.logging.ExternalApiCallLogger;
 import com.umc.product.notification.application.port.out.SendEmailPort;
 import com.umc.product.notification.application.port.out.dto.EmailMessage;
 import com.umc.product.notification.domain.exception.EmailDomainException;
@@ -40,15 +41,19 @@ public class SesEmailAdapter implements SendEmailPort {
     public void send(EmailMessage message) {
         SendEmailRequest request = buildRequest(message);
         try {
-            SendEmailResponse response = sesV2Client.sendEmail(request);
-            log.info("SES 이메일 발송 성공: to={}, messageId={}", message.to(), response.messageId());
+            SendEmailResponse response = ExternalApiCallLogger.measure("AWS_SES", "SEND_EMAIL", () ->
+                sesV2Client.sendEmail(request)
+            );
+            log.info("SES 이메일을 발송했습니다: recipientPresent={}, messageId={}",
+                hasRecipient(message.to()), response.messageId());
         } catch (SesV2Exception e) {
             // 예외 삼킴 방지: AWS error code 까지 컨텍스트에 남기고 cause 를 포함해 도메인 예외로 변환한다.
             String awsErrorCode = e.awsErrorDetails() != null ? e.awsErrorDetails().errorCode() : null;
-            log.warn("SES 발송 실패: to={}, awsErrorCode={}", message.to(), awsErrorCode, e);
+            log.warn("SES 발송 실패: recipientPresent={}, awsErrorCode={}",
+                hasRecipient(message.to()), awsErrorCode, e);
             throw new EmailDomainException(EmailErrorCode.EMAIL_SEND_FAILED, e);
         } catch (RuntimeException e) {
-            log.warn("SES 발송 중 예기치 못한 예외: to={}", message.to(), e);
+            log.warn("SES 발송 중 예기치 못한 예외: recipientPresent={}", hasRecipient(message.to()), e);
             throw new EmailDomainException(EmailErrorCode.EMAIL_SEND_FAILED, e);
         }
     }
@@ -85,5 +90,9 @@ public class SesEmailAdapter implements SendEmailPort {
             .replace("\\", "\\\\")
             .replace("\"", "\\\"");
         return String.format("\"%s\" <%s>", escapedDisplayName, fromAddress);
+    }
+
+    private boolean hasRecipient(String recipient) {
+        return recipient != null && !recipient.isBlank();
     }
 }

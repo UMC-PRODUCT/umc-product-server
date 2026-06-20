@@ -17,7 +17,7 @@ public record GisuOrganizationQueryRequest(
     @Schema(description = "기수 번호 목록. 중복 값은 제거됩니다.", example = "10")
     List<Long> generation,
 
-    @Schema(description = "활성 기수 조회 여부. true만 유효합니다.", example = "true")
+    @Schema(description = "활성 기수만 조회할지 여부. true만 허용", example = "true")
     Boolean active,
 
     @Schema(description = "기수 내 지부 정보 포함 여부", example = "false")

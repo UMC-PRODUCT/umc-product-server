@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/umc-product/generations")
 @RequiredArgsConstructor
-@Tag(name = "Organization | UMC PRODUCT 기수 Query", description = "UMC PRODUCT 기수 목록 및 상세 조회")
+@Tag(name = "Organization | UMC PRODUCT 기수 Query", description = "UMC PRODUCT 기수 목록과 상세 정보를 조회합니다.")
 public class UmcProductGenerationQueryController {
 
     private final GetUmcProductGenerationUseCase getUmcProductGenerationUseCase;

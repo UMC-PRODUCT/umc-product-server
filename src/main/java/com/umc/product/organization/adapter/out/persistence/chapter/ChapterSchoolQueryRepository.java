@@ -2,6 +2,7 @@ package com.umc.product.organization.adapter.out.persistence.chapter;
 
 import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -36,6 +37,13 @@ public class ChapterSchoolQueryRepository {
         return jpaQueryFactory
             .selectFrom(chapterSchool)
             .where(chapterSchool.school.id.eq(schoolId))
+            .fetch();
+    }
+
+    public List<ChapterSchool> findBySchoolIdIn(Collection<Long> schoolIds) {
+        return jpaQueryFactory
+            .selectFrom(chapterSchool)
+            .where(chapterSchool.school.id.in(schoolIds))
             .fetch();
     }
 

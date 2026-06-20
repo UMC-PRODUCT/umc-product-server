@@ -1,5 +1,11 @@
 package com.umc.product.challenger.adapter.in.web;
 
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.umc.product.challenger.adapter.in.web.dto.request.GlobalSearchChallengerRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerCursorRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerRequest;
@@ -7,26 +13,22 @@ import com.umc.product.challenger.adapter.in.web.dto.response.CursorSearchChalle
 import com.umc.product.challenger.adapter.in.web.dto.response.GlobalSearchChallengerResponse;
 import com.umc.product.challenger.adapter.in.web.dto.response.SearchChallengerResponse;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/challenger")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Challenger | 챌린저 검색", description = "조회 중에서 검색 API만 따로 빠져 있습니다")
+@Tag(name = "Challenger | 챌린저 검색", description = "챌린저를 조건별로 검색합니다.")
 public class ChallengerSearchController {
 
     private final SearchChallengerUseCase searchChallengerUseCase;
 
-    @Operation(summary = "[CHALLENGER-102] 챌린저 검색 (Cursor 기반)",
+    @Operation(operationId = "CHALLENGER-102", summary = "챌린저 커서 기반 검색",
         description = """
              가능한 필터는 이름, 닉네임, 학교, 지부, 파트, 기수 입니다.\s\s
              이름과 닉네임은, 통합하여 keyword 파라미터로 전달할 수도 있으며 keyword가 제공된 경우 name/nickname 파라미터는 무시됩니다. (즉, keyword가 있으면 name/nickname은 검색 조건에서 제외됩니다)\s\s
@@ -49,7 +51,7 @@ public class ChallengerSearchController {
         );
     }
 
-    @Operation(summary = "[CHALLENGER-103] 챌린저 검색 (Offset 기반)", description = "Cursor 기반 검색과 동일한 검색 조건을 활용합니다. `search/cursor`의 설명을 읽어주세요.")
+    @Operation(operationId = "CHALLENGER-103", summary = "챌린저 오프셋 기반 검색", description = "커서 기반 검색과 같은 조건을 사용합니다.")
     @GetMapping("search/offset")
     SearchChallengerResponse searchChallenger(
         @ParameterObject Pageable pageable,
@@ -63,7 +65,7 @@ public class ChallengerSearchController {
         );
     }
 
-    @Operation(summary = "[CHALLENGER-104] deprecated: 챌린저 전체 검색 (Cursor 기반, 일정 생성용)",
+    @Operation(operationId = "CHALLENGER-104", summary = "사용 중단 예정 챌린저 전체 검색",
         description = """
             `search/cursor` 및 `search/offset` API를 사용해주세요.
 

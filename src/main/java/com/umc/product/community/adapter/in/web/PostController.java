@@ -40,7 +40,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
-@Tag(name = "Community | 게시글 Command", description = "게시글 관련 API")
+@Tag(name = "Community | 게시글 Command", description = "커뮤니티 게시글을 작성하고 관리합니다.")
 public class PostController {
 
     private final CreatePostUseCase createPostUseCase;
@@ -54,7 +54,7 @@ public class PostController {
     private final GetChallengerUseCase getChallengerUseCase;
 
     @PostMapping
-    @Operation(summary = "[POST-001] 일반 게시글 생성", description = "일반 게시글을 생성합니다. 번개글은 별도 API를 사용하세요.")
+    @Operation(operationId = "POST-001", summary = "일반 게시글 생성", description = "일반 게시글을 생성합니다. 번개글은 별도 API를 사용하세요.")
     public PostResponse createPost(
         @RequestBody CreatePostRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -65,7 +65,7 @@ public class PostController {
     }
 
     @PostMapping("/lightning")
-    @Operation(summary = "[POST-002] 번개글 생성", description = "번개 모임 게시글을 생성합니다.")
+    @Operation(operationId = "POST-002", summary = "번개글 생성", description = "번개 모임 게시글을 생성합니다.")
     public PostResponse createLightningPost(
         @RequestBody CreateLightningRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -82,7 +82,7 @@ public class PostController {
         message = "내가 작성한 게시글만 수정할 수 있어요."
     )
     @PatchMapping("/{postId}")
-    @Operation(summary = "[POST-003] 일반 게시글 수정", description = "일반 게시글의 제목, 내용, 카테고리를 수정합니다.")
+    @Operation(operationId = "POST-003", summary = "일반 게시글 수정", description = "일반 게시글의 제목, 내용, 카테고리를 수정합니다.")
     public PostResponse updatePost(
         @PathVariable Long postId,
         @RequestBody UpdatePostRequest request
@@ -97,7 +97,7 @@ public class PostController {
         message = "내가 작성한 번개글만 수정할 수 있어요."
     )
     @PatchMapping("/{postId}/lightning")
-    @Operation(summary = "[POST-004] 번개글 수정", description = "번개 게시글의 제목, 내용, 모임 정보를 수정합니다.")
+    @Operation(operationId = "POST-004", summary = "번개글 수정", description = "번개 게시글의 제목, 내용, 모임 정보를 수정합니다.")
     public PostResponse updateLightningPost(
         @PathVariable Long postId,
         @RequestBody UpdateLightningRequest request
@@ -112,7 +112,7 @@ public class PostController {
         message = "내가 작성한 게시글만 삭제할 수 있어요."
     )
     @DeleteMapping("/{postId}")
-    @Operation(summary = "[POST-005] 게시글 삭제", description = "게시글을 삭제합니다.")
+    @Operation(operationId = "POST-005", summary = "게시글 삭제", description = "게시글을 삭제합니다.")
     public void deletePost(
         @PathVariable Long postId
     ) {
@@ -120,7 +120,7 @@ public class PostController {
     }
 
     @PostMapping("/{postId}/like")
-    @Operation(summary = "[POST-006] 게시글 좋아요 토글", description = "게시글 좋아요를 토글합니다. 이미 좋아요한 경우 취소됩니다.")
+    @Operation(operationId = "POST-006", summary = "게시글 좋아요 토글", description = "게시글 좋아요를 누르거나 취소합니다.")
     public LikeResponse toggleLike(
         @PathVariable Long postId,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -131,7 +131,7 @@ public class PostController {
     }
 
     @PostMapping("/{postId}/scrap")
-    @Operation(summary = "[POST-007] 게시글 스크랩 토글", description = "게시글 스크랩을 토글합니다. 이미 스크랩한 경우 취소됩니다.")
+    @Operation(operationId = "POST-007", summary = "게시글 스크랩 토글", description = "게시글 스크랩을 추가하거나 취소합니다.")
     public ScrapResponse toggleScrap(
         @PathVariable Long postId,
         @CurrentMember MemberPrincipal memberPrincipal

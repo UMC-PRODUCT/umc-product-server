@@ -15,6 +15,7 @@ import org.springframework.web.client.RestClient;
 import com.umc.product.authentication.domain.OAuthAttributes;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.global.logging.ExternalApiCallLogger;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,14 +51,16 @@ public class GoogleTokenVerifier {
 
         try {
             // Google tokeninfo endpoint 호출
-            GoogleTokenInfoResponse response = restClient.get()
-                .uri(GOOGLE_TOKEN_INFO_URL + "?id_token=" + idToken)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.warn("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
-                    throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
-                })
-                .body(GoogleTokenInfoResponse.class);
+            GoogleTokenInfoResponse response = ExternalApiCallLogger.measure("GOOGLE", "VERIFY_ID_TOKEN", () ->
+                restClient.get()
+                    .uri(GOOGLE_TOKEN_INFO_URL + "?id_token=" + idToken)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (req, res) -> {
+                        log.warn("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
+                        throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
+                    })
+                    .body(GoogleTokenInfoResponse.class)
+            );
 
             if (response == null) {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
@@ -69,7 +72,7 @@ public class GoogleTokenVerifier {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
 
-            log.info("Google ID 토큰 검증 성공: sub={}, email={}", response.sub(), response.email());
+            log.debug("Google ID Token을 검증했습니다: hasEmail={}", hasEmail(response.email()));
 
             // OAuthAttributes 형식에 맞게 Map 생성
             Map<String, Object> attributes = new HashMap<>();
@@ -83,7 +86,7 @@ public class GoogleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("Google ID 토큰 검증 중 오류 발생", e);
+            log.warn("Google ID Token 검증 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -93,14 +96,16 @@ public class GoogleTokenVerifier {
 
         try {
             // Google tokeninfo endpoint 호출
-            GoogleAccessTokenInfoResponse response = restClient.get()
-                .uri(GOOGLE_TOKEN_INFO_URL + "?access_token=" + accessToken)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.warn("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
-                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
-                })
-                .body(GoogleAccessTokenInfoResponse.class);
+            GoogleAccessTokenInfoResponse response = ExternalApiCallLogger.measure("GOOGLE", "VERIFY_ACCESS_TOKEN", () ->
+                restClient.get()
+                    .uri(GOOGLE_TOKEN_INFO_URL + "?access_token=" + accessToken)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (req, res) -> {
+                        log.warn("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
+                        throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
+                    })
+                    .body(GoogleAccessTokenInfoResponse.class)
+            );
 
             if (response == null) {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
@@ -112,7 +117,7 @@ public class GoogleTokenVerifier {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
 
-            log.info("Google Access Token 검증 성공: sub={}, email={}", response.sub(), response.email());
+            log.debug("Google Access Token을 검증했습니다: hasEmail={}", hasEmail(response.email()));
 
             // OAuthAttributes 형식에 맞게 Map 생성
             Map<String, Object> attributes = new HashMap<>();
@@ -124,7 +129,7 @@ public class GoogleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("Google Access Token 검증 중 오류 발생", e);
+            log.warn("Google Access Token 검증 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -143,23 +148,25 @@ public class GoogleTokenVerifier {
             MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
             formData.add("token", token);
 
-            restClient.post()
-                .uri(GOOGLE_REVOKE_URL)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(formData)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.warn("Google token revoke 실패: status={}", res.getStatusCode());
-                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
-                })
-                .toBodilessEntity();
+            ExternalApiCallLogger.measure("GOOGLE", "REVOKE_TOKEN", () ->
+                restClient.post()
+                    .uri(GOOGLE_REVOKE_URL)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(formData)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (req, res) -> {
+                        log.warn("Google token revoke 실패: status={}", res.getStatusCode());
+                        throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+                    })
+                    .toBodilessEntity()
+            );
 
-            log.info("Google token revoke 성공");
+            log.info("Google token revoke를 완료했습니다");
 
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("Google token revoke 중 오류 발생", e);
+            log.warn("Google token revoke 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -188,5 +195,9 @@ public class GoogleTokenVerifier {
         String email,
         String aud         // audience (client ID)
     ) {
+    }
+
+    private boolean hasEmail(String email) {
+        return email != null && !email.isBlank();
     }
 }

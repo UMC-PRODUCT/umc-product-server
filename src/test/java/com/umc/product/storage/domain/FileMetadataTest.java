@@ -29,7 +29,7 @@ class FileMetadataTest {
             .category(FileCategory.PROFILE_IMAGE)
             .contentType("image/jpeg")
             .fileSize(1024L)
-            .storageProvider(StorageProvider.GOOGLE_CLOUD_STORAGE)
+            .storageProvider(StorageProvider.AWS_S3)
             .storageKey("profile/test-file-id.jpg")
             .uploadedMemberId(1L)
             .build();
@@ -222,7 +222,7 @@ class FileMetadataTest {
             .category(category)
             .contentType(contentType)
             .fileSize(fileSize)
-            .storageProvider(StorageProvider.GOOGLE_CLOUD_STORAGE)
+            .storageProvider(StorageProvider.AWS_S3)
             .storageKey("test/key")
             .uploadedMemberId(1L)
             .build();

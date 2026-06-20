@@ -19,12 +19,12 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Authentication | 로그인")
+@Tag(name = "Authentication | 토큰", description = "로그인 토큰 재발급과 로그아웃을 다룹니다.")
 public class TokenAuthenticationController {
 
     private final ManageAuthenticationUseCase manageAuthenticationUseCase;
 
-    @Operation(summary = "[TOKEN-001] AccessToken 재발급",
+    @Operation(operationId = "TOKEN-001", summary = "Access Token 재발급",
         description = """
             RefreshToken을 이용해서 AccessToken을 재발급합니다.
             Header에 AccessToken을 포함할 필요는 없지만, 만료된 토큰이나 잘못된 토큰을 401 뜨니까 주의하세요.
@@ -40,7 +40,7 @@ public class TokenAuthenticationController {
             ));
     }
 
-    @Operation(summary = "[TOKEN-002] 로그아웃",
+    @Operation(operationId = "TOKEN-002", summary = "로그아웃",
         description = """
             RefreshToken을 서버 allow-list에서 제거합니다.
             AccessToken 없이 RefreshToken만으로 호출할 수 있으며, 만료된 AccessToken이 Authorization 헤더에 있어도 무관합니다.

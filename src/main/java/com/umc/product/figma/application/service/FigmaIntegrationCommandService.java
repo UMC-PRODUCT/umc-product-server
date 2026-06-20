@@ -1,5 +1,11 @@
 package com.umc.product.figma.application.service;
 
+import java.time.Instant;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.figma.application.port.in.RegisterFigmaIntegrationUseCase;
 import com.umc.product.figma.application.port.in.dto.RegisterFigmaIntegrationCommand;
 import com.umc.product.figma.application.port.out.FigmaOAuthPort;
@@ -9,12 +15,9 @@ import com.umc.product.figma.application.port.out.dto.FigmaTokenInfo;
 import com.umc.product.figma.domain.FigmaIntegration;
 import com.umc.product.figma.domain.exception.FigmaDomainException;
 import com.umc.product.figma.domain.exception.FigmaErrorCode;
-import java.time.Instant;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Figma OAuth 위임 통합의 Command 서비스. - authorization code → token 교환 후 영속화 - access token 만료 시 refresh - state 발급/검증은
@@ -56,7 +59,7 @@ public class FigmaIntegrationCommandService implements RegisterFigmaIntegrationU
             ));
 
         FigmaIntegration saved = saveFigmaIntegrationPort.save(integration);
-        log.info("Figma 통합 등록 완료: ownerMemberId={}, integrationId={}",
+        log.info("Figma 통합을 등록했습니다: ownerMemberId={}, integrationId={}",
             command.ownerMemberId(), saved.getId());
         return saved.getId();
     }

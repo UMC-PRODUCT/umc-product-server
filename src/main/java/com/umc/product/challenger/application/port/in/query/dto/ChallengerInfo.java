@@ -7,7 +7,6 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 
 import lombok.Builder;
-import lombok.extern.slf4j.Slf4j;
 
 
 /**
@@ -16,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
  * 각 챌린저의 상벌점 현황을 포함하여 번환하며, 성능 상 해당 정보를 제외하고자 하는 경우 별도의 DTO를 생성해서 사용해주세요.
  */
 @Builder
-@Slf4j
 public record ChallengerInfo(
     Long challengerId,
     Long memberId,
@@ -30,8 +28,6 @@ public record ChallengerInfo(
     // 아직 만들지 않았어요.
     @Deprecated(since = "v1.5.0", forRemoval = true)
     public static ChallengerInfo from(Challenger challenger) {
-        log.warn("챌린저 상벌점을 포함하지 않는 생성자를 사용하고 있습니다.");
-
         return ChallengerInfo.builder()
             .challengerId(challenger.getId())
             .memberId(challenger.getMemberId())
