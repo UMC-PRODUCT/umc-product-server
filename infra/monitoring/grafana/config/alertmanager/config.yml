@@ -20,6 +20,13 @@ route:
   group_interval: 5m
   repeat_interval: 4h
   routes:
+    # Loki 집계 결과에는 environment 라벨이 남지 않을 수 있으므로 service_name 으로도 차단한다.
+    - receiver: drop-local
+      matchers:
+        - alert_source="loki"
+        - service_name="local-umc-product"
+      continue: false
+
     # 로컬 개발 서버에서 발생한 알림은 전체 Discord 채널로 전송하지 않는다.
     - receiver: drop-local
       matchers:
