@@ -10,6 +10,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,7 +63,9 @@ class AuthenticationServiceTest {
     private static final String ISSUED_TOKEN = "issued.jwt.token";
     private static final String REFRESH_TOKEN = "refresh.jwt.token";
     private static final UUID REFRESH_JTI = UUID.fromString("33333333-3333-3333-3333-333333333333");
-    private static final Instant REFRESH_EXPIRES_AT = Instant.parse("2026-06-20T00:00:00Z");
+    // 고정 날짜는 그 시점이 지나면 RefreshToken.create()의 만료 검증에 걸려 테스트가 깨지는 시한폭탄이 된다.
+    // 항상 미래가 되도록 현재 시각 기준 상대값으로 둔다.
+    private static final Instant REFRESH_EXPIRES_AT = Instant.now().plus(Duration.ofDays(7));
 
     @Mock
     LoadEmailVerificationPort loadEmailVerificationPort;
