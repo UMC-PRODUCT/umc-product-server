@@ -125,7 +125,7 @@ public class ProjectApplicationAccessScopeResolver {
             .map(ChallengerRoleInfo::organizationId)
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
-        Map<Long, Map<Long, ChapterInfo>> chapterByGisuAndSchool = schoolIds.isEmpty()
+        Map<Long, Map<Long, ChapterInfo>> chapterByGisuAndSchool = schoolIds.isEmpty() || gisuIds.isEmpty()
             ? Map.of()
             : getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(gisuIds, schoolIds);
 
@@ -169,6 +169,10 @@ public class ProjectApplicationAccessScopeResolver {
     }
 
     private boolean isSchoolCoreInProjectChapter(List<ChallengerRoleInfo> rolesInGisu, Project project) {
+        if (project.getGisuId() == null) {
+            return false;
+        }
+
         Set<Long> schoolIds = rolesInGisu.stream()
             .filter(r -> r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
                 || r.roleType() == ChallengerRoleType.SCHOOL_VICE_PRESIDENT)
@@ -195,6 +199,10 @@ public class ProjectApplicationAccessScopeResolver {
         Project project,
         Map<Long, Map<Long, ChapterInfo>> chapterByGisuAndSchool
     ) {
+        if (project.getGisuId() == null) {
+            return false;
+        }
+
         Set<Long> schoolIds = rolesInGisu.stream()
             .filter(r -> r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
                 || r.roleType() == ChallengerRoleType.SCHOOL_VICE_PRESIDENT)
