@@ -62,7 +62,7 @@ class AuthenticationServiceTest {
     private static final String ISSUED_TOKEN = "issued.jwt.token";
     private static final String REFRESH_TOKEN = "refresh.jwt.token";
     private static final UUID REFRESH_JTI = UUID.fromString("33333333-3333-3333-3333-333333333333");
-    private static final Instant REFRESH_EXPIRES_AT = Instant.parse("2026-06-20T00:00:00Z");
+    private static final Instant REFRESH_EXPIRES_AT = Instant.now().plusSeconds(86_400);
 
     @Mock
     LoadEmailVerificationPort loadEmailVerificationPort;
