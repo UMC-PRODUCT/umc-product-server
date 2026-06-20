@@ -39,6 +39,10 @@ public enum ResourceType {
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
     WORKBOOK_SUBMISSION("workbook_submission", "워크북 제출 현황",
         Set.of(PermissionType.READ)),
+    MISSION_SUBMISSION("mission_submission", "미션 제출물",
+        Set.of(PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+    MISSION_FEEDBACK("mission_feedback", "미션 피드백",
+        Set.of(PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
     ORIGINAL_WORKBOOK("original_workbook", "원본 워크북",
         Set.of(PermissionType.MANAGE, PermissionType.RELEASE)),
 
@@ -110,8 +114,7 @@ public enum ResourceType {
     // Figma 통합 admin
     FIGMA("figma", "Figma 통합",
         Set.of(PermissionType.READ,
-            PermissionType.DELETE, PermissionType.MANAGE)),
-    ;
+            PermissionType.DELETE, PermissionType.MANAGE));
 
     private final String code;
     private final String description;

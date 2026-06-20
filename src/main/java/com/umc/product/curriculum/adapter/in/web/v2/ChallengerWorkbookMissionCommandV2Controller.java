@@ -8,12 +8,23 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.request.CreateMissionFeedbackRequest;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.request.CreateMissionSubmissionRequest;
-import com.umc.product.global.exception.NotImplementedException;
+import com.umc.product.curriculum.adapter.in.web.v2.dto.request.EditMissionFeedbackRequest;
+import com.umc.product.curriculum.adapter.in.web.v2.dto.request.EditMissionSubmissionRequest;
+import com.umc.product.curriculum.application.port.in.command.ManageMissionFeedbackUseCase;
+import com.umc.product.curriculum.application.port.in.command.ManageMissionSubmissionUseCase;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.mission.DeleteMissionFeedbackCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.mission.DeleteMissionSubmissionCommand;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -22,7 +33,8 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "Curriculum V2 | Challenger Workbook Mission Command", description = "워크북 미션 제출과 운영진 피드백을 다룹니다.")
 public class ChallengerWorkbookMissionCommandV2Controller {
 
-    // TODO: @CheckAccess 반드시 추가할 것
+    private final ManageMissionSubmissionUseCase manageMissionSubmissionUseCase;
+    private final ManageMissionFeedbackUseCase manageMissionFeedbackUseCase;
 
     @Operation(
         operationId = "CHALLENGER-WORKBOOK-MISSION-001",
@@ -43,13 +55,20 @@ public class ChallengerWorkbookMissionCommandV2Controller {
             > p.s. 미션의 LATE 처리는 createdAt이 아닌 updatedAt을 기준으로 합니다.
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.MISSION_SUBMISSION,
+        resourceId = "#request.challengerWorkbookId",
+        permission = PermissionType.WRITE,
+        message = "본인에게 배포된 챌린저 워크북에만 미션을 제출할 수 있어요."
+    )
     @PostMapping
-    public void createOriginalWorkbookMission(
-        @RequestBody CreateMissionSubmissionRequest request
+    public Long createMissionSubmission(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Valid @RequestBody CreateMissionSubmissionRequest request
     ) {
         // TODO: 스케쥴러를 매일 KST 기준 00:00 (또는 다른 시간) 에 돌려서, LATE 처리된 미션에 대해서 벌점을 부과할 필요가 있습니다. 단,중복 벌점 부과는 없도록 유의해야 합니다.
 
-        throw new NotImplementedException();
+        return manageMissionSubmissionUseCase.create(request.toCommand(memberPrincipal.getMemberId()));
     }
 
 
@@ -69,12 +88,19 @@ public class ChallengerWorkbookMissionCommandV2Controller {
             - 주차별 일정이 등록되는 순간, updatedAt을 기준으로 해당 일정 시작일 00:00 이후에 수정된 미션은 모두 LATE 처리되어 벌점이 부과됩니다.
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.MISSION_SUBMISSION,
+        resourceId = "#missionSubmissionId",
+        permission = PermissionType.EDIT,
+        message = "본인이 제출한 미션만 수정할 수 있어요."
+    )
     @PatchMapping("/{missionSubmissionId}")
-    public void editOriginalMission(
+    public void editMissionSubmission(
+        @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long missionSubmissionId,
-        @RequestBody String content
+        @Valid @RequestBody EditMissionSubmissionRequest request
     ) {
-        throw new NotImplementedException();
+        manageMissionSubmissionUseCase.edit(request.toCommand(missionSubmissionId, memberPrincipal.getMemberId()));
     }
 
     @Operation(
@@ -86,11 +112,21 @@ public class ChallengerWorkbookMissionCommandV2Controller {
             기간과 관계없이 철회가 가능하나, 그 후 재제출이 불가능해 LATE 처리가 되어 벌점이 부과될 수 있는 부분은 삭제한 사람에게 책임이 있습니다.
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.MISSION_SUBMISSION,
+        resourceId = "#missionSubmissionId",
+        permission = PermissionType.DELETE,
+        message = "본인이 제출한 미션만 철회할 수 있어요."
+    )
     @DeleteMapping("/{missionSubmissionId}")
-    public void deleteOriginalMission(
+    public void deleteMissionSubmission(
+        @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long missionSubmissionId
     ) {
-        throw new NotImplementedException();
+        manageMissionSubmissionUseCase.withdraw(DeleteMissionSubmissionCommand.builder()
+            .missionSubmissionId(missionSubmissionId)
+            .requesterMemberId(memberPrincipal.getMemberId())
+            .build());
     }
 
     // ===== 운영진용 ====
@@ -113,11 +149,18 @@ public class ChallengerWorkbookMissionCommandV2Controller {
                 - 선택 미션에 대한 피드백은 기간이 경과된 이후에 작성하여도 불이익이 존재하지 않습니다.
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.MISSION_FEEDBACK,
+        resourceId = "#request.missionSubmissionId",
+        permission = PermissionType.WRITE,
+        message = "미션 피드백은 운영진만 작성할 수 있어요."
+    )
     @PostMapping("/feedback")
-    public void createMissionFeedback(
-        @RequestBody CreateMissionFeedbackRequest request
+    public Long createMissionFeedback(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Valid @RequestBody CreateMissionFeedbackRequest request
     ) {
-        throw new NotImplementedException();
+        return manageMissionFeedbackUseCase.create(request.toCommand(memberPrincipal.getMemberId()));
     }
 
     @Operation(
@@ -131,12 +174,19 @@ public class ChallengerWorkbookMissionCommandV2Controller {
             - 피드백 최초 작성 일자 기준으로 벌점이 부과되기 때문에 수정은 벌점 부과와는 대부분의 경우에서 무관합니다.
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.MISSION_FEEDBACK,
+        resourceId = "#missionFeedbackId",
+        permission = PermissionType.EDIT,
+        message = "본인이 작성한 미션 피드백만 수정할 수 있어요."
+    )
     @PatchMapping("/feedback/{missionFeedbackId}")
     public void editMissionFeedback(
+        @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long missionFeedbackId,
-        @RequestBody String content
+        @Valid @RequestBody EditMissionFeedbackRequest request
     ) {
-        throw new NotImplementedException();
+        manageMissionFeedbackUseCase.edit(request.toCommand(missionFeedbackId, memberPrincipal.getMemberId()));
     }
 
 
@@ -150,11 +200,21 @@ public class ChallengerWorkbookMissionCommandV2Controller {
             해당 기수 종료 이후에는 피드백 삭제가 불가능합니다.
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.MISSION_FEEDBACK,
+        resourceId = "#missionFeedbackId",
+        permission = PermissionType.DELETE,
+        message = "본인이 작성한 미션 피드백만 삭제할 수 있어요."
+    )
     @DeleteMapping("/feedback/{missionFeedbackId}")
     public void deleteMissionFeedback(
+        @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long missionFeedbackId
     ) {
-        throw new NotImplementedException();
+        manageMissionFeedbackUseCase.delete(DeleteMissionFeedbackCommand.builder()
+            .missionFeedbackId(missionFeedbackId)
+            .operatorMemberId(memberPrincipal.getMemberId())
+            .build());
     }
 
 }
