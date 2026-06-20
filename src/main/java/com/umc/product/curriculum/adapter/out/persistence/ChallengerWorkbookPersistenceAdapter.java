@@ -1,14 +1,17 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.SaveChallengerWorkbookPort;
 import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -33,11 +36,28 @@ public class ChallengerWorkbookPersistenceAdapter implements LoadChallengerWorkb
     }
 
     @Override
-    public List<ChallengerWorkbook> findByMemberIdAndOriginalWorkbookIdIn(Long memberId, List<Long> originalWorkbookIds) {
+    public List<ChallengerWorkbook> findByMemberIdAndOriginalWorkbookIdIn(
+        Long memberId,
+        List<Long> originalWorkbookIds
+    ) {
         if (originalWorkbookIds.isEmpty()) {
             return List.of();
         }
         return challengerWorkbookJpaRepository.findByMemberIdAndOriginalWorkbookIdIn(memberId, originalWorkbookIds);
+    }
+
+    @Override
+    public List<ChallengerWorkbook> findByMemberIdInAndWeeklyCurriculumIdIn(
+        List<Long> memberIds,
+        List<Long> weeklyCurriculumIds
+    ) {
+        if (memberIds.isEmpty() || weeklyCurriculumIds.isEmpty()) {
+            return List.of();
+        }
+        return challengerWorkbookJpaRepository.findByMemberIdInAndOriginalWorkbook_WeeklyCurriculum_IdIn(
+            memberIds,
+            weeklyCurriculumIds
+        );
     }
 
     @Override

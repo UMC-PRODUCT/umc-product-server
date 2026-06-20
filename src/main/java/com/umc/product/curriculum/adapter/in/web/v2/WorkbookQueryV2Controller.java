@@ -4,18 +4,23 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.umc.product.curriculum.adapter.in.web.v2.dto.request.GetBestWorkbooksRequest;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.response.BestWorkbookResponse;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.response.ChallengerWorkbookResponse;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.response.OriginalWorkbookResponse;
-import com.umc.product.global.exception.NotImplementedException;
-import com.umc.product.global.response.PageResponse;
+import com.umc.product.curriculum.application.port.in.query.GetChallengerWorkbookUseCase;
+import com.umc.product.curriculum.application.port.in.query.GetOriginalWorkbookUseCase;
+import com.umc.product.curriculum.application.port.in.query.GetWeeklyBestWorkbookUseCase;
+import com.umc.product.curriculum.application.port.in.query.dto.ChallengerWorkbookInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.OriginalWorkbookInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.WeeklyBestWorkbookPageInfo;
+import com.umc.product.global.response.CursorResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -23,6 +28,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Tag(name = "Curriculum V2 | 워크북 Query", description = "원본 워크북, 챌린저 워크북, 베스트 워크북을 조회합니다.")
 public class WorkbookQueryV2Controller {
+
+    private final GetOriginalWorkbookUseCase getOriginalWorkbookUseCase;
+    private final GetChallengerWorkbookUseCase getChallengerWorkbookUseCase;
+    private final GetWeeklyBestWorkbookUseCase getWeeklyBestWorkbookUseCase;
 
     @Operation(
         operationId = "WORKBOOK-101",
@@ -35,7 +44,8 @@ public class WorkbookQueryV2Controller {
     public OriginalWorkbookResponse getOriginalWorkbook(
         @PathVariable Long originalWorkbookId
     ) {
-        throw new NotImplementedException();
+        OriginalWorkbookInfo info = getOriginalWorkbookUseCase.getById(originalWorkbookId);
+        return OriginalWorkbookResponse.from(info);
     }
 
     @Operation(
@@ -52,7 +62,8 @@ public class WorkbookQueryV2Controller {
     public ChallengerWorkbookResponse getChallengerWorkbook(
         @PathVariable Long challengerWorkbookId
     ) {
-        throw new NotImplementedException();
+        ChallengerWorkbookInfo info = getChallengerWorkbookUseCase.getById(challengerWorkbookId);
+        return ChallengerWorkbookResponse.from(info);
     }
 
     @Operation(
@@ -72,13 +83,17 @@ public class WorkbookQueryV2Controller {
             """
     )
     @GetMapping("/weekly-best-workbooks")
-    public PageResponse<BestWorkbookResponse> getBestWorkbooks(
+    public CursorResponse<BestWorkbookResponse> getBestWorkbooks(
         @ParameterObject
-        @RequestParam(required = false)
-        GetBestWorkbooksRequest request
+        @Valid GetBestWorkbooksRequest request
     ) {
-        // TODO: 경운 - 이거 IN Query로 안짜면 죽어도 Approve 안해줄거임,,,,,,
-
-        throw new NotImplementedException();
+        WeeklyBestWorkbookPageInfo page = getWeeklyBestWorkbookUseCase.searchBestWorkbooks(request.toQuery());
+        return CursorResponse.of(
+            page.content().stream()
+                .map(BestWorkbookResponse::from)
+                .toList(),
+            page.nextCursor(),
+            page.hasNext()
+        );
     }
 }

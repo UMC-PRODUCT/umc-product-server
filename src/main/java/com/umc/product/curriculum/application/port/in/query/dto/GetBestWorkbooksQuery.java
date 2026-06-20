@@ -1,8 +1,9 @@
 package com.umc.product.curriculum.application.port.in.query.dto;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.List;
 import java.util.Set;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
 
 /**
  * 베스트 워크북 목록 조회 쿼리
@@ -26,7 +27,35 @@ public record GetBestWorkbooksQuery(
     Long cursor,
     int size
 ) {
+    private static final int DEFAULT_SIZE = 20;
+
     public GetBestWorkbooksQuery {
-        if (size <= 0) size = 20;
+        if (size <= 0) {
+            size = DEFAULT_SIZE;
+        }
+    }
+
+    public static GetBestWorkbooksQuery of(
+        Long gisuId,
+        Set<Long> schoolIds,
+        Set<ChallengerPart> parts,
+        List<Long> weekNos,
+        List<Long> studyGroupIds,
+        Long cursor,
+        Integer size
+    ) {
+        return new GetBestWorkbooksQuery(
+            gisuId,
+            schoolIds,
+            parts,
+            weekNos,
+            studyGroupIds,
+            cursor,
+            size == null ? DEFAULT_SIZE : size
+        );
+    }
+
+    public GetBestWorkbooksQuery withSize(int size) {
+        return new GetBestWorkbooksQuery(gisuId, schoolIds, parts, weekNos, studyGroupIds, cursor, size);
     }
 }
