@@ -8,7 +8,6 @@ import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.tracing.Tracer;
 import io.micrometer.tracing.contextpropagation.ObservationAwareSpanThreadLocalAccessor;
 import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -31,7 +30,6 @@ public class SpanContextPropagationConfig {
 
     private final ObservationRegistry observationRegistry;
     private final ObjectProvider<Tracer> tracerProvider;
-    private boolean registered;
 
     public SpanContextPropagationConfig(
         ObservationRegistry observationRegistry,
@@ -50,14 +48,6 @@ public class SpanContextPropagationConfig {
         }
         ContextRegistry.getInstance()
             .registerThreadLocalAccessor(new ObservationAwareSpanThreadLocalAccessor(observationRegistry, tracer));
-        this.registered = true;
         log.info("Span ThreadLocalAccessor 등록 완료: 비동기 경계에서 수동 생성 Span 컨텍스트가 전파됩니다.");
-    }
-
-    @PreDestroy
-    void removeSpanThreadLocalAccessor() {
-        if (registered) {
-            ContextRegistry.getInstance().removeThreadLocalAccessor(ObservationAwareSpanThreadLocalAccessor.KEY);
-        }
     }
 }
