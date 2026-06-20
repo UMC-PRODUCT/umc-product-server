@@ -43,11 +43,11 @@ public class GithubWebhookMetricService implements HandleGithubWebhookUseCase {
     public void handle(GithubWebhookCommand command) {
         try {
             JsonNode root = objectMapper.readTree(command.payload());
-            switch (command.eventType() == null ? "" : command.eventType()) {
+            switch (command.eventType()) {
                 case EVENT_PULL_REQUEST -> handlePullRequest(root);
                 case EVENT_ISSUES -> handleIssues(root);
-                default -> {
-                    // 구독했지만 메트릭 대상이 아닌 이벤트는 조용히 무시한다.
+                case null, default -> {
+                    // 구독했지만 메트릭 대상이 아닌 이벤트(또는 헤더 누락으로 eventType 이 null)는 조용히 무시한다.
                 }
             }
         } catch (Exception e) {

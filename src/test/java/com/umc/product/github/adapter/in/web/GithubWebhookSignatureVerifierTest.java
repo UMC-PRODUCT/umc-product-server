@@ -54,4 +54,12 @@ class GithubWebhookSignatureVerifierTest {
 
         assertThat(verifier.isValid(PAYLOAD, VALID_SIGNATURE)).isFalse();
     }
+
+    @Test
+    @DisplayName("payload 가 null 이면 NPE 없이 false 를 반환한다")
+    void payload_null_거부() {
+        GithubWebhookSignatureVerifier verifier = new GithubWebhookSignatureVerifier(SECRET);
+
+        assertThat(verifier.isValid(null, VALID_SIGNATURE)).isFalse();
+    }
 }

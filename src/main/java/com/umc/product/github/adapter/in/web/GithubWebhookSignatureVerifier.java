@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -38,7 +39,7 @@ public class GithubWebhookSignatureVerifier {
      * @return 서명이 유효하면 true
      */
     public boolean isValid(byte[] payload, String signatureHeader) {
-        if (secret == null || secret.isBlank()) {
+        if (payload == null || secret == null || secret.isBlank()) {
             return false;
         }
         if (signatureHeader == null || !signatureHeader.startsWith(SIGNATURE_PREFIX)) {
@@ -58,13 +59,8 @@ public class GithubWebhookSignatureVerifier {
             Mac mac = Mac.getInstance(HMAC_ALGORITHM);
             mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM));
             byte[] digest = mac.doFinal(payload);
-
-            StringBuilder hex = new StringBuilder(digest.length * 2);
-            for (byte b : digest) {
-                hex.append(Character.forDigit((b >> 4) & 0xF, 16));
-                hex.append(Character.forDigit(b & 0xF, 16));
-            }
-            return hex.toString();
+            // HexFormat.of() 는 소문자 16진수를 생성하며, 이는 GitHub 서명(sha256=소문자) 형식과 일치한다.
+            return HexFormat.of().formatHex(digest);
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new IllegalStateException("GitHub 웹훅 HMAC 계산에 실패했습니다.", e);
         }
