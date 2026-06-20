@@ -415,6 +415,15 @@ class ProjectApplicationPermissionEvaluatorTest {
         assertThat(sut.evaluate(subject, approvePermission())).isFalse();
     }
 
+    @Test
+    void APPROVE는_SUPER_ADMIN_허용_기수_무관() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        SubjectAttributes subject = subjectWith(30L, List.of(),
+            List.of(superAdminRoleInGisu(99L)));
+
+        assertThat(sut.evaluate(subject, approvePermission())).isTrue();
+    }
+
     // --- helpers ---
 
     private void givenProject(ProjectStatus status) {

@@ -29,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -112,6 +113,8 @@ class ProjectApplicationCommandServiceTest {
     @Mock
     GetChallengerUseCase getChallengerUseCase;
     @Mock
+    GetChallengerRoleUseCase getChallengerRoleUseCase;
+    @Mock
     GetFormUseCase getFormUseCase;
 
     ProjectApplicationCommandService sut;
@@ -128,6 +131,7 @@ class ProjectApplicationCommandServiceTest {
             loadProjectMatchingRoundPort,
             manageFormResponseUseCase,
             getChallengerUseCase,
+            getChallengerRoleUseCase,
             List.of(new DeveloperMatchingPolicy(), new DesignerMatchingPolicy()),
             getFormUseCase
         );
@@ -468,6 +472,30 @@ class ProjectApplicationCommandServiceTest {
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
             then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        @DisplayName("SUPER_ADMIN은 결정 가능 시간과 관계없이 지원서 상태를 변경할 수 있다")
+        void SUPER_ADMIN은_결정_가능_시간과_관계없이_지원서_상태를_변경할_수_있다() {
+            ProjectMatchingRound expiredRound = openRound();
+            ReflectionTestUtils.setField(expiredRound, "decisionDeadline", NOW.minusSeconds(60));
+            ProjectApplication application = ProjectApplication.create(
+                applicationForm(), 999L, APPLICANT_MEMBER_ID, expiredRound
+            );
+            ReflectionTestUtils.setField(application, "id", APPLICATION_ID);
+            ReflectionTestUtils.setField(application, "status", ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(getChallengerRoleUseCase.isSuperAdmin(DECIDER_MEMBER_ID)).willReturn(true);
+
+            ProjectApplicationInfo result = sut.decide(
+                APPLICATION_ID, ApplicationDecisionStatus.APPROVED, "슈퍼어드민 수정", DECIDER_MEMBER_ID
+            );
+
+            assertThat(result.status()).isEqualTo(ProjectApplicationStatus.APPROVED);
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
+            assertThat(application.getStatusChangedMemberId()).isEqualTo(DECIDER_MEMBER_ID);
+            assertThat(application.getStatusChangeReason()).isEqualTo("슈퍼어드민 수정");
+            then(saveProjectApplicationPort).should(times(1)).save(application);
         }
 
         @Test
