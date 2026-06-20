@@ -319,6 +319,12 @@ app:
     discord:
       url: ${DISCORD_WEBHOOK_URL:}
 
+  # GitHub App 웹훅 (ADR-010 Phase A — PR/Issue 활동 메트릭).
+  # webhook secret 은 GitHub App 설정에서 발급한 값을 주입한다. 미설정 시 모든 웹훅 요청이 401 로 거부된다(fail-closed).
+  github:
+    webhook:
+      secret: ${GITHUB_APP_WEBHOOK_SECRET:}
+
   # test 도메인 시딩 API 설정. ADR-017 참조.
   # 기본값은 비활성. prod 가 아닌 환경에서 APP_SEED_ENABLED=true 로 켜야 시딩 API 가 노출된다.
   seed:
