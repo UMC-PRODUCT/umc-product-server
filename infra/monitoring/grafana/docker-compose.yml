@@ -122,6 +122,10 @@ services:
     configs:
       - source: discord-alert-webhook
         target: /etc/alertmanager/secrets/discord-webhook
+      - source: discord-dev-alert-webhook
+        target: /etc/alertmanager/secrets/discord-loki-dev-webhook
+      - source: discord-prod-alert-webhook
+        target: /etc/alertmanager/secrets/discord-loki-prod-webhook
     volumes:
       - ./config/alertmanager/config.yml:/etc/alertmanager/config.yml:ro
       - alertmanager-data:/alertmanager
@@ -163,3 +167,7 @@ networks:
 configs:
   discord-alert-webhook:
     content: ${DISCORD_ALERT_WEBHOOK:-http://127.0.0.1:65535/alertmanager-discord-webhook-not-configured}
+  discord-dev-alert-webhook:
+    content: ${DISCORD_DEV_ALERT_WEBHOOK:-http://127.0.0.1:65535/alertmanager-discord-dev-webhook-not-configured}
+  discord-prod-alert-webhook:
+    content: ${DISCORD_PROD_ALERT_WEBHOOK:-http://127.0.0.1:65535/alertmanager-discord-prod-webhook-not-configured}
