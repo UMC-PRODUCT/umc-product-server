@@ -1946,7 +1946,7 @@
                       "spec": {
                         "direction": "backward",
                         "editorMode": "code",
-                        "expr": "{service_name=~\"$service\"} | event=\"api_request_completed\"",
+                        "expr": "{service_name=~\"$service\"} | detected_level=~\"$log_level\" |~ \"$log_search\"",
                         "queryType": "range"
                       },
                       "version": "v0"
@@ -1959,7 +1959,7 @@
               "transformations": []
             }
           },
-          "description": "최근 애플리케이션 로그. Loki OTLP 기본 라벨 service_name 을 기준으로 필터링한다.",
+          "description": "최근 애플리케이션 로그. 기본값은 error/warn 레벨만 표시하며, 상단 Log Level 드롭다운으로 레벨을 변경하고 Log Search 로 텍스트 필터링할 수 있다.",
           "id": 7,
           "links": [],
           "title": "Recent Loki Logs",
@@ -3691,6 +3691,43 @@
           "regexApplyTo": "value",
           "skipUrlSync": false,
           "sort": "alphabeticalAsc"
+        }
+      },
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "allowCustomValue": false,
+          "current": {
+            "text": "error|warn",
+            "value": "error|warn"
+          },
+          "hide": "dontHide",
+          "label": "Log Level",
+          "multi": false,
+          "name": "log_level",
+          "options": [
+            {"selected": true, "text": "error|warn", "value": "error|warn"},
+            {"selected": false, "text": "error", "value": "error"},
+            {"selected": false, "text": "warn", "value": "warn"},
+            {"selected": false, "text": "info", "value": "info"},
+            {"selected": false, "text": "전체", "value": ".*"}
+          ],
+          "query": "error|warn,error,warn,info,.*",
+          "skipUrlSync": false
+        }
+      },
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "hide": "dontHide",
+          "label": "Log Search",
+          "name": "log_search",
+          "query": "",
+          "skipUrlSync": false
         }
       },
       {
