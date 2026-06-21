@@ -2824,7 +2824,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "max_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryCount | __error__=\"\" [$__range]) by (uriTemplate)",
+                        "expr": "max by (uriTemplate) (max_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryCount | __error__=\"\" [$__range]))",
                         "queryType": "instant"
                       },
                       "version": "v0"
@@ -2844,7 +2844,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "avg_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryCount | __error__=\"\" [$__range]) by (uriTemplate)",
+                        "expr": "sum by (uriTemplate) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryCount | __error__=\"\" [$__range])) / sum by (uriTemplate) (count_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" [$__range]))",
                         "queryType": "instant"
                       },
                       "version": "v0"
