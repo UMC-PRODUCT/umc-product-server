@@ -2970,6 +2970,295 @@
             "version": "13.0.1"
           }
         }
+      },
+      "panel-90": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "cloudwatch"
+                      },
+                      "group": "cloudwatch",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "dimensions": {
+                          "DBInstanceIdentifier": "$rds_instance"
+                        },
+                        "id": "cpu_utilization",
+                        "label": "CPUUtilization",
+                        "matchExact": true,
+                        "metricEditorMode": 0,
+                        "metricName": "CPUUtilization",
+                        "metricQueryType": 0,
+                        "namespace": "AWS/RDS",
+                        "period": "auto",
+                        "queryMode": "Metrics",
+                        "region": "$aws_region",
+                        "statistic": "Average"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "AWS/RDS CPUUtilization 지표입니다. 선택한 RDS 인스턴스의 CPU 사용률을 백분율로 표시합니다.",
+          "id": 90,
+          "links": [],
+          "title": "RDS CPU Utilization",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "fillOpacity": 15,
+                    "lineWidth": 2,
+                    "showPoints": "never",
+                    "stacking": {
+                      "mode": "none"
+                    }
+                  },
+                  "max": 100,
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green"
+                      },
+                      {
+                        "color": "yellow",
+                        "value": 70
+                      },
+                      {
+                        "color": "red",
+                        "value": 90
+                      }
+                    ]
+                  },
+                  "unit": "percent"
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              }
+            },
+            "version": "13.0.1"
+          }
+        }
+      },
+      "panel-91": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "cloudwatch"
+                      },
+                      "group": "cloudwatch",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "dimensions": {
+                          "DBInstanceIdentifier": "$rds_instance"
+                        },
+                        "id": "cpu_credit_balance",
+                        "label": "CPUCreditBalance",
+                        "matchExact": true,
+                        "metricEditorMode": 0,
+                        "metricName": "CPUCreditBalance",
+                        "metricQueryType": 0,
+                        "namespace": "AWS/RDS",
+                        "period": "300",
+                        "queryMode": "Metrics",
+                        "region": "$aws_region",
+                        "statistic": "Average"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "db.t2, db.t3, db.t4g 계열에서만 제공되는 AWS/RDS CPUCreditBalance 지표입니다. T 계열이 아닌 인스턴스는 데이터가 표시되지 않는 것이 정상입니다.",
+          "id": 91,
+          "links": [],
+          "title": "RDS CPU Credit Balance",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "fillOpacity": 15,
+                    "lineWidth": 2,
+                    "showPoints": "never",
+                    "stacking": {
+                      "mode": "none"
+                    }
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "unit": "short"
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              }
+            },
+            "version": "13.0.1"
+          }
+        }
+      },
+      "panel-92": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "cloudwatch"
+                      },
+                      "group": "cloudwatch",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "dimensions": {
+                          "DBInstanceIdentifier": "$rds_instance"
+                        },
+                        "id": "cpu_credit_usage",
+                        "label": "CPUCreditUsage",
+                        "matchExact": true,
+                        "metricEditorMode": 0,
+                        "metricName": "CPUCreditUsage",
+                        "metricQueryType": 0,
+                        "namespace": "AWS/RDS",
+                        "period": "300",
+                        "queryMode": "Metrics",
+                        "region": "$aws_region",
+                        "statistic": "Sum"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "db.t2, db.t3, db.t4g 계열에서만 제공되는 AWS/RDS CPUCreditUsage 지표입니다. 5분 동안 소비한 CPU Credit 합계를 표시합니다.",
+          "id": 92,
+          "links": [],
+          "title": "RDS CPU Credit Usage",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "fillOpacity": 15,
+                    "lineWidth": 2,
+                    "showPoints": "never",
+                    "stacking": {
+                      "mode": "none"
+                    }
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "unit": "short"
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              }
+            },
+            "version": "13.0.1"
+          }
+        }
       }
     },
     "layout": {
@@ -3423,6 +3712,59 @@
               },
               "title": "📝 Logs, Tomcat & Security"
             }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "collapse": false,
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-90"
+                        },
+                        "height": 9,
+                        "width": 8,
+                        "x": 0,
+                        "y": 0
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-91"
+                        },
+                        "height": 9,
+                        "width": 8,
+                        "x": 8,
+                        "y": 0
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-92"
+                        },
+                        "height": 9,
+                        "width": 8,
+                        "x": 16,
+                        "y": 0
+                      }
+                    }
+                  ]
+                }
+              },
+              "title": "☁️ AWS RDS PostgreSQL — CloudWatch"
+            }
           }
         ]
       }
@@ -3450,7 +3792,10 @@
       "performance",
       "prometheus",
       "loki",
-      "otel"
+      "otel",
+      "aws",
+      "rds",
+      "cloudwatch"
     ],
     "timeSettings": {
       "autoRefresh": "30s",
@@ -3553,6 +3898,89 @@
             "spec": {
               "query": "label_values(jvm_memory_used_bytes{application=~\"$service\"}, instance)",
               "refId": "StandardVariableQuery"
+            },
+            "version": "v0"
+          },
+          "refresh": "onDashboardLoad",
+          "regex": "",
+          "regexApplyTo": "value",
+          "skipUrlSync": false,
+          "sort": "alphabeticalAsc"
+        }
+      },
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "allowCustomValue": false,
+          "current": {
+            "text": "ap-northeast-2",
+            "value": "ap-northeast-2"
+          },
+          "definition": "regions()",
+          "hide": "dontHide",
+          "includeAll": false,
+          "label": "AWS Region",
+          "multi": false,
+          "name": "aws_region",
+          "options": [],
+          "query": {
+            "datasource": {
+              "name": "cloudwatch"
+            },
+            "group": "cloudwatch",
+            "kind": "DataQuery",
+            "spec": {
+              "attributeName": "",
+              "dimensionKey": "",
+              "instanceID": "",
+              "metricName": "",
+              "namespace": "",
+              "queryType": "regions",
+              "refId": "CloudWatchRegionsVariableQuery",
+              "region": "default",
+              "resourceType": ""
+            },
+            "version": "v0"
+          },
+          "refresh": "onDashboardLoad",
+          "regex": "",
+          "regexApplyTo": "value",
+          "skipUrlSync": false,
+          "sort": "alphabeticalAsc"
+        }
+      },
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "allowCustomValue": false,
+          "current": {
+            "text": "server-rds-prod",
+            "value": "server-rds-prod"
+          },
+          "definition": "dimension_values($aws_region, AWS/RDS, CPUUtilization, DBInstanceIdentifier)",
+          "hide": "dontHide",
+          "includeAll": false,
+          "label": "RDS Instance",
+          "multi": false,
+          "name": "rds_instance",
+          "options": [],
+          "query": {
+            "datasource": {
+              "name": "cloudwatch"
+            },
+            "group": "cloudwatch",
+            "kind": "DataQuery",
+            "spec": {
+              "attributeName": "",
+              "dimensionFilters": {},
+              "dimensionKey": "DBInstanceIdentifier",
+              "instanceID": "",
+              "metricName": "CPUUtilization",
+              "namespace": "AWS/RDS",
+              "queryType": "dimensionValues",
+              "refId": "CloudWatchRdsInstanceVariableQuery",
+              "region": "$aws_region",
+              "resourceType": ""
             },
             "version": "v0"
           },
