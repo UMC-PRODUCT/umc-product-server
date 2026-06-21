@@ -26,20 +26,20 @@ route:
     - receiver: drop-local
       matchers:
         - alert_source="loki"
-        - service_name="local-umc-product"
+        - service_name=~"local-.*"
       continue: false
 
     # Loki 로그 알림만 환경별 Discord 웹훅으로 전송한다.
     - receiver: discord-loki-dev
       matchers:
         - alert_source="loki"
-        - service_name="dev-umc-product"
+        - service_name=~"dev-.*"
       continue: false
 
     - receiver: discord-loki-prod
       matchers:
         - alert_source="loki"
-        - service_name="prod-umc-product"
+        - service_name=~"prod-.*"
       continue: false
 
     # 로컬 개발 서버에서 발생한 알림은 전체 Discord 채널로 전송하지 않는다.

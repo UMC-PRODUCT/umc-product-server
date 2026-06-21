@@ -16,9 +16,9 @@ Loki 로그 alert 는 모든 rule 에 `alert_source=loki` 라벨을 추가해 Pr
 
 | 조건 | receiver | Discord 채널 | 환경변수 |
 | --- | --- | --- | --- |
-| `alert_source=loki`, `service_name=local-umc-product` | `drop-local` | 전송하지 않음 | - |
-| `alert_source=loki`, `service_name=dev-umc-product` | `discord-loki-dev` | `#server-log-dev` | `DISCORD_DEV_ALERT_WEBHOOK` |
-| `alert_source=loki`, `service_name=prod-umc-product` | `discord-loki-prod` | `#server-log-prod` | `DISCORD_PROD_ALERT_WEBHOOK` |
+| `alert_source=loki`, `service_name=~"local-.*"` | `drop-local` | 전송하지 않음 | - |
+| `alert_source=loki`, `service_name=~"dev-.*"` | `discord-loki-dev` | `#server-log-dev` | `DISCORD_DEV_ALERT_WEBHOOK` |
+| `alert_source=loki`, `service_name=~"prod-.*"` | `discord-loki-prod` | `#server-log-prod` | `DISCORD_PROD_ALERT_WEBHOOK` |
 | 그 외 alert | `discord` | 기본 모니터링 채널 | `DISCORD_ALERT_WEBHOOK` |
 
 `#server-log-dev`, `#server-log-prod` 채널을 Loki Alertmanager 경보 수신 채널로 사용한다. 채널 정책이 변경되면 코드 변경 없이 해당 환경변수의 webhook URL 만 교체한다. 실제 webhook URL 은 저장소에 넣지 않고 배포 환경의 secret 으로 주입한다.
