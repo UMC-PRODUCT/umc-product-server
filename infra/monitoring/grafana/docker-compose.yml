@@ -103,11 +103,11 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       - GF_SERVER_ROOT_URL=${GRAFANA_SERVER_ROOT_URL:-}
       # CloudWatch datasource는 AWS SDK 기본 인증 체인을 사용한다.
-      # 실제 자격 증명은 홈서버의 .env에서만 주입하며 저장소에는 포함하지 않는다.
+      # 자격 증명 변수가 없으면 컨테이너에 전달하지 않아 기본 인증 체인의 다음 단계를 사용할 수 있다.
       - AWS_REGION=${AWS_REGION:-ap-northeast-2}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
-      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SESSION_TOKEN
     ports:
       - "${MONITORING_BIND_ADDRESS:-127.0.0.1}:${GRAFANA_PORT:-13000}:3000"
     depends_on:
