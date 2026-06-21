@@ -206,6 +206,7 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
     testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.19") // Fixture 생성에 도움을 주는 친구
+    testImplementation("io.micrometer:micrometer-tracing-test") // SimpleTracer 로 span link 전파 검증
     testRuntimeOnly("jakarta.mail:jakarta.mail-api") // JavaMailSender MockitoBean 초기화에 필요
 
     testCompileOnly("org.projectlombok:lombok")
