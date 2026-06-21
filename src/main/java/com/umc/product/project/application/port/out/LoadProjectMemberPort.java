@@ -69,6 +69,12 @@ public interface LoadProjectMemberPort {
     boolean isActivePlanMember(Long projectId, Long memberId);
 
     /**
+     * 여러 프로젝트 중 요청자가 ACTIVE PLAN 멤버인 프로젝트 ID 를 조회합니다. PM/운영진 지원자 목록 batch 권한 판정에서 Sub-PM 여부를 IN 쿼리로 확인할 때
+     * 사용합니다.
+     */
+    List<Long> listProjectIdsByActivePlanMember(Collection<Long> projectIds, Long memberId);
+
+    /**
      * 본인이 ACTIVE 멤버이면서 application 이 null 인 (즉, 지원서 경로가 아닌 랜덤 매칭/운영진 강제 배정으로 합류한) 멤버를 단건 조회한다. APPLY-004(본인 지원 내역 목록
      * 조회) 의 랜덤 매칭 카드 합성에 사용된다.
      * <p>

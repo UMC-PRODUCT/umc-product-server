@@ -107,13 +107,7 @@ public class ProjectApplication extends BaseEntity {
      * @param reason            결정 사유 (필수 아님)
      */
     public void approve(Long decidedByMemberId, String reason) {
-        validateCanBeDecided();
-        appliedMatchingRound.validateIsMutableAt(Instant.now());
-
-        this.status = ProjectApplicationStatus.APPROVED;
-        this.statusChangedMemberId = decidedByMemberId;
-        this.statusChangeReason = reason;
-        this.statusChangedAt = Instant.now();
+        applyDecision(ProjectApplicationStatus.APPROVED, decidedByMemberId, reason, true);
     }
 
     /**
@@ -127,10 +121,42 @@ public class ProjectApplication extends BaseEntity {
      * @param reason            결정 사유 (필수 아님)
      */
     public void reject(Long decidedByMemberId, String reason) {
-        validateCanBeDecided();
-        appliedMatchingRound.validateIsMutableAt(Instant.now());
+        applyDecision(ProjectApplicationStatus.REJECTED, decidedByMemberId, reason, true);
+    }
 
-        this.status = ProjectApplicationStatus.REJECTED;
+    /**
+     * 지원서를 시간 제한과 관계없이 합격 처리합니다.
+     * <p>
+     * 상태 전이 규칙(SUBMITTED / APPROVED / REJECTED 만 가능)은 유지하고, 매칭 차수의 결정 가능 시간 검증만 건너뜁니다.
+     *
+     * @param decidedByMemberId 결정한 슈퍼어드민 ID
+     * @param reason            결정 사유 (필수 아님)
+     */
+    public void forceApprove(Long decidedByMemberId, String reason) {
+        applyDecision(ProjectApplicationStatus.APPROVED, decidedByMemberId, reason, false);
+    }
+
+    /**
+     * 지원서를 시간 제한과 관계없이 불합격 처리합니다.
+     * <p>
+     * 상태 전이 규칙(SUBMITTED / APPROVED / REJECTED 만 가능)은 유지하고, 매칭 차수의 결정 가능 시간 검증만 건너뜁니다.
+     *
+     * @param decidedByMemberId 결정한 슈퍼어드민 ID
+     * @param reason            결정 사유 (필수 아님)
+     */
+    public void forceReject(Long decidedByMemberId, String reason) {
+        applyDecision(ProjectApplicationStatus.REJECTED, decidedByMemberId, reason, false);
+    }
+
+    private void applyDecision(
+        ProjectApplicationStatus targetStatus, Long decidedByMemberId, String reason, boolean validateDecisionPeriod
+    ) {
+        validateCanBeDecided();
+        if (validateDecisionPeriod) {
+            appliedMatchingRound.validateIsMutableAt(Instant.now());
+        }
+
+        this.status = targetStatus;
         this.statusChangedMemberId = decidedByMemberId;
         this.statusChangeReason = reason;
         this.statusChangedAt = Instant.now();
