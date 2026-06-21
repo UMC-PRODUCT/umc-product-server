@@ -227,6 +227,11 @@ management:
       loki.resource.labels: service.name, environment
 
   metrics:
+    distribution:
+      # Prometheus에서 URI별 P95/P99를 집계할 수 있도록 HTTP 요청 duration histogram을 발행한다.
+      percentiles-histogram:
+        http.server.requests: true
+
     tags:
       application: ${spring.application.name}
       instance: ${HOSTNAME:${LOCAL_DEVELOPER_ID:${USER:${USERNAME:unknown}}}}
