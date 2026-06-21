@@ -85,6 +85,19 @@ public class Answer extends BaseEntity {
     }
 
     /**
+     * 미답변 선택 질문을 위한 빈 답변 생성.
+     * 제출 시점의 질문 구조 스냅샷 역할로, 값 필드는 모두 null이다.
+     */
+    public static Answer createEmpty(FormResponse formResponse, Question question) {
+        Answer answer = new Answer();
+        answer.formResponse = formResponse;
+        answer.question = question;
+        answer.answeredAsType = question.getType();
+
+        return answer;
+    }
+
+    /**
      * 답변 내용 (textValue / fileIds) 부분 갱신 (PATCH 시맨틱 — 다른 도메인 update 메서드와 일관).
      * <ul>
      *   <li>null -> 기존 값 유지</li>
