@@ -2825,7 +2825,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "topk(10, sum by (method, uri) (increase(http_server_requests_milliseconds_count{application=~\"$service\", instance=~\"$instance\", method!=\"OPTIONS\"}[$__range])) > 0)",
+                        "expr": "topk(10, sum by (method, uri) (increase(http_server_requests_milliseconds_count{application=~\"$service\", instance=~\"$instance\", method!=\"OPTIONS\", uri!=\"UNKNOWN\"}[$__range])) > 0)",
                         "format": "table",
                         "instant": true,
                         "range": false
@@ -2964,7 +2964,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "topk(10, histogram_quantile(0.95, sum by (le, method, uri) (rate(http_server_requests_milliseconds_bucket{application=~\"$service\", instance=~\"$instance\"}[$__rate_interval]))) > 0)",
+                        "expr": "topk(10, histogram_quantile(0.95, sum by (le, method, uri) (rate(http_server_requests_milliseconds_bucket{application=~\"$service\", instance=~\"$instance\", uri!=\"UNKNOWN\"}[$__rate_interval]))) > 0)",
                         "format": "table",
                         "instant": true,
                         "range": false
