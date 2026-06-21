@@ -191,6 +191,52 @@ class EventOutboxRelayServiceTest {
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PUBLISHED);
     }
 
+    @Test
+    @DisplayName("이벤트 발행과 published 저장이 한 트랜잭션이라, published 저장이 실패하면 재시도 대상(PENDING)으로 남긴다")
+    void relay_published_저장_실패_재시도() {
+        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        EventPayloadSerializer serializer = new EventPayloadSerializer(objectMapper);
+        TestEvent event = TestEvent.create("test.created", "hello");
+        EventOutbox outbox = EventOutbox.record(event, serializer.serialize(event));
+        FakeLoadEventOutboxPort loadPort = new FakeLoadEventOutboxPort(List.of(outbox));
+        FailOnPublishedSaveEventOutboxPort savePort = new FailOnPublishedSaveEventOutboxPort();
+        EventOutboxRelayService relayService = new EventOutboxRelayService(
+            loadPort,
+            savePort,
+            new EventPayloadDeserializer(objectMapper),
+            new CapturingApplicationEventPublisher(),
+            new LocalTransactionManager(),
+            Tracer.NOOP,
+            100,
+            3
+        );
+
+        relayService.relay();
+
+        assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
+        assertThat(outbox.getAttempts()).isEqualTo(1);
+        assertThat(savePort.savedStatuses).contains(EventOutboxStatus.PROCESSING, EventOutboxStatus.PENDING);
+    }
+
+    private static class FailOnPublishedSaveEventOutboxPort implements SaveEventOutboxPort {
+
+        private final List<EventOutboxStatus> savedStatuses = new ArrayList<>();
+
+        @Override
+        public void save(EventOutbox eventOutbox) {
+            // published 상태 저장(= markPublished 영속화)만 실패시켜, 발행 단위 트랜잭션 실패를 재현한다.
+            if (eventOutbox.getStatus() == EventOutboxStatus.PUBLISHED) {
+                throw new IllegalStateException("published 저장 실패");
+            }
+            savedStatuses.add(eventOutbox.getStatus());
+        }
+
+        @Override
+        public void saveAll(Collection<EventOutbox> eventOutboxes) {
+            eventOutboxes.forEach(eventOutbox -> savedStatuses.add(eventOutbox.getStatus()));
+        }
+    }
+
     private static class FakeLoadEventOutboxPort implements LoadEventOutboxPort {
 
         private final List<EventOutbox> outboxes;

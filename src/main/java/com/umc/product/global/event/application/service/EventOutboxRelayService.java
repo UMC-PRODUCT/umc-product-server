@@ -108,7 +108,6 @@ public class EventOutboxRelayService {
     private void relayOne(EventOutbox outbox) {
         try {
             publish(outbox);
-            markPublished(outbox);
         } catch (RuntimeException e) {
             recordFailure(outbox, e);
         }
@@ -138,14 +137,12 @@ public class EventOutboxRelayService {
     }
 
     private void doPublish(EventOutbox outbox) {
+        // 이벤트 발행과 published 상태 변경을 하나의 트랜잭션으로 묶는다.
+        // 리스너는 @TransactionalEventListener(AFTER_COMMIT)라 markPublished가 커밋된 뒤에야 부작용이 발동하므로,
+        // "발행은 됐는데 published 처리는 실패"하는 중복 윈도우가 사라진다.
         transactionTemplate.executeWithoutResult(status -> {
             DomainEvent event = deserializer.deserialize(outbox);
             eventPublisher.publishEvent(event);
-        });
-    }
-
-    private void markPublished(EventOutbox outbox) {
-        transactionTemplate.executeWithoutResult(status -> {
             outbox.markPublished();
             saveEventOutboxPort.save(outbox);
         });
