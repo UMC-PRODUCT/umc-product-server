@@ -277,6 +277,29 @@ class FormResponseCommandServiceTest {
     }
 
     @Test
+    @DisplayName("submitDraft_allowedQuestionIds_밖의_질문에는_null_answer가_생성되지_않는다")
+    void submitDraft_allowedQuestionIds_밖_질문에_null_answer_미생성() {
+        // given — allowedQuestionIds = {Q10} (파트 필터링 결과), Q20은 범위 밖
+        FormResponse draft = draftResponse();
+        Question q10 = question(10L, true);
+
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(draft));
+        given(loadAnswerPort.listByFormResponseId(FORM_RESPONSE_ID))
+            .willReturn(List.of(answer(draft, q10)));
+
+        // when
+        sut.submitDraft(SubmitDraftFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .requiredQuestionIds(Set.of(10L))
+            .allowedQuestionIds(Set.of(10L))
+            .build());
+
+        // then — Q20은 allowedQuestionIds 밖이므로 listByIdIn 호출 안 됨
+        then(loadQuestionPort).should(never()).listByIdIn(any());
+    }
+
+    @Test
     @DisplayName("submitDraft_allowedQuestionIds가_모두_답변됐으면_null_answer를_저장하지_않는다")
     void submitDraft_전체_답변_완료시_null_answer_미저장() {
         // given — Q10, Q20 모두 답변됨
