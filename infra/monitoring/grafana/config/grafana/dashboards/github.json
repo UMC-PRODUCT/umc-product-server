@@ -1,0 +1,206 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "GitHub Org 활동 대시보드 (골격). Grafana GitHub 데이터소스(grafana-github-datasource)가 GitHub App으로 직접 폴링한 데이터를 시각화한다. ⚠️ 데이터소스 GitHub App installation 인증(404) 복구 후 데이터가 채워지며, 각 패널 쿼리의 세부 필드/필터/시각화는 Grafana UI에서 최종 확정 필요. 합의 지표 7종: PR rate / Issue rate / time to close / PR size / time to first review / open·stale PR / review coverage.",
+  "editable": true,
+  "graphTooltip": 1,
+  "links": [],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": ["umc-product", "github"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30d", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "UMC PRODUCT — GitHub Activity",
+  "uid": "umc-product-github",
+  "version": 1,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Open PRs",
+      "description": "[#6 open] 현재 열린 PR 수. Pull Requests + query 'is:open'. UI에서 reduce=count 확정.",
+      "datasource": { "type": "grafana-github-datasource" },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-github-datasource" },
+          "queryType": "Pull Requests",
+          "owner": "UMC-PRODUCT",
+          "repository": "umc-product-server",
+          "options": { "query": "is:open", "timeField": "created_at" }
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["count"], "fields": "", "values": false },
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Stale PRs (>7d open)",
+      "description": "[#6 stale] 7일 이상 열려만 있는 PR 수. Pull Requests + 'is:open' 결과에서 created_at 기준 필터. UI에서 검색쿼리(is:open created:<...) 또는 Transform 으로 확정.",
+      "datasource": { "type": "grafana-github-datasource" },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-github-datasource" },
+          "queryType": "Pull Requests",
+          "owner": "UMC-PRODUCT",
+          "repository": "umc-product-server",
+          "options": { "query": "is:open", "timeField": "created_at" }
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["count"], "fields": "", "values": false },
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Review Coverage (리뷰 없이 머지 %)",
+      "description": "[#7] 리뷰 0개로 머지된 PR 비율. GitHub 데이터소스가 PR 별 review 데이터를 노출하는지 UI에서 확인 후, 리뷰 없는 PR / 전체 머지 PR 로 산출(Transform). ⚠️ 데이터소스 review 지원 여부 확인 필요.",
+      "datasource": { "type": "grafana-github-datasource" },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-github-datasource" },
+          "queryType": "Pull Requests",
+          "owner": "UMC-PRODUCT",
+          "repository": "umc-product-server",
+          "options": { "query": "is:merged", "timeField": "merged_at" }
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "Pull Requests",
+      "description": "[#1 PR rate] PR 생성/머지 활동. queryType=Pull Requests, timeField=created_at. UI에서 시계열/카운트 시각화 확정.",
+      "datasource": { "type": "grafana-github-datasource" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-github-datasource" },
+          "queryType": "Pull Requests",
+          "owner": "UMC-PRODUCT",
+          "repository": "umc-product-server",
+          "options": { "timeField": "created_at" }
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": {}
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Issues",
+      "description": "[#2 Issue rate] 이슈 생성/종료 활동. queryType=Issues, timeField=created_at. UI에서 확정.",
+      "datasource": { "type": "grafana-github-datasource" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-github-datasource" },
+          "queryType": "Issues",
+          "owner": "UMC-PRODUCT",
+          "repository": "umc-product-server",
+          "options": { "timeField": "created_at" }
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": {}
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "PR Time to Close (created → closed/merged)",
+      "description": "[#3 time to close] Pull Requests 의 created_at/closed_at/merged_at 으로 산출. UI에서 Transform(Add field from calculation: closed − created) 추가.",
+      "datasource": { "type": "grafana-github-datasource" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-github-datasource" },
+          "queryType": "Pull Requests",
+          "owner": "UMC-PRODUCT",
+          "repository": "umc-product-server",
+          "options": { "query": "is:closed", "timeField": "closed_at" }
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": {}
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "PR Time to First Review",
+      "description": "[#5 time to first review] PR 생성 → 첫 리뷰까지. GitHub 데이터소스가 review/첫 리뷰 시각을 노출하는지 UI에서 확인 후 산출. ⚠️ 데이터소스 review 지원 여부 확인 필요.",
+      "datasource": { "type": "grafana-github-datasource" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-github-datasource" },
+          "queryType": "Pull Requests",
+          "owner": "UMC-PRODUCT",
+          "repository": "umc-product-server",
+          "options": { "timeField": "created_at" }
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": {}
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "PR Size (additions / deletions / changed files)",
+      "description": "[#4 PR size] Pull Requests 의 additions/deletions/changed_files 필드 사용. UI에서 컬럼/시각화 확정.",
+      "datasource": { "type": "grafana-github-datasource" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 22 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-github-datasource" },
+          "queryType": "Pull Requests",
+          "owner": "UMC-PRODUCT",
+          "repository": "umc-product-server",
+          "options": { "timeField": "created_at" }
+        }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": {}
+    }
+  ]
+}
