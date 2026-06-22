@@ -1926,72 +1926,6 @@
           }
         }
       },
-      "panel-7": {
-        "kind": "Panel",
-        "spec": {
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "hidden": false,
-                    "query": {
-                      "datasource": {
-                        "name": "loki"
-                      },
-                      "group": "loki",
-                      "kind": "DataQuery",
-                      "spec": {
-                        "direction": "backward",
-                        "editorMode": "code",
-                        "expr": "{service_name=~\"$service\"} | event=\"api_request_completed\"",
-                        "queryType": "range"
-                      },
-                      "version": "v0"
-                    },
-                    "refId": "A"
-                  }
-                }
-              ],
-              "queryOptions": {},
-              "transformations": []
-            }
-          },
-          "description": "최근 애플리케이션 로그. Loki OTLP 기본 라벨 service_name 을 기준으로 필터링한다.",
-          "id": 7,
-          "links": [],
-          "title": "Recent Loki Logs",
-          "vizConfig": {
-            "group": "logs",
-            "kind": "VizConfig",
-            "spec": {
-              "fieldConfig": {
-                "defaults": {},
-                "overrides": []
-              },
-              "options": {
-                "dedupStrategy": "none",
-                "enableInfiniteScrolling": false,
-                "enableLogDetails": true,
-                "prettifyLogMessage": true,
-                "showCommonLabels": false,
-                "showControls": false,
-                "showFieldSelector": false,
-                "showLabels": false,
-                "showLevel": true,
-                "showTime": true,
-                "sortOrder": "Descending",
-                "timestampResolution": "ms",
-                "unwrappedColumns": false,
-                "wrapLogMessage": false
-              }
-            },
-            "version": "13.0.1"
-          }
-        }
-      },
       "panel-71": {
         "kind": "Panel",
         "spec": {
@@ -3126,19 +3060,6 @@
                         "width": 4,
                         "x": 20,
                         "y": 0
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "panel-7"
-                        },
-                        "height": 10,
-                        "width": 24,
-                        "x": 0,
-                        "y": 4
                       }
                     }
                   ]
