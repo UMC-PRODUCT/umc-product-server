@@ -167,15 +167,12 @@ springdoc:
 #     DB span 트레이싱은 그대로 동작한다 (SQL 원문 라인만 사라짐).
 #   - local 프로필은 파일 하단(on-profile: local)에서 enable-logging=true 로 재정의하므로,
 #     로컬 개발자는 별도 env 설정 없이 SQL 라인을 본다.
-#   - include-parameter-values 는 SQL 라인에 바인딩 파라미터 값(민감정보 가능)을 풀어쓸지로 기본 false (local 만 true).
-# 환경변수 기본값: local=(true,true) / dev·staging·prod·test=(false,false)
+# 환경변수 기본값: local=true / dev·staging·prod·test=false
 # ====================================================================
 decorator:
   datasource:
     p6spy:
       enable-logging: ${P6SPY_ENABLE_LOGGING:false}
-      tracing:
-        include-parameter-values: ${P6SPY_INCLUDE_PARAMS:false}
 
 logging:
   level:
@@ -442,5 +439,3 @@ decorator:
   datasource:
     p6spy:
       enable-logging: ${P6SPY_ENABLE_LOGGING:true}
-      tracing:
-        include-parameter-values: ${P6SPY_INCLUDE_PARAMS:true}
