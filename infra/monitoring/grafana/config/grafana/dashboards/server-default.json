@@ -2804,6 +2804,238 @@
             "version": "13.0.1"
           }
         }
+      },
+      "panel-79": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "loki"
+                      },
+                      "group": "loki",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "max by (uriTemplate, method) (max_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryCount | __error__=\"\" [$__range]))",
+                        "queryType": "instant"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "loki"
+                      },
+                      "group": "loki",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (uriTemplate, method) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryCount | __error__=\"\" [$__range])) / sum by (uriTemplate, method) (count_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" [$__range]))",
+                        "queryType": "instant"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "B"
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "loki"
+                      },
+                      "group": "loki",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (uriTemplate, method) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryTimeMs | __error__=\"\" [$__range])) / sum by (uriTemplate, method) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryCount | __error__=\"\" [$__range]))",
+                        "queryType": "instant"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "C"
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "loki"
+                      },
+                      "group": "loki",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (uriTemplate, method) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryTimeMs | __error__=\"\" [$__range])) / sum by (uriTemplate, method) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap durationMs | __error__=\"\" [$__range])) * 100",
+                        "queryType": "instant"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "D"
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "loki"
+                      },
+                      "group": "loki",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum by (uriTemplate, method) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryTimeMs | __error__=\"\" [$__range]))",
+                        "queryType": "instant"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "E"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "merge",
+                  "spec": {
+                    "options": {}
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {
+                        "Time": true
+                      },
+                      "indexByName": {
+                        "method": 0,
+                        "uriTemplate": 1,
+                        "Value #A": 2,
+                        "Value #B": 3,
+                        "Value #C": 4,
+                        "Value #D": 5,
+                        "Value #E": 6
+                      },
+                      "renameByName": {
+                        "Value #A": "max queryCount",
+                        "Value #B": "avg queryCount",
+                        "Value #C": "쿼리당 시간(ms)",
+                        "Value #D": "DB 비중(%)",
+                        "Value #E": "total queryTimeMs"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "description": "api_request_completed 로그 기반 API별 DB 쿼리 통계(원본값=정확). 쿼리당시간=느린쿼리, DB비중=DB가 병목인지, total=DB부하 순위. 동기 쿼리만(@Async 제외). 진단은 Tempo.",
+          "id": 79,
+          "links": [],
+          "title": "DB queries by API (Loki 로그 기반)",
+          "vizConfig": {
+            "group": "table",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "inspect": false
+                  },
+                  "unit": "short"
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "쿼리당 시간(ms)"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "ms"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "total queryTimeMs"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "ms"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "DB 비중(%)"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 1
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "cellHeight": "sm",
+                "footer": {
+                  "countRows": false,
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "displayName": "max queryCount",
+                    "desc": true
+                  }
+                ]
+              }
+            },
+            "version": "13.0.1"
+          }
+        }
       }
     },
     "layout": {
@@ -3091,6 +3323,19 @@
                         "width": 8,
                         "x": 16,
                         "y": 26
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-79"
+                        },
+                        "height": 12,
+                        "width": 24,
+                        "x": 0,
+                        "y": 34
                       }
                     }
                   ]
