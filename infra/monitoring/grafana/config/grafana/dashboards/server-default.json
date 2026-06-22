@@ -2824,7 +2824,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "max by (uriTemplate) (max_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryCount | __error__=\"\" [$__range]))",
+                        "expr": "max by (uriTemplate, method) (max_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryCount | __error__=\"\" [$__range]))",
                         "queryType": "instant"
                       },
                       "version": "v0"
@@ -2844,7 +2844,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum by (uriTemplate) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryCount | __error__=\"\" [$__range])) / sum by (uriTemplate) (count_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" [$__range]))",
+                        "expr": "sum by (uriTemplate, method) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryCount | __error__=\"\" [$__range])) / sum by (uriTemplate, method) (count_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" [$__range]))",
                         "queryType": "instant"
                       },
                       "version": "v0"
@@ -2864,7 +2864,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum by (uriTemplate) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryTimeMs | __error__=\"\" [$__range])) / sum by (uriTemplate) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryCount | __error__=\"\" [$__range]))",
+                        "expr": "sum by (uriTemplate, method) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryTimeMs | __error__=\"\" [$__range])) / sum by (uriTemplate, method) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryCount | __error__=\"\" [$__range]))",
                         "queryType": "instant"
                       },
                       "version": "v0"
@@ -2884,7 +2884,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum by (uriTemplate) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryTimeMs | __error__=\"\" [$__range])) / sum by (uriTemplate) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap durationMs | __error__=\"\" [$__range])) * 100",
+                        "expr": "sum by (uriTemplate, method) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryTimeMs | __error__=\"\" [$__range])) / sum by (uriTemplate, method) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap durationMs | __error__=\"\" [$__range])) * 100",
                         "queryType": "instant"
                       },
                       "version": "v0"
@@ -2904,7 +2904,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum by (uriTemplate) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryTimeMs | __error__=\"\" [$__range]))",
+                        "expr": "sum by (uriTemplate, method) (sum_over_time({service_name=~\"$service\"} | event=\"api_request_completed\" | unwrap queryTimeMs | __error__=\"\" [$__range]))",
                         "queryType": "instant"
                       },
                       "version": "v0"
@@ -2931,12 +2931,13 @@
                         "Time": true
                       },
                       "indexByName": {
-                        "uriTemplate": 0,
-                        "Value #A": 1,
-                        "Value #B": 2,
-                        "Value #C": 3,
-                        "Value #D": 4,
-                        "Value #E": 5
+                        "method": 0,
+                        "uriTemplate": 1,
+                        "Value #A": 2,
+                        "Value #B": 3,
+                        "Value #C": 4,
+                        "Value #D": 5,
+                        "Value #E": 6
                       },
                       "renameByName": {
                         "Value #A": "max queryCount",
