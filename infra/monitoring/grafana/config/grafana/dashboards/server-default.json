@@ -3259,6 +3259,475 @@
             "version": "13.0.1"
           }
         }
+      },
+      "panel-93": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "cloudwatch"
+                      },
+                      "group": "cloudwatch",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "dimensions": {
+                          "DBInstanceIdentifier": "$rds_instance"
+                        },
+                        "id": "database_connections",
+                        "label": "DatabaseConnections",
+                        "matchExact": true,
+                        "metricEditorMode": 0,
+                        "metricName": "DatabaseConnections",
+                        "metricQueryType": 0,
+                        "namespace": "AWS/RDS",
+                        "period": "auto",
+                        "queryMode": "Metrics",
+                        "region": "$aws_region",
+                        "statistic": "Average"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "AWS/RDS DatabaseConnections 지표입니다. 선택한 RDS 인스턴스에 연결된 클라이언트 네트워크 연결 수를 표시합니다.",
+          "id": 93,
+          "links": [],
+          "title": "RDS Database Connections",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short"
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              }
+            },
+            "version": "13.0.1"
+          }
+        }
+      },
+      "panel-94": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "cloudwatch"
+                      },
+                      "group": "cloudwatch",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "dimensions": {
+                          "DBInstanceIdentifier": "$rds_instance"
+                        },
+                        "id": "freeable_memory",
+                        "label": "FreeableMemory",
+                        "matchExact": true,
+                        "metricEditorMode": 0,
+                        "metricName": "FreeableMemory",
+                        "metricQueryType": 0,
+                        "namespace": "AWS/RDS",
+                        "period": "auto",
+                        "queryMode": "Metrics",
+                        "region": "$aws_region",
+                        "statistic": "Average"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "AWS/RDS FreeableMemory 지표입니다. PostgreSQL 인스턴스에서 사용 가능한 메모리를 표시합니다.",
+          "id": 94,
+          "links": [],
+          "title": "RDS Freeable Memory",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "bytes"
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              }
+            },
+            "version": "13.0.1"
+          }
+        }
+      },
+      "panel-95": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "cloudwatch"
+                      },
+                      "group": "cloudwatch",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "dimensions": {
+                          "DBInstanceIdentifier": "$rds_instance"
+                        },
+                        "id": "free_storage_space",
+                        "label": "FreeStorageSpace",
+                        "matchExact": true,
+                        "metricEditorMode": 0,
+                        "metricName": "FreeStorageSpace",
+                        "metricQueryType": 0,
+                        "namespace": "AWS/RDS",
+                        "period": "auto",
+                        "queryMode": "Metrics",
+                        "region": "$aws_region",
+                        "statistic": "Average"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "AWS/RDS FreeStorageSpace 지표입니다. 선택한 RDS 인스턴스의 사용 가능한 스토리지 공간을 표시합니다.",
+          "id": 95,
+          "links": [],
+          "title": "RDS Free Storage Space",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "bytes"
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              }
+            },
+            "version": "13.0.1"
+          }
+        }
+      },
+      "panel-96": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "cloudwatch"
+                      },
+                      "group": "cloudwatch",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "dimensions": {
+                          "DBInstanceIdentifier": "$rds_instance"
+                        },
+                        "id": "disk_queue_depth",
+                        "label": "DiskQueueDepth",
+                        "matchExact": true,
+                        "metricEditorMode": 0,
+                        "metricName": "DiskQueueDepth",
+                        "metricQueryType": 0,
+                        "namespace": "AWS/RDS",
+                        "period": "auto",
+                        "queryMode": "Metrics",
+                        "region": "$aws_region",
+                        "statistic": "Average"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "AWS/RDS DiskQueueDepth 지표입니다. 디스크 I/O 처리를 기다리는 읽기·쓰기 요청 수를 표시합니다.",
+          "id": 96,
+          "links": [],
+          "title": "RDS Disk Queue Depth",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short"
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              }
+            },
+            "version": "13.0.1"
+          }
+        }
+      },
+      "panel-97": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "cloudwatch"
+                      },
+                      "group": "cloudwatch",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "dimensions": {
+                          "DBInstanceIdentifier": "$rds_instance"
+                        },
+                        "id": "read_latency",
+                        "label": "ReadLatency",
+                        "matchExact": true,
+                        "metricEditorMode": 0,
+                        "metricName": "ReadLatency",
+                        "metricQueryType": 0,
+                        "namespace": "AWS/RDS",
+                        "period": "auto",
+                        "queryMode": "Metrics",
+                        "region": "$aws_region",
+                        "statistic": "Average"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "cloudwatch"
+                      },
+                      "group": "cloudwatch",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "dimensions": {
+                          "DBInstanceIdentifier": "$rds_instance"
+                        },
+                        "id": "write_latency",
+                        "label": "WriteLatency",
+                        "matchExact": true,
+                        "metricEditorMode": 0,
+                        "metricName": "WriteLatency",
+                        "metricQueryType": 0,
+                        "namespace": "AWS/RDS",
+                        "period": "auto",
+                        "queryMode": "Metrics",
+                        "region": "$aws_region",
+                        "statistic": "Average"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "B"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "AWS/RDS ReadLatency와 WriteLatency 지표입니다. 디스크 읽기·쓰기 I/O 작업당 평균 지연 시간을 초 단위로 표시합니다.",
+          "id": 97,
+          "links": [],
+          "title": "RDS Read / Write Latency",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "s"
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              }
+            },
+            "version": "13.0.1"
+          }
+        }
+      },
+      "panel-98": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "cloudwatch"
+                      },
+                      "group": "cloudwatch",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "dimensions": {
+                          "DBInstanceIdentifier": "$rds_instance"
+                        },
+                        "id": "swap_usage",
+                        "label": "SwapUsage",
+                        "matchExact": true,
+                        "metricEditorMode": 0,
+                        "metricName": "SwapUsage",
+                        "metricQueryType": 0,
+                        "namespace": "AWS/RDS",
+                        "period": "auto",
+                        "queryMode": "Metrics",
+                        "region": "$aws_region",
+                        "statistic": "Average"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "AWS/RDS SwapUsage 지표입니다. PostgreSQL 인스턴스에서 사용 중인 swap 공간을 표시합니다.",
+          "id": 98,
+          "links": [],
+          "title": "RDS Swap Usage",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "bytes"
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              }
+            },
+            "version": "13.0.1"
+          }
+        }
       }
     },
     "layout": {
@@ -3758,6 +4227,84 @@
                         "width": 8,
                         "x": 16,
                         "y": 0
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-93"
+                        },
+                        "height": 9,
+                        "width": 8,
+                        "x": 0,
+                        "y": 9
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-94"
+                        },
+                        "height": 9,
+                        "width": 8,
+                        "x": 8,
+                        "y": 9
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-95"
+                        },
+                        "height": 9,
+                        "width": 8,
+                        "x": 16,
+                        "y": 9
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-96"
+                        },
+                        "height": 9,
+                        "width": 8,
+                        "x": 0,
+                        "y": 18
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-97"
+                        },
+                        "height": 9,
+                        "width": 8,
+                        "x": 8,
+                        "y": 18
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-98"
+                        },
+                        "height": 9,
+                        "width": 8,
+                        "x": 16,
+                        "y": 18
                       }
                     }
                   ]
