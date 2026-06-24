@@ -16,6 +16,7 @@ import com.umc.product.authentication.domain.OAuthAttributes;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.cache.domain.CacheNamespace;
+import com.umc.product.global.logging.ExternalApiCallLogger;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -79,7 +80,7 @@ public class GoogleTokenVerifier {
 
             String sub = claims.getSubject();
             String email = claims.get("email", String.class);
-            log.info("Google ID 토큰 검증 성공: sub={}, email={}", sub, email);
+            log.debug("Google ID Token을 검증했습니다: hasEmail={}", hasEmail(email));
 
             Map<String, Object> attributes = new HashMap<>();
             attributes.put("sub", sub);
@@ -92,7 +93,7 @@ public class GoogleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Google ID 토큰 검증 중 오류 발생", e);
+            log.error("Google ID Token 검증 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -101,30 +102,32 @@ public class GoogleTokenVerifier {
         log.debug("Google Access Token 검증 시작");
 
         try {
-            // Google tokeninfo endpoint 호출
-            GoogleAccessTokenInfoResponse response = restClient.get()
-                .uri(GOOGLE_TOKEN_INFO_URL + "?access_token=" + accessToken)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.error("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
-                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
-                })
-                .body(GoogleAccessTokenInfoResponse.class);
+            GoogleAccessTokenInfoResponse response = ExternalApiCallLogger.measure(
+                "GOOGLE",
+                "VERIFY_ACCESS_TOKEN",
+                () ->
+                restClient.get()
+                    .uri(GOOGLE_TOKEN_INFO_URL + "?access_token=" + accessToken)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (req, res) -> {
+                        log.error("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
+                        throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
+                    })
+                    .body(GoogleAccessTokenInfoResponse.class)
+            );
 
             if (response == null) {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
             }
 
-            // audience(aud) 검증 - 우리 앱의 client ID와 일치해야 함
             if (!googleProperties.clientIdList().contains(response.aud())) {
                 log.error("Google ID 토큰 audience 불일치: expected={}, actual={}",
                     googleProperties.clientIdList(), response.aud());
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
 
-            log.info("Google Access Token 검증 성공: sub={}, email={}", response.sub(), response.email());
+            log.debug("Google Access Token을 검증했습니다: hasEmail={}", hasEmail(response.email()));
 
-            // OAuthAttributes 형식에 맞게 Map 생성
             Map<String, Object> attributes = new HashMap<>();
             attributes.put("sub", response.sub());
             attributes.put("email", response.email());
@@ -134,7 +137,7 @@ public class GoogleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Google Access Token 검증 중 오류 발생", e);
+            log.error("Google Access Token 검증 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -153,23 +156,26 @@ public class GoogleTokenVerifier {
             MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
             formData.add("token", token);
 
-            restClient.post()
-                .uri(GOOGLE_REVOKE_URL)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(formData)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.error("Google token revoke 실패: status={}", res.getStatusCode());
-                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
-                })
-                .toBodilessEntity();
+            ExternalApiCallLogger.measure("GOOGLE", "REVOKE_TOKEN", () ->
+                restClient.post()
+                    .uri(GOOGLE_REVOKE_URL)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(formData)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (req, res) -> {
+                        log.error("Google token revoke 실패: status={}", res.getStatusCode());
+                        throw new AuthenticationDomainException(
+                            AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+                    })
+                    .toBodilessEntity()
+            );
 
-            log.info("Google token revoke 성공");
+            log.info("Google token revoke를 완료했습니다");
 
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Google token revoke 중 오류 발생", e);
+            log.error("Google token revoke 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -187,10 +193,14 @@ public class GoogleTokenVerifier {
         );
     }
 
+    private boolean hasEmail(String email) {
+        return email != null && !email.isBlank();
+    }
+
     private record GoogleAccessTokenInfoResponse(
         String sub,
         String email,
-        String aud         // audience (client ID)
+        String aud
     ) {
     }
 }

@@ -34,6 +34,7 @@ import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersRespons
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse.PartGroup;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse.ProjectMemberBrief;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectMatchingStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
@@ -245,6 +246,22 @@ public class ProjectResponseAssembler {
     public ChapterProjectStatisticsResponse statisticsForChapter(Long chapterId, Long requesterMemberId) {
         return ChapterProjectStatisticsResponse.from(
             getProjectStatisticsUseCase.getByChapterId(chapterId, requesterMemberId));
+    }
+
+    /**
+     * PROJECT-STAT-002 프로젝트 목록 지원/매칭 현황.
+     */
+    public ChapterProjectStatisticsResponse statisticsForProjects(List<Long> projectIds, Long requesterMemberId) {
+        return ChapterProjectStatisticsResponse.from(
+            getProjectStatisticsUseCase.getByProjectIds(projectIds, requesterMemberId));
+    }
+
+    /**
+     * PROJECT-STAT-003 지부 공개 프로젝트 매칭 요약.
+     */
+    public ChapterProjectMatchingStatisticsResponse matchingStatisticsForChapter(Long chapterId) {
+        return ChapterProjectMatchingStatisticsResponse.from(
+            getProjectStatisticsUseCase.getPublicMatchingStatisticsByChapterId(chapterId));
     }
 
     private ProjectMembersResponse buildMembersResponse(

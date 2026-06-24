@@ -9,5 +9,14 @@ public enum AuditAction {
     CHECK,
     SUBMIT,
     REGISTER,
-    WITHDRAW
+    WITHDRAW,
+    LOGIN,
+    LINK,
+    UNLINK,
+    ACCESS_DENIED,
+    PUBLISH,
+    CANCEL,
+    REMIND,
+    REORDER,
+    FINALIZE
 }

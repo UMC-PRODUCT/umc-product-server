@@ -1,12 +1,19 @@
 package com.umc.product.project.adapter.out.persistence;
 
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationFormPort;
 import com.umc.product.project.domain.ProjectApplicationForm;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -23,6 +30,20 @@ public class ProjectApplicationFormPersistenceAdapter
     @Override
     public Optional<ProjectApplicationForm> findByProjectId(Long projectId) {
         return repository.findFirstByProjectIdOrderByIdAsc(projectId);
+    }
+
+    @Override
+    public Map<Long, ProjectApplicationForm> findAllByProjectIds(Collection<Long> projectIds) {
+        if (projectIds == null || projectIds.isEmpty()) {
+            return Map.of();
+        }
+        return repository.findAllByProjectIds(projectIds).stream()
+            .collect(Collectors.toMap(
+                form -> form.getProject().getId(),
+                form -> form,
+                (first, ignored) -> first,
+                LinkedHashMap::new
+            ));
     }
 
     @Override

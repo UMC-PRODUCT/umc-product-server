@@ -15,11 +15,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
 import com.umc.product.storage.application.port.out.dto.StorageObjectInfo;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
@@ -45,7 +47,7 @@ class S3StorageAdapterTest {
     @DisplayName("Presigned PUT 생성 시 요청 파일 크기를 Content-Length로 서명한다")
     void Presigned_PUT_생성_시_요청_파일_크기를_Content_Length로_서명한다() throws Exception {
         // given
-        S3StorageAdapter sut = new S3StorageAdapter(s3Client, s3Presigner, properties());
+        S3StorageAdapter sut = adapter();
         ArgumentCaptor<PutObjectPresignRequest> captor = ArgumentCaptor.forClass(PutObjectPresignRequest.class);
         given(presignedPutObjectRequest.url()).willReturn(URI.create("https://storage.example.com/upload").toURL());
         given(s3Presigner.presignPutObject(captor.capture())).willReturn(presignedPutObjectRequest);
@@ -67,7 +69,7 @@ class S3StorageAdapterTest {
     @DisplayName("HeadObject 결과를 S3 객체 정보로 반환한다")
     void HeadObject_결과를_S3_객체_정보로_반환한다() {
         // given
-        S3StorageAdapter sut = new S3StorageAdapter(s3Client, s3Presigner, properties());
+        S3StorageAdapter sut = adapter();
         given(s3Client.headObject(org.mockito.ArgumentMatchers.any(HeadObjectRequest.class)))
             .willReturn(HeadObjectResponse.builder()
                 .contentLength(1024L)
@@ -85,7 +87,7 @@ class S3StorageAdapterTest {
     @DisplayName("S3 객체가 없으면 빈 객체 정보를 반환하고 exists는 false를 반환한다")
     void S3_객체가_없으면_빈_객체_정보를_반환하고_exists는_false를_반환한다() {
         // given
-        S3StorageAdapter sut = new S3StorageAdapter(s3Client, s3Presigner, properties());
+        S3StorageAdapter sut = adapter();
         given(s3Client.headObject(org.mockito.ArgumentMatchers.any(HeadObjectRequest.class)))
             .willThrow(NoSuchKeyException.builder().build());
 
@@ -98,7 +100,7 @@ class S3StorageAdapterTest {
     @DisplayName("HeadObject 조회 중 404가 아닌 S3Exception은 StorageException으로 변환한다")
     void HeadObject_조회_중_404가_아닌_S3Exception은_StorageException으로_변환한다() {
         // given
-        S3StorageAdapter sut = new S3StorageAdapter(s3Client, s3Presigner, properties());
+        S3StorageAdapter sut = adapter();
         given(s3Client.headObject(org.mockito.ArgumentMatchers.any(HeadObjectRequest.class)))
             .willThrow(S3Exception.builder().statusCode(500).build());
 
@@ -108,6 +110,15 @@ class S3StorageAdapterTest {
             .hasCauseInstanceOf(S3Exception.class)
             .extracting("baseCode")
             .isEqualTo(StorageErrorCode.STORAGE_METADATA_READ_FAILED);
+    }
+
+    private S3StorageAdapter adapter() {
+        return new S3StorageAdapter(
+            s3Client,
+            s3Presigner,
+            properties(),
+            new OperationalMetrics(new SimpleMeterRegistry())
+        );
     }
 
     private S3StorageProperties properties() {

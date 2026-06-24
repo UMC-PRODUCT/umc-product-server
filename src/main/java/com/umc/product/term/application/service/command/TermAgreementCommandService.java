@@ -5,6 +5,9 @@ import java.time.Instant;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.term.application.port.in.command.ManageTermAgreementUseCase;
 import com.umc.product.term.application.port.in.command.dto.CreateTermConsentCommand;
 import com.umc.product.term.application.port.out.LoadTermConsentPort;
@@ -31,6 +34,13 @@ public class TermAgreementCommandService implements ManageTermAgreementUseCase {
     private final SaveTermConsentPort saveTermConsentPort;
     private final SaveTermConsentLogPort saveTermConsentLogPort;
 
+    @Audited(
+        domain = Domain.TERMS,
+        action = AuditAction.SUBMIT,
+        targetType = "TermConsent",
+        targetId = "#command.termId()",
+        description = "'약관 동의를 제출했습니다.'"
+    )
     @Override
     public void createTermConsent(CreateTermConsentCommand command) {
         // 약관 존재 확인

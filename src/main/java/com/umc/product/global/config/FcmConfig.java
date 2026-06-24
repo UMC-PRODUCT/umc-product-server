@@ -1,17 +1,20 @@
 package com.umc.product.global.config;
 
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
-import com.google.firebase.messaging.FirebaseMessaging;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.messaging.FirebaseMessaging;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
@@ -28,29 +31,18 @@ public class FcmConfig {
             new ByteArrayInputStream(firebaseCredentials.getBytes(StandardCharsets.UTF_8))
         );
 
-        // private_key가 제대로 파싱됐는지 확인
-        if (credentials instanceof com.google.auth.oauth2.ServiceAccountCredentials saCreds) {
-            log.debug("service account email: {}", saCreds.getClientEmail());
-            log.debug("private key algorithm: {}", saCreds.getPrivateKey().getAlgorithm());
-            log.debug("private key format: {}", saCreds.getPrivateKey().getFormat());
-        }
-
-        log.debug("Firebase credentials 로드 완료");
-
-        log.trace("Firebase credentials 길이: {}", firebaseCredentials.length());
-        log.trace("Firebase credentials 시작: {}",
-            firebaseCredentials.substring(0, Math.min(30, firebaseCredentials.length())));
+        log.debug("Firebase credentials를 로드했습니다");
 
         FirebaseApp firebaseApp = null;
         List<FirebaseApp> apps = FirebaseApp.getApps();
 
         if (apps != null && !apps.isEmpty()) {
-            log.info("기존 FirebaseApp 검색 중... (총 {}개)", apps.size());
+            log.debug("기존 FirebaseApp 검색 중: count={}", apps.size());
 
             for (FirebaseApp app : apps) {
                 if (app.getName().equals(FirebaseApp.DEFAULT_APP_NAME)) {
                     firebaseApp = app;
-                    log.info("기존 FirebaseApp 발견: {}", app.getName());
+                    log.debug("기존 FirebaseApp 발견: name={}", app.getName());
                 }
             }
         } else {
@@ -62,10 +54,10 @@ public class FcmConfig {
                     .build();
 
             firebaseApp = FirebaseApp.initializeApp(options);
-            log.info("FirebaseApp 초기화 완료: {}", firebaseApp.getName());
+            log.info("FirebaseApp을 초기화했습니다: name={}", firebaseApp.getName());
         }
 
-        log.info("FirebaseMessaging 인스턴스 생성 완료");
+        log.info("FirebaseMessaging 인스턴스를 생성했습니다");
         return FirebaseMessaging.getInstance(firebaseApp);
     }
 }

@@ -6,8 +6,11 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.storage.application.port.in.command.ManageFileUseCase;
 import com.umc.product.storage.application.port.in.command.dto.DeleteFileCommand;
 import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
@@ -37,6 +40,13 @@ public class FileCommandService implements ManageFileUseCase {
     private final SaveFileMetadataPort saveFileMetadataPort;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
+    @Audited(
+        domain = Domain.STORAGE,
+        action = AuditAction.CREATE,
+        targetType = "FileMetadata",
+        targetId = "#result.fileId()",
+        description = "'파일 업로드 URL을 생성했습니다.'"
+    )
     @Override
     @Transactional
     public FileUploadInfo getFileUploadUrl(PrepareFileUploadCommand command) {
@@ -78,7 +88,7 @@ public class FileCommandService implements ManageFileUseCase {
             UPLOAD_URL_DURATION_MINUTES
         );
 
-        log.info("파일 업로드 URL 생성 완료: fileId={}, category={}", fileId, command.category());
+        log.info("파일 업로드 URL을 생성했습니다: fileId={}, category={}", fileId, command.category());
 
         return new FileUploadInfo(
             fileId,
@@ -89,6 +99,13 @@ public class FileCommandService implements ManageFileUseCase {
         );
     }
 
+    @Audited(
+        domain = Domain.STORAGE,
+        action = AuditAction.CHECK,
+        targetType = "FileMetadata",
+        targetId = "#fileId",
+        description = "'파일 업로드를 확인했습니다.'"
+    )
     @Override
     @Transactional
     public void confirmUpload(String fileId) {
@@ -105,9 +122,16 @@ public class FileCommandService implements ManageFileUseCase {
         confirmUploaded(metadata, objectInfo);
         saveFileMetadataPort.save(metadata);
 
-        log.info("파일 업로드 완료 확인: fileId={}", fileId);
+        log.info("파일 업로드를 확인했습니다: fileId={}", fileId);
     }
 
+    @Audited(
+        domain = Domain.STORAGE,
+        action = AuditAction.DELETE,
+        targetType = "FileMetadata",
+        targetId = "#command.fileId()",
+        description = "'파일을 삭제했습니다.'"
+    )
     @Override
     public void deleteFile(DeleteFileCommand command) {
         FileMetadata metadata = loadFileMetadataPort.findByFileId(command.fileId())
@@ -121,7 +145,7 @@ public class FileCommandService implements ManageFileUseCase {
         // 메타데이터 삭제
         saveFileMetadataPort.deleteByFileId(command.fileId());
 
-        log.info("파일 삭제 완료: fileId={}", command.fileId());
+        log.info("파일을 삭제했습니다: fileId={}", command.fileId());
     }
 
     private void validateDeletePermission(FileMetadata metadata, Long requesterMemberId) {

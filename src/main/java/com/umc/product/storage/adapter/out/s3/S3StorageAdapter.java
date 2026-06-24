@@ -21,6 +21,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriUtils;
 
+import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
 import com.umc.product.storage.application.port.out.StoragePort;
 import com.umc.product.storage.application.port.out.dto.StorageObjectInfo;
@@ -58,6 +59,7 @@ public class S3StorageAdapter implements StoragePort {
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
     private final S3StorageProperties properties;
+    private final OperationalMetrics operationalMetrics;
 
     @Value("${spring.profiles.active:default}")
     private String springProfile;
@@ -87,6 +89,7 @@ public class S3StorageAdapter implements StoragePort {
         Long fileSize,
         long durationMinutes
     ) {
+        long startNanos = System.nanoTime();
         try {
             PutObjectRequest.Builder putObjectRequestBuilder = PutObjectRequest.builder()
                 .bucket(properties.bucketName())
@@ -113,6 +116,7 @@ public class S3StorageAdapter implements StoragePort {
             LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(durationMinutes);
 
             log.debug("S3 업로드 URL 생성: storageKey={}", storageKey);
+            recordStorageMetric("CREATE_UPLOAD_URL", "success", startNanos);
 
             return new FileUploadInfo(
                 null,  // fileId는 Service에서 설정
@@ -122,6 +126,7 @@ public class S3StorageAdapter implements StoragePort {
                 expiresAt
             );
         } catch (Exception e) {
+            recordStorageMetric("CREATE_UPLOAD_URL", "failure", startNanos);
             log.error("S3 업로드 URL 생성 실패: storageKey={}", storageKey, e);
             throw new StorageException(StorageErrorCode.STORAGE_URL_GENERATION_FAILED);
         }
@@ -141,23 +146,28 @@ public class S3StorageAdapter implements StoragePort {
 
     @Override
     public Optional<StorageObjectInfo> findObjectInfoByStorageKey(String storageKey) {
+        long startNanos = System.nanoTime();
         try {
             HeadObjectRequest headRequest = HeadObjectRequest.builder()
                 .bucket(properties.bucketName())
                 .key(storageKey)
                 .build();
             HeadObjectResponse response = s3Client.headObject(headRequest);
+            recordStorageMetric("GET_OBJECT_METADATA", "success", startNanos);
             return Optional.of(StorageObjectInfo.of(
                 storageKey,
                 response.contentLength(),
                 response.contentType()
             ));
         } catch (NoSuchKeyException e) {
+            recordStorageMetric("GET_OBJECT_METADATA", "not_found", startNanos);
             return Optional.empty();
         } catch (S3Exception e) {
             if (e.statusCode() == 404) {
+                recordStorageMetric("GET_OBJECT_METADATA", "not_found", startNanos);
                 return Optional.empty();
             }
+            recordStorageMetric("GET_OBJECT_METADATA", "failure", startNanos);
             log.error("S3 객체 정보 조회 실패: storageKey={}", storageKey, e);
             throw new StorageException(StorageErrorCode.STORAGE_METADATA_READ_FAILED, e);
         }
@@ -165,6 +175,7 @@ public class S3StorageAdapter implements StoragePort {
 
     @Override
     public void delete(String storageKey) {
+        long startNanos = System.nanoTime();
         try {
             DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
                 .bucket(properties.bucketName())
@@ -172,8 +183,10 @@ public class S3StorageAdapter implements StoragePort {
                 .build();
 
             s3Client.deleteObject(deleteRequest);
-            log.info("S3 파일 삭제 완료: storageKey={}", storageKey);
+            log.info("S3 파일을 삭제했습니다: storageKey={}", storageKey);
+            recordStorageMetric("DELETE_OBJECT", "success", startNanos);
         } catch (Exception e) {
+            recordStorageMetric("DELETE_OBJECT", "failure", startNanos);
             log.error("S3 파일 삭제 실패: storageKey={}", storageKey, e);
             throw new StorageException(StorageErrorCode.STORAGE_DELETE_FAILED);
         }
@@ -202,6 +215,7 @@ public class S3StorageAdapter implements StoragePort {
      * Signed URLs</a>
      */
     private String generateCloudFrontSignedUrl(String storageKey, long durationMinutes) {
+        long startNanos = System.nanoTime();
         try {
             S3StorageProperties.CloudFront cloudfront = properties.cloudfront();
 
@@ -232,13 +246,24 @@ public class S3StorageAdapter implements StoragePort {
 
             SignedUrl signedUrl = cloudFrontUtilities.getSignedUrlWithCannedPolicy(signerRequest);
 
-            log.debug("CloudFront Signed URL 생성 완료: storageKey={}, url={}", storageKey, resourceUrl);
+            log.debug("CloudFront Signed URL을 생성했습니다: storageKey={}", storageKey);
+            recordStorageMetric("CREATE_DOWNLOAD_URL", "success", startNanos);
 
             return signedUrl.url();
         } catch (Exception e) {
+            recordStorageMetric("CREATE_DOWNLOAD_URL", "failure", startNanos);
             log.error("CloudFront Signed URL 생성 실패: storageKey={}", storageKey, e);
             throw new StorageException(StorageErrorCode.CDN_SIGNING_FAILED);
         }
+    }
+
+    private void recordStorageMetric(String operation, String result, long startNanos) {
+        operationalMetrics.recordExternalCall(
+            "STORAGE",
+            operation,
+            result,
+            Duration.ofNanos(System.nanoTime() - startNanos)
+        );
     }
 
     /**

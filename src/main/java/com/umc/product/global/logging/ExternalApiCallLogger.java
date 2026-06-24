@@ -2,7 +2,9 @@ package com.umc.product.global.logging;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 
+import java.time.Duration;
 import java.util.function.Supplier;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,9 +44,14 @@ public final class ExternalApiCallLogger {
     private static final Logger log = LoggerFactory.getLogger("external_api");
 
     private static final String EVENT = "external_api_called";
+    private static volatile OperationalMetrics operationalMetrics;
 
     private ExternalApiCallLogger() {
         // util
+    }
+
+    static void setOperationalMetrics(OperationalMetrics metrics) {
+        operationalMetrics = metrics;
     }
 
     /**
@@ -64,24 +71,35 @@ public final class ExternalApiCallLogger {
         long startNanos = System.nanoTime();
         try {
             T result = call.get();
+            long elapsedNanos = System.nanoTime() - startNanos;
+            recordMetric(provider, operation, "success", elapsedNanos);
             log.info(
                 EVENT,
                 kv("provider", provider),
                 kv("operation", operation),
                 kv("result", "SUCCESS"),
-                kv("durationMs", (System.nanoTime() - startNanos) / 1_000_000L)
+                kv("durationMs", elapsedNanos / 1_000_000L)
             );
             return result;
         } catch (RuntimeException e) {
+            long elapsedNanos = System.nanoTime() - startNanos;
+            recordMetric(provider, operation, "failure", elapsedNanos);
             log.warn(
                 EVENT,
                 kv("provider", provider),
                 kv("operation", operation),
                 kv("result", "FAILURE"),
-                kv("durationMs", (System.nanoTime() - startNanos) / 1_000_000L),
+                kv("durationMs", elapsedNanos / 1_000_000L),
                 kv("errorClass", e.getClass().getSimpleName())
             );
             throw e;
+        }
+    }
+
+    private static void recordMetric(String provider, String operation, String result, long elapsedNanos) {
+        OperationalMetrics metrics = operationalMetrics;
+        if (metrics != null) {
+            metrics.recordExternalCall(provider, operation, result, Duration.ofNanos(elapsedNanos));
         }
     }
 

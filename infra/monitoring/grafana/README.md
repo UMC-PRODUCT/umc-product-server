@@ -32,6 +32,47 @@ docker compose --profile linux up -d
 - Tempo: <http://localhost:13200>
 - OTel Collector OTLP: gRPC `:4317`, HTTP `:4318`
 
+macOS 로컬에서 Homebrew `node_exporter`를 사용할 때:
+
+```bash
+brew install node_exporter
+brew services start node_exporter
+curl http://localhost:9100/metrics
+docker compose up -d
+```
+
+Prometheus 컨테이너는 macOS 호스트의 Homebrew `node_exporter`를
+`host.docker.internal:9100`으로 scrape 한다. Docker Desktop macOS에서는 이 hostname이
+기본 제공되며, compose 에도 `host.docker.internal:host-gateway`를 명시해 Linux Docker
+Engine 호환성을 확보한다.
+
+Grafana 의 `Node Exporter Host Metrics` 대시보드는 상단 `OS` 드롭다운 기본값이
+`macOS`이다. Linux 홈서버 메트릭을 볼 때는 `Linux`로 변경하면 Linux node_exporter가
+노출하는 metric label 기준 쿼리를 사용한다. 이 대시보드는 node_exporter 기본 collector
+가 노출하는 메트릭만 사용한다. macOS memory pressure 또는 실제 CPU/GPU 온도처럼
+node_exporter 기본 메트릭에 없는 값은 별도 textfile collector/custom exporter 없이
+수집하지 않는다. 대신 기본 collector가 제공하는 CPU, memory, swap, filesystem,
+disk, network, battery/power supply, host clock/OS info, collector success/duration 값을
+표시한다. Power supply 는 배터리 잔량, 충전 상태, 전류
+(`node_power_supply_current_ampere`), full/empty 예상 시간, optional voltage/temperature
+metric 을 표시한다. watt 단위 power draw 는
+`abs(node_power_supply_current_ampere) * node_power_supply_voltage_volt` 로 계산하는
+패널을 두었지만, macOS IOKit 이 voltage field 를 반환하지 않는 Mac 에서는 값이 비어
+있다. SoC/CPU/GPU power consumption 을 안정적으로 watt 로 수집하려면 macOS
+`powermetrics` 기반 custom exporter 또는 textfile collector 가 추가로 필요하다.
+
+macOS watt power collection 선택지는 다음과 같다.
+
+- node_exporter 기본 collector 만 사용할 경우: IOKit 이 `node_power_supply_voltage_volt`
+  와 `node_power_supply_current_ampere` 를 모두 반환하는 호스트에서만 배터리/전원 watt 를
+  `abs(current_ampere) * voltage_volt` 로 계산할 수 있다. 현재 로컬 Mac 은
+  `current_ampere` 만 노출하고 `voltage_volt` 는 노출하지 않아 `Power Draw Estimate`
+  패널이 비어 있는 것이 정상이다.
+- CPU/GPU/ANE power draw 를 watt 로 보고 싶을 경우: `sudo powermetrics -i 1000 -n 1 --samplers cpu_power,gpu_power,ane_power --format plist`
+  결과를 파싱하는 별도 exporter 또는 node_exporter textfile collector writer 를 운영해야 한다.
+  `powermetrics` 는 root 권한이 필요하므로 운영 시 전용 wrapper 와 제한된 sudoers 설정을
+  별도로 검토한다.
+
 기본 대시보드의 API 집계 패널은 Grafana 상단 time range 를 기준으로 Prometheus
 HTTP request counter / duration histogram 에서 요청 총량, 요청 수 Top 10,
 p95 latency Top 10 을 계산한다. Top 10 테이블의 행 링크는 해당 `uri` 에 대응하는
@@ -87,7 +128,7 @@ docker/monitoring/
 | `loki` | OTLP logs receiver 를 통해 Collector 에서 들어온 로그 저장. 기본 30일 보존. |
 | `grafana` | Prometheus / Alertmanager / Loki / Tempo datasource 와 ADR-016 의 api-performance dashboard 자동 provisioning. |
 | `alertmanager` | Prometheus alerting rule 의 라우팅. Discord webhook 으로 송신. |
-| `node-exporter` | Linux 호스트 메트릭 (CPU / disk / network) 노출, `linux` profile 에서만 실행. prometheus 가 scrape. |
+| `node-exporter` | macOS 로컬은 Homebrew `node_exporter`, Linux 운영은 `linux` profile 의 compose 컨테이너로 CPU / disk / network 메트릭을 노출. prometheus 가 `os` 라벨로 구분해 scrape. |
 
 ## 기본 알림 Rule
 

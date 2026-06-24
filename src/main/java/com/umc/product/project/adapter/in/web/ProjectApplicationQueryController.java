@@ -1,7 +1,11 @@
 package com.umc.product.project.adapter.in.web;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,14 +24,19 @@ import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicantRespo
 import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicationDetailResponse;
 import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplicationsQuery;
 import com.umc.product.project.application.port.in.query.dto.GetProjectApplicationDetailQuery;
+import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsBatchQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 
+@Validated
 @RestController
 @RequestMapping("/api/v1/projects")
 @RequiredArgsConstructor
@@ -41,30 +50,37 @@ public class ProjectApplicationQueryController {
         operationId = "APPLY-004",
         summary = "본인 지원 내역 목록 조회",
         description = """
-            요청자의 챌린저 파트 기준으로 매칭 종류를 자동 결정해 본인 지원 내역을 조회한다.
+            요청자의 챌린저 파트에 맞는 매칭 종류로 본인 지원 내역을 조회합니다.
             <p>
-            응답 카드는 두 데이터원에서 합성된다.
+            응답에는 다음 카드가 포함될 수 있습니다.
             <ul>
-              <li>application 카드 -- 본인이 제출한 지원서. matchingRound.id/type/phase 가 실제 라운드 값으로 채워진다.</li>
-              <li>RANDOM_MATCHING 카드 -- 본인이 ACTIVE 멤버이면서 application 이 없는 케이스 (THIRD 라운드 종료 후 자동 랜덤 매칭 또는 운영진 강제 배정).
-                  matchingRound.id 는 null, phase 는 RANDOM_MATCHING, status 는 ACTIVE = 합격 의미이므로 APPROVED 로 표시된다. 도메인상 0 또는 1 건.</li>
+              <li>지원서 카드: 본인이 제출한 지원서입니다.
+                  `matchingRound.id`, `matchingRound.type`, `matchingRound.phase` 에 실제 매칭 차수 정보를 담습니다.</li>
+              <li>랜덤 매칭 카드: 지원서 없이 프로젝트 멤버로 확정된 경우입니다.
+                  `matchingRound.id` 는 `null`, `matchingRound.phase` 는 `RANDOM_MATCHING`,
+                  `status` 는 `APPROVED` 입니다. 한 기수에서 최대 1건입니다.</li>
             </ul>
             <p>
-            정렬: application 카드는 매칭 라운드 시작일 ASC -> 지원서 갱신일 DESC, RANDOM_MATCHING 카드는 결과 리스트 끝에 append.
+            정렬은 매칭 차수 시작일 오름차순, 지원서 갱신일 내림차순입니다. 랜덤 매칭 카드는 목록 마지막에 둡니다.
             <p>
             `status` 파라미터 :
             <ul>
-              <li>미지정 -> DRAFT(임시저장) 제외 application 전체 + RANDOM_MATCHING 카드 합성</li>
-              <li>명시 시 해당 상태의 application 만 조회. RANDOM_MATCHING 카드는 application status 시맨틱 외부 데이터원이므로 합성하지 않는다.</li>
+              <li>보내지 않으면 임시저장(DRAFT)을 제외한 지원서와 랜덤 매칭 카드를 함께 조회합니다.</li>
+              <li>보내면 해당 상태를 확인할 수 있는 지원서만 조회합니다.
+                  제출 이후 상태는 해당 매칭 차수의 `decisionDeadline` 이 지난 뒤 확인할 수 있습니다.
+                  랜덤 매칭 카드는 포함하지 않습니다.</li>
             </ul>
             <p>
-            요청자가 해당 기수 챌린저가 아니거나 PLAN 또는 ADMIN 이면 빈 리스트를 반환한다.
+            요청자가 해당 기수 챌린저가 아니거나 지원 대상 파트가 아니면 빈 목록을 반환합니다.
             """
     )
     public List<MyProjectApplicationResponse> getMyApplications(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam Long gisuId,
-        @Parameter(description = "지원 상태 필터 (선택). 미지정 시 DRAFT 제외 전체. 허용 값: DRAFT / SUBMITTED / APPROVED / REJECTED.")
+        @Parameter(description = """
+            지원 상태 필터입니다. 보내지 않으면 임시저장(DRAFT)을 제외한 지원서와 랜덤 매칭 카드를 조회합니다.
+            허용 값: DRAFT / SUBMITTED / APPROVED / REJECTED.
+            """)
         @RequestParam(required = false) ProjectApplicationStatus status
     ) {
         GetMyProjectApplicationsQuery query = GetMyProjectApplicationsQuery.builder()
@@ -76,24 +92,66 @@ public class ProjectApplicationQueryController {
         return assembler.myApplicationsFor(query);
     }
 
+    @GetMapping("/applications")
+    @Operation(
+        operationId = "APPLY-101-BATCH",
+        summary = "PM/운영진 복수 프로젝트 지원자 목록 조회",
+        description = """
+            복수 프로젝트의 제출된 지원자 목록을 프로젝트별로 조회합니다. 임시저장(DRAFT) 지원서는 포함하지 않습니다.
+            권한이 없거나 존재하지 않는 프로젝트는 해당 projectId 의 값을 빈 목록으로 반환합니다.
+            <p>
+            필터:
+            <ul>
+              <li>projectIds: 프로젝트 ID 목록. 최대 100개까지 조회할 수 있습니다.</li>
+              <li>matchingRoundId: 매칭 차수 ID</li>
+              <li>part: 지원자(챌린저) 파트</li>
+              <li>status: 지원 상태. SUBMITTED, APPROVED, REJECTED 만 사용할 수 있습니다.
+                  DRAFT 를 보내면 APPLICATION_DRAFT_FILTER_NOT_ALLOWED 오류를 반환합니다.</li>
+            </ul>
+            """
+    )
+    public Map<Long, List<ProjectApplicantResponse>> getProjectApplicantsBatch(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @RequestParam
+        @NotEmpty(message = "projectIds는 비어 있을 수 없습니다.") @Size(max = 100, message = "projectIds는 최대 100개까지 조회할 수 있습니다.") List<@NotNull Long> projectIds,
+        @RequestParam(required = false) Long matchingRoundId,
+        @RequestParam(required = false) ChallengerPart part,
+        @Parameter(description = """
+            지원 상태 필터입니다. DRAFT 는 지원자 목록에서 사용할 수 없습니다.
+            허용 값: SUBMITTED / APPROVED / REJECTED.
+            """)
+        @RequestParam(required = false) ProjectApplicationStatus status
+    ) {
+        List<Long> deduplicatedProjectIds = new ArrayList<>(new LinkedHashSet<>(projectIds));
+        SearchProjectApplicationsBatchQuery query = SearchProjectApplicationsBatchQuery.builder()
+            .requesterMemberId(memberPrincipal.getMemberId())
+            .projectIds(deduplicatedProjectIds)
+            .matchingRoundId(matchingRoundId)
+            .part(part)
+            .status(status)
+            .build();
+
+        return assembler.applicantsForBatch(query);
+    }
+
     @GetMapping("/{projectId}/applications")
     @Operation(
         operationId = "APPLY-101",
         summary = "PM/운영진 단일 프로젝트 지원자 목록 조회",
         description = """
-            단일 프로젝트의 지원자 목록을 조회한다. 임시저장(DRAFT) 지원서는 제외되며, SUBMITTED/APPROVED/REJECTED 만 노출.
+            단일 프로젝트의 제출된 지원자 목록을 조회합니다. 임시저장(DRAFT) 지원서는 포함하지 않습니다.
 
-            정렬: matchingRound.phase ASC -> applicant.part ASC -> submittedAt ASC.
-            같은 차수 안에서 같은 파트끼리 묶은 뒤, 그 안에서 제출 시각 오름차순으로 노출된다.
+            정렬은 매칭 차수, 지원 파트, 제출 시각 순입니다. 같은 차수와 파트 안에서는 먼저 제출한 지원서를 먼저 보여줍니다.
             <p>
             필터:
             <ul>
-              <li>matchingRoundId -- 매칭 차수 단일 필터</li>
-              <li>part -- 지원자(챌린저) 의 파트 필터</li>
-              <li>status -- 지원 상태 (SUBMITTED / APPROVED / REJECTED). 미지정 시 전체. DRAFT 입력 시 도메인 예외(APPLICATION_DRAFT_FILTER_NOT_ALLOWED) 발생.</li>
+              <li>matchingRoundId: 매칭 차수 ID</li>
+              <li>part: 지원자(챌린저) 파트</li>
+              <li>status: 지원 상태. SUBMITTED, APPROVED, REJECTED 만 사용할 수 있습니다.
+                  DRAFT 를 보내면 APPLICATION_DRAFT_FILTER_NOT_ALLOWED 오류를 반환합니다.</li>
             </ul>
             <p>
-            권한: 다음 호출자만 통과한다. 그 외에는 권한 부재를 '지원자 0건' 으로 위장하여 빈 리스트를 반환한다.
+            다음 권한이 있으면 조회할 수 있습니다. 권한이 없으면 빈 목록을 반환합니다.
             <ul>
               <li>해당 프로젝트의 PO</li>
               <li>해당 프로젝트의 보조 PM (ACTIVE PLAN 멤버)</li>
@@ -109,7 +167,10 @@ public class ProjectApplicationQueryController {
         @PathVariable Long projectId,
         @RequestParam(required = false) Long matchingRoundId,
         @RequestParam(required = false) ChallengerPart part,
-        @Parameter(description = "지원 상태 필터 (선택). 허용 값: SUBMITTED / APPROVED / REJECTED. DRAFT 입력 시 도메인 예외(APPLICATION_DRAFT_FILTER_NOT_ALLOWED).")
+        @Parameter(description = """
+            지원 상태 필터입니다. DRAFT 는 지원자 목록에서 사용할 수 없습니다.
+            허용 값: SUBMITTED / APPROVED / REJECTED.
+            """)
         @RequestParam(required = false) ProjectApplicationStatus status
     ) {
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
@@ -134,11 +195,14 @@ public class ProjectApplicationQueryController {
         operationId = "APPLY-102",
         summary = "지원서 단건 상세 조회",
         description = """
-            지원서 단건의 메타(지원자/매칭 차수/상태/시각) + 폼 구조(지원자 파트 기준 마스킹) + 제출된 답변 본문 + 첨부 파일 메타까지 한 번에 반환한다.
+            지원자, 매칭 차수, 상태, 제출/처리 시각, 지원 폼, 답변, 첨부 파일을 함께 조회합니다.
+            지원자 본인이 조회할 때 해당 매칭 차수의 `decisionDeadline` 전이면 제출 이후 상태의 `status` 는 `null` 입니다.
+            `decisionDeadline` 이 지나면 상태와 무관하게 `status` 를 반환합니다.
+            지원서 내용과 답변은 그대로 포함합니다.
             <p>
-            권한 (L2 @CheckAccess READ):
+            조회 권한:
             <ul>
-              <li>SUBMITTED/APPROVED/REJECTED -- 다음 호출자만 통과:
+              <li>SUBMITTED/APPROVED/REJECTED: 다음 호출자가 조회할 수 있습니다.
                 <ul>
                   <li>지원자 본인</li>
                   <li>해당 프로젝트의 PO</li>
@@ -147,11 +211,11 @@ public class ProjectApplicationQueryController {
                   <li>해당 프로젝트 지부의 지부장 (같은 기수)</li>
                 </ul>
               </li>
-              <li>DRAFT(임시저장) -- 지원자 본인만 통과</li>
+              <li>DRAFT(임시저장): 지원자 본인만 조회할 수 있습니다.</li>
             </ul>
-            권한 부재 시 403(AUTHORIZATION-0002) 반환.
+            권한이 없으면 403(AUTHORIZATION-0002)을 반환합니다.
             <p>
-            정합성: path 의 projectId 와 application 의 form.project.id 가 다르면 404(PROJECT-0021) 로 위장하여 다른 프로젝트의 지원서 존재 여부를 은닉한다.
+            경로의 `projectId` 와 지원서의 프로젝트가 다르면 404(PROJECT-0021)를 반환합니다.
             """
     )
     public ProjectApplicationDetailResponse getApplicationDetail(

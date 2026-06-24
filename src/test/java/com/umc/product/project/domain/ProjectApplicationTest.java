@@ -156,6 +156,42 @@ class ProjectApplicationTest {
     }
 
     @Nested
+    class forceDecision {
+
+        @Test
+        void forceApprove는_결정_마감_후에도_APPROVED로_전이한다() {
+            setRoundDeadline(round, NOW.minusSeconds(60));
+
+            application.forceApprove(DECIDER_MEMBER_ID, "슈퍼어드민 수정");
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
+            assertThat(application.getStatusChangedMemberId()).isEqualTo(DECIDER_MEMBER_ID);
+            assertThat(application.getStatusChangeReason()).isEqualTo("슈퍼어드민 수정");
+        }
+
+        @Test
+        void forceReject는_지원_진행_중에도_REJECTED로_전이한다() {
+            setRoundEndsAt(round, NOW.plusSeconds(43_200));
+
+            application.forceReject(DECIDER_MEMBER_ID, "슈퍼어드민 수정");
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
+            assertThat(application.getStatusChangedMemberId()).isEqualTo(DECIDER_MEMBER_ID);
+            assertThat(application.getStatusChangeReason()).isEqualTo("슈퍼어드민 수정");
+        }
+
+        @Test
+        void forceApprove도_DRAFT_상태에서는_PROJECT_APPLICATION_DECISION_INVALID_TRANSITION() {
+            setStatus(application, ProjectApplicationStatus.DRAFT);
+
+            assertThatThrownBy(() -> application.forceApprove(DECIDER_MEMBER_ID, null))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
+        }
+    }
+
+    @Nested
     class applyAutoDecision {
 
         @Test

@@ -12,9 +12,13 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.project.application.port.in.command.CancelProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.DecideApplicationUseCase;
@@ -72,9 +76,17 @@ public class ProjectApplicationCommandService implements
     private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
     private final ManageFormResponseUseCase manageFormResponseUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final List<MatchingDecisionPolicy> matchingDecisionPolicies;
     private final GetFormUseCase getFormUseCase;
 
+    @Audited(
+        domain = Domain.PROJECT,
+        action = AuditAction.CREATE,
+        targetType = "ProjectApplication",
+        targetId = "#result.applicationId()",
+        description = "'프로젝트 지원서 초안을 생성했습니다.'"
+    )
     @Override
     public ProjectApplicationInfo create(CreateDraftProjectApplicationCommand command) {
         ProjectApplicationForm form = loadProjectApplicationFormPort.findByProjectId(command.projectId())
@@ -168,6 +180,13 @@ public class ProjectApplicationCommandService implements
         return ProjectApplicationInfo.of(application.getId(), application.getStatus());
     }
 
+    @Audited(
+        domain = Domain.PROJECT,
+        action = AuditAction.SUBMIT,
+        targetType = "ProjectApplication",
+        targetId = "#result.applicationId()",
+        description = "'프로젝트 지원서를 제출했습니다.'"
+    )
     @Override
     public ProjectApplicationInfo submit(SubmitProjectApplicationCommand command) {
         ProjectApplication application = loadDraftApplication(
@@ -242,13 +261,37 @@ public class ProjectApplicationCommandService implements
             validateMinimumSelectionAfterRejection(application);
         }
 
-        switch (targetStatus) {
-            case APPROVED -> application.approve(decidedByMemberId, reason);
-            case REJECTED -> application.reject(decidedByMemberId, reason);
-        }
+        applyDecision(application, targetStatus, reason, decidedByMemberId);
 
         saveProjectApplicationPort.save(application);
         return ProjectApplicationInfo.of(application.getId(), application.getStatus());
+    }
+
+    private void applyDecision(
+        ProjectApplication application,
+        ApplicationDecisionStatus targetStatus,
+        String reason,
+        Long decidedByMemberId
+    ) {
+        boolean superAdmin = decidedByMemberId != null
+            && getChallengerRoleUseCase.isSuperAdmin(decidedByMemberId);
+
+        switch (targetStatus) {
+            case APPROVED -> {
+                if (superAdmin) {
+                    application.forceApprove(decidedByMemberId, reason);
+                } else {
+                    application.approve(decidedByMemberId, reason);
+                }
+            }
+            case REJECTED -> {
+                if (superAdmin) {
+                    application.forceReject(decidedByMemberId, reason);
+                } else {
+                    application.reject(decidedByMemberId, reason);
+                }
+            }
+        }
     }
 
     /**

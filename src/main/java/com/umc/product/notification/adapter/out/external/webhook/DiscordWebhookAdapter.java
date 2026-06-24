@@ -1,16 +1,20 @@
 package com.umc.product.notification.adapter.out.external.webhook;
 
-import com.umc.product.notification.application.port.out.SendWebhookPort;
-import com.umc.product.notification.domain.WebhookPlatform;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+
+import com.umc.product.global.logging.ExternalApiCallLogger;
+import com.umc.product.notification.application.port.out.SendWebhookPort;
+import com.umc.product.notification.domain.WebhookPlatform;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -45,15 +49,17 @@ public class DiscordWebhookAdapter implements SendWebhookPort {
                 "description", chunks.get(i)
             );
 
-            restClient.post()
-                .uri(webhookUrl)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("embeds", List.of(embed)))
-                .retrieve()
-                .toBodilessEntity();
+            ExternalApiCallLogger.measure("DISCORD", "SEND_WEBHOOK", () ->
+                restClient.post()
+                    .uri(webhookUrl)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("embeds", List.of(embed)))
+                    .retrieve()
+                    .toBodilessEntity()
+            );
         }
 
-        log.debug("Discord 웹훅 전송 완료: title={}, parts={}", title, totalParts);
+        log.debug("Discord 웹훅을 전송했습니다: parts={}", totalParts);
     }
 
     @Override

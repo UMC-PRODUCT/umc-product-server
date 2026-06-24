@@ -109,7 +109,7 @@ public class TestController {
         @RequestParam String title,
         @RequestParam String content
     ) {
-        log.debug("웹훅 알람 AOP 테스트가 호출되었습니다~!");
+        log.debug("웹훅 알람 AOP 테스트를 호출했습니다.");
 
         return TestAopAlarmResponse.builder()
             .content(content)
