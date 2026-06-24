@@ -9,14 +9,11 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
-import com.umc.product.project.adapter.in.scheduler.MatchingRoundDeadlineHandler;
-import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
-import com.umc.product.project.domain.ProjectMatchingRound;
-import com.umc.product.project.domain.enums.MatchingPhase;
-import com.umc.product.project.domain.enums.MatchingType;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,8 +24,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.project.adapter.in.scheduler.MatchingRoundDeadlineHandler;
+import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
+import com.umc.product.project.domain.ProjectMatchingRound;
+import com.umc.product.project.domain.enums.MatchingPhase;
+import com.umc.product.project.domain.enums.MatchingType;
+
 @ExtendWith(MockitoExtension.class)
 class MatchingRoundDeadlineSchedulerTest {
+
+    private static final Duration TEST_DEADLINE_BUFFER = Duration.ofMinutes(3);
 
     @Mock
     TaskScheduler taskScheduler;
@@ -46,7 +51,10 @@ class MatchingRoundDeadlineSchedulerTest {
     @BeforeEach
     void setUp() {
         sut = new MatchingRoundDeadlineScheduler(
-            taskScheduler, handler, loadProjectMatchingRoundPort
+            taskScheduler,
+            handler,
+            loadProjectMatchingRoundPort,
+            new MatchingRoundDeadlineSchedulerProperties(TEST_DEADLINE_BUFFER.toMinutes())
         );
     }
 
@@ -62,7 +70,7 @@ class MatchingRoundDeadlineSchedulerTest {
             sut.schedule(round);
 
             assertThat(sut.isScheduled(1L)).isTrue();
-            Instant expectedRunAt = round.getDecisionDeadline().plus(MatchingRoundDeadlineScheduler.DEADLINE_BUFFER);
+            Instant expectedRunAt = round.getDecisionDeadline().plus(TEST_DEADLINE_BUFFER);
             then(taskScheduler).should().schedule(any(Runnable.class), eq(expectedRunAt));
         }
 

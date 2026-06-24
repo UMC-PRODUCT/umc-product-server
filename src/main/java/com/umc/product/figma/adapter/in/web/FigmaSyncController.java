@@ -1,20 +1,7 @@
 package com.umc.product.figma.adapter.in.web;
 
-import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
-import com.umc.product.authorization.domain.PermissionType;
-import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.figma.config.FigmaSyncProperties;
-import com.umc.product.figma.application.port.in.DigestFigmaCommentsUseCase;
-import com.umc.product.figma.application.port.in.SummarizeFigmaCommentsUseCase;
-import com.umc.product.figma.application.port.in.SyncFigmaCommentsUseCase;
-import com.umc.product.figma.application.port.in.dto.DigestFigmaCommentsCommand;
-import com.umc.product.figma.application.port.in.dto.FigmaDigestSummary;
-import com.umc.product.figma.application.port.in.dto.FigmaSummaryResult;
-import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +10,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.figma.application.port.in.DigestFigmaCommentsUseCase;
+import com.umc.product.figma.application.port.in.SummarizeFigmaCommentsUseCase;
+import com.umc.product.figma.application.port.in.SyncFigmaCommentsUseCase;
+import com.umc.product.figma.application.port.in.dto.DigestFigmaCommentsCommand;
+import com.umc.product.figma.application.port.in.dto.FigmaDigestSummary;
+import com.umc.product.figma.application.port.in.dto.FigmaSummaryResult;
+import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;
+import com.umc.product.figma.config.FigmaSyncProperties;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Figma 댓글 동기화 admin API 통합 컨트롤러.
@@ -39,7 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/figma")
 @RequiredArgsConstructor
-@Tag(name = "Figma | Comment 동기화 및 조회", description = "Figma 댓글 sync / digest / preview 통합 API")
+@Tag(name = "Figma | Comment 동기화 및 조회", description = "Figma 댓글 동기화, 요약, 미리보기를 다룹니다.")
 public class FigmaSyncController {
 
     private static final long DEFAULT_INTERVAL_MULTIPLIER = 2L;
@@ -50,7 +53,8 @@ public class FigmaSyncController {
     private final FigmaSyncProperties figmaSyncProperties;
 
     @Operation(
-        summary = "[FIGMA-006] 활성 파일 전체 즉시 동기화",
+        operationId = "FIGMA-006",
+        summary = "활성 파일 전체 즉시 동기화",
         description = """
             정기 폴링 스케줄러가 도는 동기화 로직을 즉시 한 번 실행한다.
             마지막 cursor 이후의 새 댓글만 Discord 로 보내고, cursor 를 전진시키며,
@@ -66,7 +70,8 @@ public class FigmaSyncController {
     }
 
     @Operation(
-        summary = "[FIGMA-007] 특정 파일 즉시 동기화 (enabled 무관)",
+        operationId = "FIGMA-007",
+        summary = "특정 파일 즉시 동기화",
         description = """
             지정한 watchedFileId 한 개만 즉시 동기화한다. 해당 파일의 enabled 여부와 무관하게 동작한다.
             sync 전체와 동일하게 Discord 발송, cursor 갱신, dispatch 기록을 모두 수행하며 멱등하다.
@@ -80,7 +85,8 @@ public class FigmaSyncController {
     }
 
     @Operation(
-        summary = "[FIGMA-015] 특정 시간대 catch-up",
+        operationId = "FIGMA-015",
+        summary = "특정 시간대 누락 댓글 동기화",
         description = """
             [from, to] 시간창의 댓글을 도메인별로 묶어 Discord 로 보내고 JSON 요약을 반환한다.
             cursor 를 갱신하지 않고 force=true 로 dispatch 기록도 무시하므로,
@@ -98,7 +104,8 @@ public class FigmaSyncController {
     }
 
     @Operation(
-        summary = "[FIGMA-010] 특정 시간대 미리보기 (Discord 발송 X, dispatch / cursor 비변경)",
+        operationId = "FIGMA-010",
+        summary = "특정 시간대 미리보기 (Discord 발송 X, dispatch / cursor 비변경)",
         description = """
             [from, to] 시간창의 댓글이 어떤 도메인으로 묶여 갈지를 발송 없이 응답한다.
             Discord 발송, cursor 갱신, dispatch 기록을 모두 건너뛴다.

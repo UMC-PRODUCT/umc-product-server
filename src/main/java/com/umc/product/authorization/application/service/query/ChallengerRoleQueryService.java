@@ -1,5 +1,15 @@
 package com.umc.product.authorization.application.service.query;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
@@ -10,16 +20,9 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 사용자의 역할 정보를 조회하는 Query Service
@@ -52,6 +55,13 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
         return loadChallengerRolePort.findByMemberId(memberId).stream()
             .map(this::getChallengerRoleInfoFromEntity)
             .toList();
+    }
+
+    @Override
+    public boolean isSuperAdmin(Long memberId) {
+        return loadChallengerRolePort.findByMemberId(memberId).stream()
+            .map(ChallengerRole::getChallengerRoleType)
+            .anyMatch(ChallengerRoleType::isSuperAdmin);
     }
 
     @Override
@@ -123,7 +133,7 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
     @Override
     public List<ChallengerRoleType> getAllRoleTypesByMemberIdAndGisuId(Long memberId, Long gisuId) {
         if (gisuId == null) {
-            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE, "gisuId는 null일 수 없습니다.");
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE, "권한을 확인하려면 기수를 선택해주세요.");
         }
 
         List<ChallengerRole> roles = loadChallengerRolePort.findRolesByMemberIdAndGisuId(memberId, gisuId);

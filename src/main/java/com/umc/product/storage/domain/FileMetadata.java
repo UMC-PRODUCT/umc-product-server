@@ -1,8 +1,13 @@
 package com.umc.product.storage.domain;
 
+import java.util.Objects;
+
 import com.umc.product.common.BaseEntity;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
+import com.umc.product.storage.domain.exception.StorageErrorCode;
+import com.umc.product.storage.domain.exception.StorageException;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -17,7 +22,7 @@ import lombok.NoArgsConstructor;
 /**
  * 파일 메타데이터 엔티티
  *
- * <p>실제 파일은 외부 스토리지(S3, GCS 등)에 저장되며,
+ * <p>실제 파일은 AWS S3에 저장되며,
  * 이 엔티티는 파일의 메타 정보와 접근 경로를 관리합니다.
  */
 @Entity
@@ -59,14 +64,14 @@ public class FileMetadata extends BaseEntity {
 
 
     /**
-     * 스토리지 제공자 (S3, GCS 등)
+     * 스토리지 제공자
      */
     @Column(nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
     private StorageProvider storageProvider;
 
     /**
-     * 스토리지 키 (S3 key, GCS object name 등)
+     * 스토리지 키 (S3 key)
      */
     @Column(nullable = false, unique = true, length = 500)
     private String storageKey;
@@ -113,6 +118,25 @@ public class FileMetadata extends BaseEntity {
     }
 
     /**
+     * 실제 스토리지 객체 정보가 요청 메타데이터와 일치하는지 검증하고 업로드 완료 처리합니다.
+     */
+    public void confirmUploaded(long actualFileSize, String actualContentType) {
+        if (!category.isAllowedSize(actualFileSize)) {
+            throw new StorageException(StorageErrorCode.FILE_SIZE_EXCEEDED);
+        }
+
+        if (fileSize == null || !Objects.equals(fileSize, actualFileSize)) {
+            throw new StorageException(StorageErrorCode.FILE_SIZE_MISMATCH);
+        }
+
+        if (!isSameContentType(actualContentType)) {
+            throw new StorageException(StorageErrorCode.INVALID_CONTENT_TYPE);
+        }
+
+        markAsUploaded();
+    }
+
+    /**
      * 파일 확장자 추출
      */
     public String getFileExtension() {
@@ -121,5 +145,20 @@ public class FileMetadata extends BaseEntity {
             return originalFileName.substring(lastDotIndex + 1).toLowerCase();
         }
         return "";
+    }
+
+    private boolean isSameContentType(String actualContentType) {
+        if (contentType == null || actualContentType == null) {
+            return Objects.equals(contentType, actualContentType);
+        }
+        return extractMediaType(contentType).equalsIgnoreCase(extractMediaType(actualContentType));
+    }
+
+    private String extractMediaType(String value) {
+        int parameterIndex = value.indexOf(';');
+        if (parameterIndex < 0) {
+            return value.trim();
+        }
+        return value.substring(0, parameterIndex).trim();
     }
 }

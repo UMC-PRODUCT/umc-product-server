@@ -1,5 +1,22 @@
 package com.umc.product.project.application.service.query;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.access.ProjectAccessScope;
 import com.umc.product.project.application.access.ProjectAccessScope.All;
@@ -7,7 +24,6 @@ import com.umc.product.project.application.access.ProjectAccessScope.ChapterScop
 import com.umc.product.project.application.access.ProjectAccessScope.None;
 import com.umc.product.project.application.access.ProjectAccessScope.OwnerOnly;
 import com.umc.product.project.application.access.ProjectAccessScope.PublicOnly;
-import com.umc.product.project.application.access.ProjectAccessScope.SchoolScoped;
 import com.umc.product.project.application.access.ProjectAccessScopeResolver;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchManagedProjectUseCase;
@@ -24,20 +40,8 @@ import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -59,6 +63,45 @@ public class ProjectQueryService implements
     public ProjectInfo getById(Long projectId) {
         Project project = loadProjectPort.getById(projectId);
         return toProjectInfo(project);
+    }
+
+    /**
+     * Assembler 가 여러 projectId 의 ProjectInfo 를 N+1 없이 한 번에 받기 위한 batch 진입점.
+     * <p>
+     * coPM 멤버 / 파트별 TO / 현재 활성 멤버 수 / 썸네일/로고 CDN URL 합성에 들어가는 모든 추가 조회를 IN 쿼리 1 회로 묶어 처리한다. 누락된 projectId 는 결과 Map 에서
+     * 빠진다.
+     */
+    @Override
+    public Map<Long, ProjectInfo> findAllByIds(Collection<Long> projectIds) {
+        if (projectIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Project> projects = loadProjectPort.listByIds(projectIds);
+        if (projects.isEmpty()) {
+            return Map.of();
+        }
+
+        Set<Long> ids = projects.stream().map(Project::getId).collect(Collectors.toSet());
+
+        Map<Long, List<ProjectMember>> planMembersByProject =
+            loadProjectMemberPort.listByProjectIdsAndPartGroupedByProjectId(ids, ChallengerPart.PLAN);
+        Map<Long, List<ProjectPartQuota>> quotasByProject =
+            loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(ids);
+        Map<Long, Map<ChallengerPart, Long>> memberCountsByProject =
+            loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(ids);
+        Map<String, String> fileLinks = resolveFileLinks(projects);
+
+        Map<Long, ProjectInfo> result = new LinkedHashMap<>();
+        for (Project project : projects) {
+            result.put(project.getId(), assembleProjectInfo(
+                project,
+                planMembersByProject.getOrDefault(project.getId(), List.of()),
+                quotasByProject.getOrDefault(project.getId(), List.of()),
+                memberCountsByProject.getOrDefault(project.getId(), Map.of()),
+                fileLinks
+            ));
+        }
+        return result;
     }
 
     @Override
@@ -105,19 +148,37 @@ public class ProjectQueryService implements
      */
     private Page<Project> applyScope(ProjectAccessScope scope, SearchProjectQuery query) {
         return switch (scope) {
-            case All(Set<ProjectStatus> statuses) ->
-                loadProjectPort.search(query.withStatuses(statuses));
+            case All(Set<ProjectStatus> statuses) -> loadProjectPort.search(query.withStatuses(statuses));
             case ChapterScoped(Long chapterId, Set<ProjectStatus> statuses) ->
                 loadProjectPort.search(query.withChapterFilter(chapterId, statuses));
-            case SchoolScoped(Long schoolId, Set<ProjectStatus> statuses) ->
-                loadProjectPort.search(query.withSchoolFilter(schoolId, statuses));
             case OwnerOnly(Long memberId, Set<ProjectStatus> statuses) ->
                 loadProjectPort.search(query.withOwnerFilter(memberId, statuses));
-            case PublicOnly() ->
-                loadProjectPort.search(query.withStatuses(
-                    Set.of(ProjectStatus.IN_PROGRESS, ProjectStatus.COMPLETED)));
-            case None() ->
-                new PageImpl<>(List.of(), query.pageable(), 0L);
+            case ProjectAccessScope.WithOwnerIncluded(
+                ProjectAccessScope baseScope,
+                Long ownerMemberId,
+                Set<ProjectStatus> ownerStatuses
+            ) -> loadProjectPort.search(toScopedQuery(baseScope, query)
+                .withIncludedOwner(ownerMemberId, ownerStatuses));
+            case PublicOnly() -> loadProjectPort.search(query.withStatuses(
+                Set.of(ProjectStatus.IN_PROGRESS, ProjectStatus.COMPLETED)));
+            case None() -> new PageImpl<>(List.of(), query.pageable(), 0L);
+        };
+    }
+
+    private SearchProjectQuery toScopedQuery(ProjectAccessScope scope, SearchProjectQuery query) {
+        return switch (scope) {
+            case All(Set<ProjectStatus> statuses) -> query.withStatuses(statuses);
+            case ChapterScoped(Long chapterId, Set<ProjectStatus> statuses) ->
+                query.withChapterFilter(chapterId, statuses);
+            case OwnerOnly(Long memberId, Set<ProjectStatus> statuses) ->
+                query.withOwnerFilter(memberId, statuses);
+            case PublicOnly() -> query.withStatuses(Set.of(ProjectStatus.IN_PROGRESS, ProjectStatus.COMPLETED));
+            case None() -> query.withStatuses(Set.of(ProjectStatus.IN_PROGRESS));
+            case ProjectAccessScope.WithOwnerIncluded(
+                ProjectAccessScope baseScope,
+                Long ownerMemberId,
+                Set<ProjectStatus> ownerStatuses
+            ) -> toScopedQuery(baseScope, query).withIncludedOwner(ownerMemberId, ownerStatuses);
         };
     }
 
@@ -203,8 +264,7 @@ public class ProjectQueryService implements
     }
 
     /**
-     * Project 엔티티를 ProjectInfo로 조립합니다.
-     * coPM 목록, 파트별 TO, 파일 URL을 함께 조회합니다.
+     * Project 엔티티를 ProjectInfo로 조립합니다. coPM 목록, 파트별 TO, 파일 URL을 함께 조회합니다.
      */
     private ProjectInfo toProjectInfo(Project project) {
         List<Long> coPmMemberIds = extractCoPmMemberIds(project);

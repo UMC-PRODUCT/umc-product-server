@@ -6,19 +6,25 @@ import static com.umc.product.project.domain.QProjectApplicationForm.projectAppl
 import static com.umc.product.project.domain.QProjectMatchingRound.projectMatchingRound;
 import static com.umc.product.project.domain.QProjectMember.projectMember;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsApplicationRow;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsApprovedApplicationRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import com.umc.product.project.domain.enums.ProjectStatus;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
@@ -28,6 +34,14 @@ public class ProjectStatisticsQueryRepository {
         ProjectApplicationStatus.SUBMITTED,
         ProjectApplicationStatus.APPROVED,
         ProjectApplicationStatus.REJECTED
+    );
+    private static final List<ProjectStatus> PUBLIC_PROJECT_STATUSES = List.of(
+        ProjectStatus.IN_PROGRESS,
+        ProjectStatus.COMPLETED
+    );
+    private static final List<ChallengerPart> EXCLUDED_MATCHING_PARTS = List.of(
+        ChallengerPart.PLAN,
+        ChallengerPart.ADMIN
     );
 
     private final JPAQueryFactory queryFactory;
@@ -57,6 +71,23 @@ public class ProjectStatisticsQueryRepository {
             ))
             .from(project)
             .where(project.chapterId.eq(chapterId))
+            .orderBy(project.id.asc())
+            .fetch();
+    }
+
+    public List<ProjectStatisticsProjectRow> listPublicProjectsByChapterId(Long chapterId) {
+        return queryFactory
+            .select(Projections.constructor(
+                ProjectStatisticsProjectRow.class,
+                project.id,
+                project.gisuId,
+                project.chapterId
+            ))
+            .from(project)
+            .where(
+                project.chapterId.eq(chapterId),
+                project.status.in(PUBLIC_PROJECT_STATUSES)
+            )
             .orderBy(project.id.asc())
             .fetch();
     }
@@ -115,6 +146,52 @@ public class ProjectStatisticsQueryRepository {
             .fetch();
     }
 
+    public List<ProjectStatisticsMemberRow> listActiveMembersByProjectIds(Collection<Long> projectIds) {
+        if (projectIds == null || projectIds.isEmpty()) {
+            return List.of();
+        }
+
+        return queryFactory
+            .select(Projections.constructor(
+                ProjectStatisticsMemberRow.class,
+                project.id,
+                projectMember.id,
+                projectMember.memberId,
+                projectMember.part,
+                projectMember.status
+            ))
+            .from(projectMember)
+            .join(projectMember.project, project)
+            .where(
+                project.id.in(projectIds),
+                projectMember.status.eq(ProjectMemberStatus.ACTIVE)
+            )
+            .orderBy(project.id.asc(), projectMember.id.asc())
+            .fetch();
+    }
+
+    public List<ProjectStatisticsMemberRow> listPublicActiveMembersByChapterId(Long chapterId) {
+        return queryFactory
+            .select(Projections.constructor(
+                ProjectStatisticsMemberRow.class,
+                project.id,
+                projectMember.id,
+                projectMember.memberId,
+                projectMember.part,
+                projectMember.status
+            ))
+            .from(projectMember)
+            .join(projectMember.project, project)
+            .where(
+                project.chapterId.eq(chapterId),
+                project.status.in(PUBLIC_PROJECT_STATUSES),
+                projectMember.status.eq(ProjectMemberStatus.ACTIVE),
+                projectMember.part.notIn(EXCLUDED_MATCHING_PARTS)
+            )
+            .orderBy(project.id.asc(), projectMember.id.asc())
+            .fetch();
+    }
+
     public List<ProjectStatisticsApplicationRow> listCountedApplicationsByProjectIds(Collection<Long> projectIds) {
         if (projectIds == null || projectIds.isEmpty()) {
             return List.of();
@@ -144,6 +221,41 @@ public class ProjectStatisticsQueryRepository {
                 projectApplication.applicantMemberId.asc(),
                 projectMatchingRound.type.asc(),
                 projectMatchingRound.phase.asc(),
+                projectApplication.id.asc()
+            )
+            .fetch();
+    }
+
+    public List<ProjectStatisticsApprovedApplicationRow> listApprovedApplicationsByProjectIds(
+        Collection<Long> projectIds
+    ) {
+        if (projectIds == null || projectIds.isEmpty()) {
+            return List.of();
+        }
+
+        return queryFactory
+            .select(Projections.constructor(
+                ProjectStatisticsApprovedApplicationRow.class,
+                project.id,
+                projectApplication.applicantMemberId,
+                projectApplication.id,
+                projectMatchingRound.id,
+                projectMatchingRound.type,
+                projectMatchingRound.phase,
+                projectMatchingRound.startsAt
+            ))
+            .from(projectApplication)
+            .join(projectApplication.applicationForm, projectApplicationForm)
+            .join(projectApplicationForm.project, project)
+            .join(projectApplication.appliedMatchingRound, projectMatchingRound)
+            .where(
+                project.id.in(projectIds),
+                projectApplication.status.eq(ProjectApplicationStatus.APPROVED)
+            )
+            .orderBy(
+                project.id.asc(),
+                projectApplication.applicantMemberId.asc(),
+                projectMatchingRound.startsAt.asc(),
                 projectApplication.id.asc()
             )
             .fetch();

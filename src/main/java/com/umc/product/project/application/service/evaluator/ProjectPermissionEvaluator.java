@@ -1,5 +1,9 @@
 package com.umc.product.project.application.service.evaluator;
 
+import java.util.Objects;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
@@ -10,9 +14,8 @@ import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import java.util.Objects;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 /**
  * Project 도메인 단건 액션의 권한 판정 (L2). status × 역할 binary 매트릭스만 다룬다.
@@ -25,6 +28,7 @@ import org.springframework.stereotype.Component;
 public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
 
     private final LoadProjectPort loadProjectPort;
+    private final SuperAdminProperties superAdminProperties;
 
     @Override
     public ResourceType supportedResourceType() {
@@ -48,6 +52,9 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
      * <p>
      * 목록 조회는 {@code resourceId} 가 없어 이 분기를 타지 않고 단순 통과 후 L3-A scope 에서 거른다.
      * PR/ABORTED 는 PO + 해당 기수의 총괄단(SUPER_ADMIN 은 글로벌) ∪ 해당 기수의 지부장(chapter 무관).
+     * <p>
+     * DRAFT 는 PO 만 노출. 단, {@code app.super-admin.allow-draft-read} 가 켜진 동안은 SUPER_ADMIN 도 DRAFT 단건을
+     * 조회할 수 있다 (초기 배포 모니터링용).
      */
     private boolean canRead(SubjectAttributes subject, ResourcePermission permission) {
         if (permission.resourceId() == null) {
@@ -56,7 +63,8 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
         Project project = loadProject(permission);
         return switch (project.getStatus()) {
             case IN_PROGRESS, COMPLETED -> true;
-            case DRAFT -> isOwner(subject, project);
+            case DRAFT -> isOwner(subject, project)
+                || (superAdminProperties.allowDraftRead() && isSuperAdmin(subject));
             case PENDING_REVIEW, ABORTED -> isOwner(subject, project)
                 || isCentralCoreInGisu(subject, project.getGisuId())
                 || isChapterPresidentInGisu(subject, project.getGisuId());
@@ -156,10 +164,9 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
                 && Objects.equals(role.gisuId(), gisuId));
     }
 
-    @SuppressWarnings("unused")
-    private boolean isCentralCore(SubjectAttributes subject) {
+    private boolean isSuperAdmin(SubjectAttributes subject) {
         return subject.roleAttributes().stream()
-            .anyMatch(role -> role.roleType().isAtLeastCentralCore());
+            .anyMatch(role -> role.roleType().isSuperAdmin());
     }
 
     private boolean isCentralCoreInGisu(SubjectAttributes subject, Long gisuId) {

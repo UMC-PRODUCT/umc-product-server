@@ -1,28 +1,39 @@
 package com.umc.product.organization.adapter.in.web.swagger;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.response.gisu.ActiveGisuResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.gisu.GisuNameListResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.gisu.GisuPageResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.gisu.GisuResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 
 @Tag(name = "Organization | 기수 Query", description = "")
 public interface AdminGisuQueryControllerApi {
 
+    @Operation(operationId = "GISU-100", summary = "기수 단건 조회", description = "deprecated: `/api/v2/gisu?id={gisuId}`를 사용해주세요.")
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(schema = @Schema(implementation = GisuResponse.class))
+        )
+    })
+    @Deprecated(since = "v2.0.0", forRemoval = true)
     @Public
     @GetMapping("/{gisuId}")
     GisuResponse getGisu(@PathVariable Long gisuId);
 
-    @Operation(summary = "[GISU-101] 기수 목록 조회 ", description = "기수 목록을 최신순(generation 내림차순)으로 페이징 조회합니다")
+    @Operation(operationId = "GISU-101", summary = "기수 목록 조회", description = "기수 목록을 최신순(generation 내림차순)으로 페이징 조회합니다")
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
@@ -32,7 +43,7 @@ public interface AdminGisuQueryControllerApi {
     })
     GisuPageResponse getGisuList(Pageable pageable);
 
-    @Operation(summary = "[GISU-102] 기수 전체 목록 조회", description = "deprecated: 페이징 조회 API를 사용해주세요. 전체 기수 목록을 최신순(generation 내림차순)으로 조회합니다. 기수 ID와 기수 번호만 반환합니다.")
+    @Operation(operationId = "GISU-102", summary = "기수 전체 목록 조회", description = "deprecated: 페이징 조회 API를 사용해주세요. 전체 기수 목록을 최신순(generation 내림차순)으로 조회합니다. 기수 ID와 기수 번호만 반환합니다.")
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
@@ -43,7 +54,7 @@ public interface AdminGisuQueryControllerApi {
     @Deprecated(since = "v2.0.0", forRemoval = true)
     GisuNameListResponse getAllGisu();
 
-    @Operation(summary = "[GISU-103] 활성화된 기수 조회", description = "현재 활성화된 기수의 ID와 기수 번호를 조회합니다.")
+    @Operation(operationId = "GISU-103", summary = "활성화된 기수 조회", description = "deprecated: `/api/v2/gisu?active=true`를 사용해주세요. 현재 활성화된 기수의 ID와 기수 번호를 조회합니다.")
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
@@ -51,5 +62,6 @@ public interface AdminGisuQueryControllerApi {
             content = @Content(schema = @Schema(implementation = ActiveGisuResponse.class))
         )
     })
+    @Deprecated(since = "v2.0.0", forRemoval = true)
     ActiveGisuResponse getActiveGisu();
 }

@@ -1,10 +1,12 @@
 package com.umc.product.community.adapter.in.web.dto.response;
 
+import java.time.Instant;
+
 import com.umc.product.community.application.port.in.query.dto.PostSearchResult;
 import com.umc.product.community.application.port.in.query.dto.PostSearchResult.MatchType;
 import com.umc.product.community.domain.enums.Category;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.Instant;
 
 @Schema(description = "게시글 검색 결과 응답")
 public record PostSearchResponse(
@@ -14,7 +16,7 @@ public record PostSearchResponse(
     @Schema(description = "제목", example = "Spring Boot 스터디원 모집")
     String title,
 
-    @Schema(description = "내용 미리보기 (100자)", example = "스프링 부트를 공부할 팀원을 모집합니다...")
+    @Schema(description = "내용 미리보기. 최대 100자", example = "스프링 부트를 공부할 팀원을 모집합니다...")
     String contentPreview,
 
     @Schema(description = "카테고리", example = "FREE")

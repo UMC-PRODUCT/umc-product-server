@@ -3,16 +3,12 @@ package com.umc.product.authentication.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
@@ -28,24 +24,23 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.umc.product.authentication.application.port.in.command.dto.ChangePasswordCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LocalLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
+import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.ResetPasswordByEmailCommand;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.ClientType;
-import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.member.application.port.in.command.ManageMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswordCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialByEmailCommand;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
-import com.umc.product.term.application.port.in.query.GetRequiredTermConsentStatusUseCase;
-import com.umc.product.term.application.port.in.query.dto.RequiredTermConsentStatusInfo;
 
 /**
  * CredentialAuthenticationService 단위 테스트. ADR-017 흐름.
  * <p>
- * 외부 협력자(PasswordEncoder, JwtTokenProvider, Member 측 UseCase)는 모두 mock 으로 두고
+ * 외부 협력자(PasswordEncoder, AuthenticationTokenIssuer, Member 측 UseCase)는 모두 mock 으로 두고
  * Service 내부의 분기/사용자 열거 방지 / rehash 정책을 검증한다.
  */
 @ExtendWith(MockitoExtension.class)
@@ -58,7 +53,7 @@ class CredentialAuthenticationServiceTest {
     @Mock
     PasswordEncoder passwordEncoder;
     @Mock
-    JwtTokenProvider jwtTokenProvider;
+    AuthenticationTokenIssuer authenticationTokenIssuer;
     @Mock
     GetMemberCredentialUseCase getMemberCredentialUseCase;
     @Mock
@@ -66,7 +61,7 @@ class CredentialAuthenticationServiceTest {
     @Mock
     CredentialRehashService rehashService;
     @Mock
-    GetRequiredTermConsentStatusUseCase getRequiredTermConsentStatusUseCase;
+    OperationalMetrics operationalMetrics;
     @InjectMocks
     CredentialAuthenticationService service;
 
@@ -219,24 +214,18 @@ class CredentialAuthenticationServiceTest {
     class LoginByEmail {
 
         @Test
-        @DisplayName("정상 로그인 시 clientType 을 포함해 토큰을 발급하고, 별도 트랜잭션의 rehashService.rehashIfNeeded 를 호출한다")
+        @DisplayName("정상 로그인 시 clientType 을 포함해 토큰 발급을 위임하고, 별도 트랜잭션의 rehashService.rehashIfNeeded 를 호출한다")
         void 로그인_성공_clientType_토큰_발급_rehash호출_확인() {
             // given
             MemberCredentialInfo credential = new MemberCredentialInfo(MEMBER_ID, ENCODED_PASSWORD);
             given(getMemberCredentialUseCase.findCredentialByEmail(EMAIL))
                 .willReturn(Optional.of(credential));
             given(passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
-            given(getRequiredTermConsentStatusUseCase.getRequiredTermConsentStatus(MEMBER_ID))
-                .willReturn(new RequiredTermConsentStatusInfo(false, List.of(), List.of(10L, 20L)));
-            given(jwtTokenProvider.createAccessToken(
-                eq(MEMBER_ID),
-                anyList(),
-                eq(ClientType.IOS),
-                eq(true),
-                eq(List.of(10L, 20L))
-            ))
-                .willReturn("access-token");
-            given(jwtTokenProvider.createRefreshToken(MEMBER_ID)).willReturn("refresh-token");
+            given(authenticationTokenIssuer.issue(eq(MEMBER_ID), eq(ClientType.IOS)))
+                .willReturn(NewTokens.builder()
+                    .accessToken("access-token")
+                    .refreshToken("refresh-token")
+                    .build());
 
             // when
             LocalLoginResult result = service.loginByEmail(
@@ -247,13 +236,7 @@ class CredentialAuthenticationServiceTest {
             assertThat(result.memberId()).isEqualTo(MEMBER_ID);
             assertThat(result.accessToken()).isEqualTo("access-token");
             assertThat(result.refreshToken()).isEqualTo("refresh-token");
-            then(jwtTokenProvider).should().createAccessToken(
-                eq(MEMBER_ID),
-                anyList(),
-                eq(ClientType.IOS),
-                eq(true),
-                eq(List.of(10L, 20L))
-            );
+            then(authenticationTokenIssuer).should().issue(MEMBER_ID, ClientType.IOS);
             then(rehashService).should().rehashIfNeeded(credential, RAW_PASSWORD);
         }
 
@@ -272,12 +255,7 @@ class CredentialAuthenticationServiceTest {
 
             // 매칭/토큰 발급은 호출되지 않아야 한다
             then(passwordEncoder).should(never()).matches(anyString(), anyString());
-            then(jwtTokenProvider).should(never()).createAccessToken(anyLong(), anyList());
-            then(jwtTokenProvider).should(never()).createAccessToken(anyLong(), anyList(), any(ClientType.class));
-            then(jwtTokenProvider).should(never())
-                .createAccessToken(anyLong(), anyList(), any(ClientType.class), anyBoolean());
-            then(jwtTokenProvider).should(never())
-                .createAccessToken(anyLong(), anyList(), any(ClientType.class), anyBoolean(), anyList());
+            then(authenticationTokenIssuer).should(never()).issue(any(), any());
         }
 
         @Test
@@ -295,12 +273,7 @@ class CredentialAuthenticationServiceTest {
                 .extracting("baseCode")
                 .isEqualTo(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL);
 
-            then(jwtTokenProvider).should(never()).createAccessToken(anyLong(), anyList());
-            then(jwtTokenProvider).should(never()).createAccessToken(anyLong(), anyList(), any(ClientType.class));
-            then(jwtTokenProvider).should(never())
-                .createAccessToken(anyLong(), anyList(), any(ClientType.class), anyBoolean());
-            then(jwtTokenProvider).should(never())
-                .createAccessToken(anyLong(), anyList(), any(ClientType.class), anyBoolean(), anyList());
+            then(authenticationTokenIssuer).should(never()).issue(any(), any());
             then(manageMemberCredentialUseCase).should(never()).changePassword(any());
         }
     }

@@ -1,8 +1,11 @@
 package com.umc.product.project.domain;
 
+import java.time.Instant;
+
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,7 +18,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -99,6 +101,22 @@ public class ProjectMember extends BaseEntity {
         pm.status = ProjectMemberStatus.ACTIVE;
         pm.decidedMemberId = decidedByMemberId;
         pm.decidedAt = Instant.now();
+        return pm;
+    }
+
+    /**
+     * 지원서 합격 결과로 활성 상태의 신규 멤버를 생성합니다.
+     */
+    public static ProjectMember createFromApplication(
+        ProjectApplication application, ChallengerPart part, Long decidedByMemberId
+    ) {
+        ProjectMember pm = create(
+            application.getApplicationForm().getProject(),
+            application.getApplicantMemberId(),
+            part,
+            decidedByMemberId
+        );
+        pm.application = application;
         return pm;
     }
 

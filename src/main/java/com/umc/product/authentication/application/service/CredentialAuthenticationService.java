@@ -1,28 +1,29 @@
 package com.umc.product.authentication.application.service;
 
-import java.util.Collections;
 import java.util.Optional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authentication.application.port.in.command.CredentialAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.ChangePasswordCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LocalLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
+import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.ResetPasswordByEmailCommand;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
-import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.member.application.port.in.command.ManageMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswordCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialByEmailCommand;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
-import com.umc.product.term.application.port.in.query.GetRequiredTermConsentStatusUseCase;
-import com.umc.product.term.application.port.in.query.dto.RequiredTermConsentStatusInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,11 +41,11 @@ import lombok.extern.slf4j.Slf4j;
 public class CredentialAuthenticationService implements CredentialAuthenticationUseCase {
 
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final AuthenticationTokenIssuer authenticationTokenIssuer;
     private final GetMemberCredentialUseCase getMemberCredentialUseCase;
     private final ManageMemberCredentialUseCase manageMemberCredentialUseCase;
     private final CredentialRehashService rehashService;
-    private final GetRequiredTermConsentStatusUseCase getRequiredTermConsentStatusUseCase;
+    private final OperationalMetrics operationalMetrics;
 
     @Override
     public void registerCredentialByEmail(RegisterCredentialByEmailCommand command) {
@@ -78,59 +79,72 @@ public class CredentialAuthenticationService implements CredentialAuthentication
 
     @Override
     public void resetPasswordByEmail(ResetPasswordByEmailCommand command) {
-        // 이메일은 emailVerificationToken 으로 사전 검증되어 들어오므로 해당 이메일 소유자가 호출했다고 간주한다.
-        // 다만 시스템에 가입되지 않은 이메일이거나 자격증명이 등록되지 않은 회원(OAuth 전용 등) 인 경우는
-        // 사용자 열거 방지를 위해 단일 메시지로 응답한다.
-        MemberCredentialInfo credential = getMemberCredentialUseCase
-            .findCredentialByEmail(command.email())
-            .orElseThrow(() -> new AuthenticationDomainException(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL));
+        try {
+            // 이메일은 emailVerificationToken 으로 사전 검증되어 들어오므로 해당 이메일 소유자가 호출했다고 간주한다.
+            // 다만 시스템에 가입되지 않은 이메일이거나 자격증명이 등록되지 않은 회원(OAuth 전용 등) 인 경우는
+            // 사용자 열거 방지를 위해 단일 메시지로 응답한다.
+            MemberCredentialInfo credential = getMemberCredentialUseCase
+                .findCredentialByEmail(command.email())
+                .orElseThrow(() -> new AuthenticationDomainException(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL));
 
-        String newEncodedPassword = passwordEncoder.encode(command.newRawPassword());
+            String newEncodedPassword = passwordEncoder.encode(command.newRawPassword());
 
-        manageMemberCredentialUseCase.changePassword(
-            ChangeMemberPasswordCommand.of(credential.memberId(), newEncodedPassword)
-        );
+            manageMemberCredentialUseCase.changePassword(
+                ChangeMemberPasswordCommand.of(credential.memberId(), newEncodedPassword)
+            );
+            operationalMetrics.recordSecurityEvent("AUTHENTICATION", "PASSWORD_RESET", "success");
+        } catch (RuntimeException e) {
+            operationalMetrics.recordSecurityEvent("AUTHENTICATION", "PASSWORD_RESET", "failure");
+            throw e;
+        }
     }
 
+    @Audited(
+        domain = Domain.AUTHENTICATION,
+        action = AuditAction.LOGIN,
+        targetType = "MemberCredential",
+        targetId = "#result.memberId()",
+        description = "'이메일 로그인을 완료했습니다.'"
+    )
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public LocalLoginResult loginByEmail(LoginByEmailCommand command) {
-        // 1) 자격증명 조회: 부재 / 실패 모두 동일 메시지로 처리하여 사용자 열거 공격을 방지한다.
-        Optional<MemberCredentialInfo> credentialOpt =
-            getMemberCredentialUseCase.findCredentialByEmail(command.email());
+        try {
+            // 1) 자격증명 조회: 부재 / 실패 모두 동일 메시지로 처리하여 사용자 열거 공격을 방지한다.
+            Optional<MemberCredentialInfo> credentialOpt =
+                getMemberCredentialUseCase.findCredentialByEmail(command.email());
 
-        if (credentialOpt.isEmpty()) {
-            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL);
+            if (credentialOpt.isEmpty()) {
+                throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL);
+            }
+
+            MemberCredentialInfo credential = credentialOpt.get();
+
+            // 2) 비밀번호 검증
+            if (!passwordEncoder.matches(command.rawPassword(), credential.passwordHash())) {
+                throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL);
+            }
+
+            // 3) 점진적 rehash: 해시 정책이 갱신되었으면 최신 정책으로 재저장한다.
+            // 별도 트랜잭션(REQUIRES_NEW)에서 수행하여 실패가 로그인에 영향을 주지 않도록 한다.
+            rehashService.rehashIfNeeded(credential, command.rawPassword());
+
+            // 4) 토큰 발급
+            Long memberId = credential.memberId();
+            NewTokens newTokens = authenticationTokenIssuer.issue(
+                memberId,
+                command.clientType()
+            );
+
+            operationalMetrics.recordSecurityEvent("AUTHENTICATION", "EMAIL_LOGIN", "success");
+            return LocalLoginResult.builder()
+                .memberId(memberId)
+                .accessToken(newTokens.accessToken())
+                .refreshToken(newTokens.refreshToken())
+                .build();
+        } catch (RuntimeException e) {
+            operationalMetrics.recordSecurityEvent("AUTHENTICATION", "EMAIL_LOGIN", "failure");
+            throw e;
         }
-
-        MemberCredentialInfo credential = credentialOpt.get();
-
-        // 2) 비밀번호 검증
-        if (!passwordEncoder.matches(command.rawPassword(), credential.passwordHash())) {
-            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL);
-        }
-
-        // 3) 점진적 rehash: 해시 정책이 갱신되었으면 최신 정책으로 재저장한다.
-        // 별도 트랜잭션(REQUIRES_NEW)에서 수행하여 실패가 로그인에 영향을 주지 않도록 한다.
-        rehashService.rehashIfNeeded(credential, command.rawPassword());
-
-        // 4) 토큰 발급
-        Long memberId = credential.memberId();
-        RequiredTermConsentStatusInfo requiredTermConsentStatus =
-            getRequiredTermConsentStatusUseCase.getRequiredTermConsentStatus(memberId);
-        String accessToken = jwtTokenProvider.createAccessToken(
-            memberId,
-            Collections.emptyList(),
-            command.clientType(),
-            !requiredTermConsentStatus.needsReconsent(),
-            requiredTermConsentStatus.agreedRequiredTermIds()
-        );
-        String refreshToken = jwtTokenProvider.createRefreshToken(memberId);
-
-        return LocalLoginResult.builder()
-            .memberId(memberId)
-            .accessToken(accessToken)
-            .refreshToken(refreshToken)
-            .build();
     }
 }

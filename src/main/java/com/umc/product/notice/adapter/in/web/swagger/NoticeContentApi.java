@@ -1,5 +1,8 @@
 package com.umc.product.notice.adapter.in.web.swagger;
 
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notice.adapter.in.web.dto.request.AddNoticeImagesRequest;
@@ -10,18 +13,18 @@ import com.umc.product.notice.adapter.in.web.dto.request.ReplaceNoticeLinksReque
 import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeImagesResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeLinksResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeVoteResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Notice | 공지사항 컨텐츠 Command", description = "")
 public interface NoticeContentApi {
 
     @Operation(
-        summary = "[NOTICE-101] 공지사항 이미지 추가",
+        operationId = "NOTICE-101",
+        summary = "공지사항 이미지 추가",
         description = "첫 공지 생성 시 공지사항 이미지를 추가하는 API입니다. 파일 업로드 API로 먼저 이미지를 업로드한 뒤, 받은 이미지 ID를 전달하세요."
     )
     AddNoticeImagesResponse addNoticeImages(
@@ -34,7 +37,8 @@ public interface NoticeContentApi {
     );
 
     @Operation(
-        summary = "[NOTICE-102] 첫 공지 생성 시 공지사항 링크를 추가하는 API입니다. "
+        operationId = "NOTICE-102",
+        summary = "첫 공지 생성 시 공지사항 링크 추가"
     )
     AddNoticeLinksResponse addNoticeLinks(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
@@ -46,7 +50,8 @@ public interface NoticeContentApi {
     );
 
     @Operation(
-        summary = "[NOTICE-103] 공지사항 투표 추가",
+        operationId = "NOTICE-103",
+        summary = "공지사항 투표 추가",
         description = "공지사항에 투표를 1개 생성하여 연결합니다. 투표 생성과 공지 연결이 한 번에 처리됩니다."
     )
     AddNoticeVoteResponse addNoticeVote(
@@ -59,7 +64,8 @@ public interface NoticeContentApi {
     );
 
     @Operation(
-        summary = "[NOTICE-104] 공지사항 이미지 전체 수정",
+        operationId = "NOTICE-104",
+        summary = "공지사항 이미지 전체 수정",
         description = "요청받은 새 목록으로 교체합니다. 빈 배열([])을 보내면 모든 이미지가 삭제됩니다."
     )
     void replaceNoticeImages(
@@ -72,7 +78,8 @@ public interface NoticeContentApi {
     );
 
     @Operation(
-        summary = "[NOTICE-105] 공지사항 링크 전체 수정",
+        operationId = "NOTICE-105",
+        summary = "공지사항 링크 전체 수정",
         description = "요청받은 새 목록으로 교체합니다. 빈 배열([])을 보내면 모든 링크가 삭제됩니다."
     )
     void replaceNoticeLinks(
@@ -85,7 +92,8 @@ public interface NoticeContentApi {
     );
 
     @Operation(
-        summary = "[NOTICE-106] 공지사항 투표 삭제",
+        operationId = "NOTICE-106",
+        summary = "공지사항 투표 삭제",
         description = "공지사항 수정시 필요한 경우 해당 공지에 연결된 투표를 삭제합니다. 공지사항과 투표의 연결도 함께 제거됩니다."
     )
     void deleteNoticeVote(

@@ -1,7 +1,20 @@
 package com.umc.product.notice.application.service.command;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
@@ -21,16 +34,9 @@ import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notification.application.port.in.SendNotificationToAudienceUseCase;
 import com.umc.product.notification.application.port.in.dto.AudienceNotificationCommand;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -71,6 +77,13 @@ public class NoticeService implements ManageNoticeUseCase {
         return ids;
     }
 
+    @Audited(
+        domain = Domain.NOTICE,
+        action = AuditAction.CREATE,
+        targetType = "Notice",
+        targetId = "#result",
+        description = "'공지사항을 생성했습니다.'"
+    )
     @Override
     public Long createNotice(CreateNoticeCommand command) {
         if (!validateNoticeWritePermission(command.targetInfo(), command.memberId())) {
@@ -115,6 +128,13 @@ public class NoticeService implements ManageNoticeUseCase {
         return savedNotice.getId();
     }
 
+    @Audited(
+        domain = Domain.NOTICE,
+        action = AuditAction.UPDATE,
+        targetType = "Notice",
+        targetId = "#command.noticeId()",
+        description = "'공지사항을 수정했습니다.'"
+    )
     @Override
     public void updateNoticeTitleOrContent(UpdateNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
@@ -124,6 +144,13 @@ public class NoticeService implements ManageNoticeUseCase {
 
     }
 
+    @Audited(
+        domain = Domain.NOTICE,
+        action = AuditAction.DELETE,
+        targetType = "Notice",
+        targetId = "#command.noticeId()",
+        description = "'공지사항을 삭제했습니다.'"
+    )
     @Override
     public void deleteNotice(DeleteNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
@@ -139,6 +166,13 @@ public class NoticeService implements ManageNoticeUseCase {
         saveNoticePort.delete(notice);
     }
 
+    @Audited(
+        domain = Domain.NOTICE,
+        action = AuditAction.REMIND,
+        targetType = "Notice",
+        targetId = "#command.noticeId()",
+        description = "'공지사항 리마인드를 발송했습니다.'"
+    )
     @Override
     public void remindNotice(SendNoticeReminderCommand command) {
         Notice notice = findNoticeById(command.noticeId());
@@ -176,6 +210,16 @@ public class NoticeService implements ManageNoticeUseCase {
      */
     private boolean validateNoticeWritePermission(NoticeTargetInfo noticeTargetInfo, Long authorMemberId) {
         NoticeTargetPattern pattern = NoticeTargetPattern.from(noticeTargetInfo);
-        return pattern.validatePermission(noticeTargetInfo, authorMemberId, getChallengerRoleUseCase);
+
+        // 일반 권한 검증을 먼저 수행한다.
+        // - 구조적으로 불가능한 대상 조합(예: 지부+학교 동시 지정)은 여기서 INVALID_TARGET_SETTING 예외로
+        //   차단된다(슈퍼어드민에게도 동일 적용).
+        // - 권한을 충족하면 그대로 통과하므로, 일반적인 성공 케이스에서는 추가 역할 조회가 발생하지 않는다.
+        if (pattern.validatePermission(noticeTargetInfo, authorMemberId, getChallengerRoleUseCase)) {
+            return true;
+        }
+
+        // 권한이 부족한 경우에 한해, 슈퍼어드민이면 모든 카테고리 작성을 허용한다.
+        return getChallengerRoleUseCase.isSuperAdmin(authorMemberId);
     }
 }

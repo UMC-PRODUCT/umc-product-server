@@ -2,12 +2,21 @@ package com.umc.product.test.adapter.in.web;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.umc.product.global.security.annotation.Public;
+import com.umc.product.test.adapter.in.web.dto.CreateSeedChallengerRequest;
+import com.umc.product.test.adapter.in.web.dto.CreateSeedChallengerResponse;
+import com.umc.product.test.adapter.in.web.dto.CreateSeedChallengerRoleRequest;
+import com.umc.product.test.adapter.in.web.dto.CreateSeedChallengerRoleResponse;
+import com.umc.product.test.adapter.in.web.dto.CreateSeedMemberRequest;
+import com.umc.product.test.adapter.in.web.dto.CreateSeedMemberResponse;
+import com.umc.product.test.adapter.in.web.dto.DeleteSeedProjectDataRequest;
+import com.umc.product.test.adapter.in.web.dto.DeleteSeedProjectDataResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedCurriculumRequest;
@@ -22,6 +31,10 @@ import com.umc.product.test.adapter.in.web.dto.SeedProjectScenariosRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectScenariosResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectsRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectsResponse;
+import com.umc.product.test.application.port.in.command.CreateSeedChallengerRoleUseCase;
+import com.umc.product.test.application.port.in.command.CreateSeedChallengerUseCase;
+import com.umc.product.test.application.port.in.command.CreateSeedMemberUseCase;
+import com.umc.product.test.application.port.in.command.DeleteSeedProjectDataUseCase;
 import com.umc.product.test.application.port.in.command.SeedChallengersUseCase;
 import com.umc.product.test.application.port.in.command.SeedCurriculumUseCase;
 import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
@@ -29,6 +42,7 @@ import com.umc.product.test.application.port.in.command.SeedNoticeUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectApplicationsUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectScenariosUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
+import com.umc.product.test.application.port.in.command.dto.DeleteSeedProjectDataCommand;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -49,12 +63,16 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 @Public
-@Tag(name = "Test | 시딩", description = "운영 외 환경 전용 시딩 API 입니다. prod 환경에서는 활성화되지 않습니다.")
+@Tag(name = "Test | 시딩", description = "운영 외 환경에서 시딩 데이터를 만듭니다. prod 환경에서는 비활성화됩니다.")
 public class SeedController {
 
     private final SeedMembersUseCase seedMembersUseCase;
+    private final CreateSeedMemberUseCase createSeedMemberUseCase;
     private final SeedChallengersUseCase seedChallengersUseCase;
+    private final CreateSeedChallengerUseCase createSeedChallengerUseCase;
+    private final CreateSeedChallengerRoleUseCase createSeedChallengerRoleUseCase;
     private final SeedProjectsUseCase seedProjectsUseCase;
+    private final DeleteSeedProjectDataUseCase deleteSeedProjectDataUseCase;
     private final SeedProjectScenariosUseCase seedProjectScenariosUseCase;
     private final SeedProjectApplicationsUseCase seedProjectApplicationsUseCase;
     private final SeedCurriculumUseCase seedCurriculumUseCase;
@@ -77,6 +95,20 @@ public class SeedController {
     }
 
     @Operation(
+        operationId = "SEED-001-M",
+        summary = "테스트 멤버 단건 생성",
+        description = """
+            이름, 닉네임, 학교 ID, 이메일을 받아 ID/PW 멤버를 1명 생성합니다.
+            rawPassword 를 생략하거나 공백으로 보내면 app.seed.default-password 를 사용합니다.
+            활성 필수 약관은 모두 동의한 것으로 자동 처리합니다.
+            """
+    )
+    @PostMapping("/member")
+    public CreateSeedMemberResponse createMember(@RequestBody @Valid CreateSeedMemberRequest request) {
+        return CreateSeedMemberResponse.from(createSeedMemberUseCase.create(request.toCommand()));
+    }
+
+    @Operation(
         operationId = "SEED-002",
         summary = "챌린저 분포 시딩",
         description = """
@@ -89,6 +121,35 @@ public class SeedController {
     @PostMapping("/challengers")
     public SeedChallengersResponse seedChallengers(@RequestBody @Valid SeedChallengersRequest request) {
         return SeedChallengersResponse.from(seedChallengersUseCase.seed(request.toCommand()));
+    }
+
+    @Operation(
+        operationId = "SEED-002-C",
+        summary = "테스트 챌린저 단건 생성",
+        description = "memberId, gisuId, part로 챌린저 1명을 만듭니다."
+    )
+    @PostMapping("/challenger")
+    public CreateSeedChallengerResponse createChallenger(
+        @RequestBody @Valid CreateSeedChallengerRequest request
+    ) {
+        return CreateSeedChallengerResponse.from(createSeedChallengerUseCase.create(request.toCommand()));
+    }
+
+    @Operation(
+        operationId = "SEED-002-R",
+        summary = "테스트 챌린저 역할 단건 생성",
+        description = """
+            challengerId, roleType, gisuId 를 받아 운영진 역할을 1개 부여합니다.
+            SUPER_ADMIN 및 중앙 운영진 역할은 organizationId 없이 생성할 수 있고,
+            CHAPTER_PRESIDENT 는 organizationId 에 chapterId, SCHOOL_PRESIDENT 등 학교 역할은
+            organizationId 에 schoolId 를 전달합니다.
+            """
+    )
+    @PostMapping("/challenger-role")
+    public CreateSeedChallengerRoleResponse createChallengerRole(
+        @RequestBody @Valid CreateSeedChallengerRoleRequest request
+    ) {
+        return CreateSeedChallengerRoleResponse.from(createSeedChallengerRoleUseCase.create(request.toCommand()));
     }
 
     @Operation(
@@ -105,6 +166,28 @@ public class SeedController {
     @PostMapping("/projects")
     public SeedProjectsResponse seedProjects(@RequestBody @Valid SeedProjectsRequest request) {
         return SeedProjectsResponse.from(seedProjectsUseCase.seed(request.toCommand()));
+    }
+
+    @Operation(
+        operationId = "SEED-003-D",
+        summary = "프로젝트 시딩 데이터 삭제",
+        description = """
+            특정 기수의 프로젝트 관련 데이터를 물리 삭제합니다.
+            삭제 범위는 Project, ProjectMember, ProjectPartQuota, ProjectApplication,
+            ProjectApplicationForm/Policy, 해당 기수 Chapter 의 ProjectMatchingRound,
+            그리고 프로젝트 지원 폼이 생성한 survey Form/FormSection/Question/QuestionOption/
+            FormResponse/Answer/AnswerChoice/legacy SingleAnswer 입니다.
+            gisuId 가 null 이면 활성 기수를 대상으로 합니다. prod 환경에서는 노출되지 않습니다.
+            """
+    )
+    @DeleteMapping("/projects")
+    public DeleteSeedProjectDataResponse deleteProjectData(
+        @RequestBody(required = false) @Valid DeleteSeedProjectDataRequest request
+    ) {
+        DeleteSeedProjectDataCommand command = request == null
+            ? DeleteSeedProjectDataCommand.of(null)
+            : request.toCommand();
+        return DeleteSeedProjectDataResponse.from(deleteSeedProjectDataUseCase.delete(command));
     }
 
     @Operation(
@@ -164,7 +247,8 @@ public class SeedController {
     }
 
     @Operation(
-        summary = "[SEED-006] 지원서 시나리오 시딩",
+        operationId = "SEED-006",
+        summary = "지원서 시나리오 시딩",
         description = """
             지정 매칭 차수 + 지부를 기준으로, 아직 팀에 합류하지 않은 ACTIVE 챌린저들이
             지부의 IN_PROGRESS 프로젝트에 지원서를 제출하는 시나리오를 실행합니다.

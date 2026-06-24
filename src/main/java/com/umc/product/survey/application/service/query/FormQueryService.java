@@ -1,5 +1,14 @@
 package com.umc.product.survey.application.service.query;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.survey.application.port.in.query.GetFormUseCase;
 import com.umc.product.survey.application.port.in.query.dto.FormInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo;
@@ -16,15 +25,8 @@ import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional(readOnly = true)
@@ -51,32 +53,64 @@ public class FormQueryService implements GetFormUseCase {
 
     @Override
     public FormWithStructureInfo getFormWithStructure(Long formId) {
-        // 1. 폼 메타 로드
         Form form = loadFormPort.findById(formId)
             .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
 
-        // 2. 섹션 로드 (orderNo asc)
         List<FormSection> sections = loadFormSectionPort.listByFormId(formId);
         Set<Long> sectionIds = sections.stream()
             .map(FormSection::getId)
             .collect(Collectors.toSet());
 
-        // 3. 모든 섹션의 질문을 벌크 로드 (N+1 회피)
         List<Question> questions = loadQuestionPort.listBySectionIdIn(sectionIds);
         Set<Long> questionIds = questions.stream()
             .map(Question::getId)
             .collect(Collectors.toSet());
 
-        // 4. 모든 질문의 선택지를 벌크 로드
         List<QuestionOption> options = loadQuestionOptionPort.listByQuestionIdIn(questionIds);
 
-        // 5. 메모리 grouping — sectionId -> 질문 / questionId -> 옵션
+        return buildFormInfo(form, sections, questions, options);
+    }
+
+    @Override
+    public FormWithStructureInfo getFormWithStructureByQuestionIds(Long formId, Set<Long> questionIds) {
+        Form form = loadFormPort.findById(formId)
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
+
+        if (questionIds.isEmpty()) {
+            List<FormSection> sections = loadFormSectionPort.listByFormId(formId);
+            return buildFormInfo(form, sections, List.of(), List.of());
+        }
+
+        // Answer.questionId 기반으로 직접 조회 (isActive 무관 — fork된 구 버전 포함)
+        List<Question> questions = loadQuestionPort.listByIdIn(questionIds);
+        Set<Long> resolvedQuestionIds = questions.stream()
+            .map(Question::getId)
+            .collect(Collectors.toSet());
+
+        List<QuestionOption> options = loadQuestionOptionPort.listByQuestionIdIn(resolvedQuestionIds);
+
+        // 질문이 속한 섹션만 추려서 조회
+        Set<Long> sectionIds = questions.stream()
+            .map(q -> q.getFormSection().getId())
+            .collect(Collectors.toSet());
+        List<FormSection> sections = loadFormSectionPort.listByFormId(formId).stream()
+            .filter(s -> sectionIds.contains(s.getId()))
+            .toList();
+
+        return buildFormInfo(form, sections, questions, options);
+    }
+
+    private FormWithStructureInfo buildFormInfo(
+        Form form,
+        List<FormSection> sections,
+        List<Question> questions,
+        List<QuestionOption> options
+    ) {
         Map<Long, List<Question>> questionsBySection = questions.stream()
             .collect(Collectors.groupingBy(q -> q.getFormSection().getId()));
         Map<Long, List<QuestionOption>> optionsByQuestion = options.stream()
             .collect(Collectors.groupingBy(o -> o.getQuestion().getId()));
 
-        // 6. 중첩 DTO 조립
         List<SectionWithQuestions> sectionDtos = sections.stream()
             .map(section -> SectionWithQuestions.builder()
                 .sectionId(section.getId())
@@ -97,6 +131,7 @@ public class FormQueryService implements GetFormUseCase {
             .description(form.getDescription())
             .status(form.getStatus())
             .isAnonymous(form.isAnonymous())
+            .allowDuplicateResponses(form.isAllowDuplicateResponses())
             .createdAt(form.getCreatedAt())
             .updatedAt(form.getUpdatedAt())
             .sections(sectionDtos)

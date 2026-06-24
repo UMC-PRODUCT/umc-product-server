@@ -1,14 +1,17 @@
 package com.umc.product.project.application.port.in.query.dto;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.project.domain.enums.PartQuotaStatus;
-import com.umc.product.project.domain.enums.ProjectStatus;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import lombok.Builder;
+
 import org.springframework.data.domain.Pageable;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.domain.enums.PartQuotaStatus;
+import com.umc.product.project.domain.enums.ProjectStatus;
+
+import lombok.Builder;
 
 /**
  * 프로젝트 목록 검색 Query (PROJECT-001).
@@ -18,7 +21,7 @@ import org.springframework.data.domain.Pageable;
  * Controller는 분기 로직을 가지지 않고, Request DTO의 {@code toQuery(...)}에서 팩토리를 선택합니다.
  * <p>
  * Service 계층에서 {@link com.umc.product.project.application.access.ProjectAccessScope} 적용 시
- * {@link #withStatuses}, {@link #withChapterFilter}, {@link #withSchoolFilter}, {@link #withOwnerFilter}
+ * {@link #withStatuses}, {@link #withChapterFilter}, {@link #withOwnerFilter}
  * 헬퍼로 새 인스턴스를 만들어 어댑터에 전달합니다.
  */
 @Builder
@@ -28,9 +31,11 @@ public record SearchProjectQuery(
     Long chapterId,
     List<Long> productOwnerSchoolIds,
     Long productOwnerMemberId,
+    Long includedOwnerMemberId,
     List<ChallengerPart> parts,
     PartQuotaStatus partQuotaStatus,
     List<ProjectStatus> statuses,
+    List<ProjectStatus> includedOwnerStatuses,
     Pageable pageable
 ) {
     public SearchProjectQuery {
@@ -38,6 +43,12 @@ public record SearchProjectQuery(
         Objects.requireNonNull(pageable, "pageable must not be null");
         if (statuses == null || statuses.isEmpty()) {
             throw new IllegalArgumentException("statuses must contain at least one ProjectStatus");
+        }
+        if (includedOwnerMemberId == null && includedOwnerStatuses != null && !includedOwnerStatuses.isEmpty()) {
+            throw new IllegalArgumentException("includedOwnerMemberId must not be null when includedOwnerStatuses exists");
+        }
+        if (includedOwnerMemberId != null && (includedOwnerStatuses == null || includedOwnerStatuses.isEmpty())) {
+            throw new IllegalArgumentException("includedOwnerStatuses must contain at least one ProjectStatus");
         }
     }
 
@@ -110,19 +121,20 @@ public record SearchProjectQuery(
             .build();
     }
 
-    /** scope 적용 — 학교 한정 + 상태 교체. */
-    public SearchProjectQuery withSchoolFilter(Long schoolId, Set<ProjectStatus> newStatuses) {
-        return copyBuilder()
-            .productOwnerSchoolIds(List.of(schoolId))
-            .statuses(toList(newStatuses))
-            .build();
-    }
-
     /** scope 적용 — owner 한정 + 상태 교체. */
     public SearchProjectQuery withOwnerFilter(Long memberId, Set<ProjectStatus> newStatuses) {
         return copyBuilder()
             .productOwnerMemberId(memberId)
             .statuses(toList(newStatuses))
+            .build();
+    }
+
+    /** scope 적용 — 기존 scope 조건에 본인 PO 프로젝트를 OR 로 추가 포함. */
+    public SearchProjectQuery withIncludedOwner(Long memberId, Set<ProjectStatus> ownerStatuses) {
+        Objects.requireNonNull(memberId, "memberId must not be null");
+        return copyBuilder()
+            .includedOwnerMemberId(memberId)
+            .includedOwnerStatuses(toRequiredList(ownerStatuses))
             .build();
     }
 
@@ -133,15 +145,24 @@ public record SearchProjectQuery(
             .chapterId(chapterId)
             .productOwnerSchoolIds(productOwnerSchoolIds)
             .productOwnerMemberId(productOwnerMemberId)
+            .includedOwnerMemberId(includedOwnerMemberId)
             .parts(parts)
             .partQuotaStatus(partQuotaStatus)
             .statuses(statuses)
+            .includedOwnerStatuses(includedOwnerStatuses)
             .pageable(pageable);
     }
 
     private static List<ProjectStatus> toList(Set<ProjectStatus> set) {
         if (set == null || set.isEmpty()) {
             return List.of(ProjectStatus.IN_PROGRESS);
+        }
+        return new ArrayList<>(set);
+    }
+
+    private static List<ProjectStatus> toRequiredList(Set<ProjectStatus> set) {
+        if (set == null || set.isEmpty()) {
+            throw new IllegalArgumentException("ownerStatuses must contain at least one ProjectStatus");
         }
         return new ArrayList<>(set);
     }

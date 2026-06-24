@@ -1,5 +1,18 @@
 package com.umc.product.survey.application.service.command;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.survey.application.port.in.command.ManageQuestionUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteQuestionCommand;
@@ -16,16 +29,8 @@ import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.enums.QuestionType;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional
@@ -50,6 +55,7 @@ public class QuestionCommandService implements ManageQuestionUseCase {
 
         Question question = Question.create(
             command.title(),
+            command.description(),
             command.type(),
             command.isRequired(),
             nextOrderNo
@@ -69,7 +75,12 @@ public class QuestionCommandService implements ManageQuestionUseCase {
         }
 
         // 나머지 속성 PATCH
-        question.update(command.title(), command.description(), command.isRequired());
+        question.update(
+            command.title(),
+            command.description(),
+            command.isRequired(),
+            Boolean.TRUE.equals(command.clearDescription())
+        );
 
         saveQuestionPort.save(question);
     }
@@ -85,6 +96,13 @@ public class QuestionCommandService implements ManageQuestionUseCase {
         saveQuestionPort.deleteById(questionId);
     }
 
+    @Audited(
+        domain = Domain.SURVEY,
+        action = AuditAction.REORDER,
+        targetType = "Question",
+        targetId = "#command.sectionId()",
+        description = "'설문 질문 순서를 변경했습니다.'"
+    )
     @Override
     public void reorderQuestions(ReorderQuestionsCommand command) {
         List<Question> questions = loadQuestionPort.listBySectionId(command.sectionId());

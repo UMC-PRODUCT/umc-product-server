@@ -4,9 +4,7 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public enum NoticeTargetPattern {
 
     // =============================
@@ -52,7 +50,8 @@ public enum NoticeTargetPattern {
     SPECIFIC_GISU_ALL_TARGET(true, false, false, false) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            return useCase.isCentralCore(memberId);
+            // 특정 기수 전체공지는 해당 기수의 중앙운영진(총괄단 + 운영국원 + 교육국원) 모두 작성 가능
+            return useCase.isCentralMemberInGisu(memberId, info.targetGisuId());
         }
     },
 
@@ -167,22 +166,16 @@ public enum NoticeTargetPattern {
             }
             // 교내운영진 공지 (schoolId 지정): part 유무와 무관하게 동일 패턴
             if (hasSchool) {
-                log.info("매칭된 NoticeTargetPattern: STAFF_SPECIFIC_GISU_SPECIFIC_SCHOOL");
                 return STAFF_SPECIFIC_GISU_SPECIFIC_SCHOOL;
             }
             if (hasPart) {
-                log.info("매칭된 NoticeTargetPattern: STAFF_SPECIFIC_GISU_SPECIFIC_PART");
                 return STAFF_SPECIFIC_GISU_SPECIFIC_PART;
             }
-            log.info("매칭된 NoticeTargetPattern: STAFF_SPECIFIC_GISU");
             return STAFF_SPECIFIC_GISU;
         }
 
         for (NoticeTargetPattern pattern : values()) {
             if (pattern.matches(hasGisu, hasChapter, hasSchool, hasPart, false)) {
-                log.info(
-                    "매칭된 NoticeTargetPattern: {}, hasGisu: {}, hasChapter: {}, hasSchool: {}, hasPart: {}",
-                    pattern.name(), hasGisu, hasChapter, hasSchool, hasPart);
                 return pattern;
             }
         }

@@ -2,35 +2,29 @@ package com.umc.product.organization.adapter.out.persistence.studygroup;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.config.JpaConfig;
-import com.umc.product.global.config.QueryDslConfig;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupHeaderInfo;
-import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope;
-import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope.AsPartLeader;
-import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope.AsSchoolCore;
-import com.umc.product.organization.domain.StudyGroup;
-import com.umc.product.organization.domain.StudyGroupMember;
-import com.umc.product.organization.domain.StudyGroupMentor;
-import com.umc.product.support.TestContainersConfig;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.util.ReflectionTestUtils;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope.AsPartLeader;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope.AsSchoolCore;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupHeaderInfo;
+import com.umc.product.organization.domain.StudyGroup;
+import com.umc.product.organization.domain.StudyGroupMember;
+import com.umc.product.organization.domain.StudyGroupMentor;
+import com.umc.product.support.PersistenceAdapterTest;
+
+@PersistenceAdapterTest
 @Import({
-    JpaConfig.class,
-    QueryDslConfig.class,
-    TestContainersConfig.class,
     StudyGroupQueryRepository.class
 })
 class StudyGroupQueryRepositoryTest {

@@ -1,24 +1,47 @@
 package com.umc.product.survey.application.service.command;
 
-import com.umc.product.storage.application.port.in.query.GetFileUseCase;
-import com.umc.product.survey.application.port.in.command.ManageFormResponseUseCase;
-import com.umc.product.survey.application.port.in.command.dto.*;
-import com.umc.product.survey.application.port.out.*;
-import com.umc.product.survey.domain.*;
-import com.umc.product.survey.domain.enums.FormResponseStatus;
-import com.umc.product.survey.domain.enums.QuestionType;
-import com.umc.product.survey.domain.exception.SurveyDomainException;
-import com.umc.product.survey.domain.exception.SurveyErrorCode;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
+import com.umc.product.survey.application.port.in.command.ManageFormResponseUseCase;
+import com.umc.product.survey.application.port.in.command.dto.AnswerCommand;
+import com.umc.product.survey.application.port.in.command.dto.CreateDraftFormResponseCommand;
+import com.umc.product.survey.application.port.in.command.dto.DeleteDraftFormResponseCommand;
+import com.umc.product.survey.application.port.in.command.dto.DeleteFormResponseCommand;
+import com.umc.product.survey.application.port.in.command.dto.SubmitDraftFormResponseCommand;
+import com.umc.product.survey.application.port.in.command.dto.SubmitFormResponseCommand;
+import com.umc.product.survey.application.port.in.command.dto.UpdateDraftFormResponseCommand;
+import com.umc.product.survey.application.port.in.command.dto.UpdateFormResponseCommand;
+import com.umc.product.survey.application.port.out.LoadAnswerPort;
+import com.umc.product.survey.application.port.out.LoadFormPort;
+import com.umc.product.survey.application.port.out.LoadFormResponsePort;
+import com.umc.product.survey.application.port.out.LoadQuestionOptionPort;
+import com.umc.product.survey.application.port.out.LoadQuestionPort;
+import com.umc.product.survey.application.port.out.SaveAnswerPort;
+import com.umc.product.survey.application.port.out.SaveFormResponsePort;
+import com.umc.product.survey.domain.Answer;
+import com.umc.product.survey.domain.AnswerChoice;
+import com.umc.product.survey.domain.Form;
+import com.umc.product.survey.domain.FormResponse;
+import com.umc.product.survey.domain.Question;
+import com.umc.product.survey.domain.QuestionOption;
+import com.umc.product.survey.domain.enums.FormResponseStatus;
+import com.umc.product.survey.domain.enums.QuestionType;
+import com.umc.product.survey.domain.exception.SurveyDomainException;
+import com.umc.product.survey.domain.exception.SurveyErrorCode;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional
@@ -34,13 +57,18 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
     private final SaveAnswerPort saveAnswerPort;
     private final GetFileUseCase getFileUseCase;
 
+    @Audited(
+        domain = Domain.SURVEY,
+        action = AuditAction.SUBMIT,
+        targetType = "FormResponse",
+        targetId = "#result",
+        description = "'설문 응답을 제출했습니다.'"
+    )
     @Override
     public Long submitImmediately(SubmitFormResponseCommand command) {
         Form form = loadPublishedForm(command.formId());
 
-        if (loadFormResponsePort.existsByFormIdAndMemberId(command.formId(), command.respondentMemberId())) {
-            throw new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_ALREADY_EXISTS);
-        }
+        validateDuplicateResponsePolicy(form, command.respondentMemberId());
 
         validateAnswers(command.formId(), command.answers());
         validateAllRequiredAnswered(command.formId(), extractQuestionIds(command.answers()));
@@ -57,7 +85,8 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
 
     @Override
     public void updateResponse(UpdateFormResponseCommand command) {
-        loadPublishedForm(command.formId());
+        Form form = loadPublishedForm(command.formId());
+        validateSingleResponseLookupPolicy(form);
 
         FormResponse existing = loadFormResponsePort
             .findSubmittedByFormIdAndRespondentMemberId(command.formId(), command.respondentMemberId())
@@ -77,6 +106,9 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
 
     @Override
     public void deleteResponse(DeleteFormResponseCommand command) {
+        Form form = loadPublishedForm(command.formId());
+        validateSingleResponseLookupPolicy(form);
+
         FormResponse existing = loadFormResponsePort
             .findSubmittedByFormIdAndRespondentMemberId(command.formId(), command.respondentMemberId())
             .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
@@ -89,10 +121,7 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
     public Long createDraft(CreateDraftFormResponseCommand command) {
         Form form = loadPublishedForm(command.formId());
 
-        // 같은 폼에 같은 멤버의 응답 (DRAFT/SUBMITTED) 이 이미 있으면 예외
-        if (loadFormResponsePort.existsByFormIdAndMemberId(command.formId(), command.respondentMemberId())) {
-            throw new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_ALREADY_EXISTS);
-        }
+        validateDuplicateResponsePolicy(form, command.respondentMemberId());
 
         FormResponse draft = FormResponse.createDraft(form, command.respondentMemberId());
         return saveFormResponsePort.save(draft).getId();
@@ -118,11 +147,20 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
     public void submitDraft(SubmitDraftFormResponseCommand command) {
         FormResponse draft = loadDraft(command.formResponseId());
 
-        // 저장된 답변에서 questionId 추출 -> 필수 누락 검증
-        Set<Long> answeredQuestionIds = loadAnswerPort.listByFormResponseId(draft.getId()).stream()
+        List<Answer> savedAnswers = loadAnswerPort.listByFormResponseId(draft.getId());
+        Set<Long> answeredQuestionIds = savedAnswers.stream()
             .map(answer -> answer.getQuestion().getId())
             .collect(Collectors.toSet());
-        validateAllRequiredAnswered(draft.getForm().getId(), answeredQuestionIds);
+
+        if (command.allowedQuestionIds() != null) {
+            validateAnsweredQuestionsAllowed(command.allowedQuestionIds(), answeredQuestionIds);
+        }
+
+        if (command.requiredQuestionIds() != null) {
+            validateRequiredAnswered(command.requiredQuestionIds(), answeredQuestionIds);
+        } else {
+            validateAllRequiredAnswered(draft.getForm().getId(), answeredQuestionIds);
+        }
 
         draft.submit(Instant.now(), command.submittedIp());
         saveFormResponsePort.save(draft);
@@ -163,6 +201,21 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
         return form;
     }
 
+    private void validateDuplicateResponsePolicy(Form form, Long respondentMemberId) {
+        if (form.isAllowDuplicateResponses()) {
+            return;
+        }
+        if (loadFormResponsePort.existsByFormIdAndMemberId(form.getId(), respondentMemberId)) {
+            throw new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_ALREADY_EXISTS);
+        }
+    }
+
+    private static void validateSingleResponseLookupPolicy(Form form) {
+        if (form.isAllowDuplicateResponses()) {
+            throw new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_LOOKUP_AMBIGUOUS);
+        }
+    }
+
     /**
      * 답변 형식 / 질문 소속 / 옵션 소속 등 형식 검증만 수행. 필수 답변 누락 검증은 별도.
      * <p>
@@ -201,6 +254,22 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
         for (Question q : formQuestions) {
             if (Boolean.TRUE.equals(q.getIsRequired()) && !answeredQuestionIds.contains(q.getId())) {
                 throw new SurveyDomainException(SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+            }
+        }
+    }
+
+    private void validateRequiredAnswered(Set<Long> requiredQuestionIds, Set<Long> answeredQuestionIds) {
+        for (Long questionId : requiredQuestionIds) {
+            if (!answeredQuestionIds.contains(questionId)) {
+                throw new SurveyDomainException(SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+            }
+        }
+    }
+
+    private void validateAnsweredQuestionsAllowed(Set<Long> allowedQuestionIds, Set<Long> answeredQuestionIds) {
+        for (Long questionId : answeredQuestionIds) {
+            if (!allowedQuestionIds.contains(questionId)) {
+                throw new SurveyDomainException(SurveyErrorCode.QUESTION_IS_NOT_OWNED_BY_FORM);
             }
         }
     }

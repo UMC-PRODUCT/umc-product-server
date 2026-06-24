@@ -1,18 +1,22 @@
 package com.umc.product.figma.adapter.out.external;
 
-import com.umc.product.figma.application.port.out.FetchFigmaFileMetadataPort;
-import com.umc.product.figma.domain.exception.FigmaDomainException;
-import com.umc.product.figma.domain.exception.FigmaErrorCode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+
+import com.umc.product.figma.application.port.out.FetchFigmaFileMetadataPort;
+import com.umc.product.figma.domain.exception.FigmaDomainException;
+import com.umc.product.figma.domain.exception.FigmaErrorCode;
+import com.umc.product.global.logging.ExternalApiCallLogger;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -33,16 +37,18 @@ public class FigmaFileMetadataClient implements FetchFigmaFileMetadataPort {
         String idsParam = String.join(",", nodeIds);
         try {
             @SuppressWarnings("unchecked")
-            Map<String, Object> body = restClient.get()
-                .uri(String.format(FILE_NODES_URI_TEMPLATE, fileKey, idsParam))
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                .retrieve()
-                .body(Map.class);
+            Map<String, Object> body = ExternalApiCallLogger.measure("FIGMA", "RESOLVE_FILE_NODES", () ->
+                restClient.get()
+                    .uri(String.format(FILE_NODES_URI_TEMPLATE, fileKey, idsParam))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                    .retrieve()
+                    .body(Map.class)
+            );
 
             return parsePageNames(body, nodeIds);
         } catch (RestClientResponseException e) {
-            log.warn("Figma 파일 메타데이터 조회 실패: fileKey={}, status={}, body={}",
-                fileKey, e.getStatusCode(), e.getResponseBodyAsString());
+            log.warn("Figma 파일 메타데이터 조회 실패: fileKey={}, status={}, bodyLength={}",
+                fileKey, e.getStatusCode(), e.getResponseBodyAsByteArray().length);
             throw new FigmaDomainException(FigmaErrorCode.FILE_METADATA_FETCH_FAILED);
         }
     }

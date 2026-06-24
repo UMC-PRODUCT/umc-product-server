@@ -4,6 +4,15 @@ import static com.umc.product.project.domain.QProject.project;
 import static com.umc.product.project.domain.QProjectMember.projectMember;
 import static com.umc.product.project.domain.QProjectPartQuota.projectPartQuota;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -18,13 +27,8 @@ import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.enums.PartQuotaStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
-import java.util.ArrayList;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Repository;
 
 /**
  * Project QueryDSL 동적 검색 구현 (PROJECT-001).
@@ -40,14 +44,22 @@ public class ProjectQueryRepository {
      */
     public Page<Project> search(SearchProjectQuery query) {
         BooleanBuilder condition = buildCondition(query);
+        Pageable pageable = query.pageable();
 
-        List<Project> content = queryFactory
+        JPQLQuery<Project> contentQuery = queryFactory
             .selectFrom(project)
             .where(condition)
-            .orderBy(toOrderSpecifiers(query.pageable().getSort()))
-            .offset(query.pageable().getOffset())
-            .limit(query.pageable().getPageSize())
-            .fetch();
+            .orderBy(toOrderSpecifiers(pageable.getSort()));
+
+        // Pageable.unpaged() 는 offset/pageSize 호출 시 UnsupportedOperationException 을 던지므로
+        // 페이징 요청일 때만 offset/limit 을 적용하고, unpaged 면 조건에 맞는 전건을 반환한다.
+        if (pageable.isPaged()) {
+            contentQuery
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize());
+        }
+
+        List<Project> content = contentQuery.fetch();
 
         Long total = queryFactory
             .select(project.count())
@@ -55,26 +67,38 @@ public class ProjectQueryRepository {
             .where(condition)
             .fetchOne();
 
-        return new PageImpl<>(content, query.pageable(), total != null ? total : 0L);
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
     private BooleanBuilder buildCondition(SearchProjectQuery query) {
-        BooleanBuilder builder = new BooleanBuilder();
-
-        builder
+        BooleanBuilder common = new BooleanBuilder()
             .and(gisuIdEq(query.gisuId()))
             .and(keywordContains(query.keyword()))
+            .and(partAndQuotaFilter(query.parts(), query.partQuotaStatus()));
+
+        BooleanBuilder scoped = new BooleanBuilder()
             .and(chapterIdEq(query.chapterId()))
             .and(productOwnerSchoolIdsIn(query.productOwnerSchoolIds()))
             .and(productOwnerMemberIdEq(query.productOwnerMemberId()))
-            .and(partAndQuotaFilter(query.parts(), query.partQuotaStatus()))
             .and(statusIn(query.statuses()));
 
-        return builder;
+        BooleanExpression includedOwner = includedOwnerCond(query);
+        if (includedOwner != null) {
+            scoped.or(includedOwner);
+        }
+
+        return common.and(scoped);
     }
 
     private BooleanExpression productOwnerMemberIdEq(Long memberId) {
         return memberId != null ? project.productOwnerMemberId.eq(memberId) : null;
+    }
+
+    private BooleanExpression includedOwnerCond(SearchProjectQuery query) {
+        return query.includedOwnerMemberId() != null
+            ? project.productOwnerMemberId.eq(query.includedOwnerMemberId())
+                .and(project.status.in(query.includedOwnerStatuses()))
+            : null;
     }
 
     private BooleanExpression gisuIdEq(Long gisuId) {
@@ -191,11 +215,11 @@ public class ProjectQueryRepository {
 
     /**
      * Pageable의 Sort를 QueryDSL OrderSpecifier 배열로 변환합니다.
-     * 정렬 조건이 없으면 createdAt 내림차순을 기본으로 사용합니다.
+     * 정렬 조건이 없으면 createdAt 오름차순, name 오름차순을 기본으로 사용합니다.
      */
     private OrderSpecifier<?>[] toOrderSpecifiers(Sort sort) {
         if (sort == null || sort.isUnsorted()) {
-            return new OrderSpecifier<?>[]{project.createdAt.desc()};
+            return new OrderSpecifier<?>[]{project.createdAt.asc(), project.name.asc()};
         }
         PathBuilder<Project> path = new PathBuilder<>(Project.class, project.getMetadata());
         List<OrderSpecifier<?>> specifiers = new ArrayList<>();

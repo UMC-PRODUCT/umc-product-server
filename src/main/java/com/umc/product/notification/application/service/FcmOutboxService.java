@@ -1,13 +1,16 @@
 package com.umc.product.notification.application.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.umc.product.notification.application.port.in.ProcessFcmOutboxUseCase;
 import com.umc.product.notification.application.port.out.LoadFcmOutboxPort;
 import com.umc.product.notification.application.port.out.SaveFcmOutboxPort;
 import com.umc.product.notification.domain.FcmOutbox;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -26,7 +29,7 @@ public class FcmOutboxService implements ProcessFcmOutboxUseCase {
             return;
         }
 
-        log.warn("[DEPRECATED] FCM Outbox 토픽 이벤트 {} 건이 남아있어 FAILED 처리합니다. 토큰 기반 알림으로 전환되었습니다.",
+        log.warn("[DEPRECATED] FCM Outbox 토픽 이벤트 {}건을 FAILED로 처리합니다. 토큰 기반 알림을 사용하세요.",
             pendingEvents.size());
 
         for (FcmOutbox event : pendingEvents) {

@@ -1,17 +1,22 @@
 package com.umc.product.project.adapter.out.persistence;
 
+import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
+import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -97,6 +102,11 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     }
 
     @Override
+    public List<ProjectApplication> listDecidableByMatchingRoundIdAndProjectId(Long matchingRoundId, Long projectId) {
+        return projectApplicationQueryRepository.listDecidableByMatchingRoundIdAndProjectId(matchingRoundId, projectId);
+    }
+
+    @Override
     public Optional<ProjectApplication> findByIdWithDetails(Long applicationId) {
         return projectApplicationQueryRepository.findByIdWithDetails(applicationId);
     }
@@ -115,9 +125,43 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     public List<ProjectApplication> searchProjectApplications(
         Long projectId,
         Long matchingRoundId,
-        ProjectApplicationStatus status
+        ProjectApplicationStatus status,
+        Instant now,
+        boolean includeOngoingMatchingRounds
     ) {
-        return projectApplicationQueryRepository.searchProjectApplications(projectId, matchingRoundId, status);
+        return projectApplicationQueryRepository.searchProjectApplications(
+            projectId,
+            matchingRoundId,
+            status,
+            now,
+            includeOngoingMatchingRounds
+        );
+    }
+
+    @Override
+    public List<ProjectApplication> searchProjectApplicationsByProjectIds(
+        Collection<Long> projectIds,
+        Collection<Long> includeOngoingProjectIds,
+        Long matchingRoundId,
+        ProjectApplicationStatus status,
+        Instant now
+    ) {
+        return projectApplicationQueryRepository.searchProjectApplicationsByProjectIds(
+            projectIds,
+            includeOngoingProjectIds,
+            matchingRoundId,
+            status,
+            now
+        );
+    }
+
+    @Override
+    public List<ProjectMemberMatchedRoundInfo> listLatestApprovedMatchedRoundsByProjectIdsAndMemberIds(
+        Collection<Long> projectIds,
+        Collection<Long> memberIds
+    ) {
+        return projectApplicationQueryRepository.listLatestApprovedMatchedRoundsByProjectIdsAndMemberIds(
+            projectIds, memberIds);
     }
 
     @Override

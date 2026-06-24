@@ -1,4 +1,4 @@
-name: CD [ECR-ASG]
+name: CD [ASG]
 
 on:
   push:
@@ -6,17 +6,17 @@ on:
       - main
       - develop
     paths:
-      - 'src/**'
-      - 'build.gradle.kts'
-      - 'docker/**'
-      - 'infra/asg/**'
-      - '.github/workflows/ci.yml'
-      - '.github/workflows/cd-asg.yml'
+      - "src/**"
+      - "build.gradle.kts"
+      - "docker/**"
+      - "infra/asg/**"
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/cd-asg.yml"
 
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Deploy environment'
+        description: "Deploy environment"
         required: true
         type: choice
         options:

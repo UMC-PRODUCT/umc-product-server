@@ -10,4 +10,8 @@ public enum TermType {
     TermType(String description) {
         this.description = description;
     }
+
+    public String getDescription() {
+        return description;
+    }
 }

@@ -2,16 +2,12 @@ package com.umc.product.project.application.access;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verifyNoInteractions;
 
-import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.OrganizationType;
-import com.umc.product.project.application.access.ProjectApplicationAccessScope.None;
-import com.umc.product.project.application.access.ProjectApplicationAccessScope.ProjectScoped;
-import com.umc.product.project.application.port.out.LoadProjectMemberPort;
-import com.umc.product.project.domain.Project;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +15,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import com.umc.product.project.application.access.ProjectApplicationAccessScope.None;
+import com.umc.product.project.application.access.ProjectApplicationAccessScope.ProjectScoped;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
+import com.umc.product.project.domain.Project;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectApplicationAccessScopeResolverTest {
@@ -37,6 +44,8 @@ class ProjectApplicationAccessScopeResolverTest {
     GetChallengerRoleUseCase getChallengerRoleUseCase;
     @Mock
     LoadProjectMemberPort loadProjectMemberPort;
+    @Mock
+    GetChapterUseCase getChapterUseCase;
 
     @InjectMocks
     ProjectApplicationAccessScopeResolver sut;
@@ -44,8 +53,12 @@ class ProjectApplicationAccessScopeResolverTest {
     // --- PO / Sub-PM (프로젝트 단위 권한) ---
 
     private static Project project(Long ownerMemberId, Long gisuId, Long chapterId, Long schoolId) {
+        return project(PROJECT_ID, ownerMemberId, gisuId, chapterId, schoolId);
+    }
+
+    private static Project project(Long projectId, Long ownerMemberId, Long gisuId, Long chapterId, Long schoolId) {
         Project p = newInstance(Project.class);
-        ReflectionTestUtils.setField(p, "id", PROJECT_ID);
+        ReflectionTestUtils.setField(p, "id", projectId);
         ReflectionTestUtils.setField(p, "productOwnerMemberId", ownerMemberId);
         ReflectionTestUtils.setField(p, "gisuId", gisuId);
         ReflectionTestUtils.setField(p, "chapterId", chapterId);
@@ -92,6 +105,7 @@ class ProjectApplicationAccessScopeResolverTest {
 
         assertThat(scope).isInstanceOf(ProjectScoped.class);
         assertThat(((ProjectScoped) scope).projectId()).isEqualTo(PROJECT_ID);
+        assertThat(((ProjectScoped) scope).includeOngoingMatchingRounds()).isFalse();
     }
 
     @Test
@@ -120,6 +134,7 @@ class ProjectApplicationAccessScopeResolverTest {
             sut.resolveForProjectApplicantList(MEMBER_ID, project);
 
         assertThat(scope).isInstanceOf(ProjectScoped.class);
+        assertThat(((ProjectScoped) scope).includeOngoingMatchingRounds()).isTrue();
     }
 
     @Test
@@ -135,6 +150,7 @@ class ProjectApplicationAccessScopeResolverTest {
             sut.resolveForProjectApplicantList(MEMBER_ID, project);
 
         assertThat(scope).isInstanceOf(ProjectScoped.class);
+        assertThat(((ProjectScoped) scope).includeOngoingMatchingRounds()).isTrue();
     }
 
     // --- 지부장 ---
@@ -152,6 +168,7 @@ class ProjectApplicationAccessScopeResolverTest {
             sut.resolveForProjectApplicantList(MEMBER_ID, project);
 
         assertThat(scope).isInstanceOf(ProjectScoped.class);
+        assertThat(((ProjectScoped) scope).includeOngoingMatchingRounds()).isTrue();
     }
 
     @Test
@@ -185,7 +202,7 @@ class ProjectApplicationAccessScopeResolverTest {
         assertThat(scope).isInstanceOf(None.class);
     }
 
-    // --- 학교 회장 (SCHOOL_PRESIDENT 만 통과, 부회장 제외) ---
+    // --- 학교 회장단 (SCHOOL_PRESIDENT / SCHOOL_VICE_PRESIDENT) ---
 
     @Test
     @DisplayName("projectApplicantList_같은_기수_지부의_지부장이면_ProjectScoped")
@@ -233,13 +250,15 @@ class ProjectApplicationAccessScopeResolverTest {
     }
 
     @Test
-    @DisplayName("projectApplicantList_같은_기수_학교의_회장이면_ProjectScoped")
-    void projectApplicantList_학교회장_통과() {
+    @DisplayName("projectApplicantList_같은_기수_같은_지부_학교_회장이면_ProjectScoped")
+    void projectApplicantList_같은지부_학교회장_통과() {
         Project project = project(OWNER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
         given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, MEMBER_ID)).willReturn(false);
         given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
-            roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, SCHOOL_ID, GISU_ID)
+            roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, OTHER_SCHOOL_ID, GISU_ID)
         ));
+        given(getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(Set.of(GISU_ID), Set.of(OTHER_SCHOOL_ID)))
+            .willReturn(Map.of(GISU_ID, Map.of(OTHER_SCHOOL_ID, new ChapterInfo(CHAPTER_ID, "서울"))));
 
         ProjectApplicationAccessScope scope =
             sut.resolveForProjectApplicantList(MEMBER_ID, project);
@@ -250,14 +269,34 @@ class ProjectApplicationAccessScopeResolverTest {
     // --- 권한 없음 (역할 0건) ---
 
     @Test
-    @DisplayName("projectApplicantList_학교_부회장은_권한_없음_None")
-    void projectApplicantList_학교_부회장_거부() {
-        // SCHOOL_VICE_PRESIDENT 는 명시적으로 제외됨 (회장만 통과)
+    @DisplayName("projectApplicantList_같은_기수_같은_지부_학교_부회장이면_ProjectScoped")
+    void projectApplicantList_같은지부_학교부회장_통과() {
         Project project = project(OWNER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
         given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, MEMBER_ID)).willReturn(false);
         given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
             roleInfo(ChallengerRoleType.SCHOOL_VICE_PRESIDENT, OrganizationType.SCHOOL, SCHOOL_ID, GISU_ID)
         ));
+        given(getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(Set.of(GISU_ID), Set.of(SCHOOL_ID)))
+            .willReturn(Map.of(GISU_ID, Map.of(SCHOOL_ID, new ChapterInfo(CHAPTER_ID, "서울"))));
+
+        ProjectApplicationAccessScope scope =
+            sut.resolveForProjectApplicantList(MEMBER_ID, project);
+
+        assertThat(scope).isInstanceOf(ProjectScoped.class);
+    }
+
+    // --- helpers ---
+
+    @Test
+    @DisplayName("projectApplicantList_타_지부_학교_회장이면_None")
+    void projectApplicantList_타지부_학교회장_거부() {
+        Project project = project(OWNER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
+        given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, MEMBER_ID)).willReturn(false);
+        given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
+            roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, OTHER_SCHOOL_ID, GISU_ID)
+        ));
+        given(getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(Set.of(GISU_ID), Set.of(OTHER_SCHOOL_ID)))
+            .willReturn(Map.of(GISU_ID, Map.of(OTHER_SCHOOL_ID, new ChapterInfo(OTHER_CHAPTER_ID, "인천"))));
 
         ProjectApplicationAccessScope scope =
             sut.resolveForProjectApplicantList(MEMBER_ID, project);
@@ -265,16 +304,16 @@ class ProjectApplicationAccessScopeResolverTest {
         assertThat(scope).isInstanceOf(None.class);
     }
 
-    // --- helpers ---
-
     @Test
-    @DisplayName("projectApplicantList_타_학교_회장이면_None")
-    void projectApplicantList_타학교_회장_거부() {
+    @DisplayName("projectApplicantList_타_지부_학교_부회장이면_None")
+    void projectApplicantList_타지부_학교부회장_거부() {
         Project project = project(OWNER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
         given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, MEMBER_ID)).willReturn(false);
         given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
-            roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, OTHER_SCHOOL_ID, GISU_ID)
+            roleInfo(ChallengerRoleType.SCHOOL_VICE_PRESIDENT, OrganizationType.SCHOOL, OTHER_SCHOOL_ID, GISU_ID)
         ));
+        given(getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(Set.of(GISU_ID), Set.of(OTHER_SCHOOL_ID)))
+            .willReturn(Map.of(GISU_ID, Map.of(OTHER_SCHOOL_ID, new ChapterInfo(OTHER_CHAPTER_ID, "인천"))));
 
         ProjectApplicationAccessScope scope =
             sut.resolveForProjectApplicantList(MEMBER_ID, project);
@@ -298,6 +337,22 @@ class ProjectApplicationAccessScopeResolverTest {
     }
 
     @Test
+    @DisplayName("projectApplicantList_프로젝트_기수가_null이면_학교_회장단_scope는_None")
+    void projectApplicantList_프로젝트_기수_null_학교회장_거부() {
+        Project project = project(OWNER_ID, null, CHAPTER_ID, SCHOOL_ID);
+        given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, MEMBER_ID)).willReturn(false);
+        given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
+            roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, SCHOOL_ID, null)
+        ));
+
+        ProjectApplicationAccessScope scope =
+            sut.resolveForProjectApplicantList(MEMBER_ID, project);
+
+        assertThat(scope).isInstanceOf(None.class);
+        verifyNoInteractions(getChapterUseCase);
+    }
+
+    @Test
     @DisplayName("projectApplicantList_역할이_없는_일반_챌린저면_None")
     void projectApplicantList_일반_챌린저_거부() {
         Project project = project(OWNER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
@@ -308,5 +363,54 @@ class ProjectApplicationAccessScopeResolverTest {
             sut.resolveForProjectApplicantList(MEMBER_ID, project);
 
         assertThat(scope).isInstanceOf(None.class);
+    }
+
+    @Test
+    @DisplayName("projectApplicantLists_batch는_PO_SubPM_중앙총괄_scope를_프로젝트별로_반환")
+    void projectApplicantLists_batch_scope_판정() {
+        // given
+        Project ownerProject = project(100L, MEMBER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
+        Project subPmProject = project(101L, OWNER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
+        Project centralProject = project(102L, OWNER_ID, GISU_ID, OTHER_CHAPTER_ID, SCHOOL_ID);
+        Project deniedProject = project(103L, OWNER_ID, OTHER_GISU_ID, OTHER_CHAPTER_ID, SCHOOL_ID);
+        List<Project> projects = List.of(ownerProject, subPmProject, centralProject, deniedProject);
+
+        given(loadProjectMemberPort.listProjectIdsByActivePlanMember(
+            Set.of(100L, 101L, 102L, 103L), MEMBER_ID))
+            .willReturn(List.of(101L));
+        given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
+            roleInfo(ChallengerRoleType.CENTRAL_PRESIDENT, OrganizationType.CENTRAL, null, GISU_ID)
+        ));
+
+        // when
+        Map<Long, ProjectApplicationAccessScope> result =
+            sut.resolveForProjectApplicantLists(MEMBER_ID, projects);
+
+        // then
+        assertThat(result.keySet()).containsExactly(100L, 101L, 102L, 103L);
+        assertThat(result.get(100L)).isEqualTo(new ProjectScoped(100L));
+        assertThat(result.get(101L)).isEqualTo(new ProjectScoped(101L));
+        assertThat(result.get(102L)).isEqualTo(new ProjectScoped(102L, true));
+        assertThat(result.get(103L)).isInstanceOf(None.class);
+    }
+
+    @Test
+    @DisplayName("projectApplicantLists_batch에서_프로젝트_기수가_null이면_학교_회장단_scope는_None")
+    void projectApplicantLists_batch_프로젝트_기수_null_학교회장_거부() {
+        // given
+        Project project = project(PROJECT_ID, OWNER_ID, null, CHAPTER_ID, SCHOOL_ID);
+        given(loadProjectMemberPort.listProjectIdsByActivePlanMember(Set.of(PROJECT_ID), MEMBER_ID))
+            .willReturn(List.of());
+        given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
+            roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, SCHOOL_ID, null)
+        ));
+
+        // when
+        Map<Long, ProjectApplicationAccessScope> result =
+            sut.resolveForProjectApplicantLists(MEMBER_ID, List.of(project));
+
+        // then
+        assertThat(result).containsEntry(PROJECT_ID, new None());
+        verifyNoInteractions(getChapterUseCase);
     }
 }

@@ -2,12 +2,6 @@ package com.umc.product.project.adapter.out.persistence;
 
 import static com.umc.product.project.domain.QProjectMember.projectMember;
 
-import com.querydsl.core.Tuple;
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.project.domain.ProjectMember;
-import com.umc.product.project.domain.enums.MatchingType;
-import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -17,8 +11,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Repository;
+
+import com.querydsl.core.Tuple;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingType;
+import com.umc.product.project.domain.enums.ProjectMemberStatus;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * ProjectMember QueryDSL 기반 조회 구현.
@@ -94,6 +97,7 @@ public class ProjectMemberQueryRepository {
                 projectMember.part.eq(part),
                 projectMember.status.eq(ProjectMemberStatus.ACTIVE)
             )
+            .orderBy(projectMember.createdAt.asc(), projectMember.id.asc())
             .fetch();
 
         Map<Long, List<ProjectMember>> result = new HashMap<>();
@@ -103,6 +107,27 @@ public class ProjectMemberQueryRepository {
             result.computeIfAbsent(projectId, k -> new ArrayList<>()).add(member);
         }
         return result;
+    }
+
+    /**
+     * 여러 프로젝트 중 특정 멤버가 ACTIVE PLAN 멤버인 프로젝트 ID 를 조회한다.
+     */
+    public List<Long> listProjectIdsByActivePlanMember(Collection<Long> projectIds, Long memberId) {
+        if (projectIds == null || projectIds.isEmpty()) {
+            return List.of();
+        }
+
+        return queryFactory
+            .select(projectMember.project.id)
+            .distinct()
+            .from(projectMember)
+            .where(
+                projectMember.project.id.in(projectIds),
+                projectMember.memberId.eq(memberId),
+                projectMember.part.eq(ChallengerPart.PLAN),
+                projectMember.status.eq(ProjectMemberStatus.ACTIVE)
+            )
+            .fetch();
     }
 
     /**
@@ -138,4 +163,5 @@ public class ProjectMemberQueryRepository {
         }
         return result;
     }
+
 }

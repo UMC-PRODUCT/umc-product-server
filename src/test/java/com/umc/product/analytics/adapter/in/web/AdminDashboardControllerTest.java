@@ -6,25 +6,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.umc.product.analytics.application.port.in.query.GetAdminDashboardActionQueueUseCase;
-import com.umc.product.analytics.application.port.in.query.GetAdminDashboardContextUseCase;
-import com.umc.product.analytics.application.port.in.query.GetAdminDashboardSummaryUseCase;
-import com.umc.product.analytics.application.port.in.query.GetAdminOperationsOverviewUseCase;
-import com.umc.product.analytics.application.port.in.query.GetAdminRiskChallengerUseCase;
-import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardActionQueueInfo;
-import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardContextInfo;
-import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardSummaryInfo;
-import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewInfo;
-import com.umc.product.analytics.domain.AdminAnalyticsScopeType;
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.global.config.JacksonConfig;
-import com.umc.product.global.security.JwtTokenProvider;
-import com.umc.product.global.security.MemberPrincipal;
-import com.umc.product.schedule.domain.enums.AttendanceStatus;
-import com.umc.product.support.RestDocsConfig;
 import java.time.LocalDate;
 import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,6 +23,29 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.umc.product.analytics.application.port.in.query.GetAdminDashboardActionQueueUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminDashboardContextUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminDashboardSummaryUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsAttendanceUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsOverviewUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsPointsUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSchoolsUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSignupsUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminOperationsStudyGroupsUseCase;
+import com.umc.product.analytics.application.port.in.query.GetAdminRiskChallengerUseCase;
+import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardActionQueueInfo;
+import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardContextInfo;
+import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardSummaryInfo;
+import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewInfo;
+import com.umc.product.analytics.domain.AdminAnalyticsScopeType;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.global.config.JacksonConfig;
+import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.schedule.domain.enums.AttendanceStatus;
+import com.umc.product.support.RestDocsConfig;
 
 @WebMvcTest(controllers = AdminDashboardController.class)
 @Import({JacksonConfig.class, RestDocsConfig.class})
@@ -72,6 +79,21 @@ class AdminDashboardControllerTest {
 
     @MockitoBean
     GetAdminOperationsOverviewUseCase getAdminOperationsOverviewUseCase;
+
+    @MockitoBean
+    GetAdminOperationsSchoolsUseCase getAdminOperationsSchoolsUseCase;
+
+    @MockitoBean
+    GetAdminOperationsPointsUseCase getAdminOperationsPointsUseCase;
+
+    @MockitoBean
+    GetAdminOperationsAttendanceUseCase getAdminOperationsAttendanceUseCase;
+
+    @MockitoBean
+    GetAdminOperationsStudyGroupsUseCase getAdminOperationsStudyGroupsUseCase;
+
+    @MockitoBean
+    GetAdminOperationsSignupsUseCase getAdminOperationsSignupsUseCase;
 
     @BeforeEach
     void setUpSecurityContext() {

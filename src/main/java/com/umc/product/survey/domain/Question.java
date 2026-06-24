@@ -2,8 +2,23 @@ package com.umc.product.survey.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.survey.domain.enums.QuestionType;
-import jakarta.persistence.*;
-import lombok.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
@@ -50,8 +65,19 @@ public class Question extends BaseEntity {
         boolean isRequired,
         long orderNo
     ) {
+        return create(title, null, type, isRequired, orderNo);
+    }
+
+    public static Question create(
+        String title,
+        String description,
+        QuestionType type,
+        boolean isRequired,
+        long orderNo
+    ) {
         return Question.builder()
             .title(title)
+            .description(description)
             .type(type)
             .isRequired(isRequired)
             .orderNo(orderNo)
@@ -88,10 +114,16 @@ public class Question extends BaseEntity {
      * null 인 필드는 기존 값 유지. type 변경은 별도 {@link #changeType} 사용.
      */
     public void update(String title, String description, Boolean isRequired) {
+        update(title, description, isRequired, false);
+    }
+
+    public void update(String title, String description, Boolean isRequired, boolean clearDescription) {
         if (title != null) {
             this.title = title;
         }
-        if (description != null) {
+        if (clearDescription) {
+            this.description = null;
+        } else if (description != null) {
             this.description = description;
         }
         if (isRequired != null) {

@@ -1,9 +1,11 @@
 package com.umc.product.global.security;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
@@ -84,7 +86,7 @@ public class JwtTokenProvider {
     /**
      * emailVerificationToken 발급
      * <p>
-     * purpose claim 으로 회원가입(REGISTER) 과 비밀번호 초기화(PASSWORD_RESET) 흐름을 구분한다.
+     * purpose claim 으로 회원가입(REGISTER), 비밀번호 초기화(PASSWORD_RESET), 이메일 변경(CHANGE_EMAIL) 흐름을 구분한다.
      * 한 흐름에서 발급된 토큰이 다른 흐름에 재사용되지 않도록, 파싱 시 expectedPurpose 와 비교한다.
      */
     public String createEmailVerificationToken(String email, EmailVerificationPurpose purpose) {
@@ -197,6 +199,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
             .subject(String.valueOf(memberId)) // 사용자 식별자 (ID)
+            .id(UUID.randomUUID().toString())
             .issuedAt(now)
             .expiration(validityDate)
             .signWith(refreshTokenSecret)
@@ -269,16 +272,16 @@ public class JwtTokenProvider {
             parseClaims(token, secretKey);
             return true;
         } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
-            log.info("잘못된 JWT 서명입니다.");
+            log.debug("잘못된 JWT 서명입니다.");
             throw new AuthenticationDomainException(AuthenticationErrorCode.WRONG_JWT_SIGNATURE);
         } catch (ExpiredJwtException e) {
-            log.info("만료된 JWT 토큰입니다.");
+            log.debug("만료된 JWT 토큰입니다.");
             throw new AuthenticationDomainException(AuthenticationErrorCode.EXPIRED_JWT_TOKEN);
         } catch (UnsupportedJwtException e) {
-            log.info("지원되지 않는 JWT 토큰입니다.");
+            log.debug("지원되지 않는 JWT 토큰입니다.");
             throw new AuthenticationDomainException(AuthenticationErrorCode.UNSUPPORTED_JWT);
         } catch (IllegalArgumentException e) {
-            log.info("JWT 토큰이 잘못되었습니다.");
+            log.debug("JWT token 형식이 올바르지 않습니다.");
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_JWT);
         }
 //        return false;
@@ -302,13 +305,33 @@ public class JwtTokenProvider {
     }
 
     /**
-     * RefreshToken의 정보를 파싱해서 memberId를 반환합니다.
+     * RefreshToken의 정보를 파싱해서 allow-list 식별에 필요한 claims 를 반환합니다.
      */
-    public Long parseRefreshToken(String token) {
+    public RefreshTokenClaims parseRefreshToken(String token) {
         validateToken(token, refreshTokenSecret);
 
         Claims claims = parseClaims(token, refreshTokenSecret);
-        return Long.parseLong(claims.getSubject());
+        String jti = claims.getId();
+        if (jti == null) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        try {
+            return new RefreshTokenClaims(
+                Long.parseLong(claims.getSubject()),
+                UUID.fromString(jti),
+                toInstant(claims.getExpiration())
+            );
+        } catch (IllegalArgumentException e) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_REFRESH_TOKEN);
+        }
+    }
+
+    private Instant toInstant(Date date) {
+        if (date == null) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        return date.toInstant();
     }
 
     /**
@@ -332,7 +355,7 @@ public class JwtTokenProvider {
      * emailVerificationToken 파싱 및 검증
      * <p>
      * 토큰의 purpose claim 이 expectedPurpose 와 일치하지 않으면 INVALID_EMAIL_VERIFICATION 예외를 던진다.
-     * 예) 회원가입(REGISTER) 흐름에서 발급된 토큰을 비밀번호 초기화에 사용하려는 cross-purpose 공격 방어.
+     * 예) 회원가입(REGISTER) 흐름에서 발급된 토큰을 비밀번호 초기화나 이메일 변경에 사용하려는 cross-purpose 공격 방어.
      */
     public String parseEmailVerificationToken(String token, EmailVerificationPurpose expectedPurpose) {
         validateToken(token, emailVerificationTokenSecret);

@@ -36,7 +36,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Authentication | 로그인", description = "ID/PW 최초 등록, 변경, ID 중복확인, OAuth 로그인, AT 갱신 등")
+@Tag(name = "Authentication | 로그인", description = "이메일과 비밀번호 기반 로그인 정보를 관리합니다.")
 public class CredentialAuthenticationController {
 
     private final CredentialAuthenticationUseCase credentialAuthenticationUseCase;
@@ -44,7 +44,7 @@ public class CredentialAuthenticationController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/credentials")
-    @Operation(summary = "[CREDENTIAL-002] 비밀번호 자격증명 최초 등록",
+    @Operation(operationId = "CREDENTIAL-002", summary = "비밀번호 자격증명 최초 등록",
         description = "OAuth 로 가입한 회원이 이메일/비밀번호로 로그인할 수 있도록 비밀번호를 추가 등록합니다. "
             + "이메일은 회원의 기존 Member.email 을 그대로 사용합니다.")
     public void registerCredential(
@@ -57,7 +57,7 @@ public class CredentialAuthenticationController {
     }
 
     @PatchMapping("/password")
-    @Operation(summary = "[CREDENTIAL-003] 비밀번호 변경",
+    @Operation(operationId = "CREDENTIAL-003", summary = "비밀번호 변경",
         description = "현재 비밀번호 검증 후 새 비밀번호로 교체합니다.")
     public void changePassword(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -70,7 +70,7 @@ public class CredentialAuthenticationController {
 
     @Public
     @PatchMapping("/password/reset")
-    @Operation(summary = "[CREDENTIAL-007] 비밀번호 초기화",
+    @Operation(operationId = "CREDENTIAL-007", summary = "비밀번호 초기화",
         description = "비밀번호를 잊은 회원이 이메일 인증으로 발급받은 emailVerificationToken 을 사용해 "
             + "현재 비밀번호 없이 새 비밀번호로 교체합니다. 사용자 열거 방지를 위해 회원 없음/자격증명 미등록 등의 "
             + "사유는 모두 동일한 메시지로 응답합니다.")
@@ -86,7 +86,7 @@ public class CredentialAuthenticationController {
 
     @Public
     @GetMapping("/email/availability")
-    @Operation(summary = "[CREDENTIAL-005] 이메일 사용 가능 여부 조회",
+    @Operation(operationId = "CREDENTIAL-005", summary = "이메일 사용 가능 여부 조회",
         description = "email 형식이 유효하고 아직 사용되지 않았는지 확인합니다. 형식이 잘못되면 400 응답입니다.")
     public EmailAvailabilityResponse checkEmailAvailability(
         @RequestParam String email
@@ -97,7 +97,7 @@ public class CredentialAuthenticationController {
 
     @Public
     @PostMapping("/login/email")
-    @Operation(summary = "[LOGIN-011] 이메일/PW 로그인",
+    @Operation(operationId = "LOGIN-011", summary = "이메일과 비밀번호로 로그인",
         description = "email/password 로 인증하여 AccessToken/RefreshToken 을 발급받습니다. "
             + "clientType(ANDROID, IOS, WEB)을 함께 전달하면 AccessToken claim 으로 반영됩니다.")
     public LocalLoginResponse loginByEmail(

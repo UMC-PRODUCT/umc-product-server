@@ -1,7 +1,5 @@
 package com.umc.product.authentication.adapter.in.web;
 
-import java.util.Collections;
-
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,9 +11,12 @@ import com.umc.product.authentication.adapter.in.web.dto.request.KakaoCodeLoginR
 import com.umc.product.authentication.adapter.in.web.dto.request.KakaoLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.response.OAuthLoginResponse;
 import com.umc.product.authentication.adapter.in.web.swagger.AuthenticationControllerInterface;
+import com.umc.product.authentication.application.port.in.command.ManageAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.AuthorizationCodeLoginCommand;
+import com.umc.product.authentication.application.port.in.command.dto.IssueAuthenticationTokensCommand;
+import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
 import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
@@ -23,8 +24,6 @@ import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
-import com.umc.product.term.application.port.in.query.GetRequiredTermConsentStatusUseCase;
-import com.umc.product.term.application.port.in.query.dto.RequiredTermConsentStatusInfo;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +34,9 @@ import lombok.RequiredArgsConstructor;
 public class AuthenticationController implements AuthenticationControllerInterface {
 
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
+    private final ManageAuthenticationUseCase manageAuthenticationUseCase;
     private final VerifyOAuthTokenPort verifyOAuthTokenPort;
     private final JwtTokenProvider jwtTokenProvider;
-    private final GetRequiredTermConsentStatusUseCase getRequiredTermConsentStatusUseCase;
 
     @Override
     @PostMapping("login/google")
@@ -119,19 +118,12 @@ public class AuthenticationController implements AuthenticationControllerInterfa
                                                   String appleRefreshToken, ClientType clientType) {
         if (result.isExistingMember()) {
             // 기존 회원: JWT 발급
-            RequiredTermConsentStatusInfo requiredTermConsentStatus =
-                getRequiredTermConsentStatusUseCase.getRequiredTermConsentStatus(result.memberId());
-            String accessToken = jwtTokenProvider.createAccessToken(
-                result.memberId(),
-                Collections.emptyList(),
-                clientType,
-                !requiredTermConsentStatus.needsReconsent(),
-                requiredTermConsentStatus.agreedRequiredTermIds()
+            NewTokens newTokens = manageAuthenticationUseCase.issueTokens(
+                IssueAuthenticationTokensCommand.of(result.memberId(), clientType)
             );
-            String refreshToken = jwtTokenProvider.createRefreshToken(result.memberId());
 
             return OAuthLoginResponse.ofLoginSuccess(
-                provider, accessToken, refreshToken
+                provider, newTokens.accessToken(), newTokens.refreshToken()
             );
         } else {
             // 신규 회원: oAuthVerificationToken 발급 (회원가입 시 사용)

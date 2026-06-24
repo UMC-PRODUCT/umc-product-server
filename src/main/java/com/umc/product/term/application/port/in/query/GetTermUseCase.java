@@ -1,8 +1,11 @@
 package com.umc.product.term.application.port.in.query;
 
+import java.util.List;
+import java.util.Set;
+
+import com.umc.product.term.application.port.in.query.dto.ActiveTermInfo;
 import com.umc.product.term.application.port.in.query.dto.TermInfo;
 import com.umc.product.term.domain.enums.TermType;
-import java.util.Set;
 
 public interface GetTermUseCase {
     /**
@@ -16,6 +19,11 @@ public interface GetTermUseCase {
      * ID로 약관 정보를 가져옵니다.
      */
     TermInfo getTermsById(Long termsId);
+
+    /**
+     * 현재 활성화된 모든 약관을 조회합니다.
+     */
+    List<ActiveTermInfo> listActiveTerms();
 
     /**
      * 현재 활성화된 필수 약관 ID 목록을 조회합니다.

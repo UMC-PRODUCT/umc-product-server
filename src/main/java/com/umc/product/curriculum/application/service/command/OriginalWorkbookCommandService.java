@@ -1,5 +1,15 @@
 package com.umc.product.curriculum.application.service.command;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.curriculum.application.port.in.command.AutoReleaseWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.ManageOriginalWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.ChangeOriginalWorkbookStatusCommand;
@@ -11,18 +21,13 @@ import com.umc.product.curriculum.application.port.out.LoadWeeklyCurriculumPort;
 import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookPort;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.WeeklyCurriculum;
-import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import com.umc.product.global.exception.NotImplementedException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.umc.product.global.exception.constant.Domain;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -47,6 +52,13 @@ public class OriginalWorkbookCommandService implements ManageOriginalWorkbookUse
         return ids;
     }
 
+    @Audited(
+        domain = Domain.CURRICULUM,
+        action = AuditAction.CREATE,
+        targetType = "OriginalWorkbook",
+        targetId = "#result",
+        description = "'원본 워크북을 생성했습니다.'"
+    )
     @Override
     public Long create(CreateOriginalWorkbookCommand command) {
         WeeklyCurriculum weeklyCurriculum = loadWeeklyCurriculumPort.getById(command.weeklyCurriculumId());
@@ -66,6 +78,13 @@ public class OriginalWorkbookCommandService implements ManageOriginalWorkbookUse
         return saveOriginalWorkbookPort.save(workbook).getId();
     }
 
+    @Audited(
+        domain = Domain.CURRICULUM,
+        action = AuditAction.UPDATE,
+        targetType = "OriginalWorkbook",
+        targetId = "#command.originalWorkbookId()",
+        description = "'원본 워크북을 수정했습니다.'"
+    )
     @Override
     public void edit(EditOriginalWorkbookCommand command) {
         OriginalWorkbook workbook = loadOriginalWorkbookPort.getById(command.originalWorkbookId());
@@ -73,6 +92,13 @@ public class OriginalWorkbookCommandService implements ManageOriginalWorkbookUse
         saveOriginalWorkbookPort.save(workbook);
     }
 
+    @Audited(
+        domain = Domain.CURRICULUM,
+        action = AuditAction.DELETE,
+        targetType = "OriginalWorkbook",
+        targetId = "#originalWorkbookId",
+        description = "'원본 워크북을 삭제했습니다.'"
+    )
     @Override
     public void delete(Long originalWorkbookId) {
         OriginalWorkbook workbook = loadOriginalWorkbookPort.getById(originalWorkbookId);
@@ -101,6 +127,12 @@ public class OriginalWorkbookCommandService implements ManageOriginalWorkbookUse
 
     // ===== AutoReleaseWorkbookUseCase =====
 
+    @Audited(
+        domain = Domain.CURRICULUM,
+        action = AuditAction.PUBLISH,
+        targetType = "OriginalWorkbook",
+        description = "'배포 예정 워크북 자동 배포를 실행했습니다.'"
+    )
     @Override
     public int releaseAllDue() {
         throw new NotImplementedException();

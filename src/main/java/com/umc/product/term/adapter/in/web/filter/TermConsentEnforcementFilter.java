@@ -1,18 +1,15 @@
 package com.umc.product.term.adapter.in.web.filter;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.UrlPathHelper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.umc.product.global.response.ApiResponse;
+import com.umc.product.global.response.ApiErrorResponseWriter;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.util.PublicEndpointCollector;
 import com.umc.product.global.security.util.SecurityEndpoint;
@@ -28,23 +25,23 @@ public class TermConsentEnforcementFilter extends OncePerRequestFilter {
 
     private static final UrlPathHelper URL_PATH_HELPER = new UrlPathHelper();
 
-    private final ObjectMapper objectMapper;
+    private final ApiErrorResponseWriter errorResponseWriter;
     private final RequestMappingHandlerMapping requestMappingHandlerMapping;
     private volatile List<SecurityEndpoint> allowedEndpoints;
 
     public TermConsentEnforcementFilter(
-        ObjectMapper objectMapper,
+        ApiErrorResponseWriter errorResponseWriter,
         RequestMappingHandlerMapping requestMappingHandlerMapping
     ) {
-        this.objectMapper = objectMapper;
+        this.errorResponseWriter = errorResponseWriter;
         this.requestMappingHandlerMapping = requestMappingHandlerMapping;
     }
 
     TermConsentEnforcementFilter(
-        ObjectMapper objectMapper,
+        ApiErrorResponseWriter errorResponseWriter,
         List<SecurityEndpoint> publicEndpoints
     ) {
-        this.objectMapper = objectMapper;
+        this.errorResponseWriter = errorResponseWriter;
         this.requestMappingHandlerMapping = null;
         this.allowedEndpoints = SecurityEndpointAllowlist.reconsentBypassEndpoints(publicEndpoints);
     }
@@ -113,18 +110,7 @@ public class TermConsentEnforcementFilter extends OncePerRequestFilter {
 
     private void writeReconsentRequiredResponse(HttpServletResponse response) throws IOException {
         TermErrorCode errorCode = TermErrorCode.TERMS_RECONSENT_REQUIRED;
-
-        response.setStatus(errorCode.getHttpStatus().value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-
-        ApiResponse<Void> payload = ApiResponse.onFailure(
-            errorCode.getCode(),
-            errorCode.getMessage(),
-            null
-        );
-
-        objectMapper.writeValue(response.getWriter(), payload);
+        errorResponseWriter.write(response, errorCode);
     }
 
 }

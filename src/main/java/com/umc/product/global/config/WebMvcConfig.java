@@ -26,10 +26,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addRedirectViewController("/docs", "/docs/scalar.html");
-        registry.addRedirectViewController("/docs/", "/docs/scalar.html");
-        registry.addRedirectViewController("/docs/catalog/api", "/docs/catalog/api/index.html");
-        registry.addRedirectViewController("/docs/catalog/api/", "/docs/catalog/api/index.html");
+        registry.addRedirectViewController(SecurityPathConfig.SCALAR_ENTRY_PATH, "/docs/scalar.html");
+        registry.addRedirectViewController(SecurityPathConfig.SCALAR_ENTRY_SLASH_PATH, "/docs/scalar.html");
         registry.addRedirectViewController("/docs/catalog/error", "/docs/catalog/error/index.html");
         registry.addRedirectViewController("/docs/catalog/error/", "/docs/catalog/error/index.html");
     }
@@ -38,12 +36,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loggingInterceptor)
             .addPathPatterns("/**")
-            .excludePathPatterns(
-                "/actuator/**",
-                "/swagger-ui/**",
-                "/docs/**",
-                "/docs-json/**",
-                "/v3/api-docs/**"
-            );
+            .excludePathPatterns(SecurityPathConfig.loggingExcludedPaths());
     }
 }

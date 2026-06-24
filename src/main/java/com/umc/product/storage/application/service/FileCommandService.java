@@ -1,26 +1,36 @@
 package com.umc.product.storage.application.service;
 
+import java.util.Objects;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.storage.application.port.in.command.ManageFileUseCase;
+import com.umc.product.storage.application.port.in.command.dto.DeleteFileCommand;
 import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
 import com.umc.product.storage.application.port.in.command.dto.PrepareFileUploadCommand;
 import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
 import com.umc.product.storage.application.port.out.SaveFileMetadataPort;
 import com.umc.product.storage.application.port.out.StoragePort;
+import com.umc.product.storage.application.port.out.dto.StorageObjectInfo;
 import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
-import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class FileCommandService implements ManageFileUseCase {
 
     private static final long UPLOAD_URL_DURATION_MINUTES = 15;
@@ -28,8 +38,17 @@ public class FileCommandService implements ManageFileUseCase {
     private final StoragePort storagePort;
     private final LoadFileMetadataPort loadFileMetadataPort;
     private final SaveFileMetadataPort saveFileMetadataPort;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
+    @Audited(
+        domain = Domain.STORAGE,
+        action = AuditAction.CREATE,
+        targetType = "FileMetadata",
+        targetId = "#result.fileId()",
+        description = "'파일 업로드 URL을 생성했습니다.'"
+    )
     @Override
+    @Transactional
     public FileUploadInfo getFileUploadUrl(PrepareFileUploadCommand command) {
         // 파일 검증
         validateFile(command);
@@ -65,10 +84,11 @@ public class FileCommandService implements ManageFileUseCase {
         FileUploadInfo uploadInfo = storagePort.generateUploadUrl(
             storageKey,
             command.contentType(),
+            command.fileSize(),
             UPLOAD_URL_DURATION_MINUTES
         );
 
-        log.info("파일 업로드 URL 생성 완료: fileId={}, category={}", fileId, command.category());
+        log.info("파일 업로드 URL을 생성했습니다: fileId={}, category={}", fileId, command.category());
 
         return new FileUploadInfo(
             fileId,
@@ -79,7 +99,15 @@ public class FileCommandService implements ManageFileUseCase {
         );
     }
 
+    @Audited(
+        domain = Domain.STORAGE,
+        action = AuditAction.CHECK,
+        targetType = "FileMetadata",
+        targetId = "#fileId",
+        description = "'파일 업로드를 확인했습니다.'"
+    )
     @Override
+    @Transactional
     public void confirmUpload(String fileId) {
         FileMetadata metadata = loadFileMetadataPort.findByFileId(fileId)
             .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
@@ -88,29 +116,73 @@ public class FileCommandService implements ManageFileUseCase {
             throw new StorageException(StorageErrorCode.FILE_ALREADY_UPLOADED);
         }
 
-        // 실제 스토리지에 파일이 존재하는지 확인
-        if (!storagePort.exists(metadata.getStorageKey())) {
-            throw new StorageException(StorageErrorCode.FILE_UPLOAD_NOT_COMPLETED);
-        }
+        StorageObjectInfo objectInfo = storagePort.findObjectInfoByStorageKey(metadata.getStorageKey())
+            .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_UPLOAD_NOT_COMPLETED));
 
-        metadata.markAsUploaded();
+        confirmUploaded(metadata, objectInfo);
         saveFileMetadataPort.save(metadata);
 
-        log.info("파일 업로드 완료 확인: fileId={}", fileId);
+        log.info("파일 업로드를 확인했습니다: fileId={}", fileId);
     }
 
+    @Audited(
+        domain = Domain.STORAGE,
+        action = AuditAction.DELETE,
+        targetType = "FileMetadata",
+        targetId = "#command.fileId()",
+        description = "'파일을 삭제했습니다.'"
+    )
     @Override
-    public void deleteFile(String fileId) {
-        FileMetadata metadata = loadFileMetadataPort.findByFileId(fileId)
+    public void deleteFile(DeleteFileCommand command) {
+        FileMetadata metadata = loadFileMetadataPort.findByFileId(command.fileId())
             .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
+
+        validateDeletePermission(metadata, command.requesterMemberId());
 
         // 스토리지에서 파일 삭제
         storagePort.delete(metadata.getStorageKey());
 
         // 메타데이터 삭제
-        saveFileMetadataPort.deleteByFileId(fileId);
+        saveFileMetadataPort.deleteByFileId(command.fileId());
 
-        log.info("파일 삭제 완료: fileId={}", fileId);
+        log.info("파일을 삭제했습니다: fileId={}", command.fileId());
+    }
+
+    private void validateDeletePermission(FileMetadata metadata, Long requesterMemberId) {
+        if (Objects.equals(metadata.getUploadedMemberId(), requesterMemberId) || isSuperAdmin(requesterMemberId)) {
+            return;
+        }
+
+        throw new StorageException(StorageErrorCode.FILE_DELETE_FORBIDDEN);
+    }
+
+    private void confirmUploaded(FileMetadata metadata, StorageObjectInfo objectInfo) {
+        try {
+            metadata.confirmUploaded(objectInfo.contentLength(), objectInfo.contentType());
+        } catch (StorageException e) {
+            deleteInvalidUpload(metadata.getStorageKey(), e);
+            throw e;
+        }
+    }
+
+    private void deleteInvalidUpload(String storageKey, StorageException validationException) {
+        try {
+            storagePort.delete(storageKey);
+        } catch (Exception deleteException) {
+            log.warn(
+                "검증 실패 파일 삭제 실패: storageKey={}, validationError={}",
+                storageKey,
+                validationException.getBaseCode().getCode(),
+                deleteException
+            );
+        }
+    }
+
+    private boolean isSuperAdmin(Long memberId) {
+        return getChallengerRoleUseCase.findAllByMemberId(memberId).stream()
+            .map(ChallengerRoleInfo::roleType)
+            .filter(Objects::nonNull)
+            .anyMatch(roleType -> roleType.isSuperAdmin());
     }
 
     private void validateFile(PrepareFileUploadCommand command) {

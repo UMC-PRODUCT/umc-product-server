@@ -1,8 +1,6 @@
 package com.umc.product.term.adapter.in.web.filter;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.never;
 
 import java.io.IOException;
 import java.util.List;
@@ -10,9 +8,6 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpMethod;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -21,19 +16,16 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.global.response.ApiErrorResponseWriter;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.util.SecurityEndpoint;
-import com.umc.product.term.application.port.in.query.GetRequiredTermConsentStatusUseCase;
 
 import jakarta.servlet.ServletException;
 
-@ExtendWith(MockitoExtension.class)
 class TermConsentEnforcementFilterTest {
 
-    @Mock
-    GetRequiredTermConsentStatusUseCase getRequiredTermConsentStatusUseCase;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ApiErrorResponseWriter errorResponseWriter =
+        new ApiErrorResponseWriter(new ObjectMapper());
 
     @AfterEach
     void tearDown() {
@@ -57,7 +49,6 @@ class TermConsentEnforcementFilterTest {
         // then
         assertThat(response.getStatus()).isEqualTo(403);
         assertThat(response.getContentAsString()).contains("TERMS-0012");
-        then(getRequiredTermConsentStatusUseCase).should(never()).getRequiredTermConsentStatus(100L);
     }
 
     @Test
@@ -76,7 +67,6 @@ class TermConsentEnforcementFilterTest {
         // then
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(filterChain.getRequest()).isSameAs(request);
-        then(getRequiredTermConsentStatusUseCase).should(never()).getRequiredTermConsentStatus(100L);
     }
 
     @Test
@@ -95,7 +85,6 @@ class TermConsentEnforcementFilterTest {
         // then
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(filterChain.getRequest()).isSameAs(request);
-        then(getRequiredTermConsentStatusUseCase).should(never()).getRequiredTermConsentStatus(100L);
     }
 
     @Test
@@ -115,7 +104,6 @@ class TermConsentEnforcementFilterTest {
         // then
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(filterChain.getRequest()).isSameAs(request);
-        then(getRequiredTermConsentStatusUseCase).should(never()).getRequiredTermConsentStatus(100L);
     }
 
     @Test
@@ -136,7 +124,6 @@ class TermConsentEnforcementFilterTest {
         // then
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(filterChain.getRequest()).isSameAs(request);
-        then(getRequiredTermConsentStatusUseCase).should(never()).getRequiredTermConsentStatus(100L);
     }
 
     @Test
@@ -155,7 +142,6 @@ class TermConsentEnforcementFilterTest {
         // then
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(filterChain.getRequest()).isSameAs(request);
-        then(getRequiredTermConsentStatusUseCase).should(never()).getRequiredTermConsentStatus(100L);
     }
 
     @Test
@@ -175,7 +161,6 @@ class TermConsentEnforcementFilterTest {
         // then
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(filterChain.getRequest()).isSameAs(request);
-        then(getRequiredTermConsentStatusUseCase).should(never()).getRequiredTermConsentStatus(100L);
     }
 
     private void authenticate(Long memberId, boolean requiredTermsAgreed) {
@@ -194,7 +179,7 @@ class TermConsentEnforcementFilterTest {
 
     private TermConsentEnforcementFilter newFilter(List<SecurityEndpoint> publicEndpoints) {
         return new TermConsentEnforcementFilter(
-            objectMapper,
+            errorResponseWriter,
             publicEndpoints
         );
     }

@@ -2,6 +2,16 @@ package com.umc.product.analytics.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Instant;
+import java.util.Set;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
+
 import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardActionQueueInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardSummaryInfo;
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
@@ -12,8 +22,6 @@ import com.umc.product.challenger.domain.enums.PointType;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.global.config.JpaConfig;
-import com.umc.product.global.config.QueryDslConfig;
 import com.umc.product.member.domain.Member;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
@@ -24,21 +32,10 @@ import com.umc.product.schedule.domain.ScheduleParticipant;
 import com.umc.product.schedule.domain.ScheduleParticipantAttendance;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
-import com.umc.product.support.TestContainersConfig;
-import java.time.Instant;
-import java.util.Set;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.context.annotation.Import;
+import com.umc.product.support.PersistenceAdapterTest;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({JpaConfig.class, QueryDslConfig.class, TestContainersConfig.class, AdminDashboardAnalyticsQueryRepository.class})
+@PersistenceAdapterTest
+@Import({AdminDashboardAnalyticsQueryRepository.class})
 @DisplayName("AdminDashboardAnalyticsQueryRepository")
 class AdminDashboardAnalyticsQueryRepositoryTest {
 

@@ -30,6 +30,11 @@ public class TermPersistenceAdapter implements LoadTermPort, SaveTermPort {
     }
 
     @Override
+    public List<Term> listActive() {
+        return repository.findAllByActiveIsTrueOrderByIdAsc();
+    }
+
+    @Override
     public boolean existsById(Long id) {
         return repository.existsById(id);
     }

@@ -16,9 +16,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.authentication.application.port.out.DeleteRefreshTokenPort;
 import com.umc.product.authentication.application.port.out.LoadEmailVerificationPort;
+import com.umc.product.authentication.application.port.out.LoadRefreshTokenPort;
 import com.umc.product.authentication.application.port.out.SaveEmailVerificationPort;
 import com.umc.product.authentication.application.service.AuthenticationService;
+import com.umc.product.authentication.application.service.AuthenticationTokenIssuer;
 import com.umc.product.authentication.domain.EmailVerification;
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.global.event.adapter.out.EventPayloadSerializer;
@@ -27,7 +30,6 @@ import com.umc.product.global.event.application.port.out.SaveEventOutboxPort;
 import com.umc.product.global.event.domain.EventOutbox;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
-import com.umc.product.term.application.port.in.query.GetRequiredTermConsentStatusUseCase;
 
 @DisplayName("SendVerificationEmailEvent outbox flow")
 @ExtendWith(MockitoExtension.class)
@@ -42,13 +44,19 @@ class SendVerificationEmailOutboxFlowTest {
     private SaveEmailVerificationPort saveEmailVerificationPort;
 
     @Mock
+    private LoadRefreshTokenPort loadRefreshTokenPort;
+
+    @Mock
+    private DeleteRefreshTokenPort deleteRefreshTokenPort;
+
+    @Mock
     private JwtTokenProvider jwtTokenProvider;
 
     @Mock
-    private GetMemberCredentialUseCase getMemberCredentialUseCase;
+    private AuthenticationTokenIssuer authenticationTokenIssuer;
 
     @Mock
-    private GetRequiredTermConsentStatusUseCase getRequiredTermConsentStatusUseCase;
+    private GetMemberCredentialUseCase getMemberCredentialUseCase;
 
     @Test
     @DisplayName("이메일 인증 세션 생성 시 SendVerificationEmailEvent가 event outbox로 저장된다")
@@ -57,13 +65,15 @@ class SendVerificationEmailOutboxFlowTest {
         AuthenticationService service = new AuthenticationService(
             loadEmailVerificationPort,
             saveEmailVerificationPort,
+            loadRefreshTokenPort,
+            deleteRefreshTokenPort,
             jwtTokenProvider,
+            authenticationTokenIssuer,
             getMemberCredentialUseCase,
             new OutboxDomainEventPublisher(
                 saveEventOutboxPort,
                 new EventPayloadSerializer(new ObjectMapper().findAndRegisterModules())
-            ),
-            getRequiredTermConsentStatusUseCase
+            )
         );
         EmailVerification persisted = EmailVerification.builder()
             .email(EMAIL)

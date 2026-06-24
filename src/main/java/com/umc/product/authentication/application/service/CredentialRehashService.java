@@ -1,14 +1,16 @@
 package com.umc.product.authentication.application.service;
 
-import com.umc.product.member.application.port.in.command.ManageMemberCredentialUseCase;
-import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswordCommand;
-import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.member.application.port.in.command.ManageMemberCredentialUseCase;
+import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswordCommand;
+import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 비밀번호 해시 정책 변경 시 점진적으로 재해싱(Rehash)을 수행하는 서비스.
@@ -36,7 +38,7 @@ public class CredentialRehashService {
                 manageMemberCredentialUseCase.changePassword(
                     ChangeMemberPasswordCommand.of(credential.memberId(), upgraded)
                 );
-                log.info("[ID/PW 로그인] 비밀번호 해시 정책 갱신 완료: memberId={}", credential.memberId());
+                log.info("[ID/PW 로그인] 비밀번호 해시 정책을 갱신했습니다: memberId={}", credential.memberId());
             } catch (Exception e) {
                 // rehash 실패는 로그인 자체에는 영향을 주지 않으므로 로그만 남기고 삼킨다.
                 log.warn("[ID/PW 로그인] 비밀번호 해시 정책 갱신 실패: memberId={}", credential.memberId(), e);

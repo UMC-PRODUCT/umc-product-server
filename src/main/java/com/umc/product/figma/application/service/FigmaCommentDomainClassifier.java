@@ -1,5 +1,16 @@
 package com.umc.product.figma.application.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.figma.application.port.out.FigmaClassificationCachePort;
@@ -10,16 +21,8 @@ import com.umc.product.llm.application.port.in.ChatCompleteUseCase;
 import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
 import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
 import com.umc.product.llm.domain.exception.LlmDomainException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 /**
  * Figma 댓글 본문을 LLM 으로 분석해 등록된 라우팅 도메인 키 중 하나로 분류한다. 후보 도메인 리스트는 운영진이 figma_routing_domain 에 등록한 도메인 키들에서 가져오며, LLM 응답이
@@ -207,7 +210,7 @@ public class FigmaCommentDomainClassifier {
                 // 호출은 성공했으나 응답이 후보에 매칭되지 않음 → callSucceeded=true 로 negative 캐싱 허용.
                 return new SingleClassifyOutcome(null, true);
             }
-            log.debug("LLM 분류 성공: commentId={}, picked={}, provider={}",
+            log.debug("LLM 분류를 완료했습니다: commentId={}, picked={}, provider={}",
                 comment.commentId(), picked, result.provider());
             persistIfEligible(comment.commentId(), picked, result.provider());
             return new SingleClassifyOutcome(picked, true);

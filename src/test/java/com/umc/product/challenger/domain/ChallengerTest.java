@@ -1,13 +1,19 @@
 package com.umc.product.challenger.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.umc.product.challenger.domain.exception.ChallengerDomainException;
+import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
+
+@DisplayName("Challenger 도메인")
 class ChallengerTest {
     Challenger challenger;
 
@@ -25,24 +31,71 @@ class ChallengerTest {
         assertThat(challenger.getStatus()).isEqualTo(ChallengerStatus.ACTIVE);
     }
 
-    @Test
-    void 활성_상태가_아닌_챌린저는_상태를_변경할_수_없다() {
-        // given
+    @Nested
+    @DisplayName("changePart")
+    class ChangePart {
 
-        // when
+        @Test
+        @DisplayName("ACTIVE 챌린저는 파트를 변경할 수 있다")
+        void ACTIVE_챌린저는_파트를_변경할_수_있다() {
+            challenger.changePart(ChallengerPart.WEB);
 
-        // then
+            assertThat(challenger.getPart()).isEqualTo(ChallengerPart.WEB);
+        }
 
+        @Test
+        @DisplayName("ACTIVE 상태가 아니면 파트를 변경할 수 없다")
+        void ACTIVE_상태가_아니면_파트를_변경할_수_없다() {
+            challenger.changeStatus(ChallengerStatus.WITHDRAWN, 99L, "탈부");
+
+            assertThatThrownBy(() -> challenger.changePart(ChallengerPart.WEB))
+                .isInstanceOf(ChallengerDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ChallengerErrorCode.CHALLENGER_NOT_ACTIVE);
+        }
     }
 
-    @DisplayName("챌린저 상태를 변경할 때는 도메인 메서드를 이용해야 한다")
+    @Nested
+    @DisplayName("changeStatus")
+    class ChangeStatus {
+
+        @Test
+        @DisplayName("ACTIVE 챌린저는 상태 변경 사유와 수정자를 기록한다")
+        void ACTIVE_챌린저는_상태_변경_사유와_수정자를_기록한다() {
+            challenger.changeStatus(ChallengerStatus.EXPELLED, 99L, "징계");
+
+            assertThat(challenger.getStatus()).isEqualTo(ChallengerStatus.EXPELLED);
+            assertThat(challenger.getModifiedBy()).isEqualTo(99L);
+            assertThat(challenger.getModificationReason()).isEqualTo("징계");
+        }
+
+        @Test
+        @DisplayName("ACTIVE 상태가 아니면 다시 상태를 변경할 수 없다")
+        void ACTIVE_상태가_아니면_다시_상태를_변경할_수_없다() {
+            challenger.changeStatus(ChallengerStatus.WITHDRAWN, 99L, "탈부");
+
+            assertThatThrownBy(() -> challenger.changeStatus(ChallengerStatus.EXPELLED, 100L, "징계"))
+                .isInstanceOf(ChallengerDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ChallengerErrorCode.CHALLENGER_NOT_ACTIVE);
+        }
+    }
+
     @Test
-    void shouldUseDomainMethodWhenChangingStatus() {
-        // given
+    @DisplayName("상벌점 총합을 계산한다")
+    void 상벌점_총합을_계산한다() {
+        challenger.addPoint(ChallengerPoint.create(
+            challenger,
+            com.umc.product.challenger.domain.enums.PointType.BEST_WORKBOOK,
+            "베스트 워크북"
+        ));
+        challenger.addPoint(ChallengerPoint.create(
+            challenger,
+            com.umc.product.challenger.domain.enums.PointType.CUSTOM,
+            -3,
+            "운영진 조정"
+        ));
 
-        // when
-
-        // then
-
+        assertThat(challenger.getTotalPoints()).isEqualTo(-3.5);
     }
 }

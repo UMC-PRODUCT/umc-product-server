@@ -1,17 +1,19 @@
 package com.umc.product.llm.adapter.out.external;
 
-import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
-import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
-import com.umc.product.llm.application.port.out.ChatCompletionPort;
-import com.umc.product.llm.domain.exception.LlmDomainException;
-import com.umc.product.llm.domain.exception.LlmErrorCode;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.google.genai.GoogleGenAiChatModel;
 import org.springframework.ai.google.genai.GoogleGenAiChatOptions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+
+import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
+import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
+import com.umc.product.llm.application.port.out.ChatCompletionPort;
+import com.umc.product.llm.domain.exception.LlmDomainException;
+import com.umc.product.llm.domain.exception.LlmErrorCode;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Spring AI ChatClient 위에 얹은 Google GenAI (Gemini Developer API) 어댑터.
@@ -68,7 +70,7 @@ public class SpringAiGoogleGenAiChatCompletionAdapter implements ChatCompletionP
             Long promptTokens = ChatPromptHelper.extractPromptTokens(response);
             Long completionTokens = ChatPromptHelper.extractCompletionTokens(response);
             log.debug(
-                "Google GenAI 호출 성공: model={}, length={}, promptTokens={}, completionTokens={}",
+                "Google GenAI 호출을 완료했습니다: model={}, length={}, promptTokens={}, completionTokens={}",
                 properties.model(), normalized.length(), promptTokens, completionTokens);
             return ChatCompletionResult.of(normalized, PROVIDER_NAME, promptTokens, completionTokens);
         } catch (Exception e) {
