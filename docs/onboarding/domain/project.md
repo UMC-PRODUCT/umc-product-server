@@ -26,6 +26,7 @@ class Project {
   +transferOwnership()
   +submit()
   +publish()
+  +complete()
   +abort()
 }
 
@@ -71,6 +72,8 @@ class ProjectApplication {
   +Instant submittedAt
   +approve()
   +reject()
+  +forceApprove()
+  +forceReject()
   +applyAutoDecision()
   +cancel()
   +submit()
@@ -163,7 +166,7 @@ flowchart TB
   end
 
   subgraph UseCaseAction["port/in/command -> domain action"]
-    ProjectLifecycle["Create/Update/Submit/Transfer/Publish/Delete/Abort Project<br/>Project.createDraft, updateBasicInfo, submit, publish, abort"]
+    ProjectLifecycle["Create/Update/Submit/Transfer/Publish/Complete/Delete/Abort Project<br/>Project.createDraft, updateBasicInfo, submit, publish, complete, abort"]
     ApplicationLifecycle["Create/Update/Submit/Cancel/Decide Application<br/>ProjectApplication.create, submit, cancel, approve, reject"]
     ApplicationFormUpsert["UpsertProjectApplicationFormUseCase.upsert<br/>Survey Form diff + ProjectApplicationFormPolicy sync"]
     QuotaMember["UpdatePartQuotas, AddProjectMember, RemoveProjectMember<br/>ProjectPartQuota.create/updateQuota, ProjectMember.create/dismiss"]
