@@ -15,6 +15,9 @@ services:
   prometheus:
     image: prom/prometheus:v3.11.3
     container_name: umc-product-prometheus
+    environment:
+      # prometheus.yml의 external_labels.environment에 사용한다.
+      MONITORING_ENVIRONMENT: ${MONITORING_ENVIRONMENT:-local}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -123,9 +126,9 @@ services:
       - source: discord-alert-webhook
         target: /etc/alertmanager/secrets/discord-webhook
       - source: discord-dev-alert-webhook
-        target: /etc/alertmanager/secrets/discord-loki-dev-webhook
+        target: /etc/alertmanager/secrets/discord-dev-webhook
       - source: discord-prod-alert-webhook
-        target: /etc/alertmanager/secrets/discord-loki-prod-webhook
+        target: /etc/alertmanager/secrets/discord-prod-webhook
     volumes:
       - ./config/alertmanager/config.yml:/etc/alertmanager/config.yml:ro
       - alertmanager-data:/alertmanager

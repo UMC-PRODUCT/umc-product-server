@@ -12,16 +12,16 @@
 
 ## Discord 환경별 라우팅
 
-Loki 로그 alert 는 모든 rule 에 `alert_source=loki` 라벨을 추가해 Prometheus alert 와 구분한다. Alertmanager 는 아래 기준으로 Discord webhook 을 선택한다.
+모든 alert 는 `environment` 라벨을 우선 사용해 개발/운영 Discord webhook 으로 분기한다. Prometheus는 애플리케이션 메트릭의 `environment` 라벨을 alert 집계 시 유지하며, 환경 라벨이 없는 인프라 alert에는 `MONITORING_ENVIRONMENT` 값을 추가한다. Loki 로그 alert 는 집계 과정에서 `environment` 라벨이 사라질 수 있어 `alert_source=loki`, `service_name`을 fallback 기준으로 사용한다.
 
 | 조건 | receiver | Discord 채널 | 환경변수 |
 | --- | --- | --- | --- |
-| `alert_source=loki`, `service_name=~"local-.*"` | `drop-local` | 전송하지 않음 | - |
-| `alert_source=loki`, `service_name=~"dev-.*"` | `discord-loki-dev` | `#server-log-dev` | `DISCORD_DEV_ALERT_WEBHOOK` |
-| `alert_source=loki`, `service_name=~"prod-.*"` | `discord-loki-prod` | `#server-log-prod` | `DISCORD_PROD_ALERT_WEBHOOK` |
-| 그 외 alert | `discord` | 기본 모니터링 채널 | `DISCORD_ALERT_WEBHOOK` |
+| `environment=local` 또는 Loki `service_name=~"local-.*"` | `drop-local` | 전송하지 않음 | - |
+| `environment=dev` 또는 Loki `service_name=~"dev-.*"` | `discord-dev` | `#server-log-dev` | `DISCORD_DEV_ALERT_WEBHOOK` |
+| `environment=prod` 또는 Loki `service_name=~"prod-.*"` | `discord-prod` | `#server-log-prod` | `DISCORD_PROD_ALERT_WEBHOOK` |
+| 환경을 식별할 수 없는 alert | `discord` | 기본 모니터링 채널 | `DISCORD_ALERT_WEBHOOK` |
 
-`#server-log-dev`, `#server-log-prod` 채널을 Loki Alertmanager 경보 수신 채널로 사용한다. 채널 정책이 변경되면 코드 변경 없이 해당 환경변수의 webhook URL 만 교체한다. 실제 webhook URL 은 저장소에 넣지 않고 배포 환경의 secret 으로 주입한다.
+`#server-log-dev`, `#server-log-prod` 채널을 개발·운영 환경의 Alertmanager 경보 수신 채널로 사용한다. 채널 정책이 변경되면 코드 변경 없이 해당 환경변수의 webhook URL 만 교체한다. 실제 webhook URL 은 저장소에 넣지 않고 배포 환경의 secret 으로 주입한다.
 
 ## 환경 구분 기준
 
@@ -42,7 +42,7 @@ local/dev/prod 를 구분하려면 앱 telemetry 에서 `service.name` 또는 `s
 | dev   | `dev-umc-product`   |
 | prod  | `prod-umc-product`  |
 
-Prometheus 의 API/DB 집계 alert 는 `application`, `service_name` 라벨을 유지하도록 `sum by (...)` 기준을 맞췄다. Loki log alert 는 `service_name` 기준으로 집계하며 `alert_source=loki` 정적 라벨을 추가한다.
+Prometheus 의 API/DB 집계 alert 는 `environment`, `application`, `service_name` 라벨을 유지하도록 `sum by (...)` 기준을 맞췄다. Loki log alert 는 `service_name` 기준으로 집계하며 `alert_source=loki` 정적 라벨을 추가한다.
 
 ## Availability
 
