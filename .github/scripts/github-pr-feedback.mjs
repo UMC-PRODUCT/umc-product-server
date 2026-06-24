@@ -36,7 +36,7 @@ export function buildCiFeedback({
     testOutcome,
     now = new Date(),
 }) {
-    const [owner, repo] = repository.split("/");
+    const { owner, repo } = repositoryParts(repository);
     const failed = jobResult !== "success" || testOutcome === "failure";
     const stateText = failed ? "실패" : "성공";
     const icon = failed ? "X" : "OK";
@@ -92,8 +92,8 @@ function repositoryParts(repository) {
     return { owner, repo };
 }
 
-async function githubFetch(path, { token, method = "GET", body } = {}) {
-    const response = await fetch(`${GITHUB_API}${path}`, {
+export async function githubFetch(path, { token, method = "GET", body, fetchImpl = fetch } = {}) {
+    const response = await fetchImpl(`${GITHUB_API}${path}`, {
         method,
         headers: {
             Accept: "application/vnd.github+json",
@@ -108,10 +108,10 @@ async function githubFetch(path, { token, method = "GET", body } = {}) {
         return null;
     }
     const text = await response.text();
-    const data = text ? JSON.parse(text) : null;
     if (!response.ok) {
         throw new Error(`GitHub API request failed: ${method} ${path} status=${response.status} body=${text.slice(0, 500)}`);
     }
+    const data = text ? JSON.parse(text) : null;
     return data;
 }
 

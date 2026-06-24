@@ -13,6 +13,7 @@ import {
 import {
     buildCiFeedback,
     buildCommitStatusPayload,
+    githubFetch,
     selectMarkerComment,
 } from "./github-pr-feedback.mjs";
 import { buildDiscordDeployPayload } from "./discord-deploy-notify.mjs";
@@ -192,6 +193,36 @@ test("CI feedback keeps existing status context and comment marker", () => {
     const status = buildCommitStatusPayload(feedback);
     assert.equal(status.context, "Product Team Server CI");
     assert.equal(status.state, "failure");
+});
+
+test("CI feedback validates repository format", () => {
+    assert.throws(
+        () => buildCiFeedback({
+            eventName: "pull_request",
+            workflow: "CI",
+            ref: "refs/pull/1/merge",
+            runId: "123",
+            repository: "invalid-repository",
+            sha: "abcdef1234567890",
+            jobResult: "success",
+            testOutcome: "success",
+        }),
+        /Invalid GITHUB_REPOSITORY/,
+    );
+});
+
+test("GitHub fetch preserves non JSON error body", async () => {
+    await assert.rejects(
+        () => githubFetch("/boom", {
+            token: "token",
+            fetchImpl: async () => ({
+                ok: false,
+                status: 502,
+                text: async () => "<html>Bad Gateway</html>",
+            }),
+        }),
+        /status=502 body=<html>Bad Gateway<\/html>/,
+    );
 });
 
 test("Discord deployment payload maps deployment states", () => {
