@@ -10,9 +10,7 @@ import com.umc.product.organization.exception.OrganizationErrorCode;
 public record GisuOrganizationGraphQlRequest(
     List<Long> ids,
     List<Long> generations,
-    Boolean active,
-    Boolean includeChapters,
-    Boolean includeSchools
+    Boolean active
 ) {
 
     public GisuOrganizationQuery toQuery() {
@@ -31,16 +29,13 @@ public record GisuOrganizationGraphQlRequest(
             throw invalidCondition();
         }
 
-        boolean chapterIncluded = Boolean.TRUE.equals(includeChapters);
-        boolean schoolIncluded = Boolean.TRUE.equals(includeSchools);
-
         if (hasIds) {
-            return GisuOrganizationQuery.byIds(uniqueIds, chapterIncluded, schoolIncluded);
+            return GisuOrganizationQuery.byIds(uniqueIds, false, false);
         }
         if (hasGenerations) {
-            return GisuOrganizationQuery.byGenerations(uniqueGenerations, chapterIncluded, schoolIncluded);
+            return GisuOrganizationQuery.byGenerations(uniqueGenerations, false, false);
         }
-        return GisuOrganizationQuery.active(chapterIncluded, schoolIncluded);
+        return GisuOrganizationQuery.active(false, false);
     }
 
     private List<Long> unique(List<Long> values) {

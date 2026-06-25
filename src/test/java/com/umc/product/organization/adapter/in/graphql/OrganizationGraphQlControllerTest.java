@@ -7,6 +7,8 @@ import static org.mockito.BDDMockito.then;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,12 +23,9 @@ import com.umc.product.organization.application.port.in.query.GetGisuOrganizatio
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.ChapterOrganizationInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.ChapterSchoolInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.SchoolLinkInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationInfo.SchoolOrganizationInfo;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrganizationQuery;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
@@ -52,16 +51,26 @@ class OrganizationGraphQlControllerTest {
     GetSchoolUseCase getSchoolUseCase;
 
     @Test
-    @DisplayName("기수 조직 조회는 id 중복을 제거하고 지부와 학교 포함 옵션을 전달한다")
-    void 기수_조직_조회는_id_중복을_제거하고_지부와_학교_포함_옵션을_전달한다() {
-        given(getGisuOrganizationUseCase.get(any())).willReturn(List.of(gisuOrganization()));
+    @DisplayName("기수 조직 조회의 하위 지부와 학교는 GraphQL field resolver가 batch로 조회한다")
+    void 기수_조직_조회의_하위_지부와_학교는_GraphQL_field_resolver가_batch로_조회한다() {
+        given(getGisuOrganizationUseCase.get(any())).willReturn(List.of(gisu(1L, 10L), gisu(2L, 11L)));
+        given(getChapterUseCase.listByGisuIds(Set.of(1L, 2L))).willReturn(Map.of(
+            1L, List.of(new ChapterInfo(100L, "Ain 지부")),
+            2L, List.of(new ChapterInfo(200L, "Ner 지부"))
+        ));
+        given(getChapterUseCase.getChaptersWithSchoolsByGisuIds(Set.of(1L, 2L))).willReturn(Map.of(
+            1L, List.of(chapterWithSchools(100L, "Ain 지부", 1000L, "중앙대학교")),
+            2L, List.of(chapterWithSchools(200L, "Ner 지부", 2000L, "동국대학교"))
+        ));
+        given(getSchoolUseCase.getSchoolListByGisuIds(Set.of(1L, 2L))).willReturn(Map.of(
+            1L, List.of(schoolDetail(1000L, "중앙대학교")),
+            2L, List.of(schoolDetail(2000L, "동국대학교"))
+        ));
 
         graphQlTester.document("""
                 query {
                   gisuOrganizations(input: {
                     ids: [1, 1, 2]
-                    includeChapters: true
-                    includeSchools: true
                   }) {
                     gisus {
                       gisuId
@@ -95,8 +104,10 @@ class OrganizationGraphQlControllerTest {
             .path("gisuOrganizations.gisus[0].generation").entity(String.class).isEqualTo("10")
             .path("gisuOrganizations.gisus[0].active").entity(Boolean.class).isEqualTo(true)
             .path("gisuOrganizations.gisus[0].chapters[0].chapterName").entity(String.class).isEqualTo("Ain 지부")
+            .path("gisuOrganizations.gisus[0].chapters[0].schools[0].schoolName").entity(String.class)
+            .isEqualTo("중앙대학교")
             .path("gisuOrganizations.gisus[0].schools[0].links[0].type").entity(String.class)
-            .isEqualTo("INSTAGRAM");
+            .isEqualTo("KAKAO");
 
         ArgumentCaptor<GisuOrganizationQuery> captor = ArgumentCaptor.forClass(GisuOrganizationQuery.class);
         then(getGisuOrganizationUseCase).should().get(captor.capture());
@@ -104,8 +115,11 @@ class OrganizationGraphQlControllerTest {
         assertThat(query.selector()).isEqualTo(GisuOrganizationQuery.Selector.ID);
         assertThat(query.ids()).containsExactly(1L, 2L);
         assertThat(query.generations()).isEmpty();
-        assertThat(query.includeChapter()).isTrue();
-        assertThat(query.includeSchool()).isTrue();
+        assertThat(query.includeChapter()).isFalse();
+        assertThat(query.includeSchool()).isFalse();
+        then(getChapterUseCase).should().listByGisuIds(Set.of(1L, 2L));
+        then(getChapterUseCase).should().getChaptersWithSchoolsByGisuIds(Set.of(1L, 2L));
+        then(getSchoolUseCase).should().getSchoolListByGisuIds(Set.of(1L, 2L));
     }
 
     @Test
@@ -199,6 +213,29 @@ class OrganizationGraphQlControllerTest {
         graphQlTester.document("""
                 query {
                   gisuOrganizations(input: { active: false }) {
+                    gisus {
+                      gisuId
+                    }
+                  }
+                }
+                """)
+            .execute()
+            .errors()
+            .satisfy(errors -> assertThat(errors).hasSize(1));
+
+        then(getGisuOrganizationUseCase).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("includeChapters와 includeSchools는 GraphQL 입력으로 허용하지 않는다")
+    void includeChapters와_includeSchools는_GraphQL_입력으로_허용하지_않는다() {
+        graphQlTester.document("""
+                query {
+                  gisuOrganizations(input: {
+                    ids: [1]
+                    includeChapters: true
+                    includeSchools: true
+                  }) {
                     gisus {
                       gisuId
                     }
@@ -316,35 +353,6 @@ class OrganizationGraphQlControllerTest {
         then(getSchoolUseCase).should().getSchoolDetail(2L);
     }
 
-    private GisuOrganizationInfo gisuOrganization() {
-        Instant createdAt = Instant.parse("2026-03-01T00:00:00Z");
-        Instant updatedAt = Instant.parse("2026-03-02T00:00:00Z");
-        return new GisuOrganizationInfo(
-            1L,
-            10L,
-            Instant.parse("2026-03-01T00:00:00Z"),
-            Instant.parse("2026-08-31T23:59:59Z"),
-            true,
-            List.of(new ChapterOrganizationInfo(
-                100L,
-                "Ain 지부",
-                List.of(new ChapterSchoolInfo(1000L, "중앙대학교"))
-            )),
-            List.of(new SchoolOrganizationInfo(
-                100L,
-                "Ain 지부",
-                1000L,
-                "중앙대학교",
-                "비고",
-                "https://storage.example.com/school-logo.png",
-                List.of(new SchoolLinkInfo("인스타그램", SchoolLinkType.INSTAGRAM, "https://instagram.com/example")),
-                true,
-                createdAt,
-                updatedAt
-            ))
-        );
-    }
-
     private GisuOrganizationInfo gisu(Long gisuId, Long generation) {
         return new GisuOrganizationInfo(
             gisuId,
@@ -364,6 +372,19 @@ class OrganizationGraphQlControllerTest {
             Instant.parse("2026-03-01T00:00:00Z"),
             Instant.parse("2026-08-31T23:59:59Z"),
             true
+        );
+    }
+
+    private ChapterWithSchoolsInfo chapterWithSchools(
+        Long chapterId,
+        String chapterName,
+        Long schoolId,
+        String schoolName
+    ) {
+        return new ChapterWithSchoolsInfo(
+            chapterId,
+            chapterName,
+            List.of(new ChapterWithSchoolsInfo.SchoolInfo(schoolId, schoolName))
         );
     }
 

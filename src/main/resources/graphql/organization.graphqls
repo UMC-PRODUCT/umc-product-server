@@ -12,22 +12,10 @@ input GisuOrganizationInput {
   ids: [ID!]
   generations: [ID!]
   active: Boolean
-  includeChapters: Boolean = false
-  includeSchools: Boolean = false
 }
 
 type GisuOrganizationPayload {
-  gisus: [GisuOrganization!]!
-}
-
-type GisuOrganization {
-  gisuId: ID!
-  generation: ID!
-  startAt: String!
-  endAt: String!
-  active: Boolean!
-  chapters: [GisuChapter!]!
-  schools: [GisuSchool!]!
+  gisus: [Gisu!]!
 }
 
 type Gisu {
@@ -36,6 +24,8 @@ type Gisu {
   startAt: String!
   endAt: String!
   active: Boolean!
+  chapters: [GisuChapter!]!
+  schools: [GisuSchool!]!
 }
 
 type GisuChapter {
