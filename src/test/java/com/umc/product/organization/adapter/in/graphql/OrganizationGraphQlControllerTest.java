@@ -15,9 +15,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.graphql.GraphQlTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.graphql.test.tester.GraphQlTester;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import com.umc.product.global.config.GraphQlRuntimeWiringConfig;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuOrganizationUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
@@ -32,6 +34,7 @@ import com.umc.product.organization.application.port.in.query.dto.school.SchoolN
 import com.umc.product.organization.domain.enums.SchoolLinkType;
 
 @GraphQlTest(OrganizationGraphQlController.class)
+@Import(GraphQlRuntimeWiringConfig.class)
 @DisplayName("OrganizationGraphQlController")
 class OrganizationGraphQlControllerTest {
 
