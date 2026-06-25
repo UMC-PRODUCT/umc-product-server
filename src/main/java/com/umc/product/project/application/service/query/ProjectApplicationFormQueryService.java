@@ -1,5 +1,17 @@
 package com.umc.product.project.application.service.query;
 
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -14,12 +26,8 @@ import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import com.umc.product.survey.application.port.in.query.GetFormUseCase;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 지원 폼 조회 서비스 (PROJECT-106-GET).
@@ -44,6 +52,29 @@ public class ProjectApplicationFormQueryService implements GetProjectApplication
     public Optional<ApplicationFormInfo> findByProjectId(Long projectId, Long requesterMemberId) {
         return loadApplicationFormPort.findByProjectId(projectId)
             .map(applicationForm -> assemble(applicationForm, requesterMemberId));
+    }
+
+    @Override
+    public Map<Long, ApplicationFormInfo> findAllByProjectIds(
+        Collection<Long> projectIds,
+        Long requesterMemberId
+    ) {
+        List<Long> uniqueProjectIds = projectIds.stream()
+            .collect(Collectors.collectingAndThen(
+                Collectors.toCollection(LinkedHashSet::new),
+                List::copyOf
+            ));
+        Map<Long, ProjectApplicationForm> formsByProjectId =
+            loadApplicationFormPort.findAllByProjectIds(uniqueProjectIds);
+
+        return uniqueProjectIds.stream()
+            .filter(formsByProjectId::containsKey)
+            .collect(Collectors.toMap(
+                projectId -> projectId,
+                projectId -> assemble(formsByProjectId.get(projectId), requesterMemberId),
+                (left, right) -> left,
+                LinkedHashMap::new
+            ));
     }
 
     private ApplicationFormInfo assemble(ProjectApplicationForm applicationForm, Long requesterMemberId) {
