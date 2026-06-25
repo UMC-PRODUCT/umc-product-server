@@ -4,12 +4,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.command.dto.AddProjectMemberCommand;
+import com.umc.product.project.application.port.in.command.dto.ChangeProjectMemberStatusCommand;
 import com.umc.product.project.application.port.in.command.dto.RemoveProjectMemberCommand;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
@@ -20,13 +29,6 @@ import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import java.util.Optional;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectMemberCommandServiceTest {
@@ -145,7 +147,7 @@ class ProjectMemberCommandServiceTest {
     }
 
     @Test
-    void remove_IN_PROGRESS_단계는_soft_delete_DISMISSED() {
+    void remove_IN_PROGRESS_단계도_hardDelete() {
         Long projectId = 42L;
         Project project = project(projectId, ProjectStatus.IN_PROGRESS);
         given(loadProjectPort.getById(projectId)).willReturn(project);
@@ -158,11 +160,8 @@ class ProjectMemberCommandServiceTest {
         sut.remove(RemoveProjectMemberCommand.builder()
             .projectId(projectId).memberId(200L).reason("팀 적합도 부족").requesterMemberId(99L).build());
 
-        verify(saveProjectMemberPort).save(member);
-        verify(saveProjectMemberPort, never()).hardDelete(any());
-        assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.DISMISSED);
-        assertThat(member.getStatusChangeReason()).isEqualTo("팀 적합도 부족");
-        assertThat(member.getStatusChangedMemberId()).isEqualTo(99L);
+        verify(saveProjectMemberPort).hardDelete(555L);
+        verify(saveProjectMemberPort, never()).save(any());
     }
 
     @Test
@@ -198,14 +197,91 @@ class ProjectMemberCommandServiceTest {
         Project project = project(projectId, ProjectStatus.COMPLETED);
         given(loadProjectPort.getById(projectId)).willReturn(project);
 
-        ProjectMember member = projectMember(200L, ChallengerPart.PLAN);
-        given(loadProjectMemberPort.findByProjectIdAndMemberId(projectId, 200L))
-            .willReturn(Optional.of(member));
+        assertThatThrownBy(() -> sut.remove(RemoveProjectMemberCommand.builder()
+                .projectId(projectId).memberId(200L).requesterMemberId(99L).build()))
+            .isInstanceOf(ProjectDomainException.class)
+            .extracting("baseCode").isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        verify(saveProjectMemberPort, never()).hardDelete(any());
+    }
+
+    @Test
+    void remove_ABORTED_프로젝트는_거부() {
+        Long projectId = 42L;
+        Project project = project(projectId, ProjectStatus.ABORTED);
+        given(loadProjectPort.getById(projectId)).willReturn(project);
 
         assertThatThrownBy(() -> sut.remove(RemoveProjectMemberCommand.builder()
                 .projectId(projectId).memberId(200L).requesterMemberId(99L).build()))
             .isInstanceOf(ProjectDomainException.class)
             .extracting("baseCode").isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        verify(saveProjectMemberPort, never()).hardDelete(any());
+    }
+
+    // --- changeStatus (soft delete) ---
+
+    @Test
+    void changeStatus_정상_상태변경_시_save_및_메타데이터_기록() {
+        Long projectId = 42L;
+        Project project = project(projectId, ProjectStatus.IN_PROGRESS);
+        given(loadProjectPort.getById(projectId)).willReturn(project);
+
+        ProjectMember member = projectMember(200L, ChallengerPart.PLAN);
+        ReflectionTestUtils.setField(member, "id", 555L);
+        given(loadProjectMemberPort.findByProjectIdAndMemberId(projectId, 200L))
+            .willReturn(Optional.of(member));
+
+        sut.changeStatus(ChangeProjectMemberStatusCommand.builder()
+            .projectId(projectId).memberId(200L).status(ProjectMemberStatus.DISMISSED)
+            .reason("팀 적합도 부족").requesterMemberId(99L).build());
+
+        verify(saveProjectMemberPort).save(member);
+        verify(saveProjectMemberPort, never()).hardDelete(any());
+        assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.DISMISSED);
+        assertThat(member.getStatusChangeReason()).isEqualTo("팀 적합도 부족");
+        assertThat(member.getStatusChangedMemberId()).isEqualTo(99L);
+    }
+
+    @Test
+    void changeStatus_메인_PM은_양도_API_안내_예외() {
+        Long projectId = 42L;
+        Project project = project(projectId, ProjectStatus.IN_PROGRESS);
+        given(loadProjectPort.getById(projectId)).willReturn(project);
+
+        // 메인 PM 의 memberId = 99L (project() helper 에서 설정)
+        assertThatThrownBy(() -> sut.changeStatus(ChangeProjectMemberStatusCommand.builder()
+                .projectId(projectId).memberId(99L).status(ProjectMemberStatus.WITHDRAWN)
+                .reason("사유").requesterMemberId(99L).build()))
+            .isInstanceOf(ProjectDomainException.class)
+            .extracting("baseCode").isEqualTo(ProjectErrorCode.PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER);
+    }
+
+    @Test
+    void changeStatus_COMPLETED_프로젝트는_거부() {
+        Long projectId = 42L;
+        Project project = project(projectId, ProjectStatus.COMPLETED);
+        given(loadProjectPort.getById(projectId)).willReturn(project);
+
+        assertThatThrownBy(() -> sut.changeStatus(ChangeProjectMemberStatusCommand.builder()
+                .projectId(projectId).memberId(200L).status(ProjectMemberStatus.DISMISSED)
+                .reason("사유").requesterMemberId(99L).build()))
+            .isInstanceOf(ProjectDomainException.class)
+            .extracting("baseCode").isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        verify(saveProjectMemberPort, never()).save(any());
+    }
+
+    @Test
+    void changeStatus_프로젝트에_없는_멤버면_NOT_FOUND_예외() {
+        Long projectId = 42L;
+        Project project = project(projectId, ProjectStatus.IN_PROGRESS);
+        given(loadProjectPort.getById(projectId)).willReturn(project);
+        given(loadProjectMemberPort.findByProjectIdAndMemberId(projectId, 200L))
+            .willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> sut.changeStatus(ChangeProjectMemberStatusCommand.builder()
+                .projectId(projectId).memberId(200L).status(ProjectMemberStatus.DISMISSED)
+                .reason("사유").requesterMemberId(99L).build()))
+            .isInstanceOf(ProjectDomainException.class)
+            .extracting("baseCode").isEqualTo(ProjectErrorCode.PROJECT_MEMBER_NOT_FOUND);
     }
 
     // --- helpers ---
