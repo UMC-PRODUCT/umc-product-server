@@ -252,6 +252,9 @@ management:
       # Prometheus에서 URI별 P95/P99를 집계할 수 있도록 HTTP 요청 duration histogram을 발행한다.
       percentiles-histogram:
         http.server.requests: true
+        graphql.request: true
+        graphql.datafetcher: true
+        graphql.dataloader: true
 
     tags:
       application: ${spring.application.name}
@@ -264,6 +267,7 @@ management:
       jvm: true
       process: true
       http: true
+      graphql: true # GraphQL 요청 및 datafetcher 메트릭
       jdbc: true # DB 쿼리 메트릭
       #      rabbitmq: true # messaging, 사용 시 추가
       system: true # CPU, 메모리 등 시스템 메트릭
@@ -445,6 +449,9 @@ spring:
   config:
     activate:
       on-profile: local
+  graphql:
+    graphiql:
+      enabled: ${GRAPHQL_GRAPHIQL_ENABLED:true}
 
 decorator:
   datasource:
