@@ -145,6 +145,7 @@ jwt:
   refresh-token-secret: ${JWT_REFRESH_TOKEN_SECRET}
   oauth-verification-token-secret: ${JWT_OAUTH_VERIFICATION_TOKEN_SECRET}
   email-verification-token-secret: ${JWT_EMAIL_VERIFICATION_TOKEN_SECRET}
+  sso-login-token-secret: ${JWT_SSO_LOGIN_TOKEN_SECRET}
   access-token-validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS:3600}
   refresh-token-validity-in-seconds: ${JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS:604800}
   verification-token-validity-in-seconds: ${JWT_VERIFICATION_TOKEN_VALIDITY_IN_SECONDS:600}

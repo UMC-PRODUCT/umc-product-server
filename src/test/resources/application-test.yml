@@ -29,6 +29,7 @@ jwt:
   refresh-token-secret: refresh_token_secret
   oauth-verification-token-secret: oauth_verification_token_secret
   email-verification-token-secret: email_verification_token_secret
+  sso-login-token-secret: sso_login_token_secret
   access-token-validity-in-seconds: 3600
   refresh-token-validity-in-seconds: 604800
   verification-token-validity-in-seconds: 600

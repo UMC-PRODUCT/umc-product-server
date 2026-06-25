@@ -3,6 +3,7 @@ package com.umc.product.authentication.adapter.out.config;
 import org.springframework.stereotype.Component;
 
 import com.umc.product.authentication.application.port.out.LoadSsoClientPort;
+import com.umc.product.authentication.config.SsoProperties;
 import com.umc.product.authentication.domain.SsoClient;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;

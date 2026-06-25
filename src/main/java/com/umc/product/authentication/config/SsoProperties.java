@@ -1,4 +1,4 @@
-package com.umc.product.authentication.adapter.out.config;
+package com.umc.product.authentication.config;
 
 import java.net.URI;
 import java.time.Duration;
