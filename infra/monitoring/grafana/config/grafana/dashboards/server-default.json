@@ -678,7 +678,8 @@
                         "editorMode": "code",
                         "expr": "sum(rate(http_server_requests_milliseconds_count{application=~\"$service\", instance=~\"$instance\"}[$__rate_interval])) by (uri, method)",
                         "legendFormat": "{{method}} {{uri}}",
-                        "range": true
+                        "range": true,
+                        "interval": "2m"
                       },
                       "version": "v0"
                     },
