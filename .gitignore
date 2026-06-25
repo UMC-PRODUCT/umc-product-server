@@ -262,3 +262,5 @@ k6/*.js
 docs/harness/
 phases/
 scripts/
+!.github/scripts/
+!.github/scripts/**
