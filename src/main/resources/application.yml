@@ -29,6 +29,12 @@ spring:
       enabled: false
       lifecycle-management: start_and_stop
 
+  graphql:
+    http:
+      path: /graphql
+    graphiql:
+      enabled: ${GRAPHQL_GRAPHIQL_ENABLED:false}
+
   # Thymeleaf 템플릿 엔진 설정
   thymeleaf:
     prefix: classpath:/templates/
