@@ -6,7 +6,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public enum CacheNamespace {
-    FIGMA_CLASSIFICATION("figma.classification", "figma.classifier.l1");
+    FIGMA_CLASSIFICATION("figma.classification", "figma.classifier.l1"),
+    AUTHORITY_SNAPSHOT("authorization.authority-snapshot", "authorization.authority.snapshot");
 
     private final String value;
     private final String metricName;
