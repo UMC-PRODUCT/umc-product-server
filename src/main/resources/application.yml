@@ -276,6 +276,67 @@ app:
   # spring.profiles.active 가 콤마 구분 다중 profile 일 수 있으므로 운영자가 단일 라벨을 명시적으로 override 가능.
   environment: ${APP_ENVIRONMENT:${SPRING_PROFILES_ACTIVE:local}}
 
+  sso:
+    issuer: ${SSO_ISSUER:https://api.university.neordinary.com}
+    authorization-code-ttl: ${SSO_AUTHORIZATION_CODE_TTL:PT3M}
+    browser-login-ttl: ${SSO_BROWSER_LOGIN_TTL:PT12H}
+    cookie:
+      name: ${SSO_BROWSER_LOGIN_COOKIE_NAME:UMC_SSO_LOGIN}
+      domain: ${SSO_BROWSER_LOGIN_COOKIE_DOMAIN:}
+      secure: ${SSO_BROWSER_LOGIN_COOKIE_SECURE:true}
+      same-site: ${SSO_BROWSER_LOGIN_COOKIE_SAME_SITE:Lax}
+    clients:
+      backoffice:
+        name: UMC Backoffice
+        service-type: UMC_BACKOFFICE
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://backoffice.university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://backoffice.university.neordinary.com
+      website:
+        name: UMC Website
+        service-type: UMC_WEBSITE
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://university.neordinary.com
+      tech:
+        name: UMC Tech Blog
+        service-type: UMC_TECH_BLOG
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://tech.university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://tech.university.neordinary.com
+      ios-app:
+        name: UMC iOS App
+        service-type: IOS_APP
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - umc-ios://auth/callback
+          - https://app.university.neordinary.com/ios/auth/callback
+        allowed-origins: []
+      android-app:
+        name: UMC Android App
+        service-type: ANDROID_APP
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - umc-android://auth/callback
+          - https://app.university.neordinary.com/android/auth/callback
+        allowed-origins: []
+
   project:
     matching-round:
       # FIRST, SECOND, THIRD 차수 사이 최소 간격. 환경변수 단위는 minute.
@@ -429,6 +490,39 @@ spring:
 app:
   seed:
     enabled: ${APP_SEED_ENABLED:true}
+
+  sso:
+    clients:
+      backoffice:
+        name: UMC Backoffice
+        service-type: UMC_BACKOFFICE
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - http://localhost:5173/auth/callback
+        allowed-origins:
+          - http://localhost:5173
+      website:
+        name: UMC Website
+        service-type: UMC_WEBSITE
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - http://localhost:5173/auth/callback
+        allowed-origins:
+          - http://localhost:5173
+      tech:
+        name: UMC Tech Blog
+        service-type: UMC_TECH_BLOG
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - http://localhost:5173/auth/callback
+        allowed-origins:
+          - http://localhost:5173
 
 # ==================================================================
 # local 환경 default override — 로컬 개발자가 env 설정 없이도 SQL 라인 로깅을 본다.

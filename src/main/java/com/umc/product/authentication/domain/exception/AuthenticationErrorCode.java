@@ -68,6 +68,10 @@ public enum AuthenticationErrorCode implements BaseCode {
         "이메일 형식이 올바르지 않아요. 이메일 주소를 확인해주세요."),
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "AUTHENTICATION-0026",
         "이미 사용 중인 이메일이에요. 다른 이메일을 입력해주세요."),
+    INVALID_SSO_CLIENT(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0028",
+        "지원하지 않는 SSO client예요. 설정을 확인해주세요."),
+    INVALID_SSO_REDIRECT_URI(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0029",
+        "허용되지 않은 SSO redirect URI예요. 설정을 확인해주세요."),
 
     // OAuth Authorization Code Flow 관련 에러
     UNSUPPORTED_OAUTH_FLOW(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0023",
