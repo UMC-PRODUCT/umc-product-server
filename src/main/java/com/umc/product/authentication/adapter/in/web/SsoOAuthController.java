@@ -3,15 +3,20 @@ package com.umc.product.authentication.adapter.in.web;
 import java.net.URI;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.umc.product.authentication.adapter.in.web.dto.request.SsoTokenRequest;
+import com.umc.product.authentication.adapter.in.web.dto.response.SsoTokenResponse;
 import com.umc.product.authentication.application.port.in.command.AuthorizeSsoUseCase;
+import com.umc.product.authentication.application.port.in.command.ExchangeSsoAuthorizationCodeUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.AuthorizeSsoCommand;
 import com.umc.product.authentication.application.port.in.command.dto.SsoAuthorizationRedirectInfo;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
@@ -20,6 +25,7 @@ import com.umc.product.global.security.annotation.Public;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -29,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 public class SsoOAuthController {
 
     private final AuthorizeSsoUseCase authorizeSsoUseCase;
+    private final ExchangeSsoAuthorizationCodeUseCase exchangeSsoAuthorizationCodeUseCase;
 
     @Public
     @GetMapping("/authorize")
@@ -59,5 +66,12 @@ public class SsoOAuthController {
         return ResponseEntity.status(HttpStatus.FOUND)
             .location(URI.create(redirectInfo.redirectUri()))
             .build();
+    }
+
+    @Public
+    @PostMapping(value = "/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @Operation(operationId = "SSO-OAUTH-002", summary = "SSO OAuth token 교환")
+    public SsoTokenResponse token(@Valid SsoTokenRequest request) {
+        return SsoTokenResponse.from(exchangeSsoAuthorizationCodeUseCase.exchange(request.toCommand()));
     }
 }

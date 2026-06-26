@@ -17,6 +17,10 @@ import com.umc.product.authentication.application.service.SsoLoginTokenClaims;
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.common.domain.enums.ClientType;
+import com.umc.product.global.client.ClientContextClaims;
+import com.umc.product.global.client.ClientEnvironment;
+import com.umc.product.global.client.ClientServiceType;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -165,6 +169,32 @@ class JwtTokenProviderEmailVerificationTest {
         assertThat(claims.memberId()).isEqualTo(memberId);
         assertThat(claims.jti()).isNotNull();
         assertThat(claims.expiresAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("AccessToken과 RefreshToken은 SSO client context claim을 포함하고 다시 파싱할 수 있다")
+    void sso_client_context_claims_파싱() {
+        // given
+        Long memberId = 10L;
+        ClientContextClaims clientContext = ClientContextClaims.of(
+            "backoffice",
+            ClientServiceType.UMC_BACKOFFICE,
+            ClientEnvironment.PROD
+        );
+
+        // when
+        String accessToken = provider.createAccessToken(
+            memberId,
+            List.of("USER"),
+            ClientType.WEB,
+            clientContext,
+            3600L
+        );
+        String refreshToken = provider.createRefreshToken(memberId, clientContext);
+
+        // then
+        assertThat(provider.getClientContextClaimsFromAccessToken(accessToken)).isEqualTo(clientContext);
+        assertThat(provider.parseRefreshToken(refreshToken).clientContext()).isEqualTo(clientContext);
     }
 
     @Test

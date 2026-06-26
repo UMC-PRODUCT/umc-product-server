@@ -1,6 +1,7 @@
 package com.umc.product.global.security;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
@@ -18,6 +19,9 @@ import com.umc.product.authentication.domain.exception.AuthenticationDomainExcep
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
+import com.umc.product.global.client.ClientContextClaims;
+import com.umc.product.global.client.ClientEnvironment;
+import com.umc.product.global.client.ClientServiceType;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -34,6 +38,9 @@ public class JwtTokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth"; // 권한 정보를 저장할 키
     private static final String CLIENT_TYPE_KEY = "clientType"; // 클라이언트 플랫폼(ANDROID/IOS/WEB) 정보를 저장할 키
+    private static final String CLIENT_ID_KEY = "clientId";
+    private static final String CLIENT_SERVICE_KEY = "clientService";
+    private static final String CLIENT_ENVIRONMENT_KEY = "clientEnvironment";
     private static final String SSO_LOGIN_TYPE = "SSO_LOGIN";
     private static final String TOKEN_TYPE_KEY = "typ";
     private static final String AUTHENTICATION_METHOD_KEY = "authenticationMethod";
@@ -196,6 +203,41 @@ public class JwtTokenProvider {
         return builder.compact();
     }
 
+    public String createAccessToken(
+        Long memberId,
+        List<String> roles,
+        ClientType clientType,
+        ClientContextClaims clientContext,
+        Duration expiresIn
+    ) {
+        return createAccessToken(memberId, roles, clientType, clientContext, expiresIn.toSeconds());
+    }
+
+    public String createAccessToken(
+        Long memberId,
+        List<String> roles,
+        ClientType clientType,
+        ClientContextClaims clientContext,
+        Long expiresInSeconds
+    ) {
+        Date now = new Date();
+        Date validityDate = new Date(now.getTime() + expiresInSeconds * 1000);
+
+        var builder = Jwts.builder()
+            .subject(String.valueOf(memberId))
+            .claim(AUTHORITIES_KEY, roles)
+            .issuedAt(now)
+            .expiration(validityDate)
+            .signWith(accessTokenSecret);
+
+        if (clientType != null) {
+            builder.claim(CLIENT_TYPE_KEY, clientType.name());
+        }
+        addClientContextClaims(builder, clientContext);
+
+        return builder.compact();
+    }
+
     public String createAccessToken(Long memberId, List<String> roles, Long expiresInSeconds) {
         Date now = new Date();
         Date validityDate = new Date(now.getTime() + expiresInSeconds * 1000);
@@ -223,6 +265,22 @@ public class JwtTokenProvider {
             .expiration(validityDate)
             .signWith(refreshTokenSecret)
             .compact();
+    }
+
+    public String createRefreshToken(Long memberId, ClientContextClaims clientContext) {
+        Date now = new Date();
+        Date validityDate = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
+
+        var builder = Jwts.builder()
+            .subject(String.valueOf(memberId))
+            .id(UUID.randomUUID().toString())
+            .issuedAt(now)
+            .expiration(validityDate)
+            .signWith(refreshTokenSecret);
+
+        addClientContextClaims(builder, clientContext);
+
+        return builder.compact();
     }
 
     public List<String> getRolesFromAccessToken(String token) {
@@ -254,6 +312,10 @@ public class JwtTokenProvider {
             log.warn("AccessToken 의 clientType claim 값을 해석할 수 없습니다: {}", clientTypeStr);
             return null;
         }
+    }
+
+    public ClientContextClaims getClientContextClaimsFromAccessToken(String token) {
+        return getClientContextClaims(parseAccessTokenClaims(token));
     }
 
     public boolean validateAccessToken(String token) {
@@ -344,7 +406,8 @@ public class JwtTokenProvider {
             return new RefreshTokenClaims(
                 Long.parseLong(claims.getSubject()),
                 UUID.fromString(jti),
-                toInstant(claims.getExpiration())
+                toInstant(claims.getExpiration()),
+                getClientContextClaims(claims)
             );
         } catch (IllegalArgumentException e) {
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_REFRESH_TOKEN);
@@ -356,6 +419,56 @@ public class JwtTokenProvider {
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_REFRESH_TOKEN);
         }
         return date.toInstant();
+    }
+
+    private void addClientContextClaims(io.jsonwebtoken.JwtBuilder builder, ClientContextClaims clientContext) {
+        ClientContextClaims claims = clientContext == null ? ClientContextClaims.empty() : clientContext;
+        if (claims.clientId() != null && !claims.clientId().isBlank()) {
+            builder.claim(CLIENT_ID_KEY, claims.clientId());
+            builder.audience().add(claims.clientId()).and();
+        }
+        builder.claim(CLIENT_SERVICE_KEY, claims.serviceType().name());
+        builder.claim(CLIENT_ENVIRONMENT_KEY, claims.environment().name());
+    }
+
+    private ClientContextClaims getClientContextClaims(Claims claims) {
+        String clientId = claims.get(CLIENT_ID_KEY, String.class);
+        String clientService = claims.get(CLIENT_SERVICE_KEY, String.class);
+        String clientEnvironment = claims.get(CLIENT_ENVIRONMENT_KEY, String.class);
+
+        if (clientId == null && clientService == null && clientEnvironment == null) {
+            return ClientContextClaims.empty();
+        }
+
+        return ClientContextClaims.of(
+            clientId,
+            parseClientServiceType(clientService),
+            parseClientEnvironment(clientEnvironment)
+        );
+    }
+
+    private ClientServiceType parseClientServiceType(String value) {
+        if (value == null) {
+            return ClientServiceType.UNKNOWN;
+        }
+        try {
+            return ClientServiceType.valueOf(value);
+        } catch (IllegalArgumentException e) {
+            log.warn("JWT 의 clientService claim 값을 해석할 수 없습니다: {}", value);
+            return ClientServiceType.UNKNOWN;
+        }
+    }
+
+    private ClientEnvironment parseClientEnvironment(String value) {
+        if (value == null) {
+            return ClientEnvironment.UNKNOWN;
+        }
+        try {
+            return ClientEnvironment.valueOf(value);
+        } catch (IllegalArgumentException e) {
+            log.warn("JWT 의 clientEnvironment claim 값을 해석할 수 없습니다: {}", value);
+            return ClientEnvironment.UNKNOWN;
+        }
     }
 
     /**

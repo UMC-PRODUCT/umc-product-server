@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.authentication.application.port.out.DeleteRefreshTokenPort;
 import com.umc.product.authentication.application.port.out.LoadEmailVerificationPort;
 import com.umc.product.authentication.application.port.out.LoadRefreshTokenPort;
+import com.umc.product.authentication.application.port.out.LoadSsoClientPort;
 import com.umc.product.authentication.application.port.out.SaveEmailVerificationPort;
 import com.umc.product.authentication.application.service.AuthenticationService;
 import com.umc.product.authentication.application.service.AuthenticationTokenIssuer;
@@ -50,6 +51,9 @@ class SendVerificationEmailOutboxFlowTest {
     private DeleteRefreshTokenPort deleteRefreshTokenPort;
 
     @Mock
+    private LoadSsoClientPort loadSsoClientPort;
+
+    @Mock
     private JwtTokenProvider jwtTokenProvider;
 
     @Mock
@@ -67,6 +71,7 @@ class SendVerificationEmailOutboxFlowTest {
             saveEmailVerificationPort,
             loadRefreshTokenPort,
             deleteRefreshTokenPort,
+            loadSsoClientPort,
             jwtTokenProvider,
             authenticationTokenIssuer,
             getMemberCredentialUseCase,
