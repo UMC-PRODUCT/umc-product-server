@@ -13,10 +13,28 @@ type Member {
   schoolName: String
   profileImageLink: String
   status: MemberStatus
+  school: SchoolDetail
+  challengers: [MemberChallenger!]!
 }
 
 enum MemberStatus {
   ACTIVE
   INACTIVE
+  WITHDRAWN
+}
+
+type MemberChallenger {
+  challengerId: ID!
+  memberId: ID!
+  gisuId: ID!
+  gisu: Gisu
+  part: ChallengerPart!
+  status: ChallengerStatus!
+}
+
+enum ChallengerStatus {
+  ACTIVE
+  GRADUATED
+  EXPELLED
   WITHDRAWN
 }

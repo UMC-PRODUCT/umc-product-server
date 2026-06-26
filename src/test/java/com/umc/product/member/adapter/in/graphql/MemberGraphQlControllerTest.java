@@ -5,6 +5,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
 
+import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,11 +29,19 @@ import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.SubjectAttributes;
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicInfo;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.global.config.GraphQlRuntimeWiringConfig;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 
 @GraphQlTest(MemberGraphQlController.class)
 @Import(GraphQlRuntimeWiringConfig.class)
@@ -49,6 +59,15 @@ class MemberGraphQlControllerTest {
 
     @MockitoBean
     CheckPermissionUseCase checkPermissionUseCase;
+
+    @MockitoBean
+    GetSchoolUseCase getSchoolUseCase;
+
+    @MockitoBean
+    GetChallengerUseCase getChallengerUseCase;
+
+    @MockitoBean
+    GetGisuUseCase getGisuUseCase;
 
     @BeforeEach
     void setUpSecurityContext() {
@@ -187,6 +206,67 @@ class MemberGraphQlControllerTest {
     }
 
     @Test
+    @DisplayName("members는 school과 challengers와 gisu를 nested field로 batch 조회한다")
+    void members는_school과_challengers와_gisu를_nested_field로_batch_조회한다() {
+        SubjectAttributes subject = subject();
+        LinkedHashSet<Long> memberIds = new LinkedHashSet<>(List.of(2L, 3L));
+        LinkedHashSet<Long> schoolIds = new LinkedHashSet<>(List.of(10L, 11L));
+        LinkedHashSet<Long> gisuIds = new LinkedHashSet<>(List.of(100L, 101L));
+        given(checkPermissionUseCase.loadSubject(REQUESTER_ID)).willReturn(subject);
+        given(checkPermissionUseCase.check(subject, memberReadPermission(2L))).willReturn(true);
+        given(checkPermissionUseCase.check(subject, memberReadPermission(3L))).willReturn(true);
+        given(getMemberUseCase.findAllByIds(memberIds)).willReturn(Map.of(
+            2L, memberInfo(2L, 10L),
+            3L, memberInfo(3L, 11L)
+        ));
+        given(getSchoolUseCase.listDetailsByIds(schoolIds)).willReturn(List.of(
+            school(10L, "중앙대학교"),
+            school(11L, "숭실대학교")
+        ));
+        given(getChallengerUseCase.getAllBasicByMemberIds(memberIds)).willReturn(Map.of(
+            2L, List.of(challenger(20L, 2L, 100L, ChallengerPart.SPRINGBOOT, ChallengerStatus.ACTIVE)),
+            3L, List.of(challenger(30L, 3L, 101L, ChallengerPart.DESIGN, ChallengerStatus.GRADUATED))
+        ));
+        given(getGisuUseCase.getByIds(gisuIds)).willReturn(List.of(
+            gisu(100L, 6L),
+            gisu(101L, 7L)
+        ));
+
+        graphQlTester.document("""
+                query {
+                  members(ids: [2, 3]) {
+                    memberId
+                    school {
+                      schoolId
+                      schoolName
+                    }
+                    challengers {
+                      challengerId
+                      part
+                      status
+                      gisu {
+                        gisuId
+                        generation
+                      }
+                    }
+                  }
+                }
+                """)
+            .execute()
+            .path("members[0].school.schoolName").entity(String.class).isEqualTo("중앙대학교")
+            .path("members[0].challengers[0].part").entity(String.class).isEqualTo("SPRINGBOOT")
+            .path("members[0].challengers[0].status").entity(String.class).isEqualTo("ACTIVE")
+            .path("members[0].challengers[0].gisu.generation").entity(String.class).isEqualTo("6")
+            .path("members[1].school.schoolName").entity(String.class).isEqualTo("숭실대학교")
+            .path("members[1].challengers[0].status").entity(String.class).isEqualTo("GRADUATED")
+            .path("members[1].challengers[0].gisu.generation").entity(String.class).isEqualTo("7");
+
+        then(getSchoolUseCase).should().listDetailsByIds(schoolIds);
+        then(getChallengerUseCase).should().getAllBasicByMemberIds(memberIds);
+        then(getGisuUseCase).should().getByIds(gisuIds);
+    }
+
+    @Test
     @DisplayName("members 중 하나라도 권한이 없으면 batch 조회를 호출하지 않는다")
     void members_중_하나라도_권한이_없으면_batch_조회를_호출하지_않는다() {
         SubjectAttributes subject = subject();
@@ -206,15 +286,22 @@ class MemberGraphQlControllerTest {
             .satisfy(errors -> assertThat(errors).isNotEmpty());
 
         then(getMemberUseCase).shouldHaveNoInteractions();
+        then(getSchoolUseCase).shouldHaveNoInteractions();
+        then(getChallengerUseCase).shouldHaveNoInteractions();
+        then(getGisuUseCase).shouldHaveNoInteractions();
     }
 
     private MemberInfo memberInfo(Long memberId) {
+        return memberInfo(memberId, 10L);
+    }
+
+    private MemberInfo memberInfo(Long memberId, Long schoolId) {
         return MemberInfo.builder()
             .id(memberId)
             .name("member" + memberId)
             .nickname("nick" + memberId)
             .email("member" + memberId + "@example.com")
-            .schoolId(10L)
+            .schoolId(schoolId)
             .schoolName("중앙대학교")
             .profileImageId("profile-" + memberId)
             .profileImageLink("https://cdn.example.com/profile-" + memberId + ".png")
@@ -234,5 +321,40 @@ class MemberGraphQlControllerTest {
 
     private ResourcePermission memberReadPermission(Long memberId) {
         return ResourcePermission.of(ResourceType.MEMBER, memberId, PermissionType.READ);
+    }
+
+    private SchoolDetailInfo school(Long schoolId, String schoolName) {
+        return new SchoolDetailInfo(
+            1L,
+            "1지부",
+            schoolName,
+            schoolId,
+            "비고",
+            null,
+            List.of(),
+            true,
+            Instant.parse("2026-01-01T00:00:00Z"),
+            Instant.parse("2026-01-02T00:00:00Z")
+        );
+    }
+
+    private ChallengerBasicInfo challenger(
+        Long challengerId,
+        Long memberId,
+        Long gisuId,
+        ChallengerPart part,
+        ChallengerStatus status
+    ) {
+        return new ChallengerBasicInfo(challengerId, memberId, gisuId, part, status);
+    }
+
+    private GisuInfo gisu(Long gisuId, Long generation) {
+        return new GisuInfo(
+            gisuId,
+            generation,
+            Instant.parse("2026-01-01T00:00:00Z"),
+            Instant.parse("2026-12-31T00:00:00Z"),
+            true
+        );
     }
 }

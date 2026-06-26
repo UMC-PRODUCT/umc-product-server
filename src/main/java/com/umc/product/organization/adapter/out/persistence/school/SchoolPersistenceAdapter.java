@@ -100,6 +100,11 @@ public class SchoolPersistenceAdapter implements SaveSchoolPort, LoadSchoolPort 
     }
 
     @Override
+    public List<SchoolChapterInfo> findSchoolDetailsByIds(Set<Long> schoolIds) {
+        return schoolQueryRepository.getSchoolDetailsByIds(schoolIds);
+    }
+
+    @Override
     public Map<Long, List<SchoolDetailInfo.SchoolLinkItem>> findLinksBySchoolIds(List<Long> schoolIds) {
         return schoolQueryRepository.findLinksBySchoolIds(schoolIds);
     }
