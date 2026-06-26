@@ -11,14 +11,26 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.request.CreateBestWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v2.dto.request.DeleteChallengerWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v2.dto.request.EditChallengerWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v2.dto.request.EditWeeklyBestWorkbookReasonRequest;
+import com.umc.product.curriculum.adapter.in.web.v2.dto.request.ExcuseChallengerWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.response.ChallengerWorkbookResponse;
-import com.umc.product.global.exception.NotImplementedException;
+import com.umc.product.curriculum.adapter.in.web.v2.dto.response.ChallengerWorkbookStatusResponse;
+import com.umc.product.curriculum.application.port.in.command.ManageChallengerWorkbookUseCase;
+import com.umc.product.curriculum.application.port.in.command.ManageWeeklyBestWorkbookUseCase;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.DeployChallengerWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.query.dto.ChallengerWorkbookInfo;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -26,6 +38,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Tag(name = "Curriculum V2 | Challenger Workbook Command", description = "챌린저 워크북 배포, 수정, 베스트 워크북 지정을 다룹니다.")
 public class ChallengerWorkbookCommandV2Controller {
+
+    private final ManageChallengerWorkbookUseCase manageChallengerWorkbookUseCase;
+    private final ManageWeeklyBestWorkbookUseCase manageWeeklyBestWorkbookUseCase;
 
     @Operation(
         operationId = "CHALLENGER-WORKBOOK-001",
@@ -51,7 +66,13 @@ public class ChallengerWorkbookCommandV2Controller {
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam List<Long> originalWorkbookIds
     ) {
-        throw new NotImplementedException();
+        return manageChallengerWorkbookUseCase.batchDeploy(DeployChallengerWorkbookCommand.builder()
+                .originalWorkbookIds(originalWorkbookIds)
+                .requestedMemberId(memberPrincipal.getMemberId())
+                .build())
+            .stream()
+            .map(this::toResponse)
+            .toList();
     }
 
     @Operation(
@@ -66,10 +87,10 @@ public class ChallengerWorkbookCommandV2Controller {
     @PatchMapping("/{challengerWorkbookId}")
     public void editChallengerWorkbook(
         @PathVariable Long challengerWorkbookId,
-        @RequestBody String content,
+        @Valid @RequestBody EditChallengerWorkbookRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        throw new NotImplementedException();
+        manageChallengerWorkbookUseCase.edit(request.toCommand(challengerWorkbookId, memberPrincipal.getMemberId()));
     }
 
     // ============== 운영진용 ==============
@@ -85,12 +106,17 @@ public class ChallengerWorkbookCommandV2Controller {
             따라서, 챌린저가 해당 워크북에 대해 제출했던 모든 미션 기록이 사라지게 됩니다.
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.CURRICULUM,
+        permission = PermissionType.DELETE
+    )
     @DeleteMapping("/{challengerWorkbookId}")
     public void deleteChallengerWorkbook(
         @PathVariable Long challengerWorkbookId,
-        @RequestBody String reason
+        @Valid @RequestBody DeleteChallengerWorkbookRequest request,
+        @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        throw new NotImplementedException();
+        manageChallengerWorkbookUseCase.delete(request.toCommand(challengerWorkbookId, memberPrincipal.getMemberId()));
     }
 
     @Operation(
@@ -101,13 +127,17 @@ public class ChallengerWorkbookCommandV2Controller {
             인정 처리에 대한 철회는 제공하지 않습니다.
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.CURRICULUM,
+        permission = PermissionType.WRITE
+    )
     @PostMapping("/{challengerWorkbookId}/excuse")
     public void excuseChallengerWorkbook(
         @PathVariable Long challengerWorkbookId,
-        @RequestBody String reason,
+        @Valid @RequestBody ExcuseChallengerWorkbookRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        throw new NotImplementedException();
+        manageChallengerWorkbookUseCase.excuse(request.toCommand(challengerWorkbookId, memberPrincipal.getMemberId()));
     }
 
     // TODO: 언젠가 시간이 남는다면 인정 처리 철회를 만드시길,,, 근데 그러면 Rollback Policy 모두 정하고 하셔야 해요!
@@ -129,12 +159,17 @@ public class ChallengerWorkbookCommandV2Controller {
             - 다른 사람을 베스트 워크북으로 선정하고자 하는 경우, 철회 후 다시 선정해야 합니다.
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.CURRICULUM,
+        resourceId = "#request.weeklyCurriculumId",
+        permission = PermissionType.WRITE
+    )
     @PostMapping("/weekly-best")
     public void createWeeklyBestWorkbook(
-        @RequestBody CreateBestWorkbookRequest request,
+        @Valid @RequestBody CreateBestWorkbookRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        throw new NotImplementedException();
+        manageWeeklyBestWorkbookUseCase.selectBest(request.toCommand(memberPrincipal.getMemberId()));
     }
 
     @Operation(
@@ -148,13 +183,19 @@ public class ChallengerWorkbookCommandV2Controller {
             `BestWorkbookResponse`에서 제공되는 `weeklyBestWorkbookEntityId`를 제공하여야 합니다.
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.CURRICULUM,
+        permission = PermissionType.WRITE
+    )
     @PatchMapping("/weekly-best/{weeklyBestWorkbookId}")
     public void editWeeklyBestWorkbookReason(
         @PathVariable Long weeklyBestWorkbookId,
-        @RequestBody String newReason,
+        @Valid @RequestBody EditWeeklyBestWorkbookReasonRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        throw new NotImplementedException();
+        manageWeeklyBestWorkbookUseCase.editReason(
+            request.toCommand(weeklyBestWorkbookId, memberPrincipal.getMemberId())
+        );
     }
 
     @Operation(
@@ -165,12 +206,32 @@ public class ChallengerWorkbookCommandV2Controller {
             해당 주차가 종료된 이후 1주일 뒤까지만 철회가 가능합니다.
             """
     )
+    @CheckAccess(
+        resourceType = ResourceType.CURRICULUM,
+        permission = PermissionType.DELETE
+    )
     @DeleteMapping("/weekly-best/{weeklyBestWorkbookId}")
     public void deleteWeeklyBestWorkbook(
         @PathVariable Long weeklyBestWorkbookId,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        throw new NotImplementedException();
+        manageWeeklyBestWorkbookUseCase.withdraw(weeklyBestWorkbookId);
+    }
+
+    private ChallengerWorkbookResponse toResponse(ChallengerWorkbookInfo info) {
+        return ChallengerWorkbookResponse.builder()
+            .challengerWorkbookId(info.challengerWorkbookId())
+            .originalWorkbookId(info.originalWorkbookId())
+            .receivedStudyGroupId(info.receivedStudyGroupId())
+            .memberId(info.challengerId())
+            .isExcused(info.isExcused())
+            .excusedReason(info.excusedReason())
+            .content(info.content())
+            .isBestWorkbook(info.isBestWorkbook())
+            .status(ChallengerWorkbookStatusResponse.IN_PROGRESS)
+            .hasSubmission(false)
+            .submission(null)
+            .build();
     }
 
 }
