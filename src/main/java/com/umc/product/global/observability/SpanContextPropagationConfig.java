@@ -48,6 +48,6 @@ public class SpanContextPropagationConfig {
         }
         ContextRegistry.getInstance()
             .registerThreadLocalAccessor(new ObservationAwareSpanThreadLocalAccessor(observationRegistry, tracer));
-        log.info("Span ThreadLocalAccessor 등록 완료: 비동기 경계에서 수동 생성 Span 컨텍스트가 전파됩니다.");
+        log.info("Span ThreadLocalAccessor를 등록해 비동기 경계에서 수동 생성 Span 컨텍스트를 전파합니다.");
     }
 }
