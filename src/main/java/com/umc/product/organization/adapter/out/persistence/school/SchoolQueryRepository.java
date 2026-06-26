@@ -176,6 +176,35 @@ public class SchoolQueryRepository {
             .fetch();
     }
 
+    public List<SchoolChapterInfo> getSchoolDetailsByIds(Set<Long> schoolIds) {
+        if (schoolIds.isEmpty()) {
+            return List.of();
+        }
+
+        JPQLQuery<Long> activeChapterIds = activeChapterIdSubQuery();
+
+        return queryFactory
+            .select(Projections.constructor(SchoolChapterInfo.class,
+                chapter.id,
+                chapter.name,
+                school.name,
+                school.id,
+                school.remark,
+                school.logoImageId,
+                chapter.id.isNotNull(),
+                school.createdAt,
+                school.updatedAt
+            ))
+            .from(school)
+            .leftJoin(chapterSchool).on(
+                chapterSchool.school.eq(school)
+                    .and(chapterSchool.chapter.id.in(activeChapterIds))
+            )
+            .leftJoin(chapterSchool.chapter, chapter)
+            .where(school.id.in(schoolIds))
+            .fetch();
+    }
+
     public List<School> findSchoolsByGisuId(Long gisuId) {
         return queryFactory
             .selectDistinct(school)
