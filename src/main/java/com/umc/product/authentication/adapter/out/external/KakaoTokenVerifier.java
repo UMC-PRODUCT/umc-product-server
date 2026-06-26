@@ -96,7 +96,7 @@ public class KakaoTokenVerifier {
                     .body(formData)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
-                        log.error("Kakao 토큰 교환 실패: status={}", res.getStatusCode());
+                        log.warn("Kakao 토큰 교환 실패: status={}", res.getStatusCode());
                         throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
                     })
                     .body(KakaoTokenResponse.class)
@@ -113,7 +113,7 @@ public class KakaoTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Kakao 토큰 교환 실패", e);
+            log.warn("Kakao 토큰 교환 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -137,7 +137,7 @@ public class KakaoTokenVerifier {
                     .header("Authorization", "Bearer " + accessToken)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
-                        log.error("Kakao 사용자 정보 조회 실패: status={}", res.getStatusCode());
+                        log.warn("Kakao 사용자 정보 조회 실패: status={}", res.getStatusCode());
                         throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
                     })
                     .body(KakaoUserResponse.class)
@@ -156,7 +156,7 @@ public class KakaoTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Kakao Access Token 검증 실패", e);
+            log.warn("Kakao Access Token 검증 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -197,7 +197,7 @@ public class KakaoTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Kakao ID Token 검증 실패", e);
+            log.warn("Kakao ID Token 검증 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -243,7 +243,7 @@ public class KakaoTokenVerifier {
                     .header("Authorization", "Bearer " + accessToken)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
-                        log.error("Kakao 연결 끊기 실패: status={}", res.getStatusCode());
+                        log.warn("Kakao 연결 끊기 실패: status={}", res.getStatusCode());
                         throw new AuthenticationDomainException(
                             AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
                     })
@@ -255,7 +255,7 @@ public class KakaoTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Kakao 연결 끊기 실패", e);
+            log.warn("Kakao 연결 끊기 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -287,7 +287,7 @@ public class KakaoTokenVerifier {
                     .body(formData)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
-                        log.error("Kakao 연결 끊기 실패: status={}, targetProvided={}",
+                        log.warn("Kakao 연결 끊기 실패: status={}, targetProvided={}",
                             res.getStatusCode(), hasText(kakaoUserId));
                         throw new AuthenticationDomainException(
                             AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
@@ -300,7 +300,7 @@ public class KakaoTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Kakao 연결 끊기 실패: targetProvided={}", hasText(kakaoUserId), e);
+            log.warn("Kakao 연결 끊기 실패: targetProvided={}", hasText(kakaoUserId), e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }

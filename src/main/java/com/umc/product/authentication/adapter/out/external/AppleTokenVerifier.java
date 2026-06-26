@@ -101,7 +101,7 @@ public class AppleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Apple ID Token 검증 실패", e);
+            log.warn("Apple ID Token 검증 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -141,7 +141,7 @@ public class AppleTokenVerifier {
                         // 잘못된 분기로 성공 body 가 흘러올 수 있으므로 status / errorCode 만 남긴다.
                         String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
                         String errorCode = extractAppleErrorCode(body);
-                        log.error("Apple token endpoint 호출 실패: status={}, errorCode={}, bodyLength={}",
+                        log.warn("Apple token endpoint 호출 실패: status={}, errorCode={}, bodyLength={}",
                             res.getStatusCode(), errorCode, body.length());
                         throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
                     })
@@ -160,7 +160,7 @@ public class AppleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Apple Authorization Code 교환 실패", e);
+            log.warn("Apple Authorization Code 교환 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -193,7 +193,7 @@ public class AppleTokenVerifier {
                         // ADR-016 §민감 필드 정책: revoke 응답 본문 통째로 로깅하지 않는다.
                         String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
                         String errorCode = extractAppleErrorCode(body);
-                        log.error("Apple token revoke 실패: status={}, errorCode={}, bodyLength={}",
+                        log.warn("Apple token revoke 실패: status={}, errorCode={}, bodyLength={}",
                             res.getStatusCode(), errorCode, body.length());
                         throw new AuthenticationDomainException(
                             AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
@@ -206,7 +206,7 @@ public class AppleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Apple token revoke 실패", e);
+            log.warn("Apple token revoke 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }

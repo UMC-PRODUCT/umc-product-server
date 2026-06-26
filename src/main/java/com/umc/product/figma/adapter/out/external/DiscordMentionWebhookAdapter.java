@@ -466,14 +466,14 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
             for (int e = 0; e < embeds.size(); e++) {
                 int embedSize = byteSizeOfEmbed(embeds.get(e));
                 if (embedSize > EMBED_TOTAL_SIZE_MAX) {
-                    log.error("Discord embed 단일 한도 초과: domainKey={}, page={}, embedIdx={}, bytes={}",
+                    log.warn("Discord embed 단일 한도 초과: domainKey={}, page={}, embedIdx={}, bytes={}",
                         domainKey, p + 1, e + 1, embedSize);
                     throw new FigmaDomainException(FigmaErrorCode.DISCORD_MENTION_SEND_FAILED);
                 }
                 pageSize += embedSize;
             }
             if (pageSize > EMBED_TOTAL_SIZE_MAX) {
-                log.error("Discord 메시지 합산 한도 초과: domainKey={}, page={}, bytes={}, embeds={}",
+                log.warn("Discord 메시지 합산 한도 초과: domainKey={}, page={}, bytes={}, embeds={}",
                     domainKey, p + 1, pageSize, embeds.size());
                 throw new FigmaDomainException(FigmaErrorCode.DISCORD_MENTION_SEND_FAILED);
             }
@@ -509,7 +509,7 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
                 log.debug("Discord domain batch를 전송했습니다: domainKey={}, page={}/{}, comments={}",
                     message.domainKey(), i + 1, pages.size(), message.comments().size());
             } catch (RestClientResponseException e) {
-                log.error("Discord domain batch 전송 실패: domainKey={}, page={}/{}, status={}, bodyLength={}",
+                log.warn("Discord domain batch 전송 실패: domainKey={}, page={}/{}, status={}, bodyLength={}",
                     message.domainKey(), i + 1, pages.size(),
                     e.getStatusCode(), e.getResponseBodyAsByteArray().length);
                 if (sent.isEmpty()) {

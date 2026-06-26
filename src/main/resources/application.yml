@@ -70,8 +70,9 @@ spring:
     properties:
       hibernate:
         default_schema: public
-        format_sql: false
-        show_sql: false # p6spy가 있어서 꺼둠
+        # SQL 출력 포맷은 P6SpyConfig 가 담당하므로 hibernate.format_sql 은 두지 않는다.
+        # show_sql 도 P6Spy 라인 출력과의 중복을 막기 위해 끔.
+        show_sql: false
 
   # ====================================================================
   # Spring AI / LLM provider 설정
@@ -158,6 +159,20 @@ springdoc:
     enabled: ${OPENAPI_ENABLE:${SWAGGER_ENABLE:false}}
 
   show-actuator: ${OPENAPI_ENABLE_ACTUATOR:${SWAGGER_ENABLE_ACTUATOR:false}}
+
+# ====================================================================
+# P6Spy (datasource-decorator) — 라인 단위 SQL 로깅 제어
+# 기본값은 OFF(false) — fail-safe. 트래픽 환경에서 env 주입을 깜빡해도 로그 폭증이 발생하지 않는다.
+#   - 라인 로깅이 꺼져도 QueryStatsJdbcEventListener 통계(queryCount/queryTimeMs)와
+#     DB span 트레이싱은 그대로 동작한다 (SQL 원문 라인만 사라짐).
+#   - local 프로필은 파일 하단(on-profile: local)에서 enable-logging=true 로 재정의하므로,
+#     로컬 개발자는 별도 env 설정 없이 SQL 라인을 본다.
+# 환경변수 기본값: local=true / dev·staging·prod·test=false
+# ====================================================================
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: ${P6SPY_ENABLE_LOGGING:false}
 
 logging:
   level:
@@ -297,9 +312,6 @@ app:
     allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:}
 
   webhook:
-    buffer:
-      enabled: ${WEBHOOK_BUFFER_ENABLED:true}
-      flush-interval-ms: ${WEBHOOK_BUFFER_FLUSH_INTERVAL_MS:60000} # 1분마다 버퍼 플러시
     telegram:
       bot-token: ${TELEGRAM_BOT_TOKEN:}
       chat-id: ${TELEGRAM_CHAT_ID:}
@@ -423,3 +435,18 @@ spring:
 app:
   seed:
     enabled: ${APP_SEED_ENABLED:true}
+
+# ==================================================================
+# local 환경 default override — 로컬 개발자가 env 설정 없이도 SQL 라인 로깅을 본다.
+# (env 로 끄고 싶으면 P6SPY_ENABLE_LOGGING=false 로 override 가능)
+# ==================================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: ${P6SPY_ENABLE_LOGGING:true}

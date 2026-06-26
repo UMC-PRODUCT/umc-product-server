@@ -68,13 +68,13 @@ public class GoogleTokenVerifier {
                 .getPayload();
 
             if (!GOOGLE_ISSUERS.contains(claims.getIssuer())) {
-                log.error("Google ID 토큰 issuer 불일치: actual={}", claims.getIssuer());
+                log.warn("Google ID 토큰 issuer 불일치: actual={}", claims.getIssuer());
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
 
             Set<String> audience = claims.getAudience();
             if (audience == null || audience.stream().noneMatch(googleProperties.clientIdList()::contains)) {
-                log.error("Google ID 토큰 audience 불일치: expected={}, actual={}",
+                log.warn("Google ID 토큰 audience 불일치: expected={}, actual={}",
                     googleProperties.clientIdList(), audience);
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
@@ -94,7 +94,7 @@ public class GoogleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Google ID Token 검증 실패", e);
+            log.warn("Google ID Token 검증 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -111,7 +111,7 @@ public class GoogleTokenVerifier {
                     .uri(GOOGLE_TOKEN_INFO_URL + "?access_token=" + accessToken)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
-                        log.error("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
+                        log.warn("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
                         throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
                     })
                     .body(GoogleAccessTokenInfoResponse.class)
@@ -122,7 +122,7 @@ public class GoogleTokenVerifier {
             }
 
             if (!googleProperties.clientIdList().contains(response.aud())) {
-                log.error("Google ID 토큰 audience 불일치: expected={}, actual={}",
+                log.warn("Google ID 토큰 audience 불일치: expected={}, actual={}",
                     googleProperties.clientIdList(), response.aud());
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
@@ -138,7 +138,7 @@ public class GoogleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Google Access Token 검증 실패", e);
+            log.warn("Google Access Token 검증 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -164,7 +164,7 @@ public class GoogleTokenVerifier {
                     .body(formData)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
-                        log.error("Google token revoke 실패: status={}", res.getStatusCode());
+                        log.warn("Google token revoke 실패: status={}", res.getStatusCode());
                         throw new AuthenticationDomainException(
                             AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
                     })
@@ -176,7 +176,7 @@ public class GoogleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Google token revoke 실패", e);
+            log.warn("Google token revoke 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }

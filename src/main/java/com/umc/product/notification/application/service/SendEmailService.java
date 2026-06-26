@@ -39,9 +39,15 @@ public class SendEmailService implements SendEmailUseCase {
             SUBJECT_PREFIX + command.verificationCode(),
             htmlContent
         );
-        // 발송 실패 시 SesEmailAdapter 가 AWS error code 와 cause 를 포함해 도메인 예외로 변환한다.
-        // 비동기 호출이므로 예외는 AsyncUncaughtExceptionHandler 에서 처리된다.
-        sendEmailPort.send(message);
+        // 인증 이메일은 발송 실패 시 사용자가 가입/로그인을 진행할 수 없는 핵심 경로다.
+        // 어댑터(SesEmailAdapter)의 WARN 과 별개로, 인증 usecase 에서는 ERROR 로 남겨 운영자가 즉시 인지하도록 한다.
+        // 예외는 그대로 재던져 비동기 핸들러/상위 흐름이 처리하게 둔다.
+        try {
+            sendEmailPort.send(message);
+        } catch (EmailDomainException e) {
+            log.error("인증 이메일 발송 실패: recipientPresent={}", hasRecipient(command.to()), e);
+            throw e;
+        }
     }
 
     private String renderVerificationTemplate(SendVerificationEmailCommand command) {
