@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletRequest;
 @Component
 public class RateLimitClientKeyResolver {
 
-    private static final String HEADER_X_FORWARDED_FOR = "X-Forwarded-For";
     private static final String CLIENT_TYPE_ANONYMOUS = "ANONYMOUS";
     private static final String CLIENT_TYPE_UNKNOWN = "UNKNOWN";
 
@@ -31,10 +30,6 @@ public class RateLimitClientKeyResolver {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader(HEADER_X_FORWARDED_FOR);
-        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
         return request.getRemoteAddr();
     }
 }
