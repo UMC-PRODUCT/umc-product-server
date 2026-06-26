@@ -1,0 +1,22 @@
+extend type Query {
+  me: Member!
+  member(id: ID!): Member
+  members(ids: [ID!]!): [Member!]!
+}
+
+type Member {
+  memberId: ID!
+  name: String
+  nickname: String
+  email: String
+  schoolId: ID
+  schoolName: String
+  profileImageLink: String
+  status: MemberStatus
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  WITHDRAWN
+}
