@@ -8,6 +8,7 @@ import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatusCode;
@@ -36,7 +37,6 @@ public class OidcPublicKeyResolver {
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
     private final CacheUseCase cacheUseCase;
-    private final Object refreshLock = new Object();
 
     public String extractKid(String idToken) {
         try {
@@ -61,7 +61,7 @@ public class OidcPublicKeyResolver {
             return cached;
         }
 
-        synchronized (refreshLock) {
+        synchronized (spec.namespace()) {
             cached = findCachedPublicKey(cacheSpec, kid);
             if (cached != null) {
                 return cached;
@@ -102,24 +102,31 @@ public class OidcPublicKeyResolver {
 
         Map<String, PublicKey> keys = jwks.keys().stream()
             .filter(key -> key.kid() != null && !key.kid().isBlank())
-            .collect(Collectors.toUnmodifiableMap(OidcJwk::kid, this::buildRsaPublicKey, (left, right) -> left));
+            .filter(key -> "RSA".equalsIgnoreCase(key.kty()))
+            .map(this::buildPublicKeyEntry)
+            .flatMap(Optional::stream)
+            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue, (left, right) -> left));
         return new OidcPublicKeys(keys);
     }
 
-    private PublicKey buildRsaPublicKey(OidcJwk jwk) {
+    private Optional<Map.Entry<String, PublicKey>> buildPublicKeyEntry(OidcJwk jwk) {
         try {
-            byte[] nBytes = Base64.getUrlDecoder().decode(jwk.n());
-            byte[] eBytes = Base64.getUrlDecoder().decode(jwk.e());
-
-            RSAPublicKeySpec spec = new RSAPublicKeySpec(
-                new BigInteger(1, nBytes),
-                new BigInteger(1, eBytes)
-            );
-            return KeyFactory.getInstance("RSA").generatePublic(spec);
+            return Optional.of(Map.entry(jwk.kid(), buildRsaPublicKey(jwk)));
         } catch (Exception e) {
-            log.error("OIDC RSA 공개키 생성 실패: kid={}", jwk.kid(), e);
-            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+            log.warn("OIDC RSA 공개키 생성 실패, 해당 키를 건너뜁니다: kid={}", jwk.kid(), e);
+            return Optional.empty();
         }
+    }
+
+    private PublicKey buildRsaPublicKey(OidcJwk jwk) throws Exception {
+        byte[] nBytes = Base64.getUrlDecoder().decode(jwk.n());
+        byte[] eBytes = Base64.getUrlDecoder().decode(jwk.e());
+
+        RSAPublicKeySpec spec = new RSAPublicKeySpec(
+            new BigInteger(1, nBytes),
+            new BigInteger(1, eBytes)
+        );
+        return KeyFactory.getInstance("RSA").generatePublic(spec);
     }
 
     private CacheSpec<OidcPublicKeys> cacheSpec(OidcJwksSpec spec) {

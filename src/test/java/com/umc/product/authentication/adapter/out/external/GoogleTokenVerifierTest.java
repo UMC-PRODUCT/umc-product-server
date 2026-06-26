@@ -57,6 +57,26 @@ class GoogleTokenVerifierTest {
     }
 
     @Test
+    @DisplayName("Google ID Token audience가 없으면 INVALID_OAUTH_TOKEN 예외를 던진다")
+    void google_audience_missing() {
+        TestFixture fixture = new TestFixture();
+        KeyPair keyPair = OidcTokenTestSupport.rsaKeyPair();
+        fixture.expectGoogleJwks("google-kid", keyPair);
+        String idToken = OidcTokenTestSupport.signedIdTokenWithoutAudience(
+            keyPair,
+            "google-kid",
+            "https://accounts.google.com",
+            "google-sub",
+            Map.of("email", "google@example.com")
+        );
+
+        assertThatThrownBy(() -> fixture.verifier.verify(idToken))
+            .isInstanceOf(AuthenticationDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
+    }
+
+    @Test
     @DisplayName("Google ID Token audience가 등록된 client id가 아니면 INVALID_OAUTH_TOKEN 예외를 던진다")
     void google_audience_mismatch() {
         TestFixture fixture = new TestFixture();

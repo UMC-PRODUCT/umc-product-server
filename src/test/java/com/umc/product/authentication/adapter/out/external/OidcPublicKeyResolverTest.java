@@ -78,6 +78,41 @@ class OidcPublicKeyResolverTest {
     }
 
     @Test
+    @DisplayName("JWKS에 비 RSA 키나 손상된 RSA 키가 있어도 유효한 RSA 공개키는 캐시한다")
+    void skips_unsupported_or_corrupted_keys() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        KeyPair keyPair = OidcTokenTestSupport.rsaKeyPair();
+        String jwks = """
+            {
+              "keys": [
+                {
+                  "kid": "ec-kid",
+                  "kty": "EC",
+                  "alg": "ES256"
+                },
+                {
+                  "kid": "broken-rsa-kid",
+                  "kty": "RSA",
+                  "alg": "RS256",
+                  "n": "not-base64",
+                  "e": "AQAB"
+                },
+                %s
+              ]
+            }
+            """.formatted(OidcTokenTestSupport.jwk("valid-kid", (RSAPublicKey) keyPair.getPublic()));
+        server.expect(once(), requestTo(JWKS_URI))
+            .andRespond(withSuccess(jwks, MediaType.APPLICATION_JSON));
+        OidcPublicKeyResolver resolver = newResolver(builder);
+
+        PublicKey publicKey = resolver.getPublicKey(spec(), "valid-kid");
+
+        assertThat(publicKey).isEqualTo(keyPair.getPublic());
+        server.verify();
+    }
+
+    @Test
     @DisplayName("JWKS refresh 후에도 kid가 없으면 INVALID_OAUTH_TOKEN 예외를 던진다")
     void missing_kid_throws_invalid_oauth_token() {
         RestClient.Builder builder = RestClient.builder();

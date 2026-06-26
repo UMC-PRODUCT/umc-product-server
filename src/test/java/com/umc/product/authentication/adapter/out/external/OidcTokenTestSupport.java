@@ -55,21 +55,49 @@ final class OidcTokenTestSupport {
         return """
             {
               "keys": [
-                {
-                  "kid": "%s",
-                  "kty": "RSA",
-                  "alg": "RS256",
-                  "use": "sig",
-                  "n": "%s",
-                  "e": "%s"
-                }
+                %s
               ]
+            }
+            """.formatted(jwk(kid, publicKey));
+    }
+
+    static String jwk(String kid, RSAPublicKey publicKey) {
+        return """
+            {
+              "kid": "%s",
+              "kty": "RSA",
+              "alg": "RS256",
+              "use": "sig",
+              "n": "%s",
+              "e": "%s"
             }
             """.formatted(
             kid,
             base64UrlUnsigned(publicKey.getModulus()),
             base64UrlUnsigned(publicKey.getPublicExponent())
         );
+    }
+
+    static String signedIdTokenWithoutAudience(
+        KeyPair keyPair,
+        String kid,
+        String issuer,
+        String subject,
+        Map<String, Object> extraClaims
+    ) {
+        Instant now = Instant.now();
+        var builder = Jwts.builder()
+            .header()
+            .add("kid", kid)
+            .and()
+            .issuer(issuer)
+            .subject(subject)
+            .issuedAt(Date.from(now))
+            .expiration(Date.from(now.plusSeconds(600)));
+
+        extraClaims.forEach(builder::claim);
+
+        return builder.signWith(keyPair.getPrivate(), SIG.RS256).compact();
     }
 
     private static String base64UrlUnsigned(BigInteger value) {

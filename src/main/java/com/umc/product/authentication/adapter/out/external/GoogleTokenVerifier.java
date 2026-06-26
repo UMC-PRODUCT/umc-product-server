@@ -72,9 +72,10 @@ public class GoogleTokenVerifier {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
 
-            if (claims.getAudience().stream().noneMatch(googleProperties.clientIdList()::contains)) {
+            Set<String> audience = claims.getAudience();
+            if (audience == null || audience.stream().noneMatch(googleProperties.clientIdList()::contains)) {
                 log.error("Google ID 토큰 audience 불일치: expected={}, actual={}",
-                    googleProperties.clientIdList(), claims.getAudience());
+                    googleProperties.clientIdList(), audience);
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
 
