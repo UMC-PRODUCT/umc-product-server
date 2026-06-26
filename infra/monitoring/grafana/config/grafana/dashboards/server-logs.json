@@ -50,7 +50,7 @@
                       "spec": {
                         "direction": "backward",
                         "editorMode": "code",
-                        "expr": "{service_name=~\"$service\"} | detected_level=~\"$log_level\" |~ \"(?i)$traceId\" |~ \"(?i)$memberId\" |~ \"(?i)$clientType\" |~ \"(?i)$log_search\"",
+                        "expr": "{service_name=~\"$service\"} | detected_level=~\"$log_level\" | traceId =~ \"(?i).*$traceId.*\" | memberId =~ \"(?i).*$memberId.*\" | clientType =~ \"^$clientType$\" |~ \"(?i)$log_search\"",
                         "queryType": "range"
                       },
                       "version": "v0"
