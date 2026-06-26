@@ -1,10 +1,10 @@
 package com.umc.product.global.security.util;
 
-import com.umc.product.global.security.annotation.Public;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -12,10 +12,12 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
+import com.umc.product.global.security.annotation.Public;
+
 public class PublicEndpointCollector {
 
-    public static List<EndpointMatcher> collectPublicEndpoints(RequestMappingHandlerMapping handlerMapping) {
-        List<EndpointMatcher> publicEndpoints = new ArrayList<>();
+    public static List<SecurityEndpoint> collectPublicEndpoints(RequestMappingHandlerMapping handlerMapping) {
+        List<SecurityEndpoint> publicEndpoints = new ArrayList<>();
 
         Map<RequestMappingInfo, HandlerMethod> handlerMethods =
                 handlerMapping.getHandlerMethods();
@@ -35,14 +37,14 @@ public class PublicEndpointCollector {
                 // HTTP 메서드가 지정되지 않은 경우 모든 메서드 허용
                 if (methods.isEmpty()) {
                     for (String pattern : patterns) {
-                        publicEndpoints.add(new EndpointMatcher(null, pattern));
+                        publicEndpoints.add(SecurityEndpoint.any(pattern));
                     }
                 } else {
                     // HTTP 메서드별로 패턴 추가
                     for (RequestMethod method : methods) {
                         HttpMethod httpMethod = HttpMethod.valueOf(method.name());
                         for (String pattern : patterns) {
-                            publicEndpoints.add(new EndpointMatcher(httpMethod, pattern));
+                            publicEndpoints.add(SecurityEndpoint.of(httpMethod, pattern));
                         }
                     }
                 }
@@ -50,11 +52,5 @@ public class PublicEndpointCollector {
         }
 
         return publicEndpoints;
-    }
-
-    /**
-     * HTTP 메서드와 URL 패턴을 함께 저장하는 클래스
-     */
-    public record EndpointMatcher(HttpMethod method, String pattern) {
     }
 }
