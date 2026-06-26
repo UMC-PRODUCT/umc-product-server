@@ -17,6 +17,7 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.project.adapter.in.web.dto.request.AbortProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.request.AddProjectMemberRequest;
+import com.umc.product.project.adapter.in.web.dto.request.ChangeProjectMemberStatusRequest;
 import com.umc.product.project.adapter.in.web.dto.request.CreateDraftProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.request.TransferProjectOwnershipRequest;
 import com.umc.product.project.adapter.in.web.dto.request.UpdatePartQuotasRequest;
@@ -24,6 +25,7 @@ import com.umc.product.project.adapter.in.web.dto.request.UpdateProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectStatusResponse;
 import com.umc.product.project.application.port.in.command.AbortProjectUseCase;
 import com.umc.product.project.application.port.in.command.AddProjectMemberUseCase;
+import com.umc.product.project.application.port.in.command.ChangeProjectMemberStatusUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
 import com.umc.product.project.application.port.in.command.DeleteProjectUseCase;
 import com.umc.product.project.application.port.in.command.PublishProjectUseCase;
@@ -55,6 +57,7 @@ public class ProjectCommandController {
     private final TransferProjectOwnershipUseCase transferProjectOwnershipUseCase;
     private final AddProjectMemberUseCase addProjectMemberUseCase;
     private final RemoveProjectMemberUseCase removeProjectMemberUseCase;
+    private final ChangeProjectMemberStatusUseCase changeProjectMemberStatusUseCase;
     private final UpdatePartQuotasUseCase updatePartQuotasUseCase;
     private final PublishProjectUseCase publishProjectUseCase;
     private final DeleteProjectUseCase deleteProjectUseCase;
@@ -254,8 +257,14 @@ public class ProjectCommandController {
     @DeleteMapping("/{projectId}/members/{memberId}")
     @Operation(
         operationId = "PROJECT-005",
-        summary = "프로젝트 팀원 제거",
-        description = "프로젝트에서 멤버를 제거합니다. DRAFT/PENDING_REVIEW 단계는 hard delete (실수 정정), IN_PROGRESS 단계는 soft delete (히스토리 보존). 메인 PM 은 양도 API 로 변경해야 합니다."
+        summary = "프로젝트 팀원 제거 (hard delete)",
+        description = """
+            프로젝트에서 멤버 행을 완전히 삭제합니다. 동일 멤버를 같은 프로젝트에 재등록할 수 있습니다.
+            DRAFT/PENDING_REVIEW/IN_PROGRESS 프로젝트 단계에서만 가능하며, 종료(COMPLETED/ABORTED) 프로젝트는 이력 보존을 위해 거부됩니다.
+            상태 변경 히스토리를 남겨야 하면 [PROJECT-006] API 를 사용하세요.
+            메인 PM 은 양도 API 로 변경해야 합니다.
+            reason 은 DB 에는 남지 않고 감사 로그로만 기록됩니다.
+            """
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
@@ -275,5 +284,31 @@ public class ProjectCommandController {
             .reason(reason)
             .requesterMemberId(memberPrincipal.getMemberId())
             .build());
+    }
+
+    @PatchMapping("/{projectId}/members/{memberId}/status")
+    @Operation(
+        operationId = "PROJECT-006",
+        summary = "프로젝트 팀원 상태 변경 (soft delete)",
+        description = """
+            멤버 행을 보존한 채 status 를 변경합니다(COMPLETED/WITHDRAWN/DISMISSED 등).
+            변경 사유(reason)는 필수입니다.
+            종료(COMPLETED/ABORTED) 프로젝트와 메인 PM 은 거부됩니다. 동일 멤버 재등록이 필요하면 hard delete(DELETE) 를 사용하세요.
+            """
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트 팀원 상태를 변경할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
+    )
+    public void changeMemberStatus(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @PathVariable Long memberId,
+        @Valid @RequestBody ChangeProjectMemberStatusRequest request
+    ) {
+        changeProjectMemberStatusUseCase.changeStatus(
+            request.toCommand(projectId, memberId, memberPrincipal.getMemberId()));
     }
 }
