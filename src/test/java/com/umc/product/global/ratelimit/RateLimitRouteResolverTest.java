@@ -21,10 +21,10 @@ class RateLimitRouteResolverTest {
     }
 
     @Test
-    @DisplayName("route pattern 이 없으면 request URI 를 fallback 으로 사용한다")
-    void resolve_request_uri_fallback() {
+    @DisplayName("route pattern 이 없으면 고정된 unmapped fallback 을 사용한다")
+    void resolve_unmapped_fallback() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/products/1");
 
-        assertThat(resolver.resolve(request)).isEqualTo("/api/v1/products/1");
+        assertThat(resolver.resolve(request)).isEqualTo(RateLimitRouteResolver.UNMAPPED_ROUTE_PATTERN);
     }
 }

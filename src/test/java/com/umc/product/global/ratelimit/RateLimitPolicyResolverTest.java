@@ -15,7 +15,12 @@ class RateLimitPolicyResolverTest {
     void resolve_authenticated_default_policy() {
         RateLimitPolicyResolver resolver = new RateLimitPolicyResolver(ApiRateLimitProperties.defaults());
 
-        RateLimitPolicy policy = resolver.resolve("GET", "/api/v1/projects/{projectId}", true).orElseThrow();
+        RateLimitPolicy policy = resolver.resolve(
+            "GET",
+            "/api/v1/projects/{projectId}",
+            "/api/v1/projects/1",
+            true
+        ).orElseThrow();
 
         assertThat(policy.name()).isEqualTo("authenticated-default");
         assertThat(policy.requestsPerSecond()).isEqualTo(20);
@@ -27,7 +32,12 @@ class RateLimitPolicyResolverTest {
     void resolve_expensive_route_policy() {
         RateLimitPolicyResolver resolver = new RateLimitPolicyResolver(ApiRateLimitProperties.defaults());
 
-        RateLimitPolicy policy = resolver.resolve("GET", "/api/v1/search/{keyword}", true).orElseThrow();
+        RateLimitPolicy policy = resolver.resolve(
+            "GET",
+            "/api/v1/search/{keyword}",
+            "/api/v1/search/spring",
+            true
+        ).orElseThrow();
 
         assertThat(policy.name()).isEqualTo("expensive");
         assertThat(policy.requestsPerSecond()).isEqualTo(3);
@@ -39,9 +49,39 @@ class RateLimitPolicyResolverTest {
     void exclude_options_and_configured_paths() {
         RateLimitPolicyResolver resolver = new RateLimitPolicyResolver(ApiRateLimitProperties.defaults());
 
-        assertThat(resolver.resolve("OPTIONS", "/api/v1/projects", false)).isEmpty();
-        assertThat(resolver.resolve("GET", "/docs/scalar.html", false)).isEmpty();
-        assertThat(resolver.resolve("GET", "/actuator/health", false)).isEmpty();
+        assertThat(resolver.resolve("OPTIONS", "/api/v1/projects", "/api/v1/projects", false)).isEmpty();
+        assertThat(resolver.resolve("GET", "/docs/scalar.html", "/docs/scalar.html", false)).isEmpty();
+        assertThat(resolver.resolve("GET", "/actuator/health", "/actuator/health", false)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("미매핑 API 요청은 request URI 로 적용 범위를 판단하고 unmapped bucket 을 공유한다")
+    void resolve_unmapped_api_policy() {
+        RateLimitPolicyResolver resolver = new RateLimitPolicyResolver(ApiRateLimitProperties.defaults());
+
+        RateLimitPolicy policy = resolver.resolve(
+            "GET",
+            RateLimitRouteResolver.UNMAPPED_ROUTE_PATTERN,
+            "/api/v1/unknown/random-path",
+            false
+        ).orElseThrow();
+
+        assertThat(policy.name()).isEqualTo("anonymous-default");
+        assertThat(policy.requestsPerSecond()).isEqualTo(5);
+        assertThat(policy.requestsPerMinute()).isEqualTo(60);
+    }
+
+    @Test
+    @DisplayName("미매핑 제외 경로는 request URI 기준으로 rate limit 대상에서 제외한다")
+    void exclude_unmapped_configured_path() {
+        RateLimitPolicyResolver resolver = new RateLimitPolicyResolver(ApiRateLimitProperties.defaults());
+
+        assertThat(resolver.resolve(
+            "GET",
+            RateLimitRouteResolver.UNMAPPED_ROUTE_PATTERN,
+            "/docs/unknown",
+            false
+        )).isEmpty();
     }
 
     @Test
@@ -58,6 +98,6 @@ class RateLimitPolicyResolverTest {
         );
         RateLimitPolicyResolver resolver = new RateLimitPolicyResolver(properties);
 
-        assertThat(resolver.resolve("GET", "/api/v1/projects", true)).isEmpty();
+        assertThat(resolver.resolve("GET", "/api/v1/projects", "/api/v1/projects", true)).isEmpty();
     }
 }

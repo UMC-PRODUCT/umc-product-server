@@ -18,12 +18,17 @@ public class RateLimitPolicyResolver {
         this.properties = properties;
     }
 
-    public Optional<RateLimitPolicy> resolve(String method, String routePattern, boolean authenticated) {
+    public Optional<RateLimitPolicy> resolve(
+        String method,
+        String routePattern,
+        String requestUri,
+        boolean authenticated
+    ) {
         if (!properties.isEnabled()
             || routePattern == null
             || METHOD_OPTIONS.equalsIgnoreCase(method)
-            || !isIncluded(routePattern)
-            || isExcluded(routePattern)) {
+            || !isIncluded(effectivePath(routePattern, requestUri))
+            || isExcluded(effectivePath(routePattern, requestUri))) {
             return Optional.empty();
         }
 
@@ -69,6 +74,13 @@ public class RateLimitPolicyResolver {
 
     private boolean isExcluded(String routePattern) {
         return matchesAny(properties.excludePaths(), routePattern);
+    }
+
+    private String effectivePath(String routePattern, String requestUri) {
+        if (RateLimitRouteResolver.UNMAPPED_ROUTE_PATTERN.equals(routePattern)) {
+            return requestUri == null ? routePattern : requestUri;
+        }
+        return routePattern;
     }
 
     private boolean matchesAny(Iterable<String> patterns, String path) {

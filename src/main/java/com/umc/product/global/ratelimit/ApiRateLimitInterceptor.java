@@ -43,6 +43,7 @@ public class ApiRateLimitInterceptor implements HandlerInterceptor {
         Optional<RateLimitPolicy> policy = policyResolver.resolve(
             request.getMethod(),
             routePattern,
+            request.getRequestURI(),
             clientKey.authenticated()
         );
 
