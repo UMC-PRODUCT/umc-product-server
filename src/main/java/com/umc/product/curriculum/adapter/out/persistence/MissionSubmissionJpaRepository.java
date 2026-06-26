@@ -13,4 +13,9 @@ public interface MissionSubmissionJpaRepository extends JpaRepository<MissionSub
     List<MissionSubmission> findByChallengerWorkbook_IdIn(List<Long> challengerWorkbookIds);
 
     boolean existsByOriginalWorkbookMission_Id(Long originalWorkbookMissionId);
+
+    boolean existsByOriginalWorkbookMission_IdAndChallengerWorkbook_Id(
+        Long originalWorkbookMissionId,
+        Long challengerWorkbookId
+    );
 }

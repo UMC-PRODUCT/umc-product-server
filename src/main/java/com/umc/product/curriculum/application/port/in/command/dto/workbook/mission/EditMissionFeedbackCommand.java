@@ -1,5 +1,6 @@
 package com.umc.product.curriculum.application.port.in.command.dto.workbook.mission;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
@@ -14,12 +15,10 @@ import lombok.Builder;
  */
 @Builder
 public record EditMissionFeedbackCommand(
-    @NotNull(message = "피드백 ID는 필수입니다")
-    Long missionFeedbackId,
+    @NotNull(message = "피드백 ID는 필수입니다") Long missionFeedbackId,
 
-    @NotNull(message = "요청자 멤버 ID는 필수입니다")
-    Long reviewerMemberId,
+    @NotNull(message = "요청자 멤버 ID는 필수입니다") Long reviewerMemberId,
 
-    String content
+    @NotBlank(message = "수정할 피드백 내용은 필수입니다.") String content
 ) {
 }
