@@ -62,24 +62,26 @@ resource "aws_instance" "sut" {
   private_ip                  = local.sut_private_ip
   vpc_security_group_ids      = [aws_security_group.sut.id]
   key_name                    = var.key_name
+  iam_instance_profile        = try(aws_iam_instance_profile.sut[0].name, null)
   user_data_replace_on_change = true
 
-  # app_env 에는 외부 연동 secret 만 넣고, DB/OTLP/Hikari/dev profile 값은 여기서 강제로 덮어쓴다.
+  # 앱 env/registry credential 은 Secrets Manager ARN 만 전달하고 EC2 role 로 런타임 조회한다.
+  # DB/OTLP/Hikari/dev profile 값은 여기서 강제로 덮어써 매 테스트 조건을 고정한다.
   # 이렇게 해야 매 테스트가 같은 DB/관측/풀 크기 조건에서 시작한다.
   user_data = templatefile("${path.module}/user-data/sut.sh.tftpl", {
-    app_image         = var.app_image
-    registry_server   = var.registry_server
-    registry_username = var.registry_username
-    registry_password = var.registry_password
-    db_host           = aws_db_instance.this.address
-    db_port           = aws_db_instance.this.port
-    db_name           = var.db_name
-    db_username       = var.db_username
-    db_password       = random_password.db.result
-    otel_host         = local.monitoring_private_ip
-    otel_token        = random_password.otel_token.result
-    app_env           = var.app_env
-    hikari_pool       = 4
+    app_image                       = var.app_image
+    registry_server                 = var.registry_server
+    registry_credentials_secret_arn = var.registry_credentials_secret_arn
+    app_env_secret_arn              = var.app_env_secret_arn
+    region                          = var.region
+    db_host                         = aws_db_instance.this.address
+    db_port                         = aws_db_instance.this.port
+    db_name                         = var.db_name
+    db_username                     = var.db_username
+    db_password                     = random_password.db.result
+    otel_host                       = local.monitoring_private_ip
+    otel_token                      = random_password.otel_token.result
+    hikari_pool                     = 4
   })
 
   dynamic "credit_specification" {

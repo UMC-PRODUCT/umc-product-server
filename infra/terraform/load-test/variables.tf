@@ -117,18 +117,15 @@ variable "registry_server" {
   default     = "docker.io"
 }
 
-variable "registry_username" {
-  description = "레지스트리 로그인 사용자명. public image면 빈 문자열."
+variable "registry_credentials_secret_arn" {
+  description = "Docker registry credential JSON 을 담은 AWS Secrets Manager secret ARN. public image면 빈 문자열."
   type        = string
-  sensitive   = true
   default     = ""
-}
 
-variable "registry_password" {
-  description = "레지스트리 로그인 토큰/비밀번호. public image면 빈 문자열."
-  type        = string
-  sensitive   = true
-  default     = ""
+  validation {
+    condition     = var.registry_credentials_secret_arn == "" || can(regex("^arn:aws[a-zA-Z-]*:secretsmanager:", var.registry_credentials_secret_arn))
+    error_message = "registry_credentials_secret_arn 은 빈 문자열이거나 Secrets Manager secret ARN 이어야 합니다."
+  }
 }
 
 variable "git_repo_url" {
@@ -143,14 +140,18 @@ variable "git_repo_url" {
   }
 }
 
-variable "app_env" {
+variable "app_env_secret_arn" {
   description = <<-EOT
-    앱 런타임 env(app.env) 내용 (dev 프로필 기준, 멀티라인).
+    앱 런타임 env(app.env) 내용을 담은 AWS Secrets Manager secret ARN.
     DATABASE_URL/USERNAME/PASSWORD · OTEL_URL · SPRING_PROFILES_ACTIVE · HIKARI_MAX_POOL_SIZE 는
-    user_data 가 부하테스트 값으로 덮어쓰므로 여기엔 그 외 부팅 필수 env(외부 연동 등)만 넣으면 됨.
-    주의: 현재 방식은 Terraform state 와 EC2 user-data 에 값이 남는다. 운영 수준 보안이 필요하면 Secrets Manager ARN 방식으로 바꾼다.
+    user_data 가 부하 테스트 값으로 덮어쓰므로 secret 에는 그 외 부팅 필수 env(외부 연동 등)를 넣는다.
+    빈 문자열이면 빈 app.env 에 부하 테스트 오버라이드만 추가한다.
   EOT
   type        = string
-  sensitive   = true
   default     = ""
+
+  validation {
+    condition     = var.app_env_secret_arn == "" || can(regex("^arn:aws[a-zA-Z-]*:secretsmanager:", var.app_env_secret_arn))
+    error_message = "app_env_secret_arn 은 빈 문자열이거나 Secrets Manager secret ARN 이어야 합니다."
+  }
 }

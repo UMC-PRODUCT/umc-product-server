@@ -62,4 +62,11 @@ locals {
   # 포트를 바꾸면 security group, outputs, user-data health check 를 함께 바꿔야 한다.
   grafana_port    = 13000
   prometheus_port = 19090
+
+  # Terraform state 에 secret 원문을 넣지 않기 위해 SUT user-data 는 ARN 만 받고,
+  # EC2 role 로 Secrets Manager 에서 런타임 조회한다.
+  sut_secret_arns = compact([
+    var.app_env_secret_arn,
+    var.registry_credentials_secret_arn,
+  ])
 }

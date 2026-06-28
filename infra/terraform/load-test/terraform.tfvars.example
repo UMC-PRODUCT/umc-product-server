@@ -16,21 +16,18 @@ db_name           = "umc_product"
 db_username       = "postgres"
 
 # ── 앱 이미지 / 레지스트리 ──
-app_image       = "ghcr.io/umc-product/umc-product-server:develop-20260628"
-registry_server = "ghcr.io"
+app_image       = "docker.io/<namespace>/umc-product-server:develop-20260628"
+registry_server = "docker.io"
 
+# private image면 Secrets Manager 에 아래 JSON 을 저장하고 ARN 을 넣는다.
+# {"username":"<docker-user>","password":"<read-only-token>"}
 # public image면 빈 문자열로 둔다.
-registry_username = ""
-registry_password = ""
+registry_credentials_secret_arn = ""
 
 # ── compose/config·k6 스크립트를 가져올 레포 (private면 토큰 포함) ──
 git_repo_url = "https://github.com/umc-product/umc-product-server.git"
 
 # ── 앱 부팅 env (dev) — DB/OTEL/HIKARI 외 부팅 필수 env 만 ──
-# 멀티라인. valkey/redis 호스트는 'valkey' 로.
-app_env = <<-ENV
-# 예시 — 실제 dev app.env 내용으로 채우기
-# KAKAO_CLIENT_ID=...
-# APPLE_CLIENT_ID=...
-# (외부 연동·시크릿 중 부팅에 필요한 것)
-ENV
+# .env.local 전체 또는 필요한 키만 Secrets Manager secret string 으로 저장하고 ARN 을 넣는다.
+# valkey/redis 호스트가 필요하면 compose 서비스명 'valkey' 를 사용한다.
+app_env_secret_arn = ""
