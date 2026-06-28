@@ -12,7 +12,7 @@ resource "random_password" "grafana_admin" {
 }
 
 resource "aws_instance" "monitoring" {
-  ami                    = data.aws_ssm_parameter.ami.value
+  ami                    = data.aws_ssm_parameter.monitoring_ami.value
   instance_type          = var.monitoring_instance_type
   subnet_id              = aws_subnet.primary.id
   private_ip             = local.monitoring_private_ip
@@ -56,7 +56,7 @@ resource "aws_instance" "monitoring" {
 # SUT — 앱(dev) + valkey, DB 는 RDS
 # SUT 는 측정 대상이므로 여기의 instance_type, Hikari pool, RDS 스펙이 실험 조건이다.
 resource "aws_instance" "sut" {
-  ami                         = data.aws_ssm_parameter.ami.value
+  ami                         = data.aws_ssm_parameter.sut_ami.value
   instance_type               = var.sut_instance_type
   subnet_id                   = aws_subnet.primary.id
   private_ip                  = local.sut_private_ip
@@ -97,7 +97,7 @@ resource "aws_instance" "sut" {
 # 생성기 — k6 설치 (실행은 수동)
 # generator 는 측정 대상이 아니므로 SUT 보다 넉넉하게 잡아 k6 CPU 가 먼저 병목나지 않게 한다.
 resource "aws_instance" "generator" {
-  ami                         = data.aws_ssm_parameter.ami.value
+  ami                         = data.aws_ssm_parameter.generator_ami.value
   instance_type               = var.generator_instance_type
   subnet_id                   = aws_subnet.primary.id
   private_ip                  = local.generator_private_ip

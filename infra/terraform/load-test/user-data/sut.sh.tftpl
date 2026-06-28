@@ -7,8 +7,18 @@ exec > >(tee /var/log/umc-load-test-sut-user-data.log | logger -t user-data -s 2
 # Docker + compose (Amazon Linux 2023)
 dnf -y install docker curl
 systemctl enable --now docker
+
+case "$(uname -m)" in
+  x86_64) compose_arch="x86_64" ;;
+  aarch64|arm64) compose_arch="aarch64" ;;
+  *)
+    echo "Unsupported CPU architecture: $(uname -m)"
+    exit 1
+    ;;
+esac
+
 mkdir -p /usr/libexec/docker/cli-plugins
-curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$${compose_arch}" \
   -o /usr/libexec/docker/cli-plugins/docker-compose
 chmod +x /usr/libexec/docker/cli-plugins/docker-compose
 

@@ -18,8 +18,20 @@ variable "az_secondary" {
   default     = "ap-northeast-2c"
 }
 
-variable "ami_ssm_parameter" {
-  description = "EC2 AMI SSM 파라미터. Graviton(arm64) 인스턴스면 .../al2023-ami-kernel-default-arm64 로 교체"
+variable "monitoring_ami_ssm_parameter" {
+  description = "Monitoring EC2 AMI SSM 파라미터. 기본값은 x86_64 Amazon Linux 2023."
+  type        = string
+  default     = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+}
+
+variable "sut_ami_ssm_parameter" {
+  description = "SUT EC2 AMI SSM 파라미터. t4g.small 같은 Graviton 인스턴스를 쓰므로 기본값은 arm64."
+  type        = string
+  default     = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64"
+}
+
+variable "generator_ami_ssm_parameter" {
+  description = "Generator EC2 AMI SSM 파라미터. 기본 generator_instance_type(c5.large)에 맞춰 x86_64."
   type        = string
   default     = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
 }
@@ -43,7 +55,7 @@ variable "allowed_cidr" {
 variable "sut_instance_type" {
   description = "SUT(앱) — prod 앱과 동일 타입으로 (현재 스펙 fidelity 핵심)"
   type        = string
-  default     = "t3.small"
+  default     = "t4g.small"
 }
 
 variable "generator_instance_type" {
@@ -69,7 +81,7 @@ variable "db_instance_class" {
 variable "db_engine_version" {
   description = "RDS PostgreSQL 버전. apply 전에 해당 리전에서 가용한 정확한 버전 문자열을 확인한다."
   type        = string
-  default     = "16.4"
+  default     = "18.3"
 }
 
 variable "db_allocated_storage" {
@@ -79,18 +91,21 @@ variable "db_allocated_storage" {
 }
 
 variable "db_name" {
-  type    = string
-  default = "umc_product"
+  description = "앱이 JDBC URL 에서 접속할 DB 이름. prod 콘솔 DB name '-'는 초기 DB 없음이라는 뜻이라 실제 앱 접속 DB명을 확인해야 한다."
+  type        = string
+  default     = "umc_product"
 }
 
 variable "db_username" {
-  type    = string
-  default = "umc_product"
+  description = "RDS master username. 제공된 prod 값 기준 기본값은 postgres."
+  type        = string
+  default     = "postgres"
 }
 
 # ── 앱 이미지 / 배포 ─────────────────────────────────────────
 # app_image 는 이미 registry 에 push 된 dev profile 실행 가능 이미지를 가리켜야 한다.
 # Terraform 은 이미지를 빌드하지 않고 EC2 에서 docker compose pull 만 수행한다.
+# 기본 SUT 가 t4g.small(arm64)이므로 이미지가 linux/arm64 또는 multi-arch 로 push 되어 있어야 한다.
 variable "app_image" {
   description = "앱 Docker 이미지 (예: docker.io/<repo>:<dev-tag>)"
   type        = string

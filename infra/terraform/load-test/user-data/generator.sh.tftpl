@@ -8,12 +8,20 @@ exec > >(tee /var/log/umc-load-test-generator-user-data.log | logger -t user-dat
 dnf -y install docker git curl
 systemctl enable --now docker
 
+case "$(uname -m)" in
+  x86_64|aarch64|arm64) ;;
+  *)
+    echo "Unsupported CPU architecture: $(uname -m)"
+    exit 1
+    ;;
+esac
+
 # k6 설치 (공식 repo)
 # Amazon Linux 기본 repo 에 k6 가 없어 Grafana 공식 RPM repo 를 등록한다.
 cat > /etc/yum.repos.d/k6.repo <<'REPO'
 [k6]
 name=k6
-baseurl=https://dl.k6.io/rpm/x86_64
+baseurl=https://dl.k6.io/rpm/$basearch
 enabled=1
 gpgcheck=1
 gpgkey=https://dl.k6.io/key.gpg

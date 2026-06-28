@@ -25,10 +25,19 @@ provider "aws" {
   region = var.region
 }
 
-# EC2 AMI: Amazon Linux 2023 (x86_64). Graviton(t4g 등) 인스턴스면 variables 의
-# ami_ssm_parameter 를 arm64 파라미터로 교체할 것.
-data "aws_ssm_parameter" "ami" {
-  name = var.ami_ssm_parameter
+# EC2 AMI: 역할별 instance type 이 서로 다른 CPU architecture 일 수 있다.
+# 예: prod-like SUT 는 t4g.small(arm64), generator 는 c5.large(x86_64).
+# AMI 를 하나로 공유하면 한쪽이 부팅되지 않으므로 역할별 SSM parameter 를 분리한다.
+data "aws_ssm_parameter" "monitoring_ami" {
+  name = var.monitoring_ami_ssm_parameter
+}
+
+data "aws_ssm_parameter" "sut_ami" {
+  name = var.sut_ami_ssm_parameter
+}
+
+data "aws_ssm_parameter" "generator_ami" {
+  name = var.generator_ami_ssm_parameter
 }
 
 locals {
