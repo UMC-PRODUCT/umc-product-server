@@ -6,6 +6,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.authentication.application.event.SsoAuthorizationCodeExchangedEvent;
+import com.umc.product.authentication.application.event.SsoTokenIssuedEvent;
 import com.umc.product.authentication.application.port.in.command.ExchangeSsoAuthorizationCodeUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.ExchangeSsoAuthorizationCodeCommand;
 import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
@@ -23,6 +25,7 @@ import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.client.ClientContextClaims;
 import com.umc.product.global.client.ClientServiceType;
+import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 
@@ -41,6 +44,7 @@ public class SsoTokenExchangeCommandService implements ExchangeSsoAuthorizationC
     private final AuthenticationTokenIssuer authenticationTokenIssuer;
     private final GetMemberUseCase getMemberUseCase;
     private final GetMemberOAuthUseCase getMemberOAuthUseCase;
+    private final DomainEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -80,6 +84,17 @@ public class SsoTokenExchangeCommandService implements ExchangeSsoAuthorizationC
             .stream()
             .map(MemberOAuthInfo::provider)
             .toList();
+
+        eventPublisher.publish(SsoAuthorizationCodeExchangedEvent.of(
+            authorizationCode.getMemberId(),
+            client.clientId(),
+            command.redirectUri()
+        ));
+        eventPublisher.publish(SsoTokenIssuedEvent.of(
+            authorizationCode.getMemberId(),
+            client.clientId(),
+            command.grantType()
+        ));
 
         return SsoTokenInfo.of(
             tokens.accessToken(),

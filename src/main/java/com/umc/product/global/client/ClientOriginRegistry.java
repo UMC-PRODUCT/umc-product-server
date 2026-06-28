@@ -4,9 +4,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.springframework.stereotype.Component;
 
-@Component
 public class ClientOriginRegistry {
 
     private final Map<String, ClientContextProperties.Origin> origins;

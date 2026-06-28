@@ -3,16 +3,23 @@ package com.umc.product.global.config;
 import java.util.List;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import com.umc.product.global.client.ClientContextConfig;
+import com.umc.product.global.logging.OperationalMetricsConfig;
 import com.umc.product.global.security.resolver.CurrentMemberArgumentResolver;
 
 import lombok.RequiredArgsConstructor;
 
 @Configuration
+@Import({
+    ClientContextConfig.class,
+    OperationalMetricsConfig.class
+})
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
 

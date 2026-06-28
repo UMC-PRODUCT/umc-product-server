@@ -6,8 +6,6 @@ import com.umc.product.global.client.ClientServiceType;
 import java.time.Duration;
 import java.util.regex.Pattern;
 
-import org.springframework.stereotype.Component;
-
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -17,7 +15,6 @@ import io.micrometer.core.instrument.Timer;
  *
  * <p>cardinality 폭증을 막기 위해 memberId, fileId, requestId 같은 개별 식별자는 tag 로 받지 않는다.
  */
-@Component
 public class OperationalMetrics {
 
     private static final String METRIC_EXTERNAL_LATENCY = "operational.external.call.seconds";

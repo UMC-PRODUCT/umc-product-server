@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -24,6 +25,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.umc.product.authentication.application.event.SsoAuthorizationCodeExchangedEvent;
+import com.umc.product.authentication.application.event.SsoTokenIssuedEvent;
 import com.umc.product.authentication.application.port.in.command.dto.ExchangeSsoAuthorizationCodeCommand;
 import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
 import com.umc.product.authentication.application.port.in.command.dto.SsoTokenInfo;
@@ -42,6 +45,8 @@ import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.client.ClientContextClaims;
 import com.umc.product.global.client.ClientEnvironment;
 import com.umc.product.global.client.ClientServiceType;
+import com.umc.product.global.event.application.port.out.DomainEventPublisher;
+import com.umc.product.global.event.domain.DomainEvent;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 
@@ -70,6 +75,9 @@ class SsoTokenExchangeCommandServiceTest {
 
     @Mock
     GetMemberOAuthUseCase getMemberOAuthUseCase;
+
+    @Mock
+    DomainEventPublisher eventPublisher;
 
     @Test
     @DisplayName("authorization_code 교환 성공 시 code를 1회 소비하고 client context가 포함된 토큰과 회원 정보를 반환한다")
@@ -122,6 +130,29 @@ class SsoTokenExchangeCommandServiceTest {
         then(authenticationTokenIssuer).should()
             .issue(eq(MEMBER_ID), eq(ClientType.WEB), contextCaptor.capture(), eq(Duration.ofHours(1)));
         assertThat(contextCaptor.getValue()).isEqualTo(expectedClientContext);
+
+        ArgumentCaptor<DomainEvent> eventCaptor = ArgumentCaptor.forClass(DomainEvent.class);
+        then(eventPublisher).should(times(2)).publish(eventCaptor.capture());
+
+        assertThat(eventCaptor.getAllValues())
+            .hasSize(2)
+            .satisfiesExactly(
+                event -> {
+                    assertThat(event).isInstanceOf(SsoAuthorizationCodeExchangedEvent.class);
+                    SsoAuthorizationCodeExchangedEvent exchangedEvent =
+                        (SsoAuthorizationCodeExchangedEvent) event;
+                    assertThat(exchangedEvent.memberId()).isEqualTo(MEMBER_ID);
+                    assertThat(exchangedEvent.clientId()).isEqualTo(CLIENT_ID);
+                    assertThat(exchangedEvent.redirectUri()).isEqualTo(REDIRECT_URI);
+                },
+                event -> {
+                    assertThat(event).isInstanceOf(SsoTokenIssuedEvent.class);
+                    SsoTokenIssuedEvent issuedEvent = (SsoTokenIssuedEvent) event;
+                    assertThat(issuedEvent.memberId()).isEqualTo(MEMBER_ID);
+                    assertThat(issuedEvent.clientId()).isEqualTo(CLIENT_ID);
+                    assertThat(issuedEvent.grantType()).isEqualTo("authorization_code");
+                }
+            );
     }
 
     @Test
@@ -269,6 +300,7 @@ class SsoTokenExchangeCommandServiceTest {
 
         assertThat(authorizationCode.getUsedAt()).isNull();
         then(authenticationTokenIssuer).should(never()).issue(any(), any(), any(), any());
+        then(eventPublisher).shouldHaveNoInteractions();
     }
 
     private SsoTokenExchangeCommandService service() {
@@ -279,7 +311,8 @@ class SsoTokenExchangeCommandServiceTest {
             new PkceVerifier(),
             authenticationTokenIssuer,
             getMemberUseCase,
-            getMemberOAuthUseCase
+            getMemberOAuthUseCase,
+            eventPublisher
         );
     }
 

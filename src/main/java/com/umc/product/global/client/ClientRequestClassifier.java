@@ -6,9 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
-@Component
 @RequiredArgsConstructor
 public class ClientRequestClassifier {
 
