@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# monitoring 은 부하 중 문제가 생겼을 때 가장 먼저 봐야 하는 박스라 user-data 로그를 파일/콘솔에 남긴다.
 exec > >(tee /var/log/umc-load-test-monitoring-user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
 
+# Docker compose 기반 기존 monitoring stack 을 그대로 재사용한다.
 dnf -y install docker git curl
 systemctl enable --now docker
 mkdir -p /usr/libexec/docker/cli-plugins
@@ -12,6 +14,8 @@ chmod +x /usr/libexec/docker/cli-plugins/docker-compose
 
 cd /opt
 %{ if git_repo_url != "" ~}
+# infra/monitoring/grafana 의 compose/config/provisioning 을 가져온다.
+# private repo URL 에 토큰을 넣으면 EC2 user-data 와 Terraform state 에 남으므로 read-only 토큰만 사용한다.
 git clone ${git_repo_url} umc-product
 cd umc-product/infra/monitoring/grafana
 %{ else ~}
@@ -21,6 +25,7 @@ cd umc-product/infra/monitoring/grafana
 %{ endif ~}
 
 # 전용 스택용 .env (외부에서 접근 가능하도록 0.0.0.0 바인드)
+# 이 스택은 부하 테스트 전용이므로 localhost bind 가 아니라 VPC/SUT 에서 접근 가능한 bind 로 바꾼다.
 cat > .env <<ENV
 OTEL_INGEST_TOKEN=${otel_token}
 MONITORING_BIND_ADDRESS=0.0.0.0
@@ -30,6 +35,8 @@ GRAFANA_ADMIN_PASSWORD=${grafana_admin_password}
 DISCORD_ALERT_WEBHOOK=http://127.0.0.1:65535/load-test-alert-disabled
 ENV
 
+# 기존 prometheus.yml 은 운영/로컬 공용 설정이다.
+# 부하 테스트에서는 SUT/generator node-exporter, postgres_exporter, k6 remote-write 를 같은 Prometheus 에 모아야 한다.
 cat > config/prometheus/prometheus.yml <<'PROMETHEUS'
 global:
   scrape_interval: 15s
@@ -88,6 +95,7 @@ PROMETHEUS
 cat > docker-compose.load-test.override.yml <<'COMPOSE'
 services:
   prometheus:
+    # k6 는 Prometheus remote-write 로 결과를 밀어 넣으므로 receiver 플래그가 필요하다.
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
@@ -97,6 +105,7 @@ services:
       - --web.enable-lifecycle
 
   postgres-exporter:
+    # RDS 내부 지표(connection, lock, xact, cache hit)를 Prometheus scrape metric 으로 변환한다.
     image: prometheuscommunity/postgres-exporter:v0.17.1
     container_name: umc-load-test-postgres-exporter
     environment:
@@ -107,9 +116,11 @@ services:
     restart: unless-stopped
 COMPOSE
 
-# linux 프로필로 node-exporter 까지 기동
+# linux 프로필로 monitoring host 의 node-exporter 까지 같이 기동한다.
 docker compose -f docker-compose.yml -f docker-compose.load-test.override.yml --profile linux up -d
 
+# Grafana/Prometheus 가 뜨기 전 apply 가 성공 처리되면 이후 단계에서 원인 파악이 어렵다.
+# 최소 health endpoint 를 확인해 부팅 실패를 user-data 실패로 드러낸다.
 for i in {1..60}; do
   if curl -fsS http://localhost:13000/api/health >/dev/null &&
      curl -fsS http://localhost:19090/-/ready >/dev/null; then

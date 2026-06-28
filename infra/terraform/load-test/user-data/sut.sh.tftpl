@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# 앱이 안 뜰 때 EC2 콘솔과 /var/log 에서 바로 원인을 볼 수 있게 로그를 남긴다.
 exec > >(tee /var/log/umc-load-test-sut-user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
 
 # Docker + compose (Amazon Linux 2023)
@@ -14,11 +15,14 @@ chmod +x /usr/libexec/docker/cli-plugins/docker-compose
 mkdir -p /opt/umc
 cd /opt/umc
 
+# public image 는 로그인 없이 pull 가능하므로 credential 이 있을 때만 login 한다.
 if [ -n "${registry_username}" ] && [ -n "${registry_password}" ]; then
   echo "${registry_password}" | docker login ${registry_server} -u "${registry_username}" --password-stdin
 fi
 
 # 앱 런타임 env: 기본(app_env) + 부하테스트 오버라이드
+# app_env 는 외부 연동 secret 등 "앱 부팅에 필요한 값"만 받는다.
+# DB/OTLP/Hikari/dev profile 은 부하 테스트 조건 고정을 위해 아래 OVERRIDE_ENV 에서 항상 덮어쓴다.
 cat > app.env <<'BASE_ENV'
 ${app_env}
 BASE_ENV
@@ -27,6 +31,7 @@ SPRING_PROFILES_ACTIVE=dev
 SERVER_PORT=8080
 MANAGEMENT_PORT=9090
 APP_ENVIRONMENT=load-test
+# SeedController 와 /test/token/access 는 dev/test 용이다. 부하 테스트 시딩과 토큰 발급을 위해 켠다.
 APP_SEED_ENABLED=true
 P6SPY_ENABLE_LOGGING=false
 TRACE_SAMPLING_PROBABILITY=1.0
@@ -41,9 +46,11 @@ OVERRIDE_ENV
 
 # compose: 앱 + valkey (DB 는 RDS). prod 에 nginx 앞단이 있으면 여기 추가.
 # ⚠️ app_env 의 valkey/redis 호스트는 아래 서비스명 'valkey' 를 가리켜야 함.
+# 현재는 Nginx 없이 앱 8080 을 직접 노출한다. prod 앞단까지 재현해야 하면 여기에 nginx service 를 추가한다.
 cat > docker-compose.yml <<'COMPOSE'
 services:
   valkey:
+    # 앱 캐시/세션 의존성을 compose 내부 서비스로 해결한다. DB 는 compose 가 아니라 RDS 를 사용한다.
     image: valkey/valkey:9.1
     restart: unless-stopped
     command: ["valkey-server", "--appendonly", "yes"]
@@ -55,6 +62,7 @@ services:
       timeout: 5s
       retries: 10
   app:
+    # image 는 terraform.tfvars 의 app_image 값이다. Terraform 은 빌드하지 않고 pull 만 수행한다.
     image: ${app_image}
     restart: unless-stopped
     env_file: [app.env]
@@ -72,6 +80,7 @@ services:
       start_period: 60s
 
   node-exporter:
+    # SUT host 의 CPU/memory/network 를 Prometheus 에 노출해 USE 분석에 사용한다.
     image: prom/node-exporter:v1.11.1
     restart: unless-stopped
     command:
@@ -90,6 +99,7 @@ COMPOSE
 docker compose pull
 docker compose up -d
 
+# Flyway, DB 연결, actuator health 가 정상인지 apply 단계에서 확인한다.
 for i in {1..90}; do
   if curl -fsS http://localhost:9090/actuator/health >/dev/null; then
     echo "SUT is healthy"
