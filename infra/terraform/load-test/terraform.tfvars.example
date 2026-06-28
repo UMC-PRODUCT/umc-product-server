@@ -16,12 +16,15 @@ db_name           = "umc_product"
 db_username       = "postgres"
 
 # ── 앱 이미지 / 레지스트리 ──
-app_image       = "docker.io/<namespace>/umc-product-server:develop-20260628"
-registry_server = "docker.io"
+# 기본은 현재 AWS 계정 ECR 에서 pull 한다. ECR repository 에 이미지를 먼저 push 해야 한다.
+app_image           = "<account-id>.dkr.ecr.ap-northeast-2.amazonaws.com/umc-product-server:development-latest"
+registry_type       = "ecr"
+registry_server     = "" # ecr 이고 빈 문자열이면 현재 AWS 계정 ECR registry 로 계산
+ecr_repository_name = "umc-product-server"
 
-# private image면 Secrets Manager 에 아래 JSON 을 저장하고 ARN 을 넣는다.
+# registry_type=generic private image면 Secrets Manager 에 아래 JSON 을 저장하고 ARN 을 넣는다.
 # {"username":"<docker-user>","password":"<read-only-token>"}
-# public image면 빈 문자열로 둔다.
+# ecr/public image면 빈 문자열로 둔다.
 registry_credentials_secret_arn = ""
 
 # ── compose/config·k6 스크립트를 가져올 레포 (private면 토큰 포함) ──

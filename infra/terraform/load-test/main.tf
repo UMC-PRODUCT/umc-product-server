@@ -25,6 +25,8 @@ provider "aws" {
   region = var.region
 }
 
+data "aws_caller_identity" "current" {}
+
 # EC2 AMI: 역할별 instance type 이 서로 다른 CPU architecture 일 수 있다.
 # 예: prod-like SUT 는 t4g.small(arm64), generator 는 c5.large(x86_64).
 # AMI 를 하나로 공유하면 한쪽이 부팅되지 않으므로 역할별 SSM parameter 를 분리한다.
@@ -69,4 +71,11 @@ locals {
     var.app_env_secret_arn,
     var.registry_credentials_secret_arn,
   ])
+
+  # 개인 계정에서 ECR 을 쓰는 경우 registry_server 를 비워두면 현재 AWS 계정의 ECR registry 를 사용한다.
+  ecr_registry_server      = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com"
+  resolved_registry_server = var.registry_server != "" ? var.registry_server : local.ecr_registry_server
+
+  # SUT 가 Secrets Manager 또는 ECR 중 하나라도 런타임 AWS API 를 호출하면 instance profile 이 필요하다.
+  sut_needs_iam_role = length(local.sut_secret_arns) > 0 || var.registry_type == "ecr"
 }

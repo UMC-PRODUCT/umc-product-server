@@ -107,18 +107,35 @@ variable "db_username" {
 # Terraform 은 이미지를 빌드하지 않고 EC2 에서 docker compose pull 만 수행한다.
 # 기본 SUT 가 t4g.small(arm64)이므로 이미지가 linux/arm64 또는 multi-arch 로 push 되어 있어야 한다.
 variable "app_image" {
-  description = "앱 Docker 이미지 (예: docker.io/<repo>:<dev-tag>)"
+  description = "앱 Docker 이미지 (예: <account>.dkr.ecr.ap-northeast-2.amazonaws.com/umc-product-server:development-latest)"
   type        = string
+}
+
+variable "registry_type" {
+  description = "이미지 레지스트리 인증 방식. ecr이면 EC2 IAM role 로 로그인하고, generic이면 Secrets Manager credential 을 사용한다."
+  type        = string
+  default     = "ecr"
+
+  validation {
+    condition     = contains(["ecr", "generic", "public"], var.registry_type)
+    error_message = "registry_type 은 ecr, generic, public 중 하나여야 합니다."
+  }
 }
 
 variable "registry_server" {
-  description = "컨테이너 레지스트리 (docker.io 또는 ghcr.io)"
+  description = "컨테이너 레지스트리 호스트. registry_type=ecr 이고 빈 문자열이면 현재 AWS 계정 ECR registry 로 계산한다."
   type        = string
-  default     = "docker.io"
+  default     = ""
+}
+
+variable "ecr_repository_name" {
+  description = "registry_type=ecr 일 때 SUT EC2 role 에 pull 권한을 줄 ECR repository 이름"
+  type        = string
+  default     = "umc-product-server"
 }
 
 variable "registry_credentials_secret_arn" {
-  description = "Docker registry credential JSON 을 담은 AWS Secrets Manager secret ARN. public image면 빈 문자열."
+  description = "registry_type=generic 일 때 Docker registry credential JSON 을 담은 AWS Secrets Manager secret ARN. ECR/public image면 빈 문자열."
   type        = string
   default     = ""
 

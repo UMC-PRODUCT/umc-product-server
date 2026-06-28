@@ -25,9 +25,13 @@ chmod +x /usr/libexec/docker/cli-plugins/docker-compose
 mkdir -p /opt/umc
 cd /opt/umc
 
-# private image 는 Secrets Manager 의 JSON credential 로 로그인한다.
-# secret 예: {"username":"docker-user","password":"read-only-token"}
-if [ -n "${registry_credentials_secret_arn}" ]; then
+# registry_type=ecr 이면 SUT EC2 role 로 ECR 에 로그인한다.
+# generic private registry 는 Secrets Manager 의 JSON credential 로 로그인한다.
+if [ "${registry_type}" = "ecr" ]; then
+  aws --region "${region}" ecr get-login-password \
+    | docker login --username AWS --password-stdin "${registry_server}"
+elif [ -n "${registry_credentials_secret_arn}" ]; then
+  # secret 예: {"username":"docker-user","password":"read-only-token"}
   registry_json="$(aws --region "${region}" secretsmanager get-secret-value \
     --secret-id "${registry_credentials_secret_arn}" \
     --query SecretString \

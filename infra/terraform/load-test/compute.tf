@@ -70,7 +70,8 @@ resource "aws_instance" "sut" {
   # 이렇게 해야 매 테스트가 같은 DB/관측/풀 크기 조건에서 시작한다.
   user_data = templatefile("${path.module}/user-data/sut.sh.tftpl", {
     app_image                       = var.app_image
-    registry_server                 = var.registry_server
+    registry_type                   = var.registry_type
+    registry_server                 = local.resolved_registry_server
     registry_credentials_secret_arn = var.registry_credentials_secret_arn
     app_env_secret_arn              = var.app_env_secret_arn
     region                          = var.region
