@@ -12,11 +12,8 @@ monitoring_instance_type = "t3.large"
 # ── RDS ──
 db_instance_class = "db.t4g.small"
 db_engine_version = "18.3"
+db_name           = "umc_product"
 db_username       = "postgres"
-
-# prod RDS 콘솔의 DB name 이 '-' 라면 초기 DB 이름이 없는 상태다.
-# 앱 JDBC URL 이 실제로 어느 DB 를 쓰는지 확인한 뒤 맞춘다. 흔한 후보는 "postgres" 또는 앱 전용 DB 이름이다.
-# db_name = "postgres"
 
 # ── 앱 이미지 / 레지스트리 ──
 app_image       = "ghcr.io/umc-product/umc-product-server:develop-20260628"
