@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+exec > >(tee /var/log/umc-load-test-generator-user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
+
+dnf -y install docker git curl
+systemctl enable --now docker
+
+# k6 설치 (공식 repo)
+cat > /etc/yum.repos.d/k6.repo <<'REPO'
+[k6]
+name=k6
+baseurl=https://dl.k6.io/rpm/x86_64
+enabled=1
+gpgcheck=1
+gpgkey=https://dl.k6.io/key.gpg
+REPO
+dnf -y install k6
+
+docker run -d \
+  --name umc-load-test-generator-node-exporter \
+  --restart unless-stopped \
+  --pid host \
+  -p 9100:9100 \
+  -v /:/host:ro,rslave \
+  prom/node-exporter:v1.11.1 \
+  --path.rootfs=/host \
+  '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+
+cd /home/ec2-user
+%{ if git_repo_url != "" ~}
+git clone ${git_repo_url} umc-product
+cp -r umc-product/docs/guides/load-test/k6 ./k6 2>/dev/null || mkdir -p k6
+%{ else ~}
+echo "⚠️ git_repo_url 미설정 — k6 스크립트(script.js)·seed.json 을 ~/k6 에 수동으로 올리세요."
+mkdir -p k6
+%{ endif ~}
+if [ -f /home/ec2-user/k6/data/seed.example.json ] && [ ! -f /home/ec2-user/k6/data/seed.json ]; then
+  cp /home/ec2-user/k6/data/seed.example.json /home/ec2-user/k6/data/seed.json
+fi
+chown -R ec2-user:ec2-user /home/ec2-user/k6
+
+cat > /usr/local/bin/run-umc-k6 <<'RUNNER'
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROFILE="$${1:-smoke}"
+RATE="$${2:-50}"
+
+cd /home/ec2-user/k6
+
+export K6_OUT=experimental-prometheus-rw
+export K6_PROMETHEUS_RW_SERVER_URL="${prom_rw_url}"
+export K6_PROMETHEUS_RW_TREND_STATS="p(50),p(90),p(95),p(99),min,max,avg"
+
+k6 run \
+  -e BASE_URL="http://${sut_host}:8080" \
+  -e PROFILE="$${PROFILE}" \
+  -e RATE="$${RATE}" \
+  -e SEED_FILE="./data/seed.json" \
+  script.js
+RUNNER
+chmod +x /usr/local/bin/run-umc-k6
+
+# 실행 힌트
+cat > /home/ec2-user/k6/RUN.md <<HINT
+SUT(private): http://${sut_host}:8080
+Prometheus remote-write: ${prom_rw_url}
+
+# smoke
+run-umc-k6 smoke 1
+# read 램프 (메트릭 적재)
+run-umc-k6 read 300
+HINT
+chown ec2-user:ec2-user /home/ec2-user/k6/RUN.md

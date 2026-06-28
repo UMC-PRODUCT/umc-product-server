@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+exec > >(tee /var/log/umc-load-test-sut-user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
+
+# Docker + compose (Amazon Linux 2023)
+dnf -y install docker curl
+systemctl enable --now docker
+mkdir -p /usr/libexec/docker/cli-plugins
+curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+  -o /usr/libexec/docker/cli-plugins/docker-compose
+chmod +x /usr/libexec/docker/cli-plugins/docker-compose
+
+mkdir -p /opt/umc
+cd /opt/umc
+
+if [ -n "${registry_username}" ] && [ -n "${registry_password}" ]; then
+  echo "${registry_password}" | docker login ${registry_server} -u "${registry_username}" --password-stdin
+fi
+
+# 앱 런타임 env: 기본(app_env) + 부하테스트 오버라이드
+cat > app.env <<'BASE_ENV'
+${app_env}
+BASE_ENV
+cat >> app.env <<OVERRIDE_ENV
+SPRING_PROFILES_ACTIVE=dev
+SERVER_PORT=8080
+MANAGEMENT_PORT=9090
+APP_ENVIRONMENT=load-test
+APP_SEED_ENABLED=true
+P6SPY_ENABLE_LOGGING=false
+TRACE_SAMPLING_PROBABILITY=1.0
+DATABASE_URL=jdbc:postgresql://${db_host}:${db_port}/${db_name}
+DATABASE_USERNAME=${db_username}
+DATABASE_PASSWORD=${db_password}
+HIKARI_MAX_POOL_SIZE=${hikari_pool}
+HIKARI_MIN_IDLE=${hikari_pool}
+OTEL_URL=http://${otel_host}:4318
+OTEL_AUTH_HEADER=Bearer ${otel_token}
+OVERRIDE_ENV
+
+# compose: 앱 + valkey (DB 는 RDS). prod 에 nginx 앞단이 있으면 여기 추가.
+# ⚠️ app_env 의 valkey/redis 호스트는 아래 서비스명 'valkey' 를 가리켜야 함.
+cat > docker-compose.yml <<'COMPOSE'
+services:
+  valkey:
+    image: valkey/valkey:9.1
+    restart: unless-stopped
+    command: ["valkey-server", "--appendonly", "yes"]
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  app:
+    image: ${app_image}
+    restart: unless-stopped
+    env_file: [app.env]
+    depends_on:
+      valkey:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9090/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  node-exporter:
+    image: prom/node-exporter:v1.11.1
+    restart: unless-stopped
+    command:
+      - --path.rootfs=/host
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    ports:
+      - "9100:9100"
+
+volumes:
+  valkey-data:
+COMPOSE
+
+docker compose pull
+docker compose up -d
+
+for i in {1..90}; do
+  if curl -fsS http://localhost:9090/actuator/health >/dev/null; then
+    echo "SUT is healthy"
+    exit 0
+  fi
+  echo "waiting for SUT... $i/90"
+  sleep 5
+done
+
+echo "SUT failed to become healthy"
+docker compose ps
+docker compose logs --tail=300
+exit 1

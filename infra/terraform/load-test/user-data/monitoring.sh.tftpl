@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+exec > >(tee /var/log/umc-load-test-monitoring-user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
+
+dnf -y install docker git curl
+systemctl enable --now docker
+mkdir -p /usr/libexec/docker/cli-plugins
+curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+  -o /usr/libexec/docker/cli-plugins/docker-compose
+chmod +x /usr/libexec/docker/cli-plugins/docker-compose
+
+cd /opt
+%{ if git_repo_url != "" ~}
+git clone ${git_repo_url} umc-product
+cd umc-product/infra/monitoring/grafana
+%{ else ~}
+echo "⚠️ git_repo_url 미설정 — infra/monitoring/grafana 의 compose+config 를 이 경로에 수동으로 올린 뒤 compose up 하세요."
+mkdir -p umc-product/infra/monitoring/grafana
+cd umc-product/infra/monitoring/grafana
+%{ endif ~}
+
+# 전용 스택용 .env (외부에서 접근 가능하도록 0.0.0.0 바인드)
+cat > .env <<ENV
+OTEL_INGEST_TOKEN=${otel_token}
+MONITORING_BIND_ADDRESS=0.0.0.0
+OTEL_BIND_ADDRESS=0.0.0.0
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=${grafana_admin_password}
+DISCORD_ALERT_WEBHOOK=http://127.0.0.1:65535/load-test-alert-disabled
+ENV
+
+cat > config/prometheus/prometheus.yml <<'PROMETHEUS'
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: umc-product-load-test
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: [ 'localhost:9090' ]
+
+  - job_name: node-exporter
+    static_configs:
+      - targets: [ 'node-exporter:9100' ]
+        labels:
+          role: monitoring
+      - targets: [ '${sut_private_ip}:9100' ]
+        labels:
+          role: sut
+      - targets: [ '${generator_private_ip}:9100' ]
+        labels:
+          role: generator
+
+  - job_name: postgres-exporter
+    static_configs:
+      - targets: [ 'postgres-exporter:9187' ]
+        labels:
+          role: rds
+
+  - job_name: alertmanager
+    static_configs:
+      - targets: [ 'alertmanager:9093' ]
+
+  - job_name: grafana
+    static_configs:
+      - targets: [ 'grafana:3000' ]
+
+  - job_name: loki
+    static_configs:
+      - targets: [ 'loki:3100' ]
+
+  - job_name: otel-collector
+    static_configs:
+      - targets: [ 'otel-collector:8888' ]
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: [ 'alertmanager:9093' ]
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+PROMETHEUS
+
+cat > docker-compose.load-test.override.yml <<'COMPOSE'
+services:
+  prometheus:
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=3d
+      - --web.enable-otlp-receiver
+      - --web.enable-remote-write-receiver
+      - --web.enable-lifecycle
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    container_name: umc-load-test-postgres-exporter
+    environment:
+      DATA_SOURCE_URI: "${db_host}:${db_port}/${db_name}?sslmode=require"
+      DATA_SOURCE_USER: "${db_username}"
+      DATA_SOURCE_PASS: "${db_password}"
+    networks: [monitoring]
+    restart: unless-stopped
+COMPOSE
+
+# linux 프로필로 node-exporter 까지 기동
+docker compose -f docker-compose.yml -f docker-compose.load-test.override.yml --profile linux up -d
+
+for i in {1..60}; do
+  if curl -fsS http://localhost:13000/api/health >/dev/null &&
+     curl -fsS http://localhost:19090/-/ready >/dev/null; then
+    echo "monitoring stack is ready"
+    exit 0
+  fi
+  echo "waiting for monitoring stack... $i/60"
+  sleep 5
+done
+
+echo "monitoring stack failed to become ready"
+docker compose -f docker-compose.yml -f docker-compose.load-test.override.yml ps
+docker compose -f docker-compose.yml -f docker-compose.load-test.override.yml logs --tail=200
+exit 1
