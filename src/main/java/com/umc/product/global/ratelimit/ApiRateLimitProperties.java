@@ -22,7 +22,7 @@ public record ApiRateLimitProperties(
         excludePaths = copyOrDefault(excludePaths, defaultExcludedPaths());
         authenticatedDefault = authenticatedDefault == null ? new Limit(20, 300) : authenticatedDefault;
         anonymousDefault = anonymousDefault == null ? new Limit(5, 60) : anonymousDefault;
-        routePolicies = copyOrDefault(routePolicies, defaultRoutePolicies());
+        routePolicies = routePolicies == null ? List.of() : List.copyOf(routePolicies);
         cache = cache == null ? new Cache(100_000, Duration.ofMinutes(10)) : cache;
     }
 
@@ -33,7 +33,7 @@ public record ApiRateLimitProperties(
             defaultExcludedPaths(),
             new Limit(20, 300),
             new Limit(5, 60),
-            defaultRoutePolicies(),
+            List.of(),
             new Cache(100_000, Duration.ofMinutes(10))
         );
     }
@@ -49,27 +49,6 @@ public record ApiRateLimitProperties(
             "/webjars/**",
             "/umc-logo.svg",
             "/error"
-        );
-    }
-
-    public static List<RoutePolicy> defaultRoutePolicies() {
-        return List.of(
-            new RoutePolicy(
-                "expensive",
-                List.of(
-                    "/api/v1/search/**",
-                    "/api/search/**",
-                    "/api/v1/recommend/**",
-                    "/api/recommend/**",
-                    "/api/v1/report/**",
-                    "/api/report/**",
-                    "/api/v1/llm/**",
-                    "/api/llm/**"
-                ),
-                List.of("GET", "POST"),
-                new Limit(3, 30),
-                new Limit(1, 10)
-            )
         );
     }
 

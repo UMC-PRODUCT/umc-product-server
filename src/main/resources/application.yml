@@ -317,26 +317,6 @@ app:
     anonymous-default:
       requests-per-second: ${API_RATE_LIMIT_ANON_REQUESTS_PER_SECOND:5}
       requests-per-minute: ${API_RATE_LIMIT_ANON_REQUESTS_PER_MINUTE:60}
-    route-policies:
-      - name: expensive
-        path-patterns:
-          - /api/v1/search/**
-          - /api/search/**
-          - /api/v1/recommend/**
-          - /api/recommend/**
-          - /api/v1/report/**
-          - /api/report/**
-          - /api/v1/llm/**
-          - /api/llm/**
-        methods:
-          - GET
-          - POST
-        authenticated:
-          requests-per-second: ${API_RATE_LIMIT_EXPENSIVE_AUTH_REQUESTS_PER_SECOND:3}
-          requests-per-minute: ${API_RATE_LIMIT_EXPENSIVE_AUTH_REQUESTS_PER_MINUTE:30}
-        anonymous:
-          requests-per-second: ${API_RATE_LIMIT_EXPENSIVE_ANON_REQUESTS_PER_SECOND:1}
-          requests-per-minute: ${API_RATE_LIMIT_EXPENSIVE_ANON_REQUESTS_PER_MINUTE:10}
     cache:
       maximum-size: ${API_RATE_LIMIT_CACHE_MAXIMUM_SIZE:100000}
       expire-after-access: ${API_RATE_LIMIT_CACHE_EXPIRE_AFTER_ACCESS:PT10M}

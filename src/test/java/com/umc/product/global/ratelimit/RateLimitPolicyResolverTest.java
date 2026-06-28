@@ -28,8 +28,8 @@ class RateLimitPolicyResolverTest {
     }
 
     @Test
-    @DisplayName("비싼 API 경로는 더 엄격한 expensive 정책을 우선 적용한다")
-    void resolve_expensive_route_policy() {
+    @DisplayName("기본 설정에는 route override가 없으므로 검색 형태 경로도 기본 정책을 적용한다")
+    void resolve_default_policy_without_route_override() {
         RateLimitPolicyResolver resolver = new RateLimitPolicyResolver(ApiRateLimitProperties.defaults());
 
         RateLimitPolicy policy = resolver.resolve(
@@ -39,7 +39,39 @@ class RateLimitPolicyResolverTest {
             true
         ).orElseThrow();
 
-        assertThat(policy.name()).isEqualTo("expensive");
+        assertThat(policy.name()).isEqualTo("authenticated-default");
+        assertThat(policy.requestsPerSecond()).isEqualTo(20);
+        assertThat(policy.requestsPerMinute()).isEqualTo(300);
+    }
+
+    @Test
+    @DisplayName("명시된 route policy가 있으면 기본 정책보다 우선 적용한다")
+    void resolve_configured_route_policy() {
+        ApiRateLimitProperties properties = new ApiRateLimitProperties(
+            true,
+            List.of("/api/**"),
+            ApiRateLimitProperties.defaultExcludedPaths(),
+            new ApiRateLimitProperties.Limit(20, 300),
+            new ApiRateLimitProperties.Limit(5, 60),
+            List.of(new ApiRateLimitProperties.RoutePolicy(
+                "custom",
+                List.of("/api/v1/custom/**"),
+                List.of("GET"),
+                new ApiRateLimitProperties.Limit(3, 30),
+                new ApiRateLimitProperties.Limit(1, 10)
+            )),
+            new ApiRateLimitProperties.Cache(100_000, Duration.ofMinutes(10))
+        );
+        RateLimitPolicyResolver resolver = new RateLimitPolicyResolver(properties);
+
+        RateLimitPolicy policy = resolver.resolve(
+            "GET",
+            "/api/v1/custom/{id}",
+            "/api/v1/custom/1",
+            true
+        ).orElseThrow();
+
+        assertThat(policy.name()).isEqualTo("custom");
         assertThat(policy.requestsPerSecond()).isEqualTo(3);
         assertThat(policy.requestsPerMinute()).isEqualTo(30);
     }
@@ -93,7 +125,7 @@ class RateLimitPolicyResolverTest {
             ApiRateLimitProperties.defaultExcludedPaths(),
             new ApiRateLimitProperties.Limit(20, 300),
             new ApiRateLimitProperties.Limit(5, 60),
-            ApiRateLimitProperties.defaultRoutePolicies(),
+            List.of(),
             new ApiRateLimitProperties.Cache(100_000, Duration.ofMinutes(10))
         );
         RateLimitPolicyResolver resolver = new RateLimitPolicyResolver(properties);

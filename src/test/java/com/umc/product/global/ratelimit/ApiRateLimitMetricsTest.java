@@ -15,13 +15,13 @@ class ApiRateLimitMetricsTest {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         ApiRateLimitMetrics metrics = new ApiRateLimitMetrics(registry);
 
-        metrics.record("blocked", "expensive", "GET", "/api/v1/search/{keyword}", "WEB");
+        metrics.record("blocked", "custom", "GET", "/api/v1/custom/{id}", "WEB");
 
         assertThat(registry.get("api.rate_limit.requests.total")
             .tag("result", "blocked")
-            .tag("rule", "expensive")
+            .tag("rule", "custom")
             .tag("method", "GET")
-            .tag("uriTemplate", "/api/v1/search/{keyword}")
+            .tag("uriTemplate", "/api/v1/custom/{id}")
             .tag("clientType", "WEB")
             .counter()
             .count()).isEqualTo(1);
