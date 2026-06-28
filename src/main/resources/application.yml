@@ -277,6 +277,18 @@ app:
   # spring.profiles.active 가 콤마 구분 다중 profile 일 수 있으므로 운영자가 단일 라벨을 명시적으로 override 가능.
   environment: ${APP_ENVIRONMENT:${SPRING_PROFILES_ACTIVE:local}}
 
+  client-context:
+    origins:
+      - origin: https://university.neordinary.com
+        service-type: UMC_WEBSITE
+        environment: PROD
+      - origin: https://backoffice.university.neordinary.com
+        service-type: UMC_BACKOFFICE
+        environment: PROD
+      - origin: https://tech.university.neordinary.com
+        service-type: UMC_TECH_BLOG
+        environment: PROD
+
   sso:
     issuer: ${SSO_ISSUER:https://api.university.neordinary.com}
     authorization-code-ttl: ${SSO_AUTHORIZATION_CODE_TTL:PT3M}
@@ -489,6 +501,12 @@ spring:
       on-profile: dev
 
 app:
+  client-context:
+    origins:
+      - origin: http://localhost:5173
+        service-type: UNKNOWN
+        environment: DEV
+
   seed:
     enabled: ${APP_SEED_ENABLED:true}
 

@@ -7,7 +7,12 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.umc.product.common.domain.enums.ClientType;
+import com.umc.product.global.client.ClientContextProperties;
+import com.umc.product.global.client.ClientOriginRegistry;
+import com.umc.product.global.client.ClientRequestClassifier;
+import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.global.security.MemberPrincipal;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +39,10 @@ import org.springframework.web.servlet.HandlerMapping;
  */
 class LoggingInterceptorTest {
 
-    private final LoggingInterceptor interceptor = new LoggingInterceptor();
+    private final LoggingInterceptor interceptor = new LoggingInterceptor(
+        new ClientRequestClassifier(new ClientOriginRegistry(new ClientContextProperties(List.of()))),
+        new OperationalMetrics(new SimpleMeterRegistry())
+    );
 
     private Logger interceptorLogger;
     private ListAppender<ILoggingEvent> listAppender;
