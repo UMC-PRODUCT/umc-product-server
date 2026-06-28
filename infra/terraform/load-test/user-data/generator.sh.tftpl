@@ -69,9 +69,9 @@ export K6_OUT=experimental-prometheus-rw
 export K6_PROMETHEUS_RW_SERVER_URL="${prom_rw_url}"
 export K6_PROMETHEUS_RW_TREND_STATS="p(50),p(90),p(95),p(99),min,max,avg"
 
-# BASE_URL 은 public IP 가 아니라 SUT private IP 를 사용한다. 외부 네트워크 변수를 제거하기 위해서다.
+# BASE_URL 은 운영과 같은 HTTP 진입점인 ALB 를 사용한다.
 k6 run \
-  -e BASE_URL="http://${sut_host}:8080" \
+  -e BASE_URL="${base_url}" \
   -e PROFILE="$${PROFILE}" \
   -e RATE="$${RATE}" \
   -e SEED_FILE="./data/seed.json" \
@@ -81,7 +81,7 @@ chmod +x /usr/local/bin/run-umc-k6
 
 # 실행 힌트
 cat > /home/ec2-user/k6/RUN.md <<HINT
-SUT(private): http://${sut_host}:8080
+SUT(ALB): ${base_url}
 Prometheus remote-write: ${prom_rw_url}
 
 # smoke

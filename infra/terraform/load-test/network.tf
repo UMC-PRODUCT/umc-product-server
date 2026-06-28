@@ -23,6 +23,15 @@ resource "aws_subnet" "primary" {
   tags                    = merge(local.tags, { Name = "${local.name}-subnet-primary" })
 }
 
+# ALB 는 public subnet 2개 이상이 필요하다. EC2 는 primary 에만 두고, 이 subnet 은 ALB 용도로만 사용한다.
+resource "aws_subnet" "public_secondary" {
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = "10.20.2.0/24"
+  availability_zone       = var.az_secondary
+  map_public_ip_on_launch = true
+  tags                    = merge(local.tags, { Name = "${local.name}-subnet-public-secondary" })
+}
+
 # RDS subnet group 은 >=2 AZ 필요. DB 는 public route table 에 연결하지 않는다.
 # private subnet 에 route table association 을 만들지 않아 인터넷에서 DB 로 직접 접근할 경로를 만들지 않는다.
 resource "aws_subnet" "rds_primary" {
@@ -51,6 +60,11 @@ resource "aws_route_table" "public" {
 # public subnet 의 EC2 만 인터넷으로 나간다. RDS subnet 은 이 route table 에 연결하지 않는다.
 resource "aws_route_table_association" "primary" {
   subnet_id      = aws_subnet.primary.id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "public_secondary" {
+  subnet_id      = aws_subnet.public_secondary.id
   route_table_id = aws_route_table.public.id
 }
 
@@ -110,6 +124,20 @@ resource "aws_security_group" "monitoring" {
   tags = merge(local.tags, { Name = "${local.name}-mon" })
 }
 
+# ALB 는 운영과 같은 HTTP 진입점을 재현한다. 외부 공개는 allowed_cidr, 내부 부하는 generator SG 로 제한한다.
+resource "aws_security_group" "alb" {
+  name_prefix = "${local.name}-alb-"
+  description = "ALB in front of load test SUT"
+  vpc_id      = aws_vpc.this.id
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = merge(local.tags, { Name = "${local.name}-alb" })
+}
+
 # SSH (전 인스턴스) — 내 IP 에서만
 # SSM Session Manager 를 붙이면 22번을 닫을 수 있다. 지금은 빠른 디버깅을 위해 allowed_cidr 에만 연다.
 resource "aws_security_group_rule" "ssh_generator" {
@@ -137,23 +165,15 @@ resource "aws_security_group_rule" "ssh_monitoring" {
   security_group_id = aws_security_group.monitoring.id
 }
 
-# SUT: 8080 ← 생성기/관리자, 9090(management) ← 관측/관리자, 9100(node) ← 관측
-# 8080 은 실제 k6 트래픽 진입점이다. 관리자 CIDR 은 smoke/debug curl 용도로만 허용한다.
-resource "aws_security_group_rule" "sut_app_from_gen" {
+# SUT: 8080 ← ALB, 9090(management) ← 관측/관리자/ALB health check, 9100(node) ← 관측
+# 실제 k6 트래픽은 generator 에서 SUT 로 직접 가지 않고 ALB 를 통과한다.
+resource "aws_security_group_rule" "sut_app_from_alb" {
   type                     = "ingress"
   from_port                = 8080
   to_port                  = 8080
   protocol                 = "tcp"
-  source_security_group_id = aws_security_group.generator.id
+  source_security_group_id = aws_security_group.alb.id
   security_group_id        = aws_security_group.sut.id
-}
-resource "aws_security_group_rule" "sut_app_from_me" {
-  type              = "ingress"
-  from_port         = 8080
-  to_port           = 8080
-  protocol          = "tcp"
-  cidr_blocks       = [var.allowed_cidr]
-  security_group_id = aws_security_group.sut.id
 }
 resource "aws_security_group_rule" "sut_mgmt_from_mon" {
   type                     = "ingress"
@@ -161,6 +181,14 @@ resource "aws_security_group_rule" "sut_mgmt_from_mon" {
   to_port                  = 9090
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.monitoring.id
+  security_group_id        = aws_security_group.sut.id
+}
+resource "aws_security_group_rule" "sut_mgmt_from_alb" {
+  type                     = "ingress"
+  from_port                = 9090
+  to_port                  = 9090
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.alb.id
   security_group_id        = aws_security_group.sut.id
 }
 resource "aws_security_group_rule" "sut_mgmt_from_me" {
@@ -244,4 +272,23 @@ resource "aws_security_group_rule" "mon_grafana_from_me" {
   protocol          = "tcp"
   cidr_blocks       = [var.allowed_cidr]
   security_group_id = aws_security_group.monitoring.id
+}
+
+# ALB: 80 ← 생성기 + 관리자. k6 와 smoke curl 모두 운영과 같은 HTTP entrypoint 를 사용한다.
+resource "aws_security_group_rule" "alb_http_from_gen" {
+  type                     = "ingress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.generator.id
+  security_group_id        = aws_security_group.alb.id
+}
+
+resource "aws_security_group_rule" "alb_http_from_me" {
+  type              = "ingress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  cidr_blocks       = [var.allowed_cidr]
+  security_group_id = aws_security_group.alb.id
 }

@@ -109,7 +109,7 @@ resource "aws_instance" "generator" {
   # 실행 결과는 monitoring Prometheus remote-write endpoint 로 바로 보낸다.
   user_data = templatefile("${path.module}/user-data/generator.sh.tftpl", {
     git_repo_url = var.git_repo_url
-    sut_host     = local.sut_private_ip
+    base_url     = "http://${aws_lb.sut.dns_name}"
     prom_rw_url  = "http://${local.monitoring_private_ip}:${local.prometheus_port}/api/v1/write"
   })
 
@@ -121,6 +121,6 @@ resource "aws_instance" "generator" {
 
   tags = merge(local.tags, { Name = "${local.name}-generator" })
 
-  # RUN.md 와 run-umc-k6 가 SUT/Prometheus private endpoint 를 내장하므로 두 인스턴스 이후 생성한다.
-  depends_on = [aws_instance.sut, aws_instance.monitoring]
+  # RUN.md 와 run-umc-k6 가 ALB/Prometheus endpoint 를 내장하므로 listener 준비 이후 생성한다.
+  depends_on = [aws_lb_listener.http, aws_instance.monitoring]
 }

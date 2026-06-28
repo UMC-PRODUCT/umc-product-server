@@ -1,18 +1,23 @@
 # output 은 apply 직후 smoke/debug 에 필요한 접속 정보만 노출한다.
 # 비밀번호류는 sensitive 로 표시되지만 state 에는 남으므로 state 파일 관리는 별도로 주의한다.
 output "sut_public_ip" {
-  description = "SUT 공인 IP"
+  description = "SUT 공인 IP. 앱 트래픽은 ALB 를 사용하고, 이 값은 SSH/debug 용도다."
   value       = aws_instance.sut.public_ip
 }
 
 output "sut_app_url" {
-  description = "관리자 CIDR 에서만 쓰는 디버그용 앱 엔드포인트. k6 는 private IP 로 접근한다."
-  value       = "http://${aws_instance.sut.public_ip}:8080"
+  description = "운영과 같은 ALB 기반 앱 엔드포인트. k6 와 smoke curl 이 이 URL 을 사용한다."
+  value       = "http://${aws_lb.sut.dns_name}"
 }
 
 output "sut_private_ip" {
-  description = "generator 가 실제 부하를 보내는 SUT private IP"
+  description = "SUT private IP. Prometheus scrape/debug 확인용이며 k6 트래픽은 ALB 로 보낸다."
   value       = aws_instance.sut.private_ip
+}
+
+output "alb_dns_name" {
+  description = "SUT 앞단 ALB DNS name"
+  value       = aws_lb.sut.dns_name
 }
 
 output "grafana_url" {
@@ -54,7 +59,8 @@ output "db_password" {
 output "next_steps" {
   description = "apply 직후 사람이 실행할 최소 검증 순서"
   value       = <<-EOT
-    1) SUT 헬스: curl http://${aws_instance.sut.public_ip}:9090/actuator/health  (또는 SSH 후 로컬)
+    1) ALB 앱 스모크: curl http://${aws_lb.sut.dns_name}
+       SUT 헬스 직접 확인: curl http://${aws_instance.sut.public_ip}:9090/actuator/health
     2) Grafana: http://${aws_instance.monitoring.public_ip}:${local.grafana_port}
        비밀번호: terraform output -raw grafana_admin_password
     3) 생성기 접속 후 k6 실행:
