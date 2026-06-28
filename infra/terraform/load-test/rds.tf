@@ -22,6 +22,8 @@ resource "aws_db_instance" "this" {
   allocated_storage = var.db_allocated_storage
   storage_type      = "gp3"
 
+  # RDS 인스턴스를 만들 때 앱이 접속할 PostgreSQL database 까지 같이 만든다.
+  # 이 값이 없으면 RDS 인스턴스만 생기고 DATABASE_URL 의 umc_product DB 가 없어 앱/Flyway 가 실패한다.
   db_name  = var.db_name
   username = var.db_username
   password = random_password.db.result
