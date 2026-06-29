@@ -4,19 +4,25 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.umc.product.curriculum.application.port.out.LoadMissionFeedbackPort;
 import com.umc.product.curriculum.application.port.out.LoadMissionSubmissionPort;
-import com.umc.product.curriculum.domain.MissionFeedback;
+import com.umc.product.curriculum.application.port.out.SaveMissionSubmissionPort;
 import com.umc.product.curriculum.domain.MissionSubmission;
+import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
+import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class MissionSubmissionPersistenceAdapter implements LoadMissionSubmissionPort, LoadMissionFeedbackPort {
+public class MissionSubmissionPersistenceAdapter implements LoadMissionSubmissionPort, SaveMissionSubmissionPort {
 
     private final MissionSubmissionJpaRepository missionSubmissionJpaRepository;
-    private final MissionFeedbackJpaRepository missionFeedbackJpaRepository;
+
+    @Override
+    public MissionSubmission getById(Long missionSubmissionId) {
+        return missionSubmissionJpaRepository.findById(missionSubmissionId)
+            .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.MISSION_SUBMISSION_NOT_FOUND));
+    }
 
     @Override
     public List<MissionSubmission> findByChallengerWorkbookId(Long challengerWorkbookId) {
@@ -32,15 +38,28 @@ public class MissionSubmissionPersistenceAdapter implements LoadMissionSubmissio
     }
 
     @Override
-    public List<MissionFeedback> findByMissionSubmissionIdIn(List<Long> submissionIds) {
-        if (submissionIds.isEmpty()) {
-            return List.of();
-        }
-        return missionFeedbackJpaRepository.findByMissionSubmission_IdIn(submissionIds);
+    public boolean existsByOriginalWorkbookMissionId(Long originalWorkbookMissionId) {
+        return missionSubmissionJpaRepository.existsByOriginalWorkbookMission_Id(originalWorkbookMissionId);
     }
 
     @Override
-    public boolean existsByOriginalWorkbookMissionId(Long originalWorkbookMissionId) {
-        return missionSubmissionJpaRepository.existsByOriginalWorkbookMission_Id(originalWorkbookMissionId);
+    public boolean existsByOriginalWorkbookMissionIdAndChallengerWorkbookId(
+        Long originalWorkbookMissionId,
+        Long challengerWorkbookId
+    ) {
+        return missionSubmissionJpaRepository.existsByOriginalWorkbookMission_IdAndChallengerWorkbook_Id(
+            originalWorkbookMissionId,
+            challengerWorkbookId
+        );
+    }
+
+    @Override
+    public MissionSubmission save(MissionSubmission missionSubmission) {
+        return missionSubmissionJpaRepository.save(missionSubmission);
+    }
+
+    @Override
+    public void delete(MissionSubmission missionSubmission) {
+        missionSubmissionJpaRepository.delete(missionSubmission);
     }
 }

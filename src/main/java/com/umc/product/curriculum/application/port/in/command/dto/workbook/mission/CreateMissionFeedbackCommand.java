@@ -1,6 +1,8 @@
 package com.umc.product.curriculum.application.port.in.command.dto.workbook.mission;
 
 import com.umc.product.curriculum.domain.enums.FeedbackResult;
+
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
@@ -14,15 +16,12 @@ import lombok.Builder;
  */
 @Builder
 public record CreateMissionFeedbackCommand(
-    @NotNull(message = "미션 제출물 ID는 필수입니다")
-    Long missionSubmissionId,
+    @NotNull(message = "미션 제출물 ID는 필수입니다") Long missionSubmissionId,
 
-    @NotNull(message = "피드백 작성자 멤버 ID는 필수입니다")
-    Long reviewerMemberId,
+    @NotNull(message = "피드백 작성자 멤버 ID는 필수입니다") Long reviewerMemberId,
 
-    String content,
+    @NotBlank(message = "피드백 내용은 필수입니다") String content,
 
-    @NotNull(message = "평가 결과는 필수입니다")
-    FeedbackResult result
+    @NotNull(message = "평가 결과는 필수입니다") FeedbackResult result
 ) {
 }
