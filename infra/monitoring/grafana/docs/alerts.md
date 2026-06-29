@@ -59,7 +59,7 @@ Host alert 는 Linux 운영 node-exporter target 만 대상으로 하며, macOS 
 | `LowDiskFreeSpace`   |  warning | 10m | 관리 대상 filesystem 중 하나 이상 free space < 10GB      | `instance`               |
 | `ContainerRestarted` |  warning |  0m | 최근 10분 내 container restart 감지                      | `instance`, `name`       |
 
-`HighDiskUsage`, `LowDiskFreeSpace` 는 `tmpfs`, `overlay`, `squashfs`, macOS `/System/Volumes`, Docker/Kubernetes/container 임시 mount 를 제외한다.
+`HighDiskUsage`, `LowDiskFreeSpace` 는 `tmpfs`, `overlay`, `squashfs`, Docker/Kubernetes/container 임시 mount 를 제외한다.
 `LowDiskFreeSpace` 는 작은 system volume 잡음을 줄이기 위해 전체 크기 20GB 초과 filesystem 만 검사하고, mountpoint별 개별 알림 대신 instance별 개수로 집계한다.
 
 ## API

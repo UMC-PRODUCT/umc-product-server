@@ -153,9 +153,9 @@ groups:
         expr: |
           (
             1 - (
-              node_filesystem_avail_bytes{job="node-exporter", os="linux", device_error="", fstype!~"tmpfs|overlay|squashfs|devtmpfs|devfs|proc|sysfs|cgroup2?|pstore|tracefs|debugfs|securityfs|configfs|nsfs|autofs|fuse\\..*|ramfs|binfmt_misc|rpc_pipefs", mountpoint!~"^/(dev|proc|sys|run|var/lib/docker|var/lib/containers|var/lib/kubelet|snap)($|/)|^/System/Volumes($|/)|^/private/var/folders/.*/T/com\\.docker\\.install($|/)"}
+              node_filesystem_avail_bytes{job="node-exporter", os="linux", device_error="", fstype!~"tmpfs|overlay|squashfs|devtmpfs|proc|sysfs|cgroup2?|pstore|tracefs|debugfs|securityfs|configfs|nsfs|autofs|fuse\\..*|ramfs|binfmt_misc|rpc_pipefs", mountpoint!~"^/(dev|proc|sys|run|var/lib/docker|var/lib/containers|var/lib/kubelet|snap)($|/)"}
               /
-              node_filesystem_size_bytes{job="node-exporter", os="linux", device_error="", fstype!~"tmpfs|overlay|squashfs|devtmpfs|devfs|proc|sysfs|cgroup2?|pstore|tracefs|debugfs|securityfs|configfs|nsfs|autofs|fuse\\..*|ramfs|binfmt_misc|rpc_pipefs", mountpoint!~"^/(dev|proc|sys|run|var/lib/docker|var/lib/containers|var/lib/kubelet|snap)($|/)|^/System/Volumes($|/)|^/private/var/folders/.*/T/com\\.docker\\.install($|/)"}
+              node_filesystem_size_bytes{job="node-exporter", os="linux", device_error="", fstype!~"tmpfs|overlay|squashfs|devtmpfs|proc|sysfs|cgroup2?|pstore|tracefs|debugfs|securityfs|configfs|nsfs|autofs|fuse\\..*|ramfs|binfmt_misc|rpc_pipefs", mountpoint!~"^/(dev|proc|sys|run|var/lib/docker|var/lib/containers|var/lib/kubelet|snap)($|/)"}
             )
           ) * 100 > 80
         for: 10m
@@ -169,9 +169,9 @@ groups:
         expr: |
           (
             1 - (
-              node_filesystem_avail_bytes{job="node-exporter", os="linux", device_error="", fstype!~"tmpfs|overlay|squashfs|devtmpfs|devfs|proc|sysfs|cgroup2?|pstore|tracefs|debugfs|securityfs|configfs|nsfs|autofs|fuse\\..*|ramfs|binfmt_misc|rpc_pipefs", mountpoint!~"^/(dev|proc|sys|run|var/lib/docker|var/lib/containers|var/lib/kubelet|snap)($|/)|^/System/Volumes($|/)|^/private/var/folders/.*/T/com\\.docker\\.install($|/)"}
+              node_filesystem_avail_bytes{job="node-exporter", os="linux", device_error="", fstype!~"tmpfs|overlay|squashfs|devtmpfs|proc|sysfs|cgroup2?|pstore|tracefs|debugfs|securityfs|configfs|nsfs|autofs|fuse\\..*|ramfs|binfmt_misc|rpc_pipefs", mountpoint!~"^/(dev|proc|sys|run|var/lib/docker|var/lib/containers|var/lib/kubelet|snap)($|/)"}
               /
-              node_filesystem_size_bytes{job="node-exporter", os="linux", device_error="", fstype!~"tmpfs|overlay|squashfs|devtmpfs|devfs|proc|sysfs|cgroup2?|pstore|tracefs|debugfs|securityfs|configfs|nsfs|autofs|fuse\\..*|ramfs|binfmt_misc|rpc_pipefs", mountpoint!~"^/(dev|proc|sys|run|var/lib/docker|var/lib/containers|var/lib/kubelet|snap)($|/)|^/System/Volumes($|/)|^/private/var/folders/.*/T/com\\.docker\\.install($|/)"}
+              node_filesystem_size_bytes{job="node-exporter", os="linux", device_error="", fstype!~"tmpfs|overlay|squashfs|devtmpfs|proc|sysfs|cgroup2?|pstore|tracefs|debugfs|securityfs|configfs|nsfs|autofs|fuse\\..*|ramfs|binfmt_misc|rpc_pipefs", mountpoint!~"^/(dev|proc|sys|run|var/lib/docker|var/lib/containers|var/lib/kubelet|snap)($|/)"}
             )
           ) * 100 > 90
         for: 10m
@@ -185,11 +185,11 @@ groups:
         expr: |
           count by (instance, job, os) (
             (
-              node_filesystem_avail_bytes{job="node-exporter", os="linux", device_error="", fstype!~"tmpfs|overlay|squashfs|devtmpfs|devfs|proc|sysfs|cgroup2?|pstore|tracefs|debugfs|securityfs|configfs|nsfs|autofs|fuse\\..*|ramfs|binfmt_misc|rpc_pipefs", mountpoint!~"^/(dev|proc|sys|run|var/lib/docker|var/lib/containers|var/lib/kubelet|snap)($|/)|^/System/Volumes($|/)|^/private/var/folders/.*/T/com\\.docker\\.install($|/)"} < 10 * 1024 * 1024 * 1024
+              node_filesystem_avail_bytes{job="node-exporter", os="linux", device_error="", fstype!~"tmpfs|overlay|squashfs|devtmpfs|proc|sysfs|cgroup2?|pstore|tracefs|debugfs|securityfs|configfs|nsfs|autofs|fuse\\..*|ramfs|binfmt_misc|rpc_pipefs", mountpoint!~"^/(dev|proc|sys|run|var/lib/docker|var/lib/containers|var/lib/kubelet|snap)($|/)"} < 10 * 1024 * 1024 * 1024
             )
-            and on (instance, job, device, mountpoint, fstype)
+            and
             (
-              node_filesystem_size_bytes{job="node-exporter", os="linux", device_error="", fstype!~"tmpfs|overlay|squashfs|devtmpfs|devfs|proc|sysfs|cgroup2?|pstore|tracefs|debugfs|securityfs|configfs|nsfs|autofs|fuse\\..*|ramfs|binfmt_misc|rpc_pipefs", mountpoint!~"^/(dev|proc|sys|run|var/lib/docker|var/lib/containers|var/lib/kubelet|snap)($|/)|^/System/Volumes($|/)|^/private/var/folders/.*/T/com\\.docker\\.install($|/)"} > 20 * 1024 * 1024 * 1024
+              node_filesystem_size_bytes{job="node-exporter", os="linux", device_error="", fstype!~"tmpfs|overlay|squashfs|devtmpfs|proc|sysfs|cgroup2?|pstore|tracefs|debugfs|securityfs|configfs|nsfs|autofs|fuse\\..*|ramfs|binfmt_misc|rpc_pipefs", mountpoint!~"^/(dev|proc|sys|run|var/lib/docker|var/lib/containers|var/lib/kubelet|snap)($|/)"} > 20 * 1024 * 1024 * 1024
             )
           ) > 0
         for: 10m
