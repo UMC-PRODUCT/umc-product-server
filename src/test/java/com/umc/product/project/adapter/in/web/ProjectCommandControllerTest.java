@@ -4,24 +4,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.umc.product.global.config.JacksonConfig;
-import com.umc.product.global.security.JwtTokenProvider;
-import com.umc.product.global.security.MemberPrincipal;
-import com.umc.product.project.adapter.in.web.dto.request.AbortProjectRequest;
-import com.umc.product.project.application.port.in.command.AbortProjectUseCase;
-import com.umc.product.project.application.port.in.command.AddProjectMemberUseCase;
-import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
-import com.umc.product.project.application.port.in.command.DeleteProjectUseCase;
-import com.umc.product.project.application.port.in.command.PublishProjectUseCase;
-import com.umc.product.project.application.port.in.command.RemoveProjectMemberUseCase;
-import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
-import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
-import com.umc.product.project.application.port.in.command.UpdatePartQuotasUseCase;
-import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +19,25 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.global.config.JacksonConfig;
+import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.project.adapter.in.web.dto.request.AbortProjectRequest;
+import com.umc.product.project.adapter.in.web.dto.request.ChangeProjectMemberStatusRequest;
+import com.umc.product.project.application.port.in.command.AbortProjectUseCase;
+import com.umc.product.project.application.port.in.command.AddProjectMemberUseCase;
+import com.umc.product.project.application.port.in.command.ChangeProjectMemberStatusUseCase;
+import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
+import com.umc.product.project.application.port.in.command.DeleteProjectUseCase;
+import com.umc.product.project.application.port.in.command.PublishProjectUseCase;
+import com.umc.product.project.application.port.in.command.RemoveProjectMemberUseCase;
+import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
+import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
+import com.umc.product.project.application.port.in.command.UpdatePartQuotasUseCase;
+import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
+import com.umc.product.project.domain.enums.ProjectMemberStatus;
 
 @WebMvcTest(controllers = ProjectCommandController.class)
 @Import(JacksonConfig.class)
@@ -63,6 +68,8 @@ class ProjectCommandControllerTest {
     AddProjectMemberUseCase addProjectMemberUseCase;
     @MockitoBean
     RemoveProjectMemberUseCase removeProjectMemberUseCase;
+    @MockitoBean
+    ChangeProjectMemberStatusUseCase changeProjectMemberStatusUseCase;
     @MockitoBean
     UpdatePartQuotasUseCase updatePartQuotasUseCase;
     @MockitoBean
@@ -121,5 +128,52 @@ class ProjectCommandControllerTest {
             .andExpect(status().isBadRequest());
 
         then(abortProjectUseCase).should(never()).abort(any());
+    }
+
+    @Test
+    void DELETE_프로젝트_팀원_제거_hard_delete_200() throws Exception {
+        mockMvc.perform(delete("/api/v1/projects/" + PROJECT_ID + "/members/200"))
+            .andExpect(status().isOk());
+
+        then(removeProjectMemberUseCase).should().remove(any());
+    }
+
+    @Test
+    void PATCH_프로젝트_팀원_상태변경_soft_delete_200() throws Exception {
+        ChangeProjectMemberStatusRequest request =
+            new ChangeProjectMemberStatusRequest(ProjectMemberStatus.DISMISSED, "팀 적합도 부족");
+
+        mockMvc.perform(patch("/api/v1/projects/" + PROJECT_ID + "/members/200/status")
+                .content(objectMapper.writeValueAsString(request))
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+
+        then(changeProjectMemberStatusUseCase).should().changeStatus(any());
+    }
+
+    @Test
+    void PATCH_프로젝트_팀원_상태변경_reason_누락이면_400() throws Exception {
+        ChangeProjectMemberStatusRequest request =
+            new ChangeProjectMemberStatusRequest(ProjectMemberStatus.DISMISSED, "  ");
+
+        mockMvc.perform(patch("/api/v1/projects/" + PROJECT_ID + "/members/200/status")
+                .content(objectMapper.writeValueAsString(request))
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isBadRequest());
+
+        then(changeProjectMemberStatusUseCase).should(never()).changeStatus(any());
+    }
+
+    @Test
+    void PATCH_프로젝트_팀원_상태변경_status_누락이면_400() throws Exception {
+        ChangeProjectMemberStatusRequest request =
+            new ChangeProjectMemberStatusRequest(null, "사유");
+
+        mockMvc.perform(patch("/api/v1/projects/" + PROJECT_ID + "/members/200/status")
+                .content(objectMapper.writeValueAsString(request))
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isBadRequest());
+
+        then(changeProjectMemberStatusUseCase).should(never()).changeStatus(any());
     }
 }

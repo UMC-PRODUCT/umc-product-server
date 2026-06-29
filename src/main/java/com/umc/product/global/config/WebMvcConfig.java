@@ -2,12 +2,14 @@ package com.umc.product.global.config;
 
 import java.util.List;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import com.umc.product.global.ratelimit.ApiRateLimitInterceptor;
 import com.umc.product.global.security.resolver.CurrentMemberArgumentResolver;
 
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     private final CurrentMemberArgumentResolver currentMemberArgumentResolver;
     private final LoggingInterceptor loggingInterceptor;
+    private final ObjectProvider<ApiRateLimitInterceptor> apiRateLimitInterceptorProvider;
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
@@ -37,5 +40,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(loggingInterceptor)
             .addPathPatterns("/**")
             .excludePathPatterns(SecurityPathConfig.loggingExcludedPaths());
+        apiRateLimitInterceptorProvider.ifAvailable(apiRateLimitInterceptor ->
+            registry.addInterceptor(apiRateLimitInterceptor)
+                .addPathPatterns("/**")
+        );
     }
 }

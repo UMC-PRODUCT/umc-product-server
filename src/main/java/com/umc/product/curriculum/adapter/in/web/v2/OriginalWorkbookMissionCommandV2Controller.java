@@ -13,6 +13,7 @@ import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.request.CreateOriginalWorkbookMissionRequest;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.request.EditOriginalWorkbookMissionRequest;
+import com.umc.product.curriculum.adapter.in.web.v2.dto.response.CreateOriginalWorkbookMissionResponse;
 import com.umc.product.curriculum.application.port.in.command.ManageOriginalWorkbookMissionUseCase;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,10 +45,12 @@ public class OriginalWorkbookMissionCommandV2Controller {
         message = "원본 워크북 미션 추가는 중앙파트장 이상 권한이 필요합니다."
     )
     @PostMapping
-    public Long createOriginalWorkbookMission(
+    public CreateOriginalWorkbookMissionResponse createOriginalWorkbookMission(
         @Valid @RequestBody CreateOriginalWorkbookMissionRequest request
     ) {
-        return manageOriginalWorkbookMissionUseCase.create(request.toCommand());
+        return CreateOriginalWorkbookMissionResponse.from(
+            manageOriginalWorkbookMissionUseCase.create(request.toCommand())
+        );
     }
 
     @Operation(
