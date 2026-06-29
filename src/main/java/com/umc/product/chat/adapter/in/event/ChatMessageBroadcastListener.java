@@ -1,8 +1,7 @@
 package com.umc.product.chat.adapter.in.event;
 
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.context.event.EventListener;
 
 import com.umc.product.chat.adapter.in.web.dto.response.ChatMessageResponse;
 import com.umc.product.chat.domain.event.ChatMessageCreatedEvent;
@@ -35,7 +34,7 @@ public class ChatMessageBroadcastListener {
 
     private final BroadcastPort broadcastPort;
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @EventListener
     public void handle(ChatMessageCreatedEvent event) {
         String destination = CHAT_ROOM_DESTINATION_PREFIX + event.roomId() + CHAT_ROOM_DESTINATION_SUFFIX;
         ChatMessageResponse payload = ChatMessageResponse.from(event);
