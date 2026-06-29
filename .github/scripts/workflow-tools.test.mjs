@@ -35,6 +35,7 @@ test("Gemini payload uses static style guide without historical title list", () 
     assert.equal(payload.currentTitle, "[Feat] 프로젝트 권한 Capability API 추가");
     assert.equal(payload.changedFiles.length, 40);
     assert.ok(payload.styleGuide.includes("[Feat] 프로젝트 권한 Capability API 추가"));
+    assert.ok(payload.styleGuide.includes("[Feat] API Rate Limiter 도입"));
     assert.equal(Object.hasOwn(payload, "historicalTitles"), false);
 });
 
@@ -55,6 +56,16 @@ test("rule validation accepts repository style title", () => {
 
     assert.equal(result.valid, true);
     assert.deepEqual(result.violations, []);
+});
+
+test("rule validation accepts only canonical Hotfix casing", () => {
+    const canonical = validateTitleByRule("[Hotfix] 테스트 실패 수정");
+    const legacy = validateTitleByRule("[HotFix] 테스트 실패 수정");
+
+    assert.equal(canonical.valid, true);
+    assert.equal(legacy.valid, false);
+    assert.deepEqual(legacy.violations, ["INVALID_TAG"]);
+    assert.equal(legacy.suggestedTitle, "[Hotfix] 테스트 실패 수정");
 });
 
 test("rule validation rejects unsafe or low quality titles", () => {

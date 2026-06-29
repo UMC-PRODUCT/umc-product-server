@@ -10,7 +10,7 @@ const GEMINI_PRICING_USD_PER_MILLION = {
     "gemini-3.5-flash": { input: 1.5, output: 9 },
 };
 
-const HARD_ALLOWED_TAGS = new Set(["Feat", "Fix", "Refactor", "Chore", "Docs", "Release", "Hotfix", "HotFix"]);
+const HARD_ALLOWED_TAGS = new Set(["Feat", "Fix", "Refactor", "Chore", "Docs", "Release", "Hotfix"]);
 const TAG_NORMALIZATION = new Map([
     ["feat", "Feat"],
     ["fix", "Fix"],
@@ -19,8 +19,6 @@ const TAG_NORMALIZATION = new Map([
     ["docs", "Docs"],
     ["release", "Release"],
     ["hotfix", "Hotfix"],
-    ["hotFix", "Hotfix"],
-    ["HotFix", "Hotfix"],
 ]);
 
 export const STYLE_GUIDE = [
@@ -36,19 +34,32 @@ export const STYLE_GUIDE = [
     "[Chore] CI/CD, 설정, 테스트 보강, 운영 스크립트, 인프라성 작업",
     "[Docs] README, ADR, 가이드, API 문서, 온보딩 문서 변경",
     "[Release] vX.Y.Z 릴리즈 PR",
-    "[Hotfix]/[HotFix] 긴급 수정. 추천 제목은 [Hotfix]로 정규화한다.",
+    "[Hotfix] 긴급 수정. 대소문자는 이 형태만 사용한다.",
     "",
     "자주 쓰는 끝맺음:",
     "추가, 구현, 수정, 변경, 해결, 개선, 제작, 설계, 제거, 적용, 반영, 분리, 제한, 도입, 강화, 작성, 통일, 조정, 구축, 통합, 문서화",
     "",
-    "좋은 예시:",
-    "[Feat] 프로젝트 권한 Capability API 추가",
-    "[Feat] 프로젝트 지원 현황 API 통합 및 매칭 현황 조회 분리",
-    "[Fix] 프로젝트 지원 통계 인원을 지부 단위가 아닌 기수 단위로 집계하는 오류 수정",
-    "[Fix] 회원 keyword 검색 시 학교명으로도 검색되던 문제 해결",
-    "[Refactor] 프로젝트 지원서 조회를 자원 단위로 리팩토링",
-    "[Chore] 테스트 시드 API 호출 스크립트 추가",
+    "좋은 예시(merged PR 제목, 오래된 순):",
+    "[Feat] Docker Compose 기반 환경별 CI/CD 구축",
+    "[Feat] Curriculum 도메인 기초 엔티티 및 interface 설계",
+    "[Hotfix] SwaggerTag의 Constants가 컴파일 타임 값을 가지지 않아 발생하던 빌드 오류 해결",
+    "[Refactor] Application Secret 계층 정리",
+    "[Feat] OAuth 로그인 및 회원가입 기능 구현",
+    "[Fix] Spring Security의 Filter 내에서 발생하는 예외를 RestControllerAdvice가 처리하지 못하는 문제 해결",
+    "[Chore] Rest Docs 생성을 위한 adoc을 자동 생성하는 Gradle Task 추가",
+    "[Feat] 지원서 작성 후 제출까지의 플로우 구현 및 구조 개선",
+    "[Fix] CI 워크플로우 안정화 및 Scalar Configuration 내 오류 수정",
+    "[Release] v1.4.0",
+    "[Refactor] Member, Challenger, Authorization 도메인 내 Query UseCase 메소드 명 변경",
+    "[Feat] Project 지원 폼 저장/조회 API 및 Survey 도메인 연동",
+    "[Chore] 코드 컨벤션 검증 추가",
+    "[Feat] WebSocket SUBSCRIBE/SEND 권한 체크 및 에러 응답 처리 구현",
     "[Docs] 프로젝트 지원서 상태 변경 정책 문서화",
+    "[Feat] 프로젝트 권한 Capability API 추가",
+    "[Fix] 지원서 상세 조회 시 변경된 질문에 대한 응답이 누락되는 오류 수정",
+    "[Hotfix] 테스트 실패 수정",
+    "[Refactor] 소셜 로그인 OIDC 검증과 JWKS 캐시 적용",
+    "[Feat] API Rate Limiter 도입",
     "",
     "피해야 할 패턴:",
     "WIP:, DEPRECATED_RELEASE_VERSION, 태그 없는 제목, 불필요한 감탄사/마침표, 너무 추상적인 \"수정\", \"개선\", \"작업\", 현재 PR 내용에 없는 기능을 지어낸 제목.",
@@ -167,7 +178,7 @@ export function buildGeminiPayload({ currentTitle, body = "", headRef = "", base
 }
 
 function buildSuggestion(title, tag, body) {
-    const normalizedTag = TAG_NORMALIZATION.get(tag) ?? (HARD_ALLOWED_TAGS.has(tag) ? tag : "Chore");
+    const normalizedTag = TAG_NORMALIZATION.get(String(tag ?? "").toLowerCase()) ?? (HARD_ALLOWED_TAGS.has(tag) ? tag : "Chore");
     const normalizedBody = (body || title)
         .replace(/^WIP:\s*/i, "")
         .replace(/^DEPRECATED_RELEASE_VERSION$/i, "릴리즈 버전 정리")
@@ -181,7 +192,7 @@ function buildSuggestion(title, tag, body) {
     }
 
     const fallbackBody = normalizedBody && charLength(normalizedBody) >= 5 ? normalizedBody : "작업 내용 정리";
-    return `[${normalizedTag === "HotFix" ? "Hotfix" : normalizedTag}] ${fallbackBody}`;
+    return `[${normalizedTag}] ${fallbackBody}`;
 }
 
 export function validateTitleByRule(title) {
