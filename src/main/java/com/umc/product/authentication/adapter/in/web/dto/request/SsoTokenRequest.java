@@ -6,20 +6,15 @@ import jakarta.validation.constraints.NotBlank;
 
 public class SsoTokenRequest {
 
-    @NotBlank
-    private String grant_type;
+    @NotBlank private String grant_type;
 
-    @NotBlank
-    private String code;
+    @NotBlank private String code;
 
-    @NotBlank
-    private String client_id;
+    @NotBlank private String client_id;
 
-    @NotBlank
-    private String redirect_uri;
+    @NotBlank private String redirect_uri;
 
-    @NotBlank
-    private String code_verifier;
+    @NotBlank private String code_verifier;
 
     public String getGrant_type() {
         return grant_type;

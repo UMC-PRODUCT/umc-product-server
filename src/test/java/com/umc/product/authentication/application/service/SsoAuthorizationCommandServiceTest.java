@@ -23,8 +23,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.util.UriUtils;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 import com.umc.product.authentication.application.event.SsoAuthorizationCodeIssuedEvent;
 import com.umc.product.authentication.application.port.in.command.dto.AuthorizeSsoCommand;

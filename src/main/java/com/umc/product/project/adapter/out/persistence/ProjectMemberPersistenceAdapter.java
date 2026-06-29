@@ -15,6 +15,8 @@ import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -91,6 +93,12 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     @Override
     public Optional<ProjectMember> findByProjectIdAndMemberId(Long projectId, Long memberId) {
         return repository.findByProjectIdAndMemberId(projectId, memberId);
+    }
+
+    @Override
+    public ProjectMember getByProjectIdAndMemberId(Long projectId, Long memberId) {
+        return repository.findByProjectIdAndMemberId(projectId, memberId)
+            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_NOT_FOUND));
     }
 
     @Override

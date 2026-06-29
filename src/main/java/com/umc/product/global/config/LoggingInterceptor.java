@@ -1,5 +1,12 @@
 package com.umc.product.global.config;
 
+import org.slf4j.MDC;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.HandlerMapping;
+
 import com.umc.product.global.client.ClientDeviceType;
 import com.umc.product.global.client.ClientEnvironment;
 import com.umc.product.global.client.ClientRequestClassifier;
@@ -7,16 +14,11 @@ import com.umc.product.global.client.ClientRequestContext;
 import com.umc.product.global.client.ClientServiceType;
 import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.global.security.MemberPrincipal;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.HandlerMapping;
 
 /**
  * HTTP 요청/응답 로깅 인터셉터 (ADR-016 구조화 로그 기반)

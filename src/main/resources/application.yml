@@ -371,6 +371,30 @@ app:
       include-sql: ${APP_OBSERVABILITY_INCLUDE_SQL:false}
       max-sql-length: ${APP_OBSERVABILITY_MAX_SQL_LENGTH:500}
 
+  api-rate-limit:
+    enabled: ${API_RATE_LIMIT_ENABLED:true}
+    include-paths:
+      - /api/**
+    exclude-paths:
+      - /actuator/**
+      - /docs
+      - /docs/
+      - /docs/**
+      - /docs-json
+      - /docs-json/**
+      - /webjars/**
+      - /umc-logo.svg
+      - /error
+    authenticated-default:
+      requests-per-second: ${API_RATE_LIMIT_AUTH_REQUESTS_PER_SECOND:20}
+      requests-per-minute: ${API_RATE_LIMIT_AUTH_REQUESTS_PER_MINUTE:300}
+    anonymous-default:
+      requests-per-second: ${API_RATE_LIMIT_ANON_REQUESTS_PER_SECOND:5}
+      requests-per-minute: ${API_RATE_LIMIT_ANON_REQUESTS_PER_MINUTE:60}
+    cache:
+      maximum-size: ${API_RATE_LIMIT_CACHE_MAXIMUM_SIZE:100000}
+      expire-after-access: ${API_RATE_LIMIT_CACHE_EXPIRE_AFTER_ACCESS:PT10M}
+
   event-outbox:
     enabled: ${EVENT_OUTBOX_ENABLED:false}
     poll-interval-ms: ${EVENT_OUTBOX_POLL_INTERVAL_MS:5000}
@@ -386,9 +410,6 @@ app:
     allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:}
 
   webhook:
-    buffer:
-      enabled: ${WEBHOOK_BUFFER_ENABLED:true}
-      flush-interval-ms: ${WEBHOOK_BUFFER_FLUSH_INTERVAL_MS:60000} # 1분마다 버퍼 플러시
     telegram:
       bot-token: ${TELEGRAM_BOT_TOKEN:}
       chat-id: ${TELEGRAM_CHAT_ID:}
@@ -408,17 +429,26 @@ app:
   oauth2:
     google:
       client-id-list: ${GOOGLE_CLIENT_ID_LIST:}
+      jwks-cache:
+        ttl: ${GOOGLE_JWKS_CACHE_TTL:PT6H}
+        max-size: ${GOOGLE_JWKS_CACHE_MAX_SIZE:1}
     apple:
       ios-client-id: ${APPLE_IOS_CLIENT_ID}
       web-client-id: ${APPLE_WEB_CLIENT_ID}
       team-id: ${APPLE_TEAM_ID}
       key-id: ${APPLE_KEY_ID}
       private-key: ${APPLE_PRIVATE_KEY}
+      jwks-cache:
+        ttl: ${APPLE_JWKS_CACHE_TTL:PT24H}
+        max-size: ${APPLE_JWKS_CACHE_MAX_SIZE:1}
     kakao:
       client-id: ${KAKAO_CLIENT_ID:}
       client-secret: ${KAKAO_CLIENT_SECRET:}
       admin-key: ${KAKAO_ADMIN_KEY:}
       allowed-redirect-uris: ${KAKAO_ALLOWED_REDIRECT_URIS:}
+      jwks-cache:
+        ttl: ${KAKAO_JWKS_CACHE_TTL:PT24H}
+        max-size: ${KAKAO_JWKS_CACHE_MAX_SIZE:1}
 
   llm:
     provider: ${LLM_PROVIDER:mock}

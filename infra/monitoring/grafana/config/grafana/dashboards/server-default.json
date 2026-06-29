@@ -678,7 +678,8 @@
                         "editorMode": "code",
                         "expr": "sum(rate(http_server_requests_milliseconds_count{application=~\"$service\", instance=~\"$instance\"}[$__rate_interval])) by (uri, method)",
                         "legendFormat": "{{method}} {{uri}}",
-                        "range": true
+                        "range": true,
+                        "interval": "$http_requests_interval"
                       },
                       "version": "v0"
                     },
@@ -793,7 +794,8 @@
                         "editorMode": "code",
                         "expr": "rate(http_server_requests_milliseconds_sum{application=~\"$service\", instance=~\"$instance\"}[$__rate_interval]) / rate(http_server_requests_milliseconds_count{application=~\"$service\", instance=~\"$instance\"}[$__rate_interval])",
                         "legendFormat": "{{method}} {{uri}}",
-                        "range": true
+                        "range": true,
+                        "interval": "$http_requests_interval"
                       },
                       "version": "v0"
                     },
@@ -916,7 +918,8 @@
                         "editorMode": "code",
                         "expr": "sum(rate(http_server_requests_milliseconds_count{application=~\"$service\", instance=~\"$instance\", status=~\"4..|5..\"}[$__rate_interval])) by (status, uri)",
                         "legendFormat": "{{status}} {{uri}}",
-                        "range": true
+                        "range": true,
+                        "interval": "$http_requests_interval"
                       },
                       "version": "v0"
                     },
@@ -1035,7 +1038,8 @@
                         "editorMode": "code",
                         "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_milliseconds_bucket{application=~\"$service\", instance=~\"$instance\"}[$__rate_interval])) by (le, uri, method))",
                         "legendFormat": "p95 {{method}} {{uri}}",
-                        "range": true
+                        "range": true,
+                        "interval": "$http_requests_interval"
                       },
                       "version": "v0"
                     },
@@ -4381,6 +4385,51 @@
           "pluginId": "prometheus",
           "refresh": "onDashboardLoad",
           "regex": "",
+          "skipUrlSync": false
+        }
+      },
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "allowCustomValue": true,
+          "current": {
+            "selected": true,
+            "text": "2m",
+            "value": "2m"
+          },
+          "hide": "dontHide",
+          "includeAll": false,
+          "label": "HTTP Noise Reduction Interval",
+          "multi": false,
+          "name": "http_requests_interval",
+          "options": [
+            {
+              "selected": false,
+              "text": "15s",
+              "value": "15s"
+            },
+            {
+              "selected": false,
+              "text": "30s",
+              "value": "30s"
+            },
+            {
+              "selected": false,
+              "text": "1m",
+              "value": "1m"
+            },
+            {
+              "selected": true,
+              "text": "2m",
+              "value": "2m"
+            },
+            {
+              "selected": false,
+              "text": "5m",
+              "value": "5m"
+            }
+          ],
+          "query": "15s : 15s,30s : 30s,1m : 1m,2m : 2m,5m : 5m",
           "skipUrlSync": false
         }
       },

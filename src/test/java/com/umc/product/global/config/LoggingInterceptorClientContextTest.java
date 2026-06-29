@@ -2,6 +2,18 @@ package com.umc.product.global.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Collections;
+import java.util.List;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.slf4j.MDC;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.global.client.ClientContextClaims;
 import com.umc.product.global.client.ClientContextProperties;
@@ -13,17 +25,8 @@ import com.umc.product.global.client.ClientRequestContext;
 import com.umc.product.global.client.ClientServiceType;
 import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.global.security.MemberPrincipal;
+
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.Collections;
-import java.util.List;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.slf4j.MDC;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 class LoggingInterceptorClientContextTest {
 

@@ -2,8 +2,8 @@ package com.umc.product.authentication.application.port.in.command.dto;
 
 import java.nio.charset.StandardCharsets;
 
-import org.springframework.web.util.UriUtils;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;

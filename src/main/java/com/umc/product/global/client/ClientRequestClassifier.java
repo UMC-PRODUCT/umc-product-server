@@ -1,10 +1,12 @@
 package com.umc.product.global.client;
 
-import com.umc.product.common.domain.enums.ClientType;
-import com.umc.product.global.security.MemberPrincipal;
-import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.util.Locale;
+
+import com.umc.product.common.domain.enums.ClientType;
+import com.umc.product.global.security.MemberPrincipal;
+
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

@@ -1,9 +1,12 @@
 package com.umc.product.project.domain;
 
+import java.util.Objects;
+
 import com.umc.product.common.BaseEntity;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -186,6 +189,13 @@ public class Project extends BaseEntity {
         this.productOwnerMemberId = newOwnerMemberId;
         this.productOwnerSchoolId = newOwnerSchoolId;
         this.chapterId = newChapterId;
+    }
+
+    /**
+     * 전달된 멤버가 프로젝트의 메인 PM인지 확인합니다.
+     */
+    public boolean isOwner(Long memberId) {
+        return Objects.equals(this.productOwnerMemberId, memberId);
     }
 
     /**

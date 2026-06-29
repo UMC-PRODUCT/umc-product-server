@@ -1,10 +1,11 @@
 package com.umc.product.global.logging;
 
+import java.time.Duration;
+import java.util.regex.Pattern;
+
 import com.umc.product.global.client.ClientDeviceType;
 import com.umc.product.global.client.ClientEnvironment;
 import com.umc.product.global.client.ClientServiceType;
-import java.time.Duration;
-import java.util.regex.Pattern;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;

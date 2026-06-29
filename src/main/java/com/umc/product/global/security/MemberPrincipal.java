@@ -1,12 +1,15 @@
 package com.umc.product.global.security;
 
-import com.umc.product.common.domain.enums.ClientType;
-import com.umc.product.global.client.ClientContextClaims;
 import java.util.Collection;
 import java.util.Collections;
+
+import org.springframework.security.core.GrantedAuthority;
+
+import com.umc.product.common.domain.enums.ClientType;
+import com.umc.product.global.client.ClientContextClaims;
+
 import lombok.Builder;
 import lombok.Getter;
-import org.springframework.security.core.GrantedAuthority;
 
 @Getter
 public class MemberPrincipal {

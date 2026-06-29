@@ -2,12 +2,14 @@ package com.umc.product.global.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.umc.product.common.domain.enums.ClientType;
-import com.umc.product.global.security.MemberPrincipal;
 import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
+
+import com.umc.product.common.domain.enums.ClientType;
+import com.umc.product.global.security.MemberPrincipal;
 
 class ClientRequestClassifierTest {
 
