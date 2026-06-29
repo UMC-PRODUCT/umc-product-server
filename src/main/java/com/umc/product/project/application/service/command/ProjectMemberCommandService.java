@@ -1,7 +1,5 @@
 package com.umc.product.project.application.service.command;
 
-import java.util.Objects;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,7 +59,7 @@ public class ProjectMemberCommandService
     public void remove(RemoveProjectMemberCommand command) {
         Project project = loadProjectPort.getById(command.projectId());
 
-        if (Objects.equals(project.getProductOwnerMemberId(), command.memberId())) {
+        if (project.isOwner(command.memberId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER);
         }
 
@@ -69,8 +67,7 @@ public class ProjectMemberCommandService
         project.validateMutable();
 
         ProjectMember member = loadProjectMemberPort
-            .findByProjectIdAndMemberId(command.projectId(), command.memberId())
-            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_NOT_FOUND));
+            .getByProjectIdAndMemberId(command.projectId(), command.memberId());
 
         log.info(
             "[ProjectMember hardDelete] projectId={}, memberId={}, projectMemberId={}, requesterMemberId={}, reason={}",
@@ -91,15 +88,14 @@ public class ProjectMemberCommandService
     public void changeStatus(ChangeProjectMemberStatusCommand command) {
         Project project = loadProjectPort.getById(command.projectId());
 
-        if (Objects.equals(project.getProductOwnerMemberId(), command.memberId())) {
+        if (project.isOwner(command.memberId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER);
         }
 
         project.validateMutable();
 
         ProjectMember member = loadProjectMemberPort
-            .findByProjectIdAndMemberId(command.projectId(), command.memberId())
-            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_NOT_FOUND));
+            .getByProjectIdAndMemberId(command.projectId(), command.memberId());
 
         member.changeStatus(command.status(), command.requesterMemberId(), command.reason());
         saveProjectMemberPort.save(member);

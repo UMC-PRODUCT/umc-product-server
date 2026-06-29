@@ -30,6 +30,9 @@ public record ChangeProjectMemberStatusCommand(
         Objects.requireNonNull(projectId, "projectId must not be null");
         Objects.requireNonNull(memberId, "memberId must not be null");
         Objects.requireNonNull(status, "status must not be null");
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("reason must not be null or blank");
+        }
         Objects.requireNonNull(requesterMemberId, "requesterMemberId must not be null");
     }
 }

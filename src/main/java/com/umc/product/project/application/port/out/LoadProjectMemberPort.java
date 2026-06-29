@@ -59,6 +59,11 @@ public interface LoadProjectMemberPort {
     Optional<ProjectMember> findByProjectIdAndMemberId(Long projectId, Long memberId);
 
     /**
+     * 특정 프로젝트의 특정 멤버를 status 무관 단건 조회합니다. 존재하지 않으면 도메인 예외를 던집니다.
+     */
+    ProjectMember getByProjectIdAndMemberId(Long projectId, Long memberId);
+
+    /**
      * 해당 기수에서 이미 ACTIVE 팀원인지 확인합니다. (중복 지원 방지용)
      */
     boolean existsByGisuAndMember(Long gisuId, Long memberId);
