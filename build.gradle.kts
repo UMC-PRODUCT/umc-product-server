@@ -197,6 +197,7 @@ dependencies {
     // --- Cache ---
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("com.github.ben-manes.caffeine:caffeine")
+    implementation("com.bucket4j:bucket4j_jdk17-core:8.19.0")
 
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test")
