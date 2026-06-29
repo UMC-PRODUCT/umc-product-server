@@ -13,6 +13,9 @@ global:
   evaluation_interval: 30s
   external_labels:
     cluster: umc-product-self-hosted
+    # 애플리케이션 메트릭의 environment 라벨은 유지하고, 없는 인프라 알림에는
+    # 이 모니터링 스택이 배포된 환경을 붙여 Alertmanager가 일관되게 라우팅한다.
+    environment: ${MONITORING_ENVIRONMENT}
 
 scrape_configs:
   - job_name: prometheus
