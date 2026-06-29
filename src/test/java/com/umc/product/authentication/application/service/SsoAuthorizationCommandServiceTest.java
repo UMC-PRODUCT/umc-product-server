@@ -264,6 +264,42 @@ class SsoAuthorizationCommandServiceTest {
     }
 
     @Test
+    @DisplayName("allowed origin이 비어 있는 app client는 browser origin이 있어도 거부하지 않는다")
+    void app_client_origin_있어도_allowedOrigins_비어있으면_허용() {
+        // given
+        String appRedirectUri = "umc-ios://auth/callback";
+        given(loadSsoClientPort.getByClientId("ios-app")).willReturn(SsoClient.of(
+            "ios-app",
+            "UMC iOS App",
+            ClientServiceType.IOS_APP,
+            ClientEnvironment.PROD,
+            true,
+            Duration.ofHours(1),
+            List.of(appRedirectUri),
+            List.of()
+        ));
+        given(getSsoBrowserLoginUseCase.getLogin(RAW_LOGIN_TOKEN))
+            .willReturn(SsoBrowserLoginInfo.of(MEMBER_ID, RAW_LOGIN_TOKEN, Instant.now().plusSeconds(3600)));
+        given(saveSsoAuthorizationCodePort.save(any())).willAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        SsoAuthorizationRedirectInfo result = service.authorize(AuthorizeSsoCommand.of(
+            "ios-app",
+            appRedirectUri,
+            "code",
+            STATE,
+            CODE_CHALLENGE,
+            "S256",
+            RAW_LOGIN_TOKEN,
+            "https://unexpected.example.com"
+        ));
+
+        // then
+        assertThat(result.redirectUri()).startsWith(appRedirectUri);
+        then(saveSsoAuthorizationCodePort).should().save(any());
+    }
+
+    @Test
     @DisplayName("response_type이 code가 아니면 authorize 요청을 거부한다")
     void response_type_code_아님_거부() {
         // when & then
