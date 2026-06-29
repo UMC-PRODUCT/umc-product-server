@@ -189,10 +189,26 @@ test("CI feedback keeps existing status context and comment marker", () => {
     assert.equal(feedback.statusState, "failure");
     assert.equal(feedback.commentAction, "upsert");
     assert.match(feedback.commentBody, /<!-- umc-product-ci-status -->/);
+    assert.match(feedback.commentBody, /## :x: CI 상태: 실패/);
 
     const status = buildCommitStatusPayload(feedback);
     assert.equal(status.context, "Product Team Server CI");
     assert.equal(status.state, "failure");
+});
+
+test("CI feedback renders success icon as GitHub emoji shortcode", () => {
+    const feedback = buildCiFeedback({
+        eventName: "pull_request",
+        workflow: "CI",
+        ref: "refs/pull/1/merge",
+        runId: "123",
+        repository: "UMC-PRODUCT/umc-product-server",
+        sha: "abcdef1234567890",
+        jobResult: "success",
+        testOutcome: "success",
+    });
+
+    assert.match(feedback.commentBody, /## :white_check_mark: CI 상태: 성공/);
 });
 
 test("CI feedback validates repository format", () => {

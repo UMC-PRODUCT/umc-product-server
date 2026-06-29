@@ -39,7 +39,7 @@ export function buildCiFeedback({
     const { owner, repo } = repositoryParts(repository);
     const failed = jobResult !== "success" || testOutcome === "failure";
     const stateText = failed ? "실패" : "성공";
-    const icon = failed ? "X" : "OK";
+    const icon = failed ? ":x:" : ":white_check_mark:";
     const kstTime = kstTimestamp(now);
     const targetUrl = runUrl(owner, repo, runId);
     const entry = [
