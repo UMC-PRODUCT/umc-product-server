@@ -9,6 +9,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,7 +48,9 @@ public class SsoOAuthController {
         @RequestParam("state") String state,
         @RequestParam("code_challenge") String codeChallenge,
         @RequestParam("code_challenge_method") String codeChallengeMethod,
-        @CookieValue(name = "${app.sso.cookie.name}", required = false) String rawLoginToken
+        @CookieValue(name = "${app.sso.cookie.name}", required = false) String rawLoginToken,
+        @RequestHeader(value = "Origin", required = false) String origin,
+        @RequestHeader(value = "Referer", required = false) String referer
     ) {
         if (!StringUtils.hasText(rawLoginToken)) {
             throw new AuthenticationDomainException(AuthenticationErrorCode.SSO_BROWSER_LOGIN_REQUIRED);
@@ -60,7 +63,8 @@ public class SsoOAuthController {
             state,
             codeChallenge,
             codeChallengeMethod,
-            rawLoginToken
+            rawLoginToken,
+            resolveRequestOrigin(origin, referer)
         ));
 
         return ResponseEntity.status(HttpStatus.FOUND)
@@ -73,5 +77,34 @@ public class SsoOAuthController {
     @Operation(operationId = "SSO-OAUTH-002", summary = "SSO OAuth token 교환")
     public SsoTokenResponse token(@Valid SsoTokenRequest request) {
         return SsoTokenResponse.from(exchangeSsoAuthorizationCodeUseCase.exchange(request.toCommand()));
+    }
+
+    private String resolveRequestOrigin(String origin, String referer) {
+        if (StringUtils.hasText(origin)) {
+            return origin;
+        }
+        return deriveOriginFromReferer(referer);
+    }
+
+    private String deriveOriginFromReferer(String referer) {
+        if (!StringUtils.hasText(referer)) {
+            return null;
+        }
+        try {
+            URI uri = URI.create(referer.trim());
+            if (uri.getScheme() == null || uri.getHost() == null) {
+                return null;
+            }
+            StringBuilder origin = new StringBuilder()
+                .append(uri.getScheme())
+                .append("://")
+                .append(uri.getHost());
+            if (uri.getPort() >= 0) {
+                origin.append(':').append(uri.getPort());
+            }
+            return origin.toString();
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }

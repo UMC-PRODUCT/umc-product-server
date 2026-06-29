@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.inOrder;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -106,7 +108,8 @@ class SsoAuthorizationCommandServiceTest {
             STATE,
             CODE_CHALLENGE,
             "S256",
-            RAW_LOGIN_TOKEN
+            RAW_LOGIN_TOKEN,
+            "https://backoffice.university.neordinary.com"
         ));
 
         // then
@@ -162,13 +165,102 @@ class SsoAuthorizationCommandServiceTest {
             STATE,
             CODE_CHALLENGE,
             "S256",
-            RAW_LOGIN_TOKEN
+            RAW_LOGIN_TOKEN,
+            "https://evil.example.com"
         )))
             .isInstanceOf(AuthenticationDomainException.class)
             .extracting("baseCode")
             .isEqualTo(AuthenticationErrorCode.INVALID_SSO_REDIRECT_URI);
 
         then(saveSsoAuthorizationCodePort).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("client의 requirePkce가 true이면 client 로드 후 PKCE S256 정책을 적용한다")
+    void client_requirePkce_true_로드_후_pkce_거부() {
+        // given
+        given(loadSsoClientPort.getByClientId(CLIENT_ID)).willReturn(ssoClient(REDIRECT_URI));
+
+        // when & then
+        assertThatThrownBy(() -> service.authorize(AuthorizeSsoCommand.of(
+            CLIENT_ID,
+            REDIRECT_URI,
+            "code",
+            STATE,
+            " ",
+            "S256",
+            RAW_LOGIN_TOKEN,
+            "https://backoffice.university.neordinary.com"
+        )))
+            .isInstanceOf(AuthenticationDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(AuthenticationErrorCode.INVALID_SSO_PKCE);
+
+        InOrder inOrder = inOrder(loadSsoClientPort, getSsoBrowserLoginUseCase);
+        inOrder.verify(loadSsoClientPort).getByClientId(CLIENT_ID);
+        then(getSsoBrowserLoginUseCase).shouldHaveNoInteractions();
+        then(saveSsoAuthorizationCodePort).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("registered web client는 허용되지 않은 browser Origin을 거부한다")
+    void 허용되지_않은_browser_origin_거부() {
+        // given
+        given(loadSsoClientPort.getByClientId(CLIENT_ID)).willReturn(ssoClient(REDIRECT_URI));
+
+        // when & then
+        assertThatThrownBy(() -> service.authorize(AuthorizeSsoCommand.of(
+            CLIENT_ID,
+            REDIRECT_URI,
+            "code",
+            STATE,
+            CODE_CHALLENGE,
+            "S256",
+            RAW_LOGIN_TOKEN,
+            "https://evil.example.com"
+        )))
+            .isInstanceOf(AuthenticationDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(AuthenticationErrorCode.INVALID_SSO_AUTHORIZATION_REQUEST);
+
+        then(getSsoBrowserLoginUseCase).shouldHaveNoInteractions();
+        then(saveSsoAuthorizationCodePort).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("allowed origin이 비어 있는 app client는 Origin이 없어도 browser origin 검증으로 거부하지 않는다")
+    void app_client_origin_없음_허용() {
+        // given
+        String appRedirectUri = "umc-ios://auth/callback";
+        given(loadSsoClientPort.getByClientId("ios-app")).willReturn(SsoClient.of(
+            "ios-app",
+            "UMC iOS App",
+            ClientServiceType.IOS_APP,
+            ClientEnvironment.PROD,
+            true,
+            Duration.ofHours(1),
+            List.of(appRedirectUri),
+            List.of()
+        ));
+        given(getSsoBrowserLoginUseCase.getLogin(RAW_LOGIN_TOKEN))
+            .willReturn(SsoBrowserLoginInfo.of(MEMBER_ID, RAW_LOGIN_TOKEN, Instant.now().plusSeconds(3600)));
+        given(saveSsoAuthorizationCodePort.save(any())).willAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        SsoAuthorizationRedirectInfo result = service.authorize(AuthorizeSsoCommand.of(
+            "ios-app",
+            appRedirectUri,
+            "code",
+            STATE,
+            CODE_CHALLENGE,
+            "S256",
+            RAW_LOGIN_TOKEN,
+            null
+        ));
+
+        // then
+        assertThat(result.redirectUri()).startsWith(appRedirectUri);
+        then(saveSsoAuthorizationCodePort).should().save(any());
     }
 
     @Test
@@ -182,7 +274,8 @@ class SsoAuthorizationCommandServiceTest {
             STATE,
             CODE_CHALLENGE,
             "S256",
-            RAW_LOGIN_TOKEN
+            RAW_LOGIN_TOKEN,
+            null
         )))
             .isInstanceOf(AuthenticationDomainException.class)
             .extracting("baseCode")
@@ -192,6 +285,9 @@ class SsoAuthorizationCommandServiceTest {
     @Test
     @DisplayName("PKCE challenge method가 S256이 아니면 요청을 거부한다")
     void pkce_method_S256_아님_거부() {
+        // given
+        given(loadSsoClientPort.getByClientId(CLIENT_ID)).willReturn(ssoClient(REDIRECT_URI));
+
         // when & then
         assertThatThrownBy(() -> service.authorize(AuthorizeSsoCommand.of(
             CLIENT_ID,
@@ -200,7 +296,8 @@ class SsoAuthorizationCommandServiceTest {
             STATE,
             CODE_CHALLENGE,
             "plain",
-            RAW_LOGIN_TOKEN
+            RAW_LOGIN_TOKEN,
+            null
         )))
             .isInstanceOf(AuthenticationDomainException.class)
             .extracting("baseCode")
@@ -210,6 +307,9 @@ class SsoAuthorizationCommandServiceTest {
     @Test
     @DisplayName("PKCE challenge가 blank이면 INVALID_SSO_PKCE 예외를 던진다")
     void pkce_challenge_blank_거부() {
+        // given
+        given(loadSsoClientPort.getByClientId(CLIENT_ID)).willReturn(ssoClient(REDIRECT_URI));
+
         // when & then
         assertThatThrownBy(() -> service.authorize(AuthorizeSsoCommand.of(
             CLIENT_ID,
@@ -218,7 +318,8 @@ class SsoAuthorizationCommandServiceTest {
             STATE,
             " ",
             "S256",
-            RAW_LOGIN_TOKEN
+            RAW_LOGIN_TOKEN,
+            null
         )))
             .isInstanceOf(AuthenticationDomainException.class)
             .extracting("baseCode")
@@ -228,6 +329,9 @@ class SsoAuthorizationCommandServiceTest {
     @Test
     @DisplayName("PKCE challenge가 43자 미만이면 INVALID_SSO_PKCE 예외를 던진다")
     void pkce_challenge_짧으면_거부() {
+        // given
+        given(loadSsoClientPort.getByClientId(CLIENT_ID)).willReturn(ssoClient(REDIRECT_URI));
+
         // when & then
         assertThatThrownBy(() -> service.authorize(AuthorizeSsoCommand.of(
             CLIENT_ID,
@@ -236,7 +340,8 @@ class SsoAuthorizationCommandServiceTest {
             STATE,
             "short",
             "S256",
-            RAW_LOGIN_TOKEN
+            RAW_LOGIN_TOKEN,
+            null
         )))
             .isInstanceOf(AuthenticationDomainException.class)
             .extracting("baseCode")
@@ -246,6 +351,9 @@ class SsoAuthorizationCommandServiceTest {
     @Test
     @DisplayName("PKCE challenge에 공백이 포함되면 INVALID_SSO_PKCE 예외를 던진다")
     void pkce_challenge_공백_포함_거부() {
+        // given
+        given(loadSsoClientPort.getByClientId(CLIENT_ID)).willReturn(ssoClient(REDIRECT_URI));
+
         // when & then
         assertThatThrownBy(() -> service.authorize(AuthorizeSsoCommand.of(
             CLIENT_ID,
@@ -254,7 +362,8 @@ class SsoAuthorizationCommandServiceTest {
             STATE,
             "abcdefghijklmnopqrstuvwxyzABCDEFGHI JKLMNOPQRSTUVWXYZ0123456789",
             "S256",
-            RAW_LOGIN_TOKEN
+            RAW_LOGIN_TOKEN,
+            null
         )))
             .isInstanceOf(AuthenticationDomainException.class)
             .extracting("baseCode")
@@ -266,6 +375,7 @@ class SsoAuthorizationCommandServiceTest {
     void pkce_challenge_너무_길면_거부() {
         // given
         String tooLongChallenge = "a".repeat(129);
+        given(loadSsoClientPort.getByClientId(CLIENT_ID)).willReturn(ssoClient(REDIRECT_URI));
 
         // when & then
         assertThatThrownBy(() -> service.authorize(AuthorizeSsoCommand.of(
@@ -275,7 +385,8 @@ class SsoAuthorizationCommandServiceTest {
             STATE,
             tooLongChallenge,
             "S256",
-            RAW_LOGIN_TOKEN
+            RAW_LOGIN_TOKEN,
+            null
         )))
             .isInstanceOf(AuthenticationDomainException.class)
             .extracting("baseCode")
@@ -285,6 +396,9 @@ class SsoAuthorizationCommandServiceTest {
     @Test
     @DisplayName("PKCE challenge method가 blank이면 INVALID_SSO_PKCE 예외를 던진다")
     void pkce_method_blank_거부() {
+        // given
+        given(loadSsoClientPort.getByClientId(CLIENT_ID)).willReturn(ssoClient(REDIRECT_URI));
+
         // when & then
         assertThatThrownBy(() -> service.authorize(AuthorizeSsoCommand.of(
             CLIENT_ID,
@@ -293,7 +407,8 @@ class SsoAuthorizationCommandServiceTest {
             STATE,
             CODE_CHALLENGE,
             " ",
-            RAW_LOGIN_TOKEN
+            RAW_LOGIN_TOKEN,
+            null
         )))
             .isInstanceOf(AuthenticationDomainException.class)
             .extracting("baseCode")

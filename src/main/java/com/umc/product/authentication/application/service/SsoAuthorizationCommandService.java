@@ -41,11 +41,10 @@ public class SsoAuthorizationCommandService implements AuthorizeSsoUseCase {
     @Transactional
     public SsoAuthorizationRedirectInfo authorize(AuthorizeSsoCommand command) {
         validateResponseType(command.responseType());
-        pkceVerifier.requireCodeChallenge(command.codeChallenge());
-        PkceChallengeMethod codeChallengeMethod = pkceVerifier.requireS256(command.codeChallengeMethod());
-
         SsoClient client = loadSsoClientPort.getByClientId(command.clientId());
         validateRedirectUri(client, command.redirectUri());
+        validateRequestOrigin(client, command.requestOrigin());
+        PkceChallengeMethod codeChallengeMethod = validatePkcePolicy(client, command);
         SsoBrowserLoginInfo login = getSsoBrowserLoginUseCase.getLogin(command.rawLoginToken());
 
         String rawCode = secureTokenGenerator.generateOpaqueToken();
@@ -83,5 +82,22 @@ public class SsoAuthorizationCommandService implements AuthorizeSsoUseCase {
         if (!client.allowsRedirectUri(redirectUri)) {
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_SSO_REDIRECT_URI);
         }
+    }
+
+    private void validateRequestOrigin(SsoClient client, String requestOrigin) {
+        if (requestOrigin == null || requestOrigin.isBlank() || client.allowedOrigins().isEmpty()) {
+            return;
+        }
+        if (!client.allowsOrigin(requestOrigin)) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_SSO_AUTHORIZATION_REQUEST);
+        }
+    }
+
+    private PkceChallengeMethod validatePkcePolicy(SsoClient client, AuthorizeSsoCommand command) {
+        if (!client.requirePkce()) {
+            return pkceVerifier.requireS256(command.codeChallengeMethod());
+        }
+        pkceVerifier.requireCodeChallenge(command.codeChallenge());
+        return pkceVerifier.requireS256(command.codeChallengeMethod());
     }
 }

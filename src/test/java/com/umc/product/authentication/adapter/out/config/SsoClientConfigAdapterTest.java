@@ -58,6 +58,8 @@ class SsoClientConfigAdapterTest {
         assertThat(client.environment()).isEqualTo(ClientEnvironment.PROD);
         assertThat(client.allowsRedirectUri("https://backoffice.university.neordinary.com/auth/callback")).isTrue();
         assertThat(client.allowsRedirectUri("https://evil.example.com/auth/callback")).isFalse();
+        assertThat(client.allowsOrigin("https://backoffice.university.neordinary.com")).isTrue();
+        assertThat(client.allowsOrigin("https://evil.example.com")).isFalse();
     }
 
     @DisplayName("SSO client 생성자는 기본값과 리스트 불변성을 보장한다")
@@ -184,9 +186,11 @@ class SsoClientConfigAdapterTest {
                 assertThat(iosApp.serviceType()).isEqualTo(ClientServiceType.IOS_APP);
                 assertThat(iosApp.environment()).isEqualTo(ClientEnvironment.PROD);
                 assertThat(iosApp.redirectUris()).contains("umc-ios://auth/callback");
+                assertThat(iosApp.allowedOrigins()).isEmpty();
                 assertThat(androidApp.serviceType()).isEqualTo(ClientServiceType.ANDROID_APP);
                 assertThat(androidApp.environment()).isEqualTo(ClientEnvironment.PROD);
                 assertThat(androidApp.redirectUris()).contains("umc-android://auth/callback");
+                assertThat(androidApp.allowedOrigins()).isEmpty();
             });
     }
 

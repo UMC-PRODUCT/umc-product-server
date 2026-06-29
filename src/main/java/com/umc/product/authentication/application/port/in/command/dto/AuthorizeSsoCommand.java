@@ -10,7 +10,8 @@ public record AuthorizeSsoCommand(
     String state,
     String codeChallenge,
     String codeChallengeMethod,
-    String rawLoginToken
+    String rawLoginToken,
+    String requestOrigin
 ) {
     public AuthorizeSsoCommand {
         if (isBlank(clientId)
@@ -31,6 +32,28 @@ public record AuthorizeSsoCommand(
         String codeChallengeMethod,
         String rawLoginToken
     ) {
+        return of(
+            clientId,
+            redirectUri,
+            responseType,
+            state,
+            codeChallenge,
+            codeChallengeMethod,
+            rawLoginToken,
+            null
+        );
+    }
+
+    public static AuthorizeSsoCommand of(
+        String clientId,
+        String redirectUri,
+        String responseType,
+        String state,
+        String codeChallenge,
+        String codeChallengeMethod,
+        String rawLoginToken,
+        String requestOrigin
+    ) {
         return new AuthorizeSsoCommand(
             clientId,
             redirectUri,
@@ -38,7 +61,8 @@ public record AuthorizeSsoCommand(
             state,
             codeChallenge,
             codeChallengeMethod,
-            rawLoginToken
+            rawLoginToken,
+            requestOrigin
         );
     }
 

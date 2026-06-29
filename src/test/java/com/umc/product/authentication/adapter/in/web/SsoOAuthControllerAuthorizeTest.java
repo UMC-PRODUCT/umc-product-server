@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.umc.product.authentication.application.port.in.command.AuthorizeSsoUseCase;
@@ -20,6 +21,7 @@ import com.umc.product.support.IntegrationTestSupport;
 import jakarta.servlet.http.Cookie;
 
 @DisplayName("SsoOAuthController authorize")
+@TestPropertySource(properties = "app.cors.allowed-origin-patterns=https://backoffice.university.neordinary.com")
 class SsoOAuthControllerAuthorizeTest extends IntegrationTestSupport {
 
     @MockitoBean
@@ -37,6 +39,7 @@ class SsoOAuthControllerAuthorizeTest extends IntegrationTestSupport {
                 && command.codeChallenge().equals("challenge-123")
                 && command.codeChallengeMethod().equals("S256")
                 && command.rawLoginToken().equals("sso-login-token")
+                && command.requestOrigin().equals("https://backoffice.university.neordinary.com")
         ))).willReturn(SsoAuthorizationRedirectInfo.of(
             "https://backoffice.university.neordinary.com/auth/callback",
             "raw-code",
@@ -51,6 +54,7 @@ class SsoOAuthControllerAuthorizeTest extends IntegrationTestSupport {
                 .param("state", "state-123")
                 .param("code_challenge", "challenge-123")
                 .param("code_challenge_method", "S256")
+                .header(HttpHeaders.ORIGIN, "https://backoffice.university.neordinary.com")
                 .cookie(new Cookie("UMC_SSO_LOGIN", "sso-login-token")))
             .andExpect(status().isFound())
             .andExpect(header().string(HttpHeaders.LOCATION, containsString(
@@ -58,6 +62,32 @@ class SsoOAuthControllerAuthorizeTest extends IntegrationTestSupport {
             )))
             .andExpect(header().string(HttpHeaders.LOCATION, containsString("code=raw-code")))
             .andExpect(header().string(HttpHeaders.LOCATION, containsString("state=state-123")));
+    }
+
+    @Test
+    @DisplayName("authorize 요청에 Origin이 없으면 Referer에서 origin만 추출해 command로 전달한다")
+    void authorize_referer_origin_전달() throws Exception {
+        // given
+        given(authorizeSsoUseCase.authorize(argThat(command ->
+            command.clientId().equals("backoffice")
+                && command.requestOrigin().equals("https://backoffice.university.neordinary.com")
+        ))).willReturn(SsoAuthorizationRedirectInfo.of(
+            "https://backoffice.university.neordinary.com/auth/callback",
+            "raw-code",
+            "state-123"
+        ));
+
+        // when / then
+        mockMvc.perform(get("/api/v1/oauth/authorize")
+                .param("client_id", "backoffice")
+                .param("redirect_uri", "https://backoffice.university.neordinary.com/auth/callback")
+                .param("response_type", "code")
+                .param("state", "state-123")
+                .param("code_challenge", "challenge-123")
+                .param("code_challenge_method", "S256")
+                .header(HttpHeaders.REFERER, "https://backoffice.university.neordinary.com/projects/1?tab=form")
+                .cookie(new Cookie("UMC_SSO_LOGIN", "sso-login-token")))
+            .andExpect(status().isFound());
     }
 
     @Test

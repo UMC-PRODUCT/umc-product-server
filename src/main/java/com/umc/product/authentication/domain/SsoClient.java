@@ -54,6 +54,13 @@ public record SsoClient(
         return redirectUri != null && redirectUris.contains(redirectUri);
     }
 
+    public boolean allowsOrigin(String origin) {
+        String normalizedOrigin = normalizeOrigin(origin);
+        return normalizedOrigin != null && allowedOrigins.stream()
+            .map(SsoClient::normalizeOrigin)
+            .anyMatch(normalizedOrigin::equals);
+    }
+
     private static List<String> copyRedirectUris(List<String> redirectUris) {
         if (redirectUris == null || redirectUris.isEmpty() || containsBlank(redirectUris)) {
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_SSO_REDIRECT_URI);
@@ -74,5 +81,16 @@ public record SsoClient(
     private static boolean containsBlank(List<String> values) {
         return values.stream()
             .anyMatch(value -> value == null || value.isBlank());
+    }
+
+    private static String normalizeOrigin(String origin) {
+        if (origin == null || origin.isBlank()) {
+            return null;
+        }
+        String normalized = origin.trim();
+        while (normalized.endsWith("/") && normalized.length() > 1) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 }

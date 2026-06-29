@@ -27,7 +27,7 @@ class ClientRequestClassifierTest {
             ),
             new ClientContextProperties.Origin(
                 "http://localhost:5173",
-                ClientServiceType.UNKNOWN,
+                ClientServiceType.UMC_WEBSITE,
                 ClientEnvironment.DEV
             )
         )))
@@ -62,8 +62,8 @@ class ClientRequestClassifierTest {
     }
 
     @Test
-    @DisplayName("dev localhost Origin 은 환경만 DEV 로 판정하고 서비스는 토큰 claim 을 사용한다")
-    void dev_localhost_서비스는_토큰_환경은_origin() {
+    @DisplayName("dev localhost Origin 은 UMC_WEBSITE와 DEV로 판정한다")
+    void dev_localhost_website_origin_판정() {
         // given
         MockHttpServletRequest request = request("GET", "/api/v1/forms");
         request.addHeader("Origin", "http://localhost:5173");
@@ -84,7 +84,7 @@ class ClientRequestClassifierTest {
         // then
         assertThat(context.serviceType()).isEqualTo(ClientServiceType.UMC_WEBSITE);
         assertThat(context.environment()).isEqualTo(ClientEnvironment.DEV);
-        assertThat(context.source()).isEqualTo("token");
+        assertThat(context.source()).isEqualTo("origin");
         assertThat(context.mismatched()).isFalse();
     }
 
