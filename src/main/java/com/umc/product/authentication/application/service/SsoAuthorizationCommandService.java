@@ -85,6 +85,7 @@ public class SsoAuthorizationCommandService implements AuthorizeSsoUseCase {
     }
 
     private void validateRequestOrigin(SsoClient client, String requestOrigin) {
+        // OAuth authorize는 top-level navigation이라 Origin/Referer가 없을 수 있으므로, 값이 있을 때만 등록 origin을 검증한다.
         if (requestOrigin == null || requestOrigin.isBlank() || client.allowedOrigins().isEmpty()) {
             return;
         }
@@ -95,7 +96,7 @@ public class SsoAuthorizationCommandService implements AuthorizeSsoUseCase {
 
     private PkceChallengeMethod validatePkcePolicy(SsoClient client, AuthorizeSsoCommand command) {
         if (!client.requirePkce()) {
-            return pkceVerifier.requireS256(command.codeChallengeMethod());
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_SSO_CLIENT);
         }
         pkceVerifier.requireCodeChallenge(command.codeChallenge());
         return pkceVerifier.requireS256(command.codeChallengeMethod());

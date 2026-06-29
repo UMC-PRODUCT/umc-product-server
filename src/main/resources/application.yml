@@ -534,7 +534,7 @@ app:
   client-context:
     origins:
       - origin: http://localhost:5173
-        service-type: UMC_WEBSITE
+        service-type: UNKNOWN
         environment: DEV
 
   seed:

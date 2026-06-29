@@ -6,6 +6,10 @@ import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import com.umc.product.common.domain.enums.ClientType;
@@ -27,11 +31,15 @@ class ClientRequestClassifierTest {
             ),
             new ClientContextProperties.Origin(
                 "http://localhost:5173",
-                ClientServiceType.UMC_WEBSITE,
+                ClientServiceType.UNKNOWN,
                 ClientEnvironment.DEV
             )
         )))
     );
+
+    private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
+        .withInitializer(new ConfigDataApplicationContextInitializer())
+        .withUserConfiguration(ClientRequestClassifierTestConfig.class);
 
     @Test
     @DisplayName("등록된 Origin 이 있으면 Origin 서비스와 환경을 우선하고 토큰 서비스 충돌은 mismatch 로 표시한다")
@@ -62,8 +70,8 @@ class ClientRequestClassifierTest {
     }
 
     @Test
-    @DisplayName("dev localhost Origin 은 UMC_WEBSITE와 DEV로 판정한다")
-    void dev_localhost_website_origin_판정() {
+    @DisplayName("dev localhost Origin 은 환경만 DEV 로 판정하고 서비스는 토큰 claim 을 사용한다")
+    void dev_localhost_서비스는_토큰_환경은_origin() {
         // given
         MockHttpServletRequest request = request("GET", "/api/v1/forms");
         request.addHeader("Origin", "http://localhost:5173");
@@ -84,8 +92,24 @@ class ClientRequestClassifierTest {
         // then
         assertThat(context.serviceType()).isEqualTo(ClientServiceType.UMC_WEBSITE);
         assertThat(context.environment()).isEqualTo(ClientEnvironment.DEV);
-        assertThat(context.source()).isEqualTo("origin");
+        assertThat(context.source()).isEqualTo("token");
         assertThat(context.mismatched()).isFalse();
+    }
+
+    @Test
+    @DisplayName("dev profile은 localhost 5173 Origin 하나만 UNKNOWN 서비스와 DEV 환경으로 바인딩한다")
+    void application_yml_dev_client_context_localhost_unknown_바인딩() {
+        contextRunner
+            .withPropertyValues("spring.profiles.active=dev")
+            .run(context -> {
+                ClientContextProperties properties = context.getBean(ClientContextProperties.class);
+
+                assertThat(properties.origins()).hasSize(1);
+                ClientContextProperties.Origin origin = properties.origins().getFirst();
+                assertThat(origin.origin()).isEqualTo("http://localhost:5173");
+                assertThat(origin.serviceType()).isEqualTo(ClientServiceType.UNKNOWN);
+                assertThat(origin.environment()).isEqualTo(ClientEnvironment.DEV);
+            });
     }
 
     @Test
@@ -204,5 +228,10 @@ class ClientRequestClassifierTest {
 
     private String desktopUserAgent() {
         return "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/537.36 Chrome/126 Safari/537.36";
+    }
+
+    @Configuration
+    @EnableConfigurationProperties(ClientContextProperties.class)
+    static class ClientRequestClassifierTestConfig {
     }
 }

@@ -203,6 +203,31 @@ class SsoAuthorizationCommandServiceTest {
     }
 
     @Test
+    @DisplayName("client의 requirePkce가 false이면 지원하지 않는 SSO client 정책으로 거부한다")
+    void client_requirePkce_false_거부() {
+        // given
+        given(loadSsoClientPort.getByClientId(CLIENT_ID)).willReturn(ssoClient(REDIRECT_URI, false));
+
+        // when & then
+        assertThatThrownBy(() -> service.authorize(AuthorizeSsoCommand.of(
+            CLIENT_ID,
+            REDIRECT_URI,
+            "code",
+            STATE,
+            CODE_CHALLENGE,
+            "S256",
+            RAW_LOGIN_TOKEN,
+            "https://backoffice.university.neordinary.com"
+        )))
+            .isInstanceOf(AuthenticationDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(AuthenticationErrorCode.INVALID_SSO_CLIENT);
+
+        then(getSsoBrowserLoginUseCase).shouldHaveNoInteractions();
+        then(saveSsoAuthorizationCodePort).shouldHaveNoInteractions();
+    }
+
+    @Test
     @DisplayName("registered web client는 허용되지 않은 browser Origin을 거부한다")
     void 허용되지_않은_browser_origin_거부() {
         // given
@@ -225,6 +250,32 @@ class SsoAuthorizationCommandServiceTest {
 
         then(getSsoBrowserLoginUseCase).shouldHaveNoInteractions();
         then(saveSsoAuthorizationCodePort).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("registered web client는 Origin과 Referer가 모두 없어도 거부하지 않는다")
+    void web_client_origin_referer_없음_허용() {
+        // given
+        given(loadSsoClientPort.getByClientId(CLIENT_ID)).willReturn(ssoClient(REDIRECT_URI));
+        given(getSsoBrowserLoginUseCase.getLogin(RAW_LOGIN_TOKEN))
+            .willReturn(SsoBrowserLoginInfo.of(MEMBER_ID, RAW_LOGIN_TOKEN, Instant.now().plusSeconds(3600)));
+        given(saveSsoAuthorizationCodePort.save(any())).willAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        SsoAuthorizationRedirectInfo result = service.authorize(AuthorizeSsoCommand.of(
+            CLIENT_ID,
+            REDIRECT_URI,
+            "code",
+            STATE,
+            CODE_CHALLENGE,
+            "S256",
+            RAW_LOGIN_TOKEN,
+            null
+        ));
+
+        // then
+        assertThat(result.redirectUri()).startsWith(REDIRECT_URI);
+        then(saveSsoAuthorizationCodePort).should().save(any());
     }
 
     @Test
@@ -495,12 +546,16 @@ class SsoAuthorizationCommandServiceTest {
     }
 
     private SsoClient ssoClient(String redirectUri) {
+        return ssoClient(redirectUri, true);
+    }
+
+    private SsoClient ssoClient(String redirectUri, boolean requirePkce) {
         return SsoClient.of(
             CLIENT_ID,
             "UMC Backoffice",
             ClientServiceType.UMC_BACKOFFICE,
             ClientEnvironment.PROD,
-            true,
+            requirePkce,
             Duration.ofHours(1),
             List.of(redirectUri),
             List.of("https://backoffice.university.neordinary.com")
