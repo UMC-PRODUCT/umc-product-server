@@ -253,6 +253,34 @@ class SsoAuthorizationCommandServiceTest {
     }
 
     @Test
+    @DisplayName("registered web client는 Origin이 허용되어도 Referer origin이 허용되지 않으면 거부한다")
+    void 허용되지_않은_referer_origin_거부() {
+        // given
+        given(loadSsoClientPort.getByClientId(CLIENT_ID)).willReturn(ssoClient(REDIRECT_URI));
+
+        // when & then
+        assertThatThrownBy(() -> service.authorize(AuthorizeSsoCommand.withRequestOrigins(
+            CLIENT_ID,
+            REDIRECT_URI,
+            "code",
+            STATE,
+            CODE_CHALLENGE,
+            "S256",
+            RAW_LOGIN_TOKEN,
+            List.of(
+                "https://backoffice.university.neordinary.com",
+                "https://evil.example.com"
+            )
+        )))
+            .isInstanceOf(AuthenticationDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(AuthenticationErrorCode.INVALID_SSO_AUTHORIZATION_REQUEST);
+
+        then(getSsoBrowserLoginUseCase).shouldHaveNoInteractions();
+        then(saveSsoAuthorizationCodePort).shouldHaveNoInteractions();
+    }
+
+    @Test
     @DisplayName("registered web client는 Origin과 Referer가 모두 없어도 거부하지 않는다")
     void web_client_origin_referer_없음_허용() {
         // given
@@ -348,6 +376,40 @@ class SsoAuthorizationCommandServiceTest {
         // then
         assertThat(result.redirectUri()).startsWith(appRedirectUri);
         then(saveSsoAuthorizationCodePort).should().save(any());
+    }
+
+    @Test
+    @DisplayName("allowed origin이 비어 있는 web client는 지원하지 않는 SSO client 정책으로 거부한다")
+    void web_client_allowedOrigins_비어있으면_거부() {
+        // given
+        given(loadSsoClientPort.getByClientId(CLIENT_ID)).willReturn(SsoClient.of(
+            CLIENT_ID,
+            "UMC Backoffice",
+            ClientServiceType.UMC_BACKOFFICE,
+            ClientEnvironment.PROD,
+            true,
+            Duration.ofHours(1),
+            List.of(REDIRECT_URI),
+            List.of()
+        ));
+
+        // when & then
+        assertThatThrownBy(() -> service.authorize(AuthorizeSsoCommand.of(
+            CLIENT_ID,
+            REDIRECT_URI,
+            "code",
+            STATE,
+            CODE_CHALLENGE,
+            "S256",
+            RAW_LOGIN_TOKEN,
+            "https://backoffice.university.neordinary.com"
+        )))
+            .isInstanceOf(AuthenticationDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(AuthenticationErrorCode.INVALID_SSO_CLIENT);
+
+        then(getSsoBrowserLoginUseCase).shouldHaveNoInteractions();
+        then(saveSsoAuthorizationCodePort).shouldHaveNoInteractions();
     }
 
     @Test

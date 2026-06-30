@@ -1,6 +1,8 @@
 package com.umc.product.authentication.adapter.in.web;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -56,7 +58,7 @@ public class SsoOAuthController {
             throw new AuthenticationDomainException(AuthenticationErrorCode.SSO_BROWSER_LOGIN_REQUIRED);
         }
 
-        SsoAuthorizationRedirectInfo redirectInfo = authorizeSsoUseCase.authorize(AuthorizeSsoCommand.of(
+        SsoAuthorizationRedirectInfo redirectInfo = authorizeSsoUseCase.authorize(AuthorizeSsoCommand.withRequestOrigins(
             clientId,
             redirectUri,
             responseType,
@@ -64,7 +66,7 @@ public class SsoOAuthController {
             codeChallenge,
             codeChallengeMethod,
             rawLoginToken,
-            resolveRequestOrigin(origin, referer)
+            resolveRequestOrigins(origin, referer)
         ));
 
         return ResponseEntity.status(HttpStatus.FOUND)
@@ -79,11 +81,18 @@ public class SsoOAuthController {
         return SsoTokenResponse.from(exchangeSsoAuthorizationCodeUseCase.exchange(request.toCommand()));
     }
 
-    private String resolveRequestOrigin(String origin, String referer) {
+    private List<String> resolveRequestOrigins(String origin, String referer) {
+        List<String> requestOrigins = new ArrayList<>();
         if (StringUtils.hasText(origin)) {
-            return origin;
+            requestOrigins.add(origin);
         }
-        return deriveOriginFromReferer(referer);
+        String refererOrigin = deriveOriginFromReferer(referer);
+        if (StringUtils.hasText(refererOrigin)) {
+            requestOrigins.add(refererOrigin);
+        }
+        return requestOrigins.stream()
+            .distinct()
+            .toList();
     }
 
     private String deriveOriginFromReferer(String referer) {

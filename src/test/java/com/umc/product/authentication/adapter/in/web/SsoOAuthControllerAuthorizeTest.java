@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -39,7 +41,7 @@ class SsoOAuthControllerAuthorizeTest extends IntegrationTestSupport {
                 && command.codeChallenge().equals("challenge-123")
                 && command.codeChallengeMethod().equals("S256")
                 && command.rawLoginToken().equals("sso-login-token")
-                && command.requestOrigin().equals("https://backoffice.university.neordinary.com")
+                && command.requestOrigins().equals(List.of("https://backoffice.university.neordinary.com"))
         ))).willReturn(SsoAuthorizationRedirectInfo.of(
             "https://backoffice.university.neordinary.com/auth/callback",
             "raw-code",
@@ -70,7 +72,7 @@ class SsoOAuthControllerAuthorizeTest extends IntegrationTestSupport {
         // given
         given(authorizeSsoUseCase.authorize(argThat(command ->
             command.clientId().equals("backoffice")
-                && command.requestOrigin().equals("https://backoffice.university.neordinary.com")
+                && command.requestOrigins().equals(List.of("https://backoffice.university.neordinary.com"))
         ))).willReturn(SsoAuthorizationRedirectInfo.of(
             "https://backoffice.university.neordinary.com/auth/callback",
             "raw-code",
@@ -86,6 +88,36 @@ class SsoOAuthControllerAuthorizeTest extends IntegrationTestSupport {
                 .param("code_challenge", "challenge-123")
                 .param("code_challenge_method", "S256")
                 .header(HttpHeaders.REFERER, "https://backoffice.university.neordinary.com/projects/1?tab=form")
+                .cookie(new Cookie("UMC_SSO_LOGIN", "sso-login-token")))
+            .andExpect(status().isFound());
+    }
+
+    @Test
+    @DisplayName("authorize 요청에 Origin과 Referer가 모두 있으면 두 origin을 모두 command로 전달한다")
+    void authorize_origin_referer_모두_전달() throws Exception {
+        // given
+        given(authorizeSsoUseCase.authorize(argThat(command ->
+            command.clientId().equals("backoffice")
+                && command.requestOrigins().equals(List.of(
+                    "https://backoffice.university.neordinary.com",
+                    "https://evil.example.com"
+                ))
+        ))).willReturn(SsoAuthorizationRedirectInfo.of(
+            "https://backoffice.university.neordinary.com/auth/callback",
+            "raw-code",
+            "state-123"
+        ));
+
+        // when / then
+        mockMvc.perform(get("/api/v1/oauth/authorize")
+                .param("client_id", "backoffice")
+                .param("redirect_uri", "https://backoffice.university.neordinary.com/auth/callback")
+                .param("response_type", "code")
+                .param("state", "state-123")
+                .param("code_challenge", "challenge-123")
+                .param("code_challenge_method", "S256")
+                .header(HttpHeaders.ORIGIN, "https://backoffice.university.neordinary.com")
+                .header(HttpHeaders.REFERER, "https://evil.example.com/projects/1")
                 .cookie(new Cookie("UMC_SSO_LOGIN", "sso-login-token")))
             .andExpect(status().isFound());
     }

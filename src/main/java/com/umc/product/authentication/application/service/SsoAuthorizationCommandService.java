@@ -1,6 +1,7 @@
 package com.umc.product.authentication.application.service;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import com.umc.product.authentication.domain.SsoAuthorizationCode;
 import com.umc.product.authentication.domain.SsoClient;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.global.client.ClientServiceType;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 
 import lombok.RequiredArgsConstructor;
@@ -43,7 +45,7 @@ public class SsoAuthorizationCommandService implements AuthorizeSsoUseCase {
         validateResponseType(command.responseType());
         SsoClient client = loadSsoClientPort.getByClientId(command.clientId());
         validateRedirectUri(client, command.redirectUri());
-        validateRequestOrigin(client, command.requestOrigin());
+        validateRequestOrigins(client, command.requestOrigins());
         PkceChallengeMethod codeChallengeMethod = validatePkcePolicy(client, command);
         SsoBrowserLoginInfo login = getSsoBrowserLoginUseCase.getLogin(command.rawLoginToken());
 
@@ -84,13 +86,21 @@ public class SsoAuthorizationCommandService implements AuthorizeSsoUseCase {
         }
     }
 
-    private void validateRequestOrigin(SsoClient client, String requestOrigin) {
+    private void validateRequestOrigins(SsoClient client, List<String> requestOrigins) {
+        if (client.allowedOrigins().isEmpty()) {
+            if (isNativeAppClient(client)) {
+                return;
+            }
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_SSO_CLIENT);
+        }
         // OAuth authorize는 top-level navigation이라 Origin/Referer가 없을 수 있으므로, 값이 있을 때만 등록 origin을 검증한다.
-        if (requestOrigin == null || requestOrigin.isBlank() || client.allowedOrigins().isEmpty()) {
+        if (requestOrigins == null || requestOrigins.isEmpty()) {
             return;
         }
-        if (!client.allowsOrigin(requestOrigin)) {
-            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_SSO_AUTHORIZATION_REQUEST);
+        for (String requestOrigin : requestOrigins) {
+            if (!client.allowsOrigin(requestOrigin)) {
+                throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_SSO_AUTHORIZATION_REQUEST);
+            }
         }
     }
 
@@ -100,5 +110,10 @@ public class SsoAuthorizationCommandService implements AuthorizeSsoUseCase {
         }
         pkceVerifier.requireCodeChallenge(command.codeChallenge());
         return pkceVerifier.requireS256(command.codeChallengeMethod());
+    }
+
+    private boolean isNativeAppClient(SsoClient client) {
+        return client.serviceType() == ClientServiceType.IOS_APP
+            || client.serviceType() == ClientServiceType.ANDROID_APP;
     }
 }
