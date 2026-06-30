@@ -1,11 +1,12 @@
 package com.umc.product.authorization.application.port.in.query;
 
-import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 
 /**
  * ChallengerRole 조회 전용 UseCase입니다.
