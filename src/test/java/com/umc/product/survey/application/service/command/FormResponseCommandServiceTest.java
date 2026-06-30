@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
@@ -242,6 +243,106 @@ class FormResponseCommandServiceTest {
             .isEqualTo(SurveyErrorCode.QUESTION_IS_NOT_OWNED_BY_FORM);
 
         then(saveFormResponsePort).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("submitDraft_allowedQuestionIds_중_미답변_질문에_null_answer가_저장된다")
+    void submitDraft_미답변_선택_질문에_null_answer_저장() {
+        // given — Q10(필수, 답변됨) + Q20(선택, 미답변)
+        FormResponse draft = draftResponse();
+        Question requiredAnswered = question(10L, QuestionType.SHORT_TEXT, true);
+        Question optionalUnanswered = question(20L, QuestionType.LONG_TEXT, false);
+
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(draft));
+        given(loadAnswerPort.listByFormResponseId(FORM_RESPONSE_ID))
+            .willReturn(List.of(answer(draft, requiredAnswered)));
+        given(loadQuestionPort.listByIdIn(Set.of(20L)))
+            .willReturn(List.of(optionalUnanswered));
+
+        // when
+        sut.submitDraft(SubmitDraftFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .requiredQuestionIds(Set.of(10L))
+            .allowedQuestionIds(Set.of(10L, 20L))
+            .build());
+
+        // then — Q20에 대한 null answer가 saveAll로 저장됨
+        then(loadQuestionPort).should().listByIdIn(Set.of(20L));
+        then(saveAnswerPort).should().saveAll(argThat(answers ->
+            answers.size() == 1 &&
+            answers.get(0).getQuestion().getId().equals(20L) &&
+            answers.get(0).getTextValue() == null
+        ));
+    }
+
+    @Test
+    @DisplayName("submitDraft_allowedQuestionIds_밖의_질문에는_null_answer가_생성되지_않는다")
+    void submitDraft_allowedQuestionIds_밖_질문에_null_answer_미생성() {
+        // given — allowedQuestionIds = {Q10} (파트 필터링 결과), Q20은 범위 밖
+        FormResponse draft = draftResponse();
+        Question q10 = question(10L, true);
+
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(draft));
+        given(loadAnswerPort.listByFormResponseId(FORM_RESPONSE_ID))
+            .willReturn(List.of(answer(draft, q10)));
+
+        // when
+        sut.submitDraft(SubmitDraftFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .requiredQuestionIds(Set.of(10L))
+            .allowedQuestionIds(Set.of(10L))
+            .build());
+
+        // then — Q20은 allowedQuestionIds 밖이므로 listByIdIn 호출 안 됨
+        then(loadQuestionPort).should(never()).listByIdIn(any());
+    }
+
+    @Test
+    @DisplayName("submitDraft_allowedQuestionIds가_모두_답변됐으면_null_answer를_저장하지_않는다")
+    void submitDraft_전체_답변_완료시_null_answer_미저장() {
+        // given — Q10, Q20 모두 답변됨
+        FormResponse draft = draftResponse();
+        Question q10 = question(10L, true);
+        Question q20 = question(20L, false);
+
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(draft));
+        given(loadAnswerPort.listByFormResponseId(FORM_RESPONSE_ID))
+            .willReturn(List.of(answer(draft, q10), answer(draft, q20)));
+
+        // when
+        sut.submitDraft(SubmitDraftFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .requiredQuestionIds(Set.of(10L))
+            .allowedQuestionIds(Set.of(10L, 20L))
+            .build());
+
+        // then — 미답변 질문 없으므로 listByIdIn 호출 안 함
+        then(loadQuestionPort).should(never()).listByIdIn(any());
+    }
+
+    @Test
+    @DisplayName("submitDraft_allowedQuestionIds가_null이면_null_answer를_저장하지_않는다")
+    void submitDraft_allowedQuestionIds_null이면_null_answer_미저장() {
+        // given — 비프로젝트 경로: allowedQuestionIds 없음
+        FormResponse draft = draftResponse();
+        Question q = question(10L, true);
+
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(draft));
+        given(loadAnswerPort.listByFormResponseId(FORM_RESPONSE_ID))
+            .willReturn(List.of(answer(draft, q)));
+        given(loadQuestionPort.listByFormId(FORM_ID)).willReturn(List.of(q));
+
+        // when
+        sut.submitDraft(SubmitDraftFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .build());
+
+        // then — allowedQuestionIds null → early return
+        then(loadQuestionPort).should(never()).listByIdIn(any());
     }
 
     @Test

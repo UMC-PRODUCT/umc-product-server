@@ -1,5 +1,15 @@
 package com.umc.product.notification.application.service;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.global.config.FcmProperties;
 import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.notification.application.port.in.ValidateFcmTokensUseCase;
@@ -11,14 +21,7 @@ import com.umc.product.notification.application.port.out.dto.FcmSendTarget;
 import com.umc.product.notification.application.port.out.dto.FcmTokenValidationRequest;
 import com.umc.product.notification.application.port.out.dto.FcmTokenValidationResult;
 import com.umc.product.notification.domain.FcmToken;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

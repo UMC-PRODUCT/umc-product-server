@@ -162,6 +162,8 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
             validateAllRequiredAnswered(draft.getForm().getId(), answeredQuestionIds);
         }
 
+        saveEmptyAnswersForUnanswered(draft, command.allowedQuestionIds(), answeredQuestionIds);
+
         draft.submit(Instant.now(), command.submittedIp());
         saveFormResponsePort.save(draft);
     }
@@ -371,6 +373,35 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
             result.add(new AnswerWithOptions(answer, selectedOptions));
         }
         return result;
+    }
+
+    /**
+     * allowedQuestionIds 중 아직 답변되지 않은 질문에 대해 빈 Answer를 저장한다.
+     * 제출 이후 해당 질문이 fork되더라도 Answer.questionId 역추적으로 질문을 복원하기 위함이다.
+     */
+    private void saveEmptyAnswersForUnanswered(
+        FormResponse formResponse,
+        Set<Long> allowedQuestionIds,
+        Set<Long> answeredQuestionIds
+    ) {
+        if (allowedQuestionIds == null) {
+            return;
+        }
+
+        Set<Long> unansweredIds = allowedQuestionIds.stream()
+            .filter(id -> !answeredQuestionIds.contains(id))
+            .collect(Collectors.toSet());
+
+        if (unansweredIds.isEmpty()) {
+            return;
+        }
+
+        List<Question> unansweredQuestions = loadQuestionPort.listByIdIn(unansweredIds);
+        List<Answer> emptyAnswers = unansweredQuestions.stream()
+            .map(q -> Answer.createEmpty(formResponse, q))
+            .toList();
+
+        saveAnswerPort.saveAll(emptyAnswers);
     }
 
     private void saveAnswers(List<AnswerWithOptions> data) {

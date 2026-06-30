@@ -31,6 +31,8 @@ import com.umc.product.global.event.domain.EventOutbox;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 
+import io.micrometer.tracing.Tracer;
+
 @DisplayName("SendVerificationEmailEvent outbox flow")
 @ExtendWith(MockitoExtension.class)
 class SendVerificationEmailOutboxFlowTest {
@@ -72,7 +74,8 @@ class SendVerificationEmailOutboxFlowTest {
             getMemberCredentialUseCase,
             new OutboxDomainEventPublisher(
                 saveEventOutboxPort,
-                new EventPayloadSerializer(new ObjectMapper().findAndRegisterModules())
+                new EventPayloadSerializer(new ObjectMapper().findAndRegisterModules()),
+                Tracer.NOOP
             )
         );
         EmailVerification persisted = EmailVerification.builder()

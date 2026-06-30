@@ -3,6 +3,17 @@ package com.umc.product.notification.application.event;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.umc.product.global.config.FcmProperties;
 import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
@@ -13,16 +24,8 @@ import com.umc.product.notification.application.port.out.dto.FcmSendResult;
 import com.umc.product.notification.domain.FcmToken;
 import com.umc.product.notification.domain.exception.FcmDomainException;
 import com.umc.product.notification.domain.exception.FcmErrorCode;
+
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @DisplayName("FCM 배치 발송 이벤트 리스너")
 class FcmSendBatchRequestedEventListenerTest {

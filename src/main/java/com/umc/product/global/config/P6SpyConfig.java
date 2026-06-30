@@ -1,11 +1,14 @@
 package com.umc.product.global.config; // 패키지명 확인
 
-import com.p6spy.engine.spy.P6SpyOptions;
-import com.p6spy.engine.spy.appender.MessageFormattingStrategy;
-import jakarta.annotation.PostConstruct;
 import java.util.Locale;
+
 import org.hibernate.engine.jdbc.internal.FormatStyle;
 import org.springframework.context.annotation.Configuration;
+
+import com.p6spy.engine.spy.P6SpyOptions;
+import com.p6spy.engine.spy.appender.MessageFormattingStrategy;
+
+import jakarta.annotation.PostConstruct;
 
 @Configuration
 public class P6SpyConfig {
@@ -21,9 +24,9 @@ public class P6SpyConfig {
         @Override
         public String formatMessage(int connectionId, String now, long elapsed, String category,
                                     String prepared, String sql, String url) {
-            sql = formatSql(category, sql);
-            // [실행시간] | SQL 문법
-            return String.format("[%s] | %d ms | %s", category, elapsed, formatSql(category, sql));
+            String formatted = formatSql(category, sql);
+            // [카테고리] | 실행시간 ms | SQL
+            return String.format("[%s] | %d ms | %s", category, elapsed, formatted);
         }
 
         private String formatSql(String category, String sql) {

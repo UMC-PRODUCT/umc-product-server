@@ -1,14 +1,16 @@
 package com.umc.product.notification.adapter.in.web.dto.request;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notification.application.port.in.dto.RequestFcmNotificationCommand;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public record FcmAdminSendRequest(
     @NotNull @Valid Target target,

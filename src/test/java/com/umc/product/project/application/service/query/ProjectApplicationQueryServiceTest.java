@@ -15,6 +15,7 @@ import static org.mockito.Mockito.verify;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,7 @@ import com.umc.product.project.application.port.in.query.dto.GetProjectApplicati
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationDetailInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationSummaryInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationViewStatus;
+import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsBatchQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPolicyPort;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
@@ -509,6 +511,96 @@ class ProjectApplicationQueryServiceTest {
         // then
         verify(loadProjectApplicationPort).searchProjectApplications(
             eq(1L), eq(7L), eq(ProjectApplicationStatus.APPROVED), any(), eq(false));
+    }
+
+    @Test
+    @DisplayName("searchByProjects_요청한_projectId_key를_보존하고_권한_없는_프로젝트와_없는_프로젝트는_빈_리스트")
+    void searchByProjects_키_보존_및_빈_리스트() {
+        // given
+        Project projectA = createProject(1L, "프로젝트A", null, 99L);
+        Project projectB = createProject(2L, "프로젝트B", null, 88L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST);
+        ProjectApplication application = createSubmittedApplication(
+            55L, projectA, round, 200L, ProjectApplicationStatus.SUBMITTED);
+        SearchProjectApplicationsBatchQuery query = SearchProjectApplicationsBatchQuery.builder()
+            .requesterMemberId(REQUESTER_ID)
+            .projectIds(List.of(1L, 2L, 3L))
+            .build();
+
+        given(loadProjectPort.listByIds(List.of(1L, 2L, 3L)))
+            .willReturn(List.of(projectA, projectB));
+        given(accessScopeResolver.resolveForProjectApplicantLists(REQUESTER_ID, List.of(projectA, projectB)))
+            .willReturn(Map.of(
+                1L, new ProjectApplicationAccessScope.ProjectScoped(1L),
+                2L, new ProjectApplicationAccessScope.None()
+            ));
+        given(loadProjectApplicationPort.searchProjectApplicationsByProjectIds(
+            eq(Set.of(1L)), eq(Set.of()), isNull(), isNull(), any()))
+            .willReturn(List.of(application));
+
+        // when
+        Map<Long, List<ProjectApplicationSummaryInfo>> result = sut.searchByProjects(query);
+
+        // then
+        assertThat(result.keySet()).containsExactly(1L, 2L, 3L);
+        assertThat(result.get(1L)).extracting(ProjectApplicationSummaryInfo::id).containsExactly(55L);
+        assertThat(result.get(2L)).isEmpty();
+        assertThat(result.get(3L)).isEmpty();
+        verify(loadProjectApplicationPort).searchProjectApplicationsByProjectIds(
+            eq(Set.of(1L)), eq(Set.of()), isNull(), isNull(), any());
+    }
+
+    @Test
+    @DisplayName("searchByProjects_ProjectScoped_includeOngoing_true인_프로젝트만_진행중_차수_포함_목록으로_전달")
+    void searchByProjects_includeOngoing_프로젝트만_전달() {
+        // given
+        Project projectA = createProject(1L, "프로젝트A", null, 99L);
+        Project projectB = createProject(2L, "프로젝트B", null, 88L);
+        SearchProjectApplicationsBatchQuery query = SearchProjectApplicationsBatchQuery.builder()
+            .requesterMemberId(REQUESTER_ID)
+            .projectIds(List.of(1L, 2L))
+            .matchingRoundId(7L)
+            .status(ProjectApplicationStatus.APPROVED)
+            .build();
+
+        given(loadProjectPort.listByIds(List.of(1L, 2L)))
+            .willReturn(List.of(projectA, projectB));
+        given(accessScopeResolver.resolveForProjectApplicantLists(REQUESTER_ID, List.of(projectA, projectB)))
+            .willReturn(Map.of(
+                1L, new ProjectApplicationAccessScope.ProjectScoped(1L),
+                2L, new ProjectApplicationAccessScope.ProjectScoped(2L, true)
+            ));
+        given(loadProjectApplicationPort.searchProjectApplicationsByProjectIds(
+            eq(Set.of(1L, 2L)),
+            eq(Set.of(2L)),
+            eq(7L),
+            eq(ProjectApplicationStatus.APPROVED),
+            any()
+        )).willReturn(List.of());
+
+        // when
+        sut.searchByProjects(query);
+
+        // then
+        verify(loadProjectApplicationPort).searchProjectApplicationsByProjectIds(
+            eq(Set.of(1L, 2L)),
+            eq(Set.of(2L)),
+            eq(7L),
+            eq(ProjectApplicationStatus.APPROVED),
+            any()
+        );
+    }
+
+    @Test
+    @DisplayName("searchByProjects_DRAFT_상태_필터를_사용하면_도메인_예외")
+    void searchByProjects_DRAFT_필터_금지() {
+        assertThatThrownBy(() -> SearchProjectApplicationsBatchQuery.builder()
+            .requesterMemberId(REQUESTER_ID)
+            .projectIds(List.of(1L))
+            .status(ProjectApplicationStatus.DRAFT)
+            .build())
+            .isInstanceOf(ProjectDomainException.class);
     }
 
     // ============================================================

@@ -29,6 +29,7 @@ public enum CommonErrorCode implements BaseCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "COMMON-401", "로그인이 필요해요. 로그인 후 다시 시도해주세요."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON-403", "요청할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."),
     NOT_FOUND(HttpStatus.NOT_FOUND, "COMMON-404", "요청한 항목을 찾을 수 없어요. 입력한 값을 확인해주세요."),
+    TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "COMMON-429", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
     NOT_IMPLEMENTED(HttpStatus.NOT_IMPLEMENTED, "COMMON-501", "아직 사용할 수 없는 기능이에요. 필요한 기능이라면 서버팀에 문의해주세요."),
 
     // SECURITY: Spring Security에서 발생하는 에러
@@ -39,8 +40,7 @@ public enum CommonErrorCode implements BaseCode {
     INVALID_ENV(HttpStatus.BAD_REQUEST, "ENV-0001", "현재 실행 환경에서는 사용할 수 없는 기능이에요. 환경 설정을 확인해주세요."),
 
     // Permission Evaluator 관련 에러
-    PERMISSION_TYPE_NOT_IMPLEMENTED(HttpStatus.NOT_IMPLEMENTED, "PE-0001", "아직 지원하지 않는 권한 확인이에요. 관리자에게 문의해주세요."),
-    ;
+    PERMISSION_TYPE_NOT_IMPLEMENTED(HttpStatus.NOT_IMPLEMENTED, "PE-0001", "아직 지원하지 않는 권한 확인이에요. 관리자에게 문의해주세요.");
 
     private final HttpStatus httpStatus;
     private final String code;

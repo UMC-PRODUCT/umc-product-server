@@ -18,6 +18,12 @@ spring:
     enabled: true
     out-of-order: true
 
+# 테스트(Testcontainers) 콘솔에서 SQL flood 제거 — 명시적으로 OFF 유지.
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: false
+
 jwt:
   access-token-secret: access_token_secret
   refresh-token-secret: refresh_token_secret

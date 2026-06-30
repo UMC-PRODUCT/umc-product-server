@@ -125,6 +125,7 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
 
     /**
      * 합불 결정. 부모 프로젝트의 PO 가 SUBMITTED / APPROVED / REJECTED 상태에서 자유롭게 토글한다.
+     * SUPER_ADMIN 은 기수/프로젝트 소유 여부와 관계없이 토글할 수 있다.
      * 차수 진행 중 잠금 해제는 도메인 메서드({@code ProjectMatchingRound.validateIsMutableAt}) 가 책임진다.
      * (자동 매칭 스케줄러는 권한 모델 외)
      */
@@ -134,7 +135,7 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
             return false;
         }
         Project project = application.getApplicationForm().getProject();
-        return isOwner(subject, project);
+        return isOwner(subject, project) || isSuperAdmin(subject);
     }
 
     private boolean isDecidableStatus(ProjectApplicationStatus status) {

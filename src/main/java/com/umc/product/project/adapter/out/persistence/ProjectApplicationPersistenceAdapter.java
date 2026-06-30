@@ -139,6 +139,23 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     }
 
     @Override
+    public List<ProjectApplication> searchProjectApplicationsByProjectIds(
+        Collection<Long> projectIds,
+        Collection<Long> includeOngoingProjectIds,
+        Long matchingRoundId,
+        ProjectApplicationStatus status,
+        Instant now
+    ) {
+        return projectApplicationQueryRepository.searchProjectApplicationsByProjectIds(
+            projectIds,
+            includeOngoingProjectIds,
+            matchingRoundId,
+            status,
+            now
+        );
+    }
+
+    @Override
     public List<ProjectMemberMatchedRoundInfo> listLatestApprovedMatchedRoundsByProjectIdsAndMemberIds(
         Collection<Long> projectIds,
         Collection<Long> memberIds

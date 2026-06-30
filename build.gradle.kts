@@ -197,6 +197,7 @@ dependencies {
     // --- Cache ---
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("com.github.ben-manes.caffeine:caffeine")
+    implementation("com.bucket4j:bucket4j_jdk17-core:8.19.0")
 
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -206,6 +207,7 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
     testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.19") // Fixture 생성에 도움을 주는 친구
+    testImplementation("io.micrometer:micrometer-tracing-test") // SimpleTracer 기반 trace 전파 검증
     testRuntimeOnly("jakarta.mail:jakarta.mail-api") // JavaMailSender MockitoBean 초기화에 필요
 
     testCompileOnly("org.projectlombok:lombok")
@@ -301,6 +303,12 @@ tasks.named<Checkstyle>("checkstyleTest") {
     setSource(files(changedJavaFiles("src/test/java")))
 }
 
+val spotlessTest by tasks.registering {
+    group = "verification"
+    description = "Runs Spotless checks for Java test sources before executing tests."
+    dependsOn(tasks.named("spotlessJavaCheck"))
+}
+
 tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
     layered {
         enabled.set(true)
@@ -363,6 +371,7 @@ val checkDuplicateFlywayMigrationVersions by tasks.registering {
 tasks.withType<Test> {
     useJUnitPlatform()
     maxHeapSize = "3g"
+    dependsOn(spotlessTest)
     dependsOn(checkDuplicateFlywayMigrationVersions)
 }
 

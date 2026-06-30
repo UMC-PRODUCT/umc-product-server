@@ -6,14 +6,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.umc.product.global.config.JacksonConfig;
-import com.umc.product.global.security.JwtTokenProvider;
-import com.umc.product.global.security.MemberPrincipal;
-import com.umc.product.notification.application.port.in.RequestFcmNotificationUseCase;
-import com.umc.product.notification.application.port.in.dto.FcmNotificationRequestInfo;
-import com.umc.product.support.RestDocsConfig;
 import java.time.Instant;
 import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,6 +22,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.umc.product.global.config.JacksonConfig;
+import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.notification.application.port.in.RequestFcmNotificationUseCase;
+import com.umc.product.notification.application.port.in.dto.FcmNotificationRequestInfo;
+import com.umc.product.support.RestDocsConfig;
 
 @WebMvcTest(controllers = FcmAdminController.class)
 @Import({JacksonConfig.class, RestDocsConfig.class})
