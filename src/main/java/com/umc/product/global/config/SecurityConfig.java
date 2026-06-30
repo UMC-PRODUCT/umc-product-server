@@ -33,9 +33,11 @@ import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
 import com.umc.product.global.security.JwtAuthenticationFilter;
 import com.umc.product.global.security.util.PublicEndpointCollector;
+import com.umc.product.global.security.util.SecurityEndpoint;
 import com.umc.product.maintenance.adapter.in.web.filter.MaintenanceFilter;
 import com.umc.product.maintenance.application.port.out.MaintenanceBypassPolicy;
 import com.umc.product.maintenance.application.service.MaintenanceStateHolder;
+import com.umc.product.term.adapter.in.web.filter.TermConsentEnforcementFilter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,12 +73,28 @@ public class SecurityConfig {
     }
 
     /**
-     * 메인 Security 체인. JWT → MaintenanceFilter → 인가 순서로 동작한다.
+     * 약관 재동의 강제 필터. MaintenanceFilter 와 동일하게 명시 {@code @Bean} 으로 등록해서
+     * {@code @WebMvcTest} 슬라이스가 필터 의존성을 자동 스캔하지 않도록 한다.
+     */
+    @Bean
+    public TermConsentEnforcementFilter termConsentEnforcementFilter(
+        ApiErrorResponseWriter errorResponseWriter,
+        RequestMappingHandlerMapping requestMappingHandlerMapping
+    ) {
+        return new TermConsentEnforcementFilter(errorResponseWriter, requestMappingHandlerMapping);
+    }
+
+    /**
+     * 메인 Security 체인. JWT → MaintenanceFilter → TermConsentEnforcementFilter → 인가 순서로 동작한다.
      */
     @Bean
     @Order(1)
-    public SecurityFilterChain filterChain(HttpSecurity http, MaintenanceFilter maintenanceFilter) throws Exception {
-        List<PublicEndpointCollector.EndpointMatcher> publicEndpoints = PublicEndpointCollector
+    public SecurityFilterChain filterChain(
+        HttpSecurity http,
+        MaintenanceFilter maintenanceFilter,
+        TermConsentEnforcementFilter termConsentEnforcementFilter
+    ) throws Exception {
+        List<SecurityEndpoint> publicEndpoints = PublicEndpointCollector
             .collectPublicEndpoints(requestMappingHandlerMapping);
 
         // ✅ 디버깅 로그
@@ -107,7 +125,7 @@ public class SecurityConfig {
                 auth.requestMatchers(SecurityPathConfig.securityPermitAllPaths()).permitAll();
 
                 // @Public 어노테이션이 달린 엔드포인트 (HTTP 메서드 포함)
-                for (PublicEndpointCollector.EndpointMatcher endpoint : publicEndpoints) {
+                for (SecurityEndpoint endpoint : publicEndpoints) {
                     if (endpoint.method() != null) {
                         auth.requestMatchers(endpoint.method(), endpoint.pattern()).permitAll();
                     } else {
@@ -122,6 +140,7 @@ public class SecurityConfig {
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             // JWT 로 SecurityContext 가 채워진 뒤 점검 필터에서 bypass 판정
             .addFilterAfter(maintenanceFilter, JwtAuthenticationFilter.class)
+            .addFilterAfter(termConsentEnforcementFilter, MaintenanceFilter.class)
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(authenticationEntryPoint) // 인증 실패 시
                 .accessDeniedHandler(accessDeniedHandler)           // 인가 실패 시
