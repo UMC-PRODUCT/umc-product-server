@@ -9,39 +9,39 @@
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Client as "Web/App Client"
-    participant BrowserLoginController as "SsoBrowserLoginController"
-    participant OAuthController as "SsoOAuthController"
-    participant ClientRegistry as "LoadSsoClientPort"
-    participant BrowserLoginUseCase as "GetSsoBrowserLoginUseCase"
-    participant PkceVerifier as "PkceVerifier"
-    participant CodeRepository as "SsoAuthorizationCodeRepository"
-    participant TokenExchangeService as "SsoTokenExchangeCommandService"
-    participant TokenIssuer as "AuthenticationTokenIssuer"
-    participant EventListener as "SsoSecurityEventListener"
+    participant Client as Web App or Native App
+    participant BrowserLoginController as SsoBrowserLoginController
+    participant OAuthController as SsoOAuthController
+    participant ClientRegistry as LoadSsoClientPort
+    participant BrowserLoginUseCase as GetSsoBrowserLoginUseCase
+    participant PkceVerifier as PkceVerifier
+    participant CodeRepository as SsoAuthorizationCodeRepository
+    participant TokenExchangeService as SsoTokenExchangeCommandService
+    participant TokenIssuer as AuthenticationTokenIssuer
+    participant EventListener as SsoSecurityEventListener
 
-    Client->>BrowserLoginController: "POST /api/v1/auth/browser-login/email"
-    BrowserLoginController->>BrowserLoginController: "email/password 검증 후 SSO_LOGIN JWT 생성"
-    BrowserLoginController-->>Client: "Set-Cookie: UMC_SSO_LOGIN; HttpOnly"
+    Client->>BrowserLoginController: POST /api/v1/auth/browser-login/email
+    BrowserLoginController->>BrowserLoginController: email password 검증 후 SSO_LOGIN JWT 생성
+    BrowserLoginController-->>Client: Set-Cookie UMC_SSO_LOGIN HttpOnly
 
-    Client->>OAuthController: "GET /api/v1/oauth/authorize + PKCE + UMC_SSO_LOGIN cookie"
-    OAuthController->>OAuthController: "Origin/Referer origin 목록 추출"
-    OAuthController->>ClientRegistry: "client_id 조회"
-    ClientRegistry-->>OAuthController: "SsoClient(yml 설정)"
-    OAuthController->>OAuthController: "redirect_uri, request origins, requirePkce 정책 검증"
-    OAuthController->>PkceVerifier: "code_challenge + S256 검증"
-    OAuthController->>BrowserLoginUseCase: "SSO_LOGIN JWT 검증"
-    OAuthController->>CodeRepository: "authorization code hash 저장"
-    OAuthController->>EventListener: "authorization-code.issued event"
-    OAuthController-->>Client: "302 redirect_uri?code=...&state=..."
+    Client->>OAuthController: GET /api/v1/oauth/authorize with PKCE and SSO cookie
+    OAuthController->>OAuthController: Origin/Referer origin 목록 추출
+    OAuthController->>ClientRegistry: client_id 조회
+    ClientRegistry-->>OAuthController: SsoClient from yml
+    OAuthController->>OAuthController: redirect_uri, request origins, requirePkce 정책 검증
+    OAuthController->>PkceVerifier: code_challenge + S256 검증
+    OAuthController->>BrowserLoginUseCase: SSO_LOGIN JWT 검증
+    OAuthController->>CodeRepository: authorization code hash 저장
+    OAuthController->>EventListener: authorization-code.issued event
+    OAuthController-->>Client: 302 redirect_uri with code and state
 
-    Client->>TokenExchangeService: "POST /api/v1/oauth/token"
-    TokenExchangeService->>CodeRepository: "code hash FOR UPDATE 조회"
-    TokenExchangeService->>TokenExchangeService: "1회 사용, 만료, client_id, redirect_uri 검증"
-    TokenExchangeService->>PkceVerifier: "code_verifier 검증"
-    TokenExchangeService->>TokenIssuer: "client context 포함 access/refresh token 발급"
-    TokenExchangeService->>EventListener: "authorization-code.exchanged, token.issued event"
-    TokenExchangeService-->>Client: "accessToken, refreshToken, member, linkedOAuthProviders"
+    Client->>TokenExchangeService: POST /api/v1/oauth/token
+    TokenExchangeService->>CodeRepository: code hash FOR UPDATE 조회
+    TokenExchangeService->>TokenExchangeService: 1회 사용, 만료, client_id, redirect_uri 검증
+    TokenExchangeService->>PkceVerifier: code_verifier 검증
+    TokenExchangeService->>TokenIssuer: client context 포함 access/refresh token 발급
+    TokenExchangeService->>EventListener: authorization-code.exchanged, token.issued event
+    TokenExchangeService-->>Client: accessToken, refreshToken, member, linkedOAuthProviders
 ```
 
 ### 서버 내부 흐름 설명
@@ -57,32 +57,32 @@ Authorization code는 raw 값을 저장하지 않고 SHA-256 hash만 저장한�
 ```mermaid
 sequenceDiagram
     autonumber
-    participant User as "User"
-    participant Service as "UMC Website/Backoffice/Tech"
-    participant AuthApp as "Auth App"
-    participant AuthBE as "Auth BE"
+    participant User as User
+    participant Service as UMC Website Backoffice Tech
+    participant AuthApp as Auth App
+    participant AuthBE as Auth BE
 
-    User->>Service: "보호된 화면 접근"
-    Service->>Service: "access token 없음 또는 만료 확인"
-    Service->>Service: "code_verifier 생성, code_challenge=S256 계산"
-    Service-->>AuthApp: "authorize 화면으로 이동(client_id, redirect_uri, state, code_challenge)"
+    User->>Service: 보호된 화면 접근
+    Service->>Service: access token 없음 또는 만료 확인
+    Service->>Service: code_verifier 생성, code_challenge S256 계산
+    Service-->>AuthApp: authorize 화면으로 이동
 
-    AuthApp->>AuthBE: "GET /api/v1/auth/browser-login/me"
-    alt "SSO login cookie 없음"
-        AuthApp->>User: "로그인 폼 표시"
-        User->>AuthApp: "email/password 입력"
-        AuthApp->>AuthBE: "POST /api/v1/auth/browser-login/email"
-        AuthBE-->>AuthApp: "Set-Cookie: UMC_SSO_LOGIN"
-    else "SSO login cookie 유효"
-        AuthBE-->>AuthApp: "memberId, expiresAt"
+    AuthApp->>AuthBE: GET /api/v1/auth/browser-login/me
+    alt SSO login cookie 없음
+        AuthApp->>User: 로그인 폼 표시
+        User->>AuthApp: email password 입력
+        AuthApp->>AuthBE: POST /api/v1/auth/browser-login/email
+        AuthBE-->>AuthApp: Set-Cookie UMC_SSO_LOGIN
+    else SSO login cookie 유효
+        AuthBE-->>AuthApp: memberId, expiresAt
     end
 
-    AuthApp->>AuthBE: "GET /api/v1/oauth/authorize"
-    AuthBE-->>Service: "302 redirect_uri?code=...&state=..."
-    Service->>Service: "state 검증"
-    Service->>AuthBE: "POST /api/v1/oauth/token (code, code_verifier)"
-    AuthBE-->>Service: "accessToken, refreshToken"
-    Service->>AuthBE: "API request Authorization: Bearer accessToken"
+    AuthApp->>AuthBE: GET /api/v1/oauth/authorize
+    AuthBE-->>Service: 302 redirect_uri with code and state
+    Service->>Service: state 검증
+    Service->>AuthBE: POST /api/v1/oauth/token with code and code_verifier
+    AuthBE-->>Service: accessToken, refreshToken
+    Service->>AuthBE: API request Authorization Bearer accessToken
 ```
 
 ### 웹 클라이언트 연동 설명
@@ -98,29 +98,29 @@ Auth App은 먼저 `/api/v1/auth/browser-login/me`로 브라우저 로그인 상
 ```mermaid
 sequenceDiagram
     autonumber
-    participant User as "User"
-    participant App as "iOS/Android App"
-    participant SystemBrowser as "ASWebAuthenticationSession/Chrome Custom Tabs"
-    participant AuthApp as "Auth App"
-    participant AuthBE as "Auth BE"
+    participant User as User
+    participant App as iOS or Android App
+    participant SystemBrowser as System Browser
+    participant AuthApp as Auth App
+    participant AuthBE as Auth BE
 
-    User->>App: "로그인 버튼 선택"
-    App->>App: "code_verifier 생성, code_challenge=S256 계산"
-    App->>SystemBrowser: "authorize URL 열기"
-    SystemBrowser->>AuthApp: "Auth App 화면 표시"
-    AuthApp->>AuthBE: "GET /api/v1/auth/browser-login/me"
-    alt "SSO login cookie 없음"
-        User->>AuthApp: "email/password 로그인"
-        AuthApp->>AuthBE: "POST /api/v1/auth/browser-login/email"
-        AuthBE-->>SystemBrowser: "Set-Cookie: UMC_SSO_LOGIN"
+    User->>App: 로그인 버튼 선택
+    App->>App: code_verifier 생성, code_challenge S256 계산
+    App->>SystemBrowser: authorize URL 열기
+    SystemBrowser->>AuthApp: Auth App 화면 표시
+    AuthApp->>AuthBE: GET /api/v1/auth/browser-login/me
+    alt SSO login cookie 없음
+        User->>AuthApp: email password 로그인
+        AuthApp->>AuthBE: POST /api/v1/auth/browser-login/email
+        AuthBE-->>SystemBrowser: Set-Cookie UMC_SSO_LOGIN
     end
-    AuthApp->>AuthBE: "GET /api/v1/oauth/authorize"
-    AuthBE-->>SystemBrowser: "302 umc-ios://auth/callback?code=...&state=..."
-    SystemBrowser-->>App: "callback URL 전달"
-    App->>App: "state 검증"
-    App->>AuthBE: "POST /api/v1/oauth/token (code, code_verifier)"
-    AuthBE-->>App: "accessToken, refreshToken"
-    App->>AuthBE: "API request Authorization: Bearer accessToken"
+    AuthApp->>AuthBE: GET /api/v1/oauth/authorize
+    AuthBE-->>SystemBrowser: 302 app callback URL with code and state
+    SystemBrowser-->>App: callback URL 전달
+    App->>App: state 검증
+    App->>AuthBE: POST /api/v1/oauth/token with code and code_verifier
+    AuthBE-->>App: accessToken, refreshToken
+    App->>AuthBE: API request Authorization Bearer accessToken
 ```
 
 ### 앱 클라이언트 연동 설명
