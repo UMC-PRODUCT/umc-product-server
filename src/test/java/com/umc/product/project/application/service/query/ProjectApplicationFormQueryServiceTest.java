@@ -295,11 +295,15 @@ class ProjectApplicationFormQueryServiceTest {
         given(loadApplicationFormPort.findAllByProjectIds(List.of(PROJECT_ID, 99L))).willReturn(Map.of(
             PROJECT_ID, applicationForm
         ));
-        given(getFormUseCase.getFormWithStructure(FORM_ID)).willReturn(buildFormStructure());
-        given(loadPolicyPort.listByApplicationFormId(APPLICATION_FORM_ID)).willReturn(List.of(
-            ProjectApplicationFormPolicy.createCommon(applicationForm, COMMON_SECTION_ID),
-            ProjectApplicationFormPolicy.createForParts(applicationForm, PART_SECTION_ID,
-                Set.of(ChallengerPart.WEB))
+        given(getFormUseCase.batchGetFormsWithStructure(Set.of(FORM_ID)))
+            .willReturn(Map.of(FORM_ID, buildFormStructure()));
+        given(loadPolicyPort.listByApplicationFormIds(Set.of(APPLICATION_FORM_ID))).willReturn(Map.of(
+            APPLICATION_FORM_ID,
+            List.of(
+                ProjectApplicationFormPolicy.createCommon(applicationForm, COMMON_SECTION_ID),
+                ProjectApplicationFormPolicy.createForParts(applicationForm, PART_SECTION_ID,
+                    Set.of(ChallengerPart.WEB))
+            )
         ));
 
         // when

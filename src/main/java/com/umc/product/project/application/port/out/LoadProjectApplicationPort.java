@@ -80,6 +80,13 @@ public interface LoadProjectApplicationPort {
     Optional<ProjectApplication> findByIdWithDetails(Long applicationId);
 
     /**
+     * 여러 지원서를 fetch join 으로 조회한다.
+     * <p>
+     * applicationForm -> project, appliedMatchingRound 를 한 번에 로드한다. 입력된 모든 ID가 존재해야 하며, 누락 시 예외를 던진다.
+     */
+    List<ProjectApplication> batchGetByIdsWithDetails(Collection<Long> applicationIds);
+
+    /**
      * 본인 지원 내역을 조회한다.
      * <p>
      * applicationForm/project/matchingRound 를 fetch join 으로 함께 로드하므로 호출자는

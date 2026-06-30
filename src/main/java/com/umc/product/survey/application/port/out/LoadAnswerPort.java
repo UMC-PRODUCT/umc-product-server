@@ -23,6 +23,11 @@ public interface LoadAnswerPort {
     List<Answer> listByFormResponseId(Long formResponseId);
 
     /**
+     * 여러 FormResponse 에 속한 모든 답변을 한 번에 조회한다.
+     */
+    List<Answer> listByFormResponseIds(Set<Long> formResponseIds);
+
+    /**
      * 여러 답변의 AnswerChoice 를 한 번에 조회 (벌크 N+1 회피).
      * questionOption.orderNo 오름차순으로 정렬.
      */

@@ -39,6 +39,11 @@ public class AnswerPersistenceAdapter implements LoadAnswerPort, SaveAnswerPort 
     }
 
     @Override
+    public List<Answer> listByFormResponseIds(Set<Long> formResponseIds) {
+        return answerQueryRepository.findAllByFormResponseIdIn(formResponseIds);
+    }
+
+    @Override
     public List<AnswerChoice> listChoicesByAnswerIdIn(Set<Long> answerIds) {
         return answerChoiceQueryRepository.findAllByAnswerIdIn(answerIds);
     }

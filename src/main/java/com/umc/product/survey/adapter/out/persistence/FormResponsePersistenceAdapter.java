@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -21,6 +22,11 @@ public class FormResponsePersistenceAdapter implements LoadFormResponsePort, Sav
     @Override
     public Optional<FormResponse> findById(Long formResponseId) {
         return formResponseJpaRepository.findById(formResponseId);
+    }
+
+    @Override
+    public List<FormResponse> listByIdsWithForm(Set<Long> formResponseIds) {
+        return formResponseQueryRepository.findAllByIdInWithForm(formResponseIds);
     }
 
     @Override

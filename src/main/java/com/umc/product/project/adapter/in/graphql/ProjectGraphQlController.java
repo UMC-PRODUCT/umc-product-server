@@ -191,34 +191,35 @@ public class ProjectGraphQlController {
         Long requesterMemberId = currentMemberId();
         SubjectAttributes subject = checkPermissionUseCase.loadSubject(requesterMemberId);
 
+        Map<Long, GetProjectApplicationDetailQuery> queriesByApplicationId = new LinkedHashMap<>();
+        for (ProjectMemberGraphQlResponse projectMember : projectMembers) {
+            Long applicationId = projectMember.applicationId();
+            if (applicationId == null) {
+                continue;
+            }
+            if (!checkPermissionUseCase.check(subject, applicationReadPermission(applicationId))) {
+                continue;
+            }
+            queriesByApplicationId.putIfAbsent(
+                applicationId,
+                GetProjectApplicationDetailQuery.builder()
+                    .projectId(projectMember.projectId())
+                    .applicationId(applicationId)
+                    .requesterMemberId(requesterMemberId)
+                    .build()
+            );
+        }
+
+        Map<Long, ProjectApplicationDetailInfo> detailsByApplicationId = queriesByApplicationId.isEmpty()
+            ? Map.of()
+            : getProjectApplicationDetailUseCase.batchGetDetails(queriesByApplicationId.values());
+
         Map<ProjectMemberGraphQlResponse, ProjectApplicationGraphQlResponse> result = new LinkedHashMap<>();
         for (ProjectMemberGraphQlResponse projectMember : projectMembers) {
-            result.put(projectMember, applicationFor(projectMember, requesterMemberId, subject));
+            ProjectApplicationDetailInfo detail = detailsByApplicationId.get(projectMember.applicationId());
+            result.put(projectMember, detail == null ? null : ProjectApplicationGraphQlResponse.from(detail));
         }
         return result;
-    }
-
-    private ProjectApplicationGraphQlResponse applicationFor(
-        ProjectMemberGraphQlResponse projectMember,
-        Long requesterMemberId,
-        SubjectAttributes subject
-    ) {
-        Long applicationId = projectMember.applicationId();
-        if (applicationId == null) {
-            return null;
-        }
-        if (!checkPermissionUseCase.check(subject, applicationReadPermission(applicationId))) {
-            return null;
-        }
-
-        ProjectApplicationDetailInfo detail = getProjectApplicationDetailUseCase.getDetail(
-            GetProjectApplicationDetailQuery.builder()
-                .projectId(projectMember.projectId())
-                .applicationId(applicationId)
-                .requesterMemberId(requesterMemberId)
-                .build()
-        );
-        return ProjectApplicationGraphQlResponse.from(detail);
     }
 
     private Long currentMemberId() {

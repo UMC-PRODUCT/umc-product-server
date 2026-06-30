@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -39,6 +40,23 @@ public class FormResponseQueryRepository {
                 fr.status.eq(FormResponseStatus.SUBMITTED)
             )
             .orderBy(fr.id.desc())
+            .fetch();
+    }
+
+    /**
+     * 여러 응답을 Form과 함께 조회한다.
+     */
+    public List<FormResponse> findAllByIdInWithForm(Set<Long> formResponseIds) {
+        if (formResponseIds == null || formResponseIds.isEmpty()) {
+            return List.of();
+        }
+
+        QFormResponse fr = QFormResponse.formResponse;
+        return queryFactory
+            .selectFrom(fr)
+            .join(fr.form).fetchJoin()
+            .where(fr.id.in(formResponseIds))
+            .orderBy(fr.id.asc())
             .fetch();
     }
 }

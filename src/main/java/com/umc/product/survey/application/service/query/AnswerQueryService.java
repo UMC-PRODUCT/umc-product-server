@@ -64,6 +64,34 @@ public class AnswerQueryService implements GetAnswerUseCase {
             .toList();
     }
 
+    @Override
+    public Map<Long, List<AnswerInfo>> listByFormResponseIds(Set<Long> formResponseIds) {
+        if (formResponseIds == null || formResponseIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Answer> answers = loadAnswerPort.listByFormResponseIds(formResponseIds);
+        if (answers.isEmpty()) {
+            return Map.of();
+        }
+
+        Set<Long> answerIds = answers.stream()
+            .map(Answer::getId)
+            .collect(Collectors.toSet());
+        List<AnswerChoice> allChoices = loadAnswerPort.listChoicesByAnswerIdIn(answerIds);
+        Map<Long, List<AnswerChoice>> choicesByAnswer = allChoices.stream()
+            .collect(Collectors.groupingBy(c -> c.getAnswer().getId()));
+
+        return answers.stream()
+            .collect(Collectors.groupingBy(
+                answer -> answer.getFormResponse().getId(),
+                Collectors.mapping(
+                    answer -> AnswerInfo.from(answer, choicesByAnswer.getOrDefault(answer.getId(), List.of())),
+                    Collectors.toList()
+                )
+            ));
+    }
+
     /**
      * 단건 Answer -> AnswerInfo. 해당 답변의 AnswerChoice 만 조회 후 조립.
      */

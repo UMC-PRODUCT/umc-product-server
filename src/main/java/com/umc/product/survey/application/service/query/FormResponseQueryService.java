@@ -1,17 +1,24 @@
 package com.umc.product.survey.application.service.query;
 
-import com.umc.product.survey.application.port.in.query.GetAnswerUseCase;
-import com.umc.product.survey.application.port.in.query.GetFormResponseUseCase;
-import com.umc.product.survey.application.port.in.query.dto.FormResponseInfo;
-import com.umc.product.survey.application.port.in.query.dto.FormResponseWithAnswersInfo;
-import com.umc.product.survey.application.port.out.LoadFormResponsePort;
-import com.umc.product.survey.domain.exception.SurveyDomainException;
-import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.survey.application.port.in.query.GetAnswerUseCase;
+import com.umc.product.survey.application.port.in.query.GetFormResponseUseCase;
+import com.umc.product.survey.application.port.in.query.dto.AnswerInfo;
+import com.umc.product.survey.application.port.in.query.dto.FormResponseInfo;
+import com.umc.product.survey.application.port.in.query.dto.FormResponseWithAnswersInfo;
+import com.umc.product.survey.application.port.out.LoadFormResponsePort;
+import com.umc.product.survey.domain.FormResponse;
+import com.umc.product.survey.domain.exception.SurveyDomainException;
+import com.umc.product.survey.domain.exception.SurveyErrorCode;
 
 @Service
 @Transactional(readOnly = true)
@@ -79,6 +86,27 @@ public class FormResponseQueryService implements GetFormResponseUseCase {
             .map(formResponse -> FormResponseWithAnswersInfo.from(
                 formResponse,
                 getAnswerUseCase.listByFormResponseId(formResponseId)
+            ));
+    }
+
+    @Override
+    public Map<Long, FormResponseWithAnswersInfo> findResponsesWithAnswers(Set<Long> formResponseIds) {
+        if (formResponseIds == null || formResponseIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<FormResponse> formResponses = loadFormResponsePort.listByIdsWithForm(formResponseIds);
+        Map<Long, List<AnswerInfo>> answersByFormResponseId =
+            getAnswerUseCase.listByFormResponseIds(formResponseIds);
+
+        return formResponses.stream()
+            .map(formResponse -> FormResponseWithAnswersInfo.from(
+                formResponse,
+                answersByFormResponseId.getOrDefault(formResponse.getId(), List.of())
+            ))
+            .collect(Collectors.toMap(
+                FormResponseWithAnswersInfo::id,
+                Function.identity()
             ));
     }
 }

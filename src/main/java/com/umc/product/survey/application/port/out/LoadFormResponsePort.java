@@ -4,10 +4,13 @@ import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface LoadFormResponsePort {
 
     Optional<FormResponse> findById(Long formResponseId);
+
+    List<FormResponse> listByIdsWithForm(Set<Long> formResponseIds);
 
     /**
      * 특정 폼의 모든 응답 (DRAFT + SUBMITTED) 을 id 내림차순으로 반환.

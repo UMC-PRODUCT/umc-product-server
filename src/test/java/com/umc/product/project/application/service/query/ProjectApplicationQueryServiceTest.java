@@ -1027,6 +1027,59 @@ class ProjectApplicationQueryServiceTest {
         verify(getFormUseCase).getFormWithStructureByQuestionIds(eq(7L), eq(java.util.Set.of(10L)));
     }
 
+    @Test
+    @DisplayName("batchGetDetails_applicationId_목록을_batch_port와_batch_facade로_조회")
+    void batchGetDetails_batch_조회() {
+        // given
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
+        ProjectApplication firstApplication = createApplicationWithFormResponse(
+            55L, project, round, 200L, ProjectApplicationStatus.SUBMITTED, 123L);
+        ProjectApplication secondApplication = createApplicationWithFormResponse(
+            56L, project, round, 201L, ProjectApplicationStatus.SUBMITTED, 124L);
+
+        given(loadProjectApplicationPort.batchGetByIdsWithDetails(Set.of(55L, 56L)))
+            .willReturn(List.of(firstApplication, secondApplication));
+        given(accessScopeResolver.resolveForProjectApplicantLists(eq(REQUESTER_ID), any()))
+            .willReturn(Map.of(1L, new ProjectApplicationAccessScope.ProjectScoped(1L, true)));
+        given(getChallengerUseCase.listByMemberIdsAndGisuId(Set.of(200L, 201L), GISU_ID))
+            .willReturn(Map.of(
+                200L, challengerInfoOf(200L, ChallengerPart.DESIGN),
+                201L, challengerInfoOf(201L, ChallengerPart.WEB)
+            ));
+        given(loadProjectApplicationFormPolicyPort.listByApplicationFormIds(Set.of(33L)))
+            .willReturn(Map.of(33L, List.of()));
+        given(getFormResponseUseCase.findResponsesWithAnswers(Set.of(123L, 124L)))
+            .willReturn(Map.of(
+                123L, FormResponseWithAnswersInfo.builder()
+                    .id(123L).formId(7L).respondentMemberId(200L)
+                    .status(FormResponseStatus.SUBMITTED)
+                    .answers(List.of())
+                    .build(),
+                124L, FormResponseWithAnswersInfo.builder()
+                    .id(124L).formId(7L).respondentMemberId(201L)
+                    .status(FormResponseStatus.SUBMITTED)
+                    .answers(List.of())
+                    .build()
+            ));
+        given(getFormUseCase.getFormWithStructureByQuestionIds(7L, Set.of()))
+            .willReturn(FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
+
+        // when
+        Map<Long, ProjectApplicationDetailInfo> result = sut.batchGetDetails(List.of(
+            detailQuery(1L, 55L),
+            detailQuery(1L, 56L)
+        ));
+
+        // then
+        assertThat(result).containsOnlyKeys(55L, 56L);
+        assertThat(result.get(55L).applicantPart()).isEqualTo(ChallengerPart.DESIGN);
+        assertThat(result.get(56L).applicantPart()).isEqualTo(ChallengerPart.WEB);
+        verify(loadProjectApplicationPort, never()).findByIdWithDetails(any());
+        verify(getFormResponseUseCase, never()).findResponseWithAnswers(any());
+    }
+
     // ============================================================
     //                      Helper Methods
     // ============================================================

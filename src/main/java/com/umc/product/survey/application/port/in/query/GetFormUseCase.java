@@ -1,5 +1,7 @@
 package com.umc.product.survey.application.port.in.query;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -30,6 +32,15 @@ public interface GetFormUseCase {
      * 편집기 초기 로딩이나 응답자 UI 렌더링 시 N+1 왕복을 피하기 위한 facade.
      */
     FormWithStructureInfo getFormWithStructure(Long formId);
+
+    /**
+     * 여러 폼의 전체 구조를 한 번에 조회한다.
+     * <p>
+     * 입력된 모든 formId 는 존재해야 한다. 누락 시 SURVEY_NOT_FOUND 예외.
+     *
+     * @return formId -> 폼 구조
+     */
+    Map<Long, FormWithStructureInfo> batchGetFormsWithStructure(Collection<Long> formIds);
 
     /**
      * 제출된 응답의 questionId 집합을 기준으로 폼 구조를 조립한다 (isActive 무관).

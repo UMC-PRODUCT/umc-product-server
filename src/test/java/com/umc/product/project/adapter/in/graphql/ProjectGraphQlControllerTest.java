@@ -257,7 +257,7 @@ class ProjectGraphQlControllerTest {
             .execute()
             .path("project.members[0].application").valueIsNull();
 
-        then(getProjectApplicationDetailUseCase).should(never()).getDetail(any());
+        then(getProjectApplicationDetailUseCase).should(never()).batchGetDetails(any());
     }
 
     @Test
@@ -272,8 +272,8 @@ class ProjectGraphQlControllerTest {
             PROJECT_ID,
             List.of(projectMemberInfo(APPLICATION_ID))
         ));
-        given(getProjectApplicationDetailUseCase.getDetail(applicationDetailQuery()))
-            .willReturn(applicationDetailInfo());
+        given(getProjectApplicationDetailUseCase.batchGetDetails(any()))
+            .willReturn(Map.of(APPLICATION_ID, applicationDetailInfo()));
 
         graphQlTester.document("""
                 query {
@@ -299,7 +299,7 @@ class ProjectGraphQlControllerTest {
             .path("project.members[0].application.applicant.memberId").entity(String.class).isEqualTo("200")
             .path("project.members[0].application.applicant.part").entity(String.class).isEqualTo("WEB");
 
-        then(getProjectApplicationDetailUseCase).should().getDetail(applicationDetailQuery());
+        then(getProjectApplicationDetailUseCase).should().batchGetDetails(any());
     }
 
     private ProjectInfo projectInfo() {

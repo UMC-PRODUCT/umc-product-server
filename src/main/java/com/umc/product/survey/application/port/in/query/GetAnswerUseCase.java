@@ -2,7 +2,9 @@ package com.umc.product.survey.application.port.in.query;
 
 import com.umc.product.survey.application.port.in.query.dto.AnswerInfo;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Answer 조회 UseCase.
@@ -25,4 +27,11 @@ public interface GetAnswerUseCase {
      * 특정 FormResponse 에 속한 모든 답변을 반환한다. (질문 orderNo 순)
      */
     List<AnswerInfo> listByFormResponseId(Long formResponseId);
+
+    /**
+     * 여러 FormResponse 에 속한 답변을 한 번에 조회한다.
+     *
+     * @return formResponseId -> 답변 목록
+     */
+    Map<Long, List<AnswerInfo>> listByFormResponseIds(Set<Long> formResponseIds);
 }
