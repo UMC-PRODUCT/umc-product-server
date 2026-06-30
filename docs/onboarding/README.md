@@ -1,0 +1,15 @@
+# Onboarding
+
+이 디렉터리는 새로 합류한 개발자가 UMC PRODUCT 서버의 주요 도메인, API 진입점, 운영 규칙을 빠르게 파악하기 위한 문서를 둔다.
+
+## API 사용 문서
+
+- [GraphQL Onboarding](graphql.md): GraphQL endpoint, GraphiQL, Apollo Sandbox, schema 확인, query 작성, resolver 구현 규칙
+
+## 도메인 문서
+
+- [Domain Onboarding](domain/README.md): 제품 도메인별 역할, 책임, 경계, UX 문구 기준
+
+## 프로젝트별 운영 문서
+
+- [PLAN_DEVELOPER 3차 종료 후 잔여 TO 자동 배정](project/plan-developer-third-auto-assignment.md)
