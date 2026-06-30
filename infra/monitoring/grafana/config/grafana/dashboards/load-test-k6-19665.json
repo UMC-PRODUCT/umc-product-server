@@ -1997,7 +1997,11 @@
         "type": "datasource"
       },
       {
-        "current": {},
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
@@ -2018,10 +2022,15 @@
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
-        "type": "query"
+        "type": "query",
+        "allValue": ".*"
       },
       {
-        "current": {},
+        "current": {
+          "selected": true,
+          "text": "p95",
+          "value": "p95"
+        },
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
