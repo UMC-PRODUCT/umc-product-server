@@ -2,6 +2,7 @@ package com.umc.product.notification.application.service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -84,17 +85,21 @@ public class FcmTokenValidationService implements ValidateFcmTokensUseCase {
     private void updateTokenValidationState(List<FcmToken> tokens, List<Long> validTokenIds, List<Long> invalidTokenIds) {
         Set<Long> validTokenIdSet = new HashSet<>(validTokenIds);
         Set<Long> invalidTokenIdSet = new HashSet<>(invalidTokenIds);
+        List<FcmToken> updatedTokens = new ArrayList<>();
         tokens.forEach(token -> {
             if (invalidTokenIdSet.contains(token.getId())) {
                 token.deactivate();
-                saveFcmPort.save(token);
+                updatedTokens.add(token);
                 return;
             }
             if (validTokenIdSet.contains(token.getId())) {
                 token.markValidated();
-                saveFcmPort.save(token);
+                updatedTokens.add(token);
             }
         });
+        if (!updatedTokens.isEmpty()) {
+            saveFcmPort.saveAll(updatedTokens);
+        }
     }
 
     private void recordMetric(FcmTokenValidationResult result) {

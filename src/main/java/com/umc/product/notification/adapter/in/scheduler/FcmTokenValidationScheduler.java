@@ -1,5 +1,6 @@
 package com.umc.product.notification.adapter.in.scheduler;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(
+    name = {"app.fcm.enabled", "app.fcm.token-validation-enabled"},
+    havingValue = "true"
+)
 public class FcmTokenValidationScheduler {
 
     private final FcmProperties fcmProperties;
