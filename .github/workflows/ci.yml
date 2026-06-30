@@ -238,6 +238,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
+      issues: write
+      statuses: write
 
     steps:
       - name: 코드베이스 체크아웃
@@ -249,6 +252,10 @@ jobs:
         with:
           app-id: ${{ vars.UMC_GITHUB_APP_CLIENT_ID }}
           private-key: ${{ secrets.UMC_GITHUB_APP_PRIVATE_KEY }}
+          permission-contents: read
+          permission-issues: write
+          permission-pull-requests: write
+          permission-statuses: write
 
       - name: CI 댓글 및 status 반영
         env:
