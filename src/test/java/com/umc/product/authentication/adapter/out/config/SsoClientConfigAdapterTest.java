@@ -176,9 +176,21 @@ class SsoClientConfigAdapterTest {
             .run(context -> {
                 SsoClientConfigAdapter adapter = context.getBean(SsoClientConfigAdapter.class);
 
-                assertDevWebClient(adapter.getByClientId("backoffice"));
-                assertDevWebClient(adapter.getByClientId("website"));
-                assertDevWebClient(adapter.getByClientId("tech"));
+                assertDevWebClient(
+                    adapter.getByClientId("backoffice"),
+                    "https://dev.admin.university.neordinary.com/auth/callback",
+                    "https://dev.admin.university.neordinary.com"
+                );
+                assertDevWebClient(
+                    adapter.getByClientId("website"),
+                    "https://dev.university.neordinary.com/auth/callback",
+                    "https://dev.university.neordinary.com"
+                );
+                assertDevWebClient(
+                    adapter.getByClientId("tech"),
+                    "https://dev.tech.university.neordinary.com/auth/callback",
+                    "https://dev.tech.university.neordinary.com"
+                );
 
                 SsoClient iosApp = adapter.getByClientId("ios-app");
                 SsoClient androidApp = adapter.getByClientId("android-app");
@@ -194,10 +206,10 @@ class SsoClientConfigAdapterTest {
             });
     }
 
-    private void assertDevWebClient(SsoClient client) {
+    private void assertDevWebClient(SsoClient client, String redirectUri, String origin) {
         assertThat(client.environment()).isEqualTo(ClientEnvironment.DEV);
-        assertThat(client.redirectUris()).containsExactly("http://localhost:5173/auth/callback");
-        assertThat(client.allowedOrigins()).containsExactly("http://localhost:5173");
+        assertThat(client.redirectUris()).containsExactly(redirectUri);
+        assertThat(client.allowedOrigins()).containsExactly(origin);
     }
 
     @Configuration

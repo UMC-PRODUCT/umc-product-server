@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -67,7 +68,8 @@ class SsoFlowIntegrationTest extends IntegrationTestSupport {
     private static final String ACCESS_TOKEN = "access-token";
     private static final String REFRESH_TOKEN = "refresh-token";
     private static final String CLIENT_ID = "backoffice";
-    private static final String REDIRECT_URI = "http://localhost:5173/auth/callback";
+    private static final String REDIRECT_URI = "https://dev.admin.university.neordinary.com/auth/callback";
+    private static final URI REDIRECT_URI_EXPECTED = URI.create(REDIRECT_URI);
     private static final ClientContextClaims BACKOFFICE_DEV_CONTEXT = ClientContextClaims.of(
         CLIENT_ID,
         ClientServiceType.UMC_BACKOFFICE,
@@ -156,9 +158,9 @@ class SsoFlowIntegrationTest extends IntegrationTestSupport {
 
         String location = authorizeResult.getResponse().getHeader(HttpHeaders.LOCATION);
         var redirect = UriComponentsBuilder.fromUriString(location).build(true);
-        assertThat(redirect.getScheme()).isEqualTo("http");
-        assertThat(redirect.getHost()).isEqualTo("localhost");
-        assertThat(redirect.getPort()).isEqualTo(5173);
+        assertThat(redirect.getScheme()).isEqualTo(REDIRECT_URI_EXPECTED.getScheme());
+        assertThat(redirect.getHost()).isEqualTo(REDIRECT_URI_EXPECTED.getHost());
+        assertThat(redirect.getPort()).isEqualTo(REDIRECT_URI_EXPECTED.getPort());
         assertThat(redirect.getPath()).isEqualTo("/auth/callback");
         assertThat(redirect.getQueryParams().getFirst("state")).isEqualTo("state-123");
 
