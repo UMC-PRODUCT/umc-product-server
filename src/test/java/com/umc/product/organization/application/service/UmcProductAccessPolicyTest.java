@@ -29,14 +29,14 @@ class UmcProductAccessPolicyTest {
 
     @Test
     void 중앙_총괄단은_UMC_Product_조직을_관리할_수_있다() {
-        given(getChallengerRoleUseCase.isCentralCore(1L)).willReturn(true);
+        given(getChallengerRoleUseCase.isCentralCoreInAnyGisu(1L)).willReturn(true);
 
         assertThat(sut.canManageUmcProduct(1L)).isTrue();
     }
 
     @Test
     void 활성_UMC_Product_기수의_UMC_PRODUCT_LEAD는_UMC_Product_조직을_관리할_수_있다() {
-        given(getChallengerRoleUseCase.isCentralCore(1L)).willReturn(false);
+        given(getChallengerRoleUseCase.isCentralCoreInAnyGisu(1L)).willReturn(false);
         given(loadUmcProductFunctionalMembershipPort.existsByMemberIdAndActiveGenerationAndRoles(
             1L,
             Set.of(UmcProductFunctionalRole.UMC_PRODUCT_LEAD, UmcProductFunctionalRole.UMC_PRODUCT_VICE_LEAD)
@@ -47,7 +47,7 @@ class UmcProductAccessPolicyTest {
 
     @Test
     void 일반_팀원은_UMC_Product_조직을_관리할_수_없다() {
-        given(getChallengerRoleUseCase.isCentralCore(1L)).willReturn(false);
+        given(getChallengerRoleUseCase.isCentralCoreInAnyGisu(1L)).willReturn(false);
         given(loadUmcProductFunctionalMembershipPort.existsByMemberIdAndActiveGenerationAndRoles(
             1L,
             Set.of(UmcProductFunctionalRole.UMC_PRODUCT_LEAD, UmcProductFunctionalRole.UMC_PRODUCT_VICE_LEAD)
