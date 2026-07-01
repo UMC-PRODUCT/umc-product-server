@@ -1,7 +1,7 @@
 package com.umc.product.chat.application.service.command;
 
 import com.umc.product.chat.application.port.in.command.BroadcastChatMessageUseCase;
-import com.umc.product.chat.application.port.in.query.dto.ChatMessageInfo;
+import com.umc.product.chat.application.port.in.command.dto.BroadcastChatMessagePayload;
 import com.umc.product.chat.domain.event.ChatMessageCreatedEvent;
 import com.umc.product.global.websocket.application.port.out.BroadcastPort;
 import lombok.RequiredArgsConstructor;
@@ -28,15 +28,7 @@ public class BroadcastChatMessageService implements BroadcastChatMessageUseCase 
     public void broadcast(ChatMessageCreatedEvent event) {
         String destination = CHAT_ROOM_DESTINATION_PREFIX + event.roomId() + CHAT_ROOM_DESTINATION_SUFFIX;
 
-        ChatMessageInfo payload = new ChatMessageInfo(
-            event.messageId(),
-            event.roomId(),
-            event.senderMemberId(),
-            event.contentType(),
-            event.content(),
-            event.fileMetadataIds(),
-            event.occurredAt()
-        );
+        BroadcastChatMessagePayload payload = BroadcastChatMessagePayload.from(event);
 
         log.debug("채팅 메시지 broadcast: messageId={}, destination={}", event.messageId(), destination);
         broadcastPort.broadcast(destination, payload);
