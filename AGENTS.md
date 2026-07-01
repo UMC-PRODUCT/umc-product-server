@@ -125,6 +125,13 @@ Java LSP (`jdtls`) and `codegraph_*` tools were not available in this session, s
 - Given/When/Then structure is expected.
 - Fixture code lives in `src/test/java/com/umc/product/support/fixture` and should persist through SavePorts where possible.
 
+## REVIEW AND GIT
+
+- Review priorities: P1 security/data loss/severe bugs; P2 architecture/performance/scalability; P3 code quality/conventions; P4 alternatives; P5 typos/questions.
+- Commit format is `<type>: <subject>` with `feat`, `fix`, `refactor`, `docs`, `test`, or `chore`.
+- PR titles use `[Feat]`, `[Fix]`, `[HotFix]`, `[Refactor]`, `[Chore]`, `[Docs]`, or `[Release]`; development PRs target `develop`.
+- Never set AI authorship, AI committer metadata, or `Co-authored-by` trailers for AI tools.
+
 ## COMMANDS
 
 ```bash
@@ -139,6 +146,5 @@ Java LSP (`jdtls`) and `codegraph_*` tools were not available in this session, s
 ## NOTES
 
 - Default profile is `local`; app port is `8080`; management/Prometheus port is `9090`.
-- `build` depends on clean/docs copy behavior; `bootJar` is more deployment-focused.
-- `checkstyleMain` and `checkstyleTest` are diff-oriented in this project.
-- Existing `CLAUDE.md` is a legacy mirror of the previous root rules; keep behavior aligned with this `AGENTS.md`.
+- `build` depends on clean/docs copy behavior; `bootJar` is deployment-focused; Checkstyle tasks are diff-oriented.
+- `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` are pointers to this canonical file.
