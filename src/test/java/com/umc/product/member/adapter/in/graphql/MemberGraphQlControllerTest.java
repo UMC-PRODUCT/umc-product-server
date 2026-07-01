@@ -35,6 +35,8 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.global.config.GraphQlRuntimeWiringConfig;
+import com.umc.product.global.exception.GraphQlExceptionAdvice;
+import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -44,7 +46,7 @@ import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 
 @GraphQlTest(MemberGraphQlController.class)
-@Import(GraphQlRuntimeWiringConfig.class)
+@Import({GraphQlRuntimeWiringConfig.class, GraphQlExceptionAdvice.class})
 @DisplayName("MemberGraphQlController")
 class MemberGraphQlControllerTest {
 
@@ -150,7 +152,7 @@ class MemberGraphQlControllerTest {
                 """)
             .execute()
             .errors()
-            .satisfy(errors -> assertThat(errors).isNotEmpty());
+            .satisfy(errors -> assertCommonError(errors, "member", CommonErrorCode.FORBIDDEN));
 
         then(getMemberUseCase).shouldHaveNoInteractions();
     }
@@ -169,7 +171,7 @@ class MemberGraphQlControllerTest {
                 """)
             .execute()
             .errors()
-            .satisfy(errors -> assertThat(errors).isNotEmpty());
+            .satisfy(errors -> assertCommonError(errors, "me", CommonErrorCode.FORBIDDEN));
 
         then(getMemberUseCase).shouldHaveNoInteractions();
         then(checkPermissionUseCase).shouldHaveNoInteractions();
@@ -283,12 +285,22 @@ class MemberGraphQlControllerTest {
                 """)
             .execute()
             .errors()
-            .satisfy(errors -> assertThat(errors).isNotEmpty());
+            .satisfy(errors -> assertCommonError(errors, "members", CommonErrorCode.FORBIDDEN));
 
         then(getMemberUseCase).shouldHaveNoInteractions();
         then(getSchoolUseCase).shouldHaveNoInteractions();
         then(getChallengerUseCase).shouldHaveNoInteractions();
         then(getGisuUseCase).shouldHaveNoInteractions();
+    }
+
+    private void assertCommonError(
+        List<org.springframework.graphql.ResponseError> errors,
+        String path,
+        CommonErrorCode code
+    ) {
+        assertThat(errors).hasSize(1);
+        assertThat(errors.get(0).getPath()).isEqualTo(path);
+        assertThat(errors.get(0).getExtensions()).containsEntry("code", code.getCode());
     }
 
     private MemberInfo memberInfo(Long memberId) {

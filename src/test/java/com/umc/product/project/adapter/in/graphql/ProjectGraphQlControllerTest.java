@@ -34,6 +34,8 @@ import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.config.GraphQlRuntimeWiringConfig;
+import com.umc.product.global.exception.GraphQlExceptionAdvice;
+import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectApplicationDetailUseCase;
@@ -56,7 +58,7 @@ import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
 
 @GraphQlTest(ProjectGraphQlController.class)
-@Import(GraphQlRuntimeWiringConfig.class)
+@Import({GraphQlRuntimeWiringConfig.class, GraphQlExceptionAdvice.class})
 @DisplayName("ProjectGraphQlController")
 class ProjectGraphQlControllerTest {
 
@@ -140,9 +142,26 @@ class ProjectGraphQlControllerTest {
                 """)
             .execute()
             .errors()
-            .satisfy(errors -> assertThat(errors).isNotEmpty());
+            .satisfy(errors -> assertCommonError(errors, "project", CommonErrorCode.FORBIDDEN));
 
         then(getProjectUseCase).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("projects page size가 100을 넘으면 BAD_REQUEST GraphQL error를 반환한다")
+    void projects_page_size가_100을_넘으면_BAD_REQUEST_GraphQL_error를_반환한다() {
+        graphQlTester.document("""
+                query {
+                  projects(input: { gisuId: 1 }, page: { size: 101 }) {
+                    totalElements
+                  }
+                }
+                """)
+            .execute()
+            .errors()
+            .satisfy(errors -> assertCommonError(errors, "projects", CommonErrorCode.BAD_REQUEST));
+
+        then(searchProjectUseCase).shouldHaveNoInteractions();
     }
 
     @Test
@@ -300,6 +319,16 @@ class ProjectGraphQlControllerTest {
             .path("project.members[0].application.applicant.part").entity(String.class).isEqualTo("WEB");
 
         then(getProjectApplicationDetailUseCase).should().batchGetDetails(any());
+    }
+
+    private void assertCommonError(
+        List<org.springframework.graphql.ResponseError> errors,
+        String path,
+        CommonErrorCode code
+    ) {
+        assertThat(errors).hasSize(1);
+        assertThat(errors.get(0).getPath()).isEqualTo(path);
+        assertThat(errors.get(0).getExtensions()).containsEntry("code", code.getCode());
     }
 
     private ProjectInfo projectInfo() {

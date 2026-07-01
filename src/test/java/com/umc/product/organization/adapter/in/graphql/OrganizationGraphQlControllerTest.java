@@ -20,6 +20,7 @@ import org.springframework.graphql.test.tester.GraphQlTester;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.umc.product.global.config.GraphQlRuntimeWiringConfig;
+import com.umc.product.global.exception.GraphQlExceptionAdvice;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuOrganizationUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
@@ -32,9 +33,10 @@ import com.umc.product.organization.application.port.in.query.dto.gisu.GisuOrgan
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
 import com.umc.product.organization.domain.enums.SchoolLinkType;
+import com.umc.product.organization.exception.OrganizationErrorCode;
 
 @GraphQlTest(OrganizationGraphQlController.class)
-@Import(GraphQlRuntimeWiringConfig.class)
+@Import({GraphQlRuntimeWiringConfig.class, GraphQlExceptionAdvice.class})
 @DisplayName("OrganizationGraphQlController")
 class OrganizationGraphQlControllerTest {
 
@@ -186,7 +188,7 @@ class OrganizationGraphQlControllerTest {
                 """)
             .execute()
             .errors()
-            .satisfy(errors -> assertThat(errors).hasSize(1));
+            .satisfy(errors -> assertOrganizationBadRequest(errors, "gisuOrganizations"));
 
         then(getGisuOrganizationUseCase).shouldHaveNoInteractions();
     }
@@ -205,7 +207,7 @@ class OrganizationGraphQlControllerTest {
                 """)
             .execute()
             .errors()
-            .satisfy(errors -> assertThat(errors).hasSize(1));
+            .satisfy(errors -> assertOrganizationBadRequest(errors, "gisuOrganizations"));
 
         then(getGisuOrganizationUseCase).shouldHaveNoInteractions();
     }
@@ -224,7 +226,7 @@ class OrganizationGraphQlControllerTest {
                 """)
             .execute()
             .errors()
-            .satisfy(errors -> assertThat(errors).hasSize(1));
+            .satisfy(errors -> assertOrganizationBadRequest(errors, "gisuOrganizations"));
 
         then(getGisuOrganizationUseCase).shouldHaveNoInteractions();
     }
@@ -354,6 +356,16 @@ class OrganizationGraphQlControllerTest {
 
         then(getSchoolUseCase).should().getAllSchoolNames();
         then(getSchoolUseCase).should().getSchoolDetail(2L);
+    }
+
+    private void assertOrganizationBadRequest(
+        List<org.springframework.graphql.ResponseError> errors,
+        String path
+    ) {
+        assertThat(errors).hasSize(1);
+        assertThat(errors.get(0).getPath()).isEqualTo(path);
+        assertThat(errors.get(0).getExtensions())
+            .containsEntry("code", OrganizationErrorCode.GISU_QUERY_CONDITION_INVALID.getCode());
     }
 
     private GisuOrganizationInfo gisu(Long gisuId, Long generation) {
