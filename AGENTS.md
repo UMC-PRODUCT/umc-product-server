@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE BASE
 
 **Generated:** 2026-07-02 06:00:42 KST
-**Commit:** f7f2ccbb
+**Base Commit:** f7f2ccbb
 **Branch:** feature/init-deep-agent-guidelines
 
 ## OVERVIEW
@@ -53,7 +53,7 @@ umc-product-server/
 
 ## CODE MAP
 
-Java LSP (`jdtls`) and `codegraph_*` tools were not available in this session, so reference counts are unmeasured.
+Java LSP (`jdtls`) was unavailable; CodeGraph was available for review, but reference counts remain unmeasured here.
 
 | Symbol | Type | Location | Refs | Role |
 |--------|------|----------|------|------|
