@@ -8,6 +8,9 @@ docker/db/postgres
 logs/
 *.log
 
+loadtest/data/users.local.json
+loadtest/results/
+
 /.run/
 
 application-*.yml
