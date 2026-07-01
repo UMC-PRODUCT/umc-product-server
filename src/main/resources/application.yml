@@ -32,6 +32,9 @@ spring:
   graphql:
     http:
       path: /graphql
+    schema:
+      introspection:
+        enabled: false
     graphiql:
       enabled: ${GRAPHQL_GRAPHIQL_ENABLED:false}
 
@@ -289,7 +292,7 @@ app:
 
   graphql:
     timeout: ${GRAPHQL_TIMEOUT:5s}
-    max-depth: ${GRAPHQL_MAX_DEPTH:10}
+    max-depth: ${GRAPHQL_MAX_DEPTH:15}
     max-complexity: ${GRAPHQL_MAX_COMPLEXITY:200}
 
   client-context:
@@ -536,15 +539,21 @@ storage:
       distribution-domain: ${AWS_CLOUDFRONT_DISTRIBUTION_DOMAIN:cdn.umc.it.kr}
       private-key: ${CDN_PRIVATE_KEY}
       key-pair-id: ${CDN_KEY_PAIR_ID}
+
+
 # ==================================================================
-# dev 환경에 대한 default override
+# configuration override for dev profile
 # ==================================================================
+
 ---
 spring:
   config:
     activate:
       on-profile: dev
   graphql:
+    schema:
+      introspection:
+        enabled: true
     graphiql:
       enabled: ${GRAPHQL_GRAPHIQL_ENABLED:true}
 
@@ -602,15 +611,18 @@ app:
           - http://localhost:5173
 
 # ==================================================================
-# local 환경 default override — 로컬 개발자가 env 설정 없이도 SQL 라인 로깅을 본다.
-# (env 로 끄고 싶으면 P6SPY_ENABLE_LOGGING=false 로 override 가능)
+# configuration override for local profile
 # ==================================================================
+
 ---
 spring:
   config:
     activate:
       on-profile: local
   graphql:
+    schema:
+      introspection:
+        enabled: true
     graphiql:
       enabled: ${GRAPHQL_GRAPHIQL_ENABLED:true}
 
