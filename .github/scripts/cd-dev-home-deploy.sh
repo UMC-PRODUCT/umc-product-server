@@ -12,8 +12,6 @@ set -euo pipefail
 : "${APP_PORT:?APP_PORT is required}"
 : "${MANAGEMENT_PORT:?MANAGEMENT_PORT is required}"
 : "${HEALTHCHECK_TIMEOUT:?HEALTHCHECK_TIMEOUT is required}"
-: "${POSTGRES_USER:?POSTGRES_USER is required}"
-: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "develop 홈서버 배포 시작"
@@ -156,11 +154,6 @@ echo "[6] Docker Compose 치환 전용 환경 파일 갱신"
   echo "MANAGEMENT_PORT=${MANAGEMENT_PORT}"
   echo "SPRING_PROFILES_ACTIVE=dev"
   echo "APP_REPLICAS=${APP_REPLICAS}"
-  echo "POSTGRES_CONTAINER_NAME=umc-product-postgres-dev"
-  echo "POSTGRES_DB=development"
-  echo "POSTGRES_USER=${POSTGRES_USER}"
-  echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
-  echo "VALKEY_CONTAINER_NAME=umc-product-valkey-dev"
 } > .env
 
 wait_for_services_health() {
@@ -178,7 +171,7 @@ wait_for_services_health() {
     fi
 
     if [[ -n "${NGINX_CONTAINER_ID}" ]] \
-      && "${DOCKER_BIN}" exec "${NGINX_CONTAINER_ID}" wget -q --spider "http://localhost/nginx-health" >/dev/null 2>&1; then
+      && "${DOCKER_BIN}" exec "${NGINX_CONTAINER_ID}" curl -fsS "http://localhost/nginx-health" >/dev/null 2>&1; then
       NGINX_HEALTHY=true
     fi
 
@@ -231,8 +224,13 @@ cleanup_old_images() {
   "${DOCKER_BIN}" image prune -f >/dev/null 2>&1 || true
 }
 
-echo "[7] App 이미지 Pull"
-docker_compose pull app
+echo "[7] Docker 이미지 Pull"
+# appleboy/ssh-action이 대용량 pull progress 출력 중 exit status를 잃는 경우가 있어
+# 지원되는 Docker Compose에서는 quiet pull을 우선 사용합니다.
+if ! docker_compose pull --quiet app; then
+  echo "docker compose pull --quiet 미지원 또는 실패: 일반 pull로 재시도합니다."
+  docker_compose pull app
+fi
 
 echo "[8] 서비스 갱신 및 healthcheck 대기"
 if ! compose_up_with_wait; then
@@ -240,12 +238,6 @@ if ! compose_up_with_wait; then
   echo ""
   echo "Docker Compose 상태:"
   docker_compose ps || true
-  echo ""
-  echo "PostgreSQL 로그:"
-  docker_compose logs --tail=100 postgres || true
-  echo ""
-  echo "Valkey 로그:"
-  docker_compose logs --tail=100 valkey || true
   echo ""
   echo "Nginx 로그:"
   docker_compose logs --tail=100 nginx || true
