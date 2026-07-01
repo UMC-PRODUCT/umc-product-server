@@ -32,6 +32,47 @@ services:
     networks: [monitoring]
     restart: unless-stopped
 
+  # --- Prometheus config/rule reload ---
+  # Prometheus는 bind mount 된 prometheus.yml / alert rule 파일이 바뀌어도
+  # 자동으로 다시 읽지 않는다. git pull / rsync 로 PR 변경사항만 반영된 뒤
+  # 컨테이너가 재생성되지 않으면 이전 rule 이 계속 평가되어 오래된 알람이
+  # Discord 로 전송될 수 있으므로, 설정 파일 checksum 변경 시 /-/reload 를 호출한다.
+  prometheus-config-reloader:
+    image: alpine:3.22
+    container_name: umc-product-prometheus-config-reloader
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        interval="$${PROMETHEUS_RELOAD_INTERVAL_SECONDS:-30}"
+        checksum="$$(find /etc/prometheus -type f \( -name '*.yml' -o -name '*.yaml' \) -print | sort | xargs sha256sum | sha256sum)"
+
+        echo "Prometheus config reloader started; reloading current config"
+        wget -qO- --post-data='' http://prometheus:9090/-/reload >/dev/null \
+          || echo "Initial Prometheus reload request failed"
+
+        while true; do
+          new_checksum="$$(find /etc/prometheus -type f \( -name '*.yml' -o -name '*.yaml' \) -print | sort | xargs sha256sum | sha256sum)"
+
+          if [ "$$new_checksum" != "$$checksum" ]; then
+            echo "Prometheus config changed; reloading"
+            wget -qO- --post-data='' http://prometheus:9090/-/reload >/dev/null \
+              || echo "Prometheus reload request failed"
+          fi
+
+          checksum="$$new_checksum"
+          sleep "$$interval"
+        done
+    environment:
+      PROMETHEUS_RELOAD_INTERVAL_SECONDS: ${PROMETHEUS_RELOAD_INTERVAL_SECONDS:-30}
+    volumes:
+      - ./config/prometheus:/etc/prometheus:ro
+    depends_on:
+      - prometheus
+    networks: [monitoring]
+    restart: unless-stopped
+
   # --- Trace backend ---
   # 4317 (gRPC) / 4318 (HTTP) 로 OTLP 직접 수신 가능. 단, 운영 앱은 본 ADR-014 의
   # 권장대로 otel-collector 를 거치게 하고, tempo 의 OTLP 포트는 호스트로 노출만 해둔다.

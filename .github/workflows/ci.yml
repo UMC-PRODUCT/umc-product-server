@@ -97,6 +97,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: 🌿 Spotless 기준 브랜치 fetch
+        run: git fetch origin develop:refs/remotes/origin/develop
+
       - name: 🎯 배포 환경 설정
         id: set-env
         run: |

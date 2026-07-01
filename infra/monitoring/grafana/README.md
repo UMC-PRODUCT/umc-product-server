@@ -150,6 +150,7 @@ docker/monitoring/
 |------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `otel-collector` | 앱의 OTLP metrics / traces / logs 송신을 받아 prometheus / tempo / loki 로 분배. 향후 Cloud + Self dual-write 가 필요해지면 exporter 추가만 하면 된다.                 |
 | `prometheus`     | OTLP write receiver (`/api/v1/otlp/v1/metrics`) 활성. 자체 scrape 는 prometheus / node-exporter / alertmanager / grafana / loki / otel-collector.  |
+| `prometheus-config-reloader` | `prometheus.yml` / alert rule bind mount 변경을 감지해 Prometheus `/-/reload` 를 호출. 시작 시에도 1회 reload 하므로 PR 반영 후 컨테이너 재생성 없이 기존 rule 평가가 남아 알람을 계속 보내는 상황을 방지. |
 | `tempo`          | OTLP 4317/4318 native 수신. 로컬 디스크 backend, 기본 7일 보존.                                                                                           |
 | `loki`           | OTLP logs receiver 를 통해 Collector 에서 들어온 로그 저장. 기본 30일 보존.                                                                                    |
 | `grafana`        | Prometheus / Alertmanager / Loki / Tempo datasource 와 ADR-016 의 api-performance dashboard 자동 provisioning.                                    |
