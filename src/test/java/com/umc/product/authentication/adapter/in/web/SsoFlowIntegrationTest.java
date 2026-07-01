@@ -115,7 +115,7 @@ class SsoFlowIntegrationTest extends IntegrationTestSupport {
         String codeChallenge = s256Challenge(codeVerifier);
 
         // when: browser login
-        mockMvc.perform(post("/api/v1/auth/browser-login/email")
+        mockMvc.perform(post("/api/v1/auth/sso/email")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
@@ -129,7 +129,7 @@ class SsoFlowIntegrationTest extends IntegrationTestSupport {
             .andExpect(jsonPath("$.result.memberId").value(member.getId()));
 
         // when: authorization code 발급
-        MvcResult authorizeResult = mockMvc.perform(get("/api/v1/oauth/authorize")
+        MvcResult authorizeResult = mockMvc.perform(get("/api/v1/auth/sso/oauth/authorize")
                 .param("client_id", CLIENT_ID)
                 .param("redirect_uri", REDIRECT_URI)
                 .param("response_type", "code")
@@ -152,7 +152,7 @@ class SsoFlowIntegrationTest extends IntegrationTestSupport {
         assertThat(authorizationCode).isNotBlank();
 
         // then: token exchange
-        mockMvc.perform(post("/api/v1/oauth/token")
+        mockMvc.perform(post("/api/v1/auth/sso/oauth/token")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .param("grant_type", "authorization_code")
                 .param("code", authorizationCode)
@@ -170,7 +170,7 @@ class SsoFlowIntegrationTest extends IntegrationTestSupport {
             .andExpect(jsonPath("$.result.member.email").value(EMAIL));
 
         // then: authorization code는 1회만 소비할 수 있다
-        mockMvc.perform(post("/api/v1/oauth/token")
+        mockMvc.perform(post("/api/v1/auth/sso/oauth/token")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .param("grant_type", "authorization_code")
                 .param("code", authorizationCode)

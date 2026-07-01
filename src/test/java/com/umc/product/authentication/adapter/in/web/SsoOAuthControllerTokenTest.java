@@ -48,7 +48,7 @@ class SsoOAuthControllerTokenTest extends IntegrationTestSupport {
         ));
 
         // when / then
-        mockMvc.perform(post("/api/v1/oauth/token")
+        mockMvc.perform(post("/api/v1/auth/sso/oauth/token")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .param("grant_type", "authorization_code")
                 .param("code", "raw-code")
@@ -71,7 +71,7 @@ class SsoOAuthControllerTokenTest extends IntegrationTestSupport {
     @DisplayName("token endpoint 필수 form 필드가 없으면 400을 반환하고 UseCase를 호출하지 않는다")
     void token_form_필수값_누락_거부() throws Exception {
         // when / then
-        mockMvc.perform(post("/api/v1/oauth/token")
+        mockMvc.perform(post("/api/v1/auth/sso/oauth/token")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .param("grant_type", "authorization_code")
                 .param("code", "raw-code")

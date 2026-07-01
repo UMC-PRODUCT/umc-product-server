@@ -48,7 +48,7 @@ class SsoBrowserLoginControllerTest extends IntegrationTestSupport {
         ));
 
         // when / then
-        mockMvc.perform(post("/api/v1/auth/browser-login/email")
+        mockMvc.perform(post("/api/v1/auth/sso/email")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
@@ -73,7 +73,7 @@ class SsoBrowserLoginControllerTest extends IntegrationTestSupport {
     @DisplayName("내 브라우저 로그인 조회에서 SSO 쿠키가 없으면 401을 반환하고 UseCase를 호출하지 않는다")
     void 내_브라우저_로그인_조회_쿠키_없음_거부() throws Exception {
         // when / then
-        mockMvc.perform(get("/api/v1/auth/browser-login/me"))
+        mockMvc.perform(get("/api/v1/auth/sso/me"))
             .andExpect(status().isUnauthorized());
 
         then(getSsoBrowserLoginUseCase).should(never()).getLogin(anyString());
@@ -87,7 +87,7 @@ class SsoBrowserLoginControllerTest extends IntegrationTestSupport {
             .willReturn(SsoBrowserLoginInfo.of(1L, "sso-login-token", Instant.now().plusSeconds(3600)));
 
         // when / then
-        mockMvc.perform(get("/api/v1/auth/browser-login/me")
+        mockMvc.perform(get("/api/v1/auth/sso/me")
                 .cookie(new Cookie("UMC_SSO_LOGIN", "sso-login-token")))
             .andExpect(status().isOk());
 
@@ -99,7 +99,7 @@ class SsoBrowserLoginControllerTest extends IntegrationTestSupport {
     @DisplayName("브라우저 로그아웃은 SSO 쿠키를 삭제한다")
     void 브라우저_로그아웃_쿠키_삭제() throws Exception {
         // when / then
-        mockMvc.perform(post("/api/v1/auth/browser-login/logout"))
+        mockMvc.perform(post("/api/v1/auth/sso/logout"))
             .andExpect(status().isOk())
             .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("UMC_SSO_LOGIN=")))
             .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")))

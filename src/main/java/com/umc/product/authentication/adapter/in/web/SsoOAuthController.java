@@ -33,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/oauth")
+@RequestMapping("/api/v1/auth/sso/oauth")
 @Tag(name = "Authentication | SSO OAuth", description = "SSO OAuth Authorization Code Flow를 처리합니다.")
 public class SsoOAuthController {
 

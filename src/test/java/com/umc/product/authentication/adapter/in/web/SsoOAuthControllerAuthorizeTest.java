@@ -49,7 +49,7 @@ class SsoOAuthControllerAuthorizeTest extends IntegrationTestSupport {
         ));
 
         // when / then
-        mockMvc.perform(get("/api/v1/oauth/authorize")
+        mockMvc.perform(get("/api/v1/auth/sso/oauth/authorize")
                 .param("client_id", "backoffice")
                 .param("redirect_uri", "https://backoffice.university.neordinary.com/auth/callback")
                 .param("response_type", "code")
@@ -80,7 +80,7 @@ class SsoOAuthControllerAuthorizeTest extends IntegrationTestSupport {
         ));
 
         // when / then
-        mockMvc.perform(get("/api/v1/oauth/authorize")
+        mockMvc.perform(get("/api/v1/auth/sso/oauth/authorize")
                 .param("client_id", "backoffice")
                 .param("redirect_uri", "https://backoffice.university.neordinary.com/auth/callback")
                 .param("response_type", "code")
@@ -109,7 +109,7 @@ class SsoOAuthControllerAuthorizeTest extends IntegrationTestSupport {
         ));
 
         // when / then
-        mockMvc.perform(get("/api/v1/oauth/authorize")
+        mockMvc.perform(get("/api/v1/auth/sso/oauth/authorize")
                 .param("client_id", "backoffice")
                 .param("redirect_uri", "https://backoffice.university.neordinary.com/auth/callback")
                 .param("response_type", "code")
@@ -126,7 +126,7 @@ class SsoOAuthControllerAuthorizeTest extends IntegrationTestSupport {
     @DisplayName("authorize 요청에서 SSO 쿠키가 없으면 401을 반환하고 UseCase를 호출하지 않는다")
     void authorize_쿠키_없음_거부() throws Exception {
         // when / then
-        mockMvc.perform(get("/api/v1/oauth/authorize")
+        mockMvc.perform(get("/api/v1/auth/sso/oauth/authorize")
                 .param("client_id", "backoffice")
                 .param("redirect_uri", "https://backoffice.university.neordinary.com/auth/callback")
                 .param("response_type", "code")

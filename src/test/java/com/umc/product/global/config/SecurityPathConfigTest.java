@@ -74,8 +74,8 @@ class SecurityPathConfigTest {
     void maintenanceAllowlistContainsSsoPublicPaths() {
         assertThat(SecurityPathConfig.MAINTENANCE_ALWAYS_ALLOW_PATHS)
             .contains(
-                "/api/v1/oauth/**",
-                "/api/v1/auth/browser-login/**"
+                "/api/v1/auth/sso/oauth/**",
+                "/api/v1/auth/sso/**"
             );
     }
 }

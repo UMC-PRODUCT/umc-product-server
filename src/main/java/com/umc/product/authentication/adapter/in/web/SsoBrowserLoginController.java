@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/auth/browser-login")
+@RequestMapping("/api/v1/auth/sso")
 @Tag(name = "Authentication | SSO 브라우저 로그인", description = "Auth App 브라우저 로그인 쿠키를 관리합니다.")
 public class SsoBrowserLoginController {
 
