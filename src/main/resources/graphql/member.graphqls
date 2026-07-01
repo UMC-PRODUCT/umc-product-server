@@ -1,0 +1,40 @@
+extend type Query {
+  me: Member!
+  member(id: ID!): Member
+  members(ids: [ID!]!): [Member!]!
+}
+
+type Member {
+  memberId: ID!
+  name: String
+  nickname: String
+  email: String
+  schoolId: ID
+  schoolName: String
+  profileImageLink: String
+  status: MemberStatus
+  school: SchoolDetail
+  challengers: [MemberChallenger!]!
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  WITHDRAWN
+}
+
+type MemberChallenger {
+  challengerId: ID!
+  memberId: ID!
+  gisuId: ID!
+  gisu: Gisu
+  part: ChallengerPart!
+  status: ChallengerStatus!
+}
+
+enum ChallengerStatus {
+  ACTIVE
+  GRADUATED
+  EXPELLED
+  WITHDRAWN
+}

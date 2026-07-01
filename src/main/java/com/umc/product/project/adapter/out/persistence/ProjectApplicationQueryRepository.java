@@ -283,6 +283,24 @@ public class ProjectApplicationQueryRepository {
         return Optional.ofNullable(result);
     }
 
+    /**
+     * 여러 지원서 상세 조회용 fetch join.
+     */
+    public List<ProjectApplication> findAllByIdInWithDetails(Collection<Long> applicationIds) {
+        if (applicationIds == null || applicationIds.isEmpty()) {
+            return List.of();
+        }
+
+        return queryFactory
+            .selectFrom(projectApplication)
+            .innerJoin(projectApplication.applicationForm, projectApplicationForm).fetchJoin()
+            .innerJoin(projectApplicationForm.project, project).fetchJoin()
+            .innerJoin(projectApplication.appliedMatchingRound, projectMatchingRound).fetchJoin()
+            .where(projectApplication.id.in(applicationIds))
+            .orderBy(projectApplication.id.asc())
+            .fetch();
+    }
+
     private BooleanExpression matchingRoundIdEq(Long matchingRoundId) {
         return matchingRoundId == null ? null : projectMatchingRound.id.eq(matchingRoundId);
     }

@@ -1,7 +1,9 @@
 package com.umc.product.survey.application.port.in.query;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import com.umc.product.survey.application.port.in.query.dto.FormResponseInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormResponseWithAnswersInfo;
@@ -62,4 +64,11 @@ public interface GetFormResponseUseCase {
      * formResponseId)를 자체 에러 코드로 통일하고 싶은 경우 사용한다.
      */
     Optional<FormResponseWithAnswersInfo> findResponseWithAnswers(Long formResponseId);
+
+    /**
+     * 여러 응답의 메타 + 답변을 한 번에 조회한다.
+     *
+     * @return formResponseId -> 응답 상세. 미존재 ID는 결과에 포함하지 않는다.
+     */
+    Map<Long, FormResponseWithAnswersInfo> findResponsesWithAnswers(Set<Long> formResponseIds);
 }

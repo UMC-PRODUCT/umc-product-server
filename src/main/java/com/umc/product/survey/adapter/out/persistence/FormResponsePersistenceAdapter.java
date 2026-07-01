@@ -1,15 +1,18 @@
 package com.umc.product.survey.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
 import com.umc.product.survey.application.port.out.SaveFormResponsePort;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
@@ -21,6 +24,11 @@ public class FormResponsePersistenceAdapter implements LoadFormResponsePort, Sav
     @Override
     public Optional<FormResponse> findById(Long formResponseId) {
         return formResponseJpaRepository.findById(formResponseId);
+    }
+
+    @Override
+    public List<FormResponse> listByIdsWithForm(Set<Long> formResponseIds) {
+        return formResponseQueryRepository.findAllByIdInWithForm(formResponseIds);
     }
 
     @Override
