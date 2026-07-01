@@ -30,17 +30,20 @@ import com.umc.product.storage.domain.exception.StorageException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.cloudfront.CloudFrontUtilities;
 import software.amazon.awssdk.services.cloudfront.model.CannedSignerRequest;
 import software.amazon.awssdk.services.cloudfront.url.SignedUrl;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
@@ -134,9 +137,29 @@ public class S3StorageAdapter implements StoragePort {
 
     @Override
     public String generateAccessUrl(String storageKey, long durationMinutes) {
-        // TODO: private method들은 따로 accessUrl 생성하도록 FileCategory 단에서 public/private 구분해서 진행
-        // CloudFront 미사용 시 OAS 통한 직접 접근, Duration을 활용하지 않음
-        return generateCloudFrontUrl(storageKey);
+        if (properties.cloudfront().enabled()) {
+            return generateCloudFrontSignedUrl(storageKey, durationMinutes);
+        }
+        return generateS3DownloadUrl(storageKey, durationMinutes);
+    }
+
+    @Override
+    public void uploadObject(String storageKey, String contentType, byte[] content) {
+        long startNanos = System.nanoTime();
+        try {
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(properties.bucketName())
+                .key(storageKey)
+                .contentType(contentType)
+                .contentLength((long) content.length)
+                .build();
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(content));
+            recordStorageMetric("UPLOAD_OBJECT", "success", startNanos);
+        } catch (Exception e) {
+            recordStorageMetric("UPLOAD_OBJECT", "failure", startNanos);
+            log.error("S3 객체 저장 실패: storageKey={}", storageKey, e);
+            throw new StorageException(StorageErrorCode.STORAGE_UPLOAD_FAILED);
+        }
     }
 
     @Override
@@ -194,47 +217,22 @@ public class S3StorageAdapter implements StoragePort {
 
     // ==================== PRIVATE METHODS ====================
 
-    private String generateCloudFrontUrl(String storageKey) {
-        S3StorageProperties.CloudFront cloudfront = properties.cloudfront();
-
-        // URL 인코딩 (특수문자 처리)
-        String encodedKey = encodeStorageKey(storageKey);
-
-        // URL 구성: https://{distribution-domain}/{storageKey}
-        return String.format("https://%s/%s",
-            cloudfront.distributionDomain(),
-            encodedKey
-        );
-    }
-
-    /**
-     * CloudFront Signed URL 생성
-     *
-     * @see <a
-     * href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-signed-urls.html">CloudFront
-     * Signed URLs</a>
-     */
     private String generateCloudFrontSignedUrl(String storageKey, long durationMinutes) {
         long startNanos = System.nanoTime();
         try {
             S3StorageProperties.CloudFront cloudfront = properties.cloudfront();
 
-            // 만료 시간
             Instant expirationTime = Instant.now().plusSeconds(durationMinutes * 60);
 
-            // URL 인코딩 (특수문자 처리)
             String encodedKey = encodeStorageKey(storageKey);
 
-            // URL 구성: https://{distribution-domain}/{storageKey}
             String resourceUrl = String.format("https://%s/%s",
                 cloudfront.distributionDomain(),
                 encodedKey
             );
 
-            // CloudFront 유틸리티를 사용하여 서명
             CloudFrontUtilities cloudFrontUtilities = CloudFrontUtilities.create();
 
-            // Private Key 파싱
             PrivateKey privateKey = parsePrivateKey(cloudfront.privateKey());
 
             CannedSignerRequest signerRequest = CannedSignerRequest.builder()
@@ -257,6 +255,27 @@ public class S3StorageAdapter implements StoragePort {
         }
     }
 
+    private String generateS3DownloadUrl(String storageKey, long durationMinutes) {
+        long startNanos = System.nanoTime();
+        try {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(properties.bucketName())
+                .key(storageKey)
+                .build();
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(durationMinutes))
+                .getObjectRequest(getObjectRequest)
+                .build();
+            String url = s3Presigner.presignGetObject(presignRequest).url().toString();
+            recordStorageMetric("CREATE_DOWNLOAD_URL", "success", startNanos);
+            return url;
+        } catch (Exception e) {
+            recordStorageMetric("CREATE_DOWNLOAD_URL", "failure", startNanos);
+            log.error("S3 다운로드 URL 생성 실패: storageKey={}", storageKey, e);
+            throw new StorageException(StorageErrorCode.STORAGE_URL_GENERATION_FAILED);
+        }
+    }
+
     private void recordStorageMetric(String operation, String result, long startNanos) {
         operationalMetrics.recordExternalCall(
             "STORAGE",
@@ -270,7 +289,6 @@ public class S3StorageAdapter implements StoragePort {
      * PEM 형식의 Private Key를 파싱합니다.
      */
     private PrivateKey parsePrivateKey(String privateKeyPem) throws Exception {
-        // PEM 형식인지 확인
         if (privateKeyPem.contains("-----BEGIN")) {
             try (PemReader pemReader = new PemReader(new StringReader(privateKeyPem))) {
                 PemObject pemObject = pemReader.readPemObject();
@@ -282,19 +300,15 @@ public class S3StorageAdapter implements StoragePort {
             }
         }
 
-        // Base64로 인코딩된 DER 형식
         byte[] keyBytes = Base64.getDecoder().decode(privateKeyPem);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
         return keyFactory.generatePrivate(keySpec);
     }
 
-    /**
-     * URL Path에 사용할 수 있도록 인코딩
-     */
     private String encodeStorageKey(String storageKey) {
 
-        return UriUtils.encodePathSegment(storageKey, StandardCharsets.UTF_8); // 또는 필요시 URLEncoder.encode() 사용
+        return UriUtils.encodePath(storageKey, StandardCharsets.UTF_8);
     }
 
     private String parseSpringProfileToCloudFrontPath() {
