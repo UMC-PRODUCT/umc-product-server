@@ -1,8 +1,9 @@
 package com.umc.product.curriculum.application.port.out;
 
-import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import java.util.List;
 import java.util.Optional;
+
+import com.umc.product.curriculum.domain.ChallengerWorkbook;
 
 public interface LoadChallengerWorkbookPort {
 
@@ -21,4 +22,12 @@ public interface LoadChallengerWorkbookPort {
      * memberId + 여러 originalWorkbookId에 해당하는 ChallengerWorkbook 목록 일괄 조회 (N+1 방지)
      */
     List<ChallengerWorkbook> findByMemberIdAndOriginalWorkbookIdIn(Long memberId, List<Long> originalWorkbookIds);
+
+    /**
+     * 여러 멤버와 여러 주차 커리큘럼에 해당하는 ChallengerWorkbook 목록 일괄 조회 (N+1 방지)
+     */
+    List<ChallengerWorkbook> findByMemberIdInAndWeeklyCurriculumIdIn(
+        List<Long> memberIds,
+        List<Long> weeklyCurriculumIds
+    );
 }
