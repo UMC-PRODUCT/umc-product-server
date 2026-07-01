@@ -68,4 +68,14 @@ class SecurityPathConfigTest {
             .containsEntry("springdoc.api-docs.path", "/docs-json")
             .containsEntry("springdoc.api-docs.enabled", "${OPENAPI_ENABLE:${SWAGGER_ENABLE:false}}");
     }
+
+    @Test
+    @DisplayName("maintenance allowlist는 SSO 공개 진입 경로를 명시적으로 포함한다")
+    void maintenanceAllowlistContainsSsoPublicPaths() {
+        assertThat(SecurityPathConfig.MAINTENANCE_ALWAYS_ALLOW_PATHS)
+            .contains(
+                "/api/v1/auth/sso/oauth/**",
+                "/api/v1/auth/sso/**"
+            );
+    }
 }

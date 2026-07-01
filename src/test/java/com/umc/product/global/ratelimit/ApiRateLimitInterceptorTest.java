@@ -23,8 +23,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.global.client.ClientContextProperties;
+import com.umc.product.global.client.ClientOriginRegistry;
+import com.umc.product.global.client.ClientRequestClassifier;
 import com.umc.product.global.config.LoggingInterceptor;
 import com.umc.product.global.exception.constant.CommonErrorCode;
+import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.global.response.ApiErrorResponseWriter;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -91,9 +95,18 @@ class ApiRateLimitInterceptorTest {
 
         return MockMvcBuilders
             .standaloneSetup(controller)
-            .addInterceptors(new LoggingInterceptor(), rateLimitInterceptor)
+            .addInterceptors(loggingInterceptor(), rateLimitInterceptor)
             .setMessageConverters(new MappingJackson2HttpMessageConverter())
             .build();
+    }
+
+    private static LoggingInterceptor loggingInterceptor() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        ClientContextProperties properties = new ClientContextProperties(List.of());
+        return new LoggingInterceptor(
+            new ClientRequestClassifier(new ClientOriginRegistry(properties)),
+            new OperationalMetrics(registry)
+        );
     }
 
     private static ApiRateLimitProperties limitedProperties(boolean enabled) {

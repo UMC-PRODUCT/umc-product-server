@@ -145,6 +145,7 @@ jwt:
   refresh-token-secret: ${JWT_REFRESH_TOKEN_SECRET}
   oauth-verification-token-secret: ${JWT_OAUTH_VERIFICATION_TOKEN_SECRET}
   email-verification-token-secret: ${JWT_EMAIL_VERIFICATION_TOKEN_SECRET}
+  sso-login-token-secret: ${JWT_SSO_LOGIN_TOKEN_SECRET}
   access-token-validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS:3600}
   refresh-token-validity-in-seconds: ${JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS:604800}
   verification-token-validity-in-seconds: ${JWT_VERIFICATION_TOKEN_VALIDITY_IN_SECONDS:600}
@@ -275,6 +276,79 @@ app:
   # Figma_댓글_dev_prod_중복_방지_계획 §L4: Discord embed footer 의 환경 라벨 ([ENV: ...]) 으로 노출됨.
   # spring.profiles.active 가 콤마 구분 다중 profile 일 수 있으므로 운영자가 단일 라벨을 명시적으로 override 가능.
   environment: ${APP_ENVIRONMENT:${SPRING_PROFILES_ACTIVE:local}}
+
+  client-context:
+    origins:
+      - origin: https://university.neordinary.com
+        service-type: UMC_WEBSITE
+        environment: PROD
+      - origin: https://backoffice.university.neordinary.com
+        service-type: UMC_BACKOFFICE
+        environment: PROD
+      - origin: https://tech.university.neordinary.com
+        service-type: UMC_TECH_BLOG
+        environment: PROD
+
+  sso:
+    issuer: ${SSO_ISSUER:https://api.university.neordinary.com}
+    authorization-code-ttl: ${SSO_AUTHORIZATION_CODE_TTL:PT3M}
+    browser-login-ttl: ${SSO_BROWSER_LOGIN_TTL:PT12H}
+    cookie:
+      name: ${SSO_BROWSER_LOGIN_COOKIE_NAME:UMC_SSO_LOGIN}
+      domain: ${SSO_BROWSER_LOGIN_COOKIE_DOMAIN:}
+      secure: ${SSO_BROWSER_LOGIN_COOKIE_SECURE:true}
+      same-site: ${SSO_BROWSER_LOGIN_COOKIE_SAME_SITE:Lax}
+    clients:
+      backoffice:
+        name: UMC Backoffice
+        service-type: UMC_BACKOFFICE
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://backoffice.university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://backoffice.university.neordinary.com
+      website:
+        name: UMC Website
+        service-type: UMC_WEBSITE
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://university.neordinary.com
+      tech:
+        name: UMC Tech Blog
+        service-type: UMC_TECH_BLOG
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://tech.university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://tech.university.neordinary.com
+      ios-app:
+        name: UMC iOS App
+        service-type: IOS_APP
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - umc-ios://auth/callback
+          - https://app.university.neordinary.com/ios/auth/callback
+        allowed-origins: []
+      android-app:
+        name: UMC Android App
+        service-type: ANDROID_APP
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - umc-android://auth/callback
+          - https://app.university.neordinary.com/android/auth/callback
+        allowed-origins: []
 
   project:
     matching-round:
@@ -457,8 +531,47 @@ spring:
       on-profile: dev
 
 app:
+  client-context:
+    origins:
+      - origin: http://localhost:5173
+        service-type: UNKNOWN
+        environment: DEV
+
   seed:
     enabled: ${APP_SEED_ENABLED:true}
+
+  sso:
+    clients:
+      backoffice:
+        name: UMC Backoffice
+        service-type: UMC_BACKOFFICE
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - http://localhost:5173/auth/callback
+        allowed-origins:
+          - http://localhost:5173
+      website:
+        name: UMC Website
+        service-type: UMC_WEBSITE
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - http://localhost:5173/auth/callback
+        allowed-origins:
+          - http://localhost:5173
+      tech:
+        name: UMC Tech Blog
+        service-type: UMC_TECH_BLOG
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - http://localhost:5173/auth/callback
+        allowed-origins:
+          - http://localhost:5173
 
 # ==================================================================
 # local 환경 default override — 로컬 개발자가 env 설정 없이도 SQL 라인 로깅을 본다.

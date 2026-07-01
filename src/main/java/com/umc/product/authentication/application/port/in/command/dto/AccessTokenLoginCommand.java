@@ -21,4 +21,8 @@ public record AccessTokenLoginCommand(
         Objects.requireNonNull(provider, "provider must not be null");
         Objects.requireNonNull(token, "token must not be null");
     }
+
+    public static AccessTokenLoginCommand of(OAuthProvider provider, String token) {
+        return new AccessTokenLoginCommand(provider, token);
+    }
 }
