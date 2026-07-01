@@ -1,5 +1,8 @@
 package com.umc.product.survey.application.service.query;
 
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,6 +75,54 @@ public class FormQueryService implements GetFormUseCase {
     }
 
     @Override
+    public Map<Long, FormWithStructureInfo> batchGetFormsWithStructure(Collection<Long> formIds) {
+        if (formIds == null || formIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Long> uniqueFormIds = formIds.stream()
+            .collect(Collectors.collectingAndThen(
+                Collectors.toCollection(LinkedHashSet::new),
+                List::copyOf
+            ));
+        if (uniqueFormIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Form> forms = loadFormPort.batchGetByIds(uniqueFormIds);
+        List<FormSection> sections = loadFormSectionPort.listByFormIds(uniqueFormIds);
+        Set<Long> sectionIds = sections.stream()
+            .map(FormSection::getId)
+            .collect(Collectors.toSet());
+
+        List<Question> questions = loadQuestionPort.listBySectionIdIn(sectionIds);
+        Set<Long> questionIds = questions.stream()
+            .map(Question::getId)
+            .collect(Collectors.toSet());
+
+        List<QuestionOption> options = loadQuestionOptionPort.listByQuestionIdIn(questionIds);
+        Map<Long, List<FormSection>> sectionsByFormId = sections.stream()
+            .collect(Collectors.groupingBy(section -> section.getForm().getId()));
+        Map<Long, List<Question>> questionsBySection = questions.stream()
+            .collect(Collectors.groupingBy(question -> question.getFormSection().getId()));
+        Map<Long, List<QuestionOption>> optionsByQuestion = options.stream()
+            .collect(Collectors.groupingBy(option -> option.getQuestion().getId()));
+
+        return forms.stream()
+            .collect(Collectors.toMap(
+                Form::getId,
+                form -> buildFormInfo(
+                    form,
+                    sectionsByFormId.getOrDefault(form.getId(), List.of()),
+                    questionsBySection,
+                    optionsByQuestion
+                ),
+                (left, right) -> left,
+                LinkedHashMap::new
+            ));
+    }
+
+    @Override
     public FormWithStructureInfo getFormWithStructureByQuestionIds(Long formId, Set<Long> questionIds) {
         Form form = loadFormPort.findById(formId)
             .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
@@ -111,6 +162,15 @@ public class FormQueryService implements GetFormUseCase {
         Map<Long, List<QuestionOption>> optionsByQuestion = options.stream()
             .collect(Collectors.groupingBy(o -> o.getQuestion().getId()));
 
+        return buildFormInfo(form, sections, questionsBySection, optionsByQuestion);
+    }
+
+    private FormWithStructureInfo buildFormInfo(
+        Form form,
+        List<FormSection> sections,
+        Map<Long, List<Question>> questionsBySection,
+        Map<Long, List<QuestionOption>> optionsByQuestion
+    ) {
         List<SectionWithQuestions> sectionDtos = sections.stream()
             .map(section -> SectionWithQuestions.builder()
                 .sectionId(section.getId())

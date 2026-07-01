@@ -138,7 +138,7 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
 
                 fcmTokenDeactivator.deactivateInvalidTokens(batch, response.getResponses());
             } catch (FirebaseMessagingException e) {
-                log.error("FCM 배치 발송 실패 batchSize={}", batch.size(), e);
+                log.warn("FCM 배치 발송 실패 batchSize={}", batch.size(), e);
                 totalFail += batch.size();
             }
         }

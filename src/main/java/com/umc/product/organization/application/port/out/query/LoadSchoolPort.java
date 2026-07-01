@@ -31,6 +31,8 @@ public interface LoadSchoolPort {
 
     Map<Long, List<SchoolDetailInfo.SchoolLinkItem>> findLinksBySchoolIds(List<Long> schoolIds);
 
+    List<SchoolChapterInfo> findSchoolDetailsByIds(Set<Long> schoolIds);
+
     List<SchoolChapterInfo> findSchoolDetailsByGisuId(Long gisuId);
 
     List<SchoolGisuChapterInfo> findSchoolDetailsByGisuIds(Set<Long> gisuIds);

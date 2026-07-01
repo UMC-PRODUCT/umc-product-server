@@ -3,12 +3,12 @@ package com.umc.product.figma.adapter.in.scheduler;
 import java.time.Duration;
 import java.time.Instant;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.umc.product.figma.adapter.out.external.FigmaSummaryProperties;
 import com.umc.product.figma.application.port.out.SaveFigmaCommentDispatchPort;
-import com.umc.product.figma.config.FigmaSyncProperties;
 import com.umc.product.global.logging.OperationalMetrics;
 
 import lombok.RequiredArgsConstructor;
@@ -27,20 +27,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.figma.sync.enabled", havingValue = "true")
 public class FigmaCommentDispatchRetentionScheduler {
 
     private static final String JOB_NAME = "figma_comment_dispatch_retention";
 
     private final SaveFigmaCommentDispatchPort saveFigmaCommentDispatchPort;
-    private final FigmaSyncProperties figmaSyncProperties;
     private final FigmaSummaryProperties figmaSummaryProperties;
     private final OperationalMetrics operationalMetrics;
 
     @Scheduled(fixedDelayString = "${app.figma.summary.retention-poll-interval}")
     public void purge() {
-        if (!figmaSyncProperties.enabled()) {
-            return;
-        }
         Instant startedAt = Instant.now();
         Instant threshold = Instant.now().minus(figmaSummaryProperties.dispatchRetention());
         try {

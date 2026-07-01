@@ -1,13 +1,16 @@
 package com.umc.product.survey.adapter.out.persistence;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.survey.application.port.out.LoadFormSectionPort;
 import com.umc.product.survey.application.port.out.SaveFormSectionPort;
 import com.umc.product.survey.domain.FormSection;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
@@ -34,6 +37,11 @@ public class FormSectionPersistenceAdapter implements SaveFormSectionPort, LoadF
     @Override
     public List<FormSection> listByFormId(Long formId) {
         return formSectionQueryRepository.findAllByFormId(formId);
+    }
+
+    @Override
+    public List<FormSection> listByFormIds(Collection<Long> formIds) {
+        return formSectionQueryRepository.findAllByFormIdIn(formIds);
     }
 
     @Override

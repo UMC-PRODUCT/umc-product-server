@@ -1,14 +1,18 @@
 package com.umc.product.survey.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.survey.domain.Answer;
 import com.umc.product.survey.domain.QAnswer;
+import com.umc.product.survey.domain.QFormResponse;
 import com.umc.product.survey.domain.QFormSection;
 import com.umc.product.survey.domain.QQuestion;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
@@ -30,6 +34,28 @@ public class AnswerQueryRepository {
             .join(q.formSection, s)
             .where(a.formResponse.id.eq(formResponseId))
             .orderBy(s.orderNo.asc(), q.orderNo.asc())
+            .fetch();
+    }
+
+    /**
+     * 여러 FormResponse 의 모든 답변을 한 번에 조회한다.
+     */
+    public List<Answer> findAllByFormResponseIdIn(Set<Long> formResponseIds) {
+        if (formResponseIds == null || formResponseIds.isEmpty()) {
+            return List.of();
+        }
+
+        QAnswer a = QAnswer.answer;
+        QQuestion q = QQuestion.question;
+        QFormSection s = QFormSection.formSection;
+        QFormResponse fr = QFormResponse.formResponse;
+        return queryFactory
+            .selectFrom(a)
+            .join(a.formResponse, fr).fetchJoin()
+            .join(a.question, q).fetchJoin()
+            .join(q.formSection, s)
+            .where(a.formResponse.id.in(formResponseIds))
+            .orderBy(a.formResponse.id.asc(), s.orderNo.asc(), q.orderNo.asc())
             .fetch();
     }
 

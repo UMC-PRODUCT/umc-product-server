@@ -1,12 +1,12 @@
 package com.umc.product.survey.application.port.out;
 
-import com.umc.product.survey.domain.Answer;
-import com.umc.product.survey.domain.AnswerChoice;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import com.umc.product.survey.domain.Answer;
+import com.umc.product.survey.domain.AnswerChoice;
 
 public interface LoadAnswerPort {
 
@@ -21,6 +21,11 @@ public interface LoadAnswerPort {
      * 특정 FormResponse 에 속한 모든 답변을 질문 orderNo 오름차순으로 반환.
      */
     List<Answer> listByFormResponseId(Long formResponseId);
+
+    /**
+     * 여러 FormResponse 에 속한 모든 답변을 한 번에 조회한다.
+     */
+    List<Answer> listByFormResponseIds(Set<Long> formResponseIds);
 
     /**
      * 여러 답변의 AnswerChoice 를 한 번에 조회 (벌크 N+1 회피).

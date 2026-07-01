@@ -1,13 +1,16 @@
 package com.umc.product.survey.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.QFormResponse;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
@@ -39,6 +42,23 @@ public class FormResponseQueryRepository {
                 fr.status.eq(FormResponseStatus.SUBMITTED)
             )
             .orderBy(fr.id.desc())
+            .fetch();
+    }
+
+    /**
+     * 여러 응답을 Form과 함께 조회한다.
+     */
+    public List<FormResponse> findAllByIdInWithForm(Set<Long> formResponseIds) {
+        if (formResponseIds == null || formResponseIds.isEmpty()) {
+            return List.of();
+        }
+
+        QFormResponse fr = QFormResponse.formResponse;
+        return queryFactory
+            .selectFrom(fr)
+            .join(fr.form).fetchJoin()
+            .where(fr.id.in(formResponseIds))
+            .orderBy(fr.id.asc())
             .fetch();
     }
 }

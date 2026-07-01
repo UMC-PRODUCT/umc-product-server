@@ -1,12 +1,15 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.curriculum.application.port.out.LoadMissionFeedbackPort;
 import com.umc.product.curriculum.application.port.out.LoadMissionSubmissionPort;
 import com.umc.product.curriculum.domain.MissionFeedback;
 import com.umc.product.curriculum.domain.MissionSubmission;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -34,5 +37,10 @@ public class MissionSubmissionPersistenceAdapter implements LoadMissionSubmissio
             return List.of();
         }
         return missionFeedbackJpaRepository.findByMissionSubmission_IdIn(submissionIds);
+    }
+
+    @Override
+    public boolean existsByOriginalWorkbookMissionId(Long originalWorkbookMissionId) {
+        return missionSubmissionJpaRepository.existsByOriginalWorkbookMission_Id(originalWorkbookMissionId);
     }
 }
