@@ -18,8 +18,6 @@
 # - secrets.SERVER_SSH_USERNAME
 # - secrets.SERVER_SSH_PRIVATE_KEY
 # - secrets.SERVER_SSH_PORT
-# - secrets.POSTGRES_USER
-# - secrets.POSTGRES_PASSWORD
 # - secrets.DISCORD_CD_WEBHOOK_URL
 # Optional repository secrets:
 # - secrets.AWS_ACCOUNT_ID (inferred from AWS STS when empty)
@@ -27,16 +25,16 @@
 name: CD [Develop Home Server]
 
 on:
-  # push:
-  #   branches:
-  #     - develop
-  #   paths:
-  #     - "src/**"
-  #     - "build.gradle.kts"
-  #     - "docker/**"
-  #     - ".github/workflows/ci.yml"
-  #     - ".github/workflows/cd-dev-home.yml"
-  #     - ".github/scripts/**"
+  push:
+    branches:
+      - develop
+    paths:
+      - "src/**"
+      - "build.gradle.kts"
+      - "docker/**"
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/cd-dev-home.yml"
+      - ".github/scripts/**"
   workflow_dispatch:
 
 concurrency:
@@ -79,6 +77,9 @@ jobs:
       HEALTHCHECK_TIMEOUT: ${{ vars.HEALTHCHECK_TIMEOUT || '180' }}
 
     steps:
+      - name: 코드베이스 체크아웃
+        uses: actions/checkout@v4
+
       - name: 환경변수 검증
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -88,12 +89,7 @@ jobs:
           SERVER_SSH_USERNAME: ${{ secrets.SERVER_SSH_USERNAME }}
           SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
           SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         run: bash .github/scripts/cd-dev-home-validate-env.sh
-
-      - name: 코드베이스 체크아웃
-        uses: actions/checkout@v4
 
       - name: AWS 인증
         uses: aws-actions/configure-aws-credentials@v4
@@ -157,14 +153,12 @@ jobs:
           APP_PORT: ${{ env.APP_PORT }}
           MANAGEMENT_PORT: ${{ env.MANAGEMENT_PORT }}
           HEALTHCHECK_TIMEOUT: ${{ env.HEALTHCHECK_TIMEOUT }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         with:
           host: ${{ secrets.SERVER_SSH_HOST }}
           username: ${{ secrets.SERVER_SSH_USERNAME }}
           key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_SSH_PORT }}
-          envs: ENVIRONMENT,IMAGE_TAG,ECR_REGISTRY,ECR_IMAGE_NAME,ECR_PASSWORD,SERVER_APP_DIRECTORY,APP_ENV_B64,APP_REPLICAS,HTTP_PORT,APP_PORT,MANAGEMENT_PORT,HEALTHCHECK_TIMEOUT,POSTGRES_USER,POSTGRES_PASSWORD
+          envs: ENVIRONMENT,IMAGE_TAG,ECR_REGISTRY,ECR_IMAGE_NAME,ECR_PASSWORD,SERVER_APP_DIRECTORY,APP_ENV_B64,APP_REPLICAS,HTTP_PORT,APP_PORT,MANAGEMENT_PORT,HEALTHCHECK_TIMEOUT
           script_path: .github/scripts/cd-dev-home-deploy.sh
 
       - name: Deployment Summary
