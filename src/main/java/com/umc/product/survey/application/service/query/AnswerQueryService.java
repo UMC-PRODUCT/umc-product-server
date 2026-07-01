@@ -1,5 +1,14 @@
 package com.umc.product.survey.application.service.query;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.survey.application.port.in.query.GetAnswerUseCase;
 import com.umc.product.survey.application.port.in.query.dto.AnswerInfo;
 import com.umc.product.survey.application.port.out.LoadAnswerPort;
@@ -7,15 +16,8 @@ import com.umc.product.survey.domain.Answer;
 import com.umc.product.survey.domain.AnswerChoice;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional(readOnly = true)

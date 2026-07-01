@@ -1,17 +1,19 @@
 package com.umc.product.survey.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.survey.application.port.out.LoadAnswerPort;
 import com.umc.product.survey.application.port.out.SaveAnswerPort;
 import com.umc.product.survey.domain.Answer;
 import com.umc.product.survey.domain.AnswerChoice;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor

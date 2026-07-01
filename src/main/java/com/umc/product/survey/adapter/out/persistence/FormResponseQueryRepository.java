@@ -1,14 +1,16 @@
 package com.umc.product.survey.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.QFormResponse;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Set;
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
