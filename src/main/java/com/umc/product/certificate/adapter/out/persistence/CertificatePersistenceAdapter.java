@@ -36,7 +36,7 @@ public class CertificatePersistenceAdapter implements LoadCertificatePort, SaveC
         Long recipientMemberId,
         Long gisuId,
         Long projectId,
-        String awardTitle,
+        String meritTitle,
         Instant now
     ) {
         return certificateRepository.findValidByScope(
@@ -44,7 +44,7 @@ public class CertificatePersistenceAdapter implements LoadCertificatePort, SaveC
             recipientMemberId,
             gisuId,
             projectId,
-            awardTitle,
+            meritTitle,
             CertificateStatus.ISSUED,
             now
         ).stream().findFirst();

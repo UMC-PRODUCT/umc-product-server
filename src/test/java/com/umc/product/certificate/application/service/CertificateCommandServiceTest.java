@@ -26,8 +26,10 @@ import com.umc.product.certificate.application.port.in.command.dto.IssueCertific
 import com.umc.product.certificate.application.port.out.LoadCertificatePort;
 import com.umc.product.certificate.application.port.out.RenderCertificatePdfPort;
 import com.umc.product.certificate.application.port.out.SaveCertificatePort;
+import com.umc.product.certificate.application.port.out.dto.CertificatePdfRenderCommand;
 import com.umc.product.certificate.domain.Certificate;
 import com.umc.product.certificate.domain.CertificateIssueSpec;
+import com.umc.product.certificate.domain.CertificateIssuer;
 import com.umc.product.certificate.domain.CertificateType;
 import com.umc.product.storage.application.port.in.command.StoreGeneratedFileUseCase;
 import com.umc.product.storage.application.port.in.command.dto.GeneratedFileInfo;
@@ -118,14 +120,19 @@ class CertificateCommandServiceTest {
             .willAnswer(invocation -> invocation.getArgument(0));
         CertificateCommandService sut = sut();
         ArgumentCaptor<Certificate> certificateCaptor = ArgumentCaptor.forClass(Certificate.class);
+        ArgumentCaptor<CertificatePdfRenderCommand> renderCommandCaptor =
+            ArgumentCaptor.forClass(CertificatePdfRenderCommand.class);
 
         // when
         CertificateIssueInfo result = sut.issue(command);
 
         // then
         verify(saveCertificatePort).save(certificateCaptor.capture());
+        verify(renderCertificatePdfPort).render(renderCommandCaptor.capture());
         Certificate saved = certificateCaptor.getValue();
         assertThat(result.serialNumber()).isEqualTo("UMC-CMP-20260701-ABCDEFGH");
+        assertThat(renderCommandCaptor.getValue().issuer()).isEqualTo(CertificateIssuer.UNIVERSITY_MAKEUS_CHALLENGE);
+        assertThat(saved.getIssuer()).isEqualTo(CertificateIssuer.UNIVERSITY_MAKEUS_CHALLENGE);
         assertThat(saved.getFileId()).isEqualTo("file-id");
         assertThat(saved.getFileSha256()).isEqualTo(sha256(pdfBytes));
     }
@@ -147,6 +154,7 @@ class CertificateCommandServiceTest {
     private CertificateIssueContext completionContext() {
         return new CertificateIssueContext(
             CertificateType.COMPLETION,
+            CertificateIssuer.UNIVERSITY_MAKEUS_CHALLENGE,
             1L,
             "김유엠",
             "유엠씨대학교",
@@ -164,6 +172,7 @@ class CertificateCommandServiceTest {
         return Certificate.issue(CertificateIssueSpec.builder()
             .serialNumber(serialNumber)
             .type(CertificateType.COMPLETION)
+            .issuer(CertificateIssuer.UNIVERSITY_MAKEUS_CHALLENGE)
             .recipientMemberId(1L)
             .recipientName("김유엠")
             .recipientSchoolName("유엠씨대학교")

@@ -45,12 +45,13 @@ public class ThymeleafCertificatePdfAdapter implements RenderCertificatePdfPort 
             Context context = new Context(Locale.KOREA);
             context.setVariable("serialNumber", command.serialNumber());
             context.setVariable("typeName", command.type().displayName());
+            context.setVariable("issuerName", command.issuer().displayName());
             context.setVariable("recipientName", command.recipientName());
             context.setVariable("recipientSchoolName", command.recipientSchoolName());
             context.setVariable("gisuGeneration", command.gisuGeneration());
             context.setVariable("projectName", command.projectName());
-            context.setVariable("awardTitle", command.awardTitle());
-            context.setVariable("awardDescription", command.awardDescription());
+            context.setVariable("meritTitle", command.meritTitle());
+            context.setVariable("meritDescription", command.meritDescription());
             context.setVariable("issuedDate", DATE_FORMATTER.format(command.issuedAt()));
             context.setVariable("expiresDate", DATE_FORMATTER.format(command.expiresAt()));
             context.setVariable("verificationUrl", command.verificationUrl());
@@ -72,8 +73,8 @@ public class ThymeleafCertificatePdfAdapter implements RenderCertificatePdfPort 
     private String resolveTemplateName(CertificateType type) {
         return switch (type) {
             case COMPLETION -> "certificate/completion";
-            case AWARD -> "certificate/award";
             case PROJECT_PARTICIPATION -> "certificate/project-participation";
+            case MERIT -> "certificate/merit";
         };
     }
 

@@ -1,9 +1,11 @@
 package com.umc.product.certificate.application.service;
 
+import com.umc.product.certificate.domain.CertificateIssuer;
 import com.umc.product.certificate.domain.CertificateType;
 
 record CertificateIssueContext(
     CertificateType type,
+    CertificateIssuer issuer,
     Long recipientMemberId,
     String recipientName,
     String recipientSchoolName,
@@ -11,8 +13,8 @@ record CertificateIssueContext(
     Long gisuGeneration,
     Long projectId,
     String projectName,
-    String awardTitle,
-    String awardDescription,
+    String meritTitle,
+    String meritDescription,
     Long issuedByMemberId
 ) {
 }

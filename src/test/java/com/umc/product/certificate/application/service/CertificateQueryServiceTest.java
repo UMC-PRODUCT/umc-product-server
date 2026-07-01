@@ -20,6 +20,7 @@ import com.umc.product.certificate.application.port.in.query.dto.CertificateVeri
 import com.umc.product.certificate.application.port.out.LoadCertificatePort;
 import com.umc.product.certificate.domain.Certificate;
 import com.umc.product.certificate.domain.CertificateIssueSpec;
+import com.umc.product.certificate.domain.CertificateIssuer;
 import com.umc.product.certificate.domain.CertificateType;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 
@@ -60,6 +61,7 @@ class CertificateQueryServiceTest {
         Certificate expired = Certificate.issue(CertificateIssueSpec.builder()
             .serialNumber("UMC-CMP-20250701-ABCDEFGH")
             .type(CertificateType.COMPLETION)
+            .issuer(CertificateIssuer.UNIVERSITY_MAKEUS_CHALLENGE)
             .recipientMemberId(1L)
             .recipientName("김유엠")
             .recipientSchoolName("유엠씨대학교")
@@ -86,6 +88,8 @@ class CertificateQueryServiceTest {
         assertThat(result.status()).isEqualTo("EXPIRED");
         assertThat(result.recipientName()).isEqualTo("김*엠");
         assertThat(result.type()).isEqualTo(CertificateType.COMPLETION);
+        assertThat(result.issuer()).isEqualTo(CertificateIssuer.UNIVERSITY_MAKEUS_CHALLENGE);
+        assertThat(result.gisuGeneration()).isEqualTo(7L);
     }
 
     @Test
@@ -94,14 +98,15 @@ class CertificateQueryServiceTest {
         // given
         given(loadCertificatePort.listByRecipientMemberId(1L)).willReturn(List.of(
             Certificate.issue(CertificateIssueSpec.builder()
-                .serialNumber("UMC-AWD-20260701-ABCDEFGH")
-                .type(CertificateType.AWARD)
+                .serialNumber("UMC-MRT-20260701-ABCDEFGH")
+                .type(CertificateType.MERIT)
+                .issuer(CertificateIssuer.NEORDINARY)
                 .recipientMemberId(1L)
                 .recipientName("김유엠")
                 .recipientSchoolName("유엠씨대학교")
                 .gisuId(7L)
                 .gisuGeneration(7L)
-                .awardTitle("대상")
+                .meritTitle("대상")
                 .issuedByMemberId(10L)
                 .issuedAt(NOW)
                 .fileId("file-id")

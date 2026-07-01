@@ -29,10 +29,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.certificate.application.port.in.command.AdminIssueCertificateUseCase;
 import com.umc.product.certificate.application.port.in.command.IssueCertificateUseCase;
 import com.umc.product.certificate.application.port.in.command.RevokeCertificateUseCase;
+import com.umc.product.certificate.application.port.in.command.dto.AdminIssueCertificateCommand;
 import com.umc.product.certificate.application.port.in.command.dto.CertificateIssueInfo;
 import com.umc.product.certificate.application.port.in.command.dto.RevokeCertificateCommand;
 import com.umc.product.certificate.application.port.in.query.GetCertificateUseCase;
 import com.umc.product.certificate.application.port.in.query.dto.CertificateVerificationInfo;
+import com.umc.product.certificate.domain.CertificateIssuer;
 import com.umc.product.certificate.domain.CertificateStatus;
 import com.umc.product.certificate.domain.CertificateType;
 import com.umc.product.global.config.JacksonConfig;
@@ -88,7 +90,11 @@ class CertificateControllerTest {
     @DisplayName("본인 인증서를 셀프 발급한다")
     void 본인_인증서를_셀프_발급한다() throws Exception {
         // given
-        given(issueCertificateUseCase.issue(any())).willReturn(issueInfo("UMC-CMP-20260701-ABCDEFGH"));
+        given(issueCertificateUseCase.issue(any())).willReturn(issueInfo(
+            "UMC-CMP-20260701-ABCDEFGH",
+            CertificateType.COMPLETION,
+            CertificateIssuer.UNIVERSITY_MAKEUS_CHALLENGE
+        ));
 
         // when & then
         mockMvc.perform(post("/api/v1/certificates")
@@ -100,7 +106,49 @@ class CertificateControllerTest {
                 ))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.serialNumber").value("UMC-CMP-20260701-ABCDEFGH"))
-            .andExpect(jsonPath("$.result.type").value("COMPLETION"));
+            .andExpect(jsonPath("$.result.type").value("COMPLETION"))
+            .andExpect(jsonPath("$.result.issuer").value("UNIVERSITY_MAKEUS_CHALLENGE"));
+    }
+
+    @Test
+    @DisplayName("운영진 공로증 발급 요청은 발급 주체를 command로 변환한다")
+    void 운영진_공로증_발급_요청은_발급_주체를_command로_변환한다() throws Exception {
+        // given
+        given(adminIssueCertificateUseCase.issueByAdmin(any())).willReturn(issueInfo(
+            "UMC-MRT-20260701-ABCDEFGH",
+            CertificateType.MERIT,
+            CertificateIssuer.NEORDINARY
+        ));
+
+        // when
+        mockMvc.perform(post("/api/v1/admin/certificates")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "type": "MERIT",
+                      "issuer": "NEORDINARY",
+                      "recipientMemberId": 1,
+                      "gisuId": 7,
+                      "meritTitle": "대상",
+                      "meritDescription": "탁월한 기여",
+                      "reissue": true
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.type").value("MERIT"))
+            .andExpect(jsonPath("$.result.issuer").value("NEORDINARY"));
+
+        // then
+        verify(adminIssueCertificateUseCase).issueByAdmin(AdminIssueCertificateCommand.builder()
+            .type(CertificateType.MERIT)
+            .issuer(CertificateIssuer.NEORDINARY)
+            .requesterMemberId(99L)
+            .recipientMemberId(1L)
+            .gisuId(7L)
+            .meritTitle("대상")
+            .meritDescription("탁월한 기여")
+            .reissue(true)
+            .build());
     }
 
     @Test
@@ -112,6 +160,8 @@ class CertificateControllerTest {
                 true,
                 "ISSUED",
                 CertificateType.COMPLETION,
+                CertificateIssuer.UNIVERSITY_MAKEUS_CHALLENGE,
+                7L,
                 "김*엠",
                 ISSUED_AT,
                 EXPIRES_AT
@@ -122,6 +172,8 @@ class CertificateControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.valid").value(true))
             .andExpect(jsonPath("$.result.status").value("ISSUED"))
+            .andExpect(jsonPath("$.result.issuer").value("UNIVERSITY_MAKEUS_CHALLENGE"))
+            .andExpect(jsonPath("$.result.gisuGeneration").value(7))
             .andExpect(jsonPath("$.result.recipientName").value("김*엠"));
     }
 
@@ -142,11 +194,16 @@ class CertificateControllerTest {
             .build());
     }
 
-    private CertificateIssueInfo issueInfo(String serialNumber) {
+    private CertificateIssueInfo issueInfo(
+        String serialNumber,
+        CertificateType type,
+        CertificateIssuer issuer
+    ) {
         return new CertificateIssueInfo(
             1L,
             serialNumber,
-            CertificateType.COMPLETION,
+            type,
+            issuer,
             CertificateStatus.ISSUED,
             ISSUED_AT,
             EXPIRES_AT

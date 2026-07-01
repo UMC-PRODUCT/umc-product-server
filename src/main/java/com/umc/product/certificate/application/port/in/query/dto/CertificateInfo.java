@@ -3,6 +3,7 @@ package com.umc.product.certificate.application.port.in.query.dto;
 import java.time.Instant;
 
 import com.umc.product.certificate.domain.Certificate;
+import com.umc.product.certificate.domain.CertificateIssuer;
 import com.umc.product.certificate.domain.CertificateStatus;
 import com.umc.product.certificate.domain.CertificateType;
 
@@ -10,13 +11,14 @@ public record CertificateInfo(
     Long certificateId,
     String serialNumber,
     CertificateType type,
+    CertificateIssuer issuer,
     CertificateStatus status,
     String recipientName,
     Long gisuId,
     Long gisuGeneration,
     Long projectId,
     String projectName,
-    String awardTitle,
+    String meritTitle,
     Instant issuedAt,
     Instant expiresAt
 ) {
@@ -26,13 +28,14 @@ public record CertificateInfo(
             certificate.getId(),
             certificate.getSerialNumber(),
             certificate.getType(),
+            certificate.getIssuer(),
             certificate.statusAt(now),
             certificate.getRecipientName(),
             certificate.getGisuId(),
             certificate.getGisuGeneration(),
             certificate.getProjectId(),
             certificate.getProjectName(),
-            certificate.getAwardTitle(),
+            certificate.getMeritTitle(),
             certificate.getIssuedAt(),
             certificate.getExpiresAt()
         );

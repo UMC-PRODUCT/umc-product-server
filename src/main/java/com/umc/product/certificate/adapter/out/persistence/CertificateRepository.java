@@ -29,7 +29,7 @@ public interface CertificateRepository extends JpaRepository<Certificate, Long> 
           AND c.status = :status
           AND c.expiresAt > :now
           AND ((:projectId IS NULL AND c.projectId IS NULL) OR c.projectId = :projectId)
-          AND ((:awardTitle IS NULL AND c.awardTitle IS NULL) OR c.awardTitle = :awardTitle)
+          AND ((:meritTitle IS NULL AND c.meritTitle IS NULL) OR c.meritTitle = :meritTitle)
         ORDER BY c.issuedAt DESC, c.id DESC
         """)
     List<Certificate> findValidByScope(
@@ -37,7 +37,7 @@ public interface CertificateRepository extends JpaRepository<Certificate, Long> 
         @Param("recipientMemberId") Long recipientMemberId,
         @Param("gisuId") Long gisuId,
         @Param("projectId") Long projectId,
-        @Param("awardTitle") String awardTitle,
+        @Param("meritTitle") String meritTitle,
         @Param("status") CertificateStatus status,
         @Param("now") Instant now
     );

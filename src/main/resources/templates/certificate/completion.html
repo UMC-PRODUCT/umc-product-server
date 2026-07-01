@@ -78,7 +78,7 @@
 </head>
 <body>
 <section class="certificate">
-    <div class="eyebrow">University MakeUs Challenge</div>
+    <div class="eyebrow" th:text="${issuerName}">University MakeUs Challenge</div>
     <h1 th:text="${typeName}">수료증</h1>
     <div class="recipient">
         성명: <strong th:text="${recipientName}">홍길동</strong><br/>
@@ -90,7 +90,7 @@
         이 증서를 발급합니다.
     </p>
     <div class="issued" th:text="${issuedDate}">2026년 07월 01일</div>
-    <div class="issuer">UMC Product</div>
+    <div class="issuer" th:text="${issuerName}">University MakeUs Challenge</div>
     <div class="meta">
         일련번호: <span th:text="${serialNumber}">UMC-CMP-00000000-ABCDEFGH</span><br/>
         유효기간: 발급일로부터 <span th:text="${expiresDate}">2027년 07월 01일</span>까지<br/>

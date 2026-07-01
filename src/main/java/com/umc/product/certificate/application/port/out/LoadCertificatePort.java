@@ -18,7 +18,7 @@ public interface LoadCertificatePort {
         Long recipientMemberId,
         Long gisuId,
         Long projectId,
-        String awardTitle,
+        String meritTitle,
         Instant now
     );
 

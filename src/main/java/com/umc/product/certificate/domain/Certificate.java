@@ -42,6 +42,10 @@ public class Certificate extends BaseEntity {
     @Column(nullable = false, length = 20)
     private CertificateStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 40)
+    private CertificateIssuer issuer;
+
     @Column(nullable = false)
     private Long recipientMemberId;
 
@@ -63,10 +67,10 @@ public class Certificate extends BaseEntity {
     private String projectName;
 
     @Column(length = 100)
-    private String awardTitle;
+    private String meritTitle;
 
     @Column(length = 500)
-    private String awardDescription;
+    private String meritDescription;
 
     @Column(nullable = false)
     private Long issuedByMemberId;
@@ -95,6 +99,7 @@ public class Certificate extends BaseEntity {
         certificate.serialNumber = spec.serialNumber();
         certificate.type = spec.type();
         certificate.status = CertificateStatus.ISSUED;
+        certificate.issuer = spec.issuer();
         certificate.recipientMemberId = spec.recipientMemberId();
         certificate.recipientName = spec.recipientName();
         certificate.recipientSchoolName = spec.recipientSchoolName();
@@ -102,8 +107,8 @@ public class Certificate extends BaseEntity {
         certificate.gisuGeneration = spec.gisuGeneration();
         certificate.projectId = spec.projectId();
         certificate.projectName = spec.projectName();
-        certificate.awardTitle = spec.awardTitle();
-        certificate.awardDescription = spec.awardDescription();
+        certificate.meritTitle = spec.meritTitle();
+        certificate.meritDescription = spec.meritDescription();
         certificate.issuedByMemberId = spec.issuedByMemberId();
         certificate.issuedAt = spec.issuedAt();
         certificate.expiresAt = spec.issuedAt().plus(VALID_DAYS, ChronoUnit.DAYS);

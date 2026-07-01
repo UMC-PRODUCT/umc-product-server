@@ -108,7 +108,7 @@ public class CertificateCommandService implements
             context.recipientMemberId(),
             context.gisuId(),
             context.projectId(),
-            context.awardTitle(),
+            context.meritTitle(),
             now
         ).orElse(null);
 
@@ -135,6 +135,7 @@ public class CertificateCommandService implements
         Certificate certificate = Certificate.issue(CertificateIssueSpec.builder()
             .serialNumber(serialNumber)
             .type(context.type())
+            .issuer(context.issuer())
             .recipientMemberId(context.recipientMemberId())
             .recipientName(context.recipientName())
             .recipientSchoolName(context.recipientSchoolName())
@@ -142,8 +143,8 @@ public class CertificateCommandService implements
             .gisuGeneration(context.gisuGeneration())
             .projectId(context.projectId())
             .projectName(context.projectName())
-            .awardTitle(context.awardTitle())
-            .awardDescription(context.awardDescription())
+            .meritTitle(context.meritTitle())
+            .meritDescription(context.meritDescription())
             .issuedByMemberId(context.issuedByMemberId())
             .issuedAt(now)
             .fileId(fileInfo.fileId())
@@ -157,12 +158,13 @@ public class CertificateCommandService implements
         return renderCertificatePdfPort.render(CertificatePdfRenderCommand.builder()
             .serialNumber(serialNumber)
             .type(context.type())
+            .issuer(context.issuer())
             .recipientName(context.recipientName())
             .recipientSchoolName(context.recipientSchoolName())
             .gisuGeneration(context.gisuGeneration())
             .projectName(context.projectName())
-            .awardTitle(context.awardTitle())
-            .awardDescription(context.awardDescription())
+            .meritTitle(context.meritTitle())
+            .meritDescription(context.meritDescription())
             .issuedAt(issuedAt)
             .expiresAt(expiresAt)
             .verificationUrl(certificateProperties.verificationUrl(serialNumber))

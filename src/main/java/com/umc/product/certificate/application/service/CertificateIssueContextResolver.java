@@ -7,6 +7,7 @@ import org.springframework.util.StringUtils;
 
 import com.umc.product.certificate.application.port.in.command.dto.AdminIssueCertificateCommand;
 import com.umc.product.certificate.application.port.in.command.dto.IssueCertificateCommand;
+import com.umc.product.certificate.domain.CertificateIssuer;
 import com.umc.product.certificate.domain.CertificateType;
 import com.umc.product.certificate.domain.exception.CertificateErrorCode;
 import com.umc.product.certificate.domain.exception.CertificateException;
@@ -27,13 +28,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 class CertificateIssueContextResolver {
 
+    private static final CertificateIssuer DEFAULT_ISSUER = CertificateIssuer.UNIVERSITY_MAKEUS_CHALLENGE;
+
     private final GetMemberUseCase getMemberUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final GetProjectMemberUseCase getProjectMemberUseCase;
 
     CertificateIssueContext resolveSelf(IssueCertificateCommand command) {
-        if (command.type() == CertificateType.AWARD) {
+        if (command.type() == CertificateType.MERIT) {
             throw new CertificateException(CertificateErrorCode.CERTIFICATE_SELF_ISSUE_FORBIDDEN);
         }
         return resolve(
@@ -41,6 +44,7 @@ class CertificateIssueContextResolver {
             command.requesterMemberId(),
             command.gisuId(),
             command.projectId(),
+            DEFAULT_ISSUER,
             null,
             null,
             command.requesterMemberId()
@@ -53,8 +57,9 @@ class CertificateIssueContextResolver {
             command.recipientMemberId(),
             command.gisuId(),
             command.projectId(),
-            command.awardTitle(),
-            command.awardDescription(),
+            resolveIssuer(command.issuer()),
+            command.meritTitle(),
+            command.meritDescription(),
             command.requesterMemberId()
         );
     }
@@ -64,33 +69,40 @@ class CertificateIssueContextResolver {
         Long recipientMemberId,
         Long gisuId,
         Long projectId,
-        String awardTitle,
-        String awardDescription,
+        CertificateIssuer issuer,
+        String meritTitle,
+        String meritDescription,
         Long issuedByMemberId
     ) {
         MemberInfo member = getMemberUseCase.getById(recipientMemberId);
         GisuInfo gisu = getGisuUseCase.getById(gisuId);
 
         return switch (type) {
-            case COMPLETION -> resolveCompletion(member, gisu, issuedByMemberId);
-            case PROJECT_PARTICIPATION -> resolveProjectParticipation(member, gisu, projectId, issuedByMemberId);
-            case AWARD -> resolveAward(member, gisu, awardTitle, awardDescription, issuedByMemberId);
+            case COMPLETION -> resolveCompletion(member, gisu, issuer, issuedByMemberId);
+            case PROJECT_PARTICIPATION -> resolveProjectParticipation(member, gisu, projectId, issuer, issuedByMemberId);
+            case MERIT -> resolveMerit(member, gisu, issuer, meritTitle, meritDescription, issuedByMemberId);
         };
     }
 
-    private CertificateIssueContext resolveCompletion(MemberInfo member, GisuInfo gisu, Long issuedByMemberId) {
+    private CertificateIssueContext resolveCompletion(
+        MemberInfo member,
+        GisuInfo gisu,
+        CertificateIssuer issuer,
+        Long issuedByMemberId
+    ) {
         ChallengerInfo challenger = getChallengerUseCase.findByMemberIdAndGisuId(member.id(), gisu.gisuId())
             .orElseThrow(() -> new CertificateException(CertificateErrorCode.CERTIFICATE_ELIGIBILITY_NOT_MET));
         if (challenger.challengerStatus() != ChallengerStatus.GRADUATED) {
             throw new CertificateException(CertificateErrorCode.CERTIFICATE_ELIGIBILITY_NOT_MET);
         }
-        return baseContext(CertificateType.COMPLETION, member, gisu, null, null, null, null, issuedByMemberId);
+        return baseContext(CertificateType.COMPLETION, issuer, member, gisu, null, null, null, null, issuedByMemberId);
     }
 
     private CertificateIssueContext resolveProjectParticipation(
         MemberInfo member,
         GisuInfo gisu,
         Long projectId,
+        CertificateIssuer issuer,
         Long issuedByMemberId
     ) {
         if (projectId == null) {
@@ -106,6 +118,7 @@ class CertificateIssueContextResolver {
         }
         return baseContext(
             CertificateType.PROJECT_PARTICIPATION,
+            issuer,
             member,
             gisu,
             projectMember.projectId(),
@@ -116,41 +129,45 @@ class CertificateIssueContextResolver {
         );
     }
 
-    private CertificateIssueContext resolveAward(
+    private CertificateIssueContext resolveMerit(
         MemberInfo member,
         GisuInfo gisu,
-        String awardTitle,
-        String awardDescription,
+        CertificateIssuer issuer,
+        String meritTitle,
+        String meritDescription,
         Long issuedByMemberId
     ) {
-        String normalizedAwardTitle = normalize(awardTitle);
-        if (normalizedAwardTitle == null) {
+        String normalizedMeritTitle = normalize(meritTitle);
+        if (normalizedMeritTitle == null) {
             throw new CertificateException(CertificateErrorCode.CERTIFICATE_ELIGIBILITY_NOT_MET);
         }
         return baseContext(
-            CertificateType.AWARD,
+            CertificateType.MERIT,
+            issuer,
             member,
             gisu,
             null,
             null,
-            normalizedAwardTitle,
-            normalize(awardDescription),
+            normalizedMeritTitle,
+            normalize(meritDescription),
             issuedByMemberId
         );
     }
 
     private CertificateIssueContext baseContext(
         CertificateType type,
+        CertificateIssuer issuer,
         MemberInfo member,
         GisuInfo gisu,
         Long projectId,
         String projectName,
-        String awardTitle,
-        String awardDescription,
+        String meritTitle,
+        String meritDescription,
         Long issuedByMemberId
     ) {
         return new CertificateIssueContext(
             type,
+            issuer,
             member.id(),
             member.name(),
             member.schoolName(),
@@ -158,10 +175,14 @@ class CertificateIssueContextResolver {
             gisu.generation(),
             projectId,
             projectName,
-            awardTitle,
-            awardDescription,
+            meritTitle,
+            meritDescription,
             issuedByMemberId
         );
+    }
+
+    private CertificateIssuer resolveIssuer(CertificateIssuer issuer) {
+        return issuer == null ? DEFAULT_ISSUER : issuer;
     }
 
     private String normalize(String value) {

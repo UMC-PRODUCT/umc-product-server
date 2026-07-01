@@ -1,5 +1,6 @@
 package com.umc.product.certificate.application.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
@@ -14,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.umc.product.certificate.application.port.in.command.dto.AdminIssueCertificateCommand;
 import com.umc.product.certificate.application.port.in.command.dto.IssueCertificateCommand;
+import com.umc.product.certificate.domain.CertificateIssuer;
 import com.umc.product.certificate.domain.CertificateType;
 import com.umc.product.certificate.domain.exception.CertificateErrorCode;
 import com.umc.product.certificate.domain.exception.CertificateException;
@@ -44,20 +46,45 @@ class CertificateIssueContextResolverTest {
     GetProjectMemberUseCase getProjectMemberUseCase;
 
     @Test
-    @DisplayName("상장은 셀프 발급을 허용하지 않는다")
-    void 상장은_셀프_발급을_허용하지_않는다() {
+    @DisplayName("공로증은 셀프 발급을 허용하지 않는다")
+    void 공로증은_셀프_발급을_허용하지_않는다() {
         // given
         CertificateIssueContextResolver sut = sut();
 
         // when & then
         assertThatThrownBy(() -> sut.resolveSelf(IssueCertificateCommand.builder()
-            .type(CertificateType.AWARD)
+            .type(CertificateType.MERIT)
             .requesterMemberId(1L)
             .gisuId(7L)
             .build()))
             .isInstanceOf(CertificateException.class)
             .extracting("baseCode")
             .isEqualTo(CertificateErrorCode.CERTIFICATE_SELF_ISSUE_FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("운영진 공로증 발급 시 발급 주체를 설정할 수 있다")
+    void 운영진_공로증_발급_시_발급_주체를_설정할_수_있다() {
+        // given
+        given(getMemberUseCase.getById(1L)).willReturn(member());
+        given(getGisuUseCase.getById(7L)).willReturn(gisu());
+        CertificateIssueContextResolver sut = sut();
+
+        // when
+        CertificateIssueContext result = sut.resolveAdmin(AdminIssueCertificateCommand.builder()
+            .type(CertificateType.MERIT)
+            .issuer(CertificateIssuer.NEORDINARY)
+            .requesterMemberId(99L)
+            .recipientMemberId(1L)
+            .gisuId(7L)
+            .meritTitle("대상")
+            .build());
+
+        // then
+        assertThat(result.type()).isEqualTo(CertificateType.MERIT);
+        assertThat(result.issuer()).isEqualTo(CertificateIssuer.NEORDINARY);
+        assertThat(result.gisuGeneration()).isEqualTo(7L);
+        assertThat(result.meritTitle()).isEqualTo("대상");
     }
 
     @Test
@@ -118,8 +145,8 @@ class CertificateIssueContextResolverTest {
     }
 
     @Test
-    @DisplayName("상장 제목이 없으면 운영진 상장 발급 조건을 만족하지 않는다")
-    void 상장_제목이_없으면_운영진_상장_발급_조건을_만족하지_않는다() {
+    @DisplayName("공로증 제목이 없으면 운영진 공로증 발급 조건을 만족하지 않는다")
+    void 공로증_제목이_없으면_운영진_공로증_발급_조건을_만족하지_않는다() {
         // given
         given(getMemberUseCase.getById(1L)).willReturn(member());
         given(getGisuUseCase.getById(7L)).willReturn(gisu());
@@ -127,11 +154,11 @@ class CertificateIssueContextResolverTest {
 
         // when & then
         assertThatThrownBy(() -> sut.resolveAdmin(AdminIssueCertificateCommand.builder()
-            .type(CertificateType.AWARD)
+            .type(CertificateType.MERIT)
             .requesterMemberId(99L)
             .recipientMemberId(1L)
             .gisuId(7L)
-            .awardTitle(" ")
+            .meritTitle(" ")
             .build()))
             .isInstanceOf(CertificateException.class)
             .extracting("baseCode")

@@ -25,4 +25,18 @@ class CertificateSerialNumberGeneratorTest {
         // then
         assertThat(serialNumber).matches("UMC-PRJ-20260701-[A-Z2-7]{8}");
     }
+
+    @Test
+    @DisplayName("공로증 일련번호는 MRT 코드를 사용한다")
+    void 공로증_일련번호는_MRT_코드를_사용한다() {
+        // given
+        CertificateSerialNumberGenerator generator = new CertificateSerialNumberGenerator(new SecureRandom());
+
+        // when
+        String serialNumber = generator.generate(CertificateType.MERIT,
+            Instant.parse("2026-07-01T09:00:00Z"));
+
+        // then
+        assertThat(serialNumber).matches("UMC-MRT-20260701-[A-Z2-7]{8}");
+    }
 }
