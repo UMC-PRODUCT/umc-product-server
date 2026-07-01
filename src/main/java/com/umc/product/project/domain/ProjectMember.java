@@ -121,14 +121,24 @@ public class ProjectMember extends BaseEntity {
     }
 
     /**
+     * 멤버의 상태를 변경합니다 (soft delete 포함).
+     * <p>
+     * status 를 {@code newStatus} 로 바꾸고 변경 사유·주체·시각 메타데이터를 함께 기록합니다.
+     * 행을 물리적으로 삭제하지 않으므로 히스토리가 보존됩니다.
+     */
+    public void changeStatus(ProjectMemberStatus newStatus, Long changedByMemberId, String reason) {
+        this.status = newStatus;
+        this.statusUpdatedAt = Instant.now();
+        this.statusChangeReason = reason;
+        this.statusChangedMemberId = changedByMemberId;
+    }
+
+    /**
      * 멤버를 강제 퇴출 처리합니다 (soft delete).
      * status 를 {@link ProjectMemberStatus#DISMISSED} 로 바꾸고 변경 메타데이터를 기록합니다.
      */
     public void dismiss(String reason, Long removedByMemberId) {
-        this.status = ProjectMemberStatus.DISMISSED;
-        this.statusUpdatedAt = Instant.now();
-        this.statusChangeReason = reason;
-        this.statusChangedMemberId = removedByMemberId;
+        changeStatus(ProjectMemberStatus.DISMISSED, removedByMemberId, reason);
     }
 
     /**
@@ -138,9 +148,6 @@ public class ProjectMember extends BaseEntity {
      * 프로젝트 중단(abort) 시 일괄 처리에도 동일 메서드를 사용하며, 사유에 명시합니다.
      */
     public void withdraw(String reason, Long decidedByMemberId) {
-        this.status = ProjectMemberStatus.WITHDRAWN;
-        this.statusUpdatedAt = Instant.now();
-        this.statusChangeReason = reason;
-        this.statusChangedMemberId = decidedByMemberId;
+        changeStatus(ProjectMemberStatus.WITHDRAWN, decidedByMemberId, reason);
     }
 }

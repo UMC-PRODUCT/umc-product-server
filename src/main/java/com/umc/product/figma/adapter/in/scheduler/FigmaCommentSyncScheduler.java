@@ -1,15 +1,19 @@
 package com.umc.product.figma.adapter.in.scheduler;
 
-import com.umc.product.figma.config.FigmaSyncProperties;
+import java.time.Duration;
+import java.time.Instant;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
 import com.umc.product.figma.application.port.in.SummarizeFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;
 import com.umc.product.figma.application.port.out.LoadFigmaSummaryCursorPort;
-import java.time.Duration;
-import java.time.Instant;
+import com.umc.product.figma.config.FigmaSyncProperties;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 
 /**
  * 시간창 기반 figma 댓글 요약/발송의 정기 진입점 (ADR-004 §Decision 4 / §Implementation Plan §5).
@@ -24,6 +28,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.figma.sync.enabled", havingValue = "true")
 public class FigmaCommentSyncScheduler {
 
     private static final long BOOTSTRAP_INTERVAL_MULTIPLIER = 2L;
@@ -34,9 +39,6 @@ public class FigmaCommentSyncScheduler {
 
     @Scheduled(fixedDelayString = "${app.figma.sync.poll-interval}")
     public void poll() {
-        if (!figmaSyncProperties.enabled()) {
-            return;
-        }
         Instant now = Instant.now();
         Duration interval = figmaSyncProperties.pollInterval();
         Instant from = loadFigmaSummaryCursorPort.findCursor()

@@ -151,6 +151,7 @@ jwt:
   refresh-token-secret: ${JWT_REFRESH_TOKEN_SECRET}
   oauth-verification-token-secret: ${JWT_OAUTH_VERIFICATION_TOKEN_SECRET}
   email-verification-token-secret: ${JWT_EMAIL_VERIFICATION_TOKEN_SECRET}
+  sso-login-token-secret: ${JWT_SSO_LOGIN_TOKEN_SECRET}
   access-token-validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS:3600}
   refresh-token-validity-in-seconds: ${JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS:604800}
   verification-token-validity-in-seconds: ${JWT_VERIFICATION_TOKEN_VALIDITY_IN_SECONDS:600}
@@ -290,6 +291,79 @@ app:
     timeout: ${GRAPHQL_TIMEOUT:5s}
     max-depth: ${GRAPHQL_MAX_DEPTH:10}
     max-complexity: ${GRAPHQL_MAX_COMPLEXITY:200}
+    
+  client-context:
+    origins:
+      - origin: https://university.neordinary.com
+        service-type: UMC_WEBSITE
+        environment: PROD
+      - origin: https://backoffice.university.neordinary.com
+        service-type: UMC_BACKOFFICE
+        environment: PROD
+      - origin: https://tech.university.neordinary.com
+        service-type: UMC_TECH_BLOG
+        environment: PROD
+
+  sso:
+    issuer: ${SSO_ISSUER:https://api.university.neordinary.com}
+    authorization-code-ttl: ${SSO_AUTHORIZATION_CODE_TTL:PT3M}
+    browser-login-ttl: ${SSO_BROWSER_LOGIN_TTL:PT12H}
+    cookie:
+      name: ${SSO_BROWSER_LOGIN_COOKIE_NAME:UMC_SSO_LOGIN}
+      domain: ${SSO_BROWSER_LOGIN_COOKIE_DOMAIN:}
+      secure: ${SSO_BROWSER_LOGIN_COOKIE_SECURE:true}
+      same-site: ${SSO_BROWSER_LOGIN_COOKIE_SAME_SITE:Lax}
+    clients:
+      backoffice:
+        name: UMC Backoffice
+        service-type: UMC_BACKOFFICE
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://backoffice.university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://backoffice.university.neordinary.com
+      website:
+        name: UMC Website
+        service-type: UMC_WEBSITE
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://university.neordinary.com
+      tech:
+        name: UMC Tech Blog
+        service-type: UMC_TECH_BLOG
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://tech.university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://tech.university.neordinary.com
+      ios-app:
+        name: UMC iOS App
+        service-type: IOS_APP
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - umc-ios://auth/callback
+          - https://app.university.neordinary.com/ios/auth/callback
+        allowed-origins: []
+      android-app:
+        name: UMC Android App
+        service-type: ANDROID_APP
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - umc-android://auth/callback
+          - https://app.university.neordinary.com/android/auth/callback
+        allowed-origins: []
 
   project:
     matching-round:
@@ -312,6 +386,30 @@ app:
       include-sql: ${APP_OBSERVABILITY_INCLUDE_SQL:false}
       max-sql-length: ${APP_OBSERVABILITY_MAX_SQL_LENGTH:500}
 
+  api-rate-limit:
+    enabled: ${API_RATE_LIMIT_ENABLED:true}
+    include-paths:
+      - /api/**
+    exclude-paths:
+      - /actuator/**
+      - /docs
+      - /docs/
+      - /docs/**
+      - /docs-json
+      - /docs-json/**
+      - /webjars/**
+      - /umc-logo.svg
+      - /error
+    authenticated-default:
+      requests-per-second: ${API_RATE_LIMIT_AUTH_REQUESTS_PER_SECOND:20}
+      requests-per-minute: ${API_RATE_LIMIT_AUTH_REQUESTS_PER_MINUTE:300}
+    anonymous-default:
+      requests-per-second: ${API_RATE_LIMIT_ANON_REQUESTS_PER_SECOND:5}
+      requests-per-minute: ${API_RATE_LIMIT_ANON_REQUESTS_PER_MINUTE:60}
+    cache:
+      maximum-size: ${API_RATE_LIMIT_CACHE_MAXIMUM_SIZE:100000}
+      expire-after-access: ${API_RATE_LIMIT_CACHE_EXPIRE_AFTER_ACCESS:PT10M}
+
   event-outbox:
     enabled: ${EVENT_OUTBOX_ENABLED:false}
     poll-interval-ms: ${EVENT_OUTBOX_POLL_INTERVAL_MS:5000}
@@ -327,9 +425,6 @@ app:
     allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:}
 
   webhook:
-    buffer:
-      enabled: ${WEBHOOK_BUFFER_ENABLED:true}
-      flush-interval-ms: ${WEBHOOK_BUFFER_FLUSH_INTERVAL_MS:60000} # 1분마다 버퍼 플러시
     telegram:
       bot-token: ${TELEGRAM_BOT_TOKEN:}
       chat-id: ${TELEGRAM_CHAT_ID:}
@@ -349,17 +444,26 @@ app:
   oauth2:
     google:
       client-id-list: ${GOOGLE_CLIENT_ID_LIST:}
+      jwks-cache:
+        ttl: ${GOOGLE_JWKS_CACHE_TTL:PT6H}
+        max-size: ${GOOGLE_JWKS_CACHE_MAX_SIZE:1}
     apple:
       ios-client-id: ${APPLE_IOS_CLIENT_ID}
       web-client-id: ${APPLE_WEB_CLIENT_ID}
       team-id: ${APPLE_TEAM_ID}
       key-id: ${APPLE_KEY_ID}
       private-key: ${APPLE_PRIVATE_KEY}
+      jwks-cache:
+        ttl: ${APPLE_JWKS_CACHE_TTL:PT24H}
+        max-size: ${APPLE_JWKS_CACHE_MAX_SIZE:1}
     kakao:
       client-id: ${KAKAO_CLIENT_ID:}
       client-secret: ${KAKAO_CLIENT_SECRET:}
       admin-key: ${KAKAO_ADMIN_KEY:}
       allowed-redirect-uris: ${KAKAO_ALLOWED_REDIRECT_URIS:}
+      jwks-cache:
+        ttl: ${KAKAO_JWKS_CACHE_TTL:PT24H}
+        max-size: ${KAKAO_JWKS_CACHE_MAX_SIZE:1}
 
   llm:
     provider: ${LLM_PROVIDER:mock}
@@ -445,8 +549,47 @@ spring:
       enabled: ${GRAPHQL_GRAPHIQL_ENABLED:true}
 
 app:
+  client-context:
+    origins:
+      - origin: http://localhost:5173
+        service-type: UNKNOWN
+        environment: DEV
+
   seed:
     enabled: ${APP_SEED_ENABLED:true}
+
+  sso:
+    clients:
+      backoffice:
+        name: UMC Backoffice
+        service-type: UMC_BACKOFFICE
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - http://localhost:5173/auth/callback
+        allowed-origins:
+          - http://localhost:5173
+      website:
+        name: UMC Website
+        service-type: UMC_WEBSITE
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - http://localhost:5173/auth/callback
+        allowed-origins:
+          - http://localhost:5173
+      tech:
+        name: UMC Tech Blog
+        service-type: UMC_TECH_BLOG
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - http://localhost:5173/auth/callback
+        allowed-origins:
+          - http://localhost:5173
 
 # ==================================================================
 # local 환경 default override — 로컬 개발자가 env 설정 없이도 SQL 라인 로깅을 본다.

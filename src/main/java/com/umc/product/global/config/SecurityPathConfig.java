@@ -56,6 +56,8 @@ public final class SecurityPathConfig {
         Stream.of(
             "/api/v1/system/status",
             "/api/v1/admin/maintenance/**",
+            "/api/v1/auth/sso/oauth/**",
+            "/api/v1/auth/sso/**",
             "/api/v1/auth/**",
             "/api/v1/terms",
             "/api/v1/terms/**",
