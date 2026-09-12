@@ -2,6 +2,7 @@ import java.io.File
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.plugins.quality.Checkstyle
 import org.gradle.api.plugins.quality.CheckstyleExtension
+import org.gradle.api.tasks.SourceSetContainer
 
 val libsCatalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
 val checkstyleVersion = libsCatalog.findVersion("checkstyle").get().requiredVersion
@@ -17,6 +18,15 @@ extensions.configure<CheckstyleExtension>("checkstyle") {
 }
 
 val lintBaseRef = providers.gradleProperty("lintBase").orElse("origin/develop")
+
+// -PlintAll 은 변경 파일 필터를 끄고 소스 세트 전체를 검사한다.
+// lintBase 로는 전체 검사를 대신할 수 없다. 그쪽은 어디까지나 diff 기준점만 바꾼다.
+val lintAllEnabled = providers.gradleProperty("lintAll")
+    .map { it.isBlank() || it.toBoolean() }
+    .orElse(false)
+
+fun sourceSetAllJava(sourceSetName: String) =
+    extensions.getByType<SourceSetContainer>().named(sourceSetName).get().allJava
 
 fun changedJavaFiles(vararg sourceRoots: String) = lintBaseRef.flatMap { baseRef ->
     val diffAgainstBaseProvider = providers.exec {
@@ -52,11 +62,19 @@ tasks.withType<Checkstyle>().configureEach {
 }
 
 tasks.named<Checkstyle>("checkstyleMain") {
-    setSource(files(changedJavaFiles("src/main/java")))
+    if (lintAllEnabled.get()) {
+        setSource(sourceSetAllJava("main"))
+    } else {
+        setSource(files(changedJavaFiles("src/main/java")))
+    }
 }
 
 tasks.named<Checkstyle>("checkstyleTest") {
-    setSource(files(changedJavaFiles("src/test/java")))
+    if (lintAllEnabled.get()) {
+        setSource(sourceSetAllJava("test"))
+    } else {
+        setSource(files(changedJavaFiles("src/test/java")))
+    }
 }
 
 tasks.register("spotlessTest") {
