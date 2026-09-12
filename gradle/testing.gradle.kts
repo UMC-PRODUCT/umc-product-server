@@ -70,6 +70,11 @@ tasks.withType<Test>().configureEach {
         showStackTraces = true
     }
 
+    // Test 의 작업 디렉터리는 Gradle 프로젝트 폴더다. 저장소 최상단에 있는 공용 자산
+    // (docker/, scripts/ 등)을 찾을 때는 이 값을 기준으로 삼는다. 자세한 배경은
+    // com.umc.product.support.RepositoryRoot 참고.
+    systemProperty("umc.repository.root", rootDir.absolutePath)
+
     dependsOn(tasks.named("spotlessTest"))
     dependsOn(checkDuplicateFlywayMigrationVersions)
     dependsOn(checkSensitiveMainResourcesExcluded)

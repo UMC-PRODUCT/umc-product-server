@@ -17,6 +17,7 @@ import org.testcontainers.utility.DockerImageName;
 import com.umc.product.UmcProductApplication;
 import com.umc.product.global.event.application.service.EventOutboxRelayService;
 import com.umc.product.global.websocket.relay.StompBrokerRelayMonitor;
+import com.umc.product.support.RepositoryRoot;
 
 final class CommunityThreadTwoInstanceTopology implements AutoCloseable {
 
@@ -24,7 +25,8 @@ final class CommunityThreadTwoInstanceTopology implements AutoCloseable {
     private static final String POSTGIS_IMAGE_ENV = "UMC_TEST_POSTGIS_IMAGE";
     private static final String POSTGIS_IMAGE = "postgis/postgis:18-3.6";
     private static final String ARM64_POSTGIS_IMAGE = "umc-product-postgis-test:18.2-postgis";
-    private static final Path ARM64_POSTGIS_DOCKERFILE = Path.of("docker/test/postgis/Dockerfile");
+    private static final Path ARM64_POSTGIS_DOCKERFILE =
+        RepositoryRoot.resolve("docker/test/postgis/Dockerfile");
     private static final DockerImageName RABBITMQ_IMAGE = DockerImageName.parse("rabbitmq:4.1-management");
     private static final int STOMP_PORT = 61613;
     private static final String BROKER_USER = "relay-e2e";

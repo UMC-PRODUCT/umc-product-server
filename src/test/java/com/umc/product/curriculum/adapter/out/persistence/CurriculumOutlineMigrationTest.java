@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -26,6 +25,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.support.PersistenceAdapterTest;
+import com.umc.product.support.RepositoryRoot;
 
 @PersistenceAdapterTest
 @DisplayName("11기 커리큘럼 목차 Flyway 마이그레이션")
@@ -211,7 +211,8 @@ class CurriculumOutlineMigrationTest {
     }
 
     private List<OutlineRow> readApprovedOutline() throws Exception {
-        JsonNode outline = new ObjectMapper().readTree(Path.of("scripts/data/11th-curriculum-outline.json").toFile());
+        JsonNode outline = new ObjectMapper()
+            .readTree(RepositoryRoot.resolve("scripts/data/11th-curriculum-outline.json").toFile());
         List<OutlineRow> result = new ArrayList<>();
         for (JsonNode curriculum : outline.path("curricula")) {
             for (JsonNode week : curriculum.path("weeks")) {

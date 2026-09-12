@@ -22,7 +22,8 @@ public class TestContainersConfig {
     private static final String TEST_POSTGIS_IMAGE_ENV = "UMC_TEST_POSTGIS_IMAGE";
     private static final String OFFICIAL_POSTGIS_IMAGE = "postgis/postgis:18-3.6";
     private static final String LOCAL_ARM64_POSTGIS_IMAGE = "umc-product-postgis-test:18.2-postgis";
-    private static final Path ARM64_POSTGIS_DOCKERFILE = Path.of("docker/test/postgis/Dockerfile");
+    private static final Path ARM64_POSTGIS_DOCKERFILE =
+        RepositoryRoot.resolve("docker/test/postgis/Dockerfile");
 
     private static final DockerImageName POSTGIS_IMAGE = resolvePostgisImage();
 
