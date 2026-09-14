@@ -185,8 +185,8 @@ public class ChallengerRecord extends BaseEntity {
         }
         boolean valid = switch (learningType) {
             case PART -> tracks.isEmpty() && (isAdminRecord() || part != null);
-            case TRACK -> isAdminRecord() || (part == null && !tracks.isEmpty())
-                || (part == ChallengerPart.ADMIN && tracks.isEmpty());
+            // TRACK 기수에서 "파트 없는 사람"은 ADMIN 파트가 아니라 none(part=null·빈 트랙, 운영진 역할로 구분)으로 표현한다.
+            case TRACK -> isAdminRecord() || (part == null && !tracks.isEmpty());
         };
         if (!valid) {
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST,
