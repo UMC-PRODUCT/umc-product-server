@@ -22,6 +22,7 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
@@ -317,20 +318,41 @@ public class ChallengerQueryRepository {
     }
 
     /**
-     * 주어진 조건으로 트랙별 카운트를 실행한다 (TRACK 학습 기수용 병행 노출). tracks 배열에 각 트랙이 포함된 챌린저 수를 센다.
+     * 주어진 조건으로 트랙별 카운트를 실행한다 (TRACK 학습 기수용 병행 노출).
+     * <p>
+     * 트랙마다 별도 COUNT 쿼리를 돌리지 않고, 조건부 집계 {@code SUM(CASE WHEN tracks에 트랙 포함 THEN 1 ELSE 0)}로
+     * 5개 트랙 카운트를 <b>단일 쿼리</b>로 계산한다. 매칭 집합을 한 번만 스캔한다.
      */
     private Map<ChallengerTrack, Long> executeCountByTrack(BooleanBuilder condition) {
+        List<ChallengerTrack> tracks = List.of(ChallengerTrack.values());
+        List<NumberExpression<Long>> countExpressions = tracks.stream()
+            .map(this::trackCountExpression)
+            .toList();
+
+        Tuple row = queryFactory
+            .select(countExpressions.toArray(new Expression[0]))
+            .from(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .where(condition)
+            .fetchOne();
+
         Map<ChallengerTrack, Long> counts = new EnumMap<>(ChallengerTrack.class);
-        for (ChallengerTrack track : ChallengerTrack.values()) {
-            Long count = queryFactory
-                .select(challenger.count())
-                .from(challenger)
-                .join(member).on(challenger.memberId.eq(member.id))
-                .where(condition, trackContains(track))
-                .fetchOne();
-            counts.put(track, count == null ? 0L : count);
+        for (int i = 0; i < tracks.size(); i++) {
+            Long count = row == null ? null : row.get(countExpressions.get(i));
+            counts.put(tracks.get(i), count == null ? 0L : count);
         }
         return counts;
+    }
+
+    /**
+     * tracks 배열에 해당 트랙이 포함된 행이면 1, 아니면 0으로 집계하는 조건부 카운트 표현식.
+     */
+    private NumberExpression<Long> trackCountExpression(ChallengerTrack track) {
+        return new CaseBuilder()
+            .when(trackContains(track))
+            .then(1L)
+            .otherwise(0L)
+            .sum();
     }
 
     // ========== PRIVATE METHODS ==========
