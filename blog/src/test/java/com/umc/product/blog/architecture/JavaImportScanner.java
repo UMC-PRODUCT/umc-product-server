@@ -40,20 +40,27 @@ final class JavaImportScanner {
                 insideBlockComment = false;
             }
 
-            int blockStart = line.indexOf("/*");
-            if (blockStart >= 0) {
+            // 두 기호를 등장 순서대로 본다. // 안의 /* 를 블록 주석 시작으로 오인하면
+            // 그 뒤의 import 를 통째로 놓친다.
+            while (true) {
+                int blockStart = line.indexOf("/*");
+                int lineComment = line.indexOf("//");
+
+                if (lineComment >= 0 && (blockStart < 0 || lineComment < blockStart)) {
+                    line = line.substring(0, lineComment);
+                    break;
+                }
+                if (blockStart < 0) {
+                    break;
+                }
+
                 int blockEnd = line.indexOf("*/", blockStart + 2);
                 if (blockEnd < 0) {
                     insideBlockComment = true;
                     line = line.substring(0, blockStart);
-                } else {
-                    line = line.substring(0, blockStart) + line.substring(blockEnd + 2);
+                    break;
                 }
-            }
-
-            int lineComment = line.indexOf("//");
-            if (lineComment >= 0) {
-                line = line.substring(0, lineComment);
+                line = line.substring(0, blockStart) + line.substring(blockEnd + 2);
             }
 
             if (line.isBlank()) {

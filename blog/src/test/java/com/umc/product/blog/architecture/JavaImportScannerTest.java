@@ -77,6 +77,34 @@ class JavaImportScannerTest {
     }
 
     @Test
+    @DisplayName("한 줄 주석 안의 /* 를 블록 주석 시작으로 오인하지 않는다")
+    void doesNotTreatSlashStarInsideLineCommentAsBlockStart() {
+        String source = """
+            // 블록 주석은 /* 로 시작한다
+            import com.umc.product.audit.domain.AuditAction;
+            """;
+
+        assertThat(JavaImportScanner.scan(source))
+            .extracting("reference")
+            .containsExactly("com.umc.product.audit.domain.AuditAction");
+    }
+
+    @Test
+    @DisplayName("블록 주석이 한 줄 주석보다 먼저 나오면 블록 주석으로 본다")
+    void treatsBlockCommentBeforeLineComment() {
+        String source = """
+            /* 여기서 // 는 주석 안의 문자다
+            import com.umc.product.member.domain.Member;
+            */
+            import com.umc.product.audit.domain.AuditAction;
+            """;
+
+        assertThat(JavaImportScanner.scan(source))
+            .extracting("reference")
+            .containsExactly("com.umc.product.audit.domain.AuditAction");
+    }
+
+    @Test
     @DisplayName("javadoc 안의 import 는 읽지 않는다")
     void ignoresImportInsideJavadoc() {
         String source = """
