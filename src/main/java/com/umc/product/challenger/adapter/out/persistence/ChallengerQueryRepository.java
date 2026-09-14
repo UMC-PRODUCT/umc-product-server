@@ -310,6 +310,13 @@ public class ChallengerQueryRepository {
         if (track == null) {
             return null;
         }
+        return trackContains(challenger, track);
+    }
+
+    /**
+     * 주어진 alias의 tracks 배열에 트랙이 포함되는지 검사한다. 커서 서브쿼리 등 메인과 다른 alias에서도 재사용하기 위해 alias를 받는다.
+     */
+    private BooleanExpression trackContains(QChallenger challenger, ChallengerTrack track) {
         return Expressions.numberTemplate(Integer.class,
             "coalesce(array_position({0}, {1}), 0)",
             challenger.tracks,
@@ -376,7 +383,11 @@ public class ChallengerQueryRepository {
     }
 
     /**
-     * 파트별 정렬 순서 결정
+     * 챌린저 정렬 순서 결정 (part·track 병행).
+     * <p>
+     * PART 학습 기수 챌린저는 part sortOrder로, TRACK 학습 기수 챌린저(part=null)는 기본(대표) 트랙 sortOrder로 정렬한다.
+     * part 케이스를 먼저 검사하고, 트랙은 sortOrder 순으로 검사하므로 [기본, INFRA_PLUS] 조합은 기본 트랙 순서로 정렬된다.
+     * 커서 keyset 페이지네이션에서 다른 alias로도 호출되므로 trackContains에 alias를 전달한다.
      */
     private NumberExpression<Integer> partOrder(QChallenger challenger) {
         return new CaseBuilder()
@@ -387,6 +398,14 @@ public class ChallengerQueryRepository {
             .when(challenger.part.eq(ChallengerPart.IOS)).then(ChallengerPart.IOS.getSortOrder())
             .when(challenger.part.eq(ChallengerPart.NODEJS)).then(ChallengerPart.NODEJS.getSortOrder())
             .when(challenger.part.eq(ChallengerPart.SPRINGBOOT)).then(ChallengerPart.SPRINGBOOT.getSortOrder())
+            .when(trackContains(challenger, ChallengerTrack.PLAN)).then(ChallengerTrack.PLAN.getSortOrder())
+            .when(trackContains(challenger, ChallengerTrack.DESIGN)).then(ChallengerTrack.DESIGN.getSortOrder())
+            .when(trackContains(challenger, ChallengerTrack.WEB_PRODUCT_ENGINEER))
+            .then(ChallengerTrack.WEB_PRODUCT_ENGINEER.getSortOrder())
+            .when(trackContains(challenger, ChallengerTrack.MOBILE_PRODUCT_ENGINEER))
+            .then(ChallengerTrack.MOBILE_PRODUCT_ENGINEER.getSortOrder())
+            .when(trackContains(challenger, ChallengerTrack.INFRA_PLUS))
+            .then(ChallengerTrack.INFRA_PLUS.getSortOrder())
             .otherwise(999);
     }
 
