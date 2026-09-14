@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
     <configuration default="false" name="Local" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
         <option name="ACTIVE_PROFILES" value="local"/>
-        <module name="umc-product.main"/>
+        <module name="umc-product.monolith.main"/>
         <option name="SHORTEN_COMMAND_LINE" value="ARGS_FILE"/>
         <option name="SPRING_BOOT_MAIN_CLASS" value="com.umc.product.UmcProductApplication"/>
         <extension name="net.ashald.envfile">
@@ -11,7 +11,7 @@
             <option name="IS_IGNORE_MISSING_FILES" value="true"/>
             <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false"/>
             <ENTRIES>
-                <ENTRY IS_ENABLED="true" PARSER="env" IS_EXECUTABLE="false" PATH="src/main/resources/.env.local"/>
+                <ENTRY IS_ENABLED="true" PARSER="env" IS_EXECUTABLE="false" PATH="monolith/src/main/resources/.env.local"/>
                 <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false"/>
             </ENTRIES>
         </extension>

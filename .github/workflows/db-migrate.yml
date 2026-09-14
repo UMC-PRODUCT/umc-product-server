@@ -79,7 +79,7 @@ jobs:
       AWS_REGION: ${{ vars.AWS_REGION || 'ap-northeast-2' }}
       SSM_BASE_PATH: ${{ vars.SSM_BASE_PATH || '/umc-product/cygnus-server' }}
       FLYWAY_IMAGE: ${{ vars.FLYWAY_IMAGE || 'flyway/flyway:11-alpine' }}
-      MIGRATION_DIR: src/main/resources/db/migration
+      MIGRATION_DIR: monolith/src/main/resources/db/migration
       FLYWAY_OUT_OF_ORDER: ${{ inputs.out_of_order }}
       FLYWAY_BASELINE_ON_MIGRATE: ${{ inputs.baseline_on_migrate }}
       FLYWAY_CLEAN_DISABLED: "true"
@@ -171,7 +171,7 @@ jobs:
           set -euo pipefail
 
           # baseline-version 은 application.yml 을 단일 출처로 삼아 drift 를 막는다.
-          BASELINE_VERSION="$(grep -m1 -E '^\s*baseline-version:' src/main/resources/application.yml | awk '{print $2}')"
+          BASELINE_VERSION="$(grep -m1 -E '^\s*baseline-version:' monolith/src/main/resources/application.yml | awk '{print $2}')"
           if [[ -z "${BASELINE_VERSION}" ]]; then
             echo "::error::application.yml 에서 spring.flyway.baseline-version 을 찾지 못했습니다."
             exit 1

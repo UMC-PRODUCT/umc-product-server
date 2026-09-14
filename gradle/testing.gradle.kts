@@ -2,39 +2,6 @@ import org.gradle.api.GradleException
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.testing.Test
 
-val checkDuplicateFlywayMigrationVersions by tasks.registering {
-    group = "verification"
-    description = "Fails when two Flyway versioned migrations share the same version."
-
-    val migrationFiles = fileTree("src/main/resources/db/migration") {
-        include("V*__*.sql")
-    }
-    inputs.files(migrationFiles)
-
-    doLast {
-        val versionPattern = Regex("""^V(.+)__.+\.sql$""")
-        val duplicatedVersions = migrationFiles.files
-            .groupBy { migrationFile ->
-                versionPattern.matchEntire(migrationFile.name)?.groupValues?.get(1)
-                    ?: throw GradleException("Invalid Flyway migration filename: ${migrationFile.name}")
-            }
-            .filterValues { files -> files.size > 1 }
-
-        if (duplicatedVersions.isNotEmpty()) {
-            val details = duplicatedVersions.entries
-                .sortedBy { it.key }
-                .joinToString(System.lineSeparator()) { (version, files) ->
-                    val paths = files
-                        .sortedBy { it.name }
-                        .joinToString(", ") { it.relativeTo(projectDir).path }
-                    "  - $version: $paths"
-                }
-
-            throw GradleException("Duplicate Flyway migration versions found:${System.lineSeparator()}$details")
-        }
-    }
-}
-
 val mainResources = extensions.getByType<SourceSetContainer>().named("main").get().resources
 val checkSensitiveMainResourcesExcluded by tasks.registering {
     group = "verification"
@@ -75,7 +42,8 @@ tasks.withType<Test>().configureEach {
     systemProperty("umc.repository.root", rootDir.absolutePath)
 
     dependsOn(tasks.named("spotlessTest"))
-    dependsOn(checkDuplicateFlywayMigrationVersions)
+    // 마이그레이션 중복 검사는 루트에 하나만 둔다. 프로젝트 의존으로는 따라오지 않아 각자 명시해야 한다.
+    dependsOn(":checkDuplicateFlywayMigrationVersions")
     dependsOn(checkSensitiveMainResourcesExcluded)
 }
 

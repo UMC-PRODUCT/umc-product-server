@@ -4,14 +4,16 @@ import org.gradle.api.plugins.quality.Checkstyle
 import org.gradle.api.plugins.quality.CheckstyleExtension
 import org.gradle.api.tasks.SourceSetContainer
 
-val libsCatalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
+// subprojects 블록에서 적용되는 시점에는 서브프로젝트의 카탈로그가 아직 없다. 루트를 거친다.
+val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
 val checkstyleVersion = libsCatalog.findVersion("checkstyle").get().requiredVersion
 
 extensions.configure<CheckstyleExtension>("checkstyle") {
     toolVersion = checkstyleVersion
-    configDirectory.set(layout.projectDirectory.dir("config/checkstyle"))
+    configDirectory.set(rootProject.layout.projectDirectory.dir("config/checkstyle"))
     configProperties["suppressionFile"] =
-        layout.projectDirectory.file("config/checkstyle/naver-checkstyle-suppressions.xml").asFile.absolutePath
+        rootProject.layout.projectDirectory
+            .file("config/checkstyle/naver-checkstyle-suppressions.xml").asFile.absolutePath
     isIgnoreFailures = false
     maxErrors = 0
     maxWarnings = Int.MAX_VALUE
@@ -33,14 +35,29 @@ fun sourceSetAllJava(sourceSetName: String) =
     extensions.getByType<SourceSetContainer>().named(sourceSetName).get().allJava
         .filter { !it.startsWith(generatedSourceRoot) }
 
+// git 은 저장소 루트 기준 경로를 출력하고, pathspec 도 실행 위치 기준으로 해석한다.
+// 서브프로젝트에서 그냥 돌리면 경로가 어긋나 선택된 파일이 0건이 되고, 검사가 조용히 통과한다.
+// workingDir 를 루트로 고정하고 :(top) 으로 pathspec 도 루트 기준으로 못박는다.
+// 구분자는 반드시 invariantSeparatorsPath 여야 한다. Windows 의 역슬래시는 pathspec 에서 안 먹는다.
 fun changedJavaFiles(vararg sourceRoots: String) = lintBaseRef.flatMap { baseRef ->
+    val modulePrefix = projectDir.relativeTo(rootDir).invariantSeparatorsPath
+    val scopedPathspecs = sourceRoots.map { sourceRoot ->
+        if (modulePrefix.isEmpty()) ":(top)$sourceRoot" else ":(top)$modulePrefix/$sourceRoot"
+    }
+
     val diffAgainstBaseProvider = providers.exec {
-        commandLine("git", "diff", "--name-only", "--diff-filter=ACMR", "$baseRef...HEAD", "--", *sourceRoots)
+        workingDir = rootProject.projectDir
+        commandLine(
+            listOf("git", "diff", "--name-only", "--diff-filter=ACMR", "$baseRef...HEAD", "--") + scopedPathspecs
+        )
         isIgnoreExitValue = true
     }.standardOutput.asText
 
     val localDiffProvider = providers.exec {
-        commandLine("git", "diff", "--name-only", "--diff-filter=ACMR", "HEAD", "--", *sourceRoots)
+        workingDir = rootProject.projectDir
+        commandLine(
+            listOf("git", "diff", "--name-only", "--diff-filter=ACMR", "HEAD", "--") + scopedPathspecs
+        )
         isIgnoreExitValue = true
     }.standardOutput.asText
 
@@ -50,8 +67,8 @@ fun changedJavaFiles(vararg sourceRoots: String) = lintBaseRef.flatMap { baseRef
             .map(String::trim)
             .filter { it.endsWith(".java") && it.isNotBlank() }
             .distinct()
-            .map(::file)
-            .filter(File::exists)
+            .map { rootProject.file(it) }
+            .filter { it.exists() && it.startsWith(projectDir) }
             .toList()
     }
 }

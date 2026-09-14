@@ -9,7 +9,7 @@
 # 예)
 #   AWS_PROFILE=umc ./scripts/run-alpha.sh
 #   AWS_PROFILE=umc ./scripts/run-alpha.sh --debug-jvm
-#   ./scripts/run-alpha.sh -- java -jar build/libs/app.jar
+#   ./scripts/run-alpha.sh -- java -jar app/build/libs/app.jar
 #
 #   # 특정 값만 로컬에서 덮어쓰고 싶을 때 (env 가 SSM 주입값보다 나중에 적용됨)
 #   ./scripts/run-alpha.sh -- env APP_SEED_ENABLED=false ./gradlew bootRun
