@@ -135,7 +135,7 @@ public class ChallengerRecord extends BaseEntity {
         ChallengerRoleType challengerRoleType, Long organizationId
     ) {
         List<ChallengerTrack> selectedTracks = tracks == null ? List.of() : tracks;
-        if (selectedTracks.stream().anyMatch(value -> value == null || !value.isBasic())
+        if (!ChallengerTrack.isValidSelection(selectedTracks)
             || (challengerRoleType == null && part != null && !selectedTracks.isEmpty())) {
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
         }
@@ -180,7 +180,7 @@ public class ChallengerRecord extends BaseEntity {
     }
 
     public void validateLearningType(GisuLearningType learningType) {
-        if (tracks.stream().anyMatch(value -> value == null || !value.isBasic())) {
+        if (!ChallengerTrack.isValidSelection(tracks)) {
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
         }
         boolean valid = switch (learningType) {

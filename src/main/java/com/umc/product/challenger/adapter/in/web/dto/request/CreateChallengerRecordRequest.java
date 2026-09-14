@@ -43,7 +43,7 @@ public record CreateChallengerRecordRequest(
             return false;
         }
         List<ChallengerTrack> selectedTracks = tracks == null ? (track == null ? List.of() : List.of(track)) : tracks;
-        if (selectedTracks.stream().anyMatch(value -> value == null || !value.isBasic())) {
+        if (!ChallengerTrack.isValidSelection(selectedTracks)) {
             return false;
         }
         if (challengerRoleType != null) {

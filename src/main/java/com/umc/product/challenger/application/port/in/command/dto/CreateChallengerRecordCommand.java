@@ -29,7 +29,7 @@ public record CreateChallengerRecordCommand(
                 "track과 tracks를 동시에 지정할 수 없습니다.");
         }
         tracks = tracks == null ? (track == null ? List.of() : List.of(track)) : tracks;
-        if (tracks.stream().anyMatch(value -> value == null || !value.isBasic())) {
+        if (!ChallengerTrack.isValidSelection(tracks)) {
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
         }
         tracks = List.copyOf(tracks);
