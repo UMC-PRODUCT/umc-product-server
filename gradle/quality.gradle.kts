@@ -25,8 +25,13 @@ val lintAllEnabled = providers.gradleProperty("lintAll")
     .map { it.isBlank() || it.toBoolean() }
     .orElse(false)
 
+// QueryDSL 생성 클래스는 생성 디렉터리가 소스 세트에 등록돼 있어 전체 검사에 딸려온다. 경로로 걸러낸다.
+// 이름(Q*.java)으로 거르면 Question.java, QueryDslConfig.java 같은 실제 소스까지 조용히 빠진다.
+val generatedSourceRoot = layout.buildDirectory.dir("generated").get().asFile
+
 fun sourceSetAllJava(sourceSetName: String) =
     extensions.getByType<SourceSetContainer>().named(sourceSetName).get().allJava
+        .filter { !it.startsWith(generatedSourceRoot) }
 
 fun changedJavaFiles(vararg sourceRoots: String) = lintBaseRef.flatMap { baseRef ->
     val diffAgainstBaseProvider = providers.exec {
@@ -53,7 +58,6 @@ fun changedJavaFiles(vararg sourceRoots: String) = lintBaseRef.flatMap { baseRef
 
 tasks.withType<Checkstyle>().configureEach {
     classpath = files()
-    exclude("**/Q*.java")
 
     reports {
         xml.required.set(true)
