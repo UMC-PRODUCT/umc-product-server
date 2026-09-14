@@ -559,6 +559,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
                     ),
                     null,
                     false,
+                    Map.of(),
                     Map.of()
                 ));
 
@@ -617,6 +618,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             GISU_ID,
             6L,
             part,
+            java.util.List.of(),
             "이름" + memberId,
             "닉네임" + memberId,
             "학교",

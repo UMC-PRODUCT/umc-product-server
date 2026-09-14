@@ -24,6 +24,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -38,6 +39,7 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
+import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.member.domain.QMember;
 import com.umc.product.organization.domain.QGisu;
 
@@ -193,6 +195,7 @@ public class ChallengerQueryRepository {
         // 파트별 카운트 (같은 condition 공유)
         // 이 partCount는 전체 DB에서 조건에 부합하는 숫자입니당 ~
         Map<ChallengerPart, Long> partCounts = executeCountByPart(condition);
+        Map<ChallengerTrack, Long> trackCounts = executeCountByTrack(condition);
 
         // 커서 조건 추가
         if (cursor != null) {
@@ -203,7 +206,7 @@ public class ChallengerQueryRepository {
         List<Tuple> tuples = queryFactory
             .select(
                 challenger.id, challenger.memberId, challenger.gisuId,
-                challenger.part, challenger.status,
+                challenger.part, challenger.tracks, challenger.status,
                 member.name, member.nickname, school.name, member.profileImageId
             )
             .from(challenger)
@@ -218,7 +221,7 @@ public class ChallengerQueryRepository {
             .map(this::toSearchRow)
             .toList();
 
-        return new ChallengerSearchBundle(rows, partCounts);
+        return new ChallengerSearchBundle(rows, partCounts, trackCounts);
     }
 
     /**
@@ -229,12 +232,13 @@ public class ChallengerQueryRepository {
 
         // 파트별 카운트 (같은 condition 공유)
         Map<ChallengerPart, Long> partCounts = executeCountByPart(condition);
+        Map<ChallengerTrack, Long> trackCounts = executeCountByTrack(condition);
 
         // 메인 검색: challenger + member + school JOIN
         List<Tuple> tuples = queryFactory
             .select(
                 challenger.id, challenger.memberId, challenger.gisuId,
-                challenger.part, challenger.status,
+                challenger.part, challenger.tracks, challenger.status,
                 member.name, member.nickname, school.name, member.profileImageId
             )
             .from(challenger)
@@ -250,7 +254,7 @@ public class ChallengerQueryRepository {
             .map(this::toSearchRow)
             .toList();
 
-        return new ChallengerSearchBundle(rows, partCounts);
+        return new ChallengerSearchBundle(rows, partCounts, trackCounts);
     }
 
     /**
@@ -262,6 +266,7 @@ public class ChallengerQueryRepository {
             .memberId(tuple.get(challenger.memberId))
             .gisuId(tuple.get(challenger.gisuId))
             .part(tuple.get(challenger.part))
+            .tracks(tuple.get(challenger.tracks))
             .status(tuple.get(challenger.status))
             .memberName(tuple.get(member.name))
             .memberNickname(tuple.get(member.nickname))
@@ -294,6 +299,33 @@ public class ChallengerQueryRepository {
                 requireNonNull(tuple.get(challenger.count()))
             ));
 
+        return counts;
+    }
+
+    /**
+     * tracks 배열에 주어진 트랙이 포함되는지 검사한다. Postgres text[] 컬럼에 대한 {@code = any} 조건.
+     */
+    private BooleanExpression trackContains(ChallengerTrack track) {
+        if (track == null) {
+            return null;
+        }
+        return Expressions.booleanTemplate("{1} = any({0})", challenger.tracks, track.name());
+    }
+
+    /**
+     * 주어진 조건으로 트랙별 카운트를 실행한다 (TRACK 학습 기수용 병행 노출). tracks 배열에 각 트랙이 포함된 챌린저 수를 센다.
+     */
+    private Map<ChallengerTrack, Long> executeCountByTrack(BooleanBuilder condition) {
+        Map<ChallengerTrack, Long> counts = new EnumMap<>(ChallengerTrack.class);
+        for (ChallengerTrack track : ChallengerTrack.values()) {
+            Long count = queryFactory
+                .select(challenger.count())
+                .from(challenger)
+                .join(member).on(challenger.memberId.eq(member.id))
+                .where(condition, trackContains(track))
+                .fetchOne();
+            counts.put(track, count == null ? 0L : count);
+        }
         return counts;
     }
 
@@ -355,7 +387,8 @@ public class ChallengerQueryRepository {
         builder
             .and(schoolIdEq(query.schoolId())) // 학교 ID가 있다면 일치해야함
             .and(chapterIdEq(query.chapterId())) // 지부 ID가 있다면 일치해야함
-            .and(partEq(query.part())) // 파트값이 주어졌다면 일치하여야 함
+            .and(partEq(query.part())) // 파트값이 주어졌다면 일치하여야 함 (PART 학습 기수용)
+            .and(trackContains(query.track())) // 트랙값이 주어졌다면 tracks 배열에 포함되어야 함 (TRACK 학습 기수용)
             .and(gisuIdEq(query.gisuId())) // 기수 값이 주어졌다면 일치하여야 함
             .and(statusIn(query.statuses())); // 챌린저 상태값이 주어졌다면 일치하여야 함
 

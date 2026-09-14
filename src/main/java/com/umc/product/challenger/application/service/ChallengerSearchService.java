@@ -1,5 +1,17 @@
 package com.umc.product.challenger.application.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerPointUseCase;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
@@ -19,17 +31,8 @@ import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -68,7 +71,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
 
         Page<SearchChallengerItemInfo> page = new PageImpl<>(items, pageable, totalElements);
 
-        return new SearchChallengerResult(page, bundle.partCounts());
+        return new SearchChallengerResult(page, bundle.partCounts(), bundle.trackCounts());
     }
 
     @Override
@@ -93,7 +96,8 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         // 커서 페이지네이션: 다음 커서 ID값 제공
         Long nextCursor = hasNext ? result.getLast().challengerId() : null;
 
-        return new SearchChallengerCursorResult(items, nextCursor, hasNext, bundle.partCounts());
+        return new SearchChallengerCursorResult(items, nextCursor, hasNext, bundle.partCounts(),
+            bundle.trackCounts());
     }
 
     // global API에서 사용하는 해당 메소드는 deprecate 예정입니다. (중복)
@@ -229,6 +233,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
             row.gisuId(),
             gisuGenerationMap.getOrDefault(row.gisuId(), null),
             row.part(),
+            row.tracks(),
             row.memberName(),
             row.memberNickname(),
             row.schoolName(),

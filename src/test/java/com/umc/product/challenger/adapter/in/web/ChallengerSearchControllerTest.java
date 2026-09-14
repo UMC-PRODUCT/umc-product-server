@@ -49,7 +49,7 @@ class ChallengerSearchControllerTest {
     @DisplayName("커서 검색 size는 최대 50으로 제한된다")
     void 커서_검색_size는_최대_50으로_제한된다() throws Exception {
         given(searchChallengerUseCase.cursorSearch(any(), eq(null), eq(50)))
-            .willReturn(new SearchChallengerCursorResult(List.of(), null, false, Map.of()));
+            .willReturn(new SearchChallengerCursorResult(List.of(), null, false, Map.of(), Map.of()));
 
         mockMvc.perform(get("/api/v1/challenger/search/cursor")
                 .param("size", "100"))
@@ -65,13 +65,14 @@ class ChallengerSearchControllerTest {
         given(searchChallengerUseCase.offsetSearch(any(), any())).willReturn(new SearchChallengerResult(
             new PageImpl<>(
                 List.of(new SearchChallengerItemInfo(
-                    100L, 1L, 9L, 10L, ChallengerPart.SPRINGBOOT,
+                    100L, 1L, 9L, 10L, ChallengerPart.SPRINGBOOT, List.of(),
                     "홍길동", "길동", "테스트대학교", 1.0, null, List.of()
                 )),
                 PageRequest.of(0, 10),
                 1
             ),
-            Map.of(ChallengerPart.SPRINGBOOT, 1L)
+            Map.of(ChallengerPart.SPRINGBOOT, 1L),
+            Map.of()
         ));
 
         mockMvc.perform(get("/api/v1/challenger/search/offset")
