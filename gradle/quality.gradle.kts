@@ -98,6 +98,16 @@ tasks.named<Checkstyle>("checkstyleTest") {
     }
 }
 
+// testFixtures 는 java-test-fixtures 를 적용한 모듈에만 있다.
+tasks.matching { it.name == "checkstyleTestFixtures" }.configureEach {
+    this as Checkstyle
+    if (lintAllEnabled.get()) {
+        setSource(sourceSetAllJava("testFixtures"))
+    } else {
+        setSource(files(changedJavaFiles("src/testFixtures/java")))
+    }
+}
+
 tasks.register("spotlessTest") {
     group = "verification"
     description = "Runs Spotless checks for Java test sources before executing tests."
