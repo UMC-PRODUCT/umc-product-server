@@ -260,13 +260,13 @@ class ChallengerCommandServiceTest {
     }
 
     @Test
-    @DisplayName("트랙 기수의 일괄 생성에는 PLUS를 포함할 수 없다")
-    void 트랙_기수의_일괄_생성에는_PLUS를_포함할_수_없다() {
+    @DisplayName("트랙 기수의 일괄 생성에서 기본 트랙 없이 PLUS 단독으로는 생성할 수 없다")
+    void 트랙_기수의_일괄_생성에서_PLUS_단독은_생성할_수_없다() {
         // given
         givenTrackGisu();
         given(environment.getActiveProfiles()).willReturn(new String[] {"local"});
         CreateChallengerCommand command = CreateChallengerCommand.builder().memberId(1L).gisuId(9L)
-            .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS)).build();
+            .tracks(List.of(ChallengerTrack.INFRA_PLUS)).build();
 
         // when & then
         assertThatThrownBy(() -> sut.createChallengerBulk(List.of(command)))
@@ -277,8 +277,8 @@ class ChallengerCommandServiceTest {
     }
 
     @Test
-    @DisplayName("트랙 기수의 일괄 생성은 복수 기본 트랙을 유지한다")
-    void 트랙_기수의_일괄_생성은_복수_기본_트랙을_유지한다() {
+    @DisplayName("트랙 기수의 일괄 생성은 기본 트랙 위의 PLUS 부가 트랙을 유지한다")
+    void 트랙_기수의_일괄_생성은_기본_트랙과_PLUS를_유지한다() {
         // given
         givenTrackGisu();
         given(environment.getActiveProfiles()).willReturn(new String[] {"local"});
@@ -287,12 +287,12 @@ class ChallengerCommandServiceTest {
             assertThat(challengers).singleElement().satisfies(challenger -> {
                 assertThat(challenger.getPart()).isNull();
                 assertThat(challenger.getTracks()).containsExactly(
-                    ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER);
+                    ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS);
             });
             return challengers;
         });
         CreateChallengerCommand command = CreateChallengerCommand.builder().memberId(1L).gisuId(9L)
-            .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER)).build();
+            .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS)).build();
 
         // when
         sut.createChallengerBulk(List.of(command));

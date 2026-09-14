@@ -25,9 +25,8 @@ class ChallengerTracksPersistenceIntegrationTest extends IntegrationTestSupport 
         Challenger saved = repository.saveAndFlush(Challenger.builder()
             .memberId(88001L)
             .tracks(List.of(
-                ChallengerTrack.INFRA_PLUS,
                 ChallengerTrack.WEB_PRODUCT_ENGINEER,
-                ChallengerTrack.MOBILE_PRODUCT_ENGINEER
+                ChallengerTrack.INFRA_PLUS
             ))
             .gisuId(99001L)
             .build());
@@ -36,9 +35,8 @@ class ChallengerTracksPersistenceIntegrationTest extends IntegrationTestSupport 
         Challenger found = repository.findById(saved.getId()).orElseThrow();
 
         assertThat(found.getTracks()).containsExactly(
-            ChallengerTrack.INFRA_PLUS,
             ChallengerTrack.WEB_PRODUCT_ENGINEER,
-            ChallengerTrack.MOBILE_PRODUCT_ENGINEER
+            ChallengerTrack.INFRA_PLUS
         );
         assertThat(found.getEffectiveTracks()).isEqualTo(found.getTracks());
     }

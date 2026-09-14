@@ -101,7 +101,7 @@ class ChallengerRecordRegistrationIntegrationTest extends IntegrationTestSupport
     @Test
     @DisplayName("신규 회원이 복수 트랙과 학교 회장 역할을 한 번에 등록한다")
     void 신규_수강과_역할_등록() {
-        ChallengerRecord record = issue(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.DESIGN),
+        ChallengerRecord record = issue(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS),
             ChallengerRoleType.SCHOOL_PRESIDENT);
 
         consume(record);
@@ -109,7 +109,7 @@ class ChallengerRecordRegistrationIntegrationTest extends IntegrationTestSupport
         Challenger challenger = membership();
         assertThat(challenger.getPart()).isNull();
         assertThat(challenger.getTracks()).containsExactly(
-            ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.DESIGN);
+            ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS);
         assertThat(roles.findByChallengerId(challenger.getId())).singleElement().satisfies(role -> {
             assertThat(role.getChallengerRoleType()).isEqualTo(ChallengerRoleType.SCHOOL_PRESIDENT);
             assertThat(role.getOrganizationId()).isEqualTo(school.getId());
@@ -195,13 +195,14 @@ class ChallengerRecordRegistrationIntegrationTest extends IntegrationTestSupport
     void 기존_역할을_보존하며_트랙_추가() {
         consume(issue(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER), ChallengerRoleType.SCHOOL_PRESIDENT));
         Long id = membership().getId();
-        ChallengerRecord record = issue(List.of(ChallengerTrack.DESIGN), ChallengerRoleType.SCHOOL_PRESIDENT);
+        ChallengerRecord record = issue(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS),
+            ChallengerRoleType.SCHOOL_PRESIDENT);
 
         consume(record);
 
         assertThat(membership().getId()).isEqualTo(id);
         assertThat(membership().getTracks()).containsExactly(
-            ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.DESIGN);
+            ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS);
         assertThat(roles.findByChallengerId(id)).hasSize(1);
         assertUsed(record);
     }
@@ -261,7 +262,8 @@ class ChallengerRecordRegistrationIntegrationTest extends IntegrationTestSupport
         if (existingMembership) {
             consume(issue(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER), null));
         }
-        ChallengerRecord record = issue(List.of(ChallengerTrack.DESIGN), ChallengerRoleType.SCHOOL_PRESIDENT);
+        ChallengerRecord record = issue(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS),
+            ChallengerRoleType.SCHOOL_PRESIDENT);
         doThrow(new IllegalStateException("등록 후처리 실패")).when(notifications).sendBuffered(any());
 
         assertThatThrownBy(() -> consume(record)).isInstanceOf(IllegalStateException.class);
@@ -284,7 +286,8 @@ class ChallengerRecordRegistrationIntegrationTest extends IntegrationTestSupport
         }
         ChallengerRecord firstRecord = issue(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER),
             ChallengerRoleType.SCHOOL_PRESIDENT);
-        ChallengerRecord secondRecord = issue(List.of(ChallengerTrack.DESIGN), ChallengerRoleType.SCHOOL_PRESIDENT);
+        ChallengerRecord secondRecord = issue(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS),
+            ChallengerRoleType.SCHOOL_PRESIDENT);
         CountDownLatch firstConsumed = new CountDownLatch(1);
         CountDownLatch allowCommit = new CountDownLatch(1);
 
@@ -312,7 +315,7 @@ class ChallengerRecordRegistrationIntegrationTest extends IntegrationTestSupport
 
         assertThat(challengers.findByMemberId(member.getId())).hasSize(1);
         assertThat(membership().getTracks()).containsExactly(
-            ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.DESIGN);
+            ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS);
         assertThat(roles.findByChallengerId(membership().getId())).hasSize(1);
         assertUsed(firstRecord);
         assertUsed(secondRecord);

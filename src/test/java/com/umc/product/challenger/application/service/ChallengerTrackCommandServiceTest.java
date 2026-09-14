@@ -81,21 +81,19 @@ class ChallengerTrackCommandServiceTest {
     class CreateChallenger {
 
         @Test
-        @DisplayName("트랙 기수에서도 여러 기본 트랙을 직접 등록할 수 있다")
-        void 트랙_기수에서도_여러_기본_트랙을_직접_등록할_수_있다() {
+        @DisplayName("트랙 기수에서 복수 기본 트랙 직접 등록은 거부한다")
+        void 트랙_기수에서_복수_기본_트랙_직접_등록은_거부한다() {
             givenTrackGisu();
-            given(saveChallengerPort.save(any())).willAnswer(invocation -> invocation.getArgument(0));
             CreateChallengerCommand command = CreateChallengerCommand.builder()
                 .memberId(1L).gisuId(9L)
                 .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER))
                 .build();
 
-            sut.createChallenger(command);
-
-            ArgumentCaptor<Challenger> captor = ArgumentCaptor.forClass(Challenger.class);
-            then(saveChallengerPort).should().save(captor.capture());
-            assertThat(captor.getValue().getTracks()).containsExactly(
-                ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER);
+            assertThatThrownBy(() -> sut.createChallenger(command))
+                .isInstanceOf(ChallengerDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_LEARNING_TYPE);
+            then(saveChallengerPort).should(never()).save(any());
         }
 
         @Test
@@ -114,12 +112,12 @@ class ChallengerTrackCommandServiceTest {
         }
 
         @Test
-        @DisplayName("트랙 기수에서는 PLUS를 포함한 직접 생성을 거부한다")
-        void 트랙_기수에서는_PLUS를_포함한_직접_생성을_거부한다() {
+        @DisplayName("트랙 기수에서 기본 트랙 없이 PLUS 단독 직접 생성은 거부한다")
+        void 트랙_기수에서_PLUS_단독_직접_생성은_거부한다() {
             givenTrackGisu();
             CreateChallengerCommand command = CreateChallengerCommand.builder()
                 .memberId(1L).gisuId(9L)
-                .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS)).build();
+                .tracks(List.of(ChallengerTrack.INFRA_PLUS)).build();
 
             assertThatThrownBy(() -> sut.createChallenger(command))
                 .isInstanceOf(ChallengerDomainException.class)
@@ -156,13 +154,13 @@ class ChallengerTrackCommandServiceTest {
         }
 
         @Test
-        @DisplayName("트랙 기반 챌린저는 파트 없이 여러 트랙으로 생성한다")
-        void 트랙_기반_챌린저는_파트_없이_여러_트랙으로_생성한다() {
+        @DisplayName("트랙 기반 챌린저는 파트 없이 기본 트랙과 PLUS 부가 트랙으로 생성한다")
+        void 트랙_기반_챌린저는_파트_없이_기본_트랙과_PLUS로_생성한다() {
             CreateChallengerCommand command = CreateChallengerCommand.builder()
                 .memberId(1L)
                 .tracks(List.of(
                     ChallengerTrack.WEB_PRODUCT_ENGINEER,
-                    ChallengerTrack.MOBILE_PRODUCT_ENGINEER
+                    ChallengerTrack.INFRA_PLUS
                 ))
                 .gisuId(9L)
                 .build();
@@ -181,7 +179,7 @@ class ChallengerTrackCommandServiceTest {
             assertThat(captor.getValue().getPart()).isNull();
             assertThat(captor.getValue().getTracks()).containsExactly(
                 ChallengerTrack.WEB_PRODUCT_ENGINEER,
-                ChallengerTrack.MOBILE_PRODUCT_ENGINEER
+                ChallengerTrack.INFRA_PLUS
             );
         }
 
@@ -245,14 +243,18 @@ class ChallengerTrackCommandServiceTest {
         }
 
         @Test
-        @DisplayName("기존 챌린저에 INFRA_PLUS 트랙을 추가한다")
-        void 기존_챌린저에_INFRA_PLUS_트랙을_추가한다() {
-            Challenger challenger = challenger(1L);
+        @DisplayName("기본 트랙을 가진 챌린저에 INFRA_PLUS 부가 트랙을 추가한다")
+        void 기본_트랙을_가진_챌린저에_INFRA_PLUS_부가_트랙을_추가한다() {
+            Challenger challenger = Challenger.builder().memberId(1L).gisuId(9L)
+                .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER)).build();
+            ReflectionTestUtils.setField(challenger, "id", 1L);
+            ReflectionTestUtils.setField(challenger, "status", ChallengerStatus.ACTIVE);
             given(loadChallengerPort.findByMemberIdAndGisuId(1L, 9L)).willReturn(Optional.of(challenger));
 
             sut.addTrack(AddChallengerTrackCommand.of(1L, 9L, ChallengerTrack.INFRA_PLUS));
 
-            assertThat(challenger.getTracks()).containsExactly(ChallengerTrack.INFRA_PLUS);
+            assertThat(challenger.getTracks()).containsExactly(
+                ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS);
             then(saveChallengerPort).should().save(challenger);
         }
     }

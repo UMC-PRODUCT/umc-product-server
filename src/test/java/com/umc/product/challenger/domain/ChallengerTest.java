@@ -50,7 +50,7 @@ class ChallengerTest {
             .memberId(1L)
             .tracks(List.of(
                 ChallengerTrack.WEB_PRODUCT_ENGINEER,
-                ChallengerTrack.MOBILE_PRODUCT_ENGINEER
+                ChallengerTrack.INFRA_PLUS
             ))
             .gisuId(9L)
             .build();
@@ -58,11 +58,11 @@ class ChallengerTest {
         assertThat(trackBasedChallenger.getPart()).isNull();
         assertThat(trackBasedChallenger.getTracks()).containsExactly(
             ChallengerTrack.WEB_PRODUCT_ENGINEER,
-            ChallengerTrack.MOBILE_PRODUCT_ENGINEER
+            ChallengerTrack.INFRA_PLUS
         );
         assertThat(trackBasedChallenger.getEffectiveTracks()).containsExactly(
             ChallengerTrack.WEB_PRODUCT_ENGINEER,
-            ChallengerTrack.MOBILE_PRODUCT_ENGINEER
+            ChallengerTrack.INFRA_PLUS
         );
     }
 
@@ -99,7 +99,7 @@ class ChallengerTest {
             .memberId(1L)
             .tracks(List.of(
                 ChallengerTrack.WEB_PRODUCT_ENGINEER,
-                ChallengerTrack.MOBILE_PRODUCT_ENGINEER,
+                ChallengerTrack.INFRA_PLUS,
                 ChallengerTrack.WEB_PRODUCT_ENGINEER
             ))
             .gisuId(9L)
@@ -107,7 +107,7 @@ class ChallengerTest {
 
         assertThat(duplicated.getTracks()).containsExactly(
             ChallengerTrack.WEB_PRODUCT_ENGINEER,
-            ChallengerTrack.MOBILE_PRODUCT_ENGINEER
+            ChallengerTrack.INFRA_PLUS
         );
     }
 

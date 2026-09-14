@@ -85,17 +85,21 @@ class CurriculumCommandServiceTest {
     }
 
     @Test
-    void 플러스_트랙_커리큘럼은_생성하지_못한다() {
+    void 트랙_기수에_인프라_플러스_커리큘럼을_생성한다() {
         // given
         given(getGisuUseCase.getById(10L)).willReturn(
             new GisuInfo(10L, 10L, Instant.EPOCH, Instant.MAX, false, GisuLearningType.TRACK));
         var command = CreateCurriculumCommand.builder().gisuId(10L)
             .track(ChallengerTrack.INFRA_PLUS).title("인프라").build();
+        given(saveCurriculumPort.save(any())).willAnswer(invocation -> {
+            Curriculum curriculum = invocation.getArgument(0);
+            assertThat(curriculum.getTrack()).isEqualTo(ChallengerTrack.INFRA_PLUS);
+            ReflectionTestUtils.setField(curriculum, "id", 12L);
+            return curriculum;
+        });
 
         // when / then
-        assertThatThrownBy(() -> sut.create(command)).isInstanceOf(CurriculumDomainException.class)
-            .extracting("baseCode").isEqualTo(CurriculumErrorCode.UNSUPPORTED_CURRICULUM_TRACK);
-        then(saveCurriculumPort).shouldHaveNoInteractions();
+        assertThat(sut.create(command)).isEqualTo(12L);
     }
 
     @Test
