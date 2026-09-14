@@ -309,7 +309,11 @@ public class ChallengerQueryRepository {
         if (track == null) {
             return null;
         }
-        return Expressions.booleanTemplate("{1} = any({0})", challenger.tracks, track.name());
+        return Expressions.numberTemplate(Integer.class,
+            "coalesce(array_position({0}, {1}), 0)",
+            challenger.tracks,
+            Expressions.constant(track.name())
+        ).gt(0);
     }
 
     /**
