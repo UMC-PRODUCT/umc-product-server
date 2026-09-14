@@ -1,9 +1,10 @@
 package com.umc.product.authorization.adapter.in.web.dto.response;
 
+import java.util.List;
+
 import com.umc.product.authorization.application.port.in.query.dto.ResourcePermissionInfo;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
-import java.util.List;
 
 public record ResourcePermissionResponse(
     ResourceType resourceType,

@@ -1,11 +1,13 @@
 package com.umc.product.project.adapter.in.web.dto.response;
 
+import java.util.List;
+
 import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
 import com.umc.product.project.adapter.in.web.dto.common.PartQuotaInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import com.umc.product.project.domain.enums.PartQuotaStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
-import java.util.List;
+
 import lombok.Builder;
 
 /**

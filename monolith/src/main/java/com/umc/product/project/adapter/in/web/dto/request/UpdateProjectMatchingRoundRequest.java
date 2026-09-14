@@ -1,18 +1,18 @@
 package com.umc.product.project.adapter.in.web.dto.request;
 
+import java.time.Instant;
+
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectMatchingRoundCommand;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
+
 import jakarta.validation.constraints.Size;
-import java.time.Instant;
 
 public record UpdateProjectMatchingRoundRequest(
-    @Size(max = 255, message = "매칭 차수 이름은 255자 이하여야 합니다")
-    String name,
+    @Size(max = 255, message = "매칭 차수 이름은 255자 이하여야 합니다") String name,
 
-    @Size(max = 255, message = "매칭 차수 설명은 255자 이하여야 합니다")
-    String description,
+    @Size(max = 255, message = "매칭 차수 설명은 255자 이하여야 합니다") String description,
 
     MatchingType type,
 

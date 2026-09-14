@@ -9,24 +9,27 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.umc.product.llm.adapter.out.external.LlmProperties;
-import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
-import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
-import com.umc.product.llm.application.port.out.ChatCompletionPort;
-import com.umc.product.llm.domain.exception.LlmDomainException;
-import com.umc.product.llm.domain.exception.LlmErrorCode;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Clock;
 import java.time.Instant;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.umc.product.llm.adapter.out.external.LlmProperties;
+import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
+import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
+import com.umc.product.llm.application.port.out.ChatCompletionPort;
+import com.umc.product.llm.domain.exception.LlmDomainException;
+import com.umc.product.llm.domain.exception.LlmErrorCode;
+
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 @DisplayName("ChatCompletionService")
 @ExtendWith(MockitoExtension.class)

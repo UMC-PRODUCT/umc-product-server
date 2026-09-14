@@ -3,13 +3,15 @@ package com.umc.product.llm.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-import com.umc.product.llm.adapter.out.external.LlmProperties;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.concurrent.atomic.AtomicReference;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import com.umc.product.llm.adapter.out.external.LlmProperties;
 
 @DisplayName("LlmRateLimiter")
 class LlmRateLimiterTest {

@@ -1,7 +1,8 @@
 package com.umc.product.analytics.application.port.in.query.dto;
 
-import com.umc.product.analytics.domain.AdminAnalyticsSort;
 import org.springframework.data.domain.Pageable;
+
+import com.umc.product.analytics.domain.AdminAnalyticsSort;
 
 public record AdminSchoolSummaryQuery(
     Long requesterMemberId,

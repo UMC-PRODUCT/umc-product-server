@@ -4,15 +4,18 @@ import static com.umc.product.member.domain.QMember.member;
 import static com.umc.product.organization.domain.QSchool.school;
 import static com.umc.product.schedule.domain.QScheduleParticipant.scheduleParticipant;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.schedule.application.port.out.dto.ScheduleParticipantDetailDto;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor

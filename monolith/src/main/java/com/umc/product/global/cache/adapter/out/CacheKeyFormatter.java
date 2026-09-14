@@ -1,9 +1,10 @@
 package com.umc.product.global.cache.adapter.out;
 
-import com.umc.product.global.cache.domain.CacheKey;
-import com.umc.product.global.cache.domain.CacheNamespace;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import com.umc.product.global.cache.domain.CacheKey;
+import com.umc.product.global.cache.domain.CacheNamespace;
 
 @Component
 public class CacheKeyFormatter {

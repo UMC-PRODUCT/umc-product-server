@@ -1,9 +1,10 @@
 package com.umc.product.project.application.port.out;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.project.domain.ProjectPartQuota;
 import java.util.Collection;
 import java.util.List;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.domain.ProjectPartQuota;
 
 /**
  * ProjectPartQuota 영속화 Port (Driven / Port Out).

@@ -1,11 +1,13 @@
 package com.umc.product.community.application.service;
 
+import org.springframework.stereotype.Component;
+
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 /**
  * 작성자 정보 조회를 담당하는 컴포넌트 챌린저 ID로부터 작성자 이름을 조회하는 공통 로직을 제공합니다.

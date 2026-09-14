@@ -1,5 +1,7 @@
 package com.umc.product.challenger.application.port.in.command;
 
+import java.util.List;
+
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerCommand;
 import com.umc.product.challenger.application.port.in.command.dto.DeactivateChallengerCommand;
 import com.umc.product.challenger.application.port.in.command.dto.DeleteChallengerCommand;
@@ -7,7 +9,6 @@ import com.umc.product.challenger.application.port.in.command.dto.DeleteChalleng
 import com.umc.product.challenger.application.port.in.command.dto.GrantChallengerPointCommand;
 import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerCommand;
 import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerPointCommand;
-import java.util.List;
 
 public interface ManageChallengerUseCase {
 

@@ -1,5 +1,7 @@
 package com.umc.product.challenger.adapter.in.web.v2.dto.response;
 
+import java.util.List;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
@@ -7,8 +9,8 @@ import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.util.EmailMasker;
 import com.umc.product.member.application.port.in.query.dto.ChallengerSearchItemV2Info;
 import com.umc.product.member.application.port.in.query.dto.ChallengerSearchV2Result;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.List;
 
 /**
  * GET /api/v2/challenger/search 응답 DTO. 챌린저 단위 페이지네이션이며,

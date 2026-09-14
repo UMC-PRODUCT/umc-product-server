@@ -1,12 +1,13 @@
 package com.umc.product.member.adapter.in.web.dto.response;
 
+import java.util.List;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.util.EmailMasker;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberItemInfo;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberResult;
-import java.util.List;
 
 public record SearchMemberResponse(
     long totalCount,

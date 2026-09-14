@@ -2,11 +2,13 @@ package com.umc.product.audit.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.umc.product.global.exception.constant.Domain;
 import java.time.Instant;
 import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import com.umc.product.global.exception.constant.Domain;
 
 class AuditLogEventTest {
 

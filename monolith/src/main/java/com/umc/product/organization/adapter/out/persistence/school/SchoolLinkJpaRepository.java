@@ -1,11 +1,13 @@
 package com.umc.product.organization.adapter.out.persistence.school;
 
-import com.umc.product.organization.domain.SchoolLink;
 import java.util.List;
+
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
+
+import com.umc.product.organization.domain.SchoolLink;
 
 public interface SchoolLinkJpaRepository extends Repository<SchoolLink, Long> {
 

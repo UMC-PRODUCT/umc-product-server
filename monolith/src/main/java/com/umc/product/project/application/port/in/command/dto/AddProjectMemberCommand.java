@@ -1,7 +1,9 @@
 package com.umc.product.project.application.port.in.command.dto;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.Objects;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+
 import lombok.Builder;
 
 /**

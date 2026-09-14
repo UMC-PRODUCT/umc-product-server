@@ -1,8 +1,10 @@
 package com.umc.product.organization.adapter.in.web.dto.response.school;
 
-import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
+
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "학교 전체 목록 응답")
 public record SchoolNameListResponse(

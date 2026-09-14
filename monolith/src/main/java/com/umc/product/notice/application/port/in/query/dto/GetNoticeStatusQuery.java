@@ -1,8 +1,9 @@
 package com.umc.product.notice.application.port.in.query.dto;
 
+import java.util.List;
+
 import com.umc.product.notice.domain.enums.NoticeReadStatus;
 import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
-import java.util.List;
 
 /**
  * 공지사항 상태를 가져오는 Query

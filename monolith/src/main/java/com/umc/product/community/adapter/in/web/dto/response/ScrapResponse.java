@@ -1,6 +1,7 @@
 package com.umc.product.community.adapter.in.web.dto.response;
 
 import com.umc.product.community.application.port.in.command.post.ToggleScrapUseCase;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "스크랩 토글 응답")

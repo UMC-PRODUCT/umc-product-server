@@ -3,14 +3,16 @@ package com.umc.product.global.event.adapter.out;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.umc.product.global.event.domain.DomainEvent;
-import com.umc.product.global.event.domain.EventOutbox;
 import java.time.Instant;
 import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.global.event.domain.DomainEvent;
+import com.umc.product.global.event.domain.EventOutbox;
 
 @DisplayName("EventPayloadDeserializer")
 class EventPayloadDeserializerTest {

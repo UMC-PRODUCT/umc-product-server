@@ -12,10 +12,8 @@ import lombok.Builder;
  */
 @Builder
 public record EditCurriculumCommand(
-    @NotNull(message = "커리큘럼 ID는 필수입니다")
-    Long curriculumId,
+    @NotNull(message = "커리큘럼 ID는 필수입니다") Long curriculumId,
 
-    @NotBlank(message = "제목은 필수입니다")
-    String title
+    @NotBlank(message = "제목은 필수입니다") String title
 ) {
 }

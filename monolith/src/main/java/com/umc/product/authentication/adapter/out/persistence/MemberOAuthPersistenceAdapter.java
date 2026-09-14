@@ -1,13 +1,16 @@
 package com.umc.product.authentication.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.authentication.application.port.out.LoadMemberOAuthPort;
 import com.umc.product.authentication.application.port.out.SaveMemberOAuthPort;
 import com.umc.product.authentication.domain.MemberOAuth;
 import com.umc.product.common.domain.enums.OAuthProvider;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
 @Component

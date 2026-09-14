@@ -1,5 +1,8 @@
 package com.umc.product.organization.application.port.service.query;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -9,9 +12,8 @@ import com.umc.product.organization.application.port.in.query.GetSchoolAccessCon
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolAccessContext;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

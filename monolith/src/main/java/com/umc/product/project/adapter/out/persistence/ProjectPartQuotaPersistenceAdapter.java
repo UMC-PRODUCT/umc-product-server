@@ -1,14 +1,17 @@
 package com.umc.product.project.adapter.out.persistence;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.SaveProjectPartQuotaPort;
 import com.umc.product.project.domain.ProjectPartQuota;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor

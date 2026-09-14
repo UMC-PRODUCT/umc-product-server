@@ -1,9 +1,10 @@
 package com.umc.product.test.adapter.in.web.dto;
 
+import java.util.List;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectScenariosResult;
 import com.umc.product.test.application.port.in.command.dto.TargetProjectStatus;
-import java.util.List;
 
 public record SeedProjectScenariosResponse(
     List<CreatedProject> createdProjects,

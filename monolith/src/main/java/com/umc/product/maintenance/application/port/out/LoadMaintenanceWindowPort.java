@@ -1,9 +1,10 @@
 package com.umc.product.maintenance.application.port.out;
 
-import com.umc.product.maintenance.domain.MaintenanceWindow;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+
+import com.umc.product.maintenance.domain.MaintenanceWindow;
 
 public interface LoadMaintenanceWindowPort {
 

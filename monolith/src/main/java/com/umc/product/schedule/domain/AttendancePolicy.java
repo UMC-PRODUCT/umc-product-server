@@ -1,12 +1,14 @@
 package com.umc.product.schedule.domain;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

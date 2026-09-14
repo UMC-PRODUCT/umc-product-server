@@ -1,14 +1,15 @@
 package com.umc.product.project.application.service.policy;
 
-import com.umc.product.project.domain.ProjectApplication;
-import com.umc.product.project.domain.enums.MatchingType;
-import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+
+import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.enums.MatchingType;
+import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 
 /**
  * 매칭 차수 종료 시 자동 보충 정책.

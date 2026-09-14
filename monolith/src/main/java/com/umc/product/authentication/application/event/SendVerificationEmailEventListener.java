@@ -1,11 +1,13 @@
 package com.umc.product.authentication.application.event;
 
-import com.umc.product.notification.application.port.in.SendEmailUseCase;
-import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+
+import com.umc.product.notification.application.port.in.SendEmailUseCase;
+import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * {@link SendVerificationEmailEvent} 를 받아 트랜잭션 commit 직후 실제 메일 발송을 트리거한다.

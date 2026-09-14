@@ -1,7 +1,8 @@
 package com.umc.product.community.application.port.out.scrap;
 
-import com.umc.product.community.domain.Scrap;
 import java.util.Optional;
+
+import com.umc.product.community.domain.Scrap;
 
 public interface LoadScrapPort {
 

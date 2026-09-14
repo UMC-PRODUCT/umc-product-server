@@ -1,8 +1,10 @@
 package com.umc.product.organization.adapter.in.web.dto.response.gisu;
 
-import com.umc.product.global.response.PageResponse;
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
+
+import com.umc.product.global.response.PageResponse;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "기수 목록 페이징 응답")
 public record GisuPageResponse(

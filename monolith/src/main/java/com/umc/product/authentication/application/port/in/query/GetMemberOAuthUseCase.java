@@ -1,8 +1,9 @@
 package com.umc.product.authentication.application.port.in.query;
 
+import java.util.List;
+
 import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
 import com.umc.product.common.domain.enums.OAuthProvider;
-import java.util.List;
 
 public interface GetMemberOAuthUseCase {
     /**

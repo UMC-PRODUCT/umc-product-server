@@ -1,8 +1,9 @@
 package com.umc.product.storage.adapter.in.web.dto;
 
-import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
 import java.time.LocalDateTime;
 import java.util.Map;
+
+import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
 
 public record PrepareUploadResponse(
         String fileId,

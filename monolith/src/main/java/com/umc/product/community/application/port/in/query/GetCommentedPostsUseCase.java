@@ -1,8 +1,9 @@
 package com.umc.product.community.application.port.in.query;
 
-import com.umc.product.community.application.port.in.query.dto.PostInfo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import com.umc.product.community.application.port.in.query.dto.PostInfo;
 
 /**
  * 댓글 단 글 조회 UseCase

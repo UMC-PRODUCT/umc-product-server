@@ -1,10 +1,10 @@
 package com.umc.product.notice.application.port.in.query.dto;
 
-import com.umc.product.notice.domain.enums.VoteStatus;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+
+import com.umc.product.notice.domain.enums.VoteStatus;
 
 /**
  * 공지사항 상세 조회 시 사용되는 투표 정보 DTO (Notice 도메인)

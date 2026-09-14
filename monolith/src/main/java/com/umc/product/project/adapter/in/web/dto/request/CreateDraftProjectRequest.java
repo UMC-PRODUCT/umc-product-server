@@ -1,6 +1,7 @@
 package com.umc.product.project.adapter.in.web.dto.request;
 
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectCommand;
+
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -10,8 +11,7 @@ import jakarta.validation.constraints.NotNull;
  * 운영진(회장/지부장/총괄단)이 다른 PLAN 챌린저를 PO 로 지정하려면 명시한다.
  */
 public record CreateDraftProjectRequest(
-    @NotNull(message = "기수 ID는 필수입니다")
-    Long gisuId,
+    @NotNull(message = "기수 ID는 필수입니다") Long gisuId,
 
     Long productOwnerMemberId
 ) {

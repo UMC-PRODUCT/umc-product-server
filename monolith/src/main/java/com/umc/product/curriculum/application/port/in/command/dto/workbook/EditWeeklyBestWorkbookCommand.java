@@ -13,13 +13,10 @@ import lombok.Builder;
  */
 @Builder
 public record EditWeeklyBestWorkbookCommand(
-    @NotNull(message = "베스트 워크북 ID는 필수입니다")
-    Long weeklyBestWorkbookId,
+    @NotNull(message = "베스트 워크북 ID는 필수입니다") Long weeklyBestWorkbookId,
 
-    @NotNull(message = "멤버 ID는 필수입니다")
-    Long requestedMemberId,
+    @NotNull(message = "멤버 ID는 필수입니다") Long requestedMemberId,
 
-    @NotBlank(message = "선정 이유는 필수입니다.")
-    String newReason
+    @NotBlank(message = "선정 이유는 필수입니다.") String newReason
 ) {
 }

@@ -1,10 +1,11 @@
 package com.umc.product.authorization.application.port.in.query;
 
+import java.util.List;
+
 import com.umc.product.authorization.application.port.in.query.dto.ResourcePermissionInfo;
 import com.umc.product.authorization.application.port.in.query.dto.ResourcePermissionQuery;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
-import java.util.List;
 
 public interface ResourcePermissionUseCase {
 

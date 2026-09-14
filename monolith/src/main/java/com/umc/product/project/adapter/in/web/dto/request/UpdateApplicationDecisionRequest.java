@@ -1,6 +1,7 @@
 package com.umc.product.project.adapter.in.web.dto.request;
 
 import com.umc.product.project.application.port.in.command.dto.ApplicationDecisionStatus;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -11,9 +12,7 @@ import jakarta.validation.constraints.Size;
  * 향후 사유 입력이 추가되거나 자동 매칭에서 시스템 메시지가 들어갈 수 있도록 열어둔다.
  */
 public record UpdateApplicationDecisionRequest(
-    @NotNull(message = "결정 상태는 필수입니다.")
-    ApplicationDecisionStatus status,
+    @NotNull(message = "결정 상태는 필수입니다.") ApplicationDecisionStatus status,
 
-    @Size(max = 500, message = "결정 사유는 500자 이내여야 합니다.")
-    String reason
+    @Size(max = 500, message = "결정 사유는 500자 이내여야 합니다.") String reason
 ) {}

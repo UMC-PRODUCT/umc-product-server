@@ -1,12 +1,15 @@
 package com.umc.product.notification.adapter.out.persistentce;
 
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.notification.application.port.out.LoadFcmOutboxPort;
 import com.umc.product.notification.application.port.out.SaveFcmOutboxPort;
 import com.umc.product.notification.domain.FcmOutbox;
 import com.umc.product.notification.domain.FcmOutboxStatus;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor

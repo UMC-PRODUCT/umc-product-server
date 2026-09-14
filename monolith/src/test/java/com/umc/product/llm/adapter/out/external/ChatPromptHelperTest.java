@@ -4,12 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
+
+import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
 
 @DisplayName("ChatPromptHelper")
 class ChatPromptHelperTest {

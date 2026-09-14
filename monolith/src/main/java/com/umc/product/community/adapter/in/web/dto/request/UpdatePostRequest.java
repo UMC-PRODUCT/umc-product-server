@@ -1,9 +1,11 @@
 package com.umc.product.community.adapter.in.web.dto.request;
 
+import java.util.Objects;
+
 import com.umc.product.community.application.port.in.command.post.dto.UpdatePostCommand;
 import com.umc.product.community.domain.enums.Category;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.Objects;
 
 @Schema(description = "게시글 수정 요청")
 public record UpdatePostRequest(

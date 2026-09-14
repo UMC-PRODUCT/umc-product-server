@@ -1,9 +1,10 @@
 package com.umc.product.support.fixture;
 
+import org.springframework.stereotype.Component;
+
 import com.umc.product.organization.application.port.out.command.SaveChapterPort;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.Gisu;
-import org.springframework.stereotype.Component;
 
 @Component
 public class ChapterFixture extends FixtureSupport {

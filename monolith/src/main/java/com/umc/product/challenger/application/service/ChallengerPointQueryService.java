@@ -1,14 +1,17 @@
 package com.umc.product.challenger.application.service;
 
-import com.umc.product.challenger.application.port.in.query.GetChallengerPointUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
-import com.umc.product.challenger.application.port.out.LoadChallengerPointPort;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
+
+import com.umc.product.challenger.application.port.in.query.GetChallengerPointUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
+import com.umc.product.challenger.application.port.out.LoadChallengerPointPort;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor

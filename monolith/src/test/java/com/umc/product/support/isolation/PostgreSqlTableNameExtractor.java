@@ -1,8 +1,10 @@
 package com.umc.product.support.isolation;
 
-import jakarta.persistence.EntityManager;
 import java.util.List;
+
 import org.springframework.stereotype.Component;
+
+import jakarta.persistence.EntityManager;
 
 @Component
 class PostgreSqlTableNameExtractor implements TableNameExtractor {

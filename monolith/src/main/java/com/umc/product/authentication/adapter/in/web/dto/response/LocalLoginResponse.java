@@ -1,6 +1,7 @@
 package com.umc.product.authentication.adapter.in.web.dto.response;
 
 import com.umc.product.authentication.application.port.in.command.dto.LocalLoginResult;
+
 import lombok.Builder;
 
 @Builder

@@ -1,8 +1,8 @@
 package com.umc.product.curriculum.adapter.in.web.v2.dto.request;
 
-import com.umc.product.curriculum.application.port.in.command.dto.curriculum.EditWeeklyCurriculumCommand;
-
 import java.time.Instant;
+
+import com.umc.product.curriculum.application.port.in.command.dto.curriculum.EditWeeklyCurriculumCommand;
 
 public record EditWeeklyCurriculumRequest(
     Long weekNo,

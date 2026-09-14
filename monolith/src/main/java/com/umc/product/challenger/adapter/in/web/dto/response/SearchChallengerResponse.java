@@ -1,13 +1,15 @@
 package com.umc.product.challenger.adapter.in.web.dto.response;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerItemInfo;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerResult;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.global.response.PageResponse;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+
 import lombok.Builder;
 
 @Builder

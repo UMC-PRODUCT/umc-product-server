@@ -1,5 +1,9 @@
 package com.umc.product.schedule.adapter.in.web.v2.dto.response;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Set;
+
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleInfoResponse.ScheduleAttendancePolicyInfoResponse;
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleInfoResponse.ScheduleLocationInfoResponse;
 import com.umc.product.schedule.application.port.in.query.dto.AdminScheduleInfo;
@@ -7,9 +11,7 @@ import com.umc.product.schedule.application.port.in.query.dto.AdminScheduleInfo.
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleBaseInfo;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
-import java.time.Instant;
-import java.util.List;
-import java.util.Set;
+
 import lombok.AccessLevel;
 import lombok.Builder;
 

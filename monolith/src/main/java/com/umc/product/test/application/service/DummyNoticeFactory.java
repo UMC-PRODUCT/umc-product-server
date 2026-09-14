@@ -1,16 +1,19 @@
 package com.umc.product.test.application.service;
 
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.ThreadLocalRandom;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+
+import net.datafaker.Faker;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
 import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.enums.NoticeTab;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.ThreadLocalRandom;
-import net.datafaker.Faker;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 /**
  * datafaker 를 사용해 test 도메인 시딩용 더미 Notice Command 를 생성한다. ADR-017 참조.

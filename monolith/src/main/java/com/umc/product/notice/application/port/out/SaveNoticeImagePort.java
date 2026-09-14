@@ -1,7 +1,8 @@
 package com.umc.product.notice.application.port.out;
 
-import com.umc.product.notice.domain.NoticeImage;
 import java.util.List;
+
+import com.umc.product.notice.domain.NoticeImage;
 
 public interface SaveNoticeImagePort {
     NoticeImage saveImage(NoticeImage noticeImage);

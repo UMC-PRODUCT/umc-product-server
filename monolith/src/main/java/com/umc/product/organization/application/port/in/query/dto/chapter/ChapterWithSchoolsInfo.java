@@ -1,8 +1,9 @@
 package com.umc.product.organization.application.port.in.query.dto.chapter;
 
+import java.util.List;
+
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
-import java.util.List;
 
 public record ChapterWithSchoolsInfo(
     Long chapterId,

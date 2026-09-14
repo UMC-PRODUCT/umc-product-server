@@ -1,13 +1,16 @@
 package com.umc.product.member.adapter.out.persistence;
 
-import com.umc.product.member.application.port.out.LoadMemberProfilePort;
-import com.umc.product.member.application.port.out.SaveMemberProfilePort;
-import com.umc.product.member.domain.MemberProfile;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Component;
+
+import com.umc.product.member.application.port.out.LoadMemberProfilePort;
+import com.umc.product.member.application.port.out.SaveMemberProfilePort;
+import com.umc.product.member.domain.MemberProfile;
+
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor

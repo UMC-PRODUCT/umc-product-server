@@ -1,9 +1,11 @@
 package com.umc.product.schedule.adapter.out.persistence;
 
-import com.umc.product.schedule.domain.ScheduleParticipant;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.umc.product.schedule.domain.ScheduleParticipant;
 
 public interface ScheduleParticipantJpaRepository extends JpaRepository<ScheduleParticipant, Long> {
 

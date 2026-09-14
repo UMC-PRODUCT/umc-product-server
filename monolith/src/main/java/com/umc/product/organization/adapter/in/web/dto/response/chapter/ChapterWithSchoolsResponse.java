@@ -1,8 +1,10 @@
 package com.umc.product.organization.adapter.in.web.dto.response.chapter;
 
-import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
+
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "지부 및 소속 학교 목록 응답")
 public record ChapterWithSchoolsResponse(

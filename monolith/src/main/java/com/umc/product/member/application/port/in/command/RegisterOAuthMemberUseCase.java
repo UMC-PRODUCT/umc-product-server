@@ -1,7 +1,8 @@
 package com.umc.product.member.application.port.in.command;
 
-import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMemberCommand;
 import java.util.List;
+
+import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMemberCommand;
 
 public interface RegisterOAuthMemberUseCase {
     /**

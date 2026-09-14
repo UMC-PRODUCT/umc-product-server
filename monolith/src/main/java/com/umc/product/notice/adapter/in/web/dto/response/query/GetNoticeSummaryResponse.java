@@ -1,8 +1,10 @@
 package com.umc.product.notice.adapter.in.web.dto.response.query;
 
+import java.time.Instant;
+
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.domain.NoticeTargetInfo;
-import java.time.Instant;
+
 import lombok.Builder;
 
 /**

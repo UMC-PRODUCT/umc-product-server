@@ -2,16 +2,19 @@ package com.umc.product.project.adapter.out.persistence;
 
 import static com.umc.product.project.domain.QProjectPartQuota.projectPartQuota;
 
-import com.querydsl.core.Tuple;
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.project.domain.ProjectPartQuota;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Repository;
+
+import com.querydsl.core.Tuple;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.umc.product.project.domain.ProjectPartQuota;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * ProjectPartQuota QueryDSL 기반 조회 구현.

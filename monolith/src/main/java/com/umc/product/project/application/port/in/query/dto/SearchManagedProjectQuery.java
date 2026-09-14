@@ -1,8 +1,10 @@
 package com.umc.product.project.application.port.in.query.dto;
 
 import java.util.Objects;
-import lombok.Builder;
+
 import org.springframework.data.domain.Pageable;
+
+import lombok.Builder;
 
 /**
  * 관리 화면용 프로젝트 검색 Query (PROJECT-006).

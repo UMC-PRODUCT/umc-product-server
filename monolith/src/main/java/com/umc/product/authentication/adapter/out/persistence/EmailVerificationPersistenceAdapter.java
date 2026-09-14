@@ -1,15 +1,18 @@
 package com.umc.product.authentication.adapter.out.persistence;
 
+import java.time.Instant;
+import java.util.Optional;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.authentication.application.port.out.DeleteEmailVerificationPort;
 import com.umc.product.authentication.application.port.out.LoadEmailVerificationPort;
 import com.umc.product.authentication.application.port.out.SaveEmailVerificationPort;
 import com.umc.product.authentication.domain.EmailVerification;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
-import java.time.Instant;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
 @Component

@@ -1,7 +1,8 @@
 package com.umc.product.community.application.port.in.query;
 
-import com.umc.product.community.application.port.in.query.dto.CommentInfo;
 import java.util.List;
+
+import com.umc.product.community.application.port.in.query.dto.CommentInfo;
 
 public interface GetCommentListUseCase {
     List<CommentInfo> getComments(Long postId);

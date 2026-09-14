@@ -1,10 +1,12 @@
 package com.umc.product.support.fixture;
 
+import java.time.Instant;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.organization.application.port.out.command.SaveGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.CommonFixture;
-import java.time.Instant;
-import org.springframework.stereotype.Component;
 
 @Component
 public class GisuFixture extends FixtureSupport {

@@ -1,9 +1,11 @@
 package com.umc.product.schedule.application.port.in.query.dto;
 
+import java.util.List;
+
 import com.umc.product.schedule.application.port.out.dto.ScheduleParticipantDetailDto;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
-import java.util.List;
+
 import lombok.AccessLevel;
 import lombok.Builder;
 

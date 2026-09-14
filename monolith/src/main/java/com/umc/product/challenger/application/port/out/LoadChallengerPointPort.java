@@ -1,9 +1,10 @@
 package com.umc.product.challenger.application.port.out;
 
-import com.umc.product.challenger.domain.ChallengerPoint;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import com.umc.product.challenger.domain.ChallengerPoint;
 
 public interface LoadChallengerPointPort {
 

@@ -1,8 +1,10 @@
 package com.umc.product.organization.adapter.in.web.dto.response.school;
 
-import com.umc.product.organization.application.port.in.query.dto.school.UnassignedSchoolInfo;
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
+
+import com.umc.product.organization.application.port.in.query.dto.school.UnassignedSchoolInfo;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "배정 대기 중인 학교 목록 응답")
 public record UnassignedSchoolListResponse(

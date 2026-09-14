@@ -2,12 +2,15 @@ package com.umc.product.organization.adapter.out.persistence.gisu;
 
 import static com.umc.product.organization.domain.QGisu.gisu;
 
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.organization.domain.Gisu;
 import java.time.Instant;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Repository;
+
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.umc.product.organization.domain.Gisu;
+
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor

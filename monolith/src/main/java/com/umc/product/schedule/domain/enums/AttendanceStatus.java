@@ -2,6 +2,7 @@ package com.umc.product.schedule.domain.enums;
 
 import com.umc.product.schedule.domain.AttendancePolicy;
 import com.umc.product.schedule.domain.ScheduleParticipantAttendance;
+
 import lombok.Getter;
 
 /**

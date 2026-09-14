@@ -1,7 +1,9 @@
 package com.umc.product.curriculum.application.port.in.query.dto;
 
-import com.umc.product.curriculum.domain.WeeklyCurriculum;
 import java.time.Instant;
+
+import com.umc.product.curriculum.domain.WeeklyCurriculum;
+
 import lombok.AccessLevel;
 import lombok.Builder;
 

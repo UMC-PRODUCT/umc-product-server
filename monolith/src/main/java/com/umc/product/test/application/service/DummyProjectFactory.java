@@ -1,10 +1,12 @@
 package com.umc.product.test.application.service;
 
 import java.util.Locale;
-import net.datafaker.Faker;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+
+import net.datafaker.Faker;
 
 /**
  * datafaker 를 사용해 시나리오 시딩용 프로젝트 name / description 을 생성한다.

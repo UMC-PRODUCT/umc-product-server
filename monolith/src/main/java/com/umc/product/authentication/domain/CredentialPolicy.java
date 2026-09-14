@@ -1,8 +1,9 @@
 package com.umc.product.authentication.domain;
 
+import java.util.regex.Pattern;
+
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
-import java.util.regex.Pattern;
 
 /**
  * 이메일/PW 자격증명의 형식/정책에 대한 단일 진실 원천(SSOT). ADR-017 흐름.

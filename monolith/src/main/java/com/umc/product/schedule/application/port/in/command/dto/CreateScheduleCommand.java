@@ -1,10 +1,12 @@
 package com.umc.product.schedule.application.port.in.command.dto;
 
+import java.time.Instant;
+import java.util.Set;
+
 import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
-import java.time.Instant;
-import java.util.Set;
+
 import lombok.Builder;
 
 @Builder

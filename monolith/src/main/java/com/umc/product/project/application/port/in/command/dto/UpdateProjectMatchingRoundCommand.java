@@ -1,9 +1,11 @@
 package com.umc.product.project.application.port.in.command.dto;
 
-import com.umc.product.project.domain.enums.MatchingPhase;
-import com.umc.product.project.domain.enums.MatchingType;
 import java.time.Instant;
 import java.util.Objects;
+
+import com.umc.product.project.domain.enums.MatchingPhase;
+import com.umc.product.project.domain.enums.MatchingType;
+
 import lombok.Builder;
 
 @Builder

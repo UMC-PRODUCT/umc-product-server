@@ -1,9 +1,10 @@
 package com.umc.product.authentication.domain;
 
+import java.util.Map;
+
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
-import java.util.Map;
 
 /**
  * OAuth 인증을 통해 얻은 사용자 정보를 담는 도메인 VO.

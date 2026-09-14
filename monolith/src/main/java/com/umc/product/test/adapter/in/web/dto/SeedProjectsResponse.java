@@ -1,7 +1,8 @@
 package com.umc.product.test.adapter.in.web.dto;
 
-import com.umc.product.test.application.port.in.command.dto.SeedProjectsResult;
 import java.util.List;
+
+import com.umc.product.test.application.port.in.command.dto.SeedProjectsResult;
 
 public record SeedProjectsResponse(
     List<Long> createdProjectIds,

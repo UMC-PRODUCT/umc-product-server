@@ -1,9 +1,10 @@
 package com.umc.product.llm.adapter.out.external;
 
-import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
+
+import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
 
 /**
  * Spring AI 어댑터들이 공유하는 응답 정규화 / 토큰 추출 헬퍼.

@@ -2,6 +2,7 @@ package com.umc.product.community.adapter.in.web.dto.response;
 
 import com.umc.product.community.application.port.in.command.comment.ToggleCommentLikeUseCase;
 import com.umc.product.community.application.port.in.command.post.TogglePostLikeUseCase;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "좋아요 토글 응답")

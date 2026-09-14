@@ -1,11 +1,13 @@
 package com.umc.product.community.application.port.out.comment;
 
-import com.umc.product.community.domain.Comment;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import com.umc.product.community.domain.Comment;
 
 public interface LoadCommentPort {
     Optional<Comment> findById(Long commentId);

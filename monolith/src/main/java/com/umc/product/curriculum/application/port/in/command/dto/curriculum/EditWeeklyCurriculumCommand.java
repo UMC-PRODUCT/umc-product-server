@@ -1,9 +1,9 @@
 package com.umc.product.curriculum.application.port.in.command.dto.curriculum;
 
+import java.time.Instant;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
-
-import java.time.Instant;
 
 /**
  * 주차별 커리큘럼 수정 커맨드
@@ -17,8 +17,7 @@ import java.time.Instant;
  */
 @Builder
 public record EditWeeklyCurriculumCommand(
-    @NotNull(message = "주차별 커리큘럼 ID는 필수입니다")
-    Long weeklyCurriculumId,
+    @NotNull(message = "주차별 커리큘럼 ID는 필수입니다") Long weeklyCurriculumId,
 
     Long weekNo,
     Boolean isExtra,

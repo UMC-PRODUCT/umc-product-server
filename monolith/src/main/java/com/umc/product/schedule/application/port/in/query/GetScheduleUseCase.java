@@ -1,11 +1,12 @@
 package com.umc.product.schedule.application.port.in.query;
 
+import java.time.Instant;
+import java.util.List;
+
 import com.umc.product.schedule.application.port.in.query.dto.AdminScheduleInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleBaseInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleInfo;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
-import java.time.Instant;
-import java.util.List;
 
 public interface GetScheduleUseCase {
 

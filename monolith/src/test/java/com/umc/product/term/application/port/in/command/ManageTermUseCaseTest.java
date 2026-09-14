@@ -5,19 +5,21 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
-import com.umc.product.term.application.port.in.command.dto.CreateTermCommand;
-import com.umc.product.term.application.port.out.LoadTermPort;
-import com.umc.product.term.application.port.out.SaveTermPort;
-import com.umc.product.term.application.service.command.TermCommandService;
-import com.umc.product.term.domain.Term;
-import com.umc.product.term.domain.enums.TermType;
 import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.umc.product.term.application.port.in.command.dto.CreateTermCommand;
+import com.umc.product.term.application.port.out.LoadTermPort;
+import com.umc.product.term.application.port.out.SaveTermPort;
+import com.umc.product.term.application.service.command.TermCommandService;
+import com.umc.product.term.domain.Term;
+import com.umc.product.term.domain.enums.TermType;
 
 @ExtendWith(MockitoExtension.class)
 class ManageTermUseCaseTest {

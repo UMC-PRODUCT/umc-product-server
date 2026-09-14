@@ -1,17 +1,21 @@
 package com.umc.product.test.application.service;
 
-import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
-import com.umc.product.member.application.port.in.command.dto.TermConsents;
-import com.umc.product.term.application.port.in.query.GetTermUseCase;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
-import lombok.RequiredArgsConstructor;
-import net.datafaker.Faker;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+
+import net.datafaker.Faker;
+
+import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.TermConsents;
+import com.umc.product.term.application.port.in.query.GetTermUseCase;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * datafaker 를 사용해 test 도메인 시딩용 더미 이메일 회원 Command 를 생성한다. ADR-017 참조.

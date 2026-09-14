@@ -1,6 +1,7 @@
 package com.umc.product.organization.adapter.in.web.dto.response.studygroup;
 
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "스터디 그룹 스터디원 응답")

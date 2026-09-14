@@ -1,10 +1,11 @@
 package com.umc.product.challenger.application.port.in.query;
 
+import java.util.List;
+import java.util.Map;
+
 import com.umc.product.challenger.application.port.in.query.dto.ActivityPeriodSummary;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
-import java.util.List;
-import java.util.Map;
 
 /**
  * 회원의 기수별 활동일 합산을 조회하는 UseCase 입니다.

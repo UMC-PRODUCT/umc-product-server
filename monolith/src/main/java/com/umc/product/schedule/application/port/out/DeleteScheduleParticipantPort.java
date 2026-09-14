@@ -1,7 +1,8 @@
 package com.umc.product.schedule.application.port.out;
 
-import com.umc.product.schedule.domain.ScheduleParticipant;
 import java.util.List;
+
+import com.umc.product.schedule.domain.ScheduleParticipant;
 
 public interface DeleteScheduleParticipantPort {
 

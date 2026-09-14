@@ -1,18 +1,21 @@
 package com.umc.product.schedule.domain;
 
+import java.time.Instant;
+
+import org.locationtech.jts.geom.Point;
+
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.locationtech.jts.geom.Point;
 
 /**
  * 사용자가 출석 요청을 했을 때, 관련 정보가 담기는 Embeddable 객체.

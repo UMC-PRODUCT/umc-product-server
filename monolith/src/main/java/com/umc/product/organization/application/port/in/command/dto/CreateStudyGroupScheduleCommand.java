@@ -1,6 +1,7 @@
 package com.umc.product.organization.application.port.in.command.dto;
 
 import com.umc.product.organization.domain.StudyGroupSchedule;
+
 import lombok.Builder;
 
 @Builder

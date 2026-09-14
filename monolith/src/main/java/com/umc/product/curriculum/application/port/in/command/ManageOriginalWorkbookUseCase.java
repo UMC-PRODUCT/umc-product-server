@@ -1,10 +1,10 @@
 package com.umc.product.curriculum.application.port.in.command;
 
+import java.util.List;
+
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.ChangeOriginalWorkbookStatusCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.CreateOriginalWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.EditOriginalWorkbookCommand;
-
-import java.util.List;
 
 /**
  * OriginalWorkbook 관리 UseCase

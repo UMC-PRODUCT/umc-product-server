@@ -1,13 +1,16 @@
 package com.umc.product.notice.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
 import com.umc.product.notice.application.port.out.ManageNoticeTargetPort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
 import com.umc.product.notice.domain.NoticeTarget;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 /**
  * NoticePermission Persistence Adapter

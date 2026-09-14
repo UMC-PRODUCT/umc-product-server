@@ -1,10 +1,12 @@
 package com.umc.product.audit.domain;
 
-import com.umc.product.global.event.domain.DomainEvent;
-import com.umc.product.global.exception.constant.Domain;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+
+import com.umc.product.global.event.domain.DomainEvent;
+import com.umc.product.global.exception.constant.Domain;
+
 import lombok.Builder;
 
 /**

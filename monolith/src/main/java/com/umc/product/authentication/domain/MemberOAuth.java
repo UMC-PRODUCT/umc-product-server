@@ -4,6 +4,7 @@ import com.umc.product.authentication.domain.exception.AuthenticationDomainExcep
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.OAuthProvider;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

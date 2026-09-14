@@ -1,8 +1,10 @@
 package com.umc.product.project.adapter.in.web.dto.common;
 
-import com.umc.product.project.application.port.in.command.dto.UpdateProjectApplicationDraftCommand.AnswerEntry;
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
+
+import com.umc.product.project.application.port.in.command.dto.UpdateProjectApplicationDraftCommand.AnswerEntry;
+
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 /**
@@ -19,8 +21,7 @@ import lombok.Builder;
  */
 @Builder
 public record ApplicationAnswerItem(
-    @NotNull(message = "questionId는 필수입니다")
-    Long questionId,
+    @NotNull(message = "questionId는 필수입니다") Long questionId,
     String textValue,
     List<Long> selectedOptionIds,
     List<String> fileIds

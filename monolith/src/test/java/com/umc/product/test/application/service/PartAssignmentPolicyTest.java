@@ -2,12 +2,14 @@ package com.umc.product.test.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.List;
 import java.util.Set;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
 
 class PartAssignmentPolicyTest {
 

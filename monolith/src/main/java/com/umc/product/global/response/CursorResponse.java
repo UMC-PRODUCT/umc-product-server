@@ -86,4 +86,3 @@ public record CursorResponse<T>(List<T> content, Long nextCursor, boolean hasNex
         return new CursorResponse<>(List.of(), null, false);
     }
 }
-

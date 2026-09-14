@@ -12,11 +12,9 @@ import lombok.Builder;
  */
 @Builder
 public record DeleteChallengerWorkbookCommand(
-    @NotNull(message = "챌린저 워크북 ID는 필수입니다")
-    Long challengerWorkbookId,
+    @NotNull(message = "챌린저 워크북 ID는 필수입니다") Long challengerWorkbookId,
 
-    @NotNull(message = "요청자 멤버 ID는 필수입니다")
-    Long requestedMemberId,
+    @NotNull(message = "요청자 멤버 ID는 필수입니다") Long requestedMemberId,
 
     String reason
 ) {

@@ -2,6 +2,7 @@ package com.umc.product.authentication.adapter.in.web.dto.response;
 
 import com.umc.product.authentication.domain.enums.OAuthResultCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
+
 import lombok.Builder;
 
 @Builder

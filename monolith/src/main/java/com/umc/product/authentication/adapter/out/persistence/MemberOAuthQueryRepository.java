@@ -1,8 +1,10 @@
 package com.umc.product.authentication.adapter.out.persistence;
 
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+
+import com.querydsl.jpa.impl.JPAQueryFactory;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * MemberOAuth용 QueryDSL Repository

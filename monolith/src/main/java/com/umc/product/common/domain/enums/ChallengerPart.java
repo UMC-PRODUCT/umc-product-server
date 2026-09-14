@@ -1,8 +1,10 @@
 package com.umc.product.common.domain.enums;
 
+import java.util.Arrays;
+
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
-import java.util.Arrays;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

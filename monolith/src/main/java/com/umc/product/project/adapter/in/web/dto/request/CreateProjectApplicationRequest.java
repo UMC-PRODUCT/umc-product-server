@@ -1,6 +1,7 @@
 package com.umc.product.project.adapter.in.web.dto.request;
 
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectApplicationCommand;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
@@ -12,8 +13,7 @@ import lombok.Builder;
  */
 @Builder
 public record CreateProjectApplicationRequest(
-    @NotNull(message = "matchingRoundId는 필수입니다")
-    Long matchingRoundId
+    @NotNull(message = "matchingRoundId는 필수입니다") Long matchingRoundId
 ) {
 
     public CreateDraftProjectApplicationCommand toCommand(Long projectId, Long applicantMemberId) {

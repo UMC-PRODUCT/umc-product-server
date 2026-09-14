@@ -3,9 +3,11 @@ package com.umc.product.notice.adapter.out.persistence;
 import static com.umc.product.notice.domain.QNoticeImage.noticeImage;
 import static com.umc.product.notice.domain.QNoticeLink.noticeLink;
 
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+
+import com.querydsl.jpa.impl.JPAQueryFactory;
+
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor

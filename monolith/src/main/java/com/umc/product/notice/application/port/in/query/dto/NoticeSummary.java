@@ -1,7 +1,8 @@
 package com.umc.product.notice.application.port.in.query.dto;
 
-import com.umc.product.notice.domain.NoticeTargetInfo;
 import java.time.Instant;
+
+import com.umc.product.notice.domain.NoticeTargetInfo;
 
 public record NoticeSummary(
     Long id,

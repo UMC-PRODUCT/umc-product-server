@@ -1,8 +1,8 @@
 package com.umc.product.notice.application.port.in.command.dto;
 
-import lombok.Builder;
-
 import java.util.List;
+
+import lombok.Builder;
 
 /**
  * 공지사항 투표 응답 수정/취소 Command.

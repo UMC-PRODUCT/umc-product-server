@@ -1,8 +1,9 @@
 package com.umc.product.analytics.application.port.in.query.dto;
 
-import com.umc.product.common.domain.enums.ChallengerStatus;
 import java.util.EnumMap;
 import java.util.Map;
+
+import com.umc.product.common.domain.enums.ChallengerStatus;
 
 public record AdminDashboardSummaryInfo(
     long activeChallengerCount,

@@ -1,8 +1,9 @@
 package com.umc.product.challenger.application.port.out.dto;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.List;
 import java.util.Map;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
 
 /**
  * 챌린저 검색 결과와 파트별 인원 수를 함께 담는 DTO

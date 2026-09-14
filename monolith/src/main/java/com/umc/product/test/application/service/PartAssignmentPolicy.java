@@ -1,12 +1,14 @@
 package com.umc.product.test.application.service;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
 
 /**
  * 프로젝트 시딩의 멤버 슬롯 파트 분배 정책. ADR-017 참조.

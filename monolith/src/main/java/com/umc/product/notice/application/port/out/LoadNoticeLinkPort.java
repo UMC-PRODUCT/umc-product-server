@@ -1,8 +1,9 @@
 package com.umc.product.notice.application.port.out;
 
-import com.umc.product.notice.domain.NoticeLink;
 import java.util.List;
 import java.util.Optional;
+
+import com.umc.product.notice.domain.NoticeLink;
 
 public interface LoadNoticeLinkPort {
     Optional<NoticeLink> findLinkById(Long id);

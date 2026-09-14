@@ -1,8 +1,9 @@
 package com.umc.product.notification.application.service;
 
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
+
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * 이메일 발신자(From) 식별자 설정.

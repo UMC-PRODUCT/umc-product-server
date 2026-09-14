@@ -1,14 +1,16 @@
 package com.umc.product.notification.adapter.in.event;
 
-import com.umc.product.global.config.FcmProperties;
-import com.umc.product.notification.application.port.in.ProcessFcmOutboxUseCase;
-import com.umc.product.notification.domain.FcmOutboxEvent;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+
+import com.umc.product.global.config.FcmProperties;
+import com.umc.product.notification.application.port.in.ProcessFcmOutboxUseCase;
+import com.umc.product.notification.domain.FcmOutboxEvent;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component

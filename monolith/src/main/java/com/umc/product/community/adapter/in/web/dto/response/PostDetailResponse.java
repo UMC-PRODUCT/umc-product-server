@@ -1,10 +1,12 @@
 package com.umc.product.community.adapter.in.web.dto.response;
 
+import java.time.Instant;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.application.port.in.query.dto.PostDetailInfo;
 import com.umc.product.community.domain.enums.Category;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.Instant;
 import lombok.Builder;
 
 @Schema(description = "게시글 상세 응답")

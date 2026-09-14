@@ -1,8 +1,10 @@
 package com.umc.product.challenger.application.port.in.query.dto;
 
+import java.time.Instant;
+
 import com.umc.product.challenger.domain.ChallengerPoint;
 import com.umc.product.challenger.domain.enums.PointType;
-import java.time.Instant;
+
 import lombok.Builder;
 
 /**

@@ -1,14 +1,16 @@
 package com.umc.product.community.application.port.out.post;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.umc.product.community.application.port.in.query.dto.PostSearchQuery;
 import com.umc.product.community.application.port.out.dto.PostWithAuthor;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.enums.Category;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 /**
  * 커뮤니티 게시글을 불러오는 포트

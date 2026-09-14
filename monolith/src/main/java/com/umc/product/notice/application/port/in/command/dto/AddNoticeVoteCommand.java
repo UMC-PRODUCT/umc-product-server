@@ -1,11 +1,12 @@
 package com.umc.product.notice.application.port.in.command.dto;
 
-import com.umc.product.notice.domain.exception.NoticeDomainException;
-import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import lombok.Builder;
-
 import java.time.Instant;
 import java.util.List;
+
+import com.umc.product.notice.domain.exception.NoticeDomainException;
+import com.umc.product.notice.domain.exception.NoticeErrorCode;
+
+import lombok.Builder;
 
 @Builder
 public record AddNoticeVoteCommand(

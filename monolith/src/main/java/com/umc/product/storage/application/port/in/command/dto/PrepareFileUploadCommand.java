@@ -1,7 +1,8 @@
 package com.umc.product.storage.application.port.in.command.dto;
 
-import com.umc.product.storage.domain.enums.FileCategory;
 import java.util.Objects;
+
+import com.umc.product.storage.domain.enums.FileCategory;
 
 /**
  * 파일 업로드 준비 커맨드

@@ -1,9 +1,10 @@
 package com.umc.product.notice.adapter.in.web.dto.request;
 
-import com.umc.product.notice.application.port.in.command.dto.SubmitNoticeVoteResponseCommand;
-import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.util.List;
+
+import com.umc.product.notice.application.port.in.command.dto.SubmitNoticeVoteResponseCommand;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public record SubmitNoticeVoteResponseRequest(
 

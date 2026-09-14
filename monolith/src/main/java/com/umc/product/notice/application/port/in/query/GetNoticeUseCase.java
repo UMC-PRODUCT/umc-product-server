@@ -1,5 +1,8 @@
 package com.umc.product.notice.application.port.in.query;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.umc.product.notice.application.port.in.query.dto.GetNoticeStatusQuery;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
@@ -7,8 +10,6 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSumm
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.domain.NoticeClassification;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 public interface GetNoticeUseCase {
 

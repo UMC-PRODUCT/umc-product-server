@@ -2,6 +2,7 @@ package com.umc.product.organization.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.organization.domain.enums.SchoolLinkType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

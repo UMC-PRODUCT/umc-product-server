@@ -1,9 +1,11 @@
 package com.umc.product.notice.adapter.out.persistence;
 
-import com.umc.product.notice.domain.NoticeTarget;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.umc.product.notice.domain.NoticeTarget;
 
 /**
  * NoticePermission JPA Repository

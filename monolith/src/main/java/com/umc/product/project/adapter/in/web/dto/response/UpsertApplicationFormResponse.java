@@ -1,8 +1,10 @@
 package com.umc.product.project.adapter.in.web.dto.response;
 
+import java.util.List;
+
 import com.umc.product.project.adapter.in.web.dto.common.ApplicationFormSection;
 import com.umc.product.project.application.port.in.query.dto.ApplicationFormInfo;
-import java.util.List;
+
 import lombok.Builder;
 
 /**

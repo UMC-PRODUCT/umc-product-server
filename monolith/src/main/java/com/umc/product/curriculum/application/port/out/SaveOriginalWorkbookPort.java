@@ -1,7 +1,8 @@
 package com.umc.product.curriculum.application.port.out;
 
-import com.umc.product.curriculum.domain.OriginalWorkbook;
 import java.util.List;
+
+import com.umc.product.curriculum.domain.OriginalWorkbook;
 
 public interface SaveOriginalWorkbookPort {
 

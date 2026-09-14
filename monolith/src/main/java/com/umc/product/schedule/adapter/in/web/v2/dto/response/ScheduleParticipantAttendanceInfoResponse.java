@@ -1,8 +1,10 @@
 package com.umc.product.schedule.adapter.in.web.v2.dto.response;
 
+import java.time.Instant;
+
 import com.umc.product.schedule.application.port.in.command.dto.result.ScheduleParticipantAttendanceResult;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
-import java.time.Instant;
+
 import lombok.AccessLevel;
 import lombok.Builder;
 

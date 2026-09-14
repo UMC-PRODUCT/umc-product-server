@@ -1,12 +1,14 @@
 package com.umc.product.notice.application.service.query;
 
+import org.springframework.stereotype.Service;
+
 import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
 import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor

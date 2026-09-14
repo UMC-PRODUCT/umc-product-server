@@ -13,14 +13,11 @@ import lombok.Builder;
  */
 @Builder
 public record CreateMissionSubmissionCommand(
-    @NotNull(message = "챌린저 워크북 ID는 필수입니다")
-    Long challengerWorkbookId,
+    @NotNull(message = "챌린저 워크북 ID는 필수입니다") Long challengerWorkbookId,
 
-    @NotNull(message = "원본 워크북 미션 ID는 필수입니다")
-    Long originalWorkbookMissionId,
+    @NotNull(message = "원본 워크북 미션 ID는 필수입니다") Long originalWorkbookMissionId,
 
-    @NotNull(message = "멤버 ID는 필수입니다")
-    Long requesterMemberId,
+    @NotNull(message = "멤버 ID는 필수입니다") Long requesterMemberId,
 
     String content
 ) {

@@ -1,13 +1,12 @@
 package com.umc.product.curriculum.application.port.in.command.dto;
 
-import jakarta.validation.constraints.NotNull;
 import java.util.Objects;
 
+import jakarta.validation.constraints.NotNull;
+
 public record SubmitMissionCommand(
-        @NotNull(message = "미션 ID는 필수입니다")
-        Long missionId,
-        @NotNull(message = "챌린저 워크북 ID는 필수입니다")
-        Long challengerWorkbookId,
+        @NotNull(message = "미션 ID는 필수입니다") Long missionId,
+        @NotNull(message = "챌린저 워크북 ID는 필수입니다") Long challengerWorkbookId,
         String submission
 ) {
     public SubmitMissionCommand {

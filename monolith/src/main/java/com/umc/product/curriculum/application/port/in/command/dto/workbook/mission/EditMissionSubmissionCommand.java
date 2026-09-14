@@ -13,13 +13,10 @@ import lombok.Builder;
  */
 @Builder
 public record EditMissionSubmissionCommand(
-    @NotNull(message = "미션 제출물 ID는 필수입니다")
-    Long missionSubmissionId,
+    @NotNull(message = "미션 제출물 ID는 필수입니다") Long missionSubmissionId,
 
-    @NotNull(message = "멤버 ID는 필수입니다")
-    Long requesterMemberId,
+    @NotNull(message = "멤버 ID는 필수입니다") Long requesterMemberId,
 
-    @NotBlank(message = "수정할 내용은 필수입니다.")
-    String content
+    @NotBlank(message = "수정할 내용은 필수입니다.") String content
 ) {
 }

@@ -1,11 +1,13 @@
 package com.umc.product.organization.adapter.out.persistence.chapter;
 
-import com.umc.product.organization.domain.ChapterSchool;
 import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import com.umc.product.organization.domain.ChapterSchool;
 
 public interface ChapterSchoolJpaRepository extends JpaRepository<ChapterSchool, Long> {
 

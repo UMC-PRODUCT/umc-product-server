@@ -1,11 +1,13 @@
 package com.umc.product.authentication.application.service;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.authentication.application.port.in.query.CheckCredentialAvailabilityUseCase;
 import com.umc.product.authentication.domain.CredentialPolicy;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

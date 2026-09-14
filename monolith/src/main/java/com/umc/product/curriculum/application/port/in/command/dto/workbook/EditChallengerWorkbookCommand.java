@@ -13,13 +13,10 @@ import lombok.Builder;
  */
 @Builder
 public record EditChallengerWorkbookCommand(
-    @NotNull(message = "챌린저 워크북 ID는 필수입니다")
-    Long challengerWorkbookId,
+    @NotNull(message = "챌린저 워크북 ID는 필수입니다") Long challengerWorkbookId,
 
-    @NotNull(message = "멤버 ID는 필수입니다")
-    Long requestedMemberId,
+    @NotNull(message = "멤버 ID는 필수입니다") Long requestedMemberId,
 
-    @NotBlank(message = "수정할 내용은 필수입니다.")
-    String content
+    @NotBlank(message = "수정할 내용은 필수입니다.") String content
 ) {
 }

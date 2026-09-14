@@ -1,7 +1,8 @@
 package com.umc.product.challenger.application.port.in.query;
 
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerRecordInfo;
 import java.util.List;
+
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerRecordInfo;
 
 public interface GetChallengerRecordUseCase {
     ChallengerRecordInfo getById(Long id);

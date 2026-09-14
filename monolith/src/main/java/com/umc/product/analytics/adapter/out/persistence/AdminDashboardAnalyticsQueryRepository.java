@@ -10,6 +10,16 @@ import static com.umc.product.organization.domain.QGisu.gisu;
 import static com.umc.product.schedule.domain.QSchedule.schedule;
 import static com.umc.product.schedule.domain.QScheduleParticipant.scheduleParticipant;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
@@ -24,15 +34,8 @@ import com.umc.product.analytics.domain.AdminAnalyticsScope;
 import com.umc.product.challenger.domain.QChallengerPoint;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor

@@ -2,16 +2,18 @@ package com.umc.product.project.application.service.policy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.umc.product.project.domain.ProjectApplication;
-import com.umc.product.project.domain.enums.MatchingType;
-import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import java.util.List;
 import java.util.Random;
+
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.enums.MatchingType;
+import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 
 class DesignerMatchingPolicyTest {
 

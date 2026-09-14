@@ -1,5 +1,8 @@
 package com.umc.product.organization.application.service;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.curriculum.application.port.in.query.GetWeeklyCurriculumUseCase;
 import com.umc.product.organization.application.port.in.command.CreateStudyGroupScheduleUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupScheduleCommand;
@@ -10,9 +13,8 @@ import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import com.umc.product.schedule.application.port.in.query.GetScheduleUseCase;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleBaseInfo;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

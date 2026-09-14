@@ -3,17 +3,18 @@ package com.umc.product.curriculum.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
-import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
-import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
-import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
+import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
+import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
+import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 
 class OriginalWorkbookStatusTransitionTest {
 

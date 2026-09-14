@@ -1,9 +1,11 @@
 package com.umc.product.term.adapter.out.persistence;
 
+import org.springframework.stereotype.Component;
+
 import com.umc.product.term.application.port.out.SaveTermConsentLogPort;
 import com.umc.product.term.domain.TermConsentLog;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor

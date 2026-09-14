@@ -1,7 +1,9 @@
 package com.umc.product.schedule.application.port.in.command.dto.result;
 
-import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.Instant;
+
+import com.umc.product.schedule.domain.enums.AttendanceStatus;
+
 import lombok.Builder;
 
 @Builder

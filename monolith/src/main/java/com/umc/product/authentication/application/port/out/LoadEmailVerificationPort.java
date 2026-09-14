@@ -1,7 +1,8 @@
 package com.umc.product.authentication.application.port.out;
 
-import com.umc.product.authentication.domain.EmailVerification;
 import java.util.Optional;
+
+import com.umc.product.authentication.domain.EmailVerification;
 
 public interface LoadEmailVerificationPort {
     EmailVerification getById(Long id);

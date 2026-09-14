@@ -1,10 +1,12 @@
 package com.umc.product.llm.adapter.out.external;
 
-import com.umc.product.llm.application.port.out.ChatCompletionPort;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.umc.product.llm.application.port.out.ChatCompletionPort;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 어떤 활성 LLM 어댑터도 컨테이너에 등록되지 못한 경우의 안전 fallback.

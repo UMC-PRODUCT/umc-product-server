@@ -1,10 +1,12 @@
 package com.umc.product.organization.domain.vo;
 
+import java.time.Instant;
+
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

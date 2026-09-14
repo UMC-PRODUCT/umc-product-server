@@ -2,6 +2,7 @@ package com.umc.product.global.response;
 
 import java.util.List;
 import java.util.function.Function;
+
 import org.springframework.data.domain.Page;
 
 public record PageResponse<T>(

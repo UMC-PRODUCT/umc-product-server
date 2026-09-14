@@ -11,10 +11,8 @@ import jakarta.validation.constraints.NotNull;
  */
 @Deprecated(since = "1.3.0", forRemoval = true)
 public record SubmitWorkbookCommand(
-        @NotNull(message = "원본 워크북 ID는 필수입니다")
-        Long originalWorkbookId,
-        @NotNull(message = "챌린저 ID는 필수입니다")
-        Long challengerId,
+        @NotNull(message = "원본 워크북 ID는 필수입니다") Long originalWorkbookId,
+        @NotNull(message = "챌린저 ID는 필수입니다") Long challengerId,
         String submission
 ) {
 }

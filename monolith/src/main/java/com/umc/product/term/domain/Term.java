@@ -3,6 +3,7 @@ package com.umc.product.term.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.term.domain.enums.TermType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -4,6 +4,7 @@ import com.umc.product.authorization.adapter.in.web.dto.request.CreateChallenger
 import com.umc.product.authorization.domain.ChallengerRole;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+
 import lombok.Builder;
 
 @Builder

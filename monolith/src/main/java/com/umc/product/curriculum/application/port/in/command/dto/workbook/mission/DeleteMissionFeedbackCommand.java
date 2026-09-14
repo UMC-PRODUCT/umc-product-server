@@ -13,10 +13,8 @@ import lombok.Builder;
  */
 @Builder
 public record DeleteMissionFeedbackCommand(
-    @NotNull(message = "피드백 ID는 필수입니다")
-    Long missionFeedbackId,
+    @NotNull(message = "피드백 ID는 필수입니다") Long missionFeedbackId,
 
-    @NotNull(message = "요청자 멤버 ID는 필수입니다")
-    Long operatorMemberId
+    @NotNull(message = "요청자 멤버 ID는 필수입니다") Long operatorMemberId
 ) {
 }

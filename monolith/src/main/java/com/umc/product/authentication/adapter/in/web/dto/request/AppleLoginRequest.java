@@ -1,6 +1,7 @@
 package com.umc.product.authentication.adapter.in.web.dto.request;
 
 import com.umc.product.common.domain.enums.ClientType;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

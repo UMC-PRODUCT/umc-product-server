@@ -1,7 +1,8 @@
 package com.umc.product.authorization.adapter.in.web.dto.response;
 
-import com.umc.product.authorization.application.port.in.query.dto.ResourcePermissionInfo;
 import java.util.List;
+
+import com.umc.product.authorization.application.port.in.query.dto.ResourcePermissionInfo;
 
 public record BatchResourcePermissionResponse(
     List<ResourcePermissionResponse> results

@@ -9,17 +9,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
-import com.umc.product.authorization.application.port.in.query.dto.ResourcePermissionQuery;
-import com.umc.product.authorization.application.port.in.query.dto.ResourcePermissionInfo;
-import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
-import com.umc.product.authorization.domain.PermissionType;
-import com.umc.product.authorization.domain.ResourcePermission;
-import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.authorization.domain.SubjectAttributes;
-import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
-import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -27,6 +18,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ResourcePermissionInfo;
+import com.umc.product.authorization.application.port.in.query.dto.ResourcePermissionQuery;
+import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourcePermission;
+import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.authorization.domain.SubjectAttributes;
+import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
+import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 
 @ExtendWith(MockitoExtension.class)
 class CheckResourcePermissionServiceTest {

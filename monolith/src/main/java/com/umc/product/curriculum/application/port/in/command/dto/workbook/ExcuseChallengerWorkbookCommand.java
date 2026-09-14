@@ -15,13 +15,10 @@ import lombok.Builder;
  */
 @Builder
 public record ExcuseChallengerWorkbookCommand(
-    @NotNull(message = "챌린저 워크북 ID는 필수입니다")
-    Long challengerWorkbookId,
+    @NotNull(message = "챌린저 워크북 ID는 필수입니다") Long challengerWorkbookId,
 
-    @NotNull(message = "요청 운영진의 ID는 필수입니다")
-    Long excuseApprovedMemberId,
+    @NotNull(message = "요청 운영진의 ID는 필수입니다") Long excuseApprovedMemberId,
 
-    @NotBlank(message = "인정 사유는 필수입니다.")
-    String reason
+    @NotBlank(message = "인정 사유는 필수입니다.") String reason
 ) {
 }

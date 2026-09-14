@@ -1,9 +1,11 @@
 package com.umc.product.community.adapter.in.web.dto.request;
 
-import com.umc.product.community.application.port.in.command.post.dto.UpdateLightningCommand;
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.Objects;
+
+import com.umc.product.community.application.port.in.command.post.dto.UpdateLightningCommand;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "번개 게시글 수정 요청")
 public record UpdateLightningRequest(

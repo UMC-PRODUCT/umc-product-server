@@ -1,9 +1,10 @@
 package com.umc.product.notice.application.port.in.query.dto;
 
 
-import com.umc.product.notice.domain.NoticeTargetInfo;
 import java.time.Instant;
 import java.util.List;
+
+import com.umc.product.notice.domain.NoticeTargetInfo;
 
 /**
  * 공지사항에 대한 상세 정보를 제공하는 DTO

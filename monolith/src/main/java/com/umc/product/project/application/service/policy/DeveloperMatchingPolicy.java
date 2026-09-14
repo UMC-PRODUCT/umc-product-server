@@ -1,7 +1,8 @@
 package com.umc.product.project.application.service.policy;
 
-import com.umc.product.project.domain.enums.MatchingType;
 import org.springframework.stereotype.Component;
+
+import com.umc.product.project.domain.enums.MatchingType;
 
 /**
  * PLAN_DEVELOPER 매칭 정책 (지원자가 TO 대비 어느 비율인지로 판정).

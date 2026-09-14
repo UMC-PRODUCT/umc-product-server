@@ -1,9 +1,10 @@
 package com.umc.product.analytics.adapter.in.web.dto.response;
 
+import java.time.Instant;
+
 import com.umc.product.analytics.application.port.in.query.dto.AdminRiskChallengerInfo;
 import com.umc.product.challenger.domain.enums.PointType;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import java.time.Instant;
 
 public record AdminRiskChallengerResponse(
     Long challengerId,

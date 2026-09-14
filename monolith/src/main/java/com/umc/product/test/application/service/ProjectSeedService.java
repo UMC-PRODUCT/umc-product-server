@@ -1,5 +1,19 @@
 package com.umc.product.test.application.service;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerCommand;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
@@ -18,20 +32,9 @@ import com.umc.product.test.application.port.in.command.dto.SeedProjectsCommand;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectsResult;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectsResult.PartialProject;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectsResult.SkippedCell;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
 
 /**
  * 프로젝트 시딩 서비스. ADR-017 참조.

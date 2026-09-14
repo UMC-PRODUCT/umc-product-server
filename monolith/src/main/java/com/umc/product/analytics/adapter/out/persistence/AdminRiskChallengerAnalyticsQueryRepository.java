@@ -8,6 +8,16 @@ import static com.umc.product.organization.domain.QChapter.chapter;
 import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
 import static com.umc.product.organization.domain.QSchool.school;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -18,15 +28,8 @@ import com.umc.product.analytics.application.port.in.query.dto.AdminRiskChalleng
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
 import com.umc.product.challenger.domain.QChallengerPoint;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor

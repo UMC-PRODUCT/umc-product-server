@@ -1,13 +1,14 @@
 package com.umc.product.authentication.application.port.in.command;
 
-import com.umc.product.authentication.domain.OAuthAttributes;
+import java.util.List;
+
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.AuthorizationCodeLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthCommand;
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
+import com.umc.product.authentication.domain.OAuthAttributes;
 import com.umc.product.common.domain.enums.OAuthProvider;
-import java.util.List;
 
 public interface OAuthAuthenticationUseCase {
     /**

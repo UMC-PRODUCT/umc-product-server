@@ -1,8 +1,9 @@
 package com.umc.product.challenger.application.port.in.command;
 
+import java.util.List;
+
 import com.umc.product.challenger.application.port.in.command.dto.ConsumeChallengerRecordCommand;
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerRecordCommand;
-import java.util.List;
 
 public interface ManageChallengerRecordUseCase {
     Long create(CreateChallengerRecordCommand command);

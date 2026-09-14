@@ -1,10 +1,12 @@
 package com.umc.product.schedule.application.port.in.command.dto;
 
+import java.time.Instant;
+import java.util.Set;
+
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
-import java.time.Instant;
-import java.util.Set;
+
 import lombok.Builder;
 
 @Builder

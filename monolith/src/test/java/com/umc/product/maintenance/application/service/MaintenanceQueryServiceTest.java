@@ -4,17 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
-import com.umc.product.maintenance.application.port.out.LoadMaintenanceWindowPort;
-import com.umc.product.maintenance.domain.MaintenanceScope;
-import com.umc.product.maintenance.domain.MaintenanceWindow;
-import com.umc.product.maintenance.exception.MaintenanceDomainException;
-import com.umc.product.maintenance.exception.MaintenanceErrorCode;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,6 +18,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.umc.product.maintenance.application.port.out.LoadMaintenanceWindowPort;
+import com.umc.product.maintenance.domain.MaintenanceScope;
+import com.umc.product.maintenance.domain.MaintenanceWindow;
+import com.umc.product.maintenance.exception.MaintenanceDomainException;
+import com.umc.product.maintenance.exception.MaintenanceErrorCode;
 
 @ExtendWith(MockitoExtension.class)
 class MaintenanceQueryServiceTest {

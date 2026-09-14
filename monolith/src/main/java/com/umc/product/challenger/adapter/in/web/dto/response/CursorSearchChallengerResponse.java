@@ -1,10 +1,11 @@
 package com.umc.product.challenger.adapter.in.web.dto.response;
 
+import java.util.List;
+
 import com.umc.product.challenger.adapter.in.web.dto.response.SearchChallengerResponse.PartCountResponse;
 import com.umc.product.challenger.adapter.in.web.dto.response.SearchChallengerResponse.SearchChallengerItemResponse;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerCursorResult;
 import com.umc.product.global.response.CursorResponse;
-import java.util.List;
 
 public record CursorSearchChallengerResponse(
     CursorResponse<SearchChallengerItemResponse> cursor,

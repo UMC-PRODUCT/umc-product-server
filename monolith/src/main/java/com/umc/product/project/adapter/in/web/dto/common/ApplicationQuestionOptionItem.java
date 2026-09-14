@@ -2,6 +2,7 @@ package com.umc.product.project.adapter.in.web.dto.common;
 
 import com.umc.product.project.application.port.in.command.dto.UpsertApplicationFormCommand.ApplicationQuestionOptionEntry;
 import com.umc.product.project.application.port.in.query.dto.ApplicationFormInfo;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
@@ -15,11 +16,9 @@ import lombok.Builder;
 public record ApplicationQuestionOptionItem(
     Long optionId,
 
-    @NotBlank(message = "선택지 내용은 필수입니다")
-    String content,
+    @NotBlank(message = "선택지 내용은 필수입니다") String content,
 
-    @PositiveOrZero(message = "orderNo는 0 이상이어야 합니다")
-    long orderNo,
+    @PositiveOrZero(message = "orderNo는 0 이상이어야 합니다") long orderNo,
 
     boolean isOther
 ) {

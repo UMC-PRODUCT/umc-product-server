@@ -1,7 +1,8 @@
 package com.umc.product.test.application.port.in.command.dto;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.List;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
 
 /**
  * 시나리오 시딩 결과.

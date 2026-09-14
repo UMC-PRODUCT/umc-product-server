@@ -1,8 +1,9 @@
 package com.umc.product.analytics.adapter.in.web.dto.response;
 
+import java.util.Map;
+
 import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardSummaryInfo;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import java.util.Map;
 
 public record AdminDashboardSummaryResponse(
     long activeChallengerCount,

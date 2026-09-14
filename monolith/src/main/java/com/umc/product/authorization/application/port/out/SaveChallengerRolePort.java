@@ -1,7 +1,8 @@
 package com.umc.product.authorization.application.port.out;
 
-import com.umc.product.authorization.domain.ChallengerRole;
 import java.util.List;
+
+import com.umc.product.authorization.domain.ChallengerRole;
 
 public interface SaveChallengerRolePort {
 

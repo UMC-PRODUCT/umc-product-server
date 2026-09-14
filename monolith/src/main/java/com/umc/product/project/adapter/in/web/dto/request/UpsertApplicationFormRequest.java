@@ -1,11 +1,13 @@
 package com.umc.product.project.adapter.in.web.dto.request;
 
+import java.util.List;
+
 import com.umc.product.project.adapter.in.web.dto.common.ApplicationFormSection;
 import com.umc.product.project.application.port.in.command.dto.UpsertApplicationFormCommand;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.util.List;
 
 /**
  * 지원 폼 저장 요청 (PROJECT-106 PUT).
@@ -20,15 +22,12 @@ import java.util.List;
  */
 public record UpsertApplicationFormRequest(
 
-    @Size(max = 200, message = "폼 제목은 200자 이하여야 합니다")
-    String title,
+    @Size(max = 200, message = "폼 제목은 200자 이하여야 합니다") String title,
 
-    @Size(max = 500, message = "폼 설명은 500자 이하여야 합니다")
-    String description,
+    @Size(max = 500, message = "폼 설명은 500자 이하여야 합니다") String description,
 
     @NotNull(message = "sections 필드는 필수입니다 (빈 리스트는 허용)")
-    @Valid
-    List<ApplicationFormSection> sections
+    @Valid List<ApplicationFormSection> sections
 ) {
 
     public UpsertApplicationFormCommand toCommand(Long projectId, Long requesterMemberId) {

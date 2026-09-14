@@ -1,6 +1,7 @@
 package com.umc.product.organization.adapter.in.web.dto.request;
 
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolSearchCondition;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "학교 목록 검색 조건")
@@ -19,4 +20,3 @@ public record SchoolListRequest(
         );
     }
 }
-

@@ -1,7 +1,8 @@
 package com.umc.product.challenger.application.port.out;
 
-import com.umc.product.challenger.domain.ChallengerRecord;
 import java.util.List;
+
+import com.umc.product.challenger.domain.ChallengerRecord;
 
 public interface SaveChallengerRecordPort {
 

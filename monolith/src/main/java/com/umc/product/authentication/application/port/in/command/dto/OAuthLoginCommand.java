@@ -1,7 +1,8 @@
 package com.umc.product.authentication.application.port.in.command.dto;
 
-import com.umc.product.common.domain.enums.OAuthProvider;
 import java.util.Objects;
+
+import com.umc.product.common.domain.enums.OAuthProvider;
 
 public record OAuthLoginCommand(
     OAuthProvider provider,

@@ -2,6 +2,7 @@ package com.umc.product.curriculum.application.port.in.command.dto.workbook;
 
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -19,20 +20,16 @@ import lombok.Builder;
  */
 @Builder
 public record CreateOriginalWorkbookCommand(
-    @NotNull(message = "주차별 커리큘럼 ID는 필수입니다")
-    Long weeklyCurriculumId,
+    @NotNull(message = "주차별 커리큘럼 ID는 필수입니다") Long weeklyCurriculumId,
 
-    @NotBlank(message = "제목은 필수입니다")
-    String title,
+    @NotBlank(message = "제목은 필수입니다") String title,
 
     String description,
     String url,
     String content,
 
-    @NotNull(message = "워크북 유형은 필수입니다")
-    OriginalWorkbookType type,
+    @NotNull(message = "워크북 유형은 필수입니다") OriginalWorkbookType type,
 
-    @NotNull(message = "초기 상태는 필수입니다")
-    OriginalWorkbookStatus initialStatus
+    @NotNull(message = "초기 상태는 필수입니다") OriginalWorkbookStatus initialStatus
 ) {
 }

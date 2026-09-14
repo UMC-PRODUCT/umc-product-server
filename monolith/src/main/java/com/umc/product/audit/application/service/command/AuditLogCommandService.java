@@ -1,15 +1,17 @@
 package com.umc.product.audit.application.service.command;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.audit.application.port.in.command.SaveAuditLogUseCase;
 import com.umc.product.audit.application.port.out.SaveAuditLogPort;
 import com.umc.product.audit.domain.AuditLog;
 import com.umc.product.audit.domain.AuditLogEvent;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service

@@ -1,8 +1,9 @@
 package com.umc.product.curriculum.application.port.in.command;
 
+import java.util.List;
+
 import com.umc.product.curriculum.application.port.in.command.dto.curriculum.CreateWeeklyCurriculumCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.curriculum.EditWeeklyCurriculumCommand;
-import java.util.List;
 
 public interface ManageWeeklyCurriculumUseCase {
 

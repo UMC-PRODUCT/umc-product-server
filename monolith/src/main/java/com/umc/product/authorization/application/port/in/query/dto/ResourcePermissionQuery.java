@@ -1,8 +1,9 @@
 package com.umc.product.authorization.application.port.in.query.dto;
 
+import java.util.List;
+
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
-import java.util.List;
 
 public record ResourcePermissionQuery(
     ResourceType resourceType,

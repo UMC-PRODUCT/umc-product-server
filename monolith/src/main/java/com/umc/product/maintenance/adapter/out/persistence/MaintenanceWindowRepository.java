@@ -1,12 +1,14 @@
 package com.umc.product.maintenance.adapter.out.persistence;
 
-import com.umc.product.maintenance.domain.MaintenanceWindow;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import com.umc.product.maintenance.domain.MaintenanceWindow;
 
 public interface MaintenanceWindowRepository extends JpaRepository<MaintenanceWindow, Long> {
 

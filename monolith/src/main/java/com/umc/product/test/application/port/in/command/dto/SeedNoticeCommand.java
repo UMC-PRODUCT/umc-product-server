@@ -1,7 +1,8 @@
 package com.umc.product.test.application.port.in.command.dto;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.List;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
 
 /**
  * Notice 시딩 Command. ADR-017 참조.

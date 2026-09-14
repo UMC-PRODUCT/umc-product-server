@@ -1,8 +1,9 @@
 package com.umc.product.notice.application.port.in.query.dto;
 
+import java.util.Set;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.domain.enums.NoticeTab;
-import java.util.Set;
 
 /**
  * 공지를 조회하는 멤버의 소속 컨텍스트.

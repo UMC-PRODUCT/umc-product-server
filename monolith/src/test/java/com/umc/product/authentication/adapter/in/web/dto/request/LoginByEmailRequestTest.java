@@ -2,10 +2,11 @@ package com.umc.product.authentication.adapter.in.web.dto.request;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
-import com.umc.product.common.domain.enums.ClientType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
+import com.umc.product.common.domain.enums.ClientType;
 
 class LoginByEmailRequestTest {
 

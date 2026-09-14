@@ -1,8 +1,9 @@
 package com.umc.product.project.application.port.in.query;
 
+import org.springframework.data.domain.Page;
+
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
-import org.springframework.data.domain.Page;
 
 /**
  * 관리 화면용 프로젝트 검색 UseCase (PROJECT-006).

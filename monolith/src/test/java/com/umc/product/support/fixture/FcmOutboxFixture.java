@@ -1,8 +1,9 @@
 package com.umc.product.support.fixture;
 
+import org.springframework.stereotype.Component;
+
 import com.umc.product.notification.application.port.out.SaveFcmOutboxPort;
 import com.umc.product.notification.domain.FcmOutbox;
-import org.springframework.stereotype.Component;
 
 @Component
 public class FcmOutboxFixture extends FixtureSupport {

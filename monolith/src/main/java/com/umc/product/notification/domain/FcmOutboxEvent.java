@@ -1,8 +1,9 @@
 package com.umc.product.notification.domain;
 
-import com.umc.product.global.event.domain.DomainEvent;
 import java.time.Instant;
 import java.util.UUID;
+
+import com.umc.product.global.event.domain.DomainEvent;
 
 /**
  * FCM outbox에 신규 항목이 적재되었음을 알리는 트리거 이벤트.

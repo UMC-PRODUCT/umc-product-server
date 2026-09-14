@@ -1,7 +1,8 @@
 package com.umc.product.member.application.port.in.query;
 
-import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
 import java.util.Optional;
+
+import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
 
 /**
  * Member 도메인의 이메일 기반 자격증명 조회 UseCase. ADR-017 흐름.

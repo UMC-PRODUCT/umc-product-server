@@ -1,6 +1,7 @@
 package com.umc.product.curriculum.application.port.in.command.dto.workbook;
 
 import com.umc.product.curriculum.domain.enums.MissionType;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
@@ -15,8 +16,7 @@ import lombok.Builder;
  */
 @Builder
 public record EditOriginalWorkbookMissionCommand(
-    @NotNull(message = "원본 워크북 미션 ID는 필수입니다")
-    Long originalWorkbookMissionId,
+    @NotNull(message = "원본 워크북 미션 ID는 필수입니다") Long originalWorkbookMissionId,
 
     String title,
     String description,

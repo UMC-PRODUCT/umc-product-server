@@ -1,6 +1,7 @@
 package com.umc.product.curriculum.application.port.in.command.dto.workbook;
 
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
@@ -21,13 +22,10 @@ import lombok.Builder;
  */
 @Builder
 public record ChangeOriginalWorkbookStatusCommand(
-    @NotNull(message = "원본 워크북 ID는 필수입니다")
-    Long originalWorkbookId,
+    @NotNull(message = "원본 워크북 ID는 필수입니다") Long originalWorkbookId,
 
-    @NotNull(message = "변경할 상태는 필수입니다")
-    OriginalWorkbookStatus status,
+    @NotNull(message = "변경할 상태는 필수입니다") OriginalWorkbookStatus status,
 
-    @NotNull(message = "요청자 멤버 ID는 필수입니다")
-    Long requestedMemberId
+    @NotNull(message = "요청자 멤버 ID는 필수입니다") Long requestedMemberId
 ) {
 }

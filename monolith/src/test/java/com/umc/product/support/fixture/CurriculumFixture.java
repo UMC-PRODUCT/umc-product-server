@@ -1,5 +1,9 @@
 package com.umc.product.support.fixture;
 
+import java.time.Instant;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.out.SaveCurriculumPort;
 import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookPort;
@@ -9,8 +13,6 @@ import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.WeeklyCurriculum;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
-import java.time.Instant;
-import org.springframework.stereotype.Component;
 
 @Component
 public class CurriculumFixture extends FixtureSupport {

@@ -1,13 +1,16 @@
 package com.umc.product.llm.application.service;
 
-import com.umc.product.llm.adapter.out.external.LlmProperties;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.umc.product.llm.adapter.out.external.LlmProperties;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * LLM 호출 회로 차단 가드.

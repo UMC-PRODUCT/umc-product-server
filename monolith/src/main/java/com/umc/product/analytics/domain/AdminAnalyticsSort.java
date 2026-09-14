@@ -1,8 +1,7 @@
 package com.umc.product.analytics.domain;
 
-import com.umc.product.analytics.domain.AnalyticsDomainException;
-import com.umc.product.analytics.domain.AnalyticsErrorCode;
 import java.util.Set;
+
 
 public enum AdminAnalyticsSort {
     RISK_CHALLENGER_COUNT_DESC("riskChallengerCount,desc"),

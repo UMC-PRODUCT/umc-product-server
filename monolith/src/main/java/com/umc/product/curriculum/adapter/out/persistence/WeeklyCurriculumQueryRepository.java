@@ -2,11 +2,13 @@ package com.umc.product.curriculum.adapter.out.persistence;
 
 import static com.umc.product.curriculum.domain.QOriginalWorkbook.originalWorkbook;
 
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor

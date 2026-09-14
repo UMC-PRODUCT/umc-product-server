@@ -1,9 +1,11 @@
 package com.umc.product.community.adapter.in.web.dto.request;
 
+import java.util.Objects;
+
 import com.umc.product.community.application.port.in.command.post.dto.CreatePostCommand;
 import com.umc.product.community.domain.enums.Category;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.Objects;
 
 @Schema(description = "일반 게시글 작성 요청")
 public record CreatePostRequest(

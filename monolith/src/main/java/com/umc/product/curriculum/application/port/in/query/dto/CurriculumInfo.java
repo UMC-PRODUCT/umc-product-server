@@ -1,9 +1,10 @@
 package com.umc.product.curriculum.application.port.in.query.dto;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.domain.enums.MissionType;
 import java.time.Instant;
 import java.util.List;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.curriculum.domain.enums.MissionType;
 
 public record CurriculumInfo(
     Long id,

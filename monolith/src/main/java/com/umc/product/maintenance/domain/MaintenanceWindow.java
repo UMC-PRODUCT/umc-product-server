@@ -1,8 +1,13 @@
 package com.umc.product.maintenance.domain;
 
+import java.time.Instant;
+import java.util.EnumSet;
+import java.util.Set;
+
 import com.umc.product.common.BaseEntity;
 import com.umc.product.maintenance.exception.MaintenanceDomainException;
 import com.umc.product.maintenance.exception.MaintenanceErrorCode;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -12,9 +17,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.Instant;
-import java.util.EnumSet;
-import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;

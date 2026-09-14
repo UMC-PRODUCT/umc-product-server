@@ -1,6 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.v2.dto.response;
 
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleCapabilitiesInfo;
+
 import lombok.AccessLevel;
 import lombok.Builder;
 

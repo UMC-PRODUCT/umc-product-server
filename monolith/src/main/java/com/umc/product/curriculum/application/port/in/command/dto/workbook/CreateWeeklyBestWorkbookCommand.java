@@ -15,19 +15,14 @@ import lombok.Builder;
  */
 @Builder
 public record CreateWeeklyBestWorkbookCommand(
-    @NotNull(message = "선정자 멤버 ID는 필수입니다")
-    Long decidedMemberId,
+    @NotNull(message = "선정자 멤버 ID는 필수입니다") Long decidedMemberId,
 
-    @NotNull(message = "선정 대상 멤버 ID는 필수입니다")
-    Long bestMemberId,
+    @NotNull(message = "선정 대상 멤버 ID는 필수입니다") Long bestMemberId,
 
-    @NotNull(message = "주차별 커리큘럼 ID는 필수입니다")
-    Long weeklyCurriculumId,
+    @NotNull(message = "주차별 커리큘럼 ID는 필수입니다") Long weeklyCurriculumId,
 
-    @NotNull(message = "스터디 그룹 ID는 필수입니다")
-    Long studyGroupId,
+    @NotNull(message = "스터디 그룹 ID는 필수입니다") Long studyGroupId,
 
-    @NotBlank(message = "선정 이유는 필수입니다.")
-    String reason
+    @NotBlank(message = "선정 이유는 필수입니다.") String reason
 ) {
 }

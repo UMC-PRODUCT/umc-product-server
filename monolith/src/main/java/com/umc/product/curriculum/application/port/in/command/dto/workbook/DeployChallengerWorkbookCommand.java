@@ -1,10 +1,10 @@
 package com.umc.product.curriculum.application.port.in.command.dto.workbook;
 
+import java.util.List;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
-
-import java.util.List;
 
 /**
  * 챌린저 워크북 배포 요청 커맨드
@@ -14,10 +14,8 @@ import java.util.List;
  */
 @Builder
 public record DeployChallengerWorkbookCommand(
-    @NotEmpty(message = "배포할 원본 워크북 ID는 하나 이상이어야 합니다")
-    List<Long> originalWorkbookIds,
+    @NotEmpty(message = "배포할 원본 워크북 ID는 하나 이상이어야 합니다") List<Long> originalWorkbookIds,
 
-    @NotNull(message = "멤버 ID는 필수입니다")
-    Long requestedMemberId
+    @NotNull(message = "멤버 ID는 필수입니다") Long requestedMemberId
 ) {
 }

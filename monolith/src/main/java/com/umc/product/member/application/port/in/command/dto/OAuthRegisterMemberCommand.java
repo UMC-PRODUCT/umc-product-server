@@ -1,8 +1,10 @@
 package com.umc.product.member.application.port.in.command.dto;
 
+import java.util.List;
+
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.member.domain.Member;
-import java.util.List;
+
 import lombok.Builder;
 
 /**

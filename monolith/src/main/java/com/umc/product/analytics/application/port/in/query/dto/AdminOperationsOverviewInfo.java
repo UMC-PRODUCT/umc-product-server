@@ -1,10 +1,11 @@
 package com.umc.product.analytics.application.port.in.query.dto;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.schedule.domain.enums.AttendanceStatus;
 
 public record AdminOperationsOverviewInfo(
     List<ChapterSchoolStatusInfo> chapterSchoolStatuses,

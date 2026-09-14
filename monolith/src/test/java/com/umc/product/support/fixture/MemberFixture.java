@@ -2,9 +2,10 @@ package com.umc.product.support.fixture;
 
 import static com.umc.product.support.CommonFixture.MONKEY;
 
+import org.springframework.stereotype.Component;
+
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
-import org.springframework.stereotype.Component;
 
 @Component
 public class MemberFixture extends FixtureSupport {

@@ -1,11 +1,13 @@
 package com.umc.product.support.fixture;
 
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.member.application.port.out.SaveMemberProfilePort;
 import com.umc.product.member.domain.LinkTypeAndLink;
 import com.umc.product.member.domain.MemberProfile;
 import com.umc.product.member.domain.MemberProfileLinkType;
-import java.util.List;
-import org.springframework.stereotype.Component;
 
 /**
  * 회원 프로필(MemberProfile) 테스트용 Fixture.

@@ -2,12 +2,15 @@ package com.umc.product.challenger.adapter.out.persistence;
 
 import static com.umc.product.challenger.domain.QChallengerPoint.challengerPoint;
 
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.challenger.domain.ChallengerPoint;
 import java.util.List;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Repository;
+
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.umc.product.challenger.domain.ChallengerPoint;
+
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor

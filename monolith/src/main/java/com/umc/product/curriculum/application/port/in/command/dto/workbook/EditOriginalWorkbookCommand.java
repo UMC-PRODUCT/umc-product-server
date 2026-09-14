@@ -14,8 +14,7 @@ import lombok.Builder;
  */
 @Builder
 public record EditOriginalWorkbookCommand(
-    @NotNull(message = "원본 워크북 ID는 필수입니다")
-    Long originalWorkbookId,
+    @NotNull(message = "원본 워크북 ID는 필수입니다") Long originalWorkbookId,
 
     String title,
     String description,

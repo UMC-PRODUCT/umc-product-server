@@ -1,8 +1,9 @@
 package com.umc.product.maintenance.application.port.in.query;
 
+import java.util.List;
+
 import com.umc.product.maintenance.application.port.in.query.dto.MaintenanceStatusInfo;
 import com.umc.product.maintenance.application.port.in.query.dto.MaintenanceWindowInfo;
-import java.util.List;
 
 public interface GetMaintenanceStatusUseCase {
 

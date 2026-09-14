@@ -1,8 +1,9 @@
 package com.umc.product.notification.application.port.in;
 
+import java.util.List;
+
 import com.umc.product.notification.application.port.in.dto.AudienceNotificationCommand;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
-import java.util.List;
 
 public interface SendNotificationToAudienceUseCase {
 

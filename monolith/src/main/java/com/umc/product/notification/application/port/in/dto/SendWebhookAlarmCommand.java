@@ -1,8 +1,10 @@
 package com.umc.product.notification.application.port.in.dto;
 
-import com.umc.product.notification.domain.WebhookPlatform;
 import java.util.List;
 import java.util.Objects;
+
+import com.umc.product.notification.domain.WebhookPlatform;
+
 import lombok.Builder;
 
 @Builder

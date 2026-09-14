@@ -1,6 +1,7 @@
 package com.umc.product.project.application.service.policy;
 
 import java.util.Random;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

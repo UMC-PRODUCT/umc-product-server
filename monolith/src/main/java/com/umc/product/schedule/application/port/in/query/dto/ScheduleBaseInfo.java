@@ -1,11 +1,13 @@
 package com.umc.product.schedule.application.port.in.query.dto;
 
-import com.umc.product.schedule.domain.AttendancePolicy;
-import com.umc.product.schedule.domain.Schedule;
-import com.umc.product.schedule.domain.enums.ScheduleTag;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
+
+import com.umc.product.schedule.domain.AttendancePolicy;
+import com.umc.product.schedule.domain.Schedule;
+import com.umc.product.schedule.domain.enums.ScheduleTag;
+
 import lombok.AccessLevel;
 import lombok.Builder;
 

@@ -1,16 +1,19 @@
 package com.umc.product.member.application.service;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.term.application.port.in.query.GetTermUseCase;
 import com.umc.product.term.domain.exception.TermDomainException;
 import com.umc.product.term.domain.exception.TermErrorCode;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor

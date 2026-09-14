@@ -1,7 +1,8 @@
 package com.umc.product.term.application.port.in.query;
 
-import com.umc.product.term.application.port.in.query.dto.TermInfo;
 import java.util.List;
+
+import com.umc.product.term.application.port.in.query.dto.TermInfo;
 
 public interface GetTermAgreementUseCase {
     /**

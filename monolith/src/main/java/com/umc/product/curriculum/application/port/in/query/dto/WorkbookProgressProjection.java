@@ -1,8 +1,9 @@
 package com.umc.product.curriculum.application.port.in.query.dto;
 
+import java.time.Instant;
+
 import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
-import java.time.Instant;
 
 public record WorkbookProgressProjection(
     Long originalWorkbookId,

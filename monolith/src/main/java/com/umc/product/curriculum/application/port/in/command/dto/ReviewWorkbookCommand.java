@@ -1,6 +1,7 @@
 package com.umc.product.curriculum.application.port.in.command.dto;
 
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
+
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -10,10 +11,8 @@ import jakarta.validation.constraints.NotNull;
  * @param feedback 피드백
  */
 public record ReviewWorkbookCommand(
-        @NotNull
-        Long challengerWorkbookId,
-        @NotNull
-        WorkbookStatus status,
+        @NotNull Long challengerWorkbookId,
+        @NotNull WorkbookStatus status,
         String feedback
 ) {
 }

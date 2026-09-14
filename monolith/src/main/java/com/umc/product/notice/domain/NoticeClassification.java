@@ -1,10 +1,12 @@
 package com.umc.product.notice.domain;
 
+import java.util.List;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.domain.enums.NoticeTab;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
 
 /**
  * 역할: 클라이언트가 "어떤 범위의 공지를 보고 싶은가"를 표현하는 HTTP 쿼리 파라미터.
@@ -17,8 +19,7 @@ import java.util.List;
 @Schema(description = "공지 조회 필터.")
 public record NoticeClassification(
     @Schema(description = "기수 ID (필수)", example = "9")
-    @NotNull(message = "기수 ID는 필수입니다")
-    Long gisuId,
+    @NotNull(message = "기수 ID는 필수입니다") Long gisuId,
 
     @Schema(description = "지부 ID. 챌린저 공지 조회 시에만 사용", example = "3", nullable = true)
     Long chapterId,
@@ -31,8 +32,7 @@ public record NoticeClassification(
 
     @Schema(description = "대상 역할 하한선. CHALLENGER면 일반 공지, 그 외 값이면 운영진 공지.",
         example = "CHALLENGER")
-    @NotNull(message = "대상 역할은 필수입니다.")
-    NoticeTab noticeTab
+    @NotNull(message = "대상 역할은 필수입니다.") NoticeTab noticeTab
 ) {
     public boolean isChallengerQuery() {
         return noticeTab == NoticeTab.CHALLENGER;

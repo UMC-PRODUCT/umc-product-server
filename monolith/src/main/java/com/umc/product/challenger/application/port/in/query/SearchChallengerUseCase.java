@@ -1,13 +1,15 @@
 package com.umc.product.challenger.application.port.in.query;
 
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.GlobalSearchChallengerCursorResult;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerCursorResult;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerResult;
-import java.util.List;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 public interface SearchChallengerUseCase {
     /**

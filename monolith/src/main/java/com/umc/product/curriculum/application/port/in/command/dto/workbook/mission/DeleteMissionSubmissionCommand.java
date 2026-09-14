@@ -11,10 +11,8 @@ import lombok.Builder;
  */
 @Builder
 public record DeleteMissionSubmissionCommand(
-    @NotNull(message = "미션 제출물 ID는 필수입니다")
-    Long missionSubmissionId,
+    @NotNull(message = "미션 제출물 ID는 필수입니다") Long missionSubmissionId,
 
-    @NotNull(message = "요청자 멤버 ID는 필수입니다")
-    Long requesterMemberId
+    @NotNull(message = "요청자 멤버 ID는 필수입니다") Long requesterMemberId
 ) {
 }

@@ -1,8 +1,9 @@
 package com.umc.product.authentication.application.event;
 
-import com.umc.product.global.event.domain.DomainEvent;
 import java.time.Instant;
 import java.util.UUID;
+
+import com.umc.product.global.event.domain.DomainEvent;
 
 /**
  * 이메일 인증 세션 생성/재발급 후, 메일 발송이 필요할 때 트랜잭션 commit 직후

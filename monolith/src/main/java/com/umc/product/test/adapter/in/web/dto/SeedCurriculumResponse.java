@@ -1,7 +1,8 @@
 package com.umc.product.test.adapter.in.web.dto;
 
-import com.umc.product.test.application.port.in.command.dto.SeedCurriculumResult;
 import java.util.List;
+
+import com.umc.product.test.application.port.in.command.dto.SeedCurriculumResult;
 
 public record SeedCurriculumResponse(
     Long gisuId,

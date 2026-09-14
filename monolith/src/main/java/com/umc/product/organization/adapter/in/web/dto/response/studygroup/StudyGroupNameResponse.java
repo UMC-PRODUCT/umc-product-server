@@ -1,8 +1,10 @@
 package com.umc.product.organization.adapter.in.web.dto.response.studygroup;
 
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
+
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "스터디 그룹 이름 목록 응답")
 public record StudyGroupNameResponse(

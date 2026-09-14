@@ -1,9 +1,11 @@
 package com.umc.product.authorization.adapter.out.persistence;
 
-import com.umc.product.authorization.domain.ChallengerRole;
 import java.util.List;
 import java.util.Set;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.umc.product.authorization.domain.ChallengerRole;
 
 public interface ChallengerRoleJpaRepository extends JpaRepository<ChallengerRole, Long> {
 

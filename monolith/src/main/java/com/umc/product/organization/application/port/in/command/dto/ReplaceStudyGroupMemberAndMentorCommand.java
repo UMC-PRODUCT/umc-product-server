@@ -1,9 +1,10 @@
 package com.umc.product.organization.application.port.in.command.dto;
 
-import com.umc.product.organization.exception.OrganizationDomainException;
-import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.Objects;
 import java.util.Set;
+
+import com.umc.product.organization.exception.OrganizationDomainException;
+import com.umc.product.organization.exception.OrganizationErrorCode;
 
 public record ReplaceStudyGroupMemberAndMentorCommand(
     Long groupId,

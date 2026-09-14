@@ -1,9 +1,10 @@
 package com.umc.product.member.application.port.in.query.dto;
 
+import java.util.List;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import java.util.List;
 
 /**
  * /api/v2/challenger/search 응답의 항목 단위 정보입니다.

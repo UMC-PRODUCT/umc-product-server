@@ -1,5 +1,17 @@
 package com.umc.product.test.application.service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Supplier;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
@@ -10,18 +22,9 @@ import com.umc.product.test.application.port.in.command.SeedNoticeUseCase;
 import com.umc.product.test.application.port.in.command.dto.SeedNoticeCommand;
 import com.umc.product.test.application.port.in.command.dto.SeedNoticeResult;
 import com.umc.product.test.application.port.in.command.dto.SeedNoticeResult.ScopeSummary;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Supplier;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Notice 시딩 서비스. ADR-017 참조.

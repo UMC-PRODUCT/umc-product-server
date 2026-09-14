@@ -2,6 +2,7 @@ package com.umc.product.challenger.application.port.out.dto;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
+
 import lombok.Builder;
 
 /**

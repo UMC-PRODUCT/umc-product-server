@@ -1,10 +1,12 @@
 package com.umc.product.test.adapter.in.web.dto;
 
+import java.util.List;
+
 import com.umc.product.test.application.port.in.command.dto.SeedProjectScenariosCommand;
 import com.umc.product.test.application.port.in.command.dto.TargetProjectStatus;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import java.util.List;
 
 /**
  * 시나리오 시딩 Request.

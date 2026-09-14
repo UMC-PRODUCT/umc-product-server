@@ -1,8 +1,9 @@
 package com.umc.product.notice.application.port.out;
 
-import com.umc.product.notice.domain.NoticeTarget;
 import java.util.List;
 import java.util.Optional;
+
+import com.umc.product.notice.domain.NoticeTarget;
 
 /**
  * NoticePermission 조회 Port

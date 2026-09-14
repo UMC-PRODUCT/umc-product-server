@@ -1,15 +1,17 @@
 package com.umc.product.project.adapter.in.web.dto.common;
 
+import java.util.List;
+import java.util.Set;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.command.dto.UpsertApplicationFormCommand.ApplicationFormSectionEntry;
 import com.umc.product.project.application.port.in.query.dto.ApplicationFormInfo;
 import com.umc.product.project.domain.enums.FormSectionType;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
-import java.util.List;
-import java.util.Set;
 import lombok.Builder;
 
 /**
@@ -22,22 +24,18 @@ import lombok.Builder;
 public record ApplicationFormSection(
     Long sectionId,
 
-    @NotNull(message = "섹션 타입은 필수입니다")
-    FormSectionType type,
+    @NotNull(message = "섹션 타입은 필수입니다") FormSectionType type,
 
     Set<ChallengerPart> allowedParts,
 
-    @NotBlank(message = "섹션 제목은 필수입니다")
-    String title,
+    @NotBlank(message = "섹션 제목은 필수입니다") String title,
 
     String description,
 
-    @PositiveOrZero(message = "orderNo는 0 이상이어야 합니다")
-    long orderNo,
+    @PositiveOrZero(message = "orderNo는 0 이상이어야 합니다") long orderNo,
 
     @NotNull(message = "질문 리스트는 null 일 수 없습니다 (빈 리스트는 허용)")
-    @Valid
-    List<ApplicationQuestionItem> questions
+    @Valid List<ApplicationQuestionItem> questions
 ) {
 
     public ApplicationFormSectionEntry toEntry() {

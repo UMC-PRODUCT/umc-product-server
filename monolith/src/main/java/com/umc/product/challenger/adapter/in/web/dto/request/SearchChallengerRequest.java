@@ -1,9 +1,10 @@
 package com.umc.product.challenger.adapter.in.web.dto.request;
 
+import java.util.List;
+
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import java.util.List;
 
 public record SearchChallengerRequest(
         Long challengerId,

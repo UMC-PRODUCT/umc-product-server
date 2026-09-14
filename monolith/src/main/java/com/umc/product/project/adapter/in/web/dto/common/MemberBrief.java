@@ -1,6 +1,7 @@
 package com.umc.product.project.adapter.in.web.dto.common;
 
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+
 import lombok.Builder;
 
 /**

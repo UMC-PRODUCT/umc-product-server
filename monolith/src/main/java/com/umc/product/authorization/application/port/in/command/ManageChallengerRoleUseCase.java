@@ -1,9 +1,10 @@
 package com.umc.product.authorization.application.port.in.command;
 
+import java.util.List;
+
 import com.umc.product.authorization.application.port.in.command.dto.CreateChallengerRoleCommand;
 import com.umc.product.authorization.application.port.in.command.dto.DeleteChallengerRoleCommand;
 import com.umc.product.authorization.application.port.in.command.dto.UpdateChallengerRoleCommand;
-import java.util.List;
 
 public interface ManageChallengerRoleUseCase {
 

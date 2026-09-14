@@ -3,14 +3,15 @@ package com.umc.product.member.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.umc.product.common.domain.enums.MemberStatus;
-import com.umc.product.member.domain.exception.MemberDomainException;
-import com.umc.product.member.domain.exception.MemberErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.umc.product.common.domain.enums.MemberStatus;
+import com.umc.product.member.domain.exception.MemberDomainException;
+import com.umc.product.member.domain.exception.MemberErrorCode;
 
 /**
  * Member 도메인의 이메일/PW 자격증명 관련 메서드 단위 테스트. ADR-017 흐름.

@@ -1,6 +1,7 @@
 package com.umc.product.authentication.adapter.in.web.dto.request;
 
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialByEmailCommand;
+
 import jakarta.validation.constraints.NotBlank;
 
 /**

@@ -1,11 +1,13 @@
 package com.umc.product.maintenance.adapter.in.web.dto.response;
 
+import java.time.Instant;
+import java.util.Set;
+
 import com.umc.product.maintenance.application.port.in.query.dto.MaintenanceWindowInfo;
 import com.umc.product.maintenance.domain.MaintenanceDomain;
 import com.umc.product.maintenance.domain.MaintenanceScope;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.Instant;
-import java.util.Set;
 
 @Schema(description = "점검 윈도우 정보")
 public record MaintenanceWindowResponse(

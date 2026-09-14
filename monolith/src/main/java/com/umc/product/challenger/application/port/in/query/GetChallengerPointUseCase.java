@@ -1,9 +1,10 @@
 package com.umc.product.challenger.application.port.in.query;
 
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
 
 public interface GetChallengerPointUseCase {
     ChallengerPointInfo getById(Long challengerPointId);

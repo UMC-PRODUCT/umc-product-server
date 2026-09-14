@@ -2,9 +2,11 @@ package com.umc.product.community.adapter.in.web.dto.request;
 
 import static java.util.Objects.requireNonNull;
 
-import com.umc.product.community.application.port.in.command.post.dto.CreateLightningCommand;
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+
+import com.umc.product.community.application.port.in.command.post.dto.CreateLightningCommand;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "번개 게시글 작성 요청")
 public record CreateLightningRequest(

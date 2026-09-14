@@ -1,9 +1,10 @@
 package com.umc.product.notice.application.port.out;
 
-import com.umc.product.notice.domain.NoticeRead;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import com.umc.product.notice.domain.NoticeRead;
 
 public interface LoadNoticeReadPort {
 

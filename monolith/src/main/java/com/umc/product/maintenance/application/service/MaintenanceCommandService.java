@@ -1,5 +1,12 @@
 package com.umc.product.maintenance.application.service;
 
+import java.time.Clock;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.umc.product.maintenance.application.port.in.command.ManageMaintenanceUseCase;
 import com.umc.product.maintenance.application.port.in.command.dto.StartMaintenanceCommand;
 import com.umc.product.maintenance.application.port.out.LoadMaintenanceWindowPort;
@@ -7,11 +14,6 @@ import com.umc.product.maintenance.application.port.out.SaveMaintenanceWindowPor
 import com.umc.product.maintenance.domain.MaintenanceWindow;
 import com.umc.product.maintenance.exception.MaintenanceDomainException;
 import com.umc.product.maintenance.exception.MaintenanceErrorCode;
-import java.time.Clock;
-import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional

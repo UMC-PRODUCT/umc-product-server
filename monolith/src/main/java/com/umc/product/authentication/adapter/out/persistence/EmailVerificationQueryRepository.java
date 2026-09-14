@@ -2,11 +2,14 @@ package com.umc.product.authentication.adapter.out.persistence;
 
 import static com.umc.product.authentication.domain.QEmailVerification.emailVerification;
 
+import java.util.Optional;
+
+import org.springframework.stereotype.Repository;
+
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.authentication.domain.EmailVerification;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
 @RequiredArgsConstructor
 @Repository
