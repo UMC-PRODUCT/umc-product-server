@@ -3,6 +3,7 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 // 소스가 없는 패키징 전용 모듈이다. 실행 클래스와 resources 는 :monolith 에 있다.
 dependencies {
     implementation(project(":monolith"))
+    implementation(project(":blog"))
 }
 
 springBoot {

@@ -1,15 +1,17 @@
 package com.umc.product.audit.application.service;
 
+import static com.umc.product.support.AuditPolicyAssert.assertAllAudited;
+import static com.umc.product.support.AuditPolicyAssert.spec;
+import static com.umc.product.support.AuditPolicyAssert.type;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.support.AuditPolicyAssert.AuditSpec;
 
 class AuditCoveragePolicyTest {
 
@@ -24,28 +26,7 @@ class AuditCoveragePolicyTest {
     @Test
     @DisplayName("주요 CommandService 상태 변경 메서드는 감사 로그 대상으로 선언한다")
     void command_services_are_audited() {
-        List<String> violations = auditedSpecs().stream()
-            .filter(spec -> !matchesAuditPolicy(spec))
-            .map(AuditSpec::describe)
-            .toList();
-
-        assertThat(violations).isEmpty();
-    }
-
-    private boolean matchesAuditPolicy(AuditSpec spec) {
-        Audited audited = getMethod(spec).getAnnotation(Audited.class);
-        return audited != null
-            && audited.domain().name().equals(spec.domain())
-            && audited.action().name().equals(spec.action())
-            && audited.targetType().equals(spec.targetType());
-    }
-
-    private Method getMethod(AuditSpec spec) {
-        try {
-            return type(spec.serviceClassName()).getMethod(spec.methodName(), spec.parameterTypes());
-        } catch (NoSuchMethodException e) {
-            throw new IllegalStateException("감사 로그 정책 테스트 메서드 조회 실패: " + spec.describe(), e);
-        }
+        assertAllAudited(auditedSpecs());
     }
 
     private Object auditAction(String name) {
@@ -55,25 +36,6 @@ class AuditCoveragePolicyTest {
         } catch (IllegalArgumentException e) {
             throw new AssertionError("필수 AuditAction 누락: " + name, e);
         }
-    }
-
-    private static Class<?> type(String shortName) {
-        try {
-            return Class.forName("com.umc.product." + shortName);
-        } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("감사 로그 정책 테스트 타입 조회 실패: " + shortName, e);
-        }
-    }
-
-    private static AuditSpec spec(
-        String serviceClassName,
-        String methodName,
-        String domain,
-        String action,
-        String targetType,
-        Class<?>... parameterTypes
-    ) {
-        return new AuditSpec(serviceClassName, methodName, domain, action, targetType, parameterTypes);
     }
 
     private static List<AuditSpec> auditedSpecs() {
@@ -139,11 +101,6 @@ class AuditCoveragePolicyTest {
             spec("community.application.service.command.PostCommandService", "deletePost", "COMMUNITY", "DELETE", "Post", longType),
             spec("community.application.service.command.ReportCommandService", "report", "COMMUNITY", "SUBMIT", "PostReport", type("community.application.port.in.command.report.dto.ReportPostCommand")),
 
-            spec("blog.application.service.BlogContentCommandService", "create", "BLOG", "CREATE", "BlogContent", type("blog.application.port.in.command.dto.CreateBlogContentCommand")),
-            spec("blog.application.service.BlogContentCommandService", "update", "BLOG", "UPDATE", "BlogContent", type("blog.application.port.in.command.dto.UpdateBlogContentCommand")),
-            spec("blog.application.service.BlogContentCommandService", "delete", "BLOG", "DELETE", "BlogContent", type("blog.application.port.in.command.dto.DeleteBlogContentCommand")),
-            spec("blog.application.service.BlogSeriesCommandService", "replaceContents", "BLOG", "REORDER", "BlogSeries", type("blog.application.port.in.command.dto.ReplaceBlogSeriesContentsCommand")),
-
             spec("notice.application.service.command.NoticeService", "createNotice", "NOTICE", "CREATE", "Notice", type("notice.application.port.in.command.dto.CreateNoticeCommand")),
             spec("notice.application.service.command.NoticeService", "updateNoticeTitleOrContent", "NOTICE", "UPDATE", "Notice", type("notice.application.port.in.command.dto.UpdateNoticeCommand")),
             spec("notice.application.service.command.NoticeService", "deleteNotice", "NOTICE", "DELETE", "Notice", type("notice.application.port.in.command.dto.DeleteNoticeCommand")),
@@ -175,18 +132,4 @@ class AuditCoveragePolicyTest {
         );
     }
 
-    private record AuditSpec(
-        String serviceClassName,
-        String methodName,
-        String domain,
-        String action,
-        String targetType,
-        Class<?>[] parameterTypes
-    ) {
-
-        private String describe() {
-            return "%s#%s expected domain=%s action=%s targetType=%s"
-                .formatted(serviceClassName, methodName, domain, action, targetType);
-        }
-    }
 }
