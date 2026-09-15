@@ -4,6 +4,10 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 dependencies {
     implementation(project(":monolith"))
     implementation(project(":blog"))
+
+    // 조립 결과를 검증하는 테스트만 둔다. 모듈별 테스트는 자기 모듈 것만 보므로
+    // 배포 대상에서 모듈이 빠진 것은 여기서만 드러난다.
+    testImplementation(testFixtures(project(":monolith")))
 }
 
 springBoot {
