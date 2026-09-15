@@ -79,7 +79,7 @@ class TrackSeedIntegrationTest extends IntegrationTestSupport {
         var member = saveMemberPort.save(Member.create(
             "학습자", "학습자", "track-seed@example.com", schoolId, null));
         String request = """
-            {"memberId": %d, "gisuId": %d, "tracks": ["WEB_PRODUCT_ENGINEER", "INFRA_PLUS"]}
+            {"memberId": %d, "gisuId": %d, "tracks": ["WEB_PRODUCT_ENGINEER", "DESIGN"]}
             """.formatted(member.getId(), gisuId);
 
         // When
@@ -92,7 +92,7 @@ class TrackSeedIntegrationTest extends IntegrationTestSupport {
         var challenger = getChallengerUseCase.getByMemberIdAndGisuId(member.getId(), gisuId);
         assertThat(challenger.part()).isNull();
         assertThat(challenger.tracks()).containsExactlyInAnyOrder(
-            ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS);
+            ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.DESIGN);
     }
 
     @Test

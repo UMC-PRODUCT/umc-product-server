@@ -90,7 +90,7 @@ class ChallengerRecordTest {
         // Given
         ChallengerRecord record = ChallengerRecord.createAdminWithTracks(
             1L, 11L, 2L, 3L, ChallengerPart.SPRINGBOOT,
-            List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS), "홍길동",
+            List.of(ChallengerTrack.DESIGN, ChallengerTrack.WEB_PRODUCT_ENGINEER), "홍길동",
             ChallengerRoleType.SCHOOL_PART_LEADER, 3L);
 
         // When
@@ -98,8 +98,7 @@ class ChallengerRecordTest {
 
         // Then
         assertThat(record.getPart()).isEqualTo(ChallengerPart.SPRINGBOOT);
-        assertThat(record.getTracks()).containsExactly(
-            ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS);
+        assertThat(record.getTracks()).containsExactly(ChallengerTrack.DESIGN, ChallengerTrack.WEB_PRODUCT_ENGINEER);
         assertThat(record.getTrack()).isNull();
         assertThatThrownBy(() -> record.validateLearningType(GisuLearningType.PART))
             .isInstanceOf(ChallengerDomainException.class);

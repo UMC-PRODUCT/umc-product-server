@@ -74,9 +74,6 @@ public class Challenger extends BaseEntity {
         if (part == null && normalizedTracks.isEmpty()) {
             throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_PART_NOT_FOUND);
         }
-        if (!ChallengerTrack.isValidSelection(normalizedTracks)) {
-            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_LEARNING_TYPE);
-        }
         this.memberId = memberId;
         this.part = part;
         this.tracks = normalizedTracks;
@@ -120,11 +117,6 @@ public class Challenger extends BaseEntity {
         }
         if (this.tracks.contains(newTrack)) {
             return false;
-        }
-        List<ChallengerTrack> candidate = new ArrayList<>(this.tracks);
-        candidate.add(newTrack);
-        if (!ChallengerTrack.isValidSelection(candidate)) {
-            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_LEARNING_TYPE);
         }
         this.tracks.add(newTrack);
         return true;

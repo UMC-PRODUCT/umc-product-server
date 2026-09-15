@@ -74,6 +74,7 @@ public class CurriculumQueryService implements GetCurriculumUseCase {
         if (!valid) {
             throw new CurriculumDomainException(CurriculumErrorCode.INVALID_CURRICULUM_LEARNING_TYPE);
         }
+        validateBasicTrack(track);
         CurriculumProjection projection = track == null
             ? loadCurriculumPort.getByGisuIdAndPart(gisuId, part)
             : loadCurriculumPort.getByGisuIdAndTrack(gisuId, track);
@@ -174,20 +175,25 @@ public class CurriculumQueryService implements GetCurriculumUseCase {
     }
 
     private ChallengerTrack resolveTrack(ChallengerInfo challenger, ChallengerTrack requestedTrack) {
-        List<ChallengerTrack> tracks = challenger.tracks() == null ? List.of()
-            : challenger.tracks().stream().distinct().toList();
+        validateBasicTrack(requestedTrack);
+        List<ChallengerTrack> basicTracks = challenger.tracks() == null ? List.of()
+            : challenger.tracks().stream().filter(ChallengerTrack::isBasic).distinct().toList();
         if (requestedTrack != null) {
-            if (!tracks.contains(requestedTrack)) {
+            if (!basicTracks.contains(requestedTrack)) {
                 throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_ACCESS_DENIED);
             }
             return requestedTrack;
         }
-        // 트랙 미지정 시 기본(대표) 트랙 커리큘럼을 노출한다. INFRA_PLUS 등 부가 트랙은 명시적으로 요청해야 조회된다.
-        List<ChallengerTrack> basicTracks = tracks.stream().filter(ChallengerTrack::isBasic).toList();
         if (basicTracks.size() != 1) {
             throw new CurriculumDomainException(CurriculumErrorCode.CURRICULUM_TRACK_REQUIRED);
         }
         return basicTracks.getFirst();
+    }
+
+    private void validateBasicTrack(ChallengerTrack track) {
+        if (track != null && !track.isBasic()) {
+            throw new CurriculumDomainException(CurriculumErrorCode.UNSUPPORTED_CURRICULUM_TRACK);
+        }
     }
 
     private Map<Long, MissionSubmissionInfo> buildSubmissionInfoMap(

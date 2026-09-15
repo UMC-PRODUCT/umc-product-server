@@ -119,7 +119,8 @@ public class ChallengerSeedService implements SeedChallengersUseCase, CreateSeed
     public CreateSeedChallengerResult create(CreateSeedChallengerCommand command) {
         GisuLearningType learningType = getGisuUseCase.getById(command.gisuId()).learningType();
         boolean valid = learningType == GisuLearningType.TRACK
-            ? command.part() == null && ChallengerTrack.isValidSelection(command.tracks())
+            ? command.part() == null
+                && command.tracks().stream().allMatch(track -> track != null && track.isBasic())
             : command.part() != null && command.tracks().isEmpty();
         if (!valid) {
             throw new CommonException(CommonErrorCode.BAD_REQUEST, "PART 기수는 part, TRACK 기수는 기본 tracks를 입력해주세요.");

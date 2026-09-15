@@ -37,11 +37,11 @@ class ChallengerTrackDtoTest {
     }
 
     @Test
-    @DisplayName("조회 Info는 기본 트랙과 PLUS 부가 트랙을 노출한다")
-    void 조회_Info는_기본_트랙과_PLUS_부가_트랙을_노출한다() {
+    @DisplayName("조회 Info는 여러 유효 트랙을 노출한다")
+    void 조회_Info는_여러_유효_트랙을_노출한다() {
         Challenger challenger = Challenger.builder()
             .memberId(1L)
-            .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS))
+            .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER))
             .gisuId(9L)
             .build();
 
@@ -50,7 +50,7 @@ class ChallengerTrackDtoTest {
 
         assertThat(info.tracks()).containsExactly(
             ChallengerTrack.WEB_PRODUCT_ENGINEER,
-            ChallengerTrack.INFRA_PLUS
+            ChallengerTrack.MOBILE_PRODUCT_ENGINEER
         );
         assertThat(basicInfo.tracks()).isEqualTo(info.tracks());
     }

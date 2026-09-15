@@ -115,7 +115,7 @@ class ChallengerRecordControllerTest {
         given(manageChallengerRecordUseCase.create(any())).willReturn(10L);
         given(assembler.from(10L)).willReturn(ChallengerRecordResponse.builder()
             .code("ABC123").part(ChallengerPart.SPRINGBOOT)
-            .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS))
+            .tracks(List.of(ChallengerTrack.DESIGN, ChallengerTrack.WEB_PRODUCT_ENGINEER))
             .challengerRoleType(ChallengerRoleType.SCHOOL_PART_LEADER).build());
 
         // When / Then
@@ -123,17 +123,17 @@ class ChallengerRecordControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"gisuId":1,"chapterId":2,"schoolId":3,"part":"SPRINGBOOT",
-                     "tracks":["WEB_PRODUCT_ENGINEER","INFRA_PLUS"],"memberName":"홍길동",
+                     "tracks":["DESIGN","WEB_PRODUCT_ENGINEER"],"memberName":"홍길동",
                      "challengerRoleType":"SCHOOL_PART_LEADER"}
                     """))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.track").isEmpty())
-            .andExpect(jsonPath("$.result.tracks[0]").value("WEB_PRODUCT_ENGINEER"))
-            .andExpect(jsonPath("$.result.tracks[1]").value("INFRA_PLUS"));
+            .andExpect(jsonPath("$.result.tracks[0]").value("DESIGN"))
+            .andExpect(jsonPath("$.result.tracks[1]").value("WEB_PRODUCT_ENGINEER"));
         ArgumentCaptor<CreateChallengerRecordCommand> captor =
             ArgumentCaptor.forClass(CreateChallengerRecordCommand.class);
         then(manageChallengerRecordUseCase).should().create(captor.capture());
-        assertThat(captor.getValue().tracks()).containsExactly(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS);
+        assertThat(captor.getValue().tracks()).containsExactly(ChallengerTrack.DESIGN, ChallengerTrack.WEB_PRODUCT_ENGINEER);
         assertThat(captor.getValue().part()).isEqualTo(ChallengerPart.SPRINGBOOT);
         assertThat(captor.getValue().challengerRoleType()).isEqualTo(ChallengerRoleType.SCHOOL_PART_LEADER);
     }
@@ -148,14 +148,14 @@ class ChallengerRecordControllerTest {
         mockMvc.perform(post("/api/v1/challenger-record/bulk")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    [{"gisuId":1,"chapterId":2,"schoolId":3,"tracks":["WEB_PRODUCT_ENGINEER","INFRA_PLUS"],"memberName":"홍길동"},
+                    [{"gisuId":1,"chapterId":2,"schoolId":3,"tracks":["PLAN","DESIGN"],"memberName":"홍길동"},
                      {"gisuId":1,"schoolId":3,"tracks":[],"memberName":"김철수",
                       "challengerRoleType":"CENTRAL_OPERATING_TEAM_MEMBER"}]
                     """))
             .andExpect(status().isOk());
         ArgumentCaptor<List<CreateChallengerRecordCommand>> captor = ArgumentCaptor.captor();
         then(manageChallengerRecordUseCase).should().createBulk(captor.capture());
-        assertThat(captor.getValue().getFirst().tracks()).containsExactly(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS);
+        assertThat(captor.getValue().getFirst().tracks()).containsExactly(ChallengerTrack.PLAN, ChallengerTrack.DESIGN);
         assertThat(captor.getValue().getLast().tracks()).isEmpty();
         assertThat(captor.getValue().getLast().chapterId()).isNull();
         assertThat(captor.getValue().getLast().toEntity().canOmitChapter()).isTrue();

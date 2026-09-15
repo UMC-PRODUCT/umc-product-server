@@ -47,6 +47,9 @@ public class Curriculum extends BaseEntity {
         if ((part == null) == (track == null)) {
             throw new CurriculumDomainException(CurriculumErrorCode.INVALID_CURRICULUM_LEARNING_TYPE);
         }
+        if (track != null && !track.isBasic()) {
+            throw new CurriculumDomainException(CurriculumErrorCode.UNSUPPORTED_CURRICULUM_TRACK);
+        }
         this.gisuId = gisuId;
         this.part = part;
         this.track = track;

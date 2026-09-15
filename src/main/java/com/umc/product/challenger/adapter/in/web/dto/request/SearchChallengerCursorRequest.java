@@ -1,13 +1,10 @@
 package com.umc.product.challenger.adapter.in.web.dto.request;
 
-import java.util.List;
-
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.common.domain.enums.ChallengerTrack;
-
 import io.swagger.v3.oas.annotations.Parameter;
+import java.util.List;
 
 public record SearchChallengerCursorRequest(
         @Parameter(description = "이전 페이지의 마지막 챌린저 ID. 첫 페이지 조회 시 null")
@@ -34,11 +31,8 @@ public record SearchChallengerCursorRequest(
         @Parameter(description = "소속 지부 ID로 필터링")
         Long chapterId,
 
-        @Parameter(description = "파트별 필터링 (PLAN, DESIGN, WEB, ANDROID, IOS, NODEJS, SPRINGBOOT) - PART 학습 기수용")
+        @Parameter(description = "파트별 필터링 (PLAN, DESIGN, WEB, ANDROID, IOS, NODEJS, SPRINGBOOT)")
         ChallengerPart part,
-
-        @Parameter(description = "트랙별 필터링 (PLAN, DESIGN, WEB_PRODUCT_ENGINEER, MOBILE_PRODUCT_ENGINEER, INFRA_PLUS) - TRACK 학습 기수용")
-        ChallengerTrack track,
 
         @Parameter(description = "기수 ID로 필터링")
         Long gisuId
@@ -55,7 +49,6 @@ public record SearchChallengerCursorRequest(
                 schoolId,
                 chapterId,
                 part,
-                track,
                 gisuId,
                 List.of(ChallengerStatus.ACTIVE)
         );
