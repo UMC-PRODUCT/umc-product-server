@@ -329,6 +329,10 @@ public class ChallengerQueryRepository {
             .when(challenger.part.eq(ChallengerPart.IOS)).then(ChallengerPart.IOS.getSortOrder())
             .when(challenger.part.eq(ChallengerPart.NODEJS)).then(ChallengerPart.NODEJS.getSortOrder())
             .when(challenger.part.eq(ChallengerPart.SPRINGBOOT)).then(ChallengerPart.SPRINGBOOT.getSortOrder())
+            .when(challenger.part.eq(ChallengerPart.WEB_PRODUCT_ENGINEER))
+            .then(ChallengerPart.WEB_PRODUCT_ENGINEER.getSortOrder())
+            .when(challenger.part.eq(ChallengerPart.MOBILE_PRODUCT_ENGINEER))
+            .then(ChallengerPart.MOBILE_PRODUCT_ENGINEER.getSortOrder())
             .otherwise(999);
     }
 
