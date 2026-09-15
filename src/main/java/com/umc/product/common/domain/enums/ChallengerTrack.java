@@ -31,8 +31,9 @@ public enum ChallengerTrack {
         return switch (part) {
             case PLAN -> PLAN;
             case DESIGN -> DESIGN;
-            case WEB, NODEJS, SPRINGBOOT -> WEB_PRODUCT_ENGINEER;
-            case ANDROID, IOS -> MOBILE_PRODUCT_ENGINEER;
+            case WEB, NODEJS, SPRINGBOOT, WEB_PRODUCT_ENGINEER -> WEB_PRODUCT_ENGINEER;
+            case ANDROID, IOS, MOBILE_PRODUCT_ENGINEER -> MOBILE_PRODUCT_ENGINEER;
+            case INFRA -> INFRA_PLUS;
             case ADMIN -> throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_PART_NOT_FOUND);
         };
     }
