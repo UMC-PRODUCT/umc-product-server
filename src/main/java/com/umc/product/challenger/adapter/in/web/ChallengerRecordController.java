@@ -94,12 +94,10 @@ public class ChallengerRecordController {
     )
     @Operation(operationId = "CHALLENGER-RECORD-002", summary = "챌린저 가입 및 기록용 코드 생성",
         description = """
-            중앙운영사무국 총괄단이 기수의 학습 유형에 맞는 part 또는 기본 tracks 목록으로 6자리 코드를 발급합니다.
-            TRACK 기수는 기본 트랙을 복수로 지정할 수 있고, 비수강 운영진은 역할과 tracks: []를 사용합니다.
-            기존 단일 track 입력도 지원하지만 tracks와 동시에 지정할 수 없습니다.
-            이름과 학교가 일치하는 회원에게 수강 트랙과 challengerRoleType 역할을 한 코드로 부여합니다.
+            중앙운영사무국 총괄단이 단일 part와 선택 트랙 여부인 infra로 6자리 코드를 발급합니다.
+            이름과 학교가 일치하는 회원에게 수강 파트와 challengerRoleType 역할을 한 코드로 부여합니다.
             운영진 코드의 part는 수강이 아닌 담당 파트이며, 수강하지 않는 중앙 운영진만 chapterId를 생략할 수 있습니다.
-            PART 기수의 기존 코드 발급과 사용 방식은 유지합니다.
+            infra=true는 웹/모바일 프로덕트 엔지니어 파트에만 지정할 수 있습니다.
             """)
     @PostMapping
     public ChallengerRecordResponse createChallengerRecord(
@@ -111,8 +109,7 @@ public class ChallengerRecordController {
         Long id = manageChallengerRecordUseCase.create(
             CreateChallengerRecordCommand.builder()
                 .part(request.part())
-                .track(request.track())
-                .tracks(request.tracks())
+                .infra(request.infra())
                 .creatorMemberId(memberPrincipal.getMemberId())
                 .gisuId(request.gisuId())
                 .chapterId(request.chapterId())
@@ -144,8 +141,7 @@ public class ChallengerRecordController {
             request.stream()
                 .map(req -> CreateChallengerRecordCommand.builder()
                     .part(req.part())
-                    .track(req.track())
-                    .tracks(req.tracks())
+                    .infra(req.infra())
                     .creatorMemberId(memberPrincipal.getMemberId())
                     .gisuId(req.gisuId())
                     .chapterId(req.chapterId())

@@ -74,7 +74,7 @@ type MemberChallenger {
   gisuId: ID!
   gisu: Gisu
   part: ChallengerPart
-  tracks: [ChallengerTrack!]!
+  infra: Boolean!
   status: ChallengerStatus!
 }
 

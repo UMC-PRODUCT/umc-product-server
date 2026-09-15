@@ -23,8 +23,6 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.common.domain.enums.ChallengerTrack;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumOverviewInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProjection;
 import com.umc.product.curriculum.application.port.in.query.dto.MyCurriculumInfo;
@@ -44,8 +42,6 @@ import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
-import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 
 @ExtendWith(MockitoExtension.class)
 class CurriculumQueryServiceTest {
@@ -59,8 +55,6 @@ class CurriculumQueryServiceTest {
     private static final Instant WEEK2_END = Instant.parse("2024-03-14T23:59:59Z");
     @Mock
     GetChallengerUseCase getChallengerUseCase;
-    @Mock
-    GetGisuUseCase getGisuUseCase;
     @Mock
     LoadCurriculumPort loadCurriculumPort;
     @Mock
@@ -82,8 +76,6 @@ class CurriculumQueryServiceTest {
 
     @BeforeEach
     void setUp() {
-        given(getGisuUseCase.getById(GISU_ID)).willReturn(
-            new GisuInfo(GISU_ID, GISU_ID, Instant.EPOCH, Instant.MAX, true));
         curriculum = Curriculum.create(GISU_ID, PART, "9기 스프링부트");
         ReflectionTestUtils.setField(curriculum, "id", 100L);
         projection = new CurriculumProjection(100L, PART, "9기 스프링부트");
@@ -92,22 +84,12 @@ class CurriculumQueryServiceTest {
     // ===== getCurriculumOverview =====
 
     @Test
-    void 복수_기본_트랙_수강자는_조회할_트랙을_명시해야_한다() {
+    void 기본_파트는_선택자_없이_자동으로_조회한다() {
         // given
-        트랙_수강을_준비한다(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER));
-
-        // when / then
-        assertThatThrownBy(() -> sut.getMyProgress(MEMBER_ID, GISU_ID))
-            .isInstanceOf(CurriculumDomainException.class)
-            .extracting("baseCode").isEqualTo(CurriculumErrorCode.CURRICULUM_TRACK_REQUIRED);
-    }
-
-    @Test
-    void 기본_트랙_하나와_플러스를_수강하면_기본_트랙을_자동_선택한다() {
-        // given
-        트랙_수강을_준비한다(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS));
-        given(loadCurriculumPort.getByGisuIdAndTrack(GISU_ID, ChallengerTrack.WEB_PRODUCT_ENGINEER))
-            .willReturn(new CurriculumProjection(300L, null, ChallengerTrack.WEB_PRODUCT_ENGINEER, "웹"));
+        given(getChallengerUseCase.getByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
+            .willReturn(ChallengerInfo.builder().part(ChallengerPart.WEB_PRODUCT_ENGINEER).build());
+        given(loadCurriculumPort.getByGisuIdAndPart(GISU_ID, ChallengerPart.WEB_PRODUCT_ENGINEER))
+            .willReturn(new CurriculumProjection(300L, ChallengerPart.WEB_PRODUCT_ENGINEER, "웹"));
         given(loadWeeklyCurriculumPort.findByCurriculumId(300L, null)).willReturn(List.of());
 
         // when
@@ -115,55 +97,60 @@ class CurriculumQueryServiceTest {
 
         // then
         assertThat(result.curriculumId()).isEqualTo(300L);
-        assertThat(result.track()).isEqualTo(ChallengerTrack.WEB_PRODUCT_ENGINEER);
-        assertThat(result.part()).isNull();
+        assertThat(result.part()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
     }
 
     @Test
-    void 복수_트랙_중_선택한_트랙의_진행현황만_반환한다() {
+    void 본인의_파트를_지정해_커리큘럼을_조회할_수_있다() {
         // given
-        트랙_수강을_준비한다(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER));
-        given(loadCurriculumPort.getByGisuIdAndTrack(GISU_ID, ChallengerTrack.MOBILE_PRODUCT_ENGINEER))
-            .willReturn(new CurriculumProjection(400L, null, ChallengerTrack.MOBILE_PRODUCT_ENGINEER, "모바일"));
+        given(getChallengerUseCase.getByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
+            .willReturn(ChallengerInfo.builder()
+                .part(ChallengerPart.WEB_PRODUCT_ENGINEER).build());
+        given(loadCurriculumPort.getByGisuIdAndPart(GISU_ID, ChallengerPart.WEB_PRODUCT_ENGINEER))
+            .willReturn(new CurriculumProjection(400L, ChallengerPart.WEB_PRODUCT_ENGINEER, "웹"));
         given(loadWeeklyCurriculumPort.findByCurriculumId(400L, null)).willReturn(List.of());
 
         // when
-        var result = sut.getMyProgress(MEMBER_ID, GISU_ID, ChallengerTrack.MOBILE_PRODUCT_ENGINEER);
+        var result = sut.getMyProgress(MEMBER_ID, GISU_ID, ChallengerPart.WEB_PRODUCT_ENGINEER);
 
         // then
         assertThat(result.curriculumId()).isEqualTo(400L);
-        assertThat(result.track()).isEqualTo(ChallengerTrack.MOBILE_PRODUCT_ENGINEER);
+        assertThat(result.part()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
     }
 
     @Test
-    void 미수강_트랙의_진행현황은_조회하지_못한다() {
+    void 인프라_선택_여부로_다른_파트의_조회_권한을_얻지_못한다() {
         // given
-        트랙_수강을_준비한다(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER));
+        given(getChallengerUseCase.getByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
+            .willReturn(ChallengerInfo.builder()
+                .part(ChallengerPart.WEB_PRODUCT_ENGINEER).infra(true).build());
 
         // when / then
-        assertThatThrownBy(() -> sut.getMyProgress(MEMBER_ID, GISU_ID, ChallengerTrack.DESIGN))
+        assertThatThrownBy(() -> sut.getMyProgress(MEMBER_ID, GISU_ID, ChallengerPart.MOBILE_PRODUCT_ENGINEER))
             .isInstanceOf(CurriculumDomainException.class)
             .extracting("baseCode").isEqualTo(CurriculumErrorCode.WORKBOOK_ACCESS_DENIED);
     }
 
     @Test
-    void 파트_기수에_트랙_선택자를_보내면_거부한다() {
+    void 다른_파트의_진행현황은_조회하지_못한다() {
         // given
         given(getChallengerUseCase.getByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
             .willReturn(ChallengerInfo.builder().part(PART).build());
 
         // when / then
-        assertThatThrownBy(() -> sut.getMyProgress(MEMBER_ID, GISU_ID, ChallengerTrack.WEB_PRODUCT_ENGINEER))
+        assertThatThrownBy(() -> sut.getMyProgress(MEMBER_ID, GISU_ID, ChallengerPart.DESIGN))
             .isInstanceOf(CurriculumDomainException.class)
-            .extracting("baseCode").isEqualTo(CurriculumErrorCode.INVALID_CURRICULUM_LEARNING_TYPE);
+            .extracting("baseCode").isEqualTo(CurriculumErrorCode.WORKBOOK_ACCESS_DENIED);
     }
 
-    private void 트랙_수강을_준비한다(List<ChallengerTrack> tracks) {
-        given(getGisuUseCase.getById(GISU_ID)).willReturn(
-            new GisuInfo(GISU_ID, GISU_ID, Instant.EPOCH, Instant.MAX, true, GisuLearningType.TRACK));
+    @Test
+    void 파트가_없는_챌린저는_기본_커리큘럼을_조회하지_못한다() {
         given(getChallengerUseCase.getByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
-            .willReturn(ChallengerInfo.builder().memberId(MEMBER_ID).gisuId(GISU_ID).tracks(tracks)
-                .challengerStatus(ChallengerStatus.ACTIVE).build());
+            .willReturn(ChallengerInfo.builder().build());
+
+        assertThatThrownBy(() -> sut.getMyProgress(MEMBER_ID, GISU_ID))
+            .isInstanceOf(CurriculumDomainException.class)
+            .extracting("baseCode").isEqualTo(CurriculumErrorCode.CURRICULUM_TRACK_REQUIRED);
     }
 
     @Nested
@@ -272,8 +259,6 @@ class CurriculumQueryServiceTest {
 
         @BeforeEach
         void setUp() {
-            given(getGisuUseCase.getById(GISU_ID)).willReturn(
-                new GisuInfo(GISU_ID, GISU_ID, Instant.EPOCH, Instant.MAX, true));
             challengerInfo = ChallengerInfo.builder()
                 .challengerId(50L)
                 .memberId(MEMBER_ID)

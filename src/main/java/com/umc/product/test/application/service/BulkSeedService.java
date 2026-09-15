@@ -13,8 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.challenger.domain.enums.PointType;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
@@ -72,11 +70,8 @@ public class BulkSeedService implements SeedBulkDataUseCase {
     private static final int PARTICIPANTS_PER_SCHEDULE = 500;
     private static final List<ChallengerPart> PART_CYCLE = List.of(
         ChallengerPart.WEB, ChallengerPart.ANDROID, ChallengerPart.IOS, ChallengerPart.NODEJS,
-        ChallengerPart.SPRINGBOOT, ChallengerPart.DESIGN, ChallengerPart.PLAN
-    );
-    private static final List<ChallengerTrack> TRACK_CYCLE = List.of(
-        ChallengerTrack.PLAN, ChallengerTrack.DESIGN,
-        ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER
+        ChallengerPart.SPRINGBOOT, ChallengerPart.DESIGN, ChallengerPart.PLAN,
+        ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER
     );
     // SEED-007(ChallengerPointSeedService)과 동일한 상점 3 + 벌점 2 순환 셋
     private static final List<PointType> POINT_CYCLE = List.of(
@@ -116,7 +111,7 @@ public class BulkSeedService implements SeedBulkDataUseCase {
         // 도메인 규칙상 ID 참조(FK 제약 없음)이고 같은 트랜잭션 안에서 곧 적재된다.
         int scheduleCount = seedSchedules(base, command, memberCount);
         seedNotices(base, command, gisuId);
-        seedMembersWithActivity(base, command, gisuId, gisu.learningType(), schoolIds, rng, scheduleCount);
+        seedMembersWithActivity(base, command, gisuId, schoolIds, rng, scheduleCount);
         bulkSeedPort.finalizeBulkLoad();
 
         List<Long> sampledMemberIds =
@@ -195,7 +190,6 @@ public class BulkSeedService implements SeedBulkDataUseCase {
         BulkSeedBaseIds base,
         SeedBulkDataCommand command,
         Long gisuId,
-        GisuLearningType learningType,
         List<Long> schoolIds,
         Random rng,
         int scheduleCount
@@ -230,9 +224,8 @@ public class BulkSeedService implements SeedBulkDataUseCase {
             ));
             challengers.add(new SeedChallengerRow(
                 challengerId, memberId,
-                learningType == GisuLearningType.TRACK ? null : PART_CYCLE.get(i % PART_CYCLE.size()),
-                learningType == GisuLearningType.TRACK
-                    ? List.of(TRACK_CYCLE.get(i % TRACK_CYCLE.size())) : List.of(),
+                PART_CYCLE.get(i % PART_CYCLE.size()),
+                false,
                 gisuId));
             for (int p = 0; p < command.pointsPerChallenger(); p++) {
                 points.add(new SeedChallengerPointRow(

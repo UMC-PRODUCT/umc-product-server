@@ -15,13 +15,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public interface StudyGroupCommandControllerApi {
 
     @Operation(operationId = "STUDY-GROUP-001", summary = "스터디 그룹 생성", description = """
-        PART 기수는 part, TRACK 기수는 기본 track 하나를 지정합니다. part와 track을 함께 지정할 수 없습니다.
-        PLUS 트랙은 스터디를 생성할 수 없습니다.
+        스터디가 진행될 단일 part를 지정합니다.
 
         스터디원과 담당 파트장 ID는 모두 챌린저 ID가 아닌 회원 ID(memberId)입니다.
-        TRACK 스터디원은 해당 기수의 ACTIVE 챌린저이며 선택한 트랙을 수강 중이어야 합니다.
-        같은 기수의 동일 파트 또는 동일 트랙에서 다른 스터디에 중복 참여할 수 없습니다.
-        서로 다른 트랙의 스터디에는 함께 참여할 수 있습니다. 담당 파트장은 이 중복 제한을 적용하지 않습니다.
+        스터디원은 해당 기수의 ACTIVE 챌린저이며 지정한 파트를 수강 중이어야 합니다.
+        같은 기수의 동일 파트에서 다른 스터디에 중복 참여할 수 없습니다. 담당 파트장은 이 제한을 적용하지 않습니다.
         """)
     @ApiResponses(value = {
         @ApiResponse(responseCode = "400", description = "잘못된 요청"),
@@ -30,8 +28,7 @@ public interface StudyGroupCommandControllerApi {
     void create(CreateStudyGroupRequest request);
 
     @Operation(operationId = "STUDY-GROUP-002", summary = "스터디 그룹 수정", description = """
-        스터디 이름과 기존 PART 스터디의 part를 수정합니다. 전달하지 않은 필드는 변경되지 않습니다.
-        TRACK 스터디의 track은 생성 후 변경할 수 없으며, part를 지정할 수 없습니다.
+        스터디 이름과 part를 수정합니다. 전달하지 않은 필드는 변경되지 않습니다.
 
         파트 변경 시 같은 기수의 변경할 파트 스터디에 이미 속한 멤버가 있으면 409 에러가 발생합니다.
         스터디원 및 파트장 수정은 별도의 API 사용 바랍니다.
@@ -46,7 +43,7 @@ public interface StudyGroupCommandControllerApi {
 
     @Operation(operationId = "STUDY-GROUP-003", summary = "스터디 그룹에 스터디원 추가", description = """
         회원 ID(memberId)로 스터디원을 추가합니다.
-        TRACK 그룹은 해당 기수의 ACTIVE 챌린저와 수강 트랙을 검사합니다.
+        해당 기수의 ACTIVE 챌린저와 수강 파트를 검사합니다.
         """)
     void addMember(
         @PathVariable Long studyGroupId,

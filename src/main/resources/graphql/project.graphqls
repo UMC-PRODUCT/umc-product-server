@@ -202,6 +202,8 @@ enum ChallengerPart {
   NODEJS
   SPRINGBOOT
   ADMIN
+  WEB_PRODUCT_ENGINEER
+  MOBILE_PRODUCT_ENGINEER
 }
 
 enum PartQuotaStatus {

@@ -3,7 +3,6 @@ package com.umc.product.test.adapter.in.web.dto;
 import java.util.List;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.test.application.port.in.command.dto.SeedChallengersResult;
 
 public record SeedChallengersResponse(
@@ -19,8 +18,7 @@ public record SeedChallengersResponse(
         ChallengerPart part,
         int created,
         int memberFailed,
-        int challengerFailed,
-        ChallengerTrack track
+        int challengerFailed
     ) {
 
         public static PerCellSummary from(SeedChallengersResult.PerCellSummary summary) {
@@ -30,8 +28,7 @@ public record SeedChallengersResponse(
                 summary.part(),
                 summary.created(),
                 summary.memberFailed(),
-                summary.challengerFailed(),
-                summary.track()
+                summary.challengerFailed()
             );
         }
     }

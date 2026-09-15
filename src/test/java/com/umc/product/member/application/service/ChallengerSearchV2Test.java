@@ -31,7 +31,6 @@ import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.ChallengerSearchItemV2Info;
@@ -94,7 +93,7 @@ class ChallengerSearchV2Test {
             memberId,
             gisuId,
             part,
-            List.of(ChallengerTrack.from(part)),
+            false,
             ChallengerStatus.ACTIVE
         );
     }

@@ -28,7 +28,6 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.global.cache.application.port.in.CacheUseCase;
 import com.umc.product.global.cache.domain.CacheKey;
 import com.umc.product.global.cache.domain.CacheLookup;
@@ -233,7 +232,7 @@ class AuthorizationServiceCacheTest {
         // given
         InMemoryCacheUseCase cacheUseCase = new InMemoryCacheUseCase();
         AuthorizationService sut = authorizationService(cacheUseCase);
-        givenSubject(null, List.of(), ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, GISU_ID);
+        givenSubject(null, false, ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, GISU_ID);
         given(getChapterUseCase.findByGisuAndSchool(GISU_ID, SCHOOL_ID)).willReturn(Optional.empty());
         given(getMemberUseCase.existsById(MEMBER_ID)).willReturn(true);
 
@@ -257,7 +256,7 @@ class AuthorizationServiceCacheTest {
     void 비수강_중앙_운영진의_기존_지부_연결을_보존한다() {
         // given
         AuthorizationService sut = authorizationService(new InMemoryCacheUseCase());
-        givenSubject(null, List.of(), ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, GISU_ID);
+        givenSubject(null, false, ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, GISU_ID);
         given(getChapterUseCase.findByGisuAndSchool(GISU_ID, SCHOOL_ID))
             .willReturn(Optional.of(new ChapterInfo(CHAPTER_ID, "현재 지부")));
 
@@ -273,13 +272,13 @@ class AuthorizationServiceCacheTest {
     @MethodSource("지부가_필요한_소속")
     @DisplayName("같은 기수 비수강 중앙 운영진 이외의 소속은 지부 누락을 허용하지 않는다")
     void 지부_누락_허용을_다른_소속으로_확대하지_않는다(
-        String description, ChallengerPart part, List<ChallengerTrack> tracks,
+        String description, ChallengerPart part, boolean infra,
         ChallengerRoleType roleType, Long roleGisuId
     ) {
         // given
         InMemoryCacheUseCase cacheUseCase = new InMemoryCacheUseCase();
         AuthorizationService sut = authorizationService(cacheUseCase);
-        givenSubject(part, tracks, roleType, roleGisuId);
+        givenSubject(part, infra, roleType, roleGisuId);
         given(getChapterUseCase.byGisuAndSchool(GISU_ID, SCHOOL_ID))
             .willThrow(new OrganizationDomainException(OrganizationErrorCode.CHAPTER_NOT_FOUND));
 
@@ -293,23 +292,23 @@ class AuthorizationServiceCacheTest {
 
     private static Stream<Arguments> 지부가_필요한_소속() {
         return Stream.of(
-            Arguments.of("운영진 역할 없음", null, List.of(), null, GISU_ID),
-            Arguments.of("비수강 학교 회장", null, List.of(), ChallengerRoleType.SCHOOL_PRESIDENT, GISU_ID),
-            Arguments.of("다른 기수 중앙 운영진", null, List.of(),
+            Arguments.of("운영진 역할 없음", null, false, null, GISU_ID),
+            Arguments.of("비수강 학교 회장", null, false, ChallengerRoleType.SCHOOL_PRESIDENT, GISU_ID),
+            Arguments.of("다른 기수 중앙 운영진", null, false,
                 ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, GISU_ID + 1),
-            Arguments.of("Track 수강 중인 중앙 운영진", null, List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER),
+            Arguments.of("파트 수강 중인 중앙 운영진", ChallengerPart.WEB_PRODUCT_ENGINEER, false,
                 ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, GISU_ID),
-            Arguments.of("레거시 ADMIN 소속 중앙 운영진", ChallengerPart.ADMIN, List.of(),
+            Arguments.of("레거시 ADMIN 소속 중앙 운영진", ChallengerPart.ADMIN, false,
                 ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, GISU_ID)
         );
     }
 
-    private void givenSubject(ChallengerPart part, List<ChallengerTrack> tracks,
+    private void givenSubject(ChallengerPart part, boolean infra,
                               ChallengerRoleType roleType, Long roleGisuId) {
         given(getMemberUseCase.getById(MEMBER_ID))
             .willReturn(MemberInfo.builder().id(MEMBER_ID).schoolId(SCHOOL_ID).build());
         given(getChallengerUseCase.getAllByMemberId(MEMBER_ID)).willReturn(List.of(ChallengerInfo.builder()
-            .challengerId(CHALLENGER_ID).memberId(MEMBER_ID).gisuId(GISU_ID).part(part).tracks(tracks).build()));
+            .challengerId(CHALLENGER_ID).memberId(MEMBER_ID).gisuId(GISU_ID).part(part).infra(infra).build()));
         given(loadChallengerRolePort.findByMemberId(MEMBER_ID)).willReturn(roleType == null ? List.of() : List.of(
             ChallengerRole.create(CHALLENGER_ID, roleType,
                 roleType.isAtLeastCentralMember() ? null : SCHOOL_ID, null, roleGisuId)

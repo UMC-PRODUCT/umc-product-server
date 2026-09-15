@@ -2,7 +2,7 @@ package com.umc.product.curriculum.adapter.in.web.v2.dto.response;
 
 import java.util.List;
 
-import com.umc.product.common.domain.enums.ChallengerTrack;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.dto.WeeklyBestWorkbookInfo;
 import com.umc.product.curriculum.domain.WeeklyBestWorkbook;
 
@@ -26,15 +26,8 @@ public record BestWorkbookResponse(
     Long decidedMemberId,
     String reason,
     List<ChallengerWorkbookResponse> challengerWorkbooks,
-    ChallengerTrack track
+    ChallengerPart part
 ) {
-    public BestWorkbookResponse(
-        Long weeklyBestWorkbookEntityId, Long memberId, Long studyGroupId, Long decidedMemberId,
-        String reason, List<ChallengerWorkbookResponse> challengerWorkbooks
-    ) {
-        this(weeklyBestWorkbookEntityId, memberId, studyGroupId, decidedMemberId, reason, challengerWorkbooks, null);
-    }
-
     public static BestWorkbookResponse from(WeeklyBestWorkbookInfo info) {
         return BestWorkbookResponse.builder()
             .weeklyBestWorkbookEntityId(info.weeklyBestWorkbookEntityId())
@@ -42,7 +35,7 @@ public record BestWorkbookResponse(
             .studyGroupId(info.studyGroupId())
             .decidedMemberId(info.decidedMemberId())
             .reason(info.reason())
-            .track(info.track())
+            .part(info.part())
             .challengerWorkbooks(info.challengerWorkbooks().stream()
                 .map(ChallengerWorkbookResponse::from)
                 .toList())

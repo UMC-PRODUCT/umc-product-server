@@ -9,7 +9,6 @@ import org.springframework.util.StringUtils;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 
@@ -47,9 +46,6 @@ public class StudyGroup extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private ChallengerPart part;
 
-    @Enumerated(EnumType.STRING)
-    private ChallengerTrack track;
-
     @Getter(AccessLevel.NONE)
     @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<StudyGroupMember> members = new ArrayList<>();
@@ -59,12 +55,11 @@ public class StudyGroup extends BaseEntity {
     private List<StudyGroupMentor> mentors = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
-    private StudyGroup(String name, Long gisuId, ChallengerPart part, ChallengerTrack track) {
-        validate(name, gisuId, part, track);
+    private StudyGroup(String name, Long gisuId, ChallengerPart part) {
+        validate(name, gisuId, part);
         this.name = name;
         this.gisuId = gisuId;
         this.part = part;
-        this.track = track;
     }
 
     public static StudyGroup create(
@@ -87,18 +82,7 @@ public class StudyGroup extends BaseEntity {
         return studyGroup;
     }
 
-    public static StudyGroup create(
-        String name, Long gisuId, ChallengerPart part, ChallengerTrack track,
-        Set<Long> memberIds, Set<Long> mentorIds
-    ) {
-        StudyGroup studyGroup = StudyGroup.builder()
-            .name(name).gisuId(gisuId).part(part).track(track).build();
-        studyGroup.addMembers(memberIds);
-        studyGroup.assignMentors(mentorIds);
-        return studyGroup;
-    }
-
-    private static void validate(String name, Long gisuId, ChallengerPart part, ChallengerTrack track) {
+    private static void validate(String name, Long gisuId, ChallengerPart part) {
         if (name == null || name.isBlank()) {
             throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
         }
@@ -107,11 +91,8 @@ public class StudyGroup extends BaseEntity {
             throw new OrganizationDomainException(OrganizationErrorCode.GISU_REQUIRED);
         }
 
-        if (part == null && track == null) {
+        if (part == null) {
             throw new OrganizationDomainException(OrganizationErrorCode.PART_REQUIRED);
-        }
-        if ((part != null && track != null) || (track != null && !track.isBasic())) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_LEARNING_TYPE_INVALID);
         }
     }
 
@@ -124,9 +105,6 @@ public class StudyGroup extends BaseEntity {
     }
 
     public void updatePart(ChallengerPart challengerPart) {
-        if (challengerPart != null && track != null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_LEARNING_TYPE_INVALID);
-        }
         if (challengerPart != null) {
             this.part = challengerPart;
         }

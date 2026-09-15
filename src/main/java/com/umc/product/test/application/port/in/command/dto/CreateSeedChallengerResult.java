@@ -1,16 +1,13 @@
 package com.umc.product.test.application.port.in.command.dto;
 
-import java.util.List;
-
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 
 public record CreateSeedChallengerResult(
     Long challengerId,
     Long memberId,
     Long gisuId,
     ChallengerPart part,
-    List<ChallengerTrack> tracks
+    boolean infra
 ) {
 
     public static CreateSeedChallengerResult of(
@@ -18,8 +15,8 @@ public record CreateSeedChallengerResult(
         Long memberId,
         Long gisuId,
         ChallengerPart part,
-        List<ChallengerTrack> tracks
+        boolean infra
     ) {
-        return new CreateSeedChallengerResult(challengerId, memberId, gisuId, part, tracks);
+        return new CreateSeedChallengerResult(challengerId, memberId, gisuId, part, infra);
     }
 }

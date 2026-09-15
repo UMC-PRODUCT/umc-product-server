@@ -24,7 +24,6 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.CreateWeeklyBestWorkbookCommand;
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadMissionFeedbackPort;
@@ -325,15 +324,15 @@ class WeeklyBestWorkbookCommandServiceTest {
     }
 
     @Test
-    void 같은_기수라도_다른_트랙_그룹의_베스트로_선정하지_못한다() {
+    void 같은_기수라도_다른_파트_그룹의_베스트로_선정하지_못한다() {
         // given
         WeeklyCurriculum trackWeek = WeeklyCurriculum.create(
-            Curriculum.createForTrack(9L, ChallengerTrack.WEB_PRODUCT_ENGINEER, "웹"),
+            Curriculum.create(9L, ChallengerPart.WEB_PRODUCT_ENGINEER, "웹"),
             1L, false, "1주차", Instant.EPOCH, Instant.MAX);
         given(loadWeeklyCurriculumPort.getById(20L)).willReturn(trackWeek);
         given(getStudyGroupUseCase.getById(GROUP_ID)).willReturn(new StudyGroupInfo(
-            GROUP_ID, "모바일 그룹", 9L, null, Instant.EPOCH, List.of(50L), List.of(MEMBER_ID),
-            ChallengerTrack.MOBILE_PRODUCT_ENGINEER));
+            GROUP_ID, "모바일 그룹", 9L, ChallengerPart.MOBILE_PRODUCT_ENGINEER,
+            Instant.EPOCH, List.of(50L), List.of(MEMBER_ID)));
 
         // when / then
         assertThatThrownBy(() -> service.selectBest(command(GROUP_ID)))
@@ -342,16 +341,16 @@ class WeeklyBestWorkbookCommandServiceTest {
     }
 
     @Test
-    void 그룹_트랙과_수강_트랙이_일치하면_기존_필수미션_조건으로_베스트를_선정한다() {
+    void 그룹_파트와_수강_파트가_일치하면_기존_필수미션_조건으로_베스트를_선정한다() {
         // given
-        Curriculum trackCurriculum = Curriculum.createForTrack(9L, ChallengerTrack.WEB_PRODUCT_ENGINEER, "웹");
+        Curriculum trackCurriculum = Curriculum.create(9L, ChallengerPart.WEB_PRODUCT_ENGINEER, "웹");
         ReflectionTestUtils.setField(weekly, "curriculum", trackCurriculum);
         givenCommonEligibility();
         given(getStudyGroupUseCase.getById(GROUP_ID)).willReturn(new StudyGroupInfo(
-            GROUP_ID, "웹 그룹", 9L, null, Instant.EPOCH, List.of(50L), List.of(MEMBER_ID),
-            ChallengerTrack.WEB_PRODUCT_ENGINEER));
+            GROUP_ID, "웹 그룹", 9L, ChallengerPart.WEB_PRODUCT_ENGINEER,
+            Instant.EPOCH, List.of(50L), List.of(MEMBER_ID)));
         given(getChallengerUseCase.getAllByMemberId(MEMBER_ID)).willReturn(List.of(ChallengerInfo.builder()
-            .memberId(MEMBER_ID).gisuId(9L).tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER))
+            .memberId(MEMBER_ID).gisuId(9L).part(ChallengerPart.WEB_PRODUCT_ENGINEER)
             .challengerStatus(ChallengerStatus.ACTIVE).build()));
         given(loadMissionFeedbackPort.listByMissionSubmissionIdIn(List.of(400L)))
             .willReturn(List.of(MissionFeedback.create(submission, 50L, "통과", FeedbackResult.PASS)));

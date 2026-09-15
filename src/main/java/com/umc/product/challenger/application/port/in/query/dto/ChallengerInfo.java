@@ -5,7 +5,6 @@ import java.util.List;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 
 import lombok.Builder;
 
@@ -20,7 +19,7 @@ public record ChallengerInfo(
     Long memberId,
     Long gisuId,
     ChallengerPart part,
-    List<ChallengerTrack> tracks,
+    boolean infra,
     List<ChallengerPointInfo> challengerPoints,
     Double totalPoints,
     ChallengerStatus challengerStatus
@@ -34,7 +33,7 @@ public record ChallengerInfo(
             .memberId(challenger.getMemberId())
             .gisuId(challenger.getGisuId())
             .part(challenger.getPart())
-            .tracks(challenger.getEffectiveTracks())
+            .infra(challenger.isInfra())
             .build();
     }
 
@@ -48,7 +47,7 @@ public record ChallengerInfo(
             .memberId(challenger.getMemberId())
             .gisuId(challenger.getGisuId())
             .part(challenger.getPart())
-            .tracks(challenger.getEffectiveTracks())
+            .infra(challenger.isInfra())
             .challengerPoints(challengerPoints)
             .totalPoints(totalPoints)
             .challengerStatus(challenger.getStatus())

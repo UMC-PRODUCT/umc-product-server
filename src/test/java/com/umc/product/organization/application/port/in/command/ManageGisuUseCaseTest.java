@@ -8,7 +8,6 @@ import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.organization.application.port.in.command.dto.CreateGisuCommand;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
@@ -29,7 +28,7 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
     private GisuFixture gisuFixture;
 
     @Test
-    void 신규_기수를_트랙방식으로_생성한다() {
+    void 신규_기수를_생성한다() {
         // given
         CreateGisuCommand command = new CreateGisuCommand(
             10L,
@@ -45,7 +44,8 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
         GisuInfo savedGisu = getGisuUseCase.getById(gisuId);
         assertThat(savedGisu.generation()).isEqualTo(10L);
         assertThat(savedGisu.isActive()).isFalse();
-        assertThat(savedGisu.learningType()).isEqualTo(GisuLearningType.TRACK);
+        assertThat(savedGisu.startAt()).isEqualTo(command.startAt());
+        assertThat(savedGisu.endAt()).isEqualTo(command.endAt());
     }
 
     @Test
