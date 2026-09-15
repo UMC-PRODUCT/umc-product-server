@@ -15,11 +15,12 @@ All agent responses, generated reviews, and documentation comments must be in Ko
 ## STRUCTURE
 
 Gradle multi-module. `:monolith` holds everything not yet extracted, `:blog` is the first extracted
-domain, and `:app` only packages the boot jar. See `docs/adr/030-blog-gradle-module-extraction.md`.
+domain, and `:app` packages the boot jar and verifies what actually got assembled. See `docs/adr/030-blog-gradle-module-extraction.md`.
 
 ```text
 umc-product-server/
-├── app/                             # No sources. bootJar only -> :monolith, :blog
+├── app/                             # bootJar and assembly smoke test -> :monolith, :blog
+│   └── src/test/.../ApplicationAssemblyTest   # every deployed module must register here
 ├── blog/                            # Extracted domain -> :monolith
 │   ├── src/main/java/com/umc/product/blog/
 │   └── src/test/java/com/umc/product/blog/
@@ -46,12 +47,18 @@ umc-product-server/
 Boot entry and `src/main/resources` stay in `:monolith` so `@SpringBootTest` can find the
 configuration class.
 
-Adding a module means three edits. Registering it in `settings.gradle.kts` alone is not enough.
+Adding a module means four edits. Registering it in `settings.gradle.kts` alone is not enough,
+and each omission below fails silently rather than breaking the build.
 
 1. `settings.gradle.kts` - `include(":name")`
 2. `app/build.gradle.kts` - add the dependency, otherwise it never reaches the boot jar
 3. `gradle/documentation-catalog.gradle.kts` - add the source root, otherwise its error codes
-   silently drop out of the catalog
+   drop out of the catalog
+4. `app/src/test/.../ApplicationAssemblyTest` - add a representative bean, so a missing step 2
+   fails the build instead of shipping a jar without the module
+
+Step 4 is what catches the others. Per-module tests only see their own module: `:blog:test` passes
+even when `:blog` is absent from the boot jar.
 
 ## WHERE TO LOOK
 

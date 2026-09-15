@@ -20,9 +20,9 @@
 세 모듈로 나눈다.
 
 ```
-:app        소스 없음. 실행 jar 만 만든다.   -> :monolith, :blog
-:blog       blog 도메인                     -> :monolith
-:monolith   아직 빼내지 못한 나머지 전부     -> (프로젝트 의존 없음)
+:app        실행 jar 를 만들고 조립 결과를 검증한다.  -> :monolith, :blog
+:blog       blog 도메인                             -> :monolith
+:monolith   아직 빼내지 못한 나머지 전부              -> (프로젝트 의존 없음)
 ```
 
 `:monolith` 가 `:blog` 를 컴파일 타임에 볼 수 없다. 이것이 이번 작업의 결과물이다.
@@ -57,6 +57,18 @@ import 와, 다른 도메인의 `adapter.out` / `application.service` 참조를 
 그대로 쓴 완전한 이름은 잡지 못한다. 실제로 `GetChallengerRoleUseCase` 가 같은 패키지의
 `ListChallengerRoleUseCase` 를 상속하고 blog 가 이를 쓰는데, 허용 목록에는 나타나지 않는다.
 
+### 조립 결과는 `:app` 에서 확인한다
+
+모듈별 테스트는 자기 모듈만 본다. `:blog` 를 `app/build.gradle.kts` 의 의존에서 빼도 `:blog:test` 는
+그대로 통과한다. 테스트는 전부 초록인데 배포된 서버에 blog 가 없는 상태가 된다.
+
+`ApplicationAssemblyTest` 가 실제로 조립된 컨텍스트에서 모듈별 대표 빈과 blog 권한 평가기 등록을
+확인한다. 의존을 빼고 돌려 이 테스트만 실패하는 것을 검증했다.
+
+`:app` 에는 `package-info.java` 만 둔다. 소스가 하나도 없으면 IntelliJ 가 모듈을 만들지 않아
+`.run/*.xml` 이 참조할 대상이 사라지고, IDE 실행 구성이 `:monolith` 를 가리키게 되어 blog 빈이 빠진
+채로 서버가 뜬다.
+
 ### ArchUnit, Spring Modulith 는 쓰지 않는다
 
 이번 목표는 Gradle 의존 방향과 직접 import 표면의 고정이다. 기존 `community/architecture/*` 방식
@@ -69,8 +81,8 @@ import 와, 다른 도메인의 `adapter.out` / `application.service` 참조를 
 - `:monolith` 가 blog 를 참조하면 컴파일이 실패한다. 역검증으로 확인했다.
 - 다음 도메인 분리에 그대로 쓸 빌드 골격이 생겼다. subprojects 규약, 모듈별 QueryDSL 생성,
   testFixtures, 경계 테스트.
-- 테스트는 `682b19a42` 기준 monolith 4204 + blog 49 이고, 분리 전 4237 에서 줄어든 것이 없다.
-  늘어난 16건은 blog 감사 정책 1, 경계 검사 3, import 스캐너 12 다.
+- 테스트는 monolith 4204 + blog 63 + app 2 이고, 분리 전 4237 에서 줄어든 것이 없다.
+  늘어난 32건은 blog 감사 정책 1, 경계 검사 3, 경계 판정 8, import 스캐너 18, 조립 검증 2 다.
 
 ### 다음 도메인은 같은 방법으로 바로 옮길 수 없다
 
@@ -98,6 +110,9 @@ import 와, 다른 도메인의 `adapter.out` / `application.service` 참조를 
 4. 계약 분리가 먼저인가, 분리 순서를 바꿔야 하는가
 
 문자열 리플렉션 의존은 컴파일로 드러나지 않으므로 별도로 찾아야 한다 (아래 참고).
+
+옮긴 뒤에는 `AGENTS.md` 의 모듈 등록 4곳을 확인한다. 그중 `ApplicationAssemblyTest` 에 대표 빈을
+추가하는 것이 나머지 누락을 잡아주는 안전장치다.
 
 ### 얻지 못한 것
 
