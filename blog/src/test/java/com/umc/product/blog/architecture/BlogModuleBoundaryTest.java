@@ -7,7 +7,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -23,9 +22,11 @@ import org.junit.jupiter.api.Test;
  * {@code :blog} 는 {@code :monolith} 전체를 의존하므로 아무 타입이나 끌어다 쓸 수 있다.
  * 계약 표면이 조용히 넓어지는 것을 막으려고 허용 목록을 둔다.
  *
- * <h2>이 테스트가 잡지 못하는 것</h2>
- * 일반 import 와 static import 만 본다. 아래는 검사 범위 밖이다.
+ * <h2>정책</h2>
+ * 다른 도메인은 <b>일반 import 로만</b> 가져온다. 와일드카드와 static import 는 마지막 이름이 타입인지
+ * 멤버인지 구분할 수 없어 허용 목록으로 판단할 수 없으므로 그 자체를 위반으로 본다.
  *
+ * <h2>이 테스트가 잡지 못하는 것</h2>
  * <ul>
  *   <li>같은 패키지 참조 (import 가 없다)</li>
  *   <li>완전한 이름을 코드에 그대로 쓴 참조</li>
@@ -49,6 +50,10 @@ class BlogModuleBoundaryTest {
      *
      * <p>여기에 줄을 추가한다는 것은 blog 의 외부 계약 표면을 넓힌다는 뜻이다.
      * 리뷰에서 그 판단을 하라고 목록을 명시해 둔다.
+     *
+     * <p>다른 도메인은 일반 import 로만 가져온다. 와일드카드와 static import 는 그 자체로 위반이다.
+     * 중첩 타입은 바깥 타입과 별개로 등록한다. {@code SubjectAttributes} 를 허용해도
+     * {@code SubjectAttributes.GisuChallengerInfo} 는 따로 올려야 한다.
      */
     private static final Set<String> ALLOWED_EXTERNAL_TYPES = Set.of(
         "com.umc.product.audit.application.port.in.annotation.Audited",
@@ -79,9 +84,9 @@ class BlogModuleBoundaryTest {
         List<String> violations = new ArrayList<>();
 
         for (SourceFile source : sourceFiles()) {
-            for (String imported : externalImportsOf(source)) {
-                if (!ALLOWED_EXTERNAL_TYPES.contains(imported)) {
-                    violations.add("%s -> %s".formatted(source.relativePath(), imported));
+            for (JavaImportScanner.ImportDeclaration declaration : externalImportsOf(source.content())) {
+                if (!isAllowed(declaration)) {
+                    violations.add("%s -> %s".formatted(source.relativePath(), declaration.reference()));
                 }
             }
         }
@@ -97,7 +102,8 @@ class BlogModuleBoundaryTest {
         List<String> violations = new ArrayList<>();
 
         for (SourceFile source : sourceFiles()) {
-            for (String imported : externalImportsOf(source)) {
+            for (JavaImportScanner.ImportDeclaration declaration : externalImportsOf(source.content())) {
+                String imported = declaration.reference();
                 if (imported.contains(".adapter.out.") || imported.contains(".application.service.")) {
                     violations.add("%s -> %s".formatted(source.relativePath(), imported));
                 }
@@ -107,6 +113,18 @@ class BlogModuleBoundaryTest {
         assertThat(violations)
             .as("다른 도메인은 UseCase 를 통해서만 사용한다")
             .isEmpty();
+    }
+
+    /**
+     * 허용 여부를 한 곳에서 판단한다. 경계 검사와 판정 테스트가 같은 함수를 쓴다.
+     *
+     * <p>static import 와 와일드카드는 마지막 이름이 타입인지 멤버인지 구분할 수 없어, 허용 목록에
+     * 있는 이름이라도 거부한다.
+     */
+    static boolean isAllowed(JavaImportScanner.ImportDeclaration declaration) {
+        return !declaration.isStatic()
+            && !declaration.isWildcard()
+            && ALLOWED_EXTERNAL_TYPES.contains(declaration.reference());
     }
 
     @Test
@@ -119,24 +137,12 @@ class BlogModuleBoundaryTest {
     }
 
     /** blog 자신을 먼저 걸러낸다. blog 내부의 service, adapter.out 은 검사 대상이 아니다. */
-    private Set<String> externalImportsOf(SourceFile source) {
-        Set<String> imported = new LinkedHashSet<>();
-
-        for (JavaImportScanner.ImportDeclaration declaration : JavaImportScanner.scan(source.content())) {
-            String reference = declaration.reference();
-            if (!reference.startsWith(PRODUCT_PACKAGE_PREFIX) || reference.startsWith(BLOG_PACKAGE_PREFIX)) {
-                continue;
-            }
-            // 와일드카드는 무엇을 끌어오는지 알 수 없어 허용 목록으로 판단할 수 없다. 그대로 남겨 위반이 되게 둔다.
-            if (declaration.isWildcard()) {
-                imported.add(reference);
-                continue;
-            }
-            imported.add(ALLOWED_EXTERNAL_TYPES.contains(reference)
-                ? reference
-                : declaration.withoutTrailingMember());
-        }
-        return imported;
+    static List<JavaImportScanner.ImportDeclaration> externalImportsOf(String sourceText) {
+        return JavaImportScanner.scan(sourceText).stream()
+            .filter(declaration -> declaration.reference().startsWith(PRODUCT_PACKAGE_PREFIX))
+            .filter(declaration -> !declaration.reference().startsWith(BLOG_PACKAGE_PREFIX))
+            .distinct()
+            .toList();
     }
 
     private List<SourceFile> sourceFiles() {

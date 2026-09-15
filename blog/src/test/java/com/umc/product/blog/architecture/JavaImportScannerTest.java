@@ -136,14 +136,108 @@ class JavaImportScannerTest {
     }
 
     @Test
-    @DisplayName("멤버 이름과 와일드카드를 떼어 타입 경로를 만든다")
-    void stripsTrailingMember() {
-        assertThat(JavaImportScanner.scan("import static com.umc.product.member.domain.Member.of;")
-            .getFirst().withoutTrailingMember())
-            .isEqualTo("com.umc.product.member.domain.Member");
+    @DisplayName("import 와 타입 이름이 줄로 나뉘어도 읽는다")
+    void readsImportSplitAcrossLines() {
+        String source = """
+            import
+                com.umc.product.member.domain.Member;
+            """;
 
-        assertThat(JavaImportScanner.scan("import com.umc.product.member.domain.*;")
-            .getFirst().withoutTrailingMember())
-            .isEqualTo("com.umc.product.member.domain");
+        assertThat(JavaImportScanner.scan(source))
+            .extracting("reference")
+            .containsExactly("com.umc.product.member.domain.Member");
+    }
+
+    @Test
+    @DisplayName("애너테이션이 선언과 같은 줄에 있어도 타입 시작으로 본다")
+    void stopsAtAnnotatedTypeDeclarationOnSameLine() {
+        String source = """
+            import com.umc.product.audit.domain.AuditAction;
+
+            @Deprecated public class Example {
+                String code = \"""
+            import com.umc.product.member.domain.Member;
+            \""";
+            }
+            """;
+
+        assertThat(JavaImportScanner.scan(source))
+            .extracting("reference")
+            .containsExactly("com.umc.product.audit.domain.AuditAction");
+    }
+
+    @Test
+    @DisplayName("애너테이션 인자 문자열에 닫는 괄호가 있어도 타입 시작으로 본다")
+    void stopsAtTypeDeclarationWithParenthesisInsideAnnotationArgument() {
+        String source = """
+            import com.umc.product.audit.domain.AuditAction;
+
+            @DisplayName("괄호 ) 가 있는 이름") public class Example {
+                String code = \"""
+            import com.umc.product.member.domain.Member;
+            \""";
+            }
+            """;
+
+        assertThat(JavaImportScanner.scan(source))
+            .extracting("reference")
+            .containsExactly("com.umc.product.audit.domain.AuditAction");
+    }
+
+    @Test
+    @DisplayName("import 중간에 블록 주석이 끼어도 읽는다")
+    void readsImportWithInlineBlockComment() {
+        assertThat(JavaImportScanner.scan("import/* 설명 */com.umc.product.member.domain.Member;"))
+            .extracting("reference")
+            .containsExactly("com.umc.product.member.domain.Member");
+    }
+
+    @Test
+    @DisplayName("애너테이션 타입 선언도 타입 시작으로 본다")
+    void stopsAtAnnotationTypeDeclaration() {
+        String source = """
+            import com.umc.product.audit.domain.AuditAction;
+
+            public @interface Example {
+            }
+            """;
+
+        assertThat(JavaImportScanner.scan(source))
+            .extracting("reference")
+            .containsExactly("com.umc.product.audit.domain.AuditAction");
+    }
+
+    @Test
+    @DisplayName("문자열 안의 주석 기호에 속지 않는다")
+    void doesNotTreatCommentMarkersInsideStringLiteralAsComments() {
+        String source = """
+            import com.umc.product.audit.domain.AuditAction;
+
+            @SuppressWarnings("//") public class Example {
+                String example = \"""
+            import com.umc.product.member.domain.Member;
+            \""";
+            }
+            """;
+
+        assertThat(JavaImportScanner.scan(source))
+            .extracting("reference")
+            .containsExactly("com.umc.product.audit.domain.AuditAction");
+    }
+
+    @Test
+    @DisplayName("문자 리터럴 안의 주석 기호에도 속지 않는다")
+    void doesNotTreatCommentMarkersInsideCharLiteralAsComments() {
+        String source = """
+            import com.umc.product.audit.domain.AuditAction;
+
+            class Example {
+                char slash = '/';
+            }
+            """;
+
+        assertThat(JavaImportScanner.scan(source))
+            .extracting("reference")
+            .containsExactly("com.umc.product.audit.domain.AuditAction");
     }
 }
