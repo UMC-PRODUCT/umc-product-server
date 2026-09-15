@@ -29,7 +29,6 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
@@ -66,7 +65,7 @@ class ChallengerRecordRegistrationIntegrationTest extends IntegrationTestSupport
     void 준비() {
         gisu = saveGisuPort.save(Gisu.create(9310L,
             Instant.parse("2026-09-01T00:00:00Z"), Instant.parse("2027-02-28T00:00:00Z"),
-            false, GisuLearningType.TRACK));
+            false));
         chapter = chapterFixture.지부(gisu, "통합등록지부");
         school = schoolFixture.지부에_소속된_학교("통합등록학교", chapter);
         member = saveMemberPort.save(Member.create("등록회원", "등록", "register@test.com", school.getId(), null));

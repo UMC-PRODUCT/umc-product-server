@@ -195,19 +195,16 @@ class ChallengerWorkbookCommandServiceTest {
     }
 
     @Test
-    void 기본_파트와_인프라_워크북은_각_파트의_스터디에_배포한다() {
+    void 기본_파트의_여러_워크북을_같은_스터디에_배포한다() {
         // given
         OriginalWorkbook web = 파트_워크북(ChallengerPart.WEB_PRODUCT_ENGINEER, 101L);
-        OriginalWorkbook infra = 파트_워크북(ChallengerPart.INFRA, 102L);
-        given(loadOriginalWorkbookPort.batchGetByIds(List.of(101L, 102L))).willReturn(List.of(web, infra));
+        OriginalWorkbook second = 파트_워크북(ChallengerPart.WEB_PRODUCT_ENGINEER, 102L);
+        given(loadOriginalWorkbookPort.batchGetByIds(List.of(101L, 102L))).willReturn(List.of(web, second));
         given(getChallengerUseCase.getAllByMemberId(30L)).willReturn(List.of(ChallengerInfo.builder()
-            .memberId(30L).gisuId(9L).part(ChallengerPart.WEB_PRODUCT_ENGINEER).infra(true)
+            .memberId(30L).gisuId(9L).part(ChallengerPart.WEB_PRODUCT_ENGINEER)
             .challengerStatus(ChallengerStatus.ACTIVE).build()));
         given(getStudyGroupUseCase.findByMemberIdAndGisuIdAndPart(30L, 9L, ChallengerPart.WEB_PRODUCT_ENGINEER))
             .willReturn(Optional.of(new StudyGroupInfo(11L, "웹", 9L, ChallengerPart.WEB_PRODUCT_ENGINEER,
-                Instant.EPOCH, List.of(), List.of(30L))));
-        given(getStudyGroupUseCase.findByMemberIdAndGisuIdAndPart(30L, 9L, ChallengerPart.INFRA))
-            .willReturn(Optional.of(new StudyGroupInfo(12L, "인프라", 9L, ChallengerPart.INFRA,
                 Instant.EPOCH, List.of(), List.of(30L))));
         given(saveChallengerWorkbookPort.save(any())).willAnswer(invocation -> invocation.getArgument(0));
 
@@ -216,7 +213,7 @@ class ChallengerWorkbookCommandServiceTest {
             .requestedMemberId(30L).originalWorkbookIds(List.of(101L, 102L)).build());
 
         // then
-        assertThat(result).extracting("receivedStudyGroupId").containsExactly(11L, 12L);
+        assertThat(result).extracting("receivedStudyGroupId").containsExactly(11L, 11L);
     }
 
     @Test

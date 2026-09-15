@@ -117,7 +117,7 @@ public class WeeklyBestWorkbookCommandService implements ManageWeeklyBestWorkboo
     private boolean matches(ChallengerInfo challenger, Long gisuId, ChallengerPart part) {
         return ChallengerStatus.ACTIVE == challenger.challengerStatus()
             && gisuId.equals(challenger.gisuId())
-            && part.coversChallenger(challenger.part(), challenger.infra());
+            && part == challenger.part();
     }
 
     private void validateDecisionAuthority(

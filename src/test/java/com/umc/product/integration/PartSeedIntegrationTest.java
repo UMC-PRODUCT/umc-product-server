@@ -34,7 +34,7 @@ import com.umc.product.support.fixture.ChapterFixture;
 import com.umc.product.support.fixture.SchoolFixture;
 
 @TestPropertySource(properties = "app.seed.enabled=true")
-class TrackSeedIntegrationTest extends IntegrationTestSupport {
+class PartSeedIntegrationTest extends IntegrationTestSupport {
 
     @Autowired private SaveGisuPort saveGisuPort;
     @Autowired private ChapterFixture chapterFixture;
@@ -108,10 +108,10 @@ class TrackSeedIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("파트 커리큘럼 시딩으로 주차별 원본 워크북과 미션까지 저장한다")
+    @DisplayName("모바일 프로덕트 엔지니어 파트 커리큘럼 시딩으로 주차별 원본 워크북과 미션까지 저장한다")
     void seedPartCurriculumWithWorkbooksAndMissions() throws Exception {
         String request = """
-            {"gisuId":%d,"parts":["INFRA"],
+            {"gisuId":%d,"parts":["MOBILE_PRODUCT_ENGINEER"],
              "weeksPerCurriculum":2,"missionsPerWorkbook":1}
             """.formatted(gisuId);
 
@@ -126,9 +126,10 @@ class TrackSeedIntegrationTest extends IntegrationTestSupport {
             .andReturn().getResponse();
 
         JsonNode result = objectMapper.readTree(response.getContentAsString()).path("result");
-        var curriculum = getCurriculumUseCase.getCurriculumOverview(gisuId, ChallengerPart.INFRA, null);
+        var curriculum = getCurriculumUseCase.getCurriculumOverview(
+            gisuId, ChallengerPart.MOBILE_PRODUCT_ENGINEER, null);
         assertThat(curriculum.curriculumId()).isEqualTo(result.path("createdCurriculumIds").get(0).asLong());
-        assertThat(curriculum.part()).isEqualTo(ChallengerPart.INFRA);
+        assertThat(curriculum.part()).isEqualTo(ChallengerPart.MOBILE_PRODUCT_ENGINEER);
         for (JsonNode workbookId : result.path("createdOriginalWorkbookIds")) {
             var workbook = loadOriginalWorkbookPort.getById(workbookId.asLong());
             assertThat(workbook.getOriginalWorkbookStatus()).isEqualTo(OriginalWorkbookStatus.READY);

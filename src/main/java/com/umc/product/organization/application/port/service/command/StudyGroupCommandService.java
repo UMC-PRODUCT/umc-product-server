@@ -127,7 +127,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
         Set<Long> eligibleMemberIds = getChallengerUseCase.listBasicByMemberIdsAndGisuId(memberIds, gisuId).stream()
             .filter(info -> Objects.equals(info.gisuId(), gisuId))
             .filter(info -> info.challengerStatus() == ChallengerStatus.ACTIVE)
-            .filter(info -> part.coversChallenger(info.part(), info.infra()))
+            .filter(info -> part == info.part())
             .map(info -> info.memberId())
             .collect(Collectors.toSet());
         if (!eligibleMemberIds.containsAll(memberIds)) {

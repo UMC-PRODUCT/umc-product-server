@@ -15,11 +15,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public interface StudyGroupCommandControllerApi {
 
     @Operation(operationId = "STUDY-GROUP-001", summary = "스터디 그룹 생성", description = """
-        스터디가 진행될 단일 part를 지정합니다. 인프라 스터디는 part=INFRA로 생성합니다.
+        스터디가 진행될 단일 part를 지정합니다.
 
         스터디원과 담당 파트장 ID는 모두 챌린저 ID가 아닌 회원 ID(memberId)입니다.
         스터디원은 해당 기수의 ACTIVE 챌린저이며 지정한 파트를 수강 중이어야 합니다.
-        INFRA 스터디원은 infra=true인 챌린저여야 합니다.
         같은 기수의 동일 파트에서 다른 스터디에 중복 참여할 수 없습니다. 담당 파트장은 이 제한을 적용하지 않습니다.
         """)
     @ApiResponses(value = {

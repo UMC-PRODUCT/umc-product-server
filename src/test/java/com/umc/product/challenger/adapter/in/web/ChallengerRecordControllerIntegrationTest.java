@@ -38,7 +38,6 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
@@ -230,12 +229,12 @@ class ChallengerRecordControllerIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("비활성 트랙 기수의 코드를 발급하고 등록하면 기본 트랙 하나가 저장된다")
-    void 비활성_트랙_기수의_코드를_발급하고_등록하면_기본_트랙_하나가_저장된다() throws Exception {
+    @DisplayName("비활성 기수의 코드를 발급하고 등록하면 기본 파트와 인프라 수강 여부가 저장된다")
+    void 비활성_기수의_코드를_발급하고_등록하면_기본_파트와_인프라_수강_여부가_저장된다() throws Exception {
         // given
         Gisu gisu = saveGisuPort.save(Gisu.create(
             9301L, Instant.parse("2026-09-01T00:00:00Z"), Instant.parse("2027-02-01T00:00:00Z"),
-            false, GisuLearningType.TRACK));
+            false));
         Chapter chapter = chapterFixture.지부(gisu, "트랙코드지부");
         School school = schoolFixture.지부에_소속된_학교("트랙코드학교", chapter);
         Member member = member("트랙회원", "트랙", "track-code@test.com", school.getId());
@@ -270,7 +269,7 @@ class ChallengerRecordControllerIntegrationTest extends IntegrationTestSupport {
         // Given
         Gisu gisu = saveGisuPort.save(Gisu.create(
             9303L, Instant.parse("2026-09-01T00:00:00Z"), Instant.parse("2027-02-01T00:00:00Z"),
-            false, GisuLearningType.TRACK));
+            false));
         School school = schoolFixture.학교("지부미배정중앙학교");
         Member member = member("중앙회원", "중앙", "central-code@test.com", school.getId());
         Long recordId = manageChallengerRecordUseCase.create(CreateChallengerRecordCommand.builder()

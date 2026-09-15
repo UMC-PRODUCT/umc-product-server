@@ -50,7 +50,7 @@ import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.support.fixture.ChapterFixture;
 import com.umc.product.support.fixture.SchoolFixture;
 
-class TrackLearningIntegrationTest extends IntegrationTestSupport {
+class PartLearningIntegrationTest extends IntegrationTestSupport {
 
     @Autowired private ManageGisuUseCase manageGisuUseCase;
     @Autowired private SaveGisuPort saveGisuPort;

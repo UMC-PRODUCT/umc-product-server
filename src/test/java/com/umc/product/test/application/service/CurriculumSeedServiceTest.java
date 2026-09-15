@@ -74,12 +74,11 @@ class CurriculumSeedServiceTest {
         SeedCurriculumResult result = sut.seed(new SeedCurriculumCommand(9L, 0, 0, null, null));
 
         ArgumentCaptor<CreateCurriculumCommand> captor = ArgumentCaptor.forClass(CreateCurriculumCommand.class);
-        verify(manageCurriculumUseCase, org.mockito.Mockito.times(10)).create(captor.capture());
+        verify(manageCurriculumUseCase, org.mockito.Mockito.times(9)).create(captor.capture());
         assertThat(captor.getAllValues()).extracting(CreateCurriculumCommand::part)
             .doesNotContain(ChallengerPart.ADMIN)
-            .contains(ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER,
-                ChallengerPart.INFRA);
-        assertThat(result.createdCurriculumIds()).hasSize(10);
+            .contains(ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER);
+        assertThat(result.createdCurriculumIds()).hasSize(9);
     }
 
     @Test
@@ -91,7 +90,7 @@ class CurriculumSeedServiceTest {
         given(manageOriginalWorkbookMissionUseCase.create(any())).willReturn(40L, 41L);
 
         SeedCurriculumResult result = sut.seed(new SeedCurriculumCommand(
-            9L, 2, 1, List.of(ChallengerPart.INFRA), null));
+            9L, 2, 1, List.of(ChallengerPart.WEB_PRODUCT_ENGINEER), null));
 
         assertThat(result.createdCurriculumIds()).containsExactly(10L);
         assertThat(result.createdWeeklyCurriculumIds()).containsExactly(20L, 21L);

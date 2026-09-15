@@ -73,8 +73,8 @@ class ChallengerSeedServiceTest {
     }
 
     @Test
-    @DisplayName("parts 가 null 이면 ADMIN과 INFRA 제외 모든 파트가 대상이 된다")
-    void parts_기본값_ADMIN_INFRA_제외() {
+    @DisplayName("parts 가 null 이면 ADMIN 제외 모든 파트가 대상이 된다")
+    void parts_기본값_ADMIN_제외() {
         // Given
         Long gisuId = 9L;
         ChapterWithSchoolsInfo chapter = new ChapterWithSchoolsInfo(
@@ -88,10 +88,10 @@ class ChallengerSeedServiceTest {
 
         // Then
         long expectedParts = java.util.Arrays.stream(ChallengerPart.values())
-            .filter(p -> p != ChallengerPart.ADMIN && p != ChallengerPart.INFRA).count();
+            .filter(p -> p != ChallengerPart.ADMIN).count();
         assertThat(result.perCellSummary()).hasSize((int) expectedParts);
         assertThat(result.perCellSummary())
-            .noneMatch(s -> s.part() == ChallengerPart.ADMIN || s.part() == ChallengerPart.INFRA);
+            .noneMatch(s -> s.part() == ChallengerPart.ADMIN);
     }
 
     @Test
@@ -201,7 +201,7 @@ class ChallengerSeedServiceTest {
     }
 
     @Test
-    @DisplayName("Part 목록을 생략하면 ADMIN과 INFRA를 제외한 파트의 챌린저를 생성한다")
+    @DisplayName("Part 목록을 생략하면 ADMIN을 제외한 파트의 챌린저를 생성한다")
     void seedDefaultParts() {
         // Given
         given(getGisuUseCase.getById(11L)).willReturn(
@@ -216,7 +216,7 @@ class ChallengerSeedServiceTest {
         // Then
         assertThat(result.totalCreated()).isEqualTo(9);
         assertThat(result.perCellSummary()).extracting(SeedChallengersResult.PerCellSummary::part)
-            .doesNotContain(ChallengerPart.ADMIN, ChallengerPart.INFRA)
+            .doesNotContain(ChallengerPart.ADMIN)
             .contains(ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER);
         ArgumentCaptor<List<CreateChallengerCommand>> commands = ArgumentCaptor.forClass(List.class);
         verify(manageChallengerUseCase, times(9)).createChallengerBulk(commands.capture());
@@ -228,15 +228,15 @@ class ChallengerSeedServiceTest {
     }
 
     @Test
-    @DisplayName("INFRA를 기본 파트로 요청하면 회원을 생성하기 전에 거부한다")
-    void rejectInfraBeforeCreatingMembers() {
+    @DisplayName("파트 목록에 null이 있으면 회원을 생성하기 전에 거부한다")
+    void null_파트를_회원_생성_전에_거부한다() {
         // Given
         given(getGisuUseCase.getById(11L)).willReturn(
             new GisuInfo(11L, 11L, null, null, true));
 
         // When & Then
         assertThatThrownBy(() -> sut.seed(new SeedChallengersCommand(
-            11L, 1, List.of(ChallengerPart.INFRA), null)))
+            11L, 1, java.util.Arrays.asList(ChallengerPart.WEB_PRODUCT_ENGINEER, null), null)))
             .isInstanceOf(CommonException.class);
         verifyNoInteractions(registerEmailMemberUseCase, manageChallengerUseCase, dummyMemberFactory);
     }

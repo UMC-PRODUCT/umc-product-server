@@ -28,7 +28,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -67,7 +66,7 @@ class StudyGroupQueryServiceTest {
         given(getMemberUseCase.getById(1L)).willReturn(memberInfo(1L, 100L));
         given(getGisuUseCase.getById(11L)).willReturn(new GisuInfo(11L, 11L,
             Instant.parse("2026-09-01T00:00:00Z"), Instant.parse("2027-03-01T00:00:00Z"),
-            false, GisuLearningType.TRACK));
+            false));
         given(getChallengerRoleUseCase.isSchoolCoreInGisu(1L, 11L, 100L)).willReturn(true);
         given(getMemberUseCase.listIdsBySchoolId(100L)).willReturn(Set.of(101L));
 

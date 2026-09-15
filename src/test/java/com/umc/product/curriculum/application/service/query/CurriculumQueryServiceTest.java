@@ -101,32 +101,32 @@ class CurriculumQueryServiceTest {
     }
 
     @Test
-    void 인프라_선택_챌린저는_INFRA_커리큘럼을_조회할_수_있다() {
+    void 본인의_파트를_지정해_커리큘럼을_조회할_수_있다() {
+        // given
+        given(getChallengerUseCase.getByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
+            .willReturn(ChallengerInfo.builder()
+                .part(ChallengerPart.WEB_PRODUCT_ENGINEER).build());
+        given(loadCurriculumPort.getByGisuIdAndPart(GISU_ID, ChallengerPart.WEB_PRODUCT_ENGINEER))
+            .willReturn(new CurriculumProjection(400L, ChallengerPart.WEB_PRODUCT_ENGINEER, "웹"));
+        given(loadWeeklyCurriculumPort.findByCurriculumId(400L, null)).willReturn(List.of());
+
+        // when
+        var result = sut.getMyProgress(MEMBER_ID, GISU_ID, ChallengerPart.WEB_PRODUCT_ENGINEER);
+
+        // then
+        assertThat(result.curriculumId()).isEqualTo(400L);
+        assertThat(result.part()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
+    }
+
+    @Test
+    void 인프라_선택_여부로_다른_파트의_조회_권한을_얻지_못한다() {
         // given
         given(getChallengerUseCase.getByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
             .willReturn(ChallengerInfo.builder()
                 .part(ChallengerPart.WEB_PRODUCT_ENGINEER).infra(true).build());
-        given(loadCurriculumPort.getByGisuIdAndPart(GISU_ID, ChallengerPart.INFRA))
-            .willReturn(new CurriculumProjection(400L, ChallengerPart.INFRA, "인프라"));
-        given(loadWeeklyCurriculumPort.findByCurriculumId(400L, null)).willReturn(List.of());
-
-        // when
-        var result = sut.getMyProgress(MEMBER_ID, GISU_ID, ChallengerPart.INFRA);
-
-        // then
-        assertThat(result.curriculumId()).isEqualTo(400L);
-        assertThat(result.part()).isEqualTo(ChallengerPart.INFRA);
-    }
-
-    @Test
-    void 인프라를_선택하지_않은_챌린저는_INFRA_커리큘럼을_조회하지_못한다() {
-        // given
-        given(getChallengerUseCase.getByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
-            .willReturn(ChallengerInfo.builder()
-                .part(ChallengerPart.WEB_PRODUCT_ENGINEER).infra(false).build());
 
         // when / then
-        assertThatThrownBy(() -> sut.getMyProgress(MEMBER_ID, GISU_ID, ChallengerPart.INFRA))
+        assertThatThrownBy(() -> sut.getMyProgress(MEMBER_ID, GISU_ID, ChallengerPart.MOBILE_PRODUCT_ENGINEER))
             .isInstanceOf(CurriculumDomainException.class)
             .extracting("baseCode").isEqualTo(CurriculumErrorCode.WORKBOOK_ACCESS_DENIED);
     }

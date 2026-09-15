@@ -63,7 +63,7 @@ public class Challenger extends BaseEntity {
 
     @Builder
     public Challenger(Long memberId, ChallengerPart part, boolean infra, Long gisuId) {
-        if (part == null || !part.canBeAssignedToChallenger()) {
+        if (part == null) {
             throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_PART_NOT_FOUND);
         }
         if (infra && !part.canHaveInfra()) {
@@ -103,7 +103,7 @@ public class Challenger extends BaseEntity {
      */
     public void changePart(ChallengerPart newPart) {
         validateChallengerStatus();
-        if (newPart == null || !newPart.canBeAssignedToChallenger()) {
+        if (newPart == null) {
             throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_PART_NOT_FOUND);
         }
         this.part = newPart;

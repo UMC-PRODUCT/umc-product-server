@@ -59,16 +59,6 @@ class ChallengerRecordTest {
     }
 
     @Test
-    @DisplayName("INFRA는 챌린저 코드의 단독 파트가 될 수 없다")
-    void INFRA는_챌린저_코드의_단독_파트가_될_수_없다() {
-        assertThatThrownBy(() -> ChallengerRecord.create(
-            1L, 9L, 2L, 3L, ChallengerPart.INFRA, "홍길동"))
-            .isInstanceOf(ChallengerDomainException.class)
-            .extracting("baseCode")
-            .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
-    }
-
-    @Test
     @DisplayName("사용 처리 시 사용 회원과 시각을 기록한다")
     void 사용_처리_시_사용_회원과_시각을_기록한다() {
         ChallengerRecord record = ChallengerRecord.create(1L, 9L, 2L, 3L, ChallengerPart.WEB, "홍길동");

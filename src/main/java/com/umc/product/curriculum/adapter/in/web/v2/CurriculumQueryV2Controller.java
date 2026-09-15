@@ -37,7 +37,7 @@ public class CurriculumQueryV2Controller {
             - UMC WEB Landing Page
             - UMC APP (10th) 커리큘럼 목록 조회
 
-            part 하나를 지정합니다. 인프라 커리큘럼은 part=INFRA로 조회합니다.
+            조회할 part 하나를 지정합니다.
             선택한 커리큘럼에 대한 정보를 반환하며, 세부 내용은 아래와 같습니다.
             - 상위 단위, Curriculum의 제목
             - 주차별 커리큘럼, WeeklyCurriculum의 제목, N주차, 부록 여부, 시작/종료일
@@ -61,8 +61,7 @@ public class CurriculumQueryV2Controller {
         summary = "내 커리큘럼 진행 상황 조회",
         description = """
             기본적으로 본인의 파트에 해당하는 커리큘럼을 반환합니다.
-            인프라를 함께 수강하는 경우 part=INFRA를 지정해 인프라 커리큘럼을 조회할 수 있으며,
-            생략하면 본인의 기본 파트 커리큘럼을 반환합니다.
+            part를 지정할 경우 본인의 파트와 일치해야 합니다.
             각 주차별 워크북의 상태(기본/진행중/제출완료/통과/실패)를 반환합니다.
             """
     )

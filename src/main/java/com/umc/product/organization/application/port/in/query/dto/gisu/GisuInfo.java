@@ -2,7 +2,6 @@ package com.umc.product.organization.application.port.in.query.dto.gisu;
 
 import java.time.Instant;
 
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.GisuActivityDays;
 
@@ -11,12 +10,7 @@ public record GisuInfo(
     Long generation,
     Instant startAt,
     Instant endAt,
-    boolean isActive,
-    GisuLearningType learningType) {
-
-    public GisuInfo(Long gisuId, Long generation, Instant startAt, Instant endAt, boolean isActive) {
-        this(gisuId, generation, startAt, endAt, isActive, GisuLearningType.PART);
-    }
+    boolean isActive) {
 
     public static GisuInfo from(Gisu gisu) {
         return new GisuInfo(
@@ -24,8 +18,7 @@ public record GisuInfo(
             gisu.getGeneration(),
             gisu.getStartAt(),
             gisu.getEndAt(),
-            gisu.isActive(),
-            gisu.getLearningType()
+            gisu.isActive()
         );
     }
 

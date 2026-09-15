@@ -29,11 +29,13 @@ class StudyGroupTest {
     }
 
     @Test
-    void 인프라_파트_스터디를_생성할_수_있다() {
-        StudyGroup group = StudyGroup.create("인프라", 1L, ChallengerPart.INFRA,
+    void 모바일_프로덕트_엔지니어_파트_스터디를_생성할_수_있다() {
+        // when
+        StudyGroup group = StudyGroup.create("모바일 스터디", 1L, ChallengerPart.MOBILE_PRODUCT_ENGINEER,
             Set.of(1L), Set.of(2L));
 
-        assertThat(group.getPart()).isEqualTo(ChallengerPart.INFRA);
+        // then
+        assertThat(group.getPart()).isEqualTo(ChallengerPart.MOBILE_PRODUCT_ENGINEER);
     }
 
     @Test

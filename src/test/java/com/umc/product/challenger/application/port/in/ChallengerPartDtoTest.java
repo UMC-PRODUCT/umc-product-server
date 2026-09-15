@@ -7,28 +7,13 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.umc.product.challenger.adapter.in.web.dto.request.CreateChallengerInfoRequest;
-import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerCommand;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 
 @DisplayName("Challenger 파트 DTO")
-class ChallengerTrackDtoTest {
-
-    @Test
-    @DisplayName("생성 요청은 단일 파트와 인프라 여부를 Command에 전달한다")
-    void 생성_요청은_단일_파트와_인프라_여부를_Command에_전달한다() {
-        CreateChallengerInfoRequest request = new CreateChallengerInfoRequest(
-            1L, ChallengerPart.WEB_PRODUCT_ENGINEER, true, 9L
-        );
-
-        CreateChallengerCommand command = request.toCommand();
-
-        assertThat(command.part()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
-        assertThat(command.infra()).isTrue();
-    }
+class ChallengerPartDtoTest {
 
     @Test
     @DisplayName("조회 Info는 단일 파트와 인프라 여부를 노출한다")

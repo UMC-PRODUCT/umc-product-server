@@ -18,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
@@ -56,7 +55,7 @@ class BulkSeedServiceTest {
     @BeforeEach
     void setUp() {
         given(getGisuUseCase.getActiveGisu())
-            .willReturn(new GisuInfo(GISU_ID, 9L, null, null, true, GisuLearningType.PART));
+            .willReturn(new GisuInfo(GISU_ID, 9L, null, null, true));
         // 학교 10개 (id 1..10) — 상위 5개(1..5)가 스큐 대상
         List<ChapterWithSchoolsInfo.SchoolInfo> schools = LongStream.rangeClosed(1, 10)
             .mapToObj(id -> new ChapterWithSchoolsInfo.SchoolInfo(id, "학교" + id))

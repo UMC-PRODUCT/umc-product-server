@@ -41,9 +41,9 @@ class ChallengerTest {
     }
 
     @Test
-    @DisplayName("INFRA는 챌린저의 단독 파트가 될 수 없다")
-    void INFRA는_챌린저의_단독_파트가_될_수_없다() {
-        assertThatThrownBy(() -> challenger(ChallengerPart.INFRA, false))
+    @DisplayName("일반 챌린저 생성 시 파트를 생략할 수 없다")
+    void 일반_챌린저_생성_시_파트를_생략할_수_없다() {
+        assertThatThrownBy(() -> challenger(null, false))
             .isInstanceOf(ChallengerDomainException.class)
             .extracting("baseCode")
             .isEqualTo(ChallengerErrorCode.CHALLENGER_PART_NOT_FOUND);

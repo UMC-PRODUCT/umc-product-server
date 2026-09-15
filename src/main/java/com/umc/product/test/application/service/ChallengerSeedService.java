@@ -47,7 +47,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ChallengerSeedService implements SeedChallengersUseCase, CreateSeedChallengerUseCase {
 
     private static final List<ChallengerPart> DEFAULT_PARTS = Arrays.stream(ChallengerPart.values())
-        .filter(part -> part != ChallengerPart.ADMIN && part != ChallengerPart.INFRA)
+        .filter(part -> part != ChallengerPart.ADMIN)
         .toList();
 
     private final DummyMemberFactory dummyMemberFactory;
@@ -138,8 +138,8 @@ public class ChallengerSeedService implements SeedChallengersUseCase, CreateSeed
     private List<SeedTarget> resolveTargets(SeedChallengersCommand command) {
         List<ChallengerPart> parts = command.parts() == null || command.parts().isEmpty()
             ? DEFAULT_PARTS : command.parts();
-        if (parts.stream().anyMatch(part -> part == null || part == ChallengerPart.INFRA)) {
-            throw new CommonException(CommonErrorCode.BAD_REQUEST, "시딩할 파트에 null 또는 INFRA를 포함할 수 없어요.");
+        if (parts.stream().anyMatch(part -> part == null)) {
+            throw new CommonException(CommonErrorCode.BAD_REQUEST, "시딩할 파트에 null을 포함할 수 없어요.");
         }
         return parts.stream().distinct().map(SeedTarget::new).toList();
     }

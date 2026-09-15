@@ -3,7 +3,6 @@ package com.umc.product.organization.application.port.in.query.dto.gisu;
 import java.time.Instant;
 import java.util.List;
 
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
@@ -16,16 +15,8 @@ public record GisuOrganizationInfo(
     Instant endAt,
     boolean isActive,
     List<ChapterOrganizationInfo> chapters,
-    List<SchoolOrganizationInfo> schools,
-    GisuLearningType learningType
+    List<SchoolOrganizationInfo> schools
 ) {
-
-    public GisuOrganizationInfo(
-        Long gisuId, Long generation, Instant startAt, Instant endAt, boolean isActive,
-        List<ChapterOrganizationInfo> chapters, List<SchoolOrganizationInfo> schools
-    ) {
-        this(gisuId, generation, startAt, endAt, isActive, chapters, schools, GisuLearningType.PART);
-    }
 
     public GisuOrganizationInfo {
         chapters = chapters == null ? List.of() : List.copyOf(chapters);
@@ -44,8 +35,7 @@ public record GisuOrganizationInfo(
             gisuInfo.endAt(),
             gisuInfo.isActive(),
             chapters,
-            schools,
-            gisuInfo.learningType()
+            schools
         );
     }
 

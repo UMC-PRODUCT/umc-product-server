@@ -148,9 +148,8 @@ public class CurriculumQueryService implements GetCurriculumUseCase {
     }
 
     private ChallengerPart resolvePart(ChallengerInfo challenger, ChallengerPart requestedPart) {
-        // 챌린저가 수강하는 파트는 자신의 파트와, infra면 INFRA 파트를 포함한다.
         if (requestedPart != null) {
-            if (!requestedPart.coversChallenger(challenger.part(), challenger.infra())) {
+            if (requestedPart != challenger.part()) {
                 throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_ACCESS_DENIED);
             }
             return requestedPart;

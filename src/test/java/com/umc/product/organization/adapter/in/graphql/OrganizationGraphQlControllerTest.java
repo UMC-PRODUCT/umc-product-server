@@ -19,7 +19,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.graphql.test.tester.GraphQlTester;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.global.config.GraphQlRuntimeWiringConfig;
 import com.umc.product.global.exception.GraphQlExceptionAdvice;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
@@ -57,10 +56,10 @@ class OrganizationGraphQlControllerTest {
     GetSchoolUseCase getSchoolUseCase;
 
     @Test
-    void 기수조회는_트랙_학습방식을_노출한다() {
+    void 기수의_번호와_기간_및_활성_상태를_조회한다() {
         // given
         GisuInfo info = new GisuInfo(11L, 11L, Instant.parse("2026-09-01T00:00:00Z"),
-            Instant.parse("2027-03-01T00:00:00Z"), false, GisuLearningType.TRACK);
+            Instant.parse("2027-03-01T00:00:00Z"), false);
         given(getGisuOrganizationUseCase.get(any()))
             .willReturn(List.of(GisuOrganizationInfo.of(info, List.of(), List.of())));
 
@@ -68,12 +67,16 @@ class OrganizationGraphQlControllerTest {
         graphQlTester.document("""
                 query {
                   gisuOrganizations(input: { ids: [11] }) {
-                    gisus { gisuId learningType }
+                    gisus { gisuId generation startAt endAt active }
                   }
                 }
                 """)
             .execute()
-            .path("gisuOrganizations.gisus[0].learningType").entity(String.class).isEqualTo("TRACK");
+            .path("gisuOrganizations.gisus[0].gisuId").entity(String.class).isEqualTo("11")
+            .path("gisuOrganizations.gisus[0].generation").entity(String.class).isEqualTo("11")
+            .path("gisuOrganizations.gisus[0].startAt").entity(String.class).isEqualTo("2026-09-01T00:00:00Z")
+            .path("gisuOrganizations.gisus[0].endAt").entity(String.class).isEqualTo("2027-03-01T00:00:00Z")
+            .path("gisuOrganizations.gisus[0].active").entity(Boolean.class).isEqualTo(false);
     }
 
     @Test

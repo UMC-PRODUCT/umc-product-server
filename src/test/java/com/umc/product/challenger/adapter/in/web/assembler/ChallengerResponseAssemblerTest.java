@@ -23,7 +23,6 @@ import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResp
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -113,6 +112,6 @@ class ChallengerResponseAssemblerTest {
 
     private GisuInfo gisu() {
         return new GisuInfo(6L, 11L, Instant.parse("2026-08-31T15:00:00Z"),
-            Instant.parse("2027-02-27T15:00:00Z"), true, GisuLearningType.TRACK);
+            Instant.parse("2027-02-27T15:00:00Z"), true);
     }
 }

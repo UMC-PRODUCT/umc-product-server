@@ -34,7 +34,7 @@ import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 
 @ExtendWith(MockitoExtension.class)
-class TrackStudyGroupCommandServiceTest {
+class PartStudyGroupCommandServiceTest {
 
     @Mock private LoadStudyGroupPort loadStudyGroupPort;
     @Mock private LoadGisuPort loadGisuPort;
@@ -56,23 +56,23 @@ class TrackStudyGroupCommandServiceTest {
     }
 
     @Test
-    void 인프라_선택_챌린저는_INFRA_스터디에_참여할_수_있다() {
+    void 인프라_선택_챌린저는_자신의_모바일_파트_스터디에_참여할_수_있다() {
         given(loadGisuPort.getById(10L)).willReturn(gisu());
         given(getChallengerUseCase.listBasicByMemberIdsAndGisuId(Set.of(1L), 10L))
             .willReturn(List.of(challenger(ChallengerPart.MOBILE_PRODUCT_ENGINEER, true, ChallengerStatus.ACTIVE)));
 
-        service.create(command(ChallengerPart.INFRA));
+        service.create(command(ChallengerPart.MOBILE_PRODUCT_ENGINEER));
 
         verify(saveStudyGroupPort).save(any());
     }
 
     @Test
-    void 인프라를_선택하지_않은_챌린저는_INFRA_스터디에_참여할_수_없다() {
+    void 인프라를_선택해도_웹_챌린저는_모바일_파트_스터디에_참여할_수_없다() {
         given(loadGisuPort.getById(10L)).willReturn(gisu());
         given(getChallengerUseCase.listBasicByMemberIdsAndGisuId(Set.of(1L), 10L))
-            .willReturn(List.of(challenger(ChallengerPart.WEB_PRODUCT_ENGINEER, false, ChallengerStatus.ACTIVE)));
+            .willReturn(List.of(challenger(ChallengerPart.WEB_PRODUCT_ENGINEER, true, ChallengerStatus.ACTIVE)));
 
-        assertThatThrownBy(() -> service.create(command(ChallengerPart.INFRA)))
+        assertThatThrownBy(() -> service.create(command(ChallengerPart.MOBILE_PRODUCT_ENGINEER)))
             .extracting("baseCode").isEqualTo(OrganizationErrorCode.STUDY_GROUP_TRACK_MEMBER_INVALID);
         verify(saveStudyGroupPort, never()).save(any());
     }

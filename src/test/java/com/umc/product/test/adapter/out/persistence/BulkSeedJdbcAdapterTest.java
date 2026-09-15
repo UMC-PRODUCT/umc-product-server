@@ -14,7 +14,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.member.domain.Member;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.PersistenceAdapterTest;
@@ -36,8 +35,8 @@ class BulkSeedJdbcAdapterTest {
         // Given
         Instant startsAt = Instant.parse("2026-09-01T00:00:00Z");
         Instant endsAt = Instant.parse("2027-02-28T00:00:00Z");
-        Gisu partGisu = em.persist(Gisu.create(10L, startsAt, endsAt, false, GisuLearningType.PART));
-        Gisu trackGisu = em.persist(Gisu.create(11L, startsAt, endsAt, false, GisuLearningType.TRACK));
+        Gisu partGisu = em.persist(Gisu.create(10L, startsAt, endsAt, false));
+        Gisu trackGisu = em.persist(Gisu.create(11L, startsAt, endsAt, false));
         Member member = em.persist(Member.create("벌크회원", "벌크", "bulk-array@test.umc.local", null, null));
         em.flush();
         BulkSeedJdbcAdapter sut = new BulkSeedJdbcAdapter(jdbcTemplate);

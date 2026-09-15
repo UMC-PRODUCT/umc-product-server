@@ -11,7 +11,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.support.IntegrationTestSupport;
 
 @DisplayName("Challenger part와 infra JPA 통합 테스트")
-class ChallengerTracksPersistenceIntegrationTest extends IntegrationTestSupport {
+class ChallengerPartPersistenceIntegrationTest extends IntegrationTestSupport {
 
     @Autowired
     ChallengerJpaRepository repository;

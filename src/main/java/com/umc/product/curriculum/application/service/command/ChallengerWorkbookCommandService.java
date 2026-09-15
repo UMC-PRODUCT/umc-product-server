@@ -124,7 +124,7 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
         boolean matched = challengers.stream().anyMatch(challenger ->
             ChallengerStatus.ACTIVE == challenger.challengerStatus()
                 && curriculum.getGisuId().equals(challenger.gisuId())
-                && curriculum.getPart().coversChallenger(challenger.part(), challenger.infra()));
+                && curriculum.getPart() == challenger.part());
         if (!matched) {
             throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_ACCESS_DENIED);
         }

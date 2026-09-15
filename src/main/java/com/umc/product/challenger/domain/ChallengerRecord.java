@@ -112,9 +112,6 @@ public class ChallengerRecord extends BaseEntity {
         ChallengerPart part, boolean infra, String memberName,
         ChallengerRoleType challengerRoleType, Long organizationId
     ) {
-        if (part != null && !part.canBeAssignedToChallenger()) {
-            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
-        }
         if (infra && (part == null || !part.canHaveInfra())) {
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
         }
