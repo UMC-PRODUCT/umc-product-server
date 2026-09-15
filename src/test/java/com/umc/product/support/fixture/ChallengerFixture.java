@@ -1,11 +1,10 @@
 package com.umc.product.support.fixture;
 
-import static com.umc.product.support.CommonFixture.MONKEY;
+import org.springframework.stereotype.Component;
 
 import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import org.springframework.stereotype.Component;
 
 @Component
 public class ChallengerFixture extends FixtureSupport {
@@ -17,11 +16,7 @@ public class ChallengerFixture extends FixtureSupport {
     }
 
     public Challenger 챌린저(Long memberId, ChallengerPart part, Long gisuId) {
-        Challenger challenger = MONKEY.giveMeBuilder(Challenger.class)
-            .set("memberId", memberId)
-            .set("part", part)
-            .set("gisuId", gisuId)
-            .sample();
+        Challenger challenger = new Challenger(memberId, part, gisuId);
         return saveChallengerPort.save(challenger);
     }
 

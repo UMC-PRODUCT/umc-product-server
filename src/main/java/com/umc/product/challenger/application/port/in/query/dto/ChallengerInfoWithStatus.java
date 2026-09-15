@@ -1,11 +1,8 @@
 package com.umc.product.challenger.application.port.in.query.dto;
 
-import java.util.List;
-
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 
 import lombok.Builder;
 
@@ -25,7 +22,7 @@ public record ChallengerInfoWithStatus(
     Long memberId,
     Long gisuId,
     ChallengerPart part,
-    List<ChallengerTrack> tracks,
+    boolean infra,
     ChallengerStatus status
 ) {
 
@@ -35,7 +32,7 @@ public record ChallengerInfoWithStatus(
             .memberId(challenger.getMemberId())
             .gisuId(challenger.getGisuId())
             .part(challenger.getPart())
-            .tracks(challenger.getEffectiveTracks())
+            .infra(challenger.isInfra())
             .status(challenger.getStatus())
             .build();
     }

@@ -30,10 +30,8 @@ import com.umc.product.challenger.domain.ChallengerPoint;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
-import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 
 import lombok.RequiredArgsConstructor;
 
@@ -49,7 +47,6 @@ public class ChallengerCommandService implements ManageChallengerUseCase, AddCha
     private final LoadChallengerPointPort loadChallengerPointPort;
     private final SaveChallengerPointPort saveChallengerPointPort;
     private final EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
-    private final GetGisuUseCase getGisuUseCase;
 
     // NOTE: 같은 도메인은 port를 통해서 접근하도록 함.
     // 동일 도메인 내에서 UseCase를 통해서 접근할 경우, 의존 방향이 역전된 것
@@ -70,19 +67,14 @@ public class ChallengerCommandService implements ManageChallengerUseCase, AddCha
     }
 
     private Challenger createChallengerForGisu(CreateChallengerCommand command) {
-        if (getGisuUseCase.getById(command.gisuId()).learningType() == GisuLearningType.TRACK) {
-            if (command.part() != null
-                || command.tracks().stream().anyMatch(track -> track == null || !track.isBasic())) {
-                throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_LEARNING_TYPE);
-            }
-            if (command.tracks().isEmpty()) {
-                return Challenger.createWithoutEnrollment(command.memberId(), command.gisuId());
-            }
+        // 파트가 없으면 수강 없이 기수에만 소속되는 챌린저(예: 비수강 운영진)로 생성한다.
+        if (command.part() == null) {
+            return Challenger.createWithoutEnrollment(command.memberId(), command.gisuId());
         }
         return Challenger.builder()
             .memberId(command.memberId())
             .part(command.part())
-            .tracks(command.tracks())
+            .infra(command.infra())
             .gisuId(command.gisuId())
             .build();
     }
@@ -112,17 +104,19 @@ public class ChallengerCommandService implements ManageChallengerUseCase, AddCha
 
     @Override
     public void addTrack(AddChallengerTrackCommand command) {
-        Challenger challenger = loadChallengerPort.findByMemberIdAndGisuId(command.memberId(), command.gisuId())
-            .orElseGet(() -> Challenger.builder()
-                .memberId(command.memberId())
-                .tracks(List.of(command.track()))
-                .gisuId(command.gisuId())
-                .build());
-
-        if (challenger.getId() == null || challenger.addTrack(command.track())) {
-            saveChallengerPort.save(challenger);
-            evictAuthoritySnapshotCacheUseCase.evictByMemberId(command.memberId());
+        // 리크루팅(트랙 기반) 경계에서 넘어온 합격 트랙을 파트로 매핑해 챌린저를 생성한다.
+        // 파트는 단일이므로 이미 챌린저가 있으면 파트를 덮어쓰지 않는다.
+        if (loadChallengerPort.findByMemberIdAndGisuId(command.memberId(), command.gisuId()).isPresent()) {
+            return;
         }
+
+        Challenger challenger = Challenger.builder()
+            .memberId(command.memberId())
+            .part(command.track().toPart())
+            .gisuId(command.gisuId())
+            .build();
+        saveChallengerPort.save(challenger);
+        evictAuthoritySnapshotCacheUseCase.evictByMemberId(command.memberId());
     }
 
     @Override
@@ -135,9 +129,6 @@ public class ChallengerCommandService implements ManageChallengerUseCase, AddCha
         }
 
         if (command.newPart() != null) {
-            if (getGisuUseCase.getById(challenger.getGisuId()).learningType() == GisuLearningType.TRACK) {
-                throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_LEARNING_TYPE);
-            }
             challenger.changePart(command.newPart());
         }
 

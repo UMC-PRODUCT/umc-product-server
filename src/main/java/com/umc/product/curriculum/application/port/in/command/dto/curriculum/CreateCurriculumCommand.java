@@ -1,7 +1,6 @@
 package com.umc.product.curriculum.application.port.in.command.dto.curriculum;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,11 +19,6 @@ public record CreateCurriculumCommand(
 
     ChallengerPart part,
 
-    ChallengerTrack track,
-
     @NotBlank(message = "제목은 필수입니다") String title
 ) {
-    public CreateCurriculumCommand(Long gisuId, ChallengerPart part, String title) {
-        this(gisuId, part, null, title);
-    }
 }

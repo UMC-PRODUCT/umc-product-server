@@ -5,7 +5,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.curriculum.application.port.in.command.ManageCurriculumUseCase;
 import com.umc.product.curriculum.application.port.in.command.dto.curriculum.CreateCurriculumCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.curriculum.EditCurriculumCommand;
@@ -39,22 +38,13 @@ public class CurriculumCommandService implements ManageCurriculumUseCase {
     )
     @Override
     public Long create(CreateCurriculumCommand command) {
-        GisuLearningType learningType = getGisuUseCase.getById(command.gisuId()).learningType();
-        boolean valid = learningType == GisuLearningType.PART
-            ? command.part() != null && command.track() == null
-            : command.part() == null && command.track() != null;
-        if (!valid) {
+        if (command.part() == null) {
             throw new CurriculumDomainException(CurriculumErrorCode.INVALID_CURRICULUM_LEARNING_TYPE);
         }
-        Curriculum curriculum = learningType == GisuLearningType.PART
-            ? Curriculum.create(command.gisuId(), command.part(), command.title())
-            : Curriculum.createForTrack(command.gisuId(), command.track(), command.title());
-        boolean exists = learningType == GisuLearningType.PART
-            ? loadCurriculumPort.existsByGisuIdAndPart(command.gisuId(), command.part())
-            : loadCurriculumPort.existsByGisuIdAndTrack(command.gisuId(), command.track());
-        if (exists) {
+        if (loadCurriculumPort.existsByGisuIdAndPart(command.gisuId(), command.part())) {
             throw new CurriculumDomainException(CurriculumErrorCode.CURRICULUM_ALREADY_EXISTS);
         }
+        Curriculum curriculum = Curriculum.create(command.gisuId(), command.part(), command.title());
         return saveCurriculumPort.save(curriculum).getId();
     }
 

@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
 import java.util.List;
@@ -38,8 +37,6 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.ChallengerTrack;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.member.application.port.in.command.LockMemberUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -48,7 +45,6 @@ import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChallengerRecordCommandService")
@@ -95,9 +91,7 @@ class ChallengerRecordCommandServiceTest {
 
     @BeforeEach
     void 기본_기수는_파트_학습을_사용한다() {
-        GisuInfo gisu = mock(GisuInfo.class);
-        lenient().when(gisu.learningType()).thenReturn(GisuLearningType.PART);
-        lenient().when(getGisuUseCase.getById(9L)).thenReturn(gisu);
+        lenient().when(getGisuUseCase.getById(9L)).thenReturn(null);
         lenient().when(getChapterUseCase.byGisuAndSchool(9L, 3L)).thenReturn(new ChapterInfo(2L, "서울"));
         lenient().when(saveChallengerPort.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
     }
@@ -249,8 +243,8 @@ class ChallengerRecordCommandServiceTest {
     }
 
     @Test
-    @DisplayName("운영진 기록 코드 소비 시 해당 기수 챌린저가 없으면 실패한다")
-    void 운영진_기록_코드_소비_시_해당_기수_챌린저가_없으면_실패한다() {
+    @DisplayName("운영진 기록 코드 소비 시 해당 기수 챌린저가 없으면 소속과 역할을 함께 생성한다")
+    void 운영진_기록_코드_소비_시_해당_기수_챌린저가_없으면_소속과_역할을_함께_생성한다() {
         ChallengerRecord record = ChallengerRecord.createAdmin(
             1L, 9L, 2L, 3L, ChallengerPart.SPRINGBOOT, "홍길동",
             ChallengerRoleType.SCHOOL_PRESIDENT, 3L
@@ -259,13 +253,11 @@ class ChallengerRecordCommandServiceTest {
         given(loadChallengerPort.findByMemberIdAndGisuId(100L, 9L)).willReturn(Optional.empty());
         given(getMemberUseCase.getById(100L)).willReturn(member("홍길동", 3L));
 
-        assertThatThrownBy(() -> sut.consumeCode(consumeCommand()))
-            .isInstanceOf(ChallengerDomainException.class)
-            .extracting("baseCode")
-            .isEqualTo(ChallengerErrorCode.NO_CHALLENGER_IN_MEMBER_GISU);
+        sut.consumeCode(consumeCommand());
 
-        assertThat(record.isUsed()).isFalse();
-        then(manageChallengerRoleUseCase).should(never()).createChallengerRole(any());
+        assertThat(record.isUsed()).isTrue();
+        then(saveChallengerPort).should().save(any(Challenger.class));
+        then(manageChallengerRoleUseCase).should().createChallengerRole(any());
     }
 
     private CreateChallengerRecordCommand recordCommand() {
@@ -280,53 +272,19 @@ class ChallengerRecordCommandServiceTest {
     }
 
     @Test
-    @DisplayName("트랙 기수의 기본 트랙 코드를 파트 없이 발급한다")
-    void 트랙_기수의_기본_트랙_코드를_파트_없이_발급한다() {
-        // given
-        givenTrackGisu();
-        given(getChapterUseCase.byGisuAndSchool(9L, 3L)).willReturn(new ChapterInfo(2L, "서울"));
+    @DisplayName("part와 infra를 지정한 코드를 발급한다")
+    void part와_infra를_지정한_코드를_발급한다() {
         given(saveChallengerRecordPort.save(any())).willAnswer(invocation -> invocation.getArgument(0));
+        CreateChallengerRecordCommand command = CreateChallengerRecordCommand.builder()
+            .creatorMemberId(1L).gisuId(9L).chapterId(2L).schoolId(3L)
+            .part(ChallengerPart.WEB_PRODUCT_ENGINEER).infra(true).memberName("홍길동").build();
 
-        // when
-        sut.create(trackCommand(ChallengerTrack.WEB_PRODUCT_ENGINEER));
+        sut.create(command);
 
-        // then
         ArgumentCaptor<ChallengerRecord> captor = ArgumentCaptor.forClass(ChallengerRecord.class);
         then(saveChallengerRecordPort).should().save(captor.capture());
-        assertThat(captor.getValue().getTrack()).isEqualTo(ChallengerTrack.WEB_PRODUCT_ENGINEER);
-        assertThat(captor.getValue().getPart()).isNull();
-    }
-
-    @Test
-    @DisplayName("파트 기수에는 트랙 코드를 발급할 수 없다")
-    void 파트_기수에는_트랙_코드를_발급할_수_없다() {
-        assertThatThrownBy(() -> sut.create(trackCommand(ChallengerTrack.DESIGN)))
-            .isInstanceOf(ChallengerDomainException.class)
-            .extracting("baseCode")
-            .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
-        then(saveChallengerRecordPort).should(never()).save(any());
-    }
-
-    @Test
-    @DisplayName("트랙 기수에는 기존 파트 코드를 발급할 수 없다")
-    void 트랙_기수에는_기존_파트_코드를_발급할_수_없다() {
-        givenTrackGisu();
-
-        assertThatThrownBy(() -> sut.create(recordCommand()))
-            .isInstanceOf(ChallengerDomainException.class)
-            .extracting("baseCode")
-            .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
-        then(saveChallengerRecordPort).should(never()).save(any());
-    }
-
-    @Test
-    @DisplayName("PLUS 트랙은 일반 가입코드로 발급할 수 없다")
-    void PLUS_트랙은_일반_가입코드로_발급할_수_없다() {
-        assertThatThrownBy(() -> sut.create(trackCommand(ChallengerTrack.INFRA_PLUS)))
-            .isInstanceOf(ChallengerDomainException.class)
-            .extracting("baseCode")
-            .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
-        then(saveChallengerRecordPort).should(never()).save(any());
+        assertThat(captor.getValue().getPart()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
+        assertThat(captor.getValue().isInfra()).isTrue();
     }
 
     @Test
@@ -342,71 +300,6 @@ class ChallengerRecordCommandServiceTest {
             .extracting("baseCode")
             .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
         then(saveChallengerRecordPort).should(never()).saveAll(any());
-    }
-
-    @Test
-    @DisplayName("일괄 발급도 기수와 학습 유형이 다르면 전체 저장하지 않는다")
-    void 일괄_발급도_기수와_학습_유형이_다르면_전체_저장하지_않는다() {
-        givenTrackGisu();
-        given(getChapterUseCase.byGisuAndSchool(9L, 3L)).willReturn(new ChapterInfo(2L, "서울"));
-
-        assertThatThrownBy(() -> sut.createBulk(List.of(trackCommand(ChallengerTrack.PLAN), recordCommand())))
-            .isInstanceOf(ChallengerDomainException.class);
-        then(saveChallengerRecordPort).should(never()).saveAll(any());
-    }
-
-    @Test
-    @DisplayName("기본 트랙 코드를 등록하면 하나의 트랙을 가진 챌린저를 생성한다")
-    void 기본_트랙_코드를_등록하면_하나의_트랙을_가진_챌린저를_생성한다() {
-        // given
-        givenTrackGisu();
-        ChallengerRecord record = trackCommand(ChallengerTrack.MOBILE_PRODUCT_ENGINEER).toEntity();
-        given(loadChallengerRecordPort.getByCodeForUpdate("ABC123")).willReturn(record);
-        given(getMemberUseCase.getById(100L)).willReturn(member("홍길동", 3L));
-        given(loadChallengerPort.findByMemberIdAndGisuId(100L, 9L)).willReturn(Optional.empty());
-
-        // when
-        sut.consumeCode(consumeCommand());
-
-        // then
-        ArgumentCaptor<Challenger> captor = ArgumentCaptor.forClass(Challenger.class);
-        then(saveChallengerPort).should().save(captor.capture());
-        assertThat(captor.getValue().getPart()).isNull();
-        assertThat(captor.getValue().getTracks()).containsExactly(ChallengerTrack.MOBILE_PRODUCT_ENGINEER);
-        assertThat(record.isUsed()).isTrue();
-        then(evictAuthoritySnapshotCacheUseCase).should().evictByMemberId(100L);
-        then(manageChallengerRoleUseCase).should(never()).createChallengerRole(any());
-    }
-
-    @Test
-    @DisplayName("운영진 코드에 수강 트랙을 함께 발급하고 담당 파트는 보존한다")
-    void 운영진_코드에_수강_트랙을_함께_발급하고_담당_파트는_보존한다() {
-        givenTrackGisu();
-        given(saveChallengerRecordPort.save(any())).willAnswer(invocation -> invocation.getArgument(0));
-        CreateChallengerRecordCommand command = CreateChallengerRecordCommand.builder()
-            .creatorMemberId(1L).gisuId(9L).chapterId(2L).schoolId(3L)
-            .part(ChallengerPart.WEB).track(ChallengerTrack.WEB_PRODUCT_ENGINEER)
-            .memberName("홍길동").challengerRoleType(ChallengerRoleType.SCHOOL_PART_LEADER).build();
-
-        sut.create(command);
-
-        ArgumentCaptor<ChallengerRecord> captor = ArgumentCaptor.forClass(ChallengerRecord.class);
-        then(saveChallengerRecordPort).should().save(captor.capture());
-        assertThat(captor.getValue().getTracks()).containsExactly(ChallengerTrack.WEB_PRODUCT_ENGINEER);
-        assertThat(captor.getValue().getPart()).isEqualTo(ChallengerPart.WEB);
-        assertThat(captor.getValue().getChallengerRoleType()).isEqualTo(ChallengerRoleType.SCHOOL_PART_LEADER);
-    }
-
-    private void givenTrackGisu() {
-        GisuInfo gisu = mock(GisuInfo.class);
-        given(gisu.learningType()).willReturn(GisuLearningType.TRACK);
-        given(getGisuUseCase.getById(9L)).willReturn(gisu);
-    }
-
-    private CreateChallengerRecordCommand trackCommand(ChallengerTrack track) {
-        return CreateChallengerRecordCommand.builder()
-            .creatorMemberId(1L).gisuId(9L).chapterId(2L).schoolId(3L)
-            .track(track).memberName("홍길동").build();
     }
 
     private ConsumeChallengerRecordCommand consumeCommand() {

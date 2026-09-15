@@ -21,7 +21,6 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupHeaderInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberPageInfo;
@@ -95,24 +94,6 @@ public class StudyGroupQueryRepository {
         return groupId == null ? Optional.empty() : findEntityById(groupId);
     }
 
-    public Optional<StudyGroup> findEntityByMemberIdAndGisuIdAndTrack(
-        Long memberId,
-        Long gisuId,
-        ChallengerTrack track
-    ) {
-        Long groupId = queryFactory
-            .select(studyGroup.id)
-            .from(studyGroupMember)
-            .join(studyGroupMember.studyGroup, studyGroup)
-            .where(
-                studyGroupMember.memberId.eq(memberId),
-                studyGroup.gisuId.eq(gisuId),
-                studyGroup.track.eq(track)
-            )
-            .fetchFirst();
-        return groupId == null ? Optional.empty() : findEntityById(groupId);
-    }
-
     // ============================================================================
     // Scope 기반 페이징 조회 — 헤더만 반환. 멤버/멘토 ID 는 별도 batch 메서드로 분리.
     // ============================================================================
@@ -144,8 +125,7 @@ public class StudyGroupQueryRepository {
                 studyGroup.name,
                 studyGroup.gisuId,
                 studyGroup.part,
-                studyGroup.createdAt,
-                studyGroup.track
+                studyGroup.createdAt
             ))
             .from(studyGroup)
             .where(
@@ -208,8 +188,7 @@ public class StudyGroupQueryRepository {
                 studyGroup.id,
                 studyGroup.name,
                 studyGroup.part,
-                studyGroupMember.memberId,
-                studyGroup.track
+                studyGroupMember.memberId
             ))
             .from(studyGroupMember)
             .join(studyGroupMember.studyGroup, studyGroup)
@@ -389,23 +368,6 @@ public class StudyGroupQueryRepository {
             .where(
                 studyGroup.gisuId.eq(gisuId),
                 studyGroup.part.eq(part),
-                studyGroupMember.memberId.in(memberIds),
-                excludedStudyGroupCondition(excludedStudyGroupId)
-            )
-            .fetch()
-        );
-    }
-
-    public Set<Long> findConflictedTrackMemberIds(
-        Long gisuId, ChallengerTrack track, Set<Long> memberIds, Long excludedStudyGroupId
-    ) {
-        return new HashSet<>(queryFactory
-            .select(studyGroupMember.memberId)
-            .from(studyGroupMember)
-            .join(studyGroupMember.studyGroup, studyGroup)
-            .where(
-                studyGroup.gisuId.eq(gisuId),
-                studyGroup.track.eq(track),
                 studyGroupMember.memberId.in(memberIds),
                 excludedStudyGroupCondition(excludedStudyGroupId)
             )

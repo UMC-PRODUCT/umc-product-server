@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 import net.datafaker.Faker;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.curriculum.application.port.in.command.dto.curriculum.CreateCurriculumCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.curriculum.CreateWeeklyCurriculumCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.CreateOriginalWorkbookCommand;
@@ -40,14 +39,13 @@ public class DummyCurriculumFactory {
     private final Faker faker = new Faker(Locale.KOREAN);
 
     /**
-     * 기수의 학습 방식에 맞는 파트 또는 트랙 커리큘럼 Command 를 생성한다.
+     * 파트 커리큘럼 Command 를 생성한다.
      */
-    public CreateCurriculumCommand nextCurriculumCommand(Long gisuId, ChallengerPart part, ChallengerTrack track) {
+    public CreateCurriculumCommand nextCurriculumCommand(Long gisuId, ChallengerPart part) {
         return CreateCurriculumCommand.builder()
             .gisuId(gisuId)
             .part(part)
-            .track(track)
-            .title("%d기 %s 커리큘럼".formatted(gisuId, track != null ? track.name() : part.name()))
+            .title("%d기 %s 커리큘럼".formatted(gisuId, part.name()))
             .build();
     }
 

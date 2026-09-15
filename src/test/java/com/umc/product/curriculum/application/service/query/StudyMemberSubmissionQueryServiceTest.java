@@ -24,7 +24,6 @@ import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProjection;
 import com.umc.product.curriculum.application.port.in.query.dto.StudyMemberSubmissionInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.StudyMemberSubmissionQuery;
@@ -306,37 +305,37 @@ class StudyMemberSubmissionQueryServiceTest {
     }
 
     @Test
-    void 같은_사람의_서로_다른_트랙_제출현황은_각_트랙_주차로_분리된다() {
+    void 같은_사람의_서로_다른_파트_제출현황은_각_파트_주차로_분리된다() {
         // given
         given(getStudyGroupUseCase.getVisibleStudyGroupMembers(REQUESTER_ID, null, null, 21))
             .willReturn(List.of(
-                new StudyGroupMemberPageInfo(1L, 11L, "웹 그룹", null, PASSED_MEMBER,
-                    ChallengerTrack.WEB_PRODUCT_ENGINEER),
-                new StudyGroupMemberPageInfo(2L, 12L, "모바일 그룹", null, PASSED_MEMBER,
-                    ChallengerTrack.MOBILE_PRODUCT_ENGINEER)));
-        given(loadCurriculumPort.findByGisuIdAndTrack(GISU_ID, ChallengerTrack.WEB_PRODUCT_ENGINEER))
-            .willReturn(Optional.of(new CurriculumProjection(101L, null, ChallengerTrack.WEB_PRODUCT_ENGINEER, "웹")));
-        given(loadCurriculumPort.findByGisuIdAndTrack(GISU_ID, ChallengerTrack.MOBILE_PRODUCT_ENGINEER))
+                new StudyGroupMemberPageInfo(1L, 11L, "웹 그룹", ChallengerPart.WEB_PRODUCT_ENGINEER,
+                    PASSED_MEMBER),
+                new StudyGroupMemberPageInfo(2L, 12L, "모바일 그룹", ChallengerPart.MOBILE_PRODUCT_ENGINEER,
+                    PASSED_MEMBER)));
+        given(loadCurriculumPort.findByGisuIdAndPart(GISU_ID, ChallengerPart.WEB_PRODUCT_ENGINEER))
+            .willReturn(Optional.of(new CurriculumProjection(101L, ChallengerPart.WEB_PRODUCT_ENGINEER, "웹")));
+        given(loadCurriculumPort.findByGisuIdAndPart(GISU_ID, ChallengerPart.MOBILE_PRODUCT_ENGINEER))
             .willReturn(Optional.of(new CurriculumProjection(
-                102L, null, ChallengerTrack.MOBILE_PRODUCT_ENGINEER, "모바일")));
+                102L, ChallengerPart.MOBILE_PRODUCT_ENGINEER, "모바일")));
         given(loadWeeklyCurriculumPort.findByCurriculumId(101L, null))
-            .willReturn(List.of(트랙_주차(ChallengerTrack.WEB_PRODUCT_ENGINEER, 201L)));
+            .willReturn(List.of(파트_주차(ChallengerPart.WEB_PRODUCT_ENGINEER, 201L)));
         given(loadWeeklyCurriculumPort.findByCurriculumId(102L, null))
-            .willReturn(List.of(트랙_주차(ChallengerTrack.MOBILE_PRODUCT_ENGINEER, 202L)));
+            .willReturn(List.of(파트_주차(ChallengerPart.MOBILE_PRODUCT_ENGINEER, 202L)));
 
         // when
         var result = service.getStudyMemberSubmissions(
             new StudyMemberSubmissionQuery(REQUESTER_ID, null, List.of(), null, 20));
 
         // then
-        assertThat(result).extracting(StudyMemberSubmissionInfo::track)
-            .containsExactly(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER);
+        assertThat(result).extracting(StudyMemberSubmissionInfo::part)
+            .containsExactly(ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER);
         assertThat(result.get(0).weeks()).extracting("weeklyCurriculumId").containsExactly(201L);
         assertThat(result.get(1).weeks()).extracting("weeklyCurriculumId").containsExactly(202L);
     }
 
-    private WeeklyCurriculum 트랙_주차(ChallengerTrack track, Long id) {
-        WeeklyCurriculum weekly = WeeklyCurriculum.create(Curriculum.createForTrack(GISU_ID, track, "트랙"),
+    private WeeklyCurriculum 파트_주차(ChallengerPart part, Long id) {
+        WeeklyCurriculum weekly = WeeklyCurriculum.create(Curriculum.create(GISU_ID, part, "파트"),
             1L, false, "1주차", Instant.EPOCH, Instant.MAX);
         ReflectionTestUtils.setField(weekly, "id", id);
         return weekly;

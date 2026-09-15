@@ -1,18 +1,10 @@
 package com.umc.product.challenger.domain;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,10 +42,11 @@ public class Challenger extends BaseEntity {
     @Column(name = "part")
     private ChallengerPart part;
 
-    @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(nullable = false, name = "tracks", columnDefinition = "text[]")
-    private List<ChallengerTrack> tracks = new ArrayList<>();
+    /**
+     * 개발 파트 위에 부가로 수강하는 인프라 트랙 여부. 개발 파트(웹/모바일 프로덕트 엔지니어)에만 true가 될 수 있다.
+     */
+    @Column(nullable = false, name = "infra")
+    private boolean infra;
 
     @Column(nullable = false, name = "gisu_id")
     private Long gisuId;
@@ -69,20 +62,22 @@ public class Challenger extends BaseEntity {
     private Long modifiedBy;
 
     @Builder
-    public Challenger(Long memberId, ChallengerPart part, List<ChallengerTrack> tracks, Long gisuId) {
-        List<ChallengerTrack> normalizedTracks = normalizeTracks(tracks);
-        if (part == null && normalizedTracks.isEmpty()) {
+    public Challenger(Long memberId, ChallengerPart part, boolean infra, Long gisuId) {
+        if (part == null) {
             throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_PART_NOT_FOUND);
+        }
+        if (infra && !part.canHaveInfra()) {
+            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_LEARNING_TYPE);
         }
         this.memberId = memberId;
         this.part = part;
-        this.tracks = normalizedTracks;
+        this.infra = infra;
         this.gisuId = gisuId;
         this.status = ChallengerStatus.ACTIVE;
     }
 
     public Challenger(Long memberId, ChallengerPart part, Long gisuId) {
-        this(memberId, part, List.of(), gisuId);
+        this(memberId, part, false, gisuId);
     }
 
     /**
@@ -93,6 +88,7 @@ public class Challenger extends BaseEntity {
         challenger.memberId = memberId;
         challenger.gisuId = gisuId;
         challenger.status = ChallengerStatus.ACTIVE;
+        challenger.infra = false;
         return challenger;
     }
 
@@ -103,37 +99,49 @@ public class Challenger extends BaseEntity {
     }
 
     /**
-     * 챌린저의 파트를 변경합니다.
+     * 챌린저의 파트를 변경합니다. 새 파트가 infra를 얹을 수 없는 파트면 infra는 해제됩니다.
      */
     public void changePart(ChallengerPart newPart) {
         validateChallengerStatus();
+        if (newPart == null) {
+            throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_PART_NOT_FOUND);
+        }
         this.part = newPart;
+        if (!newPart.canHaveInfra()) {
+            this.infra = false;
+        }
     }
 
-    public boolean addTrack(ChallengerTrack newTrack) {
+    /**
+     * 개발 파트 챌린저에게 인프라 부가 트랙을 활성화합니다.
+     */
+    public void enableInfra() {
         validateChallengerStatus();
-        if (newTrack == null) {
-            throw new IllegalArgumentException("추가할 트랙은 null일 수 없습니다.");
+        if (this.part == null || !this.part.canHaveInfra()) {
+            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_LEARNING_TYPE);
         }
-        if (this.tracks.contains(newTrack)) {
-            return false;
-        }
-        this.tracks.add(newTrack);
-        return true;
+        this.infra = true;
     }
 
-    public List<ChallengerTrack> getTracks() {
-        return List.copyOf(this.tracks);
-    }
-
-    public List<ChallengerTrack> getEffectiveTracks() {
-        if (!this.tracks.isEmpty()) {
-            return List.copyOf(this.tracks);
+    /**
+     * 코드로 전달된 학습 정보를 기존 챌린저에 반영합니다. 파트는 단일이므로 아직 파트가 없을 때만 설정하고,
+     * infra는 개발 파트일 때만 추가로 활성화합니다. 실제로 변경이 발생하면 {@code true}를 반환합니다.
+     */
+    public boolean applyLearning(ChallengerPart newPart, boolean newInfra) {
+        boolean changed = false;
+        if (newPart != null && this.part != null && this.part != newPart) {
+            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_LEARNING_TYPE,
+                "챌린저는 하나의 파트에만 소속될 수 있습니다.");
         }
-        if (this.part == null || this.part == ChallengerPart.ADMIN) {
-            return List.of();
+        if (newPart != null && this.part == null) {
+            changePart(newPart);
+            changed = true;
         }
-        return List.of(ChallengerTrack.from(this.part));
+        if (newInfra && !this.infra && this.part != null && this.part.canHaveInfra()) {
+            enableInfra();
+            changed = true;
+        }
+        return changed;
     }
 
     /**
@@ -145,15 +153,5 @@ public class Challenger extends BaseEntity {
         this.status = newStatus;
         this.modifiedBy = modifiedBy;
         this.modificationReason = reason;
-    }
-
-    private static List<ChallengerTrack> normalizeTracks(List<ChallengerTrack> tracks) {
-        if (tracks == null || tracks.isEmpty()) {
-            return new ArrayList<>();
-        }
-        if (tracks.stream().anyMatch(track -> track == null)) {
-            throw new IllegalArgumentException("트랙 목록에 null을 포함할 수 없습니다.");
-        }
-        return new ArrayList<>(new LinkedHashSet<>(tracks));
     }
 }
