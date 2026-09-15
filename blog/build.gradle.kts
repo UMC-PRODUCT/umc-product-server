@@ -4,7 +4,7 @@
 // 계약 DTO 가 엔티티를 물고 있는 코드부터 정리해야 한다. 대신 BlogModuleBoundaryTest 로
 // blog 가 쓰는 외부 타입을 고정한다.
 dependencies {
-    // implementation 이라 :app 이 blog 를 거쳐 monolith 를 전이로 보지 않는다.
+    // monolith 를 blog 의 컴파일 API 로 노출하지 않는다. 런타임에는 전이 의존으로 포함된다.
     implementation(project(":monolith"))
     testImplementation(testFixtures(project(":monolith")))
 }

@@ -11,8 +11,8 @@
 ## Support / Config / Utility
 
 ### CommonFixtureTest
-- 위치: `src/test/java/com/umc/product/support/CommonFixtureTest.java`
+- 위치: `monolith/src/test/java/com/umc/product/support/CommonFixtureTest.java`
 
 | 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
 |---:|---|---|---|
-| [12](../../../src/test/java/com/umc/product/support/CommonFixtureTest.java#L12) | FailoverIntrospector가 3가지 방식의 객체를 모두 정상적으로 생성한다 | 조건 FailoverIntrospector가 3가지 방식의 객체를 모두 정상적으로 생성한다 | 성공: 검증 assertThat(builderObj).isNotNull(); assertThat(builderObj.getName()).isNotBlank(); // defaultNotNull(true) 덕분에 null이 아님; assertThat(beanObj).isNotNull(); assertThat(beanObj.getTitle()).isNotBlank(); |
+| [12](../../../monolith/src/test/java/com/umc/product/support/CommonFixtureTest.java#L12) | FailoverIntrospector가 3가지 방식의 객체를 모두 정상적으로 생성한다 | 조건 FailoverIntrospector가 3가지 방식의 객체를 모두 정상적으로 생성한다 | 성공: 검증 assertThat(builderObj).isNotNull(); assertThat(builderObj.getName()).isNotBlank(); // defaultNotNull(true) 덕분에 null이 아님; assertThat(beanObj).isNotNull(); assertThat(beanObj.getTitle()).isNotBlank(); |

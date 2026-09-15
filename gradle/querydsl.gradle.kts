@@ -15,8 +15,7 @@ tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.add("-Xlint:deprecation")
 }
 
-// 생성 위치는 main 컴파일에만 건다. 이 디렉터리가 main 소스 세트의 srcDir 이라,
-// test/testFixtures 컴파일까지 여기에 쏟으면 다음 빌드에서 중복 클래스가 된다.
+// main 과 테스트의 생성 소스가 섞이지 않도록 출력 경로를 compileJava 에만 지정한다.
 tasks.named<JavaCompile>("compileJava") {
     options.generatedSourceOutputDirectory.set(querydslDir)
 }

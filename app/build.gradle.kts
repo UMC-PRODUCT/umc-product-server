@@ -11,8 +11,7 @@ springBoot {
     buildInfo()
 }
 
-// bootJar 와 함께 활성화하면 Spring Boot 가 -plain.jar 를 같이 만든다.
-// Dockerfile 의 COPY 가 두 파일을 잡아 실패하므로 끄고 파일명을 고정한다.
+// 배포 산출물은 app.jar 하나만 만들도록 일반 JAR 생성을 끈다.
 tasks.named<Jar>("jar") { enabled = false }
 
 tasks.named<BootJar>("bootJar") {

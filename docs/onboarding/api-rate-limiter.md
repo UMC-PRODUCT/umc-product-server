@@ -10,8 +10,8 @@ API Rate Limiter는 FE 버그, 재시도 루프, 동일 사용자의 짧은 시�
 
 Rate Limiter는 `HandlerInterceptor`로 동작한다.
 
-- 등록 위치: `src/main/java/com/umc/product/global/config/WebMvcConfig.java`
-- 구현 위치: `src/main/java/com/umc/product/global/ratelimit`
+- 등록 위치: `monolith/src/main/java/com/umc/product/global/config/WebMvcConfig.java`
+- 구현 위치: `monolith/src/main/java/com/umc/product/global/ratelimit`
 - 설정 prefix: `app.api-rate-limit`
 - 기본 활성화: `API_RATE_LIMIT_ENABLED`가 없으면 활성화된다.
 - 비활성화: `API_RATE_LIMIT_ENABLED=false`

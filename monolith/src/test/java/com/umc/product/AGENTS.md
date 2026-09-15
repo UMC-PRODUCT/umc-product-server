@@ -6,12 +6,27 @@ Tests mirror production domains and share infrastructure under `support`. Use th
 
 ## STRUCTURE
 
+Shared support code lives in the `testFixtures` source set so other modules can use it.
+Classes with real `@Test` methods stay in `src/test`, otherwise they drop out of the test run
+without any error.
+
 ```text
-src/test/java/com/umc/product/
+monolith/src/test/java/com/umc/product/
 ├── {domain}/                         # domain-specific unit, slice, integration tests
 ├── integration/                      # cross-domain integration cases
-└── support/                          # Testcontainers, fixtures, MockMvc, DB isolation
+└── support/                          # only tests that verify the support code itself
+
+monolith/src/testFixtures/java/com/umc/product/support/   # shared, published to other modules
+├── IntegrationTestSupport.java       # Testcontainers, DB isolation, MockMvc
+├── fixture/                          # reusable persisted test data
+└── isolation/                        # table truncation between integration tests
+
+monolith/src/testFixtures/resources/  # application-test.yml, logback-test.xml, auto-config imports
 ```
+
+Other modules consume it with `testImplementation(testFixtures(project(":monolith")))`.
+Types exposed through `protected` fields or `public` return values must be declared
+`testFixturesApi`, not `testFixturesImplementation`.
 
 ## WHERE TO LOOK
 
