@@ -83,8 +83,8 @@ class MemberChallengerGraphQlControllerTest {
     }
 
     @Test
-    @DisplayName("members는 Challenger의 여러 tracks와 소속 정보를 batch 조회한다")
-    void members는_Challenger의_여러_tracks와_소속_정보를_batch_조회한다() {
+    @DisplayName("members는 Challenger의 단일 part와 infra 및 소속 정보를 batch 조회한다")
+    void members는_Challenger의_단일_part와_infra_및_소속_정보를_batch_조회한다() {
         SubjectAttributes subject = subject();
         LinkedHashSet<Long> memberIds = new LinkedHashSet<>(List.of(2L, 3L));
         LinkedHashSet<Long> schoolIds = new LinkedHashSet<>(List.of(10L, 11L));
@@ -134,7 +134,7 @@ class MemberChallengerGraphQlControllerTest {
                     challengers {
                       challengerId
                       part
-                      tracks
+                      infra
                       status
                       gisu {
                         gisuId
@@ -147,8 +147,7 @@ class MemberChallengerGraphQlControllerTest {
             .execute()
             .path("members[0].school.schoolName").entity(String.class).isEqualTo("중앙대학교")
             .path("members[0].challengers[0].part").entity(String.class).isEqualTo("SPRINGBOOT")
-            .path("members[0].challengers[0].tracks").entityList(String.class)
-            .containsExactly("WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER")
+            .path("members[0].challengers[0].infra").entity(Boolean.class).isEqualTo(false)
             .path("members[0].challengers[0].status").entity(String.class).isEqualTo("ACTIVE")
             .path("members[0].challengers[0].gisu.generation").entity(String.class).isEqualTo("6")
             .path("members[1].school.schoolName").entity(String.class).isEqualTo("숭실대학교")

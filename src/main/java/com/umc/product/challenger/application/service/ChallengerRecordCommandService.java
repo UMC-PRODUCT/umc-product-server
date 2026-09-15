@@ -130,9 +130,6 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
         validateRecord(record);
 
         Optional<Challenger> existing = loadChallengerPort.findByMemberIdAndGisuId(memberId, record.getGisuId());
-        if (record.isAdminRecord() && existing.isEmpty()) {
-            throw new ChallengerDomainException(ChallengerErrorCode.NO_CHALLENGER_IN_MEMBER_GISU);
-        }
         existing.ifPresent(Challenger::validateChallengerStatus);
 
         boolean membershipAdded = existing.isEmpty();

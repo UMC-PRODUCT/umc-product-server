@@ -243,8 +243,8 @@ class ChallengerRecordCommandServiceTest {
     }
 
     @Test
-    @DisplayName("운영진 기록 코드 소비 시 해당 기수 챌린저가 없으면 실패한다")
-    void 운영진_기록_코드_소비_시_해당_기수_챌린저가_없으면_실패한다() {
+    @DisplayName("운영진 기록 코드 소비 시 해당 기수 챌린저가 없으면 소속과 역할을 함께 생성한다")
+    void 운영진_기록_코드_소비_시_해당_기수_챌린저가_없으면_소속과_역할을_함께_생성한다() {
         ChallengerRecord record = ChallengerRecord.createAdmin(
             1L, 9L, 2L, 3L, ChallengerPart.SPRINGBOOT, "홍길동",
             ChallengerRoleType.SCHOOL_PRESIDENT, 3L
@@ -253,13 +253,11 @@ class ChallengerRecordCommandServiceTest {
         given(loadChallengerPort.findByMemberIdAndGisuId(100L, 9L)).willReturn(Optional.empty());
         given(getMemberUseCase.getById(100L)).willReturn(member("홍길동", 3L));
 
-        assertThatThrownBy(() -> sut.consumeCode(consumeCommand()))
-            .isInstanceOf(ChallengerDomainException.class)
-            .extracting("baseCode")
-            .isEqualTo(ChallengerErrorCode.NO_CHALLENGER_IN_MEMBER_GISU);
+        sut.consumeCode(consumeCommand());
 
-        assertThat(record.isUsed()).isFalse();
-        then(manageChallengerRoleUseCase).should(never()).createChallengerRole(any());
+        assertThat(record.isUsed()).isTrue();
+        then(saveChallengerPort).should().save(any(Challenger.class));
+        then(manageChallengerRoleUseCase).should().createChallengerRole(any());
     }
 
     private CreateChallengerRecordCommand recordCommand() {
