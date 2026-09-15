@@ -26,8 +26,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerCommand;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.member.application.port.in.command.RegisterEmailMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
@@ -64,7 +62,7 @@ class ChallengerSeedServiceTest {
     void setUp() {
         consents = List.of();
         lenient().when(getGisuUseCase.getById(anyLong())).thenAnswer(inv ->
-            new GisuInfo(inv.getArgument(0), 10L, null, null, true, GisuLearningType.PART));
+            new GisuInfo(inv.getArgument(0), 10L, null, null, true));
         lenient().when(getMemberUseCase.countAll()).thenReturn(0L);
         lenient().when(dummyMemberFactory.snapshotMandatoryConsents()).thenReturn(consents);
         lenient().when(dummyMemberFactory.nextEmailCommandWithSchool(anyLong(), anyLong(), any()))
@@ -75,8 +73,8 @@ class ChallengerSeedServiceTest {
     }
 
     @Test
-    @DisplayName("parts 가 null 이면 ADMIN 제외 모든 파트가 대상이 된다")
-    void parts_기본값_ADMIN_제외() {
+    @DisplayName("parts 가 null 이면 ADMIN과 INFRA 제외 모든 파트가 대상이 된다")
+    void parts_기본값_ADMIN_INFRA_제외() {
         // Given
         Long gisuId = 9L;
         ChapterWithSchoolsInfo chapter = new ChapterWithSchoolsInfo(
@@ -90,10 +88,10 @@ class ChallengerSeedServiceTest {
 
         // Then
         long expectedParts = java.util.Arrays.stream(ChallengerPart.values())
-            .filter(p -> p != ChallengerPart.ADMIN).count();
+            .filter(p -> p != ChallengerPart.ADMIN && p != ChallengerPart.INFRA).count();
         assertThat(result.perCellSummary()).hasSize((int) expectedParts);
         assertThat(result.perCellSummary())
-            .noneMatch(s -> s.part() == ChallengerPart.ADMIN);
+            .noneMatch(s -> s.part() == ChallengerPart.ADMIN || s.part() == ChallengerPart.INFRA);
     }
 
     @Test
@@ -203,70 +201,56 @@ class ChallengerSeedServiceTest {
     }
 
     @Test
-    @DisplayName("Track 목록을 생략하면 학교별 기본 네 Track의 챌린저를 생성한다")
-    void seedDefaultTracks() {
+    @DisplayName("Part 목록을 생략하면 ADMIN과 INFRA를 제외한 파트의 챌린저를 생성한다")
+    void seedDefaultParts() {
         // Given
         given(getGisuUseCase.getById(11L)).willReturn(
-            new GisuInfo(11L, 11L, null, null, true, GisuLearningType.TRACK));
+            new GisuInfo(11L, 11L, null, null, true));
         given(getChapterUseCase.getChaptersWithSchoolsByGisuId(11L)).willReturn(List.of(
             new ChapterWithSchoolsInfo(1L, "지부", List.of(new ChapterWithSchoolsInfo.SchoolInfo(101L, "학교")))));
         given(manageChallengerUseCase.createChallengerBulk(any())).willReturn(List.of(99L));
 
         // When
-        SeedChallengersResult result = sut.seed(new SeedChallengersCommand(11L, null, null, null, 1, null));
+        SeedChallengersResult result = sut.seed(new SeedChallengersCommand(11L, 1, null, null));
 
         // Then
-        assertThat(result.totalCreated()).isEqualTo(4);
-        assertThat(result.perCellSummary()).extracting(SeedChallengersResult.PerCellSummary::track)
-            .containsExactly(ChallengerTrack.PLAN, ChallengerTrack.DESIGN,
-                ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER);
+        assertThat(result.totalCreated()).isEqualTo(9);
+        assertThat(result.perCellSummary()).extracting(SeedChallengersResult.PerCellSummary::part)
+            .doesNotContain(ChallengerPart.ADMIN, ChallengerPart.INFRA)
+            .contains(ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER);
         ArgumentCaptor<List<CreateChallengerCommand>> commands = ArgumentCaptor.forClass(List.class);
-        verify(manageChallengerUseCase, times(4)).createChallengerBulk(commands.capture());
+        verify(manageChallengerUseCase, times(9)).createChallengerBulk(commands.capture());
         assertThat(commands.getAllValues()).allSatisfy(batch -> {
             assertThat(batch).hasSize(1);
-            assertThat(batch.getFirst().part()).isNull();
-            assertThat(batch.getFirst().tracks()).hasSize(1).doesNotContain(ChallengerTrack.INFRA_PLUS);
+            assertThat(batch.getFirst().part()).isNotNull();
+            assertThat(batch.getFirst().infra()).isFalse();
         });
     }
 
     @Test
-    @DisplayName("Track 기수에 Part를 요청하면 회원을 생성하기 전에 거부한다")
-    void rejectPartBeforeCreatingMembers() {
+    @DisplayName("INFRA를 기본 파트로 요청하면 회원을 생성하기 전에 거부한다")
+    void rejectInfraBeforeCreatingMembers() {
         // Given
         given(getGisuUseCase.getById(11L)).willReturn(
-            new GisuInfo(11L, 11L, null, null, true, GisuLearningType.TRACK));
+            new GisuInfo(11L, 11L, null, null, true));
 
         // When & Then
         assertThatThrownBy(() -> sut.seed(new SeedChallengersCommand(
-            11L, 1, List.of(ChallengerPart.WEB), null)))
+            11L, 1, List.of(ChallengerPart.INFRA), null)))
             .isInstanceOf(CommonException.class);
         verifyNoInteractions(registerEmailMemberUseCase, manageChallengerUseCase, dummyMemberFactory);
     }
 
     @Test
-    @DisplayName("PLUS 시딩은 회원을 생성하기 전에 거부한다")
-    void rejectPlusBeforeCreatingMembers() {
+    @DisplayName("학교별 생성 수가 없으면 회원을 생성하기 전에 거부한다")
+    void rejectMissingCountBeforeCreatingMembers() {
         // Given
         given(getGisuUseCase.getById(11L)).willReturn(
-            new GisuInfo(11L, 11L, null, null, true, GisuLearningType.TRACK));
+            new GisuInfo(11L, 11L, null, null, true));
 
         // When & Then
         assertThatThrownBy(() -> sut.seed(new SeedChallengersCommand(
-            11L, null, null, null, 1, List.of(ChallengerTrack.INFRA_PLUS))))
-            .isInstanceOf(CommonException.class);
-        verifyNoInteractions(registerEmailMemberUseCase, manageChallengerUseCase, dummyMemberFactory);
-    }
-
-    @Test
-    @DisplayName("Track 기수의 학교별 생성 수가 없으면 회원을 생성하기 전에 거부한다")
-    void rejectMissingTrackCountBeforeCreatingMembers() {
-        // Given
-        given(getGisuUseCase.getById(11L)).willReturn(
-            new GisuInfo(11L, 11L, null, null, true, GisuLearningType.TRACK));
-
-        // When & Then
-        assertThatThrownBy(() -> sut.seed(new SeedChallengersCommand(
-            11L, null, null, null, null, List.of(ChallengerTrack.PLAN))))
+            11L, null, List.of(ChallengerPart.PLAN), null)))
             .isInstanceOf(CommonException.class);
         verifyNoInteractions(registerEmailMemberUseCase, manageChallengerUseCase, dummyMemberFactory);
     }

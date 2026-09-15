@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 
 public record CreateChallengerInfoRequest(
     @NotNull(message = "회원 ID는 필수입니다") Long memberId,
-    ChallengerPart part,
+    @NotNull(message = "파트는 필수입니다") ChallengerPart part,
     boolean infra,
     @NotNull(message = "기수 ID는 필수입니다") Long gisuId
 ) {

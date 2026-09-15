@@ -29,7 +29,6 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.global.config.GraphQlRuntimeWiringConfig;
 import com.umc.product.global.exception.GraphQlExceptionAdvice;
@@ -107,7 +106,7 @@ class MemberChallengerGraphQlControllerTest {
                 2L,
                 100L,
                 ChallengerPart.SPRINGBOOT,
-                List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER),
+                false,
                 ChallengerStatus.ACTIVE
             )),
             3L, List.of(challenger(
@@ -115,7 +114,7 @@ class MemberChallengerGraphQlControllerTest {
                 3L,
                 101L,
                 ChallengerPart.DESIGN,
-                List.of(ChallengerTrack.DESIGN),
+                false,
                 ChallengerStatus.GRADUATED
             ))
         ));
@@ -210,10 +209,10 @@ class MemberChallengerGraphQlControllerTest {
         Long memberId,
         Long gisuId,
         ChallengerPart part,
-        List<ChallengerTrack> tracks,
+        boolean infra,
         ChallengerStatus status
     ) {
-        return new ChallengerBasicInfo(challengerId, memberId, gisuId, part, tracks, status);
+        return new ChallengerBasicInfo(challengerId, memberId, gisuId, part, infra, status);
     }
 
     private GisuInfo gisu(Long gisuId, Long generation) {

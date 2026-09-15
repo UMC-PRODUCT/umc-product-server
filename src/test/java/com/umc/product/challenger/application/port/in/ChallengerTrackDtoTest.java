@@ -13,51 +13,45 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicI
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 
-@DisplayName("Challenger 트랙 DTO")
+@DisplayName("Challenger 파트 DTO")
 class ChallengerTrackDtoTest {
 
     @Test
-    @DisplayName("생성 요청은 여러 트랙을 생성 Command에 노출한다")
-    void 생성_요청은_여러_트랙을_생성_Command에_노출한다() {
+    @DisplayName("생성 요청은 단일 파트와 인프라 여부를 Command에 전달한다")
+    void 생성_요청은_단일_파트와_인프라_여부를_Command에_전달한다() {
         CreateChallengerInfoRequest request = new CreateChallengerInfoRequest(
-            1L,
-            null,
-            List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER),
-            9L
+            1L, ChallengerPart.WEB_PRODUCT_ENGINEER, true, 9L
         );
 
         CreateChallengerCommand command = request.toCommand();
 
-        assertThat(command.tracks()).containsExactly(
-            ChallengerTrack.WEB_PRODUCT_ENGINEER,
-            ChallengerTrack.MOBILE_PRODUCT_ENGINEER
-        );
+        assertThat(command.part()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
+        assertThat(command.infra()).isTrue();
     }
 
     @Test
-    @DisplayName("조회 Info는 여러 유효 트랙을 노출한다")
-    void 조회_Info는_여러_유효_트랙을_노출한다() {
+    @DisplayName("조회 Info는 단일 파트와 인프라 여부를 노출한다")
+    void 조회_Info는_단일_파트와_인프라_여부를_노출한다() {
         Challenger challenger = Challenger.builder()
             .memberId(1L)
-            .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER))
+            .part(ChallengerPart.MOBILE_PRODUCT_ENGINEER)
+            .infra(true)
             .gisuId(9L)
             .build();
 
         ChallengerInfo info = ChallengerInfo.from(challenger, List.of());
         ChallengerBasicInfo basicInfo = ChallengerBasicInfo.from(challenger);
 
-        assertThat(info.tracks()).containsExactly(
-            ChallengerTrack.WEB_PRODUCT_ENGINEER,
-            ChallengerTrack.MOBILE_PRODUCT_ENGINEER
-        );
-        assertThat(basicInfo.tracks()).isEqualTo(info.tracks());
+        assertThat(info.part()).isEqualTo(ChallengerPart.MOBILE_PRODUCT_ENGINEER);
+        assertThat(info.infra()).isTrue();
+        assertThat(basicInfo.part()).isEqualTo(info.part());
+        assertThat(basicInfo.infra()).isEqualTo(info.infra());
     }
 
     @Test
-    @DisplayName("조회 Info는 기존 파트를 단일 유효 트랙으로 노출한다")
-    void 조회_Info는_기존_파트를_단일_유효_트랙으로_노출한다() {
+    @DisplayName("레거시 파트도 변환 없이 그대로 노출한다")
+    void 레거시_파트도_변환_없이_그대로_노출한다() {
         Challenger challenger = Challenger.builder()
             .memberId(1L)
             .part(ChallengerPart.SPRINGBOOT)
@@ -66,6 +60,7 @@ class ChallengerTrackDtoTest {
 
         ChallengerInfo info = ChallengerInfo.from(challenger, List.of());
 
-        assertThat(info.tracks()).containsExactly(ChallengerTrack.WEB_PRODUCT_ENGINEER);
+        assertThat(info.part()).isEqualTo(ChallengerPart.SPRINGBOOT);
+        assertThat(info.infra()).isFalse();
     }
 }

@@ -10,8 +10,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,7 +29,6 @@ import com.umc.product.challenger.application.port.in.command.ManageChallengerUs
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerCommand;
 import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerCommand;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
@@ -79,7 +76,8 @@ class ChallengerCommandControllerTest {
                 .content("""
                     {
                       "memberId": 1,
-                      "tracks": ["WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER"],
+                      "part": "WEB_PRODUCT_ENGINEER",
+                      "infra": true,
                       "gisuId": 9
                     }
                     """))
@@ -89,15 +87,13 @@ class ChallengerCommandControllerTest {
         org.mockito.ArgumentCaptor<CreateChallengerCommand> captor =
             org.mockito.ArgumentCaptor.forClass(CreateChallengerCommand.class);
         then(manageChallengerUseCase).should().createChallenger(captor.capture());
-        assertThat(captor.getValue().tracks()).isEqualTo(List.of(
-            ChallengerTrack.WEB_PRODUCT_ENGINEER,
-            ChallengerTrack.MOBILE_PRODUCT_ENGINEER
-        ));
+        assertThat(captor.getValue().part()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
+        assertThat(captor.getValue().infra()).isTrue();
     }
 
     @Test
-    @DisplayName("챌린저 생성 요청의 part와 tracks가 모두 없으면 400")
-    void 챌린저_생성_요청의_part와_tracks가_모두_없으면_400() throws Exception {
+    @DisplayName("챌린저 생성 요청의 part가 없으면 400")
+    void 챌린저_생성_요청의_part가_없으면_400() throws Exception {
         mockMvc.perform(post("/api/v1/challenger")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
@@ -109,16 +105,14 @@ class ChallengerCommandControllerTest {
     }
 
     @Test
-    @DisplayName("챌린저 batch 생성 요청의 여러 tracks를 Command에 전달한다")
-    void 챌린저_batch_생성_요청의_여러_tracks를_Command에_전달한다() throws Exception {
+    @DisplayName("챌린저 batch 생성 요청의 part와 infra를 Command에 전달한다")
+    void 챌린저_batch_생성_요청의_part와_infra를_Command에_전달한다() throws Exception {
         given(manageChallengerUseCase.createChallenger(any(CreateChallengerCommand.class))).willReturn(100L);
         given(assembler.fromChallengerId(100L)).willReturn(ChallengerInfoResponse.builder()
             .challengerId(100L)
             .memberId(1L)
-            .tracks(List.of(
-                ChallengerTrack.WEB_PRODUCT_ENGINEER,
-                ChallengerTrack.MOBILE_PRODUCT_ENGINEER
-            ))
+            .part(ChallengerPart.MOBILE_PRODUCT_ENGINEER)
+            .infra(true)
             .build());
 
         mockMvc.perform(post("/api/v1/challenger/batch")
@@ -126,7 +120,8 @@ class ChallengerCommandControllerTest {
                 .content("""
                     [{
                       "memberId": 1,
-                      "tracks": ["WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER"],
+                      "part": "MOBILE_PRODUCT_ENGINEER",
+                      "infra": true,
                       "gisuId": 9
                     }]
                     """))
@@ -135,15 +130,13 @@ class ChallengerCommandControllerTest {
         org.mockito.ArgumentCaptor<CreateChallengerCommand> captor =
             org.mockito.ArgumentCaptor.forClass(CreateChallengerCommand.class);
         then(manageChallengerUseCase).should().createChallenger(captor.capture());
-        assertThat(captor.getValue().tracks()).containsExactly(
-            ChallengerTrack.WEB_PRODUCT_ENGINEER,
-            ChallengerTrack.MOBILE_PRODUCT_ENGINEER
-        );
+        assertThat(captor.getValue().part()).isEqualTo(ChallengerPart.MOBILE_PRODUCT_ENGINEER);
+        assertThat(captor.getValue().infra()).isTrue();
     }
 
     @Test
-    @DisplayName("챌린저 batch 생성 요청 내부 항목의 part와 tracks가 모두 없으면 400")
-    void 챌린저_batch_생성_요청_내부_항목의_part와_tracks가_모두_없으면_400() throws Exception {
+    @DisplayName("챌린저 batch 생성 요청 내부 항목의 part가 없으면 400")
+    void 챌린저_batch_생성_요청_내부_항목의_part가_없으면_400() throws Exception {
         mockMvc.perform(post("/api/v1/challenger/batch")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""

@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +38,6 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.member.application.port.out.SaveMemberPort;
@@ -243,14 +241,14 @@ class ChallengerRecordControllerIntegrationTest extends IntegrationTestSupport {
         Member member = member("트랙회원", "트랙", "track-code@test.com", school.getId());
         Long recordId = manageChallengerRecordUseCase.create(CreateChallengerRecordCommand.builder()
             .creatorMemberId(member.getId()).gisuId(gisu.getId()).chapterId(chapter.getId())
-            .schoolId(school.getId()).track(ChallengerTrack.WEB_PRODUCT_ENGINEER)
+            .schoolId(school.getId()).part(ChallengerPart.WEB_PRODUCT_ENGINEER).infra(true)
             .memberName(member.getName()).build());
         ChallengerRecord record = challengerRecordJpaRepository.findById(recordId).orElseThrow();
         ChallengerRecordResponse response = recordResponseAssembler.from(recordId);
         assertThat(response.chapterId()).isEqualTo(chapter.getId());
         assertThat(response.chapterName()).isEqualTo(chapter.getName());
-        assertThat(response.track()).isEqualTo(ChallengerTrack.WEB_PRODUCT_ENGINEER);
-        assertThat(response.tracks()).containsExactly(ChallengerTrack.WEB_PRODUCT_ENGINEER);
+        assertThat(response.part()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
+        assertThat(response.infra()).isTrue();
         authenticate(member.getId());
 
         // when
@@ -261,8 +259,8 @@ class ChallengerRecordControllerIntegrationTest extends IntegrationTestSupport {
         // then
         Challenger challenger = challengerJpaRepository.findByMemberIdAndGisuId(member.getId(), gisu.getId())
             .orElseThrow();
-        assertThat(challenger.getPart()).isNull();
-        assertThat(challenger.getTracks()).containsExactly(ChallengerTrack.WEB_PRODUCT_ENGINEER);
+        assertThat(challenger.getPart()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
+        assertThat(challenger.isInfra()).isTrue();
         assertThat(challengerRecordJpaRepository.findById(recordId).orElseThrow().isUsed()).isTrue();
     }
 
@@ -277,7 +275,7 @@ class ChallengerRecordControllerIntegrationTest extends IntegrationTestSupport {
         Member member = member("중앙회원", "중앙", "central-code@test.com", school.getId());
         Long recordId = manageChallengerRecordUseCase.create(CreateChallengerRecordCommand.builder()
             .creatorMemberId(member.getId()).gisuId(gisu.getId()).schoolId(school.getId())
-            .tracks(List.of()).memberName(member.getName())
+            .memberName(member.getName())
             .challengerRoleType(ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER).build());
 
         // When
@@ -288,8 +286,8 @@ class ChallengerRecordControllerIntegrationTest extends IntegrationTestSupport {
         assertThat(response.chapterName()).isNull();
         assertThat(response.schoolId()).isEqualTo(school.getId());
         assertThat(response.schoolName()).isEqualTo(school.getName());
-        assertThat(response.tracks()).isEmpty();
-        assertThat(response.track()).isNull();
+        assertThat(response.part()).isNull();
+        assertThat(response.infra()).isFalse();
         assertThat(response.challengerRoleType()).isEqualTo(ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER);
     }
 

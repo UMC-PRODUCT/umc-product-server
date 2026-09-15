@@ -8,8 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -19,8 +18,6 @@ import com.umc.product.challenger.application.port.in.command.dto.CreateChalleng
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.out.LoadChallengerRecordPort;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.curriculum.application.port.in.command.ManageChallengerWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.ManageCurriculumUseCase;
 import com.umc.product.curriculum.application.port.in.command.ManageMissionSubmissionUseCase;
@@ -49,7 +46,6 @@ import com.umc.product.organization.application.port.in.command.dto.CreateStudyG
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
 import com.umc.product.organization.application.port.out.command.SaveGisuPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
-import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.support.fixture.ChapterFixture;
 import com.umc.product.support.fixture.SchoolFixture;
@@ -79,29 +75,22 @@ class TrackLearningIntegrationTest extends IntegrationTestSupport {
     @MockitoBean
     private SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
 
-    @ParameterizedTest
-    @EnumSource(GisuLearningType.class)
-    @DisplayName("기수의 Part 또는 Track 코드 등록부터 스터디 배정과 워크북 제출까지 연결된다")
-    void registerAndStudy(GisuLearningType learningType) {
+    @Test
+    @DisplayName("단일 파트 코드 등록부터 스터디 배정과 워크북 제출까지 연결된다")
+    void registerAndStudy() {
         // Given
         Instant now = Instant.now();
-        Long gisuId = learningType == GisuLearningType.TRACK
-            ? manageGisuUseCase.create(new CreateGisuCommand(
-                99L, now.minus(1, ChronoUnit.DAYS), now.plus(90, ChronoUnit.DAYS)))
-            : saveGisuPort.save(Gisu.create(
-                99L, now.minus(1, ChronoUnit.DAYS), now.plus(90, ChronoUnit.DAYS), false,
-                GisuLearningType.PART)).getId();
+        Long gisuId = manageGisuUseCase.create(new CreateGisuCommand(
+            99L, now.minus(1, ChronoUnit.DAYS), now.plus(90, ChronoUnit.DAYS)));
         var chapter = chapterFixture.지부(loadGisuPort.getById(gisuId), "신규 지부");
         var school = schoolFixture.지부에_소속된_학교("학습 학교", chapter);
         var member = saveMemberPort.save(Member.create(
             "학습자", "학습자", "learner@example.com", school.getId(), null));
         var mentor = saveMemberPort.save(Member.create(
             "멘토", "멘토", "mentor@example.com", school.getId(), null));
-        ChallengerPart part = learningType == GisuLearningType.PART ? ChallengerPart.WEB : null;
-        ChallengerTrack track = learningType == GisuLearningType.TRACK
-            ? ChallengerTrack.WEB_PRODUCT_ENGINEER : null;
+        ChallengerPart part = ChallengerPart.WEB_PRODUCT_ENGINEER;
         Long curriculumId = manageCurriculumUseCase.create(CreateCurriculumCommand.builder()
-            .gisuId(gisuId).part(part).track(track).title("새 기수 웹 커리큘럼").build());
+            .gisuId(gisuId).part(part).title("새 기수 웹 커리큘럼").build());
         Long weeklyId = manageWeeklyCurriculumUseCase.create(CreateWeeklyCurriculumCommand.builder()
             .curriculumId(curriculumId).weekNo(1L).isExtra(false).title("첫 주차")
             .startsAt(now.minus(1, ChronoUnit.DAYS)).endsAt(now.plus(7, ChronoUnit.DAYS)).build());
@@ -115,14 +104,13 @@ class TrackLearningIntegrationTest extends IntegrationTestSupport {
         // When
         Long recordId = manageChallengerRecordUseCase.create(CreateChallengerRecordCommand.builder()
             .gisuId(gisuId).chapterId(chapter.getId()).schoolId(school.getId())
-            .memberName(member.getName()).creatorMemberId(mentor.getId()).part(part).track(track).build());
+            .memberName(member.getName()).creatorMemberId(mentor.getId()).part(part).build());
         String code = loadChallengerRecordPort.getById(recordId).getCode();
         manageChallengerRecordUseCase.consumeCode(new ConsumeChallengerRecordCommand(member.getId(), code));
         manageStudyGroupUseCase.create(new CreateStudyGroupCommand(
-            "웹 스터디", gisuId, part, Set.of(mentor.getId()), Set.of(member.getId()), track));
-        var group = learningType == GisuLearningType.PART
-            ? getStudyGroupUseCase.findByMemberIdAndGisuIdAndPart(member.getId(), gisuId, part).orElseThrow()
-            : getStudyGroupUseCase.findByMemberIdAndGisuIdAndTrack(member.getId(), gisuId, track).orElseThrow();
+            "웹 스터디", gisuId, part, Set.of(mentor.getId()), Set.of(member.getId())));
+        var group = getStudyGroupUseCase
+            .findByMemberIdAndGisuIdAndPart(member.getId(), gisuId, part).orElseThrow();
         for (OriginalWorkbookStatus status : List.of(OriginalWorkbookStatus.READY, OriginalWorkbookStatus.RELEASED)) {
             manageOriginalWorkbookUseCase.changeStatusForRelease(List.of(
                 new ChangeOriginalWorkbookStatusCommand(originalId, status, mentor.getId())));
@@ -137,18 +125,15 @@ class TrackLearningIntegrationTest extends IntegrationTestSupport {
         assertThat(loadChallengerRecordPort.getById(recordId).isUsed()).isTrue();
         var challenger = getChallengerUseCase.getByMemberIdAndGisuId(member.getId(), gisuId);
         assertThat(challenger.part()).isEqualTo(part);
-        if (track != null) {
-            assertThat(challenger.tracks()).containsExactly(track);
-        }
+        assertThat(challenger.infra()).isFalse();
         assertThat(group.part()).isEqualTo(part);
-        assertThat(group.track()).isEqualTo(track);
         assertThat(workbook.receivedStudyGroupId()).isEqualTo(group.groupId());
         assertThat(getOriginalWorkbookUseCase.getById(originalId, member.getId()).title()).isEqualTo("첫 워크북");
         assertThat(manageChallengerWorkbookUseCase.batchDeploy(request).getFirst().challengerWorkbookId())
             .isEqualTo(workbook.challengerWorkbookId());
         var progress = getCurriculumUseCase.getMyProgress(member.getId(), gisuId);
         assertThat(progress.curriculumId()).isEqualTo(curriculumId);
-        assertThat(progress.track()).isEqualTo(track);
+        assertThat(progress.part()).isEqualTo(part);
         var submittedMission = progress.weeks().getFirst().releasedOriginalWorkbooks().getFirst().missions().getFirst();
         assertThat(submittedMission.hasSubmission()).isTrue();
         assertThat(submissionId).isNotNull();

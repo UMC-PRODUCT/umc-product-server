@@ -6,14 +6,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -45,10 +42,6 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.common.domain.enums.ChallengerTrack;
-import com.umc.product.common.domain.enums.GisuLearningType;
-import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChallengerCommandService")
@@ -71,16 +64,6 @@ class ChallengerCommandServiceTest {
 
     @Mock
     EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
-
-    @Mock
-    GetGisuUseCase getGisuUseCase;
-
-    @BeforeEach
-    void 기본_기수는_파트_학습을_사용한다() {
-        GisuInfo gisu = mock(GisuInfo.class);
-        lenient().when(gisu.learningType()).thenReturn(GisuLearningType.PART);
-        lenient().when(getGisuUseCase.getById(any())).thenReturn(gisu);
-    }
 
     @InjectMocks
     ChallengerCommandService sut;
@@ -124,30 +107,6 @@ class ChallengerCommandServiceTest {
             sut.createChallenger(command);
 
             then(evictAuthoritySnapshotCacheUseCase).should().evictByMemberId(1L);
-        }
-
-        @Test
-        @DisplayName("트랙 기반 챌린저는 파트 없이 생성한다")
-        void 트랙_기반_챌린저는_파트_없이_생성한다() {
-            CreateChallengerCommand command = CreateChallengerCommand.builder()
-                .memberId(1L)
-                .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER))
-                .gisuId(9L)
-                .build();
-            given(loadChallengerPort.findByMemberIdAndGisuId(1L, 9L)).willReturn(Optional.empty());
-            given(saveChallengerPort.save(any(Challenger.class))).willAnswer(invocation -> {
-                Challenger challenger = invocation.getArgument(0);
-                ReflectionTestUtils.setField(challenger, "id", 101L);
-                return challenger;
-            });
-
-            Long result = sut.createChallenger(command);
-
-            ArgumentCaptor<Challenger> captor = ArgumentCaptor.forClass(Challenger.class);
-            assertThat(result).isEqualTo(101L);
-            then(saveChallengerPort).should().save(captor.capture());
-            assertThat(captor.getValue().getPart()).isNull();
-            assertThat(captor.getValue().getTracks()).containsExactly(ChallengerTrack.WEB_PRODUCT_ENGINEER);
         }
 
         @Test
@@ -235,118 +194,6 @@ class ChallengerCommandServiceTest {
         ));
 
         then(evictAuthoritySnapshotCacheUseCase).should().evictByMemberIds(List.of(1L, 2L));
-    }
-
-    @Test
-    @DisplayName("트랙 기수의 일괄 생성에 파트가 섞이면 어떤 챌린저도 저장하지 않는다")
-    void 트랙_기수의_일괄_생성에_파트가_섞이면_어떤_챌린저도_저장하지_않는다() {
-        // given
-        givenTrackGisu();
-        given(environment.getActiveProfiles()).willReturn(new String[] {"local"});
-        List<CreateChallengerCommand> commands = List.of(
-            CreateChallengerCommand.builder().memberId(1L).gisuId(9L)
-                .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER)).build(),
-            CreateChallengerCommand.builder().memberId(2L).gisuId(9L)
-                .part(ChallengerPart.WEB).build()
-        );
-
-        // when & then
-        assertThatThrownBy(() -> sut.createChallengerBulk(commands))
-            .isInstanceOf(ChallengerDomainException.class)
-            .extracting("baseCode")
-            .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_LEARNING_TYPE);
-        then(saveChallengerPort).should(never()).saveAll(any());
-        then(evictAuthoritySnapshotCacheUseCase).shouldHaveNoInteractions();
-    }
-
-    @Test
-    @DisplayName("트랙 기수의 일괄 생성에는 PLUS를 포함할 수 없다")
-    void 트랙_기수의_일괄_생성에는_PLUS를_포함할_수_없다() {
-        // given
-        givenTrackGisu();
-        given(environment.getActiveProfiles()).willReturn(new String[] {"local"});
-        CreateChallengerCommand command = CreateChallengerCommand.builder().memberId(1L).gisuId(9L)
-            .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.INFRA_PLUS)).build();
-
-        // when & then
-        assertThatThrownBy(() -> sut.createChallengerBulk(List.of(command)))
-            .isInstanceOf(ChallengerDomainException.class)
-            .extracting("baseCode")
-            .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_LEARNING_TYPE);
-        then(saveChallengerPort).should(never()).saveAll(any());
-    }
-
-    @Test
-    @DisplayName("트랙 기수의 일괄 생성은 복수 기본 트랙을 유지한다")
-    void 트랙_기수의_일괄_생성은_복수_기본_트랙을_유지한다() {
-        // given
-        givenTrackGisu();
-        given(environment.getActiveProfiles()).willReturn(new String[] {"local"});
-        given(saveChallengerPort.saveAll(any())).willAnswer(invocation -> {
-            List<Challenger> challengers = invocation.getArgument(0);
-            assertThat(challengers).singleElement().satisfies(challenger -> {
-                assertThat(challenger.getPart()).isNull();
-                assertThat(challenger.getTracks()).containsExactly(
-                    ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER);
-            });
-            return challengers;
-        });
-        CreateChallengerCommand command = CreateChallengerCommand.builder().memberId(1L).gisuId(9L)
-            .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER)).build();
-
-        // when
-        sut.createChallengerBulk(List.of(command));
-
-        // then
-        then(saveChallengerPort).should().saveAll(any());
-        then(evictAuthoritySnapshotCacheUseCase).should().evictByMemberIds(List.of(1L));
-    }
-
-    @Test
-    @DisplayName("트랙 기수 챌린저에는 파트를 추가할 수 없다")
-    void 트랙_기수_챌린저에는_파트를_추가할_수_없다() {
-        // given
-        givenTrackGisu();
-        Challenger challenger = Challenger.builder().memberId(1L).gisuId(9L)
-            .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER)).build();
-        given(loadChallengerPort.getById(1L)).willReturn(challenger);
-
-        // when & then
-        assertThatThrownBy(() -> sut.updateChallenger(
-            UpdateChallengerCommand.forPartChange(1L, ChallengerPart.WEB, 99L)))
-            .isInstanceOf(ChallengerDomainException.class)
-            .extracting("baseCode")
-            .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_LEARNING_TYPE);
-        assertThat(challenger.getPart()).isNull();
-        assertThat(challenger.getTracks()).containsExactly(ChallengerTrack.WEB_PRODUCT_ENGINEER);
-        then(saveChallengerPort).should(never()).save(any());
-        then(evictAuthoritySnapshotCacheUseCase).shouldHaveNoInteractions();
-    }
-
-    @Test
-    @DisplayName("트랙 챌린저의 상태만 변경하는 요청은 기존처럼 처리한다")
-    void 트랙_챌린저의_상태만_변경하는_요청은_기존처럼_처리한다() {
-        // given
-        Challenger challenger = Challenger.builder().memberId(1L).gisuId(9L)
-            .tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER)).build();
-        given(loadChallengerPort.getById(1L)).willReturn(challenger);
-
-        // when
-        sut.updateChallenger(UpdateChallengerCommand.forStatusChange(
-            1L, ChallengerStatus.WITHDRAWN, "탈퇴", 99L));
-
-        // then
-        assertThat(challenger.getStatus()).isEqualTo(ChallengerStatus.WITHDRAWN);
-        assertThat(challenger.getPart()).isNull();
-        then(saveChallengerPort).should().save(challenger);
-        then(evictAuthoritySnapshotCacheUseCase).should().evictByMemberId(1L);
-        then(getGisuUseCase).should(never()).getById(any());
-    }
-
-    private void givenTrackGisu() {
-        GisuInfo gisu = mock(GisuInfo.class);
-        given(gisu.learningType()).willReturn(GisuLearningType.TRACK);
-        given(getGisuUseCase.getById(9L)).willReturn(gisu);
     }
 
     @Test

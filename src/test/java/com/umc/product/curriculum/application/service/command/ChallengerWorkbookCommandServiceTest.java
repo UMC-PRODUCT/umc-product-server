@@ -24,7 +24,6 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.DeleteChallengerWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.DeployChallengerWorkbookCommand;
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
@@ -196,20 +195,20 @@ class ChallengerWorkbookCommandServiceTest {
     }
 
     @Test
-    void 복수_트랙의_워크북은_각_트랙의_스터디에_배포한다() {
+    void 기본_파트와_인프라_워크북은_각_파트의_스터디에_배포한다() {
         // given
-        OriginalWorkbook web = 트랙_워크북(ChallengerTrack.WEB_PRODUCT_ENGINEER, 101L);
-        OriginalWorkbook mobile = 트랙_워크북(ChallengerTrack.MOBILE_PRODUCT_ENGINEER, 102L);
-        given(loadOriginalWorkbookPort.batchGetByIds(List.of(101L, 102L))).willReturn(List.of(web, mobile));
+        OriginalWorkbook web = 파트_워크북(ChallengerPart.WEB_PRODUCT_ENGINEER, 101L);
+        OriginalWorkbook infra = 파트_워크북(ChallengerPart.INFRA, 102L);
+        given(loadOriginalWorkbookPort.batchGetByIds(List.of(101L, 102L))).willReturn(List.of(web, infra));
         given(getChallengerUseCase.getAllByMemberId(30L)).willReturn(List.of(ChallengerInfo.builder()
-            .memberId(30L).gisuId(9L).tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER,
-                ChallengerTrack.MOBILE_PRODUCT_ENGINEER)).challengerStatus(ChallengerStatus.ACTIVE).build()));
-        given(getStudyGroupUseCase.findByMemberIdAndGisuIdAndTrack(30L, 9L, ChallengerTrack.WEB_PRODUCT_ENGINEER))
-            .willReturn(Optional.of(new StudyGroupInfo(11L, "웹", 9L, null, Instant.EPOCH,
-                List.of(), List.of(30L), ChallengerTrack.WEB_PRODUCT_ENGINEER)));
-        given(getStudyGroupUseCase.findByMemberIdAndGisuIdAndTrack(30L, 9L, ChallengerTrack.MOBILE_PRODUCT_ENGINEER))
-            .willReturn(Optional.of(new StudyGroupInfo(12L, "모바일", 9L, null, Instant.EPOCH,
-                List.of(), List.of(30L), ChallengerTrack.MOBILE_PRODUCT_ENGINEER)));
+            .memberId(30L).gisuId(9L).part(ChallengerPart.WEB_PRODUCT_ENGINEER).infra(true)
+            .challengerStatus(ChallengerStatus.ACTIVE).build()));
+        given(getStudyGroupUseCase.findByMemberIdAndGisuIdAndPart(30L, 9L, ChallengerPart.WEB_PRODUCT_ENGINEER))
+            .willReturn(Optional.of(new StudyGroupInfo(11L, "웹", 9L, ChallengerPart.WEB_PRODUCT_ENGINEER,
+                Instant.EPOCH, List.of(), List.of(30L))));
+        given(getStudyGroupUseCase.findByMemberIdAndGisuIdAndPart(30L, 9L, ChallengerPart.INFRA))
+            .willReturn(Optional.of(new StudyGroupInfo(12L, "인프라", 9L, ChallengerPart.INFRA,
+                Instant.EPOCH, List.of(), List.of(30L))));
         given(saveChallengerWorkbookPort.save(any())).willAnswer(invocation -> invocation.getArgument(0));
 
         // when
@@ -221,14 +220,14 @@ class ChallengerWorkbookCommandServiceTest {
     }
 
     @Test
-    void 수강하지_않은_트랙이나_다른_기수의_워크북은_배포하지_못한다() {
+    void 수강하지_않은_파트나_다른_기수의_워크북은_배포하지_못한다() {
         // given
-        OriginalWorkbook web = 트랙_워크북(ChallengerTrack.WEB_PRODUCT_ENGINEER, 101L);
+        OriginalWorkbook web = 파트_워크북(ChallengerPart.WEB_PRODUCT_ENGINEER, 101L);
         given(loadOriginalWorkbookPort.batchGetByIds(List.of(101L))).willReturn(List.of(web));
         given(getChallengerUseCase.getAllByMemberId(30L)).willReturn(List.of(
-            ChallengerInfo.builder().gisuId(9L).tracks(List.of(ChallengerTrack.MOBILE_PRODUCT_ENGINEER))
+            ChallengerInfo.builder().gisuId(9L).part(ChallengerPart.MOBILE_PRODUCT_ENGINEER)
                 .challengerStatus(ChallengerStatus.ACTIVE).build(),
-            ChallengerInfo.builder().gisuId(8L).tracks(List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER))
+            ChallengerInfo.builder().gisuId(8L).part(ChallengerPart.WEB_PRODUCT_ENGINEER)
                 .challengerStatus(ChallengerStatus.ACTIVE).build()));
 
         // when / then
@@ -239,8 +238,8 @@ class ChallengerWorkbookCommandServiceTest {
         verify(saveChallengerWorkbookPort, never()).save(any());
     }
 
-    private OriginalWorkbook 트랙_워크북(ChallengerTrack track, Long id) {
-        WeeklyCurriculum weekly = WeeklyCurriculum.create(Curriculum.createForTrack(9L, track, "트랙"),
+    private OriginalWorkbook 파트_워크북(ChallengerPart part, Long id) {
+        WeeklyCurriculum weekly = WeeklyCurriculum.create(Curriculum.create(9L, part, "파트"),
             1L, false, "1주차", Instant.EPOCH, Instant.MAX);
         OriginalWorkbook result = OriginalWorkbook.createAsReady(
             weekly, "워크북", null, null, null, OriginalWorkbookType.MAIN);

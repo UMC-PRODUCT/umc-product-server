@@ -18,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
@@ -72,43 +71,20 @@ class BulkSeedServiceTest {
     }
 
     @Test
-    @DisplayName("Track 기수에는 기본 Track을 순환 배정하고 Part를 저장하지 않는다")
-    void track_기수_기본_track_배정() {
-        // Given
-        given(getGisuUseCase.getActiveGisu())
-            .willReturn(new GisuInfo(GISU_ID, 11L, null, null, true, GisuLearningType.TRACK));
-
-        // When
-        sut.seed(command(8));
-
-        // Then
-        verify(bulkSeedPort).insertChallengers(challengerCaptor.capture());
-        assertThat(challengerCaptor.getValue()).allSatisfy(row -> {
-            assertThat(row.part()).isNull();
-            assertThat(row.tracks()).hasSize(1);
-            assertThat(row.gisuId()).isEqualTo(GISU_ID);
-        });
-        assertThat(challengerCaptor.getValue()).flatExtracting(SeedChallengerRow::tracks)
-            .containsExactly(
-                ChallengerTrack.PLAN, ChallengerTrack.DESIGN,
-                ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER,
-                ChallengerTrack.PLAN, ChallengerTrack.DESIGN,
-                ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER);
-    }
-
-    @Test
-    @DisplayName("Part 기수에는 기존 일곱 Part를 순환 배정하고 Track을 비워 둔다")
-    void part_기수_기존_part_배정() {
+    @DisplayName("챌린저에게 레거시와 신규 Part를 순환 배정하고 infra는 false로 둔다")
+    void part_순환_배정() {
         // Given // When
-        sut.seed(command(8));
+        sut.seed(command(10));
 
         // Then
         verify(bulkSeedPort).insertChallengers(challengerCaptor.capture());
-        assertThat(challengerCaptor.getValue()).allSatisfy(row -> assertThat(row.tracks()).isEmpty());
+        assertThat(challengerCaptor.getValue()).allSatisfy(row -> assertThat(row.infra()).isFalse());
         assertThat(challengerCaptor.getValue()).extracting(SeedChallengerRow::part)
             .containsExactly(
                 ChallengerPart.WEB, ChallengerPart.ANDROID, ChallengerPart.IOS, ChallengerPart.NODEJS,
-                ChallengerPart.SPRINGBOOT, ChallengerPart.DESIGN, ChallengerPart.PLAN, ChallengerPart.WEB);
+                ChallengerPart.SPRINGBOOT, ChallengerPart.DESIGN, ChallengerPart.PLAN,
+                ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER,
+                ChallengerPart.WEB);
     }
 
     @Test

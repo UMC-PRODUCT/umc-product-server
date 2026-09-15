@@ -74,7 +74,8 @@ class ChallengerResponseAssemblerTest {
         assertThat(single.challengerId()).isEqualTo(100L);
         assertThat(single.gisuId()).isEqualTo(6L);
         assertThat(single.schoolId()).isEqualTo(30L);
-        assertThat(single.tracks()).isEmpty();
+        assertThat(single.part()).isNull();
+        assertThat(single.infra()).isFalse();
         assertThat(single.chapterId()).isEqualTo(hasChapter ? 20L : null);
         assertThat(single.chapterName()).isEqualTo(hasChapter ? "현재 지부" : null);
     }
@@ -103,7 +104,7 @@ class ChallengerResponseAssemblerTest {
     }
 
     private ChallengerInfo challenger() {
-        return ChallengerInfo.builder().challengerId(100L).memberId(1L).gisuId(6L).tracks(List.of()).build();
+        return ChallengerInfo.builder().challengerId(100L).memberId(1L).gisuId(6L).build();
     }
 
     private MemberInfo member() {
