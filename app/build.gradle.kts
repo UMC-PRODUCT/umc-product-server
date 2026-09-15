@@ -1,6 +1,7 @@
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
-// 소스가 없는 패키징 전용 모듈이다. 실행 클래스와 resources 는 :monolith 에 있다.
+// 배포 산출물을 조립하는 모듈이다. 실행 클래스와 resources 는 :monolith 에 있다.
+// main 에는 package-info.java 만 두는데, 이유는 그 파일에 적어뒀다.
 dependencies {
     implementation(project(":monolith"))
     implementation(project(":blog"))
