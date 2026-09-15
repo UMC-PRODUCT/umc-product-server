@@ -1,6 +1,7 @@
 import org.gradle.api.artifacts.VersionCatalogsExtension
 
-val libsCatalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
+// subprojects 블록에서 적용되는 시점에는 서브프로젝트의 카탈로그가 아직 없다. 루트를 거친다.
+val libsCatalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
 
 fun version(alias: String): String = libsCatalog.findVersion(alias).get().requiredVersion
 

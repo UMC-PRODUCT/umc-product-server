@@ -56,7 +56,7 @@ jobs:
           distribution: corretto
 
       - name: Validate and build boot JAR
-        run: ./gradlew clean spotlessCheck checkstyleMain checkstyleTest compileJava compileTestJava test bootJar
+        run: ./gradlew clean check :app:bootJar
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

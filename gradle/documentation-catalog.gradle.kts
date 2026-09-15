@@ -31,23 +31,31 @@ data class ErrorCodeDocumentationEntry(
 
 // 생성 산출물은 docs/guides와 Spring static resource 양쪽에 쓴다.
 // docs/guides는 repository 문서용, static resource는 서버/Backoffice 서빙용이다.
-val documentationSourceRoot = file("src/main/java")
+// 에러 코드는 모든 모듈에서 걷는다. 모듈을 추가하면 여기에도 넣어야 카탈로그에서 빠지지 않는다.
+// 빠져도 빌드는 성공하므로 눈치채기 어렵다.
+val documentationSourceRoots = listOf(
+    file("monolith/src/main/java"),
+    file("blog/src/main/java")
+).filter { it.isDirectory }
+
+// 정적 산출물은 서버가 서빙하는 자원이라 resources 를 가진 :monolith 에 둔다.
+val staticCatalogRoot = file("monolith/src/main/resources/static/docs/catalog")
 val errorCodeCatalogMarkdownFile = file("docs/guides/에러_코드_목록.md")
 val errorCodeCatalogJsonFile = file("docs/guides/에러_코드_목록.json")
 val errorCodeCatalogSchemaFile = file("docs/guides/에러_코드_목록.schema.json")
-val staticErrorCodeCatalogMarkdownFile = file("src/main/resources/static/docs/catalog/error/catalog.md")
-val staticErrorCodeCatalogJsonFile = file("src/main/resources/static/docs/catalog/error/catalog.json")
-val staticErrorCodeCatalogSchemaFile = file("src/main/resources/static/docs/catalog/error/catalog.schema.json")
-val staticErrorCodeCatalogIndexFile = file("src/main/resources/static/docs/catalog/error/index.html")
+val staticErrorCodeCatalogMarkdownFile = File(staticCatalogRoot, "error/catalog.md")
+val staticErrorCodeCatalogJsonFile = File(staticCatalogRoot, "error/catalog.json")
+val staticErrorCodeCatalogSchemaFile = File(staticCatalogRoot, "error/catalog.schema.json")
+val staticErrorCodeCatalogIndexFile = File(staticCatalogRoot, "error/index.html")
 val staleCatalogFilesToRemove = listOf(
     file("docs/guides/API_목록.md"),
     file("docs/guides/API_목록.json"),
     file("docs/guides/ErrorCode_목록.md"),
     file("docs/guides/ErrorCode_목록.json"),
     file("docs/guides/ErrorCode_목록.schema.json"),
-    file("src/main/resources/static/docs/catalog/api/catalog.md"),
-    file("src/main/resources/static/docs/catalog/api/catalog.json"),
-    file("src/main/resources/static/docs/catalog/api/index.html")
+    File(staticCatalogRoot, "api/catalog.md"),
+    File(staticCatalogRoot, "api/catalog.json"),
+    File(staticCatalogRoot, "api/index.html")
 )
 
 val errorCodeCatalogServiceName = "umc-product-server"
@@ -206,8 +214,9 @@ fun appendJsonStringArray(builder: StringBuilder, property: String, values: List
 fun extractErrorCodeEntries(): List<ErrorCodeDocumentationEntry> {
     val entries = mutableListOf<ErrorCodeDocumentationEntry>()
 
-    documentationSourceRoot
-        .walkTopDown()
+    documentationSourceRoots
+        .asSequence()
+        .flatMap { it.walkTopDown() }
         .filter { it.isFile && it.name.endsWith("ErrorCode.java") }
         .forEach { sourceFile ->
             val lines = sourceFile.readLines()
