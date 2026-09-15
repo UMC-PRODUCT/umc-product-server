@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.curriculum.application.port.in.query.GetStudyMemberSubmissionUseCase;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProjection;
 import com.umc.product.curriculum.application.port.in.query.dto.StudyMemberSubmissionInfo;
@@ -99,7 +98,7 @@ public class StudyMemberSubmissionQueryService implements GetStudyMemberSubmissi
 
         return page.stream()
             .map(row -> toInfo(row,
-                weeksByLearning.getOrDefault(new LearningKey(row.part(), row.track()), List.of()), snapshot, memberMap))
+                weeksByLearning.getOrDefault(new LearningKey(row.part()), List.of()), snapshot, memberMap))
             .toList();
     }
 
@@ -125,16 +124,11 @@ public class StudyMemberSubmissionQueryService implements GetStudyMemberSubmissi
             if (requestedGisuId != null && !group.gisuId().equals(gisuId)) {
                 throw new CurriculumDomainException(CurriculumErrorCode.STUDY_GROUP_NOT_MATCHED);
             }
-            learningKeys = List.of(new LearningKey(group.part(), group.track()));
+            learningKeys = List.of(new LearningKey(group.part()));
         } else {
             learningKeys = new java.util.ArrayList<>();
             for (ChallengerPart part : ChallengerPart.values()) {
-                learningKeys.add(new LearningKey(part, null));
-            }
-            for (ChallengerTrack track : ChallengerTrack.values()) {
-                if (track.isBasic()) {
-                    learningKeys.add(new LearningKey(null, track));
-                }
+                learningKeys.add(new LearningKey(part));
             }
         }
 
@@ -160,7 +154,7 @@ public class StudyMemberSubmissionQueryService implements GetStudyMemberSubmissi
         Map<LearningKey, List<WeeklyCurriculum>> weeksByLearning = new LinkedHashMap<>();
 
         for (LearningKey key : page.stream()
-            .map(row -> new LearningKey(row.part(), row.track())).collect(Collectors.toSet())) {
+            .map(row -> new LearningKey(row.part())).collect(Collectors.toSet())) {
             Optional<CurriculumProjection> curriculum = findCurriculum(gisuId, key);
             if (curriculum.isEmpty()) {
                 continue;
@@ -172,12 +166,10 @@ public class StudyMemberSubmissionQueryService implements GetStudyMemberSubmissi
     }
 
     private Optional<CurriculumProjection> findCurriculum(Long gisuId, LearningKey key) {
-        return key.track() == null
-            ? loadCurriculumPort.findByGisuIdAndPart(gisuId, key.part())
-            : loadCurriculumPort.findByGisuIdAndTrack(gisuId, key.track());
+        return loadCurriculumPort.findByGisuIdAndPart(gisuId, key.part());
     }
 
-    private record LearningKey(ChallengerPart part, ChallengerTrack track) {
+    private record LearningKey(ChallengerPart part) {
     }
 
     private List<WeeklyCurriculum> loadWeeks(Long curriculumId, List<Long> weekNos) {
@@ -246,7 +238,7 @@ public class StudyMemberSubmissionQueryService implements GetStudyMemberSubmissi
     ) {
         return page.stream()
             .flatMap(row -> weeksByLearning
-                .getOrDefault(new LearningKey(row.part(), row.track()), List.<WeeklyCurriculum>of()).stream()
+                .getOrDefault(new LearningKey(row.part()), List.<WeeklyCurriculum>of()).stream()
                 .map(week -> new ChallengerWorkbookLookupKey(row.memberId(), week.getId(), row.studyGroupId())))
             .toList();
     }
@@ -269,7 +261,6 @@ public class StudyMemberSubmissionQueryService implements GetStudyMemberSubmissi
             .studyGroupId(row.studyGroupId())
             .studyGroupName(row.studyGroupName())
             .part(row.part())
-            .track(row.track())
             .weeks(weeks.stream()
                 .sorted((left, right) -> Long.compare(left.getWeekNo(), right.getWeekNo()))
                 .map(week -> toWeeklyInfo(row, week, snapshot))

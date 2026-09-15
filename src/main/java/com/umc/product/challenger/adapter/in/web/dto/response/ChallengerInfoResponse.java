@@ -8,7 +8,6 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
@@ -25,7 +24,7 @@ public record ChallengerInfoResponse(
     Long chapterId,
     String chapterName,
     ChallengerPart part,
-    List<ChallengerTrack> tracks,
+    boolean infra,
     ChallengerStatus challengerStatus,
     // TODO: 호환성을 위해 유지하는 것으로, 다음 마이너 버전 업데이트에 제거하도록 함
     List<ChallengerPointInfo> challengerPoints,
@@ -58,7 +57,7 @@ public record ChallengerInfoResponse(
             .chapterId(chapterInfo == null ? null : chapterInfo.id())
             .chapterName(chapterInfo == null ? null : chapterInfo.name())
             .part(info.part())
-            .tracks(info.tracks())
+            .infra(info.infra())
             .challengerPoints(info.challengerPoints())
             .totalPoints(info.totalPoints())
             .points(info.challengerPoints())
@@ -97,7 +96,7 @@ public record ChallengerInfoResponse(
             .chapterName(chapterInfo == null ? null : chapterInfo.name())
             // 파트
             .part(info.part())
-            .tracks(info.tracks())
+            .infra(info.infra())
             .challengerStatus(info.challengerStatus())
             // 상벌점
             .challengerPoints(info.challengerPoints())
@@ -136,7 +135,7 @@ public record ChallengerInfoResponse(
             .chapterId(chapterId)
             .chapterName(chapterName)
             .part(part)
-            .tracks(tracks)
+            .infra(infra)
             .challengerStatus(challengerStatus)
             // 상벌점 정보는 공개하지 않음
             .challengerPoints(List.of())

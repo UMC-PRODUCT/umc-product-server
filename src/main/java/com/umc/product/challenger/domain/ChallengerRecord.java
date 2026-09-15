@@ -2,21 +2,13 @@ package com.umc.product.challenger.domain;
 
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.stream.IntStream;
-
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.ChallengerTrack;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.common.domain.enums.OrganizationType;
 
 import jakarta.persistence.Column;
@@ -64,14 +56,8 @@ public class ChallengerRecord extends BaseEntity {
     @Column(name = "part")
     private ChallengerPart part;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "track")
-    private ChallengerTrack track;
-
-    @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(nullable = false, name = "tracks", columnDefinition = "text[]")
-    private List<ChallengerTrack> tracks = new ArrayList<>();
+    @Column(nullable = false, name = "infra")
+    private boolean infra;
 
     @Column(name = "challenger_role_type")
     @Enumerated(EnumType.STRING)
@@ -93,22 +79,14 @@ public class ChallengerRecord extends BaseEntity {
         Long createdMemberId, Long gisuId, Long chapterId, Long schoolId,
         ChallengerPart part, String memberName
     ) {
-        return create(createdMemberId, gisuId, chapterId, schoolId, part, null, memberName);
+        return create(createdMemberId, gisuId, chapterId, schoolId, part, false, memberName);
     }
 
     public static ChallengerRecord create(
         Long createdMemberId, Long gisuId, Long chapterId, Long schoolId,
-        ChallengerPart part, ChallengerTrack track, String memberName
+        ChallengerPart part, boolean infra, String memberName
     ) {
-        return createWithTracks(createdMemberId, gisuId, chapterId, schoolId, part,
-            track == null ? List.of() : List.of(track), memberName);
-    }
-
-    public static ChallengerRecord createWithTracks(
-        Long createdMemberId, Long gisuId, Long chapterId, Long schoolId,
-        ChallengerPart part, List<ChallengerTrack> tracks, String memberName
-    ) {
-        return createRecord(createdMemberId, gisuId, chapterId, schoolId, part, tracks, memberName, null, null);
+        return createRecord(createdMemberId, gisuId, chapterId, schoolId, part, infra, memberName, null, null);
     }
 
     public static ChallengerRecord createAdmin(
@@ -116,27 +94,32 @@ public class ChallengerRecord extends BaseEntity {
         ChallengerPart part, String memberName,
         ChallengerRoleType challengerRoleType, Long organizationId
     ) {
-        return createAdminWithTracks(createdMemberId, gisuId, chapterId, schoolId, part,
-            List.of(), memberName, challengerRoleType, organizationId);
+        return createAdmin(createdMemberId, gisuId, chapterId, schoolId, part, false, memberName,
+            challengerRoleType, organizationId);
     }
 
-    public static ChallengerRecord createAdminWithTracks(
+    public static ChallengerRecord createAdmin(
         Long createdMemberId, Long gisuId, Long chapterId, Long schoolId,
-        ChallengerPart part, List<ChallengerTrack> tracks, String memberName,
+        ChallengerPart part, boolean infra, String memberName,
         ChallengerRoleType challengerRoleType, Long organizationId
     ) {
-        return createRecord(createdMemberId, gisuId, chapterId, schoolId, part, tracks,
-            memberName, challengerRoleType, organizationId);
+        return createRecord(createdMemberId, gisuId, chapterId, schoolId, part, infra, memberName,
+            challengerRoleType, organizationId);
     }
 
     private static ChallengerRecord createRecord(
         Long createdMemberId, Long gisuId, Long chapterId, Long schoolId,
-        ChallengerPart part, List<ChallengerTrack> tracks, String memberName,
+        ChallengerPart part, boolean infra, String memberName,
         ChallengerRoleType challengerRoleType, Long organizationId
     ) {
-        List<ChallengerTrack> selectedTracks = tracks == null ? List.of() : tracks;
-        if (selectedTracks.stream().anyMatch(value -> value == null || !value.isBasic())
-            || (challengerRoleType == null && part != null && !selectedTracks.isEmpty())) {
+        if (part != null && !part.canBeAssignedToChallenger()) {
+            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
+        }
+        if (infra && (part == null || !part.canHaveInfra())) {
+            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
+        }
+        // 운영진 코드가 아닌 수강 코드는 파트가 필수다.
+        if (challengerRoleType == null && part == null) {
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
         }
         ChallengerRecord record = new ChallengerRecord();
@@ -147,8 +130,7 @@ public class ChallengerRecord extends BaseEntity {
         record.schoolId = schoolId;
         record.memberName = memberName;
         record.part = part;
-        record.tracks = new ArrayList<>(new LinkedHashSet<>(selectedTracks));
-        record.track = record.tracks.size() == 1 ? record.tracks.getFirst() : null;
+        record.infra = infra;
         record.challengerRoleType = challengerRoleType;
         record.organizationId = organizationId;
         if (chapterId == null && !record.canOmitChapter()) {
@@ -166,31 +148,25 @@ public class ChallengerRecord extends BaseEntity {
             .toString();
     }
 
-    public List<ChallengerTrack> getTracks() {
-        return List.copyOf(tracks);
-    }
-
     public boolean isAdminRecord() {
         return this.challengerRoleType != null;
     }
 
     public boolean canOmitChapter() {
         return isAdminRecord() && challengerRoleType.organizationType() == OrganizationType.CENTRAL
-            && tracks.isEmpty();
+            && part == null;
     }
 
-    public void validateLearningType(GisuLearningType learningType) {
-        if (tracks.stream().anyMatch(value -> value == null || !value.isBasic())) {
+    /**
+     * 코드의 학습 정보 유효성을 검증한다. 새 모델은 단일 part + infra이며 기수 학습 유형과 무관하다.
+     */
+    public void validateLearningSelection() {
+        if (infra && (part == null || !part.canHaveInfra())) {
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
         }
-        boolean valid = switch (learningType) {
-            case PART -> tracks.isEmpty() && (isAdminRecord() || part != null);
-            case TRACK -> isAdminRecord() || (part == null && !tracks.isEmpty())
-                || (part == ChallengerPart.ADMIN && tracks.isEmpty());
-        };
-        if (!valid) {
+        if (!isAdminRecord() && part == null) {
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST,
-                "기수의 학습 유형에 맞는 파트 또는 기본 트랙을 선택해주세요.");
+                "학습 파트를 선택해주세요.");
         }
     }
 

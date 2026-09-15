@@ -12,8 +12,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.curriculum.application.port.in.command.ManageCurriculumUseCase;
 import com.umc.product.curriculum.application.port.in.command.ManageOriginalWorkbookMissionUseCase;
 import com.umc.product.curriculum.application.port.in.command.ManageOriginalWorkbookUseCase;
@@ -37,9 +35,9 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Curriculum 시딩 서비스. ADR-017 참조.
  * <p>
- * 활성 기수(또는 지정 기수)의 학습 방식에 맞는 파트 또는 기본 트랙별로 다음 골격을 생성한다.
+ * 활성 기수(또는 지정 기수)의 파트별로 다음 골격을 생성한다.
  * <pre>
- *  Curriculum (gisu, part 또는 track)
+ *  Curriculum (gisu, part)
  *    └─ WeeklyCurriculum (week 1 ~ N)
  *         └─ OriginalWorkbook (MAIN, READY)
  *              └─ OriginalWorkbookMission (M개)
@@ -62,10 +60,6 @@ public class CurriculumSeedService implements SeedCurriculumUseCase {
     private static final List<ChallengerPart> DEFAULT_PARTS = Arrays.stream(ChallengerPart.values())
         .filter(p -> p != ChallengerPart.ADMIN)
         .toList();
-    private static final List<ChallengerTrack> DEFAULT_TRACKS = Arrays.stream(ChallengerTrack.values())
-        .filter(ChallengerTrack::isBasic)
-        .toList();
-
     private final DummyCurriculumFactory dummyCurriculumFactory;
     private final GetGisuUseCase getGisuUseCase;
     private final ManageCurriculumUseCase manageCurriculumUseCase;
@@ -142,30 +136,14 @@ public class CurriculumSeedService implements SeedCurriculumUseCase {
     }
 
     private List<CreateCurriculumCommand> resolveCurricula(Long gisuId, SeedCurriculumCommand command) {
-        GisuLearningType learningType = getGisuUseCase.getById(gisuId).learningType();
+        getGisuUseCase.getById(gisuId);
         List<ChallengerPart> parts = command.parts() == null ? List.of() : command.parts();
-        List<ChallengerTrack> tracks = command.tracks() == null ? List.of() : command.tracks();
-        if (parts.stream().anyMatch(Objects::isNull) || tracks.stream().anyMatch(Objects::isNull)) {
-            throw new CurriculumDomainException(CurriculumErrorCode.INVALID_CURRICULUM_LEARNING_TYPE);
-        }
-        if (learningType == GisuLearningType.TRACK) {
-            if (!parts.isEmpty()) {
-                throw new CurriculumDomainException(CurriculumErrorCode.INVALID_CURRICULUM_LEARNING_TYPE);
-            }
-            if (tracks.stream().anyMatch(track -> !track.isBasic())) {
-                throw new CurriculumDomainException(CurriculumErrorCode.UNSUPPORTED_CURRICULUM_TRACK);
-            }
-            return (tracks.isEmpty() ? DEFAULT_TRACKS : tracks).stream()
-                .distinct()
-                .map(track -> dummyCurriculumFactory.nextCurriculumCommand(gisuId, null, track))
-                .toList();
-        }
-        if (!tracks.isEmpty()) {
+        if (parts.stream().anyMatch(Objects::isNull)) {
             throw new CurriculumDomainException(CurriculumErrorCode.INVALID_CURRICULUM_LEARNING_TYPE);
         }
         return (parts.isEmpty() ? DEFAULT_PARTS : parts).stream()
             .filter(part -> part != ChallengerPart.ADMIN)
-            .map(part -> dummyCurriculumFactory.nextCurriculumCommand(gisuId, part, null))
+            .map(part -> dummyCurriculumFactory.nextCurriculumCommand(gisuId, part))
             .toList();
     }
 
@@ -174,8 +152,8 @@ public class CurriculumSeedService implements SeedCurriculumUseCase {
             return createOrReuseEmptyCurriculum(command, counters);
         } catch (Exception e) {
             counters.curriculumFailed++;
-            log.error("curriculum seed: create curriculum failed (gisuId={}, part={}, track={}): {}",
-                command.gisuId(), command.part(), command.track(), e.toString());
+            log.error("curriculum seed: create curriculum failed (gisuId={}, part={}): {}",
+                command.gisuId(), command.part(), e.toString());
             return null;
         }
     }
@@ -190,7 +168,7 @@ public class CurriculumSeedService implements SeedCurriculumUseCase {
                 throw exception;
             }
             var existing = getCurriculumUseCase.getCurriculumOverview(
-                command.gisuId(), command.part(), command.track(), null);
+                command.gisuId(), command.part(), null);
             if (!existing.weeks().isEmpty()) {
                 throw exception;
             }

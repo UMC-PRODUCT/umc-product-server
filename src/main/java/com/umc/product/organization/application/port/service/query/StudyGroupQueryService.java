@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
@@ -104,8 +103,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
                 assembleStudyGroupMembers(header.groupId(),
                     mentorIdsByGroup.getOrDefault(header.groupId(), List.of()), memberMap),
                 assembleStudyGroupMembers(header.groupId(),
-                    memberIdsByGroup.getOrDefault(header.groupId(), List.of()), memberMap),
-                header.track()
+                    memberIdsByGroup.getOrDefault(header.groupId(), List.of()), memberMap)
             ))
             .toList();
     }
@@ -240,16 +238,6 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
             .map(StudyGroupInfo::from);
     }
 
-    @Override
-    public Optional<StudyGroupInfo> findByMemberIdAndGisuIdAndTrack(
-        Long memberId,
-        Long gisuId,
-        ChallengerTrack track
-    ) {
-        return loadStudyGroupPort.findEntityByMemberIdAndGisuIdAndTrack(memberId, gisuId, track)
-            .map(StudyGroupInfo::from);
-    }
-
     /**
      * 스터디 그룹 단건 조회 — Aggregate root 를 fetch join 으로 통째로 로드, Member 도메인 batch 호출로 이름/학교/프로필 합성.
      * Member 가 존재하지 않는 memberId 는 결과에서 제외 (INNER JOIN 의 silent drop 과 동일 동작).
@@ -274,8 +262,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
             group.getId(), group.getName(),
             group.getGisuId(), group.getPart(), group.getCreatedAt(),
             assembleStudyGroupMembers(studyGroupId, mentorIds, memberMap),
-            assembleStudyGroupMembers(studyGroupId, memberIds, memberMap),
-            group.getTrack()
+            assembleStudyGroupMembers(studyGroupId, memberIds, memberMap)
         );
     }
 

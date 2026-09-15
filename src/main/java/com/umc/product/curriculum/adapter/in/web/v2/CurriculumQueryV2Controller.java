@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.response.CurriculumOverviewResponse;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.response.MyCurriculumResponse;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumUseCase;
@@ -38,7 +37,7 @@ public class CurriculumQueryV2Controller {
             - UMC WEB Landing Page
             - UMC APP (10th) 커리큘럼 목록 조회
 
-            PART 기수는 part, TRACK 기수는 track 하나를 지정합니다. 기본 트랙만 지원합니다.
+            part 하나를 지정합니다. 인프라 커리큘럼은 part=INFRA로 조회합니다.
             선택한 커리큘럼에 대한 정보를 반환하며, 세부 내용은 아래와 같습니다.
             - 상위 단위, Curriculum의 제목
             - 주차별 커리큘럼, WeeklyCurriculum의 제목, N주차, 부록 여부, 시작/종료일
@@ -51,10 +50,9 @@ public class CurriculumQueryV2Controller {
     public CurriculumOverviewResponse getCurriculum(
         @RequestParam Long gisuId,
         @RequestParam(required = false) ChallengerPart part,
-        @RequestParam(required = false) ChallengerTrack track,
         @RequestParam(required = false) Long weekNo
     ) {
-        CurriculumOverviewInfo info = getCurriculumUseCase.getCurriculumOverview(gisuId, part, track, weekNo);
+        CurriculumOverviewInfo info = getCurriculumUseCase.getCurriculumOverview(gisuId, part, weekNo);
         return CurriculumOverviewResponse.from(info);
     }
 
@@ -62,19 +60,19 @@ public class CurriculumQueryV2Controller {
         operationId = "CURRICULUM-102",
         summary = "내 커리큘럼 진행 상황 조회",
         description = """
-            PART 기수는 본인의 파트에 해당하는 커리큘럼을 반환합니다.
-            TRACK 기수는 수강 중인 기본 track을 지정합니다. 기본 트랙이 정확히 하나면 생략할 수 있습니다.
-            여러 기본 트랙을 수강하면 track을 반드시 지정해야 하며, 응답은 선택한 커리큘럼 한 개입니다.
+            기본적으로 본인의 파트에 해당하는 커리큘럼을 반환합니다.
+            인프라를 함께 수강하는 경우 part=INFRA를 지정해 인프라 커리큘럼을 조회할 수 있으며,
+            생략하면 본인의 기본 파트 커리큘럼을 반환합니다.
             각 주차별 워크북의 상태(기본/진행중/제출완료/통과/실패)를 반환합니다.
             """
     )
     @GetMapping("/progress/me")
     public MyCurriculumResponse getMyProgress(
         @RequestParam Long gisuId,
-        @RequestParam(required = false) ChallengerTrack track,
+        @RequestParam(required = false) ChallengerPart part,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        MyCurriculumInfo info = getCurriculumUseCase.getMyProgress(memberPrincipal.getMemberId(), gisuId, track);
+        MyCurriculumInfo info = getCurriculumUseCase.getMyProgress(memberPrincipal.getMemberId(), gisuId, part);
         return MyCurriculumResponse.from(info);
     }
 }

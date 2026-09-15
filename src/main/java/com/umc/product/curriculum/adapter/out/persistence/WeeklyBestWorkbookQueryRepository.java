@@ -20,7 +20,6 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.curriculum.application.port.in.query.dto.GetBestWorkbooksQuery;
 import com.umc.product.curriculum.application.port.out.LoadWeeklyBestWorkbookPort.BestWorkbookHolder;
 import com.umc.product.curriculum.domain.WeeklyBestWorkbook;
@@ -117,7 +116,6 @@ public class WeeklyBestWorkbookQueryRepository {
                 gisuIdEq(query.gisuId()),
                 memberIdIn(query.memberIds()),
                 partIn(query.parts()),
-                trackIn(query.tracks()),
                 weekNoIn(query.weekNos()),
                 studyGroupIdIn(query.studyGroupIds())
             )
@@ -137,7 +135,6 @@ public class WeeklyBestWorkbookQueryRepository {
                 gisuIdEq(query.gisuId()),
                 memberIdIn(query.memberIds()),
                 partIn(query.parts()),
-                trackIn(query.tracks()),
                 weekNoIn(query.weekNos()),
                 studyGroupIdIn(query.studyGroupIds())
             )
@@ -167,10 +164,6 @@ public class WeeklyBestWorkbookQueryRepository {
 
     private BooleanExpression partIn(Set<ChallengerPart> parts) {
         return hasValues(parts) ? curriculum.part.in(parts) : null;
-    }
-
-    private BooleanExpression trackIn(Set<ChallengerTrack> tracks) {
-        return hasValues(tracks) ? curriculum.track.in(tracks) : null;
     }
 
     private BooleanExpression weekNoIn(List<Long> weekNos) {

@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupHeaderInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberPageInfo;
@@ -25,14 +24,6 @@ public interface LoadStudyGroupPort {
         Long memberId,
         Long gisuId,
         ChallengerPart part
-    );
-
-    Optional<StudyGroup> findEntityByMemberIdAndGisuIdAndTrack(
-        Long memberId, Long gisuId, ChallengerTrack track
-    );
-
-    Set<Long> findConflictedTrackMemberIds(
-        Long gisuId, ChallengerTrack track, Set<Long> memberIds, Long excludedStudyGroupId
     );
 
     StudyGroup getByName(String name);
