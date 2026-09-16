@@ -240,6 +240,93 @@ class CommunityThreadMessageCommandServiceTest {
     }
 
     @Test
+    @DisplayName("음소거한 멤버는 message-created fact의 recipientMemberIds에서 빠지지만 unread_count는 그대로 오른다")
+    void create_excludesMutedMembersFromRecipientsButStillIncrementsUnread() {
+        CommunityThread thread = thread();
+        CommunityThreadMember sender = active(OWNER_ID, CommunityThreadMemberRole.OWNER);
+        CommunityThreadMember recipient = active(ADMIN_ID, CommunityThreadMemberRole.ADMIN);
+        CommunityThreadMember mutedRecipient = active(MEMBER_ID, CommunityThreadMemberRole.MEMBER);
+        mutedRecipient.mute();
+        ChatMessageInfo chatInfo = chatInfo(902L, OWNER_ID, "뮤트 테스트");
+        given(loadThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, OWNER_ID))
+            .willReturn(Optional.of(sender));
+        given(loadThreadMemberPort.listByThreadId(THREAD_ID))
+            .willReturn(List.of(sender, recipient, mutedRecipient));
+        given(createChatMessageUseCase.create(any(CreateChatMessageCommand.class)))
+            .willReturn(new ChatMessageMutationResult(chatInfo, false));
+        given(infoAssembler.assemble(THREAD_ID, chatInfo)).willReturn(communityMessageInfo);
+        given(saveThreadPort.save(thread)).willReturn(thread);
+        given(saveThreadMemberPort.saveAll(any())).willAnswer(invocation -> invocation.getArgument(0));
+
+        sut.create(createCommand(OWNER_ID));
+
+        // 음소거해도 인앱 안읽음 배지는 그대로 올라가야 한다 — 뮤트는 푸시만 막는다
+        assertThat(mutedRecipient.getUnreadCount()).isEqualTo(1L);
+
+        ArgumentCaptor<Collection> facts = ArgumentCaptor.forClass(Collection.class);
+        then(domainEventPublisher).should().publishAll(facts.capture());
+        Collection<?> publishedFacts = facts.getValue();
+        CommunityThreadMessageCreatedEvent created = publishedFacts.stream()
+            .filter(CommunityThreadMessageCreatedEvent.class::isInstance)
+            .map(CommunityThreadMessageCreatedEvent.class::cast)
+            .findFirst()
+            .orElseThrow();
+        assertThat(created.recipientMemberIds())
+            .contains(ADMIN_ID)
+            .doesNotContain(MEMBER_ID);
+    }
+
+    @Test
+    @DisplayName("음소거한 멤버라도 멘션당하면 mentioned fact엔 포함되고, message-created fact엔 여전히 빠진다")
+    void create_mentionBypassesMuteButGeneralRecipientsStillExcludeMuted() {
+        CommunityThread thread = thread();
+        CommunityThreadMember sender = active(OWNER_ID, CommunityThreadMemberRole.OWNER);
+        CommunityThreadMember mutedMentioned = active(MEMBER_ID, CommunityThreadMemberRole.MEMBER);
+        mutedMentioned.mute();
+        ChatMessageInfo chatInfo = chatInfo(903L, OWNER_ID, "뮤트+멘션 테스트");
+        given(loadThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, OWNER_ID))
+            .willReturn(Optional.of(sender));
+        given(loadThreadMemberPort.listByThreadId(THREAD_ID))
+            .willReturn(List.of(sender, mutedMentioned));
+        given(createChatMessageUseCase.create(any(CreateChatMessageCommand.class)))
+            .willReturn(new ChatMessageMutationResult(chatInfo, false));
+        given(infoAssembler.assemble(THREAD_ID, chatInfo)).willReturn(communityMessageInfo);
+        given(saveThreadPort.save(thread)).willReturn(thread);
+        given(saveThreadMemberPort.saveAll(any())).willAnswer(invocation -> invocation.getArgument(0));
+
+        sut.create(new CreateCommunityThreadMessageCommand(
+            THREAD_ID,
+            OWNER_ID,
+            UUID.fromString("00000000-0000-0000-0000-000000000003"),
+            CommunityThreadMessageType.TEXT,
+            "@member 안녕",
+            List.of(),
+            List.of(MEMBER_ID),
+            null
+        ));
+
+        ArgumentCaptor<Collection> facts = ArgumentCaptor.forClass(Collection.class);
+        then(domainEventPublisher).should().publishAll(facts.capture());
+        Collection<?> publishedFacts = facts.getValue();
+
+        CommunityThreadMessageCreatedEvent created = publishedFacts.stream()
+            .filter(CommunityThreadMessageCreatedEvent.class::isInstance)
+            .map(CommunityThreadMessageCreatedEvent.class::cast)
+            .findFirst()
+            .orElseThrow();
+        assertThat(created.recipientMemberIds()).doesNotContain(MEMBER_ID);
+
+        CommunityThreadMentionedEvent mentioned = publishedFacts.stream()
+            .filter(CommunityThreadMentionedEvent.class::isInstance)
+            .map(CommunityThreadMentionedEvent.class::cast)
+            .findFirst()
+            .orElseThrow();
+        assertThat(mentioned.mentionedMemberIds()).containsExactly(MEMBER_ID);
+    }
+
+    @Test
     @DisplayName("삭제된 thread는 Chat mutation 전에 THREAD_NOT_FOUND로 거절한다")
     void deletedThreadIsRejectedBeforeChat() {
         CommunityThread deleted = thread();

@@ -119,19 +119,28 @@ public class CommunityThreadMessageCommandService implements
         saveThreadPort.save(thread);
         saveThreadMemberPort.saveAll(activeMembers);
 
-        List<Long> recipientMemberIds = activeMembers.stream()
+        List<Long> activeRecipientMemberIds = activeMembers.stream()
             .map(CommunityThreadMember::getMemberId)
             .filter(memberId -> !memberId.equals(command.senderMemberId()))
             .toList();
-        Set<Long> recipients = new HashSet<>(recipientMemberIds);
+        Set<Long> recipients = new HashSet<>(activeRecipientMemberIds);
         List<Long> mentionedMemberIds = command.mentionedMemberIds().stream()
             .filter(recipients::contains)
             .toList();
+
+        // 알림(FCM) 발행 대상은 음소거하지 않은 활성 수신자만. 멘션은 음소거를 무시
+        // mentionedMemberIds는 위 recipients(음소거 무관)를 그대로 따름.
+        List<Long> notifiableMemberIds = activeMembers.stream()
+            .filter(member -> !member.isMuted())
+            .map(CommunityThreadMember::getMemberId)
+            .filter(memberId -> !memberId.equals(command.senderMemberId()))
+            .toList();
+
         DomainEvent createdFact = CommunityThreadMessageCreatedEvent.of(
             thread.getId(),
             created.messageId(),
             command.senderMemberId(),
-            recipientMemberIds
+            notifiableMemberIds
         );
         List<? extends DomainEvent> facts = mentionedMemberIds.isEmpty()
             ? List.of(createdFact)
