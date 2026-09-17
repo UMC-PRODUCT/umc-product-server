@@ -31,22 +31,6 @@ class CommunityThreadMessageEventTest {
     );
 
     @Test
-    @DisplayName("메시지 생성 이벤트는 수신자 ID를 정렬·중복 제거한 불변 스냅샷으로 보관한다")
-    void 메시지_생성_이벤트는_수신자_ID를_정렬하고_불변으로_보관한다() {
-        List<Long> mutableRecipientIds = new ArrayList<>(List.of(30L, 10L, 30L, 20L));
-
-        CommunityThreadMessageCreatedEvent event =
-            CommunityThreadMessageCreatedEvent.of(1L, 2L, 3L, mutableRecipientIds);
-
-        mutableRecipientIds.add(40L);
-
-        assertThat(event.recipientMemberIds()).containsExactly(10L, 20L, 30L);
-        assertThatThrownBy(() -> event.recipientMemberIds().add(40L))
-            .isInstanceOf(UnsupportedOperationException.class);
-        assertThat(event.eventType()).isEqualTo("community.thread.message.created");
-    }
-
-    @Test
     @DisplayName("멘션 이벤트는 멘션 ID를 정렬·중복 제거한 불변 스냅샷으로 보관한다")
     void 멘션_이벤트는_멘션_ID를_정렬하고_불변으로_보관한다() {
         List<Long> mutableMentionedIds = new ArrayList<>(List.of(50L, 40L, 50L, 40L, 60L));
@@ -66,7 +50,7 @@ class CommunityThreadMessageEventTest {
     @DisplayName("두 이벤트의 기본 팩토리는 UUID와 발생 시각을 채운다")
     void 기본_팩토리는_UUID와_발생시각을_채운다() {
         CommunityThreadMessageCreatedEvent createdEvent =
-            CommunityThreadMessageCreatedEvent.of(1L, 2L, 3L, List.of());
+            CommunityThreadMessageCreatedEvent.of(1L, 2L, 3L);
         CommunityThreadMentionedEvent mentionedEvent =
             CommunityThreadMentionedEvent.of(1L, 2L, 3L, List.of());
 
@@ -90,8 +74,7 @@ class CommunityThreadMessageEventTest {
                 "occurredAt",
                 "threadId",
                 "messageId",
-                "senderMemberId",
-                "recipientMemberIds"
+                "senderMemberId"
             )
             .doesNotContainAnyElementsOf(FORBIDDEN_PAYLOAD_PROPERTIES);
         assertThat(recordComponentNames(CommunityThreadMentionedEvent.class))
@@ -117,8 +100,7 @@ class CommunityThreadMessageEventTest {
             occurredAt,
             1L,
             2L,
-            3L,
-            List.of(30L, 10L, 30L)
+            3L
         );
         CommunityThreadMentionedEvent mentionedEvent = new CommunityThreadMentionedEvent(
             eventId,
@@ -131,7 +113,6 @@ class CommunityThreadMessageEventTest {
 
         assertThat(createdEvent.eventId()).isEqualTo(eventId);
         assertThat(createdEvent.occurredAt()).isEqualTo(occurredAt);
-        assertThat(createdEvent.recipientMemberIds()).containsExactly(10L, 30L);
         assertThat(mentionedEvent.eventId()).isEqualTo(eventId);
         assertThat(mentionedEvent.occurredAt()).isEqualTo(occurredAt);
         assertThat(mentionedEvent.mentionedMemberIds()).containsExactly(40L, 50L);

@@ -27,6 +27,8 @@ import com.umc.product.community.application.port.in.query.thread.dto.ListThread
 import com.umc.product.community.application.port.in.query.thread.dto.ThreadListFilter;
 import com.umc.product.community.application.port.in.query.thread.dto.ThreadListInfo;
 import com.umc.product.community.application.port.out.thread.CommunityThreadQueryPort;
+import com.umc.product.community.application.port.out.thread.LoadCommunityThreadMemberPort;
+import com.umc.product.community.application.port.out.thread.LoadCommunityThreadPort;
 import com.umc.product.community.application.port.out.thread.dto.CommunityThreadListCondition;
 import com.umc.product.community.application.port.out.thread.dto.CommunityThreadListRows;
 import com.umc.product.community.application.port.out.thread.dto.CommunityThreadQueryRow;
@@ -51,6 +53,12 @@ class CommunityThreadListDetailQueryServiceTest {
     CommunityThreadQueryPort threadQueryPort;
 
     @Mock
+    LoadCommunityThreadMemberPort loadThreadMemberPort;
+
+    @Mock
+    LoadCommunityThreadPort loadThreadPort;
+
+    @Mock
     GetMemberUseCase getMemberUseCase;
 
     @Mock
@@ -68,6 +76,8 @@ class CommunityThreadListDetailQueryServiceTest {
     void setUp() {
         sut = new CommunityThreadQueryService(
             threadQueryPort,
+            loadThreadPort,
+            loadThreadMemberPort,
             getMemberUseCase,
             getChallengerUseCase,
             getGisuUseCase,
