@@ -130,8 +130,7 @@ public class CommunityThreadMessageCommandService implements
         DomainEvent createdFact = CommunityThreadMessageCreatedEvent.of(
             thread.getId(),
             created.messageId(),
-            command.senderMemberId(),
-            recipientMemberIds
+            command.senderMemberId()
         );
         List<? extends DomainEvent> facts = mentionedMemberIds.isEmpty()
             ? List.of(createdFact)

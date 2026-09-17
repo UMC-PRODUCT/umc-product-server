@@ -32,6 +32,8 @@ import com.umc.product.community.application.port.in.query.thread.dto.ThreadInvi
 import com.umc.product.community.application.port.in.query.thread.dto.ThreadMemberInfo;
 import com.umc.product.community.application.port.in.query.thread.dto.ThreadMemberPageInfo;
 import com.umc.product.community.application.port.out.thread.CommunityThreadQueryPort;
+import com.umc.product.community.application.port.out.thread.LoadCommunityThreadMemberPort;
+import com.umc.product.community.application.port.out.thread.LoadCommunityThreadPort;
 import com.umc.product.community.application.port.out.thread.dto.CommunityThreadMemberRow;
 import com.umc.product.community.application.port.out.thread.dto.CommunityThreadQueryRow;
 import com.umc.product.community.domain.CommunityThreadProperties;
@@ -59,6 +61,12 @@ class CommunityThreadMemberInvitableQueryServiceTest {
     CommunityThreadQueryPort threadQueryPort;
 
     @Mock
+    LoadCommunityThreadMemberPort loadThreadMemberPort;
+
+    @Mock
+    LoadCommunityThreadPort loadThreadPort;
+
+    @Mock
     GetMemberUseCase getMemberUseCase;
 
     @Mock
@@ -76,6 +84,8 @@ class CommunityThreadMemberInvitableQueryServiceTest {
     void setUp() {
         sut = new CommunityThreadQueryService(
             threadQueryPort,
+            loadThreadPort,
+            loadThreadMemberPort,
             getMemberUseCase,
             getChallengerUseCase,
             getGisuUseCase,
