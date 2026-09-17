@@ -18,8 +18,10 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicI
 import com.umc.product.community.application.port.in.query.thread.BrowseCommunityThreadsUseCase;
 import com.umc.product.community.application.port.in.query.thread.GetCommunityThreadMembersByIdsUseCase;
 import com.umc.product.community.application.port.in.query.thread.GetCommunityThreadMutationDetailUseCase;
+import com.umc.product.community.application.port.in.query.thread.GetCommunityThreadTitleUseCase;
 import com.umc.product.community.application.port.in.query.thread.GetJoinedCommunityThreadDetailUseCase;
 import com.umc.product.community.application.port.in.query.thread.GetPublicCommunityThreadDetailUseCase;
+import com.umc.product.community.application.port.in.query.thread.ListCommunityThreadMemberStatusUseCase;
 import com.umc.product.community.application.port.in.query.thread.ListCommunityThreadMembersUseCase;
 import com.umc.product.community.application.port.in.query.thread.ListCommunityThreadsUseCase;
 import com.umc.product.community.application.port.in.query.thread.SearchCommunityThreadInvitableUseCase;
@@ -37,12 +39,16 @@ import com.umc.product.community.application.port.in.query.thread.dto.ThreadList
 import com.umc.product.community.application.port.in.query.thread.dto.ThreadListInfo;
 import com.umc.product.community.application.port.in.query.thread.dto.ThreadMemberInfo;
 import com.umc.product.community.application.port.in.query.thread.dto.ThreadMemberPageInfo;
+import com.umc.product.community.application.port.in.query.thread.dto.ThreadMemberStatusInfo;
 import com.umc.product.community.application.port.in.query.thread.dto.ThreadSummaryInfo;
 import com.umc.product.community.application.port.out.thread.CommunityThreadQueryPort;
+import com.umc.product.community.application.port.out.thread.LoadCommunityThreadMemberPort;
+import com.umc.product.community.application.port.out.thread.LoadCommunityThreadPort;
 import com.umc.product.community.application.port.out.thread.dto.CommunityThreadListCondition;
 import com.umc.product.community.application.port.out.thread.dto.CommunityThreadListRows;
 import com.umc.product.community.application.port.out.thread.dto.CommunityThreadMemberRow;
 import com.umc.product.community.application.port.out.thread.dto.CommunityThreadQueryRow;
+import com.umc.product.community.domain.CommunityThread;
 import com.umc.product.community.domain.CommunityThreadProperties;
 import com.umc.product.community.domain.enums.CommunityThreadCategory;
 import com.umc.product.community.domain.enums.CommunityThreadMemberRole;
@@ -70,12 +76,16 @@ public class CommunityThreadQueryService implements
     GetCommunityThreadMembersByIdsUseCase,
     GetCommunityThreadMutationDetailUseCase,
     ListCommunityThreadMembersUseCase,
+    ListCommunityThreadMemberStatusUseCase,
+    GetCommunityThreadTitleUseCase,
     SearchCommunityThreadInvitableUseCase {
 
     private static final String UNKNOWN_MEMBER_NAME = "알 수 없음";
     private static final String SHARE_PATH_PREFIX = "/api/v1/community/threads/";
 
     private final CommunityThreadQueryPort threadQueryPort;
+    private final LoadCommunityThreadPort loadThreadPort;
+    private final LoadCommunityThreadMemberPort loadThreadMemberPort;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
@@ -242,6 +252,24 @@ public class CommunityThreadQueryService implements
             ))
             .toList();
         return new ThreadInvitablePageInfo(items, result.nextOffset(), result.total());
+    }
+
+    @Override
+    public List<ThreadMemberStatusInfo> listMemberStatus(Long threadId) {
+        return loadThreadMemberPort.listByThreadId(threadId).stream()
+            .map(member -> new ThreadMemberStatusInfo(
+                member.getMemberId(),
+                member.isActive(),
+                member.isMuted()
+            ))
+            .toList();
+    }
+
+    @Override
+    public String getThreadTitle(Long threadId) {
+        return loadThreadPort.findById(threadId)
+            .map(CommunityThread::getTitle)
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.THREAD_NOT_FOUND));
     }
 
     private CommunityThreadQueryRow getReadableThread(Long threadId, Long requesterMemberId) {
