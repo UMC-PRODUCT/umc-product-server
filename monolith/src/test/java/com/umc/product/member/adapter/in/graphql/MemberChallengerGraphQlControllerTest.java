@@ -11,7 +11,8 @@ import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.graphql.GraphQlTest;
 import org.springframework.context.annotation.Import;
@@ -29,7 +30,6 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.global.config.GraphQlRuntimeWiringConfig;
 import com.umc.product.global.exception.GraphQlExceptionAdvice;
@@ -83,9 +83,10 @@ class MemberChallengerGraphQlControllerTest {
         SecurityContextHolder.clearContext();
     }
 
-    @Test
-    @DisplayName("members는 Challenger의 여러 tracks와 소속 정보를 batch 조회한다")
-    void members는_Challenger의_여러_tracks와_소속_정보를_batch_조회한다() {
+    @ParameterizedTest
+    @EnumSource(value = ChallengerPart.class, names = {"SPRINGBOOT", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER"})
+    @DisplayName("members는 Challenger의 단일 part와 infra 및 소속 정보를 batch 조회한다")
+    void members는_Challenger의_단일_part와_infra_및_소속_정보를_batch_조회한다(ChallengerPart part) {
         SubjectAttributes subject = subject();
         LinkedHashSet<Long> memberIds = new LinkedHashSet<>(List.of(2L, 3L));
         LinkedHashSet<Long> schoolIds = new LinkedHashSet<>(List.of(10L, 11L));
@@ -106,8 +107,8 @@ class MemberChallengerGraphQlControllerTest {
                 20L,
                 2L,
                 100L,
-                ChallengerPart.SPRINGBOOT,
-                List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER, ChallengerTrack.MOBILE_PRODUCT_ENGINEER),
+                part,
+                false,
                 ChallengerStatus.ACTIVE
             )),
             3L, List.of(challenger(
@@ -115,7 +116,7 @@ class MemberChallengerGraphQlControllerTest {
                 3L,
                 101L,
                 ChallengerPart.DESIGN,
-                List.of(ChallengerTrack.DESIGN),
+                false,
                 ChallengerStatus.GRADUATED
             ))
         ));
@@ -135,7 +136,7 @@ class MemberChallengerGraphQlControllerTest {
                     challengers {
                       challengerId
                       part
-                      tracks
+                      infra
                       status
                       gisu {
                         gisuId
@@ -147,9 +148,8 @@ class MemberChallengerGraphQlControllerTest {
                 """)
             .execute()
             .path("members[0].school.schoolName").entity(String.class).isEqualTo("중앙대학교")
-            .path("members[0].challengers[0].part").entity(String.class).isEqualTo("SPRINGBOOT")
-            .path("members[0].challengers[0].tracks").entityList(String.class)
-            .containsExactly("WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER")
+            .path("members[0].challengers[0].part").entity(String.class).isEqualTo(part.name())
+            .path("members[0].challengers[0].infra").entity(Boolean.class).isEqualTo(false)
             .path("members[0].challengers[0].status").entity(String.class).isEqualTo("ACTIVE")
             .path("members[0].challengers[0].gisu.generation").entity(String.class).isEqualTo("6")
             .path("members[1].school.schoolName").entity(String.class).isEqualTo("숭실대학교")
@@ -210,10 +210,10 @@ class MemberChallengerGraphQlControllerTest {
         Long memberId,
         Long gisuId,
         ChallengerPart part,
-        List<ChallengerTrack> tracks,
+        boolean infra,
         ChallengerStatus status
     ) {
-        return new ChallengerBasicInfo(challengerId, memberId, gisuId, part, tracks, status);
+        return new ChallengerBasicInfo(challengerId, memberId, gisuId, part, infra, status);
     }
 
     private GisuInfo gisu(Long gisuId, Long generation) {

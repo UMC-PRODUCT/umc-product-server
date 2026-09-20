@@ -174,8 +174,8 @@ class ChapterOrganizationSeedMigrationTest {
 
     private Long insertGisu(long generation) {
         return jdbcTemplate.queryForObject("""
-            INSERT INTO gisu (generation, is_active, learning_type, start_at, end_at, created_at, updated_at)
-            VALUES (?, false, 'TRACK', '2026-09-01T00:00:00+09:00',
+            INSERT INTO gisu (generation, is_active, start_at, end_at, created_at, updated_at)
+            VALUES (?, false, '2026-09-01T00:00:00+09:00',
                 '2027-02-27T23:59:59.999999+09:00', now(), now()) RETURNING id
             """, Long.class, generation);
     }

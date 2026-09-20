@@ -221,7 +221,7 @@ class MemberInvitationQueryServiceTest {
             memberId,
             gisuId,
             ChallengerPart.WEB,
-            List.of(),
+            false,
             status
         );
     }

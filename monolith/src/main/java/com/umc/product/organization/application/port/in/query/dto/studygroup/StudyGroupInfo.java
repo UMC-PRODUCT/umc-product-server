@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.List;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.organization.domain.StudyGroupMember;
 import com.umc.product.organization.domain.StudyGroupMentor;
@@ -16,18 +15,8 @@ public record StudyGroupInfo(
     ChallengerPart part,
     Instant createdAt,
     List<Long> mentorIds,
-    List<Long> memberIds,
-    ChallengerTrack track
+    List<Long> memberIds
 ) {
-    public StudyGroupInfo(
-        Long groupId, String name, Long gisuId, ChallengerPart part,
-        Instant createdAt,
-        List<Long> mentorIds,
-        List<Long> memberIds
-    ) {
-        this(groupId, name, gisuId, part, createdAt, mentorIds, memberIds, null);
-    }
-
     public StudyGroupInfo {
         mentorIds = mentorIds == null ? List.of() : List.copyOf(mentorIds);
         memberIds = memberIds == null ? List.of() : List.copyOf(memberIds);
@@ -59,8 +48,7 @@ public record StudyGroupInfo(
                 .toList(),
             studyGroup.getMembers().stream()
                 .map(StudyGroupMember::getMemberId)
-                .toList(),
-            studyGroup.getTrack()
+                .toList()
         );
     }
 }

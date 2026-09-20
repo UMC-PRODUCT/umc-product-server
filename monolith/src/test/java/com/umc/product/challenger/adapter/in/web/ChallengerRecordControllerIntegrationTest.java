@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -39,8 +38,6 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.ChallengerTrack;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
@@ -232,25 +229,25 @@ class ChallengerRecordControllerIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("비활성 트랙 기수의 코드를 발급하고 등록하면 기본 트랙 하나가 저장된다")
-    void 비활성_트랙_기수의_코드를_발급하고_등록하면_기본_트랙_하나가_저장된다() throws Exception {
+    @DisplayName("비활성 기수의 코드를 발급하고 등록하면 기본 파트와 인프라 수강 여부가 저장된다")
+    void 비활성_기수의_코드를_발급하고_등록하면_기본_파트와_인프라_수강_여부가_저장된다() throws Exception {
         // given
         Gisu gisu = saveGisuPort.save(Gisu.create(
             9301L, Instant.parse("2026-09-01T00:00:00Z"), Instant.parse("2027-02-01T00:00:00Z"),
-            false, GisuLearningType.TRACK));
+            false));
         Chapter chapter = chapterFixture.지부(gisu, "트랙코드지부");
         School school = schoolFixture.지부에_소속된_학교("트랙코드학교", chapter);
         Member member = member("트랙회원", "트랙", "track-code@test.com", school.getId());
         Long recordId = manageChallengerRecordUseCase.create(CreateChallengerRecordCommand.builder()
             .creatorMemberId(member.getId()).gisuId(gisu.getId()).chapterId(chapter.getId())
-            .schoolId(school.getId()).track(ChallengerTrack.WEB_PRODUCT_ENGINEER)
+            .schoolId(school.getId()).part(ChallengerPart.WEB_PRODUCT_ENGINEER).infra(true)
             .memberName(member.getName()).build());
         ChallengerRecord record = challengerRecordJpaRepository.findById(recordId).orElseThrow();
         ChallengerRecordResponse response = recordResponseAssembler.from(recordId);
         assertThat(response.chapterId()).isEqualTo(chapter.getId());
         assertThat(response.chapterName()).isEqualTo(chapter.getName());
-        assertThat(response.track()).isEqualTo(ChallengerTrack.WEB_PRODUCT_ENGINEER);
-        assertThat(response.tracks()).containsExactly(ChallengerTrack.WEB_PRODUCT_ENGINEER);
+        assertThat(response.part()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
+        assertThat(response.infra()).isTrue();
         authenticate(member.getId());
 
         // when
@@ -261,8 +258,8 @@ class ChallengerRecordControllerIntegrationTest extends IntegrationTestSupport {
         // then
         Challenger challenger = challengerJpaRepository.findByMemberIdAndGisuId(member.getId(), gisu.getId())
             .orElseThrow();
-        assertThat(challenger.getPart()).isNull();
-        assertThat(challenger.getTracks()).containsExactly(ChallengerTrack.WEB_PRODUCT_ENGINEER);
+        assertThat(challenger.getPart()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
+        assertThat(challenger.isInfra()).isTrue();
         assertThat(challengerRecordJpaRepository.findById(recordId).orElseThrow().isUsed()).isTrue();
     }
 
@@ -272,12 +269,12 @@ class ChallengerRecordControllerIntegrationTest extends IntegrationTestSupport {
         // Given
         Gisu gisu = saveGisuPort.save(Gisu.create(
             9303L, Instant.parse("2026-09-01T00:00:00Z"), Instant.parse("2027-02-01T00:00:00Z"),
-            false, GisuLearningType.TRACK));
+            false));
         School school = schoolFixture.학교("지부미배정중앙학교");
         Member member = member("중앙회원", "중앙", "central-code@test.com", school.getId());
         Long recordId = manageChallengerRecordUseCase.create(CreateChallengerRecordCommand.builder()
             .creatorMemberId(member.getId()).gisuId(gisu.getId()).schoolId(school.getId())
-            .tracks(List.of()).memberName(member.getName())
+            .memberName(member.getName())
             .challengerRoleType(ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER).build());
 
         // When
@@ -288,8 +285,8 @@ class ChallengerRecordControllerIntegrationTest extends IntegrationTestSupport {
         assertThat(response.chapterName()).isNull();
         assertThat(response.schoolId()).isEqualTo(school.getId());
         assertThat(response.schoolName()).isEqualTo(school.getName());
-        assertThat(response.tracks()).isEmpty();
-        assertThat(response.track()).isNull();
+        assertThat(response.part()).isNull();
+        assertThat(response.infra()).isFalse();
         assertThat(response.challengerRoleType()).isEqualTo(ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER);
     }
 

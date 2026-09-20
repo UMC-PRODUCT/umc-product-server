@@ -8,7 +8,6 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 
@@ -20,41 +19,35 @@ import com.umc.product.organization.exception.OrganizationErrorCode;
 class StudyGroupTest {
 
     @Test
-    void 기본트랙_스터디는_파트없이_생성된다() {
+    void 신규_프로덕트_엔지니어_파트_스터디를_생성한다() {
         // when
-        StudyGroup group = StudyGroup.create("웹 트랙", 1L, null, ChallengerTrack.WEB_PRODUCT_ENGINEER,
+        StudyGroup group = StudyGroup.create("웹 스터디", 1L, ChallengerPart.WEB_PRODUCT_ENGINEER,
             Set.of(1L), Set.of(2L));
 
         // then
-        assertThat(group.getPart()).isNull();
-        assertThat(group.getTrack()).isEqualTo(ChallengerTrack.WEB_PRODUCT_ENGINEER);
+        assertThat(group.getPart()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
     }
 
     @Test
-    void 파트와_트랙을_함께_지정할_수_없다() {
-        // when & then
-        assertThatThrownBy(() -> StudyGroup.create("웹 트랙", 1L, ChallengerPart.WEB,
-            ChallengerTrack.WEB_PRODUCT_ENGINEER, Set.of(1L), Set.of(2L)))
-            .extracting("baseCode").isEqualTo(OrganizationErrorCode.STUDY_GROUP_LEARNING_TYPE_INVALID);
+    void 모바일_프로덕트_엔지니어_파트_스터디를_생성할_수_있다() {
+        // when
+        StudyGroup group = StudyGroup.create("모바일 스터디", 1L, ChallengerPart.MOBILE_PRODUCT_ENGINEER,
+            Set.of(1L), Set.of(2L));
+
+        // then
+        assertThat(group.getPart()).isEqualTo(ChallengerPart.MOBILE_PRODUCT_ENGINEER);
     }
 
     @Test
-    void 플러스트랙_스터디를_생성할_수_없다() {
-        // when & then
-        assertThatThrownBy(() -> StudyGroup.create("인프라", 1L, null,
-            ChallengerTrack.INFRA_PLUS, Set.of(1L), Set.of(2L)))
-            .extracting("baseCode").isEqualTo(OrganizationErrorCode.STUDY_GROUP_LEARNING_TYPE_INVALID);
-    }
-
-    @Test
-    void 트랙스터디를_파트스터디로_변경할_수_없다() {
+    void 스터디_파트를_변경할_수_있다() {
         // given
-        StudyGroup group = StudyGroup.create("웹 트랙", 1L, null, ChallengerTrack.WEB_PRODUCT_ENGINEER,
+        StudyGroup group = StudyGroup.create("웹 스터디", 1L, ChallengerPart.WEB_PRODUCT_ENGINEER,
             Set.of(1L), Set.of(2L));
 
         // when & then
-        assertThatThrownBy(() -> group.updatePart(ChallengerPart.WEB))
-            .extracting("baseCode").isEqualTo(OrganizationErrorCode.STUDY_GROUP_LEARNING_TYPE_INVALID);
+        group.updatePart(ChallengerPart.MOBILE_PRODUCT_ENGINEER);
+
+        assertThat(group.getPart()).isEqualTo(ChallengerPart.MOBILE_PRODUCT_ENGINEER);
     }
 
     @Test

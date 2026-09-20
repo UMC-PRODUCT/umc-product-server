@@ -1,9 +1,6 @@
 package com.umc.product.test.adapter.in.web.dto;
 
-import java.util.List;
-
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.test.application.port.in.command.dto.CreateSeedChallengerResult;
 
 public record CreateSeedChallengerResponse(
@@ -11,7 +8,7 @@ public record CreateSeedChallengerResponse(
     Long memberId,
     Long gisuId,
     ChallengerPart part,
-    List<ChallengerTrack> tracks
+    boolean infra
 ) {
 
     public static CreateSeedChallengerResponse from(CreateSeedChallengerResult result) {
@@ -20,7 +17,7 @@ public record CreateSeedChallengerResponse(
             result.memberId(),
             result.gisuId(),
             result.part(),
-            result.tracks()
+            result.infra()
         );
     }
 }

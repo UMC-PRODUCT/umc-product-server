@@ -15,6 +15,15 @@
 
 회원 정보는 `member`, 조직 정보는 `organization` 도메인의 책임이다. 챌린저 도메인은 다른 도메인의 Aggregate를 직접 참조하지 않고 ID와 공개 UseCase를 통해 필요한 정보만 사용한다.
 
+## 11기 Part 전환
+
+- 기본 파트는 `PLAN`, `DESIGN`, `WEB_PRODUCT_ENGINEER`, `MOBILE_PRODUCT_ENGINEER`를 사용한다.
+- `V2026.09.15.00.00`은 `generation=11`인 기수의 챌린저·등록 코드·커리큘럼·스터디그룹에서 기본 Track을 같은 이름의 Part로 복사한다. 이전 기수의 학습 정보와 기존 행의 식별자·등록 코드 사용 이력은 보존한다.
+- 챌린저와 등록 코드의 수강 Track은 하나여야 한다. 복수 Track이나 `INFRA_PLUS`를 발견하면 복사를 중단하며, 비수강 운영진의 빈 배열은 변경하지 않는다.
+- 운영진 등록 코드의 기존 담당 Part와 수강 Track이 다르면 담당 파트를 덮어쓰지 않고 복사를 중단한다.
+- 원본 `track`/`tracks` 컬럼과 리크루팅의 Track 계약은 유지한다. 리크루팅 등록 경계에서 `ChallengerTrack.toPart()`로 변환하고, 챌린저 학습 정보는 Part로 저장한다.
+- `INFRA`는 독립 Part로 사용하지 않고 개인별 `infra` boolean을 유지한다. 학습 기준을 Part로 통일해 기수의 `learningType`은 제거한다. 리크루팅의 Part 전환과 Track 컬럼 제거는 후속 작업이다.
+
 ## UX Writing Notes
 
 `사용자`보다 도메인 의미가 분명한 `챌린저`를 우선한다. 코드, 기수, 소속이 맞지 않는 오류는 `입력한 코드를 확인해주세요`, `소속 정보를 확인해주세요`처럼 사용자가 바로 확인할 대상을 말한다.

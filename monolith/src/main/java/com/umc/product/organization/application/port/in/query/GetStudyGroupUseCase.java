@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberPageInfo;
@@ -51,10 +50,6 @@ public interface GetStudyGroupUseCase {
         Long memberId,
         Long gisuId,
         ChallengerPart part
-    );
-
-    Optional<StudyGroupInfo> findByMemberIdAndGisuIdAndTrack(
-        Long memberId, Long gisuId, ChallengerTrack track
     );
 
     StudyGroupWithMemberAndMentorInfo getWithMemberAndMentorInfoById(Long studyGroupId);

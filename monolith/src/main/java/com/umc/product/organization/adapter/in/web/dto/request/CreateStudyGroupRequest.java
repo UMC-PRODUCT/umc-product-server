@@ -3,7 +3,6 @@ package com.umc.product.organization.adapter.in.web.dto.request;
 import java.util.Set;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupCommand;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -27,19 +26,9 @@ public record CreateStudyGroupRequest(
         @NotEmpty Set<Long> mentorIds,
 
         @Schema(description = "스터디원 회원 ID 목록", example = "[102, 103, 104]")
-        @NotEmpty Set<Long> memberIds,
-
-        @Schema(description = "Track 기수의 기본 트랙")
-        ChallengerTrack track
+        @NotEmpty Set<Long> memberIds
 ) {
-    public CreateStudyGroupRequest(
-        String name, Long gisuId, ChallengerPart part, Set<Long> mentorIds, Set<Long> memberIds
-    ) {
-        this(name, gisuId, part, mentorIds, memberIds, null);
-    }
-
     public CreateStudyGroupCommand toCommand() {
-        return new CreateStudyGroupCommand(name, gisuId, part, mentorIds,
-            memberIds, track);
+        return new CreateStudyGroupCommand(name, gisuId, part, mentorIds, memberIds);
     }
 }

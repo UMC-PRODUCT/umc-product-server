@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.List;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.curriculum.application.port.in.query.dto.MyCurriculumInfo;
 import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
@@ -19,12 +18,11 @@ public record MyCurriculumResponse(
     Long curriculumId,
     String title,
     List<MyWeeklyCurriculumResponse> weeks,
-    ChallengerPart part,
-    ChallengerTrack track
+    ChallengerPart part
 ) {
 
     public MyCurriculumResponse(Long curriculumId, String title, List<MyWeeklyCurriculumResponse> weeks) {
-        this(curriculumId, title, weeks, null, null);
+        this(curriculumId, title, weeks, null);
     }
 
     public static MyCurriculumResponse from(MyCurriculumInfo info) {
@@ -32,7 +30,6 @@ public record MyCurriculumResponse(
             .curriculumId(info.curriculumId())
             .title(info.title())
             .part(info.part())
-            .track(info.track())
             .weeks(info.weeks().stream()
                 .map(MyWeeklyCurriculumResponse::from)
                 .toList())

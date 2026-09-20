@@ -50,6 +50,7 @@ class ManageStudyGroupUseCaseTest extends UseCaseTestSupport {
         StudyGroup group = studyGroupFixture.스터디그룹(
             "web-study", gisu, ChallengerPart.WEB, null, Set.of(member.getId())
         );
+        challengerFixture.챌린저(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
 
         // when
         manageStudyGroupUseCase.update(
@@ -72,6 +73,7 @@ class ManageStudyGroupUseCaseTest extends UseCaseTestSupport {
         StudyGroup planGroup = studyGroupFixture.스터디그룹(
             "plan-study", gisu, ChallengerPart.PLAN, null, Set.of(member.getId())
         );
+        challengerFixture.챌린저(member.getId(), ChallengerPart.WEB, gisu.getId());
 
         // when & then
         assertThatThrownBy(() -> manageStudyGroupUseCase.update(

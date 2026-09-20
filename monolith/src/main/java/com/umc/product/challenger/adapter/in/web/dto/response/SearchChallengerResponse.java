@@ -68,7 +68,9 @@ public record SearchChallengerResponse(
             ChallengerPart.ANDROID,
             ChallengerPart.IOS,
             ChallengerPart.NODEJS,
-            ChallengerPart.SPRINGBOOT
+            ChallengerPart.SPRINGBOOT,
+            ChallengerPart.WEB_PRODUCT_ENGINEER,
+            ChallengerPart.MOBILE_PRODUCT_ENGINEER
         );
 
         public static List<PartCountResponse> from(Map<ChallengerPart, Long> counts) {

@@ -14,8 +14,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.member.domain.Member;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.PersistenceAdapterTest;
@@ -32,13 +30,13 @@ class BulkSeedJdbcAdapterTest {
     JdbcTemplate jdbcTemplate;
 
     @Test
-    @DisplayName("벌크 저장한 Track 배열과 기존 Part를 챌린저로 다시 조회할 수 있다")
-    void track_배열과_part_벌크_저장() {
+    @DisplayName("벌크 저장한 Part와 infra를 챌린저로 다시 조회할 수 있다")
+    void part와_infra_벌크_저장() {
         // Given
         Instant startsAt = Instant.parse("2026-09-01T00:00:00Z");
         Instant endsAt = Instant.parse("2027-02-28T00:00:00Z");
-        Gisu partGisu = em.persist(Gisu.create(10L, startsAt, endsAt, false, GisuLearningType.PART));
-        Gisu trackGisu = em.persist(Gisu.create(11L, startsAt, endsAt, false, GisuLearningType.TRACK));
+        Gisu partGisu = em.persist(Gisu.create(10L, startsAt, endsAt, false));
+        Gisu trackGisu = em.persist(Gisu.create(11L, startsAt, endsAt, false));
         Member member = em.persist(Member.create("벌크회원", "벌크", "bulk-array@test.umc.local", null, null));
         em.flush();
         BulkSeedJdbcAdapter sut = new BulkSeedJdbcAdapter(jdbcTemplate);
@@ -47,9 +45,9 @@ class BulkSeedJdbcAdapterTest {
 
         // When
         sut.insertChallengers(List.of(
-            new SeedChallengerRow(partId, member.getId(), ChallengerPart.WEB, List.of(), partGisu.getId()),
-            new SeedChallengerRow(trackId, member.getId(), null,
-                List.of(ChallengerTrack.WEB_PRODUCT_ENGINEER), trackGisu.getId())
+            new SeedChallengerRow(partId, member.getId(), ChallengerPart.WEB, false, partGisu.getId()),
+            new SeedChallengerRow(trackId, member.getId(), ChallengerPart.WEB_PRODUCT_ENGINEER,
+                true, trackGisu.getId())
         ));
         em.clear();
 
@@ -57,8 +55,8 @@ class BulkSeedJdbcAdapterTest {
         Challenger partChallenger = em.find(Challenger.class, partId);
         Challenger trackChallenger = em.find(Challenger.class, trackId);
         assertThat(partChallenger.getPart()).isEqualTo(ChallengerPart.WEB);
-        assertThat(partChallenger.getTracks()).isEmpty();
-        assertThat(trackChallenger.getPart()).isNull();
-        assertThat(trackChallenger.getTracks()).containsExactly(ChallengerTrack.WEB_PRODUCT_ENGINEER);
+        assertThat(partChallenger.isInfra()).isFalse();
+        assertThat(trackChallenger.getPart()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
+        assertThat(trackChallenger.isInfra()).isTrue();
     }
 }

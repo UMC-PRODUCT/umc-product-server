@@ -69,15 +69,14 @@ public class BulkSeedJdbcAdapter implements BulkSeedPort {
     @Override
     public void insertChallengers(List<SeedChallengerRow> rows) {
         jdbcTemplate.batchUpdate(
-            "INSERT INTO challenger (id, member_id, part, tracks, gisu_id, status, created_at, updated_at) "
+            "INSERT INTO challenger (id, member_id, part, infra, gisu_id, status, created_at, updated_at) "
                 + "VALUES (?, ?, ?, ?, ?, 'ACTIVE', now(), now())",
             rows, JDBC_BATCH_SIZE,
             (ps, row) -> {
                 ps.setLong(1, row.id());
                 ps.setLong(2, row.memberId());
                 ps.setString(3, row.part() == null ? null : row.part().name());
-                ps.setArray(4, ps.getConnection().createArrayOf(
-                    "text", row.tracks().stream().map(Enum::name).toArray(String[]::new)));
+                ps.setBoolean(4, row.infra());
                 ps.setLong(5, row.gisuId());
             });
     }

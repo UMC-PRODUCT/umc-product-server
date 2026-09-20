@@ -5,7 +5,6 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.umc.product.common.domain.enums.GisuLearningType;
 import com.umc.product.organization.application.port.in.command.ManageGisuUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateGisuCommand;
 import com.umc.product.organization.application.port.out.command.SaveGisuPort;
@@ -31,7 +30,7 @@ public class GisuService implements ManageGisuUseCase {
         validateGenerationNotDuplicated(command);
 
         Gisu gisu = Gisu.create(
-            command.generation(), command.startAt(), command.endAt(), false, GisuLearningType.TRACK
+            command.generation(), command.startAt(), command.endAt(), false
         );
 
         return saveGisuPort.save(gisu).getId();

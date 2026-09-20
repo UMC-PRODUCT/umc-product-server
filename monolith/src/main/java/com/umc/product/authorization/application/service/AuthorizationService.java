@@ -155,7 +155,6 @@ public class AuthorizationService implements CheckPermissionUseCase {
 
     private Long resolveChapterId(ChallengerInfo challengerInfo, Long schoolId, List<RoleAttribute> roles) {
         boolean isNonLearningCentralStaff = challengerInfo.part() == null
-            && challengerInfo.tracks() != null && challengerInfo.tracks().isEmpty()
             && roles.stream().anyMatch(role -> Objects.equals(role.gisuId(), challengerInfo.gisuId())
                 && role.roleType().isAtLeastCentralMember());
         if (isNonLearningCentralStaff) {

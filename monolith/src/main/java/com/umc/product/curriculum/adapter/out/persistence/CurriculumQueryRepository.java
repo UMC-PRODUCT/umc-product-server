@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProjection;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.global.exception.NotImplementedException;
@@ -30,22 +29,12 @@ public class CurriculumQueryRepository {
                 .select(Projections.constructor(CurriculumProjection.class,
                     curriculum.id,
                     curriculum.part,
-                    curriculum.track,
                     curriculum.title
                 ))
                 .from(curriculum)
                 .where(curriculum.gisuId.eq(gisuId), curriculum.part.eq(part))
                 .fetchOne()
         );
-    }
-
-    public Optional<CurriculumProjection> findByGisuIdAndTrack(Long gisuId, ChallengerTrack track) {
-        return Optional.ofNullable(queryFactory
-            .select(Projections.constructor(CurriculumProjection.class,
-                curriculum.id, curriculum.part, curriculum.track, curriculum.title))
-            .from(curriculum)
-            .where(curriculum.gisuId.eq(gisuId), curriculum.track.eq(track))
-            .fetchOne());
     }
 
     /**

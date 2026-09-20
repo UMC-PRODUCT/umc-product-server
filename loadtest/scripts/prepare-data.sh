@@ -43,10 +43,9 @@ seed_api() {
   echo "[api] BASE_URL=$BASE_URL, count=$count"
 
   # 1) 활성 기수
-  local gisu_info gisu_id learning_type
+  local gisu_info gisu_id
   gisu_info="$(curl -fsS "$BASE_URL/api/v1/gisu/active")"
   gisu_id="$(jq -r '.result.gisuId // .result.id // empty' <<<"$gisu_info")"
-  learning_type="$(jq -r '.result.learningType // "PART"' <<<"$gisu_info")"
   [ -n "$gisu_id" ] || {
     echo "활성 기수 조회 실패 (GET /api/v1/gisu/active)" >&2
     exit 1
@@ -64,9 +63,8 @@ seed_api() {
   # 3) member + challenger 반복 생성. 단건 API 응답에서 memberId 를 모은다.
   #    챌린저 등록 실패 멤버는 seed.json 에서 제외한다 — schedules/me(@CheckAccess SCHEDULE READ)가
   #    챌린저 기록을 요구해 그 멤버로는 홈 시나리오가 403 을 맞기 때문.
-  local parts=(WEB ANDROID IOS NODEJS SPRINGBOOT DESIGN PLAN)
-  local tracks=(PLAN DESIGN WEB_PRODUCT_ENGINEER MOBILE_PRODUCT_ENGINEER)
-  local ts mid cid part track challenger_body i
+  local parts=(WEB ANDROID IOS NODEJS SPRINGBOOT DESIGN PLAN WEB_PRODUCT_ENGINEER MOBILE_PRODUCT_ENGINEER)
+  local ts mid cid part challenger_body i
   local member_ids=()
   local challenger_member_ids=()
   local challenger_ids=()
@@ -83,13 +81,8 @@ seed_api() {
       echo "  member 생성 응답에 memberId 없음 (i=$i)" >&2
       continue
     }
-    if [ "$learning_type" = "TRACK" ]; then
-      track="${tracks[$(((i - 1) % ${#tracks[@]}))]}"
-      challenger_body="{\"memberId\":$mid,\"gisuId\":$gisu_id,\"tracks\":[\"$track\"]}"
-    else
-      part="${parts[$(((i - 1) % ${#parts[@]}))]}"
-      challenger_body="{\"memberId\":$mid,\"gisuId\":$gisu_id,\"part\":\"$part\"}"
-    fi
+    part="${parts[$(((i - 1) % ${#parts[@]}))]}"
+    challenger_body="{\"memberId\":$mid,\"gisuId\":$gisu_id,\"part\":\"$part\"}"
     # 챌린저 등록 — 응답의 challengerId 를 첫 성공분만 운영진 후보로 보관 (스케줄/공지 생성 권한용)
     cid="$(api_post /test/seed/challenger \
       "$challenger_body" \

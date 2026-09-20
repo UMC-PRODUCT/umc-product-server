@@ -15,7 +15,6 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.common.domain.enums.ChallengerTrack;
 import com.umc.product.curriculum.application.port.in.command.ManageChallengerWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.DeleteChallengerWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.DeployChallengerWorkbookCommand;
@@ -60,7 +59,7 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
             validateDeployableMember(workbook, challengers);
             Curriculum curriculum = workbook.getWeeklyCurriculum().getCurriculum();
             groupCache.computeIfAbsent(
-                new GroupKey(curriculum.getGisuId(), curriculum.getPart(), curriculum.getTrack()),
+                new GroupKey(curriculum.getGisuId(), curriculum.getPart()),
                 key -> resolveStudyGroup(command.requestedMemberId(), key)
             );
         });
@@ -125,18 +124,14 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
         boolean matched = challengers.stream().anyMatch(challenger ->
             ChallengerStatus.ACTIVE == challenger.challengerStatus()
                 && curriculum.getGisuId().equals(challenger.gisuId())
-                && (curriculum.getTrack() == null ? curriculum.getPart() == challenger.part()
-                : challenger.tracks() != null && challenger.tracks().contains(curriculum.getTrack())));
+                && curriculum.getPart() == challenger.part());
         if (!matched) {
             throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_ACCESS_DENIED);
         }
     }
 
     private StudyGroupInfo resolveStudyGroup(Long memberId, GroupKey key) {
-        var group = key.track() == null
-            ? getStudyGroupUseCase.findByMemberIdAndGisuIdAndPart(memberId, key.gisuId(), key.part())
-            : getStudyGroupUseCase.findByMemberIdAndGisuIdAndTrack(memberId, key.gisuId(), key.track());
-        return group
+        return getStudyGroupUseCase.findByMemberIdAndGisuIdAndPart(memberId, key.gisuId(), key.part())
             .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.STUDY_GROUP_NOT_MATCHED));
     }
 
@@ -148,7 +143,7 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
     ) {
         Curriculum curriculum = original.getWeeklyCurriculum().getCurriculum();
         Long groupId = groupCache.get(new GroupKey(
-            curriculum.getGisuId(), curriculum.getPart(), curriculum.getTrack())).groupId();
+            curriculum.getGisuId(), curriculum.getPart())).groupId();
         ChallengerWorkbook existing = existingByOriginalId.get(original.getId());
         if (existing != null) {
             if (existing.getStudyGroupId() != null
@@ -176,6 +171,6 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
             .build();
     }
 
-    private record GroupKey(Long gisuId, ChallengerPart part, ChallengerTrack track) {
+    private record GroupKey(Long gisuId, ChallengerPart part) {
     }
 }

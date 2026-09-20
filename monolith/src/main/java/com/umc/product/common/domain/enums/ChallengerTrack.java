@@ -23,17 +23,18 @@ public enum ChallengerTrack {
         return this != INFRA_PLUS;
     }
 
-    public static ChallengerTrack from(ChallengerPart part) {
-        if (part == null || part == ChallengerPart.ADMIN) {
-            throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_PART_NOT_FOUND);
-        }
-
-        return switch (part) {
-            case PLAN -> PLAN;
-            case DESIGN -> DESIGN;
-            case WEB, NODEJS, SPRINGBOOT -> WEB_PRODUCT_ENGINEER;
-            case ANDROID, IOS -> MOBILE_PRODUCT_ENGINEER;
-            case ADMIN -> throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_PART_NOT_FOUND);
+    /**
+     * 리크루팅(트랙 기반)에서 챌린저(파트 기반)로 넘어가는 경계에서 트랙을 파트로 매핑한다. 이름이 동일하므로 항등 매핑이며,
+     * INFRA_PLUS는 단독 기본 파트가 아니므로 챌린저 생성 경계에서 허용하지 않는다.
+     */
+    public ChallengerPart toPart() {
+        return switch (this) {
+            case PLAN -> ChallengerPart.PLAN;
+            case DESIGN -> ChallengerPart.DESIGN;
+            case WEB_PRODUCT_ENGINEER -> ChallengerPart.WEB_PRODUCT_ENGINEER;
+            case MOBILE_PRODUCT_ENGINEER -> ChallengerPart.MOBILE_PRODUCT_ENGINEER;
+            case INFRA_PLUS -> throw new ChallengerDomainException(
+                ChallengerErrorCode.INVALID_CHALLENGER_LEARNING_TYPE);
         };
     }
 }
