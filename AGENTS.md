@@ -14,42 +14,70 @@ All agent responses, generated reviews, and documentation comments must be in Ko
 
 ## STRUCTURE
 
+Gradle multi-module. `:monolith` holds everything not yet extracted, `:blog` is the first extracted
+domain, and `:app` packages the boot jar and verifies what actually got assembled. See `docs/adr/030-blog-gradle-module-extraction.md`.
+
 ```text
 umc-product-server/
-├── src/main/java/com/umc/product/
-│   ├── {domain}/domain              # Entity, VO, domain enum, domain exception
-│   ├── {domain}/application/port    # UseCase and outbound Port contracts
-│   ├── {domain}/application/service # Command/Query service implementations
-│   ├── {domain}/adapter/in          # REST/GraphQL controllers, schedulers, aspects
-│   ├── {domain}/adapter/out         # Persistence and external adapters
-│   ├── global/                      # response, exception, security, config, observability
-│   └── common/                      # BaseEntity and shared domain enums
-├── src/main/resources/db/migration/ # Flyway SQL migrations
-├── src/main/resources/graphql/      # Spring GraphQL schema files
-├── src/test/java/com/umc/product/   # domain tests plus shared support package
+├── app/                             # bootJar and assembly smoke test -> :monolith, :blog
+│   └── src/test/.../ApplicationAssemblyTest   # every deployed module must register here
+├── blog/                            # Extracted domain -> :monolith
+│   ├── src/main/java/com/umc/product/blog/
+│   └── src/test/java/com/umc/product/blog/
+│       └── architecture/            # Outbound dependency allowlist
+├── monolith/                        # Everything else. No project dependency
+│   ├── src/main/java/com/umc/product/
+│   │   ├── {domain}/domain              # Entity, VO, domain enum, domain exception
+│   │   ├── {domain}/application/port    # UseCase and outbound Port contracts
+│   │   ├── {domain}/application/service # Command/Query service implementations
+│   │   ├── {domain}/adapter/in          # REST/GraphQL controllers, schedulers, aspects
+│   │   ├── {domain}/adapter/out         # Persistence and external adapters
+│   │   ├── global/                      # response, exception, security, config, observability
+│   │   └── common/                      # BaseEntity and shared domain enums
+│   ├── src/main/resources/db/migration/ # Flyway SQL migrations
+│   ├── src/main/resources/graphql/      # Spring GraphQL schema files
+│   ├── src/test/java/com/umc/product/   # domain tests
+│   └── src/testFixtures/java/com/umc/product/support/  # shared test support
 ├── docs/adr                         # architecture decisions
 ├── docs/onboarding                  # domain/test maps
-└── build.gradle.kts                 # Gradle, QueryDSL, quality gates
+├── gradle/                          # dependencies, querydsl, quality, testing scripts
+└── build.gradle.kts                 # root: subprojects config, spotless misc, doc catalog
 ```
+
+Boot entry and `src/main/resources` stay in `:monolith` so `@SpringBootTest` can find the
+configuration class.
+
+Adding a module means four edits. Registering it in `settings.gradle.kts` alone is not enough,
+and each omission below fails silently rather than breaking the build.
+
+1. `settings.gradle.kts` - `include(":name")`
+2. `app/build.gradle.kts` - add the dependency, otherwise it never reaches the boot jar
+3. `gradle/documentation-catalog.gradle.kts` - add the source root, otherwise its error codes
+   drop out of the catalog
+4. `app/src/test/.../ApplicationAssemblyTest` - add a representative bean, so a missing step 2
+   fails the build instead of shipping a jar without the module
+
+Step 4 is what catches the others. Per-module tests only see their own module: `:blog:test` passes
+even when `:blog` is absent from the boot jar.
 
 ## WHERE TO LOOK
 
 | Task | Location | Notes |
 |------|----------|-------|
-| Boot entry | `src/main/java/com/umc/product/UmcProductApplication.java` | `@SpringBootApplication`, configuration properties scan |
+| Boot entry | `monolith/src/main/java/com/umc/product/UmcProductApplication.java` | `@SpringBootApplication`, configuration properties scan |
 | Security flow | `global/config/SecurityConfig.java`, `global/security/*` | JWT, `@Public`, access denied/auth entry points |
 | SSO/PKCE auth | `authentication/adapter/in/web/Sso*`, `authentication/application/service/Sso*` | browser login, authorization code, token exchange |
 | Web pipeline | `global/config/WebMvcConfig.java` | current member resolver, logging, rate limit, docs redirect |
-| GraphQL API | `{domain}/adapter/in/graphql`, `src/main/resources/graphql` | Spring GraphQL controllers and schema contracts |
+| GraphQL API | `{domain}/adapter/in/graphql`, `monolith/src/main/resources/graphql` | Spring GraphQL controllers and schema contracts |
 | Response envelope | `global/response/*`, `global/exception/*` | success wrapping and error response paths |
 | Domain API | `{domain}/adapter/in/web/*Controller.java` | controllers delegate to UseCases only |
 | Application logic | `{domain}/application/service` | split command/query services |
 | Persistence | `{domain}/adapter/out/persistence` | JPA repositories plus QueryDSL query repositories |
 | Public contracts | `{domain}/application/port/in`, `{domain}/application/port/out` | UseCase and Port interfaces |
-| High-complexity project flows | `src/main/java/com/umc/product/project` | application forms, matching, statistics, permissions |
-| Organization model | `src/main/java/com/umc/product/organization` | school, chapter, gisu, study group, UMC PRODUCT org |
-| Test infrastructure | `src/test/java/com/umc/product/support` | Testcontainers, fixtures, MockMvc, isolation |
-| Migrations | `src/main/resources/db/migration` | `VYYYY.MM.DD.HH.MM__snake_case.sql` |
+| High-complexity project flows | `monolith/src/main/java/com/umc/product/project` | application forms, matching, statistics, permissions |
+| Organization model | `monolith/src/main/java/com/umc/product/organization` | school, chapter, gisu, study group, UMC PRODUCT org |
+| Test infrastructure | `monolith/src/testFixtures/java/com/umc/product/support` | Testcontainers, fixtures, MockMvc, isolation |
+| Migrations | `monolith/src/main/resources/db/migration` | `VYYYY.MM.DD.HH.MM__snake_case.sql` |
 
 ## CODE MAP
 
@@ -57,7 +85,7 @@ Java LSP (`jdtls`) was unavailable; CodeGraph was available for review, but refe
 
 | Symbol | Type | Location | Refs | Role |
 |--------|------|----------|------|------|
-| `UmcProductApplication` | class | `src/main/java/com/umc/product/UmcProductApplication.java` | n/a | Boot entry |
+| `UmcProductApplication` | class | `monolith/src/main/java/com/umc/product/UmcProductApplication.java` | n/a | Boot entry |
 | `SecurityConfig` | class | `global/config/SecurityConfig.java` | n/a | Security filter chain |
 | `WebMvcConfig` | class | `global/config/WebMvcConfig.java` | n/a | MVC interceptors/resolvers |
 | `GlobalResponseWrapper` | class | `global/response/GlobalResponseWrapper.java` | n/a | Success response envelope |
@@ -72,7 +100,7 @@ Java LSP (`jdtls`) was unavailable; CodeGraph was available for review, but refe
 | `ProjectApplicationCommandService` | service | `project/application/service/command` | n/a | application submit/update flow |
 | `ProjectStatisticsQueryService` | service | `project/application/service/query` | n/a | statistics aggregation |
 | `AdminOperationsAnalyticsQueryRepository` | repository | `analytics/adapter/out/persistence` | n/a | QueryDSL analytics aggregation |
-| `IntegrationTestSupport` | test support | `src/test/java/com/umc/product/support` | n/a | Spring Boot/Testcontainers base |
+| `IntegrationTestSupport` | test support | `monolith/src/testFixtures/java/com/umc/product/support` | n/a | Spring Boot/Testcontainers base |
 
 ## ARCHITECTURE RULES
 
@@ -93,7 +121,7 @@ Java LSP (`jdtls`) was unavailable; CodeGraph was available for review, but refe
 - REST API URIs must be resource-first: start with `/api/v{version}/{domain}` and use stable, kebab-case resource nouns after the domain segment.
 - Admin REST APIs must use `/api/v{version}/{domain}/admin/...`; do not create new admin APIs under `/api/v{version}/admin/{domain}/...`.
 - Treat `admin` as an access/control surface inside the owning domain, not as a top-level domain. When changing controller paths, update controller tests, security/maintenance allow paths, and onboarding/API guide documents together.
-- GraphQL schema files in `src/main/resources/graphql` are API contracts and must stay aligned with GraphQL DTOs.
+- GraphQL schema files in `monolith/src/main/resources/graphql` are API contracts and must stay aligned with GraphQL DTOs.
 - SSO/PKCE flows must not log authorization codes, login tokens, refresh tokens, or client secrets.
 - Request records live under `adapter/in/web/dto/request` and convert to command/query objects near the adapter boundary.
 - Response records live under `adapter/in/web/dto/response` and usually expose `from(Info)`.
@@ -137,7 +165,7 @@ Java LSP (`jdtls`) was unavailable; CodeGraph was available for review, but refe
 - Integration tests reuse `IntegrationTestSupport`; persistence slices reuse `PersistenceAdapterTest`; web slices reuse `ControllerTestSupport`.
 - Test names and `@DisplayName` values should be Korean and behavior-focused.
 - Given/When/Then structure is expected.
-- Fixture code lives in `src/test/java/com/umc/product/support/fixture` and should persist through SavePorts where possible.
+- Fixture code lives in `monolith/src/testFixtures/java/com/umc/product/support/fixture` and should persist through SavePorts where possible.
 
 ## REVIEW AND GIT
 
@@ -149,12 +177,15 @@ Java LSP (`jdtls`) was unavailable; CodeGraph was available for review, but refe
 ## COMMANDS
 
 ```bash
-./gradlew bootRun
-./gradlew spotlessCheck checkstyleMain checkstyleTest
-./gradlew compileJava compileTestJava
-./gradlew test
-./gradlew build
+./gradlew :app:bootRun
+./gradlew check                      # CI and completion criteria use this single entry point
+./gradlew :monolith:test :blog:test
+./gradlew :app:bootJar               # app/build/libs/app.jar
+./gradlew checkstyleMain -PlintAll   # full scan instead of changed files only
 ```
+
+`check` covers spotless, checkstyle for every source set, tests, the Flyway duplicate-version task,
+and the documentation catalog. Listing tasks by hand silently drops newly added checks.
 
 ## NOTES
 

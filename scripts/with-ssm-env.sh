@@ -6,7 +6,7 @@
 #   ./scripts/with-ssm-env.sh <ENVIRONMENT> [PROJECT_NAME] -- <COMMAND...>
 #   예) ./scripts/with-ssm-env.sh alpha -- ./gradlew bootRun
 #       AWS_PROFILE=umc ./scripts/with-ssm-env.sh alpha -- ./gradlew bootRun
-#       ./scripts/with-ssm-env.sh prod cygnus-server -- java -jar build/libs/app.jar
+#       ./scripts/with-ssm-env.sh prod cygnus-server -- java -jar app/build/libs/app.jar
 #
 # 환경변수:
 #   SSM_PREFIX   (default: /umc-product)

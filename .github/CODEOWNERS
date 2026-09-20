@@ -12,38 +12,38 @@ docker/** @kyeoungwoon
 .gitignore @kyeoungwoon
 
 # 공통
-src/main/java/com/umc/product/common/** @kyeoungwoon
-src/main/java/com/umc/product/global/** @kyeoungwoon
+monolith/src/main/java/com/umc/product/common/** @kyeoungwoon
+monolith/src/main/java/com/umc/product/global/** @kyeoungwoon
 
 # 인증/인가
-src/main/java/com/umc/product/authentication/** @kyeoungwoon
-src/main/java/com/umc/product/authorization/** @kyeoungwoon
+monolith/src/main/java/com/umc/product/authentication/** @kyeoungwoon
+monolith/src/main/java/com/umc/product/authorization/** @kyeoungwoon
 
 # 회원 관련
-src/main/java/com/umc/product/member/** @kyeoungwoon
-src/main/java/com/umc/product/challenger/** @kyeoungwoon
-src/main/java/com/umc/product/term/** @kyeoungwoon @ParkSenn
+monolith/src/main/java/com/umc/product/member/** @kyeoungwoon
+monolith/src/main/java/com/umc/product/challenger/** @kyeoungwoon
+monolith/src/main/java/com/umc/product/term/** @kyeoungwoon @ParkSenn
 
 # 파일 업로드
-src/main/java/com/umc/product/storage/** @kyeoungwoon
+monolith/src/main/java/com/umc/product/storage/** @kyeoungwoon
 
 # 커뮤니티
-src/main/java/com/umc/product/community/** @sopp1313
+monolith/src/main/java/com/umc/product/community/** @sopp1313
 
 # 커리큘럼, 조직 관련
-src/main/java/com/umc/product/curriculum/** @wlgusqkr @kyeoungwoon
-src/main/java/com/umc/product/organization/** @wlgusqkr @kyeoungwoon
+monolith/src/main/java/com/umc/product/curriculum/** @wlgusqkr @kyeoungwoon
+monolith/src/main/java/com/umc/product/organization/** @wlgusqkr @kyeoungwoon
 
 # 공지사항
-src/main/java/com/umc/product/notice/** @kanghana1 @seamooll @kyeoungwoon
+monolith/src/main/java/com/umc/product/notice/** @kanghana1 @seamooll @kyeoungwoon
 
 # 알림
-src/main/java/com/umc/product/notification/** @kanghana1 @seamooll @wlgusqkr
+monolith/src/main/java/com/umc/product/notification/** @kanghana1 @seamooll @wlgusqkr
 
 # 모집 및 프로젝트 관련
-src/main/java/com/umc/product/form/** @galllee @kyeoungwoon
-src/main/java/com/umc/product/project/** @kyeoungwoon @wooodypark
-src/main/java/com/umc/product/recruitment/** @galllee
+monolith/src/main/java/com/umc/product/form/** @galllee @kyeoungwoon
+monolith/src/main/java/com/umc/product/project/** @kyeoungwoon @wooodypark
+monolith/src/main/java/com/umc/product/recruitment/** @galllee
 
 # 일정/출석
-src/main/java/com/umc/product/schedule/** @sopp1313 @ParkSenn @kyeoungwoon
+monolith/src/main/java/com/umc/product/schedule/** @sopp1313 @ParkSenn @kyeoungwoon

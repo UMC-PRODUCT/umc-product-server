@@ -1,0 +1,15 @@
+package com.umc.product.notice.application.port.in.query;
+
+import java.util.List;
+
+import com.umc.product.notice.application.port.in.query.dto.NoticeImageInfo;
+import com.umc.product.notice.application.port.in.query.dto.NoticeLinkInfo;
+import com.umc.product.notice.application.port.in.query.dto.NoticeVoteInfo;
+
+public interface GetNoticeContentUseCase {
+    List<NoticeLinkInfo> findLinkByNoticeId(Long noticeId);
+
+    NoticeVoteInfo findVoteByNoticeId(Long noticeId, Long memberId);
+
+    List<NoticeImageInfo> findImageByNoticeId(Long noticeId);
+}

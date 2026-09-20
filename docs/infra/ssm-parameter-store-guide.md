@@ -122,7 +122,7 @@ AWS_PROFILE=umc ./scripts/run-alpha.sh
 AWS_PROFILE=umc ./scripts/run-alpha.sh --debug-jvm
 
 # bootRun 대신 임의 명령 실행
-./scripts/run-alpha.sh -- java -jar build/libs/app.jar
+./scripts/run-alpha.sh -- java -jar app/build/libs/app.jar
 
 # 특정 값만 로컬에서 덮어쓰기 (env 가 SSM 주입값 이후에 적용됨)
 ./scripts/run-alpha.sh -- env APP_SEED_ENABLED=false ./gradlew bootRun
@@ -132,7 +132,7 @@ alpha 는 공유 환경이므로 시딩·삭제 등 파괴적인 작업은 주�
 다른 환경/프로젝트가 필요하면 범용 스크립트를 직접 쓴다:
 
 ```bash
-./scripts/with-ssm-env.sh prod cygnus-server -- java -jar build/libs/app.jar
+./scripts/with-ssm-env.sh prod cygnus-server -- java -jar app/build/libs/app.jar
 ```
 
 IntelliJ 에서 실행하고 싶다면 Run Configuration 을 Gradle 이 아닌
