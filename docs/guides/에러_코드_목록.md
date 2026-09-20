@@ -144,7 +144,7 @@
 | 109 | challenger | `CHALLENGER-0015` | `INVALID_CHALLENGER_RECORD_CREATE_REQUEST` | 400 BAD_REQUEST | 입력한 정보로 챌린저 기록을 만들 수 없어요. 값을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/challenger/domain/exception/ChallengerErrorCode.java:27` |
 | 110 | challenger | `CHALLENGER-0016` | `NO_CHALLENGER_IN_MEMBER_GISU` | 404 NOT_FOUND | 해당 기수의 챌린저 기록을 찾을 수 없어요. 기수를 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/challenger/domain/exception/ChallengerErrorCode.java:28` |
 | 111 | challenger | `CHALLENGER-0017` | `CHALLENGER_PART_NOT_FOUND` | 404 NOT_FOUND | 챌린저 파트를 찾을 수 없어요. 파트 값을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/challenger/domain/exception/ChallengerErrorCode.java:29` |
-| 112 | challenger | `CHALLENGER-0018` | `INVALID_CHALLENGER_LEARNING_TYPE` | 400 BAD_REQUEST | 트랙 기수는 파트 없이 기본 트랙으로 등록해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/challenger/domain/exception/ChallengerErrorCode.java:30` |
+| 112 | challenger | `CHALLENGER-0018` | `INVALID_CHALLENGER_LEARNING_TYPE` | 400 BAD_REQUEST | 파트와 인프라 선택 정보를 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/challenger/domain/exception/ChallengerErrorCode.java:30` |
 
 ## chat
 
