@@ -2,8 +2,6 @@ package com.umc.product.support.fixture;
 
 import org.springframework.stereotype.Component;
 
-import org.springframework.stereotype.Component;
-
 import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
