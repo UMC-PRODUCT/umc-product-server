@@ -27,7 +27,7 @@ public record NoticeClassification(
     @Schema(description = "학교 ID. 챌린저 공지 조회 시에만 사용 (운영진 공지는 클라이언트가 명시)", example = "5", nullable = true)
     Long schoolId,
 
-    @Schema(description = "파트. 챌린저 공지 조회 시에만 사용", example = "SPRINGBOOT", nullable = true)
+    @Schema(description = "파트. 챌린저 공지 조회 시에만 사용", example = "WEB_PRODUCT_ENGINEER", nullable = true)
     ChallengerPart part,
 
     @Schema(description = "대상 역할 하한선. CHALLENGER면 일반 공지, 그 외 값이면 운영진 공지.",

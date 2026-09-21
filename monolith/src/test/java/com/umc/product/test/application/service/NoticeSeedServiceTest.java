@@ -74,7 +74,7 @@ class NoticeSeedServiceTest {
         SeedNoticeResult result = sut.seed(new SeedNoticeCommand(
             gisuId, authorMemberId,
             3, 2, 1, 2,
-            List.of(ChallengerPart.WEB, ChallengerPart.SPRINGBOOT)
+            List.of(ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER)
         ));
 
         // Then - GLOBAL=3, CHAPTER=2*2=4, SCHOOL=2*2*1=4, PART=2*2=4 → 15
@@ -110,7 +110,7 @@ class NoticeSeedServiceTest {
         SeedNoticeResult result = sut.seed(new SeedNoticeCommand(
             gisuId, authorMemberId,
             1, 1, 1, 1,
-            List.of(ChallengerPart.WEB)
+            List.of(ChallengerPart.WEB_PRODUCT_ENGINEER)
         ));
 
         // Then
@@ -157,8 +157,8 @@ class NoticeSeedServiceTest {
     }
 
     @Test
-    @DisplayName("parts 가 null 이면 ADMIN 제외 모든 파트가 사용된다")
-    void parts_기본값_ADMIN_제외() {
+    @DisplayName("parts 가 null 이면 선택 가능한 파트만 사용된다")
+    void parts_기본값_선택가능_파트만() {
         // Given
         Long gisuId = 9L;
         givenChapterWithSchools(gisuId);
@@ -171,10 +171,9 @@ class NoticeSeedServiceTest {
         ));
 
         // Then
-        verify(dummyNoticeFactory, times((int) java.util.Arrays.stream(ChallengerPart.values())
-            .filter(p -> p != ChallengerPart.ADMIN).count()))
+        verify(dummyNoticeFactory, times(ChallengerPart.selectableValues().size()))
             .nextPartNoticeCommand(anyLong(), anyLong(), partCaptor.capture(), anyInt());
-        assertThat(partCaptor.getAllValues()).noneMatch(p -> p == ChallengerPart.ADMIN);
+        assertThat(partCaptor.getAllValues()).allMatch(ChallengerPart::isSelectable);
     }
 
     @Test
@@ -187,7 +186,7 @@ class NoticeSeedServiceTest {
         ArgumentCaptor<CreateNoticeCommand> captor = ArgumentCaptor.forClass(CreateNoticeCommand.class);
 
         // When - GLOBAL 1, CHAPTER 1, SCHOOL 1, PART 1
-        sut.seed(new SeedNoticeCommand(gisuId, 1L, 1, 1, 1, 1, List.of(ChallengerPart.WEB)));
+        sut.seed(new SeedNoticeCommand(gisuId, 1L, 1, 1, 1, 1, List.of(ChallengerPart.WEB_PRODUCT_ENGINEER)));
 
         // Then
         verify(manageNoticeUseCase, times(8)).createNotice(captor.capture()); // 1 + 2 + 4 + 1

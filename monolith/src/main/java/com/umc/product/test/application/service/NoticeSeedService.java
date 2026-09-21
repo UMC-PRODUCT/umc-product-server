@@ -1,7 +1,6 @@
 package com.umc.product.test.application.service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
@@ -56,9 +55,7 @@ public class NoticeSeedService implements SeedNoticeUseCase {
     private static final String SCOPE_SCHOOL = "SCHOOL";
     private static final String SCOPE_PART = "PART";
 
-    private static final List<ChallengerPart> DEFAULT_PARTS = Arrays.stream(ChallengerPart.values())
-        .filter(p -> p != ChallengerPart.ADMIN)
-        .toList();
+    private static final List<ChallengerPart> DEFAULT_PARTS = ChallengerPart.selectableValues();
 
     private final DummyNoticeFactory dummyNoticeFactory;
     private final GetGisuUseCase getGisuUseCase;
@@ -108,7 +105,8 @@ public class NoticeSeedService implements SeedNoticeUseCase {
         if (parts == null || parts.isEmpty()) {
             return DEFAULT_PARTS;
         }
-        return parts.stream().filter(p -> p != ChallengerPart.ADMIN).toList();
+        // 레거시 파트는 공지 대상이 될 수 없으므로(createNotice에서 거부됨) 시드 단계에서 걸러낸다.
+        return parts.stream().filter(ChallengerPart::isSelectable).toList();
     }
 
     private ScopeSummary seedGlobal(Long gisuId, Long authorMemberId, int target, List<Long> createdIds) {

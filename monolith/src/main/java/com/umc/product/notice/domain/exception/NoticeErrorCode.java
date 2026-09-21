@@ -25,6 +25,8 @@ public enum NoticeErrorCode implements BaseCode {
         "공지를 조회할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."),
     INVALID_TARGET_SETTING(HttpStatus.BAD_REQUEST, "NOTICE-0010", "공지 수신자 설정이 올바르지 않아요. 대상 설정을 확인해주세요."),
     NO_TARGET_FOUND(HttpStatus.NOT_FOUND, "NOTICE-0011", "공지 수신 대상을 찾을 수 없어요. 대상 설정을 다시 확인해주세요."),
+    INVALID_TARGET_PART(HttpStatus.BAD_REQUEST, "NOTICE-0013",
+        "더 이상 사용하지 않는 파트는 공지 대상으로 지정할 수 없어요. 현재 파트를 선택해주세요."),
 
 
     VOTE_IDS_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0001", "투표를 1개 이상 선택해주세요."),

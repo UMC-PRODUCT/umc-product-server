@@ -31,7 +31,7 @@ public record NoticeTargetInfo(
 
     @Schema(description = "대상 파트 목록. 빈 배열이면 모든 파트 대상. "
         + "특정 파트만 지정하면 해당 파트 챌린저와 파트장에게만 공지",
-        example = "[\"SPRINGBOOT\", \"WEB\"]")
+        example = "[\"WEB_PRODUCT_ENGINEER\", \"MOBILE_PRODUCT_ENGINEER\"]")
     List<ChallengerPart> targetParts,
 
     @Schema(description = "대상 역할 하한선. CHALLENGER면 일반 챌린저 공지. "
