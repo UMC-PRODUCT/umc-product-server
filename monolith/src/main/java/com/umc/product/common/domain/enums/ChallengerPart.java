@@ -1,6 +1,8 @@
 package com.umc.product.common.domain.enums;
 
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
@@ -34,6 +36,27 @@ public enum ChallengerPart {
      */
     public boolean canHaveInfra() {
         return this == WEB_PRODUCT_ENGINEER || this == MOBILE_PRODUCT_ENGINEER;
+    }
+
+    /**
+     * 신규 발급(선택 가능) 파트인지 여부. 레거시 파트(WEB/ANDROID/IOS/NODEJS/SPRINGBOOT/ADMIN)는 false이며, 신규 공지 대상 선택 등
+     * "현재 사용하는 파트" 목록의 단일 기준이 된다.
+     */
+    public boolean isSelectable() {
+        return this == PLAN
+            || this == DESIGN
+            || this == WEB_PRODUCT_ENGINEER
+            || this == MOBILE_PRODUCT_ENGINEER;
+    }
+
+    /**
+     * 선택 가능한 파트를 sortOrder 순으로 반환한다.
+     */
+    public static List<ChallengerPart> selectableValues() {
+        return Arrays.stream(values())
+            .filter(ChallengerPart::isSelectable)
+            .sorted(Comparator.comparingInt(ChallengerPart::getSortOrder))
+            .toList();
     }
 
     public static ChallengerPart from(String part) {
