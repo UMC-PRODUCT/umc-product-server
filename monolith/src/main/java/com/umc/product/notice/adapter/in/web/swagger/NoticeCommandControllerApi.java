@@ -43,14 +43,14 @@ public interface NoticeCommandControllerApi {
             | 중앙운영진 전체 | `CENTRAL_MEMBER` | null | null | 총괄단 |
             | 중앙운영진 + 모든 학교회장단 | `SCHOOL_CORE` | null | null | 중앙운영진 |
             | 중앙운영진 + 모든 학교회장단 + 모든 파트장 | `SCHOOL_PART_LEADER` | null | null 또는 `[]` | 중앙운영진 |
-            | 중앙운영진 + 모든 학교회장단 + 특정 파트 파트장 | `SCHOOL_PART_LEADER` | null | `["SPRINGBOOT"]` | 중앙운영진 |
+            | 중앙운영진 + 모든 학교회장단 + 특정 파트 파트장 | `SCHOOL_PART_LEADER` | null | `["WEB_PRODUCT_ENGINEER"]` | 중앙운영진 |
 
             ### 교내운영진 공지 (`targetSchoolId` 지정 필수)
 
             | 열람 대상 | targetNoticeTab | targetSchoolId | targetParts | 작성 권한 |
             |---|---|---|---|---|
             | 해당 학교 파트장 전체 + 상위 운영진 | `SCHOOL_PART_LEADER` | schoolId | null 또는 `[]` | 해당 학교 회장단 |
-            | 해당 학교 특정 파트 파트장 + 상위 운영진 | `SCHOOL_PART_LEADER` | schoolId | `["SPRINGBOOT"]` | 해당 학교 회장단 |
+            | 해당 학교 특정 파트 파트장 + 상위 운영진 | `SCHOOL_PART_LEADER` | schoolId | `["WEB_PRODUCT_ENGINEER"]` | 해당 학교 회장단 |
             """
     )
     @ApiResponses({
