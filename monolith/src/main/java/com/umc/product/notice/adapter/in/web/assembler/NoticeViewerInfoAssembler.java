@@ -58,7 +58,10 @@ public class NoticeViewerInfoAssembler {
         return getChallengerUseCase.findByMemberIdAndGisuId(memberId, gisuId)
             .map(challenger -> {
                 Set<ChallengerPart> parts = new HashSet<>();
-                parts.add(challenger.part());
+                // 수강 없는 운영진은 part=null이므로 Set에 담지 않는다.
+                if (challenger.part() != null) {
+                    parts.add(challenger.part());
+                }
                 parts.addAll(getChallengerRoleUseCase.getAllResponsiblePartByMemberIdAndGisuId(memberId, gisuId));
                 return parts;
             })
