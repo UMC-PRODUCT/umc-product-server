@@ -14,6 +14,7 @@ import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
@@ -86,6 +87,8 @@ public class NoticeService implements ManageNoticeUseCase {
     )
     @Override
     public Long createNotice(CreateNoticeCommand command) {
+        validateSelectableTargetParts(command.targetInfo());
+
         if (!validateNoticeWritePermission(command.targetInfo(), command.memberId())) {
             throw new NoticeDomainException(NoticeErrorCode.NO_WRITE_PERMISSION);
         }
@@ -215,6 +218,20 @@ public class NoticeService implements ManageNoticeUseCase {
     private Notice findNoticeById(Long noticeId) {
         return loadNoticePort.findNoticeById(noticeId)
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
+    }
+
+    /**
+     * 공지 대상 파트가 현재 사용 가능한(선택 가능한) 파트인지 검증한다. 레거시 파트를 대상으로 지정하면 신규 공지를 만들 수 없다. 대상 파트 미지정(전체 대상)은 허용한다.
+     */
+    private void validateSelectableTargetParts(NoticeTargetInfo noticeTargetInfo) {
+        List<ChallengerPart> targetParts = noticeTargetInfo.targetParts();
+        if (targetParts == null || targetParts.isEmpty()) {
+            return;
+        }
+        boolean hasLegacyPart = targetParts.stream().anyMatch(part -> !part.isSelectable());
+        if (hasLegacyPart) {
+            throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_PART);
+        }
     }
 
     /**
