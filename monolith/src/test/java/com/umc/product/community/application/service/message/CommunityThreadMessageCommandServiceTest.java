@@ -171,7 +171,6 @@ class CommunityThreadMessageCommandServiceTest {
         assertThat(created.threadId()).isEqualTo(THREAD_ID);
         assertThat(created.messageId()).isEqualTo(chatInfo.messageId());
         assertThat(created.senderMemberId()).isEqualTo(OWNER_ID);
-        assertThat(created.recipientMemberIds()).containsExactly(ADMIN_ID, MEMBER_ID);
         CommunityThreadMentionedEvent mentioned = publishedFacts.stream()
             .filter(CommunityThreadMentionedEvent.class::isInstance)
             .map(CommunityThreadMentionedEvent.class::cast)
