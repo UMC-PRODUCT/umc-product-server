@@ -1,10 +1,14 @@
 package com.umc.product.curriculum.application.port.in.query;
 
+import java.util.Optional;
+
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumOverviewInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.MyCurriculumInfo;
 
 public interface GetCurriculumUseCase {
+
+    Optional<Long> findIdByGisuIdAndPart(Long gisuId, ChallengerPart part);
 
     /**
      * V2: 기수+파트 기반 커리큘럼 개요 조회 (WeeklyCurriculum 단위)
