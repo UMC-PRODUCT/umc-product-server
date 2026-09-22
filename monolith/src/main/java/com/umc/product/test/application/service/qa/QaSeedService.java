@@ -19,6 +19,7 @@ public class QaSeedService implements SeedQaDataUseCase {
     private final QaLearningSeedScenario learningSeedScenario;
     private final QaAttendanceSeedScenario attendanceSeedScenario;
     private final QaNoticePointSeedScenario noticePointSeedScenario;
+    private final QaChatSeedScenario chatSeedScenario;
 
     @Override
     @Transactional
@@ -27,6 +28,7 @@ public class QaSeedService implements SeedQaDataUseCase {
         learningSeedScenario.seed(context);
         attendanceSeedScenario.seed(context);
         noticePointSeedScenario.seed(context);
+        chatSeedScenario.seed(context);
         return new QaSeedResult(context.members().size());
     }
 }
