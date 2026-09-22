@@ -26,7 +26,10 @@ public record ChallengerInfoResponse(
     ChallengerPart part,
     boolean infra,
     ChallengerStatus challengerStatus,
-    // TODO: 호환성을 위해 유지하는 것으로, 다음 마이너 버전 업데이트에 제거하도록 함
+    // TODO(상벌점 응답 호환 제거): 지원 중인 모든 클라이언트가 points로 전환하고 구필드 사용이 종료된 뒤 제거한다.
+    // 제거 시 이 필드와 두 from(), toPublic()의 challengerPoints 매핑 및 응답 계약 테스트를 함께 정리한다.
+    // 서버 배포나 프론트 develop 반영만으로는 구버전 앱의 사용 종료를 보장할 수 없다.
+    // 내부 ChallengerInfo.challengerPoints 조회 모델은 이 응답 별칭과 별개이므로 유지한다.
     List<ChallengerPointInfo> challengerPoints,
     List<ChallengerPointInfo> points,
     Double totalPoints,
