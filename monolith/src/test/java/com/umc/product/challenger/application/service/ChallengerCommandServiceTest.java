@@ -8,13 +8,17 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
@@ -42,6 +46,8 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChallengerCommandService")
@@ -64,6 +70,9 @@ class ChallengerCommandServiceTest {
 
     @Mock
     EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
+
+    @Mock
+    GetGisuUseCase getGisuUseCase;
 
     @InjectMocks
     ChallengerCommandService sut;
@@ -291,12 +300,76 @@ class ChallengerCommandServiceTest {
         then(saveChallengerPort).shouldHaveNoInteractions();
     }
 
+    @ParameterizedTest
+    @ValueSource(longs = {10L, 11L})
+    @DisplayName("기수 ID와 관계없이 10기부터 기존 우수 워크북 상점을 부여할 수 없다")
+    void 기수_ID와_관계없이_10기부터_기존_우수_워크북_상점을_부여할_수_없다(Long generation) {
+        // Given
+        given(loadChallengerPort.getById(1L)).willReturn(challenger(1L, ChallengerStatus.ACTIVE, 2L));
+        given(getGisuUseCase.getById(2L)).willReturn(gisu(2L, generation));
+
+        // When & Then
+        assertThatThrownBy(() -> sut.grantChallengerPoint(GrantChallengerPointCommand.builder()
+            .challengerId(1L)
+            .pointType(PointType.BEST_WORKBOOK)
+            .description("우수 워크북")
+            .build()))
+            .isInstanceOf(ChallengerDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(ChallengerErrorCode.LEGACY_POINT_TYPE_NOT_ALLOWED);
+
+        then(saveChallengerPointPort).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("기수 ID가 10보다 커도 9기는 기존 우수 워크북 상점을 부여할 수 있다")
+    void 기수_ID가_10보다_커도_9기는_기존_우수_워크북_상점을_부여할_수_있다() {
+        // Given
+        given(loadChallengerPort.getById(1L)).willReturn(challenger(1L, ChallengerStatus.ACTIVE, 99L));
+        given(getGisuUseCase.getById(99L)).willReturn(gisu(99L, 9L));
+
+        // When
+        sut.grantChallengerPoint(GrantChallengerPointCommand.builder()
+            .challengerId(1L)
+            .pointType(PointType.BEST_WORKBOOK)
+            .description("우수 워크북")
+            .build());
+
+        // Then
+        ArgumentCaptor<ChallengerPoint> captor = ArgumentCaptor.forClass(ChallengerPoint.class);
+        then(saveChallengerPointPort).should().save(captor.capture());
+        assertThat(captor.getValue().getPointValue()).isEqualTo(-0.5);
+        then(getGisuUseCase).should().getById(99L);
+    }
+
+    @Test
+    @DisplayName("새 우수 워크북 상점은 기수 조회 없이 정상 배점으로 저장한다")
+    void 새_우수_워크북_상점은_기수_조회_없이_정상_배점으로_저장한다() {
+        // Given
+        given(loadChallengerPort.getById(1L)).willReturn(challenger(1L, ChallengerStatus.ACTIVE, 2L));
+
+        // When
+        sut.grantChallengerPoint(GrantChallengerPointCommand.builder()
+            .challengerId(1L)
+            .pointType(PointType.BEST_WORKBOOK_V2)
+            .pointValue(2)
+            .description("우수 워크북")
+            .build());
+
+        // Then
+        ArgumentCaptor<ChallengerPoint> captor = ArgumentCaptor.forClass(ChallengerPoint.class);
+        then(saveChallengerPointPort).should().save(captor.capture());
+        assertThat(captor.getValue().getPointValue()).isEqualTo(2.0);
+        then(getGisuUseCase).shouldHaveNoInteractions();
+    }
+
     @Test
     @DisplayName("상벌점 일괄 부여는 Point port로 한 번에 저장한다")
     void 상벌점_일괄_부여는_Point_port로_한_번에_저장한다() {
         Challenger challenger = challenger(1L, ChallengerStatus.ACTIVE);
         given(environment.getActiveProfiles()).willReturn(new String[]{"test"});
         given(loadChallengerPort.getAllByIds(java.util.Set.of(1L))).willReturn(List.of(challenger));
+        given(getGisuUseCase.batchGetByIds(List.of(9L))).willReturn(List.of(gisu(9L, 9L)));
 
         sut.grantChallengerPointBulk(List.of(
             GrantChallengerPointCommand.builder()
@@ -320,6 +393,83 @@ class ChallengerCommandServiceTest {
     }
 
     @Test
+    @DisplayName("일괄 부여는 직접 지정한 상점과 벌점 값을 보존한다")
+    void 일괄_부여는_직접_지정한_상점과_벌점_값을_보존한다() {
+        // Given
+        given(environment.getActiveProfiles()).willReturn(new String[]{"test"});
+        given(loadChallengerPort.getAllByIds(Set.of(1L)))
+            .willReturn(List.of(challenger(1L, ChallengerStatus.ACTIVE)));
+
+        // When
+        sut.grantChallengerPointBulk(List.of(
+            GrantChallengerPointCommand.builder()
+                .challengerId(1L).pointType(PointType.CUSTOM).pointValue(3).description("상점").build(),
+            GrantChallengerPointCommand.builder()
+                .challengerId(1L).pointType(PointType.CUSTOM).pointValue(-2).description("벌점").build()
+        ));
+
+        // Then
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<ChallengerPoint>> captor = ArgumentCaptor.forClass(List.class);
+        then(saveChallengerPointPort).should().saveAll(captor.capture());
+        assertThat(captor.getValue()).extracting(ChallengerPoint::getPointValue).containsExactly(3.0, -2.0);
+        then(getGisuUseCase).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("일괄 부여에 잘못된 고정 배점이 있으면 아무 상벌점도 저장하지 않는다")
+    void 일괄_부여에_잘못된_고정_배점이_있으면_아무_상벌점도_저장하지_않는다() {
+        // Given
+        given(environment.getActiveProfiles()).willReturn(new String[]{"test"});
+        given(loadChallengerPort.getAllByIds(Set.of(1L)))
+            .willReturn(List.of(challenger(1L, ChallengerStatus.ACTIVE)));
+
+        // When & Then
+        assertThatThrownBy(() -> sut.grantChallengerPointBulk(List.of(
+            GrantChallengerPointCommand.builder()
+                .challengerId(1L).pointType(PointType.BEST_WORKBOOK_V2).description("정상").build(),
+            GrantChallengerPointCommand.builder()
+                .challengerId(1L).pointType(PointType.BEST_WORKBOOK_V2).pointValue(9).description("오류").build()
+        )))
+            .isInstanceOf(ChallengerDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(ChallengerErrorCode.INVALID_POINT_VALUE);
+
+        then(saveChallengerPointPort).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("일괄 부여는 기존 우수 워크북 대상 기수만 한 번 조회하고 10기부터 거절한다")
+    void 일괄_부여는_기존_우수_워크북_대상_기수만_한_번_조회하고_10기부터_거절한다() {
+        // Given
+        given(environment.getActiveProfiles()).willReturn(new String[]{"test"});
+        given(loadChallengerPort.getAllByIds(Set.of(1L, 2L, 3L)))
+            .willReturn(List.of(
+                challenger(1L, ChallengerStatus.ACTIVE, 2L),
+                challenger(2L, ChallengerStatus.ACTIVE, 2L),
+                challenger(3L, ChallengerStatus.ACTIVE, 99L)
+            ));
+        given(getGisuUseCase.batchGetByIds(List.of(2L))).willReturn(List.of(gisu(2L, 10L)));
+
+        // When & Then
+        assertThatThrownBy(() -> sut.grantChallengerPointBulk(List.of(
+            GrantChallengerPointCommand.builder()
+                .challengerId(1L).pointType(PointType.BEST_WORKBOOK).description("기존 상점").build(),
+            GrantChallengerPointCommand.builder()
+                .challengerId(2L).pointType(PointType.BEST_WORKBOOK).description("기존 상점").build(),
+            GrantChallengerPointCommand.builder()
+                .challengerId(3L).pointType(PointType.BEST_WORKBOOK_V2).description("신규 상점").build()
+        )))
+            .isInstanceOf(ChallengerDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(ChallengerErrorCode.LEGACY_POINT_TYPE_NOT_ALLOWED);
+
+        then(getGisuUseCase).should().batchGetByIds(List.of(2L));
+        then(getGisuUseCase).shouldHaveNoMoreInteractions();
+        then(saveChallengerPointPort).shouldHaveNoInteractions();
+    }
+
+    @Test
     @DisplayName("상벌점 설명을 수정한다")
     void 상벌점_설명을_수정한다() {
         Challenger challenger = challenger(1L, ChallengerStatus.ACTIVE);
@@ -333,13 +483,21 @@ class ChallengerCommandServiceTest {
     }
 
     private Challenger challenger(Long id, ChallengerStatus status) {
+        return challenger(id, status, 9L);
+    }
+
+    private Challenger challenger(Long id, ChallengerStatus status, Long gisuId) {
         Challenger challenger = Challenger.builder()
             .memberId(1L)
             .part(ChallengerPart.SPRINGBOOT)
-            .gisuId(9L)
+            .gisuId(gisuId)
             .build();
         ReflectionTestUtils.setField(challenger, "id", id);
         ReflectionTestUtils.setField(challenger, "status", status);
         return challenger;
+    }
+
+    private GisuInfo gisu(Long gisuId, Long generation) {
+        return new GisuInfo(gisuId, generation, Instant.EPOCH, Instant.EPOCH.plusSeconds(1), false);
     }
 }

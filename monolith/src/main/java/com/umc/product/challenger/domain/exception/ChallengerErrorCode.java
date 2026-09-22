@@ -28,6 +28,9 @@ public enum ChallengerErrorCode implements BaseCode {
     NO_CHALLENGER_IN_MEMBER_GISU(HttpStatus.NOT_FOUND, "CHALLENGER-0016", "해당 기수의 챌린저 기록을 찾을 수 없어요. 기수를 확인해주세요."),
     CHALLENGER_PART_NOT_FOUND(HttpStatus.NOT_FOUND, "CHALLENGER-0017", "챌린저 파트를 찾을 수 없어요. 파트 값을 확인해주세요."),
     INVALID_CHALLENGER_LEARNING_TYPE(HttpStatus.BAD_REQUEST, "CHALLENGER-0018", "파트와 인프라 선택 정보를 확인해주세요."),
+    CUSTOM_POINT_VALUE_REQUIRED(HttpStatus.BAD_REQUEST, "CHALLENGER-0019", "기타 상벌점은 점수를 직접 입력해주세요."),
+    INVALID_POINT_VALUE(HttpStatus.BAD_REQUEST, "CHALLENGER-0020", "선택한 상벌점 유형의 정해진 배점과 일치하지 않아요."),
+    LEGACY_POINT_TYPE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "CHALLENGER-0021", "10기부터는 우수 워크북 V2 유형을 사용해주세요."),
     ;
 
     private final HttpStatus httpStatus;

@@ -27,11 +27,13 @@ import com.umc.product.challenger.application.port.out.SaveChallengerPointPort;
 import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.ChallengerPoint;
+import com.umc.product.challenger.domain.enums.PointType;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 
 import lombok.RequiredArgsConstructor;
 
@@ -47,6 +49,7 @@ public class ChallengerCommandService implements ManageChallengerUseCase, AddCha
     private final LoadChallengerPointPort loadChallengerPointPort;
     private final SaveChallengerPointPort saveChallengerPointPort;
     private final EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
+    private final GetGisuUseCase getGisuUseCase;
 
     // NOTE: 같은 도메인은 port를 통해서 접근하도록 함.
     // 동일 도메인 내에서 UseCase를 통해서 접근할 경우, 의존 방향이 역전된 것
@@ -167,6 +170,9 @@ public class ChallengerCommandService implements ManageChallengerUseCase, AddCha
     public void grantChallengerPoint(GrantChallengerPointCommand command) {
         Challenger challenger = loadChallengerPort.getById(command.challengerId());
         challenger.validateChallengerStatus();
+        if (command.pointType() == PointType.BEST_WORKBOOK) {
+            validateBestWorkbookGeneration(getGisuUseCase.getById(challenger.getGisuId()).generation());
+        }
 
         ChallengerPoint point = ChallengerPoint.create(
             challenger,
@@ -185,6 +191,16 @@ public class ChallengerCommandService implements ManageChallengerUseCase, AddCha
         Map<Long, List<GrantChallengerPointCommand>> commandsByChallengerId = commands.stream()
             .collect(Collectors.groupingBy(GrantChallengerPointCommand::challengerId));
         List<Challenger> challengers = loadChallengerPort.getAllByIds(commandsByChallengerId.keySet());
+        List<Long> legacyGisuIds = challengers.stream()
+            .filter(challenger -> commandsByChallengerId.get(challenger.getId()).stream()
+                .anyMatch(command -> command.pointType() == PointType.BEST_WORKBOOK))
+            .map(Challenger::getGisuId)
+            .distinct()
+            .toList();
+        if (!legacyGisuIds.isEmpty()) {
+            getGisuUseCase.batchGetByIds(legacyGisuIds)
+                .forEach(gisu -> validateBestWorkbookGeneration(gisu.generation()));
+        }
         List<ChallengerPoint> points = new ArrayList<>();
 
         for (Challenger challenger : challengers) {
@@ -197,12 +213,20 @@ public class ChallengerCommandService implements ManageChallengerUseCase, AddCha
                 points.add(ChallengerPoint.create(
                     challenger,
                     command.pointType(),
+                    command.pointValue(),
                     command.description()
                 ));
             }
         }
 
         saveChallengerPointPort.saveAll(points);
+    }
+
+    private void validateBestWorkbookGeneration(long generation) {
+        // 10기는 상벌점 제도 변경 기준이며, 파트 개편 시점인 11기와는 별개다.
+        if (generation >= 10) {
+            throw new ChallengerDomainException(ChallengerErrorCode.LEGACY_POINT_TYPE_NOT_ALLOWED);
+        }
     }
 
     @Override

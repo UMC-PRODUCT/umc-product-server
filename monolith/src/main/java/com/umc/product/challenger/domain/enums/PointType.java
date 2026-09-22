@@ -6,11 +6,14 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum PointType {
+    // 과거 기록의 타입과 배점을 해석하므로 프론트의 신규 선택지에서 숨긴 뒤에도 유지한다.
+    // 제거를 검토하려면 구형 입력 계약 종료와 과거 점수를 보존하는 DB 기록 및 클라이언트 참조 이관이 선행되어야 한다.
+    // JPA가 문자열 enum으로 읽으므로 기존 DB 참조가 남아 있을 때 삭제하면 과거 기록 조회가 실패한다.
     BEST_WORKBOOK(-0.5),
     WARNING(0.0),
     OUT(1.0),
 
-    // 10기 변경사항 반영, 위에거는 10기 이후로 사용하지 않습니다
+    // 10기부터 사용하는 개편 배점. BEST_WORKBOOK의 신규 부여 제한은 서비스에서 별도로 검증한다.
 
     CUSTOM(0.0), // 가천대 등 자체 제도 운영하는 곳
 
