@@ -147,7 +147,7 @@
 | 112 | challenger | `CHALLENGER-0018` | `INVALID_CHALLENGER_LEARNING_TYPE` | 400 BAD_REQUEST | 파트와 인프라 선택 정보를 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/challenger/domain/exception/ChallengerErrorCode.java:30` |
 | 113 | challenger | `CHALLENGER-0019` | `CUSTOM_POINT_VALUE_REQUIRED` | 400 BAD_REQUEST | 기타 상벌점은 점수를 직접 입력해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/challenger/domain/exception/ChallengerErrorCode.java:31` |
 | 114 | challenger | `CHALLENGER-0020` | `INVALID_POINT_VALUE` | 400 BAD_REQUEST | 선택한 상벌점 유형의 정해진 배점과 일치하지 않아요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/challenger/domain/exception/ChallengerErrorCode.java:32` |
-| 115 | challenger | `CHALLENGER-0021` | `LEGACY_POINT_TYPE_NOT_ALLOWED` | 400 BAD_REQUEST | 10기부터는 우수 워크북 V2 유형을 사용해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/challenger/domain/exception/ChallengerErrorCode.java:33` |
+| 115 | challenger | `CHALLENGER-0021` | `LEGACY_POINT_TYPE_NOT_ALLOWED` | 400 BAD_REQUEST | 해당 기수에서 사용할 수 없는 상벌점 항목이에요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/challenger/domain/exception/ChallengerErrorCode.java:33` |
 
 ## chat
 
