@@ -2,6 +2,7 @@ package com.umc.product.curriculum.application.service.query;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -53,6 +54,11 @@ public class CurriculumQueryService implements GetCurriculumUseCase {
     private final LoadChallengerWorkbookPort loadChallengerWorkbookPort;
     private final LoadMissionSubmissionPort loadMissionSubmissionPort;
     private final LoadMissionFeedbackPort loadMissionFeedbackPort;
+
+    @Override
+    public Optional<Long> findIdByGisuIdAndPart(Long gisuId, ChallengerPart part) {
+        return loadCurriculumPort.findByGisuIdAndPart(gisuId, part).map(CurriculumProjection::id);
+    }
 
     @Override
     public CurriculumOverviewInfo getCurriculumOverview(Long gisuId, ChallengerPart part, Long weekNo) {
