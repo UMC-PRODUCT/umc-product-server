@@ -102,6 +102,7 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
             .sorted(Comparator.comparing(NoticeImage::getDisplayOrder))
             .map(image -> new NoticeImageInfo(
                 image.getId(),
+                image.getImageId(),
                 fileLinks.get(image.getImageId()),
                 image.getDisplayOrder()
             ))
