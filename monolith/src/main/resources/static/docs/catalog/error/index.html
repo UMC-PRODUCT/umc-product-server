@@ -165,7 +165,7 @@
   "schemaVersion": 1,
   "service": "umc-product-server",
   "generatedAt": null,
-  "totalCount": 660,
+  "totalCount": 661,
   "items": [
     {
       "sequence": 1,
@@ -14095,6 +14095,28 @@
     },
     {
       "sequence": 634,
+      "domain": "schedule",
+      "code": "SCHEDULE-0034",
+      "name": "PARTICIPANT_REQUIRED",
+      "httpStatus": 400,
+      "httpStatusName": "BAD_REQUEST",
+      "message": "출석이 필요한 일정에는 참여자를 1명 이상 넣어주세요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "ScheduleErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java",
+        "line": 72
+      }
+    },
+    {
+      "sequence": 635,
       "domain": "storage",
       "code": "STORAGE-0001",
       "name": "FILE_NOT_FOUND",
@@ -14116,7 +14138,7 @@
       }
     },
     {
-      "sequence": 635,
+      "sequence": 636,
       "domain": "storage",
       "code": "STORAGE-0002",
       "name": "FILE_UPLOAD_NOT_COMPLETED",
@@ -14138,7 +14160,7 @@
       }
     },
     {
-      "sequence": 636,
+      "sequence": 637,
       "domain": "storage",
       "code": "STORAGE-0003",
       "name": "FILE_ALREADY_UPLOADED",
@@ -14160,7 +14182,7 @@
       }
     },
     {
-      "sequence": 637,
+      "sequence": 638,
       "domain": "storage",
       "code": "STORAGE-0004",
       "name": "INVALID_FILE_EXTENSION",
@@ -14182,7 +14204,7 @@
       }
     },
     {
-      "sequence": 638,
+      "sequence": 639,
       "domain": "storage",
       "code": "STORAGE-0005",
       "name": "FILE_SIZE_EXCEEDED",
@@ -14204,7 +14226,7 @@
       }
     },
     {
-      "sequence": 639,
+      "sequence": 640,
       "domain": "storage",
       "code": "STORAGE-0006",
       "name": "INVALID_CONTENT_TYPE",
@@ -14226,7 +14248,7 @@
       }
     },
     {
-      "sequence": 640,
+      "sequence": 641,
       "domain": "storage",
       "code": "STORAGE-0007",
       "name": "STORAGE_UPLOAD_FAILED",
@@ -14248,7 +14270,7 @@
       }
     },
     {
-      "sequence": 641,
+      "sequence": 642,
       "domain": "storage",
       "code": "STORAGE-0008",
       "name": "STORAGE_DELETE_FAILED",
@@ -14270,7 +14292,7 @@
       }
     },
     {
-      "sequence": 642,
+      "sequence": 643,
       "domain": "storage",
       "code": "STORAGE-0009",
       "name": "STORAGE_URL_GENERATION_FAILED",
@@ -14292,7 +14314,7 @@
       }
     },
     {
-      "sequence": 643,
+      "sequence": 644,
       "domain": "storage",
       "code": "STORAGE-0010",
       "name": "CDN_SIGNING_FAILED",
@@ -14314,7 +14336,7 @@
       }
     },
     {
-      "sequence": 644,
+      "sequence": 645,
       "domain": "storage",
       "code": "STORAGE-0011",
       "name": "NO_ENV_KEYS",
@@ -14336,7 +14358,7 @@
       }
     },
     {
-      "sequence": 645,
+      "sequence": 646,
       "domain": "storage",
       "code": "STORAGE-0012",
       "name": "INVALID_SPRING_PROFILE",
@@ -14358,7 +14380,7 @@
       }
     },
     {
-      "sequence": 646,
+      "sequence": 647,
       "domain": "storage",
       "code": "STORAGE-0013",
       "name": "FILE_DELETE_FORBIDDEN",
@@ -14380,7 +14402,7 @@
       }
     },
     {
-      "sequence": 647,
+      "sequence": 648,
       "domain": "storage",
       "code": "STORAGE-0014",
       "name": "FILE_SIZE_MISMATCH",
@@ -14402,7 +14424,7 @@
       }
     },
     {
-      "sequence": 648,
+      "sequence": 649,
       "domain": "storage",
       "code": "STORAGE-0015",
       "name": "STORAGE_METADATA_READ_FAILED",
@@ -14424,7 +14446,7 @@
       }
     },
     {
-      "sequence": 649,
+      "sequence": 650,
       "domain": "storage",
       "code": "STORAGE-0016",
       "name": "FILE_USE_FORBIDDEN",
@@ -14446,7 +14468,7 @@
       }
     },
     {
-      "sequence": 650,
+      "sequence": 651,
       "domain": "term",
       "code": "TERMS-0001",
       "name": "TERMS_NOT_FOUND",
@@ -14468,7 +14490,7 @@
       }
     },
     {
-      "sequence": 651,
+      "sequence": 652,
       "domain": "term",
       "code": "TERMS-0002",
       "name": "TERMS_TYPE_REQUIRED",
@@ -14490,7 +14512,7 @@
       }
     },
     {
-      "sequence": 652,
+      "sequence": 653,
       "domain": "term",
       "code": "TERMS-0003",
       "name": "TERMS_TITLE_REQUIRED",
@@ -14512,7 +14534,7 @@
       }
     },
     {
-      "sequence": 653,
+      "sequence": 654,
       "domain": "term",
       "code": "TERMS-0004",
       "name": "TERMS_CONTENT_REQUIRED",
@@ -14534,7 +14556,7 @@
       }
     },
     {
-      "sequence": 654,
+      "sequence": 655,
       "domain": "term",
       "code": "TERMS-0005",
       "name": "TERMS_VERSION_REQUIRED",
@@ -14556,7 +14578,7 @@
       }
     },
     {
-      "sequence": 655,
+      "sequence": 656,
       "domain": "term",
       "code": "TERMS-0006",
       "name": "TERMS_CONSENT_NOT_FOUND",
@@ -14578,7 +14600,7 @@
       }
     },
     {
-      "sequence": 656,
+      "sequence": 657,
       "domain": "term",
       "code": "TERMS-0007",
       "name": "TERMS_CONSENT_ALREADY_EXISTS",
@@ -14600,7 +14622,7 @@
       }
     },
     {
-      "sequence": 657,
+      "sequence": 658,
       "domain": "term",
       "code": "TERMS-0008",
       "name": "MEMBER_ID_REQUIRED",
@@ -14622,7 +14644,7 @@
       }
     },
     {
-      "sequence": 658,
+      "sequence": 659,
       "domain": "term",
       "code": "TERMS-0009",
       "name": "TERM_ID_REQUIRED",
@@ -14644,7 +14666,7 @@
       }
     },
     {
-      "sequence": 659,
+      "sequence": 660,
       "domain": "term",
       "code": "TERMS-0010",
       "name": "MANDATORY_TERMS_NOT_AGREED",
@@ -14666,7 +14688,7 @@
       }
     },
     {
-      "sequence": 660,
+      "sequence": 661,
       "domain": "term",
       "code": "TERMS-0011",
       "name": "TERM_PERMISSION_DENIED",
