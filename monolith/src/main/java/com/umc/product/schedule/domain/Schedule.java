@@ -1,5 +1,6 @@
 package com.umc.product.schedule.domain;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
@@ -166,6 +167,15 @@ public class Schedule extends BaseEntity {
         return AttendancePolicy.create(earlyCheckInMinutes, attendanceGraceMinutes, lateToleranceMinutes);
     }
 
+    // 출석 정책 시각 검증
+    // (1) 순서: checkInStartAt < startsAt <= onTimeEndAt < lateEndAt < endsAt
+    //     유예 구간(startsAt ~ onTimeEndAt)만 0분을 허용한다.
+    //     "시작 정각 전까지 출석, 정각부터 N분 경계 전까지 지각" 형태의 정책이 이 구간을 0분으로 요구한다.
+    //     출석 판정은 경계값을 포함하지 않는다. 유예 0분이면 시작 정각 요청은 지각이다.
+    //     조기 출석과 지각 구간은 1분 이상을 유지한다.
+    // (2) 정밀도: 분으로 변환되는 세 구간의 길이가 정수 분이어야 한다.
+    //     ChronoUnit.MINUTES.between이 초 단위를 절삭하므로 변환 전에 걸러야 한다.
+    //     거르지 않으면 startsAt + 30초 같은 입력이 순서 검증을 통과한 뒤 유예 0분으로 저장된다.
     private static void validateAttendancePolicyTimes(
         Instant checkInStartAt, // 출석 요청 시작 가능 시점
         Instant onTimeEndAt, // 출석으로 인정하는 마감 시간
@@ -173,13 +183,26 @@ public class Schedule extends BaseEntity {
         Instant startsAt, // 일정 시작 시간
         Instant endsAt // 일정 종료 시간
     ) {
-        // 검증해야 하는 내용: checkInStartAt < startAt < onTimeEndAt < lateEndAt < endsAt
-        if (!checkInStartAt.isBefore(startsAt) ||
-            !startsAt.isBefore(onTimeEndAt) ||
-            !onTimeEndAt.isBefore(lateEndAt) ||
-            !lateEndAt.isBefore(endsAt)
+        if (!checkInStartAt.isBefore(startsAt)
+            || startsAt.isAfter(onTimeEndAt)
+            || !onTimeEndAt.isBefore(lateEndAt)
+            || !lateEndAt.isBefore(endsAt)
         ) {
             throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
+        }
+
+        validateWholeMinutes(checkInStartAt, startsAt);
+        validateWholeMinutes(startsAt, onTimeEndAt);
+        validateWholeMinutes(onTimeEndAt, lateEndAt);
+    }
+
+    // 두 시각의 간격이 정수 분인지 검증. 순서 검증을 통과한 뒤에만 호출하므로 간격은 음수가 아니다.
+    private static void validateWholeMinutes(Instant from, Instant to) {
+        Duration interval = Duration.between(from, to);
+
+        if (interval.getNano() != 0 || interval.getSeconds() % 60 != 0) {
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE,
+                "출석 정책의 시간 간격은 정수 분이어야 합니다");
         }
     }
 

@@ -69,6 +69,9 @@ public enum ScheduleErrorCode implements BaseCode {
     SCHEDULE_HAS_ATTENDANCE_RECORD(HttpStatus.BAD_REQUEST, "SCHEDULE-0033",
         "출석 기록이 있는 일정은 삭제할 수 없어요. 출석 기록을 먼저 확인해주세요."),
 
+    PARTICIPANT_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0034",
+        "출석이 필요한 일정에는 참여자를 1명 이상 넣어주세요."),
+
     ;
 
     private final HttpStatus httpStatus;

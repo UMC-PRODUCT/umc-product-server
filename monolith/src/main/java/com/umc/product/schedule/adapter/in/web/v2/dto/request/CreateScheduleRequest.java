@@ -23,7 +23,9 @@ import jakarta.validation.constraints.Size;
  * @param endsAt               일정 종료 시간
  * @param location             일정 위치 (비대면인 경우, null)
  * @param attendancePolicy     출석/지각/결석과 관련된 정책입니다. 제공되지 않은 경우 출석을 요하지 않는 일정으로 간주합니다.
- * @param participantMemberIds 일정에 참여하는 사용자의 memberId의 배열입니다. 요청한 사용자는 자동으로 참여하도록 설정되며, 중복값은 자동으로 필터링 됩니다.
+ * @param participantMemberIds 일정에 참여하는 사용자의 memberId의 배열입니다. 중복값은 자동으로 필터링 됩니다.
+ *                             작성자는 자동으로 포함되지 않으므로, 참여시키려면 명단에 직접 넣어야 합니다.
+ *                             출석 정책이 있는 일정은 참여자가 1명 이상이어야 합니다.
  */
 public record CreateScheduleRequest(
     @Schema(description = "일정 제목", example = "10기 OT", maxLength = 100)
@@ -48,10 +50,8 @@ public record CreateScheduleRequest(
     @Valid ScheduleAttendancePolicyRequest attendancePolicy,
 
     // 참여자는 중복되지 않도록 Set으로 받습니다.
-    // 참여자 목록에는 반드시 요청한 사용자가 포함되어 있어야 하며,
-    // 서버 측 생성자에서 add()를 통해서 강제로 참여시켜야 합니다.
-    // (기획단 변경이 있기 전까지는 해당 사항을 유지합니다.)
-    @Schema(description = "참여자 Member ID 목록", example = "[1, 2, 3]")
+    // 작성자를 참여자로 넣을지는 호출자가 결정합니다. 서버는 작성자를 자동으로 추가하지 않습니다.
+    @Schema(description = "참여자 Member ID 목록 (작성자는 자동 포함되지 않음)", example = "[1, 2, 3]")
     Set<Long> participantMemberIds
 ) {
     public CreateScheduleCommand toCommand(Long authorMemberId) {
