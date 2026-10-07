@@ -12,6 +12,8 @@ public interface LoadNoticeImagePort {
 
     boolean existsImageByNoticeId(Long noticeId);
 
+    List<Long> listNoticeIdsWithImages(List<Long> noticeIds);
+
     int findNextImageDisplayOrder(Long noticeId);
 
     int countImageByNoticeId(Long noticeId);

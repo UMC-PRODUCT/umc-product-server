@@ -98,6 +98,21 @@ public class NoticeContentPersistenceAdapter implements
     }
 
     @Override
+    public List<Long> listNoticeIdsWithImages(List<Long> noticeIds) {
+        return contentsQueryRepository.listNoticeIdsWithImages(noticeIds);
+    }
+
+    @Override
+    public List<Long> listNoticeIdsWithLinks(List<Long> noticeIds) {
+        return contentsQueryRepository.listNoticeIdsWithLinks(noticeIds);
+    }
+
+    @Override
+    public List<Long> listNoticeIdsWithVotes(List<Long> noticeIds) {
+        return contentsQueryRepository.listNoticeIdsWithVotes(noticeIds);
+    }
+
+    @Override
     public NoticeImage saveImage(NoticeImage noticeImage) {
         return imageJpaRepository.save(noticeImage);
     }

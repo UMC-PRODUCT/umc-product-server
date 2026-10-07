@@ -26,7 +26,10 @@ public record GetNoticeSummaryResponse(
     Long authorChallengerId,
     Long authorMemberId,
     String authorNickname,
-    String authorName
+    String authorName,
+    boolean hasImages,
+    boolean hasLinks,
+    boolean hasVote
 ) {
     public static GetNoticeSummaryResponse from(
         NoticeSummary noticeSummary
@@ -44,6 +47,9 @@ public record GetNoticeSummaryResponse(
             .authorMemberId(noticeSummary.authorMemberId())
             .authorNickname(noticeSummary.authorNickname())
             .authorName(noticeSummary.authorName())
+            .hasImages(noticeSummary.hasImages())
+            .hasLinks(noticeSummary.hasLinks())
+            .hasVote(noticeSummary.hasVote())
             .build();
     }
 }

@@ -1,6 +1,7 @@
 package com.umc.product.notice.application.service.query;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,9 +30,12 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSumm
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeVoteInfo;
+import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
+import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
 import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
+import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeClassification;
 import com.umc.product.notice.domain.NoticeRead;
@@ -59,6 +63,9 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private final LoadNoticePort loadNoticePort;
     private final LoadNoticeReadPort loadNoticeReadPort;
     private final LoadNoticeTargetPort loadNoticeTargetPort;
+    private final LoadNoticeImagePort loadNoticeImagePort;
+    private final LoadNoticeLinkPort loadNoticeLinkPort;
+    private final LoadNoticeVotePort loadNoticeVotePort;
 
     private final GetChapterUseCase getChapterUseCase;
     private final GetMemberUseCase getMemberUseCase;
@@ -378,7 +385,11 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         Map<Long, MemberInfo> memberMap = getMemberUseCase.findAllByIds(authorMemberIds);
 
-        return new NoticeQueryData(targetMap, memberMap);
+        Set<Long> noticeIdsWithImages = new HashSet<>(loadNoticeImagePort.listNoticeIdsWithImages(noticeIds));
+        Set<Long> noticeIdsWithLinks = new HashSet<>(loadNoticeLinkPort.listNoticeIdsWithLinks(noticeIds));
+        Set<Long> noticeIdsWithVotes = new HashSet<>(loadNoticeVotePort.listNoticeIdsWithVotes(noticeIds));
+
+        return new NoticeQueryData(targetMap, memberMap, noticeIdsWithImages, noticeIdsWithLinks, noticeIdsWithVotes);
     }
 
     // Notice를 NoticeSummary로 매핑
@@ -396,7 +407,10 @@ public class NoticeQueryService implements GetNoticeUseCase {
             notice.isShouldSendNotification(), notice.isMustRead(), viewCount, notice.getCreatedAt(),
             targetInfo, notice.getAuthorMemberId(),
             memberInfo != null ? memberInfo.nickname() : null,
-            memberInfo != null ? memberInfo.name() : null
+            memberInfo != null ? memberInfo.name() : null,
+            data.noticeIdsWithImages().contains(notice.getId()),
+            data.noticeIdsWithLinks().contains(notice.getId()),
+            data.noticeIdsWithVotes().contains(notice.getId())
         );
     }
 
@@ -540,7 +554,10 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
     private record NoticeQueryData(
         Map<Long, NoticeTarget> targetMap,
-        Map<Long, MemberInfo> memberMap
+        Map<Long, MemberInfo> memberMap,
+        Set<Long> noticeIdsWithImages,
+        Set<Long> noticeIdsWithLinks,
+        Set<Long> noticeIdsWithVotes
     ) {
     }
 

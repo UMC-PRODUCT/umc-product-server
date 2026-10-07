@@ -12,6 +12,8 @@ public interface LoadNoticeLinkPort {
 
     boolean existsLinkByNoticeId(Long noticeId);
 
+    List<Long> listNoticeIdsWithLinks(List<Long> noticeIds);
+
     int findNextLinkDisplayOrder(Long noticeId);
 
     int countLinkByNoticeId(Long noticeId);
