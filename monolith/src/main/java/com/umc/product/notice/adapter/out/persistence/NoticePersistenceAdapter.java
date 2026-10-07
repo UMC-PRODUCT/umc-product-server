@@ -1,5 +1,6 @@
 package com.umc.product.notice.adapter.out.persistence;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +70,11 @@ public class NoticePersistenceAdapter implements
     @Override
     public void incrementViewCount(Long noticeId) {
         noticeJpaRepository.incrementViewCount(noticeId);
+    }
+
+    @Override
+    public void updateUpdatedAt(Long noticeId, Instant updatedAt) {
+        noticeJpaRepository.updateUpdatedAt(noticeId, updatedAt);
     }
 
     @Override

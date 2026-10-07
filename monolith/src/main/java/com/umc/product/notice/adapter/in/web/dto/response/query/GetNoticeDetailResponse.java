@@ -33,7 +33,8 @@ public record GetNoticeDetailResponse(
 
     // 메타데이터
     Long viewCount,
-    Instant createdAt
+    Instant createdAt,
+    Instant updatedAt
 ) {
 
     public static GetNoticeDetailResponse from(
@@ -52,6 +53,7 @@ public record GetNoticeDetailResponse(
             .targetInfo(noticeInfo.targetInfo())
             .viewCount(noticeInfo.viewCount() + 1)
             .createdAt(noticeInfo.createdAt())
+            .updatedAt(noticeInfo.updatedAt())
             .build();
     }
 

@@ -115,7 +115,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
             linkInfos,
             targetInfo,
             notice.getViewCount(),
-            notice.getCreatedAt()
+            notice.getCreatedAt(),
+            notice.getUpdatedAt()
         );
     }
 

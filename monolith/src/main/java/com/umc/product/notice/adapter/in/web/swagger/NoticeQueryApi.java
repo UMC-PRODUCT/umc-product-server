@@ -20,8 +20,6 @@ import com.umc.product.notice.domain.NoticeClassification;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -56,13 +54,19 @@ public interface NoticeQueryApi {
                 - schoolId 미입력 + noticeTab이 CENTRAL_MEMBER인 경우 → 중앙운영진 대상 공지, 총괄단 작성 가능
                 - schoolId 미입력 + noticeTab이 SCHOOL_CORE인 경우 → 학교회장단 대상 공지, 총괄단과 중앙운영진 작성 가능
                 - schoolId 미입력 + noticeTab이 SCHOOL_PART_LEADER인 경우 → 학교 파트장 대상 공지, 총괄단과 중앙운영진 작성 가능
+
+            ### 첨부 배지 정보
+
+            각 공지 항목은 다음 첨부 존재 여부를 반환합니다. 첨부가 없으면 false입니다.
+            - `hasImages`: 이미지 첨부 존재 여부
+            - `hasLinks`: 링크 첨부 존재 여부
+            - `hasVote`: 투표 첨부 존재 여부. 투표 시작 전이나 종료 후에도 첨부가 있으면 true입니다.
             """
     )
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
-            description = "조회 성공",
-            content = @Content(schema = @Schema(implementation = PageResponse.class))
+            description = "조회 성공"
         ),
         @ApiResponse(
             responseCode = "403",
@@ -86,6 +90,13 @@ public interface NoticeQueryApi {
             키워드로 공지사항을 검색합니다. 제목과 내용에서 검색합니다.
 
             **targetNoticeTab 필드 및 필터 조건은 전체 조회와 동일하게 적용됩니다.**
+
+            ### 첨부 배지 정보
+
+            각 공지 항목은 목록 조회와 동일한 첨부 존재 여부를 반환합니다. 첨부가 없으면 false입니다.
+            - `hasImages`: 이미지 첨부 존재 여부
+            - `hasLinks`: 링크 첨부 존재 여부
+            - `hasVote`: 투표 첨부 존재 여부. 투표 시작 전이나 종료 후에도 첨부가 있으면 true입니다.
             """
     )
     @ApiResponses({
@@ -114,7 +125,15 @@ public interface NoticeQueryApi {
     @Operation(
         operationId = "NOTICE-003",
         summary = "공지사항 상세 조회",
-        description = "특정 공지사항의 상세 정보를 조회합니다. READ 권한이 없으면 403을 반환합니다."
+        description = """
+            특정 공지사항의 상세 정보를 조회합니다. READ 권한이 없으면 403을 반환합니다.
+
+            ### 수정 일시
+
+            - `updatedAt`: 공지 수정 일시. ISO 8601 UTC 형식으로 반환합니다.
+            - 제목·본문·필독 여부가 변경되거나 이미지·링크·투표 추가·교체·삭제가 처리되면 갱신합니다.
+            - 상세 조회와 조회수 증가는 수정 일시를 변경하지 않습니다.
+            """
     )
     @ApiResponses({
         @ApiResponse(

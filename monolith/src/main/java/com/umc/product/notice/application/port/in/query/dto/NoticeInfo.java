@@ -23,7 +23,8 @@ public record NoticeInfo(
 
     // 메타데이터
     long viewCount,
-    Instant createdAt
+    Instant createdAt,
+    Instant updatedAt
 ) {
 
 }
