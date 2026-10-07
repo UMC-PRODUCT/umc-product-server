@@ -13,7 +13,7 @@ import com.umc.product.notice.domain.NoticeRead;
 public interface NoticeReadJpaRepository extends JpaRepository<NoticeRead, Long> {
     List<NoticeRead> findAllByNoticeId(Long noticeId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM NoticeRead nr WHERE nr.notice.id = :noticeId")
     void deleteAllByNoticeId(@Param("noticeId") Long noticeId);
 
