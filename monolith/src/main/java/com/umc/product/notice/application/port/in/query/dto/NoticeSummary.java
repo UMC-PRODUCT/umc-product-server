@@ -15,6 +15,9 @@ public record NoticeSummary(
     NoticeTargetInfo targetInfo,
     Long authorMemberId,
     String authorNickname,
-    String authorName
+    String authorName,
+    boolean hasImages,
+    boolean hasLinks,
+    boolean hasVote
 ) {
 }

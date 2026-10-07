@@ -130,7 +130,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         NoticeVote vote = loadNoticeVotePort.findVoteByNoticeId(noticeId)
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
 
-        saveNoticeVotePort.deleteVote(vote);
+        saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
         manageVoteUseCase.deleteVote(vote.getVoteId());
     }
 
