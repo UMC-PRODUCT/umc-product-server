@@ -7723,7 +7723,7 @@
       "source": {
         "enumName": "NoticeErrorCode",
         "file": "monolith/src/main/java/com/umc/product/notice/domain/exception/NoticeErrorCode.java",
-        "line": 49
+        "line": 48
       }
     },
     {

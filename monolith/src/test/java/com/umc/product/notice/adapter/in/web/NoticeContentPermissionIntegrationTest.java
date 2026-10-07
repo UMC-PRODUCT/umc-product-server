@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
 import com.umc.product.form.application.port.out.LoadFormPort;
+import com.umc.product.maintenance.application.port.in.command.RefreshMaintenanceStateUseCase;
 import com.umc.product.member.adapter.out.persistence.MemberSystemRoleJpaRepository;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
@@ -61,6 +62,8 @@ class NoticeContentPermissionIntegrationTest extends IntegrationTestSupport {
     @Autowired
     EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
     @Autowired
+    RefreshMaintenanceStateUseCase refreshMaintenanceStateUseCase;
+    @Autowired
     SaveNoticePort saveNoticePort;
     @Autowired
     SaveNoticeTargetPort saveNoticeTargetPort;
@@ -89,6 +92,7 @@ class NoticeContentPermissionIntegrationTest extends IntegrationTestSupport {
 
     @BeforeEach
     void setUp() {
+        refreshMaintenanceStateUseCase.refresh();
         Long schoolId = schoolFixture.학교("공지 테스트 학교").getId();
         authorMemberId = saveMember("notice-author", schoolId);
         Long superAdminMemberId = saveMember("notice-super-admin", schoolId);

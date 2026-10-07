@@ -24,6 +24,9 @@ public interface NoticeCommandControllerApi {
         operationId = "NOTICE-201",
         summary = "공지사항 생성",
         description = """
+            제목은 필수이며 최대 255자, 본문은 필수이며 최대 3,000자입니다.
+            길이를 초과하거나 비어 있으면 400(COMMON-400)을 반환하고 공지를 저장하지 않습니다.
+
             - `mustRead=true`: 필독 공지로 지정 → 목록 최상단 고정 (UPMS에서 사용, 앱공지에서는 false로 설정)
 
             ---
@@ -97,7 +100,9 @@ public interface NoticeCommandControllerApi {
     @Operation(
         operationId = "NOTICE-203",
         summary = "공지사항 수정",
-        description = "공지사항 내용을 수정합니다. mustRead=true로 설정하면 UPMS 필독 공지로 지정되어 목록 최상단에 고정되며, false로 변경하면 고정이 해제됩니다."
+        description = "공지사항 내용을 수정합니다. 제목과 본문을 모두 전달해야 하며, 제목은 최대 255자, 본문은 최대 3,000자입니다. "
+            + "길이를 초과하거나 비어 있으면 400(COMMON-400)을 반환하고 기존 공지를 변경하지 않습니다. "
+            + "mustRead=true로 설정하면 UPMS 필독 공지로 지정되어 목록 최상단에 고정되며, false로 변경하면 고정이 해제됩니다."
     )
     @ApiResponses({
         @ApiResponse(
