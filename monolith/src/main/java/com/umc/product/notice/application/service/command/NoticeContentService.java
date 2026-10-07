@@ -7,6 +7,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourcePermission;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.form.application.port.in.command.ManageVoteUseCase;
 import com.umc.product.form.application.port.in.command.dto.CreateVoteCommand;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
@@ -48,16 +52,22 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     private final LoadNoticePort loadNoticePort;
     private final SaveNoticePort saveNoticePort;
 
+    private final CheckPermissionUseCase checkPermissionUseCase;
     private final ManageVoteUseCase manageVoteUseCase;
     private final Clock clock;
 
     @Override
     public AddNoticeVoteResult addVote(AddNoticeVoteCommand command, Long noticeId) {
-        Notice notice = findNoticeById(noticeId);
-        notice.validateAuthorMember(command.createdMemberId());
+        Notice notice = findEditableNotice(noticeId, command.createdMemberId());
 
         if (loadNoticeVotePort.existsVoteByNoticeId(noticeId)) {
             throw new NoticeDomainException(NoticeErrorCode.VOTE_ALREADY_EXISTS);
+        }
+
+        if (command.startsAt() == null || command.endsAtExclusive() == null
+            || !command.startsAt().isBefore(command.endsAtExclusive())
+            || !command.endsAtExclusive().isAfter(clock.instant())) {
+            throw new NoticeDomainException(NoticeErrorCode.INVALID_VOTE_PERIOD);
         }
 
         Long voteId = manageVoteUseCase.createVote(
@@ -79,8 +89,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
     @Override
     public List<Long> addImages(AddNoticeImagesCommand command, Long noticeId, Long memberId) {
-        Notice notice = findNoticeById(noticeId);
-        notice.validateAuthorMember(memberId);
+        Notice notice = findEditableNotice(noticeId, memberId);
 
         if (command.imageIds() == null || command.imageIds().isEmpty()) {
             throw new NoticeDomainException(NoticeErrorCode.IMAGE_URLS_REQUIRED);
@@ -110,8 +119,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
     @Override
     public List<Long> addLinks(AddNoticeLinksCommand command, Long noticeId, Long memberId) {
-        Notice notice = findNoticeById(noticeId);
-        notice.validateAuthorMember(memberId);
+        Notice notice = findEditableNotice(noticeId, memberId);
 
         if (command.links() == null || command.links().isEmpty()) {
             throw new NoticeDomainException(NoticeErrorCode.LINK_URLS_REQUIRED);
@@ -131,8 +139,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
     @Override
     public void deleteVote(Long noticeId, Long memberId) {
-        Notice notice = findNoticeById(noticeId);
-        notice.validateAuthorMember(memberId);
+        findEditableNotice(noticeId, memberId);
 
         NoticeVote vote = loadNoticeVotePort.findVoteByNoticeId(noticeId)
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
@@ -164,8 +171,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
             throw new NoticeDomainException(NoticeErrorCode.IMAGE_LIMIT_EXCEEDED);
         }
 
-        Notice notice = findNoticeById(noticeId);
-        notice.validateAuthorMember(memberId);
+        Notice notice = findEditableNotice(noticeId, memberId);
 
         saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
 
@@ -187,8 +193,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
             return;
         }
 
-        Notice notice = findNoticeById(noticeId);
-        notice.validateAuthorMember(memberId);
+        Notice notice = findEditableNotice(noticeId, memberId);
         saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
 
         if (!command.links().isEmpty()) {
@@ -203,9 +208,16 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         saveNoticePort.updateUpdatedAt(noticeId, clock.instant());
     }
 
-    private Notice findNoticeById(Long noticeId) {
-        return loadNoticePort.findNoticeById(noticeId)
+    private Notice findEditableNotice(Long noticeId, Long memberId) {
+        Notice notice = loadNoticePort.findNoticeById(noticeId)
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
+
+        if (!checkPermissionUseCase.check(memberId,
+            ResourcePermission.of(ResourceType.NOTICE, noticeId, PermissionType.EDIT))) {
+            throw new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH);
+        }
+
+        return notice;
     }
 
 }
