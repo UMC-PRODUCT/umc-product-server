@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.notice.domain.enums.NoticeTab;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -64,5 +65,26 @@ public record NoticeTargetInfo(
         boolean partMatch = (this.targetParts == null || this.targetParts.isEmpty() || this.targetParts.contains(part));
 
         return gisuMatch && chapterMatch && schoolMatch && partMatch;
+    }
+
+    public boolean isStaffTarget(ChallengerRoleType role, Long gisuId, Long organizationId,
+                                  ChallengerPart responsiblePart) {
+        if (!isStaffNotice() || (targetGisuId != null && !targetGisuId.equals(gisuId))) {
+            return false;
+        }
+        NoticeTab viewerRole = role.isAtLeastCentralMember()
+            ? NoticeTab.CENTRAL_MEMBER : NoticeTab.findFrom(role).orElse(null);
+        if (!targetNoticeTab.includes(viewerRole)) {
+            return false;
+        }
+        if (role == ChallengerRoleType.CHAPTER_PRESIDENT && targetSchoolId != null) {
+            return false;
+        }
+        if (role.isAtLeastSchoolAdmin() && targetSchoolId != null && !targetSchoolId.equals(organizationId)) {
+            return false;
+        }
+        return viewerRole != NoticeTab.SCHOOL_PART_LEADER || targetParts == null || targetParts.isEmpty()
+            || responsiblePart == null || responsiblePart == ChallengerPart.ADMIN
+            || targetParts.contains(responsiblePart);
     }
 }

@@ -18,9 +18,9 @@ import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTargetInfo;
-import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +35,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
 
     private final GetNoticeTargetUseCase getNoticeTargetUseCase;
     private final LoadNoticePort loadNoticePort;
+    private final GetChapterUseCase getChapterUseCase;
 
     @Override
     public ResourceType supportedResourceType() {
@@ -94,36 +95,8 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
 
     private boolean canReadStaffNotice(SubjectAttributes subjectAttributes, NoticeTargetInfo targetInfo) {
         return subjectAttributes.roleAttributes().stream()
-            .anyMatch(role -> {
-                NoticeTab viewerRole = NoticeTab.findFrom(role.roleType()).orElse(null);
-                if (viewerRole == null) {
-                    return false;
-                }
-                // 역할 레벨 확인: 공지의 minTargetRole이 viewerRole을 포함하는지 (하한선 체크)
-                if (!targetInfo.targetNoticeTab().includes(viewerRole)) {
-                    return false;
-                }
-                // 기수 범위 확인
-                if (targetInfo.targetGisuId() != null && !targetInfo.targetGisuId().equals(role.gisuId())) {
-                    return false;
-                }
-                // 학교 범위 확인 (교내운영진 공지)
-                if (targetInfo.targetSchoolId() != null
-                    && !targetInfo.targetSchoolId().equals(role.organizationId())) {
-                    return false;
-                }
-                // 파트 범위 확인: 파트장만 담당 파트로 필터링 (회장단/중앙운영진은 파트 무관)
-                // ADMIN 파트(기타 교내 운영진)는 파트 구분 없이 열람 가능
-                if (viewerRole == NoticeTab.SCHOOL_PART_LEADER
-                    && targetInfo.targetParts() != null && !targetInfo.targetParts().isEmpty()) {
-                    boolean isPartFree = role.responsiblePart() == null
-                        || role.responsiblePart() == ChallengerPart.ADMIN;
-                    if (!isPartFree && !targetInfo.targetParts().contains(role.responsiblePart())) {
-                        return false;
-                    }
-                }
-                return true;
-            });
+            .anyMatch(role -> targetInfo.isStaffTarget(role.roleType(), role.gisuId(), role.organizationId(),
+                role.responsiblePart()));
     }
 
     /**
@@ -134,9 +107,9 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
     private boolean canReadByRole(RoleAttribute role, NoticeTargetInfo targetInfo, SubjectAttributes subject) {
         return switch (role.roleType()) {
             // 중앙운영진: 본인 기수 범위의 모든 챌린저 공지를 파트 무관하게 읽기 가능
-            case CENTRAL_OPERATING_TEAM_MEMBER, CENTRAL_EDUCATION_TEAM_MEMBER -> targetInfo.targetGisuId() == null ||
-                targetInfo.targetGisuId().equals(role.gisuId());
-            case CHAPTER_PRESIDENT -> chapterPresidentCanRead(role, targetInfo, subject);
+            case CENTRAL_OPERATING_TEAM_MEMBER, CENTRAL_EDUCATION_TEAM_MEMBER -> targetInfo.targetGisuId() == null
+                || targetInfo.targetGisuId().equals(role.gisuId());
+            case CHAPTER_PRESIDENT -> chapterPresidentCanRead(role, targetInfo);
             case SCHOOL_PRESIDENT, SCHOOL_VICE_PRESIDENT -> schoolCoreCanRead(role, targetInfo, subject);
             case SCHOOL_PART_LEADER -> schoolPartLeaderCanRead(role, targetInfo, subject);
             default -> false;
@@ -178,27 +151,20 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
         return subjectAttributes.toAuthoritySnapshot().isCentralCoreInAnyGisu();
     }
 
-    private boolean chapterPresidentCanRead(RoleAttribute role, NoticeTargetInfo targetInfo,
-                                            SubjectAttributes subject) {
+    private boolean chapterPresidentCanRead(RoleAttribute role, NoticeTargetInfo targetInfo) {
         Long myChapterId = role.organizationId();
-        if (myChapterId == null) {
+        if (myChapterId == null
+            || targetInfo.targetGisuId() != null && !role.gisuId().equals(targetInfo.targetGisuId())) {
             return false;
         }
         if (targetInfo.targetChapterId() != null && !myChapterId.equals(targetInfo.targetChapterId())) {
             return false;
         }
-        if (targetInfo.targetSchoolId() != null
-            && (subject.schoolId() == null || !subject.schoolId().equals(targetInfo.targetSchoolId()))) {
-            return false;
+        if (targetInfo.targetSchoolId() != null) {
+            return getChapterUseCase.findByGisuAndSchool(role.gisuId(), targetInfo.targetSchoolId())
+                .map(chapter -> myChapterId.equals(chapter.id())).orElse(false);
         }
-        if (targetInfo.targetChapterId() == null && targetInfo.targetSchoolId() == null) {
-            return false;
-        }
-        return subject.gisuChallengerInfos().stream()
-            .filter(info -> myChapterId.equals(info.chapterId()))
-            .filter(info -> role.gisuId().equals(info.gisuId()))
-            .anyMatch(info -> targetInfo.targetGisuId() == null
-                || targetInfo.targetGisuId().equals(info.gisuId()));
+        return true;
     }
 
     private boolean schoolCoreCanRead(RoleAttribute role, NoticeTargetInfo targetInfo, SubjectAttributes subject) {

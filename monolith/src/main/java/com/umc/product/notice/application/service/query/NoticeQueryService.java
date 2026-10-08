@@ -21,6 +21,7 @@ import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.GetNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
 import com.umc.product.notice.application.port.in.query.dto.GetNoticeStatusQuery;
+import com.umc.product.notice.application.port.in.query.dto.NoticeAuthorInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeImageInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeLinkInfo;
@@ -71,6 +72,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private final GetMemberUseCase getMemberUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetNoticeContentUseCase getNoticeContentUseCase;
+    private final NoticeAuthorQueryService noticeAuthorQueryService;
 
     @Override
     public Page<NoticeSummary> getAllNoticeSummaries(NoticeViewerInfo viewerInfo, NoticeClassification classification,
@@ -116,7 +118,9 @@ public class NoticeQueryService implements GetNoticeUseCase {
             targetInfo,
             notice.getViewCount(),
             notice.getCreatedAt(),
-            notice.getUpdatedAt()
+            notice.getUpdatedAt(),
+            noticeAuthorQueryService.getAll(getMemberUseCase.findAllByIds(Set.of(notice.getAuthorMemberId())))
+                .get(notice.getAuthorMemberId())
         );
     }
 
@@ -316,7 +320,9 @@ public class NoticeQueryService implements GetNoticeUseCase {
                 "본인 소속 지부의 공지만 조회할 수 있습니다.");
         }
         if (classification.schoolId() != null
-            && !classification.schoolId().equals(viewerInfo.schoolId())) {
+            && !classification.schoolId().equals(viewerInfo.schoolId())
+            && !(classification.isChallengerQuery() && viewerInfo.isChapterPresident()
+                && viewerInfo.chapterSchoolIds().contains(classification.schoolId()))) {
             throw new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION,
                 "본인 소속 학교의 공지만 조회할 수 있습니다.");
         }
@@ -328,6 +334,10 @@ public class NoticeQueryService implements GetNoticeUseCase {
             // 챌린저 공지: 필드 조합 유효성 검증 (지부+학교 동시 지정 등 불가 조합 차단)
             NoticeTargetPattern.from(classification.toTargetInfo());
         } else {
+            if (viewerInfo.isChapterPresident() && classification.schoolId() != null) {
+                throw new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION,
+                    "지부장은 학교를 지정하지 않은 중앙 운영진 공지만 조회할 수 있습니다.");
+            }
             // 운영진 공지: 조회자 역할이 요청 역할 이상인지 검증
             NoticeTab viewerRole = viewerInfo.viewerRole();
             if (viewerRole == null) {
@@ -390,7 +400,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
         Set<Long> noticeIdsWithLinks = new HashSet<>(loadNoticeLinkPort.listNoticeIdsWithLinks(noticeIds));
         Set<Long> noticeIdsWithVotes = new HashSet<>(loadNoticeVotePort.listNoticeIdsWithVotes(noticeIds));
 
-        return new NoticeQueryData(targetMap, memberMap, noticeIdsWithImages, noticeIdsWithLinks, noticeIdsWithVotes);
+        return new NoticeQueryData(targetMap, memberMap, noticeIdsWithImages, noticeIdsWithLinks, noticeIdsWithVotes,
+            noticeAuthorQueryService.getAll(memberMap));
     }
 
     // Notice를 NoticeSummary로 매핑
@@ -411,7 +422,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
             memberInfo != null ? memberInfo.name() : null,
             data.noticeIdsWithImages().contains(notice.getId()),
             data.noticeIdsWithLinks().contains(notice.getId()),
-            data.noticeIdsWithVotes().contains(notice.getId())
+            data.noticeIdsWithVotes().contains(notice.getId()),
+            data.authorByMemberId().get(notice.getAuthorMemberId())
         );
     }
 
@@ -558,7 +570,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
         Map<Long, MemberInfo> memberMap,
         Set<Long> noticeIdsWithImages,
         Set<Long> noticeIdsWithLinks,
-        Set<Long> noticeIdsWithVotes
+        Set<Long> noticeIdsWithVotes,
+        Map<Long, NoticeAuthorInfo> authorByMemberId
     ) {
     }
 

@@ -34,7 +34,8 @@ public interface NoticeQueryApi {
         description = """
             `noticeTab` 값으로 챌린저 공지(`CHALLENGER`)와 운영진 공지(`CHALLENGER` 외)를 구분
             CHALLENGER 공지는 운영진 공지가 아닌 일반공지를 의미함. 운영진 공지가 아닌 이상 `noticeTab`은 항상 `CHALLENGER`로 고정되어야 함.
-            운영진 공지를 조회할 때에는 조회자의 ROLE에 따라 CENTRAL_MEMBER, SCHOOL_CORE, SCHOOL_PART_LEADER 중 하나로 요청해야 하며, 이 값에 따라 조회 가능한 공지의 범위가 달라짐.
+            운영진 공지를 조회할 때에는 조회자의 ROLE에 따라 CENTRAL_MEMBER, SCHOOL_CORE, SCHOOL_PART_LEADER 중 하나로 요청합니다.
+            이 값에 따라 조회 가능한 공지의 범위가 달라집니다.
             - CHALLENGER -> 챌린저 공지
             - CENTRAL_MEMBER -> 중앙운영사무국 공지
             - SCHOOL_CORE -> 학교회장단 공지
@@ -43,17 +44,22 @@ public interface NoticeQueryApi {
             자기 role보다 상위 tab 요청시 오류 (403)
 
 
-            운영진 공지는 중앙운영사무국 공지 / 교내 운영진 공지 이렇게 나뉘고, 기준은 `schoolId` 파라미터의 입력 여부
-            (gisuId: O / chapterId: X / schoolId: 분류기준이 됨)
+            ### 조회 범위
 
-            - schoolId 입력 -> 교내 운영진 공지로 구분됨, 교내 회장단이 작성 가능
-                - schoolId 입력 + noticeTab은 SCHOOL_PART_LEADER로 입력 → 해당 학교 모든 파트장 대상 공지
-                - schoolId 입력 + noticeTab은 SCHOOL_PART_LEADER로 입력 + targetParts 특정 파트 지정 → 해당 학교 특정 파트장 대상 공지
+            - `chapterId`, `schoolId`, `part`를 모두 생략하면 'UMC 전체'로 조회하며,
+              조회자의 권한 내 전체·지부·학교 공지를 함께 반환합니다. 일반 챌린저와 파트장은 본인 파트 기준을 유지합니다.
+            - 운영진 공지에서도 학교 필터를 생략하면 열람 가능한 중앙·학교 운영진 공지를 함께 반환합니다.
+            - 지부장은 학교를 지정하지 않은 중앙 발신 운영진 공지만 열람할 수 있습니다.
+              `SCHOOL_CORE`와 `SCHOOL_PART_LEADER` 대상 공지는 열람 가능하며, `CENTRAL_MEMBER` 대상은 열람할 수 없습니다.
+              학교 운영진 공지 조회 요청은 403을 반환합니다.
+            - 운영진 공지는 `gisuId`가 필수이며 `chapterId`는 지정할 수 없습니다.
 
-            - schoolId 미입력 -> 중앙운영사무국 공지로 구분됨, 총괄단과 중앙운영진이 작성 가능
-                - schoolId 미입력 + noticeTab이 CENTRAL_MEMBER인 경우 → 중앙운영진 대상 공지, 총괄단 작성 가능
-                - schoolId 미입력 + noticeTab이 SCHOOL_CORE인 경우 → 학교회장단 대상 공지, 총괄단과 중앙운영진 작성 가능
-                - schoolId 미입력 + noticeTab이 SCHOOL_PART_LEADER인 경우 → 학교 파트장 대상 공지, 총괄단과 중앙운영진 작성 가능
+            ### 작성자 표시
+
+            `author`는 작성자의 `memberId`, `name`, `nickname`과 현재 활성 기수의
+            `gisuId`, `roleType`, `roleName`, `organizationType`, `organizationId`, `organizationName`을 반환합니다.
+            역할이 여러 개이면 가장 높은 직책을 표시합니다. 활성 기수의 역할이 없으면 역할·소속은 null입니다.
+            기존 `authorMemberId`, `authorName`, `authorNickname`, `authorChallengerId`는 유지합니다.
 
             ### 첨부 배지 정보
 
@@ -90,6 +96,8 @@ public interface NoticeQueryApi {
             키워드로 공지사항을 검색합니다. 제목과 내용에서 검색합니다.
 
             **targetNoticeTab 필드 및 필터 조건은 전체 조회와 동일하게 적용됩니다.**
+
+            'UMC 전체' 조회 범위와 `author`의 활성 기수 최상위 역할·소속 표시도 목록 조회와 동일합니다.
 
             ### 첨부 배지 정보
 
@@ -133,6 +141,11 @@ public interface NoticeQueryApi {
             - `updatedAt`: 공지 수정 일시. ISO 8601 UTC 형식으로 반환합니다.
             - 제목·본문·필독 여부가 변경되거나 이미지·링크·투표 추가·교체·삭제가 처리되면 갱신합니다.
             - 상세 조회와 조회수 증가는 수정 일시를 변경하지 않습니다.
+
+            ### 작성자 표시
+
+            `author`는 목록과 동일하게 작성자의 이름·닉네임 및 현재 활성 기수의 최상위 역할·소속을 반환합니다.
+            활성 기수의 역할이 없으면 역할·소속은 null입니다.
             """
     )
     @ApiResponses({

@@ -35,6 +35,7 @@ import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notification.application.port.in.RequestFcmNotificationUseCase;
 import com.umc.product.notification.application.port.in.dto.RequestFcmNotificationCommand;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +66,7 @@ public class NoticeService implements ManageNoticeUseCase {
     private final GetChallengerUseCase getChallengerUseCase;
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
     private final RequestFcmNotificationUseCase requestFcmNotificationUseCase;
+    private final GetGisuUseCase getGisuUseCase;
 
     @Override
     public List<Long> createNoticeBulk(List<CreateNoticeCommand> commands) {
@@ -246,7 +248,8 @@ public class NoticeService implements ManageNoticeUseCase {
         // - 구조적으로 불가능한 대상 조합(예: 지부+학교 동시 지정)은 여기서 INVALID_TARGET_SETTING 예외로
         //   차단된다(슈퍼어드민에게도 동일 적용).
         // - 권한을 충족하면 그대로 통과하므로, 일반적인 성공 케이스에서는 추가 역할 조회가 발생하지 않는다.
-        if (pattern.validatePermission(noticeTargetInfo, authorMemberId, getChallengerRoleUseCase)) {
+        if (pattern.validatePermissionInGisu(noticeTargetInfo, authorMemberId,
+            getChallengerRoleUseCase, getGisuUseCase.getActiveGisuId())) {
             return true;
         }
 

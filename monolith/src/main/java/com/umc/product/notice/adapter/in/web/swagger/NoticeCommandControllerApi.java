@@ -29,6 +29,12 @@ public interface NoticeCommandControllerApi {
 
             - `mustRead=true`: 필독 공지로 지정 → 목록 최상단 고정 (UPMS에서 사용, 앱공지에서는 false로 설정)
 
+            ### 작성 권한
+
+            작성 권한은 대상 기수와 별개로 현재 활성 기수의 역할을 기준으로 확인합니다.
+            교내 운영진은 본인 학교의 모든 파트에 작성할 수 있으며, 파트 미지정 학교 전체 공지는 회장·부회장만 작성할 수 있습니다.
+            지부장은 운영진 공지를 작성할 수 없습니다. SUPER_ADMIN의 기존 작성 권한은 유지합니다.
+
             ---
 
             ## 운영진 공지 작성 방법
@@ -53,7 +59,7 @@ public interface NoticeCommandControllerApi {
             | 열람 대상 | targetNoticeTab | targetSchoolId | targetParts | 작성 권한 |
             |---|---|---|---|---|
             | 해당 학교 파트장 전체 + 상위 운영진 | `SCHOOL_PART_LEADER` | schoolId | null 또는 `[]` | 해당 학교 회장단 |
-            | 해당 학교 특정 파트 파트장 + 상위 운영진 | `SCHOOL_PART_LEADER` | schoolId | `["WEB_PRODUCT_ENGINEER"]` | 해당 학교 회장단 |
+            | 해당 학교 특정 파트 파트장 + 상위 운영진 | `SCHOOL_PART_LEADER` | schoolId | `["WEB_PRODUCT_ENGINEER"]` | 해당 학교 교내 운영진 |
             """
     )
     @ApiResponses({

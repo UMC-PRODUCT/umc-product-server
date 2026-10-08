@@ -2,6 +2,7 @@ package com.umc.product.notice.adapter.in.web.dto.response.query;
 
 import java.time.Instant;
 
+import com.umc.product.notice.application.port.in.query.dto.NoticeAuthorInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.domain.NoticeTargetInfo;
 
@@ -29,7 +30,8 @@ public record GetNoticeSummaryResponse(
     String authorName,
     boolean hasImages,
     boolean hasLinks,
-    boolean hasVote
+    boolean hasVote,
+    NoticeAuthorInfo author
 ) {
     public static GetNoticeSummaryResponse from(
         NoticeSummary noticeSummary
@@ -50,6 +52,7 @@ public record GetNoticeSummaryResponse(
             .hasImages(noticeSummary.hasImages())
             .hasLinks(noticeSummary.hasLinks())
             .hasVote(noticeSummary.hasVote())
+            .author(noticeSummary.author())
             .build();
     }
 }

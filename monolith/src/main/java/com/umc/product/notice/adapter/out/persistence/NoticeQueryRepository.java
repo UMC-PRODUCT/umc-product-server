@@ -123,12 +123,24 @@ public class NoticeQueryRepository {
         BooleanExpression rolesMatch = noticeTarget.targetNoticeTab.in(readableRoles);
         BooleanExpression partMatch = buildStaffPartCondition(classification, viewerInfo);
 
-        // schoolId 있음 → 교내공지: 해당 학교 공지만 / 없음 → 중앙공지: school null만 (총괄/중운도 동일)
-        BooleanExpression schoolMatch = classification.schoolId() != null
-            ? noticeTarget.targetSchoolId.eq(classification.schoolId())
-            : noticeTarget.targetSchoolId.isNull();
+        // 필터를 지정하지 않으면 조회 권한 내 중앙·학교 운영진 공지를 함께 조회한다.
+        BooleanExpression schoolMatch = buildStaffSchoolCondition(classification, viewerInfo);
 
         return isNotChallengerNotice().and(gisuMatch).and(rolesMatch).and(schoolMatch).and(partMatch);
+    }
+
+    private BooleanExpression buildStaffSchoolCondition(NoticeClassification classification,
+                                                        NoticeViewerInfo viewerInfo) {
+        if (classification.schoolId() != null) {
+            return noticeTarget.targetSchoolId.eq(classification.schoolId());
+        }
+        if (viewerInfo.viewerRole() == NoticeTab.CENTRAL_MEMBER) {
+            return Expressions.TRUE;
+        }
+        if (viewerInfo.isChapterPresident() || viewerInfo.schoolId() == null) {
+            return noticeTarget.targetSchoolId.isNull();
+        }
+        return noticeTarget.targetSchoolId.isNull().or(noticeTarget.targetSchoolId.eq(viewerInfo.schoolId()));
     }
 
     /**
@@ -189,9 +201,8 @@ public class NoticeQueryRepository {
         if (!hasChapter && !hasSchool && !hasPart) {
             return challengerNoticeOnly
                 .and(gisuMatch)
-                .and(noticeTarget.targetChapterId.isNull())
-                .and(noticeTarget.targetSchoolId.isNull())
-                .and(targetPartIsEmpty());
+                .and(buildReadableOrganizationCondition(viewerInfo))
+                .and(buildChallengerPartCondition(viewerInfo));
         }
 
         if (hasChapter && !hasSchool && !hasPart) {
@@ -241,6 +252,26 @@ public class NoticeQueryRepository {
 
     private BooleanExpression isChallengerNotice() {
         return noticeTarget.targetNoticeTab.eq(NoticeTab.CHALLENGER);
+    }
+
+    private BooleanExpression buildReadableOrganizationCondition(NoticeViewerInfo viewerInfo) {
+        if (viewerInfo.viewerRole() == NoticeTab.CENTRAL_MEMBER) {
+            return Expressions.TRUE;
+        }
+        BooleanExpression condition = noticeTarget.targetChapterId.isNull()
+            .and(noticeTarget.targetSchoolId.isNull());
+        if (viewerInfo.chapterId() != null) {
+            condition = condition.or(noticeTarget.targetChapterId.eq(viewerInfo.chapterId())
+                .and(noticeTarget.targetSchoolId.isNull()));
+        }
+        if (viewerInfo.isChapterPresident() && !viewerInfo.chapterSchoolIds().isEmpty()) {
+            condition = condition.or(noticeTarget.targetChapterId.isNull()
+                .and(noticeTarget.targetSchoolId.in(viewerInfo.chapterSchoolIds())));
+        } else if (viewerInfo.schoolId() != null) {
+            condition = condition.or(noticeTarget.targetChapterId.isNull()
+                .and(noticeTarget.targetSchoolId.eq(viewerInfo.schoolId())));
+        }
+        return condition;
     }
 
     private BooleanExpression isNotChallengerNotice() {

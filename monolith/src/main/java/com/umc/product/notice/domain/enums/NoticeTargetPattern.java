@@ -208,14 +208,28 @@ public enum NoticeTargetPattern {
             return useCase.isCentralCoreInGisu(memberId, info.targetGisuId());
         }
         if (info.targetSchoolId() != null) {
-            // 교내운영진 공지 (SCHOOL_PART_LEADER + schoolId): 해당 학교 회장단만 작성 가능
-            return useCase.isSchoolCoreInGisu(memberId, info.targetGisuId(), info.targetSchoolId());
+            boolean hasPart = info.targetParts() != null && !info.targetParts().isEmpty();
+            return hasPart
+                ? useCase.isSchoolAdminInGisu(memberId, info.targetGisuId(), info.targetSchoolId())
+                : useCase.isSchoolCoreInGisu(memberId, info.targetGisuId(), info.targetSchoolId());
         }
         // 학교 운영진 대상 중앙 공지 (SCHOOL_CORE / SCHOOL_PART_LEADER + schoolId=null): 중앙운영진 작성 가능
         return useCase.isCentralMemberInGisu(memberId, info.targetGisuId());
     }
 
     public abstract boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase);
+
+    public boolean validatePermissionInGisu(NoticeTargetInfo info, Long memberId,
+                                             GetChallengerRoleUseCase useCase, Long authorityGisuId) {
+        if (this == ALL_GISU_ALL_TARGET) {
+            return useCase.isCentralCoreInGisu(memberId, authorityGisuId);
+        }
+        if (this == ALL_GISU_SPECIFIC_SCHOOL) {
+            return useCase.isSchoolCoreInGisu(memberId, authorityGisuId, info.targetSchoolId());
+        }
+        return validatePermission(new NoticeTargetInfo(authorityGisuId, info.targetChapterId(),
+            info.targetSchoolId(), info.targetParts(), info.targetNoticeTab()), memberId, useCase);
+    }
 
     private boolean matches(boolean hasGisu, boolean hasChapter, boolean hasSchool, boolean hasPart,
                             boolean hasStaffRoles) {

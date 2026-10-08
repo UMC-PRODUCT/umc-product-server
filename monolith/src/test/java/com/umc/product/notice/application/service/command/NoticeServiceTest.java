@@ -39,6 +39,7 @@ import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notification.application.port.in.RequestFcmNotificationUseCase;
 import com.umc.product.notification.application.port.in.dto.RequestFcmNotificationCommand;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("NoticeService - 공지 작성 대상 파트 검증")
@@ -65,6 +66,8 @@ class NoticeServiceTest {
     ManageNoticeContentUseCase manageNoticeContentUseCase;
     @Mock
     RequestFcmNotificationUseCase requestFcmNotificationUseCase;
+    @Mock
+    GetGisuUseCase getGisuUseCase;
 
     @InjectMocks
     NoticeService sut;
@@ -98,6 +101,7 @@ class NoticeServiceTest {
         ReflectionTestUtils.setField(notice, "id", 42L);
         when(saveNoticePort.save(any(Notice.class))).thenReturn(notice);
         when(getChallengerRoleUseCase.isCentralMemberInGisu(AUTHOR_MEMBER_ID, GISU_ID)).thenReturn(true);
+        when(getGisuUseCase.getActiveGisuId()).thenReturn(GISU_ID);
 
         // When
         sut.createNotice(new CreateNoticeCommand(AUTHOR_MEMBER_ID, "제목", "내용", true, false,

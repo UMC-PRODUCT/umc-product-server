@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
@@ -94,5 +95,74 @@ class NoticeQueryRepositoryPartFilterIntegrationTest extends IntegrationTestSupp
 
         assertThat(result.getContent()).extracting(Notice::getId)
             .containsExactlyInAnyOrder(webNoticeId, mobileNoticeId, allPartsNoticeId);
+    }
+
+    @Test
+    void UMC_전체와_검색은_본인_권한_내_지부_학교_파트_공지를_함께_조회한다() {
+        // given
+        Long global = persistNotice(null, null, List.of(), NoticeTab.CHALLENGER);
+        Long chapter = persistNotice(CHAPTER_ID, null, List.of(), NoticeTab.CHALLENGER);
+        Long schoolWeb = persistNotice(null, 5L, List.of(ChallengerPart.WEB_PRODUCT_ENGINEER), NoticeTab.CHALLENGER);
+        Long schoolMobile = persistNotice(null, 5L, List.of(ChallengerPart.MOBILE_PRODUCT_ENGINEER), NoticeTab.CHALLENGER);
+        Long otherSchool = persistNotice(null, 6L, List.of(), NoticeTab.CHALLENGER);
+        Long otherChapter = persistNotice(4L, null, List.of(), NoticeTab.CHALLENGER);
+        NoticeClassification classification = new NoticeClassification(GISU_ID, null, null, null, NoticeTab.CHALLENGER);
+        NoticeViewerInfo viewer = new NoticeViewerInfo(Set.of(ChallengerPart.WEB_PRODUCT_ENGINEER), 5L, CHAPTER_ID, null);
+
+        // when
+        Page<Notice> list = noticeQueryRepository.findByClassification(classification, viewer, PageRequest.of(0, 10));
+        Page<Notice> search = noticeQueryRepository.findByKeyword("제목", classification, viewer, PageRequest.of(0, 10));
+
+        // then
+        assertThat(list.getContent()).extracting(Notice::getId).containsExactlyInAnyOrder(global, chapter, schoolWeb)
+            .doesNotContain(schoolMobile, otherSchool, otherChapter);
+        assertThat(search.getContent()).extracting(Notice::getId).containsExactlyElementsOf(
+            list.getContent().stream().map(Notice::getId).toList());
+        assertThat(list.getTotalElements()).isEqualTo(3);
+        assertThat(search.getTotalElements()).isEqualTo(3);
+    }
+
+    @Test
+    void 중앙_운영진의_UMC_전체에는_모든_지부_학교_파트_공지를_포함한다() {
+        // given
+        Long chapter = persistNotice(4L, null, List.of(ChallengerPart.MOBILE_PRODUCT_ENGINEER), NoticeTab.CHALLENGER);
+        Long school = persistNotice(null, 6L, List.of(ChallengerPart.WEB_PRODUCT_ENGINEER), NoticeTab.CHALLENGER);
+        NoticeClassification classification = new NoticeClassification(GISU_ID, null, null, null, NoticeTab.CHALLENGER);
+        NoticeViewerInfo viewer = new NoticeViewerInfo(Set.of(), 5L, CHAPTER_ID, NoticeTab.CENTRAL_MEMBER);
+        // when
+        Page<Notice> result = noticeQueryRepository.findByClassification(classification, viewer, PageRequest.of(0, 1));
+        // then: 페이지 크기와 전체 개수 유지
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent()).extracting(Notice::getId).containsAnyOf(chapter, school);
+        assertThat(result.hasNext()).isTrue();
+    }
+
+    @Test
+    void 지부장은_본인_지부_학교_챌린저_공지를_읽지만_학교_운영진_공지는_조회하지_못한다() {
+        // given
+        Long ownSchool = persistNotice(null, 5L, List.of(), NoticeTab.CHALLENGER);
+        Long otherSchool = persistNotice(null, 6L, List.of(), NoticeTab.CHALLENGER);
+        Long centralStaff = persistNotice(null, null, List.of(), NoticeTab.SCHOOL_CORE);
+        Long schoolStaff = persistNotice(null, 5L, List.of(), NoticeTab.SCHOOL_PART_LEADER);
+        Long centralOnly = persistNotice(null, null, List.of(), NoticeTab.CENTRAL_MEMBER);
+        NoticeViewerInfo viewer = new NoticeViewerInfo(Set.of(), 5L, CHAPTER_ID, NoticeTab.SCHOOL_CORE,
+            ChallengerRoleType.CHAPTER_PRESIDENT, Set.of(5L));
+        // when
+        Page<Notice> challenger = noticeQueryRepository.findByClassification(
+            new NoticeClassification(GISU_ID, null, null, null, NoticeTab.CHALLENGER), viewer, PageRequest.of(0, 10));
+        Page<Notice> staff = noticeQueryRepository.findByClassification(
+            new NoticeClassification(GISU_ID, null, null, null, NoticeTab.SCHOOL_CORE), viewer, PageRequest.of(0, 10));
+        // then
+        assertThat(challenger.getContent()).extracting(Notice::getId).containsExactly(ownSchool).doesNotContain(otherSchool);
+        assertThat(staff.getContent()).extracting(Notice::getId).containsExactly(centralStaff)
+            .doesNotContain(schoolStaff, centralOnly);
+    }
+
+    private Long persistNotice(Long chapterId, Long schoolId, List<ChallengerPart> parts, NoticeTab tab) {
+        Notice notice = saveNoticePort.save(Notice.create("제목", "내용", 1L, false, false));
+        saveNoticeTargetPort.save(NoticeTarget.builder().noticeId(notice.getId()).targetGisuId(GISU_ID)
+            .targetChapterId(chapterId).targetSchoolId(schoolId).targetChallengerPart(parts).targetNoticeTab(tab).build());
+        return notice.getId();
     }
 }
