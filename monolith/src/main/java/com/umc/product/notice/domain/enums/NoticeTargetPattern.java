@@ -29,8 +29,8 @@ public enum NoticeTargetPattern {
     ALL_GISU_SPECIFIC_SCHOOL_WITH_PART(false, false, true, true) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
-                "전체 기수를 대상으로 하는 경우, 교내 특정 파트를 한정한 공지는 불가능합니다.");
+            validateTargetSetting(info);
+            return false;
         }
     },
 
@@ -38,8 +38,8 @@ public enum NoticeTargetPattern {
     ALL_GISU_WITH_CHAPTER(false, true, false, false) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
-                "기수가 주어지지 않은 상태에서 지부 대상으로 공지를 작성할 수 없습니다.");
+            validateTargetSetting(info);
+            return false;
         }
     },
 
@@ -94,8 +94,8 @@ public enum NoticeTargetPattern {
     INVALID_GISU_CHAPTER_SCHOOL(true, true, true, false) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
-                "기수, 지부, 학교는 동시에 지정할 수 없습니다.");
+            validateTargetSetting(info);
+            return false;
         }
     },
 
@@ -115,7 +115,7 @@ public enum NoticeTargetPattern {
     STAFF_SPECIFIC_GISU_SPECIFIC_PART(true, false, false, true, true) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            validatePartForStaff(info);
+            validateTargetSetting(info);
             return hasStaffWritePermission(info, memberId, useCase);
         }
     },
@@ -124,7 +124,7 @@ public enum NoticeTargetPattern {
     STAFF_SPECIFIC_GISU_SPECIFIC_SCHOOL(true, false, true, false, true) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            validateSchoolForCentralRole(info);
+            validateTargetSetting(info);
             return hasStaffWritePermission(info, memberId, useCase);
         }
     };
@@ -218,6 +218,23 @@ public enum NoticeTargetPattern {
     }
 
     public abstract boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase);
+
+    public void validateTargetSetting(NoticeTargetInfo info) {
+        switch (this) {
+            case ALL_GISU_SPECIFIC_SCHOOL_WITH_PART -> throw new NoticeDomainException(
+                NoticeErrorCode.INVALID_TARGET_SETTING,
+                "전체 기수를 대상으로 하는 경우, 교내 특정 파트를 한정한 공지는 불가능합니다.");
+            case ALL_GISU_WITH_CHAPTER -> throw new NoticeDomainException(
+                NoticeErrorCode.INVALID_TARGET_SETTING,
+                "기수가 주어지지 않은 상태에서 지부 대상으로 공지를 작성할 수 없습니다.");
+            case INVALID_GISU_CHAPTER_SCHOOL -> throw new NoticeDomainException(
+                NoticeErrorCode.INVALID_TARGET_SETTING, "기수, 지부, 학교는 동시에 지정할 수 없습니다.");
+            case STAFF_SPECIFIC_GISU_SPECIFIC_PART -> validatePartForStaff(info);
+            case STAFF_SPECIFIC_GISU_SPECIFIC_SCHOOL -> validateSchoolForCentralRole(info);
+            default -> {
+            }
+        }
+    }
 
     public boolean validatePermissionInGisu(NoticeTargetInfo info, Long memberId,
                                              GetChallengerRoleUseCase useCase, Long authorityGisuId) {

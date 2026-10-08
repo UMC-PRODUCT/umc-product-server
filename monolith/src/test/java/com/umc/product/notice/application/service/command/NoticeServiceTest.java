@@ -127,7 +127,6 @@ class NoticeServiceTest {
     void 확장_대상_알림_요청(NoticeTargetInfo targetInfo) {
         // Given
         when(getChallengerRoleUseCase.isSuperAdmin(AUTHOR_MEMBER_ID)).thenReturn(true);
-        when(getGisuUseCase.getActiveGisuId()).thenReturn(GISU_ID);
         Notice notice = Notice.create("제목", "내용", AUTHOR_MEMBER_ID, true, false);
         ReflectionTestUtils.setField(notice, "id", 42L);
         when(saveNoticePort.save(any(Notice.class))).thenReturn(notice);
@@ -146,6 +145,7 @@ class NoticeServiceTest {
         assertThat(captor.getValue().targetGisuId()).isNull();
         assertThat(captor.getValue().targetSchoolId()).isNull();
         assertThat(captor.getValue().targetParts()).isEmpty();
+        verifyNoInteractions(getGisuUseCase);
     }
 
     @ParameterizedTest
@@ -154,7 +154,6 @@ class NoticeServiceTest {
     void 제한_대상_알림_없이_게시(NoticeTargetInfo targetInfo) {
         // Given
         when(getChallengerRoleUseCase.isSuperAdmin(AUTHOR_MEMBER_ID)).thenReturn(true);
-        when(getGisuUseCase.getActiveGisuId()).thenReturn(GISU_ID);
         Notice notice = Notice.create("제목", "내용", AUTHOR_MEMBER_ID, false, false);
         ReflectionTestUtils.setField(notice, "id", 42L);
         when(saveNoticePort.save(any(Notice.class))).thenReturn(notice);
@@ -170,6 +169,35 @@ class NoticeServiceTest {
         assertThat(captor.getValue().isShouldSendNotification()).isFalse();
         verify(saveNoticeTargetPort).save(any());
         verifyNoInteractions(requestFcmNotificationUseCase);
+        verifyNoInteractions(getGisuUseCase);
+    }
+
+    @ParameterizedTest
+    @MethodSource("잘못된_대상_조합")
+    @DisplayName("잘못된 대상 조합은 관리자 권한을 평가하기 전에 거부한다")
+    void 잘못된_대상은_관리자_권한으로도_우회하지_못한다(NoticeTargetInfo targetInfo) {
+        // Given
+        CreateNoticeCommand command = new CreateNoticeCommand(
+            AUTHOR_MEMBER_ID, "제목", "내용", false, false, targetInfo);
+
+        // When / Then
+        assertThatThrownBy(() -> sut.createNotice(command))
+            .isInstanceOf(NoticeDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(NoticeErrorCode.INVALID_TARGET_SETTING);
+        verifyNoInteractions(getChallengerRoleUseCase, getGisuUseCase, saveNoticePort, saveNoticeTargetPort);
+    }
+
+    private static Stream<NoticeTargetInfo> 잘못된_대상_조합() {
+        return Stream.of(
+            new NoticeTargetInfo(null, 3L, null, List.of(), NoticeTab.CHALLENGER),
+            new NoticeTargetInfo(null, null, 5L, List.of(ChallengerPart.WEB_PRODUCT_ENGINEER), NoticeTab.CHALLENGER),
+            new NoticeTargetInfo(GISU_ID, 3L, 5L, List.of(), NoticeTab.CHALLENGER),
+            new NoticeTargetInfo(null, null, null, List.of(), NoticeTab.SCHOOL_CORE),
+            new NoticeTargetInfo(GISU_ID, 3L, null, List.of(), NoticeTab.SCHOOL_CORE),
+            new NoticeTargetInfo(GISU_ID, null, 5L, List.of(), NoticeTab.CENTRAL_MEMBER),
+            new NoticeTargetInfo(GISU_ID, null, null, List.of(ChallengerPart.WEB_PRODUCT_ENGINEER), NoticeTab.SCHOOL_CORE)
+        );
     }
 
     private static Stream<Arguments> 알림_확장_대상() {
