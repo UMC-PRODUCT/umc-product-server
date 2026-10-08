@@ -24,7 +24,24 @@ public interface NoticeCommandControllerApi {
         operationId = "NOTICE-201",
         summary = "공지사항 생성",
         description = """
+            제목은 필수이며 최대 255자, 본문은 필수이며 최대 3,000자입니다.
+            길이를 초과하거나 비어 있으면 400(COMMON-400)을 반환하고 공지를 저장하지 않습니다.
+
             - `mustRead=true`: 필독 공지로 지정 → 목록 최상단 고정 (UPMS에서 사용, 앱공지에서는 false로 설정)
+
+            ### 작성 권한
+
+            작성 권한은 대상 기수와 별개로 현재 활성 기수의 역할을 기준으로 확인합니다.
+            교내 운영진은 본인 학교의 모든 파트에 작성할 수 있으며, 파트 미지정 학교 전체 공지는 회장·부회장만 작성할 수 있습니다.
+            지부장은 운영진 공지를 작성할 수 없습니다. SUPER_ADMIN의 기존 작성 권한은 유지합니다.
+
+            ### 알림 발송 조건
+
+            - 작성 권한이 있는 공지는 운영진·전체 기수 공지를 포함하여 `shouldNotify=true`로 알림을 요청할 수 있습니다.
+            - 운영진 공지는 대상 기수·학교·역할·담당 파트에 맞는 운영진에게만 알림을 요청합니다.
+              지부장은 학교 미지정 운영진 공지의 수신 대상에만 포함됩니다.
+            - 전체 기수 공지는 회원별 최신 챌린저 정보를 기준으로 대상을 계산하고, 같은 회원에게 중복 요청하지 않습니다.
+            - 알림은 기존 비동기 발송 경로로 처리하며, 등록된 푸시 토큰이 있는 수신자에게 발송합니다.
 
             ---
 
@@ -50,7 +67,7 @@ public interface NoticeCommandControllerApi {
             | 열람 대상 | targetNoticeTab | targetSchoolId | targetParts | 작성 권한 |
             |---|---|---|---|---|
             | 해당 학교 파트장 전체 + 상위 운영진 | `SCHOOL_PART_LEADER` | schoolId | null 또는 `[]` | 해당 학교 회장단 |
-            | 해당 학교 특정 파트 파트장 + 상위 운영진 | `SCHOOL_PART_LEADER` | schoolId | `["WEB_PRODUCT_ENGINEER"]` | 해당 학교 회장단 |
+            | 해당 학교 특정 파트 파트장 + 상위 운영진 | `SCHOOL_PART_LEADER` | schoolId | `["WEB_PRODUCT_ENGINEER"]` | 해당 학교 교내 운영진 |
             """
     )
     @ApiResponses({
@@ -97,7 +114,9 @@ public interface NoticeCommandControllerApi {
     @Operation(
         operationId = "NOTICE-203",
         summary = "공지사항 수정",
-        description = "공지사항 내용을 수정합니다. mustRead=true로 설정하면 UPMS 필독 공지로 지정되어 목록 최상단에 고정되며, false로 변경하면 고정이 해제됩니다."
+        description = "공지사항 내용을 수정합니다. 제목과 본문을 모두 전달해야 하며, 제목은 최대 255자, 본문은 최대 3,000자입니다. "
+            + "길이를 초과하거나 비어 있으면 400(COMMON-400)을 반환하고 기존 공지를 변경하지 않습니다. "
+            + "mustRead=true로 설정하면 UPMS 필독 공지로 지정되어 목록 최상단에 고정되며, false로 변경하면 고정이 해제됩니다."
     )
     @ApiResponses({
         @ApiResponse(

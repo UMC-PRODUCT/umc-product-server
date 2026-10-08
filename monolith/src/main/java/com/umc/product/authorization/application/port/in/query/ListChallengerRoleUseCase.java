@@ -22,6 +22,8 @@ public interface ListChallengerRoleUseCase {
 
     List<ChallengerRoleInfo> listByMemberIdAndGisuId(Long memberId, Long gisuId);
 
+    List<ChallengerRoleInfo> listByChallengerIdsAndGisuId(Set<Long> challengerIds, Long gisuId);
+
     Map<Long, List<ChallengerRoleType>> mapRoleTypesByChallengerIds(Set<Long> challengerIds);
 
     Set<ChallengerPart> listResponsiblePartsByMemberIdAndGisuId(Long memberId, Long gisuId);

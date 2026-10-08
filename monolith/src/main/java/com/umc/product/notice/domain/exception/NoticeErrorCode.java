@@ -42,6 +42,7 @@ public enum NoticeErrorCode implements BaseCode {
     VOTE_NOT_STARTED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0011", "아직 투표 기간이 시작되지 않았어요. 시작 후 다시 시도해주세요."),
     VOTE_CLOSED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0012", "이미 종료된 투표예요. 투표 기간을 확인해주세요."),
     SELECTED_OPTION_IDS_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0013", "투표 선택지를 1개 이상 선택해주세요."),
+    INVALID_VOTE_PERIOD(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0014", "투표 시작 시각은 마감 시각보다 이전이고, 마감 시각은 현재보다 이후여야 해요."),
 
 
     NOT_IMPLEMENTED_YET(HttpStatus.NOT_IMPLEMENTED, "NOTICE-9999", "아직 사용할 수 없는 기능이에요. 필요한 기능이라면 서버팀에 문의해주세요.");

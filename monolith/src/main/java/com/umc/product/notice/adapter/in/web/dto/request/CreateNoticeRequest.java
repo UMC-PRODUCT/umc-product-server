@@ -7,14 +7,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 @Schema(description = "공지사항 생성 요청")
 public record CreateNoticeRequest(
     @Schema(description = "공지사항 제목")
-    @NotBlank(message = "제목은 필수입니다.") String title,
+    @NotBlank(message = "제목은 필수입니다.") @Size(max = 255, message = "공지 제목은 255자 이하여야 합니다.") String title,
 
     @Schema(description = "공지사항 본문 내용")
-    @NotBlank(message = "내용은 필수입니다.") String content,
+    @NotBlank(message = "내용은 필수입니다.") @Size(max = 3000, message = "공지 내용은 3,000자 이하여야 합니다.") String content,
 
     @Schema(description = "공지 생성 시 대상자에게 푸시 알림을 보낼지 여부. true면 즉시 알림 발송")
     @NotNull(message = "알림 발송 여부는 필수입니다.") Boolean shouldNotify,

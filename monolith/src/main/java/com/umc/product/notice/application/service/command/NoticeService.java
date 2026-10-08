@@ -27,6 +27,7 @@ import com.umc.product.notice.application.port.out.ManageNoticeTargetPort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
+import com.umc.product.notice.application.service.query.NoticeAudienceResolver;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.NoticeTargetInfo;
@@ -35,6 +36,7 @@ import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notification.application.port.in.RequestFcmNotificationUseCase;
 import com.umc.product.notification.application.port.in.dto.RequestFcmNotificationCommand;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +67,8 @@ public class NoticeService implements ManageNoticeUseCase {
     private final GetChallengerUseCase getChallengerUseCase;
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
     private final RequestFcmNotificationUseCase requestFcmNotificationUseCase;
+    private final GetGisuUseCase getGisuUseCase;
+    private final NoticeAudienceResolver noticeAudienceResolver;
 
     @Override
     public List<Long> createNoticeBulk(List<CreateNoticeCommand> commands) {
@@ -121,12 +125,7 @@ public class NoticeService implements ManageNoticeUseCase {
             requestFcmNotificationUseCase.request(
                 RequestFcmNotificationCommand.builder()
                     .requesterMemberId(command.memberId())
-                    .targetGisuId(command.targetInfo().targetGisuId())
-                    .targetChapterId(command.targetInfo().targetChapterId())
-                    .targetSchoolId(command.targetInfo().targetSchoolId())
-                    .targetParts(command.targetInfo().targetParts() == null
-                        ? Set.of()
-                        : new HashSet<>(command.targetInfo().targetParts()))
+                    .memberIds(noticeAudienceResolver.resolve(command.targetInfo()))
                     .title(alarmTitle)
                     .body(alarmBody)
                     .deepLink("umc://notice/" + savedNotice.getId())
@@ -241,16 +240,14 @@ public class NoticeService implements ManageNoticeUseCase {
      */
     private boolean validateNoticeWritePermission(NoticeTargetInfo noticeTargetInfo, Long authorMemberId) {
         NoticeTargetPattern pattern = NoticeTargetPattern.from(noticeTargetInfo);
+        pattern.validateTargetSetting(noticeTargetInfo);
 
-        // 일반 권한 검증을 먼저 수행한다.
-        // - 구조적으로 불가능한 대상 조합(예: 지부+학교 동시 지정)은 여기서 INVALID_TARGET_SETTING 예외로
-        //   차단된다(슈퍼어드민에게도 동일 적용).
-        // - 권한을 충족하면 그대로 통과하므로, 일반적인 성공 케이스에서는 추가 역할 조회가 발생하지 않는다.
-        if (pattern.validatePermission(noticeTargetInfo, authorMemberId, getChallengerRoleUseCase)) {
+        // 시스템 관리자 권한은 활성 기수 유무와 무관하다. 대상 조합 검증은 동일하게 적용한다.
+        if (getChallengerRoleUseCase.isSuperAdmin(authorMemberId)) {
             return true;
         }
 
-        // 권한이 부족한 경우에 한해, 슈퍼어드민이면 모든 카테고리 작성을 허용한다.
-        return getChallengerRoleUseCase.isSuperAdmin(authorMemberId);
+        return pattern.validatePermissionInGisu(noticeTargetInfo, authorMemberId,
+            getChallengerRoleUseCase, getGisuUseCase.getActiveGisuId());
     }
 }

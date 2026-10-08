@@ -17,13 +17,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("NoticeViewerInfoAssembler")
@@ -85,5 +89,26 @@ class NoticeViewerInfoAssemblerTest {
         NoticeViewerInfo result = sut.toMemberIdAndGisuId(MEMBER_ID, GISU_ID);
 
         assertThat(result.memberParts()).doesNotContainNull().isEmpty();
+    }
+
+    @Test
+    void 지부장은_담당_지부와_소속_학교_범위를_사용한다() {
+        // given: 과거 기수 중앙 역할은 현재 조회 권한에 사용하지 않는다.
+        given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
+            ChallengerRoleInfo.builder().gisuId(8L).roleType(ChallengerRoleType.CENTRAL_PRESIDENT).build(),
+            ChallengerRoleInfo.builder().gisuId(GISU_ID).roleType(ChallengerRoleType.CHAPTER_PRESIDENT)
+                .organizationType(OrganizationType.CHAPTER).organizationId(3L).build()));
+        given(getChapterUseCase.getChaptersWithSchoolsByGisuId(GISU_ID)).willReturn(List.of(
+            new ChapterWithSchoolsInfo(3L, "담당 지부", List.of(
+                new ChapterWithSchoolsInfo.SchoolInfo(5L, "학교"))),
+            new ChapterWithSchoolsInfo(4L, "다른 지부", List.of(
+                new ChapterWithSchoolsInfo.SchoolInfo(6L, "다른 학교")))));
+        // when
+        NoticeViewerInfo result = sut.toMemberIdAndGisuId(MEMBER_ID, GISU_ID);
+        // then
+        assertThat(result.isChapterPresident()).isTrue();
+        assertThat(result.chapterId()).isEqualTo(3L);
+        assertThat(result.chapterSchoolIds()).containsExactly(5L);
+        assertThat(result.viewerRole()).isEqualTo(NoticeTab.SCHOOL_CORE);
     }
 }

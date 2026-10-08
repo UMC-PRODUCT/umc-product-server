@@ -18,6 +18,7 @@ public record NoticeSummary(
     String authorName,
     boolean hasImages,
     boolean hasLinks,
-    boolean hasVote
+    boolean hasVote,
+    NoticeAuthorInfo author
 ) {
 }

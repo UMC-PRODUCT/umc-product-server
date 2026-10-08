@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +24,8 @@ import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.enums.NoticeTab;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("NoticePermissionEvaluator")
@@ -39,11 +42,13 @@ class NoticePermissionEvaluatorTest {
 
     @Mock
     LoadNoticePort loadNoticePort;
+    @Mock
+    GetChapterUseCase getChapterUseCase;
 
     @Test
     @DisplayName("특정 기수 공지 읽기는 기존 호환성을 위해 중앙 총괄단의 다른 기수 역할도 인정한다")
     void central_core_in_other_gisu_can_read_specific_gisu_notice_for_compatibility() {
-        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort);
+        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort, getChapterUseCase);
         given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID))
             .willReturn(new NoticeTargetInfo(10L, null, null, List.of(), NoticeTab.CHALLENGER));
         SubjectAttributes subject = subjectWithRole(new RoleAttribute(
@@ -62,7 +67,7 @@ class NoticePermissionEvaluatorTest {
     @Test
     @DisplayName("특정 기수 학교 공지 관리는 기존 호환성을 위해 같은 학교 운영진의 다른 기수 역할도 인정한다")
     void school_admin_in_other_gisu_can_check_specific_gisu_school_notice_for_compatibility() {
-        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort);
+        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort, getChapterUseCase);
         given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID))
             .willReturn(new NoticeTargetInfo(10L, null, SCHOOL_ID, List.of(), NoticeTab.CHALLENGER));
         SubjectAttributes subject = subjectWithRole(new RoleAttribute(
@@ -81,7 +86,7 @@ class NoticePermissionEvaluatorTest {
     @Test
     @DisplayName("특정 기수 지부 공지 관리는 기존 호환성을 위해 같은 지부장의 다른 기수 역할도 인정한다")
     void chapter_president_in_other_gisu_can_check_specific_gisu_chapter_notice_for_compatibility() {
-        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort);
+        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort, getChapterUseCase);
         given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID))
             .willReturn(new NoticeTargetInfo(10L, CHAPTER_ID, null, List.of(), NoticeTab.CHALLENGER));
         SubjectAttributes subject = subjectWithRole(new RoleAttribute(
@@ -100,7 +105,7 @@ class NoticePermissionEvaluatorTest {
     @Test
     @DisplayName("특정 기수 전체 공지 관리는 기존 호환성을 위해 중앙운영진의 다른 기수 역할도 인정한다")
     void central_member_in_other_gisu_can_check_specific_gisu_notice_for_compatibility() {
-        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort);
+        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort, getChapterUseCase);
         given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID))
             .willReturn(new NoticeTargetInfo(10L, null, null, List.of(), NoticeTab.CHALLENGER));
         SubjectAttributes subject = subjectWithRole(new RoleAttribute(
@@ -119,7 +124,7 @@ class NoticePermissionEvaluatorTest {
     @Test
     @DisplayName("다른 학교 운영진은 특정 기수 학교 공지를 관리할 수 없다")
     void school_admin_in_other_school_cannot_check_specific_gisu_school_notice() {
-        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort);
+        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort, getChapterUseCase);
         given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID))
             .willReturn(new NoticeTargetInfo(10L, null, SCHOOL_ID, List.of(), NoticeTab.CHALLENGER));
         SubjectAttributes subject = subjectWithRole(new RoleAttribute(
@@ -138,7 +143,7 @@ class NoticePermissionEvaluatorTest {
     @Test
     @DisplayName("다른 지부장은 특정 기수 지부 공지를 관리할 수 없다")
     void chapter_president_in_other_chapter_cannot_check_specific_gisu_chapter_notice() {
-        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort);
+        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort, getChapterUseCase);
         given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID))
             .willReturn(new NoticeTargetInfo(10L, CHAPTER_ID, null, List.of(), NoticeTab.CHALLENGER));
         SubjectAttributes subject = subjectWithRole(new RoleAttribute(
@@ -162,5 +167,55 @@ class NoticePermissionEvaluatorTest {
             .roleAttributes(List.of(roleAttribute))
             .systemRoles(Set.of())
             .build();
+    }
+
+    @Test
+    void 지부장은_중앙_발신_운영진_공지에만_접근한다() {
+        // given: 학교 ID와 지부 ID가 같더라도 학교 운영진 공지 권한은 부여하지 않는다.
+        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort, getChapterUseCase);
+        SubjectAttributes subject = subjectWithRole(new RoleAttribute(ChallengerRoleType.CHAPTER_PRESIDENT,
+            OrganizationType.CHAPTER, SCHOOL_ID, null, 10L));
+        given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID)).willReturn(
+            new NoticeTargetInfo(10L, null, null, List.of(), NoticeTab.SCHOOL_CORE),
+            new NoticeTargetInfo(10L, null, SCHOOL_ID, List.of(), NoticeTab.SCHOOL_PART_LEADER),
+            new NoticeTargetInfo(10L, null, null, List.of(), NoticeTab.CENTRAL_MEMBER));
+        ResourcePermission read = ResourcePermission.of(ResourceType.NOTICE, NOTICE_ID, PermissionType.READ);
+        // when & then
+        assertThat(sut.evaluate(subject, read)).isTrue();
+        assertThat(sut.evaluate(subject, read)).isFalse();
+        assertThat(sut.evaluate(subject, read)).isFalse();
+    }
+
+    @Test
+    void 중앙_운영진은_학교_운영진_공지를_읽을_수_있다() {
+        // given
+        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort, getChapterUseCase);
+        given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID))
+            .willReturn(new NoticeTargetInfo(10L, null, SCHOOL_ID, List.of(), NoticeTab.SCHOOL_PART_LEADER));
+        SubjectAttributes subject = subjectWithRole(new RoleAttribute(ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER,
+            OrganizationType.CENTRAL, null, null, 10L));
+        // when
+        boolean result = sut.evaluate(subject, ResourcePermission.of(ResourceType.NOTICE, NOTICE_ID, PermissionType.READ));
+        // then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void 지부장은_소속_학교와_무관하게_담당_지부의_챌린저_공지를_열람한다() {
+        // given
+        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort, getChapterUseCase);
+        SubjectAttributes subject = subjectWithRole(new RoleAttribute(ChallengerRoleType.CHAPTER_PRESIDENT,
+            OrganizationType.CHAPTER, CHAPTER_ID, null, 10L));
+        given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID)).willReturn(
+            new NoticeTargetInfo(10L, CHAPTER_ID, null, List.of(), NoticeTab.CHALLENGER),
+            new NoticeTargetInfo(10L, null, OTHER_SCHOOL_ID, List.of(), NoticeTab.CHALLENGER),
+            new NoticeTargetInfo(9L, CHAPTER_ID, null, List.of(), NoticeTab.CHALLENGER));
+        given(getChapterUseCase.findByGisuAndSchool(10L, OTHER_SCHOOL_ID))
+            .willReturn(Optional.of(new ChapterInfo(CHAPTER_ID, "담당 지부")));
+        ResourcePermission read = ResourcePermission.of(ResourceType.NOTICE, NOTICE_ID, PermissionType.READ);
+        // when & then
+        assertThat(sut.evaluate(subject, read)).isTrue();
+        assertThat(sut.evaluate(subject, read)).isTrue();
+        assertThat(sut.evaluate(subject, read)).isFalse();
     }
 }

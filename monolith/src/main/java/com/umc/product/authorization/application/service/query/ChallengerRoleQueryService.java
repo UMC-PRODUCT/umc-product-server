@@ -97,6 +97,18 @@ public class ChallengerRoleQueryService implements
         return hasSystemSuperAdmin(memberId);
     }
 
+    @Override
+    public List<ChallengerRoleInfo> listByChallengerIdsAndGisuId(Set<Long> challengerIds, Long gisuId) {
+        if (challengerIds.isEmpty()) {
+            return List.of();
+        }
+        var gisu = getGisuUseCase.getById(gisuId);
+        return loadChallengerRolePort.findByChallengerIdIn(challengerIds).stream()
+            .filter(role -> gisuId.equals(role.getGisuId()))
+            .map(role -> ChallengerRoleInfo.from(role, gisu))
+            .toList();
+    }
+
     private boolean memberExists(Long memberId) {
         return checkMemberExistenceUseCase.existsById(memberId);
     }

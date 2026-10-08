@@ -226,6 +226,21 @@ class ChallengerRoleQueryServiceTest {
         return sut(memberId -> true);
     }
 
+    @Test
+    void 역할_일괄_조회는_요청_기수만_반환하고_기수_상세를_한번_조회한다() {
+        // given
+        ChallengerRole active = ChallengerRole.create(10L, ChallengerRoleType.SCHOOL_PRESIDENT, SCHOOL_ID, null, GISU_ID);
+        ChallengerRole past = ChallengerRole.create(11L, ChallengerRoleType.CENTRAL_PRESIDENT, null, null, 8L);
+        given(loadChallengerRolePort.findByChallengerIdIn(Set.of(10L, 11L))).willReturn(List.of(active, past));
+        given(getGisuUseCase.getById(GISU_ID)).willReturn(new GisuInfo(GISU_ID, 10L, null, null, true));
+        // when
+        List<ChallengerRoleInfo> result = sut().listByChallengerIdsAndGisuId(Set.of(10L, 11L), GISU_ID);
+        // then
+        assertThat(result).extracting(ChallengerRoleInfo::challengerId).containsExactly(10L);
+        then(getGisuUseCase).should().getById(GISU_ID);
+        then(getGisuUseCase).shouldHaveNoMoreInteractions();
+    }
+
     private ChallengerRoleQueryService sut(CheckMemberExistenceUseCase checkMemberExistenceUseCase) {
         return new ChallengerRoleQueryService(
             loadChallengerRolePort,

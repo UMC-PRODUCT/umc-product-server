@@ -1,11 +1,16 @@
 package com.umc.product.notice.application.service.command;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourcePermission;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.form.application.port.in.command.ManageVoteUseCase;
 import com.umc.product.form.application.port.in.command.dto.CreateVoteCommand;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
@@ -21,6 +26,7 @@ import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
 import com.umc.product.notice.application.port.out.SaveNoticeImagePort;
 import com.umc.product.notice.application.port.out.SaveNoticeLinkPort;
+import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeVotePort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeImage;
@@ -44,16 +50,24 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     private final SaveNoticeImagePort saveNoticeImagePort;
     private final SaveNoticeLinkPort saveNoticeLinkPort;
     private final LoadNoticePort loadNoticePort;
+    private final SaveNoticePort saveNoticePort;
 
+    private final CheckPermissionUseCase checkPermissionUseCase;
     private final ManageVoteUseCase manageVoteUseCase;
+    private final Clock clock;
 
     @Override
     public AddNoticeVoteResult addVote(AddNoticeVoteCommand command, Long noticeId) {
-        Notice notice = findNoticeById(noticeId);
-        notice.validateAuthorMember(command.createdMemberId());
+        Notice notice = findEditableNotice(noticeId, command.createdMemberId());
 
         if (loadNoticeVotePort.existsVoteByNoticeId(noticeId)) {
             throw new NoticeDomainException(NoticeErrorCode.VOTE_ALREADY_EXISTS);
+        }
+
+        if (command.startsAt() == null || command.endsAtExclusive() == null
+            || !command.startsAt().isBefore(command.endsAtExclusive())
+            || !command.endsAtExclusive().isAfter(clock.instant())) {
+            throw new NoticeDomainException(NoticeErrorCode.INVALID_VOTE_PERIOD);
         }
 
         Long voteId = manageVoteUseCase.createVote(
@@ -68,14 +82,14 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
         NoticeVote noticeVote = NoticeVote.create(voteId, notice, command.startsAt(), command.endsAtExclusive());
         NoticeVote savedVote = saveNoticeVotePort.saveVote(noticeVote);
+        saveNoticePort.updateUpdatedAt(noticeId, clock.instant());
 
         return new AddNoticeVoteResult(savedVote.getId(), voteId);
     }
 
     @Override
     public List<Long> addImages(AddNoticeImagesCommand command, Long noticeId, Long memberId) {
-        Notice notice = findNoticeById(noticeId);
-        notice.validateAuthorMember(memberId);
+        Notice notice = findEditableNotice(noticeId, memberId);
 
         if (command.imageIds() == null || command.imageIds().isEmpty()) {
             throw new NoticeDomainException(NoticeErrorCode.IMAGE_URLS_REQUIRED);
@@ -97,6 +111,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
             .toList();
 
         List<NoticeImage> savedImages = saveNoticeImagePort.saveAllImages(images);
+        saveNoticePort.updateUpdatedAt(noticeId, clock.instant());
         return savedImages.stream()
             .map(NoticeImage::getId)
             .toList();
@@ -104,8 +119,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
     @Override
     public List<Long> addLinks(AddNoticeLinksCommand command, Long noticeId, Long memberId) {
-        Notice notice = findNoticeById(noticeId);
-        notice.validateAuthorMember(memberId);
+        Notice notice = findEditableNotice(noticeId, memberId);
 
         if (command.links() == null || command.links().isEmpty()) {
             throw new NoticeDomainException(NoticeErrorCode.LINK_URLS_REQUIRED);
@@ -117,6 +131,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
             .toList();
 
         List<NoticeLink> savedLinks = saveNoticeLinkPort.saveAllLinks(links);
+        saveNoticePort.updateUpdatedAt(noticeId, clock.instant());
         return savedLinks.stream()
             .map(NoticeLink::getId)
             .toList();
@@ -124,14 +139,14 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
     @Override
     public void deleteVote(Long noticeId, Long memberId) {
-        Notice notice = findNoticeById(noticeId);
-        notice.validateAuthorMember(memberId);
+        findEditableNotice(noticeId, memberId);
 
         NoticeVote vote = loadNoticeVotePort.findVoteByNoticeId(noticeId)
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
 
         saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
         manageVoteUseCase.deleteVote(vote.getVoteId());
+        saveNoticePort.updateUpdatedAt(noticeId, clock.instant());
     }
 
     @Override
@@ -156,21 +171,20 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
             throw new NoticeDomainException(NoticeErrorCode.IMAGE_LIMIT_EXCEEDED);
         }
 
-        Notice notice = findNoticeById(noticeId);
-        notice.validateAuthorMember(memberId);
+        Notice notice = findEditableNotice(noticeId, memberId);
 
         saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
 
-        if (command.imageIds().isEmpty()) {
-            return;
+        if (!command.imageIds().isEmpty()) {
+            AtomicInteger order = new AtomicInteger(0);
+            List<NoticeImage> images = command.imageIds().stream()
+                .map(imageId -> NoticeImage.create(imageId, notice, order.getAndIncrement()))
+                .toList();
+
+            saveNoticeImagePort.saveAllImages(images);
         }
 
-        AtomicInteger order = new AtomicInteger(0);
-        List<NoticeImage> images = command.imageIds().stream()
-            .map(imageId -> NoticeImage.create(imageId, notice, order.getAndIncrement()))
-            .toList();
-
-        saveNoticeImagePort.saveAllImages(images);
+        saveNoticePort.updateUpdatedAt(noticeId, clock.instant());
     }
 
     @Override
@@ -179,25 +193,31 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
             return;
         }
 
-        Notice notice = findNoticeById(noticeId);
-        notice.validateAuthorMember(memberId);
+        Notice notice = findEditableNotice(noticeId, memberId);
         saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
 
-        if (command.links().isEmpty()) {
-            return;
+        if (!command.links().isEmpty()) {
+            AtomicInteger order = new AtomicInteger(0);
+            List<NoticeLink> links = command.links().stream()
+                .map(link -> NoticeLink.create(link, notice, order.getAndIncrement()))
+                .toList();
+
+            saveNoticeLinkPort.saveAllLinks(links);
         }
 
-        AtomicInteger order = new AtomicInteger(0);
-        List<NoticeLink> links = command.links().stream()
-            .map(link -> NoticeLink.create(link, notice, order.getAndIncrement()))
-            .toList();
-
-        saveNoticeLinkPort.saveAllLinks(links);
+        saveNoticePort.updateUpdatedAt(noticeId, clock.instant());
     }
 
-    private Notice findNoticeById(Long noticeId) {
-        return loadNoticePort.findNoticeById(noticeId)
+    private Notice findEditableNotice(Long noticeId, Long memberId) {
+        Notice notice = loadNoticePort.findNoticeById(noticeId)
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
+
+        if (!checkPermissionUseCase.check(memberId,
+            ResourcePermission.of(ResourceType.NOTICE, noticeId, PermissionType.EDIT))) {
+            throw new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH);
+        }
+
+        return notice;
     }
 
 }

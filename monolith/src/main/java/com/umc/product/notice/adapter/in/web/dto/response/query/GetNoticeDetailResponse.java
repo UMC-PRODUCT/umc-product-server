@@ -3,6 +3,7 @@ package com.umc.product.notice.adapter.in.web.dto.response.query;
 import java.time.Instant;
 import java.util.List;
 
+import com.umc.product.notice.application.port.in.query.dto.NoticeAuthorInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeImageInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeLinkInfo;
@@ -33,7 +34,9 @@ public record GetNoticeDetailResponse(
 
     // 메타데이터
     Long viewCount,
-    Instant createdAt
+    Instant createdAt,
+    Instant updatedAt,
+    NoticeAuthorInfo author
 ) {
 
     public static GetNoticeDetailResponse from(
@@ -52,6 +55,8 @@ public record GetNoticeDetailResponse(
             .targetInfo(noticeInfo.targetInfo())
             .viewCount(noticeInfo.viewCount() + 1)
             .createdAt(noticeInfo.createdAt())
+            .updatedAt(noticeInfo.updatedAt())
+            .author(noticeInfo.author())
             .build();
     }
 
