@@ -10,10 +10,14 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -32,6 +36,7 @@ import com.umc.product.notice.application.port.out.ManageNoticeTargetPort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
+import com.umc.product.notice.application.service.query.NoticeAudienceResolver;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.enums.NoticeTab;
@@ -42,7 +47,7 @@ import com.umc.product.notification.application.port.in.dto.RequestFcmNotificati
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("NoticeService - 공지 작성 대상 파트 검증")
+@DisplayName("NoticeService - 공지 생성 및 재알림")
 class NoticeServiceTest {
 
     private static final Long AUTHOR_MEMBER_ID = 100L;
@@ -68,6 +73,8 @@ class NoticeServiceTest {
     RequestFcmNotificationUseCase requestFcmNotificationUseCase;
     @Mock
     GetGisuUseCase getGisuUseCase;
+    @Mock
+    NoticeAudienceResolver noticeAudienceResolver;
 
     @InjectMocks
     NoticeService sut;
@@ -112,6 +119,67 @@ class NoticeServiceTest {
             ArgumentCaptor.forClass(RequestFcmNotificationCommand.class);
         verify(requestFcmNotificationUseCase).request(captor.capture());
         assertThat(captor.getValue().deepLink()).isEqualTo("umc://notice/42");
+    }
+
+    @ParameterizedTest
+    @MethodSource("알림_확장_대상")
+    @DisplayName("운영진·전체 기수 공지도 계산한 수신자에게 알림을 요청한다")
+    void 확장_대상_알림_요청(NoticeTargetInfo targetInfo) {
+        // Given
+        when(getChallengerRoleUseCase.isSuperAdmin(AUTHOR_MEMBER_ID)).thenReturn(true);
+        when(getGisuUseCase.getActiveGisuId()).thenReturn(GISU_ID);
+        Notice notice = Notice.create("제목", "내용", AUTHOR_MEMBER_ID, true, false);
+        ReflectionTestUtils.setField(notice, "id", 42L);
+        when(saveNoticePort.save(any(Notice.class))).thenReturn(notice);
+        when(noticeAudienceResolver.resolve(targetInfo)).thenReturn(List.of(70L));
+        CreateNoticeCommand command = new CreateNoticeCommand(
+            AUTHOR_MEMBER_ID, "제목", "내용", true, false, targetInfo);
+
+        // When
+        assertThat(sut.createNotice(command)).isEqualTo(42L);
+
+        // Then
+        ArgumentCaptor<RequestFcmNotificationCommand> captor =
+            ArgumentCaptor.forClass(RequestFcmNotificationCommand.class);
+        verify(requestFcmNotificationUseCase).request(captor.capture());
+        assertThat(captor.getValue().memberIds()).containsExactly(70L);
+        assertThat(captor.getValue().targetGisuId()).isNull();
+        assertThat(captor.getValue().targetSchoolId()).isNull();
+        assertThat(captor.getValue().targetParts()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @MethodSource("알림_확장_대상")
+    @DisplayName("운영진·전체 기수 공지도 알림을 끄면 공지와 대상을 저장한다")
+    void 제한_대상_알림_없이_게시(NoticeTargetInfo targetInfo) {
+        // Given
+        when(getChallengerRoleUseCase.isSuperAdmin(AUTHOR_MEMBER_ID)).thenReturn(true);
+        when(getGisuUseCase.getActiveGisuId()).thenReturn(GISU_ID);
+        Notice notice = Notice.create("제목", "내용", AUTHOR_MEMBER_ID, false, false);
+        ReflectionTestUtils.setField(notice, "id", 42L);
+        when(saveNoticePort.save(any(Notice.class))).thenReturn(notice);
+
+        // When
+        Long noticeId = sut.createNotice(new CreateNoticeCommand(
+            AUTHOR_MEMBER_ID, "제목", "내용", false, false, targetInfo));
+
+        // Then
+        assertThat(noticeId).isEqualTo(42L);
+        ArgumentCaptor<Notice> captor = ArgumentCaptor.forClass(Notice.class);
+        verify(saveNoticePort).save(captor.capture());
+        assertThat(captor.getValue().isShouldSendNotification()).isFalse();
+        verify(saveNoticeTargetPort).save(any());
+        verifyNoInteractions(requestFcmNotificationUseCase);
+    }
+
+    private static Stream<Arguments> 알림_확장_대상() {
+        return Stream.of(
+            Arguments.of(new NoticeTargetInfo(GISU_ID, null, null, List.of(), NoticeTab.CENTRAL_MEMBER)),
+            Arguments.of(new NoticeTargetInfo(GISU_ID, null, null, List.of(), NoticeTab.SCHOOL_CORE)),
+            Arguments.of(new NoticeTargetInfo(GISU_ID, null, null, List.of(), NoticeTab.SCHOOL_PART_LEADER)),
+            Arguments.of(new NoticeTargetInfo(null, null, null, List.of(), NoticeTab.CHALLENGER)),
+            Arguments.of(new NoticeTargetInfo(null, null, 3L, List.of(), NoticeTab.CHALLENGER))
+        );
     }
 
     private CreateNoticeCommand createCommand(List<ChallengerPart> targetParts) {

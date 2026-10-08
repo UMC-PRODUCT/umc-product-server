@@ -27,6 +27,7 @@ import com.umc.product.notice.application.port.out.ManageNoticeTargetPort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
+import com.umc.product.notice.application.service.query.NoticeAudienceResolver;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.NoticeTargetInfo;
@@ -67,6 +68,7 @@ public class NoticeService implements ManageNoticeUseCase {
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
     private final RequestFcmNotificationUseCase requestFcmNotificationUseCase;
     private final GetGisuUseCase getGisuUseCase;
+    private final NoticeAudienceResolver noticeAudienceResolver;
 
     @Override
     public List<Long> createNoticeBulk(List<CreateNoticeCommand> commands) {
@@ -123,12 +125,7 @@ public class NoticeService implements ManageNoticeUseCase {
             requestFcmNotificationUseCase.request(
                 RequestFcmNotificationCommand.builder()
                     .requesterMemberId(command.memberId())
-                    .targetGisuId(command.targetInfo().targetGisuId())
-                    .targetChapterId(command.targetInfo().targetChapterId())
-                    .targetSchoolId(command.targetInfo().targetSchoolId())
-                    .targetParts(command.targetInfo().targetParts() == null
-                        ? Set.of()
-                        : new HashSet<>(command.targetInfo().targetParts()))
+                    .memberIds(noticeAudienceResolver.resolve(command.targetInfo()))
                     .title(alarmTitle)
                     .body(alarmBody)
                     .deepLink("umc://notice/" + savedNotice.getId())
