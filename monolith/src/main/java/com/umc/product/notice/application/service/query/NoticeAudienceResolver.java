@@ -1,10 +1,9 @@
 package com.umc.product.notice.application.service.query;
 
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,9 +12,7 @@ import org.springframework.stereotype.Component;
 import com.umc.product.authorization.application.port.in.query.ListChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerBasicInfo;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
@@ -39,52 +36,50 @@ public class NoticeAudienceResolver {
     }
 
     private List<Long> resolveChallengers(NoticeTargetInfo target) {
-        List<ChallengerInfo> challengers = target.targetGisuId() == null
-            ? getChallengerUseCase.getAllLatestGisuPerMemberWithoutChallengerPoints()
-            : getChallengerUseCase.getAllByGisuId(target.targetGisuId());
+        List<ChallengerBasicInfo> challengers = loadChallengers(target.targetGisuId());
         if (challengers.isEmpty()) {
             return List.of();
         }
-        Set<Long> memberIds = challengers.stream().map(ChallengerInfo::memberId).collect(Collectors.toSet());
-        Map<Long, MemberInfo> memberById = getMemberUseCase.findAllByIds(memberIds);
-        Map<Long, Map<Long, ChapterInfo>> chapterByGisuAndSchool =
-            loadChaptersForTarget(target, challengers, memberById.values());
+        Set<Long> memberIds = challengers.stream().map(ChallengerBasicInfo::memberId).collect(Collectors.toSet());
+        boolean hasOrganizationTarget = target.targetSchoolId() != null || target.targetChapterId() != null;
+        Map<Long, Long> schoolIdByMemberId = hasOrganizationTarget
+            ? getMemberUseCase.findAllSchoolIdsByIds(memberIds) : Map.of();
+        // 학교가 없는 회원도 전체 공지에는 포함하고, 존재하지 않는 회원은 기존처럼 제외한다.
+        Set<Long> existingMemberIds = hasOrganizationTarget
+            ? schoolIdByMemberId.keySet() : getMemberUseCase.findAllNamesByIds(memberIds).keySet();
+        Map<Long, ChapterInfo> chapterBySchoolId = loadChaptersForTarget(target, schoolIdByMemberId);
 
         Set<Long> recipientMemberIds = new LinkedHashSet<>();
-        for (ChallengerInfo challenger : challengers) {
-            MemberInfo member = memberById.get(challenger.memberId());
-            if (member == null) {
+        for (ChallengerBasicInfo challenger : challengers) {
+            if (!existingMemberIds.contains(challenger.memberId())) {
                 continue;
             }
-            Long chapterId = findChapterId(chapterByGisuAndSchool, challenger.gisuId(), member.schoolId());
-            if (target.isTarget(challenger.gisuId(), chapterId, member.schoolId(), challenger.part())) {
+            Long schoolId = schoolIdByMemberId.get(challenger.memberId());
+            ChapterInfo chapter = schoolId == null ? null : chapterBySchoolId.get(schoolId);
+            Long chapterId = chapter == null ? null : chapter.id();
+            if (target.isTarget(challenger.gisuId(), chapterId, schoolId, challenger.part())) {
                 recipientMemberIds.add(challenger.memberId());
             }
         }
         return List.copyOf(recipientMemberIds);
     }
 
-    private Map<Long, Map<Long, ChapterInfo>> loadChaptersForTarget(NoticeTargetInfo target,
-                                                                  List<ChallengerInfo> challengers,
-                                                                  Collection<MemberInfo> members) {
-        if (target.targetChapterId() == null) {
-            return Map.of();
+    private List<ChallengerBasicInfo> loadChallengers(Long gisuId) {
+        if (gisuId != null) {
+            return getChallengerUseCase.listBasicByGisuId(gisuId);
         }
-        Set<Long> schoolIds = members.stream().map(MemberInfo::schoolId)
-            .filter(Objects::nonNull).collect(Collectors.toSet());
-        if (schoolIds.isEmpty()) {
-            return Map.of();
-        }
-        Set<Long> gisuIds = challengers.stream().map(ChallengerInfo::gisuId).collect(Collectors.toSet());
-        return getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(gisuIds, schoolIds);
+        return getChallengerUseCase.getAllLatestGisuPerMemberWithoutChallengerPoints().stream()
+            .map(info -> new ChallengerBasicInfo(info.challengerId(), info.memberId(), info.gisuId(),
+                info.part(), info.infra(), info.challengerStatus()))
+            .toList();
     }
 
-    private Long findChapterId(Map<Long, Map<Long, ChapterInfo>> chapterByGisuAndSchool, Long gisuId, Long schoolId) {
-        if (schoolId == null) {
-            return null;
+    private Map<Long, ChapterInfo> loadChaptersForTarget(NoticeTargetInfo target, Map<Long, Long> schoolIdByMemberId) {
+        if (target.targetChapterId() == null || schoolIdByMemberId.isEmpty()) {
+            return Map.of();
         }
-        ChapterInfo chapter = chapterByGisuAndSchool.getOrDefault(gisuId, Map.of()).get(schoolId);
-        return chapter == null ? null : chapter.id();
+        return getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(Set.of(target.targetGisuId()),
+            new HashSet<>(schoolIdByMemberId.values())).getOrDefault(target.targetGisuId(), Map.of());
     }
 
     private List<Long> resolveStaff(NoticeTargetInfo target) {

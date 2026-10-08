@@ -2,6 +2,9 @@ package com.umc.product.notice.application.service.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.util.List;
@@ -14,7 +17,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.ListChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
@@ -23,11 +28,15 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import com.umc.product.member.application.port.out.LoadMemberPort;
+import com.umc.product.member.application.service.MemberQueryService;
+import com.umc.product.member.domain.Member;
 import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 
 @ExtendWith(MockitoExtension.class)
 class NoticeAudienceResolverTest {
@@ -43,8 +52,8 @@ class NoticeAudienceResolverTest {
         // given: 기수 중복 이력과 다른 학교 회원, 학교 없는 회원
         given(getChallengerUseCase.getAllLatestGisuPerMemberWithoutChallengerPoints()).willReturn(List.of(
             challenger(1L, 9L), challenger(1L, 10L), challenger(2L, 10L), challenger(3L, 10L)));
-        given(getMemberUseCase.findAllByIds(Set.of(1L, 2L, 3L))).willReturn(Map.of(
-            1L, member(1L, 5L), 2L, member(2L, 6L), 3L, member(3L, null)));
+        given(getMemberUseCase.findAllSchoolIdsByIds(Set.of(1L, 2L, 3L)))
+            .willReturn(Map.of(1L, 5L, 2L, 6L));
         // when
         List<Long> result = sut.resolve(new NoticeTargetInfo(null, null, 5L, List.of(), NoticeTab.CHALLENGER));
         // then
@@ -55,9 +64,10 @@ class NoticeAudienceResolverTest {
     @Test
     void 지부와_파트가_모두_맞는_챌린저만_선정한다() {
         // given
-        given(getChallengerUseCase.getAllByGisuId(10L)).willReturn(List.of(challenger(1L, 10L), challenger(2L, 10L)));
-        given(getMemberUseCase.findAllByIds(Set.of(1L, 2L))).willReturn(Map.of(
-            1L, member(1L, 5L), 2L, member(2L, 6L)));
+        given(getChallengerUseCase.listBasicByGisuId(10L)).willReturn(List.of(
+            basicChallenger(1L, ChallengerPart.WEB_PRODUCT_ENGINEER),
+            basicChallenger(2L, ChallengerPart.WEB_PRODUCT_ENGINEER)));
+        given(getMemberUseCase.findAllSchoolIdsByIds(Set.of(1L, 2L))).willReturn(Map.of(1L, 5L, 2L, 6L));
         given(getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(Set.of(10L), Set.of(5L, 6L)))
             .willReturn(Map.of(10L, Map.of(5L, new ChapterInfo(3L, "대상 지부"),
                 6L, new ChapterInfo(4L, "다른 지부"))));
@@ -66,6 +76,61 @@ class NoticeAudienceResolverTest {
             List.of(ChallengerPart.WEB_PRODUCT_ENGINEER), NoticeTab.CHALLENGER));
         // then
         assertThat(result).containsExactly(1L);
+    }
+
+    @Test
+    void 전체_기수_수신자_선정은_학교가_없는_회원도_포함하고_프로필을_조회하지_않는다() {
+        // given: 회원 2는 존재하지 않고 회원 1은 학교와 정상 프로필 파일이 없다.
+        given(getChallengerUseCase.getAllLatestGisuPerMemberWithoutChallengerPoints())
+            .willReturn(List.of(challenger(1L, 10L), challenger(2L, 10L)));
+        LoadMemberPort members = mock(LoadMemberPort.class);
+        GetFileUseCase files = mock(GetFileUseCase.class);
+        GetSchoolUseCase schools = mock(GetSchoolUseCase.class);
+        Member member = Member.create("이름", "닉네임", "notice@example.com", null, "missing-profile");
+        ReflectionTestUtils.setField(member, "id", 1L);
+        given(members.findAllByIds(Set.of(1L, 2L))).willReturn(List.of(member));
+        MemberQueryService memberQuery = new MemberQueryService(members, schools, files,
+            mock(GetChallengerRoleUseCase.class));
+        NoticeAudienceResolver resolver = new NoticeAudienceResolver(getChallengerUseCase,
+            listChallengerRoleUseCase, memberQuery, getChapterUseCase);
+
+        // when
+        List<Long> result = resolver.resolve(new NoticeTargetInfo(null, null, null, List.of(), NoticeTab.CHALLENGER));
+
+        // then
+        assertThat(result).containsExactly(1L);
+        verifyNoInteractions(files, schools, getChapterUseCase, listChallengerRoleUseCase);
+    }
+
+    @Test
+    void 특정_기수_파트_수신자는_상벌점과_프로필_조회_없이_선정한다() {
+        // given
+        given(getChallengerUseCase.listBasicByGisuId(10L)).willReturn(List.of(
+            basicChallenger(1L, ChallengerPart.WEB_PRODUCT_ENGINEER),
+            basicChallenger(2L, ChallengerPart.MOBILE_PRODUCT_ENGINEER),
+            basicChallenger(3L, ChallengerPart.WEB_PRODUCT_ENGINEER)));
+        given(getMemberUseCase.findAllNamesByIds(Set.of(1L, 2L, 3L))).willReturn(Map.of(1L, "웹", 2L, "모바일"));
+
+        // when
+        List<Long> result = sut.resolve(new NoticeTargetInfo(10L, null, null,
+            List.of(ChallengerPart.WEB_PRODUCT_ENGINEER), NoticeTab.CHALLENGER));
+
+        // then
+        assertThat(result).containsExactly(1L);
+        verify(getChallengerUseCase, never()).getAllByGisuId(10L);
+        verify(getMemberUseCase, never()).findAllByIds(Set.of(1L, 2L, 3L));
+        verifyNoInteractions(getChapterUseCase, listChallengerRoleUseCase);
+    }
+
+    @Test
+    void 챌린저가_없으면_추가_조회_없이_빈_수신자를_반환한다() {
+        // given
+        given(getChallengerUseCase.listBasicByGisuId(10L)).willReturn(List.of());
+        // when
+        List<Long> result = sut.resolve(new NoticeTargetInfo(10L, null, null, List.of(), NoticeTab.CHALLENGER));
+        // then
+        assertThat(result).isEmpty();
+        verifyNoInteractions(getMemberUseCase, getChapterUseCase, listChallengerRoleUseCase);
     }
 
     @Test
@@ -110,8 +175,8 @@ class NoticeAudienceResolverTest {
             .part(ChallengerPart.WEB_PRODUCT_ENGINEER).build();
     }
 
-    private MemberInfo member(Long id, Long schoolId) {
-        return MemberInfo.builder().id(id).schoolId(schoolId).build();
+    private ChallengerBasicInfo basicChallenger(Long memberId, ChallengerPart part) {
+        return new ChallengerBasicInfo(memberId, memberId, 10L, part, false, null);
     }
 
     private ChallengerRoleInfo role(Long challengerId, ChallengerRoleType type, Long organizationId,
