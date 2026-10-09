@@ -746,41 +746,42 @@
 | 631 | schedule | `SCHEDULE-0031` | `CANNOT_CREATE_ATTENDANCE_REQUIRED_SCHEDULE` | 403 FORBIDDEN | 출석이 필요한 일정을 만들 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:64` |
 | 632 | schedule | `SCHEDULE-0032` | `INVALID_MEMBER_INVITE` | 400 BAD_REQUEST | 초대할 수 없는 참여자가 포함되어 있어요. 참여자 목록을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:67` |
 | 633 | schedule | `SCHEDULE-0033` | `SCHEDULE_HAS_ATTENDANCE_RECORD` | 400 BAD_REQUEST | 출석 기록이 있는 일정은 삭제할 수 없어요. 출석 기록을 먼저 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:69` |
+| 634 | schedule | `SCHEDULE-0034` | `PARTICIPANT_REQUIRED` | 400 BAD_REQUEST | 출석이 필요한 일정에는 참여자를 1명 이상 넣어주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/schedule/domain/exception/ScheduleErrorCode.java:72` |
 
 ## storage
 
 | 순번 | 도메인 | 코드 | 이름 | HTTP 상태 | 메시지 | 사용자 행동 | 재시도 | 심각도 | 사용 중단 | 담당자 | 태그 | 원본 |
 |---:|---|---|---|---|---|---|---|---|---|---|---|---|
-| 634 | storage | `STORAGE-0001` | `FILE_NOT_FOUND` | 404 NOT_FOUND | 파일을 찾을 수 없어요. 선택한 파일을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:15` |
-| 635 | storage | `STORAGE-0002` | `FILE_UPLOAD_NOT_COMPLETED` | 400 BAD_REQUEST | 파일 업로드가 아직 끝나지 않았어요. 업로드를 완료한 뒤 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:16` |
-| 636 | storage | `STORAGE-0003` | `FILE_ALREADY_UPLOADED` | 400 BAD_REQUEST | 이미 업로드가 끝난 파일이에요. 파일 정보를 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:17` |
-| 637 | storage | `STORAGE-0004` | `INVALID_FILE_EXTENSION` | 400 BAD_REQUEST | 지원하지 않는 파일 형식이에요. 다른 파일을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:23` |
-| 638 | storage | `STORAGE-0005` | `FILE_SIZE_EXCEEDED` | 400 BAD_REQUEST | 파일 크기가 너무 커요. 더 작은 파일을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:24` |
-| 639 | storage | `STORAGE-0006` | `INVALID_CONTENT_TYPE` | 400 BAD_REQUEST | 파일 형식 정보가 올바르지 않아요. 파일을 다시 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:25` |
-| 640 | storage | `STORAGE-0007` | `STORAGE_UPLOAD_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일을 업로드하지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:29` |
-| 641 | storage | `STORAGE-0008` | `STORAGE_DELETE_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일을 삭제하지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:30` |
-| 642 | storage | `STORAGE-0009` | `STORAGE_URL_GENERATION_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일 접근 링크를 만들지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:31` |
-| 643 | storage | `STORAGE-0010` | `CDN_SIGNING_FAILED` | 500 INTERNAL_SERVER_ERROR | CDN 접근 링크를 만들지 못했어요. 관리자에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:36` |
-| 644 | storage | `STORAGE-0011` | `NO_ENV_KEYS` | 500 INTERNAL_SERVER_ERROR | CDN 설정이 누락됐어요. 관리자에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:37` |
-| 645 | storage | `STORAGE-0012` | `INVALID_SPRING_PROFILE` | 500 INTERNAL_SERVER_ERROR | 서버 실행 환경이 올바르지 않아요. 관리자에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:38` |
-| 646 | storage | `STORAGE-0013` | `FILE_DELETE_FORBIDDEN` | 403 FORBIDDEN | 파일을 삭제할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:18` |
-| 647 | storage | `STORAGE-0014` | `FILE_SIZE_MISMATCH` | 400 BAD_REQUEST | 요청한 파일 크기와 실제 업로드된 파일 크기가 달라요. 다시 업로드해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:26` |
-| 648 | storage | `STORAGE-0015` | `STORAGE_METADATA_READ_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일 정보를 확인하지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:32` |
-| 649 | storage | `STORAGE-0016` | `FILE_USE_FORBIDDEN` | 403 FORBIDDEN | 이 파일을 사용할 권한이 없어요. 본인이 업로드한 파일만 사용할 수 있어요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:20` |
+| 635 | storage | `STORAGE-0001` | `FILE_NOT_FOUND` | 404 NOT_FOUND | 파일을 찾을 수 없어요. 선택한 파일을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:15` |
+| 636 | storage | `STORAGE-0002` | `FILE_UPLOAD_NOT_COMPLETED` | 400 BAD_REQUEST | 파일 업로드가 아직 끝나지 않았어요. 업로드를 완료한 뒤 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:16` |
+| 637 | storage | `STORAGE-0003` | `FILE_ALREADY_UPLOADED` | 400 BAD_REQUEST | 이미 업로드가 끝난 파일이에요. 파일 정보를 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:17` |
+| 638 | storage | `STORAGE-0004` | `INVALID_FILE_EXTENSION` | 400 BAD_REQUEST | 지원하지 않는 파일 형식이에요. 다른 파일을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:23` |
+| 639 | storage | `STORAGE-0005` | `FILE_SIZE_EXCEEDED` | 400 BAD_REQUEST | 파일 크기가 너무 커요. 더 작은 파일을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:24` |
+| 640 | storage | `STORAGE-0006` | `INVALID_CONTENT_TYPE` | 400 BAD_REQUEST | 파일 형식 정보가 올바르지 않아요. 파일을 다시 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:25` |
+| 641 | storage | `STORAGE-0007` | `STORAGE_UPLOAD_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일을 업로드하지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:29` |
+| 642 | storage | `STORAGE-0008` | `STORAGE_DELETE_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일을 삭제하지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:30` |
+| 643 | storage | `STORAGE-0009` | `STORAGE_URL_GENERATION_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일 접근 링크를 만들지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:31` |
+| 644 | storage | `STORAGE-0010` | `CDN_SIGNING_FAILED` | 500 INTERNAL_SERVER_ERROR | CDN 접근 링크를 만들지 못했어요. 관리자에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:36` |
+| 645 | storage | `STORAGE-0011` | `NO_ENV_KEYS` | 500 INTERNAL_SERVER_ERROR | CDN 설정이 누락됐어요. 관리자에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:37` |
+| 646 | storage | `STORAGE-0012` | `INVALID_SPRING_PROFILE` | 500 INTERNAL_SERVER_ERROR | 서버 실행 환경이 올바르지 않아요. 관리자에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:38` |
+| 647 | storage | `STORAGE-0013` | `FILE_DELETE_FORBIDDEN` | 403 FORBIDDEN | 파일을 삭제할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:18` |
+| 648 | storage | `STORAGE-0014` | `FILE_SIZE_MISMATCH` | 400 BAD_REQUEST | 요청한 파일 크기와 실제 업로드된 파일 크기가 달라요. 다시 업로드해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:26` |
+| 649 | storage | `STORAGE-0015` | `STORAGE_METADATA_READ_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일 정보를 확인하지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:32` |
+| 650 | storage | `STORAGE-0016` | `FILE_USE_FORBIDDEN` | 403 FORBIDDEN | 이 파일을 사용할 권한이 없어요. 본인이 업로드한 파일만 사용할 수 있어요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:20` |
 
 ## term
 
 | 순번 | 도메인 | 코드 | 이름 | HTTP 상태 | 메시지 | 사용자 행동 | 재시도 | 심각도 | 사용 중단 | 담당자 | 태그 | 원본 |
 |---:|---|---|---|---|---|---|---|---|---|---|---|---|
-| 650 | term | `TERMS-0001` | `TERMS_NOT_FOUND` | 404 NOT_FOUND | 약관을 찾을 수 없어요. 선택한 약관을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:14` |
-| 651 | term | `TERMS-0002` | `TERMS_TYPE_REQUIRED` | 400 BAD_REQUEST | 약관 타입을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:15` |
-| 652 | term | `TERMS-0003` | `TERMS_TITLE_REQUIRED` | 400 BAD_REQUEST | 약관 제목을 입력해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:16` |
-| 653 | term | `TERMS-0004` | `TERMS_CONTENT_REQUIRED` | 400 BAD_REQUEST | 약관 내용을 입력해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:17` |
-| 654 | term | `TERMS-0005` | `TERMS_VERSION_REQUIRED` | 400 BAD_REQUEST | 약관 버전을 입력해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:18` |
-| 655 | term | `TERMS-0006` | `TERMS_CONSENT_NOT_FOUND` | 404 NOT_FOUND | 약관 동의 정보를 찾을 수 없어요. 동의 내역을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:20` |
-| 656 | term | `TERMS-0007` | `TERMS_CONSENT_ALREADY_EXISTS` | 400 BAD_REQUEST | 이미 동의한 약관이에요. 동의 내역을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:21` |
-| 657 | term | `TERMS-0008` | `MEMBER_ID_REQUIRED` | 400 BAD_REQUEST | 회원을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:22` |
-| 658 | term | `TERMS-0009` | `TERM_ID_REQUIRED` | 400 BAD_REQUEST | 약관을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:23` |
-| 659 | term | `TERMS-0010` | `MANDATORY_TERMS_NOT_AGREED` | 400 BAD_REQUEST | 필수 약관에 모두 동의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:24` |
-| 660 | term | `TERMS-0011` | `TERM_PERMISSION_DENIED` | 403 FORBIDDEN | 약관을 관리할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:26` |
+| 651 | term | `TERMS-0001` | `TERMS_NOT_FOUND` | 404 NOT_FOUND | 약관을 찾을 수 없어요. 선택한 약관을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:14` |
+| 652 | term | `TERMS-0002` | `TERMS_TYPE_REQUIRED` | 400 BAD_REQUEST | 약관 타입을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:15` |
+| 653 | term | `TERMS-0003` | `TERMS_TITLE_REQUIRED` | 400 BAD_REQUEST | 약관 제목을 입력해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:16` |
+| 654 | term | `TERMS-0004` | `TERMS_CONTENT_REQUIRED` | 400 BAD_REQUEST | 약관 내용을 입력해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:17` |
+| 655 | term | `TERMS-0005` | `TERMS_VERSION_REQUIRED` | 400 BAD_REQUEST | 약관 버전을 입력해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:18` |
+| 656 | term | `TERMS-0006` | `TERMS_CONSENT_NOT_FOUND` | 404 NOT_FOUND | 약관 동의 정보를 찾을 수 없어요. 동의 내역을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:20` |
+| 657 | term | `TERMS-0007` | `TERMS_CONSENT_ALREADY_EXISTS` | 400 BAD_REQUEST | 이미 동의한 약관이에요. 동의 내역을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:21` |
+| 658 | term | `TERMS-0008` | `MEMBER_ID_REQUIRED` | 400 BAD_REQUEST | 회원을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:22` |
+| 659 | term | `TERMS-0009` | `TERM_ID_REQUIRED` | 400 BAD_REQUEST | 약관을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:23` |
+| 660 | term | `TERMS-0010` | `MANDATORY_TERMS_NOT_AGREED` | 400 BAD_REQUEST | 필수 약관에 모두 동의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:24` |
+| 661 | term | `TERMS-0011` | `TERM_PERMISSION_DENIED` | 403 FORBIDDEN | 약관을 관리할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:26` |
 

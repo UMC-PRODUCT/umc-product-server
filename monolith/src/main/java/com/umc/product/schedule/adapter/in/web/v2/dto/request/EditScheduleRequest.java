@@ -47,10 +47,9 @@ public record EditScheduleRequest(
     Boolean isAttendanceRequired, // 명시적 플래그 추가
 
     // 참여자는 중복되지 않도록 Set으로 받습니다.
-    // 참여자 목록에는 반드시 요청한 사용자가 포함되어 있어야 하며,
-    // 서버 측 생성자에서 add()를 통해서 강제로 참여시켜야 합니다.
-    // (기획단 변경이 있기 전까지는 해당 사항을 유지합니다.)
-    @Schema(description = "참여자 Member ID 목록", example = "[1, 2, 4]")
+    // 작성자를 참여자로 넣을지는 호출자가 결정합니다. 서버는 작성자를 자동으로 추가하지 않습니다.
+    // null이면 기존 명단을 유지합니다. 출석 정책이 있는 일정은 수정 후에도 참여자가 1명 이상이어야 합니다.
+    @Schema(description = "참여자 Member ID 목록 (null: 유지, 작성자는 자동 포함되지 않음)", example = "[1, 2, 4]")
     Set<Long> participantMemberIds
 ) {
 

@@ -89,6 +89,11 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         if (command.attendancePolicy() != null && !capabilitiesInfo.canCreateAttendanceRequiredSchedule()) {
             throw new ScheduleDomainException(ScheduleErrorCode.CANNOT_CREATE_ATTENDANCE_REQUIRED_SCHEDULE);
         }
+        // 출석이 필요한 일정은 참여자가 1명 이상이어야 한다.
+        // 참여자가 없으면 내 일정과 출결 목록 양쪽에서 빠져 작성자도 일정을 다시 찾을 수 없다.
+        if (command.attendancePolicy() != null && command.participantMemberIds().isEmpty()) {
+            throw new ScheduleDomainException(ScheduleErrorCode.PARTICIPANT_REQUIRED);
+        }
 
         // 작성자의 가장 최근 기수 Challenger 상태 조회 (탈부, 제명 상태일 시 exeption)
         ChallengerInfoWithStatus challengerInfoWithStatus = getChallengerUseCase.getLatestActiveChallengerByMemberId(
@@ -171,6 +176,30 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
             }
         }
 
+        // 수정 이후 출석이 필요한 상태로 남는지 판단한다.
+        // 출석 해제 요청이 아니고, 새 정책이 오거나 기존 정책이 남아 있으면 출석이 필요한 일정이다.
+        boolean willRequireAttendance = !command.isChangingToAttendanceNotRequired()
+            && (command.attendancePolicy() != null || schedule.getPolicy() != null);
+
+        // 기존 참여자 명단. 하한 검증과 뒤쪽 명단 비교 양쪽에서 쓰므로 필요한 경우 한 번만 조회한다.
+        Set<Long> existingParticipantIds = null;
+        if (willRequireAttendance || command.isParticipantsUpdateRequested()) {
+            existingParticipantIds = loadScheduleParticipantPort.findMemberIdsByScheduleId(schedule.getId());
+        }
+
+        // 최소 참여자 수 검증 (생성과 동일한 이유. 수정으로 참여자가 0명이 되는 것을 막는다)
+        // 요청 필드가 아니라 수정 후 최종 명단을 기준으로 본다.
+        // 명단을 생략한 채 출석 정책만 추가하는 경로가 있어, 요청 필드만 보면 검증이 우회된다.
+        if (willRequireAttendance) {
+            Set<Long> finalParticipantIds = command.isParticipantsUpdateRequested()
+                ? command.participantMemberIds()
+                : existingParticipantIds;
+
+            if (finalParticipantIds.isEmpty()) {
+                throw new ScheduleDomainException(ScheduleErrorCode.PARTICIPANT_REQUIRED);
+            }
+        }
+
         // 대면 -> 비대면 전환 시
         if (command.isChangingToOnline()) {
             schedule.convertToOnline();
@@ -197,15 +226,10 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
             newPolicy
         );
 
-        if (command.isParticipantsUpdateRequested()) {
-            // DB에 있는 기존 참여자 ID 목록을 가져옴
-            Set<Long> existingParticipantIds = loadScheduleParticipantPort.findMemberIdsByScheduleId(schedule.getId());
-
-            // 진짜 명단이 달라졌는지 비교
-            if (!existingParticipantIds.equals(command.participantMemberIds())) {
-                // 진짜 달라졌을 때만 업데이트 수행
-                updateParticipants(schedule, command);
-            }
+        // 진짜 명단이 달라졌을 때만 업데이트 수행 (기존 명단은 위에서 이미 조회했다)
+        if (command.isParticipantsUpdateRequested()
+            && !existingParticipantIds.equals(command.participantMemberIds())) {
+            updateParticipants(schedule, command);
         }
 
         // 일정 update
