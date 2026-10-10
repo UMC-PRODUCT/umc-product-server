@@ -45,16 +45,40 @@ class ChallengerManagementSearchPolicyTest {
     }
 
     @Test
-    void 최고_관리자는_챌린저_이력이나_활성_기수_없이_검색한다() {
+    void 최고_관리자가_기수를_지정하면_해당_기수로_검색한다() {
+        // given
+        given(checkMemberExistenceUseCase.existsById(1L)).willReturn(true);
+        given(checkChallengerAuthorityUseCase.isSuperAdmin(1L)).willReturn(true);
+        // when
+        SearchMemberQuery result = policy.scope(query(11L, null), 1L);
+        // then
+        assertThat(result.gisuId()).isEqualTo(11L);
+        assertThat(result.schoolId()).isNull();
+        verifyNoInteractions(getGisuUseCase, getMemberUseCase, getChapterUseCase);
+    }
+
+    @Test
+    void 최고_관리자가_기수를_생략하면_활성_기수로_검색한다() {
+        // given
+        given(checkMemberExistenceUseCase.existsById(1L)).willReturn(true);
+        given(checkChallengerAuthorityUseCase.isSuperAdmin(1L)).willReturn(true);
+        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.of(new GisuInfo(11L, 11L, null, null, true)));
+        // when
+        SearchMemberQuery result = policy.scope(query(null, null), 1L);
+        // then
+        assertThat(result.gisuId()).isEqualTo(11L);
+        assertThat(result.schoolId()).isNull();
+        verifyNoInteractions(getMemberUseCase, getChapterUseCase);
+    }
+
+    @Test
+    void 최고_관리자도_기수를_지정하지_않고_활성_기수가_없으면_거부한다() {
         // given
         given(checkMemberExistenceUseCase.existsById(1L)).willReturn(true);
         given(checkChallengerAuthorityUseCase.isSuperAdmin(1L)).willReturn(true);
         given(getGisuUseCase.findActiveGisu()).willReturn(Optional.empty());
-        // when
-        SearchMemberQuery result = policy.scope(query(null, null), 1L);
-        // then
-        assertThat(result.gisuId()).isNull();
-        assertThat(result.schoolId()).isNull();
+        // when & then
+        assertThatThrownBy(() -> policy.scope(query(null, null), 1L)).isInstanceOf(MemberDomainException.class);
         verifyNoInteractions(getMemberUseCase, getChapterUseCase);
     }
 

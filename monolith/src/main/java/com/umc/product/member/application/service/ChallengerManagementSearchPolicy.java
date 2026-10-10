@@ -31,11 +31,11 @@ public class ChallengerManagementSearchPolicy {
         boolean superAdmin = checkChallengerAuthorityUseCase.isSuperAdmin(memberId);
         Long gisuId = query.gisuId() != null ? query.gisuId()
             : getGisuUseCase.findActiveGisu().map(gisu -> gisu.gisuId()).orElse(null);
-        if (superAdmin) {
-            return withScope(query, gisuId, query.chapterId(), query.schoolId());
-        }
         if (gisuId == null) {
             throw accessDenied();
+        }
+        if (superAdmin) {
+            return withScope(query, gisuId, query.chapterId(), query.schoolId());
         }
         if (checkChallengerAuthorityUseCase.isCentralMemberInGisu(memberId, gisuId)) {
             return withScope(query, gisuId, query.chapterId(), query.schoolId());

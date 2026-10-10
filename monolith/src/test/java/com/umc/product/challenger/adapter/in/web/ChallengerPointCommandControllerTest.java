@@ -119,7 +119,10 @@ class ChallengerPointCommandControllerTest {
 
     @ParameterizedTest
     @EnumSource(value = ChallengerErrorCode.class, names = {
-        "CUSTOM_POINT_VALUE_REQUIRED", "INVALID_POINT_VALUE", "LEGACY_POINT_TYPE_NOT_ALLOWED"
+        "CUSTOM_POINT_VALUE_REQUIRED",
+        "CUSTOM_POINT_VALUE_MUST_BE_NON_ZERO",
+        "INVALID_POINT_VALUE",
+        "LEGACY_POINT_TYPE_NOT_ALLOWED"
     })
     @DisplayName("상벌점 검증 실패는 400과 구체적인 오류 코드를 반환한다")
     void 상벌점_검증_실패는_400과_구체적인_오류_코드를_반환한다(ChallengerErrorCode errorCode) throws Exception {
