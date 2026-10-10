@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -76,6 +77,20 @@ class ChallengerPointCommandControllerTest {
                 .content("""
                     {"pointValue":1,"description":"조정"}
                     """))
+            .andExpect(status().isBadRequest());
+
+        then(manageChallengerUseCase).should(never()).grantChallengerPoint(any(GrantChallengerPointCommand.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"null", "\"\"", "\"   \""})
+    @DisplayName("상벌점 부여 요청의 설명이 비어 있으면 400")
+    void 상벌점_부여_요청의_설명이_비어_있으면_400(String description) throws Exception {
+        mockMvc.perform(post("/api/v1/challenger/{challengerId}/points", 100L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"pointType":"CUSTOM","pointValue":1,"description":%s}
+                    """.formatted(description)))
             .andExpect(status().isBadRequest());
 
         then(manageChallengerUseCase).should(never()).grantChallengerPoint(any(GrantChallengerPointCommand.class));
