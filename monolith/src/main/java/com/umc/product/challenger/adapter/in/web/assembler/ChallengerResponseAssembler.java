@@ -34,6 +34,15 @@ public class ChallengerResponseAssembler {
 
     public ChallengerInfoResponse fromChallengerId(Long challengerId) {
         ChallengerInfo challengerInfo = getChallengerUseCase.getById(challengerId);
+        return assemble(challengerInfo);
+    }
+
+    public ChallengerInfoResponse fromChallengerIdWithPointsLatestFirst(Long challengerId) {
+        ChallengerInfo challengerInfo = getChallengerUseCase.getByIdWithPointsLatestFirst(challengerId);
+        return assemble(challengerInfo);
+    }
+
+    private ChallengerInfoResponse assemble(ChallengerInfo challengerInfo) {
         MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
         GisuInfo gisuInfo = getGisuUseCase.getById(challengerInfo.gisuId());
         ChapterInfo chapterInfo = getChapterUseCase.findByGisuAndSchool(challengerInfo.gisuId(), memberInfo.schoolId())

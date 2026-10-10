@@ -31,6 +31,12 @@ public class ChallengerPointQueryService implements GetChallengerPointUseCase {
     }
 
     @Override
+    public List<ChallengerPointInfo> listByChallengerIdOrderByCreatedAtDesc(Long challengerId) {
+        return loadChallengerPointPort.listByChallengerIdOrderByCreatedAtDesc(challengerId)
+            .stream().map(ChallengerPointInfo::from).toList();
+    }
+
+    @Override
     public Map<Long, List<ChallengerPointInfo>> getMapByChallengerIds(Set<Long> challengerIds) {
         if (challengerIds == null || challengerIds.isEmpty()) {
             return Map.of();

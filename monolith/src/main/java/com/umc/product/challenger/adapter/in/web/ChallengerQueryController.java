@@ -43,9 +43,12 @@ public class ChallengerQueryController {
 //        return assembler.fromMemberId(memberPrincipal.getMemberId());
 //    }
 
-    @Operation(operationId = "CHALLENGER-101", summary = "챌린저 정보 조회")
+    @Operation(
+        operationId = "CHALLENGER-101",
+        summary = "챌린저 정보 조회",
+        description = "챌린저 기본 정보와 상벌점 이력을 조회합니다. 상벌점 이력은 생성 일시 기준 최신순으로 반환됩니다.")
     @GetMapping("{challengerId}")
     ChallengerInfoResponse getChallengerInfo(@PathVariable Long challengerId) {
-        return assembler.fromChallengerId(challengerId);
+        return assembler.fromChallengerIdWithPointsLatestFirst(challengerId);
     }
 }

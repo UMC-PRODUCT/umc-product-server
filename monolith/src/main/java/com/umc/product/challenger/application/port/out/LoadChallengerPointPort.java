@@ -10,6 +10,8 @@ public interface LoadChallengerPointPort {
 
     List<ChallengerPoint> findByChallengerId(Long challengerId);
 
+    List<ChallengerPoint> listByChallengerIdOrderByCreatedAtDesc(Long challengerId);
+
     /**
      * 여러 챌린저 ID로 포인트 일괄 조회
      */
