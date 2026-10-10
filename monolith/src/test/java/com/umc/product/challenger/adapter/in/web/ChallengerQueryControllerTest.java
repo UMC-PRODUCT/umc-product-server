@@ -37,7 +37,7 @@ class ChallengerQueryControllerTest {
     @Test
     @DisplayName("챌린저 단건 정보를 조회한다")
     void 챌린저_단건_정보를_조회한다() throws Exception {
-        given(assembler.fromChallengerId(100L)).willReturn(ChallengerInfoResponse.builder()
+        given(assembler.fromChallengerIdWithPointsLatestFirst(100L)).willReturn(ChallengerInfoResponse.builder()
             .challengerId(100L)
             .memberId(1L)
             .build());
