@@ -9,6 +9,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
 import com.umc.product.challenger.application.port.in.command.AddChallengerTrackUseCase;
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
@@ -33,6 +35,7 @@ import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 
 import lombok.RequiredArgsConstructor;
@@ -236,6 +239,13 @@ public class ChallengerCommandService implements ManageChallengerUseCase, AddCha
         saveChallengerPointPort.save(point);
     }
 
+    @Audited(
+        domain = Domain.CHALLENGER,
+        action = AuditAction.DELETE,
+        targetType = "ChallengerPoint",
+        targetId = "#command.challengerPointId()",
+        description = "'챌린저 상벌점 기록을 삭제했습니다.'"
+    )
     @Override
     public void deleteChallengerPoint(DeleteChallengerPointCommand command) {
         ChallengerPoint point = loadChallengerPointPort.getById(command.challengerPointId());

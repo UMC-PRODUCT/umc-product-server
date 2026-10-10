@@ -86,6 +86,7 @@ class AuditCoveragePolicyTest {
             spec("organization.application.service.UmcProductSquadCommandService", "deleteParticipant", "ORGANIZATION", "DELETE", "UmcProductSquadParticipant", longType, longType, longType),
 
             spec("challenger.application.service.ChallengerRecordCommandService", "consumeCode", "CHALLENGER", "CHECK", "ChallengerRecord", type("challenger.application.port.in.command.dto.ConsumeChallengerRecordCommand")),
+            spec("challenger.application.service.ChallengerCommandService", "deleteChallengerPoint", "CHALLENGER", "DELETE", "ChallengerPoint", type("challenger.application.port.in.command.dto.DeleteChallengerPointCommand")),
 
             spec("curriculum.application.service.command.CurriculumCommandService", "create", "CURRICULUM", "CREATE", "Curriculum", type("curriculum.application.port.in.command.dto.curriculum.CreateCurriculumCommand")),
             spec("curriculum.application.service.command.CurriculumCommandService", "edit", "CURRICULUM", "UPDATE", "Curriculum", type("curriculum.application.port.in.command.dto.curriculum.EditCurriculumCommand")),

@@ -59,6 +59,9 @@ public class ChallengerPoint extends BaseEntity {
         if (type == PointType.CUSTOM && pointValue == null) {
             throw new ChallengerDomainException(ChallengerErrorCode.CUSTOM_POINT_VALUE_REQUIRED);
         }
+        if (type == PointType.CUSTOM && pointValue == 0) {
+            throw new ChallengerDomainException(ChallengerErrorCode.CUSTOM_POINT_VALUE_MUST_BE_NON_ZERO);
+        }
         // 기존 앱은 고정 유형에도 배점을 보내므로 기본값과 같은 입력은 허용한다.
         // 잘못된 배점을 막는 검증은 프론트 수정 이후에도 유지해야 한다.
         if (type != PointType.CUSTOM && pointValue != null

@@ -18,11 +18,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.umc.product.authorization.application.port.in.query.ListChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -43,6 +45,8 @@ class ChallengerResponseAssemblerTest {
     GetGisuUseCase getGisuUseCase;
     @Mock
     GetChapterUseCase getChapterUseCase;
+    @Mock
+    ListChallengerRoleUseCase listChallengerRoleUseCase;
     @InjectMocks
     ChallengerResponseAssembler assembler;
 
@@ -69,14 +73,52 @@ class ChallengerResponseAssemblerTest {
         List<ChallengerInfoResponse> all = assembler.fromMemberId(1L);
 
         // then
-        assertThat(all).containsExactly(single);
+        assertThat(all).hasSize(1);
         assertThat(single.challengerId()).isEqualTo(100L);
         assertThat(single.gisuId()).isEqualTo(6L);
         assertThat(single.schoolId()).isEqualTo(30L);
         assertThat(single.part()).isNull();
         assertThat(single.infra()).isFalse();
+        assertThat(single.challengerStatus()).isNull();
+        assertThat(single.roles()).isNull();
         assertThat(single.chapterId()).isEqualTo(hasChapter ? 20L : null);
         assertThat(single.chapterName()).isEqualTo(hasChapter ? "현재 지부" : null);
+    }
+
+    @Test
+    @DisplayName("챌린저 단건 상세 응답에 활동 상태와 해당 기수 운영 역할을 포함한다")
+    void 단건_상세에_활동_상태와_운영_역할을_포함한다() {
+        // given
+        ChallengerInfo challenger = ChallengerInfo.builder()
+            .challengerId(100L)
+            .memberId(1L)
+            .gisuId(6L)
+            .challengerStatus(ChallengerStatus.ACTIVE)
+            .build();
+        ChallengerRoleInfo role = ChallengerRoleInfo.builder()
+            .id(200L)
+            .challengerId(100L)
+            .gisuId(6L)
+            .roleType(ChallengerRoleType.SCHOOL_PRESIDENT)
+            .organizationType(OrganizationType.SCHOOL)
+            .organizationId(30L)
+            .build();
+        given(getChallengerUseCase.getByIdWithPointsLatestFirst(100L)).willReturn(challenger);
+        given(getMemberUseCase.getById(1L)).willReturn(member());
+        given(getGisuUseCase.getById(6L)).willReturn(gisu());
+        given(getChapterUseCase.findByGisuAndSchool(6L, 30L)).willReturn(Optional.empty());
+        given(listChallengerRoleUseCase.listByMemberIdAndGisuId(1L, 6L)).willReturn(List.of(role));
+
+        // when
+        ChallengerInfoResponse response = assembler.fromChallengerIdWithPointsLatestFirst(100L);
+
+        // then
+        assertThat(response.challengerStatus()).isEqualTo(ChallengerStatus.ACTIVE);
+        assertThat(response.roles()).singleElement().satisfies(result -> {
+            assertThat(result.challengerRoleId()).isEqualTo(200L);
+            assertThat(result.roleType()).isEqualTo(ChallengerRoleType.SCHOOL_PRESIDENT);
+            assertThat(result.gisuId()).isEqualTo(6L);
+        });
     }
 
     @Test

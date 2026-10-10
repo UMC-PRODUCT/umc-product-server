@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.umc.product.authorization.application.port.in.query.ListChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
@@ -31,15 +33,41 @@ public class ChallengerResponseAssembler {
     private final GetMemberUseCase getMemberUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final GetChapterUseCase getChapterUseCase;
+    private final ListChallengerRoleUseCase listChallengerRoleUseCase;
 
     public ChallengerInfoResponse fromChallengerId(Long challengerId) {
         ChallengerInfo challengerInfo = getChallengerUseCase.getById(challengerId);
+        return assemble(challengerInfo);
+    }
+
+    public ChallengerInfoResponse fromChallengerIdWithPointsLatestFirst(Long challengerId) {
+        ChallengerInfo challengerInfo = getChallengerUseCase.getByIdWithPointsLatestFirst(challengerId);
+        List<ChallengerRoleInfo> roles = listChallengerRoleUseCase.listByMemberIdAndGisuId(
+            challengerInfo.memberId(),
+            challengerInfo.gisuId()
+        );
+        return assemble(challengerInfo, roles);
+    }
+
+    private ChallengerInfoResponse assemble(ChallengerInfo challengerInfo) {
         MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
         GisuInfo gisuInfo = getGisuUseCase.getById(challengerInfo.gisuId());
         ChapterInfo chapterInfo = getChapterUseCase.findByGisuAndSchool(challengerInfo.gisuId(), memberInfo.schoolId())
             .orElse(null);
 
         return ChallengerInfoResponse.from(challengerInfo, memberInfo, gisuInfo, chapterInfo);
+    }
+
+    private ChallengerInfoResponse assemble(
+        ChallengerInfo challengerInfo,
+        List<ChallengerRoleInfo> roles
+    ) {
+        MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
+        GisuInfo gisuInfo = getGisuUseCase.getById(challengerInfo.gisuId());
+        ChapterInfo chapterInfo = getChapterUseCase.findByGisuAndSchool(challengerInfo.gisuId(), memberInfo.schoolId())
+            .orElse(null);
+
+        return ChallengerInfoResponse.from(challengerInfo, memberInfo, gisuInfo, chapterInfo, roles);
     }
 
     public List<ChallengerInfoResponse> fromMemberId(Long memberId) {

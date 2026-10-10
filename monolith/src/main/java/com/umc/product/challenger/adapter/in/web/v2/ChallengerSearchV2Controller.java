@@ -2,6 +2,7 @@ package com.umc.product.challenger.adapter.in.web.v2;
 
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,7 +23,7 @@ import lombok.RequiredArgsConstructor;
  * 회원 검색이 아닌 "챌린저 검색"이 목적이며, 같은 회원이 여러 기수에 참여했다면 기수별로 별도 row를 반환합니다.
  * 검색 조건은 회원 검색과 동일한 키워드/필터를 사용합니다 (SearchMemberQuery).
  * <p>
- * 권한 정책: 챌린저 기록이 하나라도 있는 회원만 검색 가능.
+ * 권한 정책: SUPER_ADMIN, 대상 기수 중앙 운영진 또는 본인 학교 회장단만 검색 가능.
  */
 @RestController
 @RequestMapping("/api/v2/challenger")
@@ -45,17 +46,21 @@ public class ChallengerSearchV2Controller {
             - 검색 결과에는 본인 외 회원이 포함되므로, 로그인 식별자인 이메일은 평문 노출을 피하기 위해
               컨트롤러 단에서 마스킹 처리되어 응답됩니다.
             - 회원 단위로 묶인 검색이 필요하다면 `/api/v2/member/search` 를 사용해 주세요.
-            - 챌린저 기록이 하나라도 있는 회원만 사용할 수 있습니다. 챌린저 기록이 없으면 403을 반환합니다.
+            - SUPER_ADMIN, 대상 기수의 중앙운영사무국 및 학교 회장단만 사용할 수 있습니다.
+            - 기수를 생략하면 활성 기수를 사용합니다.
+            - 학교 회장단의 검색 범위는 본인의 지부·학교로 고정됩니다.
+            - 권한이 없거나 학교 회장단이 다른 지부·학교를 지정하면 403을 반환합니다.
+            - 검색 기본 페이지 크기는 10입니다.
             """
     )
     @GetMapping("search")
     public ChallengerSearchV2Response searchChallengersV2(
-        @ParameterObject Pageable pageable,
+        @ParameterObject @PageableDefault(size = 10) Pageable pageable,
         @ParameterObject SearchMemberRequest searchRequest,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         return ChallengerSearchV2Response.from(
-            searchMemberUseCase.searchChallengersByV2(
+            searchMemberUseCase.searchChallengersByV2WithScope(
                 searchRequest.toQuery(),
                 memberPrincipal.getMemberId(),
                 pageable

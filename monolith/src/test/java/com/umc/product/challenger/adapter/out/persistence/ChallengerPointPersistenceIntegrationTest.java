@@ -2,6 +2,8 @@ package com.umc.product.challenger.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,9 @@ class ChallengerPointPersistenceIntegrationTest extends IntegrationTestSupport {
 
     @Autowired
     ChallengerPointJpaRepository pointRepository;
+
+    @Autowired
+    ChallengerPointQueryRepository pointQueryRepository;
 
     @Autowired
     ManageChallengerUseCase manageChallengerUseCase;
@@ -94,5 +99,45 @@ class ChallengerPointPersistenceIntegrationTest extends IntegrationTestSupport {
 
         assertThat(challengerRepository.findById(challenger.getId())).isEmpty();
         assertThat(pointRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("상벌점 이력을 생성 일시와 ID 기준 최신순으로 조회한다")
+    void 상벌점_이력을_생성_일시와_ID_기준_최신순으로_조회한다() {
+        // given
+        Challenger challenger = challengerRepository.saveAndFlush(Challenger.builder()
+            .memberId(88006L)
+            .part(ChallengerPart.SPRINGBOOT)
+            .gisuId(99001L)
+            .build());
+        ChallengerPoint oldest = pointRepository.saveAndFlush(
+            ChallengerPoint.create(challenger, PointType.CUSTOM, 1, "가장 오래된 기록")
+        );
+        ChallengerPoint latestFirst = pointRepository.saveAndFlush(
+            ChallengerPoint.create(challenger, PointType.CUSTOM, 2, "최신 기록 중 먼저 생성")
+        );
+        ChallengerPoint latestSecond = pointRepository.saveAndFlush(
+            ChallengerPoint.create(challenger, PointType.CUSTOM, 3, "최신 기록 중 나중에 생성")
+        );
+        jdbcTemplate.update(
+            "UPDATE challenger_point SET created_at = ? WHERE id = ?",
+            java.sql.Timestamp.from(java.time.Instant.parse("2026-10-10T09:00:00Z")),
+            oldest.getId()
+        );
+        jdbcTemplate.update(
+            "UPDATE challenger_point SET created_at = ? WHERE id IN (?, ?)",
+            java.sql.Timestamp.from(java.time.Instant.parse("2026-10-11T09:00:00Z")),
+            latestFirst.getId(),
+            latestSecond.getId()
+        );
+        entityManager.clear();
+
+        // when
+        List<ChallengerPoint> result =
+            pointQueryRepository.findAllByChallengerOrderByCreatedAtDesc(challenger.getId());
+
+        // then
+        assertThat(result).extracting(ChallengerPoint::getId)
+            .containsExactly(latestSecond.getId(), latestFirst.getId(), oldest.getId());
     }
 }

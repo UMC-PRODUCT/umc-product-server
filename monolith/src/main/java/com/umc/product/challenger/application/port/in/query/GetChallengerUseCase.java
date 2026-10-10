@@ -17,6 +17,11 @@ public interface GetChallengerUseCase {
      */
     ChallengerInfo getById(Long challengerId);
 
+    /**
+     * challengerId로 챌린저 정보를 조회하며, 상벌점 이력은 최신순으로 반환합니다.
+     */
+    ChallengerInfo getByIdWithPointsLatestFirst(Long challengerId);
+
     Optional<ChallengerInfo> findById(Long challengerId);
 
     /**
