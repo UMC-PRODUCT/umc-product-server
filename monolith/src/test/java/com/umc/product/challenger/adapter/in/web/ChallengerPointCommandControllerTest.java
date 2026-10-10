@@ -55,7 +55,7 @@ class ChallengerPointCommandControllerTest {
     @Test
     @DisplayName("상벌점 부여 성공 시 챌린저 정보를 반환한다")
     void 상벌점_부여_성공시_챌린저_정보를_반환한다() throws Exception {
-        given(assembler.fromChallengerId(100L)).willReturn(ChallengerInfoResponse.builder()
+        given(assembler.fromChallengerIdWithPointsLatestFirst(100L)).willReturn(ChallengerInfoResponse.builder()
             .challengerId(100L)
             .totalPoints(1.0)
             .build());
@@ -100,7 +100,7 @@ class ChallengerPointCommandControllerTest {
     @DisplayName("고정 배점 생략 요청을 기본 배점 처리용 null로 전달한다")
     void 고정_배점_생략_요청을_기본_배점_처리용_null로_전달한다() throws Exception {
         // given
-        given(assembler.fromChallengerId(100L)).willReturn(ChallengerInfoResponse.builder()
+        given(assembler.fromChallengerIdWithPointsLatestFirst(100L)).willReturn(ChallengerInfoResponse.builder()
             .challengerId(100L)
             .totalPoints(-2.0)
             .build());

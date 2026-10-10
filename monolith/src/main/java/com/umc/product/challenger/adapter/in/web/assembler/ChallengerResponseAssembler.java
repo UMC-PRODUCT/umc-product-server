@@ -42,7 +42,11 @@ public class ChallengerResponseAssembler {
 
     public ChallengerInfoResponse fromChallengerIdWithPointsLatestFirst(Long challengerId) {
         ChallengerInfo challengerInfo = getChallengerUseCase.getByIdWithPointsLatestFirst(challengerId);
-        return assemble(challengerInfo);
+        List<ChallengerRoleInfo> roles = listChallengerRoleUseCase.listByMemberIdAndGisuId(
+            challengerInfo.memberId(),
+            challengerInfo.gisuId()
+        );
+        return assemble(challengerInfo, roles);
     }
 
     private ChallengerInfoResponse assemble(ChallengerInfo challengerInfo) {
@@ -50,10 +54,18 @@ public class ChallengerResponseAssembler {
         GisuInfo gisuInfo = getGisuUseCase.getById(challengerInfo.gisuId());
         ChapterInfo chapterInfo = getChapterUseCase.findByGisuAndSchool(challengerInfo.gisuId(), memberInfo.schoolId())
             .orElse(null);
-        List<ChallengerRoleInfo> roles = listChallengerRoleUseCase.listByMemberIdAndGisuId(
-            challengerInfo.memberId(),
-            challengerInfo.gisuId()
-        );
+
+        return ChallengerInfoResponse.from(challengerInfo, memberInfo, gisuInfo, chapterInfo);
+    }
+
+    private ChallengerInfoResponse assemble(
+        ChallengerInfo challengerInfo,
+        List<ChallengerRoleInfo> roles
+    ) {
+        MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
+        GisuInfo gisuInfo = getGisuUseCase.getById(challengerInfo.gisuId());
+        ChapterInfo chapterInfo = getChapterUseCase.findByGisuAndSchool(challengerInfo.gisuId(), memberInfo.schoolId())
+            .orElse(null);
 
         return ChallengerInfoResponse.from(challengerInfo, memberInfo, gisuInfo, chapterInfo, roles);
     }

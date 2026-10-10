@@ -65,7 +65,6 @@ class ChallengerResponseAssemblerTest {
         given(getGisuUseCase.getById(6L)).willReturn(gisu);
         given(getGisuUseCase.getByIds(Set.of(6L))).willReturn(List.of(gisu));
         given(getChapterUseCase.findByGisuAndSchool(6L, 30L)).willReturn(Optional.ofNullable(chapter));
-        given(listChallengerRoleUseCase.listByMemberIdAndGisuId(1L, 6L)).willReturn(List.of());
         given(getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(Set.of(6L), Set.of(30L)))
             .willReturn(hasChapter ? Map.of(6L, Map.of(30L, chapter)) : Map.of());
 
@@ -80,6 +79,8 @@ class ChallengerResponseAssemblerTest {
         assertThat(single.schoolId()).isEqualTo(30L);
         assertThat(single.part()).isNull();
         assertThat(single.infra()).isFalse();
+        assertThat(single.challengerStatus()).isNull();
+        assertThat(single.roles()).isNull();
         assertThat(single.chapterId()).isEqualTo(hasChapter ? 20L : null);
         assertThat(single.chapterName()).isEqualTo(hasChapter ? "현재 지부" : null);
     }

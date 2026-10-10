@@ -46,7 +46,7 @@ public class ChallengerPointCommandController {
     ) {
         manageChallengerUseCase.grantChallengerPoint(request.toCommand(challengerId));
 
-        return assembler.fromChallengerId(challengerId);
+        return assembler.fromChallengerIdWithPointsLatestFirst(challengerId);
     }
 
     @CheckAccess(
