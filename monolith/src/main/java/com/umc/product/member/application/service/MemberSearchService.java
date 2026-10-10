@@ -53,6 +53,7 @@ public class MemberSearchService implements SearchMemberUseCase {
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final MemberSearchAccessScopeResolver memberSearchAccessScopeResolver;
+    private final ChallengerManagementSearchPolicy challengerManagementSearchPolicy;
 
     @Override
     public SearchMemberResult searchBy(SearchMemberQuery query, Long requesterMemberId, Pageable pageable) {
@@ -79,6 +80,19 @@ public class MemberSearchService implements SearchMemberUseCase {
     ) {
         assertMemberSearchAccess(requesterMemberId);
         Page<Challenger> challengers = searchMemberPort.search(query, pageable);
+        return assembleChallengerSearchResult(challengers);
+    }
+
+    @Override
+    public ChallengerSearchV2Result searchChallengersByV2WithScope(
+        SearchMemberQuery query, Long requesterMemberId, Pageable pageable
+    ) {
+        SearchMemberQuery scopedQuery = challengerManagementSearchPolicy.scope(query, requesterMemberId);
+        Page<Challenger> challengers = searchMemberPort.search(scopedQuery, pageable);
+        return assembleChallengerSearchResult(challengers);
+    }
+
+    private ChallengerSearchV2Result assembleChallengerSearchResult(Page<Challenger> challengers) {
         List<Challenger> content = challengers.getContent();
 
         Map<Long, MemberInfo> memberProfiles = loadMemberProfiles(content);
