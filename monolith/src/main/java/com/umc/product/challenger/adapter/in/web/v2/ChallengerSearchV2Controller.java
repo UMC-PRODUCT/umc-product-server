@@ -2,6 +2,7 @@ package com.umc.product.challenger.adapter.in.web.v2;
 
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -49,11 +50,12 @@ public class ChallengerSearchV2Controller {
             - 기수를 생략하면 활성 기수를 사용합니다.
             - 학교 회장단의 검색 범위는 본인의 지부·학교로 고정됩니다.
             - 권한이 없거나 학교 회장단이 다른 지부·학교를 지정하면 403을 반환합니다.
+            - 검색 기본 페이지 크기는 10입니다.
             """
     )
     @GetMapping("search")
     public ChallengerSearchV2Response searchChallengersV2(
-        @ParameterObject Pageable pageable,
+        @ParameterObject @PageableDefault(size = 10) Pageable pageable,
         @ParameterObject SearchMemberRequest searchRequest,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {

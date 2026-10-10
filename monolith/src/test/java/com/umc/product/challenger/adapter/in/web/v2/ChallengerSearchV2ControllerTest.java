@@ -1,6 +1,7 @@
 package com.umc.product.challenger.adapter.in.web.v2;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -97,6 +98,24 @@ class ChallengerSearchV2ControllerTest {
             .andExpect(status().isOk());
 
         then(searchMemberUseCase).should().searchChallengersByV2WithScope(any(), eq(99L), any());
+    }
+
+    @Test
+    @DisplayName("챌린저 검색 v2의 기본 페이지 크기는 10이다")
+    void 챌린저_검색_v2의_기본_페이지_크기는_10이다() throws Exception {
+        given(searchMemberUseCase.searchChallengersByV2WithScope(any(), any(), any()))
+            .willReturn(new ChallengerSearchV2Result(
+                new PageImpl<>(List.of(), PageRequest.of(0, 10), 0)
+            ));
+
+        mockMvc.perform(get("/api/v2/challenger/search"))
+            .andExpect(status().isOk());
+
+        then(searchMemberUseCase).should().searchChallengersByV2WithScope(
+            any(),
+            eq(99L),
+            argThat(pageable -> pageable.getPageNumber() == 0 && pageable.getPageSize() == 10)
+        );
     }
 
     @Test
