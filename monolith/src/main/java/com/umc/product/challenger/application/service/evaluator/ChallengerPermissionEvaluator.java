@@ -1,9 +1,9 @@
 package com.umc.product.challenger.application.service.evaluator;
 
-import com.umc.product.authorization.domain.AuthoritySnapshot;
 import org.springframework.stereotype.Component;
 
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
+import com.umc.product.authorization.domain.AuthoritySnapshot;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.SubjectAttributes;
