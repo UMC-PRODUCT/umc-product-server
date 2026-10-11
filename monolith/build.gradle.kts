@@ -12,6 +12,8 @@ plugins {
 // public 반환 타입으로 노출돼 있어, implementation 으로 두면 상속한 모듈이 그 멤버를 쓰는 순간
 // "cannot access" 로 컴파일이 깨진다.
 dependencies {
+    testImplementation("com.tngtech.archunit:archunit-junit5:${libs.versions.archunit.get()}")
+
     testFixturesApi("org.springframework.boot:spring-boot-starter-test")
     testFixturesApi("org.springframework.boot:spring-boot-testcontainers")
     testFixturesApi("org.springframework.boot:spring-boot-starter-data-jpa")
