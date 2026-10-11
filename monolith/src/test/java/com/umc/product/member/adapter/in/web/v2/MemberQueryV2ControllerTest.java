@@ -83,6 +83,7 @@ class MemberQueryV2ControllerTest {
                 .build(),
             MemberProfileInfo.builder().github("https://github.com/umc").build(),
             true,
+            true,
             30L,
             null,
             List.of()
@@ -92,7 +93,34 @@ class MemberQueryV2ControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.id").value(99L))
             .andExpect(jsonPath("$.result.hasLocalCredential").value(true))
+            .andExpect(jsonPath("$.result.isSuperAdmin").value(true))
             .andExpect(jsonPath("$.result.totalActivityDays").value(30L));
+    }
+
+    @Test
+    @DisplayName("일반 사용자의 본인 정보에는 isSuperAdmin false를 반환한다")
+    void 일반_사용자의_본인_정보에는_isSuperAdmin_false를_반환한다() throws Exception {
+        given(getMemberSummaryV2UseCase.getSummaryByMemberId(99L)).willReturn(new MemberSummaryV2Info(
+            MemberInfo.builder()
+                .id(99L)
+                .name("홍길동")
+                .nickname("길동")
+                .email("gildong@example.com")
+                .schoolId(1L)
+                .schoolName("테스트대학교")
+                .status(MemberStatus.ACTIVE)
+                .build(),
+            MemberProfileInfo.builder().build(),
+            false,
+            false,
+            0L,
+            null,
+            List.of()
+        ));
+
+        mockMvc.perform(get("/api/v2/member/me"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.isSuperAdmin").value(false));
     }
 
     @Test

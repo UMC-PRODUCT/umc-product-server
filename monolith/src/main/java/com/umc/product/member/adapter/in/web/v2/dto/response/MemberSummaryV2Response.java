@@ -28,6 +28,8 @@ public record MemberSummaryV2Response(
     String email,
     @Schema(description = "로컬 계정 비밀번호 자격증명 보유 여부")
     boolean hasLocalCredential,
+    @Schema(description = "시스템 역할 SUPER_ADMIN 보유 여부")
+    boolean isSuperAdmin,
 
     Long schoolId,
     String schoolName,
@@ -53,6 +55,7 @@ public record MemberSummaryV2Response(
             m.nickname(),
             m.email(),
             info.hasLocalCredential(),
+            info.isSuperAdmin(),
             m.schoolId(),
             m.schoolName(),
             m.profileImageLink(),

@@ -22,12 +22,14 @@ import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCa
 import com.umc.product.member.application.port.in.query.GetMemberProfileUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberSummaryV2UseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.ListMemberSystemRoleUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberSummaryV2Info;
 import com.umc.product.member.application.port.in.query.dto.MemberSummaryV2Info.ActiveChallenger;
 import com.umc.product.member.application.port.in.query.dto.MemberSummaryV2Info.ChallengerHistoryItem;
 import com.umc.product.member.application.port.in.query.dto.MemberSummaryV2Info.CurrentGisuMembership;
+import com.umc.product.member.domain.MemberSystemRoleType;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
@@ -49,6 +51,7 @@ public class MemberSummaryV2QueryService implements GetMemberSummaryV2UseCase {
     private final GetMemberUseCase getMemberUseCase;
     private final GetMemberCredentialUseCase getMemberCredentialUseCase;
     private final GetMemberProfileUseCase getMemberProfileUseCase;
+    private final ListMemberSystemRoleUseCase listMemberSystemRoleUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final GetChapterUseCase getChapterUseCase;
@@ -60,6 +63,8 @@ public class MemberSummaryV2QueryService implements GetMemberSummaryV2UseCase {
         MemberInfo memberInfo = getMemberUseCase.getById(memberId);
         boolean hasLocalCredential = getMemberCredentialUseCase.findCredentialByMemberId(memberId).isPresent();
         MemberProfileInfo profileInfo = getMemberProfileUseCase.getMemberProfileById(memberId);
+        boolean isSuperAdmin = listMemberSystemRoleUseCase.listByMemberId(memberId).stream()
+            .anyMatch(role -> MemberSystemRoleType.SUPER_ADMIN.name().equals(role.roleType()));
 
         // 챌린저 + 점수 일괄 로딩 (D13에서 batch로 교체됨)
         List<ChallengerInfo> challengers = getChallengerUseCase.getAllByMemberId(memberId);
@@ -117,6 +122,7 @@ public class MemberSummaryV2QueryService implements GetMemberSummaryV2UseCase {
             memberInfo,
             profileInfo,
             hasLocalCredential,
+            isSuperAdmin,
             activitySummary.totalActivityDays(),
             currentMembership,
             history
