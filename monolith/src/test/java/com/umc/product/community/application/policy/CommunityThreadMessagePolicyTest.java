@@ -1,4 +1,4 @@
-package com.umc.product.chat.application.policy;
+package com.umc.product.community.application.policy;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.umc.product.chat.application.port.in.command.ValidateChatAttachmentsUseCase;
 import com.umc.product.chat.application.port.in.command.dto.CreateChatMessageCommand;
 import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.chat.domain.exception.ChatDomainException;
@@ -25,18 +26,18 @@ import com.umc.product.storage.application.port.in.query.dto.FileMetadataInfo;
 import com.umc.product.storage.domain.enums.FileCategory;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("CommunityChatMessagePolicy")
-class CommunityChatMessagePolicyTest {
+@DisplayName("CommunityThreadMessagePolicy")
+class CommunityThreadMessagePolicyTest {
 
     private static final long TEN_MEBIBYTES = 10L * 1024L * 1024L;
 
     @Mock
     GetFileUseCase getFileUseCase;
     @Mock
-    ChatAttachmentPolicy chatAttachmentPolicy;
+    ValidateChatAttachmentsUseCase validateChatAttachmentsUseCase;
 
     @InjectMocks
-    CommunityChatMessagePolicy sut;
+    CommunityThreadMessagePolicy sut;
 
     @Test
     @DisplayName("TEXT 본문은 정확히 2,000 code point까지 허용한다")
@@ -55,6 +56,39 @@ class CommunityChatMessagePolicyTest {
     }
 
     @Test
+    @DisplayName("메시지 생성에는 clientMessageId가 필요하다")
+    void create_requiresClientMessageId() {
+        CreateChatMessageCommand command = new CreateChatMessageCommand(
+            1L, 10L, null, MessageContentType.TEXT, "본문", List.of(), List.of(), null
+        );
+
+        assertError(() -> sut.validateCreate(command), ChatErrorCode.CHAT_MESSAGE_CLIENT_ID_REQUIRED);
+    }
+
+    @Test
+    @DisplayName("TEXT 메시지는 첨부파일을 허용하지 않는다")
+    void text_rejectsAttachments() {
+        CreateChatMessageCommand command = new CreateChatMessageCommand(
+            1L, 10L, UUID.randomUUID(), MessageContentType.TEXT, "본문",
+            List.of("file-1"), List.of(), null
+        );
+
+        assertError(() -> sut.validateCreate(command), ChatErrorCode.CHAT_MESSAGE_ATTACHMENT_NOT_ALLOWED);
+        then(getFileUseCase).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("커뮤니티 메시지는 FILE 콘텐츠 타입을 허용하지 않는다")
+    void fileType_isRejected() {
+        CreateChatMessageCommand command = new CreateChatMessageCommand(
+            1L, 10L, UUID.randomUUID(), MessageContentType.FILE, null,
+            List.of("file-1"), List.of(), null
+        );
+
+        assertError(() -> sut.validateCreate(command), ChatErrorCode.CHAT_MESSAGE_INVALID_CONTENT_TYPE);
+    }
+
+    @Test
     @DisplayName("IMAGE는 4개 파일과 파일당 10MiB 경계를 허용한다")
     void image_exactBoundary() {
         List<String> fileIds = List.of("file-1", "file-2", "file-3", "file-4");
@@ -69,7 +103,7 @@ class CommunityChatMessagePolicyTest {
             sut.validateAttachments(command);
         }).doesNotThrowAnyException();
 
-        then(chatAttachmentPolicy).should().validate(MessageContentType.IMAGE, files);
+        then(validateChatAttachmentsUseCase).should().validate(MessageContentType.IMAGE, files);
     }
 
     @Test
@@ -78,6 +112,15 @@ class CommunityChatMessagePolicyTest {
         CreateChatMessageCommand command = image(List.of("1", "2", "3", "4", "5"));
 
         assertError(() -> sut.validateCreate(command), ChatErrorCode.CHAT_MESSAGE_INVALID_ATTACHMENT_COUNT);
+    }
+
+    @Test
+    @DisplayName("IMAGE 메시지는 같은 첨부파일을 중복 사용할 수 없다")
+    void image_rejectsDuplicateFiles() {
+        CreateChatMessageCommand command = image(List.of("file-1", "file-1"));
+
+        assertError(() -> sut.validateCreate(command), ChatErrorCode.CHAT_MESSAGE_INVALID_ATTACHMENT);
+        then(getFileUseCase).shouldHaveNoInteractions();
     }
 
     @Test
@@ -111,6 +154,16 @@ class CommunityChatMessagePolicyTest {
         );
 
         assertThatCode(() -> sut.validateCreate(command)).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("수정 본문도 2,000 code point를 초과하면 거부한다")
+    void edit_rejectsOverBoundary() {
+        assertError(
+            () -> sut.validateEdit("가".repeat(2_001)),
+            ChatErrorCode.CHAT_MESSAGE_INVALID_CONTENT_LENGTH
+        );
+        assertThatCode(() -> sut.validateEdit("가".repeat(2_000))).doesNotThrowAnyException();
     }
 
     private CreateChatMessageCommand text(String content) {

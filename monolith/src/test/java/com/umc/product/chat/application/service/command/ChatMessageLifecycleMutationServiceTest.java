@@ -19,7 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.chat.application.policy.ChatRoomAccessPolicy;
-import com.umc.product.chat.application.policy.CommunityChatMessagePolicy;
 import com.umc.product.chat.application.port.in.command.dto.ChatMessageMutationResult;
 import com.umc.product.chat.application.port.in.command.dto.EditChatMessageCommand;
 import com.umc.product.chat.application.port.in.command.dto.TombstoneChatMessageCommand;
@@ -61,8 +60,6 @@ class ChatMessageLifecycleMutationServiceTest {
     SaveChatMessageMentionPort saveChatMessageMentionPort;
     @Mock
     SaveChatMessageReactionPort saveChatMessageReactionPort;
-    @Mock
-    CommunityChatMessagePolicy communityChatMessagePolicy;
     @Mock
     ChatRoomAccessPolicy chatRoomAccessPolicy;
     @Mock

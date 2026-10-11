@@ -6,13 +6,14 @@ import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
+import com.umc.product.chat.application.port.in.command.ValidateChatAttachmentsUseCase;
 import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
 import com.umc.product.storage.application.port.in.query.dto.FileMetadataInfo;
 
 @Component
-public class ChatAttachmentPolicy {
+public class ChatAttachmentPolicy implements ValidateChatAttachmentsUseCase {
 
     private static final Map<String, Set<String>> IMAGE_TYPES = Map.of(
         "jpg", Set.of("image/jpeg"),
@@ -33,6 +34,7 @@ public class ChatAttachmentPolicy {
         "zip", Set.of("application/zip", "application/x-zip-compressed")
     );
 
+    @Override
     public void validate(MessageContentType contentType, Iterable<FileMetadataInfo> files) {
         Map<String, Set<String>> allowedTypes = switch (contentType) {
             case IMAGE -> IMAGE_TYPES;

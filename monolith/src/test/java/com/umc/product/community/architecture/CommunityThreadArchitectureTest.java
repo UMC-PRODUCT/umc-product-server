@@ -20,14 +20,14 @@ class CommunityThreadArchitectureTest {
     private static final Path PRODUCTION_SOURCE_ROOT = Path.of("src/main/java/com/umc/product");
     private static final Path COMMUNITY_SOURCE_ROOT = PRODUCTION_SOURCE_ROOT.resolve("community");
     private static final Path COMMUNITY_ADAPTER_IN_ROOT = COMMUNITY_SOURCE_ROOT.resolve("adapter/in");
-    private static final Path CHAT_ADAPTER_IN_ROOT = PRODUCTION_SOURCE_ROOT.resolve("chat/adapter/in");
-    private static final Path GLOBAL_SOURCE_ROOT = PRODUCTION_SOURCE_ROOT.resolve("global");
     private static final Set<Path> ALLOWED_CHAT_EVENT_IMPORT_SOURCES = Set.of(
         COMMUNITY_SOURCE_ROOT.resolve("adapter/in/event/CommunityThreadRealtimeEventListener.java"),
         COMMUNITY_SOURCE_ROOT.resolve("application/port/in/realtime/RelayCommunityThreadRealtimeEventUseCase.java"),
         COMMUNITY_SOURCE_ROOT.resolve("application/service/realtime/CommunityThreadRealtimeFanOutService.java"),
         COMMUNITY_SOURCE_ROOT.resolve("application/service/realtime/CommunityThreadChatRealtimeRelay.java")
     );
+    private static final Path CHAT_ADAPTER_IN_ROOT = PRODUCTION_SOURCE_ROOT.resolve("chat/adapter/in");
+    private static final Path GLOBAL_SOURCE_ROOT = PRODUCTION_SOURCE_ROOT.resolve("global");
     private static final Set<String> ALLOWED_CHAT_EVENT_TYPES = Set.of(
         "com.umc.product.chat.domain.event.ChatMessageCreatedEvent",
         "com.umc.product.chat.domain.event.ChatMessageUpdatedEvent",
@@ -36,13 +36,12 @@ class CommunityThreadArchitectureTest {
         "com.umc.product.chat.domain.event.ChatReadUpdatedEvent"
     );
 
-    /**
-     * Community가 Chat command/query 계약을 채우기 위해 값으로만 쓰는 Chat domain enum. entity/repository 참조가 아니므로
-     * 경계 위반이 아니며, 소문자 import 문 전체를 정확히 일치시킨다.
-     */
-    private static final Set<String> ALLOWED_CHAT_DOMAIN_VALUE_IMPORTS = Set.of(
+
+    private static final Set<String> ALLOWED_CHAT_DOMAIN_CONTRACT_IMPORTS = Set.of(
         "import com.umc.product.chat.domain.messagecontenttype;",
-        "import com.umc.product.chat.domain.chatroomreadscope;"
+        "import com.umc.product.chat.domain.chatroomreadscope;",
+        "import com.umc.product.chat.domain.exception.chatdomainexception;",
+        "import com.umc.product.chat.domain.exception.chaterrorcode;"
     );
 
     private static final Set<String> ALLOWED_DOMAIN_ROOTS = Set.of(
@@ -67,6 +66,98 @@ class CommunityThreadArchitectureTest {
         "@(Post|Patch|Delete)Mapping\\s*\\([^)]*\\)",
         Pattern.CASE_INSENSITIVE | Pattern.DOTALL
     );
+
+    private static boolean isForeignPersistenceImport(Path sourcePath, String line) {
+        if (!line.trim().startsWith("import ")) {
+            return false;
+        }
+        String importLine = line.trim().toLowerCase(Locale.ROOT);
+        if (importLine.startsWith("import com.umc.product.chat.domain.event.")) {
+            return !isAllowedChatEventImport(sourcePath, line);
+        }
+        if (importLine.contains("com.umc.product.chat.adapter.")) {
+            return true;
+        }
+        if (importLine.contains(".adapter.out.persistence.")) {
+            return true;
+        }
+        if (ALLOWED_CHAT_DOMAIN_CONTRACT_IMPORTS.contains(importLine)) {
+            return false;
+        }
+        if (importLine.contains(".chat.domain.")) {
+            return true;
+        }
+        Matcher domainImport = DOMAIN_IMPORT.matcher(importLine);
+        return domainImport.find()
+            && !ALLOWED_DOMAIN_ROOTS.contains(domainImport.group(1))
+            && !importLine.contains(".domain.event.");
+    }
+
+    private static boolean isAllowedChatEventImport(Path sourcePath, String line) {
+        String importLine = line.trim();
+        if (!importLine.startsWith("import ") || !importLine.endsWith(";")) {
+            return false;
+        }
+        String importedType = importLine.substring("import ".length(), importLine.length() - 1).trim();
+        return ALLOWED_CHAT_EVENT_IMPORT_SOURCES.contains(sourcePath.normalize())
+            && ALLOWED_CHAT_EVENT_TYPES.contains(importedType);
+    }
+
+    private static boolean containsNotificationDeliveryToken(String line) {
+        String code = line.replaceAll("//.*", "");
+        return code.contains("com.umc.product.notification.")
+            || code.matches(".*\\b(?:send|deliver|publish)(?:Notification|Alarm)\\b.*")
+            || code.matches(".*\\bNotification(?:Service|Publisher|Sender)\\b.*");
+    }
+
+    private static boolean isForbiddenRestMutation(String mapping) {
+        String normalized = mapping.toLowerCase(Locale.ROOT);
+        boolean messageCreate = normalized.contains("@postmapping")
+            && normalized.contains("/threads/{threadid}/messages")
+            && !normalized.contains("/report");
+        boolean messageEditOrDelete = (normalized.contains("@patchmapping")
+            || normalized.contains("@deletemapping"))
+            && normalized.contains("/messages/")
+            && !normalized.contains("/report");
+        boolean reactionMutation = (normalized.contains("@postmapping")
+            || normalized.contains("@deletemapping"))
+            && normalized.contains("/reactions/");
+        boolean readMutation = (normalized.contains("@postmapping")
+            || normalized.contains("@patchmapping")
+            || normalized.contains("@deletemapping"))
+            && normalized.contains("/read");
+        return messageCreate || messageEditOrDelete || reactionMutation || readMutation;
+    }
+
+    private static List<String> mappingDeclarations(SourceFile source) {
+        return STOMP_MAPPING.matcher(source.content()).results()
+            .map(match -> match.group())
+            .toList();
+    }
+
+    private static List<SourceFile> sourceFiles(Path root) throws IOException {
+        return javaSources(root).stream()
+            .map(path -> {
+                try {
+                    return new SourceFile(path, Files.readString(path));
+                } catch (IOException exception) {
+                    throw new IllegalStateException("production source를 읽지 못했습니다: " + path, exception);
+                }
+            })
+            .toList();
+    }
+
+    private static List<Path> javaSources(Path root) throws IOException {
+        if (!Files.exists(root)) {
+            return List.of();
+        }
+        try (var paths = Files.walk(root)) {
+            return paths
+                .filter(Files::isRegularFile)
+                .filter(path -> path.toString().endsWith(".java"))
+                .toList();
+        }
+    }
 
     @Test
     @DisplayName(
@@ -210,98 +301,6 @@ class CommunityThreadArchitectureTest {
         assertThat(forbiddenMutations)
             .as("REST message/reaction/read mutation mapping")
             .isEmpty();
-    }
-
-    private static boolean isForeignPersistenceImport(Path sourcePath, String line) {
-        if (!line.trim().startsWith("import ")) {
-            return false;
-        }
-        String importLine = line.trim().toLowerCase(Locale.ROOT);
-        if (importLine.startsWith("import com.umc.product.chat.domain.event.")) {
-            return !isAllowedChatEventImport(sourcePath, line);
-        }
-        if (importLine.contains("com.umc.product.chat.adapter.")) {
-            return true;
-        }
-        if (importLine.contains(".adapter.out.persistence.")) {
-            return true;
-        }
-        if (ALLOWED_CHAT_DOMAIN_VALUE_IMPORTS.contains(importLine)) {
-            return false;
-        }
-        if (importLine.contains(".chat.domain.")) {
-            return true;
-        }
-        Matcher domainImport = DOMAIN_IMPORT.matcher(importLine);
-        return domainImport.find()
-            && !ALLOWED_DOMAIN_ROOTS.contains(domainImport.group(1))
-            && !importLine.contains(".domain.event.");
-    }
-
-    private static boolean isAllowedChatEventImport(Path sourcePath, String line) {
-        String importLine = line.trim();
-        if (!importLine.startsWith("import ") || !importLine.endsWith(";")) {
-            return false;
-        }
-        String importedType = importLine.substring("import ".length(), importLine.length() - 1).trim();
-        return ALLOWED_CHAT_EVENT_IMPORT_SOURCES.contains(sourcePath.normalize())
-            && ALLOWED_CHAT_EVENT_TYPES.contains(importedType);
-    }
-
-    private static boolean containsNotificationDeliveryToken(String line) {
-        String code = line.replaceAll("//.*", "");
-        return code.contains("com.umc.product.notification.")
-            || code.matches(".*\\b(?:send|deliver|publish)(?:Notification|Alarm)\\b.*")
-            || code.matches(".*\\bNotification(?:Service|Publisher|Sender)\\b.*");
-    }
-
-    private static boolean isForbiddenRestMutation(String mapping) {
-        String normalized = mapping.toLowerCase(Locale.ROOT);
-        boolean messageCreate = normalized.contains("@postmapping")
-            && normalized.contains("/threads/{threadid}/messages")
-            && !normalized.contains("/report");
-        boolean messageEditOrDelete = (normalized.contains("@patchmapping")
-            || normalized.contains("@deletemapping"))
-            && normalized.contains("/messages/")
-            && !normalized.contains("/report");
-        boolean reactionMutation = (normalized.contains("@postmapping")
-            || normalized.contains("@deletemapping"))
-            && normalized.contains("/reactions/");
-        boolean readMutation = (normalized.contains("@postmapping")
-            || normalized.contains("@patchmapping")
-            || normalized.contains("@deletemapping"))
-            && normalized.contains("/read");
-        return messageCreate || messageEditOrDelete || reactionMutation || readMutation;
-    }
-
-    private static List<String> mappingDeclarations(SourceFile source) {
-        return STOMP_MAPPING.matcher(source.content()).results()
-            .map(match -> match.group())
-            .toList();
-    }
-
-    private static List<SourceFile> sourceFiles(Path root) throws IOException {
-        return javaSources(root).stream()
-            .map(path -> {
-                try {
-                    return new SourceFile(path, Files.readString(path));
-                } catch (IOException exception) {
-                    throw new IllegalStateException("production source를 읽지 못했습니다: " + path, exception);
-                }
-            })
-            .toList();
-    }
-
-    private static List<Path> javaSources(Path root) throws IOException {
-        if (!Files.exists(root)) {
-            return List.of();
-        }
-        try (var paths = Files.walk(root)) {
-            return paths
-                .filter(Files::isRegularFile)
-                .filter(path -> path.toString().endsWith(".java"))
-                .toList();
-        }
     }
 
     private record SourceFile(Path path, String content) {

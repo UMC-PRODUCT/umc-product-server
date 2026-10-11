@@ -27,6 +27,7 @@ import com.umc.product.chat.application.port.in.query.dto.ChatReactionInfo;
 import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.community.application.event.CommunityThreadMentionedEvent;
 import com.umc.product.community.application.event.CommunityThreadMessageCreatedEvent;
+import com.umc.product.community.application.policy.CommunityThreadMessagePolicy;
 import com.umc.product.community.application.port.in.command.thread.message.CreateCommunityThreadMessageUseCase;
 import com.umc.product.community.application.port.in.command.thread.message.EditCommunityThreadMessageUseCase;
 import com.umc.product.community.application.port.in.command.thread.message.ManageCommunityThreadMessageReactionUseCase;
@@ -77,6 +78,7 @@ public class CommunityThreadMessageCommandService implements
     private final ManageChatMessageReactionUseCase reactionUseCase;
     private final UpdateChatReadUseCase updateChatReadUseCase;
     private final ListChatRoomSummariesUseCase listChatRoomSummariesUseCase;
+    private final CommunityThreadMessagePolicy messagePolicy;
     private final CommunityThreadMessageInfoAssembler infoAssembler;
     private final DomainEventPublisher domainEventPublisher;
 
@@ -84,7 +86,7 @@ public class CommunityThreadMessageCommandService implements
     public CommunityThreadMessageMutationInfo create(CreateCommunityThreadMessageCommand command) {
         CommunityThread thread = loadLockedThread(command.threadId());
         loadActiveMember(thread.getId(), command.senderMemberId());
-        ChatMessageMutationResult result = createChatMessageUseCase.create(new CreateChatMessageCommand(
+        CreateChatMessageCommand chatCommand = new CreateChatMessageCommand(
             thread.getChatRoomId(),
             command.senderMemberId(),
             command.clientMessageId(),
@@ -93,7 +95,12 @@ public class CommunityThreadMessageCommandService implements
             command.fileMetadataIds(),
             command.mentionedMemberIds(),
             command.replyToMessageId()
-        ));
+        );
+        messagePolicy.validateCreate(chatCommand);
+        ChatMessageMutationResult result = createChatMessageUseCase.create(
+            chatCommand,
+            messagePolicy::validateAttachments
+        );
         CommunityThreadMessageInfo message = infoAssembler.assemble(thread.getId(), result.message());
         if (result.deduplicated()) {
             return new CommunityThreadMessageMutationInfo(message, true);
@@ -151,6 +158,7 @@ public class CommunityThreadMessageCommandService implements
     public CommunityThreadMessageMutationInfo edit(EditCommunityThreadMessageCommand command) {
         CommunityThread thread = loadLockedThread(command.threadId());
         loadActiveMember(thread.getId(), command.requesterMemberId());
+        messagePolicy.validateEdit(command.content());
         ChatMessageMutationResult result = editChatMessageUseCase.edit(new EditChatMessageCommand(
             thread.getChatRoomId(),
             command.messageId(),
@@ -214,9 +222,9 @@ public class CommunityThreadMessageCommandService implements
             command.lastReadMessageId()
         ));
         long unreadCount = listChatRoomSummariesUseCase.listRoomSummaries(
-            command.memberId(),
-            List.of(thread.getChatRoomId())
-        ).stream()
+                command.memberId(),
+                List.of(thread.getChatRoomId())
+            ).stream()
             .filter(summary -> thread.getChatRoomId().equals(summary.roomId()))
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("Chat room summary is missing"))

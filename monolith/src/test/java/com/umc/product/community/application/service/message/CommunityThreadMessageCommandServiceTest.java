@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.inOrder;
 
 import java.time.Instant;
@@ -23,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.chat.application.port.in.command.ChatMessageAttachmentValidation;
 import com.umc.product.chat.application.port.in.command.CreateChatMessageUseCase;
 import com.umc.product.chat.application.port.in.command.EditChatMessageUseCase;
 import com.umc.product.chat.application.port.in.command.ManageChatMessageReactionUseCase;
@@ -41,8 +43,11 @@ import com.umc.product.chat.application.port.in.query.dto.ChatMessageInfo;
 import com.umc.product.chat.application.port.in.query.dto.ChatReactionInfo;
 import com.umc.product.chat.application.port.in.query.dto.ChatRoomSummaryInfo;
 import com.umc.product.chat.domain.MessageContentType;
+import com.umc.product.chat.domain.exception.ChatDomainException;
+import com.umc.product.chat.domain.exception.ChatErrorCode;
 import com.umc.product.community.application.event.CommunityThreadMentionedEvent;
 import com.umc.product.community.application.event.CommunityThreadMessageCreatedEvent;
+import com.umc.product.community.application.policy.CommunityThreadMessagePolicy;
 import com.umc.product.community.application.port.in.command.thread.message.dto.ChangeCommunityThreadMessageReactionCommand;
 import com.umc.product.community.application.port.in.command.thread.message.dto.CreateCommunityThreadMessageCommand;
 import com.umc.product.community.application.port.in.command.thread.message.dto.EditCommunityThreadMessageCommand;
@@ -98,6 +103,8 @@ class CommunityThreadMessageCommandServiceTest {
     @Mock
     ListChatRoomSummariesUseCase listChatRoomSummariesUseCase;
     @Mock
+    CommunityThreadMessagePolicy messagePolicy;
+    @Mock
     CommunityThreadMessageInfoAssembler infoAssembler;
     @Mock
     CommunityThreadMessageInfo communityMessageInfo;
@@ -122,8 +129,13 @@ class CommunityThreadMessageCommandServiceTest {
             .willReturn(Optional.of(sender));
         given(loadThreadMemberPort.listByThreadId(THREAD_ID))
             .willReturn(List.of(sender, recipient, secondRecipient, left));
-        given(createChatMessageUseCase.create(any(CreateChatMessageCommand.class)))
-            .willReturn(new ChatMessageMutationResult(chatInfo, false));
+        given(createChatMessageUseCase.create(any(CreateChatMessageCommand.class), any()))
+            .willAnswer(invocation -> {
+                CreateChatMessageCommand chatCommand = invocation.getArgument(0);
+                ChatMessageAttachmentValidation validation = invocation.getArgument(1);
+                validation.validate(chatCommand);
+                return new ChatMessageMutationResult(chatInfo, false);
+            });
         given(infoAssembler.assemble(THREAD_ID, chatInfo)).willReturn(communityMessageInfo);
         given(saveThreadPort.save(thread)).willReturn(thread);
         given(saveThreadMemberPort.saveAll(any())).willAnswer(invocation -> invocation.getArgument(0));
@@ -148,11 +160,13 @@ class CommunityThreadMessageCommandServiceTest {
         assertThat(secondRecipient.getUnreadCount()).isEqualTo(1L);
         assertThat(left.getUnreadCount()).isZero();
 
-        InOrder order = inOrder(loadThreadPort, loadThreadMemberPort, createChatMessageUseCase,
+        InOrder order = inOrder(loadThreadPort, loadThreadMemberPort, messagePolicy, createChatMessageUseCase,
             saveThreadPort, saveThreadMemberPort, domainEventPublisher);
         order.verify(loadThreadPort).findByIdForUpdate(THREAD_ID);
         order.verify(loadThreadMemberPort).findByThreadIdAndMemberId(THREAD_ID, OWNER_ID);
-        order.verify(createChatMessageUseCase).create(any(CreateChatMessageCommand.class));
+        order.verify(messagePolicy).validateCreate(any(CreateChatMessageCommand.class));
+        order.verify(createChatMessageUseCase).create(any(CreateChatMessageCommand.class), any());
+        order.verify(messagePolicy).validateAttachments(any(CreateChatMessageCommand.class));
         order.verify(saveThreadPort).save(thread);
         order.verify(saveThreadMemberPort).saveAll(any());
         order.verify(domainEventPublisher).publishAll(any(Collection.class));
@@ -190,7 +204,7 @@ class CommunityThreadMessageCommandServiceTest {
         given(loadThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, OWNER_ID))
             .willReturn(Optional.of(sender));
-        given(createChatMessageUseCase.create(any(CreateChatMessageCommand.class)))
+        given(createChatMessageUseCase.create(any(CreateChatMessageCommand.class), any()))
             .willReturn(new ChatMessageMutationResult(chatInfo, true));
         given(infoAssembler.assemble(THREAD_ID, chatInfo)).willReturn(communityMessageInfo);
 
@@ -213,6 +227,24 @@ class CommunityThreadMessageCommandServiceTest {
     }
 
     @Test
+    @DisplayName("스레드 메시지 정책이 거절하면 Chat 생성과 projection을 실행하지 않는다")
+    void create_policyFailureStopsBeforeChat() {
+        given(loadThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread()));
+        given(loadThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, OWNER_ID))
+            .willReturn(Optional.of(active(OWNER_ID, CommunityThreadMemberRole.OWNER)));
+        willThrow(new ChatDomainException(ChatErrorCode.CHAT_MESSAGE_INVALID_CONTENT_LENGTH))
+            .given(messagePolicy).validateCreate(any(CreateChatMessageCommand.class));
+
+        assertThatThrownBy(() -> sut.create(createCommand(OWNER_ID)))
+            .isInstanceOf(ChatDomainException.class)
+            .extracting(error -> ((ChatDomainException) error).getBaseCode())
+            .isEqualTo(ChatErrorCode.CHAT_MESSAGE_INVALID_CONTENT_LENGTH);
+        then(createChatMessageUseCase).shouldHaveNoInteractions();
+        then(saveThreadPort).shouldHaveNoInteractions();
+        then(saveThreadMemberPort).shouldHaveNoInteractions();
+    }
+
+    @Test
     @DisplayName("멘션이 없는 fresh create는 message-created fact만 한 번 발행한다")
     void create_withoutMentionsPublishesOnlyCreatedFact() {
         CommunityThread thread = thread();
@@ -223,7 +255,7 @@ class CommunityThreadMessageCommandServiceTest {
         given(loadThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, OWNER_ID))
             .willReturn(Optional.of(sender));
         given(loadThreadMemberPort.listByThreadId(THREAD_ID)).willReturn(List.of(sender, recipient));
-        given(createChatMessageUseCase.create(any(CreateChatMessageCommand.class)))
+        given(createChatMessageUseCase.create(any(CreateChatMessageCommand.class), any()))
             .willReturn(new ChatMessageMutationResult(chatInfo, false));
         given(infoAssembler.assemble(THREAD_ID, chatInfo)).willReturn(communityMessageInfo);
         given(saveThreadPort.save(thread)).willReturn(thread);
@@ -302,9 +334,11 @@ class CommunityThreadMessageCommandServiceTest {
 
         assertThat(result.deduplicated()).isFalse();
         assertThat(thread.getLastMessagePreview()).isEqualTo("수정");
-        InOrder order = inOrder(loadThreadPort, loadThreadMemberPort, editChatMessageUseCase, saveThreadPort);
+        InOrder order = inOrder(loadThreadPort, loadThreadMemberPort, messagePolicy,
+            editChatMessageUseCase, saveThreadPort);
         order.verify(loadThreadPort).findByIdForUpdate(THREAD_ID);
         order.verify(loadThreadMemberPort).findByThreadIdAndMemberId(THREAD_ID, OWNER_ID);
+        order.verify(messagePolicy).validateEdit("수정");
         order.verify(editChatMessageUseCase).edit(any(EditChatMessageCommand.class));
         order.verify(saveThreadPort).save(thread);
     }

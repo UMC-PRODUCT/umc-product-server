@@ -2,6 +2,7 @@ package com.umc.product.chat.application.service.command;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -10,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.chat.application.policy.ChatMessagePayloadFingerprint;
 import com.umc.product.chat.application.policy.ChatRoomAccessPolicy;
-import com.umc.product.chat.application.policy.CommunityChatMessagePolicy;
+import com.umc.product.chat.application.port.in.command.ChatMessageAttachmentValidation;
 import com.umc.product.chat.application.port.in.command.CreateChatMessageUseCase;
 import com.umc.product.chat.application.port.in.command.EditChatMessageUseCase;
 import com.umc.product.chat.application.port.in.command.TombstoneChatMessageUseCase;
@@ -54,14 +55,16 @@ public class ChatMessageLifecycleCommandService implements
     private final LoadChatMessageMentionPort loadChatMessageMentionPort;
     private final SaveChatMessageMentionPort saveChatMessageMentionPort;
     private final SaveChatMessageReactionPort saveChatMessageReactionPort;
-    private final CommunityChatMessagePolicy communityChatMessagePolicy;
     private final ChatRoomAccessPolicy chatRoomAccessPolicy;
     private final ChatMessageInfoAssembler chatMessageInfoAssembler;
     private final DomainEventPublisher domainEventPublisher;
 
     @Override
-    public ChatMessageMutationResult create(CreateChatMessageCommand command) {
-        communityChatMessagePolicy.validateCreate(command);
+    public ChatMessageMutationResult create(
+        CreateChatMessageCommand command,
+        ChatMessageAttachmentValidation attachmentValidation
+    ) {
+        Objects.requireNonNull(attachmentValidation, "attachmentValidation");
         String payloadFingerprint = ChatMessagePayloadFingerprint.from(command);
         loadChatRoomPort.getByIdForUpdate(command.roomId());
         chatRoomAccessPolicy.verifyMember(command.roomId(), command.senderMemberId());
@@ -78,7 +81,7 @@ public class ChatMessageLifecycleCommandService implements
             return replay(existing.get(), command, payloadFingerprint);
         }
 
-        communityChatMessagePolicy.validateAttachments(command);
+        attachmentValidation.validate(command);
         ChatMessage saved = saveChatMessagePort.save(ChatMessage.create(
             command.roomId(),
             command.senderMemberId(),
@@ -105,7 +108,6 @@ public class ChatMessageLifecycleCommandService implements
 
     @Override
     public ChatMessageMutationResult edit(EditChatMessageCommand command) {
-        communityChatMessagePolicy.validateEdit(command.content());
         loadChatRoomPort.getByIdForUpdate(command.roomId());
         chatRoomAccessPolicy.verifyMember(command.roomId(), command.editorMemberId());
         ChatMessage message = loadChatMessagePort.getByIdAndRoomId(command.messageId(), command.roomId());
