@@ -61,7 +61,6 @@ class ChatMessageLifecycleMutationServiceTest {
     @Mock
     SaveChatMessageReactionPort saveChatMessageReactionPort;
     @Mock
-    @Mock
     ChatRoomAccessPolicy chatRoomAccessPolicy;
     @Mock
     ChatMessageInfoAssembler chatMessageInfoAssembler;
