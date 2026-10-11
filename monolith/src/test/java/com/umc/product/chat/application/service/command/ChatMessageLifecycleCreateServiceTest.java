@@ -110,17 +110,20 @@ class ChatMessageLifecycleCreateServiceTest {
         assertThat(event.getValue().mentionedMemberIds()).containsExactly(20L, 30L);
 
         InOrder validationOrder = inOrder(
+            communityChatMessagePolicy,
             loadChatRoomPort,
             chatRoomAccessPolicy,
             loadChatMemberPort,
             loadChatMessagePort,
             saveChatMessagePort
         );
+        validationOrder.verify(communityChatMessagePolicy).validateCreate(command);
         validationOrder.verify(loadChatRoomPort).getByIdForUpdate(1L);
         validationOrder.verify(chatRoomAccessPolicy).verifyMember(1L, 10L);
         validationOrder.verify(loadChatMemberPort).listByRoomId(1L);
         validationOrder.verify(loadChatMessagePort)
             .findByRoomIdAndSenderMemberIdAndClientMessageId(1L, 10L, clientMessageId);
+        validationOrder.verify(communityChatMessagePolicy).validateAttachments(command);
         validationOrder.verify(saveChatMessagePort).save(any(ChatMessage.class));
     }
 
@@ -168,6 +171,7 @@ class ChatMessageLifecycleCreateServiceTest {
 
         assertThat(result.deduplicated()).isTrue();
         assertThat(result.message()).isSameAs(info);
+        then(communityChatMessagePolicy).should().validateCreate(command);
         then(communityChatMessagePolicy).should(never()).validateAttachments(command);
         then(saveChatMessagePort).shouldHaveNoInteractions();
         then(saveChatMessageMentionPort).shouldHaveNoInteractions();
