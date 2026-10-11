@@ -26,6 +26,15 @@ public class ChallengerPointQueryRepository {
             .fetch();
     }
 
+    List<ChallengerPoint> findAllByChallengerOrderByCreatedAtDesc(Long challengerId) {
+        return queryFactory
+            .select(challengerPoint)
+            .from(challengerPoint)
+            .where(challengerPoint.challenger.id.eq(challengerId))
+            .orderBy(challengerPoint.createdAt.desc(), challengerPoint.id.desc())
+            .fetch();
+    }
+
     public List<ChallengerPoint> findAllByChallengerIdIn(Set<Long> challengerIds) {
         return queryFactory
             .select(challengerPoint)

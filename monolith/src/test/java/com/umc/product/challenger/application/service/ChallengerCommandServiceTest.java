@@ -300,6 +300,24 @@ class ChallengerCommandServiceTest {
         then(saveChallengerPort).shouldHaveNoInteractions();
     }
 
+    @Test
+    @DisplayName("기타 상벌점은 0점을 부여할 수 없다")
+    void 기타_상벌점은_0점을_부여할_수_없다() {
+        given(loadChallengerPort.getById(1L)).willReturn(challenger(1L, ChallengerStatus.ACTIVE));
+
+        assertThatThrownBy(() -> sut.grantChallengerPoint(GrantChallengerPointCommand.builder()
+            .challengerId(1L)
+            .pointType(PointType.CUSTOM)
+            .pointValue(0)
+            .description("조정")
+            .build()))
+            .isInstanceOf(ChallengerDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(ChallengerErrorCode.CUSTOM_POINT_VALUE_MUST_BE_NON_ZERO);
+
+        then(saveChallengerPointPort).shouldHaveNoInteractions();
+    }
+
     @ParameterizedTest
     @ValueSource(longs = {10L, 11L})
     @DisplayName("기수 ID와 관계없이 10기부터 기존 우수 워크북 상점을 부여할 수 없다")

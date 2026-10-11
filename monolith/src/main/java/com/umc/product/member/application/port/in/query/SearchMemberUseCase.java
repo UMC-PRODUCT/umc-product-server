@@ -28,4 +28,13 @@ public interface SearchMemberUseCase {
         Long requesterMemberId,
         Pageable pageable
     );
+
+    /**
+     * v2 챌린저 검색 + 요청자의 권한에 따른 검색 범위 적용
+     */
+    ChallengerSearchV2Result searchChallengersByV2WithScope(
+        SearchMemberQuery query,
+        Long requesterMemberId,
+        Pageable pageable
+    );
 }

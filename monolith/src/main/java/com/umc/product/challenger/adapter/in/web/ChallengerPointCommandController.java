@@ -46,7 +46,7 @@ public class ChallengerPointCommandController {
     ) {
         manageChallengerUseCase.grantChallengerPoint(request.toCommand(challengerId));
 
-        return assembler.fromChallengerId(challengerId);
+        return assembler.fromChallengerIdWithPointsLatestFirst(challengerId);
     }
 
     @CheckAccess(
@@ -70,7 +70,7 @@ public class ChallengerPointCommandController {
         permission = PermissionType.DELETE,
         message = "상벌점 기록은 중앙운영사무국 총괄단만 삭제할 수 있어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
-    @Operation(operationId = "POINT-003", summary = "챌린저 상벌점 삭제", description = "총괄단 권한이 필요합니다.")
+    @Operation(operationId = "POINT-003", summary = "챌린저 상벌점 삭제", description = "총괄단 권한이 필요합니다. 삭제 이력은 감사 로그에 기록됩니다.")
     @DeleteMapping("points/{challengerPointId}")
     void deleteChallengerPoint(@PathVariable Long challengerPointId) {
         manageChallengerUseCase.deleteChallengerPoint(

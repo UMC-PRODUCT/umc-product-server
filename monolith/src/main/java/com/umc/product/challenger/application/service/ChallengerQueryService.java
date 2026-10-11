@@ -38,6 +38,14 @@ public class ChallengerQueryService implements GetChallengerUseCase, CheckChalle
     }
 
     @Override
+    public ChallengerInfo getByIdWithPointsLatestFirst(Long challengerId) {
+        Challenger challenger = loadChallengerPort.getById(challengerId);
+        List<ChallengerPointInfo> challengerPointInfos =
+            getChallengerPointUseCase.listByChallengerIdOrderByCreatedAtDesc(challengerId);
+        return ChallengerInfo.from(challenger, challengerPointInfos);
+    }
+
+    @Override
     public Optional<ChallengerInfo> findById(Long challengerId) {
         return loadChallengerPort.findById(challengerId)
             .map(this::getChallengerInfoFromChallenger);

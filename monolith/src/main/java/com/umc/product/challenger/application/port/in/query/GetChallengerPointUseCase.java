@@ -11,6 +11,8 @@ public interface GetChallengerPointUseCase {
 
     List<ChallengerPointInfo> getListByChallengerId(Long challengerId);
 
+    List<ChallengerPointInfo> listByChallengerIdOrderByCreatedAtDesc(Long challengerId);
+
     /**
      * 여러 챌린저의 포인트를 한 번의 쿼리로 일괄 조회
      *

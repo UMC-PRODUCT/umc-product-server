@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -54,7 +55,7 @@ class ChallengerPointCommandControllerTest {
     @Test
     @DisplayName("상벌점 부여 성공 시 챌린저 정보를 반환한다")
     void 상벌점_부여_성공시_챌린저_정보를_반환한다() throws Exception {
-        given(assembler.fromChallengerId(100L)).willReturn(ChallengerInfoResponse.builder()
+        given(assembler.fromChallengerIdWithPointsLatestFirst(100L)).willReturn(ChallengerInfoResponse.builder()
             .challengerId(100L)
             .totalPoints(1.0)
             .build());
@@ -81,11 +82,25 @@ class ChallengerPointCommandControllerTest {
         then(manageChallengerUseCase).should(never()).grantChallengerPoint(any(GrantChallengerPointCommand.class));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"null", "\"\"", "\"   \""})
+    @DisplayName("상벌점 부여 요청의 설명이 비어 있으면 400")
+    void 상벌점_부여_요청의_설명이_비어_있으면_400(String description) throws Exception {
+        mockMvc.perform(post("/api/v1/challenger/{challengerId}/points", 100L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"pointType":"CUSTOM","pointValue":1,"description":%s}
+                    """.formatted(description)))
+            .andExpect(status().isBadRequest());
+
+        then(manageChallengerUseCase).should(never()).grantChallengerPoint(any(GrantChallengerPointCommand.class));
+    }
+
     @Test
     @DisplayName("고정 배점 생략 요청을 기본 배점 처리용 null로 전달한다")
     void 고정_배점_생략_요청을_기본_배점_처리용_null로_전달한다() throws Exception {
         // given
-        given(assembler.fromChallengerId(100L)).willReturn(ChallengerInfoResponse.builder()
+        given(assembler.fromChallengerIdWithPointsLatestFirst(100L)).willReturn(ChallengerInfoResponse.builder()
             .challengerId(100L)
             .totalPoints(-2.0)
             .build());
@@ -104,7 +119,10 @@ class ChallengerPointCommandControllerTest {
 
     @ParameterizedTest
     @EnumSource(value = ChallengerErrorCode.class, names = {
-        "CUSTOM_POINT_VALUE_REQUIRED", "INVALID_POINT_VALUE", "LEGACY_POINT_TYPE_NOT_ALLOWED"
+        "CUSTOM_POINT_VALUE_REQUIRED",
+        "CUSTOM_POINT_VALUE_MUST_BE_NON_ZERO",
+        "INVALID_POINT_VALUE",
+        "LEGACY_POINT_TYPE_NOT_ALLOWED"
     })
     @DisplayName("상벌점 검증 실패는 400과 구체적인 오류 코드를 반환한다")
     void 상벌점_검증_실패는_400과_구체적인_오류_코드를_반환한다(ChallengerErrorCode errorCode) throws Exception {

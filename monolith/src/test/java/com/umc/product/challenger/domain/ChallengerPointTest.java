@@ -61,9 +61,9 @@ class ChallengerPointTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {-3, 0, 3})
-    @DisplayName("CUSTOM은 명시한 점수와 부호를 보존한다")
-    void CUSTOM은_명시한_점수와_부호를_보존한다(int value) {
+    @ValueSource(ints = {-3, 3})
+    @DisplayName("CUSTOM은 명시한 0이 아닌 점수와 부호를 보존한다")
+    void CUSTOM은_명시한_0이_아닌_점수와_부호를_보존한다(int value) {
         // given
         Challenger challenger = challenger();
 
@@ -72,6 +72,18 @@ class ChallengerPointTest {
 
         // then
         assertThat(point.getPointValue()).isEqualTo((double)value);
+    }
+
+    @Test
+    @DisplayName("CUSTOM은 0점을 허용하지 않는다")
+    void CUSTOM은_0점을_허용하지_않는다() {
+        // given
+        Challenger challenger = challenger();
+
+        // when & then
+        assertThatThrownBy(() -> ChallengerPoint.create(challenger, PointType.CUSTOM, 0, "직접 부여"))
+            .isInstanceOf(ChallengerDomainException.class)
+            .extracting("baseCode").isEqualTo(ChallengerErrorCode.CUSTOM_POINT_VALUE_MUST_BE_NON_ZERO);
     }
 
     @Test

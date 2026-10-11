@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 import java.time.Instant;
 import java.util.List;
@@ -53,12 +54,32 @@ class ChallengerSearchV2Test {
     @Mock GetChallengerUseCase getChallengerUseCase;
     @Mock GetChallengerRoleUseCase getChallengerRoleUseCase;
     @Mock GetGisuUseCase getGisuUseCase;
+    @Mock ChallengerManagementSearchPolicy challengerManagementSearchPolicy;
 
     @InjectMocks MemberSearchService memberSearchService;
 
     @BeforeEach
     void setUp() {
         given(checkChallengerHistoryUseCase.hasChallengerHistory(REQUESTER_MEMBER_ID)).willReturn(true);
+    }
+
+    @Test
+    void 운영용_검색은_학교_범위를_적용하고_기존_검색은_기존_조건을_유지한다() {
+        // given
+        SearchMemberQuery original = new SearchMemberQuery(null, 11L, null, null, null);
+        SearchMemberQuery scoped = new SearchMemberQuery(null, 11L, null, null, 10L);
+        Pageable pageable = PageRequest.of(0, 10);
+        given(challengerManagementSearchPolicy.scope(original, REQUESTER_MEMBER_ID)).willReturn(scoped);
+        given(searchMemberPort.search(scoped, pageable)).willReturn(Page.empty(pageable));
+        given(searchMemberPort.search(original, pageable)).willReturn(Page.empty(pageable));
+
+        // when
+        memberSearchService.searchChallengersByV2WithScope(original, REQUESTER_MEMBER_ID, pageable);
+        memberSearchService.searchChallengersByV2(original, REQUESTER_MEMBER_ID, pageable);
+
+        // then
+        then(searchMemberPort).should().search(scoped, pageable);
+        then(searchMemberPort).should().search(original, pageable);
     }
 
     private Challenger challenger(Long id, Long memberId, ChallengerPart part, Long gisuId) {

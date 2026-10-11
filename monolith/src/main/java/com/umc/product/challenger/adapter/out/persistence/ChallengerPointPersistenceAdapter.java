@@ -27,6 +27,11 @@ public class ChallengerPointPersistenceAdapter implements LoadChallengerPointPor
     }
 
     @Override
+    public List<ChallengerPoint> listByChallengerIdOrderByCreatedAtDesc(Long challengerId) {
+        return queryRepository.findAllByChallengerOrderByCreatedAtDesc(challengerId);
+    }
+
+    @Override
     public List<ChallengerPoint> findByChallengerIdIn(Set<Long> challengerIds) {
         return queryRepository.findAllByChallengerIdIn(challengerIds);
     }

@@ -5,6 +5,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.challenger.adapter.in.web.assembler.ChallengerResponseAssembler;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 
@@ -43,9 +46,23 @@ public class ChallengerQueryController {
 //        return assembler.fromMemberId(memberPrincipal.getMemberId());
 //    }
 
-    @Operation(operationId = "CHALLENGER-101", summary = "챌린저 정보 조회")
+    @Operation(
+        operationId = "CHALLENGER-101",
+        summary = "챌린저 정보 조회",
+        description = """
+           챌린저 기본 정보와 상벌점 이력을 조회합니다.
+
+           - 상벌점 이력은 생성 일시 기준 최신순으로 반환됩니다.
+           - SUPER_ADMIN, 대상 기수의 중앙운영사무국 및 학교 회장단만 조회할 수 있습니다.
+           """
+    )
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER,
+        resourceId = "#challengerId",
+        permission = PermissionType.READ
+    )
     @GetMapping("{challengerId}")
     ChallengerInfoResponse getChallengerInfo(@PathVariable Long challengerId) {
-        return assembler.fromChallengerId(challengerId);
+        return assembler.fromChallengerIdWithPointsLatestFirst(challengerId);
     }
 }
