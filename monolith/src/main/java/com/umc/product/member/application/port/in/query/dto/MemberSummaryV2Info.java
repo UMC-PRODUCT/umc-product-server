@@ -18,6 +18,7 @@ public record MemberSummaryV2Info(
     MemberInfo member,
     MemberProfileInfo profile,
     boolean hasLocalCredential,
+    boolean isSuperAdmin,
     long totalActivityDays,
     CurrentGisuMembership currentGisuMembership,
     List<ChallengerHistoryItem> challengerHistory

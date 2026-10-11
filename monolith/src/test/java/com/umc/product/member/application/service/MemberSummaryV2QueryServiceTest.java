@@ -30,10 +30,13 @@ import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberProfileUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.ListMemberSystemRoleUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberSummaryV2Info;
+import com.umc.product.member.application.port.in.query.dto.MemberSystemRoleInfo;
+import com.umc.product.member.domain.MemberSystemRoleType;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
@@ -46,6 +49,7 @@ class MemberSummaryV2QueryServiceTest {
     @Mock GetMemberUseCase getMemberUseCase;
     @Mock GetMemberCredentialUseCase getMemberCredentialUseCase;
     @Mock GetMemberProfileUseCase getMemberProfileUseCase;
+    @Mock ListMemberSystemRoleUseCase listMemberSystemRoleUseCase;
     @Mock GetChallengerUseCase getChallengerUseCase;
     @Mock GetGisuUseCase getGisuUseCase;
     @Mock GetChapterUseCase getChapterUseCase;
@@ -114,6 +118,7 @@ class MemberSummaryV2QueryServiceTest {
 
         MemberSummaryV2Info info = service.getSummaryByMemberId(100L);
 
+        assertThat(info.isSuperAdmin()).isFalse();
         assertThat(info.totalActivityDays()).isEqualTo(45L);
         assertThat(info.currentGisuMembership()).isNotNull();
         assertThat(info.currentGisuMembership().gisuId()).isEqualTo(7L);
@@ -241,5 +246,38 @@ class MemberSummaryV2QueryServiceTest {
         MemberSummaryV2Info info = service.getSummaryByMemberId(100L);
 
         assertThat(info.hasLocalCredential()).isFalse();
+    }
+
+    @Test
+    void SUPER_ADMIN이면_isSuperAdmin이_true이다() {
+        given(getMemberUseCase.getById(100L)).willReturn(member());
+        given(getMemberProfileUseCase.getMemberProfileById(100L)).willReturn(profile());
+        given(listMemberSystemRoleUseCase.listByMemberId(100L)).willReturn(List.of(
+            new MemberSystemRoleInfo(100L, MemberSystemRoleType.SUPER_ADMIN.name())
+        ));
+        given(getChallengerUseCase.getAllByMemberId(100L)).willReturn(List.of());
+        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.empty());
+        given(getChallengerActivityPeriodUseCase.calculateActivityPeriod(any(), any()))
+            .willReturn(new ActivityPeriodSummary(0L, List.of()));
+
+        MemberSummaryV2Info info = service.getSummaryByMemberId(100L);
+
+        assertThat(info.isSuperAdmin()).isTrue();
+        assertThat(info.currentGisuMembership()).isNull();
+    }
+
+    @Test
+    void SUPER_ADMIN_역할이_없으면_isSuperAdmin이_false이다() {
+        given(getMemberUseCase.getById(100L)).willReturn(member());
+        given(getMemberProfileUseCase.getMemberProfileById(100L)).willReturn(profile());
+        given(listMemberSystemRoleUseCase.listByMemberId(100L)).willReturn(List.of());
+        given(getChallengerUseCase.getAllByMemberId(100L)).willReturn(List.of());
+        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.empty());
+        given(getChallengerActivityPeriodUseCase.calculateActivityPeriod(any(), any()))
+            .willReturn(new ActivityPeriodSummary(0L, List.of()));
+
+        MemberSummaryV2Info info = service.getSummaryByMemberId(100L);
+
+        assertThat(info.isSuperAdmin()).isFalse();
     }
 }
