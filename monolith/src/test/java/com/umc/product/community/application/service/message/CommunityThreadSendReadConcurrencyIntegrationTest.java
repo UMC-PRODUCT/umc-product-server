@@ -33,7 +33,7 @@ class CommunityThreadSendReadConcurrencyIntegrationTest
         createChatMessageUseCase.create(chatText(
             thread,
             UUID.fromString("ae4d37ee-34ff-4bff-9e55-4acc353f4adb")
-        ));
+        ), ignored -> { });
         assertThat(threadMember(thread.threadId(), MEMBER_ID).getUnreadCount()).isEqualTo(1L);
         CountDownLatch sendApplied = new CountDownLatch(1);
         CountDownLatch allowSendCommit = new CountDownLatch(1);
@@ -41,7 +41,7 @@ class CommunityThreadSendReadConcurrencyIntegrationTest
             ChatMessageMutationResult result = createChatMessageUseCase.create(chatText(
                 thread,
                 UUID.fromString("6cde6397-d664-40a0-826b-05b1b82a23ea")
-            ));
+            ), ignored -> { });
             sendApplied.countDown();
             race.await(allowSendCommit, "send commit release");
             return result;

@@ -18,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.umc.product.chat.application.policy.ChatRoomAccessPolicy;
-import com.umc.product.chat.application.policy.CommunityChatMessagePolicy;
 import com.umc.product.chat.application.port.in.command.dto.CreateChatMessageCommand;
 import com.umc.product.chat.application.port.out.LoadChatMemberPort;
 import com.umc.product.chat.application.port.out.LoadChatMessageMentionPort;
@@ -55,8 +54,6 @@ class ChatMessageLifecycleReplyValidationTest {
     @Mock
     SaveChatMessageReactionPort saveChatMessageReactionPort;
     @Mock
-    CommunityChatMessagePolicy communityChatMessagePolicy;
-    @Mock
     ChatRoomAccessPolicy chatRoomAccessPolicy;
     @Mock
     ChatMessageInfoAssembler chatMessageInfoAssembler;
@@ -82,7 +79,7 @@ class ChatMessageLifecycleReplyValidationTest {
         );
         given(loadChatMessagePort.existsByIdAndRoomId(90L, 1L)).willReturn(false);
 
-        assertThatThrownBy(() -> sut.create(command))
+        assertThatThrownBy(() -> sut.create(command, ignored -> { }))
             .isInstanceOf(ChatDomainException.class)
             .extracting(error -> ((ChatDomainException) error).getBaseCode())
             .isEqualTo(ChatErrorCode.CHAT_MESSAGE_INVALID_REPLY_TARGET);

@@ -57,8 +57,8 @@ class ChatRoomConcurrencyIntegrationTest extends IntegrationTestSupport {
         );
 
         List<ChatMessageMutationResult> results = race(
-            () -> createChatMessageUseCase.create(command),
-            () -> createChatMessageUseCase.create(command)
+            () -> createChatMessageUseCase.create(command, ignored -> { }),
+            () -> createChatMessageUseCase.create(command, ignored -> { })
         );
 
         assertThat(results).extracting(ChatMessageMutationResult::deduplicated)
@@ -77,7 +77,7 @@ class ChatRoomConcurrencyIntegrationTest extends IntegrationTestSupport {
             OWNER,
             UUID.fromString("e07147f6-8524-43c9-9b55-6045ad0d69cb"),
             "reaction"
-        )).message().messageId();
+        ), ignored -> { }).message().messageId();
         ChangeChatMessageReactionCommand command =
             new ChangeChatMessageReactionCommand(roomId, messageId, OWNER, "👍");
 

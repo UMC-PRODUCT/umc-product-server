@@ -1,9 +1,10 @@
-package com.umc.product.chat.application.policy;
+package com.umc.product.community.application.policy;
 
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import com.umc.product.chat.application.port.in.command.ValidateChatAttachmentsUseCase;
 import com.umc.product.chat.application.port.in.command.dto.CreateChatMessageCommand;
 import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.chat.domain.exception.ChatDomainException;
@@ -15,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class CommunityChatMessagePolicy {
+public class CommunityThreadMessagePolicy {
 
     private static final int MAX_CONTENT_CODE_POINTS = 2_000;
     private static final int MAX_MENTIONS = 100;
@@ -24,7 +25,7 @@ public class CommunityChatMessagePolicy {
     private static final long MAX_TOTAL_IMAGE_SIZE = 40L * 1024L * 1024L;
 
     private final GetFileUseCase getFileUseCase;
-    private final ChatAttachmentPolicy chatAttachmentPolicy;
+    private final ValidateChatAttachmentsUseCase validateChatAttachmentsUseCase;
 
     public void validateCreate(CreateChatMessageCommand command) {
         if (command.clientMessageId() == null) {
@@ -56,7 +57,7 @@ public class CommunityChatMessagePolicy {
             command.fileMetadataIds(),
             command.senderMemberId()
         );
-        chatAttachmentPolicy.validate(MessageContentType.IMAGE, files);
+        validateChatAttachmentsUseCase.validate(MessageContentType.IMAGE, files);
 
         long totalSize = 0L;
         for (FileMetadataInfo file : files) {

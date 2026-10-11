@@ -1,4 +1,4 @@
-package com.umc.product.chat.application.policy;
+package com.umc.product.community.application.policy;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.umc.product.chat.application.port.in.command.ValidateChatAttachmentsUseCase;
 import com.umc.product.chat.application.port.in.command.dto.CreateChatMessageCommand;
 import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.chat.domain.exception.ChatDomainException;
@@ -25,18 +26,18 @@ import com.umc.product.storage.application.port.in.query.dto.FileMetadataInfo;
 import com.umc.product.storage.domain.enums.FileCategory;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("CommunityChatMessagePolicy")
-class CommunityChatMessagePolicyTest {
+@DisplayName("CommunityThreadMessagePolicy")
+class CommunityThreadMessagePolicyTest {
 
     private static final long TEN_MEBIBYTES = 10L * 1024L * 1024L;
 
     @Mock
     GetFileUseCase getFileUseCase;
     @Mock
-    ChatAttachmentPolicy chatAttachmentPolicy;
+    ValidateChatAttachmentsUseCase validateChatAttachmentsUseCase;
 
     @InjectMocks
-    CommunityChatMessagePolicy sut;
+    CommunityThreadMessagePolicy sut;
 
     @Test
     @DisplayName("TEXT 본문은 정확히 2,000 code point까지 허용한다")
@@ -102,7 +103,7 @@ class CommunityChatMessagePolicyTest {
             sut.validateAttachments(command);
         }).doesNotThrowAnyException();
 
-        then(chatAttachmentPolicy).should().validate(MessageContentType.IMAGE, files);
+        then(validateChatAttachmentsUseCase).should().validate(MessageContentType.IMAGE, files);
     }
 
     @Test

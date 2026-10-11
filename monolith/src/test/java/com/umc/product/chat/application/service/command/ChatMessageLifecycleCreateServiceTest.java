@@ -25,7 +25,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.chat.application.policy.ChatMessagePayloadFingerprint;
 import com.umc.product.chat.application.policy.ChatRoomAccessPolicy;
-import com.umc.product.chat.application.policy.CommunityChatMessagePolicy;
+import com.umc.product.chat.application.port.in.command.ChatMessageAttachmentValidation;
 import com.umc.product.chat.application.port.in.command.dto.ChatMessageMutationResult;
 import com.umc.product.chat.application.port.in.command.dto.CreateChatMessageCommand;
 import com.umc.product.chat.application.port.in.query.dto.ChatMessageInfo;
@@ -67,7 +67,7 @@ class ChatMessageLifecycleCreateServiceTest {
     @Mock
     SaveChatMessageReactionPort saveChatMessageReactionPort;
     @Mock
-    CommunityChatMessagePolicy communityChatMessagePolicy;
+    ChatMessageAttachmentValidation attachmentValidation;
     @Mock
     ChatRoomAccessPolicy chatRoomAccessPolicy;
     @Mock
@@ -95,7 +95,7 @@ class ChatMessageLifecycleCreateServiceTest {
         given(saveChatMessagePort.save(any(ChatMessage.class))).willReturn(saved);
         given(chatMessageInfoAssembler.assemble(saved, 10L)).willReturn(info);
 
-        ChatMessageMutationResult result = sut.create(command);
+        ChatMessageMutationResult result = sut.create(command, attachmentValidation);
 
         assertThat(result.deduplicated()).isFalse();
         assertThat(command.mentionedMemberIds()).containsExactly(20L, 30L);
@@ -110,20 +110,19 @@ class ChatMessageLifecycleCreateServiceTest {
         assertThat(event.getValue().mentionedMemberIds()).containsExactly(20L, 30L);
 
         InOrder validationOrder = inOrder(
-            communityChatMessagePolicy,
+            attachmentValidation,
             loadChatRoomPort,
             chatRoomAccessPolicy,
             loadChatMemberPort,
             loadChatMessagePort,
             saveChatMessagePort
         );
-        validationOrder.verify(communityChatMessagePolicy).validateCreate(command);
         validationOrder.verify(loadChatRoomPort).getByIdForUpdate(1L);
         validationOrder.verify(chatRoomAccessPolicy).verifyMember(1L, 10L);
         validationOrder.verify(loadChatMemberPort).listByRoomId(1L);
         validationOrder.verify(loadChatMessagePort)
             .findByRoomIdAndSenderMemberIdAndClientMessageId(1L, 10L, clientMessageId);
-        validationOrder.verify(communityChatMessagePolicy).validateAttachments(command);
+        validationOrder.verify(attachmentValidation).validate(command);
         validationOrder.verify(saveChatMessagePort).save(any(ChatMessage.class));
     }
 
@@ -167,12 +166,11 @@ class ChatMessageLifecycleCreateServiceTest {
         given(loadChatMessageMentionPort.listMemberIdsByMessageId(100L)).willReturn(List.of());
         given(chatMessageInfoAssembler.assemble(existing, 10L)).willReturn(info);
 
-        ChatMessageMutationResult result = sut.create(command);
+        ChatMessageMutationResult result = sut.create(command, attachmentValidation);
 
         assertThat(result.deduplicated()).isTrue();
         assertThat(result.message()).isSameAs(info);
-        then(communityChatMessagePolicy).should().validateCreate(command);
-        then(communityChatMessagePolicy).should(never()).validateAttachments(command);
+        then(attachmentValidation).shouldHaveNoInteractions();
         then(saveChatMessagePort).shouldHaveNoInteractions();
         then(saveChatMessageMentionPort).shouldHaveNoInteractions();
         then(saveChatMemberPort).shouldHaveNoInteractions();
@@ -205,7 +203,7 @@ class ChatMessageLifecycleCreateServiceTest {
             .willReturn(Optional.of(existing));
         given(loadChatMessageMentionPort.listMemberIdsByMessageId(100L)).willReturn(List.of());
 
-        assertThatThrownBy(() -> sut.create(command))
+        assertThatThrownBy(() -> sut.create(command, attachmentValidation))
             .isInstanceOf(ChatDomainException.class)
             .extracting(error -> ((ChatDomainException) error).getBaseCode())
             .isEqualTo(ChatErrorCode.CHAT_MESSAGE_IDEMPOTENCY_CONFLICT);
@@ -221,7 +219,7 @@ class ChatMessageLifecycleCreateServiceTest {
         CreateChatMessageCommand command = text(clientMessageId, List.of(20L));
         given(loadChatMemberPort.listByRoomId(1L)).willReturn(List.of(ChatMember.of(1L, 10L)));
 
-        assertThatThrownBy(() -> sut.create(command))
+        assertThatThrownBy(() -> sut.create(command, attachmentValidation))
             .isInstanceOf(ChatDomainException.class)
             .extracting(error -> ((ChatDomainException) error).getBaseCode())
             .isEqualTo(ChatErrorCode.CHAT_MESSAGE_INVALID_MENTION);

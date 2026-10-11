@@ -84,7 +84,7 @@ class ChatRoomPessimisticLockIntegrationTest extends IntegrationTestSupport {
         race.await(leaveApplied, "leave mutation");
 
         TransactionCall<ChatMessageMutationResult> send = race.submit(() ->
-            createChatMessageUseCase.create(text(roomId))
+            createChatMessageUseCase.create(text(roomId), ignored -> { })
         );
         try {
             race.awaitPostgreSqlLockWait(send);

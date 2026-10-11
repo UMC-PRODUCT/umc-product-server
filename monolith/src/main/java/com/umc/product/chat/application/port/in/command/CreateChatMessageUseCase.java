@@ -5,5 +5,8 @@ import com.umc.product.chat.application.port.in.command.dto.CreateChatMessageCom
 
 public interface CreateChatMessageUseCase {
 
-    ChatMessageMutationResult create(CreateChatMessageCommand command);
+    ChatMessageMutationResult create(
+        CreateChatMessageCommand command,
+        ChatMessageAttachmentValidation attachmentValidation
+    );
 }
