@@ -87,6 +87,18 @@ class SsoBrowserLoginCommandServiceTest {
     }
 
     @Test
+    @DisplayName("Mac 미연결 계정에는 로그인·가입 증명 토큰을 모두 발급하지 않는다")
+    void mac_미연결_계정_토큰_없음() {
+        OAuthAttributes attrs = new OAuthAttributes(OAuthProvider.GOOGLE, "google-id", EMAIL);
+        given(oAuthAuthenticationUseCase.loginWithOAuthAttributes(attrs))
+            .willReturn(OAuthTokenLoginResult.newMember(OAuthProvider.GOOGLE, "google-id", EMAIL));
+        SsoBrowserOAuthLoginResult result = service.loginByVerifiedOAuth(attrs, null, "google-client");
+        assertThat(result.hasLoginCookie()).isFalse();
+        assertThat(result.oAuthVerificationToken()).isNull();
+        org.mockito.Mockito.verifyNoInteractions(tokenProvider, jwtTokenProvider, eventPublisher);
+    }
+
+    @Test
     @DisplayName("email/password 검증 후 SSO 브라우저 로그인 토큰을 발급하고 생성 이벤트를 발행한다")
     void 이메일_로그인_성공_토큰_발급_이벤트_발행() {
         // given
