@@ -79,6 +79,9 @@ public enum AuthenticationErrorCode implements BaseCode {
     INVALID_SSO_AUTHORIZATION_CODE(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0034", "SSO authorization code가 유효하지 않아요."),
     EXPIRED_SSO_AUTHORIZATION_CODE(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0035", "SSO authorization code가 만료됐어요."),
     UNSUPPORTED_SSO_GRANT_TYPE(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0036", "지원하지 않는 SSO grant_type이에요."),
+    INVALID_SSO_SOCIAL_ATTEMPT(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0037", "소셜 로그인 요청이 유효하지 않아요. 다시 시작해주세요."),
+    SSO_SOCIAL_PROVIDER_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "AUTHENTICATION-0038",
+        "소셜 로그인을 사용할 수 없어요. 잠시 후 다시 시도해주세요."),
 
     // OAuth Authorization Code Flow 관련 에러
     UNSUPPORTED_OAUTH_FLOW(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0023",

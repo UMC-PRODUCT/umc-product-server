@@ -59,6 +59,21 @@ public class KakaoTokenVerifier {
      * @throws AuthenticationDomainException redirect URI 불일치, 토큰 교환 실패, 또는 사용자 정보 조회 실패 시
      */
     public OAuthAttributes verifyAuthorizationCode(String authorizationCode, String redirectUri) {
+        return verifyAuthorizationCode(authorizationCode, redirectUri, null, false);
+    }
+
+    /**
+     * 서버 callback용 진입점이다. 기존 두 인자 메서드와 동일한 코드 교환·사용자 조회 로직을 재사용한다.
+     * nonce가 있으면 OIDC를 요청한 것이므로 ID Token의 nonce까지 검증하며, 없으면 기존 userinfo도 허용한다.
+     * 서버 흐름은 5xx/연결 장애를 별도 오류로 반환하되 기존 모바일 진입점의 오류 의미는 유지한다.
+     */
+    public OAuthAttributes verifyAuthorizationCode(String authorizationCode, String redirectUri, String nonce) {
+        return verifyAuthorizationCode(authorizationCode, redirectUri, nonce, true);
+    }
+
+    // OIDC를 사용하지 않는 서버 로그인도 기존 모바일 API와 장애 응답을 구분해야 한다.
+    private OAuthAttributes verifyAuthorizationCode(String authorizationCode, String redirectUri,
+                                                    String nonce, boolean serverFlow) {
         log.debug("Kakao Authorization Code 교환 시작");
 
         if (!kakaoOAuthProperties.isAllowedRedirectUri(redirectUri)) {
@@ -66,11 +81,15 @@ public class KakaoTokenVerifier {
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_REDIRECT_URI);
         }
 
-        KakaoTokenResponse response = exchangeAuthorizationCode(authorizationCode, redirectUri);
+        KakaoTokenResponse response = exchangeAuthorizationCode(authorizationCode, redirectUri, serverFlow);
         if (StringUtils.hasText(response.idToken())) {
-            return verifyIdToken(response.idToken());
+            return verifyIdToken(response.idToken(), nonce, serverFlow);
         }
-        return verifyAccessToken(response.accessToken());
+        // OIDC를 요청했는데 ID Token이 없다면 검증을 약화해 userinfo로 넘어가지 않고 실패시킨다.
+        if (nonce != null) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+        }
+        return verifyAccessToken(response.accessToken(), serverFlow);
     }
 
     /**
@@ -78,7 +97,8 @@ public class KakaoTokenVerifier {
      * <p>
      * client_secret은 Kakao 앱이 보안 모드일 때만 필요하며, 비어 있으면 form data에서 제외합니다.
      */
-    private KakaoTokenResponse exchangeAuthorizationCode(String authorizationCode, String redirectUri) {
+    private KakaoTokenResponse exchangeAuthorizationCode(String authorizationCode, String redirectUri,
+                                                          boolean serverFlow) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", "authorization_code");
         formData.add("client_id", kakaoOAuthProperties.clientId());
@@ -96,6 +116,10 @@ public class KakaoTokenVerifier {
                     .body(formData)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
+                        if (serverFlow && res.getStatusCode().is5xxServerError()) {
+                            throw new AuthenticationDomainException(
+                                AuthenticationErrorCode.SSO_SOCIAL_PROVIDER_UNAVAILABLE);
+                        }
                         log.warn("Kakao 토큰 교환 실패: status={}", res.getStatusCode());
                         throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
                     })
@@ -113,7 +137,10 @@ public class KakaoTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("Kakao 토큰 교환 실패", e);
+            if (serverFlow && e instanceof org.springframework.web.client.RestClientException) {
+                throw new AuthenticationDomainException(AuthenticationErrorCode.SSO_SOCIAL_PROVIDER_UNAVAILABLE);
+            }
+            log.warn("Kakao 토큰 교환 실패: errorClass={}", e.getClass().getSimpleName());
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -128,6 +155,10 @@ public class KakaoTokenVerifier {
      * @throws AuthenticationDomainException 토큰 검증 실패 시
      */
     public OAuthAttributes verifyAccessToken(String accessToken) {
+        return verifyAccessToken(accessToken, false);
+    }
+
+    private OAuthAttributes verifyAccessToken(String accessToken, boolean serverFlow) {
         log.debug("Kakao Access Token 검증 시작");
 
         try {
@@ -137,6 +168,10 @@ public class KakaoTokenVerifier {
                     .header("Authorization", "Bearer " + accessToken)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
+                        if (serverFlow && res.getStatusCode().is5xxServerError()) {
+                            throw new AuthenticationDomainException(
+                                AuthenticationErrorCode.SSO_SOCIAL_PROVIDER_UNAVAILABLE);
+                        }
                         log.warn("Kakao 사용자 정보 조회 실패: status={}", res.getStatusCode());
                         throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
                     })
@@ -156,6 +191,9 @@ public class KakaoTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
+            if (serverFlow && e instanceof org.springframework.web.client.RestClientException) {
+                throw new AuthenticationDomainException(AuthenticationErrorCode.SSO_SOCIAL_PROVIDER_UNAVAILABLE);
+            }
             log.warn("Kakao Access Token 검증 실패", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
@@ -169,18 +207,30 @@ public class KakaoTokenVerifier {
     }
 
     public OAuthAttributes verifyIdToken(String idToken) {
+        return verifyIdToken(idToken, null, false);
+    }
+
+    public OAuthAttributes verifyIdToken(String idToken, String nonce) {
+        return verifyIdToken(idToken, nonce, true);
+    }
+
+    private OAuthAttributes verifyIdToken(String idToken, String nonce, boolean serverFlow) {
         log.debug("Kakao ID Token 검증 시작");
 
         try {
             String kid = publicKeyResolver.extractKid(idToken);
             Claims claims = Jwts.parser()
-                .verifyWith(publicKeyResolver.getPublicKey(kakaoJwksSpec(), kid))
+                // OIDC 미요청이어도 ID Token이 응답되면 검증하므로 nonce 유무와 서버 흐름 여부는 별개다.
+                .verifyWith(publicKeyResolver.getPublicKey(kakaoJwksSpec(), kid, serverFlow))
                 .requireIssuer(KAKAO_ISSUER)
                 .requireAudience(kakaoOAuthProperties.clientId())
                 .build()
                 .parseSignedClaims(idToken)
                 .getPayload();
 
+            if (nonce != null) {
+                OidcLoginClaimsValidator.validate(claims, kakaoOAuthProperties.clientId(), nonce);
+            }
             log.debug("Kakao ID Token을 검증했습니다: hasEmail={}", hasEmail(claims.get("email", String.class)));
 
             Map<String, Object> attributes = new HashMap<>();
@@ -197,7 +247,7 @@ public class KakaoTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("Kakao ID Token 검증 실패", e);
+            log.warn("Kakao ID Token 검증 실패: errorClass={}", e.getClass().getSimpleName());
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }

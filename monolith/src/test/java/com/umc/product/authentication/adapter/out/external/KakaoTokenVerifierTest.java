@@ -76,6 +76,19 @@ class KakaoTokenVerifierTest {
         fixture.server.verify();
     }
 
+    @Test
+    @DisplayName("Kakao OIDC 서버 로그인은 다른 nonce를 거절한다")
+    void 서버_nonce_불일치() {
+        TestFixture fixture = new TestFixture();
+        KeyPair keys = OidcTokenTestSupport.rsaKeyPair();
+        fixture.expectKakaoJwks("kakao-kid", keys);
+        String token = OidcTokenTestSupport.signedIdToken(keys, "kakao-kid", "https://kauth.kakao.com",
+            "kakao-rest-api-key", "123456789", Map.of("nonce", "other-nonce"));
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+            fixture.verifier.verifyIdToken(token, "request-nonce"))
+            .isInstanceOf(com.umc.product.authentication.domain.exception.AuthenticationDomainException.class);
+    }
+
     private static class TestFixture {
 
         private final RestClient.Builder builder = RestClient.builder();

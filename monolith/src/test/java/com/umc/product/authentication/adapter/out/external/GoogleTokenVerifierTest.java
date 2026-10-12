@@ -97,6 +97,41 @@ class GoogleTokenVerifierTest {
             .isEqualTo(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
     }
 
+    @Test
+    @DisplayName("서버 Google code 교환은 정확한 web client와 nonce를 검증한다")
+    void 서버_코드_교환() {
+        TestFixture fixture = new TestFixture();
+        KeyPair keys = OidcTokenTestSupport.rsaKeyPair();
+        String token = OidcTokenTestSupport.signedIdToken(keys, "google-kid", "https://accounts.google.com",
+            "server-client", "google-sub", Map.of("nonce", "request-nonce", "email", "a@example.com"));
+        fixture.server.expect(requestTo("https://oauth2.googleapis.com/token"))
+            .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.method(
+                org.springframework.http.HttpMethod.POST))
+            .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.content().formData(
+                new org.springframework.util.LinkedMultiValueMap<>(Map.of(
+                    "code", List.of("provider-code"), "client_id", List.of("server-client"),
+                    "client_secret", List.of("server-secret"), "grant_type", List.of("authorization_code"),
+                    "redirect_uri", List.of("https://api.example.com/callback")))))
+            .andRespond(withSuccess("{\"id_token\":\"" + token + "\"}", MediaType.APPLICATION_JSON));
+        fixture.expectGoogleJwks("google-kid", keys);
+        OAuthAttributes result = fixture.verifier.verifyAuthorizationCode("provider-code",
+            "https://api.example.com/callback", "server-client", "server-secret", "request-nonce");
+        assertThat(result.providerId()).isEqualTo("google-sub");
+        fixture.server.verify();
+    }
+
+    @Test
+    @DisplayName("서명과 audience가 맞아도 다른 로그인 nonce의 Google 토큰은 거절한다")
+    void 서버_nonce_불일치() {
+        TestFixture fixture = new TestFixture();
+        KeyPair keys = OidcTokenTestSupport.rsaKeyPair();
+        fixture.expectGoogleJwks("google-kid", keys);
+        String token = OidcTokenTestSupport.signedIdToken(keys, "google-kid", "https://accounts.google.com",
+            "server-client", "google-sub", Map.of("nonce", "other-nonce"));
+        assertThatThrownBy(() -> fixture.verifier.verifyIdToken(token, "server-client", "request-nonce"))
+            .isInstanceOf(AuthenticationDomainException.class);
+    }
+
     private static class TestFixture {
 
         private final RestClient.Builder builder = RestClient.builder();
