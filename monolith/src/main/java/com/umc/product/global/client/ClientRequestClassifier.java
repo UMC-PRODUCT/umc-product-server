@@ -19,7 +19,8 @@ public class ClientRequestClassifier {
 
     public ClientRequestContext classify(HttpServletRequest request, MemberPrincipal principal) {
         ClientDeviceType deviceType = resolveDeviceType(request, principal);
-        ClientContextClaims tokenClaims = principal == null ? ClientContextClaims.empty() : principal.getClientContextClaims();
+        ClientContextClaims tokenClaims = principal == null
+            ? ClientContextClaims.empty() : principal.getClientContextClaims();
         if (tokenClaims == null) {
             tokenClaims = ClientContextClaims.empty();
         }
@@ -78,6 +79,11 @@ public class ClientRequestClassifier {
         }
         if (clientType == ClientType.ANDROID) {
             return ClientDeviceType.ANDROID;
+        }
+
+        // 인증된 토큰이 MACOS라면 User-Agent가 없거나 브라우저처럼 보여도 데스크톱으로 분류한다.
+        if (clientType == ClientType.MACOS) {
+            return ClientDeviceType.DESKTOP;
         }
 
         String userAgent = request.getHeader("User-Agent");

@@ -32,7 +32,8 @@ public record AppleOAuthProperties(
     public String resolveClientId(ClientType clientType) {
         return switch (clientType) {
             case IOS -> iosClientId;
-            case WEB, ANDROID -> webClientId;
+            // 브라우저 기반 Apple 인가는 Services ID를 쓴다. UMC 토큰의 MACOS 플랫폼 분류와는 별개다.
+            case WEB, ANDROID, MACOS -> webClientId;
         };
     }
 }

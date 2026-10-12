@@ -211,6 +211,61 @@ class SsoTokenExchangeCommandServiceTest {
     }
 
     @Test
+    @DisplayName("macOS SSO client는 MACOS 플랫폼으로 토큰을 발급한다")
+    void macos_client_type_토큰_발급() {
+        // given
+        SsoTokenExchangeCommandService service = service();
+        String clientId = "macos-app";
+        String redirectUri = "umc-macos://auth/callback";
+        SsoAuthorizationCode authorizationCode = authorizationCode(
+            clientId,
+            redirectUri,
+            Instant.now().plusSeconds(300)
+        );
+        SsoClient client = SsoClient.of(
+            clientId,
+            "UMC macOS App",
+            ClientServiceType.MACOS_APP,
+            ClientEnvironment.PROD,
+            true,
+            Duration.ofMinutes(30),
+            List.of(redirectUri),
+            List.of()
+        );
+        ClientContextClaims expectedClientContext = ClientContextClaims.of(
+            clientId,
+            ClientServiceType.MACOS_APP,
+            ClientEnvironment.PROD
+        );
+
+        given(loadSsoAuthorizationCodePort.findByCodeHashForUpdate(sha256Hex(RAW_CODE)))
+            .willReturn(Optional.of(authorizationCode));
+        given(loadSsoClientPort.getByClientId(clientId)).willReturn(client);
+        given(authenticationTokenIssuer.issue(MEMBER_ID, ClientType.MACOS, expectedClientContext, Duration.ofMinutes(30)))
+            .willReturn(NewTokens.builder()
+                .accessToken("macos-access-token")
+                .refreshToken("macos-refresh-token")
+                .expiresIn(1800L)
+                .clientContextClaims(expectedClientContext)
+                .build());
+        given(getMemberUseCase.getById(MEMBER_ID)).willReturn(memberInfo());
+        given(getMemberOAuthUseCase.getOAuthList(MEMBER_ID)).willReturn(List.of());
+
+        // when
+        SsoTokenInfo result = service.exchange(command(
+            "authorization_code",
+            clientId,
+            redirectUri,
+            CODE_VERIFIER
+        ));
+
+        // then
+        assertThat(result.accessToken()).isEqualTo("macos-access-token");
+        then(authenticationTokenIssuer).should()
+            .issue(MEMBER_ID, ClientType.MACOS, expectedClientContext, Duration.ofMinutes(30));
+    }
+
+    @Test
     @DisplayName("grant_type이 authorization_code가 아니면 UNSUPPORTED_SSO_GRANT_TYPE 예외를 던진다")
     void grant_type_거부() {
         // given

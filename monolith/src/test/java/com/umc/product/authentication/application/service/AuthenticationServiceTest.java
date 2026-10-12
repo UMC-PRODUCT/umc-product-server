@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
@@ -42,6 +41,7 @@ import com.umc.product.authentication.domain.RefreshToken;
 import com.umc.product.authentication.domain.SsoClient;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.global.client.ClientContextClaims;
 import com.umc.product.global.client.ClientEnvironment;
 import com.umc.product.global.client.ClientServiceType;
@@ -190,7 +190,7 @@ class AuthenticationServiceTest {
             given(loadSsoClientPort.getByClientId(clientId)).willReturn(client);
             given(authenticationTokenIssuer.issue(
                 eq(MEMBER_ID),
-                isNull(),
+                eq(ClientType.WEB),
                 eq(expectedClientContext),
                 eq(Duration.ofHours(1))
             )).willReturn(newTokens);
@@ -208,7 +208,78 @@ class AuthenticationServiceTest {
             then(loadSsoClientPort).should().getByClientId(clientId);
             then(authenticationTokenIssuer).should().issue(
                 MEMBER_ID,
-                null,
+                ClientType.WEB,
+                expectedClientContext,
+                Duration.ofHours(1)
+            );
+            then(authenticationTokenIssuer).should(never()).issue(MEMBER_ID, null);
+        }
+
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.CsvSource({"MACOS_APP,MACOS", "IOS_APP,IOS", "ANDROID_APP,ANDROID"})
+        @DisplayName("macOS 갱신은 등록 client의 플랫폼을 유지한다")
+        void macos_refresh_token_플랫폼_보존(ClientServiceType serviceType, ClientType platform) {
+            // given
+            String clientId = serviceType.name().toLowerCase(java.util.Locale.ROOT).replace('_', '-');
+            ClientContextClaims refreshTokenContext = ClientContextClaims.of(
+                clientId,
+                ClientServiceType.UNKNOWN,
+                ClientEnvironment.UNKNOWN
+            );
+            ClientContextClaims expectedClientContext = ClientContextClaims.of(
+                clientId,
+                serviceType,
+                ClientEnvironment.PROD
+            );
+            RefreshTokenClaims claims = new RefreshTokenClaims(
+                MEMBER_ID,
+                REFRESH_JTI,
+                REFRESH_EXPIRES_AT,
+                refreshTokenContext
+            );
+            RefreshToken stored = RefreshToken.create(REFRESH_JTI, MEMBER_ID, REFRESH_EXPIRES_AT, clientId);
+            SsoClient client = SsoClient.of(
+                clientId,
+                "UMC Backoffice",
+                serviceType,
+                ClientEnvironment.PROD,
+                true,
+                Duration.ofHours(1),
+                List.of("https://macos-app.university.neordinary.com/auth/callback"),
+                List.of("https://macos-app.university.neordinary.com")
+            );
+            NewTokens newTokens = NewTokens.builder()
+                .accessToken("new-sso-access-token")
+                .refreshToken("new-sso-refresh-token")
+                .clientContextClaims(expectedClientContext)
+                .expiresIn(3600L)
+                .build();
+
+            given(jwtTokenProvider.parseRefreshToken(REFRESH_TOKEN)).willReturn(claims);
+            given(loadRefreshTokenPort.findByJti(REFRESH_JTI)).willReturn(Optional.of(stored));
+            given(deleteRefreshTokenPort.deleteByJti(REFRESH_JTI)).willReturn(true);
+            given(loadSsoClientPort.getByClientId(clientId)).willReturn(client);
+            given(authenticationTokenIssuer.issue(
+                eq(MEMBER_ID),
+                eq(platform),
+                eq(expectedClientContext),
+                eq(Duration.ofHours(1))
+            )).willReturn(newTokens);
+
+            // when
+            NewTokens result = service.renewAccessToken(
+                RenewAccessTokenCommand.builder()
+                    .refreshToken(REFRESH_TOKEN)
+                    .build()
+            );
+
+            // then
+            assertThat(result).isSameAs(newTokens);
+            then(deleteRefreshTokenPort).should().deleteByJti(REFRESH_JTI);
+            then(loadSsoClientPort).should().getByClientId(clientId);
+            then(authenticationTokenIssuer).should().issue(
+                MEMBER_ID,
+                platform,
                 expectedClientContext,
                 Duration.ofHours(1)
             );

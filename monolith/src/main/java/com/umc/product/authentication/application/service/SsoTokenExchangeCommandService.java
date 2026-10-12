@@ -21,10 +21,8 @@ import com.umc.product.authentication.domain.SsoAuthorizationCode;
 import com.umc.product.authentication.domain.SsoClient;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
-import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.client.ClientContextClaims;
-import com.umc.product.global.client.ClientServiceType;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -73,9 +71,11 @@ public class SsoTokenExchangeCommandService implements ExchangeSsoAuthorizationC
             client.serviceType(),
             client.environment()
         );
+        // provider 코드가 아니라 검증·소비한 UMC authorization code의 회원에게 최종 토큰을 발급한다.
+        // 갱신에서도 SsoClient의 동일 매핑을 사용해 macos-app의 MACOS 플랫폼을 유지한다.
         NewTokens tokens = authenticationTokenIssuer.issue(
             authorizationCode.getMemberId(),
-            toClientType(client.serviceType()),
+            client.tokenClientType(),
             clientContext,
             client.accessTokenTtl()
         );
@@ -109,16 +109,6 @@ public class SsoTokenExchangeCommandService implements ExchangeSsoAuthorizationC
         if (!AUTHORIZATION_CODE_GRANT_TYPE.equals(grantType)) {
             throw new AuthenticationDomainException(AuthenticationErrorCode.UNSUPPORTED_SSO_GRANT_TYPE);
         }
-    }
-
-    private ClientType toClientType(ClientServiceType serviceType) {
-        if (serviceType == ClientServiceType.IOS_APP) {
-            return ClientType.IOS;
-        }
-        if (serviceType == ClientServiceType.ANDROID_APP) {
-            return ClientType.ANDROID;
-        }
-        return ClientType.WEB;
     }
 
     private void validateAuthorizationCodeBeforePkce(
