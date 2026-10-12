@@ -4,7 +4,7 @@
 
 리소스 API 인증은 계속 `Authorization: Bearer <access_token>` 기반 stateless JWT 인증이다. `UMC_SSO_LOGIN` cookie는 Auth App 브라우저 로그인 상태를 표현하는 전용 JWT이며, 일반 API 인증 수단으로 사용하지 않는다.
 
-현재 앱은 기존 native SDK direct login을 유지한다. 앱은 Kakao, Google, Apple SDK로 받은 provider token 또는 Apple authorization code를 기존 `/api/v1/auth/login/**` endpoint로 전달하고, SSO authorization code flow로 이전하지 않는다.
+현재 iOS·Android 앱은 기존 native SDK direct login을 유지한다. 앱은 Kakao, Google, Apple SDK로 받은 provider token 또는 Apple authorization code를 기존 `/api/v1/auth/login/**` endpoint로 전달하고, SSO authorization code flow로 이전하지 않는다.
 
 ## 서버 내부 흐름
 
@@ -69,7 +69,9 @@ sequenceDiagram
 
 `app.sso.clients` 설정이 SSO client registry의 단일 기준이다. 서버는 `client_id`로 설정을 조회하고, 등록된 `redirect_uri`만 허용한다. 운영 `UMC_WEBSITE` origin은 `https://university.neordinary.com`이며 `www`를 붙이지 않는다. dev profile에서는 localhost를 `http://localhost:5173`만 허용한다.
 
-`GET /api/v1/auth/sso/oauth/authorize`는 Authorization Code + PKCE 전용이다. 모든 현재 client는 `require-pkce: true`이고, `requirePkce=false` 설정은 지원하지 않는 SSO client 정책으로 거부한다. authorize 요청에서 `Origin` 또는 `Referer`가 존재하면 각각의 origin이 client의 `allowed-origins` 안에 있어야 한다. 단, OAuth authorize는 브라우저 top-level navigation으로 호출될 수 있어 두 헤더가 모두 없을 수 있으며, 이 경우에는 `client_id`, `redirect_uri`, SSO login cookie, PKCE 검증으로 흐름을 보호한다.
+`GET /api/v1/auth/sso/oauth/authorize`는 Authorization Code + PKCE 전용이다. 모든 현재 client는 `require-pkce: true`이고, `requirePkce=false` 설정은 지원하지 않는 SSO client 정책으로 거부한다. `allowed-origins`가 등록된 client는 authorize 요청에 `Origin` 또는 `Referer`가 있으면 각각의 origin이 허용 목록에 있어야 한다. OAuth authorize는 브라우저 top-level navigation으로 호출될 수 있어 두 헤더가 모두 없을 수 있으며, 이 경우에는 `client_id`, `redirect_uri`, SSO login cookie, PKCE 검증으로 흐름을 보호한다.
+
+`allowed-origins`가 비어 있는 `IOS_APP`, `ANDROID_APP`, `MACOS_APP` 네이티브 client는 Origin/Referer 검사를 생략한다. 이 예외는 origin 검사에만 적용되며 등록 client·redirect URI·PKCE 검증은 유지한다. 네이티브가 아닌 client의 빈 origin 허용 목록은 거부한다. macOS 서버 소셜 로그인은 callback에서 내부 로그인 증명을 만들어 기존 authorize UseCase에 전달하며, 일반 브라우저 SSO 로그인 쿠키를 새로 설정하지 않는다.
 
 Authorization code는 raw 값을 저장하지 않고 SHA-256 hash만 저장한다. `POST /api/v1/auth/sso/oauth/token`은 hash를 `FOR UPDATE`로 조회해 code의 1회 사용을 보장하고, `client_id`, `redirect_uri`, 만료 시각, `code_verifier`를 모두 검증한 뒤 access/refresh token을 발급한다.
 
@@ -145,11 +147,15 @@ sequenceDiagram
 
 ### 앱 클라이언트 연동 설명
 
-앱은 이번 SSO 변경에서 기존 native SDK direct login을 유지한다. 즉 앱은 `/api/v1/auth/sso/**` endpoint와 `UMC_SSO_LOGIN` cookie를 사용하지 않는다.
+iOS·Android 앱은 기존 native SDK direct login을 유지한다. 즉 앱은 `/api/v1/auth/sso/**` endpoint와 `UMC_SSO_LOGIN` cookie를 사용하지 않는다.
 
 Kakao/Google 앱 request는 기존처럼 SDK에서 받은 `idToken` 또는 `accessToken`을 `POST /api/v1/auth/login/kakao`, `POST /api/v1/auth/login/google`로 전달한다. Apple 앱 request는 `authorizationCode`와 앱 client type을 `POST /api/v1/auth/login/apple`로 전달한다.
 
 앱도 token 발급 이후에는 웹과 동일하게 access/refresh token 기반으로 동작한다. 일반 API 요청에는 `UMC_SSO_LOGIN` cookie를 붙이지 않고 `Authorization: Bearer <accessToken>`만 사용한다.
+
+## macOS 서버 소셜 로그인
+
+macOS는 `macos-app`으로 등록하며 서버가 Apple·Google·Kakao의 HTTPS callback을 받은 후 기존 SSO 일회용 코드를 발급한다. 기존 연결 회원만 지원한다. 시작 API, 환경 변수, 브라우저 결속과 수동 확인 절차는 [macOS 소셜 SSO 개발 가이드](macos-social-sso.md)를 참고한다.
 
 ## SSO API 변경 사항
 
