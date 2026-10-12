@@ -344,6 +344,22 @@ app:
 
   sso:
     issuer: ${SSO_ISSUER:https://api.university.neordinary.com}
+    # 제공자 콘솔·HTTPS callback·비밀값 준비 후 각각 활성화한다. 기존 모바일 로그인 활성화 설정과는 별개다.
+    social:
+      providers:
+        google:
+          enabled: ${SSO_SOCIAL_GOOGLE_ENABLED:false}
+          callback-uri: ${SSO_SOCIAL_GOOGLE_CALLBACK_URI:}
+          client-id: ${SSO_SOCIAL_GOOGLE_CLIENT_ID:}
+          client-secret: ${SSO_SOCIAL_GOOGLE_CLIENT_SECRET:}
+        kakao:
+          enabled: ${SSO_SOCIAL_KAKAO_ENABLED:false}
+          callback-uri: ${SSO_SOCIAL_KAKAO_CALLBACK_URI:}
+          # true로 설정할 때는 Kakao 콘솔도 OIDC를 활성화해야 하며 ID Token nonce를 검증한다.
+          oidc: ${SSO_SOCIAL_KAKAO_OIDC:false}
+        apple:
+          enabled: ${SSO_SOCIAL_APPLE_ENABLED:false}
+          callback-uri: ${SSO_SOCIAL_APPLE_CALLBACK_URI:}
     authorization-code-ttl: ${SSO_AUTHORIZATION_CODE_TTL:PT3M}
     browser-login-ttl: ${SSO_BROWSER_LOGIN_TTL:PT12H}
     cookie:
@@ -382,6 +398,17 @@ app:
           - https://tech.university.neordinary.com/auth/callback
         allowed-origins:
           - https://tech.university.neordinary.com
+      # Mac은 공개 클라이언트이므로 client secret 대신 PKCE S256으로 코드 교환 요청자를 확인한다.
+      # redirect URI는 앱 복귀용 주소다. 위 social의 서버 HTTPS callback 주소와 혼동하지 않는다.
+      macos-app:
+        name: UMC macOS App
+        service-type: MACOS_APP
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - umc-macos://auth/callback
+        allowed-origins: []
       ios-app:
         name: UMC iOS App
         service-type: IOS_APP
