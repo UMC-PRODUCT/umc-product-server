@@ -65,8 +65,9 @@ class SsoSocialLoginControllerTest extends IntegrationTestSupport {
         MvcResult start = start(OAuthProvider.APPLE);
         mockMvc.perform(post("/api/v1/auth/sso/social/apple/callback")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED).header("Origin", "https://appleid.apple.com")
-                .cookie(binding(start)).param("state", state(start)).param("error", "access_denied"))
-            .andExpect(status().isSeeOther());
+                .cookie(binding(start)).param("state", state(start)).param("error", "user_cancelled_authorize"))
+            .andExpect(status().isSeeOther())
+            .andExpect(header().string("Location", "umc-macos://auth/callback?error=access_denied&state=mac-state"));
     }
 
     @Test

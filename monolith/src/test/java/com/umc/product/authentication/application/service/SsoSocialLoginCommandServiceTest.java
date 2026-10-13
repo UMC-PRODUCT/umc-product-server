@@ -103,6 +103,36 @@ class SsoSocialLoginCommandServiceTest {
     }
 
     @Test
+    @DisplayName("Apple의 실제 취소 오류는 앱에 접근 거절로 전달한다")
+    void apple_사용자_취소() {
+        given(consumer.consume(OAuthProvider.APPLE, "state", "binding")).willReturn(attempt(OAuthProvider.APPLE));
+        CompleteSsoSocialLoginCommand command = new CompleteSsoSocialLoginCommand(OAuthProvider.APPLE,
+            null, "state", "user_cancelled_authorize", "binding");
+        assertThat(service.complete(command))
+            .isEqualTo("umc-macos://auth/callback?error=access_denied&state=mac%20state%26x");
+        verifyNoInteractions(provider, browser, authorize);
+    }
+
+    @Test
+    @DisplayName("Apple 전용 취소 오류를 다른 제공자가 보내면 인증 실패로 처리한다")
+    void 다른_제공자의_apple_취소_오류() {
+        given(consumer.consume(OAuthProvider.GOOGLE, "state", "binding")).willReturn(attempt());
+        assertThat(service.complete(command("user_cancelled_authorize")))
+            .contains("error=authentication_failed");
+        verifyNoInteractions(provider, browser, authorize);
+    }
+
+    @Test
+    @DisplayName("Apple 취소 오류와 인가 코드가 함께 오면 인증 실패로 처리한다")
+    void apple_취소와_인가_코드_동시_수신() {
+        given(consumer.consume(OAuthProvider.APPLE, "state", "binding")).willReturn(attempt(OAuthProvider.APPLE));
+        CompleteSsoSocialLoginCommand command = new CompleteSsoSocialLoginCommand(OAuthProvider.APPLE,
+            "provider-code", "state", "user_cancelled_authorize", "binding");
+        assertThat(service.complete(command)).contains("error=authentication_failed");
+        verifyNoInteractions(provider, browser, authorize);
+    }
+
+    @Test
     @DisplayName("브라우저 결속 실패는 앱 redirect로 바꾸지 않는다")
     void 검증되지_않은_시도() {
         given(consumer.consume(OAuthProvider.GOOGLE, "state", "binding"))
@@ -128,7 +158,11 @@ class SsoSocialLoginCommandServiceTest {
     }
 
     private SsoSocialLoginAttempt attempt() {
-        return SsoSocialLoginAttempt.create(OAuthProvider.GOOGLE, "state-hash", "binding-hash", "macos-app",
+        return attempt(OAuthProvider.GOOGLE);
+    }
+
+    private SsoSocialLoginAttempt attempt(OAuthProvider oauthProvider) {
+        return SsoSocialLoginAttempt.create(oauthProvider, "state-hash", "binding-hash", "macos-app",
             "umc-macos://auth/callback", "mac state&x", "A".repeat(43),
             "https://api.example.com/callback", "nonce", Instant.now().plusSeconds(600));
     }

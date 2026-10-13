@@ -27,6 +27,7 @@ import com.umc.product.authentication.domain.SsoClient;
 import com.umc.product.authentication.domain.SsoSocialLoginAttempt;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.client.ClientServiceType;
 
 import lombok.RequiredArgsConstructor;
@@ -101,7 +102,11 @@ public class SsoSocialLoginCommandService implements ManageSsoSocialLoginUseCase
         // 취소·실패 응답도 신뢰할 수 있는 시도를 소비한 뒤 처리한다.
         // 제공자가 보낸 오류 설명을 URL에 그대로 노출하지 않고 앱과 합의한 오류값만 전달한다.
         if (StringUtils.hasText(command.error())) {
-            return errorRedirect(attempt, "access_denied".equals(command.error())
+            // Apple 웹 로그인은 표준 access_denied 대신 전용 취소값을 보낸다.
+            // Apple에서 온 경우에만 취소로 인정하며, 코드가 함께 온 모순된 응답은 실패로 유지한다.
+            boolean cancelled = "access_denied".equals(command.error())
+                || (command.provider() == OAuthProvider.APPLE && "user_cancelled_authorize".equals(command.error()));
+            return errorRedirect(attempt, cancelled
                 && !StringUtils.hasText(command.code())
                 ? "access_denied" : "authentication_failed");
         }
