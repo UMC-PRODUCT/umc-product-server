@@ -104,6 +104,9 @@ class SsoFlowIntegrationTest extends IntegrationTestSupport {
     @MockitoBean
     private OAuthTokenVerificationAdapter oAuthTokenVerificationAdapter;
 
+    @MockitoBean
+    private com.umc.product.authentication.application.port.out.SsoSocialProviderPort socialProvider;
+
     @Test
     @DisplayName("browser login 후 authorization code를 발급하고 PKCE verifier로 token을 교환한다")
     void browser_login_authorization_code_token_exchange_성공() throws Exception {
@@ -275,6 +278,86 @@ class SsoFlowIntegrationTest extends IntegrationTestSupport {
                 .param("code", authorizationCode)
                 .param("client_id", CLIENT_ID)
                 .param("redirect_uri", REDIRECT_URI)
+                .param("code_verifier", codeVerifier))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.accessToken").value(ACCESS_TOKEN))
+            .andExpect(jsonPath("$.result.refreshToken").value(REFRESH_TOKEN))
+            .andExpect(jsonPath("$.result.expiresIn").value(3600L))
+            .andExpect(jsonPath("$.result.tokenType").value("Bearer"))
+            .andExpect(jsonPath("$.result.member.id").value(member.getId()))
+            .andExpect(jsonPath("$.result.member.email").value(EMAIL));
+    }
+
+    @Test
+    @DisplayName("Mac 서버 소셜 callback부터 기존 PKCE token 교환까지 연결된다")
+    void macos_social_callback_token_exchange_성공() throws Exception {
+        // given
+        String macClientId = "macos-app";
+        String macRedirectUri = "umc-macos://auth/callback";
+        ClientContextClaims macContext = ClientContextClaims.of(macClientId,
+            ClientServiceType.MACOS_APP, ClientEnvironment.PROD);
+        Member member = activeMemberWithOAuth(OAuthProvider.KAKAO, "kakao-provider-id");
+        Instant loginExpiresAt = Instant.now().plusSeconds(3600);
+        given(socialProvider.prepare(eq(OAuthProvider.KAKAO), any(), any())).willAnswer(invocation ->
+            new com.umc.product.authentication.application.port.out.SsoSocialProviderPort.Authorization(
+                "https://kauth.kakao.com/oauth/authorize?state=" + invocation.getArgument(1, String.class),
+                "https://api.example.com/api/v1/auth/sso/social/kakao/callback"));
+        given(socialProvider.exchange(eq(OAuthProvider.KAKAO), eq("provider-code"), any(), any()))
+            .willReturn(new com.umc.product.authentication.application.port.out.SsoSocialProviderPort.Identity(
+                new OAuthAttributes(OAuthProvider.KAKAO, "kakao-provider-id", EMAIL), null, "kakao-client"));
+        given(jwtTokenProvider.createSsoLoginToken(eq(member.getId()), eq("kakao"), any(Instant.class)))
+            .willReturn(LOGIN_TOKEN);
+        given(jwtTokenProvider.parseSsoLoginToken(LOGIN_TOKEN))
+            .willReturn(SsoLoginTokenClaims.of(member.getId(), Instant.now(), loginExpiresAt, "kakao"));
+        given(jwtTokenProvider.createAccessToken(
+            eq(member.getId()),
+            anyList(),
+            eq(ClientType.MACOS),
+            argThat(macContext::equals),
+            eq(3600L)
+        )).willReturn(ACCESS_TOKEN);
+        given(jwtTokenProvider.createRefreshToken(eq(member.getId()), argThat(macContext::equals)))
+            .willReturn(REFRESH_TOKEN);
+        given(jwtTokenProvider.parseRefreshToken(REFRESH_TOKEN))
+            .willReturn(new RefreshTokenClaims(
+                member.getId(),
+                UUID.randomUUID(),
+                Instant.now().plusSeconds(604800),
+                macContext
+            ));
+
+        String codeVerifier = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG";
+        String codeChallenge = s256Challenge(codeVerifier);
+
+        // when: 브라우저를 통한 서버 소셜 로그인 시작
+        MvcResult startResult = mockMvc.perform(get("/api/v1/auth/sso/social/kakao/authorize")
+                .param("client_id", macClientId).param("redirect_uri", macRedirectUri)
+                .param("response_type", "code").param("state", "state-123")
+                .param("code_challenge", codeChallenge).param("code_challenge_method", "S256"))
+            .andExpect(status().isFound()).andReturn();
+        String providerState = UriComponentsBuilder.fromUriString(startResult.getResponse().getHeader("Location"))
+            .build().getQueryParams().getFirst("state");
+        String binding = startResult.getResponse().getHeader("Set-Cookie").split(";", 2)[0].split("=", 2)[1];
+        MvcResult authorizeResult = mockMvc.perform(get("/api/v1/auth/sso/social/kakao/callback")
+                .param("state", providerState).param("code", "provider-code")
+                .cookie(new Cookie(SsoSocialCookieWriter.COOKIE_NAME, binding)))
+            .andExpect(status().isSeeOther()).andReturn();
+
+        String location = authorizeResult.getResponse().getHeader(HttpHeaders.LOCATION);
+        var redirect = UriComponentsBuilder.fromUriString(location).build(true);
+        assertThat(redirect.getQueryParams().getFirst("state")).isEqualTo("state-123");
+
+        String authorizationCode = redirect.getQueryParams().getFirst("code");
+        assertThat(authorizationCode).isNotBlank().isNotEqualTo("provider-code");
+        assertThat(redirect.getScheme()).isEqualTo("umc-macos");
+
+        // then: token exchange
+        mockMvc.perform(post("/api/v1/auth/sso/oauth/token")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("grant_type", "authorization_code")
+                .param("code", authorizationCode)
+                .param("client_id", macClientId)
+                .param("redirect_uri", macRedirectUri)
                 .param("code_verifier", codeVerifier))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.accessToken").value(ACCESS_TOKEN))

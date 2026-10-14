@@ -80,6 +80,8 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_REFRESH_TOKEN);
         }
 
+        // SSO refresh token은 발급받은 client ID에 결속된다. 요청 헤더로 플랫폼을 다시 추정하지 않고,
+        // 검증된 토큰의 client ID로 등록 설정을 읽어 서비스·환경·플랫폼·Access Token 수명을 재구성한다.
         if (clientId != null && !clientId.isBlank()) {
             SsoClient client = loadSsoClientPort.getByClientId(clientId);
             ClientContextClaims clientContext = ClientContextClaims.of(
@@ -89,7 +91,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
             );
             return authenticationTokenIssuer.issue(
                 claims.memberId(),
-                null,
+                client.tokenClientType(),
                 clientContext,
                 client.accessTokenTtl()
             );

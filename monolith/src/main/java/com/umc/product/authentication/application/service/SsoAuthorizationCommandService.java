@@ -20,7 +20,6 @@ import com.umc.product.authentication.domain.SsoAuthorizationCode;
 import com.umc.product.authentication.domain.SsoClient;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
-import com.umc.product.global.client.ClientServiceType;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 
 import lombok.RequiredArgsConstructor;
@@ -88,7 +87,9 @@ public class SsoAuthorizationCommandService implements AuthorizeSsoUseCase {
 
     private void validateRequestOrigins(SsoClient client, List<String> requestOrigins) {
         if (client.allowedOrigins().isEmpty()) {
-            if (isNativeAppClient(client)) {
+            // 네이티브 앱은 웹 origin이 없을 수 있다. 이 분기는 origin 요구만 생략하며,
+            // 등록 client/redirect URI와 PKCE 검증까지 생략하는 것은 아니다.
+            if (client.isNativeApp()) {
                 return;
             }
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_SSO_CLIENT);
@@ -112,8 +113,4 @@ public class SsoAuthorizationCommandService implements AuthorizeSsoUseCase {
         return pkceVerifier.requireS256(command.codeChallengeMethod());
     }
 
-    private boolean isNativeAppClient(SsoClient client) {
-        return client.serviceType() == ClientServiceType.IOS_APP
-            || client.serviceType() == ClientServiceType.ANDROID_APP;
-    }
 }

@@ -73,11 +73,15 @@ public class AppleTokenVerifier {
      * @throws AuthenticationDomainException 토큰 검증 실패 시
      */
     public OAuthAttributes verifyIdToken(String idToken, String clientId) {
+        return verifyIdToken(idToken, clientId, null);
+    }
+
+    public OAuthAttributes verifyIdToken(String idToken, String clientId, String nonce) {
         log.debug("Apple ID Token 검증 시작: clientId={}", clientId);
 
         try {
             String kid = publicKeyResolver.extractKid(idToken);
-            PublicKey publicKey = publicKeyResolver.getPublicKey(appleJwksSpec(), kid);
+            PublicKey publicKey = publicKeyResolver.getPublicKey(appleJwksSpec(), kid, nonce != null);
 
             Claims claims = Jwts.parser()
                 .verifyWith(publicKey)
@@ -87,6 +91,9 @@ public class AppleTokenVerifier {
                 .parseSignedClaims(idToken)
                 .getPayload();
 
+            if (nonce != null) {
+                OidcLoginClaimsValidator.validate(claims, clientId, nonce);
+            }
             String sub = claims.getSubject();
             String email = claims.get("email", String.class);
 
@@ -101,7 +108,7 @@ public class AppleTokenVerifier {
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("Apple ID Token 검증 실패", e);
+            log.warn("Apple ID Token 검증 실패: errorClass={}", e.getClass().getSimpleName());
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
@@ -117,6 +124,17 @@ public class AppleTokenVerifier {
      * @throws AuthenticationDomainException 코드 교환 또는 토큰 검증 실패 시
      */
     public AppleAuthorizationCodeResult verifyAuthorizationCode(String authorizationCode, ClientType clientType) {
+        return verifyAuthorizationCode(authorizationCode, clientType, null, null);
+    }
+
+    /**
+     * 서버 브라우저 인가용 확장 진입점이다. Mac에서 시작했어도 Apple에는 web Services ID로 요청한다.
+     * redirectUri는 Apple 인가에 사용한 서버 HTTPS callback이며, nonce는 이번 ID Token과 시도를 결속한다.
+     * 기존 두 인자 진입점은 두 값을 생략하여 기존 native 코드 교환과 오류 계약을 유지한다.
+     * Apple refresh token은 UMC refresh token과 다르며, 추후 Apple 연결 해제에 필요한 정보로 반환한다.
+     */
+    public AppleAuthorizationCodeResult verifyAuthorizationCode(String authorizationCode, ClientType clientType,
+                                                                 String redirectUri, String nonce) {
         log.debug("Apple Authorization Code 교환 시작: clientType={}", clientType);
 
         try {
@@ -128,6 +146,10 @@ public class AppleTokenVerifier {
             formData.add("client_secret", clientSecret);
             formData.add("code", authorizationCode);
             formData.add("grant_type", "authorization_code");
+            // 웹 인가에 사용한 HTTPS callback을 그대로 교환에 사용한다. 기존 native 흐름은 생략한다.
+            if (redirectUri != null) {
+                formData.add("redirect_uri", redirectUri);
+            }
 
             AppleTokenResponse response = ExternalApiCallLogger.measure("APPLE", "EXCHANGE_AUTHORIZATION_CODE", () ->
                 restClient.post()
@@ -139,6 +161,11 @@ public class AppleTokenVerifier {
                         // ADR-016 §민감 필드 정책: 성공 응답 body 에는 access_token / id_token / refresh_token
                         // 이 포함되어 있어 통째로 로깅하면 토큰이 stdout / Loki 에 남는다. 에러 응답이라도
                         // 잘못된 분기로 성공 body 가 흘러올 수 있으므로 status / errorCode 만 남긴다.
+                        // 서버 SSO만 일시 장애를 별도로 구분하여 기존 모바일 API 오류 계약을 유지한다.
+                        if (redirectUri != null && res.getStatusCode().is5xxServerError()) {
+                            throw new AuthenticationDomainException(
+                                AuthenticationErrorCode.SSO_SOCIAL_PROVIDER_UNAVAILABLE);
+                        }
                         String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
                         String errorCode = extractAppleErrorCode(body);
                         log.warn("Apple token endpoint 호출 실패: status={}, errorCode={}, bodyLength={}",
@@ -154,13 +181,16 @@ public class AppleTokenVerifier {
 
             log.info("Apple Authorization Code를 교환했습니다. ID Token을 검증합니다");
 
-            OAuthAttributes attrs = verifyIdToken(response.idToken(), clientId);
+            OAuthAttributes attrs = verifyIdToken(response.idToken(), clientId, nonce);
             return new AppleAuthorizationCodeResult(attrs, response.refreshToken(), clientId);
 
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("Apple Authorization Code 교환 실패", e);
+            if (redirectUri != null && e instanceof org.springframework.web.client.RestClientException) {
+                throw new AuthenticationDomainException(AuthenticationErrorCode.SSO_SOCIAL_PROVIDER_UNAVAILABLE);
+            }
+            log.warn("Apple Authorization Code 교환 실패: errorClass={}", e.getClass().getSimpleName());
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }

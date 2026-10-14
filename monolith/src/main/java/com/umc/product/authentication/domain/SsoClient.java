@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.global.client.ClientEnvironment;
 import com.umc.product.global.client.ClientServiceType;
 
@@ -48,6 +49,26 @@ public record SsoClient(
             redirectUris,
             allowedOrigins
         );
+    }
+
+    /**
+     * 등록 서비스 종류를 토큰의 플랫폼으로 변환한다. MACOS_APP은 서비스 구분, MACOS는 실행 플랫폼 구분이다.
+     * 최초 SSO 교환과 refresh 모두 이 규칙을 사용해야 갱신 후 플랫폼 정보가 누락되거나 WEB으로 바뀌지 않는다.
+     */
+    public ClientType tokenClientType() {
+        return switch (serviceType) {
+            case IOS_APP -> ClientType.IOS;
+            case ANDROID_APP -> ClientType.ANDROID;
+            case MACOS_APP -> ClientType.MACOS;
+            default -> ClientType.WEB;
+        };
+    }
+
+    /** 웹 origin 대신 등록 앱 callback과 PKCE를 사용하는 네이티브 클라이언트를 판별한다. */
+    public boolean isNativeApp() {
+        return serviceType == ClientServiceType.IOS_APP
+            || serviceType == ClientServiceType.ANDROID_APP
+            || serviceType == ClientServiceType.MACOS_APP;
     }
 
     public boolean allowsRedirectUri(String redirectUri) {

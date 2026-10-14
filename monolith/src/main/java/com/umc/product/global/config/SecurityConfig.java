@@ -197,6 +197,16 @@ public class SecurityConfig {
         configuration.setExposedHeaders(List.of("X-Trace-Id", "Retry-After"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // Apple form POST는 Origin: https://appleid.apple.com을 포함할 수 있어 해당 callback에만 허용한다.
+        // 브라우저 결속 쿠키를 사용하므로 credentials도 허용하되, 전체 API의 허용 origin은 확대하지 않는다.
+        // 구체적인 경로를 /**보다 먼저 등록해야 Apple callback에 이 설정이 선택된다.
+        // CORS 허용만으로 로그인하지 않으며 서비스에서 state·브라우저 결속·nonce를 별도로 검증한다.
+        CorsConfiguration appleCallback = new CorsConfiguration();
+        appleCallback.setAllowedOrigins(List.of("https://appleid.apple.com"));
+        appleCallback.setAllowedMethods(List.of("POST"));
+        appleCallback.setAllowedHeaders(List.of("Content-Type"));
+        appleCallback.setAllowCredentials(true);
+        source.registerCorsConfiguration("/api/v1/auth/sso/social/apple/callback", appleCallback);
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
