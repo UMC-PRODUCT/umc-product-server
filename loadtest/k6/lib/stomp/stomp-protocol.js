@@ -29,6 +29,12 @@ export function encodeFrame(command, headers = {}, body = "") {
   return `${command}\n${lines.join("\n")}\n\n${body}\0`;
 }
 
+/**
+ * 나뉘거나 합쳐져 들어오는 WebSocket 텍스트를 완성된 STOMP 프레임 배열로 변환한다.
+ * 연결마다 하나씩 생성하고, 수신할 때마다 push(chunk)를 호출한다. 미완성 프레임은 다음 수신까지 보관한다.
+ * heartbeat는 결과에서 제외하며, 잘못된 프레임이나 버퍼 제한 초과는 오류를 던진다.
+ * StompClient가 내부에서 사용하므로 Chat 시나리오에서 직접 생성할 필요는 없다.
+ */
 export class StompDecoder {
   constructor() {
     this.buffer = "";

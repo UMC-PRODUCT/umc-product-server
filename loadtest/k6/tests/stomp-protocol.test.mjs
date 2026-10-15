@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { encodeFrame, StompDecoder, utf8Length } from "../lib/stomp-protocol.js";
+import { encodeFrame, StompDecoder, utf8Length } from "../lib/stomp/stomp-protocol.js";
 
 test("한글과 이모지 본문의 UTF-8 바이트 길이를 기록한다", () => {
   assert.equal(utf8Length("한글😀"), 10);

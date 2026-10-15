@@ -2,6 +2,7 @@ import { WebSocket } from "k6/websockets";
 
 import { encodeFrame, StompDecoder } from "./stomp-protocol.js";
 
+// 통신 실패 원인을 reason으로 전달한다. 호출부는 오류 원문 대신 이 값을 사용해 실패 지표를 분류한다.
 export class StompError extends Error {
   constructor(message, reason) {
     super(message);
@@ -10,6 +11,7 @@ export class StompError extends Error {
   }
 }
 
+// 응답·heartbeat·종료 대기의 시간 초과다. Smoke의 구독 준비 단계에서는 이 타입만 재시도 대상으로 삼는다.
 export class StompTimeoutError extends StompError {
   constructor(message) {
     super(message, "timeout");
@@ -17,6 +19,12 @@ export class StompTimeoutError extends StompError {
   }
 }
 
+/**
+ * WebSocket 연결 하나에서 STOMP 인증·구독·프레임 송수신·heartbeat·응답 대기를 처리한다.
+ * Chat의 방이나 메시지 형식은 알지 못한다. Chat 시나리오는 보통 이 클래스를 감싼 ChatClient를 사용한다.
+ * 직접 사용할 때는 connect() 후 subscribe/send를 호출하고, finally에서 close()로 타이머와 대기를 정리한다.
+ * 특정 응답은 waitFor로 기다리고, 연속 이벤트는 observe로 받는다. 대기는 전송 전에 등록해야 응답을 놓치지 않는다.
+ */
 export class StompClient {
   constructor(url, { token, label, timeoutMs = 10000 }) {
     this.url = url;
@@ -111,14 +119,15 @@ export class StompClient {
     if (!this.connected || this.closing) throw new Error(`${this.label}: STOMP 연결이 준비되지 않았습니다`);
   }
 
-  waitFor(matches, description, timeoutMs = this.timeoutMs) {
+  // key를 요청별로 지정하면 cancelWaiters(key, error)로 해당 요청의 대기만 취소할 수 있다.
+  waitFor(matches, description, timeoutMs = this.timeoutMs, key) {
     if (this.failure) return Promise.reject(this.failure);
     if (this.closing) return Promise.reject(new Error(`${this.label}: 종료 중인 연결`));
     // ACK와 상태 이벤트의 도착 순서는 고정되지 않는다. 먼저 도착한 프레임도 버리지 않고 찾는다.
     const index = this.inbox.findIndex(matches);
     if (index >= 0) return Promise.resolve(this.inbox.splice(index, 1)[0]);
     return new Promise((resolve, reject) => {
-      const waiter = { matches, resolve, reject, timer: null };
+      const waiter = { matches, resolve, reject, key, timer: null };
       waiter.timer = setTimeout(() => {
         this.waiters = this.waiters.filter((entry) => entry !== waiter);
         reject(new StompTimeoutError(`${this.label}: ${description} 시간 초과 (${timeoutMs}ms)`));
@@ -127,6 +136,7 @@ export class StompClient {
     });
   }
 
+  // listener(frame)가 true를 반환하면 해당 프레임은 소비된 것으로 처리한다. 반환된 함수로 관측자를 해제한다.
   observe(listener) {
     this.observers.add(listener);
     return () => this.observers.delete(listener);
@@ -176,11 +186,16 @@ export class StompClient {
   }
 
   rejectWaiters(error) {
-    for (const waiter of this.waiters) {
+    this.cancelWaiters(undefined, error);
+  }
+
+  cancelWaiters(key, error) {
+    const cancelled = this.waiters.filter((waiter) => key === undefined || waiter.key === key);
+    this.waiters = this.waiters.filter((waiter) => !cancelled.includes(waiter));
+    for (const waiter of cancelled) {
       clearTimeout(waiter.timer);
       waiter.reject(error);
     }
-    this.waiters = [];
   }
 
   fail(error) {

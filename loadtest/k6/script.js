@@ -25,8 +25,15 @@ import smokeHome, { requiresSeed as smokeHomeSeed } from "./scenarios/smoke/home
 import loadHome, { requiresSeed as loadHomeSeed } from "./scenarios/load/home.js";
 import chatMessage, {
   requiresSeed as chatMessageSeed,
-  options as chatMessageOptions,
+  getOptions as chatMessageOptions,
+  validateSeed as validateSmokeChatSeed,
 } from "./scenarios/smoke/chat-message.js";
+import loadChatMessage, {
+  requiresSeed as loadChatMessageSeed,
+  getOptions as loadChatMessageOptions,
+  validateSeed as validateLoadChatSeed,
+  prepareRun as prepareChatRun,
+} from "./scenarios/load/chat-message.js";
 
 // PROFILE(부하 유형) × SCENARIO(업무 시나리오) → 실제 실행 함수 매핑.
 // k6 는 런타임 동적 import 를 지원하지 않으므로, 정적 import 를 registry 로 모아 __ENV 로 고른다.
@@ -35,9 +42,12 @@ const REGISTRY = {
     "health-check": { fn: healthCheck, requiresSeed: healthCheckSeed },
     "project-read": { fn: smokeProjectRead, requiresSeed: smokeProjectReadSeed },
     home: { fn: smokeHome, requiresSeed: smokeHomeSeed },
-    "chat-message": { fn: chatMessage, requiresSeed: chatMessageSeed, options: chatMessageOptions },
+    "chat-message": { fn: chatMessage, requiresSeed: chatMessageSeed,
+      getOptions: chatMessageOptions, validateSeed: validateSmokeChatSeed },
   },
   load: {
+    "chat-message": { fn: loadChatMessage, requiresSeed: loadChatMessageSeed,
+      getOptions: loadChatMessageOptions, validateSeed: validateLoadChatSeed, prepareRun: prepareChatRun },
     "project-read": { fn: loadProjectRead, requiresSeed: loadProjectReadSeed },
     "application-submit": {
       fn: applicationSubmit,
@@ -81,7 +91,7 @@ if (!selected) {
 // systemTags 에서 url/name 을 제외한다 — 쿼리스트링(memberId 등)이 URL 마다 달라
 // Prometheus 시리즈가 요청 수만큼 폭발한다(카디널리티). 시나리오 구분은 우리 scenario 태그로 충분.
 export const options = {
-  ...(selected.options || buildOptions(PROFILE, __ENV.RATE, __ENV.DURATION)),
+  ...(selected.getOptions ? selected.getOptions() : buildOptions(PROFILE, __ENV.RATE, __ENV.DURATION)),
   systemTags: [
     "scenario",
     "status",
@@ -102,12 +112,14 @@ const seedRaw = selected.requiresSeed
 
 export function setup() {
   // setup 반환값은 default 함수 data 인자로 전달된다. k6 는 시딩하지 않고 seed 파일만 넘긴다.
-  return { seed: parseSeed(seedRaw) };
+  const seed = parseSeed(seedRaw);
+  if (selected.validateSeed) selected.validateSeed(seed);
+  return { seed, context: selected.prepareRun ? selected.prepareRun() : null };
 }
 
 export default function (data) {
   // 비동기 STOMP 시나리오의 완료·실패를 k6가 기다리도록 Promise도 그대로 반환한다.
-  return selected.fn(data.seed);
+  return selected.fn(data.seed, data.context);
 }
 
 // 실행마다 요약을 파일로 남긴다 (JMeter 리포트처럼). 터미널 출력은 그대로 유지하고,
