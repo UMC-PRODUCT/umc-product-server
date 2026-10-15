@@ -1,0 +1,12 @@
+{
+  "runId": "00000000-0000-4000-8000-000000000000",
+  "baseUrl": "http://localhost:8080",
+  "schoolId": "1",
+  "memberIds": ["101", "102"],
+  "rooms": [
+    {
+      "threadId": "201",
+      "memberIds": ["101", "102"]
+    }
+  ]
+}
