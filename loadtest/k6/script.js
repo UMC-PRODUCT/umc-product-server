@@ -2,6 +2,7 @@ import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
 
 import { buildOptions } from "./config/profiles.js";
 import { parseSeed } from "./lib/data.js";
+import { chatRunConditions } from "./lib/chat/chat-run.js";
 
 import healthCheck, {
   requiresSeed as healthCheckSeed,
@@ -103,6 +104,7 @@ export const options = {
     "group",
   ],
 };
+const configuredOptionsJson = JSON.stringify(options);
 
 // open() 은 init 단계에서만 동작한다. 시딩이 필요한 시나리오일 때만 seed.json 을 읽는다.
 // 파일이 없으면 여기서 실패한다 — prepare-data.sh 로 먼저 시딩하거나 seed.example.json 을 복사한다.
@@ -122,11 +124,22 @@ export default function (data) {
   return selected.fn(data.seed, data.context);
 }
 
-// 실행마다 요약을 파일로 남긴다 (JMeter 리포트처럼). 터미널 출력은 그대로 유지하고,
-// JSON 은 실행 디렉터리의 ./out/last-summary.json 에 쓴다.
+// Chat 실행 래퍼가 지정한 폴더에 보존한다. 기존 직접 실행은 last-summary.json 경로를 유지한다.
 export function handleSummary(data) {
-  return {
-    stdout: textSummary(data, { indent: "  ", enableColors: true }),
-    "./out/last-summary.json": JSON.stringify(data, null, 2),
+  const directory = __ENV.CHAT_RUN_DIR;
+  const outputs = {
+    stdout: textSummary(data, { indent: "  ", enableColors: !directory }),
+    [directory ? `${directory}/summary.json` : "./out/last-summary.json"]: JSON.stringify(data, null, 2),
   };
+  if (directory && SCENARIO === "chat-message") {
+    let conditions;
+    try {
+      conditions = chatRunConditions(PROFILE, __ENV, parseSeed(seedRaw),
+        { ...JSON.parse(configuredOptionsJson), ...data.options });
+    } catch (_) {
+      conditions = { available: false, error: "설정 또는 시드 검증 실패. run-meta.json과 console.log를 확인하세요." };
+    }
+    outputs[`${directory}/conditions.json`] = JSON.stringify(conditions, null, 2);
+  }
+  return outputs;
 }
