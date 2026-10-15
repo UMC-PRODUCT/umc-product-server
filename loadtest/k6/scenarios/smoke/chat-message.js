@@ -2,7 +2,9 @@ import { check } from "k6";
 
 import { getAccessToken } from "../../lib/auth.js";
 import { BASE_URL } from "../../lib/http.js";
-import { StompClient, StompTimeoutError } from "../../lib/stomp.js";
+import { StompClient, StompError, StompTimeoutError } from "../../lib/stomp.js";
+import { initializeMetrics, recordAttempt, recordDuplicate, recordFailure,
+  recordLatency, recordMessageResult } from "../../lib/chat-metrics.js";
 
 export const requiresSeed = true;
 const TIMEOUT_MS = Number(__ENV.CHAT_TIMEOUT_MS || 10000);
@@ -16,7 +18,8 @@ export const options = {
     chat_smoke: { executor: "shared-iterations", vus: 1, iterations: 1,
       maxDuration: `${Math.ceil((TIMEOUT_MS * 5 + 5000) / 1000)}s` },
   },
-  thresholds: { checks: ["rate==1"], iterations: ["count==1"] },
+  summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "count"],
+  thresholds: { checks: ["rate==1"], iterations: ["count==1"], umc_chat_failures: ["count==0"] },
 };
 
 const EVENTS = "/user/queue/community/threads/events";
@@ -43,10 +46,32 @@ function eventOf(frame) {
   return frame.event;
 }
 
-async function exchange(sender, receiver, target, phase, timeoutMs, progress = {}) {
+async function exchange(sender, receiver, target, phase, timeoutMs, progress = {}, measured = false) {
   const commandId = crypto.randomUUID();
   const clientMessageId = crypto.randomUUID();
   const content = `Chat ${phase} 송수신 확인 ${clientMessageId}`;
+  let sentAt;
+  let success = false;
+  const observeDuplicates = (client, kind, matches) => {
+    let seen = false;
+    return client.observe((frame) => {
+      if (!matches(eventOf(frame))) return false;
+      if (!seen) { seen = true; return false; }
+      if (measured) recordDuplicate(kind);
+      return true;
+    });
+  };
+  const observers = [
+    observeDuplicates(sender, "ack", (event) => event?.type === "command.acknowledged"
+      && event.payload?.commandId === commandId),
+    observeDuplicates(receiver, "delivery", (event) => event?.type === "message.created"
+      && event.threadId === target.threadId && event.payload?.clientMessageId === clientMessageId),
+  ];
+  const cancelOther = (peer) => (error) => {
+    // 한쪽 실패로 취소한 대기는 새로운 시간 초과가 아니다. 실제 발생한 실패만 기록한다.
+    peer.rejectWaiters(new StompError(`${phase} 상대 응답 대기 취소`, "cancelled"));
+    throw error;
+  };
 
   // 대기자를 먼저 등록해야 전송 직후 도착하는 ACK·이벤트도 놓치지 않는다.
   const acknowledged = sender.waitFor((frame) => {
@@ -55,16 +80,17 @@ async function exchange(sender, receiver, target, phase, timeoutMs, progress = {
   }, `${phase} ACK`, timeoutMs).then((frame) => {
     const event = eventOf(frame);
     if (event.type !== "command.acknowledged") {
-      throw new Error(`${phase} 요청 거절: status=${event.status}, code=${event.code}`);
+      throw new StompError(`${phase} 요청 거절: status=${event.status}, code=${event.code}`, "rejected");
     }
     const ack = event.payload;
     if (event.threadId !== target.threadId || ack.command !== "MESSAGE_CREATE"
         || ack.clientMessageId !== clientMessageId || ack.deduplicated !== false) {
-      throw new Error(`${phase} ACK의 요청 식별 정보가 다릅니다`);
+      throw new StompError(`${phase} ACK의 요청 식별 정보가 다릅니다`, "mismatch");
     }
     progress.acknowledged = true;
+    if (measured) recordLatency("ack", frame.receivedAt - sentAt);
     return ack;
-  });
+  }).catch(cancelOther(receiver));
   const delivered = receiver.waitFor((frame) => {
     const event = eventOf(frame);
     return event?.type === "message.created" && event.threadId === target.threadId
@@ -74,24 +100,50 @@ async function exchange(sender, receiver, target, phase, timeoutMs, progress = {
     if (message?.senderId !== target.senderId || message.threadId !== target.threadId
         || message.type !== "TEXT" || message.clientMessageId !== clientMessageId
         || message.content !== content) {
-      throw new Error(`${phase} 수신 메시지의 발신자·본문·식별 정보가 다릅니다`);
+      throw new StompError(`${phase} 수신 메시지의 발신자·본문·식별 정보가 다릅니다`, "mismatch");
     }
     progress.delivered = true;
+    if (measured) recordLatency("delivery", frame.receivedAt - sentAt);
     return message;
-  });
+  }).catch(cancelOther(sender));
 
   // 어느 한쪽이 실패해도 나머지 대기자의 결과를 회수해 처리되지 않은 Promise를 남기지 않는다.
   const pending = Promise.allSettled([acknowledged, delivered]);
-  sender.send(`/app/community/threads/${target.threadId}/messages`,
-    { clientMessageId, type: "TEXT", content }, { "x-command-id": commandId });
-  const results = await pending;
-  for (const result of results) {
-    if (result.status === "rejected") throw result.reason;
+  try {
+    if (measured) recordAttempt();
+    // 준비 메시지는 같은 경로를 거치지만 측정 대상 전송·지연·실패율에는 포함하지 않는다.
+    sentAt = Date.now();
+    try {
+      sender.send(`/app/community/threads/${target.threadId}/messages`,
+        { clientMessageId, type: "TEXT", content }, { "x-command-id": commandId });
+    } catch (error) {
+      const failure = error instanceof StompError ? error
+        : new StompError(`${phase} 메시지 전송 실패`, "send_error");
+      sender.rejectWaiters(new StompError("전송 실패로 응답 대기 취소", "cancelled"));
+      receiver.rejectWaiters(new StompError("전송 실패로 응답 대기 취소", "cancelled"));
+      await pending;
+      if (measured) recordFailure("send", failure);
+      throw failure;
+    }
+    const results = await pending;
+    const errors = results.map((result, index) => ({ ...result, stage: index === 0 ? "ack" : "delivery" }))
+      .filter((result) => result.status === "rejected" && result.reason.reason !== "cancelled");
+    for (const error of errors) {
+      if (measured) recordFailure(error.stage, error.reason);
+    }
+    if (errors.length) throw errors[0].reason;
+    if (results[0].value.messageId !== results[1].value.messageId) {
+      const error = new StompError(`${phase} ACK와 수신 이벤트가 서로 다른 메시지를 가리킵니다`, "mismatch");
+      if (measured) recordFailure("correlation", error);
+      throw error;
+    }
+    success = true;
+    return results[1].value;
+  } finally {
+    if (measured) recordMessageResult(success);
+    // 본 테스트의 관측자는 연결 종료까지 유지해 첫 응답 뒤에 도착한 중복도 센다.
+    if (!measured) observers.forEach((remove) => remove());
   }
-  if (results[0].value.messageId !== results[1].value.messageId) {
-    throw new Error(`${phase} ACK와 수신 이벤트가 서로 다른 메시지를 가리킵니다`);
-  }
-  return results[1].value;
 }
 
 async function prepareSubscriptions(sender, receiver, target) {
@@ -112,34 +164,49 @@ async function prepareSubscriptions(sender, receiver, target) {
 }
 
 export default async function (seed) {
+  initializeMetrics();
   const clients = [];
   const result = { connected: false, ready: false, acknowledged: false,
     delivered: false, correlated: false, closed: false };
   let failure = null;
+  let stage = "seed";
   try {
     const target = validateSeed(seed);
     const url = `${BASE_URL.replace(/^http/, "ws")}/ws/websocket`;
+    stage = "auth";
     const sender = new StompClient(url, { token: getAccessToken(target.senderId),
       label: "sender", timeoutMs: TIMEOUT_MS });
     clients.push(sender);
     const receiver = new StompClient(url, { token: getAccessToken(target.receiverId),
       label: "receiver", timeoutMs: TIMEOUT_MS });
     clients.push(receiver);
+    stage = "connect";
     await Promise.all(clients.map((client) => client.connect()));
     result.connected = true;
+    stage = "subscription";
     await prepareSubscriptions(sender, receiver, target);
     result.ready = true;
-    const message = await exchange(sender, receiver, target, "Smoke", TIMEOUT_MS, result);
+    stage = "message";
+    const message = await exchange(sender, receiver, target, "Smoke", TIMEOUT_MS, result, true);
     result.correlated = true;
     console.log(`Chat Smoke 송수신 성공: threadId=${target.threadId}, messageId=${message.messageId}`);
   } catch (error) {
     failure = error;
+    if (stage !== "message") recordFailure(stage, error);
   } finally {
     // 성공·실패 모두 heartbeat, 대기 타이머와 소켓을 정리해야 k6 실행이 끝난다.
     const closed = await Promise.allSettled(clients.map((client) => client.close()));
     result.closed = closed.every((entry) => entry.status === "fulfilled");
-    if (!failure) failure = clients.find((client) => client.failure)?.failure || null;
-    if (!failure && !result.closed) failure = closed.find((entry) => entry.status === "rejected").reason;
+    const connectionFailure = clients.find((client) => client.failure)?.failure;
+    const closeFailure = closed.find((entry) => entry.status === "rejected")?.reason;
+    if (!failure && connectionFailure) {
+      failure = connectionFailure;
+      recordFailure("connection", failure);
+    }
+    if (closeFailure) {
+      if (!failure) failure = closeFailure;
+      recordFailure("cleanup", closeFailure);
+    }
     check(result, {
       "두 회원 STOMP 인증 완료": (value) => value.connected,
       "준비 메시지로 구독 확인": (value) => value.ready,

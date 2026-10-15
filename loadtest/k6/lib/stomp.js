@@ -2,9 +2,17 @@ import { WebSocket } from "k6/websockets";
 
 import { encodeFrame, StompDecoder } from "./stomp-protocol.js";
 
-export class StompTimeoutError extends Error {
-  constructor(message) {
+export class StompError extends Error {
+  constructor(message, reason) {
     super(message);
+    this.name = "StompError";
+    this.reason = reason;
+  }
+}
+
+export class StompTimeoutError extends StompError {
+  constructor(message) {
+    super(message, "timeout");
     this.name = "StompTimeoutError";
   }
 }
@@ -26,6 +34,7 @@ export class StompClient {
     this.timers = [];
     this.closeWaiter = null;
     this.lastActivity = Date.now();
+    this.observers = new Set();
   }
 
   async connect() {
@@ -42,33 +51,37 @@ export class StompClient {
             "heart-beat": "10000,10000",
           });
         } catch (_) {
-          this.fail(new Error(`${this.label}: CONNECT 전송 실패`));
+          this.fail(new StompError(`${this.label}: CONNECT 전송 실패`, "send_error"));
         }
       };
       this.socket.onmessage = (event) => {
-        this.lastActivity = Date.now();
+        const receivedAt = Date.now();
+        this.lastActivity = receivedAt;
         try {
           if (typeof event.data !== "string") throw new Error("텍스트 STOMP 프레임이 아닙니다");
           for (const frame of this.decoder.push(event.data)) {
+            // 두 응답을 모두 기다린 시각이 아니라 각 프레임을 받은 시각으로 지연을 계산한다.
+            frame.receivedAt = receivedAt;
             if (frame.command === "ERROR") {
-              this.fail(new Error(`${this.label}: STOMP ERROR 수신`));
+              this.fail(new StompError(`${this.label}: STOMP ERROR 수신`, "stomp_error"));
               return;
             }
             this.dispatch(frame);
           }
         } catch (_) {
           // 서버 본문에는 인증 정보가 섞일 수 있어 원문 대신 처리 단계만 오류로 남긴다.
-          this.fail(new Error(`${this.label}: STOMP 수신 프레임 처리 실패`));
+          this.fail(new StompError(`${this.label}: STOMP 수신 프레임 처리 실패`, "frame_error"));
         }
       };
-      this.socket.onerror = () => this.fail(new Error(`${this.label}: WebSocket 연결 오류`));
+      this.socket.onerror = () => this.fail(new StompError(`${this.label}: WebSocket 연결 오류`, "connection_error"));
       this.socket.onclose = () => {
         this.stopHeartbeats();
         if (this.closeWaiter) this.closeWaiter();
-        if (!this.closing) this.fail(new Error(`${this.label}: 예상하지 못한 연결 종료`));
+        if (!this.closing) this.fail(new StompError(`${this.label}: 예상하지 못한 연결 종료`, "connection_closed"));
+        this.observers.clear();
       };
     } catch (_) {
-      this.fail(new Error(`${this.label}: WebSocket 생성 실패`));
+      this.fail(new StompError(`${this.label}: WebSocket 생성 실패`, "connection_error"));
     }
     const frame = await ready;
     this.connected = true;
@@ -114,7 +127,16 @@ export class StompClient {
     });
   }
 
+  observe(listener) {
+    this.observers.add(listener);
+    return () => this.observers.delete(listener);
+  }
+
   dispatch(frame) {
+    // 관측자가 true를 반환한 중복 프레임은 대기자나 미처리 버퍼에 다시 전달하지 않는다.
+    let consumed = false;
+    for (const observer of this.observers) consumed = observer(frame) || consumed;
+    if (consumed) return;
     const index = this.waiters.findIndex((waiter) => waiter.matches(frame));
     if (index >= 0) {
       const [waiter] = this.waiters.splice(index, 1);
@@ -129,20 +151,20 @@ export class StompClient {
   startHeartbeats(header = "0,0") {
     const intervals = header.split(",").map(Number);
     if (intervals.length !== 2 || intervals.some((value) => !Number.isInteger(value) || value < 0)) {
-      throw new Error(`${this.label}: 잘못된 heartbeat 응답`);
+      throw new StompError(`${this.label}: 잘못된 heartbeat 응답`, "frame_error");
     }
     const [serverSends, serverReceives] = intervals;
     if (serverReceives > 0) {
       this.timers.push(setInterval(() => {
         try { this.socket.send("\n"); }
-        catch (_) { this.fail(new Error(`${this.label}: heartbeat 전송 실패`)); }
+        catch (_) { this.fail(new StompError(`${this.label}: heartbeat 전송 실패`, "send_error")); }
       }, Math.max(10000, serverReceives)));
     }
     if (serverSends > 0) {
       const interval = Math.max(10000, serverSends);
       this.timers.push(setInterval(() => {
         if (Date.now() - this.lastActivity > interval * 2.5) {
-          this.fail(new Error(`${this.label}: heartbeat 수신 시간 초과`));
+          this.fail(new StompTimeoutError(`${this.label}: heartbeat 수신 시간 초과`));
         }
       }, interval));
     }
@@ -174,11 +196,15 @@ export class StompClient {
     this.closing = true;
     this.stopHeartbeats();
     this.rejectWaiters(new Error(`${this.label}: 연결 종료`));
-    if (!this.socket || this.socket.readyState === WebSocket.CLOSED) return;
+    if (!this.socket || this.socket.readyState === WebSocket.CLOSED) {
+      this.observers.clear();
+      return;
+    }
     await new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.closeWaiter = null;
-        reject(new Error(`${this.label}: 연결 종료 시간 초과`));
+        this.observers.clear();
+        reject(new StompTimeoutError(`${this.label}: 연결 종료 시간 초과`));
       }, 2000);
       this.closeWaiter = () => {
         clearTimeout(timer);
@@ -192,7 +218,8 @@ export class StompClient {
       } catch (_) {
         clearTimeout(timer);
         this.closeWaiter = null;
-        reject(new Error(`${this.label}: 연결 종료 실패`));
+        this.observers.clear();
+        reject(new StompError(`${this.label}: 연결 종료 실패`, "connection_error"));
       }
     });
   }
