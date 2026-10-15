@@ -23,6 +23,10 @@ import soakProjectRead, {
 } from "./scenarios/soak/project-read.js";
 import smokeHome, { requiresSeed as smokeHomeSeed } from "./scenarios/smoke/home.js";
 import loadHome, { requiresSeed as loadHomeSeed } from "./scenarios/load/home.js";
+import chatMessage, {
+  requiresSeed as chatMessageSeed,
+  options as chatMessageOptions,
+} from "./scenarios/smoke/chat-message.js";
 
 // PROFILE(부하 유형) × SCENARIO(업무 시나리오) → 실제 실행 함수 매핑.
 // k6 는 런타임 동적 import 를 지원하지 않으므로, 정적 import 를 registry 로 모아 __ENV 로 고른다.
@@ -31,6 +35,7 @@ const REGISTRY = {
     "health-check": { fn: healthCheck, requiresSeed: healthCheckSeed },
     "project-read": { fn: smokeProjectRead, requiresSeed: smokeProjectReadSeed },
     home: { fn: smokeHome, requiresSeed: smokeHomeSeed },
+    "chat-message": { fn: chatMessage, requiresSeed: chatMessageSeed, options: chatMessageOptions },
   },
   load: {
     "project-read": { fn: loadProjectRead, requiresSeed: loadProjectReadSeed },
@@ -72,11 +77,11 @@ if (!selected) {
   );
 }
 
-// options 는 init 단계에서 평가된다. RATE/DURATION 은 환경변수로 지정한다.
+// options는 init 단계에서 평가된다. 전용 옵션이 없는 시나리오는 RATE/DURATION으로 공통 프로필을 선택한다.
 // systemTags 에서 url/name 을 제외한다 — 쿼리스트링(memberId 등)이 URL 마다 달라
 // Prometheus 시리즈가 요청 수만큼 폭발한다(카디널리티). 시나리오 구분은 우리 scenario 태그로 충분.
 export const options = {
-  ...buildOptions(PROFILE, __ENV.RATE, __ENV.DURATION),
+  ...(selected.options || buildOptions(PROFILE, __ENV.RATE, __ENV.DURATION)),
   systemTags: [
     "scenario",
     "status",
@@ -101,7 +106,8 @@ export function setup() {
 }
 
 export default function (data) {
-  selected.fn(data.seed);
+  // 비동기 STOMP 시나리오의 완료·실패를 k6가 기다리도록 Promise도 그대로 반환한다.
+  return selected.fn(data.seed);
 }
 
 // 실행마다 요약을 파일로 남긴다 (JMeter 리포트처럼). 터미널 출력은 그대로 유지하고,
