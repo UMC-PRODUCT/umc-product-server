@@ -3,8 +3,8 @@
 set -euo pipefail
 
 if [ "${1:-}" = "--help" ]; then
-  printf '사용법: SEED_FILE=<시드 경로> [PROFILE=load|smoke] bash loadtest/scripts/run-chat-test.sh [실행 이름]\n'
-  printf '시드 경로는 명령을 실행한 디렉터리 기준입니다. 기본 프로필은 load입니다.\n'
+  printf '사용법: SEED_FILE=<시드 경로> [PROFILE=load] [SCENARIO=chat-message] bash loadtest/scripts/run-chat-test.sh [실행 이름]\n'
+  printf '시드 경로는 명령을 실행한 디렉터리 기준입니다. PROFILE·SCENARIO는 script.js에 등록된 조합을 사용하세요.\n'
   printf '부하 설정: BASE_URL, CHAT_USERS, CHAT_ROOMS, CHAT_USERS_PER_VU 또는 CHAT_VU_USERS, CHAT_SENDERS\n'
   printf '시간 설정: DURATION, CHAT_MESSAGE_INTERVAL_MS, CHAT_TIMEOUT_MS, CHAT_STARTUP_TIMEOUT_MS\n'
   printf 'CHAT_RUN_NOTES에 앱·DB 버전, JVM 옵션, 실행 전 데이터 규모, 서버 지표 위치를 기록할 수 있습니다.\n'
@@ -13,14 +13,14 @@ fi
 
 fail() { printf '[오류] %s\n' "$*" >&2; exit 1; }
 [ "$#" -le 1 ] || fail '실행 이름 하나만 지정하세요. --help를 확인하세요.'
-LABEL="${1:-chat-message}"
+SCENARIO="${SCENARIO:-chat-message}"
+LABEL="${1:-$SCENARIO}"
 [[ "$LABEL" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]] || fail '실행 이름에는 영문·숫자·하이픈·밑줄만 사용하세요.'
 for tool in k6 jq git mktemp; do
   command -v "$tool" >/dev/null 2>&1 || fail "필요한 명령어가 없습니다: $tool"
 done
 [ -n "${SEED_FILE:-}" ] && [ -f "$SEED_FILE" ] || fail 'SEED_FILE에 준비된 시드 파일을 지정하세요.'
 PROFILE="${PROFILE:-load}"
-case "$PROFILE" in load|smoke) ;; *) fail 'PROFILE은 load 또는 smoke여야 합니다.' ;; esac
 REPO_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 K6_DIR="$REPO_ROOT/loadtest/k6"
 mkdir -p "$K6_DIR/out/chat"
@@ -53,12 +53,12 @@ for name in BASE_URL CHAT_USERS CHAT_ROOMS CHAT_USERS_PER_VU CHAT_VU_USERS CHAT_
     INPUTS="$(jq -c --arg name "$name" --arg value "$(printenv "$name")" '. + {($name): $value}' <<< "$INPUTS")"
   fi
 done
-jq -n --arg label "$LABEL" --arg startedAt "$STARTED_AT" --arg profile "$PROFILE" \
+jq -n --arg label "$LABEL" --arg startedAt "$STARTED_AT" --arg profile "$PROFILE" --arg scenario "$SCENARIO" \
   --arg commit "$(git -C "$REPO_ROOT" rev-parse HEAD)" \
   --arg status "$(git -C "$REPO_ROOT" status --porcelain)" \
   --arg k6Version "$(k6 version)" --arg platform "$(uname -sm)" \
   --arg seedSource "$SEED_FILE" --arg notes "${CHAT_RUN_NOTES:-}" --argjson inputs "$INPUTS" \
-  '{label: $label, startedAt: $startedAt, profile: $profile, scenario: "chat-message",
+  '{label: $label, startedAt: $startedAt, profile: $profile, scenario: $scenario,
     commit: $commit, dirty: ($status != ""), changedFiles: $status, k6Version: $k6Version,
     platform: $platform, seedSource: $seedSource, inputs: $inputs, notes: $notes}' > "$RUN_DIR/run-meta.json"
 
@@ -68,7 +68,8 @@ jq -e '{runId, baseUrl, schoolId, memberIds,
   "$SEED_FILE" > "$RUN_DIR/seed.json"
 cd "$K6_DIR"
 set +e
-PROFILE="$PROFILE" SCENARIO=chat-message SEED_FILE="$RUN_DIR/seed.json" CHAT_RUN_DIR="$RUN_DIR" \
+# 선택한 이름을 그대로 전달한다. 지원 여부는 공통 러너의 등록 정보와 조건 기록 함수로 확인한다.
+PROFILE="$PROFILE" SCENARIO="$SCENARIO" SEED_FILE="$RUN_DIR/seed.json" CHAT_RUN_DIR="$RUN_DIR" \
   k6 run --no-usage-report --no-color script.js 2>&1 | tee "$RUN_DIR/console.log"
 PIPE_CODES=("${PIPESTATUS[@]}")
 set -e

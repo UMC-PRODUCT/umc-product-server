@@ -141,8 +141,9 @@ registerHooks({
   },
 });
 
-const { default: smoke } = await import("../scenarios/smoke/chat-message.js");
-const { default: load, validateSeed: validateLoadSeed, prepareRun, getOptions: loadOptions } = await import("../scenarios/load/chat-message.js");
+const { default: smoke, getRunConditions: smokeConditions } = await import("../scenarios/smoke/chat-message.js");
+const { default: load, validateSeed: validateLoadSeed, prepareRun, getOptions: loadOptions,
+  getRunConditions: loadConditions } = await import("../scenarios/load/chat-message.js");
 const { runChatUsers } = await import("../lib/chat/chat-load-session.js");
 const { createLoadPlan } = await import("../lib/chat/chat-load.js");
 const { readLoadConfig } = await import("../config/chat-load.js");
@@ -170,6 +171,35 @@ afterEach(() => {
   Date.now = realNow;
   for (const timer of state.timers) clearTimeout(timer);
   assert.ok(state.sockets.every((socket) => socket.readyState === 3));
+});
+
+test("각 시나리오가 기본값과 실제 사용자 배정을 기록하고 인증 정보는 제외한다", () => {
+  __ENV.SCENARIO = "chat-custom";
+  __ENV.SECRET_TOKEN = "do-not-record";
+  const data = { ...seed, memberIds: ["2", "3", "4"],
+    rooms: [{ threadId: "1", memberIds: ["3", "4"] }, { threadId: "2", memberIds: ["2", "3"] }] };
+  const smokeRecord = smokeConditions(data);
+  assert.deepEqual(smokeRecord.vuMemberIds, [["3", "4"]]);
+  assert.equal(smokeRecord.rooms.length, 1);
+  assert.equal(smokeRecord.config.tags.scenario, "chat-custom");
+  __ENV.CHAT_USERS = "3";
+  __ENV.CHAT_ROOMS = "2";
+  __ENV.CHAT_VU_USERS = "[[1,3],[2]]";
+  __ENV.CHAT_SENDERS = "[2]";
+  const loadRecord = loadConditions(data);
+  assert.equal(loadRecord.config.intervalMs, 1000);
+  assert.equal(loadRecord.config.durationMs, 30000);
+  assert.deepEqual(loadRecord.vuMemberIds, [["2", "4"], ["3"]]);
+  assert.deepEqual(loadRecord.senderMemberIds, ["3"]);
+  assert.equal(loadRecord.config.tags.scenario, "chat-custom");
+  assert.equal(JSON.stringify([smokeRecord, loadRecord]).includes("do-not-record"), false);
+});
+
+test("선택한 시나리오 이름이 Smoke의 측정 지표와 판정 태그까지 전달된다", async () => {
+  __ENV.SCENARIO = "chat-custom";
+  await smoke(seed);
+  assert.ok(samples("ack_latency_ms").every((sample) => sample.tags.scenario === "chat-custom"));
+  assert.ok(samples("delivery_latency_ms").every((sample) => sample.tags.scenario === "chat-custom"));
 });
 
 test("준비 메시지를 제외하고 ACK 10ms와 전달 40ms를 각각 한 번 기록한다", async () => {

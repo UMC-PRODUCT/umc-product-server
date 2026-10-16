@@ -9,6 +9,19 @@ export const requiresSeed = true;
 export const getOptions = () => buildLoadOptions(readLoadConfig(__ENV));
 export const validateSeed = (seed) => createLoadPlan(seed, readLoadConfig(__ENV));
 
+// 이 시나리오의 실제 배정과 부하 모델을 기록한다. 새 행동에 설정을 추가하면 여기에도 함께 남긴다.
+export function getRunConditions(seed) {
+  const config = readLoadConfig(__ENV);
+  createLoadPlan(seed, config);
+  return {
+    config,
+    rooms: seed.rooms.map((room) => ({ threadId: room.threadId, memberIds: room.memberIds })),
+    vuMemberIds: config.vuUsers.map((group) => group.map((index) => seed.memberIds[index - 1])),
+    senderMemberIds: config.senders.map((index) => seed.memberIds[index - 1]),
+    loadModel: "사용자별 ACK 대기 후 다음 전송",
+  };
+}
+
 export function prepareRun() {
   const config = readLoadConfig(__ENV);
   // setup에서 한 번 만든 값을 모든 VU가 복사해 받는다. VU끼리 JS 객체를 공유하지 않는다.

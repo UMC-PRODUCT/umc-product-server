@@ -38,14 +38,15 @@ function readVuUsers(env, users) {
     Array.from({ length: Math.min(perVu, users - group * perVu) }, (_, index) => group * perVu + index + 1));
 }
 
-export function readLoadConfig(env) {
+// 새 시나리오는 이름만 전달해 같은 부하 설정과 측정 코드를 다른 지표 태그로 재사용할 수 있다.
+export function readLoadConfig(env, scenario = env.SCENARIO || "chat-message") {
   const users = positiveInteger(env.CHAT_USERS, 2, "CHAT_USERS", 1, 1000);
   return { ...readChatConfig(env), users, vuUsers: readVuUsers(env, users), senders: readSenders(env, users),
     rooms: positiveInteger(env.CHAT_ROOMS, 1, "CHAT_ROOMS", 1, 1000),
     intervalMs: positiveInteger(env.CHAT_MESSAGE_INTERVAL_MS, 1000, "CHAT_MESSAGE_INTERVAL_MS", 1, 60000),
     startupMs: positiveInteger(env.CHAT_STARTUP_TIMEOUT_MS, 10000, "CHAT_STARTUP_TIMEOUT_MS", 100, 120000),
     durationMs: durationMs(env.DURATION || "30s"),
-    tags: { scenario: "chat-message", profile: "load" } };
+    tags: { scenario, profile: "load" } };
 }
 
 export function buildLoadOptions(config) {

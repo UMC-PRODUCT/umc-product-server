@@ -28,12 +28,14 @@ import chatMessage, {
   requiresSeed as chatMessageSeed,
   getOptions as chatMessageOptions,
   validateSeed as validateSmokeChatSeed,
+  getRunConditions as smokeChatConditions,
 } from "./scenarios/smoke/chat-message.js";
 import loadChatMessage, {
   requiresSeed as loadChatMessageSeed,
   getOptions as loadChatMessageOptions,
   validateSeed as validateLoadChatSeed,
   prepareRun as prepareChatRun,
+  getRunConditions as loadChatConditions,
 } from "./scenarios/load/chat-message.js";
 
 // PROFILE(부하 유형) × SCENARIO(업무 시나리오) → 실제 실행 함수 매핑.
@@ -44,11 +46,12 @@ const REGISTRY = {
     "project-read": { fn: smokeProjectRead, requiresSeed: smokeProjectReadSeed },
     home: { fn: smokeHome, requiresSeed: smokeHomeSeed },
     "chat-message": { fn: chatMessage, requiresSeed: chatMessageSeed,
-      getOptions: chatMessageOptions, validateSeed: validateSmokeChatSeed },
+      getOptions: chatMessageOptions, validateSeed: validateSmokeChatSeed, getRunConditions: smokeChatConditions },
   },
   load: {
     "chat-message": { fn: loadChatMessage, requiresSeed: loadChatMessageSeed,
-      getOptions: loadChatMessageOptions, validateSeed: validateLoadChatSeed, prepareRun: prepareChatRun },
+      getOptions: loadChatMessageOptions, validateSeed: validateLoadChatSeed,
+      prepareRun: prepareChatRun, getRunConditions: loadChatConditions },
     "project-read": { fn: loadProjectRead, requiresSeed: loadProjectReadSeed },
     "application-submit": {
       fn: applicationSubmit,
@@ -86,6 +89,11 @@ if (!selected) {
   throw new Error(
     `알 수 없는 PROFILE/SCENARIO: ${PROFILE}/${SCENARIO}. 사용 가능: ${available}`,
   );
+}
+
+// 실행별 기록을 요청한 시나리오는 자기 조건을 제공해야 한다. 지원하지 않는 조합은 부하를 주기 전에 거부한다.
+if (__ENV.CHAT_RUN_DIR && typeof selected.getRunConditions !== "function") {
+  throw new Error(`${PROFILE}/${SCENARIO}에 실행 조건 기록용 getRunConditions를 등록하세요`);
 }
 
 // options는 init 단계에서 평가된다. 전용 옵션이 없는 시나리오는 RATE/DURATION으로 공통 프로필을 선택한다.
@@ -131,11 +139,11 @@ export function handleSummary(data) {
     stdout: textSummary(data, { indent: "  ", enableColors: !directory }),
     [directory ? `${directory}/summary.json` : "./out/last-summary.json"]: JSON.stringify(data, null, 2),
   };
-  if (directory && SCENARIO === "chat-message") {
+  if (directory) {
     let conditions;
     try {
-      conditions = chatRunConditions(PROFILE, __ENV, parseSeed(seedRaw),
-        { ...JSON.parse(configuredOptionsJson), ...data.options });
+      conditions = chatRunConditions({ profile: PROFILE, scenario: SCENARIO, seed: parseSeed(seedRaw),
+        options: { ...JSON.parse(configuredOptionsJson), ...data.options } }, selected.getRunConditions);
     } catch (_) {
       conditions = { available: false, error: "설정 또는 시드 검증 실패. run-meta.json과 console.log를 확인하세요." };
     }

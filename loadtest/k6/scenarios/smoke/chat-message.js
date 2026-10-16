@@ -15,6 +15,15 @@ export function validateSeed(seed) {
   selectPair(seed, readPairConfig(__ENV));
 }
 
+// Smoke는 전체 시드 중 실제 사용한 첫 방과 두 사용자만 기록한다.
+export function getRunConditions(seed) {
+  const config = readPairConfig(__ENV);
+  const target = selectPair(seed, config);
+  const memberIds = [target.senderId, target.receiverId];
+  return { config, rooms: [{ threadId: target.threadId, memberIds }],
+    vuMemberIds: [memberIds], senderMemberIds: [target.senderId], loadModel: "한 번 송수신" };
+}
+
 export default async function (seed) {
   const config = readPairConfig(__ENV);
   const target = selectPair(seed, config);

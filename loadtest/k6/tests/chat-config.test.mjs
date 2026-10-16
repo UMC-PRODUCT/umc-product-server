@@ -4,6 +4,14 @@ import { durationMs, readChatConfig } from "../config/chat.js";
 import { readPairConfig, buildPairOptions } from "../config/chat-pair.js";
 import { readLoadConfig, buildLoadOptions } from "../config/chat-load.js";
 
+test("Smoke와 반복 부하의 지표 이름은 환경변수 또는 명시한 시나리오 이름을 따른다", () => {
+  for (const read of [readPairConfig, readLoadConfig]) {
+    assert.equal(read({}).tags.scenario, "chat-message");
+    assert.equal(read({ SCENARIO: "chat-custom" }).tags.scenario, "chat-custom");
+    assert.equal(read({ SCENARIO: "chat-custom" }, "chat-explicit").tags.scenario, "chat-explicit");
+  }
+});
+
 test("반복 부하의 사용자 수와 방 수는 서로 독립적이다", () => {
   const config = readLoadConfig({ CHAT_USERS: "4", CHAT_ROOMS: "1", DURATION: "1m30s",
     CHAT_MESSAGE_INTERVAL_MS: "250" });

@@ -1,9 +1,9 @@
 import { readChatConfig } from "./chat.js";
 
-export function readPairConfig(env) {
+export function readPairConfig(env, scenario = env.SCENARIO || "chat-message") {
   const connection = readChatConfig(env);
   // 두 사용자·한 방·한 번 송수신은 Smoke의 최소 구성이다. 반복 부하의 사용자 배정과 분리한다.
-  return { ...connection, tags: { scenario: "chat-message", profile: "smoke" } };
+  return { ...connection, tags: { scenario, profile: "smoke" } };
 }
 
 export function buildPairOptions(config) {

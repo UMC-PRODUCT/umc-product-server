@@ -9,22 +9,27 @@ import { chatRunConditions } from "../lib/chat/chat-run.js";
 const seed = { baseUrl: "http://localhost:8080", memberIds: ["10", "20", "30"],
   rooms: [{ threadId: "1", memberIds: ["10", "20", "30"] }] };
 
-test("실행 조건에는 기본값·실제 회원 배정이 포함되고 인증 정보는 제외한다", () => {
-  const snapshot = chatRunConditions("load", { CHAT_USERS: "3", CHAT_VU_USERS: "[[1,3],[2]]",
-    CHAT_SENDERS: "[2]", SECRET_TOKEN: "secret" }, seed, { scenarios: {} });
-  assert.equal(snapshot.config.intervalMs, 1000);
-  assert.equal(snapshot.config.durationMs, 30000);
-  assert.deepEqual(snapshot.vuMemberIds, [["10", "30"], ["20"]]);
-  assert.deepEqual(snapshot.senderMemberIds, ["20"]);
-  assert.equal(JSON.stringify(snapshot).includes("secret"), false);
+test("새 시나리오의 추가 설정을 유지하고 실제 선택한 이름과 옵션을 기록한다", () => {
+  const options = { scenarios: { custom: { vus: 2 } } };
+  const snapshot = chatRunConditions({ profile: "load", scenario: "chat-custom", seed, options }, (data) => {
+    assert.equal(data, seed);
+    return { scenario: "잘못된 이름", profile: "다른 프로필", k6Options: {},
+      config: { batchSize: 5 }, vuMemberIds: [["10", "30"], ["20"]],
+      customMeasurement: { target: "request-order" } };
+  });
+  assert.equal(snapshot.scenario, "chat-custom");
+  assert.equal(snapshot.profile, "load");
+  assert.deepEqual(snapshot.k6Options, options);
+  assert.equal(snapshot.config.batchSize, 5);
+  assert.deepEqual(snapshot.customMeasurement, { target: "request-order" });
 });
 
-test("Smoke 실행 조건은 전체 시드와 무관하게 첫 방의 두 회원을 기록한다", () => {
-  const snapshot = chatRunConditions("smoke", {}, { ...seed,
-    rooms: [{ threadId: "2", memberIds: ["20", "30"] }, seed.rooms[0]] }, {});
-  assert.deepEqual(snapshot.vuMemberIds, [["20", "30"]]);
-  assert.deepEqual(snapshot.senderMemberIds, ["20"]);
-  assert.equal(snapshot.rooms.length, 1);
+test("조건 기록 함수가 없거나 동기적인 조건 객체를 반환하지 않으면 거부한다", () => {
+  const context = { profile: "load", scenario: "chat-custom", seed, options: {} };
+  assert.throws(() => chatRunConditions(context), /getRunConditions/);
+  for (const result of [null, [], "문자열", Promise.resolve({}), { available: false }]) {
+    assert.throws(() => chatRunConditions(context, () => result), /동기적으로/);
+  }
 });
 
 test("실행 래퍼는 성공·실패·요약 누락과 연속 실행의 기록을 각각 보존한다", () => {
@@ -40,18 +45,20 @@ const fs = require("node:fs");
 const path = require("node:path");
 if (process.argv[2] === "version") { console.log("k6 test-double"); process.exit(0); }
 const out = process.env.CHAT_RUN_DIR;
-console.log("실행 로그 " + process.env.PROFILE);
+console.log("실행 로그 " + process.env.PROFILE + "/" + process.env.SCENARIO);
 if (process.env.TEST_K6_MODE !== "missing") {
   fs.writeFileSync(path.join(out, "summary.json"), JSON.stringify({ metrics: {} }));
   fs.writeFileSync(path.join(out, "conditions.json"), JSON.stringify({
-    profile: process.env.PROFILE, available: process.env.TEST_K6_MODE !== "unavailable" }));
+    profile: process.env.PROFILE, scenario: process.env.SCENARIO,
+    available: process.env.TEST_K6_MODE !== "unavailable" }));
 }
 process.exit(process.env.TEST_K6_MODE === "failure" ? 99 : 0);
 `, { mode: 0o755 });
-    for (const mode of ["success", "success", "failure", "missing", "unavailable"]) {
+    for (const [mode, scenario] of [["success", ""], ["success", "chat-custom"],
+      ["failure", "chat-custom"], ["missing", ""], ["unavailable", ""]]) {
       const result = spawnSync("bash", [script, "test-archive"], {
         cwd: fixture, encoding: "utf8", env: { ...process.env,
-          PATH: `${fixture}:${process.env.PATH}`, SEED_FILE: "seed.json", PROFILE: "load",
+          PATH: `${fixture}:${process.env.PATH}`, SEED_FILE: "seed.json", PROFILE: "load", SCENARIO: scenario,
           TEST_K6_MODE: mode, CHAT_RUN_NOTES: "로컬 DB, 데이터 규모 미확인", SECRET_TOKEN: "do-not-copy" },
       });
       const directory = /^결과 폴더: (.+)$/m.exec(result.stdout)?.[1];
@@ -63,7 +70,9 @@ process.exit(process.env.TEST_K6_MODE === "failure" ? 99 : 0);
       assert.equal(meta.k6ExitCode, mode === "failure" ? 99 : 0);
       assert.ok(meta.startedAt && meta.endedAt && meta.commit);
       assert.equal(meta.notes, "로컬 DB, 데이터 규모 미확인");
-      assert.match(readFileSync(join(directory, "console.log"), "utf8"), /실행 로그 load/);
+      assert.equal(meta.scenario, scenario || "chat-message");
+      assert.ok(readFileSync(join(directory, "console.log"), "utf8").includes(`실행 로그 load/${meta.scenario}`));
+      if (mode !== "missing") assert.equal(json(directory, "conditions.json").scenario, meta.scenario);
       assert.deepEqual(json(directory, "seed.json").memberIds, seed.memberIds);
       for (const file of readdirSync(directory)) {
         assert.equal(readFileSync(join(directory, file), "utf8").includes("do-not-copy"), false);
