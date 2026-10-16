@@ -1,4 +1,4 @@
-import { durationMs, positiveInteger, readChatConfig } from "./chat.js";
+import { durationMs, positiveInteger, readChatConfig, readLatencyThresholds } from "./chat.js";
 
 function readSenders(env, users) {
   if (env.CHAT_SENDERS === undefined) return Array.from({ length: users }, (_, index) => index + 1);
@@ -46,6 +46,7 @@ export function readLoadConfig(env, scenario = env.SCENARIO || "chat-message") {
     intervalMs: positiveInteger(env.CHAT_MESSAGE_INTERVAL_MS, 1000, "CHAT_MESSAGE_INTERVAL_MS", 1, 60000),
     startupMs: positiveInteger(env.CHAT_STARTUP_TIMEOUT_MS, 10000, "CHAT_STARTUP_TIMEOUT_MS", 100, 120000),
     durationMs: durationMs(env.DURATION || "30s"),
+    latencyThresholds: readLatencyThresholds(env),
     tags: { scenario, profile: "load" } };
 }
 
@@ -55,9 +56,9 @@ export function buildLoadOptions(config) {
     // 반복 횟수는 VU 수를 기준으로 검사하고 실제 연결 수는 ws_sessions에서 별도로 확인한다.
     scenarios: { chat_load: { executor: "per-vu-iterations", vus, iterations: 1,
       maxDuration: `${config.startupMs + config.durationMs + config.timeoutMs * 3 + 3000}ms` } },
-    summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "count"],
+    summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)", "count"],
     thresholds: { checks: ["rate==1"], iterations: [`count==${vus}`],
       umc_chat_failures: ["count==0"], umc_chat_delivery_missing: ["count==0"],
-      umc_chat_completion_missing: ["count==0"] },
+      umc_chat_completion_missing: ["count==0"], ...config.latencyThresholds },
   };
 }

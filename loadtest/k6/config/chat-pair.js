@@ -1,9 +1,9 @@
-import { readChatConfig } from "./chat.js";
+import { readChatConfig, readLatencyThresholds } from "./chat.js";
 
 export function readPairConfig(env, scenario = env.SCENARIO || "chat-message") {
   const connection = readChatConfig(env);
   // 두 사용자·한 방·한 번 송수신은 Smoke의 최소 구성이다. 반복 부하의 사용자 배정과 분리한다.
-  return { ...connection, tags: { scenario, profile: "smoke" } };
+  return { ...connection, latencyThresholds: readLatencyThresholds(env), tags: { scenario, profile: "smoke" } };
 }
 
 export function buildPairOptions(config) {
@@ -14,8 +14,8 @@ export function buildPairOptions(config) {
       chat_smoke: { executor: "per-vu-iterations", vus: 1,
         iterations: 1, maxDuration: `${overhead}ms` },
     },
-    summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "count"],
+    summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)", "count"],
     thresholds: { checks: ["rate==1"], iterations: ["count==1"],
-      umc_chat_failures: ["count==0"] },
+      umc_chat_failures: ["count==0"], ...config.latencyThresholds },
   };
 }

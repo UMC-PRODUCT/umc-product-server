@@ -59,7 +59,8 @@ process.exit(process.env.TEST_K6_MODE === "failure" ? 99 : 0);
       const result = spawnSync("bash", [script, "test-archive"], {
         cwd: fixture, encoding: "utf8", env: { ...process.env,
           PATH: `${fixture}:${process.env.PATH}`, SEED_FILE: "seed.json", PROFILE: "load", SCENARIO: scenario,
-          TEST_K6_MODE: mode, CHAT_RUN_NOTES: "로컬 DB, 데이터 규모 미확인", SECRET_TOKEN: "do-not-copy" },
+          TEST_K6_MODE: mode, CHAT_RUN_NOTES: "로컬 DB, 데이터 규모 미확인", SECRET_TOKEN: "do-not-copy",
+          CHAT_ACK_P95_MS: "100", CHAT_ACK_P99_MS: "200", CHAT_DELIVERY_P95_MS: "500", CHAT_DELIVERY_P99_MS: "1000" },
       });
       const directory = /^결과 폴더: (.+)$/m.exec(result.stdout)?.[1];
       assert.ok(directory, result.stderr);
@@ -71,6 +72,10 @@ process.exit(process.env.TEST_K6_MODE === "failure" ? 99 : 0);
       assert.ok(meta.startedAt && meta.endedAt && meta.commit);
       assert.equal(meta.notes, "로컬 DB, 데이터 규모 미확인");
       assert.equal(meta.scenario, scenario || "chat-message");
+      for (const [name, value] of Object.entries({ CHAT_ACK_P95_MS: "100", CHAT_ACK_P99_MS: "200",
+        CHAT_DELIVERY_P95_MS: "500", CHAT_DELIVERY_P99_MS: "1000" })) {
+        assert.equal(meta.inputs[name], value);
+      }
       assert.ok(readFileSync(join(directory, "console.log"), "utf8").includes(`실행 로그 load/${meta.scenario}`));
       if (mode !== "missing") assert.equal(json(directory, "conditions.json").scenario, meta.scenario);
       assert.deepEqual(json(directory, "seed.json").memberIds, seed.memberIds);

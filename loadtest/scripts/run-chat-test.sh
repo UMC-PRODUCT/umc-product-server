@@ -7,6 +7,7 @@ if [ "${1:-}" = "--help" ]; then
   printf '시드 경로는 명령을 실행한 디렉터리 기준입니다. PROFILE·SCENARIO는 script.js에 등록된 조합을 사용하세요.\n'
   printf '부하 설정: BASE_URL, CHAT_USERS, CHAT_ROOMS, CHAT_USERS_PER_VU 또는 CHAT_VU_USERS, CHAT_SENDERS\n'
   printf '시간 설정: DURATION, CHAT_MESSAGE_INTERVAL_MS, CHAT_TIMEOUT_MS, CHAT_STARTUP_TIMEOUT_MS\n'
+  printf '선택 성능 기준(ms): CHAT_ACK_P95_MS, CHAT_ACK_P99_MS, CHAT_DELIVERY_P95_MS, CHAT_DELIVERY_P99_MS\n'
   printf 'CHAT_RUN_NOTES에 앱·DB 버전, JVM 옵션, 실행 전 데이터 규모, 서버 지표 위치를 기록할 수 있습니다.\n'
   exit 0
 fi
@@ -48,7 +49,8 @@ trap finish EXIT
 # 환경변수 전체나 로컬 설정 파일을 복사하지 않는다. 테스트 설정과 사용자가 남긴 설명만 저장한다.
 INPUTS='{}'
 for name in BASE_URL CHAT_USERS CHAT_ROOMS CHAT_USERS_PER_VU CHAT_VU_USERS CHAT_SENDERS \
-  DURATION CHAT_MESSAGE_INTERVAL_MS CHAT_TIMEOUT_MS CHAT_STARTUP_TIMEOUT_MS; do
+  DURATION CHAT_MESSAGE_INTERVAL_MS CHAT_TIMEOUT_MS CHAT_STARTUP_TIMEOUT_MS \
+  CHAT_ACK_P95_MS CHAT_ACK_P99_MS CHAT_DELIVERY_P95_MS CHAT_DELIVERY_P99_MS; do
   if printenv "$name" >/dev/null; then
     INPUTS="$(jq -c --arg name "$name" --arg value "$(printenv "$name")" '. + {($name): $value}' <<< "$INPUTS")"
   fi

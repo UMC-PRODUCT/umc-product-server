@@ -74,6 +74,52 @@ test("연결 설정에는 사용자와 방 배정이 포함되지 않는다", ()
   assert.deepEqual(readChatConfig({}), { baseUrl: "http://localhost:8080", timeoutMs: 10000 });
 });
 
+for (const [profile, read, build] of [["Smoke", readPairConfig, buildPairOptions],
+  ["반복 부하", readLoadConfig, buildLoadOptions]]) {
+  test(`${profile}는 성능 기준을 생략하면 기존 판정만 유지하고 p99도 요약한다`, () => {
+    const config = read({});
+    const options = build(config);
+    assert.deepEqual(config.latencyThresholds, {});
+    assert.equal(options.thresholds.umc_chat_ack_latency_ms, undefined);
+    assert.equal(options.thresholds.umc_chat_delivery_latency_ms, undefined);
+    assert.deepEqual(options.thresholds.checks, ["rate==1"]);
+    assert.deepEqual(options.thresholds.umc_chat_failures, ["count==0"]);
+    assert.ok(options.summaryTrendStats.includes("p(99)"));
+  });
+
+  test(`${profile}는 지정한 지연 기준만 추가하고 응답 대기 시간은 유지한다`, () => {
+    for (const [name, metric, percentile] of [
+      ["CHAT_ACK_P95_MS", "umc_chat_ack_latency_ms", 95],
+      ["CHAT_ACK_P99_MS", "umc_chat_ack_latency_ms", 99],
+      ["CHAT_DELIVERY_P95_MS", "umc_chat_delivery_latency_ms", 95],
+      ["CHAT_DELIVERY_P99_MS", "umc_chat_delivery_latency_ms", 99],
+    ]) {
+      const config = read({ [name]: "250.5", CHAT_TIMEOUT_MS: "10000" });
+      const expected = { [metric]: [`p(${percentile})<250.5`] };
+      assert.equal(config.timeoutMs, 10000);
+      assert.deepEqual(config.latencyThresholds, expected);
+      const thresholds = build(config).thresholds;
+      assert.deepEqual(Object.fromEntries(Object.entries(thresholds)
+        .filter(([key]) => key.endsWith("_latency_ms"))), expected);
+    }
+  });
+
+  test(`${profile}는 ACK와 전달의 p95·p99 기준을 함께 적용한다`, () => {
+    const options = build(read({ CHAT_ACK_P95_MS: "100", CHAT_ACK_P99_MS: "200",
+      CHAT_DELIVERY_P95_MS: "500", CHAT_DELIVERY_P99_MS: "1000" }));
+    assert.deepEqual(options.thresholds.umc_chat_ack_latency_ms, ["p(95)<100", "p(99)<200"]);
+    assert.deepEqual(options.thresholds.umc_chat_delivery_latency_ms, ["p(95)<500", "p(99)<1000"]);
+  });
+
+  test(`${profile}는 잘못된 성능 기준을 조용히 무시하지 않고 거부한다`, () => {
+    for (const name of ["CHAT_ACK_P95_MS", "CHAT_ACK_P99_MS", "CHAT_DELIVERY_P95_MS", "CHAT_DELIVERY_P99_MS"]) {
+      for (const value of ["", " ", "0", "-1", "NaN", "Infinity", "500ms", "1x", "1e3"]) {
+        assert.throws(() => read({ [name]: value }), new RegExp(name));
+      }
+    }
+  });
+}
+
 test("기간은 단위가 있는 양수만 허용한다", () => {
   assert.equal(durationMs("0.5s"), 500);
   assert.equal(durationMs("24h"), 86400000);

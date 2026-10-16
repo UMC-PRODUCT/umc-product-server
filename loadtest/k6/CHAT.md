@@ -77,6 +77,8 @@ ACK가 늦으면 전송량도 줄어든다. HTTP 테스트의 `RATE`처럼 초�
 | `CHAT_MESSAGE_INTERVAL_MS` / `DURATION` | `1000` / `30s` | 반복 전송 간격(ms) / 전송 구간 |
 | `CHAT_TIMEOUT_MS` | `10000` | 응답 대기·전달 지연 판정 시간(ms) |
 | `CHAT_STARTUP_TIMEOUT_MS` | `10000` | 반복 부하 시작 전 연결·구독 준비 시간(ms) |
+| `CHAT_ACK_P95_MS` / `CHAT_ACK_P99_MS` | 미지정 | ACK 지연 p95 / p99 합격 기준(ms) |
+| `CHAT_DELIVERY_P95_MS` / `CHAT_DELIVERY_P99_MS` | 미지정 | 전달 지연 p95 / p99 합격 기준(ms) |
 | `CHAT_RUN_NOTES` | 빈 문자열 | 앱·DB 버전, 데이터 규모, 서버 지표 위치 등 실행 메모 |
 
 Smoke에는 반복 부하의 인원·배정·전송 설정이 적용되지 않는다. 설정 범위와 검증은 [config](config/) 참조.
@@ -93,6 +95,22 @@ CHAT_ROOM_MEMBERS='[[1,2,3],[2,4]]' \
 ```
 
 이후 실행할 때는 이 시드와 `CHAT_USERS=4 CHAT_ROOMS=2`를 지정한다. 방 구성을 바꾸려면 JSON만 고치지 말고 실제 데이터를 다시 준비한다.
+
+### 성능 합격 기준
+
+`CHAT_TIMEOUT_MS`는 응답을 기다리는 시간이다. 충분히 빠른지 판정하려면 p95·p99 기준을 별도로 지정한다.
+값은 ms 단위의 양수이며, 지정한 항목만 `p(95)<값` 또는 `p(99)<값` 조건으로 검사한다.
+미지정 시 기존 오류·누락 검사만 적용한다. 다음은 전달 지연 p95가 500ms 미만이어야 통과하는 예시다.
+
+```bash
+BASE_URL=http://localhost:8080 PROFILE=load SEED_FILE="$CHAT_LOAD_SEED" \
+CHAT_USERS=4 CHAT_ROOMS=1 DURATION=30s CHAT_DELIVERY_P95_MS=500 \
+  bash loadtest/scripts/run-chat-test.sh delivery-p95
+```
+
+500ms는 사용 예시이며 실제 목표는 각 이슈에서 정한다. 기준을 넘기면 메시지가 모두 도착해도 테스트는 실패한다.
+Smoke에도 적용할 수 있지만 측정 메시지가 한 건이므로, 성능 비교는 반복 부하에서 충분한 표본으로 진행한다.
+요약에는 p99도 표시하며, 적용한 기준은 `conditions.json`의 `config.latencyThresholds`와 `k6Options.thresholds`에 기록한다.
 
 ## 결과 확인
 

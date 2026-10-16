@@ -24,3 +24,23 @@ export function readChatConfig(env) {
   const timeoutMs = positiveInteger(env.CHAT_TIMEOUT_MS, 10000, "CHAT_TIMEOUT_MS", 100, 60000);
   return { baseUrl, timeoutMs };
 }
+
+export function readLatencyThresholds(env) {
+  const thresholds = {};
+  for (const [metric, prefix] of [["umc_chat_ack_latency_ms", "CHAT_ACK"],
+    ["umc_chat_delivery_latency_ms", "CHAT_DELIVERY"]]) {
+    const expressions = [];
+    for (const percentile of [95, 99]) {
+      const name = `${prefix}_P${percentile}_MS`;
+      if (env[name] === undefined) continue;
+      const raw = String(env[name]);
+      const milliseconds = Number(raw);
+      if (!/^[0-9]+(?:\.[0-9]+)?$/.test(raw) || !Number.isFinite(milliseconds) || milliseconds <= 0) {
+        throw new Error(`${name}는 ms 단위의 양수여야 합니다. 예: 500, 250.5`);
+      }
+      expressions.push(`p(${percentile})<${milliseconds}`);
+    }
+    if (expressions.length) thresholds[metric] = expressions;
+  }
+  return thresholds;
+}

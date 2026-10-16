@@ -177,12 +177,17 @@ afterEach(() => {
 test("각 시나리오가 기본값과 실제 사용자 배정을 기록하고 인증 정보는 제외한다", () => {
   __ENV.SCENARIO = "chat-custom";
   __ENV.SECRET_TOKEN = "do-not-record";
+  __ENV.CHAT_ACK_P95_MS = "100";
+  __ENV.CHAT_DELIVERY_P99_MS = "500";
   const data = { ...seed, memberIds: ["2", "3", "4"],
     rooms: [{ threadId: "1", memberIds: ["3", "4"] }, { threadId: "2", memberIds: ["2", "3"] }] };
   const smokeRecord = smokeConditions(data);
   assert.deepEqual(smokeRecord.vuMemberIds, [["3", "4"]]);
   assert.equal(smokeRecord.rooms.length, 1);
   assert.equal(smokeRecord.config.tags.scenario, "chat-custom");
+  const latencyThresholds = { umc_chat_ack_latency_ms: ["p(95)<100"],
+    umc_chat_delivery_latency_ms: ["p(99)<500"] };
+  assert.deepEqual(smokeRecord.config.latencyThresholds, latencyThresholds);
   __ENV.CHAT_USERS = "3";
   __ENV.CHAT_ROOMS = "2";
   __ENV.CHAT_VU_USERS = "[[1,3],[2]]";
@@ -193,6 +198,7 @@ test("각 시나리오가 기본값과 실제 사용자 배정을 기록하고 �
   assert.deepEqual(loadRecord.vuMemberIds, [["2", "4"], ["3"]]);
   assert.deepEqual(loadRecord.senderMemberIds, ["3"]);
   assert.equal(loadRecord.config.tags.scenario, "chat-custom");
+  assert.deepEqual(loadRecord.config.latencyThresholds, latencyThresholds);
   assert.equal(JSON.stringify([smokeRecord, loadRecord]).includes("do-not-record"), false);
 });
 
