@@ -69,7 +69,8 @@ class FakeWebSocket {
         continue;
       }
       const ackDelay = main && state.mode === "delivery-first" ? 40 : 10;
-      const deliveryDelay = main && state.mode === "delivery-first" ? 10 : 40;
+      const deliveryDelay = main && state.mode === "late-delivery" ? 150
+        : main && state.mode === "delivery-first" ? 10 : 40;
       if (!(main && ["ack-timeout", "both-timeout"].includes(state.mode))) {
         this.schedule(() => {
           state.now = sentAt + ackDelay;
@@ -86,7 +87,7 @@ class FakeWebSocket {
           // 발신자에게 돌아온 이벤트는 상대방 연결의 중복 수신과 구분한다.
           this.emit(delivery);
           for (const receiver of receivers.filter((socket) => !members || members.includes(socket.memberId))) {
-            receiver.emit(delivery, main && state.mode === "duplicate" ? 2 : 1);
+            receiver.emit(delivery, main && ["duplicate", "late-delivery"].includes(state.mode) ? 2 : 1);
             if (main) receiver.lastDelivery = delivery;
           }
         }, deliveryDelay);
@@ -530,6 +531,19 @@ test("중복 수신은 별도 집계하고 별도 VU의 전달 지연·건수를
   assert.ok(count("duplicate_events") > 0);
   assert.equal(count("delivery_received"), count("delivery_expected"));
   assert.equal(samples("delivery_latency_ms").length, count("delivery_expected"));
+});
+
+test("늦게 도착한 메시지도 실제 전달 지연을 한 번 기록하고 시간 초과는 별도 집계한다", async () => {
+  state.mode = "late-delivery";
+  const results = await runUsers(seed);
+  assert.ok(results.every((entry) => entry.status === "rejected"));
+  assert.ok(count("delivery_received") > 0);
+  assert.equal(count("delivery_missing"), 0);
+  assert.equal(count("delivery_late"), count("delivery_received"));
+  assert.equal(samples("delivery_latency_ms").length, count("delivery_received"));
+  assert.ok(samples("delivery_latency_ms").every((sample) => sample.value >= 150));
+  assert.ok(count("duplicate_events") > 0);
+  assert.ok(issues().some((entry) => entry.tags.stage === "delivery" && entry.tags.reason === "timeout"));
 });
 
 test("송신 완료 신호가 누락되면 데이터 수신이 성공해도 전체 성공으로 처리하지 않는다", async () => {

@@ -65,8 +65,8 @@ export function recordAckResult(success, tags) {
 export function recordDelivery(result, tags) {
   if (result.duplicate) { recordDuplicate("delivery", tags); return; }
   deliveryReceived.add(1, tags);
+  recordLatency("delivery", result.latencyMs, tags);
   if (result.late) deliveryLate.add(1, tags);
-  else recordLatency("delivery", result.latencyMs, tags);
 }
 
 export function recordDeliverySummary(summary, tags) {
