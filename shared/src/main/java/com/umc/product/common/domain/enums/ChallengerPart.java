@@ -4,9 +4,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-import com.umc.product.challenger.domain.exception.ChallengerDomainException;
-import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -57,17 +54,5 @@ public enum ChallengerPart {
             .filter(ChallengerPart::isSelectable)
             .sorted(Comparator.comparingInt(ChallengerPart::getSortOrder))
             .toList();
-    }
-
-    public static ChallengerPart from(String part) {
-        if (part == null || part.isBlank()) {
-            throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_PART_NOT_FOUND);
-        }
-        return Arrays.stream(ChallengerPart.values())
-            .filter(challengerPart -> challengerPart.name().equals(part))
-            .findFirst()
-            .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_PART_NOT_FOUND));
-
-
     }
 }

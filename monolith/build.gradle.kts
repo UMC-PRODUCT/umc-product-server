@@ -12,7 +12,19 @@ plugins {
 // public 반환 타입으로 노출돼 있어, implementation 으로 두면 상속한 모듈이 그 멤버를 쓰는 순간
 // "cannot access" 로 컴파일이 깨진다.
 dependencies {
+    // === main: 운영 코드 의존성 ===
+
+    // monolith의 main 코드가 shared를 사용한다.
+    implementation(project(":shared"))
+
+    // === test: 테스트 코드 의존성 ===
     testImplementation("com.tngtech.archunit:archunit-junit5:${libs.versions.archunit.get()}")
+
+    // === testFixtures API: 공통 테스트 지원 코드와 소비자에게 노출하는 의존성 ===
+
+    // monolith의 fixture가 shared를 사용하고,
+    // fixture 소비자도 shared의 타입을 사용할 수 있게 한다.
+    testFixturesApi(project(":shared"))
 
     testFixturesApi("org.springframework.boot:spring-boot-starter-test")
     testFixturesApi("org.springframework.boot:spring-boot-testcontainers")
