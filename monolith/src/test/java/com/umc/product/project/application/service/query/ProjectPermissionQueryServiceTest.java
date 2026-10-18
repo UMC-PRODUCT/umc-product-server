@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -39,6 +40,7 @@ import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplicationForm;
@@ -76,8 +78,18 @@ class ProjectPermissionQueryServiceTest {
     @Mock
     ProjectStatisticsAccessPolicy projectStatisticsAccessPolicy;
 
+    @Mock
+    ProjectMatchingChapterResolver projectMatchingChapterResolver;
+
     @InjectMocks
     ProjectPermissionQueryService sut;
+
+    @BeforeEach
+    void setUpMatchingChapter() {
+        // 기본: 요청자의 매칭 지부는 테스트 프로젝트 지부와 같다
+        lenient().when(projectMatchingChapterResolver.findMatchingChapterId(any(), any()))
+            .thenReturn(Optional.of(CHAPTER_ID));
+    }
 
     @Test
     void DRAFT_프로젝트는_작성자이고_이름과_지원폼이_있으면_검토_요청이_가능하다() {

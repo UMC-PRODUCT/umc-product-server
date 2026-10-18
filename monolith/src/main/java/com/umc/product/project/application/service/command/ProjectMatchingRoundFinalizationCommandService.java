@@ -40,6 +40,8 @@ import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.application.service.policy.AutoDecisionResult;
 import com.umc.product.project.application.service.policy.MatchingDecisionPolicy;
+import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
+import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver.ChapterTransferDelta;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectMatchingRound;
@@ -90,6 +92,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final SearchChallengerUseCase searchChallengerUseCase;
+    private final ProjectMatchingChapterResolver matchingChapterResolver;
 
     @Audited(
         domain = Domain.PROJECT,
@@ -305,13 +308,13 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             .map(ProjectMember::getMemberId)
             .forEach(alreadyMatchedMemberIds::add);
 
-        List<SearchChallengerItemInfo> candidates = new ArrayList<>(
+        List<RandomAssignmentCandidate> candidates = new ArrayList<>(
             listActiveChallengersInChapter(gisuId, round.getChapterId())
         );
         Collections.shuffle(candidates, matchingRandom);
 
         List<ProjectMember> assignments = new ArrayList<>();
-        for (SearchChallengerItemInfo candidate : candidates) {
+        for (RandomAssignmentCandidate candidate : candidates) {
             if (remainingByKey.values().stream().noneMatch(remaining -> remaining > 0)) {
                 break;
             }
@@ -377,7 +380,30 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         return result;
     }
 
-    private List<SearchChallengerItemInfo> listActiveChallengersInChapter(Long gisuId, Long chapterId) {
+    /**
+     * 랜덤 배정 후보: 매칭 지부 기준 ACTIVE 챌린저.
+     * <p>
+     * 학교 기준 지부 검색 결과에서 다른 지부로 이동한 챌린저를 빼고, 이 지부로 이동해 온 ACTIVE 챌린저를 더한다.
+     */
+    private List<RandomAssignmentCandidate> listActiveChallengersInChapter(Long gisuId, Long chapterId) {
+        ChapterTransferDelta delta = matchingChapterResolver.deltaOf(chapterId);
+
+        List<RandomAssignmentCandidate> candidates = new ArrayList<>();
+        Set<Long> addedMemberIds = new HashSet<>();
+        for (SearchChallengerItemInfo info : searchActiveChallengersBySchoolChapter(gisuId, chapterId)) {
+            if (!delta.outboundMemberIds().contains(info.memberId()) && addedMemberIds.add(info.memberId())) {
+                candidates.add(new RandomAssignmentCandidate(info.memberId(), info.part()));
+            }
+        }
+        for (ChallengerInfo inbound : delta.inboundChallengers()) {
+            if (inbound.challengerStatus() == ChallengerStatus.ACTIVE && addedMemberIds.add(inbound.memberId())) {
+                candidates.add(new RandomAssignmentCandidate(inbound.memberId(), inbound.part()));
+            }
+        }
+        return candidates;
+    }
+
+    private List<SearchChallengerItemInfo> searchActiveChallengersBySchoolChapter(Long gisuId, Long chapterId) {
         SearchChallengerQuery query = new SearchChallengerQuery(
             null,
             null,
@@ -442,4 +468,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     }
 
     private record ProjectPartKey(Long projectId, ChallengerPart part) {}
+
+    private record RandomAssignmentCandidate(Long memberId, ChallengerPart part) {
+    }
 }

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +38,8 @@ import com.umc.product.project.application.port.out.dto.ProjectStatisticsApprove
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
+import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
+import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver.ChapterTransferDelta;
 import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.enums.MatchingPhase;
@@ -62,8 +66,16 @@ class ProjectStatisticsQueryServiceTest {
     @Mock
     ProjectStatisticsAccessPolicy projectStatisticsAccessPolicy;
 
+    @Mock
+    ProjectMatchingChapterResolver matchingChapterResolver;
+
     @InjectMocks
     ProjectStatisticsQueryService sut;
+
+    @BeforeEach
+    void setUpMatchingChapter() {
+        lenient().when(matchingChapterResolver.deltaOf(any())).thenReturn(ChapterTransferDelta.empty());
+    }
 
     @Test
     @DisplayName("getByProjectId_기존_멤버_지원_이력과_차수별_BFF_통계를_함께_반환한다")

@@ -55,6 +55,7 @@ import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.service.policy.DesignerMatchingPolicy;
 import com.umc.product.project.application.service.policy.DeveloperMatchingPolicy;
+import com.umc.product.project.application.service.policy.ProjectApplicationChapterPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
@@ -116,6 +117,8 @@ class ProjectApplicationCommandServiceTest {
     CheckChallengerAuthorityUseCase checkChallengerAuthorityUseCase;
     @Mock
     GetFormUseCase getFormUseCase;
+    @Mock
+    ProjectApplicationChapterPolicy projectApplicationChapterPolicy;
 
     ProjectApplicationCommandService sut;
 
@@ -132,6 +135,7 @@ class ProjectApplicationCommandServiceTest {
             manageFormResponseUseCase,
             getChallengerUseCase,
             checkChallengerAuthorityUseCase,
+            projectApplicationChapterPolicy,
             List.of(new DeveloperMatchingPolicy(), new DesignerMatchingPolicy()),
             getFormUseCase
         );
