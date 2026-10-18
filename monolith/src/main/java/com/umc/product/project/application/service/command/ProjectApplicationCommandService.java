@@ -45,6 +45,7 @@ import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.service.policy.MatchingDecisionPolicy;
+import com.umc.product.project.application.service.policy.ProjectApplicationChapterPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
@@ -77,6 +78,7 @@ public class ProjectApplicationCommandService implements
     private final ManageFormResponseUseCase manageFormResponseUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final CheckChallengerAuthorityUseCase checkChallengerAuthorityUseCase;
+    private final ProjectApplicationChapterPolicy projectApplicationChapterPolicy;
     private final List<MatchingDecisionPolicy> matchingDecisionPolicies;
     private final GetFormUseCase getFormUseCase;
 
@@ -130,6 +132,9 @@ public class ProjectApplicationCommandService implements
         if (round.getType() != expectedType) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_ROUND_TYPE_MISMATCH);
         }
+
+        // 4-a. 지부 일치 — 차수와 지원자 매칭 지부가 모두 프로젝트 지부여야 한다 (매칭 지부 이동 반영)
+        projectApplicationChapterPolicy.validate(project, round, command.applicantMemberId());
 
         // 5. 동일 차수 기준 DRAFT 중복 체크 — 이미 있으면 409
         if (loadProjectApplicationPort.findByProjectIdAndApplicantMemberIdAndRoundIdAndStatus(
@@ -198,6 +203,13 @@ public class ProjectApplicationCommandService implements
             && !application.getAppliedMatchingRound().isOpenAt(Instant.now())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_ROUND_NOT_OPEN);
         }
+
+        // 지부 일치 재검증 — 임시저장 이후 매칭 지부가 바뀐 경우를 막는다
+        projectApplicationChapterPolicy.validate(
+            application.getApplicationForm().getProject(),
+            application.getAppliedMatchingRound(),
+            command.requesterMemberId()
+        );
 
         // 동일 차수 중복 제출 체크
         if (application.getAppliedMatchingRound() != null
