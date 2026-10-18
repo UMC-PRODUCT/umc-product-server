@@ -233,6 +233,29 @@ class ProjectPermissionQueryServiceTest {
     }
 
     @Test
+    void 지원_생성은_매칭_지부가_프로젝트_지부와_다르면_CHAPTER_MISMATCH로_거부된다() {
+        Project project = project(ProjectStatus.IN_PROGRESS, 999L, 999L, "서비스 리뉴얼");
+        ProjectApplicationForm form = ProjectApplicationForm.create(project, 500L);
+        SubjectAttributes subject = subject();
+        givenBase(project, subject);
+        givenForms(form);
+        givenQuotas(project, ChallengerPart.DESIGN);
+        givenApplicationCreatePermissions(subject, PROJECT_ID);
+        given(getChallengerUseCase.findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID))
+            .willReturn(Optional.of(challenger(ChallengerPart.DESIGN)));
+        given(projectMatchingChapterResolver.findMatchingChapterId(REQUESTER_ID, GISU_ID))
+            .willReturn(Optional.of(CHAPTER_ID + 1));
+        given(projectApplicationAccessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.None());
+        given(projectStatisticsAccessPolicy.canReadProjectStatistics(REQUESTER_ID, project)).willReturn(false);
+
+        ProjectPermissionInfo result = sut.listByProjectIds(REQUESTER_ID, List.of(PROJECT_ID)).get(0);
+
+        assertThat(result.application().canCreate().allowed()).isFalse();
+        assertThat(result.application().canCreate().reasonCode()).isEqualTo(ProjectPermissionReason.CHAPTER_MISMATCH.name());
+    }
+
+    @Test
     void 같은_지부와_기수의_프로젝트는_권한_계산용_조회_결과를_캐시한다() {
         Project firstProject = project(PROJECT_ID, GISU_ID, CHAPTER_ID, ProjectStatus.IN_PROGRESS, 999L, 999L, "서비스 리뉴얼");
         Project secondProject = project(

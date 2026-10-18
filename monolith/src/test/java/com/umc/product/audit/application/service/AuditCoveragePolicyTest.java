@@ -122,6 +122,8 @@ class AuditCoveragePolicyTest {
             spec("project.application.service.command.ProjectApplicationCommandService", "submit", "PROJECT", "SUBMIT", "ProjectApplication", type("project.application.port.in.command.dto.SubmitProjectApplicationCommand")),
             spec("project.application.service.command.ProjectMatchingRoundFinalizationCommandService", "autoDecide", "PROJECT", "FINALIZE", "ProjectMatchingRound", longType, longType),
             spec("project.application.service.command.ProjectPartQuotaCommandService", "update", "PROJECT", "UPDATE", "ProjectPartQuota", type("project.application.port.in.command.dto.UpdatePartQuotasCommand")),
+            spec("project.application.service.command.ProjectMatchingChapterTransferCommandService", "transfer", "PROJECT", "CREATE", "ProjectMatchingChapterTransfer", type("project.application.port.in.command.dto.TransferMatchingChapterCommand")),
+            spec("project.application.service.command.ProjectMatchingChapterTransferCommandService", "release", "PROJECT", "UPDATE", "ProjectMatchingChapterTransfer", type("project.application.port.in.command.dto.ReleaseMatchingChapterTransferCommand")),
 
             spec("storage.application.service.FileCommandService", "getFileUploadUrl", "STORAGE", "CREATE", "FileMetadata", type("storage.application.port.in.command.dto.PrepareFileUploadCommand")),
             spec("storage.application.service.FileCommandService", "confirmUpload", "STORAGE", "CHECK", "FileMetadata", String.class),
