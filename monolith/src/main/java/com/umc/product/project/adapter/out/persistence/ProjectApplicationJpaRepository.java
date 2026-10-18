@@ -25,6 +25,7 @@ public interface ProjectApplicationJpaRepository extends JpaRepository<ProjectAp
     );
 
     @Query("SELECT a FROM ProjectApplication a "
+        + "JOIN FETCH a.appliedMatchingRound "
         + "WHERE a.applicantMemberId = :applicantMemberId "
         + "AND a.applicationForm.project.gisuId = :gisuId "
         + "AND a.status IN :statuses")

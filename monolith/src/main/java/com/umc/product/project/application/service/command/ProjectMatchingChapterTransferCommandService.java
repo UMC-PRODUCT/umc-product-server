@@ -43,8 +43,9 @@ import lombok.RequiredArgsConstructor;
  * 권한: 슈퍼어드민, 해당 기수 총괄단, 원지부 지부장, 이동지부 지부장. 한 명이 등록하면 즉시 효력이 생긴다.
  * <p>
  * 전제 조건(등록·해제 공통): 해당 기수에 팀원이 아니고 APPROVED 지원서가 없어야 한다.
- * 통과하면 해당 기수의 DRAFT/SUBMITTED 지원서를 "지부 이동" 사유로 자동 철회한다.
- * 철회는 차수 OPEN 여부와 무관하게 수행한다 (본인 철회 경로와 달리 운영 조치이므로).
+ * 통과하면 해당 기수의 DRAFT/SUBMITTED 지원서와, 아직 자동 선발이 실행되지 않은 차수의 REJECTED 지원서를 "매칭 지부 이동" 사유로
+ * 자동 철회한다. REJECTED 는 결정 마감 전 PM 이 합격으로 되돌리거나 마감 시 자동 선발이 합격시킬 수 있어서, 이전 지부 팀에 배정되는 일을
+ * 막기 위해 함께 철회한다. 철회는 차수 OPEN 여부와 무관하게 수행한다 (본인 철회 경로와 달리 운영 조치이므로).
  */
 @Service
 @RequiredArgsConstructor
@@ -54,8 +55,9 @@ public class ProjectMatchingChapterTransferCommandService
 
     static final String AUTO_CANCEL_REASON = "매칭 지부 이동";
 
-    private static final List<ProjectApplicationStatus> CANCELLABLE_STATUSES =
-        List.of(ProjectApplicationStatus.DRAFT, ProjectApplicationStatus.SUBMITTED);
+    private static final List<ProjectApplicationStatus> CANCELLABLE_STATUSES = List.of(
+        ProjectApplicationStatus.DRAFT, ProjectApplicationStatus.SUBMITTED, ProjectApplicationStatus.REJECTED
+    );
 
     private final LoadProjectMatchingChapterTransferPort loadTransferPort;
     private final SaveProjectMatchingChapterTransferPort saveTransferPort;
@@ -208,12 +210,25 @@ public class ProjectMatchingChapterTransferCommandService
 
     private int cancelInProgressApplications(Long memberId, Long gisuId, Long requesterId) {
         List<ProjectApplication> applications = loadProjectApplicationPort
-            .listByApplicantMemberIdAndGisuIdAndStatusIn(memberId, gisuId, CANCELLABLE_STATUSES);
+            .listByApplicantMemberIdAndGisuIdAndStatusIn(memberId, gisuId, CANCELLABLE_STATUSES).stream()
+            .filter(ProjectMatchingChapterTransferCommandService::isStillInMatching)
+            .toList();
         if (applications.isEmpty()) {
             return 0;
         }
-        applications.forEach(application -> application.cancel(requesterId, AUTO_CANCEL_REASON));
+        applications.forEach(application -> application.cancelForChapterTransfer(requesterId, AUTO_CANCEL_REASON));
         saveProjectApplicationPort.saveAll(applications);
         return applications.size();
+    }
+
+    /**
+     * 철회 대상인지 판단한다. DRAFT/SUBMITTED 는 항상, REJECTED 는 자동 선발이 아직 실행되지 않은 차수일 때만 대상이다.
+     * 이미 마감 처리된 차수의 불합격은 결과가 확정된 이력이므로 그대로 둔다.
+     */
+    private static boolean isStillInMatching(ProjectApplication application) {
+        if (application.getStatus() != ProjectApplicationStatus.REJECTED) {
+            return true;
+        }
+        return !application.getAppliedMatchingRound().isAutoDecisionExecuted();
     }
 }

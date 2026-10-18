@@ -171,6 +171,8 @@ public interface LoadProjectApplicationPort {
 
     /**
      * 기수 내 특정 지원자의 지원서 중 주어진 상태의 지원서를 조회합니다. 매칭 지부 이동 전제 조건 검증과 자동 철회에 사용됩니다.
+     * <p>
+     * appliedMatchingRound 를 fetch join 으로 함께 로드합니다.
      */
     List<ProjectApplication> listByApplicantMemberIdAndGisuIdAndStatusIn(
         Long applicantMemberId, Long gisuId, Collection<ProjectApplicationStatus> statuses

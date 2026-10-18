@@ -260,6 +260,49 @@ class ProjectApplicationTest {
     }
 
     @Nested
+    class cancelForChapterTransfer {
+
+        @Test
+        void REJECTED도_CANCELLED로_전이하고_처리자와_사유를_남긴다() {
+            setStatus(application, ProjectApplicationStatus.REJECTED);
+
+            application.cancelForChapterTransfer(DECIDER_MEMBER_ID, "매칭 지부 이동");
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.CANCELLED);
+            assertThat(application.getStatusChangedMemberId()).isEqualTo(DECIDER_MEMBER_ID);
+            assertThat(application.getStatusChangeReason()).isEqualTo("매칭 지부 이동");
+            assertThat(application.getStatusChangedAt()).isNotNull();
+        }
+
+        @Test
+        void SUBMITTED를_CANCELLED로_전이한다() {
+            application.cancelForChapterTransfer(DECIDER_MEMBER_ID, "매칭 지부 이동");
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.CANCELLED);
+        }
+
+        @Test
+        void APPROVED는_PROJECT_APPLICATION_CANCEL_NOT_ALLOWED() {
+            setStatus(application, ProjectApplicationStatus.APPROVED);
+
+            assertThatThrownBy(() -> application.cancelForChapterTransfer(DECIDER_MEMBER_ID, "매칭 지부 이동"))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_CANCEL_NOT_ALLOWED);
+        }
+
+        @Test
+        void CANCELLED는_PROJECT_APPLICATION_CANCEL_NOT_ALLOWED() {
+            setStatus(application, ProjectApplicationStatus.CANCELLED);
+
+            assertThatThrownBy(() -> application.cancelForChapterTransfer(DECIDER_MEMBER_ID, "매칭 지부 이동"))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_CANCEL_NOT_ALLOWED);
+        }
+    }
+
+    @Nested
     class cancel {
 
         @Test

@@ -44,7 +44,7 @@ public class ProjectMatchingChapterTransferController {
             - 슈퍼어드민, 해당 기수 총괄단, 원지부 지부장, 이동지부 지부장이 등록할 수 있습니다.
             - 기획 파트와 파트가 없는 챌린저는 이동할 수 없습니다.
             - 이미 팀원이거나 합격한 지원서가 있으면 이동할 수 없습니다.
-            - 임시저장·제출 상태의 지원서는 자동으로 철회됩니다.
+            - 임시저장·제출 상태의 지원서와, 아직 자동 선발이 실행되지 않은 차수의 불합격 지원서는 자동으로 철회됩니다.
             - 한 명이라도 실패하면 전체가 롤백되며, 실패한 회원은 에러 응답의 상세 메시지로 알려줍니다.
             """
     )
@@ -64,7 +64,7 @@ public class ProjectMatchingChapterTransferController {
         description = """
             매칭 지부 이동을 해제해 원지부 매칭으로 되돌립니다.
             - 권한과 전제 조건은 등록과 같습니다.
-            - 이동지부에서 작성·제출한 지원서는 자동으로 철회됩니다.
+            - 이동지부에서 작성·제출한 지원서와, 아직 자동 선발이 실행되지 않은 차수의 불합격 지원서는 자동으로 철회됩니다.
             """
     )
     public ProjectMatchingChapterTransferResponse release(

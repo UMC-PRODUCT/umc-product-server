@@ -61,6 +61,9 @@ class ProjectMatchingChapterTransferCommandServiceTest {
     private static final Long BUSAN = 7L;
     private static final Long DESIGNER_ID = 1L;
     private static final Long REQUESTER_ID = 99L;
+    private static final List<ProjectApplicationStatus> CANCELLABLE = List.of(
+        ProjectApplicationStatus.DRAFT, ProjectApplicationStatus.SUBMITTED, ProjectApplicationStatus.REJECTED
+    );
 
     @Mock
     LoadProjectMatchingChapterTransferPort loadTransferPort;
@@ -112,7 +115,7 @@ class ProjectMatchingChapterTransferCommandServiceTest {
             ProjectApplication submitted = application(SEOUL);
             submitted.submit();
             given(loadProjectApplicationPort.listByApplicantMemberIdAndGisuIdAndStatusIn(
-                DESIGNER_ID, GISU_ID, List.of(ProjectApplicationStatus.DRAFT, ProjectApplicationStatus.SUBMITTED)))
+                DESIGNER_ID, GISU_ID, CANCELLABLE))
                 .willReturn(List.of(draft, submitted));
 
             List<ProjectMatchingChapterTransferInfo> result = sut.transfer(command(GYEONGGI));
@@ -127,6 +130,24 @@ class ProjectMatchingChapterTransferCommandServiceTest {
             assertThat(draft.getStatusChangeReason()).isEqualTo(ProjectMatchingChapterTransferCommandService.AUTO_CANCEL_REASON);
             then(saveProjectApplicationPort).should().saveAll(List.of(draft, submitted));
             then(saveTransferPort).should().save(any(ProjectMatchingChapterTransfer.class));
+        }
+
+        @Test
+        @DisplayName("자동 선발 전 차수의 불합격 지원서는 철회하고, 마감 처리된 차수의 불합격 지원서는 그대로 둔다")
+        void 마감_전_차수의_불합격만_철회한다() {
+            ProjectApplication openRoundRejected = rejected(application(SEOUL));
+            ProjectApplication finalizedRoundRejected = rejected(application(SEOUL));
+            finalizedRoundRejected.getAppliedMatchingRound().executeAutoDecision(REQUESTER_ID);
+            given(loadProjectApplicationPort.listByApplicantMemberIdAndGisuIdAndStatusIn(
+                DESIGNER_ID, GISU_ID, CANCELLABLE))
+                .willReturn(List.of(openRoundRejected, finalizedRoundRejected));
+
+            List<ProjectMatchingChapterTransferInfo> result = sut.transfer(command(GYEONGGI));
+
+            assertThat(result.getFirst().cancelledApplicationCount()).isEqualTo(1);
+            assertThat(openRoundRejected.getStatus()).isEqualTo(ProjectApplicationStatus.CANCELLED);
+            assertThat(finalizedRoundRejected.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
+            then(saveProjectApplicationPort).should().saveAll(List.of(openRoundRejected));
         }
 
         @Test
@@ -235,7 +256,7 @@ class ProjectMatchingChapterTransferCommandServiceTest {
             given(loadTransferPort.getById(10L)).willReturn(transfer);
             ProjectApplication draft = application(GYEONGGI);
             given(loadProjectApplicationPort.listByApplicantMemberIdAndGisuIdAndStatusIn(
-                DESIGNER_ID, GISU_ID, List.of(ProjectApplicationStatus.DRAFT, ProjectApplicationStatus.SUBMITTED)))
+                DESIGNER_ID, GISU_ID, CANCELLABLE))
                 .willReturn(List.of(draft));
 
             ProjectMatchingChapterTransferInfo result = sut.release(releaseCommand());
@@ -244,6 +265,21 @@ class ProjectMatchingChapterTransferCommandServiceTest {
             assertThat(result.releasedAt()).isNotNull();
             assertThat(result.cancelledApplicationCount()).isEqualTo(1);
             assertThat(draft.getStatus()).isEqualTo(ProjectApplicationStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("해제할 때도 자동 선발 전 차수의 불합격 지원서를 철회한다")
+        void 해제할_때도_마감_전_불합격을_철회한다() {
+            given(loadTransferPort.getById(10L)).willReturn(activeTransfer());
+            ProjectApplication openRoundRejected = rejected(application(GYEONGGI));
+            given(loadProjectApplicationPort.listByApplicantMemberIdAndGisuIdAndStatusIn(
+                DESIGNER_ID, GISU_ID, CANCELLABLE))
+                .willReturn(List.of(openRoundRejected));
+
+            ProjectMatchingChapterTransferInfo result = sut.release(releaseCommand());
+
+            assertThat(result.cancelledApplicationCount()).isEqualTo(1);
+            assertThat(openRoundRejected.getStatus()).isEqualTo(ProjectApplicationStatus.CANCELLED);
         }
 
         @Test
@@ -304,6 +340,12 @@ class ProjectMatchingChapterTransferCommandServiceTest {
             now.minusSeconds(3600), now.plusSeconds(3600), now.plusSeconds(7200)
         );
         return ProjectApplication.create(ProjectApplicationForm.create(project, 500L), 1L, DESIGNER_ID, round);
+    }
+
+    private static ProjectApplication rejected(ProjectApplication application) {
+        application.submit();
+        application.applyAutoDecision(ProjectApplicationStatus.REJECTED, null);
+        return application;
     }
 
     private static void assertError(org.assertj.core.api.ThrowableAssert.ThrowingCallable call, ProjectErrorCode code) {
