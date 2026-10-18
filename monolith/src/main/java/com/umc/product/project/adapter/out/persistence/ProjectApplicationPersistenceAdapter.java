@@ -185,4 +185,16 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
             List.of(ProjectApplicationStatus.DRAFT, ProjectApplicationStatus.SUBMITTED)
         );
     }
+
+    @Override
+    public List<ProjectApplication> listByApplicantMemberIdAndGisuIdAndStatusIn(
+        Long applicantMemberId, Long gisuId, Collection<ProjectApplicationStatus> statuses
+    ) {
+        if (statuses == null || statuses.isEmpty()) {
+            return List.of();
+        }
+        return projectApplicationJpaRepository.findAllByApplicantMemberIdAndGisuIdAndStatusIn(
+            applicantMemberId, gisuId, statuses
+        );
+    }
 }
