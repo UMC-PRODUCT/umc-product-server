@@ -15,6 +15,7 @@ import org.springframework.transaction.support.AbstractPlatformTransactionManage
 import org.springframework.transaction.support.DefaultTransactionStatus;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.global.config.OutboxRoutingConfig;
 import com.umc.product.global.event.adapter.out.EventPayloadDeserializer;
 import com.umc.product.global.event.adapter.out.EventPayloadSerializer;
 import com.umc.product.global.event.application.port.out.SaveEventOutboxPort;
@@ -35,7 +36,11 @@ class EventOutboxRelayMetricsTest {
         EventOutbox outbox = outbox();
         EventOutboxRelayService sut = relayService(outbox, meterRegistry, 2);
 
-        sut.relay();
+        sut.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
         assertThat(meterRegistry.get("event.outbox.relay.retry").counter().count()).isEqualTo(1.0);
@@ -51,7 +56,11 @@ class EventOutboxRelayMetricsTest {
         outbox.recordFailure("previous failure", Instant.now(), 2);
         EventOutboxRelayService sut = relayService(outbox, meterRegistry, 2);
 
-        sut.relay();
+        sut.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.FAILED);
         assertThat(meterRegistry.get("event.outbox.relay.retry").counter().count()).isZero();
@@ -102,10 +111,6 @@ class EventOutboxRelayMetricsTest {
         ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
         return new EventOutboxRelayService(
             new com.umc.product.global.event.application.port.out.LoadEventOutboxPort() {
-                @Override
-                public List<EventOutbox> listPublishable(int limit, Instant now) {
-                    return List.of(outbox);
-                }
 
                 @Override
                 public List<EventOutbox> listPublishable(
@@ -123,7 +128,6 @@ class EventOutboxRelayMetricsTest {
             new LocalTransactionManager(),
             Tracer.NOOP,
             new EventOutboxRelayMetrics(meterRegistry),
-            100,
             maxAttempts
         );
     }

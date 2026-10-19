@@ -20,6 +20,7 @@ import org.springframework.transaction.support.DefaultTransactionStatus;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.global.config.OutboxRoutingConfig;
 import com.umc.product.global.event.adapter.out.EventPayloadDeserializer;
 import com.umc.product.global.event.adapter.out.EventPayloadSerializer;
 import com.umc.product.global.event.application.port.out.LoadEventOutboxPort;
@@ -54,11 +55,14 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PUBLISHED);
         assertThat(publisher.events).hasSize(1);
@@ -84,11 +88,11 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             3
         );
 
         relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
             new OutboxEventSelection(java.util.Set.of(), java.util.Set.of(), "chat.",
                 OutboxEventSelection.PrefixMatch.NOT_MATCH), 1
         );
@@ -119,11 +123,14 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
         assertThat(outbox.getAttempts()).isEqualTo(1);
@@ -150,11 +157,11 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             3
         );
 
         relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
             new OutboxEventSelection(java.util.Set.of(), java.util.Set.of(), "chat.",
                 OutboxEventSelection.PrefixMatch.NOT_MATCH), 1
         );
@@ -185,11 +192,14 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             2
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.FAILED);
         assertThat(outbox.getAttempts()).isEqualTo(2);
@@ -216,11 +226,14 @@ class EventOutboxRelayServiceTest {
             new CapturingApplicationEventPublisher(),
             new LocalTransactionManager(),
             tracer,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         SimpleSpan relaySpan = tracer.getSpans().stream()
             .filter(span -> "outbox.relay.publish".equals(span.getName()))
@@ -249,11 +262,14 @@ class EventOutboxRelayServiceTest {
             new CapturingApplicationEventPublisher(),
             new LocalTransactionManager(),
             tracer,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         SimpleSpan relaySpan = tracer.getSpans().stream()
             .filter(span -> "outbox.relay.publish".equals(span.getName()))
@@ -280,11 +296,14 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
         assertThat(outbox.getAttempts()).isEqualTo(1);
@@ -310,11 +329,14 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(transactionActiveDuringPublish).isFalse();
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PUBLISHED);
@@ -339,11 +361,14 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
         assertThat(outbox.getAttempts()).isEqualTo(1);
@@ -367,11 +392,14 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(publisher.events).hasSize(1);
         assertThat(savePort.savedStatuses).containsExactly(EventOutboxStatus.PROCESSING);
@@ -435,11 +463,6 @@ class EventOutboxRelayServiceTest {
                         case NONE -> false;
                     }))
                 .limit(limit).toList();
-        }
-
-        @Override
-        public List<EventOutbox> listPublishable(int limit, Instant now) {
-            return outboxes;
         }
     }
 

@@ -24,6 +24,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.config.FcmProperties;
+import com.umc.product.global.config.OutboxRoutingConfig;
 import com.umc.product.global.event.adapter.out.EventPayloadDeserializer;
 import com.umc.product.global.event.adapter.out.EventPayloadSerializer;
 import com.umc.product.global.event.adapter.out.OutboxDomainEventPublisher;
@@ -32,6 +33,7 @@ import com.umc.product.global.event.application.port.out.OutboxEventSelection;
 import com.umc.product.global.event.application.port.out.SaveEventOutboxPort;
 import com.umc.product.global.event.application.service.EventOutboxRelayMetrics;
 import com.umc.product.global.event.application.service.EventOutboxRelayService;
+import com.umc.product.global.event.application.service.OutboxProcessingGroup;
 import com.umc.product.global.event.domain.EventOutbox;
 import com.umc.product.global.event.domain.EventOutboxStatus;
 import com.umc.product.global.logging.OperationalMetrics;
@@ -93,11 +95,14 @@ class FcmNotificationOutboxFlowTest {
             new LocalTransactionManager(),
             new DefaultListableBeanFactory().getBeanProvider(Tracer.class),
             new EventOutboxRelayMetrics(new SimpleMeterRegistry()),
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(transactionActiveDuringListener).isTrue();
         assertThat(requestOutbox.getStatus()).isEqualTo(EventOutboxStatus.PUBLISHED);
@@ -150,11 +155,14 @@ class FcmNotificationOutboxFlowTest {
             new LocalTransactionManager(),
             new DefaultListableBeanFactory().getBeanProvider(Tracer.class),
             new EventOutboxRelayMetrics(new SimpleMeterRegistry()),
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(transactionActiveDuringSend).isFalse();
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PUBLISHED);
@@ -187,11 +195,6 @@ class FcmNotificationOutboxFlowTest {
             OutboxEventSelection selection,
             int limit, Instant now
         ) {
-            throw new UnsupportedOperationException("이 테스트는 기존 전체 처리 경로만 사용합니다.");
-        }
-
-        @Override
-        public List<EventOutbox> listPublishable(int limit, Instant now) {
             return List.of(eventOutbox);
         }
     }

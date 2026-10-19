@@ -47,7 +47,6 @@ public class EventOutboxRelayService {
     private final Tracer tracer;
     private final EventOutboxRelayMetrics relayMetrics;
     private final TransactionTemplate transactionTemplate;
-    private final int batchSize;
     private final int maxAttempts;
 
     @Autowired
@@ -59,7 +58,6 @@ public class EventOutboxRelayService {
         PlatformTransactionManager transactionManager,
         ObjectProvider<Tracer> tracerProvider,
         EventOutboxRelayMetrics relayMetrics,
-        @Value("${app.event-outbox.batch-size:100}") int batchSize,
         @Value("${app.event-outbox.max-attempts:5}") int maxAttempts
     ) {
         this(
@@ -70,7 +68,6 @@ public class EventOutboxRelayService {
             transactionManager,
             tracerProvider.getIfAvailable(() -> Tracer.NOOP),
             relayMetrics,
-            batchSize,
             maxAttempts
         );
     }
@@ -82,7 +79,6 @@ public class EventOutboxRelayService {
         ApplicationEventPublisher eventPublisher,
         PlatformTransactionManager transactionManager,
         Tracer tracer,
-        int batchSize,
         int maxAttempts
     ) {
         this(
@@ -93,7 +89,6 @@ public class EventOutboxRelayService {
             transactionManager,
             tracer,
             EventOutboxRelayMetrics.noOp(),
-            batchSize,
             maxAttempts
         );
     }
@@ -106,7 +101,6 @@ public class EventOutboxRelayService {
         PlatformTransactionManager transactionManager,
         Tracer tracer,
         EventOutboxRelayMetrics relayMetrics,
-        int batchSize,
         int maxAttempts
     ) {
         this.loadEventOutboxPort = loadEventOutboxPort;
@@ -117,22 +111,11 @@ public class EventOutboxRelayService {
         this.relayMetrics = relayMetrics;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-        this.batchSize = batchSize;
         this.maxAttempts = maxAttempts;
     }
 
-    public void relay() {
-        List<EventOutbox> outboxes = claimPublishable(null, batchSize);
-        for (EventOutbox outbox : outboxes) {
-            relayOne(outbox, null);
-        }
-    }
-
-    public void relay(OutboxEventSelection selection, int limit) {
-        relay(null, selection, limit);
-    }
-
     public void relay(OutboxProcessingGroup group, OutboxEventSelection selection, int limit) {
+        Objects.requireNonNull(group);
         Objects.requireNonNull(selection);
         if (limit <= 0) {
             throw new IllegalArgumentException("배치 크기는 양수여야 합니다.");
@@ -156,9 +139,7 @@ public class EventOutboxRelayService {
     private List<EventOutbox> claimPublishable(OutboxEventSelection selection, int limit) {
         List<EventOutbox> outboxes = transactionTemplate.execute(status -> {
             Instant now = Instant.now();
-            List<EventOutbox> publishableOutboxes = selection == null
-                ? loadEventOutboxPort.listPublishable(limit, now)
-                : loadEventOutboxPort.listPublishable(selection, limit, now);
+            List<EventOutbox> publishableOutboxes = loadEventOutboxPort.listPublishable(selection, limit, now);
             Instant leaseUntil = now.plus(PROCESSING_LEASE);
             publishableOutboxes.forEach(outbox -> outbox.markProcessing(leaseUntil));
             saveEventOutboxPort.saveAll(publishableOutboxes);

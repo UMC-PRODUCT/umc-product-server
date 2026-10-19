@@ -55,7 +55,10 @@ class EventOutboxJpaRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        List<EventOutbox> result = repository.findPublishableForUpdate(100, NOW);
+        List<EventOutbox> result = queryRepository.findPublishableForUpdate(
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100, NOW
+        );
 
         assertThat(result)
             .extracting(EventOutbox::getEventId)

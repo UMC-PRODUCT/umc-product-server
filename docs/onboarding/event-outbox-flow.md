@@ -152,7 +152,6 @@ executor 거절이나 배치 예외 뒤에도 다음 polling에서 다시 시도
 공통 `poll-interval-ms`와 `batch-size`는 기본값이며 `workers.realtime`과 `workers.background`에서
 각각 덮어쓸 수 있다. 폴링 주기는 Worker 완료 시각이 아니라 짧은 실행 요청 메서드 반환을 기준으로 한다.
 `relay-enabled=false`는 두 폴링을 중지하지만 publisher의 저장은 계속된다.
-기존 인자 없는 `relay()`는 테스트 호환용으로 남아 있으며 운영 폴러는 호출하지 않는다.
 
 새 이벤트는 기존 그룹이면 라우팅 설정만 수정한다. 새 그룹이 필요하면 라우팅 등록과 함께
 Worker·전용 executor·폴링 등록을 추가한다. 그룹 등록만으로 Worker가 자동 생성되지는 않는다.

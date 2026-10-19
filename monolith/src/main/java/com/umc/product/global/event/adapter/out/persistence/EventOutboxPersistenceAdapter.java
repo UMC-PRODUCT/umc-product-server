@@ -36,8 +36,4 @@ public class EventOutboxPersistenceAdapter implements SaveEventOutboxPort, LoadE
         eventOutboxJpaRepository.saveAll(eventOutboxes);
     }
 
-    @Override
-    public List<EventOutbox> listPublishable(int limit, Instant now) {
-        return eventOutboxJpaRepository.findPublishableForUpdate(limit, now);
-    }
 }
