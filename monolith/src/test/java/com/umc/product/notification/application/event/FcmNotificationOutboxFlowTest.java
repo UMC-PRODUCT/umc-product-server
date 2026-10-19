@@ -28,6 +28,7 @@ import com.umc.product.global.event.adapter.out.EventPayloadDeserializer;
 import com.umc.product.global.event.adapter.out.EventPayloadSerializer;
 import com.umc.product.global.event.adapter.out.OutboxDomainEventPublisher;
 import com.umc.product.global.event.application.port.out.LoadEventOutboxPort;
+import com.umc.product.global.event.application.port.out.OutboxEventSelection;
 import com.umc.product.global.event.application.port.out.SaveEventOutboxPort;
 import com.umc.product.global.event.application.service.EventOutboxRelayMetrics;
 import com.umc.product.global.event.application.service.EventOutboxRelayService;
@@ -179,6 +180,14 @@ class FcmNotificationOutboxFlowTest {
 
         private SingleEventOutboxPort(EventOutbox eventOutbox) {
             this.eventOutbox = eventOutbox;
+        }
+
+        @Override
+        public List<EventOutbox> listPublishable(
+            OutboxEventSelection selection,
+            int limit, Instant now
+        ) {
+            throw new UnsupportedOperationException("이 테스트는 기존 전체 처리 경로만 사용합니다.");
         }
 
         @Override

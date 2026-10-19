@@ -13,6 +13,8 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import com.umc.product.global.config.OutboxRoutingConfig;
+import com.umc.product.global.event.application.port.out.OutboxEventSelection;
+import com.umc.product.global.event.application.port.out.OutboxEventSelection.PrefixMatch;
 import com.umc.product.global.event.application.service.OutboxEventRoutingPolicy.Rule;
 
 @DisplayName("Outbox 이벤트 처리 그룹 분류")
@@ -20,6 +22,36 @@ class OutboxEventRoutingPolicyTest {
 
     private static final OutboxProcessingGroup REALTIME = OutboxProcessingGroup.REALTIME;
     private static final OutboxProcessingGroup BACKGROUND = OutboxProcessingGroup.BACKGROUND;
+
+    @Test
+    @DisplayName("접두사와 대상 그룹은 특정 도메인 없이 설정으로 교체할 수 있다")
+    void 접두사_설정_교체() {
+        var analytics = new OutboxProcessingGroup("analytics");
+        var policy = new OutboxEventRoutingPolicy(
+            Set.of(analytics, BACKGROUND), BACKGROUND, List.of(), "report.", analytics
+        );
+
+        assertThat(policy.resolve("report.created")).isEqualTo(analytics);
+        assertThat(policy.resolve("chat.message.created")).isEqualTo(BACKGROUND);
+        assertThat(policy.selectionFor(analytics).prefix()).isEqualTo("report.");
+        assertThat(policy.selectionFor(analytics).prefixMatch())
+            .isEqualTo(PrefixMatch.MATCH);
+    }
+
+    @Test
+    @DisplayName("조회 조건은 잘못된 접두사와 일관되지 않은 명시적 타입을 거부한다")
+    void 잘못된_조회조건_거부() {
+        assertThatIllegalArgumentException().isThrownBy(() ->
+            new OutboxEventSelection(
+                Set.of(), Set.of(), "chat.%",
+                PrefixMatch.MATCH
+            ));
+        assertThatIllegalArgumentException().isThrownBy(() ->
+            new OutboxEventSelection(
+                Set.of("test.created"), Set.of(), "chat.",
+                PrefixMatch.MATCH
+            ));
+    }
 
     @ParameterizedTest
     @ValueSource(strings = {
@@ -58,7 +90,7 @@ class OutboxEventRoutingPolicyTest {
             Set.of(REALTIME, BACKGROUND, analytics), BACKGROUND, List.of(
                 new Rule("chat.statistics.completed", analytics),
                 new Rule("chat.statistics.requested", BACKGROUND)
-            )
+            ), "chat.", REALTIME
         );
         // When & Then
         assertThat(policy.resolve("chat.statistics.completed")).isEqualTo(analytics);
@@ -72,13 +104,13 @@ class OutboxEventRoutingPolicyTest {
     void 잘못된_그룹_설정_거부() {
         assertThatIllegalArgumentException().isThrownBy(() -> new OutboxEventRoutingPolicy(
             Set.of(REALTIME, BACKGROUND), BACKGROUND,
-            List.of(new Rule("chat.message.created", REALTIME), new Rule("chat.message.created", BACKGROUND))
+            List.of(new Rule("chat.message.created", REALTIME), new Rule("chat.message.created", BACKGROUND)), "chat.", REALTIME
         ));
         assertThatIllegalArgumentException().isThrownBy(() -> new OutboxEventRoutingPolicy(
-            Set.of(BACKGROUND), BACKGROUND, List.of(new Rule("chat.message.created", REALTIME))
+            Set.of(BACKGROUND), BACKGROUND, List.of(new Rule("chat.message.created", REALTIME)), "chat.", REALTIME
         ));
         assertThatIllegalArgumentException().isThrownBy(() -> new OutboxEventRoutingPolicy(
-            Set.of(REALTIME), BACKGROUND, List.of()
+            Set.of(REALTIME), BACKGROUND, List.of(), "chat.", REALTIME
         ));
     }
 

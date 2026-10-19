@@ -24,6 +24,6 @@ public class OutboxRoutingConfig {
             new Rule("community.thread.invited", realtime),
             new Rule("community.thread.member.left", realtime),
             new Rule("community.thread.member.kicked", realtime)
-        ));
+        ), "chat.", realtime);
     }
 }

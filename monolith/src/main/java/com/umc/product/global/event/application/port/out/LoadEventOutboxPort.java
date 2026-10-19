@@ -8,4 +8,6 @@ import com.umc.product.global.event.domain.EventOutbox;
 public interface LoadEventOutboxPort {
 
     List<EventOutbox> listPublishable(int limit, Instant now);
+
+    List<EventOutbox> listPublishable(OutboxEventSelection selection, int limit, Instant now);
 }

@@ -3,6 +3,7 @@ package com.umc.product.global.event.application.service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.umc.product.global.event.adapter.out.EventPayloadDeserializer;
 import com.umc.product.global.event.application.port.out.LoadEventOutboxPort;
+import com.umc.product.global.event.application.port.out.OutboxEventSelection;
 import com.umc.product.global.event.application.port.out.SaveEventOutboxPort;
 import com.umc.product.global.event.domain.DomainEvent;
 import com.umc.product.global.event.domain.EventOutbox;
@@ -120,16 +122,28 @@ public class EventOutboxRelayService {
     }
 
     public void relay() {
-        List<EventOutbox> outboxes = claimPublishable();
+        List<EventOutbox> outboxes = claimPublishable(null, batchSize);
         for (EventOutbox outbox : outboxes) {
             relayOne(outbox);
         }
     }
 
-    private List<EventOutbox> claimPublishable() {
+    public void relay(OutboxEventSelection selection, int limit) {
+        Objects.requireNonNull(selection);
+        if (limit <= 0) {
+            throw new IllegalArgumentException("배치 크기는 양수여야 합니다.");
+        }
+        for (EventOutbox outbox : claimPublishable(selection, limit)) {
+            relayOne(outbox);
+        }
+    }
+
+    private List<EventOutbox> claimPublishable(OutboxEventSelection selection, int limit) {
         List<EventOutbox> outboxes = transactionTemplate.execute(status -> {
             Instant now = Instant.now();
-            List<EventOutbox> publishableOutboxes = loadEventOutboxPort.listPublishable(batchSize, now);
+            List<EventOutbox> publishableOutboxes = selection == null
+                ? loadEventOutboxPort.listPublishable(limit, now)
+                : loadEventOutboxPort.listPublishable(selection, limit, now);
             Instant leaseUntil = now.plus(PROCESSING_LEASE);
             publishableOutboxes.forEach(outbox -> outbox.markProcessing(leaseUntil));
             saveEventOutboxPort.saveAll(publishableOutboxes);

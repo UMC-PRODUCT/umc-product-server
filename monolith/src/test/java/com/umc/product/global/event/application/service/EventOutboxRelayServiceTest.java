@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.event.adapter.out.EventPayloadDeserializer;
 import com.umc.product.global.event.adapter.out.EventPayloadSerializer;
 import com.umc.product.global.event.application.port.out.LoadEventOutboxPort;
+import com.umc.product.global.event.application.port.out.OutboxEventSelection;
 import com.umc.product.global.event.application.port.out.SaveEventOutboxPort;
 import com.umc.product.global.event.domain.DomainEvent;
 import com.umc.product.global.event.domain.EventOutbox;
@@ -67,6 +68,39 @@ class EventOutboxRelayServiceTest {
     }
 
     @Test
+    @DisplayName("그룹별 실행도 기존 발행과 완료 기록을 유지한다")
+    void 그룹별_relay_성공() {
+        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        EventPayloadSerializer serializer = new EventPayloadSerializer(objectMapper);
+        TestEvent event = TestEvent.create("test.created", "hello");
+        EventOutbox outbox = EventOutbox.record(event, serializer.serialize(event));
+        FakeLoadEventOutboxPort loadPort = new FakeLoadEventOutboxPort(List.of(outbox));
+        FakeSaveEventOutboxPort savePort = new FakeSaveEventOutboxPort();
+        CapturingApplicationEventPublisher publisher = new CapturingApplicationEventPublisher();
+        EventOutboxRelayService relayService = new EventOutboxRelayService(
+            loadPort,
+            savePort,
+            new EventPayloadDeserializer(objectMapper),
+            publisher,
+            new LocalTransactionManager(),
+            Tracer.NOOP,
+            100,
+            3
+        );
+
+        relayService.relay(
+            new OutboxEventSelection(java.util.Set.of(), java.util.Set.of(), "chat.",
+                OutboxEventSelection.PrefixMatch.NOT_MATCH), 1
+        );
+
+        assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PUBLISHED);
+        assertThat(publisher.events).hasSize(1);
+        assertThat(publisher.events.getFirst()).isInstanceOf(TestEvent.class);
+        assertThat(((TestEvent) publisher.events.getFirst()).message()).isEqualTo("hello");
+        assertThat(savePort.savedStatuses).contains(EventOutboxStatus.PROCESSING, EventOutboxStatus.PUBLISHED);
+    }
+
+    @Test
     @DisplayName("이벤트 복원 또는 발행 실패 시 별도 상태 저장 트랜잭션에서 attempts를 증가시키고 pending으로 남긴다")
     void relay_실패_재시도() {
         ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
@@ -90,6 +124,40 @@ class EventOutboxRelayServiceTest {
         );
 
         relayService.relay();
+
+        assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
+        assertThat(outbox.getAttempts()).isEqualTo(1);
+        assertThat(outbox.getLastError()).contains("publish failed");
+        assertThat(savePort.savedStatuses).contains(EventOutboxStatus.PROCESSING, EventOutboxStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("그룹별 실행 실패도 기존 재시도 상태로 기록한다")
+    void 그룹별_relay_실패_재시도() {
+        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        EventPayloadSerializer serializer = new EventPayloadSerializer(objectMapper);
+        TestEvent event = TestEvent.create("test.created", "hello");
+        EventOutbox outbox = EventOutbox.record(event, serializer.serialize(event));
+        FakeLoadEventOutboxPort loadPort = new FakeLoadEventOutboxPort(List.of(outbox));
+        FakeSaveEventOutboxPort savePort = new FakeSaveEventOutboxPort();
+        ApplicationEventPublisher publisher = ignored -> {
+            throw new IllegalStateException("publish failed");
+        };
+        EventOutboxRelayService relayService = new EventOutboxRelayService(
+            loadPort,
+            savePort,
+            new EventPayloadDeserializer(objectMapper),
+            publisher,
+            new LocalTransactionManager(),
+            Tracer.NOOP,
+            100,
+            3
+        );
+
+        relayService.relay(
+            new OutboxEventSelection(java.util.Set.of(), java.util.Set.of(), "chat.",
+                OutboxEventSelection.PrefixMatch.NOT_MATCH), 1
+        );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
         assertThat(outbox.getAttempts()).isEqualTo(1);
@@ -352,6 +420,21 @@ class EventOutboxRelayServiceTest {
 
         private FakeLoadEventOutboxPort(List<EventOutbox> outboxes) {
             this.outboxes = outboxes;
+        }
+
+        @Override
+        public List<EventOutbox> listPublishable(
+            OutboxEventSelection selection,
+            int limit, Instant now
+        ) {
+            return outboxes.stream().filter(outbox -> selection.includedTypes().contains(outbox.getEventType())
+                || (!selection.overriddenTypes().contains(outbox.getEventType())
+                    && switch (selection.prefixMatch()) {
+                        case MATCH -> outbox.getEventType().startsWith(selection.prefix());
+                        case NOT_MATCH -> !outbox.getEventType().startsWith(selection.prefix());
+                        case NONE -> false;
+                    }))
+                .limit(limit).toList();
         }
 
         @Override
