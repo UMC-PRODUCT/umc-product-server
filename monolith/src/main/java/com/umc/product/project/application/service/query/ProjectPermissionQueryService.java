@@ -39,6 +39,7 @@ import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplicationForm;
@@ -74,6 +75,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
     private final GetChallengerUseCase getChallengerUseCase;
     private final ProjectApplicationAccessScopeResolver projectApplicationAccessScopeResolver;
     private final ProjectStatisticsAccessPolicy projectStatisticsAccessPolicy;
+    private final ProjectMatchingChapterResolver projectMatchingChapterResolver;
 
     @Override
     public List<ProjectPermissionInfo> listByProjectIds(Long requesterMemberId, List<Long> projectIds) {
@@ -321,6 +323,9 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         if (context.quotas().stream().noneMatch(quota -> quota.getPart() == challenger.get().part())) {
             return denied(ProjectPermissionReason.PROJECT_APPLICATION_PART_NOT_ALLOWED);
         }
+        if (!context.isInProjectMatchingChapter(requesterMemberId)) {
+            return denied(ProjectPermissionReason.CHAPTER_MISMATCH);
+        }
         if (context.existsByGisuAndMember(requesterMemberId)) {
             return denied(ProjectPermissionReason.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
         }
@@ -455,6 +460,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         private final Map<Long, List<ProjectMatchingRound>> openMatchingRounds = new LinkedHashMap<>();
         private final Map<Long, Optional<ChallengerInfo>> challengerInfos = new LinkedHashMap<>();
         private final Map<Long, Boolean> projectMemberExists = new LinkedHashMap<>();
+        private final Map<Long, Optional<Long>> matchingChapterIds = new LinkedHashMap<>();
 
         private PermissionCache(SubjectAttributes subject) {
             this.subject = subject;
@@ -491,6 +497,12 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         private boolean existsByGisuAndMember(Long gisuId, Long memberId) {
             return projectMemberExists.computeIfAbsent(gisuId, id ->
                 loadProjectMemberPort.existsByGisuAndMember(id, memberId)
+            );
+        }
+
+        private Optional<Long> matchingChapterId(Long memberId, Long gisuId) {
+            return matchingChapterIds.computeIfAbsent(gisuId, id ->
+                projectMatchingChapterResolver.findMatchingChapterId(memberId, id)
             );
         }
     }
@@ -541,6 +553,15 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
 
         private boolean existsByGisuAndMember(Long memberId) {
             return permissionCache.existsByGisuAndMember(project.getGisuId(), memberId);
+        }
+
+        /**
+         * 지원자의 매칭 지부가 프로젝트 지부와 같은지 확인합니다. 규칙은 {@code ProjectApplicationChapterPolicy} 와 같습니다.
+         */
+        private boolean isInProjectMatchingChapter(Long memberId) {
+            return permissionCache.matchingChapterId(memberId, project.getGisuId())
+                .map(chapterId -> Objects.equals(chapterId, project.getChapterId()))
+                .orElse(false);
         }
     }
 }

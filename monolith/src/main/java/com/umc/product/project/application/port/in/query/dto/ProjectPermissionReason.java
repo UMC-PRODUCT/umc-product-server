@@ -16,6 +16,7 @@ public enum ProjectPermissionReason {
     PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM("이미 해당 기수에서 팀에 소속되어 있습니다."),
     PROJECT_APPLICATION_PART_NOT_ALLOWED("본인 파트 모집 정원이 존재하지 않습니다."),
     MATCHING_ROUND_NOT_OPEN("지원 가능한 매칭 차수가 열려 있지 않습니다."),
+    CHAPTER_MISMATCH("내 매칭 지부의 프로젝트가 아닙니다."),
     NOT_PROJECT_GISU_CHALLENGER("해당 프로젝트 기수의 지원 가능한 챌린저가 아닙니다."),
     NOT_IMPLEMENTED("아직 지원하지 않는 기능입니다.");
 

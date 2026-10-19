@@ -47,6 +47,7 @@ import com.umc.product.project.application.port.out.dto.ProjectStatisticsApprove
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
+import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
@@ -65,6 +66,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
     private final GetMemberUseCase getMemberUseCase;
     private final LoadProjectPort loadProjectPort;
     private final ProjectStatisticsAccessPolicy projectStatisticsAccessPolicy;
+    private final ProjectMatchingChapterResolver matchingChapterResolver;
 
     @Override
     public ProjectStatisticsInfo getByProjectId(Long projectId, Long requesterMemberId) {
@@ -277,7 +279,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             .map(ProjectStatisticsProjectRow::chapterId)
             .filter(Objects::nonNull)
             .distinct()
-            .flatMap(chapterId -> getChallengerUseCase.listByChapterId(chapterId).stream())
+            .flatMap(chapterId -> listChallengersInMatchingChapter(chapterId).stream())
             .filter(this::isEligibleChallenger)
             .map(ChallengerInfo::memberId)
             .filter(Objects::nonNull)
@@ -288,6 +290,17 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             : getMemberUseCase.findAllSchoolIdsByIds(eligibleMemberIds);
 
         return new StatisticsPopulation(eligibleMemberIds, schoolIdByMemberId);
+    }
+
+    /**
+     * 매칭 지부 기준 인원. 학교 기준 지부 인원에서 다른 지부로 이동한 챌린저를 빼고, 이 지부로 이동해 온 챌린저를 더한다.
+     * <p>
+     * 통계는 모집단 밖 지원자의 지원서를 버리므로({@code buildContext}), 이 보정이 없으면 이동한 챌린저의 지원서가 이동지부 통계에서 빠지고
+     * 원지부 통계에는 미매칭으로 남는다.
+     */
+    private List<ChallengerInfo> listChallengersInMatchingChapter(Long chapterId) {
+        return matchingChapterResolver.deltaOf(chapterId)
+            .apply(getChallengerUseCase.listByChapterId(chapterId));
     }
 
     private boolean isEligibleChallenger(ChallengerInfo challenger) {

@@ -229,6 +229,30 @@ public class ProjectApplication extends BaseEntity {
     }
 
     /**
+     * 매칭 지부 이동·해제에 따라 지원서를 철회합니다 (운영 조치).
+     * <p>
+     * 본인 철회({@link #cancel})와 달리 {@link ProjectApplicationStatus#REJECTED} 도 철회할 수 있습니다. 결정 마감 전에는 PM 이
+     * 불합격을 합격으로 되돌릴 수 있고, 마감 시 자동 선발이 불합격 지원서에서 합격자를 뽑을 수 있어서, 지부를 옮긴 챌린저가 이전 지부
+     * 팀에 배정되는 일을 막기 위함입니다. 어떤 차수의 REJECTED 를 철회할지는 호출자(Service)가 정합니다.
+     * <p>
+     * 가능 상태: DRAFT, SUBMITTED, REJECTED. APPROVED 는 이미 매칭이 확정된 것으로 보고 지부 이동 자체를 막아야 하며, CANCELLED 는 이중 철회입니다.
+     *
+     * @param decidedByMemberId 지부 이동을 처리한 운영진 ID
+     * @param reason            철회 사유
+     */
+    public void cancelForChapterTransfer(Long decidedByMemberId, String reason) {
+        if (this.status != ProjectApplicationStatus.DRAFT
+            && this.status != ProjectApplicationStatus.SUBMITTED
+            && this.status != ProjectApplicationStatus.REJECTED) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_CANCEL_NOT_ALLOWED);
+        }
+        this.status = ProjectApplicationStatus.CANCELLED;
+        this.statusChangedMemberId = decidedByMemberId;
+        this.statusChangeReason = reason;
+        this.statusChangedAt = Instant.now();
+    }
+
+    /**
      * 지원서 제출 처리 (임시저장에서만 이동 가능)
      */
     public void submit() {

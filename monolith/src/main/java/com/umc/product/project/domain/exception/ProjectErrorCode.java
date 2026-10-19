@@ -99,6 +99,27 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_APPLICATION_CANCEL_ROUND_CLOSED(HttpStatus.BAD_REQUEST, "PROJECT-0215", "매칭 차수가 종료되어 지원서를 철회할 수 없어요. 차수 기간을 확인해주세요."),
     PROJECT_APPLICATION_MINIMUM_SELECTION_REQUIRED(HttpStatus.CONFLICT, "PROJECT-0216",
         "매칭 규칙의 최소 선발 인원을 충족하지 않아 불합격 처리할 수 없어요. 합격 인원을 확인해주세요."),
+    PROJECT_APPLICATION_CHAPTER_MISMATCH(HttpStatus.FORBIDDEN, "PROJECT-0217",
+        "내 매칭 지부의 프로젝트에만 지원할 수 있어요. 프로젝트의 지부를 확인해주세요."),
+    PROJECT_APPLICATION_ROUND_CHAPTER_MISMATCH(HttpStatus.BAD_REQUEST, "PROJECT-0218",
+        "선택한 매칭 차수가 프로젝트 지부의 차수가 아니에요. 매칭 차수를 다시 선택해주세요."),
+
+    // ProjectMatchingChapterTransfer
+    CHAPTER_TRANSFER_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0400", "매칭 지부 이동 기록을 찾을 수 없어요. 선택한 기록을 확인해주세요."),
+    CHAPTER_TRANSFER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PROJECT-0401",
+        "매칭 지부 이동을 처리할 권한이 없어요. 원지부 또는 이동지부의 지부장이나 총괄단만 처리할 수 있어요."),
+    CHAPTER_TRANSFER_PART_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROJECT-0402",
+        "기획 파트이거나 파트가 없는 챌린저는 매칭 지부를 이동할 수 없어요."),
+    CHAPTER_TRANSFER_SAME_CHAPTER(HttpStatus.BAD_REQUEST, "PROJECT-0403", "현재 매칭 지부와 같은 지부로는 이동할 수 없어요. 이동할 지부를 확인해주세요."),
+    CHAPTER_TRANSFER_CHAPTER_NOT_IN_GISU(HttpStatus.BAD_REQUEST, "PROJECT-0404", "해당 기수의 지부가 아니에요. 이동할 지부를 확인해주세요."),
+    CHAPTER_TRANSFER_ALREADY_ACTIVE(HttpStatus.CONFLICT, "PROJECT-0405",
+        "이미 매칭 지부를 이동한 챌린저예요. 기존 이동을 해제한 뒤 다시 등록해주세요."),
+    CHAPTER_TRANSFER_ALREADY_MATCHED(HttpStatus.CONFLICT, "PROJECT-0406",
+        "이미 팀에 소속됐거나 합격한 지원서가 있어 매칭 지부를 바꿀 수 없어요."),
+    CHAPTER_TRANSFER_ALREADY_RELEASED(HttpStatus.CONFLICT, "PROJECT-0407", "이미 해제된 매칭 지부 이동이에요."),
+    CHAPTER_TRANSFER_DUPLICATE_TARGET(HttpStatus.BAD_REQUEST, "PROJECT-0408", "같은 챌린저가 요청에 중복으로 들어 있어요. 요청 목록을 확인해주세요."),
+    CHAPTER_TRANSFER_ORIGIN_NOT_FOUND(HttpStatus.CONFLICT, "PROJECT-0409",
+        "챌린저의 원래 지부를 확인할 수 없어요. 학교의 지부 배정을 확인해주세요."),
 
     ;
 

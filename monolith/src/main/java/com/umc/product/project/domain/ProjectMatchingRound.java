@@ -218,6 +218,13 @@ public class ProjectMatchingRound extends BaseEntity {
      */
 
     /**
+     * 자동 선발(마감 처리)이 이미 실행되었는지 여부. 실행 전이면 PM 판정이나 자동 선발로 지원서 결과가 아직 바뀔 수 있습니다.
+     */
+    public boolean isAutoDecisionExecuted() {
+        return autoDecisionExecutedAt != null;
+    }
+
+    /**
      * 특정 시점 기준으로 매칭 차수가 활성화 되어있는지 여부를 판단합니다.
      * <p>
      * startsAt <= now <= endsAt 인 경우에 활성화된 것으로 간주합니다.

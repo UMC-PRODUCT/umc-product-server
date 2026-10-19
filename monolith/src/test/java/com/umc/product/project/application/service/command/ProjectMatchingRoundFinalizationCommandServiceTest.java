@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 
 import java.time.Instant;
@@ -51,6 +52,8 @@ import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.application.service.policy.DesignerMatchingPolicy;
 import com.umc.product.project.application.service.policy.DeveloperMatchingPolicy;
 import com.umc.product.project.application.service.policy.MatchingDecisionPolicy;
+import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
+import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver.ChapterTransferDelta;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
@@ -95,6 +98,8 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
     GetChallengerUseCase getChallengerUseCase;
     @Mock
     SearchChallengerUseCase searchChallengerUseCase;
+    @Mock
+    ProjectMatchingChapterResolver matchingChapterResolver;
 
     ProjectMatchingRoundFinalizationCommandService sut;
 
@@ -112,8 +117,10 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             new Random(42L),
             getChallengerRoleUseCase,
             getChallengerUseCase,
-            searchChallengerUseCase
+            searchChallengerUseCase,
+            matchingChapterResolver
         );
+        lenient().when(matchingChapterResolver.deltaOf(any())).thenReturn(ChapterTransferDelta.empty());
         given(getChallengerRoleUseCase.findAllByMemberId(EXECUTOR_MEMBER_ID))
             .willReturn(List.of(centralCoreRole()));
     }
@@ -333,7 +340,8 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
                     new Random(42L),
                     getChallengerRoleUseCase,
                     getChallengerUseCase,
-                    searchChallengerUseCase
+                    searchChallengerUseCase,
+                    matchingChapterResolver
                 );
             ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DESIGN);
             given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
