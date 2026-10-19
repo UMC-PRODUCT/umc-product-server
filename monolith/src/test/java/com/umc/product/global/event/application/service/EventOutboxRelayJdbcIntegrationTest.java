@@ -49,7 +49,20 @@ class EventOutboxRelayJdbcIntegrationTest extends IntegrationTestSupport {
         AtomicBoolean transactionActiveDuringDispatch = new AtomicBoolean(true);
         AtomicInteger activeConnectionsDuringDispatch = new AtomicInteger(-1);
         EventOutboxRelayService relayService = new EventOutboxRelayService(
-            (limit, now) -> List.of(outbox),
+            new com.umc.product.global.event.application.port.out.LoadEventOutboxPort() {
+                @Override
+                public List<EventOutbox> listPublishable(int limit, Instant now) {
+                    return List.of(outbox);
+                }
+
+                @Override
+                public List<EventOutbox> listPublishable(
+                    com.umc.product.global.event.application.port.out.OutboxEventSelection selection,
+                    int limit, Instant now
+                ) {
+                    return List.of(outbox);
+                }
+            },
             savePort,
             new EventPayloadDeserializer(mapper),
             ignored -> {

@@ -501,6 +501,9 @@ app:
     poll-interval-ms: ${EVENT_OUTBOX_POLL_INTERVAL_MS:1000}
     batch-size: ${EVENT_OUTBOX_BATCH_SIZE:100}
     max-attempts: ${EVENT_OUTBOX_MAX_ATTEMPTS:5}
+    metrics:
+      enabled: ${EVENT_OUTBOX_METRICS_ENABLED:true}
+      sample-interval-ms: ${EVENT_OUTBOX_METRICS_SAMPLE_INTERVAL_MS:30000}
     workers:
       realtime:
         poll-interval-ms: ${EVENT_OUTBOX_REALTIME_POLL_INTERVAL_MS:${app.event-outbox.poll-interval-ms}}

@@ -49,7 +49,7 @@ class OutboxWorkerTest {
         assertThat(tasks).hasSize(1);
         verifyNoInteractions(relay);
         tasks.remove().run();
-        verify(relay).relay(policy.selectionFor(OutboxProcessingGroup.REALTIME), 10);
+        verify(relay).relay(OutboxProcessingGroup.REALTIME, policy.selectionFor(OutboxProcessingGroup.REALTIME), 10);
         assertThat(worker.requestRun()).isTrue();
         assertThat(tasks).hasSize(1);
     }
@@ -64,12 +64,12 @@ class OutboxWorkerTest {
                 worker.requestRun();
             }
             return null;
-        }).doAnswer(invocation -> null).when(relay).relay(any(), eq(10));
+        }).doAnswer(invocation -> null).when(relay).relay(any(), any(), eq(10));
 
         worker.requestRun();
         tasks.remove().run();
 
-        verify(relay, times(2)).relay(any(), eq(10));
+        verify(relay, times(2)).relay(any(), any(), eq(10));
         assertThat(tasks).isEmpty();
     }
 
@@ -95,7 +95,7 @@ class OutboxWorkerTest {
         verifyNoInteractions(relay);
         assertThat(worker.requestRun()).isTrue();
         tasks.remove().run();
-        verify(relay).relay(any(), eq(10));
+        verify(relay).relay(any(), any(), eq(10));
     }
 
     @Test
@@ -103,14 +103,14 @@ class OutboxWorkerTest {
     void 배치실패후_재실행() {
         Queue<Runnable> tasks = new ArrayDeque<>();
         var worker = worker(tasks::add);
-        doThrow(new IllegalStateException("선점 실패")).doNothing().when(relay).relay(any(), eq(10));
+        doThrow(new IllegalStateException("선점 실패")).doNothing().when(relay).relay(any(), any(), eq(10));
 
         worker.requestRun();
         tasks.remove().run();
         assertThat(worker.requestRun()).isTrue();
         tasks.remove().run();
 
-        verify(relay, times(2)).relay(any(), eq(10));
+        verify(relay, times(2)).relay(any(), any(), eq(10));
     }
 
     @Test
@@ -139,11 +139,13 @@ class OutboxWorkerTest {
                 throw new IllegalStateException("테스트 대기 시간 초과");
             }
             return null;
-        }).when(relay).relay(policy.selectionFor(OutboxProcessingGroup.BACKGROUND), 10);
+        }).when(relay).relay(
+            OutboxProcessingGroup.BACKGROUND, policy.selectionFor(OutboxProcessingGroup.BACKGROUND), 10
+        );
         doAnswer(invocation -> {
             realtimeCompleted.countDown();
             return null;
-        }).when(relay).relay(policy.selectionFor(OutboxProcessingGroup.REALTIME), 10);
+        }).when(relay).relay(OutboxProcessingGroup.REALTIME, policy.selectionFor(OutboxProcessingGroup.REALTIME), 10);
         var realtimeExecutor = Executors.newSingleThreadExecutor();
         var backgroundExecutor = Executors.newSingleThreadExecutor();
         var realtime = worker(realtimeExecutor);

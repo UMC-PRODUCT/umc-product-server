@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.support.ContextPropagatingTaskDecorator;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import com.umc.product.global.event.application.service.EventOutboxRelayMetrics;
 import com.umc.product.global.event.application.service.EventOutboxRelayService;
 import com.umc.product.global.event.application.service.OutboxEventRoutingPolicy;
 import com.umc.product.global.event.application.service.OutboxProcessingGroup;
@@ -30,9 +31,10 @@ public class OutboxWorkerConfig {
         @Qualifier("realtimeOutboxExecutor") ThreadPoolTaskExecutor executor,
         EventOutboxRelayService relay,
         OutboxEventRoutingPolicy routingPolicy,
+        EventOutboxRelayMetrics metrics,
         @Value("${app.event-outbox.workers.realtime.batch-size:${app.event-outbox.batch-size:100}}") int batchSize
     ) {
-        return new OutboxWorker(OutboxProcessingGroup.REALTIME, executor, relay, routingPolicy, batchSize);
+        return new OutboxWorker(OutboxProcessingGroup.REALTIME, executor, relay, routingPolicy, batchSize, metrics);
     }
 
     @Bean(destroyMethod = "close")
@@ -40,9 +42,10 @@ public class OutboxWorkerConfig {
         @Qualifier("backgroundOutboxExecutor") ThreadPoolTaskExecutor executor,
         EventOutboxRelayService relay,
         OutboxEventRoutingPolicy routingPolicy,
+        EventOutboxRelayMetrics metrics,
         @Value("${app.event-outbox.workers.background.batch-size:${app.event-outbox.batch-size:100}}") int batchSize
     ) {
-        return new OutboxWorker(OutboxProcessingGroup.BACKGROUND, executor, relay, routingPolicy, batchSize);
+        return new OutboxWorker(OutboxProcessingGroup.BACKGROUND, executor, relay, routingPolicy, batchSize, metrics);
     }
 
     private ThreadPoolTaskExecutor createExecutor(String threadNamePrefix) {

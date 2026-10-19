@@ -59,6 +59,41 @@ class EventOutboxRelayMetricsTest {
         assertThat(meterRegistry.get("event.outbox.relay.failed").counter().getId().getTags()).isEmpty();
     }
 
+    @Test
+    @DisplayName("그룹 실행은 발행 시간과 재시도 결과를 해당 그룹에 기록한다")
+    void 그룹별_발행_관측() {
+        var registry = new SimpleMeterRegistry();
+        EventOutbox outbox = outbox();
+        var sut = relayService(outbox, registry, 2);
+        var selection = new com.umc.product.global.config.OutboxRoutingConfig()
+            .outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND);
+
+        sut.relay(OutboxProcessingGroup.BACKGROUND, selection, 10);
+
+        assertThat(registry.get("event.outbox.publish.duration").tags("group", "background", "outcome", "failure")
+            .timer().count()).isEqualTo(1);
+        assertThat(registry.get("event.outbox.group.failure").tags("group", "background", "outcome", "retry")
+            .counter().count()).isEqualTo(1);
+        assertThat(registry.get("event.outbox.batch.duration").tags("group", "background", "outcome", "success")
+            .timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("executor 거절은 해당 그룹의 거절 횟수로 기록한다")
+    void 그룹별_거절_관측() {
+        var registry = new SimpleMeterRegistry();
+        var metrics = new EventOutboxRelayMetrics(registry);
+        var policy = new com.umc.product.global.config.OutboxRoutingConfig().outboxEventRoutingPolicy();
+        var worker = new OutboxWorker(OutboxProcessingGroup.REALTIME, task -> {
+            throw new java.util.concurrent.RejectedExecutionException();
+        }, relayService(outbox(), registry, 2), policy, 10, metrics);
+
+        assertThat(worker.requestRun()).isFalse();
+
+        assertThat(registry.get("event.outbox.worker.rejected").tag("group", "realtime")
+            .counter().count()).isEqualTo(1);
+    }
+
     private EventOutboxRelayService relayService(
         EventOutbox outbox,
         SimpleMeterRegistry meterRegistry,
@@ -66,7 +101,20 @@ class EventOutboxRelayMetricsTest {
     ) {
         ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
         return new EventOutboxRelayService(
-            (limit, now) -> List.of(outbox),
+            new com.umc.product.global.event.application.port.out.LoadEventOutboxPort() {
+                @Override
+                public List<EventOutbox> listPublishable(int limit, Instant now) {
+                    return List.of(outbox);
+                }
+
+                @Override
+                public List<EventOutbox> listPublishable(
+                    com.umc.product.global.event.application.port.out.OutboxEventSelection selection,
+                    int limit, Instant now
+                ) {
+                    return List.of(outbox);
+                }
+            },
             new NoOpSaveEventOutboxPort(),
             new EventPayloadDeserializer(objectMapper),
             ignored -> {

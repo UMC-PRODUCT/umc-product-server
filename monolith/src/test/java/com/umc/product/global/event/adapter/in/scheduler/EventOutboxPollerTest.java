@@ -14,15 +14,19 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import com.umc.product.global.config.OutboxRoutingConfig;
 import com.umc.product.global.config.OutboxWorkerConfig;
+import com.umc.product.global.event.application.service.EventOutboxRelayMetrics;
 import com.umc.product.global.event.application.service.EventOutboxRelayService;
 import com.umc.product.global.event.application.service.OutboxEventRoutingPolicy;
 import com.umc.product.global.event.application.service.OutboxProcessingGroup;
+
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 @DisplayName("Outbox 그룹별 폴링 연결")
 class EventOutboxPollerTest {
 
     private final ApplicationContextRunner runner = new ApplicationContextRunner()
         .withUserConfiguration(OutboxRoutingConfig.class, OutboxWorkerConfig.class, EventOutboxPoller.class)
+        .withBean(EventOutboxRelayMetrics.class, () -> new EventOutboxRelayMetrics(new SimpleMeterRegistry()))
         .withBean(EventOutboxRelayService.class, () -> mock(EventOutboxRelayService.class));
 
     @Test
@@ -45,8 +49,12 @@ class EventOutboxPollerTest {
             poller.pollRealtime();
             poller.pollBackground();
 
-            verify(relay, timeout(5000)).relay(policy.selectionFor(OutboxProcessingGroup.REALTIME), 7);
-            verify(relay, timeout(5000)).relay(policy.selectionFor(OutboxProcessingGroup.BACKGROUND), 13);
+            verify(relay, timeout(5000)).relay(
+                OutboxProcessingGroup.REALTIME, policy.selectionFor(OutboxProcessingGroup.REALTIME), 7
+            );
+            verify(relay, timeout(5000)).relay(
+                OutboxProcessingGroup.BACKGROUND, policy.selectionFor(OutboxProcessingGroup.BACKGROUND), 13
+            );
         });
     }
 
@@ -71,8 +79,12 @@ class EventOutboxPollerTest {
             poller.pollRealtime();
             poller.pollBackground();
 
-            verify(relay, timeout(5000)).relay(policy.selectionFor(OutboxProcessingGroup.REALTIME), 23);
-            verify(relay, timeout(5000)).relay(policy.selectionFor(OutboxProcessingGroup.BACKGROUND), 23);
+            verify(relay, timeout(5000)).relay(
+                OutboxProcessingGroup.REALTIME, policy.selectionFor(OutboxProcessingGroup.REALTIME), 23
+            );
+            verify(relay, timeout(5000)).relay(
+                OutboxProcessingGroup.BACKGROUND, policy.selectionFor(OutboxProcessingGroup.BACKGROUND), 23
+            );
         });
     }
 

@@ -16,6 +16,7 @@ public final class OutboxWorker implements AutoCloseable {
     private final EventOutboxRelayService relay;
     private final OutboxEventSelection selection;
     private final int batchSize;
+    private final EventOutboxRelayMetrics metrics;
     private boolean scheduled;
     private boolean pending;
     private boolean closed;
@@ -27,6 +28,18 @@ public final class OutboxWorker implements AutoCloseable {
         OutboxEventRoutingPolicy routingPolicy,
         int batchSize
     ) {
+        this(group, executor, relay, routingPolicy, batchSize, EventOutboxRelayMetrics.noOp());
+    }
+
+    public OutboxWorker(
+        OutboxProcessingGroup group,
+        Executor executor,
+        EventOutboxRelayService relay,
+        OutboxEventRoutingPolicy routingPolicy,
+        int batchSize,
+        EventOutboxRelayMetrics metrics
+    ) {
+        this.metrics = Objects.requireNonNull(metrics);
         this.group = Objects.requireNonNull(group);
         this.executor = Objects.requireNonNull(executor);
         this.relay = Objects.requireNonNull(relay);
@@ -53,6 +66,7 @@ public final class OutboxWorker implements AutoCloseable {
         } catch (RejectedExecutionException exception) {
             scheduled = false;
             pending = false;
+            metrics.recordRejection(group.name());
             log.warn("Outbox worker 실행 요청 거절: group={}", group.name());
             return false;
         }
@@ -62,7 +76,7 @@ public final class OutboxWorker implements AutoCloseable {
         try {
             while (takeSignal()) {
                 try {
-                    relay.relay(selection, batchSize);
+                    relay.relay(group, selection, batchSize);
                 } catch (RuntimeException exception) {
                     log.error("Outbox worker 배치 실행 실패: group={}", group.name(), exception);
                 }

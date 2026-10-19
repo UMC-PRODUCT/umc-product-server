@@ -142,6 +142,25 @@ class EventOutboxJpaRepositoryTest {
         )).extracting(EventOutbox::getEventId).containsExactly(unknown);
     }
 
+    @Test
+    @DisplayName("적체 집계는 재시도 대기와 만료 전 lease도 포함하고 완료 이벤트는 제외한다")
+    void 그룹별_적체_집계() {
+        insertOutbox("chat.message.created", "PENDING", NOW.plusSeconds(30));
+        insertOutbox("chat.message.updated", "PROCESSING", NOW.plusSeconds(300));
+        insertOutbox("chat.message.deleted", "PUBLISHED", NOW.minusSeconds(1));
+        insertOutbox("notification.fcm.batch.requested", "PENDING", NOW);
+        var policy = new OutboxRoutingConfig().outboxEventRoutingPolicy();
+
+        var realtime = queryRepository.getBacklog(policy.selectionFor(OutboxProcessingGroup.REALTIME));
+        var background = queryRepository.getBacklog(policy.selectionFor(OutboxProcessingGroup.BACKGROUND));
+
+        assertThat(realtime.pending()).isEqualTo(1);
+        assertThat(realtime.processing()).isEqualTo(1);
+        assertThat(realtime.oldestAgeSeconds()).isGreaterThanOrEqualTo(0);
+        assertThat(background.pending()).isEqualTo(1);
+        assertThat(background.processing()).isZero();
+    }
+
     private Long persist(EventOutbox outbox) {
         EntityManager setupEntityManager = entityManagerFactory.createEntityManager();
         setupEntityManager.getTransaction().begin();

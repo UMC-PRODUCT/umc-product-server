@@ -124,17 +124,32 @@ public class EventOutboxRelayService {
     public void relay() {
         List<EventOutbox> outboxes = claimPublishable(null, batchSize);
         for (EventOutbox outbox : outboxes) {
-            relayOne(outbox);
+            relayOne(outbox, null);
         }
     }
 
     public void relay(OutboxEventSelection selection, int limit) {
+        relay(null, selection, limit);
+    }
+
+    public void relay(OutboxProcessingGroup group, OutboxEventSelection selection, int limit) {
         Objects.requireNonNull(selection);
         if (limit <= 0) {
             throw new IllegalArgumentException("배치 크기는 양수여야 합니다.");
         }
-        for (EventOutbox outbox : claimPublishable(selection, limit)) {
-            relayOne(outbox);
+        long startedAt = System.nanoTime();
+        String outcome = "success";
+        try {
+            for (EventOutbox outbox : claimPublishable(selection, limit)) {
+                relayOne(outbox, group);
+            }
+        } catch (RuntimeException exception) {
+            outcome = "failure";
+            throw exception;
+        } finally {
+            if (group != null) {
+                relayMetrics.recordDuration("batch", group.name(), outcome, startedAt);
+            }
         }
     }
 
@@ -152,16 +167,27 @@ public class EventOutboxRelayService {
         return outboxes == null ? List.of() : outboxes;
     }
 
-    private void relayOne(EventOutbox outbox) {
+    private void relayOne(EventOutbox outbox, OutboxProcessingGroup group) {
+        long startedAt = System.nanoTime();
+        String outcome = "success";
         try {
             publish(outbox);
         } catch (OptimisticLockingFailureException e) {
+            outcome = "ownership_lost";
             logLeaseOwnershipLost(outbox);
         } catch (RuntimeException e) {
+            outcome = "failure";
             try {
                 recordFailure(outbox, e);
+                if (group != null) {
+                    relayMetrics.recordGroupFailure(group.name(), outbox.getStatus());
+                }
             } catch (OptimisticLockingFailureException ignored) {
                 logLeaseOwnershipLost(outbox);
+            }
+        } finally {
+            if (group != null) {
+                relayMetrics.recordDuration("publish", group.name(), outcome, startedAt);
             }
         }
     }
