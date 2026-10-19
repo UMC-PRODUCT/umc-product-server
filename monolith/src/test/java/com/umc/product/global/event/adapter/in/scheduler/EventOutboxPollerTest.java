@@ -30,6 +30,43 @@ class EventOutboxPollerTest {
         .withBean(EventOutboxRelayService.class, () -> mock(EventOutboxRelayService.class));
 
     @Test
+    @DisplayName("그룹별 동시성 설정을 executor 크기와 Worker 슬롯에 함께 적용한다")
+    void 동시성_설정_연결() {
+        runner.withPropertyValues(
+            "app.event-outbox.workers.realtime.concurrency=2",
+            "app.event-outbox.workers.background.concurrency=3"
+        ).run(context -> {
+            assertThat(context).hasNotFailed();
+            var realtime = context.getBean("realtimeOutboxExecutor", ThreadPoolTaskExecutor.class);
+            var background = context.getBean("backgroundOutboxExecutor", ThreadPoolTaskExecutor.class);
+            assertThat(realtime.getCorePoolSize()).isEqualTo(2);
+            assertThat(realtime.getMaxPoolSize()).isEqualTo(2);
+            assertThat(realtime.getQueueCapacity()).isEqualTo(2);
+            assertThat(background.getCorePoolSize()).isEqualTo(3);
+            assertThat(background.getMaxPoolSize()).isEqualTo(3);
+            assertThat(background.getQueueCapacity()).isEqualTo(3);
+            var poller = context.getBean(EventOutboxPoller.class);
+            var relay = context.getBean(EventOutboxRelayService.class);
+            var policy = context.getBean(OutboxEventRoutingPolicy.class);
+
+            poller.pollRealtime();
+            poller.pollBackground();
+
+            verify(relay, timeout(5000).times(2)).relay(OutboxProcessingGroup.REALTIME,
+                policy.selectionFor(OutboxProcessingGroup.REALTIME), 100);
+            verify(relay, timeout(5000).times(3)).relay(OutboxProcessingGroup.BACKGROUND,
+                policy.selectionFor(OutboxProcessingGroup.BACKGROUND), 100);
+        });
+    }
+
+    @Test
+    @DisplayName("유효하지 않은 동시성 설정이면 시작을 거부한다")
+    void 잘못된_동시성_설정_거부() {
+        runner.withPropertyValues("app.event-outbox.workers.realtime.concurrency=0").run(context ->
+            assertThat(context).hasFailed());
+    }
+
+    @Test
     @DisplayName("각 폴링은 독립 executor에서 자기 그룹과 배치 크기로 Relay를 호출한다")
     void 그룹별_워커_연결() {
         runner.withPropertyValues(
@@ -43,16 +80,18 @@ class EventOutboxPollerTest {
             var realtime = context.getBean("realtimeOutboxExecutor", ThreadPoolTaskExecutor.class);
             var background = context.getBean("backgroundOutboxExecutor", ThreadPoolTaskExecutor.class);
             assertThat(realtime).isNotSameAs(background);
+            assertThat(realtime.getCorePoolSize()).isEqualTo(3);
+            assertThat(background.getCorePoolSize()).isEqualTo(2);
             assertThat(realtime.getThreadNamePrefix()).isEqualTo("outbox-realtime-");
             assertThat(background.getThreadNamePrefix()).isEqualTo("outbox-background-");
 
             poller.pollRealtime();
             poller.pollBackground();
 
-            verify(relay, timeout(5000)).relay(
+            verify(relay, timeout(5000).times(3)).relay(
                 OutboxProcessingGroup.REALTIME, policy.selectionFor(OutboxProcessingGroup.REALTIME), 7
             );
-            verify(relay, timeout(5000)).relay(
+            verify(relay, timeout(5000).times(2)).relay(
                 OutboxProcessingGroup.BACKGROUND, policy.selectionFor(OutboxProcessingGroup.BACKGROUND), 13
             );
         });
@@ -79,10 +118,10 @@ class EventOutboxPollerTest {
             poller.pollRealtime();
             poller.pollBackground();
 
-            verify(relay, timeout(5000)).relay(
+            verify(relay, timeout(5000).times(3)).relay(
                 OutboxProcessingGroup.REALTIME, policy.selectionFor(OutboxProcessingGroup.REALTIME), 23
             );
-            verify(relay, timeout(5000)).relay(
+            verify(relay, timeout(5000).times(2)).relay(
                 OutboxProcessingGroup.BACKGROUND, policy.selectionFor(OutboxProcessingGroup.BACKGROUND), 23
             );
         });

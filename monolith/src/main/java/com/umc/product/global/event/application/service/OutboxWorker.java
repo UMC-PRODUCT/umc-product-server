@@ -1,8 +1,10 @@
 package com.umc.product.global.event.application.service;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.stream.IntStream;
 
 import com.umc.product.global.event.application.port.out.OutboxEventSelection;
 
@@ -17,8 +19,7 @@ public final class OutboxWorker implements AutoCloseable {
     private final OutboxEventSelection selection;
     private final int batchSize;
     private final EventOutboxRelayMetrics metrics;
-    private boolean scheduled;
-    private boolean pending;
+    private final List<ExecutionSlot> slots;
     private boolean closed;
 
     public OutboxWorker(
@@ -39,6 +40,18 @@ public final class OutboxWorker implements AutoCloseable {
         int batchSize,
         EventOutboxRelayMetrics metrics
     ) {
+        this(group, executor, relay, routingPolicy, batchSize, metrics, 1);
+    }
+
+    public OutboxWorker(
+        OutboxProcessingGroup group,
+        Executor executor,
+        EventOutboxRelayService relay,
+        OutboxEventRoutingPolicy routingPolicy,
+        int batchSize,
+        EventOutboxRelayMetrics metrics,
+        int concurrency
+    ) {
         this.metrics = Objects.requireNonNull(metrics);
         this.group = Objects.requireNonNull(group);
         this.executor = Objects.requireNonNull(executor);
@@ -48,33 +61,41 @@ public final class OutboxWorker implements AutoCloseable {
             throw new IllegalArgumentException("배치 크기는 양수여야 합니다.");
         }
         this.batchSize = batchSize;
+        if (concurrency <= 0) {
+            throw new IllegalArgumentException("동시 실행 수는 양수여야 합니다.");
+        }
+        slots = IntStream.range(0, concurrency).mapToObj(index -> new ExecutionSlot()).toList();
     }
 
-    // 대기 중이거나 실행 중인 요청은 하나의 후속 배치 신호로 합친다.
+    // 슬롯마다 실행 요청을 하나의 후속 신호로 합쳐 executor 적재량을 제한한다.
     public synchronized boolean requestRun() {
         if (closed) {
             return false;
         }
-        pending = true;
-        if (scheduled) {
-            return true;
+        boolean accepted = false;
+        for (ExecutionSlot slot : slots) {
+            slot.pending = true;
+            if (slot.scheduled) {
+                accepted = true;
+                continue;
+            }
+            slot.scheduled = true;
+            try {
+                executor.execute(() -> drain(slot));
+                accepted = true;
+            } catch (RejectedExecutionException exception) {
+                slot.scheduled = false;
+                slot.pending = false;
+                metrics.recordRejection(group.name());
+                log.warn("Outbox worker 실행 요청 거절: group={}", group.name());
+            }
         }
-        scheduled = true;
-        try {
-            executor.execute(this::drain);
-            return true;
-        } catch (RejectedExecutionException exception) {
-            scheduled = false;
-            pending = false;
-            metrics.recordRejection(group.name());
-            log.warn("Outbox worker 실행 요청 거절: group={}", group.name());
-            return false;
-        }
+        return accepted;
     }
 
-    private void drain() {
+    private void drain(ExecutionSlot slot) {
         try {
-            while (takeSignal()) {
+            while (takeSignal(slot)) {
                 try {
                     relay.relay(group, selection, batchSize);
                 } catch (RuntimeException exception) {
@@ -83,19 +104,19 @@ public final class OutboxWorker implements AutoCloseable {
             }
         } catch (Error error) {
             synchronized (this) {
-                scheduled = false;
-                pending = false;
+                slot.scheduled = false;
+                slot.pending = false;
             }
             throw error;
         }
     }
 
-    private synchronized boolean takeSignal() {
-        if (closed || !pending) {
-            scheduled = false;
+    private synchronized boolean takeSignal(ExecutionSlot slot) {
+        if (closed || !slot.pending) {
+            slot.scheduled = false;
             return false;
         }
-        pending = false;
+        slot.pending = false;
         return true;
     }
 
@@ -103,6 +124,11 @@ public final class OutboxWorker implements AutoCloseable {
     @Override
     public synchronized void close() {
         closed = true;
-        pending = false;
+        slots.forEach(slot -> slot.pending = false);
+    }
+
+    private static final class ExecutionSlot {
+        private boolean scheduled;
+        private boolean pending;
     }
 }

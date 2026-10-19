@@ -7,13 +7,18 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.umc.product.global.config.OutboxRoutingConfig;
 import com.umc.product.global.event.application.service.OutboxEventRoutingPolicy;
@@ -45,6 +50,9 @@ class EventOutboxJpaRepositoryTest {
 
     @Autowired
     private EntityManagerFactory entityManagerFactory;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @Test
     @DisplayName("발행 가능한 이벤트를 다음 시도 시각 순서로 조회한다")
@@ -162,6 +170,55 @@ class EventOutboxJpaRepositoryTest {
         assertThat(realtime.oldestAgeSeconds()).isGreaterThanOrEqualTo(0);
         assertThat(background.pending()).isEqualTo(1);
         assertThat(background.processing()).isZero();
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @DisplayName("동일 그룹의 두 실행은 잠긴 row를 건너뛰고 서로 다른 이벤트를 선점한다")
+    void 병렬_선점_중복_방지() throws Exception {
+        Long first = persist(EventOutbox.record(TestEvent.create(), "{}"));
+        Long second = persist(EventOutbox.record(TestEvent.create(), "{}"));
+        CountDownLatch claimed = new CountDownLatch(2);
+        CountDownLatch release = new CountDownLatch(1);
+        var selection = new com.umc.product.global.event.application.port.out.OutboxEventSelection(
+            Set.of("test.event"), Set.of("test.event"), "chat.",
+            com.umc.product.global.event.application.port.out.OutboxEventSelection.PrefixMatch.NONE
+        );
+        var executor = Executors.newFixedThreadPool(2);
+        java.util.concurrent.Callable<List<Long>> claim = () -> new TransactionTemplate(transactionManager)
+            .execute(status -> {
+                var events = queryRepository.findPublishableForUpdate(selection, 1, Instant.now());
+                claimed.countDown();
+                try {
+                    if (!release.await(5, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("테스트 대기 시간 초과");
+                    }
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(exception);
+                }
+                events.forEach(event -> event.markProcessing(Instant.now().plusSeconds(300)));
+                entityManager.flush();
+                return events.stream().map(EventOutbox::getId).toList();
+            });
+        try {
+            var resultA = executor.submit(claim);
+            var resultB = executor.submit(claim);
+            assertThat(claimed.await(5, TimeUnit.SECONDS)).isTrue();
+            release.countDown();
+            var idsA = resultA.get(5, TimeUnit.SECONDS);
+            var idsB = resultB.get(5, TimeUnit.SECONDS);
+            assertThat(idsA).hasSize(1);
+            assertThat(idsB).hasSize(1).doesNotContainAnyElementsOf(idsA);
+            assertThat(java.util.stream.Stream.concat(idsA.stream(), idsB.stream()).toList())
+                .containsExactlyInAnyOrder(first, second);
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+            assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+            delete(first);
+            delete(second);
+        }
     }
 
     private Long persist(EventOutbox outbox) {

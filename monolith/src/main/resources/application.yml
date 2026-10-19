@@ -506,9 +506,11 @@ app:
       sample-interval-ms: ${EVENT_OUTBOX_METRICS_SAMPLE_INTERVAL_MS:30000}
     workers:
       realtime:
+        concurrency: ${EVENT_OUTBOX_REALTIME_CONCURRENCY:3}
         poll-interval-ms: ${EVENT_OUTBOX_REALTIME_POLL_INTERVAL_MS:${app.event-outbox.poll-interval-ms}}
         batch-size: ${EVENT_OUTBOX_REALTIME_BATCH_SIZE:${app.event-outbox.batch-size}}
       background:
+        concurrency: ${EVENT_OUTBOX_BACKGROUND_CONCURRENCY:2}
         poll-interval-ms: ${EVENT_OUTBOX_BACKGROUND_POLL_INTERVAL_MS:${app.event-outbox.poll-interval-ms}}
         batch-size: ${EVENT_OUTBOX_BACKGROUND_BATCH_SIZE:${app.event-outbox.batch-size}}
 
