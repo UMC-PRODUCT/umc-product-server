@@ -24,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.umc.product.global.config.OutboxRoutingConfig;
+import com.umc.product.global.event.adapter.in.scheduler.EventOutboxPoller;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Outbox 그룹별 Worker 실행")
@@ -149,10 +150,11 @@ class OutboxWorkerTest {
         var background = new OutboxWorker(
             OutboxProcessingGroup.BACKGROUND, backgroundExecutor, relay, policy, 10
         );
+        var poller = new EventOutboxPoller(realtime, background);
         try {
-            background.requestRun();
+            poller.pollBackground();
             assertThat(backgroundStarted.await(5, TimeUnit.SECONDS)).isTrue();
-            realtime.requestRun();
+            poller.pollRealtime();
             assertThat(realtimeCompleted.await(5, TimeUnit.SECONDS)).isTrue();
         } finally {
             realtime.close();
