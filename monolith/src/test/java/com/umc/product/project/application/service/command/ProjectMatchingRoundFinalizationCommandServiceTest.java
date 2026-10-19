@@ -612,7 +612,8 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             type, phase, 1L,
             Instant.now().minusSeconds(7_200),
             Instant.now().minusSeconds(3_600),
-            ROUND_DECISION_DEADLINE
+            ROUND_DECISION_DEADLINE,
+            ROUND_DECISION_DEADLINE.plusSeconds(7200)
         );
         ReflectionTestUtils.setField(round, "id", ROUND_ID);
         return round;
@@ -640,7 +641,8 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             type, MatchingPhase.FIRST, 1L,
             Instant.now().minusSeconds(86_400),
             Instant.now().plusSeconds(43_200),
-            Instant.now().plusSeconds(86_400)
+            Instant.now().plusSeconds(86_400),
+            Instant.now().plusSeconds(93_600)
         );
         ReflectionTestUtils.setField(round, "id", ROUND_ID);
         return round;

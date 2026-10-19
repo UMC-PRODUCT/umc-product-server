@@ -185,7 +185,8 @@ class MatchingRoundDeadlineSchedulerTest {
             MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, 1L,
             Instant.now().plusSeconds(86_400),
             Instant.now().plusSeconds(172_800),
-            Instant.now().plusSeconds(259_200)
+            Instant.now().plusSeconds(259_200),
+            Instant.now().plusSeconds(266_400)
         );
         ReflectionTestUtils.setField(round, "id", id);
         return round;

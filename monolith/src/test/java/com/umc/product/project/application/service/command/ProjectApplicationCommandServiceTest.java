@@ -683,7 +683,7 @@ class ProjectApplicationCommandServiceTest {
         ProjectMatchingRound round = ProjectMatchingRound.create(
             "기획-디자인 1차 매칭", null,
             MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, 1L,
-            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE
+            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE, ROUND_DECISION_DEADLINE.plusSeconds(7200)
         );
         ReflectionTestUtils.setField(round, "id", MATCHING_ROUND_ID);
         return round;
@@ -693,7 +693,7 @@ class ProjectApplicationCommandServiceTest {
         return ProjectMatchingRound.create(
             "프로젝트 매칭", null,
             matchingType, MatchingPhase.FIRST, 1L,
-            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE
+            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE, ROUND_DECISION_DEADLINE.plusSeconds(7200)
         );
     }
 

@@ -427,7 +427,8 @@ class ProjectPermissionQueryServiceTest {
             CHAPTER_ID,
             Instant.now().minusSeconds(60),
             Instant.now().plusSeconds(60),
-            Instant.now().plusSeconds(120)
+            Instant.now().plusSeconds(120),
+            Instant.now().plusSeconds(7320)
         );
     }
 

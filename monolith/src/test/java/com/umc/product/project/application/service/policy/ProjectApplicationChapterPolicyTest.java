@@ -74,7 +74,7 @@ class ProjectApplicationChapterPolicyTest {
         Instant now = Instant.now();
         return ProjectMatchingRound.create(
             "디자인 1차", null, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, chapterId,
-            now.minusSeconds(3600), now.plusSeconds(3600), now.plusSeconds(7200)
+            now.minusSeconds(3600), now.plusSeconds(3600), now.plusSeconds(7200), now.plusSeconds(14400)
         );
     }
 }

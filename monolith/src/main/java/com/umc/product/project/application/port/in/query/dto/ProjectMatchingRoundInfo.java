@@ -19,6 +19,7 @@ public record ProjectMatchingRoundInfo(
     Instant startsAt,
     Instant endsAt,
     Instant decisionDeadline,
+    Instant resultPublishAt,
     Instant autoDecisionExecutedAt,
     Long autoDecisionExecutedMemberId,
     Instant createdAt,
@@ -35,6 +36,7 @@ public record ProjectMatchingRoundInfo(
             .startsAt(matchingRound.getStartsAt())
             .endsAt(matchingRound.getEndsAt())
             .decisionDeadline(matchingRound.getDecisionDeadline())
+            .resultPublishAt(matchingRound.getResultPublishAt())
             .autoDecisionExecutedAt(matchingRound.getAutoDecisionExecutedAt())
             .autoDecisionExecutedMemberId(matchingRound.getAutoDecisionExecutedMemberId())
             .createdAt(matchingRound.getCreatedAt())

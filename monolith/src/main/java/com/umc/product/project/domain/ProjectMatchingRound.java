@@ -76,6 +76,10 @@ public class ProjectMatchingRound extends BaseEntity {
     @Column(nullable = false)
     private Instant decisionDeadline; // 선발 마감 기한
 
+    // 지원자에게 매칭 결과를 공개하는 시각
+    // 발표 시각이 없는 기존 차수는 null입니다.
+    private Instant resultPublishAt;
+
     // 선발 마감 기한이 지나서 스케쥴러 등에 의해서 자동으로 선발이 실행된 시간
     // null인 경우 아닙니다.
     private Instant autoDecisionExecutedAt;
@@ -87,7 +91,7 @@ public class ProjectMatchingRound extends BaseEntity {
     private ProjectMatchingRound(
         String name, String description, MatchingType type,
         MatchingPhase phase, Long chapterId,
-        Instant startsAt, Instant endsAt, Instant decisionDeadline
+        Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
     ) {
         this.name = name;
         this.description = description;
@@ -97,6 +101,7 @@ public class ProjectMatchingRound extends BaseEntity {
         this.startsAt = startsAt;
         this.endsAt = endsAt;
         this.decisionDeadline = decisionDeadline;
+        this.resultPublishAt = resultPublishAt;
     }
 
     /**
@@ -107,6 +112,8 @@ public class ProjectMatchingRound extends BaseEntity {
      * - 동일한 유형과 차수를 가진 매칭 차수는 생성할 수 없습니다.
      * <p>
      * - startsAt < endsAt < decisionDeadline 이어야 합니다.
+     * <p>
+     * - 결과 발표 시각은 선발 마감 시각보다 빠를 수 없습니다.
      * <p>
      * - 동일한 지부 내에서는 차수 간 startsAt ~ decisionDeadline 기간이 겹쳐서는 안됩니다.
      *
@@ -119,14 +126,15 @@ public class ProjectMatchingRound extends BaseEntity {
      * @param endsAt           매칭 종료 시간
      * @param decisionDeadline 매칭 기간 중 접수된 지원서의 합/불 결정 데드라인. <p> 경과되었을 때 UMC 규칙에 의한 최소 선발 인원을 뽑지 않은 경우 해당 규모만큼 자동으로
      *                         선발됩니다. <p> 최소 선발 인원을 제외한 나머지는 모두 불합격 처리됩니다.
+     * @param resultPublishAt  결과 발표 시각 (기존 차수의 미설정 값은 null)
      * @return 생성된 매칭 차수
      */
     public static ProjectMatchingRound create(
         String name, String description,
         MatchingType type, MatchingPhase phase, Long chapterId,
-        Instant startsAt, Instant endsAt, Instant decisionDeadline
+        Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
     ) {
-        validateDates(startsAt, endsAt, decisionDeadline);
+        validateDates(startsAt, endsAt, decisionDeadline, resultPublishAt);
 
         return ProjectMatchingRound.builder()
             .name(name)
@@ -137,6 +145,7 @@ public class ProjectMatchingRound extends BaseEntity {
             .startsAt(startsAt)
             .endsAt(endsAt)
             .decisionDeadline(decisionDeadline)
+            .resultPublishAt(resultPublishAt)
             .build();
     }
 
@@ -161,11 +170,18 @@ public class ProjectMatchingRound extends BaseEntity {
 
     /**
      * 매칭 차수의 날짜가 유효한지 검증합니다.
+     * <p>
+     * 시작 < 종료 < 결정 마감 순서여야 하며, 결과 발표 시각은 결정 마감보다 빠를 수 없습니다.
+     * <p>
+     * 발표 시각이 없는 기존 차수는 null을 허용하여 이름 등 다른 정보를 수정할 수 있도록 합니다.
      */
-    public static void validateDates(Instant startsAt, Instant endsAt, Instant decisionDeadline) {
+    public static void validateDates(
+        Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
+    ) {
         if (startsAt == null || endsAt == null || decisionDeadline == null
             || !startsAt.isBefore(endsAt)
-            || !endsAt.isBefore(decisionDeadline)) {
+            || !endsAt.isBefore(decisionDeadline)
+            || (resultPublishAt != null && resultPublishAt.isBefore(decisionDeadline))) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
         }
     }
@@ -175,9 +191,9 @@ public class ProjectMatchingRound extends BaseEntity {
      */
     public void update(
         String name, String description, MatchingType type, MatchingPhase phase,
-        Instant startsAt, Instant endsAt, Instant decisionDeadline
+        Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
     ) {
-        validateDates(startsAt, endsAt, decisionDeadline);
+        validateDates(startsAt, endsAt, decisionDeadline, resultPublishAt);
 
         this.name = name;
         this.description = description;
@@ -186,6 +202,7 @@ public class ProjectMatchingRound extends BaseEntity {
         this.startsAt = startsAt;
         this.endsAt = endsAt;
         this.decisionDeadline = decisionDeadline;
+        this.resultPublishAt = resultPublishAt;
     }
 
     /**
@@ -194,7 +211,7 @@ public class ProjectMatchingRound extends BaseEntity {
      * 각 매개변수에 대한 설명은 {@link #create}를 참조해주세요.
      */
     public void reschedule(Instant startsAt, Instant endsAt, Instant decisionDeadline) {
-        validateDates(startsAt, endsAt, decisionDeadline);
+        validateDates(startsAt, endsAt, decisionDeadline, resultPublishAt);
 
         this.startsAt = startsAt;
         this.endsAt = endsAt;

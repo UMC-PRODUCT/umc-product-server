@@ -120,7 +120,8 @@ class ProjectSeedDataCleanupPersistenceAdapterTest {
             chapterId,
             ROUND_STARTS_AT,
             ROUND_ENDS_AT,
-            ROUND_DECISION_DEADLINE
+            ROUND_DECISION_DEADLINE,
+            ROUND_DECISION_DEADLINE.plusSeconds(7200)
         );
         em.persist(round);
 

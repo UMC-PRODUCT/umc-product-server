@@ -1,5 +1,6 @@
 package com.umc.product.project.application.service.command;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -59,6 +60,63 @@ class ProjectMatchingRoundCommandServiceTest {
         sut = sutWithMinPhaseIntervalMinutes(1);
         given(getChallengerRoleUseCase.findAllByMemberId(EXECUTOR_MEMBER_ID))
             .willReturn(List.of(centralCoreRole()));
+    }
+
+    @Nested
+    class resultPublishAt {
+
+        @Test
+        void 발표_시각만_수정할_수_있다() {
+            // given
+            ProjectMatchingRound existing = futureRound(MatchingType.PLAN_DESIGN);
+            Instant resultPublishAt = existing.getResultPublishAt().plusSeconds(3600);
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(existing);
+            UpdateProjectMatchingRoundCommand command = UpdateProjectMatchingRoundCommand.builder()
+                .matchingRoundId(ROUND_ID)
+                .requesterMemberId(EXECUTOR_MEMBER_ID)
+                .resultPublishAt(resultPublishAt)
+                .build();
+
+            // when
+            sut.update(command);
+
+            // then
+            assertThat(existing.getResultPublishAt()).isEqualTo(resultPublishAt);
+        }
+
+        @Test
+        void 수정_요청에서_발표_시각을_생략하면_기존_값을_유지한다() {
+            // given
+            ProjectMatchingRound existing = futureRound(MatchingType.PLAN_DESIGN);
+            Instant resultPublishAt = existing.getResultPublishAt();
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(existing);
+
+            // when
+            sut.update(updateCommand(ROUND_ID));
+
+            // then
+            assertThat(existing.getResultPublishAt()).isEqualTo(resultPublishAt);
+        }
+
+        @Test
+        void 선발_마감만_발표_시각_이후로_수정하면_거부한다() {
+            // given
+            ProjectMatchingRound existing = futureRound(MatchingType.PLAN_DESIGN);
+            Instant resultPublishAt = existing.getResultPublishAt();
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(existing);
+            UpdateProjectMatchingRoundCommand command = UpdateProjectMatchingRoundCommand.builder()
+                .matchingRoundId(ROUND_ID)
+                .requesterMemberId(EXECUTOR_MEMBER_ID)
+                .decisionDeadline(resultPublishAt.plusSeconds(1))
+                .build();
+
+            // when & then
+            assertThatThrownBy(() -> sut.update(command))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
+            then(scheduleMatchingRoundDeadlinePort).should(never()).schedule(any());
+        }
     }
 
     @Nested
@@ -311,6 +369,7 @@ class ProjectMatchingRoundCommandServiceTest {
             .startsAt(startsAt)
             .endsAt(endsAt)
             .decisionDeadline(decisionDeadline)
+            .resultPublishAt(decisionDeadline.plusSeconds(7200))
             .requesterMemberId(EXECUTOR_MEMBER_ID)
             .build();
     }
@@ -332,6 +391,7 @@ class ProjectMatchingRoundCommandServiceTest {
             .startsAt(Instant.parse(startsAt))
             .endsAt(Instant.parse(endsAt))
             .decisionDeadline(Instant.parse(decisionDeadline))
+            .resultPublishAt(Instant.parse(decisionDeadline).plusSeconds(7200))
             .requesterMemberId(EXECUTOR_MEMBER_ID)
             .build();
     }
@@ -356,7 +416,8 @@ class ProjectMatchingRoundCommandServiceTest {
             type, MatchingPhase.FIRST, 1L,
             Instant.now().plusSeconds(86_400),
             Instant.now().plusSeconds(172_800),
-            Instant.now().plusSeconds(259_200)
+            Instant.now().plusSeconds(259_200),
+            Instant.now().plusSeconds(266_400)
         );
         ReflectionTestUtils.setField(round, "id", ROUND_ID);
         return round;
@@ -379,7 +440,8 @@ class ProjectMatchingRoundCommandServiceTest {
             chapterId,
             Instant.parse(startsAt),
             Instant.parse(endsAt),
-            Instant.parse(decisionDeadline)
+            Instant.parse(decisionDeadline),
+            Instant.parse(decisionDeadline).plusSeconds(7200)
         );
         ReflectionTestUtils.setField(round, "id", id);
         return round;

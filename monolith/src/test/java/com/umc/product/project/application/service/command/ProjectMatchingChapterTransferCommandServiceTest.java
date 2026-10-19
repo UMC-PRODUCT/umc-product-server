@@ -337,7 +337,7 @@ class ProjectMatchingChapterTransferCommandServiceTest {
         Instant now = Instant.now();
         ProjectMatchingRound round = ProjectMatchingRound.create(
             "디자인 1차", null, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, chapterId,
-            now.minusSeconds(3600), now.plusSeconds(3600), now.plusSeconds(7200)
+            now.minusSeconds(3600), now.plusSeconds(3600), now.plusSeconds(7200), now.plusSeconds(14400)
         );
         return ProjectApplication.create(ProjectApplicationForm.create(project, 500L), 1L, DESIGNER_ID, round);
     }
