@@ -166,7 +166,7 @@ public class ProjectApplication extends BaseEntity {
      * 확정된 자동 선발 결과를 지원서에 반영합니다.
      * <p>
      * PM 의 단건 토글({@link #approve}/{@link #reject})과 달리 차수 잠금 검증을 거치지 않으며,
-     * 정책에 따라 도출된 최종 status (APPROVED 또는 REJECTED) 를 그대로 적용합니다.
+     * 발표 시각이 있는 차수는 활성화된 팀원의 배정을 기준으로, 기존 차수는 자동 선발 정책의 결과를 기준으로 합불을 반영합니다.
      * <p>
      * 발표 시각이 있는 차수는 결과 공개 서비스에서, 기존 차수는 자동 선발 서비스에서 호출합니다.
      *

@@ -197,7 +197,7 @@ public class ProjectApplicationQueryController {
         summary = "지원서 단건 상세 조회",
         description = """
             지원자, 매칭 차수, 상태, 제출/처리 시각, 지원 폼, 답변, 첨부 파일을 함께 조회합니다.
-            지원자 본인 조회 시 해당 매칭 차수의 `resultPublishAt` 전이면 제출 이후 상태의 `status` 는 `null` 입니다.
+            지원자 본인 조회 시 해당 매칭 차수의 발표 작업이 완료되어 `resultPublishedAt`이 기록되기 전이면 제출 이후 상태의 `status` 는 `null` 입니다.
             `resultPublishAt` 이 null인 기존 차수는 `decisionDeadline` 이 지난 뒤 `status` 를 반환합니다.
             임시저장(DRAFT)과 지원 취소(CANCELLED)는 시점과 관계없이 표시합니다.
             지원서 내용과 답변은 그대로 포함합니다.

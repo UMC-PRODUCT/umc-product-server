@@ -36,7 +36,7 @@ import lombok.Builder;
  * @param matchingRoundPhase  매칭 차수
  * @param status              표시용 상태 (DRAFT 포함). 본인 조회 시 해당 매칭 차수의 결과 공개 전이면 제출 이후 상태는 {@code null}
  * @param submittedAt         지원시각 (DRAFT 이면 null)
- * @param statusChangedAt     처리시각 (합/불 결정 전이면 null)
+ * @param statusChangedAt     처리시각 (합/불 결정 전 또는 본인 조회에서 결과 공개 전이면 null)
  * @param formStructure       지원자 파트 기준 폼 구조 (COMMON + applicantPart 의 PART 섹션만 포함)
  * @param formResponse        FormResponse 메타 (제출 시각 / 마지막 저장 시각 등)
  * @param answersByQuestionId 답변이 있는 questionId 만 매핑됨 — 답변 없는 질문은 키 자체가 없음

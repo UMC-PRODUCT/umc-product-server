@@ -283,7 +283,6 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         ProjectMatchingRound round,
         Long executedByMemberId
     ) {
-
         List<Project> projects = loadProjectPort.listByChapterIdAndStatus(
             round.getChapterId(),
             ProjectStatus.IN_PROGRESS

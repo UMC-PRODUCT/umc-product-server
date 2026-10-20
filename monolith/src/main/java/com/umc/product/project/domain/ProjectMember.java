@@ -117,7 +117,7 @@ public class ProjectMember extends BaseEntity {
     public static ProjectMember createFromApplication(
         ProjectApplication application, ChallengerPart part, Long decidedByMemberId
     ) {
-         ProjectMember pm = createForMatching(
+        ProjectMember pm = createForMatching(
             application.getApplicationForm().getProject(),
             application.getApplicantMemberId(),
             part,

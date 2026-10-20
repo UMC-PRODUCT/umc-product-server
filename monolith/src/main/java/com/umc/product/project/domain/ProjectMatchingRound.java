@@ -1,6 +1,7 @@
 package com.umc.product.project.domain;
 
 import java.time.Instant;
+import java.util.Objects;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.project.domain.enums.MatchingPhase;
@@ -55,14 +56,7 @@ public class ProjectMatchingRound extends BaseEntity {
     @Column(nullable = false)
     private MatchingType type; // 매칭의 종류
 
-    /*
-    몇 차 매칭인지
-    아래는 4차 도입 전 설계 메모입니다. 현재는 FOURTH를 별도 차수로 등록하고 시작·발표 시각을 관리합니다.
-    고민사항 : 처음에는 Long 값으로 phaseNo로 넣었었는데, 매칭 관련해서는 확장성이 사실 상 필요 없는 점을 고려하였음.
-    또한 랜덤매칭의 경우, UI 상에 표시해줄 필요성은 있다고 생각하는데 .. DB에서 THIRD가 지난 상태를 랜덤매칭으로 지정할지가 고민 ..
-
-    -> 랜덤매칭에 최초에 기간이 필요했던 이유는 사람이 일을 해야하니까인데.. 지금은 그냥 랜덤매칭 딸깎 하면 되는거라 enum에 넣을 필요는 없을 듯
-     */
+    // 1~3차 지원 매칭과 4차 랜덤 매칭을 구분합니다.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MatchingPhase phase; // 매칭 차수
@@ -81,7 +75,7 @@ public class ProjectMatchingRound extends BaseEntity {
     private Instant resultPublishedAt; // 결과 공개 완료 시각 (공개 전에는 null)
 
     // 1~3차는 선발 마감 이후, 4차는 시작 시각에 자동 선발 또는 랜덤 배정이 실행된 시간
-    // null인 경우 아닙니다.
+    // 아직 실행하지 않았으면 null입니다.
     private Instant autoDecisionExecutedAt;
     // 자동 선발이 실행된 경우, 누가 실행했는지 (운영진 ID)
     // 스케쥴러가 진행한 경우 null로 유지함
@@ -218,7 +212,7 @@ public class ProjectMatchingRound extends BaseEntity {
         if (isAutoDecisionExecuted() && (this.type != type || this.phase != phase
             || !this.startsAt.equals(startsAt) || !this.endsAt.equals(endsAt)
             || !this.decisionDeadline.equals(decisionDeadline)
-            || !java.util.Objects.equals(this.resultPublishAt, resultPublishAt))) {
+            || !Objects.equals(this.resultPublishAt, resultPublishAt))) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
         }
 
