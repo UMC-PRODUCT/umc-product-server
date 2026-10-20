@@ -593,6 +593,115 @@ class ProjectApplicationCommandServiceTest {
     }
 
     @Nested
+    class decide_revertToSubmitted {
+
+        @Test
+        void SUBMITTED_입력시_APPROVED를_대기로_되돌리고_저장한다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            ProjectApplicationInfo info = sut.decide(
+                APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, "재검토", DECIDER_MEMBER_ID
+            );
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            assertThat(application.getStatusChangedMemberId()).isEqualTo(DECIDER_MEMBER_ID);
+            assertThat(application.getStatusChangeReason()).isEqualTo("재검토");
+            assertThat(info.status()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+
+        @Test
+        void SUBMITTED_입력시_REJECTED도_대기로_되돌린다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.REJECTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+
+        @Test
+        void SUBMITTED_입력은_quota_검증을_적용하지_않는다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.REJECTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
+                .willReturn(Map.of(ChallengerPart.WEB, 99L));   // 초과 상황이지만 대기 되돌리기는 무관
+
+            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+        }
+
+        @Test
+        void SUBMITTED_입력시_같은_차수에_다른_활성_지원서가_있으면_ALREADY_EXISTS() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.REJECTED);
+            ProjectApplication otherDraft = otherApplication(
+                701L, APPLICANT_MEMBER_ID, application.getApplicationForm(), ProjectApplicationStatus.DRAFT
+            );
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(loadProjectApplicationPort.findByProjectIdAndApplicantMemberIdAndRoundIdAndStatus(
+                any(), eq(APPLICANT_MEMBER_ID), any(), eq(ProjectApplicationStatus.DRAFT)
+            )).willReturn(Optional.of(otherDraft));
+
+            assertThatThrownBy(() -> sut.decide(
+                APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_ALREADY_EXISTS);
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        void SUBMITTED_입력시_자기_자신만_활성_지원서로_조회되면_되돌린다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(loadProjectApplicationPort.findByProjectIdAndApplicantMemberIdAndRoundIdAndStatus(
+                any(), eq(APPLICANT_MEMBER_ID), any(), eq(ProjectApplicationStatus.SUBMITTED)
+            )).willReturn(Optional.of(application));
+
+            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+
+        @Test
+        void PM은_결정_마감_후에는_대기로_되돌릴_수_없다() {
+            ProjectMatchingRound expiredRound = openRound();
+            ReflectionTestUtils.setField(expiredRound, "decisionDeadline", NOW.minusSeconds(60));
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED, expiredRound);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> sut.decide(
+                APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        void SUPER_ADMIN은_결정_마감_후에도_대기로_되돌릴_수_있다() {
+            ProjectMatchingRound expiredRound = openRound();
+            ReflectionTestUtils.setField(expiredRound, "decisionDeadline", NOW.minusSeconds(60));
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED, expiredRound);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(checkChallengerAuthorityUseCase.isSuperAdmin(DECIDER_MEMBER_ID)).willReturn(true);
+
+            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, "운영 조치", DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            assertThat(application.getStatusChangeReason()).isEqualTo("운영 조치");
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+    }
+
+    @Nested
     class cancel {
 
         @Test

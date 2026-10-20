@@ -272,6 +272,9 @@ public class ProjectApplicationCommandService implements
         if (targetStatus == ApplicationDecisionStatus.REJECTED && isDecidableStatus(application.getStatus())) {
             validateMinimumSelectionAfterRejection(application);
         }
+        if (targetStatus == ApplicationDecisionStatus.SUBMITTED) {
+            validateNoOtherActiveApplication(application);
+        }
 
         applyDecision(application, targetStatus, reason, decidedByMemberId);
 
@@ -302,6 +305,37 @@ public class ProjectApplicationCommandService implements
                 } else {
                     application.reject(decidedByMemberId, reason);
                 }
+            }
+            case SUBMITTED -> {
+                if (superAdmin) {
+                    application.forceRevertToSubmitted(decidedByMemberId, reason);
+                } else {
+                    application.revertToSubmitted(decidedByMemberId, reason);
+                }
+            }
+        }
+    }
+
+    /**
+     * 대기(SUBMITTED)로 되돌리기 전, 같은 (프로젝트, 차수, 지원자)에 다른 활성(DRAFT/SUBMITTED) 지원서가 없는지 검증한다.
+     * <p>
+     * 활성 지원서는 partial unique index 로 (양식, 차수, 지원자)당 하나만 허용되므로, 다른 활성 지원서가 있는 채로 되돌리면
+     * 저장 시점에 제약 위반이 난다. 그 전에 {@link ProjectErrorCode#PROJECT_APPLICATION_ALREADY_EXISTS} 로 막는다.
+     */
+    private void validateNoOtherActiveApplication(ProjectApplication application) {
+        Long projectId = application.getApplicationForm().getProject().getId();
+        Long roundId = application.getAppliedMatchingRound().getId();
+        for (ProjectApplicationStatus activeStatus : List.of(
+            ProjectApplicationStatus.DRAFT, ProjectApplicationStatus.SUBMITTED
+        )) {
+            boolean otherActiveExists = loadProjectApplicationPort
+                .findByProjectIdAndApplicantMemberIdAndRoundIdAndStatus(
+                    projectId, application.getApplicantMemberId(), roundId, activeStatus
+                )
+                .filter(other -> !other.getId().equals(application.getId()))
+                .isPresent();
+            if (otherActiveExists) {
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_ALREADY_EXISTS);
             }
         }
     }
