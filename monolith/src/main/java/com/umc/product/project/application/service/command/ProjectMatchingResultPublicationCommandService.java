@@ -24,9 +24,8 @@ import com.umc.product.project.domain.exception.ProjectErrorCode;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 매칭 차수의 결과 공개를 처리하는 서비스.
- * <p>
- * 지원서의 최종 합불 반영, 공개 대기 멤버의 활성화와 차수의 공개 완료 기록을 동일한 트랜잭션에서 처리합니다.
+ * 지원서 합불, 팀원 활성화, 공개 완료 시각을 함께 저장한다.
+ * 도중에 실패하면 모두 롤백한다.
  */
 @Service
 @RequiredArgsConstructor
@@ -45,7 +44,6 @@ public class ProjectMatchingResultPublicationCommandService implements PublishPr
             round = loadProjectMatchingRoundPort.getByIdForUpdate(matchingRoundId);
         } catch (ProjectDomainException e) {
             if (e.getBaseCode() == ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FOUND) {
-                // 삭제된 차수는 처리하지 않는다.
                 return;
             }
             throw e;
@@ -56,7 +54,6 @@ public class ProjectMatchingResultPublicationCommandService implements PublishPr
         }
 
         Set<Long> approvedApplicationIds = new HashSet<>();
-        // 프로젝트와 배정 행을 잠가 중단·완료 처리와 결과 공개의 경합을 방지한다.
         for (ProjectMember member : loadProjectMemberPort.listPendingByMatchingRoundId(matchingRoundId)) {
             ProjectStatus projectStatus = member.getProject().getStatus();
             if (projectStatus == ProjectStatus.IN_PROGRESS) {
@@ -69,7 +66,7 @@ public class ProjectMatchingResultPublicationCommandService implements PublishPr
             }
         }
 
-        // 선발을 다시 계산하지 않고, 실제 공개하는 배정에 연결된 지원서만 합격 처리한다.
+        // ACTIVE로 변경한 팀원의 지원서는 합격, 나머지 판정 대상 지원서는 불합격 처리한다.
         List<ProjectApplication> applications = loadProjectApplicationPort.listByMatchingRoundId(matchingRoundId).stream()
             .filter(application -> application.getStatus() == ProjectApplicationStatus.SUBMITTED
                 || application.getStatus() == ProjectApplicationStatus.APPROVED
@@ -84,7 +81,6 @@ public class ProjectMatchingResultPublicationCommandService implements PublishPr
         }
         saveProjectApplicationPort.saveAll(applications);
 
-        // 지원서 합불과 멤버 활성화를 반영한 후 공개 완료 시각을 기록한다.
         round.publishResult(now);
     }
 }

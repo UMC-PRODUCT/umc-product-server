@@ -361,9 +361,7 @@ public class ProjectApplicationQueryService
     }
 
     /**
-     * 지원자 본인에게 지원 상태를 표시할 수 있는지 판단한다.
-     * <p>
-     * DRAFT 와 CANCELLED 는 항상 표시하고, 나머지는 해당 차수의 {@code isResultPublishedAt} 으로 판단한다.
+     * DRAFT와 CANCELLED는 항상 표시하고, 나머지 지원 상태는 결과 공개 후 표시한다.
      */
     private boolean isStatusVisibleToApplicantSelf(ProjectApplication application) {
         ProjectApplicationStatus status = application.getStatus();

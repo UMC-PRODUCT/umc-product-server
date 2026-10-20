@@ -309,7 +309,7 @@ public class ProjectApplicationCommandService implements
     /**
      * APPROVED 토글 시 잔여 자리 검증.
      * <p>
-     * 잔여 자리 = 전체 TO − (이전 차수까지 실제 배정된 멤버(ACTIVE/PENDING_PUBLICATION)) − (현재 차수에서 같은 (project, part) 의 APPROVED 카운트).
+     * 잔여 자리 = 전체 TO − (이전 차수까지 ACTIVE 및 PENDING_PUBLICATION 멤버) − (현재 차수에서 같은 (project, part) 의 APPROVED 카운트).
      * 이 값이 0 이하면 자리가 없으므로 예외를 던진다.
      */
     private void validateRemainingQuota(ProjectApplication application) {

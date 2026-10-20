@@ -56,10 +56,10 @@ import com.umc.product.project.domain.exception.ProjectErrorCode;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 매칭 차수 종료 시점에 자동 선발을 실행하는 서비스 (MATCHING-201 + 스케줄러 공통 진입점).
+ * 1~3차 자동 선발과 4차 랜덤 배정을 실행하는 서비스 (MATCHING-201 + 스케줄러 공통 진입점).
  * <p>
  * CRUD lifecycle (생성/수정/삭제) 은 {@link ProjectMatchingRoundCommandService} 가 책임지며,
- * 본 서비스는 lifecycle 종료 트리거({@code decisionDeadline} 도달) 후의 처리만 담당한다.
+ * 본 서비스는 1~3차 결정 마감 후의 선발과 4차 시작 시점의 배정을 담당한다.
  * <p>
  * CRUD 와 분리한 이유: lifecycle 호출 흐름({@code Service → Registry})과 트리거 흐름
  * ({@code Registry → Service}) 의 양 방향이 한 클래스에 모이면 순환 의존성이 발생하기 때문이다.
@@ -210,7 +210,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     /**
      * 본 차수에서 정책 적용 시 입력으로 사용할 (project, part) 별 남은 자리 수 맵을 한 번에 구한다.
      * <p>
-     * 그룹 수만큼 DB 를 두 번씩 치던 기존 단건 호출 대신, projectId 집합 단위로 partQuota 와 active 멤버 수를
+     * 그룹 수만큼 DB 를 두 번씩 치던 기존 단건 호출 대신, projectId 집합 단위로 partQuota 와 ACTIVE 및 PENDING_PUBLICATION 멤버 수를
      * 일괄 조회한 뒤 in-memory 로 차감한다.
      */
     private Map<ProjectPartKey, Integer> buildRemainingQuotaMap(Set<ProjectPartKey> keys) {

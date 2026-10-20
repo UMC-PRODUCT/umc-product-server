@@ -67,7 +67,7 @@ public class ProjectApplicationQueryController {
             <ul>
               <li>보내지 않으면 임시저장(DRAFT)을 제외한 지원서와 랜덤 매칭 카드를 함께 조회합니다.</li>
               <li>보내면 해당 상태를 확인할 수 있는 지원서만 조회합니다.
-                  제출 이후 상태는 해당 매칭 차수의 `resultPublishAt` 부터 확인할 수 있습니다.
+                  제출 이후 상태는 해당 매칭 차수의 발표 작업이 완료되어 `resultPublishedAt`이 기록된 뒤 확인할 수 있습니다.
                   `resultPublishAt` 이 null인 기존 차수는 `decisionDeadline` 이 지난 뒤 확인할 수 있습니다.
                   랜덤 매칭 카드는 포함하지 않습니다.</li>
             </ul>

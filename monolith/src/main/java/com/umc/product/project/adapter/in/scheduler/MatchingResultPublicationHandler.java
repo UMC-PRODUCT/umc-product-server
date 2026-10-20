@@ -12,10 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 매칭 결과 발표 시점에 공개 UseCase 를 호출하는 driving adapter.
- * <p>
- * out-side {@link com.umc.product.project.adapter.out.scheduler.MatchingRoundDeadlineScheduler}
- * 가 등록한 1회성 task 에서 호출합니다.
+ * 스케줄러가 발표 시각에 호출하여 매칭 결과를 공개한다.
+ * 처리 중 예외가 발생하면 로그와 실패 지표를 기록하고 종료한다. 자동 재시도는 하지 않는다.
  */
 @Component
 @RequiredArgsConstructor
@@ -27,9 +25,6 @@ public class MatchingResultPublicationHandler {
     private final PublishProjectMatchingResultUseCase publishProjectMatchingResultUseCase;
     private final OperationalMetrics operationalMetrics;
 
-    /**
-     * 발표 시점에 1회 호출되어 결과를 공개한다. 예외는 기록하고 종료하여 다음 task 진행을 막지 않는다.
-     */
     public void handle(Long matchingRoundId) {
         Instant startedAt = Instant.now();
         try {

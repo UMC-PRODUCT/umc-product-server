@@ -11,13 +11,12 @@ public interface LoadProjectMatchingRoundPort {
     ProjectMatchingRound getById(Long id);
 
     /**
-     * 매칭 차수를 비관적 쓰기 잠금으로 조회합니다. 자동 선발·결과 공개의 중복 실행을 방지합니다.
+     * 같은 차수의 선발·발표가 동시에 처리되지 않도록 차수 행을 잠금 후 조회합니다.
      */
     ProjectMatchingRound getByIdForUpdate(Long id);
 
     /**
-     * 결과 발표 시각이 설정됐으며 아직 공개되지 않은 차수를 조회합니다.
-     * 서버 시작 시 결과 발표 예약을 복구하는 데 사용합니다.
+     * 발표 시각이 설정되어 있고, 아직 발표 작업이 끝나지 않은 차수를 조회합니다.
      */
     List<ProjectMatchingRound> listAllNotPublished();
 

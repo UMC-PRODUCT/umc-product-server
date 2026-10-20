@@ -25,12 +25,11 @@ import jakarta.annotation.PostConstruct;
  * <p>
  * 매칭 차수 lifecycle ({@code create} / {@code update} / {@code delete}) 호출에 맞춰
  * {@link TaskScheduler} 에 자동 선발과 결과 발표 시점의 1회성 task 를 등록한다.
- * 자동 선발은 in-side {@link MatchingRoundDeadlineHandler}, 결과 공개는
- * {@link MatchingResultPublicationHandler} 가 실행하며,
+ * 자동 선발은 {@link MatchingRoundDeadlineHandler}, 결과 발표는 {@link MatchingResultPublicationHandler} 가 실행하며,
  * 본 클래스는 등록/취소/상태 보관만 담당한다.
  * <p>
- * 부팅 시 미처리 자동 선발과 결과 발표 작업을 다시 등록한다.
- * 다중 인스턴스 환경에서 동일 차수의 작업이 중복 등록되어도 service 측에서 잠금과 완료 여부를 확인한다.
+ * 부팅 시 아직 처리되지 않은 자동 선발과 결과 발표 작업을 다시 등록한다.
+ * 다중 인스턴스에서 같은 작업을 실행해도 service 에서 완료 여부를 확인해 중복 처리하지 않는다.
  */
 @Component
 @ConditionalOnProperty(
@@ -41,7 +40,7 @@ import jakarta.annotation.PostConstruct;
 public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDeadlinePort {
 
     /**
-     * 자동 선발 발화 시점을 deadline 정각이 아닌 buffer 만큼 뒤로 미룬다.
+     * 1~3차 자동 선발 발화 시점을 deadline 정각이 아닌 buffer 만큼 뒤로 미룬다.
      * <p>
      * - 클럭 정밀도: deadline 정각에 발화 시 {@code isDecisionDeadlinePassed} 가 false 가 돼 NOT_FINALIZABLE 로 종료될 위험 회피
      * - PM 마지막 토글 커밋과의 짧은 race 보호
@@ -104,7 +103,7 @@ public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDead
     }
 
     /**
-     * 결과 발표 시각에 1회성 task 를 등록한다. 같은 차수의 기존 발표 예약은 취소한다.
+     * 발표 시각에 공개 작업을 예약한다. 기존 예약이 있으면 교체한다.
      */
     public void schedulePublication(ProjectMatchingRound round) {
         ScheduledFuture<?> previous = publicationTasks.remove(round.getId());

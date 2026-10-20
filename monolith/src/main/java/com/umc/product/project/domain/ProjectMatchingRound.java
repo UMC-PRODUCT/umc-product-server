@@ -55,6 +55,14 @@ public class ProjectMatchingRound extends BaseEntity {
     @Column(nullable = false)
     private MatchingType type; // 매칭의 종류
 
+    /*
+    몇 차 매칭인지
+    아래는 4차 도입 전 설계 메모입니다. 현재는 FOURTH를 별도 차수로 등록하고 시작·발표 시각을 관리합니다.
+    고민사항 : 처음에는 Long 값으로 phaseNo로 넣었었는데, 매칭 관련해서는 확장성이 사실 상 필요 없는 점을 고려하였음.
+    또한 랜덤매칭의 경우, UI 상에 표시해줄 필요성은 있다고 생각하는데 .. DB에서 THIRD가 지난 상태를 랜덤매칭으로 지정할지가 고민 ..
+
+    -> 랜덤매칭에 최초에 기간이 필요했던 이유는 사람이 일을 해야하니까인데.. 지금은 그냥 랜덤매칭 딸깎 하면 되는거라 enum에 넣을 필요는 없을 듯
+     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MatchingPhase phase; // 매칭 차수
@@ -72,7 +80,7 @@ public class ProjectMatchingRound extends BaseEntity {
     private Instant resultPublishAt; // 결과 발표 예정 시각 (기존 차수는 null)
     private Instant resultPublishedAt; // 결과 공개 완료 시각 (공개 전에는 null)
 
-    // 자동 선발 또는 4차 랜덤 배정이 실행된 시간
+    // 1~3차는 선발 마감 이후, 4차는 시작 시각에 자동 선발 또는 랜덤 배정이 실행된 시간
     // null인 경우 아닙니다.
     private Instant autoDecisionExecutedAt;
     // 자동 선발이 실행된 경우, 누가 실행했는지 (운영진 ID)
@@ -117,7 +125,8 @@ public class ProjectMatchingRound extends BaseEntity {
      * @param startsAt         매칭 시작 시간
      * @param endsAt           매칭 종료 시간
      * @param decisionDeadline 매칭 기간 중 접수된 지원서의 합/불 결정 데드라인. <p> 경과되었을 때 UMC 규칙에 의한 최소 선발 인원을 뽑지 않은 경우 해당 규모만큼 자동으로
-     *                         선발됩니다. <p> 최소 선발 인원을 제외한 나머지는 모두 불합격 처리됩니다.
+     *                         선발됩니다. <p> 최종 선발되지 않은 지원서는 불합격 처리됩니다. 발표 시각이 있는 차수는 합불을 발표 시 반영합니다.
+     *                         <p> 4차는 endsAt과 같은 시각을 입력하며, 랜덤 배정은 startsAt에 실행됩니다.
      * @param resultPublishAt  결과 발표 시각 (기존 차수의 미설정 값은 null)
      * @return 생성된 매칭 차수
      */
@@ -162,10 +171,7 @@ public class ProjectMatchingRound extends BaseEntity {
 
     /**
      * 매칭 차수의 날짜가 유효한지 검증합니다.
-     * <p>
-     * 시작 < 종료 < 결정 마감 순서여야 하며, 결과 발표 시각은 결정 마감보다 늦어야 합니다.
-     * <p>
-     * 발표 시각이 없는 기존 차수는 null을 허용하여 이름 등 다른 정보를 수정할 수 있도록 합니다.
+     * 1~3차는 시작 < 종료 < 결정 마감 < 발표 순서이며, 발표 시각이 없는 기존 차수는 발표 시각 검사를 생략합니다.
      */
     public static void validateDates(
         Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
@@ -179,8 +185,7 @@ public class ProjectMatchingRound extends BaseEntity {
     }
 
     /**
-     * 4차는 지원 기간이 없으므로 종료와 마감을 같은 시각으로 받습니다.
-     * 시작 시각에 랜덤 배정을 실행하고 마감 이후 발표 시각에 공개합니다.
+     * 4차는 시작 < 종료 = 결정 마감 < 발표 순서인지 확인합니다. 1~3차는 일반 일정 규칙을 적용합니다.
      */
     public static void validateSchedule(
         MatchingType type, MatchingPhase phase,
@@ -241,9 +246,9 @@ public class ProjectMatchingRound extends BaseEntity {
     }
 
     /**
-     * 매칭 차수에 대해 랜덤 매칭을 실행하는 경우 사용됩니다. 실행한 지부장 Member ID를 받습니다.
+     * 매칭 차수의 자동 선발 또는 랜덤 배정 완료를 기록합니다.
      *
-     * @param executedByMemberId 실행한 지부장 ID
+     * @param executedByMemberId 실행한 운영진 ID. 스케줄러 호출 시 null
      */
     public void executeAutoDecision(Long executedByMemberId) {
         this.autoDecisionExecutedAt = Instant.now();
@@ -290,12 +295,7 @@ public class ProjectMatchingRound extends BaseEntity {
     }
 
     /**
-     * 결과 발표 시각에 도달한 차수를 공개할 수 있는지 판단합니다.
-     * <p>
-     * 자동 선발이 완료됐으며 아직 공개되지 않은 차수만 대상입니다.
-     *
-     * @param now 기준 시각
-     * @return 결과 공개 가능 여부
+     * 발표 시각이 되었고 선발이 끝난 차수 중, 아직 공개하지 않은 차수인지 확인합니다.
      */
     public boolean canPublishAt(Instant now) {
         return resultPublishAt != null && !now.isBefore(resultPublishAt)
@@ -303,11 +303,7 @@ public class ProjectMatchingRound extends BaseEntity {
     }
 
     /**
-     * 매칭 결과의 공개 완료 시각을 기록합니다.
-     * <p>
-     * 팀원 활성화와 동일한 트랜잭션에서 호출합니다.
-     *
-     * @param now 공개 완료 시각
+     * 지원서 합불과 팀원 상태를 반영한 뒤 공개 완료 시각을 기록합니다.
      */
     public void publishResult(Instant now) {
         if (!canPublishAt(now)) {
@@ -317,13 +313,8 @@ public class ProjectMatchingRound extends BaseEntity {
     }
 
     /**
-     * 특정 시점에 지원자에게 매칭 결과를 공개할 수 있는지 판단합니다.
-     * <p>
-     * 발표 작업에서 팀원 활성화와 함께 {@code resultPublishedAt} 을 기록한 뒤 공개합니다.
-     * {@code resultPublishAt} 이 null인 기존 차수는 {@code decisionDeadline < now} 이면 공개합니다.
-     *
-     * @param now 기준 시각
-     * @return 매칭 결과 공개 가능 여부
+     * 발표 작업이 끝났는지 확인합니다. 예정 시각이 지났더라도 작업이 끝나지 않았으면 비공개입니다.
+     * 발표 시각이 없는 기존 차수는 PM 결정 마감이 지나면 공개합니다.
      */
     public boolean isResultPublishedAt(Instant now) {
         if (resultPublishAt == null) {

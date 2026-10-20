@@ -112,9 +112,7 @@ public class ProjectMember extends BaseEntity {
 
     /**
      * 선발된 지원서에 연결된 신규 멤버를 생성합니다.
-     * <p>
-     * 결과 발표 시각이 있는 차수는 PENDING_PUBLICATION, 발표 시각이 없는 기존 차수는 ACTIVE 로 생성합니다.
-     * 발표 전에는 연결된 지원서에 PM의 결정값이 유지되므로 지원서 상태와 배정 상태가 다를 수 있습니다.
+     * 발표 시각이 설정된 차수는 공개 대기 상태로 생성하고, 지원서 합불은 발표 시 반영합니다.
      */
     public static ProjectMember createFromApplication(
         ProjectApplication application, ChallengerPart part, Long decidedByMemberId
@@ -131,8 +129,8 @@ public class ProjectMember extends BaseEntity {
     }
 
     /**
-     * 지원서 없이 매칭 차수에서 배정된 팀원을 생성합니다.
-     * 발표 시각이 있는 차수는 공개 대기 상태로, 발표 시각이 없는 기존 차수는 활성 상태로 생성합니다.
+     * 차수에 배정된 팀원을 만듭니다. 발표 시각이 설정되어 있으면 공개 대기 상태로 만듭니다.
+     * 발표 시각이 없는 기존 차수는 즉시 ACTIVE 상태로 만듭니다.
      */
     public static ProjectMember createForMatching(
         Project project, Long memberId, ChallengerPart part, ProjectMatchingRound round, Long decidedByMemberId
@@ -146,11 +144,7 @@ public class ProjectMember extends BaseEntity {
     }
 
     /**
-     * 결과 발표 시 공개 대기 중인 멤버를 ACTIVE 로 전이합니다.
-     * <p>
-     * PENDING_PUBLICATION 이 아닌 멤버는 변경하지 않습니다.
-     *
-     * @param now 결과 공개 기준 시각
+     * 발표할 수 있는 차수의 공개 대기 팀원을 ACTIVE로 변경합니다.
      */
     public void publish(Instant now) {
         if (status != ProjectMemberStatus.PENDING_PUBLICATION) {
@@ -206,7 +200,7 @@ public class ProjectMember extends BaseEntity {
      * 멤버 활동을 정상 완료 처리합니다.
      * status 를 {@link ProjectMemberStatus#COMPLETED} 로 바꾸고 변경 메타데이터를 기록합니다.
      * <p>
-     * 프로젝트 완료(complete) 시 ACTIVE 및 PENDING_PUBLICATION 멤버의 일괄 처리에 사용합니다.
+     * 프로젝트 완료(complete) 시 ACTIVE 멤버 일괄 처리에 사용합니다.
      */
     public void complete(Long decidedByMemberId) {
         changeStatus(ProjectMemberStatus.COMPLETED, decidedByMemberId, null);

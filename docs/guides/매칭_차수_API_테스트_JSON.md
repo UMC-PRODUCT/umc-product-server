@@ -14,6 +14,8 @@
 | 조회 메서드   | `GET /api/v1/project/matching-rounds`                      |
 | 시간 형식    | ISO-8601 Instant, 예: `2026-05-10T00:00:00Z`                |
 
+생성 요청의 `resultPublishAt`은 필수입니다. 1~3차는 `startsAt < endsAt < decisionDeadline < resultPublishAt`, 4차는 `startsAt < endsAt = decisionDeadline < resultPublishAt`을 만족해야 합니다.
+
 ## 테스트 데이터 전제
 
 | 변수                                   | 설명                        | 예시 값   |
@@ -60,7 +62,8 @@
     "chapterId": 2,
     "startsAt": "2026-05-10T00:00:00Z",
     "endsAt": "2026-05-12T00:00:00Z",
-    "decisionDeadline": "2026-05-13T00:00:00Z"
+    "decisionDeadline": "2026-05-13T00:00:00Z",
+    "resultPublishAt": "2026-05-13T02:00:00Z"
 }
 ```
 
@@ -86,13 +89,14 @@
     "chapterId": 1,
     "startsAt": "2026-05-11T00:00:00Z",
     "endsAt": "2026-05-14T00:00:00Z",
-    "decisionDeadline": "2026-05-15T00:00:00Z"
+    "decisionDeadline": "2026-05-15T00:00:00Z",
+    "resultPublishAt": "2026-05-15T02:00:00Z"
 }
 ```
 
 ## 3. 매칭 차수 생성 요청 시 날짜 순서가 잘못된 경우
 
-`startsAt < endsAt < decisionDeadline` 조건을 만족하지 않는 요청을 검증합니다.
+`startsAt < endsAt < decisionDeadline < resultPublishAt` 조건을 만족하지 않는 요청을 검증합니다.
 
 | 항목       | 값                                                 |
 |----------|---------------------------------------------------|
@@ -113,7 +117,8 @@
     "chapterId": 1,
     "startsAt": "2026-05-12T00:00:00Z",
     "endsAt": "2026-05-10T00:00:00Z",
-    "decisionDeadline": "2026-05-13T00:00:00Z"
+    "decisionDeadline": "2026-05-13T00:00:00Z",
+    "resultPublishAt": "2026-05-13T02:00:00Z"
 }
 ```
 
@@ -128,13 +133,14 @@
     "chapterId": 1,
     "startsAt": "2026-05-14T00:00:00Z",
     "endsAt": "2026-05-18T00:00:00Z",
-    "decisionDeadline": "2026-05-17T00:00:00Z"
+    "decisionDeadline": "2026-05-17T00:00:00Z",
+    "resultPublishAt": "2026-05-17T02:00:00Z"
 }
 ```
 
 ## 4. 매칭 차수 부분 수정 가능
 
-기존 매칭 차수의 이름, 설명, 유형, 차수, 기간을 수정할 수 있음을 검증합니다.
+자동 선발 전 차수의 이름, 설명, 유형, 차수, 기간을 수정할 수 있음을 검증합니다. 자동 선발·랜덤 배정 완료 후에는 이름·설명만 수정할 수 있고, 유형·차수·일정 변경은 `400 PROJECT-0306`입니다. 발표 시각이 없는 기존 1~3차는 해당 값을 생략하면 null을 유지합니다.
 
 > 수정 API는 부분 수정 성격의 `PATCH`입니다. 요청 본문에는 수정할 필드만 포함합니다. 제공되지 않은 필드는 기존 매칭 차수 값을 유지합니다. 요청 본문에는 `chapterId`를 포함하지 않습니다. 매칭 차수가 소속된 지부는 수정할 수 없고, 권한 및 기간 중복 검증은 기존 매칭 차수의 `chapterId` 기준으로 수행됩니다.
 
@@ -151,7 +157,8 @@
     "name": "기획-디자인 1차 매칭 수정",
     "startsAt": "2026-05-20T00:00:00Z",
     "endsAt": "2026-05-22T00:00:00Z",
-    "decisionDeadline": "2026-05-23T00:00:00Z"
+    "decisionDeadline": "2026-05-23T00:00:00Z",
+    "resultPublishAt": "2026-05-23T02:00:00Z"
 }
 ```
 
@@ -166,11 +173,12 @@
 | `startsAt`         | `2026-05-20T00:00:00Z` |
 | `endsAt`           | `2026-05-22T00:00:00Z` |
 | `decisionDeadline` | `2026-05-23T00:00:00Z` |
+| `resultPublishAt` | `2026-05-23T02:00:00Z` |
 | `chapterId`        | 기존 매칭 차수의 `chapterId`  |
 
 ### 4-1. 부분 수정 결과의 기간 순서가 잘못된 경우
 
-기존 값과 요청 값을 병합한 최종 결과가 `startsAt < endsAt < decisionDeadline`을 만족하지 않으면 실패합니다.
+기존 값과 요청 값을 병합한 최종 결과가 `startsAt < endsAt < decisionDeadline < resultPublishAt`을 만족하지 않으면 실패합니다.
 
 | 항목       | 값                                                     |
 |----------|-------------------------------------------------------|
@@ -202,13 +210,14 @@
     "chapterId": 999,
     "startsAt": "2026-05-20T00:00:00Z",
     "endsAt": "2026-05-22T00:00:00Z",
-    "decisionDeadline": "2026-05-23T00:00:00Z"
+    "decisionDeadline": "2026-05-23T00:00:00Z",
+    "resultPublishAt": "2026-05-23T02:00:00Z"
 }
 ```
 
 ## 5. 관련된 지원서가 있는 경우 매칭 차수 삭제 불가능
 
-`ProjectApplication.appliedMatchingRound`가 대상 매칭 차수를 참조하는 경우 삭제가 차단되는지 검증합니다.
+자동 선발 전 차수에서 `ProjectApplication.appliedMatchingRound`가 대상 차수를 참조하면 삭제가 차단됩니다. 자동 선발·랜덤 배정 완료 여부를 먼저 검사하므로, 실행된 차수는 지원서 유무와 관계없이 `400 PROJECT-0306`입니다.
 
 | 항목       | 값                                                                      |
 |----------|------------------------------------------------------------------------|
@@ -245,6 +254,7 @@
         "startsAt": "2026-05-10T00:00:00Z",
         "endsAt": "2026-05-12T00:00:00Z",
         "decisionDeadline": "2026-05-13T00:00:00Z",
+        "resultPublishAt": "2026-05-13T02:00:00Z",
         "autoDecisionExecutedAt": null,
         "autoDecisionExecutedMemberId": null,
         "createdAt": "2026-05-01T00:00:00Z",
@@ -254,6 +264,8 @@
 ```
 
 ### 6-2. `time` 기준 지원 가능 매칭 차수 조회
+
+4차는 지원서를 받지 않으므로 시간 기준 조회에서 제외합니다.
 
 | 항목     | 값                                                                       |
 |--------|-------------------------------------------------------------------------|
@@ -277,6 +289,7 @@
         "startsAt": "2026-05-10T00:00:00Z",
         "endsAt": "2026-05-12T00:00:00Z",
         "decisionDeadline": "2026-05-13T00:00:00Z",
+        "resultPublishAt": "2026-05-13T02:00:00Z",
         "autoDecisionExecutedAt": null,
         "autoDecisionExecutedMemberId": null,
         "createdAt": "2026-05-01T00:00:00Z",
@@ -316,7 +329,8 @@
     "chapterId": 1,
     "startsAt": "2026-06-01T00:00:00Z",
     "endsAt": "2026-06-03T00:00:00Z",
-    "decisionDeadline": "2026-06-04T00:00:00Z"
+    "decisionDeadline": "2026-06-04T00:00:00Z",
+    "resultPublishAt": "2026-06-04T02:00:00Z"
 }
 ```
 
@@ -325,5 +339,22 @@
 ```json
 {
     "matchingRoundId": 201
+}
+```
+
+## 4차 랜덤 매칭 생성 예시
+
+`PLAN_DESIGN`과 `PLAN_DEVELOPER` 모두 같은 일정 규칙을 사용합니다. 아래 시각은 UTC이며, 한국 시각으로 11월 19일 00시 배정, 20시 종료·마감, 22시 발표입니다. 기존 차수와의 중복 및 순서 조건을 만족하는 지부에서 요청합니다.
+
+```json
+{
+    "name": "기획-개발자 4차 랜덤 매칭",
+    "type": "PLAN_DEVELOPER",
+    "phase": "FOURTH",
+    "chapterId": 1,
+    "startsAt": "2026-11-18T15:00:00Z",
+    "endsAt": "2026-11-19T11:00:00Z",
+    "decisionDeadline": "2026-11-19T11:00:00Z",
+    "resultPublishAt": "2026-11-19T13:00:00Z"
 }
 ```
