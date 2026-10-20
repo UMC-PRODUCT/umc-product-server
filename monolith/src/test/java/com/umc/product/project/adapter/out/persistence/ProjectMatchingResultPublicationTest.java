@@ -105,6 +105,46 @@ class ProjectMatchingResultPublicationTest {
     }
 
     @Test
+    void 지원서_없는_랜덤_배정도_발표할_때_팀원과_랜덤_매칭_조회에_반영된다() {
+        // given
+        Project project = project(100L);
+        Instant startsAt = Instant.now().minusSeconds(86400);
+        ProjectMatchingRound round = em.persist(ProjectMatchingRound.create(
+            "개발자 4차", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.FOURTH, 1L,
+            startsAt, startsAt.plusSeconds(72000), startsAt.plusSeconds(72000), startsAt.plusSeconds(79200)));
+        round.executeAutoDecision(null);
+        ProjectMember member = em.persist(ProjectMember.createForMatching(
+            project, 10L, ChallengerPart.WEB, round, 999L));
+        em.flush();
+        em.clear();
+
+        assertThat(rounds.listOpenAt(1L, startsAt.plusSeconds(3600))).isEmpty();
+        assertThat(members.listAssignedMemberIdsByGisuId(1L)).containsExactly(10L);
+        assertThat(members.listAssignedMemberIdsByGisuId(2L)).isEmpty();
+        assertThat(members.countAssignedByProjectIdGroupByPart(project.getId())).containsEntry(ChallengerPart.WEB, 1L);
+        assertThat(members.listByProjectId(project.getId())).isEmpty();
+        assertThat(members.findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
+            10L, 1L, MatchingType.PLAN_DEVELOPER)).isEmpty();
+        assertThat(members.listMatchedRoundsByProjectIdsAndMemberIds(Set.of(project.getId()), Set.of(10L))).isEmpty();
+
+        // when
+        publisher.publish(round.getId());
+        em.flush();
+        em.clear();
+
+        // then
+        assertThat(members.listByProjectId(project.getId())).extracting(ProjectMember::getId).containsExactly(member.getId());
+        assertThat(members.findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
+            10L, 1L, MatchingType.PLAN_DEVELOPER)).get().satisfies(published -> {
+                assertThat(published.getId()).isEqualTo(member.getId());
+                assertThat(published.getApplication()).isNull();
+            });
+        assertThat(members.listMatchedRoundsByProjectIdsAndMemberIds(Set.of(project.getId()), Set.of(10L)))
+            .extracting(row -> row.matchingRoundId()).containsExactly(round.getId());
+        assertThat(members.listAssignedMemberIdsByGisuId(1L)).containsExactly(10L);
+    }
+
+    @Test
     void 선발된_팀원이_없어도_미결정_지원서를_불합격으로_확정하고_공개한다() {
         // given
         Project project = project(100L);

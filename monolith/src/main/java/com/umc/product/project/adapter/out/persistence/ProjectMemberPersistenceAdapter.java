@@ -40,6 +40,11 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     }
 
     @Override
+    public List<Long> listAssignedMemberIdsByGisuId(Long gisuId) {
+        return queryRepository.listAssignedMemberIdsByGisuId(gisuId);
+    }
+
+    @Override
     public Map<ChallengerPart, Long> countAssignedByProjectIdGroupByPart(Long projectId) {
         return countAssignedByProjectIdsGroupByProjectIdAndPart(List.of(projectId)).getOrDefault(projectId, Map.of());
     }

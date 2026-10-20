@@ -47,7 +47,6 @@ import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
-import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
@@ -113,6 +112,17 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         if (round.getAutoDecisionExecutedAt() != null) {
             return;
         }
+        if (round.isRandomMatching()) {
+            if (Instant.now().isBefore(round.getStartsAt())) {
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FINALIZABLE);
+            }
+            List<ProjectMember> assignments = buildRandomAssignedMembers(round, executedByMemberId);
+            if (!assignments.isEmpty()) {
+                saveProjectMemberPort.saveAll(assignments);
+            }
+            round.executeAutoDecision(executedByMemberId);
+            return;
+        }
         if (!round.isDecisionDeadlinePassed(Instant.now())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FINALIZABLE);
         }
@@ -145,8 +155,6 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             }
             membersToSave.addAll(buildApprovedMembers(applicants, approvedIds, applicantPart, executedByMemberId));
         }
-
-        membersToSave.addAll(buildRandomAssignedMembersAfterThirdDeveloperRound(round, membersToSave, executedByMemberId));
 
         if (!membersToSave.isEmpty()) {
             saveProjectMemberPort.saveAll(membersToSave);
@@ -271,14 +279,10 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             .toList();
     }
 
-    private List<ProjectMember> buildRandomAssignedMembersAfterThirdDeveloperRound(
+    private List<ProjectMember> buildRandomAssignedMembers(
         ProjectMatchingRound round,
-        List<ProjectMember> plannedMembers,
         Long executedByMemberId
     ) {
-        if (round.getType() != MatchingType.PLAN_DEVELOPER || round.getPhase() != MatchingPhase.THIRD) {
-            return List.of();
-        }
 
         List<Project> projects = loadProjectPort.listByChapterIdAndStatus(
             round.getChapterId(),
@@ -288,25 +292,16 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             return List.of();
         }
 
-        Set<Long> projectIds = projects.stream()
-            .map(Project::getId)
-            .collect(Collectors.toSet());
         Map<Long, Project> projectById = projects.stream()
             .collect(Collectors.toMap(Project::getId, project -> project));
         Long gisuId = projects.getFirst().getGisuId();
 
-        Map<ProjectPartKey, Integer> remainingByKey = buildRemainingDeveloperQuotaMap(projects, plannedMembers);
+        Map<ProjectPartKey, Integer> remainingByKey = buildRemainingMatchingQuotaMap(projects, round.getType());
         if (remainingByKey.values().stream().noneMatch(remaining -> remaining > 0)) {
             return List.of();
         }
 
-        Set<Long> alreadyMatchedMemberIds = loadProjectMemberPort.listByProjectIds(projectIds).values().stream()
-            .flatMap(List::stream)
-            .map(ProjectMember::getMemberId)
-            .collect(Collectors.toSet());
-        plannedMembers.stream()
-            .map(ProjectMember::getMemberId)
-            .forEach(alreadyMatchedMemberIds::add);
+        Set<Long> alreadyMatchedMemberIds = new HashSet<>(loadProjectMemberPort.listAssignedMemberIdsByGisuId(gisuId));
 
         List<RandomAssignmentCandidate> candidates = new ArrayList<>(
             listActiveChallengersInChapter(gisuId, round.getChapterId())
@@ -318,7 +313,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             if (remainingByKey.values().stream().noneMatch(remaining -> remaining > 0)) {
                 break;
             }
-            if (alreadyMatchedMemberIds.contains(candidate.memberId()) || !isDeveloperPart(candidate.part())) {
+            if (alreadyMatchedMemberIds.contains(candidate.memberId()) || !isMatchingPart(candidate.part(), round.getType())) {
                 continue;
             }
 
@@ -329,7 +324,8 @@ public class ProjectMatchingRoundFinalizationCommandService implements
 
             ProjectPartKey key = targetKey.get();
             Project project = projectById.get(key.projectId());
-            assignments.add(ProjectMember.create(project, candidate.memberId(), candidate.part(), executedByMemberId));
+            assignments.add(ProjectMember.createForMatching(
+                project, candidate.memberId(), candidate.part(), round, executedByMemberId));
             alreadyMatchedMemberIds.add(candidate.memberId());
             remainingByKey.computeIfPresent(key, (ignored, remaining) -> remaining - 1);
         }
@@ -337,22 +333,14 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         return assignments;
     }
 
-    private Map<ProjectPartKey, Integer> buildRemainingDeveloperQuotaMap(
-        List<Project> projects,
-        List<ProjectMember> plannedMembers
+    private Map<ProjectPartKey, Integer> buildRemainingMatchingQuotaMap(
+        List<Project> projects, MatchingType type
     ) {
         Set<Long> projectIds = projects.stream()
             .map(Project::getId)
             .collect(Collectors.toSet());
-        Map<Long, Map<ChallengerPart, Long>> activeByProject = loadProjectMemberPort
-            .countByProjectIdsGroupByProjectIdAndPart(projectIds);
-        Map<ProjectPartKey, Long> plannedByKey = plannedMembers.stream()
-            .filter(member -> projectIds.contains(member.getProject().getId()))
-            .filter(member -> isDeveloperPart(member.getPart()))
-            .collect(Collectors.groupingBy(
-                member -> new ProjectPartKey(member.getProject().getId(), member.getPart()),
-                Collectors.counting()
-            ));
+        Map<Long, Map<ChallengerPart, Long>> assignedByProject = loadProjectMemberPort
+            .countAssignedByProjectIdsGroupByProjectIdAndPart(projectIds);
 
         Map<ProjectPartKey, Integer> result = new HashMap<>();
         Map<Long, List<ProjectPartQuota>> quotasByProject = loadProjectPartQuotaPort
@@ -361,17 +349,16 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             Long projectId = project.getId();
             for (ProjectPartQuota quota : quotasByProject.getOrDefault(projectId, List.of())) {
                 ChallengerPart part = quota.getPart();
-                if (!isDeveloperPart(part)) {
+                if (!isMatchingPart(part, type)) {
                     continue;
                 }
 
                 ProjectPartKey key = new ProjectPartKey(projectId, part);
-                int active = activeByProject
+                int assigned = assignedByProject
                     .getOrDefault(projectId, Map.of())
                     .getOrDefault(part, 0L)
                     .intValue();
-                int planned = plannedByKey.getOrDefault(key, 0L).intValue();
-                int remaining = Math.max(0, quota.getQuota().intValue() - active - planned);
+                int remaining = Math.max(0, quota.getQuota().intValue() - assigned);
                 if (remaining > 0) {
                     result.put(key, remaining);
                 }
@@ -448,8 +435,11 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         return Optional.of(availableKeys.get(matchingRandom.nextInt(availableKeys.size())));
     }
 
-    private boolean isDeveloperPart(ChallengerPart part) {
-        return DEVELOPER_PARTS.contains(part);
+    private boolean isMatchingPart(ChallengerPart part, MatchingType type) {
+        return switch (type) {
+            case PLAN_DESIGN -> part == ChallengerPart.DESIGN;
+            case PLAN_DEVELOPER -> DEVELOPER_PARTS.contains(part);
+        };
     }
 
     private void validateManageAccess(Long memberId, Long chapterId) {

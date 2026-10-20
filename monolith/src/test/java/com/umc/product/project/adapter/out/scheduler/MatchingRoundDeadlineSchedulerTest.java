@@ -76,6 +76,23 @@ class MatchingRoundDeadlineSchedulerTest {
     class schedule {
 
         @Test
+        void 랜덤_4차는_시작_시각에_배정하고_발표_시각에_공개하도록_예약한다() {
+            Instant startsAt = Instant.parse("2026-11-19T00:00:00+09:00");
+            ProjectMatchingRound round = ProjectMatchingRound.create(
+                "개발자 4차", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.FOURTH, 1L,
+                startsAt, startsAt.plusSeconds(72000), startsAt.plusSeconds(72000), startsAt.plusSeconds(79200));
+            ReflectionTestUtils.setField(round, "id", 1L);
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                .willAnswer(invocation -> scheduledFuture);
+
+            sut.schedule(round);
+
+            then(taskScheduler).should().schedule(any(Runnable.class), eq(startsAt));
+            then(taskScheduler).should().schedule(any(Runnable.class), eq(round.getResultPublishAt()));
+            then(taskScheduler).should(times(2)).schedule(any(Runnable.class), any(Instant.class));
+        }
+
+        @Test
         void deadline_buffer_적용된_시점에_task가_등록된다() {
             ProjectMatchingRound round = roundWithId(1L);
             given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))

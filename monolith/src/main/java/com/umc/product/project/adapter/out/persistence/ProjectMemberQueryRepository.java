@@ -36,6 +36,17 @@ public class ProjectMemberQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     /**
+     * 랜덤 매칭의 중복 배정을 막기 위해 해당 기수의 활성·공개 대기 회원 ID를 한 번에 조회합니다.
+     */
+    public List<Long> listAssignedMemberIdsByGisuId(Long gisuId) {
+        return queryFactory.select(projectMember.memberId).distinct()
+            .from(projectMember)
+            .where(projectMember.project.gisuId.eq(gisuId),
+                projectMember.status.in(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION))
+            .fetch();
+    }
+
+    /**
      * 현재 활성 팀원이 배정된 매칭 차수를 조회합니다.
      * 팀원에 저장된 배정 차수를 사용하며,
      * 발표 전 팀원이나 배정 차수가 없는 팀원은 조회하지 않습니다.

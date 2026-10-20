@@ -57,10 +57,11 @@ public class ProjectMatchingRoundCommandService implements
     public Long create(CreateProjectMatchingRoundCommand command) {
         // 지부장 이상부터 매칭 차수에 대한 수정이 가능합니다.
         validateManageAccess(command.requesterMemberId(), command.chapterId());
+        ProjectMatchingRound.validateSchedule(command.type(), command.phase(), command.startsAt(),
+            command.endsAt(), command.decisionDeadline(), command.resultPublishAt());
         // 매칭 차수는 중복될 수 없습니다.
         validateNoOverlap(
-            command.chapterId(), command.startsAt(), command.endsAt(), command.decisionDeadline(),
-            command.resultPublishAt());
+            command.chapterId(), command.startsAt(), command.decisionDeadline());
         validatePhaseSequence(
             null,
             command.chapterId(),
@@ -105,13 +106,12 @@ public class ProjectMatchingRoundCommandService implements
             : matchingRound.getResultPublishAt();
 
         validateManageAccess(command.requesterMemberId(), matchingRound.getChapterId());
+        ProjectMatchingRound.validateSchedule(type, phase, startsAt, endsAt, decisionDeadline, resultPublishAt);
         validateNoOverlapExceptId(
             matchingRound.getId(),
             matchingRound.getChapterId(),
             startsAt,
-            endsAt,
-            decisionDeadline,
-            resultPublishAt
+            decisionDeadline
         );
         validatePhaseSequence(
             matchingRound.getId(),
@@ -140,6 +140,10 @@ public class ProjectMatchingRoundCommandService implements
         ProjectMatchingRound matchingRound = loadProjectMatchingRoundPort.getByIdForUpdate(matchingRoundId);
         validateManageAccess(requesterMemberId, matchingRound.getChapterId());
 
+        if (matchingRound.isAutoDecisionExecuted()) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
+        }
+
         if (loadProjectApplicationPort.existsByAppliedMatchingRoundId(matchingRoundId)) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_DELETE_CONFLICT);
         }
@@ -149,18 +153,16 @@ public class ProjectMatchingRoundCommandService implements
     }
 
     private void validateNoOverlap(
-        Long chapterId, Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
+        Long chapterId, Instant startsAt, Instant decisionDeadline
     ) {
-        ProjectMatchingRound.validateDates(startsAt, endsAt, decisionDeadline, resultPublishAt);
         if (!loadProjectMatchingRoundPort.listOverlapping(chapterId, startsAt, decisionDeadline).isEmpty()) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED);
         }
     }
 
     private void validateNoOverlapExceptId(
-        Long id, Long chapterId, Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
+        Long id, Long chapterId, Instant startsAt, Instant decisionDeadline
     ) {
-        ProjectMatchingRound.validateDates(startsAt, endsAt, decisionDeadline, resultPublishAt);
         if (!loadProjectMatchingRoundPort.listOverlappingExceptId(
             id, chapterId, startsAt, decisionDeadline).isEmpty()) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED);

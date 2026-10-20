@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -88,6 +89,38 @@ class ProjectMatchingRoundCommandServiceTest {
 
     @Nested
     class lifecycleHooks {
+
+        @Test
+        void 랜덤_4차는_종료와_마감을_같게_등록하고_지원서를_받지_않는다() {
+            Instant startsAt = Instant.parse("2026-11-19T00:00:00+09:00");
+            CreateProjectMatchingRoundCommand command = CreateProjectMatchingRoundCommand.builder()
+                .requesterMemberId(EXECUTOR_MEMBER_ID).name("개발자 4차")
+                .type(MatchingType.PLAN_DEVELOPER).phase(MatchingPhase.FOURTH).chapterId(1L)
+                .startsAt(startsAt).endsAt(startsAt.plusSeconds(72000))
+                .decisionDeadline(startsAt.plusSeconds(72000)).resultPublishAt(startsAt.plusSeconds(79200))
+                .build();
+            given(saveProjectMatchingRoundPort.save(any())).willAnswer(invocation -> {
+                ProjectMatchingRound saved = invocation.getArgument(0);
+                ReflectionTestUtils.setField(saved, "id", ROUND_ID);
+                return saved;
+            });
+
+            assertThat(sut.create(command)).isEqualTo(ROUND_ID);
+
+            ArgumentCaptor<ProjectMatchingRound> captor = ArgumentCaptor.forClass(ProjectMatchingRound.class);
+            then(scheduleMatchingRoundDeadlinePort).should().schedule(captor.capture());
+            ProjectMatchingRound saved = captor.getValue();
+            assertThat(saved.isOpenAt(startsAt)).isFalse();
+            assertThat(saved.getEndsAt()).isEqualTo(saved.getDecisionDeadline());
+
+            saved.executeAutoDecision(null);
+            given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(saved);
+            assertThatThrownBy(() -> sut.delete(ROUND_ID, EXECUTOR_MEMBER_ID))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
+            then(saveProjectMatchingRoundPort).should(never()).delete(any());
+        }
 
         @Test
         void system_role_super_admin은_challenger_role_없이_차수를_생성한다() {

@@ -33,6 +33,12 @@ public interface LoadProjectMemberPort {
     List<ProjectMember> listPendingByMatchingRoundId(Long matchingRoundId);
 
     /**
+     * 해당 기수에서 활성 또는 공개 대기 상태로 배정된 회원 ID를 조회합니다.
+     * 랜덤 매칭에서 이미 배정된 회원을 제외하는 데 사용합니다.
+     */
+    List<Long> listAssignedMemberIdsByGisuId(Long gisuId);
+
+    /**
      * 프로젝트/멤버 쌍별 활성(ACTIVE) 멤버의 배정 차수를 조회합니다.
      * 팀원 응답의 매칭 차수 정보에 사용합니다.
      */

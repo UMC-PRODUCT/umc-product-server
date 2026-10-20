@@ -119,15 +119,27 @@ public class ProjectMember extends BaseEntity {
     public static ProjectMember createFromApplication(
         ProjectApplication application, ChallengerPart part, Long decidedByMemberId
     ) {
-        ProjectMember pm = create(
+         ProjectMember pm = createForMatching(
             application.getApplicationForm().getProject(),
             application.getApplicantMemberId(),
             part,
+            application.getAppliedMatchingRound(),
             decidedByMemberId
         );
         pm.application = application;
-        pm.assignedMatchingRound = application.getAppliedMatchingRound();
-        if (pm.assignedMatchingRound.getResultPublishAt() != null) {
+        return pm;
+    }
+
+    /**
+     * 지원서 없이 매칭 차수에서 배정된 팀원을 생성합니다.
+     * 발표 시각이 있는 차수는 공개 대기 상태로, 발표 시각이 없는 기존 차수는 활성 상태로 생성합니다.
+     */
+    public static ProjectMember createForMatching(
+        Project project, Long memberId, ChallengerPart part, ProjectMatchingRound round, Long decidedByMemberId
+    ) {
+        ProjectMember pm = create(project, memberId, part, decidedByMemberId);
+        pm.assignedMatchingRound = round;
+        if (round.getResultPublishAt() != null) {
             pm.status = ProjectMemberStatus.PENDING_PUBLICATION;
         }
         return pm;

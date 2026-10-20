@@ -5,5 +5,6 @@ public enum MatchingPhase {
     SECOND,
     THIRD,
 
-    // THIRD 매칭이 종료된 이후에는 자체적으로 랜덤 매칭을 진행함
+    // 지원서 접수 없이 잔여 인원을 랜덤 배정하는 차수
+    FOURTH,
 }

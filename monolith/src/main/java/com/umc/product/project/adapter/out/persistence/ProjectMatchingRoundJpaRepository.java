@@ -36,6 +36,7 @@ public interface ProjectMatchingRoundJpaRepository extends JpaRepository<Project
         where r.chapterId = :chapterId
           and r.startsAt <= :time
           and r.endsAt >= :time
+          and r.phase <> com.umc.product.project.domain.enums.MatchingPhase.FOURTH
         order by r.startsAt asc
         """)
     List<ProjectMatchingRound> findOpenAt(

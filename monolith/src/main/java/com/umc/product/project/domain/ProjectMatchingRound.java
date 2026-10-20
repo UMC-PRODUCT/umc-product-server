@@ -55,13 +55,6 @@ public class ProjectMatchingRound extends BaseEntity {
     @Column(nullable = false)
     private MatchingType type; // 매칭의 종류
 
-    /*
-    몇 차 매칭인지
-    고민사항 : 처음에는 Long 값으로 phaseNo로 넣었었는데, 매칭 관련해서는 확장성이 사실 상 필요 없는 점을 고려하였음.
-    또한 랜덤매칭의 경우, UI 상에 표시해줄 필요성은 있다고 생각하는데 .. DB에서 THIRD가 지난 상태를 랜덤매칭으로 지정할지가 고민 ..
-
-    -> 랜덤매칭에 최초에 기간이 필요했던 이유는 사람이 일을 해야하니까인데.. 지금은 그냥 랜덤매칭 딸깎 하면 되는거라 enum에 넣을 필요는 없을 듯
-     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MatchingPhase phase; // 매칭 차수
@@ -79,7 +72,7 @@ public class ProjectMatchingRound extends BaseEntity {
     private Instant resultPublishAt; // 결과 발표 예정 시각 (기존 차수는 null)
     private Instant resultPublishedAt; // 결과 공개 완료 시각 (공개 전에는 null)
 
-    // 선발 마감 기한이 지나서 스케쥴러 등에 의해서 자동으로 선발이 실행된 시간
+    // 자동 선발 또는 4차 랜덤 배정이 실행된 시간
     // null인 경우 아닙니다.
     private Instant autoDecisionExecutedAt;
     // 자동 선발이 실행된 경우, 누가 실행했는지 (운영진 ID)
@@ -110,7 +103,7 @@ public class ProjectMatchingRound extends BaseEntity {
      * <p>
      * - 동일한 유형과 차수를 가진 매칭 차수는 생성할 수 없습니다.
      * <p>
-     * - startsAt < endsAt < decisionDeadline 이어야 합니다.
+     * - 일반 차수는 startsAt < endsAt < decisionDeadline, 4차는 startsAt < endsAt = decisionDeadline 이어야 합니다.
      * <p>
      * - 결과 발표 시각은 선발 마감 시각보다 늦어야 합니다.
      * <p>
@@ -119,7 +112,7 @@ public class ProjectMatchingRound extends BaseEntity {
      * @param name             매칭 차수 이름 (e.g. 기획-디자인 1차 매칭)
      * @param description      차수 설명 (nullable)
      * @param type             매칭 유형 (기획-디자인/기획-개발자)
-     * @param phase            차수 단계 (1,2,3차 중에서 선택, 랜덤 매칭은 별도로 제공하지 않으며 운영진이 직접 API를 통해서 실행하면 됩니다.)
+     * @param phase            차수 단계 (1~3차 지원 매칭, 4차 랜덤 매칭)
      * @param chapterId        지부 ID (어떤 지부의 매칭 차수인지를 나타냅니다.)
      * @param startsAt         매칭 시작 시간
      * @param endsAt           매칭 종료 시간
@@ -133,7 +126,7 @@ public class ProjectMatchingRound extends BaseEntity {
         MatchingType type, MatchingPhase phase, Long chapterId,
         Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
     ) {
-        validateDates(startsAt, endsAt, decisionDeadline, resultPublishAt);
+        validateSchedule(type, phase, startsAt, endsAt, decisionDeadline, resultPublishAt);
 
         return ProjectMatchingRound.builder()
             .name(name)
@@ -186,13 +179,37 @@ public class ProjectMatchingRound extends BaseEntity {
     }
 
     /**
+     * 4차는 지원 기간이 없으므로 종료와 마감을 같은 시각으로 받습니다.
+     * 시작 시각에 랜덤 배정을 실행하고 마감 이후 발표 시각에 공개합니다.
+     */
+    public static void validateSchedule(
+        MatchingType type, MatchingPhase phase,
+        Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
+    ) {
+        if (phase != MatchingPhase.FOURTH) {
+            validateDates(startsAt, endsAt, decisionDeadline, resultPublishAt);
+            return;
+        }
+        if (type == null || startsAt == null || endsAt == null
+            || decisionDeadline == null || resultPublishAt == null
+            || !startsAt.isBefore(endsAt) || !endsAt.equals(decisionDeadline)
+            || !resultPublishAt.isAfter(decisionDeadline)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
+        }
+    }
+
+    public boolean isRandomMatching() {
+        return phase == MatchingPhase.FOURTH;
+    }
+
+    /**
      * 매칭 차수 기본 정보와 일정을 변경합니다.
      */
     public void update(
         String name, String description, MatchingType type, MatchingPhase phase,
         Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
     ) {
-        validateDates(startsAt, endsAt, decisionDeadline, resultPublishAt);
+        validateSchedule(type, phase, startsAt, endsAt, decisionDeadline, resultPublishAt);
         if (isAutoDecisionExecuted() && (this.type != type || this.phase != phase
             || !this.startsAt.equals(startsAt) || !this.endsAt.equals(endsAt)
             || !this.decisionDeadline.equals(decisionDeadline)
@@ -216,7 +233,7 @@ public class ProjectMatchingRound extends BaseEntity {
      * 각 매개변수에 대한 설명은 {@link #create}를 참조해주세요.
      */
     public void reschedule(Instant startsAt, Instant endsAt, Instant decisionDeadline) {
-        validateDates(startsAt, endsAt, decisionDeadline, resultPublishAt);
+        validateSchedule(type, phase, startsAt, endsAt, decisionDeadline, resultPublishAt);
 
         this.startsAt = startsAt;
         this.endsAt = endsAt;
@@ -249,13 +266,13 @@ public class ProjectMatchingRound extends BaseEntity {
     /**
      * 특정 시점 기준으로 매칭 차수가 활성화 되어있는지 여부를 판단합니다.
      * <p>
-     * startsAt <= now <= endsAt 인 경우에 활성화된 것으로 간주합니다.
+     * 1~3차에서 startsAt <= now <= endsAt 인 경우 지원할 수 있습니다. 4차는 지원서를 받지 않습니다.
      *
      * @param now 기준 시각
      * @return 제공된 시점을 기준으로 매칭 차수가 활성화되었는지 여부
      */
     public boolean isOpenAt(Instant now) {
-        return !startsAt.isAfter(now) && !endsAt.isBefore(now);
+        return !isRandomMatching() && !startsAt.isAfter(now) && !endsAt.isBefore(now);
     }
 
     /**
