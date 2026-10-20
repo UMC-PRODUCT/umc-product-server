@@ -1,5 +1,6 @@
 package com.umc.product.project.domain;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -19,6 +20,7 @@ class ProjectMatchingRoundTest {
     private static final Instant STARTS_AT = Instant.parse("2026-05-10T00:00:00Z");
     private static final Instant ENDS_AT = Instant.parse("2026-05-15T00:00:00Z");
     private static final Instant DECISION_DEADLINE = Instant.parse("2026-05-17T00:00:00Z");
+    private static final Instant RESULT_PUBLISH_AT = Instant.parse("2026-05-17T02:00:00Z");
 
     ProjectMatchingRound round;
 
@@ -27,8 +29,88 @@ class ProjectMatchingRoundTest {
         round = ProjectMatchingRound.create(
             "기획-디자인 1차 매칭", null,
             MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, 1L,
-            STARTS_AT, ENDS_AT, DECISION_DEADLINE
+            STARTS_AT, ENDS_AT, DECISION_DEADLINE, RESULT_PUBLISH_AT
         );
+    }
+
+    @Nested
+    class resultPublishAt {
+
+        @Test
+        void 발표_시각이_선발_마감과_같으면_거부한다() {
+            // when & then
+            assertThatThrownBy(() -> ProjectMatchingRound.validateDates(
+                STARTS_AT, ENDS_AT, DECISION_DEADLINE, DECISION_DEADLINE
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
+        }
+
+        @Test
+        void 발표_시각이_선발_마감보다_빠르면_거부한다() {
+            // when & then
+            assertThatThrownBy(() -> ProjectMatchingRound.validateDates(
+                STARTS_AT, ENDS_AT, DECISION_DEADLINE, DECISION_DEADLINE.minusSeconds(1)
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
+        }
+
+        @Test
+        void 잘못된_발표_시각으로_수정하면_기존_값을_유지한다() {
+            // when & then
+            assertThatThrownBy(() -> round.update(
+                "수정한 이름", null, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST,
+                STARTS_AT, ENDS_AT, DECISION_DEADLINE, DECISION_DEADLINE.minusSeconds(1)
+            )).isInstanceOf(ProjectDomainException.class);
+            assertThat(round.getName()).isEqualTo("기획-디자인 1차 매칭");
+            assertThat(round.getResultPublishAt()).isEqualTo(RESULT_PUBLISH_AT);
+        }
+    }
+
+    @Nested
+    class isResultPublishedAt {
+
+        @Test
+        void 자동_선발이_완료되면_발표_시각_정각부터_공개한다() {
+            // given
+            round.executeAutoDecision(null);
+
+            // when & then
+            assertThat(round.isResultPublishedAt(RESULT_PUBLISH_AT)).isFalse();
+            round.publishResult(RESULT_PUBLISH_AT);
+            assertThat(round.isResultPublishedAt(RESULT_PUBLISH_AT)).isTrue();
+        }
+
+        @Test
+        void 발표_시각이_지나도_자동_선발이_완료된_후에_공개한다() {
+            // given
+            Instant afterPublishAt = RESULT_PUBLISH_AT.plusSeconds(600);
+
+            // when & then
+            assertThat(round.isResultPublishedAt(afterPublishAt)).isFalse();
+            round.executeAutoDecision(null);
+            assertThat(round.isResultPublishedAt(afterPublishAt)).isFalse();
+            round.publishResult(afterPublishAt);
+            assertThat(round.isResultPublishedAt(afterPublishAt)).isTrue();
+        }
+
+        @Test
+        void 발표_시각이_없는_기존_차수는_결정_마감_경과_후_공개한다() {
+            // given
+            ProjectMatchingRound existingRound = ProjectMatchingRound.create(
+                "기획-디자인 1차 매칭", null,
+                MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, 1L,
+                STARTS_AT, ENDS_AT, DECISION_DEADLINE, null
+            );
+
+            // when & then
+            assertThat(existingRound.isResultPublishedAt(DECISION_DEADLINE.minusSeconds(1))).isFalse();
+            assertThat(existingRound.isResultPublishedAt(DECISION_DEADLINE)).isFalse();
+            assertThat(existingRound.isResultPublishedAt(DECISION_DEADLINE.plusSeconds(1))).isTrue();
+        }
     }
 
     @Nested

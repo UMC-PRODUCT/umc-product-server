@@ -145,7 +145,7 @@ class ProjectApplicationCommandServiceTest {
             .willReturn(challengerWithPart(ChallengerPart.WEB));
         given(loadProjectPartQuotaPort.listByProjectId(any()))
             .willReturn(List.of(partQuotaForWeb(6L)));
-        given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
+        given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
             .willReturn(Map.of());
         given(loadProjectApplicationPort.listByMatchingRoundId(any()))
             .willReturn(List.of());
@@ -506,7 +506,7 @@ class ProjectApplicationCommandServiceTest {
         void APPROVED_토글시_active_멤버가_TO를_채워_남은_자리가_없으면_QUOTA_EXCEEDED() {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
-            given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
                 .willReturn(Map.of(ChallengerPart.WEB, 6L));   // active 6 == TO 6 → 남은 자리 0
 
             assertThatThrownBy(() -> sut.decide(
@@ -522,7 +522,7 @@ class ProjectApplicationCommandServiceTest {
         void APPROVED_토글시_active_멤버와_현재차수_APPROVED_합산이_TO를_초과하면_QUOTA_EXCEEDED() {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
-            given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
                 .willReturn(Map.of(ChallengerPart.WEB, 4L));   // active 4
             // 현재 차수 APPROVED 2명 (다른 application) → 4 + 2 + 1 = 7 > TO 6
             given(loadProjectApplicationPort.listByMatchingRoundId(any()))
@@ -549,7 +549,7 @@ class ProjectApplicationCommandServiceTest {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED);
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
             // active 6 으로 quota 초과 상황이라도 — 이미 APPROVED 인 application 재토글은 검증 우회
-            given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
                 .willReturn(Map.of(ChallengerPart.WEB, 6L));
 
             sut.decide(APPLICATION_ID, ApplicationDecisionStatus.APPROVED, "재확인", DECIDER_MEMBER_ID);
@@ -562,7 +562,7 @@ class ProjectApplicationCommandServiceTest {
         void REJECTED_토글은_quota_검증을_적용하지_않는다() {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED);
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
-            given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
                 .willReturn(Map.of(ChallengerPart.WEB, 99L));   // 초과 상황이지만 REJECTED 는 무관
             given(loadProjectApplicationPort.listDecidableByMatchingRoundIdAndProjectId(any(), any()))
                 .willReturn(List.of(application));
@@ -577,7 +577,7 @@ class ProjectApplicationCommandServiceTest {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
             ProjectApplication iosApp = otherApprovedApplication(701L, 71L, application.getApplicationForm());
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
-            given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
                 .willReturn(Map.of(ChallengerPart.WEB, 5L));   // WEB active 5, TO 6 → 남은 1
             given(loadProjectApplicationPort.listByMatchingRoundId(any()))
                 .willReturn(List.of(iosApp));
@@ -683,7 +683,7 @@ class ProjectApplicationCommandServiceTest {
         ProjectMatchingRound round = ProjectMatchingRound.create(
             "기획-디자인 1차 매칭", null,
             MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, 1L,
-            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE
+            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE, ROUND_DECISION_DEADLINE.plusSeconds(7200)
         );
         ReflectionTestUtils.setField(round, "id", MATCHING_ROUND_ID);
         return round;
@@ -693,7 +693,7 @@ class ProjectApplicationCommandServiceTest {
         return ProjectMatchingRound.create(
             "프로젝트 매칭", null,
             matchingType, MatchingPhase.FIRST, 1L,
-            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE
+            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE, ROUND_DECISION_DEADLINE.plusSeconds(7200)
         );
     }
 

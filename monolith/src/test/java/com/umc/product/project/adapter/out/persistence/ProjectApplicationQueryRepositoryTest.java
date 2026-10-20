@@ -288,7 +288,8 @@ class ProjectApplicationQueryRepositoryTest {
             1L,
             startsAt,
             startsAt.plusSeconds(3_600),
-            startsAt.plusSeconds(7_200)
+            startsAt.plusSeconds(7_200),
+            startsAt.plusSeconds(14_400)
         );
         em.persist(round);
         return round;

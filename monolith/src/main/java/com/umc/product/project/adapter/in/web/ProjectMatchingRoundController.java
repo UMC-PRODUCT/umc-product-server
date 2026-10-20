@@ -74,7 +74,7 @@ public class ProjectMatchingRoundController {
             매칭 차수를 생성합니다.
             - 중앙운영사무국 총괄단 이상은 모든 지부에 생성할 수 있습니다.
             - 지부장은 본인 지부에만 생성할 수 있습니다.
-            - startsAt < endsAt < decisionDeadline 순서를 만족해야 합니다.
+            - startsAt < endsAt < decisionDeadline <= resultPublishAt 순서를 만족해야 합니다.
             - 같은 지부 내 기존 매칭 차수와 startsAt ~ decisionDeadline 기간이 중복되면 409를 반환합니다.
             - 동일 지부 내 type + phase 조합은 DB Unique Key로도 중복을 제한합니다.
             """
@@ -99,7 +99,8 @@ public class ProjectMatchingRoundController {
             - 수정 요청 본문에는 chapterId를 포함하지 않습니다.
             - 매칭 차수가 소속된 chapterId는 수정할 수 없으며, 권한 및 기간 중복 검증도 기존 chapterId 기준으로 수행합니다.
             - 요청 본문에 제공되지 않은 필드는 기존 매칭 차수 값을 유지합니다.
-            - 기존 값과 요청 값을 병합한 최종 결과가 startsAt < endsAt < decisionDeadline 순서를 만족해야 합니다.
+            - 기존 값과 요청 값을 병합한 최종 결과가 startsAt < endsAt < decisionDeadline <= resultPublishAt 순서를 만족해야 합니다.
+            - 발표 시각이 없는 기존 차수는 resultPublishAt을 생략하면 미설정 상태를 유지합니다.
             - 같은 지부 내 다른 매칭 차수와 startsAt ~ decisionDeadline 기간이 중복되면 409를 반환합니다.
             """
     )
@@ -142,6 +143,8 @@ public class ProjectMatchingRoundController {
             - 이미 자동 선발이 실행된 매칭 차수에 대해서는 멱등 (no-op).
             - 정책 매트릭스(디자이너 / 개발자)에 따라 SUBMITTED 우선 random 보충 후 부족하면 REJECTED 까지 override 합니다.
             - 합격자에게는 ProjectMember 가 자동으로 생성됩니다.
+            - 발표 시각이 있는 차수는 공개 대기 팀원만 생성하며, 지원서의 최종 합불은 결과 공개 시 반영합니다.
+            - 발표 시각이 없는 기존 차수는 지원서 합불과 활성 팀원을 즉시 반영합니다.
             """
     )
     public void autoDecide(

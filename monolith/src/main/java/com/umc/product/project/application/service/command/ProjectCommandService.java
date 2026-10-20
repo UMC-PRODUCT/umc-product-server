@@ -314,7 +314,7 @@ public class ProjectCommandService implements
      * 프로젝트 중단(abort). IN_PROGRESS → ABORTED 상태 전이 + 자식 도메인 일괄 동기화.
      * <ul>
      *   <li>{@link Project#abort} 로 상태 전이 (COMPLETED/ABORTED 는 도메인 가드가 거부)</li>
-     *   <li>ACTIVE 인 ProjectMember 는 모두 WITHDRAWN, statusChangeReason 에 중단 사유 기록</li>
+     *   <li>ACTIVE 및 PENDING_PUBLICATION 인 ProjectMember 는 모두 WITHDRAWN, statusChangeReason 에 중단 사유 기록</li>
      *   <li>진행 중(DRAFT/SUBMITTED) ProjectApplication 은 모두 CANCELLED</li>
      * </ul>
      * 권한 검증은 Controller 단의 {@code @CheckAccess(MANAGE)} 가 담당.
@@ -324,7 +324,7 @@ public class ProjectCommandService implements
         Project project = loadProjectPort.getById(command.projectId());
         project.abort(command.reason(), command.requesterMemberId());
 
-        List<ProjectMember> activeMembers = loadProjectMemberPort.listByProjectId(project.getId());
+        List<ProjectMember> activeMembers = loadProjectMemberPort.listAssignedByProjectId(project.getId());
         for (ProjectMember member : activeMembers) {
             member.withdraw(command.reason(), command.requesterMemberId());
         }
@@ -341,7 +341,7 @@ public class ProjectCommandService implements
      * <ul>
      *   <li>대상 프로젝트마다 MANAGE 권한을 검증 (배열 입력이라 Controller {@code @CheckAccess} 로는 단건 바인딩 불가)</li>
      *   <li>{@link Project#complete} 로 상태 전이 (IN_PROGRESS 가 아니면 도메인 가드가 거부)</li>
-     *   <li>ACTIVE 인 ProjectMember 는 모두 COMPLETED (정상 졸업이므로 사유 없음)</li>
+     *   <li>ACTIVE 및 PENDING_PUBLICATION 인 ProjectMember 는 모두 COMPLETED (정상 졸업이므로 사유 없음)</li>
      *   <li>진행 중(DRAFT/SUBMITTED) ProjectApplication 은 모두 CANCELLED, 사유에 완료 자동 취소 명시</li>
      * </ul>
      * {@code @Transactional} 이므로 대상 중 하나라도 권한/상태 조건을 만족하지 못하면 전체 롤백된다.
@@ -368,7 +368,7 @@ public class ProjectCommandService implements
 
             project.complete(command.requesterMemberId());
 
-            List<ProjectMember> activeMembers = loadProjectMemberPort.listByProjectId(project.getId());
+            List<ProjectMember> activeMembers = loadProjectMemberPort.listAssignedByProjectId(project.getId());
             for (ProjectMember member : activeMembers) {
                 member.complete(command.requesterMemberId());
             }

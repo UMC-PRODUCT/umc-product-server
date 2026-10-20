@@ -12,25 +12,25 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
 import com.umc.product.global.observability.ScheduledTaskTracer;
+import com.umc.product.project.adapter.in.scheduler.MatchingResultPublicationHandler;
 import com.umc.product.project.adapter.in.scheduler.MatchingRoundDeadlineHandler;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.ScheduleMatchingRoundDeadlinePort;
 import com.umc.product.project.domain.ProjectMatchingRound;
 
 import jakarta.annotation.PostConstruct;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * {@link ScheduleMatchingRoundDeadlinePort} 의 driven adapter 구현.
  * <p>
  * 매칭 차수 lifecycle ({@code create} / {@code update} / {@code delete}) 호출에 맞춰
- * {@link TaskScheduler} 에 결정 마감 시점의 1회성 task 를 등록한다.
- * 등록된 task 는 in-side {@link MatchingRoundDeadlineHandler} 가 실행하며,
+ * {@link TaskScheduler} 에 자동 선발과 결과 발표 시점의 1회성 task 를 등록한다.
+ * 자동 선발은 in-side {@link MatchingRoundDeadlineHandler}, 결과 공개는
+ * {@link MatchingResultPublicationHandler} 가 실행하며,
  * 본 클래스는 등록/취소/상태 보관만 담당한다.
  * <p>
- * 부팅 시 자동 선발이 아직 실행되지 않은 모든 매칭 차수를 다시 등록하여 JVM 재시작에도 안전하다.
- * 다중 인스턴스 환경에서 동일 round 가 중복 등록되어도 service 측 멱등성
- * ({@code autoDecisionExecutedAt != null}) 으로 방어된다.
+ * 부팅 시 미처리 자동 선발과 결과 발표 작업을 다시 등록한다.
+ * 다중 인스턴스 환경에서 동일 차수의 작업이 중복 등록되어도 service 측에서 잠금과 완료 여부를 확인한다.
  */
 @Component
 @ConditionalOnProperty(
@@ -38,7 +38,6 @@ import lombok.extern.slf4j.Slf4j;
     havingValue = "true",
     matchIfMissing = true
 )
-@Slf4j
 public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDeadlinePort {
 
     /**
@@ -52,20 +51,24 @@ public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDead
 
     private final TaskScheduler taskScheduler;
     private final MatchingRoundDeadlineHandler handler;
+    private final MatchingResultPublicationHandler publicationHandler;
     private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
     private final ScheduledTaskTracer scheduledTaskTracer;
 
     private final Map<Long, ScheduledFuture<?>> pendingTasks = new ConcurrentHashMap<>();
+    private final Map<Long, ScheduledFuture<?>> publicationTasks = new ConcurrentHashMap<>();
 
     public MatchingRoundDeadlineScheduler(
         @Qualifier("matchingDeadlineTaskScheduler") TaskScheduler taskScheduler,
         MatchingRoundDeadlineHandler handler,
         LoadProjectMatchingRoundPort loadProjectMatchingRoundPort,
         MatchingRoundDeadlineSchedulerProperties properties,
-        ScheduledTaskTracer scheduledTaskTracer
+        ScheduledTaskTracer scheduledTaskTracer,
+        MatchingResultPublicationHandler publicationHandler
     ) {
         this.taskScheduler = taskScheduler;
         this.handler = handler;
+        this.publicationHandler = publicationHandler;
         this.loadProjectMatchingRoundPort = loadProjectMatchingRoundPort;
         this.deadlineBuffer = properties.deadlineBuffer();
         this.scheduledTaskTracer = scheduledTaskTracer;
@@ -74,6 +77,7 @@ public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDead
     @PostConstruct
     public void recoverPendingTasks() {
         loadProjectMatchingRoundPort.listAllNotAutoDecided().forEach(this::schedule);
+        loadProjectMatchingRoundPort.listAllNotPublished().forEach(this::schedulePublication);
     }
 
     @Override
@@ -95,10 +99,42 @@ public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDead
             runAt
         );
         pendingTasks.put(roundId, future);
+        schedulePublication(round);
+    }
+
+    /**
+     * 결과 발표 시각에 1회성 task 를 등록한다. 같은 차수의 기존 발표 예약은 취소한다.
+     */
+    public void schedulePublication(ProjectMatchingRound round) {
+        ScheduledFuture<?> previous = publicationTasks.remove(round.getId());
+        if (previous != null) {
+            previous.cancel(false);
+        }
+        if (round.getResultPublishAt() != null && round.getResultPublishedAt() == null) {
+            registerPublication(round.getId(), round.getResultPublishAt());
+        }
+    }
+
+    private void registerPublication(Long roundId, Instant runAt) {
+        ScheduledFuture<?> future = taskScheduler.schedule(
+            scheduledTaskTracer.trace("matchingResultPublication", () -> {
+                try {
+                    publicationHandler.handle(roundId);
+                } finally {
+                    publicationTasks.remove(roundId);
+                }
+            }),
+            runAt
+        );
+        publicationTasks.put(roundId, future);
     }
 
     @Override
     public void cancel(Long roundId) {
+        ScheduledFuture<?> publication = publicationTasks.remove(roundId);
+        if (publication != null) {
+            publication.cancel(false);
+        }
         ScheduledFuture<?> future = pendingTasks.remove(roundId);
         if (future != null) {
             future.cancel(false);

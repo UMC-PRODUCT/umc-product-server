@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,8 +14,29 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 
+import jakarta.persistence.LockModeType;
+
 // TODO: 프로젝트 전반의 QueryDSL 일관성을 위해 ProjectMemberQueryRepository로 마이그레이션 필요.
 public interface ProjectMemberJpaRepository extends JpaRepository<ProjectMember, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select pm from ProjectMember pm join fetch pm.project
+        where pm.project.id = :projectId and pm.status in :statuses order by pm.id
+        """)
+    List<ProjectMember> findAssignedByProjectId(@Param("projectId") Long projectId,
+        @Param("statuses") Collection<ProjectMemberStatus> statuses);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select pm from ProjectMember pm join fetch pm.project
+        where pm.assignedMatchingRound.id = :roundId and pm.status = :status order by pm.id
+        """)
+    List<ProjectMember> findPendingByRoundId(@Param("roundId") Long roundId,
+        @Param("status") ProjectMemberStatus status);
+
+    boolean existsByProject_GisuIdAndMemberIdAndStatusIn(Long gisuId, Long memberId,
+        Collection<ProjectMemberStatus> statuses);
 
     List<ProjectMember> findByProjectIdAndPartAndStatusOrderByCreatedAtAscIdAsc(
         Long projectId, ChallengerPart part, ProjectMemberStatus status

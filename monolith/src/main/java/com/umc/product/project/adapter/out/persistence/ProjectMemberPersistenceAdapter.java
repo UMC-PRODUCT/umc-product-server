@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
+import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
@@ -26,6 +27,34 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
 
     private final ProjectMemberJpaRepository repository;
     private final ProjectMemberQueryRepository queryRepository;
+
+    @Override
+    public List<ProjectMember> listAssignedByProjectId(Long projectId) {
+        return repository.findAssignedByProjectId(projectId,
+            List.of(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION));
+    }
+
+    @Override
+    public List<ProjectMember> listPendingByMatchingRoundId(Long matchingRoundId) {
+        return repository.findPendingByRoundId(matchingRoundId, ProjectMemberStatus.PENDING_PUBLICATION);
+    }
+
+    @Override
+    public Map<ChallengerPart, Long> countAssignedByProjectIdGroupByPart(Long projectId) {
+        return countAssignedByProjectIdsGroupByProjectIdAndPart(List.of(projectId)).getOrDefault(projectId, Map.of());
+    }
+
+    @Override
+    public Map<Long, Map<ChallengerPart, Long>> countAssignedByProjectIdsGroupByProjectIdAndPart(Collection<Long> projectIds) {
+        return queryRepository.countAssignedByProjectIdsGroupByProjectIdAndPart(projectIds);
+    }
+
+    @Override
+    public List<ProjectMemberMatchedRoundInfo> listMatchedRoundsByProjectIdsAndMemberIds(
+        Collection<Long> projectIds, Collection<Long> memberIds
+    ) {
+        return queryRepository.listMatchedRoundsByProjectIdsAndMemberIds(projectIds, memberIds);
+    }
 
     @Override
     public ProjectMember save(ProjectMember member) {
@@ -103,7 +132,8 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
 
     @Override
     public boolean existsByGisuAndMember(Long gisuId, Long memberId) {
-        return repository.existsByProject_GisuIdAndMemberIdAndStatus(gisuId, memberId, ProjectMemberStatus.ACTIVE);
+        return repository.existsByProject_GisuIdAndMemberIdAndStatusIn(gisuId, memberId,
+            List.of(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION));
     }
 
     @Override

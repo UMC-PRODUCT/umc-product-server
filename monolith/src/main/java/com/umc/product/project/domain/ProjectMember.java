@@ -5,6 +5,8 @@ import java.time.Instant;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -56,6 +58,10 @@ public class ProjectMember extends BaseEntity {
     @JoinColumn(name = "project_application_id")
     private ProjectApplication application; // 어떤 지원서로 들어왔는지, nullable true!
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_matching_round_id")
+    private ProjectMatchingRound assignedMatchingRound; // 실제 배정된 매칭 차수
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
@@ -105,7 +111,10 @@ public class ProjectMember extends BaseEntity {
     }
 
     /**
-     * 지원서 합격 결과로 활성 상태의 신규 멤버를 생성합니다.
+     * 선발된 지원서에 연결된 신규 멤버를 생성합니다.
+     * <p>
+     * 결과 발표 시각이 있는 차수는 PENDING_PUBLICATION, 발표 시각이 없는 기존 차수는 ACTIVE 로 생성합니다.
+     * 발표 전에는 연결된 지원서에 PM의 결정값이 유지되므로 지원서 상태와 배정 상태가 다를 수 있습니다.
      */
     public static ProjectMember createFromApplication(
         ProjectApplication application, ChallengerPart part, Long decidedByMemberId
@@ -117,7 +126,30 @@ public class ProjectMember extends BaseEntity {
             decidedByMemberId
         );
         pm.application = application;
+        pm.assignedMatchingRound = application.getAppliedMatchingRound();
+        if (pm.assignedMatchingRound.getResultPublishAt() != null) {
+            pm.status = ProjectMemberStatus.PENDING_PUBLICATION;
+        }
         return pm;
+    }
+
+    /**
+     * 결과 발표 시 공개 대기 중인 멤버를 ACTIVE 로 전이합니다.
+     * <p>
+     * PENDING_PUBLICATION 이 아닌 멤버는 변경하지 않습니다.
+     *
+     * @param now 결과 공개 기준 시각
+     */
+    public void publish(Instant now) {
+        if (status != ProjectMemberStatus.PENDING_PUBLICATION) {
+            return;
+        }
+        if (assignedMatchingRound == null || !assignedMatchingRound.canPublishAt(now)) {
+            throw new ProjectDomainException(
+                ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_PUBLISHABLE);
+        }
+        this.status = ProjectMemberStatus.ACTIVE;
+        this.statusUpdatedAt = now;
     }
 
     /**
@@ -127,6 +159,13 @@ public class ProjectMember extends BaseEntity {
      * 행을 물리적으로 삭제하지 않으므로 히스토리가 보존됩니다.
      */
     public void changeStatus(ProjectMemberStatus newStatus, Long changedByMemberId, String reason) {
+        if (newStatus == ProjectMemberStatus.PENDING_PUBLICATION
+            || (newStatus == ProjectMemberStatus.ACTIVE && assignedMatchingRound != null
+            && assignedMatchingRound.getResultPublishAt() != null
+            && !assignedMatchingRound.isResultPublishedAt(Instant.now()))) {
+            throw new ProjectDomainException(
+                ProjectErrorCode.PROJECT_MEMBER_PUBLICATION_MANAGED);
+        }
         this.status = newStatus;
         this.statusUpdatedAt = Instant.now();
         this.statusChangeReason = reason;
@@ -155,7 +194,7 @@ public class ProjectMember extends BaseEntity {
      * 멤버 활동을 정상 완료 처리합니다.
      * status 를 {@link ProjectMemberStatus#COMPLETED} 로 바꾸고 변경 메타데이터를 기록합니다.
      * <p>
-     * 프로젝트 완료(complete) 시 ACTIVE 멤버 일괄 처리에 사용합니다.
+     * 프로젝트 완료(complete) 시 ACTIVE 및 PENDING_PUBLICATION 멤버의 일괄 처리에 사용합니다.
      */
     public void complete(Long decidedByMemberId) {
         changeStatus(ProjectMemberStatus.COMPLETED, decidedByMemberId, null);

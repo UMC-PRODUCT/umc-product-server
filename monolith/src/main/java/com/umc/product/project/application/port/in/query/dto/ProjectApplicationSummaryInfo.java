@@ -43,7 +43,7 @@ public record ProjectApplicationSummaryInfo(
             .matchingRoundId(application.getAppliedMatchingRound().getId())
             .status(statusVisible ? application.getStatus() : null)
             .submittedAt(application.getSubmittedAt())
-            .statusChangedAt(application.getStatusChangedAt())
+            .statusChangedAt(statusVisible ? application.getStatusChangedAt() : null)
             .createdAt(application.getCreatedAt())
             .updatedAt(application.getUpdatedAt())
             .build();

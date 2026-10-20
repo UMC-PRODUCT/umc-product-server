@@ -45,7 +45,6 @@ import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
-import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
 import com.umc.product.project.domain.ProjectApplicationForm;
@@ -67,7 +66,6 @@ public class ProjectResponseAssembler {
     private final SearchManagedProjectUseCase searchManagedProjectUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
-    private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final GetProjectStatisticsUseCase getProjectStatisticsUseCase;
     private final CheckPermissionUseCase checkPermissionUseCase;
@@ -320,8 +318,8 @@ public class ProjectResponseAssembler {
             return Map.of();
         }
 
-        List<ProjectMemberMatchedRoundInfo> rows = loadProjectApplicationPort
-            .listLatestApprovedMatchedRoundsByProjectIdsAndMemberIds(projectIds, memberIds);
+        List<ProjectMemberMatchedRoundInfo> rows = loadProjectMemberPort
+            .listMatchedRoundsByProjectIdsAndMemberIds(projectIds, memberIds);
         if (rows == null || rows.isEmpty()) {
             return Map.of();
         }

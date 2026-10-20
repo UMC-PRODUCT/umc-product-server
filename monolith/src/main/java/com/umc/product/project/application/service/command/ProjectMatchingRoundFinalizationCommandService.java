@@ -103,7 +103,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     )
     @Override
     public void autoDecide(Long matchingRoundId, Long executedByMemberId) {
-        ProjectMatchingRound round = loadProjectMatchingRoundPort.getById(matchingRoundId);
+        ProjectMatchingRound round = loadProjectMatchingRoundPort.getByIdForUpdate(matchingRoundId);
 
         // executedByMemberId == null 은 스케줄러 호출. 권한 검증은 운영진 수동 호출에만 적용.
         if (executedByMemberId != null) {
@@ -132,16 +132,17 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             Map<ProjectPartKey, Integer> remainingQuotaByKey = buildRemainingQuotaMap(grouped.keySet());
 
             Set<Long> approvedIds = new HashSet<>();
-            Set<Long> rejectedIds = new HashSet<>();
             for (Map.Entry<ProjectPartKey, List<ProjectApplication>> entry : grouped.entrySet()) {
                 int quota = remainingQuotaByKey.getOrDefault(entry.getKey(), 0);
                 AutoDecisionResult result = policy.decideAutomatically(entry.getValue(), quota, matchingRandom);
                 approvedIds.addAll(result.approvedIds());
-                rejectedIds.addAll(result.rejectedIds());
             }
 
-            applyDecisions(applicants, approvedIds, rejectedIds, executedByMemberId);
-            saveProjectApplicationPort.saveAll(applicants);
+            // 발표 시각이 있는 차수는 배정만 확정하고, 지원서에는 PM의 마지막 결정을 유지한다.
+            if (round.getResultPublishAt() == null) {
+                applyDecisions(applicants, approvedIds, executedByMemberId);
+                saveProjectApplicationPort.saveAll(applicants);
+            }
             membersToSave.addAll(buildApprovedMembers(applicants, approvedIds, applicantPart, executedByMemberId));
         }
 
@@ -223,7 +224,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             ));
 
         Map<Long, Map<ChallengerPart, Long>> activeByProject = loadProjectMemberPort
-            .countByProjectIdsGroupByProjectIdAndPart(projectIds);
+            .countAssignedByProjectIdsGroupByProjectIdAndPart(projectIds);
 
         Map<ProjectPartKey, Integer> result = new HashMap<>();
         for (ProjectPartKey key : keys) {
@@ -242,7 +243,6 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     private void applyDecisions(
         List<ProjectApplication> applicants,
         Set<Long> approvedIds,
-        Set<Long> rejectedIds,
         Long executedByMemberId
     ) {
         for (ProjectApplication app : applicants) {

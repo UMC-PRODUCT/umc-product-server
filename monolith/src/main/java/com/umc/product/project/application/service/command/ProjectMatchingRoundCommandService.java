@@ -59,7 +59,8 @@ public class ProjectMatchingRoundCommandService implements
         validateManageAccess(command.requesterMemberId(), command.chapterId());
         // 매칭 차수는 중복될 수 없습니다.
         validateNoOverlap(
-            command.chapterId(), command.startsAt(), command.endsAt(), command.decisionDeadline());
+            command.chapterId(), command.startsAt(), command.endsAt(), command.decisionDeadline(),
+            command.resultPublishAt());
         validatePhaseSequence(
             null,
             command.chapterId(),
@@ -77,7 +78,8 @@ public class ProjectMatchingRoundCommandService implements
             command.chapterId(),
             command.startsAt(),
             command.endsAt(),
-            command.decisionDeadline()
+            command.decisionDeadline(),
+            command.resultPublishAt()
         );
 
         ProjectMatchingRound saved = saveProjectMatchingRoundPort.save(matchingRound);
@@ -87,7 +89,7 @@ public class ProjectMatchingRoundCommandService implements
 
     @Override
     public void update(UpdateProjectMatchingRoundCommand command) {
-        ProjectMatchingRound matchingRound = loadProjectMatchingRoundPort.getById(command.matchingRoundId());
+        ProjectMatchingRound matchingRound = loadProjectMatchingRoundPort.getByIdForUpdate(command.matchingRoundId());
 
         String name = command.name() != null ? command.name() : matchingRound.getName();
         String description = command.description() != null ? command.description() : matchingRound.getDescription();
@@ -98,6 +100,9 @@ public class ProjectMatchingRoundCommandService implements
         Instant decisionDeadline = command.decisionDeadline() != null
             ? command.decisionDeadline()
             : matchingRound.getDecisionDeadline();
+        Instant resultPublishAt = command.resultPublishAt() != null
+            ? command.resultPublishAt()
+            : matchingRound.getResultPublishAt();
 
         validateManageAccess(command.requesterMemberId(), matchingRound.getChapterId());
         validateNoOverlapExceptId(
@@ -105,7 +110,8 @@ public class ProjectMatchingRoundCommandService implements
             matchingRound.getChapterId(),
             startsAt,
             endsAt,
-            decisionDeadline
+            decisionDeadline,
+            resultPublishAt
         );
         validatePhaseSequence(
             matchingRound.getId(),
@@ -123,14 +129,15 @@ public class ProjectMatchingRoundCommandService implements
             phase,
             startsAt,
             endsAt,
-            decisionDeadline
+            decisionDeadline,
+            resultPublishAt
         );
         scheduleAfterCommit(matchingRound);
     }
 
     @Override
     public void delete(Long matchingRoundId, Long requesterMemberId) {
-        ProjectMatchingRound matchingRound = loadProjectMatchingRoundPort.getById(matchingRoundId);
+        ProjectMatchingRound matchingRound = loadProjectMatchingRoundPort.getByIdForUpdate(matchingRoundId);
         validateManageAccess(requesterMemberId, matchingRound.getChapterId());
 
         if (loadProjectApplicationPort.existsByAppliedMatchingRoundId(matchingRoundId)) {
@@ -142,18 +149,18 @@ public class ProjectMatchingRoundCommandService implements
     }
 
     private void validateNoOverlap(
-        Long chapterId, Instant startsAt, Instant endsAt, Instant decisionDeadline
+        Long chapterId, Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
     ) {
-        ProjectMatchingRound.validateDates(startsAt, endsAt, decisionDeadline);
+        ProjectMatchingRound.validateDates(startsAt, endsAt, decisionDeadline, resultPublishAt);
         if (!loadProjectMatchingRoundPort.listOverlapping(chapterId, startsAt, decisionDeadline).isEmpty()) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED);
         }
     }
 
     private void validateNoOverlapExceptId(
-        Long id, Long chapterId, Instant startsAt, Instant endsAt, Instant decisionDeadline
+        Long id, Long chapterId, Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
     ) {
-        ProjectMatchingRound.validateDates(startsAt, endsAt, decisionDeadline);
+        ProjectMatchingRound.validateDates(startsAt, endsAt, decisionDeadline, resultPublishAt);
         if (!loadProjectMatchingRoundPort.listOverlappingExceptId(
             id, chapterId, startsAt, decisionDeadline).isEmpty()) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED);

@@ -33,6 +33,17 @@ public class ProjectMatchingRoundPersistenceAdapter
     }
 
     @Override
+    public ProjectMatchingRound getByIdForUpdate(Long id) {
+        return jpaRepository.findByIdForUpdate(id)
+            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FOUND));
+    }
+
+    @Override
+    public List<ProjectMatchingRound> listAllNotPublished() {
+        return jpaRepository.findAllNotPublished();
+    }
+
+    @Override
     public Optional<ProjectMatchingRound> findById(Long id) {
         return jpaRepository.findById(id);
     }

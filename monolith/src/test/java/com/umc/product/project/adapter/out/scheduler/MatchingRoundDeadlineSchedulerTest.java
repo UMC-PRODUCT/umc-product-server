@@ -24,8 +24,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.global.observability.ScheduledTaskTracer;
+import com.umc.product.project.adapter.in.scheduler.MatchingResultPublicationHandler;
 import com.umc.product.project.adapter.in.scheduler.MatchingRoundDeadlineHandler;
+import com.umc.product.project.application.port.in.command.PublishProjectMatchingResultUseCase;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.enums.MatchingPhase;
@@ -49,6 +52,11 @@ class MatchingRoundDeadlineSchedulerTest {
     @Mock
     ScheduledFuture<?> scheduledFuture2;
 
+    @Mock
+    PublishProjectMatchingResultUseCase publishProjectMatchingResultUseCase;
+    @Mock
+    OperationalMetrics operationalMetrics;
+
     MatchingRoundDeadlineScheduler sut;
 
     @BeforeEach
@@ -59,7 +67,8 @@ class MatchingRoundDeadlineSchedulerTest {
             loadProjectMatchingRoundPort,
             new MatchingRoundDeadlineSchedulerProperties(TEST_DEADLINE_BUFFER.toMinutes()),
             // NOOP Tracer 기반 — trace() 래퍼는 task 를 그대로 실행하므로 스케줄러 동작 검증에 영향이 없다.
-            new ScheduledTaskTracer(Tracer.NOOP)
+            new ScheduledTaskTracer(Tracer.NOOP),
+            new MatchingResultPublicationHandler(publishProjectMatchingResultUseCase, operationalMetrics)
         );
     }
 
@@ -179,13 +188,77 @@ class MatchingRoundDeadlineSchedulerTest {
         }
     }
 
+    @Test
+    void 발표_작업이_실패해도_재예약하지_않고_등록을_제거한다() {
+        // given
+        ProjectMatchingRound round = roundWithId(1L);
+        Instant publishAt = round.getDecisionDeadline().plusSeconds(3600);
+        ReflectionTestUtils.setField(round, "resultPublishAt", publishAt);
+        ArgumentCaptor<Runnable> taskCaptor = ArgumentCaptor.forClass(Runnable.class);
+        given(taskScheduler.schedule(taskCaptor.capture(), any(Instant.class)))
+            .willAnswer(invocation -> scheduledFuture);
+        willThrow(new IllegalStateException("일시 오류")).given(publishProjectMatchingResultUseCase).publish(1L);
+
+        // when
+        sut.schedulePublication(round);
+        then(taskScheduler).should().schedule(any(Runnable.class), eq(publishAt));
+        taskCaptor.getValue().run();
+
+        // then
+        then(publishProjectMatchingResultUseCase).should().publish(1L);
+        then(taskScheduler).should(times(1)).schedule(any(Runnable.class), any(Instant.class));
+        sut.cancel(1L);
+        then(scheduledFuture).should(never()).cancel(false);
+    }
+
+    @Test
+    void 발표_시각에_한번_실행하고_등록을_제거한다() {
+        // given
+        ProjectMatchingRound round = roundWithId(1L);
+        Instant publishAt = round.getDecisionDeadline().plusSeconds(3600);
+        ReflectionTestUtils.setField(round, "resultPublishAt", publishAt);
+        ArgumentCaptor<Runnable> taskCaptor = ArgumentCaptor.forClass(Runnable.class);
+        given(taskScheduler.schedule(taskCaptor.capture(), any(Instant.class)))
+            .willAnswer(invocation -> scheduledFuture);
+
+        // when
+        sut.schedulePublication(round);
+        taskCaptor.getValue().run();
+
+        // then
+        then(publishProjectMatchingResultUseCase).should().publish(1L);
+        then(taskScheduler).should().schedule(any(Runnable.class), eq(publishAt));
+        then(taskScheduler).should(times(1)).schedule(any(Runnable.class), any(Instant.class));
+        sut.cancel(1L);
+        then(scheduledFuture).should(never()).cancel(false);
+    }
+
+    @Test
+    void 재시작하면_자동_선발이_끝난_차수의_미공개_예약도_복구한다() {
+        // given
+        ProjectMatchingRound round = roundWithId(1L);
+        Instant publishAt = round.getDecisionDeadline().plusSeconds(3600);
+        ReflectionTestUtils.setField(round, "resultPublishAt", publishAt);
+        round.executeAutoDecision(null);
+        given(loadProjectMatchingRoundPort.listAllNotPublished()).willReturn(List.of(round));
+        given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+            .willAnswer(invocation -> scheduledFuture);
+
+        // when
+        sut.recoverPendingTasks();
+
+        // then
+        then(taskScheduler).should().schedule(any(Runnable.class), eq(publishAt));
+    }
+
     private ProjectMatchingRound roundWithId(Long id) {
         ProjectMatchingRound round = ProjectMatchingRound.create(
             "테스트 매칭 " + id, null,
             MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, 1L,
             Instant.now().plusSeconds(86_400),
             Instant.now().plusSeconds(172_800),
-            Instant.now().plusSeconds(259_200)
+            Instant.now().plusSeconds(259_200),
+            null
         );
         ReflectionTestUtils.setField(round, "id", id);
         return round;

@@ -2,14 +2,29 @@ package com.umc.product.project.adapter.out.persistence;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.umc.product.project.domain.ProjectMatchingRound;
 
+import jakarta.persistence.LockModeType;
+
 public interface ProjectMatchingRoundJpaRepository extends JpaRepository<ProjectMatchingRound, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from ProjectMatchingRound r where r.id = :id")
+    Optional<ProjectMatchingRound> findByIdForUpdate(@Param("id") Long id);
+
+    @Query("""
+        select r from ProjectMatchingRound r
+        where r.resultPublishAt is not null and r.resultPublishedAt is null
+        order by r.resultPublishAt, r.id
+        """)
+    List<ProjectMatchingRound> findAllNotPublished();
 
     List<ProjectMatchingRound> findAllByChapterIdOrderByStartsAtAsc(Long chapterId);
 
