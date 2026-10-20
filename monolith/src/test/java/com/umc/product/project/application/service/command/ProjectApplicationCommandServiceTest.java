@@ -53,8 +53,6 @@ import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
-import com.umc.product.project.application.service.policy.DesignerMatchingPolicy;
-import com.umc.product.project.application.service.policy.DeveloperMatchingPolicy;
 import com.umc.product.project.application.service.policy.ProjectApplicationChapterPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
@@ -136,7 +134,6 @@ class ProjectApplicationCommandServiceTest {
             getChallengerUseCase,
             checkChallengerAuthorityUseCase,
             projectApplicationChapterPolicy,
-            List.of(new DeveloperMatchingPolicy(), new DesignerMatchingPolicy()),
             getFormUseCase
         );
 
@@ -294,8 +291,6 @@ class ProjectApplicationCommandServiceTest {
         void REJECTED_입력시_도메인_reject_호출_후_저장한다() {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
-            given(loadProjectApplicationPort.listDecidableByMatchingRoundIdAndProjectId(any(), any()))
-                .willReturn(List.of(application));
 
             sut.decide(APPLICATION_ID, ApplicationDecisionStatus.REJECTED, "면접 결과", DECIDER_MEMBER_ID);
 
@@ -305,102 +300,19 @@ class ProjectApplicationCommandServiceTest {
         }
 
         @Test
-        void 디자이너_지원자_2명_승인_0명에서_SUBMITTED를_REJECTED로_변경하면_MINIMUM_SELECTION_REQUIRED() {
-            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
-            ProjectApplication otherSubmitted = otherApplication(
-                701L, 101L, application.getApplicationForm(), ProjectApplicationStatus.SUBMITTED
-            );
+        void 불합격_처리는_최소_선발_인원과_무관하게_허용된다() {
+            // 합격자가 한 명뿐인 상황에서 그 한 명을 불합격시켜도 막지 않는다. 부족분은 결정 마감 시 자동 선발이 채운다.
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED);
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
-            given(loadProjectApplicationPort.listDecidableByMatchingRoundIdAndProjectId(any(), any()))
-                .willReturn(List.of(application, otherSubmitted));
-            given(loadProjectPartQuotaPort.listByProjectId(any()))
-                .willReturn(List.of(partQuotaFor(ChallengerPart.DESIGN, 1L)));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(APPLICANT_MEMBER_ID), any()))
-                .willReturn(challengerWith(APPLICANT_MEMBER_ID, ChallengerPart.DESIGN));
-            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), any()))
-                .willReturn(Map.of(
-                    APPLICANT_MEMBER_ID, challengerWith(APPLICANT_MEMBER_ID, ChallengerPart.DESIGN),
-                    101L, challengerWith(101L, ChallengerPart.DESIGN)
-                ));
 
-            assertThatThrownBy(() -> sut.decide(
-                APPLICATION_ID, ApplicationDecisionStatus.REJECTED, null, DECIDER_MEMBER_ID
-            ))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_MINIMUM_SELECTION_REQUIRED);
-
-            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
-            then(saveProjectApplicationPort).should(never()).save(any());
-        }
-
-        @Test
-        void 디자이너_최소_1명이_이미_APPROVED면_다른_SUBMITTED를_REJECTED로_변경할_수_있다() {
-            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
-            ProjectApplication approved = otherApplication(
-                701L, 101L, application.getApplicationForm(), ProjectApplicationStatus.APPROVED
-            );
-            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
-            given(loadProjectApplicationPort.listDecidableByMatchingRoundIdAndProjectId(any(), any()))
-                .willReturn(List.of(application, approved));
-            given(loadProjectPartQuotaPort.listByProjectId(any()))
-                .willReturn(List.of(partQuotaFor(ChallengerPart.DESIGN, 1L)));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(APPLICANT_MEMBER_ID), any()))
-                .willReturn(challengerWith(APPLICANT_MEMBER_ID, ChallengerPart.DESIGN));
-            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), any()))
-                .willReturn(Map.of(
-                    APPLICANT_MEMBER_ID, challengerWith(APPLICANT_MEMBER_ID, ChallengerPart.DESIGN),
-                    101L, challengerWith(101L, ChallengerPart.DESIGN)
-                ));
-
-            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.REJECTED, null, DECIDER_MEMBER_ID);
+            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.REJECTED, "재검토 후 불합격", DECIDER_MEMBER_ID);
 
             assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
             then(saveProjectApplicationPort).should(times(1)).save(application);
         }
 
         @Test
-        void 개발자_TO6_지원자6명_승인3명에서_APPROVED를_REJECTED로_변경하면_MINIMUM_SELECTION_REQUIRED() {
-            ProjectMatchingRound developerRound = openRound(MatchingType.PLAN_DEVELOPER);
-            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED, developerRound);
-            List<ProjectApplication> applicants = List.of(
-                application,
-                otherApplication(701L, 101L, application.getApplicationForm(), ProjectApplicationStatus.APPROVED),
-                otherApplication(702L, 102L, application.getApplicationForm(), ProjectApplicationStatus.APPROVED),
-                otherApplication(703L, 103L, application.getApplicationForm(), ProjectApplicationStatus.SUBMITTED),
-                otherApplication(704L, 104L, application.getApplicationForm(), ProjectApplicationStatus.SUBMITTED),
-                otherApplication(705L, 105L, application.getApplicationForm(), ProjectApplicationStatus.SUBMITTED)
-            );
-            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
-            given(loadProjectApplicationPort.listDecidableByMatchingRoundIdAndProjectId(any(), any()))
-                .willReturn(applicants);
-            given(loadProjectPartQuotaPort.listByProjectId(any()))
-                .willReturn(List.of(partQuotaFor(ChallengerPart.WEB, 6L)));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(APPLICANT_MEMBER_ID), any()))
-                .willReturn(challengerWith(APPLICANT_MEMBER_ID, ChallengerPart.WEB));
-            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), any()))
-                .willReturn(Map.of(
-                    APPLICANT_MEMBER_ID, challengerWith(APPLICANT_MEMBER_ID, ChallengerPart.WEB),
-                    101L, challengerWith(101L, ChallengerPart.WEB),
-                    102L, challengerWith(102L, ChallengerPart.WEB),
-                    103L, challengerWith(103L, ChallengerPart.WEB),
-                    104L, challengerWith(104L, ChallengerPart.WEB),
-                    105L, challengerWith(105L, ChallengerPart.WEB)
-                ));
-
-            assertThatThrownBy(() -> sut.decide(
-                APPLICATION_ID, ApplicationDecisionStatus.REJECTED, null, DECIDER_MEMBER_ID
-            ))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_MINIMUM_SELECTION_REQUIRED);
-
-            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
-            then(saveProjectApplicationPort).should(never()).save(any());
-        }
-
-        @Test
-        void APPROVED_변경은_최소선발_미달_상태에서도_quota_검증만_통과하면_허용한다() {
+        void APPROVED_변경은_quota_검증만_통과하면_허용한다() {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
             ProjectApplication otherSubmitted = otherApplication(
                 701L, 101L, application.getApplicationForm(), ProjectApplicationStatus.SUBMITTED
@@ -408,8 +320,6 @@ class ProjectApplicationCommandServiceTest {
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
             given(loadProjectApplicationPort.listByMatchingRoundId(any()))
                 .willReturn(List.of());
-            given(loadProjectApplicationPort.listDecidableByMatchingRoundIdAndProjectId(any(), any()))
-                .willReturn(List.of(application, otherSubmitted));
             given(loadProjectPartQuotaPort.listByProjectId(any()))
                 .willReturn(List.of(partQuotaFor(ChallengerPart.DESIGN, 1L)));
             given(getChallengerUseCase.getByMemberIdAndGisuId(eq(APPLICANT_MEMBER_ID), any()))
@@ -564,8 +474,6 @@ class ProjectApplicationCommandServiceTest {
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
             given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
                 .willReturn(Map.of(ChallengerPart.WEB, 99L));   // 초과 상황이지만 REJECTED 는 무관
-            given(loadProjectApplicationPort.listDecidableByMatchingRoundIdAndProjectId(any(), any()))
-                .willReturn(List.of(application));
 
             sut.decide(APPLICATION_ID, ApplicationDecisionStatus.REJECTED, null, DECIDER_MEMBER_ID);
 
@@ -796,14 +704,6 @@ class ProjectApplicationCommandServiceTest {
         );
         ReflectionTestUtils.setField(round, "id", MATCHING_ROUND_ID);
         return round;
-    }
-
-    private ProjectMatchingRound openRound(MatchingType matchingType) {
-        return ProjectMatchingRound.create(
-            "프로젝트 매칭", null,
-            matchingType, MatchingPhase.FIRST, 1L,
-            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE
-        );
     }
 
     private ProjectApplicationForm applicationForm() {

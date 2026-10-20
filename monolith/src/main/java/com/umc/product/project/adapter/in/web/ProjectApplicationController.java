@@ -131,7 +131,6 @@ public class ProjectApplicationController {
             - SUPER_ADMIN: 매칭 차수 시간과 관계없이 가능
             - APPROVED / REJECTED / SUBMITTED(대기로 되돌리기) 사이 자유 변경 허용
             - SUBMITTED 로 되돌릴 때 같은 차수에 다른 활성 지원서가 있으면 거절
-            - REJECTED 처리 후 매칭 규칙의 최소선발 수를 만족하지 못하면 거절
             """
     )
     @CheckAccess(
