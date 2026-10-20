@@ -60,7 +60,7 @@ public enum ProjectErrorCode implements BaseCode {
     // ProjectMatchingRound
     PROJECT_MATCHING_ROUND_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0300", "매칭 차수를 찾을 수 없어요. 선택한 차수를 확인해주세요."),
     PROJECT_MATCHING_ROUND_INVALID_PERIOD(HttpStatus.BAD_REQUEST, "PROJECT-0301",
-        "매칭 차수 기간은 시작, 종료, 결정 마감, 결과 발표 순서여야 해요. 시간을 다시 선택해주세요."),
+        "1~3차는 시작 < 종료 < 결정 마감 < 발표, 4차는 시작 < 종료 = 결정 마감 < 발표 순서로 입력해주세요."),
     PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED(HttpStatus.CONFLICT, "PROJECT-0302",
         "같은 지부의 다른 매칭 차수와 기간이 겹쳐요. 기간을 다시 선택해주세요."),
     PROJECT_MATCHING_ROUND_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PROJECT-0303",
@@ -70,7 +70,7 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_MATCHING_ROUND_TIME_REQUIRES_CHAPTER(HttpStatus.BAD_REQUEST, "PROJECT-0305",
         "시간 기준으로 조회하려면 지부를 함께 선택해주세요."),
     PROJECT_MATCHING_ROUND_LOCKED(HttpStatus.BAD_REQUEST, "PROJECT-0306",
-        "결정 마감 시각이 지나 결정을 변경할 수 없어요. 차수 기간을 확인해주세요."),
+        "결정 마감이 지났거나 자동 선발이 완료되어 요청한 변경 또는 삭제를 할 수 없어요."),
     PROJECT_MATCHING_ROUND_NOT_ENDED(HttpStatus.BAD_REQUEST, "PROJECT-0310",
         "아직 지원 기간이 끝나지 않아 결정을 변경할 수 없어요. 지원 종료 시각을 확인해주세요."),
     PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE(HttpStatus.BAD_REQUEST, "PROJECT-0311",
@@ -84,8 +84,8 @@ public enum ProjectErrorCode implements BaseCode {
 
     PROJECT_MATCHING_ROUND_NOT_PUBLISHABLE(HttpStatus.CONFLICT, "PROJECT-0312",
         "자동 선발 완료 후 결과 발표 시각부터 공개할 수 있어요."),
-    PROJECT_MEMBER_PUBLICATION_MANAGED(HttpStatus.CONFLICT, "PROJECT-0102",
-        "발표 대기 팀원의 활성화는 결과 공개 처리로만 가능해요."),
+    PROJECT_MEMBER_PUBLICATION_MANAGED(HttpStatus.CONFLICT, "PROJECT-0103",
+        "공개 대기 상태로 직접 변경하거나, 결과 발표 전에 활동 중 상태로 변경할 수 없어요."),
 
     // ProjectApplication (APPLY-001/002/003)
     PROJECT_DRAFT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0204", "작성 중인 지원서를 찾을 수 없어요. 지원서 목록을 확인해주세요."),
