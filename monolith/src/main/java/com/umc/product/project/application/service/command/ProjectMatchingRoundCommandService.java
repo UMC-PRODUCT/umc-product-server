@@ -68,7 +68,8 @@ public class ProjectMatchingRoundCommandService implements
             command.type(),
             command.phase(),
             command.startsAt(),
-            command.decisionDeadline()
+            command.decisionDeadline(),
+            command.resultPublishAt()
         );
 
         ProjectMatchingRound matchingRound = ProjectMatchingRound.create(
@@ -119,7 +120,8 @@ public class ProjectMatchingRoundCommandService implements
             type,
             phase,
             startsAt,
-            decisionDeadline
+            decisionDeadline,
+            resultPublishAt
         );
 
         matchingRound.update(
@@ -223,19 +225,21 @@ public class ProjectMatchingRoundCommandService implements
         MatchingType type,
         MatchingPhase phase,
         Instant startsAt,
-        Instant decisionDeadline
+        Instant decisionDeadline,
+        Instant resultPublishAt
     ) {
         loadProjectMatchingRoundPort.listByChapterId(chapterId).stream()
             .filter(round -> !Objects.equals(round.getId(), currentRoundId))
             .filter(round -> round.getType() == type)
-            .forEach(round -> validatePhaseSequence(round, phase, startsAt, decisionDeadline));
+            .forEach(round -> validatePhaseSequence(round, phase, startsAt, decisionDeadline, resultPublishAt));
     }
 
     private void validatePhaseSequence(
         ProjectMatchingRound existingRound,
         MatchingPhase phase,
         Instant startsAt,
-        Instant decisionDeadline
+        Instant decisionDeadline,
+        Instant resultPublishAt
     ) {
         int phaseOrder = existingRound.getPhase().compareTo(phase);
         Duration minPhaseInterval = projectMatchingRoundProperties.minPhaseInterval();
@@ -244,11 +248,13 @@ public class ProjectMatchingRoundCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
         }
 
-        if (phaseOrder < 0 && startsAt.isBefore(existingRound.getDecisionDeadline().plus(minPhaseInterval))) {
+        if (phaseOrder < 0 && (startsAt.isBefore(existingRound.getDecisionDeadline().plus(minPhaseInterval))
+            || (existingRound.getResultPublishAt() != null && startsAt.isBefore(existingRound.getResultPublishAt())))) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
         }
 
-        if (phaseOrder > 0 && existingRound.getStartsAt().isBefore(decisionDeadline.plus(minPhaseInterval))) {
+        if (phaseOrder > 0 && (existingRound.getStartsAt().isBefore(decisionDeadline.plus(minPhaseInterval))
+            || (resultPublishAt != null && existingRound.getStartsAt().isBefore(resultPublishAt)))) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
         }
     }

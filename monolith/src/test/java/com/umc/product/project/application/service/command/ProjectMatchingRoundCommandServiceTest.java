@@ -16,6 +16,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -356,6 +358,48 @@ class ProjectMatchingRoundCommandServiceTest {
                 .isEqualTo("PROJECT-0309");
             then(scheduleMatchingRoundDeadlinePort).should(never()).schedule(any());
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"2026-05-13T01:59:59Z", "2026-05-13T02:00:00Z"})
+    void 다음_차수는_이전_차수_발표_시각부터_생성할_수_있다(String startsAt) {
+        // given
+        ProjectMatchingRound first = matchingRound(10L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, 1L,
+            "2026-05-10T00:00:00Z", "2026-05-12T00:00:00Z", "2026-05-13T00:00:00Z");
+        CreateProjectMatchingRoundCommand command = createCommand(1L, MatchingType.PLAN_DESIGN, MatchingPhase.SECOND,
+            startsAt, "2026-05-15T00:00:00Z", "2026-05-16T00:00:00Z");
+        given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(List.of(first));
+
+        // when / then
+        if (command.startsAt().isBefore(first.getResultPublishAt())) {
+            assertThatThrownBy(() -> sut.create(command)).isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode").isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
+            then(saveProjectMatchingRoundPort).should(never()).save(any());
+        } else {
+            given(saveProjectMatchingRoundPort.save(any())).willAnswer(invocation -> invocation.getArgument(0));
+            sut.create(command);
+            then(saveProjectMatchingRoundPort).should().save(any());
+        }
+    }
+
+    @Test
+    void 이전_차수_발표를_다음_차수_시작_뒤로_수정할_수_없다() {
+        // given
+        ProjectMatchingRound first = futureRound(MatchingType.PLAN_DESIGN);
+        ProjectMatchingRound second = ProjectMatchingRound.create("2차", null, MatchingType.PLAN_DESIGN,
+            MatchingPhase.SECOND, 1L, first.getResultPublishAt(), first.getResultPublishAt().plusSeconds(86400),
+            first.getResultPublishAt().plusSeconds(172800), first.getResultPublishAt().plusSeconds(180000));
+        ReflectionTestUtils.setField(second, "id", 2L);
+        given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(first);
+        given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(List.of(first, second));
+        UpdateProjectMatchingRoundCommand command = UpdateProjectMatchingRoundCommand.builder()
+            .matchingRoundId(ROUND_ID).requesterMemberId(EXECUTOR_MEMBER_ID)
+            .resultPublishAt(second.getStartsAt().plusSeconds(1)).build();
+
+        // when / then
+        assertThatThrownBy(() -> sut.update(command)).isInstanceOf(ProjectDomainException.class)
+            .extracting("baseCode").isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
+        then(scheduleMatchingRoundDeadlinePort).should(never()).schedule(any());
     }
 
     private CreateProjectMatchingRoundCommand createCommand(Long chapterId) {

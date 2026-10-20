@@ -52,6 +52,9 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "PROJECT-0101", "이미 이 프로젝트의 멤버예요. 멤버 목록을 확인해주세요."),
     PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER(HttpStatus.BAD_REQUEST, "PROJECT-0102", "메인 PM은 팀원 제거가 아니라 소유권 양도로 변경해주세요."),
 
+    PROJECT_MEMBER_PUBLICATION_MANAGED(HttpStatus.CONFLICT, "PROJECT-0103",
+        "공개 대기 상태로 직접 변경하거나, 결과 발표 전에 활동 중 상태로 변경할 수 없어요."),
+
     // ProjectPartQuota / Publish (PROJECT-105/108)
     PROJECT_PART_QUOTA_INVALID(HttpStatus.BAD_REQUEST, "PROJECT-0200", "파트 정원은 1명 이상으로 입력해주세요."),
     PROJECT_PART_QUOTA_REQUIRED(HttpStatus.BAD_REQUEST, "PROJECT-0202", "프로젝트를 공개하려면 파트별 정원을 1개 이상 등록해주세요."),
@@ -80,12 +83,10 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_MATCHING_ROUND_POLICY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "PROJECT-0308",
         "이 매칭 종류의 자동 선발 정책을 찾지 못했어요. 관리자에게 문의해주세요."),
     PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID(HttpStatus.CONFLICT, "PROJECT-0309",
-        "매칭 차수는 FIRST, SECOND, THIRD, FOURTH 순서로 배치하고 이전 차수 결정 마감 이후 1분 이상 간격을 둬야 해요."),
+        "매칭 차수는 FIRST, SECOND, THIRD, FOURTH 순서로 배치하고 이전 차수 결정 마감 이후 1분 이상 간격을 두고, 이전 차수 발표 시각 이후에 시작해주세요."),
 
     PROJECT_MATCHING_ROUND_NOT_PUBLISHABLE(HttpStatus.CONFLICT, "PROJECT-0312",
         "자동 선발 완료 후 결과 발표 시각부터 공개할 수 있어요."),
-    PROJECT_MEMBER_PUBLICATION_MANAGED(HttpStatus.CONFLICT, "PROJECT-0103",
-        "공개 대기 상태로 직접 변경하거나, 결과 발표 전에 활동 중 상태로 변경할 수 없어요."),
 
     // ProjectApplication (APPLY-001/002/003)
     PROJECT_DRAFT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0204", "작성 중인 지원서를 찾을 수 없어요. 지원서 목록을 확인해주세요."),

@@ -14,7 +14,7 @@
 | 조회 메서드   | `GET /api/v1/project/matching-rounds`                      |
 | 시간 형식    | ISO-8601 Instant, 예: `2026-05-10T00:00:00Z`                |
 
-생성 요청의 `resultPublishAt`은 필수입니다. 1~3차는 `startsAt < endsAt < decisionDeadline < resultPublishAt`, 4차는 `startsAt < endsAt = decisionDeadline < resultPublishAt`을 만족해야 합니다.
+생성 요청의 `resultPublishAt`은 필수입니다. 1~3차는 `startsAt < endsAt < decisionDeadline < resultPublishAt`, 4차는 `startsAt < endsAt = decisionDeadline < resultPublishAt`을 만족해야 합니다. 같은 지부·유형의 다음 차수는 이전 차수의 발표 시각부터 시작할 수 있습니다.
 
 ## 테스트 데이터 전제
 
