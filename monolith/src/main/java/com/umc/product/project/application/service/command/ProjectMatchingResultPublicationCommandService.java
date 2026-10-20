@@ -38,19 +38,19 @@ public class ProjectMatchingResultPublicationCommandService implements PublishPr
     private final SaveProjectApplicationPort saveProjectApplicationPort;
 
     @Override
-    public void publish(Long matchingRoundId) {
+    public boolean publish(Long matchingRoundId) {
         ProjectMatchingRound round;
         try {
             round = loadProjectMatchingRoundPort.getByIdForUpdate(matchingRoundId);
         } catch (ProjectDomainException e) {
             if (e.getBaseCode() == ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FOUND) {
-                return;
+                return false;
             }
             throw e;
         }
         Instant now = Instant.now();
         if (!round.canPublishAt(now)) {
-            return;
+            return false;
         }
 
         Set<Long> approvedApplicationIds = new HashSet<>();
@@ -82,5 +82,6 @@ public class ProjectMatchingResultPublicationCommandService implements PublishPr
         saveProjectApplicationPort.saveAll(applications);
 
         round.publishResult(now);
+        return true;
     }
 }

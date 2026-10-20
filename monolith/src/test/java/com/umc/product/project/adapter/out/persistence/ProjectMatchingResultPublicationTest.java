@@ -78,7 +78,7 @@ class ProjectMatchingResultPublicationTest {
             .isEqualTo(pmDecidedAt);
 
         // when
-        publisher.publish(round.getId());
+        assertThat(publisher.publish(round.getId())).isTrue();
         em.flush();
         em.clear();
 
@@ -94,7 +94,7 @@ class ProjectMatchingResultPublicationTest {
         assertThat(em.find(ProjectMember.class, selected.getId()).getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
         Instant processedAt = published.getStatusChangedAt();
         Instant publishedAt = em.find(ProjectMatchingRound.class, round.getId()).getResultPublishedAt();
-        publisher.publish(round.getId());
+        assertThat(publisher.publish(round.getId())).isFalse();
         em.flush();
         em.clear();
         assertThat(em.find(ProjectApplication.class, selectedApplication.getId()).getStatusChangedAt())
@@ -218,7 +218,7 @@ class ProjectMatchingResultPublicationTest {
         em.clear();
 
         // when
-        publisher.publish(round.getId());
+        assertThat(publisher.publish(round.getId())).isFalse();
 
         // then
         assertThat(members.listByProjectId(project.getId())).isEmpty();

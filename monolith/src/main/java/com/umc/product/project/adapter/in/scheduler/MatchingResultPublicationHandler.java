@@ -28,9 +28,9 @@ public class MatchingResultPublicationHandler {
     public void handle(Long matchingRoundId) {
         Instant startedAt = Instant.now();
         try {
-            publishProjectMatchingResultUseCase.publish(matchingRoundId);
+            boolean published = publishProjectMatchingResultUseCase.publish(matchingRoundId);
             Duration duration = Duration.between(startedAt, Instant.now());
-            operationalMetrics.recordBatchJob(JOB_NAME, "success", duration, 1);
+            operationalMetrics.recordBatchJob(JOB_NAME, published ? "success" : "skipped", duration, published ? 1 : 0);
         } catch (Exception e) {
             Duration duration = Duration.between(startedAt, Instant.now());
             operationalMetrics.recordBatchJob(JOB_NAME, "failure", duration, 0);
