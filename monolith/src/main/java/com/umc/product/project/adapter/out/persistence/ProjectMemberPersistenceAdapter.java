@@ -29,12 +29,6 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     private final ProjectMemberQueryRepository queryRepository;
 
     @Override
-    public List<ProjectMember> listAssignedByProjectId(Long projectId) {
-        return repository.findAssignedByProjectId(projectId,
-            List.of(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION));
-    }
-
-    @Override
     public List<ProjectMember> listPendingByMatchingRoundId(Long matchingRoundId) {
         return repository.findPendingByRoundId(matchingRoundId, ProjectMemberStatus.PENDING_PUBLICATION);
     }

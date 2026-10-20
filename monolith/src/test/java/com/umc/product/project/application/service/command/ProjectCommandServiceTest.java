@@ -745,7 +745,7 @@ class ProjectCommandServiceTest {
                 com.umc.product.project.domain.ProjectMember.create(project, 500L, ChallengerPart.WEB, 100L);
 
             given(loadProjectPort.getById(1L)).willReturn(project);
-            given(loadProjectMemberPort.listAssignedByProjectId(1L)).willReturn(java.util.List.of(activeMember));
+            given(loadProjectMemberPort.listByProjectId(1L)).willReturn(java.util.List.of(activeMember));
             given(loadProjectApplicationPort.listInProgressByProjectId(1L))
                 .willReturn(java.util.List.of());
 
@@ -797,7 +797,7 @@ class ProjectCommandServiceTest {
             ProjectMember activeMember = ProjectMember.create(project, 500L, ChallengerPart.WEB, 100L);
 
             given(loadProjectPort.listByIds(List.of(1L))).willReturn(List.of(project));
-            given(loadProjectMemberPort.listAssignedByProjectId(1L)).willReturn(List.of(activeMember));
+            given(loadProjectMemberPort.listByProjectId(1L)).willReturn(List.of(activeMember));
             given(loadProjectApplicationPort.listInProgressByProjectId(1L)).willReturn(List.of());
 
             sut.complete(command(List.of(1L)));
@@ -814,7 +814,7 @@ class ProjectCommandServiceTest {
             ProjectApplication application = mock(ProjectApplication.class);
 
             given(loadProjectPort.listByIds(List.of(1L))).willReturn(List.of(project));
-            given(loadProjectMemberPort.listAssignedByProjectId(1L)).willReturn(List.of());
+            given(loadProjectMemberPort.listByProjectId(1L)).willReturn(List.of());
             given(loadProjectApplicationPort.listInProgressByProjectId(1L)).willReturn(List.of(application));
 
             sut.complete(command(List.of(1L)));
@@ -829,7 +829,7 @@ class ProjectCommandServiceTest {
             ReflectionTestUtils.setField(second, "id", 2L);
 
             given(loadProjectPort.listByIds(List.of(1L, 2L))).willReturn(List.of(first, second));
-            given(loadProjectMemberPort.listAssignedByProjectId(any())).willReturn(List.of());
+            given(loadProjectMemberPort.listByProjectId(any())).willReturn(List.of());
             given(loadProjectApplicationPort.listInProgressByProjectId(any())).willReturn(List.of());
 
             sut.complete(command(List.of(1L, 2L)));
@@ -842,7 +842,7 @@ class ProjectCommandServiceTest {
         void 대상_프로젝트마다_MANAGE_권한을_검증한다() {
             Project project = createProject(ProjectStatus.IN_PROGRESS);
             given(loadProjectPort.listByIds(List.of(1L))).willReturn(List.of(project));
-            given(loadProjectMemberPort.listAssignedByProjectId(1L)).willReturn(List.of());
+            given(loadProjectMemberPort.listByProjectId(1L)).willReturn(List.of());
             given(loadProjectApplicationPort.listInProgressByProjectId(1L)).willReturn(List.of());
 
             sut.complete(command(List.of(1L)));

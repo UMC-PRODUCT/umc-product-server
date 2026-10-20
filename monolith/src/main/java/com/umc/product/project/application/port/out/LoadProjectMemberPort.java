@@ -21,26 +21,17 @@ public interface LoadProjectMemberPort {
     List<ProjectMember> listByProjectId(Long projectId);
 
     /**
-     * 특정 프로젝트의 활성(ACTIVE) 및 공개 대기(PENDING_PUBLICATION) 멤버를 조회합니다.
-     * 프로젝트 중단·완료 처리에 사용합니다.
-     */
-    List<ProjectMember> listAssignedByProjectId(Long projectId);
-
-    /**
-     * 특정 매칭 차수에서 배정된 공개 대기(PENDING_PUBLICATION) 멤버를 조회합니다.
-     * 결과 발표 시 활성화할 멤버를 조회하는 데 사용합니다.
+     * 해당 차수의 공개 대기 팀원과 소속 프로젝트를 잠금 후 조회합니다.
      */
     List<ProjectMember> listPendingByMatchingRoundId(Long matchingRoundId);
 
     /**
-     * 해당 기수에서 활성 또는 공개 대기 상태로 배정된 회원 ID를 조회합니다.
-     * 랜덤 매칭에서 이미 배정된 회원을 제외하는 데 사용합니다.
+     * 중복 배정을 막기 위해 해당 기수의 ACTIVE·PENDING_PUBLICATION 팀원 ID를 조회합니다.
      */
     List<Long> listAssignedMemberIdsByGisuId(Long gisuId);
 
     /**
-     * 프로젝트/멤버 쌍별 활성(ACTIVE) 멤버의 배정 차수를 조회합니다.
-     * 팀원 응답의 매칭 차수 정보에 사용합니다.
+     * ACTIVE 팀원에 연결된 배정 차수를 조회합니다. 배정 차수가 없는 팀원은 제외합니다.
      */
     List<ProjectMemberMatchedRoundInfo> listMatchedRoundsByProjectIdsAndMemberIds(
         Collection<Long> projectIds, Collection<Long> memberIds);

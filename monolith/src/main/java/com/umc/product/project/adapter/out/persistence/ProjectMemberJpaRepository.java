@@ -22,14 +22,6 @@ public interface ProjectMemberJpaRepository extends JpaRepository<ProjectMember,
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         select pm from ProjectMember pm join fetch pm.project
-        where pm.project.id = :projectId and pm.status in :statuses order by pm.id
-        """)
-    List<ProjectMember> findAssignedByProjectId(@Param("projectId") Long projectId,
-        @Param("statuses") Collection<ProjectMemberStatus> statuses);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-        select pm from ProjectMember pm join fetch pm.project
         where pm.assignedMatchingRound.id = :roundId and pm.status = :status order by pm.id
         """)
     List<ProjectMember> findPendingByRoundId(@Param("roundId") Long roundId,
