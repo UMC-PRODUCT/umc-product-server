@@ -19,9 +19,6 @@ class FormPublicContractArchTest {
 
     private static final String FORM_PACKAGE = "com.umc.product.form.";
     private static final String FORM_PORT_IN_PACKAGE = FORM_PACKAGE + "application.port.in.";
-    // Form 전용 낙관적 락 오류 변환은 모듈 이동 전에 별도 처리 위치를 정해야 한다.
-    private static final String GLOBAL_EXCEPTION_HANDLER =
-        "com.umc.product.global.exception.GlobalExceptionHandler";
     private static final String PROJECT_SEED_FACTORY =
         "com.umc.product.test.application.service.DummyApplicationFormFactory";
     private static final List<String> PRODUCT_CONSUMER_PACKAGES = List.of(
@@ -40,13 +37,12 @@ class FormPublicContractArchTest {
         .importPackages("com.umc.product");
 
     private static final DescribedPredicate<JavaClass> FORM_CONSUMERS =
-        new DescribedPredicate<>("Form과 전역 예외 처리기를 제외한 운영 코드") {
+        new DescribedPredicate<>("Form을 제외한 운영 코드") {
             @Override
             public boolean test(JavaClass source) {
                 String name = source.getName();
                 return name.startsWith("com.umc.product.")
-                    && !name.startsWith(FORM_PACKAGE)
-                    && !name.equals(GLOBAL_EXCEPTION_HANDLER);
+                    && !name.startsWith(FORM_PACKAGE);
             }
         };
 
@@ -58,7 +54,6 @@ class FormPublicContractArchTest {
                 return name.startsWith("com.umc.product.")
                     && !name.startsWith(FORM_PACKAGE)
                     && PRODUCT_CONSUMER_PACKAGES.stream().noneMatch(name::startsWith)
-                    && !name.equals(GLOBAL_EXCEPTION_HANDLER)
                     && !name.equals(PROJECT_SEED_FACTORY);
             }
         };
