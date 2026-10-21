@@ -156,6 +156,102 @@ class ProjectApplicationTest {
     }
 
     @Nested
+    class revertToSubmitted {
+
+        @Test
+        void APPROVED를_SUBMITTED로_되돌린다() {
+            setStatus(application, ProjectApplicationStatus.APPROVED);
+
+            application.revertToSubmitted(DECIDER_MEMBER_ID, "재검토");
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            assertThat(application.getStatusChangedMemberId()).isEqualTo(DECIDER_MEMBER_ID);
+            assertThat(application.getStatusChangeReason()).isEqualTo("재검토");
+            assertThat(application.getStatusChangedAt()).isNotNull();
+        }
+
+        @Test
+        void REJECTED를_SUBMITTED로_되돌린다() {
+            setStatus(application, ProjectApplicationStatus.REJECTED);
+
+            application.revertToSubmitted(DECIDER_MEMBER_ID, null);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+        }
+
+        @Test
+        void SUBMITTED에서_다시_호출해도_예외_없이_갱신된다() {
+            assertThatCode(() -> application.revertToSubmitted(DECIDER_MEMBER_ID, null))
+                .doesNotThrowAnyException();
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+        }
+
+        @Test
+        void DRAFT_상태에서는_PROJECT_APPLICATION_DECISION_INVALID_TRANSITION() {
+            setStatus(application, ProjectApplicationStatus.DRAFT);
+
+            assertThatThrownBy(() -> application.revertToSubmitted(DECIDER_MEMBER_ID, null))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
+        }
+
+        @Test
+        void CANCELLED_상태에서는_PROJECT_APPLICATION_DECISION_INVALID_TRANSITION() {
+            setStatus(application, ProjectApplicationStatus.CANCELLED);
+
+            assertThatThrownBy(() -> application.revertToSubmitted(DECIDER_MEMBER_ID, null))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
+        }
+
+        @Test
+        void 결정_마감_후에는_PROJECT_MATCHING_ROUND_LOCKED() {
+            setStatus(application, ProjectApplicationStatus.APPROVED);
+            setRoundDeadline(round, NOW.minusSeconds(60));
+
+            assertThatThrownBy(() -> application.revertToSubmitted(DECIDER_MEMBER_ID, null))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
+        }
+
+        @Test
+        void 지원_진행_중에는_PROJECT_MATCHING_ROUND_NOT_ENDED() {
+            setStatus(application, ProjectApplicationStatus.APPROVED);
+            setRoundEndsAt(round, NOW.plusSeconds(43_200));
+
+            assertThatThrownBy(() -> application.revertToSubmitted(DECIDER_MEMBER_ID, null))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_ENDED);
+        }
+
+        @Test
+        void forceRevertToSubmitted는_결정_마감_후에도_SUBMITTED로_되돌린다() {
+            setStatus(application, ProjectApplicationStatus.APPROVED);
+            setRoundDeadline(round, NOW.minusSeconds(60));
+
+            application.forceRevertToSubmitted(DECIDER_MEMBER_ID, "운영 조치");
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            assertThat(application.getStatusChangeReason()).isEqualTo("운영 조치");
+        }
+
+        @Test
+        void forceRevertToSubmitted도_DRAFT_상태에서는_PROJECT_APPLICATION_DECISION_INVALID_TRANSITION() {
+            setStatus(application, ProjectApplicationStatus.DRAFT);
+
+            assertThatThrownBy(() -> application.forceRevertToSubmitted(DECIDER_MEMBER_ID, null))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
+        }
+    }
+
+    @Nested
     class forceDecision {
 
         @Test

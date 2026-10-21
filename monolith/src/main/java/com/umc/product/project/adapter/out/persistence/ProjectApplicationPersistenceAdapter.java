@@ -102,11 +102,6 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     }
 
     @Override
-    public List<ProjectApplication> listDecidableByMatchingRoundIdAndProjectId(Long matchingRoundId, Long projectId) {
-        return projectApplicationQueryRepository.listDecidableByMatchingRoundIdAndProjectId(matchingRoundId, projectId);
-    }
-
-    @Override
     public Optional<ProjectApplication> findByIdWithDetails(Long applicationId) {
         return projectApplicationQueryRepository.findByIdWithDetails(applicationId);
     }
