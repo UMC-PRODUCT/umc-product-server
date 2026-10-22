@@ -24,6 +24,7 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope;
 import com.umc.product.project.application.access.ProjectApplicationAccessScopeResolver;
+import com.umc.product.project.application.access.ProjectApplicationDecisionPolicy;
 import com.umc.product.project.application.port.in.query.GetProjectPermissionsUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionCapabilityInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionInfo;
@@ -142,7 +143,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
             applicationFormPermissions(requesterMemberId, subject, context),
             partQuotaPermissions(context),
             statusPermissions(context),
-            applicationPermissions(requesterMemberId, context),
+            applicationPermissions(requesterMemberId, subject, context),
             memberPermissions(context),
             statisticsPermissions(requesterMemberId, project)
         );
@@ -285,11 +286,15 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         });
     }
 
-    private ApplicationPermissions applicationPermissions(Long requesterMemberId, ProjectCapabilityContext context) {
+    private ApplicationPermissions applicationPermissions(
+        Long requesterMemberId,
+        SubjectAttributes subject,
+        ProjectCapabilityContext context
+    ) {
         return new ApplicationPermissions(
             canCreateApplication(requesterMemberId, context),
             canReadApplicationList(requesterMemberId, context.project()),
-            canDecideApplication(requesterMemberId, context.project())
+            canDecideApplication(subject, context.project())
         );
     }
 
@@ -344,11 +349,15 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         return ProjectPermissionCapabilityInfo.allow();
     }
 
-    private ProjectPermissionCapabilityInfo canDecideApplication(Long requesterMemberId, Project project) {
+    /**
+     * 프론트용 "판정 가능" 플래그. 역할 조건은 판정 API 의 권한 평가기와 같은 {@link ProjectApplicationDecisionPolicy} 를 쓴다.
+     * 판정 가능 시간은 차수마다 달라 프로젝트 단위 플래그에는 넣지 않고, 실제 판정 요청 시 도메인이 검증한다.
+     */
+    private ProjectPermissionCapabilityInfo canDecideApplication(SubjectAttributes subject, Project project) {
         if (project.getStatus() != ProjectStatus.IN_PROGRESS) {
             return denied(ProjectPermissionReason.INVALID_PROJECT_STATUS);
         }
-        if (!Objects.equals(project.getProductOwnerMemberId(), requesterMemberId)) {
+        if (!ProjectApplicationDecisionPolicy.canDecide(subject, project)) {
             return denied(ProjectPermissionReason.PERMISSION_DENIED);
         }
         return ProjectPermissionCapabilityInfo.allow();

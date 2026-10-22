@@ -9,6 +9,7 @@ import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.project.application.access.ProjectApplicationDecisionPolicy;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
@@ -124,9 +125,9 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
     }
 
     /**
-     * 합불 결정. 부모 프로젝트의 PO 가 SUBMITTED / APPROVED / REJECTED 상태에서 자유롭게 토글한다.
-     * SUPER_ADMIN 은 기수/프로젝트 소유 여부와 관계없이 토글할 수 있다.
-     * 차수 진행 중 잠금 해제는 도메인 메서드({@code ProjectMatchingRound.validateIsMutableAt}) 가 책임진다.
+     * 합불 결정. SUBMITTED / APPROVED / REJECTED 상태의 지원서에 대해
+     * {@link ProjectApplicationDecisionPolicy}(담당 PM, 프로젝트 기수의 총괄·부총괄, SUPER_ADMIN)가 허용하는 사람만 가능하다.
+     * 판정 가능 시간은 도메인 메서드({@code ProjectMatchingRound.validateIsMutableAt}) 가 책임진다.
      * (자동 매칭 스케줄러는 권한 모델 외)
      */
     private boolean canApprove(SubjectAttributes subject, ResourcePermission permission) {
@@ -135,7 +136,7 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
             return false;
         }
         Project project = application.getApplicationForm().getProject();
-        return isOwner(subject, project) || isSuperAdmin(subject);
+        return ProjectApplicationDecisionPolicy.canDecide(subject, project);
     }
 
     private boolean isDecidableStatus(ProjectApplicationStatus status) {

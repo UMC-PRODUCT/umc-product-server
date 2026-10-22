@@ -406,10 +406,28 @@ class ProjectApplicationPermissionEvaluatorTest {
     }
 
     @Test
-    void APPROVE는_총괄단도_거부_자동매칭은_권한_외() {
+    void APPROVE는_같은_기수_총괄단_허용() {
         givenApplication(ProjectApplicationStatus.SUBMITTED);
         SubjectAttributes subject = subjectWith(30L, List.of(),
             List.of(centralCoreRoleInGisu(PROJECT_GISU_ID)));
+
+        assertThat(sut.evaluate(subject, approvePermission())).isTrue();
+    }
+
+    @Test
+    void APPROVE는_다른_기수_총괄단_거부() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        SubjectAttributes subject = subjectWith(30L, List.of(),
+            List.of(centralCoreRoleInGisu(PROJECT_GISU_ID + 1)));
+
+        assertThat(sut.evaluate(subject, approvePermission())).isFalse();
+    }
+
+    @Test
+    void APPROVE는_같은_기수_지부장_거부() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        SubjectAttributes subject = subjectWith(30L, List.of(),
+            List.of(chapterPresidentRole(PROJECT_CHAPTER_ID, PROJECT_GISU_ID)));
 
         assertThat(sut.evaluate(subject, approvePermission())).isFalse();
     }
