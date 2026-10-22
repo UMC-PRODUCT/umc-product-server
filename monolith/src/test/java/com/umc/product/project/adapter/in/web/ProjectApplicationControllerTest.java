@@ -202,6 +202,24 @@ class ProjectApplicationControllerTest {
         }
 
         @Test
+        void SUBMITTED_요청시_200_및_대기_status_반환() throws Exception {
+            UpdateApplicationDecisionRequest request = new UpdateApplicationDecisionRequest(
+                ApplicationDecisionStatus.SUBMITTED, "재검토"
+            );
+            given(decideApplicationUseCase.decide(
+                eq(APPLICATION_ID), eq(ApplicationDecisionStatus.SUBMITTED), eq("재검토"), eq(TEST_MEMBER_ID)
+            )).willReturn(ProjectApplicationInfo.of(APPLICATION_ID, ProjectApplicationStatus.SUBMITTED));
+
+            mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",
+                    PROJECT_ID, APPLICATION_ID)
+                    .content(objectMapper.writeValueAsString(request))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.applicationId").value(APPLICATION_ID))
+                .andExpect(jsonPath("$.result.status").value("SUBMITTED"));
+        }
+
+        @Test
         void PENDING_요청시_400_및_UseCase를_호출하지_않는다() throws Exception {
             String body = """
                 { "status": "PENDING" }

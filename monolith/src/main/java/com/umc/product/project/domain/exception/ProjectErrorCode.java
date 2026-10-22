@@ -103,8 +103,6 @@ public enum ProjectErrorCode implements BaseCode {
         "해당 파트의 남은 자리를 초과해 합격 처리할 수 없어요. 파트 정원을 확인해주세요."),
     PROJECT_APPLICATION_CANCEL_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROJECT-0214", "이미 종결된 지원서는 철회할 수 없어요. 지원서 상태를 확인해주세요."),
     PROJECT_APPLICATION_CANCEL_ROUND_CLOSED(HttpStatus.BAD_REQUEST, "PROJECT-0215", "매칭 차수가 종료되어 지원서를 철회할 수 없어요. 차수 기간을 확인해주세요."),
-    PROJECT_APPLICATION_MINIMUM_SELECTION_REQUIRED(HttpStatus.CONFLICT, "PROJECT-0216",
-        "매칭 규칙의 최소 선발 인원을 충족하지 않아 불합격 처리할 수 없어요. 합격 인원을 확인해주세요."),
     PROJECT_APPLICATION_CHAPTER_MISMATCH(HttpStatus.FORBIDDEN, "PROJECT-0217",
         "내 매칭 지부의 프로젝트에만 지원할 수 있어요. 프로젝트의 지부를 확인해주세요."),
     PROJECT_APPLICATION_ROUND_CHAPTER_MISMATCH(HttpStatus.BAD_REQUEST, "PROJECT-0218",
