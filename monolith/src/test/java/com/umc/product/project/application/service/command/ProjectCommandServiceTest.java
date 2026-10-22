@@ -11,6 +11,7 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.Nested;
@@ -48,7 +49,10 @@ import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.SaveProjectPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingPhase;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
@@ -100,6 +104,14 @@ class ProjectCommandServiceTest {
         ReflectionTestUtils.setField(project, "id", 1L);
         ReflectionTestUtils.setField(project, "status", status);
         return project;
+    }
+
+    private ProjectMember createPendingPublicationMember(Project project) {
+        Instant now = Instant.now();
+        ProjectMatchingRound round = ProjectMatchingRound.create("개발 1차", null,
+            MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST, project.getChapterId(),
+            now.minusSeconds(10800), now.minusSeconds(7200), now.minusSeconds(3600), now.plusSeconds(3600));
+        return ProjectMember.createForMatching(project, 501L, ChallengerPart.WEB, round, 100L);
     }
 
     private ChallengerInfo challengerInfo(Long memberId, ChallengerPart part) {
@@ -739,13 +751,15 @@ class ProjectCommandServiceTest {
     class abort {
 
         @Test
-        void IN_PROGRESS_상태에서_멤버_WITHDRAWN_application_CANCELLED() {
+        void 중단하면_ACTIVE와_PENDING_PUBLICATION_멤버를_WITHDRAWN으로_변경한다() {
             Project project = createProject(ProjectStatus.IN_PROGRESS);
             com.umc.product.project.domain.ProjectMember activeMember =
                 com.umc.product.project.domain.ProjectMember.create(project, 500L, ChallengerPart.WEB, 100L);
+            ProjectMember pendingPublicationMember = createPendingPublicationMember(project);
 
             given(loadProjectPort.getById(1L)).willReturn(project);
-            given(loadProjectMemberPort.listByProjectId(1L)).willReturn(java.util.List.of(activeMember));
+            given(loadProjectMemberPort.listActiveAndPendingPublicationByProjectId(1L))
+                .willReturn(List.of(activeMember, pendingPublicationMember));
             given(loadProjectApplicationPort.listInProgressByProjectId(1L))
                 .willReturn(java.util.List.of());
 
@@ -757,6 +771,9 @@ class ProjectCommandServiceTest {
             assertThat(activeMember.getStatus())
                 .isEqualTo(com.umc.product.project.domain.enums.ProjectMemberStatus.WITHDRAWN);
             assertThat(activeMember.getStatusChangeReason()).isEqualTo("팀 와해");
+            assertThat(pendingPublicationMember.getStatus()).isEqualTo(ProjectMemberStatus.WITHDRAWN);
+            assertThat(pendingPublicationMember.getStatusChangeReason()).isEqualTo("팀 와해");
+            assertThat(pendingPublicationMember.getStatusChangedMemberId()).isEqualTo(99L);
         }
 
         @Test

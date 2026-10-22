@@ -43,6 +43,7 @@ import com.umc.product.form.domain.enums.FormStatus;
 import com.umc.product.form.domain.enums.QuestionType;
 import com.umc.product.project.application.port.in.command.dto.ApplicationDecisionStatus;
 import com.umc.product.project.application.port.in.command.dto.CancelProjectApplicationCommand;
+import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectApplicationCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectApplicationCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectApplicationDraftCommand;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationInfo;
@@ -63,6 +64,7 @@ import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
@@ -142,12 +144,44 @@ class ProjectApplicationCommandServiceTest {
             .willReturn(challengerWithPart(ChallengerPart.WEB));
         given(loadProjectPartQuotaPort.listByProjectId(any()))
             .willReturn(List.of(partQuotaForWeb(6L)));
-        given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
+        given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
             .willReturn(Map.of());
         given(loadProjectApplicationPort.listByMatchingRoundId(any()))
             .willReturn(List.of());
         given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), any()))
             .willReturn(Map.of(APPLICANT_MEMBER_ID, challengerWith(APPLICANT_MEMBER_ID, ChallengerPart.WEB)));
+    }
+
+    @Nested
+    class create {
+
+        @Test
+        @DisplayName("지원서 생성은 모집 종료 시 팀 소속자에게도 지원 기간 예외를 발생시킨다")
+        void 지원서_생성은_모집_종료_시_팀_소속자에게도_지원_기간_예외를_발생시킨다() {
+            ProjectApplicationForm form = givenCreateApplication(closedRound());
+            given(loadProjectMemberPort.existsByGisuAndMember(form.getProject().getGisuId(), APPLICANT_MEMBER_ID))
+                .willReturn(true);
+
+            assertThatThrownBy(() -> sut.create(createCommand()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_ROUND_NOT_OPEN);
+        }
+
+        @Test
+        @DisplayName("지원서 생성은 모집 중 팀 소속자에게 이미 팀에 소속됨 예외를 발생시킨다")
+        void 지원서_생성은_모집_중_팀_소속자에게_이미_팀에_소속됨_예외를_발생시킨다() {
+            ProjectMatchingRound round = openRound(MatchingType.PLAN_DEVELOPER);
+            ReflectionTestUtils.setField(round, "endsAt", Instant.now().plusSeconds(3600));
+            ProjectApplicationForm form = givenCreateApplication(round);
+            given(loadProjectMemberPort.existsByGisuAndMember(form.getProject().getGisuId(), APPLICANT_MEMBER_ID))
+                .willReturn(true);
+
+            assertThatThrownBy(() -> sut.create(createCommand()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
+        }
     }
 
     @Nested
@@ -416,7 +450,7 @@ class ProjectApplicationCommandServiceTest {
         void APPROVED_토글시_active_멤버가_TO를_채워_남은_자리가_없으면_QUOTA_EXCEEDED() {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
-            given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
                 .willReturn(Map.of(ChallengerPart.WEB, 6L));   // active 6 == TO 6 → 남은 자리 0
 
             assertThatThrownBy(() -> sut.decide(
@@ -432,7 +466,7 @@ class ProjectApplicationCommandServiceTest {
         void APPROVED_토글시_active_멤버와_현재차수_APPROVED_합산이_TO를_초과하면_QUOTA_EXCEEDED() {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
-            given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
                 .willReturn(Map.of(ChallengerPart.WEB, 4L));   // active 4
             // 현재 차수 APPROVED 2명 (다른 application) → 4 + 2 + 1 = 7 > TO 6
             given(loadProjectApplicationPort.listByMatchingRoundId(any()))
@@ -459,7 +493,7 @@ class ProjectApplicationCommandServiceTest {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED);
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
             // active 6 으로 quota 초과 상황이라도 — 이미 APPROVED 인 application 재토글은 검증 우회
-            given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
                 .willReturn(Map.of(ChallengerPart.WEB, 6L));
 
             sut.decide(APPLICATION_ID, ApplicationDecisionStatus.APPROVED, "재확인", DECIDER_MEMBER_ID);
@@ -472,7 +506,7 @@ class ProjectApplicationCommandServiceTest {
         void REJECTED_토글은_quota_검증을_적용하지_않는다() {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED);
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
-            given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
                 .willReturn(Map.of(ChallengerPart.WEB, 99L));   // 초과 상황이지만 REJECTED 는 무관
 
             sut.decide(APPLICATION_ID, ApplicationDecisionStatus.REJECTED, null, DECIDER_MEMBER_ID);
@@ -485,7 +519,7 @@ class ProjectApplicationCommandServiceTest {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
             ProjectApplication iosApp = otherApprovedApplication(701L, 71L, application.getApplicationForm());
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
-            given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
                 .willReturn(Map.of(ChallengerPart.WEB, 5L));   // WEB active 5, TO 6 → 남은 1
             given(loadProjectApplicationPort.listByMatchingRoundId(any()))
                 .willReturn(List.of(iosApp));
@@ -696,14 +730,47 @@ class ProjectApplicationCommandServiceTest {
         return application;
     }
 
+    private ProjectApplicationForm givenCreateApplication(ProjectMatchingRound round) {
+        ProjectApplicationForm form = applicationForm();
+        ReflectionTestUtils.setField(form.getProject(), "status", ProjectStatus.IN_PROGRESS);
+        given(loadProjectApplicationFormPort.findByProjectId(PROJECT_ID)).willReturn(Optional.of(form));
+        given(loadProjectPartQuotaPort.existsByProjectIdAndPart(PROJECT_ID, ChallengerPart.WEB)).willReturn(true);
+        given(loadProjectMatchingRoundPort.getById(MATCHING_ROUND_ID)).willReturn(round);
+        return form;
+    }
+
+    private CreateDraftProjectApplicationCommand createCommand() {
+        return CreateDraftProjectApplicationCommand.builder()
+            .projectId(PROJECT_ID)
+            .applicantMemberId(APPLICANT_MEMBER_ID)
+            .matchingRoundId(MATCHING_ROUND_ID)
+            .build();
+    }
+
+    private ProjectMatchingRound closedRound() {
+        return ProjectMatchingRound.create(
+            "개발자 1차 매칭", null,
+            MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST, 2L,
+            NOW.minusSeconds(7200), NOW.minusSeconds(3600), NOW.minusSeconds(1800), NOW.plusSeconds(3600)
+        );
+    }
+
     private ProjectMatchingRound openRound() {
         ProjectMatchingRound round = ProjectMatchingRound.create(
             "기획-디자인 1차 매칭", null,
             MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, 1L,
-            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE
+            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE, ROUND_DECISION_DEADLINE.plusSeconds(7200)
         );
         ReflectionTestUtils.setField(round, "id", MATCHING_ROUND_ID);
         return round;
+    }
+
+    private ProjectMatchingRound openRound(MatchingType matchingType) {
+        return ProjectMatchingRound.create(
+            "프로젝트 매칭", null,
+            matchingType, MatchingPhase.FIRST, 1L,
+            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE, ROUND_DECISION_DEADLINE.plusSeconds(7200)
+        );
     }
 
     private ProjectApplicationForm applicationForm() {

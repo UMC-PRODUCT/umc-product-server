@@ -112,12 +112,7 @@ public class ProjectApplicationCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_PART_NOT_ALLOWED);
         }
 
-        // 3. 기수 팀원 여부 체크 — 이미 이 기수에 소속된 팀이 있으면 불가
-        if (loadProjectMemberPort.existsByGisuAndMember(project.getGisuId(), command.applicantMemberId())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
-        }
-
-        // 4. FE가 지정한 매칭 차수 조회 + 검증
+        // 3. FE가 지정한 매칭 차수 조회 + 검증
         ProjectMatchingRound round = loadProjectMatchingRoundPort.getById(command.matchingRoundId());
 
         if (!round.isOpenAt(Instant.now())) {
@@ -131,8 +126,13 @@ public class ProjectApplicationCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_ROUND_TYPE_MISMATCH);
         }
 
-        // 4-a. 지부 일치 — 차수와 지원자 매칭 지부가 모두 프로젝트 지부여야 한다 (매칭 지부 이동 반영)
+        // 3-a. 지부 일치 — 차수와 지원자 매칭 지부가 모두 프로젝트 지부여야 한다 (매칭 지부 이동 반영)
         projectApplicationChapterPolicy.validate(project, round, command.applicantMemberId());
+
+        // 4. 기수 팀원 여부 체크 — 이미 이 기수에 소속된 팀이 있으면 불가
+        if (loadProjectMemberPort.existsByGisuAndMember(project.getGisuId(), command.applicantMemberId())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
+        }
 
         // 5. 동일 차수 기준 DRAFT 중복 체크 — 이미 있으면 409
         if (loadProjectApplicationPort.findByProjectIdAndApplicantMemberIdAndRoundIdAndStatus(
@@ -338,7 +338,7 @@ public class ProjectApplicationCommandService implements
     /**
      * APPROVED 토글 시 잔여 자리 검증.
      * <p>
-     * 잔여 자리 = 전체 TO − (이전 차수까지 ACTIVE 멤버) − (현재 차수에서 같은 (project, part) 의 APPROVED 카운트).
+     * 잔여 자리 = 전체 TO − (이전 차수까지 ACTIVE 및 PENDING_PUBLICATION 멤버) − (현재 차수에서 같은 (project, part) 의 APPROVED 카운트).
      * 이 값이 0 이하면 자리가 없으므로 예외를 던진다.
      */
     private void validateRemainingQuota(ProjectApplication application) {
@@ -358,7 +358,7 @@ public class ProjectApplicationCommandService implements
             .orElse(0);
 
         int activeMemberCount = loadProjectMemberPort
-            .countByProjectIdGroupByPart(projectId)
+            .countAssignedByProjectIdGroupByPart(projectId)
             .getOrDefault(part, 0L)
             .intValue();
 

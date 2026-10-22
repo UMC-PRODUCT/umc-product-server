@@ -25,7 +25,9 @@ public record CreateProjectMatchingRoundRequest(
 
     @NotNull(message = "매칭 종료 시각은 필수입니다") Instant endsAt,
 
-    @NotNull(message = "선발 마감 시각은 필수입니다") Instant decisionDeadline
+    @NotNull(message = "선발 마감 시각은 필수입니다") Instant decisionDeadline,
+
+    @NotNull(message = "결과 발표 시각은 필수입니다") Instant resultPublishAt
 ) {
     public CreateProjectMatchingRoundCommand toCreateCommand(Long requesterMemberId) {
         return CreateProjectMatchingRoundCommand.builder()
@@ -38,6 +40,7 @@ public record CreateProjectMatchingRoundRequest(
             .startsAt(startsAt)
             .endsAt(endsAt)
             .decisionDeadline(decisionDeadline)
+            .resultPublishAt(resultPublishAt)
             .build();
     }
 }

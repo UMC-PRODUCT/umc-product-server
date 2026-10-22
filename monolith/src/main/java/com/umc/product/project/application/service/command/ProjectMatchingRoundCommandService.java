@@ -57,16 +57,19 @@ public class ProjectMatchingRoundCommandService implements
     public Long create(CreateProjectMatchingRoundCommand command) {
         // 지부장 이상부터 매칭 차수에 대한 수정이 가능합니다.
         validateManageAccess(command.requesterMemberId(), command.chapterId());
+        ProjectMatchingRound.validateSchedule(command.type(), command.phase(), command.startsAt(),
+            command.endsAt(), command.decisionDeadline(), command.resultPublishAt());
         // 매칭 차수는 중복될 수 없습니다.
         validateNoOverlap(
-            command.chapterId(), command.startsAt(), command.endsAt(), command.decisionDeadline());
+            command.chapterId(), command.startsAt(), command.decisionDeadline());
         validatePhaseSequence(
             null,
             command.chapterId(),
             command.type(),
             command.phase(),
             command.startsAt(),
-            command.decisionDeadline()
+            command.decisionDeadline(),
+            command.resultPublishAt()
         );
 
         ProjectMatchingRound matchingRound = ProjectMatchingRound.create(
@@ -77,7 +80,8 @@ public class ProjectMatchingRoundCommandService implements
             command.chapterId(),
             command.startsAt(),
             command.endsAt(),
-            command.decisionDeadline()
+            command.decisionDeadline(),
+            command.resultPublishAt()
         );
 
         ProjectMatchingRound saved = saveProjectMatchingRoundPort.save(matchingRound);
@@ -87,7 +91,7 @@ public class ProjectMatchingRoundCommandService implements
 
     @Override
     public void update(UpdateProjectMatchingRoundCommand command) {
-        ProjectMatchingRound matchingRound = loadProjectMatchingRoundPort.getById(command.matchingRoundId());
+        ProjectMatchingRound matchingRound = loadProjectMatchingRoundPort.getByIdForUpdate(command.matchingRoundId());
 
         String name = command.name() != null ? command.name() : matchingRound.getName();
         String description = command.description() != null ? command.description() : matchingRound.getDescription();
@@ -98,13 +102,16 @@ public class ProjectMatchingRoundCommandService implements
         Instant decisionDeadline = command.decisionDeadline() != null
             ? command.decisionDeadline()
             : matchingRound.getDecisionDeadline();
+        Instant resultPublishAt = command.resultPublishAt() != null
+            ? command.resultPublishAt()
+            : matchingRound.getResultPublishAt();
 
         validateManageAccess(command.requesterMemberId(), matchingRound.getChapterId());
+        ProjectMatchingRound.validateSchedule(type, phase, startsAt, endsAt, decisionDeadline, resultPublishAt);
         validateNoOverlapExceptId(
             matchingRound.getId(),
             matchingRound.getChapterId(),
             startsAt,
-            endsAt,
             decisionDeadline
         );
         validatePhaseSequence(
@@ -113,7 +120,8 @@ public class ProjectMatchingRoundCommandService implements
             type,
             phase,
             startsAt,
-            decisionDeadline
+            decisionDeadline,
+            resultPublishAt
         );
 
         matchingRound.update(
@@ -123,15 +131,20 @@ public class ProjectMatchingRoundCommandService implements
             phase,
             startsAt,
             endsAt,
-            decisionDeadline
+            decisionDeadline,
+            resultPublishAt
         );
         scheduleAfterCommit(matchingRound);
     }
 
     @Override
     public void delete(Long matchingRoundId, Long requesterMemberId) {
-        ProjectMatchingRound matchingRound = loadProjectMatchingRoundPort.getById(matchingRoundId);
+        ProjectMatchingRound matchingRound = loadProjectMatchingRoundPort.getByIdForUpdate(matchingRoundId);
         validateManageAccess(requesterMemberId, matchingRound.getChapterId());
+
+        if (matchingRound.isAutoDecisionExecuted()) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
+        }
 
         if (loadProjectApplicationPort.existsByAppliedMatchingRoundId(matchingRoundId)) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_DELETE_CONFLICT);
@@ -142,18 +155,16 @@ public class ProjectMatchingRoundCommandService implements
     }
 
     private void validateNoOverlap(
-        Long chapterId, Instant startsAt, Instant endsAt, Instant decisionDeadline
+        Long chapterId, Instant startsAt, Instant decisionDeadline
     ) {
-        ProjectMatchingRound.validateDates(startsAt, endsAt, decisionDeadline);
         if (!loadProjectMatchingRoundPort.listOverlapping(chapterId, startsAt, decisionDeadline).isEmpty()) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED);
         }
     }
 
     private void validateNoOverlapExceptId(
-        Long id, Long chapterId, Instant startsAt, Instant endsAt, Instant decisionDeadline
+        Long id, Long chapterId, Instant startsAt, Instant decisionDeadline
     ) {
-        ProjectMatchingRound.validateDates(startsAt, endsAt, decisionDeadline);
         if (!loadProjectMatchingRoundPort.listOverlappingExceptId(
             id, chapterId, startsAt, decisionDeadline).isEmpty()) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED);
@@ -214,19 +225,21 @@ public class ProjectMatchingRoundCommandService implements
         MatchingType type,
         MatchingPhase phase,
         Instant startsAt,
-        Instant decisionDeadline
+        Instant decisionDeadline,
+        Instant resultPublishAt
     ) {
         loadProjectMatchingRoundPort.listByChapterId(chapterId).stream()
             .filter(round -> !Objects.equals(round.getId(), currentRoundId))
             .filter(round -> round.getType() == type)
-            .forEach(round -> validatePhaseSequence(round, phase, startsAt, decisionDeadline));
+            .forEach(round -> validatePhaseSequence(round, phase, startsAt, decisionDeadline, resultPublishAt));
     }
 
     private void validatePhaseSequence(
         ProjectMatchingRound existingRound,
         MatchingPhase phase,
         Instant startsAt,
-        Instant decisionDeadline
+        Instant decisionDeadline,
+        Instant resultPublishAt
     ) {
         int phaseOrder = existingRound.getPhase().compareTo(phase);
         Duration minPhaseInterval = projectMatchingRoundProperties.minPhaseInterval();
@@ -235,11 +248,13 @@ public class ProjectMatchingRoundCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
         }
 
-        if (phaseOrder < 0 && startsAt.isBefore(existingRound.getDecisionDeadline().plus(minPhaseInterval))) {
+        if (phaseOrder < 0 && (startsAt.isBefore(existingRound.getDecisionDeadline().plus(minPhaseInterval))
+            || (existingRound.getResultPublishAt() != null && startsAt.isBefore(existingRound.getResultPublishAt())))) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
         }
 
-        if (phaseOrder > 0 && existingRound.getStartsAt().isBefore(decisionDeadline.plus(minPhaseInterval))) {
+        if (phaseOrder > 0 && (existingRound.getStartsAt().isBefore(decisionDeadline.plus(minPhaseInterval))
+            || (resultPublishAt != null && existingRound.getStartsAt().isBefore(resultPublishAt)))) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
         }
     }

@@ -86,6 +86,29 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
     }
 
     @Test
+    @DisplayName("차수 생성 시 발표 시각을 생략하면 실패한다")
+    void 차수_생성시_발표_시각을_생략하면_실패한다() throws Exception {
+        // given
+        OperatorContext context = chapterPresidentContext();
+        authenticate(context.member().getId());
+
+        // when & then
+        mockMvc.perform(post(BASE_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody(Map.of(
+                    "name", "기획-디자인 1차 매칭",
+                    "type", "PLAN_DESIGN",
+                    "phase", "FIRST",
+                    "chapterId", context.chapter().getId(),
+                    "startsAt", "2099-05-10T00:00:00Z",
+                    "endsAt", "2099-05-12T00:00:00Z",
+                    "decisionDeadline", "2099-05-13T00:00:00Z"
+                ))))
+            .andExpect(status().isBadRequest());
+        assertThat(loadProjectMatchingRoundPort.listByChapterId(context.chapter().getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("지부장이 본인 지부에 매칭 차수를 생성할 수 있다")
     void 지부장이_본인_지부에_매칭_차수를_생성한다() throws Exception {
         // given
@@ -101,13 +124,22 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
                     MatchingType.PLAN_DESIGN,
                     MatchingPhase.FIRST,
                     context.chapter().getId(),
-                    "2026-05-10T00:00:00Z",
-                    "2026-05-12T00:00:00Z",
-                    "2026-05-13T00:00:00Z"
+                    "2099-05-10T00:00:00Z",
+                    "2099-05-12T00:00:00Z",
+                    "2099-05-13T00:00:00Z"
                 )))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.result.matchingRoundId").isString());
+
+        entityManager.clear();
+        assertThat(loadProjectMatchingRoundPort.listByChapterId(context.chapter().getId()))
+            .singleElement()
+            .extracting(ProjectMatchingRound::getResultPublishAt)
+            .isEqualTo(Instant.parse("2099-05-13T02:00:00Z"));
+        mockMvc.perform(get(BASE_URL).param("chapterId", context.chapter().getId().toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result[0].resultPublishAt").value("2099-05-13T02:00:00Z"));
     }
 
     @Test
@@ -232,20 +264,24 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
             MatchingType.PLAN_DESIGN,
             MatchingPhase.FIRST,
             context.chapter().getId(),
-            "2026-05-10T00:00:00Z",
-            "2026-05-12T00:00:00Z",
-            "2026-05-13T00:00:00Z"
+            "2099-05-10T00:00:00Z",
+            "2099-05-12T00:00:00Z",
+            "2099-05-13T00:00:00Z"
         );
         authenticate(context.member().getId());
 
         // when
         mockMvc.perform(patch(BASE_URL + "/{matchingRoundId}", matchingRound.getId())
                 .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody(Map.of("resultPublishAt", "2099-05-23T03:30:00Z"))))
+            .andExpect(status().isOk());
+        mockMvc.perform(patch(BASE_URL + "/{matchingRoundId}", matchingRound.getId())
+                .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody(Map.of(
                     "name", "기획-디자인 1차 매칭 수정",
-                    "startsAt", "2026-05-20T00:00:00Z",
-                    "endsAt", "2026-05-22T00:00:00Z",
-                    "decisionDeadline", "2026-05-23T00:00:00Z"
+                    "startsAt", "2099-05-20T00:00:00Z",
+                    "endsAt", "2099-05-22T00:00:00Z",
+                    "decisionDeadline", "2099-05-23T00:00:00Z"
                 ))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true));
@@ -257,9 +293,10 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
         assertThat(updated.getDescription()).isEqualTo("수정 전");
         assertThat(updated.getType()).isEqualTo(MatchingType.PLAN_DESIGN);
         assertThat(updated.getPhase()).isEqualTo(MatchingPhase.FIRST);
-        assertThat(updated.getStartsAt()).isEqualTo(Instant.parse("2026-05-20T00:00:00Z"));
-        assertThat(updated.getEndsAt()).isEqualTo(Instant.parse("2026-05-22T00:00:00Z"));
-        assertThat(updated.getDecisionDeadline()).isEqualTo(Instant.parse("2026-05-23T00:00:00Z"));
+        assertThat(updated.getStartsAt()).isEqualTo(Instant.parse("2099-05-20T00:00:00Z"));
+        assertThat(updated.getEndsAt()).isEqualTo(Instant.parse("2099-05-22T00:00:00Z"));
+        assertThat(updated.getDecisionDeadline()).isEqualTo(Instant.parse("2099-05-23T00:00:00Z"));
+        assertThat(updated.getResultPublishAt()).isEqualTo(Instant.parse("2099-05-23T03:30:00Z"));
         assertThat(updated.getChapterId()).isEqualTo(context.chapter().getId());
     }
 
@@ -465,6 +502,7 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
         );
     }
 
+    // 발표 시각 도입 전에 저장된 차수로 기존 API 동작을 검증합니다.
     private ProjectMatchingRound saveMatchingRound(
         String name,
         String description,
@@ -483,7 +521,8 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
             chapterId,
             Instant.parse(startsAt),
             Instant.parse(endsAt),
-            Instant.parse(decisionDeadline)
+            Instant.parse(decisionDeadline),
+            null
         ));
     }
 
@@ -525,7 +564,8 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
             "chapterId", chapterId,
             "startsAt", startsAt,
             "endsAt", endsAt,
-            "decisionDeadline", decisionDeadline
+            "decisionDeadline", decisionDeadline,
+            "resultPublishAt", Instant.parse(decisionDeadline).plusSeconds(7200).toString()
         ));
     }
 

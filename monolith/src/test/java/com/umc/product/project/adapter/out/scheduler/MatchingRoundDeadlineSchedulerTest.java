@@ -25,6 +25,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.global.observability.ScheduledTaskTracer;
+import com.umc.product.project.adapter.in.scheduler.MatchingResultPublicationHandler;
 import com.umc.product.project.adapter.in.scheduler.MatchingRoundDeadlineHandler;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.domain.ProjectMatchingRound;
@@ -49,6 +50,9 @@ class MatchingRoundDeadlineSchedulerTest {
     @Mock
     ScheduledFuture<?> scheduledFuture2;
 
+    @Mock
+    MatchingResultPublicationHandler publicationHandler;
+
     MatchingRoundDeadlineScheduler sut;
 
     @BeforeEach
@@ -59,12 +63,29 @@ class MatchingRoundDeadlineSchedulerTest {
             loadProjectMatchingRoundPort,
             new MatchingRoundDeadlineSchedulerProperties(TEST_DEADLINE_BUFFER.toMinutes()),
             // NOOP Tracer 기반 — trace() 래퍼는 task 를 그대로 실행하므로 스케줄러 동작 검증에 영향이 없다.
-            new ScheduledTaskTracer(Tracer.NOOP)
+            new ScheduledTaskTracer(Tracer.NOOP),
+            publicationHandler
         );
     }
 
     @Nested
     class schedule {
+
+        @Test
+        void 랜덤_4차는_시작_시각에_매칭하고_발표_시각에_공개하도록_예약한다() {
+            Instant startsAt = Instant.parse("2026-11-19T00:00:00+09:00");
+            ProjectMatchingRound round = ProjectMatchingRound.create(
+                "개발자 4차", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.FOURTH, 1L,
+                startsAt, startsAt.plusSeconds(72000), startsAt.plusSeconds(72000), startsAt.plusSeconds(79200));
+            ReflectionTestUtils.setField(round, "id", 1L);
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                .willAnswer(invocation -> scheduledFuture);
+
+            sut.schedule(round);
+
+            then(taskScheduler).should().schedule(any(Runnable.class), eq(startsAt));
+            then(taskScheduler).should().schedule(any(Runnable.class), eq(round.getResultPublishAt()));
+        }
 
         @Test
         void deadline_buffer_적용된_시점에_task가_등록된다() {
@@ -179,13 +200,51 @@ class MatchingRoundDeadlineSchedulerTest {
         }
     }
 
+    @Test
+    void 발표_시각에_예약한_작업은_발표_handler에_위임한다() {
+        // given
+        ProjectMatchingRound round = roundWithId(1L);
+        Instant publishAt = round.getDecisionDeadline().plusSeconds(3600);
+        ReflectionTestUtils.setField(round, "resultPublishAt", publishAt);
+        ArgumentCaptor<Runnable> taskCaptor = ArgumentCaptor.forClass(Runnable.class);
+        given(taskScheduler.schedule(taskCaptor.capture(), any(Instant.class)))
+            .willAnswer(invocation -> scheduledFuture);
+
+        // when
+        sut.schedulePublication(round);
+        taskCaptor.getValue().run();
+
+        // then
+        then(publicationHandler).should().handle(1L);
+        then(taskScheduler).should().schedule(any(Runnable.class), eq(publishAt));
+    }
+
+    @Test
+    void 재시작하면_자동_선발이_끝난_차수의_미공개_예약도_복구한다() {
+        // given
+        ProjectMatchingRound round = roundWithId(1L);
+        Instant publishAt = round.getDecisionDeadline().plusSeconds(3600);
+        ReflectionTestUtils.setField(round, "resultPublishAt", publishAt);
+        round.executeAutoDecision(null);
+        given(loadProjectMatchingRoundPort.listAllNotPublished()).willReturn(List.of(round));
+        given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+            .willAnswer(invocation -> scheduledFuture);
+
+        // when
+        sut.recoverPendingTasks();
+
+        // then
+        then(taskScheduler).should().schedule(any(Runnable.class), eq(publishAt));
+    }
+
     private ProjectMatchingRound roundWithId(Long id) {
         ProjectMatchingRound round = ProjectMatchingRound.create(
             "테스트 매칭 " + id, null,
             MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, 1L,
             Instant.now().plusSeconds(86_400),
             Instant.now().plusSeconds(172_800),
-            Instant.now().plusSeconds(259_200)
+            Instant.now().plusSeconds(259_200),
+            null
         );
         ReflectionTestUtils.setField(round, "id", id);
         return round;

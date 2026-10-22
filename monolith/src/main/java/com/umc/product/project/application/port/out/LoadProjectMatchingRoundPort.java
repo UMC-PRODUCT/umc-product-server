@@ -10,6 +10,16 @@ public interface LoadProjectMatchingRoundPort {
 
     ProjectMatchingRound getById(Long id);
 
+    /**
+     * 같은 차수의 선발·발표가 동시에 처리되지 않도록 차수 행을 잠금 후 조회합니다.
+     */
+    ProjectMatchingRound getByIdForUpdate(Long id);
+
+    /**
+     * 발표 시각이 설정되어 있고, 아직 발표 작업이 끝나지 않은 차수를 조회합니다.
+     */
+    List<ProjectMatchingRound> listAllNotPublished();
+
     Optional<ProjectMatchingRound> findById(Long id);
 
     List<ProjectMatchingRound> listByIds(List<Long> ids);

@@ -1,5 +1,6 @@
 package com.umc.product.project.adapter.out.persistence;
 
+import static com.umc.product.project.domain.QProjectMatchingRound.projectMatchingRound;
 import static com.umc.product.project.domain.QProjectMember.projectMember;
 
 import java.util.ArrayList;
@@ -15,8 +16,10 @@ import java.util.Set;
 import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
@@ -31,6 +34,36 @@ import lombok.RequiredArgsConstructor;
 public class ProjectMemberQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+
+    /**
+     * 랜덤 매칭 시 중복 선발을 막기 위해 해당 기수의 ACTIVE·PENDING_PUBLICATION 멤버의 memberId를 조회한다.
+     */
+    public List<Long> listAssignedMemberIdsByGisuId(Long gisuId) {
+        return queryFactory.select(projectMember.memberId).distinct()
+            .from(projectMember)
+            .where(projectMember.project.gisuId.eq(gisuId),
+                projectMember.status.in(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION))
+            .fetch();
+    }
+
+    /**
+     * ACTIVE 멤버의 assignedMatchingRound를 조회한다. PENDING_PUBLICATION 멤버와 차수가 null인 멤버는 제외한다.
+     */
+    public List<ProjectMemberMatchedRoundInfo> listMatchedRoundsByProjectIdsAndMemberIds(
+        Collection<Long> projectIds, Collection<Long> memberIds
+    ) {
+        if (projectIds.isEmpty() || memberIds.isEmpty()) {
+            return List.of();
+        }
+        return queryFactory.select(Projections.constructor(ProjectMemberMatchedRoundInfo.class,
+                projectMember.project.id, projectMember.memberId, projectMatchingRound.id,
+                projectMatchingRound.type, projectMatchingRound.phase))
+            .from(projectMember)
+            .join(projectMember.assignedMatchingRound, projectMatchingRound)
+            .where(projectMember.project.id.in(projectIds), projectMember.memberId.in(memberIds),
+                projectMember.status.eq(ProjectMemberStatus.ACTIVE))
+            .fetch();
+    }
 
     /**
      * 매칭 종류로부터 노출 가능 파트 집합을 결정한다. 동일 멤버의 다른 파트(예: 같은 사람이 다른 기수에 PLAN 으로 합류한 잔여 row 가 잘못 매칭되는 경우) 를 차단하는 안전망 역할.
@@ -138,6 +171,15 @@ public class ProjectMemberQueryRepository {
     public Map<Long, Map<ChallengerPart, Long>> countByProjectIdsGroupByProjectIdAndPart(
         Collection<Long> projectIds
     ) {
+        return countMembers(projectIds, List.of(ProjectMemberStatus.ACTIVE));
+    }
+
+    public Map<Long, Map<ChallengerPart, Long>> countAssignedByProjectIdsGroupByProjectIdAndPart(Collection<Long> projectIds) {
+        return countMembers(projectIds, List.of(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION));
+    }
+
+    private Map<Long, Map<ChallengerPart, Long>> countMembers(Collection<Long> projectIds,
+        Collection<ProjectMemberStatus> statuses) {
         if (projectIds == null || projectIds.isEmpty()) {
             return Map.of();
         }
@@ -147,7 +189,7 @@ public class ProjectMemberQueryRepository {
             .from(projectMember)
             .where(
                 projectMember.project.id.in(projectIds),
-                projectMember.status.eq(ProjectMemberStatus.ACTIVE)
+                projectMember.status.in(statuses)
             )
             .groupBy(projectMember.project.id, projectMember.part)
             .fetch();

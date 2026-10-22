@@ -360,12 +360,15 @@ public class ProjectApplicationQueryService
             && projectScoped.includeOngoingMatchingRounds();
     }
 
+    /**
+     * DRAFT와 CANCELLED는 항상 표시하고, 나머지 지원 상태는 결과 공개 후 표시한다.
+     */
     private boolean isStatusVisibleToApplicantSelf(ProjectApplication application) {
         ProjectApplicationStatus status = application.getStatus();
         if (status == ProjectApplicationStatus.DRAFT || status == ProjectApplicationStatus.CANCELLED) {
             return true;
         }
-        return application.getAppliedMatchingRound().isDecisionDeadlinePassed(Instant.now());
+        return application.getAppliedMatchingRound().isResultPublishedAt(Instant.now());
     }
 
     private Map<Long, List<ProjectApplicationSummaryInfo>> freeze(

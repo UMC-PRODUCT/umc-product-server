@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.MatchingType;
 
@@ -18,6 +19,43 @@ public interface LoadProjectMemberPort {
      * 특정 프로젝트의 활성(ACTIVE) 멤버 전체를 조회합니다. PROJECT-003(팀원 조회)에서 사용.
      */
     List<ProjectMember> listByProjectId(Long projectId);
+
+    /**
+     * 특정 프로젝트의 ACTIVE 및 PENDING_PUBLICATION 멤버를 조회합니다.
+     */
+    List<ProjectMember> listActiveAndPendingPublicationByProjectId(Long projectId);
+
+    /**
+     * 해당 차수의 PENDING_PUBLICATION 멤버와 소속 프로젝트를 잠금 후 조회합니다.
+     */
+    List<ProjectMember> listPendingByMatchingRoundId(Long matchingRoundId);
+
+    /**
+     * 중복 선발을 막기 위해 해당 기수의 ACTIVE·PENDING_PUBLICATION 멤버의 memberId를 조회합니다.
+     */
+    List<Long> listAssignedMemberIdsByGisuId(Long gisuId);
+
+    /**
+     * ACTIVE 멤버의 assignedMatchingRound를 조회합니다. 차수가 null인 멤버는 제외합니다.
+     */
+    List<ProjectMemberMatchedRoundInfo> listMatchedRoundsByProjectIdsAndMemberIds(
+        Collection<Long> projectIds, Collection<Long> memberIds);
+
+    /**
+     * 특정 프로젝트의 파트별 ACTIVE 및 PENDING_PUBLICATION 멤버 수를 집계합니다.
+     * 내부 정원 검증에 사용합니다.
+     *
+     * @return 파트 → 멤버 수 맵
+     */
+    Map<ChallengerPart, Long> countAssignedByProjectIdGroupByPart(Long projectId);
+
+    /**
+     * 여러 프로젝트의 파트별 ACTIVE 및 PENDING_PUBLICATION 멤버 수를 한 번에 집계합니다.
+     * 집계 대상은 {@link #countAssignedByProjectIdGroupByPart(Long)} 와 같습니다.
+     *
+     * @return projectId → (파트 → 멤버 수) 맵
+     */
+    Map<Long, Map<ChallengerPart, Long>> countAssignedByProjectIdsGroupByProjectIdAndPart(Collection<Long> projectIds);
 
     /**
      * 여러 프로젝트의 활성(ACTIVE) 멤버를 한 번에 조회합니다 (N+1 방지용 IN 쿼리). PROJECT-004(팀원 일괄 조회)에서 사용.
@@ -64,7 +102,7 @@ public interface LoadProjectMemberPort {
     ProjectMember getByProjectIdAndMemberId(Long projectId, Long memberId);
 
     /**
-     * 해당 기수에서 이미 ACTIVE 팀원인지 확인합니다. (중복 지원 방지용)
+     * 해당 기수에 ACTIVE 또는 PENDING_PUBLICATION 멤버가 존재하는지 확인합니다. (중복 지원 방지용)
      */
     boolean existsByGisuAndMember(Long gisuId, Long memberId);
 

@@ -326,11 +326,11 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         if (!context.isInProjectMatchingChapter(requesterMemberId)) {
             return denied(ProjectPermissionReason.CHAPTER_MISMATCH);
         }
-        if (context.existsByGisuAndMember(requesterMemberId)) {
-            return denied(ProjectPermissionReason.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
-        }
         if (context.openMatchingRounds().stream().noneMatch(round -> round.getType() == matchingType.get())) {
             return denied(ProjectPermissionReason.MATCHING_ROUND_NOT_OPEN);
+        }
+        if (context.existsByGisuAndMember(requesterMemberId)) {
+            return denied(ProjectPermissionReason.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
         }
         return ProjectPermissionCapabilityInfo.allow();
     }

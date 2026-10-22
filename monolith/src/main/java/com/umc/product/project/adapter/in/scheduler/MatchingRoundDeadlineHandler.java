@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 매칭 차수 결정 마감 시점에 트리거되어 자동 선발 UseCase 를 호출하는 driving adapter.
+ * 1~3차 결정 마감 이후 또는 4차 시작 시점에 자동 선발 UseCase 를 호출하는 driving adapter.
  * <p>
  * out-side {@link com.umc.product.project.adapter.out.scheduler.MatchingRoundDeadlineScheduler}
  * 가 {@link org.springframework.scheduling.TaskScheduler} 에 본 컴포넌트의 {@link #handle(Long)} 를 묶어 등록한다.
@@ -28,7 +28,7 @@ public class MatchingRoundDeadlineHandler {
     private final OperationalMetrics operationalMetrics;
 
     /**
-     * deadline 시점에 1회 호출되어 자동 선발을 실행한다. 예외는 swallow 하여 다음 task 진행을 막지 않는다.
+     * 예약 시점에 1회 호출되어 자동 선발을 실행한다. 예외는 swallow 하여 다음 task 진행을 막지 않는다.
      */
     public void handle(Long matchingRoundId) {
         Instant startedAt = Instant.now();

@@ -478,7 +478,7 @@ class ProjectApplicationTest {
         return ProjectMatchingRound.create(
             "기획-디자인 1차 매칭", null,
             MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, 1L,
-            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE
+            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE, ROUND_DECISION_DEADLINE.plusSeconds(7200)
         );
     }
 

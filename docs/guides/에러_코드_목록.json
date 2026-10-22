@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "service": "umc-product-server",
   "generatedAt": null,
-  "totalCount": 676,
+  "totalCount": 678,
   "items": [
     {
       "sequence": 1,
@@ -10655,6 +10655,28 @@
     {
       "sequence": 485,
       "domain": "project",
+      "code": "PROJECT-0103",
+      "name": "PROJECT_MEMBER_PUBLICATION_MANAGED",
+      "httpStatus": 409,
+      "httpStatusName": "CONFLICT",
+      "message": "PENDING_PUBLICATION으로 직접 변경하거나, 결과 발표 전에 ACTIVE로 변경할 수 없어요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "ProjectErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
+        "line": 55
+      }
+    },
+    {
+      "sequence": 486,
+      "domain": "project",
       "code": "PROJECT-0200",
       "name": "PROJECT_PART_QUOTA_INVALID",
       "httpStatus": 400,
@@ -10671,11 +10693,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 56
+        "line": 59
       }
     },
     {
-      "sequence": 486,
+      "sequence": 487,
       "domain": "project",
       "code": "PROJECT-0202",
       "name": "PROJECT_PART_QUOTA_REQUIRED",
@@ -10693,11 +10715,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 57
+        "line": 60
       }
     },
     {
-      "sequence": 487,
+      "sequence": 488,
       "domain": "project",
       "code": "PROJECT-0203",
       "name": "PROJECT_PART_QUOTA_DUPLICATE",
@@ -10715,11 +10737,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 58
+        "line": 61
       }
     },
     {
-      "sequence": 488,
+      "sequence": 489,
       "domain": "project",
       "code": "PROJECT-0204",
       "name": "PROJECT_DRAFT_APPLICATION_NOT_FOUND",
@@ -10737,11 +10759,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 86
+        "line": 92
       }
     },
     {
-      "sequence": 489,
+      "sequence": 490,
       "domain": "project",
       "code": "PROJECT-0205",
       "name": "PROJECT_APPLICATION_PART_NOT_ALLOWED",
@@ -10759,11 +10781,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 87
+        "line": 93
       }
     },
     {
-      "sequence": 490,
+      "sequence": 491,
       "domain": "project",
       "code": "PROJECT-0206",
       "name": "PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM",
@@ -10781,11 +10803,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 88
+        "line": 94
       }
     },
     {
-      "sequence": 491,
+      "sequence": 492,
       "domain": "project",
       "code": "PROJECT-0207",
       "name": "PROJECT_APPLICATION_DUPLICATE_SUBMISSION",
@@ -10803,11 +10825,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 89
+        "line": 95
       }
     },
     {
-      "sequence": 492,
+      "sequence": 493,
       "domain": "project",
       "code": "PROJECT-0208",
       "name": "PROJECT_APPLICATION_ROUND_NOT_OPEN",
@@ -10825,11 +10847,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 90
+        "line": 96
       }
     },
     {
-      "sequence": 493,
+      "sequence": 494,
       "domain": "project",
       "code": "PROJECT-0209",
       "name": "PROJECT_APPLICATION_ROUND_TYPE_MISMATCH",
@@ -10847,11 +10869,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 91
+        "line": 97
       }
     },
     {
-      "sequence": 494,
+      "sequence": 495,
       "domain": "project",
       "code": "PROJECT-0210",
       "name": "PROJECT_APPLICATION_ALREADY_EXISTS",
@@ -10869,11 +10891,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 92
+        "line": 98
       }
     },
     {
-      "sequence": 495,
+      "sequence": 496,
       "domain": "project",
       "code": "PROJECT-0211",
       "name": "PROJECT_APPLICATION_SELF_APPLY_NOT_ALLOWED",
@@ -10891,11 +10913,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 93
+        "line": 99
       }
     },
     {
-      "sequence": 496,
+      "sequence": 497,
       "domain": "project",
       "code": "PROJECT-0212",
       "name": "PROJECT_APPLICATION_DECISION_INVALID_TRANSITION",
@@ -10913,11 +10935,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 94
+        "line": 100
       }
     },
     {
-      "sequence": 497,
+      "sequence": 498,
       "domain": "project",
       "code": "PROJECT-0213",
       "name": "PROJECT_APPLICATION_QUOTA_EXCEEDED",
@@ -10935,11 +10957,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 96
+        "line": 102
       }
     },
     {
-      "sequence": 498,
+      "sequence": 499,
       "domain": "project",
       "code": "PROJECT-0214",
       "name": "PROJECT_APPLICATION_CANCEL_NOT_ALLOWED",
@@ -10957,11 +10979,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 98
+        "line": 104
       }
     },
     {
-      "sequence": 499,
+      "sequence": 500,
       "domain": "project",
       "code": "PROJECT-0215",
       "name": "PROJECT_APPLICATION_CANCEL_ROUND_CLOSED",
@@ -10979,11 +11001,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 99
+        "line": 105
       }
     },
     {
-      "sequence": 500,
+      "sequence": 501,
       "domain": "project",
       "code": "PROJECT-0217",
       "name": "PROJECT_APPLICATION_CHAPTER_MISMATCH",
@@ -11001,11 +11023,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 100
+        "line": 106
       }
     },
     {
-      "sequence": 501,
+      "sequence": 502,
       "domain": "project",
       "code": "PROJECT-0218",
       "name": "PROJECT_APPLICATION_ROUND_CHAPTER_MISMATCH",
@@ -11023,11 +11045,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 102
+        "line": 108
       }
     },
     {
-      "sequence": 502,
+      "sequence": 503,
       "domain": "project",
       "code": "PROJECT-0300",
       "name": "PROJECT_MATCHING_ROUND_NOT_FOUND",
@@ -11045,17 +11067,17 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 61
+        "line": 64
       }
     },
     {
-      "sequence": 503,
+      "sequence": 504,
       "domain": "project",
       "code": "PROJECT-0301",
       "name": "PROJECT_MATCHING_ROUND_INVALID_PERIOD",
       "httpStatus": 400,
       "httpStatusName": "BAD_REQUEST",
-      "message": "매칭 차수 기간은 시작, 종료, 결정 마감 순서여야 해요. 시간을 다시 선택해주세요.",
+      "message": "1~3차는 시작 < 종료 < 결정 마감, 4차는 시작 < 종료 = 결정 마감이며, 발표는 결정 마감으로부터 최소 5분 이후로 입력해주세요.",
       "description": null,
       "clientAction": null,
       "retryable": null,
@@ -11067,11 +11089,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 62
+        "line": 65
       }
     },
     {
-      "sequence": 504,
+      "sequence": 505,
       "domain": "project",
       "code": "PROJECT-0302",
       "name": "PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED",
@@ -11089,11 +11111,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 64
+        "line": 67
       }
     },
     {
-      "sequence": 505,
+      "sequence": 506,
       "domain": "project",
       "code": "PROJECT-0303",
       "name": "PROJECT_MATCHING_ROUND_ACCESS_DENIED",
@@ -11111,11 +11133,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 66
+        "line": 69
       }
     },
     {
-      "sequence": 506,
+      "sequence": 507,
       "domain": "project",
       "code": "PROJECT-0304",
       "name": "PROJECT_MATCHING_ROUND_DELETE_CONFLICT",
@@ -11133,11 +11155,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 68
+        "line": 71
       }
     },
     {
-      "sequence": 507,
+      "sequence": 508,
       "domain": "project",
       "code": "PROJECT-0305",
       "name": "PROJECT_MATCHING_ROUND_TIME_REQUIRES_CHAPTER",
@@ -11155,39 +11177,17 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 70
-      }
-    },
-    {
-      "sequence": 508,
-      "domain": "project",
-      "code": "PROJECT-0306",
-      "name": "PROJECT_MATCHING_ROUND_LOCKED",
-      "httpStatus": 400,
-      "httpStatusName": "BAD_REQUEST",
-      "message": "결정 마감 시각이 지나 결정을 변경할 수 없어요. 차수 기간을 확인해주세요.",
-      "description": null,
-      "clientAction": null,
-      "retryable": null,
-      "severity": null,
-      "deprecated": false,
-      "replacementCode": null,
-      "owners": [],
-      "tags": [],
-      "source": {
-        "enumName": "ProjectErrorCode",
-        "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 72
+        "line": 73
       }
     },
     {
       "sequence": 509,
       "domain": "project",
-      "code": "PROJECT-0307",
-      "name": "PROJECT_MATCHING_ROUND_NOT_FINALIZABLE",
+      "code": "PROJECT-0306",
+      "name": "PROJECT_MATCHING_ROUND_LOCKED",
       "httpStatus": 400,
       "httpStatusName": "BAD_REQUEST",
-      "message": "결정 마감 시각이 지난 뒤 자동 선발을 실행할 수 있어요. 마감 시각을 확인해주세요.",
+      "message": "결정 마감이 지났거나 자동 선발이 완료되어 요청한 변경 또는 삭제를 할 수 없어요.",
       "description": null,
       "clientAction": null,
       "retryable": null,
@@ -11199,11 +11199,33 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 78
+        "line": 75
       }
     },
     {
       "sequence": 510,
+      "domain": "project",
+      "code": "PROJECT-0307",
+      "name": "PROJECT_MATCHING_ROUND_NOT_FINALIZABLE",
+      "httpStatus": 400,
+      "httpStatusName": "BAD_REQUEST",
+      "message": "1~3차는 결정 마감 이후, 4차 랜덤 매칭은 시작 시각부터 실행할 수 있어요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "ProjectErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
+        "line": 81
+      }
+    },
+    {
+      "sequence": 511,
       "domain": "project",
       "code": "PROJECT-0308",
       "name": "PROJECT_MATCHING_ROUND_POLICY_NOT_FOUND",
@@ -11221,17 +11243,17 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 80
+        "line": 83
       }
     },
     {
-      "sequence": 511,
+      "sequence": 512,
       "domain": "project",
       "code": "PROJECT-0309",
       "name": "PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID",
       "httpStatus": 409,
       "httpStatusName": "CONFLICT",
-      "message": "매칭 차수는 FIRST, SECOND, THIRD 순서로 배치하고 이전 차수 결정 마감 이후 1분 이상 간격을 둬야 해요.",
+      "message": "매칭 차수는 FIRST, SECOND, THIRD, FOURTH 순서로 배치하고 이전 차수 결정 마감 이후 1분 이상 간격을 두고, 이전 차수 발표 시각 이후에 시작해주세요.",
       "description": null,
       "clientAction": null,
       "retryable": null,
@@ -11243,11 +11265,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 82
+        "line": 85
       }
     },
     {
-      "sequence": 512,
+      "sequence": 513,
       "domain": "project",
       "code": "PROJECT-0310",
       "name": "PROJECT_MATCHING_ROUND_NOT_ENDED",
@@ -11265,11 +11287,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 74
+        "line": 77
       }
     },
     {
-      "sequence": 513,
+      "sequence": 514,
       "domain": "project",
       "code": "PROJECT-0311",
       "name": "PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE",
@@ -11287,11 +11309,33 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 76
+        "line": 79
       }
     },
     {
-      "sequence": 514,
+      "sequence": 515,
+      "domain": "project",
+      "code": "PROJECT-0312",
+      "name": "PROJECT_MATCHING_ROUND_NOT_PUBLISHABLE",
+      "httpStatus": 409,
+      "httpStatusName": "CONFLICT",
+      "message": "자동 선발 완료 후 결과 발표 시각부터 공개할 수 있어요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "ProjectErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
+        "line": 88
+      }
+    },
+    {
+      "sequence": 516,
       "domain": "project",
       "code": "PROJECT-0400",
       "name": "CHAPTER_TRANSFER_NOT_FOUND",
@@ -11309,11 +11353,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 106
+        "line": 112
       }
     },
     {
-      "sequence": 515,
+      "sequence": 517,
       "domain": "project",
       "code": "PROJECT-0401",
       "name": "CHAPTER_TRANSFER_ACCESS_DENIED",
@@ -11331,11 +11375,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 107
+        "line": 113
       }
     },
     {
-      "sequence": 516,
+      "sequence": 518,
       "domain": "project",
       "code": "PROJECT-0402",
       "name": "CHAPTER_TRANSFER_PART_NOT_ALLOWED",
@@ -11353,11 +11397,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 109
+        "line": 115
       }
     },
     {
-      "sequence": 517,
+      "sequence": 519,
       "domain": "project",
       "code": "PROJECT-0403",
       "name": "CHAPTER_TRANSFER_SAME_CHAPTER",
@@ -11375,11 +11419,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 111
+        "line": 117
       }
     },
     {
-      "sequence": 518,
+      "sequence": 520,
       "domain": "project",
       "code": "PROJECT-0404",
       "name": "CHAPTER_TRANSFER_CHAPTER_NOT_IN_GISU",
@@ -11397,11 +11441,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 112
+        "line": 118
       }
     },
     {
-      "sequence": 519,
+      "sequence": 521,
       "domain": "project",
       "code": "PROJECT-0405",
       "name": "CHAPTER_TRANSFER_ALREADY_ACTIVE",
@@ -11419,11 +11463,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 113
+        "line": 119
       }
     },
     {
-      "sequence": 520,
+      "sequence": 522,
       "domain": "project",
       "code": "PROJECT-0406",
       "name": "CHAPTER_TRANSFER_ALREADY_MATCHED",
@@ -11441,11 +11485,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 115
+        "line": 121
       }
     },
     {
-      "sequence": 521,
+      "sequence": 523,
       "domain": "project",
       "code": "PROJECT-0407",
       "name": "CHAPTER_TRANSFER_ALREADY_RELEASED",
@@ -11463,11 +11507,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 117
+        "line": 123
       }
     },
     {
-      "sequence": 522,
+      "sequence": 524,
       "domain": "project",
       "code": "PROJECT-0408",
       "name": "CHAPTER_TRANSFER_DUPLICATE_TARGET",
@@ -11485,11 +11529,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 118
+        "line": 124
       }
     },
     {
-      "sequence": 523,
+      "sequence": 525,
       "domain": "project",
       "code": "PROJECT-0409",
       "name": "CHAPTER_TRANSFER_ORIGIN_NOT_FOUND",
@@ -11507,11 +11551,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 119
+        "line": 125
       }
     },
     {
-      "sequence": 524,
+      "sequence": 526,
       "domain": "recruiting",
       "code": "RECRUITING-0001",
       "name": "RECRUITING_SEASON_NOT_FOUND",
@@ -11533,7 +11577,7 @@
       }
     },
     {
-      "sequence": 525,
+      "sequence": 527,
       "domain": "recruiting",
       "code": "RECRUITING-0002",
       "name": "RECRUITING_ROUND_NOT_FOUND",
@@ -11555,7 +11599,7 @@
       }
     },
     {
-      "sequence": 526,
+      "sequence": 528,
       "domain": "recruiting",
       "code": "RECRUITING-0003",
       "name": "RECRUITING_APPLICATION_FORM_NOT_FOUND",
@@ -11577,7 +11621,7 @@
       }
     },
     {
-      "sequence": 527,
+      "sequence": 529,
       "domain": "recruiting",
       "code": "RECRUITING-0004",
       "name": "RECRUITING_APPLICATION_NOT_FOUND",
@@ -11599,7 +11643,7 @@
       }
     },
     {
-      "sequence": 528,
+      "sequence": 530,
       "domain": "recruiting",
       "code": "RECRUITING-0006",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_NOT_FOUND",
@@ -11621,7 +11665,7 @@
       }
     },
     {
-      "sequence": 529,
+      "sequence": 531,
       "domain": "recruiting",
       "code": "RECRUITING-0007",
       "name": "RECRUITING_APPLICATION_EVALUATION_NOT_FOUND",
@@ -11643,7 +11687,7 @@
       }
     },
     {
-      "sequence": 530,
+      "sequence": 532,
       "domain": "recruiting",
       "code": "RECRUITING-0008",
       "name": "RECRUITING_ROUND_EVALUATOR_NOT_FOUND",
@@ -11665,7 +11709,7 @@
       }
     },
     {
-      "sequence": 531,
+      "sequence": 533,
       "domain": "recruiting",
       "code": "RECRUITING-0009",
       "name": "RECRUITING_ROUND_INTERVIEW_QUESTION_NOT_FOUND",
@@ -11687,7 +11731,7 @@
       }
     },
     {
-      "sequence": 532,
+      "sequence": 534,
       "domain": "recruiting",
       "code": "RECRUITING-0010",
       "name": "RECRUITING_APPLICATION_INTERVIEW_QUESTION_NOT_FOUND",
@@ -11709,7 +11753,7 @@
       }
     },
     {
-      "sequence": 533,
+      "sequence": 535,
       "domain": "recruiting",
       "code": "RECRUITING-0100",
       "name": "RECRUITING_ROUND_INVALID_ROUND_NO",
@@ -11731,7 +11775,7 @@
       }
     },
     {
-      "sequence": 534,
+      "sequence": 536,
       "domain": "recruiting",
       "code": "RECRUITING-0101",
       "name": "RECRUITING_SEASON_INVALID_TRANSITION",
@@ -11753,7 +11797,7 @@
       }
     },
     {
-      "sequence": 535,
+      "sequence": 537,
       "domain": "recruiting",
       "code": "RECRUITING-0102",
       "name": "RECRUITING_ROUND_INVALID_TRANSITION",
@@ -11775,7 +11819,7 @@
       }
     },
     {
-      "sequence": 536,
+      "sequence": 538,
       "domain": "recruiting",
       "code": "RECRUITING-0103",
       "name": "RECRUITING_SEASON_ALREADY_EXISTS",
@@ -11797,7 +11841,7 @@
       }
     },
     {
-      "sequence": 537,
+      "sequence": 539,
       "domain": "recruiting",
       "code": "RECRUITING-0104",
       "name": "RECRUITING_ROUND_ALREADY_EXISTS",
@@ -11819,7 +11863,7 @@
       }
     },
     {
-      "sequence": 538,
+      "sequence": 540,
       "domain": "recruiting",
       "code": "RECRUITING-0105",
       "name": "RECRUITING_SEASON_REQUIRED_FIELD",
@@ -11841,7 +11885,7 @@
       }
     },
     {
-      "sequence": 539,
+      "sequence": 541,
       "domain": "recruiting",
       "code": "RECRUITING-0106",
       "name": "RECRUITING_QUOTA_INVALID_TARGET_COUNT",
@@ -11863,7 +11907,7 @@
       }
     },
     {
-      "sequence": 540,
+      "sequence": 542,
       "domain": "recruiting",
       "code": "RECRUITING-0107",
       "name": "RECRUITING_QUOTA_UNSUPPORTED_TRACK",
@@ -11885,7 +11929,7 @@
       }
     },
     {
-      "sequence": 541,
+      "sequence": 543,
       "domain": "recruiting",
       "code": "RECRUITING-0108",
       "name": "RECRUITING_QUOTA_DUPLICATE_TRACK",
@@ -11907,7 +11951,7 @@
       }
     },
     {
-      "sequence": 542,
+      "sequence": 544,
       "domain": "recruiting",
       "code": "RECRUITING-0109",
       "name": "RECRUITING_ROUND_INVALID_TRACKS",
@@ -11929,7 +11973,7 @@
       }
     },
     {
-      "sequence": 543,
+      "sequence": 545,
       "domain": "recruiting",
       "code": "RECRUITING-0110",
       "name": "RECRUITING_ROUND_TRACK_NOT_IN_SEASON",
@@ -11951,7 +11995,7 @@
       }
     },
     {
-      "sequence": 544,
+      "sequence": 546,
       "domain": "recruiting",
       "code": "RECRUITING-0111",
       "name": "RECRUITING_ROUND_INVALID_SCHEDULE",
@@ -11973,7 +12017,7 @@
       }
     },
     {
-      "sequence": 545,
+      "sequence": 547,
       "domain": "recruiting",
       "code": "RECRUITING-0112",
       "name": "RECRUITING_SEASON_CREATION_FORBIDDEN",
@@ -11995,7 +12039,7 @@
       }
     },
     {
-      "sequence": 546,
+      "sequence": 548,
       "domain": "recruiting",
       "code": "RECRUITING-0113",
       "name": "RECRUITING_ROUND_RECRUITMENT_POLICY_LOCKED",
@@ -12017,7 +12061,7 @@
       }
     },
     {
-      "sequence": 547,
+      "sequence": 549,
       "domain": "recruiting",
       "code": "RECRUITING-0114",
       "name": "RECRUITING_ROUND_INVALID_TITLE",
@@ -12039,7 +12083,7 @@
       }
     },
     {
-      "sequence": 548,
+      "sequence": 550,
       "domain": "recruiting",
       "code": "RECRUITING-0115",
       "name": "RECRUITING_ROUND_TITLE_ALREADY_EXISTS",
@@ -12061,7 +12105,7 @@
       }
     },
     {
-      "sequence": 549,
+      "sequence": 551,
       "domain": "recruiting",
       "code": "RECRUITING-0116",
       "name": "RECRUITING_ROUND_NO_SEQUENCE_CONFLICT",
@@ -12083,7 +12127,7 @@
       }
     },
     {
-      "sequence": 550,
+      "sequence": 552,
       "domain": "recruiting",
       "code": "RECRUITING-0117",
       "name": "RECRUITING_ROUND_DELETE_CONFLICT",
@@ -12105,7 +12149,7 @@
       }
     },
     {
-      "sequence": 551,
+      "sequence": 553,
       "domain": "recruiting",
       "code": "RECRUITING-0118",
       "name": "RECRUITING_ROUND_UNPUBLISH_CONFLICT",
@@ -12127,7 +12171,7 @@
       }
     },
     {
-      "sequence": 552,
+      "sequence": 554,
       "domain": "recruiting",
       "code": "RECRUITING-0119",
       "name": "RECRUITING_CHAPTER_QUOTA_INVALID_TARGET_COUNT",
@@ -12149,7 +12193,7 @@
       }
     },
     {
-      "sequence": 553,
+      "sequence": 555,
       "domain": "recruiting",
       "code": "RECRUITING-0120",
       "name": "RECRUITING_ROUND_NOT_DELETED",
@@ -12171,7 +12215,7 @@
       }
     },
     {
-      "sequence": 554,
+      "sequence": 556,
       "domain": "recruiting",
       "code": "RECRUITING-0121",
       "name": "RECRUITING_ROUND_RESTORE_CONFLICT",
@@ -12193,7 +12237,7 @@
       }
     },
     {
-      "sequence": 555,
+      "sequence": 557,
       "domain": "recruiting",
       "code": "RECRUITING-0200",
       "name": "RECRUITING_APPLICATION_FORM_INVALID",
@@ -12215,7 +12259,7 @@
       }
     },
     {
-      "sequence": 556,
+      "sequence": 558,
       "domain": "recruiting",
       "code": "RECRUITING-0201",
       "name": "RECRUITING_APPLICATION_FORM_INVALID_TRANSITION",
@@ -12237,7 +12281,7 @@
       }
     },
     {
-      "sequence": 557,
+      "sequence": 559,
       "domain": "recruiting",
       "code": "RECRUITING-0202",
       "name": "RECRUITING_APPLICATION_FORM_ALREADY_EXISTS",
@@ -12259,7 +12303,7 @@
       }
     },
     {
-      "sequence": 558,
+      "sequence": 560,
       "domain": "recruiting",
       "code": "RECRUITING-0203",
       "name": "RECRUITING_APPLICATION_FORM_NOT_PUBLISHED",
@@ -12281,7 +12325,7 @@
       }
     },
     {
-      "sequence": 559,
+      "sequence": 561,
       "domain": "recruiting",
       "code": "RECRUITING-0204",
       "name": "RECRUITING_FORM_SECTION_POLICY_INVALID",
@@ -12303,7 +12347,7 @@
       }
     },
     {
-      "sequence": 560,
+      "sequence": 562,
       "domain": "recruiting",
       "code": "RECRUITING-0205",
       "name": "RECRUITING_FORM_SECTION_POLICY_INVALID_TRACK",
@@ -12325,7 +12369,7 @@
       }
     },
     {
-      "sequence": 561,
+      "sequence": 563,
       "domain": "recruiting",
       "code": "RECRUITING-0206",
       "name": "RECRUITING_APPLICATION_FORM_TRACK_SECTION_REQUIRED",
@@ -12347,7 +12391,7 @@
       }
     },
     {
-      "sequence": 562,
+      "sequence": 564,
       "domain": "recruiting",
       "code": "RECRUITING-0300",
       "name": "RECRUITING_APPLICATION_INVALID_TRANSITION",
@@ -12369,7 +12413,7 @@
       }
     },
     {
-      "sequence": 563,
+      "sequence": 565,
       "domain": "recruiting",
       "code": "RECRUITING-0301",
       "name": "RECRUITING_APPLICATION_ALREADY_EXISTS",
@@ -12391,7 +12435,7 @@
       }
     },
     {
-      "sequence": 564,
+      "sequence": 566,
       "domain": "recruiting",
       "code": "RECRUITING-0302",
       "name": "RECRUITING_APPLICATION_DIFFERENT_SCHOOL_EXISTS",
@@ -12413,7 +12457,7 @@
       }
     },
     {
-      "sequence": 565,
+      "sequence": 567,
       "domain": "recruiting",
       "code": "RECRUITING-0303",
       "name": "RECRUITING_APPLICATION_REAPPLICATION_BLOCKED",
@@ -12435,7 +12479,7 @@
       }
     },
     {
-      "sequence": 566,
+      "sequence": 568,
       "domain": "recruiting",
       "code": "RECRUITING-0304",
       "name": "RECRUITING_APPLICATION_FINAL_PASS_ALREADY_EXISTS",
@@ -12457,7 +12501,7 @@
       }
     },
     {
-      "sequence": 567,
+      "sequence": 569,
       "domain": "recruiting",
       "code": "RECRUITING-0305",
       "name": "RECRUITING_REGISTRATION_FORBIDDEN",
@@ -12479,7 +12523,7 @@
       }
     },
     {
-      "sequence": 568,
+      "sequence": 570,
       "domain": "recruiting",
       "code": "RECRUITING-0306",
       "name": "RECRUITING_APPLICATION_MEMBER_REQUIRED",
@@ -12501,7 +12545,7 @@
       }
     },
     {
-      "sequence": 569,
+      "sequence": 571,
       "domain": "recruiting",
       "code": "RECRUITING-0307",
       "name": "RECRUITING_APPLICATION_REQUIRED_FIELD",
@@ -12523,7 +12567,7 @@
       }
     },
     {
-      "sequence": 570,
+      "sequence": 572,
       "domain": "recruiting",
       "code": "RECRUITING-0308",
       "name": "RECRUITING_APPLICATION_INVALID_APPLICANT_NAME",
@@ -12545,7 +12589,7 @@
       }
     },
     {
-      "sequence": 571,
+      "sequence": 573,
       "domain": "recruiting",
       "code": "RECRUITING-0309",
       "name": "RECRUITING_APPLICATION_INVALID_EMAIL",
@@ -12567,7 +12611,7 @@
       }
     },
     {
-      "sequence": 572,
+      "sequence": 574,
       "domain": "recruiting",
       "code": "RECRUITING-0310",
       "name": "RECRUITING_APPLICATION_INVALID_FIRST_CHOICE",
@@ -12589,7 +12633,7 @@
       }
     },
     {
-      "sequence": 573,
+      "sequence": 575,
       "domain": "recruiting",
       "code": "RECRUITING-0311",
       "name": "RECRUITING_APPLICATION_INVALID_SECOND_CHOICE",
@@ -12611,7 +12655,7 @@
       }
     },
     {
-      "sequence": 574,
+      "sequence": 576,
       "domain": "recruiting",
       "code": "RECRUITING-0312",
       "name": "RECRUITING_APPLICATION_INVALID_ACCEPTED_TRACK",
@@ -12633,7 +12677,7 @@
       }
     },
     {
-      "sequence": 575,
+      "sequence": 577,
       "domain": "recruiting",
       "code": "RECRUITING-0313",
       "name": "RECRUITING_APPLICATION_INVALID_PRIVACY_CONSENT",
@@ -12655,7 +12699,7 @@
       }
     },
     {
-      "sequence": 576,
+      "sequence": 578,
       "domain": "recruiting",
       "code": "RECRUITING-0314",
       "name": "RECRUITING_APPLICATION_INVALID_KEY",
@@ -12677,7 +12721,7 @@
       }
     },
     {
-      "sequence": 577,
+      "sequence": 579,
       "domain": "recruiting",
       "code": "RECRUITING-0315",
       "name": "RECRUITING_APPLICATION_KEY_ISSUE_FAILED",
@@ -12699,7 +12743,7 @@
       }
     },
     {
-      "sequence": 578,
+      "sequence": 580,
       "domain": "recruiting",
       "code": "RECRUITING-0316",
       "name": "RECRUITING_APPLICATION_APPLICANT_MISMATCH",
@@ -12721,7 +12765,7 @@
       }
     },
     {
-      "sequence": 579,
+      "sequence": 581,
       "domain": "recruiting",
       "code": "RECRUITING-0317",
       "name": "RECRUITING_FINAL_DECISION_FORBIDDEN",
@@ -12743,7 +12787,7 @@
       }
     },
     {
-      "sequence": 580,
+      "sequence": 582,
       "domain": "recruiting",
       "code": "RECRUITING-0318",
       "name": "RECRUITING_QUOTA_NOT_FOUND",
@@ -12765,7 +12809,7 @@
       }
     },
     {
-      "sequence": 581,
+      "sequence": 583,
       "domain": "recruiting",
       "code": "RECRUITING-0319",
       "name": "RECRUITING_QUOTA_EXCEEDED",
@@ -12787,7 +12831,7 @@
       }
     },
     {
-      "sequence": 582,
+      "sequence": 584,
       "domain": "recruiting",
       "code": "RECRUITING-0320",
       "name": "RECRUITING_QUOTA_BELOW_RESERVED",
@@ -12809,7 +12853,7 @@
       }
     },
     {
-      "sequence": 583,
+      "sequence": 585,
       "domain": "recruiting",
       "code": "RECRUITING-0321",
       "name": "RECRUITING_APPLICATION_PERIOD_CLOSED",
@@ -12831,7 +12875,7 @@
       }
     },
     {
-      "sequence": 584,
+      "sequence": 586,
       "domain": "recruiting",
       "code": "RECRUITING-0322",
       "name": "RECRUITING_CONCURRENCY_LOCK_TIMEOUT",
@@ -12853,7 +12897,7 @@
       }
     },
     {
-      "sequence": 585,
+      "sequence": 587,
       "domain": "recruiting",
       "code": "RECRUITING-0323",
       "name": "RECRUITING_SUMMARY_ACCESS_DENIED",
@@ -12875,7 +12919,7 @@
       }
     },
     {
-      "sequence": 586,
+      "sequence": 588,
       "domain": "recruiting",
       "code": "RECRUITING-0324",
       "name": "RECRUITING_APPLICATION_ANSWER_OUT_OF_SCOPE",
@@ -12897,7 +12941,7 @@
       }
     },
     {
-      "sequence": 587,
+      "sequence": 589,
       "domain": "recruiting",
       "code": "RECRUITING-0325",
       "name": "RECRUITING_EVALUATION_STATISTICS_ACCESS_DENIED",
@@ -12919,7 +12963,7 @@
       }
     },
     {
-      "sequence": 588,
+      "sequence": 590,
       "domain": "recruiting",
       "code": "RECRUITING-0326",
       "name": "RECRUITING_DECISION_HISTORY_ACCESS_DENIED",
@@ -12941,7 +12985,7 @@
       }
     },
     {
-      "sequence": 589,
+      "sequence": 591,
       "domain": "recruiting",
       "code": "RECRUITING-0327",
       "name": "RECRUITING_DECISION_HISTORY_INVALID",
@@ -12963,7 +13007,7 @@
       }
     },
     {
-      "sequence": 590,
+      "sequence": 592,
       "domain": "recruiting",
       "code": "RECRUITING-0328",
       "name": "RECRUITING_DECISION_HISTORY_EXPORT_TOO_LARGE",
@@ -12985,7 +13029,7 @@
       }
     },
     {
-      "sequence": 591,
+      "sequence": 593,
       "domain": "recruiting",
       "code": "RECRUITING-0329",
       "name": "RECRUITING_DECISION_HISTORY_INVALID_PAGE_SIZE",
@@ -13007,7 +13051,7 @@
       }
     },
     {
-      "sequence": 592,
+      "sequence": 594,
       "domain": "recruiting",
       "code": "RECRUITING-0330",
       "name": "RECRUITING_CHAPTER_QUOTA_TOTAL_MISMATCH",
@@ -13029,7 +13073,7 @@
       }
     },
     {
-      "sequence": 593,
+      "sequence": 595,
       "domain": "recruiting",
       "code": "RECRUITING-0401",
       "name": "RECRUITING_EVALUATION_ALREADY_SUBMITTED",
@@ -13051,7 +13095,7 @@
       }
     },
     {
-      "sequence": 594,
+      "sequence": 596,
       "domain": "recruiting",
       "code": "RECRUITING-0402",
       "name": "RECRUITING_EVALUATION_ACCESS_DENIED",
@@ -13073,7 +13117,7 @@
       }
     },
     {
-      "sequence": 595,
+      "sequence": 597,
       "domain": "recruiting",
       "code": "RECRUITING-0403",
       "name": "RECRUITING_EVALUATION_INVALID",
@@ -13095,7 +13139,7 @@
       }
     },
     {
-      "sequence": 596,
+      "sequence": 598,
       "domain": "recruiting",
       "code": "RECRUITING-0404",
       "name": "RECRUITING_EVALUATION_DECISION_REQUIRED",
@@ -13117,7 +13161,7 @@
       }
     },
     {
-      "sequence": 597,
+      "sequence": 599,
       "domain": "recruiting",
       "code": "RECRUITING-0405",
       "name": "RECRUITING_EVALUATION_COMMENT_TOO_LONG",
@@ -13139,7 +13183,7 @@
       }
     },
     {
-      "sequence": 598,
+      "sequence": 600,
       "domain": "recruiting",
       "code": "RECRUITING-0410",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_INVALID",
@@ -13161,7 +13205,7 @@
       }
     },
     {
-      "sequence": 599,
+      "sequence": 601,
       "domain": "recruiting",
       "code": "RECRUITING-0411",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_INVALID_TRANSITION",
@@ -13183,7 +13227,7 @@
       }
     },
     {
-      "sequence": 600,
+      "sequence": 602,
       "domain": "recruiting",
       "code": "RECRUITING-0412",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_INVALID_RESPONSE",
@@ -13205,7 +13249,7 @@
       }
     },
     {
-      "sequence": 601,
+      "sequence": 603,
       "domain": "recruiting",
       "code": "RECRUITING-0413",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_INVALID_PERIOD",
@@ -13227,7 +13271,7 @@
       }
     },
     {
-      "sequence": 602,
+      "sequence": 604,
       "domain": "recruiting",
       "code": "RECRUITING-0414",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_INVALID_LOCATION",
@@ -13249,7 +13293,7 @@
       }
     },
     {
-      "sequence": 603,
+      "sequence": 605,
       "domain": "recruiting",
       "code": "RECRUITING-0415",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_INVALID_CONTACT",
@@ -13271,7 +13315,7 @@
       }
     },
     {
-      "sequence": 604,
+      "sequence": 606,
       "domain": "recruiting",
       "code": "RECRUITING-0416",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_INVALID_MAIL_STATE",
@@ -13293,7 +13337,7 @@
       }
     },
     {
-      "sequence": 605,
+      "sequence": 607,
       "domain": "recruiting",
       "code": "RECRUITING-0417",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_ALREADY_EXISTS",
@@ -13315,7 +13359,7 @@
       }
     },
     {
-      "sequence": 606,
+      "sequence": 608,
       "domain": "recruiting",
       "code": "RECRUITING-0418",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_ACCESS_DENIED",
@@ -13337,7 +13381,7 @@
       }
     },
     {
-      "sequence": 607,
+      "sequence": 609,
       "domain": "recruiting",
       "code": "RECRUITING-0419",
       "name": "RECRUITING_INTERVIEW_AVAILABILITY_NOT_IMPLEMENTED",
@@ -13359,7 +13403,7 @@
       }
     },
     {
-      "sequence": 608,
+      "sequence": 610,
       "domain": "recruiting",
       "code": "RECRUITING-0420",
       "name": "RECRUITING_INTERVIEW_SESSION_NOT_FOUND",
@@ -13381,7 +13425,7 @@
       }
     },
     {
-      "sequence": 609,
+      "sequence": 611,
       "domain": "recruiting",
       "code": "RECRUITING-0421",
       "name": "RECRUITING_INTERVIEW_SESSION_INVALID",
@@ -13403,7 +13447,7 @@
       }
     },
     {
-      "sequence": 610,
+      "sequence": 612,
       "domain": "recruiting",
       "code": "RECRUITING-0422",
       "name": "RECRUITING_INTERVIEW_SESSION_INVALID_SLOT",
@@ -13425,7 +13469,7 @@
       }
     },
     {
-      "sequence": 611,
+      "sequence": 613,
       "domain": "recruiting",
       "code": "RECRUITING-0423",
       "name": "RECRUITING_INTERVIEW_SESSION_CONFIRMED_SCHEDULE_EXISTS",
@@ -13447,7 +13491,7 @@
       }
     },
     {
-      "sequence": 612,
+      "sequence": 614,
       "domain": "recruiting",
       "code": "RECRUITING-0424",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_ASSIGNMENT_CONFLICT",
@@ -13469,7 +13513,7 @@
       }
     },
     {
-      "sequence": 613,
+      "sequence": 615,
       "domain": "recruiting",
       "code": "RECRUITING-0425",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_ASSIGNMENT_LOCK_TIMEOUT",
@@ -13491,7 +13535,7 @@
       }
     },
     {
-      "sequence": 614,
+      "sequence": 616,
       "domain": "recruiting",
       "code": "RECRUITING-0500",
       "name": "RECRUITING_ROUND_EVALUATOR_INVALID",
@@ -13513,7 +13557,7 @@
       }
     },
     {
-      "sequence": 615,
+      "sequence": 617,
       "domain": "recruiting",
       "code": "RECRUITING-0501",
       "name": "RECRUITING_ROUND_EVALUATOR_ALREADY_EXISTS",
@@ -13535,7 +13579,7 @@
       }
     },
     {
-      "sequence": 616,
+      "sequence": 618,
       "domain": "recruiting",
       "code": "RECRUITING-0502",
       "name": "RECRUITING_INTERVIEW_QUESTION_INVALID_TARGET",
@@ -13557,7 +13601,7 @@
       }
     },
     {
-      "sequence": 617,
+      "sequence": 619,
       "domain": "recruiting",
       "code": "RECRUITING-0503",
       "name": "RECRUITING_INTERVIEW_QUESTION_INVALID_CONTENT",
@@ -13579,7 +13623,7 @@
       }
     },
     {
-      "sequence": 618,
+      "sequence": 620,
       "domain": "recruiting",
       "code": "RECRUITING-0504",
       "name": "RECRUITING_INTERVIEW_QUESTION_INVALID_ORDER_NO",
@@ -13601,7 +13645,7 @@
       }
     },
     {
-      "sequence": 619,
+      "sequence": 621,
       "domain": "recruiting",
       "code": "RECRUITING-0505",
       "name": "RECRUITING_INTERVIEW_QUESTION_IMMUTABLE",
@@ -13623,7 +13667,7 @@
       }
     },
     {
-      "sequence": 620,
+      "sequence": 622,
       "domain": "recruiting",
       "code": "RECRUITING-0506",
       "name": "RECRUITING_INTERVIEW_QUESTION_ACCESS_DENIED",
@@ -13645,7 +13689,7 @@
       }
     },
     {
-      "sequence": 621,
+      "sequence": 623,
       "domain": "recruiting",
       "code": "RECRUITING-0507",
       "name": "RECRUITING_INTERVIEW_QUESTION_INVALID_ACTOR",
@@ -13667,7 +13711,7 @@
       }
     },
     {
-      "sequence": 622,
+      "sequence": 624,
       "domain": "recruiting",
       "code": "RECRUITING-0508",
       "name": "RECRUITING_APPLICANT_IDENTITY_REQUIRED",
@@ -13689,7 +13733,7 @@
       }
     },
     {
-      "sequence": 623,
+      "sequence": 625,
       "domain": "schedule",
       "code": "SCHEDULE-0006",
       "name": "INVALID_TIME_RANGE",
@@ -13711,7 +13755,7 @@
       }
     },
     {
-      "sequence": 624,
+      "sequence": 626,
       "domain": "schedule",
       "code": "SCHEDULE-0009",
       "name": "SCHEDULE_NOT_FOUND",
@@ -13733,7 +13777,7 @@
       }
     },
     {
-      "sequence": 625,
+      "sequence": 627,
       "domain": "schedule",
       "code": "SCHEDULE-0010",
       "name": "TAG_REQUIRED",
@@ -13755,7 +13799,7 @@
       }
     },
     {
-      "sequence": 626,
+      "sequence": 628,
       "domain": "schedule",
       "code": "SCHEDULE-0011",
       "name": "NOT_FIRST_ATTENDANCE_REQUEST",
@@ -13777,7 +13821,7 @@
       }
     },
     {
-      "sequence": 627,
+      "sequence": 629,
       "domain": "schedule",
       "code": "SCHEDULE-0012",
       "name": "NO_ATTENDANCE_RECORD",
@@ -13799,7 +13843,7 @@
       }
     },
     {
-      "sequence": 628,
+      "sequence": 630,
       "domain": "schedule",
       "code": "SCHEDULE-0013",
       "name": "INVALID_ATTENDANCE_STATUS_FOR_EXCUSE",
@@ -13821,7 +13865,7 @@
       }
     },
     {
-      "sequence": 629,
+      "sequence": 631,
       "domain": "schedule",
       "code": "SCHEDULE-0014",
       "name": "INVALID_ATTENDANCE_STATUS_FOR_APPROVAL",
@@ -13843,7 +13887,7 @@
       }
     },
     {
-      "sequence": 630,
+      "sequence": 632,
       "domain": "schedule",
       "code": "SCHEDULE-0015",
       "name": "INVALID_ATTENDANCE_STATUS_FOR_REJECT",
@@ -13865,7 +13909,7 @@
       }
     },
     {
-      "sequence": 631,
+      "sequence": 633,
       "domain": "schedule",
       "code": "SCHEDULE-0016",
       "name": "NO_EXCUSE_REASON_GIVEN",
@@ -13887,7 +13931,7 @@
       }
     },
     {
-      "sequence": 632,
+      "sequence": 634,
       "domain": "schedule",
       "code": "SCHEDULE-0017",
       "name": "ATTENDANCE_NOT_REQUIRES_CONFIRM",
@@ -13909,7 +13953,7 @@
       }
     },
     {
-      "sequence": 633,
+      "sequence": 635,
       "domain": "schedule",
       "code": "SCHEDULE-0018",
       "name": "SCHEDULE_ENDED",
@@ -13931,7 +13975,7 @@
       }
     },
     {
-      "sequence": 634,
+      "sequence": 636,
       "domain": "schedule",
       "code": "SCHEDULE-0019",
       "name": "CHECK_IN_TOO_EARLY",
@@ -13953,7 +13997,7 @@
       }
     },
     {
-      "sequence": 635,
+      "sequence": 637,
       "domain": "schedule",
       "code": "SCHEDULE-0020",
       "name": "OFFLINE_SCHEDULE_REQUIRES_LOCATION",
@@ -13975,7 +14019,7 @@
       }
     },
     {
-      "sequence": 636,
+      "sequence": 638,
       "domain": "schedule",
       "code": "SCHEDULE-0021",
       "name": "SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST",
@@ -13997,7 +14041,7 @@
       }
     },
     {
-      "sequence": 637,
+      "sequence": 639,
       "domain": "schedule",
       "code": "SCHEDULE-0022",
       "name": "PARTICIPANT_NOT_FOUND",
@@ -14019,7 +14063,7 @@
       }
     },
     {
-      "sequence": 638,
+      "sequence": 640,
       "domain": "schedule",
       "code": "SCHEDULE-0023",
       "name": "LOCATION_NOT_VERIFIED",
@@ -14041,7 +14085,7 @@
       }
     },
     {
-      "sequence": 639,
+      "sequence": 641,
       "domain": "schedule",
       "code": "SCHEDULE-0024",
       "name": "ONLINE_SCHEDULE_SHOULD_NOT_HAVE_LOCATION",
@@ -14063,7 +14107,7 @@
       }
     },
     {
-      "sequence": 640,
+      "sequence": 642,
       "domain": "schedule",
       "code": "SCHEDULE-0025",
       "name": "NOT_ACTIVE_GISU_SCHEDULE",
@@ -14085,7 +14129,7 @@
       }
     },
     {
-      "sequence": 641,
+      "sequence": 643,
       "domain": "schedule",
       "code": "SCHEDULE-0026",
       "name": "NOT_SCHEDULE_PARTICIPANT",
@@ -14107,7 +14151,7 @@
       }
     },
     {
-      "sequence": 642,
+      "sequence": 644,
       "domain": "schedule",
       "code": "SCHEDULE-0027",
       "name": "ATTENDANCE_POLICY_REQUIRED",
@@ -14129,7 +14173,7 @@
       }
     },
     {
-      "sequence": 643,
+      "sequence": 645,
       "domain": "schedule",
       "code": "SCHEDULE-0028",
       "name": "STARTED_SCHEDULE_CANT_BE_EDITED",
@@ -14151,7 +14195,7 @@
       }
     },
     {
-      "sequence": 644,
+      "sequence": 646,
       "domain": "schedule",
       "code": "SCHEDULE-0029",
       "name": "CANNOT_CREATE_SCHEDULE",
@@ -14173,7 +14217,7 @@
       }
     },
     {
-      "sequence": 645,
+      "sequence": 647,
       "domain": "schedule",
       "code": "SCHEDULE-0030",
       "name": "EXCEEDED_MAX_PARTICIPANTS",
@@ -14195,7 +14239,7 @@
       }
     },
     {
-      "sequence": 646,
+      "sequence": 648,
       "domain": "schedule",
       "code": "SCHEDULE-0031",
       "name": "CANNOT_CREATE_ATTENDANCE_REQUIRED_SCHEDULE",
@@ -14217,7 +14261,7 @@
       }
     },
     {
-      "sequence": 647,
+      "sequence": 649,
       "domain": "schedule",
       "code": "SCHEDULE-0032",
       "name": "INVALID_MEMBER_INVITE",
@@ -14239,7 +14283,7 @@
       }
     },
     {
-      "sequence": 648,
+      "sequence": 650,
       "domain": "schedule",
       "code": "SCHEDULE-0033",
       "name": "SCHEDULE_HAS_ATTENDANCE_RECORD",
@@ -14261,7 +14305,7 @@
       }
     },
     {
-      "sequence": 649,
+      "sequence": 651,
       "domain": "schedule",
       "code": "SCHEDULE-0034",
       "name": "PARTICIPANT_REQUIRED",
@@ -14283,7 +14327,7 @@
       }
     },
     {
-      "sequence": 650,
+      "sequence": 652,
       "domain": "storage",
       "code": "STORAGE-0001",
       "name": "FILE_NOT_FOUND",
@@ -14305,7 +14349,7 @@
       }
     },
     {
-      "sequence": 651,
+      "sequence": 653,
       "domain": "storage",
       "code": "STORAGE-0002",
       "name": "FILE_UPLOAD_NOT_COMPLETED",
@@ -14327,7 +14371,7 @@
       }
     },
     {
-      "sequence": 652,
+      "sequence": 654,
       "domain": "storage",
       "code": "STORAGE-0003",
       "name": "FILE_ALREADY_UPLOADED",
@@ -14349,7 +14393,7 @@
       }
     },
     {
-      "sequence": 653,
+      "sequence": 655,
       "domain": "storage",
       "code": "STORAGE-0004",
       "name": "INVALID_FILE_EXTENSION",
@@ -14371,7 +14415,7 @@
       }
     },
     {
-      "sequence": 654,
+      "sequence": 656,
       "domain": "storage",
       "code": "STORAGE-0005",
       "name": "FILE_SIZE_EXCEEDED",
@@ -14393,7 +14437,7 @@
       }
     },
     {
-      "sequence": 655,
+      "sequence": 657,
       "domain": "storage",
       "code": "STORAGE-0006",
       "name": "INVALID_CONTENT_TYPE",
@@ -14415,7 +14459,7 @@
       }
     },
     {
-      "sequence": 656,
+      "sequence": 658,
       "domain": "storage",
       "code": "STORAGE-0007",
       "name": "STORAGE_UPLOAD_FAILED",
@@ -14437,7 +14481,7 @@
       }
     },
     {
-      "sequence": 657,
+      "sequence": 659,
       "domain": "storage",
       "code": "STORAGE-0008",
       "name": "STORAGE_DELETE_FAILED",
@@ -14459,7 +14503,7 @@
       }
     },
     {
-      "sequence": 658,
+      "sequence": 660,
       "domain": "storage",
       "code": "STORAGE-0009",
       "name": "STORAGE_URL_GENERATION_FAILED",
@@ -14481,7 +14525,7 @@
       }
     },
     {
-      "sequence": 659,
+      "sequence": 661,
       "domain": "storage",
       "code": "STORAGE-0010",
       "name": "CDN_SIGNING_FAILED",
@@ -14503,7 +14547,7 @@
       }
     },
     {
-      "sequence": 660,
+      "sequence": 662,
       "domain": "storage",
       "code": "STORAGE-0011",
       "name": "NO_ENV_KEYS",
@@ -14525,7 +14569,7 @@
       }
     },
     {
-      "sequence": 661,
+      "sequence": 663,
       "domain": "storage",
       "code": "STORAGE-0012",
       "name": "INVALID_SPRING_PROFILE",
@@ -14547,7 +14591,7 @@
       }
     },
     {
-      "sequence": 662,
+      "sequence": 664,
       "domain": "storage",
       "code": "STORAGE-0013",
       "name": "FILE_DELETE_FORBIDDEN",
@@ -14569,7 +14613,7 @@
       }
     },
     {
-      "sequence": 663,
+      "sequence": 665,
       "domain": "storage",
       "code": "STORAGE-0014",
       "name": "FILE_SIZE_MISMATCH",
@@ -14591,7 +14635,7 @@
       }
     },
     {
-      "sequence": 664,
+      "sequence": 666,
       "domain": "storage",
       "code": "STORAGE-0015",
       "name": "STORAGE_METADATA_READ_FAILED",
@@ -14613,7 +14657,7 @@
       }
     },
     {
-      "sequence": 665,
+      "sequence": 667,
       "domain": "storage",
       "code": "STORAGE-0016",
       "name": "FILE_USE_FORBIDDEN",
@@ -14635,7 +14679,7 @@
       }
     },
     {
-      "sequence": 666,
+      "sequence": 668,
       "domain": "term",
       "code": "TERMS-0001",
       "name": "TERMS_NOT_FOUND",
@@ -14657,7 +14701,7 @@
       }
     },
     {
-      "sequence": 667,
+      "sequence": 669,
       "domain": "term",
       "code": "TERMS-0002",
       "name": "TERMS_TYPE_REQUIRED",
@@ -14679,7 +14723,7 @@
       }
     },
     {
-      "sequence": 668,
+      "sequence": 670,
       "domain": "term",
       "code": "TERMS-0003",
       "name": "TERMS_TITLE_REQUIRED",
@@ -14701,7 +14745,7 @@
       }
     },
     {
-      "sequence": 669,
+      "sequence": 671,
       "domain": "term",
       "code": "TERMS-0004",
       "name": "TERMS_CONTENT_REQUIRED",
@@ -14723,7 +14767,7 @@
       }
     },
     {
-      "sequence": 670,
+      "sequence": 672,
       "domain": "term",
       "code": "TERMS-0005",
       "name": "TERMS_VERSION_REQUIRED",
@@ -14745,7 +14789,7 @@
       }
     },
     {
-      "sequence": 671,
+      "sequence": 673,
       "domain": "term",
       "code": "TERMS-0006",
       "name": "TERMS_CONSENT_NOT_FOUND",
@@ -14767,7 +14811,7 @@
       }
     },
     {
-      "sequence": 672,
+      "sequence": 674,
       "domain": "term",
       "code": "TERMS-0007",
       "name": "TERMS_CONSENT_ALREADY_EXISTS",
@@ -14789,7 +14833,7 @@
       }
     },
     {
-      "sequence": 673,
+      "sequence": 675,
       "domain": "term",
       "code": "TERMS-0008",
       "name": "MEMBER_ID_REQUIRED",
@@ -14811,7 +14855,7 @@
       }
     },
     {
-      "sequence": 674,
+      "sequence": 676,
       "domain": "term",
       "code": "TERMS-0009",
       "name": "TERM_ID_REQUIRED",
@@ -14833,7 +14877,7 @@
       }
     },
     {
-      "sequence": 675,
+      "sequence": 677,
       "domain": "term",
       "code": "TERMS-0010",
       "name": "MANDATORY_TERMS_NOT_AGREED",
@@ -14855,7 +14899,7 @@
       }
     },
     {
-      "sequence": 676,
+      "sequence": 678,
       "domain": "term",
       "code": "TERMS-0011",
       "name": "TERM_PERMISSION_DENIED",

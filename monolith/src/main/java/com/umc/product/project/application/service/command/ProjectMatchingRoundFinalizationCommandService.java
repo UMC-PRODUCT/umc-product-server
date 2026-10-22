@@ -47,7 +47,6 @@ import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
-import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
@@ -57,10 +56,10 @@ import com.umc.product.project.domain.exception.ProjectErrorCode;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 매칭 차수 종료 시점에 자동 선발을 실행하는 서비스 (MATCHING-201 + 스케줄러 공통 진입점).
+ * 1~3차 자동 선발과 4차 랜덤 매칭을 실행하는 서비스 (MATCHING-201 + 스케줄러 공통 진입점).
  * <p>
  * CRUD lifecycle (생성/수정/삭제) 은 {@link ProjectMatchingRoundCommandService} 가 책임지며,
- * 본 서비스는 lifecycle 종료 트리거({@code decisionDeadline} 도달) 후의 처리만 담당한다.
+ * 본 서비스는 1~3차 결정 마감 후의 선발과 4차 시작 시점의 랜덤 매칭을 담당한다.
  * <p>
  * CRUD 와 분리한 이유: lifecycle 호출 흐름({@code Service → Registry})과 트리거 흐름
  * ({@code Registry → Service}) 의 양 방향이 한 클래스에 모이면 순환 의존성이 발생하기 때문이다.
@@ -103,7 +102,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     )
     @Override
     public void autoDecide(Long matchingRoundId, Long executedByMemberId) {
-        ProjectMatchingRound round = loadProjectMatchingRoundPort.getById(matchingRoundId);
+        ProjectMatchingRound round = loadProjectMatchingRoundPort.getByIdForUpdate(matchingRoundId);
 
         // executedByMemberId == null 은 스케줄러 호출. 권한 검증은 운영진 수동 호출에만 적용.
         if (executedByMemberId != null) {
@@ -111,6 +110,17 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         }
 
         if (round.getAutoDecisionExecutedAt() != null) {
+            return;
+        }
+        if (round.isRandomMatching()) {
+            if (Instant.now().isBefore(round.getStartsAt())) {
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FINALIZABLE);
+            }
+            List<ProjectMember> assignments = buildRandomAssignedMembers(round, executedByMemberId);
+            if (!assignments.isEmpty()) {
+                saveProjectMemberPort.saveAll(assignments);
+            }
+            round.executeAutoDecision(executedByMemberId);
             return;
         }
         if (!round.isDecisionDeadlinePassed(Instant.now())) {
@@ -132,20 +142,19 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             Map<ProjectPartKey, Integer> remainingQuotaByKey = buildRemainingQuotaMap(grouped.keySet());
 
             Set<Long> approvedIds = new HashSet<>();
-            Set<Long> rejectedIds = new HashSet<>();
             for (Map.Entry<ProjectPartKey, List<ProjectApplication>> entry : grouped.entrySet()) {
                 int quota = remainingQuotaByKey.getOrDefault(entry.getKey(), 0);
                 AutoDecisionResult result = policy.decideAutomatically(entry.getValue(), quota, matchingRandom);
                 approvedIds.addAll(result.approvedIds());
-                rejectedIds.addAll(result.rejectedIds());
             }
 
-            applyDecisions(applicants, approvedIds, rejectedIds, executedByMemberId);
-            saveProjectApplicationPort.saveAll(applicants);
+            // 발표 시각이 있는 차수는 PENDING_PUBLICATION 멤버를 생성하고, 지원서에는 PM의 마지막 결정을 유지한다.
+            if (round.getResultPublishAt() == null) {
+                applyDecisions(applicants, approvedIds, executedByMemberId);
+                saveProjectApplicationPort.saveAll(applicants);
+            }
             membersToSave.addAll(buildApprovedMembers(applicants, approvedIds, applicantPart, executedByMemberId));
         }
-
-        membersToSave.addAll(buildRandomAssignedMembersAfterThirdDeveloperRound(round, membersToSave, executedByMemberId));
 
         if (!membersToSave.isEmpty()) {
             saveProjectMemberPort.saveAll(membersToSave);
@@ -201,7 +210,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     /**
      * 본 차수에서 정책 적용 시 입력으로 사용할 (project, part) 별 남은 자리 수 맵을 한 번에 구한다.
      * <p>
-     * 그룹 수만큼 DB 를 두 번씩 치던 기존 단건 호출 대신, projectId 집합 단위로 partQuota 와 active 멤버 수를
+     * 그룹 수만큼 DB 를 두 번씩 치던 기존 단건 호출 대신, projectId 집합 단위로 partQuota 와 ACTIVE 및 PENDING_PUBLICATION 멤버 수를
      * 일괄 조회한 뒤 in-memory 로 차감한다.
      */
     private Map<ProjectPartKey, Integer> buildRemainingQuotaMap(Set<ProjectPartKey> keys) {
@@ -223,7 +232,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             ));
 
         Map<Long, Map<ChallengerPart, Long>> activeByProject = loadProjectMemberPort
-            .countByProjectIdsGroupByProjectIdAndPart(projectIds);
+            .countAssignedByProjectIdsGroupByProjectIdAndPart(projectIds);
 
         Map<ProjectPartKey, Integer> result = new HashMap<>();
         for (ProjectPartKey key : keys) {
@@ -242,7 +251,6 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     private void applyDecisions(
         List<ProjectApplication> applicants,
         Set<Long> approvedIds,
-        Set<Long> rejectedIds,
         Long executedByMemberId
     ) {
         for (ProjectApplication app : applicants) {
@@ -271,15 +279,10 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             .toList();
     }
 
-    private List<ProjectMember> buildRandomAssignedMembersAfterThirdDeveloperRound(
+    private List<ProjectMember> buildRandomAssignedMembers(
         ProjectMatchingRound round,
-        List<ProjectMember> plannedMembers,
         Long executedByMemberId
     ) {
-        if (round.getType() != MatchingType.PLAN_DEVELOPER || round.getPhase() != MatchingPhase.THIRD) {
-            return List.of();
-        }
-
         List<Project> projects = loadProjectPort.listByChapterIdAndStatus(
             round.getChapterId(),
             ProjectStatus.IN_PROGRESS
@@ -288,25 +291,16 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             return List.of();
         }
 
-        Set<Long> projectIds = projects.stream()
-            .map(Project::getId)
-            .collect(Collectors.toSet());
         Map<Long, Project> projectById = projects.stream()
             .collect(Collectors.toMap(Project::getId, project -> project));
         Long gisuId = projects.getFirst().getGisuId();
 
-        Map<ProjectPartKey, Integer> remainingByKey = buildRemainingDeveloperQuotaMap(projects, plannedMembers);
+        Map<ProjectPartKey, Integer> remainingByKey = buildRemainingMatchingQuotaMap(projects, round.getType());
         if (remainingByKey.values().stream().noneMatch(remaining -> remaining > 0)) {
             return List.of();
         }
 
-        Set<Long> alreadyMatchedMemberIds = loadProjectMemberPort.listByProjectIds(projectIds).values().stream()
-            .flatMap(List::stream)
-            .map(ProjectMember::getMemberId)
-            .collect(Collectors.toSet());
-        plannedMembers.stream()
-            .map(ProjectMember::getMemberId)
-            .forEach(alreadyMatchedMemberIds::add);
+        Set<Long> alreadyMatchedMemberIds = new HashSet<>(loadProjectMemberPort.listAssignedMemberIdsByGisuId(gisuId));
 
         List<RandomAssignmentCandidate> candidates = new ArrayList<>(
             listActiveChallengersInChapter(gisuId, round.getChapterId())
@@ -318,7 +312,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             if (remainingByKey.values().stream().noneMatch(remaining -> remaining > 0)) {
                 break;
             }
-            if (alreadyMatchedMemberIds.contains(candidate.memberId()) || !isDeveloperPart(candidate.part())) {
+            if (alreadyMatchedMemberIds.contains(candidate.memberId()) || !isMatchingPart(candidate.part(), round.getType())) {
                 continue;
             }
 
@@ -329,7 +323,8 @@ public class ProjectMatchingRoundFinalizationCommandService implements
 
             ProjectPartKey key = targetKey.get();
             Project project = projectById.get(key.projectId());
-            assignments.add(ProjectMember.create(project, candidate.memberId(), candidate.part(), executedByMemberId));
+            assignments.add(ProjectMember.createForMatching(
+                project, candidate.memberId(), candidate.part(), round, executedByMemberId));
             alreadyMatchedMemberIds.add(candidate.memberId());
             remainingByKey.computeIfPresent(key, (ignored, remaining) -> remaining - 1);
         }
@@ -337,22 +332,14 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         return assignments;
     }
 
-    private Map<ProjectPartKey, Integer> buildRemainingDeveloperQuotaMap(
-        List<Project> projects,
-        List<ProjectMember> plannedMembers
+    private Map<ProjectPartKey, Integer> buildRemainingMatchingQuotaMap(
+        List<Project> projects, MatchingType type
     ) {
         Set<Long> projectIds = projects.stream()
             .map(Project::getId)
             .collect(Collectors.toSet());
-        Map<Long, Map<ChallengerPart, Long>> activeByProject = loadProjectMemberPort
-            .countByProjectIdsGroupByProjectIdAndPart(projectIds);
-        Map<ProjectPartKey, Long> plannedByKey = plannedMembers.stream()
-            .filter(member -> projectIds.contains(member.getProject().getId()))
-            .filter(member -> isDeveloperPart(member.getPart()))
-            .collect(Collectors.groupingBy(
-                member -> new ProjectPartKey(member.getProject().getId(), member.getPart()),
-                Collectors.counting()
-            ));
+        Map<Long, Map<ChallengerPart, Long>> assignedByProject = loadProjectMemberPort
+            .countAssignedByProjectIdsGroupByProjectIdAndPart(projectIds);
 
         Map<ProjectPartKey, Integer> result = new HashMap<>();
         Map<Long, List<ProjectPartQuota>> quotasByProject = loadProjectPartQuotaPort
@@ -361,17 +348,16 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             Long projectId = project.getId();
             for (ProjectPartQuota quota : quotasByProject.getOrDefault(projectId, List.of())) {
                 ChallengerPart part = quota.getPart();
-                if (!isDeveloperPart(part)) {
+                if (!isMatchingPart(part, type)) {
                     continue;
                 }
 
                 ProjectPartKey key = new ProjectPartKey(projectId, part);
-                int active = activeByProject
+                int assigned = assignedByProject
                     .getOrDefault(projectId, Map.of())
                     .getOrDefault(part, 0L)
                     .intValue();
-                int planned = plannedByKey.getOrDefault(key, 0L).intValue();
-                int remaining = Math.max(0, quota.getQuota().intValue() - active - planned);
+                int remaining = Math.max(0, quota.getQuota().intValue() - assigned);
                 if (remaining > 0) {
                     result.put(key, remaining);
                 }
@@ -448,8 +434,11 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         return Optional.of(availableKeys.get(matchingRandom.nextInt(availableKeys.size())));
     }
 
-    private boolean isDeveloperPart(ChallengerPart part) {
-        return DEVELOPER_PARTS.contains(part);
+    private boolean isMatchingPart(ChallengerPart part, MatchingType type) {
+        return switch (type) {
+            case PLAN_DESIGN -> part == ChallengerPart.DESIGN;
+            case PLAN_DEVELOPER -> DEVELOPER_PARTS.contains(part);
+        };
     }
 
     private void validateManageAccess(Long memberId, Long chapterId) {

@@ -33,6 +33,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope;
 import com.umc.product.project.application.access.ProjectApplicationAccessScopeResolver;
+import com.umc.product.project.application.port.in.query.dto.ProjectPermissionCapabilityInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionReason;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
@@ -324,6 +325,44 @@ class ProjectPermissionQueryServiceTest {
             .isEqualTo(ProjectPermissionReason.PROJECT_NOT_FOUND.name());
     }
 
+    @Test
+    void 지원_생성_권한은_모집_종료_시_팀_소속자에게도_차수_미오픈_사유를_반환한다() {
+        givenApplicationCreateConditions(List.of());
+        lenient().when(loadProjectMemberPort.existsByGisuAndMember(GISU_ID, REQUESTER_ID)).thenReturn(true);
+
+        ProjectPermissionInfo result = sut.listByProjectIds(REQUESTER_ID, List.of(PROJECT_ID)).get(0);
+
+        assertThat(result.application().canCreate())
+            .isEqualTo(ProjectPermissionCapabilityInfo.denied(ProjectPermissionReason.MATCHING_ROUND_NOT_OPEN));
+    }
+
+    @Test
+    void 지원_생성_권한은_모집_중_팀_소속자에게_이미_팀에_소속됨_사유를_반환한다() {
+        givenApplicationCreateConditions(List.of(openRound()));
+        given(loadProjectMemberPort.existsByGisuAndMember(GISU_ID, REQUESTER_ID)).willReturn(true);
+
+        ProjectPermissionInfo result = sut.listByProjectIds(REQUESTER_ID, List.of(PROJECT_ID)).get(0);
+
+        assertThat(result.application().canCreate()).isEqualTo(ProjectPermissionCapabilityInfo.denied(
+            ProjectPermissionReason.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM
+        ));
+    }
+
+    private void givenApplicationCreateConditions(List<ProjectMatchingRound> openRounds) {
+        Project project = project(ProjectStatus.IN_PROGRESS, 999L, 999L, "서비스 리뉴얼");
+        SubjectAttributes subject = subject();
+        givenBase(project, subject);
+        givenForms(ProjectApplicationForm.create(project, 500L));
+        givenQuotas(project, ChallengerPart.WEB);
+        givenApplicationCreatePermissions(subject, PROJECT_ID);
+        given(getChallengerUseCase.findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID))
+            .willReturn(Optional.of(challenger(ChallengerPart.WEB)));
+        given(loadProjectMatchingRoundPort.listOpenAt(eq(CHAPTER_ID), any(Instant.class)))
+            .willReturn(openRounds);
+        given(projectApplicationAccessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.None());
+    }
+
     private void givenBase(Project project, SubjectAttributes subject) {
         given(checkPermissionUseCase.loadSubject(REQUESTER_ID)).willReturn(subject);
         given(loadProjectPort.listByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
@@ -427,7 +466,8 @@ class ProjectPermissionQueryServiceTest {
             CHAPTER_ID,
             Instant.now().minusSeconds(60),
             Instant.now().plusSeconds(60),
-            Instant.now().plusSeconds(120)
+            Instant.now().plusSeconds(120),
+            Instant.now().plusSeconds(7320)
         );
     }
 

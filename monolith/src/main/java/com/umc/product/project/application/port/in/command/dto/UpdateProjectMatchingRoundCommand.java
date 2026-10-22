@@ -18,7 +18,8 @@ public record UpdateProjectMatchingRoundCommand(
     MatchingPhase phase,
     Instant startsAt,
     Instant endsAt,
-    Instant decisionDeadline
+    Instant decisionDeadline,
+    Instant resultPublishAt
 ) {
     public UpdateProjectMatchingRoundCommand {
         Objects.requireNonNull(matchingRoundId, "matchingRoundId must not be null");

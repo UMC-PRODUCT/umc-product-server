@@ -3,6 +3,7 @@ package com.umc.product.project.adapter.in.web.dto.request;
 import com.umc.product.project.application.port.in.command.dto.ChangeProjectMemberStatusCommand;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -14,6 +15,7 @@ import jakarta.validation.constraints.Size;
  * {@code status_change_reason} 컬럼에 영속화되는 정식 변경 이력이므로 필수.
  */
 public record ChangeProjectMemberStatusRequest(
+    @Schema(allowableValues = {"ACTIVE", "COMPLETED", "WITHDRAWN", "DISMISSED"})
     @NotNull(message = "status 는 필수입니다") ProjectMemberStatus status,
 
     @NotBlank(message = "reason 은 필수입니다") @Size(max = 255) String reason

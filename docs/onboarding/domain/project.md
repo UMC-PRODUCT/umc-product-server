@@ -138,10 +138,11 @@ stateDiagram-v2
   SUBMITTED --> REJECTED: DecideApplicationUseCase.decide
   APPROVED --> REJECTED: DecideApplicationUseCase.decide
   REJECTED --> APPROVED: DecideApplicationUseCase.decide
-  SUBMITTED --> APPROVED: AutoDecideProjectMatchingRoundUseCase.autoDecide
-  SUBMITTED --> REJECTED: AutoDecideProjectMatchingRoundUseCase.autoDecide
-  APPROVED --> APPROVED: ProjectMember.createFromApplication
+  SUBMITTED --> APPROVED: PublishProjectMatchingResultUseCase.publish
+  SUBMITTED --> REJECTED: PublishProjectMatchingResultUseCase.publish
 ```
+
+발표 시각이 있는 차수는 자동 선발에서 `PENDING_PUBLICATION` 멤버를 생성하고, 지원서 상태는 발표 작업에서 반영한다. 발표 시각이 없는 기존 차수는 자동 선발 시 지원서 상태도 즉시 반영한다.
 
 ### Command UseCase 지도
 
@@ -153,6 +154,7 @@ flowchart TB
     ProjectApplicationFormController["ProjectApplicationFormController"]
     ProjectMatchingRoundController["ProjectMatchingRoundController"]
     MatchingRoundDeadlineHandler["MatchingRoundDeadlineHandler"]
+    MatchingResultPublicationHandler["MatchingResultPublicationHandler"]
   end
 
   subgraph CommandService["application/service/command"]
@@ -163,6 +165,7 @@ flowchart TB
     ProjectMemberCommandService["ProjectMemberCommandService"]
     ProjectMatchingRoundCommandService["ProjectMatchingRoundCommandService"]
     ProjectMatchingRoundFinalizationCommandService["ProjectMatchingRoundFinalizationCommandService"]
+    ProjectMatchingResultPublicationCommandService["ProjectMatchingResultPublicationCommandService"]
   end
 
   subgraph UseCaseAction["port/in/command -> domain action"]
@@ -170,8 +173,9 @@ flowchart TB
     ApplicationLifecycle["Create/Update/Submit/Cancel/Decide Application<br/>ProjectApplication.create, submit, cancel, approve, reject"]
     ApplicationFormUpsert["UpsertProjectApplicationFormUseCase.upsert<br/>Survey Form diff + ProjectApplicationFormPolicy sync"]
     QuotaMember["UpdatePartQuotas, AddProjectMember, RemoveProjectMember<br/>ProjectPartQuota.create/updateQuota, ProjectMember.create/dismiss"]
-    MatchingRoundLifecycle["Create/Update/Delete MatchingRound<br/>ProjectMatchingRound.create/update + deadline schedule"]
-    MatchingRoundFinalize["AutoDecideProjectMatchingRoundUseCase.autoDecide<br/>ProjectApplication.applyAutoDecision + ProjectMember.createFromApplication"]
+    MatchingRoundLifecycle["Create/Update/Delete MatchingRound<br/>ProjectMatchingRound.create/update + 선발·발표 예약"]
+    MatchingRoundFinalize["AutoDecideProjectMatchingRoundUseCase.autoDecide<br/>선발·랜덤 매칭 + PENDING_PUBLICATION 멤버 생성"]
+    MatchingResultPublish["PublishProjectMatchingResultUseCase.publish<br/>지원서 합불 반영 + ACTIVE로 변경 + 공개 완료 기록"]
   end
 
   ProjectCommandController --> ProjectCommandService
@@ -182,6 +186,7 @@ flowchart TB
   ProjectMatchingRoundController --> ProjectMatchingRoundCommandService
   ProjectMatchingRoundController --> ProjectMatchingRoundFinalizationCommandService
   MatchingRoundDeadlineHandler --> ProjectMatchingRoundFinalizationCommandService
+  MatchingResultPublicationHandler --> ProjectMatchingResultPublicationCommandService
 
   ProjectCommandService --> ProjectLifecycle
   ProjectApplicationCommandService --> ApplicationLifecycle
@@ -190,6 +195,7 @@ flowchart TB
   ProjectMemberCommandService --> QuotaMember
   ProjectMatchingRoundCommandService --> MatchingRoundLifecycle
   ProjectMatchingRoundFinalizationCommandService --> MatchingRoundFinalize
+  ProjectMatchingResultPublicationCommandService --> MatchingResultPublish
 
   ProjectLifecycle --> ProjectPorts["Load/SaveProject*, Load/SaveApplicationForm*, Load/SavePartQuota*, Load/SaveMember* Port"]
   ApplicationLifecycle --> ApplicationPorts["Load/SaveProjectApplication*, LoadMatchingRound, LoadPartQuota, LoadProjectMember Port"]
@@ -261,7 +267,7 @@ PM은 `PATCH /api/v1/projects/{projectId}/applications/{applicationId}/decision`
 
 값별 추가 검증은 다음과 같다.
 
-- `APPROVED`: 잔여 정원만 검증한다. 잔여 정원은 `파트별 TO - 기존 ACTIVE 멤버 수 - 현재 차수의 같은 프로젝트/파트 APPROVED 수`로 계산하며, 초과하면 `PROJECT_APPLICATION_QUOTA_EXCEEDED` 409를 반환한다.
+- `APPROVED`: 잔여 정원만 검증한다. 잔여 정원은 `파트별 TO - 기존 ACTIVE 및 PENDING_PUBLICATION 멤버 수 - 현재 차수의 같은 프로젝트/파트 APPROVED 수`로 계산하며, 초과하면 `PROJECT_APPLICATION_QUOTA_EXCEEDED` 409를 반환한다.
 - `REJECTED`: 추가 검증이 없다. 합격자가 최소 선발 인원보다 적어져도 막지 않는다. 부족분은 결정 마감 시 자동 선발이 채운다.
 - `SUBMITTED`: 같은 (프로젝트, 차수, 지원자)에 다른 활성(`DRAFT`/`SUBMITTED`) 지원서가 있으면 `PROJECT_APPLICATION_ALREADY_EXISTS` 409를 반환한다. 활성 지원서는 partial unique index로 하나만 허용되기 때문이다.
 
@@ -279,9 +285,17 @@ PM은 `PATCH /api/v1/projects/{projectId}/applications/{applicationId}/decision`
 - `PLAN_DESIGN`: 지원자가 2명 이상이면 최소 1명. 지원자가 1명이면 의무 없음.
 - `PLAN_DEVELOPER`: 지원자가 남은 TO 이상이면 최소 `ceil(TO * 0.5)`명, 지원자가 TO의 50% 초과 100% 미만이면 최소 `ceil(TO * 0.25)`명, 지원자가 TO의 50% 이하면 의무 없음.
 
+## 매칭 결과 발표
+
+1~3차는 결정 마감 후 기본 1분 뒤 자동 선발하고, 4차는 시작 시각에 랜덤 매칭한다. 선발된 팀원은 `PENDING_PUBLICATION`으로 저장하며 지원서에는 PM의 마지막 결정값을 유지한다. 발표 시각에 팀원을 `ACTIVE`로 변경하고 지원서 합불과 `resultPublishedAt`을 함께 저장한다.
+
+일반 팀원 조회와 인원수는 `ACTIVE`, 내부 정원 계산과 중복 선발 검사는 `ACTIVE`와 `PENDING_PUBLICATION`을 기준으로 한다. 발표 전에는 지원자에게 합불 결과를 공개하지 않는다. 발표 시각이 없는 기존 차수는 기존 처리 방식을 유지한다.
+
+자동 선발·4차 랜덤 매칭·발표의 상세 흐름은 [매칭 자동 선발과 4차 랜덤 매칭·결과 발표](../project/plan-developer-third-auto-assignment.md)를 참고한다.
+
 ## 상세 문서
 
-- [PLAN_DEVELOPER 3차 종료 후 잔여 TO 자동 배정](../project/plan-developer-third-auto-assignment.md)
+- [매칭 자동 선발과 4차 랜덤 매칭·결과 발표](../project/plan-developer-third-auto-assignment.md)
 
 ## 경계
 

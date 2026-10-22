@@ -22,7 +22,9 @@ public record UpdateProjectMatchingRoundRequest(
 
     Instant endsAt,
 
-    Instant decisionDeadline
+    Instant decisionDeadline,
+
+    Instant resultPublishAt
 ) {
     public UpdateProjectMatchingRoundRequest {
         if (name != null && name.isBlank()) {
@@ -48,6 +50,7 @@ public record UpdateProjectMatchingRoundRequest(
             .startsAt(startsAt)
             .endsAt(endsAt)
             .decisionDeadline(decisionDeadline)
+            .resultPublishAt(resultPublishAt)
             .build();
     }
 }

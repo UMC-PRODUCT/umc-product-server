@@ -250,7 +250,8 @@ public class ProjectStatisticsQueryRepository {
             .join(projectApplication.appliedMatchingRound, projectMatchingRound)
             .where(
                 project.id.in(projectIds),
-                projectApplication.status.eq(ProjectApplicationStatus.APPROVED)
+                projectApplication.status.eq(ProjectApplicationStatus.APPROVED),
+                projectMatchingRound.resultPublishAt.isNull().or(projectMatchingRound.resultPublishedAt.isNotNull())
             )
             .orderBy(
                 project.id.asc(),

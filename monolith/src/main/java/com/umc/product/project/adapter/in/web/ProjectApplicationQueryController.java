@@ -67,7 +67,8 @@ public class ProjectApplicationQueryController {
             <ul>
               <li>보내지 않으면 임시저장(DRAFT)을 제외한 지원서와 랜덤 매칭 카드를 함께 조회합니다.</li>
               <li>보내면 해당 상태를 확인할 수 있는 지원서만 조회합니다.
-                  제출 이후 상태는 해당 매칭 차수의 `decisionDeadline` 이 지난 뒤 확인할 수 있습니다.
+                  제출 이후 상태는 해당 매칭 차수의 발표 작업이 완료되어 `resultPublishedAt`이 기록된 뒤 확인할 수 있습니다.
+                  `resultPublishAt` 이 null인 기존 차수는 `decisionDeadline` 이 지난 뒤 확인할 수 있습니다.
                   랜덤 매칭 카드는 포함하지 않습니다.</li>
             </ul>
             <p>
@@ -196,8 +197,9 @@ public class ProjectApplicationQueryController {
         summary = "지원서 단건 상세 조회",
         description = """
             지원자, 매칭 차수, 상태, 제출/처리 시각, 지원 폼, 답변, 첨부 파일을 함께 조회합니다.
-            지원자 본인이 조회할 때 해당 매칭 차수의 `decisionDeadline` 전이면 제출 이후 상태의 `status` 는 `null` 입니다.
-            `decisionDeadline` 이 지나면 상태와 무관하게 `status` 를 반환합니다.
+            지원자 본인 조회 시 해당 매칭 차수의 발표 작업이 완료되어 `resultPublishedAt`이 기록되기 전이면 제출 이후 상태의 `status` 는 `null` 입니다.
+            `resultPublishAt` 이 null인 기존 차수는 `decisionDeadline` 이 지난 뒤 `status` 를 반환합니다.
+            임시저장(DRAFT)과 지원 취소(CANCELLED)는 시점과 관계없이 표시합니다.
             지원서 내용과 답변은 그대로 포함합니다.
             <p>
             조회 권한:

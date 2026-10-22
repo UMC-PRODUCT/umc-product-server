@@ -14,7 +14,10 @@ public interface ProjectApplicationJpaRepository extends JpaRepository<ProjectAp
 
     boolean existsByAppliedMatchingRound_Id(Long matchingRoundId);
 
-    List<ProjectApplication> findAllByAppliedMatchingRound_Id(Long matchingRoundId);
+    @Query("SELECT a FROM ProjectApplication a "
+        + "JOIN FETCH a.applicationForm f JOIN FETCH f.project "
+        + "WHERE a.appliedMatchingRound.id = :matchingRoundId")
+    List<ProjectApplication> findAllByAppliedMatchingRound_Id(@Param("matchingRoundId") Long matchingRoundId);
 
     @Query("SELECT a FROM ProjectApplication a "
         + "WHERE a.applicationForm.project.id = :projectId "

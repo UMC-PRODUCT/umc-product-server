@@ -52,6 +52,9 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "PROJECT-0101", "이미 이 프로젝트의 멤버예요. 멤버 목록을 확인해주세요."),
     PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER(HttpStatus.BAD_REQUEST, "PROJECT-0102", "메인 PM은 팀원 제거가 아니라 소유권 양도로 변경해주세요."),
 
+    PROJECT_MEMBER_PUBLICATION_MANAGED(HttpStatus.CONFLICT, "PROJECT-0103",
+        "PENDING_PUBLICATION으로 직접 변경하거나, 결과 발표 전에 ACTIVE로 변경할 수 없어요."),
+
     // ProjectPartQuota / Publish (PROJECT-105/108)
     PROJECT_PART_QUOTA_INVALID(HttpStatus.BAD_REQUEST, "PROJECT-0200", "파트 정원은 1명 이상으로 입력해주세요."),
     PROJECT_PART_QUOTA_REQUIRED(HttpStatus.BAD_REQUEST, "PROJECT-0202", "프로젝트를 공개하려면 파트별 정원을 1개 이상 등록해주세요."),
@@ -60,7 +63,7 @@ public enum ProjectErrorCode implements BaseCode {
     // ProjectMatchingRound
     PROJECT_MATCHING_ROUND_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0300", "매칭 차수를 찾을 수 없어요. 선택한 차수를 확인해주세요."),
     PROJECT_MATCHING_ROUND_INVALID_PERIOD(HttpStatus.BAD_REQUEST, "PROJECT-0301",
-        "매칭 차수 기간은 시작, 종료, 결정 마감 순서여야 해요. 시간을 다시 선택해주세요."),
+        "1~3차는 시작 < 종료 < 결정 마감, 4차는 시작 < 종료 = 결정 마감이며, 발표는 결정 마감으로부터 최소 5분 이후로 입력해주세요."),
     PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED(HttpStatus.CONFLICT, "PROJECT-0302",
         "같은 지부의 다른 매칭 차수와 기간이 겹쳐요. 기간을 다시 선택해주세요."),
     PROJECT_MATCHING_ROUND_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PROJECT-0303",
@@ -70,17 +73,20 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_MATCHING_ROUND_TIME_REQUIRES_CHAPTER(HttpStatus.BAD_REQUEST, "PROJECT-0305",
         "시간 기준으로 조회하려면 지부를 함께 선택해주세요."),
     PROJECT_MATCHING_ROUND_LOCKED(HttpStatus.BAD_REQUEST, "PROJECT-0306",
-        "결정 마감 시각이 지나 결정을 변경할 수 없어요. 차수 기간을 확인해주세요."),
+        "결정 마감이 지났거나 자동 선발이 완료되어 요청한 변경 또는 삭제를 할 수 없어요."),
     PROJECT_MATCHING_ROUND_NOT_ENDED(HttpStatus.BAD_REQUEST, "PROJECT-0310",
         "아직 지원 기간이 끝나지 않아 결정을 변경할 수 없어요. 지원 종료 시각을 확인해주세요."),
     PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE(HttpStatus.BAD_REQUEST, "PROJECT-0311",
         "아직 지원 기간이 끝나지 않아 지원서를 조회할 수 없어요. 지원 종료 시각을 확인해주세요."),
     PROJECT_MATCHING_ROUND_NOT_FINALIZABLE(HttpStatus.BAD_REQUEST, "PROJECT-0307",
-        "결정 마감 시각이 지난 뒤 자동 선발을 실행할 수 있어요. 마감 시각을 확인해주세요."),
+        "1~3차는 결정 마감 이후, 4차 랜덤 매칭은 시작 시각부터 실행할 수 있어요."),
     PROJECT_MATCHING_ROUND_POLICY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "PROJECT-0308",
         "이 매칭 종류의 자동 선발 정책을 찾지 못했어요. 관리자에게 문의해주세요."),
     PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID(HttpStatus.CONFLICT, "PROJECT-0309",
-        "매칭 차수는 FIRST, SECOND, THIRD 순서로 배치하고 이전 차수 결정 마감 이후 1분 이상 간격을 둬야 해요."),
+        "매칭 차수는 FIRST, SECOND, THIRD, FOURTH 순서로 배치하고 이전 차수 결정 마감 이후 1분 이상 간격을 두고, 이전 차수 발표 시각 이후에 시작해주세요."),
+
+    PROJECT_MATCHING_ROUND_NOT_PUBLISHABLE(HttpStatus.CONFLICT, "PROJECT-0312",
+        "자동 선발 완료 후 결과 발표 시각부터 공개할 수 있어요."),
 
     // ProjectApplication (APPLY-001/002/003)
     PROJECT_DRAFT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0204", "작성 중인 지원서를 찾을 수 없어요. 지원서 목록을 확인해주세요."),

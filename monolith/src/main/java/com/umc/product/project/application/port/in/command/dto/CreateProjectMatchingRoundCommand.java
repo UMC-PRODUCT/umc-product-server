@@ -18,7 +18,8 @@ public record CreateProjectMatchingRoundCommand(
     Long chapterId,
     Instant startsAt,
     Instant endsAt,
-    Instant decisionDeadline
+    Instant decisionDeadline,
+    Instant resultPublishAt
 ) {
     public CreateProjectMatchingRoundCommand {
         Objects.requireNonNull(requesterMemberId, "requesterMemberId must not be null");
@@ -29,5 +30,6 @@ public record CreateProjectMatchingRoundCommand(
         Objects.requireNonNull(startsAt, "startsAt must not be null");
         Objects.requireNonNull(endsAt, "endsAt must not be null");
         Objects.requireNonNull(decisionDeadline, "decisionDeadline must not be null");
+        Objects.requireNonNull(resultPublishAt, "resultPublishAt must not be null");
     }
 }

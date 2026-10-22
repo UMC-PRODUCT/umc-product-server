@@ -1,6 +1,8 @@
 package com.umc.product.project.domain;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.project.domain.enums.MatchingPhase;
@@ -42,6 +44,8 @@ import lombok.NoArgsConstructor;
 )
 public class ProjectMatchingRound extends BaseEntity {
 
+    private static final Duration MIN_RESULT_PUBLICATION_INTERVAL = Duration.ofMinutes(5);
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -55,13 +59,7 @@ public class ProjectMatchingRound extends BaseEntity {
     @Column(nullable = false)
     private MatchingType type; // 매칭의 종류
 
-    /*
-    몇 차 매칭인지
-    고민사항 : 처음에는 Long 값으로 phaseNo로 넣었었는데, 매칭 관련해서는 확장성이 사실 상 필요 없는 점을 고려하였음.
-    또한 랜덤매칭의 경우, UI 상에 표시해줄 필요성은 있다고 생각하는데 .. DB에서 THIRD가 지난 상태를 랜덤매칭으로 지정할지가 고민 ..
-
-    -> 랜덤매칭에 최초에 기간이 필요했던 이유는 사람이 일을 해야하니까인데.. 지금은 그냥 랜덤매칭 딸깎 하면 되는거라 enum에 넣을 필요는 없을 듯
-     */
+    // 1~3차 지원 매칭과 4차 랜덤 매칭을 구분합니다.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MatchingPhase phase; // 매칭 차수
@@ -76,8 +74,11 @@ public class ProjectMatchingRound extends BaseEntity {
     @Column(nullable = false)
     private Instant decisionDeadline; // 선발 마감 기한
 
-    // 선발 마감 기한이 지나서 스케쥴러 등에 의해서 자동으로 선발이 실행된 시간
-    // null인 경우 아닙니다.
+    private Instant resultPublishAt; // 결과 발표 예정 시각 (기존 차수는 null)
+    private Instant resultPublishedAt; // 결과 공개 완료 시각 (공개 전에는 null)
+
+    // 1~3차는 선발 마감 이후, 4차는 시작 시각에 자동 선발 또는 랜덤 매칭이 실행된 시간
+    // 아직 실행하지 않았으면 null입니다.
     private Instant autoDecisionExecutedAt;
     // 자동 선발이 실행된 경우, 누가 실행했는지 (운영진 ID)
     // 스케쥴러가 진행한 경우 null로 유지함
@@ -87,7 +88,7 @@ public class ProjectMatchingRound extends BaseEntity {
     private ProjectMatchingRound(
         String name, String description, MatchingType type,
         MatchingPhase phase, Long chapterId,
-        Instant startsAt, Instant endsAt, Instant decisionDeadline
+        Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
     ) {
         this.name = name;
         this.description = description;
@@ -97,6 +98,7 @@ public class ProjectMatchingRound extends BaseEntity {
         this.startsAt = startsAt;
         this.endsAt = endsAt;
         this.decisionDeadline = decisionDeadline;
+        this.resultPublishAt = resultPublishAt;
     }
 
     /**
@@ -106,27 +108,31 @@ public class ProjectMatchingRound extends BaseEntity {
      * <p>
      * - 동일한 유형과 차수를 가진 매칭 차수는 생성할 수 없습니다.
      * <p>
-     * - startsAt < endsAt < decisionDeadline 이어야 합니다.
+     * - 일반 차수는 startsAt < endsAt < decisionDeadline, 4차는 startsAt < endsAt = decisionDeadline 이어야 합니다.
+     * <p>
+     * - 결과 발표 시각은 선발 마감 시각으로부터 최소 5분 이후여야 합니다.
      * <p>
      * - 동일한 지부 내에서는 차수 간 startsAt ~ decisionDeadline 기간이 겹쳐서는 안됩니다.
      *
      * @param name             매칭 차수 이름 (e.g. 기획-디자인 1차 매칭)
      * @param description      차수 설명 (nullable)
      * @param type             매칭 유형 (기획-디자인/기획-개발자)
-     * @param phase            차수 단계 (1,2,3차 중에서 선택, 랜덤 매칭은 별도로 제공하지 않으며 운영진이 직접 API를 통해서 실행하면 됩니다.)
+     * @param phase            차수 단계 (1~3차 지원 매칭, 4차 랜덤 매칭)
      * @param chapterId        지부 ID (어떤 지부의 매칭 차수인지를 나타냅니다.)
      * @param startsAt         매칭 시작 시간
      * @param endsAt           매칭 종료 시간
      * @param decisionDeadline 매칭 기간 중 접수된 지원서의 합/불 결정 데드라인. <p> 경과되었을 때 UMC 규칙에 의한 최소 선발 인원을 뽑지 않은 경우 해당 규모만큼 자동으로
-     *                         선발됩니다. <p> 최소 선발 인원을 제외한 나머지는 모두 불합격 처리됩니다.
+     *                         선발됩니다. <p> 최종 선발되지 않은 지원서는 불합격 처리됩니다. 발표 시각이 있는 차수는 합불을 발표 시 반영합니다.
+     *                         <p> 4차는 endsAt과 같은 시각을 입력하며, 랜덤 매칭은 startsAt에 실행됩니다.
+     * @param resultPublishAt  결과 발표 시각 (기존 차수의 미설정 값은 null)
      * @return 생성된 매칭 차수
      */
     public static ProjectMatchingRound create(
         String name, String description,
         MatchingType type, MatchingPhase phase, Long chapterId,
-        Instant startsAt, Instant endsAt, Instant decisionDeadline
+        Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
     ) {
-        validateDates(startsAt, endsAt, decisionDeadline);
+        validateSchedule(type, phase, startsAt, endsAt, decisionDeadline, resultPublishAt);
 
         return ProjectMatchingRound.builder()
             .name(name)
@@ -137,6 +143,7 @@ public class ProjectMatchingRound extends BaseEntity {
             .startsAt(startsAt)
             .endsAt(endsAt)
             .decisionDeadline(decisionDeadline)
+            .resultPublishAt(resultPublishAt)
             .build();
     }
 
@@ -161,13 +168,42 @@ public class ProjectMatchingRound extends BaseEntity {
 
     /**
      * 매칭 차수의 날짜가 유효한지 검증합니다.
+     * 1~3차는 시작 < 종료 < 결정 마감 순서이며, 발표는 결정 마감으로부터 최소 5분 이후여야 합니다.
+     * 발표 시각이 없는 기존 차수는 발표 시각 검사를 생략합니다.
      */
-    public static void validateDates(Instant startsAt, Instant endsAt, Instant decisionDeadline) {
+    public static void validateDates(
+        Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
+    ) {
         if (startsAt == null || endsAt == null || decisionDeadline == null
             || !startsAt.isBefore(endsAt)
-            || !endsAt.isBefore(decisionDeadline)) {
+            || !endsAt.isBefore(decisionDeadline)
+            || (resultPublishAt != null
+            && resultPublishAt.isBefore(decisionDeadline.plus(MIN_RESULT_PUBLICATION_INTERVAL)))) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
         }
+    }
+
+    /**
+     * 4차는 시작 < 종료 = 결정 마감이며, 발표는 결정 마감으로부터 최소 5분 이후여야 합니다. 1~3차는 일반 일정 규칙을 적용합니다.
+     */
+    public static void validateSchedule(
+        MatchingType type, MatchingPhase phase,
+        Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
+    ) {
+        if (phase != MatchingPhase.FOURTH) {
+            validateDates(startsAt, endsAt, decisionDeadline, resultPublishAt);
+            return;
+        }
+        if (type == null || startsAt == null || endsAt == null
+            || decisionDeadline == null || resultPublishAt == null
+            || !startsAt.isBefore(endsAt) || !endsAt.equals(decisionDeadline)
+            || resultPublishAt.isBefore(decisionDeadline.plus(MIN_RESULT_PUBLICATION_INTERVAL))) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
+        }
+    }
+
+    public boolean isRandomMatching() {
+        return phase == MatchingPhase.FOURTH;
     }
 
     /**
@@ -175,9 +211,15 @@ public class ProjectMatchingRound extends BaseEntity {
      */
     public void update(
         String name, String description, MatchingType type, MatchingPhase phase,
-        Instant startsAt, Instant endsAt, Instant decisionDeadline
+        Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
     ) {
-        validateDates(startsAt, endsAt, decisionDeadline);
+        validateSchedule(type, phase, startsAt, endsAt, decisionDeadline, resultPublishAt);
+        if (isAutoDecisionExecuted() && (this.type != type || this.phase != phase
+            || !this.startsAt.equals(startsAt) || !this.endsAt.equals(endsAt)
+            || !this.decisionDeadline.equals(decisionDeadline)
+            || !Objects.equals(this.resultPublishAt, resultPublishAt))) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
+        }
 
         this.name = name;
         this.description = description;
@@ -186,6 +228,7 @@ public class ProjectMatchingRound extends BaseEntity {
         this.startsAt = startsAt;
         this.endsAt = endsAt;
         this.decisionDeadline = decisionDeadline;
+        this.resultPublishAt = resultPublishAt;
     }
 
     /**
@@ -194,7 +237,7 @@ public class ProjectMatchingRound extends BaseEntity {
      * 각 매개변수에 대한 설명은 {@link #create}를 참조해주세요.
      */
     public void reschedule(Instant startsAt, Instant endsAt, Instant decisionDeadline) {
-        validateDates(startsAt, endsAt, decisionDeadline);
+        validateSchedule(type, phase, startsAt, endsAt, decisionDeadline, resultPublishAt);
 
         this.startsAt = startsAt;
         this.endsAt = endsAt;
@@ -202,9 +245,9 @@ public class ProjectMatchingRound extends BaseEntity {
     }
 
     /**
-     * 매칭 차수에 대해 랜덤 매칭을 실행하는 경우 사용됩니다. 실행한 지부장 Member ID를 받습니다.
+     * 매칭 차수의 자동 선발 또는 랜덤 매칭 완료를 기록합니다.
      *
-     * @param executedByMemberId 실행한 지부장 ID
+     * @param executedByMemberId 실행한 운영진 ID. 스케줄러 호출 시 null
      */
     public void executeAutoDecision(Long executedByMemberId) {
         this.autoDecisionExecutedAt = Instant.now();
@@ -227,13 +270,13 @@ public class ProjectMatchingRound extends BaseEntity {
     /**
      * 특정 시점 기준으로 매칭 차수가 활성화 되어있는지 여부를 판단합니다.
      * <p>
-     * startsAt <= now <= endsAt 인 경우에 활성화된 것으로 간주합니다.
+     * 1~3차에서 startsAt <= now <= endsAt 인 경우 지원할 수 있습니다. 4차는 지원서를 받지 않습니다.
      *
      * @param now 기준 시각
      * @return 제공된 시점을 기준으로 매칭 차수가 활성화되었는지 여부
      */
     public boolean isOpenAt(Instant now) {
-        return !startsAt.isAfter(now) && !endsAt.isBefore(now);
+        return !isRandomMatching() && !startsAt.isAfter(now) && !endsAt.isBefore(now);
     }
 
     /**
@@ -248,6 +291,35 @@ public class ProjectMatchingRound extends BaseEntity {
      */
     public boolean isDecisionDeadlinePassed(Instant now) {
         return decisionDeadline.isBefore(now);
+    }
+
+    /**
+     * 발표 시각이 되었고 선발이 끝난 차수 중, 아직 공개하지 않은 차수인지 확인합니다.
+     */
+    public boolean canPublishAt(Instant now) {
+        return resultPublishAt != null && !now.isBefore(resultPublishAt)
+            && isAutoDecisionExecuted() && resultPublishedAt == null;
+    }
+
+    /**
+     * 지원서 합불과 팀원 상태를 반영한 뒤 공개 완료 시각을 기록합니다.
+     */
+    public void publishResult(Instant now) {
+        if (!canPublishAt(now)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_PUBLISHABLE);
+        }
+        resultPublishedAt = now;
+    }
+
+    /**
+     * 발표 작업이 끝났는지 확인합니다. 예정 시각이 지났더라도 작업이 끝나지 않았으면 비공개입니다.
+     * 발표 시각이 없는 기존 차수는 PM 결정 마감이 지나면 공개합니다.
+     */
+    public boolean isResultPublishedAt(Instant now) {
+        if (resultPublishAt == null) {
+            return isDecisionDeadlinePassed(now);
+        }
+        return resultPublishedAt != null && !resultPublishedAt.isAfter(now);
     }
 
     /**

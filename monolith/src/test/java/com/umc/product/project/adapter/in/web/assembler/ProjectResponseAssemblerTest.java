@@ -233,7 +233,7 @@ class ProjectResponseAssemblerTest {
             101L, memberInfoOf(101L, "코PM", "박코피"),
             102L, memberInfoOf(102L, "백엔드", "이다라")
         ));
-        given(loadProjectApplicationPort.listLatestApprovedMatchedRoundsByProjectIdsAndMemberIds(any(), any()))
+        given(loadProjectMemberPort.listMatchedRoundsByProjectIdsAndMemberIds(any(), any()))
             .willReturn(List.of(new ProjectMemberMatchedRoundInfo(
                 42L,
                 102L,
@@ -277,7 +277,7 @@ class ProjectResponseAssemblerTest {
             199L, memberInfoOf(199L, "메인43", "이메인"),
             102L, memberInfoOf(102L, "백엔드", "이다라")
         ));
-        given(loadProjectApplicationPort.listLatestApprovedMatchedRoundsByProjectIdsAndMemberIds(any(), any()))
+        given(loadProjectMemberPort.listMatchedRoundsByProjectIdsAndMemberIds(any(), any()))
             .willReturn(List.of(
                 new ProjectMemberMatchedRoundInfo(42L, 102L, 7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST),
                 new ProjectMemberMatchedRoundInfo(43L, 102L, 8L, MatchingType.PLAN_DEVELOPER, MatchingPhase.THIRD)
