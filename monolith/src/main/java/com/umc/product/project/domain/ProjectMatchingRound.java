@@ -74,7 +74,7 @@ public class ProjectMatchingRound extends BaseEntity {
     private Instant resultPublishAt; // 결과 발표 예정 시각 (기존 차수는 null)
     private Instant resultPublishedAt; // 결과 공개 완료 시각 (공개 전에는 null)
 
-    // 1~3차는 선발 마감 이후, 4차는 시작 시각에 자동 선발 또는 랜덤 배정이 실행된 시간
+    // 1~3차는 선발 마감 이후, 4차는 시작 시각에 자동 선발 또는 랜덤 매칭이 실행된 시간
     // 아직 실행하지 않았으면 null입니다.
     private Instant autoDecisionExecutedAt;
     // 자동 선발이 실행된 경우, 누가 실행했는지 (운영진 ID)
@@ -120,7 +120,7 @@ public class ProjectMatchingRound extends BaseEntity {
      * @param endsAt           매칭 종료 시간
      * @param decisionDeadline 매칭 기간 중 접수된 지원서의 합/불 결정 데드라인. <p> 경과되었을 때 UMC 규칙에 의한 최소 선발 인원을 뽑지 않은 경우 해당 규모만큼 자동으로
      *                         선발됩니다. <p> 최종 선발되지 않은 지원서는 불합격 처리됩니다. 발표 시각이 있는 차수는 합불을 발표 시 반영합니다.
-     *                         <p> 4차는 endsAt과 같은 시각을 입력하며, 랜덤 배정은 startsAt에 실행됩니다.
+     *                         <p> 4차는 endsAt과 같은 시각을 입력하며, 랜덤 매칭은 startsAt에 실행됩니다.
      * @param resultPublishAt  결과 발표 시각 (기존 차수의 미설정 값은 null)
      * @return 생성된 매칭 차수
      */
@@ -240,7 +240,7 @@ public class ProjectMatchingRound extends BaseEntity {
     }
 
     /**
-     * 매칭 차수의 자동 선발 또는 랜덤 배정 완료를 기록합니다.
+     * 매칭 차수의 자동 선발 또는 랜덤 매칭 완료를 기록합니다.
      *
      * @param executedByMemberId 실행한 운영진 ID. 스케줄러 호출 시 null
      */

@@ -24,7 +24,7 @@ import com.umc.product.project.domain.exception.ProjectErrorCode;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 지원서 합불, 팀원 활성화, 공개 완료 시각을 함께 저장한다.
+ * 지원서 합불, 멤버의 PENDING_PUBLICATION → ACTIVE 변경, 공개 완료 시각을 함께 저장한다.
  * 도중에 실패하면 모두 롤백한다.
  */
 @Service
@@ -61,13 +61,12 @@ public class ProjectMatchingResultPublicationCommandService implements PublishPr
                 if (member.getApplication() != null) {
                     approvedApplicationIds.add(member.getApplication().getId());
                 }
-            } else {
-                member.withdraw("결과 공개 전 프로젝트 종료 또는 비공개 전환", null);
             }
         }
 
-        // ACTIVE로 변경한 팀원의 지원서는 합격, 나머지 판정 대상 지원서는 불합격 처리한다.
+        // ACTIVE로 변경한 멤버의 지원서는 APPROVED, 나머지 판정 대상 지원서는 REJECTED로 변경한다.
         List<ProjectApplication> applications = loadProjectApplicationPort.listByMatchingRoundId(matchingRoundId).stream()
+            .filter(application -> application.getApplicationForm().getProject().getStatus() == ProjectStatus.IN_PROGRESS)
             .filter(application -> application.getStatus() == ProjectApplicationStatus.SUBMITTED
                 || application.getStatus() == ProjectApplicationStatus.APPROVED
                 || application.getStatus() == ProjectApplicationStatus.REJECTED)

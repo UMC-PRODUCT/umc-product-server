@@ -77,7 +77,7 @@ public class ProjectMatchingRoundController {
             - 1~3차는 startsAt < endsAt < decisionDeadline < resultPublishAt 순서를 만족해야 합니다.
             - 랜덤 매칭은 type=PLAN_DESIGN 또는 PLAN_DEVELOPER, phase=FOURTH로 별도 등록합니다.
             - 4차는 startsAt < endsAt = decisionDeadline < resultPublishAt이며 지원서를 받지 않습니다.
-            - 4차의 startsAt에 랜덤 배정을 실행하고 resultPublishAt에 공개합니다.
+            - 4차의 startsAt에 랜덤 매칭을 실행하고 resultPublishAt에 공개합니다.
             - 같은 지부 내 기존 매칭 차수와 startsAt ~ decisionDeadline 기간이 중복되면 409를 반환합니다.
             - 동일 지부 내 type + phase 조합은 DB Unique Key로도 중복을 제한합니다.
             """
@@ -102,7 +102,7 @@ public class ProjectMatchingRoundController {
             - 수정 요청 본문에는 chapterId를 포함하지 않습니다.
             - 매칭 차수가 소속된 chapterId는 수정할 수 없으며, 권한 및 기간 중복 검증도 기존 chapterId 기준으로 수행합니다.
             - 요청 본문에 제공되지 않은 필드는 기존 매칭 차수 값을 유지합니다.
-            - 자동 선발 또는 랜덤 배정 완료 후에는 이름·설명만 수정할 수 있습니다. 유형·차수·일정 변경은 400 PROJECT-0306을 반환합니다.
+            - 자동 선발 또는 랜덤 매칭 완료 후에는 이름·설명만 수정할 수 있습니다. 유형·차수·일정 변경은 400 PROJECT-0306을 반환합니다.
             - 최종 일정은 1~3차의 경우 startsAt < endsAt < decisionDeadline < resultPublishAt 순서여야 합니다.
             - 4차는 startsAt < endsAt = decisionDeadline < resultPublishAt 순서여야 합니다.
             - 발표 시각이 없는 기존 차수는 resultPublishAt을 생략하면 미설정 상태를 유지합니다.
@@ -127,7 +127,7 @@ public class ProjectMatchingRoundController {
             - 중앙운영사무국 총괄단 이상은 모든 지부의 매칭 차수를 삭제할 수 있습니다.
             - 지부장은 본인 지부의 매칭 차수만 삭제할 수 있습니다.
             - 해당 매칭 차수를 참조하는 지원서가 하나라도 있으면 삭제할 수 없으며 409를 반환합니다.
-            - 자동 선발 또는 랜덤 배정이 실행된 차수는 지원서 유무보다 먼저 검사하며, 삭제 요청에 400 PROJECT-0306을 반환합니다.
+            - 자동 선발 또는 랜덤 매칭이 실행된 차수는 지원서 유무보다 먼저 검사하며, 삭제 요청에 400 PROJECT-0306을 반환합니다.
             """
     )
     public void delete(
@@ -142,16 +142,16 @@ public class ProjectMatchingRoundController {
         operationId = "PROJECT-MATCHING-201",
         summary = "매칭 차수 자동 선발 수동 실행",
         description = """
-            1~3차는 결정 마감(decisionDeadline) 이후 자동 선발하고, 4차는 시작 시각(startsAt)부터 랜덤 배정합니다.
+            1~3차는 결정 마감(decisionDeadline) 이후 자동 선발하고, 4차는 시작 시각(startsAt)부터 랜덤 매칭합니다.
             - 중앙운영사무국 총괄단 이상은 모든 지부의 매칭 차수에서 자동 선발을 실행할 수 있습니다.
             - 지부장은 본인 지부의 매칭 차수에서만 자동 선발을 실행할 수 있습니다.
             - 1~3차는 결정 마감 경과 전, 4차는 시작 시각 전에 실행할 수 없으며 400을 반환합니다.
             - 이미 자동 선발이 실행된 매칭 차수에 대해서는 멱등 (no-op).
             - 1~3차는 정책 매트릭스(디자이너 / 개발자)에 따라 SUBMITTED 우선 random 보충 후 부족하면 REJECTED 까지 override 합니다.
-            - 4차는 지원서 없이 해당 유형의 미배정 챌린저를 잔여 정원에 랜덤 배정합니다.
+            - 4차는 지원서 없이 해당 유형의 챌린저를 잔여 정원에 랜덤 매칭합니다. 같은 기수에 ACTIVE 또는 PENDING_PUBLICATION 멤버가 있으면 제외합니다.
             - 합격자에게는 ProjectMember 가 자동으로 생성됩니다.
-            - 발표 시각이 있는 차수는 공개 대기 팀원만 생성하며, 지원서의 최종 합불은 결과 공개 시 반영합니다.
-            - 발표 시각이 없는 기존 차수는 지원서 합불과 활성 팀원을 즉시 반영합니다.
+            - 발표 시각이 있는 차수는 PENDING_PUBLICATION 멤버만 생성하며, 지원서의 최종 합불은 결과 공개 시 반영합니다.
+            - 발표 시각이 없는 기존 차수는 지원서 합불을 즉시 반영하고 ACTIVE 멤버를 생성합니다.
             """
     )
     public void autoDecide(

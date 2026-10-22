@@ -76,7 +76,7 @@ class MatchingRoundDeadlineSchedulerTest {
     class schedule {
 
         @Test
-        void 랜덤_4차는_시작_시각에_배정하고_발표_시각에_공개하도록_예약한다() {
+        void 랜덤_4차는_시작_시각에_매칭하고_발표_시각에_공개하도록_예약한다() {
             Instant startsAt = Instant.parse("2026-11-19T00:00:00+09:00");
             ProjectMatchingRound round = ProjectMatchingRound.create(
                 "개발자 4차", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.FOURTH, 1L,

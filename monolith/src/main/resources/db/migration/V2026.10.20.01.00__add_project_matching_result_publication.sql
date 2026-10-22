@@ -6,7 +6,7 @@ ALTER TABLE project_matching_round
 ALTER TABLE project_member
     ADD COLUMN assigned_matching_round_id BIGINT REFERENCES project_matching_round (id);
 
--- 기존 팀원은 상태를 유지하고, 연결된 지원서로 배정 차수만 채웁니다.
+-- 기존 멤버는 상태를 유지하고, 연결된 지원서로 assigned_matching_round_id만 채웁니다.
 UPDATE project_member pm
 SET assigned_matching_round_id = pa.applied_matching_round_id
 FROM project_application pa

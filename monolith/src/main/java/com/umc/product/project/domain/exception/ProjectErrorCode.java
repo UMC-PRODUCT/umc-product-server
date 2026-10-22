@@ -53,7 +53,7 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER(HttpStatus.BAD_REQUEST, "PROJECT-0102", "메인 PM은 팀원 제거가 아니라 소유권 양도로 변경해주세요."),
 
     PROJECT_MEMBER_PUBLICATION_MANAGED(HttpStatus.CONFLICT, "PROJECT-0103",
-        "공개 대기 상태로 직접 변경하거나, 결과 발표 전에 활동 중 상태로 변경할 수 없어요."),
+        "PENDING_PUBLICATION으로 직접 변경하거나, 결과 발표 전에 ACTIVE로 변경할 수 없어요."),
 
     // ProjectPartQuota / Publish (PROJECT-105/108)
     PROJECT_PART_QUOTA_INVALID(HttpStatus.BAD_REQUEST, "PROJECT-0200", "파트 정원은 1명 이상으로 입력해주세요."),

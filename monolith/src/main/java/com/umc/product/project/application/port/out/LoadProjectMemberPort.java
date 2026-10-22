@@ -21,34 +21,39 @@ public interface LoadProjectMemberPort {
     List<ProjectMember> listByProjectId(Long projectId);
 
     /**
-     * 해당 차수의 공개 대기 팀원과 소속 프로젝트를 잠금 후 조회합니다.
+     * 특정 프로젝트의 ACTIVE 및 PENDING_PUBLICATION 멤버를 조회합니다.
+     */
+    List<ProjectMember> listActiveAndPendingPublicationByProjectId(Long projectId);
+
+    /**
+     * 해당 차수의 PENDING_PUBLICATION 멤버와 소속 프로젝트를 잠금 후 조회합니다.
      */
     List<ProjectMember> listPendingByMatchingRoundId(Long matchingRoundId);
 
     /**
-     * 중복 배정을 막기 위해 해당 기수의 ACTIVE·PENDING_PUBLICATION 팀원 ID를 조회합니다.
+     * 중복 선발을 막기 위해 해당 기수의 ACTIVE·PENDING_PUBLICATION 멤버의 memberId를 조회합니다.
      */
     List<Long> listAssignedMemberIdsByGisuId(Long gisuId);
 
     /**
-     * ACTIVE 팀원에 연결된 배정 차수를 조회합니다. 배정 차수가 없는 팀원은 제외합니다.
+     * ACTIVE 멤버의 assignedMatchingRound를 조회합니다. 차수가 null인 멤버는 제외합니다.
      */
     List<ProjectMemberMatchedRoundInfo> listMatchedRoundsByProjectIdsAndMemberIds(
         Collection<Long> projectIds, Collection<Long> memberIds);
 
     /**
-     * 특정 프로젝트의 파트별 실제 배정 인원을 집계합니다. ACTIVE 와 PENDING_PUBLICATION 을 포함합니다.
+     * 특정 프로젝트의 파트별 ACTIVE 및 PENDING_PUBLICATION 멤버 수를 집계합니다.
      * 내부 정원 검증에 사용합니다.
      *
-     * @return 파트 → 배정 인원수 맵
+     * @return 파트 → 멤버 수 맵
      */
     Map<ChallengerPart, Long> countAssignedByProjectIdGroupByPart(Long projectId);
 
     /**
-     * 여러 프로젝트의 파트별 실제 배정 인원을 한 번에 집계합니다.
+     * 여러 프로젝트의 파트별 ACTIVE 및 PENDING_PUBLICATION 멤버 수를 한 번에 집계합니다.
      * 집계 대상은 {@link #countAssignedByProjectIdGroupByPart(Long)} 와 같습니다.
      *
-     * @return projectId → (파트 → 배정 인원수) 맵
+     * @return projectId → (파트 → 멤버 수) 맵
      */
     Map<Long, Map<ChallengerPart, Long>> countAssignedByProjectIdsGroupByProjectIdAndPart(Collection<Long> projectIds);
 
@@ -97,7 +102,7 @@ public interface LoadProjectMemberPort {
     ProjectMember getByProjectIdAndMemberId(Long projectId, Long memberId);
 
     /**
-     * 해당 기수에서 ACTIVE 또는 공개 대기 상태로 배정됐는지 확인합니다. (중복 지원 방지용)
+     * 해당 기수에 ACTIVE 또는 PENDING_PUBLICATION 멤버가 존재하는지 확인합니다. (중복 지원 방지용)
      */
     boolean existsByGisuAndMember(Long gisuId, Long memberId);
 

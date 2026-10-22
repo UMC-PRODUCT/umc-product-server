@@ -133,7 +133,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
 
         @ParameterizedTest
         @EnumSource(value = ProjectApplicationStatus.class, names = {"SUBMITTED", "REJECTED"})
-        void 발표_전에는_PM_결정과_처리정보를_유지하고_최소선발_대상만_대기_배정한다(
+        void 발표_전에는_PM_결정과_처리정보를_유지하고_최소선발_대상만_PENDING_PUBLICATION으로_생성한다(
             ProjectApplicationStatus originalStatus
         ) {
             // given
@@ -586,7 +586,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
 
         @ParameterizedTest
         @EnumSource(MatchingType.class)
-        void 차수_유형에_맞는_파트만_4차에서_랜덤_배정하고_발표까지_대기한다(MatchingType type) {
+        void 차수_유형에_맞는_파트만_4차에서_랜덤_매칭하고_PENDING_PUBLICATION으로_생성한다(MatchingType type) {
             ChallengerPart targetPart = type == MatchingType.PLAN_DESIGN ? ChallengerPart.DESIGN : ChallengerPart.WEB;
             ChallengerPart otherPart = type == MatchingType.PLAN_DESIGN ? ChallengerPart.WEB : ChallengerPart.DESIGN;
             Instant now = Instant.now();
@@ -653,7 +653,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
 
         @ParameterizedTest
         @EnumSource(value = MatchingPhase.class, names = {"SECOND", "THIRD"})
-        void 일반_차수_종료_후에는_잔여_TO_랜덤_배정을_하지_않는다(MatchingPhase phase) {
+        void 일반_차수_종료_후에는_잔여_TO_랜덤_매칭을_하지_않는다(MatchingPhase phase) {
             ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DEVELOPER, phase);
             given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
             given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID)).willReturn(List.of());
@@ -667,7 +667,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
     }
 
     @Test
-    void 개발자_4차_시작_전에는_랜덤_배정을_실행할_수_없다() {
+    void 개발자_4차_시작_전에는_랜덤_매칭을_실행할_수_없다() {
         Instant startsAt = Instant.now().plusSeconds(3600);
         ProjectMatchingRound round = ProjectMatchingRound.create(
             "개발자 4차", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.FOURTH, 1L,

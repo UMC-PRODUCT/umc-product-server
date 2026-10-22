@@ -21,7 +21,7 @@ class ProjectMemberPublicationTest {
 
     @ParameterizedTest
     @ValueSource(longs = {-1, 0, 1})
-    void 발표_시각_정각부터_대기_팀원을_활성화할_수_있다(long secondsAfterPublishAt) {
+    void 발표_시각_정각부터_PENDING_PUBLICATION을_ACTIVE로_변경할_수_있다(long secondsAfterPublishAt) {
         // given
         ProjectMatchingRound round = round(PUBLISH_AT);
         round.executeAutoDecision(null);
@@ -48,7 +48,7 @@ class ProjectMemberPublicationTest {
 
         // when & then
         assertThatThrownBy(() -> member.publish(PUBLISH_AT.plusSeconds(1))).isInstanceOf(ProjectDomainException.class);
-        assertThatThrownBy(() -> member.changeStatus(ProjectMemberStatus.ACTIVE, 10L, "활성화"))
+        assertThatThrownBy(() -> member.changeStatus(ProjectMemberStatus.ACTIVE, 10L, "ACTIVE 변경"))
             .isInstanceOf(ProjectDomainException.class);
         ProjectMember direct = ProjectMember.create(project(), 20L, ChallengerPart.WEB, 10L);
         assertThatThrownBy(() -> direct.changeStatus(ProjectMemberStatus.PENDING_PUBLICATION, 10L, "대기"))
@@ -56,7 +56,7 @@ class ProjectMemberPublicationTest {
     }
 
     @Test
-    void 기존_차수와_직접_배정은_활성_상태를_유지한다() {
+    void 발표_시각이_없는_차수와_직접_추가한_멤버는_ACTIVE로_생성한다() {
         assertThat(member(round(null)).getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
         assertThat(ProjectMember.create(project(), 20L, ChallengerPart.WEB, 10L).getStatus())
             .isEqualTo(ProjectMemberStatus.ACTIVE);

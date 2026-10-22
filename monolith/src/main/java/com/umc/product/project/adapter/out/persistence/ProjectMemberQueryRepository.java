@@ -36,7 +36,7 @@ public class ProjectMemberQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     /**
-     * 랜덤 매칭의 중복 배정을 막기 위해 해당 기수의 활성·공개 대기 회원 ID를 한 번에 조회한다.
+     * 랜덤 매칭 시 중복 선발을 막기 위해 해당 기수의 ACTIVE·PENDING_PUBLICATION 멤버의 memberId를 조회한다.
      */
     public List<Long> listAssignedMemberIdsByGisuId(Long gisuId) {
         return queryFactory.select(projectMember.memberId).distinct()
@@ -47,7 +47,7 @@ public class ProjectMemberQueryRepository {
     }
 
     /**
-     * ACTIVE 팀원에 연결된 배정 차수를 조회한다. 공개 대기 팀원과 배정 차수가 없는 팀원은 제외한다.
+     * ACTIVE 멤버의 assignedMatchingRound를 조회한다. PENDING_PUBLICATION 멤버와 차수가 null인 멤버는 제외한다.
      */
     public List<ProjectMemberMatchedRoundInfo> listMatchedRoundsByProjectIdsAndMemberIds(
         Collection<Long> projectIds, Collection<Long> memberIds

@@ -60,7 +60,7 @@ public class ProjectMember extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_matching_round_id")
-    private ProjectMatchingRound assignedMatchingRound; // 실제 배정된 매칭 차수
+    private ProjectMatchingRound assignedMatchingRound; // 이 멤버를 선발한 매칭 차수
 
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -112,7 +112,7 @@ public class ProjectMember extends BaseEntity {
 
     /**
      * 선발된 지원서에 연결된 신규 멤버를 생성합니다.
-     * 발표 시각이 설정된 차수는 공개 대기 상태로 생성하고, 지원서 합불은 발표 시 반영합니다.
+     * 발표 시각이 설정된 차수는 PENDING_PUBLICATION 상태로 생성하고, 지원서 합불은 발표 시 반영합니다.
      */
     public static ProjectMember createFromApplication(
         ProjectApplication application, ChallengerPart part, Long decidedByMemberId
@@ -129,7 +129,7 @@ public class ProjectMember extends BaseEntity {
     }
 
     /**
-     * 차수에 배정된 팀원을 만듭니다. 발표 시각이 설정되어 있으면 공개 대기 상태로 만듭니다.
+     * 차수에서 선발한 ProjectMember를 만듭니다. 발표 시각이 설정되어 있으면 PENDING_PUBLICATION 상태로 만듭니다.
      * 발표 시각이 없는 기존 차수는 즉시 ACTIVE 상태로 만듭니다.
      */
     public static ProjectMember createForMatching(
@@ -144,7 +144,7 @@ public class ProjectMember extends BaseEntity {
     }
 
     /**
-     * 발표할 수 있는 차수의 공개 대기 팀원을 ACTIVE로 변경합니다.
+     * 발표할 수 있는 차수의 PENDING_PUBLICATION 멤버를 ACTIVE로 변경합니다.
      */
     public void publish(Instant now) {
         if (status != ProjectMemberStatus.PENDING_PUBLICATION) {

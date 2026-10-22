@@ -314,7 +314,7 @@ public class ProjectCommandService implements
      * 프로젝트 중단(abort). IN_PROGRESS → ABORTED 상태 전이 + 자식 도메인 일괄 동기화.
      * <ul>
      *   <li>{@link Project#abort} 로 상태 전이 (COMPLETED/ABORTED 는 도메인 가드가 거부)</li>
-     *   <li>ACTIVE 인 ProjectMember 는 모두 WITHDRAWN, statusChangeReason 에 중단 사유 기록</li>
+     *   <li>ACTIVE 및 PENDING_PUBLICATION 인 ProjectMember 는 모두 WITHDRAWN, statusChangeReason 에 중단 사유 기록</li>
      *   <li>진행 중(DRAFT/SUBMITTED) ProjectApplication 은 모두 CANCELLED</li>
      * </ul>
      * 권한 검증은 Controller 단의 {@code @CheckAccess(MANAGE)} 가 담당.
@@ -324,8 +324,8 @@ public class ProjectCommandService implements
         Project project = loadProjectPort.getById(command.projectId());
         project.abort(command.reason(), command.requesterMemberId());
 
-        List<ProjectMember> activeMembers = loadProjectMemberPort.listByProjectId(project.getId());
-        for (ProjectMember member : activeMembers) {
+        List<ProjectMember> members = loadProjectMemberPort.listActiveAndPendingPublicationByProjectId(project.getId());
+        for (ProjectMember member : members) {
             member.withdraw(command.reason(), command.requesterMemberId());
         }
 

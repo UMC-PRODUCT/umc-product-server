@@ -54,7 +54,7 @@ class ProjectMatchingResultPublicationTest {
     ProjectStatisticsQueryRepository statistics;
 
     @Test
-    void 배정된_지원서는_공개할_때_합격으로_바꾸고_배정되지_않은_지원서는_불합격으로_확정한다() {
+    void 발표하면_PENDING_PUBLICATION_멤버의_지원서는_APPROVED로_나머지는_REJECTED로_변경한다() {
         // given
         Project project = project(100L);
         ProjectMatchingRound round = round(Instant.now().minusSeconds(600), true);
@@ -105,7 +105,7 @@ class ProjectMatchingResultPublicationTest {
     }
 
     @Test
-    void 지원서_없는_랜덤_배정도_발표할_때_팀원과_랜덤_매칭_조회에_반영된다() {
+    void 지원서_없는_랜덤_매칭도_발표할_때_팀원과_랜덤_매칭_조회에_반영된다() {
         // given
         Project project = project(100L);
         Instant startsAt = Instant.now().minusSeconds(86400);
@@ -145,7 +145,7 @@ class ProjectMatchingResultPublicationTest {
     }
 
     @Test
-    void 선발된_팀원이_없어도_미결정_지원서를_불합격으로_확정하고_공개한다() {
+    void 선발된_멤버가_없어도_SUBMITTED_지원서를_REJECTED로_변경하고_공개한다() {
         // given
         Project project = project(100L);
         ProjectMatchingRound round = round(Instant.now().minusSeconds(600), true);
@@ -165,7 +165,7 @@ class ProjectMatchingResultPublicationTest {
     }
 
     @Test
-    void 공개_대기는_실제_배정으로_계산하지만_공개_조회에는_포함하지_않는다() {
+    void PENDING_PUBLICATION은_정원에_포함하고_ACTIVE_조회에서는_제외한다() {
         // given
         Project project = project(100L);
         ProjectMatchingRound round = round(Instant.now().plusSeconds(600), true);
@@ -227,14 +227,13 @@ class ProjectMatchingResultPublicationTest {
     }
 
     @Test
-    void 공개_전에_해제되거나_프로젝트가_중단된_배정은_활성화하지_않는다() {
+    void 발표할_때_DISMISSED_멤버는_유지하고_PENDING_PUBLICATION_멤버만_ACTIVE로_변경한다() {
         // given
         Project project = project(100L);
         ProjectMatchingRound round = round(Instant.now().minusSeconds(600), true);
         ProjectMember dismissed = matchedMember(project, round, 10L);
-        dismissed.dismiss("배정 해제", 999L);
+        dismissed.dismiss("DISMISSED 처리", 999L);
         ProjectMember pending = matchedMember(project, round, 11L);
-        project.abort("프로젝트 중단", 999L);
         em.flush();
         em.clear();
 
@@ -244,9 +243,77 @@ class ProjectMatchingResultPublicationTest {
         em.clear();
 
         // then
-        assertThat(members.listByProjectId(project.getId())).isEmpty();
+        assertThat(members.listByProjectId(project.getId())).extracting(ProjectMember::getId)
+            .containsExactly(pending.getId());
         assertThat(em.find(ProjectMember.class, dismissed.getId()).getStatus()).isEqualTo(ProjectMemberStatus.DISMISSED);
-        assertThat(em.find(ProjectMember.class, pending.getId()).getStatus()).isEqualTo(ProjectMemberStatus.WITHDRAWN);
+        assertThat(em.find(ProjectMember.class, pending.getId()).getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
+    }
+
+    @Test
+    void ABORTED_프로젝트의_멤버와_지원서는_발표해도_변경하지_않는다() {
+        // given
+        Project project = project(100L);
+        ProjectMatchingRound round = round(Instant.now().minusSeconds(600), true);
+        ProjectMember member = matchedMember(project, round, 10L);
+        member.getApplication().forceApprove(999L, "PM 합격 결정");
+        ProjectApplication cancelled = application(project, round, 11L, ProjectApplicationStatus.SUBMITTED);
+        cancelled.cancel(999L, "프로젝트 종료");
+        ProjectMember dismissed = matchedMember(project, round, 12L);
+        dismissed.dismiss("DISMISSED 처리", 999L);
+        ProjectMember other = matchedMember(project(200L), round, 20L);
+        project.abort("프로젝트 중단", 999L);
+        member.withdraw("프로젝트 중단", 999L);
+        em.flush();
+        em.clear();
+        Instant statusChangedAt = em.find(ProjectMember.class, member.getId()).getStatusUpdatedAt();
+        Instant decidedAt = em.find(ProjectApplication.class, member.getApplication().getId()).getStatusChangedAt();
+
+        // when
+        assertThat(publisher.publish(round.getId())).isTrue();
+        em.flush();
+        em.clear();
+
+        // then
+        ProjectMember ended = em.find(ProjectMember.class, member.getId());
+        assertThat(ended.getStatus()).isEqualTo(ProjectMemberStatus.WITHDRAWN);
+        assertThat(ended.getStatusUpdatedAt()).isEqualTo(statusChangedAt);
+        assertThat(ended.getStatusChangedMemberId()).isEqualTo(999L);
+        ProjectApplication approved = em.find(ProjectApplication.class, member.getApplication().getId());
+        assertThat(approved.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
+        assertThat(approved.getStatusChangedAt()).isEqualTo(decidedAt);
+        assertThat(approved.getStatusChangeReason()).isEqualTo("PM 합격 결정");
+        assertThat(em.find(ProjectApplication.class, cancelled.getId()).getStatus()).isEqualTo(ProjectApplicationStatus.CANCELLED);
+        assertThat(em.find(ProjectMember.class, dismissed.getId()).getStatus()).isEqualTo(ProjectMemberStatus.DISMISSED);
+        assertThat(members.listActiveAndPendingPublicationByProjectId(project.getId())).isEmpty();
+        assertThat(em.find(ProjectMember.class, other.getId()).getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
+    }
+
+    @Test
+    void 중단_대상은_ACTIVE와_PENDING_PUBLICATION이고_일반_조회는_ACTIVE만_반환한다() {
+        // given
+        Project project = project(100L);
+        ProjectMatchingRound round = round(Instant.now().plusSeconds(600), true);
+        ProjectMember active = em.persist(ProjectMember.create(project, 10L, ChallengerPart.WEB, 999L));
+        ProjectMember pending = matchedMember(project, round, 11L);
+        ProjectMember withdrawn = matchedMember(project, round, 12L);
+        withdrawn.withdraw("탈퇴", 999L);
+        ProjectMember completed = em.persist(ProjectMember.create(project, 13L, ChallengerPart.WEB, 999L));
+        completed.complete(999L);
+        ProjectMember dismissed = matchedMember(project, round, 14L);
+        dismissed.dismiss("DISMISSED 처리", 999L);
+        matchedMember(project(200L), round, 20L);
+        em.flush();
+        em.clear();
+
+        // when
+        List<ProjectMember> result = members.listActiveAndPendingPublicationByProjectId(project.getId());
+
+        // then
+        assertThat(result).extracting(ProjectMember::getId).containsExactly(active.getId(), pending.getId());
+        assertThat(members.listByProjectId(project.getId())).extracting(ProjectMember::getId).containsExactly(active.getId());
+        assertThat(members.existsByGisuAndMember(1L, 10L)).isTrue();
+        assertThat(members.existsByGisuAndMember(1L, 11L)).isTrue();
+        assertThat(members.existsByGisuAndMember(1L, 12L)).isFalse();
     }
 
     private void assertPublicViews(Project project, int expectedCount, PartQuotaStatus status) {

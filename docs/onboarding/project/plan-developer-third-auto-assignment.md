@@ -1,17 +1,17 @@
-# 매칭 자동 선발과 4차 랜덤 배정·결과 발표
+# 매칭 자동 선발과 4차 랜덤 매칭·결과 발표
 
 ## 목적
 
-1~3차는 PM 결정 마감 이후 최소 선발 인원을 보충하고, 남은 TO는 별도의 `FOURTH` 차수에서 랜덤 배정한다. `PLAN_DESIGN`과 `PLAN_DEVELOPER` 모두 같은 일정 구조를 사용한다. 발표 시각이 있는 차수는 팀원을 `PENDING_PUBLICATION`으로 배정한 뒤 발표 시각에 공개한다.
+1~3차는 PM 결정 마감 이후 최소 선발 인원을 보충하고, 남은 TO는 별도의 `FOURTH` 차수에서 랜덤 매칭한다. `PLAN_DESIGN`과 `PLAN_DEVELOPER` 모두 같은 일정 구조를 사용한다. 발표 시각이 있는 차수는 멤버를 `PENDING_PUBLICATION`으로 생성한 뒤 발표 작업에서 `ACTIVE`로 변경한다.
 
-랜덤 배정으로 생성된 팀원은 지원서 기반 합격자가 아니므로 `ProjectMember.application = null`로 저장되고, `assignedMatchingRound`에 배정 차수가 기록된다. 사용자 지원 내역 화면에서는 이 케이스를 `RANDOM_MATCHING` 카드로 합성한다.
+랜덤 매칭으로 생성된 멤버는 지원서가 없으므로 `ProjectMember.application = null`로 저장되고, `assignedMatchingRound`에 해당 차수가 기록된다. 사용자 지원 내역 화면에서는 이 케이스를 `RANDOM_MATCHING` 카드로 합성한다.
 
 ## 실행 진입점
 
 자동 선발 진입점은 `AutoDecideProjectMatchingRoundUseCase.autoDecide(matchingRoundId, executedByMemberId)` 하나다.
 
 - 1~3차 스케줄러 호출: `decisionDeadline + app.project.matching-round.deadline-buffer-minutes` 시점에 실행한다. 기본 buffer는 1분이다.
-- 4차 스케줄러 호출: `startsAt`에 랜덤 배정을 실행한다.
+- 4차 스케줄러 호출: `startsAt`에 랜덤 매칭을 실행한다.
 - 결과 발표: `resultPublishAt`에 `PublishProjectMatchingResultUseCase.publish`를 호출한다.
 - 운영진 수동 호출: `POST /api/v1/project/matching-rounds/{matchingRoundId}/auto-decide`.
 - `executedByMemberId == null`이면 스케줄러 호출로 보고 권한 검증을 생략한다.
@@ -30,11 +30,11 @@
 
 ## 전체 처리 순서
 
-1. 1~3차는 지원서와 최소 선발 정책으로 배정할 인원을 정한다. 4차는 지원서 없이 잔여 TO에 랜덤 배정한다.
+1. 1~3차는 지원서와 최소 선발 정책으로 선발할 인원을 정한다. 4차는 지원서 없이 잔여 TO에 랜덤 매칭한다.
 2. 팀원을 `PENDING_PUBLICATION`으로 저장하고 차수의 자동 선발 완료 시각을 기록한다. 지원서는 PM의 마지막 결정값을 유지한다.
-3. 발표 작업에서 팀원을 활성화하고 지원서 합불을 반영한 뒤 공개 완료 시각을 기록한다.
+3. 발표 작업에서 멤버를 `PENDING_PUBLICATION`에서 `ACTIVE`로 변경하고 지원서 합불을 반영한 뒤 공개 완료 시각을 기록한다.
 
-지원서 기반 배정은 `application`이 연결되고, 4차 랜덤 배정은 `application = null`이다. 두 경우 모두 `assignedMatchingRound`에 배정 차수를 기록한다. 발표 시각이 없는 기존 차수는 자동 선발 시 팀원 활성화와 지원서 합불 반영을 즉시 처리한다.
+1~3차에서 생성한 멤버는 `application`이 연결되고, 4차 랜덤 매칭은 `application = null`이다. 두 경우 모두 `assignedMatchingRound`에 해당 차수를 기록한다. 발표 시각이 없는 기존 차수는 자동 선발 시 `ACTIVE` 멤버를 생성하고 지원서 합불을 즉시 반영한다.
 
 ## 1~3차: 지원서 기준 자동 선발
 
@@ -95,19 +95,19 @@
 3. 그래도 부족하면 `REJECTED` 풀에서 랜덤 보충한다. 이 경우 PM의 기존 불합격 결정을 override한다.
 4. 합격자로 선정되지 않은 `SUBMITTED`와 `REJECTED`는 모두 최종 `REJECTED`.
 
-발표 시각이 있는 차수는 위 결과를 배정에만 사용하고, 지원서 상태는 발표 작업에서 변경한다. 실제 상태가 변경되는 지원서에만 다음 메타데이터를 기록한다. 기존 상태가 최종 합불과 같으면 PM의 변경 정보를 유지한다.
+발표 시각이 있는 차수는 위 결과로 `PENDING_PUBLICATION` 멤버만 생성하고, 지원서 상태는 발표 작업에서 변경한다. 실제 상태가 변경되는 지원서에만 다음 메타데이터를 기록한다. 기존 상태가 최종 합불과 같으면 PM의 변경 정보를 유지한다.
 
 - `statusChangedMemberId = executedByMemberId`
 - `statusChangeReason = "auto-decide"`
 - `statusChangedAt = now`
 
-## 4차: 잔여 TO 랜덤 배정
+## 4차: 잔여 TO 랜덤 매칭
 
-`phase == FOURTH`인 차수의 시작 시각에 실행한다. 3차 자동 선발에서는 랜덤 배정을 실행하지 않는다.
+`phase == FOURTH`인 차수의 시작 시각에 실행한다. 3차 자동 선발에서는 랜덤 매칭을 실행하지 않는다.
 
 1~3차는 `startsAt < endsAt < decisionDeadline < resultPublishAt`, 4차는 `startsAt < endsAt = decisionDeadline < resultPublishAt`으로 입력한다. 같은 지부·유형에서는 이전 차수의 발표 시각이 다음 차수의 시작 시각보다 늦을 수 없다.
 
-4차의 `endsAt`과 `decisionDeadline`은 일정 검증에 사용하며, 배정 실행은 `startsAt`, 공개 실행은 `resultPublishAt`을 기준으로 한다.
+4차의 `endsAt`과 `decisionDeadline`은 일정 검증에 사용하며, 랜덤 매칭은 `startsAt`, 결과 발표는 `resultPublishAt`을 기준으로 한다.
 
 ### 대상 프로젝트
 
@@ -128,7 +128,7 @@
 - `NODEJS`
 - `SPRINGBOOT`
 
-`PLAN`과 `ADMIN`은 배정 대상에서 제외한다. `WEB_PRODUCT_ENGINEER`와 `MOBILE_PRODUCT_ENGINEER`의 랜덤 배정 지원은 이번 구현에 포함하지 않는다.
+`PLAN`과 `ADMIN`은 랜덤 매칭 대상에서 제외한다. `WEB_PRODUCT_ENGINEER`와 `MOBILE_PRODUCT_ENGINEER`의 랜덤 매칭 지원은 이번 구현에 포함하지 않는다.
 
 ### 잔여 TO 산정
 
@@ -155,7 +155,7 @@
 학교 기준 지부 검색 결과에서 다른 지부로 이동한 챌린저를 제외하고, 현재 지부로 이동해 온 ACTIVE 챌린저를 추가한다. 조회된 후보 목록은 먼저 전체 셔플된다. 이후 순회하면서 아래 후보는 제외한다.
 
 - 같은 기수에서 이미 ACTIVE 또는 PENDING_PUBLICATION `ProjectMember`인 멤버
-- 이번 랜덤 배정에서 이미 배정한 멤버
+- 이번 랜덤 매칭에서 이미 선발한 멤버
 - 해당 매칭 유형의 대상 파트가 아닌 멤버
 - 후보자의 파트와 같은 잔여 TO가 더 이상 없는 경우
 
@@ -165,7 +165,7 @@
 
 1. 후보자의 파트와 같은 잔여 TO가 있는 `(projectId, part)` 목록을 만든다.
 2. 그 목록 중 하나를 랜덤으로 선택한다.
-3. `ProjectMember.createForMatching`으로 배정 차수가 연결된 공개 대기 팀원을 생성한다.
+3. `ProjectMember.createForMatching`으로 `assignedMatchingRound`가 연결된 `PENDING_PUBLICATION` 멤버를 생성한다.
 4. 해당 `(projectId, part)`의 잔여 TO를 1 감소시킨다.
 5. 모든 잔여 TO가 0이 되거나 후보자를 모두 소진하면 종료한다.
 
@@ -173,7 +173,7 @@
 
 ## 결과 발표
 
-발표 작업은 자동 선발이 완료되고 발표 시각에 도달한 미공개 차수에 대해 실행한다. 해당 차수의 공개 대기 팀원 중 프로젝트가 `IN_PROGRESS`인 팀원은 `ACTIVE`로 변경하고, 그 외 팀원은 배정을 해제한다. 활성화한 팀원에 연결된 지원서는 합격, 나머지 판정 대상 지원서는 불합격으로 반영한다. `DRAFT`와 `CANCELLED`는 변경하지 않는다.
+발표 작업은 자동 선발이 완료되고 발표 시각에 도달한 미공개 차수에 대해 실행한다. 프로젝트가 `IN_PROGRESS`인 `PENDING_PUBLICATION` 멤버를 `ACTIVE`로 변경하고, 해당 멤버에 연결된 지원서는 `APPROVED`, 나머지 판정 대상 지원서는 `REJECTED`로 변경한다. 프로젝트가 `IN_PROGRESS`가 아닌 경우 멤버·지원서는 변경하지 않으며, `DRAFT`, `CANCELLED` 지원서도 변경하지 않는다.
 
 팀원 상태, 지원서 합불, 차수의 `resultPublishedAt`은 같은 트랜잭션에서 저장한다. 지원자 합불 공개는 시각 경과만으로 이루어지지 않고 발표 작업 완료를 기준으로 한다. PM은 발표 전까지 기존 결정값을 조회한다. 공개 팀원 목록·인원수는 `ACTIVE`를 기준으로 한다.
 
@@ -185,8 +185,8 @@
 - 후보자가 부족하면 남은 TO는 그대로 남는다.
 - 랜덤 배정자는 지원서가 없으므로 `ProjectApplication` 상태가 변경되지 않는다.
 - 랜덤 배정자는 `ProjectMember.application = null`로 저장되며, 일반 지원서 합격자와 구분된다.
-- 중복 제외 기준은 같은 기수의 ACTIVE·PENDING_PUBLICATION 멤버와 이번 실행에서 이미 배정한 멤버다.
-- 발표 전에 프로젝트를 중단·완료하면 공개 대기 배정은 발표 작업까지 남아 정원·중복 배정 계산에 포함된다. 발표 작업은 해당 배정을 해제하고 판정 대상 지원서를 불합격 처리한다.
+- 중복 제외 기준은 같은 기수의 `ACTIVE`·`PENDING_PUBLICATION` 멤버와 이번 실행에서 이미 선발한 멤버다.
+- 프로젝트 중단 API는 `ACTIVE`와 `PENDING_PUBLICATION` 멤버를 `WITHDRAWN`으로 변경한다. 완료 API는 기존처럼 `ACTIVE` 멤버만 `COMPLETED`로 변경한다. 이후 발표 작업은 `ABORTED`, `COMPLETED` 프로젝트의 멤버와 지원서를 변경하지 않는다.
 - 스케줄러는 기본 활성화되어 있으며 `scheduler.matching-round-deadline.enabled=false`로 끌 수 있다.
 
 ## 테스트 기준
@@ -195,14 +195,14 @@
 
 주요 케이스:
 
-- `차수_유형에_맞는_파트만_4차에서_랜덤_배정하고_발표까지_대기한다`
-- `일반_차수_종료_후에는_잔여_TO_랜덤_배정을_하지_않는다`
-- `개발자_4차_시작_전에는_랜덤_배정을_실행할_수_없다`
+- `차수_유형에_맞는_파트만_4차에서_랜덤_매칭하고_PENDING_PUBLICATION으로_생성한다`
+- `일반_차수_종료_후에는_잔여_TO_랜덤_매칭을_하지_않는다`
+- `개발자_4차_시작_전에는_랜덤_매칭을_실행할_수_없다`
 - `이전_차수_active_멤버가_있으면_남은_TO_기준으로_정책이_적용된다`
 - `남은_TO가_0이면_의무_없음으로_처리되어_SUBMITTED는_모두_REJECTED`
 
 ## 배포 시 확인 사항
 
-- 3차 종료 시 랜덤 배정은 실행하지 않으므로 지부별로 4차 차수를 등록해야 한다. 배포 당시 진행 중인 3차도 같은 처리를 따른다.
+- 3차 종료 시 랜덤 매칭은 실행하지 않으므로 지부별로 4차 차수를 등록해야 한다. 배포 당시 진행 중인 3차도 같은 처리를 따른다.
 - 차수 생성 요청에는 `resultPublishAt`이 필수다. 프론트의 입력·요청 변경과 서버 배포 순서를 맞춰야 한다.
 - 기존 차수의 일정은 이번 검증 추가로 자동 변경되지 않는다. 이미 등록된 차수도 이전 발표 시각과 다음 시작 시각을 확인한다.

@@ -81,6 +81,12 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     }
 
     @Override
+    public List<ProjectMember> listActiveAndPendingPublicationByProjectId(Long projectId) {
+        return repository.findByProjectIdAndStatusInOrderByCreatedAtAscIdAsc(projectId,
+            List.of(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION));
+    }
+
+    @Override
     public Map<Long, List<ProjectMember>> listByProjectIds(Collection<Long> projectIds) {
         return repository.findByProjectIdInAndStatusOrderByCreatedAtAscIdAsc(projectIds, ProjectMemberStatus.ACTIVE)
             .stream()

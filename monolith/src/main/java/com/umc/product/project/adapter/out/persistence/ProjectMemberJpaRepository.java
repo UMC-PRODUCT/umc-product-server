@@ -36,6 +36,9 @@ public interface ProjectMemberJpaRepository extends JpaRepository<ProjectMember,
 
     List<ProjectMember> findByProjectIdAndStatusOrderByCreatedAtAscIdAsc(Long projectId, ProjectMemberStatus status);
 
+    List<ProjectMember> findByProjectIdAndStatusInOrderByCreatedAtAscIdAsc(
+        Long projectId, Collection<ProjectMemberStatus> statuses);
+
     List<ProjectMember> findByProjectIdInAndStatusOrderByCreatedAtAscIdAsc(
         Collection<Long> projectIds, ProjectMemberStatus status
     );
