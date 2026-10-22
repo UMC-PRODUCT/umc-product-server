@@ -255,7 +255,9 @@ class ProjectMatchingResultPublicationTest {
         Project project = project(100L);
         ProjectMatchingRound round = round(Instant.now().minusSeconds(600), true);
         ProjectMember member = matchedMember(project, round, 10L);
-        member.getApplication().forceApprove(999L, "PM 합격 결정");
+        ReflectionTestUtils.setField(member.getApplication(), "statusChangedMemberId", 999L);
+        ReflectionTestUtils.setField(member.getApplication(), "statusChangeReason", "PM 합격 결정");
+        ReflectionTestUtils.setField(member.getApplication(), "statusChangedAt", Instant.now());
         ProjectApplication cancelled = application(project, round, 11L, ProjectApplicationStatus.SUBMITTED);
         cancelled.cancel(999L, "프로젝트 종료");
         ProjectMember dismissed = matchedMember(project, round, 12L);
