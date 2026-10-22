@@ -765,6 +765,14 @@ class ProjectApplicationCommandServiceTest {
         return round;
     }
 
+    private ProjectMatchingRound openRound(MatchingType matchingType) {
+        return ProjectMatchingRound.create(
+            "프로젝트 매칭", null,
+            matchingType, MatchingPhase.FIRST, 1L,
+            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE, ROUND_DECISION_DEADLINE.plusSeconds(7200)
+        );
+    }
+
     private ProjectApplicationForm applicationForm() {
         Project project = Project.createDraft(1L, 2L, 999L, 7L, 999L);
         ReflectionTestUtils.setField(project, "id", PROJECT_ID);
