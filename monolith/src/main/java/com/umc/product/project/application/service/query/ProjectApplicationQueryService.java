@@ -99,7 +99,8 @@ public class ProjectApplicationQueryService
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
         }
 
-        // 지원자 본인은 시점 제약 없이 조회 가능하며, PM/운영진 등 타인 조회만 지원 종료(endsAt) 이후로 제한한다.
+        // 지원자 본인은 시점 제약 없이 조회 가능하다. PM·보조 PM은 목록은 실시간으로 보더라도 지원서 내용은 지원 종료(endsAt) 이후에만 열람하고,
+        // 최고관리자·같은 기수 총괄단만 진행 중인 차수의 내용까지 본다.
         boolean isApplicantSelf = Objects.equals(application.getApplicantMemberId(), query.requesterMemberId());
         if (!isApplicantSelf && !canViewOngoingMatchingRoundApplications(query.requesterMemberId(), project)) {
             application.getAppliedMatchingRound().validateIsViewableAt(Instant.now());
@@ -357,7 +358,7 @@ public class ProjectApplicationQueryService
         ProjectApplicationAccessScope scope =
             accessScopeResolver.resolveForProjectApplicantList(requesterMemberId, project);
         return scope instanceof ProjectApplicationAccessScope.ProjectScoped projectScoped
-            && projectScoped.includeOngoingMatchingRounds();
+            && projectScoped.includeOngoingApplicationDetails();
     }
 
     /**
@@ -431,7 +432,7 @@ public class ProjectApplicationQueryService
             scopes.forEach((projectId, scope) -> ongoingVisibilityByKey.put(
                 new RequesterProjectKey(requesterMemberId, projectId),
                 scope instanceof ProjectApplicationAccessScope.ProjectScoped projectScoped
-                    && projectScoped.includeOngoingMatchingRounds()
+                    && projectScoped.includeOngoingApplicationDetails()
             ));
         });
 

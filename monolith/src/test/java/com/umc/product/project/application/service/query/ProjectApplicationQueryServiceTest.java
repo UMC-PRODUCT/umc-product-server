@@ -725,6 +725,52 @@ class ProjectApplicationQueryServiceTest {
     }
 
     @Test
+    @DisplayName("getDetail_PM_scope는_목록만_실시간이라_지원_진행_중_내용_열람은_APPLICANTS_NOT_VIEWABLE")
+    void getDetail_PM은_지원_진행_중_내용_열람_차단() {
+        // given - PO/보조 PM 범위: 목록은 진행 중 차수 포함, 내용 열람은 지원 마감 후
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
+        ReflectionTestUtils.setField(round, "endsAt", java.time.Instant.now().plusSeconds(3_600));
+        ProjectApplication application = createSubmittedApplication(
+            55L, project, round, 200L, ProjectApplicationStatus.SUBMITTED);
+
+        GetProjectApplicationDetailQuery query = detailQuery(1L, 55L);
+        given(loadProjectApplicationPort.findByIdWithDetails(55L))
+            .willReturn(Optional.of(application));
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L, true, false));
+
+        // when & then
+        assertThatThrownBy(() -> sut.getDetail(query))
+            .isInstanceOf(ProjectDomainException.class)
+            .hasFieldOrPropertyWithValue("baseCode",
+                ProjectErrorCode.PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE);
+        verify(getChallengerUseCase, never()).findByMemberIdAndGisuId(any(), any());
+    }
+
+    @Test
+    @DisplayName("searchByProject_PM_scope면_진행_중_차수_지원서까지_목록으로_조회")
+    void searchByProject_PM은_진행_중_차수_목록_조회() {
+        // given
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(REQUESTER_ID).projectId(1L).build();
+
+        given(loadProjectPort.getById(1L)).willReturn(project);
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L, true, false));
+        given(loadProjectApplicationPort.searchProjectApplications(eq(1L), isNull(), isNull(), any(), eq(true)))
+            .willReturn(List.of());
+
+        // when
+        sut.searchByProject(query);
+
+        // then
+        verify(loadProjectApplicationPort).searchProjectApplications(eq(1L), isNull(), isNull(), any(), eq(true));
+    }
+
+    @Test
     @DisplayName("getDetail_중앙총괄단_scope면_지원_진행_중인_차수도_조회")
     void getDetail_중앙총괄단은_지원_진행_중에도_조회() {
         // given - endsAt 이 미래라 아직 지원 기간 중이지만 중앙 총괄단 scope 로 통과
