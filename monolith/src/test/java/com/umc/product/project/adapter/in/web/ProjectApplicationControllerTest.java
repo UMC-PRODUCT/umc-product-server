@@ -172,7 +172,7 @@ class ProjectApplicationControllerTest {
                 ApplicationDecisionStatus.APPROVED, "역량 우수"
             );
             given(decideApplicationUseCase.decide(
-                eq(APPLICATION_ID), eq(ApplicationDecisionStatus.APPROVED), eq("역량 우수"), eq(TEST_MEMBER_ID)
+                eq(PROJECT_ID), eq(APPLICATION_ID), eq(ApplicationDecisionStatus.APPROVED), eq("역량 우수"), eq(TEST_MEMBER_ID)
             )).willReturn(ProjectApplicationInfo.of(APPLICATION_ID, ProjectApplicationStatus.APPROVED));
 
             mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",
@@ -190,7 +190,7 @@ class ProjectApplicationControllerTest {
                 ApplicationDecisionStatus.REJECTED, null
             );
             given(decideApplicationUseCase.decide(
-                eq(APPLICATION_ID), eq(ApplicationDecisionStatus.REJECTED), eq(null), eq(TEST_MEMBER_ID)
+                eq(PROJECT_ID), eq(APPLICATION_ID), eq(ApplicationDecisionStatus.REJECTED), eq(null), eq(TEST_MEMBER_ID)
             )).willReturn(ProjectApplicationInfo.of(APPLICATION_ID, ProjectApplicationStatus.REJECTED));
 
             mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",
@@ -207,7 +207,7 @@ class ProjectApplicationControllerTest {
                 ApplicationDecisionStatus.SUBMITTED, "재검토"
             );
             given(decideApplicationUseCase.decide(
-                eq(APPLICATION_ID), eq(ApplicationDecisionStatus.SUBMITTED), eq("재검토"), eq(TEST_MEMBER_ID)
+                eq(PROJECT_ID), eq(APPLICATION_ID), eq(ApplicationDecisionStatus.SUBMITTED), eq("재검토"), eq(TEST_MEMBER_ID)
             )).willReturn(ProjectApplicationInfo.of(APPLICATION_ID, ProjectApplicationStatus.SUBMITTED));
 
             mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",
@@ -231,7 +231,7 @@ class ProjectApplicationControllerTest {
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
 
-            then(decideApplicationUseCase).should(never()).decide(any(), any(), any(), any());
+            then(decideApplicationUseCase).should(never()).decide(any(), any(), any(), any(), any());
         }
 
         @Test
@@ -245,7 +245,7 @@ class ProjectApplicationControllerTest {
                     .content(body).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
 
-            then(decideApplicationUseCase).should(never()).decide(any(), any(), any(), any());
+            then(decideApplicationUseCase).should(never()).decide(any(), any(), any(), any(), any());
         }
 
         @Test
@@ -259,7 +259,7 @@ class ProjectApplicationControllerTest {
                     .content(body).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
 
-            then(decideApplicationUseCase).should(never()).decide(any(), any(), any(), any());
+            then(decideApplicationUseCase).should(never()).decide(any(), any(), any(), any(), any());
         }
 
         @Test
@@ -274,7 +274,7 @@ class ProjectApplicationControllerTest {
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
 
-            then(decideApplicationUseCase).should(never()).decide(any(), any(), any(), any());
+            then(decideApplicationUseCase).should(never()).decide(any(), any(), any(), any(), any());
         }
 
         @Test
@@ -282,7 +282,7 @@ class ProjectApplicationControllerTest {
             UpdateApplicationDecisionRequest request = new UpdateApplicationDecisionRequest(
                 ApplicationDecisionStatus.APPROVED, null
             );
-            given(decideApplicationUseCase.decide(any(), any(), any(), any()))
+            given(decideApplicationUseCase.decide(any(), any(), any(), any(), any()))
                 .willThrow(new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED));
 
             mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",
@@ -298,7 +298,7 @@ class ProjectApplicationControllerTest {
             UpdateApplicationDecisionRequest request = new UpdateApplicationDecisionRequest(
                 ApplicationDecisionStatus.APPROVED, null
             );
-            given(decideApplicationUseCase.decide(any(), any(), any(), any()))
+            given(decideApplicationUseCase.decide(any(), any(), any(), any(), any()))
                 .willThrow(new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION));
 
             mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",

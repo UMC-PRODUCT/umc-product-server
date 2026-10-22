@@ -253,6 +253,7 @@ public class ProjectApplicationCommandService implements
 
     @Override
     public ProjectApplicationInfo decide(
+        Long projectId,
         Long applicationId,
         ApplicationDecisionStatus targetStatus,
         String reason,
@@ -260,6 +261,10 @@ public class ProjectApplicationCommandService implements
     ) {
         ProjectApplication application = loadProjectApplicationPort.findById(applicationId)
             .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND));
+        // 경로의 프로젝트와 지원서의 프로젝트가 다르면 다른 프로젝트 ID 로 우회한 요청이므로 없는 지원서로 취급한다.
+        if (!Objects.equals(application.getApplicationForm().getProject().getId(), projectId)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+        }
 
         if (targetStatus == ApplicationDecisionStatus.APPROVED
             && application.getStatus() != ProjectApplicationStatus.APPROVED) {

@@ -130,6 +130,7 @@ public class ProjectApplicationController {
             - 모두 지원 마감 후부터 결정 마감(decisionDeadline)까지만 가능 (SUPER_ADMIN 도 동일)
             - APPROVED / REJECTED / SUBMITTED(대기로 되돌리기) 사이 자유 변경 허용
             - SUBMITTED 로 되돌릴 때 같은 차수에 다른 활성 지원서가 있으면 거절
+            - 경로의 projectId 가 지원서의 프로젝트와 다르면 404
             """
     )
     @CheckAccess(
@@ -146,7 +147,7 @@ public class ProjectApplicationController {
     ) {
         return ProjectApplicationStatusResponse.from(
             decideApplicationUseCase.decide(
-                applicationId, request.status(), request.reason(), memberPrincipal.getMemberId()
+                projectId, applicationId, request.status(), request.reason(), memberPrincipal.getMemberId()
             )
         );
     }

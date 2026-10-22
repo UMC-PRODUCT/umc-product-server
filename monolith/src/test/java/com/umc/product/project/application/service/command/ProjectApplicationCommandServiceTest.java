@@ -272,7 +272,7 @@ class ProjectApplicationCommandServiceTest {
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
 
             ProjectApplicationInfo info = sut.decide(
-                APPLICATION_ID, ApplicationDecisionStatus.APPROVED, "역량 우수", DECIDER_MEMBER_ID
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, "역량 우수", DECIDER_MEMBER_ID
             );
 
             assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
@@ -288,7 +288,7 @@ class ProjectApplicationCommandServiceTest {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
 
-            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.REJECTED, "면접 결과", DECIDER_MEMBER_ID);
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.REJECTED, "면접 결과", DECIDER_MEMBER_ID);
 
             assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
             assertThat(application.getStatusChangeReason()).isEqualTo("면접 결과");
@@ -301,7 +301,7 @@ class ProjectApplicationCommandServiceTest {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED);
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
 
-            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.REJECTED, "재검토 후 불합격", DECIDER_MEMBER_ID);
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.REJECTED, "재검토 후 불합격", DECIDER_MEMBER_ID);
 
             assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
             then(saveProjectApplicationPort).should(times(1)).save(application);
@@ -321,7 +321,7 @@ class ProjectApplicationCommandServiceTest {
             given(getChallengerUseCase.getByMemberIdAndGisuId(eq(APPLICANT_MEMBER_ID), any()))
                 .willReturn(challengerWith(APPLICANT_MEMBER_ID, ChallengerPart.DESIGN));
 
-            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID);
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID);
 
             assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
             then(saveProjectApplicationPort).should(times(1)).save(application);
@@ -332,7 +332,7 @@ class ProjectApplicationCommandServiceTest {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
 
-            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID);
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID);
 
             assertThat(application.getStatusChangeReason()).isNull();
         }
@@ -342,7 +342,7 @@ class ProjectApplicationCommandServiceTest {
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> sut.decide(
-                APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
             ))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -356,7 +356,7 @@ class ProjectApplicationCommandServiceTest {
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
 
             assertThatThrownBy(() -> sut.decide(
-                APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
             ))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -376,7 +376,7 @@ class ProjectApplicationCommandServiceTest {
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
 
             assertThatThrownBy(() -> sut.decide(
-                APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
             ))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -393,7 +393,7 @@ class ProjectApplicationCommandServiceTest {
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
 
             assertThatThrownBy(() -> sut.decide(
-                APPLICATION_ID, ApplicationDecisionStatus.APPROVED, "마감 후 수정", DECIDER_MEMBER_ID
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, "마감 후 수정", DECIDER_MEMBER_ID
             ))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -410,7 +410,7 @@ class ProjectApplicationCommandServiceTest {
                 .willReturn(Map.of(ChallengerPart.WEB, 6L));   // active 6 == TO 6 → 남은 자리 0
 
             assertThatThrownBy(() -> sut.decide(
-                APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
             ))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -437,7 +437,7 @@ class ProjectApplicationCommandServiceTest {
                 ));
 
             assertThatThrownBy(() -> sut.decide(
-                APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
             ))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -452,7 +452,7 @@ class ProjectApplicationCommandServiceTest {
             given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
                 .willReturn(Map.of(ChallengerPart.WEB, 6L));
 
-            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.APPROVED, "재확인", DECIDER_MEMBER_ID);
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, "재확인", DECIDER_MEMBER_ID);
 
             assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
             then(saveProjectApplicationPort).should(times(1)).save(application);
@@ -465,7 +465,7 @@ class ProjectApplicationCommandServiceTest {
             given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
                 .willReturn(Map.of(ChallengerPart.WEB, 99L));   // 초과 상황이지만 REJECTED 는 무관
 
-            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.REJECTED, null, DECIDER_MEMBER_ID);
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.REJECTED, null, DECIDER_MEMBER_ID);
 
             assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
         }
@@ -484,9 +484,28 @@ class ProjectApplicationCommandServiceTest {
             given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), any()))
                 .willReturn(Map.of(71L, challengerWith(71L, ChallengerPart.IOS)));
 
-            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID);
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID);
 
             assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
+        }
+    }
+
+    @Nested
+    class decide_projectIdMismatch {
+
+        @Test
+        void 경로_프로젝트와_지원서_프로젝트가_다르면_NOT_FOUND로_거절하고_저장하지_않는다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> sut.decide(
+                PROJECT_ID + 1, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            then(saveProjectApplicationPort).should(never()).save(any());
         }
     }
 
@@ -499,7 +518,7 @@ class ProjectApplicationCommandServiceTest {
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
 
             ProjectApplicationInfo info = sut.decide(
-                APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, "재검토", DECIDER_MEMBER_ID
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, "재검토", DECIDER_MEMBER_ID
             );
 
             assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
@@ -514,7 +533,7 @@ class ProjectApplicationCommandServiceTest {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.REJECTED);
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
 
-            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID);
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID);
 
             assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
             then(saveProjectApplicationPort).should(times(1)).save(application);
@@ -527,7 +546,7 @@ class ProjectApplicationCommandServiceTest {
             given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
                 .willReturn(Map.of(ChallengerPart.WEB, 99L));   // 초과 상황이지만 대기 되돌리기는 무관
 
-            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID);
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID);
 
             assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
         }
@@ -544,7 +563,7 @@ class ProjectApplicationCommandServiceTest {
             )).willReturn(Optional.of(otherDraft));
 
             assertThatThrownBy(() -> sut.decide(
-                APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID
             ))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -561,7 +580,7 @@ class ProjectApplicationCommandServiceTest {
                 any(), eq(APPLICANT_MEMBER_ID), any(), eq(ProjectApplicationStatus.SUBMITTED)
             )).willReturn(Optional.of(application));
 
-            sut.decide(APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID);
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID);
 
             assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
             then(saveProjectApplicationPort).should(times(1)).save(application);
@@ -575,7 +594,7 @@ class ProjectApplicationCommandServiceTest {
             given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
 
             assertThatThrownBy(() -> sut.decide(
-                APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID
             ))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
