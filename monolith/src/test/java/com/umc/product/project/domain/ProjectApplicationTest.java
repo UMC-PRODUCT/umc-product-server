@@ -229,62 +229,6 @@ class ProjectApplicationTest {
                 .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_ENDED);
         }
 
-        @Test
-        void forceRevertToSubmitted는_결정_마감_후에도_SUBMITTED로_되돌린다() {
-            setStatus(application, ProjectApplicationStatus.APPROVED);
-            setRoundDeadline(round, NOW.minusSeconds(60));
-
-            application.forceRevertToSubmitted(DECIDER_MEMBER_ID, "운영 조치");
-
-            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
-            assertThat(application.getStatusChangeReason()).isEqualTo("운영 조치");
-        }
-
-        @Test
-        void forceRevertToSubmitted도_DRAFT_상태에서는_PROJECT_APPLICATION_DECISION_INVALID_TRANSITION() {
-            setStatus(application, ProjectApplicationStatus.DRAFT);
-
-            assertThatThrownBy(() -> application.forceRevertToSubmitted(DECIDER_MEMBER_ID, null))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
-        }
-    }
-
-    @Nested
-    class forceDecision {
-
-        @Test
-        void forceApprove는_결정_마감_후에도_APPROVED로_전이한다() {
-            setRoundDeadline(round, NOW.minusSeconds(60));
-
-            application.forceApprove(DECIDER_MEMBER_ID, "슈퍼어드민 수정");
-
-            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
-            assertThat(application.getStatusChangedMemberId()).isEqualTo(DECIDER_MEMBER_ID);
-            assertThat(application.getStatusChangeReason()).isEqualTo("슈퍼어드민 수정");
-        }
-
-        @Test
-        void forceReject는_지원_진행_중에도_REJECTED로_전이한다() {
-            setRoundEndsAt(round, NOW.plusSeconds(43_200));
-
-            application.forceReject(DECIDER_MEMBER_ID, "슈퍼어드민 수정");
-
-            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
-            assertThat(application.getStatusChangedMemberId()).isEqualTo(DECIDER_MEMBER_ID);
-            assertThat(application.getStatusChangeReason()).isEqualTo("슈퍼어드민 수정");
-        }
-
-        @Test
-        void forceApprove도_DRAFT_상태에서는_PROJECT_APPLICATION_DECISION_INVALID_TRANSITION() {
-            setStatus(application, ProjectApplicationStatus.DRAFT);
-
-            assertThatThrownBy(() -> application.forceApprove(DECIDER_MEMBER_ID, null))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
-        }
     }
 
     @Nested

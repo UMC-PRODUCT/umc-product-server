@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
-import com.umc.product.authorization.application.port.in.query.CheckChallengerAuthorityUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -76,7 +75,6 @@ public class ProjectApplicationCommandService implements
     private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
     private final ManageFormResponseUseCase manageFormResponseUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
-    private final CheckChallengerAuthorityUseCase checkChallengerAuthorityUseCase;
     private final ProjectApplicationChapterPolicy projectApplicationChapterPolicy;
     private final GetFormUseCase getFormUseCase;
 
@@ -283,31 +281,10 @@ public class ProjectApplicationCommandService implements
         String reason,
         Long decidedByMemberId
     ) {
-        boolean superAdmin = decidedByMemberId != null
-            && checkChallengerAuthorityUseCase.isSuperAdmin(decidedByMemberId);
-
         switch (targetStatus) {
-            case APPROVED -> {
-                if (superAdmin) {
-                    application.forceApprove(decidedByMemberId, reason);
-                } else {
-                    application.approve(decidedByMemberId, reason);
-                }
-            }
-            case REJECTED -> {
-                if (superAdmin) {
-                    application.forceReject(decidedByMemberId, reason);
-                } else {
-                    application.reject(decidedByMemberId, reason);
-                }
-            }
-            case SUBMITTED -> {
-                if (superAdmin) {
-                    application.forceRevertToSubmitted(decidedByMemberId, reason);
-                } else {
-                    application.revertToSubmitted(decidedByMemberId, reason);
-                }
-            }
+            case APPROVED -> application.approve(decidedByMemberId, reason);
+            case REJECTED -> application.reject(decidedByMemberId, reason);
+            case SUBMITTED -> application.revertToSubmitted(decidedByMemberId, reason);
         }
     }
 
