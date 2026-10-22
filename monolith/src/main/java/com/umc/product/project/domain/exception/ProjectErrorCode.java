@@ -63,7 +63,7 @@ public enum ProjectErrorCode implements BaseCode {
     // ProjectMatchingRound
     PROJECT_MATCHING_ROUND_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0300", "매칭 차수를 찾을 수 없어요. 선택한 차수를 확인해주세요."),
     PROJECT_MATCHING_ROUND_INVALID_PERIOD(HttpStatus.BAD_REQUEST, "PROJECT-0301",
-        "1~3차는 시작 < 종료 < 결정 마감 < 발표, 4차는 시작 < 종료 = 결정 마감 < 발표 순서로 입력해주세요."),
+        "1~3차는 시작 < 종료 < 결정 마감, 4차는 시작 < 종료 = 결정 마감이며, 발표는 결정 마감으로부터 최소 5분 이후로 입력해주세요."),
     PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED(HttpStatus.CONFLICT, "PROJECT-0302",
         "같은 지부의 다른 매칭 차수와 기간이 겹쳐요. 기간을 다시 선택해주세요."),
     PROJECT_MATCHING_ROUND_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PROJECT-0303",

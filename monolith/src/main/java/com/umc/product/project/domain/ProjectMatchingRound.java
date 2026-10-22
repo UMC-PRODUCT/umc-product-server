@@ -1,5 +1,6 @@
 package com.umc.product.project.domain;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -42,6 +43,8 @@ import lombok.NoArgsConstructor;
     }
 )
 public class ProjectMatchingRound extends BaseEntity {
+
+    private static final Duration MIN_RESULT_PUBLICATION_INTERVAL = Duration.ofMinutes(5);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -107,7 +110,7 @@ public class ProjectMatchingRound extends BaseEntity {
      * <p>
      * - 일반 차수는 startsAt < endsAt < decisionDeadline, 4차는 startsAt < endsAt = decisionDeadline 이어야 합니다.
      * <p>
-     * - 결과 발표 시각은 선발 마감 시각보다 늦어야 합니다.
+     * - 결과 발표 시각은 선발 마감 시각으로부터 최소 5분 이후여야 합니다.
      * <p>
      * - 동일한 지부 내에서는 차수 간 startsAt ~ decisionDeadline 기간이 겹쳐서는 안됩니다.
      *
@@ -165,7 +168,8 @@ public class ProjectMatchingRound extends BaseEntity {
 
     /**
      * 매칭 차수의 날짜가 유효한지 검증합니다.
-     * 1~3차는 시작 < 종료 < 결정 마감 < 발표 순서이며, 발표 시각이 없는 기존 차수는 발표 시각 검사를 생략합니다.
+     * 1~3차는 시작 < 종료 < 결정 마감 순서이며, 발표는 결정 마감으로부터 최소 5분 이후여야 합니다.
+     * 발표 시각이 없는 기존 차수는 발표 시각 검사를 생략합니다.
      */
     public static void validateDates(
         Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
@@ -173,13 +177,14 @@ public class ProjectMatchingRound extends BaseEntity {
         if (startsAt == null || endsAt == null || decisionDeadline == null
             || !startsAt.isBefore(endsAt)
             || !endsAt.isBefore(decisionDeadline)
-            || (resultPublishAt != null && !resultPublishAt.isAfter(decisionDeadline))) {
+            || (resultPublishAt != null
+            && resultPublishAt.isBefore(decisionDeadline.plus(MIN_RESULT_PUBLICATION_INTERVAL)))) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
         }
     }
 
     /**
-     * 4차는 시작 < 종료 = 결정 마감 < 발표 순서인지 확인합니다. 1~3차는 일반 일정 규칙을 적용합니다.
+     * 4차는 시작 < 종료 = 결정 마감이며, 발표는 결정 마감으로부터 최소 5분 이후여야 합니다. 1~3차는 일반 일정 규칙을 적용합니다.
      */
     public static void validateSchedule(
         MatchingType type, MatchingPhase phase,
@@ -192,7 +197,7 @@ public class ProjectMatchingRound extends BaseEntity {
         if (type == null || startsAt == null || endsAt == null
             || decisionDeadline == null || resultPublishAt == null
             || !startsAt.isBefore(endsAt) || !endsAt.equals(decisionDeadline)
-            || !resultPublishAt.isAfter(decisionDeadline)) {
+            || resultPublishAt.isBefore(decisionDeadline.plus(MIN_RESULT_PUBLICATION_INTERVAL))) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
         }
     }

@@ -11099,7 +11099,7 @@
       "name": "PROJECT_MATCHING_ROUND_INVALID_PERIOD",
       "httpStatus": 400,
       "httpStatusName": "BAD_REQUEST",
-      "message": "1~3차는 시작 < 종료 < 결정 마감 < 발표, 4차는 시작 < 종료 = 결정 마감 < 발표 순서로 입력해주세요.",
+      "message": "1~3차는 시작 < 종료 < 결정 마감, 4차는 시작 < 종료 = 결정 마감이며, 발표는 결정 마감으로부터 최소 5분 이후로 입력해주세요.",
       "description": null,
       "clientAction": null,
       "retryable": null,

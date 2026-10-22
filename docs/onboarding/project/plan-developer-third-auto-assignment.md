@@ -105,7 +105,9 @@
 
 `phase == FOURTH`인 차수의 시작 시각에 실행한다. 3차 자동 선발에서는 랜덤 매칭을 실행하지 않는다.
 
-1~3차는 `startsAt < endsAt < decisionDeadline < resultPublishAt`, 4차는 `startsAt < endsAt = decisionDeadline < resultPublishAt`으로 입력한다. 같은 지부·유형에서는 이전 차수의 발표 시각이 다음 차수의 시작 시각보다 늦을 수 없다.
+1~3차는 `startsAt < endsAt < decisionDeadline < resultPublishAt`, 4차는 `startsAt < endsAt = decisionDeadline < resultPublishAt`으로 입력한다. 모든 차수의 `resultPublishAt`은 `decisionDeadline`으로부터 최소 5분 이후여야 한다. 같은 지부·유형에서는 이전 차수의 발표 시각이 다음 차수의 시작 시각보다 늦을 수 없다.
+
+1~3차 자동 선발이 PM 마감 후 기본 1분 뒤 실행되므로, 발표 전 선발 처리 시간을 확보하기 위해 최소 5분 간격을 둔다.
 
 4차의 `endsAt`과 `decisionDeadline`은 일정 검증에 사용하며, 랜덤 매칭은 `startsAt`, 결과 발표는 `resultPublishAt`을 기준으로 한다.
 

@@ -14,7 +14,9 @@
 | 조회 메서드   | `GET /api/v1/project/matching-rounds`                      |
 | 시간 형식    | ISO-8601 Instant, 예: `2026-05-10T00:00:00Z`                |
 
-생성 요청의 `resultPublishAt`은 필수입니다. 1~3차는 `startsAt < endsAt < decisionDeadline < resultPublishAt`, 4차는 `startsAt < endsAt = decisionDeadline < resultPublishAt`을 만족해야 합니다. 같은 지부·유형의 다음 차수는 이전 차수의 발표 시각부터 시작할 수 있습니다.
+생성 요청의 `resultPublishAt`은 필수입니다. 1~3차는 `startsAt < endsAt < decisionDeadline < resultPublishAt`, 4차는 `startsAt < endsAt = decisionDeadline < resultPublishAt`을 만족해야 합니다. 모든 차수의 `resultPublishAt`은 `decisionDeadline`으로부터 최소 5분 이후여야 합니다. 같은 지부·유형의 다음 차수는 이전 차수의 발표 시각부터 시작할 수 있습니다.
+
+1~3차 자동 선발이 PM 마감 후 기본 1분 뒤 실행되므로, 발표 전 선발 처리 시간을 확보하기 위해 최소 5분 간격을 둡니다.
 
 ## 테스트 데이터 전제
 
@@ -96,7 +98,7 @@
 
 ## 3. 매칭 차수 생성 요청 시 날짜 순서가 잘못된 경우
 
-`startsAt < endsAt < decisionDeadline < resultPublishAt` 조건을 만족하지 않는 요청을 검증합니다.
+`startsAt < endsAt < decisionDeadline < resultPublishAt` 조건 또는 결정 마감과 발표 사이의 최소 5분 간격을 만족하지 않는 요청을 검증합니다. 결정 마감이 `00:00:00Z`이면 발표가 `00:04:59Z`인 요청은 `400 PROJECT-0301`, `00:05:00Z`인 요청은 허용됩니다.
 
 | 항목       | 값                                                 |
 |----------|---------------------------------------------------|
@@ -178,7 +180,7 @@
 
 ### 4-1. 부분 수정 결과의 기간 순서가 잘못된 경우
 
-기존 값과 요청 값을 병합한 최종 결과가 `startsAt < endsAt < decisionDeadline < resultPublishAt`을 만족하지 않으면 실패합니다.
+기존 값과 요청 값을 병합한 최종 결과가 `startsAt < endsAt < decisionDeadline < resultPublishAt` 또는 결정 마감과 발표 사이의 최소 5분 간격을 만족하지 않으면 `400 PROJECT-0301`로 실패합니다.
 
 | 항목       | 값                                                     |
 |----------|-------------------------------------------------------|

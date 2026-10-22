@@ -9,6 +9,8 @@ import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
@@ -35,6 +37,35 @@ class ProjectMatchingRoundTest {
 
     @Nested
     class resultPublishAt {
+
+        @ParameterizedTest
+        @EnumSource(MatchingPhase.class)
+        void 발표_시각이_결정_마감으로부터_5분_미만이면_거부한다(MatchingPhase phase) {
+            // given
+            Instant endsAt = phase == MatchingPhase.FOURTH ? DECISION_DEADLINE : ENDS_AT;
+
+            // when & then
+            assertThatThrownBy(() -> ProjectMatchingRound.validateSchedule(
+                MatchingType.PLAN_DESIGN, phase,
+                STARTS_AT, endsAt, DECISION_DEADLINE, DECISION_DEADLINE.plusSeconds(300).minusNanos(1)
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
+        }
+
+        @ParameterizedTest
+        @EnumSource(MatchingPhase.class)
+        void 발표_시각이_결정_마감으로부터_정확히_5분_후이면_허용한다(MatchingPhase phase) {
+            // given
+            Instant endsAt = phase == MatchingPhase.FOURTH ? DECISION_DEADLINE : ENDS_AT;
+
+            // when & then
+            assertThatCode(() -> ProjectMatchingRound.validateSchedule(
+                MatchingType.PLAN_DESIGN, phase,
+                STARTS_AT, endsAt, DECISION_DEADLINE, DECISION_DEADLINE.plusSeconds(300)
+            )).doesNotThrowAnyException();
+        }
 
         @Test
         void 발표_시각이_선발_마감과_같으면_거부한다() {
@@ -63,7 +94,7 @@ class ProjectMatchingRoundTest {
             // when & then
             assertThatThrownBy(() -> round.update(
                 "수정한 이름", null, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST,
-                STARTS_AT, ENDS_AT, DECISION_DEADLINE, DECISION_DEADLINE.minusSeconds(1)
+                STARTS_AT, ENDS_AT, DECISION_DEADLINE, DECISION_DEADLINE.plusSeconds(299)
             )).isInstanceOf(ProjectDomainException.class);
             assertThat(round.getName()).isEqualTo("기획-디자인 1차 매칭");
             assertThat(round.getResultPublishAt()).isEqualTo(RESULT_PUBLISH_AT);

@@ -77,6 +77,8 @@ public class ProjectMatchingRoundController {
             - 1~3차는 startsAt < endsAt < decisionDeadline < resultPublishAt 순서를 만족해야 합니다.
             - 랜덤 매칭은 type=PLAN_DESIGN 또는 PLAN_DEVELOPER, phase=FOURTH로 별도 등록합니다.
             - 4차는 startsAt < endsAt = decisionDeadline < resultPublishAt이며 지원서를 받지 않습니다.
+            - 모든 차수의 resultPublishAt은 decisionDeadline으로부터 최소 5분 이후여야 하며, 위반 시 400 PROJECT-0301을 반환합니다.
+              1~3차 자동 선발이 PM 마감 후 기본 1분 뒤 실행되므로, 발표 전 선발 처리 시간을 확보하기 위한 간격입니다.
             - 4차의 startsAt에 랜덤 매칭을 실행하고 resultPublishAt에 공개합니다.
             - 같은 지부 내 기존 매칭 차수와 startsAt ~ decisionDeadline 기간이 중복되면 409를 반환합니다.
             - 동일 지부 내 type + phase 조합은 DB Unique Key로도 중복을 제한합니다.
@@ -105,6 +107,8 @@ public class ProjectMatchingRoundController {
             - 자동 선발 또는 랜덤 매칭 완료 후에는 이름·설명만 수정할 수 있습니다. 유형·차수·일정 변경은 400 PROJECT-0306을 반환합니다.
             - 최종 일정은 1~3차의 경우 startsAt < endsAt < decisionDeadline < resultPublishAt 순서여야 합니다.
             - 4차는 startsAt < endsAt = decisionDeadline < resultPublishAt 순서여야 합니다.
+            - 최종 resultPublishAt은 decisionDeadline으로부터 최소 5분 이후여야 하며, 위반 시 400 PROJECT-0301을 반환합니다.
+              1~3차 자동 선발이 PM 마감 후 기본 1분 뒤 실행되므로, 발표 전 선발 처리 시간을 확보하기 위한 간격입니다.
             - 발표 시각이 없는 기존 차수는 resultPublishAt을 생략하면 미설정 상태를 유지합니다.
             - 같은 지부 내 다른 매칭 차수와 startsAt ~ decisionDeadline 기간이 중복되면 409를 반환합니다.
             """
