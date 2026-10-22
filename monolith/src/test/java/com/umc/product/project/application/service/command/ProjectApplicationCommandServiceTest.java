@@ -43,6 +43,7 @@ import com.umc.product.form.domain.enums.FormStatus;
 import com.umc.product.form.domain.enums.QuestionType;
 import com.umc.product.project.application.port.in.command.dto.ApplicationDecisionStatus;
 import com.umc.product.project.application.port.in.command.dto.CancelProjectApplicationCommand;
+import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectApplicationCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectApplicationCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectApplicationDraftCommand;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationInfo;
@@ -65,6 +66,7 @@ import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
@@ -151,6 +153,38 @@ class ProjectApplicationCommandServiceTest {
             .willReturn(List.of());
         given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), any()))
             .willReturn(Map.of(APPLICANT_MEMBER_ID, challengerWith(APPLICANT_MEMBER_ID, ChallengerPart.WEB)));
+    }
+
+    @Nested
+    class create {
+
+        @Test
+        @DisplayName("지원서 생성은 모집 종료 시 팀 소속자에게도 지원 기간 예외를 발생시킨다")
+        void 지원서_생성은_모집_종료_시_팀_소속자에게도_지원_기간_예외를_발생시킨다() {
+            ProjectApplicationForm form = givenCreateApplication(closedRound());
+            given(loadProjectMemberPort.existsByGisuAndMember(form.getProject().getGisuId(), APPLICANT_MEMBER_ID))
+                .willReturn(true);
+
+            assertThatThrownBy(() -> sut.create(createCommand()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_ROUND_NOT_OPEN);
+        }
+
+        @Test
+        @DisplayName("지원서 생성은 모집 중 팀 소속자에게 이미 팀에 소속됨 예외를 발생시킨다")
+        void 지원서_생성은_모집_중_팀_소속자에게_이미_팀에_소속됨_예외를_발생시킨다() {
+            ProjectMatchingRound round = openRound(MatchingType.PLAN_DEVELOPER);
+            ReflectionTestUtils.setField(round, "endsAt", Instant.now().plusSeconds(3600));
+            ProjectApplicationForm form = givenCreateApplication(round);
+            given(loadProjectMemberPort.existsByGisuAndMember(form.getProject().getGisuId(), APPLICANT_MEMBER_ID))
+                .willReturn(true);
+
+            assertThatThrownBy(() -> sut.create(createCommand()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
+        }
     }
 
     @Nested
@@ -677,6 +711,31 @@ class ProjectApplicationCommandServiceTest {
         ReflectionTestUtils.setField(application, "id", APPLICATION_ID);
         ReflectionTestUtils.setField(application, "status", status);
         return application;
+    }
+
+    private ProjectApplicationForm givenCreateApplication(ProjectMatchingRound round) {
+        ProjectApplicationForm form = applicationForm();
+        ReflectionTestUtils.setField(form.getProject(), "status", ProjectStatus.IN_PROGRESS);
+        given(loadProjectApplicationFormPort.findByProjectId(PROJECT_ID)).willReturn(Optional.of(form));
+        given(loadProjectPartQuotaPort.existsByProjectIdAndPart(PROJECT_ID, ChallengerPart.WEB)).willReturn(true);
+        given(loadProjectMatchingRoundPort.getById(MATCHING_ROUND_ID)).willReturn(round);
+        return form;
+    }
+
+    private CreateDraftProjectApplicationCommand createCommand() {
+        return CreateDraftProjectApplicationCommand.builder()
+            .projectId(PROJECT_ID)
+            .applicantMemberId(APPLICANT_MEMBER_ID)
+            .matchingRoundId(MATCHING_ROUND_ID)
+            .build();
+    }
+
+    private ProjectMatchingRound closedRound() {
+        return ProjectMatchingRound.create(
+            "개발자 1차 매칭", null,
+            MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST, 2L,
+            NOW.minusSeconds(7200), NOW.minusSeconds(3600), NOW.minusSeconds(1800), NOW.plusSeconds(3600)
+        );
     }
 
     private ProjectMatchingRound openRound() {

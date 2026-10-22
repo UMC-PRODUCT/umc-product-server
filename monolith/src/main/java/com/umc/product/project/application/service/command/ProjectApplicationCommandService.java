@@ -114,12 +114,7 @@ public class ProjectApplicationCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_PART_NOT_ALLOWED);
         }
 
-        // 3. 기수 팀원 여부 체크 — 이미 이 기수에 소속된 팀이 있으면 불가
-        if (loadProjectMemberPort.existsByGisuAndMember(project.getGisuId(), command.applicantMemberId())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
-        }
-
-        // 4. FE가 지정한 매칭 차수 조회 + 검증
+        // 3. FE가 지정한 매칭 차수 조회 + 검증
         ProjectMatchingRound round = loadProjectMatchingRoundPort.getById(command.matchingRoundId());
 
         if (!round.isOpenAt(Instant.now())) {
@@ -133,8 +128,13 @@ public class ProjectApplicationCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_ROUND_TYPE_MISMATCH);
         }
 
-        // 4-a. 지부 일치 — 차수와 지원자 매칭 지부가 모두 프로젝트 지부여야 한다 (매칭 지부 이동 반영)
+        // 3-a. 지부 일치 — 차수와 지원자 매칭 지부가 모두 프로젝트 지부여야 한다 (매칭 지부 이동 반영)
         projectApplicationChapterPolicy.validate(project, round, command.applicantMemberId());
+
+        // 4. 기수 팀원 여부 체크 — 이미 이 기수에 소속된 팀이 있으면 불가
+        if (loadProjectMemberPort.existsByGisuAndMember(project.getGisuId(), command.applicantMemberId())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
+        }
 
         // 5. 동일 차수 기준 DRAFT 중복 체크 — 이미 있으면 409
         if (loadProjectApplicationPort.findByProjectIdAndApplicantMemberIdAndRoundIdAndStatus(
