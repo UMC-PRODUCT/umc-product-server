@@ -263,7 +263,7 @@ flowchart TB
 
 PM은 `PATCH /api/v1/projects/{projectId}/applications/{applicationId}/decision`으로 지원서 상태를 바꾼다. 요청 DTO의 `ApplicationDecisionStatus`는 `APPROVED`, `REJECTED`, `SUBMITTED` 세 값을 받는다. `SUBMITTED`는 이미 내린 합격·불합격을 거두고 대기(미판정)로 되돌리는 입력이며, 지원 현황 화면이 "대기"로 보여주는 값과 같다.
 
-세 값 모두 같은 시간 창에서만 허용된다. 지원 마감(`endsAt`) 이후부터 결정 마감(`decisionDeadline`) 전까지이며, 지원 기간 중이면 `PROJECT_MATCHING_ROUND_NOT_ENDED`, 결정 마감 후면 `PROJECT_MATCHING_ROUND_LOCKED`를 반환한다. 슈퍼어드민은 시간과 관계없이 바꿀 수 있다. 출발 상태는 `SUBMITTED`, `APPROVED`, `REJECTED`만 가능하고 `DRAFT`, `CANCELLED`에서는 `PROJECT_APPLICATION_DECISION_INVALID_TRANSITION`이다.
+세 값 모두 같은 시간 창에서만 허용된다. 지원 마감(`endsAt`) 이후부터 결정 마감(`decisionDeadline`) 전까지이며, 지원 기간 중이면 `PROJECT_MATCHING_ROUND_NOT_ENDED`, 결정 마감 후면 `PROJECT_MATCHING_ROUND_LOCKED`를 반환한다. 판정할 수 있는 사람은 담당 PM, 프로젝트 기수의 총괄·부총괄, 최고관리자이며 규칙은 `ProjectApplicationDecisionPolicy` 한 곳에 있다. 최고관리자도 같은 시간 제한을 받는다. URL의 `projectId`가 지원서의 프로젝트와 다르면 `PROJECT_APPLICATION_NOT_FOUND` 404를 반환한다. 출발 상태는 `SUBMITTED`, `APPROVED`, `REJECTED`만 가능하고 `DRAFT`, `CANCELLED`에서는 `PROJECT_APPLICATION_DECISION_INVALID_TRANSITION`이다.
 
 값별 추가 검증은 다음과 같다.
 

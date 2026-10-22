@@ -12,7 +12,12 @@ import com.umc.product.project.application.port.in.query.dto.ProjectApplicationI
  */
 public interface DecideApplicationUseCase {
 
+    /**
+     * @param projectId     요청 경로의 프로젝트 ID. 지원서가 이 프로젝트 소속이 아니면 {@code PROJECT_APPLICATION_NOT_FOUND}.
+     * @param applicationId 판정할 지원서 ID
+     */
     ProjectApplicationInfo decide(
+        Long projectId,
         Long applicationId,
         ApplicationDecisionStatus targetStatus,
         String reason,

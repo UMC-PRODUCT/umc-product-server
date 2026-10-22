@@ -125,30 +125,6 @@ public class ProjectApplication extends BaseEntity {
     }
 
     /**
-     * 지원서를 시간 제한과 관계없이 합격 처리합니다.
-     * <p>
-     * 상태 전이 규칙(SUBMITTED / APPROVED / REJECTED 만 가능)은 유지하고, 매칭 차수의 결정 가능 시간 검증만 건너뜁니다.
-     *
-     * @param decidedByMemberId 결정한 슈퍼어드민 ID
-     * @param reason            결정 사유 (필수 아님)
-     */
-    public void forceApprove(Long decidedByMemberId, String reason) {
-        applyDecision(ProjectApplicationStatus.APPROVED, decidedByMemberId, reason, false);
-    }
-
-    /**
-     * 지원서를 시간 제한과 관계없이 불합격 처리합니다.
-     * <p>
-     * 상태 전이 규칙(SUBMITTED / APPROVED / REJECTED 만 가능)은 유지하고, 매칭 차수의 결정 가능 시간 검증만 건너뜁니다.
-     *
-     * @param decidedByMemberId 결정한 슈퍼어드민 ID
-     * @param reason            결정 사유 (필수 아님)
-     */
-    public void forceReject(Long decidedByMemberId, String reason) {
-        applyDecision(ProjectApplicationStatus.REJECTED, decidedByMemberId, reason, false);
-    }
-
-    /**
      * 내린 판정을 거두고 지원서를 대기({@link ProjectApplicationStatus#SUBMITTED}) 로 되돌립니다.
      * <p>
      * 합격·불합격 토글과 같은 시간 창(지원 마감 후 ~ 결정 마감 전)에서만 가능하며, APPROVED 또는 REJECTED 상태에서 호출합니다.
@@ -159,18 +135,6 @@ public class ProjectApplication extends BaseEntity {
      */
     public void revertToSubmitted(Long decidedByMemberId, String reason) {
         applyDecision(ProjectApplicationStatus.SUBMITTED, decidedByMemberId, reason, true);
-    }
-
-    /**
-     * 시간 제한과 관계없이 지원서를 대기({@link ProjectApplicationStatus#SUBMITTED}) 로 되돌립니다.
-     * <p>
-     * 상태 전이 규칙(SUBMITTED / APPROVED / REJECTED 만 가능)은 유지하고, 매칭 차수의 결정 가능 시간 검증만 건너뜁니다.
-     *
-     * @param decidedByMemberId 되돌린 슈퍼어드민 ID
-     * @param reason            되돌린 사유 (필수 아님)
-     */
-    public void forceRevertToSubmitted(Long decidedByMemberId, String reason) {
-        applyDecision(ProjectApplicationStatus.SUBMITTED, decidedByMemberId, reason, false);
     }
 
     private void applyDecision(

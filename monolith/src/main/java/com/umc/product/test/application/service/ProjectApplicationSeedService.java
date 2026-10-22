@@ -295,7 +295,7 @@ public class ProjectApplicationSeedService implements SeedProjectApplicationsUse
             ? ApplicationDecisionStatus.APPROVED
             : ApplicationDecisionStatus.REJECTED;
         try {
-            decideApplicationUseCase.decide(applicationId, decision, null, poMemberId);
+            decideApplicationUseCase.decide(projectId, applicationId, decision, null, poMemberId);
         } catch (Exception e) {
             log.error("seed DECIDE 실패 (memberId={}, projectId={}, decision={}): {}",
                 challenger.memberId(), projectId, decision, e.toString());

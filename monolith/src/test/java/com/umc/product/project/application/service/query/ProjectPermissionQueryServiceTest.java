@@ -26,11 +26,14 @@ import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.authorization.domain.RoleAttribute;
 import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
+import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope;
 import com.umc.product.project.application.access.ProjectApplicationAccessScopeResolver;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionCapabilityInfo;
@@ -204,6 +207,52 @@ class ProjectPermissionQueryServiceTest {
         assertThat(result.applicationForm().canEdit().reasonCode())
             .isEqualTo(ProjectPermissionReason.ACTIVE_MATCHING_ROUND_EXISTS.name());
         assertThat(result.canDelete().reason()).isEqualTo("진행 중인 프로젝트는 중단 기능을 이용해주세요.");
+    }
+
+    @Test
+    void 판정_가능_플래그는_같은_기수_총괄단이면_허용한다() {
+        Project project = project(ProjectStatus.IN_PROGRESS, 999L, 999L, "서비스 리뉴얼");
+        ProjectApplicationForm form = ProjectApplicationForm.create(project, 500L);
+        SubjectAttributes subject = subjectWithRoles(List.of(centralCoreRoleInGisu(GISU_ID)));
+        givenBase(project, subject);
+        givenForms(form);
+        givenProjectPermission(subject, PermissionType.READ, true);
+        givenProjectPermission(subject, PermissionType.EDIT, false);
+        givenProjectPermission(subject, PermissionType.DELETE, false);
+        givenProjectPermission(subject, PermissionType.MANAGE, false);
+        given(loadProjectMatchingRoundPort.listOpenAt(eq(CHAPTER_ID), any(Instant.class)))
+            .willReturn(List.of());
+        given(projectApplicationAccessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(PROJECT_ID));
+        given(projectStatisticsAccessPolicy.canReadProjectStatistics(REQUESTER_ID, project)).willReturn(true);
+
+        ProjectPermissionInfo result = sut.listByProjectIds(REQUESTER_ID, List.of(PROJECT_ID)).get(0);
+
+        assertThat(result.application().canDecide().allowed()).isTrue();
+    }
+
+    @Test
+    void 판정_가능_플래그는_다른_기수_총괄단이거나_역할이_없으면_거부한다() {
+        Project project = project(ProjectStatus.IN_PROGRESS, 999L, 999L, "서비스 리뉴얼");
+        ProjectApplicationForm form = ProjectApplicationForm.create(project, 500L);
+        SubjectAttributes subject = subjectWithRoles(List.of(centralCoreRoleInGisu(GISU_ID + 1)));
+        givenBase(project, subject);
+        givenForms(form);
+        givenProjectPermission(subject, PermissionType.READ, true);
+        givenProjectPermission(subject, PermissionType.EDIT, false);
+        givenProjectPermission(subject, PermissionType.DELETE, false);
+        givenProjectPermission(subject, PermissionType.MANAGE, false);
+        given(loadProjectMatchingRoundPort.listOpenAt(eq(CHAPTER_ID), any(Instant.class)))
+            .willReturn(List.of());
+        given(projectApplicationAccessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.None());
+        given(projectStatisticsAccessPolicy.canReadProjectStatistics(REQUESTER_ID, project)).willReturn(false);
+
+        ProjectPermissionInfo result = sut.listByProjectIds(REQUESTER_ID, List.of(PROJECT_ID)).get(0);
+
+        assertThat(result.application().canDecide().allowed()).isFalse();
+        assertThat(result.application().canDecide().reasonCode())
+            .isEqualTo(ProjectPermissionReason.PERMISSION_DENIED.name());
     }
 
     @Test
@@ -425,6 +474,23 @@ class ProjectPermissionQueryServiceTest {
             .schoolId(3L)
             .gisuChallengerInfos(List.of())
             .roleAttributes(List.of())
+            .build();
+    }
+
+    private RoleAttribute centralCoreRoleInGisu(Long gisuId) {
+        return new RoleAttribute(
+            ChallengerRoleType.CENTRAL_PRESIDENT,
+            OrganizationType.CENTRAL,
+            null, null, gisuId
+        );
+    }
+
+    private SubjectAttributes subjectWithRoles(List<RoleAttribute> roles) {
+        return SubjectAttributes.builder()
+            .memberId(REQUESTER_ID)
+            .schoolId(3L)
+            .gisuChallengerInfos(List.of())
+            .roleAttributes(roles)
             .build();
     }
 
