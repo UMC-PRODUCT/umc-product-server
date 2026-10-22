@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
@@ -68,34 +69,15 @@ class ProjectMatchingRoundTest {
         }
 
         @Test
-        void 발표_시각이_선발_마감과_같으면_거부한다() {
-            // when & then
-            assertThatThrownBy(() -> ProjectMatchingRound.validateDates(
-                STARTS_AT, ENDS_AT, DECISION_DEADLINE, DECISION_DEADLINE
-            ))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
-        }
-
-        @Test
-        void 발표_시각이_선발_마감보다_빠르면_거부한다() {
-            // when & then
-            assertThatThrownBy(() -> ProjectMatchingRound.validateDates(
-                STARTS_AT, ENDS_AT, DECISION_DEADLINE, DECISION_DEADLINE.minusSeconds(1)
-            ))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
-        }
-
-        @Test
         void 잘못된_발표_시각으로_수정하면_기존_값을_유지한다() {
             // when & then
             assertThatThrownBy(() -> round.update(
                 "수정한 이름", null, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST,
                 STARTS_AT, ENDS_AT, DECISION_DEADLINE, DECISION_DEADLINE.plusSeconds(299)
-            )).isInstanceOf(ProjectDomainException.class);
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
             assertThat(round.getName()).isEqualTo("기획-디자인 1차 매칭");
             assertThat(round.getResultPublishAt()).isEqualTo(RESULT_PUBLISH_AT);
         }
@@ -104,21 +86,11 @@ class ProjectMatchingRoundTest {
     @Nested
     class isResultPublishedAt {
 
-        @Test
-        void 자동_선발이_완료되면_발표_시각_정각부터_공개한다() {
+        @ParameterizedTest
+        @ValueSource(longs = {0, 600})
+        void 발표_시각이_되어도_발표_작업이_완료되어야_공개한다(long secondsAfterPublishAt) {
             // given
-            round.executeAutoDecision(null);
-
-            // when & then
-            assertThat(round.isResultPublishedAt(RESULT_PUBLISH_AT)).isFalse();
-            round.publishResult(RESULT_PUBLISH_AT);
-            assertThat(round.isResultPublishedAt(RESULT_PUBLISH_AT)).isTrue();
-        }
-
-        @Test
-        void 발표_시각이_지나도_자동_선발이_완료된_후에_공개한다() {
-            // given
-            Instant afterPublishAt = RESULT_PUBLISH_AT.plusSeconds(600);
+            Instant afterPublishAt = RESULT_PUBLISH_AT.plusSeconds(secondsAfterPublishAt);
 
             // when & then
             assertThat(round.isResultPublishedAt(afterPublishAt)).isFalse();

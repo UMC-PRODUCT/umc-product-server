@@ -16,8 +16,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -114,9 +112,14 @@ class ProjectMatchingRoundCommandServiceTest {
             ProjectMatchingRound saved = captor.getValue();
             assertThat(saved.isOpenAt(startsAt)).isFalse();
             assertThat(saved.getEndsAt()).isEqualTo(saved.getDecisionDeadline());
+        }
 
-            saved.executeAutoDecision(null);
-            given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(saved);
+        @Test
+        void 자동_선발이_완료된_차수는_삭제할_수_없다() {
+            ProjectMatchingRound round = futureRound(MatchingType.PLAN_DEVELOPER);
+            round.executeAutoDecision(null);
+            given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
+
             assertThatThrownBy(() -> sut.delete(ROUND_ID, EXECUTOR_MEMBER_ID))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -360,26 +363,38 @@ class ProjectMatchingRoundCommandServiceTest {
         }
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"2026-05-13T01:59:59Z", "2026-05-13T02:00:00Z"})
-    void 다음_차수는_이전_차수_발표_시각부터_생성할_수_있다(String startsAt) {
+    @Test
+    void 다음_차수는_이전_차수_발표_시각_전에는_시작할_수_없다() {
         // given
         ProjectMatchingRound first = matchingRound(10L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, 1L,
             "2026-05-10T00:00:00Z", "2026-05-12T00:00:00Z", "2026-05-13T00:00:00Z");
         CreateProjectMatchingRoundCommand command = createCommand(1L, MatchingType.PLAN_DESIGN, MatchingPhase.SECOND,
-            startsAt, "2026-05-15T00:00:00Z", "2026-05-16T00:00:00Z");
+            "2026-05-13T01:59:59Z", "2026-05-15T00:00:00Z", "2026-05-16T00:00:00Z");
         given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(List.of(first));
 
-        // when / then
-        if (command.startsAt().isBefore(first.getResultPublishAt())) {
-            assertThatThrownBy(() -> sut.create(command)).isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode").isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
-            then(saveProjectMatchingRoundPort).should(never()).save(any());
-        } else {
-            given(saveProjectMatchingRoundPort.save(any())).willAnswer(invocation -> invocation.getArgument(0));
-            sut.create(command);
-            then(saveProjectMatchingRoundPort).should().save(any());
-        }
+        // when & then
+        assertThatThrownBy(() -> sut.create(command))
+            .isInstanceOf(ProjectDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
+        then(saveProjectMatchingRoundPort).should(never()).save(any());
+    }
+
+    @Test
+    void 다음_차수는_이전_차수_발표_시각부터_시작할_수_있다() {
+        // given
+        ProjectMatchingRound first = matchingRound(10L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, 1L,
+            "2026-05-10T00:00:00Z", "2026-05-12T00:00:00Z", "2026-05-13T00:00:00Z");
+        CreateProjectMatchingRoundCommand command = createCommand(1L, MatchingType.PLAN_DESIGN, MatchingPhase.SECOND,
+            "2026-05-13T02:00:00Z", "2026-05-15T00:00:00Z", "2026-05-16T00:00:00Z");
+        given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(List.of(first));
+        given(saveProjectMatchingRoundPort.save(any())).willAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        sut.create(command);
+
+        // then
+        then(saveProjectMatchingRoundPort).should().save(any());
     }
 
     @Test

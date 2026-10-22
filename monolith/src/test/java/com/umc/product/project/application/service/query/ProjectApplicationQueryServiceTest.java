@@ -296,14 +296,15 @@ class ProjectApplicationQueryServiceTest {
     }
 
     @Test
-    @DisplayName("listMyApplications_발표_시각이_지나도_확정_전이면_상태_필터_결과에서_제외한다")
-    void 자동_선발_완료_전에는_상태_필터로_결과를_조회할_수_없다() {
+    @DisplayName("listMyApplications_발표_시각이_지나도_발표_작업_완료_전이면_상태_필터_결과에서_제외한다")
+    void 발표_작업_완료_전에는_상태_필터로_결과를_조회할_수_없다() {
         // given
         Project project = createProject(1L, "프로젝트A", "thumb-1", 99L);
         ProjectMatchingRound round = createMatchingRound(
             7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST);
         markDecisionDeadlinePassed(round);
         ReflectionTestUtils.setField(round, "resultPublishAt", java.time.Instant.now().minusSeconds(600));
+        round.executeAutoDecision(null);
         ProjectApplication application = createApplication(
             55L, project, round, ProjectApplicationStatus.APPROVED);
         given(getChallengerUseCase.findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID))
@@ -943,7 +944,7 @@ class ProjectApplicationQueryServiceTest {
     }
 
     @Test
-    @DisplayName("getDetail_지원자_본인_호출은_지원서_내용을_보여주되_결과_발표_전_상태는_null")
+    @DisplayName("getDetail_지원자_본인_호출은_지원서_내용을_보여주되_결과_발표_전_상태와_처리시각은_null")
     void selfDetailMasksStatusBeforeResultPublishAt() {
         // given
         Project project = createProject(1L, "프로젝트A", null, 99L);
@@ -954,6 +955,7 @@ class ProjectApplicationQueryServiceTest {
         round.executeAutoDecision(null);
         ProjectApplication application = createApplicationWithFormResponse(
             55L, project, round, 200L, ProjectApplicationStatus.APPROVED, 123L);
+        ReflectionTestUtils.setField(application, "statusChangedAt", java.time.Instant.now().minusSeconds(300));
 
         GetProjectApplicationDetailQuery query = detailQuery(1L, 55L, 200L);
         given(loadProjectApplicationPort.findByIdWithDetails(55L))
@@ -978,6 +980,7 @@ class ProjectApplicationQueryServiceTest {
         assertThat(result.applicationId()).isEqualTo(55L);
         assertThat(result.status()).isNull();
         assertThat(result.formResponse().id()).isEqualTo(123L);
+        assertThat(result.statusChangedAt()).isNull();
     }
 
     @Test
