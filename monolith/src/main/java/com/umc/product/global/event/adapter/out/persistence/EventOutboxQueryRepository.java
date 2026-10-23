@@ -1,7 +1,6 @@
 package com.umc.product.global.event.adapter.out.persistence;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
@@ -30,14 +29,14 @@ public class EventOutboxQueryRepository implements LoadOutboxBacklogPort {
             SELECT * FROM event_outbox
             WHERE status IN ('PENDING', 'PROCESSING')
               AND next_attempt_at <= :now
-              AND (%s)
+              AND processing_group = :processingGroup
             ORDER BY next_attempt_at, id
             FOR UPDATE SKIP LOCKED
             LIMIT :limit
-            """.formatted(selectionPredicate(selection)), EventOutbox.class);
+            """, EventOutbox.class);
         query.setParameter("now", now);
         query.setParameter("limit", limit);
-        bindSelection(query, selection);
+        query.setParameter("processingGroup", selection.processingGroup());
         List<?> results = query.getResultList();
         return results.stream().map(EventOutbox.class::cast).toList();
     }
@@ -50,44 +49,12 @@ public class EventOutboxQueryRepository implements LoadOutboxBacklogPort {
                    COUNT(*) FILTER (WHERE status = 'PROCESSING'),
                    COALESCE(GREATEST(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - MIN(created_at))), 0), 0)
             FROM event_outbox
-            WHERE status IN ('PENDING', 'PROCESSING') AND (%s)
-            """.formatted(selectionPredicate(selection)));
-        bindSelection(query, selection);
+            WHERE status IN ('PENDING', 'PROCESSING') AND processing_group = :processingGroup
+            """);
+        query.setParameter("processingGroup", selection.processingGroup());
         Object[] row = (Object[])query.getSingleResult();
         return new OutboxBacklog(((Number)row[0]).longValue(), ((Number)row[1]).longValue(),
             ((Number)row[2]).doubleValue());
-    }
-
-    private String selectionPredicate(OutboxEventSelection selection) {
-        List<String> conditions = new ArrayList<>();
-        if (!selection.includedTypes().isEmpty()) {
-            conditions.add("event_type IN (:includedTypes)");
-        }
-        String fallback = switch (selection.prefixMatch()) {
-            case MATCH -> "event_type LIKE :prefixPattern";
-            case NOT_MATCH -> "event_type NOT LIKE :prefixPattern";
-            case NONE -> null;
-        };
-        if (fallback != null) {
-            if (!selection.overriddenTypes().isEmpty()) {
-                fallback += " AND event_type NOT IN (:overriddenTypes)";
-            }
-            conditions.add("(" + fallback + ")");
-        }
-        return conditions.isEmpty() ? "FALSE" : String.join(" OR ", conditions);
-    }
-
-    private void bindSelection(Query query, OutboxEventSelection selection) {
-        if (!selection.includedTypes().isEmpty()) {
-            query.setParameter("includedTypes", selection.includedTypes());
-        }
-        if (selection.prefixMatch() != OutboxEventSelection.PrefixMatch.NONE) {
-            query.setParameter("prefixPattern", selection.prefix() + "%");
-        }
-        if (selection.prefixMatch() != OutboxEventSelection.PrefixMatch.NONE
-            && !selection.overriddenTypes().isEmpty()) {
-            query.setParameter("overriddenTypes", selection.overriddenTypes());
-        }
     }
 
 }

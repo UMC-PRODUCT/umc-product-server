@@ -32,13 +32,16 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.OptimisticLockException;
 
-@Import(EventOutboxQueryRepository.class)
+@Import({EventOutboxQueryRepository.class, EventOutboxPersistenceAdapter.class, OutboxRoutingConfig.class})
 @PersistenceAdapterTest
 @DisplayName("EventOutboxJpaRepository")
 class EventOutboxJpaRepositoryTest {
 
     @Autowired
     private EventOutboxQueryRepository queryRepository;
+
+    @Autowired
+    private EventOutboxPersistenceAdapter persistenceAdapter;
 
     private static final Instant NOW = Instant.parse("2026-07-13T00:00:00Z");
 
@@ -71,6 +74,65 @@ class EventOutboxJpaRepositoryTest {
         assertThat(result)
             .extracting(EventOutbox::getEventId)
             .containsExactly(earlierEventId, laterEventId);
+    }
+
+    @Test
+    @DisplayName("단건과 일괄 저장 시 타입 규칙으로 처리 그룹을 기록한다")
+    void 저장할_때_처리_그룹_확정() {
+        // Given
+        EventOutbox chat = EventOutbox.record(RoutedEvent.create("chat.message.created"), "{}");
+        EventOutbox lifecycle = EventOutbox.record(RoutedEvent.create("community.thread.invited"), "{}");
+        EventOutbox notification = EventOutbox.record(RoutedEvent.create("community.thread.message.created"), "{}");
+
+        // When
+        persistenceAdapter.save(chat);
+        persistenceAdapter.saveAll(List.of(lifecycle, notification));
+        entityManager.flush();
+        entityManager.clear();
+
+        // Then
+        assertThat(repository.findById(chat.getId()).orElseThrow().getProcessingGroup()).isEqualTo("realtime");
+        assertThat(repository.findById(lifecycle.getId()).orElseThrow().getProcessingGroup()).isEqualTo("realtime");
+        assertThat(repository.findById(notification.getId()).orElseThrow().getProcessingGroup())
+            .isEqualTo("background");
+    }
+
+    @Test
+    @DisplayName("알림 적체가 있어도 실시간 선점 조건은 그룹 인덱스로 탐색할 수 있다")
+    void 그룹별_인덱스_탐색() {
+        // Given
+        entityManager.createNativeQuery("""
+            INSERT INTO event_outbox (
+                event_id, event_type, event_class, payload, status, attempts,
+                next_attempt_at, created_at, updated_at
+            )
+            SELECT gen_random_uuid(), 'notification.fcm.batch.requested', 'test.Event',
+                   '{}'::jsonb, 'PENDING', 0, :at, :at, :at
+            FROM generate_series(1, 2000)
+            """).setParameter("at", NOW.minusSeconds(60)).executeUpdate();
+        UUID chat = insertOutbox("chat.message.created", "PENDING", NOW.minusSeconds(1));
+        entityManager.flush();
+        // 작은 테스트 데이터에서도 그룹 인덱스의 사용 가능 여부를 검증한다.
+        entityManager.createNativeQuery("SET LOCAL enable_seqscan = off").executeUpdate();
+
+        // When
+        List<?> plan = entityManager.createNativeQuery("""
+            EXPLAIN (ANALYZE, BUFFERS)
+            SELECT * FROM event_outbox
+            WHERE status IN ('PENDING', 'PROCESSING')
+              AND processing_group = 'realtime'
+              AND next_attempt_at <= :now
+            ORDER BY next_attempt_at, id
+            FOR UPDATE SKIP LOCKED
+            LIMIT 1
+            """).setParameter("now", NOW).getResultList();
+
+        // Then
+        String executionPlan = String.join("\n", plan.stream().map(Object::toString).toList());
+        assertThat(executionPlan).contains("idx_event_outbox_group_publishable", "Index Cond:", "processing_group");
+        assertThat(queryRepository.findPublishableForUpdate(
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.REALTIME), 1, NOW
+        )).extracting(EventOutbox::getEventId).containsExactly(chat);
     }
 
     @Test
@@ -140,6 +202,9 @@ class EventOutboxJpaRepositoryTest {
             ), "chat.", OutboxProcessingGroup.REALTIME
         );
         UUID statistics = insertOutbox("chat.statistics.created", "PENDING", NOW.minusSeconds(10));
+        entityManager.createNativeQuery("UPDATE event_outbox SET processing_group = 'analytics' WHERE event_id = :id")
+            .setParameter("id", statistics)
+            .executeUpdate();
         UUID chat = insertOutbox("chat.message.created", "PENDING", NOW.minusSeconds(5));
         UUID unknown = insertOutbox("unknown.created", "PENDING", NOW.minusSeconds(1));
 
@@ -180,10 +245,7 @@ class EventOutboxJpaRepositoryTest {
         Long second = persist(EventOutbox.record(TestEvent.create(), "{}"));
         CountDownLatch claimed = new CountDownLatch(2);
         CountDownLatch release = new CountDownLatch(1);
-        var selection = new com.umc.product.global.event.application.port.out.OutboxEventSelection(
-            Set.of("test.event"), Set.of("test.event"), "chat.",
-            com.umc.product.global.event.application.port.out.OutboxEventSelection.PrefixMatch.NONE
-        );
+        var selection = new com.umc.product.global.event.application.port.out.OutboxEventSelection("background");
         var executor = Executors.newFixedThreadPool(2);
         java.util.concurrent.Callable<List<Long>> claim = () -> new TransactionTemplate(transactionManager)
             .execute(status -> {
@@ -270,6 +332,13 @@ class EventOutboxJpaRepositoryTest {
             .setParameter("updatedAt", NOW)
             .executeUpdate();
         return eventId;
+    }
+
+    private record RoutedEvent(UUID eventId, Instant occurredAt, String eventType) implements DomainEvent {
+
+        private static RoutedEvent create(String eventType) {
+            return new RoutedEvent(UUID.randomUUID(), Instant.now(), eventType);
+        }
     }
 
     private record TestEvent(UUID eventId, Instant occurredAt) implements DomainEvent {

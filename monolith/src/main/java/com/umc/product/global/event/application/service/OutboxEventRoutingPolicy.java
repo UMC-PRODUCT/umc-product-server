@@ -5,12 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+import com.umc.product.global.event.application.port.in.ResolveOutboxProcessingGroupUseCase;
 import com.umc.product.global.event.application.port.out.OutboxEventSelection;
-import com.umc.product.global.event.application.port.out.OutboxEventSelection.PrefixMatch;
 
-public final class OutboxEventRoutingPolicy {
+public final class OutboxEventRoutingPolicy implements ResolveOutboxProcessingGroupUseCase {
 
     private final Set<OutboxProcessingGroup> groups;
     private final OutboxProcessingGroup defaultGroup;
@@ -61,17 +60,16 @@ public final class OutboxEventRoutingPolicy {
         return eventType.startsWith(prefix) ? prefixGroup : defaultGroup;
     }
 
+    @Override
+    public String resolveProcessingGroup(String eventType) {
+        return resolve(eventType).name();
+    }
+
     public OutboxEventSelection selectionFor(OutboxProcessingGroup group) {
         if (!groups.contains(group)) {
             throw new IllegalArgumentException("등록되지 않은 처리 그룹입니다.");
         }
-        Set<String> included = eventTypes.entrySet().stream()
-            .filter(entry -> entry.getValue().equals(group))
-            .map(Map.Entry::getKey)
-            .collect(Collectors.toUnmodifiableSet());
-        PrefixMatch match = group.equals(prefixGroup) ? PrefixMatch.MATCH
-            : group.equals(defaultGroup) ? PrefixMatch.NOT_MATCH : PrefixMatch.NONE;
-        return new OutboxEventSelection(included, eventTypes.keySet(), prefix, match);
+        return new OutboxEventSelection(group.name());
     }
 
     public Set<OutboxProcessingGroup> groups() {

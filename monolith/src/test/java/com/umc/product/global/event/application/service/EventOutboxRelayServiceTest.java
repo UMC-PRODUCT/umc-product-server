@@ -93,8 +93,7 @@ class EventOutboxRelayServiceTest {
 
         relayService.relay(
             OutboxProcessingGroup.BACKGROUND,
-            new OutboxEventSelection(java.util.Set.of(), java.util.Set.of(), "chat.",
-                OutboxEventSelection.PrefixMatch.NOT_MATCH), 1
+            new OutboxEventSelection("background"), 1
         );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PUBLISHED);
@@ -162,8 +161,7 @@ class EventOutboxRelayServiceTest {
 
         relayService.relay(
             OutboxProcessingGroup.BACKGROUND,
-            new OutboxEventSelection(java.util.Set.of(), java.util.Set.of(), "chat.",
-                OutboxEventSelection.PrefixMatch.NOT_MATCH), 1
+            new OutboxEventSelection("background"), 1
         );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
@@ -455,13 +453,9 @@ class EventOutboxRelayServiceTest {
             OutboxEventSelection selection,
             int limit, Instant now
         ) {
-            return outboxes.stream().filter(outbox -> selection.includedTypes().contains(outbox.getEventType())
-                || (!selection.overriddenTypes().contains(outbox.getEventType())
-                    && switch (selection.prefixMatch()) {
-                        case MATCH -> outbox.getEventType().startsWith(selection.prefix());
-                        case NOT_MATCH -> !outbox.getEventType().startsWith(selection.prefix());
-                        case NONE -> false;
-                    }))
+            var policy = new com.umc.product.global.config.OutboxRoutingConfig().outboxEventRoutingPolicy();
+            return outboxes.stream().filter(outbox ->
+                policy.resolveProcessingGroup(outbox.getEventType()).equals(selection.processingGroup()))
                 .limit(limit).toList();
         }
     }

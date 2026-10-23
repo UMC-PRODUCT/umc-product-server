@@ -14,7 +14,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import com.umc.product.global.config.OutboxRoutingConfig;
 import com.umc.product.global.event.application.port.out.OutboxEventSelection;
-import com.umc.product.global.event.application.port.out.OutboxEventSelection.PrefixMatch;
 import com.umc.product.global.event.application.service.OutboxEventRoutingPolicy.Rule;
 
 @DisplayName("Outbox 이벤트 처리 그룹 분류")
@@ -33,24 +32,15 @@ class OutboxEventRoutingPolicyTest {
 
         assertThat(policy.resolve("report.created")).isEqualTo(analytics);
         assertThat(policy.resolve("chat.message.created")).isEqualTo(BACKGROUND);
-        assertThat(policy.selectionFor(analytics).prefix()).isEqualTo("report.");
-        assertThat(policy.selectionFor(analytics).prefixMatch())
-            .isEqualTo(PrefixMatch.MATCH);
+        assertThat(policy.selectionFor(analytics).processingGroup()).isEqualTo("analytics");
     }
 
-    @Test
-    @DisplayName("조회 조건은 잘못된 접두사와 일관되지 않은 명시적 타입을 거부한다")
-    void 잘못된_조회조건_거부() {
-        assertThatIllegalArgumentException().isThrownBy(() ->
-            new OutboxEventSelection(
-                Set.of(), Set.of(), "chat.%",
-                PrefixMatch.MATCH
-            ));
-        assertThatIllegalArgumentException().isThrownBy(() ->
-            new OutboxEventSelection(
-                Set.of("test.created"), Set.of(), "chat.",
-                PrefixMatch.MATCH
-            ));
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"REALTIME", "chat.%", " realtime"})
+    @DisplayName("조회 조건은 잘못된 처리 그룹 이름을 거부한다")
+    void 잘못된_조회조건_거부(String group) {
+        assertThatIllegalArgumentException().isThrownBy(() -> new OutboxEventSelection(group));
     }
 
     @ParameterizedTest

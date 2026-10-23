@@ -136,7 +136,10 @@ Firebase API를 호출하는 batch 발송 이벤트는 `NON_TRANSACTIONAL`이 �
 ## 처리 그룹과 실행 격리
 
 `event_outbox` 테이블은 공용으로 유지한다. `OutboxRoutingConfig`의 분류를
-`OutboxEventRoutingPolicy`가 해석하며, 조회 시점에 각 그룹의 이벤트만 선점한다.
+`OutboxEventRoutingPolicy`가 해석하며, 최초 저장 시 분류 결과를 `processing_group`에 기록한다.
+선점과 적체 집계는 저장된 그룹을 동등 조건으로 조회한다.
+`PENDING`, `PROCESSING`만 포함하는 `(processing_group, next_attempt_at, id)` 부분 인덱스로
+해당 그룹 안에서 시간순으로 탐색하므로 다른 그룹의 적체를 필터링하며 읽지 않는다.
 정확한 이벤트 타입 매핑이 기본 접두사 규칙보다 우선한다.
 
 - REALTIME: 기본 `chat.` 이벤트, Community의 updated/deleted/invited/member.left/member.kicked 이벤트.
@@ -156,9 +159,13 @@ executor 거절이나 배치 예외 뒤에도 다음 polling에서 다시 시도
 각각 덮어쓸 수 있다. 폴링 주기는 Worker 완료 시각이 아니라 짧은 실행 요청 메서드 반환을 기준으로 한다.
 `relay-enabled=false`는 두 폴링을 중지하지만 publisher의 저장은 계속된다.
 
-새 이벤트는 기존 그룹이면 라우팅 설정만 수정한다. 새 그룹이 필요하면 라우팅 등록과 함께
+새 이벤트는 기존 그룹이면 라우팅 설정을 수정한다. 라우팅 규칙 변경은 이후 저장되는 이벤트부터 적용되며,
+기존 미완료 이벤트도 재분류하려면 relay를 중지하고 별도 데이터 마이그레이션을 수행한다.
+순차 배포 중 그룹을 보내지 않는 구버전 writer를 위해 `assign_event_outbox_processing_group` 트리거가
+현재 기본 분류를 적용하므로, 규칙 변경 시 이 함수도 함께 갱신한다.
+구버전 writer가 모두 제거된 뒤 트리거 제거는 별도 마이그레이션으로 진행할 수 있다. 새 그룹이 필요하면 라우팅 등록과 함께
 Worker·전용 executor·폴링 등록을 추가한다. 그룹 등록만으로 Worker가 자동 생성되지는 않는다.
-각 그룹은 반드시 겹치지 않는 조건으로 조회해야 하며 조건 생성과 적체 집계가 같은 분류를 사용한다.
+각 그룹은 고유한 이름을 사용하며 선점과 적체 집계는 같은 `processing_group` 조건을 사용한다.
 
 ## 관측 지표
 
@@ -187,9 +194,12 @@ Timer percentile histogram은 배포 환경의 Micrometer distribution 설정으
 구버전 폴러는 그룹 구분 없이 선점하므로 rolling deploy 중에는 실행 격리가 보장되지 않는다.
 
 1. 모든 인스턴스의 기존 relay를 중지하고 실행 중인 배치가 종료되었는지 확인한다.
-2. 새 코드를 relay 비활성 상태로 배포한다. 업무 요청의 Outbox 적재는 유지한다.
-3. 라우팅 목록과 그룹별 미처리 이벤트를 확인한 뒤 새 인스턴스에서 relay를 활성화한다.
-4. backlog/oldest age, 재시도/FAILED, 채팅 전달 지연을 확인한다.
+2. `V2026.10.23.00.00__add_event_outbox_processing_group.sql`을 먼저 적용한다.
+   기존 데이터 분류와 인덱스 생성을 수행하므로 테이블 크기에 따른 잠금·실행 시간을 사전 확인한다.
+   구버전 writer도 트리거로 분류되고 기존 시간순 인덱스는 유지되어 롤백할 수 있다.
+3. 새 코드를 relay 비활성 상태로 배포한다. 업무 요청의 Outbox 적재는 유지한다.
+4. 라우팅 목록과 그룹별 미처리 이벤트를 확인한 뒤 새 인스턴스에서 relay를 활성화한다.
+5. backlog/oldest age, 재시도/FAILED, 채팅 전달 지연을 확인한다.
 
 롤백도 신규 Worker 중지와 배치 종료 확인 후 구버전 relay를 활성화한다.
 강제 중단된 배치는 최대 5분 lease 대기가 생길 수 있으며 상태를 임의로 PUBLISHED로 바꾸지 않는다.
