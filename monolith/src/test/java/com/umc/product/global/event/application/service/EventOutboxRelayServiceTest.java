@@ -20,9 +20,11 @@ import org.springframework.transaction.support.DefaultTransactionStatus;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.global.config.OutboxRoutingConfig;
 import com.umc.product.global.event.adapter.out.EventPayloadDeserializer;
 import com.umc.product.global.event.adapter.out.EventPayloadSerializer;
 import com.umc.product.global.event.application.port.out.LoadEventOutboxPort;
+import com.umc.product.global.event.application.port.out.OutboxEventSelection;
 import com.umc.product.global.event.application.port.out.SaveEventOutboxPort;
 import com.umc.product.global.event.domain.DomainEvent;
 import com.umc.product.global.event.domain.EventOutbox;
@@ -53,11 +55,46 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
+
+        assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PUBLISHED);
+        assertThat(publisher.events).hasSize(1);
+        assertThat(publisher.events.getFirst()).isInstanceOf(TestEvent.class);
+        assertThat(((TestEvent) publisher.events.getFirst()).message()).isEqualTo("hello");
+        assertThat(savePort.savedStatuses).contains(EventOutboxStatus.PROCESSING, EventOutboxStatus.PUBLISHED);
+    }
+
+    @Test
+    @DisplayName("그룹별 실행도 기존 발행과 완료 기록을 유지한다")
+    void 그룹별_relay_성공() {
+        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        EventPayloadSerializer serializer = new EventPayloadSerializer(objectMapper);
+        TestEvent event = TestEvent.create("test.created", "hello");
+        EventOutbox outbox = EventOutbox.record(event, serializer.serialize(event));
+        FakeLoadEventOutboxPort loadPort = new FakeLoadEventOutboxPort(List.of(outbox));
+        FakeSaveEventOutboxPort savePort = new FakeSaveEventOutboxPort();
+        CapturingApplicationEventPublisher publisher = new CapturingApplicationEventPublisher();
+        EventOutboxRelayService relayService = new EventOutboxRelayService(
+            loadPort,
+            savePort,
+            new EventPayloadDeserializer(objectMapper),
+            publisher,
+            new LocalTransactionManager(),
+            Tracer.NOOP,
+            3
+        );
+
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxEventSelection("background"), 1
+        );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PUBLISHED);
         assertThat(publisher.events).hasSize(1);
@@ -85,11 +122,47 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
+
+        assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
+        assertThat(outbox.getAttempts()).isEqualTo(1);
+        assertThat(outbox.getLastError()).contains("publish failed");
+        assertThat(savePort.savedStatuses).contains(EventOutboxStatus.PROCESSING, EventOutboxStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("그룹별 실행 실패도 기존 재시도 상태로 기록한다")
+    void 그룹별_relay_실패_재시도() {
+        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        EventPayloadSerializer serializer = new EventPayloadSerializer(objectMapper);
+        TestEvent event = TestEvent.create("test.created", "hello");
+        EventOutbox outbox = EventOutbox.record(event, serializer.serialize(event));
+        FakeLoadEventOutboxPort loadPort = new FakeLoadEventOutboxPort(List.of(outbox));
+        FakeSaveEventOutboxPort savePort = new FakeSaveEventOutboxPort();
+        ApplicationEventPublisher publisher = ignored -> {
+            throw new IllegalStateException("publish failed");
+        };
+        EventOutboxRelayService relayService = new EventOutboxRelayService(
+            loadPort,
+            savePort,
+            new EventPayloadDeserializer(objectMapper),
+            publisher,
+            new LocalTransactionManager(),
+            Tracer.NOOP,
+            3
+        );
+
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxEventSelection("background"), 1
+        );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
         assertThat(outbox.getAttempts()).isEqualTo(1);
@@ -117,11 +190,14 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             2
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.FAILED);
         assertThat(outbox.getAttempts()).isEqualTo(2);
@@ -148,11 +224,14 @@ class EventOutboxRelayServiceTest {
             new CapturingApplicationEventPublisher(),
             new LocalTransactionManager(),
             tracer,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         SimpleSpan relaySpan = tracer.getSpans().stream()
             .filter(span -> "outbox.relay.publish".equals(span.getName()))
@@ -181,11 +260,14 @@ class EventOutboxRelayServiceTest {
             new CapturingApplicationEventPublisher(),
             new LocalTransactionManager(),
             tracer,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         SimpleSpan relaySpan = tracer.getSpans().stream()
             .filter(span -> "outbox.relay.publish".equals(span.getName()))
@@ -212,11 +294,14 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
         assertThat(outbox.getAttempts()).isEqualTo(1);
@@ -242,11 +327,14 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(transactionActiveDuringPublish).isFalse();
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PUBLISHED);
@@ -271,11 +359,14 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
         assertThat(outbox.getAttempts()).isEqualTo(1);
@@ -299,11 +390,14 @@ class EventOutboxRelayServiceTest {
             publisher,
             new LocalTransactionManager(),
             Tracer.NOOP,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(publisher.events).hasSize(1);
         assertThat(savePort.savedStatuses).containsExactly(EventOutboxStatus.PROCESSING);
@@ -355,8 +449,14 @@ class EventOutboxRelayServiceTest {
         }
 
         @Override
-        public List<EventOutbox> listPublishable(int limit, Instant now) {
-            return outboxes;
+        public List<EventOutbox> listPublishable(
+            OutboxEventSelection selection,
+            int limit, Instant now
+        ) {
+            var policy = new com.umc.product.global.config.OutboxRoutingConfig().outboxEventRoutingPolicy();
+            return outboxes.stream().filter(outbox ->
+                policy.resolveProcessingGroup(outbox.getEventType()).equals(selection.processingGroup()))
+                .limit(limit).toList();
         }
     }
 

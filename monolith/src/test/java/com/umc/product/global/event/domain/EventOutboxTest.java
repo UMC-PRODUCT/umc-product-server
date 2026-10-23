@@ -1,6 +1,7 @@
 package com.umc.product.global.event.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -37,6 +38,24 @@ class EventOutboxTest {
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.FAILED);
         assertThat(outbox.getAttempts()).isEqualTo(2);
         assertThat(outbox.getLastError()).isEqualTo("second");
+    }
+
+    @Test
+    @DisplayName("처리 그룹은 재시도와 완료 상태 저장 중에도 유지된다")
+    void 처리_그룹_유지() {
+        // Given
+        EventOutbox outbox = EventOutbox.record(TestEvent.create("chat.message.created"), "{}");
+        outbox.assignProcessingGroup("realtime");
+
+        // When
+        outbox.markProcessing(Instant.now().plusSeconds(300));
+        outbox.recordFailure("일시 오류", Instant.now(), 3);
+        outbox.assignProcessingGroup("realtime");
+        outbox.markPublished();
+
+        // Then
+        assertThat(outbox.getProcessingGroup()).isEqualTo("realtime");
+        assertThatIllegalStateException().isThrownBy(() -> outbox.assignProcessingGroup("background"));
     }
 
     private record TestEvent(

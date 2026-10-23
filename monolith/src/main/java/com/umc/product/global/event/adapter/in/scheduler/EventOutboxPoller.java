@@ -1,12 +1,11 @@
 package com.umc.product.global.event.adapter.in.scheduler;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.umc.product.global.event.application.service.EventOutboxRelayService;
-
-import lombok.RequiredArgsConstructor;
+import com.umc.product.global.event.application.service.OutboxWorker;
 
 @Component
 @ConditionalOnProperty(
@@ -15,13 +14,28 @@ import lombok.RequiredArgsConstructor;
     havingValue = "true",
     matchIfMissing = true
 )
-@RequiredArgsConstructor
 public class EventOutboxPoller {
 
-    private final EventOutboxRelayService relayService;
+    private final OutboxWorker realtimeWorker;
+    private final OutboxWorker backgroundWorker;
 
-    @Scheduled(fixedDelayString = "${app.event-outbox.poll-interval-ms:1000}")
-    public void poll() {
-        relayService.relay();
+    public EventOutboxPoller(
+        @Qualifier("realtimeOutboxWorker") OutboxWorker realtimeWorker,
+        @Qualifier("backgroundOutboxWorker") OutboxWorker backgroundWorker
+    ) {
+        this.realtimeWorker = realtimeWorker;
+        this.backgroundWorker = backgroundWorker;
+    }
+
+    @Scheduled(fixedDelayString =
+        "${app.event-outbox.workers.realtime.poll-interval-ms:${app.event-outbox.poll-interval-ms:1000}}")
+    public void pollRealtime() {
+        realtimeWorker.requestRun();
+    }
+
+    @Scheduled(fixedDelayString =
+        "${app.event-outbox.workers.background.poll-interval-ms:${app.event-outbox.poll-interval-ms:1000}}")
+    public void pollBackground() {
+        backgroundWorker.requestRun();
     }
 }

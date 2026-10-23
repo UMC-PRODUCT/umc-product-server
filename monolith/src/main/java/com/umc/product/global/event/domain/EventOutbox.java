@@ -41,6 +41,10 @@ public class EventOutbox extends BaseEntity {
     @Column(name = "event_type", nullable = false, length = 150)
     private String eventType;
 
+    // 구버전 애플리케이션과의 순차 배포 중에는 DB 트리거가 누락된 그룹을 채운다.
+    @Column(name = "processing_group", length = 50)
+    private String processingGroup;
+
     @Column(name = "event_class", nullable = false, length = 300)
     private String eventClass;
 
@@ -105,6 +109,17 @@ public class EventOutbox extends BaseEntity {
             Instant.now(),
             traceparent
         );
+    }
+
+    public void assignProcessingGroup(String processingGroup) {
+        if (processingGroup == null || processingGroup.length() > 50
+            || !processingGroup.matches("[a-z][a-z0-9-]*")) {
+            throw new IllegalArgumentException("유효한 outbox 처리 그룹이 필요합니다.");
+        }
+        if (this.processingGroup != null && !this.processingGroup.equals(processingGroup)) {
+            throw new IllegalStateException("저장된 outbox 처리 그룹은 변경할 수 없습니다.");
+        }
+        this.processingGroup = processingGroup;
     }
 
     public void markPublished() {
