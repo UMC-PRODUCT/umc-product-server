@@ -57,6 +57,9 @@ public class ProjectApplicationAccessScopeResolver {
      * </ul>
      * 그 외엔 {@link None} 반환 — 호출 측이 빈 목록 처리하여 권한 부재를 '지원자 0건' 으로 위장한다.
      * <p>
+     * 진행 중인 차수(지원 기간 중)의 노출 범위는 역할마다 다르다. PO·보조 PM은 제출된 지원자 목록을 실시간으로 보되 지원서 내용은
+     * 지원 마감 후에 열람하고, SUPER_ADMIN·같은 기수 Central Core 는 목록과 내용 모두 즉시 본다. 지부장·학교 회장단은 둘 다 지원 마감 후다.
+     * <p>
      * {@code project} 는 호출자(서비스 단)가 사전 로드한 인스턴스를 그대로 전달받는다. 동일 트랜잭션 내 중복 조회를 피하기 위함.
      */
     public ProjectApplicationAccessScope resolveForProjectApplicantList(Long memberId, Project project) {
@@ -64,7 +67,7 @@ public class ProjectApplicationAccessScopeResolver {
 
         if (Objects.equals(project.getProductOwnerMemberId(), memberId)
             || loadProjectMemberPort.isActivePlanMember(projectId, memberId)) {
-            return new ProjectScoped(projectId);
+            return new ProjectScoped(projectId, true, false);
         }
 
         if (getChallengerRoleUseCase.isSuperAdmin(memberId)) {
@@ -136,7 +139,7 @@ public class ProjectApplicationAccessScopeResolver {
             Long projectId = project.getId();
             if (Objects.equals(project.getProductOwnerMemberId(), memberId)
                 || activePlanProjectIds.contains(projectId)) {
-                result.put(projectId, new ProjectScoped(projectId));
+                result.put(projectId, new ProjectScoped(projectId, true, false));
                 continue;
             }
 

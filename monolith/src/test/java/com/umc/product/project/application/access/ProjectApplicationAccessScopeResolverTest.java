@@ -105,7 +105,9 @@ class ProjectApplicationAccessScopeResolverTest {
 
         assertThat(scope).isInstanceOf(ProjectScoped.class);
         assertThat(((ProjectScoped) scope).projectId()).isEqualTo(PROJECT_ID);
-        assertThat(((ProjectScoped) scope).includeOngoingMatchingRounds()).isFalse();
+        // PO 는 지원 기간 중에도 제출된 지원자 목록은 실시간으로 보지만, 지원서 내용 열람은 지원 마감 후다.
+        assertThat(((ProjectScoped) scope).includeOngoingMatchingRounds()).isTrue();
+        assertThat(((ProjectScoped) scope).includeOngoingApplicationDetails()).isFalse();
     }
 
     @Test
@@ -118,6 +120,8 @@ class ProjectApplicationAccessScopeResolverTest {
             sut.resolveForProjectApplicantList(MEMBER_ID, project);
 
         assertThat(scope).isInstanceOf(ProjectScoped.class);
+        assertThat(((ProjectScoped) scope).includeOngoingMatchingRounds()).isTrue();
+        assertThat(((ProjectScoped) scope).includeOngoingApplicationDetails()).isFalse();
     }
 
     @Test
@@ -132,6 +136,7 @@ class ProjectApplicationAccessScopeResolverTest {
 
         assertThat(scope).isInstanceOf(ProjectScoped.class);
         assertThat(((ProjectScoped) scope).includeOngoingMatchingRounds()).isTrue();
+        assertThat(((ProjectScoped) scope).includeOngoingApplicationDetails()).isTrue();
     }
 
     @Test
@@ -148,6 +153,7 @@ class ProjectApplicationAccessScopeResolverTest {
 
         assertThat(scope).isInstanceOf(ProjectScoped.class);
         assertThat(((ProjectScoped) scope).includeOngoingMatchingRounds()).isTrue();
+        assertThat(((ProjectScoped) scope).includeOngoingApplicationDetails()).isTrue();
     }
 
     // --- 지부장 ---
@@ -166,6 +172,7 @@ class ProjectApplicationAccessScopeResolverTest {
 
         assertThat(scope).isInstanceOf(ProjectScoped.class);
         assertThat(((ProjectScoped) scope).includeOngoingMatchingRounds()).isTrue();
+        assertThat(((ProjectScoped) scope).includeOngoingApplicationDetails()).isTrue();
     }
 
     @Test
@@ -385,9 +392,9 @@ class ProjectApplicationAccessScopeResolverTest {
 
         // then
         assertThat(result.keySet()).containsExactly(100L, 101L, 102L, 103L);
-        assertThat(result.get(100L)).isEqualTo(new ProjectScoped(100L));
-        assertThat(result.get(101L)).isEqualTo(new ProjectScoped(101L));
-        assertThat(result.get(102L)).isEqualTo(new ProjectScoped(102L, true));
+        assertThat(result.get(100L)).isEqualTo(new ProjectScoped(100L, true, false));
+        assertThat(result.get(101L)).isEqualTo(new ProjectScoped(101L, true, false));
+        assertThat(result.get(102L)).isEqualTo(new ProjectScoped(102L, true, true));
         assertThat(result.get(103L)).isInstanceOf(None.class);
     }
 

@@ -18,12 +18,27 @@ public sealed interface ProjectApplicationAccessScope {
 
     /**
      * 특정 프로젝트의 지원서만 (PO/Sub-PM/CC/지부장/학교장의 "이 프로젝트 지원자 목록")
+     * <p>
+     * 두 플래그는 "지원 기간이 아직 안 끝난 차수"를 얼마나 보여줄지를 나눈다.
+     * <ul>
+     *   <li>{@code includeOngoingMatchingRounds}: 지원자 <b>목록</b>에 진행 중인 차수의 지원서를 포함한다.</li>
+     *   <li>{@code includeOngoingApplicationDetails}: 진행 중인 차수 지원서의 <b>내용</b>(답변·첨부)까지 열람한다.</li>
+     * </ul>
+     * PM·보조 PM은 지원 기간에도 제출된 지원자 목록은 실시간으로 보지만, 지원서 열람은 지원 마감 후부터다.
+     * 최고관리자와 같은 기수 총괄단은 둘 다 가능하다.
      */
-    record ProjectScoped(Long projectId, boolean includeOngoingMatchingRounds)
-        implements ProjectApplicationAccessScope {
+    record ProjectScoped(
+        Long projectId,
+        boolean includeOngoingMatchingRounds,
+        boolean includeOngoingApplicationDetails
+    ) implements ProjectApplicationAccessScope {
 
         public ProjectScoped(Long projectId) {
-            this(projectId, false);
+            this(projectId, false, false);
+        }
+
+        public ProjectScoped(Long projectId, boolean includeOngoing) {
+            this(projectId, includeOngoing, includeOngoing);
         }
     }
 
