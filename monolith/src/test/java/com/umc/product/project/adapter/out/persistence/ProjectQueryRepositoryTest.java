@@ -8,6 +8,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
@@ -453,6 +455,27 @@ class ProjectQueryRepositoryTest {
             .extracting(Project::getName)
             .contains("내 초안")
             .doesNotContain("다른 사람 초안");
+    }
+
+    @ParameterizedTest
+    @CsvSource({"PENDING_PUBLICATION, RECRUITING", "ACTIVE, COMPLETED"})
+    void 모집_상태는_발표된_멤버만_정원에_반영한다(ProjectMemberStatus memberStatus, PartQuotaStatus quotaStatus) {
+        // given
+        Project project = em.find(Project.class, alphaId);
+        em.persist(ProjectPartQuota.create(project, ChallengerPart.WEB_PRODUCT_ENGINEER, 1L, 999L));
+        ProjectMember member = ProjectMember.create(project, 50L, ChallengerPart.WEB_PRODUCT_ENGINEER, 999L);
+        ReflectionTestUtils.setField(member, "status", memberStatus);
+        em.persist(member);
+        em.flush();
+        em.clear();
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            gisuId, null, null, null, List.of(ChallengerPart.WEB_PRODUCT_ENGINEER), quotaStatus, PageRequest.of(0, 20));
+
+        // when
+        Page<Project> result = sut.search(query);
+
+        // then
+        assertThat(result.getContent()).extracting(Project::getId).containsExactly(alphaId);
     }
 
     // ========== Helper ==========
