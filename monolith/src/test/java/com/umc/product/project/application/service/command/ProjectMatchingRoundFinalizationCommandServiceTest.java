@@ -2,6 +2,7 @@ package com.umc.product.project.application.service.command;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -24,8 +25,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -42,7 +45,6 @@ import com.umc.product.challenger.application.port.in.query.dto.SearchChallenger
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
@@ -103,6 +105,9 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
     SearchChallengerUseCase searchChallengerUseCase;
     @Mock
     ProjectMatchingChapterResolver matchingChapterResolver;
+
+    @Captor
+    ArgumentCaptor<Collection<ProjectMember>> approvedMembersCaptor;
 
     ProjectMatchingRoundFinalizationCommandService sut;
 
@@ -166,10 +171,8 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
                 assertThat(app.getStatusChangedMemberId()).isEqualTo(1000L);
                 assertThat(app.getStatusChangeReason()).isEqualTo("PM 결정");
             }
-            @SuppressWarnings("unchecked")
-            ArgumentCaptor<Collection<ProjectMember>> captor = ArgumentCaptor.forClass(Collection.class);
-            then(saveProjectMemberPort).should().saveAll(captor.capture());
-            assertThat(captor.getValue()).singleElement().satisfies(member -> {
+            then(saveProjectMemberPort).should().saveAll(approvedMembersCaptor.capture());
+            assertThat(approvedMembersCaptor.getValue()).singleElement().satisfies(member -> {
                 assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.PENDING_PUBLICATION);
                 assertThat(member.getApplication()).isIn(app1, app2);
                 assertThat(member.getAssignedMatchingRound()).isSameAs(round);
@@ -585,73 +588,6 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
         }
 
         @ParameterizedTest
-        @EnumSource(MatchingType.class)
-        void 차수_유형에_맞는_파트만_4차에서_랜덤_매칭하고_PENDING_PUBLICATION으로_생성한다(MatchingType type) {
-            ChallengerPart targetPart = type == MatchingType.PLAN_DESIGN ? ChallengerPart.DESIGN : ChallengerPart.WEB;
-            ChallengerPart otherPart = type == MatchingType.PLAN_DESIGN ? ChallengerPart.WEB : ChallengerPart.DESIGN;
-            Instant now = Instant.now();
-            ProjectMatchingRound round = ProjectMatchingRound.create(
-                "랜덤 4차", null, type, MatchingPhase.FOURTH, 1L,
-                now.minusSeconds(60), now.plusSeconds(72000), now.plusSeconds(72000), now.plusSeconds(79200));
-            ReflectionTestUtils.setField(round, "id", ROUND_ID);
-            Project project = projectWithId(PROJECT_ID);
-
-            given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
-            given(loadProjectPort.listByChapterIdAndStatus(1L, ProjectStatus.IN_PROGRESS))
-                .willReturn(List.of(project));
-            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
-                .willReturn(Map.of(PROJECT_ID, List.of(
-                    partQuota(project, targetPart, 2L),
-                    partQuota(project, otherPart, 1L),
-                    partQuota(project, ChallengerPart.SPRINGBOOT, 1L)
-                )));
-            given(loadProjectMemberPort.countAssignedByProjectIdsGroupByProjectIdAndPart(any()))
-                .willReturn(Map.of(PROJECT_ID, Map.of(
-                    targetPart, 1L,
-                    ChallengerPart.SPRINGBOOT, 1L
-                )));
-            given(loadProjectMemberPort.listAssignedMemberIdsByGisuId(project.getGisuId()))
-                .willReturn(List.of(20L));
-            given(searchChallengerUseCase.cursorSearch(any(SearchChallengerQuery.class), isNull(), eq(500)))
-                .willReturn(new SearchChallengerCursorResult(
-                    List.of(
-                        searchCandidate(20L, targetPart),
-                        searchCandidate(31L, targetPart),
-                        searchCandidate(32L, otherPart),
-                        searchCandidate(33L, ChallengerPart.PLAN),
-                        searchCandidate(34L, ChallengerPart.SPRINGBOOT)
-                    ),
-                    null,
-                    false,
-                    Map.of()
-                ));
-
-            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
-
-            @SuppressWarnings("unchecked")
-            ArgumentCaptor<Collection<ProjectMember>> membersCaptor = ArgumentCaptor.forClass(Collection.class);
-            then(saveProjectMemberPort).should().saveAll(membersCaptor.capture());
-            assertThat(membersCaptor.getValue())
-                .extracting(ProjectMember::getMemberId)
-                .containsExactly(31L);
-            assertThat(membersCaptor.getValue())
-                .extracting(ProjectMember::getPart)
-                .containsExactly(targetPart);
-            assertThat(membersCaptor.getValue()).singleElement().satisfies(member -> {
-                assertThat(member.getAssignedMatchingRound()).isSameAs(round);
-                assertThat(member.getApplication()).isNull();
-                assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.PENDING_PUBLICATION);
-            });
-            assertThat(round.isAutoDecisionExecuted()).isTrue();
-            then(loadProjectApplicationPort).should(never()).listByMatchingRoundId(any());
-
-            ArgumentCaptor<SearchChallengerQuery> queryCaptor = ArgumentCaptor.forClass(SearchChallengerQuery.class);
-            then(searchChallengerUseCase).should().cursorSearch(queryCaptor.capture(), isNull(), eq(500));
-            assertThat(queryCaptor.getValue().statuses()).containsExactly(ChallengerStatus.ACTIVE);
-            assertThat(queryCaptor.getValue().chapterId()).isEqualTo(1L);
-        }
-
-        @ParameterizedTest
         @EnumSource(value = MatchingPhase.class, names = {"SECOND", "THIRD"})
         void 일반_차수_종료_후에는_잔여_TO_랜덤_매칭을_하지_않는다(MatchingPhase phase) {
             ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DEVELOPER, phase);
@@ -666,20 +602,190 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
         }
     }
 
-    @Test
-    void 개발자_4차_시작_전에는_랜덤_매칭을_실행할_수_없다() {
-        Instant startsAt = Instant.now().plusSeconds(3600);
-        ProjectMatchingRound round = ProjectMatchingRound.create(
-            "개발자 4차", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.FOURTH, 1L,
-            startsAt, startsAt.plusSeconds(72000), startsAt.plusSeconds(72000), startsAt.plusSeconds(79200));
-        given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
+    @Nested
+    class RandomAssignment {
 
-        assertThatThrownBy(() -> sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID))
-            .isInstanceOf(ProjectDomainException.class)
-            .extracting("baseCode")
-            .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FINALIZABLE);
-        then(searchChallengerUseCase).should(never()).cursorSearch(any(), any(), anyInt());
-        assertThat(round.isAutoDecisionExecuted()).isFalse();
+        @Captor
+        ArgumentCaptor<Collection<ProjectMember>> membersCaptor;
+
+        Project project;
+        ProjectMatchingRound round;
+
+        @BeforeEach
+        void prepareProject() {
+            project = projectWithId(PROJECT_ID);
+            ReflectionTestUtils.setField(project, "chapterId", 1L);
+            ReflectionTestUtils.setField(project, "status", ProjectStatus.IN_PROGRESS);
+            given(loadProjectPort.listByChapterIdAndStatus(1L, ProjectStatus.IN_PROGRESS))
+                .willReturn(List.of(project));
+        }
+
+        @ParameterizedTest
+        @CsvSource({
+            "PLAN_DESIGN, DESIGN, WEB_PRODUCT_ENGINEER",
+            "PLAN_DEVELOPER, WEB_PRODUCT_ENGINEER, DESIGN",
+            "PLAN_DEVELOPER, MOBILE_PRODUCT_ENGINEER, DESIGN"
+        })
+        void 매칭_유형에_해당하는_파트를_발표_대기_상태로_배정한다(
+            MatchingType type, ChallengerPart part, ChallengerPart otherPart
+        ) {
+            // given
+            givenRound(type);
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+                .willReturn(Map.of(PROJECT_ID, List.of(
+                    partQuota(project, part, 1L), partQuota(project, otherPart, 1L))));
+            givenCandidates(searchCandidate(31L, part), searchCandidate(32L, otherPart));
+
+            // when
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            // then
+            then(saveProjectMemberPort).should().saveAll(membersCaptor.capture());
+            assertThat(membersCaptor.getValue()).singleElement().satisfies(member -> {
+                assertThat(member.getMemberId()).isEqualTo(31L);
+                assertThat(member.getPart()).isEqualTo(part);
+                assertThat(member.getProject()).isSameAs(project);
+                assertThat(member.getAssignedMatchingRound()).isSameAs(round);
+                assertThat(member.getApplication()).isNull();
+                assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.PENDING_PUBLICATION);
+            });
+        }
+
+        @ParameterizedTest
+        @EnumSource(value = ChallengerPart.class, names = {"WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER"})
+        void 기존_배정_인원을_제외한_잔여_정원만큼만_배정한다(ChallengerPart part) {
+            // given
+            givenRound(MatchingType.PLAN_DEVELOPER);
+            givenQuota(part, 2L);
+            given(loadProjectMemberPort.countAssignedByProjectIdsGroupByProjectIdAndPart(any()))
+                .willReturn(Map.of(PROJECT_ID, Map.of(part, 1L)));
+            givenCandidates(searchCandidate(31L, part), searchCandidate(32L, part));
+
+            // when
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            // then
+            then(saveProjectMemberPort).should().saveAll(membersCaptor.capture());
+            assertThat(membersCaptor.getValue()).singleElement().satisfies(member -> {
+                assertThat(member.getMemberId()).isIn(31L, 32L);
+                assertThat(member.getPart()).isEqualTo(part);
+            });
+        }
+
+        @ParameterizedTest
+        @EnumSource(value = ChallengerPart.class, names = {"WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER"})
+        void 이미_배정된_회원은_빈자리가_있어도_다시_배정하지_않는다(ChallengerPart part) {
+            // given
+            givenRound(MatchingType.PLAN_DEVELOPER);
+            givenQuota(part, 2L);
+            given(loadProjectMemberPort.listAssignedMemberIdsByGisuId(GISU_ID)).willReturn(List.of(20L));
+            givenCandidates(searchCandidate(20L, part), searchCandidate(31L, part));
+
+            // when
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            // then
+            then(saveProjectMemberPort).should().saveAll(membersCaptor.capture());
+            assertThat(membersCaptor.getValue()).extracting(ProjectMember::getMemberId).containsExactly(31L);
+        }
+
+        @ParameterizedTest
+        @EnumSource(value = ChallengerPart.class, names = {"WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER"})
+        void 정원이_가득_차면_추가로_배정하지_않는다(ChallengerPart part) {
+            // given
+            givenRound(MatchingType.PLAN_DEVELOPER);
+            givenQuota(part, 1L);
+            given(loadProjectMemberPort.countAssignedByProjectIdsGroupByProjectIdAndPart(any()))
+                .willReturn(Map.of(PROJECT_ID, Map.of(part, 1L)));
+
+            // when
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            // then
+            then(saveProjectMemberPort).should(never()).saveAll(any());
+            assertThat(round.isAutoDecisionExecuted()).isTrue();
+        }
+
+        @Test
+        void 웹과_모바일_후보는_각자_파트의_정원이_있는_프로젝트에_배정한다() {
+            // given
+            givenRound(MatchingType.PLAN_DEVELOPER);
+            Project mobileProject = projectWithId(101L);
+            ReflectionTestUtils.setField(mobileProject, "chapterId", 1L);
+            ReflectionTestUtils.setField(mobileProject, "status", ProjectStatus.IN_PROGRESS);
+            given(loadProjectPort.listByChapterIdAndStatus(1L, ProjectStatus.IN_PROGRESS))
+                .willReturn(List.of(project, mobileProject));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+                .willReturn(Map.of(
+                    PROJECT_ID, List.of(partQuota(project, ChallengerPart.WEB_PRODUCT_ENGINEER, 1L)),
+                    101L, List.of(partQuota(mobileProject, ChallengerPart.MOBILE_PRODUCT_ENGINEER, 1L))));
+            givenCandidates(searchCandidate(31L, ChallengerPart.WEB_PRODUCT_ENGINEER),
+                searchCandidate(32L, ChallengerPart.MOBILE_PRODUCT_ENGINEER));
+
+            // when
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            // then
+            then(saveProjectMemberPort).should().saveAll(membersCaptor.capture());
+            assertThat(membersCaptor.getValue()).extracting(
+                    ProjectMember::getMemberId, member -> member.getProject().getId(), ProjectMember::getPart)
+                .containsExactlyInAnyOrder(
+                    tuple(31L, PROJECT_ID, ChallengerPart.WEB_PRODUCT_ENGINEER),
+                    tuple(32L, 101L, ChallengerPart.MOBILE_PRODUCT_ENGINEER));
+        }
+
+        @Test
+        void 실행한_4차를_다시_실행해도_추가로_저장하지_않는다() {
+            // given
+            givenRound(MatchingType.PLAN_DEVELOPER);
+            givenQuota(ChallengerPart.WEB_PRODUCT_ENGINEER, 2L);
+            givenCandidates(searchCandidate(31L, ChallengerPart.WEB_PRODUCT_ENGINEER));
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+            Instant executedAt = round.getAutoDecisionExecutedAt();
+
+            // when
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            // then
+            then(saveProjectMemberPort).should().saveAll(membersCaptor.capture());
+            assertThat(membersCaptor.getValue()).extracting(ProjectMember::getMemberId).containsExactly(31L);
+            assertThat(round.getAutoDecisionExecutedAt()).isEqualTo(executedAt);
+        }
+
+        @Test
+        void 개발자_4차_시작_전에는_랜덤_매칭을_실행할_수_없다() {
+            Instant startsAt = Instant.now().plusSeconds(3600);
+            ProjectMatchingRound round = ProjectMatchingRound.create(
+                "개발자 4차", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.FOURTH, 1L,
+                startsAt, startsAt.plusSeconds(72000), startsAt.plusSeconds(72000), startsAt.plusSeconds(79200));
+            given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
+
+            assertThatThrownBy(() -> sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FINALIZABLE);
+            then(searchChallengerUseCase).should(never()).cursorSearch(any(), any(), anyInt());
+            assertThat(round.isAutoDecisionExecuted()).isFalse();
+        }
+
+        private void givenRound(MatchingType type) {
+            Instant startsAt = Instant.now().minusSeconds(60);
+            round = ProjectMatchingRound.create("랜덤 4차", null, type, MatchingPhase.FOURTH, 1L,
+                startsAt, startsAt.plusSeconds(72000), startsAt.plusSeconds(72000), startsAt.plusSeconds(79200));
+            ReflectionTestUtils.setField(round, "id", ROUND_ID);
+            given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
+        }
+
+        private void givenQuota(ChallengerPart part, Long capacity) {
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+                .willReturn(Map.of(PROJECT_ID, List.of(partQuota(project, part, capacity))));
+        }
+
+        private void givenCandidates(SearchChallengerItemInfo... candidates) {
+            given(searchChallengerUseCase.cursorSearch(any(SearchChallengerQuery.class), isNull(), eq(500)))
+                .willReturn(new SearchChallengerCursorResult(List.of(candidates), null, false, Map.of()));
+        }
+
     }
 
     private ProjectMatchingRound expiredRound(MatchingType type) {

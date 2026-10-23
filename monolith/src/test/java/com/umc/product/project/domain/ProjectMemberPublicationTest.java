@@ -39,28 +39,12 @@ class ProjectMemberPublicationTest {
     }
 
     @Test
-    void 일반_상태_변경으로_PENDING_PUBLICATION을_설정하거나_ACTIVE로_공개할_수_없다() {
-        // given
-        ProjectMatchingRound round = round(PUBLISH_AT);
-        ProjectMember member = member(round);
-        ProjectMember direct = ProjectMember.create(project(), 20L, ChallengerPart.WEB, 10L);
+    void 발표_시각이_없는_기존_차수의_멤버는_ACTIVE로_생성한다() {
+        // when
+        ProjectMember member = member(round(null));
 
-        // when & then
-        assertThatThrownBy(() -> member.changeStatus(ProjectMemberStatus.ACTIVE, 10L, "ACTIVE 변경"))
-            .isInstanceOf(ProjectDomainException.class)
-            .extracting("baseCode")
-            .isEqualTo(ProjectErrorCode.PROJECT_MEMBER_PUBLICATION_MANAGED);
-        assertThatThrownBy(() -> direct.changeStatus(ProjectMemberStatus.PENDING_PUBLICATION, 10L, "상태 변경"))
-            .isInstanceOf(ProjectDomainException.class)
-            .extracting("baseCode")
-            .isEqualTo(ProjectErrorCode.PROJECT_MEMBER_PUBLICATION_MANAGED);
-    }
-
-    @Test
-    void 발표_시각이_없는_차수와_직접_추가한_멤버는_ACTIVE로_생성한다() {
-        assertThat(member(round(null)).getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
-        assertThat(ProjectMember.create(project(), 20L, ChallengerPart.WEB, 10L).getStatus())
-            .isEqualTo(ProjectMemberStatus.ACTIVE);
+        // then
+        assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
     }
 
     private Project project() {

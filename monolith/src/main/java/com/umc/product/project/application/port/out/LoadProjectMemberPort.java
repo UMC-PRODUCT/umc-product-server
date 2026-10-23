@@ -128,8 +128,8 @@ public interface LoadProjectMemberPort {
      *   <li>{@code memberId} -- 본인 멤버 ID</li>
      *   <li>{@code gisuId} -- {@code project.gisuId} 일치 (해당 기수)</li>
      *   <li>{@code matchingType} -- 본인 챌린저 파트로부터 추론된 매칭 종류로 part 집합 필터.
-     *       PLAN_DEVELOPER -> WEB/ANDROID/IOS/NODEJS/SPRINGBOOT, PLAN_DESIGN -> DESIGN.
-     *       동일 멤버의 다른 파트 노이즈를 차단하는 안전망이다.</li>
+     *       PLAN_DEVELOPER는 신규 WEB_PRODUCT_ENGINEER·MOBILE_PRODUCT_ENGINEER와
+     *       과거 WEB·ANDROID·IOS·NODEJS·SPRINGBOOT를 포함하고, PLAN_DESIGN은 DESIGN을 포함한다.</li>
      *   <li>{@code application = null}</li>
      *   <li>{@code status = ACTIVE} (DISMISSED 제외)</li>
      * </ul>

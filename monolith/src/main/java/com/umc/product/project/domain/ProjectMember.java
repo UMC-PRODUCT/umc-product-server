@@ -165,13 +165,6 @@ public class ProjectMember extends BaseEntity {
      * 행을 물리적으로 삭제하지 않으므로 히스토리가 보존됩니다.
      */
     public void changeStatus(ProjectMemberStatus newStatus, Long changedByMemberId, String reason) {
-        if (newStatus == ProjectMemberStatus.PENDING_PUBLICATION
-            || (newStatus == ProjectMemberStatus.ACTIVE && assignedMatchingRound != null
-            && assignedMatchingRound.getResultPublishAt() != null
-            && !assignedMatchingRound.isResultPublishedAt(Instant.now()))) {
-            throw new ProjectDomainException(
-                ProjectErrorCode.PROJECT_MEMBER_PUBLICATION_MANAGED);
-        }
         this.status = newStatus;
         this.statusUpdatedAt = Instant.now();
         this.statusChangeReason = reason;

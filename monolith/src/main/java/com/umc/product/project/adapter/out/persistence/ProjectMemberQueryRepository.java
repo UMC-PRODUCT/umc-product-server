@@ -66,7 +66,11 @@ public class ProjectMemberQueryRepository {
     }
 
     /**
-     * 매칭 종류로부터 노출 가능 파트 집합을 결정한다. 동일 멤버의 다른 파트(예: 같은 사람이 다른 기수에 PLAN 으로 합류한 잔여 row 가 잘못 매칭되는 경우) 를 차단하는 안전망 역할.
+     * 지원서 없이 랜덤 또는 수동 배정된 프로젝트 구성원을 조회할 때, 매칭 유형에 해당하는 파트 집합을 반환한다.
+     * <p>
+     * PLAN_DESIGN은 DESIGN, PLAN_DEVELOPER는 신규 WEB_PRODUCT_ENGINEER·MOBILE_PRODUCT_ENGINEER와
+     * 과거 WEB·ANDROID·IOS·NODEJS·SPRINGBOOT를 포함한다.
+     * 과거 기수의 배정 결과도 조회할 수 있도록 기존 개발 파트를 함께 반환한다.
      */
     private static Set<ChallengerPart> partsOf(MatchingType matchingType) {
         return switch (matchingType) {
@@ -76,7 +80,9 @@ public class ProjectMemberQueryRepository {
                 ChallengerPart.ANDROID,
                 ChallengerPart.IOS,
                 ChallengerPart.NODEJS,
-                ChallengerPart.SPRINGBOOT
+                ChallengerPart.SPRINGBOOT,
+                ChallengerPart.WEB_PRODUCT_ENGINEER,
+                ChallengerPart.MOBILE_PRODUCT_ENGINEER
             );
         };
     }

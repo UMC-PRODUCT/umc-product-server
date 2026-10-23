@@ -52,9 +52,6 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "PROJECT-0101", "이미 이 프로젝트의 멤버예요. 멤버 목록을 확인해주세요."),
     PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER(HttpStatus.BAD_REQUEST, "PROJECT-0102", "메인 PM은 팀원 제거가 아니라 소유권 양도로 변경해주세요."),
 
-    PROJECT_MEMBER_PUBLICATION_MANAGED(HttpStatus.CONFLICT, "PROJECT-0103",
-        "PENDING_PUBLICATION으로 직접 변경하거나, 결과 발표 전에 ACTIVE로 변경할 수 없어요."),
-
     // ProjectPartQuota / Publish (PROJECT-105/108)
     PROJECT_PART_QUOTA_INVALID(HttpStatus.BAD_REQUEST, "PROJECT-0200", "파트 정원은 1명 이상으로 입력해주세요."),
     PROJECT_PART_QUOTA_REQUIRED(HttpStatus.BAD_REQUEST, "PROJECT-0202", "프로젝트를 공개하려면 파트별 정원을 1개 이상 등록해주세요."),
