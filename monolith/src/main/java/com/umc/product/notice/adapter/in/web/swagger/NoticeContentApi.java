@@ -1,0 +1,116 @@
+package com.umc.product.notice.adapter.in.web.swagger;
+
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.notice.adapter.in.web.dto.request.AddNoticeImagesRequest;
+import com.umc.product.notice.adapter.in.web.dto.request.AddNoticeLinksRequest;
+import com.umc.product.notice.adapter.in.web.dto.request.AddNoticeVoteRequest;
+import com.umc.product.notice.adapter.in.web.dto.request.ReplaceNoticeImagesRequest;
+import com.umc.product.notice.adapter.in.web.dto.request.ReplaceNoticeLinksRequest;
+import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeImagesResponse;
+import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeLinksResponse;
+import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeVoteResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+
+@Tag(name = "Notice | 공지사항 컨텐츠 Command", description = "")
+public interface NoticeContentApi {
+
+    @Operation(
+        operationId = "NOTICE-101",
+        summary = "공지사항 이미지 추가",
+        description = "첫 공지 생성 시 공지사항 이미지를 추가하는 API입니다. "
+            + "파일 업로드 API로 먼저 이미지를 업로드한 뒤, 받은 이미지 ID를 전달하세요. "
+            + "공지 작성자 또는 SUPER_ADMIN만 사용할 수 있으며, 권한이 없으면 403을 반환합니다."
+    )
+    AddNoticeImagesResponse addNoticeImages(
+        @Parameter(description = "공지사항 ID", required = true, example = "1")
+        @PathVariable Long noticeId,
+
+        @RequestBody @Valid AddNoticeImagesRequest request,
+
+        @CurrentMember MemberPrincipal memberPrincipal
+    );
+
+    @Operation(
+        operationId = "NOTICE-102",
+        summary = "첫 공지 생성 시 공지사항 링크 추가",
+        description = "공지 작성자 또는 SUPER_ADMIN만 사용할 수 있으며, 권한이 없으면 403을 반환합니다."
+    )
+    AddNoticeLinksResponse addNoticeLinks(
+        @Parameter(description = "공지사항 ID", required = true, example = "1")
+        @PathVariable Long noticeId,
+
+        @RequestBody @Valid AddNoticeLinksRequest request,
+
+        @CurrentMember MemberPrincipal memberPrincipal
+    );
+
+    @Operation(
+        operationId = "NOTICE-103",
+        summary = "공지사항 투표 추가",
+        description = "공지사항에 투표를 1개 생성하여 연결합니다. 투표 생성과 공지 연결이 한 번에 처리됩니다. "
+            + "공지 작성자 또는 SUPER_ADMIN만 사용할 수 있으며, 권한이 없으면 403을 반환합니다. "
+            + "startsAt은 endsAtExclusive보다 이전이어야 하고, endsAtExclusive는 현재 시각보다 이후여야 합니다. "
+            + "시작 시각이 과거여도 마감이 미래이면 등록할 수 있습니다. "
+            + "기간이 올바르지 않으면 400을 반환합니다. "
+            + "시각은 ISO 8601 형식으로 전달하며, 마감 시각 자체는 투표 가능 시간에 포함되지 않습니다."
+    )
+    AddNoticeVoteResponse addNoticeVote(
+        @Parameter(description = "공지사항 ID", required = true, example = "1")
+        @PathVariable Long noticeId,
+
+        @RequestBody @Valid AddNoticeVoteRequest request,
+
+        MemberPrincipal memberPrincipal
+    );
+
+    @Operation(
+        operationId = "NOTICE-104",
+        summary = "공지사항 이미지 전체 수정",
+        description = "요청받은 새 목록으로 교체합니다. 빈 배열([])을 보내면 모든 이미지가 삭제됩니다. "
+            + "공지 작성자 또는 SUPER_ADMIN만 사용할 수 있으며, 권한이 없으면 403을 반환합니다."
+    )
+    void replaceNoticeImages(
+        @Parameter(description = "공지사항 ID", required = true, example = "1")
+        @PathVariable Long noticeId,
+
+        @RequestBody @Valid ReplaceNoticeImagesRequest request,
+
+        @CurrentMember MemberPrincipal memberPrincipal
+    );
+
+    @Operation(
+        operationId = "NOTICE-105",
+        summary = "공지사항 링크 전체 수정",
+        description = "요청받은 새 목록으로 교체합니다. 빈 배열([])을 보내면 모든 링크가 삭제됩니다. "
+            + "공지 작성자 또는 SUPER_ADMIN만 사용할 수 있으며, 권한이 없으면 403을 반환합니다."
+    )
+    void replaceNoticeLinks(
+        @Parameter(description = "공지사항 ID", required = true, example = "1")
+        @PathVariable Long noticeId,
+
+        @RequestBody @Valid ReplaceNoticeLinksRequest request,
+
+        @CurrentMember MemberPrincipal memberPrincipal
+    );
+
+    @Operation(
+        operationId = "NOTICE-106",
+        summary = "공지사항 투표 삭제",
+        description = "공지사항 수정시 필요한 경우 해당 공지에 연결된 투표를 삭제합니다. 공지사항과 투표의 연결도 함께 제거됩니다. "
+            + "공지 작성자 또는 SUPER_ADMIN만 사용할 수 있으며, 권한이 없으면 403을 반환합니다."
+    )
+    void deleteNoticeVote(
+        @Parameter(description = "공지사항 ID", required = true, example = "1")
+        @PathVariable Long noticeId,
+        @CurrentMember MemberPrincipal memberPrincipal
+    );
+
+}

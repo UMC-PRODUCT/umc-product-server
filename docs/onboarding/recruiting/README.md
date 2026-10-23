@@ -200,7 +200,7 @@ GraphQL `submitRecruitingInterviewAvailability(applicationId: ID!, input: Submit
 
 단건 facade는 `endsAt`·`location`이 세션에서 계산한 값과 일치할 때만 확정한다. batch 확정은 실제 PostgreSQL 동시성 테스트에서 같은 슬롯 경쟁 한 건 성공, 서로 다른 슬롯의 병렬 성공, 동일 지원서 중복 방지와 부분 실패 rollback을 검증한다.
 
-정확한 input/output 계약은 [`recruiting.graphqls`](../../../src/main/resources/graphql/recruiting.graphqls)를 기준으로 한다.
+정확한 input/output 계약은 [`recruiting.graphqls`](../../../monolith/src/main/resources/graphql/recruiting.graphqls)를 기준으로 한다.
 
 ## CSV와 민감정보
 

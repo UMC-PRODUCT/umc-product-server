@@ -1,0 +1,868 @@
+package com.umc.product.project.application.service.command;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.form.application.port.in.command.ManageFormResponseUseCase;
+import com.umc.product.form.application.port.in.command.dto.AnswerCommand;
+import com.umc.product.form.application.port.in.command.dto.SubmitDraftFormResponseCommand;
+import com.umc.product.form.application.port.in.command.dto.UpdateDraftFormResponseCommand;
+import com.umc.product.form.application.port.in.query.GetFormUseCase;
+import com.umc.product.form.application.port.in.query.dto.FormWithStructureInfo;
+import com.umc.product.form.domain.enums.FormStatus;
+import com.umc.product.form.domain.enums.QuestionType;
+import com.umc.product.project.application.port.in.command.dto.ApplicationDecisionStatus;
+import com.umc.product.project.application.port.in.command.dto.CancelProjectApplicationCommand;
+import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectApplicationCommand;
+import com.umc.product.project.application.port.in.command.dto.SubmitProjectApplicationCommand;
+import com.umc.product.project.application.port.in.command.dto.UpdateProjectApplicationDraftCommand;
+import com.umc.product.project.application.port.in.query.dto.ProjectApplicationInfo;
+import com.umc.product.project.application.port.out.LoadProjectApplicationFormPolicyPort;
+import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
+import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
+import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
+import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
+import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
+import com.umc.product.project.application.service.policy.ProjectApplicationChapterPolicy;
+import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.ProjectApplicationForm;
+import com.umc.product.project.domain.ProjectApplicationFormPolicy;
+import com.umc.product.project.domain.ProjectMatchingRound;
+import com.umc.product.project.domain.ProjectPartQuota;
+import com.umc.product.project.domain.enums.MatchingPhase;
+import com.umc.product.project.domain.enums.MatchingType;
+import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import com.umc.product.project.domain.enums.ProjectStatus;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
+
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ProjectApplicationCommandServiceTest {
+
+    private static final Long PROJECT_ID = 100L;
+    private static final Long APPLICATION_ID = 500L;
+    private static final Long APPLICATION_FORM_ID = 600L;
+    private static final Long FORM_ID = 700L;
+    private static final Long FORM_RESPONSE_ID = 999L;
+    private static final Long MATCHING_ROUND_ID = 800L;
+    private static final Long APPLICANT_MEMBER_ID = 100L;
+    private static final Long DECIDER_MEMBER_ID = 200L;
+    private static final Long COMMON_SECTION_ID = 10L;
+    private static final Long WEB_SECTION_ID = 20L;
+    private static final Long DESIGN_SECTION_ID = 30L;
+    private static final Long COMMON_QUESTION_ID = 101L;
+    private static final Long WEB_QUESTION_ID = 201L;
+    private static final Long DESIGN_QUESTION_ID = 301L;
+
+    // 합/불(decide)은 지원 종료(endsAt) 후 ~ 결정 마감(decisionDeadline) 전에만 가능하므로
+    // 공용 라운드는 지원이 끝난 상태(endsAt 과거, decisionDeadline 미래)로 둔다.
+    // 지원 진행 중이어야 하는 cancel 성공 케이스는 개별 테스트에서 endsAt 을 미래로 오버라이드한다.
+    private static final Instant NOW = Instant.now();
+    private static final Instant ROUND_STARTS_AT = NOW.minusSeconds(172_800);
+    private static final Instant ROUND_ENDS_AT = NOW.minusSeconds(43_200);
+    private static final Instant ROUND_DECISION_DEADLINE = NOW.plusSeconds(86_400);
+
+    @Mock
+    LoadProjectApplicationPort loadProjectApplicationPort;
+    @Mock
+    SaveProjectApplicationPort saveProjectApplicationPort;
+    @Mock
+    LoadProjectApplicationFormPort loadProjectApplicationFormPort;
+    @Mock
+    LoadProjectApplicationFormPolicyPort loadProjectApplicationFormPolicyPort;
+    @Mock
+    LoadProjectPartQuotaPort loadProjectPartQuotaPort;
+    @Mock
+    LoadProjectMemberPort loadProjectMemberPort;
+    @Mock
+    LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
+    @Mock
+    ManageFormResponseUseCase manageFormResponseUseCase;
+    @Mock
+    GetChallengerUseCase getChallengerUseCase;
+    @Mock
+    GetFormUseCase getFormUseCase;
+    @Mock
+    ProjectApplicationChapterPolicy projectApplicationChapterPolicy;
+
+    ProjectApplicationCommandService sut;
+
+    @BeforeEach
+    void setUpQuotaMocks() {
+        sut = new ProjectApplicationCommandService(
+            loadProjectApplicationPort,
+            saveProjectApplicationPort,
+            loadProjectApplicationFormPort,
+            loadProjectApplicationFormPolicyPort,
+            loadProjectPartQuotaPort,
+            loadProjectMemberPort,
+            loadProjectMatchingRoundPort,
+            manageFormResponseUseCase,
+            getChallengerUseCase,
+            projectApplicationChapterPolicy,
+            getFormUseCase
+        );
+
+        // 기본: quota 충분 (ChallengerPart.WEB, TO 6, active 0, 같은 차수 APPROVED 0)
+        given(getChallengerUseCase.getByMemberIdAndGisuId(any(), any()))
+            .willReturn(challengerWithPart(ChallengerPart.WEB));
+        given(loadProjectPartQuotaPort.listByProjectId(any()))
+            .willReturn(List.of(partQuotaForWeb(6L)));
+        given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
+            .willReturn(Map.of());
+        given(loadProjectApplicationPort.listByMatchingRoundId(any()))
+            .willReturn(List.of());
+        given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), any()))
+            .willReturn(Map.of(APPLICANT_MEMBER_ID, challengerWith(APPLICANT_MEMBER_ID, ChallengerPart.WEB)));
+    }
+
+    @Nested
+    class create {
+
+        @Test
+        @DisplayName("지원서 생성은 모집 종료 시 팀 소속자에게도 지원 기간 예외를 발생시킨다")
+        void 지원서_생성은_모집_종료_시_팀_소속자에게도_지원_기간_예외를_발생시킨다() {
+            ProjectApplicationForm form = givenCreateApplication(closedRound());
+            given(loadProjectMemberPort.existsByGisuAndMember(form.getProject().getGisuId(), APPLICANT_MEMBER_ID))
+                .willReturn(true);
+
+            assertThatThrownBy(() -> sut.create(createCommand()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_ROUND_NOT_OPEN);
+        }
+
+        @Test
+        @DisplayName("지원서 생성은 모집 중 팀 소속자에게 이미 팀에 소속됨 예외를 발생시킨다")
+        void 지원서_생성은_모집_중_팀_소속자에게_이미_팀에_소속됨_예외를_발생시킨다() {
+            ProjectMatchingRound round = openRound(MatchingType.PLAN_DEVELOPER);
+            ReflectionTestUtils.setField(round, "endsAt", Instant.now().plusSeconds(3600));
+            ProjectApplicationForm form = givenCreateApplication(round);
+            given(loadProjectMemberPort.existsByGisuAndMember(form.getProject().getGisuId(), APPLICANT_MEMBER_ID))
+                .willReturn(true);
+
+            assertThatThrownBy(() -> sut.create(createCommand()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
+        }
+    }
+
+    @Nested
+    class updateAndSubmit {
+
+        @Test
+        @DisplayName("update는 applicationId로 지정한 DRAFT만 수정한다")
+        void update는_applicationId로_지정한_DRAFT만_수정한다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.DRAFT);
+            given(loadProjectApplicationPort.findByIdWithDetails(APPLICATION_ID))
+                .willReturn(Optional.of(application));
+            givenVisibleScope(application);
+
+            ProjectApplicationInfo result = sut.update(UpdateProjectApplicationDraftCommand.builder()
+                .projectId(PROJECT_ID)
+                .applicationId(APPLICATION_ID)
+                .requesterMemberId(APPLICANT_MEMBER_ID)
+                .answers(List.of(answerEntry(COMMON_QUESTION_ID)))
+                .build());
+
+            ArgumentCaptor<UpdateDraftFormResponseCommand> captor =
+                ArgumentCaptor.forClass(UpdateDraftFormResponseCommand.class);
+            then(manageFormResponseUseCase).should().updateDraft(captor.capture());
+            assertThat(result.applicationId()).isEqualTo(APPLICATION_ID);
+            assertThat(captor.getValue().formResponseId()).isEqualTo(FORM_RESPONSE_ID);
+            assertThat(captor.getValue().answers())
+                .extracting(AnswerCommand::questionId)
+                .containsExactly(COMMON_QUESTION_ID);
+            then(loadProjectApplicationPort).should(never()).getDraftByProjectAndMember(anyLong(), anyLong());
+        }
+
+        @Test
+        @DisplayName("update 요청에 노출되지 않은 questionId가 있으면 실패한다")
+        void update_요청에_노출되지_않은_questionId가_있으면_실패한다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.DRAFT);
+            given(loadProjectApplicationPort.findByIdWithDetails(APPLICATION_ID))
+                .willReturn(Optional.of(application));
+            givenVisibleScope(application);
+
+            assertThatThrownBy(() -> sut.update(UpdateProjectApplicationDraftCommand.builder()
+                .projectId(PROJECT_ID)
+                .applicationId(APPLICATION_ID)
+                .requesterMemberId(APPLICANT_MEMBER_ID)
+                .answers(List.of(answerEntry(DESIGN_QUESTION_ID)))
+                .build()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.APPLICATION_FORM_INVALID_QUESTION_ID);
+
+            then(manageFormResponseUseCase).should(never()).updateDraft(any());
+        }
+
+        @Test
+        @DisplayName("submit은 지원자에게 노출되는 required question scope만 Survey에 전달한다")
+        void submit은_노출되는_required_question_scope만_Survey에_전달한다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.DRAFT);
+            ReflectionTestUtils.setField(application.getAppliedMatchingRound(), "endsAt", NOW.plusSeconds(43_200));
+            given(loadProjectApplicationPort.findByIdWithDetails(APPLICATION_ID))
+                .willReturn(Optional.of(application));
+            givenVisibleScope(application);
+
+            ProjectApplicationInfo result = sut.submit(SubmitProjectApplicationCommand.builder()
+                .projectId(PROJECT_ID)
+                .applicationId(APPLICATION_ID)
+                .requesterMemberId(APPLICANT_MEMBER_ID)
+                .build());
+
+            ArgumentCaptor<SubmitDraftFormResponseCommand> captor =
+                ArgumentCaptor.forClass(SubmitDraftFormResponseCommand.class);
+            then(manageFormResponseUseCase).should().submitDraft(captor.capture());
+            assertThat(result.status()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            assertThat(captor.getValue().formResponseId()).isEqualTo(FORM_RESPONSE_ID);
+            assertThat(captor.getValue().requiredQuestionIds())
+                .containsExactlyInAnyOrder(COMMON_QUESTION_ID, WEB_QUESTION_ID);
+            assertThat(captor.getValue().allowedQuestionIds())
+                .containsExactlyInAnyOrder(COMMON_QUESTION_ID, WEB_QUESTION_ID);
+            then(loadProjectApplicationPort).should(never()).getDraftByProjectAndMember(anyLong(), anyLong());
+        }
+
+        @Test
+        @DisplayName("path projectId와 application의 projectId가 다르면 PROJECT_APPLICATION_NOT_FOUND")
+        void path_projectId와_application_projectId가_다르면_NOT_FOUND() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.DRAFT);
+            given(loadProjectApplicationPort.findByIdWithDetails(APPLICATION_ID))
+                .willReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> sut.update(UpdateProjectApplicationDraftCommand.builder()
+                .projectId(PROJECT_ID + 1)
+                .applicationId(APPLICATION_ID)
+                .requesterMemberId(APPLICANT_MEMBER_ID)
+                .answers(List.of(answerEntry(COMMON_QUESTION_ID)))
+                .build()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+
+            then(manageFormResponseUseCase).should(never()).updateDraft(any());
+        }
+
+        @Test
+        @DisplayName("DRAFT가 아닌 applicationId로 submit하면 실패한다")
+        void DRAFT가_아닌_applicationId로_submit하면_실패한다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findByIdWithDetails(APPLICATION_ID))
+                .willReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> sut.submit(SubmitProjectApplicationCommand.builder()
+                .projectId(PROJECT_ID)
+                .applicationId(APPLICATION_ID)
+                .requesterMemberId(APPLICANT_MEMBER_ID)
+                .build()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_DRAFT_APPLICATION_NOT_FOUND);
+
+            then(manageFormResponseUseCase).should(never()).submitDraft(any());
+        }
+    }
+
+    @Nested
+    class decide {
+
+        @Test
+        void APPROVED_입력시_도메인_approve_호출_후_저장한다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            ProjectApplicationInfo info = sut.decide(
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, "역량 우수", DECIDER_MEMBER_ID
+            );
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
+            assertThat(application.getStatusChangedMemberId()).isEqualTo(DECIDER_MEMBER_ID);
+            assertThat(application.getStatusChangeReason()).isEqualTo("역량 우수");
+            assertThat(info.applicationId()).isEqualTo(APPLICATION_ID);
+            assertThat(info.status()).isEqualTo(ProjectApplicationStatus.APPROVED);
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+
+        @Test
+        void REJECTED_입력시_도메인_reject_호출_후_저장한다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.REJECTED, "면접 결과", DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
+            assertThat(application.getStatusChangeReason()).isEqualTo("면접 결과");
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+
+        @Test
+        void 불합격_처리는_최소_선발_인원과_무관하게_허용된다() {
+            // 합격자가 한 명뿐인 상황에서 그 한 명을 불합격시켜도 막지 않는다. 부족분은 결정 마감 시 자동 선발이 채운다.
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.REJECTED, "재검토 후 불합격", DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+
+        @Test
+        void APPROVED_변경은_quota_검증만_통과하면_허용한다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            ProjectApplication otherSubmitted = otherApplication(
+                701L, 101L, application.getApplicationForm(), ProjectApplicationStatus.SUBMITTED
+            );
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(loadProjectApplicationPort.listByMatchingRoundId(any()))
+                .willReturn(List.of());
+            given(loadProjectPartQuotaPort.listByProjectId(any()))
+                .willReturn(List.of(partQuotaFor(ChallengerPart.DESIGN, 1L)));
+            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(APPLICANT_MEMBER_ID), any()))
+                .willReturn(challengerWith(APPLICANT_MEMBER_ID, ChallengerPart.DESIGN));
+
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+
+        @Test
+        void reason이_null이어도_정상_처리된다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatusChangeReason()).isNull();
+        }
+
+        @Test
+        void 존재하지_않는_지원서면_PROJECT_APPLICATION_NOT_FOUND() {
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> sut.decide(
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        void DRAFT_상태_지원서면_도메인_예외_전파_후_저장하지_않는다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.DRAFT);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> sut.decide(
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        void 차수_종료_후에는_도메인_예외_전파_후_저장하지_않는다() {
+            ProjectMatchingRound expiredRound = openRound();
+            ReflectionTestUtils.setField(expiredRound, "decisionDeadline", NOW.minusSeconds(60));
+            ProjectApplication application = ProjectApplication.create(
+                applicationForm(), 999L, APPLICANT_MEMBER_ID, expiredRound
+            );
+            ReflectionTestUtils.setField(application, "id", APPLICATION_ID);
+            ReflectionTestUtils.setField(application, "status", ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> sut.decide(
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        @DisplayName("결정 마감 후에는 누구도 판정을 바꿀 수 없다 (슈퍼어드민 예외 없음)")
+        void 결정_마감_후에는_누구도_판정을_바꿀_수_없다() {
+            ProjectMatchingRound expiredRound = openRound();
+            ReflectionTestUtils.setField(expiredRound, "decisionDeadline", NOW.minusSeconds(60));
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED, expiredRound);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> sut.decide(
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, "마감 후 수정", DECIDER_MEMBER_ID
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        void APPROVED_토글시_active_멤버가_TO를_채워_남은_자리가_없으면_QUOTA_EXCEEDED() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
+                .willReturn(Map.of(ChallengerPart.WEB, 6L));   // active 6 == TO 6 → 남은 자리 0
+
+            assertThatThrownBy(() -> sut.decide(
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_QUOTA_EXCEEDED);
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        void APPROVED_토글시_active_멤버와_현재차수_APPROVED_합산이_TO를_초과하면_QUOTA_EXCEEDED() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
+                .willReturn(Map.of(ChallengerPart.WEB, 4L));   // active 4
+            // 현재 차수 APPROVED 2명 (다른 application) → 4 + 2 + 1 = 7 > TO 6
+            given(loadProjectApplicationPort.listByMatchingRoundId(any()))
+                .willReturn(List.of(
+                    otherApprovedApplication(701L, 71L, application.getApplicationForm()),
+                    otherApprovedApplication(702L, 72L, application.getApplicationForm())
+                ));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), any()))
+                .willReturn(Map.of(
+                    71L, challengerWith(71L, ChallengerPart.WEB),
+                    72L, challengerWith(72L, ChallengerPart.WEB)
+                ));
+
+            assertThatThrownBy(() -> sut.decide(
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_QUOTA_EXCEEDED);
+        }
+
+        @Test
+        void 이미_APPROVED인_지원서를_다시_APPROVED로_토글하면_quota_검증_우회() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            // active 6 으로 quota 초과 상황이라도 — 이미 APPROVED 인 application 재토글은 검증 우회
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
+                .willReturn(Map.of(ChallengerPart.WEB, 6L));
+
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, "재확인", DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+
+        @Test
+        void REJECTED_토글은_quota_검증을_적용하지_않는다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
+                .willReturn(Map.of(ChallengerPart.WEB, 99L));   // 초과 상황이지만 REJECTED 는 무관
+
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.REJECTED, null, DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
+        }
+
+        @Test
+        void 다른_part로_APPROVED인_application은_현재_part_quota_검증에_영향을_주지_않는다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            ProjectApplication iosApp = otherApprovedApplication(701L, 71L, application.getApplicationForm());
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(loadProjectMemberPort.countAssignedByProjectIdGroupByPart(any()))
+                .willReturn(Map.of(ChallengerPart.WEB, 5L));   // WEB active 5, TO 6 → 남은 1
+            given(loadProjectApplicationPort.listByMatchingRoundId(any()))
+                .willReturn(List.of(iosApp));
+            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(APPLICANT_MEMBER_ID), any()))
+                .willReturn(challengerWith(APPLICANT_MEMBER_ID, ChallengerPart.WEB));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), any()))
+                .willReturn(Map.of(71L, challengerWith(71L, ChallengerPart.IOS)));
+
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
+        }
+    }
+
+    @Nested
+    class decide_projectIdMismatch {
+
+        @Test
+        void 경로_프로젝트와_지원서_프로젝트가_다르면_NOT_FOUND로_거절하고_저장하지_않는다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> sut.decide(
+                PROJECT_ID + 1, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+    }
+
+    @Nested
+    class decide_revertToSubmitted {
+
+        @Test
+        void SUBMITTED_입력시_APPROVED를_대기로_되돌리고_저장한다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            ProjectApplicationInfo info = sut.decide(
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, "재검토", DECIDER_MEMBER_ID
+            );
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            assertThat(application.getStatusChangedMemberId()).isEqualTo(DECIDER_MEMBER_ID);
+            assertThat(application.getStatusChangeReason()).isEqualTo("재검토");
+            assertThat(info.status()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+
+        @Test
+        void SUBMITTED_입력시_REJECTED도_대기로_되돌린다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.REJECTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+
+        @Test
+        void SUBMITTED_입력은_quota_검증을_적용하지_않는다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.REJECTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(loadProjectMemberPort.countByProjectIdGroupByPart(any()))
+                .willReturn(Map.of(ChallengerPart.WEB, 99L));   // 초과 상황이지만 대기 되돌리기는 무관
+
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+        }
+
+        @Test
+        void SUBMITTED_입력시_같은_차수에_다른_활성_지원서가_있으면_ALREADY_EXISTS() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.REJECTED);
+            ProjectApplication otherDraft = otherApplication(
+                701L, APPLICANT_MEMBER_ID, application.getApplicationForm(), ProjectApplicationStatus.DRAFT
+            );
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(loadProjectApplicationPort.findByProjectIdAndApplicantMemberIdAndRoundIdAndStatus(
+                any(), eq(APPLICANT_MEMBER_ID), any(), eq(ProjectApplicationStatus.DRAFT)
+            )).willReturn(Optional.of(otherDraft));
+
+            assertThatThrownBy(() -> sut.decide(
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_ALREADY_EXISTS);
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        void SUBMITTED_입력시_자기_자신만_활성_지원서로_조회되면_되돌린다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(loadProjectApplicationPort.findByProjectIdAndApplicantMemberIdAndRoundIdAndStatus(
+                any(), eq(APPLICANT_MEMBER_ID), any(), eq(ProjectApplicationStatus.SUBMITTED)
+            )).willReturn(Optional.of(application));
+
+            sut.decide(PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+
+        @Test
+        void PM은_결정_마감_후에는_대기로_되돌릴_수_없다() {
+            ProjectMatchingRound expiredRound = openRound();
+            ReflectionTestUtils.setField(expiredRound, "decisionDeadline", NOW.minusSeconds(60));
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.APPROVED, expiredRound);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> sut.decide(
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.SUBMITTED, null, DECIDER_MEMBER_ID
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        void SUBMITTED를_CANCELLED로_전이하고_저장한다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            ReflectionTestUtils.setField(application.getAppliedMatchingRound(), "endsAt", NOW.plusSeconds(43_200));
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(saveProjectApplicationPort.save(any(ProjectApplication.class)))
+                .willAnswer(inv -> inv.getArgument(0));
+
+            ProjectApplicationInfo result = sut.cancel(cancelCommand(null));
+
+            assertThat(result.status()).isEqualTo(ProjectApplicationStatus.CANCELLED);
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+
+        @Test
+        void 차수가_종료되었으면_CANCEL_ROUND_CLOSED() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            ReflectionTestUtils.setField(application.getAppliedMatchingRound(), "endsAt", NOW.minusSeconds(60));
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> sut.cancel(cancelCommand("늦었지만")))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_CANCEL_ROUND_CLOSED);
+
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        void 지원서가_없으면_PROJECT_APPLICATION_NOT_FOUND() {
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> sut.cancel(cancelCommand(null)))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        void 이미_CANCELLED라면_도메인이_CANCEL_NOT_ALLOWED() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.CANCELLED);
+            ReflectionTestUtils.setField(application.getAppliedMatchingRound(), "endsAt", NOW.plusSeconds(43_200));
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> sut.cancel(cancelCommand(null)))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_CANCEL_NOT_ALLOWED);
+
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+    }
+
+    private ProjectApplication applicationWithStatus(ProjectApplicationStatus status) {
+        return applicationWithStatus(status, openRound());
+    }
+
+    private ProjectApplication applicationWithStatus(ProjectApplicationStatus status, ProjectMatchingRound round) {
+        ProjectApplication application = ProjectApplication.create(
+            applicationForm(), FORM_RESPONSE_ID, APPLICANT_MEMBER_ID, round
+        );
+        ReflectionTestUtils.setField(application, "id", APPLICATION_ID);
+        ReflectionTestUtils.setField(application, "status", status);
+        return application;
+    }
+
+    private ProjectApplicationForm givenCreateApplication(ProjectMatchingRound round) {
+        ProjectApplicationForm form = applicationForm();
+        ReflectionTestUtils.setField(form.getProject(), "status", ProjectStatus.IN_PROGRESS);
+        given(loadProjectApplicationFormPort.findByProjectId(PROJECT_ID)).willReturn(Optional.of(form));
+        given(loadProjectPartQuotaPort.existsByProjectIdAndPart(PROJECT_ID, ChallengerPart.WEB)).willReturn(true);
+        given(loadProjectMatchingRoundPort.getById(MATCHING_ROUND_ID)).willReturn(round);
+        return form;
+    }
+
+    private CreateDraftProjectApplicationCommand createCommand() {
+        return CreateDraftProjectApplicationCommand.builder()
+            .projectId(PROJECT_ID)
+            .applicantMemberId(APPLICANT_MEMBER_ID)
+            .matchingRoundId(MATCHING_ROUND_ID)
+            .build();
+    }
+
+    private ProjectMatchingRound closedRound() {
+        return ProjectMatchingRound.create(
+            "개발자 1차 매칭", null,
+            MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST, 2L,
+            NOW.minusSeconds(7200), NOW.minusSeconds(3600), NOW.minusSeconds(1800), NOW.plusSeconds(3600)
+        );
+    }
+
+    private ProjectMatchingRound openRound() {
+        ProjectMatchingRound round = ProjectMatchingRound.create(
+            "기획-디자인 1차 매칭", null,
+            MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, 1L,
+            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE, ROUND_DECISION_DEADLINE.plusSeconds(7200)
+        );
+        ReflectionTestUtils.setField(round, "id", MATCHING_ROUND_ID);
+        return round;
+    }
+
+    private ProjectMatchingRound openRound(MatchingType matchingType) {
+        return ProjectMatchingRound.create(
+            "프로젝트 매칭", null,
+            matchingType, MatchingPhase.FIRST, 1L,
+            ROUND_STARTS_AT, ROUND_ENDS_AT, ROUND_DECISION_DEADLINE, ROUND_DECISION_DEADLINE.plusSeconds(7200)
+        );
+    }
+
+    private ProjectApplicationForm applicationForm() {
+        Project project = Project.createDraft(1L, 2L, 999L, 7L, 999L);
+        ReflectionTestUtils.setField(project, "id", PROJECT_ID);
+        ProjectApplicationForm applicationForm = ProjectApplicationForm.create(project, FORM_ID);
+        ReflectionTestUtils.setField(applicationForm, "id", APPLICATION_FORM_ID);
+        return applicationForm;
+    }
+
+    private ChallengerInfo challengerWithPart(ChallengerPart part) {
+        return ChallengerInfo.builder()
+            .challengerId(1L).memberId(APPLICANT_MEMBER_ID).gisuId(1L)
+            .part(part).challengerPoints(new ArrayList<>()).totalPoints(0.0)
+            .build();
+    }
+
+    private ProjectPartQuota partQuotaForWeb(Long quota) {
+        return partQuotaFor(ChallengerPart.WEB, quota);
+    }
+
+    private ProjectPartQuota partQuotaFor(ChallengerPart part, Long quota) {
+        Project project = Project.createDraft(1L, 2L, 999L, 7L, 999L);
+        return ProjectPartQuota.create(project, part, quota, 999L);
+    }
+
+    private ProjectApplication otherApprovedApplication(Long id, Long applicantMemberId, ProjectApplicationForm form) {
+        return otherApplication(id, applicantMemberId, form, ProjectApplicationStatus.APPROVED);
+    }
+
+    private ProjectApplication otherApplication(
+        Long id,
+        Long applicantMemberId,
+        ProjectApplicationForm form,
+        ProjectApplicationStatus status
+    ) {
+        ProjectApplication app = ProjectApplication.create(form, 999L, applicantMemberId, openRound());
+        ReflectionTestUtils.setField(app, "id", id);
+        ReflectionTestUtils.setField(app, "status", status);
+        return app;
+    }
+
+    private ChallengerInfo challengerWith(Long memberId, ChallengerPart part) {
+        return ChallengerInfo.builder()
+            .challengerId(memberId * 10).memberId(memberId).gisuId(1L)
+            .part(part).challengerPoints(new ArrayList<>()).totalPoints(0.0)
+            .build();
+    }
+
+    private CancelProjectApplicationCommand cancelCommand(String reason) {
+        return CancelProjectApplicationCommand.builder()
+            .applicationId(APPLICATION_ID)
+            .requesterMemberId(APPLICANT_MEMBER_ID)
+            .reason(reason)
+            .build();
+    }
+
+    private void givenVisibleScope(ProjectApplication application) {
+        ProjectApplicationForm form = application.getApplicationForm();
+        given(getChallengerUseCase.getByMemberIdAndGisuId(APPLICANT_MEMBER_ID, form.getProject().getGisuId()))
+            .willReturn(challengerWithPart(ChallengerPart.WEB));
+        given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(APPLICATION_FORM_ID))
+            .willReturn(List.of(
+                ProjectApplicationFormPolicy.createCommon(form, COMMON_SECTION_ID),
+                ProjectApplicationFormPolicy.createForParts(form, WEB_SECTION_ID, Set.of(ChallengerPart.WEB)),
+                ProjectApplicationFormPolicy.createForParts(form, DESIGN_SECTION_ID, Set.of(ChallengerPart.DESIGN))
+            ));
+        given(getFormUseCase.getFormWithStructure(FORM_ID))
+            .willReturn(formStructure());
+    }
+
+    private FormWithStructureInfo formStructure() {
+        return FormWithStructureInfo.builder()
+            .formId(FORM_ID)
+            .createdMemberId(1L)
+            .title("프로젝트 지원서")
+            .description(null)
+            .status(FormStatus.PUBLISHED)
+            .isAnonymous(false)
+            .allowDuplicateResponses(true)
+            .sections(List.of(
+                section(COMMON_SECTION_ID, COMMON_QUESTION_ID, true),
+                section(WEB_SECTION_ID, WEB_QUESTION_ID, true),
+                section(DESIGN_SECTION_ID, DESIGN_QUESTION_ID, true)
+            ))
+            .build();
+    }
+
+    private FormWithStructureInfo.SectionWithQuestions section(
+        Long sectionId, Long questionId, boolean isRequired
+    ) {
+        return FormWithStructureInfo.SectionWithQuestions.builder()
+            .sectionId(sectionId)
+            .title("섹션")
+            .description(null)
+            .orderNo(sectionId)
+            .questions(List.of(question(questionId, isRequired)))
+            .build();
+    }
+
+    private FormWithStructureInfo.QuestionWithOptions question(Long questionId, boolean isRequired) {
+        return FormWithStructureInfo.QuestionWithOptions.builder()
+            .questionId(questionId)
+            .title("질문")
+            .description(null)
+            .type(QuestionType.SHORT_TEXT)
+            .isRequired(isRequired)
+            .orderNo(questionId)
+            .options(List.of())
+            .build();
+    }
+
+    private UpdateProjectApplicationDraftCommand.AnswerEntry answerEntry(Long questionId) {
+        return UpdateProjectApplicationDraftCommand.AnswerEntry.builder()
+            .questionId(questionId)
+            .textValue("답변")
+            .selectedOptionIds(List.of())
+            .fileIds(List.of())
+            .build();
+    }
+}

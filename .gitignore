@@ -19,6 +19,7 @@ application-*.yml
 !.env.example
 
 .gradle
+/.pnpm-store/
 build/
 
 ### STS ###

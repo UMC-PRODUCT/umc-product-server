@@ -72,7 +72,7 @@ done
 
 - 실행 전/후로 `flyway info` 를 찍어 Step Summary 에 접이식 블록으로 남긴다.
 - DB 접속 정보는 SSM(`DATABASE_URL` / `DATABASE_USERNAME` / `DATABASE_PASSWORD`)에서 읽고
-  전부 마스킹한다. 마이그레이션 SQL 은 체크아웃한 `src/main/resources/db/migration` 을 그대로 마운트한다.
+  전부 마스킹한다. 마이그레이션 SQL 은 체크아웃한 `monolith/src/main/resources/db/migration` 을 그대로 마운트한다.
 - `clean` 은 `FLYWAY_CLEAN_DISABLED=true` 로 아예 봉인되어 있다. 선택지에도 없다.
 - `concurrency` 로 환경별 직렬화되어 같은 DB 에 두 실행이 동시에 붙지 않는다.
 - Flyway CLI 는 `flyway/flyway:11-alpine` 을 쓴다. 앱이 쓰는 flyway-core(Spring Boot 3.5.x → 11.x)와
@@ -93,7 +93,7 @@ done
 2. `flyway_schema_history` 의 마지막 행이 `success=false` 면, PostgreSQL 은 DDL 이 트랜잭션 안에서
    롤백되므로 대개 해당 마이그레이션은 통째로 되돌아가 있다. SQL 을 고쳐 새 버전으로 다시 올리는 것이
    원칙이고, 이미 배포된 파일을 수정하는 것은 금지다
-   ([migration 규약](../../src/main/resources/db/migration/AGENTS.md)).
+   ([migration 규약](../../monolith/src/main/resources/db/migration/AGENTS.md)).
 3. 실패 행이 남아 재실행이 막히면 `repair` 로 실패 기록을 정리한 뒤 재시도한다.
 4. 앱은 아직 구버전이 떠 있는 상태이므로 서비스는 살아 있다. 서두르지 않아도 된다.
 

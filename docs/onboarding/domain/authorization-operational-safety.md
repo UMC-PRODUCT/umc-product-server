@@ -16,7 +16,7 @@
 | 구버전·신버전 중첩 | 없음 |
 | legacy 데이터 규모 | 중단 시간 안에 단일 backfill과 constraint 변경이 가능한 수준 |
 
-이 전제에서는 구버전 writer가 migration 도중 `challenger_role.SUPER_ADMIN`을 다시 쓰지 않는다. 따라서 임시 dual-write 객체를 운영하지 않고 [단일 Flyway migration](../../../src/main/resources/db/migration/V2026.07.05.18.50__move_super_admin_to_member_system_role.sql)에서 테이블 생성, backfill, legacy 정리, constraint 강화를 순서대로 수행한다.
+이 전제에서는 구버전 writer가 migration 도중 `challenger_role.SUPER_ADMIN`을 다시 쓰지 않는다. 따라서 임시 dual-write 객체를 운영하지 않고 [단일 Flyway migration](../../../monolith/src/main/resources/db/migration/V2026.07.05.18.50__move_super_admin_to_member_system_role.sql)에서 테이블 생성, backfill, legacy 정리, constraint 강화를 순서대로 수행한다.
 
 현재 `spring.flyway.enabled`는 `true`이므로 별도 migration runner가 없다면 Flyway는 신버전 애플리케이션 startup 중 실행된다. 이때 "migration 후 신버전 시작"은 논리적 순서이며, 실제 운영에서는 migration과 검증이 끝날 때까지 신버전 인스턴스에 traffic을 전달하지 않아야 한다. 현재 CD workflow의 `docker compose up`은 app과 nginx를 함께 시작하고 health gate 없이 종료되므로, 이 migration을 배포할 때는 그대로 실행하지 않는다.
 
@@ -52,7 +52,7 @@
 - cache key의 회원 ID와 payload의 회원 ID가 다르면 동일하게 evict 후 다시 구성한다.
 - cache hit에서도 회원 존재 여부를 다시 확인하여 삭제된 회원의 snapshot을 반환하지 않는다.
 - 현재 구현된 Challenger, ChallengerRole, ChallengerRecord, 학교·지부 정보 변경과 회원 삭제 경로는 transaction commit 이후 `EvictAuthoritySnapshotCacheUseCase`로 관련 회원 cache를 제거한다.
-- [현재 Caffeine cache](../../../src/main/java/com/umc/product/authorization/application/service/AuthorizationService.java)는 인스턴스 로컬이며 TTL은 30초다. 단일 서버에서는 명시적 eviction이 같은 cache 인스턴스에 도달하고, TTL은 stale entry의 수명을 제한하는 보조 장치다.
+- [현재 Caffeine cache](../../../monolith/src/main/java/com/umc/product/authorization/application/service/AuthorizationService.java)는 인스턴스 로컬이며 TTL은 30초다. 단일 서버에서는 명시적 eviction이 같은 cache 인스턴스에 도달하고, TTL은 stale entry의 수명을 제한하는 보조 장치다.
 - 단일 서버에서도 cache miss 요청이 이전 권한을 조회한 뒤 역할 변경 transaction의 eviction보다 늦게 cache에 저장하면 구 snapshot이 다시 들어갈 수 있다. 현재 구조는 이런 경쟁에서 최대 TTL 30초의 stale 권한을 허용한다.
 - 실행 중인 서버에서 role 테이블을 직접 SQL로 변경하면 application eviction을 우회한다. 즉시 반영이 필요하면 서버를 재시작하여 local cache를 비우거나 별도 eviction 경로를 실행해야 한다.
 
@@ -341,9 +341,9 @@ WHERE version = '2026.07.05.18.50';
 
 ### 필수 검증
 
-- disposable PostgreSQL 또는 staging clone을 가리키도록 `PGSERVICE`, `PGSERVICEFILE`, `PGPASSFILE`을 설정하고 `psql -v ON_ERROR_STOP=1 -f src/main/resources/db/migration/V2026.07.05.18.50__move_super_admin_to_member_system_role.sql`로 migration smoke를 실행한다. PR에는 중복 이관, 회원 ID 집합 일치, 일반 데이터 보존, legacy 재삽입 거부 결과를 남긴다. 이 명령은 Flyway history를 기록하지 않으므로 운영 migration 적용에는 사용하지 않는다.
-- [AuthoritySnapshot cache 테스트](../../../src/test/java/com/umc/product/authorization/application/service/AuthorizationServiceCacheTest.java): cache hit, 회원 삭제, schema version, 회원 ID 불일치
-- [Cache serializer 테스트](../../../src/test/java/com/umc/product/authorization/application/service/AuthoritySnapshotCacheSerializerTest.java): 직렬화 round trip과 지원하지 않는 version 거부
-- [AuthoritySnapshot 도메인 테스트](../../../src/test/java/com/umc/product/authorization/domain/AuthoritySnapshotTest.java): `SUPER_ADMIN` global override와 기수별 역할 정책
+- disposable PostgreSQL 또는 staging clone을 가리키도록 `PGSERVICE`, `PGSERVICEFILE`, `PGPASSFILE`을 설정하고 `psql -v ON_ERROR_STOP=1 -f monolith/src/main/resources/db/migration/V2026.07.05.18.50__move_super_admin_to_member_system_role.sql`로 migration smoke를 실행한다. PR에는 중복 이관, 회원 ID 집합 일치, 일반 데이터 보존, legacy 재삽입 거부 결과를 남긴다. 이 명령은 Flyway history를 기록하지 않으므로 운영 migration 적용에는 사용하지 않는다.
+- [AuthoritySnapshot cache 테스트](../../../monolith/src/test/java/com/umc/product/authorization/application/service/AuthorizationServiceCacheTest.java): cache hit, 회원 삭제, schema version, 회원 ID 불일치
+- [Cache serializer 테스트](../../../monolith/src/test/java/com/umc/product/authorization/application/service/AuthoritySnapshotCacheSerializerTest.java): 직렬화 round trip과 지원하지 않는 version 거부
+- [AuthoritySnapshot 도메인 테스트](../../../monolith/src/test/java/com/umc/product/authorization/domain/AuthoritySnapshotTest.java): `SUPER_ADMIN` global override와 기수별 역할 정책
 - 권한 API 회귀 테스트: endpoint, response shape, status semantics와 대표 리소스 권한 결과
 - ChallengerRole과 ChallengerRecord controller 테스트: JSON의 `SUPER_ADMIN` enum 입력이 모두 `400 Bad Request`인지 확인
