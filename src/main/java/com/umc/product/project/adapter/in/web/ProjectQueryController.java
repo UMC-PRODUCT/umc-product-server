@@ -115,7 +115,11 @@ public class ProjectQueryController {
     @Operation(
         operationId = "PROJECT-006",
         summary = "내가 관리하는 프로젝트 목록",
-        description = "역할별 자동 scope: 중앙 총괄단은 전체, 지부장과 학교 회장단은 본인이 속한 지부 전체, PM 챌린저는 본인 owner 프로젝트. 일반 챌린저는 빈 페이지."
+        description = """
+            역할별 자동 scope: 중앙 총괄단은 전체, 지부장과 학교 회장단은 본인이 속한 지부 전체, PM 챌린저는 본인 owner 프로젝트. 일반 챌린저는 빈 페이지.
+            정렬: 등록완료(IN_PROGRESS) → 승인대기(PENDING_REVIEW) → 임시저장(DRAFT) → 기타 상태.
+            임시저장은 생성 시각 내림차순이며, 나머지는 요청 정렬(기본: 생성 시각·이름 오름차순)을 적용합니다. 최종 동률은 ID 오름차순입니다.
+            """
     )
     public PageResponse<ManagedProjectSummaryResponse> searchManaged(
         @CurrentMember MemberPrincipal memberPrincipal,

@@ -179,6 +179,9 @@ class ProjectQueryServiceTest {
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().get(0).id()).isEqualTo(1L);
+        ArgumentCaptor<SearchProjectQuery> captor = ArgumentCaptor.forClass(SearchProjectQuery.class);
+        verify(loadProjectPort).search(captor.capture());
+        assertThat(captor.getValue().managedStatusOrder()).isFalse();
     }
 
     @Test
@@ -314,9 +317,35 @@ class ProjectQueryServiceTest {
         ArgumentCaptor<SearchProjectQuery> captor = ArgumentCaptor.forClass(SearchProjectQuery.class);
         verify(loadProjectPort).search(captor.capture());
         SearchProjectQuery actual = captor.getValue();
+        assertThat(actual.managedStatusOrder()).isTrue();
         assertThat(actual.chapterId()).isEqualTo(5L);
         assertThat(actual.includedOwnerMemberId()).isEqualTo(99L);
         assertThat(actual.includedOwnerStatuses()).contains(ProjectStatus.DRAFT);
+    }
+
+    @Test
+    void 관리_목록의_PM_scope에도_상태_정렬을_전달한다() {
+        // given
+        PageRequest pageable = PageRequest.of(1, 2);
+        SearchManagedProjectQuery query = SearchManagedProjectQuery.builder()
+            .gisuId(1L).keyword("검색어").pageable(pageable).build();
+        given(scopeResolver.resolveForManagement(any(), any(), anySet()))
+            .willReturn(new ProjectAccessScope.OwnerOnly(99L,
+                java.util.EnumSet.allOf(ProjectStatus.class)));
+        given(loadProjectPort.search(any(SearchProjectQuery.class))).willReturn(Page.empty(pageable));
+
+        // when
+        sut.searchManaged(query, 99L);
+
+        // then
+        ArgumentCaptor<SearchProjectQuery> captor = ArgumentCaptor.forClass(SearchProjectQuery.class);
+        verify(loadProjectPort).search(captor.capture());
+        SearchProjectQuery actual = captor.getValue();
+        assertThat(actual.managedStatusOrder()).isTrue();
+        assertThat(actual.productOwnerMemberId()).isEqualTo(99L);
+        assertThat(actual.statuses()).contains(ProjectStatus.DRAFT);
+        assertThat(actual.keyword()).isEqualTo("검색어");
+        assertThat(actual.pageable()).isEqualTo(pageable);
     }
 
     // ========== Helper Methods ==========
