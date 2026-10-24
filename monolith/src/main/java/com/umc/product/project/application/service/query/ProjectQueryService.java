@@ -113,7 +113,7 @@ public class ProjectQueryService implements
     /**
      * 관리 화면 검색 (PROJECT-006). 호출자 역할에 따라 자동 scope 적용.
      * <p>
-     * 노출 상태: PENDING_REVIEW / IN_PROGRESS / COMPLETED / ABORTED. DRAFT 는 제외.
+     * 기본 노출 상태: PENDING_REVIEW / IN_PROGRESS / COMPLETED / ABORTED. 본인 PO 프로젝트는 DRAFT 도 포함한다.
      */
     @Override
     public Page<ProjectInfo> searchManaged(SearchManagedProjectQuery query, Long memberId) {
@@ -131,6 +131,7 @@ public class ProjectQueryService implements
             .keyword(query.keyword())
             .statuses(new ArrayList<>(requested))
             .pageable(query.pageable())
+            .managedStatusOrder(true)
             .build();
         return toProjectInfoPage(applyScope(scope, base));
     }
