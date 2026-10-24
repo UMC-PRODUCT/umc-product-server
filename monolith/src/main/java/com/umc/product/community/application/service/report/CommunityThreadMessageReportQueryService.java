@@ -10,12 +10,12 @@ import com.umc.product.community.application.port.in.query.thread.report.SearchC
 import com.umc.product.community.application.port.in.query.thread.report.dto.CommunityThreadMessageAdminReportInfo;
 import com.umc.product.community.application.port.in.query.thread.report.dto.CommunityThreadMessageReportPageInfo;
 import com.umc.product.community.application.port.in.query.thread.report.dto.SearchCommunityThreadMessageReportsQuery;
-import com.umc.product.community.application.port.out.report.SearchThreadMessageReportPort;
-import com.umc.product.community.application.port.out.report.dto.ThreadMessageReportSearchQuery;
-import com.umc.product.community.application.port.out.report.dto.ThreadMessageReportSearchResult;
-import com.umc.product.community.domain.enums.ReportStatus;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
+import com.umc.product.report.application.port.in.query.SearchThreadMessageReportsUseCase;
+import com.umc.product.report.application.port.in.query.dto.SearchThreadMessageReportsQuery;
+import com.umc.product.report.application.port.in.query.dto.ThreadMessageReportPageResult;
+import com.umc.product.report.domain.enums.ReportStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 public class CommunityThreadMessageReportQueryService implements SearchCommunityThreadMessageReportsUseCase {
 
     private final CheckChallengerAuthorityUseCase checkChallengerAuthorityUseCase;
-    private final SearchThreadMessageReportPort searchThreadMessageReportPort;
+    private final SearchThreadMessageReportsUseCase searchThreadMessageReportsUseCase;
 
     @Override
     public CommunityThreadMessageReportPageInfo search(SearchCommunityThreadMessageReportsQuery query) {
@@ -35,8 +35,8 @@ public class CommunityThreadMessageReportQueryService implements SearchCommunity
             throw new CommunityDomainException(CommunityErrorCode.THREAD_ACCESS_DENIED);
         }
 
-        ThreadMessageReportSearchResult result = searchThreadMessageReportPort.search(
-            new ThreadMessageReportSearchQuery(
+        ThreadMessageReportPageResult result = searchThreadMessageReportsUseCase.search(
+            new SearchThreadMessageReportsQuery(
                 query.status() == null ? ReportStatus.PENDING : query.status(),
                 query.reason(),
                 query.threadId(),

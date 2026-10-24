@@ -43,6 +43,13 @@ class CommunityThreadArchitectureTest {
         "import com.umc.product.chat.domain.exception.chatdomainexception;",
         "import com.umc.product.chat.domain.exception.chaterrorcode;"
     );
+    private static final Set<String> ALLOWED_REPORT_DOMAIN_CONTRACT_IMPORTS = Set.of(
+        "import com.umc.product.report.domain.enums.reportreason;",
+        "import com.umc.product.report.domain.enums.reportstatus;",
+        "import com.umc.product.report.domain.enums.reporttargettype;",
+        "import com.umc.product.report.domain.exception.reportdomainexception;",
+        "import com.umc.product.report.domain.exception.reporterrorcode;"
+    );
 
     private static final Set<String> ALLOWED_DOMAIN_ROOTS = Set.of(
         "community",
@@ -81,7 +88,8 @@ class CommunityThreadArchitectureTest {
         if (importLine.contains(".adapter.out.persistence.")) {
             return true;
         }
-        if (ALLOWED_CHAT_DOMAIN_CONTRACT_IMPORTS.contains(importLine)) {
+        if (ALLOWED_CHAT_DOMAIN_CONTRACT_IMPORTS.contains(importLine)
+            || ALLOWED_REPORT_DOMAIN_CONTRACT_IMPORTS.contains(importLine)) {
             return false;
         }
         if (importLine.contains(".chat.domain.")) {

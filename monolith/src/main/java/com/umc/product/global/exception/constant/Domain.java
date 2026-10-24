@@ -32,5 +32,6 @@ public enum Domain {
     FEEDBACK,
     BLOG,
     CERTIFICATE,
-    DEMODAY
+    DEMODAY,
+    REPORT
 }
