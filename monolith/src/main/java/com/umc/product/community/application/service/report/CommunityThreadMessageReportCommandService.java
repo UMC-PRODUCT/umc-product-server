@@ -22,6 +22,8 @@ import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.report.application.port.out.LoadReportPort;
 import com.umc.product.report.application.port.out.SaveReportPort;
 import com.umc.product.report.domain.Report;
+import com.umc.product.report.domain.exception.ReportDomainException;
+import com.umc.product.report.domain.exception.ReportErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -60,11 +62,11 @@ public class CommunityThreadMessageReportCommandService implements ReportCommuni
             command.messageId()
         ));
         if (Objects.equals(message.senderMemberId(), command.requesterMemberId())) {
-            throw new CommunityDomainException(CommunityErrorCode.REPORT_SELF_TARGET);
+            throw new ReportDomainException(ReportErrorCode.REPORT_SELF_TARGET);
         }
 
         if (loadReportPort.existsThreadMessageReport(command.requesterMemberId(), command.messageId())) {
-            throw new CommunityDomainException(CommunityErrorCode.REPORT_ALREADY_EXISTS);
+            throw new ReportDomainException(ReportErrorCode.REPORT_ALREADY_EXISTS);
         }
 
         Report savedReport = saveReportPort.save(Report.createThreadMessage(

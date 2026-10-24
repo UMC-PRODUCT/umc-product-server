@@ -44,6 +44,8 @@ import com.umc.product.report.application.port.out.LoadReportPort;
 import com.umc.product.report.application.port.out.SaveReportPort;
 import com.umc.product.report.domain.Report;
 import com.umc.product.report.domain.enums.ReportReason;
+import com.umc.product.report.domain.exception.ReportDomainException;
+import com.umc.product.report.domain.exception.ReportErrorCode;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("스레드 메시지 신고 명령 서비스")
@@ -277,9 +279,9 @@ class CommunityThreadMessageReportCommandServiceTest {
 
         // when & then
         assertThatThrownBy(() -> sut.report(command()))
-            .isInstanceOf(CommunityDomainException.class)
+            .isInstanceOf(ReportDomainException.class)
             .extracting(error -> ((BusinessException) error).getBaseCode())
-            .isEqualTo(CommunityErrorCode.REPORT_SELF_TARGET);
+            .isEqualTo(ReportErrorCode.REPORT_SELF_TARGET);
 
         then(loadReportPort).shouldHaveNoInteractions();
         then(saveReportPort).shouldHaveNoInteractions();
@@ -304,9 +306,9 @@ class CommunityThreadMessageReportCommandServiceTest {
 
         // when & then
         assertThatThrownBy(() -> sut.report(command()))
-            .isInstanceOf(CommunityDomainException.class)
+            .isInstanceOf(ReportDomainException.class)
             .extracting(error -> ((BusinessException) error).getBaseCode())
-            .isEqualTo(CommunityErrorCode.REPORT_ALREADY_EXISTS);
+            .isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS);
 
         then(saveReportPort).should(never()).save(any(Report.class));
         InOrder order = inOrder(
@@ -333,8 +335,8 @@ class CommunityThreadMessageReportCommandServiceTest {
         // given
         CommunityThread thread = thread();
         CommunityThreadMember member = activeMember();
-        CommunityDomainException duplicate = new CommunityDomainException(
-            CommunityErrorCode.REPORT_ALREADY_EXISTS
+        ReportDomainException duplicate = new ReportDomainException(
+            ReportErrorCode.REPORT_ALREADY_EXISTS
         );
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
@@ -352,7 +354,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         assertThatThrownBy(() -> sut.report(command()))
             .isSameAs(duplicate)
             .extracting(error -> ((BusinessException) error).getBaseCode())
-            .isEqualTo(CommunityErrorCode.REPORT_ALREADY_EXISTS);
+            .isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS);
         then(saveReportPort).should().save(any(Report.class));
     }
 

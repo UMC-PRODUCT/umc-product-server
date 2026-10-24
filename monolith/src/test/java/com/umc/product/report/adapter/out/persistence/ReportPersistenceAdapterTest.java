@@ -24,11 +24,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.umc.product.community.adapter.out.persistence.CommunityThreadRepository;
 import com.umc.product.community.domain.CommunityThread;
 import com.umc.product.community.domain.enums.CommunityThreadCategory;
-import com.umc.product.community.domain.exception.CommunityDomainException;
-import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.report.domain.Report;
 import com.umc.product.report.domain.enums.ReportReason;
 import com.umc.product.report.domain.enums.ReportTargetType;
+import com.umc.product.report.domain.exception.ReportDomainException;
+import com.umc.product.report.domain.exception.ReportErrorCode;
 import com.umc.product.support.PersistenceAdapterTest;
 
 @PersistenceAdapterTest
@@ -90,8 +90,8 @@ class ReportPersistenceAdapterTest {
 
         // when & then
         assertThatThrownBy(() -> sut.save(second))
-            .isInstanceOfSatisfying(CommunityDomainException.class, exception ->
-                assertThat(exception.getBaseCode()).isEqualTo(CommunityErrorCode.REPORT_ALREADY_EXISTS)
+            .isInstanceOfSatisfying(ReportDomainException.class, exception ->
+                assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS)
             );
     }
 
@@ -149,8 +149,8 @@ class ReportPersistenceAdapterTest {
                 Report.createThreadMessage(10L, threadId, 30L, ReportReason.ABUSE)
             ));
             return SaveResult.SAVED;
-        } catch (CommunityDomainException exception) {
-            assertThat(exception.getBaseCode()).isEqualTo(CommunityErrorCode.REPORT_ALREADY_EXISTS);
+        } catch (ReportDomainException exception) {
+            assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS);
             return SaveResult.DUPLICATE;
         }
     }

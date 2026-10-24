@@ -6,12 +6,12 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
-import com.umc.product.community.domain.exception.CommunityDomainException;
-import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.report.application.port.out.LoadReportPort;
 import com.umc.product.report.application.port.out.SaveReportPort;
 import com.umc.product.report.domain.Report;
 import com.umc.product.report.domain.enums.ReportTargetType;
+import com.umc.product.report.domain.exception.ReportDomainException;
+import com.umc.product.report.domain.exception.ReportErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -50,7 +50,7 @@ public class ReportPersistenceAdapter implements LoadReportPort, SaveReportPort 
             return reportRepository.saveAndFlush(report);
         } catch (DataIntegrityViolationException exception) {
             if (isReporterTargetDuplicate(exception)) {
-                throw new CommunityDomainException(CommunityErrorCode.REPORT_ALREADY_EXISTS, exception);
+                throw new ReportDomainException(ReportErrorCode.REPORT_ALREADY_EXISTS, exception);
             }
             throw exception;
         }

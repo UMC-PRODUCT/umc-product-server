@@ -19,6 +19,8 @@ import com.umc.product.report.application.port.out.LoadReportPort;
 import com.umc.product.report.application.port.out.SaveReportPort;
 import com.umc.product.report.domain.Report;
 import com.umc.product.report.domain.enums.ReportTargetType;
+import com.umc.product.report.domain.exception.ReportDomainException;
+import com.umc.product.report.domain.exception.ReportErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -77,7 +79,7 @@ public class ReportCommandService implements ReportPostUseCase, ReportCommentUse
     private void checkDuplicateAndSaveReport(Long reporterId, ReportTargetType targetType, Long targetId) {
         // 중복 신고 확인
         if (loadReportPort.existsByReporterIdAndTargetTypeAndTargetId(reporterId, targetType, targetId)) {
-            throw new CommunityDomainException(CommunityErrorCode.REPORT_ALREADY_EXISTS);
+            throw new ReportDomainException(ReportErrorCode.REPORT_ALREADY_EXISTS);
         }
 
         // 신고 생성 및 저장
