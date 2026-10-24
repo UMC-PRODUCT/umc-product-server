@@ -18,6 +18,8 @@ import com.umc.product.community.application.port.in.query.thread.message.dto.Co
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageMentionInfo;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageRecipientsQuery;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageType;
+import com.umc.product.community.domain.event.CommunityThreadInvitedEvent;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.notification.application.port.in.RequestFcmNotificationUseCase;
 import com.umc.product.notification.application.port.in.dto.RequestFcmNotificationCommand;
 
@@ -39,6 +41,7 @@ public class CommunityAlarmEventListener {
     private final ListCommunityThreadMemberStatusUseCase listMemberStatusUseCase;
     private final GetCommunityThreadMessageForRecipientsUseCase getMessageForRecipientsUseCase;
     private final GetCommunityThreadTitleUseCase getThreadTitleUseCase;
+    private final GetMemberUseCase getMemberUseCase;
     private final RequestFcmNotificationUseCase requestFcmNotificationUseCase;
 
     @EventListener
@@ -96,6 +99,36 @@ public class CommunityAlarmEventListener {
 
         log.info("Community 메시지 알림 요청: threadId={}, messageId={}, targetCount={}",
             threadId, messageId, finalTargetIds.size());
+    }
+
+    @EventListener
+    public void handle(CommunityThreadInvitedEvent event) {
+        List<Long> invitedMemberIds = event.invitedMemberIds();
+        if (invitedMemberIds.isEmpty()) {
+            return;
+        }
+
+        String inviterName = getMemberUseCase.getById(event.inviterMemberId()).name();
+        String threadTitle = getThreadTitleUseCase.getThreadTitle(event.threadId());
+
+        requestFcmNotificationUseCase.request(RequestFcmNotificationCommand.builder()
+            .requesterMemberId(event.inviterMemberId())
+            .memberIds(invitedMemberIds)
+            .title(inviteTitle(threadTitle))
+            .body(inviteBody(inviterName))
+            .build());
+
+        log.info("Community 초대 알림 요청: threadId={}, inviterMemberId={}, targetCount={}",
+            event.threadId(), event.inviterMemberId(), invitedMemberIds.size());
+    }
+
+    private String inviteTitle(String threadTitle) {
+        return StringUtils.abbreviate(threadTitle, TITLE_MAX_LENGTH);
+    }
+
+    // 수락 대기가 아니라 초대 즉시 멤버가 되는 구조라, 문구도 이미 참여된 사실을 안내한다.
+    private String inviteBody(String inviterName) {
+        return StringUtils.abbreviate(inviterName + "님이 스레드에 초대해 참여했어요", BODY_MAX_LENGTH);
     }
 
     private String title(String threadTitle, CommunityThreadMessageInfo info) {
