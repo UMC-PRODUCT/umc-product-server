@@ -52,7 +52,7 @@ class ProjectMatchingResultPublicationCommandServiceTest {
     ProjectMatchingResultPublicationCommandService sut;
 
     @Test
-    void 선발된_지원서는_합격으로_나머지_지원서는_불합격으로_발표한다() {
+    void 선발된_지원서는_APPROVED로_나머지_지원서는_REJECTED로_발표한다() {
         // given
         ProjectMatchingRound round = round(Instant.now().minusSeconds(60), true);
         Project project = project();
@@ -80,7 +80,7 @@ class ProjectMatchingResultPublicationCommandServiceTest {
     }
 
     @Test
-    void 선발된_멤버가_없어도_지원서를_불합격으로_발표한다() {
+    void 선발된_멤버가_없어도_지원서를_REJECTED로_발표한다() {
         // given
         ProjectMatchingRound round = round(Instant.now().minusSeconds(60), true);
         ProjectApplication application = application(project(), round, 10L, ProjectApplicationStatus.SUBMITTED);
@@ -98,7 +98,7 @@ class ProjectMatchingResultPublicationCommandServiceTest {
     }
 
     @Test
-    void 지원서_없는_랜덤_배정_멤버도_활성화한다() {
+    void 지원서_없는_랜덤_배정_멤버도_ACTIVE로_변경한다() {
         // given
         ProjectMatchingRound round = round(Instant.now().minusSeconds(60), true);
         ProjectMember member = ProjectMember.createForMatching(

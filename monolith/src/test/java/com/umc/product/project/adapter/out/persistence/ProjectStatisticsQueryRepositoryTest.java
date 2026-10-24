@@ -33,7 +33,7 @@ class ProjectStatisticsQueryRepositoryTest {
     ProjectStatisticsQueryRepository sut;
 
     @Test
-    void 공개_팀원_통계는_발표_대기_멤버를_제외한다() {
+    void 공개_팀원_통계는_PENDING_PUBLICATION_멤버를_제외한다() {
         // given
         Project project = project();
         em.persist(ProjectMember.create(project, 10L, ChallengerPart.WEB_PRODUCT_ENGINEER, 999L));
@@ -50,7 +50,7 @@ class ProjectStatisticsQueryRepositoryTest {
     }
 
     @Test
-    void 합격_지원서_통계는_결과가_발표된_차수만_포함한다() {
+    void APPROVED_지원서_통계는_결과가_발표된_차수만_포함한다() {
         // given
         Project project = project();
         ProjectApplicationForm form = em.persist(ProjectApplicationForm.create(project, 999L));

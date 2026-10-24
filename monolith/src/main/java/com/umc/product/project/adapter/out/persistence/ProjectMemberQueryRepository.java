@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,6 +45,25 @@ public class ProjectMemberQueryRepository {
             .where(projectMember.project.gisuId.eq(gisuId),
                 projectMember.status.in(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION))
             .fetch();
+    }
+
+    /** 파트와 관계없이 ACTIVE·PENDING_PUBLICATION 회원 ID를 프로젝트별로 중복 없이 조회한다. */
+    public Map<Long, Set<Long>> listAssignedMemberIdsByProjectIds(Collection<Long> projectIds) {
+        if (projectIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Tuple> rows = queryFactory.select(projectMember.project.id, projectMember.memberId).distinct()
+            .from(projectMember)
+            .where(projectMember.project.id.in(projectIds),
+                projectMember.status.in(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION))
+            .fetch();
+
+        Map<Long, Set<Long>> result = new HashMap<>();
+        for (Tuple row : rows) {
+            result.computeIfAbsent(row.get(projectMember.project.id), ignored -> new HashSet<>())
+                .add(row.get(projectMember.memberId));
+        }
+        return result;
     }
 
     /**

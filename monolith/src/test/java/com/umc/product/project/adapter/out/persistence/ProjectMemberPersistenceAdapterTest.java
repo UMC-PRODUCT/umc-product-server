@@ -55,7 +55,7 @@ class ProjectMemberPersistenceAdapterTest {
     }
 
     @Test
-    void 내부_팀원_조회는_활성과_발표_대기_멤버만_포함한다() {
+    void 내부_팀원_조회는_ACTIVE와_PENDING_PUBLICATION_멤버만_포함한다() {
         // when
         var result = sut.listActiveAndPendingPublicationByProjectId(project.getId());
 
@@ -64,7 +64,7 @@ class ProjectMemberPersistenceAdapterTest {
     }
 
     @Test
-    void 공개_팀원_조회는_활성_멤버만_포함한다() {
+    void 공개_팀원_조회는_ACTIVE_멤버만_포함한다() {
         // when
         var members = sut.listByProjectId(project.getId());
         var membersByProject = sut.listByProjectIds(Set.of(project.getId()));
@@ -76,7 +76,7 @@ class ProjectMemberPersistenceAdapterTest {
     }
 
     @Test
-    void 내부_정원은_발표_대기를_포함하고_공개_인원수는_활성_멤버만_집계한다() {
+    void 내부_정원은_PENDING_PUBLICATION을_포함하고_공개_인원수는_ACTIVE_멤버만_집계한다() {
         // when
         var assigned = sut.countAssignedByProjectIdGroupByPart(project.getId());
         var published = sut.countByProjectIdGroupByPart(project.getId());
@@ -87,7 +87,7 @@ class ProjectMemberPersistenceAdapterTest {
     }
 
     @Test
-    void 중복_배정_검사는_해당_기수의_활성과_발표_대기_멤버만_포함한다() {
+    void 중복_배정_검사는_해당_기수의_ACTIVE와_PENDING_PUBLICATION_멤버만_포함한다() {
         // when
         var assignedIds = sut.listAssignedMemberIdsByGisuId(1L);
 
@@ -100,7 +100,7 @@ class ProjectMemberPersistenceAdapterTest {
     }
 
     @Test
-    void 매칭_차수_조회는_발표된_멤버만_포함한다() {
+    void 매칭_차수_조회는_ACTIVE_멤버만_포함한다() {
         // when
         var result = sut.listMatchedRoundsByProjectIdsAndMemberIds(
             Set.of(project.getId()), Set.of(10L, 11L));
@@ -108,6 +108,24 @@ class ProjectMemberPersistenceAdapterTest {
         // then
         assertThat(result).extracting(row -> row.memberId()).containsExactly(10L);
         assertThat(result).extracting(row -> row.matchingRoundId()).containsExactly(round.getId());
+    }
+
+    @Test
+    void 학교_집계용_회원은_프로젝트별로_모든_파트의_ACTIVE와_PENDING_PUBLICATION_멤버를_조회한다() {
+        // given
+        em.persist(ProjectMember.create(project, 15L, ChallengerPart.DESIGN, 999L));
+        Project otherProject = project();
+        em.persist(ProjectMember.create(otherProject, 20L, ChallengerPart.DESIGN, 999L));
+        em.flush();
+        em.clear();
+
+        // when
+        var result = sut.listAssignedMemberIdsByProjectIds(Set.of(project.getId(), otherProject.getId()));
+
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result.get(project.getId())).containsExactlyInAnyOrder(10L, 11L, 15L);
+        assertThat(result.get(otherProject.getId())).containsExactly(20L);
     }
 
     private Project project() {

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,7 +13,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 
@@ -94,7 +97,7 @@ class DeveloperMatchingPolicyTest {
         void 의무_없음이면_SUBMITTED는_REJECTED로_확정() {
             List<ProjectApplication> applicants = applications(2, ProjectApplicationStatus.SUBMITTED);
 
-            AutoDecisionResult result = sut.decideAutomatically(applicants, 5, new Random(FIXED_SEED));
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 5, new Random(FIXED_SEED), schoolContext(applicants));
 
             assertThat(result.approvedIds()).isEmpty();
             assertThat(result.rejectedIds()).hasSize(2);
@@ -106,7 +109,7 @@ class DeveloperMatchingPolicyTest {
             applicants.addAll(applicationsWithIds(List.of(1L, 2L, 3L), ProjectApplicationStatus.APPROVED));
             applicants.addAll(applicationsWithIds(List.of(4L, 5L, 6L), ProjectApplicationStatus.SUBMITTED));
 
-            AutoDecisionResult result = sut.decideAutomatically(applicants, 6, new Random(FIXED_SEED));
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 6, new Random(FIXED_SEED), schoolContext(applicants));
 
             assertThat(result.approvedIds()).containsExactlyInAnyOrder(1L, 2L, 3L);
             assertThat(result.rejectedIds()).containsExactlyInAnyOrder(4L, 5L, 6L);
@@ -118,7 +121,7 @@ class DeveloperMatchingPolicyTest {
             applicants.addAll(applicationsWithIds(List.of(1L), ProjectApplicationStatus.APPROVED));
             applicants.addAll(applicationsWithIds(List.of(2L, 3L, 4L, 5L, 6L), ProjectApplicationStatus.SUBMITTED));
 
-            AutoDecisionResult result = sut.decideAutomatically(applicants, 6, new Random(FIXED_SEED));
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 6, new Random(FIXED_SEED), schoolContext(applicants));
 
             assertThat(result.approvedIds()).hasSize(3);
             assertThat(result.approvedIds()).contains(1L);
@@ -133,7 +136,7 @@ class DeveloperMatchingPolicyTest {
             applicants.addAll(applicationsWithIds(List.of(2L), ProjectApplicationStatus.SUBMITTED));
             applicants.addAll(applicationsWithIds(List.of(3L, 4L, 5L, 6L), ProjectApplicationStatus.REJECTED));
 
-            AutoDecisionResult result = sut.decideAutomatically(applicants, 6, new Random(FIXED_SEED));
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 6, new Random(FIXED_SEED), schoolContext(applicants));
 
             assertThat(result.approvedIds()).hasSize(3);
             assertThat(result.approvedIds()).contains(1L, 2L);
@@ -146,7 +149,7 @@ class DeveloperMatchingPolicyTest {
                 List.of(1L, 2L, 3L, 4L, 5L, 6L), ProjectApplicationStatus.REJECTED
             );
 
-            AutoDecisionResult result = sut.decideAutomatically(applicants, 6, new Random(FIXED_SEED));
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 6, new Random(FIXED_SEED), schoolContext(applicants));
 
             assertThat(result.approvedIds()).hasSize(3);
             assertThat(result.rejectedIds()).hasSize(3);
@@ -157,7 +160,7 @@ class DeveloperMatchingPolicyTest {
         void TO_50퍼센트_이하라_의무_없는_상황에서_SUBMITTED는_REJECTED로_확정() {
             List<ProjectApplication> applicants = applications(2, ProjectApplicationStatus.SUBMITTED);
 
-            AutoDecisionResult result = sut.decideAutomatically(applicants, 6, new Random(FIXED_SEED));
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 6, new Random(FIXED_SEED), schoolContext(applicants));
 
             assertThat(result.approvedIds()).isEmpty();
             assertThat(result.rejectedIds()).hasSize(2);
@@ -170,7 +173,7 @@ class DeveloperMatchingPolicyTest {
             applicants.addAll(applicationsWithIds(List.of(2L, 3L), ProjectApplicationStatus.SUBMITTED));
             applicants.addAll(applicationsWithIds(List.of(4L, 5L), ProjectApplicationStatus.REJECTED));
 
-            AutoDecisionResult result = sut.decideAutomatically(applicants, 5, new Random(FIXED_SEED));
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 5, new Random(FIXED_SEED), schoolContext(applicants));
 
             assertThat(result.approvedIds()).doesNotContainAnyElementsOf(result.rejectedIds());
         }
@@ -188,16 +191,18 @@ class DeveloperMatchingPolicyTest {
         return ids.stream().map(id -> application(id, status)).toList();
     }
 
+    private MatchingSchoolContext schoolContext(List<ProjectApplication> applicants) {
+        return new MatchingSchoolContext(applicants.stream().collect(Collectors.toMap(
+            ProjectApplication::getApplicantMemberId, ProjectApplication::getApplicantMemberId)));
+    }
+
     private ProjectApplication application(Long id, ProjectApplicationStatus status) {
-        try {
-            var constructor = ProjectApplication.class.getDeclaredConstructor();
-            constructor.setAccessible(true);
-            ProjectApplication application = constructor.newInstance();
-            ReflectionTestUtils.setField(application, "id", id);
-            ReflectionTestUtils.setField(application, "status", status);
-            return application;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        Project project = Project.createDraft(1L, 1L, 100L, 1L, 100L);
+        ReflectionTestUtils.setField(project, "id", 100L);
+        ProjectApplicationForm form = ProjectApplicationForm.create(project, 1L);
+        ProjectApplication application = ProjectApplication.create(form, 1L, id, null);
+        ReflectionTestUtils.setField(application, "id", id);
+        ReflectionTestUtils.setField(application, "status", status);
+        return application;
     }
 }

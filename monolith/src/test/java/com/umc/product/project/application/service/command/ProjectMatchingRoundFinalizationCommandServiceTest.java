@@ -10,7 +10,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
 import java.time.Instant;
@@ -19,6 +21,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -46,6 +50,7 @@ import com.umc.product.challenger.application.port.in.query.dto.SearchChallenger
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
@@ -104,6 +109,8 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
     @Mock
     SearchChallengerUseCase searchChallengerUseCase;
     @Mock
+    GetMemberUseCase getMemberUseCase;
+    @Mock
     ProjectMatchingChapterResolver matchingChapterResolver;
 
     @Captor
@@ -125,10 +132,15 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             new Random(42L),
             getChallengerRoleUseCase,
             getChallengerUseCase,
+            getMemberUseCase,
             searchChallengerUseCase,
             matchingChapterResolver
         );
         lenient().when(matchingChapterResolver.deltaOf(any())).thenReturn(ChapterTransferDelta.empty());
+        given(getMemberUseCase.findAllSchoolIdsByIds(any())).willAnswer(invocation -> {
+            Set<Long> memberIds = invocation.getArgument(0);
+            return memberIds.stream().collect(Collectors.toMap(id -> id, id -> id));
+        });
         given(getChallengerRoleUseCase.findAllByMemberId(EXECUTOR_MEMBER_ID))
             .willReturn(List.of(centralCoreRole()));
     }
@@ -393,6 +405,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
                     new Random(42L),
                     getChallengerRoleUseCase,
                     getChallengerUseCase,
+                    getMemberUseCase,
                     searchChallengerUseCase,
                     matchingChapterResolver
                 );
@@ -603,6 +616,71 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
     }
 
     @Nested
+    class SchoolPreference {
+
+        @ParameterizedTest
+        @CsvSource({"WEB_PRODUCT_ENGINEER, MOBILE_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER, WEB_PRODUCT_ENGINEER"})
+        void 다른_파트의_APPROVED_지원자도_보충_선발_전에_학교_집계에_반영한다(
+            ChallengerPart candidatePart, ChallengerPart approvedPart
+        ) {
+            // given
+            ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DEVELOPER);
+            Project project = projectWithId(PROJECT_ID);
+            ProjectApplication first = application(201L, 31L, ProjectApplicationStatus.SUBMITTED, project, round);
+            ProjectApplication second = application(202L, 32L, ProjectApplicationStatus.SUBMITTED, project, round);
+            ProjectApplication approved = application(203L, 33L, ProjectApplicationStatus.APPROVED, project, round);
+            given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
+            given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID)).willReturn(List.of(first, second, approved));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong())).willReturn(Map.of(
+                31L, challenger(31L, candidatePart), 32L, challenger(32L, candidatePart), 33L, challenger(33L, approvedPart)));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any())).willReturn(Map.of(PROJECT_ID,
+                List.of(partQuota(project, candidatePart, 2L), partQuota(project, approvedPart, 2L))));
+            willReturn(Map.of(999L, 99L, 31L, 1L, 32L, 2L, 33L, 1L)).given(getMemberUseCase).findAllSchoolIdsByIds(any());
+
+            // when
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            // then
+            then(saveProjectMemberPort).should().saveAll(approvedMembersCaptor.capture());
+            assertThat(approvedMembersCaptor.getValue()).extracting(ProjectMember::getMemberId)
+                .containsExactlyInAnyOrder(32L, 33L);
+        }
+
+        @Test
+        void 다른_파트에서_방금_선발한_인원도_다음_파트의_선발에_반영한다() {
+            // given
+            ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DEVELOPER);
+            Project project = projectWithId(PROJECT_ID);
+            List<ProjectApplication> applicants = List.of(
+                application(201L, 31L, ProjectApplicationStatus.SUBMITTED, project, round),
+                application(202L, 32L, ProjectApplicationStatus.SUBMITTED, project, round),
+                application(203L, 33L, ProjectApplicationStatus.SUBMITTED, project, round),
+                application(204L, 34L, ProjectApplicationStatus.SUBMITTED, project, round));
+            given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
+            given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID)).willReturn(applicants);
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong())).willReturn(Map.of(
+                31L, challenger(31L, ChallengerPart.WEB_PRODUCT_ENGINEER),
+                32L, challenger(32L, ChallengerPart.WEB_PRODUCT_ENGINEER),
+                33L, challenger(33L, ChallengerPart.MOBILE_PRODUCT_ENGINEER),
+                34L, challenger(34L, ChallengerPart.MOBILE_PRODUCT_ENGINEER)));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any())).willReturn(Map.of(PROJECT_ID,
+                List.of(partQuota(project, ChallengerPart.WEB_PRODUCT_ENGINEER, 2L),
+                    partQuota(project, ChallengerPart.MOBILE_PRODUCT_ENGINEER, 2L))));
+            Map<Long, Long> schoolIds = Map.of(999L, 99L, 31L, 1L, 32L, 2L, 33L, 2L, 34L, 1L);
+            willReturn(schoolIds).given(getMemberUseCase).findAllSchoolIdsByIds(any());
+
+            // when
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            // then
+            then(saveProjectMemberPort).should().saveAll(approvedMembersCaptor.capture());
+            assertThat(approvedMembersCaptor.getValue()).hasSize(2);
+            assertThat(approvedMembersCaptor.getValue()).extracting(member -> schoolIds.get(member.getMemberId()))
+                .containsExactlyInAnyOrder(1L, 2L);
+        }
+    }
+
+    @Nested
     class RandomAssignment {
 
         @Captor
@@ -626,7 +704,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             "PLAN_DEVELOPER, WEB_PRODUCT_ENGINEER, DESIGN",
             "PLAN_DEVELOPER, MOBILE_PRODUCT_ENGINEER, DESIGN"
         })
-        void 매칭_유형에_해당하는_파트를_발표_대기_상태로_배정한다(
+        void 매칭_유형에_해당하는_파트를_PENDING_PUBLICATION_상태로_배정한다(
             MatchingType type, ChallengerPart part, ChallengerPart otherPart
         ) {
             // given
@@ -732,6 +810,85 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
                 .containsExactlyInAnyOrder(
                     tuple(31L, PROJECT_ID, ChallengerPart.WEB_PRODUCT_ENGINEER),
                     tuple(32L, 101L, ChallengerPart.MOBILE_PRODUCT_ENGINEER));
+        }
+
+        @ParameterizedTest
+        @CsvSource({"PLAN_DESIGN, DESIGN", "PLAN_DEVELOPER, WEB_PRODUCT_ENGINEER", "PLAN_DEVELOPER, MOBILE_PRODUCT_ENGINEER"})
+        void 다른_파트의_기존_구성원을_포함해_학교가_덜_중복되는_프로젝트에_배정한다(
+            MatchingType type, ChallengerPart part
+        ) {
+            // given
+            givenRound(type);
+            Project otherProject = projectWithId(101L);
+            given(loadProjectPort.listByChapterIdAndStatus(1L, ProjectStatus.IN_PROGRESS))
+                .willReturn(List.of(project, otherProject));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any())).willReturn(Map.of(
+                PROJECT_ID, List.of(partQuota(project, part, 1L)),
+                101L, List.of(partQuota(otherProject, part, 1L))));
+            given(loadProjectMemberPort.listAssignedMemberIdsByProjectIds(any()))
+                .willReturn(Map.of(PROJECT_ID, Set.of(20L, 21L), 101L, Set.of(22L)));
+            willReturn(Map.of(999L, 99L, 20L, 1L, 21L, 1L, 22L, 1L, 31L, 1L)).given(getMemberUseCase).findAllSchoolIdsByIds(any());
+            givenCandidates(searchCandidate(31L, part));
+
+            // when
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            // then
+            then(saveProjectMemberPort).should().saveAll(membersCaptor.capture());
+            assertThat(membersCaptor.getValue()).singleElement().satisfies(member -> {
+                assertThat(member.getMemberId()).isEqualTo(31L);
+                assertThat(member.getProject().getId()).isEqualTo(101L);
+                assertThat(member.getPart()).isEqualTo(part);
+            });
+        }
+
+        @Test
+        void PO의_학교도_프로젝트_선택에_반영한다() {
+            // given
+            givenRound(MatchingType.PLAN_DEVELOPER);
+            Project otherProject = projectWithId(101L);
+            ReflectionTestUtils.setField(otherProject, "productOwnerMemberId", 998L);
+            given(loadProjectPort.listByChapterIdAndStatus(1L, ProjectStatus.IN_PROGRESS))
+                .willReturn(List.of(project, otherProject));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any())).willReturn(Map.of(
+                PROJECT_ID, List.of(partQuota(project, ChallengerPart.WEB_PRODUCT_ENGINEER, 1L)),
+                101L, List.of(partQuota(otherProject, ChallengerPart.WEB_PRODUCT_ENGINEER, 1L))));
+            willReturn(Map.of(999L, 1L, 998L, 2L, 31L, 1L)).given(getMemberUseCase).findAllSchoolIdsByIds(any());
+            givenCandidates(searchCandidate(31L, ChallengerPart.WEB_PRODUCT_ENGINEER));
+
+            // when
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            // then
+            then(saveProjectMemberPort).should().saveAll(membersCaptor.capture());
+            assertThat(membersCaptor.getValue()).singleElement()
+                .extracting(member -> member.getProject().getId()).isEqualTo(101L);
+        }
+
+        @Test
+        void 같은_학교_후보를_연속_배정할_때_직전_배정을_다음_선택에_반영한다() {
+            // given
+            Random random = mock(Random.class);
+            given(random.nextInt(anyInt())).willReturn(0);
+            ReflectionTestUtils.setField(sut, "matchingRandom", random);
+            givenRound(MatchingType.PLAN_DEVELOPER);
+            Project otherProject = projectWithId(101L);
+            given(loadProjectPort.listByChapterIdAndStatus(1L, ProjectStatus.IN_PROGRESS))
+                .willReturn(List.of(project, otherProject));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any())).willReturn(Map.of(
+                PROJECT_ID, List.of(partQuota(project, ChallengerPart.WEB_PRODUCT_ENGINEER, 2L)),
+                101L, List.of(partQuota(otherProject, ChallengerPart.WEB_PRODUCT_ENGINEER, 2L))));
+            willReturn(Map.of(999L, 99L, 31L, 1L, 32L, 1L)).given(getMemberUseCase).findAllSchoolIdsByIds(any());
+            givenCandidates(searchCandidate(31L, ChallengerPart.WEB_PRODUCT_ENGINEER),
+                searchCandidate(32L, ChallengerPart.WEB_PRODUCT_ENGINEER));
+
+            // when
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            // then
+            then(saveProjectMemberPort).should().saveAll(membersCaptor.capture());
+            assertThat(membersCaptor.getValue()).hasSize(2).extracting(member -> member.getProject().getId())
+                .containsExactlyInAnyOrder(PROJECT_ID, 101L);
         }
 
         @Test

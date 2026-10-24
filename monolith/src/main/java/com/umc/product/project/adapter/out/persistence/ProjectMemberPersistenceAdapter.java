@@ -5,6 +5,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -36,6 +37,11 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     @Override
     public List<Long> listAssignedMemberIdsByGisuId(Long gisuId) {
         return queryRepository.listAssignedMemberIdsByGisuId(gisuId);
+    }
+
+    @Override
+    public Map<Long, Set<Long>> listAssignedMemberIdsByProjectIds(Collection<Long> projectIds) {
+        return queryRepository.listAssignedMemberIdsByProjectIds(projectIds);
     }
 
     @Override

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
@@ -34,6 +35,9 @@ public interface LoadProjectMemberPort {
      * 중복 선발을 막기 위해 해당 기수의 ACTIVE·PENDING_PUBLICATION 멤버의 memberId를 조회합니다.
      */
     List<Long> listAssignedMemberIdsByGisuId(Long gisuId);
+
+    /** 파트와 관계없이 ACTIVE·PENDING_PUBLICATION 회원 ID를 프로젝트별로 중복 없이 일괄 조회합니다. */
+    Map<Long, Set<Long>> listAssignedMemberIdsByProjectIds(Collection<Long> projectIds);
 
     /**
      * ACTIVE 멤버의 assignedMatchingRound를 조회합니다. 차수가 null인 멤버는 제외합니다.
