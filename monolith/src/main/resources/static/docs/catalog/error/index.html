@@ -121,6 +121,7 @@
                     <option value="organization">organization</option>
                     <option value="project">project</option>
                     <option value="recruiting">recruiting</option>
+                    <option value="report">report</option>
                     <option value="schedule">schedule</option>
                     <option value="storage">storage</option>
                     <option value="term">term</option>
@@ -3470,28 +3471,6 @@
     {
       "sequence": 151,
       "domain": "community",
-      "code": "COMMUNITY-0016",
-      "name": "REPORT_ALREADY_EXISTS",
-      "httpStatus": 409,
-      "httpStatusName": "CONFLICT",
-      "message": "이미 신고한 게시글, 댓글 또는 스레드 메시지예요. 신고 내역을 확인해주세요.",
-      "description": null,
-      "clientAction": null,
-      "retryable": null,
-      "severity": null,
-      "deprecated": false,
-      "replacementCode": null,
-      "owners": [],
-      "tags": [],
-      "source": {
-        "enumName": "CommunityErrorCode",
-        "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 27
-      }
-    },
-    {
-      "sequence": 152,
-      "domain": "community",
       "code": "COMMUNITY-0017",
       "name": "INVALID_POST_AUTHOR",
       "httpStatus": 400,
@@ -3508,11 +3487,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 31
+        "line": 30
       }
     },
     {
-      "sequence": 153,
+      "sequence": 152,
       "domain": "community",
       "code": "COMMUNITY-0018",
       "name": "NOT_LIGHTNING_POST",
@@ -3530,11 +3509,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 32
+        "line": 31
       }
     },
     {
-      "sequence": 154,
+      "sequence": 153,
       "domain": "community",
       "code": "COMMUNITY-0019",
       "name": "USE_LIGHTNING_API",
@@ -3552,11 +3531,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 33
+        "line": 32
       }
     },
     {
-      "sequence": 155,
+      "sequence": 154,
       "domain": "community",
       "code": "COMMUNITY-0020",
       "name": "LIGHTNING_INFO_REQUIRED",
@@ -3574,11 +3553,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 34
+        "line": 33
       }
     },
     {
-      "sequence": 156,
+      "sequence": 155,
       "domain": "community",
       "code": "COMMUNITY-0021",
       "name": "POST_NOT_OWNED",
@@ -3596,11 +3575,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 35
+        "line": 34
       }
     },
     {
-      "sequence": 157,
+      "sequence": 156,
       "domain": "community",
       "code": "COMMUNITY-0022",
       "name": "INVALID_LIGHTNING_MEET_AT",
@@ -3618,11 +3597,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 38
+        "line": 37
       }
     },
     {
-      "sequence": 158,
+      "sequence": 157,
       "domain": "community",
       "code": "COMMUNITY-0023",
       "name": "INVALID_LIGHTNING_LOCATION",
@@ -3640,11 +3619,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 39
+        "line": 38
       }
     },
     {
-      "sequence": 159,
+      "sequence": 158,
       "domain": "community",
       "code": "COMMUNITY-0024",
       "name": "INVALID_LIGHTNING_MAX_PARTICIPANTS",
@@ -3662,11 +3641,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 40
+        "line": 39
       }
     },
     {
-      "sequence": 160,
+      "sequence": 159,
       "domain": "community",
       "code": "COMMUNITY-0025",
       "name": "INVALID_LIGHTNING_OPEN_CHAT_URL",
@@ -3684,11 +3663,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 41
+        "line": 40
       }
     },
     {
-      "sequence": 161,
+      "sequence": 160,
       "domain": "community",
       "code": "COMMUNITY-0026",
       "name": "INVALID_LIGHTNING_OPEN_CHAT_URL_FORMAT",
@@ -3706,11 +3685,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 42
+        "line": 41
       }
     },
     {
-      "sequence": 162,
+      "sequence": 161,
       "domain": "community",
       "code": "COMMUNITY-0027",
       "name": "INVALID_LIGHTNING_MEET_AT_PAST",
@@ -3728,11 +3707,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 43
+        "line": 42
       }
     },
     {
-      "sequence": 163,
+      "sequence": 162,
       "domain": "community",
       "code": "COMMUNITY-0028",
       "name": "INVALID_COMMENT_POST_ID",
@@ -3750,11 +3729,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 46
+        "line": 45
       }
     },
     {
-      "sequence": 164,
+      "sequence": 163,
       "domain": "community",
       "code": "COMMUNITY-0029",
       "name": "INVALID_COMMENT_CHALLENGER_ID",
@@ -3772,11 +3751,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 47
+        "line": 46
       }
     },
     {
-      "sequence": 165,
+      "sequence": 164,
       "domain": "community",
       "code": "COMMUNITY-0030",
       "name": "INVALID_ID",
@@ -3794,11 +3773,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 50
+        "line": 49
       }
     },
     {
-      "sequence": 166,
+      "sequence": 165,
       "domain": "community",
       "code": "COMMUNITY-0031",
       "name": "POST_SAVE_REQUIRES_AUTHOR",
@@ -3816,11 +3795,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 53
+        "line": 52
       }
     },
     {
-      "sequence": 167,
+      "sequence": 166,
       "domain": "community",
       "code": "COMMUNITY-0032",
       "name": "POST_UPDATE_INVALID_CALL",
@@ -3838,11 +3817,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 54
+        "line": 53
       }
     },
     {
-      "sequence": 168,
+      "sequence": 167,
       "domain": "community",
       "code": "COMMUNITY-0033",
       "name": "THREAD_NOT_FOUND",
@@ -3860,11 +3839,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 56
+        "line": 55
       }
     },
     {
-      "sequence": 169,
+      "sequence": 168,
       "domain": "community",
       "code": "COMMUNITY-0034",
       "name": "THREAD_ACCESS_DENIED",
@@ -3882,11 +3861,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 57
+        "line": 56
       }
     },
     {
-      "sequence": 170,
+      "sequence": 169,
       "domain": "community",
       "code": "COMMUNITY-0035",
       "name": "THREAD_MEMBER_NOT_FOUND",
@@ -3904,11 +3883,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 58
+        "line": 57
       }
     },
     {
-      "sequence": 171,
+      "sequence": 170,
       "domain": "community",
       "code": "COMMUNITY-0036",
       "name": "THREAD_CAPACITY_EXCEEDED",
@@ -3926,11 +3905,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 59
+        "line": 58
       }
     },
     {
-      "sequence": 172,
+      "sequence": 171,
       "domain": "community",
       "code": "COMMUNITY-0037",
       "name": "THREAD_DELETED",
@@ -3948,11 +3927,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 60
+        "line": 59
       }
     },
     {
-      "sequence": 173,
+      "sequence": 172,
       "domain": "community",
       "code": "COMMUNITY-0038",
       "name": "THREAD_MEMBER_ALREADY_ACTIVE",
@@ -3970,11 +3949,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 61
+        "line": 60
       }
     },
     {
-      "sequence": 174,
+      "sequence": 173,
       "domain": "community",
       "code": "COMMUNITY-0039",
       "name": "THREAD_MEMBER_KICKED",
@@ -3992,11 +3971,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 62
+        "line": 61
       }
     },
     {
-      "sequence": 175,
+      "sequence": 174,
       "domain": "community",
       "code": "COMMUNITY-0040",
       "name": "THREAD_OWNER_REQUIRED",
@@ -4014,11 +3993,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 63
+        "line": 62
       }
     },
     {
-      "sequence": 176,
+      "sequence": 175,
       "domain": "community",
       "code": "COMMUNITY-0041",
       "name": "THREAD_OWNER_CANNOT_LEAVE",
@@ -4036,11 +4015,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 64
+        "line": 63
       }
     },
     {
-      "sequence": 177,
+      "sequence": 176,
       "domain": "community",
       "code": "COMMUNITY-0042",
       "name": "THREAD_OWNER_CANNOT_BE_KICKED",
@@ -4058,11 +4037,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 65
+        "line": 64
       }
     },
     {
-      "sequence": 178,
+      "sequence": 177,
       "domain": "community",
       "code": "COMMUNITY-0043",
       "name": "THREAD_INVALID_ROLE_CHANGE",
@@ -4080,11 +4059,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 66
+        "line": 65
       }
     },
     {
-      "sequence": 179,
+      "sequence": 178,
       "domain": "community",
       "code": "COMMUNITY-0044",
       "name": "THREAD_INVITEE_NOT_ELIGIBLE",
@@ -4102,11 +4081,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 67
+        "line": 66
       }
     },
     {
-      "sequence": 180,
+      "sequence": 179,
       "domain": "community",
       "code": "COMMUNITY-0045",
       "name": "THREAD_INVALID_COMMAND",
@@ -4124,33 +4103,11 @@
       "source": {
         "enumName": "CommunityErrorCode",
         "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 68
+        "line": 67
       }
     },
     {
-      "sequence": 181,
-      "domain": "community",
-      "code": "COMMUNITY-0046",
-      "name": "REPORT_SELF_TARGET",
-      "httpStatus": 403,
-      "httpStatusName": "FORBIDDEN",
-      "message": "내가 작성한 메시지는 신고할 수 없어요.",
-      "description": null,
-      "clientAction": null,
-      "retryable": null,
-      "severity": null,
-      "deprecated": false,
-      "replacementCode": null,
-      "owners": [],
-      "tags": [],
-      "source": {
-        "enumName": "CommunityErrorCode",
-        "file": "monolith/src/main/java/com/umc/product/community/domain/exception/CommunityErrorCode.java",
-        "line": 28
-      }
-    },
-    {
-      "sequence": 182,
+      "sequence": 180,
       "domain": "curriculum",
       "code": "CURRICULUM-0001",
       "name": "CURRICULUM_NOT_FOUND",
@@ -4172,7 +4129,7 @@
       }
     },
     {
-      "sequence": 183,
+      "sequence": 181,
       "domain": "curriculum",
       "code": "CURRICULUM-0002",
       "name": "WORKBOOK_NOT_FOUND",
@@ -4194,7 +4151,7 @@
       }
     },
     {
-      "sequence": 184,
+      "sequence": 182,
       "domain": "curriculum",
       "code": "CURRICULUM-0003",
       "name": "MISSION_NOT_FOUND",
@@ -4216,7 +4173,7 @@
       }
     },
     {
-      "sequence": 185,
+      "sequence": 183,
       "domain": "curriculum",
       "code": "CURRICULUM-0004",
       "name": "WORKBOOK_HAS_SUBMISSIONS",
@@ -4238,7 +4195,7 @@
       }
     },
     {
-      "sequence": 186,
+      "sequence": 184,
       "domain": "curriculum",
       "code": "CURRICULUM-0005",
       "name": "WORKBOOK_NOT_IN_CURRICULUM",
@@ -4260,7 +4217,7 @@
       }
     },
     {
-      "sequence": 187,
+      "sequence": 185,
       "domain": "curriculum",
       "code": "CURRICULUM-0006",
       "name": "CHALLENGER_WORKBOOK_NOT_FOUND",
@@ -4282,7 +4239,7 @@
       }
     },
     {
-      "sequence": 188,
+      "sequence": 186,
       "domain": "curriculum",
       "code": "CURRICULUM-0007",
       "name": "SUBMISSION_REQUIRED",
@@ -4304,7 +4261,7 @@
       }
     },
     {
-      "sequence": 189,
+      "sequence": 187,
       "domain": "curriculum",
       "code": "CURRICULUM-0008",
       "name": "INVALID_WORKBOOK_STATUS",
@@ -4326,7 +4283,7 @@
       }
     },
     {
-      "sequence": 190,
+      "sequence": 188,
       "domain": "curriculum",
       "code": "CURRICULUM-0009",
       "name": "WORKBOOK_SUBMISSION_ALREADY_EXISTS",
@@ -4348,7 +4305,7 @@
       }
     },
     {
-      "sequence": 191,
+      "sequence": 189,
       "domain": "curriculum",
       "code": "CURRICULUM-0010",
       "name": "CURRICULUM_ALREADY_EXISTS",
@@ -4370,7 +4327,7 @@
       }
     },
     {
-      "sequence": 192,
+      "sequence": 190,
       "domain": "curriculum",
       "code": "CURRICULUM-0011",
       "name": "WORKBOOK_ACCESS_DENIED",
@@ -4392,7 +4349,7 @@
       }
     },
     {
-      "sequence": 193,
+      "sequence": 191,
       "domain": "curriculum",
       "code": "CURRICULUM-0012",
       "name": "INVALID_WEEKLY_CURRICULUM_PERIOD",
@@ -4414,7 +4371,7 @@
       }
     },
     {
-      "sequence": 194,
+      "sequence": 192,
       "domain": "curriculum",
       "code": "CURRICULUM-0013",
       "name": "INVALID_WORKBOOK_STATUS_TRANSITION",
@@ -4436,7 +4393,7 @@
       }
     },
     {
-      "sequence": 195,
+      "sequence": 193,
       "domain": "curriculum",
       "code": "CURRICULUM-0014",
       "name": "WEEKLY_CURRICULUM_NOT_FOUND",
@@ -4458,7 +4415,7 @@
       }
     },
     {
-      "sequence": 196,
+      "sequence": 194,
       "domain": "curriculum",
       "code": "CURRICULUM-0015",
       "name": "CURRICULUM_HAS_WEEKLY_CURRICULUMS",
@@ -4480,7 +4437,7 @@
       }
     },
     {
-      "sequence": 197,
+      "sequence": 195,
       "domain": "curriculum",
       "code": "CURRICULUM-0016",
       "name": "WEEKLY_CURRICULUM_HAS_WORKBOOKS",
@@ -4502,7 +4459,7 @@
       }
     },
     {
-      "sequence": 198,
+      "sequence": 196,
       "domain": "curriculum",
       "code": "CURRICULUM-0017",
       "name": "WEEKLY_CURRICULUM_DATE_LOCKED",
@@ -4524,7 +4481,7 @@
       }
     },
     {
-      "sequence": 199,
+      "sequence": 197,
       "domain": "curriculum",
       "code": "CURRICULUM-0018",
       "name": "WEEKLY_CURRICULUM_ALREADY_EXISTS",
@@ -4546,7 +4503,7 @@
       }
     },
     {
-      "sequence": 200,
+      "sequence": 198,
       "domain": "curriculum",
       "code": "CURRICULUM-0019",
       "name": "WEEKLY_CURRICULUM_PERIOD_ALREADY_ENDED",
@@ -4568,7 +4525,7 @@
       }
     },
     {
-      "sequence": 201,
+      "sequence": 199,
       "domain": "curriculum",
       "code": "CURRICULUM-0020",
       "name": "MISSION_HAS_SUBMISSIONS",
@@ -4590,7 +4547,7 @@
       }
     },
     {
-      "sequence": 202,
+      "sequence": 200,
       "domain": "curriculum",
       "code": "CURRICULUM-0021",
       "name": "RELEASED_WORKBOOK_NECESSARY_MISSION_FORBIDDEN",
@@ -4612,7 +4569,7 @@
       }
     },
     {
-      "sequence": 203,
+      "sequence": 201,
       "domain": "curriculum",
       "code": "CURRICULUM-0022",
       "name": "RELEASED_WORKBOOK_MISSION_UPGRADE_FORBIDDEN",
@@ -4634,7 +4591,7 @@
       }
     },
     {
-      "sequence": 204,
+      "sequence": 202,
       "domain": "curriculum",
       "code": "CURRICULUM-0023",
       "name": "MISSION_SUBMISSION_NOT_FOUND",
@@ -4656,7 +4613,7 @@
       }
     },
     {
-      "sequence": 205,
+      "sequence": 203,
       "domain": "curriculum",
       "code": "CURRICULUM-0024",
       "name": "MISSION_FEEDBACK_NOT_FOUND",
@@ -4678,7 +4635,7 @@
       }
     },
     {
-      "sequence": 206,
+      "sequence": 204,
       "domain": "curriculum",
       "code": "CURRICULUM-0025",
       "name": "FEEDBACK_REQUIRED",
@@ -4700,7 +4657,7 @@
       }
     },
     {
-      "sequence": 207,
+      "sequence": 205,
       "domain": "curriculum",
       "code": "CURRICULUM-0026",
       "name": "FEEDBACK_RESULT_REQUIRED",
@@ -4722,7 +4679,7 @@
       }
     },
     {
-      "sequence": 208,
+      "sequence": 206,
       "domain": "curriculum",
       "code": "CURRICULUM-0027",
       "name": "SUBMISSION_PERIOD_ENDED",
@@ -4744,7 +4701,7 @@
       }
     },
     {
-      "sequence": 209,
+      "sequence": 207,
       "domain": "curriculum",
       "code": "CURRICULUM-0028",
       "name": "SUBMISSION_EDIT_PERIOD_ENDED",
@@ -4766,7 +4723,7 @@
       }
     },
     {
-      "sequence": 210,
+      "sequence": 208,
       "domain": "curriculum",
       "code": "CURRICULUM-0029",
       "name": "MISSION_SUBMISSION_ALREADY_WITHDRAWN",
@@ -4788,7 +4745,7 @@
       }
     },
     {
-      "sequence": 211,
+      "sequence": 209,
       "domain": "curriculum",
       "code": "CURRICULUM-0030",
       "name": "FEEDBACK_EDIT_PERIOD_ENDED",
@@ -4810,7 +4767,7 @@
       }
     },
     {
-      "sequence": 212,
+      "sequence": 210,
       "domain": "curriculum",
       "code": "CURRICULUM-0031",
       "name": "FEEDBACK_DELETE_PERIOD_ENDED",
@@ -4832,7 +4789,7 @@
       }
     },
     {
-      "sequence": 213,
+      "sequence": 211,
       "domain": "curriculum",
       "code": "CURRICULUM-0032",
       "name": "STUDY_GROUP_NOT_MATCHED",
@@ -4854,7 +4811,7 @@
       }
     },
     {
-      "sequence": 214,
+      "sequence": 212,
       "domain": "curriculum",
       "code": "CURRICULUM-0033",
       "name": "WEEKLY_BEST_ALREADY_EXISTS",
@@ -4876,7 +4833,7 @@
       }
     },
     {
-      "sequence": 215,
+      "sequence": 213,
       "domain": "curriculum",
       "code": "CURRICULUM-0034",
       "name": "BEST_WORKBOOK_REQUIREMENTS_NOT_MET",
@@ -4898,7 +4855,7 @@
       }
     },
     {
-      "sequence": 216,
+      "sequence": 214,
       "domain": "curriculum",
       "code": "CURRICULUM-0035",
       "name": "BEST_WORKBOOK_REASON_REQUIRED",
@@ -4920,7 +4877,7 @@
       }
     },
     {
-      "sequence": 217,
+      "sequence": 215,
       "domain": "curriculum",
       "code": "CURRICULUM-0036",
       "name": "CHALLENGER_WORKBOOK_ALREADY_EXISTS",
@@ -4942,7 +4899,7 @@
       }
     },
     {
-      "sequence": 218,
+      "sequence": 216,
       "domain": "curriculum",
       "code": "CURRICULUM-0037",
       "name": "INVALID_CURRICULUM_LEARNING_TYPE",
@@ -4964,7 +4921,7 @@
       }
     },
     {
-      "sequence": 219,
+      "sequence": 217,
       "domain": "curriculum",
       "code": "CURRICULUM-0038",
       "name": "CURRICULUM_TRACK_REQUIRED",
@@ -4986,7 +4943,7 @@
       }
     },
     {
-      "sequence": 220,
+      "sequence": 218,
       "domain": "curriculum",
       "code": "CURRICULUM-0039",
       "name": "UNSUPPORTED_CURRICULUM_TRACK",
@@ -5008,7 +4965,7 @@
       }
     },
     {
-      "sequence": 221,
+      "sequence": 219,
       "domain": "demoday",
       "code": "DEMODAY-0100",
       "name": "DEMODAY_POLL_INVALID_WINDOW",
@@ -5030,7 +4987,7 @@
       }
     },
     {
-      "sequence": 222,
+      "sequence": 220,
       "domain": "demoday",
       "code": "DEMODAY-0103",
       "name": "DEMODAY_POLL_OPEN_AT_REQUIRED",
@@ -5052,7 +5009,7 @@
       }
     },
     {
-      "sequence": 223,
+      "sequence": 221,
       "domain": "demoday",
       "code": "DEMODAY-0104",
       "name": "DEMODAY_POLL_CLOSE_AT_REQUIRED",
@@ -5074,7 +5031,7 @@
       }
     },
     {
-      "sequence": 224,
+      "sequence": 222,
       "domain": "demoday",
       "code": "DEMODAY-0105",
       "name": "DEMODAY_POLL_BOOTH_LOCKED",
@@ -5096,7 +5053,7 @@
       }
     },
     {
-      "sequence": 225,
+      "sequence": 223,
       "domain": "demoday",
       "code": "DEMODAY-0106",
       "name": "DEMODAY_POLL_INVALID_NAME",
@@ -5118,7 +5075,7 @@
       }
     },
     {
-      "sequence": 226,
+      "sequence": 224,
       "domain": "demoday",
       "code": "DEMODAY-0107",
       "name": "DEMODAY_POLL_GISU_REQUIRED",
@@ -5140,7 +5097,7 @@
       }
     },
     {
-      "sequence": 227,
+      "sequence": 225,
       "domain": "demoday",
       "code": "DEMODAY-0108",
       "name": "DEMODAY_POLL_ALREADY_OPEN",
@@ -5162,7 +5119,7 @@
       }
     },
     {
-      "sequence": 228,
+      "sequence": 226,
       "domain": "demoday",
       "code": "DEMODAY-0109",
       "name": "DEMODAY_POLL_ALREADY_CLOSED",
@@ -5184,7 +5141,7 @@
       }
     },
     {
-      "sequence": 229,
+      "sequence": 227,
       "domain": "demoday",
       "code": "DEMODAY-0110",
       "name": "DEMODAY_POLL_NOT_FOUND",
@@ -5206,7 +5163,7 @@
       }
     },
     {
-      "sequence": 230,
+      "sequence": 228,
       "domain": "demoday",
       "code": "DEMODAY-0111",
       "name": "DEMODAY_POLL_NOT_OPEN",
@@ -5228,7 +5185,7 @@
       }
     },
     {
-      "sequence": 231,
+      "sequence": 229,
       "domain": "demoday",
       "code": "DEMODAY-0112",
       "name": "DEMODAY_POLL_INVALID_STATUS_TRANSITION",
@@ -5250,7 +5207,7 @@
       }
     },
     {
-      "sequence": 232,
+      "sequence": 230,
       "domain": "demoday",
       "code": "DEMODAY-0200",
       "name": "DEMODAY_BOOTH_INVALID_IDENTIFIER",
@@ -5272,7 +5229,7 @@
       }
     },
     {
-      "sequence": 233,
+      "sequence": 231,
       "domain": "demoday",
       "code": "DEMODAY-0201",
       "name": "DEMODAY_BOOTH_INVALID_NAME",
@@ -5294,7 +5251,7 @@
       }
     },
     {
-      "sequence": 234,
+      "sequence": 232,
       "domain": "demoday",
       "code": "DEMODAY-0202",
       "name": "DEMODAY_BOOTH_NOT_FOUND",
@@ -5316,7 +5273,7 @@
       }
     },
     {
-      "sequence": 235,
+      "sequence": 233,
       "domain": "demoday",
       "code": "DEMODAY-0203",
       "name": "DEMODAY_BOOTH_INVALID_CODE",
@@ -5338,7 +5295,7 @@
       }
     },
     {
-      "sequence": 236,
+      "sequence": 234,
       "domain": "demoday",
       "code": "DEMODAY-0204",
       "name": "DEMODAY_BOOTH_CODE_DUPLICATED",
@@ -5360,7 +5317,7 @@
       }
     },
     {
-      "sequence": 237,
+      "sequence": 235,
       "domain": "demoday",
       "code": "DEMODAY-0300",
       "name": "DEMODAY_ENTRY_CODE_ALREADY_REDEEMED",
@@ -5382,7 +5339,7 @@
       }
     },
     {
-      "sequence": 238,
+      "sequence": 236,
       "domain": "demoday",
       "code": "DEMODAY-0301",
       "name": "DEMODAY_ENTRY_CODE_ALREADY_BOUND",
@@ -5404,7 +5361,7 @@
       }
     },
     {
-      "sequence": 239,
+      "sequence": 237,
       "domain": "demoday",
       "code": "DEMODAY-0302",
       "name": "DEMODAY_ENTRY_CODE_GENERATION_NOT_ALLOWED",
@@ -5426,7 +5383,7 @@
       }
     },
     {
-      "sequence": 240,
+      "sequence": 238,
       "domain": "demoday",
       "code": "DEMODAY-0303",
       "name": "DEMODAY_ENTRY_CODE_NOT_FOUND",
@@ -5448,7 +5405,7 @@
       }
     },
     {
-      "sequence": 241,
+      "sequence": 239,
       "domain": "demoday",
       "code": "DEMODAY-0304",
       "name": "DEMODAY_ENTRY_CODE_POLL_MISMATCH",
@@ -5470,7 +5427,7 @@
       }
     },
     {
-      "sequence": 242,
+      "sequence": 240,
       "domain": "demoday",
       "code": "DEMODAY-0400",
       "name": "DEMODAY_VOTE_NOT_OPENED_YET",
@@ -5492,7 +5449,7 @@
       }
     },
     {
-      "sequence": 243,
+      "sequence": 241,
       "domain": "demoday",
       "code": "DEMODAY-0401",
       "name": "DEMODAY_VOTE_CLOSED",
@@ -5514,7 +5471,7 @@
       }
     },
     {
-      "sequence": 244,
+      "sequence": 242,
       "domain": "demoday",
       "code": "DEMODAY-0402",
       "name": "DEMODAY_VOTE_ALREADY_CAST",
@@ -5536,7 +5493,7 @@
       }
     },
     {
-      "sequence": 245,
+      "sequence": 243,
       "domain": "demoday",
       "code": "DEMODAY-0403",
       "name": "DEMODAY_VOTE_ALREADY_REVOKED",
@@ -5558,7 +5515,7 @@
       }
     },
     {
-      "sequence": 246,
+      "sequence": 244,
       "domain": "demoday",
       "code": "DEMODAY-0404",
       "name": "DEMODAY_VOTE_POLL_MISMATCH",
@@ -5580,7 +5537,7 @@
       }
     },
     {
-      "sequence": 247,
+      "sequence": 245,
       "domain": "demoday",
       "code": "DEMODAY-0405",
       "name": "DEMODAY_VOTE_QR_INVALID",
@@ -5602,7 +5559,7 @@
       }
     },
     {
-      "sequence": 248,
+      "sequence": 246,
       "domain": "demoday",
       "code": "DEMODAY-0406",
       "name": "DEMODAY_VOTE_QR_EXPIRED",
@@ -5624,7 +5581,7 @@
       }
     },
     {
-      "sequence": 249,
+      "sequence": 247,
       "domain": "demoday",
       "code": "DEMODAY-0407",
       "name": "DEMODAY_VOTE_QR_PURPOSE_MISMATCH",
@@ -5646,7 +5603,7 @@
       }
     },
     {
-      "sequence": 250,
+      "sequence": 248,
       "domain": "demoday",
       "code": "DEMODAY-0408",
       "name": "DEMODAY_VOTE_QR_POLL_MISMATCH",
@@ -5668,7 +5625,7 @@
       }
     },
     {
-      "sequence": 251,
+      "sequence": 249,
       "domain": "demoday",
       "code": "DEMODAY-0409",
       "name": "DEMODAY_VOTE_INSUFFICIENT_STAMPS",
@@ -5690,7 +5647,7 @@
       }
     },
     {
-      "sequence": 252,
+      "sequence": 250,
       "domain": "demoday",
       "code": "DEMODAY-0410",
       "name": "DEMODAY_VOTE_AUTHORIZATION_INVALID",
@@ -5712,7 +5669,7 @@
       }
     },
     {
-      "sequence": 253,
+      "sequence": 251,
       "domain": "demoday",
       "code": "DEMODAY-0411",
       "name": "DEMODAY_VOTE_AUTHORIZATION_EXPIRED",
@@ -5734,7 +5691,7 @@
       }
     },
     {
-      "sequence": 254,
+      "sequence": 252,
       "domain": "demoday",
       "code": "DEMODAY-0412",
       "name": "DEMODAY_VOTE_AUTHORIZATION_PURPOSE_MISMATCH",
@@ -5756,7 +5713,7 @@
       }
     },
     {
-      "sequence": 255,
+      "sequence": 253,
       "domain": "demoday",
       "code": "DEMODAY-0413",
       "name": "DEMODAY_VOTE_AUTHORIZATION_PARTICIPANT_MISMATCH",
@@ -5778,7 +5735,7 @@
       }
     },
     {
-      "sequence": 256,
+      "sequence": 254,
       "domain": "demoday",
       "code": "DEMODAY-0414",
       "name": "DEMODAY_VOTE_NOT_FOUND",
@@ -5800,7 +5757,7 @@
       }
     },
     {
-      "sequence": 257,
+      "sequence": 255,
       "domain": "demoday",
       "code": "DEMODAY-0415",
       "name": "DEMODAY_VOTE_NOT_REVOKED",
@@ -5822,7 +5779,7 @@
       }
     },
     {
-      "sequence": 258,
+      "sequence": 256,
       "domain": "demoday",
       "code": "DEMODAY-0416",
       "name": "DEMODAY_VOTE_EXTERNAL_BOOTH_NOT_ALLOWED",
@@ -5844,7 +5801,7 @@
       }
     },
     {
-      "sequence": 259,
+      "sequence": 257,
       "domain": "demoday",
       "code": "DEMODAY-0417",
       "name": "DEMODAY_VOTE_OWN_BOOTH_FORBIDDEN",
@@ -5866,7 +5823,7 @@
       }
     },
     {
-      "sequence": 260,
+      "sequence": 258,
       "domain": "demoday",
       "code": "DEMODAY-0501",
       "name": "DEMODAY_STAMP_ALREADY_COLLECTED",
@@ -5888,7 +5845,7 @@
       }
     },
     {
-      "sequence": 261,
+      "sequence": 259,
       "domain": "demoday",
       "code": "DEMODAY-0502",
       "name": "DEMODAY_STAMP_ALREADY_REVOKED",
@@ -5910,7 +5867,7 @@
       }
     },
     {
-      "sequence": 262,
+      "sequence": 260,
       "domain": "demoday",
       "code": "DEMODAY-0503",
       "name": "DEMODAY_STAMP_POLL_MISMATCH",
@@ -5932,7 +5889,7 @@
       }
     },
     {
-      "sequence": 263,
+      "sequence": 261,
       "domain": "demoday",
       "code": "DEMODAY-0504",
       "name": "DEMODAY_STAMP_CREDENTIAL_INVALID",
@@ -5954,7 +5911,7 @@
       }
     },
     {
-      "sequence": 264,
+      "sequence": 262,
       "domain": "demoday",
       "code": "DEMODAY-0505",
       "name": "DEMODAY_STAMP_COOLDOWN_ACTIVE",
@@ -5976,7 +5933,7 @@
       }
     },
     {
-      "sequence": 265,
+      "sequence": 263,
       "domain": "demoday",
       "code": "DEMODAY-0506",
       "name": "DEMODAY_STAMP_MAX_COUNT_REACHED",
@@ -5998,7 +5955,7 @@
       }
     },
     {
-      "sequence": 266,
+      "sequence": 264,
       "domain": "demoday",
       "code": "DEMODAY-0600",
       "name": "DEMODAY_ADMIN_ACCESS_DENIED",
@@ -6020,7 +5977,7 @@
       }
     },
     {
-      "sequence": 267,
+      "sequence": 265,
       "domain": "feedback",
       "code": "FEEDBACK-0001",
       "name": "USER_FEEDBACK_TEMPLATE_NOT_FOUND",
@@ -6042,7 +5999,7 @@
       }
     },
     {
-      "sequence": 268,
+      "sequence": 266,
       "domain": "form",
       "code": "FORM-0001",
       "name": "FORM_NOT_FOUND",
@@ -6064,7 +6021,7 @@
       }
     },
     {
-      "sequence": 269,
+      "sequence": 267,
       "domain": "form",
       "code": "FORM-0002",
       "name": "FORM_NOT_DRAFT",
@@ -6086,7 +6043,7 @@
       }
     },
     {
-      "sequence": 270,
+      "sequence": 268,
       "domain": "form",
       "code": "FORM-0003",
       "name": "QUESTION_NOT_FOUND",
@@ -6108,7 +6065,7 @@
       }
     },
     {
-      "sequence": 271,
+      "sequence": 269,
       "domain": "form",
       "code": "FORM-0005",
       "name": "FORM_ALREADY_PUBLISHED",
@@ -6130,7 +6087,7 @@
       }
     },
     {
-      "sequence": 272,
+      "sequence": 270,
       "domain": "form",
       "code": "FORM-0006",
       "name": "FORM_RESPONSE_NOT_FOUND",
@@ -6152,7 +6109,7 @@
       }
     },
     {
-      "sequence": 273,
+      "sequence": 271,
       "domain": "form",
       "code": "FORM-0007",
       "name": "QUESTION_IS_NOT_OWNED_BY_FORM",
@@ -6174,7 +6131,7 @@
       }
     },
     {
-      "sequence": 274,
+      "sequence": 272,
       "domain": "form",
       "code": "FORM-0008",
       "name": "FORM_RESPONSE_FORBIDDEN",
@@ -6196,7 +6153,7 @@
       }
     },
     {
-      "sequence": 275,
+      "sequence": 273,
       "domain": "form",
       "code": "FORM-0009",
       "name": "QUESTION_TYPE_MISMATCH",
@@ -6218,7 +6175,7 @@
       }
     },
     {
-      "sequence": 276,
+      "sequence": 274,
       "domain": "form",
       "code": "FORM-0010",
       "name": "REQUIRED_QUESTION_NOT_ANSWERED",
@@ -6240,7 +6197,7 @@
       }
     },
     {
-      "sequence": 277,
+      "sequence": 275,
       "domain": "form",
       "code": "FORM-0011",
       "name": "INVALID_ANSWER_FORMAT",
@@ -6262,7 +6219,7 @@
       }
     },
     {
-      "sequence": 278,
+      "sequence": 276,
       "domain": "form",
       "code": "FORM-0012",
       "name": "OTHER_OPTION_DUPLICATED",
@@ -6284,7 +6241,7 @@
       }
     },
     {
-      "sequence": 279,
+      "sequence": 277,
       "domain": "form",
       "code": "FORM-0013",
       "name": "OPTION_NOT_IN_QUESTION",
@@ -6306,7 +6263,7 @@
       }
     },
     {
-      "sequence": 280,
+      "sequence": 278,
       "domain": "form",
       "code": "FORM-0014",
       "name": "OPTION_TEXT_REQUIRED",
@@ -6328,7 +6285,7 @@
       }
     },
     {
-      "sequence": 281,
+      "sequence": 279,
       "domain": "form",
       "code": "FORM-0015",
       "name": "INVALID_FORM_ACTIVE_PERIOD",
@@ -6350,7 +6307,7 @@
       }
     },
     {
-      "sequence": 282,
+      "sequence": 280,
       "domain": "form",
       "code": "FORM-0023",
       "name": "INVALID_VOTE_SELECTION",
@@ -6372,7 +6329,7 @@
       }
     },
     {
-      "sequence": 283,
+      "sequence": 281,
       "domain": "form",
       "code": "FORM-0025",
       "name": "INVALID_VOTE_FORM_STRUCTURE",
@@ -6394,7 +6351,7 @@
       }
     },
     {
-      "sequence": 284,
+      "sequence": 282,
       "domain": "form",
       "code": "FORM-0027",
       "name": "FORM_RESPONSE_ALREADY_EXISTS",
@@ -6416,7 +6373,7 @@
       }
     },
     {
-      "sequence": 285,
+      "sequence": 283,
       "domain": "form",
       "code": "FORM-0028",
       "name": "FORM_NOT_PUBLISHED",
@@ -6438,7 +6395,7 @@
       }
     },
     {
-      "sequence": 286,
+      "sequence": 284,
       "domain": "form",
       "code": "FORM-0029",
       "name": "QUESTION_OPTION_NOT_FOUND",
@@ -6460,7 +6417,7 @@
       }
     },
     {
-      "sequence": 287,
+      "sequence": 285,
       "domain": "form",
       "code": "FORM-0030",
       "name": "ANSWER_NOT_FOUND",
@@ -6482,7 +6439,7 @@
       }
     },
     {
-      "sequence": 288,
+      "sequence": 286,
       "domain": "form",
       "code": "FORM-0031",
       "name": "FORM_RESPONSE_NOT_DRAFT",
@@ -6504,7 +6461,7 @@
       }
     },
     {
-      "sequence": 289,
+      "sequence": 287,
       "domain": "form",
       "code": "FORM-0032",
       "name": "ANSWER_ALREADY_EXISTS",
@@ -6526,7 +6483,7 @@
       }
     },
     {
-      "sequence": 290,
+      "sequence": 288,
       "domain": "form",
       "code": "FORM-0033",
       "name": "FORM_RESPONSE_LOOKUP_AMBIGUOUS",
@@ -6548,7 +6505,7 @@
       }
     },
     {
-      "sequence": 291,
+      "sequence": 289,
       "domain": "form",
       "code": "FORM-0034",
       "name": "RESPONDENT_MEMBER_ID_REQUIRED",
@@ -6570,7 +6527,7 @@
       }
     },
     {
-      "sequence": 292,
+      "sequence": 290,
       "domain": "form",
       "code": "FORM-0035",
       "name": "RESPONSE_ACCESS_KEY_REQUIRED",
@@ -6592,7 +6549,7 @@
       }
     },
     {
-      "sequence": 293,
+      "sequence": 291,
       "domain": "form",
       "code": "FORM-0036",
       "name": "INVALID_SUBMIT_SCOPE",
@@ -6614,7 +6571,7 @@
       }
     },
     {
-      "sequence": 294,
+      "sequence": 292,
       "domain": "form",
       "code": "FORM-0037",
       "name": "INVALID_NEXT_SECTION_SELF_LOOP",
@@ -6636,7 +6593,7 @@
       }
     },
     {
-      "sequence": 295,
+      "sequence": 293,
       "domain": "form",
       "code": "FORM-0038",
       "name": "FORM_INVALID_TRANSITION",
@@ -6658,7 +6615,7 @@
       }
     },
     {
-      "sequence": 296,
+      "sequence": 294,
       "domain": "form",
       "code": "FORM-0039",
       "name": "FORM_HAS_RESPONSES",
@@ -6680,7 +6637,7 @@
       }
     },
     {
-      "sequence": 297,
+      "sequence": 295,
       "domain": "form",
       "code": "FORM-0040",
       "name": "INVALID_NEXT_SECTION_BACKWARD",
@@ -6702,7 +6659,7 @@
       }
     },
     {
-      "sequence": 298,
+      "sequence": 296,
       "domain": "form",
       "code": "FORM-0041",
       "name": "MULTIPLE_BRANCHING_QUESTIONS_IN_SECTION",
@@ -6724,7 +6681,7 @@
       }
     },
     {
-      "sequence": 299,
+      "sequence": 297,
       "domain": "form",
       "code": "FORM-0042",
       "name": "FORM_RESPONSE_ALREADY_CLAIMED",
@@ -6746,7 +6703,7 @@
       }
     },
     {
-      "sequence": 300,
+      "sequence": 298,
       "domain": "form",
       "code": "FORM-0043",
       "name": "DRAFT_SCHEMA_MISMATCH",
@@ -6768,7 +6725,7 @@
       }
     },
     {
-      "sequence": 301,
+      "sequence": 299,
       "domain": "form",
       "code": "FORM-0044",
       "name": "FORM_RESPONSE_CONCURRENT_MODIFICATION",
@@ -6790,7 +6747,7 @@
       }
     },
     {
-      "sequence": 302,
+      "sequence": 300,
       "domain": "form",
       "code": "FORM-0045",
       "name": "FORM_RESPONSE_NOT_IN_FORM",
@@ -6812,7 +6769,7 @@
       }
     },
     {
-      "sequence": 303,
+      "sequence": 301,
       "domain": "form",
       "code": "FORM-0046",
       "name": "FORM_RESPONSE_NOT_SUBMITTED",
@@ -6834,7 +6791,7 @@
       }
     },
     {
-      "sequence": 304,
+      "sequence": 302,
       "domain": "global",
       "code": "COMMON-0001",
       "name": "INTERNAL_SERVER_ERROR",
@@ -6856,7 +6813,7 @@
       }
     },
     {
-      "sequence": 305,
+      "sequence": 303,
       "domain": "global",
       "code": "COMMON-400",
       "name": "BAD_REQUEST",
@@ -6878,7 +6835,7 @@
       }
     },
     {
-      "sequence": 306,
+      "sequence": 304,
       "domain": "global",
       "code": "COMMON-401",
       "name": "UNAUTHORIZED",
@@ -6900,7 +6857,7 @@
       }
     },
     {
-      "sequence": 307,
+      "sequence": 305,
       "domain": "global",
       "code": "COMMON-403",
       "name": "FORBIDDEN",
@@ -6922,7 +6879,7 @@
       }
     },
     {
-      "sequence": 308,
+      "sequence": 306,
       "domain": "global",
       "code": "COMMON-404",
       "name": "NOT_FOUND",
@@ -6944,7 +6901,7 @@
       }
     },
     {
-      "sequence": 309,
+      "sequence": 307,
       "domain": "global",
       "code": "COMMON-429",
       "name": "TOO_MANY_REQUESTS",
@@ -6966,7 +6923,7 @@
       }
     },
     {
-      "sequence": 310,
+      "sequence": 308,
       "domain": "global",
       "code": "COMMON-501",
       "name": "NOT_IMPLEMENTED",
@@ -6988,7 +6945,7 @@
       }
     },
     {
-      "sequence": 311,
+      "sequence": 309,
       "domain": "global",
       "code": "ENV-0001",
       "name": "INVALID_ENV",
@@ -7010,7 +6967,7 @@
       }
     },
     {
-      "sequence": 312,
+      "sequence": 310,
       "domain": "global",
       "code": "PE-0001",
       "name": "PERMISSION_TYPE_NOT_IMPLEMENTED",
@@ -7032,7 +6989,7 @@
       }
     },
     {
-      "sequence": 313,
+      "sequence": 311,
       "domain": "global",
       "code": "SECURITY-0001",
       "name": "SECURITY_NOT_GIVEN",
@@ -7054,7 +7011,7 @@
       }
     },
     {
-      "sequence": 314,
+      "sequence": 312,
       "domain": "global",
       "code": "SECURITY-0002",
       "name": "SECURITY_FORBIDDEN",
@@ -7076,7 +7033,7 @@
       }
     },
     {
-      "sequence": 315,
+      "sequence": 313,
       "domain": "global",
       "code": "SECURITY-0003",
       "name": "SECURITY_WEBSOCKET_BROKER_ACCESS",
@@ -7098,7 +7055,7 @@
       }
     },
     {
-      "sequence": 316,
+      "sequence": 314,
       "domain": "global",
       "code": "SECURITY-0004",
       "name": "SECURITY_WEBSOCKET_INVALID_DESTINATION",
@@ -7120,7 +7077,7 @@
       }
     },
     {
-      "sequence": 317,
+      "sequence": 315,
       "domain": "llm",
       "code": "LLM-0001",
       "name": "CHAT_COMPLETION_FAILED",
@@ -7142,7 +7099,7 @@
       }
     },
     {
-      "sequence": 318,
+      "sequence": 316,
       "domain": "llm",
       "code": "LLM-0002",
       "name": "CHAT_COMPLETION_INVALID_RESPONSE",
@@ -7164,7 +7121,7 @@
       }
     },
     {
-      "sequence": 319,
+      "sequence": 317,
       "domain": "llm",
       "code": "LLM-0003",
       "name": "PROVIDER_NOT_CONFIGURED",
@@ -7186,7 +7143,7 @@
       }
     },
     {
-      "sequence": 320,
+      "sequence": 318,
       "domain": "maintenance",
       "code": "MAINTENANCE-0001",
       "name": "SERVICE_UNDER_MAINTENANCE",
@@ -7208,7 +7165,7 @@
       }
     },
     {
-      "sequence": 321,
+      "sequence": 319,
       "domain": "maintenance",
       "code": "MAINTENANCE-0002",
       "name": "MAINTENANCE_WINDOW_NOT_FOUND",
@@ -7230,7 +7187,7 @@
       }
     },
     {
-      "sequence": 322,
+      "sequence": 320,
       "domain": "maintenance",
       "code": "MAINTENANCE-0003",
       "name": "INVALID_TIME_RANGE",
@@ -7252,7 +7209,7 @@
       }
     },
     {
-      "sequence": 323,
+      "sequence": 321,
       "domain": "maintenance",
       "code": "MAINTENANCE-0004",
       "name": "START_AT_IN_PAST",
@@ -7274,7 +7231,7 @@
       }
     },
     {
-      "sequence": 324,
+      "sequence": 322,
       "domain": "maintenance",
       "code": "MAINTENANCE-0005",
       "name": "TARGET_DOMAINS_REQUIRED",
@@ -7296,7 +7253,7 @@
       }
     },
     {
-      "sequence": 325,
+      "sequence": 323,
       "domain": "maintenance",
       "code": "MAINTENANCE-0006",
       "name": "OVERLAPPING_WINDOW",
@@ -7318,7 +7275,7 @@
       }
     },
     {
-      "sequence": 326,
+      "sequence": 324,
       "domain": "maintenance",
       "code": "MAINTENANCE-0007",
       "name": "ALREADY_ENDED",
@@ -7340,7 +7297,7 @@
       }
     },
     {
-      "sequence": 327,
+      "sequence": 325,
       "domain": "maintenance",
       "code": "MAINTENANCE-0008",
       "name": "NOT_SUPER_ADMIN",
@@ -7362,7 +7319,7 @@
       }
     },
     {
-      "sequence": 328,
+      "sequence": 326,
       "domain": "member",
       "code": "MEMBER-0001",
       "name": "MEMBER_NOT_FOUND",
@@ -7384,7 +7341,7 @@
       }
     },
     {
-      "sequence": 329,
+      "sequence": 327,
       "domain": "member",
       "code": "MEMBER-0002",
       "name": "MEMBER_ALREADY_EXISTS",
@@ -7406,7 +7363,7 @@
       }
     },
     {
-      "sequence": 330,
+      "sequence": 328,
       "domain": "member",
       "code": "MEMBER-0003",
       "name": "EMAIL_ALREADY_EXISTS",
@@ -7428,7 +7385,7 @@
       }
     },
     {
-      "sequence": 331,
+      "sequence": 329,
       "domain": "member",
       "code": "MEMBER-0004",
       "name": "MEMBER_ALREADY_WITHDRAWN",
@@ -7450,7 +7407,7 @@
       }
     },
     {
-      "sequence": 332,
+      "sequence": 330,
       "domain": "member",
       "code": "MEMBER-0005",
       "name": "INVALID_MEMBER_STATUS",
@@ -7472,7 +7429,7 @@
       }
     },
     {
-      "sequence": 333,
+      "sequence": 331,
       "domain": "member",
       "code": "MEMBER-0006",
       "name": "MEMBER_NOT_ACTIVE",
@@ -7494,7 +7451,7 @@
       }
     },
     {
-      "sequence": 334,
+      "sequence": 332,
       "domain": "member",
       "code": "MEMBER-0007",
       "name": "MEMBER_ALREADY_REGISTERED",
@@ -7516,7 +7473,7 @@
       }
     },
     {
-      "sequence": 335,
+      "sequence": 333,
       "domain": "member",
       "code": "MEMBER-0008",
       "name": "MEMBER_PROFILE_NOT_FOUND",
@@ -7538,7 +7495,7 @@
       }
     },
     {
-      "sequence": 336,
+      "sequence": 334,
       "domain": "member",
       "code": "MEMBER-0009",
       "name": "MEMBER_SCHOOL_NOT_ASSIGNED",
@@ -7560,7 +7517,7 @@
       }
     },
     {
-      "sequence": 337,
+      "sequence": 335,
       "domain": "member",
       "code": "MEMBER-0010",
       "name": "CREDENTIAL_ALREADY_REGISTERED",
@@ -7582,7 +7539,7 @@
       }
     },
     {
-      "sequence": 338,
+      "sequence": 336,
       "domain": "member",
       "code": "MEMBER-0011",
       "name": "CREDENTIAL_NOT_REGISTERED",
@@ -7604,7 +7561,7 @@
       }
     },
     {
-      "sequence": 339,
+      "sequence": 337,
       "domain": "member",
       "code": "MEMBER-0012",
       "name": "INVALID_LOGIN_ID",
@@ -7626,7 +7583,7 @@
       }
     },
     {
-      "sequence": 340,
+      "sequence": 338,
       "domain": "member",
       "code": "MEMBER-0013",
       "name": "INVALID_PASSWORD",
@@ -7648,7 +7605,7 @@
       }
     },
     {
-      "sequence": 341,
+      "sequence": 339,
       "domain": "member",
       "code": "MEMBER-0014",
       "name": "MEMBER_SEARCH_ACCESS_DENIED",
@@ -7670,7 +7627,7 @@
       }
     },
     {
-      "sequence": 342,
+      "sequence": 340,
       "domain": "member",
       "code": "MEMBER-0015",
       "name": "CHALLENGER_MANAGEMENT_SEARCH_ACCESS_DENIED",
@@ -7692,7 +7649,7 @@
       }
     },
     {
-      "sequence": 343,
+      "sequence": 341,
       "domain": "notice",
       "code": "NOTICE-0001",
       "name": "NOTICE_NOT_FOUND",
@@ -7714,7 +7671,7 @@
       }
     },
     {
-      "sequence": 344,
+      "sequence": 342,
       "domain": "notice",
       "code": "NOTICE-0002",
       "name": "ALREADY_PUBLISHED_NOTICE",
@@ -7736,7 +7693,7 @@
       }
     },
     {
-      "sequence": 345,
+      "sequence": 343,
       "domain": "notice",
       "code": "NOTICE-0003",
       "name": "INVALID_NOTICE_TITLE",
@@ -7758,7 +7715,7 @@
       }
     },
     {
-      "sequence": 346,
+      "sequence": 344,
       "domain": "notice",
       "code": "NOTICE-0004",
       "name": "INVALID_NOTICE_CONTENT",
@@ -7780,7 +7737,7 @@
       }
     },
     {
-      "sequence": 347,
+      "sequence": 345,
       "domain": "notice",
       "code": "NOTICE-0005",
       "name": "INVALID_NOTICE_STATUS_FOR_REMINDER",
@@ -7802,7 +7759,7 @@
       }
     },
     {
-      "sequence": 348,
+      "sequence": 346,
       "domain": "notice",
       "code": "NOTICE-0006",
       "name": "AUTHOR_REQUIRED",
@@ -7824,7 +7781,7 @@
       }
     },
     {
-      "sequence": 349,
+      "sequence": 347,
       "domain": "notice",
       "code": "NOTICE-0007",
       "name": "NOTICE_SCOPE_REQUIRED",
@@ -7846,7 +7803,7 @@
       }
     },
     {
-      "sequence": 350,
+      "sequence": 348,
       "domain": "notice",
       "code": "NOTICE-0008",
       "name": "NOTICE_AUTHOR_MISMATCH",
@@ -7868,7 +7825,7 @@
       }
     },
     {
-      "sequence": 351,
+      "sequence": 349,
       "domain": "notice",
       "code": "NOTICE-0009",
       "name": "NO_WRITE_PERMISSION",
@@ -7890,7 +7847,7 @@
       }
     },
     {
-      "sequence": 352,
+      "sequence": 350,
       "domain": "notice",
       "code": "NOTICE-0010",
       "name": "INVALID_TARGET_SETTING",
@@ -7912,7 +7869,7 @@
       }
     },
     {
-      "sequence": 353,
+      "sequence": 351,
       "domain": "notice",
       "code": "NOTICE-0011",
       "name": "NO_TARGET_FOUND",
@@ -7934,7 +7891,7 @@
       }
     },
     {
-      "sequence": 354,
+      "sequence": 352,
       "domain": "notice",
       "code": "NOTICE-0012",
       "name": "NO_READ_PERMISSION",
@@ -7956,7 +7913,7 @@
       }
     },
     {
-      "sequence": 355,
+      "sequence": 353,
       "domain": "notice",
       "code": "NOTICE-0013",
       "name": "INVALID_TARGET_PART",
@@ -7978,7 +7935,7 @@
       }
     },
     {
-      "sequence": 356,
+      "sequence": 354,
       "domain": "notice",
       "code": "NOTICE-9999",
       "name": "NOT_IMPLEMENTED_YET",
@@ -8000,7 +7957,7 @@
       }
     },
     {
-      "sequence": 357,
+      "sequence": 355,
       "domain": "notice",
       "code": "NOTICE-CONTENTS-0001",
       "name": "VOTE_IDS_REQUIRED",
@@ -8022,7 +7979,7 @@
       }
     },
     {
-      "sequence": 358,
+      "sequence": 356,
       "domain": "notice",
       "code": "NOTICE-CONTENTS-0002",
       "name": "IMAGE_URLS_REQUIRED",
@@ -8044,7 +8001,7 @@
       }
     },
     {
-      "sequence": 359,
+      "sequence": 357,
       "domain": "notice",
       "code": "NOTICE-CONTENTS-0003",
       "name": "LINK_URLS_REQUIRED",
@@ -8066,7 +8023,7 @@
       }
     },
     {
-      "sequence": 360,
+      "sequence": 358,
       "domain": "notice",
       "code": "NOTICE-CONTENTS-0004",
       "name": "NOTICE_VOTE_NOT_FOUND",
@@ -8088,7 +8045,7 @@
       }
     },
     {
-      "sequence": 361,
+      "sequence": 359,
       "domain": "notice",
       "code": "NOTICE-CONTENTS-0005",
       "name": "NOTICE_IMAGE_NOT_FOUND",
@@ -8110,7 +8067,7 @@
       }
     },
     {
-      "sequence": 362,
+      "sequence": 360,
       "domain": "notice",
       "code": "NOTICE-CONTENTS-0006",
       "name": "NOTICE_LINK_NOT_FOUND",
@@ -8132,7 +8089,7 @@
       }
     },
     {
-      "sequence": 363,
+      "sequence": 361,
       "domain": "notice",
       "code": "NOTICE-CONTENTS-0007",
       "name": "IMAGE_LIMIT_EXCEEDED",
@@ -8154,7 +8111,7 @@
       }
     },
     {
-      "sequence": 364,
+      "sequence": 362,
       "domain": "notice",
       "code": "NOTICE-CONTENTS-0008",
       "name": "VOTE_ALREADY_EXISTS",
@@ -8176,7 +8133,7 @@
       }
     },
     {
-      "sequence": 365,
+      "sequence": 363,
       "domain": "notice",
       "code": "NOTICE-CONTENTS-0009",
       "name": "INVALID_VOTE_OPTION_COUNT",
@@ -8198,7 +8155,7 @@
       }
     },
     {
-      "sequence": 366,
+      "sequence": 364,
       "domain": "notice",
       "code": "NOTICE-CONTENTS-0010",
       "name": "INVALID_VOTE_OPTION_CONTENT",
@@ -8220,7 +8177,7 @@
       }
     },
     {
-      "sequence": 367,
+      "sequence": 365,
       "domain": "notice",
       "code": "NOTICE-CONTENTS-0011",
       "name": "VOTE_NOT_STARTED",
@@ -8242,7 +8199,7 @@
       }
     },
     {
-      "sequence": 368,
+      "sequence": 366,
       "domain": "notice",
       "code": "NOTICE-CONTENTS-0012",
       "name": "VOTE_CLOSED",
@@ -8264,7 +8221,7 @@
       }
     },
     {
-      "sequence": 369,
+      "sequence": 367,
       "domain": "notice",
       "code": "NOTICE-CONTENTS-0013",
       "name": "SELECTED_OPTION_IDS_REQUIRED",
@@ -8286,7 +8243,7 @@
       }
     },
     {
-      "sequence": 370,
+      "sequence": 368,
       "domain": "notice",
       "code": "NOTICE-CONTENTS-0014",
       "name": "INVALID_VOTE_PERIOD",
@@ -8308,7 +8265,7 @@
       }
     },
     {
-      "sequence": 371,
+      "sequence": 369,
       "domain": "notification",
       "code": "EMAIL-0004",
       "name": "EMAIL_TEMPLATE_RENDER_FAILED",
@@ -8330,7 +8287,7 @@
       }
     },
     {
-      "sequence": 372,
+      "sequence": 370,
       "domain": "notification",
       "code": "EMAIL-0005",
       "name": "EMAIL_SEND_FAILED",
@@ -8352,7 +8309,7 @@
       }
     },
     {
-      "sequence": 373,
+      "sequence": 371,
       "domain": "notification",
       "code": "FCM-0001",
       "name": "FCM_NOT_FOUND",
@@ -8374,7 +8331,7 @@
       }
     },
     {
-      "sequence": 374,
+      "sequence": 372,
       "domain": "notification",
       "code": "FCM-0002",
       "name": "USER_FCM_NOT_FOUND",
@@ -8396,7 +8353,7 @@
       }
     },
     {
-      "sequence": 375,
+      "sequence": 373,
       "domain": "notification",
       "code": "FCM-0003",
       "name": "FCM_SEND_FAILED",
@@ -8418,7 +8375,7 @@
       }
     },
     {
-      "sequence": 376,
+      "sequence": 374,
       "domain": "notification",
       "code": "FCM-0004",
       "name": "TOPIC_SUBSCRIBE_FAILED",
@@ -8440,7 +8397,7 @@
       }
     },
     {
-      "sequence": 377,
+      "sequence": 375,
       "domain": "notification",
       "code": "FCM-0005",
       "name": "TOPIC_UNSUBSCRIBE_FAILED",
@@ -8462,7 +8419,7 @@
       }
     },
     {
-      "sequence": 378,
+      "sequence": 376,
       "domain": "notification",
       "code": "FCM-0006",
       "name": "TOPIC_SEND_FAILED",
@@ -8484,7 +8441,7 @@
       }
     },
     {
-      "sequence": 379,
+      "sequence": 377,
       "domain": "notification",
       "code": "FCM-0007",
       "name": "RATE_LIMITED",
@@ -8506,7 +8463,7 @@
       }
     },
     {
-      "sequence": 380,
+      "sequence": 378,
       "domain": "notification",
       "code": "WEBHOOK-0001",
       "name": "WEBHOOK_SEND_FAILED",
@@ -8528,7 +8485,7 @@
       }
     },
     {
-      "sequence": 381,
+      "sequence": 379,
       "domain": "notification",
       "code": "WEBHOOK-0002",
       "name": "WEBHOOK_ADAPTER_NOT_FOUND",
@@ -8550,7 +8507,7 @@
       }
     },
     {
-      "sequence": 382,
+      "sequence": 380,
       "domain": "organization",
       "code": "ORGANIZATION-0001",
       "name": "GISU_REQUIRED",
@@ -8572,7 +8529,7 @@
       }
     },
     {
-      "sequence": 383,
+      "sequence": 381,
       "domain": "organization",
       "code": "ORGANIZATION-0002",
       "name": "ORGAN_NAME_REQUIRED",
@@ -8594,7 +8551,7 @@
       }
     },
     {
-      "sequence": 384,
+      "sequence": 382,
       "domain": "organization",
       "code": "ORGANIZATION-0003",
       "name": "SCHOOL_REQUIRED",
@@ -8616,7 +8573,7 @@
       }
     },
     {
-      "sequence": 385,
+      "sequence": 383,
       "domain": "organization",
       "code": "ORGANIZATION-0004",
       "name": "CHAPTER_REQUIRED",
@@ -8638,7 +8595,7 @@
       }
     },
     {
-      "sequence": 386,
+      "sequence": 384,
       "domain": "organization",
       "code": "ORGANIZATION-0005",
       "name": "GISU_START_AT_REQUIRED",
@@ -8660,7 +8617,7 @@
       }
     },
     {
-      "sequence": 387,
+      "sequence": 385,
       "domain": "organization",
       "code": "ORGANIZATION-0006",
       "name": "GISU_END_AT_REQUIRED",
@@ -8682,7 +8639,7 @@
       }
     },
     {
-      "sequence": 388,
+      "sequence": 386,
       "domain": "organization",
       "code": "ORGANIZATION-0007",
       "name": "GISU_PERIOD_INVALID",
@@ -8704,7 +8661,7 @@
       }
     },
     {
-      "sequence": 389,
+      "sequence": 387,
       "domain": "organization",
       "code": "ORGANIZATION-0008",
       "name": "SCHOOL_NAME_REQUIRED",
@@ -8726,7 +8683,7 @@
       }
     },
     {
-      "sequence": 390,
+      "sequence": 388,
       "domain": "organization",
       "code": "ORGANIZATION-0009",
       "name": "SCHOOL_DOMAIN_REQUIRED",
@@ -8748,7 +8705,7 @@
       }
     },
     {
-      "sequence": 391,
+      "sequence": 389,
       "domain": "organization",
       "code": "ORGANIZATION-0010",
       "name": "STUDY_GROUP_NAME_REQUIRED",
@@ -8770,7 +8727,7 @@
       }
     },
     {
-      "sequence": 392,
+      "sequence": 390,
       "domain": "organization",
       "code": "ORGANIZATION-0011",
       "name": "STUDY_GROUP_LEADER_REQUIRED",
@@ -8792,7 +8749,7 @@
       }
     },
     {
-      "sequence": 393,
+      "sequence": 391,
       "domain": "organization",
       "code": "ORGANIZATION-0012",
       "name": "STUDY_GROUP_REQUIRED",
@@ -8814,7 +8771,7 @@
       }
     },
     {
-      "sequence": 394,
+      "sequence": 392,
       "domain": "organization",
       "code": "ORGANIZATION-0013",
       "name": "STUDY_GROUP_MEMBER_REQUIRED",
@@ -8836,7 +8793,7 @@
       }
     },
     {
-      "sequence": 395,
+      "sequence": 393,
       "domain": "organization",
       "code": "ORGANIZATION-0014",
       "name": "STUDY_GROUP_MEMBER_ID_REQUIRED",
@@ -8858,7 +8815,7 @@
       }
     },
     {
-      "sequence": 396,
+      "sequence": 394,
       "domain": "organization",
       "code": "ORGANIZATION-0015",
       "name": "STUDY_GROUP_MEMBER_ALREADY_EXISTS",
@@ -8880,7 +8837,7 @@
       }
     },
     {
-      "sequence": 397,
+      "sequence": 395,
       "domain": "organization",
       "code": "ORGANIZATION-0016",
       "name": "STUDY_GROUP_MEMBER_NOT_FOUND",
@@ -8902,7 +8859,7 @@
       }
     },
     {
-      "sequence": 398,
+      "sequence": 396,
       "domain": "organization",
       "code": "ORGANIZATION-0017",
       "name": "CHAPTER_NOT_FOUND",
@@ -8924,7 +8881,7 @@
       }
     },
     {
-      "sequence": 399,
+      "sequence": 397,
       "domain": "organization",
       "code": "ORGANIZATION-0018",
       "name": "SCHOOL_NOT_FOUND",
@@ -8946,7 +8903,7 @@
       }
     },
     {
-      "sequence": 400,
+      "sequence": 398,
       "domain": "organization",
       "code": "ORGANIZATION-0019",
       "name": "GISU_IS_ACTIVE_NOT_FOUND",
@@ -8968,7 +8925,7 @@
       }
     },
     {
-      "sequence": 401,
+      "sequence": 399,
       "domain": "organization",
       "code": "ORGANIZATION-0020",
       "name": "GISU_NOT_FOUND",
@@ -8990,7 +8947,7 @@
       }
     },
     {
-      "sequence": 402,
+      "sequence": 400,
       "domain": "organization",
       "code": "ORGANIZATION-0021",
       "name": "PART_REQUIRED",
@@ -9012,7 +8969,7 @@
       }
     },
     {
-      "sequence": 403,
+      "sequence": 401,
       "domain": "organization",
       "code": "ORGANIZATION-0022",
       "name": "STUDY_GROUP_NAME_INVALID",
@@ -9034,7 +8991,7 @@
       }
     },
     {
-      "sequence": 404,
+      "sequence": 402,
       "domain": "organization",
       "code": "ORGANIZATION-0023",
       "name": "STUDY_GROUP_NOT_FOUND",
@@ -9056,7 +9013,7 @@
       }
     },
     {
-      "sequence": 405,
+      "sequence": 403,
       "domain": "organization",
       "code": "ORGANIZATION-0024",
       "name": "STUDY_GROUP_CHALLENGER_INVALID",
@@ -9078,7 +9035,7 @@
       }
     },
     {
-      "sequence": 406,
+      "sequence": 404,
       "domain": "organization",
       "code": "ORGANIZATION-0025",
       "name": "LEADER_CANNOT_BE_MEMBER",
@@ -9100,7 +9057,7 @@
       }
     },
     {
-      "sequence": 407,
+      "sequence": 405,
       "domain": "organization",
       "code": "ORGANIZATION-0026",
       "name": "STUDY_GROUP_MEMBER_DUPLICATED",
@@ -9122,7 +9079,7 @@
       }
     },
     {
-      "sequence": 408,
+      "sequence": 406,
       "domain": "organization",
       "code": "ORGANIZATION-0027",
       "name": "NO_SUCH_CHAPTER_SCHOOL",
@@ -9144,7 +9101,7 @@
       }
     },
     {
-      "sequence": 409,
+      "sequence": 407,
       "domain": "organization",
       "code": "ORGANIZATION-0028",
       "name": "GISU_ALREADY_EXISTS",
@@ -9166,7 +9123,7 @@
       }
     },
     {
-      "sequence": 410,
+      "sequence": 408,
       "domain": "organization",
       "code": "ORGANIZATION-0029",
       "name": "SCHOOL_ALREADY_ASSIGNED_TO_CHAPTER",
@@ -9188,7 +9145,7 @@
       }
     },
     {
-      "sequence": 411,
+      "sequence": 409,
       "domain": "organization",
       "code": "ORGANIZATION-0030",
       "name": "CHAPTER_NAME_DUPLICATED",
@@ -9210,7 +9167,7 @@
       }
     },
     {
-      "sequence": 412,
+      "sequence": 410,
       "domain": "organization",
       "code": "ORGANIZATION-0031",
       "name": "STUDY_GROUP_ACCESS_DENIED",
@@ -9232,7 +9189,7 @@
       }
     },
     {
-      "sequence": 413,
+      "sequence": 411,
       "domain": "organization",
       "code": "ORGANIZATION-0032",
       "name": "GISU_HAS_ASSOCIATED_CHAPTERS",
@@ -9254,7 +9211,7 @@
       }
     },
     {
-      "sequence": 414,
+      "sequence": 412,
       "domain": "organization",
       "code": "ORGANIZATION-0033",
       "name": "STUDY_GROUP_MENTOR_REQUIRED",
@@ -9276,7 +9233,7 @@
       }
     },
     {
-      "sequence": 415,
+      "sequence": 413,
       "domain": "organization",
       "code": "ORGANIZATION-0034",
       "name": "STUDY_GROUP_MENTOR_ID_REQUIRED",
@@ -9298,7 +9255,7 @@
       }
     },
     {
-      "sequence": 416,
+      "sequence": 414,
       "domain": "organization",
       "code": "ORGANIZATION-0035",
       "name": "STUDY_GROUP_MEMBER_ALREADY_IN_PART_STUDY",
@@ -9320,7 +9277,7 @@
       }
     },
     {
-      "sequence": 417,
+      "sequence": 415,
       "domain": "organization",
       "code": "ORGANIZATION-0036",
       "name": "STUDY_GROUP_MENTOR_DUPLICATED",
@@ -9342,7 +9299,7 @@
       }
     },
     {
-      "sequence": 418,
+      "sequence": 416,
       "domain": "organization",
       "code": "ORGANIZATION-0037",
       "name": "STUDY_GROUP_MENTOR_NOT_FOUND",
@@ -9364,7 +9321,7 @@
       }
     },
     {
-      "sequence": 419,
+      "sequence": 417,
       "domain": "organization",
       "code": "ORGANIZATION-0038",
       "name": "STUDY_GROUP_SCHEDULE_ATTENDANCE_POLICY_REQUIRED",
@@ -9386,7 +9343,7 @@
       }
     },
     {
-      "sequence": 420,
+      "sequence": 418,
       "domain": "organization",
       "code": "ORGANIZATION-0039",
       "name": "STUDY_GROUP_SCHEDULE_ALREADY_EXISTS",
@@ -9408,7 +9365,7 @@
       }
     },
     {
-      "sequence": 421,
+      "sequence": 419,
       "domain": "organization",
       "code": "ORGANIZATION-0045",
       "name": "UMC_PRODUCT_MEMBER_REQUIRED",
@@ -9430,7 +9387,7 @@
       }
     },
     {
-      "sequence": 422,
+      "sequence": 420,
       "domain": "organization",
       "code": "ORGANIZATION-0046",
       "name": "UMC_PRODUCT_MEMBER_NOT_FOUND",
@@ -9452,7 +9409,7 @@
       }
     },
     {
-      "sequence": 423,
+      "sequence": 421,
       "domain": "organization",
       "code": "ORGANIZATION-0047",
       "name": "UMC_PRODUCT_MEMBER_ALREADY_EXISTS",
@@ -9474,7 +9431,7 @@
       }
     },
     {
-      "sequence": 424,
+      "sequence": 422,
       "domain": "organization",
       "code": "ORGANIZATION-0048",
       "name": "UMC_PRODUCT_MEMBER_ID_REQUIRED",
@@ -9496,7 +9453,7 @@
       }
     },
     {
-      "sequence": 425,
+      "sequence": 423,
       "domain": "organization",
       "code": "ORGANIZATION-0051",
       "name": "UMC_PRODUCT_ROLE_REQUIRED",
@@ -9518,7 +9475,7 @@
       }
     },
     {
-      "sequence": 426,
+      "sequence": 424,
       "domain": "organization",
       "code": "ORGANIZATION-0052",
       "name": "UMC_PRODUCT_POSITION_REQUIRED",
@@ -9540,7 +9497,7 @@
       }
     },
     {
-      "sequence": 427,
+      "sequence": 425,
       "domain": "organization",
       "code": "ORGANIZATION-0053",
       "name": "UMC_PRODUCT_ACCESS_DENIED",
@@ -9562,7 +9519,7 @@
       }
     },
     {
-      "sequence": 428,
+      "sequence": 426,
       "domain": "organization",
       "code": "ORGANIZATION-0058",
       "name": "UMC_PRODUCT_SQUAD_REQUIRED",
@@ -9584,7 +9541,7 @@
       }
     },
     {
-      "sequence": 429,
+      "sequence": 427,
       "domain": "organization",
       "code": "ORGANIZATION-0059",
       "name": "UMC_PRODUCT_SQUAD_NOT_FOUND",
@@ -9606,7 +9563,7 @@
       }
     },
     {
-      "sequence": 430,
+      "sequence": 428,
       "domain": "organization",
       "code": "ORGANIZATION-0060",
       "name": "UMC_PRODUCT_SQUAD_CODE_REQUIRED",
@@ -9628,7 +9585,7 @@
       }
     },
     {
-      "sequence": 431,
+      "sequence": 429,
       "domain": "organization",
       "code": "ORGANIZATION-0061",
       "name": "UMC_PRODUCT_SQUAD_NAME_REQUIRED",
@@ -9650,7 +9607,7 @@
       }
     },
     {
-      "sequence": 432,
+      "sequence": 430,
       "domain": "organization",
       "code": "ORGANIZATION-0065",
       "name": "GISU_QUERY_CONDITION_INVALID",
@@ -9672,7 +9629,7 @@
       }
     },
     {
-      "sequence": 433,
+      "sequence": 431,
       "domain": "organization",
       "code": "ORGANIZATION-0066",
       "name": "UMC_PRODUCT_START_DATE_REQUIRED",
@@ -9694,7 +9651,7 @@
       }
     },
     {
-      "sequence": 434,
+      "sequence": 432,
       "domain": "organization",
       "code": "ORGANIZATION-0067",
       "name": "UMC_PRODUCT_PERIOD_INVALID",
@@ -9716,7 +9673,7 @@
       }
     },
     {
-      "sequence": 435,
+      "sequence": 433,
       "domain": "organization",
       "code": "ORGANIZATION-0068",
       "name": "UMC_PRODUCT_ACTIVITY_PERIOD_REQUIRED",
@@ -9738,7 +9695,7 @@
       }
     },
     {
-      "sequence": 436,
+      "sequence": 434,
       "domain": "organization",
       "code": "ORGANIZATION-0069",
       "name": "UMC_PRODUCT_ACTIVITY_PERIOD_OUT_OF_RANGE",
@@ -9760,7 +9717,7 @@
       }
     },
     {
-      "sequence": 437,
+      "sequence": 435,
       "domain": "organization",
       "code": "ORGANIZATION-0070",
       "name": "UMC_PRODUCT_ACTIVITY_PERIOD_NOT_FOUND",
@@ -9782,7 +9739,7 @@
       }
     },
     {
-      "sequence": 438,
+      "sequence": 436,
       "domain": "organization",
       "code": "ORGANIZATION-0071",
       "name": "UMC_PRODUCT_ACTIVITY_PERIOD_OVERLAPPED",
@@ -9804,7 +9761,7 @@
       }
     },
     {
-      "sequence": 439,
+      "sequence": 437,
       "domain": "organization",
       "code": "ORGANIZATION-0072",
       "name": "UMC_PRODUCT_ACTIVITY_PERIOD_HAS_ASSOCIATIONS",
@@ -9826,7 +9783,7 @@
       }
     },
     {
-      "sequence": 440,
+      "sequence": 438,
       "domain": "organization",
       "code": "ORGANIZATION-0073",
       "name": "UMC_PRODUCT_CHAPTER_REQUIRED",
@@ -9848,7 +9805,7 @@
       }
     },
     {
-      "sequence": 441,
+      "sequence": 439,
       "domain": "organization",
       "code": "ORGANIZATION-0074",
       "name": "UMC_PRODUCT_CHAPTER_CODE_REQUIRED",
@@ -9870,7 +9827,7 @@
       }
     },
     {
-      "sequence": 442,
+      "sequence": 440,
       "domain": "organization",
       "code": "ORGANIZATION-0075",
       "name": "UMC_PRODUCT_CHAPTER_NAME_REQUIRED",
@@ -9892,7 +9849,7 @@
       }
     },
     {
-      "sequence": 443,
+      "sequence": 441,
       "domain": "organization",
       "code": "ORGANIZATION-0076",
       "name": "UMC_PRODUCT_CHAPTER_NOT_FOUND",
@@ -9914,7 +9871,7 @@
       }
     },
     {
-      "sequence": 444,
+      "sequence": 442,
       "domain": "organization",
       "code": "ORGANIZATION-0077",
       "name": "UMC_PRODUCT_CHAPTER_ALREADY_EXISTS",
@@ -9936,7 +9893,7 @@
       }
     },
     {
-      "sequence": 445,
+      "sequence": 443,
       "domain": "organization",
       "code": "ORGANIZATION-0078",
       "name": "UMC_PRODUCT_CHAPTER_HAS_MEMBERSHIPS",
@@ -9958,7 +9915,7 @@
       }
     },
     {
-      "sequence": 446,
+      "sequence": 444,
       "domain": "organization",
       "code": "ORGANIZATION-0086",
       "name": "UMC_PRODUCT_CHAPTER_MEMBERSHIP_NOT_FOUND",
@@ -9980,7 +9937,7 @@
       }
     },
     {
-      "sequence": 447,
+      "sequence": 445,
       "domain": "organization",
       "code": "ORGANIZATION-0087",
       "name": "UMC_PRODUCT_CHAPTER_MEMBERSHIP_OVERLAPPED",
@@ -10002,7 +9959,7 @@
       }
     },
     {
-      "sequence": 448,
+      "sequence": 446,
       "domain": "organization",
       "code": "ORGANIZATION-0089",
       "name": "UMC_PRODUCT_LEADERSHIP_ROLE_REQUIRED",
@@ -10024,7 +9981,7 @@
       }
     },
     {
-      "sequence": 449,
+      "sequence": 447,
       "domain": "organization",
       "code": "ORGANIZATION-0090",
       "name": "UMC_PRODUCT_LEADERSHIP_NOT_FOUND",
@@ -10046,7 +10003,7 @@
       }
     },
     {
-      "sequence": 450,
+      "sequence": 448,
       "domain": "organization",
       "code": "ORGANIZATION-0091",
       "name": "UMC_PRODUCT_LEADERSHIP_OVERLAPPED",
@@ -10068,7 +10025,7 @@
       }
     },
     {
-      "sequence": 451,
+      "sequence": 449,
       "domain": "organization",
       "code": "ORGANIZATION-0092",
       "name": "UMC_PRODUCT_SQUAD_PARTICIPANT_NOT_FOUND",
@@ -10090,7 +10047,7 @@
       }
     },
     {
-      "sequence": 452,
+      "sequence": 450,
       "domain": "organization",
       "code": "ORGANIZATION-0093",
       "name": "UMC_PRODUCT_SQUAD_PARTICIPATION_OVERLAPPED",
@@ -10112,7 +10069,7 @@
       }
     },
     {
-      "sequence": 453,
+      "sequence": 451,
       "domain": "organization",
       "code": "ORGANIZATION-0094",
       "name": "UMC_PRODUCT_SQUAD_LEAD_OVERLAPPED",
@@ -10134,7 +10091,7 @@
       }
     },
     {
-      "sequence": 454,
+      "sequence": 452,
       "domain": "organization",
       "code": "ORGANIZATION-0095",
       "name": "UMC_PRODUCT_SQUAD_HAS_PARTICIPANTS",
@@ -10156,7 +10113,7 @@
       }
     },
     {
-      "sequence": 455,
+      "sequence": 453,
       "domain": "organization",
       "code": "ORGANIZATION-0096",
       "name": "UMC_PRODUCT_SQUAD_ALREADY_EXISTS",
@@ -10178,7 +10135,7 @@
       }
     },
     {
-      "sequence": 456,
+      "sequence": 454,
       "domain": "organization",
       "code": "ORGANIZATION-0097",
       "name": "STUDY_GROUP_LEARNING_TYPE_INVALID",
@@ -10200,7 +10157,7 @@
       }
     },
     {
-      "sequence": 457,
+      "sequence": 455,
       "domain": "organization",
       "code": "ORGANIZATION-0098",
       "name": "STUDY_GROUP_TRACK_IMMUTABLE",
@@ -10222,7 +10179,7 @@
       }
     },
     {
-      "sequence": 458,
+      "sequence": 456,
       "domain": "organization",
       "code": "ORGANIZATION-0099",
       "name": "STUDY_GROUP_TRACK_MEMBER_INVALID",
@@ -10244,7 +10201,7 @@
       }
     },
     {
-      "sequence": 459,
+      "sequence": 457,
       "domain": "organization",
       "code": "ORGANIZATION-0100",
       "name": "STUDY_GROUP_MEMBER_ALREADY_IN_TRACK_STUDY",
@@ -10266,7 +10223,7 @@
       }
     },
     {
-      "sequence": 460,
+      "sequence": 458,
       "domain": "project",
       "code": "PROJECT-0001",
       "name": "PROJECT_NOT_FOUND",
@@ -10288,7 +10245,7 @@
       }
     },
     {
-      "sequence": 461,
+      "sequence": 459,
       "domain": "project",
       "code": "PROJECT-0002",
       "name": "ALREADY_COMPLETED_PROJECT",
@@ -10310,7 +10267,7 @@
       }
     },
     {
-      "sequence": 462,
+      "sequence": 460,
       "domain": "project",
       "code": "PROJECT-0003",
       "name": "PROJECT_ABORT_UNAVAILABLE",
@@ -10332,7 +10289,7 @@
       }
     },
     {
-      "sequence": 463,
+      "sequence": 461,
       "domain": "project",
       "code": "PROJECT-0004",
       "name": "APPLICATION_NOT_SUBMITTED",
@@ -10354,7 +10311,7 @@
       }
     },
     {
-      "sequence": 464,
+      "sequence": 462,
       "domain": "project",
       "code": "PROJECT-0005",
       "name": "APPLICATION_SUBMIT_NOT_AVAILABLE",
@@ -10376,7 +10333,7 @@
       }
     },
     {
-      "sequence": 465,
+      "sequence": 463,
       "domain": "project",
       "code": "PROJECT-0006",
       "name": "APPLICATION_FORM_NOT_FOUND",
@@ -10398,7 +10355,7 @@
       }
     },
     {
-      "sequence": 466,
+      "sequence": 464,
       "domain": "project",
       "code": "PROJECT-0007",
       "name": "APPLICATION_FORM_ACCESS_NOT_ALLOWED",
@@ -10420,7 +10377,7 @@
       }
     },
     {
-      "sequence": 467,
+      "sequence": 465,
       "domain": "project",
       "code": "PROJECT-0008",
       "name": "PROJECT_DRAFT_ALREADY_IN_PROGRESS",
@@ -10442,7 +10399,7 @@
       }
     },
     {
-      "sequence": 468,
+      "sequence": 466,
       "domain": "project",
       "code": "PROJECT-0009",
       "name": "PROJECT_INVALID_STATE",
@@ -10464,7 +10421,7 @@
       }
     },
     {
-      "sequence": 469,
+      "sequence": 467,
       "domain": "project",
       "code": "PROJECT-0010",
       "name": "PROJECT_OWNER_NOT_PLAN_CHALLENGER",
@@ -10486,7 +10443,7 @@
       }
     },
     {
-      "sequence": 470,
+      "sequence": 468,
       "domain": "project",
       "code": "PROJECT-0011",
       "name": "PROJECT_SUBMIT_VALIDATION_FAILED",
@@ -10508,7 +10465,7 @@
       }
     },
     {
-      "sequence": 471,
+      "sequence": 469,
       "domain": "project",
       "code": "PROJECT-0012",
       "name": "PROJECT_ACCESS_DENIED",
@@ -10530,7 +10487,7 @@
       }
     },
     {
-      "sequence": 472,
+      "sequence": 470,
       "domain": "project",
       "code": "PROJECT-0013",
       "name": "APPLICATION_FORM_POLICY_PARTS_EMPTY",
@@ -10552,7 +10509,7 @@
       }
     },
     {
-      "sequence": 473,
+      "sequence": 471,
       "domain": "project",
       "code": "PROJECT-0014",
       "name": "APPLICATION_FORM_INVALID_SECTION_ID",
@@ -10574,7 +10531,7 @@
       }
     },
     {
-      "sequence": 474,
+      "sequence": 472,
       "domain": "project",
       "code": "PROJECT-0015",
       "name": "APPLICATION_FORM_INVALID_QUESTION_ID",
@@ -10596,7 +10553,7 @@
       }
     },
     {
-      "sequence": 475,
+      "sequence": 473,
       "domain": "project",
       "code": "PROJECT-0016",
       "name": "APPLICATION_FORM_INVALID_OPTION_ID",
@@ -10618,7 +10575,7 @@
       }
     },
     {
-      "sequence": 476,
+      "sequence": 474,
       "domain": "project",
       "code": "PROJECT-0017",
       "name": "APPLICATION_FORM_OPTIONS_NOT_ALLOWED",
@@ -10640,7 +10597,7 @@
       }
     },
     {
-      "sequence": 477,
+      "sequence": 475,
       "domain": "project",
       "code": "PROJECT-0018",
       "name": "APPLICATION_FORM_OPTIONS_REQUIRED",
@@ -10662,7 +10619,7 @@
       }
     },
     {
-      "sequence": 478,
+      "sequence": 476,
       "domain": "project",
       "code": "PROJECT-0019",
       "name": "APPLICATION_DRAFT_NOT_EXPOSABLE",
@@ -10684,7 +10641,7 @@
       }
     },
     {
-      "sequence": 479,
+      "sequence": 477,
       "domain": "project",
       "code": "PROJECT-0020",
       "name": "APPLICATION_DRAFT_FILTER_NOT_ALLOWED",
@@ -10706,7 +10663,7 @@
       }
     },
     {
-      "sequence": 480,
+      "sequence": 478,
       "domain": "project",
       "code": "PROJECT-0021",
       "name": "PROJECT_APPLICATION_NOT_FOUND",
@@ -10728,7 +10685,7 @@
       }
     },
     {
-      "sequence": 481,
+      "sequence": 479,
       "domain": "project",
       "code": "PROJECT-0022",
       "name": "PROJECT_DELETE_NOT_ALLOWED_IN_STATUS",
@@ -10750,7 +10707,7 @@
       }
     },
     {
-      "sequence": 482,
+      "sequence": 480,
       "domain": "project",
       "code": "PROJECT-0023",
       "name": "PROJECT_ABORT_REASON_REQUIRED",
@@ -10772,7 +10729,7 @@
       }
     },
     {
-      "sequence": 483,
+      "sequence": 481,
       "domain": "project",
       "code": "PROJECT-0100",
       "name": "PROJECT_MEMBER_NOT_FOUND",
@@ -10794,7 +10751,7 @@
       }
     },
     {
-      "sequence": 484,
+      "sequence": 482,
       "domain": "project",
       "code": "PROJECT-0101",
       "name": "PROJECT_MEMBER_ALREADY_EXISTS",
@@ -10816,7 +10773,7 @@
       }
     },
     {
-      "sequence": 485,
+      "sequence": 483,
       "domain": "project",
       "code": "PROJECT-0102",
       "name": "PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER",
@@ -10838,7 +10795,7 @@
       }
     },
     {
-      "sequence": 486,
+      "sequence": 484,
       "domain": "project",
       "code": "PROJECT-0103",
       "name": "PROJECT_MEMBER_PUBLICATION_MANAGED",
@@ -10860,7 +10817,7 @@
       }
     },
     {
-      "sequence": 487,
+      "sequence": 485,
       "domain": "project",
       "code": "PROJECT-0200",
       "name": "PROJECT_PART_QUOTA_INVALID",
@@ -10882,7 +10839,7 @@
       }
     },
     {
-      "sequence": 488,
+      "sequence": 486,
       "domain": "project",
       "code": "PROJECT-0202",
       "name": "PROJECT_PART_QUOTA_REQUIRED",
@@ -10904,7 +10861,7 @@
       }
     },
     {
-      "sequence": 489,
+      "sequence": 487,
       "domain": "project",
       "code": "PROJECT-0203",
       "name": "PROJECT_PART_QUOTA_DUPLICATE",
@@ -10926,7 +10883,7 @@
       }
     },
     {
-      "sequence": 490,
+      "sequence": 488,
       "domain": "project",
       "code": "PROJECT-0204",
       "name": "PROJECT_DRAFT_APPLICATION_NOT_FOUND",
@@ -10948,7 +10905,7 @@
       }
     },
     {
-      "sequence": 491,
+      "sequence": 489,
       "domain": "project",
       "code": "PROJECT-0205",
       "name": "PROJECT_APPLICATION_PART_NOT_ALLOWED",
@@ -10970,7 +10927,7 @@
       }
     },
     {
-      "sequence": 492,
+      "sequence": 490,
       "domain": "project",
       "code": "PROJECT-0206",
       "name": "PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM",
@@ -10992,7 +10949,7 @@
       }
     },
     {
-      "sequence": 493,
+      "sequence": 491,
       "domain": "project",
       "code": "PROJECT-0207",
       "name": "PROJECT_APPLICATION_DUPLICATE_SUBMISSION",
@@ -11014,7 +10971,7 @@
       }
     },
     {
-      "sequence": 494,
+      "sequence": 492,
       "domain": "project",
       "code": "PROJECT-0208",
       "name": "PROJECT_APPLICATION_ROUND_NOT_OPEN",
@@ -11036,7 +10993,7 @@
       }
     },
     {
-      "sequence": 495,
+      "sequence": 493,
       "domain": "project",
       "code": "PROJECT-0209",
       "name": "PROJECT_APPLICATION_ROUND_TYPE_MISMATCH",
@@ -11058,7 +11015,7 @@
       }
     },
     {
-      "sequence": 496,
+      "sequence": 494,
       "domain": "project",
       "code": "PROJECT-0210",
       "name": "PROJECT_APPLICATION_ALREADY_EXISTS",
@@ -11080,7 +11037,7 @@
       }
     },
     {
-      "sequence": 497,
+      "sequence": 495,
       "domain": "project",
       "code": "PROJECT-0211",
       "name": "PROJECT_APPLICATION_SELF_APPLY_NOT_ALLOWED",
@@ -11102,7 +11059,7 @@
       }
     },
     {
-      "sequence": 498,
+      "sequence": 496,
       "domain": "project",
       "code": "PROJECT-0212",
       "name": "PROJECT_APPLICATION_DECISION_INVALID_TRANSITION",
@@ -11124,7 +11081,7 @@
       }
     },
     {
-      "sequence": 499,
+      "sequence": 497,
       "domain": "project",
       "code": "PROJECT-0213",
       "name": "PROJECT_APPLICATION_QUOTA_EXCEEDED",
@@ -11146,7 +11103,7 @@
       }
     },
     {
-      "sequence": 500,
+      "sequence": 498,
       "domain": "project",
       "code": "PROJECT-0214",
       "name": "PROJECT_APPLICATION_CANCEL_NOT_ALLOWED",
@@ -11168,7 +11125,7 @@
       }
     },
     {
-      "sequence": 501,
+      "sequence": 499,
       "domain": "project",
       "code": "PROJECT-0215",
       "name": "PROJECT_APPLICATION_CANCEL_ROUND_CLOSED",
@@ -11190,7 +11147,7 @@
       }
     },
     {
-      "sequence": 502,
+      "sequence": 500,
       "domain": "project",
       "code": "PROJECT-0217",
       "name": "PROJECT_APPLICATION_CHAPTER_MISMATCH",
@@ -11212,7 +11169,7 @@
       }
     },
     {
-      "sequence": 503,
+      "sequence": 501,
       "domain": "project",
       "code": "PROJECT-0218",
       "name": "PROJECT_APPLICATION_ROUND_CHAPTER_MISMATCH",
@@ -11234,7 +11191,7 @@
       }
     },
     {
-      "sequence": 504,
+      "sequence": 502,
       "domain": "project",
       "code": "PROJECT-0300",
       "name": "PROJECT_MATCHING_ROUND_NOT_FOUND",
@@ -11256,7 +11213,7 @@
       }
     },
     {
-      "sequence": 505,
+      "sequence": 503,
       "domain": "project",
       "code": "PROJECT-0301",
       "name": "PROJECT_MATCHING_ROUND_INVALID_PERIOD",
@@ -11278,7 +11235,7 @@
       }
     },
     {
-      "sequence": 506,
+      "sequence": 504,
       "domain": "project",
       "code": "PROJECT-0302",
       "name": "PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED",
@@ -11300,7 +11257,7 @@
       }
     },
     {
-      "sequence": 507,
+      "sequence": 505,
       "domain": "project",
       "code": "PROJECT-0303",
       "name": "PROJECT_MATCHING_ROUND_ACCESS_DENIED",
@@ -11322,7 +11279,7 @@
       }
     },
     {
-      "sequence": 508,
+      "sequence": 506,
       "domain": "project",
       "code": "PROJECT-0304",
       "name": "PROJECT_MATCHING_ROUND_DELETE_CONFLICT",
@@ -11344,7 +11301,7 @@
       }
     },
     {
-      "sequence": 509,
+      "sequence": 507,
       "domain": "project",
       "code": "PROJECT-0305",
       "name": "PROJECT_MATCHING_ROUND_TIME_REQUIRES_CHAPTER",
@@ -11366,7 +11323,7 @@
       }
     },
     {
-      "sequence": 510,
+      "sequence": 508,
       "domain": "project",
       "code": "PROJECT-0306",
       "name": "PROJECT_MATCHING_ROUND_LOCKED",
@@ -11388,7 +11345,7 @@
       }
     },
     {
-      "sequence": 511,
+      "sequence": 509,
       "domain": "project",
       "code": "PROJECT-0307",
       "name": "PROJECT_MATCHING_ROUND_NOT_FINALIZABLE",
@@ -11410,7 +11367,7 @@
       }
     },
     {
-      "sequence": 512,
+      "sequence": 510,
       "domain": "project",
       "code": "PROJECT-0308",
       "name": "PROJECT_MATCHING_ROUND_POLICY_NOT_FOUND",
@@ -11432,7 +11389,7 @@
       }
     },
     {
-      "sequence": 513,
+      "sequence": 511,
       "domain": "project",
       "code": "PROJECT-0309",
       "name": "PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID",
@@ -11454,7 +11411,7 @@
       }
     },
     {
-      "sequence": 514,
+      "sequence": 512,
       "domain": "project",
       "code": "PROJECT-0310",
       "name": "PROJECT_MATCHING_ROUND_NOT_ENDED",
@@ -11476,7 +11433,7 @@
       }
     },
     {
-      "sequence": 515,
+      "sequence": 513,
       "domain": "project",
       "code": "PROJECT-0311",
       "name": "PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE",
@@ -11498,7 +11455,7 @@
       }
     },
     {
-      "sequence": 516,
+      "sequence": 514,
       "domain": "project",
       "code": "PROJECT-0312",
       "name": "PROJECT_MATCHING_ROUND_NOT_PUBLISHABLE",
@@ -11520,7 +11477,7 @@
       }
     },
     {
-      "sequence": 517,
+      "sequence": 515,
       "domain": "project",
       "code": "PROJECT-0400",
       "name": "CHAPTER_TRANSFER_NOT_FOUND",
@@ -11542,7 +11499,7 @@
       }
     },
     {
-      "sequence": 518,
+      "sequence": 516,
       "domain": "project",
       "code": "PROJECT-0401",
       "name": "CHAPTER_TRANSFER_ACCESS_DENIED",
@@ -11564,7 +11521,7 @@
       }
     },
     {
-      "sequence": 519,
+      "sequence": 517,
       "domain": "project",
       "code": "PROJECT-0402",
       "name": "CHAPTER_TRANSFER_PART_NOT_ALLOWED",
@@ -11586,7 +11543,7 @@
       }
     },
     {
-      "sequence": 520,
+      "sequence": 518,
       "domain": "project",
       "code": "PROJECT-0403",
       "name": "CHAPTER_TRANSFER_SAME_CHAPTER",
@@ -11608,7 +11565,7 @@
       }
     },
     {
-      "sequence": 521,
+      "sequence": 519,
       "domain": "project",
       "code": "PROJECT-0404",
       "name": "CHAPTER_TRANSFER_CHAPTER_NOT_IN_GISU",
@@ -11630,7 +11587,7 @@
       }
     },
     {
-      "sequence": 522,
+      "sequence": 520,
       "domain": "project",
       "code": "PROJECT-0405",
       "name": "CHAPTER_TRANSFER_ALREADY_ACTIVE",
@@ -11652,7 +11609,7 @@
       }
     },
     {
-      "sequence": 523,
+      "sequence": 521,
       "domain": "project",
       "code": "PROJECT-0406",
       "name": "CHAPTER_TRANSFER_ALREADY_MATCHED",
@@ -11674,7 +11631,7 @@
       }
     },
     {
-      "sequence": 524,
+      "sequence": 522,
       "domain": "project",
       "code": "PROJECT-0407",
       "name": "CHAPTER_TRANSFER_ALREADY_RELEASED",
@@ -11696,7 +11653,7 @@
       }
     },
     {
-      "sequence": 525,
+      "sequence": 523,
       "domain": "project",
       "code": "PROJECT-0408",
       "name": "CHAPTER_TRANSFER_DUPLICATE_TARGET",
@@ -11718,7 +11675,7 @@
       }
     },
     {
-      "sequence": 526,
+      "sequence": 524,
       "domain": "project",
       "code": "PROJECT-0409",
       "name": "CHAPTER_TRANSFER_ORIGIN_NOT_FOUND",
@@ -11740,7 +11697,7 @@
       }
     },
     {
-      "sequence": 527,
+      "sequence": 525,
       "domain": "recruiting",
       "code": "RECRUITING-0001",
       "name": "RECRUITING_SEASON_NOT_FOUND",
@@ -11762,7 +11719,7 @@
       }
     },
     {
-      "sequence": 528,
+      "sequence": 526,
       "domain": "recruiting",
       "code": "RECRUITING-0002",
       "name": "RECRUITING_ROUND_NOT_FOUND",
@@ -11784,7 +11741,7 @@
       }
     },
     {
-      "sequence": 529,
+      "sequence": 527,
       "domain": "recruiting",
       "code": "RECRUITING-0003",
       "name": "RECRUITING_APPLICATION_FORM_NOT_FOUND",
@@ -11806,7 +11763,7 @@
       }
     },
     {
-      "sequence": 530,
+      "sequence": 528,
       "domain": "recruiting",
       "code": "RECRUITING-0004",
       "name": "RECRUITING_APPLICATION_NOT_FOUND",
@@ -11828,7 +11785,7 @@
       }
     },
     {
-      "sequence": 531,
+      "sequence": 529,
       "domain": "recruiting",
       "code": "RECRUITING-0006",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_NOT_FOUND",
@@ -11850,7 +11807,7 @@
       }
     },
     {
-      "sequence": 532,
+      "sequence": 530,
       "domain": "recruiting",
       "code": "RECRUITING-0007",
       "name": "RECRUITING_APPLICATION_EVALUATION_NOT_FOUND",
@@ -11872,7 +11829,7 @@
       }
     },
     {
-      "sequence": 533,
+      "sequence": 531,
       "domain": "recruiting",
       "code": "RECRUITING-0008",
       "name": "RECRUITING_ROUND_EVALUATOR_NOT_FOUND",
@@ -11894,7 +11851,7 @@
       }
     },
     {
-      "sequence": 534,
+      "sequence": 532,
       "domain": "recruiting",
       "code": "RECRUITING-0009",
       "name": "RECRUITING_ROUND_INTERVIEW_QUESTION_NOT_FOUND",
@@ -11916,7 +11873,7 @@
       }
     },
     {
-      "sequence": 535,
+      "sequence": 533,
       "domain": "recruiting",
       "code": "RECRUITING-0010",
       "name": "RECRUITING_APPLICATION_INTERVIEW_QUESTION_NOT_FOUND",
@@ -11938,7 +11895,7 @@
       }
     },
     {
-      "sequence": 536,
+      "sequence": 534,
       "domain": "recruiting",
       "code": "RECRUITING-0100",
       "name": "RECRUITING_ROUND_INVALID_ROUND_NO",
@@ -11960,7 +11917,7 @@
       }
     },
     {
-      "sequence": 537,
+      "sequence": 535,
       "domain": "recruiting",
       "code": "RECRUITING-0101",
       "name": "RECRUITING_SEASON_INVALID_TRANSITION",
@@ -11982,7 +11939,7 @@
       }
     },
     {
-      "sequence": 538,
+      "sequence": 536,
       "domain": "recruiting",
       "code": "RECRUITING-0102",
       "name": "RECRUITING_ROUND_INVALID_TRANSITION",
@@ -12004,7 +11961,7 @@
       }
     },
     {
-      "sequence": 539,
+      "sequence": 537,
       "domain": "recruiting",
       "code": "RECRUITING-0103",
       "name": "RECRUITING_SEASON_ALREADY_EXISTS",
@@ -12026,7 +11983,7 @@
       }
     },
     {
-      "sequence": 540,
+      "sequence": 538,
       "domain": "recruiting",
       "code": "RECRUITING-0104",
       "name": "RECRUITING_ROUND_ALREADY_EXISTS",
@@ -12048,7 +12005,7 @@
       }
     },
     {
-      "sequence": 541,
+      "sequence": 539,
       "domain": "recruiting",
       "code": "RECRUITING-0105",
       "name": "RECRUITING_SEASON_REQUIRED_FIELD",
@@ -12070,7 +12027,7 @@
       }
     },
     {
-      "sequence": 542,
+      "sequence": 540,
       "domain": "recruiting",
       "code": "RECRUITING-0106",
       "name": "RECRUITING_QUOTA_INVALID_TARGET_COUNT",
@@ -12092,7 +12049,7 @@
       }
     },
     {
-      "sequence": 543,
+      "sequence": 541,
       "domain": "recruiting",
       "code": "RECRUITING-0107",
       "name": "RECRUITING_QUOTA_UNSUPPORTED_TRACK",
@@ -12114,7 +12071,7 @@
       }
     },
     {
-      "sequence": 544,
+      "sequence": 542,
       "domain": "recruiting",
       "code": "RECRUITING-0108",
       "name": "RECRUITING_QUOTA_DUPLICATE_TRACK",
@@ -12136,7 +12093,7 @@
       }
     },
     {
-      "sequence": 545,
+      "sequence": 543,
       "domain": "recruiting",
       "code": "RECRUITING-0109",
       "name": "RECRUITING_ROUND_INVALID_TRACKS",
@@ -12158,7 +12115,7 @@
       }
     },
     {
-      "sequence": 546,
+      "sequence": 544,
       "domain": "recruiting",
       "code": "RECRUITING-0110",
       "name": "RECRUITING_ROUND_TRACK_NOT_IN_SEASON",
@@ -12180,7 +12137,7 @@
       }
     },
     {
-      "sequence": 547,
+      "sequence": 545,
       "domain": "recruiting",
       "code": "RECRUITING-0111",
       "name": "RECRUITING_ROUND_INVALID_SCHEDULE",
@@ -12202,7 +12159,7 @@
       }
     },
     {
-      "sequence": 548,
+      "sequence": 546,
       "domain": "recruiting",
       "code": "RECRUITING-0112",
       "name": "RECRUITING_SEASON_CREATION_FORBIDDEN",
@@ -12224,7 +12181,7 @@
       }
     },
     {
-      "sequence": 549,
+      "sequence": 547,
       "domain": "recruiting",
       "code": "RECRUITING-0113",
       "name": "RECRUITING_ROUND_RECRUITMENT_POLICY_LOCKED",
@@ -12246,7 +12203,7 @@
       }
     },
     {
-      "sequence": 550,
+      "sequence": 548,
       "domain": "recruiting",
       "code": "RECRUITING-0114",
       "name": "RECRUITING_ROUND_INVALID_TITLE",
@@ -12268,7 +12225,7 @@
       }
     },
     {
-      "sequence": 551,
+      "sequence": 549,
       "domain": "recruiting",
       "code": "RECRUITING-0115",
       "name": "RECRUITING_ROUND_TITLE_ALREADY_EXISTS",
@@ -12290,7 +12247,7 @@
       }
     },
     {
-      "sequence": 552,
+      "sequence": 550,
       "domain": "recruiting",
       "code": "RECRUITING-0116",
       "name": "RECRUITING_ROUND_NO_SEQUENCE_CONFLICT",
@@ -12312,7 +12269,7 @@
       }
     },
     {
-      "sequence": 553,
+      "sequence": 551,
       "domain": "recruiting",
       "code": "RECRUITING-0117",
       "name": "RECRUITING_ROUND_DELETE_CONFLICT",
@@ -12334,7 +12291,7 @@
       }
     },
     {
-      "sequence": 554,
+      "sequence": 552,
       "domain": "recruiting",
       "code": "RECRUITING-0118",
       "name": "RECRUITING_ROUND_UNPUBLISH_CONFLICT",
@@ -12356,7 +12313,7 @@
       }
     },
     {
-      "sequence": 555,
+      "sequence": 553,
       "domain": "recruiting",
       "code": "RECRUITING-0119",
       "name": "RECRUITING_CHAPTER_QUOTA_INVALID_TARGET_COUNT",
@@ -12378,7 +12335,7 @@
       }
     },
     {
-      "sequence": 556,
+      "sequence": 554,
       "domain": "recruiting",
       "code": "RECRUITING-0120",
       "name": "RECRUITING_ROUND_NOT_DELETED",
@@ -12400,7 +12357,7 @@
       }
     },
     {
-      "sequence": 557,
+      "sequence": 555,
       "domain": "recruiting",
       "code": "RECRUITING-0121",
       "name": "RECRUITING_ROUND_RESTORE_CONFLICT",
@@ -12422,7 +12379,7 @@
       }
     },
     {
-      "sequence": 558,
+      "sequence": 556,
       "domain": "recruiting",
       "code": "RECRUITING-0200",
       "name": "RECRUITING_APPLICATION_FORM_INVALID",
@@ -12444,7 +12401,7 @@
       }
     },
     {
-      "sequence": 559,
+      "sequence": 557,
       "domain": "recruiting",
       "code": "RECRUITING-0201",
       "name": "RECRUITING_APPLICATION_FORM_INVALID_TRANSITION",
@@ -12466,7 +12423,7 @@
       }
     },
     {
-      "sequence": 560,
+      "sequence": 558,
       "domain": "recruiting",
       "code": "RECRUITING-0202",
       "name": "RECRUITING_APPLICATION_FORM_ALREADY_EXISTS",
@@ -12488,7 +12445,7 @@
       }
     },
     {
-      "sequence": 561,
+      "sequence": 559,
       "domain": "recruiting",
       "code": "RECRUITING-0203",
       "name": "RECRUITING_APPLICATION_FORM_NOT_PUBLISHED",
@@ -12510,7 +12467,7 @@
       }
     },
     {
-      "sequence": 562,
+      "sequence": 560,
       "domain": "recruiting",
       "code": "RECRUITING-0204",
       "name": "RECRUITING_FORM_SECTION_POLICY_INVALID",
@@ -12532,7 +12489,7 @@
       }
     },
     {
-      "sequence": 563,
+      "sequence": 561,
       "domain": "recruiting",
       "code": "RECRUITING-0205",
       "name": "RECRUITING_FORM_SECTION_POLICY_INVALID_TRACK",
@@ -12554,7 +12511,7 @@
       }
     },
     {
-      "sequence": 564,
+      "sequence": 562,
       "domain": "recruiting",
       "code": "RECRUITING-0206",
       "name": "RECRUITING_APPLICATION_FORM_TRACK_SECTION_REQUIRED",
@@ -12576,7 +12533,7 @@
       }
     },
     {
-      "sequence": 565,
+      "sequence": 563,
       "domain": "recruiting",
       "code": "RECRUITING-0300",
       "name": "RECRUITING_APPLICATION_INVALID_TRANSITION",
@@ -12598,7 +12555,7 @@
       }
     },
     {
-      "sequence": 566,
+      "sequence": 564,
       "domain": "recruiting",
       "code": "RECRUITING-0301",
       "name": "RECRUITING_APPLICATION_ALREADY_EXISTS",
@@ -12620,7 +12577,7 @@
       }
     },
     {
-      "sequence": 567,
+      "sequence": 565,
       "domain": "recruiting",
       "code": "RECRUITING-0302",
       "name": "RECRUITING_APPLICATION_DIFFERENT_SCHOOL_EXISTS",
@@ -12642,7 +12599,7 @@
       }
     },
     {
-      "sequence": 568,
+      "sequence": 566,
       "domain": "recruiting",
       "code": "RECRUITING-0303",
       "name": "RECRUITING_APPLICATION_REAPPLICATION_BLOCKED",
@@ -12664,7 +12621,7 @@
       }
     },
     {
-      "sequence": 569,
+      "sequence": 567,
       "domain": "recruiting",
       "code": "RECRUITING-0304",
       "name": "RECRUITING_APPLICATION_FINAL_PASS_ALREADY_EXISTS",
@@ -12686,7 +12643,7 @@
       }
     },
     {
-      "sequence": 570,
+      "sequence": 568,
       "domain": "recruiting",
       "code": "RECRUITING-0305",
       "name": "RECRUITING_REGISTRATION_FORBIDDEN",
@@ -12708,7 +12665,7 @@
       }
     },
     {
-      "sequence": 571,
+      "sequence": 569,
       "domain": "recruiting",
       "code": "RECRUITING-0306",
       "name": "RECRUITING_APPLICATION_MEMBER_REQUIRED",
@@ -12730,7 +12687,7 @@
       }
     },
     {
-      "sequence": 572,
+      "sequence": 570,
       "domain": "recruiting",
       "code": "RECRUITING-0307",
       "name": "RECRUITING_APPLICATION_REQUIRED_FIELD",
@@ -12752,7 +12709,7 @@
       }
     },
     {
-      "sequence": 573,
+      "sequence": 571,
       "domain": "recruiting",
       "code": "RECRUITING-0308",
       "name": "RECRUITING_APPLICATION_INVALID_APPLICANT_NAME",
@@ -12774,7 +12731,7 @@
       }
     },
     {
-      "sequence": 574,
+      "sequence": 572,
       "domain": "recruiting",
       "code": "RECRUITING-0309",
       "name": "RECRUITING_APPLICATION_INVALID_EMAIL",
@@ -12796,7 +12753,7 @@
       }
     },
     {
-      "sequence": 575,
+      "sequence": 573,
       "domain": "recruiting",
       "code": "RECRUITING-0310",
       "name": "RECRUITING_APPLICATION_INVALID_FIRST_CHOICE",
@@ -12818,7 +12775,7 @@
       }
     },
     {
-      "sequence": 576,
+      "sequence": 574,
       "domain": "recruiting",
       "code": "RECRUITING-0311",
       "name": "RECRUITING_APPLICATION_INVALID_SECOND_CHOICE",
@@ -12840,7 +12797,7 @@
       }
     },
     {
-      "sequence": 577,
+      "sequence": 575,
       "domain": "recruiting",
       "code": "RECRUITING-0312",
       "name": "RECRUITING_APPLICATION_INVALID_ACCEPTED_TRACK",
@@ -12862,7 +12819,7 @@
       }
     },
     {
-      "sequence": 578,
+      "sequence": 576,
       "domain": "recruiting",
       "code": "RECRUITING-0313",
       "name": "RECRUITING_APPLICATION_INVALID_PRIVACY_CONSENT",
@@ -12884,7 +12841,7 @@
       }
     },
     {
-      "sequence": 579,
+      "sequence": 577,
       "domain": "recruiting",
       "code": "RECRUITING-0314",
       "name": "RECRUITING_APPLICATION_INVALID_KEY",
@@ -12906,7 +12863,7 @@
       }
     },
     {
-      "sequence": 580,
+      "sequence": 578,
       "domain": "recruiting",
       "code": "RECRUITING-0315",
       "name": "RECRUITING_APPLICATION_KEY_ISSUE_FAILED",
@@ -12928,7 +12885,7 @@
       }
     },
     {
-      "sequence": 581,
+      "sequence": 579,
       "domain": "recruiting",
       "code": "RECRUITING-0316",
       "name": "RECRUITING_APPLICATION_APPLICANT_MISMATCH",
@@ -12950,7 +12907,7 @@
       }
     },
     {
-      "sequence": 582,
+      "sequence": 580,
       "domain": "recruiting",
       "code": "RECRUITING-0317",
       "name": "RECRUITING_FINAL_DECISION_FORBIDDEN",
@@ -12972,7 +12929,7 @@
       }
     },
     {
-      "sequence": 583,
+      "sequence": 581,
       "domain": "recruiting",
       "code": "RECRUITING-0318",
       "name": "RECRUITING_QUOTA_NOT_FOUND",
@@ -12994,7 +12951,7 @@
       }
     },
     {
-      "sequence": 584,
+      "sequence": 582,
       "domain": "recruiting",
       "code": "RECRUITING-0319",
       "name": "RECRUITING_QUOTA_EXCEEDED",
@@ -13016,7 +12973,7 @@
       }
     },
     {
-      "sequence": 585,
+      "sequence": 583,
       "domain": "recruiting",
       "code": "RECRUITING-0320",
       "name": "RECRUITING_QUOTA_BELOW_RESERVED",
@@ -13038,7 +12995,7 @@
       }
     },
     {
-      "sequence": 586,
+      "sequence": 584,
       "domain": "recruiting",
       "code": "RECRUITING-0321",
       "name": "RECRUITING_APPLICATION_PERIOD_CLOSED",
@@ -13060,7 +13017,7 @@
       }
     },
     {
-      "sequence": 587,
+      "sequence": 585,
       "domain": "recruiting",
       "code": "RECRUITING-0322",
       "name": "RECRUITING_CONCURRENCY_LOCK_TIMEOUT",
@@ -13082,7 +13039,7 @@
       }
     },
     {
-      "sequence": 588,
+      "sequence": 586,
       "domain": "recruiting",
       "code": "RECRUITING-0323",
       "name": "RECRUITING_SUMMARY_ACCESS_DENIED",
@@ -13104,7 +13061,7 @@
       }
     },
     {
-      "sequence": 589,
+      "sequence": 587,
       "domain": "recruiting",
       "code": "RECRUITING-0324",
       "name": "RECRUITING_APPLICATION_ANSWER_OUT_OF_SCOPE",
@@ -13126,7 +13083,7 @@
       }
     },
     {
-      "sequence": 590,
+      "sequence": 588,
       "domain": "recruiting",
       "code": "RECRUITING-0325",
       "name": "RECRUITING_EVALUATION_STATISTICS_ACCESS_DENIED",
@@ -13148,7 +13105,7 @@
       }
     },
     {
-      "sequence": 591,
+      "sequence": 589,
       "domain": "recruiting",
       "code": "RECRUITING-0326",
       "name": "RECRUITING_DECISION_HISTORY_ACCESS_DENIED",
@@ -13170,7 +13127,7 @@
       }
     },
     {
-      "sequence": 592,
+      "sequence": 590,
       "domain": "recruiting",
       "code": "RECRUITING-0327",
       "name": "RECRUITING_DECISION_HISTORY_INVALID",
@@ -13192,7 +13149,7 @@
       }
     },
     {
-      "sequence": 593,
+      "sequence": 591,
       "domain": "recruiting",
       "code": "RECRUITING-0328",
       "name": "RECRUITING_DECISION_HISTORY_EXPORT_TOO_LARGE",
@@ -13214,7 +13171,7 @@
       }
     },
     {
-      "sequence": 594,
+      "sequence": 592,
       "domain": "recruiting",
       "code": "RECRUITING-0329",
       "name": "RECRUITING_DECISION_HISTORY_INVALID_PAGE_SIZE",
@@ -13236,7 +13193,7 @@
       }
     },
     {
-      "sequence": 595,
+      "sequence": 593,
       "domain": "recruiting",
       "code": "RECRUITING-0330",
       "name": "RECRUITING_CHAPTER_QUOTA_TOTAL_MISMATCH",
@@ -13258,7 +13215,7 @@
       }
     },
     {
-      "sequence": 596,
+      "sequence": 594,
       "domain": "recruiting",
       "code": "RECRUITING-0401",
       "name": "RECRUITING_EVALUATION_ALREADY_SUBMITTED",
@@ -13280,7 +13237,7 @@
       }
     },
     {
-      "sequence": 597,
+      "sequence": 595,
       "domain": "recruiting",
       "code": "RECRUITING-0402",
       "name": "RECRUITING_EVALUATION_ACCESS_DENIED",
@@ -13302,7 +13259,7 @@
       }
     },
     {
-      "sequence": 598,
+      "sequence": 596,
       "domain": "recruiting",
       "code": "RECRUITING-0403",
       "name": "RECRUITING_EVALUATION_INVALID",
@@ -13324,7 +13281,7 @@
       }
     },
     {
-      "sequence": 599,
+      "sequence": 597,
       "domain": "recruiting",
       "code": "RECRUITING-0404",
       "name": "RECRUITING_EVALUATION_DECISION_REQUIRED",
@@ -13346,7 +13303,7 @@
       }
     },
     {
-      "sequence": 600,
+      "sequence": 598,
       "domain": "recruiting",
       "code": "RECRUITING-0405",
       "name": "RECRUITING_EVALUATION_COMMENT_TOO_LONG",
@@ -13368,7 +13325,7 @@
       }
     },
     {
-      "sequence": 601,
+      "sequence": 599,
       "domain": "recruiting",
       "code": "RECRUITING-0410",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_INVALID",
@@ -13390,7 +13347,7 @@
       }
     },
     {
-      "sequence": 602,
+      "sequence": 600,
       "domain": "recruiting",
       "code": "RECRUITING-0411",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_INVALID_TRANSITION",
@@ -13412,7 +13369,7 @@
       }
     },
     {
-      "sequence": 603,
+      "sequence": 601,
       "domain": "recruiting",
       "code": "RECRUITING-0412",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_INVALID_RESPONSE",
@@ -13434,7 +13391,7 @@
       }
     },
     {
-      "sequence": 604,
+      "sequence": 602,
       "domain": "recruiting",
       "code": "RECRUITING-0413",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_INVALID_PERIOD",
@@ -13456,7 +13413,7 @@
       }
     },
     {
-      "sequence": 605,
+      "sequence": 603,
       "domain": "recruiting",
       "code": "RECRUITING-0414",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_INVALID_LOCATION",
@@ -13478,7 +13435,7 @@
       }
     },
     {
-      "sequence": 606,
+      "sequence": 604,
       "domain": "recruiting",
       "code": "RECRUITING-0415",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_INVALID_CONTACT",
@@ -13500,7 +13457,7 @@
       }
     },
     {
-      "sequence": 607,
+      "sequence": 605,
       "domain": "recruiting",
       "code": "RECRUITING-0416",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_INVALID_MAIL_STATE",
@@ -13522,7 +13479,7 @@
       }
     },
     {
-      "sequence": 608,
+      "sequence": 606,
       "domain": "recruiting",
       "code": "RECRUITING-0417",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_ALREADY_EXISTS",
@@ -13544,7 +13501,7 @@
       }
     },
     {
-      "sequence": 609,
+      "sequence": 607,
       "domain": "recruiting",
       "code": "RECRUITING-0418",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_ACCESS_DENIED",
@@ -13566,7 +13523,7 @@
       }
     },
     {
-      "sequence": 610,
+      "sequence": 608,
       "domain": "recruiting",
       "code": "RECRUITING-0419",
       "name": "RECRUITING_INTERVIEW_AVAILABILITY_NOT_IMPLEMENTED",
@@ -13588,7 +13545,7 @@
       }
     },
     {
-      "sequence": 611,
+      "sequence": 609,
       "domain": "recruiting",
       "code": "RECRUITING-0420",
       "name": "RECRUITING_INTERVIEW_SESSION_NOT_FOUND",
@@ -13610,7 +13567,7 @@
       }
     },
     {
-      "sequence": 612,
+      "sequence": 610,
       "domain": "recruiting",
       "code": "RECRUITING-0421",
       "name": "RECRUITING_INTERVIEW_SESSION_INVALID",
@@ -13632,7 +13589,7 @@
       }
     },
     {
-      "sequence": 613,
+      "sequence": 611,
       "domain": "recruiting",
       "code": "RECRUITING-0422",
       "name": "RECRUITING_INTERVIEW_SESSION_INVALID_SLOT",
@@ -13654,7 +13611,7 @@
       }
     },
     {
-      "sequence": 614,
+      "sequence": 612,
       "domain": "recruiting",
       "code": "RECRUITING-0423",
       "name": "RECRUITING_INTERVIEW_SESSION_CONFIRMED_SCHEDULE_EXISTS",
@@ -13676,7 +13633,7 @@
       }
     },
     {
-      "sequence": 615,
+      "sequence": 613,
       "domain": "recruiting",
       "code": "RECRUITING-0424",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_ASSIGNMENT_CONFLICT",
@@ -13698,7 +13655,7 @@
       }
     },
     {
-      "sequence": 616,
+      "sequence": 614,
       "domain": "recruiting",
       "code": "RECRUITING-0425",
       "name": "RECRUITING_INTERVIEW_SCHEDULE_ASSIGNMENT_LOCK_TIMEOUT",
@@ -13720,7 +13677,7 @@
       }
     },
     {
-      "sequence": 617,
+      "sequence": 615,
       "domain": "recruiting",
       "code": "RECRUITING-0500",
       "name": "RECRUITING_ROUND_EVALUATOR_INVALID",
@@ -13742,7 +13699,7 @@
       }
     },
     {
-      "sequence": 618,
+      "sequence": 616,
       "domain": "recruiting",
       "code": "RECRUITING-0501",
       "name": "RECRUITING_ROUND_EVALUATOR_ALREADY_EXISTS",
@@ -13764,7 +13721,7 @@
       }
     },
     {
-      "sequence": 619,
+      "sequence": 617,
       "domain": "recruiting",
       "code": "RECRUITING-0502",
       "name": "RECRUITING_INTERVIEW_QUESTION_INVALID_TARGET",
@@ -13786,7 +13743,7 @@
       }
     },
     {
-      "sequence": 620,
+      "sequence": 618,
       "domain": "recruiting",
       "code": "RECRUITING-0503",
       "name": "RECRUITING_INTERVIEW_QUESTION_INVALID_CONTENT",
@@ -13808,7 +13765,7 @@
       }
     },
     {
-      "sequence": 621,
+      "sequence": 619,
       "domain": "recruiting",
       "code": "RECRUITING-0504",
       "name": "RECRUITING_INTERVIEW_QUESTION_INVALID_ORDER_NO",
@@ -13830,7 +13787,7 @@
       }
     },
     {
-      "sequence": 622,
+      "sequence": 620,
       "domain": "recruiting",
       "code": "RECRUITING-0505",
       "name": "RECRUITING_INTERVIEW_QUESTION_IMMUTABLE",
@@ -13852,7 +13809,7 @@
       }
     },
     {
-      "sequence": 623,
+      "sequence": 621,
       "domain": "recruiting",
       "code": "RECRUITING-0506",
       "name": "RECRUITING_INTERVIEW_QUESTION_ACCESS_DENIED",
@@ -13874,7 +13831,7 @@
       }
     },
     {
-      "sequence": 624,
+      "sequence": 622,
       "domain": "recruiting",
       "code": "RECRUITING-0507",
       "name": "RECRUITING_INTERVIEW_QUESTION_INVALID_ACTOR",
@@ -13896,7 +13853,7 @@
       }
     },
     {
-      "sequence": 625,
+      "sequence": 623,
       "domain": "recruiting",
       "code": "RECRUITING-0508",
       "name": "RECRUITING_APPLICANT_IDENTITY_REQUIRED",
@@ -13915,6 +13872,50 @@
         "enumName": "RecruitingErrorCode",
         "file": "monolith/src/main/java/com/umc/product/recruiting/domain/exception/RecruitingErrorCode.java",
         "line": 112
+      }
+    },
+    {
+      "sequence": 624,
+      "domain": "report",
+      "code": "COMMUNITY-0016",
+      "name": "REPORT_ALREADY_EXISTS",
+      "httpStatus": 409,
+      "httpStatusName": "CONFLICT",
+      "message": "이미 신고한 게시글, 댓글 또는 스레드 메시지예요. 신고 내역을 확인해주세요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "ReportErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/report/domain/exception/ReportErrorCode.java",
+        "line": 19
+      }
+    },
+    {
+      "sequence": 625,
+      "domain": "report",
+      "code": "COMMUNITY-0046",
+      "name": "REPORT_SELF_TARGET",
+      "httpStatus": 403,
+      "httpStatusName": "FORBIDDEN",
+      "message": "내가 작성한 메시지는 신고할 수 없어요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "ReportErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/report/domain/exception/ReportErrorCode.java",
+        "line": 20
       }
     },
     {
