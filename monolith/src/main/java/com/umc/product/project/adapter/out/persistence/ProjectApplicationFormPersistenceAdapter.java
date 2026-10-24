@@ -23,6 +23,11 @@ public class ProjectApplicationFormPersistenceAdapter
     private final ProjectApplicationFormJpaRepository repository;
 
     @Override
+    public List<ProjectApplicationForm> listByProjectId(Long projectId) {
+        return repository.findAllByProjectId(projectId);
+    }
+
+    @Override
     public boolean existsByProjectId(Long projectId) {
         return repository.existsByProjectId(projectId);
     }

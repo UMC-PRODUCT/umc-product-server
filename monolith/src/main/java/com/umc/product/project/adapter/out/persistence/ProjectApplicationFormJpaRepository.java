@@ -13,6 +13,8 @@ import com.umc.product.project.domain.ProjectApplicationForm;
 
 public interface ProjectApplicationFormJpaRepository extends JpaRepository<ProjectApplicationForm, Long> {
 
+    List<ProjectApplicationForm> findAllByProjectId(Long projectId);
+
     boolean existsByProjectId(Long projectId);
 
     Optional<ProjectApplicationForm> findFirstByProjectIdOrderByIdAsc(Long projectId);

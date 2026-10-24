@@ -87,6 +87,11 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     }
 
     @Override
+    public void deleteAllByProjectId(Long projectId) {
+        projectApplicationJpaRepository.deleteAllByProjectId(projectId);
+    }
+
+    @Override
     public ProjectApplication save(ProjectApplication application) {
         return projectApplicationJpaRepository.save(application);
     }

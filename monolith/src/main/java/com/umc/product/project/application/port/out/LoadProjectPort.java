@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.domain.Project;
@@ -30,6 +31,8 @@ public interface LoadProjectPort {
      */
     Project getById(Long id);
 
+    Project getByIdForUpdate(Long id);
+
     /**
      * 여러 ID 에 대해 Project 를 한 번에 조회합니다. 누락된 ID 는 결과에서 빠집니다 (예외 없음).
      */
@@ -46,21 +49,10 @@ public interface LoadProjectPort {
      */
     boolean existsByOwnerAndGisu(Long productOwnerMemberId, Long gisuId);
 
-    /**
-     * 특정 creator 가 특정 기수에 작성 중인 DRAFT 프로젝트를 조회합니다. (creator, gisu) 당 DRAFT 1 개 UNIQUE 제약이라 단건이 보장됩니다.
-     */
-    Optional<Project> findDraftByCreatorAndGisu(Long creatorMemberId, Long gisuId);
+    /** 생성 시각 내림차순, ID 내림차순으로 가장 최근 초안 한 건을 조회한다. */
+    Optional<Project> findLatestDraftByCreatorAndGisu(Long creatorMemberId, Long gisuId);
 
-    /**
-     * 특정 creator 가 특정 기수에 작성 중인 DRAFT 를 보유하고 있는지 확인합니다. Draft 동시 생성 방지(PROJECT-101)용 빠른 체크.
-     */
-    boolean existsDraftByCreatorAndGisu(Long creatorMemberId, Long gisuId);
-
-    /**
-     * 특정 PO 가 특정 기수에 활성 DRAFT 프로젝트를 보유하고 있는지 확인합니다. 운영진이 다른 챌린저를 PO 로 임명하는 경로에서 PO 의 DRAFT 중복을 차단하기 위한 체크. (owner,
-     * gisu) DRAFT 1 개 partial unique index 와 짝.
-     */
-    boolean existsDraftByOwnerAndGisu(Long productOwnerMemberId, Long gisuId);
+    Page<Project> searchDraftsByCreatorAndGisu(Long creatorMemberId, Long gisuId, Pageable pageable);
 
     /**
      * 동적 조건으로 프로젝트 목록을 페이지 조회합니다.

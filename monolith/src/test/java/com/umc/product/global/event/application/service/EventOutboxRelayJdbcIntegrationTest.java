@@ -19,6 +19,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.global.config.OutboxRoutingConfig;
 import com.umc.product.global.event.adapter.out.EventPayloadDeserializer;
 import com.umc.product.global.event.adapter.out.EventPayloadSerializer;
 import com.umc.product.global.event.application.port.out.SaveEventOutboxPort;
@@ -49,7 +50,16 @@ class EventOutboxRelayJdbcIntegrationTest extends IntegrationTestSupport {
         AtomicBoolean transactionActiveDuringDispatch = new AtomicBoolean(true);
         AtomicInteger activeConnectionsDuringDispatch = new AtomicInteger(-1);
         EventOutboxRelayService relayService = new EventOutboxRelayService(
-            (limit, now) -> List.of(outbox),
+            new com.umc.product.global.event.application.port.out.LoadEventOutboxPort() {
+
+                @Override
+                public List<EventOutbox> listPublishable(
+                    com.umc.product.global.event.application.port.out.OutboxEventSelection selection,
+                    int limit, Instant now
+                ) {
+                    return List.of(outbox);
+                }
+            },
             savePort,
             new EventPayloadDeserializer(mapper),
             ignored -> {
@@ -60,11 +70,14 @@ class EventOutboxRelayJdbcIntegrationTest extends IntegrationTestSupport {
             },
             new DataSourceTransactionManager(dataSource),
             Tracer.NOOP,
-            100,
             3
         );
 
-        relayService.relay();
+        relayService.relay(
+            OutboxProcessingGroup.BACKGROUND,
+            new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
+            100
+        );
 
         assertThat(transactionActiveDuringDispatch).isFalse();
         assertThat(activeConnectionsDuringDispatch).hasValue(0);

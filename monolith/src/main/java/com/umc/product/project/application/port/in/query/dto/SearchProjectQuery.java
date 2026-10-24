@@ -23,6 +23,8 @@ import lombok.Builder;
  * Service 계층에서 {@link com.umc.product.project.application.access.ProjectAccessScope} 적용 시
  * {@link #withStatuses}, {@link #withChapterFilter}, {@link #withOwnerFilter}
  * 헬퍼로 새 인스턴스를 만들어 어댑터에 전달합니다.
+ *
+ * @param managedStatusOrder 관리 목록 전용 상태 우선 정렬 여부. 공개 목록은 false 로 기존 정렬을 유지한다.
  */
 @Builder
 public record SearchProjectQuery(
@@ -36,7 +38,8 @@ public record SearchProjectQuery(
     PartQuotaStatus partQuotaStatus,
     List<ProjectStatus> statuses,
     List<ProjectStatus> includedOwnerStatuses,
-    Pageable pageable
+    Pageable pageable,
+    boolean managedStatusOrder
 ) {
     public SearchProjectQuery {
         Objects.requireNonNull(gisuId, "gisuId must not be null");
@@ -150,7 +153,8 @@ public record SearchProjectQuery(
             .partQuotaStatus(partQuotaStatus)
             .statuses(statuses)
             .includedOwnerStatuses(includedOwnerStatuses)
-            .pageable(pageable);
+            .pageable(pageable)
+            .managedStatusOrder(managedStatusOrder);
     }
 
     private static List<ProjectStatus> toList(Set<ProjectStatus> set) {

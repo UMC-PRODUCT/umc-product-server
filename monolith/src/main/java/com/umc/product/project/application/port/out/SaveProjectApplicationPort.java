@@ -7,6 +7,9 @@ import com.umc.product.project.domain.ProjectApplication;
 
 public interface SaveProjectApplicationPort {
 
+    /** 프로젝트 삭제 시 해당 프로젝트의 지원서를 일괄 삭제한다. */
+    void deleteAllByProjectId(Long projectId);
+
     ProjectApplication save(ProjectApplication application);
 
     /**

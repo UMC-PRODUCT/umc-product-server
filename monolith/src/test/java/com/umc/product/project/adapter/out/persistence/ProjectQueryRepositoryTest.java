@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -194,7 +196,8 @@ class ProjectQueryRepositoryTest {
         assertThat(result.getTotalElements()).isZero();
     }
 
-    // ========== parts / partQuotaStatus 상관 필터 ==========
+    // ========== parts / partQuotaStatus 상관 필터 ===    }
+
 
     @Test
     void 파트_단일_선택_해당_파트_있는_프로젝트만() {
@@ -476,6 +479,119 @@ class ProjectQueryRepositoryTest {
 
         // then
         assertThat(result.getContent()).extracting(Project::getId).containsExactly(alphaId);
+    }
+
+    @Test
+    void 관리_목록은_상태별_정렬_후_페이지를_나눈다() {
+        // given — 생성 순서와 상태 순서를 섞고 이름도 생성 순서와 반대로 지정한다.
+        Long targetGisuId = 78L;
+        Project draftOld = persistProject("초안 A", ProjectStatus.DRAFT, targetGisuId, 1L, 99L);
+        Project pendingNew = persistProject("대기 A", ProjectStatus.PENDING_REVIEW, targetGisuId, 1L, 99L);
+        Project approvedNew = persistProject("등록 A", ProjectStatus.IN_PROGRESS, targetGisuId, 1L, 99L);
+        Project draftNew = persistProject("초안 Z", ProjectStatus.DRAFT, targetGisuId, 1L, 100L);
+        Project pendingOld = persistProject("대기 Z", ProjectStatus.PENDING_REVIEW, targetGisuId, 1L, 99L);
+        Project approvedOld = persistProject("등록 Z", ProjectStatus.IN_PROGRESS, targetGisuId, 1L, 99L);
+        Project completed = persistProject("완료", ProjectStatus.COMPLETED, targetGisuId, 1L, 99L);
+        Project aborted = persistProject("중단", ProjectStatus.ABORTED, targetGisuId, 1L, 99L);
+        em.flush();
+        Instant oldTime = Instant.parse("2026-01-01T00:00:00Z");
+        Instant newTime = oldTime.plusSeconds(60);
+        for (Project item : List.of(draftOld, pendingOld, approvedOld, completed, aborted)) {
+            updateAuditTimestamp(item.getId(), oldTime);
+        }
+        for (Project item : List.of(draftNew, pendingNew, approvedNew)) {
+            updateAuditTimestamp(item.getId(), newTime);
+        }
+        em.clear();
+
+        // when — 그룹 경계를 가로지르는 크기로 페이지를 조회한다.
+        List<Long> ids = new ArrayList<>();
+        for (int page = 0; page < 3; page++) {
+            Page<Project> result = sut.search(managedQuery(targetGisuId, PageRequest.of(page, 3)));
+            assertThat(result.getTotalElements()).isEqualTo(8);
+            ids.addAll(result.map(Project::getId).getContent());
+        }
+
+        // then
+        assertThat(ids).containsExactly(approvedOld.getId(), approvedNew.getId(),
+            pendingOld.getId(), pendingNew.getId(), draftNew.getId(), draftOld.getId(),
+            completed.getId(), aborted.getId());
+    }
+
+    @Test
+    void 관리_목록은_생성시각이_같으면_이름과_ID로_순서를_고정한다() {
+        // given
+        Long targetGisuId = 79L;
+        List<Project> projects = new ArrayList<>();
+        for (ProjectStatus status : List.of(ProjectStatus.IN_PROGRESS, ProjectStatus.PENDING_REVIEW,
+            ProjectStatus.DRAFT)) {
+            projects.add(persistProject("Z", status, targetGisuId, 1L, 99L));
+            projects.add(persistProject("A", status, targetGisuId, 1L, 100L));
+            projects.add(persistProject("A", status, targetGisuId, 1L, 101L));
+        }
+        em.flush();
+        for (Project item : projects) {
+            updateAuditTimestamp(item.getId(), Instant.parse("2026-01-01T00:00:00Z"));
+        }
+        em.clear();
+
+        // when — unpaged 경로도 같은 정렬을 적용한다.
+        Page<Project> result = sut.search(managedQuery(targetGisuId, Pageable.unpaged()));
+
+        // then
+        assertThat(result.getContent()).extracting(Project::getId).containsExactly(
+            projects.get(1).getId(), projects.get(2).getId(), projects.get(0).getId(),
+            projects.get(4).getId(), projects.get(5).getId(), projects.get(3).getId(),
+            projects.get(7).getId(), projects.get(8).getId(), projects.get(6).getId());
+    }
+
+    @Test
+    void 일반_목록은_상태_우선순위_없이_기존_요청_정렬을_유지한다() {
+        // given
+        Long targetGisuId = 80L;
+        Project draft = persistProject("A", ProjectStatus.DRAFT, targetGisuId, 1L, 99L);
+        Project approved = persistProject("Z", ProjectStatus.IN_PROGRESS, targetGisuId, 1L, 99L);
+        em.flush();
+        updateAuditTimestamp(draft.getId(), Instant.parse("2026-01-01T00:00:00Z"));
+        updateAuditTimestamp(approved.getId(), Instant.parse("2026-01-02T00:00:00Z"));
+        em.clear();
+        SearchProjectQuery query = SearchProjectQuery.forAdmin(targetGisuId, null, null, null, null, null,
+            List.of(ProjectStatus.DRAFT, ProjectStatus.IN_PROGRESS), PageRequest.of(0, 20));
+
+        // when & then
+        assertThat(sut.search(query).getContent()).extracting(Project::getId)
+            .containsExactly(draft.getId(), approved.getId());
+    }
+
+    @Test
+    void 요청_정렬은_상태_순서와_임시저장_최신순보다_우선하지_않는다() {
+        // given
+        Long targetGisuId = 81L;
+        Project draftOld = persistProject("Z 초안", ProjectStatus.DRAFT, targetGisuId, 1L, 99L);
+        Project draftNew = persistProject("A 초안", ProjectStatus.DRAFT, targetGisuId, 1L, 100L);
+        Project approvedA = persistProject("A 등록", ProjectStatus.IN_PROGRESS, targetGisuId, 1L, 99L);
+        Project approvedZ = persistProject("Z 등록", ProjectStatus.IN_PROGRESS, targetGisuId, 1L, 99L);
+        em.flush();
+        updateAuditTimestamp(draftOld.getId(), Instant.parse("2026-01-01T00:00:00Z"));
+        updateAuditTimestamp(draftNew.getId(), Instant.parse("2026-01-02T00:00:00Z"));
+        em.clear();
+
+        // when
+        Page<Project> result = sut.search(managedQuery(targetGisuId,
+            PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "name"))));
+
+        // then — 등록완료 내부에만 요청한 이름 역순을 적용한다.
+        assertThat(result.getContent()).extracting(Project::getId).containsExactly(
+            approvedZ.getId(), approvedA.getId(), draftNew.getId(), draftOld.getId());
+    }
+
+    private SearchProjectQuery managedQuery(Long targetGisuId, Pageable pageable) {
+        return SearchProjectQuery.builder()
+            .gisuId(targetGisuId)
+            .statuses(List.of(ProjectStatus.values()))
+            .pageable(pageable)
+            .managedStatusOrder(true)
+            .build();
     }
 
     // ========== Helper ==========

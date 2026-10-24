@@ -96,7 +96,13 @@ final class CommunityThreadTwoInstanceTopology implements AutoCloseable {
     }
 
     void relayOutbox() {
-        appA.context().getBean(EventOutboxRelayService.class).relay();
+        var relay = appA.context().getBean(EventOutboxRelayService.class);
+        var routing = appA.context().getBean(
+            com.umc.product.global.event.application.service.OutboxEventRoutingPolicy.class
+        );
+        for (var group : routing.groups()) {
+            relay.relay(group, routing.selectionFor(group), 100);
+        }
     }
 
     void pauseRelay() throws InterruptedException {
