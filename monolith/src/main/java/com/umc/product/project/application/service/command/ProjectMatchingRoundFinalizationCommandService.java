@@ -61,7 +61,7 @@ import com.umc.product.project.domain.exception.ProjectErrorCode;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 운영진 수동 실행과 스케줄러 호출을 받아 1~3차 자동 선발과 4차 랜덤 매칭을 처리한다.
+ * 운영진 수동 실행과 스케줄러 호출을 받아 1~3차 자동 선발과 랜덤 매칭을 처리한다.
  * 차수 관리 서비스는 작업을 예약하고, 스케줄러는 이 서비스를 호출하므로 순환 의존성을 피하도록 분리한다.
  */
 @Service
@@ -71,7 +71,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     AutoDecideProjectMatchingRoundUseCase {
 
     private static final int RANDOM_ASSIGNMENT_SEARCH_PAGE_SIZE = 500;
-    // 4차 개발자 배정은 WEB_PRODUCT_ENGINEER·MOBILE_PRODUCT_ENGINEER만 대상으로 하며, 과거 개발 파트는 조회에서만 지원한다.
+    // 랜덤 매칭 개발자 배정은 WEB_PRODUCT_ENGINEER·MOBILE_PRODUCT_ENGINEER만 대상으로 하며, 과거 개발 파트는 조회에서만 지원한다.
     private static final Set<ChallengerPart> RANDOM_ASSIGNMENT_DEVELOPER_PARTS = Set.of(
         ChallengerPart.WEB_PRODUCT_ENGINEER,
         ChallengerPart.MOBILE_PRODUCT_ENGINEER
@@ -93,7 +93,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     private final ProjectMatchingChapterResolver matchingChapterResolver;
 
     /**
-     * 1~3차는 PM 결정 마감 후 최소 선발 인원을 보충하고, 4차(랜덤 매칭)는 시작 시각부터 미배정 챌린저를 배정한다.
+     * 1~3차는 PM 결정 마감 후 최소 선발 인원을 보충하고, 랜덤 매칭은 시작 시각부터 미배정 챌린저를 배정한다.
      * 발표 시각이 있는 차수의 선발 결과는 PENDING_PUBLICATION 멤버로 저장하고, 결과 공개는 발표 서비스에서 처리한다.
      */
     @Audited(
@@ -120,7 +120,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
 
         List<ProjectMember> membersToSave;
         if (round.isRandomMatching()) {
-            // 4차는 지원서 없이 시작 시각부터 미배정 챌린저를 잔여 모집 정원에 배정한다.
+            // 랜덤 매칭은 지원서 없이 시작 시각부터 미배정 챌린저를 잔여 모집 정원에 배정한다.
             if (Instant.now().isBefore(round.getStartsAt())) {
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FINALIZABLE);
             }
@@ -297,7 +297,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     }
 
     /**
-     * 4차 미배정 챌린저를 동일 파트의 잔여 모집 정원에 배정할 멤버 목록을 만든다.
+     * 랜덤 매칭 미배정 챌린저를 동일 파트의 잔여 모집 정원에 배정할 멤버 목록을 만든다.
      * 후보 순서는 무작위이며, 각 후보는 같은 학교 구성원이 가장 적은 프로젝트에 배정한다.
      */
     private List<ProjectMember> buildRandomAssignedMembers(
@@ -362,7 +362,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     }
 
     /**
-     * 4차 매칭 대상 파트의 모집 정원에서 ACTIVE·PENDING_PUBLICATION 인원을 차감한다.
+     * 랜덤 매칭 매칭 대상 파트의 모집 정원에서 ACTIVE·PENDING_PUBLICATION 인원을 차감한다.
      * 잔여 모집 정원이 있는 프로젝트·파트만 배정 대상으로 반환한다.
      */
     private Map<ProjectPartKey, Integer> buildRemainingMatchingQuotaMap(
@@ -521,7 +521,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     }
 
     /**
-     * 4차 후보 및 정원의 파트가 현재 매칭 유형의 대상인지 판단한다.
+     * 랜덤 매칭 후보 및 정원의 파트가 현재 매칭 유형의 대상인지 판단한다.
      * PLAN_DESIGN은 DESIGN, PLAN_DEVELOPER는 WEB_PRODUCT_ENGINEER·MOBILE_PRODUCT_ENGINEER만 허용한다.
      */
     private boolean isRandomAssignmentPart(ChallengerPart part, MatchingType type) {

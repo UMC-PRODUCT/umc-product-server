@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * 매칭 차수 생성/수정 검증 설정.
  *
- * @param minPhaseIntervalMinutes FIRST, SECOND, THIRD, FOURTH 차수 사이 최소 간격. 환경변수 단위는 minute.
+ * @param minPhaseIntervalMinutes FIRST, SECOND, THIRD, RANDOM_MATCHING 차수 사이 최소 간격. 환경변수 단위는 minute.
  */
 @ConfigurationProperties(prefix = "app.project.matching-round")
 public record ProjectMatchingRoundProperties(

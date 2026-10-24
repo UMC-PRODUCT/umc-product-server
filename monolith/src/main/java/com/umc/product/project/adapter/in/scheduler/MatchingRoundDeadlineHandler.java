@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 1~3차 결정 마감 이후 또는 4차 시작 시점에 자동 선발 UseCase 를 호출하는 driving adapter.
+ * 1~3차 결정 마감 이후 또는 랜덤 매칭 시작 시점에 자동 선발 UseCase 를 호출하는 driving adapter.
  * <p>
  * out-side {@link com.umc.product.project.adapter.out.scheduler.MatchingRoundDeadlineScheduler}
  * 가 {@link org.springframework.scheduling.TaskScheduler} 에 본 컴포넌트의 {@link #handle(Long)} 를 묶어 등록한다.

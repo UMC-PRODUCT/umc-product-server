@@ -892,7 +892,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
         }
 
         @Test
-        void 실행한_4차를_다시_실행해도_추가로_저장하지_않는다() {
+        void 실행한_랜덤_매칭을_다시_실행해도_추가로_저장하지_않는다() {
             // given
             givenRound(MatchingType.PLAN_DEVELOPER);
             givenQuota(ChallengerPart.WEB_PRODUCT_ENGINEER, 2L);
@@ -910,10 +910,10 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
         }
 
         @Test
-        void 개발자_4차_시작_전에는_랜덤_매칭을_실행할_수_없다() {
+        void 개발자_랜덤_매칭은_시작_시각_전에는_실행할_수_없다() {
             Instant startsAt = Instant.now().plusSeconds(3600);
             ProjectMatchingRound round = ProjectMatchingRound.create(
-                "개발자 4차", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.FOURTH, 1L,
+                "개발자 랜덤 매칭", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.RANDOM_MATCHING, 1L,
                 startsAt, startsAt.plusSeconds(72000), startsAt.plusSeconds(72000), startsAt.plusSeconds(79200));
             given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
 
@@ -927,7 +927,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
 
         private void givenRound(MatchingType type) {
             Instant startsAt = Instant.now().minusSeconds(60);
-            round = ProjectMatchingRound.create("랜덤 4차", null, type, MatchingPhase.FOURTH, 1L,
+            round = ProjectMatchingRound.create("랜덤 매칭", null, type, MatchingPhase.RANDOM_MATCHING, 1L,
                 startsAt, startsAt.plusSeconds(72000), startsAt.plusSeconds(72000), startsAt.plusSeconds(79200));
             ReflectionTestUtils.setField(round, "id", ROUND_ID);
             given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);

@@ -72,11 +72,11 @@ class MatchingRoundDeadlineSchedulerTest {
     class schedule {
 
         @Test
-        void 랜덤_4차는_시작_시각에_매칭하고_발표_시각에_공개하도록_예약한다() {
+        void 랜덤_매칭은_시작_시각에_매칭하고_발표_시각에_공개하도록_예약한다() {
             // given
             Instant startsAt = Instant.parse("2026-11-19T00:00:00+09:00");
             ProjectMatchingRound round = ProjectMatchingRound.create(
-                "개발자 4차", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.FOURTH, 1L,
+                "개발자 랜덤 매칭", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.RANDOM_MATCHING, 1L,
                 startsAt, startsAt.plusSeconds(72000), startsAt.plusSeconds(72000), startsAt.plusSeconds(79200));
             ReflectionTestUtils.setField(round, "id", 1L);
             given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))

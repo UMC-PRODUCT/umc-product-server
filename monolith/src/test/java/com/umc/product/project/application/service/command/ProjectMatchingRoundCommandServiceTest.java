@@ -94,11 +94,11 @@ class ProjectMatchingRoundCommandServiceTest {
     class lifecycleHooks {
 
         @Test
-        void 랜덤_4차는_종료와_마감을_같게_등록하고_지원서를_받지_않는다() {
+        void 랜덤_매칭은_종료와_마감을_같게_등록하고_지원서를_받지_않는다() {
             Instant startsAt = Instant.parse("2026-11-19T00:00:00+09:00");
             CreateProjectMatchingRoundCommand command = CreateProjectMatchingRoundCommand.builder()
-                .requesterMemberId(EXECUTOR_MEMBER_ID).name("개발자 4차")
-                .type(MatchingType.PLAN_DEVELOPER).phase(MatchingPhase.FOURTH).chapterId(1L)
+                .requesterMemberId(EXECUTOR_MEMBER_ID).name("개발자 랜덤 매칭")
+                .type(MatchingType.PLAN_DEVELOPER).phase(MatchingPhase.RANDOM_MATCHING).chapterId(1L)
                 .startsAt(startsAt).endsAt(startsAt.plusSeconds(72000))
                 .decisionDeadline(startsAt.plusSeconds(72000)).resultPublishAt(startsAt.plusSeconds(79200))
                 .build();

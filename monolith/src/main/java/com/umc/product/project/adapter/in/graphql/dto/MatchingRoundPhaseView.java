@@ -13,7 +13,7 @@ public enum MatchingRoundPhaseView {
             case FIRST -> FIRST;
             case SECOND -> SECOND;
             case THIRD -> THIRD;
-            case FOURTH -> RANDOM_MATCHING;
+            case RANDOM_MATCHING -> RANDOM_MATCHING;
         };
     }
 }
