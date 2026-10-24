@@ -35,6 +35,7 @@ import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersRespons
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
+import com.umc.product.project.application.port.in.query.SearchDraftProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchManagedProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
@@ -60,6 +61,8 @@ class ProjectResponseAssemblerTest {
     SearchProjectUseCase searchProjectUseCase;
     @Mock
     SearchManagedProjectUseCase searchManagedProjectUseCase;
+    @Mock
+    SearchDraftProjectUseCase searchDraftProjectUseCase;
     @Mock
     GetProjectStatisticsUseCase getProjectStatisticsUseCase;
     @Mock
@@ -134,6 +137,28 @@ class ProjectResponseAssemblerTest {
         DraftProjectResponse response = sut.draftFor(99L, 1L);
 
         assertThat(response.applicationFormId()).isEqualTo(100L);
+    }
+
+    @Test
+    void 초안_목록은_멤버와_지원폼을_페이지_단위로_조회한다() {
+        // given
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        ProjectInfo first = projectInfo(42L);
+        ProjectInfo second = projectInfo(43L);
+        given(searchDraftProjectUseCase.searchDrafts(99L, 1L, pageable))
+            .willReturn(new org.springframework.data.domain.PageImpl<>(List.of(first, second), pageable, 2));
+        given(getMemberUseCase.findAllByIds(java.util.Set.of(99L)))
+            .willReturn(Map.of(99L, memberInfo(99L)));
+        given(loadProjectApplicationFormPort.findAllByProjectIds(java.util.Set.of(42L, 43L)))
+            .willReturn(Map.of(42L, applicationForm(project(42L), 100L, 500L)));
+
+        // when
+        var result = sut.draftsFor(99L, 1L, pageable);
+
+        // then
+        assertThat(result.content()).extracting(DraftProjectResponse::id).containsExactly(42L, 43L);
+        assertThat(result.content().get(0).applicationFormId()).isEqualTo(100L);
+        assertThat(result.content().get(1).applicationFormId()).isNull();
     }
 
     @Test

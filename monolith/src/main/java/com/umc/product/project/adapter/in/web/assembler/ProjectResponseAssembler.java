@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
@@ -39,6 +40,7 @@ import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterPro
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
+import com.umc.product.project.application.port.in.query.SearchDraftProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchManagedProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
@@ -64,6 +66,7 @@ public class ProjectResponseAssembler {
     private final GetProjectUseCase getProjectUseCase;
     private final SearchProjectUseCase searchProjectUseCase;
     private final SearchManagedProjectUseCase searchManagedProjectUseCase;
+    private final SearchDraftProjectUseCase searchDraftProjectUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
@@ -210,8 +213,30 @@ public class ProjectResponseAssembler {
         return result;
     }
 
+    public PageResponse<DraftProjectResponse> draftsFor(Long memberId, Long gisuId, Pageable pageable) {
+        Page<ProjectInfo> page = searchDraftProjectUseCase.searchDrafts(memberId, gisuId, pageable);
+        Set<Long> memberIds = new HashSet<>();
+        Set<Long> projectIds = new HashSet<>();
+        for (ProjectInfo info : page) {
+            projectIds.add(info.id());
+            memberIds.add(info.productOwnerMemberId());
+            memberIds.addAll(info.coProductOwnerMemberIds());
+        }
+        Map<Long, MemberInfo> memberMap = memberIds.isEmpty() ? Map.of() : getMemberUseCase.findAllByIds(memberIds);
+        Map<Long, ProjectApplicationForm> forms = projectIds.isEmpty()
+            ? Map.of() : loadProjectApplicationFormPort.findAllByProjectIds(projectIds);
+        return PageResponse.of(page, info -> {
+            List<MemberBrief> coOwners = info.coProductOwnerMemberIds().stream()
+                .map(id -> toBrief(memberMap.get(id)))
+                .toList();
+            ProjectApplicationForm form = forms.get(info.id());
+            return DraftProjectResponse.from(info, toBrief(memberMap.get(info.productOwnerMemberId())),
+                coOwners, form == null ? null : form.getId());
+        });
+    }
+
     /**
-     * PROJECT-103 내가 작성 중인 Draft 조회 (creator 기준). Draft 가 없으면 {@code null} 반환.
+     * PROJECT-103 내가 가장 최근 생성한 Draft 조회 (creator 기준). Draft 가 없으면 {@code null} 반환.
      */
     public DraftProjectResponse draftFor(Long memberId, Long gisuId) {
         Optional<ProjectInfo> maybe = getProjectUseCase.findDraftByCreatorAndGisu(memberId, gisuId);

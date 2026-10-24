@@ -101,4 +101,16 @@ class ProjectQueryControllerTest {
 
         then(assembler).should().detailFor(42L);
     }
+    @Test
+    void 내_초안_목록은_로그인한_작성자의_페이지만_조회한다() throws Exception {
+        given(assembler.draftsFor(eq(TEST_MEMBER_ID), eq(1L), any()))
+            .willReturn(new PageResponse<>(List.of(), 1, 2, 0, 0, false, true));
+
+        mockMvc.perform(get("/api/v1/projects/me/drafts")
+                .param("gisuId", "1").param("page", "1").param("size", "2")
+                .param("creatorMemberId", "1234"))
+            .andExpect(status().isOk());
+        then(assembler).should().draftsFor(eq(TEST_MEMBER_ID), eq(1L), any());
+    }
+
 }

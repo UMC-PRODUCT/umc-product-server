@@ -37,8 +37,8 @@ public interface GetProjectUseCase {
     Map<Long, ProjectInfo> findAllByIds(Collection<Long> projectIds);
 
     /**
-     * 특정 creator 가 특정 기수에 작성 중인 Draft 프로젝트를 조회합니다. 등록 화면 재진입용 — creator 본인이 만든 DRAFT 만 노출되며, (creator, gisu) 당 DRAFT 1
-     * 개 제약이라 단건이 보장됩니다.
+     * 작성자 본인이 해당 기수에서 가장 최근 생성한 초안을 조회합니다.
+     * 생성 시각이 같으면 ID가 큰 초안을 반환합니다. 전체 목록은 {@link SearchDraftProjectUseCase}로 조회합니다.
      *
      * @param creatorMemberId 작성자(creator) Member ID
      * @param gisuId          기수 ID
