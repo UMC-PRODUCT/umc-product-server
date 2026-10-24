@@ -82,7 +82,9 @@ public class AnswerQueryService implements GetAnswerUseCase {
             .collect(Collectors.groupingBy(
                 answer -> answer.getFormResponse().getId(),
                 Collectors.mapping(
-                    answer -> AnswerInfo.from(answer, choicesByAnswer.getOrDefault(answer.getId(), List.of())),
+                    answer -> FormQueryInfoAssembler.toAnswerInfo(
+                        answer, choicesByAnswer.getOrDefault(answer.getId(), List.of())
+                    ),
                     Collectors.toList()
                 )
             ));
@@ -152,7 +154,7 @@ public class AnswerQueryService implements GetAnswerUseCase {
             .collect(Collectors.groupingBy(c -> c.getAnswer().getId()));
 
         return answers.stream()
-            .map(answer -> AnswerInfo.from(
+            .map(answer -> FormQueryInfoAssembler.toAnswerInfo(
                 answer,
                 choicesByAnswer.getOrDefault(answer.getId(), List.of())
             ))
@@ -164,6 +166,6 @@ public class AnswerQueryService implements GetAnswerUseCase {
      */
     private AnswerInfo toAnswerInfo(Answer answer) {
         List<AnswerChoice> choices = loadAnswerPort.listChoicesByAnswerIdIn(Set.of(answer.getId()));
-        return AnswerInfo.from(answer, choices);
+        return FormQueryInfoAssembler.toAnswerInfo(answer, choices);
     }
 }

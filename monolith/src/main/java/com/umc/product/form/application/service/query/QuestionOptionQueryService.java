@@ -24,20 +24,20 @@ public class QuestionOptionQueryService implements GetQuestionOptionUseCase {
     @Override
     public Optional<QuestionOptionInfo> findById(Long optionId) {
         return loadQuestionOptionPort.findById(optionId)
-            .map(QuestionOptionInfo::from);
+            .map(FormQueryInfoAssembler::toQuestionOptionInfo);
     }
 
     @Override
     public QuestionOptionInfo getById(Long optionId) {
         return loadQuestionOptionPort.findById(optionId)
-            .map(QuestionOptionInfo::from)
+            .map(FormQueryInfoAssembler::toQuestionOptionInfo)
             .orElseThrow(() -> new FormDomainException(FormErrorCode.QUESTION_OPTION_NOT_FOUND));
     }
 
     @Override
     public List<QuestionOptionInfo> listByQuestionId(Long questionId) {
         return loadQuestionOptionPort.listByQuestionId(questionId).stream()
-            .map(QuestionOptionInfo::from)
+            .map(FormQueryInfoAssembler::toQuestionOptionInfo)
             .toList();
     }
 }
