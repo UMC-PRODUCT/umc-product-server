@@ -18,10 +18,10 @@ import com.umc.product.community.adapter.in.web.validation.PositiveDecimalId;
 import com.umc.product.community.application.port.in.command.thread.report.ReportCommunityThreadMessageUseCase;
 import com.umc.product.community.application.port.in.query.thread.report.SearchCommunityThreadMessageReportsUseCase;
 import com.umc.product.community.application.port.in.query.thread.report.dto.SearchCommunityThreadMessageReportsQuery;
-import com.umc.product.community.domain.enums.ReportReason;
-import com.umc.product.community.domain.enums.ReportStatus;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.report.domain.enums.ReportReason;
+import com.umc.product.report.domain.enums.ReportStatus;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

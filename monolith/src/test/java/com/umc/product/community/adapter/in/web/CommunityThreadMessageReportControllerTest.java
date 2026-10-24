@@ -36,11 +36,11 @@ import com.umc.product.community.application.port.in.query.thread.report.dto.Com
 import com.umc.product.community.application.port.in.query.thread.report.dto.CommunityThreadMessageReportPageInfo;
 import com.umc.product.community.application.port.in.query.thread.report.dto.CommunityThreadMessageReportReceiptInfo;
 import com.umc.product.community.application.port.in.query.thread.report.dto.SearchCommunityThreadMessageReportsQuery;
-import com.umc.product.community.domain.enums.ReportReason;
-import com.umc.product.community.domain.enums.ReportStatus;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.report.domain.enums.ReportReason;
+import com.umc.product.report.domain.enums.ReportStatus;
 
 @WebMvcTest(controllers = CommunityThreadMessageReportController.class)
 @Import(JacksonConfig.class)

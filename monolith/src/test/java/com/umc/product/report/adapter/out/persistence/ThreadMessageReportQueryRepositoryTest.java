@@ -1,4 +1,4 @@
-package com.umc.product.community.adapter.out.persistence;
+package com.umc.product.report.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,14 +12,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
-import com.umc.product.community.application.port.out.report.dto.ThreadMessageReportSearchQuery;
-import com.umc.product.community.application.port.out.report.dto.ThreadMessageReportSearchResult;
+import com.umc.product.community.adapter.out.persistence.CommunityThreadRepository;
 import com.umc.product.community.domain.CommunityThread;
-import com.umc.product.community.domain.Report;
 import com.umc.product.community.domain.enums.CommunityThreadCategory;
-import com.umc.product.community.domain.enums.ReportReason;
-import com.umc.product.community.domain.enums.ReportStatus;
-import com.umc.product.community.domain.enums.ReportTargetType;
+import com.umc.product.report.application.port.out.dto.ThreadMessageReportSearchQuery;
+import com.umc.product.report.application.port.out.dto.ThreadMessageReportSearchResult;
+import com.umc.product.report.domain.Report;
+import com.umc.product.report.domain.enums.ReportReason;
+import com.umc.product.report.domain.enums.ReportStatus;
+import com.umc.product.report.domain.enums.ReportTargetType;
 import com.umc.product.support.PersistenceAdapterTest;
 
 @PersistenceAdapterTest

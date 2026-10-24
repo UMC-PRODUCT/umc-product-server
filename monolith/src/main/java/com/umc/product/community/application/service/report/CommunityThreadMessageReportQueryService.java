@@ -10,12 +10,12 @@ import com.umc.product.community.application.port.in.query.thread.report.SearchC
 import com.umc.product.community.application.port.in.query.thread.report.dto.CommunityThreadMessageAdminReportInfo;
 import com.umc.product.community.application.port.in.query.thread.report.dto.CommunityThreadMessageReportPageInfo;
 import com.umc.product.community.application.port.in.query.thread.report.dto.SearchCommunityThreadMessageReportsQuery;
-import com.umc.product.community.application.port.out.report.SearchThreadMessageReportPort;
-import com.umc.product.community.application.port.out.report.dto.ThreadMessageReportSearchQuery;
-import com.umc.product.community.application.port.out.report.dto.ThreadMessageReportSearchResult;
-import com.umc.product.community.domain.enums.ReportStatus;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
+import com.umc.product.report.application.port.out.SearchThreadMessageReportPort;
+import com.umc.product.report.application.port.out.dto.ThreadMessageReportSearchQuery;
+import com.umc.product.report.application.port.out.dto.ThreadMessageReportSearchResult;
+import com.umc.product.report.domain.enums.ReportStatus;
 
 import lombok.RequiredArgsConstructor;
 

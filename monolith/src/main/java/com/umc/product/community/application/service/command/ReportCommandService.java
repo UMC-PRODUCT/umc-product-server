@@ -11,14 +11,14 @@ import com.umc.product.community.application.port.in.command.report.dto.ReportCo
 import com.umc.product.community.application.port.in.command.report.dto.ReportPostCommand;
 import com.umc.product.community.application.port.out.comment.LoadCommentPort;
 import com.umc.product.community.application.port.out.post.LoadPostPort;
-import com.umc.product.community.application.port.out.report.LoadReportPort;
-import com.umc.product.community.application.port.out.report.SaveReportPort;
-import com.umc.product.community.domain.Report;
-import com.umc.product.community.domain.enums.ReportTargetType;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.report.application.port.out.LoadReportPort;
+import com.umc.product.report.application.port.out.SaveReportPort;
+import com.umc.product.report.domain.Report;
+import com.umc.product.report.domain.enums.ReportTargetType;
 
 import lombok.RequiredArgsConstructor;
 

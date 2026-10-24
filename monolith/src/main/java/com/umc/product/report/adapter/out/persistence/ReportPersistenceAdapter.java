@@ -1,4 +1,4 @@
-package com.umc.product.community.adapter.out.persistence;
+package com.umc.product.report.adapter.out.persistence;
 
 import java.util.Optional;
 
@@ -6,12 +6,12 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
-import com.umc.product.community.application.port.out.report.LoadReportPort;
-import com.umc.product.community.application.port.out.report.SaveReportPort;
-import com.umc.product.community.domain.Report;
-import com.umc.product.community.domain.enums.ReportTargetType;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
+import com.umc.product.report.application.port.out.LoadReportPort;
+import com.umc.product.report.application.port.out.SaveReportPort;
+import com.umc.product.report.domain.Report;
+import com.umc.product.report.domain.enums.ReportTargetType;
 
 import lombok.RequiredArgsConstructor;
 

@@ -13,15 +13,15 @@ import com.umc.product.chat.application.port.in.query.dto.GetChatMessageRoomQuer
 import com.umc.product.community.application.port.in.command.thread.report.ReportCommunityThreadMessageUseCase;
 import com.umc.product.community.application.port.in.command.thread.report.dto.ReportCommunityThreadMessageCommand;
 import com.umc.product.community.application.port.in.query.thread.report.dto.CommunityThreadMessageReportReceiptInfo;
-import com.umc.product.community.application.port.out.report.LoadReportPort;
-import com.umc.product.community.application.port.out.report.SaveReportPort;
 import com.umc.product.community.application.port.out.thread.LoadCommunityThreadMemberPort;
 import com.umc.product.community.application.port.out.thread.LoadCommunityThreadPort;
 import com.umc.product.community.domain.CommunityThread;
 import com.umc.product.community.domain.CommunityThreadMember;
-import com.umc.product.community.domain.Report;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
+import com.umc.product.report.application.port.out.LoadReportPort;
+import com.umc.product.report.application.port.out.SaveReportPort;
+import com.umc.product.report.domain.Report;
 
 import lombok.RequiredArgsConstructor;
 

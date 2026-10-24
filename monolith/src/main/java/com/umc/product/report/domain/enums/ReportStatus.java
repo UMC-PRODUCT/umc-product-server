@@ -1,4 +1,4 @@
-package com.umc.product.community.domain.enums;
+package com.umc.product.report.domain.enums;
 
 public enum ReportStatus {
     PENDING,   // 대기중

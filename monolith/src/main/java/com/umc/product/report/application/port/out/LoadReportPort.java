@@ -1,9 +1,9 @@
-package com.umc.product.community.application.port.out.report;
+package com.umc.product.report.application.port.out;
 
 import java.util.Optional;
 
-import com.umc.product.community.domain.Report;
-import com.umc.product.community.domain.enums.ReportTargetType;
+import com.umc.product.report.domain.Report;
+import com.umc.product.report.domain.enums.ReportTargetType;
 
 public interface LoadReportPort {
 

@@ -1,9 +1,9 @@
-package com.umc.product.community.domain;
+package com.umc.product.report.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.community.domain.enums.ReportReason;
-import com.umc.product.community.domain.enums.ReportStatus;
-import com.umc.product.community.domain.enums.ReportTargetType;
+import com.umc.product.report.domain.enums.ReportReason;
+import com.umc.product.report.domain.enums.ReportStatus;
+import com.umc.product.report.domain.enums.ReportTargetType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

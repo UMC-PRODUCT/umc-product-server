@@ -1,4 +1,4 @@
-package com.umc.product.community.adapter.out.persistence;
+package com.umc.product.report.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -21,13 +21,14 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.umc.product.community.adapter.out.persistence.CommunityThreadRepository;
 import com.umc.product.community.domain.CommunityThread;
-import com.umc.product.community.domain.Report;
 import com.umc.product.community.domain.enums.CommunityThreadCategory;
-import com.umc.product.community.domain.enums.ReportReason;
-import com.umc.product.community.domain.enums.ReportTargetType;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
+import com.umc.product.report.domain.Report;
+import com.umc.product.report.domain.enums.ReportReason;
+import com.umc.product.report.domain.enums.ReportTargetType;
 import com.umc.product.support.PersistenceAdapterTest;
 
 @PersistenceAdapterTest

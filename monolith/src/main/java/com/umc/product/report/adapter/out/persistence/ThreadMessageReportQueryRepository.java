@@ -1,6 +1,6 @@
-package com.umc.product.community.adapter.out.persistence;
+package com.umc.product.report.adapter.out.persistence;
 
-import static com.umc.product.community.domain.QReport.report;
+import static com.umc.product.report.domain.QReport.report;
 
 import java.util.List;
 
@@ -8,11 +8,11 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.community.application.port.out.report.SearchThreadMessageReportPort;
-import com.umc.product.community.application.port.out.report.dto.ThreadMessageReportSearchQuery;
-import com.umc.product.community.application.port.out.report.dto.ThreadMessageReportSearchResult;
-import com.umc.product.community.domain.Report;
-import com.umc.product.community.domain.enums.ReportTargetType;
+import com.umc.product.report.application.port.out.SearchThreadMessageReportPort;
+import com.umc.product.report.application.port.out.dto.ThreadMessageReportSearchQuery;
+import com.umc.product.report.application.port.out.dto.ThreadMessageReportSearchResult;
+import com.umc.product.report.domain.Report;
+import com.umc.product.report.domain.enums.ReportTargetType;
 
 import lombok.RequiredArgsConstructor;
 

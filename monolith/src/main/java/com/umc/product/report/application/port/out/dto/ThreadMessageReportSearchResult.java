@@ -1,8 +1,8 @@
-package com.umc.product.community.application.port.out.report.dto;
+package com.umc.product.report.application.port.out.dto;
 
 import java.util.List;
 
-import com.umc.product.community.domain.Report;
+import com.umc.product.report.domain.Report;
 
 public record ThreadMessageReportSearchResult(List<Report> reports, long total) {
 

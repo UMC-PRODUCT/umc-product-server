@@ -1,4 +1,4 @@
-package com.umc.product.community.adapter.out.persistence;
+package com.umc.product.report.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -16,10 +16,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
-import com.umc.product.community.domain.Report;
-import com.umc.product.community.domain.enums.ReportReason;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
+import com.umc.product.report.domain.Report;
+import com.umc.product.report.domain.enums.ReportReason;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ReportPersistenceAdapter 신고 중복 무결성 예외 변환")

@@ -1,13 +1,13 @@
-package com.umc.product.community.domain;
+package com.umc.product.report.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.umc.product.community.domain.enums.ReportReason;
-import com.umc.product.community.domain.enums.ReportStatus;
-import com.umc.product.community.domain.enums.ReportTargetType;
+import com.umc.product.report.domain.enums.ReportReason;
+import com.umc.product.report.domain.enums.ReportStatus;
+import com.umc.product.report.domain.enums.ReportTargetType;
 
 @DisplayName("Report")
 class ReportTest {
