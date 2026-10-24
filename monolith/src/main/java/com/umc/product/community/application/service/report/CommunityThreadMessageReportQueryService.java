@@ -12,9 +12,9 @@ import com.umc.product.community.application.port.in.query.thread.report.dto.Com
 import com.umc.product.community.application.port.in.query.thread.report.dto.SearchCommunityThreadMessageReportsQuery;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
-import com.umc.product.report.application.port.out.SearchThreadMessageReportPort;
-import com.umc.product.report.application.port.out.dto.ThreadMessageReportSearchQuery;
-import com.umc.product.report.application.port.out.dto.ThreadMessageReportSearchResult;
+import com.umc.product.report.application.port.in.query.SearchThreadMessageReportsUseCase;
+import com.umc.product.report.application.port.in.query.dto.SearchThreadMessageReportsQuery;
+import com.umc.product.report.application.port.in.query.dto.ThreadMessageReportPageResult;
 import com.umc.product.report.domain.enums.ReportStatus;
 
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 public class CommunityThreadMessageReportQueryService implements SearchCommunityThreadMessageReportsUseCase {
 
     private final CheckChallengerAuthorityUseCase checkChallengerAuthorityUseCase;
-    private final SearchThreadMessageReportPort searchThreadMessageReportPort;
+    private final SearchThreadMessageReportsUseCase searchThreadMessageReportsUseCase;
 
     @Override
     public CommunityThreadMessageReportPageInfo search(SearchCommunityThreadMessageReportsQuery query) {
@@ -35,8 +35,8 @@ public class CommunityThreadMessageReportQueryService implements SearchCommunity
             throw new CommunityDomainException(CommunityErrorCode.THREAD_ACCESS_DENIED);
         }
 
-        ThreadMessageReportSearchResult result = searchThreadMessageReportPort.search(
-            new ThreadMessageReportSearchQuery(
+        ThreadMessageReportPageResult result = searchThreadMessageReportsUseCase.search(
+            new SearchThreadMessageReportsQuery(
                 query.status() == null ? ReportStatus.PENDING : query.status(),
                 query.reason(),
                 query.threadId(),

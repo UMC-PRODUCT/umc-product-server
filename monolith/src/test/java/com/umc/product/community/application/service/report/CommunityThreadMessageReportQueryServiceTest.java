@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.mock;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,12 +21,13 @@ import com.umc.product.community.application.port.in.query.thread.report.dto.Com
 import com.umc.product.community.application.port.in.query.thread.report.dto.SearchCommunityThreadMessageReportsQuery;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
-import com.umc.product.report.application.port.out.SearchThreadMessageReportPort;
-import com.umc.product.report.application.port.out.dto.ThreadMessageReportSearchQuery;
-import com.umc.product.report.application.port.out.dto.ThreadMessageReportSearchResult;
-import com.umc.product.report.domain.Report;
+import com.umc.product.report.application.port.in.query.SearchThreadMessageReportsUseCase;
+import com.umc.product.report.application.port.in.query.dto.ReportInfo;
+import com.umc.product.report.application.port.in.query.dto.SearchThreadMessageReportsQuery;
+import com.umc.product.report.application.port.in.query.dto.ThreadMessageReportPageResult;
 import com.umc.product.report.domain.enums.ReportReason;
 import com.umc.product.report.domain.enums.ReportStatus;
+import com.umc.product.report.domain.enums.ReportTargetType;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("스레드 메시지 신고 관리자 조회 서비스")
@@ -42,13 +42,13 @@ class CommunityThreadMessageReportQueryServiceTest {
     CheckChallengerAuthorityUseCase checkChallengerAuthorityUseCase;
 
     @Mock
-    SearchThreadMessageReportPort searchThreadMessageReportPort;
+    SearchThreadMessageReportsUseCase searchThreadMessageReportsUseCase;
 
     @InjectMocks
     CommunityThreadMessageReportQueryService sut;
 
     @Test
-    @DisplayName("SUPER_ADMIN만 기본 PENDING과 모든 관리자 필터를 검색 포트에 전달하고 exact total/nextOffset을 반환한다")
+    @DisplayName("SUPER_ADMIN만 기본 PENDING과 모든 관리자 필터를 신고 조회 UseCase에 전달하고 exact total/nextOffset을 반환한다")
     void search_SUPER_ADMIN은_기본상태와_필터_total을_전달한다() {
         // given
         SearchCommunityThreadMessageReportsQuery query = new SearchCommunityThreadMessageReportsQuery(
@@ -60,7 +60,7 @@ class CommunityThreadMessageReportQueryServiceTest {
             3,
             2
         );
-        ThreadMessageReportSearchQuery expectedPortQuery = new ThreadMessageReportSearchQuery(
+        SearchThreadMessageReportsQuery expectedQuery = new SearchThreadMessageReportsQuery(
             ReportStatus.PENDING,
             ReportReason.ABUSE,
             THREAD_ID,
@@ -68,13 +68,13 @@ class CommunityThreadMessageReportQueryServiceTest {
             3,
             2
         );
-        Report first = report(91L, THREAD_ID, 701L, REPORTER_MEMBER_ID, ReportReason.ABUSE,
+        ReportInfo first = report(91L, THREAD_ID, 701L, REPORTER_MEMBER_ID, ReportReason.ABUSE,
             ReportStatus.PENDING);
-        Report second = report(90L, THREAD_ID, 700L, REPORTER_MEMBER_ID, ReportReason.ABUSE,
+        ReportInfo second = report(90L, THREAD_ID, 700L, REPORTER_MEMBER_ID, ReportReason.ABUSE,
             ReportStatus.PENDING);
         given(checkChallengerAuthorityUseCase.isSuperAdmin(ADMIN_MEMBER_ID)).willReturn(true);
-        given(searchThreadMessageReportPort.search(expectedPortQuery))
-            .willReturn(new ThreadMessageReportSearchResult(List.of(first, second), 7L));
+        given(searchThreadMessageReportsUseCase.search(expectedQuery))
+            .willReturn(new ThreadMessageReportPageResult(List.of(first, second), 7L));
         // when
         CommunityThreadMessageReportPageInfo result = sut.search(query);
 
@@ -102,11 +102,11 @@ class CommunityThreadMessageReportQueryServiceTest {
                 )
             );
         then(checkChallengerAuthorityUseCase).should().isSuperAdmin(ADMIN_MEMBER_ID);
-        then(searchThreadMessageReportPort).should().search(expectedPortQuery);
+        then(searchThreadMessageReportsUseCase).should().search(expectedQuery);
     }
 
     @Test
-    @DisplayName("SUPER_ADMIN이 아니면 신고 검색 포트를 호출하지 않고 접근을 거부한다")
+    @DisplayName("SUPER_ADMIN이 아니면 신고 조회 UseCase를 호출하지 않고 접근을 거부한다")
     void search_SUPER_ADMIN이_아니면_fail_closed한다() {
         // given
         SearchCommunityThreadMessageReportsQuery query = new SearchCommunityThreadMessageReportsQuery(
@@ -124,7 +124,7 @@ class CommunityThreadMessageReportQueryServiceTest {
             .isInstanceOf(CommunityDomainException.class)
             .extracting(error -> ((CommunityDomainException) error).getBaseCode())
             .isEqualTo(CommunityErrorCode.THREAD_ACCESS_DENIED);
-        then(searchThreadMessageReportPort).shouldHaveNoInteractions();
+        then(searchThreadMessageReportsUseCase).shouldHaveNoInteractions();
     }
 
     @Test
@@ -140,7 +140,7 @@ class CommunityThreadMessageReportQueryServiceTest {
             4,
             2
         );
-        ThreadMessageReportSearchQuery portQuery = new ThreadMessageReportSearchQuery(
+        SearchThreadMessageReportsQuery expectedQuery = new SearchThreadMessageReportsQuery(
             ReportStatus.REJECTED,
             ReportReason.ETC,
             THREAD_ID,
@@ -149,9 +149,9 @@ class CommunityThreadMessageReportQueryServiceTest {
             2
         );
         given(checkChallengerAuthorityUseCase.isSuperAdmin(ADMIN_MEMBER_ID)).willReturn(true);
-        Report report = report(80L, THREAD_ID, 600L, 404L, ReportReason.ETC, ReportStatus.REJECTED);
-        given(searchThreadMessageReportPort.search(portQuery))
-            .willReturn(new ThreadMessageReportSearchResult(
+        ReportInfo report = report(80L, THREAD_ID, 600L, 404L, ReportReason.ETC, ReportStatus.REJECTED);
+        given(searchThreadMessageReportsUseCase.search(expectedQuery))
+            .willReturn(new ThreadMessageReportPageResult(
                 List.of(report),
                 5L
             ));
@@ -163,7 +163,7 @@ class CommunityThreadMessageReportQueryServiceTest {
         assertThat(result.total()).isEqualTo(5L);
     }
 
-    private Report report(
+    private ReportInfo report(
         Long reportId,
         Long threadId,
         Long messageId,
@@ -171,14 +171,15 @@ class CommunityThreadMessageReportQueryServiceTest {
         ReportReason reason,
         ReportStatus status
     ) {
-        Report report = mock(Report.class);
-        given(report.getId()).willReturn(reportId);
-        given(report.getThreadId()).willReturn(threadId);
-        given(report.getTargetId()).willReturn(messageId);
-        given(report.getReporterId()).willReturn(reporterId);
-        given(report.getReasonCode()).willReturn(reason);
-        given(report.getStatus()).willReturn(status);
-        given(report.getCreatedAt()).willReturn(CREATED_AT);
-        return report;
+        return new ReportInfo(
+            reportId,
+            reporterId,
+            ReportTargetType.THREAD_MESSAGE,
+            messageId,
+            threadId,
+            reason,
+            status,
+            CREATED_AT
+        );
     }
 }
