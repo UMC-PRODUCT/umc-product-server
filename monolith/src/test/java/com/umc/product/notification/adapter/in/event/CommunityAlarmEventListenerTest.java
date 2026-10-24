@@ -262,7 +262,7 @@ class CommunityAlarmEventListenerTest {
         RequestFcmNotificationCommand command = captor.getValue();
         assertThat(command.memberIds()).containsExactly(RECIPIENT_ID, MUTED_ID);
         assertThat(command.title()).isEqualTo(THREAD_TITLE);
-        assertThat(command.body()).isEqualTo("홍길동님이 스레드에 초대해 참여했어요");
+        assertThat(command.body()).isEqualTo("홍길동님의 초대로 스레드에 참여했어요");
     }
 
     @Test

@@ -128,7 +128,7 @@ public class CommunityAlarmEventListener {
 
     // 수락 대기가 아니라 초대 즉시 멤버가 되는 구조라, 문구도 이미 참여된 사실을 안내한다.
     private String inviteBody(String inviterName) {
-        return StringUtils.abbreviate(inviterName + "님이 스레드에 초대해 참여했어요", BODY_MAX_LENGTH);
+        return StringUtils.abbreviate(inviterName + "님의 초대로 스레드에 참여했어요", BODY_MAX_LENGTH);
     }
 
     private String title(String threadTitle, CommunityThreadMessageInfo info) {
