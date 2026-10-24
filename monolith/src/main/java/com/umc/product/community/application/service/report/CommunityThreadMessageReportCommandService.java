@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.chat.application.port.in.query.GetChatMessageRoomUseCase;
 import com.umc.product.chat.application.port.in.query.GetChatMessageUseCase;
+import com.umc.product.chat.application.port.in.query.dto.ChatMessageInfo;
 import com.umc.product.chat.application.port.in.query.dto.GetChatMessageQuery;
 import com.umc.product.chat.application.port.in.query.dto.GetChatMessageRoomQuery;
 import com.umc.product.community.application.port.in.command.thread.report.ReportCommunityThreadMessageUseCase;
@@ -53,11 +54,14 @@ public class CommunityThreadMessageReportCommandService implements ReportCommuni
             throw new CommunityDomainException(CommunityErrorCode.THREAD_ACCESS_DENIED);
         }
 
-        getChatMessageUseCase.getMessage(new GetChatMessageQuery(
+        ChatMessageInfo message = getChatMessageUseCase.getMessage(new GetChatMessageQuery(
             chatRoomId,
             command.requesterMemberId(),
             command.messageId()
         ));
+        if (Objects.equals(message.senderMemberId(), command.requesterMemberId())) {
+            throw new CommunityDomainException(CommunityErrorCode.REPORT_SELF_TARGET);
+        }
 
         if (loadReportPort.existsThreadMessageReport(command.requesterMemberId(), command.messageId())) {
             throw new CommunityDomainException(CommunityErrorCode.REPORT_ALREADY_EXISTS);

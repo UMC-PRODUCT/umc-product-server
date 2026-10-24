@@ -260,6 +260,32 @@ class CommunityThreadMessageReportCommandServiceTest {
     }
 
     @Test
+    @DisplayName("본인이 보낸 메시지는 중복 확인과 저장 전에 REPORT_SELF_TARGET으로 거부한다")
+    void report_본인_메시지_신고를_거부한다() {
+        // given
+        CommunityThread thread = thread();
+        CommunityThreadMember member = activeMember();
+        given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
+            .willReturn(CHAT_ROOM_ID);
+        given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
+            .willReturn(Optional.of(member));
+        given(getChatMessageUseCase.getMessage(
+            new GetChatMessageQuery(CHAT_ROOM_ID, REQUESTER_MEMBER_ID, MESSAGE_ID)
+        )).willReturn(chatMessageFrom(REQUESTER_MEMBER_ID));
+
+        // when & then
+        assertThatThrownBy(() -> sut.report(command()))
+            .isInstanceOf(CommunityDomainException.class)
+            .extracting(error -> ((BusinessException) error).getBaseCode())
+            .isEqualTo(CommunityErrorCode.REPORT_SELF_TARGET);
+
+        then(loadReportPort).shouldHaveNoInteractions();
+        then(saveReportPort).shouldHaveNoInteractions();
+    }
+
+    @Test
     @DisplayName("같은 회원이 같은 메시지를 다시 신고하면 Chat 검증 뒤 중복 충돌로 저장하지 않는다")
     void report_같은_회원의_메시지_중복_신고를_거부한다() {
         // given
@@ -353,10 +379,14 @@ class CommunityThreadMessageReportCommandServiceTest {
     }
 
     private ChatMessageInfo chatMessage() {
+        return chatMessageFrom(66L);
+    }
+
+    private ChatMessageInfo chatMessageFrom(Long senderMemberId) {
         return new ChatMessageInfo(
             MESSAGE_ID,
             CHAT_ROOM_ID,
-            66L,
+            senderMemberId,
             MessageContentType.TEXT,
             "신고 대상 메시지",
             List.of(),
