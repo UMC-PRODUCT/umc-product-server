@@ -287,15 +287,15 @@ PM은 `PATCH /api/v1/projects/{projectId}/applications/{applicationId}/decision`
 
 ## 매칭 결과 발표
 
-1~3차는 결정 마감 후 기본 1분 뒤 자동 선발하고, 4차는 시작 시각에 랜덤 매칭한다. 선발된 팀원은 `PENDING_PUBLICATION`으로 저장하며 지원서에는 PM의 마지막 결정값을 유지한다. 발표 시각에 팀원을 `ACTIVE`로 변경하고 지원서 합불과 `resultPublishedAt`을 함께 저장한다.
+1~3차는 결정 마감 후 기본 1분 뒤 자동 선발하고, 랜덤 매칭은 시작 시각에 실행한다. 선발된 팀원은 `PENDING_PUBLICATION`으로 저장하며 지원서에는 PM의 마지막 결정값을 유지한다. 발표 시각에 팀원을 `ACTIVE`로 변경하고 지원서 합불과 `resultPublishedAt`을 함께 저장한다.
 
 일반 팀원 조회와 인원수는 `ACTIVE`, 내부 정원 계산과 중복 선발 검사는 `ACTIVE`와 `PENDING_PUBLICATION`을 기준으로 한다. 발표 전에는 지원자에게 합불 결과를 공개하지 않는다. 발표 시각이 없는 기존 차수는 기존 처리 방식을 유지한다.
 
-자동 선발·4차 랜덤 매칭·발표의 상세 흐름은 [매칭 자동 선발과 4차 랜덤 매칭·결과 발표](../project/plan-developer-third-auto-assignment.md)를 참고한다.
+자동 선발·랜덤 매칭·발표의 상세 흐름은 [매칭 자동 선발과 랜덤 매칭·결과 발표](../project/plan-developer-third-auto-assignment.md)를 참고한다.
 
 ## 상세 문서
 
-- [매칭 자동 선발과 4차 랜덤 매칭·결과 발표](../project/plan-developer-third-auto-assignment.md)
+- [매칭 자동 선발과 랜덤 매칭·결과 발표](../project/plan-developer-third-auto-assignment.md)
 
 ## 경계
 

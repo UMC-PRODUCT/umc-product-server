@@ -94,7 +94,7 @@ class ProjectDeletionCommandServiceTest {
         // given
         Project project = givenProject(ProjectStatus.IN_PROGRESS);
         ProjectMatchingRound decision = round(20L, MatchingPhase.FIRST, -7200, -3600, 3600);
-        ProjectMatchingRound random = round(10L, MatchingPhase.FOURTH, -3600, 3600, 3600);
+        ProjectMatchingRound random = round(10L, MatchingPhase.RANDOM_MATCHING, -3600, 3600, 3600);
         given(loadProjectMatchingRoundPort.listByChapterIdForUpdate(2L)).willReturn(List.of(decision, random));
 
         // when
@@ -148,7 +148,7 @@ class ProjectDeletionCommandServiceTest {
         Instant now = Instant.now();
         ProjectMatchingRound round = ProjectMatchingRound.create("테스트", null, MatchingType.PLAN_DEVELOPER,
             phase, 2L, now.plusSeconds(start), now.plusSeconds(end), now.plusSeconds(deadline),
-            phase == MatchingPhase.FOURTH ? now.plusSeconds(deadline + 3600) : null);
+            phase == MatchingPhase.RANDOM_MATCHING ? now.plusSeconds(deadline + 3600) : null);
         ReflectionTestUtils.setField(round, "id", id);
         return round;
     }

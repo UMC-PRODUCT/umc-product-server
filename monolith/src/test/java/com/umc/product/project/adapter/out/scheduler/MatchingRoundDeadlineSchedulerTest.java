@@ -72,19 +72,29 @@ class MatchingRoundDeadlineSchedulerTest {
     class schedule {
 
         @Test
-        void 랜덤_4차는_시작_시각에_매칭하고_발표_시각에_공개하도록_예약한다() {
+        void 랜덤_매칭은_시작_시각에_매칭하고_발표_시각에_공개하도록_예약한다() {
+            // given
             Instant startsAt = Instant.parse("2026-11-19T00:00:00+09:00");
             ProjectMatchingRound round = ProjectMatchingRound.create(
-                "개발자 4차", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.FOURTH, 1L,
+                "개발자 랜덤 매칭", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.RANDOM_MATCHING, 1L,
                 startsAt, startsAt.plusSeconds(72000), startsAt.plusSeconds(72000), startsAt.plusSeconds(79200));
             ReflectionTestUtils.setField(round, "id", 1L);
             given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
                 .willAnswer(invocation -> scheduledFuture);
 
+            // when
             sut.schedule(round);
 
-            then(taskScheduler).should().schedule(any(Runnable.class), eq(startsAt));
-            then(taskScheduler).should().schedule(any(Runnable.class), eq(round.getResultPublishAt()));
+            // then
+            ArgumentCaptor<Runnable> matchingTask = ArgumentCaptor.forClass(Runnable.class);
+            ArgumentCaptor<Runnable> publicationTask = ArgumentCaptor.forClass(Runnable.class);
+            then(taskScheduler).should().schedule(matchingTask.capture(), eq(startsAt));
+            then(taskScheduler).should().schedule(publicationTask.capture(), eq(round.getResultPublishAt()));
+            matchingTask.getValue().run();
+            then(handler).should().handle(1L);
+            then(publicationHandler).should(never()).handle(any());
+            publicationTask.getValue().run();
+            then(publicationHandler).should().handle(1L);
         }
 
         @Test
@@ -227,7 +237,8 @@ class MatchingRoundDeadlineSchedulerTest {
         ReflectionTestUtils.setField(round, "resultPublishAt", publishAt);
         round.executeAutoDecision(null);
         given(loadProjectMatchingRoundPort.listAllNotPublished()).willReturn(List.of(round));
-        given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+        ArgumentCaptor<Runnable> taskCaptor = ArgumentCaptor.forClass(Runnable.class);
+        given(taskScheduler.schedule(taskCaptor.capture(), any(Instant.class)))
             .willAnswer(invocation -> scheduledFuture);
 
         // when
@@ -235,6 +246,9 @@ class MatchingRoundDeadlineSchedulerTest {
 
         // then
         then(taskScheduler).should().schedule(any(Runnable.class), eq(publishAt));
+        taskCaptor.getValue().run();
+        then(publicationHandler).should().handle(1L);
+        then(handler).should(never()).handle(any());
     }
 
     private ProjectMatchingRound roundWithId(Long id) {

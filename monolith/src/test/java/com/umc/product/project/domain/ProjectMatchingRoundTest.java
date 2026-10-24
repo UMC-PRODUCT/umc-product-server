@@ -38,7 +38,7 @@ class ProjectMatchingRoundTest {
     @Test
     void 랜덤_매칭은_시작과_종료_사이여도_지원기간이_아니다() {
         ProjectMatchingRound random = ProjectMatchingRound.create("랜덤", null,
-            MatchingType.PLAN_DEVELOPER, MatchingPhase.FOURTH, 1L,
+            MatchingType.PLAN_DEVELOPER, MatchingPhase.RANDOM_MATCHING, 1L,
             STARTS_AT, ENDS_AT, ENDS_AT, RESULT_PUBLISH_AT);
         assertThat(random.isOpenAt(STARTS_AT)).isFalse();
         assertThat(random.isOpenAt(ENDS_AT)).isFalse();
@@ -60,7 +60,7 @@ class ProjectMatchingRoundTest {
         @EnumSource(MatchingPhase.class)
         void 발표_시각이_결정_마감으로부터_5분_미만이면_거부한다(MatchingPhase phase) {
             // given
-            Instant endsAt = phase == MatchingPhase.FOURTH ? DECISION_DEADLINE : ENDS_AT;
+            Instant endsAt = phase == MatchingPhase.RANDOM_MATCHING ? DECISION_DEADLINE : ENDS_AT;
 
             // when & then
             assertThatThrownBy(() -> ProjectMatchingRound.validateSchedule(
@@ -76,7 +76,7 @@ class ProjectMatchingRoundTest {
         @EnumSource(MatchingPhase.class)
         void 발표_시각이_결정_마감으로부터_정확히_5분_후이면_허용한다(MatchingPhase phase) {
             // given
-            Instant endsAt = phase == MatchingPhase.FOURTH ? DECISION_DEADLINE : ENDS_AT;
+            Instant endsAt = phase == MatchingPhase.RANDOM_MATCHING ? DECISION_DEADLINE : ENDS_AT;
 
             // when & then
             assertThatCode(() -> ProjectMatchingRound.validateSchedule(

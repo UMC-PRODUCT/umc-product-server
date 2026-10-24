@@ -6,5 +6,5 @@ public enum MatchingPhase {
     THIRD,
 
     // 지원서 접수 없이 잔여 인원을 랜덤 매칭하는 차수
-    FOURTH,
+    RANDOM_MATCHING,
 }

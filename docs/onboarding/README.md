@@ -14,5 +14,5 @@
 
 ## 프로젝트별 운영 문서
 
-- [매칭 자동 선발과 4차 랜덤 매칭·결과 발표](project/plan-developer-third-auto-assignment.md)
+- [매칭 자동 선발과 랜덤 매칭·결과 발표](project/plan-developer-third-auto-assignment.md)
 - [Event Outbox 발행 및 소비 흐름](event-outbox-flow.md): 이벤트 저장, polling, relay, 상태 전이와 dispatch mode 선택 기준
