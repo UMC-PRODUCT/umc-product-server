@@ -24,6 +24,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
+import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectCommand;
@@ -42,10 +45,30 @@ class ProjectDraftIntegrationTest extends IntegrationTestSupport {
     @Autowired LoadProjectPort loadProjectPort;
     @Autowired PlatformTransactionManager transactionManager;
     @Autowired JdbcTemplate jdbcTemplate;
+    @Autowired CheckPermissionUseCase checkPermissionUseCase;
+    @Autowired EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
 
     @AfterEach
     void 인증_정리() {
         SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void 이전_권한_캐시가_남아도_현재_기획자로_초안을_생성한다() throws Exception {
+        // given — DB 초기화 후에도 같은 회원 ID의 이전 권한 캐시가 남는 상황을 재현한다.
+        Context owner = fixture.기획자("작성자", 91L);
+        evictAuthoritySnapshotCacheUseCase.evictByMemberId(owner.memberId());
+        jdbcTemplate.update("UPDATE challenger SET part = 'DESIGN' WHERE member_id = ?", owner.memberId());
+        assertThat(checkPermissionUseCase.loadSubject(owner.memberId()).gisuChallengerInfos())
+            .extracting(info -> info.part()).containsExactly(ChallengerPart.DESIGN);
+        jdbcTemplate.update("UPDATE challenger SET part = 'PLAN' WHERE member_id = ?", owner.memberId());
+
+        // when
+        authenticate(owner.memberId());
+        Long projectId = create(owner);
+
+        // then
+        assertThat(loadProjectPort.getById(projectId).getCreatorMemberId()).isEqualTo(owner.memberId());
     }
 
     @Test
@@ -174,6 +197,8 @@ class ProjectDraftIntegrationTest extends IntegrationTestSupport {
     }
 
     private void authenticate(Long memberId) {
+        // DB 초기화로 회원 ID가 재사용되므로 이전 테스트의 권한 캐시를 제거한다.
+        evictAuthoritySnapshotCacheUseCase.evictByMemberId(memberId);
         MemberPrincipal principal = MemberPrincipal.builder().memberId(memberId).build();
         SecurityContextHolder.getContext().setAuthentication(
             new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
