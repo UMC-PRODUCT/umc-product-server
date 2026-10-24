@@ -9,7 +9,5 @@ public interface LoadReportPort {
 
     boolean existsByReporterIdAndTargetTypeAndTargetId(Long reporterId, ReportTargetType targetType, Long targetId);
 
-    boolean existsThreadMessageReport(Long reporterId, Long messageId);
-
     Optional<Report> findById(Long reportId);
 }

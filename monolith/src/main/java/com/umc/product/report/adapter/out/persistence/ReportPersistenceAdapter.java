@@ -31,15 +31,6 @@ public class ReportPersistenceAdapter implements LoadReportPort, SaveReportPort 
     }
 
     @Override
-    public boolean existsThreadMessageReport(Long reporterId, Long messageId) {
-        return reportRepository.existsByReporterIdAndTargetTypeAndTargetId(
-            reporterId,
-            ReportTargetType.THREAD_MESSAGE,
-            messageId
-        );
-    }
-
-    @Override
     public Optional<Report> findById(Long reportId) {
         return reportRepository.findById(reportId);
     }

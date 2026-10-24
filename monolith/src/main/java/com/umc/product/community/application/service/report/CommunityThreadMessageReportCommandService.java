@@ -19,9 +19,9 @@ import com.umc.product.community.domain.CommunityThread;
 import com.umc.product.community.domain.CommunityThreadMember;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
-import com.umc.product.report.application.port.out.LoadReportPort;
-import com.umc.product.report.application.port.out.SaveReportPort;
-import com.umc.product.report.domain.Report;
+import com.umc.product.report.application.port.in.command.SubmitReportUseCase;
+import com.umc.product.report.application.port.in.command.dto.SubmitReportCommand;
+import com.umc.product.report.application.port.in.command.dto.SubmitReportResult;
 import com.umc.product.report.domain.exception.ReportDomainException;
 import com.umc.product.report.domain.exception.ReportErrorCode;
 
@@ -36,8 +36,7 @@ public class CommunityThreadMessageReportCommandService implements ReportCommuni
     private final LoadCommunityThreadMemberPort loadThreadMemberPort;
     private final GetChatMessageRoomUseCase getChatMessageRoomUseCase;
     private final GetChatMessageUseCase getChatMessageUseCase;
-    private final LoadReportPort loadReportPort;
-    private final SaveReportPort saveReportPort;
+    private final SubmitReportUseCase submitReportUseCase;
 
     @Override
     public CommunityThreadMessageReportReceiptInfo report(ReportCommunityThreadMessageCommand command) {
@@ -65,18 +64,14 @@ public class CommunityThreadMessageReportCommandService implements ReportCommuni
             throw new ReportDomainException(ReportErrorCode.REPORT_SELF_TARGET);
         }
 
-        if (loadReportPort.existsThreadMessageReport(command.requesterMemberId(), command.messageId())) {
-            throw new ReportDomainException(ReportErrorCode.REPORT_ALREADY_EXISTS);
-        }
-
-        Report savedReport = saveReportPort.save(Report.createThreadMessage(
+        SubmitReportResult submitted = submitReportUseCase.submit(SubmitReportCommand.threadMessage(
             command.requesterMemberId(),
             thread.getId(),
             command.messageId(),
             command.reason()
         ));
         return CommunityThreadMessageReportReceiptInfo.from(
-            savedReport,
+            submitted,
             command.messageId(),
             command.reason()
         );

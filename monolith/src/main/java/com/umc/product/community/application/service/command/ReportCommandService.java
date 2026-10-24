@@ -13,14 +13,10 @@ import com.umc.product.community.application.port.out.comment.LoadCommentPort;
 import com.umc.product.community.application.port.out.post.LoadPostPort;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
-import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
-import com.umc.product.report.application.port.out.LoadReportPort;
-import com.umc.product.report.application.port.out.SaveReportPort;
-import com.umc.product.report.domain.Report;
+import com.umc.product.report.application.port.in.command.SubmitReportUseCase;
+import com.umc.product.report.application.port.in.command.dto.SubmitReportCommand;
 import com.umc.product.report.domain.enums.ReportTargetType;
-import com.umc.product.report.domain.exception.ReportDomainException;
-import com.umc.product.report.domain.exception.ReportErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,8 +27,7 @@ public class ReportCommandService implements ReportPostUseCase, ReportCommentUse
 
     private final LoadPostPort loadPostPort;
     private final LoadCommentPort loadCommentPort;
-    private final LoadReportPort loadReportPort;
-    private final SaveReportPort saveReportPort;
+    private final SubmitReportUseCase submitReportUseCase;
 
     @Audited(
         domain = Domain.COMMUNITY,
@@ -47,8 +42,9 @@ public class ReportCommandService implements ReportPostUseCase, ReportCommentUse
         loadPostPort.findById(command.postId())
             .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.POST_NOT_FOUND));
 
-        // 중복 신고 확인 및 저장
-        checkDuplicateAndSaveReport(command.reporterId(), ReportTargetType.POST, command.postId());
+        submitReportUseCase.submit(
+            SubmitReportCommand.of(command.reporterId(), ReportTargetType.POST, command.postId())
+        );
     }
 
     @Audited(
@@ -64,26 +60,8 @@ public class ReportCommandService implements ReportPostUseCase, ReportCommentUse
         loadCommentPort.findById(command.commentId())
             .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.COMMENT_NOT_FOUND));
 
-        // 중복 신고 확인 및 저장
-        checkDuplicateAndSaveReport(command.reporterId(), ReportTargetType.COMMENT, command.commentId());
-    }
-
-    /**
-     * 중복 신고를 확인하고 신고를 생성합니다.
-     *
-     * @param reporterId 신고자 회원 ID
-     * @param targetType 신고 대상 타입
-     * @param targetId   신고 대상 ID
-     * @throws BusinessException 이미 신고한 경우
-     */
-    private void checkDuplicateAndSaveReport(Long reporterId, ReportTargetType targetType, Long targetId) {
-        // 중복 신고 확인
-        if (loadReportPort.existsByReporterIdAndTargetTypeAndTargetId(reporterId, targetType, targetId)) {
-            throw new ReportDomainException(ReportErrorCode.REPORT_ALREADY_EXISTS);
-        }
-
-        // 신고 생성 및 저장
-        Report report = Report.create(reporterId, targetType, targetId, null);
-        saveReportPort.save(report);
+        submitReportUseCase.submit(
+            SubmitReportCommand.of(command.reporterId(), ReportTargetType.COMMENT, command.commentId())
+        );
     }
 }

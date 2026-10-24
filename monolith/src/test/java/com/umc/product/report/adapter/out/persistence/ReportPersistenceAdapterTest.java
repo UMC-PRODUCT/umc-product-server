@@ -73,7 +73,7 @@ class ReportPersistenceAdapterTest {
         Report reloadedLegacy = sut.findById(legacyId).orElseThrow();
         Report reloadedThreadMessage = sut.findById(threadMessageId).orElseThrow();
         assertThat(sut.existsByReporterIdAndTargetTypeAndTargetId(1L, ReportTargetType.COMMENT, 2L)).isTrue();
-        assertThat(sut.existsThreadMessageReport(3L, 5L)).isTrue();
+        assertThat(sut.existsByReporterIdAndTargetTypeAndTargetId(3L, ReportTargetType.THREAD_MESSAGE, 5L)).isTrue();
         assertThat(reloadedLegacy.getReason()).isEqualTo("기존 사유");
         assertThat(reloadedThreadMessage.getThreadId()).isEqualTo(thread.getId());
         assertThat(reloadedThreadMessage.getReasonCode()).isEqualTo(ReportReason.SPAM);
