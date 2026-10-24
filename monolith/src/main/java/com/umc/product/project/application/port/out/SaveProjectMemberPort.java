@@ -28,7 +28,7 @@ public interface SaveProjectMemberPort {
     void hardDelete(Long projectMemberId);
 
     /**
-     * 특정 프로젝트의 모든 멤버 row 를 일괄 삭제합니다. DRAFT/PENDING_REVIEW 단계 프로젝트 hard delete 시 자식 정리용.
+     * 특정 프로젝트의 모든 멤버 row 를 일괄 삭제합니다. 프로젝트 삭제 시 연관 데이터 정리용.
      */
     void deleteAllByProjectId(Long projectId);
 }

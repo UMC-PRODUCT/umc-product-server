@@ -872,7 +872,7 @@ class ProjectPermissionEvaluatorTest {
     }
 
     @Test
-    void DELETE는_IN_PROGRESS_프로젝트에는_누구도_거부() {
+    void DELETE는_IN_PROGRESS_프로젝트의_소유자에게_허용() {
         Long projectId = 100L;
         given(loadProjectPort.findById(projectId))
             .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.IN_PROGRESS)));
@@ -880,11 +880,11 @@ class ProjectPermissionEvaluatorTest {
         SubjectAttributes subject = subjectWith(10L, List.of(), List.of(centralCoreRole()));
         ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.DELETE);
 
-        assertThat(sut.evaluate(subject, permission)).isFalse();
+        assertThat(sut.evaluate(subject, permission)).isTrue();
     }
 
     @Test
-    void DELETE는_COMPLETED_프로젝트에는_누구도_거부() {
+    void DELETE는_COMPLETED_프로젝트의_소유자에게_허용() {
         Long projectId = 100L;
         given(loadProjectPort.findById(projectId))
             .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.COMPLETED)));
@@ -892,7 +892,7 @@ class ProjectPermissionEvaluatorTest {
         SubjectAttributes subject = subjectWith(10L, List.of(), List.of(centralCoreRole()));
         ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.DELETE);
 
-        assertThat(sut.evaluate(subject, permission)).isFalse();
+        assertThat(sut.evaluate(subject, permission)).isTrue();
     }
 
     // --- helpers ---

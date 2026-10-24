@@ -270,12 +270,11 @@ public class Project extends BaseEntity {
     }
 
     /**
-     * 프로젝트 hard delete 가능 상태인지 검증한다. DRAFT/PENDING_REVIEW 단계에서만 허용.
-     * IN_PROGRESS 이상은 모집/매칭 데이터가 누적되므로 {@link #abort} 로 상태 전이해야 한다.
+     * 지원기간에는 프로젝트를 삭제할 수 없다. 그 외 기간에는 상태와 무관하게 삭제할 수 있다.
      */
-    public void validateDeletable() {
-        if (this.status != ProjectStatus.DRAFT && this.status != ProjectStatus.PENDING_REVIEW) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DELETE_NOT_ALLOWED_IN_STATUS);
+    public void validateDeletable(boolean hasOpenApplicationRound) {
+        if (hasOpenApplicationRound) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DELETE_DURING_APPLICATION_PERIOD);
         }
     }
 

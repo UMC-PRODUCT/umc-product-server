@@ -118,7 +118,7 @@ class AuditCoveragePolicyTest {
 
             spec("project.application.service.command.ProjectCommandService", "create", "PROJECT", "CREATE", "Project", type("project.application.port.in.command.dto.CreateDraftProjectCommand")),
             spec("project.application.service.command.ProjectCommandService", "publish", "PROJECT", "PUBLISH", "Project", type("project.application.port.in.command.dto.PublishProjectCommand")),
-            spec("project.application.service.command.ProjectCommandService", "delete", "PROJECT", "DELETE", "Project", type("project.application.port.in.command.dto.DeleteProjectCommand")),
+            spec("project.application.service.command.ProjectDeletionCommandService", "delete", "PROJECT", "DELETE", "Project", type("project.application.port.in.command.dto.DeleteProjectCommand")),
             spec("project.application.service.command.ProjectApplicationCommandService", "submit", "PROJECT", "SUBMIT", "ProjectApplication", type("project.application.port.in.command.dto.SubmitProjectApplicationCommand")),
             spec("project.application.service.command.ProjectMatchingRoundFinalizationCommandService", "autoDecide", "PROJECT", "FINALIZE", "ProjectMatchingRound", longType, longType),
             spec("project.application.service.command.ProjectPartQuotaCommandService", "update", "PROJECT", "UPDATE", "ProjectPartQuota", type("project.application.port.in.command.dto.UpdatePartQuotasCommand")),

@@ -117,18 +117,12 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
     }
 
     /**
-     * 단건 DELETE 분기. 프로젝트 hard delete 액션의 권한 판정.
-     * <ul>
-     *   <li>DRAFT / PENDING_REVIEW: PO 본인 또는 운영진(해당 기수 총괄단 / 본인 지부장)만 통과.</li>
-     *   <li>IN_PROGRESS / COMPLETED / ABORTED: 절대 차단 — abort() 로 상태 전이만 허용.</li>
-     * </ul>
+     * PO 본인 또는 해당 기수 총괄단·본인 지부장만 삭제할 수 있다.
+     * 지원기간 검증은 삭제 서비스에서, 화면의 가능 여부는 권한 조회 서비스에서 처리한다.
      */
     private boolean canDelete(SubjectAttributes subject, ResourcePermission permission) {
         Project project = loadProject(permission);
-        return switch (project.getStatus()) {
-            case DRAFT, PENDING_REVIEW -> isOwner(subject, project) || isProjectAdmin(subject, project);
-            case IN_PROGRESS, COMPLETED, ABORTED -> false;
-        };
+        return isOwner(subject, project) || isProjectAdmin(subject, project);
     }
 
     /**

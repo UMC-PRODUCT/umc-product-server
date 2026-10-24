@@ -30,6 +30,8 @@ public interface LoadProjectPort {
      */
     Project getById(Long id);
 
+    Project getByIdForUpdate(Long id);
+
     /**
      * 여러 ID 에 대해 Project 를 한 번에 조회합니다. 누락된 ID 는 결과에서 빠집니다 (예외 없음).
      */
