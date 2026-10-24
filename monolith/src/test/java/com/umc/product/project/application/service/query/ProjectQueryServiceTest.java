@@ -21,6 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -122,7 +124,7 @@ class ProjectQueryServiceTest {
     void findDraftByCreatorAndGisu_DRAFT_프로젝트_반환() {
         // given
         Project project = createProject(1L, ProjectStatus.DRAFT);
-        given(loadProjectPort.findDraftByCreatorAndGisu(10L, 1L))
+        given(loadProjectPort.findLatestDraftByCreatorAndGisu(10L, 1L))
             .willReturn(Optional.of(project));
         given(loadProjectMemberPort.listByProjectIdAndPart(1L, ChallengerPart.PLAN))
             .willReturn(List.of());
@@ -141,7 +143,7 @@ class ProjectQueryServiceTest {
     @Test
     void findDraftByCreatorAndGisu_프로젝트_없으면_empty() {
         // given
-        given(loadProjectPort.findDraftByCreatorAndGisu(10L, 1L))
+        given(loadProjectPort.findLatestDraftByCreatorAndGisu(10L, 1L))
             .willReturn(Optional.empty());
 
         // when
@@ -346,6 +348,25 @@ class ProjectQueryServiceTest {
         assertThat(actual.statuses()).contains(ProjectStatus.DRAFT);
         assertThat(actual.keyword()).isEqualTo("검색어");
         assertThat(actual.pageable()).isEqualTo(pageable);
+    }
+
+    @Test
+    void 초안_목록은_작성자와_기수를_전달하고_최신순으로_페이지_조회한다() {
+        // given
+        given(loadProjectPort.searchDraftsByCreatorAndGisu(eq(99L), eq(1L), any()))
+            .willReturn(Page.empty());
+
+        // when
+        sut.searchDrafts(99L, 1L, PageRequest.of(1, 2, Sort.by("name")));
+
+        // then
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(loadProjectPort).searchDraftsByCreatorAndGisu(eq(99L), eq(1L), captor.capture());
+        assertThat(captor.getValue().getPageNumber()).isEqualTo(1);
+        assertThat(captor.getValue().getPageSize()).isEqualTo(2);
+        assertThat(captor.getValue().getSort().stream().map(Sort.Order::getProperty))
+            .containsExactly("createdAt", "id");
+        assertThat(captor.getValue().getSort()).allMatch(Sort.Order::isDescending);
     }
 
     // ========== Helper Methods ==========

@@ -3,6 +3,8 @@ package com.umc.product.project.adapter.out.persistence;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -21,14 +23,12 @@ public interface ProjectJpaRepository extends JpaRepository<Project, Long> {
 
     boolean existsByProductOwnerMemberIdAndGisuId(Long productOwnerMemberId, Long gisuId);
 
-    Optional<Project> findByCreatorMemberIdAndGisuIdAndStatus(
+    Optional<Project> findFirstByCreatorMemberIdAndGisuIdAndStatusOrderByCreatedAtDescIdDesc(
         Long creatorMemberId, Long gisuId, ProjectStatus status);
+
+    Page<Project> findAllByCreatorMemberIdAndGisuIdAndStatus(
+        Long creatorMemberId, Long gisuId, ProjectStatus status, Pageable pageable);
 
     List<Project> findByChapterIdAndStatus(Long chapterId, ProjectStatus status);
 
-    boolean existsByCreatorMemberIdAndGisuIdAndStatus(
-        Long creatorMemberId, Long gisuId, ProjectStatus status);
-
-    boolean existsByProductOwnerMemberIdAndGisuIdAndStatus(
-        Long productOwnerMemberId, Long gisuId, ProjectStatus status);
 }

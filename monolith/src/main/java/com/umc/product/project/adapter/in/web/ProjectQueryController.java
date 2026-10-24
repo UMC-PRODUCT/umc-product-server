@@ -136,11 +136,26 @@ public class ProjectQueryController {
         return assembler.searchManagedFor(query, memberPrincipal.getMemberId());
     }
 
+    @GetMapping("/me/drafts")
+    @Operation(
+        operationId = "PROJECT-008",
+        summary = "내 초안 프로젝트 목록 조회",
+        description = "요청자가 작성한 해당 기수의 초안을 생성 시각·ID 내림차순으로 페이지 조회합니다. 각 초안은 ID로 구분합니다."
+    )
+    public PageResponse<DraftProjectResponse> getMyDrafts(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @RequestParam Long gisuId,
+        @ParameterObject @PageableDefault(size = 20, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC)
+        Pageable pageable
+    ) {
+        return assembler.draftsFor(memberPrincipal.getMemberId(), gisuId, pageable);
+    }
+
     @GetMapping("/me/draft")
     @Operation(
         operationId = "PROJECT-103",
         summary = "내 초안 프로젝트 조회",
-        description = "요청자(PM)가 작성 중인 Draft 프로젝트를 조회합니다. 없으면 null."
+        description = "요청자가 가장 최근 생성한 초안 한 건을 조회합니다. 생성 시각이 같으면 ID가 큰 초안을 반환하며, 없으면 null입니다. 전체 초안은 /me/drafts에서 조회합니다."
     )
     public DraftProjectResponse getMyDraft(
         @CurrentMember MemberPrincipal memberPrincipal,
