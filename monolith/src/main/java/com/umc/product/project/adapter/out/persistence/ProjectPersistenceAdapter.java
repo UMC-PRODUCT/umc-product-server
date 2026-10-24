@@ -15,6 +15,8 @@ import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 
 @Component
@@ -22,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class ProjectPersistenceAdapter implements LoadProjectPort, SaveProjectPort {
 
     private final ProjectJpaRepository jpaRepository;
+    private final EntityManager entityManager;
     private final ProjectQueryRepository queryRepository;
 
     @Override
@@ -33,6 +36,14 @@ public class ProjectPersistenceAdapter implements LoadProjectPort, SaveProjectPo
     public Project getById(Long id) {
         return jpaRepository.findById(id)
             .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_NOT_FOUND));
+    }
+
+    @Override
+    public Project getByIdForUpdate(Long id) {
+        Project project = jpaRepository.findByIdForUpdate(id)
+            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_NOT_FOUND));
+        entityManager.refresh(project, LockModeType.PESSIMISTIC_WRITE);
+        return project;
     }
 
     @Override

@@ -81,6 +81,11 @@ public class ProjectMatchingRoundPersistenceAdapter
     }
 
     @Override
+    public List<ProjectMatchingRound> listByChapterIdForUpdate(Long chapterId) {
+        return jpaRepository.findAllByChapterIdForUpdate(chapterId);
+    }
+
+    @Override
     public List<ProjectMatchingRound> listAll() {
         return jpaRepository.findAllByOrderByStartsAtAsc();
     }

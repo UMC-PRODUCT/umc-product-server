@@ -19,7 +19,6 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.form.application.port.in.command.ManageFormUseCase;
-import com.umc.product.form.application.port.in.command.dto.DeleteFormCommand;
 import com.umc.product.form.application.port.in.command.dto.PublishFormCommand;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -30,7 +29,6 @@ import com.umc.product.organization.application.port.in.query.dto.chapter.Chapte
 import com.umc.product.project.application.port.in.command.AbortProjectUseCase;
 import com.umc.product.project.application.port.in.command.CompleteProjectsUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
-import com.umc.product.project.application.port.in.command.DeleteProjectUseCase;
 import com.umc.product.project.application.port.in.command.PublishProjectUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
 import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
@@ -38,7 +36,6 @@ import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
 import com.umc.product.project.application.port.in.command.dto.AbortProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.CompleteProjectsCommand;
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectCommand;
-import com.umc.product.project.application.port.in.command.dto.DeleteProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.PublishProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.TransferProjectOwnershipCommand;
@@ -48,10 +45,7 @@ import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
-import com.umc.product.project.application.port.out.SaveProjectApplicationFormPolicyPort;
-import com.umc.product.project.application.port.out.SaveProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
-import com.umc.product.project.application.port.out.SaveProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.SaveProjectPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
@@ -73,7 +67,6 @@ public class ProjectCommandService implements
     SubmitProjectUseCase,
     TransferProjectOwnershipUseCase,
     PublishProjectUseCase,
-    DeleteProjectUseCase,
     AbortProjectUseCase,
     CompleteProjectsUseCase {
 
@@ -86,9 +79,6 @@ public class ProjectCommandService implements
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final SaveProjectMemberPort saveProjectMemberPort;
-    private final SaveProjectPartQuotaPort saveProjectPartQuotaPort;
-    private final SaveProjectApplicationFormPort saveProjectApplicationFormPort;
-    private final SaveProjectApplicationFormPolicyPort saveProjectApplicationFormPolicyPort;
     private final CheckPermissionUseCase checkPermissionUseCase;
 
     // Cross-domain UseCases
@@ -269,45 +259,6 @@ public class ProjectCommandService implements
             .build());
 
         return project.getStatus();
-    }
-
-    /**
-     * 프로젝트 hard delete. DRAFT/PENDING_REVIEW 상태에서만 호출 가능하며 자식 row 들을 순서대로 정리한다.
-     * <ol>
-     *   <li>ProjectApplicationForm 이 등록되어 있으면 Policy → ApplicationForm row → form Form 순으로 정리.
-     *       (Form 삭제는 form 도메인의 cascade 가 보장)</li>
-     *   <li>ProjectPartQuota 일괄 삭제</li>
-     *   <li>ProjectMember 일괄 삭제</li>
-     *   <li>Project 삭제</li>
-     * </ol>
-     * 권한 검증은 Controller 단의 {@code @CheckAccess(DELETE)} + {@link com.umc.product.project.application.service.evaluator.ProjectPermissionEvaluator}
-     * 가 담당. 본 Service 는 도메인 상태 invariant 만 책임진다.
-     */
-    @Audited(
-        domain = Domain.PROJECT,
-        action = AuditAction.DELETE,
-        targetType = "Project",
-        targetId = "#command.projectId()",
-        description = "'프로젝트를 삭제했습니다.'"
-    )
-    @Override
-    public void delete(DeleteProjectCommand command) {
-        Project project = loadProjectPort.getById(command.projectId());
-        project.validateDeletable();
-
-        loadProjectApplicationFormPort.findByProjectId(project.getId())
-            .ifPresent(form -> {
-                saveProjectApplicationFormPolicyPort.deleteAllByApplicationFormId(form.getId());
-                saveProjectApplicationFormPort.deleteAllByProjectId(project.getId());
-                manageFormUseCase.deleteForm(DeleteFormCommand.builder()
-                    .formId(form.getFormId())
-                    .requesterMemberId(command.requesterMemberId())
-                    .build());
-            });
-
-        saveProjectPartQuotaPort.deleteAllByProjectId(project.getId());
-        saveProjectMemberPort.deleteAllByProjectId(project.getId());
-        saveProjectPort.delete(project);
     }
 
     /**

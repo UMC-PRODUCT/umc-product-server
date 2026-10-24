@@ -343,45 +343,22 @@ class ProjectTest {
     class validateDeletable {
 
         @Test
-        void DRAFT_상태에서는_통과() {
-            project.validateDeletable();
+        void 지원기간_밖에서는_모든_상태의_삭제를_허용한다() {
+            for (ProjectStatus status : ProjectStatus.values()) {
+                setStatus(project, status);
+                project.validateDeletable(false);
+            }
         }
 
         @Test
-        void PENDING_REVIEW_상태에서는_통과() {
-            setStatus(project, ProjectStatus.PENDING_REVIEW);
-
-            project.validateDeletable();
-        }
-
-        @Test
-        void IN_PROGRESS_상태에서는_DELETE_NOT_ALLOWED() {
-            setStatus(project, ProjectStatus.IN_PROGRESS);
-
-            assertThatThrownBy(() -> project.validateDeletable())
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_DELETE_NOT_ALLOWED_IN_STATUS);
-        }
-
-        @Test
-        void COMPLETED_상태에서는_DELETE_NOT_ALLOWED() {
-            setStatus(project, ProjectStatus.COMPLETED);
-
-            assertThatThrownBy(() -> project.validateDeletable())
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_DELETE_NOT_ALLOWED_IN_STATUS);
-        }
-
-        @Test
-        void ABORTED_상태에서는_DELETE_NOT_ALLOWED() {
-            setStatus(project, ProjectStatus.ABORTED);
-
-            assertThatThrownBy(() -> project.validateDeletable())
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_DELETE_NOT_ALLOWED_IN_STATUS);
+        void 지원기간에는_상태와_무관하게_삭제를_거부한다() {
+            for (ProjectStatus status : ProjectStatus.values()) {
+                setStatus(project, status);
+                assertThatThrownBy(() -> project.validateDeletable(true))
+                    .isInstanceOf(ProjectDomainException.class)
+                    .extracting("baseCode")
+                    .isEqualTo(ProjectErrorCode.PROJECT_DELETE_DURING_APPLICATION_PERIOD);
+            }
         }
     }
 

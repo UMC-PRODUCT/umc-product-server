@@ -28,6 +28,9 @@ public interface LoadProjectMatchingRoundPort {
 
     List<ProjectMatchingRound> listByChapterId(Long chapterId);
 
+    /** 프로젝트 삭제와 차수별 선발·발표를 직렬화하도록 ID 순으로 잠금 조회한다. */
+    List<ProjectMatchingRound> listByChapterIdForUpdate(Long chapterId);
+
     List<ProjectMatchingRound> listAll();
 
     List<ProjectMatchingRound> listOpenAt(Long chapterId, Instant time);

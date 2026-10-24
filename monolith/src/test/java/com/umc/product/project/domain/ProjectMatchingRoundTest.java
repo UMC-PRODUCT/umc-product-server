@@ -27,6 +27,23 @@ class ProjectMatchingRoundTest {
 
     ProjectMatchingRound round;
 
+    @Test
+    void 지원기간은_시작과_종료_시각을_포함한다() {
+        assertThat(round.isOpenAt(STARTS_AT.minusNanos(1))).isFalse();
+        assertThat(round.isOpenAt(STARTS_AT)).isTrue();
+        assertThat(round.isOpenAt(ENDS_AT)).isTrue();
+        assertThat(round.isOpenAt(ENDS_AT.plusNanos(1))).isFalse();
+    }
+
+    @Test
+    void 랜덤_매칭은_시작과_종료_사이여도_지원기간이_아니다() {
+        ProjectMatchingRound random = ProjectMatchingRound.create("랜덤", null,
+            MatchingType.PLAN_DEVELOPER, MatchingPhase.FOURTH, 1L,
+            STARTS_AT, ENDS_AT, ENDS_AT, RESULT_PUBLISH_AT);
+        assertThat(random.isOpenAt(STARTS_AT)).isFalse();
+        assertThat(random.isOpenAt(ENDS_AT)).isFalse();
+    }
+
     @BeforeEach
     void setUp() {
         round = ProjectMatchingRound.create(

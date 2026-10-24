@@ -206,7 +206,7 @@ class ProjectPermissionQueryServiceTest {
         assertThat(result.applicationForm().canEdit().allowed()).isFalse();
         assertThat(result.applicationForm().canEdit().reasonCode())
             .isEqualTo(ProjectPermissionReason.ACTIVE_MATCHING_ROUND_EXISTS.name());
-        assertThat(result.canDelete().reason()).isEqualTo("진행 중인 프로젝트는 중단 기능을 이용해주세요.");
+        assertThat(result.canDelete().reasonCode()).isEqualTo(ProjectPermissionReason.APPLICATION_PERIOD_IN_PROGRESS.name());
     }
 
     @Test
