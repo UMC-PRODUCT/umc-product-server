@@ -5,6 +5,7 @@ import lombok.Getter;
 @Getter
 public enum ProjectPermissionReason {
     APPLICATION_PERIOD_IN_PROGRESS("지원기간에는 프로젝트를 삭제할 수 없습니다."),
+    PROJECT_UPDATE_DURING_APPLICATION_PERIOD("지원기간에는 프로젝트 정보를 수정할 수 없습니다."),
     PROJECT_NOT_FOUND("프로젝트를 찾을 수 없습니다."),
     PERMISSION_DENIED("권한이 없습니다."),
     INVALID_PROJECT_STATUS("현재 상태에서는 이 작업을 수행할 수 없습니다."),

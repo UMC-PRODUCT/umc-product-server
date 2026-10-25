@@ -32,14 +32,12 @@ import com.umc.product.project.application.port.in.command.CreateDraftProjectUse
 import com.umc.product.project.application.port.in.command.PublishProjectUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
 import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
-import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
 import com.umc.product.project.application.port.in.command.dto.AbortProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.CompleteProjectsCommand;
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.PublishProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.TransferProjectOwnershipCommand;
-import com.umc.product.project.application.port.in.command.dto.UpdateProjectCommand;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
@@ -63,7 +61,6 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class ProjectCommandService implements
     CreateDraftProjectUseCase,
-    UpdateProjectUseCase,
     SubmitProjectUseCase,
     TransferProjectOwnershipUseCase,
     PublishProjectUseCase,
@@ -159,19 +156,6 @@ public class ProjectCommandService implements
         }
 
         throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
-    }
-
-    @Override
-    public ProjectStatus update(UpdateProjectCommand command) {
-        Project project = loadProjectPort.getById(command.projectId());
-        project.updateBasicInfo(
-            command.name(),
-            command.description(),
-            command.externalLink(),
-            command.thumbnailFileId(),
-            command.logoFileId()
-        );
-        return project.getStatus();
     }
 
     @Override

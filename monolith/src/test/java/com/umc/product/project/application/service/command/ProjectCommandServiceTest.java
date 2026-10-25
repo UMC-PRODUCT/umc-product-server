@@ -43,7 +43,6 @@ import com.umc.product.project.application.port.in.command.dto.CompleteProjectsC
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.TransferProjectOwnershipCommand;
-import com.umc.product.project.application.port.in.command.dto.UpdateProjectCommand;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.SaveProjectPort;
@@ -368,70 +367,6 @@ class ProjectCommandServiceTest {
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
-        }
-    }
-
-    @Nested
-    class update {
-
-        @Test
-        void DRAFT_상태_수정_성공() {
-            Project project = createProject(ProjectStatus.DRAFT);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-
-            sut.update(updateCommand("새이름"));
-
-            assertThat(project.getName()).isEqualTo("새이름");
-        }
-
-        @Test
-        void PENDING_REVIEW_상태_수정_성공() {
-            Project project = createProject(ProjectStatus.PENDING_REVIEW);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-
-            sut.update(updateCommand("새이름"));
-
-            assertThat(project.getName()).isEqualTo("새이름");
-        }
-
-        @Test
-        void IN_PROGRESS_상태_수정_성공() {
-            Project project = createProject(ProjectStatus.IN_PROGRESS);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-
-            sut.update(updateCommand("새이름"));
-
-            assertThat(project.getName()).isEqualTo("새이름");
-        }
-
-        @Test
-        void COMPLETED_상태는_수정_불가() {
-            Project project = createProject(ProjectStatus.COMPLETED);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-
-            assertThatThrownBy(() -> sut.update(updateCommand("새이름")))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
-        }
-
-        @Test
-        void ABORTED_상태는_수정_불가() {
-            Project project = createProject(ProjectStatus.ABORTED);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-
-            assertThatThrownBy(() -> sut.update(updateCommand("새이름")))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
-        }
-
-        private UpdateProjectCommand updateCommand(String name) {
-            return UpdateProjectCommand.builder()
-                .projectId(1L)
-                .requesterMemberId(100L)
-                .name(name)
-                .build();
         }
     }
 

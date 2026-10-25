@@ -8,6 +8,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -85,11 +86,14 @@ class ProjectPermissionQueryServiceTest {
     @Mock
     ProjectMatchingChapterResolver projectMatchingChapterResolver;
 
+    @Mock Clock clock;
+
     @InjectMocks
     ProjectPermissionQueryService sut;
 
     @BeforeEach
     void setUpMatchingChapter() {
+        lenient().when(clock.instant()).thenReturn(Instant.now());
         // 기본: 요청자의 매칭 지부는 테스트 프로젝트 지부와 같다
         lenient().when(projectMatchingChapterResolver.findMatchingChapterId(any(), any()))
             .thenReturn(Optional.of(CHAPTER_ID));
@@ -207,6 +211,10 @@ class ProjectPermissionQueryServiceTest {
         assertThat(result.applicationForm().canEdit().reasonCode())
             .isEqualTo(ProjectPermissionReason.ACTIVE_MATCHING_ROUND_EXISTS.name());
         assertThat(result.canDelete().reasonCode()).isEqualTo(ProjectPermissionReason.APPLICATION_PERIOD_IN_PROGRESS.name());
+        assertThat(result.canEditInfo().allowed()).isFalse();
+        assertThat(result.canEditInfo().reasonCode())
+            .isEqualTo(ProjectPermissionReason.PROJECT_UPDATE_DURING_APPLICATION_PERIOD.name());
+        assertThat(result.canTransferOwnership().allowed()).isTrue();
     }
 
     @Test
