@@ -281,8 +281,9 @@ PM은 `PATCH /api/v1/projects/{projectId}/applications/{applicationId}/decision`
 4. 합격자로 뽑히지 않은 `SUBMITTED`와 `REJECTED`는 모두 최종 `REJECTED`.
 
 최소 선발 인원 규칙은 매칭 종류별로 다르다. 지원자 수는 `SUBMITTED`, `APPROVED`, `REJECTED`를 모두 센다.
+두 매칭 모두 잔여 모집 정원(TO)을 기준으로 하며, 잔여 TO가 없으면 추가 선발하지 않는다. 잔여 TO가 있을 때의 규칙은 다음과 같다.
 
-- `PLAN_DESIGN`: 지원자가 2명 이상이면 최소 1명. 지원자가 1명이면 의무 없음.
+- `PLAN_DESIGN`: 지원자가 2명 이상이면 최소 1명. 지원자가 1명 이하이면 선택 의무 없음.
 - `PLAN_DEVELOPER`: 지원자가 남은 TO 이상이면 최소 `ceil(TO * 0.5)`명, 지원자가 TO의 50% 초과 100% 미만이면 최소 `ceil(TO * 0.25)`명, 지원자가 TO의 50% 이하면 의무 없음.
 
 ## 매칭 결과 발표

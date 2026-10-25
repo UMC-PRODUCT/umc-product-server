@@ -542,11 +542,13 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             assertThat(approvedCount).isEqualTo(1);
         }
 
-        @Test
-        void 남은_TO가_0이면_의무_없음으로_처리되어_SUBMITTED는_모두_REJECTED() {
-            // 전체 TO 6, 이전 차수까지 ACTIVE WEB 6명 → 남은 TO 0
-            // applicantsCount=2, quota=0 → applicantsCount(2) >= quota(0) → ceil(0 * 0.5) = 0 의무
-            ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DEVELOPER);
+        @ParameterizedTest
+        @CsvSource({"PLAN_DESIGN, DESIGN", "PLAN_DEVELOPER, WEB", "PLAN_DEVELOPER, WEB_PRODUCT_ENGINEER",
+            "PLAN_DEVELOPER, MOBILE_PRODUCT_ENGINEER"})
+        void 잔여_정원이_없으면_지원자를_불합격_처리하고_멤버를_추가하지_않는다(MatchingType type, ChallengerPart part) {
+            // 디자인·개발 매칭, 전체 TO 6, 기존 배정 인원 6명 → 남은 TO 0
+            // 본 차수 지원자 2명 → 남은 TO 0 → 추가 선발 불가 → SUBMITTED 모두 REJECTED
+            ProjectMatchingRound round = expiredRound(type);
             Project project = projectWithId(PROJECT_ID);
             ProjectApplication app1 = application(201L, 21L, ProjectApplicationStatus.SUBMITTED, project, round);
             ProjectApplication app2 = application(202L, 22L, ProjectApplicationStatus.SUBMITTED, project, round);
@@ -556,13 +558,13 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
                 .willReturn(List.of(app1, app2));
             given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong()))
                 .willReturn(Map.of(
-                    21L, challenger(21L, ChallengerPart.WEB),
-                    22L, challenger(22L, ChallengerPart.WEB)
+                    21L, challenger(21L, part),
+                    22L, challenger(22L, part)
                 ));
             given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
-                .willReturn(Map.of(PROJECT_ID, List.of(partQuota(project, ChallengerPart.WEB, 6L))));
+                .willReturn(Map.of(PROJECT_ID, List.of(partQuota(project, part, 6L))));
             given(loadProjectMemberPort.countAssignedByProjectIdsGroupByProjectIdAndPart(any()))
-                .willReturn(Map.of(PROJECT_ID, Map.of(ChallengerPart.WEB, 6L)));
+                .willReturn(Map.of(PROJECT_ID, Map.of(part, 6L)));
 
             sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
 

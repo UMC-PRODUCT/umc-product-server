@@ -7,10 +7,10 @@ import com.umc.product.project.domain.enums.MatchingType;
 /**
  * PLAN_DESIGN 매칭 정책.
  * <ul>
- *   <li>지원자 1명: 선택 의무 없음 (PM 자유)</li>
- *   <li>지원자 2명 이상: 최소 1명 합격 의무</li>
+ *   <li>잔여 모집 정원 없음: 추가 선발 불가</li>
+ *   <li>잔여 모집 정원이 있고 지원자 1명 이하: 선택 의무 없음 (PM 자유)</li>
+ *   <li>잔여 모집 정원이 있고 지원자 2명 이상: 최소 1명 합격 의무</li>
  * </ul>
- * TO 와 무관하다.
  */
 @Component
 public class DesignerMatchingPolicy implements MatchingDecisionPolicy {
@@ -22,6 +22,6 @@ public class DesignerMatchingPolicy implements MatchingDecisionPolicy {
 
     @Override
     public int minimumRequired(int applicantsCount, int quota) {
-        return applicantsCount >= 2 ? 1 : 0;
+        return quota > 0 && applicantsCount >= 2 ? 1 : 0;
     }
 }
