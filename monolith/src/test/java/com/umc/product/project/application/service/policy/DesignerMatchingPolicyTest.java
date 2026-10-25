@@ -30,17 +30,23 @@ class DesignerMatchingPolicyTest {
     }
 
     /**
-     * final-api.md §3 매트릭스 ① — TO 무관, 지원자 수 자체로 판정.
+     * 잔여 모집 정원과 지원자 수로 최소 선발 인원을 판정한다.
      * <pre>
-     * 지원자 1명     → 0 (자유)
-     * 지원자 2명 이상 → 1
+     * 잔여 정원 없음 → 0 (추가 선발 불가)
+     * 잔여 정원 있음, 지원자 1명 이하 → 0 (선택 의무 없음)
+     * 잔여 정원 있음, 지원자 2명 이상 → 1
      * </pre>
      */
     @Nested
     class minimumRequired {
 
-        @ParameterizedTest(name = "지원자 {0}명 (TO {1}) → 최소 {2}명")
+        @ParameterizedTest(name = "지원자 {0}명 (잔여 정원 {1}) → 최소 {2}명")
         @CsvSource({
+            "0, 0, 0",
+            "1, 0, 0",
+            "2, 0, 0",
+            "10, 0, 0",
+            "0, 1, 0",
             "1, 1, 0",
             "1, 2, 0",
             "1, 5, 0",
@@ -50,13 +56,26 @@ class DesignerMatchingPolicyTest {
             "5, 1, 1",
             "10, 3, 1"
         })
-        void TO_무관_지원자_수만으로_결정(int applicants, int quota, int expectedMin) {
+        void 잔여_정원과_지원자_수에_따라_최소_선발_인원을_결정한다(int applicants, int quota, int expectedMin) {
             assertThat(sut.minimumRequired(applicants, quota)).isEqualTo(expectedMin);
         }
     }
 
     @Nested
     class decideAutomatically {
+
+        @Test
+        void 잔여_정원이_없으면_SUBMITTED와_REJECTED에서_추가_선발하지_않는다() {
+            List<ProjectApplication> applicants = List.of(
+                application(1L, ProjectApplicationStatus.SUBMITTED),
+                application(2L, ProjectApplicationStatus.REJECTED)
+            );
+
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 0, new Random(FIXED_SEED), schoolContext(applicants));
+
+            assertThat(result.approvedIds()).isEmpty();
+            assertThat(result.rejectedIds()).containsExactlyInAnyOrder(1L, 2L);
+        }
 
         @Test
         void 지원자_1명만_있고_의무_없음이면_SUBMITTED는_REJECTED로_확정() {

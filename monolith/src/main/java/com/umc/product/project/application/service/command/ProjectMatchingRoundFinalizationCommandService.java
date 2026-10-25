@@ -147,7 +147,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         ProjectMatchingRound round,
         Long executedByMemberId
     ) {
-        // 디자인은 지원자 수, 개발자는 지원자 수와 잔여 모집 정원으로 최소 선발 인원을 계산한다.
+        // 매칭 유형별로 지원자 수와 잔여 모집 정원을 고려하여 최소 선발 인원을 계산한다.
         MatchingDecisionPolicy policy = resolvePolicy(round.getType());
 
         List<ProjectApplication> applicants = loadProjectApplicationPort

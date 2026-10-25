@@ -28,8 +28,8 @@ public interface MatchingDecisionPolicy {
      * 정책상 최소 합격 인원.
      *
      * @param applicantsCount 본 차수 본 프로젝트의 전체 지원자 수 (status 무관, CANCELLED 제외)
-     * @param quota           본 프로젝트의 해당 파트 정원
-     * @return 최소 합격 인원 (정책 의무 없음 → 0)
+     * @param quota           본 프로젝트의 해당 파트 잔여 모집 정원
+     * @return 최소 합격 인원 (잔여 모집 정원이 없거나 선택 의무가 없으면 0)
      */
     int minimumRequired(int applicantsCount, int quota);
 
