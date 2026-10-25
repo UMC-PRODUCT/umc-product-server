@@ -3,6 +3,8 @@ package com.umc.product.project.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Instant;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -138,6 +140,24 @@ class ProjectTest {
             project.submit();
 
             assertThat(project.getStatus()).isEqualTo(ProjectStatus.PENDING_REVIEW);
+        }
+
+        @Test
+        void 제출시각은_제출할_때_기록하고_승인과_정보수정으로_바뀌지_않는다() {
+            // given
+            assertThat(project.getSubmittedAt()).isNull();
+            project.updateBasicInfo("프로젝트명", null, null, null, null);
+            Instant before = Instant.now();
+
+            // when
+            project.submit();
+            Instant submittedAt = project.getSubmittedAt();
+            project.publish();
+            project.updateBasicInfo("수정 이름", null, null, null, null);
+
+            // then
+            assertThat(submittedAt).isBetween(before, Instant.now());
+            assertThat(project.getSubmittedAt()).isEqualTo(submittedAt);
         }
 
         @Test

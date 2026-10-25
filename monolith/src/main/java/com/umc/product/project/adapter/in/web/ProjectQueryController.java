@@ -48,12 +48,17 @@ public class ProjectQueryController {
     @Operation(
         operationId = "PROJECT-001",
         summary = "프로젝트 목록 조회",
-        description = "기수/지부/파트 등으로 필터링된 프로젝트 목록을 페이지 조회합니다. 비회원도 조회 가능하며, 이 경우 공개 상태(IN_PROGRESS/COMPLETED) 프로젝트만 노출됩니다."
+        description = """
+            기수/지부/파트 등으로 필터링된 프로젝트 목록을 페이지 조회합니다.
+            비회원도 조회 가능하며, 이 경우 공개 상태(IN_PROGRESS/COMPLETED) 프로젝트만 노출됩니다.
+            PM 제출시각·ID 오름차순으로 정렬하고, 매칭 기간에는 모집 완료 프로젝트를 하단에 배치합니다.
+            디자인·개발 구분은 기존 parts 필터를 사용하며, 생략하면 지부의 진행 중인 매칭 일정을 기준으로 판단합니다.
+            """
     )
     public PageResponse<ProjectSummaryResponse> searchProjects(
         @CurrentMember MemberPrincipal memberPrincipal,
         @ParameterObject @Valid SearchProjectRequest request,
-        @ParameterObject @PageableDefault(size = 20, sort = {"createdAt", "name"}, direction = Sort.Direction.ASC)
+        @ParameterObject @PageableDefault(size = 20, sort = {"submittedAt", "id"}, direction = Sort.Direction.ASC)
         Pageable pageable
     ) {
         SearchProjectQuery query = request.toQuery(pageable);
@@ -116,7 +121,9 @@ public class ProjectQueryController {
         operationId = "PROJECT-006",
         summary = "내가 관리하는 프로젝트 목록",
         description = """
-            역할별 자동 scope: 중앙 총괄단은 전체, 지부장과 학교 회장단은 본인이 속한 지부 전체, PM 챌린저는 본인 owner 프로젝트. 일반 챌린저는 빈 페이지.
+            최고관리자는 모든 기수, 총괄단은 해당 기수 전체 지부, 지부장은 해당 기수 본인 지부를 조회합니다.
+            일반 중앙운영·교육국은 해당 기수 전체 지부의 승인대기·등록완료만, PM은 본인 프로젝트를 조회합니다.
+            학교 운영진 역할만으로는 관리 목록이 제공되지 않으며, PM 등 다른 정상 역할의 권한은 유지합니다.
             정렬: 등록완료(IN_PROGRESS) → 승인대기(PENDING_REVIEW) → 임시저장(DRAFT) → 기타 상태.
             임시저장은 생성 시각 내림차순이며, 나머지는 요청 정렬(기본: 생성 시각·이름 오름차순)을 적용합니다. 최종 동률은 ID 오름차순입니다.
             """

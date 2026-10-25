@@ -47,6 +47,8 @@ public enum ProjectErrorCode implements BaseCode {
         "프로젝트는 DRAFT 또는 PENDING_REVIEW 상태에서만 삭제할 수 있어요. 상태를 확인해주세요."),
     PROJECT_DELETE_DURING_APPLICATION_PERIOD(HttpStatus.CONFLICT, "PROJECT-0024",
         "지원기간에는 프로젝트를 삭제할 수 없어요. 지원기간이 끝난 뒤 다시 시도해주세요."),
+    PROJECT_UPDATE_DURING_APPLICATION_PERIOD(HttpStatus.CONFLICT, "PROJECT-0025",
+        "지원기간에는 프로젝트 정보를 수정할 수 없어요. 지원기간이 끝난 뒤 다시 시도해주세요."),
     PROJECT_ABORT_REASON_REQUIRED(HttpStatus.BAD_REQUEST, "PROJECT-0023", "프로젝트 중단 사유를 입력해주세요."),
 
     // ProjectMember (PROJECT-003/004/005)

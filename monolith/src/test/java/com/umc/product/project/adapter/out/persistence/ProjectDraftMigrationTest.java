@@ -67,7 +67,8 @@ class ProjectDraftMigrationTest {
                 assertOldConstraints(jdbc);
                 assertThat(jdbc.queryForList("SELECT * FROM project ORDER BY id")).isEqualTo(existing);
 
-                Flyway upgraded = Flyway.configure().dataSource(source).locations("classpath:db/migration").load();
+                Flyway upgraded = Flyway.configure().dataSource(source).locations("classpath:db/migration")
+                    .target(MigrationVersion.fromVersion("2026.10.24.00.00")).load();
                 assertThat(upgraded.migrate().migrationsExecuted).isEqualTo(1);
                 upgraded.validate();
 

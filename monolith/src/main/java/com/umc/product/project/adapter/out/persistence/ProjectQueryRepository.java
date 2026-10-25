@@ -1,6 +1,7 @@
 package com.umc.product.project.adapter.out.persistence;
 
 import static com.umc.product.project.domain.QProject.project;
+import static com.umc.product.project.domain.QProjectMatchingRound.projectMatchingRound;
 import static com.umc.product.project.domain.QProjectMember.projectMember;
 import static com.umc.product.project.domain.QProjectPartQuota.projectPartQuota;
 
@@ -8,6 +9,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -27,6 +29,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.PartQuotaStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
@@ -52,9 +55,7 @@ public class ProjectQueryRepository {
         JPQLQuery<Project> contentQuery = queryFactory
             .selectFrom(project)
             .where(condition)
-            .orderBy(query.managedStatusOrder()
-                ? managedOrderSpecifiers(pageable.getSort())
-                : toOrderSpecifiers(pageable.getSort()));
+            .orderBy(orderSpecifiers(query));
 
         // Pageable.unpaged() 는 offset/pageSize 호출 시 UnsupportedOperationException 을 던지므로
         // 페이징 요청일 때만 offset/limit 을 적용하고, unpaged 면 조건에 맞는 전건을 반환한다.
@@ -86,6 +87,10 @@ public class ProjectQueryRepository {
             .and(productOwnerSchoolIdsIn(query.productOwnerSchoolIds()))
             .and(productOwnerMemberIdEq(query.productOwnerMemberId()))
             .and(statusIn(query.statuses()));
+
+        if (query.globalVisibleStatuses() != null && !query.globalVisibleStatuses().isEmpty()) {
+            scoped.or(project.status.in(query.globalVisibleStatuses()));
+        }
 
         BooleanExpression includedOwner = includedOwnerCond(query);
         if (includedOwner != null) {
@@ -216,6 +221,58 @@ public class ProjectQueryRepository {
         return (statuses != null && !statuses.isEmpty())
             ? project.status.in(statuses)
             : null;
+    }
+
+    private OrderSpecifier<?>[] orderSpecifiers(SearchProjectQuery query) {
+        if (query.managedStatusOrder()) {
+            return managedOrderSpecifiers(query.pageable().getSort());
+        }
+        if (!query.matchingListOrder()) {
+            return toOrderSpecifiers(query.pageable().getSort());
+        }
+        Objects.requireNonNull(query.matchingOrderAt(), "matchingOrderAt must be supplied by the query service");
+        BooleanBuilder completed = matchingQuotaCompleted(query.parts(), query.matchingOrderAt());
+        return new OrderSpecifier<?>[]{
+            new CaseBuilder().when(completed).then(1).otherwise(0).asc(),
+            project.submittedAt.asc().nullsFirst(), project.id.asc()
+        };
+    }
+
+    /** 기존 파트 필터와 진행 중인 일정으로 판단한다. 개발은 선택한 파트 외의 개발 TO도 함께 본다. */
+    private BooleanBuilder matchingQuotaCompleted(List<ChallengerPart> selectedParts, Instant now) {
+        List<MatchingType> types = selectedParts == null || selectedParts.isEmpty()
+            ? List.of(MatchingType.values())
+            : selectedParts.stream().flatMap(part -> MatchingType.fromPart(part).stream()).distinct().toList();
+        BooleanBuilder applicable = new BooleanBuilder();
+        BooleanBuilder recruiting = new BooleanBuilder();
+        for (MatchingType type : types) {
+            List<ChallengerPart> parts = Arrays.stream(ChallengerPart.values())
+                .filter(part -> MatchingType.fromPart(part).filter(type::equals).isPresent()).toList();
+            BooleanExpression matchingQuota = projectPartQuota.project.eq(project).and(projectPartQuota.part.in(parts));
+            BooleanExpression hasQuota = JPAExpressions.selectOne().from(projectPartQuota).where(matchingQuota).exists();
+            BooleanExpression hasVacancy = JPAExpressions.selectOne().from(projectPartQuota)
+                .where(matchingQuota, projectPartQuota.quota.gt(
+                    JPAExpressions.select(projectMember.count()).from(projectMember)
+                        .where(projectMember.project.eq(project), projectMember.part.eq(projectPartQuota.part),
+                            projectMember.status.eq(ProjectMemberStatus.ACTIVE))))
+                .exists();
+            BooleanExpression period = inMatchingPeriod(type, now);
+            applicable.or(period.and(hasQuota));
+            recruiting.or(period.and(hasVacancy));
+        }
+        return types.isEmpty() ? new BooleanBuilder(project.id.isNull()) : applicable.and(recruiting.not());
+    }
+
+    /** 첫 차수 시작부터 마지막 예정 결과 발표까지 적용하므로 차수 사이에도 하단 배치를 유지한다. */
+    private BooleanExpression inMatchingPeriod(MatchingType type, Instant now) {
+        BooleanExpression matchingRound = projectMatchingRound.chapterId.eq(project.chapterId)
+            .and(projectMatchingRound.type.eq(type));
+        BooleanExpression started = JPAExpressions.selectOne().from(projectMatchingRound)
+            .where(matchingRound, projectMatchingRound.startsAt.loe(now)).exists();
+        BooleanExpression notEnded = JPAExpressions.selectOne().from(projectMatchingRound)
+            .where(matchingRound, projectMatchingRound.resultPublishAt.coalesce(projectMatchingRound.decisionDeadline)
+                .goe(now)).exists();
+        return started.and(notEnded);
     }
 
     /**

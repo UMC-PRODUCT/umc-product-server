@@ -374,12 +374,12 @@ class ProjectPermissionEvaluatorTest {
     }
 
     @Test
-    void WRITE는_학교_회장단_허용() {
+    void WRITE는_학교_회장단_역할만으로는_거부() {
         SubjectAttributes subject = subjectWith(1L, List.of(),
             List.of(schoolPresidentRole(1L, 1L)));
         ResourcePermission permission = ResourcePermission.ofType(ResourceType.PROJECT, PermissionType.WRITE);
 
-        assertThat(sut.evaluate(subject, permission)).isTrue();
+        assertThat(sut.evaluate(subject, permission)).isFalse();
     }
 
     // --- EDIT ---

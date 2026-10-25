@@ -26,6 +26,7 @@ import com.umc.product.project.application.port.in.query.dto.ProjectMatchingChap
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingChapterTransferPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
+import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMatchingChapterTransferPort;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
@@ -64,6 +65,7 @@ public class ProjectMatchingChapterTransferCommandService
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final SaveProjectApplicationPort saveProjectApplicationPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
+    private final LockProjectMatchingPort lockProjectMatchingPort;
     private final ProjectMatchingChapterResolver matchingChapterResolver;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetChapterUseCase getChapterUseCase;
@@ -78,6 +80,7 @@ public class ProjectMatchingChapterTransferCommandService
     )
     @Override
     public List<ProjectMatchingChapterTransferInfo> transfer(TransferMatchingChapterCommand command) {
+        lockProjectMatchingPort.lockByGisuId(command.gisuId());
         validateNoDuplicateTargets(command.targets());
 
         Long gisuId = command.gisuId();
@@ -103,6 +106,7 @@ public class ProjectMatchingChapterTransferCommandService
     )
     @Override
     public ProjectMatchingChapterTransferInfo release(ReleaseMatchingChapterTransferCommand command) {
+        lockProjectMatchingPort.lockByTransferId(command.transferId());
         ProjectMatchingChapterTransfer transfer = loadTransferPort.getById(command.transferId());
         if (!transfer.isActive()) {
             throw new ProjectDomainException(ProjectErrorCode.CHAPTER_TRANSFER_ALREADY_RELEASED);

@@ -32,14 +32,12 @@ import com.umc.product.project.application.port.in.command.CreateDraftProjectUse
 import com.umc.product.project.application.port.in.command.PublishProjectUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
 import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
-import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
 import com.umc.product.project.application.port.in.command.dto.AbortProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.CompleteProjectsCommand;
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.PublishProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.TransferProjectOwnershipCommand;
-import com.umc.product.project.application.port.in.command.dto.UpdateProjectCommand;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
@@ -63,7 +61,6 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class ProjectCommandService implements
     CreateDraftProjectUseCase,
-    UpdateProjectUseCase,
     SubmitProjectUseCase,
     TransferProjectOwnershipUseCase,
     PublishProjectUseCase,
@@ -114,7 +111,7 @@ public class ProjectCommandService implements
         if (!Objects.equals(command.requesterMemberId(), command.productOwnerMemberId())) {
             validateRequesterCanAssignTarget(
                 command.requesterMemberId(), command.gisuId(),
-                member.schoolId(), chapter.id()
+                chapter.id()
             );
         }
 
@@ -131,14 +128,13 @@ public class ProjectCommandService implements
     /**
      * 호출자가 다른 챌린저를 PO 로 지정하는 경우 — 호출자의 운영진 role 과 target 의 scope 일치를 검증한다.
      * <ul>
-     *   <li>전역 SUPER_ADMIN 또는 총괄단(총괄/부총괄): scope 무관 통과</li>
+     *   <li>SUPER_ADMIN은 모든 기수, 총괄단은 해당 기수의 모든 지부를 관리한다.</li>
      *   <li>지부장(CHAPTER_PRESIDENT): target 의 chapter 가 본인 지부와 일치해야 함</li>
-     *   <li>학교 회장단(회장/부회장): target 의 school 이 본인 학교와 일치해야 함</li>
      *   <li>그 외(일반 PLAN 챌린저 등): 다른 사람 임명 권한 없음 — 거부</li>
      * </ul>
      */
     private void validateRequesterCanAssignTarget(
-        Long requesterId, Long gisuId, Long targetSchoolId, Long targetChapterId
+        Long requesterId, Long gisuId, Long targetChapterId
     ) {
         if (getChallengerRoleUseCase.isSuperAdmin(requesterId)) {
             return;
@@ -159,28 +155,7 @@ public class ProjectCommandService implements
             return;
         }
 
-        boolean hasSchoolAuthority = requesterRoles.stream()
-            .filter(r -> r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
-                || r.roleType() == ChallengerRoleType.SCHOOL_VICE_PRESIDENT)
-            .anyMatch(r -> Objects.equals(r.organizationId(), targetSchoolId));
-        if (hasSchoolAuthority) {
-            return;
-        }
-
         throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
-    }
-
-    @Override
-    public ProjectStatus update(UpdateProjectCommand command) {
-        Project project = loadProjectPort.getById(command.projectId());
-        project.updateBasicInfo(
-            command.name(),
-            command.description(),
-            command.externalLink(),
-            command.thumbnailFileId(),
-            command.logoFileId()
-        );
-        return project.getStatus();
     }
 
     @Override

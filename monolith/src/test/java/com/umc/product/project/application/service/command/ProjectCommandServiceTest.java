@@ -43,7 +43,6 @@ import com.umc.product.project.application.port.in.command.dto.CompleteProjectsC
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.TransferProjectOwnershipCommand;
-import com.umc.product.project.application.port.in.command.dto.UpdateProjectCommand;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.SaveProjectPort;
@@ -303,7 +302,7 @@ class ProjectCommandServiceTest {
         }
 
         @Test
-        void 학교_회장이_본인_학교_PLAN_챌린저를_PO로_지정하면_성공() {
+        void 학교_회장도_본인_학교의_대리_등록은_거부() {
             var command = CreateDraftProjectCommand.builder()
                 .gisuId(1L)
                 .productOwnerMemberId(100L)
@@ -319,15 +318,9 @@ class ProjectCommandServiceTest {
             given(getChallengerRoleUseCase.findAllByMemberId(200L)).willReturn(java.util.List.of(
                 roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, 10L, 1L)
             ));
-            given(saveProjectPort.save(any())).willAnswer(inv -> {
-                Project p = inv.getArgument(0);
-                ReflectionTestUtils.setField(p, "id", 99L);
-                return p;
-            });
-
-            Long result = sut.create(command);
-
-            assertThat(result).isEqualTo(99L);
+            assertThatThrownBy(() -> sut.create(command))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode").isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
 
         @Test
@@ -374,70 +367,6 @@ class ProjectCommandServiceTest {
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
-        }
-    }
-
-    @Nested
-    class update {
-
-        @Test
-        void DRAFT_상태_수정_성공() {
-            Project project = createProject(ProjectStatus.DRAFT);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-
-            sut.update(updateCommand("새이름"));
-
-            assertThat(project.getName()).isEqualTo("새이름");
-        }
-
-        @Test
-        void PENDING_REVIEW_상태_수정_성공() {
-            Project project = createProject(ProjectStatus.PENDING_REVIEW);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-
-            sut.update(updateCommand("새이름"));
-
-            assertThat(project.getName()).isEqualTo("새이름");
-        }
-
-        @Test
-        void IN_PROGRESS_상태_수정_성공() {
-            Project project = createProject(ProjectStatus.IN_PROGRESS);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-
-            sut.update(updateCommand("새이름"));
-
-            assertThat(project.getName()).isEqualTo("새이름");
-        }
-
-        @Test
-        void COMPLETED_상태는_수정_불가() {
-            Project project = createProject(ProjectStatus.COMPLETED);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-
-            assertThatThrownBy(() -> sut.update(updateCommand("새이름")))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
-        }
-
-        @Test
-        void ABORTED_상태는_수정_불가() {
-            Project project = createProject(ProjectStatus.ABORTED);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-
-            assertThatThrownBy(() -> sut.update(updateCommand("새이름")))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
-        }
-
-        private UpdateProjectCommand updateCommand(String name) {
-            return UpdateProjectCommand.builder()
-                .projectId(1L)
-                .requesterMemberId(100L)
-                .name(name)
-                .build();
         }
     }
 

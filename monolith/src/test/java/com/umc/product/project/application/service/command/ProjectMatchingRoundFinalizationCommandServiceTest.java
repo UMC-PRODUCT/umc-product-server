@@ -56,6 +56,7 @@ import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.application.service.policy.DesignerMatchingPolicy;
@@ -116,12 +117,16 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
     @Captor
     ArgumentCaptor<Collection<ProjectMember>> approvedMembersCaptor;
 
+    @Mock
+    LockProjectMatchingPort lockProjectMatchingPort;
+
     ProjectMatchingRoundFinalizationCommandService sut;
 
     @BeforeEach
     void setUp() {
         sut = new ProjectMatchingRoundFinalizationCommandService(
             loadProjectMatchingRoundPort,
+            lockProjectMatchingPort,
             loadProjectApplicationPort,
             saveProjectApplicationPort,
             loadProjectPort,
@@ -395,6 +400,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             ProjectMatchingRoundFinalizationCommandService sutWithoutPolicy =
                 new ProjectMatchingRoundFinalizationCommandService(
                     loadProjectMatchingRoundPort,
+                    lockProjectMatchingPort,
                     loadProjectApplicationPort,
                     saveProjectApplicationPort,
                     loadProjectPort,

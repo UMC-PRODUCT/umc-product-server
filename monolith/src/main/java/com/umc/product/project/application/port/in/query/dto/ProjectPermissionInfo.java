@@ -64,8 +64,16 @@ public record ProjectPermissionInfo(
     public record MemberPermissions(
         ProjectPermissionCapabilityInfo canRead,
         ProjectPermissionCapabilityInfo canCreate,
-        ProjectPermissionCapabilityInfo canDelete
+        ProjectPermissionCapabilityInfo canDelete,
+        ProjectPermissionCapabilityInfo canAssign,
+        ProjectPermissionCapabilityInfo canUnassign
     ) {
+        public MemberPermissions(ProjectPermissionCapabilityInfo canRead, ProjectPermissionCapabilityInfo canCreate,
+            ProjectPermissionCapabilityInfo canDelete) {
+            this(canRead, canCreate, canDelete,
+                ProjectPermissionCapabilityInfo.denied(ProjectPermissionReason.PERMISSION_DENIED),
+                ProjectPermissionCapabilityInfo.denied(ProjectPermissionReason.PERMISSION_DENIED));
+        }
     }
 
     public record StatisticsPermissions(

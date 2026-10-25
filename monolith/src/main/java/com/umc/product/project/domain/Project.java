@@ -1,5 +1,6 @@
 package com.umc.product.project.domain;
 
+import java.time.Instant;
 import java.util.Objects;
 
 import com.umc.product.common.BaseEntity;
@@ -76,6 +77,9 @@ public class Project extends BaseEntity {
      */
     @Column(nullable = false, name = "created_by_member_id")
     private Long creatorMemberId;
+
+    /** PM이 제출하여 승인대기로 전환한 시각. 기존 데이터와 초안은 null일 수 있다. */
+    private Instant submittedAt;
 
     private Long statusChangedByMemberId; // 프로젝트 상태를 변경한 멤버의 ID입니다. (예: ABORTED로 변경한 멤버)
     private String statusChangedReason; // 프로젝트 상태를 변경한 이유입니다. (예: ABORTED로 변경한 이유)
@@ -246,6 +250,7 @@ public class Project extends BaseEntity {
         validateStatus(ProjectStatus.DRAFT);
         validateSubmitRequiredFields();
         this.status = ProjectStatus.PENDING_REVIEW;
+        this.submittedAt = Instant.now();
     }
 
     /**
