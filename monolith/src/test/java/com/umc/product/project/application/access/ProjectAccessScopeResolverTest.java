@@ -9,6 +9,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -17,8 +19,6 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
-import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
-import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import com.umc.product.project.application.access.ProjectAccessScope.All;
 import com.umc.product.project.application.access.ProjectAccessScope.ChapterScoped;
 import com.umc.product.project.application.access.ProjectAccessScope.None;
@@ -35,8 +35,6 @@ class ProjectAccessScopeResolverTest {
     GetChallengerRoleUseCase getChallengerRoleUseCase;
     @Mock
     LoadProjectPort loadProjectPort;
-    @Mock
-    GetChapterUseCase getChapterUseCase;
 
     @InjectMocks
     ProjectAccessScopeResolver sut;
@@ -188,38 +186,6 @@ class ProjectAccessScopeResolverTest {
     }
 
     @Test
-    void management_은_학교_회장이면_본인_학교가_속한_지부의_ChapterScoped() {
-        Long memberId = 10L;
-        Long gisuId = 1L;
-        given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of(
-            roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, 7L, gisuId)
-        ));
-        given(getChapterUseCase.byGisuAndSchool(gisuId, 7L))
-            .willReturn(new ChapterInfo(5L, "테스트 지부"));
-
-        ProjectAccessScope scope = sut.resolveForManagement(memberId, gisuId, Set.of(ProjectStatus.IN_PROGRESS));
-
-        assertThat(scope).isInstanceOf(ChapterScoped.class);
-        assertThat(((ChapterScoped) scope).chapterId()).isEqualTo(5L);
-    }
-
-    @Test
-    void management_은_학교_부회장도_본인_학교가_속한_지부의_ChapterScoped() {
-        Long memberId = 10L;
-        Long gisuId = 1L;
-        given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of(
-            roleInfo(ChallengerRoleType.SCHOOL_VICE_PRESIDENT, OrganizationType.SCHOOL, 7L, gisuId)
-        ));
-        given(getChapterUseCase.byGisuAndSchool(gisuId, 7L))
-            .willReturn(new ChapterInfo(5L, "테스트 지부"));
-
-        ProjectAccessScope scope = sut.resolveForManagement(memberId, gisuId, Set.of(ProjectStatus.IN_PROGRESS));
-
-        assertThat(scope).isInstanceOf(ChapterScoped.class);
-        assertThat(((ChapterScoped) scope).chapterId()).isEqualTo(5L);
-    }
-
-    @Test
     void management_은_PM_챌린저면_OwnerOnly() {
         Long memberId = 10L;
         Long gisuId = 1L;
@@ -302,6 +268,54 @@ class ProjectAccessScopeResolverTest {
         ProjectAccessScope scope = sut.resolveForManagement(memberId, currentGisuId, Set.of(ProjectStatus.IN_PROGRESS));
 
         assertThat(scope).isInstanceOf(None.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class, names = {"SCHOOL_PRESIDENT", "SCHOOL_VICE_PRESIDENT",
+        "SCHOOL_PART_LEADER", "SCHOOL_ETC_ADMIN"})
+    void 학교_운영진_역할만으로_관리_목록을_조회할_수_없다(ChallengerRoleType role) {
+        given(getChallengerRoleUseCase.findAllByMemberId(10L))
+            .willReturn(List.of(roleInfo(role, OrganizationType.SCHOOL, 7L, 1L)));
+        assertThat(sut.resolveForManagement(10L, 1L, Set.of(ProjectStatus.IN_PROGRESS))).isInstanceOf(None.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class, names = {"CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER"})
+    void 중앙운영진은_해당_기수의_승인대기와_등록완료만_조회한다(ChallengerRoleType role) {
+        given(getChallengerRoleUseCase.findAllByMemberId(10L))
+            .willReturn(List.of(roleInfo(role, OrganizationType.CENTRAL, null, 1L)));
+        var scope = sut.resolveForManagement(10L, 1L, java.util.EnumSet.allOf(ProjectStatus.class));
+        assertThat(scope).isInstanceOf(All.class);
+        assertThat(((All) scope).visibleStatuses())
+            .containsExactlyInAnyOrder(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS);
+        assertThat(sut.resolveForManagement(10L, 2L, Set.of(ProjectStatus.IN_PROGRESS))).isInstanceOf(None.class);
+        assertThat(sut.resolveForManagement(10L, 1L, Set.of(ProjectStatus.COMPLETED))).isInstanceOf(None.class);
+    }
+
+    @Test
+    void 중앙운영진과_지부장을_겸하면_두_역할의_조회_범위를_함께_유지한다() {
+        given(getChallengerRoleUseCase.findAllByMemberId(10L)).willReturn(List.of(
+            roleInfo(ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, OrganizationType.CENTRAL, null, 1L),
+            roleInfo(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER, 5L, 1L)));
+        Set<ProjectStatus> requested = Set.of(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS,
+            ProjectStatus.COMPLETED, ProjectStatus.ABORTED);
+        var scope = sut.resolveForManagement(10L, 1L, requested);
+        assertThat(scope).isInstanceOf(ProjectAccessScope.ChapterWithGlobalRead.class);
+        var combined = (ProjectAccessScope.ChapterWithGlobalRead) scope;
+        assertThat(combined.chapterId()).isEqualTo(5L);
+        assertThat(combined.visibleStatuses()).containsAll(requested);
+        assertThat(combined.globalVisibleStatuses())
+            .containsExactlyInAnyOrder(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS);
+    }
+
+    @Test
+    void 학교_운영진이라도_PM이면_본인_프로젝트와_초안은_조회한다() {
+        given(getChallengerRoleUseCase.findAllByMemberId(10L))
+            .willReturn(List.of(roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, 7L, 1L)));
+        given(loadProjectPort.existsByOwnerAndGisu(10L, 1L)).willReturn(true);
+        var scope = sut.resolveForManagement(10L, 1L, Set.of(ProjectStatus.IN_PROGRESS));
+        assertThat(scope).isInstanceOf(OwnerOnly.class);
+        assertThat(((OwnerOnly) scope).visibleStatuses()).contains(ProjectStatus.DRAFT, ProjectStatus.IN_PROGRESS);
     }
 
     // --- helpers ---

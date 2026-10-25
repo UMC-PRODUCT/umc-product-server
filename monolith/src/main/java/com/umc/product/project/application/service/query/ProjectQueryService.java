@@ -166,6 +166,9 @@ public class ProjectQueryService implements
             case All(Set<ProjectStatus> statuses) -> loadProjectPort.search(query.withStatuses(statuses));
             case ChapterScoped(Long chapterId, Set<ProjectStatus> statuses) ->
                 loadProjectPort.search(query.withChapterFilter(chapterId, statuses));
+            case ProjectAccessScope.ChapterWithGlobalRead(Long chapterId, Set<ProjectStatus> statuses,
+                Set<ProjectStatus> globalStatuses) ->
+                loadProjectPort.search(query.withChapterAndGlobalRead(chapterId, statuses, globalStatuses));
             case OwnerOnly(Long memberId, Set<ProjectStatus> statuses) ->
                 loadProjectPort.search(query.withOwnerFilter(memberId, statuses));
             case ProjectAccessScope.WithOwnerIncluded(
@@ -185,6 +188,8 @@ public class ProjectQueryService implements
             case All(Set<ProjectStatus> statuses) -> query.withStatuses(statuses);
             case ChapterScoped(Long chapterId, Set<ProjectStatus> statuses) ->
                 query.withChapterFilter(chapterId, statuses);
+            case ProjectAccessScope.ChapterWithGlobalRead(Long chapterId, Set<ProjectStatus> statuses,
+                Set<ProjectStatus> globalStatuses) -> query.withChapterAndGlobalRead(chapterId, statuses, globalStatuses);
             case OwnerOnly(Long memberId, Set<ProjectStatus> statuses) ->
                 query.withOwnerFilter(memberId, statuses);
             case PublicOnly() -> query.withStatuses(Set.of(ProjectStatus.IN_PROGRESS, ProjectStatus.COMPLETED));

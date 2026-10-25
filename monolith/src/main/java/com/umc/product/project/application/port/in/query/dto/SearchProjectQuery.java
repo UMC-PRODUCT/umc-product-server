@@ -38,10 +38,14 @@ public record SearchProjectQuery(
     PartQuotaStatus partQuotaStatus,
     List<ProjectStatus> statuses,
     List<ProjectStatus> includedOwnerStatuses,
+    List<ProjectStatus> globalVisibleStatuses,
     Pageable pageable,
     boolean managedStatusOrder
 ) {
     public SearchProjectQuery {
+        if (globalVisibleStatuses != null && !globalVisibleStatuses.isEmpty() && chapterId == null) {
+            throw new IllegalArgumentException("chapterId must not be null when globalVisibleStatuses exists");
+        }
         Objects.requireNonNull(gisuId, "gisuId must not be null");
         Objects.requireNonNull(pageable, "pageable must not be null");
         if (statuses == null || statuses.isEmpty()) {
@@ -124,6 +128,13 @@ public record SearchProjectQuery(
             .build();
     }
 
+    /** 지부장·중앙운영진 겸직의 상태별 조회 범위를 한 쿼리에 적용한다. */
+    public SearchProjectQuery withChapterAndGlobalRead(Long scopedChapterId, Set<ProjectStatus> chapterStatuses,
+        Set<ProjectStatus> globalStatuses) {
+        return copyBuilder().chapterId(scopedChapterId).statuses(toList(chapterStatuses))
+            .globalVisibleStatuses(toRequiredList(globalStatuses)).build();
+    }
+
     /** scope 적용 — owner 한정 + 상태 교체. */
     public SearchProjectQuery withOwnerFilter(Long memberId, Set<ProjectStatus> newStatuses) {
         return copyBuilder()
@@ -153,6 +164,7 @@ public record SearchProjectQuery(
             .partQuotaStatus(partQuotaStatus)
             .statuses(statuses)
             .includedOwnerStatuses(includedOwnerStatuses)
+            .globalVisibleStatuses(globalVisibleStatuses)
             .pageable(pageable)
             .managedStatusOrder(managedStatusOrder);
     }

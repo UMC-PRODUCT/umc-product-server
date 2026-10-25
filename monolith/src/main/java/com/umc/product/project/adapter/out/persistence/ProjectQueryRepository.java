@@ -87,6 +87,10 @@ public class ProjectQueryRepository {
             .and(productOwnerMemberIdEq(query.productOwnerMemberId()))
             .and(statusIn(query.statuses()));
 
+        if (query.globalVisibleStatuses() != null && !query.globalVisibleStatuses().isEmpty()) {
+            scoped.or(project.status.in(query.globalVisibleStatuses()));
+        }
+
         BooleanExpression includedOwner = includedOwnerCond(query);
         if (includedOwner != null) {
             scoped.or(includedOwner);
