@@ -18,12 +18,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -59,7 +59,7 @@ class ProjectQueryControllerTest {
     }
 
     @Test
-    void GET_프로젝트_목록_기본정렬은_createdAt_ASC_name_ASC() throws Exception {
+    void GET_프로젝트_목록은_추가_파라미터_없이_팀매칭_정렬을_사용한다() throws Exception {
         given(assembler.searchFor(any(SearchProjectQuery.class), eq(TEST_MEMBER_ID)))
             .willReturn(new PageResponse<ProjectSummaryResponse>(List.of(), 0, 20, 0, 0, false, false));
 
@@ -70,12 +70,27 @@ class ProjectQueryControllerTest {
         ArgumentCaptor<SearchProjectQuery> captor = ArgumentCaptor.forClass(SearchProjectQuery.class);
         then(assembler).should().searchFor(captor.capture(), eq(TEST_MEMBER_ID));
 
-        List<Sort.Order> orders = captor.getValue().pageable().getSort().stream().toList();
-        assertThat(orders)
-            .extracting(Sort.Order::getProperty)
-            .containsExactly("createdAt", "name");
-        assertThat(orders)
-            .allMatch(Sort.Order::isAscending);
+        assertThat(captor.getValue().matchingListOrder()).isTrue();
+        assertThat(captor.getValue().matchingOrderAt()).isNull();
+    }
+
+    @Test
+    void 추가_옵션_없이_팀매칭_정렬을_적용하고_기존_파트필터를_전달한다() throws Exception {
+        // given
+        given(assembler.searchFor(any(SearchProjectQuery.class), eq(TEST_MEMBER_ID)))
+            .willReturn(new PageResponse<ProjectSummaryResponse>(List.of(), 0, 20, 0, 0, false, false));
+
+        // when
+        mockMvc.perform(get("/api/v1/projects").param("gisuId", "1")
+                .param("parts", "DESIGN").param("matchingOrderAt", "2099-01-01T00:00:00Z"))
+            .andExpect(status().isOk());
+
+        // then
+        ArgumentCaptor<SearchProjectQuery> captor = ArgumentCaptor.forClass(SearchProjectQuery.class);
+        then(assembler).should().searchFor(captor.capture(), eq(TEST_MEMBER_ID));
+        assertThat(captor.getValue().matchingListOrder()).isTrue();
+        assertThat(captor.getValue().parts()).containsExactly(ChallengerPart.DESIGN);
+        assertThat(captor.getValue().matchingOrderAt()).isNull();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.umc.product.project.application.port.in.query.dto;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -24,6 +25,8 @@ import lombok.Builder;
  * {@link #withStatuses}, {@link #withChapterFilter}, {@link #withOwnerFilter}
  * 헬퍼로 새 인스턴스를 만들어 어댑터에 전달합니다.
  *
+ * @param matchingListOrder 팀 매칭 목록의 제출순·모집 완료 하단 정렬 여부.
+ * @param matchingOrderAt 서버에서 결정하는 팀 매칭 기간 판정 시각.
  * @param managedStatusOrder 관리 목록 전용 상태 우선 정렬 여부. 공개 목록은 false 로 기존 정렬을 유지한다.
  */
 @Builder
@@ -40,7 +43,9 @@ public record SearchProjectQuery(
     List<ProjectStatus> includedOwnerStatuses,
     List<ProjectStatus> globalVisibleStatuses,
     Pageable pageable,
-    boolean managedStatusOrder
+    boolean managedStatusOrder,
+    boolean matchingListOrder,
+    Instant matchingOrderAt
 ) {
     public SearchProjectQuery {
         if (globalVisibleStatuses != null && !globalVisibleStatuses.isEmpty() && chapterId == null) {
@@ -152,6 +157,11 @@ public record SearchProjectQuery(
             .build();
     }
 
+    /** 팀 매칭 목록의 기간 판정 시각은 서버에서 지정한다. */
+    public SearchProjectQuery withMatchingOrderAt(Instant now) {
+        return copyBuilder().matchingOrderAt(Objects.requireNonNull(now)).build();
+    }
+
     private SearchProjectQueryBuilder copyBuilder() {
         return SearchProjectQuery.builder()
             .gisuId(gisuId)
@@ -166,7 +176,9 @@ public record SearchProjectQuery(
             .includedOwnerStatuses(includedOwnerStatuses)
             .globalVisibleStatuses(globalVisibleStatuses)
             .pageable(pageable)
-            .managedStatusOrder(managedStatusOrder);
+            .managedStatusOrder(managedStatusOrder)
+            .matchingListOrder(matchingListOrder)
+            .matchingOrderAt(matchingOrderAt);
     }
 
     private static List<ProjectStatus> toList(Set<ProjectStatus> set) {

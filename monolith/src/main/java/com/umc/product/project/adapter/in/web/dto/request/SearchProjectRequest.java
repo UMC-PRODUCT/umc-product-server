@@ -44,6 +44,7 @@ public record SearchProjectRequest(
             .parts(parts)
             .partQuotaStatus(partQuotaStatus)
             .statuses(effectiveStatuses)
+            .matchingListOrder(true)
             .pageable(pageable)
             .build();
     }
