@@ -70,7 +70,11 @@ public class ProjectCommandController {
     @Operation(
         operationId = "PROJECT-101",
         summary = "프로젝트 초안 생성",
-        description = "PM(PLAN 파트 챌린저)이 빈 DRAFT 상태의 프로젝트를 생성합니다. 페이지 진입 시 GET /me/draft로 사전 확인 후 호출 권장. 동일 PM·동일 기수 중복 생성 시 409."
+        description = """
+            해당 기수 PLAN 챌린저가 본인을 PM으로 지정해 초안을 생성합니다. 임시저장 개수 제한은 없습니다.
+            최고관리자는 전체 기수, 총괄단은 해당 기수, 지부장은 해당 기수 본인 지부의 PLAN 챌린저를 대리 등록할 수 있습니다.
+            학교 운영진·일반 중앙운영진 역할만으로는 대리 등록할 수 없습니다.
+            """
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,

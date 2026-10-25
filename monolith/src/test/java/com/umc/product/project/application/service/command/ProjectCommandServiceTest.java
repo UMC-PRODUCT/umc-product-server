@@ -303,7 +303,7 @@ class ProjectCommandServiceTest {
         }
 
         @Test
-        void 학교_회장이_본인_학교_PLAN_챌린저를_PO로_지정하면_성공() {
+        void 학교_회장도_본인_학교의_대리_등록은_거부() {
             var command = CreateDraftProjectCommand.builder()
                 .gisuId(1L)
                 .productOwnerMemberId(100L)
@@ -319,15 +319,9 @@ class ProjectCommandServiceTest {
             given(getChallengerRoleUseCase.findAllByMemberId(200L)).willReturn(java.util.List.of(
                 roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, 10L, 1L)
             ));
-            given(saveProjectPort.save(any())).willAnswer(inv -> {
-                Project p = inv.getArgument(0);
-                ReflectionTestUtils.setField(p, "id", 99L);
-                return p;
-            });
-
-            Long result = sut.create(command);
-
-            assertThat(result).isEqualTo(99L);
+            assertThatThrownBy(() -> sut.create(command))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode").isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
 
         @Test

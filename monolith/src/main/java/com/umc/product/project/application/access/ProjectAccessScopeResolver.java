@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.project.application.access.ProjectAccessScope.All;
 import com.umc.product.project.application.access.ProjectAccessScope.ChapterScoped;
+import com.umc.product.project.application.access.ProjectAccessScope.ChapterWithGlobalRead;
 import com.umc.product.project.application.access.ProjectAccessScope.None;
 import com.umc.product.project.application.access.ProjectAccessScope.OwnerOnly;
 import com.umc.product.project.application.access.ProjectAccessScope.PublicOnly;
@@ -37,7 +37,6 @@ public class ProjectAccessScopeResolver {
 
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final LoadProjectPort loadProjectPort;
-    private final GetChapterUseCase getChapterUseCase;
 
     /**
      * 공개 검색(PROJECT-001) 컨텍스트.
@@ -96,12 +95,12 @@ public class ProjectAccessScopeResolver {
      * <ol>
      *   <li>Central Core → 전체 (DRAFT 제외)</li>
      *   <li>지부장 → 본인 지부 (DRAFT 제외)</li>
-     *   <li>학교 회장단 → 본인 학교가 속한 지부 전체 (DRAFT 제외) — 정책상 지부장과 동일 범위</li>
+     *   <li>중앙운영·교육국 일반 운영진 → 해당 기수 전체 지부의 승인대기·등록완료</li>
      *   <li>PM 챌린저 → 본인이 owner 인 프로젝트만 (DRAFT 포함)</li>
-     *   <li>그 외 → 관리 대상 0건</li>
+     *   <li>학교 운영진 등 그 외 → 관리 대상 0건 (PM 겸직 시 본인 프로젝트 포함)</li>
      * </ol>
      * <p>
-     * {@code requestedStatuses} 는 운영진 분기에 그대로 전달되며, PO 분기에서는 DRAFT 가 union 된다.
+     * 요청 상태를 역할별 가시 상태와 교차 적용하며, PO 분기에서는 DRAFT 를 추가한다.
      */
     public ProjectAccessScope resolveForManagement(
         Long memberId, Long gisuId, Set<ProjectStatus> requestedStatuses
@@ -118,28 +117,25 @@ public class ProjectAccessScopeResolver {
             return includeOwnerProjects(new All(requestedStatuses), memberId, gisuId, requestedStatuses);
         }
 
+        Set<ProjectStatus> centralVisible = EnumSet.noneOf(ProjectStatus.class);
+        if (rolesInGisu.stream().anyMatch(role -> role.roleType().isAtLeastCentralMember())) {
+            centralVisible.addAll(Set.of(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS));
+            if (!requestedStatuses.isEmpty()) {
+                centralVisible.retainAll(requestedStatuses);
+            }
+        }
         Optional<Long> chapterId = chapterPresidentOrgId(rolesInGisu);
         if (chapterId.isPresent()) {
-            return includeOwnerProjects(new ChapterScoped(chapterId.get(), requestedStatuses),
-                memberId, gisuId, requestedStatuses);
+            ProjectAccessScope scope = centralVisible.isEmpty()
+                ? new ChapterScoped(chapterId.get(), requestedStatuses)
+                : new ChapterWithGlobalRead(chapterId.get(), requestedStatuses, centralVisible);
+            return includeOwnerProjects(scope, memberId, gisuId, requestedStatuses);
+        }
+        if (!centralVisible.isEmpty()) {
+            return includeOwnerProjects(new All(centralVisible), memberId, gisuId, requestedStatuses);
         }
 
-        Optional<Long> schoolId = schoolCoreOrgId(rolesInGisu);
-        if (schoolId.isPresent()) {
-            Long schoolChapterId = getChapterUseCase.byGisuAndSchool(gisuId, schoolId.get()).id();
-            return includeOwnerProjects(new ChapterScoped(schoolChapterId, requestedStatuses),
-                memberId, gisuId, requestedStatuses);
-        }
-
-        if (loadProjectPort.existsByOwnerAndGisu(memberId, gisuId)) {
-            Set<ProjectStatus> withDraft = requestedStatuses.isEmpty()
-                ? EnumSet.allOf(ProjectStatus.class)
-                : EnumSet.copyOf(requestedStatuses);
-            withDraft.add(ProjectStatus.DRAFT);
-            return new OwnerOnly(memberId, withDraft);
-        }
-
-        return new None();
+        return ownerOnlyOrNone(memberId, gisuId, requestedStatuses);
     }
 
     private ProjectAccessScope includeOwnerProjects(
@@ -166,11 +162,13 @@ public class ProjectAccessScopeResolver {
             .findFirst();
     }
 
-    private Optional<Long> schoolCoreOrgId(List<ChallengerRoleInfo> rolesInGisu) {
-        return rolesInGisu.stream()
-            .filter(role -> role.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
-                || role.roleType() == ChallengerRoleType.SCHOOL_VICE_PRESIDENT)
-            .map(ChallengerRoleInfo::organizationId)
-            .findFirst();
+    private ProjectAccessScope ownerOnlyOrNone(Long memberId, Long gisuId, Set<ProjectStatus> requestedStatuses) {
+        if (!loadProjectPort.existsByOwnerAndGisu(memberId, gisuId)) {
+            return new None();
+        }
+        Set<ProjectStatus> visible = requestedStatuses.isEmpty()
+            ? EnumSet.allOf(ProjectStatus.class) : EnumSet.copyOf(requestedStatuses);
+        visible.add(ProjectStatus.DRAFT);
+        return new OwnerOnly(memberId, visible);
     }
 }
