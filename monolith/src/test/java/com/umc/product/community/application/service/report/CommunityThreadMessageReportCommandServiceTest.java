@@ -7,7 +7,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.lang.reflect.RecordComponent;
@@ -33,17 +32,20 @@ import com.umc.product.chat.application.port.in.query.dto.GetChatMessageRoomQuer
 import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.community.application.port.in.command.thread.report.dto.ReportCommunityThreadMessageCommand;
 import com.umc.product.community.application.port.in.query.thread.report.dto.CommunityThreadMessageReportReceiptInfo;
-import com.umc.product.community.application.port.out.report.LoadReportPort;
-import com.umc.product.community.application.port.out.report.SaveReportPort;
 import com.umc.product.community.application.port.out.thread.LoadCommunityThreadMemberPort;
 import com.umc.product.community.application.port.out.thread.LoadCommunityThreadPort;
 import com.umc.product.community.domain.CommunityThread;
 import com.umc.product.community.domain.CommunityThreadMember;
-import com.umc.product.community.domain.Report;
-import com.umc.product.community.domain.enums.ReportReason;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.global.exception.BusinessException;
+import com.umc.product.report.application.port.in.command.SubmitReportUseCase;
+import com.umc.product.report.application.port.in.command.dto.SubmitReportCommand;
+import com.umc.product.report.application.port.in.command.dto.SubmitReportResult;
+import com.umc.product.report.domain.enums.ReportReason;
+import com.umc.product.report.domain.enums.ReportTargetType;
+import com.umc.product.report.domain.exception.ReportDomainException;
+import com.umc.product.report.domain.exception.ReportErrorCode;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("스레드 메시지 신고 명령 서비스")
@@ -68,10 +70,7 @@ class CommunityThreadMessageReportCommandServiceTest {
     GetChatMessageUseCase getChatMessageUseCase;
 
     @Mock
-    LoadReportPort loadReportPort;
-
-    @Mock
-    SaveReportPort saveReportPort;
+    SubmitReportUseCase submitReportUseCase;
 
     @InjectMocks
     CommunityThreadMessageReportCommandService sut;
@@ -82,9 +81,6 @@ class CommunityThreadMessageReportCommandServiceTest {
         // given
         CommunityThread thread = thread();
         CommunityThreadMember member = activeMember();
-        Report persisted = mock(Report.class);
-        given(persisted.getId()).willReturn(901L);
-        given(persisted.getCreatedAt()).willReturn(CREATED_AT);
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
@@ -94,8 +90,8 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageUseCase.getMessage(
             new GetChatMessageQuery(CHAT_ROOM_ID, REQUESTER_MEMBER_ID, MESSAGE_ID)
         )).willReturn(chatMessage());
-        given(loadReportPort.existsThreadMessageReport(REQUESTER_MEMBER_ID, MESSAGE_ID)).willReturn(false);
-        given(saveReportPort.save(any(Report.class))).willReturn(persisted);
+        given(submitReportUseCase.submit(any(SubmitReportCommand.class)))
+            .willReturn(new SubmitReportResult(901L, CREATED_AT));
 
         // when
         CommunityThreadMessageReportReceiptInfo result = sut.report(command());
@@ -110,21 +106,21 @@ class CommunityThreadMessageReportCommandServiceTest {
             .toList())
             .doesNotContain("reporterId", "reporterMemberId");
 
-        ArgumentCaptor<Report> reportCaptor = ArgumentCaptor.forClass(Report.class);
-        then(saveReportPort).should().save(reportCaptor.capture());
-        Report report = reportCaptor.getValue();
-        assertThat(report.getReporterId()).isEqualTo(REQUESTER_MEMBER_ID);
-        assertThat(report.getThreadId()).isEqualTo(THREAD_ID);
-        assertThat(report.getTargetId()).isEqualTo(MESSAGE_ID);
-        assertThat(report.getReasonCode()).isEqualTo(ReportReason.ABUSE);
+        ArgumentCaptor<SubmitReportCommand> submitCaptor = ArgumentCaptor.forClass(SubmitReportCommand.class);
+        then(submitReportUseCase).should().submit(submitCaptor.capture());
+        SubmitReportCommand submitted = submitCaptor.getValue();
+        assertThat(submitted.reporterId()).isEqualTo(REQUESTER_MEMBER_ID);
+        assertThat(submitted.targetType()).isEqualTo(ReportTargetType.THREAD_MESSAGE);
+        assertThat(submitted.threadId()).isEqualTo(THREAD_ID);
+        assertThat(submitted.targetId()).isEqualTo(MESSAGE_ID);
+        assertThat(submitted.reasonCode()).isEqualTo(ReportReason.ABUSE);
 
         InOrder order = inOrder(
             getChatMessageRoomUseCase,
             loadCommunityThreadPort,
             loadCommunityThreadMemberPort,
             getChatMessageUseCase,
-            loadReportPort,
-            saveReportPort
+            submitReportUseCase
         );
         order.verify(getChatMessageRoomUseCase)
             .getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID));
@@ -134,8 +130,7 @@ class CommunityThreadMessageReportCommandServiceTest {
             .findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID);
         order.verify(getChatMessageUseCase)
             .getMessage(new GetChatMessageQuery(CHAT_ROOM_ID, REQUESTER_MEMBER_ID, MESSAGE_ID));
-        order.verify(loadReportPort).existsThreadMessageReport(REQUESTER_MEMBER_ID, MESSAGE_ID);
-        order.verify(saveReportPort).save(any(Report.class));
+        order.verify(submitReportUseCase).submit(any(SubmitReportCommand.class));
     }
 
     @Test
@@ -155,8 +150,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         verifyNoInteractions(
             loadCommunityThreadMemberPort,
             getChatMessageUseCase,
-            loadReportPort,
-            saveReportPort
+            submitReportUseCase
         );
     }
 
@@ -181,8 +175,7 @@ class CommunityThreadMessageReportCommandServiceTest {
 
         then(loadCommunityThreadMemberPort).shouldHaveNoInteractions();
         then(getChatMessageUseCase).shouldHaveNoInteractions();
-        then(loadReportPort).shouldHaveNoInteractions();
-        then(saveReportPort).shouldHaveNoInteractions();
+        then(submitReportUseCase).shouldHaveNoInteractions();
     }
 
     @Test
@@ -207,8 +200,7 @@ class CommunityThreadMessageReportCommandServiceTest {
 
         then(loadCommunityThreadMemberPort).shouldHaveNoInteractions();
         then(getChatMessageUseCase).shouldHaveNoInteractions();
-        then(loadReportPort).shouldHaveNoInteractions();
-        then(saveReportPort).shouldHaveNoInteractions();
+        then(submitReportUseCase).shouldHaveNoInteractions();
     }
 
     @Test
@@ -230,8 +222,7 @@ class CommunityThreadMessageReportCommandServiceTest {
             .isEqualTo(CommunityErrorCode.THREAD_MEMBER_NOT_FOUND);
 
         then(getChatMessageUseCase).shouldHaveNoInteractions();
-        then(loadReportPort).shouldHaveNoInteractions();
-        then(saveReportPort).shouldHaveNoInteractions();
+        then(submitReportUseCase).shouldHaveNoInteractions();
     }
 
     @Test
@@ -255,13 +246,12 @@ class CommunityThreadMessageReportCommandServiceTest {
             .isEqualTo(CommunityErrorCode.THREAD_ACCESS_DENIED);
 
         then(getChatMessageUseCase).shouldHaveNoInteractions();
-        then(loadReportPort).shouldHaveNoInteractions();
-        then(saveReportPort).shouldHaveNoInteractions();
+        then(submitReportUseCase).shouldHaveNoInteractions();
     }
 
     @Test
-    @DisplayName("같은 회원이 같은 메시지를 다시 신고하면 Chat 검증 뒤 중복 충돌로 저장하지 않는다")
-    void report_같은_회원의_메시지_중복_신고를_거부한다() {
+    @DisplayName("본인이 보낸 메시지는 중복 확인과 저장 전에 REPORT_SELF_TARGET으로 거부한다")
+    void report_본인_메시지_신고를_거부한다() {
         // given
         CommunityThread thread = thread();
         CommunityThreadMember member = activeMember();
@@ -273,43 +263,24 @@ class CommunityThreadMessageReportCommandServiceTest {
             .willReturn(Optional.of(member));
         given(getChatMessageUseCase.getMessage(
             new GetChatMessageQuery(CHAT_ROOM_ID, REQUESTER_MEMBER_ID, MESSAGE_ID)
-        )).willReturn(chatMessage());
-        given(loadReportPort.existsThreadMessageReport(REQUESTER_MEMBER_ID, MESSAGE_ID)).willReturn(true);
+        )).willReturn(chatMessageFrom(REQUESTER_MEMBER_ID));
 
         // when & then
         assertThatThrownBy(() -> sut.report(command()))
-            .isInstanceOf(CommunityDomainException.class)
+            .isInstanceOf(ReportDomainException.class)
             .extracting(error -> ((BusinessException) error).getBaseCode())
-            .isEqualTo(CommunityErrorCode.REPORT_ALREADY_EXISTS);
+            .isEqualTo(ReportErrorCode.REPORT_SELF_TARGET);
 
-        then(saveReportPort).should(never()).save(any(Report.class));
-        InOrder order = inOrder(
-            getChatMessageRoomUseCase,
-            loadCommunityThreadPort,
-            loadCommunityThreadMemberPort,
-            getChatMessageUseCase,
-            loadReportPort
-        );
-        order.verify(getChatMessageRoomUseCase)
-            .getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID));
-        order.verify(loadCommunityThreadPort).findByChatRoomId(CHAT_ROOM_ID);
-        order.verify(loadCommunityThreadPort).findByIdForUpdate(THREAD_ID);
-        order.verify(loadCommunityThreadMemberPort)
-            .findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID);
-        order.verify(getChatMessageUseCase)
-            .getMessage(new GetChatMessageQuery(CHAT_ROOM_ID, REQUESTER_MEMBER_ID, MESSAGE_ID));
-        order.verify(loadReportPort).existsThreadMessageReport(REQUESTER_MEMBER_ID, MESSAGE_ID);
+        then(submitReportUseCase).shouldHaveNoInteractions();
     }
 
     @Test
-    @DisplayName("중복 사전 확인과 저장 사이의 동시 충돌도 REPORT_ALREADY_EXISTS로 전달한다")
-    void report_저장_시점_동시_중복_충돌을_그대로_전달한다() {
+    @DisplayName("신고 엔진의 중복 신고 거부는 Chat 검증 뒤 그대로 전달한다")
+    void report_중복_신고_거부를_그대로_전달한다() {
         // given
         CommunityThread thread = thread();
         CommunityThreadMember member = activeMember();
-        CommunityDomainException duplicate = new CommunityDomainException(
-            CommunityErrorCode.REPORT_ALREADY_EXISTS
-        );
+        ReportDomainException duplicate = new ReportDomainException(ReportErrorCode.REPORT_ALREADY_EXISTS);
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
@@ -319,15 +290,18 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageUseCase.getMessage(
             new GetChatMessageQuery(CHAT_ROOM_ID, REQUESTER_MEMBER_ID, MESSAGE_ID)
         )).willReturn(chatMessage());
-        given(loadReportPort.existsThreadMessageReport(REQUESTER_MEMBER_ID, MESSAGE_ID)).willReturn(false);
-        given(saveReportPort.save(any(Report.class))).willThrow(duplicate);
+        given(submitReportUseCase.submit(any(SubmitReportCommand.class))).willThrow(duplicate);
 
         // when & then
         assertThatThrownBy(() -> sut.report(command()))
             .isSameAs(duplicate)
             .extracting(error -> ((BusinessException) error).getBaseCode())
-            .isEqualTo(CommunityErrorCode.REPORT_ALREADY_EXISTS);
-        then(saveReportPort).should().save(any(Report.class));
+            .isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS);
+
+        InOrder order = inOrder(getChatMessageUseCase, submitReportUseCase);
+        order.verify(getChatMessageUseCase)
+            .getMessage(new GetChatMessageQuery(CHAT_ROOM_ID, REQUESTER_MEMBER_ID, MESSAGE_ID));
+        order.verify(submitReportUseCase).submit(any(SubmitReportCommand.class));
     }
 
     private ReportCommunityThreadMessageCommand command() {
@@ -353,10 +327,14 @@ class CommunityThreadMessageReportCommandServiceTest {
     }
 
     private ChatMessageInfo chatMessage() {
+        return chatMessageFrom(66L);
+    }
+
+    private ChatMessageInfo chatMessageFrom(Long senderMemberId) {
         return new ChatMessageInfo(
             MESSAGE_ID,
             CHAT_ROOM_ID,
-            66L,
+            senderMemberId,
             MessageContentType.TEXT,
             "신고 대상 메시지",
             List.of(),

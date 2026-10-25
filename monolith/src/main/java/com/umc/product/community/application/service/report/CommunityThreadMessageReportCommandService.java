@@ -7,20 +7,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.chat.application.port.in.query.GetChatMessageRoomUseCase;
 import com.umc.product.chat.application.port.in.query.GetChatMessageUseCase;
+import com.umc.product.chat.application.port.in.query.dto.ChatMessageInfo;
 import com.umc.product.chat.application.port.in.query.dto.GetChatMessageQuery;
 import com.umc.product.chat.application.port.in.query.dto.GetChatMessageRoomQuery;
 import com.umc.product.community.application.port.in.command.thread.report.ReportCommunityThreadMessageUseCase;
 import com.umc.product.community.application.port.in.command.thread.report.dto.ReportCommunityThreadMessageCommand;
 import com.umc.product.community.application.port.in.query.thread.report.dto.CommunityThreadMessageReportReceiptInfo;
-import com.umc.product.community.application.port.out.report.LoadReportPort;
-import com.umc.product.community.application.port.out.report.SaveReportPort;
 import com.umc.product.community.application.port.out.thread.LoadCommunityThreadMemberPort;
 import com.umc.product.community.application.port.out.thread.LoadCommunityThreadPort;
 import com.umc.product.community.domain.CommunityThread;
 import com.umc.product.community.domain.CommunityThreadMember;
-import com.umc.product.community.domain.Report;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
+import com.umc.product.report.application.port.in.command.SubmitReportUseCase;
+import com.umc.product.report.application.port.in.command.dto.SubmitReportCommand;
+import com.umc.product.report.application.port.in.command.dto.SubmitReportResult;
+import com.umc.product.report.domain.exception.ReportDomainException;
+import com.umc.product.report.domain.exception.ReportErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,8 +36,7 @@ public class CommunityThreadMessageReportCommandService implements ReportCommuni
     private final LoadCommunityThreadMemberPort loadThreadMemberPort;
     private final GetChatMessageRoomUseCase getChatMessageRoomUseCase;
     private final GetChatMessageUseCase getChatMessageUseCase;
-    private final LoadReportPort loadReportPort;
-    private final SaveReportPort saveReportPort;
+    private final SubmitReportUseCase submitReportUseCase;
 
     @Override
     public CommunityThreadMessageReportReceiptInfo report(ReportCommunityThreadMessageCommand command) {
@@ -53,24 +55,23 @@ public class CommunityThreadMessageReportCommandService implements ReportCommuni
             throw new CommunityDomainException(CommunityErrorCode.THREAD_ACCESS_DENIED);
         }
 
-        getChatMessageUseCase.getMessage(new GetChatMessageQuery(
+        ChatMessageInfo message = getChatMessageUseCase.getMessage(new GetChatMessageQuery(
             chatRoomId,
             command.requesterMemberId(),
             command.messageId()
         ));
-
-        if (loadReportPort.existsThreadMessageReport(command.requesterMemberId(), command.messageId())) {
-            throw new CommunityDomainException(CommunityErrorCode.REPORT_ALREADY_EXISTS);
+        if (Objects.equals(message.senderMemberId(), command.requesterMemberId())) {
+            throw new ReportDomainException(ReportErrorCode.REPORT_SELF_TARGET);
         }
 
-        Report savedReport = saveReportPort.save(Report.createThreadMessage(
+        SubmitReportResult submitted = submitReportUseCase.submit(SubmitReportCommand.threadMessage(
             command.requesterMemberId(),
             thread.getId(),
             command.messageId(),
             command.reason()
         ));
         return CommunityThreadMessageReportReceiptInfo.from(
-            savedReport,
+            submitted,
             command.messageId(),
             command.reason()
         );

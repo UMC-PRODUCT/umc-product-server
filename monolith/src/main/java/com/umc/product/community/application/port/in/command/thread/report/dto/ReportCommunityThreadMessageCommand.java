@@ -2,7 +2,7 @@ package com.umc.product.community.application.port.in.command.thread.report.dto;
 
 import java.util.Objects;
 
-import com.umc.product.community.domain.enums.ReportReason;
+import com.umc.product.report.domain.enums.ReportReason;
 
 public record ReportCommunityThreadMessageCommand(
     Long messageId,
