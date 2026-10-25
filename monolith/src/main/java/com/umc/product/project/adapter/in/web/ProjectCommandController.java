@@ -94,7 +94,7 @@ public class ProjectCommandController {
     @Operation(
         operationId = "PROJECT-102",
         summary = "프로젝트 기본정보 수정",
-        description = "프로젝트 기본정보를 부분 업데이트합니다. DRAFT/PENDING_REVIEW/IN_PROGRESS 모두 허용, 종료 상태(COMPLETED/ABORTED)는 수정 불가. 소유권 양도는 별도 엔드포인트."
+        description = "프로젝트 기본정보를 부분 업데이트합니다. DRAFT/PENDING_REVIEW/IN_PROGRESS 모두 허용, 종료 상태(COMPLETED/ABORTED)는 수정 불가. 지원기간에는 기본정보 수정 불가. 소유권 양도는 별도 엔드포인트."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
