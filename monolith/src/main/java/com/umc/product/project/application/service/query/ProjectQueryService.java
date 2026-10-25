@@ -1,5 +1,6 @@
 package com.umc.product.project.application.service.query;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -56,6 +57,7 @@ public class ProjectQueryService implements
     SearchManagedProjectUseCase,
     SearchDraftProjectUseCase {
 
+    private final Clock clock;
     private final LoadProjectPort loadProjectPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
@@ -155,7 +157,9 @@ public class ProjectQueryService implements
         Set<ProjectStatus> requestedStatuses = new HashSet<>(query.statuses());
         ProjectAccessScope scope = scopeResolver.resolveForPublicSearch(
             memberId, query.gisuId(), requestedStatuses);
-        return toProjectInfoPage(applyScope(scope, query));
+        SearchProjectQuery scopedQuery = query.matchingListOrder()
+            ? query.withMatchingOrderAt(clock.instant()) : query;
+        return toProjectInfoPage(applyScope(scope, scopedQuery));
     }
 
     /**

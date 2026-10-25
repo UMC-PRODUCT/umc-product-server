@@ -48,12 +48,17 @@ public class ProjectQueryController {
     @Operation(
         operationId = "PROJECT-001",
         summary = "프로젝트 목록 조회",
-        description = "기수/지부/파트 등으로 필터링된 프로젝트 목록을 페이지 조회합니다. 비회원도 조회 가능하며, 이 경우 공개 상태(IN_PROGRESS/COMPLETED) 프로젝트만 노출됩니다."
+        description = """
+            기수/지부/파트 등으로 필터링된 프로젝트 목록을 페이지 조회합니다.
+            비회원도 조회 가능하며, 이 경우 공개 상태(IN_PROGRESS/COMPLETED) 프로젝트만 노출됩니다.
+            PM 제출시각·ID 오름차순으로 정렬하고, 매칭 기간에는 모집 완료 프로젝트를 하단에 배치합니다.
+            디자인·개발 구분은 기존 parts 필터를 사용하며, 생략하면 지부의 진행 중인 매칭 일정을 기준으로 판단합니다.
+            """
     )
     public PageResponse<ProjectSummaryResponse> searchProjects(
         @CurrentMember MemberPrincipal memberPrincipal,
         @ParameterObject @Valid SearchProjectRequest request,
-        @ParameterObject @PageableDefault(size = 20, sort = {"createdAt", "name"}, direction = Sort.Direction.ASC)
+        @ParameterObject @PageableDefault(size = 20, sort = {"submittedAt", "id"}, direction = Sort.Direction.ASC)
         Pageable pageable
     ) {
         SearchProjectQuery query = request.toQuery(pageable);

@@ -8,6 +8,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,6 +55,8 @@ class ProjectQueryServiceTest {
     GetFileUseCase getFileUseCase;
     @Mock
     ProjectAccessScopeResolver scopeResolver;
+
+    @Mock Clock clock;
 
     @InjectMocks
     ProjectQueryService sut;
@@ -151,6 +155,30 @@ class ProjectQueryServiceTest {
 
         // then
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void 팀매칭_목록은_서버시각과_정렬설정을_권한필터와_함께_전달한다() {
+        // given
+        Instant now = Instant.parse("2026-11-13T00:00:00Z");
+        SearchProjectQuery query = SearchProjectQuery.builder().gisuId(1L)
+            .statuses(List.of(ProjectStatus.IN_PROGRESS)).matchingListOrder(true)
+            .pageable(PageRequest.of(0, 20)).build();
+        given(clock.instant()).willReturn(now);
+        given(scopeResolver.resolveForPublicSearch(any(), any(), anySet()))
+            .willReturn(new ProjectAccessScope.PublicOnly());
+        given(loadProjectPort.search(any())).willReturn(Page.empty());
+
+        // when
+        sut.search(query, null);
+
+        // then
+        ArgumentCaptor<SearchProjectQuery> captor = ArgumentCaptor.forClass(SearchProjectQuery.class);
+        verify(loadProjectPort).search(captor.capture());
+        assertThat(captor.getValue().matchingListOrder()).isTrue();
+        assertThat(captor.getValue().matchingOrderAt()).isEqualTo(now);
+        assertThat(captor.getValue().statuses()).containsExactlyInAnyOrder(
+            ProjectStatus.IN_PROGRESS, ProjectStatus.COMPLETED);
     }
 
     @Test
