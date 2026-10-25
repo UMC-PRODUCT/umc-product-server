@@ -1,7 +1,7 @@
 package com.umc.product.community.application.port.in.query.thread.report.dto;
 
-import com.umc.product.community.domain.enums.ReportReason;
-import com.umc.product.community.domain.enums.ReportStatus;
+import com.umc.product.report.domain.enums.ReportReason;
+import com.umc.product.report.domain.enums.ReportStatus;
 
 public record SearchCommunityThreadMessageReportsQuery(
     Long requesterMemberId,

@@ -24,7 +24,7 @@ public enum CommunityErrorCode implements BaseCode {
     INVALID_COMMENT_CONTENT(HttpStatus.BAD_REQUEST, "COMMUNITY-0010", "댓글 내용이 올바르지 않아요. 내용을 확인해주세요."),
     COMMENT_NOT_OWNED(HttpStatus.FORBIDDEN, "COMMUNITY-0011", "내가 작성한 댓글만 삭제할 수 있어요."),
 
-    REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "COMMUNITY-0016", "이미 신고한 게시글, 댓글 또는 스레드 메시지예요. 신고 내역을 확인해주세요."),
+    // COMMUNITY-0016, COMMUNITY-0046은 ReportErrorCode로 이동했어요. 재사용하지 마세요.
 
     // === Post 검증 ===
     INVALID_POST_AUTHOR(HttpStatus.BAD_REQUEST, "COMMUNITY-0017", "작성자 정보가 필요해요. 로그인 정보를 확인해주세요."),
