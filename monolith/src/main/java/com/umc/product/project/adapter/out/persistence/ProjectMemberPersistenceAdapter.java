@@ -103,6 +103,11 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     }
 
     @Override
+    public Map<Long, List<ProjectMember>> listAssignedByProjectIds(Collection<Long> projectIds) {
+        return queryRepository.listAssignedByProjectIds(projectIds);
+    }
+
+    @Override
     public List<ProjectMember> listByProjectIdAndPart(Long projectId, ChallengerPart part) {
         return repository.findByProjectIdAndPartAndStatusOrderByCreatedAtAscIdAsc(
             projectId, part, ProjectMemberStatus.ACTIVE);

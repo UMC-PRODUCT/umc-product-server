@@ -68,6 +68,9 @@ public interface LoadProjectMemberPort {
      */
     Map<Long, List<ProjectMember>> listByProjectIds(Collection<Long> projectIds);
 
+    /** TO 관리의 현재 인원·최소 TO를 계산하도록 ACTIVE와 발표 대기를 일괄 조회한다. */
+    Map<Long, List<ProjectMember>> listAssignedByProjectIds(Collection<Long> projectIds);
+
     /**
      * 특정 프로젝트의 특정 파트에 속한 ACTIVE 멤버 목록을 조회합니다. PLAN 파트 조회 시 보조 PM(coPM) 추출에 사용됩니다.
      */
