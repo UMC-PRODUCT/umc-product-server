@@ -13,6 +13,11 @@ import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 
 public interface ProjectApplicationJpaRepository extends JpaRepository<ProjectApplication, Long> {
 
+    @Query("select distinct a.applicantMemberId from ProjectApplication a "
+        + "where a.applicationForm.project.gisuId = :gisuId and a.status = :status")
+    List<Long> findApplicantMemberIdsByGisuIdAndStatus(@Param("gisuId") Long gisuId,
+        @Param("status") ProjectApplicationStatus status);
+
     @Modifying
     @Query("delete from ProjectApplication a where a.applicationForm.project.id = :projectId")
     void deleteAllByProjectId(@Param("projectId") Long projectId);

@@ -40,6 +40,7 @@ import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.application.service.policy.AutoDecisionResult;
@@ -78,6 +79,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     );
 
     private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
+    private final LockProjectMatchingPort lockProjectMatchingPort;
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final SaveProjectApplicationPort saveProjectApplicationPort;
     private final LoadProjectPort loadProjectPort;
@@ -105,7 +107,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     )
     @Override
     public void autoDecide(Long matchingRoundId, Long executedByMemberId) {
-        // 같은 차수의 동시 실행을 막고, 잠금을 획득한 뒤 실행 완료 여부를 확인한다.
+        lockProjectMatchingPort.lockByRoundId(matchingRoundId);
         ProjectMatchingRound round = loadProjectMatchingRoundPort.getByIdForUpdate(matchingRoundId);
 
         // 스케줄러는 실행 회원 ID 없이 호출하므로 운영진 수동 실행에만 권한을 검증한다.
@@ -150,9 +152,22 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         // 매칭 유형별로 지원자 수와 잔여 모집 정원을 고려하여 최소 선발 인원을 계산한다.
         MatchingDecisionPolicy policy = resolvePolicy(round.getType());
 
-        List<ProjectApplication> applicants = loadProjectApplicationPort
-            .listByMatchingRoundId(round.getId()).stream()
+        List<ProjectApplication> roundApplications = loadProjectApplicationPort.listByMatchingRoundId(round.getId());
+        Set<Long> alreadyAssigned = roundApplications.isEmpty() ? Set.of()
+            : new HashSet<>(loadProjectMemberPort.listAssignedMemberIdsByGisuId(
+                roundApplications.getFirst().getApplicationForm().getProject().getGisuId()));
+        if (round.getResultPublishAt() == null) {
+            List<ProjectApplication> alreadyMatchedApplications = roundApplications.stream()
+                .filter(a -> isDecidableStatus(a.getStatus()))
+                .filter(a -> alreadyAssigned.contains(a.getApplicantMemberId())).toList();
+            applyDecisions(alreadyMatchedApplications, Set.of(), executedByMemberId);
+            if (!alreadyMatchedApplications.isEmpty()) {
+                saveProjectApplicationPort.saveAll(alreadyMatchedApplications);
+            }
+        }
+        List<ProjectApplication> applicants = roundApplications.stream()
             .filter(a -> isDecidableStatus(a.getStatus()))
+            .filter(a -> !alreadyAssigned.contains(a.getApplicantMemberId()))
             .toList();
         if (applicants.isEmpty()) {
             return List.of();

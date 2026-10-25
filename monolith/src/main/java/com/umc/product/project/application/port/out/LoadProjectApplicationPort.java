@@ -16,6 +16,8 @@ import com.umc.product.project.domain.enums.ProjectApplicationStatus;
  */
 public interface LoadProjectApplicationPort {
 
+    List<Long> listApprovedApplicantMemberIdsByGisuId(Long gisuId);
+
     /**
      * 단건 조회. 권한 판정/단건 액션에서 사용합니다.
      */

@@ -20,6 +20,8 @@ import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 
 @Component
@@ -27,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, SaveProjectMemberPort {
 
     private final ProjectMemberJpaRepository repository;
+    private final EntityManager entityManager;
     private final ProjectMemberQueryRepository queryRepository;
 
     @Override
@@ -133,6 +136,13 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     @Override
     public Optional<ProjectMember> findByProjectIdAndMemberId(Long projectId, Long memberId) {
         return repository.findByProjectIdAndMemberId(projectId, memberId);
+    }
+
+    @Override
+    public Optional<ProjectMember> findByProjectIdAndMemberIdForUpdate(Long projectId, Long memberId) {
+        Optional<ProjectMember> member = repository.findByProjectIdAndMemberIdForUpdate(projectId, memberId);
+        member.ifPresent(value -> entityManager.refresh(value, LockModeType.PESSIMISTIC_WRITE));
+        return member;
     }
 
     @Override

@@ -40,6 +40,7 @@ import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.application.service.policy.ProjectManualMatchingAccessPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
@@ -144,7 +145,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
             partQuotaPermissions(context),
             statusPermissions(context),
             applicationPermissions(requesterMemberId, subject, context),
-            memberPermissions(context),
+            memberPermissions(subject, context),
             statisticsPermissions(requesterMemberId, project)
         );
     }
@@ -363,7 +364,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         return ProjectPermissionCapabilityInfo.allow();
     }
 
-    private MemberPermissions memberPermissions(ProjectCapabilityContext context) {
+    private MemberPermissions memberPermissions(SubjectAttributes subject, ProjectCapabilityContext context) {
         ProjectPermissionCapabilityInfo read = requirePermission(
             context.projectPermission(PermissionType.READ),
             ProjectPermissionCapabilityInfo::allow
@@ -372,7 +373,14 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
             context.projectPermission(PermissionType.EDIT),
             ProjectPermissionCapabilityInfo::allow
         );
-        return new MemberPermissions(read, edit, edit);
+        Project project = context.project();
+        boolean staff = ProjectManualMatchingAccessPolicy.canManage(subject.toAuthoritySnapshot(), project);
+        ProjectPermissionCapabilityInfo assign = requirePermission(staff && project.getStatus() == ProjectStatus.IN_PROGRESS,
+            ProjectPermissionCapabilityInfo::allow);
+        ProjectPermissionCapabilityInfo unassign = requirePermission(staff
+            && project.getStatus() != ProjectStatus.COMPLETED && project.getStatus() != ProjectStatus.ABORTED,
+            ProjectPermissionCapabilityInfo::allow);
+        return new MemberPermissions(read, edit, edit, assign, unassign);
     }
 
     private StatisticsPermissions statisticsPermissions(Long requesterMemberId, Project project) {

@@ -143,6 +143,22 @@ public class ProjectMember extends BaseEntity {
         return pm;
     }
 
+    /** 재배정은 지원서·차수 선발 경로와 구분하여 즉시 ACTIVE로 반영한다. */
+    public void assignManually(ChallengerPart part, Long requesterMemberId) {
+        if (status == ProjectMemberStatus.ACTIVE || status == ProjectMemberStatus.PENDING_PUBLICATION) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_ALREADY_EXISTS);
+        }
+        this.status = ProjectMemberStatus.ACTIVE;
+        this.part = part;
+        this.application = null;
+        this.assignedMatchingRound = null;
+        this.decidedMemberId = requesterMemberId;
+        this.decidedAt = Instant.now();
+        this.statusUpdatedAt = decidedAt;
+        this.statusChangedMemberId = requesterMemberId;
+        this.statusChangeReason = "운영진 수동 배정";
+    }
+
     /**
      * 발표할 수 있는 차수의 PENDING_PUBLICATION 멤버를 ACTIVE로 변경합니다.
      */

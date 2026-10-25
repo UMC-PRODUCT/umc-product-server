@@ -45,6 +45,11 @@ public interface ProjectMemberJpaRepository extends JpaRepository<ProjectMember,
 
     Optional<ProjectMember> findByProjectIdAndMemberId(Long projectId, Long memberId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select pm from ProjectMember pm where pm.project.id = :projectId and pm.memberId = :memberId")
+    Optional<ProjectMember> findByProjectIdAndMemberIdForUpdate(@Param("projectId") Long projectId,
+        @Param("memberId") Long memberId);
+
     @Query("SELECT pm.part, COUNT(pm) FROM ProjectMember pm "
         + "WHERE pm.project.id = :projectId AND pm.status = :status "
         + "GROUP BY pm.part")

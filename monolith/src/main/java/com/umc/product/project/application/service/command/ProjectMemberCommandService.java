@@ -3,8 +3,11 @@ package com.umc.product.project.application.service.command;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.command.AddProjectMemberUseCase;
 import com.umc.product.project.application.port.in.command.ChangeProjectMemberStatusUseCase;
+import com.umc.product.project.application.port.in.command.ManageProjectMatchingUseCase;
 import com.umc.product.project.application.port.in.command.RemoveProjectMemberUseCase;
 import com.umc.product.project.application.port.in.command.dto.AddProjectMemberCommand;
 import com.umc.product.project.application.port.in.command.dto.ChangeProjectMemberStatusCommand;
@@ -27,12 +30,17 @@ import lombok.extern.slf4j.Slf4j;
 public class ProjectMemberCommandService
     implements AddProjectMemberUseCase, RemoveProjectMemberUseCase, ChangeProjectMemberStatusUseCase {
 
+    private final ManageProjectMatchingUseCase manageProjectMatchingUseCase;
+    private final GetChallengerUseCase getChallengerUseCase;
     private final LoadProjectPort loadProjectPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final SaveProjectMemberPort saveProjectMemberPort;
 
     @Override
     public Long add(AddProjectMemberCommand command) {
+        if (command.part() != ChallengerPart.PLAN) {
+            return manageProjectMatchingUseCase.assign(command);
+        }
         Project project = loadProjectPort.getById(command.projectId());
         project.validateMutable();
 
@@ -41,6 +49,10 @@ public class ProjectMemberCommandService
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_ALREADY_EXISTS);
             });
 
+        if (getChallengerUseCase.getActiveByMemberIdAndGisuId(command.memberId(), project.getGisuId()).part()
+            != ChallengerPart.PLAN) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_OWNER_NOT_PLAN_CHALLENGER);
+        }
         ProjectMember member = ProjectMember.create(
             project, command.memberId(), command.part(), command.requesterMemberId());
         return saveProjectMemberPort.save(member).getId();
@@ -68,6 +80,11 @@ public class ProjectMemberCommandService
 
         ProjectMember member = loadProjectMemberPort
             .getByProjectIdAndMemberId(command.projectId(), command.memberId());
+
+        if (member.getPart() != ChallengerPart.PLAN) {
+            manageProjectMatchingUseCase.unassign(command);
+            return;
+        }
 
         log.info(
             "[ProjectMember hardDelete] projectId={}, memberId={}, projectMemberId={}, requesterMemberId={}, reason={}",
@@ -97,6 +114,10 @@ public class ProjectMemberCommandService
         ProjectMember member = loadProjectMemberPort
             .getByProjectIdAndMemberId(command.projectId(), command.memberId());
 
+        if (member.getPart() != ChallengerPart.PLAN) {
+            manageProjectMatchingUseCase.changeStatus(command);
+            return;
+        }
         member.changeStatus(command.status(), command.requesterMemberId(), command.reason());
         saveProjectMemberPort.save(member);
     }

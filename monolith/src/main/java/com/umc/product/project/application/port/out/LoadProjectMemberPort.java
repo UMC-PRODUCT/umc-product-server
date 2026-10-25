@@ -105,6 +105,8 @@ public interface LoadProjectMemberPort {
      */
     ProjectMember getByProjectIdAndMemberId(Long projectId, Long memberId);
 
+    Optional<ProjectMember> findByProjectIdAndMemberIdForUpdate(Long projectId, Long memberId);
+
     /**
      * 해당 기수에 ACTIVE 또는 PENDING_PUBLICATION 멤버가 존재하는지 확인합니다. (중복 지원 방지용)
      */

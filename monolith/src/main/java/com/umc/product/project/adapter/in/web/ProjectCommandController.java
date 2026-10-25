@@ -154,7 +154,11 @@ public class ProjectCommandController {
     @Operation(
         operationId = "PROJECT-004",
         summary = "프로젝트 팀원 추가",
-        description = "프로젝트에 멤버를 추가합니다. 보조 PM 추가는 part = PLAN. DRAFT 단계에선 PM 본인만, IN_PROGRESS 에선 운영진(중앙 총괄단)도 호출 가능."
+        description = """
+            PLAN 파트는 기존 보조 PM 관리 권한을 사용합니다.
+            일반 파트는 해당 기수 총괄단·담당 지부장만 수동 배정할 수 있으며, 기수·파트·매칭 지부·중복·정원을 검증합니다.
+            운영진 수동 배정 전용 경로는 /api/v1/projects/admin/{projectId}/members 입니다.
+            """
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
@@ -287,7 +291,8 @@ public class ProjectCommandController {
             프로젝트에서 멤버 행을 완전히 삭제합니다. 동일 멤버를 같은 프로젝트에 재등록할 수 있습니다.
             DRAFT/PENDING_REVIEW/IN_PROGRESS 프로젝트 단계에서만 가능하며, 종료(COMPLETED/ABORTED) 프로젝트는 이력 보존을 위해 거부됩니다.
             상태 변경 히스토리를 남겨야 하면 [PROJECT-006] API 를 사용하세요.
-            메인 PM 은 양도 API 로 변경해야 합니다.
+            일반 파트의 제거는 해당 기수 총괄단·담당 지부장만 가능하며 연결 지원서를 불합격으로 변경합니다.
+            보조 PM 관리는 기존 권한을 유지합니다. 메인 PM 은 양도 API 로 변경해야 합니다.
             reason 은 DB 에는 남지 않고 감사 로그로만 기록됩니다.
             """
     )
@@ -317,7 +322,9 @@ public class ProjectCommandController {
         summary = "프로젝트 팀원 상태 변경 (soft delete)",
         description = """
             멤버 행을 보존한 채 status 를 변경합니다(COMPLETED/WITHDRAWN/DISMISSED 등).
-            변경 사유(reason)는 필수입니다.
+            변경 사유(reason)는 필수입니다. 보조 PM 관리는 기존 권한을 유지합니다.
+            일반 파트는 해당 기수 총괄단·담당 지부장만 변경할 수 있습니다.
+            활동 해제 시 연결 지원서는 불합격으로 변경하며, ACTIVE 복귀 시 수동 배정 검증을 다시 적용합니다.
             종료(COMPLETED/ABORTED) 프로젝트와 메인 PM 은 거부됩니다. 동일 멤버 재등록이 필요하면 hard delete(DELETE) 를 사용하세요.
             """
     )
