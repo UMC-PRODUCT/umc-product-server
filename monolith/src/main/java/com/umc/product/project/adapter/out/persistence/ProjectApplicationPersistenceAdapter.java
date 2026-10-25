@@ -26,6 +26,11 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     private final ProjectApplicationQueryRepository projectApplicationQueryRepository;
 
     @Override
+    public List<Long> listApprovedApplicantMemberIdsByGisuId(Long gisuId) {
+        return projectApplicationJpaRepository.findApplicantMemberIdsByGisuIdAndStatus(gisuId, ProjectApplicationStatus.APPROVED);
+    }
+
+    @Override
     public Optional<ProjectApplication> findById(Long id) {
         return projectApplicationJpaRepository.findById(id);
     }

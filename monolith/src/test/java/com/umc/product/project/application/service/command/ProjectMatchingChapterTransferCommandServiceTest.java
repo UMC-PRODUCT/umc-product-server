@@ -37,6 +37,7 @@ import com.umc.product.project.application.port.in.query.dto.ProjectMatchingChap
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingChapterTransferPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
+import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMatchingChapterTransferPort;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
@@ -83,6 +84,9 @@ class ProjectMatchingChapterTransferCommandServiceTest {
     GetChapterUseCase getChapterUseCase;
     @Mock
     CheckChallengerAuthorityUseCase checkChallengerAuthorityUseCase;
+
+    @Mock
+    LockProjectMatchingPort lockProjectMatchingPort;
 
     @InjectMocks
     ProjectMatchingChapterTransferCommandService sut;

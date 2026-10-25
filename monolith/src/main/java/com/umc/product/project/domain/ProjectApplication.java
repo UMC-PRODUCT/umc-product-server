@@ -137,6 +137,11 @@ public class ProjectApplication extends BaseEntity {
         applyDecision(ProjectApplicationStatus.SUBMITTED, decidedByMemberId, reason, true);
     }
 
+    /** 운영진 매칭 해제는 차수·결정 마감과 관계없이 불합격으로 반영한다. */
+    public void rejectForMatchingRelease(Long requesterMemberId, String reason) {
+        applyDecision(ProjectApplicationStatus.REJECTED, requesterMemberId, reason, false);
+    }
+
     private void applyDecision(
         ProjectApplicationStatus targetStatus, Long decidedByMemberId, String reason, boolean validateDecisionPeriod
     ) {

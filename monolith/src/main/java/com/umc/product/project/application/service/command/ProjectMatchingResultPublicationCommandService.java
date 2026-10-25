@@ -12,6 +12,7 @@ import com.umc.product.project.application.port.in.command.PublishProjectMatchin
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
+import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectMatchingRound;
@@ -33,12 +34,14 @@ import lombok.RequiredArgsConstructor;
 public class ProjectMatchingResultPublicationCommandService implements PublishProjectMatchingResultUseCase {
 
     private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
+    private final LockProjectMatchingPort lockProjectMatchingPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final SaveProjectApplicationPort saveProjectApplicationPort;
 
     @Override
     public boolean publish(Long matchingRoundId) {
+        lockProjectMatchingPort.lockByRoundId(matchingRoundId);
         ProjectMatchingRound round;
         try {
             round = loadProjectMatchingRoundPort.getByIdForUpdate(matchingRoundId);

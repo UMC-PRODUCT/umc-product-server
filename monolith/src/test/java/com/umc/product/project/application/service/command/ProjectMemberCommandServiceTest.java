@@ -17,7 +17,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.application.port.in.command.ManageProjectMatchingUseCase;
 import com.umc.product.project.application.port.in.command.dto.AddProjectMemberCommand;
 import com.umc.product.project.application.port.in.command.dto.ChangeProjectMemberStatusCommand;
 import com.umc.product.project.application.port.in.command.dto.RemoveProjectMemberCommand;
@@ -41,6 +44,11 @@ class ProjectMemberCommandServiceTest {
     @Mock
     SaveProjectMemberPort saveProjectMemberPort;
 
+    @Mock
+    GetChallengerUseCase getChallengerUseCase;
+    @Mock
+    ManageProjectMatchingUseCase manageProjectMatchingUseCase;
+
     @InjectMocks
     ProjectMemberCommandService sut;
 
@@ -52,6 +60,8 @@ class ProjectMemberCommandServiceTest {
         given(loadProjectPort.getById(projectId)).willReturn(project);
         given(loadProjectMemberPort.findByProjectIdAndMemberId(projectId, 200L))
             .willReturn(Optional.empty());
+        given(getChallengerUseCase.getActiveByMemberIdAndGisuId(org.mockito.ArgumentMatchers.eq(200L), any()))
+            .willReturn(ChallengerInfo.builder().part(ChallengerPart.PLAN).build());
         given(saveProjectMemberPort.save(any(ProjectMember.class))).willAnswer(inv -> {
             ProjectMember pm = inv.getArgument(0);
             ReflectionTestUtils.setField(pm, "id", 999L);

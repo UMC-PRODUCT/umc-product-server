@@ -111,14 +111,18 @@ public record ProjectPermissionsResponse(
     public record MemberPermissionsResponse(
         ProjectPermissionCapabilityInfo canRead,
         ProjectPermissionCapabilityInfo canCreate,
-        ProjectPermissionCapabilityInfo canDelete
+        ProjectPermissionCapabilityInfo canDelete,
+        ProjectPermissionCapabilityInfo canAssign,
+        ProjectPermissionCapabilityInfo canUnassign
     ) {
 
         private static MemberPermissionsResponse from(ProjectPermissionInfo.MemberPermissions permissions) {
             return new MemberPermissionsResponse(
                 permissions.canRead(),
                 permissions.canCreate(),
-                permissions.canDelete()
+                permissions.canDelete(),
+                permissions.canAssign(),
+                permissions.canUnassign()
             );
         }
     }

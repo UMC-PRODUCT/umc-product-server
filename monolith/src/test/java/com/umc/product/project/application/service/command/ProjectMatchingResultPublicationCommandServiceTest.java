@@ -20,6 +20,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
+import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
@@ -48,6 +49,8 @@ class ProjectMatchingResultPublicationCommandServiceTest {
     LoadProjectApplicationPort loadProjectApplicationPort;
     @Mock
     SaveProjectApplicationPort saveProjectApplicationPort;
+    @Mock
+    LockProjectMatchingPort lockProjectMatchingPort;
     @InjectMocks
     ProjectMatchingResultPublicationCommandService sut;
 
