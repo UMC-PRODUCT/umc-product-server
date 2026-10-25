@@ -91,6 +91,7 @@ class CommunityAlarmEventListenerTest {
         assertThat(command.memberIds()).containsExactly(RECIPIENT_ID);
         assertThat(command.title()).isEqualTo("테스트방 홍길동");
         assertThat(command.body()).isEqualTo("새 메시지");
+        assertThat(command.deepLink()).isEqualTo("umc://thread/" + THREAD_ID);
     }
 
     @Test
@@ -263,6 +264,7 @@ class CommunityAlarmEventListenerTest {
         assertThat(command.memberIds()).containsExactly(RECIPIENT_ID, MUTED_ID);
         assertThat(command.title()).isEqualTo(THREAD_TITLE);
         assertThat(command.body()).isEqualTo("홍길동님의 초대로 스레드에 참여했어요");
+        assertThat(command.deepLink()).isEqualTo("umc://thread/" + THREAD_ID);
     }
 
     @Test
