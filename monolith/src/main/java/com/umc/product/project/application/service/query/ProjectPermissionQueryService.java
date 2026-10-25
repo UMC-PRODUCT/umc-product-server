@@ -387,18 +387,8 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
 
     private ProjectPermissionCapabilityInfo canDeleteProject(ProjectCapabilityContext context) {
         return requirePermission(context.projectPermission(PermissionType.DELETE), () -> {
-            ProjectStatus status = context.project().getStatus();
-            if (status == ProjectStatus.IN_PROGRESS) {
-                return ProjectPermissionCapabilityInfo.denied(
-                    ProjectPermissionReason.INVALID_PROJECT_STATUS,
-                    "진행 중인 프로젝트는 중단 기능을 이용해주세요."
-                );
-            }
-            if (status != ProjectStatus.DRAFT && status != ProjectStatus.PENDING_REVIEW) {
-                return ProjectPermissionCapabilityInfo.denied(
-                    ProjectPermissionReason.INVALID_PROJECT_STATUS,
-                    "현재 상태에서는 프로젝트를 삭제할 수 없습니다."
-                );
+            if (context.hasOpenMatchingRound()) {
+                return ProjectPermissionCapabilityInfo.denied(ProjectPermissionReason.APPLICATION_PERIOD_IN_PROGRESS);
             }
             return ProjectPermissionCapabilityInfo.allow();
         });

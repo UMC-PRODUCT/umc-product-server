@@ -4,7 +4,9 @@ import static com.umc.product.project.domain.QProject.project;
 import static com.umc.product.project.domain.QProjectMember.projectMember;
 import static com.umc.product.project.domain.QProjectPartQuota.projectPartQuota;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -17,6 +19,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLQuery;
@@ -49,7 +52,9 @@ public class ProjectQueryRepository {
         JPQLQuery<Project> contentQuery = queryFactory
             .selectFrom(project)
             .where(condition)
-            .orderBy(toOrderSpecifiers(pageable.getSort()));
+            .orderBy(query.managedStatusOrder()
+                ? managedOrderSpecifiers(pageable.getSort())
+                : toOrderSpecifiers(pageable.getSort()));
 
         // Pageable.unpaged() 는 offset/pageSize 호출 시 UnsupportedOperationException 을 던지므로
         // 페이징 요청일 때만 offset/limit 을 적용하고, unpaged 면 조건에 맞는 전건을 반환한다.
@@ -211,6 +216,25 @@ public class ProjectQueryRepository {
         return (statuses != null && !statuses.isEmpty())
             ? project.status.in(statuses)
             : null;
+    }
+
+    /**
+     * 관리 목록은 등록완료 → 승인대기 → 임시저장 → 기타 상태 순서로 정렬한다.
+     * 임시저장만 최신 생성 순으로 고정하고, 나머지는 기존 요청 정렬을 유지한다.
+     */
+    private OrderSpecifier<?>[] managedOrderSpecifiers(Sort sort) {
+        List<OrderSpecifier<?>> specifiers = new ArrayList<>();
+        specifiers.add(new CaseBuilder()
+            .when(project.status.eq(ProjectStatus.IN_PROGRESS)).then(0)
+            .when(project.status.eq(ProjectStatus.PENDING_REVIEW)).then(1)
+            .when(project.status.eq(ProjectStatus.DRAFT)).then(2)
+            .otherwise(3).asc());
+        specifiers.add(new CaseBuilder()
+            .when(project.status.eq(ProjectStatus.DRAFT)).then(project.createdAt)
+            .otherwise((Instant)null).desc());
+        specifiers.addAll(Arrays.asList(toOrderSpecifiers(sort)));
+        specifiers.add(project.id.asc());
+        return specifiers.toArray(new OrderSpecifier<?>[0]);
     }
 
     /**

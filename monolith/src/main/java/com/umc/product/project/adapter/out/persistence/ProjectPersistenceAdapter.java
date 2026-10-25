@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
@@ -15,6 +16,8 @@ import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 
 @Component
@@ -22,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 public class ProjectPersistenceAdapter implements LoadProjectPort, SaveProjectPort {
 
     private final ProjectJpaRepository jpaRepository;
+    private final EntityManager entityManager;
     private final ProjectQueryRepository queryRepository;
 
     @Override
@@ -33,6 +37,14 @@ public class ProjectPersistenceAdapter implements LoadProjectPort, SaveProjectPo
     public Project getById(Long id) {
         return jpaRepository.findById(id)
             .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_NOT_FOUND));
+    }
+
+    @Override
+    public Project getByIdForUpdate(Long id) {
+        Project project = jpaRepository.findByIdForUpdate(id)
+            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_NOT_FOUND));
+        entityManager.refresh(project, LockModeType.PESSIMISTIC_WRITE);
+        return project;
     }
 
     @Override
@@ -54,21 +66,15 @@ public class ProjectPersistenceAdapter implements LoadProjectPort, SaveProjectPo
     }
 
     @Override
-    public Optional<Project> findDraftByCreatorAndGisu(Long creatorMemberId, Long gisuId) {
-        return jpaRepository.findByCreatorMemberIdAndGisuIdAndStatus(
+    public Optional<Project> findLatestDraftByCreatorAndGisu(Long creatorMemberId, Long gisuId) {
+        return jpaRepository.findFirstByCreatorMemberIdAndGisuIdAndStatusOrderByCreatedAtDescIdDesc(
             creatorMemberId, gisuId, ProjectStatus.DRAFT);
     }
 
     @Override
-    public boolean existsDraftByCreatorAndGisu(Long creatorMemberId, Long gisuId) {
-        return jpaRepository.existsByCreatorMemberIdAndGisuIdAndStatus(
-            creatorMemberId, gisuId, ProjectStatus.DRAFT);
-    }
-
-    @Override
-    public boolean existsDraftByOwnerAndGisu(Long productOwnerMemberId, Long gisuId) {
-        return jpaRepository.existsByProductOwnerMemberIdAndGisuIdAndStatus(
-            productOwnerMemberId, gisuId, ProjectStatus.DRAFT);
+    public Page<Project> searchDraftsByCreatorAndGisu(Long creatorMemberId, Long gisuId, Pageable pageable) {
+        return jpaRepository.findAllByCreatorMemberIdAndGisuIdAndStatus(
+            creatorMemberId, gisuId, ProjectStatus.DRAFT, pageable);
     }
 
     @Override

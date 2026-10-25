@@ -1,8 +1,8 @@
-# 매칭 자동 선발과 4차 랜덤 매칭·결과 발표
+# 매칭 자동 선발과 랜덤 매칭·결과 발표
 
 ## 목적
 
-1~3차는 PM 결정 마감 이후 최소 선발 인원을 보충하고, 남은 TO는 별도의 `FOURTH` 차수에서 랜덤 매칭한다. `PLAN_DESIGN`과 `PLAN_DEVELOPER` 모두 같은 일정 구조를 사용한다. 발표 시각이 있는 차수는 멤버를 `PENDING_PUBLICATION`으로 생성한 뒤 발표 작업에서 `ACTIVE`로 변경한다.
+1~3차는 PM 결정 마감 이후 최소 선발 인원을 보충하고, 남은 TO는 별도의 `RANDOM_MATCHING` 차수에서 랜덤 매칭한다. `PLAN_DESIGN`과 `PLAN_DEVELOPER` 모두 같은 일정 구조를 사용한다. 발표 시각이 있는 차수는 멤버를 `PENDING_PUBLICATION`으로 생성한 뒤 발표 작업에서 `ACTIVE`로 변경한다.
 
 랜덤 매칭으로 생성된 멤버는 지원서가 없으므로 `ProjectMember.application = null`로 저장되고, `assignedMatchingRound`에 해당 차수가 기록된다. 사용자 지원 내역 화면에서는 이 케이스를 `RANDOM_MATCHING` 카드로 합성한다.
 
@@ -11,13 +11,13 @@
 자동 선발 진입점은 `AutoDecideProjectMatchingRoundUseCase.autoDecide(matchingRoundId, executedByMemberId)` 하나다.
 
 - 1~3차 스케줄러 호출: `decisionDeadline + app.project.matching-round.deadline-buffer-minutes` 시점에 실행한다. 기본 buffer는 1분이다.
-- 4차 스케줄러 호출: `startsAt`에 랜덤 매칭을 실행한다.
+- 랜덤 매칭 스케줄러 호출: `startsAt`에 랜덤 매칭을 실행한다.
 - 결과 발표: `resultPublishAt`에 `PublishProjectMatchingResultUseCase.publish`를 호출한다.
 - 운영진 수동 호출: `POST /api/v1/project/matching-rounds/{matchingRoundId}/auto-decide`.
 - `executedByMemberId == null`이면 스케줄러 호출로 보고 권한 검증을 생략한다.
 - `executedByMemberId != null`이면 슈퍼어드민, 중앙운영사무국 총괄단 이상 또는 해당 지부 지부장만 실행할 수 있다.
 - `autoDecisionExecutedAt`이 이미 있으면 멱등 no-op으로 종료한다.
-- 수동 실행도 1~3차는 결정 마감 이후, 4차는 시작 시각부터 가능하다. 그 전에는 `PROJECT_MATCHING_ROUND_NOT_FINALIZABLE` 예외가 발생한다.
+- 수동 실행도 1~3차는 결정 마감 이후, 랜덤 매칭은 시작 시각부터 가능하다. 그 전에는 `PROJECT_MATCHING_ROUND_NOT_FINALIZABLE` 예외가 발생한다.
 
 관련 구현:
 
@@ -30,11 +30,11 @@
 
 ## 전체 처리 순서
 
-1. 1~3차는 지원서와 최소 선발 정책으로 선발할 인원을 정한다. 4차는 지원서 없이 잔여 TO에 랜덤 매칭한다.
+1. 1~3차는 지원서와 최소 선발 정책으로 선발할 인원을 정한다. 랜덤 매칭은 지원서 없이 잔여 TO에 배정한다.
 2. 팀원을 `PENDING_PUBLICATION`으로 저장하고 차수의 자동 선발 완료 시각을 기록한다. 지원서는 PM의 마지막 결정값을 유지한다.
 3. 발표 작업에서 멤버를 `PENDING_PUBLICATION`에서 `ACTIVE`로 변경하고 지원서 합불을 반영한 뒤 공개 완료 시각을 기록한다.
 
-1~3차에서 생성한 멤버는 `application`이 연결되고, 4차 랜덤 매칭은 `application = null`이다. 두 경우 모두 `assignedMatchingRound`에 해당 차수를 기록한다. 발표 시각이 없는 기존 차수는 자동 선발 시 `ACTIVE` 멤버를 생성하고 지원서 합불을 즉시 반영한다.
+1~3차에서 생성한 멤버는 `application`이 연결되고, 랜덤 매칭은 `application = null`이다. 두 경우 모두 `assignedMatchingRound`에 해당 차수를 기록한다. 발표 시각이 없는 기존 차수는 자동 선발 시 `ACTIVE` 멤버를 생성하고 지원서 합불을 즉시 반영한다.
 
 ## 1~3차: 지원서 기준 자동 선발
 
@@ -101,15 +101,15 @@
 - `statusChangeReason = "auto-decide"`
 - `statusChangedAt = now`
 
-## 4차: 잔여 TO 랜덤 매칭
+## 랜덤 매칭: 잔여 TO 배정
 
-`phase == FOURTH`인 차수의 시작 시각에 실행한다. 3차 자동 선발에서는 랜덤 매칭을 실행하지 않는다.
+`phase == RANDOM_MATCHING`인 차수의 시작 시각에 실행한다. 3차 자동 선발에서는 랜덤 매칭을 실행하지 않는다.
 
-1~3차는 `startsAt < endsAt < decisionDeadline < resultPublishAt`, 4차는 `startsAt < endsAt = decisionDeadline < resultPublishAt`으로 입력한다. 모든 차수의 `resultPublishAt`은 `decisionDeadline`으로부터 최소 5분 이후여야 한다. 같은 지부·유형에서는 이전 차수의 발표 시각이 다음 차수의 시작 시각보다 늦을 수 없다.
+1~3차는 `startsAt < endsAt < decisionDeadline < resultPublishAt`, 랜덤 매칭은 `startsAt < endsAt = decisionDeadline < resultPublishAt`으로 입력한다. 모든 차수의 `resultPublishAt`은 `decisionDeadline`으로부터 최소 5분 이후여야 한다. 같은 지부·유형에서는 이전 차수의 발표 시각이 다음 차수의 시작 시각보다 늦을 수 없다.
 
 1~3차 자동 선발이 PM 마감 후 기본 1분 뒤 실행되므로, 발표 전 선발 처리 시간을 확보하기 위해 최소 5분 간격을 둔다.
 
-4차의 `endsAt`과 `decisionDeadline`은 일정 검증에 사용하며, 랜덤 매칭은 `startsAt`, 결과 발표는 `resultPublishAt`을 기준으로 한다.
+랜덤 매칭의 `endsAt`과 `decisionDeadline`은 일정 검증에 사용하며, 랜덤 매칭은 `startsAt`, 결과 발표는 `resultPublishAt`을 기준으로 한다.
 
 ### 대상 프로젝트
 
@@ -124,13 +124,10 @@
 
 `PLAN_DESIGN`은 `DESIGN`, `PLAN_DEVELOPER`는 아래 개발 파트를 대상으로 한다.
 
-- `WEB`
-- `ANDROID`
-- `IOS`
-- `NODEJS`
-- `SPRINGBOOT`
+- `WEB_PRODUCT_ENGINEER`
+- `MOBILE_PRODUCT_ENGINEER`
 
-`PLAN`과 `ADMIN`은 랜덤 매칭 대상에서 제외한다. `WEB_PRODUCT_ENGINEER`와 `MOBILE_PRODUCT_ENGINEER`의 랜덤 매칭 지원은 이번 구현에 포함하지 않는다.
+`PLAN`과 `ADMIN`, 과거 개발 파트는 랜덤 매칭 대상에서 제외한다. 과거 개발 파트의 결과 조회는 유지한다.
 
 ### 잔여 TO 산정
 
@@ -197,14 +194,14 @@
 
 주요 케이스:
 
-- `차수_유형에_맞는_파트만_4차에서_랜덤_매칭하고_PENDING_PUBLICATION으로_생성한다`
+- `매칭_유형에_해당하는_파트를_PENDING_PUBLICATION_상태로_배정한다`
 - `일반_차수_종료_후에는_잔여_TO_랜덤_매칭을_하지_않는다`
-- `개발자_4차_시작_전에는_랜덤_매칭을_실행할_수_없다`
+- `개발자_랜덤_매칭은_시작_시각_전에는_실행할_수_없다`
 - `이전_차수_active_멤버가_있으면_남은_TO_기준으로_정책이_적용된다`
 - `남은_TO가_0이면_의무_없음으로_처리되어_SUBMITTED는_모두_REJECTED`
 
 ## 배포 시 확인 사항
 
-- 3차 종료 시 랜덤 매칭은 실행하지 않으므로 지부별로 4차 차수를 등록해야 한다. 배포 당시 진행 중인 3차도 같은 처리를 따른다.
+- 3차 종료 시 랜덤 매칭은 실행하지 않으므로 지부별로 RANDOM_MATCHING 차수를 등록해야 한다. 배포 당시 진행 중인 3차도 같은 처리를 따른다.
 - 차수 생성 요청에는 `resultPublishAt`이 필수다. 프론트의 입력·요청 변경과 서버 배포 순서를 맞춰야 한다.
 - 기존 차수의 일정은 이번 검증 추가로 자동 변경되지 않는다. 이미 등록된 차수도 이전 발표 시각과 다음 시작 시각을 확인한다.

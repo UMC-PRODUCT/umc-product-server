@@ -84,7 +84,7 @@ public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDead
         Long roundId = round.getId();
         cancel(roundId);
 
-        // 4차는 시작 시각에 랜덤 매칭하고, 일반 차수는 PM 마감 이후 자동 선발한다.
+        // 랜덤 매칭은 시작 시각에 실행하고, 일반 차수는 PM 마감 이후 자동 선발한다.
         Instant runAt = round.isRandomMatching() ? round.getStartsAt() : round.getDecisionDeadline().plus(deadlineBuffer);
         // 동적 등록 task 는 @Scheduled 가 아니라 Spring 의 관측 span 이 붙지 않는다.
         // 실행 시 새 root span 을 열어 마감 자동 선발 처리를 하나의 traceId 로 묶는다.

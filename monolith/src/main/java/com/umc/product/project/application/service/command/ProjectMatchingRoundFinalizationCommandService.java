@@ -2,7 +2,9 @@ package com.umc.product.project.application.service.command;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -11,6 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -30,6 +33,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.project.application.port.in.command.AutoDecideProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
@@ -40,6 +44,7 @@ import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.application.service.policy.AutoDecisionResult;
 import com.umc.product.project.application.service.policy.MatchingDecisionPolicy;
+import com.umc.product.project.application.service.policy.MatchingSchoolContext;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver.ChapterTransferDelta;
 import com.umc.product.project.domain.Project;
@@ -56,13 +61,8 @@ import com.umc.product.project.domain.exception.ProjectErrorCode;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 1~3차 자동 선발과 4차 랜덤 매칭을 실행하는 서비스 (MATCHING-201 + 스케줄러 공통 진입점).
- * <p>
- * CRUD lifecycle (생성/수정/삭제) 은 {@link ProjectMatchingRoundCommandService} 가 책임지며,
- * 본 서비스는 1~3차 결정 마감 후의 선발과 4차 시작 시점의 랜덤 매칭을 담당한다.
- * <p>
- * CRUD 와 분리한 이유: lifecycle 호출 흐름({@code Service → Registry})과 트리거 흐름
- * ({@code Registry → Service}) 의 양 방향이 한 클래스에 모이면 순환 의존성이 발생하기 때문이다.
+ * 운영진 수동 실행과 스케줄러 호출을 받아 1~3차 자동 선발과 랜덤 매칭을 처리한다.
+ * 차수 관리 서비스는 작업을 예약하고, 스케줄러는 이 서비스를 호출하므로 순환 의존성을 피하도록 분리한다.
  */
 @Service
 @RequiredArgsConstructor
@@ -71,12 +71,10 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     AutoDecideProjectMatchingRoundUseCase {
 
     private static final int RANDOM_ASSIGNMENT_SEARCH_PAGE_SIZE = 500;
-    private static final Set<ChallengerPart> DEVELOPER_PARTS = Set.of(
-        ChallengerPart.WEB,
-        ChallengerPart.ANDROID,
-        ChallengerPart.IOS,
-        ChallengerPart.NODEJS,
-        ChallengerPart.SPRINGBOOT
+    // 랜덤 매칭 개발자 배정은 WEB_PRODUCT_ENGINEER·MOBILE_PRODUCT_ENGINEER만 대상으로 하며, 과거 개발 파트는 조회에서만 지원한다.
+    private static final Set<ChallengerPart> RANDOM_ASSIGNMENT_DEVELOPER_PARTS = Set.of(
+        ChallengerPart.WEB_PRODUCT_ENGINEER,
+        ChallengerPart.MOBILE_PRODUCT_ENGINEER
     );
 
     private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
@@ -90,9 +88,14 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     private final Random matchingRandom;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
+    private final GetMemberUseCase getMemberUseCase;
     private final SearchChallengerUseCase searchChallengerUseCase;
     private final ProjectMatchingChapterResolver matchingChapterResolver;
 
+    /**
+     * 1~3차는 PM 결정 마감 후 최소 선발 인원을 보충하고, 랜덤 매칭은 시작 시각부터 미배정 챌린저를 배정한다.
+     * 발표 시각이 있는 차수의 선발 결과는 PENDING_PUBLICATION 멤버로 저장하고, 결과 공개는 발표 서비스에서 처리한다.
+     */
     @Audited(
         domain = Domain.PROJECT,
         action = AuditAction.FINALIZE,
@@ -102,65 +105,79 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     )
     @Override
     public void autoDecide(Long matchingRoundId, Long executedByMemberId) {
+        // 같은 차수의 동시 실행을 막고, 잠금을 획득한 뒤 실행 완료 여부를 확인한다.
         ProjectMatchingRound round = loadProjectMatchingRoundPort.getByIdForUpdate(matchingRoundId);
 
-        // executedByMemberId == null 은 스케줄러 호출. 권한 검증은 운영진 수동 호출에만 적용.
+        // 스케줄러는 실행 회원 ID 없이 호출하므로 운영진 수동 실행에만 권한을 검증한다.
         if (executedByMemberId != null) {
             validateManageAccess(executedByMemberId, round.getChapterId());
         }
 
+        // 이미 처리한 차수는 재호출돼도 추가 선발·배정하지 않는다.
         if (round.getAutoDecisionExecutedAt() != null) {
             return;
         }
+
+        List<ProjectMember> membersToSave;
         if (round.isRandomMatching()) {
+            // 랜덤 매칭은 지원서 없이 시작 시각부터 미배정 챌린저를 잔여 모집 정원에 배정한다.
             if (Instant.now().isBefore(round.getStartsAt())) {
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FINALIZABLE);
             }
-            List<ProjectMember> assignments = buildRandomAssignedMembers(round, executedByMemberId);
-            if (!assignments.isEmpty()) {
-                saveProjectMemberPort.saveAll(assignments);
+            membersToSave = buildRandomAssignedMembers(round, executedByMemberId);
+        } else {
+            // 1~3차는 PM 결정 마감 후 최소 선발 인원을 보충한다.
+            if (!round.isDecisionDeadlinePassed(Instant.now())) {
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FINALIZABLE);
             }
-            round.executeAutoDecision(executedByMemberId);
-            return;
-        }
-        if (!round.isDecisionDeadlinePassed(Instant.now())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FINALIZABLE);
-        }
-
-        MatchingDecisionPolicy policy = resolvePolicy(round.getType());
-
-        List<ProjectApplication> applicants = loadProjectApplicationPort
-            .listByMatchingRoundId(matchingRoundId).stream()
-            .filter(a -> isDecidableStatus(a.getStatus()))
-            .toList();
-
-        List<ProjectMember> membersToSave = new ArrayList<>();
-        if (!applicants.isEmpty()) {
-            Map<Long, ChallengerPart> applicantPart = resolveApplicantParts(applicants);
-            Map<ProjectPartKey, List<ProjectApplication>> grouped = groupByProjectAndPart(applicants, applicantPart);
-
-            Map<ProjectPartKey, Integer> remainingQuotaByKey = buildRemainingQuotaMap(grouped.keySet());
-
-            Set<Long> approvedIds = new HashSet<>();
-            for (Map.Entry<ProjectPartKey, List<ProjectApplication>> entry : grouped.entrySet()) {
-                int quota = remainingQuotaByKey.getOrDefault(entry.getKey(), 0);
-                AutoDecisionResult result = policy.decideAutomatically(entry.getValue(), quota, matchingRandom);
-                approvedIds.addAll(result.approvedIds());
-            }
-
-            // 발표 시각이 있는 차수는 PENDING_PUBLICATION 멤버를 생성하고, 지원서에는 PM의 마지막 결정을 유지한다.
-            if (round.getResultPublishAt() == null) {
-                applyDecisions(applicants, approvedIds, executedByMemberId);
-                saveProjectApplicationPort.saveAll(applicants);
-            }
-            membersToSave.addAll(buildApprovedMembers(applicants, approvedIds, applicantPart, executedByMemberId));
+            membersToSave = selectAndApplyAutomaticDecisions(round, executedByMemberId);
         }
 
         if (!membersToSave.isEmpty()) {
             saveProjectMemberPort.saveAll(membersToSave);
         }
-
         round.executeAutoDecision(executedByMemberId);
+    }
+
+    /**
+     * 1~3차 최소 선발 인원을 보충하고, 발표 시각이 없는 기존 차수는 지원서 상태를 변경·저장한다.
+     * 선발된 프로젝트 멤버를 반환하며, 멤버 저장과 차수 실행 완료 기록은 호출자가 처리한다.
+     */
+    private List<ProjectMember> selectAndApplyAutomaticDecisions(
+        ProjectMatchingRound round,
+        Long executedByMemberId
+    ) {
+        // 매칭 유형별로 지원자 수와 잔여 모집 정원을 고려하여 최소 선발 인원을 계산한다.
+        MatchingDecisionPolicy policy = resolvePolicy(round.getType());
+
+        List<ProjectApplication> applicants = loadProjectApplicationPort
+            .listByMatchingRoundId(round.getId()).stream()
+            .filter(a -> isDecidableStatus(a.getStatus()))
+            .toList();
+        if (applicants.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, ChallengerPart> partByApplicationId = resolvePartsByApplicationId(applicants);
+        Map<ProjectPartKey, List<ProjectApplication>> grouped = groupByProjectAndPart(applicants, partByApplicationId);
+        Map<ProjectPartKey, Integer> remainingQuotaByKey = buildRemainingQuotaMap(grouped.keySet());
+        MatchingSchoolContext schoolContext = buildSupplementSchoolContext(applicants);
+
+        // APPROVED는 유지하고 SUBMITTED → REJECTED 순으로 보충한다. 각 상태 안에서 학교 중복이 적은 지원자를 우선한다.
+        Set<Long> approvedApplicationIds = new HashSet<>();
+        for (Map.Entry<ProjectPartKey, List<ProjectApplication>> entry : grouped.entrySet()) {
+            int remainingQuota = remainingQuotaByKey.getOrDefault(entry.getKey(), 0);
+            AutoDecisionResult result = policy.decideAutomatically(
+                entry.getValue(), remainingQuota, matchingRandom, schoolContext);
+            approvedApplicationIds.addAll(result.approvedIds());
+        }
+
+        // 발표 전에는 PM의 마지막 결정을 유지한다. 발표 시각이 없는 기존 차수만 APPROVED·REJECTED를 즉시 반영한다.
+        if (round.getResultPublishAt() == null) {
+            applyDecisions(applicants, approvedApplicationIds, executedByMemberId);
+            saveProjectApplicationPort.saveAll(applicants);
+        }
+        return buildApprovedMembers(applicants, approvedApplicationIds, partByApplicationId, executedByMemberId);
     }
 
     private MatchingDecisionPolicy resolvePolicy(MatchingType type) {
@@ -176,13 +193,8 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             || status == ProjectApplicationStatus.REJECTED;
     }
 
-    /**
-     * 지원자 전원의 챌린저 파트를 한 번의 batch 조회로 해석한다.
-     * <p>
-     * 한 차수 안의 모든 application 은 동일한 gisu 에 속한다는 도메인 invariant 를 활용해
-     * memberId 집합으로 일괄 조회한 뒤 in-memory 매핑한다.
-     */
-    private Map<Long, ChallengerPart> resolveApplicantParts(List<ProjectApplication> applicants) {
+    /** 프로젝트 기수의 챌린저 파트를 일괄 조회해 지원서별 선발 파트를 구한다. */
+    private Map<Long, ChallengerPart> resolvePartsByApplicationId(List<ProjectApplication> applicants) {
         Long gisuId = applicants.get(0).getApplicationForm().getProject().getGisuId();
         Set<Long> memberIds = applicants.stream()
             .map(ProjectApplication::getApplicantMemberId)
@@ -196,22 +208,25 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         ));
     }
 
+    /** 최소 선발 인원을 각각 계산하도록 지원서를 프로젝트·파트별로 묶는다. */
     private Map<ProjectPartKey, List<ProjectApplication>> groupByProjectAndPart(
-        List<ProjectApplication> applicants, Map<Long, ChallengerPart> applicantPart
+        List<ProjectApplication> applicants, Map<Long, ChallengerPart> partByApplicationId
     ) {
         return applicants.stream().collect(Collectors.groupingBy(
             a -> new ProjectPartKey(
                 a.getApplicationForm().getProject().getId(),
-                applicantPart.get(a.getId())
-            )
+                partByApplicationId.get(a.getId())
+            ),
+            // 같은 프로젝트의 파트 간에 학교 집계를 공유하므로 처리 순서를 고정한다.
+            () -> new TreeMap<>(Comparator.comparing(ProjectPartKey::projectId)
+                .thenComparing(key -> key.part().name())),
+            Collectors.toList()
         ));
     }
 
     /**
-     * 본 차수에서 정책 적용 시 입력으로 사용할 (project, part) 별 남은 자리 수 맵을 한 번에 구한다.
-     * <p>
-     * 그룹 수만큼 DB 를 두 번씩 치던 기존 단건 호출 대신, projectId 집합 단위로 partQuota 와 ACTIVE 및 PENDING_PUBLICATION 멤버 수를
-     * 일괄 조회한 뒤 in-memory 로 차감한다.
+     * 1~3차 선발 정책에 전달할 프로젝트·파트별 잔여 모집 정원을 일괄 계산한다.
+     * PENDING_PUBLICATION도 배정된 인원이므로 ACTIVE와 함께 정원에서 차감한다.
      */
     private Map<ProjectPartKey, Integer> buildRemainingQuotaMap(Set<ProjectPartKey> keys) {
         if (keys.isEmpty()) {
@@ -231,7 +246,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
                 ))
             ));
 
-        Map<Long, Map<ChallengerPart, Long>> activeByProject = loadProjectMemberPort
+        Map<Long, Map<ChallengerPart, Long>> assignedByProject = loadProjectMemberPort
             .countAssignedByProjectIdsGroupByProjectIdAndPart(projectIds);
 
         Map<ProjectPartKey, Integer> result = new HashMap<>();
@@ -239,22 +254,23 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             int total = totalQuotaByProject
                 .getOrDefault(key.projectId(), Map.of())
                 .getOrDefault(key.part(), 0);
-            int active = activeByProject
+            int assigned = assignedByProject
                 .getOrDefault(key.projectId(), Map.of())
                 .getOrDefault(key.part(), 0L)
                 .intValue();
-            result.put(key, Math.max(0, total - active));
+            result.put(key, Math.max(0, total - assigned));
         }
         return result;
     }
 
+    /** 발표 시각이 없는 기존 차수에 한해, 선발된 지원서는 APPROVED로 나머지는 REJECTED로 즉시 반영한다. */
     private void applyDecisions(
         List<ProjectApplication> applicants,
-        Set<Long> approvedIds,
+        Set<Long> approvedApplicationIds,
         Long executedByMemberId
     ) {
         for (ProjectApplication app : applicants) {
-            ProjectApplicationStatus target = approvedIds.contains(app.getId())
+            ProjectApplicationStatus target = approvedApplicationIds.contains(app.getId())
                 ? ProjectApplicationStatus.APPROVED
                 : ProjectApplicationStatus.REJECTED;
             if (app.getStatus() != target) {
@@ -263,22 +279,27 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         }
     }
 
+    /** 기존 APPROVED와 자동 보충으로 선발된 지원서를 프로젝트 멤버로 만든다. */
     private List<ProjectMember> buildApprovedMembers(
         List<ProjectApplication> applicants,
-        Set<Long> approvedIds,
-        Map<Long, ChallengerPart> applicantPart,
+        Set<Long> approvedApplicationIds,
+        Map<Long, ChallengerPart> partByApplicationId,
         Long executedByMemberId
     ) {
         return applicants.stream()
-            .filter(app -> approvedIds.contains(app.getId()))
+            .filter(app -> approvedApplicationIds.contains(app.getId()))
             .map(app -> ProjectMember.createFromApplication(
                 app,
-                applicantPart.get(app.getId()),
+                partByApplicationId.get(app.getId()),
                 executedByMemberId
             ))
             .toList();
     }
 
+    /**
+     * 랜덤 매칭 미배정 챌린저를 동일 파트의 잔여 모집 정원에 배정할 멤버 목록을 만든다.
+     * 후보 순서는 무작위이며, 각 후보는 같은 학교 구성원이 가장 적은 프로젝트에 배정한다.
+     */
     private List<ProjectMember> buildRandomAssignedMembers(
         ProjectMatchingRound round,
         Long executedByMemberId
@@ -300,11 +321,16 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             return List.of();
         }
 
+        // 같은 기수에서 이미 배정된 ACTIVE·PENDING_PUBLICATION 회원은 후보에서 제외한다.
         Set<Long> alreadyMatchedMemberIds = new HashSet<>(loadProjectMemberPort.listAssignedMemberIdsByGisuId(gisuId));
 
         List<RandomAssignmentCandidate> candidates = new ArrayList<>(
             listActiveChallengersInChapter(gisuId, round.getChapterId())
         );
+        Set<Long> candidateMemberIds = candidates.stream()
+            .map(RandomAssignmentCandidate::memberId).collect(Collectors.toSet());
+        MatchingSchoolContext schoolContext = buildMatchingSchoolContext(projects, candidateMemberIds);
+        // 잔여 모집 정원보다 후보가 많아도 조회 순서가 배정 우선순위가 되지 않도록 섞는다.
         Collections.shuffle(candidates, matchingRandom);
 
         List<ProjectMember> assignments = new ArrayList<>();
@@ -312,11 +338,12 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             if (remainingByKey.values().stream().noneMatch(remaining -> remaining > 0)) {
                 break;
             }
-            if (alreadyMatchedMemberIds.contains(candidate.memberId()) || !isMatchingPart(candidate.part(), round.getType())) {
+            if (alreadyMatchedMemberIds.contains(candidate.memberId()) || !isRandomAssignmentPart(candidate.part(), round.getType())) {
                 continue;
             }
 
-            Optional<ProjectPartKey> targetKey = pickRandomRemainingProjectKey(candidate.part(), remainingByKey);
+            Optional<ProjectPartKey> targetKey = pickProjectWithSchoolPreference(
+                candidate.memberId(), candidate.part(), remainingByKey, schoolContext);
             if (targetKey.isEmpty()) {
                 continue;
             }
@@ -325,6 +352,8 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             Project project = projectById.get(key.projectId());
             assignments.add(ProjectMember.createForMatching(
                 project, candidate.memberId(), candidate.part(), round, executedByMemberId));
+            // 다음 후보가 이번 배정까지 고려하도록 학교 집계·배정 회원·잔여 모집 정원을 즉시 갱신한다.
+            schoolContext.addMember(key.projectId(), candidate.memberId());
             alreadyMatchedMemberIds.add(candidate.memberId());
             remainingByKey.computeIfPresent(key, (ignored, remaining) -> remaining - 1);
         }
@@ -332,6 +361,10 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         return assignments;
     }
 
+    /**
+     * 랜덤 매칭 매칭 대상 파트의 모집 정원에서 ACTIVE·PENDING_PUBLICATION 인원을 차감한다.
+     * 잔여 모집 정원이 있는 프로젝트·파트만 배정 대상으로 반환한다.
+     */
     private Map<ProjectPartKey, Integer> buildRemainingMatchingQuotaMap(
         List<Project> projects, MatchingType type
     ) {
@@ -348,7 +381,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             Long projectId = project.getId();
             for (ProjectPartQuota quota : quotasByProject.getOrDefault(projectId, List.of())) {
                 ChallengerPart part = quota.getPart();
-                if (!isMatchingPart(part, type)) {
+                if (!isRandomAssignmentPart(part, type)) {
                     continue;
                 }
 
@@ -367,9 +400,8 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     }
 
     /**
-     * 랜덤 배정 후보: 매칭 지부 기준 ACTIVE 챌린저.
-     * <p>
-     * 학교 기준 지부 검색 결과에서 다른 지부로 이동한 챌린저를 빼고, 이 지부로 이동해 온 ACTIVE 챌린저를 더한다.
+     * 매칭 지부 이동을 반영해 해당 기수·지부의 ACTIVE 챌린저 후보를 구성한다.
+     * 학교 기준 지부 목록에서 전출자를 제외하고 전입자를 추가하며, 같은 회원은 한 번만 포함한다.
      */
     private List<RandomAssignmentCandidate> listActiveChallengersInChapter(Long gisuId, Long chapterId) {
         ChapterTransferDelta delta = matchingChapterResolver.deltaOf(chapterId);
@@ -389,6 +421,10 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         return candidates;
     }
 
+    /**
+     * 해당 기수의 학교 기준 지부에 속한 ACTIVE 챌린저를 조회한다.
+     * 조회 순서대로 배정하지 않도록 모든 페이지를 모은 뒤 호출부에서 후보 순서를 섞는다.
+     */
     private List<SearchChallengerItemInfo> searchActiveChallengersBySchoolChapter(Long gisuId, Long chapterId) {
         SearchChallengerQuery query = new SearchChallengerQuery(
             null,
@@ -418,29 +454,84 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         return result;
     }
 
-    private Optional<ProjectPartKey> pickRandomRemainingProjectKey(
+    /**
+     * 동일 파트의 잔여 모집 정원이 있는 프로젝트 중 같은 학교 구성원이 가장 적은 곳을 선택한다.
+     * 학교 인원수가 같으면 무작위로 선택하며, 중복을 피할 수 없어도 배정은 진행한다.
+     */
+    private Optional<ProjectPartKey> pickProjectWithSchoolPreference(
+        Long memberId,
         ChallengerPart part,
-        Map<ProjectPartKey, Integer> remainingByKey
+        Map<ProjectPartKey, Integer> remainingByKey,
+        MatchingSchoolContext schoolContext
     ) {
-        List<ProjectPartKey> availableKeys = remainingByKey.entrySet().stream()
-            .filter(entry -> entry.getValue() > 0)
-            .filter(entry -> entry.getKey().part() == part)
-            .map(Map.Entry::getKey)
-            .toList();
-
+        List<ProjectPartKey> availableKeys = new ArrayList<>();
+        int minimumSchoolCount = Integer.MAX_VALUE;
+        for (Map.Entry<ProjectPartKey, Integer> entry : remainingByKey.entrySet()) {
+            ProjectPartKey key = entry.getKey();
+            if (entry.getValue() <= 0 || key.part() != part) {
+                continue;
+            }
+            int schoolCount = schoolContext.countSameSchoolMembers(key.projectId(), memberId);
+            if (schoolCount < minimumSchoolCount) {
+                minimumSchoolCount = schoolCount;
+                availableKeys.clear();
+            }
+            if (schoolCount == minimumSchoolCount) {
+                availableKeys.add(key);
+            }
+        }
         if (availableKeys.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(availableKeys.get(matchingRandom.nextInt(availableKeys.size())));
     }
 
-    private boolean isMatchingPart(ChallengerPart part, MatchingType type) {
+    /**
+     * 1~3차 보충 선발에 사용할 학교 집계에 이번 차수 전체 파트의 APPROVED 지원자를 미리 반영한다.
+     * 아직 선발 정책을 적용하지 않은 파트의 APPROVED도 유지할 인원이므로 학교 중복 판단에 포함한다.
+     */
+    private MatchingSchoolContext buildSupplementSchoolContext(List<ProjectApplication> applicants) {
+        List<Project> projects = applicants.stream()
+            .map(app -> app.getApplicationForm().getProject()).distinct().toList();
+        Set<Long> applicantMemberIds = applicants.stream()
+            .map(ProjectApplication::getApplicantMemberId).collect(Collectors.toSet());
+        MatchingSchoolContext schoolContext = buildMatchingSchoolContext(projects, applicantMemberIds);
+        applicants.stream().filter(app -> app.getStatus() == ProjectApplicationStatus.APPROVED)
+            .forEach(app -> schoolContext.addMember(
+                app.getApplicationForm().getProject().getId(), app.getApplicantMemberId()));
+        return schoolContext;
+    }
+
+    /**
+     * 후보와 기존 구성원의 학교를 일괄 조회하고, 파트 구분 없이 프로젝트별 학교 인원수를 집계한다.
+     * 기존 구성원은 PM과 ACTIVE·PENDING_PUBLICATION 멤버이며, 같은 회원은 프로젝트마다 한 번만 집계한다.
+     */
+    private MatchingSchoolContext buildMatchingSchoolContext(Collection<Project> projects, Set<Long> candidateMemberIds) {
+        Set<Long> projectIds = projects.stream().map(Project::getId).collect(Collectors.toSet());
+        Map<Long, Set<Long>> assignedMemberIdsByProject = loadProjectMemberPort.listAssignedMemberIdsByProjectIds(projectIds);
+        Set<Long> memberIds = new HashSet<>(candidateMemberIds);
+        assignedMemberIdsByProject.values().forEach(memberIds::addAll);
+        projects.forEach(project -> memberIds.add(project.getProductOwnerMemberId()));
+
+        MatchingSchoolContext schoolContext = new MatchingSchoolContext(getMemberUseCase.findAllSchoolIdsByIds(memberIds));
+        assignedMemberIdsByProject.forEach((projectId, assignedMemberIds) ->
+            assignedMemberIds.forEach(memberId -> schoolContext.addMember(projectId, memberId)));
+        projects.forEach(project -> schoolContext.addMember(project.getId(), project.getProductOwnerMemberId()));
+        return schoolContext;
+    }
+
+    /**
+     * 랜덤 매칭 후보 및 정원의 파트가 현재 매칭 유형의 대상인지 판단한다.
+     * PLAN_DESIGN은 DESIGN, PLAN_DEVELOPER는 WEB_PRODUCT_ENGINEER·MOBILE_PRODUCT_ENGINEER만 허용한다.
+     */
+    private boolean isRandomAssignmentPart(ChallengerPart part, MatchingType type) {
         return switch (type) {
             case PLAN_DESIGN -> part == ChallengerPart.DESIGN;
-            case PLAN_DEVELOPER -> DEVELOPER_PARTS.contains(part);
+            case PLAN_DEVELOPER -> RANDOM_ASSIGNMENT_DEVELOPER_PARTS.contains(part);
         };
     }
 
+    /** 운영진 수동 실행 시 최고관리자·중앙 총괄단 이상 또는 해당 지부장인지 검증한다. */
     private void validateManageAccess(Long memberId, Long chapterId) {
         if (getChallengerRoleUseCase.isSuperAdmin(memberId)) {
             return;

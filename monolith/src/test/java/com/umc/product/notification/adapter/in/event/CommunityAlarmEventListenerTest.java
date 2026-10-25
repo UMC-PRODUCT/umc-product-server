@@ -29,6 +29,9 @@ import com.umc.product.community.application.port.in.query.thread.message.dto.Co
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageRecipientsQuery;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageStatus;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageType;
+import com.umc.product.community.domain.event.CommunityThreadInvitedEvent;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notification.application.port.in.RequestFcmNotificationUseCase;
 import com.umc.product.notification.application.port.in.dto.FcmNotificationRequestInfo;
 import com.umc.product.notification.application.port.in.dto.RequestFcmNotificationCommand;
@@ -52,6 +55,8 @@ class CommunityAlarmEventListenerTest {
     GetCommunityThreadMessageForRecipientsUseCase getMessageForRecipientsUseCase;
     @Mock
     GetCommunityThreadTitleUseCase getThreadTitleUseCase;
+    @Mock
+    GetMemberUseCase getMemberUseCase;
     @Mock
     RequestFcmNotificationUseCase requestFcmNotificationUseCase;
 
@@ -239,6 +244,56 @@ class CommunityAlarmEventListenerTest {
         sut.handle(CommunityThreadMessageCreatedEvent.of(THREAD_ID, MESSAGE_ID, SENDER_ID));
 
         then(requestFcmNotificationUseCase).should(org.mockito.Mockito.times(1)).request(any());
+    }
+
+    @Test
+    @DisplayName("초대된 멤버 전원에게 알림을 요청한다")
+    void handleInvited_notifiesAllInvitedMembers() {
+        given(getMemberUseCase.getById(SENDER_ID)).willReturn(memberInfo(SENDER_ID, "홍길동"));
+        given(getThreadTitleUseCase.getThreadTitle(THREAD_ID)).willReturn(THREAD_TITLE);
+        given(requestFcmNotificationUseCase.request(any()))
+            .willReturn(FcmNotificationRequestInfo.of(UUID.randomUUID(), NOW));
+
+        sut.handle(CommunityThreadInvitedEvent.of(THREAD_ID, SENDER_ID, List.of(RECIPIENT_ID, MUTED_ID), NOW));
+
+        ArgumentCaptor<RequestFcmNotificationCommand> captor =
+            ArgumentCaptor.forClass(RequestFcmNotificationCommand.class);
+        then(requestFcmNotificationUseCase).should().request(captor.capture());
+        RequestFcmNotificationCommand command = captor.getValue();
+        assertThat(command.memberIds()).containsExactly(RECIPIENT_ID, MUTED_ID);
+        assertThat(command.title()).isEqualTo(THREAD_TITLE);
+        assertThat(command.body()).isEqualTo("홍길동님의 초대로 스레드에 참여했어요");
+    }
+
+    @Test
+    @DisplayName("초대 대상이 없으면 조회 없이 종료한다")
+    void handleInvited_noInvitedMembers_doesNothing() {
+        sut.handle(CommunityThreadInvitedEvent.of(THREAD_ID, SENDER_ID, List.of(), NOW));
+
+        then(getMemberUseCase).shouldHaveNoInteractions();
+        then(getThreadTitleUseCase).shouldHaveNoInteractions();
+        then(requestFcmNotificationUseCase).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("초대 알림 제목은 25자, 본문은 40자를 넘으면 잘라낸다")
+    void handleInvited_longTitleAndBody_areAbbreviated() {
+        given(getMemberUseCase.getById(SENDER_ID)).willReturn(memberInfo(SENDER_ID, "긴".repeat(30)));
+        given(getThreadTitleUseCase.getThreadTitle(THREAD_ID)).willReturn("긴".repeat(30));
+        given(requestFcmNotificationUseCase.request(any()))
+            .willReturn(FcmNotificationRequestInfo.of(UUID.randomUUID(), NOW));
+
+        sut.handle(CommunityThreadInvitedEvent.of(THREAD_ID, SENDER_ID, List.of(RECIPIENT_ID), NOW));
+
+        ArgumentCaptor<RequestFcmNotificationCommand> captor =
+            ArgumentCaptor.forClass(RequestFcmNotificationCommand.class);
+        then(requestFcmNotificationUseCase).should().request(captor.capture());
+        assertThat(captor.getValue().title()).hasSize(25);
+        assertThat(captor.getValue().body()).hasSize(40);
+    }
+
+    private MemberInfo memberInfo(Long id, String name) {
+        return MemberInfo.builder().id(id).name(name).build();
     }
 
     private ThreadMemberStatusInfo status(Long memberId, boolean isActive, boolean muted) {

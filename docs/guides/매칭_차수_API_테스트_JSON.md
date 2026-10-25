@@ -14,7 +14,7 @@
 | 조회 메서드   | `GET /api/v1/project/matching-rounds`                      |
 | 시간 형식    | ISO-8601 Instant, 예: `2026-05-10T00:00:00Z`                |
 
-생성 요청의 `resultPublishAt`은 필수입니다. 1~3차는 `startsAt < endsAt < decisionDeadline < resultPublishAt`, 4차는 `startsAt < endsAt = decisionDeadline < resultPublishAt`을 만족해야 합니다. 모든 차수의 `resultPublishAt`은 `decisionDeadline`으로부터 최소 5분 이후여야 합니다. 같은 지부·유형의 다음 차수는 이전 차수의 발표 시각부터 시작할 수 있습니다.
+생성 요청의 `resultPublishAt`은 필수입니다. 1~3차는 `startsAt < endsAt < decisionDeadline < resultPublishAt`, 랜덤 매칭은 `startsAt < endsAt = decisionDeadline < resultPublishAt`을 만족해야 합니다. 모든 차수의 `resultPublishAt`은 `decisionDeadline`으로부터 최소 5분 이후여야 합니다. 같은 지부·유형의 다음 차수는 이전 차수의 발표 시각부터 시작할 수 있습니다.
 
 1~3차 자동 선발이 PM 마감 후 기본 1분 뒤 실행되므로, 발표 전 선발 처리 시간을 확보하기 위해 최소 5분 간격을 둡니다.
 
@@ -267,7 +267,7 @@
 
 ### 6-2. `time` 기준 지원 가능 매칭 차수 조회
 
-4차는 지원서를 받지 않으므로 시간 기준 조회에서 제외합니다.
+랜덤 매칭은 지원서를 받지 않으므로 시간 기준 조회에서 제외합니다.
 
 | 항목     | 값                                                                       |
 |--------|-------------------------------------------------------------------------|
@@ -344,15 +344,18 @@
 }
 ```
 
-## 4차 랜덤 매칭 생성 예시
+## 랜덤 매칭 생성 예시
+
+랜덤 매칭의 `phase` 요청·응답 값은 `RANDOM_MATCHING`입니다.
+
 
 `PLAN_DESIGN`과 `PLAN_DEVELOPER` 모두 같은 일정 규칙을 사용합니다. 아래 시각은 UTC이며, 한국 시각으로 11월 19일 00시 랜덤 매칭, 20시 종료·마감, 22시 발표입니다. 기존 차수와의 중복 및 순서 조건을 만족하는 지부에서 요청합니다.
 
 ```json
 {
-    "name": "기획-개발자 4차 랜덤 매칭",
+    "name": "기획-개발자 랜덤 매칭",
     "type": "PLAN_DEVELOPER",
-    "phase": "FOURTH",
+    "phase": "RANDOM_MATCHING",
     "chapterId": 1,
     "startsAt": "2026-11-18T15:00:00Z",
     "endsAt": "2026-11-19T11:00:00Z",

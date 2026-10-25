@@ -219,7 +219,11 @@ public class ProjectCommandController {
     @Operation(
         operationId = "PROJECT-109",
         summary = "프로젝트 삭제",
-        description = "DRAFT / PENDING_REVIEW 상태의 프로젝트를 hard delete 합니다. 연관 ProjectMember / PartQuota / ApplicationForm + form Form 까지 cascade 삭제. PO 본인 또는 운영진(본인 지부장 / 해당 기수 총괄단)만 호출 가능. IN_PROGRESS 이상은 abort 엔드포인트 사용."
+        description = """
+            각 차수의 지원기간을 제외한 기간에 프로젝트를 삭제합니다. 랜덤 매칭은 지원기간에 포함하지 않습니다.
+            지원서·답변·팀 소속·정원·지원 폼을 함께 삭제합니다. 삭제된 프로젝트의 팀원은 해당 프로젝트의 배정에서 해제됩니다.
+            PO 본인 또는 운영진(본인 지부장 / 해당 기수 총괄단)만 호출할 수 있습니다.
+            """
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,

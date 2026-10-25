@@ -10725,11 +10725,33 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 48
+        "line": 50
       }
     },
     {
       "sequence": 481,
+      "domain": "project",
+      "code": "PROJECT-0024",
+      "name": "PROJECT_DELETE_DURING_APPLICATION_PERIOD",
+      "httpStatus": 409,
+      "httpStatusName": "CONFLICT",
+      "message": "지원기간에는 프로젝트를 삭제할 수 없어요. 지원기간이 끝난 뒤 다시 시도해주세요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "ProjectErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
+        "line": 48
+      }
+    },
+    {
+      "sequence": 482,
       "domain": "project",
       "code": "PROJECT-0100",
       "name": "PROJECT_MEMBER_NOT_FOUND",
@@ -10747,11 +10769,11 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 51
+        "line": 53
       }
     },
     {
-      "sequence": 482,
+      "sequence": 483,
       "domain": "project",
       "code": "PROJECT-0101",
       "name": "PROJECT_MEMBER_ALREADY_EXISTS",
@@ -10769,39 +10791,17 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 52
+        "line": 54
       }
     },
     {
-      "sequence": 483,
+      "sequence": 484,
       "domain": "project",
       "code": "PROJECT-0102",
       "name": "PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER",
       "httpStatus": 400,
       "httpStatusName": "BAD_REQUEST",
       "message": "메인 PM은 팀원 제거가 아니라 소유권 양도로 변경해주세요.",
-      "description": null,
-      "clientAction": null,
-      "retryable": null,
-      "severity": null,
-      "deprecated": false,
-      "replacementCode": null,
-      "owners": [],
-      "tags": [],
-      "source": {
-        "enumName": "ProjectErrorCode",
-        "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 53
-      }
-    },
-    {
-      "sequence": 484,
-      "domain": "project",
-      "code": "PROJECT-0103",
-      "name": "PROJECT_MEMBER_PUBLICATION_MANAGED",
-      "httpStatus": 409,
-      "httpStatusName": "CONFLICT",
-      "message": "PENDING_PUBLICATION으로 직접 변경하거나, 결과 발표 전에 ACTIVE로 변경할 수 없어요.",
       "description": null,
       "clientAction": null,
       "retryable": null,
@@ -10835,7 +10835,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 59
+        "line": 58
       }
     },
     {
@@ -10857,7 +10857,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 60
+        "line": 59
       }
     },
     {
@@ -10879,7 +10879,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 61
+        "line": 60
       }
     },
     {
@@ -10901,7 +10901,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 92
+        "line": 90
       }
     },
     {
@@ -10923,7 +10923,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 93
+        "line": 91
       }
     },
     {
@@ -10945,7 +10945,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 94
+        "line": 92
       }
     },
     {
@@ -10967,7 +10967,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 95
+        "line": 93
       }
     },
     {
@@ -10989,7 +10989,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 96
+        "line": 94
       }
     },
     {
@@ -11011,7 +11011,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 97
+        "line": 95
       }
     },
     {
@@ -11033,7 +11033,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 98
+        "line": 96
       }
     },
     {
@@ -11055,7 +11055,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 99
+        "line": 97
       }
     },
     {
@@ -11077,7 +11077,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 100
+        "line": 98
       }
     },
     {
@@ -11099,7 +11099,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 102
+        "line": 100
       }
     },
     {
@@ -11121,7 +11121,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 104
+        "line": 102
       }
     },
     {
@@ -11143,7 +11143,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 105
+        "line": 103
       }
     },
     {
@@ -11165,7 +11165,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 106
+        "line": 104
       }
     },
     {
@@ -11187,7 +11187,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 108
+        "line": 106
       }
     },
     {
@@ -11209,7 +11209,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 64
+        "line": 63
       }
     },
     {
@@ -11219,7 +11219,7 @@
       "name": "PROJECT_MATCHING_ROUND_INVALID_PERIOD",
       "httpStatus": 400,
       "httpStatusName": "BAD_REQUEST",
-      "message": "1~3차는 시작 < 종료 < 결정 마감, 4차는 시작 < 종료 = 결정 마감이며, 발표는 결정 마감으로부터 최소 5분 이후로 입력해주세요.",
+      "message": "1~3차는 시작 < 종료 < 결정 마감, 랜덤 매칭은 시작 < 종료 = 결정 마감이며, 발표는 결정 마감으로부터 최소 5분 이후로 입력해주세요.",
       "description": null,
       "clientAction": null,
       "retryable": null,
@@ -11231,7 +11231,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 65
+        "line": 64
       }
     },
     {
@@ -11253,7 +11253,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 67
+        "line": 66
       }
     },
     {
@@ -11275,7 +11275,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 69
+        "line": 68
       }
     },
     {
@@ -11297,7 +11297,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 71
+        "line": 70
       }
     },
     {
@@ -11319,7 +11319,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 73
+        "line": 72
       }
     },
     {
@@ -11341,7 +11341,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 75
+        "line": 74
       }
     },
     {
@@ -11351,7 +11351,7 @@
       "name": "PROJECT_MATCHING_ROUND_NOT_FINALIZABLE",
       "httpStatus": 400,
       "httpStatusName": "BAD_REQUEST",
-      "message": "1~3차는 결정 마감 이후, 4차 랜덤 매칭은 시작 시각부터 실행할 수 있어요.",
+      "message": "아직 자동 선발·배정을 실행할 수 없어요. 1~3차는 PM 결정 마감 시각이 지난 후, 랜덤 매칭은 시작 시각부터 실행할 수 있어요.",
       "description": null,
       "clientAction": null,
       "retryable": null,
@@ -11363,7 +11363,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 81
+        "line": 80
       }
     },
     {
@@ -11385,7 +11385,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 83
+        "line": 82
       }
     },
     {
@@ -11395,7 +11395,7 @@
       "name": "PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID",
       "httpStatus": 409,
       "httpStatusName": "CONFLICT",
-      "message": "매칭 차수는 FIRST, SECOND, THIRD, FOURTH 순서로 배치하고 이전 차수 결정 마감 이후 1분 이상 간격을 두고, 이전 차수 발표 시각 이후에 시작해주세요.",
+      "message": "매칭 차수가 중복되거나 일정 순서가 맞지 않아요. 차수별 시작·결정 마감·발표 시각을 확인해주세요.",
       "description": null,
       "clientAction": null,
       "retryable": null,
@@ -11407,7 +11407,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 85
+        "line": 84
       }
     },
     {
@@ -11429,7 +11429,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 77
+        "line": 76
       }
     },
     {
@@ -11451,7 +11451,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 79
+        "line": 78
       }
     },
     {
@@ -11473,7 +11473,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 88
+        "line": 86
       }
     },
     {
@@ -11495,7 +11495,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 112
+        "line": 110
       }
     },
     {
@@ -11517,7 +11517,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 113
+        "line": 111
       }
     },
     {
@@ -11539,7 +11539,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 115
+        "line": 113
       }
     },
     {
@@ -11561,7 +11561,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 117
+        "line": 115
       }
     },
     {
@@ -11583,7 +11583,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 118
+        "line": 116
       }
     },
     {
@@ -11605,7 +11605,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 119
+        "line": 117
       }
     },
     {
@@ -11627,7 +11627,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 121
+        "line": 119
       }
     },
     {
@@ -11649,7 +11649,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 123
+        "line": 121
       }
     },
     {
@@ -11671,7 +11671,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 124
+        "line": 122
       }
     },
     {
@@ -11693,7 +11693,7 @@
       "source": {
         "enumName": "ProjectErrorCode",
         "file": "monolith/src/main/java/com/umc/product/project/domain/exception/ProjectErrorCode.java",
-        "line": 125
+        "line": 123
       }
     },
     {

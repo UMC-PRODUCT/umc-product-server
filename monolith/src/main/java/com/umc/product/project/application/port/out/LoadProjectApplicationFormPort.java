@@ -1,6 +1,7 @@
 package com.umc.product.project.application.port.out;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -23,6 +24,8 @@ public interface LoadProjectApplicationFormPort {
      * 운영상 프로젝트당 폼 1개로 사용하지만 스키마는 1:N 을 허용하므로 가장 먼저 생성된 row 를 반환합니다.
      */
     Optional<ProjectApplicationForm> findByProjectId(Long projectId);
+
+    List<ProjectApplicationForm> listByProjectId(Long projectId);
 
     /**
      * 여러 프로젝트의 지원 폼을 projectId 기준으로 조회합니다.

@@ -59,7 +59,7 @@ public class ProjectMatchingRound extends BaseEntity {
     @Column(nullable = false)
     private MatchingType type; // 매칭의 종류
 
-    // 1~3차 지원 매칭과 4차 랜덤 매칭을 구분합니다.
+    // 1~3차 지원 매칭과 랜덤 매칭을 구분합니다.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MatchingPhase phase; // 매칭 차수
@@ -77,7 +77,7 @@ public class ProjectMatchingRound extends BaseEntity {
     private Instant resultPublishAt; // 결과 발표 예정 시각 (기존 차수는 null)
     private Instant resultPublishedAt; // 결과 공개 완료 시각 (공개 전에는 null)
 
-    // 1~3차는 선발 마감 이후, 4차는 시작 시각에 자동 선발 또는 랜덤 매칭이 실행된 시간
+    // 자동 선발·배정 실행 시각: 1~3차는 PM 결정 마감 후, 랜덤 매칭은 시작 시각부터 실행한다.
     // 아직 실행하지 않았으면 null입니다.
     private Instant autoDecisionExecutedAt;
     // 자동 선발이 실행된 경우, 누가 실행했는지 (운영진 ID)
@@ -108,7 +108,7 @@ public class ProjectMatchingRound extends BaseEntity {
      * <p>
      * - 동일한 유형과 차수를 가진 매칭 차수는 생성할 수 없습니다.
      * <p>
-     * - 일반 차수는 startsAt < endsAt < decisionDeadline, 4차는 startsAt < endsAt = decisionDeadline 이어야 합니다.
+     * - 일반 차수는 startsAt < endsAt < decisionDeadline, 랜덤 매칭은 startsAt < endsAt = decisionDeadline 이어야 합니다.
      * <p>
      * - 결과 발표 시각은 선발 마감 시각으로부터 최소 5분 이후여야 합니다.
      * <p>
@@ -117,13 +117,13 @@ public class ProjectMatchingRound extends BaseEntity {
      * @param name             매칭 차수 이름 (e.g. 기획-디자인 1차 매칭)
      * @param description      차수 설명 (nullable)
      * @param type             매칭 유형 (기획-디자인/기획-개발자)
-     * @param phase            차수 단계 (1~3차 지원 매칭, 4차 랜덤 매칭)
+     * @param phase            차수 단계 (1~3차 지원 매칭, 랜덤 매칭)
      * @param chapterId        지부 ID (어떤 지부의 매칭 차수인지를 나타냅니다.)
      * @param startsAt         매칭 시작 시간
      * @param endsAt           매칭 종료 시간
      * @param decisionDeadline 매칭 기간 중 접수된 지원서의 합/불 결정 데드라인. <p> 경과되었을 때 UMC 규칙에 의한 최소 선발 인원을 뽑지 않은 경우 해당 규모만큼 자동으로
      *                         선발됩니다. <p> 최종 선발되지 않은 지원서는 불합격 처리됩니다. 발표 시각이 있는 차수는 합불을 발표 시 반영합니다.
-     *                         <p> 4차는 endsAt과 같은 시각을 입력하며, 랜덤 매칭은 startsAt에 실행됩니다.
+     *                         <p> 랜덤 매칭은 endsAt과 같은 시각을 입력하며, 배정은 startsAt에 실행됩니다.
      * @param resultPublishAt  결과 발표 시각 (기존 차수의 미설정 값은 null)
      * @return 생성된 매칭 차수
      */
@@ -184,13 +184,13 @@ public class ProjectMatchingRound extends BaseEntity {
     }
 
     /**
-     * 4차는 시작 < 종료 = 결정 마감이며, 발표는 결정 마감으로부터 최소 5분 이후여야 합니다. 1~3차는 일반 일정 규칙을 적용합니다.
+     * 랜덤 매칭은 시작 < 종료 = 결정 마감이며, 발표는 결정 마감으로부터 최소 5분 이후여야 합니다. 1~3차는 일반 일정 규칙을 적용합니다.
      */
     public static void validateSchedule(
         MatchingType type, MatchingPhase phase,
         Instant startsAt, Instant endsAt, Instant decisionDeadline, Instant resultPublishAt
     ) {
-        if (phase != MatchingPhase.FOURTH) {
+        if (phase != MatchingPhase.RANDOM_MATCHING) {
             validateDates(startsAt, endsAt, decisionDeadline, resultPublishAt);
             return;
         }
@@ -203,7 +203,7 @@ public class ProjectMatchingRound extends BaseEntity {
     }
 
     public boolean isRandomMatching() {
-        return phase == MatchingPhase.FOURTH;
+        return phase == MatchingPhase.RANDOM_MATCHING;
     }
 
     /**
@@ -270,7 +270,7 @@ public class ProjectMatchingRound extends BaseEntity {
     /**
      * 특정 시점 기준으로 매칭 차수가 활성화 되어있는지 여부를 판단합니다.
      * <p>
-     * 1~3차에서 startsAt <= now <= endsAt 인 경우 지원할 수 있습니다. 4차는 지원서를 받지 않습니다.
+     * 1~3차에서 startsAt <= now <= endsAt 인 경우 지원할 수 있습니다. 랜덤 매칭은 지원서를 받지 않습니다.
      *
      * @param now 기준 시각
      * @return 제공된 시점을 기준으로 매칭 차수가 활성화되었는지 여부

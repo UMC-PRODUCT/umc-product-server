@@ -14,6 +14,9 @@ import java.util.stream.Stream;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,7 @@ import com.umc.product.project.application.access.ProjectAccessScope.OwnerOnly;
 import com.umc.product.project.application.access.ProjectAccessScope.PublicOnly;
 import com.umc.product.project.application.access.ProjectAccessScopeResolver;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
+import com.umc.product.project.application.port.in.query.SearchDraftProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchManagedProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
@@ -49,7 +53,8 @@ import lombok.RequiredArgsConstructor;
 public class ProjectQueryService implements
     GetProjectUseCase,
     SearchProjectUseCase,
-    SearchManagedProjectUseCase {
+    SearchManagedProjectUseCase,
+    SearchDraftProjectUseCase {
 
     private final LoadProjectPort loadProjectPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
@@ -106,14 +111,23 @@ public class ProjectQueryService implements
 
     @Override
     public Optional<ProjectInfo> findDraftByCreatorAndGisu(Long creatorMemberId, Long gisuId) {
-        return loadProjectPort.findDraftByCreatorAndGisu(creatorMemberId, gisuId)
+        return loadProjectPort.findLatestDraftByCreatorAndGisu(creatorMemberId, gisuId)
             .map(this::toProjectInfo);
+    }
+
+    @Override
+    public Page<ProjectInfo> searchDrafts(Long creatorMemberId, Long gisuId, Pageable pageable) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt", "id");
+        Pageable ordered = pageable.isPaged()
+            ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort)
+            : Pageable.unpaged(sort);
+        return toProjectInfoPage(loadProjectPort.searchDraftsByCreatorAndGisu(creatorMemberId, gisuId, ordered));
     }
 
     /**
      * 관리 화면 검색 (PROJECT-006). 호출자 역할에 따라 자동 scope 적용.
      * <p>
-     * 노출 상태: PENDING_REVIEW / IN_PROGRESS / COMPLETED / ABORTED. DRAFT 는 제외.
+     * 기본 노출 상태: PENDING_REVIEW / IN_PROGRESS / COMPLETED / ABORTED. 본인 PO 프로젝트는 DRAFT 도 포함한다.
      */
     @Override
     public Page<ProjectInfo> searchManaged(SearchManagedProjectQuery query, Long memberId) {
@@ -131,6 +145,7 @@ public class ProjectQueryService implements
             .keyword(query.keyword())
             .statuses(new ArrayList<>(requested))
             .pageable(query.pageable())
+            .managedStatusOrder(true)
             .build();
         return toProjectInfoPage(applyScope(scope, base));
     }

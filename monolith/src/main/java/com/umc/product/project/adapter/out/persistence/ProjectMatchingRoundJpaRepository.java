@@ -28,6 +28,10 @@ public interface ProjectMatchingRoundJpaRepository extends JpaRepository<Project
 
     List<ProjectMatchingRound> findAllByChapterIdOrderByStartsAtAsc(Long chapterId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from ProjectMatchingRound r where r.chapterId = :chapterId order by r.id")
+    List<ProjectMatchingRound> findAllByChapterIdForUpdate(@Param("chapterId") Long chapterId);
+
     List<ProjectMatchingRound> findAllByOrderByStartsAtAsc();
 
     @Query("""
@@ -36,7 +40,7 @@ public interface ProjectMatchingRoundJpaRepository extends JpaRepository<Project
         where r.chapterId = :chapterId
           and r.startsAt <= :time
           and r.endsAt >= :time
-          and r.phase <> com.umc.product.project.domain.enums.MatchingPhase.FOURTH
+          and r.phase <> com.umc.product.project.domain.enums.MatchingPhase.RANDOM_MATCHING
         order by r.startsAt asc
         """)
     List<ProjectMatchingRound> findOpenAt(

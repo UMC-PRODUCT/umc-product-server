@@ -5,9 +5,7 @@ import com.umc.product.project.application.port.in.command.dto.DeleteProjectComm
 /**
  * 프로젝트 hard delete UseCase.
  * <p>
- * DRAFT / PENDING_REVIEW 상태에서만 호출 가능. 자식 row(멤버/정원/지원 폼 매핑/Form/Policy)를
- * 같은 트랜잭션 내에서 명시적으로 cascade 삭제합니다. IN_PROGRESS 이상은
- * {@code AbortProjectUseCase} 로 상태 전이만 허용합니다.
+ * 각 차수의 지원기간을 제외한 기간에 연관 지원서·답변·팀 소속을 같은 트랜잭션에서 삭제합니다.
  */
 public interface DeleteProjectUseCase {
 
