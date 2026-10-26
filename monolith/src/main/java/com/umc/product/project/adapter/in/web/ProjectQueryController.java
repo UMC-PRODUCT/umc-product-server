@@ -27,10 +27,12 @@ import com.umc.product.project.adapter.in.web.dto.response.ManagedProjectSummary
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
+import com.umc.product.project.application.port.in.query.dto.ProjectMemberView;
 import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -102,7 +104,15 @@ public class ProjectQueryController {
     @Operation(
         operationId = "PROJECT-007",
         summary = "프로젝트 팀원 구성 일괄 조회",
-        description = "복수의 projectId에 대한 팀원 구성을 조회합니다. 권한이 없거나 조회에 실패한 프로젝트는 결과에서 제외됩니다."
+        description = """
+            복수의 projectId에 대한 팀원 구성을 조회합니다.
+            view를 생략하거나 PUBLISHED로 요청하면 현재 공개된 명단을 반환하며, 권한이 없거나 조회에 실패한 프로젝트는 결과에서 제외됩니다.
+
+            ADJUSTMENT는 랜덤 매칭 이후 운영진의 최종 인원 조정 화면에서 사용합니다.
+            랜덤 매칭이 완료되고 조정 시작 시각이 지난 후부터 최종 공개 전까지, 미공개 배정을 포함하고 해제 예약자를 제외한 명단을 반환합니다.
+            조정 종료 후에도 최종 공개 전까지 조정 명단을 조회할 수 있으며, 그 외에는 현재 공개된 명단을 반환합니다.
+            디자인·개발 매칭 일정은 각각 적용합니다. 요청한 프로젝트 모두에 조정 권한이 필요하며, 하나라도 권한이 없으면 요청 전체를 거부합니다.
+            """
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
@@ -111,9 +121,11 @@ public class ProjectQueryController {
     )
     public Map<Long, ProjectMembersResponse> getBatchMembers(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @RequestParam List<Long> projectIds
+        @RequestParam List<Long> projectIds,
+        @Parameter(description = "명단 조회 방식. PUBLISHED: 현재 공개 명단(기본값), ADJUSTMENT: 운영진 최종 인원 조정 화면용 명단")
+        @RequestParam(defaultValue = "PUBLISHED") ProjectMemberView view
     ) {
-        return assembler.listProjectMembers(projectIds, memberPrincipal.getMemberId());
+        return assembler.listProjectMembers(projectIds, memberPrincipal.getMemberId(), view);
     }
 
     @GetMapping("/me/managed")

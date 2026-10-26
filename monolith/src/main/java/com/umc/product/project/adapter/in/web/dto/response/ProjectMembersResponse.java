@@ -1,9 +1,13 @@
 package com.umc.product.project.adapter.in.web.dto.response;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRosterInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRosterInfo.RosterMemberInfo;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 
@@ -21,6 +25,20 @@ public record ProjectMembersResponse(
     List<ProjectMemberBrief> coProductOwners,
     List<PartGroup> partGroups
 ) {
+
+    /** 팀원 명단을 메인 PM·보조 PM·파트별 팀원으로 나누어 응답을 구성한다. */
+    public static ProjectMembersResponse from(ProjectMatchingRosterInfo info) {
+        Long ownerId = info.productOwner() == null ? null : info.productOwner().memberId();
+        List<ProjectMemberBrief> coOwners = info.members().stream()
+            .filter(member -> member.part() == ChallengerPart.PLAN && !Objects.equals(member.memberId(), ownerId))
+            .map(ProjectMemberBrief::from).toList();
+        List<PartGroup> groups = Arrays.stream(ChallengerPart.values())
+            .filter(part -> part != ChallengerPart.PLAN)
+            .map(part -> new PartGroup(part, info.members().stream().filter(member -> member.part() == part)
+                .map(ProjectMemberBrief::from).toList()))
+            .filter(group -> !group.members().isEmpty()).toList();
+        return new ProjectMembersResponse(info.projectId(), ProjectMemberBrief.from(info.productOwner()), coOwners, groups);
+    }
 
     /** 파트별 멤버 묶음. {@code part} 는 PLAN 외 파트만 등장한다. */
     public record PartGroup(ChallengerPart part, List<ProjectMemberBrief> members) {
@@ -47,6 +65,15 @@ public record ProjectMembersResponse(
                 .schoolName(info.schoolName())
                 .matchedRoundInfo(matchedRoundInfo)
                 .build();
+        }
+
+        public static ProjectMemberBrief from(RosterMemberInfo info) {
+            if (info == null) {
+                return null;
+            }
+            MatchedRoundInfo round = info.matchingRoundId() == null ? null
+                : new MatchedRoundInfo(info.matchingRoundId(), info.matchingType(), info.matchingPhase());
+            return new ProjectMemberBrief(info.memberId(), info.nickname(), info.name(), info.schoolName(), round);
         }
     }
 

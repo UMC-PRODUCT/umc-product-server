@@ -52,6 +52,18 @@ public class ProjectMatchingAdjustmentPolicy {
         return adjustment;
     }
 
+    /**
+     * 조정 명단을 조회할 수 있는 랜덤 차수를 반환한다.
+     * 랜덤 매칭 완료 후 조정 시작부터 최종 공개 전까지 조회하며, 조정 종료 후에도 명단은 조회할 수 있다.
+     */
+    public List<ProjectMatchingRound> findViewableAdjustmentRounds(List<ProjectMatchingRound> rounds, Instant now) {
+        return rounds.stream()
+            .filter(ProjectMatchingRound::isRandomMatching)
+            .filter(ProjectMatchingRound::isAutoDecisionExecuted)
+            .filter(round -> !now.isBefore(round.getStartsAt()) && round.getResultPublishedAt() == null)
+            .toList();
+    }
+
     private void validateRegularRoundPublicationGap(List<ProjectMatchingRound> rounds, Instant now) {
         boolean blocked = rounds.stream().filter(round -> !round.isRandomMatching())
             .anyMatch(round -> !now.isBefore(round.getDecisionDeadline())

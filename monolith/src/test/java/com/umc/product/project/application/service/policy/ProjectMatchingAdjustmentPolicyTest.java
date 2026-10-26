@@ -137,6 +137,29 @@ class ProjectMatchingAdjustmentPolicyTest {
         assertThat(policy.validateChange(rounds, MatchingType.PLAN_DESIGN, developerStart)).isEmpty();
     }
 
+    @Test
+    void 조정_종료_후에도_최종_공개_전에는_조정_명단을_조회할_수_있다() {
+        // given
+        ProjectMatchingRound round = randomRound();
+        round.executeAutoDecision(null);
+
+        // when & then
+        assertThat(policy.findViewableAdjustmentRounds(List.of(publishedThirdRound(), round), round.getEndsAt()))
+            .containsExactly(round);
+    }
+
+    @Test
+    void 최종_공개_완료_후에는_조정_명단을_조회하지_않는다() {
+        // given
+        ProjectMatchingRound round = randomRound();
+        List<ProjectMatchingRound> rounds = List.of(publishedThirdRound(), round);
+        round.executeAutoDecision(null);
+        round.publishResult(round.getResultPublishAt());
+
+        // when & then
+        assertThat(policy.findViewableAdjustmentRounds(rounds, round.getResultPublishAt())).isEmpty();
+    }
+
     private void assertBlocked(List<ProjectMatchingRound> rounds, Instant now) {
         assertThatThrownBy(() -> policy.validateChange(rounds, MatchingType.PLAN_DESIGN, now))
             .isInstanceOf(ProjectDomainException.class).extracting("baseCode")

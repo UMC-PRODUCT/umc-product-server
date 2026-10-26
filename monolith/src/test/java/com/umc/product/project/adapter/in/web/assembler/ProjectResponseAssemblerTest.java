@@ -2,7 +2,6 @@ package com.umc.product.project.adapter.in.web.assembler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 
 import java.lang.reflect.RecordComponent;
@@ -21,8 +20,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
-import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -33,12 +30,16 @@ import com.umc.product.project.adapter.in.web.dto.response.ManagedProjectSummary
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
+import com.umc.product.project.application.port.in.query.GetProjectMatchingAdjustmentUseCase;
+import com.umc.product.project.application.port.in.query.GetProjectPublishedMembersUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchDraftProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchManagedProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRosterInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRosterInfo.RosterMemberInfo;
 import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
@@ -74,7 +75,9 @@ class ProjectResponseAssemblerTest {
     @Mock
     LoadProjectMemberPort loadProjectMemberPort;
     @Mock
-    CheckPermissionUseCase checkPermissionUseCase;
+    GetProjectPublishedMembersUseCase getProjectPublishedMembersUseCase;
+    @Mock
+    GetProjectMatchingAdjustmentUseCase getProjectMatchingAdjustmentUseCase;
 
     @InjectMocks
     ProjectResponseAssembler sut;
@@ -288,25 +291,14 @@ class ProjectResponseAssemblerTest {
     @Test
     @DisplayName("listProjectMembers는 프로젝트와 멤버 쌍별로 APPROVED 매칭차수를 매핑한다")
     void listProjectMembersMapsApprovedMatchedRoundByProjectAndMember() {
-        ProjectInfo project42 = projectInfo(42L);
-        ProjectInfo project43 = projectInfoWithOwner(43L, 199L);
-        given(checkPermissionUseCase.check(anyLong(), any(ResourcePermission.class))).willReturn(true);
-        given(getProjectUseCase.getById(42L)).willReturn(project42);
-        given(getProjectUseCase.getById(43L)).willReturn(project43);
-        given(loadProjectMemberPort.listByProjectIds(Set.of(42L, 43L))).willReturn(Map.of(
-            42L, List.of(projectMember(102L, ChallengerPart.SPRINGBOOT)),
-            43L, List.of(projectMember(102L, ChallengerPart.SPRINGBOOT))
-        ));
-        given(getMemberUseCase.findAllByIds(Set.of(99L, 199L, 102L))).willReturn(Map.of(
-            99L, memberInfoOf(99L, "메인42", "김메인"),
-            199L, memberInfoOf(199L, "메인43", "이메인"),
-            102L, memberInfoOf(102L, "백엔드", "이다라")
-        ));
-        given(loadProjectMemberPort.listMatchedRoundsByProjectIdsAndMemberIds(any(), any()))
-            .willReturn(List.of(
-                new ProjectMemberMatchedRoundInfo(42L, 102L, 7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST),
-                new ProjectMemberMatchedRoundInfo(43L, 102L, 8L, MatchingType.PLAN_DEVELOPER, MatchingPhase.THIRD)
-            ));
+        ProjectMatchingRosterInfo project42 = new ProjectMatchingRosterInfo(42L, null, List.of(
+            new RosterMemberInfo(102L, "백엔드", "이다라", null, ChallengerPart.SPRINGBOOT,
+                7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST)));
+        ProjectMatchingRosterInfo project43 = new ProjectMatchingRosterInfo(43L, null, List.of(
+            new RosterMemberInfo(102L, "백엔드", "이다라", null, ChallengerPart.SPRINGBOOT,
+                8L, MatchingType.PLAN_DEVELOPER, MatchingPhase.THIRD)));
+        given(getProjectPublishedMembersUseCase.get(List.of(42L, 43L), 900L)).willReturn(Map.of(
+            42L, project42, 43L, project43));
 
         Map<Long, ProjectMembersResponse> responses = sut.listProjectMembers(List.of(42L, 43L), 900L);
 

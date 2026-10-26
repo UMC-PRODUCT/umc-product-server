@@ -1,5 +1,6 @@
 package com.umc.product.project.application.service.query;
 
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -20,10 +21,14 @@ import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.project.application.port.in.query.SearchProjectMatchingCandidateUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectMatchingCandidateInfo;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
+import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.service.policy.ProjectManualMatchingAccessPolicy;
+import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
+import com.umc.product.project.domain.ProjectMatchingRound;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
@@ -36,10 +41,12 @@ public class ProjectMatchingCandidateQueryService implements SearchProjectMatchi
     private final LoadProjectPort loadProjectPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final LoadProjectApplicationPort loadProjectApplicationPort;
+    private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final ProjectMatchingChapterResolver matchingChapterResolver;
     private final ProjectManualMatchingAccessPolicy accessPolicy;
+    private final ProjectMatchingAdjustmentPolicy adjustmentPolicy;
 
     @Override
     public Page<ProjectMatchingCandidateInfo> search(Long projectId, Long requesterMemberId, ChallengerPart part,
@@ -50,8 +57,14 @@ public class ProjectMatchingCandidateQueryService implements SearchProjectMatchi
         if (part == null || part == ChallengerPart.PLAN || part == ChallengerPart.ADMIN) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_PART_NOT_ALLOWED);
         }
-        Set<Long> assigned = new HashSet<>(loadProjectMemberPort.listAssignedMemberIdsByGisuId(project.getGisuId()));
-        assigned.addAll(loadProjectApplicationPort.listApprovedApplicantMemberIdsByGisuId(project.getGisuId()));
+        MatchingType matchingType = MatchingType.fromPart(part).orElseThrow();
+        Long adjustmentRoundId = adjustmentPolicy.findViewableAdjustmentRounds(
+                loadProjectMatchingRoundPort.listByChapterId(project.getChapterId()), Instant.now()).stream()
+            .filter(round -> round.getType() == matchingType)
+            .map(ProjectMatchingRound::getId).findFirst().orElse(null);
+        // 후보 조회는 변경 제한 기간에도 허용하며, 조정 명단에서 해제된 팀원은 후보에 포함한다.
+        Set<Long> assigned = new HashSet<>(loadProjectMemberPort.listAssignedMemberIdsByGisuId(project.getGisuId(), adjustmentRoundId));
+        assigned.addAll(loadProjectApplicationPort.listApprovedApplicantMemberIdsByGisuId(project.getGisuId(), adjustmentRoundId));
         assigned.add(project.getProductOwnerMemberId());
         var challengers = matchingChapterResolver.deltaOf(project.getChapterId())
             .apply(getChallengerUseCase.listByChapterId(project.getChapterId())).stream()
