@@ -2,9 +2,9 @@ package com.umc.product.community.application.port.in.query.thread.report.dto;
 
 import java.time.Instant;
 
-import com.umc.product.community.domain.Report;
-import com.umc.product.community.domain.enums.ReportReason;
-import com.umc.product.community.domain.enums.ReportStatus;
+import com.umc.product.report.application.port.in.query.dto.ReportInfo;
+import com.umc.product.report.domain.enums.ReportReason;
+import com.umc.product.report.domain.enums.ReportStatus;
 
 public record CommunityThreadMessageAdminReportInfo(
     Long reportId,
@@ -16,15 +16,15 @@ public record CommunityThreadMessageAdminReportInfo(
     Instant createdAt
 ) {
 
-    public static CommunityThreadMessageAdminReportInfo from(Report report) {
+    public static CommunityThreadMessageAdminReportInfo from(ReportInfo report) {
         return new CommunityThreadMessageAdminReportInfo(
-            report.getId(),
-            report.getThreadId(),
-            report.getTargetId(),
-            report.getReasonCode(),
-            report.getStatus(),
-            report.getReporterId(),
-            report.getCreatedAt()
+            report.reportId(),
+            report.threadId(),
+            report.targetId(),
+            report.reasonCode(),
+            report.status(),
+            report.reporterId(),
+            report.createdAt()
         );
     }
 }

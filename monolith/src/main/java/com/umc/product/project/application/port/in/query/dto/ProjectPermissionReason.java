@@ -6,6 +6,8 @@ import lombok.Getter;
 public enum ProjectPermissionReason {
     APPLICATION_PERIOD_IN_PROGRESS("지원기간에는 프로젝트를 삭제할 수 없습니다."),
     PROJECT_UPDATE_DURING_APPLICATION_PERIOD("지원기간에는 프로젝트 정보를 수정할 수 없습니다."),
+    PART_QUOTA_MATCHING_IN_PROGRESS("1차 시작부터 3차 합불 결정 마감까지 TO를 수정할 수 없습니다."),
+    PART_QUOTA_MATCHING_SCHEDULE_INCOMPLETE("매칭이 시작되었으나 3차 일정이 없어 TO 수정 재개 시점을 확인할 수 없습니다."),
     PROJECT_NOT_FOUND("프로젝트를 찾을 수 없습니다."),
     PERMISSION_DENIED("권한이 없습니다."),
     INVALID_PROJECT_STATUS("현재 상태에서는 이 작업을 수행할 수 없습니다."),

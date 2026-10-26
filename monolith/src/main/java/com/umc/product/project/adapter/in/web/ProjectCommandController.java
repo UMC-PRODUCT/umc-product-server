@@ -209,7 +209,12 @@ public class ProjectCommandController {
     @Operation(
         operationId = "PROJECT-105",
         summary = "파트별 정원 일괄 갱신",
-        description = "PUT 시멘틱 — 본문이 곧 새 상태가 된다. 본문에 없는 기존 파트는 삭제. quota ≥ 1. 운영진 검토 단계 액션 — 본인 지부장 또는 총괄단만 호출 가능."
+        description = """
+            본문의 파트 정원으로 전체 교체하며, 생략한 기존 파트는 삭제합니다. quota는 1 이상이어야 합니다.
+            최고관리자·해당 기수 총괄단·담당 지부장만 수정할 수 있습니다.
+            파트별 1차 매칭 시작부터 3차 PM 판정 마감까지는 변경할 수 없으며, 배정 인원 미만·지부 인원 초과도 차단합니다.
+            변경한 셀만 저장하려면 PATCH /api/v1/projects/admin/part-quotas를 사용하세요.
+            """
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,

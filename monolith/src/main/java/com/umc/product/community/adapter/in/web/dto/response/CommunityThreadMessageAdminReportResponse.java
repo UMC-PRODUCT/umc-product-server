@@ -5,8 +5,8 @@ import static com.umc.product.community.adapter.in.web.CommunityWebNumbers.text;
 import java.time.Instant;
 
 import com.umc.product.community.application.port.in.query.thread.report.dto.CommunityThreadMessageAdminReportInfo;
-import com.umc.product.community.domain.enums.ReportReason;
-import com.umc.product.community.domain.enums.ReportStatus;
+import com.umc.product.report.domain.enums.ReportReason;
+import com.umc.product.report.domain.enums.ReportStatus;
 
 public record CommunityThreadMessageAdminReportResponse(
     String reportId,

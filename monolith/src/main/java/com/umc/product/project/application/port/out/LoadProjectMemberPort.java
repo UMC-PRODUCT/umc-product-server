@@ -86,6 +86,9 @@ public interface LoadProjectMemberPort {
      */
     Map<Long, List<ProjectMember>> listByProjectIds(Collection<Long> projectIds);
 
+    /** TO 관리의 현재 인원·최소 TO를 계산하도록 ACTIVE와 발표 대기를 일괄 조회한다. */
+    Map<Long, List<ProjectMember>> listAssignedByProjectIds(Collection<Long> projectIds);
+
     /**
      * ACTIVE 팀원에서 지정한 조정 차수에 해제 예약된 팀원을 제외하고, 해당 차수의 PENDING_PUBLICATION 팀원을 포함합니다.
      * 차수 ID 목록이 비어 있으면 공개 명단(ACTIVE)만 반환합니다.

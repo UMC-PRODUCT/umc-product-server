@@ -22,6 +22,7 @@ import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope;
 import com.umc.product.project.application.access.ProjectApplicationAccessScopeResolver;
@@ -44,6 +45,7 @@ import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.service.policy.ProjectManualMatchingAccessPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
+import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
 import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplicationForm;
@@ -82,6 +84,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
     private final ProjectStatisticsAccessPolicy projectStatisticsAccessPolicy;
     private final ProjectMatchingChapterResolver projectMatchingChapterResolver;
     private final ProjectMatchingAdjustmentPolicy projectMatchingAdjustmentPolicy;
+    private final ProjectQuotaEditPolicy projectQuotaEditPolicy;
 
     @Override
     public List<ProjectPermissionInfo> listByProjectIds(Long requesterMemberId, List<Long> projectIds) {
@@ -102,8 +105,8 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
             loadProjectApplicationFormPort.findAllByProjectIds(uniqueIds);
         Map<Long, List<ProjectPartQuota>> quotasByProjectId =
             loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(uniqueIds);
-        PermissionCache permissionCache = new PermissionCache(subject);
         Instant now = clock.instant();
+        PermissionCache permissionCache = new PermissionCache(subject, now);
 
         return uniqueIds.stream()
             .map(projectId -> {
@@ -226,7 +229,14 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
     private PartQuotaPermissions partQuotaPermissions(ProjectCapabilityContext context) {
         return new PartQuotaPermissions(requirePermission(
             context.projectPermission(PermissionType.MANAGE),
-            ProjectPermissionCapabilityInfo::allow
+            () -> {
+                var rounds = context.permissionCache().allMatchingRounds(context.project().getChapterId());
+                var windows = java.util.Arrays.stream(ChallengerPart.values())
+                    .filter(part -> part != ChallengerPart.ADMIN)
+                    .map(part -> projectQuotaEditPolicy.evaluate(part, rounds, context.permissionCache().now)).toList();
+                return windows.stream().anyMatch(window -> window.capability().allowed())
+                    ? ProjectPermissionCapabilityInfo.allow() : windows.getFirst().capability();
+            }
         ));
     }
 
@@ -475,6 +485,8 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
     private class PermissionCache {
 
         private final SubjectAttributes subject;
+        private final Instant now;
+        private final Map<Long, List<ProjectMatchingRound>> allMatchingRounds = new LinkedHashMap<>();
         private final Map<Long, Map<PermissionType, Boolean>> projectPermissions = new LinkedHashMap<>();
         private final Map<Long, Boolean> applicationWritePermissions = new LinkedHashMap<>();
         private final Map<Long, List<ProjectMatchingRound>> openMatchingRounds = new LinkedHashMap<>();
@@ -483,8 +495,13 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         private final Map<Long, Boolean> projectMemberExists = new LinkedHashMap<>();
         private final Map<Long, Optional<Long>> matchingChapterIds = new LinkedHashMap<>();
 
-        private PermissionCache(SubjectAttributes subject) {
+        private PermissionCache(SubjectAttributes subject, Instant now) {
             this.subject = subject;
+            this.now = now;
+        }
+
+        private List<ProjectMatchingRound> allMatchingRounds(Long chapterId) {
+            return allMatchingRounds.computeIfAbsent(chapterId, loadProjectMatchingRoundPort::listByChapterId);
         }
 
         private boolean project(Long projectId, PermissionType permissionType) {

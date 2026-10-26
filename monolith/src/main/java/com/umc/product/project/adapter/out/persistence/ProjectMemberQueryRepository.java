@@ -232,6 +232,25 @@ public class ProjectMemberQueryRepository {
     }
 
     /**
+     * 현재 배정 및 발표 대기 팀원을 프로젝트별로 조회한다.
+     */
+    public Map<Long, List<ProjectMember>> listAssignedByProjectIds(Collection<Long> projectIds) {
+        if (projectIds == null || projectIds.isEmpty()) {
+            return Map.of();
+        }
+        List<Tuple> rows = queryFactory.select(projectMember.project.id, projectMember).from(projectMember)
+            .where(projectMember.project.id.in(projectIds),
+                projectMember.status.in(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION))
+            .orderBy(projectMember.id.asc()).fetch();
+        Map<Long, List<ProjectMember>> result = new HashMap<>();
+        for (Tuple row : rows) {
+            result.computeIfAbsent(row.get(projectMember.project.id), ignored -> new ArrayList<>())
+                .add(row.get(projectMember));
+        }
+        return result;
+    }
+
+    /**
      * 여러 프로젝트의 (projectId, part) 별 ACTIVE 멤버 수를 한 번에 집계한다.
      *
      * @return projectId -> (part -> 인원수) 맵. 인원이 0 인 (project, part) 조합은 엔트리 없음.
