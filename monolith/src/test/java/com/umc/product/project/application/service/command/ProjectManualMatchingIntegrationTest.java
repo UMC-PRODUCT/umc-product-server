@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -43,6 +44,8 @@ import com.umc.product.project.application.port.in.query.GetRandomMatchedProject
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
+import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
@@ -210,10 +213,10 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 기존_상태변경_API도_지원서_불합격과_즉시_재배정을_일관되게_처리한다() throws Exception {
+    void 상태변경으로_퇴출한_팀원은_결과_공개_후_배정_API로_재배정한다() throws Exception {
         // given
         Scenario scenario = fixture.준비();
-        var application = fixture.지원서_배정(scenario, true);
+        ApplicationScenario application = fixture.지원서_배정(scenario, true);
         authenticate(scenario.staffId());
 
         // when
@@ -228,12 +231,40 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         mockMvc.perform(patch("/api/v1/projects/{id}/members/{member}/status", scenario.projectId(),
             scenario.candidateId())
                 .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"ACTIVE\",\"reason\":\"재배정\"}"))
-            .andExpect(status().isOk());
-        var member = members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId());
+            .andExpect(status().isConflict());
+        assertThat(publisher.publish(application.roundId())).isTrue();
+        assign(scenario, scenario.candidateId()).andExpect(status().isOk());
+        ProjectMember member = members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId());
         assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
         assertThat(member.getAssignedMatchingRound()).isNull();
-        assertThat(publisher.publish(application.roundId())).isTrue();
+        assertThat(member.getApplication()).isNull();
         assertThat(members.listByProjectId(scenario.projectId())).hasSize(1);
+    }
+
+    @Test
+    void 동일한_퇴출_요청은_팀원과_연결_지원서의_사유와_처리_시각을_유지한다() throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        ApplicationScenario application = fixture.지원서_배정(scenario, true);
+        authenticate(scenario.staffId());
+        mockMvc.perform(patch("/api/v1/projects/{id}/members/{member}/status", scenario.projectId(), scenario.candidateId())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"DISMISSED\",\"reason\":\"퇴출 사유\"}"))
+            .andExpect(status().isOk());
+        Instant memberUpdatedAt = members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId()).getStatusUpdatedAt();
+        Instant applicationChangedAt = applications.findById(application.applicationId()).orElseThrow().getStatusChangedAt();
+
+        // when
+        mockMvc.perform(patch("/api/v1/projects/{id}/members/{member}/status", scenario.projectId(), scenario.candidateId())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"DISMISSED\",\"reason\":\"변경된 사유\"}"))
+            .andExpect(status().isOk());
+
+        // then
+        ProjectMember member = members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId());
+        ProjectApplication rejected = applications.findById(application.applicationId()).orElseThrow();
+        assertThat(member.getStatusChangeReason()).isEqualTo("퇴출 사유");
+        assertThat(member.getStatusUpdatedAt()).isEqualTo(memberUpdatedAt);
+        assertThat(rejected.getStatusChangeReason()).isEqualTo("퇴출 사유");
+        assertThat(rejected.getStatusChangedAt()).isEqualTo(applicationChangedAt);
     }
 
     @ParameterizedTest

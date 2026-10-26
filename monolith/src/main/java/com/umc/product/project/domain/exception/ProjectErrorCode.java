@@ -58,6 +58,8 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_MANUAL_MATCHING_NOT_ALLOWED_IN_PERIOD(HttpStatus.CONFLICT, "PROJECT-0103", "현재는 팀원 수동 배정·해제를 처리할 수 없는 기간이에요."),
     PROJECT_MEMBER_ADJUSTMENT_CONFLICT(HttpStatus.CONFLICT, "PROJECT-0104",
         "현재 상태에서는 요청한 팀원 조정을 처리할 수 없어요."),
+    PROJECT_MEMBER_STATUS_CHANGE_NOT_ALLOWED(HttpStatus.CONFLICT, "PROJECT-0105",
+        "현재 멤버 상태에서는 요청한 상태로 변경할 수 없어요."),
 
     // ProjectPartQuota / Publish (PROJECT-105/108)
     PROJECT_PART_QUOTA_INVALID(HttpStatus.BAD_REQUEST, "PROJECT-0200", "파트 정원은 1명 이상으로 입력해주세요."),

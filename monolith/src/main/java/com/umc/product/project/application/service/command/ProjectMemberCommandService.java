@@ -95,12 +95,12 @@ public class ProjectMemberCommandService
     }
 
     /**
-     * 멤버 상태 변경 (soft delete). 행을 보존한 채 {@code status} 만 바꾸고 사유·주체를 기록한다.
+     * 팀원의 활동 완료·중도 이탈·퇴출을 처리하고, 행을 보존한 채 사유·주체를 기록한다.
      * <ul>
      *   <li>메인 PM: 거부 — 양도 API 로 유도</li>
      *   <li>COMPLETED / ABORTED 프로젝트: 거부 — 종료된 프로젝트의 이력 고정</li>
      * </ul>
-     * 재등록이 필요하면 hard delete API({@code PROJECT-005}) 를 사용한다.
+     * 동일한 종료 상태를 다시 요청하면 기존 처리 정보를 유지한다.
      */
     @Override
     public void changeStatus(ChangeProjectMemberStatusCommand command) {
@@ -119,7 +119,8 @@ public class ProjectMemberCommandService
             manageProjectMatchingUseCase.changeStatus(command);
             return;
         }
-        member.changeStatus(command.status(), command.requesterMemberId(), command.reason());
-        saveProjectMemberPort.save(member);
+        if (member.changeStatus(command.status(), command.requesterMemberId(), command.reason())) {
+            saveProjectMemberPort.save(member);
+        }
     }
 }

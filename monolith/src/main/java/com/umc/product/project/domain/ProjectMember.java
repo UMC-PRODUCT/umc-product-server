@@ -223,18 +223,32 @@ public class ProjectMember extends BaseEntity {
     }
 
     /**
-     * 멤버의 상태를 변경합니다 (soft delete 포함).
-     * <p>
-     * status 를 {@code newStatus} 로 바꾸고 변경 사유·주체·시각 메타데이터를 함께 기록합니다.
-     * 행을 물리적으로 삭제하지 않으므로 히스토리가 보존됩니다.
+     * 팀원의 활동 완료·중도 이탈·퇴출을 기록합니다.
+     * ACTIVE는 세 상태로, PENDING_PUBLICATION은 WITHDRAWN·DISMISSED로만 변경할 수 있습니다.
+     * 종료 상태 간 변경은 허용하지 않으며, 동일 상태 요청은 기존 사유·주체·시각을 유지합니다.
      * 해제 예약이 있으면 취소하여 결과 공개 시 다시 해제되지 않도록 합니다.
+     *
+     * @return 상태를 변경했으면 true, 동일한 종료 상태를 다시 요청했으면 false
      */
-    public void changeStatus(ProjectMemberStatus newStatus, Long changedByMemberId, String reason) {
+    public boolean changeStatus(ProjectMemberStatus newStatus, Long changedByMemberId, String reason) {
+        if (newStatus != ProjectMemberStatus.COMPLETED
+            && newStatus != ProjectMemberStatus.WITHDRAWN
+            && newStatus != ProjectMemberStatus.DISMISSED) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_STATUS_CHANGE_NOT_ALLOWED);
+        }
+        if (status == newStatus) {
+            return false;
+        }
+        if (status != ProjectMemberStatus.ACTIVE
+            && (status != ProjectMemberStatus.PENDING_PUBLICATION || newStatus == ProjectMemberStatus.COMPLETED)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_STATUS_CHANGE_NOT_ALLOWED);
+        }
         this.status = newStatus;
         this.pendingRemovalRoundId = null;
         this.statusUpdatedAt = Instant.now();
         this.statusChangeReason = reason;
         this.statusChangedMemberId = changedByMemberId;
+        return true;
     }
 
     /**

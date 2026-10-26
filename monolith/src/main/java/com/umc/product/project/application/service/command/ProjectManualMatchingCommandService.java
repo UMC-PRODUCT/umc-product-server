@@ -116,19 +116,11 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
     public void changeStatus(ChangeProjectMemberStatusCommand command) {
         Project project = lockProject(command.projectId(), command.requesterMemberId()).project();
         ProjectMember member = getMatchingMember(project, command.memberId());
-        if (command.status() == ProjectMemberStatus.ACTIVE) {
-            if (member.getStatus() == ProjectMemberStatus.ACTIVE) {
-                return;
-            }
-            project.validateApplicable();
-            validateCandidate(project, command.memberId(), member.getPart(), null);
-            validateQuota(project, member.getPart(), null);
-            member.assignManually(member.getPart(), command.requesterMemberId());
-        } else {
-            member.changeStatus(command.status(), command.requesterMemberId(), command.reason());
-            if (command.status() == ProjectMemberStatus.WITHDRAWN || command.status() == ProjectMemberStatus.DISMISSED) {
-                rejectLinkedApplication(member, command.requesterMemberId(), command.reason());
-            }
+        if (!member.changeStatus(command.status(), command.requesterMemberId(), command.reason())) {
+            return;
+        }
+        if (command.status() == ProjectMemberStatus.WITHDRAWN || command.status() == ProjectMemberStatus.DISMISSED) {
+            rejectLinkedApplication(member, command.requesterMemberId(), command.reason());
         }
         saveProjectMemberPort.save(member);
     }
