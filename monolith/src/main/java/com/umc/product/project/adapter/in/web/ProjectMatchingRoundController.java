@@ -79,7 +79,7 @@ public class ProjectMatchingRoundController {
         description = """
             해당 지부·매칭 유형의 1~3차와 랜덤 매칭 일정을 한 번에 등록하거나 수정합니다.
             - 최고관리자, 해당 기수 총괄단, 해당 지부장만 저장할 수 있습니다.
-            - type은 한 번만 지정하고, rounds에는 1~3차와 랜덤 매칭을 하나씩 모두 포함합니다. 누락·중복되면 409 PROJECT-0309를 반환합니다.
+            - type은 한 번만 지정하고, rounds에는 1~3차와 랜덤 매칭을 하나씩 모두 포함합니다. 개수가 4개가 아니면 400, phase가 중복되면 409 PROJECT-0309를 반환합니다.
             - 기존 차수가 없으면 네 차수를 생성하고, 모두 있으면 phase로 찾아 ID를 유지한 채 이름·설명·일정을 수정합니다. 일부만 있으면 409 PROJECT-0309를 반환합니다.
             - 1~3차는 startsAt < endsAt < decisionDeadline < resultPublishAt이어야 합니다.
             - 랜덤 매칭은 decisionDeadline을 받지 않으며 endsAt을 결정 마감으로 저장합니다. startsAt~endsAt은 운영진 조정 기간입니다.
