@@ -54,4 +54,9 @@ public interface LoadAnswerPort {
      * key: option ID, value: 투표자 member ID 목록
      */
     Map<Long, List<Long>> findSelectedMemberIdsByOptionId(Long formId);
+
+    /**
+     * 특정 섹션의 질문(비활성 구버전 포함)에 답변한 제출 완료 응답 수. 섹션 삭제 전 영향 범위 안내용.
+     */
+    long countSubmittedResponsesBySectionId(Long sectionId);
 }

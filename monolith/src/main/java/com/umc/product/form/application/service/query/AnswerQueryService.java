@@ -166,4 +166,9 @@ public class AnswerQueryService implements GetAnswerUseCase {
         List<AnswerChoice> choices = loadAnswerPort.listChoicesByAnswerIdIn(Set.of(answer.getId()));
         return AnswerInfo.from(answer, choices);
     }
+
+    @Override
+    public long countSubmittedResponsesBySectionId(Long sectionId) {
+        return loadAnswerPort.countSubmittedResponsesBySectionId(sectionId);
+    }
 }

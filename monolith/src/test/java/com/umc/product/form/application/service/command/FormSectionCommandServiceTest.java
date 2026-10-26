@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 
 import java.util.List;
@@ -13,16 +14,19 @@ import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.form.application.port.in.command.dto.DeleteFormSectionCommand;
 import com.umc.product.form.application.port.in.command.dto.ReorderFormSectionsCommand;
 import com.umc.product.form.application.port.out.LoadFormPort;
 import com.umc.product.form.application.port.out.LoadFormSectionPort;
 import com.umc.product.form.application.port.out.LoadQuestionOptionPort;
 import com.umc.product.form.application.port.out.LoadQuestionPort;
+import com.umc.product.form.application.port.out.SaveAnswerPort;
 import com.umc.product.form.application.port.out.SaveFormSectionPort;
 import com.umc.product.form.application.port.out.SaveQuestionOptionPort;
 import com.umc.product.form.application.port.out.SaveQuestionPort;
@@ -54,9 +58,23 @@ class FormSectionCommandServiceTest {
     SaveQuestionPort saveQuestionPort;
     @Mock
     SaveQuestionOptionPort saveQuestionOptionPort;
+    @Mock
+    SaveAnswerPort saveAnswerPort;
 
     @InjectMocks
     FormSectionCommandService sut;
+
+    @Test
+    @DisplayName("deleteSection: 섹션에 달린 답변 -> 선택지 -> 질문 -> 섹션 순으로 지운다")
+    void deleteSection_답변부터_cascade_삭제() {
+        sut.deleteSection(DeleteFormSectionCommand.builder().sectionId(10L).requesterMemberId(MEMBER_ID).build());
+
+        InOrder inOrder = inOrder(saveAnswerPort, saveQuestionOptionPort, saveQuestionPort, saveFormSectionPort);
+        inOrder.verify(saveAnswerPort).deleteBySectionId(10L);
+        inOrder.verify(saveQuestionOptionPort).deleteBySectionId(10L);
+        inOrder.verify(saveQuestionPort).deleteBySectionId(10L);
+        inOrder.verify(saveFormSectionPort).deleteById(10L);
+    }
 
     @Test
     @DisplayName("reorderSections: 재배치 결과 옵션의 nextSectionId 가 back-edge 가 되면 거부")

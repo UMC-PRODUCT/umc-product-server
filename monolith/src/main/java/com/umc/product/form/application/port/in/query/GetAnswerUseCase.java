@@ -69,4 +69,9 @@ public interface GetAnswerUseCase {
      * 응답에 답변이 하나도 없으면 빈 리스트 (정보 유출 방지 위해 응답 존재 여부는 검사하지 않음).
      */
     List<AnswerInfo> listByFormResponseIdAsAnonymous(Long formResponseId, String responseAccessKey);
+
+    /**
+     * 특정 섹션의 질문(비활성 구버전 포함)에 답변한 제출 완료 응답 수를 반환한다. 폼 편집에서 섹션 삭제 전 영향 범위를 알리는 용도.
+     */
+    long countSubmittedResponsesBySectionId(Long sectionId);
 }
