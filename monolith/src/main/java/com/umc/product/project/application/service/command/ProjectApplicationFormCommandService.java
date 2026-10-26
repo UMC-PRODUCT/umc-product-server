@@ -32,6 +32,7 @@ import com.umc.product.form.application.port.in.command.dto.UpdateFormCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateFormSectionCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateQuestionCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateQuestionOptionCommand;
+import com.umc.product.form.application.port.in.query.GetAnswerUseCase;
 import com.umc.product.form.application.port.in.query.GetFormUseCase;
 import com.umc.product.form.application.port.in.query.dto.FormWithStructureInfo;
 import com.umc.product.form.application.port.in.query.dto.FormWithStructureInfo.Option;
@@ -89,6 +90,7 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
     private final ManageQuestionUseCase manageQuestionUseCase;
     private final ManageQuestionOptionUseCase manageQuestionOptionUseCase;
     private final GetFormUseCase getFormUseCase;
+    private final GetAnswerUseCase getAnswerUseCase;
 
     @Override
     public ApplicationFormInfo upsert(UpsertApplicationFormCommand command) {
@@ -203,7 +205,9 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
             applicationForm, command, existingSectionById, policyByFormSectionId, shouldFork
         );
 
-        deleteRemovedSections(command.sections(), existing.sections(), command.requesterMemberId());
+        deleteRemovedSections(
+            command.sections(), existing.sections(), command.requesterMemberId(), command.confirmDeleteAnsweredSections()
+        );
 
         if (!orderedSectionIds.isEmpty()) {
             manageFormSectionUseCase.reorderSections(
@@ -301,10 +305,16 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
         return entry.sectionId();
     }
 
+    /**
+     * 본문에서 빠진 섹션을 삭제한다. 섹션에 제출된 답변이 있으면 답변까지 함께 지워지므로,
+     * {@code confirmDeleteAnsweredSections} 가 false 인 동안은 {@link ProjectErrorCode#APPLICATION_FORM_SECTION_HAS_ANSWERS} 로
+     * 거절하고 메시지에 섹션명과 답변한 지원자 수를 담는다. 클라이언트는 이 메시지로 경고한 뒤 플래그를 켜서 다시 요청한다.
+     */
     private void deleteRemovedSections(
         List<ApplicationFormSectionEntry> requestSections,
         List<SectionWithQuestions> existingSections,
-        Long requesterMemberId
+        Long requesterMemberId,
+        boolean confirmDeleteAnsweredSections
     ) {
         Set<Long> requestedExistingIds = requestSections.stream()
             .map(ApplicationFormSectionEntry::sectionId)
@@ -314,6 +324,16 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
         for (SectionWithQuestions existing : existingSections) {
             if (requestedExistingIds.contains(existing.sectionId())) {
                 continue;
+            }
+            if (!confirmDeleteAnsweredSections) {
+                long answeredCount = getAnswerUseCase.countSubmittedResponsesBySectionId(existing.sectionId());
+                if (answeredCount > 0) {
+                    throw new ProjectDomainException(
+                        ProjectErrorCode.APPLICATION_FORM_SECTION_HAS_ANSWERS,
+                        "'%s' 섹션에 답변한 지원자가 %d명 있어요. 삭제하면 답변도 함께 지워져요. 그래도 삭제하려면 confirmDeleteAnsweredSections 를 true 로 보내주세요."
+                            .formatted(existing.title(), answeredCount)
+                    );
+                }
             }
             manageFormSectionUseCase.deleteSection(
                 DeleteFormSectionCommand.builder()

@@ -19,6 +19,7 @@ import com.umc.product.form.application.port.out.LoadFormPort;
 import com.umc.product.form.application.port.out.LoadFormSectionPort;
 import com.umc.product.form.application.port.out.LoadQuestionOptionPort;
 import com.umc.product.form.application.port.out.LoadQuestionPort;
+import com.umc.product.form.application.port.out.SaveAnswerPort;
 import com.umc.product.form.application.port.out.SaveFormSectionPort;
 import com.umc.product.form.application.port.out.SaveQuestionOptionPort;
 import com.umc.product.form.application.port.out.SaveQuestionPort;
@@ -43,6 +44,7 @@ public class FormSectionCommandService implements ManageFormSectionUseCase {
     private final SaveFormSectionPort saveFormSectionPort;
     private final SaveQuestionPort saveQuestionPort;
     private final SaveQuestionOptionPort saveQuestionOptionPort;
+    private final SaveAnswerPort saveAnswerPort;
 
     @Override
     public Long createSection(CreateFormSectionCommand command) {
@@ -71,7 +73,8 @@ public class FormSectionCommandService implements ManageFormSectionUseCase {
     public void deleteSection(DeleteFormSectionCommand command) {
         Long sectionId = command.sectionId();
 
-        // cascade (자식부터)
+        // cascade (자식부터): 답변 -> 선택지 -> 질문 -> 섹션. 섹션에 달린 제출 답변도 함께 지워지므로 호출자가 사전에 확인을 받아야 한다.
+        saveAnswerPort.deleteBySectionId(sectionId);
         saveQuestionOptionPort.deleteBySectionId(sectionId);
         saveQuestionPort.deleteBySectionId(sectionId);
         saveFormSectionPort.deleteById(sectionId);

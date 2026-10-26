@@ -34,6 +34,8 @@ public enum ProjectErrorCode implements BaseCode {
     APPLICATION_FORM_INVALID_QUESTION_ID(HttpStatus.BAD_REQUEST, "PROJECT-0015", "해당 섹션에 없는 질문이에요. 질문을 다시 선택해주세요."),
     APPLICATION_FORM_INVALID_OPTION_ID(HttpStatus.BAD_REQUEST, "PROJECT-0016", "해당 질문에 없는 선택지예요. 선택지를 다시 선택해주세요."),
     APPLICATION_FORM_OPTIONS_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROJECT-0017", "선택형 질문에만 선택지를 추가할 수 있어요. 질문 유형을 확인해주세요."),
+    APPLICATION_FORM_SECTION_HAS_ANSWERS(HttpStatus.CONFLICT, "PROJECT-0026",
+        "이미 답변한 지원자가 있는 섹션이에요. 삭제하면 답변도 함께 지워지니 삭제 확인을 보내주세요."),
     APPLICATION_FORM_OPTIONS_REQUIRED(HttpStatus.BAD_REQUEST, "PROJECT-0018", "선택형 질문에는 선택지가 1개 이상 필요해요. 선택지를 추가해주세요."),
 
     // Project Draft flow (PROJECT-101, 102, 107)

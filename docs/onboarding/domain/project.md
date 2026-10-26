@@ -294,6 +294,14 @@ PM은 `PATCH /api/v1/projects/{projectId}/applications/{applicationId}/decision`
 
 자동 선발·랜덤 매칭·발표의 상세 흐름은 [매칭 자동 선발과 랜덤 매칭·결과 발표](../project/plan-developer-third-auto-assignment.md)를 참고한다.
 
+## 지원 폼 수정과 제출된 답변
+
+PM은 `PUT /api/v1/projects/{projectId}/application-form`으로 지원 폼 전체를 다시 저장한다. 모집 중(IN_PROGRESS)이라도 지부에 열린 매칭 차수가 없으면 수정할 수 있다. 모집 중 수정은 질문을 새 버전으로 갈라서(원본 비활성) 이미 제출된 답변이 옛 질문에 그대로 남게 한다.
+
+섹션을 본문에서 빼면 섹션과 그 안의 질문·선택지·답변을 함께 지운다. 그 섹션에 제출 완료된 답변이 있으면 서버가 바로 지우지 않고 `PROJECT_APPLICATION_FORM_SECTION_HAS_ANSWERS`(PROJECT-0026, 409)를 반환하며, 메시지에 섹션명과 답변한 지원자 수를 담는다. 클라이언트는 이 메시지로 PM에게 경고한 뒤 `confirmDeleteAnsweredSections: true`를 붙여 다시 요청하고, 그때 답변까지 삭제한다. 답변이 없는 섹션은 확인 없이 삭제한다.
+
+제출된 지원서 상세(`GET /api/v1/projects/{projectId}/applications/{applicationId}`)는 제출 당시 답변이 달린 질문 기준으로 폼 구조를 만들고, 현재 섹션 파트 정책으로 다시 가리지 않는다. 섹션 정책을 나중에 바꿔도(예: 디자인 전용 → 개발 전용) 이미 제출한 지원자의 답변은 그대로 보인다. 새 지원서를 쓰는 화면만 현재 정책대로 섹션을 가린다.
+
 ## 상세 문서
 
 - [매칭 자동 선발과 랜덤 매칭·결과 발표](../project/plan-developer-third-auto-assignment.md)

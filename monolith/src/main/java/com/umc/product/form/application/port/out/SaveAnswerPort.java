@@ -53,4 +53,9 @@ public interface SaveAnswerPort {
      * Answer 자체는 보존.
      */
     void deleteChoicesByAnswerId(Long answerId);
+
+    /**
+     * 특정 섹션의 질문(비활성 구버전 포함)에 속한 모든 Answer 와 그에 딸린 AnswerChoice 를 삭제 (deleteSection cascade 용).
+     */
+    void deleteBySectionId(Long sectionId);
 }
