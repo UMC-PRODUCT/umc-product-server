@@ -9,9 +9,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -20,12 +23,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.command.dto.UpdatePartQuotasCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdatePartQuotasCommand.Entry;
+import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectPartQuotaPort;
+import com.umc.product.project.application.service.policy.ProjectQuotaCapacityPolicy;
+import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.ProjectStatus;
@@ -42,8 +51,23 @@ class ProjectPartQuotaCommandServiceTest {
     @Mock
     SaveProjectPartQuotaPort saveProjectPartQuotaPort;
 
+    @Mock Clock clock;
+    @Mock CheckPermissionUseCase checkPermissionUseCase;
+    @Mock LockProjectMatchingPort lockProjectMatchingPort;
+    @Mock LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
+    @Mock LoadProjectMemberPort loadProjectMemberPort;
+    @Mock ProjectQuotaEditPolicy editPolicy;
+    @Mock ProjectQuotaCapacityPolicy capacityPolicy;
+
     @InjectMocks
     ProjectPartQuotaCommandService sut;
+
+    @BeforeEach
+    void 잠금_조회와_시각을_설정한다() {
+        org.mockito.Mockito.lenient().when(clock.instant()).thenReturn(Instant.now());
+        org.mockito.Mockito.lenient().when(loadProjectPort.getByIdForUpdate(any()))
+            .thenAnswer(invocation -> loadProjectPort.getById(invocation.getArgument(0)));
+    }
 
     @Test
     void update_신규_파트_추가() {

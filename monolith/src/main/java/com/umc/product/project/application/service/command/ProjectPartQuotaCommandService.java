@@ -1,9 +1,13 @@
 package com.umc.product.project.application.service.command;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,15 +16,25 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourcePermission;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.project.application.port.in.command.UpdatePartQuotasUseCase;
 import com.umc.product.project.application.port.in.command.dto.UpdatePartQuotasCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdatePartQuotasCommand.Entry;
+import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectPartQuotaPort;
+import com.umc.product.project.application.service.policy.ProjectQuotaCapacityPolicy;
+import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
@@ -32,6 +46,13 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
 
+    private final Clock clock;
+    private final CheckPermissionUseCase checkPermissionUseCase;
+    private final LockProjectMatchingPort lockProjectMatchingPort;
+    private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
+    private final LoadProjectMemberPort loadProjectMemberPort;
+    private final ProjectQuotaEditPolicy editPolicy;
+    private final ProjectQuotaCapacityPolicy capacityPolicy;
     private final LoadProjectPort loadProjectPort;
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
     private final SaveProjectPartQuotaPort saveProjectPartQuotaPort;
@@ -48,7 +69,23 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
     )
     @Override
     public void update(UpdatePartQuotasCommand command) {
+        updateWithinBatch(command);
         Project project = loadProjectPort.getById(command.projectId());
+        capacityPolicy.validate(project.getGisuId(), project.getChapterId());
+    }
+
+    // 일괄 저장은 모든 프로젝트를 갱신한 뒤 지부 TO 상한을 검증한다.
+    void updateWithinBatch(UpdatePartQuotasCommand command) {
+        lockProjectMatchingPort.lockByProjectId(command.projectId());
+        Project target = loadProjectPort.getById(command.projectId());
+        Long chapterId = target.getChapterId();
+        var rounds = loadProjectMatchingRoundPort.listByChapterIdForUpdate(chapterId);
+        Project project = loadProjectPort.getByIdForUpdate(command.projectId());
+        if (!Objects.equals(chapterId, project.getChapterId())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+        checkPermissionUseCase.checkOrThrow(command.requesterMemberId(),
+            ResourcePermission.of(ResourceType.PROJECT, project.getId(), PermissionType.MANAGE));
         project.validateMutable();
 
         validateEntries(command.entries());
@@ -63,6 +100,39 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
         Set<ChallengerPart> partsToDelete = existingByPart.keySet().stream()
             .filter(p -> !requestedParts.contains(p))
             .collect(Collectors.toSet());
+
+        Map<ChallengerPart, Long> assigned = loadProjectMemberPort.countAssignedByProjectIdGroupByPart(project.getId());
+        Map<ChallengerPart, Long> requested = command.entries().stream()
+            .collect(Collectors.toMap(Entry::part, Entry::quota));
+        Set<ChallengerPart> changed = EnumSet.noneOf(ChallengerPart.class);
+        changed.addAll(existingByPart.keySet());
+        changed.addAll(requested.keySet());
+        Instant now = clock.instant();
+        for (ChallengerPart part : changed) {
+            long minimum = assigned.getOrDefault(part, 0L);
+            if (part == ChallengerPart.PLAN) {
+                var ids = new HashSet<Long>();
+                ids.add(project.getProductOwnerMemberId());
+                loadProjectMemberPort.listActiveAndPendingPublicationByProjectId(project.getId()).stream()
+                    .filter(member -> member.getPart() == ChallengerPart.PLAN)
+                    .map(ProjectMember::getMemberId).forEach(ids::add);
+                minimum = ids.size();
+            }
+            long defaultQuota = part == ChallengerPart.PLAN ? minimum : 0;
+            long before = existingByPart.containsKey(part) ? existingByPart.get(part).getQuota() : defaultQuota;
+            long after = requested.getOrDefault(part, 0L);
+            if (before == after) {
+                continue;
+            }
+            if (part == ChallengerPart.ADMIN) {
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_QUOTA_READ_ONLY);
+            }
+            editPolicy.validate(part, rounds, now);
+            if (after < minimum) {
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_QUOTA_BELOW_ASSIGNED,
+                    part.getDisplayName() + ": 이미 배정된 인원보다 TO를 줄일 수 없어요.");
+            }
+        }
 
         if (!partsToDelete.isEmpty()) {
             saveProjectPartQuotaPort.deleteByProjectIdAndPartIn(command.projectId(), partsToDelete);
