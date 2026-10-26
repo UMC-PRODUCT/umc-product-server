@@ -18,6 +18,8 @@ export function getAccessToken(memberId, { timeout, baseUrl = BASE_URL } = {}) {
   // 업무 시나리오 지표에 토큰 발급 지연이 섞인다 — auth 로 분리해 따로 본다.
   const res = http.get(`${origin}/test/token/access?memberId=${memberId}`, {
     tags: { scenario: "auth" },
+    ...(__ENV.TEST_API_BASIC_AUTH
+      ? { headers: { Authorization: `Basic ${__ENV.TEST_API_BASIC_AUTH}` } } : {}),
     ...(timeout ? { timeout } : {}),
   });
   // 컨트롤러가 raw 문자열 토큰을 반환한다. 따옴표가 감싸져 있으면 제거한다.

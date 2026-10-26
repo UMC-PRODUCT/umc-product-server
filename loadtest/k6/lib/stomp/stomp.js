@@ -81,7 +81,10 @@ export class StompClient {
           this.fail(new StompError(`${this.label}: STOMP 수신 프레임 처리 실패`, "frame_error"));
         }
       };
-      this.socket.onerror = () => this.fail(new StompError(`${this.label}: WebSocket 연결 오류`, "connection_error"));
+      this.socket.onerror = () => {
+        // DISCONNECT 이후 서버가 먼저 닫는 경우도 있다. 실제 종료 여부는 close()가 확인한다.
+        if (!this.closing) this.fail(new StompError(`${this.label}: WebSocket 연결 오류`, "connection_error"));
+      };
       this.socket.onclose = () => {
         this.stopHeartbeats();
         if (this.closeWaiter) this.closeWaiter();

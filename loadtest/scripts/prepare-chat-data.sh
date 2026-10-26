@@ -87,6 +87,9 @@ trap on_exit EXIT
 api() {
   local method="$1" path="$2" body="${3:-}" token="${4:-}"
   local args=(--fail --silent --show-error --connect-timeout 5 --max-time 30 --request "$method")
+  if [[ "$path" == /test/* ]] && [ -n "${TEST_API_BASIC_AUTH:-}" ]; then
+    args+=(--header "Authorization: Basic $TEST_API_BASIC_AUTH")
+  fi
   if [ -n "$body" ]; then
     args+=(--header 'Content-Type: application/json' --data "$body")
   fi
