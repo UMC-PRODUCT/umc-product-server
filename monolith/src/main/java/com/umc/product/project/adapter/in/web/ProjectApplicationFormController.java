@@ -37,7 +37,13 @@ public class ProjectApplicationFormController {
     @Operation(
         operationId = "PROJECT-106",
         summary = "지원 폼 저장",
-        description = "요청 본문을 지원 폼의 새 전체 상태로 저장합니다. 폼이 없으면 생성하고, 있으면 섹션, 질문, 옵션을 본문 구조와 맞춥니다. DRAFT 또는 PENDING_REVIEW 상태에서만 호출할 수 있습니다."
+        description = """
+            요청 본문을 지원 폼의 새 전체 상태로 저장합니다. 폼이 없으면 생성하고, 있으면 섹션, 질문, 옵션을 본문 구조와 맞춥니다.
+            DRAFT, PENDING_REVIEW 상태이거나, IN_PROGRESS 라도 지부에 열린 매칭 차수가 없을 때 호출할 수 있습니다.
+            <p>
+            본문에서 뺀 섹션에 이미 제출된 답변이 있으면 PROJECT-0026 (409) 으로 거절하고, 메시지에 섹션명과 답변한 지원자 수를 담습니다.
+            사용자에게 경고한 뒤 confirmDeleteAnsweredSections 를 true 로 보내면 섹션과 그 답변을 함께 삭제합니다.
+            """
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,

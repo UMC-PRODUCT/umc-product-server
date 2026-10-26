@@ -46,6 +46,7 @@ import com.umc.product.form.application.port.in.command.dto.UpdateFormCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateFormSectionCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateQuestionCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateQuestionOptionCommand;
+import com.umc.product.form.application.port.in.query.GetAnswerUseCase;
 import com.umc.product.form.application.port.in.query.GetFormUseCase;
 import com.umc.product.form.application.port.in.query.dto.FormWithStructureInfo;
 import com.umc.product.form.application.port.in.query.dto.FormWithStructureInfo.Option;
@@ -97,6 +98,8 @@ class ProjectApplicationFormCommandServiceTest {
     ManageQuestionOptionUseCase manageQuestionOptionUseCase;
     @Mock
     GetFormUseCase getFormUseCase;
+    @Mock
+    GetAnswerUseCase getAnswerUseCase;
 
     @InjectMocks
     ProjectApplicationFormCommandService sut;
@@ -472,6 +475,70 @@ class ProjectApplicationFormCommandServiceTest {
 
             sut.upsert(cmd);
 
+            ArgumentCaptor<DeleteFormSectionCommand> deleteCaptor =
+                ArgumentCaptor.forClass(DeleteFormSectionCommand.class);
+            then(manageFormSectionUseCase).should().deleteSection(deleteCaptor.capture());
+            assertThat(deleteCaptor.getValue().sectionId()).isEqualTo(1001L);
+            then(savePolicyPort).should().deleteByFormSectionId(1001L);
+        }
+
+        @Test
+        void 제출_답변이_있는_섹션을_확인_없이_빼면_SECTION_HAS_ANSWERS로_거절하고_삭제하지_않는다() {
+            Project project = createProject(42L, ProjectStatus.IN_PROGRESS, "Triple");
+            ProjectApplicationForm form = createApplicationForm(project, 100L, 500L);
+
+            given(loadProjectPort.getById(42L)).willReturn(project);
+            given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
+            given(getFormUseCase.getFormWithStructure(500L)).willReturn(structure(List.of(
+                existingSection(1000L, "공통", null, 1L, List.of()),
+                existingSection(1001L, "지울 섹션", null, 2L, List.of())
+            )));
+            given(loadPolicyPort.listByApplicationFormId(100L)).willReturn(List.of(
+                ProjectApplicationFormPolicy.createCommon(form, 1000L),
+                ProjectApplicationFormPolicy.createCommon(form, 1001L)
+            ));
+            given(getAnswerUseCase.countSubmittedResponsesBySectionId(1001L)).willReturn(3L);
+
+            UpsertApplicationFormCommand cmd = commandWithSections(42L, List.of(
+                section(1000L, FormSectionType.COMMON, Set.of(), "공통", 1, List.of())
+            ));
+
+            assertThatThrownBy(() -> sut.upsert(cmd))
+                .isInstanceOf(ProjectDomainException.class)
+                .hasMessageContaining("지울 섹션")
+                .hasMessageContaining("3명")
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.APPLICATION_FORM_SECTION_HAS_ANSWERS);
+            then(manageFormSectionUseCase).should(never()).deleteSection(any());
+            then(savePolicyPort).should(never()).deleteByFormSectionId(any());
+        }
+
+        @Test
+        void 답변_삭제에_동의하면_제출_답변이_있는_섹션도_답변과_함께_삭제한다() {
+            Project project = createProject(42L, ProjectStatus.IN_PROGRESS, "Triple");
+            ProjectApplicationForm form = createApplicationForm(project, 100L, 500L);
+
+            given(loadProjectPort.getById(42L)).willReturn(project);
+            given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
+            given(getFormUseCase.getFormWithStructure(500L)).willReturn(structure(List.of(
+                existingSection(1000L, "공통", null, 1L, List.of()),
+                existingSection(1001L, "지울 섹션", null, 2L, List.of())
+            )));
+            given(loadPolicyPort.listByApplicationFormId(100L)).willReturn(List.of(
+                ProjectApplicationFormPolicy.createCommon(form, 1000L),
+                ProjectApplicationFormPolicy.createCommon(form, 1001L)
+            ));
+
+            UpsertApplicationFormCommand cmd = UpsertApplicationFormCommand.builder()
+                .projectId(42L).requesterMemberId(99L)
+                .title("Triple").description(null)
+                .sections(List.of(section(1000L, FormSectionType.COMMON, Set.of(), "공통", 1, List.of())))
+                .confirmDeleteAnsweredSections(true)
+                .build();
+
+            sut.upsert(cmd);
+
+            then(getAnswerUseCase).should(never()).countSubmittedResponsesBySectionId(any());
             ArgumentCaptor<DeleteFormSectionCommand> deleteCaptor =
                 ArgumentCaptor.forClass(DeleteFormSectionCommand.class);
             then(manageFormSectionUseCase).should().deleteSection(deleteCaptor.capture());
