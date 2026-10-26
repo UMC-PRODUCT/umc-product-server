@@ -162,7 +162,7 @@ class ThreadMessageReportQueryRepositoryTest {
         Long messageId,
         ReportReason reason
     ) {
-        return Report.createThreadMessage(reporterId, threadId, messageId, reason);
+        return Report.createThreadMessage(reporterId, threadId, messageId, reason, null);
     }
 
     private CommunityThread createThread(Long chatRoomId, String title) {

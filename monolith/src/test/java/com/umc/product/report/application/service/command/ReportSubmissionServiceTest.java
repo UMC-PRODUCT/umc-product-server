@@ -22,6 +22,7 @@ import com.umc.product.report.application.port.in.command.dto.SubmitReportResult
 import com.umc.product.report.application.port.out.LoadReportPort;
 import com.umc.product.report.application.port.out.SaveReportPort;
 import com.umc.product.report.domain.Report;
+import com.umc.product.report.domain.enums.ReportDeliveryStatus;
 import com.umc.product.report.domain.enums.ReportReason;
 import com.umc.product.report.domain.enums.ReportTargetType;
 import com.umc.product.report.domain.exception.ReportDomainException;
@@ -35,6 +36,8 @@ class ReportSubmissionServiceTest {
     private static final Long THREAD_ID = 11L;
     private static final Long MESSAGE_ID = 33L;
     private static final Instant CREATED_AT = Instant.parse("2026-07-18T00:00:00Z");
+    private static final SubmitReportCommand.TargetSnapshot SNAPSHOT =
+        new SubmitReportCommand.TargetSnapshot(4L, "신고 대상 메시지", "스레드 제목");
 
     @Mock
     LoadReportPort loadReportPort;
@@ -57,7 +60,7 @@ class ReportSubmissionServiceTest {
 
         // when
         SubmitReportResult result = sut.submit(
-            SubmitReportCommand.threadMessage(REPORTER_ID, THREAD_ID, MESSAGE_ID, ReportReason.ABUSE)
+            SubmitReportCommand.threadMessage(REPORTER_ID, THREAD_ID, MESSAGE_ID, ReportReason.ABUSE, SNAPSHOT)
         );
 
         // then
@@ -70,6 +73,10 @@ class ReportSubmissionServiceTest {
         assertThat(saved.getTargetId()).isEqualTo(MESSAGE_ID);
         assertThat(saved.getThreadId()).isEqualTo(THREAD_ID);
         assertThat(saved.getReasonCode()).isEqualTo(ReportReason.ABUSE);
+        assertThat(saved.getDeliveryStatus()).isEqualTo(ReportDeliveryStatus.PENDING);
+        assertThat(saved.getTargetSnapshot().getAuthorId()).isEqualTo(4L);
+        assertThat(saved.getTargetSnapshot().getContent()).isEqualTo("신고 대상 메시지");
+        assertThat(saved.getTargetSnapshot().getContext()).isEqualTo("스레드 제목");
     }
 
     @Test
@@ -102,7 +109,7 @@ class ReportSubmissionServiceTest {
 
         // when & then
         assertThatThrownBy(() -> sut.submit(
-            SubmitReportCommand.threadMessage(REPORTER_ID, THREAD_ID, MESSAGE_ID, ReportReason.ABUSE)
+            SubmitReportCommand.threadMessage(REPORTER_ID, THREAD_ID, MESSAGE_ID, ReportReason.ABUSE, SNAPSHOT)
         ))
             .isInstanceOfSatisfying(ReportDomainException.class, exception ->
                 assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS)
@@ -122,7 +129,7 @@ class ReportSubmissionServiceTest {
 
         // when & then
         assertThatThrownBy(() -> sut.submit(
-            SubmitReportCommand.threadMessage(REPORTER_ID, THREAD_ID, MESSAGE_ID, ReportReason.ABUSE)
+            SubmitReportCommand.threadMessage(REPORTER_ID, THREAD_ID, MESSAGE_ID, ReportReason.ABUSE, SNAPSHOT)
         )).isSameAs(duplicate);
     }
 

@@ -72,6 +72,6 @@ class ReportPersistenceAdapterConstraintTranslationTest {
     }
 
     private Report report() {
-        return Report.createThreadMessage(10L, 20L, 30L, ReportReason.SPAM);
+        return Report.createThreadMessage(10L, 20L, 30L, ReportReason.SPAM, null);
     }
 }

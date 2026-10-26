@@ -9,6 +9,7 @@ import com.umc.product.report.application.port.in.command.dto.SubmitReportResult
 import com.umc.product.report.application.port.out.LoadReportPort;
 import com.umc.product.report.application.port.out.SaveReportPort;
 import com.umc.product.report.domain.Report;
+import com.umc.product.report.domain.ReportTargetSnapshot;
 import com.umc.product.report.domain.enums.ReportTargetType;
 import com.umc.product.report.domain.exception.ReportDomainException;
 import com.umc.product.report.domain.exception.ReportErrorCode;
@@ -44,9 +45,17 @@ public class ReportSubmissionService implements SubmitReportUseCase {
                 command.reporterId(),
                 command.threadId(),
                 command.targetId(),
-                command.reasonCode()
+                command.reasonCode(),
+                toSnapshot(command.targetSnapshot())
             );
         }
         return Report.create(command.reporterId(), command.targetType(), command.targetId(), null);
+    }
+
+    private ReportTargetSnapshot toSnapshot(SubmitReportCommand.TargetSnapshot snapshot) {
+        if (snapshot == null) {
+            return null;
+        }
+        return ReportTargetSnapshot.of(snapshot.authorId(), snapshot.content(), snapshot.context());
     }
 }

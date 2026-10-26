@@ -80,6 +80,7 @@ class CommunityThreadMessageReportCommandServiceTest {
     void report_Challenger_기록이_없는_활성_회원도_member_ID로_신고한다() {
         // given
         CommunityThread thread = thread();
+        given(thread.getTitle()).willReturn("스레드 제목");
         CommunityThreadMember member = activeMember();
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
@@ -114,6 +115,8 @@ class CommunityThreadMessageReportCommandServiceTest {
         assertThat(submitted.threadId()).isEqualTo(THREAD_ID);
         assertThat(submitted.targetId()).isEqualTo(MESSAGE_ID);
         assertThat(submitted.reasonCode()).isEqualTo(ReportReason.ABUSE);
+        assertThat(submitted.targetSnapshot())
+            .isEqualTo(new SubmitReportCommand.TargetSnapshot(66L, "신고 대상 메시지", "스레드 제목"));
 
         InOrder order = inOrder(
             getChatMessageRoomUseCase,

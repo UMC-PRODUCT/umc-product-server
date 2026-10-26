@@ -1,11 +1,15 @@
 package com.umc.product.report.domain;
 
+import java.time.Instant;
+
 import com.umc.product.common.BaseEntity;
+import com.umc.product.report.domain.enums.ReportDeliveryStatus;
 import com.umc.product.report.domain.enums.ReportReason;
 import com.umc.product.report.domain.enums.ReportStatus;
 import com.umc.product.report.domain.enums.ReportTargetType;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -53,6 +57,20 @@ public class Report extends BaseEntity {
     @Column(name = "reason_code", length = 32)
     private ReportReason reasonCode;
 
+    /** 운영 채널 전달 상태. 전달 기능 이전에 접수된 신고는 {@code null}. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "delivery_status", length = 20)
+    private ReportDeliveryStatus deliveryStatus;
+
+    @Column(name = "delivery_attempt_count", nullable = false)
+    private int deliveryAttemptCount;
+
+    @Column(name = "delivered_at")
+    private Instant deliveredAt;
+
+    @Embedded
+    private ReportTargetSnapshot targetSnapshot;
+
     @Builder
     private Report(
         Long reporterId,
@@ -60,7 +78,8 @@ public class Report extends BaseEntity {
         Long targetId,
         String reason,
         Long threadId,
-        ReportReason reasonCode
+        ReportReason reasonCode,
+        ReportTargetSnapshot targetSnapshot
     ) {
         this.reporterId = reporterId;
         this.targetType = targetType;
@@ -69,6 +88,9 @@ public class Report extends BaseEntity {
         this.reason = reason;
         this.threadId = threadId;
         this.reasonCode = reasonCode;
+        this.deliveryStatus = ReportDeliveryStatus.PENDING;
+        this.deliveryAttemptCount = 0;
+        this.targetSnapshot = targetSnapshot;
     }
 
     public static Report create(Long reporterId, ReportTargetType targetType, Long targetId, String reason) {
@@ -87,7 +109,8 @@ public class Report extends BaseEntity {
         Long reporterId,
         Long threadId,
         Long messageId,
-        ReportReason reason
+        ReportReason reason,
+        ReportTargetSnapshot targetSnapshot
     ) {
         return Report.builder()
             .reporterId(requirePositive(reporterId, "reporterId"))
@@ -95,6 +118,7 @@ public class Report extends BaseEntity {
             .targetId(requirePositive(messageId, "messageId"))
             .threadId(requirePositive(threadId, "threadId"))
             .reasonCode(requireReason(reason))
+            .targetSnapshot(targetSnapshot)
             .build();
     }
 
