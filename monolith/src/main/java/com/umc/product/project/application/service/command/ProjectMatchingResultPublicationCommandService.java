@@ -15,9 +15,11 @@ import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
+import com.umc.product.project.application.port.out.ScheduleRandomMatchingPort;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
@@ -41,6 +43,7 @@ public class ProjectMatchingResultPublicationCommandService implements PublishPr
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final SaveProjectApplicationPort saveProjectApplicationPort;
     private final SaveProjectMemberPort saveProjectMemberPort;
+    private final ScheduleRandomMatchingPort scheduleRandomMatchingPort;
 
     @Override
     public boolean publish(Long matchingRoundId) {
@@ -96,6 +99,10 @@ public class ProjectMatchingResultPublicationCommandService implements PublishPr
         saveProjectApplicationPort.saveAll(applications);
 
         round.publishResult(now);
+        if (round.getPhase() == MatchingPhase.THIRD) {
+            // 랜덤 매칭은 공개 트랜잭션 커밋 후 별도 작업으로 예약한다.
+            scheduleRandomMatchingPort.scheduleAfterPublication(round.getChapterId(), round.getType());
+        }
         return true;
     }
 }

@@ -23,6 +23,7 @@ import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
+import com.umc.product.project.application.port.out.ScheduleRandomMatchingPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
@@ -54,8 +55,25 @@ class ProjectMatchingResultPublicationCommandServiceTest {
     SaveProjectMemberPort saveProjectMemberPort;
     @Mock
     LockProjectMatchingPort lockProjectMatchingPort;
+    @Mock
+    ScheduleRandomMatchingPort scheduleRandomMatchingPort;
     @InjectMocks
     ProjectMatchingResultPublicationCommandService sut;
+
+    @Test
+    void 제3차_공개_완료_후_같은_매칭_유형의_랜덤_매칭_예약을_요청한다() {
+        // given
+        ProjectMatchingRound round = round(Instant.now().minusSeconds(60), true);
+        ReflectionTestUtils.setField(round, "phase", MatchingPhase.THIRD);
+        given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
+
+        // when
+        sut.publish(ROUND_ID);
+
+        // then
+        assertThat(round.getResultPublishedAt()).isNotNull();
+        then(scheduleRandomMatchingPort).should().scheduleAfterPublication(round.getChapterId(), round.getType());
+    }
 
     @Test
     void 선발된_지원서는_APPROVED로_나머지_지원서는_REJECTED로_발표한다() {

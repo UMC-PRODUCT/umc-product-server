@@ -18,11 +18,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.event.TransactionalEventListenerFactory;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionSynchronizationUtils;
 
 import com.umc.product.global.observability.ScheduledTaskTracer;
 import com.umc.product.project.adapter.in.scheduler.MatchingResultPublicationHandler;
@@ -72,13 +79,15 @@ class MatchingRoundDeadlineSchedulerTest {
     class schedule {
 
         @Test
-        void 랜덤_매칭은_시작_시각에_매칭하고_발표_시각에_공개하도록_예약한다() {
+        void 랜덤_매칭은_3차_실제_공개_시각에_buffer를_더해_예약한다() {
             // given
             Instant startsAt = Instant.parse("2026-11-19T00:00:00+09:00");
             ProjectMatchingRound round = ProjectMatchingRound.create(
                 "개발자 랜덤 매칭", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.RANDOM_MATCHING, 1L,
                 startsAt, startsAt.plusSeconds(72000), startsAt.plusSeconds(72000), startsAt.plusSeconds(79200));
             ReflectionTestUtils.setField(round, "id", 1L);
+            ProjectMatchingRound third = thirdRound(true);
+            given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(List.of(third, round));
             given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
                 .willAnswer(invocation -> scheduledFuture);
 
@@ -88,13 +97,36 @@ class MatchingRoundDeadlineSchedulerTest {
             // then
             ArgumentCaptor<Runnable> matchingTask = ArgumentCaptor.forClass(Runnable.class);
             ArgumentCaptor<Runnable> publicationTask = ArgumentCaptor.forClass(Runnable.class);
-            then(taskScheduler).should().schedule(matchingTask.capture(), eq(startsAt));
+            then(taskScheduler).should().schedule(matchingTask.capture(),
+                eq(third.getResultPublishedAt().plus(TEST_DEADLINE_BUFFER)));
             then(taskScheduler).should().schedule(publicationTask.capture(), eq(round.getResultPublishAt()));
             matchingTask.getValue().run();
             then(handler).should().handle(1L);
             then(publicationHandler).should(never()).handle(any());
             publicationTask.getValue().run();
             then(publicationHandler).should().handle(1L);
+        }
+
+        @Test
+        void 랜덤_매칭은_3차_공개_전에는_최종_발표만_예약한다() {
+            // given
+            ProjectMatchingRound third = thirdRound(false);
+            Instant startsAt = Instant.now().plusSeconds(3600);
+            ProjectMatchingRound round = ProjectMatchingRound.create(
+                "개발자 랜덤 매칭", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.RANDOM_MATCHING, 1L,
+                startsAt, startsAt.plusSeconds(72000), startsAt.plusSeconds(72000), startsAt.plusSeconds(79200));
+            ReflectionTestUtils.setField(round, "id", 1L);
+            given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(List.of(third, round));
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                .willAnswer(invocation -> scheduledFuture);
+
+            // when
+            sut.schedule(round);
+
+            // then
+            assertThat(sut.isScheduled(1L)).isFalse();
+            then(taskScheduler).should().schedule(any(Runnable.class), eq(round.getResultPublishAt()));
+            then(taskScheduler).shouldHaveNoMoreInteractions();
         }
 
         @Test
@@ -229,6 +261,45 @@ class MatchingRoundDeadlineSchedulerTest {
         then(taskScheduler).should().schedule(any(Runnable.class), eq(publishAt));
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void 랜덤_매칭_예약은_3차_공개_트랜잭션이_커밋된_경우에만_등록한다(boolean committed) {
+        // given
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            context.registerBean(TransactionalEventListenerFactory.class);
+            context.registerBean(MatchingRoundDeadlineScheduler.class, () -> sut);
+            context.registerBean(RandomMatchingSchedulingAdapter.class);
+            context.refresh();
+            ProjectMatchingRound third = thirdRound(true);
+            Instant startsAt = Instant.now().plusSeconds(3600);
+            ProjectMatchingRound random = ProjectMatchingRound.create(
+                "개발자 랜덤 매칭", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.RANDOM_MATCHING, 1L,
+                startsAt, startsAt.plusSeconds(72000), startsAt.plusSeconds(72000), startsAt.plusSeconds(79200));
+            ReflectionTestUtils.setField(random, "id", 1L);
+            if (committed) {
+                given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(List.of(third, random));
+                given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                    .willAnswer(invocation -> scheduledFuture);
+            }
+            TransactionSynchronizationManager.setActualTransactionActive(true);
+            TransactionSynchronizationManager.initSynchronization();
+            try {
+                // when
+                context.getBean(RandomMatchingSchedulingAdapter.class)
+                    .scheduleAfterPublication(1L, MatchingType.PLAN_DEVELOPER);
+
+                // then
+                then(taskScheduler).shouldHaveNoInteractions();
+                TransactionSynchronizationUtils.triggerAfterCompletion(committed
+                    ? TransactionSynchronization.STATUS_COMMITTED : TransactionSynchronization.STATUS_ROLLED_BACK);
+                assertThat(sut.isScheduled(1L)).isEqualTo(committed);
+                then(handler).shouldHaveNoInteractions();
+            } finally {
+                TransactionSynchronizationManager.clear();
+            }
+        }
+    }
+
     @Test
     void 재시작하면_자동_선발이_끝난_차수의_미공개_예약도_복구한다() {
         // given
@@ -249,6 +320,19 @@ class MatchingRoundDeadlineSchedulerTest {
         taskCaptor.getValue().run();
         then(publicationHandler).should().handle(1L);
         then(handler).should(never()).handle(any());
+    }
+
+    private ProjectMatchingRound thirdRound(boolean published) {
+        Instant publishAt = Instant.now().minusSeconds(60);
+        ProjectMatchingRound round = ProjectMatchingRound.create(
+            "개발자 3차 매칭", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.THIRD, 1L,
+            publishAt.minusSeconds(10800), publishAt.minusSeconds(7200), publishAt.minusSeconds(3600), publishAt);
+        ReflectionTestUtils.setField(round, "id", 3L);
+        round.executeAutoDecision(null);
+        if (published) {
+            round.publishResult(Instant.now());
+        }
+        return round;
     }
 
     private ProjectMatchingRound roundWithId(Long id) {

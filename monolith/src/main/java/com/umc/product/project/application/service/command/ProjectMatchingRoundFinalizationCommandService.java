@@ -43,6 +43,7 @@ import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
+import com.umc.product.project.application.port.out.ScheduleRandomMatchingPort;
 import com.umc.product.project.application.service.policy.AutoDecisionResult;
 import com.umc.product.project.application.service.policy.MatchingDecisionPolicy;
 import com.umc.product.project.application.service.policy.MatchingSchoolContext;
@@ -53,6 +54,7 @@ import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
+import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
@@ -93,9 +95,10 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     private final GetMemberUseCase getMemberUseCase;
     private final SearchChallengerUseCase searchChallengerUseCase;
     private final ProjectMatchingChapterResolver matchingChapterResolver;
+    private final ScheduleRandomMatchingPort scheduleRandomMatchingPort;
 
     /**
-     * 1~3차는 PM 결정 마감 후 최소 선발 인원을 보충하고, 랜덤 매칭은 시작 시각부터 미배정 챌린저를 배정한다.
+     * 1~3차는 PM 결정 마감 후 최소 선발 인원을 보충하고, 랜덤 매칭은 같은 유형의 3차 결과 공개 완료 후 미배정 챌린저를 배정한다.
      * 발표 시각이 있는 차수의 선발 결과는 PENDING_PUBLICATION 멤버로 저장하고, 결과 공개는 발표 서비스에서 처리한다.
      */
     @Audited(
@@ -122,8 +125,12 @@ public class ProjectMatchingRoundFinalizationCommandService implements
 
         List<ProjectMember> membersToSave;
         if (round.isRandomMatching()) {
-            // 랜덤 매칭은 지원서 없이 시작 시각부터 미배정 챌린저를 잔여 모집 정원에 배정한다.
-            if (Instant.now().isBefore(round.getStartsAt())) {
+            // 랜덤 매칭은 지원서 없이 같은 지부·유형의 3차 공개 완료 후 미배정 챌린저를 잔여 TO에 배정한다.
+            Instant now = Instant.now();
+            boolean thirdPublished = loadProjectMatchingRoundPort.listByChapterId(round.getChapterId()).stream()
+                .anyMatch(previous -> previous.getType() == round.getType() && previous.getPhase() == MatchingPhase.THIRD
+                    && previous.isAutoDecisionExecuted() && previous.isResultPublishedAt(now));
+            if (!thirdPublished) {
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FINALIZABLE);
             }
             membersToSave = buildRandomAssignedMembers(round, executedByMemberId);
@@ -139,6 +146,10 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             saveProjectMemberPort.saveAll(membersToSave);
         }
         round.executeAutoDecision(executedByMemberId);
+        if (round.getPhase() == MatchingPhase.THIRD && round.getResultPublishAt() == null) {
+            // 발표 시각이 없는 기존 차수는 자동 선발과 동시에 공개하므로, 커밋 후 랜덤 매칭을 예약한다.
+            scheduleRandomMatchingPort.scheduleAfterPublication(round.getChapterId(), round.getType());
+        }
     }
 
     /**

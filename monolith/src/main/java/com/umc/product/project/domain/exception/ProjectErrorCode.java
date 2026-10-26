@@ -83,7 +83,7 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE(HttpStatus.BAD_REQUEST, "PROJECT-0311",
         "아직 지원 기간이 끝나지 않아 지원서를 조회할 수 없어요. 지원 종료 시각을 확인해주세요."),
     PROJECT_MATCHING_ROUND_NOT_FINALIZABLE(HttpStatus.BAD_REQUEST, "PROJECT-0307",
-        "아직 자동 선발·배정을 실행할 수 없어요. 1~3차는 PM 결정 마감 시각이 지난 후, 랜덤 매칭은 시작 시각부터 실행할 수 있어요."),
+        "아직 자동 선발·배정을 실행할 수 없어요. 1~3차는 PM 결정 마감 이후, 랜덤 매칭은 같은 유형의 3차 결과 공개 완료 후 실행할 수 있어요."),
     PROJECT_MATCHING_ROUND_POLICY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "PROJECT-0308",
         "이 매칭 종류의 자동 선발 정책을 찾지 못했어요. 관리자에게 문의해주세요."),
     PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID(HttpStatus.CONFLICT, "PROJECT-0309",
