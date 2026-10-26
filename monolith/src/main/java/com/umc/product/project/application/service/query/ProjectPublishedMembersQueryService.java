@@ -1,6 +1,5 @@
 package com.umc.product.project.application.service.query;
 
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -58,6 +57,7 @@ public class ProjectPublishedMembersQueryService implements GetProjectPublishedM
         for (Long projectId : projectIds) {
             Project project = projectsById.get(projectId);
             if (project == null) {
+                log.warn("프로젝트 팀원 일괄 조회 - 프로젝트 조회 실패: projectId={}, reason={}", projectId, "프로젝트가 존재하지 않음");
                 continue;
             }
             if (!projectPermissionEvaluator.canRead(subject, project)) {
@@ -89,8 +89,6 @@ public class ProjectPublishedMembersQueryService implements GetProjectPublishedM
         Map<Long, ProjectMatchingRosterInfo> result = new LinkedHashMap<>();
         validProjects.forEach((projectId, project) -> {
             List<RosterMemberInfo> members = projectMembersMap.getOrDefault(projectId, List.of()).stream()
-                .sorted(Comparator.comparing(ProjectMember::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
-                    .thenComparing(ProjectMember::getId, Comparator.nullsLast(Comparator.naturalOrder())))
                 .map(member -> toInfo(memberMap.get(member.getMemberId()), member.getPart(),
                     member.getAssignedMatchingRound()))
                 .filter(Objects::nonNull)

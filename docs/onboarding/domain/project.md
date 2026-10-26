@@ -267,7 +267,7 @@ PM은 `PATCH /api/v1/projects/{projectId}/applications/{applicationId}/decision`
 
 값별 추가 검증은 다음과 같다.
 
-- `APPROVED`: 새 합격 처리 시 같은 기수의 ACTIVE·PENDING_PUBLICATION 팀원과 다른 APPROVED 지원서가 있는지 검사한다. 이미 배정됐거나 다른 합격 내역이 있으면 `PROJECT_APPLICATION_APPROVAL_CONFLICT` 409를 반환한다. 잔여 TO는 `파트별 TO - 기존 ACTIVE 및 PENDING_PUBLICATION 멤버 수 - 현재 차수의 같은 프로젝트/파트 APPROVED 수`로 계산하며, 초과하면 `PROJECT_APPLICATION_QUOTA_EXCEEDED` 409를 반환한다.
+- `APPROVED`: 같은 기수에 이미 배정됐거나 다른 합격 지원서가 있으면 `PROJECT_APPLICATION_APPROVAL_CONFLICT` 409를 반환한다. 잔여 정원은 `파트별 TO - 기존 ACTIVE 및 PENDING_PUBLICATION 멤버 수 - 현재 차수의 같은 프로젝트/파트 APPROVED 수`로 계산하며, 초과하면 `PROJECT_APPLICATION_QUOTA_EXCEEDED` 409를 반환한다.
 - `REJECTED`: 추가 검증이 없다. 합격자가 최소 선발 인원보다 적어져도 막지 않는다. 부족분은 결정 마감 시 자동 선발이 채운다.
 - `SUBMITTED`: 같은 (프로젝트, 차수, 지원자)에 다른 활성(`DRAFT`/`SUBMITTED`) 지원서가 있으면 `PROJECT_APPLICATION_ALREADY_EXISTS` 409를 반환한다. 활성 지원서는 partial unique index로 하나만 허용되기 때문이다.
 
@@ -288,11 +288,11 @@ PM은 `PATCH /api/v1/projects/{projectId}/applications/{applicationId}/decision`
 
 ## 매칭 결과 발표
 
-1~3차는 결정 마감 후 기본 1분 뒤 자동 선발하고, 랜덤 매칭은 같은 지부·유형의 3차 실제 공개 완료 시각에 같은 buffer를 더해 실행한다. 3차 공개 트랜잭션 커밋 후 별도 작업으로 예약한다. 선발된 팀원은 `PENDING_PUBLICATION`으로 저장하며 지원서에는 PM의 마지막 결정값을 유지한다. 발표 시각에 팀원을 `ACTIVE`로 변경하고 지원서 합불과 `resultPublishedAt`을 함께 저장한다.
+1~3차는 결정 마감 후 기본 1분 뒤 자동 선발하고, 랜덤 매칭은 같은 지부·유형의 3차 결과 공개 후 실행한다. 선발된 팀원은 `PENDING_PUBLICATION`으로 저장하며 지원서에는 PM의 마지막 결정값을 유지한다. 발표 시각에 팀원을 `ACTIVE`로 변경하고 지원서 합불과 `resultPublishedAt`을 함께 저장한다.
 
 일반 팀원 조회와 인원수는 `ACTIVE`, 내부 정원 계산과 중복 선발 검사는 `ACTIVE`와 `PENDING_PUBLICATION`을 기준으로 한다. 발표 전에는 지원자에게 합불 결과를 공개하지 않는다. 발표 시각이 없는 기존 차수는 기존 처리 방식을 유지한다.
 
-랜덤 조정 기간의 배정·해제는 운영진 명단에 먼저 반영하고, 일반 명단에는 최종 공개 시 반영한다. ACTIVE 팀원의 해제는 `pendingRemovalRoundId`로 예약하며, 해당 조정 차수의 TO·중복 배정 검사에서는 제외한다. `view=ADJUSTMENT` 조회는 모든 요청 프로젝트의 조정 권한을 확인하고, 조정 명단을 보여줄 시점이 아니면 공개 명단을 반환한다. 수동 배정·해제 제한 기간은 해당 지부의 디자인·개발에 공통 적용한다. 상세 정책은 [운영진 수동 배정·매칭 해제](../../guides/project-manual-matching.md)를 참고한다.
+랜덤 매칭 조정 기간의 배정·해제는 [운영진 수동 배정·매칭 해제](../../guides/project-manual-matching.md)를 참고한다.
 
 자동 선발·랜덤 매칭·발표의 상세 흐름은 [매칭 자동 선발과 랜덤 매칭·결과 발표](../project/plan-developer-third-auto-assignment.md)를 참고한다.
 

@@ -105,14 +105,8 @@ public class ProjectQueryController {
         operationId = "PROJECT-007",
         summary = "프로젝트 팀원 구성 일괄 조회",
         description = """
-            여러 프로젝트의 팀원 구성을 조회합니다. view로 명단 기준을 선택합니다.
-            - PUBLISHED(기본값): 공개 명단입니다. 권한이 없거나 존재하지 않는 프로젝트는 응답에서 제외합니다.
-            - ADJUSTMENT: 운영진의 최종 인원 조정 화면용 조정 명단입니다. 조정 기간에 배정한 인원은 포함하고, 해제한 인원은 제외합니다.
-              랜덤 매칭 완료 후 조정 시작부터 최종 결과 공개 전까지는 조정 명단(ADJUSTMENT)을 반환합니다. 조정 종료 후에도 조회할 수 있습니다.
-              그 외에는 공개 명단(PUBLISHED)을 반환합니다. 조정 화면에서는 ADJUSTMENT, 일반 결과 화면에서는 PUBLISHED로 요청합니다.
-              배정·해제 버튼은 프로젝트 권한 응답의 member.canAssign·canUnassign을 기준으로 판단합니다.
-              슈퍼어드민·해당 기수 총괄단·담당 지부장만 조회할 수 있으며, 요청한 모든 프로젝트에 조정 권한이 필요합니다.
-              하나라도 권한이 없으면 403, 존재하지 않는 프로젝트가 있으면 404로 요청 전체가 실패합니다. 공개 명단을 반환하는 시점에도 조정 권한을 확인합니다.
+            복수의 projectId에 대한 팀원 구성을 조회합니다. 권한이 없거나 조회에 실패한 프로젝트는 결과에서 제외됩니다.
+            view=ADJUSTMENT는 랜덤 매칭 조정 기간의 운영진 조정 명단을 반환하며, 요청한 모든 프로젝트에 수동 배정 권한이 필요합니다(없으면 403).
             """
     )
     @CheckAccess(
@@ -123,7 +117,7 @@ public class ProjectQueryController {
     public Map<Long, ProjectMembersResponse> getBatchMembers(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam List<Long> projectIds,
-        @Parameter(description = "명단 조회 방식. PUBLISHED: 현재 공개 명단(기본값), ADJUSTMENT: 운영진 최종 인원 조정 화면용 명단")
+        @Parameter(description = "명단 기준. PUBLISHED: 공개 명단(기본값), ADJUSTMENT: 운영진 조정 명단")
         @RequestParam(defaultValue = "PUBLISHED") ProjectMemberView view
     ) {
         return assembler.listProjectMembers(projectIds, memberPrincipal.getMemberId(), view);

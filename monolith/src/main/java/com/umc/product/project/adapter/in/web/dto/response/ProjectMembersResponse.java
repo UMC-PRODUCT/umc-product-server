@@ -1,7 +1,10 @@
 package com.umc.product.project.adapter.in.web.dto.response;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -28,16 +31,18 @@ public record ProjectMembersResponse(
     /** 팀원 명단을 메인 PM·보조 PM·파트별 팀원으로 나누어 응답을 구성한다. */
     public static ProjectMembersResponse from(ProjectMatchingRosterInfo info) {
         Long ownerId = info.productOwner() == null ? null : info.productOwner().memberId();
-        List<ProjectMemberBrief> coOwners = info.members().stream()
-            .filter(member -> member.part() == ChallengerPart.PLAN && !Objects.equals(member.memberId(), ownerId))
-            .map(ProjectMemberBrief::from)
+        Map<ChallengerPart, List<ProjectMemberBrief>> partToMembers = new EnumMap<>(ChallengerPart.class);
+        for (RosterMemberInfo member : info.members()) {
+            ProjectMemberBrief brief = ProjectMemberBrief.from(member);
+            partToMembers.computeIfAbsent(member.part(), part -> new ArrayList<>()).add(brief);
+        }
+
+        List<ProjectMemberBrief> coOwners = partToMembers.getOrDefault(ChallengerPart.PLAN, List.of()).stream()
+            .filter(member -> !Objects.equals(member.memberId(), ownerId))
             .toList();
         List<PartGroup> groups = Arrays.stream(ChallengerPart.values())
             .filter(part -> part != ChallengerPart.PLAN)
-            .map(part -> new PartGroup(part, info.members().stream()
-                .filter(member -> member.part() == part)
-                .map(ProjectMemberBrief::from)
-                .toList()))
+            .map(part -> new PartGroup(part, partToMembers.getOrDefault(part, List.of())))
             .filter(group -> !group.members().isEmpty())
             .toList();
         return ProjectMembersResponse.builder()

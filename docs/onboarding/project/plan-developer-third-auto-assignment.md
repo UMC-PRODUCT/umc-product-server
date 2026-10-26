@@ -11,13 +11,13 @@
 자동 선발 진입점은 `AutoDecideProjectMatchingRoundUseCase.autoDecide(matchingRoundId, executedByMemberId)` 하나다.
 
 - 1~3차 스케줄러 호출: `decisionDeadline + app.project.matching-round.deadline-buffer-minutes` 시점에 실행한다. 기본 buffer는 1분이다.
-- 랜덤 매칭 스케줄러 호출: 같은 지부·유형의 3차 실제 공개 완료 시각에 위와 같은 buffer를 더해 실행한다. 공개 트랜잭션 커밋 후 별도 작업으로 예약하며, 랜덤 배정도 별도 트랜잭션에서 실행한다.
+- 랜덤 매칭 스케줄러 호출: 같은 지부·유형의 3차 결과 공개가 커밋된 후 같은 buffer 뒤에 실행한다.
 - 결과 발표: `resultPublishAt`에 `PublishProjectMatchingResultUseCase.publish`를 호출한다.
 - 운영진 수동 호출: `POST /api/v1/project/matching-rounds/{matchingRoundId}/auto-decide`.
 - `executedByMemberId == null`이면 스케줄러 호출로 보고 권한 검증을 생략한다.
 - `executedByMemberId != null`이면 슈퍼어드민, 중앙운영사무국 총괄단 이상 또는 해당 지부 지부장만 실행할 수 있다.
 - `autoDecisionExecutedAt`이 이미 있으면 멱등 no-op으로 종료한다.
-- 수동 실행도 1~3차는 결정 마감 이후, 랜덤 매칭은 같은 지부·유형의 3차 선발과 실제 공개가 완료된 후 가능하다. 그 전에는 `PROJECT_MATCHING_ROUND_NOT_FINALIZABLE` 예외가 발생한다. 스케줄러 buffer는 수동 실행의 대기 조건이 아니다.
+- 수동 실행도 1~3차는 결정 마감 이후, 랜덤 매칭은 3차 결과 공개 후 가능하다. 그 전에는 `PROJECT_MATCHING_ROUND_NOT_FINALIZABLE` 예외가 발생한다.
 
 관련 구현:
 
@@ -50,7 +50,7 @@
 - `REJECTED`
 
 `DRAFT`와 `CANCELLED`는 정책 입력에서 제외하고 상태도 변경하지 않는다.
-같은 기수에서 이미 ACTIVE 또는 PENDING_PUBLICATION 팀원인 지원자는 선발 대상에서 제외한다. 다른 프로젝트의 APPROVED 지원서 보유자는 보충 선발하지 않으며, 대상에 동일인의 APPROVED 지원서가 여러 개 있으면 임의로 선택하지 않고 `PROJECT_MATCHING_DUPLICATE_APPROVAL`로 중단한다.
+같은 기수에 이미 배정된 지원자는 선발하지 않으며, 동일인의 APPROVED 지원서가 여럿이면 `PROJECT_MATCHING_DUPLICATE_APPROVAL`로 중단한다.
 
 ### 그룹 기준
 
@@ -105,13 +105,13 @@
 
 ## 랜덤 매칭: 잔여 TO 배정
 
-`phase == RANDOM_MATCHING`인 차수는 같은 지부·유형의 3차 결과 공개 완료 시각에 기존 buffer를 더해 실행한다. 3차 자동 선발에서는 랜덤 매칭을 실행하지 않는다.
+`phase == RANDOM_MATCHING`인 차수는 같은 지부·유형의 3차 결과 공개 후 실행한다. 3차 자동 선발에서는 랜덤 매칭을 실행하지 않는다.
 
 1~3차는 `startsAt < endsAt < decisionDeadline < resultPublishAt`, 랜덤 매칭은 `startsAt < endsAt = decisionDeadline < resultPublishAt`으로 입력한다. 모든 차수의 `resultPublishAt`은 `decisionDeadline`으로부터 최소 5분 이후여야 한다. 같은 지부·유형에서는 이전 차수의 발표 시각이 다음 차수의 시작 시각보다 늦을 수 없다.
 
 1~3차 자동 선발이 PM 마감 후 기본 1분 뒤 실행되므로, 발표 전 선발 처리 시간을 확보하기 위해 최소 5분 간격을 둔다.
 
-랜덤 매칭의 `startsAt`~`endsAt`은 운영진 인원 조정 기간이다. `decisionDeadline`은 `endsAt`과 같으며, 결과 발표는 `resultPublishAt`을 기준으로 한다. 3차 공개가 지연되면 실제 공개 완료 후 buffer를 기준으로 랜덤 매칭을 예약한다.
+랜덤 매칭의 `startsAt`~`endsAt`은 운영진 조정 기간이며, 결과 발표는 `resultPublishAt`을 기준으로 한다.
 
 ### 대상 프로젝트
 
@@ -177,8 +177,6 @@
 발표 작업은 자동 선발이 완료되고 발표 시각에 도달한 미공개 차수에 대해 실행한다. 프로젝트가 `IN_PROGRESS`인 `PENDING_PUBLICATION` 멤버를 `ACTIVE`로 변경하고, 해당 멤버에 연결된 지원서는 `APPROVED`, 나머지 판정 대상 지원서는 `REJECTED`로 변경한다. 프로젝트가 `IN_PROGRESS`가 아닌 경우 멤버·지원서는 변경하지 않으며, `DRAFT`, `CANCELLED` 지원서도 변경하지 않는다.
 
 팀원 상태, 지원서 합불, 차수의 `resultPublishedAt`은 같은 트랜잭션에서 저장한다. 지원자 합불 공개는 시각 경과만으로 이루어지지 않고 발표 작업 완료를 기준으로 한다. PM은 발표 전까지 기존 결정값을 조회한다. 공개 팀원 목록·인원수는 `ACTIVE`를 기준으로 한다.
-
-랜덤 최종 공개 시에는 해당 차수의 해제 예약을 먼저 반영하고 미공개 배정을 ACTIVE로 변경한다. 공개 전에는 운영진 조정 명단과 일반 공개 명단을 구분한다. 배정·해제 기간과 조회 정책은 [운영진 수동 배정·매칭 해제](../../guides/project-manual-matching.md)를 참고한다.
 
 자동 선발과 발표는 각각 1회성 작업으로 예약한다. 실패 시 주기적으로 재시도하지 않으며, 서버 시작 시 DB에서 미처리 차수를 조회해 예약한다. 발표 시점에 자동 선발이 완료되지 않았다면 공개를 건너뛴다. 자동 선발 완료나 수동 실행 이후에 발표 작업을 다시 예약하지 않는다. 공개하지 않은 실행은 `skipped`, 공개 완료는 `success`, 예외가 발생한 실행은 `failure` 지표로 기록한다.
 
