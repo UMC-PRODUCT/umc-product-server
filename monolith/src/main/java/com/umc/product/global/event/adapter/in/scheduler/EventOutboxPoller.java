@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.umc.product.global.event.application.service.OutboxWorker;
+import com.umc.product.global.event.application.port.in.RequestOutboxRunUseCase;
 
 @Component
 @ConditionalOnProperty(
@@ -16,12 +16,12 @@ import com.umc.product.global.event.application.service.OutboxWorker;
 )
 public class EventOutboxPoller {
 
-    private final OutboxWorker realtimeWorker;
-    private final OutboxWorker backgroundWorker;
+    private final RequestOutboxRunUseCase realtimeWorker;
+    private final RequestOutboxRunUseCase backgroundWorker;
 
     public EventOutboxPoller(
-        @Qualifier("realtimeOutboxWorker") OutboxWorker realtimeWorker,
-        @Qualifier("backgroundOutboxWorker") OutboxWorker backgroundWorker
+        @Qualifier("realtimeOutboxWorker") RequestOutboxRunUseCase realtimeWorker,
+        @Qualifier("backgroundOutboxWorker") RequestOutboxRunUseCase backgroundWorker
     ) {
         this.realtimeWorker = realtimeWorker;
         this.backgroundWorker = backgroundWorker;

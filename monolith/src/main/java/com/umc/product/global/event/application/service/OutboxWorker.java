@@ -6,12 +6,13 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.stream.IntStream;
 
+import com.umc.product.global.event.application.port.in.RequestOutboxRunUseCase;
 import com.umc.product.global.event.application.port.out.OutboxEventSelection;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public final class OutboxWorker implements AutoCloseable {
+public final class OutboxWorker implements RequestOutboxRunUseCase, AutoCloseable {
 
     private final OutboxProcessingGroup group;
     private final Executor executor;
@@ -68,6 +69,7 @@ public final class OutboxWorker implements AutoCloseable {
     }
 
     // 슬롯마다 실행 요청을 하나의 후속 신호로 합쳐 executor 적재량을 제한한다.
+    @Override
     public synchronized boolean requestRun() {
         if (closed) {
             return false;

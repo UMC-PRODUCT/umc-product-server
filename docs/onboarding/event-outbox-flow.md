@@ -128,7 +128,7 @@ Firebase API를 호출하는 batch 발송 이벤트는 `NON_TRANSACTIONAL`이 �
 
 ## 운영 제어
 
-`EVENT_OUTBOX_RELAY_ENABLED=false`는 poller만 중지한다. `DomainEventPublisher`는 계속 신규 이벤트를
+`EVENT_OUTBOX_RELAY_ENABLED=false`는 poller와 커밋 신호에 의한 즉시 처리를 중지한다. `DomainEventPublisher`는 계속 신규 이벤트를
 `PENDING`으로 저장하며, relay를 다시 활성화하면 적체된 이벤트를 처리한다. Spring local publisher로
 우회하지 않으므로 환경에 따라 이벤트 내구성이 달라지지 않는다.
 
@@ -157,7 +157,16 @@ executor 거절이나 배치 예외 뒤에도 다음 polling에서 다시 시도
 
 공통 `poll-interval-ms`와 `batch-size`는 기본값이며 `workers.realtime`과 `workers.background`에서
 각각 덮어쓸 수 있다. 폴링 주기는 Worker 완료 시각이 아니라 짧은 실행 요청 메서드 반환을 기준으로 한다.
-`relay-enabled=false`는 두 폴링을 중지하지만 publisher의 저장은 계속된다.
+`relay-enabled=false`는 두 폴링과 커밋 신호에 의한 즉시 처리를 중지하지만 publisher의 저장은 계속된다.
+
+`EVENT_OUTBOX_REALTIME_IMMEDIATE_DISPATCH_ENABLED=true`로
+`app.event-outbox.workers.realtime.immediate-dispatch-enabled`를 켜면, 커밋 이후의
+`RealtimeOutboxCommittedEvent`를 수신해 기존 REALTIME Worker의 실행을 요청한다. 기본값은 `false`다.
+수신기는 이미 커밋된 신호를 일반 `@EventListener`로 받으며, 요청 스레드에서 DB 처리를 직접 수행하거나
+완료를 기다리지 않는다. BACKGROUND Worker는 깨우지 않는다.
+실행 요청 거절·종료·일시적인 실패는 저장 성공을 되돌리지 않으며 기존 폴링이 미처리 이벤트를 복구한다.
+신호와 폴링은 같은 Worker 슬롯·executor·claim·lease·backoff를 사용한다.
+즉시 처리를 켜도 폴링 주기는 바뀌지 않는다. 전후 성능 비교는 같은 폴링 주기에서 먼저 진행한다.
 
 새 이벤트는 기존 그룹이면 라우팅 설정을 수정한다. 라우팅 규칙 변경은 이후 저장되는 이벤트부터 적용되며,
 기존 미완료 이벤트도 재분류하려면 relay를 중지하고 별도 데이터 마이그레이션을 수행한다.
