@@ -33,7 +33,9 @@ public record UpsertApplicationFormCommand(
     Long requesterMemberId,
     String title,
     String description,
-    List<ApplicationFormSectionEntry> sections
+    List<ApplicationFormSectionEntry> sections,
+    /** 제출 답변이 있는 섹션을 본문에서 뺐을 때, 답변까지 지우는 데 동의했는지. false 면 그런 섹션이 있을 때 409 로 거절한다. */
+    boolean confirmDeleteAnsweredSections
 ) {
 
     public UpsertApplicationFormCommand {

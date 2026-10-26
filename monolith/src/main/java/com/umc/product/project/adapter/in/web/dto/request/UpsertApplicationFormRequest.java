@@ -27,7 +27,12 @@ public record UpsertApplicationFormRequest(
     @Size(max = 500, message = "폼 설명은 500자 이하여야 합니다") String description,
 
     @NotNull(message = "sections 필드는 필수입니다 (빈 리스트는 허용)")
-    @Valid List<ApplicationFormSection> sections
+    @Valid List<ApplicationFormSection> sections,
+    /**
+     * 본문에서 뺀 섹션에 이미 제출된 답변이 있을 때, 답변까지 함께 삭제하는 데 동의했는지. 생략하면 false.
+     * false 인 채로 그런 섹션을 빼면 PROJECT-0026 (409) 으로 거절되고 메시지에 섹션명과 답변한 지원자 수가 담긴다.
+     */
+    Boolean confirmDeleteAnsweredSections
 ) {
 
     public UpsertApplicationFormCommand toCommand(Long projectId, Long requesterMemberId) {
@@ -37,6 +42,7 @@ public record UpsertApplicationFormRequest(
             .title(title)
             .description(description)
             .sections(sections.stream().map(ApplicationFormSection::toEntry).toList())
+            .confirmDeleteAnsweredSections(Boolean.TRUE.equals(confirmDeleteAnsweredSections))
             .build();
     }
 }

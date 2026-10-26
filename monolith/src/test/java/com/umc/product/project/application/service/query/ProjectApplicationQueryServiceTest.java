@@ -50,6 +50,7 @@ import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
+import com.umc.product.project.domain.ProjectApplicationFormPolicy;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
@@ -804,6 +805,52 @@ class ProjectApplicationQueryServiceTest {
 
         // then
         assertThat(result.applicationId()).isEqualTo(55L);
+    }
+
+    @Test
+    @DisplayName("getDetail_섹션_파트_정책이_바뀌어도_답변이_있는_섹션은_그대로_보여준다")
+    void getDetail_정책_변경과_무관하게_답변한_섹션_표시() {
+        // given - 디자이너가 답변한 섹션의 정책이 이후 '개발 파트 전용' 으로 바뀐 상황
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
+        markDecisionDeadlinePassed(round);
+        ProjectApplication application = createApplicationWithFormResponse(
+            55L, project, round, 200L, ProjectApplicationStatus.SUBMITTED, 123L);
+
+        GetProjectApplicationDetailQuery query = detailQuery(1L, 55L);
+        given(loadProjectApplicationPort.findByIdWithDetails(55L))
+            .willReturn(Optional.of(application));
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L, true));
+        given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
+            .willReturn(Optional.of(challengerInfoOf(200L, ChallengerPart.DESIGN)));
+        given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
+            .willReturn(List.of(ProjectApplicationFormPolicy.createForParts(
+                application.getApplicationForm(), 10L, Set.of(ChallengerPart.WEB))));
+        given(getFormResponseUseCase.findResponseWithAnswers(123L))
+            .willReturn(Optional.of(FormResponseWithAnswersInfo.builder()
+                .id(123L).formId(7L).respondentMemberId(200L)
+                .status(FormResponseStatus.SUBMITTED)
+                .answers(List.of())
+                .build()));
+        given(getFormUseCase.getFormWithStructureByQuestionIds(eq(7L), anySet())).willReturn(
+            FormWithStructureInfo.builder().formId(7L).sections(List.of(
+                FormWithStructureInfo.SectionWithQuestions.builder()
+                    .sectionId(10L).title("포트폴리오").orderNo(1L)
+                    .questions(List.of(FormWithStructureInfo.QuestionWithOptions.builder()
+                        .questionId(100L).title("포트폴리오 링크").type(QuestionType.SHORT_TEXT)
+                        .isRequired(true).orderNo(1L).options(List.of())
+                        .build()))
+                    .build()
+            )).build());
+
+        // when
+        ProjectApplicationDetailInfo result = sut.getDetail(query);
+
+        // then - 현재 정책(WEB 전용)으로 가리지 않고 답변한 섹션을 그대로 돌려준다
+        assertThat(result.formStructure().sections()).hasSize(1);
+        assertThat(result.formStructure().sections().get(0).sectionId()).isEqualTo(10L);
     }
 
     @Test

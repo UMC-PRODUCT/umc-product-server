@@ -91,7 +91,8 @@ class ProjectApplicationFormControllerTest {
                     ))
                     .build()
             )
-        );
+        ,
+            null);
 
         given(upsertProjectApplicationFormUseCase.upsert(any())).willReturn(
             ApplicationFormInfo.builder()
@@ -130,7 +131,8 @@ class ProjectApplicationFormControllerTest {
                     .title("").description(null).orderNo(1).questions(List.of())
                     .build()
             )
-        );
+        ,
+            null);
 
         mockMvc.perform(put("/api/v1/projects/42/application-form")
                 .content(objectMapper.writeValueAsString(request))

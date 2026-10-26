@@ -53,4 +53,21 @@ public interface AnswerJpaRepository extends JpaRepository<Answer, Long> {
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Answer a WHERE a.question.id = :questionId")
     int deleteByQuestionId(@Param("questionId") Long questionId);
+
+    /**
+     * 특정 섹션의 질문(비활성 구버전 포함)에 답변한 제출 완료(SUBMITTED) 응답 수. 섹션 삭제 전 경고용.
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT a.formResponse.id) FROM Answer a
+            WHERE a.question.formSection.id = :sectionId
+              AND a.formResponse.status = com.umc.product.form.domain.enums.FormResponseStatus.SUBMITTED
+        """)
+    long countSubmittedResponsesBySectionId(@Param("sectionId") Long sectionId);
+
+    /**
+     * 특정 섹션의 질문(비활성 구버전 포함)에 속한 모든 Answer 삭제 (deleteSection cascade 용)
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Answer a WHERE a.question.formSection.id = :sectionId")
+    int deleteBySectionId(@Param("sectionId") Long sectionId);
 }
