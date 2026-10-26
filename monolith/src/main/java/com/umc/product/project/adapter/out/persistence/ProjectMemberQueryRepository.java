@@ -55,6 +55,18 @@ public class ProjectMemberQueryRepository {
             .fetch();
     }
 
+    /**
+     * 단건 배정 검증을 위해 해당 회원의 ACTIVE·PENDING_PUBLICATION 팀원 여부만 조회한다.
+     * 지정한 조정 차수에 해제 예약된 ACTIVE 팀원은 제외한다.
+     * 차수 ID가 null이면 해제 예약자를 포함한다.
+     */
+    public boolean existsAssignedMemberExcludingPendingRemoval(Long gisuId, Long memberId, Long adjustmentRoundId) {
+        return queryFactory.selectOne().from(projectMember)
+            .where(projectMember.project.gisuId.eq(gisuId), projectMember.memberId.eq(memberId),
+                assignedMember(adjustmentRoundId))
+            .fetchFirst() != null;
+    }
+
     /** 파트와 관계없이 ACTIVE·PENDING_PUBLICATION 회원 ID를 프로젝트별로 중복 없이 조회한다. */
     public Map<Long, Set<Long>> listAssignedMemberIdsByProjectIds(Collection<Long> projectIds) {
         if (projectIds.isEmpty()) {

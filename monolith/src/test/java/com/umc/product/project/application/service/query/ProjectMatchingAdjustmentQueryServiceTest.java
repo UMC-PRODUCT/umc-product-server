@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,9 +26,11 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRosterInfo;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.application.service.policy.ProjectManualMatchingAccessPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectMatchingRound;
@@ -54,8 +56,13 @@ class ProjectMatchingAdjustmentQueryServiceTest {
     GetMemberUseCase getMemberUseCase;
     @Spy
     ProjectMatchingAdjustmentPolicy adjustmentPolicy = new ProjectMatchingAdjustmentPolicy();
-    @InjectMocks
     ProjectMatchingAdjustmentQueryService sut;
+
+    @BeforeEach
+    void setUp() {
+        sut = new ProjectMatchingAdjustmentQueryService(loadProjectPort, loadProjectMatchingRoundPort, loadProjectMemberPort,
+            new ProjectManualMatchingAccessPolicy(checkPermissionUseCase), getMemberUseCase, adjustmentPolicy);
+    }
 
     @Test
     void 조정_권한이_없는_프로젝트가_하나라도_있으면_명단_전체를_거부한다() {
@@ -64,7 +71,7 @@ class ProjectMatchingAdjustmentQueryServiceTest {
         given(checkPermissionUseCase.loadSubject(900L)).willReturn(chapterPresident(10L));
 
         // when & then
-        assertThatThrownBy(() -> sut.get(List.of(1L, 2L), 900L))
+        assertThatThrownBy(() -> sut.batchGetByProjectIds(List.of(1L, 2L), 900L))
             .isInstanceOf(ProjectDomainException.class).extracting("baseCode")
             .isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         then(loadProjectMemberPort).shouldHaveNoInteractions();
@@ -85,7 +92,7 @@ class ProjectMatchingAdjustmentQueryServiceTest {
             99L, MemberInfo.builder().id(99L).build(), 100L, MemberInfo.builder().id(100L).build()));
 
         // when
-        var result = sut.get(List.of(1L), 900L);
+        Map<Long, ProjectMatchingRosterInfo> result = sut.batchGetByProjectIds(List.of(1L), 900L);
 
         // then
         assertThat(result.get(1L).members()).extracting("memberId").containsExactly(100L);
@@ -115,7 +122,7 @@ class ProjectMatchingAdjustmentQueryServiceTest {
             99L, MemberInfo.builder().id(99L).build(), 100L, MemberInfo.builder().id(100L).build()));
 
         // when
-        var result = sut.get(List.of(1L), 900L);
+        Map<Long, ProjectMatchingRosterInfo> result = sut.batchGetByProjectIds(List.of(1L), 900L);
 
         // then
         assertThat(result.get(1L).members()).extracting("matchingRoundId").containsExactly(12L);

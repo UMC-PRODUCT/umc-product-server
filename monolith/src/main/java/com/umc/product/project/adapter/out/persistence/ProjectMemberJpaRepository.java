@@ -48,8 +48,14 @@ public interface ProjectMemberJpaRepository extends JpaRepository<ProjectMember,
     List<ProjectMember> findByProjectIdAndStatusInOrderByCreatedAtAscIdAsc(
         Long projectId, Collection<ProjectMemberStatus> statuses);
 
+    /** 팀원과 선발 차수를 함께 조회한다. 선발 차수가 없는 수동 배정 팀원도 포함한다. */
+    @Query("""
+        select pm from ProjectMember pm left join fetch pm.assignedMatchingRound
+        where pm.project.id in :projectIds and pm.status = :status
+        order by pm.createdAt, pm.id
+        """)
     List<ProjectMember> findByProjectIdInAndStatusOrderByCreatedAtAscIdAsc(
-        Collection<Long> projectIds, ProjectMemberStatus status
+        @Param("projectIds") Collection<Long> projectIds, @Param("status") ProjectMemberStatus status
     );
 
     Optional<ProjectMember> findByProjectIdAndMemberId(Long projectId, Long memberId);

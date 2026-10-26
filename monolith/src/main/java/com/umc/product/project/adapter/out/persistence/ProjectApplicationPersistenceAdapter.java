@@ -32,9 +32,6 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
 
     @Override
     public List<Long> listApprovedApplicantMemberIdsByGisuId(Long gisuId, Long adjustmentRoundId) {
-        if (adjustmentRoundId == null) {
-            return listApprovedApplicantMemberIdsByGisuId(gisuId);
-        }
         return projectApplicationQueryRepository.listApprovedApplicantMemberIdsByGisuId(gisuId, adjustmentRoundId);
     }
 
@@ -46,6 +43,11 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     @Override
     public boolean existsByAppliedMatchingRoundId(Long matchingRoundId) {
         return projectApplicationJpaRepository.existsByAppliedMatchingRound_Id(matchingRoundId);
+    }
+
+    @Override
+    public boolean existsApprovedApplicationExcludingPendingRemoval(Long gisuId, Long memberId, Long adjustmentRoundId) {
+        return projectApplicationQueryRepository.existsApprovedApplicationExcludingPendingRemoval(gisuId, memberId, adjustmentRoundId);
     }
 
     @Override

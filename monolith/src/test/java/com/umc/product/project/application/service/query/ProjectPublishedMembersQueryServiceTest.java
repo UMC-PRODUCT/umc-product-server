@@ -5,6 +5,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
 import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRosterInfo;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.service.evaluator.ProjectPermissionEvaluator;
@@ -53,7 +55,7 @@ class ProjectPublishedMembersQueryServiceTest {
         given(checkPermissionUseCase.loadSubject(900L)).willReturn(SubjectAttributes.builder().memberId(900L).build());
 
         // when
-        var result = sut.get(projectIds, 900L);
+        Map<Long, ProjectMatchingRosterInfo> result = sut.listByProjectIds(projectIds, 900L);
 
         // then
         assertThat(result).containsOnlyKeys(1L);

@@ -50,6 +50,7 @@ import com.umc.product.project.domain.exception.ProjectErrorCode;
 import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.support.concurrency.PostgreSqlTransactionRace;
 import com.umc.product.support.fixture.ProjectManualMatchingFixture;
+import com.umc.product.support.fixture.ProjectManualMatchingFixture.ApplicationScenario;
 import com.umc.product.support.fixture.ProjectManualMatchingFixture.Scenario;
 
 @AutoConfigureMockMvc(addFilters = false)
@@ -166,10 +167,13 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void 마감_이후_또는_발표_전_해제도_지원서를_불합격으로_바꾸고_답변을_보존한다(boolean pending) throws Exception {
+    void 공개된_팀원을_해제하면_지원서를_불합격으로_바꾸고_답변을_보존한다(boolean pending) throws Exception {
         // given
         Scenario scenario = fixture.준비();
-        var application = fixture.지원서_배정(scenario, pending);
+        ApplicationScenario application = fixture.지원서_배정(scenario, pending);
+        if (pending) {
+            assertThat(publisher.publish(application.roundId())).isTrue();
+        }
         authenticate(scenario.staffId());
 
         // when
@@ -183,11 +187,26 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM form_response WHERE id = ?", Long.class,
             application.responseId()))
             .isEqualTo(1L);
-        if (pending) {
-            assertThat(publisher.publish(application.roundId())).isTrue();
-        }
         assertThat(members.existsByGisuAndMember(scenario.gisuId(), scenario.candidateId())).isFalse();
         assign(scenario, scenario.candidateId()).andExpect(status().isOk());
+    }
+
+    @Test
+    void 일반_차수의_공개_전에는_해제를_거부하고_팀원과_지원서_상태를_유지한다() throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        ApplicationScenario application = fixture.지원서_배정(scenario, true);
+        authenticate(scenario.staffId());
+
+        // when
+        mockMvc.perform(delete(admin(scenario) + "/{memberId}", scenario.candidateId()))
+            .andExpect(status().isConflict());
+
+        // then
+        assertThat(members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId()).getStatus())
+            .isEqualTo(ProjectMemberStatus.PENDING_PUBLICATION);
+        assertThat(applications.findById(application.applicationId()).orElseThrow().getStatus())
+            .isEqualTo(ProjectApplicationStatus.APPROVED);
     }
 
     @Test

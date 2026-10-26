@@ -48,6 +48,18 @@ public class ProjectApplicationQueryRepository {
     }
 
     /**
+     * 단건 배정 검증을 위해 해당 회원의 APPROVED 지원서 존재 여부만 조회한다.
+     * 지정한 조정 차수에 해제 예약된 팀원의 연결 지원서는 제외한다.
+     * 차수 ID가 null이면 해제 예약자의 연결 지원서도 포함한다.
+     */
+    public boolean existsApprovedApplicationExcludingPendingRemoval(Long gisuId, Long memberId, Long adjustmentRoundId) {
+        return queryFactory.selectOne().from(projectApplication)
+            .where(projectApplication.applicationForm.project.gisuId.eq(gisuId),
+                projectApplication.applicantMemberId.eq(memberId), approvedApplication(adjustmentRoundId))
+            .fetchFirst() != null;
+    }
+
+    /**
      * (projectId, applicantMemberId, roundId, status) 조합으로 단건 조회.
      */
     public Optional<ProjectApplication> findByProjectIdAndApplicantMemberIdAndRoundIdAndStatus(

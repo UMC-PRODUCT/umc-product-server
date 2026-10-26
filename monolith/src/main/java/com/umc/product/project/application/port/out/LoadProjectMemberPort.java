@@ -80,7 +80,7 @@ public interface LoadProjectMemberPort {
     Map<Long, Map<ChallengerPart, Long>> countAssignedByProjectIdsGroupByProjectIdAndPart(Collection<Long> projectIds);
 
     /**
-     * 여러 프로젝트의 활성(ACTIVE) 멤버를 한 번에 조회합니다 (N+1 방지용 IN 쿼리). PROJECT-004(팀원 일괄 조회)에서 사용.
+     * 여러 프로젝트의 ACTIVE 팀원과 선발 차수를 한 번에 조회합니다. PROJECT-007(팀원 일괄 조회)에서 사용합니다.
      *
      * @return projectId → 활성 멤버 목록 맵. 활성 멤버가 없는 프로젝트는 엔트리 없음.
      */
@@ -135,6 +135,13 @@ public interface LoadProjectMemberPort {
      * 해당 기수에 ACTIVE 또는 PENDING_PUBLICATION 멤버가 존재하는지 확인합니다. (중복 지원 방지용)
      */
     boolean existsByGisuAndMember(Long gisuId, Long memberId);
+
+    /**
+     * 해당 회원이 기수 내 ACTIVE·PENDING_PUBLICATION 팀원인지 확인합니다.
+     * 지정한 조정 차수에 해제 예약된 ACTIVE 팀원은 제외합니다.
+     * 차수 ID가 null이면 해제 예약자를 포함합니다.
+     */
+    boolean existsAssignedMemberExcludingPendingRemoval(Long gisuId, Long memberId, Long adjustmentRoundId);
 
     /**
      * 특정 프로젝트의 ACTIVE PLAN 파트 멤버인지 확인합니다. 보조 PM(Sub-PM) 검사에 사용됩니다.

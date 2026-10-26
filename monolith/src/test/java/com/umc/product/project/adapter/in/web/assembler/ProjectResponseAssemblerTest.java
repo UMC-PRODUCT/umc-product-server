@@ -297,7 +297,7 @@ class ProjectResponseAssemblerTest {
         ProjectMatchingRosterInfo project43 = new ProjectMatchingRosterInfo(43L, null, List.of(
             new RosterMemberInfo(102L, "백엔드", "이다라", null, ChallengerPart.SPRINGBOOT,
                 8L, MatchingType.PLAN_DEVELOPER, MatchingPhase.THIRD)));
-        given(getProjectPublishedMembersUseCase.get(List.of(42L, 43L), 900L)).willReturn(Map.of(
+        given(getProjectPublishedMembersUseCase.listByProjectIds(List.of(42L, 43L), 900L)).willReturn(Map.of(
             42L, project42, 43L, project43));
 
         Map<Long, ProjectMembersResponse> responses = sut.listProjectMembers(List.of(42L, 43L), 900L);

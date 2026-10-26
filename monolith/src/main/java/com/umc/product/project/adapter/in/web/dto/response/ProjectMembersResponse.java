@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Objects;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRosterInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRosterInfo.RosterMemberInfo;
 import com.umc.product.project.domain.enums.MatchingPhase;
@@ -14,7 +13,7 @@ import com.umc.product.project.domain.enums.MatchingType;
 import lombok.Builder;
 
 /**
- * PROJECT-003 응답: 프로젝트의 팀원 구성.
+ * PROJECT-003·PROJECT-007 응답: 프로젝트의 팀원 구성.
  * <p>
  * 메인 PM 은 별도 필드로 강조 노출. 보조 PM(PLAN 파트의 다른 멤버)은 분리. 그 외 파트는 {@link PartGroup} 으로 묶어 노출.
  */
@@ -31,13 +30,22 @@ public record ProjectMembersResponse(
         Long ownerId = info.productOwner() == null ? null : info.productOwner().memberId();
         List<ProjectMemberBrief> coOwners = info.members().stream()
             .filter(member -> member.part() == ChallengerPart.PLAN && !Objects.equals(member.memberId(), ownerId))
-            .map(ProjectMemberBrief::from).toList();
+            .map(ProjectMemberBrief::from)
+            .toList();
         List<PartGroup> groups = Arrays.stream(ChallengerPart.values())
             .filter(part -> part != ChallengerPart.PLAN)
-            .map(part -> new PartGroup(part, info.members().stream().filter(member -> member.part() == part)
-                .map(ProjectMemberBrief::from).toList()))
-            .filter(group -> !group.members().isEmpty()).toList();
-        return new ProjectMembersResponse(info.projectId(), ProjectMemberBrief.from(info.productOwner()), coOwners, groups);
+            .map(part -> new PartGroup(part, info.members().stream()
+                .filter(member -> member.part() == part)
+                .map(ProjectMemberBrief::from)
+                .toList()))
+            .filter(group -> !group.members().isEmpty())
+            .toList();
+        return ProjectMembersResponse.builder()
+            .projectId(info.projectId())
+            .productOwner(ProjectMemberBrief.from(info.productOwner()))
+            .coProductOwners(coOwners)
+            .partGroups(groups)
+            .build();
     }
 
     /** 파트별 멤버 묶음. {@code part} 는 PLAN 외 파트만 등장한다. */
@@ -47,7 +55,7 @@ public record ProjectMembersResponse(
     /**
      * 프로젝트 팀원 조회 전용 멤버 간략 정보.
      * <p>
-     * 공용 {@code MemberBrief} 에 매칭 차수 필드를 섞지 않기 위해 PROJECT-003 응답 안에서만 사용한다.
+     * 공용 {@code MemberBrief} 에 매칭 차수 필드를 섞지 않기 위해 팀원 구성 응답 안에서만 사용한다.
      */
     @Builder
     public record ProjectMemberBrief(
@@ -57,23 +65,19 @@ public record ProjectMembersResponse(
         String schoolName,
         MatchedRoundInfo matchedRoundInfo
     ) {
-        public static ProjectMemberBrief from(MemberInfo info, MatchedRoundInfo matchedRoundInfo) {
-            return ProjectMemberBrief.builder()
-                .memberId(info.id())
-                .nickname(info.nickname())
-                .name(info.name())
-                .schoolName(info.schoolName())
-                .matchedRoundInfo(matchedRoundInfo)
-                .build();
-        }
-
         public static ProjectMemberBrief from(RosterMemberInfo info) {
             if (info == null) {
                 return null;
             }
             MatchedRoundInfo round = info.matchingRoundId() == null ? null
                 : new MatchedRoundInfo(info.matchingRoundId(), info.matchingType(), info.matchingPhase());
-            return new ProjectMemberBrief(info.memberId(), info.nickname(), info.name(), info.schoolName(), round);
+            return ProjectMemberBrief.builder()
+                .memberId(info.memberId())
+                .nickname(info.nickname())
+                .name(info.name())
+                .schoolName(info.schoolName())
+                .matchedRoundInfo(round)
+                .build();
         }
     }
 

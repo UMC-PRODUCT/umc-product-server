@@ -1,9 +1,7 @@
 package com.umc.product.project.application.service.command;
 
 import java.time.Instant;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +27,6 @@ import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.MatchingType;
-import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
@@ -60,27 +57,30 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
         LockedContext context = lockProject(command.projectId(), command.requesterMemberId());
         Project project = context.project();
         validateMatchingPart(command.part());
-        ProjectMatchingRound round = adjustmentPolicy.validateChange(
-            context.rounds(), MatchingType.fromPart(command.part()).orElseThrow(), Instant.now()).orElse(null);
-        Long roundId = round == null ? null : round.getId();
+
+        MatchingType matchingType = MatchingType.fromPart(command.part()).orElseThrow();
+        ProjectMatchingRound adjustmentRound = adjustmentPolicy.validateChange(
+            context.rounds(), matchingType, Instant.now()).orElse(null);
+        Long adjustmentRoundId = adjustmentRound == null ? null : adjustmentRound.getId();
         project.validateApplicable();
-        validateCandidate(project, command.memberId(), command.part(), roundId);
-        validateQuota(project, command.part(), roundId);
+        validateCandidate(project, command.memberId(), command.part(), adjustmentRoundId);
+        validateQuota(project, command.part(), adjustmentRoundId);
+
         ProjectMember member = loadProjectMemberPort
             .findByProjectIdAndMemberIdForUpdate(project.getId(), command.memberId()).orElse(null);
         if (member == null) {
-            member = round == null
+            member = adjustmentRound == null
                 ? ProjectMember.create(project, command.memberId(), command.part(), command.requesterMemberId())
-                : ProjectMember.createForMatching(project, command.memberId(), command.part(), round,
+                : ProjectMember.createForMatching(project, command.memberId(), command.part(), adjustmentRound,
                     command.requesterMemberId());
-        } else if (round != null && roundId.equals(member.getPendingRemovalRoundId())) {
+        } else if (adjustmentRound != null && adjustmentRoundId.equals(member.getPendingRemovalRoundId())) {
             // 같은 팀에 다시 배정하면 해제 예약만 취소하고 기존 지원서와 선발 차수를 유지한다.
             if (member.getPart() != command.part()) {
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_PART_NOT_ALLOWED);
             }
-            member.cancelRemoval(round, command.requesterMemberId());
-        } else if (round != null) {
-            member.assignForAdjustment(command.part(), round, command.requesterMemberId());
+            member.cancelRemoval(adjustmentRound, command.requesterMemberId());
+        } else if (adjustmentRound != null) {
+            member.assignForAdjustment(command.part(), adjustmentRound, command.requesterMemberId());
         } else {
             member.assignManually(command.part(), command.requesterMemberId());
         }
@@ -92,16 +92,20 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
         LockedContext context = lockProject(command.projectId(), command.requesterMemberId());
         Project project = context.project();
         ProjectMember member = getMatchingMember(project, command.memberId());
-        ProjectMatchingRound round = adjustmentPolicy.validateChange(
-            context.rounds(), MatchingType.fromPart(member.getPart()).orElseThrow(), Instant.now()).orElse(null);
-        if (round != null && member.getStatus() == ProjectMemberStatus.ACTIVE) {
-            member.scheduleRemoval(round, command.requesterMemberId(), command.reason());
+
+        MatchingType matchingType = MatchingType.fromPart(member.getPart()).orElseThrow();
+        ProjectMatchingRound adjustmentRound = adjustmentPolicy.validateChange(
+            context.rounds(), matchingType, Instant.now()).orElse(null);
+        if (adjustmentRound != null && member.getStatus() == ProjectMemberStatus.ACTIVE) {
+            // 공개된 팀원은 최종 결과 공개 전까지 기존 명단에 남아 있어야 하므로 해제만 예약한다.
+            member.scheduleRemoval(adjustmentRound, command.requesterMemberId(), command.reason());
             saveProjectMemberPort.save(member);
             log.info("프로젝트 매칭 해제 예약: projectId={}, memberId={}, matchingRoundId={}, requesterMemberId={}, reason={}",
-                project.getId(), command.memberId(), round.getId(), command.requesterMemberId(), command.reason());
+                project.getId(), command.memberId(), adjustmentRound.getId(), command.requesterMemberId(), command.reason());
             return;
         }
-        // 미공개 배정의 취소와 조정 기간 외의 배정 해제는 즉시 반영한다.
+
+        // 조정 기간의 PENDING_PUBLICATION 배정 취소와 그 외 허용 기간의 해제는 즉시 반영한다.
         rejectLinkedApplication(member, command.requesterMemberId(), command.reason());
         log.info("프로젝트 매칭 해제: projectId={}, memberId={}, requesterMemberId={}, reason={}",
             project.getId(), command.memberId(), command.requesterMemberId(), command.reason());
@@ -165,15 +169,8 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
     }
 
     private boolean isAlreadyAssigned(Long gisuId, Long memberId, Long adjustmentRoundId) {
-        if (adjustmentRoundId == null) {
-            return loadProjectMemberPort.existsByGisuAndMember(gisuId, memberId)
-                || !loadProjectApplicationPort.listByApplicantMemberIdAndGisuIdAndStatusIn(
-                    memberId, gisuId, List.of(ProjectApplicationStatus.APPROVED)).isEmpty();
-        }
-        Set<Long> assignedMemberIds = new HashSet<>(
-            loadProjectMemberPort.listAssignedMemberIdsByGisuId(gisuId, adjustmentRoundId));
-        assignedMemberIds.addAll(loadProjectApplicationPort.listApprovedApplicantMemberIdsByGisuId(gisuId, adjustmentRoundId));
-        return assignedMemberIds.contains(memberId);
+        return loadProjectMemberPort.existsAssignedMemberExcludingPendingRemoval(gisuId, memberId, adjustmentRoundId)
+            || loadProjectApplicationPort.existsApprovedApplicationExcludingPendingRemoval(gisuId, memberId, adjustmentRoundId);
     }
 
     private void validateMatchingPart(ChallengerPart part) {

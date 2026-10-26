@@ -43,6 +43,7 @@ import com.umc.product.project.application.port.in.command.dto.SubmitProjectComm
 import com.umc.product.project.domain.enums.ProjectStatus;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -159,8 +160,10 @@ public class ProjectCommandController {
         operationId = "PROJECT-004",
         summary = "프로젝트 팀원 추가",
         description = """
+            프로젝트에 팀원을 추가합니다.
             PLAN 파트는 기존 보조 PM 관리 권한을 사용합니다.
-            일반 파트는 해당 기수 총괄단·담당 지부장만 수동 배정할 수 있으며, 기수·파트·매칭 지부·중복·정원을 검증합니다.
+            디자인·개발 파트는 슈퍼어드민·해당 기수 총괄단·담당 지부장만 수동 배정할 수 있으며, 기수·파트·매칭 지부·중복·TO를 검증합니다.
+            디자인·개발 파트의 배정 가능 기간과 명단 반영 시점은 운영진 수동 배정[PROJECT-402]과 같습니다.
             운영진 수동 배정 전용 경로는 /api/v1/projects/admin/{projectId}/members 입니다.
             """
     )
@@ -290,14 +293,15 @@ public class ProjectCommandController {
     @DeleteMapping("/{projectId}/members/{memberId}")
     @Operation(
         operationId = "PROJECT-005",
-        summary = "프로젝트 팀원 제거 (hard delete)",
+        summary = "프로젝트 팀원 배정 해제",
         description = """
-            프로젝트에서 멤버 행을 완전히 삭제합니다. 동일 멤버를 같은 프로젝트에 재등록할 수 있습니다.
+            프로젝트에서 팀원의 배정을 해제합니다. 동일 멤버를 같은 프로젝트에 재등록할 수 있습니다.
             DRAFT/PENDING_REVIEW/IN_PROGRESS 프로젝트 단계에서만 가능하며, 종료(COMPLETED/ABORTED) 프로젝트는 이력 보존을 위해 거부됩니다.
             상태 변경 히스토리를 남겨야 하면 [PROJECT-006] API 를 사용하세요.
-            일반 파트의 제거는 해당 기수 총괄단·담당 지부장만 가능하며 연결 지원서를 불합격으로 변경합니다.
+            디자인·개발 파트의 배정 해제는 슈퍼어드민·해당 기수 총괄단·담당 지부장만 가능합니다.
+            디자인·개발 파트의 해제 가능 기간과 명단·지원서 반영 시점은 운영진 매칭 해제[PROJECT-403]과 같습니다.
             보조 PM 관리는 기존 권한을 유지합니다. 메인 PM 은 양도 API 로 변경해야 합니다.
-            reason 은 DB 에는 남지 않고 감사 로그로만 기록됩니다.
+            reason은 감사 로그에 기록하며, 디자인·개발 파트에 연결 지원서가 있으면 불합격 처리 사유로도 기록합니다.
             """
     )
     @CheckAccess(
@@ -310,6 +314,7 @@ public class ProjectCommandController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long projectId,
         @PathVariable Long memberId,
+        @Parameter(description = "해제 사유(선택). 디자인·개발 파트에 연결 지원서가 있으면 불합격 처리 사유로도 기록합니다.")
         @RequestParam(required = false) String reason
     ) {
         removeProjectMemberUseCase.remove(RemoveProjectMemberCommand.builder()

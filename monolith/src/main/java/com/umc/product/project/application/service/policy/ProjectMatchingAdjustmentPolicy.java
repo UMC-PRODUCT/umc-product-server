@@ -21,7 +21,7 @@ public class ProjectMatchingAdjustmentPolicy {
     /**
      * 팀원 수동 배정·해제 가능 여부를 검증한다.
      * <ul>
-     *   <li>최종 발표에 일괄 반영해야 하는 경우: 결과를 공개할 랜덤 차수를 반환한다.</li>
+     *   <li>최종 결과 공개 시 일괄 반영해야 하는 경우: 결과를 공개할 랜덤 차수를 반환한다.</li>
      *   <li>즉시 반영 가능한 기간인 경우: 빈 Optional을 반환한다.</li>
      *   <li>변경할 수 없는 기간인 경우: 예외를 발생시킨다.</li>
      * </ul>
@@ -41,9 +41,12 @@ public class ProjectMatchingAdjustmentPolicy {
      */
     public Optional<ProjectMatchingRound> validateChange(List<ProjectMatchingRound> rounds, MatchingType type, Instant now) {
         if (!isChangeAllowedInPeriod(rounds, now)) {
-            throw changeNotAllowed();
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MANUAL_MATCHING_NOT_ALLOWED_IN_PERIOD);
         }
-        return findApplicableRandomRound(rounds.stream().filter(round -> round.getType() == type).toList(), now);
+        List<ProjectMatchingRound> matchingRounds = rounds.stream()
+            .filter(round -> round.getType() == type)
+            .toList();
+        return findApplicableRandomRound(matchingRounds, now);
     }
 
     /**
@@ -51,17 +54,24 @@ public class ProjectMatchingAdjustmentPolicy {
      * 실제 변경 요청과 프로젝트 권한 조회에서 같은 기간 규칙을 사용한다.
      */
     public boolean isChangeAllowedInPeriod(List<ProjectMatchingRound> rounds, Instant now) {
-        boolean publicationPending = rounds.stream().filter(round -> !round.isRandomMatching())
+        boolean regularResultsPending = rounds.stream()
+            .filter(round -> !round.isRandomMatching())
             .anyMatch(round -> !now.isBefore(round.getDecisionDeadline()) && !round.isResultPublishedAt(now));
-        if (publicationPending) {
+        if (regularResultsPending) {
             return false;
         }
         for (MatchingType type : MatchingType.values()) {
-            Optional<ProjectMatchingRound> adjustment = findApplicableRandomRound(
-                rounds.stream().filter(round -> round.getType() == type).toList(), now);
-            boolean blocked = adjustment.filter(round -> !round.isAutoDecisionExecuted()
-                || now.isBefore(round.getStartsAt()) || !now.isBefore(round.getEndsAt())).isPresent();
-            if (blocked) {
+            List<ProjectMatchingRound> matchingRounds = rounds.stream()
+                .filter(round -> round.getType() == type)
+                .toList();
+            Optional<ProjectMatchingRound> adjustment = findApplicableRandomRound(matchingRounds, now);
+            if (adjustment.isEmpty()) {
+                continue;
+            }
+
+            ProjectMatchingRound randomRound = adjustment.get();
+            boolean withinAdjustmentPeriod = !now.isBefore(randomRound.getStartsAt()) && now.isBefore(randomRound.getEndsAt());
+            if (!randomRound.isAutoDecisionExecuted() || !withinAdjustmentPeriod) {
                 return false;
             }
         }
@@ -70,7 +80,8 @@ public class ProjectMatchingAdjustmentPolicy {
 
     /**
      * 조정 명단을 조회할 수 있는 랜덤 차수를 반환한다.
-     * 랜덤 매칭 완료 후 조정 시작부터 최종 공개 전까지 조회하며, 조정 종료 후에도 명단은 조회할 수 있다.
+     * 랜덤 매칭 완료 후 조정 시작부터 최종 결과 공개 전까지 조회한다.
+     * 조정이 끝난 뒤에도 운영진은 최종 공개할 명단을 확인해야 하므로, 조정 종료 시각으로 조회를 제한하지 않는다.
      */
     public List<ProjectMatchingRound> findViewableAdjustmentRounds(List<ProjectMatchingRound> rounds, Instant now) {
         return rounds.stream()
@@ -87,13 +98,10 @@ public class ProjectMatchingAdjustmentPolicy {
     private Optional<ProjectMatchingRound> findApplicableRandomRound(List<ProjectMatchingRound> rounds, Instant now) {
         boolean thirdPublished = rounds.stream()
             .anyMatch(round -> round.getPhase() == MatchingPhase.THIRD && round.isResultPublishedAt(now));
-        return rounds.stream().filter(ProjectMatchingRound::isRandomMatching)
+        return rounds.stream()
+            .filter(ProjectMatchingRound::isRandomMatching)
             .filter(round -> round.getResultPublishedAt() == null)
             .filter(round -> thirdPublished || round.isAutoDecisionExecuted() || !now.isBefore(round.getStartsAt()))
             .findFirst();
-    }
-
-    private ProjectDomainException changeNotAllowed() {
-        return new ProjectDomainException(ProjectErrorCode.PROJECT_MANUAL_MATCHING_NOT_ALLOWED_IN_PERIOD);
     }
 }

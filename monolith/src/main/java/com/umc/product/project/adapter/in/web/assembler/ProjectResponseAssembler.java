@@ -153,11 +153,11 @@ public class ProjectResponseAssembler {
     /**
      * PROJECT-007 프로젝트 팀원 구성 일괄 조회.
      * <p>
-     * 각 projectId에 대해 per-project 권한 체크 및 데이터 조회를 수행하며, 실패한 프로젝트는 결과에서 제외 멤버 정보는 유효한 프로젝트 전체를 모아 한 번에 조회한다.
+     * 공개 명단을 일괄 조회한 결과를 응답으로 변환한다. 권한이 없거나 존재하지 않는 프로젝트는 제외한다.
      */
     public Map<Long, ProjectMembersResponse> listProjectMembers(List<Long> projectIds, Long memberId) {
         Map<Long, ProjectMembersResponse> result = new LinkedHashMap<>();
-        getProjectPublishedMembersUseCase.get(projectIds, memberId)
+        getProjectPublishedMembersUseCase.listByProjectIds(projectIds, memberId)
             .forEach((projectId, info) -> result.put(projectId, ProjectMembersResponse.from(info)));
         return result;
     }
@@ -170,7 +170,7 @@ public class ProjectResponseAssembler {
             return listProjectMembers(projectIds, memberId);
         }
         Map<Long, ProjectMembersResponse> result = new LinkedHashMap<>();
-        getProjectMatchingAdjustmentUseCase.get(projectIds, memberId)
+        getProjectMatchingAdjustmentUseCase.batchGetByProjectIds(projectIds, memberId)
             .forEach((projectId, info) -> result.put(projectId, ProjectMembersResponse.from(info)));
         return result;
     }
@@ -326,8 +326,8 @@ public class ProjectResponseAssembler {
     }
 
     private RosterMemberInfo toRosterMemberInfo(MemberInfo info, ChallengerPart part, MatchedRoundInfo round) {
-        return info == null ? null : new RosterMemberInfo(info.id(), info.nickname(), info.name(), info.schoolName(),
-            part, round == null ? null : round.id(), round == null ? null : round.type(), round == null ? null : round.phase());
+        return RosterMemberInfo.of(info, part,
+            round == null ? null : round.id(), round == null ? null : round.type(), round == null ? null : round.phase());
     }
 
     private record ProjectMemberKey(Long projectId, Long memberId) {

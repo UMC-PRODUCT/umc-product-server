@@ -62,6 +62,7 @@ import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 운영진 수동 실행과 스케줄러 호출을 받아 1~3차 자동 선발과 랜덤 매칭을 처리한다.
@@ -69,6 +70,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional
 public class ProjectMatchingRoundFinalizationCommandService implements
     AutoDecideProjectMatchingRoundUseCase {
@@ -185,14 +187,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         }
 
         Map<Long, ChallengerPart> partByApplicationId = resolvePartsByApplicationId(applicants);
-        Set<Long> approvedMemberIds = applicants.stream()
-            .filter(application -> application.getStatus() == ProjectApplicationStatus.APPROVED)
-            .map(ProjectApplication::getApplicantMemberId).collect(Collectors.toSet());
-        long approvedCount = applicants.stream()
-            .filter(application -> application.getStatus() == ProjectApplicationStatus.APPROVED).count();
-        if (approvedCount != approvedMemberIds.size()) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_DUPLICATE_APPROVAL);
-        }
+        Set<Long> approvedMemberIds = collectApprovedMemberIds(applicants, round.getId());
         Map<ProjectPartKey, List<ProjectApplication>> grouped = groupByProjectAndPart(applicants, partByApplicationId);
         Map<ProjectPartKey, Integer> remainingQuotaByKey = buildRemainingQuotaMap(grouped.keySet());
         MatchingSchoolContext schoolContext = buildSupplementSchoolContext(applicants);
@@ -219,6 +214,20 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             saveProjectApplicationPort.saveAll(applicants);
         }
         return buildApprovedMembers(applicants, approvedApplicationIds, partByApplicationId, executedByMemberId);
+    }
+
+    /** 합격 지원자의 회원 ID를 모으고, 동일인의 중복 합격이 있으면 선발을 중단한다. */
+    private Set<Long> collectApprovedMemberIds(List<ProjectApplication> applicants, Long matchingRoundId) {
+        Set<Long> approvedMemberIds = new HashSet<>();
+        for (ProjectApplication application : applicants) {
+            if (application.getStatus() == ProjectApplicationStatus.APPROVED
+                && !approvedMemberIds.add(application.getApplicantMemberId())) {
+                log.warn("자동 선발 중복 합격 발견: matchingRoundId={}, memberId={}",
+                    matchingRoundId, application.getApplicantMemberId());
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_DUPLICATE_APPROVAL);
+            }
+        }
+        return approvedMemberIds;
     }
 
     private MatchingDecisionPolicy resolvePolicy(MatchingType type) {

@@ -64,9 +64,6 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
 
     @Override
     public Map<ChallengerPart, Long> countAssignedByProjectIdGroupByPart(Long projectId, Long adjustmentRoundId) {
-        if (adjustmentRoundId == null) {
-            return countAssignedByProjectIdGroupByPart(projectId);
-        }
         return queryRepository.countAssignedByProjectIdGroupByPart(projectId, adjustmentRoundId);
     }
 
@@ -178,6 +175,11 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     public boolean existsByGisuAndMember(Long gisuId, Long memberId) {
         return repository.existsByProject_GisuIdAndMemberIdAndStatusIn(gisuId, memberId,
             List.of(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION));
+    }
+
+    @Override
+    public boolean existsAssignedMemberExcludingPendingRemoval(Long gisuId, Long memberId, Long adjustmentRoundId) {
+        return queryRepository.existsAssignedMemberExcludingPendingRemoval(gisuId, memberId, adjustmentRoundId);
     }
 
     @Override
