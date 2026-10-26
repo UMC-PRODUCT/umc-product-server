@@ -174,6 +174,14 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         }
 
         Map<Long, ChallengerPart> partByApplicationId = resolvePartsByApplicationId(applicants);
+        Set<Long> approvedMemberIds = applicants.stream()
+            .filter(application -> application.getStatus() == ProjectApplicationStatus.APPROVED)
+            .map(ProjectApplication::getApplicantMemberId).collect(Collectors.toSet());
+        long approvedCount = applicants.stream()
+            .filter(application -> application.getStatus() == ProjectApplicationStatus.APPROVED).count();
+        if (approvedCount != approvedMemberIds.size()) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_DUPLICATE_APPROVAL);
+        }
         Map<ProjectPartKey, List<ProjectApplication>> grouped = groupByProjectAndPart(applicants, partByApplicationId);
         Map<ProjectPartKey, Integer> remainingQuotaByKey = buildRemainingQuotaMap(grouped.keySet());
         MatchingSchoolContext schoolContext = buildSupplementSchoolContext(applicants);
@@ -182,9 +190,16 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         Set<Long> approvedApplicationIds = new HashSet<>();
         for (Map.Entry<ProjectPartKey, List<ProjectApplication>> entry : grouped.entrySet()) {
             int remainingQuota = remainingQuotaByKey.getOrDefault(entry.getKey(), 0);
+            // 다른 프로젝트의 합격자를 보충 선발하지 않고, 이번 차수에서 방금 선발한 지원자도 중복 배정하지 않는다.
+            List<ProjectApplication> available = entry.getValue().stream()
+                .filter(application -> !alreadyAssigned.contains(application.getApplicantMemberId()))
+                .filter(application -> application.getStatus() == ProjectApplicationStatus.APPROVED
+                    || !approvedMemberIds.contains(application.getApplicantMemberId())).toList();
             AutoDecisionResult result = policy.decideAutomatically(
-                entry.getValue(), remainingQuota, matchingRandom, schoolContext);
+                available, remainingQuota, matchingRandom, schoolContext);
             approvedApplicationIds.addAll(result.approvedIds());
+            available.stream().filter(application -> result.approvedIds().contains(application.getId()))
+                .forEach(application -> alreadyAssigned.add(application.getApplicantMemberId()));
         }
 
         // 발표 전에는 PM의 마지막 결정을 유지한다. 발표 시각이 없는 기존 차수만 APPROVED·REJECTED를 즉시 반영한다.

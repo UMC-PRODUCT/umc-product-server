@@ -42,6 +42,7 @@ import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
+import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.service.policy.ProjectApplicationChapterPolicy;
 import com.umc.product.project.domain.Project;
@@ -73,6 +74,7 @@ public class ProjectApplicationCommandService implements
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
+    private final LockProjectMatchingPort lockProjectMatchingPort;
     private final ManageFormResponseUseCase manageFormResponseUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final ProjectApplicationChapterPolicy projectApplicationChapterPolicy;
@@ -259,6 +261,8 @@ public class ProjectApplicationCommandService implements
         String reason,
         Long decidedByMemberId
     ) {
+        // 수동 배정·자동 선발과 같은 락을 사용하고, 락 획득 후 지원서와 배정 상태를 조회한다.
+        lockProjectMatchingPort.lockByProjectId(projectId);
         ProjectApplication application = loadProjectApplicationPort.findById(applicationId)
             .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND));
         // 경로의 프로젝트와 지원서의 프로젝트가 다르면 다른 프로젝트 ID 로 우회한 요청이므로 없는 지원서로 취급한다.
@@ -268,6 +272,7 @@ public class ProjectApplicationCommandService implements
 
         if (targetStatus == ApplicationDecisionStatus.APPROVED
             && application.getStatus() != ProjectApplicationStatus.APPROVED) {
+            validateApproval(application);
             validateRemainingQuota(application);
         }
         if (targetStatus == ApplicationDecisionStatus.SUBMITTED) {
@@ -278,6 +283,21 @@ public class ProjectApplicationCommandService implements
 
         saveProjectApplicationPort.save(application);
         return ProjectApplicationInfo.of(application.getId(), application.getStatus());
+    }
+
+    /**
+     * 같은 기수에 이미 배정됐거나 다른 APPROVED 지원서가 있는 지원자는 새로 합격 처리하지 않는다.
+     */
+    private void validateApproval(ProjectApplication application) {
+        Long gisuId = application.getApplicationForm().getProject().getGisuId();
+        Long memberId = application.getApplicantMemberId();
+        boolean assigned = loadProjectMemberPort.existsByGisuAndMember(gisuId, memberId);
+        boolean approved = loadProjectApplicationPort.listByApplicantMemberIdAndGisuIdAndStatusIn(
+                memberId, gisuId, List.of(ProjectApplicationStatus.APPROVED)).stream()
+            .anyMatch(other -> !other.getId().equals(application.getId()));
+        if (assigned || approved) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_APPROVAL_CONFLICT);
+        }
     }
 
     private void applyDecision(

@@ -153,6 +153,75 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
     @Nested
     class autoDecide {
 
+        @Test
+        void 여러_프로젝트에_지원한_동일인을_한_차수에서_중복_선발하지_않는다() {
+            // given
+            ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DEVELOPER);
+            Project first = projectWithId(PROJECT_ID);
+            Project second = projectWithId(101L);
+            ProjectApplication firstApplication = application(101L, 11L, ProjectApplicationStatus.SUBMITTED, first, round);
+            ProjectApplication secondApplication = application(102L, 11L, ProjectApplicationStatus.SUBMITTED, second, round);
+            given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
+            given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID)).willReturn(List.of(firstApplication, secondApplication));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong()))
+                .willReturn(Map.of(11L, challenger(11L, ChallengerPart.WEB_PRODUCT_ENGINEER)));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any())).willReturn(Map.of(
+                PROJECT_ID, List.of(partQuota(first, ChallengerPart.WEB_PRODUCT_ENGINEER, 1L)),
+                101L, List.of(partQuota(second, ChallengerPart.WEB_PRODUCT_ENGINEER, 1L))));
+
+            // when
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            // then
+            then(saveProjectMemberPort).should().saveAll(approvedMembersCaptor.capture());
+            assertThat(approvedMembersCaptor.getValue()).extracting(ProjectMember::getMemberId).containsExactly(11L);
+        }
+
+        @Test
+        void 다른_프로젝트의_APPROVED_지원자를_먼저_처리하는_프로젝트에서_보충_선발하지_않는다() {
+            // given
+            ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DEVELOPER);
+            Project first = projectWithId(PROJECT_ID);
+            Project second = projectWithId(101L);
+            ProjectApplication submitted = application(101L, 11L, ProjectApplicationStatus.SUBMITTED, first, round);
+            ProjectApplication approved = application(102L, 11L, ProjectApplicationStatus.APPROVED, second, round);
+            given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
+            given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID)).willReturn(List.of(submitted, approved));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong()))
+                .willReturn(Map.of(11L, challenger(11L, ChallengerPart.WEB_PRODUCT_ENGINEER)));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any())).willReturn(Map.of(
+                PROJECT_ID, List.of(partQuota(first, ChallengerPart.WEB_PRODUCT_ENGINEER, 1L)),
+                101L, List.of(partQuota(second, ChallengerPart.WEB_PRODUCT_ENGINEER, 1L))));
+
+            // when
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            // then
+            then(saveProjectMemberPort).should().saveAll(approvedMembersCaptor.capture());
+            assertThat(approvedMembersCaptor.getValue()).extracting(ProjectMember::getApplication).containsExactly(approved);
+        }
+
+        @Test
+        void 동일인의_APPROVED_지원서가_여러_개면_자동_선발을_중단한다() {
+            // given
+            ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DEVELOPER);
+            Project first = projectWithId(PROJECT_ID);
+            Project second = projectWithId(101L);
+            given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
+            given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID)).willReturn(List.of(
+                application(101L, 11L, ProjectApplicationStatus.APPROVED, first, round),
+                application(102L, 11L, ProjectApplicationStatus.APPROVED, second, round)));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong()))
+                .willReturn(Map.of(11L, challenger(11L, ChallengerPart.WEB_PRODUCT_ENGINEER)));
+
+            // when & then
+            assertThatThrownBy(() -> sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID))
+                .isInstanceOf(ProjectDomainException.class).extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_DUPLICATE_APPROVAL);
+            then(saveProjectMemberPort).should(never()).saveAll(any());
+            assertThat(round.isAutoDecisionExecuted()).isFalse();
+        }
+
         @ParameterizedTest
         @EnumSource(value = ProjectApplicationStatus.class, names = {"SUBMITTED", "REJECTED"})
         void 발표_전에는_PM_결정과_처리정보를_유지하고_최소선발_대상만_PENDING_PUBLICATION으로_생성한다(

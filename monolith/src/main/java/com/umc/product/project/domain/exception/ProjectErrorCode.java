@@ -90,6 +90,8 @@ public enum ProjectErrorCode implements BaseCode {
         "매칭 차수가 중복되거나 일정 순서가 맞지 않아요. 차수별 시작·결정 마감·발표 시각을 확인해주세요."),
     PROJECT_MATCHING_ROUND_NOT_PUBLISHABLE(HttpStatus.CONFLICT, "PROJECT-0312",
         "자동 선발 완료 후 결과 발표 시각부터 공개할 수 있어요."),
+    PROJECT_MATCHING_DUPLICATE_APPROVAL(HttpStatus.CONFLICT, "PROJECT-0313",
+        "지원자의 합격 내역이 중복되어 자동 선발을 진행할 수 없어요. 합격 내역을 확인해주세요."),
 
     // ProjectApplication (APPLY-001/002/003)
     PROJECT_DRAFT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0204", "작성 중인 지원서를 찾을 수 없어요. 지원서 목록을 확인해주세요."),
@@ -110,6 +112,8 @@ public enum ProjectErrorCode implements BaseCode {
         "내 매칭 지부의 프로젝트에만 지원할 수 있어요. 프로젝트의 지부를 확인해주세요."),
     PROJECT_APPLICATION_ROUND_CHAPTER_MISMATCH(HttpStatus.BAD_REQUEST, "PROJECT-0218",
         "선택한 매칭 차수가 프로젝트 지부의 차수가 아니에요. 매칭 차수를 다시 선택해주세요."),
+    PROJECT_APPLICATION_APPROVAL_CONFLICT(HttpStatus.CONFLICT, "PROJECT-0219",
+        "이미 팀에 배정되었거나 다른 합격 내역이 있어 합격 처리할 수 없어요."),
 
     // ProjectMatchingChapterTransfer
     CHAPTER_TRANSFER_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0400", "매칭 지부 이동 기록을 찾을 수 없어요. 선택한 기록을 확인해주세요."),
