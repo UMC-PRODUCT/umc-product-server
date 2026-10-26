@@ -78,7 +78,7 @@ class RealtimeOutboxCommitListenerTest {
             var policy = context.getBean(OutboxEventRoutingPolicy.class);
             doAnswer(invocation -> {
                 threads.add(Thread.currentThread().getName());
-                return null;
+                return 0;
             }).when(relay).relay(OutboxProcessingGroup.REALTIME, policy.selectionFor(OutboxProcessingGroup.REALTIME), 7);
 
             context.publishEvent(new RealtimeOutboxCommittedEvent());

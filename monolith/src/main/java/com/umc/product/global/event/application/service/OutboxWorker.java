@@ -96,10 +96,13 @@ public final class OutboxWorker implements RequestOutboxRunUseCase, AutoCloseabl
     }
 
     private void drain(ExecutionSlot slot) {
+        boolean continueBatch = false;
         try {
-            while (takeSignal(slot)) {
+            while (takeSignal(slot, continueBatch)) {
+                continueBatch = false;
                 try {
-                    relay.relay(group, selection, batchSize);
+                    int claimed = relay.relay(group, selection, batchSize);
+                    continueBatch = OutboxProcessingGroup.REALTIME.equals(group) && claimed == batchSize;
                 } catch (RuntimeException exception) {
                     log.error("Outbox worker 배치 실행 실패: group={}", group.name(), exception);
                 }
@@ -113,8 +116,8 @@ public final class OutboxWorker implements RequestOutboxRunUseCase, AutoCloseabl
         }
     }
 
-    private synchronized boolean takeSignal(ExecutionSlot slot) {
-        if (closed || !slot.pending) {
+    private synchronized boolean takeSignal(ExecutionSlot slot, boolean continueBatch) {
+        if (closed || (!slot.pending && !continueBatch)) {
             slot.scheduled = false;
             return false;
         }

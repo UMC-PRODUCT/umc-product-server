@@ -114,7 +114,10 @@ public class EventOutboxRelayService {
         this.maxAttempts = maxAttempts;
     }
 
-    public void relay(OutboxProcessingGroup group, OutboxEventSelection selection, int limit) {
+    /**
+     * 한 배치를 선점하고 발행을 시도한다. 반환값은 발행 성공 수가 아닌 선점한 이벤트 수다.
+     */
+    public int relay(OutboxProcessingGroup group, OutboxEventSelection selection, int limit) {
         Objects.requireNonNull(group);
         Objects.requireNonNull(selection);
         if (limit <= 0) {
@@ -123,9 +126,11 @@ public class EventOutboxRelayService {
         long startedAt = System.nanoTime();
         String outcome = "success";
         try {
-            for (EventOutbox outbox : claimPublishable(selection, limit)) {
+            List<EventOutbox> outboxes = claimPublishable(selection, limit);
+            for (EventOutbox outbox : outboxes) {
                 relayOne(outbox, group);
             }
+            return outboxes.size();
         } catch (RuntimeException exception) {
             outcome = "failure";
             throw exception;
