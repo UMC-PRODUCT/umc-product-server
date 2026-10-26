@@ -307,6 +307,61 @@ class CommunityThreadMessageReportCommandServiceTest {
         order.verify(submitReportUseCase).submit(any(SubmitReportCommand.class));
     }
 
+    @Test
+    @DisplayName("본문이 없는 이미지 메시지는 콘텐츠 타입으로 스냅샷 내용을 남긴다")
+    void report_본문_없는_이미지는_타입으로_스냅샷을_남긴다() {
+        // given
+        stubReportable(new ChatMessageInfo(
+            MESSAGE_ID, CHAT_ROOM_ID, 66L, MessageContentType.IMAGE, null, List.of(), CREATED_AT
+        ));
+
+        // when
+        sut.report(command());
+
+        // then
+        assertThat(submittedSnapshot())
+            .isEqualTo(new SubmitReportCommand.TargetSnapshot(66L, "[IMAGE]", "스레드 제목"));
+    }
+
+    @Test
+    @DisplayName("발신자가 없는 시스템 메시지도 작성자 없이 신고를 접수한다")
+    void report_시스템_메시지는_작성자_없이_접수한다() {
+        // given
+        stubReportable(new ChatMessageInfo(
+            MESSAGE_ID, CHAT_ROOM_ID, null, MessageContentType.SYSTEM, "입장했습니다.", List.of(), CREATED_AT
+        ));
+
+        // when
+        sut.report(command());
+
+        // then
+        assertThat(submittedSnapshot())
+            .isEqualTo(new SubmitReportCommand.TargetSnapshot(null, "입장했습니다.", "스레드 제목"));
+    }
+
+    private void stubReportable(ChatMessageInfo message) {
+        CommunityThread thread = thread();
+        given(thread.getTitle()).willReturn("스레드 제목");
+        CommunityThreadMember member = activeMember();
+        given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
+            .willReturn(CHAT_ROOM_ID);
+        given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
+            .willReturn(Optional.of(member));
+        given(getChatMessageUseCase.getMessage(
+            new GetChatMessageQuery(CHAT_ROOM_ID, REQUESTER_MEMBER_ID, MESSAGE_ID)
+        )).willReturn(message);
+        given(submitReportUseCase.submit(any(SubmitReportCommand.class)))
+            .willReturn(new SubmitReportResult(901L, CREATED_AT));
+    }
+
+    private SubmitReportCommand.TargetSnapshot submittedSnapshot() {
+        ArgumentCaptor<SubmitReportCommand> captor = ArgumentCaptor.forClass(SubmitReportCommand.class);
+        then(submitReportUseCase).should().submit(captor.capture());
+        return captor.getValue().targetSnapshot();
+    }
+
     private ReportCommunityThreadMessageCommand command() {
         return new ReportCommunityThreadMessageCommand(
             MESSAGE_ID,

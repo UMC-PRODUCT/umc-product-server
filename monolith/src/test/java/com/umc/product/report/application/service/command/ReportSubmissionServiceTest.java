@@ -17,6 +17,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.umc.product.global.event.application.port.out.DomainEventPublisher;
+import com.umc.product.global.event.domain.DomainEvent;
 import com.umc.product.report.application.port.in.command.dto.SubmitReportCommand;
 import com.umc.product.report.application.port.in.command.dto.SubmitReportResult;
 import com.umc.product.report.application.port.out.LoadReportPort;
@@ -25,6 +27,7 @@ import com.umc.product.report.domain.Report;
 import com.umc.product.report.domain.enums.ReportDeliveryStatus;
 import com.umc.product.report.domain.enums.ReportReason;
 import com.umc.product.report.domain.enums.ReportTargetType;
+import com.umc.product.report.domain.event.ReportSubmittedEvent;
 import com.umc.product.report.domain.exception.ReportDomainException;
 import com.umc.product.report.domain.exception.ReportErrorCode;
 
@@ -44,6 +47,9 @@ class ReportSubmissionServiceTest {
 
     @Mock
     SaveReportPort saveReportPort;
+
+    @Mock
+    DomainEventPublisher domainEventPublisher;
 
     @InjectMocks
     ReportSubmissionService sut;
@@ -77,6 +83,7 @@ class ReportSubmissionServiceTest {
         assertThat(saved.getTargetSnapshot().getAuthorId()).isEqualTo(4L);
         assertThat(saved.getTargetSnapshot().getContent()).isEqualTo("신고 대상 메시지");
         assertThat(saved.getTargetSnapshot().getContext()).isEqualTo("스레드 제목");
+        assertThat(publishedReportId()).isEqualTo(901L);
     }
 
     @Test
@@ -97,6 +104,7 @@ class ReportSubmissionServiceTest {
         assertThat(saved.getTargetId()).isEqualTo(7L);
         assertThat(saved.getThreadId()).isNull();
         assertThat(saved.getReasonCode()).isNull();
+        assertThat(publishedReportId()).isEqualTo(902L);
     }
 
     @Test
@@ -115,6 +123,7 @@ class ReportSubmissionServiceTest {
                 assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS)
             );
         then(saveReportPort).shouldHaveNoInteractions();
+        then(domainEventPublisher).shouldHaveNoInteractions();
     }
 
     @Test
@@ -131,6 +140,7 @@ class ReportSubmissionServiceTest {
         assertThatThrownBy(() -> sut.submit(
             SubmitReportCommand.threadMessage(REPORTER_ID, THREAD_ID, MESSAGE_ID, ReportReason.ABUSE, SNAPSHOT)
         )).isSameAs(duplicate);
+        then(domainEventPublisher).shouldHaveNoInteractions();
     }
 
     private Report persisted(Long id) {
@@ -144,5 +154,12 @@ class ReportSubmissionServiceTest {
         ArgumentCaptor<Report> captor = ArgumentCaptor.forClass(Report.class);
         then(saveReportPort).should().save(captor.capture());
         return captor.getValue();
+    }
+
+    private Long publishedReportId() {
+        ArgumentCaptor<DomainEvent> captor = ArgumentCaptor.forClass(DomainEvent.class);
+        then(domainEventPublisher).should().publish(captor.capture());
+        assertThat(captor.getValue()).isInstanceOf(ReportSubmittedEvent.class);
+        return ((ReportSubmittedEvent) captor.getValue()).reportId();
     }
 }

@@ -3,6 +3,8 @@ package com.umc.product.report.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Instant;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -55,9 +57,51 @@ class ReportTest {
     }
 
     @Test
-    @DisplayName("스냅샷 작성자 ID가 없으면 만들 수 없다")
-    void snapshot_작성자가_없으면_거부한다() {
-        assertThatThrownBy(() -> ReportTargetSnapshot.of(null, "내용", "스레드 제목"))
+    @DisplayName("작성자가 없는 대상(시스템 메시지)도 스냅샷으로 남길 수 있다")
+    void snapshot_작성자가_없어도_만든다() {
+        ReportTargetSnapshot snapshot = ReportTargetSnapshot.of(null, "입장했습니다.", "스레드 제목");
+
+        assertThat(snapshot.getAuthorId()).isNull();
+        assertThat(snapshot.getContent()).isEqualTo("입장했습니다.");
+    }
+
+    @Test
+    @DisplayName("스냅샷 작성자 ID가 0 이하면 만들 수 없다")
+    void snapshot_작성자_ID가_양수가_아니면_거부한다() {
+        assertThatThrownBy(() -> ReportTargetSnapshot.of(0L, "내용", "스레드 제목"))
             .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("전달에 성공하면 SENT와 전달 시각을 남긴다")
+    void markDelivered_전달_완료를_기록한다() {
+        // given
+        Report report = Report.create(1L, ReportTargetType.POST, 2L, null);
+        Instant deliveredAt = Instant.parse("2026-10-26T00:00:00Z");
+
+        // when
+        report.markDelivered(deliveredAt);
+
+        // then
+        assertThat(report.getDeliveryStatus()).isEqualTo(ReportDeliveryStatus.SENT);
+        assertThat(report.getDeliveredAt()).isEqualTo(deliveredAt);
+        assertThat(report.isDeliveryPending()).isFalse();
+    }
+
+    @Test
+    @DisplayName("전달 실패는 시도 횟수를 올리고 최대 횟수에 닿으면 FAILED로 바꾼다")
+    void recordDeliveryFailure_최대_횟수에서_FAILED가_된다() {
+        // given
+        Report report = Report.create(1L, ReportTargetType.POST, 2L, null);
+
+        // when & then
+        report.recordDeliveryFailure(2);
+        assertThat(report.getDeliveryAttemptCount()).isEqualTo(1);
+        assertThat(report.getDeliveryStatus()).isEqualTo(ReportDeliveryStatus.PENDING);
+
+        report.recordDeliveryFailure(2);
+        assertThat(report.getDeliveryAttemptCount()).isEqualTo(2);
+        assertThat(report.getDeliveryStatus()).isEqualTo(ReportDeliveryStatus.FAILED);
+        assertThat(report.isDeliveryPending()).isFalse();
     }
 }

@@ -535,6 +535,11 @@ app:
     discord:
       url: ${DISCORD_WEBHOOK_URL:}
 
+  # 신고 운영 채널(Discord 신고 채널) 웹훅. 비어 있으면 보내지 않고 신고를 전달 대기(PENDING)로 남긴다.
+  report:
+    discord:
+      webhook-url: ${REPORT_DISCORD_WEBHOOK_URL:}
+
   # 일반 테스트 및 인증서 PDF 미리보기 API. prod 프로필에서는 설정과 무관하게 비활성화된다.
   test-api:
     enabled: ${APP_TEST_API_ENABLED:false}

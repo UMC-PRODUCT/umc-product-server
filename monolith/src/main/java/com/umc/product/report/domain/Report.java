@@ -62,6 +62,7 @@ public class Report extends BaseEntity {
     @Column(name = "delivery_status", length = 20)
     private ReportDeliveryStatus deliveryStatus;
 
+    /** 전달에 실패한 횟수. 성공한 시도는 세지 않습니다. */
     @Column(name = "delivery_attempt_count", nullable = false)
     private int deliveryAttemptCount;
 
@@ -120,6 +121,28 @@ public class Report extends BaseEntity {
             .reasonCode(requireReason(reason))
             .targetSnapshot(targetSnapshot)
             .build();
+    }
+
+    /**
+     * 운영 채널 전달을 아직 시도해야 하는 신고인지 확인합니다. 전달 기능 이전 신고({@code null})는 대상이 아닙니다.
+     */
+    public boolean isDeliveryPending() {
+        return this.deliveryStatus == ReportDeliveryStatus.PENDING;
+    }
+
+    public void markDelivered(Instant deliveredAt) {
+        this.deliveryStatus = ReportDeliveryStatus.SENT;
+        this.deliveredAt = deliveredAt;
+    }
+
+    /**
+     * 전달 실패를 기록합니다. 시도 횟수가 {@code maxAttempts}에 닿으면 더 이상 자동으로 재시도하지 않도록 {@code FAILED}로 바꿉니다.
+     */
+    public void recordDeliveryFailure(int maxAttempts) {
+        this.deliveryAttemptCount++;
+        if (this.deliveryAttemptCount >= maxAttempts) {
+            this.deliveryStatus = ReportDeliveryStatus.FAILED;
+        }
     }
 
     public void approve() {

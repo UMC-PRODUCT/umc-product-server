@@ -18,7 +18,7 @@ public class ReportTargetSnapshot {
 
     private static final int CONTEXT_MAX_LENGTH = 255;
 
-    /** 신고 대상 작성자의 {@code member.id}. */
+    /** 신고 대상 작성자의 {@code member.id}. 작성자가 없는 대상(예: 시스템 메시지)은 {@code null}. */
     @Column(name = "target_author_id")
     private Long authorId;
 
@@ -36,7 +36,7 @@ public class ReportTargetSnapshot {
     }
 
     public static ReportTargetSnapshot of(Long authorId, String content, String context) {
-        if (authorId == null || authorId <= 0) {
+        if (authorId != null && authorId <= 0) {
             throw new IllegalArgumentException("authorId must be positive");
         }
         if (context != null && context.length() > CONTEXT_MAX_LENGTH) {
