@@ -480,6 +480,51 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
     }
 
     @Test
+    @DisplayName("type을 지정하면 해당 매칭 유형의 차수만 조회한다")
+    void type_지정시_해당_유형만_조회한다() throws Exception {
+        // given
+        Gisu gisu = gisuFixture.비활성_기수(10L);
+        Chapter chapter = chapterFixture.지부(gisu, "owned");
+        saveMatchingRound("디자인 1차", null, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, chapter.getId(),
+            "2026-05-10T00:00:00Z", "2026-05-12T00:00:00Z", "2026-05-13T00:00:00Z");
+        ProjectMatchingRound developer = saveMatchingRound(
+            "개발자 1차", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST, chapter.getId(),
+            "2026-05-20T00:00:00Z", "2026-05-22T00:00:00Z", "2026-05-23T00:00:00Z");
+
+        // when & then
+        mockMvc.perform(get(BASE_URL)
+                .param("chapterId", chapter.getId().toString())
+                .param("type", "PLAN_DEVELOPER"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result", hasSize(1)))
+            .andExpect(jsonPath("$.result[0].id").value(developer.getId().toString()))
+            .andExpect(jsonPath("$.result[0].type").value("PLAN_DEVELOPER"));
+    }
+
+    @Test
+    @DisplayName("type을 생략하면 모든 매칭 유형의 차수를 조회한다")
+    void type_생략시_모든_유형을_조회한다() throws Exception {
+        // given
+        Gisu gisu = gisuFixture.비활성_기수(10L);
+        Chapter chapter = chapterFixture.지부(gisu, "owned");
+        ProjectMatchingRound designer = saveMatchingRound(
+            "디자인 1차", null, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, chapter.getId(),
+            "2026-05-10T00:00:00Z", "2026-05-12T00:00:00Z", "2026-05-13T00:00:00Z");
+        ProjectMatchingRound developer = saveMatchingRound(
+            "개발자 1차", null, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST, chapter.getId(),
+            "2026-05-20T00:00:00Z", "2026-05-22T00:00:00Z", "2026-05-23T00:00:00Z");
+
+        // when & then
+        mockMvc.perform(get(BASE_URL).param("chapterId", chapter.getId().toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result", hasSize(2)))
+            .andExpect(jsonPath("$.result[0].id").value(designer.getId().toString()))
+            .andExpect(jsonPath("$.result[0].type").value("PLAN_DESIGN"))
+            .andExpect(jsonPath("$.result[1].id").value(developer.getId().toString()))
+            .andExpect(jsonPath("$.result[1].type").value("PLAN_DEVELOPER"));
+    }
+
+    @Test
     @DisplayName("time만 전달하면 매칭 차수 목록을 조회할 수 없다")
     void time만_전달하면_매칭_차수_목록을_조회할_수_없다() throws Exception {
         // when & then

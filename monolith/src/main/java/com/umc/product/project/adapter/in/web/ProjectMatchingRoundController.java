@@ -53,6 +53,7 @@ public class ProjectMatchingRoundController {
         description = """
             매칭 차수 목록을 조회합니다.
             - chapterId가 있으면 해당 지부의 매칭 차수만 startsAt 오름차순으로 반환합니다.
+            - type을 지정하면 해당 매칭 유형만 조회하며, 생략하면 전체 유형을 조회합니다.
             - time이 있으면 해당 시점에 지원 가능한 1~3차(startsAt <= time <= endsAt)만 반환합니다. 랜덤 매칭은 제외합니다.
             - time 기준 조회는 chapterId와 함께 요청해야 하며, chapterId 없이 time만 요청하면 400을 반환합니다.
             - 서로 다른 유형이 동시에 진행 중이면 유형별 차수가 함께 반환될 수 있습니다.
@@ -61,11 +62,12 @@ public class ProjectMatchingRoundController {
     )
     public List<ProjectMatchingRoundResponse> list(
         @RequestParam(required = false) Long chapterId,
+        @RequestParam(required = false) MatchingType type,
         @RequestParam(required = false)
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
         Instant time
     ) {
-        return getProjectMatchingRoundUseCase.list(chapterId, time).stream()
+        return getProjectMatchingRoundUseCase.list(chapterId, type, time).stream()
             .map(ProjectMatchingRoundResponse::from)
             .toList();
     }
