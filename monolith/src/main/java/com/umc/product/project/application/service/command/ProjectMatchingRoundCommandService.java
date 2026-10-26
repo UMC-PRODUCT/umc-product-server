@@ -13,8 +13,6 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.project.application.port.in.command.CreateProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.in.command.DeleteProjectMatchingRoundUseCase;
@@ -69,7 +67,7 @@ public class ProjectMatchingRoundCommandService implements
         CreateProjectMatchingRoundCommand first = commands.getFirst();
         Long chapterId = first.chapterId();
         Long memberId = first.requesterMemberId();
-        validateManageAccessInGisu(memberId, chapterId);
+        validateManageAccess(memberId, chapterId);
         if (commands.stream().anyMatch(command -> command.type() != first.type()
             || !Objects.equals(command.chapterId(), chapterId)
             || !Objects.equals(command.requesterMemberId(), memberId))) {
@@ -227,7 +225,7 @@ public class ProjectMatchingRoundCommandService implements
 
     @Override
     public void deleteAll(Long chapterId, MatchingType type, Long requesterMemberId) {
-        validateManageAccessInGisu(requesterMemberId, chapterId);
+        validateManageAccess(requesterMemberId, chapterId);
         List<ProjectMatchingRound> rounds = loadProjectMatchingRoundPort.listByChapterId(chapterId).stream()
             .filter(round -> round.getType() == type)
             .toList();
@@ -308,26 +306,11 @@ public class ProjectMatchingRoundCommandService implements
         action.run();
     }
 
-    private void validateManageAccessInGisu(Long memberId, Long chapterId) {
+    private void validateManageAccess(Long memberId, Long chapterId) {
         Long gisuId = getChapterUseCase.getGisuIdByChapterId(chapterId);
         if (!getChallengerRoleUseCase.isSuperAdmin(memberId)
             && !getChallengerRoleUseCase.isCentralCoreInGisu(memberId, gisuId)
             && !getChallengerRoleUseCase.isChapterPresidentInGisu(memberId, gisuId, chapterId)) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_ACCESS_DENIED);
-        }
-    }
-
-    private void validateManageAccess(Long memberId, Long chapterId) {
-        if (getChallengerRoleUseCase.isSuperAdmin(memberId)) {
-            return;
-        }
-        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
-        boolean allowed = roles.stream()
-            .anyMatch(role -> role.roleType().isAtLeastCentralCore()
-                || (role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
-                && Objects.equals(role.organizationId(), chapterId)));
-
-        if (!allowed) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_ACCESS_DENIED);
         }
     }

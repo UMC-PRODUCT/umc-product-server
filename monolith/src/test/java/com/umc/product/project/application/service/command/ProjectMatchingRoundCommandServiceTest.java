@@ -25,9 +25,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.project.application.port.in.command.dto.CreateProjectMatchingRoundCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectMatchingRoundCommand;
@@ -67,8 +64,8 @@ class ProjectMatchingRoundCommandServiceTest {
     @BeforeEach
     void setUpRoleMock() {
         sut = sutWithMinPhaseIntervalMinutes(1);
-        given(getChallengerRoleUseCase.findAllByMemberId(EXECUTOR_MEMBER_ID))
-            .willReturn(List.of(centralCoreRole()));
+        given(getChapterUseCase.getGisuIdByChapterId(1L)).willReturn(5L);
+        given(getChallengerRoleUseCase.isCentralCoreInGisu(EXECUTOR_MEMBER_ID, 5L)).willReturn(true);
     }
 
     @Nested
@@ -139,6 +136,21 @@ class ProjectMatchingRoundCommandServiceTest {
         }
 
         @Test
+        void 대상_기수와_지부의_관리_권한이_없으면_생성을_거부한다() {
+            reset(getChallengerRoleUseCase);
+            given(getChapterUseCase.getGisuIdByChapterId(1L)).willReturn(6L);
+
+            assertThatThrownBy(() -> sut.create(createCommand(1L)))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_ACCESS_DENIED);
+
+            then(getChallengerRoleUseCase).should().isCentralCoreInGisu(EXECUTOR_MEMBER_ID, 6L);
+            then(getChallengerRoleUseCase).should().isChapterPresidentInGisu(EXECUTOR_MEMBER_ID, 6L, 1L);
+            then(saveProjectMatchingRoundPort).should(never()).save(any());
+        }
+
+        @Test
         void system_role_super_admin은_challenger_role_없이_차수를_생성한다() {
             reset(getChallengerRoleUseCase);
             CreateProjectMatchingRoundCommand command = createCommand(1L);
@@ -149,7 +161,7 @@ class ProjectMatchingRoundCommandServiceTest {
 
             sut.create(command);
 
-            then(getChallengerRoleUseCase).should(never()).findAllByMemberId(EXECUTOR_MEMBER_ID);
+            then(getChallengerRoleUseCase).should(never()).isCentralCoreInGisu(EXECUTOR_MEMBER_ID, 5L);
             then(saveProjectMatchingRoundPort).should().save(any());
         }
 
@@ -440,17 +452,10 @@ class ProjectMatchingRoundCommandServiceTest {
 
     @Nested
     class WholeSchedule {
-        @BeforeEach
-        void resetRoles() {
-            reset(getChallengerRoleUseCase);
-        }
-
         @Test
         @DisplayName("1차 시작 시각부터 전체 일정을 수정할 수 없다")
         void 일차_시작_후_수정_불가() {
             // given
-            given(getChapterUseCase.getGisuIdByChapterId(1L)).willReturn(5L);
-            given(getChallengerRoleUseCase.isCentralCoreInGisu(EXECUTOR_MEMBER_ID, 5L)).willReturn(true);
             List<ProjectMatchingRound> existing = existingRounds();
             given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(existing);
 
@@ -468,8 +473,6 @@ class ProjectMatchingRoundCommandServiceTest {
         @DisplayName("마지막 차수의 발표 간격 오류가 있으면 기존 일정도 변경하지 않는다")
         void 잘못된_발표_간격_거부() {
             // given
-            given(getChapterUseCase.getGisuIdByChapterId(1L)).willReturn(5L);
-            given(getChallengerRoleUseCase.isCentralCoreInGisu(EXECUTOR_MEMBER_ID, 5L)).willReturn(true);
             List<ProjectMatchingRound> existing = existingRounds();
             List<Instant> originalStartsAt = existing.stream().map(ProjectMatchingRound::getStartsAt).toList();
             given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(existing);
@@ -616,12 +619,4 @@ class ProjectMatchingRoundCommandServiceTest {
         );
     }
 
-    private ChallengerRoleInfo centralCoreRole() {
-        return ChallengerRoleInfo.builder()
-            .roleType(ChallengerRoleType.CENTRAL_PRESIDENT)
-            .organizationType(OrganizationType.CENTRAL)
-            .organizationId(null)
-            .gisuId(5L)
-            .build();
-    }
 }
