@@ -96,6 +96,12 @@ public class ProjectMember extends BaseEntity {
     private String statusChangeReason;
     private Long statusChangedMemberId;
 
+    // 랜덤 매칭 이후 조정 기간에 기존 팀원의 배정을 해제하면, 해제를 적용할 랜덤 매칭 차수 ID를 저장합니다.
+    // 최종 결과 공개 전까지는 기존 공개 명단에 보여야 하므로 ACTIVE 상태를 유지하고, 조정 명단에서만 제외합니다.
+    // 기존 선발 차수(assignedMatchingRound)는 유지하며, 이 필드에 기록된 차수의 결과를 공개할 때 배정을 해제합니다.
+    // 해제 예약이 없으면 null입니다.
+    private Long pendingRemovalRoundId;
+
     /**
      * 활성 상태의 신규 멤버를 생성합니다.
      */
