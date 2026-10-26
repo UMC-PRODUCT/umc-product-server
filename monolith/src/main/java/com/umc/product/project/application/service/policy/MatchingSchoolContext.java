@@ -20,16 +20,23 @@ public class MatchingSchoolContext {
         this.schoolIdByMemberId = Map.copyOf(schoolIdByMemberId);
     }
 
-    /** 후보와 같은 학교의 프로젝트 구성원이 몇 명인지 반환한다. */
+    /** 후보와 같은 학교의 프로젝트 구성원이 몇 명인지 반환한다. 후보의 학교 정보가 없으면 0을 반환한다. */
     public int countSameSchoolMembers(Long projectId, Long memberId) {
-        long schoolId = schoolIdByMemberId.get(memberId);
+        Long schoolId = schoolIdByMemberId.get(memberId);
+        if (schoolId == null) {
+            return 0;
+        }
         return schoolCountsByProject.getOrDefault(projectId, Map.of()).getOrDefault(schoolId, 0);
     }
 
     /** 기존 구성원과 선발된 회원을 반영해, 다음 선택에서도 최신 학교 인원수를 사용한다. */
     public void addMember(Long projectId, Long memberId) {
+        Long schoolId = schoolIdByMemberId.get(memberId);
+        // 학교 정보가 없는 회원은 학교별 인원 집계에서 제외한다.
+        if (schoolId == null) {
+            return;
+        }
         if (memberIdsByProject.computeIfAbsent(projectId, ignored -> new HashSet<>()).add(memberId)) {
-            long schoolId = schoolIdByMemberId.get(memberId);
             schoolCountsByProject.computeIfAbsent(projectId, ignored -> new HashMap<>())
                 .merge(schoolId, 1, Integer::sum);
         }

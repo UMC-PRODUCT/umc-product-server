@@ -563,7 +563,13 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         assignedMemberIdsByProject.values().forEach(memberIds::addAll);
         projects.forEach(project -> memberIds.add(project.getProductOwnerMemberId()));
 
-        MatchingSchoolContext schoolContext = new MatchingSchoolContext(getMemberUseCase.findAllSchoolIdsByIds(memberIds));
+        Map<Long, Long> schoolIdByMemberId = getMemberUseCase.findAllSchoolIdsByIds(memberIds);
+        Set<Long> missingSchoolMemberIds = new HashSet<>(memberIds);
+        missingSchoolMemberIds.removeAll(schoolIdByMemberId.keySet());
+        if (!missingSchoolMemberIds.isEmpty()) {
+            log.warn("자동 매칭 학교 정보 누락: projectIds={}, memberIds={}", projectIds, missingSchoolMemberIds);
+        }
+        MatchingSchoolContext schoolContext = new MatchingSchoolContext(schoolIdByMemberId);
         assignedMemberIdsByProject.forEach((projectId, assignedMemberIds) ->
             assignedMemberIds.forEach(memberId -> schoolContext.addMember(projectId, memberId)));
         projects.forEach(project -> schoolContext.addMember(project.getId(), project.getProductOwnerMemberId()));
