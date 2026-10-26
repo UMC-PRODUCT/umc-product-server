@@ -42,6 +42,7 @@ import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.service.policy.ProjectManualMatchingAccessPolicy;
+import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
@@ -80,6 +81,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
     private final ProjectApplicationAccessScopeResolver projectApplicationAccessScopeResolver;
     private final ProjectStatisticsAccessPolicy projectStatisticsAccessPolicy;
     private final ProjectMatchingChapterResolver projectMatchingChapterResolver;
+    private final ProjectMatchingAdjustmentPolicy projectMatchingAdjustmentPolicy;
 
     @Override
     public List<ProjectPermissionInfo> listByProjectIds(Long requesterMemberId, List<Long> projectIds) {
@@ -116,7 +118,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
                     permissionCache.openMatchingRounds(project.getChapterId(), now),
                     permissionCache
                 );
-                return buildInfo(requesterMemberId, subject, context);
+                return buildInfo(requesterMemberId, subject, context, now);
             })
             .toList();
     }
@@ -124,7 +126,8 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
     private ProjectPermissionInfo buildInfo(
         Long requesterMemberId,
         SubjectAttributes subject,
-        ProjectCapabilityContext context
+        ProjectCapabilityContext context,
+        Instant now
     ) {
         Project project = context.project();
         ProjectPermissionCapabilityInfo canEditInfo = requirePermission(
@@ -149,7 +152,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
             partQuotaPermissions(context),
             statusPermissions(context),
             applicationPermissions(requesterMemberId, subject, context),
-            memberPermissions(subject, context),
+            memberPermissions(subject, context, now),
             statisticsPermissions(requesterMemberId, project)
         );
     }
@@ -368,7 +371,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         return ProjectPermissionCapabilityInfo.allow();
     }
 
-    private MemberPermissions memberPermissions(SubjectAttributes subject, ProjectCapabilityContext context) {
+    private MemberPermissions memberPermissions(SubjectAttributes subject, ProjectCapabilityContext context, Instant now) {
         ProjectPermissionCapabilityInfo read = requirePermission(
             context.projectPermission(PermissionType.READ),
             ProjectPermissionCapabilityInfo::allow
@@ -380,11 +383,17 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         Project project = context.project();
         boolean staff = ProjectManualMatchingAccessPolicy.canManage(subject.toAuthoritySnapshot(), project);
         ProjectPermissionCapabilityInfo assign = requirePermission(staff && project.getStatus() == ProjectStatus.IN_PROGRESS,
-            ProjectPermissionCapabilityInfo::allow);
+            () -> manualMatchingPeriod(context, now));
         ProjectPermissionCapabilityInfo unassign = requirePermission(staff
             && project.getStatus() != ProjectStatus.COMPLETED && project.getStatus() != ProjectStatus.ABORTED,
-            ProjectPermissionCapabilityInfo::allow);
+            () -> manualMatchingPeriod(context, now));
         return new MemberPermissions(read, edit, edit, assign, unassign);
+    }
+
+    private ProjectPermissionCapabilityInfo manualMatchingPeriod(ProjectCapabilityContext context, Instant now) {
+        return context.permissionCache().canChangeMembers(context.project().getChapterId(), now)
+            ? ProjectPermissionCapabilityInfo.allow()
+            : denied(ProjectPermissionReason.PROJECT_MANUAL_MATCHING_NOT_ALLOWED_IN_PERIOD);
     }
 
     private StatisticsPermissions statisticsPermissions(Long requesterMemberId, Project project) {
@@ -469,6 +478,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         private final Map<Long, Map<PermissionType, Boolean>> projectPermissions = new LinkedHashMap<>();
         private final Map<Long, Boolean> applicationWritePermissions = new LinkedHashMap<>();
         private final Map<Long, List<ProjectMatchingRound>> openMatchingRounds = new LinkedHashMap<>();
+        private final Map<Long, Boolean> manualMatchingAllowed = new LinkedHashMap<>();
         private final Map<Long, Optional<ChallengerInfo>> challengerInfos = new LinkedHashMap<>();
         private final Map<Long, Boolean> projectMemberExists = new LinkedHashMap<>();
         private final Map<Long, Optional<Long>> matchingChapterIds = new LinkedHashMap<>();
@@ -496,6 +506,13 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         private List<ProjectMatchingRound> openMatchingRounds(Long chapterId, Instant now) {
             return openMatchingRounds.computeIfAbsent(chapterId, id ->
                 List.copyOf(loadProjectMatchingRoundPort.listOpenAt(id, now))
+            );
+        }
+
+        // 같은 지부의 프로젝트들은 기간 판단 결과를 공유해 차수를 반복 조회하지 않는다.
+        private boolean canChangeMembers(Long chapterId, Instant now) {
+            return manualMatchingAllowed.computeIfAbsent(chapterId, id ->
+                projectMatchingAdjustmentPolicy.isChangeAllowedInPeriod(loadProjectMatchingRoundPort.listByChapterId(id), now)
             );
         }
 

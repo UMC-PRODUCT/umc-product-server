@@ -13,7 +13,7 @@ import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
 /**
- * 매칭 유형별 팀원 수동 배정·해제 가능 기간과 결과 반영 시점을 판단하는 정책.
+ * 팀원 수동 배정·해제 가능 기간과 매칭 유형별 결과 반영 시점을 판단하는 정책.
  */
 @Component
 public class ProjectMatchingAdjustmentPolicy {
@@ -32,24 +32,40 @@ public class ProjectMatchingAdjustmentPolicy {
      *   <li>어드민 조정 기간 중 랜덤 매칭이 완료되지 않은 경우</li>
      *   <li>어드민 조정 종료부터 최종 결과 공개 완료 전까지</li>
      * </ul>
-     * 디자이너는 디자인 매칭 일정, 개발자는 개발자 매칭 일정만 적용한다.
+     * 해당 지부의 디자인·개발 매칭 중 하나라도 변경 불가 기간이면 모두 차단한다.
+     * 일괄 공개할 랜덤 차수는 배정·해제할 파트의 매칭 유형을 기준으로 반환한다.
      *
      * @param rounds 대상 지부의 매칭 차수 목록
      * @param type 배정·해제할 파트에 해당하는 매칭 유형
      * @param now 기간 판단 기준 시각
      */
     public Optional<ProjectMatchingRound> validateChange(List<ProjectMatchingRound> rounds, MatchingType type, Instant now) {
-        List<ProjectMatchingRound> matchingRounds = rounds.stream()
-            .filter(round -> round.getType() == type).toList();
-        validateRegularRoundPublicationGap(matchingRounds, now);
-        Optional<ProjectMatchingRound> adjustment = findApplicableRandomRound(matchingRounds, now);
-        adjustment.ifPresent(round -> {
-            if (!round.isAutoDecisionExecuted() || now.isBefore(round.getStartsAt())
-                || !now.isBefore(round.getEndsAt())) {
-                throw changeNotAllowed();
+        if (!isChangeAllowedInPeriod(rounds, now)) {
+            throw changeNotAllowed();
+        }
+        return findApplicableRandomRound(rounds.stream().filter(round -> round.getType() == type).toList(), now);
+    }
+
+    /**
+     * 해당 지부의 디자인·개발 일정을 확인해 수동 배정·해제가 가능한 기간인지 판단한다.
+     * 실제 변경 요청과 프로젝트 권한 조회에서 같은 기간 규칙을 사용한다.
+     */
+    public boolean isChangeAllowedInPeriod(List<ProjectMatchingRound> rounds, Instant now) {
+        boolean publicationPending = rounds.stream().filter(round -> !round.isRandomMatching())
+            .anyMatch(round -> !now.isBefore(round.getDecisionDeadline()) && !round.isResultPublishedAt(now));
+        if (publicationPending) {
+            return false;
+        }
+        for (MatchingType type : MatchingType.values()) {
+            Optional<ProjectMatchingRound> adjustment = findApplicableRandomRound(
+                rounds.stream().filter(round -> round.getType() == type).toList(), now);
+            boolean blocked = adjustment.filter(round -> !round.isAutoDecisionExecuted()
+                || now.isBefore(round.getStartsAt()) || !now.isBefore(round.getEndsAt())).isPresent();
+            if (blocked) {
+                return false;
             }
-        });
-        return adjustment;
+        }
+        return true;
     }
 
     /**
@@ -62,15 +78,6 @@ public class ProjectMatchingAdjustmentPolicy {
             .filter(ProjectMatchingRound::isAutoDecisionExecuted)
             .filter(round -> !now.isBefore(round.getStartsAt()) && round.getResultPublishedAt() == null)
             .toList();
-    }
-
-    private void validateRegularRoundPublicationGap(List<ProjectMatchingRound> rounds, Instant now) {
-        boolean blocked = rounds.stream().filter(round -> !round.isRandomMatching())
-            .anyMatch(round -> !now.isBefore(round.getDecisionDeadline())
-                && !round.isResultPublishedAt(now));
-        if (blocked) {
-            throw changeNotAllowed();
-        }
     }
 
     /**

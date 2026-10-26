@@ -41,6 +41,18 @@ class ProjectMatchingAdjustmentPolicyTest {
     }
 
     @Test
+    void 디자인_차수의_결과_공개_대기_중에는_개발자_배정도_차단한다() {
+        // given
+        ProjectMatchingRound round = regularRound();
+
+        // when & then
+        assertThatThrownBy(() -> policy.validateChange(List.of(round), MatchingType.PLAN_DEVELOPER,
+            round.getDecisionDeadline()))
+            .isInstanceOf(ProjectDomainException.class).extracting("baseCode")
+            .isEqualTo(ProjectErrorCode.PROJECT_MANUAL_MATCHING_NOT_ALLOWED_IN_PERIOD);
+    }
+
+    @Test
     void 일반_차수의_공개_완료_후에는_즉시_반영하도록_빈_값을_반환한다() {
         // given
         ProjectMatchingRound round = regularRound();
@@ -135,6 +147,27 @@ class ProjectMatchingAdjustmentPolicyTest {
 
         // when & then
         assertThat(policy.validateChange(rounds, MatchingType.PLAN_DESIGN, developerStart)).isEmpty();
+    }
+
+    @Test
+    void 개발자_조정_종료부터_최종_공개_전까지는_디자인_배정도_차단한다() {
+        // given
+        ProjectMatchingRound designRandom = randomRound();
+        designRandom.executeAutoDecision(null);
+        designRandom.publishResult(designRandom.getResultPublishAt());
+        Instant developerStart = START.plusSeconds(30L * 24 * 3600);
+        ProjectMatchingRound developerThird = ProjectMatchingRound.create("개발자 3차", null, MatchingType.PLAN_DEVELOPER,
+            MatchingPhase.THIRD, 1L, developerStart.minusSeconds(10800), developerStart.minusSeconds(7200),
+            developerStart.minusSeconds(3600), developerStart.minusSeconds(60));
+        developerThird.executeAutoDecision(null);
+        developerThird.publishResult(developerThird.getResultPublishAt());
+        ProjectMatchingRound developerRandom = ProjectMatchingRound.create("개발자 랜덤", null, MatchingType.PLAN_DEVELOPER,
+            MatchingPhase.RANDOM_MATCHING, 1L, developerStart, developerStart.plusSeconds(7200),
+            developerStart.plusSeconds(7200), developerStart.plusSeconds(10800));
+        developerRandom.executeAutoDecision(null);
+
+        // when & then
+        assertBlocked(List.of(publishedThirdRound(), designRandom, developerThird, developerRandom), developerRandom.getEndsAt());
     }
 
     @Test
