@@ -111,6 +111,8 @@ public enum ProjectErrorCode implements BaseCode {
         "자동 선발 완료 후 결과 발표 시각부터 공개할 수 있어요."),
     PROJECT_MATCHING_DUPLICATE_APPROVAL(HttpStatus.CONFLICT, "PROJECT-0313",
         "지원자의 합격 내역이 중복되어 자동 선발을 진행할 수 없어요. 합격 내역을 확인해주세요."),
+    PROJECT_MATCHING_ROUND_ALREADY_STARTED(HttpStatus.BAD_REQUEST, "PROJECT-0314",
+        "1차 매칭이 시작되어 차수를 등록·수정·삭제할 수 없어요."),
 
     // ProjectApplication (APPLY-001/002/003)
     PROJECT_DRAFT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0204", "작성 중인 지원서를 찾을 수 없어요. 지원서 목록을 확인해주세요."),

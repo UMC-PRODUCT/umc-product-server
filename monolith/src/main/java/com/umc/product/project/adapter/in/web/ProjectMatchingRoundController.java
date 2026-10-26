@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.project.adapter.in.web.dto.request.CreateProjectMatchingRoundRequest;
+import com.umc.product.project.adapter.in.web.dto.request.SaveProjectMatchingRoundsRequest;
 import com.umc.product.project.adapter.in.web.dto.request.UpdateProjectMatchingRoundRequest;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMatchingRoundCreateResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMatchingRoundResponse;
@@ -51,7 +53,8 @@ public class ProjectMatchingRoundController {
             매칭 차수 목록을 조회합니다.
             - chapterId가 있으면 해당 지부의 매칭 차수만 startsAt 오름차순으로 반환합니다.
             - time이 있으면 해당 시점에 지원 가능한 1~3차(startsAt <= time <= endsAt)만 반환합니다. 랜덤 매칭은 제외합니다.
-            - time 기준 조회는 결과가 최대 1건이 되도록 chapterId와 함께 요청해야 하며, chapterId 없이 time만 요청하면 400을 반환합니다.
+            - time 기준 조회는 chapterId와 함께 요청해야 하며, chapterId 없이 time만 요청하면 400을 반환합니다.
+            - 서로 다른 유형이 동시에 진행 중이면 유형별 차수가 함께 반환될 수 있습니다.
             - time이 없고 chapterId도 없으면 전체 매칭 차수를 startsAt 오름차순으로 반환합니다.
             """
     )
@@ -72,6 +75,7 @@ public class ProjectMatchingRoundController {
         summary = "매칭 차수 생성",
         description = """
             매칭 차수를 생성합니다.
+            - 해당 지부·유형의 1차가 시작되면 최고관리자도 등록할 수 없으며 400 PROJECT-0314를 반환합니다.
             - 중앙운영사무국 총괄단 이상은 모든 지부에 생성할 수 있습니다.
             - 지부장은 본인 지부에만 생성할 수 있습니다.
             - 1~3차는 startsAt < endsAt < decisionDeadline < resultPublishAt 순서를 만족해야 합니다.
@@ -94,12 +98,42 @@ public class ProjectMatchingRoundController {
         return ProjectMatchingRoundCreateResponse.from(matchingRoundId);
     }
 
+    @PutMapping("/chapters/{chapterId}")
+    @Operation(
+        operationId = "PROJECT-MATCHING-104",
+        summary = "지부·매칭 유형별 매칭 차수 일괄 등록·수정",
+        description = """
+            해당 지부·매칭 유형의 1~3차와 랜덤 매칭 일정을 한 번에 등록하거나 수정합니다.
+            - 최고관리자, 해당 기수 총괄단, 해당 지부장만 저장할 수 있습니다.
+            - type은 한 번만 지정하고, rounds에는 1~3차와 랜덤 매칭을 하나씩 모두 포함합니다. 누락·중복되면 409 PROJECT-0309를 반환합니다.
+            - 기존 차수가 없으면 네 차수를 생성하고, 모두 있으면 phase로 찾아 ID를 유지한 채 이름·설명·일정을 수정합니다. 일부만 있으면 409 PROJECT-0309를 반환합니다.
+            - 1~3차는 startsAt < endsAt < decisionDeadline < resultPublishAt이어야 합니다.
+            - 랜덤 매칭은 decisionDeadline을 받지 않으며 endsAt을 결정 마감으로 저장합니다. startsAt~endsAt은 운영진 조정 기간입니다.
+            - resultPublishAt은 결정 마감으로부터 최소 5분 이후여야 하며, 위반 시 400 PROJECT-0301을 반환합니다.
+              1~3차 자동 선발이 결정 마감 후 기본 1분 뒤 실행되므로, 발표 전 선발 처리 시간을 확보하기 위한 간격입니다.
+            - 다음 차수는 이전 차수의 결정 마감과 발표 시각 이후에 시작해야 하며(409 PROJECT-0309), 같은 유형의 차수끼리 기간이 겹치면 409 PROJECT-0302를 반환합니다.
+            - 해당 지부·유형의 1차 매칭 시작 이후에는 수정할 수 없으며 400 PROJECT-0314를 반환합니다.
+            - 하나라도 검증에 실패하면 전체 변경을 저장하지 않습니다.
+            """
+    )
+    public List<ProjectMatchingRoundResponse> saveAll(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long chapterId,
+        @Valid @RequestBody SaveProjectMatchingRoundsRequest request
+    ) {
+        return updateProjectMatchingRoundUseCase
+            .saveAll(request.toCommands(memberPrincipal.getMemberId(), chapterId)).stream()
+            .map(ProjectMatchingRoundResponse::from)
+            .toList();
+    }
+
     @PatchMapping("/{matchingRoundId}")
     @Operation(
         operationId = "PROJECT-MATCHING-102",
         summary = "매칭 차수 수정",
         description = """
             매칭 차수 정보를 부분 수정합니다.
+            - 해당 지부·유형의 1차가 시작되면 최고관리자도 수정할 수 없으며 400 PROJECT-0314를 반환합니다.
             - 중앙운영사무국 총괄단 이상은 모든 지부의 매칭 차수를 수정할 수 있습니다.
             - 지부장은 본인 지부의 매칭 차수만 수정할 수 있습니다.
             - 수정 요청 본문에는 chapterId를 포함하지 않습니다.
@@ -129,6 +163,7 @@ public class ProjectMatchingRoundController {
         summary = "매칭 차수 삭제",
         description = """
             매칭 차수를 삭제합니다.
+            - 해당 지부·유형의 1차가 시작되면 최고관리자도 삭제할 수 없으며 400 PROJECT-0314를 반환합니다.
             - 중앙운영사무국 총괄단 이상은 모든 지부의 매칭 차수를 삭제할 수 있습니다.
             - 지부장은 본인 지부의 매칭 차수만 삭제할 수 있습니다.
             - 해당 매칭 차수를 참조하는 지원서가 하나라도 있으면 삭제할 수 없으며 409를 반환합니다.

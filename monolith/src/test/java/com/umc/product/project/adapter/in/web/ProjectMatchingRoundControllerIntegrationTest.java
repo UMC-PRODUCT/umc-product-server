@@ -6,10 +6,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
@@ -21,6 +25,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.security.MemberPrincipal;
@@ -311,16 +316,16 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
             MatchingType.PLAN_DESIGN,
             MatchingPhase.FIRST,
             context.chapter().getId(),
-            "2026-05-10T00:00:00Z",
-            "2026-05-12T00:00:00Z",
-            "2026-05-13T00:00:00Z"
+            "2099-05-10T00:00:00Z",
+            "2099-05-12T00:00:00Z",
+            "2099-05-13T00:00:00Z"
         );
         authenticate(context.member().getId());
 
         // when & then
         mockMvc.perform(patch(BASE_URL + "/{matchingRoundId}", matchingRound.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(requestBody(Map.of("startsAt", "2026-05-14T00:00:00Z"))))
+                .content(requestBody(Map.of("startsAt", "2099-05-14T00:00:00Z"))))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.code").value("PROJECT-0301"));
@@ -371,9 +376,9 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
             MatchingType.PLAN_DESIGN,
             MatchingPhase.FIRST,
             context.chapter().getId(),
-            "2026-05-10T00:00:00Z",
-            "2026-05-12T00:00:00Z",
-            "2026-05-13T00:00:00Z"
+            "2099-05-10T00:00:00Z",
+            "2099-05-12T00:00:00Z",
+            "2099-05-13T00:00:00Z"
         );
         saveProjectApplication(context, matchingRound);
         authenticate(context.member().getId());
@@ -482,6 +487,93 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.code").value("PROJECT-0305"));
+    }
+
+    @Test
+    @DisplayName("전체 일정 저장은 최초 생성과 기존 차수 ID를 유지하는 수정을 지원한다")
+    void 전체_일정_생성과_수정() throws Exception {
+        // given
+        OperatorContext context = chapterPresidentContext();
+        authenticate(context.member().getId());
+
+        // when
+        mockMvc.perform(put(BASE_URL + "/chapters/{chapterId}", context.chapter().getId())
+                .contentType(MediaType.APPLICATION_JSON).content(wholeScheduleRequest(0)))
+            .andExpect(status().isOk());
+        List<ProjectMatchingRound> before = loadProjectMatchingRoundPort.listByChapterId(context.chapter().getId());
+        List<Long> originalIds = before.stream().map(ProjectMatchingRound::getId).toList();
+        mockMvc.perform(put(BASE_URL + "/chapters/{chapterId}", context.chapter().getId())
+                .contentType(MediaType.APPLICATION_JSON).content(wholeScheduleRequest(86400)))
+            .andExpect(status().isOk());
+
+        // then
+        entityManager.clear();
+        List<ProjectMatchingRound> after = loadProjectMatchingRoundPort.listByChapterId(context.chapter().getId());
+        assertThat(after).hasSize(4);
+        assertThat(after.stream().map(ProjectMatchingRound::getId).toList()).isEqualTo(originalIds);
+        assertThat(after.getFirst().getStartsAt()).isEqualTo(Instant.parse("2099-01-02T00:00:00Z"));
+        assertThat(after.getLast().getDecisionDeadline()).isEqualTo(after.getLast().getEndsAt());
+    }
+
+    @Test
+    @DisplayName("랜덤 매칭 발표도 종료 후 최소 5분이어야 하며 오류 시 전체를 저장하지 않는다")
+    void 랜덤_발표_간격_검증() throws Exception {
+        // given
+        OperatorContext context = chapterPresidentContext();
+        authenticate(context.member().getId());
+        ObjectNode body = (ObjectNode) objectMapper.readTree(wholeScheduleRequest(0));
+        ((ObjectNode) body.get("rounds").get(3)).put("resultPublishAt", "2099-01-04T01:04:59Z");
+
+        // when & then
+        mockMvc.perform(put(BASE_URL + "/chapters/{chapterId}", context.chapter().getId())
+                .contentType(MediaType.APPLICATION_JSON).content(body.toString()))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("PROJECT-0301"));
+        assertThat(loadProjectMatchingRoundPort.listByChapterId(context.chapter().getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("다른 기수 총괄은 저장할 수 없고 같은 기수 총괄은 저장할 수 있다")
+    void 전체_저장_총괄_기수_검증() throws Exception {
+        // given
+        OperatorContext context = chapterPresidentContext();
+        Member central = memberFixture.일반("central");
+        Challenger challenger = challengerFixture.챌린저(central.getId(), ChallengerPart.PLAN, context.gisu().getId());
+        challengerRoleFixture.중앙운영사무국_총괄(challenger.getId(), context.gisu().getId());
+        Gisu otherGisu = gisuFixture.비활성_기수(11L);
+        Chapter otherChapter = chapterFixture.지부(otherGisu, "other");
+        authenticate(central.getId());
+
+        // when & then
+        mockMvc.perform(put(BASE_URL + "/chapters/{chapterId}", otherChapter.getId())
+                .contentType(MediaType.APPLICATION_JSON).content(wholeScheduleRequest(0)))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value("PROJECT-0303"));
+        mockMvc.perform(put(BASE_URL + "/chapters/{chapterId}", context.chapter().getId())
+                .contentType(MediaType.APPLICATION_JSON).content(wholeScheduleRequest(0)))
+            .andExpect(status().isOk());
+        assertThat(loadProjectMatchingRoundPort.listByChapterId(otherChapter.getId())).isEmpty();
+    }
+
+    private String wholeScheduleRequest(long shiftSeconds) throws Exception {
+        List<Map<String, Object>> rounds = new ArrayList<>();
+        for (MatchingPhase phase : MatchingPhase.values()) {
+            Instant start = Instant.parse("2099-01-01T00:00:00Z")
+                .plusSeconds(phase.ordinal() * 86400L + shiftSeconds);
+            Instant end = start.plusSeconds(3600);
+            Instant deadline = phase == MatchingPhase.RANDOM_MATCHING ? end : end.plusSeconds(3600);
+            Map<String, Object> round = new HashMap<>();
+            round.put("name", phase.name());
+            round.put("phase", phase.name());
+            round.put("startsAt", start.toString());
+            round.put("endsAt", end.toString());
+            round.put("resultPublishAt", deadline.plusSeconds(300).toString());
+            if (phase != MatchingPhase.RANDOM_MATCHING) {
+                round.put("decisionDeadline", deadline.toString());
+            }
+            rounds.add(round);
+        }
+        return requestBody(Map.of("type", "PLAN_DESIGN", "rounds", rounds));
     }
 
     private OperatorContext chapterPresidentContext() {

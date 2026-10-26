@@ -1,7 +1,9 @@
 package com.umc.product.project.application.service.command;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -13,11 +15,13 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.project.application.port.in.command.CreateProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.in.command.DeleteProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.in.command.dto.CreateProjectMatchingRoundCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectMatchingRoundCommand;
+import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRoundInfo;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.SaveProjectMatchingRoundPort;
@@ -52,11 +56,81 @@ public class ProjectMatchingRoundCommandService implements
 
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final ProjectMatchingRoundProperties projectMatchingRoundProperties;
+    private final GetChapterUseCase getChapterUseCase;
+    private final Clock clock;
+
+    @Override
+    public List<ProjectMatchingRoundInfo> saveAll(List<CreateProjectMatchingRoundCommand> commands) {
+        if (commands.size() != MatchingPhase.values().length
+            || commands.stream().map(CreateProjectMatchingRoundCommand::phase).distinct().count()
+                != MatchingPhase.values().length) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
+        }
+        CreateProjectMatchingRoundCommand first = commands.getFirst();
+        Long chapterId = first.chapterId();
+        Long memberId = first.requesterMemberId();
+        Long gisuId = getChapterUseCase.getGisuIdByChapterId(chapterId);
+        if (!getChallengerRoleUseCase.isSuperAdmin(memberId)
+            && !getChallengerRoleUseCase.isCentralCoreInGisu(memberId, gisuId)
+            && !getChallengerRoleUseCase.isChapterPresidentInGisu(memberId, gisuId, chapterId)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_ACCESS_DENIED);
+        }
+        if (commands.stream().anyMatch(command -> command.type() != first.type()
+            || !Objects.equals(command.chapterId(), chapterId)
+            || !Objects.equals(command.requesterMemberId(), memberId))) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
+        }
+
+        List<ProjectMatchingRound> existing = loadProjectMatchingRoundPort.listByChapterId(chapterId);
+        List<ProjectMatchingRound> targets = existing.stream()
+            .filter(round -> round.getType() == first.type()).toList();
+        validateScheduleNotStarted(targets, first.type());
+        if (!targets.isEmpty() && targets.size() != MatchingPhase.values().length) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
+        }
+
+        List<ProjectMatchingRound> proposed = commands.stream()
+            .map(command -> ProjectMatchingRound.create(command.name(), command.description(), command.type(),
+                command.phase(), chapterId, command.startsAt(), command.endsAt(),
+                command.decisionDeadline(), command.resultPublishAt()))
+            .sorted(Comparator.comparing(ProjectMatchingRound::getPhase)).toList();
+        validateWholeSchedule(proposed);
+
+        for (ProjectMatchingRound round : proposed) {
+            ProjectMatchingRound target = targets.stream().filter(current -> current.getPhase() == round.getPhase())
+                .findFirst().orElse(null);
+            if (target == null) {
+                target = saveProjectMatchingRoundPort.save(round);
+            } else {
+                target.update(round.getName(), round.getDescription(), round.getType(), round.getPhase(),
+                    round.getStartsAt(), round.getEndsAt(), round.getDecisionDeadline(), round.getResultPublishAt());
+            }
+            scheduleAfterCommit(target);
+        }
+        return loadProjectMatchingRoundPort.listByChapterId(chapterId).stream()
+            .filter(round -> round.getType() == first.type())
+            .sorted(Comparator.comparing(ProjectMatchingRound::getPhase))
+            .map(ProjectMatchingRoundInfo::from)
+            .toList();
+    }
+
+    private void validateWholeSchedule(List<ProjectMatchingRound> proposed) {
+        for (int index = 0; index < proposed.size(); index++) {
+            ProjectMatchingRound round = proposed.get(index);
+            for (int previousIndex = 0; previousIndex < index; previousIndex++) {
+                ProjectMatchingRound previous = proposed.get(previousIndex);
+                ProjectMatchingRound.validateNoOverlap(round, previous);
+                validatePhaseSequence(previous, round.getPhase(), round.getStartsAt(), round.getDecisionDeadline(),
+                    round.getResultPublishAt());
+            }
+        }
+    }
 
     @Override
     public Long create(CreateProjectMatchingRoundCommand command) {
         // 지부장 이상부터 매칭 차수에 대한 수정이 가능합니다.
         validateManageAccess(command.requesterMemberId(), command.chapterId());
+        validateScheduleNotStarted(loadProjectMatchingRoundPort.listByChapterId(command.chapterId()), command.type());
         ProjectMatchingRound.validateSchedule(command.type(), command.phase(), command.startsAt(),
             command.endsAt(), command.decisionDeadline(), command.resultPublishAt());
         // 매칭 차수는 중복될 수 없습니다.
@@ -107,6 +181,12 @@ public class ProjectMatchingRoundCommandService implements
             : matchingRound.getResultPublishAt();
 
         validateManageAccess(command.requesterMemberId(), matchingRound.getChapterId());
+        List<ProjectMatchingRound> chapterRounds =
+            loadProjectMatchingRoundPort.listByChapterId(matchingRound.getChapterId());
+        validateScheduleNotStarted(chapterRounds, matchingRound.getType());
+        if (type != matchingRound.getType()) {
+            validateScheduleNotStarted(chapterRounds, type);
+        }
         ProjectMatchingRound.validateSchedule(type, phase, startsAt, endsAt, decisionDeadline, resultPublishAt);
         validateNoOverlapExceptId(
             matchingRound.getId(),
@@ -141,6 +221,8 @@ public class ProjectMatchingRoundCommandService implements
     public void delete(Long matchingRoundId, Long requesterMemberId) {
         ProjectMatchingRound matchingRound = loadProjectMatchingRoundPort.getByIdForUpdate(matchingRoundId);
         validateManageAccess(requesterMemberId, matchingRound.getChapterId());
+        validateScheduleNotStarted(loadProjectMatchingRoundPort.listByChapterId(matchingRound.getChapterId()),
+            matchingRound.getType());
 
         if (matchingRound.isAutoDecisionExecuted()) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
@@ -152,6 +234,14 @@ public class ProjectMatchingRoundCommandService implements
 
         saveProjectMatchingRoundPort.delete(matchingRound);
         cancelAfterCommit(matchingRoundId);
+    }
+
+    private void validateScheduleNotStarted(List<ProjectMatchingRound> rounds, MatchingType type) {
+        Instant now = clock.instant();
+        if (rounds.stream().anyMatch(round -> round.getType() == type && round.getPhase() == MatchingPhase.FIRST
+            && !now.isBefore(round.getStartsAt()))) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_ALREADY_STARTED);
+        }
     }
 
     private void validateNoOverlap(

@@ -40,6 +40,8 @@ public interface GetChapterUseCase {
 
     ChapterInfo getChapterById(Long chapterId);
 
+    Long getGisuIdByChapterId(Long chapterId);
+
     /**
      * 여러 gisuId와 schoolId 조합에 해당하는 ChapterInfo를 1번 쿼리로 일괄 조회
      *
