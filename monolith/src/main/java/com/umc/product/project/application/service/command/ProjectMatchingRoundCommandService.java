@@ -69,12 +69,7 @@ public class ProjectMatchingRoundCommandService implements
         CreateProjectMatchingRoundCommand first = commands.getFirst();
         Long chapterId = first.chapterId();
         Long memberId = first.requesterMemberId();
-        Long gisuId = getChapterUseCase.getGisuIdByChapterId(chapterId);
-        if (!getChallengerRoleUseCase.isSuperAdmin(memberId)
-            && !getChallengerRoleUseCase.isCentralCoreInGisu(memberId, gisuId)
-            && !getChallengerRoleUseCase.isChapterPresidentInGisu(memberId, gisuId, chapterId)) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_ACCESS_DENIED);
-        }
+        validateManageAccessInGisu(memberId, chapterId);
         if (commands.stream().anyMatch(command -> command.type() != first.type()
             || !Objects.equals(command.chapterId(), chapterId)
             || !Objects.equals(command.requesterMemberId(), memberId))) {
@@ -224,16 +219,35 @@ public class ProjectMatchingRoundCommandService implements
         validateScheduleNotStarted(loadProjectMatchingRoundPort.listByChapterId(matchingRound.getChapterId()),
             matchingRound.getType());
 
-        if (matchingRound.isAutoDecisionExecuted()) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
-        }
-
-        if (loadProjectApplicationPort.existsByAppliedMatchingRoundId(matchingRoundId)) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_DELETE_CONFLICT);
-        }
+        validateDeletable(List.of(matchingRound));
 
         saveProjectMatchingRoundPort.delete(matchingRound);
         cancelAfterCommit(matchingRoundId);
+    }
+
+    @Override
+    public void deleteAll(Long chapterId, MatchingType type, Long requesterMemberId) {
+        validateManageAccessInGisu(requesterMemberId, chapterId);
+        List<ProjectMatchingRound> rounds = loadProjectMatchingRoundPort.listByChapterId(chapterId).stream()
+            .filter(round -> round.getType() == type)
+            .toList();
+        if (rounds.isEmpty()) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FOUND);
+        }
+        validateScheduleNotStarted(rounds, type);
+        validateDeletable(rounds);
+        saveProjectMatchingRoundPort.deleteAll(rounds);
+        rounds.forEach(round -> cancelAfterCommit(round.getId()));
+    }
+
+    private void validateDeletable(List<ProjectMatchingRound> rounds) {
+        if (rounds.stream().anyMatch(ProjectMatchingRound::isAutoDecisionExecuted)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
+        }
+        if (rounds.stream().anyMatch(round ->
+            loadProjectApplicationPort.existsByAppliedMatchingRoundId(round.getId()))) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_DELETE_CONFLICT);
+        }
     }
 
     private void validateScheduleNotStarted(List<ProjectMatchingRound> rounds, MatchingType type) {
@@ -292,6 +306,15 @@ public class ProjectMatchingRoundCommandService implements
             return;
         }
         action.run();
+    }
+
+    private void validateManageAccessInGisu(Long memberId, Long chapterId) {
+        Long gisuId = getChapterUseCase.getGisuIdByChapterId(chapterId);
+        if (!getChallengerRoleUseCase.isSuperAdmin(memberId)
+            && !getChallengerRoleUseCase.isCentralCoreInGisu(memberId, gisuId)
+            && !getChallengerRoleUseCase.isChapterPresidentInGisu(memberId, gisuId, chapterId)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_ACCESS_DENIED);
+        }
     }
 
     private void validateManageAccess(Long memberId, Long chapterId) {

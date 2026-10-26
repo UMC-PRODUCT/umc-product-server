@@ -27,6 +27,7 @@ import com.umc.product.project.application.port.in.command.CreateProjectMatching
 import com.umc.product.project.application.port.in.command.DeleteProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectMatchingRoundUseCase;
+import com.umc.product.project.domain.enums.MatchingType;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -155,6 +156,28 @@ public class ProjectMatchingRoundController {
     ) {
         updateProjectMatchingRoundUseCase.update(
             request.toCommand(matchingRoundId, memberPrincipal.getMemberId()));
+    }
+
+    @DeleteMapping("/chapters/{chapterId}")
+    @Operation(
+        operationId = "PROJECT-MATCHING-105",
+        summary = "지부·매칭 유형별 매칭 차수 일괄 삭제",
+        description = """
+            해당 지부에서 type으로 지정한 매칭 유형의 차수를 모두 삭제합니다.
+            - 최고관리자, 해당 기수 총괄단, 해당 지부장만 삭제할 수 있습니다.
+            - 해당 지부·유형의 1차 시작 시각부터는 삭제할 수 없으며 400 PROJECT-0314를 반환합니다.
+            - 자동 선발이 실행된 차수가 있으면 400 PROJECT-0306을 반환합니다.
+            - 지원서가 연결된 차수가 있으면 409 PROJECT-0304를 반환합니다.
+            - 삭제할 차수가 없으면 404 PROJECT-0300을 반환합니다.
+            - 하나라도 삭제할 수 없으면 전체 차수를 삭제하지 않습니다.
+            """
+    )
+    public void deleteAll(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long chapterId,
+        @RequestParam MatchingType type
+    ) {
+        deleteProjectMatchingRoundUseCase.deleteAll(chapterId, type, memberPrincipal.getMemberId());
     }
 
     @DeleteMapping("/{matchingRoundId}")
