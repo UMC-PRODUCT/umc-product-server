@@ -99,6 +99,7 @@ class FakeWebSocket {
     if (this.readyState === 3) return;
     this.readyState = 2;
     this.schedule(() => {
+      if (state.mode === "close-error") this.onerror();
       if (state.mode === "duplicate" && this.lastDelivery) this.emit(this.lastDelivery);
       this.readyState = 3;
       this.onclose();
@@ -219,6 +220,13 @@ test("준비 메시지를 제외하고 ACK 10ms와 전달 40ms를 각각 한 번
   assert.deepEqual(samples("ack_latency_ms").map((entry) => entry.value), [10]);
   assert.deepEqual(samples("delivery_latency_ms").map((entry) => entry.value), [40]);
   assert.ok(state.checks.every(Boolean));
+});
+
+test("정상 종료 요청 후 오류 이벤트가 와도 실제 연결이 닫히면 성공한다", async () => {
+  state.mode = "close-error";
+  await smoke(seed);
+  assert.ok(state.checks.every(Boolean));
+  assert.equal(count("failures"), 0);
 });
 
 test("상대방 수신이 먼저 와도 각 도착 시각으로 지연을 기록한다", async () => {

@@ -25,7 +25,13 @@ registerHooks({
 const { getAccessToken } = await import("../lib/auth.js");
 const state = globalThis.__authHarness;
 
-beforeEach(() => { state.requests = []; state.status = 200; });
+beforeEach(() => { state.requests = []; state.status = 200; delete __ENV.TEST_API_BASIC_AUTH; });
+
+test("dev 테스트 토큰 요청에만 지정한 Basic 인증을 적용한다", () => {
+  __ENV.TEST_API_BASIC_AUTH = "dGVzdDp0ZXN0";
+  getAccessToken("106");
+  assert.deepEqual(state.requests[0].params.headers, { Authorization: "Basic dGVzdDp0ZXN0" });
+});
 
 test("기존 호출은 전역 BASE_URL과 auth 태그를 유지한다", () => {
   getAccessToken("101");

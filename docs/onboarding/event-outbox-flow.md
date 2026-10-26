@@ -128,7 +128,7 @@ Firebase API를 호출하는 batch 발송 이벤트는 `NON_TRANSACTIONAL`이 �
 
 ## 운영 제어
 
-`EVENT_OUTBOX_RELAY_ENABLED=false`는 poller만 중지한다. `DomainEventPublisher`는 계속 신규 이벤트를
+`EVENT_OUTBOX_RELAY_ENABLED=false`는 poller와 커밋 신호에 의한 즉시 처리를 중지한다. `DomainEventPublisher`는 계속 신규 이벤트를
 `PENDING`으로 저장하며, relay를 다시 활성화하면 적체된 이벤트를 처리한다. Spring local publisher로
 우회하지 않으므로 환경에 따라 이벤트 내구성이 달라지지 않는다.
 
@@ -151,13 +151,27 @@ Firebase API를 호출하는 batch 발송 이벤트는 `NON_TRANSACTIONAL`이 �
 trace context는 각 실행으로 전파한다.
 폴러는 실행 요청만 전달하고 실제 DB 선점부터 발행·완료 기록까지 전용 executor에서 수행한다.
 한 번의 요청은 모든 슬롯을 깨운다. 반복 요청은 슬롯마다 하나의 후속 신호로 합친다.
-후속 신호가 없으면 각 슬롯은 한 배치 이후 종료하고 다음 폴링을 기다린다.
+REALTIME 슬롯은 선점 건수가 배치 크기와 같으면 추가 신호 없이 다음 배치를 이어서 처리한다.
+선점 건수가 배치 크기보다 작거나 0이면 대기 중인 후속 신호가 없는 한 종료한다.
+배치 크기의 정확한 배수만큼 처리했다면 마지막에 빈 배치 조회 한 번으로 종료를 확인한다.
+반환하는 건수는 발행 성공 수가 아닌 선점 건수다. 실패 이벤트의 backoff와 lease 조건은 그대로이며,
+재시도 시각이 아직 오지 않은 이벤트는 다음 선점 조회에서 제외된다.
+BACKGROUND 슬롯은 기존처럼 후속 신호가 없으면 한 배치 이후 종료하고 다음 폴링을 기다린다.
 executor 거절이나 배치 예외 뒤에도 다음 polling에서 다시 시도한다.
 종료 시 새 선점을 중지하며 executor 종료 대기는 30초다. 강제 종료로 남은 PROCESSING은 lease 만료 후 복구한다.
 
 공통 `poll-interval-ms`와 `batch-size`는 기본값이며 `workers.realtime`과 `workers.background`에서
 각각 덮어쓸 수 있다. 폴링 주기는 Worker 완료 시각이 아니라 짧은 실행 요청 메서드 반환을 기준으로 한다.
-`relay-enabled=false`는 두 폴링을 중지하지만 publisher의 저장은 계속된다.
+`relay-enabled=false`는 두 폴링과 커밋 신호에 의한 즉시 처리를 중지하지만 publisher의 저장은 계속된다.
+
+`EVENT_OUTBOX_REALTIME_IMMEDIATE_DISPATCH_ENABLED=true`로
+`app.event-outbox.workers.realtime.immediate-dispatch-enabled`를 켜면, 커밋 이후의
+`RealtimeOutboxCommittedEvent`를 수신해 기존 REALTIME Worker의 실행을 요청한다. 기본값은 `false`다.
+수신기는 이미 커밋된 신호를 일반 `@EventListener`로 받으며, 요청 스레드에서 DB 처리를 직접 수행하거나
+완료를 기다리지 않는다. BACKGROUND Worker는 깨우지 않는다.
+실행 요청 거절·종료·일시적인 실패는 저장 성공을 되돌리지 않으며 기존 폴링이 미처리 이벤트를 복구한다.
+신호와 폴링은 같은 Worker 슬롯·executor·claim·lease·backoff를 사용한다.
+즉시 처리를 켜도 폴링 주기는 바뀌지 않는다. 전후 성능 비교는 같은 폴링 주기에서 먼저 진행한다.
 
 새 이벤트는 기존 그룹이면 라우팅 설정을 수정한다. 라우팅 규칙 변경은 이후 저장되는 이벤트부터 적용되며,
 기존 미완료 이벤트도 재분류하려면 relay를 중지하고 별도 데이터 마이그레이션을 수행한다.
@@ -166,6 +180,24 @@ executor 거절이나 배치 예외 뒤에도 다음 polling에서 다시 시도
 구버전 writer가 모두 제거된 뒤 트리거 제거는 별도 마이그레이션으로 진행할 수 있다. 새 그룹이 필요하면 라우팅 등록과 함께
 Worker·전용 executor·폴링 등록을 추가한다. 그룹 등록만으로 Worker가 자동 생성되지는 않는다.
 각 그룹은 고유한 이름을 사용하며 선점과 적체 집계는 같은 `processing_group` 조건을 사용한다.
+
+## 전달 보장 검증
+
+`RealtimeOutboxDeliveryIntegrationTest`는 `IntegrationTestSupport`의 실제 PostgreSQL/PostGIS DB와
+운영 Publisher·Worker·Relay·Persistence adapter를 사용한다. test 프로필의 자동 스케줄 비활성화를 유지하고
+커밋 신호와 수동 폴링을 구분해 다음 경계를 검증한다.
+
+- 커밋 전에는 다른 연결에서 이벤트를 읽지 못하고 커밋 이후 신호로 전달한다.
+- 롤백한 이벤트는 DB에 남지 않으며 신호와 폴링으로 전달되지 않는다.
+- 신호 유실·executor 거절 후에도 저장된 이벤트를 폴링으로 복구한다.
+- 즉시 신호와 폴링이 경쟁해도 유효한 lease 동안 동일 이벤트를 중복 발행하지 않는다.
+- backoff 시각 이전에는 선점하지 않으며 재시도 시각 이후 같은 `eventId`로 복구한다.
+- 중단된 PROCESSING은 lease 만료 이후 복구하고 이전 소유자의 상태 덮어쓰기를 버전으로 차단한다.
+- 전달 후 완료 기록이 실패하면 같은 `eventId`로 재전달할 수 있다. 소비자는 중복 제거를 유지해야 한다.
+
+시간 경계는 DB의 `next_attempt_at`을 조절해 재현하며 실제 backoff나 lease 시간만큼 대기하지 않는다.
+큐 포화와 완료 기록 실패는 테스트에 수동 조립한 실행기·저장 어댑터에서 주입하고,
+공유 ApplicationContext의 도메인 빈은 모킹하지 않는다.
 
 ## 관측 지표
 

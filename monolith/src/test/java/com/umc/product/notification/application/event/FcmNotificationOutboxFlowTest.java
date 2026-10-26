@@ -1,6 +1,7 @@
 package com.umc.product.notification.application.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import com.umc.product.global.config.FcmProperties;
 import com.umc.product.global.config.OutboxRoutingConfig;
 import com.umc.product.global.event.adapter.out.EventPayloadDeserializer;
 import com.umc.product.global.event.adapter.out.EventPayloadSerializer;
+import com.umc.product.global.event.adapter.out.OutboxCommitSignalPublisher;
 import com.umc.product.global.event.adapter.out.OutboxDomainEventPublisher;
 import com.umc.product.global.event.application.port.out.LoadEventOutboxPort;
 import com.umc.product.global.event.application.port.out.OutboxEventSelection;
@@ -58,7 +60,9 @@ class FcmNotificationOutboxFlowTest {
         EventPayloadSerializer serializer = new EventPayloadSerializer(objectMapper);
         RecordingSaveEventOutboxPort requestOutboxPort = new RecordingSaveEventOutboxPort();
         FcmNotificationCommandService service = new FcmNotificationCommandService(
-            new OutboxDomainEventPublisher(requestOutboxPort, serializer, Tracer.NOOP)
+            new OutboxDomainEventPublisher(
+                requestOutboxPort, serializer, Tracer.NOOP, mock(OutboxCommitSignalPublisher.class)
+            )
         );
 
         service.request(RequestFcmNotificationCommand.builder()
@@ -78,7 +82,9 @@ class FcmNotificationOutboxFlowTest {
             new FcmProperties(true, true),
             new FcmAudienceResolver(null, null, null),
             new FakeLoadFcmPort(createTokens(501)),
-            new OutboxDomainEventPublisher(batchOutboxPort, serializer, Tracer.NOOP)
+            new OutboxDomainEventPublisher(
+                batchOutboxPort, serializer, Tracer.NOOP, mock(OutboxCommitSignalPublisher.class)
+            )
         );
         AtomicBoolean transactionActiveDuringListener = new AtomicBoolean(false);
         ApplicationEventPublisher springPublisher = event -> {
@@ -144,7 +150,9 @@ class FcmNotificationOutboxFlowTest {
                 transactionActiveDuringSend.set(TransactionSynchronizationManager.isActualTransactionActive());
                 return FcmSendResult.of(1, 1, List.of(), List.of(2L));
             },
-            new OutboxDomainEventPublisher(retryOutboxPort, serializer, Tracer.NOOP),
+            new OutboxDomainEventPublisher(
+                retryOutboxPort, serializer, Tracer.NOOP, mock(OutboxCommitSignalPublisher.class)
+            ),
             new OperationalMetrics(new SimpleMeterRegistry())
         );
         EventOutboxRelayService relayService = new EventOutboxRelayService(
