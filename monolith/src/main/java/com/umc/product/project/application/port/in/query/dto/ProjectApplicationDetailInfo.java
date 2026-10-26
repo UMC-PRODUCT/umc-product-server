@@ -37,7 +37,7 @@ import lombok.Builder;
  * @param status              표시용 상태 (DRAFT 포함). 본인 조회 시 해당 매칭 차수의 결과 공개 전이면 제출 이후 상태는 {@code null}
  * @param submittedAt         지원시각 (DRAFT 이면 null)
  * @param statusChangedAt     처리시각 (합/불 결정 전 또는 본인 조회에서 결과 공개 전이면 null)
- * @param formStructure       지원자 파트 기준 폼 구조 (COMMON + applicantPart 의 PART 섹션만 포함)
+ * @param formStructure       제출 당시 답변이 달린 질문 기준 폼 구조 (현재 파트 정책으로 다시 가리지 않음)
  * @param formResponse        FormResponse 메타 (제출 시각 / 마지막 저장 시각 등)
  * @param answersByQuestionId 답변이 있는 questionId 만 매핑됨 — 답변 없는 질문은 키 자체가 없음
  * @param filesByFileId       answer.fileIds 들의 메타+URL — 누락된 fileId 는 매핑에서 빠짐
@@ -99,8 +99,9 @@ public record ProjectApplicationDetailInfo(
         ProjectApplicationForm applicationForm = application.getApplicationForm();
         ProjectMatchingRound round = application.getAppliedMatchingRound();
 
-        ApplicationFormInfo maskedFormStructure = ApplicationFormInfo.forApplicant(
-            applicationForm, formStructure, formPolicies, applicantPart);
+        // 제출된 지원서는 제출 당시 답변이 달린 질문 기준으로 구조를 보여준다. formStructure 는 이미 답변한 질문으로 좁혀져 있으므로
+        // 현재 파트 정책으로 다시 가리지 않는다. 정책을 나중에 바꿔도(예: 디자인 전용 -> 개발 전용) 답변이 사라지지 않게 하기 위함이다.
+        ApplicationFormInfo maskedFormStructure = ApplicationFormInfo.of(applicationForm, formStructure, formPolicies);
 
         FormResponseInfo formResponse = FormResponseInfo.builder()
             .id(formResponseWithAnswers.id())
