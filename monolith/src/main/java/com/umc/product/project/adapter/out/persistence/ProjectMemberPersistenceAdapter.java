@@ -43,6 +43,11 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     }
 
     @Override
+    public List<Long> listAssignedMemberIdsByGisuId(Long gisuId, Long adjustmentRoundId) {
+        return queryRepository.listAssignedMemberIdsByGisuId(gisuId, adjustmentRoundId);
+    }
+
+    @Override
     public Map<Long, Set<Long>> listAssignedMemberIdsByProjectIds(Collection<Long> projectIds) {
         return queryRepository.listAssignedMemberIdsByProjectIds(projectIds);
     }
@@ -50,6 +55,14 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     @Override
     public Map<ChallengerPart, Long> countAssignedByProjectIdGroupByPart(Long projectId) {
         return countAssignedByProjectIdsGroupByProjectIdAndPart(List.of(projectId)).getOrDefault(projectId, Map.of());
+    }
+
+    @Override
+    public Map<ChallengerPart, Long> countAssignedByProjectIdGroupByPart(Long projectId, Long adjustmentRoundId) {
+        if (adjustmentRoundId == null) {
+            return countAssignedByProjectIdGroupByPart(projectId);
+        }
+        return queryRepository.countAssignedByProjectIdGroupByPart(projectId, adjustmentRoundId);
     }
 
     @Override
@@ -100,6 +113,11 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
         return repository.findByProjectIdInAndStatusOrderByCreatedAtAscIdAsc(projectIds, ProjectMemberStatus.ACTIVE)
             .stream()
             .collect(Collectors.groupingBy(pm -> pm.getProject().getId()));
+    }
+
+    @Override
+    public List<ProjectMember> listAdjustmentMembersByProjectIds(Collection<Long> projectIds, Collection<Long> adjustmentRoundIds) {
+        return queryRepository.listAdjustmentMembersByProjectIds(projectIds, adjustmentRoundIds);
     }
 
     @Override

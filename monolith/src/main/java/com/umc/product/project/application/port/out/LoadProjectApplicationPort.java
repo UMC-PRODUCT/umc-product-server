@@ -19,6 +19,12 @@ public interface LoadProjectApplicationPort {
     List<Long> listApprovedApplicantMemberIdsByGisuId(Long gisuId);
 
     /**
+     * 해당 기수에서 APPROVED 지원서를 가진 회원 ID를 조회합니다.
+     * 지정한 조정 차수에 해제 예약된 팀원의 연결 지원서는 제외합니다. 차수 ID가 null이면 제외하지 않습니다.
+     */
+    List<Long> listApprovedApplicantMemberIdsByGisuId(Long gisuId, Long adjustmentRoundId);
+
+    /**
      * 단건 조회. 권한 판정/단건 액션에서 사용합니다.
      */
     Optional<ProjectApplication> findById(Long id);
