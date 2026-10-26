@@ -32,9 +32,21 @@ public interface LoadProjectMemberPort {
     List<ProjectMember> listPendingByMatchingRoundId(Long matchingRoundId);
 
     /**
+     * 지정한 랜덤 차수의 최종 공개 시 배정 해제를 반영할 팀원을 조회합니다.
+     * 연결 지원서를 함께 조회하여 해제 사유와 지원서 상태를 반영할 때 추가 조회하지 않습니다.
+     */
+    List<ProjectMember> listPendingRemovalsByMatchingRoundId(Long matchingRoundId);
+
+    /**
      * 중복 선발을 막기 위해 해당 기수의 ACTIVE·PENDING_PUBLICATION 멤버의 memberId를 조회합니다.
      */
     List<Long> listAssignedMemberIdsByGisuId(Long gisuId);
+
+    /**
+     * 해당 기수의 ACTIVE·PENDING_PUBLICATION 팀원의 회원 ID를 조회합니다.
+     * 지정한 조정 차수에 해제 예약된 ACTIVE 팀원은 제외합니다. 차수 ID가 null이면 해제 예약자를 포함합니다.
+     */
+    List<Long> listAssignedMemberIdsByGisuId(Long gisuId, Long adjustmentRoundId);
 
     /** 파트와 관계없이 ACTIVE·PENDING_PUBLICATION 회원 ID를 프로젝트별로 중복 없이 일괄 조회합니다. */
     Map<Long, Set<Long>> listAssignedMemberIdsByProjectIds(Collection<Long> projectIds);
@@ -54,6 +66,12 @@ public interface LoadProjectMemberPort {
     Map<ChallengerPart, Long> countAssignedByProjectIdGroupByPart(Long projectId);
 
     /**
+     * 프로젝트의 파트별 ACTIVE·PENDING_PUBLICATION 팀원 수를 집계합니다.
+     * 지정한 조정 차수에 해제 예약된 ACTIVE 팀원은 제외합니다. 차수 ID가 null이면 해제 예약자를 포함합니다.
+     */
+    Map<ChallengerPart, Long> countAssignedByProjectIdGroupByPart(Long projectId, Long adjustmentRoundId);
+
+    /**
      * 여러 프로젝트의 파트별 ACTIVE 및 PENDING_PUBLICATION 멤버 수를 한 번에 집계합니다.
      * 집계 대상은 {@link #countAssignedByProjectIdGroupByPart(Long)} 와 같습니다.
      *
@@ -62,7 +80,7 @@ public interface LoadProjectMemberPort {
     Map<Long, Map<ChallengerPart, Long>> countAssignedByProjectIdsGroupByProjectIdAndPart(Collection<Long> projectIds);
 
     /**
-     * 여러 프로젝트의 활성(ACTIVE) 멤버를 한 번에 조회합니다 (N+1 방지용 IN 쿼리). PROJECT-004(팀원 일괄 조회)에서 사용.
+     * 여러 프로젝트의 ACTIVE 팀원과 선발 차수를 한 번에 조회합니다. PROJECT-007(팀원 일괄 조회)에서 사용합니다.
      *
      * @return projectId → 활성 멤버 목록 맵. 활성 멤버가 없는 프로젝트는 엔트리 없음.
      */
@@ -70,6 +88,12 @@ public interface LoadProjectMemberPort {
 
     /** TO 관리의 현재 인원·최소 TO를 계산하도록 ACTIVE와 발표 대기를 일괄 조회한다. */
     Map<Long, List<ProjectMember>> listAssignedByProjectIds(Collection<Long> projectIds);
+
+    /**
+     * ACTIVE 팀원에서 지정한 조정 차수에 해제 예약된 팀원을 제외하고, 해당 차수의 PENDING_PUBLICATION 팀원을 포함합니다.
+     * 차수 ID 목록이 비어 있으면 공개 명단(ACTIVE)만 반환합니다.
+     */
+    List<ProjectMember> listAdjustmentMembersByProjectIds(Collection<Long> projectIds, Collection<Long> adjustmentRoundIds);
 
     /**
      * 특정 프로젝트의 특정 파트에 속한 ACTIVE 멤버 목록을 조회합니다. PLAN 파트 조회 시 보조 PM(coPM) 추출에 사용됩니다.
@@ -114,6 +138,13 @@ public interface LoadProjectMemberPort {
      * 해당 기수에 ACTIVE 또는 PENDING_PUBLICATION 멤버가 존재하는지 확인합니다. (중복 지원 방지용)
      */
     boolean existsByGisuAndMember(Long gisuId, Long memberId);
+
+    /**
+     * 해당 회원이 기수 내 ACTIVE·PENDING_PUBLICATION 팀원인지 확인합니다.
+     * 지정한 조정 차수에 해제 예약된 ACTIVE 팀원은 제외합니다.
+     * 차수 ID가 null이면 해제 예약자를 포함합니다.
+     */
+    boolean existsAssignedMemberExcludingPendingRemoval(Long gisuId, Long memberId, Long adjustmentRoundId);
 
     /**
      * 특정 프로젝트의 ACTIVE PLAN 파트 멤버인지 확인합니다. 보조 PM(Sub-PM) 검사에 사용됩니다.

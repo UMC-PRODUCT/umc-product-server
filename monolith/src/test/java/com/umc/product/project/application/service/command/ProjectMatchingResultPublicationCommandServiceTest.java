@@ -22,6 +22,8 @@ import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
+import com.umc.product.project.application.port.out.SaveProjectMemberPort;
+import com.umc.product.project.application.port.out.ScheduleRandomMatchingPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
@@ -50,9 +52,28 @@ class ProjectMatchingResultPublicationCommandServiceTest {
     @Mock
     SaveProjectApplicationPort saveProjectApplicationPort;
     @Mock
+    SaveProjectMemberPort saveProjectMemberPort;
+    @Mock
     LockProjectMatchingPort lockProjectMatchingPort;
+    @Mock
+    ScheduleRandomMatchingPort scheduleRandomMatchingPort;
     @InjectMocks
     ProjectMatchingResultPublicationCommandService sut;
+
+    @Test
+    void 제3차_공개_완료_후_같은_매칭_유형의_랜덤_매칭_예약을_요청한다() {
+        // given
+        ProjectMatchingRound round = round(Instant.now().minusSeconds(60), true);
+        ReflectionTestUtils.setField(round, "phase", MatchingPhase.THIRD);
+        given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
+
+        // when
+        sut.publish(ROUND_ID);
+
+        // then
+        assertThat(round.getResultPublishedAt()).isNotNull();
+        then(scheduleRandomMatchingPort).should().scheduleAfterPublication(round.getChapterId(), round.getType());
+    }
 
     @Test
     void 선발된_지원서는_APPROVED로_나머지_지원서는_REJECTED로_발표한다() {
@@ -223,6 +244,45 @@ class ProjectMatchingResultPublicationCommandServiceTest {
         assertThat(published).isFalse();
         then(loadProjectMemberPort).should(never()).listPendingByMatchingRoundId(any());
         then(saveProjectApplicationPort).should(never()).saveAll(any());
+    }
+
+    @Test
+    void 랜덤_결과_공개_시_이전_팀의_해제를_반영하고_이동한_팀의_배정을_공개한다() {
+        // given
+        Instant publishAt = Instant.now().minusSeconds(60);
+        ProjectMatchingRound previousRound = round(publishAt.minusSeconds(86400), true);
+        Project previousProject = project();
+        ReflectionTestUtils.setField(previousProject, "id", 1L);
+        ProjectApplication previousApplication = application(previousProject, previousRound, 10L, ProjectApplicationStatus.APPROVED);
+        ProjectMember previousMember = ProjectMember.createFromApplication(
+            previousApplication, ChallengerPart.WEB_PRODUCT_ENGINEER, EXECUTOR_ID);
+        previousMember.publish(previousRound.getResultPublishAt());
+        ReflectionTestUtils.setField(previousMember, "id", 100L);
+        ProjectMatchingRound randomRound = ProjectMatchingRound.create("개발 랜덤", null, MatchingType.PLAN_DEVELOPER,
+            MatchingPhase.RANDOM_MATCHING, 1L, publishAt.minusSeconds(7200), publishAt.minusSeconds(3600),
+            publishAt.minusSeconds(3600), publishAt);
+        ReflectionTestUtils.setField(randomRound, "id", ROUND_ID);
+        randomRound.executeAutoDecision(EXECUTOR_ID);
+        previousMember.scheduleRemoval(randomRound, EXECUTOR_ID, "팀 이동");
+        Project newProject = project();
+        ReflectionTestUtils.setField(newProject, "id", 2L);
+        ProjectMember newMember = ProjectMember.createForMatching(
+            newProject, 10L, ChallengerPart.WEB_PRODUCT_ENGINEER, randomRound, EXECUTOR_ID);
+        given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(randomRound);
+        given(loadProjectMemberPort.listPendingRemovalsByMatchingRoundId(ROUND_ID)).willReturn(List.of(previousMember));
+        given(loadProjectMemberPort.listPendingByMatchingRoundId(ROUND_ID)).willReturn(List.of(newMember));
+
+        // when
+        boolean published = sut.publish(ROUND_ID);
+
+        // then
+        assertThat(published).isTrue();
+        assertThat(previousApplication.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
+        assertThat(previousApplication.getStatusChangeReason()).isEqualTo("팀 이동");
+        then(saveProjectMemberPort).should().hardDelete(100L);
+        then(saveProjectApplicationPort).should().save(previousApplication);
+        assertThat(newMember.getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
+        assertThat(randomRound.getResultPublishedAt()).isNotNull();
     }
 
     private Project project() {

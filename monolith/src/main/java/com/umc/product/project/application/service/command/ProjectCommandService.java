@@ -43,6 +43,7 @@ import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.application.port.out.SaveProjectPort;
 import com.umc.product.project.domain.Project;
@@ -70,6 +71,7 @@ public class ProjectCommandService implements
     private static final String COMPLETE_APPLICATION_CANCEL_REASON = "프로젝트가 완료되어 자동 취소되었습니다.";
 
     private final LoadProjectPort loadProjectPort;
+    private final LockProjectMatchingPort lockProjectMatchingPort;
     private final SaveProjectPort saveProjectPort;
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
@@ -239,6 +241,8 @@ public class ProjectCommandService implements
      */
     @Override
     public void abort(AbortProjectCommand command) {
+        // 해제 예약의 최종 공개와 프로젝트 중단이 같은 팀원 정보를 동시에 변경하지 않도록 한다.
+        lockProjectMatchingPort.lockByProjectId(command.projectId());
         Project project = loadProjectPort.getById(command.projectId());
         project.abort(command.reason(), command.requesterMemberId());
 

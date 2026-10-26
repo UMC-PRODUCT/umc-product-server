@@ -22,7 +22,8 @@ public enum ProjectPermissionReason {
     MATCHING_ROUND_NOT_OPEN("지원 가능한 매칭 차수가 열려 있지 않습니다."),
     CHAPTER_MISMATCH("내 매칭 지부의 프로젝트가 아닙니다."),
     NOT_PROJECT_GISU_CHALLENGER("해당 프로젝트 기수의 지원 가능한 챌린저가 아닙니다."),
-    NOT_IMPLEMENTED("아직 지원하지 않는 기능입니다.");
+    NOT_IMPLEMENTED("아직 지원하지 않는 기능입니다."),
+    PROJECT_MANUAL_MATCHING_NOT_ALLOWED_IN_PERIOD("현재는 팀원 수동 배정·해제를 처리할 수 없는 기간입니다.");
 
     private final String message;
 

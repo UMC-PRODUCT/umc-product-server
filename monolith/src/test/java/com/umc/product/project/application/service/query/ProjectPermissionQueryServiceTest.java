@@ -18,6 +18,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -46,6 +48,7 @@ import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
 import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
@@ -90,6 +93,9 @@ class ProjectPermissionQueryServiceTest {
 
     @Spy ProjectQuotaEditPolicy projectQuotaEditPolicy = new ProjectQuotaEditPolicy();
     @Mock Clock clock;
+
+    @Spy
+    ProjectMatchingAdjustmentPolicy projectMatchingAdjustmentPolicy = new ProjectMatchingAdjustmentPolicy();
 
     @InjectMocks
     ProjectPermissionQueryService sut;
@@ -406,6 +412,35 @@ class ProjectPermissionQueryServiceTest {
         assertThat(result.application().canCreate()).isEqualTo(ProjectPermissionCapabilityInfo.denied(
             ProjectPermissionReason.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM
         ));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void 수동_배정과_해제_권한은_변경_가능_기간을_반영한다(boolean published) {
+        // given
+        Project project = project(ProjectStatus.IN_PROGRESS, 999L, 999L, "서비스 리뉴얼");
+        SubjectAttributes subject = subjectWithRoles(List.of(centralCoreRoleInGisu(GISU_ID)));
+        givenBase(project, subject);
+        Instant now = Instant.parse("2026-11-19T22:00:00+09:00");
+        given(clock.instant()).willReturn(now);
+        ProjectMatchingRound round = ProjectMatchingRound.create("개발자 1차", null, MatchingType.PLAN_DEVELOPER,
+            MatchingPhase.FIRST, CHAPTER_ID, now.minusSeconds(10800), now.minusSeconds(7200),
+            now.minusSeconds(3600), now.minusSeconds(60));
+        round.executeAutoDecision(null);
+        if (published) {
+            round.publishResult(now.minusSeconds(60));
+        }
+        given(loadProjectMatchingRoundPort.listByChapterId(CHAPTER_ID)).willReturn(List.of(round));
+
+        // when
+        ProjectPermissionInfo result = sut.listByProjectIds(REQUESTER_ID, List.of(PROJECT_ID)).getFirst();
+
+        // then
+        ProjectPermissionCapabilityInfo expected = published ? ProjectPermissionCapabilityInfo.allow()
+            : ProjectPermissionCapabilityInfo.denied(ProjectPermissionReason.PROJECT_MANUAL_MATCHING_NOT_ALLOWED_IN_PERIOD);
+        assertThat(result.member().canAssign()).isEqualTo(expected);
+        assertThat(result.member().canUnassign()).isEqualTo(expected);
+        then(loadProjectMatchingRoundPort).should(times(1)).listByChapterId(CHAPTER_ID);
     }
 
     private void givenApplicationCreateConditions(List<ProjectMatchingRound> openRounds) {

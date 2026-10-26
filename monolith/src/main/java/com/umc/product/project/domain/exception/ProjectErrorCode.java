@@ -57,6 +57,15 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0100", "프로젝트 멤버를 찾을 수 없어요. 멤버 목록을 확인해주세요."),
     PROJECT_MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "PROJECT-0101", "이미 이 프로젝트의 멤버예요. 멤버 목록을 확인해주세요."),
     PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER(HttpStatus.BAD_REQUEST, "PROJECT-0102", "메인 PM은 팀원 제거가 아니라 소유권 양도로 변경해주세요."),
+    PROJECT_MANUAL_MATCHING_NOT_ALLOWED_IN_PERIOD(HttpStatus.CONFLICT, "PROJECT-0103", "현재는 팀원 수동 배정·해제를 처리할 수 없는 기간이에요."),
+    PROJECT_MEMBER_ADJUSTMENT_CONFLICT(HttpStatus.CONFLICT, "PROJECT-0104",
+        "현재 상태에서는 요청한 팀원 조정을 처리할 수 없어요."),
+    PROJECT_MEMBER_STATUS_CHANGE_NOT_ALLOWED(HttpStatus.CONFLICT, "PROJECT-0105",
+        "현재 멤버 상태에서는 요청한 상태로 변경할 수 없어요."),
+    PROJECT_MANUAL_MATCHING_QUOTA_EXCEEDED(HttpStatus.CONFLICT, "PROJECT-0106",
+        "해당 파트의 TO가 가득 차 수동 배정할 수 없어요."),
+    PROJECT_MANUAL_MATCHING_QUOTA_RESERVED_BY_APPROVAL(HttpStatus.CONFLICT, "PROJECT-0107",
+        "아직 팀원으로 반영되지 않은 합격자를 포함하면 해당 파트의 TO가 가득 차 수동 배정할 수 없어요. 합격 내역을 확인해주세요."),
 
     // ProjectPartQuota / Publish (PROJECT-105/108)
     PROJECT_PART_QUOTA_INVALID(HttpStatus.BAD_REQUEST, "PROJECT-0200", "파트 정원은 1명 이상으로 입력해주세요."),
@@ -93,13 +102,15 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE(HttpStatus.BAD_REQUEST, "PROJECT-0311",
         "아직 지원 기간이 끝나지 않아 지원서를 조회할 수 없어요. 지원 종료 시각을 확인해주세요."),
     PROJECT_MATCHING_ROUND_NOT_FINALIZABLE(HttpStatus.BAD_REQUEST, "PROJECT-0307",
-        "아직 자동 선발·배정을 실행할 수 없어요. 1~3차는 PM 결정 마감 시각이 지난 후, 랜덤 매칭은 시작 시각부터 실행할 수 있어요."),
+        "아직 자동 선발·배정을 실행할 수 없어요. 1~3차는 PM 결정 마감 이후, 랜덤 매칭은 같은 유형의 3차 결과 공개 완료 후 실행할 수 있어요."),
     PROJECT_MATCHING_ROUND_POLICY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "PROJECT-0308",
         "이 매칭 종류의 자동 선발 정책을 찾지 못했어요. 관리자에게 문의해주세요."),
     PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID(HttpStatus.CONFLICT, "PROJECT-0309",
         "매칭 차수가 중복되거나 일정 순서가 맞지 않아요. 차수별 시작·결정 마감·발표 시각을 확인해주세요."),
     PROJECT_MATCHING_ROUND_NOT_PUBLISHABLE(HttpStatus.CONFLICT, "PROJECT-0312",
         "자동 선발 완료 후 결과 발표 시각부터 공개할 수 있어요."),
+    PROJECT_MATCHING_DUPLICATE_APPROVAL(HttpStatus.CONFLICT, "PROJECT-0313",
+        "지원자의 합격 내역이 중복되어 자동 선발을 진행할 수 없어요. 합격 내역을 확인해주세요."),
 
     // ProjectApplication (APPLY-001/002/003)
     PROJECT_DRAFT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0204", "작성 중인 지원서를 찾을 수 없어요. 지원서 목록을 확인해주세요."),
@@ -120,6 +131,8 @@ public enum ProjectErrorCode implements BaseCode {
         "내 매칭 지부의 프로젝트에만 지원할 수 있어요. 프로젝트의 지부를 확인해주세요."),
     PROJECT_APPLICATION_ROUND_CHAPTER_MISMATCH(HttpStatus.BAD_REQUEST, "PROJECT-0218",
         "선택한 매칭 차수가 프로젝트 지부의 차수가 아니에요. 매칭 차수를 다시 선택해주세요."),
+    PROJECT_APPLICATION_APPROVAL_CONFLICT(HttpStatus.CONFLICT, "PROJECT-0219",
+        "이미 팀에 배정되었거나 다른 합격 내역이 있어 합격 처리할 수 없어요."),
 
     // ProjectMatchingChapterTransfer
     CHAPTER_TRANSFER_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0400", "매칭 지부 이동 기록을 찾을 수 없어요. 선택한 기록을 확인해주세요."),

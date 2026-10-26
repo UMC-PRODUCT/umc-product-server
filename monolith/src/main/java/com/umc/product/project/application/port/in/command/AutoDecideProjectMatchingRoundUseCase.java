@@ -3,7 +3,7 @@ package com.umc.product.project.application.port.in.command;
 /**
  * 매칭 차수 자동 선발 UseCase (MATCHING-201 + 스케줄러 공통 진입점).
  * <p>
- * 1~3차는 결정 마감 후 정책 매트릭스 기반으로 지원자를 선발하고, 랜덤 매칭은 시작 시각부터 실행합니다.
+ * 1~3차는 결정 마감 후 정책 매트릭스 기반으로 지원자를 선발하고, 랜덤 매칭은 같은 유형의 3차 결과 공개 완료 후 실행합니다.
  * 발표 시각이 설정된 차수는 PENDING_PUBLICATION 멤버를 생성하며 지원서 합불은 발표 시 반영합니다.
  * <p>
  * 호출자:

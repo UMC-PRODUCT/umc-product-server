@@ -135,12 +135,36 @@ public class ProjectManualMatchingFixture {
     }
 
     public ApplicationScenario 지원서_배정(Scenario scenario, boolean pending) {
-        Project project = loadProjectPort.getById(scenario.projectId());
         Instant now = Instant.now();
         ProjectMatchingRound round = ProjectMatchingRound.create("디자인 1차", null, MatchingType.PLAN_DESIGN,
             MatchingPhase.FIRST, scenario.chapterId(), now.minusSeconds(10800), now.minusSeconds(7200),
             now.minusSeconds(3600), pending ? now.minusSeconds(600) : null);
         entityManager.persist(round);
+        ApplicationScenario result = 지원서_등록(scenario, round);
+        ProjectApplication application = entityManager.find(ProjectApplication.class, result.applicationId());
+        application.applyAutoDecision(ProjectApplicationStatus.APPROVED, scenario.staffId());
+        saveProjectMemberPort.save(ProjectMember.createFromApplication(application, ChallengerPart.DESIGN,
+            scenario.staffId()));
+        round.executeAutoDecision(scenario.staffId());
+        entityManager.flush();
+        return result;
+    }
+
+    public ApplicationScenario PM_합격_처리(Scenario scenario) {
+        Instant now = Instant.now();
+        ProjectMatchingRound round = ProjectMatchingRound.create("디자인 1차", null, MatchingType.PLAN_DESIGN,
+            MatchingPhase.FIRST, scenario.chapterId(), now.minusSeconds(10800), now.minusSeconds(7200),
+            now.plusSeconds(3600), now.plusSeconds(10800));
+        entityManager.persist(round);
+        ApplicationScenario result = 지원서_등록(scenario, round);
+        entityManager.find(ProjectApplication.class, result.applicationId()).approve(scenario.ownerId(), "PM 합격");
+        entityManager.flush();
+        return result;
+    }
+
+    private ApplicationScenario 지원서_등록(Scenario scenario, ProjectMatchingRound round) {
+        Project project = loadProjectPort.getById(scenario.projectId());
+        Instant now = Instant.now();
         Form form = Form.createPublished(scenario.ownerId(), "지원서", false);
         entityManager.persist(form);
         FormSection section = FormSection.create(form, "공통", null, 1L);
@@ -158,11 +182,7 @@ public class ProjectManualMatchingFixture {
         ProjectApplication application = ProjectApplication.create(applicationForm, response.getId(),
             scenario.candidateId(), round);
         application.submit();
-        application.applyAutoDecision(ProjectApplicationStatus.APPROVED, scenario.staffId());
         entityManager.persist(application);
-        saveProjectMemberPort.save(ProjectMember.createFromApplication(application, ChallengerPart.DESIGN,
-            scenario.staffId()));
-        round.executeAutoDecision(scenario.staffId());
         entityManager.flush();
         return new ApplicationScenario(application.getId(), round.getId(), response.getId(), answer.getId());
     }

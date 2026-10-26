@@ -37,7 +37,8 @@ public class ProjectManualMatchingController {
 
     @GetMapping("/candidates")
     @Operation(operationId = "PROJECT-401", summary = "수동 배정 후보 조회",
-        description = "해당 기수·매칭 지부의 파트별 미배정 챌린저를 조회합니다. 발표 전 선발 인원과 합격 지원서 보유자는 제외합니다.")
+        description = "해당 기수·매칭 지부의 파트별 미배정 챌린저를 조회합니다. 발표 전 선발 인원과 합격 지원서 보유자는 제외합니다. "
+            + "랜덤 매칭 조정 기간에는 조정 명단 기준으로 판단합니다.")
     public PageResponse<ProjectMatchingCandidateInfo> candidates(@CurrentMember MemberPrincipal principal,
         @PathVariable Long projectId, @RequestParam ChallengerPart part,
         @RequestParam(required = false) String keyword,
@@ -48,7 +49,12 @@ public class ProjectManualMatchingController {
 
     @PostMapping
     @Operation(operationId = "PROJECT-402", summary = "운영진 수동 배정",
-        description = "차수·마감과 관계없이 즉시 배정합니다. 현재 파트와 매칭 지부를 검증하며 TO 초과·중복 배정은 거부합니다.")
+        description = """
+            현재 파트와 매칭 지부를 검증하며 TO 초과·중복 배정은 거부합니다.
+            TO는 배정된 팀원과 PM이 합격 처리했지만 아직 팀원으로 반영되지 않은 지원자를 포함해 검증합니다.
+            배정된 팀원으로 TO가 가득 찼으면 409(PROJECT-0106), 미반영 합격자를 포함해 가득 찼으면 409(PROJECT-0107)를 반환합니다.
+            배정할 수 없는 기간에는 409(PROJECT-0103)를 반환하며, 랜덤 매칭 조정 기간의 배정은 최종 결과 공개 시 공개 명단에 반영합니다.
+            """)
     public Long assign(@CurrentMember MemberPrincipal principal, @PathVariable Long projectId,
         @Valid @RequestBody AddProjectMemberRequest request) {
         return manageProjectMatchingUseCase.assign(request.toCommand(projectId, principal.getMemberId()));
@@ -56,7 +62,11 @@ public class ProjectManualMatchingController {
 
     @DeleteMapping("/{memberId}")
     @Operation(operationId = "PROJECT-403", summary = "운영진 매칭 해제",
-        description = "팀 소속을 해제하고 연결 지원서는 불합격으로 변경합니다. 지원서·답변은 보존하며 차수·마감에 따른 제한은 없습니다.")
+        description = """
+            팀 소속을 해제하고 연결 지원서는 불합격으로 변경합니다. 지원서·답변은 보존합니다.
+            해제할 수 없는 기간에는 409(PROJECT-0103)를 반환합니다.
+            랜덤 매칭 조정 기간에 공개된 팀원의 해제는 최종 결과 공개 시 반영하고, 조정 기간에 배정한 팀원은 바로 취소합니다.
+            """)
     public void unassign(@CurrentMember MemberPrincipal principal, @PathVariable Long projectId,
         @PathVariable Long memberId, @RequestParam(required = false) String reason) {
         manageProjectMatchingUseCase.unassign(RemoveProjectMemberCommand.builder()

@@ -3,8 +3,11 @@ package com.umc.product.project.adapter.out.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +76,25 @@ class ProjectMemberPersistenceAdapterTest {
         assertThat(members).extracting(ProjectMember::getId).containsExactly(active.getId());
         assertThat(membersByProject.get(project.getId()))
             .extracting(ProjectMember::getId).containsExactly(active.getId());
+    }
+
+    @Test
+    void 공개_팀원_일괄_조회는_선발_차수를_함께_조회하고_차수가_없는_팀원도_포함한다() {
+        // given
+        ProjectMember manual = em.persist(ProjectMember.create(project, 15L, ChallengerPart.WEB_PRODUCT_ENGINEER, 999L));
+        em.flush();
+        em.clear();
+
+        // when
+        Map<Long, List<ProjectMember>> result = sut.listByProjectIds(Set.of(project.getId()));
+        List<ProjectMember> members = result.get(project.getId());
+
+        // then
+        assertThat(members).extracting(ProjectMember::getId).containsExactly(active.getId(), manual.getId());
+        assertThat(Hibernate.isInitialized(members.getFirst().getAssignedMatchingRound())).isTrue();
+        em.clear();
+        assertThat(members.getFirst().getAssignedMatchingRound().getPhase()).isEqualTo(MatchingPhase.FIRST);
+        assertThat(members.getLast().getAssignedMatchingRound()).isNull();
     }
 
     @Test

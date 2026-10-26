@@ -14,9 +14,12 @@ import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
+import com.umc.product.project.application.port.out.SaveProjectMemberPort;
+import com.umc.product.project.application.port.out.ScheduleRandomMatchingPort;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
@@ -26,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 지원서 합불, 멤버의 PENDING_PUBLICATION → ACTIVE 변경, 공개 완료 시각을 함께 저장한다.
+ * 랜덤 차수는 해제 예약된 팀원의 삭제도 함께 반영한다.
  * 도중에 실패하면 모두 롤백한다.
  */
 @Service
@@ -38,6 +42,8 @@ public class ProjectMatchingResultPublicationCommandService implements PublishPr
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final SaveProjectApplicationPort saveProjectApplicationPort;
+    private final SaveProjectMemberPort saveProjectMemberPort;
+    private final ScheduleRandomMatchingPort scheduleRandomMatchingPort;
 
     @Override
     public boolean publish(Long matchingRoundId) {
@@ -54,6 +60,15 @@ public class ProjectMatchingResultPublicationCommandService implements PublishPr
         Instant now = Instant.now();
         if (!round.canPublishAt(now)) {
             return false;
+        }
+
+        // 최종 결과 공개 시 해제 예약을 먼저 반영하고 새 배정을 공개한다.
+        for (ProjectMember member : loadProjectMemberPort.listPendingRemovalsByMatchingRoundId(matchingRoundId)) {
+            if (member.getApplication() != null) {
+                member.getApplication().rejectForMatchingRelease(member.getStatusChangedMemberId(), member.getStatusChangeReason());
+                saveProjectApplicationPort.save(member.getApplication());
+            }
+            saveProjectMemberPort.hardDelete(member.getId());
         }
 
         Set<Long> approvedApplicationIds = new HashSet<>();
@@ -84,6 +99,10 @@ public class ProjectMatchingResultPublicationCommandService implements PublishPr
         saveProjectApplicationPort.saveAll(applications);
 
         round.publishResult(now);
+        if (round.getPhase() == MatchingPhase.THIRD) {
+            // 랜덤 매칭은 공개 트랜잭션 커밋 후 별도 작업으로 예약한다.
+            scheduleRandomMatchingPort.scheduleAfterPublication(round.getChapterId(), round.getType());
+        }
         return true;
     }
 }

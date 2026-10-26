@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -43,6 +44,8 @@ import com.umc.product.project.application.port.in.query.GetRandomMatchedProject
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
+import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
@@ -50,6 +53,7 @@ import com.umc.product.project.domain.exception.ProjectErrorCode;
 import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.support.concurrency.PostgreSqlTransactionRace;
 import com.umc.product.support.fixture.ProjectManualMatchingFixture;
+import com.umc.product.support.fixture.ProjectManualMatchingFixture.ApplicationScenario;
 import com.umc.product.support.fixture.ProjectManualMatchingFixture.Scenario;
 
 @AutoConfigureMockMvc(addFilters = false)
@@ -154,7 +158,8 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
                 .content(body(scenario.candidateId(), "WEB_PRODUCT_ENGINEER"))).andExpect(status().isForbidden());
         assign(scenario, other.candidateId()).andExpect(status().isForbidden());
         assign(scenario, scenario.candidateId()).andExpect(status().isOk());
-        assign(scenario, second).andExpect(status().isConflict());
+        assign(scenario, second).andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("PROJECT-0106"));
         // 같은 지부 ID여도 기수가 다른 역할로는 수동 매칭 권한을 얻지 못한다.
         var nextGisu = fixture.다른_기수();
         jdbc.update("UPDATE challenger_role SET gisu_id = ? WHERE organization_id = ?", nextGisu.gisuId(),
@@ -164,12 +169,65 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         assertThat(members.listByProjectId(scenario.projectId())).hasSize(1);
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void 마감_이후_또는_발표_전_해제도_지원서를_불합격으로_바꾸고_답변을_보존한다(boolean pending) throws Exception {
+    @Test
+    void 미반영_PM_합격자로_TO가_가득_차면_수동_배정을_거부한다() throws Exception {
         // given
         Scenario scenario = fixture.준비();
-        var application = fixture.지원서_배정(scenario, pending);
+        ApplicationScenario application = fixture.PM_합격_처리(scenario);
+        Long candidateId = fixture.회원(scenario, "수동배정후보", ChallengerPart.DESIGN);
+        authenticate(scenario.staffId());
+
+        // when & then
+        assign(scenario, candidateId).andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("PROJECT-0107"));
+        assertThat(members.listByProjectId(scenario.projectId())).isEmpty();
+        assertThat(applications.findById(application.applicationId()).orElseThrow().getStatus())
+            .isEqualTo(ProjectApplicationStatus.APPROVED);
+    }
+
+    @Test
+    void 미반영_PM_합격자를_제외한_남은_TO에만_수동_배정한다() throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        jdbc.update("UPDATE project_part_quota SET quota = 2 WHERE project_id = ?", scenario.projectId());
+        fixture.PM_합격_처리(scenario);
+        Long first = fixture.회원(scenario, "첫번째후보", ChallengerPart.DESIGN);
+        Long second = fixture.회원(scenario, "두번째후보", ChallengerPart.DESIGN);
+        authenticate(scenario.staffId());
+
+        // when & then
+        assign(scenario, first).andExpect(status().isOk());
+        assign(scenario, second).andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("PROJECT-0107"));
+        assertThat(members.listByProjectId(scenario.projectId())).extracting(ProjectMember::getMemberId)
+            .containsExactly(first);
+    }
+
+    @Test
+    void 공개된_팀원의_합격_지원서는_수동_배정_TO에서_중복_차감하지_않는다() throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        jdbc.update("UPDATE project_part_quota SET quota = 2 WHERE project_id = ?", scenario.projectId());
+        ApplicationScenario application = fixture.지원서_배정(scenario, true);
+        assertThat(publisher.publish(application.roundId())).isTrue();
+        Long candidateId = fixture.회원(scenario, "수동배정후보", ChallengerPart.DESIGN);
+        authenticate(scenario.staffId());
+
+        // when & then
+        assign(scenario, candidateId).andExpect(status().isOk());
+        assertThat(members.listByProjectId(scenario.projectId())).extracting(ProjectMember::getMemberId)
+            .containsExactlyInAnyOrder(scenario.candidateId(), candidateId);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void 공개된_팀원을_해제하면_지원서를_불합격으로_바꾸고_답변을_보존한다(boolean pending) throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        ApplicationScenario application = fixture.지원서_배정(scenario, pending);
+        if (pending) {
+            assertThat(publisher.publish(application.roundId())).isTrue();
+        }
         authenticate(scenario.staffId());
 
         // when
@@ -183,18 +241,33 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM form_response WHERE id = ?", Long.class,
             application.responseId()))
             .isEqualTo(1L);
-        if (pending) {
-            assertThat(publisher.publish(application.roundId())).isTrue();
-        }
         assertThat(members.existsByGisuAndMember(scenario.gisuId(), scenario.candidateId())).isFalse();
         assign(scenario, scenario.candidateId()).andExpect(status().isOk());
     }
 
     @Test
-    void 기존_상태변경_API도_지원서_불합격과_즉시_재배정을_일관되게_처리한다() throws Exception {
+    void 일반_차수의_공개_전에는_해제를_거부하고_팀원과_지원서_상태를_유지한다() throws Exception {
         // given
         Scenario scenario = fixture.준비();
-        var application = fixture.지원서_배정(scenario, true);
+        ApplicationScenario application = fixture.지원서_배정(scenario, true);
+        authenticate(scenario.staffId());
+
+        // when
+        mockMvc.perform(delete(admin(scenario) + "/{memberId}", scenario.candidateId()))
+            .andExpect(status().isConflict());
+
+        // then
+        assertThat(members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId()).getStatus())
+            .isEqualTo(ProjectMemberStatus.PENDING_PUBLICATION);
+        assertThat(applications.findById(application.applicationId()).orElseThrow().getStatus())
+            .isEqualTo(ProjectApplicationStatus.APPROVED);
+    }
+
+    @Test
+    void 상태변경으로_퇴출한_팀원은_결과_공개_후_배정_API로_재배정한다() throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        ApplicationScenario application = fixture.지원서_배정(scenario, true);
         authenticate(scenario.staffId());
 
         // when
@@ -209,12 +282,40 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         mockMvc.perform(patch("/api/v1/projects/{id}/members/{member}/status", scenario.projectId(),
             scenario.candidateId())
                 .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"ACTIVE\",\"reason\":\"재배정\"}"))
-            .andExpect(status().isOk());
-        var member = members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId());
+            .andExpect(status().isConflict());
+        assertThat(publisher.publish(application.roundId())).isTrue();
+        assign(scenario, scenario.candidateId()).andExpect(status().isOk());
+        ProjectMember member = members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId());
         assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
         assertThat(member.getAssignedMatchingRound()).isNull();
-        assertThat(publisher.publish(application.roundId())).isTrue();
+        assertThat(member.getApplication()).isNull();
         assertThat(members.listByProjectId(scenario.projectId())).hasSize(1);
+    }
+
+    @Test
+    void 동일한_퇴출_요청은_팀원과_연결_지원서의_사유와_처리_시각을_유지한다() throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        ApplicationScenario application = fixture.지원서_배정(scenario, true);
+        authenticate(scenario.staffId());
+        mockMvc.perform(patch("/api/v1/projects/{id}/members/{member}/status", scenario.projectId(), scenario.candidateId())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"DISMISSED\",\"reason\":\"퇴출 사유\"}"))
+            .andExpect(status().isOk());
+        Instant memberUpdatedAt = members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId()).getStatusUpdatedAt();
+        Instant applicationChangedAt = applications.findById(application.applicationId()).orElseThrow().getStatusChangedAt();
+
+        // when
+        mockMvc.perform(patch("/api/v1/projects/{id}/members/{member}/status", scenario.projectId(), scenario.candidateId())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"DISMISSED\",\"reason\":\"변경된 사유\"}"))
+            .andExpect(status().isOk());
+
+        // then
+        ProjectMember member = members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId());
+        ProjectApplication rejected = applications.findById(application.applicationId()).orElseThrow();
+        assertThat(member.getStatusChangeReason()).isEqualTo("퇴출 사유");
+        assertThat(member.getStatusUpdatedAt()).isEqualTo(memberUpdatedAt);
+        assertThat(rejected.getStatusChangeReason()).isEqualTo("퇴출 사유");
+        assertThat(rejected.getStatusChangedAt()).isEqualTo(applicationChangedAt);
     }
 
     @ParameterizedTest
@@ -394,7 +495,7 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         } catch (ExecutionException e) {
             assertThat(e.getCause()).isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode").isIn(
-                    ProjectErrorCode.PROJECT_APPLICATION_QUOTA_EXCEEDED,
+                    ProjectErrorCode.PROJECT_MANUAL_MATCHING_QUOTA_EXCEEDED,
                     ProjectErrorCode.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
             return false;
         }

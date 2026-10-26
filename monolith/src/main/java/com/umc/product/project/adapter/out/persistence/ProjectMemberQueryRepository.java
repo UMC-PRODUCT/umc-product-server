@@ -18,6 +18,7 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
@@ -40,11 +41,30 @@ public class ProjectMemberQueryRepository {
      * 랜덤 매칭 시 중복 선발을 막기 위해 해당 기수의 ACTIVE·PENDING_PUBLICATION 멤버의 memberId를 조회한다.
      */
     public List<Long> listAssignedMemberIdsByGisuId(Long gisuId) {
+        return listAssignedMemberIdsByGisuId(gisuId, null);
+    }
+
+    /**
+     * 기수 내 ACTIVE·PENDING_PUBLICATION 팀원의 회원 ID를 중복 없이 조회한다.
+     * 지정한 조정 차수에 해제 예약된 ACTIVE 팀원은 제외한다. 차수 ID가 null이면 기존 배정 인원을 모두 포함한다.
+     */
+    public List<Long> listAssignedMemberIdsByGisuId(Long gisuId, Long adjustmentRoundId) {
         return queryFactory.select(projectMember.memberId).distinct()
             .from(projectMember)
-            .where(projectMember.project.gisuId.eq(gisuId),
-                projectMember.status.in(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION))
+            .where(projectMember.project.gisuId.eq(gisuId), assignedMember(adjustmentRoundId))
             .fetch();
+    }
+
+    /**
+     * 단건 배정 검증을 위해 해당 회원의 ACTIVE·PENDING_PUBLICATION 팀원 여부만 조회한다.
+     * 지정한 조정 차수에 해제 예약된 ACTIVE 팀원은 제외한다.
+     * 차수 ID가 null이면 해제 예약자를 포함한다.
+     */
+    public boolean existsAssignedMemberExcludingPendingRemoval(Long gisuId, Long memberId, Long adjustmentRoundId) {
+        return queryFactory.selectOne().from(projectMember)
+            .where(projectMember.project.gisuId.eq(gisuId), projectMember.memberId.eq(memberId),
+                assignedMember(adjustmentRoundId))
+            .fetchFirst() != null;
     }
 
     /** 파트와 관계없이 ACTIVE·PENDING_PUBLICATION 회원 ID를 프로젝트별로 중복 없이 조회한다. */
@@ -134,6 +154,28 @@ public class ProjectMemberQueryRepository {
     }
 
     /**
+     * 여러 프로젝트의 ACTIVE 팀원에서 지정한 조정 차수의 해제 예약자를 제외하고, 해당 차수의 PENDING_PUBLICATION 팀원을 포함한다.
+     * 조정 차수 목록이 비어 있으면 ACTIVE 팀원만 반환한다. 프로젝트와 선발 차수는 fetch join으로 함께 조회한다.
+     */
+    public List<ProjectMember> listAdjustmentMembersByProjectIds(Collection<Long> projectIds, Collection<Long> adjustmentRoundIds) {
+        if (projectIds.isEmpty()) {
+            return List.of();
+        }
+        BooleanExpression visible = projectMember.status.eq(ProjectMemberStatus.ACTIVE);
+        if (!adjustmentRoundIds.isEmpty()) {
+            visible = visible.and(projectMember.pendingRemovalRoundId.isNull()
+                    .or(projectMember.pendingRemovalRoundId.notIn(adjustmentRoundIds)))
+                .or(projectMember.status.eq(ProjectMemberStatus.PENDING_PUBLICATION)
+                    .and(projectMember.assignedMatchingRound.id.in(adjustmentRoundIds)));
+        }
+        return queryFactory.selectFrom(projectMember)
+            .join(projectMember.project).fetchJoin()
+            .leftJoin(projectMember.assignedMatchingRound).fetchJoin()
+            .where(projectMember.project.id.in(projectIds), visible)
+            .orderBy(projectMember.createdAt.asc(), projectMember.id.asc()).fetch();
+    }
+
+    /**
      * 여러 프로젝트의 특정 파트 ACTIVE 멤버를 한 번에 조회해 projectId 기준으로 그룹핑한다.
      * <p>
      * {@code projectMember.project.id} projection 으로 FK 만 추출하여, 호출자가 {@code member.getProject().getId()} 로 lazy
@@ -219,8 +261,33 @@ public class ProjectMemberQueryRepository {
         return countMembers(projectIds, List.of(ProjectMemberStatus.ACTIVE));
     }
 
+    /**
+     * 수동 배정 시 TO 검증을 위해 프로젝트의 파트별 ACTIVE·PENDING_PUBLICATION 팀원 수를 집계한다.
+     * 지정한 조정 차수에 해제 예약된 ACTIVE 팀원은 제외한다. 차수 ID가 null이면 해제 예약자를 포함한다.
+     */
+    public Map<ChallengerPart, Long> countAssignedByProjectIdGroupByPart(Long projectId, Long adjustmentRoundId) {
+        List<Tuple> rows = queryFactory.select(projectMember.part, projectMember.count()).from(projectMember)
+            .where(projectMember.project.id.eq(projectId), assignedMember(adjustmentRoundId))
+            .groupBy(projectMember.part).fetch();
+        Map<ChallengerPart, Long> counts = new EnumMap<>(ChallengerPart.class);
+        rows.forEach(row -> counts.put(row.get(projectMember.part), row.get(projectMember.count())));
+        return counts;
+    }
+
     public Map<Long, Map<ChallengerPart, Long>> countAssignedByProjectIdsGroupByProjectIdAndPart(Collection<Long> projectIds) {
         return countMembers(projectIds, List.of(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION));
+    }
+
+    /**
+     * ACTIVE·PENDING_PUBLICATION 팀원을 포함하고, 지정한 조정 차수에 해제 예약된 ACTIVE 팀원은 제외한다.
+     */
+    private BooleanExpression assignedMember(Long adjustmentRoundId) {
+        BooleanExpression active = projectMember.status.eq(ProjectMemberStatus.ACTIVE);
+        if (adjustmentRoundId != null) {
+            active = active.and(projectMember.pendingRemovalRoundId.isNull()
+                .or(projectMember.pendingRemovalRoundId.ne(adjustmentRoundId)));
+        }
+        return active.or(projectMember.status.eq(ProjectMemberStatus.PENDING_PUBLICATION));
     }
 
     private Map<Long, Map<ChallengerPart, Long>> countMembers(Collection<Long> projectIds,

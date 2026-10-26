@@ -59,13 +59,14 @@ public class ProjectMemberCommandService
     }
 
     /**
-     * 멤버 hard delete. 행을 물리적으로 삭제해 동일 멤버의 재등록을 허용한다.
+     * 프로젝트 팀원의 배정을 해제한다.
      * <ul>
-     *   <li>DRAFT / PENDING_REVIEW / IN_PROGRESS: hard delete</li>
+     *   <li>일반 파트: 수동 매칭 서비스에서 기간을 검증하고, 즉시 해제하거나 최종 결과 공개까지 해제를 예약한다.</li>
+     *   <li>보조 PM(PLAN): 팀원 행을 즉시 삭제한다.</li>
      *   <li>COMPLETED / ABORTED: 거부 — 종료된 프로젝트의 참여 이력 보존</li>
      * </ul>
      * 메인 PM 은 양도 API 로 변경해야 하므로 본 메서드에서 거부한다.
-     * 행과 함께 사라지는 {@code reason} 은 삭제 직전 감사 로그로만 남긴다.
+     * 보조 PM 해제 사유는 삭제 직전 로그로 남기며, 일반 파트의 사유 처리는 수동 매칭 서비스에 위임한다.
      */
     @Override
     public void remove(RemoveProjectMemberCommand command) {
@@ -94,12 +95,12 @@ public class ProjectMemberCommandService
     }
 
     /**
-     * 멤버 상태 변경 (soft delete). 행을 보존한 채 {@code status} 만 바꾸고 사유·주체를 기록한다.
+     * 팀원의 활동 완료·중도 이탈·퇴출을 처리하고, 행을 보존한 채 사유·주체를 기록한다.
      * <ul>
      *   <li>메인 PM: 거부 — 양도 API 로 유도</li>
      *   <li>COMPLETED / ABORTED 프로젝트: 거부 — 종료된 프로젝트의 이력 고정</li>
      * </ul>
-     * 재등록이 필요하면 hard delete API({@code PROJECT-005}) 를 사용한다.
+     * 동일한 종료 상태를 다시 요청하면 기존 처리 정보를 유지한다.
      */
     @Override
     public void changeStatus(ChangeProjectMemberStatusCommand command) {
@@ -118,7 +119,8 @@ public class ProjectMemberCommandService
             manageProjectMatchingUseCase.changeStatus(command);
             return;
         }
-        member.changeStatus(command.status(), command.requesterMemberId(), command.reason());
-        saveProjectMemberPort.save(member);
+        if (member.changeStatus(command.status(), command.requesterMemberId(), command.reason())) {
+            saveProjectMemberPort.save(member);
+        }
     }
 }

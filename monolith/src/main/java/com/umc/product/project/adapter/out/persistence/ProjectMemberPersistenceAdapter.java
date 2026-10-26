@@ -38,8 +38,18 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     }
 
     @Override
+    public List<ProjectMember> listPendingRemovalsByMatchingRoundId(Long matchingRoundId) {
+        return repository.findPendingRemovalsByRoundId(matchingRoundId);
+    }
+
+    @Override
     public List<Long> listAssignedMemberIdsByGisuId(Long gisuId) {
         return queryRepository.listAssignedMemberIdsByGisuId(gisuId);
+    }
+
+    @Override
+    public List<Long> listAssignedMemberIdsByGisuId(Long gisuId, Long adjustmentRoundId) {
+        return queryRepository.listAssignedMemberIdsByGisuId(gisuId, adjustmentRoundId);
     }
 
     @Override
@@ -50,6 +60,11 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     @Override
     public Map<ChallengerPart, Long> countAssignedByProjectIdGroupByPart(Long projectId) {
         return countAssignedByProjectIdsGroupByProjectIdAndPart(List.of(projectId)).getOrDefault(projectId, Map.of());
+    }
+
+    @Override
+    public Map<ChallengerPart, Long> countAssignedByProjectIdGroupByPart(Long projectId, Long adjustmentRoundId) {
+        return queryRepository.countAssignedByProjectIdGroupByPart(projectId, adjustmentRoundId);
     }
 
     @Override
@@ -100,6 +115,11 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
         return repository.findByProjectIdInAndStatusOrderByCreatedAtAscIdAsc(projectIds, ProjectMemberStatus.ACTIVE)
             .stream()
             .collect(Collectors.groupingBy(pm -> pm.getProject().getId()));
+    }
+
+    @Override
+    public List<ProjectMember> listAdjustmentMembersByProjectIds(Collection<Long> projectIds, Collection<Long> adjustmentRoundIds) {
+        return queryRepository.listAdjustmentMembersByProjectIds(projectIds, adjustmentRoundIds);
     }
 
     @Override
@@ -160,6 +180,11 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     public boolean existsByGisuAndMember(Long gisuId, Long memberId) {
         return repository.existsByProject_GisuIdAndMemberIdAndStatusIn(gisuId, memberId,
             List.of(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION));
+    }
+
+    @Override
+    public boolean existsAssignedMemberExcludingPendingRemoval(Long gisuId, Long memberId, Long adjustmentRoundId) {
+        return queryRepository.existsAssignedMemberExcludingPendingRemoval(gisuId, memberId, adjustmentRoundId);
     }
 
     @Override

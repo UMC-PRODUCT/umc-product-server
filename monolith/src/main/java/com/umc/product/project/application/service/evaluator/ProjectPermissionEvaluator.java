@@ -60,7 +60,13 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
         if (permission.resourceId() == null) {
             return true;
         }
-        Project project = loadProject(permission);
+        return canRead(subject, loadProject(permission));
+    }
+
+    /**
+     * 일괄 조회에서 이미 가져온 프로젝트에 단건 READ와 같은 권한 규칙을 적용한다. 추가 DB 조회는 하지 않는다.
+     */
+    public boolean canRead(SubjectAttributes subject, Project project) {
         return switch (project.getStatus()) {
             case IN_PROGRESS, COMPLETED -> true;
             case DRAFT -> isOwner(subject, project)

@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -52,6 +54,7 @@ import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
+import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.service.policy.ProjectApplicationChapterPolicy;
 import com.umc.product.project.domain.Project;
@@ -109,6 +112,8 @@ class ProjectApplicationCommandServiceTest {
     @Mock
     LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
     @Mock
+    LockProjectMatchingPort lockProjectMatchingPort;
+    @Mock
     ManageFormResponseUseCase manageFormResponseUseCase;
     @Mock
     GetChallengerUseCase getChallengerUseCase;
@@ -129,6 +134,7 @@ class ProjectApplicationCommandServiceTest {
             loadProjectPartQuotaPort,
             loadProjectMemberPort,
             loadProjectMatchingRoundPort,
+            lockProjectMatchingPort,
             manageFormResponseUseCase,
             getChallengerUseCase,
             projectApplicationChapterPolicy,
@@ -299,6 +305,42 @@ class ProjectApplicationCommandServiceTest {
 
     @Nested
     class decide {
+
+        @Test
+        void 이미_팀에_배정된_지원자는_새로_합격_처리하지_않는다() {
+            // given
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(loadProjectMemberPort.existsByGisuAndMember(1L, APPLICANT_MEMBER_ID)).willReturn(true);
+
+            // when & then
+            assertThatThrownBy(() -> sut.decide(
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID))
+                .isInstanceOf(ProjectDomainException.class).extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_APPROVAL_CONFLICT);
+            InOrder order = inOrder(lockProjectMatchingPort, loadProjectApplicationPort);
+            order.verify(lockProjectMatchingPort).lockByProjectId(PROJECT_ID);
+            order.verify(loadProjectApplicationPort).findById(APPLICATION_ID);
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        void 같은_기수에_다른_APPROVED_지원서가_있으면_중복_합격을_거부한다() {
+            // given
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            ProjectApplication other = otherApplication(701L, APPLICANT_MEMBER_ID,
+                application.getApplicationForm(), ProjectApplicationStatus.APPROVED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(loadProjectApplicationPort.listByApplicantMemberIdAndGisuIdAndStatusIn(
+                APPLICANT_MEMBER_ID, 1L, List.of(ProjectApplicationStatus.APPROVED))).willReturn(List.of(other));
+
+            // when & then
+            assertThatThrownBy(() -> sut.decide(
+                PROJECT_ID, APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID))
+                .isInstanceOf(ProjectDomainException.class).extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_APPROVAL_CONFLICT);
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
 
         @Test
         void APPROVED_입력시_도메인_approve_호출_후_저장한다() {

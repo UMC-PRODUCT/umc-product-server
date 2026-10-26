@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -62,6 +64,8 @@ class ProjectCommandServiceTest {
 
     @Mock
     LoadProjectPort loadProjectPort;
+    @Mock
+    com.umc.product.project.application.port.out.LockProjectMatchingPort lockProjectMatchingPort;
     @Mock
     SaveProjectPort saveProjectPort;
     @Mock
@@ -579,6 +583,10 @@ class ProjectCommandServiceTest {
             assertThat(pendingPublicationMember.getStatus()).isEqualTo(ProjectMemberStatus.WITHDRAWN);
             assertThat(pendingPublicationMember.getStatusChangeReason()).isEqualTo("팀 와해");
             assertThat(pendingPublicationMember.getStatusChangedMemberId()).isEqualTo(99L);
+            InOrder order = inOrder(lockProjectMatchingPort, loadProjectPort, loadProjectMemberPort);
+            order.verify(lockProjectMatchingPort).lockByProjectId(1L);
+            order.verify(loadProjectPort).getById(1L);
+            order.verify(loadProjectMemberPort).listActiveAndPendingPublicationByProjectId(1L);
         }
 
         @Test

@@ -161,6 +161,7 @@ public class ProjectCommandController {
         description = """
             PLAN 파트는 기존 보조 PM 관리 권한을 사용합니다.
             일반 파트는 해당 기수 총괄단·담당 지부장만 수동 배정할 수 있으며, 기수·파트·매칭 지부·중복·정원을 검증합니다.
+            일반 파트의 배정 가능 기간과 반영 시점은 운영진 수동 배정[PROJECT-402]과 같습니다.
             운영진 수동 배정 전용 경로는 /api/v1/projects/admin/{projectId}/members 입니다.
             """
     )
@@ -301,8 +302,9 @@ public class ProjectCommandController {
             DRAFT/PENDING_REVIEW/IN_PROGRESS 프로젝트 단계에서만 가능하며, 종료(COMPLETED/ABORTED) 프로젝트는 이력 보존을 위해 거부됩니다.
             상태 변경 히스토리를 남겨야 하면 [PROJECT-006] API 를 사용하세요.
             일반 파트의 제거는 해당 기수 총괄단·담당 지부장만 가능하며 연결 지원서를 불합격으로 변경합니다.
+            일반 파트의 해제 가능 기간과 반영 시점은 운영진 매칭 해제[PROJECT-403]과 같습니다.
             보조 PM 관리는 기존 권한을 유지합니다. 메인 PM 은 양도 API 로 변경해야 합니다.
-            reason 은 DB 에는 남지 않고 감사 로그로만 기록됩니다.
+            reason 은 감사 로그와 연결 지원서의 불합격 사유로 기록됩니다.
             """
     )
     @CheckAccess(
@@ -328,13 +330,15 @@ public class ProjectCommandController {
     @PatchMapping("/{projectId}/members/{memberId}/status")
     @Operation(
         operationId = "PROJECT-006",
-        summary = "프로젝트 팀원 상태 변경 (soft delete)",
+        summary = "프로젝트 팀원 상태 변경",
         description = """
-            멤버 행을 보존한 채 status 를 변경합니다(COMPLETED/WITHDRAWN/DISMISSED 등).
-            변경 사유(reason)는 필수입니다. 보조 PM 관리는 기존 권한을 유지합니다.
-            일반 파트는 해당 기수 총괄단·담당 지부장만 변경할 수 있습니다.
-            활동 해제 시 연결 지원서는 불합격으로 변경하며, ACTIVE 복귀 시 수동 배정 검증을 다시 적용합니다.
-            종료(COMPLETED/ABORTED) 프로젝트와 메인 PM 은 거부됩니다. 동일 멤버 재등록이 필요하면 hard delete(DELETE) 를 사용하세요.
+            팀원 기록을 보존하며 활동 완료(COMPLETED)·중도 이탈(WITHDRAWN)·퇴출(DISMISSED)을 처리합니다. 변경 사유(reason)는 필수입니다.
+            - ACTIVE는 세 상태로 변경할 수 있으며, PENDING_PUBLICATION은 WITHDRAWN·DISMISSED로만 변경할 수 있습니다.
+            - 종료 상태 간 변경은 불가하며, 동일 상태를 다시 요청하면 기존 사유와 처리 시각을 유지합니다.
+            - ACTIVE·PENDING_PUBLICATION으로 직접 변경할 수 없습니다. 디자인·개발 팀원의 재배정은 [PROJECT-402]를 사용하세요.
+            - 매칭 기간 제한 없이 즉시 반영하며, 해제 예약이 있으면 취소합니다. 디자인·개발 팀원의 이탈·퇴출은 연결 지원서를 불합격으로 변경합니다.
+            디자인·개발 파트는 슈퍼어드민·해당 기수 총괄단·담당 지부장만 변경할 수 있으며, 보조 PM 관리는 기존 권한을 유지합니다.
+            종료(COMPLETED/ABORTED) 프로젝트와 메인 PM의 상태 변경은 불가합니다.
             """
     )
     @CheckAccess(

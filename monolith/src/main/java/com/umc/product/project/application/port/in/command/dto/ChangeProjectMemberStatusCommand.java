@@ -7,10 +7,9 @@ import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import lombok.Builder;
 
 /**
- * 프로젝트 멤버 상태 변경 Command (PROJECT-006, soft delete).
+ * 프로젝트 팀원 활동 완료·중도 이탈·퇴출 Command (PROJECT-006).
  * <p>
- * 행을 보존한 채 {@code status} 로 변경하고 {@code reason} 을 감사 이력으로 기록한다.
- * 동일 멤버 재등록이 필요하면 hard delete API({@code PROJECT-005}) 를 사용한다.
+ * 행을 보존한 채 {@code status} 로 변경하고 {@code reason} 을 최근 상태 변경 사유로 기록한다.
  * <p>
  * 정책:
  * <ul>

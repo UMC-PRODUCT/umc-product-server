@@ -1,10 +1,7 @@
 package com.umc.product.project.adapter.in.web.assembler;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,10 +15,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
-import com.umc.product.authorization.domain.PermissionType;
-import com.umc.product.authorization.domain.ResourcePermission;
-import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -32,18 +25,21 @@ import com.umc.product.project.adapter.in.web.dto.response.ManagedProjectSummary
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse.MatchedRoundInfo;
-import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse.PartGroup;
-import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse.ProjectMemberBrief;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectMatchingStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
+import com.umc.product.project.application.port.in.query.GetProjectMatchingAdjustmentUseCase;
+import com.umc.product.project.application.port.in.query.GetProjectPublishedMembersUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchDraftProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchManagedProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRosterInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRosterInfo.RosterMemberInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectMemberView;
 import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
@@ -53,14 +49,12 @@ import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.ProjectMember;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Project Response 조립기. Controller에서 여러 UseCase를 조합하는 로직을 캡슐화합니다.
  */
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class ProjectResponseAssembler {
 
     private final GetProjectUseCase getProjectUseCase;
@@ -71,7 +65,8 @@ public class ProjectResponseAssembler {
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final GetProjectStatisticsUseCase getProjectStatisticsUseCase;
-    private final CheckPermissionUseCase checkPermissionUseCase;
+    private final GetProjectPublishedMembersUseCase getProjectPublishedMembersUseCase;
+    private final GetProjectMatchingAdjustmentUseCase getProjectMatchingAdjustmentUseCase;
 
     /**
      * PROJECT-001 프로젝트 목록 조회.
@@ -158,58 +153,25 @@ public class ProjectResponseAssembler {
     /**
      * PROJECT-007 프로젝트 팀원 구성 일괄 조회.
      * <p>
-     * 각 projectId에 대해 per-project 권한 체크 및 데이터 조회를 수행하며, 실패한 프로젝트는 결과에서 제외 멤버 정보는 유효한 프로젝트 전체를 모아 한 번에 조회한다.
+     * 공개 명단을 일괄 조회한 결과를 응답으로 변환한다. 권한이 없거나 존재하지 않는 프로젝트는 제외한다.
      */
     public Map<Long, ProjectMembersResponse> listProjectMembers(List<Long> projectIds, Long memberId) {
-        // Step 1: 권한 체크 + 프로젝트 정보 조회 (실패 시 skip)
-        Map<Long, ProjectInfo> validProjects = new LinkedHashMap<>();
-        for (Long projectId : projectIds) {
-            boolean hasAccess = checkPermissionUseCase.check(
-                memberId, ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.READ));
-            if (!hasAccess) {
-                log.warn("프로젝트 팀원 일괄 조회 - 접근 권한 없음: memberId={}, projectId={}", memberId, projectId);
-                continue;
-            }
-            try {
-                validProjects.put(projectId, getProjectUseCase.getById(projectId));
-            } catch (Exception e) {
-                log.warn("프로젝트 팀원 일괄 조회 - 프로젝트 조회 실패: projectId={}, reason={}", projectId, e.getMessage());
-            }
-        }
-
-        if (validProjects.isEmpty()) {
-            return Map.of();
-        }
-
-        // Step 2: 유효한 전체 프로젝트의 파트 멤버를 IN 쿼리 한 번으로 조회 후 메모리 grouping
-        Map<Long, List<ProjectMember>> projectMembersMap =
-            loadProjectMemberPort.listByProjectIds(validProjects.keySet());
-
-        // Step 3: 유효한 전체 프로젝트의 멤버 ID를 모아 한 번에 조회
-        // TODO: getProjectUseCase.getById() N+1 — validProjects 수만큼 호출됨.
-        //       GetProjectUseCase.listByIds() 배치 메서드 추가 후 개선 필요.
-        Set<Long> allMemberIds = new HashSet<>();
-        validProjects.forEach((projectId, info) -> {
-            allMemberIds.add(info.productOwnerMemberId());
-            projectMembersMap.getOrDefault(projectId, List.of())
-                .forEach(m -> allMemberIds.add(m.getMemberId()));
-        });
-        Map<Long, MemberInfo> memberMap = allMemberIds.isEmpty()
-            ? Map.of()
-            : getMemberUseCase.findAllByIds(allMemberIds);
-        Map<ProjectMemberKey, MatchedRoundInfo> matchedRoundMap =
-            loadMatchedRoundMap(validProjects.keySet(), allMemberIds);
-
-        // Step 4: 응답 조립
         Map<Long, ProjectMembersResponse> result = new LinkedHashMap<>();
-        validProjects.forEach((projectId, info) ->
-            result.put(projectId, buildMembersResponse(
-                projectId,
-                info,
-                projectMembersMap.getOrDefault(projectId, List.of()),
-                memberMap,
-                matchedRoundMap)));
+        getProjectPublishedMembersUseCase.listByProjectIds(projectIds, memberId)
+            .forEach((projectId, info) -> result.put(projectId, ProjectMembersResponse.from(info)));
+        return result;
+    }
 
+    /**
+     * PROJECT-007 요청한 조회 방식에 따라 공개 명단 또는 운영진 조정 명단을 응답으로 변환한다.
+     */
+    public Map<Long, ProjectMembersResponse> listProjectMembers(List<Long> projectIds, Long memberId, ProjectMemberView view) {
+        if (view == ProjectMemberView.PUBLISHED) {
+            return listProjectMembers(projectIds, memberId);
+        }
+        Map<Long, ProjectMembersResponse> result = new LinkedHashMap<>();
+        getProjectMatchingAdjustmentUseCase.batchGetByProjectIds(projectIds, memberId)
+            .forEach((projectId, info) -> result.put(projectId, ProjectMembersResponse.from(info)));
         return result;
     }
 
@@ -294,45 +256,19 @@ public class ProjectResponseAssembler {
         Map<Long, MemberInfo> memberMap,
         Map<ProjectMemberKey, MatchedRoundInfo> matchedRoundMap
     ) {
-        ProjectMemberBrief productOwner = toProjectMemberBrief(
+        RosterMemberInfo productOwner = toRosterMemberInfo(
             memberMap.get(info.productOwnerMemberId()),
+            ChallengerPart.PLAN,
             matchedRoundMap.get(ProjectMemberKey.of(projectId, info.productOwnerMemberId()))
         );
-
-        Map<ChallengerPart, List<ProjectMemberBrief>> partToMembers = new EnumMap<>(ChallengerPart.class);
-        List<ProjectMember> orderedMembers = members.stream()
+        List<RosterMemberInfo> roster = members.stream()
             .sorted(Comparator.comparing(ProjectMember::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(ProjectMember::getId, Comparator.nullsLast(Comparator.naturalOrder())))
+            .map(member -> toRosterMemberInfo(memberMap.get(member.getMemberId()), member.getPart(),
+                matchedRoundMap.get(ProjectMemberKey.of(projectId, member.getMemberId()))))
+            .filter(Objects::nonNull)
             .toList();
-
-        for (ProjectMember m : orderedMembers) {
-            ProjectMemberBrief brief = toProjectMemberBrief(
-                memberMap.get(m.getMemberId()),
-                matchedRoundMap.get(ProjectMemberKey.of(projectId, m.getMemberId()))
-            );
-            if (brief == null) {
-                continue;
-            }
-            partToMembers.computeIfAbsent(m.getPart(), p -> new ArrayList<>()).add(brief);
-        }
-
-        List<ProjectMemberBrief> coProductOwners = partToMembers.getOrDefault(ChallengerPart.PLAN, List.of()).stream()
-            .filter(b -> !Objects.equals(b.memberId(), info.productOwnerMemberId()))
-            .toList();
-
-        List<PartGroup> partGroups = Arrays.stream(ChallengerPart.values())
-            .filter(p -> p != ChallengerPart.PLAN)
-            .map(p -> new PartGroup(p,
-                partToMembers.getOrDefault(p, List.of())))
-            .filter(g -> !g.members().isEmpty())
-            .toList();
-
-        return ProjectMembersResponse.builder()
-            .projectId(projectId)
-            .productOwner(productOwner)
-            .coProductOwners(coProductOwners)
-            .partGroups(partGroups)
-            .build();
+        return ProjectMembersResponse.from(new ProjectMatchingRosterInfo(projectId, productOwner, roster));
     }
 
     private Map<ProjectMemberKey, MatchedRoundInfo> loadMatchedRoundMap(
@@ -389,8 +325,9 @@ public class ProjectResponseAssembler {
             .build();
     }
 
-    private ProjectMemberBrief toProjectMemberBrief(MemberInfo info, MatchedRoundInfo matchedRoundInfo) {
-        return info == null ? null : ProjectMemberBrief.from(info, matchedRoundInfo);
+    private RosterMemberInfo toRosterMemberInfo(MemberInfo info, ChallengerPart part, MatchedRoundInfo round) {
+        return RosterMemberInfo.of(info, part,
+            round == null ? null : round.id(), round == null ? null : round.type(), round == null ? null : round.phase());
     }
 
     private record ProjectMemberKey(Long projectId, Long memberId) {

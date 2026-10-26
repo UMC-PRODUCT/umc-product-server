@@ -17,9 +17,11 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
 import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.QProjectMember;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 
@@ -33,6 +35,29 @@ import lombok.RequiredArgsConstructor;
 public class ProjectApplicationQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+
+    /**
+     * 기수 내 APPROVED 지원서의 지원자 회원 ID를 중복 없이 조회한다.
+     * 지정한 조정 차수에 해제 예약된 팀원의 연결 지원서는 제외한다. 차수 ID가 null이면 제외하지 않는다.
+     */
+    public List<Long> listApprovedApplicantMemberIdsByGisuId(Long gisuId, Long adjustmentRoundId) {
+        return queryFactory.select(projectApplication.applicantMemberId).distinct()
+            .from(projectApplication)
+            .where(projectApplication.applicationForm.project.gisuId.eq(gisuId), approvedApplication(adjustmentRoundId))
+            .fetch();
+    }
+
+    /**
+     * 단건 배정 검증을 위해 해당 회원의 APPROVED 지원서 존재 여부만 조회한다.
+     * 지정한 조정 차수에 해제 예약된 팀원의 연결 지원서는 제외한다.
+     * 차수 ID가 null이면 해제 예약자의 연결 지원서도 포함한다.
+     */
+    public boolean existsApprovedApplicationExcludingPendingRemoval(Long gisuId, Long memberId, Long adjustmentRoundId) {
+        return queryFactory.selectOne().from(projectApplication)
+            .where(projectApplication.applicationForm.project.gisuId.eq(gisuId),
+                projectApplication.applicantMemberId.eq(memberId), approvedApplication(adjustmentRoundId))
+            .fetchFirst() != null;
+    }
 
     /**
      * (projectId, applicantMemberId, roundId, status) 조합으로 단건 조회.
@@ -278,6 +303,20 @@ public class ProjectApplicationQueryRepository {
             .where(projectApplication.id.in(applicationIds))
             .orderBy(projectApplication.id.asc())
             .fetch();
+    }
+
+    /**
+     * 해제 예약된 팀원의 연결 지원서는 공개 전까지 APPROVED를 유지하므로, 해당 조정 차수의 검사에서만 제외한다.
+     */
+    private BooleanExpression approvedApplication(Long adjustmentRoundId) {
+        BooleanExpression approved = projectApplication.status.eq(ProjectApplicationStatus.APPROVED);
+        if (adjustmentRoundId == null) {
+            return approved;
+        }
+        QProjectMember removal = new QProjectMember("removal");
+        return approved.and(JPAExpressions.selectOne().from(removal)
+            .where(removal.application.id.eq(projectApplication.id), removal.pendingRemovalRoundId.eq(adjustmentRoundId))
+            .notExists());
     }
 
     private BooleanExpression matchingRoundIdEq(Long matchingRoundId) {

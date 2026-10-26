@@ -43,6 +43,7 @@ import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.service.policy.ProjectManualMatchingAccessPolicy;
+import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
 import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
@@ -82,6 +83,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
     private final ProjectApplicationAccessScopeResolver projectApplicationAccessScopeResolver;
     private final ProjectStatisticsAccessPolicy projectStatisticsAccessPolicy;
     private final ProjectMatchingChapterResolver projectMatchingChapterResolver;
+    private final ProjectMatchingAdjustmentPolicy projectMatchingAdjustmentPolicy;
     private final ProjectQuotaEditPolicy projectQuotaEditPolicy;
 
     @Override
@@ -390,11 +392,17 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         Project project = context.project();
         boolean staff = ProjectManualMatchingAccessPolicy.canManage(subject.toAuthoritySnapshot(), project);
         ProjectPermissionCapabilityInfo assign = requirePermission(staff && project.getStatus() == ProjectStatus.IN_PROGRESS,
-            ProjectPermissionCapabilityInfo::allow);
+            () -> manualMatchingPeriod(context));
         ProjectPermissionCapabilityInfo unassign = requirePermission(staff
             && project.getStatus() != ProjectStatus.COMPLETED && project.getStatus() != ProjectStatus.ABORTED,
-            ProjectPermissionCapabilityInfo::allow);
+            () -> manualMatchingPeriod(context));
         return new MemberPermissions(read, edit, edit, assign, unassign);
+    }
+
+    private ProjectPermissionCapabilityInfo manualMatchingPeriod(ProjectCapabilityContext context) {
+        return context.permissionCache().canChangeMembers(context.project().getChapterId())
+            ? ProjectPermissionCapabilityInfo.allow()
+            : denied(ProjectPermissionReason.PROJECT_MANUAL_MATCHING_NOT_ALLOWED_IN_PERIOD);
     }
 
     private StatisticsPermissions statisticsPermissions(Long requesterMemberId, Project project) {
@@ -481,6 +489,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         private final Map<Long, Map<PermissionType, Boolean>> projectPermissions = new LinkedHashMap<>();
         private final Map<Long, Boolean> applicationWritePermissions = new LinkedHashMap<>();
         private final Map<Long, List<ProjectMatchingRound>> openMatchingRounds = new LinkedHashMap<>();
+        private final Map<Long, Boolean> manualMatchingAllowed = new LinkedHashMap<>();
         private final Map<Long, Optional<ChallengerInfo>> challengerInfos = new LinkedHashMap<>();
         private final Map<Long, Boolean> projectMemberExists = new LinkedHashMap<>();
         private final Map<Long, Optional<Long>> matchingChapterIds = new LinkedHashMap<>();
@@ -513,6 +522,13 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         private List<ProjectMatchingRound> openMatchingRounds(Long chapterId, Instant now) {
             return openMatchingRounds.computeIfAbsent(chapterId, id ->
                 List.copyOf(loadProjectMatchingRoundPort.listOpenAt(id, now))
+            );
+        }
+
+        // 같은 지부의 프로젝트들은 기간 판단 결과를 공유해 차수를 반복 조회하지 않는다.
+        private boolean canChangeMembers(Long chapterId) {
+            return manualMatchingAllowed.computeIfAbsent(chapterId, id ->
+                projectMatchingAdjustmentPolicy.isChangeAllowedInPeriod(allMatchingRounds(id), now)
             );
         }
 
