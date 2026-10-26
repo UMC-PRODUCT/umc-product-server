@@ -2,6 +2,7 @@ package com.umc.product.authentication.application.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +27,7 @@ import com.umc.product.authentication.application.service.AuthenticationTokenIss
 import com.umc.product.authentication.domain.EmailVerification;
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.global.event.adapter.out.EventPayloadSerializer;
+import com.umc.product.global.event.adapter.out.OutboxCommitSignalPublisher;
 import com.umc.product.global.event.adapter.out.OutboxDomainEventPublisher;
 import com.umc.product.global.event.application.port.out.SaveEventOutboxPort;
 import com.umc.product.global.event.domain.EventOutbox;
@@ -80,7 +82,8 @@ class SendVerificationEmailOutboxFlowTest {
             new OutboxDomainEventPublisher(
                 saveEventOutboxPort,
                 new EventPayloadSerializer(new ObjectMapper().findAndRegisterModules()),
-                Tracer.NOOP
+                Tracer.NOOP,
+                mock(OutboxCommitSignalPublisher.class)
             )
         );
         EmailVerification persisted = EmailVerification.builder()
