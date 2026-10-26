@@ -181,6 +181,24 @@ executor 거절이나 배치 예외 뒤에도 다음 polling에서 다시 시도
 Worker·전용 executor·폴링 등록을 추가한다. 그룹 등록만으로 Worker가 자동 생성되지는 않는다.
 각 그룹은 고유한 이름을 사용하며 선점과 적체 집계는 같은 `processing_group` 조건을 사용한다.
 
+## 전달 보장 검증
+
+`RealtimeOutboxDeliveryIntegrationTest`는 `IntegrationTestSupport`의 실제 PostgreSQL/PostGIS DB와
+운영 Publisher·Worker·Relay·Persistence adapter를 사용한다. test 프로필의 자동 스케줄 비활성화를 유지하고
+커밋 신호와 수동 폴링을 구분해 다음 경계를 검증한다.
+
+- 커밋 전에는 다른 연결에서 이벤트를 읽지 못하고 커밋 이후 신호로 전달한다.
+- 롤백한 이벤트는 DB에 남지 않으며 신호와 폴링으로 전달되지 않는다.
+- 신호 유실·executor 거절 후에도 저장된 이벤트를 폴링으로 복구한다.
+- 즉시 신호와 폴링이 경쟁해도 유효한 lease 동안 동일 이벤트를 중복 발행하지 않는다.
+- backoff 시각 이전에는 선점하지 않으며 재시도 시각 이후 같은 `eventId`로 복구한다.
+- 중단된 PROCESSING은 lease 만료 이후 복구하고 이전 소유자의 상태 덮어쓰기를 버전으로 차단한다.
+- 전달 후 완료 기록이 실패하면 같은 `eventId`로 재전달할 수 있다. 소비자는 중복 제거를 유지해야 한다.
+
+시간 경계는 DB의 `next_attempt_at`을 조절해 재현하며 실제 backoff나 lease 시간만큼 대기하지 않는다.
+큐 포화와 완료 기록 실패는 테스트에 수동 조립한 실행기·저장 어댑터에서 주입하고,
+공유 ApplicationContext의 도메인 빈은 모킹하지 않는다.
+
 ## 관측 지표
 
 | 이름 | 태그 | 의미 |
