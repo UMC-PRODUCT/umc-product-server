@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
@@ -155,6 +156,7 @@ public class ProjectMember extends BaseEntity {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_ALREADY_EXISTS);
         }
         this.status = ProjectMemberStatus.ACTIVE;
+        this.pendingRemovalRoundId = null;
         this.part = part;
         this.application = null;
         this.assignedMatchingRound = null;
@@ -163,6 +165,46 @@ public class ProjectMember extends BaseEntity {
         this.statusUpdatedAt = decidedAt;
         this.statusChangedMemberId = requesterMemberId;
         this.statusChangeReason = "운영진 수동 배정";
+    }
+
+    /**
+     * COMPLETED·WITHDRAWN·DISMISSED 상태의 팀원을 조정 중인 랜덤 차수의 PENDING_PUBLICATION 상태로 배정합니다.
+     * 기존 지원서 연결은 해제하고, 해당 랜덤 차수를 선발 차수로 기록합니다.
+     */
+    public void assignForAdjustment(ChallengerPart part, ProjectMatchingRound round, Long requesterMemberId) {
+        validateAdjustmentRound(round, part);
+        assignManually(part, requesterMemberId);
+        this.assignedMatchingRound = round;
+        this.status = ProjectMemberStatus.PENDING_PUBLICATION;
+    }
+
+    /**
+     * ACTIVE 팀원의 배정 해제를 랜덤 차수의 최종 공개 시점에 반영하도록 예약합니다.
+     * 공개 전까지 기존 상태·지원서·선발 차수를 유지하고, 해제 사유·처리자·시각을 기록합니다.
+     */
+    public void scheduleRemoval(ProjectMatchingRound round, Long requesterMemberId, String reason) {
+        validateAdjustmentRound(round, part);
+        if (status != ProjectMemberStatus.ACTIVE) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_ADJUSTMENT_CONFLICT);
+        }
+        this.pendingRemovalRoundId = round.getId();
+        this.statusChangedMemberId = requesterMemberId;
+        this.statusChangeReason = reason;
+        this.statusUpdatedAt = Instant.now();
+    }
+
+    /**
+     * 같은 프로젝트에 다시 배정할 때 해제 예약만 취소하고 기존 지원서와 선발 차수를 유지합니다.
+     */
+    public void cancelRemoval(ProjectMatchingRound round, Long requesterMemberId) {
+        validateAdjustmentRound(round, part);
+        if (status != ProjectMemberStatus.ACTIVE || !round.getId().equals(pendingRemovalRoundId)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_ADJUSTMENT_CONFLICT);
+        }
+        this.pendingRemovalRoundId = null;
+        this.statusChangedMemberId = requesterMemberId;
+        this.statusChangeReason = "운영진 배정 해제 취소";
+        this.statusUpdatedAt = Instant.now();
     }
 
     /**
@@ -185,9 +227,11 @@ public class ProjectMember extends BaseEntity {
      * <p>
      * status 를 {@code newStatus} 로 바꾸고 변경 사유·주체·시각 메타데이터를 함께 기록합니다.
      * 행을 물리적으로 삭제하지 않으므로 히스토리가 보존됩니다.
+     * 해제 예약이 있으면 취소하여 결과 공개 시 다시 해제되지 않도록 합니다.
      */
     public void changeStatus(ProjectMemberStatus newStatus, Long changedByMemberId, String reason) {
         this.status = newStatus;
+        this.pendingRemovalRoundId = null;
         this.statusUpdatedAt = Instant.now();
         this.statusChangeReason = reason;
         this.statusChangedMemberId = changedByMemberId;
@@ -219,5 +263,14 @@ public class ProjectMember extends BaseEntity {
      */
     public void complete(Long decidedByMemberId) {
         changeStatus(ProjectMemberStatus.COMPLETED, decidedByMemberId, null);
+    }
+
+    private void validateAdjustmentRound(ProjectMatchingRound round, ChallengerPart part) {
+        if (round == null || round.getId() == null || !round.isRandomMatching()
+            || part == null || MatchingType.fromPart(part).orElse(null) != round.getType()
+            || !round.getChapterId().equals(project.getChapterId())
+            || !round.isAutoDecisionExecuted() || round.getResultPublishedAt() != null) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_ADJUSTMENT_CONFLICT);
+        }
     }
 }

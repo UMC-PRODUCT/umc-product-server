@@ -38,6 +38,11 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     }
 
     @Override
+    public List<ProjectMember> listPendingRemovalsByMatchingRoundId(Long matchingRoundId) {
+        return repository.findPendingRemovalsByRoundId(matchingRoundId);
+    }
+
+    @Override
     public List<Long> listAssignedMemberIdsByGisuId(Long gisuId) {
         return queryRepository.listAssignedMemberIdsByGisuId(gisuId);
     }

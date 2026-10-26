@@ -27,6 +27,15 @@ public interface ProjectMemberJpaRepository extends JpaRepository<ProjectMember,
     List<ProjectMember> findPendingByRoundId(@Param("roundId") Long roundId,
         @Param("status") ProjectMemberStatus status);
 
+    /**
+     * 삭제할 해제 예약 팀원과 연결 지원서를 함께 조회한다.
+     */
+    @Query("""
+        select pm from ProjectMember pm left join fetch pm.application
+        where pm.pendingRemovalRoundId = :roundId order by pm.id
+        """)
+    List<ProjectMember> findPendingRemovalsByRoundId(@Param("roundId") Long roundId);
+
     boolean existsByProject_GisuIdAndMemberIdAndStatusIn(Long gisuId, Long memberId,
         Collection<ProjectMemberStatus> statuses);
 

@@ -1,6 +1,9 @@
 package com.umc.product.project.application.service.command;
 
+import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +23,12 @@ import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.application.service.policy.ProjectManualMatchingAccessPolicy;
+import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
@@ -47,17 +53,34 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
     private final GetChallengerUseCase getChallengerUseCase;
     private final ProjectMatchingChapterResolver matchingChapterResolver;
     private final ProjectManualMatchingAccessPolicy accessPolicy;
+    private final ProjectMatchingAdjustmentPolicy adjustmentPolicy;
 
     @Override
     public Long assign(AddProjectMemberCommand command) {
-        Project project = lockProject(command.projectId(), command.requesterMemberId());
+        LockedContext context = lockProject(command.projectId(), command.requesterMemberId());
+        Project project = context.project();
+        validateMatchingPart(command.part());
+        ProjectMatchingRound round = adjustmentPolicy.validateChange(
+            context.rounds(), MatchingType.fromPart(command.part()).orElseThrow(), Instant.now()).orElse(null);
+        Long roundId = round == null ? null : round.getId();
         project.validateApplicable();
-        validateCandidate(project, command.memberId(), command.part());
-        validateQuota(project, command.part());
+        validateCandidate(project, command.memberId(), command.part(), roundId);
+        validateQuota(project, command.part(), roundId);
         ProjectMember member = loadProjectMemberPort
             .findByProjectIdAndMemberIdForUpdate(project.getId(), command.memberId()).orElse(null);
         if (member == null) {
-            member = ProjectMember.create(project, command.memberId(), command.part(), command.requesterMemberId());
+            member = round == null
+                ? ProjectMember.create(project, command.memberId(), command.part(), command.requesterMemberId())
+                : ProjectMember.createForMatching(project, command.memberId(), command.part(), round,
+                    command.requesterMemberId());
+        } else if (round != null && roundId.equals(member.getPendingRemovalRoundId())) {
+            // 같은 팀에 다시 배정하면 해제 예약만 취소하고 기존 지원서와 선발 차수를 유지한다.
+            if (member.getPart() != command.part()) {
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_PART_NOT_ALLOWED);
+            }
+            member.cancelRemoval(round, command.requesterMemberId());
+        } else if (round != null) {
+            member.assignForAdjustment(command.part(), round, command.requesterMemberId());
         } else {
             member.assignManually(command.part(), command.requesterMemberId());
         }
@@ -66,8 +89,19 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
 
     @Override
     public void unassign(RemoveProjectMemberCommand command) {
-        Project project = lockProject(command.projectId(), command.requesterMemberId());
+        LockedContext context = lockProject(command.projectId(), command.requesterMemberId());
+        Project project = context.project();
         ProjectMember member = getMatchingMember(project, command.memberId());
+        ProjectMatchingRound round = adjustmentPolicy.validateChange(
+            context.rounds(), MatchingType.fromPart(member.getPart()).orElseThrow(), Instant.now()).orElse(null);
+        if (round != null && member.getStatus() == ProjectMemberStatus.ACTIVE) {
+            member.scheduleRemoval(round, command.requesterMemberId(), command.reason());
+            saveProjectMemberPort.save(member);
+            log.info("프로젝트 매칭 해제 예약: projectId={}, memberId={}, matchingRoundId={}, requesterMemberId={}, reason={}",
+                project.getId(), command.memberId(), round.getId(), command.requesterMemberId(), command.reason());
+            return;
+        }
+        // 미공개 배정의 취소와 조정 기간 외의 배정 해제는 즉시 반영한다.
         rejectLinkedApplication(member, command.requesterMemberId(), command.reason());
         log.info("프로젝트 매칭 해제: projectId={}, memberId={}, requesterMemberId={}, reason={}",
             project.getId(), command.memberId(), command.requesterMemberId(), command.reason());
@@ -76,18 +110,17 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
 
     @Override
     public void changeStatus(ChangeProjectMemberStatusCommand command) {
-        Project project = lockProject(command.projectId(), command.requesterMemberId());
+        Project project = lockProject(command.projectId(), command.requesterMemberId()).project();
         ProjectMember member = getMatchingMember(project, command.memberId());
         if (command.status() == ProjectMemberStatus.ACTIVE) {
             if (member.getStatus() == ProjectMemberStatus.ACTIVE) {
                 return;
             }
             project.validateApplicable();
-            validateCandidate(project, command.memberId(), member.getPart());
-            validateQuota(project, member.getPart());
+            validateCandidate(project, command.memberId(), member.getPart(), null);
+            validateQuota(project, member.getPart(), null);
             member.assignManually(member.getPart(), command.requesterMemberId());
         } else {
-            // PENDING_PUBLICATION으로 직접 변경하는 요청은 도메인에서 거부한다.
             member.changeStatus(command.status(), command.requesterMemberId(), command.reason());
             if (command.status() == ProjectMemberStatus.WITHDRAWN || command.status() == ProjectMemberStatus.DISMISSED) {
                 rejectLinkedApplication(member, command.requesterMemberId(), command.reason());
@@ -96,15 +129,15 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
         saveProjectMemberPort.save(member);
     }
 
-    private Project lockProject(Long projectId, Long requesterMemberId) {
+    private LockedContext lockProject(Long projectId, Long requesterMemberId) {
         lockProjectMatchingPort.lockByProjectId(projectId);
         Project snapshot = loadProjectPort.getById(projectId);
         accessPolicy.validate(requesterMemberId, snapshot);
-        loadProjectMatchingRoundPort.listByChapterIdForUpdate(snapshot.getChapterId());
+        List<ProjectMatchingRound> rounds = loadProjectMatchingRoundPort.listByChapterIdForUpdate(snapshot.getChapterId());
         Project project = loadProjectPort.getByIdForUpdate(projectId);
         accessPolicy.validate(requesterMemberId, project);
         project.validateMutable();
-        return project;
+        return new LockedContext(project, rounds);
     }
 
     private ProjectMember getMatchingMember(Project project, Long memberId) {
@@ -117,7 +150,7 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
         return member;
     }
 
-    private void validateCandidate(Project project, Long memberId, ChallengerPart part) {
+    private void validateCandidate(Project project, Long memberId, ChallengerPart part, Long adjustmentRoundId) {
         validateMatchingPart(part);
         var challenger = getChallengerUseCase.getActiveByMemberIdAndGisuId(memberId, project.getGisuId());
         if (challenger.part() != part) {
@@ -126,12 +159,21 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
         if (!matchingChapterResolver.isInMatchingChapter(memberId, project.getGisuId(), project.getChapterId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_CHAPTER_MISMATCH);
         }
-        if (project.isOwner(memberId)
-            || loadProjectMemberPort.existsByGisuAndMember(project.getGisuId(), memberId)
-            || !loadProjectApplicationPort.listByApplicantMemberIdAndGisuIdAndStatusIn(
-                memberId, project.getGisuId(), List.of(ProjectApplicationStatus.APPROVED)).isEmpty()) {
+        if (project.isOwner(memberId) || isAlreadyAssigned(project.getGisuId(), memberId, adjustmentRoundId)) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
         }
+    }
+
+    private boolean isAlreadyAssigned(Long gisuId, Long memberId, Long adjustmentRoundId) {
+        if (adjustmentRoundId == null) {
+            return loadProjectMemberPort.existsByGisuAndMember(gisuId, memberId)
+                || !loadProjectApplicationPort.listByApplicantMemberIdAndGisuIdAndStatusIn(
+                    memberId, gisuId, List.of(ProjectApplicationStatus.APPROVED)).isEmpty();
+        }
+        Set<Long> assignedMemberIds = new HashSet<>(
+            loadProjectMemberPort.listAssignedMemberIdsByGisuId(gisuId, adjustmentRoundId));
+        assignedMemberIds.addAll(loadProjectApplicationPort.listApprovedApplicantMemberIdsByGisuId(gisuId, adjustmentRoundId));
+        return assignedMemberIds.contains(memberId);
     }
 
     private void validateMatchingPart(ChallengerPart part) {
@@ -140,10 +182,10 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
         }
     }
 
-    private void validateQuota(Project project, ChallengerPart part) {
+    private void validateQuota(Project project, ChallengerPart part, Long adjustmentRoundId) {
         long quota = loadProjectPartQuotaPort.listByProjectId(project.getId()).stream()
             .filter(q -> q.getPart() == part).mapToLong(q -> q.getQuota()).findFirst().orElse(0L);
-        long assigned = loadProjectMemberPort.countAssignedByProjectIdGroupByPart(project.getId())
+        long assigned = loadProjectMemberPort.countAssignedByProjectIdGroupByPart(project.getId(), adjustmentRoundId)
             .getOrDefault(part, 0L);
         if (assigned >= quota) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_QUOTA_EXCEEDED);
@@ -156,4 +198,6 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
             saveProjectApplicationPort.save(member.getApplication());
         }
     }
+
+    private record LockedContext(Project project, List<ProjectMatchingRound> rounds) {}
 }

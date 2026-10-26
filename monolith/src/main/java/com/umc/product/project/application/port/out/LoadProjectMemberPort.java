@@ -32,6 +32,12 @@ public interface LoadProjectMemberPort {
     List<ProjectMember> listPendingByMatchingRoundId(Long matchingRoundId);
 
     /**
+     * 지정한 랜덤 차수의 최종 공개 시 배정 해제를 반영할 팀원을 조회합니다.
+     * 연결 지원서를 함께 조회하여 해제 사유와 지원서 상태를 반영할 때 추가 조회하지 않습니다.
+     */
+    List<ProjectMember> listPendingRemovalsByMatchingRoundId(Long matchingRoundId);
+
+    /**
      * 중복 선발을 막기 위해 해당 기수의 ACTIVE·PENDING_PUBLICATION 멤버의 memberId를 조회합니다.
      */
     List<Long> listAssignedMemberIdsByGisuId(Long gisuId);
