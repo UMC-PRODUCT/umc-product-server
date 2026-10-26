@@ -60,6 +60,10 @@ public enum ProjectErrorCode implements BaseCode {
         "현재 상태에서는 요청한 팀원 조정을 처리할 수 없어요."),
     PROJECT_MEMBER_STATUS_CHANGE_NOT_ALLOWED(HttpStatus.CONFLICT, "PROJECT-0105",
         "현재 멤버 상태에서는 요청한 상태로 변경할 수 없어요."),
+    PROJECT_MANUAL_MATCHING_QUOTA_EXCEEDED(HttpStatus.CONFLICT, "PROJECT-0106",
+        "해당 파트의 TO가 가득 차 수동 배정할 수 없어요."),
+    PROJECT_MANUAL_MATCHING_QUOTA_RESERVED_BY_APPROVAL(HttpStatus.CONFLICT, "PROJECT-0107",
+        "아직 팀원으로 반영되지 않은 합격자를 포함하면 해당 파트의 TO가 가득 차 수동 배정할 수 없어요. 합격 내역을 확인해주세요."),
 
     // ProjectPartQuota / Publish (PROJECT-105/108)
     PROJECT_PART_QUOTA_INVALID(HttpStatus.BAD_REQUEST, "PROJECT-0200", "파트 정원은 1명 이상으로 입력해주세요."),

@@ -2,11 +2,15 @@ package com.umc.product.project.application.service.command;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.command.ManageProjectMatchingUseCase;
 import com.umc.product.project.application.port.in.command.dto.AddProjectMemberCommand;
@@ -24,9 +28,11 @@ import com.umc.product.project.application.service.policy.ProjectManualMatchingA
 import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.MatchingType;
+import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
@@ -177,8 +183,41 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
         long assigned = loadProjectMemberPort.countAssignedByProjectIdGroupByPart(project.getId(), adjustmentRoundId)
             .getOrDefault(part, 0L);
         if (assigned >= quota) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_QUOTA_EXCEEDED);
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MANUAL_MATCHING_QUOTA_EXCEEDED);
         }
+        if (assigned + countUnassignedApprovedApplicants(project, part) >= quota) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MANUAL_MATCHING_QUOTA_RESERVED_BY_APPROVAL);
+        }
+    }
+
+    /**
+     * 해당 프로젝트·파트의 공개 전 일반 차수 APPROVED 지원자 중 아직 팀원으로 반영되지 않은 인원을 계산한다.
+     * ACTIVE 또는 PENDING_PUBLICATION 팀원의 지원서는 제외하며, 해제 예약자의 지원서도 TO를 다시 차감하지 않는다.
+     */
+    private long countUnassignedApprovedApplicants(Project project, ChallengerPart part) {
+        Instant now = Instant.now();
+        MatchingType type = MatchingType.fromPart(part).orElseThrow();
+        Set<Long> approvedMemberIds = loadProjectApplicationPort.searchProjectApplications(
+                project.getId(), null, ProjectApplicationStatus.APPROVED, now, true).stream()
+            .filter(application -> application.getAppliedMatchingRound().getType() == type)
+            .filter(application -> !application.getAppliedMatchingRound().isRandomMatching())
+            .filter(application -> !application.getAppliedMatchingRound().isResultPublishedAt(now))
+            .map(ProjectApplication::getApplicantMemberId)
+            .collect(Collectors.toSet());
+        if (approvedMemberIds.isEmpty()) {
+            return 0;
+        }
+
+        Set<Long> assignedMemberIds = loadProjectMemberPort.listAssignedMemberIdsByProjectIds(List.of(project.getId()))
+            .getOrDefault(project.getId(), Set.of());
+        approvedMemberIds.removeAll(assignedMemberIds);
+        if (approvedMemberIds.isEmpty()) {
+            return 0;
+        }
+
+        Map<Long, ChallengerInfo> challengers = getChallengerUseCase
+            .batchGetByMemberIdsAndGisuId(approvedMemberIds, project.getGisuId());
+        return approvedMemberIds.stream().filter(memberId -> challengers.get(memberId).part() == part).count();
     }
 
     private void rejectLinkedApplication(ProjectMember member, Long requesterMemberId, String reason) {

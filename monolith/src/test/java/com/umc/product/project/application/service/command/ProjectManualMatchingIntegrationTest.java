@@ -158,7 +158,8 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
                 .content(body(scenario.candidateId(), "WEB_PRODUCT_ENGINEER"))).andExpect(status().isForbidden());
         assign(scenario, other.candidateId()).andExpect(status().isForbidden());
         assign(scenario, scenario.candidateId()).andExpect(status().isOk());
-        assign(scenario, second).andExpect(status().isConflict());
+        assign(scenario, second).andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("PROJECT-0106"));
         // 같은 지부 ID여도 기수가 다른 역할로는 수동 매칭 권한을 얻지 못한다.
         var nextGisu = fixture.다른_기수();
         jdbc.update("UPDATE challenger_role SET gisu_id = ? WHERE organization_id = ?", nextGisu.gisuId(),
@@ -166,6 +167,56 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         authenticate(scenario.staffId());
         mockMvc.perform(get(candidates(scenario)).param("part", "DESIGN")).andExpect(status().isForbidden());
         assertThat(members.listByProjectId(scenario.projectId())).hasSize(1);
+    }
+
+    @Test
+    void 미반영_PM_합격자로_TO가_가득_차면_수동_배정을_거부한다() throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        ApplicationScenario application = fixture.PM_합격_처리(scenario);
+        Long candidateId = fixture.회원(scenario, "수동배정후보", ChallengerPart.DESIGN);
+        authenticate(scenario.staffId());
+
+        // when & then
+        assign(scenario, candidateId).andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("PROJECT-0107"));
+        assertThat(members.listByProjectId(scenario.projectId())).isEmpty();
+        assertThat(applications.findById(application.applicationId()).orElseThrow().getStatus())
+            .isEqualTo(ProjectApplicationStatus.APPROVED);
+    }
+
+    @Test
+    void 미반영_PM_합격자를_제외한_남은_TO에만_수동_배정한다() throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        jdbc.update("UPDATE project_part_quota SET quota = 2 WHERE project_id = ?", scenario.projectId());
+        fixture.PM_합격_처리(scenario);
+        Long first = fixture.회원(scenario, "첫번째후보", ChallengerPart.DESIGN);
+        Long second = fixture.회원(scenario, "두번째후보", ChallengerPart.DESIGN);
+        authenticate(scenario.staffId());
+
+        // when & then
+        assign(scenario, first).andExpect(status().isOk());
+        assign(scenario, second).andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("PROJECT-0107"));
+        assertThat(members.listByProjectId(scenario.projectId())).extracting(ProjectMember::getMemberId)
+            .containsExactly(first);
+    }
+
+    @Test
+    void 공개된_팀원의_합격_지원서는_수동_배정_TO에서_중복_차감하지_않는다() throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        jdbc.update("UPDATE project_part_quota SET quota = 2 WHERE project_id = ?", scenario.projectId());
+        ApplicationScenario application = fixture.지원서_배정(scenario, true);
+        assertThat(publisher.publish(application.roundId())).isTrue();
+        Long candidateId = fixture.회원(scenario, "수동배정후보", ChallengerPart.DESIGN);
+        authenticate(scenario.staffId());
+
+        // when & then
+        assign(scenario, candidateId).andExpect(status().isOk());
+        assertThat(members.listByProjectId(scenario.projectId())).extracting(ProjectMember::getMemberId)
+            .containsExactlyInAnyOrder(scenario.candidateId(), candidateId);
     }
 
     @ParameterizedTest
@@ -444,7 +495,7 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         } catch (ExecutionException e) {
             assertThat(e.getCause()).isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode").isIn(
-                    ProjectErrorCode.PROJECT_APPLICATION_QUOTA_EXCEEDED,
+                    ProjectErrorCode.PROJECT_MANUAL_MATCHING_QUOTA_EXCEEDED,
                     ProjectErrorCode.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
             return false;
         }
