@@ -16,8 +16,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsApplicationRow;
-import com.umc.product.project.application.port.out.dto.ProjectStatisticsApprovedApplicationRow;
-import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchedMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsTargetProjectRow;
@@ -100,34 +99,19 @@ public class ProjectStatisticsQueryRepository {
             .fetch();
     }
 
-    public List<ProjectStatisticsProjectRow> listPublicProjectsByChapterId(Long chapterId) {
+    public List<ProjectStatisticsTargetProjectRow> listPublicProjectsByChapterId(Long chapterId) {
         return queryFactory
             .select(Projections.constructor(
-                ProjectStatisticsProjectRow.class,
+                ProjectStatisticsTargetProjectRow.class,
                 project.id,
-                project.gisuId,
-                project.chapterId
+                project.name
             ))
             .from(project)
             .where(
                 project.chapterId.eq(chapterId),
                 project.status.in(PUBLIC_PROJECT_STATUSES)
             )
-            .orderBy(project.id.asc())
-            .fetch();
-    }
-
-    public List<ProjectStatisticsMatchingRoundRow> listMatchingRoundsByChapterId(Long chapterId) {
-        return queryFactory
-            .select(Projections.constructor(
-                ProjectStatisticsMatchingRoundRow.class,
-                projectMatchingRound.id,
-                projectMatchingRound.type,
-                projectMatchingRound.phase
-            ))
-            .from(projectMatchingRound)
-            .where(projectMatchingRound.chapterId.eq(chapterId))
-            .orderBy(projectMatchingRound.startsAt.asc(), projectMatchingRound.id.asc())
+            .orderBy(project.submittedAt.asc().nullsFirst(), project.id.asc())
             .fetch();
     }
 
@@ -151,18 +135,18 @@ public class ProjectStatisticsQueryRepository {
             .fetch();
     }
 
-    public List<ProjectStatisticsMemberRow> listPublicActiveMembersByChapterId(Long chapterId) {
+    public List<ProjectStatisticsMatchedMemberRow> listPublicActiveMembersByChapterId(Long chapterId) {
         return queryFactory
             .select(Projections.constructor(
-                ProjectStatisticsMemberRow.class,
+                ProjectStatisticsMatchedMemberRow.class,
                 project.id,
-                projectMember.id,
                 projectMember.memberId,
                 projectMember.part,
-                projectMember.status
+                projectMatchingRound.id
             ))
             .from(projectMember)
             .join(projectMember.project, project)
+            .join(projectMember.assignedMatchingRound, projectMatchingRound)
             .where(
                 project.chapterId.eq(chapterId),
                 project.status.in(PUBLIC_PROJECT_STATUSES),
@@ -207,39 +191,4 @@ public class ProjectStatisticsQueryRepository {
             .fetch();
     }
 
-    public List<ProjectStatisticsApprovedApplicationRow> listApprovedApplicationsByProjectIds(
-        Collection<Long> projectIds
-    ) {
-        if (projectIds == null || projectIds.isEmpty()) {
-            return List.of();
-        }
-
-        return queryFactory
-            .select(Projections.constructor(
-                ProjectStatisticsApprovedApplicationRow.class,
-                project.id,
-                projectApplication.applicantMemberId,
-                projectApplication.id,
-                projectMatchingRound.id,
-                projectMatchingRound.type,
-                projectMatchingRound.phase,
-                projectMatchingRound.startsAt
-            ))
-            .from(projectApplication)
-            .join(projectApplication.applicationForm, projectApplicationForm)
-            .join(projectApplicationForm.project, project)
-            .join(projectApplication.appliedMatchingRound, projectMatchingRound)
-            .where(
-                project.id.in(projectIds),
-                projectApplication.status.eq(ProjectApplicationStatus.APPROVED),
-                projectMatchingRound.resultPublishAt.isNull().or(projectMatchingRound.resultPublishedAt.isNotNull())
-            )
-            .orderBy(
-                project.id.asc(),
-                projectApplication.applicantMemberId.asc(),
-                projectMatchingRound.startsAt.asc(),
-                projectApplication.id.asc()
-            )
-            .fetch();
-    }
 }

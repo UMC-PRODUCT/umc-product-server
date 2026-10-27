@@ -1,14 +1,13 @@
 package com.umc.product.project.application.port.in.query.dto.statistics;
 
-import java.util.List;
+import com.umc.product.project.domain.enums.MatchingPhase;
 
 /**
- * 매칭 차수별 ProjectMember 기준 매칭 완료 인원 수와 지원 가능 인원 수.
+ * 차수별 매칭 완료 인원 수와 매칭 대기 인원 수.
  */
 public record RoundMatchingStatisticsInfo(
-    ProjectMatchingRoundStatisticsInfo matchingRound,
+    MatchingPhase phase,
     long matchedMemberCount,
-    long availableMemberCount,
-    List<ProjectMatchingCountInfo> projects
+    long availableMemberCount
 ) {
 }

@@ -5,6 +5,7 @@ package com.umc.product.project.application.port.in.query.dto.statistics;
  */
 public record SchoolMatchingStatisticsInfo(
     Long schoolId,
+    String schoolName,
     long matchedMemberCount,
     long totalMemberCount
 ) {

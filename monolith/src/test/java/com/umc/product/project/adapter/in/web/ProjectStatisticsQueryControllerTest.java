@@ -25,9 +25,6 @@ import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.project.adapter.in.web.assembler.ProjectResponseAssembler;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectMatchingStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectMatchingStatisticsResponse.ProjectMatchingCountResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectMatchingStatisticsResponse.RoundMatchingStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectMatchingStatisticsResponse.UnclassifiedMatchingStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.ProjectMatchingRoundStatisticsResponse;
@@ -36,12 +33,18 @@ import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectSta
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.RoundApplicationStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.RoundSchoolApplicationStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.SchoolApplicationStatisticsResponse;
+import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.PhaseApplicantCountInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.SchoolStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.SummaryInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingRoundStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.PartMatchingStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.PhaseMatchingCountInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundApplicationStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.RoundMatchingStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.SchoolMatchingStatisticsInfo;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
@@ -229,35 +232,37 @@ class ProjectStatisticsQueryControllerTest {
             .andExpect(jsonPath("$.result.chapterId").value(3L))
             .andExpect(jsonPath("$.result.roundMatchingStatistics[0].matchedMemberCount").value(2))
             .andExpect(jsonPath("$.result.roundMatchingStatistics[0].availableMemberCount").value(4))
-            .andExpect(jsonPath("$.result.roundMatchingStatistics[0].projects[0].projectId").value(10L))
+            .andExpect(jsonPath("$.result.projectMatchingStatistics[0].projectId").value(10L))
             .andExpect(jsonPath("$.result.schoolMatchingStatistics[0].matchedMemberCount").value(2))
-            .andExpect(jsonPath("$.result.unclassifiedMatchingStatistics.matchedMemberCount").value(1));
+            .andExpect(jsonPath("$.result.roundMatchingStatistics[0].phase").value("FIRST"))
+            .andExpect(jsonPath("$.result.schoolMatchingStatistics[0].schoolName").value("학교"))
+            .andExpect(jsonPath("$.result.projectMatchingStatistics[0].projectName").value("프로젝트"))
+            .andExpect(jsonPath("$.result.projectMatchingStatistics[0].quota").value(4))
+            .andExpect(jsonPath("$.result.projectMatchingStatistics[0].rounds[3].phase").value("RANDOM_MATCHING"))
+            .andExpect(jsonPath("$.result.projectMatchingStatistics[0].parts[0].matchedMemberCount").value(2))
+            .andExpect(jsonPath("$.result.projectMatchingStatistics[0].parts[0].quota").value(4))
+            .andExpect(jsonPath("$.result.summary").doesNotExist())
+            .andExpect(jsonPath("$.result.matchingRound").doesNotExist())
+            .andExpect(jsonPath("$.result.roundMatchingStatistics[0].matchingRound").doesNotExist())
+            .andExpect(jsonPath("$.result.matchingRate").doesNotExist())
+            .andExpect(jsonPath("$.result.totalMemberCount").doesNotExist())
+            .andExpect(jsonPath("$.result.matchedMemberCount").doesNotExist())
+            .andExpect(jsonPath("$.result.unclassifiedMatchingStatistics").doesNotExist());
     }
 
     private static ChapterProjectMatchingStatisticsResponse matchingResponse(Long chapterId) {
-        ProjectMatchingRoundStatisticsResponse round = new ProjectMatchingRoundStatisticsResponse(
-            1L,
-            MatchingType.PLAN_DEVELOPER,
-            MatchingPhase.FIRST
-        );
-
-        return new ChapterProjectMatchingStatisticsResponse(
+        return ChapterProjectMatchingStatisticsResponse.from(new ChapterProjectMatchingStatisticsInfo(
             chapterId,
-            List.of(new RoundMatchingStatisticsResponse(
-                round,
-                2L,
-                4L,
-                List.of(new ProjectMatchingCountResponse(10L, 2L))
-            )),
-            List.of(new ChapterProjectMatchingStatisticsResponse.SchoolMatchingStatisticsResponse(
-                501L,
-                2L,
-                3L
-            )),
-            new UnclassifiedMatchingStatisticsResponse(
-                1L,
-                List.of(new ProjectMatchingCountResponse(11L, 1L))
-            )
-        );
+            List.of(new RoundMatchingStatisticsInfo(MatchingPhase.FIRST, 2L, 4L),
+                new RoundMatchingStatisticsInfo(MatchingPhase.SECOND, 0L, 2L),
+                new RoundMatchingStatisticsInfo(MatchingPhase.THIRD, 0L, 2L),
+                new RoundMatchingStatisticsInfo(MatchingPhase.RANDOM_MATCHING, 0L, 2L)),
+            List.of(new SchoolMatchingStatisticsInfo(501L, "학교", 2L, 4L)),
+            List.of(new ProjectMatchingStatisticsInfo(10L, "프로젝트", 2L, 4L,
+                List.of(new PhaseMatchingCountInfo(MatchingPhase.FIRST, 2L),
+                    new PhaseMatchingCountInfo(MatchingPhase.SECOND, 0L),
+                    new PhaseMatchingCountInfo(MatchingPhase.THIRD, 0L),
+                    new PhaseMatchingCountInfo(MatchingPhase.RANDOM_MATCHING, 0L)),
+                List.of(new PartMatchingStatisticsInfo(ChallengerPart.WEB, 2L, 4L))))));
     }
 }

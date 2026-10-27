@@ -9,6 +9,9 @@ public record ChapterProjectMatchingStatisticsInfo(
     Long chapterId,
     List<RoundMatchingStatisticsInfo> roundMatchingStatistics,
     List<SchoolMatchingStatisticsInfo> schoolMatchingStatistics,
-    UnclassifiedMatchingStatisticsInfo unclassifiedMatchingStatistics
+    List<ProjectMatchingStatisticsInfo> projectMatchingStatistics
 ) {
+    public static ChapterProjectMatchingStatisticsInfo empty(Long chapterId) {
+        return new ChapterProjectMatchingStatisticsInfo(chapterId, List.of(), List.of(), List.of());
+    }
 }

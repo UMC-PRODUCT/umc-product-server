@@ -83,7 +83,7 @@ public class ProjectStatisticsQueryController {
               지원률은 appliedMemberCount / availableMemberCount로 계산합니다.
             - summary.schoolApplicationStatistics: 학교별 지원 가능 총원과 1·2·3차 지원 인원입니다. 총원은 차수가 지나도 차감하지 않습니다.
             - summary.projectRoundStatistics: 프로젝트별 1·2·3차 지원 인원입니다. 팀 매칭 프로젝트 목록과 같이 등록순으로 정렬합니다.
-            - 학교별·프로젝트별 rounds는 지원자가 없어도 FIRST, SECOND, THIRD 3개를 항상 반환합니다.
+            - 학교별·프로젝트별 rounds는 기준 유형에 생성된 1~3차만 반환하며, 지원자가 없는 차수도 0명으로 반환합니다.
             - 개인 정보와 지원자 명단은 포함하지 않습니다.
 
             함께 사용하는 API
@@ -117,12 +117,23 @@ public class ProjectStatisticsQueryController {
         operationId = "PROJECT-STAT-003",
         summary = "지부 공개 프로젝트 매칭 요약 조회",
         description = """
-            로그인 사용자 누구나 조회할 수 있는 지부 내 공개 프로젝트 매칭 요약입니다.
-            멤버 ID와 지원서 ID는 노출하지 않고 ProjectMember 기준 집계 숫자만 반환합니다.
+            로그인 사용자 누구나 조회할 수 있는 지부 내 공개 프로젝트 매칭 통계입니다.
+            멤버 ID와 지원서 ID는 노출하지 않고 집계 숫자만 반환합니다.
 
             집계 대상 프로젝트는 공개 프로젝트 목록과 동일하게 IN_PROGRESS, COMPLETED 상태만 포함합니다.
-            차수 귀속은 각 ProjectMember가 해당 프로젝트에 작성한 APPROVED 지원서 중 가장 오래된 매칭 차수를 사용합니다.
-            합격 지원서가 없으면 차수별 집계에서 제외하고 unclassifiedMatchingStatistics에 별도 집계합니다.
+            매칭 유형(PLAN_DESIGN 또는 PLAN_DEVELOPER)은 지원 통계와 같은 기준 차수로 정합니다.
+            진행 중인 1~3차가 있으면 그 차수를, 없으면 가장 최근에 종료된 1~3차를 기준으로 합니다. 기준 차수가 없으면 모든 배열이 비어 있습니다.
+
+            집계 기준
+            - 기준 유형의 1~3차와 랜덤 매칭을 집계합니다.
+            - 매칭 인원은 결과가 공개된 팀원을 배정된 차수 기준으로 셉니다. 배정된 차수가 없는 팀원은 제외합니다.
+            - 매칭 대상은 해당 기수·매칭 지부에서 활동 중인 기준 유형 챌린저입니다.
+            - 차수 배열은 생성된 차수만 차수 순서로 반환하며, 매칭 인원이 없어도 0명으로 반환합니다.
+
+            응답 항목
+            - roundMatchingStatistics: 차수별 매칭 인원과 매칭 대기 인원입니다. 매칭 대기 인원은 이전 차수까지 매칭된 인원을 뺀 값입니다.
+            - schoolMatchingStatistics: 학교별 누적 매칭 인원과 매칭 대상 총원입니다. 총원은 차수가 지나도 차감하지 않습니다.
+            - projectMatchingStatistics: 프로젝트별 누적 매칭 인원, 전체 TO, 차수별·파트별 매칭 인원과 TO입니다.
             """
     )
     public ChapterProjectMatchingStatisticsResponse getPublicMatchingStatistics(
