@@ -20,6 +20,7 @@ import com.umc.product.project.application.port.out.dto.ProjectStatisticsApprove
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsTargetProjectRow;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
@@ -75,6 +76,30 @@ public class ProjectStatisticsQueryRepository {
             .fetch();
     }
 
+    /**
+     * 지원 통계 대상 프로젝트를 조회한다.
+     * <p>
+     * 임시저장(DRAFT)·승인대기(PENDING_REVIEW) 프로젝트는 지원서를 받을 수 없어 제외한다.
+     */
+    public List<ProjectStatisticsTargetProjectRow> listApplicationStatisticsProjectsByIds(Collection<Long> projectIds) {
+        if (projectIds.isEmpty()) {
+            return List.of();
+        }
+        return queryFactory
+            .select(Projections.constructor(
+                ProjectStatisticsTargetProjectRow.class,
+                project.id,
+                project.name
+            ))
+            .from(project)
+            .where(
+                project.id.in(projectIds),
+                project.status.notIn(ProjectStatus.DRAFT, ProjectStatus.PENDING_REVIEW)
+            )
+            .orderBy(project.submittedAt.asc().nullsFirst(), project.id.asc())
+            .fetch();
+    }
+
     public List<ProjectStatisticsProjectRow> listPublicProjectsByChapterId(Long chapterId) {
         return queryFactory
             .select(Projections.constructor(
@@ -120,50 +145,6 @@ public class ProjectStatisticsQueryRepository {
             .join(projectMember.project, project)
             .where(
                 project.id.eq(projectId),
-                projectMember.status.eq(ProjectMemberStatus.ACTIVE)
-            )
-            .orderBy(project.id.asc(), projectMember.id.asc())
-            .fetch();
-    }
-
-    public List<ProjectStatisticsMemberRow> listActiveMembersByChapterId(Long chapterId) {
-        return queryFactory
-            .select(Projections.constructor(
-                ProjectStatisticsMemberRow.class,
-                project.id,
-                projectMember.id,
-                projectMember.memberId,
-                projectMember.part,
-                projectMember.status
-            ))
-            .from(projectMember)
-            .join(projectMember.project, project)
-            .where(
-                project.chapterId.eq(chapterId),
-                projectMember.status.eq(ProjectMemberStatus.ACTIVE)
-            )
-            .orderBy(project.id.asc(), projectMember.id.asc())
-            .fetch();
-    }
-
-    public List<ProjectStatisticsMemberRow> listActiveMembersByProjectIds(Collection<Long> projectIds) {
-        if (projectIds == null || projectIds.isEmpty()) {
-            return List.of();
-        }
-
-        return queryFactory
-            .select(Projections.constructor(
-                ProjectStatisticsMemberRow.class,
-                project.id,
-                projectMember.id,
-                projectMember.memberId,
-                projectMember.part,
-                projectMember.status
-            ))
-            .from(projectMember)
-            .join(projectMember.project, project)
-            .where(
-                project.id.in(projectIds),
                 projectMember.status.eq(ProjectMemberStatus.ACTIVE)
             )
             .orderBy(project.id.asc(), projectMember.id.asc())

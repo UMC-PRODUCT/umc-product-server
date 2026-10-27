@@ -149,6 +149,11 @@ public class ChapterQueryService implements GetChapterUseCase {
     }
 
     @Override
+    public Long getGisuIdByChapterId(Long chapterId) {
+        return loadChapterPort.findById(chapterId).getGisu().getId();
+    }
+
+    @Override
     public ChapterInfo getChapterById(Long chapterId) {
         return ChapterInfo.from(loadChapterPort.findById(chapterId));
     }

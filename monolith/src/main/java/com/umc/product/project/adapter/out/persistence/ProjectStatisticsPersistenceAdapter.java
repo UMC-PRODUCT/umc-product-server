@@ -11,6 +11,7 @@ import com.umc.product.project.application.port.out.dto.ProjectStatisticsApprove
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsTargetProjectRow;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
@@ -34,6 +35,11 @@ public class ProjectStatisticsPersistenceAdapter implements LoadProjectStatistic
     }
 
     @Override
+    public List<ProjectStatisticsTargetProjectRow> listApplicationStatisticsProjectsByIds(Collection<Long> projectIds) {
+        return queryRepository.listApplicationStatisticsProjectsByIds(projectIds);
+    }
+
+    @Override
     public List<ProjectStatisticsProjectRow> listPublicProjectsByChapterId(Long chapterId) {
         return queryRepository.listPublicProjectsByChapterId(chapterId);
     }
@@ -46,16 +52,6 @@ public class ProjectStatisticsPersistenceAdapter implements LoadProjectStatistic
     @Override
     public List<ProjectStatisticsMemberRow> listActiveMembersByProjectId(Long projectId) {
         return queryRepository.listActiveMembersByProjectId(projectId);
-    }
-
-    @Override
-    public List<ProjectStatisticsMemberRow> listActiveMembersByChapterId(Long chapterId) {
-        return queryRepository.listActiveMembersByChapterId(chapterId);
-    }
-
-    @Override
-    public List<ProjectStatisticsMemberRow> listActiveMembersByProjectIds(Collection<Long> projectIds) {
-        return queryRepository.listActiveMembersByProjectIds(projectIds);
     }
 
     @Override

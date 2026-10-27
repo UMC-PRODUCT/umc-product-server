@@ -1,5 +1,7 @@
 package com.umc.product.project.application.service.query;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -10,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -22,34 +25,45 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectMatchingStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectStatisticsSummaryInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.PhaseApplicantCountInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.ProjectRoundStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.SchoolStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.SummaryInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingCountInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingRoundStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMemberApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMemberStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectRoundMemberCountInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectRoundMemberStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundSchoolApplicationStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.SchoolApplicationMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.SchoolApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.SchoolMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.UnclassifiedMatchingStatisticsInfo;
+import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
+import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsApplicationRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsApprovedApplicationRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsTargetProjectRow;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.ProjectMatchingRound;
+import com.umc.product.project.domain.enums.MatchingPhase;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
@@ -61,12 +75,20 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCase {
 
+    private static final List<MatchingPhase> APPLICATION_PHASES =
+        List.of(MatchingPhase.FIRST, MatchingPhase.SECOND, MatchingPhase.THIRD);
+
     private final LoadProjectStatisticsPort loadProjectStatisticsPort;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final LoadProjectPort loadProjectPort;
     private final ProjectStatisticsAccessPolicy projectStatisticsAccessPolicy;
     private final ProjectMatchingChapterResolver matchingChapterResolver;
+    private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
+    private final LoadProjectMemberPort loadProjectMemberPort;
+    private final GetChapterUseCase getChapterUseCase;
+    private final GetSchoolUseCase getSchoolUseCase;
+    private final Clock clock;
 
     @Override
     public ProjectStatisticsInfo getByProjectId(Long projectId, Long requesterMemberId) {
@@ -86,115 +108,35 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
     }
 
     @Override
-    public ChapterProjectStatisticsInfo getByChapterId(Long chapterId, Long requesterMemberId) {
+    public ProjectApplicationStatisticsInfo getByChapterId(Long chapterId, Long requesterMemberId) {
         validateChapterAccess(requesterMemberId, chapterId);
-
-        List<ProjectStatisticsProjectRow> projects = loadProjectStatisticsPort.listProjectsByChapterId(chapterId);
-        return assembleChapterStatistics(chapterId, projects, loadProjectStatisticsPort.listActiveMembersByChapterId(chapterId));
+        Set<Long> projectIds = loadProjectStatisticsPort.listProjectsByChapterId(chapterId).stream()
+            .map(ProjectStatisticsProjectRow::projectId).collect(Collectors.toSet());
+        return assembleApplicationStatistics(chapterId, projectIds, projectIds);
     }
 
     @Override
-    public ChapterProjectStatisticsInfo getByProjectIds(Collection<Long> projectIds, Long requesterMemberId) {
-        if (projectIds == null) {
-            return new ChapterProjectStatisticsInfo(null, List.of(), emptySummary());
+    public ProjectApplicationStatisticsInfo getByProjectIds(Collection<Long> projectIds, Long requesterMemberId) {
+        if (projectIds == null || projectIds.isEmpty() || projectIds.stream().anyMatch(Objects::isNull)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_STATISTICS_INVALID_TARGET);
         }
-        Set<Long> distinctProjectIds = projectIds.stream()
-            .filter(Objects::nonNull)
-            .collect(Collectors.toCollection(LinkedHashSet::new));
-        if (distinctProjectIds.isEmpty()) {
-            return new ChapterProjectStatisticsInfo(null, List.of(), emptySummary());
-        }
-
-        List<Project> targetProjects = loadProjectPort.listByIds(distinctProjectIds);
-        if (targetProjects.size() != distinctProjectIds.size()) {
+        Set<Long> distinctIds = new HashSet<>(projectIds);
+        List<Project> projects = loadProjectPort.listByIds(distinctIds);
+        if (projects.size() != distinctIds.size()) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_NOT_FOUND);
         }
-
-        targetProjects.forEach(project -> validateProjectAccess(requesterMemberId, project));
-        Long chapterId = resolveSingleChapterId(targetProjects);
-        List<ProjectStatisticsProjectRow> projects = targetProjects.stream()
-            .map(project -> new ProjectStatisticsProjectRow(
-                project.getId(),
-                project.getGisuId(),
-                project.getChapterId()
-            ))
-            .sorted(Comparator.comparing(ProjectStatisticsProjectRow::projectId))
-            .toList();
-
-        return assembleChapterStatistics(
-            chapterId,
-            projects,
-            loadProjectStatisticsPort.listActiveMembersByProjectIds(distinctProjectIds)
-        );
-    }
-
-    private ChapterProjectStatisticsInfo assembleChapterStatistics(
-        Long chapterId,
-        List<ProjectStatisticsProjectRow> projects,
-        List<ProjectStatisticsMemberRow> rawMembers
-    ) {
-        if (projects.isEmpty()) {
-            return new ChapterProjectStatisticsInfo(chapterId, List.of(), emptySummary());
+        for (Project project : projects) {
+            validateProjectAccess(requesterMemberId, project);
         }
-
-        Set<Long> projectIds = projects.stream()
-            .map(ProjectStatisticsProjectRow::projectId)
-            .collect(Collectors.toCollection(LinkedHashSet::new));
-        List<ProjectStatisticsMatchingRoundRow> rounds =
-            loadProjectStatisticsPort.listMatchingRoundsByChapterId(chapterId);
-        List<ProjectStatisticsMemberRow> members =
-            sortMembers(rawMembers);
-        List<ProjectStatisticsApplicationRow> applications =
-            sortApplications(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(projectIds));
-        StatisticsPopulation population = resolvePopulation(projects);
-
-        Map<Long, List<ProjectStatisticsMemberRow>> membersByProject = members.stream()
-            .collect(Collectors.groupingBy(
-                ProjectStatisticsMemberRow::projectId,
-                LinkedHashMap::new,
-                Collectors.toList()
-            ));
-        Map<Long, List<ProjectStatisticsApplicationRow>> applicationsByProject = applications.stream()
-            .collect(Collectors.groupingBy(
-                ProjectStatisticsApplicationRow::projectId,
-                LinkedHashMap::new,
-                Collectors.toList()
-            ));
-
-        List<ProjectStatisticsInfo> projectStatistics = projects.stream()
-            .map(project -> assembleProject(
-                project,
-                rounds,
-                membersByProject.getOrDefault(project.projectId(), List.of()),
-                applicationsByProject.getOrDefault(project.projectId(), List.of()),
-                population
-            ))
-            .toList();
-
-        StatisticsContext chapterContext = buildContext(rounds, applications, members, population);
-        return new ChapterProjectStatisticsInfo(
-            chapterId,
-            projectStatistics,
-            new ChapterProjectStatisticsSummaryInfo(
-                buildRoundApplicationStatistics(chapterContext),
-                buildRoundSchoolApplicationStatistics(chapterContext),
-                buildSchoolMatchingStatistics(chapterContext),
-                buildProjectRoundStatistics(projects, chapterContext)
-            )
-        );
-    }
-
-    private Long resolveSingleChapterId(Collection<Project> projects) {
-        Set<Long> chapterIds = projects.stream()
-            .map(Project::getChapterId)
-            .collect(Collectors.toSet());
-        if (chapterIds.size() != 1) {
-            throw new ProjectDomainException(
-                ProjectErrorCode.PROJECT_INVALID_STATE,
-                "프로젝트 통계는 같은 지부의 프로젝트끼리만 한 번에 조회할 수 있어요."
-            );
+        Set<Long> chapterIds = projects.stream().map(Project::getChapterId).collect(Collectors.toSet());
+        Set<Long> gisuIds = projects.stream().map(Project::getGisuId).collect(Collectors.toSet());
+        if (chapterIds.size() != 1 || chapterIds.contains(null) || gisuIds.size() != 1) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_STATISTICS_SCOPE_MISMATCH);
         }
-        return chapterIds.iterator().next();
+        Long chapterId = chapterIds.iterator().next();
+        Set<Long> chapterProjectIds = loadProjectStatisticsPort.listProjectsByChapterId(chapterId).stream()
+            .map(ProjectStatisticsProjectRow::projectId).collect(Collectors.toSet());
+        return assembleApplicationStatistics(chapterId, distinctIds, chapterProjectIds);
     }
 
     @Override
@@ -229,6 +171,200 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             buildPublicSchoolMatchingStatistics(context),
             buildUnclassifiedMatchingStatistics(context)
         );
+    }
+
+    /**
+     * 기준 매칭 유형의 1·2·3차 지원 통계를 조립한다.
+     * <p>
+     * 지원 인원은 {@code requestedProjectIds} 범위에서 집계하고, 지원 가능 인원의 이전 차수 매칭 인원은
+     * {@code chapterProjectIds}(지부 전체) 기준으로 차감한다. 프로젝트를 지정해 조회해도 분모가 지부 기준으로 유지되도록 두 범위를 분리한다.
+     * 임시저장·승인대기 프로젝트는 지원서를 받을 수 없으므로 프로젝트별 통계에서 제외한다.
+     */
+    private ProjectApplicationStatisticsInfo assembleApplicationStatistics(
+        Long chapterId, Set<Long> requestedProjectIds, Set<Long> chapterProjectIds
+    ) {
+        List<ProjectMatchingRound> allRounds = loadProjectMatchingRoundPort.listByChapterId(chapterId);
+        Optional<ProjectMatchingRound> selected = selectMatchingRound(allRounds, clock.instant());
+        if (selected.isEmpty()) {
+            return ProjectApplicationStatisticsInfo.empty(chapterId);
+        }
+        List<ProjectStatisticsTargetProjectRow> targetProjects =
+            loadProjectStatisticsPort.listApplicationStatisticsProjectsByIds(requestedProjectIds);
+        ProjectMatchingRound matchingRound = selected.get();
+        List<ProjectMatchingRound> rounds = allRounds.stream()
+            .filter(round -> round.getType() == matchingRound.getType())
+            .filter(round -> APPLICATION_PHASES.contains(round.getPhase()))
+            .sorted(Comparator.comparing(ProjectMatchingRound::getPhase))
+            .toList();
+        Long gisuId = getChapterUseCase.getGisuIdByChapterId(chapterId);
+        StatisticsPopulation population = resolvePopulation(chapterId, gisuId, matchingRound.getType());
+        Set<Long> projectIds = targetProjects.stream()
+            .map(ProjectStatisticsTargetProjectRow::projectId).collect(Collectors.toSet());
+        Set<Long> roundIds = rounds.stream().map(ProjectMatchingRound::getId).collect(Collectors.toSet());
+        List<ProjectStatisticsApplicationRow> applications = projectIds.isEmpty() ? List.of()
+            : loadProjectStatisticsPort.listCountedApplicationsByProjectIds(projectIds).stream()
+                .filter(application -> roundIds.contains(application.matchingRoundId()))
+                .filter(application -> population.eligibleMemberIds().contains(application.applicantMemberId()))
+                .toList();
+
+        // 프로젝트 지정 조회에서도 분모는 지부 전체의 실제 배정 차수를 기준으로 계산한다.
+        List<ProjectMemberMatchedRoundInfo> assignments =
+            chapterProjectIds.isEmpty() || population.eligibleMemberIds().isEmpty() ? List.of()
+                : loadProjectMemberPort.listMatchedRoundsByProjectIdsAndMemberIds(
+                    chapterProjectIds, population.eligibleMemberIds());
+
+        return new ProjectApplicationStatisticsInfo(chapterId, toMatchingRoundInfo(matchingRound), new SummaryInfo(
+            buildRoundStatistics(rounds, applications, assignments, population),
+            buildSchoolStatistics(chapterId, gisuId, applications, population),
+            targetProjects.stream()
+                .map(project -> new ProjectRoundStatisticsInfo(
+                    project.projectId(), project.projectName(),
+                    countByPhase(applications.stream()
+                        .filter(application -> Objects.equals(application.projectId(), project.projectId()))
+                        .toList())))
+                .toList()
+        ));
+    }
+
+    /**
+     * 통계 기준 차수를 선택한다. 지원 기간(startsAt~endsAt)인 1~3차를 우선하고, 없으면 가장 최근에 종료된 1~3차를 사용한다.
+     * 랜덤 매칭은 지원서를 받지 않으므로 선택 대상에서 제외한다.
+     */
+    private Optional<ProjectMatchingRound> selectMatchingRound(List<ProjectMatchingRound> rounds, Instant now) {
+        List<ProjectMatchingRound> applicationRounds = rounds.stream()
+            .filter(round -> APPLICATION_PHASES.contains(round.getPhase()))
+            .toList();
+        Optional<ProjectMatchingRound> active = applicationRounds.stream()
+            .filter(round -> !round.getStartsAt().isAfter(now) && !round.getEndsAt().isBefore(now))
+            .max(Comparator.comparing(ProjectMatchingRound::getStartsAt).thenComparing(ProjectMatchingRound::getId));
+        return active.or(() -> applicationRounds.stream()
+            .filter(round -> round.getEndsAt().isBefore(now))
+            .max(Comparator.comparing(ProjectMatchingRound::getEndsAt).thenComparing(ProjectMatchingRound::getId)));
+    }
+
+    /**
+     * 지원 통계의 지원 가능 인원. 매칭 지부 기준 챌린저 중 해당 기수의 활동 중(ACTIVE)이며 기준 매칭 유형에 해당하는 파트만 포함한다.
+     * <p>
+     * 공개 매칭 통계와 단건 통계({@link #resolvePopulation(List)})는 디자인·개발을 합산하지만, 지원 통계는 선택된 유형만 집계한다.
+     */
+    private StatisticsPopulation resolvePopulation(Long chapterId, Long gisuId, MatchingType type) {
+        Set<Long> memberIds = listChallengersInMatchingChapter(chapterId).stream()
+            .filter(challenger -> Objects.equals(challenger.gisuId(), gisuId))
+            .filter(challenger -> challenger.challengerStatus() == ChallengerStatus.ACTIVE)
+            .filter(challenger -> MatchingType.fromPart(challenger.part()).filter(type::equals).isPresent())
+            .map(ChallengerInfo::memberId).filter(Objects::nonNull).collect(Collectors.toSet());
+        return new StatisticsPopulation(memberIds, memberIds.isEmpty() ? Map.of()
+            : getMemberUseCase.findAllSchoolIdsByIds(memberIds));
+    }
+
+    /**
+     * 차수별 지원 인원과 지원 가능 인원을 계산한다.
+     * <p>
+     * 지원 가능 인원은 지원 가능 인원 전체에서 이전 차수로 실제 배정된 ACTIVE 팀원을 뺀 값이다.
+     * 결과 공개 전(PENDING_PUBLICATION) 팀원은 아직 배정이 확정되지 않았으므로 차감하지 않는다.
+     */
+    private List<RoundApplicationStatisticsInfo> buildRoundStatistics(
+        List<ProjectMatchingRound> rounds,
+        List<ProjectStatisticsApplicationRow> applications,
+        List<ProjectMemberMatchedRoundInfo> assignments,
+        StatisticsPopulation population
+    ) {
+        Set<Long> roundIds = rounds.stream().map(ProjectMatchingRound::getId).collect(Collectors.toSet());
+        return rounds.stream().map(round -> {
+            long previouslyMatchedCount = assignments.stream()
+                .filter(assignment -> roundIds.contains(assignment.matchingRoundId()))
+                .filter(assignment -> assignment.matchingRoundPhase().compareTo(round.getPhase()) < 0)
+                .map(ProjectMemberMatchedRoundInfo::memberId)
+                .filter(population.eligibleMemberIds()::contains).distinct().count();
+            long applicantCount = applications.stream()
+                .filter(application -> Objects.equals(application.matchingRoundId(), round.getId()))
+                .map(ProjectStatisticsApplicationRow::applicantMemberId).distinct().count();
+            return new RoundApplicationStatisticsInfo(toMatchingRoundInfo(round), applicantCount,
+                Math.max(0L, population.eligibleMemberIds().size() - previouslyMatchedCount));
+        }).toList();
+    }
+
+    /**
+     * 학교별 지원 가능 총원과 1·2·3차 지원 인원을 계산한다.
+     * <p>
+     * 지부 소속 학교는 지원자가 없어도 포함하고, 다른 지부에서 이동해 온 챌린저의 학교는 학교명을 별도로 조회해 추가한다.
+     * 지원 가능 총원은 차수에 따라 차감하지 않는다.
+     */
+    private List<SchoolStatisticsInfo> buildSchoolStatistics(
+        Long chapterId, Long gisuId, List<ProjectStatisticsApplicationRow> applications, StatisticsPopulation population
+    ) {
+        Map<Long, Long> totals = population.eligibleMemberIds().stream().map(population.schoolIdByMemberId()::get)
+            .filter(Objects::nonNull).collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        Map<Long, String> schoolNames = getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId).stream()
+            .filter(chapter -> Objects.equals(chapter.chapterId(), chapterId))
+            .flatMap(chapter -> chapter.schools().stream())
+            .collect(Collectors.toMap(ChapterWithSchoolsInfo.SchoolInfo::schoolId,
+                ChapterWithSchoolsInfo.SchoolInfo::schoolName));
+        Set<Long> transferredSchoolIds = new HashSet<>(totals.keySet());
+        transferredSchoolIds.removeAll(schoolNames.keySet());
+        if (!transferredSchoolIds.isEmpty()) {
+            for (SchoolDetailInfo school : getSchoolUseCase.listDetailsByIds(transferredSchoolIds)) {
+                schoolNames.put(school.schoolId(), school.schoolName());
+            }
+        }
+        return schoolNames.entrySet().stream().sorted(Map.Entry.comparingByKey())
+            .map(school -> new SchoolStatisticsInfo(school.getKey(), school.getValue(),
+                totals.getOrDefault(school.getKey(), 0L), countByPhase(applications.stream()
+                    .filter(application -> Objects.equals(
+                        population.schoolIdByMemberId().get(application.applicantMemberId()), school.getKey()))
+                    .toList())))
+            .toList();
+    }
+
+    /**
+     * 1·2·3차별 지원 회원 수를 계산한다. 같은 차수에서 여러 번 지원한 회원은 한 번만 세며, 지원자가 없는 차수도 0으로 반환한다.
+     */
+    private List<PhaseApplicantCountInfo> countByPhase(List<ProjectStatisticsApplicationRow> applications) {
+        return APPLICATION_PHASES.stream().map(phase -> new PhaseApplicantCountInfo(phase, applications.stream()
+            .filter(application -> application.matchingRoundPhase() == phase)
+            .map(ProjectStatisticsApplicationRow::applicantMemberId).distinct().count())).toList();
+    }
+
+    private Map<ProjectMemberKey, List<ProjectStatisticsApplicationRow>> groupApplications(
+        Collection<ProjectStatisticsApplicationRow> applications
+    ) {
+        return sortApplications(applications).stream()
+            .collect(Collectors.groupingBy(
+                ProjectMemberKey::from,
+                LinkedHashMap::new,
+                Collectors.toList()
+            ));
+    }
+
+    private ProjectMemberStatisticsInfo toMemberInfo(
+        ProjectStatisticsMemberRow member,
+        List<ProjectStatisticsApplicationRow> applications
+    ) {
+        return new ProjectMemberStatisticsInfo(
+            member.projectMemberId(),
+            member.memberId(),
+            member.part(),
+            member.status(),
+            applications.stream()
+                .map(this::toApplicationInfo)
+                .toList()
+        );
+    }
+
+    private ProjectMemberApplicationStatisticsInfo toApplicationInfo(ProjectStatisticsApplicationRow row) {
+        return new ProjectMemberApplicationStatisticsInfo(
+            row.applicationId(),
+            row.status(),
+            new ProjectMatchingRoundStatisticsInfo(
+                row.matchingRoundId(),
+                row.matchingRoundType(),
+                row.matchingRoundPhase()
+            )
+        );
+    }
+
+    private ProjectMatchingRoundStatisticsInfo toMatchingRoundInfo(ProjectMatchingRound round) {
+        return new ProjectMatchingRoundStatisticsInfo(round.getId(), round.getType(), round.getPhase());
     }
 
     /**
@@ -388,91 +524,6 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
                 .comparingLong(SchoolApplicationStatisticsInfo::applicantCount)
                 .reversed()
                 .thenComparing(SchoolApplicationStatisticsInfo::schoolId))
-            .toList();
-    }
-
-    private List<SchoolApplicationMatchingStatisticsInfo> buildSchoolMatchingStatistics(StatisticsContext context) {
-        Map<Long, Long> totalMemberCountBySchool = context.population().eligibleMemberIds().stream()
-            .map(context.population().schoolIdByMemberId()::get)
-            .filter(Objects::nonNull)
-            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-        Map<Long, Set<Long>> matchedMemberIdsBySchool = new HashMap<>();
-        for (ProjectStatisticsMemberRow member : context.members()) {
-            if (member.memberId() == null) {
-                continue;
-            }
-            Long schoolId = context.population().schoolIdByMemberId().get(member.memberId());
-            if (schoolId == null) {
-                continue;
-            }
-            matchedMemberIdsBySchool
-                .computeIfAbsent(schoolId, ignored -> new HashSet<>())
-                .add(member.memberId());
-        }
-
-        Map<Long, Set<Long>> appliedMemberIdsBySchool = new HashMap<>();
-        for (ProjectStatisticsApplicationRow application : context.applications()) {
-            if (application.applicantMemberId() == null) {
-                continue;
-            }
-            Long schoolId = context.population().schoolIdByMemberId().get(application.applicantMemberId());
-            if (schoolId == null) {
-                continue;
-            }
-            appliedMemberIdsBySchool
-                .computeIfAbsent(schoolId, ignored -> new HashSet<>())
-                .add(application.applicantMemberId());
-        }
-
-        return totalMemberCountBySchool.entrySet().stream()
-            .map(entry -> new SchoolApplicationMatchingStatisticsInfo(
-                entry.getKey(),
-                matchedMemberIdsBySchool.getOrDefault(entry.getKey(), Set.of()).size(),
-                entry.getValue(),
-                appliedMemberIdsBySchool.getOrDefault(entry.getKey(), Set.of()).size()
-            ))
-            .sorted(Comparator.comparing(SchoolApplicationMatchingStatisticsInfo::schoolId))
-            .toList();
-    }
-
-    private List<ProjectRoundMemberStatisticsInfo> buildProjectRoundStatistics(
-        List<ProjectStatisticsProjectRow> projects,
-        StatisticsContext context
-    ) {
-        Map<Long, Map<Long, Set<Long>>> projectRoundApplied = new HashMap<>();
-        for (ProjectStatisticsApplicationRow application : context.applications()) {
-            projectRoundApplied
-                .computeIfAbsent(application.projectId(), ignored -> new HashMap<>())
-                .computeIfAbsent(application.matchingRoundId(), ignored -> new HashSet<>())
-                .add(application.applicantMemberId());
-        }
-
-        Map<Long, Map<Long, Set<Long>>> projectRoundMatched = new HashMap<>();
-        for (ProjectStatisticsApplicationRow application : context.matchedApplications()) {
-            projectRoundMatched
-                .computeIfAbsent(application.projectId(), ignored -> new HashMap<>())
-                .computeIfAbsent(application.matchingRoundId(), ignored -> new HashSet<>())
-                .add(application.applicantMemberId());
-        }
-
-        return projects.stream()
-            .sorted(Comparator.comparing(ProjectStatisticsProjectRow::projectId))
-            .map(project -> new ProjectRoundMemberStatisticsInfo(
-                project.projectId(),
-                context.rounds().stream()
-                    .map(round -> new ProjectRoundMemberCountInfo(
-                        toMatchingRoundInfo(round),
-                        projectRoundApplied
-                            .getOrDefault(project.projectId(), Map.of())
-                            .getOrDefault(round.matchingRoundId(), Set.of())
-                            .size(),
-                        projectRoundMatched
-                            .getOrDefault(project.projectId(), Map.of())
-                            .getOrDefault(round.matchingRoundId(), Set.of())
-                            .size()
-                    ))
-                    .toList()
-            ))
             .toList();
     }
 
@@ -638,17 +689,6 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
         return memberIdsByRound;
     }
 
-    private Map<ProjectMemberKey, List<ProjectStatisticsApplicationRow>> groupApplications(
-        Collection<ProjectStatisticsApplicationRow> applications
-    ) {
-        return sortApplications(applications).stream()
-            .collect(Collectors.groupingBy(
-                ProjectMemberKey::from,
-                LinkedHashMap::new,
-                Collectors.toList()
-            ));
-    }
-
     private List<ProjectStatisticsMemberRow> sortMembers(Collection<ProjectStatisticsMemberRow> members) {
         return members.stream()
             .sorted(Comparator
@@ -685,43 +725,12 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             .toList();
     }
 
-    private ProjectMemberStatisticsInfo toMemberInfo(
-        ProjectStatisticsMemberRow member,
-        List<ProjectStatisticsApplicationRow> applications
-    ) {
-        return new ProjectMemberStatisticsInfo(
-            member.projectMemberId(),
-            member.memberId(),
-            member.part(),
-            member.status(),
-            applications.stream()
-                .map(this::toApplicationInfo)
-                .toList()
-        );
-    }
-
-    private ProjectMemberApplicationStatisticsInfo toApplicationInfo(ProjectStatisticsApplicationRow row) {
-        return new ProjectMemberApplicationStatisticsInfo(
-            row.applicationId(),
-            row.status(),
-            new ProjectMatchingRoundStatisticsInfo(
-                row.matchingRoundId(),
-                row.matchingRoundType(),
-                row.matchingRoundPhase()
-            )
-        );
-    }
-
     private ProjectMatchingRoundStatisticsInfo toMatchingRoundInfo(ProjectStatisticsMatchingRoundRow row) {
         return new ProjectMatchingRoundStatisticsInfo(
             row.matchingRoundId(),
             row.matchingRoundType(),
             row.matchingRoundPhase()
         );
-    }
-
-    private ChapterProjectStatisticsSummaryInfo emptySummary() {
-        return new ChapterProjectStatisticsSummaryInfo(List.of(), List.of(), List.of(), List.of());
     }
 
     private ChapterProjectMatchingStatisticsInfo emptyPublicMatchingStatistics(Long chapterId) {

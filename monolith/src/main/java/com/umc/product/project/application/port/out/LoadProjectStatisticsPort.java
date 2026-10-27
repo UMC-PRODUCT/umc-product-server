@@ -8,6 +8,7 @@ import com.umc.product.project.application.port.out.dto.ProjectStatisticsApprove
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsTargetProjectRow;
 
 public interface LoadProjectStatisticsPort {
 
@@ -20,6 +21,11 @@ public interface LoadProjectStatisticsPort {
      * 지부 내 전체 프로젝트의 통계 집계 기준 정보를 조회합니다.
      */
     List<ProjectStatisticsProjectRow> listProjectsByChapterId(Long chapterId);
+
+    /**
+     * 지정 프로젝트 중 임시저장·승인대기를 제외한 지원 통계 대상을 조회합니다.
+     */
+    List<ProjectStatisticsTargetProjectRow> listApplicationStatisticsProjectsByIds(Collection<Long> projectIds);
 
     /**
      * 로그인 사용자 공개 매칭 통계에 포함할 공개 프로젝트를 조회합니다.
@@ -35,16 +41,6 @@ public interface LoadProjectStatisticsPort {
      * 단건 프로젝트의 ACTIVE 프로젝트 멤버를 조회합니다.
      */
     List<ProjectStatisticsMemberRow> listActiveMembersByProjectId(Long projectId);
-
-    /**
-     * 지부 내 전체 프로젝트의 ACTIVE 프로젝트 멤버를 조회합니다.
-     */
-    List<ProjectStatisticsMemberRow> listActiveMembersByChapterId(Long chapterId);
-
-    /**
-     * 지정한 프로젝트들의 ACTIVE 프로젝트 멤버를 조회합니다.
-     */
-    List<ProjectStatisticsMemberRow> listActiveMembersByProjectIds(Collection<Long> projectIds);
 
     /**
      * 공개 프로젝트에 속한 ACTIVE 프로젝트 멤버 중 실제 매칭 집계 대상 멤버를 조회합니다.

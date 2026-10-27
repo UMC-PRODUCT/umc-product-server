@@ -43,6 +43,15 @@ class ChapterQueryServiceTest {
     ChapterQueryService chapterQueryService;
 
     @Test
+    @DisplayName("통계 권한 검증용 기수는 조회 대상 지부에서 가져온다")
+    void 지부의_기수_ID_조회() {
+        // given
+        given(loadChapterPort.findById(20L)).willReturn(chapter(20L, gisu(2L, 11L), "현재 지부"));
+        // when & then
+        assertThat(chapterQueryService.getGisuIdByChapterId(20L)).isEqualTo(2L);
+    }
+
+    @Test
     @DisplayName("학교가 여러 기수에 참여했어도 요청한 기수의 지부를 조회한다")
     void 요청한_기수의_학교_지부를_조회한다() {
         // given

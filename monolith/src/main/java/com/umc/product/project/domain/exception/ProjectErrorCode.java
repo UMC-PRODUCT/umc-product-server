@@ -151,6 +151,12 @@ public enum ProjectErrorCode implements BaseCode {
     CHAPTER_TRANSFER_ORIGIN_NOT_FOUND(HttpStatus.CONFLICT, "PROJECT-0409",
         "챌린저의 원래 지부를 확인할 수 없어요. 학교의 지부 배정을 확인해주세요."),
 
+    // ProjectStatistics
+    PROJECT_STATISTICS_INVALID_TARGET(HttpStatus.BAD_REQUEST, "PROJECT-0500",
+        "통계를 조회할 프로젝트 ID를 올바르게 입력해주세요."),
+    PROJECT_STATISTICS_SCOPE_MISMATCH(HttpStatus.BAD_REQUEST, "PROJECT-0501",
+        "프로젝트 통계는 같은 기수·지부의 프로젝트끼리만 조회할 수 있어요."),
+
     ;
 
     private final HttpStatus httpStatus;
