@@ -13,6 +13,12 @@ Chat WebSocket/STOMP 부하테스트의 실행 방법과 이슈별 시나리오 
 
 ## 실행
 
+dev의 `/test/**`가 문서 계정의 Basic 인증으로 보호되는 경우, `아이디:비밀번호`를 Base64로
+인코딩한 값을 `TEST_API_BASIC_AUTH` 환경변수로 전달한다. 시딩과 k6 토큰 발급에만 적용하며
+일반 API·WebSocket의 JWT 인증은 유지한다. 인코딩한 값도 비밀이므로 커밋하거나 실행 메모에 넣지 않는다.
+
+채팅 하네스는 `k6/websockets`를 지원하는 버전이 필요하다. dev 실행 검증 버전은 k6 v2.3.0이다.
+
 로컬 앱·PostgreSQL이 실행 중이어야 한다. 필요한 도구는 `k6`, `jq`, `curl`, `uuidgen`, `git`, `bash`다.
 앱의 `APP_TEST_API_ENABLED`, `APP_SEED_ENABLED`가 켜져 있어야 한다.
 학교 데이터가 하나 이상 필요하므로 조회에 실패하면 로컬 DB의 Flyway 적용 상태를 확인한다.

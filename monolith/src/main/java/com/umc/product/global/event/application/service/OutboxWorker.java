@@ -6,12 +6,13 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.stream.IntStream;
 
+import com.umc.product.global.event.application.port.in.RequestOutboxRunUseCase;
 import com.umc.product.global.event.application.port.out.OutboxEventSelection;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public final class OutboxWorker implements AutoCloseable {
+public final class OutboxWorker implements RequestOutboxRunUseCase, AutoCloseable {
 
     private final OutboxProcessingGroup group;
     private final Executor executor;
@@ -68,6 +69,7 @@ public final class OutboxWorker implements AutoCloseable {
     }
 
     // 슬롯마다 실행 요청을 하나의 후속 신호로 합쳐 executor 적재량을 제한한다.
+    @Override
     public synchronized boolean requestRun() {
         if (closed) {
             return false;
@@ -94,10 +96,13 @@ public final class OutboxWorker implements AutoCloseable {
     }
 
     private void drain(ExecutionSlot slot) {
+        boolean continueBatch = false;
         try {
-            while (takeSignal(slot)) {
+            while (takeSignal(slot, continueBatch)) {
+                continueBatch = false;
                 try {
-                    relay.relay(group, selection, batchSize);
+                    int claimed = relay.relay(group, selection, batchSize);
+                    continueBatch = OutboxProcessingGroup.REALTIME.equals(group) && claimed == batchSize;
                 } catch (RuntimeException exception) {
                     log.error("Outbox worker 배치 실행 실패: group={}", group.name(), exception);
                 }
@@ -111,8 +116,8 @@ public final class OutboxWorker implements AutoCloseable {
         }
     }
 
-    private synchronized boolean takeSignal(ExecutionSlot slot) {
-        if (closed || !slot.pending) {
+    private synchronized boolean takeSignal(ExecutionSlot slot, boolean continueBatch) {
+        if (closed || (!slot.pending && !continueBatch)) {
             slot.scheduled = false;
             return false;
         }

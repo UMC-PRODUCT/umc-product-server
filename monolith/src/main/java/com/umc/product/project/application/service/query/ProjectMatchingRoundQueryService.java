@@ -13,6 +13,7 @@ import com.umc.product.project.application.port.in.query.GetProjectMatchingRound
 import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRoundInfo;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.domain.ProjectMatchingRound;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
@@ -26,7 +27,7 @@ public class ProjectMatchingRoundQueryService implements GetProjectMatchingRound
     private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
 
     @Override
-    public List<ProjectMatchingRoundInfo> list(Long chapterId, Instant time) {
+    public List<ProjectMatchingRoundInfo> list(Long chapterId, MatchingType type, Instant time) {
         List<ProjectMatchingRound> rounds;
         if (time != null) {
             if (chapterId == null) {
@@ -40,6 +41,7 @@ public class ProjectMatchingRoundQueryService implements GetProjectMatchingRound
         }
 
         return rounds.stream()
+            .filter(round -> type == null || round.getType() == type)
             .map(ProjectMatchingRoundInfo::from)
             .toList();
     }

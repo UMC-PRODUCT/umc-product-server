@@ -1,6 +1,7 @@
 package com.umc.product.global.event.adapter.out;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -30,7 +31,8 @@ class OutboxDomainEventPublisherTest {
         OutboxDomainEventPublisher publisher = new OutboxDomainEventPublisher(
             savePort,
             new EventPayloadSerializer(new ObjectMapper().findAndRegisterModules()),
-            Tracer.NOOP
+            Tracer.NOOP,
+            mock(OutboxCommitSignalPublisher.class)
         );
         TestEvent event = TestEvent.create("test.created", "hello");
 
@@ -50,7 +52,8 @@ class OutboxDomainEventPublisherTest {
         OutboxDomainEventPublisher publisher = new OutboxDomainEventPublisher(
             savePort,
             new EventPayloadSerializer(new ObjectMapper().findAndRegisterModules()),
-            Tracer.NOOP
+            Tracer.NOOP,
+            mock(OutboxCommitSignalPublisher.class)
         );
         TestEvent first = TestEvent.create("test.first", "first");
         TestEvent second = TestEvent.create("test.second", "second");
@@ -71,7 +74,8 @@ class OutboxDomainEventPublisherTest {
         OutboxDomainEventPublisher publisher = new OutboxDomainEventPublisher(
             savePort,
             new EventPayloadSerializer(new ObjectMapper().findAndRegisterModules()),
-            tracer
+            tracer,
+            mock(OutboxCommitSignalPublisher.class)
         );
         TestEvent event = TestEvent.create("test.created", "hello");
         Span span = tracer.nextSpan().name("origin").start();
@@ -94,8 +98,7 @@ class OutboxDomainEventPublisherTest {
         OutboxDomainEventPublisher publisher = new OutboxDomainEventPublisher(
             savePort,
             new EventPayloadSerializer(new ObjectMapper().findAndRegisterModules()),
-            new SimpleTracer()
-        );
+            new SimpleTracer(), mock(OutboxCommitSignalPublisher.class));
         TestEvent event = TestEvent.create("test.created", "hello");
 
         publisher.publish(event);

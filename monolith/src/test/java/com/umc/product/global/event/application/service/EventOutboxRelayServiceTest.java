@@ -3,11 +3,14 @@ package com.umc.product.global.event.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,12 +61,13 @@ class EventOutboxRelayServiceTest {
             3
         );
 
-        relayService.relay(
+        int claimed = relayService.relay(
             OutboxProcessingGroup.BACKGROUND,
             new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
             100
         );
 
+        assertThat(claimed).isEqualTo(1);
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PUBLISHED);
         assertThat(publisher.events).hasSize(1);
         assertThat(publisher.events.getFirst()).isInstanceOf(TestEvent.class);
@@ -125,12 +129,13 @@ class EventOutboxRelayServiceTest {
             3
         );
 
-        relayService.relay(
+        int claimed = relayService.relay(
             OutboxProcessingGroup.BACKGROUND,
             new OutboxRoutingConfig().outboxEventRoutingPolicy().selectionFor(OutboxProcessingGroup.BACKGROUND),
             100
         );
 
+        assertThat(claimed).isEqualTo(1);
         assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
         assertThat(outbox.getAttempts()).isEqualTo(1);
         assertThat(outbox.getLastError()).contains("publish failed");
@@ -458,6 +463,102 @@ class EventOutboxRelayServiceTest {
                 policy.resolveProcessingGroup(outbox.getEventType()).equals(selection.processingGroup()))
                 .limit(limit).toList();
         }
+    }
+
+    @Test
+    @DisplayName("선점 가능한 이벤트가 없으면 0건을 반환하고 발행하지 않는다")
+    void 빈_배치_반환() {
+        // given
+        var mapper = new ObjectMapper().findAndRegisterModules();
+        var publisher = new CapturingApplicationEventPublisher();
+        var relay = new EventOutboxRelayService(
+            new FakeLoadEventOutboxPort(List.of()), new FakeSaveEventOutboxPort(),
+            new EventPayloadDeserializer(mapper), publisher, new LocalTransactionManager(), Tracer.NOOP, 3
+        );
+
+        // when
+        int claimed = relay.relay(OutboxProcessingGroup.REALTIME, new OutboxEventSelection("realtime"), 10);
+
+        // then
+        assertThat(claimed).isZero();
+        assertThat(publisher.events).isEmpty();
+    }
+
+    @Test
+    @DisplayName("실제 Relay가 반환한 선점 수로 한 신호의 실시간 적체를 모두 발행한다")
+    void 실제_Relay_연속_배치() {
+        // given
+        var mapper = new ObjectMapper().findAndRegisterModules();
+        var serializer = new EventPayloadSerializer(mapper);
+        List<EventOutbox> outboxes = new ArrayList<>();
+        for (int index = 0; index < 23; index++) {
+            TestEvent event = TestEvent.create("chat.message.created", "hello");
+            outboxes.add(EventOutbox.record(event, serializer.serialize(event)));
+        }
+        AtomicInteger queries = new AtomicInteger();
+        LoadEventOutboxPort loadPort = (selection, limit, now) -> {
+            queries.incrementAndGet();
+            return outboxes.stream().filter(outbox -> outbox.getStatus() == EventOutboxStatus.PENDING)
+                .limit(limit).toList();
+        };
+        var publisher = new CapturingApplicationEventPublisher();
+        var relay = new EventOutboxRelayService(
+            loadPort, new FakeSaveEventOutboxPort(), new EventPayloadDeserializer(mapper), publisher,
+            new LocalTransactionManager(), Tracer.NOOP, 3
+        );
+        Queue<Runnable> tasks = new ArrayDeque<>();
+        var worker = new OutboxWorker(
+            OutboxProcessingGroup.REALTIME, tasks::add, relay, new OutboxRoutingConfig().outboxEventRoutingPolicy(), 10
+        );
+
+        // when
+        worker.requestRun();
+        tasks.remove().run();
+
+        // then
+        assertThat(publisher.events).hasSize(23);
+        assertThat(outboxes).allMatch(outbox -> outbox.getStatus() == EventOutboxStatus.PUBLISHED);
+        assertThat(queries).hasValue(3);
+        assertThat(tasks).isEmpty();
+    }
+
+    @Test
+    @DisplayName("실패 이벤트가 재시도 대기 상태로 남아도 빈 배치 조회 후 반복을 멈춘다")
+    void 재시도_대기_후_반복_종료() {
+        // given
+        var mapper = new ObjectMapper().findAndRegisterModules();
+        TestEvent event = TestEvent.create("chat.message.created", "hello");
+        EventOutbox outbox = EventOutbox.record(event, new EventPayloadSerializer(mapper).serialize(event));
+        Instant eligibleAt = Instant.now();
+        AtomicInteger queries = new AtomicInteger();
+        LoadEventOutboxPort loadPort = (selection, limit, now) -> {
+            queries.incrementAndGet();
+            // 동일한 조회 시점에서 backoff 이후 이벤트가 제외되는 상황을 재현한다.
+            return outbox.getStatus() == EventOutboxStatus.PENDING && !outbox.getNextAttemptAt().isAfter(eligibleAt)
+                ? List.of(outbox) : List.of();
+        };
+        AtomicInteger attempts = new AtomicInteger();
+        var relay = new EventOutboxRelayService(
+            loadPort, new FakeSaveEventOutboxPort(), new EventPayloadDeserializer(mapper), ignored -> {
+                attempts.incrementAndGet();
+                throw new IllegalStateException("발행 실패");
+            }, new LocalTransactionManager(), Tracer.NOOP, 3
+        );
+        Queue<Runnable> tasks = new ArrayDeque<>();
+        var worker = new OutboxWorker(
+            OutboxProcessingGroup.REALTIME, tasks::add, relay, new OutboxRoutingConfig().outboxEventRoutingPolicy(), 1
+        );
+
+        // when
+        worker.requestRun();
+        tasks.remove().run();
+
+        // then
+        assertThat(queries).hasValue(2);
+        assertThat(attempts).hasValue(1);
+        assertThat(outbox.getStatus()).isEqualTo(EventOutboxStatus.PENDING);
+        assertThat(outbox.getNextAttemptAt()).isAfter(eligibleAt);
+        assertThat(tasks).isEmpty();
     }
 
     private static class FakeSaveEventOutboxPort implements SaveEventOutboxPort {

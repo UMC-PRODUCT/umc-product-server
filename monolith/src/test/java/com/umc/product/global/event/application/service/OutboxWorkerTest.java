@@ -5,10 +5,10 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -65,8 +65,8 @@ class OutboxWorkerTest {
             for (int index = 0; index < 100; index++) {
                 worker.requestRun();
             }
-            return null;
-        }).doAnswer(invocation -> null).when(relay).relay(any(), any(), eq(10));
+            return 0;
+        }).doAnswer(invocation -> 0).when(relay).relay(any(), any(), eq(10));
 
         worker.requestRun();
         tasks.remove().run();
@@ -105,7 +105,7 @@ class OutboxWorkerTest {
     void 배치실패후_재실행() {
         Queue<Runnable> tasks = new ArrayDeque<>();
         var worker = worker(tasks::add);
-        doThrow(new IllegalStateException("선점 실패")).doNothing().when(relay).relay(any(), any(), eq(10));
+        when(relay.relay(any(), any(), eq(10))).thenThrow(new IllegalStateException("선점 실패")).thenReturn(0);
 
         worker.requestRun();
         tasks.remove().run();
@@ -140,13 +140,13 @@ class OutboxWorkerTest {
             if (!releaseBackground.await(5, TimeUnit.SECONDS)) {
                 throw new IllegalStateException("테스트 대기 시간 초과");
             }
-            return null;
+            return 0;
         }).when(relay).relay(
             OutboxProcessingGroup.BACKGROUND, policy.selectionFor(OutboxProcessingGroup.BACKGROUND), 10
         );
         doAnswer(invocation -> {
             realtimeCompleted.countDown();
-            return null;
+            return 0;
         }).when(relay).relay(OutboxProcessingGroup.REALTIME, policy.selectionFor(OutboxProcessingGroup.REALTIME), 10);
         var realtimeExecutor = Executors.newSingleThreadExecutor();
         var backgroundExecutor = Executors.newSingleThreadExecutor();
@@ -189,7 +189,7 @@ class OutboxWorkerTest {
             } finally {
                 active.decrementAndGet();
             }
-            return null;
+            return 0;
         }).when(relay).relay(any(), any(), eq(10));
         var executor = Executors.newFixedThreadPool(4);
         var worker = new OutboxWorker(OutboxProcessingGroup.REALTIME, executor, relay, policy,
@@ -243,7 +243,7 @@ class OutboxWorkerTest {
         Queue<Runnable> tasks = new ArrayDeque<>();
         var worker = new OutboxWorker(OutboxProcessingGroup.REALTIME, tasks::add, relay, policy,
             10, EventOutboxRelayMetrics.noOp(), 2);
-        doThrow(new IllegalStateException("선점 실패")).doNothing().when(relay).relay(any(), any(), eq(10));
+        when(relay.relay(any(), any(), eq(10))).thenThrow(new IllegalStateException("선점 실패")).thenReturn(0);
         worker.requestRun();
         tasks.remove().run();
         tasks.remove().run();
@@ -254,6 +254,179 @@ class OutboxWorkerTest {
 
         verify(relay, times(2)).relay(any(), any(), eq(10));
         assertThat(worker.requestRun()).isFalse();
+    }
+
+    @Test
+    @DisplayName("한 번의 신호로 실시간 적체를 여러 배치 처리하고 부분 배치에서 멈춘다")
+    void 여러_배치_연속_처리() {
+        // given
+        Queue<Runnable> tasks = new ArrayDeque<>();
+        var worker = worker(tasks::add);
+        when(relay.relay(any(), any(), eq(10))).thenReturn(10, 10, 3);
+
+        // when
+        worker.requestRun();
+        assertThat(tasks).hasSize(1);
+        tasks.remove().run();
+
+        // then
+        verify(relay, times(3)).relay(any(), any(), eq(10));
+        assertThat(tasks).isEmpty();
+        assertThat(worker.requestRun()).isTrue();
+        assertThat(tasks).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("배치 크기의 정확한 배수를 처리하면 빈 조회 한 번 이후 멈춘다")
+    void 정확한_배수_후_빈_조회() {
+        // given
+        Queue<Runnable> tasks = new ArrayDeque<>();
+        var worker = worker(tasks::add);
+        when(relay.relay(any(), any(), eq(10))).thenReturn(10, 10, 0);
+
+        // when
+        worker.requestRun();
+        tasks.remove().run();
+
+        // then
+        verify(relay, times(3)).relay(any(), any(), eq(10));
+        assertThat(tasks).isEmpty();
+    }
+
+    @Test
+    @DisplayName("가득 찬 배치 도중 들어온 신호는 다음 연속 배치에 합친다")
+    void 연속_배치와_대기_신호_병합() {
+        // given
+        Queue<Runnable> tasks = new ArrayDeque<>();
+        var worker = worker(tasks::add);
+        doAnswer(invocation -> {
+            for (int index = 0; index < 100; index++) {
+                worker.requestRun();
+            }
+            return 10;
+        }).doReturn(3).when(relay).relay(any(), any(), eq(10));
+
+        // when
+        worker.requestRun();
+        tasks.remove().run();
+
+        // then
+        verify(relay, times(2)).relay(any(), any(), eq(10));
+        assertThat(tasks).isEmpty();
+    }
+
+    @Test
+    @DisplayName("가득 찬 배치 실행 중 종료하면 추가 배치를 선점하지 않는다")
+    void 연속_배치_종료() {
+        // given
+        Queue<Runnable> tasks = new ArrayDeque<>();
+        var worker = worker(tasks::add);
+        doAnswer(invocation -> {
+            worker.close();
+            return 10;
+        }).when(relay).relay(any(), any(), eq(10));
+
+        // when
+        worker.requestRun();
+        tasks.remove().run();
+
+        // then
+        verify(relay).relay(any(), any(), eq(10));
+        assertThat(worker.requestRun()).isFalse();
+        assertThat(tasks).isEmpty();
+    }
+
+    @Test
+    @DisplayName("백그라운드는 가득 찬 배치여도 추가 신호 없이 연속 처리하지 않는다")
+    void 백그라운드_한_배치_유지() {
+        // given
+        Queue<Runnable> tasks = new ArrayDeque<>();
+        var worker = new OutboxWorker(OutboxProcessingGroup.BACKGROUND, tasks::add, relay, policy, 10);
+        when(relay.relay(any(), any(), eq(10))).thenReturn(10);
+
+        // when
+        worker.requestRun();
+        tasks.remove().run();
+
+        // then
+        verify(relay).relay(any(), any(), eq(10));
+        assertThat(tasks).isEmpty();
+    }
+
+    @Test
+    @DisplayName("연속 배치가 실패하면 자동 반복을 멈추고 다음 요청으로 복구한다")
+    void 연속_배치_실패_후_복구() {
+        // given
+        Queue<Runnable> tasks = new ArrayDeque<>();
+        var worker = worker(tasks::add);
+        when(relay.relay(any(), any(), eq(10))).thenReturn(10)
+            .thenThrow(new IllegalStateException("선점 실패")).thenReturn(0);
+
+        // when
+        worker.requestRun();
+        tasks.remove().run();
+        verify(relay, times(2)).relay(any(), any(), eq(10));
+
+        // then
+        assertThat(worker.requestRun()).isTrue();
+        tasks.remove().run();
+        verify(relay, times(3)).relay(any(), any(), eq(10));
+        assertThat(tasks).isEmpty();
+    }
+
+    @Test
+    @DisplayName("연속 배치와 반복 신호에도 동시성 상한과 executor 제출 수를 유지한다")
+    void 연속_배치_동시성_상한() throws Exception {
+        // given
+        CountDownLatch started = new CountDownLatch(2);
+        CountDownLatch release = new CountDownLatch(1);
+        AtomicInteger batches = new AtomicInteger(5);
+        AtomicInteger active = new AtomicInteger();
+        AtomicInteger maximum = new AtomicInteger();
+        AtomicInteger submitted = new AtomicInteger();
+        doAnswer(invocation -> {
+            int current = active.incrementAndGet();
+            maximum.accumulateAndGet(current, Math::max);
+            int claimed = batches.getAndUpdate(count -> Math.max(0, count - 1)) > 0 ? 10 : 0;
+            started.countDown();
+            try {
+                if (!release.await(5, TimeUnit.SECONDS)) {
+                    throw new IllegalStateException("테스트 대기 시간 초과");
+                }
+                return claimed;
+            } finally {
+                active.decrementAndGet();
+            }
+        }).when(relay).relay(any(), any(), eq(10));
+        var executor = Executors.newFixedThreadPool(4);
+        Executor countingExecutor = task -> {
+            submitted.incrementAndGet();
+            executor.execute(task);
+        };
+        var worker = new OutboxWorker(OutboxProcessingGroup.REALTIME, countingExecutor, relay, policy,
+            10, EventOutboxRelayMetrics.noOp(), 2);
+
+        // when
+        try {
+            worker.requestRun();
+            assertThat(started.await(5, TimeUnit.SECONDS)).isTrue();
+            for (int index = 0; index < 100; index++) {
+                worker.requestRun();
+            }
+            release.countDown();
+            executor.shutdown();
+            assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+
+            // then
+            verify(relay, times(7)).relay(any(), any(), eq(10));
+            assertThat(maximum.get()).isEqualTo(2);
+            assertThat(submitted.get()).isEqualTo(2);
+        } finally {
+            worker.close();
+            release.countDown();
+            executor.shutdownNow();
+            assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+        }
     }
 
     @Test
