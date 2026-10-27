@@ -1,10 +1,14 @@
 package com.umc.product.project.application.service.policy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +25,8 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import com.umc.product.organization.exception.OrganizationDomainException;
+import com.umc.product.organization.exception.OrganizationErrorCode;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.domain.Project;
 
@@ -67,17 +73,20 @@ class ProjectStatisticsAccessPolicyTest {
     @Test
     @DisplayName("중앙 운영진은 지부 통계를 조회할 수 있다")
     void 중앙_운영진은_지부_통계를_조회할_수_있다() {
+        given(getChapterUseCase.getGisuIdByChapterId(CHAPTER_ID)).willReturn(1L);
         given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID))
             .willReturn(List.of(role(ChallengerRoleType.CENTRAL_PRESIDENT, OrganizationType.CENTRAL, null)));
 
         boolean result = sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID);
 
         assertThat(result).isTrue();
+        verify(getChallengerRoleUseCase).isSuperAdmin(MEMBER_ID);
     }
 
     @Test
     @DisplayName("해당 지부장은 지부 통계를 조회할 수 있다")
     void 해당_지부장은_지부_통계를_조회할_수_있다() {
+        given(getChapterUseCase.getGisuIdByChapterId(CHAPTER_ID)).willReturn(1L);
         given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID))
             .willReturn(List.of(role(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER, CHAPTER_ID)));
 
@@ -89,10 +98,11 @@ class ProjectStatisticsAccessPolicyTest {
     @Test
     @DisplayName("해당 지부 소속 학교 회장단은 지부 통계를 조회할 수 있다")
     void 해당_지부_소속_학교_회장단은_지부_통계를_조회할_수_있다() {
+        given(getChapterUseCase.getGisuIdByChapterId(CHAPTER_ID)).willReturn(1L);
         given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID))
             .willReturn(List.of(role(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, SCHOOL_ID)));
-        given(getChapterUseCase.getChaptersBySchoolIds(Set.of(SCHOOL_ID)))
-            .willReturn(List.of(new ChapterInfo(CHAPTER_ID, "테스트 지부")));
+        given(getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(Set.of(1L), Set.of(SCHOOL_ID)))
+            .willReturn(Map.of(1L, Map.of(SCHOOL_ID, new ChapterInfo(CHAPTER_ID, "테스트 지부"))));
 
         boolean result = sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID);
 
@@ -107,6 +117,70 @@ class ProjectStatisticsAccessPolicyTest {
         boolean result = sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID);
 
         assertThat(result).isFalse();
+        verifyNoInteractions(getChapterUseCase);
+        verify(getChallengerRoleUseCase).isSuperAdmin(MEMBER_ID);
+    }
+
+    @Test
+    @DisplayName("이전 기수 총괄단 역할은 프로젝트와 지부 통계 권한으로 인정하지 않는다")
+    void 이전_기수_총괄단_거부() {
+        // given
+        given(getChapterUseCase.getGisuIdByChapterId(CHAPTER_ID)).willReturn(1L);
+        given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
+            ChallengerRoleInfo.builder().roleType(ChallengerRoleType.CENTRAL_PRESIDENT).gisuId(2L).build()));
+        // when & then
+        assertThat(sut.canReadProjectStatistics(MEMBER_ID, project(999L))).isFalse();
+        assertThat(sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID)).isFalse();
+    }
+
+    @Test
+    @DisplayName("이전 기수 학교 회장 역할은 같은 학교여도 통계를 조회할 수 없다")
+    void 이전_기수_학교회장_거부() {
+        // given
+        given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
+            ChallengerRoleInfo.builder().roleType(ChallengerRoleType.SCHOOL_PRESIDENT)
+                .organizationId(SCHOOL_ID).gisuId(2L).build()));
+        // when & then
+        assertThat(sut.canReadProjectStatistics(MEMBER_ID, project(999L))).isFalse();
+    }
+
+    @Test
+    @DisplayName("최고관리자는 기수와 무관하게 지부 통계를 조회할 수 있다")
+    void 최고관리자_전역_권한_유지() {
+        given(getChallengerRoleUseCase.isSuperAdmin(MEMBER_ID)).willReturn(true);
+        assertThat(sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID)).isTrue();
+        assertThat(sut.canReadProjectStatistics(MEMBER_ID, project(999L))).isTrue();
+        verifyNoInteractions(getChapterUseCase);
+        verify(getChallengerRoleUseCase, times(2)).isSuperAdmin(MEMBER_ID);
+    }
+
+    @Test
+    @DisplayName("통계 권한에 해당하지 않는 역할은 지부 존재 여부를 조회하지 않고 거절한다")
+    void 권한_없는_역할은_지부_조회_전에_거절한다() {
+        // given
+        given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
+            role(ChallengerRoleType.CENTRAL_EDUCATION_TEAM_MEMBER, OrganizationType.CENTRAL, null)));
+
+        // when & then
+        assertThat(sut.canReadChapterStatistics(MEMBER_ID, 999L)).isFalse();
+        verifyNoInteractions(getChapterUseCase);
+        verify(getChallengerRoleUseCase).isSuperAdmin(MEMBER_ID);
+    }
+
+    @Test
+    @DisplayName("운영진이 존재하지 않는 지부를 조회하면 지부 없음 오류를 유지한다")
+    void 운영진의_없는_지부_조회는_대상_없음_오류를_유지한다() {
+        // given
+        given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
+            role(ChallengerRoleType.CENTRAL_PRESIDENT, OrganizationType.CENTRAL, null)));
+        given(getChapterUseCase.getGisuIdByChapterId(999L))
+            .willThrow(new OrganizationDomainException(OrganizationErrorCode.CHAPTER_NOT_FOUND));
+
+        // when & then
+        assertThatThrownBy(() -> sut.canReadChapterStatistics(MEMBER_ID, 999L))
+            .isInstanceOfSatisfying(OrganizationDomainException.class,
+                exception -> assertThat(exception.getBaseCode()).isEqualTo(OrganizationErrorCode.CHAPTER_NOT_FOUND));
+        verify(getChallengerRoleUseCase).isSuperAdmin(MEMBER_ID);
     }
 
     private static Project project(Long ownerMemberId) {

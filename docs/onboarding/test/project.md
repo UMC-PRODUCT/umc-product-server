@@ -103,7 +103,7 @@
 | 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
 |---:|---|---|---|
 | [68](../../../monolith/src/test/java/com/umc/product/project/adapter/in/web/ProjectStatisticsQueryControllerTest.java#L68) | GET_projectId_statistics_단건_프로젝트_지원_매칭_현황을_반환한다 | HTTP GET /api/v1/projects/{projectId}/statistics | 성공: HTTP 200 OK |
-| [90](../../../monolith/src/test/java/com/umc/product/project/adapter/in/web/ProjectStatisticsQueryControllerTest.java#L90) | GET_statistics_chapterId_지부_전체_프로젝트_지원_매칭_현황을_반환한다 | HTTP GET /api/v1/projects/statistics; param chapterId="3" | 성공: HTTP 200 OK |
+| [90](../../../monolith/src/test/java/com/umc/product/project/adapter/in/web/ProjectStatisticsQueryControllerTest.java#L90) | GET_statistics_chapterId_지부_전체_프로젝트_지원_매칭_현황을_반환한다 | HTTP GET /api/v1/projects/statistics/applications; param chapterId="3" | 성공: HTTP 200 OK |
 
 ## UseCase / Application Service
 

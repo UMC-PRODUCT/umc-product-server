@@ -98,7 +98,7 @@ public record ProjectStatisticsResponse(
         @Schema(description = "매칭 차수")
         MatchingPhase phase
     ) {
-        private static ProjectMatchingRoundStatisticsResponse from(ProjectMatchingRoundStatisticsInfo info) {
+        static ProjectMatchingRoundStatisticsResponse from(ProjectMatchingRoundStatisticsInfo info) {
             return new ProjectMatchingRoundStatisticsResponse(
                 info.matchingRoundId(),
                 info.type(),

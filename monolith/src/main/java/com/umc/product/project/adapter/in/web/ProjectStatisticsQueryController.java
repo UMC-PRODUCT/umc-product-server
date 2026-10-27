@@ -36,7 +36,7 @@ public class ProjectStatisticsQueryController {
         summary = "단건 프로젝트 지원/매칭 현황 조회 (Deprecated)",
         deprecated = true,
         description = """
-            deprecated: `/api/v1/projects/statistics?projectIds={projectId}`를 사용해주세요.
+            deprecated: `/api/v1/projects/statistics/applications?projectIds={projectId}`를 사용해주세요.
 
             프로젝트 ID와 함께 멤버 목록을 포함하고 있고, FE단 재가공을 최소화해드리기 위해서 `roundApplicationStatistics` 및 `schoolApplicationStatistics` 필드를 두고 있습니다.
 
@@ -57,37 +57,45 @@ public class ProjectStatisticsQueryController {
         return assembler.statisticsForProject(projectId, memberPrincipal.getMemberId());
     }
 
-    @GetMapping("/statistics")
+    @GetMapping("/statistics/applications")
     @Operation(
         operationId = "PROJECT-STAT-002",
         summary = "프로젝트 지원 현황 조회",
         description = """
-            프로젝트 지원 현황 조회 API입니다.
-            projectIds 또는 chapterId 중 정확히 하나만 query parameter로 제공해야 합니다.
+            디자인·개발 매칭의 차수별·학교별·프로젝트별 지원 현황을 조회합니다.
+            projectIds와 chapterId 중 하나만 보내야 하며, 둘 다 보내거나 둘 다 없으면 400을 반환합니다.
 
-            - projectIds 제공: 요청한 프로젝트의 지원 현황을 `projects` 배열로 반환합니다. 단건은 1개 값으로 요청하고, 다건은 같은 지부 프로젝트만 요청할 수 있습니다.
-            - chapterId 제공: 지부 전체 프로젝트 지원 현황을 반환합니다.
+            조회 범위
+            - chapterId: 해당 지부의 모든 프로젝트를 집계합니다.
+            - projectIds: 지정한 프로젝트만 집계합니다. 단건은 값 1개로 요청하며, 모두 같은 기수·지부여야 합니다(아니면 400 PROJECT-0501).
+            - 임시저장(DRAFT)·승인대기(PENDING_REVIEW) 프로젝트는 지원서를 받을 수 없으므로 항상 제외합니다.
+              중단(ABORTED)·완료(COMPLETED) 프로젝트는 이전에 받은 지원서가 있으므로 포함합니다.
 
-            지부 내 모든 프로젝트 목록 및 각 프로젝트에 대한 프로젝트 멤버를 포함하며,
-            이는 `/api/v1/projects/{projectId}/statistics` 에서 제공하는 것과 동일한 형태입니다.
-            추가로 BFF 패턴을 적용하여 FE단 데이터 가공 책임을 줄이기 위해 `summary` 필드를 제공합니다.
+            기준 매칭 (matchingRound)
+            - 지원 기간(startsAt~endsAt)이 진행 중인 1~3차를 기준으로 하며, 없으면 가장 최근에 종료된 1~3차를 사용합니다.
+            - 기준 차수와 같은 유형(PLAN_DESIGN 또는 PLAN_DEVELOPER)의 1~3차만 집계합니다. 랜덤 매칭은 지원서를 받지 않아 제외합니다.
+            - 시작한 1~3차가 없으면 matchingRound는 null이고 summary의 배열은 모두 비어 있습니다.
 
-            응답 필드 설명:
-            - projects: 프로젝트별 지원 현황 목록입니다.
-            - projects[].projectMembers: 해당 프로젝트에 최종 합류한 ACTIVE ProjectMember 목록입니다.
-            - projects[].projectMembers[].applications: 해당 멤버가 해당 프로젝트에 작성한 지원 이력입니다. 강제 배정처럼 지원서 없이 합류한 경우 빈 배열입니다.
-            - projects[].roundApplicationStatistics: 프로젝트 단위의 매칭 차수별 지원서 수와 지원 가능 인원 수입니다.
-            - projects[].schoolApplicationStatistics: 프로젝트 단위의 매칭 차수별 학교 지원자 수입니다. 같은 차수 안에서는 memberId 기준으로 중복 제거합니다.
-            - summary.roundApplicationStatistics: 조회 범위 전체의 매칭 차수별 지원서 수와 지원 가능 인원 수입니다. `appliedMemberCount`는 지원서 수 합계이고, `availableMemberCount`는 지원 가능 챌린저 총원에서 이전 차수까지 이미 ProjectMember로 합류한 인원을 제외한 값입니다.
-            - summary.roundSchoolRankings: 조회 범위 전체의 매칭 차수별 학교 지원자 수입니다. 같은 차수 안에서는 memberId 기준으로 중복 제거합니다.
-            - summary.schoolMatchingStatistics: 학교별 지원 가능 총원, 매칭 완료 인원, 한 번이라도 지원한 인원 수입니다. `totalMemberCount`는 지원 가능한 ACTIVE 챌린저 수, `matchedMemberCount`는 ACTIVE ProjectMember 수, `appliedMemberCount`는 조회 범위에서 한 번이라도 지원한 memberId 기준 unique 인원 수입니다.
-            - summary.projectRoundStatistics: 프로젝트별 매칭 차수 지원 현황입니다. `appliedMemberCount`는 프로젝트와 차수 안에서 memberId 기준으로 중복 제거한 지원자 수이고, `matchedMemberCount`는 해당 프로젝트와 차수에서 매칭 완료된 인원 수입니다.
+            집계 기준
+            - 지원 인원은 제출·합격·불합격 지원서를 낸 인원이며, 같은 차수에서 여러 번 지원해도 한 명으로 셉니다.
+            - 지원 가능 인원은 지부의 기준 유형 활동 중 챌린저 수입니다. projectIds로 조회해도 지부 기준으로 계산합니다.
+            - summary.roundApplicationStatistics: 차수별 지원 인원과 지원 가능 인원입니다. 지원 가능 인원은 이전 차수까지 매칭된 인원을 뺀 값이며,
+              지원률은 appliedMemberCount / availableMemberCount로 계산합니다.
+            - summary.schoolApplicationStatistics: 학교별 지원 가능 총원과 1·2·3차 지원 인원입니다. 총원은 차수가 지나도 차감하지 않습니다.
+            - summary.projectRoundStatistics: 프로젝트별 1·2·3차 지원 인원입니다. 팀 매칭 프로젝트 목록과 같이 등록순으로 정렬합니다.
+            - 학교별·프로젝트별 rounds는 지원자가 없어도 FIRST, SECOND, THIRD 3개를 항상 반환합니다.
+            - 개인 정보와 지원자 명단은 포함하지 않습니다.
 
-            프로젝트별 지원자 목록은 `/api/v1/projects/{projectId}/applications`를 호출해서 조회해야 합니다.
-            공개 매칭 요약은 `/api/v1/projects/statistics/matchings`를 호출해서 조회해야 합니다.
+            함께 사용하는 API
+            - 프로젝트 목록·모집 상태·파트별 현재 인원/TO: GET /api/v1/projects
+            - 프로젝트별 지원자 목록(아코디언): GET /api/v1/projects/{projectId}/applications,
+              GET /api/v1/projects/applications?projectIds={projectIds}
+            - 공개 매칭 통계: GET /api/v1/projects/statistics/matchings?chapterId={chapterId}
 
-            권한: projectIds 조회는 각 프로젝트의 PO/Sub-PM(본인 프로젝트), 총괄단, 해당 지부장, 해당 지부 소속 학교 회장/부회장만 조회할 수 있습니다.
-            chapterId 조회는 총괄단(모든 지부), 해당 지부장, 해당 지부 소속 학교 회장/부회장만 조회할 수 있습니다. 그 외에는 403.
+            권한
+            - SUPER_ADMIN, 해당 기수 총괄단, 해당 지부장, 해당 지부 소속 학교 회장·부회장은 chapterId·projectIds 모두 조회할 수 있습니다.
+            - PO·Sub-PM은 본인 프로젝트만 projectIds로 조회할 수 있습니다.
+            - 권한이 없으면 403, 존재하지 않는 프로젝트가 포함되면 404를 반환합니다.
             """
     )
     public ChapterProjectStatisticsResponse getStatistics(

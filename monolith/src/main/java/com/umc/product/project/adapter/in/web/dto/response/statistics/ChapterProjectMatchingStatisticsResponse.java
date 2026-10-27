@@ -48,11 +48,7 @@ public record ChapterProjectMatchingStatisticsResponse(
     ) {
         private static RoundMatchingStatisticsResponse from(RoundMatchingStatisticsInfo info) {
             return new RoundMatchingStatisticsResponse(
-                new ProjectMatchingRoundStatisticsResponse(
-                    info.matchingRound().matchingRoundId(),
-                    info.matchingRound().type(),
-                    info.matchingRound().phase()
-                ),
+                ProjectMatchingRoundStatisticsResponse.from(info.matchingRound()),
                 info.matchedMemberCount(),
                 info.availableMemberCount(),
                 info.projects().stream()

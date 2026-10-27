@@ -4,6 +4,9 @@
 
 Accepted (2026-05-19)
 
+후속 변경(#1427): 지원 통계 경로는 `GET /api/v1/projects/statistics/applications`로 변경한다.
+공개 매칭 통계 경로 `GET /api/v1/projects/statistics/matchings`는 유지한다.
+
 ## Context
 
 2026년 5월 기준 프로젝트 도메인의 통계 조회는 지원 현황과 매칭 현황이 분리되어 있었다.

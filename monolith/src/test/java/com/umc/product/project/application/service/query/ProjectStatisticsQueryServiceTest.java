@@ -8,8 +8,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +21,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,28 +33,59 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectMatchingStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.PhaseApplicantCountInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.RoundApplicationStatisticsInfo;
+import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
+import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoundInfo;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsApplicationRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsApprovedApplicationRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsTargetProjectRow;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver.ChapterTransferDelta;
 import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
+import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectStatisticsQueryServiceTest {
+
+    private static final Instant NOW = Instant.parse("2026-10-27T03:00:00Z");
+    private static final Long CHAPTER_ID = 10L;
+    private static final Long GISU_ID = 3L;
+    private static final Long REQUESTER_ID = 99L;
+
+    @Mock
+    LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
+
+    @Mock
+    LoadProjectMemberPort loadProjectMemberPort;
+
+    @Mock
+    GetChapterUseCase getChapterUseCase;
+
+    @Mock
+    GetSchoolUseCase getSchoolUseCase;
+
+    @Mock
+    Clock clock;
 
     @Mock
     LoadProjectStatisticsPort loadProjectStatisticsPort;
@@ -73,8 +109,38 @@ class ProjectStatisticsQueryServiceTest {
     ProjectStatisticsQueryService sut;
 
     @BeforeEach
-    void setUpMatchingChapter() {
+    void setUp() {
         lenient().when(matchingChapterResolver.deltaOf(any())).thenReturn(ChapterTransferDelta.empty());
+        lenient().when(clock.instant()).thenReturn(NOW);
+        lenient().when(projectStatisticsAccessPolicy.canReadChapterStatistics(REQUESTER_ID, CHAPTER_ID))
+            .thenReturn(true);
+        lenient().when(projectStatisticsAccessPolicy.canReadProjectStatistics(any(), any())).thenReturn(true);
+        lenient().when(getChapterUseCase.getGisuIdByChapterId(CHAPTER_ID)).thenReturn(GISU_ID);
+        lenient().when(loadProjectStatisticsPort.listProjectsByChapterId(CHAPTER_ID)).thenReturn(List.of(
+            new ProjectStatisticsProjectRow(100L, GISU_ID, CHAPTER_ID),
+            new ProjectStatisticsProjectRow(101L, GISU_ID, CHAPTER_ID)));
+        lenient().when(loadProjectPort.listByIds(Set.of(100L, 101L)))
+            .thenReturn(List.of(project(100L, CHAPTER_ID), project(101L, CHAPTER_ID)));
+        lenient().when(loadProjectStatisticsPort.listApplicationStatisticsProjectsByIds(Set.of(100L, 101L)))
+            .thenReturn(List.of(targetProject(100L), targetProject(101L)));
+        lenient().when(loadProjectStatisticsPort.listApplicationStatisticsProjectsByIds(Set.of(100L)))
+            .thenReturn(List.of(targetProject(100L)));
+        lenient().when(loadProjectPort.listByIds(Set.of(100L))).thenReturn(List.of(project(100L, CHAPTER_ID)));
+        lenient().when(loadProjectMatchingRoundPort.listByChapterId(CHAPTER_ID)).thenReturn(List.of(
+            round(21L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST, -10, -9),
+            round(22L, MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND, -1, 1),
+            round(23L, MatchingType.PLAN_DEVELOPER, MatchingPhase.THIRD, 5, 6)));
+        lenient().when(getChallengerUseCase.listByChapterId(CHAPTER_ID)).thenReturn(List.of(
+            challenger(1L, ChallengerPart.WEB), challenger(2L, ChallengerPart.IOS),
+            challenger(3L, ChallengerPart.WEB_PRODUCT_ENGINEER), challenger(4L, ChallengerPart.DESIGN),
+            challenger(5L, ChallengerPart.PLAN), challenger(6L, ChallengerPart.ADMIN)));
+        lenient().when(getMemberUseCase.findAllSchoolIdsByIds(Set.of(1L, 2L, 3L)))
+            .thenReturn(Map.of(1L, 501L, 2L, 501L, 3L, 502L));
+        lenient().when(getChapterUseCase.getChaptersWithSchoolsByGisuId(GISU_ID)).thenReturn(List.of(
+            new ChapterWithSchoolsInfo(CHAPTER_ID, "지부", List.of(
+                new ChapterWithSchoolsInfo.SchoolInfo(501L, "가톨릭대학교"),
+                new ChapterWithSchoolsInfo.SchoolInfo(502L, "세종대학교"),
+                new ChapterWithSchoolsInfo.SchoolInfo(503L, "지원 가능 인원이 없는 학교")))));
     }
 
     @Test
@@ -180,229 +246,6 @@ class ProjectStatisticsQueryServiceTest {
     }
 
     @Test
-    @DisplayName("getByChapterId_프로젝트별_기존_필드와_지부_BFF_요약을_함께_반환한다")
-    void 지부_BFF_통계_반환() {
-        // given
-        Long chapterId = 3L;
-        Long gisuId = 1L;
-        given(loadProjectStatisticsPort.listProjectsByChapterId(chapterId))
-            .willReturn(List.of(
-                projectRow(10L, gisuId, chapterId),
-                projectRow(11L, gisuId, chapterId)
-            ));
-        given(loadProjectStatisticsPort.listMatchingRoundsByChapterId(chapterId))
-            .willReturn(List.of(
-                roundRow(1L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST),
-                roundRow(2L, MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND)
-            ));
-        given(loadProjectStatisticsPort.listActiveMembersByChapterId(chapterId))
-            .willReturn(List.of(
-                memberRow(10L, 101L, 1001L, ChallengerPart.WEB),
-                memberRow(10L, 102L, 1002L, ChallengerPart.DESIGN),
-                memberRow(11L, 201L, 1004L, ChallengerPart.WEB)
-            ));
-        given(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(Set.of(10L, 11L)))
-            .willReturn(List.of(
-                applicationRow(10L, 1001L, 301L, ProjectApplicationStatus.APPROVED, 1L,
-                    MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST),
-                applicationRow(10L, 1003L, 302L, ProjectApplicationStatus.REJECTED, 1L,
-                    MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST),
-                applicationRow(11L, 1003L, 303L, ProjectApplicationStatus.SUBMITTED, 1L,
-                    MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST),
-                applicationRow(11L, 1004L, 304L, ProjectApplicationStatus.APPROVED, 2L,
-                    MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND),
-                applicationRow(10L, 9001L, 305L, ProjectApplicationStatus.SUBMITTED, 2L,
-                    MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND)
-            ));
-        given(getChallengerUseCase.listByChapterId(chapterId))
-            .willReturn(List.of(
-                challenger(1001L, gisuId, ChallengerPart.WEB),
-                challenger(1002L, gisuId, ChallengerPart.DESIGN),
-                challenger(1003L, gisuId, ChallengerPart.WEB),
-                challenger(1004L, gisuId, ChallengerPart.ANDROID),
-                challenger(9001L, gisuId, ChallengerPart.PLAN),
-                challenger(9002L, gisuId, ChallengerPart.ADMIN)
-            ));
-        given(getMemberUseCase.findAllSchoolIdsByIds(Set.of(1001L, 1002L, 1003L, 1004L)))
-            .willReturn(Map.of(
-                1001L, 501L,
-                1002L, 502L,
-                1003L, 502L,
-                1004L, 501L
-            ));
-        // 요청자가 총괄단 → FULL (멤버 단위 포함)
-        Long requesterMemberId = 7000L;
-        given(projectStatisticsAccessPolicy.canReadChapterStatistics(requesterMemberId, chapterId))
-            .willReturn(true);
-
-        // when
-        ChapterProjectStatisticsInfo result = sut.getByChapterId(chapterId, requesterMemberId);
-
-        // then
-        assertThat(result.chapterId()).isEqualTo(chapterId);
-        assertThat(result.projects())
-            .extracting(ProjectStatisticsInfo::projectId)
-            .containsExactly(10L, 11L);
-        assertThat(result.projects().get(0).projectMembers()).hasSize(2);
-        assertThat(result.projects().get(0).projectMembers().get(0).applications())
-            .extracting("applicationId", "status")
-            .containsExactly(tuple(301L, ProjectApplicationStatus.APPROVED));
-        assertThat(result.projects().get(0).projectMembers().get(1).applications()).isEmpty();
-        assertThat(result.projects().get(1).projectMembers()).hasSize(1);
-        assertThat(result.projects().get(1).projectMembers().get(0).applications())
-            .extracting("applicationId", "status")
-            .containsExactly(tuple(304L, ProjectApplicationStatus.APPROVED));
-
-        assertThat(result.summary().roundApplicationStatistics())
-            .extracting(
-                s -> s.matchingRound().matchingRoundId(),
-                s -> s.appliedMemberCount(),
-                s -> s.availableMemberCount()
-            )
-            .containsExactly(
-                tuple(1L, 3L, 4L),
-                tuple(2L, 1L, 3L)
-            );
-        assertThat(result.summary().roundSchoolRankings().get(0).schools())
-            .extracting("schoolId", "applicantCount")
-            .containsExactly(
-                tuple(501L, 1L),
-                tuple(502L, 1L)
-            );
-        assertThat(result.summary().schoolMatchingStatistics())
-            .extracting("schoolId", "matchedMemberCount", "totalMemberCount", "appliedMemberCount")
-            .containsExactly(
-                tuple(501L, 2L, 2L, 2L),
-                tuple(502L, 1L, 2L, 1L)
-            );
-        assertThat(result.summary().projectRoundStatistics())
-            .extracting("projectId")
-            .containsExactly(10L, 11L);
-        assertThat(result.summary().projectRoundStatistics().get(0).matchingRounds())
-            .extracting(
-                s -> s.matchingRound().matchingRoundId(),
-                s -> s.appliedMemberCount(),
-                s -> s.matchedMemberCount()
-            )
-            .containsExactly(
-                tuple(1L, 2L, 1L),
-                tuple(2L, 0L, 0L)
-            );
-        assertThat(result.summary().projectRoundStatistics().get(1).matchingRounds())
-            .extracting(
-                s -> s.matchingRound().matchingRoundId(),
-                s -> s.appliedMemberCount(),
-                s -> s.matchedMemberCount()
-            )
-            .containsExactly(
-                tuple(1L, 1L, 0L),
-                tuple(2L, 1L, 1L)
-            );
-
-        verify(loadProjectStatisticsPort).listProjectsByChapterId(chapterId);
-        verify(loadProjectStatisticsPort).listActiveMembersByChapterId(chapterId);
-    }
-
-    @Test
-    @DisplayName("getByProjectIds_프로젝트_목록을_지부_응답_형태로_반환한다")
-    void 프로젝트_목록_통계_반환() {
-        // given
-        Long chapterId = 3L;
-        Long gisuId = 1L;
-        Long requesterMemberId = 7000L;
-        Set<Long> projectIds = Set.of(10L, 11L);
-        given(loadProjectPort.listByIds(projectIds))
-            .willReturn(List.of(
-                project(10L, requesterMemberId, chapterId),
-                project(11L, requesterMemberId, chapterId)
-            ));
-        given(loadProjectStatisticsPort.listMatchingRoundsByChapterId(chapterId))
-            .willReturn(List.of(
-                roundRow(1L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST),
-                roundRow(2L, MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND)
-            ));
-        given(loadProjectStatisticsPort.listActiveMembersByProjectIds(projectIds))
-            .willReturn(List.of(
-                memberRow(10L, 101L, 1001L, ChallengerPart.WEB),
-                memberRow(11L, 201L, 1004L, ChallengerPart.WEB)
-            ));
-        given(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(projectIds))
-            .willReturn(List.of(
-                applicationRow(10L, 1001L, 301L, ProjectApplicationStatus.APPROVED, 1L,
-                    MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST),
-                applicationRow(11L, 1004L, 304L, ProjectApplicationStatus.APPROVED, 2L,
-                    MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND)
-            ));
-        given(getChallengerUseCase.listByChapterId(chapterId))
-            .willReturn(List.of(
-                challenger(1001L, gisuId, ChallengerPart.WEB),
-                challenger(1002L, gisuId, ChallengerPart.DESIGN),
-                challenger(1003L, gisuId, ChallengerPart.WEB),
-                challenger(1004L, gisuId, ChallengerPart.ANDROID)
-            ));
-        given(getMemberUseCase.findAllSchoolIdsByIds(Set.of(1001L, 1002L, 1003L, 1004L)))
-            .willReturn(Map.of(
-                1001L, 501L,
-                1002L, 502L,
-                1003L, 502L,
-                1004L, 501L
-            ));
-        given(projectStatisticsAccessPolicy.canReadProjectStatistics(eq(requesterMemberId), any(Project.class)))
-            .willReturn(true);
-
-        // when
-        ChapterProjectStatisticsInfo result = sut.getByProjectIds(List.of(10L, 11L), requesterMemberId);
-
-        // then
-        assertThat(result.chapterId()).isEqualTo(chapterId);
-        assertThat(result.projects())
-            .extracting(ProjectStatisticsInfo::projectId)
-            .containsExactly(10L, 11L);
-        assertThat(result.summary().roundApplicationStatistics())
-            .extracting(
-                s -> s.matchingRound().matchingRoundId(),
-                s -> s.appliedMemberCount(),
-                s -> s.availableMemberCount()
-            )
-            .containsExactly(
-                tuple(1L, 1L, 4L),
-                tuple(2L, 1L, 3L)
-            );
-        assertThat(result.summary().projectRoundStatistics())
-            .extracting("projectId")
-            .containsExactly(10L, 11L);
-
-        verify(loadProjectStatisticsPort).listActiveMembersByProjectIds(projectIds);
-    }
-
-    @Test
-    @DisplayName("getByChapterId_null_memberId는_학교별_summary_집계에서_무시한다")
-    void 지부_통계_null_memberId_학교별_summary_집계_무시() {
-        // given
-        Long chapterId = 3L;
-        Long gisuId = 1L;
-        Long requesterMemberId = 7000L;
-        given(loadProjectStatisticsPort.listProjectsByChapterId(chapterId))
-            .willReturn(List.of(projectRow(10L, gisuId, chapterId)));
-        given(loadProjectStatisticsPort.listMatchingRoundsByChapterId(chapterId))
-            .willReturn(List.of(roundRow(1L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST)));
-        given(loadProjectStatisticsPort.listActiveMembersByChapterId(chapterId))
-            .willReturn(List.of(memberRow(10L, 101L, null, ChallengerPart.WEB)));
-        given(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(Set.of(10L)))
-            .willReturn(List.of());
-        given(getChallengerUseCase.listByChapterId(chapterId))
-            .willReturn(List.of());
-        given(projectStatisticsAccessPolicy.canReadChapterStatistics(requesterMemberId, chapterId))
-            .willReturn(true);
-
-        // when
-        ChapterProjectStatisticsInfo result = sut.getByChapterId(chapterId, requesterMemberId);
-
-        // then
-        assertThat(result.summary().schoolMatchingStatistics()).isEmpty();
-    }
-
-    @Test
     @DisplayName("getPublicMatchingStatisticsByChapterId_ProjectMember_기준_공개_매칭_요약을_반환한다")
     void 공개_프로젝트_매칭_요약_반환() {
         // given
@@ -492,60 +335,6 @@ class ProjectStatisticsQueryServiceTest {
     }
 
     @Test
-    @DisplayName("getByChapterId_지부장이면_조회_가능하다")
-    void 지부_지부장이면_조회_가능() {
-        // given
-        Long chapterId = 3L;
-        Long gisuId = 1L;
-        Long requesterMemberId = 8000L;
-        givenSingleProjectChapter(chapterId, gisuId);
-        given(projectStatisticsAccessPolicy.canReadChapterStatistics(requesterMemberId, chapterId))
-            .willReturn(true);
-
-        // when
-        ChapterProjectStatisticsInfo result = sut.getByChapterId(chapterId, requesterMemberId);
-
-        // then — 권한 통과: 프로젝트 멤버까지 그대로 노출
-        assertThat(result.projects()).hasSize(1);
-        assertThat(result.projects().get(0).projectMembers()).hasSize(1);
-        assertThat(result.summary()).isNotNull();
-    }
-
-    @Test
-    @DisplayName("getByChapterId_해당_지부_소속_학교_회장이면_조회_가능하다")
-    void 지부_학교_회장이면_조회_가능() {
-        // given
-        Long chapterId = 3L;
-        Long gisuId = 1L;
-        Long schoolId = 7L;
-        Long requesterMemberId = 8100L;
-        givenSingleProjectChapter(chapterId, gisuId);
-        given(projectStatisticsAccessPolicy.canReadChapterStatistics(requesterMemberId, chapterId))
-            .willReturn(true);
-
-        // when
-        ChapterProjectStatisticsInfo result = sut.getByChapterId(chapterId, requesterMemberId);
-
-        // then
-        assertThat(result.projects()).hasSize(1);
-        assertThat(result.projects().get(0).projectMembers()).hasSize(1);
-    }
-
-    @Test
-    @DisplayName("getByChapterId_권한이_없으면_PROJECT_ACCESS_DENIED")
-    void 지부_권한없으면_거부() {
-        // given
-        Long chapterId = 3L;
-        Long requesterMemberId = 8200L;
-        given(projectStatisticsAccessPolicy.canReadChapterStatistics(requesterMemberId, chapterId))
-            .willReturn(false);
-
-        // when & then
-        assertThatThrownBy(() -> sut.getByChapterId(chapterId, requesterMemberId))
-            .isInstanceOf(ProjectDomainException.class);
-    }
-
-    @Test
     @DisplayName("getByProjectId_보조PM이면_FULL로_멤버_단위를_포함한다")
     void 단건_보조PM이면_FULL() {
         // given
@@ -605,17 +394,204 @@ class ProjectStatisticsQueryServiceTest {
             .isInstanceOf(ProjectDomainException.class);
     }
 
-    /** 멤버 1명짜리 단일 프로젝트 지부 통계 데이터 stub (집계 경로 통과용). */
-    private void givenSingleProjectChapter(Long chapterId, Long gisuId) {
-        given(loadProjectStatisticsPort.listProjectsByChapterId(chapterId))
-            .willReturn(List.of(projectRow(10L, gisuId, chapterId)));
-        given(loadProjectStatisticsPort.listMatchingRoundsByChapterId(chapterId)).willReturn(List.of());
-        given(loadProjectStatisticsPort.listActiveMembersByChapterId(chapterId))
-            .willReturn(List.of(memberRow(10L, 101L, 1001L, ChallengerPart.WEB)));
-        given(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(Set.of(10L))).willReturn(List.of());
-        given(getChallengerUseCase.listByChapterId(chapterId))
-            .willReturn(List.of(challenger(1001L, gisuId, ChallengerPart.WEB)));
-        given(getMemberUseCase.findAllSchoolIdsByIds(Set.of(1001L))).willReturn(Map.of(1001L, 501L));
+    @Test
+    @DisplayName("같은 회원의 복수 프로젝트 지원은 전체·학교 통계에서 한 번만 집계한다")
+    void 복수_프로젝트_지원_중복_제거() {
+        // given
+        given(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(Set.of(100L, 101L))).willReturn(List.of(
+            application(100L, 1L, 21L, MatchingPhase.FIRST),
+            application(101L, 1L, 21L, MatchingPhase.FIRST),
+            application(101L, 2L, 21L, MatchingPhase.FIRST),
+            application(100L, 1L, 22L, MatchingPhase.SECOND),
+            application(100L, 4L, 21L, MatchingPhase.FIRST)));
+
+        // when
+        var result = sut.getByChapterId(CHAPTER_ID, REQUESTER_ID);
+
+        // then
+        assertThat(result.matchingRound().matchingRoundId()).isEqualTo(22L);
+        assertThat(result.summary().roundApplicationStatistics())
+            .extracting(RoundApplicationStatisticsInfo::appliedMemberCount).containsExactly(2L, 1L, 0L);
+        var school = result.summary().schoolApplicationStatistics().getFirst();
+        assertThat(school.schoolName()).isEqualTo("가톨릭대학교");
+        assertThat(school.totalMemberCount()).isEqualTo(2);
+        assertThat(school.rounds()).extracting(PhaseApplicantCountInfo::applicantCount).containsExactly(2L, 1L, 0L);
+        assertThat(result.summary().projectRoundStatistics().getFirst().rounds())
+            .extracting(PhaseApplicantCountInfo::applicantCount).containsExactly(1L, 1L, 0L);
+        assertThat(result.summary().projectRoundStatistics().get(1).rounds())
+            .extracting(PhaseApplicantCountInfo::applicantCount).containsExactly(2L, 0L, 0L);
+    }
+
+    @Test
+    @DisplayName("프로젝트 지정 시 분자는 해당 프로젝트이고 분모는 다른 프로젝트의 실제 매칭도 차감한다")
+    void 지정_프로젝트_분모는_지부_전체_기준() {
+        // given
+        given(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(Set.of(100L)))
+            .willReturn(List.of(application(100L, 2L, 22L, MatchingPhase.SECOND)));
+        given(loadProjectMemberPort.listMatchedRoundsByProjectIdsAndMemberIds(Set.of(100L, 101L), Set.of(1L, 2L, 3L)))
+            .willReturn(List.of(
+                new ProjectMemberMatchedRoundInfo(101L, 1L, 21L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST),
+                new ProjectMemberMatchedRoundInfo(100L, 2L, 22L, MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND)));
+
+        // when
+        var result = sut.getByProjectIds(List.of(100L), REQUESTER_ID);
+
+        // then
+        assertThat(result.summary().roundApplicationStatistics())
+            .extracting(RoundApplicationStatisticsInfo::availableMemberCount).containsExactly(3L, 2L, 1L);
+        assertThat(result.summary().roundApplicationStatistics())
+            .extracting(RoundApplicationStatisticsInfo::appliedMemberCount).containsExactly(0L, 1L, 0L);
+        assertThat(result.summary().projectRoundStatistics()).hasSize(1);
+        assertThat(result.summary().schoolApplicationStatistics().getFirst().totalMemberCount()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("지원자가 없는 프로젝트와 학교도 1·2·3차를 0명으로 반환한다")
+    void 지원자_없는_프로젝트와_학교() {
+        // when
+        var result = sut.getByProjectIds(List.of(100L, 101L), REQUESTER_ID);
+
+        // then
+        assertThat(result.summary().projectRoundStatistics()).hasSize(2).allSatisfy(project ->
+            assertThat(project.rounds()).extracting(PhaseApplicantCountInfo::applicantCount)
+                .containsExactly(0L, 0L, 0L));
+        assertThat(result.summary().schoolApplicationStatistics()).hasSize(3);
+        assertThat(result.summary().schoolApplicationStatistics().getLast().totalMemberCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("진행 중인 차수가 없으면 종료 시각이 가장 최근인 지원 차수를 사용한다")
+    void 최근_종료_매칭_선택() {
+        // given
+        given(loadProjectMatchingRoundPort.listByChapterId(CHAPTER_ID)).willReturn(List.of(
+            round(11L, MatchingType.PLAN_DESIGN, MatchingPhase.THIRD, -8, -7),
+            round(21L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST, -3, -2),
+            round(22L, MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND, 2, 3)));
+
+        // when
+        var result = sut.getByChapterId(CHAPTER_ID, REQUESTER_ID);
+
+        // then
+        assertThat(result.matchingRound().matchingRoundId()).isEqualTo(21L);
+        assertThat(result.matchingRound().type()).isEqualTo(MatchingType.PLAN_DEVELOPER);
+    }
+
+    @Test
+    @DisplayName("디자인 매칭은 디자인 인원만 분모와 지원자 집계에 포함한다")
+    void 디자인_매칭_모집단_분리() {
+        // given
+        given(loadProjectMatchingRoundPort.listByChapterId(CHAPTER_ID)).willReturn(List.of(
+            round(11L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST, -1, 1)));
+        given(getMemberUseCase.findAllSchoolIdsByIds(Set.of(4L))).willReturn(Map.of(4L, 501L));
+        given(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(Set.of(100L))).willReturn(List.of(
+            new ProjectStatisticsApplicationRow(100L, 4L, 1L, ProjectApplicationStatus.SUBMITTED,
+                11L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST),
+            application(100L, 1L, 21L, MatchingPhase.FIRST)));
+
+        // when
+        var result = sut.getByProjectIds(List.of(100L), REQUESTER_ID);
+
+        // then
+        assertThat(result.summary().roundApplicationStatistics().getFirst().availableMemberCount()).isEqualTo(1L);
+        assertThat(result.summary().roundApplicationStatistics().getFirst().appliedMemberCount()).isEqualTo(1L);
+        assertThat(result.summary().schoolApplicationStatistics().getFirst().totalMemberCount()).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("랜덤 매칭은 기준 차수와 지원 통계에서 제외한다")
+    void 랜덤_차수_제외() {
+        // given
+        List<ProjectMatchingRound> rounds = List.of(
+            round(23L, MatchingType.PLAN_DEVELOPER, MatchingPhase.THIRD, -3, -2),
+            randomRound());
+        given(loadProjectMatchingRoundPort.listByChapterId(CHAPTER_ID)).willReturn(rounds);
+
+        // when
+        var result = sut.getByProjectIds(List.of(100L), REQUESTER_ID);
+
+        // then
+        assertThat(result.matchingRound().phase()).isEqualTo(MatchingPhase.THIRD);
+        assertThat(result.summary().roundApplicationStatistics()).hasSize(1);
+        assertThat(result.summary().schoolApplicationStatistics().getFirst().rounds())
+            .extracting(PhaseApplicantCountInfo::phase)
+            .containsExactly(MatchingPhase.FIRST, MatchingPhase.SECOND, MatchingPhase.THIRD);
+    }
+
+    @Test
+    @DisplayName("아직 시작한 매칭이 없으면 기준 차수와 통계가 비어 있다")
+    void 시작_전_빈_통계() {
+        // given
+        given(loadProjectMatchingRoundPort.listByChapterId(CHAPTER_ID))
+            .willReturn(List.of(round(21L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST, 1, 2)));
+
+        // when
+        var result = sut.getByChapterId(CHAPTER_ID, REQUESTER_ID);
+
+        // then
+        assertThat(result).isEqualTo(ProjectApplicationStatisticsInfo.empty(CHAPTER_ID));
+        verifyNoInteractions(getChallengerUseCase, loadProjectMemberPort);
+    }
+
+    @Test
+    @DisplayName("지부 조회 권한이 없으면 통계를 읽기 전에 거절한다")
+    void 지부_권한_거절() {
+        // given
+        given(projectStatisticsAccessPolicy.canReadChapterStatistics(REQUESTER_ID, CHAPTER_ID)).willReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> sut.getByChapterId(CHAPTER_ID, REQUESTER_ID))
+            .isInstanceOf(ProjectDomainException.class);
+        verifyNoInteractions(loadProjectStatisticsPort, loadProjectMatchingRoundPort);
+    }
+
+    @Test
+    @DisplayName("복수 프로젝트 중 하나라도 권한이 없으면 전체 요청을 거절한다")
+    void 복수_프로젝트_각각_권한_검증() {
+        // given
+        var projects = List.of(project(100L, CHAPTER_ID), project(101L, CHAPTER_ID));
+        given(loadProjectPort.listByIds(Set.of(100L, 101L))).willReturn(projects);
+        given(projectStatisticsAccessPolicy.canReadProjectStatistics(REQUESTER_ID, projects.getLast()))
+            .willReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> sut.getByProjectIds(List.of(100L, 101L), REQUESTER_ID))
+            .isInstanceOf(ProjectDomainException.class);
+        verify(projectStatisticsAccessPolicy).canReadProjectStatistics(REQUESTER_ID, projects.getFirst());
+        verifyNoInteractions(loadProjectMatchingRoundPort);
+    }
+
+    @Test
+    @DisplayName("서로 다른 지부의 프로젝트는 함께 조회할 수 없다")
+    void 다른_지부_프로젝트_거절() {
+        // given
+        given(loadProjectPort.listByIds(Set.of(100L, 101L)))
+            .willReturn(List.of(project(100L, CHAPTER_ID), project(101L, 20L)));
+
+        // when & then
+        assertThatThrownBy(() -> sut.getByProjectIds(List.of(100L, 101L), REQUESTER_ID))
+            .isInstanceOf(ProjectDomainException.class);
+        verifyNoInteractions(loadProjectMatchingRoundPort);
+    }
+
+    @Test
+    @DisplayName("없는 프로젝트가 포함되면 부분 결과를 반환하지 않는다")
+    void 없는_프로젝트_거절() {
+        // given
+        given(loadProjectPort.listByIds(Set.of(100L, 999L))).willReturn(List.of(project(100L, CHAPTER_ID)));
+
+        // when & then
+        assertThatThrownBy(() -> sut.getByProjectIds(List.of(100L, 999L), REQUESTER_ID))
+            .isInstanceOf(ProjectDomainException.class);
+    }
+
+    @Test
+    @DisplayName("중복된 프로젝트 ID는 한 번만 집계한다")
+    void 프로젝트_ID_중복_제거() {
+        // when
+        var result = sut.getByProjectIds(List.of(100L, 100L), REQUESTER_ID);
+
+        // then
+        assertThat(result.summary().projectRoundStatistics()).hasSize(1);
     }
 
     /** 멤버 1명짜리 단건 프로젝트 통계 데이터 stub (집계 경로 통과용). */
@@ -717,5 +693,89 @@ class ProjectStatisticsQueryServiceTest {
             .part(part)
             .challengerStatus(status)
             .build();
+    }
+    @Test
+    @DisplayName("지부 지원 통계는 쿼리에서 선별한 프로젝트만 집계한다")
+    void 지부_조회에서_미등록_프로젝트_제외() {
+        // given
+        given(loadProjectStatisticsPort.listApplicationStatisticsProjectsByIds(Set.of(100L, 101L)))
+            .willReturn(List.of(targetProject(100L)));
+        given(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(Set.of(100L)))
+            .willReturn(List.of(application(100L, 1L, 21L, MatchingPhase.FIRST)));
+
+        // when
+        var result = sut.getByChapterId(CHAPTER_ID, REQUESTER_ID);
+
+        // then
+        assertThat(result.summary().projectRoundStatistics()).extracting(project -> project.projectId())
+            .containsExactly(100L);
+        assertThat(result.summary().roundApplicationStatistics().getFirst().appliedMemberCount()).isEqualTo(1L);
+        assertThat(result.summary().schoolApplicationStatistics().getFirst().rounds().getFirst().applicantCount())
+            .isEqualTo(1L);
+        verify(loadProjectStatisticsPort).listCountedApplicationsByProjectIds(Set.of(100L));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ProjectStatus.class, names = {"DRAFT", "PENDING_REVIEW"})
+    @DisplayName("프로젝트를 직접 지정해도 임시저장·승인대기는 지원 통계에서 제외한다")
+    void 프로젝트_지정_조회에서도_미등록_프로젝트_제외(ProjectStatus status) {
+        // given
+        Project excluded = project(101L, CHAPTER_ID);
+        ReflectionTestUtils.setField(excluded, "status", status);
+        given(loadProjectPort.listByIds(Set.of(100L, 101L)))
+            .willReturn(List.of(project(100L, CHAPTER_ID), excluded));
+        given(loadProjectStatisticsPort.listApplicationStatisticsProjectsByIds(Set.of(100L, 101L)))
+            .willReturn(List.of(targetProject(100L)));
+        given(loadProjectStatisticsPort.listCountedApplicationsByProjectIds(Set.of(100L)))
+            .willReturn(List.of(application(100L, 1L, 21L, MatchingPhase.FIRST)));
+
+        // when
+        var result = sut.getByProjectIds(List.of(100L, 101L), REQUESTER_ID);
+
+        // then
+        assertThat(result.summary().projectRoundStatistics()).extracting(project -> project.projectId())
+            .containsExactly(100L);
+        assertThat(result.summary().roundApplicationStatistics().getFirst().appliedMemberCount()).isEqualTo(1L);
+        verify(loadProjectStatisticsPort).listCountedApplicationsByProjectIds(Set.of(100L));
+    }
+
+    private static ProjectStatisticsTargetProjectRow targetProject(Long id) {
+        return new ProjectStatisticsTargetProjectRow(id, "프로젝트 " + id);
+    }
+
+    private static Project project(Long id, Long chapterId) {
+        Project project = Project.createDraft(GISU_ID, chapterId, REQUESTER_ID, 501L, REQUESTER_ID);
+        ReflectionTestUtils.setField(project, "id", id);
+        ReflectionTestUtils.setField(project, "name", "프로젝트 " + id);
+        ReflectionTestUtils.setField(project, "status", ProjectStatus.IN_PROGRESS);
+        return project;
+    }
+
+    private static ProjectMatchingRound round(Long id, MatchingType type, MatchingPhase phase, long start, long end) {
+        Instant endsAt = NOW.plus(end, ChronoUnit.DAYS);
+        ProjectMatchingRound round = ProjectMatchingRound.create("매칭", null, type, phase, CHAPTER_ID,
+            NOW.plus(start, ChronoUnit.DAYS), endsAt, endsAt.plusSeconds(60), null);
+        ReflectionTestUtils.setField(round, "id", id);
+        return round;
+    }
+
+    private static ProjectMatchingRound randomRound() {
+        Instant endsAt = NOW.plusSeconds(60);
+        ProjectMatchingRound round = ProjectMatchingRound.create("랜덤", null, MatchingType.PLAN_DEVELOPER,
+            MatchingPhase.RANDOM_MATCHING, CHAPTER_ID,
+            NOW.minusSeconds(60), endsAt, endsAt, endsAt.plus(5, ChronoUnit.MINUTES));
+        ReflectionTestUtils.setField(round, "id", 24L);
+        return round;
+    }
+
+    private static ChallengerInfo challenger(Long memberId, ChallengerPart part) {
+        return ChallengerInfo.builder().memberId(memberId).gisuId(GISU_ID).part(part)
+            .challengerStatus(ChallengerStatus.ACTIVE).build();
+    }
+
+    private static ProjectStatisticsApplicationRow application(Long projectId, Long memberId, Long roundId,
+                                                              MatchingPhase phase) {
+        return new ProjectStatisticsApplicationRow(projectId, memberId, projectId * 100 + memberId,
+            ProjectApplicationStatus.SUBMITTED, roundId, MatchingType.PLAN_DEVELOPER, phase);
     }
 }
