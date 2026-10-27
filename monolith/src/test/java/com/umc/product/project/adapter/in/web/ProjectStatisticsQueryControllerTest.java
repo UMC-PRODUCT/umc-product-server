@@ -34,13 +34,17 @@ import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectSta
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.SchoolApplicationStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.RoundApplicationStatisticsResponse;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.PhaseApplicantCountInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.SchoolStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.SummaryInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.ApplicationPhaseCountInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.ApplicationProjectStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.ApplicationSchoolStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.ApplicationSummaryInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingRoundStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.PartStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.PhaseMatchingCountInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.MatchingPartStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.MatchingPhaseCountInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.MatchingPhaseStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.MatchingProjectStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.MatchingSchoolStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundApplicationStatisticsInfo;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
@@ -207,14 +211,14 @@ class ProjectStatisticsQueryControllerTest {
     private static ProjectApplicationStatisticsResponse applicationResponse() {
         ProjectMatchingRoundStatisticsInfo round =
             new ProjectMatchingRoundStatisticsInfo(2L, MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND);
-        List<PhaseApplicantCountInfo> counts = List.of(
-            new PhaseApplicantCountInfo(MatchingPhase.FIRST, 2),
-            new PhaseApplicantCountInfo(MatchingPhase.SECOND, 1),
-            new PhaseApplicantCountInfo(MatchingPhase.THIRD, 0));
+        List<ApplicationPhaseCountInfo> counts = List.of(
+            new ApplicationPhaseCountInfo(MatchingPhase.FIRST, 2),
+            new ApplicationPhaseCountInfo(MatchingPhase.SECOND, 1),
+            new ApplicationPhaseCountInfo(MatchingPhase.THIRD, 0));
         return ProjectApplicationStatisticsResponse.from(new ProjectApplicationStatisticsInfo(3L, round,
-            new SummaryInfo(List.of(new RoundApplicationStatisticsInfo(round, 1, 4)),
-                List.of(new SchoolStatisticsInfo(501L, "가톨릭대학교", 4, counts)),
-                List.of(new ProjectApplicationStatisticsInfo.ProjectStatisticsInfo(10L, "프로젝트 A", counts)))));
+            new ApplicationSummaryInfo(List.of(new RoundApplicationStatisticsInfo(round, 1, 4)),
+                List.of(new ApplicationSchoolStatisticsInfo(501L, "가톨릭대학교", 4, counts)),
+                List.of(new ApplicationProjectStatisticsInfo(10L, "프로젝트 A", counts)))));
     }
 
     @Test
@@ -252,16 +256,16 @@ class ProjectStatisticsQueryControllerTest {
     private static ProjectMatchingStatisticsResponse matchingResponse(Long chapterId) {
         return ProjectMatchingStatisticsResponse.from(new ProjectMatchingStatisticsInfo(
             chapterId,
-            List.of(new ProjectMatchingStatisticsInfo.PhaseStatisticsInfo(MatchingPhase.FIRST, 2L, 4L),
-                new ProjectMatchingStatisticsInfo.PhaseStatisticsInfo(MatchingPhase.SECOND, 0L, 2L),
-                new ProjectMatchingStatisticsInfo.PhaseStatisticsInfo(MatchingPhase.THIRD, 0L, 2L),
-                new ProjectMatchingStatisticsInfo.PhaseStatisticsInfo(MatchingPhase.RANDOM_MATCHING, 0L, 2L)),
-            List.of(new ProjectMatchingStatisticsInfo.SchoolStatisticsInfo(501L, "학교", 2L, 4L)),
-            List.of(new ProjectMatchingStatisticsInfo.ProjectStatisticsInfo(10L, "프로젝트", 2L, 4L,
-                List.of(new PhaseMatchingCountInfo(MatchingPhase.FIRST, 2L),
-                    new PhaseMatchingCountInfo(MatchingPhase.SECOND, 0L),
-                    new PhaseMatchingCountInfo(MatchingPhase.THIRD, 0L),
-                    new PhaseMatchingCountInfo(MatchingPhase.RANDOM_MATCHING, 0L)),
-                List.of(new PartStatisticsInfo(ChallengerPart.WEB, 2L, 4L))))));
+            List.of(new MatchingPhaseStatisticsInfo(MatchingPhase.FIRST, 2L, 4L),
+                new MatchingPhaseStatisticsInfo(MatchingPhase.SECOND, 0L, 2L),
+                new MatchingPhaseStatisticsInfo(MatchingPhase.THIRD, 0L, 2L),
+                new MatchingPhaseStatisticsInfo(MatchingPhase.RANDOM_MATCHING, 0L, 2L)),
+            List.of(new MatchingSchoolStatisticsInfo(501L, "학교", 2L, 4L)),
+            List.of(new MatchingProjectStatisticsInfo(10L, "프로젝트", 2L, 4L,
+                List.of(new MatchingPhaseCountInfo(MatchingPhase.FIRST, 2L),
+                    new MatchingPhaseCountInfo(MatchingPhase.SECOND, 0L),
+                    new MatchingPhaseCountInfo(MatchingPhase.THIRD, 0L),
+                    new MatchingPhaseCountInfo(MatchingPhase.RANDOM_MATCHING, 0L)),
+                List.of(new MatchingPartStatisticsInfo(ChallengerPart.WEB, 2L, 4L))))));
     }
 }

@@ -38,7 +38,7 @@ import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.PhaseApplicantCountInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.ApplicationPhaseCountInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundApplicationStatisticsInfo;
@@ -467,11 +467,11 @@ class ProjectStatisticsQueryServiceTest {
         var school = result.summary().schoolApplicationStatistics().getFirst();
         assertThat(school.schoolName()).isEqualTo("가톨릭대학교");
         assertThat(school.totalMemberCount()).isEqualTo(2);
-        assertThat(school.rounds()).extracting(PhaseApplicantCountInfo::applicantCount).containsExactly(2L, 1L, 0L);
+        assertThat(school.rounds()).extracting(ApplicationPhaseCountInfo::applicantCount).containsExactly(2L, 1L, 0L);
         assertThat(result.summary().projectRoundStatistics().getFirst().rounds())
-            .extracting(PhaseApplicantCountInfo::applicantCount).containsExactly(1L, 1L, 0L);
+            .extracting(ApplicationPhaseCountInfo::applicantCount).containsExactly(1L, 1L, 0L);
         assertThat(result.summary().projectRoundStatistics().get(1).rounds())
-            .extracting(PhaseApplicantCountInfo::applicantCount).containsExactly(2L, 0L, 0L);
+            .extracting(ApplicationPhaseCountInfo::applicantCount).containsExactly(2L, 0L, 0L);
     }
 
     @Test
@@ -505,7 +505,7 @@ class ProjectStatisticsQueryServiceTest {
 
         // then
         assertThat(result.summary().projectRoundStatistics()).hasSize(2).allSatisfy(project ->
-            assertThat(project.rounds()).extracting(PhaseApplicantCountInfo::applicantCount)
+            assertThat(project.rounds()).extracting(ApplicationPhaseCountInfo::applicantCount)
                 .containsExactly(0L, 0L, 0L));
         assertThat(result.summary().schoolApplicationStatistics()).hasSize(3);
         assertThat(result.summary().schoolApplicationStatistics().getLast().totalMemberCount()).isZero();
@@ -565,7 +565,7 @@ class ProjectStatisticsQueryServiceTest {
         assertThat(result.matchingRound().phase()).isEqualTo(MatchingPhase.THIRD);
         assertThat(result.summary().roundApplicationStatistics()).hasSize(1);
         assertThat(result.summary().schoolApplicationStatistics().getFirst().rounds())
-            .extracting(PhaseApplicantCountInfo::phase)
+            .extracting(ApplicationPhaseCountInfo::phase)
             .containsExactly(MatchingPhase.THIRD);
     }
 

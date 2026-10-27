@@ -10,22 +10,22 @@ import com.umc.product.project.domain.enums.MatchingPhase;
  */
 public record ProjectMatchingStatisticsInfo(
     Long chapterId,
-    List<PhaseStatisticsInfo> roundMatchingStatistics,
-    List<SchoolStatisticsInfo> schoolMatchingStatistics,
-    List<ProjectStatisticsInfo> projectMatchingStatistics
+    List<MatchingPhaseStatisticsInfo> roundMatchingStatistics,
+    List<MatchingSchoolStatisticsInfo> schoolMatchingStatistics,
+    List<MatchingProjectStatisticsInfo> projectMatchingStatistics
 ) {
     public static ProjectMatchingStatisticsInfo empty(Long chapterId) {
         return new ProjectMatchingStatisticsInfo(chapterId, List.of(), List.of(), List.of());
     }
 
-    public record PhaseStatisticsInfo(
+    public record MatchingPhaseStatisticsInfo(
         MatchingPhase phase,
         long matchedMemberCount,
         long availableMemberCount
     ) {
     }
 
-    public record SchoolStatisticsInfo(
+    public record MatchingSchoolStatisticsInfo(
         Long schoolId,
         String schoolName,
         long matchedMemberCount,
@@ -33,19 +33,19 @@ public record ProjectMatchingStatisticsInfo(
     ) {
     }
 
-    public record ProjectStatisticsInfo(
+    public record MatchingProjectStatisticsInfo(
         Long projectId,
         String projectName,
         long matchedMemberCount,
         long quota,
-        List<PhaseMatchingCountInfo> rounds,
-        List<PartStatisticsInfo> parts
+        List<MatchingPhaseCountInfo> rounds,
+        List<MatchingPartStatisticsInfo> parts
     ) {
     }
 
-    public record PhaseMatchingCountInfo(MatchingPhase phase, long matchedMemberCount) {
+    public record MatchingPhaseCountInfo(MatchingPhase phase, long matchedMemberCount) {
     }
 
-    public record PartStatisticsInfo(ChallengerPart part, long matchedMemberCount, long quota) {
+    public record MatchingPartStatisticsInfo(ChallengerPart part, long matchedMemberCount, long quota) {
     }
 }
