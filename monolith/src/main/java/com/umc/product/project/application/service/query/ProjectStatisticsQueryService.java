@@ -30,24 +30,20 @@ import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
-import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.PhaseApplicantCountInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.ProjectRoundStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.SchoolStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.SummaryInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingRoundStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.PartMatchingStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.PartStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.PhaseMatchingCountInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMemberApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMemberStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundApplicationStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.RoundMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundSchoolApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.SchoolApplicationStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.SchoolMatchingStatisticsInfo;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
@@ -112,7 +108,9 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
     }
 
     @Override
-    public ProjectApplicationStatisticsInfo getByChapterId(Long chapterId, Long requesterMemberId) {
+    public ProjectApplicationStatisticsInfo getApplicationStatisticsByChapterId(
+        Long chapterId, Long requesterMemberId
+    ) {
         validateChapterAccess(requesterMemberId, chapterId);
         Set<Long> projectIds = loadProjectStatisticsPort.listProjectsByChapterId(chapterId).stream()
             .map(ProjectStatisticsProjectRow::projectId).collect(Collectors.toSet());
@@ -120,7 +118,9 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
     }
 
     @Override
-    public ProjectApplicationStatisticsInfo getByProjectIds(Collection<Long> projectIds, Long requesterMemberId) {
+    public ProjectApplicationStatisticsInfo getApplicationStatisticsByProjectIds(
+        Collection<Long> projectIds, Long requesterMemberId
+    ) {
         if (projectIds == null || projectIds.isEmpty() || projectIds.stream().anyMatch(Objects::isNull)) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_STATISTICS_INVALID_TARGET);
         }
@@ -144,11 +144,11 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
     }
 
     @Override
-    public ChapterProjectMatchingStatisticsInfo getPublicMatchingStatisticsByChapterId(Long chapterId) {
+    public ProjectMatchingStatisticsInfo getMatchingStatisticsByChapterId(Long chapterId) {
         List<ProjectMatchingRound> allRounds = loadProjectMatchingRoundPort.listByChapterId(chapterId);
         Optional<ProjectMatchingRound> selected = selectMatchingRound(allRounds, clock.instant());
         if (selected.isEmpty()) {
-            return ChapterProjectMatchingStatisticsInfo.empty(chapterId);
+            return ProjectMatchingStatisticsInfo.empty(chapterId);
         }
         MatchingType type = selected.get().getType();
         List<ProjectMatchingRound> rounds = allRounds.stream()
@@ -176,7 +176,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
         Map<Long, List<ProjectPartQuota>> quotasByProjectId = projectIds.isEmpty() ? Map.of()
             : loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(projectIds);
 
-        return new ChapterProjectMatchingStatisticsInfo(
+        return new ProjectMatchingStatisticsInfo(
             chapterId,
             buildRoundMatchingStatistics(phases, members, phaseByRoundId, population),
             buildPublicSchoolMatchingStatistics(chapterId, gisuId, members, population),
@@ -228,7 +228,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             buildRoundStatistics(rounds, applications, assignments, population),
             buildSchoolStatistics(chapterId, gisuId, rounds, applications, population),
             targetProjects.stream()
-                .map(project -> new ProjectRoundStatisticsInfo(
+                .map(project -> new ProjectApplicationStatisticsInfo.ProjectStatisticsInfo(
                     project.projectId(), project.projectName(),
                     countByPhase(rounds, applications.stream()
                         .filter(application -> Objects.equals(application.projectId(), project.projectId()))
@@ -559,14 +559,14 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
      * 차수별 매칭 완료 인원과 매칭 대기 인원을 계산한다. 매칭 대기 인원은 이전 차수까지 매칭된 회원을 뺀 값이다.
      * 매칭 인원이 없는 차수도 0명으로 반환한다.
      */
-    private List<RoundMatchingStatisticsInfo> buildRoundMatchingStatistics(
+    private List<ProjectMatchingStatisticsInfo.PhaseStatisticsInfo> buildRoundMatchingStatistics(
         List<MatchingPhase> phases,
         List<ProjectStatisticsMatchedMemberRow> members,
         Map<Long, MatchingPhase> phaseByRoundId,
         StatisticsPopulation population
     ) {
         Map<MatchingPhase, Set<Long>> memberIdsByPhase = groupMatchedMemberIdsByPhase(members, phaseByRoundId);
-        List<RoundMatchingStatisticsInfo> statistics = new ArrayList<>();
+        List<ProjectMatchingStatisticsInfo.PhaseStatisticsInfo> statistics = new ArrayList<>();
         Set<Long> cumulativeMatchedMemberIds = new HashSet<>();
         for (MatchingPhase phase : phases) {
             Set<Long> matchedMemberIds = memberIdsByPhase.getOrDefault(phase, Set.of());
@@ -574,7 +574,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
                 0L,
                 population.eligibleMemberIds().size() - cumulativeMatchedMemberIds.size()
             );
-            statistics.add(new RoundMatchingStatisticsInfo(
+            statistics.add(new ProjectMatchingStatisticsInfo.PhaseStatisticsInfo(
                 phase,
                 matchedMemberIds.size(),
                 availableMemberCount
@@ -584,7 +584,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
         return statistics;
     }
 
-    private List<SchoolMatchingStatisticsInfo> buildPublicSchoolMatchingStatistics(
+    private List<ProjectMatchingStatisticsInfo.SchoolStatisticsInfo> buildPublicSchoolMatchingStatistics(
         Long chapterId,
         Long gisuId,
         List<ProjectStatisticsMatchedMemberRow> members,
@@ -604,7 +604,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
         }
         return schoolNames.entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
-            .map(school -> new SchoolMatchingStatisticsInfo(
+            .map(school -> new ProjectMatchingStatisticsInfo.SchoolStatisticsInfo(
                 school.getKey(),
                 school.getValue(),
                 matchedMemberIdsBySchool.getOrDefault(school.getKey(), Set.of()).size(),
@@ -617,7 +617,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
      * 프로젝트별 누적 매칭 인원과 차수별·파트별 매칭 인원, 모집 정원(TO)을 계산한다.
      * 정원은 기준 매칭 유형 파트에 등록된 전체 정원이며 잔여 인원이 아니다.
      */
-    private List<ProjectMatchingStatisticsInfo> buildProjectMatchingStatistics(
+    private List<ProjectMatchingStatisticsInfo.ProjectStatisticsInfo> buildProjectMatchingStatistics(
         List<ProjectStatisticsTargetProjectRow> projects,
         MatchingType type,
         List<MatchingPhase> phases,
@@ -640,7 +640,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             .toList();
     }
 
-    private ProjectMatchingStatisticsInfo toProjectMatchingStatistics(
+    private ProjectMatchingStatisticsInfo.ProjectStatisticsInfo toProjectMatchingStatistics(
         ProjectStatisticsTargetProjectRow project,
         MatchingType type,
         List<MatchingPhase> phases,
@@ -654,9 +654,9 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
         long totalQuota = quotasByPart.values().stream().mapToLong(Long::longValue).sum();
         List<PhaseMatchingCountInfo> roundStatistics =
             buildProjectRoundMatchingStatistics(phases, members, phaseByRoundId);
-        List<PartMatchingStatisticsInfo> partStatistics = buildPartMatchingStatistics(members, quotasByPart);
+        List<PartStatisticsInfo> partStatistics = buildPartMatchingStatistics(members, quotasByPart);
 
-        return new ProjectMatchingStatisticsInfo(
+        return new ProjectMatchingStatisticsInfo.ProjectStatisticsInfo(
             project.projectId(),
             project.projectName(),
             countMatchedMembers(members),
@@ -680,7 +680,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
             .toList();
     }
 
-    private List<PartMatchingStatisticsInfo> buildPartMatchingStatistics(
+    private List<PartStatisticsInfo> buildPartMatchingStatistics(
         List<ProjectStatisticsMatchedMemberRow> members,
         Map<ChallengerPart, Long> quotasByPart
     ) {
@@ -693,7 +693,7 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
 
         return parts.stream()
             .sorted()
-            .map(part -> new PartMatchingStatisticsInfo(
+            .map(part -> new PartStatisticsInfo(
                 part,
                 memberIdsByPart.getOrDefault(part, Set.of()).size(),
                 quotasByPart.getOrDefault(part, 0L)

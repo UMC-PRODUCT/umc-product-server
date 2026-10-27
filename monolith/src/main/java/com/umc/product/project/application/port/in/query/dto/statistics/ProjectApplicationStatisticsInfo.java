@@ -4,6 +4,9 @@ import java.util.List;
 
 import com.umc.product.project.domain.enums.MatchingPhase;
 
+/**
+ * 기준 매칭 유형의 차수별·학교별·프로젝트별 지원 통계.
+ */
 public record ProjectApplicationStatisticsInfo(
     Long chapterId,
     ProjectMatchingRoundStatisticsInfo matchingRound,
@@ -17,7 +20,7 @@ public record ProjectApplicationStatisticsInfo(
     public record SummaryInfo(
         List<RoundApplicationStatisticsInfo> roundApplicationStatistics,
         List<SchoolStatisticsInfo> schoolApplicationStatistics,
-        List<ProjectRoundStatisticsInfo> projectRoundStatistics
+        List<ProjectStatisticsInfo> projectRoundStatistics
     ) {
     }
 
@@ -29,7 +32,7 @@ public record ProjectApplicationStatisticsInfo(
     ) {
     }
 
-    public record ProjectRoundStatisticsInfo(
+    public record ProjectStatisticsInfo(
         Long projectId,
         String projectName,
         List<PhaseApplicantCountInfo> rounds

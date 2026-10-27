@@ -24,27 +24,24 @@ import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.project.adapter.in.web.assembler.ProjectResponseAssembler;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectMatchingStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ChapterProjectStatisticsResponse;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectApplicationStatisticsResponse;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectMatchingRoundStatisticsResponse;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectMatchingStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.ProjectMatchingRoundStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.ProjectMemberApplicationStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.ProjectMemberStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.RoundApplicationStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.RoundSchoolApplicationStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.SchoolApplicationStatisticsResponse;
-import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectMatchingStatisticsInfo;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.RoundApplicationStatisticsResponse;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.PhaseApplicantCountInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.SchoolStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.SummaryInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingRoundStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.PartMatchingStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.PartStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.PhaseMatchingCountInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundApplicationStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.RoundMatchingStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.SchoolMatchingStatisticsInfo;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
@@ -81,7 +78,7 @@ class ProjectStatisticsQueryControllerTest {
     @DisplayName("지부 지원 통계는 기준 매칭과 중복 없는 요약을 반환한다")
     void 지부_지원_통계_조회() throws Exception {
         // given
-        given(assembler.statisticsForChapter(3L, TEST_MEMBER_ID)).willReturn(applicationResponse());
+        given(assembler.applicationStatisticsForChapter(3L, TEST_MEMBER_ID)).willReturn(applicationResponse());
 
         // when & then
         mockMvc.perform(get("/api/v1/projects/statistics/applications").param("chapterId", "3"))
@@ -103,7 +100,8 @@ class ProjectStatisticsQueryControllerTest {
     @DisplayName("단일 프로젝트도 지부 조회와 같은 응답 구조를 사용한다")
     void 단일_프로젝트_지원_통계_조회() throws Exception {
         // given
-        given(assembler.statisticsForProjects(List.of(10L), TEST_MEMBER_ID)).willReturn(applicationResponse());
+        given(assembler.applicationStatisticsForProjects(List.of(10L), TEST_MEMBER_ID))
+            .willReturn(applicationResponse());
 
         // when & then
         mockMvc.perform(get("/api/v1/projects/statistics/applications").param("projectIds", "10"))
@@ -116,7 +114,8 @@ class ProjectStatisticsQueryControllerTest {
     @DisplayName("복수 프로젝트 ID를 같은 지원 통계 경로로 전달한다")
     void 복수_프로젝트_지원_통계_조회() throws Exception {
         // given
-        given(assembler.statisticsForProjects(List.of(10L, 11L), TEST_MEMBER_ID)).willReturn(applicationResponse());
+        given(assembler.applicationStatisticsForProjects(List.of(10L, 11L), TEST_MEMBER_ID))
+            .willReturn(applicationResponse());
 
         // when & then
         mockMvc.perform(get("/api/v1/projects/statistics/applications").param("projectIds", "10,11"))
@@ -128,8 +127,8 @@ class ProjectStatisticsQueryControllerTest {
     @DisplayName("기준 매칭이 없으면 빈 통계를 반환한다")
     void 시작한_매칭_없음() throws Exception {
         // given
-        given(assembler.statisticsForChapter(3L, TEST_MEMBER_ID))
-            .willReturn(ChapterProjectStatisticsResponse.from(ProjectApplicationStatisticsInfo.empty(3L)));
+        given(assembler.applicationStatisticsForChapter(3L, TEST_MEMBER_ID))
+            .willReturn(ProjectApplicationStatisticsResponse.from(ProjectApplicationStatisticsInfo.empty(3L)));
 
         // when & then
         mockMvc.perform(get("/api/v1/projects/statistics/applications").param("chapterId", "3"))
@@ -205,17 +204,17 @@ class ProjectStatisticsQueryControllerTest {
         );
     }
 
-    private static ChapterProjectStatisticsResponse applicationResponse() {
+    private static ProjectApplicationStatisticsResponse applicationResponse() {
         ProjectMatchingRoundStatisticsInfo round =
             new ProjectMatchingRoundStatisticsInfo(2L, MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND);
         List<PhaseApplicantCountInfo> counts = List.of(
             new PhaseApplicantCountInfo(MatchingPhase.FIRST, 2),
             new PhaseApplicantCountInfo(MatchingPhase.SECOND, 1),
             new PhaseApplicantCountInfo(MatchingPhase.THIRD, 0));
-        return ChapterProjectStatisticsResponse.from(new ProjectApplicationStatisticsInfo(3L, round,
+        return ProjectApplicationStatisticsResponse.from(new ProjectApplicationStatisticsInfo(3L, round,
             new SummaryInfo(List.of(new RoundApplicationStatisticsInfo(round, 1, 4)),
                 List.of(new SchoolStatisticsInfo(501L, "가톨릭대학교", 4, counts)),
-                List.of(new ProjectApplicationStatisticsInfo.ProjectRoundStatisticsInfo(10L, "프로젝트 A", counts)))));
+                List.of(new ProjectApplicationStatisticsInfo.ProjectStatisticsInfo(10L, "프로젝트 A", counts)))));
     }
 
     @Test
@@ -250,19 +249,19 @@ class ProjectStatisticsQueryControllerTest {
             .andExpect(jsonPath("$.result.unclassifiedMatchingStatistics").doesNotExist());
     }
 
-    private static ChapterProjectMatchingStatisticsResponse matchingResponse(Long chapterId) {
-        return ChapterProjectMatchingStatisticsResponse.from(new ChapterProjectMatchingStatisticsInfo(
+    private static ProjectMatchingStatisticsResponse matchingResponse(Long chapterId) {
+        return ProjectMatchingStatisticsResponse.from(new ProjectMatchingStatisticsInfo(
             chapterId,
-            List.of(new RoundMatchingStatisticsInfo(MatchingPhase.FIRST, 2L, 4L),
-                new RoundMatchingStatisticsInfo(MatchingPhase.SECOND, 0L, 2L),
-                new RoundMatchingStatisticsInfo(MatchingPhase.THIRD, 0L, 2L),
-                new RoundMatchingStatisticsInfo(MatchingPhase.RANDOM_MATCHING, 0L, 2L)),
-            List.of(new SchoolMatchingStatisticsInfo(501L, "학교", 2L, 4L)),
-            List.of(new ProjectMatchingStatisticsInfo(10L, "프로젝트", 2L, 4L,
+            List.of(new ProjectMatchingStatisticsInfo.PhaseStatisticsInfo(MatchingPhase.FIRST, 2L, 4L),
+                new ProjectMatchingStatisticsInfo.PhaseStatisticsInfo(MatchingPhase.SECOND, 0L, 2L),
+                new ProjectMatchingStatisticsInfo.PhaseStatisticsInfo(MatchingPhase.THIRD, 0L, 2L),
+                new ProjectMatchingStatisticsInfo.PhaseStatisticsInfo(MatchingPhase.RANDOM_MATCHING, 0L, 2L)),
+            List.of(new ProjectMatchingStatisticsInfo.SchoolStatisticsInfo(501L, "학교", 2L, 4L)),
+            List.of(new ProjectMatchingStatisticsInfo.ProjectStatisticsInfo(10L, "프로젝트", 2L, 4L,
                 List.of(new PhaseMatchingCountInfo(MatchingPhase.FIRST, 2L),
                     new PhaseMatchingCountInfo(MatchingPhase.SECOND, 0L),
                     new PhaseMatchingCountInfo(MatchingPhase.THIRD, 0L),
                     new PhaseMatchingCountInfo(MatchingPhase.RANDOM_MATCHING, 0L)),
-                List.of(new PartMatchingStatisticsInfo(ChallengerPart.WEB, 2L, 4L))))));
+                List.of(new PartStatisticsInfo(ChallengerPart.WEB, 2L, 4L))))));
     }
 }

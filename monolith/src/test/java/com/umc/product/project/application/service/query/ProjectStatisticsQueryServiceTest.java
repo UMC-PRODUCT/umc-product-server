@@ -37,9 +37,9 @@ import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.PhaseApplicantCountInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundApplicationStatisticsInfo;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
@@ -285,7 +285,7 @@ class ProjectStatisticsQueryServiceTest {
                 ProjectPartQuota.create(project, ChallengerPart.PLAN, 1L, REQUESTER_ID))));
 
         // when
-        ChapterProjectMatchingStatisticsInfo result = sut.getPublicMatchingStatisticsByChapterId(CHAPTER_ID);
+        ProjectMatchingStatisticsInfo result = sut.getMatchingStatisticsByChapterId(CHAPTER_ID);
 
         // then
         assertThat(result.roundMatchingStatistics()).extracting("phase", "matchedMemberCount", "availableMemberCount")
@@ -329,8 +329,8 @@ class ProjectStatisticsQueryServiceTest {
                 ProjectPartQuota.create(project, ChallengerPart.WEB, 3L, REQUESTER_ID))));
 
         // when
-        var result = sut.getPublicMatchingStatisticsByChapterId(CHAPTER_ID);
-        var applications = sut.getByProjectIds(List.of(100L), REQUESTER_ID);
+        var result = sut.getMatchingStatisticsByChapterId(CHAPTER_ID);
+        var applications = sut.getApplicationStatisticsByProjectIds(List.of(100L), REQUESTER_ID);
 
         // then
         assertThat(applications.matchingRound().type()).isEqualTo(MatchingType.PLAN_DESIGN);
@@ -355,7 +355,7 @@ class ProjectStatisticsQueryServiceTest {
             .willReturn(Map.of(1L, 501L, 2L, 501L, 3L, 502L));
 
         // when
-        var result = sut.getPublicMatchingStatisticsByChapterId(CHAPTER_ID);
+        var result = sut.getMatchingStatisticsByChapterId(CHAPTER_ID);
 
         // then
         assertThat(result.roundMatchingStatistics()).extracting("matchedMemberCount", "availableMemberCount")
@@ -377,7 +377,7 @@ class ProjectStatisticsQueryServiceTest {
             new SchoolDetailInfo(20L, "다른 지부", "이동 학교", null, 504L, null, null, List.of(), true, NOW, NOW)));
 
         // when
-        var result = sut.getPublicMatchingStatisticsByChapterId(CHAPTER_ID);
+        var result = sut.getMatchingStatisticsByChapterId(CHAPTER_ID);
 
         // then
         assertThat(result.schoolMatchingStatistics()).extracting("schoolId", "schoolName", "totalMemberCount")
@@ -458,7 +458,7 @@ class ProjectStatisticsQueryServiceTest {
             application(100L, 4L, 21L, MatchingPhase.FIRST)));
 
         // when
-        var result = sut.getByChapterId(CHAPTER_ID, REQUESTER_ID);
+        var result = sut.getApplicationStatisticsByChapterId(CHAPTER_ID, REQUESTER_ID);
 
         // then
         assertThat(result.matchingRound().matchingRoundId()).isEqualTo(22L);
@@ -486,7 +486,7 @@ class ProjectStatisticsQueryServiceTest {
                 new ProjectMemberMatchedRoundInfo(100L, 2L, 22L, MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND)));
 
         // when
-        var result = sut.getByProjectIds(List.of(100L), REQUESTER_ID);
+        var result = sut.getApplicationStatisticsByProjectIds(List.of(100L), REQUESTER_ID);
 
         // then
         assertThat(result.summary().roundApplicationStatistics())
@@ -501,7 +501,7 @@ class ProjectStatisticsQueryServiceTest {
     @DisplayName("지원자가 없는 프로젝트와 학교도 1·2·3차를 0명으로 반환한다")
     void 지원자_없는_프로젝트와_학교() {
         // when
-        var result = sut.getByProjectIds(List.of(100L, 101L), REQUESTER_ID);
+        var result = sut.getApplicationStatisticsByProjectIds(List.of(100L, 101L), REQUESTER_ID);
 
         // then
         assertThat(result.summary().projectRoundStatistics()).hasSize(2).allSatisfy(project ->
@@ -521,7 +521,7 @@ class ProjectStatisticsQueryServiceTest {
             round(22L, MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND, 2, 3)));
 
         // when
-        var result = sut.getByChapterId(CHAPTER_ID, REQUESTER_ID);
+        var result = sut.getApplicationStatisticsByChapterId(CHAPTER_ID, REQUESTER_ID);
 
         // then
         assertThat(result.matchingRound().matchingRoundId()).isEqualTo(21L);
@@ -541,7 +541,7 @@ class ProjectStatisticsQueryServiceTest {
             application(100L, 1L, 21L, MatchingPhase.FIRST)));
 
         // when
-        var result = sut.getByProjectIds(List.of(100L), REQUESTER_ID);
+        var result = sut.getApplicationStatisticsByProjectIds(List.of(100L), REQUESTER_ID);
 
         // then
         assertThat(result.summary().roundApplicationStatistics().getFirst().availableMemberCount()).isEqualTo(1L);
@@ -559,7 +559,7 @@ class ProjectStatisticsQueryServiceTest {
         given(loadProjectMatchingRoundPort.listByChapterId(CHAPTER_ID)).willReturn(rounds);
 
         // when
-        var result = sut.getByProjectIds(List.of(100L), REQUESTER_ID);
+        var result = sut.getApplicationStatisticsByProjectIds(List.of(100L), REQUESTER_ID);
 
         // then
         assertThat(result.matchingRound().phase()).isEqualTo(MatchingPhase.THIRD);
@@ -579,7 +579,7 @@ class ProjectStatisticsQueryServiceTest {
             round(21L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST, -1, 1)));
 
         // when
-        var result = sut.getByProjectIds(List.of(100L), REQUESTER_ID);
+        var result = sut.getApplicationStatisticsByProjectIds(List.of(100L), REQUESTER_ID);
 
         // then
         assertThat(result.summary().roundApplicationStatistics())
@@ -605,7 +605,7 @@ class ProjectStatisticsQueryServiceTest {
             .willReturn(List.of(targetProject(100L)));
 
         // when
-        var result = sut.getPublicMatchingStatisticsByChapterId(CHAPTER_ID);
+        var result = sut.getMatchingStatisticsByChapterId(CHAPTER_ID);
 
         // then
         assertThat(result.roundMatchingStatistics()).extracting("phase", "matchedMemberCount")
@@ -621,7 +621,7 @@ class ProjectStatisticsQueryServiceTest {
         given(loadProjectMatchingRoundPort.listByChapterId(CHAPTER_ID)).willReturn(List.of());
 
         // when
-        var result = sut.getPublicMatchingStatisticsByChapterId(CHAPTER_ID);
+        var result = sut.getMatchingStatisticsByChapterId(CHAPTER_ID);
 
         // then
         assertThat(result.roundMatchingStatistics()).isEmpty();
@@ -637,7 +637,7 @@ class ProjectStatisticsQueryServiceTest {
             .willReturn(List.of(round(21L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST, 1, 2)));
 
         // when
-        var result = sut.getByChapterId(CHAPTER_ID, REQUESTER_ID);
+        var result = sut.getApplicationStatisticsByChapterId(CHAPTER_ID, REQUESTER_ID);
 
         // then
         assertThat(result).isEqualTo(ProjectApplicationStatisticsInfo.empty(CHAPTER_ID));
@@ -651,7 +651,7 @@ class ProjectStatisticsQueryServiceTest {
         given(projectStatisticsAccessPolicy.canReadChapterStatistics(REQUESTER_ID, CHAPTER_ID)).willReturn(false);
 
         // when & then
-        assertThatThrownBy(() -> sut.getByChapterId(CHAPTER_ID, REQUESTER_ID))
+        assertThatThrownBy(() -> sut.getApplicationStatisticsByChapterId(CHAPTER_ID, REQUESTER_ID))
             .isInstanceOf(ProjectDomainException.class);
         verifyNoInteractions(loadProjectStatisticsPort, loadProjectMatchingRoundPort);
     }
@@ -666,7 +666,7 @@ class ProjectStatisticsQueryServiceTest {
             .willReturn(false);
 
         // when & then
-        assertThatThrownBy(() -> sut.getByProjectIds(List.of(100L, 101L), REQUESTER_ID))
+        assertThatThrownBy(() -> sut.getApplicationStatisticsByProjectIds(List.of(100L, 101L), REQUESTER_ID))
             .isInstanceOf(ProjectDomainException.class);
         verify(projectStatisticsAccessPolicy).canReadProjectStatistics(REQUESTER_ID, projects.getFirst());
         verifyNoInteractions(loadProjectMatchingRoundPort);
@@ -680,7 +680,7 @@ class ProjectStatisticsQueryServiceTest {
             .willReturn(List.of(project(100L, CHAPTER_ID), project(101L, 20L)));
 
         // when & then
-        assertThatThrownBy(() -> sut.getByProjectIds(List.of(100L, 101L), REQUESTER_ID))
+        assertThatThrownBy(() -> sut.getApplicationStatisticsByProjectIds(List.of(100L, 101L), REQUESTER_ID))
             .isInstanceOf(ProjectDomainException.class);
         verifyNoInteractions(loadProjectMatchingRoundPort);
     }
@@ -692,7 +692,7 @@ class ProjectStatisticsQueryServiceTest {
         given(loadProjectPort.listByIds(Set.of(100L, 999L))).willReturn(List.of(project(100L, CHAPTER_ID)));
 
         // when & then
-        assertThatThrownBy(() -> sut.getByProjectIds(List.of(100L, 999L), REQUESTER_ID))
+        assertThatThrownBy(() -> sut.getApplicationStatisticsByProjectIds(List.of(100L, 999L), REQUESTER_ID))
             .isInstanceOf(ProjectDomainException.class);
     }
 
@@ -700,7 +700,7 @@ class ProjectStatisticsQueryServiceTest {
     @DisplayName("중복된 프로젝트 ID는 한 번만 집계한다")
     void 프로젝트_ID_중복_제거() {
         // when
-        var result = sut.getByProjectIds(List.of(100L, 100L), REQUESTER_ID);
+        var result = sut.getApplicationStatisticsByProjectIds(List.of(100L, 100L), REQUESTER_ID);
 
         // then
         assertThat(result.summary().projectRoundStatistics()).hasSize(1);
@@ -789,7 +789,7 @@ class ProjectStatisticsQueryServiceTest {
             .willReturn(List.of(application(100L, 1L, 21L, MatchingPhase.FIRST)));
 
         // when
-        var result = sut.getByChapterId(CHAPTER_ID, REQUESTER_ID);
+        var result = sut.getApplicationStatisticsByChapterId(CHAPTER_ID, REQUESTER_ID);
 
         // then
         assertThat(result.summary().projectRoundStatistics()).extracting(project -> project.projectId())
@@ -815,7 +815,7 @@ class ProjectStatisticsQueryServiceTest {
             .willReturn(List.of(application(100L, 1L, 21L, MatchingPhase.FIRST)));
 
         // when
-        var result = sut.getByProjectIds(List.of(100L, 101L), REQUESTER_ID);
+        var result = sut.getApplicationStatisticsByProjectIds(List.of(100L, 101L), REQUESTER_ID);
 
         // then
         assertThat(result.summary().projectRoundStatistics()).extracting(project -> project.projectId())

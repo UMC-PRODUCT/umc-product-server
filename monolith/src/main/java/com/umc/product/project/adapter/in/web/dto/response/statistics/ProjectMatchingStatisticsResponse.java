@@ -3,44 +3,41 @@ package com.umc.product.project.adapter.in.web.dto.response.statistics;
 import java.util.List;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.project.application.port.in.query.dto.statistics.ChapterProjectMatchingStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.PartMatchingStatisticsInfo;
+import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.PartStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo.PhaseMatchingCountInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.RoundMatchingStatisticsInfo;
-import com.umc.product.project.application.port.in.query.dto.statistics.SchoolMatchingStatisticsInfo;
 import com.umc.product.project.domain.enums.MatchingPhase;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "지부별 공개 프로젝트 매칭 통계 응답")
-public record ChapterProjectMatchingStatisticsResponse(
+public record ProjectMatchingStatisticsResponse(
     @Schema(description = "지부 ID")
     Long chapterId,
     @Schema(description = "차수별 매칭 현황")
-    List<RoundMatchingStatisticsResponse> roundMatchingStatistics,
+    List<PhaseStatisticsResponse> roundMatchingStatistics,
     @Schema(description = "학교별 누적 매칭 인원과 매칭 대상 총원")
-    List<SchoolMatchingStatisticsResponse> schoolMatchingStatistics,
+    List<SchoolStatisticsResponse> schoolMatchingStatistics,
     @Schema(description = "프로젝트별 매칭 현황")
-    List<ProjectMatchingStatisticsResponse> projectMatchingStatistics
+    List<ProjectStatisticsResponse> projectMatchingStatistics
 ) {
-    public static ChapterProjectMatchingStatisticsResponse from(ChapterProjectMatchingStatisticsInfo info) {
-        return new ChapterProjectMatchingStatisticsResponse(
+    public static ProjectMatchingStatisticsResponse from(ProjectMatchingStatisticsInfo info) {
+        return new ProjectMatchingStatisticsResponse(
             info.chapterId(),
             info.roundMatchingStatistics().stream()
-                .map(RoundMatchingStatisticsResponse::from)
+                .map(PhaseStatisticsResponse::from)
                 .toList(),
             info.schoolMatchingStatistics().stream()
-                .map(SchoolMatchingStatisticsResponse::from)
+                .map(SchoolStatisticsResponse::from)
                 .toList(),
             info.projectMatchingStatistics().stream()
-                .map(ProjectMatchingStatisticsResponse::from)
+                .map(ProjectStatisticsResponse::from)
                 .toList()
         );
     }
 
     @Schema(description = "차수별 매칭 현황")
-    public record RoundMatchingStatisticsResponse(
+    public record PhaseStatisticsResponse(
         @Schema(description = "매칭 차수")
         MatchingPhase phase,
         @Schema(description = "매칭 완료 인원 수")
@@ -48,8 +45,8 @@ public record ChapterProjectMatchingStatisticsResponse(
         @Schema(description = "매칭 대기 인원 수. 이전 차수까지 매칭된 인원을 뺀 값입니다.")
         long availableMemberCount
     ) {
-        private static RoundMatchingStatisticsResponse from(RoundMatchingStatisticsInfo info) {
-            return new RoundMatchingStatisticsResponse(
+        private static PhaseStatisticsResponse from(ProjectMatchingStatisticsInfo.PhaseStatisticsInfo info) {
+            return new PhaseStatisticsResponse(
                 info.phase(),
                 info.matchedMemberCount(),
                 info.availableMemberCount()
@@ -57,8 +54,8 @@ public record ChapterProjectMatchingStatisticsResponse(
         }
     }
 
-    @Schema(description = "학교별 매칭 현황")
-    public record SchoolMatchingStatisticsResponse(
+    @Schema(name = "ProjectMatchingSchoolStatisticsResponse", description = "학교별 매칭 현황")
+    public record SchoolStatisticsResponse(
         @Schema(description = "학교 ID")
         Long schoolId,
         @Schema(description = "학교명")
@@ -68,8 +65,8 @@ public record ChapterProjectMatchingStatisticsResponse(
         @Schema(description = "매칭 대상 총원. 차수가 지나도 차감하지 않습니다.")
         long totalMemberCount
     ) {
-        private static SchoolMatchingStatisticsResponse from(SchoolMatchingStatisticsInfo info) {
-            return new SchoolMatchingStatisticsResponse(
+        private static SchoolStatisticsResponse from(ProjectMatchingStatisticsInfo.SchoolStatisticsInfo info) {
+            return new SchoolStatisticsResponse(
                 info.schoolId(),
                 info.schoolName(),
                 info.matchedMemberCount(),
@@ -78,8 +75,8 @@ public record ChapterProjectMatchingStatisticsResponse(
         }
     }
 
-    @Schema(description = "프로젝트별 매칭 현황")
-    public record ProjectMatchingStatisticsResponse(
+    @Schema(name = "ProjectMatchingProjectStatisticsResponse", description = "프로젝트별 매칭 현황")
+    public record ProjectStatisticsResponse(
         @Schema(description = "프로젝트 ID")
         Long projectId,
         @Schema(description = "프로젝트명")
@@ -91,10 +88,10 @@ public record ChapterProjectMatchingStatisticsResponse(
         @Schema(description = "차수별 매칭 완료 인원 수")
         List<PhaseMatchingCountResponse> rounds,
         @Schema(description = "파트별 누적 매칭 완료 인원 수와 모집 정원")
-        List<PartMatchingStatisticsResponse> parts
+        List<PartStatisticsResponse> parts
     ) {
-        private static ProjectMatchingStatisticsResponse from(ProjectMatchingStatisticsInfo info) {
-            return new ProjectMatchingStatisticsResponse(
+        private static ProjectStatisticsResponse from(ProjectMatchingStatisticsInfo.ProjectStatisticsInfo info) {
+            return new ProjectStatisticsResponse(
                 info.projectId(),
                 info.projectName(),
                 info.matchedMemberCount(),
@@ -103,7 +100,7 @@ public record ChapterProjectMatchingStatisticsResponse(
                     .map(PhaseMatchingCountResponse::from)
                     .toList(),
                 info.parts().stream()
-                    .map(PartMatchingStatisticsResponse::from)
+                    .map(PartStatisticsResponse::from)
                     .toList()
             );
         }
@@ -122,7 +119,7 @@ public record ChapterProjectMatchingStatisticsResponse(
     }
 
     @Schema(description = "파트별 누적 매칭 완료 인원 수와 모집 정원")
-    public record PartMatchingStatisticsResponse(
+    public record PartStatisticsResponse(
         @Schema(description = "파트")
         ChallengerPart part,
         @Schema(description = "누적 매칭 완료 인원 수")
@@ -130,8 +127,8 @@ public record ChapterProjectMatchingStatisticsResponse(
         @Schema(description = "모집 정원(TO)")
         long quota
     ) {
-        private static PartMatchingStatisticsResponse from(PartMatchingStatisticsInfo info) {
-            return new PartMatchingStatisticsResponse(
+        private static PartStatisticsResponse from(PartStatisticsInfo info) {
+            return new PartStatisticsResponse(
                 info.part(),
                 info.matchedMemberCount(),
                 info.quota()
