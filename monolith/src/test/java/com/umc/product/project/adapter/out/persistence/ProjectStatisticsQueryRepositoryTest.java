@@ -3,7 +3,6 @@ package com.umc.product.project.adapter.out.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
-import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +12,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.Project;
-import com.umc.product.project.domain.ProjectApplication;
-import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
-import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.support.PersistenceAdapterTest;
 
@@ -33,11 +30,24 @@ class ProjectStatisticsQueryRepositoryTest {
     ProjectStatisticsQueryRepository sut;
 
     @Test
-    void 공개_팀원_통계는_PENDING_PUBLICATION_멤버를_제외한다() {
+    void 공개_팀원_통계는_차수가_있는_ACTIVE_디자인_개발_팀원만_조회한다() {
         // given
         Project project = project();
-        em.persist(ProjectMember.create(project, 10L, ChallengerPart.WEB_PRODUCT_ENGINEER, 999L));
-        em.persist(ProjectMember.createForMatching(project, 11L, ChallengerPart.WEB_PRODUCT_ENGINEER, round(MatchingPhase.FIRST), 999L));
+        ProjectMatchingRound first = round(MatchingPhase.FIRST);
+        ProjectMember active = ProjectMember.createForMatching(project, 10L, ChallengerPart.WEB_PRODUCT_ENGINEER,
+            first, 999L);
+        active.publish(Instant.now());
+        em.persist(active);
+        em.persist(ProjectMember.create(project, 12L, ChallengerPart.WEB_PRODUCT_ENGINEER, 999L));
+        ProjectMember plan = ProjectMember.createForMatching(project, 13L, ChallengerPart.PLAN, first, 999L);
+        plan.publish(Instant.now());
+        em.persist(plan);
+        Project hidden = project();
+        ReflectionTestUtils.setField(hidden, "status", ProjectStatus.DRAFT);
+        ProjectMember hiddenMember = ProjectMember.createForMatching(hidden, 14L, ChallengerPart.WEB_PRODUCT_ENGINEER,
+            first, 999L);
+        hiddenMember.publish(Instant.now());
+        em.persist(hiddenMember);
         em.flush();
         em.clear();
 
@@ -47,29 +57,53 @@ class ProjectStatisticsQueryRepositoryTest {
         // then
         assertThat(result)
             .extracting(row -> row.memberId()).containsExactly(10L);
+        assertThat(result.getFirst().matchingRoundId()).isEqualTo(first.getId());
     }
 
     @Test
-    void APPROVED_지원서_통계는_결과가_발표된_차수만_포함한다() {
+    void 공개_팀원_통계는_발표_대기_팀원을_제외한다() {
         // given
         Project project = project();
-        ProjectApplicationForm form = em.persist(ProjectApplicationForm.create(project, 999L));
-        ProjectMatchingRound published = round(MatchingPhase.FIRST);
-        published.publishResult(Instant.now());
-        ProjectMatchingRound pending = round(MatchingPhase.SECOND);
-        ProjectApplication approved = em.persist(ProjectApplication.create(form, 100L, 10L, published));
-        ReflectionTestUtils.setField(approved, "status", ProjectApplicationStatus.APPROVED);
-        ProjectApplication hidden = em.persist(ProjectApplication.create(form, 101L, 11L, pending));
-        ReflectionTestUtils.setField(hidden, "status", ProjectApplicationStatus.APPROVED);
+        ProjectMatchingRound first = round(MatchingPhase.FIRST);
+        ProjectMember active = ProjectMember.createForMatching(project, 10L, ChallengerPart.WEB_PRODUCT_ENGINEER,
+            first, 999L);
+        active.publish(Instant.now());
+        em.persist(active);
+        ProjectMember pending = ProjectMember.createForMatching(project, 11L, ChallengerPart.WEB_PRODUCT_ENGINEER,
+            first, 999L);
+        em.persist(pending);
+        assertThat(pending.getStatus()).isEqualTo(ProjectMemberStatus.PENDING_PUBLICATION);
         em.flush();
         em.clear();
 
         // when
-        var result = sut.listApprovedApplicationsByProjectIds(Set.of(project.getId()));
+        var result = sut.listPublicActiveMembersByChapterId(1L);
 
         // then
-        assertThat(result)
-            .extracting(row -> row.applicantMemberId()).containsExactly(10L);
+        assertThat(result).extracting(row -> row.memberId()).containsExactly(10L);
+    }
+
+    @Test
+    void 공개_프로젝트는_등록순으로_조회하고_비공개_상태는_제외한다() {
+        // given
+        Project later = project();
+        ReflectionTestUtils.setField(later, "submittedAt", Instant.parse("2026-10-02T00:00:00Z"));
+        Project earlier = project();
+        ReflectionTestUtils.setField(earlier, "submittedAt", Instant.parse("2026-10-01T00:00:00Z"));
+        ReflectionTestUtils.setField(earlier, "status", ProjectStatus.COMPLETED);
+        Project hidden = project();
+        ReflectionTestUtils.setField(hidden, "status", ProjectStatus.PENDING_REVIEW);
+        Project otherChapter = project();
+        ReflectionTestUtils.setField(otherChapter, "chapterId", 2L);
+        em.flush();
+        em.clear();
+
+        // when
+        var result = sut.listPublicProjectsByChapterId(1L);
+
+        // then
+        assertThat(result).extracting(row -> row.projectId()).containsExactly(earlier.getId(), later.getId());
+        assertThat(result).extracting(row -> row.projectName()).containsOnly("매칭 프로젝트");
     }
 
     private Project project() {

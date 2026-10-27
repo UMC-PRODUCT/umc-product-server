@@ -7,8 +7,7 @@ import org.springframework.stereotype.Component;
 
 import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsApplicationRow;
-import com.umc.product.project.application.port.out.dto.ProjectStatisticsApprovedApplicationRow;
-import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchingRoundRow;
+import com.umc.product.project.application.port.out.dto.ProjectStatisticsMatchedMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsTargetProjectRow;
@@ -40,13 +39,8 @@ public class ProjectStatisticsPersistenceAdapter implements LoadProjectStatistic
     }
 
     @Override
-    public List<ProjectStatisticsProjectRow> listPublicProjectsByChapterId(Long chapterId) {
+    public List<ProjectStatisticsTargetProjectRow> listPublicProjectsByChapterId(Long chapterId) {
         return queryRepository.listPublicProjectsByChapterId(chapterId);
-    }
-
-    @Override
-    public List<ProjectStatisticsMatchingRoundRow> listMatchingRoundsByChapterId(Long chapterId) {
-        return queryRepository.listMatchingRoundsByChapterId(chapterId);
     }
 
     @Override
@@ -55,7 +49,7 @@ public class ProjectStatisticsPersistenceAdapter implements LoadProjectStatistic
     }
 
     @Override
-    public List<ProjectStatisticsMemberRow> listPublicActiveMembersByChapterId(Long chapterId) {
+    public List<ProjectStatisticsMatchedMemberRow> listPublicActiveMembersByChapterId(Long chapterId) {
         return queryRepository.listPublicActiveMembersByChapterId(chapterId);
     }
 
@@ -64,10 +58,4 @@ public class ProjectStatisticsPersistenceAdapter implements LoadProjectStatistic
         return queryRepository.listCountedApplicationsByProjectIds(projectIds);
     }
 
-    @Override
-    public List<ProjectStatisticsApprovedApplicationRow> listApprovedApplicationsByProjectIds(
-        Collection<Long> projectIds
-    ) {
-        return queryRepository.listApprovedApplicationsByProjectIds(projectIds);
-    }
 }

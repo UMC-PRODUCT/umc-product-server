@@ -90,8 +90,10 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
 
         // then
         assertThat(members.listByProjectId(scenario.projectId())).extracting(m -> m.getMemberId()).contains(scenario.candidateId());
-        assertThat(statistics.listPublicActiveMembersByChapterId(scenario.chapterId()))
-            .extracting(m -> m.memberId()).contains(scenario.candidateId());
+        ProjectMember member = members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId());
+        assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
+        assertThat(member.getAssignedMatchingRound()).isNull();
+        assertThat(statistics.listPublicActiveMembersByChapterId(scenario.chapterId())).isEmpty();
         mockMvc.perform(get(candidates(scenario)).param("part", "DESIGN"))
             .andExpect(status().isOk()).andExpect(jsonPath("$.result.totalElements").value(0));
         mockMvc.perform(delete(admin(scenario) + "/{memberId}", scenario.candidateId())).andExpect(status().isOk());
