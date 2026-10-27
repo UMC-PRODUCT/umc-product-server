@@ -1,17 +1,14 @@
 package com.umc.product.project.application.service.policy;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
+import com.umc.product.authorization.domain.AuthoritySnapshot;
+import com.umc.product.authorization.domain.RoleAttribute;
+import com.umc.product.member.application.port.in.query.CheckMemberExistenceUseCase;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.domain.Project;
@@ -23,7 +20,8 @@ import lombok.RequiredArgsConstructor;
 public class ProjectStatisticsAccessPolicy {
 
     private final LoadProjectMemberPort loadProjectMemberPort;
-    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+    private final CheckPermissionUseCase checkPermissionUseCase;
+    private final CheckMemberExistenceUseCase checkMemberExistenceUseCase;
     private final GetChapterUseCase getChapterUseCase;
 
     public boolean canReadProjectStatistics(Long memberId, Project project) {
@@ -48,41 +46,39 @@ public class ProjectStatisticsAccessPolicy {
      * 운영진 역할이 없는 회원은 기수 조회 없이 바로 거부한다. 기수는 지부에서 조회해야 하는 경우가 있어 {@link Supplier}로 지연 조회한다.
      */
     private boolean canReadChapterStatistics(Long memberId, Long chapterId, Supplier<Long> gisuIdSupplier) {
-        if (getChallengerRoleUseCase.isSuperAdmin(memberId)) {
+        if (!checkMemberExistenceUseCase.existsById(memberId)) {
+            return false;
+        }
+        var authority = checkPermissionUseCase.loadSubject(memberId).toAuthoritySnapshot();
+        if (authority.isSuperAdmin()) {
             return true;
         }
-        List<ChallengerRoleInfo> staffRoles = getChallengerRoleUseCase.findAllByMemberId(memberId).stream()
-            .filter(role -> role.roleType().isAtLeastCentralCore()
-                || role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
-                || role.roleType().isAtLeastSchoolCore())
-            .toList();
-        if (staffRoles.isEmpty()) {
+        if (!hasStatisticsAuthority(authority)) {
             return false;
         }
         Long gisuId = gisuIdSupplier.get();
         if (gisuId == null) {
             return false;
         }
-        List<ChallengerRoleInfo> roles = staffRoles.stream()
-            .filter(role -> Objects.equals(role.gisuId(), gisuId))
-            .toList();
-        return roles.stream().anyMatch(role -> role.roleType().isAtLeastCentralCore()
-                || (role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
-                    && Objects.equals(role.organizationId(), chapterId)))
-            || isSchoolCoreOfChapter(roles, chapterId, gisuId);
+        return authority.isCentralCoreInGisu(gisuId)
+            || authority.isChapterPresidentInGisu(gisuId, chapterId)
+            || isSchoolCoreOfChapter(authority, chapterId, gisuId);
     }
 
-    private boolean isSchoolCoreOfChapter(List<ChallengerRoleInfo> roles, Long chapterId, Long gisuId) {
-        Set<Long> schoolIds = roles.stream()
-            .filter(role -> role.roleType().isAtLeastSchoolCore())
-            .map(ChallengerRoleInfo::organizationId)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
-        if (schoolIds.isEmpty()) {
-            return false;
-        }
-        return getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(Set.of(gisuId), schoolIds)
-            .getOrDefault(gisuId, Map.of()).values().stream()
-            .anyMatch(chapter -> Objects.equals(chapter.id(), chapterId));
+    private boolean hasStatisticsAuthority(AuthoritySnapshot authority) {
+        return authority.isCentralCoreInAnyGisu()
+            || authority.challengerRoles().stream()
+                .map(RoleAttribute::organizationId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .anyMatch(organizationId -> authority.isChapterPresidentInAnyGisu(organizationId)
+                    || authority.isSchoolCoreInAnyGisu(organizationId));
+    }
+
+    private boolean isSchoolCoreOfChapter(AuthoritySnapshot authority, Long chapterId, Long gisuId) {
+        return getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId).stream()
+            .filter(chapter -> Objects.equals(chapter.chapterId(), chapterId))
+            .flatMap(chapter -> chapter.schools().stream())
+            .anyMatch(school -> authority.isSchoolCoreInGisu(gisuId, school.schoolId()));
     }
 }
