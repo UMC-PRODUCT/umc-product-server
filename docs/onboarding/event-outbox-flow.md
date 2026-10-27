@@ -164,9 +164,9 @@ executor 거절이나 배치 예외 뒤에도 다음 polling에서 다시 시도
 각각 덮어쓸 수 있다. 폴링 주기는 Worker 완료 시각이 아니라 짧은 실행 요청 메서드 반환을 기준으로 한다.
 `relay-enabled=false`는 두 폴링과 커밋 신호에 의한 즉시 처리를 중지하지만 publisher의 저장은 계속된다.
 
-`EVENT_OUTBOX_REALTIME_IMMEDIATE_DISPATCH_ENABLED=true`로
-`app.event-outbox.workers.realtime.immediate-dispatch-enabled`를 켜면, 커밋 이후의
-`RealtimeOutboxCommittedEvent`를 수신해 기존 REALTIME Worker의 실행을 요청한다. 기본값은 `false`다.
+`app.event-outbox.workers.realtime.immediate-dispatch-enabled`의 기본값은 `true`이며, 커밋 이후의
+`RealtimeOutboxCommittedEvent`를 수신해 기존 REALTIME Worker의 실행을 요청한다.
+`EVENT_OUTBOX_REALTIME_IMMEDIATE_DISPATCH_ENABLED=false`로 설정하면 즉시 처리를 끄고 기존 폴링만 사용한다.
 수신기는 이미 커밋된 신호를 일반 `@EventListener`로 받으며, 요청 스레드에서 DB 처리를 직접 수행하거나
 완료를 기다리지 않는다. BACKGROUND Worker는 깨우지 않는다.
 실행 요청 거절·종료·일시적인 실패는 저장 성공을 되돌리지 않으며 기존 폴링이 미처리 이벤트를 복구한다.
