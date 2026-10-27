@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -22,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
@@ -30,10 +28,10 @@ import com.umc.product.challenger.application.port.in.query.dto.SearchChallenger
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerItemInfo;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.project.application.port.in.command.AutoDecideProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
@@ -98,6 +96,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     private final SearchChallengerUseCase searchChallengerUseCase;
     private final ProjectMatchingChapterResolver matchingChapterResolver;
     private final ScheduleRandomMatchingPort scheduleRandomMatchingPort;
+    private final GetChapterUseCase getChapterUseCase;
 
     /**
      * 1~3차는 PM 결정 마감 후 최소 선발 인원을 보충하고, 랜덤 매칭은 같은 유형의 3차 결과 공개 완료 후 미배정 챌린저를 배정한다.
@@ -587,18 +586,12 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         };
     }
 
-    /** 운영진 수동 실행 시 최고관리자·중앙 총괄단 이상 또는 해당 지부장인지 검증한다. */
+    /** 운영진 수동 실행 시 최고관리자·해당 기수 총괄단 또는 해당 기수·지부의 지부장인지 검증한다. */
     private void validateManageAccess(Long memberId, Long chapterId) {
-        if (getChallengerRoleUseCase.isSuperAdmin(memberId)) {
-            return;
-        }
-        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
-        boolean allowed = roles.stream()
-            .anyMatch(role -> role.roleType().isAtLeastCentralCore()
-                || (role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
-                && Objects.equals(role.organizationId(), chapterId)));
-
-        if (!allowed) {
+        Long gisuId = getChapterUseCase.getGisuIdByChapterId(chapterId);
+        if (!getChallengerRoleUseCase.isSuperAdmin(memberId)
+            && !getChallengerRoleUseCase.isCentralCoreInGisu(memberId, gisuId)
+            && !getChallengerRoleUseCase.isChapterPresidentInGisu(memberId, gisuId, chapterId)) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_ACCESS_DENIED);
         }
     }

@@ -154,6 +154,11 @@ public class ChapterQueryService implements GetChapterUseCase {
     }
 
     @Override
+    public Long getGisuIdByChapterId(Long chapterId) {
+        return loadChapterPort.findById(chapterId).getGisu().getId();
+    }
+
+    @Override
     public Map<Long, Map<Long, ChapterInfo>> getChapterMapByGisuIdsAndSchoolIds(
         Set<Long> gisuIds, Set<Long> schoolIds
     ) {

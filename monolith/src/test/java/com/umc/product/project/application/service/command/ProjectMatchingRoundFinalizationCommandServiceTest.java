@@ -40,7 +40,6 @@ import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
@@ -48,9 +47,8 @@ import com.umc.product.challenger.application.port.in.query.dto.SearchChallenger
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerItemInfo;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
@@ -122,6 +120,8 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
     LockProjectMatchingPort lockProjectMatchingPort;
     @Mock
     ScheduleRandomMatchingPort scheduleRandomMatchingPort;
+    @Mock
+    GetChapterUseCase getChapterUseCase;
 
     ProjectMatchingRoundFinalizationCommandService sut;
 
@@ -143,15 +143,16 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             getMemberUseCase,
             searchChallengerUseCase,
             matchingChapterResolver,
-            scheduleRandomMatchingPort
+            scheduleRandomMatchingPort,
+            getChapterUseCase
         );
         lenient().when(matchingChapterResolver.deltaOf(any())).thenReturn(ChapterTransferDelta.empty());
         given(getMemberUseCase.findAllSchoolIdsByIds(any())).willAnswer(invocation -> {
             Set<Long> memberIds = invocation.getArgument(0);
             return memberIds.stream().collect(Collectors.toMap(id -> id, id -> id));
         });
-        given(getChallengerRoleUseCase.findAllByMemberId(EXECUTOR_MEMBER_ID))
-            .willReturn(List.of(centralCoreRole()));
+        given(getChapterUseCase.getGisuIdByChapterId(1L)).willReturn(5L);
+        given(getChallengerRoleUseCase.isCentralCoreInGisu(EXECUTOR_MEMBER_ID, 5L)).willReturn(true);
     }
 
     @Nested
@@ -487,7 +488,8 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
                     getMemberUseCase,
                     searchChallengerUseCase,
                     matchingChapterResolver,
-                    scheduleRandomMatchingPort
+                    scheduleRandomMatchingPort,
+                    getChapterUseCase
                 );
             ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DESIGN);
             given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
@@ -530,7 +532,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
 
             sut.autoDecide(ROUND_ID, null);
 
-            then(getChallengerRoleUseCase).should(never()).findAllByMemberId(any());
+            then(getChapterUseCase).should(never()).getGisuIdByChapterId(any());
         }
 
         @Test
@@ -543,7 +545,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
 
             assertThat(round.getAutoDecisionExecutedMemberId()).isEqualTo(EXECUTOR_MEMBER_ID);
-            then(getChallengerRoleUseCase).should(never()).findAllByMemberId(EXECUTOR_MEMBER_ID);
+            then(getChallengerRoleUseCase).should(never()).isCentralCoreInGisu(EXECUTOR_MEMBER_ID, 5L);
         }
 
         @Test
@@ -551,7 +553,6 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             Long unauthorizedMemberId = 555L;
             ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DESIGN);
             given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
-            given(getChallengerRoleUseCase.findAllByMemberId(unauthorizedMemberId)).willReturn(List.of());
 
             assertThatThrownBy(() -> sut.autoDecide(ROUND_ID, unauthorizedMemberId))
                 .isInstanceOf(ProjectDomainException.class)
@@ -565,8 +566,8 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DESIGN);
             ReflectionTestUtils.setField(round, "chapterId", 1L);
             given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
-            given(getChallengerRoleUseCase.findAllByMemberId(otherChapterPresidentId))
-                .willReturn(List.of(chapterPresidentRole(99L)));
+            given(getChallengerRoleUseCase.isChapterPresidentInGisu(otherChapterPresidentId, GISU_ID, 99L))
+                .willReturn(true);
 
             assertThatThrownBy(() -> sut.autoDecide(ROUND_ID, otherChapterPresidentId))
                 .isInstanceOf(ProjectDomainException.class)
@@ -581,8 +582,8 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             ReflectionTestUtils.setField(round, "chapterId", 1L);
             given(loadProjectMatchingRoundPort.getByIdForUpdate(ROUND_ID)).willReturn(round);
             given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID)).willReturn(List.of());
-            given(getChallengerRoleUseCase.findAllByMemberId(chapterPresidentId))
-                .willReturn(List.of(chapterPresidentRole(1L)));
+            given(getChallengerRoleUseCase.isChapterPresidentInGisu(chapterPresidentId, GISU_ID, 1L))
+                .willReturn(true);
 
             sut.autoDecide(ROUND_ID, chapterPresidentId);
 
@@ -1135,21 +1136,5 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
         return ProjectPartQuota.create(project, part, quota, 999L);
     }
 
-    private ChallengerRoleInfo centralCoreRole() {
-        return ChallengerRoleInfo.builder()
-            .roleType(ChallengerRoleType.CENTRAL_PRESIDENT)
-            .organizationType(OrganizationType.CENTRAL)
-            .organizationId(null)
-            .gisuId(GISU_ID)
-            .build();
-    }
 
-    private ChallengerRoleInfo chapterPresidentRole(Long chapterId) {
-        return ChallengerRoleInfo.builder()
-            .roleType(ChallengerRoleType.CHAPTER_PRESIDENT)
-            .organizationType(OrganizationType.CHAPTER)
-            .organizationId(chapterId)
-            .gisuId(GISU_ID)
-            .build();
-    }
 }

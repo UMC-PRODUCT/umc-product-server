@@ -8,7 +8,10 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,9 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.project.application.port.in.command.dto.CreateProjectMatchingRoundCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectMatchingRoundCommand;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
@@ -42,6 +43,7 @@ class ProjectMatchingRoundCommandServiceTest {
 
     private static final Long ROUND_ID = 1L;
     private static final Long EXECUTOR_MEMBER_ID = 999L;
+    private static final Clock TEST_CLOCK = Clock.fixed(Instant.parse("2026-05-01T00:00:00Z"), ZoneOffset.UTC);
 
     @Mock
     LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
@@ -54,13 +56,16 @@ class ProjectMatchingRoundCommandServiceTest {
     @Mock
     GetChallengerRoleUseCase getChallengerRoleUseCase;
 
+    @Mock
+    GetChapterUseCase getChapterUseCase;
+
     ProjectMatchingRoundCommandService sut;
 
     @BeforeEach
     void setUpRoleMock() {
         sut = sutWithMinPhaseIntervalMinutes(1);
-        given(getChallengerRoleUseCase.findAllByMemberId(EXECUTOR_MEMBER_ID))
-            .willReturn(List.of(centralCoreRole()));
+        given(getChapterUseCase.getGisuIdByChapterId(1L)).willReturn(5L);
+        given(getChallengerRoleUseCase.isCentralCoreInGisu(EXECUTOR_MEMBER_ID, 5L)).willReturn(true);
     }
 
     @Nested
@@ -131,6 +136,21 @@ class ProjectMatchingRoundCommandServiceTest {
         }
 
         @Test
+        void 대상_기수와_지부의_관리_권한이_없으면_생성을_거부한다() {
+            reset(getChallengerRoleUseCase);
+            given(getChapterUseCase.getGisuIdByChapterId(1L)).willReturn(6L);
+
+            assertThatThrownBy(() -> sut.create(createCommand(1L)))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_ACCESS_DENIED);
+
+            then(getChallengerRoleUseCase).should().isCentralCoreInGisu(EXECUTOR_MEMBER_ID, 6L);
+            then(getChallengerRoleUseCase).should().isChapterPresidentInGisu(EXECUTOR_MEMBER_ID, 6L, 1L);
+            then(saveProjectMatchingRoundPort).should(never()).save(any());
+        }
+
+        @Test
         void system_role_super_admin은_challenger_role_없이_차수를_생성한다() {
             reset(getChallengerRoleUseCase);
             CreateProjectMatchingRoundCommand command = createCommand(1L);
@@ -141,7 +161,7 @@ class ProjectMatchingRoundCommandServiceTest {
 
             sut.create(command);
 
-            then(getChallengerRoleUseCase).should(never()).findAllByMemberId(EXECUTOR_MEMBER_ID);
+            then(getChallengerRoleUseCase).should(never()).isCentralCoreInGisu(EXECUTOR_MEMBER_ID, 5L);
             then(saveProjectMatchingRoundPort).should().save(any());
         }
 
@@ -430,8 +450,73 @@ class ProjectMatchingRoundCommandServiceTest {
         then(scheduleMatchingRoundDeadlinePort).should(never()).schedule(any());
     }
 
+    @Nested
+    class WholeSchedule {
+        @Test
+        @DisplayName("1차 시작 시각부터 전체 일정을 수정할 수 없다")
+        void 일차_시작_후_수정_불가() {
+            // given
+            List<ProjectMatchingRound> existing = existingRounds();
+            given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(existing);
+
+            // when & then
+            for (long seconds : List.of(0L, 1L)) {
+                ReflectionTestUtils.setField(sut, "clock",
+                    Clock.fixed(existing.getFirst().getStartsAt().plusSeconds(seconds), ZoneOffset.UTC));
+                assertThatThrownBy(() -> sut.saveAll(commands(86400)))
+                    .isInstanceOf(ProjectDomainException.class).extracting("baseCode")
+                    .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_ALREADY_STARTED);
+            }
+        }
+
+        @Test
+        @DisplayName("마지막 차수의 발표 간격 오류가 있으면 기존 일정도 변경하지 않는다")
+        void 잘못된_발표_간격_거부() {
+            // given
+            List<ProjectMatchingRound> existing = existingRounds();
+            List<Instant> originalStartsAt = existing.stream().map(ProjectMatchingRound::getStartsAt).toList();
+            given(loadProjectMatchingRoundPort.listByChapterId(1L)).willReturn(existing);
+            List<CreateProjectMatchingRoundCommand> commands = new ArrayList<>(commands(86400));
+            CreateProjectMatchingRoundCommand last = commands.removeLast();
+            commands.add(new CreateProjectMatchingRoundCommand(EXECUTOR_MEMBER_ID, last.name(), null, last.type(),
+                last.phase(), 1L, last.startsAt(), last.endsAt(), last.decisionDeadline(),
+                last.decisionDeadline().plusSeconds(299)));
+
+            // when & then
+            assertThatThrownBy(() -> sut.saveAll(commands))
+                .isInstanceOf(ProjectDomainException.class).extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
+            assertThat(existing).extracting(ProjectMatchingRound::getStartsAt)
+                .containsExactlyElementsOf(originalStartsAt);
+        }
+
+        private List<CreateProjectMatchingRoundCommand> commands(long shiftSeconds) {
+            List<CreateProjectMatchingRoundCommand> result = new ArrayList<>();
+            for (MatchingPhase phase : MatchingPhase.values()) {
+                Instant start = Instant.parse("2099-01-01T00:00:00Z")
+                    .plusSeconds(phase.ordinal() * 86400L + shiftSeconds);
+                Instant end = start.plusSeconds(3600);
+                Instant deadline = phase == MatchingPhase.RANDOM_MATCHING ? end : end.plusSeconds(3600);
+                result.add(new CreateProjectMatchingRoundCommand(EXECUTOR_MEMBER_ID, phase.name(), null,
+                    MatchingType.PLAN_DESIGN, phase, 1L, start, end, deadline, deadline.plusSeconds(300)));
+            }
+            return result;
+        }
+
+        private List<ProjectMatchingRound> existingRounds() {
+            List<ProjectMatchingRound> result = new ArrayList<>();
+            for (CreateProjectMatchingRoundCommand command : commands(0)) {
+                ProjectMatchingRound round = ProjectMatchingRound.create(command.name(), null, command.type(),
+                    command.phase(), 1L, command.startsAt(), command.endsAt(),
+                    command.decisionDeadline(), command.resultPublishAt());
+                result.add(round);
+            }
+            return result;
+        }
+    }
+
     private CreateProjectMatchingRoundCommand createCommand(Long chapterId) {
-        Instant startsAt = Instant.now().plusSeconds(86_400);
+        Instant startsAt = TEST_CLOCK.instant().plusSeconds(86_400);
         Instant endsAt = startsAt.plusSeconds(86_400);
         Instant decisionDeadline = endsAt.plusSeconds(86_400);
         return CreateProjectMatchingRoundCommand.builder()
@@ -488,10 +573,10 @@ class ProjectMatchingRoundCommandServiceTest {
         ProjectMatchingRound round = ProjectMatchingRound.create(
             "테스트 매칭", null,
             type, MatchingPhase.FIRST, 1L,
-            Instant.now().plusSeconds(86_400),
-            Instant.now().plusSeconds(172_800),
-            Instant.now().plusSeconds(259_200),
-            Instant.now().plusSeconds(266_400)
+            TEST_CLOCK.instant().plusSeconds(86_400),
+            TEST_CLOCK.instant().plusSeconds(172_800),
+            TEST_CLOCK.instant().plusSeconds(259_200),
+            TEST_CLOCK.instant().plusSeconds(266_400)
         );
         ReflectionTestUtils.setField(round, "id", ROUND_ID);
         return round;
@@ -528,16 +613,10 @@ class ProjectMatchingRoundCommandServiceTest {
             loadProjectApplicationPort,
             scheduleMatchingRoundDeadlinePort,
             getChallengerRoleUseCase,
-            new ProjectMatchingRoundProperties(minPhaseIntervalMinutes)
+            new ProjectMatchingRoundProperties(minPhaseIntervalMinutes),
+            getChapterUseCase,
+            TEST_CLOCK
         );
     }
 
-    private ChallengerRoleInfo centralCoreRole() {
-        return ChallengerRoleInfo.builder()
-            .roleType(ChallengerRoleType.CENTRAL_PRESIDENT)
-            .organizationType(OrganizationType.CENTRAL)
-            .organizationId(null)
-            .gisuId(5L)
-            .build();
-    }
 }
