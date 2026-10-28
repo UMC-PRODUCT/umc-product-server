@@ -7,6 +7,8 @@ import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.enums.MatchingPhase;
@@ -20,47 +22,52 @@ class ProjectMatchingAdjustmentPolicyTest {
     private final ProjectMatchingAdjustmentPolicy policy = new ProjectMatchingAdjustmentPolicy();
 
     @Test
-    void 일반_차수의_결정_마감_전에는_즉시_반영하도록_빈_값을_반환한다() {
+    void 첫_지원_시작부터_결정_마감_전까지_변경을_허용한다() {
         // given
-        ProjectMatchingRound round = regularRound();
+        ProjectMatchingRound first = regularRound();
+        List<ProjectMatchingRound> rounds = List.of(first);
 
         // when & then
-        assertThat(policy.validateChange(List.of(round), MatchingType.PLAN_DESIGN,
-            round.getDecisionDeadline().minusNanos(1))).isEmpty();
+        assertBlocked(rounds, first.getStartsAt().minusNanos(1));
+        assertThat(policy.validateChange(rounds, MatchingType.PLAN_DESIGN, first.getStartsAt())).isEmpty();
+        assertThat(policy.validateChange(rounds, MatchingType.PLAN_DESIGN, first.getDecisionDeadline().minusNanos(1)))
+            .isEmpty();
+        assertBlocked(rounds, first.getDecisionDeadline());
     }
 
-    @Test
-    void 일반_차수의_결정_마감부터_공개_완료_전까지는_변경을_차단한다() {
+    @ParameterizedTest
+    @EnumSource(MatchingType.class)
+    void 일반_차수의_허용_기간에는_같은_유형만_변경할_수_있다(MatchingType type) {
         // given
-        ProjectMatchingRound round = regularRound();
-        List<ProjectMatchingRound> rounds = List.of(round);
+        ProjectMatchingRound round = ProjectMatchingRound.create("1차", null, type,
+            MatchingPhase.FIRST, 1L, START, START.plusSeconds(3600), START.plusSeconds(7200), START.plusSeconds(10800));
+        MatchingType other = type == MatchingType.PLAN_DESIGN ? MatchingType.PLAN_DEVELOPER : MatchingType.PLAN_DESIGN;
 
         // when & then
-        assertBlocked(rounds, round.getDecisionDeadline());
-        assertBlocked(rounds, round.getResultPublishAt());
-    }
-
-    @Test
-    void 디자인_차수의_결과_공개_대기_중에는_개발자_배정도_차단한다() {
-        // given
-        ProjectMatchingRound round = regularRound();
-
-        // when & then
-        assertThatThrownBy(() -> policy.validateChange(List.of(round), MatchingType.PLAN_DEVELOPER,
-            round.getDecisionDeadline()))
+        assertThat(policy.validateChange(List.of(round), type, START)).isEmpty();
+        assertThatThrownBy(() -> policy.validateChange(List.of(round), other, START))
             .isInstanceOf(ProjectDomainException.class).extracting("baseCode")
             .isEqualTo(ProjectErrorCode.PROJECT_MANUAL_MATCHING_NOT_ALLOWED_IN_PERIOD);
     }
 
     @Test
-    void 일반_차수의_공개_완료_후에는_즉시_반영하도록_빈_값을_반환한다() {
+    void 이전_결과_공개부터_다음_결정_마감_전까지_변경을_허용한다() {
         // given
         ProjectMatchingRound round = regularRound();
         round.executeAutoDecision(null);
-        round.publishResult(round.getResultPublishAt());
+
+        ProjectMatchingRound second = ProjectMatchingRound.create("2차", null, MatchingType.PLAN_DESIGN,
+            MatchingPhase.SECOND, 1L, START.plusSeconds(14400), START.plusSeconds(18000),
+            START.plusSeconds(21600), START.plusSeconds(25200));
+        List<ProjectMatchingRound> rounds = List.of(round, second);
 
         // when & then
-        assertThat(policy.validateChange(List.of(round), MatchingType.PLAN_DESIGN, round.getResultPublishAt())).isEmpty();
+        assertBlocked(rounds, round.getResultPublishAt());
+        round.publishResult(round.getResultPublishAt());
+        assertThat(policy.validateChange(rounds, MatchingType.PLAN_DESIGN, round.getResultPublishAt())).isEmpty();
+        assertThat(policy.validateChange(rounds, MatchingType.PLAN_DESIGN, second.getDecisionDeadline().minusNanos(1)))
+            .isEmpty();
+        assertBlocked(rounds, second.getDecisionDeadline());
     }
 
     @Test
@@ -82,16 +89,29 @@ class ProjectMatchingAdjustmentPolicyTest {
         assertBlocked(List.of(publishedThirdRound(), round), round.getStartsAt().minusNanos(1));
     }
 
-    @Test
-    void 랜덤_매칭이_완료된_조정_기간에는_일괄_공개할_랜덤_차수를_반환한다() {
+    @ParameterizedTest
+    @EnumSource(MatchingType.class)
+    void 랜덤_조정_기간에는_같은_유형만_변경할_수_있다(MatchingType type) {
         // given
-        ProjectMatchingRound round = randomRound();
+        ProjectMatchingRound round = ProjectMatchingRound.create("랜덤", null, type,
+            MatchingPhase.RANDOM_MATCHING, 1L, START, START.plusSeconds(7200), START.plusSeconds(7200),
+            START.plusSeconds(10800));
         round.executeAutoDecision(null);
-        List<ProjectMatchingRound> rounds = List.of(publishedThirdRound(), round);
+        MatchingType other = type == MatchingType.PLAN_DESIGN ? MatchingType.PLAN_DEVELOPER : MatchingType.PLAN_DESIGN;
+        Instant previousStart = START.minusSeconds(30L * 24 * 3600);
+        ProjectMatchingRound published = ProjectMatchingRound.create("이전 유형 랜덤", null, other,
+            MatchingPhase.RANDOM_MATCHING, 1L, previousStart, previousStart.plusSeconds(7200),
+            previousStart.plusSeconds(7200), previousStart.plusSeconds(10800));
+        published.executeAutoDecision(null);
+        published.publishResult(published.getResultPublishAt());
+        List<ProjectMatchingRound> rounds = List.of(published, round);
 
         // when & then
-        assertThat(policy.validateChange(rounds, MatchingType.PLAN_DESIGN, START)).contains(round);
-        assertThat(policy.validateChange(rounds, MatchingType.PLAN_DESIGN, round.getEndsAt().minusNanos(1))).contains(round);
+        assertThat(policy.validateChange(rounds, type, START)).contains(round);
+        assertThat(policy.validateChange(rounds, type, round.getEndsAt().minusNanos(1))).contains(round);
+        assertThatThrownBy(() -> policy.validateChange(rounds, other, START))
+            .isInstanceOf(ProjectDomainException.class).extracting("baseCode")
+            .isEqualTo(ProjectErrorCode.PROJECT_MANUAL_MATCHING_NOT_ALLOWED_IN_PERIOD);
     }
 
     @Test
@@ -107,67 +127,35 @@ class ProjectMatchingAdjustmentPolicyTest {
     }
 
     @Test
-    void 최종_공개_완료_후에는_즉시_반영하도록_빈_값을_반환한다() {
+    void 디자인_최종_공개_완료_후에는_디자인_변경을_차단한다() {
         // given
         ProjectMatchingRound round = randomRound();
         round.executeAutoDecision(null);
         round.publishResult(round.getResultPublishAt());
 
         // when & then
-        assertThat(policy.validateChange(List.of(publishedThirdRound(), round), MatchingType.PLAN_DESIGN,
-            round.getResultPublishAt())).isEmpty();
+        List<ProjectMatchingRound> rounds = List.of(publishedThirdRound(), round);
+        assertThat(policy.isChangeAllowedInPeriod(rounds, round.getResultPublishAt())).isFalse();
+        assertBlocked(rounds, round.getResultPublishAt());
     }
 
     @Test
-    void 같은_유형의_3차_공개_후에는_랜덤_매칭_실행_전에도_변경을_차단한다() {
-        // given
-        List<ProjectMatchingRound> rounds = List.of(publishedThirdRound(), randomRound());
-
-        // when & then
-        assertBlocked(rounds, START.minusSeconds(30));
-    }
-
-    @Test
-    void 디자인_최종_공개_후에는_개발자_조정_기간에도_디자인_변경을_즉시_반영한다() {
+    void 디자인_최종_공개_후_개발_매칭이_시작되면_개발만_변경할_수_있다() {
         // given
         ProjectMatchingRound designRandom = randomRound();
         designRandom.executeAutoDecision(null);
         designRandom.publishResult(designRandom.getResultPublishAt());
         Instant developerStart = START.plusSeconds(30L * 24 * 3600);
-        ProjectMatchingRound developerThird = ProjectMatchingRound.create("개발자 3차", null, MatchingType.PLAN_DEVELOPER,
-            MatchingPhase.THIRD, 1L, developerStart.minusSeconds(10800), developerStart.minusSeconds(7200),
-            developerStart.minusSeconds(3600), developerStart.minusSeconds(60));
-        developerThird.executeAutoDecision(null);
-        developerThird.publishResult(developerThird.getResultPublishAt());
-        ProjectMatchingRound developerRandom = ProjectMatchingRound.create("개발자 랜덤", null, MatchingType.PLAN_DEVELOPER,
-            MatchingPhase.RANDOM_MATCHING, 1L, developerStart, developerStart.plusSeconds(7200),
+        ProjectMatchingRound developerFirst = ProjectMatchingRound.create("개발자 1차", null, MatchingType.PLAN_DEVELOPER,
+            MatchingPhase.FIRST, 1L, developerStart, developerStart.plusSeconds(3600),
             developerStart.plusSeconds(7200), developerStart.plusSeconds(10800));
-        developerRandom.executeAutoDecision(null);
-        List<ProjectMatchingRound> rounds = List.of(publishedThirdRound(), designRandom, developerThird, developerRandom);
+        List<ProjectMatchingRound> rounds = List.of(publishedThirdRound(), designRandom, developerFirst);
 
         // when & then
-        assertThat(policy.validateChange(rounds, MatchingType.PLAN_DESIGN, developerStart)).isEmpty();
-    }
-
-    @Test
-    void 개발자_조정_종료부터_최종_공개_전까지는_디자인_배정도_차단한다() {
-        // given
-        ProjectMatchingRound designRandom = randomRound();
-        designRandom.executeAutoDecision(null);
-        designRandom.publishResult(designRandom.getResultPublishAt());
-        Instant developerStart = START.plusSeconds(30L * 24 * 3600);
-        ProjectMatchingRound developerThird = ProjectMatchingRound.create("개발자 3차", null, MatchingType.PLAN_DEVELOPER,
-            MatchingPhase.THIRD, 1L, developerStart.minusSeconds(10800), developerStart.minusSeconds(7200),
-            developerStart.minusSeconds(3600), developerStart.minusSeconds(60));
-        developerThird.executeAutoDecision(null);
-        developerThird.publishResult(developerThird.getResultPublishAt());
-        ProjectMatchingRound developerRandom = ProjectMatchingRound.create("개발자 랜덤", null, MatchingType.PLAN_DEVELOPER,
-            MatchingPhase.RANDOM_MATCHING, 1L, developerStart, developerStart.plusSeconds(7200),
-            developerStart.plusSeconds(7200), developerStart.plusSeconds(10800));
-        developerRandom.executeAutoDecision(null);
-
-        // when & then
-        assertBlocked(List.of(publishedThirdRound(), designRandom, developerThird, developerRandom), developerRandom.getEndsAt());
+        assertThat(policy.isChangeAllowedInPeriod(rounds, developerStart.minusNanos(1))).isFalse();
+        assertThat(policy.isChangeAllowedInPeriod(rounds, developerStart)).isTrue();
+        assertThat(policy.validateChange(rounds, MatchingType.PLAN_DEVELOPER, developerStart)).isEmpty();
+        assertBlocked(rounds, developerStart);
     }
 
     @Test
