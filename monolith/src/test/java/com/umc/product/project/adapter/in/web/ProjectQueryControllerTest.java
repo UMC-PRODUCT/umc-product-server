@@ -59,16 +59,6 @@ class ProjectQueryControllerTest {
     }
 
     @Test
-    void 매칭_현황_표_잘못된_요청() throws Exception {
-        // when & then
-        mockMvc.perform(get("/api/v1/projects/matching-overview"))
-            .andExpect(status().isBadRequest());
-        mockMvc.perform(get("/api/v1/projects/matching-overview")
-                .param("chapterId", "3").param("view", "UNKNOWN"))
-            .andExpect(status().isBadRequest());
-    }
-
-    @Test
     void GET_프로젝트_목록은_추가_파라미터_없이_팀매칭_정렬을_사용한다() throws Exception {
         given(assembler.searchFor(any(SearchProjectQuery.class), eq(TEST_MEMBER_ID)))
             .willReturn(new PageResponse<ProjectSummaryResponse>(List.of(), 0, 20, 0, 0, false, false));

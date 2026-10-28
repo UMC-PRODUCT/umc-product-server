@@ -93,7 +93,7 @@ public interface LoadProjectMemberPort {
      * 매칭 현황 표에 보여줄 팀원을 프로젝트·배정 차수와 함께 조회합니다.
      * <p>
      * 진행 중 프로젝트는 ACTIVE 팀원을 반환합니다. 조정 차수 ID가 있으면 그 차수에 해제 예약된 팀원을 빼고,
-     * 그 차수의 발표 대기 팀원을 더합니다. 완료 프로젝트는 ACTIVE·COMPLETED 팀원을 반환합니다.
+     * 그 차수의 발표 대기 팀원을 더합니다. 완료 프로젝트는 COMPLETED 팀원을 반환합니다.
      */
     List<ProjectMember> listMatchingOverviewMembersByProjectIds(
         Collection<Long> projectIds, Collection<Long> adjustmentRoundIds);

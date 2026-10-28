@@ -25,15 +25,12 @@ import com.umc.product.project.adapter.in.web.dto.request.SearchProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ManagedProjectSummaryResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
-import com.umc.product.project.adapter.in.web.dto.response.ProjectMatchingOverviewResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
-import com.umc.product.project.application.port.in.query.dto.ProjectMemberView;
 import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -159,31 +156,6 @@ public class ProjectQueryController {
         Pageable pageable
     ) {
         return assembler.draftsFor(memberPrincipal.getMemberId(), gisuId, pageable);
-    }
-
-    @GetMapping("/matching-overview")
-    @Operation(
-        operationId = "PROJECT-009",
-        summary = "지부별 프로젝트 매칭 결과 시트 조회",
-        description = """
-            지부의 공개 프로젝트(IN_PROGRESS, COMPLETED)별 팀원 명단과 인원/TO를 조회합니다.
-
-            - 인원과 TO는 디자인·개발 파트만 집계합니다. (PM·보조 PM 제외)
-            - 수동 배정 팀원을 포함하며, COMPLETED 프로젝트는 활동을 마친 COMPLETED 팀원만 포함합니다.
-
-            view
-            - PUBLISHED(기본값): 공개된 명단을 조회합니다.
-            - ADJUSTMENT: 랜덤 매칭 이후 조정 기간에 보이는 명단을 조회합니다. 조정 기간이 아니면 공개된 명단을 반환합니다.
-              SUPER_ADMIN, 해당 기수 총괄단, 해당 지부장만 조회할 수 있습니다.
-            """
-    )
-    public ProjectMatchingOverviewResponse getMatchingOverview(
-        @CurrentMember MemberPrincipal memberPrincipal,
-        @Parameter(description = "지부 ID", required = true) @RequestParam Long chapterId,
-        @Parameter(description = "명단 기준. PUBLISHED(기본값) 또는 ADJUSTMENT")
-        @RequestParam(defaultValue = "PUBLISHED") ProjectMemberView view
-    ) {
-        return assembler.matchingOverviewForChapter(chapterId, view, memberPrincipal.getMemberId());
     }
 
     @GetMapping("/me/draft")

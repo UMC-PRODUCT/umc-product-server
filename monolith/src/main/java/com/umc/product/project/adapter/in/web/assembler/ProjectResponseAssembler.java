@@ -206,7 +206,7 @@ public class ProjectResponseAssembler {
     }
 
     /**
-     * PROJECT-009 지부별 프로젝트 매칭 현황.
+     * PROJECT-STAT-004 지부별 프로젝트 매칭 현황.
      */
     public ProjectMatchingOverviewResponse matchingOverviewForChapter(
         Long chapterId,

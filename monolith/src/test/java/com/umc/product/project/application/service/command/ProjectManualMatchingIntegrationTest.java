@@ -170,11 +170,12 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         fixture.배정_가능_기간(scenario);
         Scenario other = fixture.다른_지부(scenario);
         Long second = fixture.회원(scenario, "두번째", ChallengerPart.DESIGN);
+        Long developer = fixture.회원(scenario, "개발파트후보", ChallengerPart.WEB_PRODUCT_ENGINEER);
         authenticate(scenario.staffId());
 
         // when & then
-        mockMvc.perform(post(admin(scenario)).contentType(MediaType.APPLICATION_JSON)
-                .content(body(scenario.candidateId(), "WEB_PRODUCT_ENGINEER"))).andExpect(status().isForbidden());
+        assign(scenario, developer).andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value("PROJECT-0205"));
         assign(scenario, other.candidateId()).andExpect(status().isForbidden());
         assign(scenario, scenario.candidateId()).andExpect(status().isOk());
         assign(scenario, second).andExpect(status().isConflict())

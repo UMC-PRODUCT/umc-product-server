@@ -1,7 +1,7 @@
 package com.umc.product.project.application.port.in.query.dto;
 
 /**
- * 프로젝트 팀원 명단 조회 기준. 매칭 현황 표(PROJECT-009)에서 사용합니다.
+ * 프로젝트 팀원 명단 조회 기준. 매칭 현황 표(PROJECT-STAT-004)에서 사용합니다.
  */
 public enum ProjectMemberView {
     /** 공개된 팀원 명단. */
