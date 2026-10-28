@@ -23,6 +23,7 @@ import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
 import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ManagedProjectSummaryResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
+import com.umc.product.project.adapter.in.web.dto.response.ProjectMatchingOverviewResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse.MatchedRoundInfo;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
@@ -30,6 +31,7 @@ import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectApp
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectMatchingStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
 import com.umc.product.project.application.port.in.query.GetProjectMatchingAdjustmentUseCase;
+import com.umc.product.project.application.port.in.query.GetProjectMatchingOverviewUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectPublishedMembersUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
@@ -65,6 +67,7 @@ public class ProjectResponseAssembler {
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final GetProjectStatisticsUseCase getProjectStatisticsUseCase;
+    private final GetProjectMatchingOverviewUseCase getProjectMatchingOverviewUseCase;
     private final GetProjectPublishedMembersUseCase getProjectPublishedMembersUseCase;
     private final GetProjectMatchingAdjustmentUseCase getProjectMatchingAdjustmentUseCase;
 
@@ -215,6 +218,19 @@ public class ProjectResponseAssembler {
             .toList();
 
         return DraftProjectResponse.from(info, owner, coOwners, resolveApplicationFormId(info.id()));
+    }
+
+    /**
+     * PROJECT-009 지부별 프로젝트 매칭 현황.
+     */
+    public ProjectMatchingOverviewResponse matchingOverviewForChapter(
+        Long chapterId,
+        ProjectMemberView view,
+        Long requesterMemberId
+    ) {
+        return ProjectMatchingOverviewResponse.from(
+            getProjectMatchingOverviewUseCase.getByChapterId(chapterId, view, requesterMemberId)
+        );
     }
 
     /**

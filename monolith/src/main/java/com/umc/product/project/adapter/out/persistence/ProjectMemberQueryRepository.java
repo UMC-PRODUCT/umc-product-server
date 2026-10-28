@@ -25,6 +25,7 @@ import com.umc.product.project.application.port.out.dto.ProjectMemberMatchedRoun
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
+import com.umc.product.project.domain.enums.ProjectStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -161,18 +162,31 @@ public class ProjectMemberQueryRepository {
         if (projectIds.isEmpty()) {
             return List.of();
         }
-        BooleanExpression visible = projectMember.status.eq(ProjectMemberStatus.ACTIVE);
-        if (!adjustmentRoundIds.isEmpty()) {
-            visible = visible.and(projectMember.pendingRemovalRoundId.isNull()
-                    .or(projectMember.pendingRemovalRoundId.notIn(adjustmentRoundIds)))
-                .or(projectMember.status.eq(ProjectMemberStatus.PENDING_PUBLICATION)
-                    .and(projectMember.assignedMatchingRound.id.in(adjustmentRoundIds)));
-        }
+        BooleanExpression visible = adjustmentMembers(adjustmentRoundIds);
         return queryFactory.selectFrom(projectMember)
             .join(projectMember.project).fetchJoin()
             .leftJoin(projectMember.assignedMatchingRound).fetchJoin()
             .where(projectMember.project.id.in(projectIds), visible)
-            .orderBy(projectMember.createdAt.asc(), projectMember.id.asc()).fetch();
+            .orderBy(projectMember.createdAt.asc(), projectMember.id.asc())
+            .fetch();
+    }
+
+    public List<ProjectMember> listMatchingOverviewMembersByProjectIds(
+        Collection<Long> projectIds, Collection<Long> adjustmentRoundIds
+    ) {
+        if (projectIds.isEmpty()) {
+            return List.of();
+        }
+        BooleanExpression ongoing = projectMember.project.status.eq(ProjectStatus.IN_PROGRESS)
+            .and(adjustmentMembers(adjustmentRoundIds));
+        BooleanExpression completed = projectMember.project.status.eq(ProjectStatus.COMPLETED)
+            .and(projectMember.status.eq(ProjectMemberStatus.COMPLETED));
+        return queryFactory.selectFrom(projectMember)
+            .join(projectMember.project).fetchJoin()
+            .leftJoin(projectMember.assignedMatchingRound).fetchJoin()
+            .where(projectMember.project.id.in(projectIds), ongoing.or(completed))
+            .orderBy(projectMember.createdAt.asc(), projectMember.id.asc())
+            .fetch();
     }
 
     /**
@@ -276,6 +290,17 @@ public class ProjectMemberQueryRepository {
 
     public Map<Long, Map<ChallengerPart, Long>> countAssignedByProjectIdsGroupByProjectIdAndPart(Collection<Long> projectIds) {
         return countMembers(projectIds, List.of(ProjectMemberStatus.ACTIVE, ProjectMemberStatus.PENDING_PUBLICATION));
+    }
+
+    private BooleanExpression adjustmentMembers(Collection<Long> adjustmentRoundIds) {
+        BooleanExpression visible = projectMember.status.eq(ProjectMemberStatus.ACTIVE);
+        if (!adjustmentRoundIds.isEmpty()) {
+            visible = visible.and(projectMember.pendingRemovalRoundId.isNull()
+                    .or(projectMember.pendingRemovalRoundId.notIn(adjustmentRoundIds)))
+                .or(projectMember.status.eq(ProjectMemberStatus.PENDING_PUBLICATION)
+                    .and(projectMember.assignedMatchingRound.id.in(adjustmentRoundIds)));
+        }
+        return visible;
     }
 
     /**

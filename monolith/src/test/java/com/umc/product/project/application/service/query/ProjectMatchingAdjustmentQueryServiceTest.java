@@ -18,12 +18,8 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
-import com.umc.product.authorization.domain.RoleAttribute;
-import com.umc.product.authorization.domain.SubjectAttributes;
+import com.umc.product.authorization.application.port.in.query.CheckChallengerAuthorityUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectMatchingRosterInfo;
@@ -51,7 +47,7 @@ class ProjectMatchingAdjustmentQueryServiceTest {
     @Mock
     LoadProjectMemberPort loadProjectMemberPort;
     @Mock
-    CheckPermissionUseCase checkPermissionUseCase;
+    CheckChallengerAuthorityUseCase authorityUseCase;
     @Mock
     GetMemberUseCase getMemberUseCase;
     @Spy
@@ -61,14 +57,14 @@ class ProjectMatchingAdjustmentQueryServiceTest {
     @BeforeEach
     void setUp() {
         sut = new ProjectMatchingAdjustmentQueryService(loadProjectPort, loadProjectMatchingRoundPort, loadProjectMemberPort,
-            new ProjectManualMatchingAccessPolicy(checkPermissionUseCase), getMemberUseCase, adjustmentPolicy);
+            new ProjectManualMatchingAccessPolicy(authorityUseCase), getMemberUseCase, adjustmentPolicy);
     }
 
     @Test
     void 조정_권한이_없는_프로젝트가_하나라도_있으면_명단_전체를_거부한다() {
         // given
         given(loadProjectPort.listByIds(List.of(1L, 2L))).willReturn(List.of(project(1L, 10L), project(2L, 20L)));
-        given(checkPermissionUseCase.loadSubject(900L)).willReturn(chapterPresident(10L));
+        given(authorityUseCase.isChapterPresidentInGisu(900L, 1L, 10L)).willReturn(true);
 
         // when & then
         assertThatThrownBy(() -> sut.batchGetByProjectIds(List.of(1L, 2L), 900L))
@@ -85,7 +81,7 @@ class ProjectMatchingAdjustmentQueryServiceTest {
         round.executeAutoDecision(null);
         ProjectMember member = ProjectMember.create(project, 100L, ChallengerPart.WEB_PRODUCT_ENGINEER, 900L);
         given(loadProjectPort.listByIds(List.of(1L))).willReturn(List.of(project));
-        given(checkPermissionUseCase.loadSubject(900L)).willReturn(chapterPresident(10L));
+        given(authorityUseCase.isChapterPresidentInGisu(900L, 1L, 10L)).willReturn(true);
         given(loadProjectMatchingRoundPort.listByChapterId(10L)).willReturn(List.of(publishedThirdRound(round), round));
         given(loadProjectMemberPort.listAdjustmentMembersByProjectIds(Set.of(1L), Set.of())).willReturn(List.of(member));
         given(getMemberUseCase.findAllByIds(Set.of(99L, 100L))).willReturn(Map.of(
@@ -96,11 +92,11 @@ class ProjectMatchingAdjustmentQueryServiceTest {
 
         // then
         assertThat(result.get(1L).members()).extracting("memberId").containsExactly(100L);
-        then(checkPermissionUseCase).should().loadSubject(900L);
+        then(authorityUseCase).should().isChapterPresidentInGisu(900L, 1L, 10L);
     }
 
     @Test
-        void 디자인_최종_공개_후_개발자_조정_기간에는_개발자_조정_차수만_명단에_반영한다() {
+    void 디자인_최종_공개_후_개발자_조정_기간에는_개발자_조정_차수만_명단에_반영한다() {
         // given
         Project project = project(1L, 10L);
         Instant now = Instant.now();
@@ -114,7 +110,7 @@ class ProjectMatchingAdjustmentQueryServiceTest {
         ProjectMember member = ProjectMember.createForMatching(
             project, 100L, ChallengerPart.WEB_PRODUCT_ENGINEER, developer, 900L);
         given(loadProjectPort.listByIds(List.of(1L))).willReturn(List.of(project));
-        given(checkPermissionUseCase.loadSubject(900L)).willReturn(chapterPresident(10L));
+        given(authorityUseCase.isChapterPresidentInGisu(900L, 1L, 10L)).willReturn(true);
         given(loadProjectMatchingRoundPort.listByChapterId(10L)).willReturn(List.of(
             publishedThirdRound(design), design, publishedThirdRound(developer), developer));
         given(loadProjectMemberPort.listAdjustmentMembersByProjectIds(Set.of(1L), Set.of(12L))).willReturn(List.of(member));
@@ -134,12 +130,6 @@ class ProjectMatchingAdjustmentQueryServiceTest {
         ReflectionTestUtils.setField(project, "id", projectId);
         ReflectionTestUtils.setField(project, "status", ProjectStatus.IN_PROGRESS);
         return project;
-    }
-
-    private SubjectAttributes chapterPresident(Long chapterId) {
-        return SubjectAttributes.builder().memberId(900L)
-            .roleAttributes(List.of(new RoleAttribute(ChallengerRoleType.CHAPTER_PRESIDENT,
-                OrganizationType.CHAPTER, chapterId, null, 1L))).build();
     }
 
     private ProjectMatchingRound publishedThirdRound(ProjectMatchingRound random) {
