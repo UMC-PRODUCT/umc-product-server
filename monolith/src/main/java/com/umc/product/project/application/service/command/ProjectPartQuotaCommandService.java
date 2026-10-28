@@ -33,6 +33,7 @@ import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectPartQuotaPort;
 import com.umc.product.project.application.service.policy.ProjectQuotaCapacityPolicy;
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
+import com.umc.product.project.application.service.policy.ProjectQuotaMemberPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
@@ -52,6 +53,7 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
     private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final ProjectQuotaEditPolicy editPolicy;
+    private final ProjectQuotaMemberPolicy memberPolicy;
     private final ProjectQuotaCapacityPolicy capacityPolicy;
     private final LoadProjectPort loadProjectPort;
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
@@ -101,19 +103,22 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
             .filter(p -> !requestedParts.contains(p))
             .collect(Collectors.toSet());
 
-        Map<ChallengerPart, Long> assigned = loadProjectMemberPort.countAssignedByProjectIdGroupByPart(project.getId());
+        Instant now = clock.instant();
+        var reserved = memberPolicy.reservedMembers(
+            loadProjectMemberPort.listActiveAndPendingPublicationByProjectId(project.getId()), rounds, now);
+        Map<ChallengerPart, Long> assigned = reserved.stream()
+            .collect(Collectors.groupingBy(ProjectMember::getPart, Collectors.counting()));
         Map<ChallengerPart, Long> requested = command.entries().stream()
             .collect(Collectors.toMap(Entry::part, Entry::quota));
         Set<ChallengerPart> changed = EnumSet.noneOf(ChallengerPart.class);
         changed.addAll(existingByPart.keySet());
         changed.addAll(requested.keySet());
-        Instant now = clock.instant();
         for (ChallengerPart part : changed) {
             long minimum = assigned.getOrDefault(part, 0L);
             if (part == ChallengerPart.PLAN) {
                 var ids = new HashSet<Long>();
                 ids.add(project.getProductOwnerMemberId());
-                loadProjectMemberPort.listActiveAndPendingPublicationByProjectId(project.getId()).stream()
+                reserved.stream()
                     .filter(member -> member.getPart() == ChallengerPart.PLAN)
                     .map(ProjectMember::getMemberId).forEach(ids::add);
                 minimum = ids.size();
