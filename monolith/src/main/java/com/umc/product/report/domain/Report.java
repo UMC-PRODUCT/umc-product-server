@@ -3,10 +3,13 @@ package com.umc.product.report.domain;
 import java.time.Instant;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.report.domain.enums.ReportActionType;
 import com.umc.product.report.domain.enums.ReportDeliveryStatus;
 import com.umc.product.report.domain.enums.ReportReason;
 import com.umc.product.report.domain.enums.ReportStatus;
 import com.umc.product.report.domain.enums.ReportTargetType;
+import com.umc.product.report.domain.exception.ReportDomainException;
+import com.umc.product.report.domain.exception.ReportErrorCode;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -151,6 +154,33 @@ public class Report extends BaseEntity {
 
     public void reject() {
         this.status = ReportStatus.REJECTED;
+    }
+
+    /**
+     * 처리 대기(PENDING) 신고에 운영자 조치를 한 번만 적용하고, 남길 조치 이력을 돌려줍니다.
+     *
+     * @throws ReportDomainException 이미 처리되었거나 반려된 신고면 {@link ReportErrorCode#REPORT_ALREADY_MODERATED}
+     */
+    public ReportAction moderate(
+        ReportActionType actionType,
+        String reason,
+        String moderatorExternalId,
+        String moderatorName,
+        Instant actedAt
+    ) {
+        if (this.status != ReportStatus.PENDING) {
+            throw new ReportDomainException(ReportErrorCode.REPORT_ALREADY_MODERATED);
+        }
+        ReportAction action = ReportAction.record(
+            this.id,
+            actionType,
+            reason,
+            moderatorExternalId,
+            moderatorName,
+            actedAt
+        );
+        this.status = actionType.resultStatus();
+        return action;
     }
 
     private static Long requirePositive(Long value, String name) {

@@ -36,6 +36,11 @@ public class ReportPersistenceAdapter implements LoadReportPort, SaveReportPort 
     }
 
     @Override
+    public Optional<Report> findByIdForUpdate(Long reportId) {
+        return reportRepository.findByIdForUpdate(reportId);
+    }
+
+    @Override
     public Report save(Report report) {
         try {
             return reportRepository.saveAndFlush(report);

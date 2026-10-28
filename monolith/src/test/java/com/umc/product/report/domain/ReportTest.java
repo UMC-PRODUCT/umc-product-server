@@ -7,11 +7,15 @@ import java.time.Instant;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.report.domain.enums.ReportActionType;
 import com.umc.product.report.domain.enums.ReportDeliveryStatus;
 import com.umc.product.report.domain.enums.ReportReason;
 import com.umc.product.report.domain.enums.ReportStatus;
 import com.umc.product.report.domain.enums.ReportTargetType;
+import com.umc.product.report.domain.exception.ReportDomainException;
+import com.umc.product.report.domain.exception.ReportErrorCode;
 
 @DisplayName("Report")
 class ReportTest {
@@ -103,5 +107,74 @@ class ReportTest {
         assertThat(report.getDeliveryAttemptCount()).isEqualTo(2);
         assertThat(report.getDeliveryStatus()).isEqualTo(ReportDeliveryStatus.FAILED);
         assertThat(report.isDeliveryPending()).isFalse();
+    }
+
+    @Test
+    @DisplayName("처리 대기 신고를 처리하면 APPROVED로 바꾸고 조치 이력을 만든다")
+    void moderate_처리하면_APPROVED와_이력을_남긴다() {
+        // given
+        Report report = savedReport();
+        Instant actedAt = Instant.parse("2026-10-29T00:00:00Z");
+
+        // when
+        ReportAction action = report.moderate(ReportActionType.APPROVE, " 욕설 확인 ", "1234567890", "모루", actedAt);
+
+        // then
+        assertThat(report.getStatus()).isEqualTo(ReportStatus.APPROVED);
+        assertThat(action.getReportId()).isEqualTo(901L);
+        assertThat(action.getActionType()).isEqualTo(ReportActionType.APPROVE);
+        assertThat(action.getReason()).isEqualTo("욕설 확인");
+        assertThat(action.getModeratorExternalId()).isEqualTo("1234567890");
+        assertThat(action.getModeratorName()).isEqualTo("모루");
+        assertThat(action.getActedAt()).isEqualTo(actedAt);
+    }
+
+    @Test
+    @DisplayName("처리 대기 신고를 반려하면 REJECTED로 바꾼다")
+    void moderate_반려하면_REJECTED가_된다() {
+        // given
+        Report report = savedReport();
+
+        // when
+        report.moderate(ReportActionType.REJECT, "신고 사유 아님", "1234567890", "모루", Instant.now());
+
+        // then
+        assertThat(report.getStatus()).isEqualTo(ReportStatus.REJECTED);
+    }
+
+    @Test
+    @DisplayName("이미 처리된 신고는 다시 조치할 수 없다")
+    void moderate_이미_처리된_신고는_거부한다() {
+        // given
+        Report report = savedReport();
+        report.moderate(ReportActionType.APPROVE, "욕설 확인", "1", "모루", Instant.now());
+
+        // when & then
+        assertThatThrownBy(() -> report.moderate(ReportActionType.REJECT, "번복", "2", "다른 운영자", Instant.now()))
+            .isInstanceOfSatisfying(ReportDomainException.class, exception ->
+                assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_MODERATED)
+            );
+        assertThat(report.getStatus()).isEqualTo(ReportStatus.APPROVED);
+    }
+
+    @Test
+    @DisplayName("사유가 비었거나 500자를 넘으면 조치하지 않고 상태도 그대로 둔다")
+    void moderate_사유가_잘못되면_거부한다() {
+        // given
+        Report report = savedReport();
+        String tooLong = "가".repeat(ReportAction.REASON_MAX_LENGTH + 1);
+
+        // when & then
+        assertThatThrownBy(() -> report.moderate(ReportActionType.APPROVE, " ", "1", "모루", Instant.now()))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> report.moderate(ReportActionType.APPROVE, tooLong, "1", "모루", Instant.now()))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThat(report.getStatus()).isEqualTo(ReportStatus.PENDING);
+    }
+
+    private Report savedReport() {
+        Report report = Report.create(1L, ReportTargetType.POST, 2L, null);
+        ReflectionTestUtils.setField(report, "id", 901L);
+        return report;
     }
 }
