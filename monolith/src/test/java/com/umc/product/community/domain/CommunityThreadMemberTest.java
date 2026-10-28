@@ -100,6 +100,58 @@ class CommunityThreadMemberTest {
     }
 
     @Test
+    @DisplayName("KICKED 멤버는 확인 전까지 isKickPending이 true다")
+    void kick_확인_전에는_kickPending이다() {
+        // given
+        CommunityThreadMember member = CommunityThreadMember.createMember(1L, 11L, JOINED_AT);
+        member.kick(JOINED_AT.plusSeconds(10));
+
+        // then
+        assertThat(member.isKicked()).isTrue();
+        assertThat(member.isKickPending()).isTrue();
+    }
+
+    @Test
+    @DisplayName("강퇴를 확인하면 KICKED_ACKNOWLEDGED로 전이되고 더 이상 pending이 아니다")
+    void acknowledgeKick_확인하면_상태가_전이된다() {
+        // given
+        CommunityThreadMember member = CommunityThreadMember.createMember(1L, 11L, JOINED_AT);
+        member.kick(JOINED_AT.plusSeconds(10));
+
+        // when
+        member.acknowledgeKick();
+
+        // then
+        assertThat(member.getState()).isEqualTo(CommunityThreadMemberState.KICKED_ACKNOWLEDGED);
+        assertThat(member.isKicked()).isTrue();
+        assertThat(member.isKickPending()).isFalse();
+    }
+
+    @Test
+    @DisplayName("KICKED가 아닌 멤버는 강퇴를 확인할 수 없다")
+    void acknowledgeKick_KICKED가_아니면_거절한다() {
+        // given
+        CommunityThreadMember member = CommunityThreadMember.createMember(1L, 11L, JOINED_AT);
+
+        // when & then
+        assertThatThrownBy(member::acknowledgeKick)
+            .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("이미 확인한 강퇴는 다시 확인할 수 없다")
+    void acknowledgeKick_이미_확인했으면_거절한다() {
+        // given
+        CommunityThreadMember member = CommunityThreadMember.createMember(1L, 11L, JOINED_AT);
+        member.kick(JOINED_AT.plusSeconds(10));
+        member.acknowledgeKick();
+
+        // when & then
+        assertThatThrownBy(member::acknowledgeKick)
+            .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("재가입 시각이 없으면 LEFT 상태와 역할을 유지한다")
     void rejoin_시각을_거절하면_상태와_역할을_유지한다() {
         // given

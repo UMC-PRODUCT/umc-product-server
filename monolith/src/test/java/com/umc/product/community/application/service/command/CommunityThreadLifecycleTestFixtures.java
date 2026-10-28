@@ -56,6 +56,9 @@ final class CommunityThreadLifecycleTestFixtures {
             member.leave(NOW.minusSeconds(60));
         } else if (state == CommunityThreadMemberState.KICKED) {
             member.kick(NOW.minusSeconds(60));
+        } else if (state == CommunityThreadMemberState.KICKED_ACKNOWLEDGED) {
+            member.kick(NOW.minusSeconds(60));
+            member.acknowledgeKick();
         }
         return member;
     }
