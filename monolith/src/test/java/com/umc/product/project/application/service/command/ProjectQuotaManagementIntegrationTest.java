@@ -418,6 +418,87 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         assertThat(quota(other, "DESIGN")).isZero();
     }
 
+    @Test
+    void 해제예약자는_공개인원에_남지만_TO를_영으로_줄일_수_있다() throws Exception {
+        // given
+        fixture.해제예약(scenario, NOW);
+
+        // when
+        JsonNode design = cell(view(null), "DESIGN");
+
+        // then
+        assertThat(design.path("currentCount").asLong()).isEqualTo(1);
+        assertThat(design.path("minimumQuota").asLong()).isZero();
+        save(List.of(change(scenario.projectId(), "DESIGN", 0))).andExpect(status().isOk());
+        assertThat(quota(scenario.projectId(), "DESIGN")).isZero();
+        assertThat(cell(view(null), "DESIGN").path("currentCount").asLong()).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT status FROM project_member WHERE project_id=? AND member_id=?",
+            String.class, scenario.projectId(), scenario.candidateId())).isEqualTo("ACTIVE");
+    }
+
+    @Test
+    void 해제예약_후_새_발표대기자는_최소_TO에_포함한다() throws Exception {
+        // given
+        fixture.해제예약(scenario, NOW);
+        Long replacement = projects.회원(scenario, "교체 인원", ChallengerPart.DESIGN);
+        fixture.배정(scenario, replacement, ChallengerPart.DESIGN, true);
+        fixture.정원(scenario.projectId(), ChallengerPart.DESIGN, 2);
+
+        // when & then
+        assertThat(cell(view(null), "DESIGN").path("minimumQuota").asLong()).isEqualTo(1);
+        save(List.of(change(scenario.projectId(), "DESIGN", 1))).andExpect(status().isOk());
+        denied(save(List.of(change(scenario.projectId(), "DESIGN", 0))), "PROJECT-0252");
+        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(1);
+    }
+
+    @Test
+    void 기존_PUT도_해제예약된_파트의_TO를_제거할_수_있다() throws Exception {
+        // given
+        fixture.해제예약(scenario, NOW);
+
+        // when
+        legacyPut(List.of(Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 1))).andExpect(status().isOk());
+
+        // then
+        assertThat(quota(scenario.projectId(), "DESIGN")).isZero();
+    }
+
+    @Test
+    void 해제예약을_취소하면_최소_TO에_다시_포함한다() throws Exception {
+        // given
+        fixture.해제예약(scenario, NOW);
+        jdbc.update("UPDATE project_member SET pending_removal_round_id=NULL WHERE project_id=?", scenario.projectId());
+
+        // when & then
+        assertThat(cell(view(null), "DESIGN").path("minimumQuota").asLong()).isEqualTo(1);
+        denied(save(List.of(change(scenario.projectId(), "DESIGN", 0))), "PROJECT-0252");
+    }
+
+    @Test
+    void 조정기간이_끝나도_최종공개_전까지_해제예약자를_제외한다() throws Exception {
+        // given
+        Long roundId = fixture.해제예약(scenario, NOW.minusSeconds(4000));
+
+        // when & then
+        assertThat(cell(view(null), "DESIGN").path("minimumQuota").asLong()).isZero();
+        save(List.of(change(scenario.projectId(), "DESIGN", 0))).andExpect(status().isOk());
+        assertThat(jdbc.queryForObject("SELECT result_published_at IS NULL FROM project_matching_round WHERE id=?",
+            Boolean.class, roundId)).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"type='PLAN_DEVELOPER'", "auto_decision_executed_at=NULL",
+        "result_published_at=starts_at", "starts_at=starts_at + interval '2 hours'"})
+    void 해당_파트의_유효한_조정차수가_아니면_해제예약자를_제외하지_않는다(String update) throws Exception {
+        // given
+        Long roundId = fixture.해제예약(scenario, NOW);
+        jdbc.update("UPDATE project_matching_round SET " + update + " WHERE id=?", roundId);
+
+        // when & then
+        assertThat(cell(view(null), "DESIGN").path("minimumQuota").asLong()).isEqualTo(1);
+        denied(save(List.of(change(scenario.projectId(), "DESIGN", 0))), "PROJECT-0252");
+    }
+
     private void schedule(MatchingType type, long firstStart, long thirdDeadline) {
         fixture.차수(scenario, type, MatchingPhase.FIRST, NOW.plusSeconds(firstStart),
             NOW.plusSeconds(firstStart + 600), NOW.plusSeconds(firstStart + 1200));

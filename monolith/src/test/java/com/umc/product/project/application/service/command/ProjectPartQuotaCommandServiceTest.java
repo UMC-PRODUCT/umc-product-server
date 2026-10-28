@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -33,8 +34,10 @@ import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectPartQuotaPort;
+import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectQuotaCapacityPolicy;
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
+import com.umc.product.project.application.service.policy.ProjectQuotaMemberPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.ProjectStatus;
@@ -58,6 +61,7 @@ class ProjectPartQuotaCommandServiceTest {
     @Mock LoadProjectMemberPort loadProjectMemberPort;
     @Mock ProjectQuotaEditPolicy editPolicy;
     @Mock ProjectQuotaCapacityPolicy capacityPolicy;
+    @Spy ProjectQuotaMemberPolicy memberPolicy = new ProjectQuotaMemberPolicy(new ProjectMatchingAdjustmentPolicy());
 
     @InjectMocks
     ProjectPartQuotaCommandService sut;

@@ -77,6 +77,19 @@ public class ProjectQuotaManagementFixture {
         saveProjectMemberPort.save(member);
     }
 
+    public Long 해제예약(Scenario scenario, Instant now) {
+        ProjectMatchingRound round = saveProjectMatchingRoundPort.save(ProjectMatchingRound.create(
+            "TO 조정", null, MatchingType.PLAN_DESIGN, MatchingPhase.RANDOM_MATCHING, scenario.chapterId(),
+            now.minusSeconds(3600), now.plusSeconds(3600), now.plusSeconds(3600), now.plusSeconds(7200)));
+        round.executeAutoDecision(scenario.staffId());
+        saveProjectMatchingRoundPort.save(round);
+        ProjectMember member = ProjectMember.create(loadProjectPort.getById(scenario.projectId()),
+            scenario.candidateId(), ChallengerPart.DESIGN, scenario.staffId());
+        member.scheduleRemoval(round, scenario.staffId(), "팀 이동");
+        saveProjectMemberPort.save(member);
+        return round.getId();
+    }
+
     public void 차수(Scenario scenario, MatchingType type, MatchingPhase phase,
         Instant startsAt, Instant endsAt, Instant deadline) {
         saveProjectMatchingRoundPort.save(ProjectMatchingRound.create("TO 기간 검증", null, type, phase,
