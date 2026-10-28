@@ -64,6 +64,23 @@ class DiscordReportMessageFactoryTest {
         assertThat(message.get("allowed_mentions")).isEqualTo(Map.of("parse", List.of()));
     }
 
+    @Test
+    @DisplayName("신고 승인과 문제 없음 버튼을 붙인다")
+    @SuppressWarnings("unchecked")
+    void create_조치_버튼을_붙인다() {
+        // given
+        Report report = threadMessageReport(ReportTargetSnapshot.of(4L, "내용", null));
+
+        // when
+        List<Map<String, Object>> rows = (List<Map<String, Object>>) sut.create(report).get("components");
+
+        // then
+        List<Map<String, Object>> buttons = (List<Map<String, Object>>) rows.get(0).get("components");
+        assertThat(buttons).extracting(button -> button.get("custom_id"))
+            .containsExactly("report:901:approve", "report:901:reject");
+        assertThat(buttons).extracting(button -> button.get("disabled")).containsOnly(false);
+    }
+
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> fields(Map<String, Object> message) {
         Map<String, Object> embed = ((List<Map<String, Object>>) message.get("embeds")).get(0);

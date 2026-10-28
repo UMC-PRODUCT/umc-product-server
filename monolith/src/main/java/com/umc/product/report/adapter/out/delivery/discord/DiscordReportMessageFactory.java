@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
+import com.umc.product.report.adapter.discord.ReportDiscordButtons;
 import com.umc.product.report.domain.Report;
 import com.umc.product.report.domain.ReportTargetSnapshot;
 import com.umc.product.report.domain.enums.ReportReason;
@@ -27,6 +28,7 @@ public class DiscordReportMessageFactory {
     public Map<String, Object> create(Report report) {
         Map<String, Object> message = new LinkedHashMap<>();
         message.put("embeds", List.of(embed(report)));
+        message.put("components", ReportDiscordButtons.actionRows(report.getId(), false));
         // 신고 내용에 @everyone 등이 있어도 아무도 호출되지 않도록 멘션을 막습니다.
         message.put("allowed_mentions", Map.of("parse", List.of()));
         return message;

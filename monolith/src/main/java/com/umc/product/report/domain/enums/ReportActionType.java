@@ -7,10 +7,10 @@ package com.umc.product.report.domain.enums;
  */
 public enum ReportActionType {
 
-    /** 신고를 받아들여 처리를 끝냅니다. */
+    /** 신고가 타당하다고 판정합니다. 실제 제재는 별도 조치로 다룹니다. */
     APPROVE(ReportStatus.APPROVED),
 
-    /** 신고를 반려합니다. */
+    /** 신고 사유에 해당하지 않는다고 판정합니다. */
     REJECT(ReportStatus.REJECTED);
 
     private final ReportStatus resultStatus;

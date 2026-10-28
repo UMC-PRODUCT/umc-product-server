@@ -1,5 +1,6 @@
 package com.umc.product.report.adapter.in.web.discord;
 
+import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -17,6 +18,7 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.report.application.port.in.command.ModerateReportUseCase;
 
 @DisplayName("Discord 상호작용 콜백")
 class DiscordInteractionControllerTest {
@@ -30,12 +32,15 @@ class DiscordInteractionControllerTest {
 
     @BeforeEach
     void setUp() {
-        DiscordInteractionSignatureVerifier verifier = new DiscordInteractionSignatureVerifier(
-            new ReportDiscordInteractionProperties(keys.publicKeyHex()),
-            Clock.fixed(NOW, ZoneOffset.UTC)
-        );
+        ReportDiscordInteractionProperties properties =
+            new ReportDiscordInteractionProperties(keys.publicKeyHex(), "guild-1", "role-1");
+        DiscordInteractionSignatureVerifier verifier =
+            new DiscordInteractionSignatureVerifier(properties, Clock.fixed(NOW, ZoneOffset.UTC));
+        ObjectMapper objectMapper = new ObjectMapper();
+        DiscordInteractionHandler handler =
+            new DiscordInteractionHandler(mock(ModerateReportUseCase.class), properties, objectMapper);
         mockMvc = MockMvcBuilders
-            .standaloneSetup(new DiscordInteractionController(verifier, new ObjectMapper()))
+            .standaloneSetup(new DiscordInteractionController(verifier, handler, objectMapper))
             .build();
     }
 
@@ -71,10 +76,10 @@ class DiscordInteractionControllerTest {
     }
 
     @Test
-    @DisplayName("아직 처리하지 않는 상호작용 유형이면 400으로 응답한다")
+    @DisplayName("처리하지 않는 상호작용 유형(슬래시 명령 등)이면 400으로 응답한다")
     void 처리하지_않는_유형이면_400() throws Exception {
         // given
-        String body = "{\"id\":\"1\",\"type\":3}";
+        String body = "{\"id\":\"1\",\"type\":2}";
 
         // when & then
         mockMvc.perform(signedRequest(body, keys.sign(TIMESTAMP, body)))

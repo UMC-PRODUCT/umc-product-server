@@ -538,11 +538,14 @@ app:
 
   # 신고 운영 채널(Discord 봇). 봇 토큰이나 채널 ID가 비어 있으면 신고를 보내지 않고 전달 대기(PENDING)로 남긴다.
   # 앱 공개키(public-key)가 비어 있으면 상호작용 콜백을 모두 401로 거절한다.
+  # 서버 ID(guild-id)나 신고처리 역할 ID(moderator-role-id)가 비어 있으면 아무도 버튼으로 신고를 처리할 수 없다.
   report:
     discord:
       bot-token: ${REPORT_DISCORD_BOT_TOKEN:}
       channel-id: ${REPORT_DISCORD_CHANNEL_ID:}
       public-key: ${REPORT_DISCORD_PUBLIC_KEY:}
+      guild-id: ${REPORT_DISCORD_GUILD_ID:}
+      moderator-role-id: ${REPORT_DISCORD_MODERATOR_ROLE_ID:}
 
   # 일반 테스트 및 인증서 PDF 미리보기 API. prod 프로필에서는 설정과 무관하게 비활성화된다.
   test-api:

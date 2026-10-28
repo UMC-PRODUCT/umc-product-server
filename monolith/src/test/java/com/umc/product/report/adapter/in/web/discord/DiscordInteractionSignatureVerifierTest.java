@@ -132,7 +132,10 @@ class DiscordInteractionSignatureVerifierTest {
     }
 
     private DiscordInteractionSignatureVerifier verifierWith(String publicKeyHex) {
-        return new DiscordInteractionSignatureVerifier(new ReportDiscordInteractionProperties(publicKeyHex), clock);
+        return new DiscordInteractionSignatureVerifier(
+            new ReportDiscordInteractionProperties(publicKeyHex, null, null),
+            clock
+        );
     }
 
     private static byte[] bytes(String value) {

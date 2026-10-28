@@ -32,17 +32,17 @@ public class DiscordInteractionController {
     static final String SIGNATURE_HEADER = "X-Signature-Ed25519";
     static final String TIMESTAMP_HEADER = "X-Signature-Timestamp";
 
-    private static final int INTERACTION_TYPE_PING = 1;
-    private static final int RESPONSE_TYPE_PONG = 1;
-
     private final DiscordInteractionSignatureVerifier signatureVerifier;
+    private final DiscordInteractionHandler interactionHandler;
     private final ObjectMapper objectMapper;
 
     public DiscordInteractionController(
         DiscordInteractionSignatureVerifier signatureVerifier,
+        DiscordInteractionHandler interactionHandler,
         ObjectMapper objectMapper
     ) {
         this.signatureVerifier = signatureVerifier;
+        this.interactionHandler = interactionHandler;
         this.objectMapper = objectMapper;
     }
 
@@ -61,11 +61,9 @@ public class DiscordInteractionController {
         if (interaction == null) {
             return ResponseEntity.badRequest().build();
         }
-        if (interaction.path("type").asInt() == INTERACTION_TYPE_PING) {
-            return ResponseEntity.ok(Map.of("type", RESPONSE_TYPE_PONG));
-        }
-        // 버튼·모달 상호작용은 아직 처리하지 않습니다.
-        return ResponseEntity.badRequest().build();
+        return interactionHandler.handle(interaction)
+            .map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.badRequest().build());
     }
 
     private JsonNode readJson(byte[] body) {
