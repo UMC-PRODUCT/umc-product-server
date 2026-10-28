@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.chat.application.port.in.command.LeaveChatRoomUseCase;
 import com.umc.product.chat.application.port.in.command.dto.LeaveChatRoomCommand;
+import com.umc.product.community.application.port.in.command.thread.AcknowledgeCommunityThreadKickUseCase;
 import com.umc.product.community.application.port.in.command.thread.ChangeCommunityThreadMemberRoleUseCase;
 import com.umc.product.community.application.port.in.command.thread.InviteCommunityThreadMembersUseCase;
 import com.umc.product.community.application.port.in.command.thread.KickCommunityThreadMemberUseCase;
@@ -41,7 +42,8 @@ public class CommunityThreadMembershipCommandService implements
     InviteCommunityThreadMembersUseCase,
     KickCommunityThreadMemberUseCase,
     LeaveCommunityThreadUseCase,
-    ChangeCommunityThreadMemberRoleUseCase {
+    ChangeCommunityThreadMemberRoleUseCase,
+    AcknowledgeCommunityThreadKickUseCase {
 
     private final LoadCommunityThreadPort loadThreadPort;
     private final LoadCommunityThreadMemberPort loadMemberPort;
@@ -103,6 +105,16 @@ public class CommunityThreadMembershipCommandService implements
             kickedAt
         ));
         return CommunityThreadMemberLifecycleInfo.from(target, activeMemberIds.size() - 1L);
+    }
+
+    @Override
+    public CommunityThreadMemberLifecycleInfo acknowledgeKick(ThreadActorCommand command) {
+        CommunityThread thread = loadLockedThread(command.threadId());
+        CommunityThreadMember target = loadKickPendingActor(thread.getId(), command.actorMemberId());
+        target.acknowledgeKick();
+        saveMemberPort.save(target);
+        long memberCount = loadMemberPort.countActiveByThreadId(thread.getId());
+        return CommunityThreadMemberLifecycleInfo.from(target, memberCount);
     }
 
     @Override
@@ -177,6 +189,15 @@ public class CommunityThreadMembershipCommandService implements
         return loadMemberPort.findByThreadIdAndMemberId(threadId, memberId)
             .filter(CommunityThreadMember::isActive)
             .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.THREAD_MEMBER_NOT_FOUND));
+    }
+
+    private CommunityThreadMember loadKickPendingActor(Long threadId, Long memberId) {
+        CommunityThreadMember member = loadMemberPort.findByThreadIdAndMemberId(threadId, memberId)
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.THREAD_MEMBER_NOT_FOUND));
+        if (!member.isKickPending()) {
+            throw new CommunityDomainException(CommunityErrorCode.THREAD_KICK_NOT_ACKNOWLEDGEABLE);
+        }
+        return member;
     }
 
     private void requireManager(CommunityThreadMember actor) {

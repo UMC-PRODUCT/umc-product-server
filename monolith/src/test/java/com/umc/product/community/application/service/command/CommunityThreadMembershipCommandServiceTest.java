@@ -204,6 +204,51 @@ class CommunityThreadMembershipCommandServiceTest {
     }
 
     @Test
+    @DisplayName("강퇴 확인은 KICKED 멤버를 KICKED_ACKNOWLEDGED로 전환한다")
+    void acknowledgeKick_transitionsPendingKickToAcknowledged() {
+        // given
+        CommunityThread thread = CommunityThreadLifecycleTestFixtures.thread();
+        CommunityThreadMember kickedMember = CommunityThreadLifecycleTestFixtures.member(
+            20L,
+            CommunityThreadMemberRole.MEMBER,
+            CommunityThreadMemberState.KICKED
+        );
+        given(loadThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadMemberPort.findByThreadIdAndMemberId(THREAD_ID, 20L)).willReturn(Optional.of(kickedMember));
+        given(saveMemberPort.save(kickedMember)).willReturn(kickedMember);
+        given(loadMemberPort.countActiveByThreadId(THREAD_ID)).willReturn(1L);
+
+        // when
+        CommunityThreadMemberLifecycleInfo result = sut.acknowledgeKick(
+            new ThreadActorCommand(THREAD_ID, 20L)
+        );
+
+        // then
+        assertThat(result.state()).isEqualTo(CommunityThreadMemberState.KICKED_ACKNOWLEDGED);
+        then(saveMemberPort).should().save(kickedMember);
+    }
+
+    @Test
+    @DisplayName("강퇴 상태가 아니면 강퇴 확인을 거절한다")
+    void acknowledgeKick_rejectsWhenNotKickPending() {
+        // given
+        CommunityThread thread = CommunityThreadLifecycleTestFixtures.thread();
+        CommunityThreadMember activeMember = CommunityThreadLifecycleTestFixtures.activeMember(
+            20L,
+            CommunityThreadMemberRole.MEMBER
+        );
+        given(loadThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadMemberPort.findByThreadIdAndMemberId(THREAD_ID, 20L)).willReturn(Optional.of(activeMember));
+
+        // when & then
+        assertThatThrownBy(() -> sut.acknowledgeKick(new ThreadActorCommand(THREAD_ID, 20L)))
+            .isInstanceOf(CommunityDomainException.class)
+            .extracting(error -> ((CommunityDomainException) error).getBaseCode())
+            .isEqualTo(CommunityErrorCode.THREAD_KICK_NOT_ACKNOWLEDGEABLE);
+        then(saveMemberPort).shouldHaveNoInteractions();
+    }
+
+    @Test
     @DisplayName("OWNER는 소유권 이전 전 탈퇴할 수 없다")
     void leave_ownerIsRejectedBeforeChat() {
         // given
