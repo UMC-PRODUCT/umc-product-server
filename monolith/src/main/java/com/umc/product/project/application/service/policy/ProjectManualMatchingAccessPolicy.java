@@ -1,11 +1,8 @@
 package com.umc.product.project.application.service.policy;
 
-import java.util.Collection;
-
 import org.springframework.stereotype.Component;
 
-import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
-import com.umc.product.authorization.domain.AuthoritySnapshot;
+import com.umc.product.authorization.application.port.in.query.CheckChallengerAuthorityUseCase;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
@@ -15,26 +12,21 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class ProjectManualMatchingAccessPolicy {
-    private final CheckPermissionUseCase checkPermissionUseCase;
+    private final CheckChallengerAuthorityUseCase authorityUseCase;
 
-    public static boolean canManage(AuthoritySnapshot authority, Project project) {
-        return authority.isCentralCoreInGisu(project.getGisuId())
-            || authority.isChapterPresidentInGisu(project.getGisuId(), project.getChapterId());
+    /** 해당 기수의 총괄단 또는 해당 지부장인지 판단한다. */
+    public boolean canManage(Long requesterMemberId, Long gisuId, Long chapterId) {
+        return authorityUseCase.isCentralCoreInGisu(requesterMemberId, gisuId)
+            || authorityUseCase.isChapterPresidentInGisu(requesterMemberId, gisuId, chapterId);
     }
 
     public void validate(Long requesterMemberId, Project project) {
-        AuthoritySnapshot authority = checkPermissionUseCase.loadSubject(requesterMemberId).toAuthoritySnapshot();
-        validate(authority, project);
+        validateChapter(requesterMemberId, project.getGisuId(), project.getChapterId());
     }
 
-    /** 요청자의 권한 정보를 한 번 조회하고, 모든 프로젝트에 조정 권한이 있는지 검증한다. */
-    public void validateAll(Long requesterMemberId, Collection<Project> projects) {
-        AuthoritySnapshot authority = checkPermissionUseCase.loadSubject(requesterMemberId).toAuthoritySnapshot();
-        projects.forEach(project -> validate(authority, project));
-    }
-
-    private void validate(AuthoritySnapshot authority, Project project) {
-        if (!canManage(authority, project)) {
+    /** 지부 단위로 조정 권한을 검증한다. */
+    public void validateChapter(Long requesterMemberId, Long gisuId, Long chapterId) {
+        if (!canManage(requesterMemberId, gisuId, chapterId)) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
     }

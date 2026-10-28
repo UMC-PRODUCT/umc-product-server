@@ -27,12 +27,10 @@ import com.umc.product.project.adapter.in.web.dto.response.ManagedProjectSummary
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
-import com.umc.product.project.application.port.in.query.dto.ProjectMemberView;
 import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -104,10 +102,7 @@ public class ProjectQueryController {
     @Operation(
         operationId = "PROJECT-007",
         summary = "프로젝트 팀원 구성 일괄 조회",
-        description = """
-            복수의 projectId에 대한 팀원 구성을 조회합니다. 권한이 없거나 조회에 실패한 프로젝트는 결과에서 제외됩니다.
-            view=ADJUSTMENT는 랜덤 매칭 조정 기간의 운영진 조정 명단을 반환하며, 요청한 모든 프로젝트에 수동 배정 권한이 필요합니다(없으면 403).
-            """
+        description = "복수의 projectId에 대한 팀원 구성을 조회합니다. 권한이 없거나 조회에 실패한 프로젝트는 결과에서 제외됩니다."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
@@ -116,11 +111,9 @@ public class ProjectQueryController {
     )
     public Map<Long, ProjectMembersResponse> getBatchMembers(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @RequestParam List<Long> projectIds,
-        @Parameter(description = "명단 기준. PUBLISHED: 공개 명단(기본값), ADJUSTMENT: 운영진 조정 명단")
-        @RequestParam(defaultValue = "PUBLISHED") ProjectMemberView view
+        @RequestParam List<Long> projectIds
     ) {
-        return assembler.listProjectMembers(projectIds, memberPrincipal.getMemberId(), view);
+        return assembler.listProjectMembers(projectIds, memberPrincipal.getMemberId());
     }
 
     @GetMapping("/me/managed")

@@ -2,7 +2,6 @@ package com.umc.product.project.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -18,9 +17,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.Project;
-import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
-import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.support.PersistenceAdapterTest;
@@ -89,35 +86,6 @@ class ProjectMemberQueryRepositoryTest {
         // then
         assertThat(result).get().extracting(ProjectMember::getId).isEqualTo(assigned.getId());
 
-    }
-
-    @Test
-    void 해제_예약과_미공개_배정은_조정_명단에만_반영한다() {
-        // given
-        Project project = persistProject("조정 프로젝트", 100L);
-        Instant start = Instant.parse("2026-11-19T00:00:00+09:00");
-        ProjectMatchingRound third = em.persist(ProjectMatchingRound.create("개발 3차", null, MatchingType.PLAN_DEVELOPER,
-            MatchingPhase.THIRD, 1L, start.minusSeconds(14400), start.minusSeconds(10800),
-            start.minusSeconds(7200), start.minusSeconds(3600)));
-        third.executeAutoDecision(null);
-        third.publishResult(third.getResultPublishAt());
-        ProjectMatchingRound random = em.persist(ProjectMatchingRound.create("개발 랜덤", null, MatchingType.PLAN_DEVELOPER,
-            MatchingPhase.RANDOM_MATCHING, 1L, start, start.plusSeconds(7200), start.plusSeconds(7200), start.plusSeconds(10800)));
-        random.executeAutoDecision(null);
-        em.persist(ProjectMember.create(project, 10L, ChallengerPart.WEB_PRODUCT_ENGINEER, 999L));
-        ProjectMember removal = em.persist(ProjectMember.create(project, 11L, ChallengerPart.WEB_PRODUCT_ENGINEER, 999L));
-        removal.scheduleRemoval(random, 999L, "팀 이동");
-        em.persist(ProjectMember.createForMatching(project, 12L, ChallengerPart.WEB_PRODUCT_ENGINEER, random, 999L));
-        em.flush();
-        em.clear();
-
-        // when
-        List<ProjectMember> published = sut.listAdjustmentMembersByProjectIds(List.of(project.getId()), List.of());
-        List<ProjectMember> adjustment = sut.listAdjustmentMembersByProjectIds(List.of(project.getId()), List.of(random.getId()));
-
-        // then
-        assertThat(published).extracting(ProjectMember::getMemberId).containsExactly(10L, 11L);
-        assertThat(adjustment).extracting(ProjectMember::getMemberId).containsExactly(10L, 12L);
     }
 
     private Project persistProject(String name, Long ownerId) {

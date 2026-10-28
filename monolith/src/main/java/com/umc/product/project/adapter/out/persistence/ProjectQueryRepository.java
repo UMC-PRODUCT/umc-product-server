@@ -76,6 +76,17 @@ public class ProjectQueryRepository {
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
+    /** 지부의 공개 프로젝트(IN_PROGRESS·COMPLETED)를 제출 시각·ID 오름차순으로 조회합니다. */
+    public List<Project> listPublicByChapterId(Long chapterId) {
+        return queryFactory.selectFrom(project)
+            .where(
+                project.chapterId.eq(chapterId),
+                project.status.in(ProjectStatus.IN_PROGRESS, ProjectStatus.COMPLETED)
+            )
+            .orderBy(project.submittedAt.asc().nullsFirst(), project.id.asc())
+            .fetch();
+    }
+
     private BooleanBuilder buildCondition(SearchProjectQuery query) {
         BooleanBuilder common = new BooleanBuilder()
             .and(gisuIdEq(query.gisuId()))
