@@ -1,5 +1,6 @@
 package com.umc.product.project.application.service.command;
 
+import java.time.Clock;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -17,11 +18,13 @@ import com.umc.product.project.application.access.ProjectQuotaAccessPolicy;
 import com.umc.product.project.application.port.in.command.SaveProjectQuotaManagementUseCase;
 import com.umc.product.project.application.port.in.command.dto.SaveProjectQuotaManagementCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdatePartQuotasCommand;
+import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.service.policy.ProjectQuotaCapacityPolicy;
+import com.umc.product.project.application.service.policy.ProjectQuotaMemberPolicy;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
@@ -31,6 +34,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional
 public class ProjectQuotaManagementCommandService implements SaveProjectQuotaManagementUseCase {
+    private final Clock clock;
+    private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
+    private final ProjectQuotaMemberPolicy memberPolicy;
     private final ProjectQuotaAccessPolicy accessPolicy;
     private final LockProjectMatchingPort lockProjectMatchingPort;
     private final LoadProjectPort loadProjectPort;
@@ -46,6 +52,8 @@ public class ProjectQuotaManagementCommandService implements SaveProjectQuotaMan
         accessPolicy.requireChapter(command.requesterId(), command.gisuId(), command.chapterId());
         validate(command);
         lockProjectMatchingPort.lockByGisuId(command.gisuId());
+        var rounds = loadProjectMatchingRoundPort.listByChapterIdForUpdate(command.chapterId());
+        var now = clock.instant();
         var assigned = loadProjectMemberPort.listAssignedByProjectIds(command.projects().stream()
             .map(SaveProjectQuotaManagementCommand.ProjectChange::projectId).toList());
         for (var change : command.projects().stream()
@@ -63,7 +71,7 @@ public class ProjectQuotaManagementCommandService implements SaveProjectQuotaMan
                 if (entry.part() == ChallengerPart.PLAN) {
                     memberIds.add(project.getProductOwnerMemberId());
                 }
-                assigned.getOrDefault(project.getId(), List.of()).stream()
+                memberPolicy.reservedMembers(assigned.getOrDefault(project.getId(), List.of()), rounds, now).stream()
                     .filter(member -> member.getPart() == entry.part())
                     .map(com.umc.product.project.domain.ProjectMember::getMemberId).forEach(memberIds::add);
                 if (entry.quota() < memberIds.size()) {

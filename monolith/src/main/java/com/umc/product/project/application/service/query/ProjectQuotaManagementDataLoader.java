@@ -1,7 +1,9 @@
 package com.umc.product.project.application.service.query;
 
+import java.time.Clock;
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,10 +16,12 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
+import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
+import com.umc.product.project.application.service.policy.ProjectQuotaMemberPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
@@ -29,6 +33,9 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class ProjectQuotaManagementDataLoader {
+    private final Clock clock;
+    private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
+    private final ProjectQuotaMemberPolicy memberPolicy;
     private final LoadProjectPort loadProjectPort;
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
@@ -49,13 +56,19 @@ public class ProjectQuotaManagementDataLoader {
         matchingChapterResolver.deltaOf(chapterId).apply(getChallengerUseCase.listByChapterId(chapterId)).stream()
             .filter(challenger -> challenger.challengerStatus() == ChallengerStatus.ACTIVE)
             .forEach(challenger -> population.merge(challenger.part(), 1L, Math::addExact));
+        var assigned = loadProjectMemberPort.listAssignedByProjectIds(ids);
+        var rounds = loadProjectMatchingRoundPort.listByChapterId(chapterId);
+        var now = clock.instant();
+        Map<Long, List<ProjectMember>> reserved = new HashMap<>();
+        assigned.forEach((projectId, members) -> reserved.put(projectId, memberPolicy.reservedMembers(members, rounds, now)));
         return new Snapshot(projects, loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(ids),
-            loadProjectMemberPort.listAssignedByProjectIds(ids), population);
+            assigned, reserved, population);
     }
 
     public record Snapshot(
         List<Project> projects, Map<Long, List<ProjectPartQuota>> quotas,
-        Map<Long, List<ProjectMember>> assignedMembers, Map<ChallengerPart, Long> population
+        Map<Long, List<ProjectMember>> assignedMembers, Map<Long, List<ProjectMember>> reservedMembers,
+        Map<ChallengerPart, Long> population
     ) {
         public long quota(Project project, ChallengerPart part) {
             return quotas.getOrDefault(project.getId(), List.of()).stream().filter(quota -> quota.getPart() == part)
@@ -76,7 +89,7 @@ public class ProjectQuotaManagementDataLoader {
             if (part == ChallengerPart.PLAN) {
                 ids.add(project.getProductOwnerMemberId());
             }
-            assignedMembers.getOrDefault(project.getId(), List.of()).stream()
+            (includePending ? reservedMembers : assignedMembers).getOrDefault(project.getId(), List.of()).stream()
                 .filter(member -> member.getPart() == part)
                 .filter(member -> includePending || member.getStatus() == ProjectMemberStatus.ACTIVE)
                 .map(ProjectMember::getMemberId).forEach(ids::add);
