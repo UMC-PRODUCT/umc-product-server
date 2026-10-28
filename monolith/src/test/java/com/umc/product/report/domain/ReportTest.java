@@ -172,6 +172,35 @@ class ReportTest {
         assertThat(report.getStatus()).isEqualTo(ReportStatus.PENDING);
     }
 
+    @Test
+    @DisplayName("전달 실패 신고를 다시 보내도록 되돌리면 PENDING과 실패 횟수 0이 된다")
+    void requeueDelivery_실패한_신고를_되돌린다() {
+        // given
+        Report report = Report.create(1L, ReportTargetType.POST, 2L, null);
+        report.recordDeliveryFailure(1);
+
+        // when
+        report.requeueDelivery();
+
+        // then
+        assertThat(report.getDeliveryStatus()).isEqualTo(ReportDeliveryStatus.PENDING);
+        assertThat(report.getDeliveryAttemptCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("이미 전달한 신고나 전달 기능 이전 신고는 다시 보내도록 되돌릴 수 없다")
+    void requeueDelivery_전달_대상이_아니면_거부한다() {
+        // given
+        Report sent = Report.create(1L, ReportTargetType.POST, 2L, null);
+        sent.markDelivered(Instant.parse("2026-10-29T00:00:00Z"));
+        Report legacy = Report.create(1L, ReportTargetType.POST, 3L, null);
+        ReflectionTestUtils.setField(legacy, "deliveryStatus", null);
+
+        // when & then
+        assertThatThrownBy(sent::requeueDelivery).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(legacy::requeueDelivery).isInstanceOf(IllegalStateException.class);
+    }
+
     private Report savedReport() {
         Report report = Report.create(1L, ReportTargetType.POST, 2L, null);
         ReflectionTestUtils.setField(report, "id", 901L);

@@ -20,6 +20,8 @@ import com.umc.product.report.domain.Report;
 public class DiscordBotReportDeliveryAdapter implements ReportDeliveryPort {
 
     static final String CREATE_MESSAGE_URL = "https://discord.com/api/v10/channels/{channelId}/messages";
+    // Discord는 봇 요청의 User-Agent를 "DiscordBot (URL, 버전)" 형식으로 요구하며, 형식이 다르면 요청을 막을 수 있습니다.
+    static final String USER_AGENT = "DiscordBot (https://github.com/UMC-PRODUCT/umc-product-server, 1.0)";
 
     private final RestClient restClient;
     private final ReportDiscordProperties properties;
@@ -50,6 +52,7 @@ public class DiscordBotReportDeliveryAdapter implements ReportDeliveryPort {
             restClient.post()
                 .uri(CREATE_MESSAGE_URL, properties.channelId())
                 .header(HttpHeaders.AUTHORIZATION, "Bot " + properties.botToken())
+                .header(HttpHeaders.USER_AGENT, USER_AGENT)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(message)
                 .retrieve()

@@ -148,6 +148,19 @@ public class Report extends BaseEntity {
         }
     }
 
+    /**
+     * 전달 대기(PENDING)나 실패(FAILED) 신고를 다시 전달하도록 되돌립니다. 실패 횟수도 처음부터 다시 셉니다.
+     *
+     * @throws IllegalStateException 이미 전달했거나 전달 기능 이전에 접수된 신고
+     */
+    public void requeueDelivery() {
+        if (this.deliveryStatus != ReportDeliveryStatus.PENDING && this.deliveryStatus != ReportDeliveryStatus.FAILED) {
+            throw new IllegalStateException("only PENDING or FAILED reports can be requeued: " + this.deliveryStatus);
+        }
+        this.deliveryStatus = ReportDeliveryStatus.PENDING;
+        this.deliveryAttemptCount = 0;
+    }
+
     public void approve() {
         this.status = ReportStatus.APPROVED;
     }

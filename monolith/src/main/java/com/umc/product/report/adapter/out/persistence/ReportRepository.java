@@ -1,13 +1,18 @@
 package com.umc.product.report.adapter.out.persistence;
 
+import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.umc.product.report.domain.Report;
+import com.umc.product.report.domain.enums.ReportDeliveryStatus;
 import com.umc.product.report.domain.enums.ReportTargetType;
 
 import jakarta.persistence.LockModeType;
@@ -25,4 +30,10 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from Report r where r.id = :reportId")
     Optional<Report> findByIdForUpdate(@Param("reportId") Long reportId);
+
+    List<Report> findByDeliveryStatusInAndCreatedAtBeforeOrderByIdAsc(
+        Collection<ReportDeliveryStatus> deliveryStatuses,
+        Instant createdBefore,
+        Pageable pageable
+    );
 }

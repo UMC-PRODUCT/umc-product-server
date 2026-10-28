@@ -33,13 +33,14 @@ class DiscordBotReportDeliveryAdapterTest {
     private final MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
 
     @Test
-    @DisplayName("봇 토큰으로 인증해 신고 채널에 메시지를 보낸다")
+    @DisplayName("봇 토큰과 Discord가 요구하는 User-Agent로 신고 채널에 메시지를 보낸다")
     void deliver_채널에_메시지를_보낸다() {
         // given
         DiscordBotReportDeliveryAdapter sut = adapter(BOT_TOKEN, CHANNEL_ID);
         server.expect(once(), requestTo(MESSAGE_URL))
             .andExpect(method(HttpMethod.POST))
             .andExpect(header(HttpHeaders.AUTHORIZATION, "Bot " + BOT_TOKEN))
+            .andExpect(header(HttpHeaders.USER_AGENT, DiscordBotReportDeliveryAdapter.USER_AGENT))
             .andExpect(jsonPath("$.embeds[0].title").value("신고 접수 #901"))
             .andExpect(jsonPath("$.allowed_mentions.parse").isEmpty())
             .andRespond(withSuccess());

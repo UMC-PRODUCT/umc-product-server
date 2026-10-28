@@ -20,7 +20,9 @@ public enum ReportErrorCode implements BaseCode {
     REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "COMMUNITY-0016", "이미 신고한 게시글, 댓글 또는 스레드 메시지예요. 신고 내역을 확인해주세요."),
     REPORT_SELF_TARGET(HttpStatus.FORBIDDEN, "COMMUNITY-0046", "내가 작성한 메시지는 신고할 수 없어요."),
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT-0001", "신고를 찾을 수 없어요."),
-    REPORT_ALREADY_MODERATED(HttpStatus.CONFLICT, "REPORT-0002", "이미 처리되었거나 반려된 신고예요.");
+    REPORT_ALREADY_MODERATED(HttpStatus.CONFLICT, "REPORT-0002", "이미 처리되었거나 반려된 신고예요."),
+    REPORT_ADMIN_REQUIRED(HttpStatus.FORBIDDEN, "REPORT-0003", "신고를 다시 보낼 권한이 없어요."),
+    REPORT_DELIVERY_DISABLED(HttpStatus.CONFLICT, "REPORT-0004", "신고 운영 채널이 설정되지 않아 다시 보낼 수 없어요.");
 
     private final HttpStatus httpStatus;
     private final String code;
