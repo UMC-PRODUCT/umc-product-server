@@ -30,7 +30,6 @@ import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryRespons
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectApplicationStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectMatchingStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
-import com.umc.product.project.application.port.in.query.GetProjectMatchingAdjustmentUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectMatchingOverviewUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectPublishedMembersUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
@@ -69,7 +68,6 @@ public class ProjectResponseAssembler {
     private final GetProjectStatisticsUseCase getProjectStatisticsUseCase;
     private final GetProjectMatchingOverviewUseCase getProjectMatchingOverviewUseCase;
     private final GetProjectPublishedMembersUseCase getProjectPublishedMembersUseCase;
-    private final GetProjectMatchingAdjustmentUseCase getProjectMatchingAdjustmentUseCase;
 
     /**
      * PROJECT-001 프로젝트 목록 조회.
@@ -161,19 +159,6 @@ public class ProjectResponseAssembler {
     public Map<Long, ProjectMembersResponse> listProjectMembers(List<Long> projectIds, Long memberId) {
         Map<Long, ProjectMembersResponse> result = new LinkedHashMap<>();
         getProjectPublishedMembersUseCase.listByProjectIds(projectIds, memberId)
-            .forEach((projectId, info) -> result.put(projectId, ProjectMembersResponse.from(info)));
-        return result;
-    }
-
-    /**
-     * PROJECT-007 요청한 조회 방식에 따라 공개 명단 또는 운영진 조정 명단을 응답으로 변환한다.
-     */
-    public Map<Long, ProjectMembersResponse> listProjectMembers(List<Long> projectIds, Long memberId, ProjectMemberView view) {
-        if (view == ProjectMemberView.PUBLISHED) {
-            return listProjectMembers(projectIds, memberId);
-        }
-        Map<Long, ProjectMembersResponse> result = new LinkedHashMap<>();
-        getProjectMatchingAdjustmentUseCase.batchGetByProjectIds(projectIds, memberId)
             .forEach((projectId, info) -> result.put(projectId, ProjectMembersResponse.from(info)));
         return result;
     }

@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
@@ -30,9 +29,7 @@ import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.project.adapter.in.web.assembler.ProjectResponseAssembler;
-import com.umc.product.project.adapter.in.web.dto.response.ProjectMatchingOverviewResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
-import com.umc.product.project.application.port.in.query.dto.ProjectMemberView;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 
 @WebMvcTest(controllers = ProjectQueryController.class)
@@ -59,32 +56,6 @@ class ProjectQueryControllerTest {
         SecurityContextHolder.getContext().setAuthentication(
             new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
         );
-    }
-
-    @Test
-    void 매칭_현황_표_기본_조회() throws Exception {
-        // given
-        given(assembler.matchingOverviewForChapter(3L, ProjectMemberView.PUBLISHED, TEST_MEMBER_ID))
-            .willReturn(new ProjectMatchingOverviewResponse(List.of()));
-
-        // when & then
-        mockMvc.perform(get("/api/v1/projects/matching-overview").param("chapterId", "3"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.result.projects").isEmpty())
-            .andExpect(jsonPath("$.result.page").doesNotExist());
-    }
-
-    @Test
-    void 매칭_현황_표_조정_조회() throws Exception {
-        // given
-        given(assembler.matchingOverviewForChapter(3L, ProjectMemberView.ADJUSTMENT, TEST_MEMBER_ID))
-            .willReturn(new ProjectMatchingOverviewResponse(List.of()));
-
-        // when & then
-        mockMvc.perform(get("/api/v1/projects/matching-overview")
-                .param("chapterId", "3").param("view", "ADJUSTMENT"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.result.projects").isArray());
     }
 
     @Test

@@ -76,10 +76,7 @@ public class ProjectQueryRepository {
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
-    /**
-     * 지부의 공개 프로젝트(IN_PROGRESS·COMPLETED)를 제출 시각·ID 오름차순으로 조회합니다.
-     * 제출 시각이 없는 프로젝트는 먼저 반환합니다.
-     */
+    /** 지부의 공개 프로젝트(IN_PROGRESS·COMPLETED)를 제출 시각·ID 오름차순으로 조회합니다. */
     public List<Project> listPublicByChapterId(Long chapterId) {
         return queryFactory.selectFrom(project)
             .where(

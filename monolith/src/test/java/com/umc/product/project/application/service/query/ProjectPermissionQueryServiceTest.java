@@ -48,6 +48,7 @@ import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.application.service.policy.ProjectManualMatchingAccessPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
@@ -93,6 +94,9 @@ class ProjectPermissionQueryServiceTest {
 
     @Spy ProjectQuotaEditPolicy projectQuotaEditPolicy = new ProjectQuotaEditPolicy();
     @Mock Clock clock;
+
+    @Mock
+    ProjectManualMatchingAccessPolicy projectManualMatchingAccessPolicy;
 
     @Spy
     ProjectMatchingAdjustmentPolicy projectMatchingAdjustmentPolicy = new ProjectMatchingAdjustmentPolicy();
@@ -375,6 +379,7 @@ class ProjectPermissionQueryServiceTest {
         then(loadProjectMatchingRoundPort).should(times(1)).listOpenAt(eq(CHAPTER_ID), any(Instant.class));
         then(getChallengerUseCase).should(times(1)).findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID);
         then(loadProjectMemberPort).should(times(1)).existsByGisuAndMember(GISU_ID, REQUESTER_ID);
+        then(projectManualMatchingAccessPolicy).should(times(1)).canManage(REQUESTER_ID, GISU_ID, CHAPTER_ID);
     }
 
     @Test
@@ -421,6 +426,7 @@ class ProjectPermissionQueryServiceTest {
         Project project = project(ProjectStatus.IN_PROGRESS, 999L, 999L, "서비스 리뉴얼");
         SubjectAttributes subject = subjectWithRoles(List.of(centralCoreRoleInGisu(GISU_ID)));
         givenBase(project, subject);
+        given(projectManualMatchingAccessPolicy.canManage(REQUESTER_ID, GISU_ID, CHAPTER_ID)).willReturn(true);
         Instant now = Instant.parse("2026-11-19T22:00:00+09:00");
         given(clock.instant()).willReturn(now);
         ProjectMatchingRound round = ProjectMatchingRound.create("개발자 1차", null, MatchingType.PLAN_DEVELOPER,

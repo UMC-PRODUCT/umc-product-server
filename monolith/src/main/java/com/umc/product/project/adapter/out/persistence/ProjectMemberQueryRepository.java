@@ -154,23 +154,6 @@ public class ProjectMemberQueryRepository {
         return Optional.ofNullable(result);
     }
 
-    /**
-     * 여러 프로젝트의 ACTIVE 팀원에서 지정한 조정 차수의 해제 예약자를 제외하고, 해당 차수의 PENDING_PUBLICATION 팀원을 포함한다.
-     * 조정 차수 목록이 비어 있으면 ACTIVE 팀원만 반환한다. 프로젝트와 선발 차수는 fetch join으로 함께 조회한다.
-     */
-    public List<ProjectMember> listAdjustmentMembersByProjectIds(Collection<Long> projectIds, Collection<Long> adjustmentRoundIds) {
-        if (projectIds.isEmpty()) {
-            return List.of();
-        }
-        BooleanExpression visible = adjustmentMembers(adjustmentRoundIds);
-        return queryFactory.selectFrom(projectMember)
-            .join(projectMember.project).fetchJoin()
-            .leftJoin(projectMember.assignedMatchingRound).fetchJoin()
-            .where(projectMember.project.id.in(projectIds), visible)
-            .orderBy(projectMember.createdAt.asc(), projectMember.id.asc())
-            .fetch();
-    }
-
     public List<ProjectMember> listMatchingOverviewMembersByProjectIds(
         Collection<Long> projectIds, Collection<Long> adjustmentRoundIds
     ) {

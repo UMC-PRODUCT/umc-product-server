@@ -30,7 +30,6 @@ import com.umc.product.project.adapter.in.web.dto.response.ManagedProjectSummary
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
-import com.umc.product.project.application.port.in.query.GetProjectMatchingAdjustmentUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectPublishedMembersUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
@@ -76,8 +75,6 @@ class ProjectResponseAssemblerTest {
     LoadProjectMemberPort loadProjectMemberPort;
     @Mock
     GetProjectPublishedMembersUseCase getProjectPublishedMembersUseCase;
-    @Mock
-    GetProjectMatchingAdjustmentUseCase getProjectMatchingAdjustmentUseCase;
 
     @InjectMocks
     ProjectResponseAssembler sut;

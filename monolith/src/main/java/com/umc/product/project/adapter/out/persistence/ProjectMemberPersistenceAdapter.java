@@ -125,11 +125,6 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     }
 
     @Override
-    public List<ProjectMember> listAdjustmentMembersByProjectIds(Collection<Long> projectIds, Collection<Long> adjustmentRoundIds) {
-        return queryRepository.listAdjustmentMembersByProjectIds(projectIds, adjustmentRoundIds);
-    }
-
-    @Override
     public Map<Long, List<ProjectMember>> listAssignedByProjectIds(Collection<Long> projectIds) {
         return queryRepository.listAssignedByProjectIds(projectIds);
     }

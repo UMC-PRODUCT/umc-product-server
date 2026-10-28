@@ -90,12 +90,6 @@ public interface LoadProjectMemberPort {
     Map<Long, List<ProjectMember>> listAssignedByProjectIds(Collection<Long> projectIds);
 
     /**
-     * ACTIVE 팀원에서 지정한 조정 차수에 해제 예약된 팀원을 제외하고, 해당 차수의 PENDING_PUBLICATION 팀원을 포함합니다.
-     * 차수 ID 목록이 비어 있으면 공개 명단(ACTIVE)만 반환합니다.
-     */
-    List<ProjectMember> listAdjustmentMembersByProjectIds(Collection<Long> projectIds, Collection<Long> adjustmentRoundIds);
-
-    /**
      * 매칭 현황 표에 보여줄 팀원을 프로젝트·배정 차수와 함께 조회합니다.
      * <p>
      * 진행 중 프로젝트는 ACTIVE 팀원을 반환합니다. 조정 차수 ID가 있으면 그 차수에 해제 예약된 팀원을 빼고,
