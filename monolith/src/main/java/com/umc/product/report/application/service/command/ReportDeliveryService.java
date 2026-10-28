@@ -52,8 +52,9 @@ public class ReportDeliveryService implements DeliverReportUseCase {
             return;
         }
         if (!reportDeliveryPort.isEnabled()) {
-            // 보내지 않은 신고를 전달 완료로 남기지 않도록 PENDING을 유지합니다.
-            log.warn("신고 운영 채널이 설정되지 않아 전달하지 않습니다: reportId={}", reportId);
+            // 운영 채널이 아직 연결되지 않았습니다. 보내지 않은 신고를 전달 완료로 남기지 않도록 PENDING을 유지하고,
+            // 운영 채널(Discord 봇)을 연결하는 작업에서 PENDING 신고를 다시 보내는 경로를 함께 추가합니다.
+            log.warn("신고 운영 채널이 연결되지 않아 전달하지 않고 PENDING으로 남깁니다: reportId={}", reportId);
             return;
         }
 
