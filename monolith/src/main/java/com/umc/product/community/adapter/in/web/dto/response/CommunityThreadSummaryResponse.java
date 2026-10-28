@@ -7,7 +7,12 @@ import java.time.Instant;
 import com.umc.product.community.application.port.in.query.thread.dto.ThreadSummaryInfo;
 import com.umc.product.community.domain.enums.CommunityThreadCategory;
 import com.umc.product.community.domain.enums.CommunityThreadMemberRole;
+import com.umc.product.community.domain.enums.CommunityThreadMemberState;
 
+/**
+ * @param membershipState 참여한 적 없는 스레드는 {@code null}. {@code KICKED}는 강퇴를 아직 확인하지
+ *     않은 상태로, 클라이언트는 이 값을 보고 목록에서 비활성 처리한 뒤 강퇴 확인 API를 호출해야 한다.
+ */
 public record CommunityThreadSummaryResponse(
     String threadId,
     String title,
@@ -21,6 +26,7 @@ public record CommunityThreadSummaryResponse(
     boolean isMuted,
     boolean isJoined,
     CommunityThreadMemberRole myRole,
+    CommunityThreadMemberState membershipState,
     CommunityThreadLastMessageResponse lastMessage,
     String createdBy,
     Instant createdAt,
@@ -41,6 +47,7 @@ public record CommunityThreadSummaryResponse(
             info.isMuted(),
             info.isJoined(),
             info.myRole(),
+            info.membershipState(),
             CommunityThreadLastMessageResponse.from(info.lastMessage()),
             text(info.createdBy()),
             info.createdAt(),
