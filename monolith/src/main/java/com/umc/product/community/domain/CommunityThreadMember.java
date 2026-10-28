@@ -114,12 +114,6 @@ public class CommunityThreadMember extends BaseEntity {
         this.leftAt = validKickedAt;
     }
 
-    /**
-     * 강퇴 사실을 확인 처리한다.
-     *
-     * <p>확인 전({@code KICKED})에는 목록에 비활성 상태로 노출되지만, 확인 후({@code KICKED_ACKNOWLEDGED})에는
-     * 목록 조회에서 완전히 제외된다.</p>
-     */
     public void acknowledgeKick() {
         if (state != CommunityThreadMemberState.KICKED) {
             throw new IllegalStateException("only KICKED members can acknowledge kick");
@@ -190,23 +184,12 @@ public class CommunityThreadMember extends BaseEntity {
         return state == CommunityThreadMemberState.ACTIVE;
     }
 
-    /**
-     * 강퇴된 멤버인지 판단한다(확인 여부 무관).
-     *
-     * <p>LEFT와 달리 재초대할 수 없고, 메시지 조회/전송이 모두 차단된다. 확인 전({@code KICKED})에는
-     * 스레드 목록/상세 조회는 예외적으로 허용된다 — {@link #isKickPending()} 참고.</p>
-     */
+    /** {@code KICKED}, {@code KICKED_ACKNOWLEDGED} 둘 다 포함한다. */
     public boolean isKicked() {
         return state == CommunityThreadMemberState.KICKED
             || state == CommunityThreadMemberState.KICKED_ACKNOWLEDGED;
     }
 
-    /**
-     * 강퇴됐지만 아직 확인하지 않은 상태인지 판단한다.
-     *
-     * <p>이 상태의 스레드는 목록에 비활성으로 노출되고, 상세 조회도 허용되어 프론트가 강퇴 안내를
-     * 보여줄 수 있다.</p>
-     */
     public boolean isKickPending() {
         return state == CommunityThreadMemberState.KICKED;
     }
