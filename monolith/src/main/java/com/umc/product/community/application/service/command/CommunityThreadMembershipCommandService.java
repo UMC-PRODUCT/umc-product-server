@@ -109,11 +109,10 @@ public class CommunityThreadMembershipCommandService implements
 
     @Override
     public CommunityThreadMemberLifecycleInfo acknowledgeKick(ThreadActorCommand command) {
-        CommunityThread thread = loadLockedThread(command.threadId());
-        CommunityThreadMember target = loadKickPendingActor(thread.getId(), command.actorMemberId());
+        CommunityThreadMember target = loadKickPendingActor(command.threadId(), command.actorMemberId());
         target.acknowledgeKick();
         saveMemberPort.save(target);
-        long memberCount = loadMemberPort.countActiveByThreadId(thread.getId());
+        long memberCount = loadMemberPort.countActiveByThreadId(command.threadId());
         return CommunityThreadMemberLifecycleInfo.from(target, memberCount);
     }
 

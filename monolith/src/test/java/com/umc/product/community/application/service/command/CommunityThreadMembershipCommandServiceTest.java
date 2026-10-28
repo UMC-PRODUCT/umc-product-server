@@ -207,13 +207,11 @@ class CommunityThreadMembershipCommandServiceTest {
     @DisplayName("강퇴 확인은 KICKED 멤버를 KICKED_ACKNOWLEDGED로 전환한다")
     void acknowledgeKick_transitionsPendingKickToAcknowledged() {
         // given
-        CommunityThread thread = CommunityThreadLifecycleTestFixtures.thread();
         CommunityThreadMember kickedMember = CommunityThreadLifecycleTestFixtures.member(
             20L,
             CommunityThreadMemberRole.MEMBER,
             CommunityThreadMemberState.KICKED
         );
-        given(loadThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadMemberPort.findByThreadIdAndMemberId(THREAD_ID, 20L)).willReturn(Optional.of(kickedMember));
         given(saveMemberPort.save(kickedMember)).willReturn(kickedMember);
         given(loadMemberPort.countActiveByThreadId(THREAD_ID)).willReturn(1L);
@@ -232,12 +230,10 @@ class CommunityThreadMembershipCommandServiceTest {
     @DisplayName("강퇴 상태가 아니면 강퇴 확인을 거절한다")
     void acknowledgeKick_rejectsWhenNotKickPending() {
         // given
-        CommunityThread thread = CommunityThreadLifecycleTestFixtures.thread();
         CommunityThreadMember activeMember = CommunityThreadLifecycleTestFixtures.activeMember(
             20L,
             CommunityThreadMemberRole.MEMBER
         );
-        given(loadThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadMemberPort.findByThreadIdAndMemberId(THREAD_ID, 20L)).willReturn(Optional.of(activeMember));
 
         // when & then
