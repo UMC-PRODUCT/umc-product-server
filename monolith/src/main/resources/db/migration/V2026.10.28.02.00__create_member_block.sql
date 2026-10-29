@@ -10,6 +10,3 @@ CREATE TABLE member_block
     CONSTRAINT ck_member_block_not_self
         CHECK (blocker_member_id <> blocked_member_id)
 );
-
-CREATE INDEX idx_member_block_blocker
-    ON member_block (blocker_member_id);
