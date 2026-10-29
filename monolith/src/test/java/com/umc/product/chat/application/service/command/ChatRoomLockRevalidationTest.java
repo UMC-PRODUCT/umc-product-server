@@ -110,7 +110,9 @@ class ChatRoomLockRevalidationTest {
             loadChatRoomPort,
             loadChatMemberPort,
             loadChatMessagePort,
-            saveChatMemberPort
+            saveChatMemberPort,
+            saveChatMessagePort,
+            domainEventPublisher
         );
     }
 

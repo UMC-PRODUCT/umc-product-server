@@ -90,7 +90,7 @@ public class CommunityThreadMembershipCommandService implements
             throw new CommunityDomainException(CommunityErrorCode.THREAD_OWNER_CANNOT_BE_KICKED);
         }
         List<Long> activeMemberIds = activeMemberIds(thread.getId());
-        leaveChatRoomUseCase.leaveChatRoom(LeaveChatRoomCommand.of(
+        leaveChatRoomUseCase.leaveChatRoom(LeaveChatRoomCommand.kicked(
             thread.getChatRoomId(),
             target.getMemberId()
         ));
@@ -124,7 +124,7 @@ public class CommunityThreadMembershipCommandService implements
             throw new CommunityDomainException(CommunityErrorCode.THREAD_OWNER_CANNOT_LEAVE);
         }
         List<Long> activeMemberIds = activeMemberIds(thread.getId());
-        leaveChatRoomUseCase.leaveChatRoom(LeaveChatRoomCommand.of(
+        leaveChatRoomUseCase.leaveChatRoom(LeaveChatRoomCommand.left(
             thread.getChatRoomId(),
             actor.getMemberId()
         ));

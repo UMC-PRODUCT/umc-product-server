@@ -170,7 +170,7 @@ class CommunityThreadMembershipCommandServiceTest {
         order.verify(loadMemberPort).findByThreadIdAndMemberId(THREAD_ID, OWNER_ID);
         order.verify(loadMemberPort).findByThreadIdAndMemberId(THREAD_ID, 20L);
         order.verify(loadMemberPort).listByThreadId(THREAD_ID);
-        order.verify(leaveChatRoomUseCase).leaveChatRoom(LeaveChatRoomCommand.of(100L, 20L));
+        order.verify(leaveChatRoomUseCase).leaveChatRoom(LeaveChatRoomCommand.kicked(100L, 20L));
         order.verify(saveMemberPort).save(target);
         order.verify(eventPublisher).publish(any(CommunityThreadMemberKickedEvent.class));
     }
@@ -289,6 +289,7 @@ class CommunityThreadMembershipCommandServiceTest {
         sut.leave(new ThreadActorCommand(THREAD_ID, 20L));
 
         // then
+        then(leaveChatRoomUseCase).should().leaveChatRoom(LeaveChatRoomCommand.left(100L, 20L));
         then(eventPublisher).should().publish(eventCaptor.capture());
         assertThat(eventCaptor.getValue().membershipJoinedAt()).isEqualTo(NOW);
         assertThat(eventCaptor.getValue().occurredAt()).isEqualTo(NOW);
