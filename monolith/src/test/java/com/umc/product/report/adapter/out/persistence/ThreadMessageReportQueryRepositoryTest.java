@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.community.adapter.out.persistence.CommunityThreadRepository;
 import com.umc.product.community.domain.CommunityThread;
@@ -51,9 +52,9 @@ class ThreadMessageReportQueryRepositoryTest {
         Report first = threadMessageReport(11L, firstThread.getId(), 1001L, ReportReason.ABUSE);
         Report second = threadMessageReport(12L, firstThread.getId(), 1002L, ReportReason.ABUSE);
         Report third = threadMessageReport(13L, firstThread.getId(), 1003L, ReportReason.ABUSE);
-        third.approve();
+        approve(third);
         Report fourth = threadMessageReport(14L, firstThread.getId(), 1004L, ReportReason.ABUSE);
-        fourth.approve();
+        approve(fourth);
         Report fifth = threadMessageReport(15L, secondThread.getId(), 1005L, ReportReason.SPAM);
         Report legacyPost = Report.create(99L, ReportTargetType.POST, 1001L, null);
         Report legacyComment = Report.create(99L, ReportTargetType.COMMENT, 1001L, null);
@@ -128,9 +129,9 @@ class ThreadMessageReportQueryRepositoryTest {
         // given
         CommunityThread thread = threadRepository.saveAndFlush(createThread(130L, "복합 필터 스레드"));
         Report approvedMatch = threadMessageReport(31L, thread.getId(), 3001L, ReportReason.ETC);
-        approvedMatch.approve();
+        approve(approvedMatch);
         Report approvedDifferentReporter = threadMessageReport(32L, thread.getId(), 3002L, ReportReason.ETC);
-        approvedDifferentReporter.approve();
+        approve(approvedDifferentReporter);
         Report pendingSameReporter = threadMessageReport(31L, thread.getId(), 3003L, ReportReason.ETC);
         reportRepository.saveAllAndFlush(List.of(
             approvedMatch,
@@ -190,5 +191,10 @@ class ThreadMessageReportQueryRepositoryTest {
                 .setParameter("id", report.getId())
                 .executeUpdate();
         }
+    }
+
+    // 조회 필터 검증용으로 상태만 바꿉니다. 실제 처리는 Report.moderate()로만 합니다.
+    private static void approve(Report report) {
+        ReflectionTestUtils.setField(report, "status", ReportStatus.APPROVED);
     }
 }

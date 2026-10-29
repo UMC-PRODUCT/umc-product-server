@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.report.adapter.discord.DiscordText;
 import com.umc.product.report.adapter.discord.ReportDiscordButtons;
 import com.umc.product.report.application.port.in.command.ModerateReportUseCase;
 import com.umc.product.report.application.port.in.command.dto.ModerateReportCommand;
@@ -113,7 +114,7 @@ public class DiscordInteractionHandler {
         if (reason == null || reason.isBlank()) {
             return DiscordInteractionResponses.ephemeral(MESSAGE_REASON_REQUIRED);
         }
-        if (reason.trim().length() > ReportAction.REASON_MAX_LENGTH) {
+        if (DiscordText.length(reason.trim()) > ReportAction.REASON_MAX_LENGTH) {
             return DiscordInteractionResponses.ephemeral(MESSAGE_REASON_TOO_LONG);
         }
 
@@ -163,7 +164,7 @@ public class DiscordInteractionHandler {
         if (name == null) {
             return member.path("user").path("id").asText();
         }
-        return name.length() > MODERATOR_NAME_MAX_LENGTH ? name.substring(0, MODERATOR_NAME_MAX_LENGTH) : name;
+        return DiscordText.truncate(name, MODERATOR_NAME_MAX_LENGTH, "");
     }
 
     private static String firstText(JsonNode... candidates) {

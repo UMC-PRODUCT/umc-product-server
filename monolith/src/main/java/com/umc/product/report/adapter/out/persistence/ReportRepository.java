@@ -1,7 +1,6 @@
 package com.umc.product.report.adapter.out.persistence;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,9 +30,17 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     @Query("select r from Report r where r.id = :reportId")
     Optional<Report> findByIdForUpdate(@Param("reportId") Long reportId);
 
-    List<Report> findByDeliveryStatusInAndCreatedAtBeforeOrderByIdAsc(
-        Collection<ReportDeliveryStatus> deliveryStatuses,
-        Instant createdBefore,
+    @Query("""
+        select r from Report r
+        where r.createdAt < :createdBefore
+          and (r.deliveryStatus = :failed
+            or (r.deliveryStatus = :pending and r.deliveryAttemptCount = 0))
+        order by r.id asc
+        """)
+    List<Report> findRedeliveryCandidates(
+        @Param("createdBefore") Instant createdBefore,
+        @Param("failed") ReportDeliveryStatus failed,
+        @Param("pending") ReportDeliveryStatus pending,
         Pageable pageable
     );
 }

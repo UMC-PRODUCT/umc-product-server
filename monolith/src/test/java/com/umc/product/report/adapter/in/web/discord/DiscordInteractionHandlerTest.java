@@ -179,6 +179,21 @@ class DiscordInteractionHandlerTest {
     }
 
     @Test
+    @DisplayName("사유 길이는 문자 단위로 세서 이모지 500개도 받아들인다")
+    void 사유_길이는_문자_단위로_센다() throws Exception {
+        // given
+        given(moderateReportUseCase.moderate(any())).willReturn(new ModerateReportResult(
+            901L, ReportStatus.APPROVED, ReportActionType.APPROVE, "😀".repeat(500), "모루", Instant.now()
+        ));
+
+        // when
+        JsonNode response = respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "😀".repeat(500)));
+
+        // then
+        assertThat(response.path("type").asInt()).isEqualTo(DiscordInteractionResponses.UPDATE_MESSAGE);
+    }
+
+    @Test
     @DisplayName("처리 중 예상하지 못한 오류가 나면 본인에게만 안내한다")
     void 사유_제출_예상하지_못한_오류() throws Exception {
         // given

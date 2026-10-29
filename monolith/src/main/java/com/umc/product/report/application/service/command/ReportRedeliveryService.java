@@ -50,7 +50,7 @@ public class ReportRedeliveryService implements RedeliverReportsUseCase {
         }
 
         Instant createdBefore = Instant.now(clock).minus(IN_FLIGHT_GRACE);
-        List<Report> reports = loadReportPort.findUndeliveredCreatedBefore(createdBefore, command.limit());
+        List<Report> reports = loadReportPort.findRedeliveryCandidates(createdBefore, command.limit());
         for (Report report : reports) {
             report.requeueDelivery();
             saveReportPort.save(report);

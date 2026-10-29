@@ -161,14 +161,6 @@ public class Report extends BaseEntity {
         this.deliveryAttemptCount = 0;
     }
 
-    public void approve() {
-        this.status = ReportStatus.APPROVED;
-    }
-
-    public void reject() {
-        this.status = ReportStatus.REJECTED;
-    }
-
     /**
      * 처리 대기(PENDING) 신고에 운영자 조치를 한 번만 적용하고, 남길 조치 이력을 돌려줍니다.
      *

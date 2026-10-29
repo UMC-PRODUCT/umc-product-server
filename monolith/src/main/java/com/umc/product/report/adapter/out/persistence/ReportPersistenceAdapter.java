@@ -1,7 +1,6 @@
 package com.umc.product.report.adapter.out.persistence;
 
 import java.time.Instant;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,10 +45,11 @@ public class ReportPersistenceAdapter implements LoadReportPort, SaveReportPort 
     }
 
     @Override
-    public List<Report> findUndeliveredCreatedBefore(Instant createdBefore, int limit) {
-        return reportRepository.findByDeliveryStatusInAndCreatedAtBeforeOrderByIdAsc(
-            EnumSet.of(ReportDeliveryStatus.PENDING, ReportDeliveryStatus.FAILED),
+    public List<Report> findRedeliveryCandidates(Instant createdBefore, int limit) {
+        return reportRepository.findRedeliveryCandidates(
             createdBefore,
+            ReportDeliveryStatus.FAILED,
+            ReportDeliveryStatus.PENDING,
             PageRequest.of(0, limit)
         );
     }

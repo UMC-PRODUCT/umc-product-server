@@ -19,7 +19,10 @@ public interface LoadReportPort {
     Optional<Report> findByIdForUpdate(Long reportId);
 
     /**
-     * {@code createdBefore} 이전에 접수되어 아직 전달하지 못한(PENDING, FAILED) 신고를 오래된 순으로 최대 {@code limit}건 조회합니다.
+     * {@code createdBefore} 이전에 접수된 신고 중 다시 보낼 대상을 오래된 순으로 최대 {@code limit}건 조회합니다.
+     * <p>
+     * 실패(FAILED)했거나 한 번도 시도하지 않은 대기(PENDING, 실패 횟수 0) 신고만 대상입니다. 재시도 중인 신고(PENDING, 실패 횟수 1 이상)는
+     * outbox가 아직 처리하고 있으므로 넣지 않습니다.
      */
-    List<Report> findUndeliveredCreatedBefore(Instant createdBefore, int limit);
+    List<Report> findRedeliveryCandidates(Instant createdBefore, int limit);
 }

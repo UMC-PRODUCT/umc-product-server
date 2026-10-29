@@ -1,7 +1,6 @@
 package com.umc.product.report.adapter.in.web.discord;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -124,11 +123,17 @@ class DiscordInteractionSignatureVerifierTest {
     }
 
     @Test
-    @DisplayName("공개키 형식이 잘못되었으면 시작할 때 실패한다")
-    void 생성_공개키_형식이_잘못되면_실패한다() {
-        assertThatThrownBy(() -> verifierWith("abcd"))
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessageNotContaining("abcd");
+    @DisplayName("공개키 형식이 잘못되어도 서버는 뜨고, 모든 요청을 거절한다")
+    void 생성_공개키_형식이_잘못되면_모두_거절한다() {
+        // given
+        DiscordInteractionSignatureVerifier malformed = verifierWith("abcd");
+        String signature = keys.sign(TIMESTAMP, BODY);
+
+        // when
+        boolean valid = malformed.isValid(signature, TIMESTAMP, bytes(BODY));
+
+        // then
+        assertThat(valid).isFalse();
     }
 
     private DiscordInteractionSignatureVerifier verifierWith(String publicKeyHex) {

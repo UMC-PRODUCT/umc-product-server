@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
+import com.umc.product.report.adapter.discord.DiscordText;
 import com.umc.product.report.adapter.discord.ReportDiscordButtons;
 import com.umc.product.report.domain.Report;
 import com.umc.product.report.domain.ReportTargetSnapshot;
@@ -42,7 +43,8 @@ public class DiscordReportMessageFactory {
 
         ReportTargetSnapshot snapshot = report.getTargetSnapshot();
         if (snapshot != null) {
-            if (snapshot.getContext() != null) {
+            // Discord는 빈 값의 항목을 거절하므로 내용이 없는 위치는 넣지 않습니다.
+            if (snapshot.getContext() != null && !snapshot.getContext().isBlank()) {
                 fields.add(field("위치", snapshot.getContext(), true));
             }
             fields.add(field("작성자 member ID", authorLabel(snapshot.getAuthorId()), true));
@@ -96,9 +98,6 @@ public class DiscordReportMessageFactory {
         if (content == null || content.isBlank()) {
             return "(내용 없음)";
         }
-        if (content.length() <= CONTENT_PREVIEW_MAX_LENGTH) {
-            return content;
-        }
-        return content.substring(0, CONTENT_PREVIEW_MAX_LENGTH) + "…";
+        return DiscordText.truncate(content, CONTENT_PREVIEW_MAX_LENGTH, "…");
     }
 }

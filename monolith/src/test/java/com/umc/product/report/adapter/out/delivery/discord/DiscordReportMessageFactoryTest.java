@@ -81,6 +81,37 @@ class DiscordReportMessageFactoryTest {
         assertThat(buttons).extracting(button -> button.get("disabled")).containsOnly(false);
     }
 
+    @Test
+    @DisplayName("위치가 비어 있으면 Discord가 거절하지 않도록 위치 항목을 넣지 않는다")
+    void create_빈_위치는_넣지_않는다() {
+        // given
+        Report report = threadMessageReport(ReportTargetSnapshot.of(4L, "내용", " "));
+
+        // when
+        List<Map<String, Object>> fields = fields(sut.create(report));
+
+        // then
+        assertThat(fields).extracting(field -> field.get("name")).doesNotContain("위치");
+    }
+
+    @Test
+    @DisplayName("내용을 자를 때 이모지를 중간에서 자르지 않는다")
+    void create_이모지를_중간에서_자르지_않는다() {
+        // given
+        String emojis = "😀".repeat(DiscordReportMessageFactory.CONTENT_PREVIEW_MAX_LENGTH + 10);
+        Report report = threadMessageReport(ReportTargetSnapshot.of(4L, emojis, null));
+
+        // when
+        String content = (String) fields(sut.create(report)).stream()
+            .filter(field -> "내용".equals(field.get("name")))
+            .findFirst()
+            .orElseThrow()
+            .get("value");
+
+        // then
+        assertThat(content).isEqualTo("😀".repeat(DiscordReportMessageFactory.CONTENT_PREVIEW_MAX_LENGTH) + "…");
+    }
+
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> fields(Map<String, Object> message) {
         Map<String, Object> embed = ((List<Map<String, Object>>) message.get("embeds")).get(0);

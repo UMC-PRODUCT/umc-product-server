@@ -201,6 +201,19 @@ class ReportTest {
         assertThatThrownBy(legacy::requeueDelivery).isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("사유 길이는 문자 단위로 세서 이모지 500개도 받아들인다")
+    void moderate_사유_길이는_문자_단위로_센다() {
+        // given
+        Report report = savedReport();
+
+        // when
+        ReportAction action = report.moderate(ReportActionType.APPROVE, "😀".repeat(500), "1", "모루", Instant.now());
+
+        // then
+        assertThat(action.getReason()).isEqualTo("😀".repeat(500));
+    }
+
     private Report savedReport() {
         Report report = Report.create(1L, ReportTargetType.POST, 2L, null);
         ReflectionTestUtils.setField(report, "id", 901L);

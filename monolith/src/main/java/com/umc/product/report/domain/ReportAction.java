@@ -99,7 +99,8 @@ public class ReportAction extends BaseEntity {
             throw new IllegalArgumentException(name + " must not be blank");
         }
         String trimmed = value.trim();
-        if (trimmed.length() > maxLength) {
+        // DB의 VARCHAR 길이와 맞추기 위해 char가 아니라 문자(code point) 수로 셉니다.
+        if (trimmed.codePointCount(0, trimmed.length()) > maxLength) {
             throw new IllegalArgumentException(name + " must not exceed " + maxLength + " characters");
         }
         return trimmed;

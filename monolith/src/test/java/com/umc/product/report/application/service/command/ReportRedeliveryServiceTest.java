@@ -75,7 +75,7 @@ class ReportRedeliveryServiceTest {
     }
 
     @Test
-    @DisplayName("접수 후 5분이 지난 미전달 신고를 PENDING으로 되돌리고 전달 이벤트를 다시 넣는다")
+    @DisplayName("접수 후 5분이 지난 재전송 대상 신고를 PENDING으로 되돌리고 전달 이벤트를 다시 넣는다")
     @SuppressWarnings("unchecked")
     void redeliver_미전달_신고를_다시_넣는다() {
         // given
@@ -84,7 +84,7 @@ class ReportRedeliveryServiceTest {
         Report failed = report(901L);
         failed.recordDeliveryFailure(1);
         Report pending = report(902L);
-        given(loadReportPort.findUndeliveredCreatedBefore(NOW.minus(ReportRedeliveryService.IN_FLIGHT_GRACE), 50))
+        given(loadReportPort.findRedeliveryCandidates(NOW.minus(ReportRedeliveryService.IN_FLIGHT_GRACE), 50))
             .willReturn(List.of(failed, pending));
 
         // when
@@ -118,7 +118,7 @@ class ReportRedeliveryServiceTest {
             );
         assertThatThrownBy(() -> sut.redeliver(new RedeliverReportsCommand(null, 100)))
             .isInstanceOf(ReportDomainException.class);
-        then(loadReportPort).should(never()).findUndeliveredCreatedBefore(any(), anyInt());
+        then(loadReportPort).should(never()).findRedeliveryCandidates(any(), anyInt());
         then(domainEventPublisher).should(never()).publishAll(any());
     }
 
@@ -134,7 +134,7 @@ class ReportRedeliveryServiceTest {
             .isInstanceOfSatisfying(ReportDomainException.class, exception ->
                 assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_DELIVERY_DISABLED)
             );
-        then(loadReportPort).should(never()).findUndeliveredCreatedBefore(any(), anyInt());
+        then(loadReportPort).should(never()).findRedeliveryCandidates(any(), anyInt());
     }
 
     @Test

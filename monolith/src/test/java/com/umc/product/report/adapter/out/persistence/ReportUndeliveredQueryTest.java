@@ -19,7 +19,7 @@ import com.umc.product.support.PersistenceAdapterTest;
 
 @PersistenceAdapterTest
 @Import(ReportPersistenceAdapter.class)
-@DisplayName("미전달 신고 조회")
+@DisplayName("재전송 대상 신고 조회")
 class ReportUndeliveredQueryTest {
 
     @Autowired
@@ -29,8 +29,8 @@ class ReportUndeliveredQueryTest {
     TestEntityManager entityManager;
 
     @Test
-    @DisplayName("기준 시각 이전에 접수된 PENDING, FAILED 신고만 오래된 순으로 limit건 조회한다")
-    void findUndeliveredCreatedBefore_미전달_신고만_조회한다() {
+    @DisplayName("기준 시각 이전에 접수된 FAILED와 한 번도 시도하지 않은 PENDING만 오래된 순으로 limit건 조회한다")
+    void findRedeliveryCandidates_재전송_대상만_조회한다() {
         // given
         Long pendingId = save(Report.create(1L, ReportTargetType.POST, 1L, null));
         Report failed = Report.create(1L, ReportTargetType.POST, 2L, null);
@@ -43,13 +43,16 @@ class ReportUndeliveredQueryTest {
         ReflectionTestUtils.setField(legacy, "deliveryStatus", null);
         save(legacy);
         Long laterPendingId = save(Report.create(1L, ReportTargetType.POST, 5L, null));
+        Report retrying = Report.create(1L, ReportTargetType.POST, 6L, null);
+        retrying.recordDeliveryFailure(5);
+        save(retrying);
         entityManager.clear();
         Instant future = Instant.now().plus(Duration.ofHours(1));
 
         // when
-        List<Report> all = sut.findUndeliveredCreatedBefore(future, 100);
-        List<Report> limited = sut.findUndeliveredCreatedBefore(future, 2);
-        List<Report> none = sut.findUndeliveredCreatedBefore(Instant.now().minus(Duration.ofHours(1)), 100);
+        List<Report> all = sut.findRedeliveryCandidates(future, 100);
+        List<Report> limited = sut.findRedeliveryCandidates(future, 2);
+        List<Report> none = sut.findRedeliveryCandidates(Instant.now().minus(Duration.ofHours(1)), 100);
 
         // then
         assertThat(all).extracting(Report::getId).containsExactly(pendingId, failedId, laterPendingId);
