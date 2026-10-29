@@ -889,7 +889,7 @@ components:
           $ref: "#/components/schemas/NullableString"
         type:
           type: string
-          enum: [TEXT, IMAGE, SYSTEM]
+          enum: [TEXT, IMAGE, SYSTEM, MEMBER_LEFT, MEMBER_KICKED]
         status:
           type: string
           enum: [SENT]

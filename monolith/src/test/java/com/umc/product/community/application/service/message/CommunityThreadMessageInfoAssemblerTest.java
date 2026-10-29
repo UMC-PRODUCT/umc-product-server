@@ -150,6 +150,33 @@ class CommunityThreadMessageInfoAssemblerTest {
     }
 
     @Test
+    @DisplayName("퇴장 기록 메시지는 Community type으로 변환하고 sender 이름으로 표시 문구를 구성한다")
+    void assembleMemberExitMessages() {
+        CommunityThreadMessageInfoAssembler sut =
+            new CommunityThreadMessageInfoAssembler(getMemberUseCase, getFileUseCase);
+        ChatMessageInfo left = new ChatMessageInfo(
+            902L, ROOM_ID, 10L, MessageContentType.MEMBER_LEFT, null, List.of(), CREATED_AT
+        );
+        ChatMessageInfo kicked = new ChatMessageInfo(
+            903L, ROOM_ID, 20L, MessageContentType.MEMBER_KICKED, null, List.of(), CREATED_AT
+        );
+        MemberInfo leaver = mockMember(10L, "A");
+        MemberInfo kickedMember = mockMember(20L, "B");
+        given(getMemberUseCase.findAllByIds(Set.of(10L, 20L)))
+            .willReturn(Map.of(10L, leaver, 20L, kickedMember));
+
+        List<CommunityThreadMessageInfo> result = sut.assemble(THREAD_ID, List.of(left, kicked));
+
+        assertThat(result).extracting("type", "senderId", "senderName", "content")
+            .containsExactly(
+                org.assertj.core.groups.Tuple.tuple(CommunityThreadMessageType.MEMBER_LEFT, 10L, "A", "A님이 나갔습니다."),
+                org.assertj.core.groups.Tuple.tuple(
+                    CommunityThreadMessageType.MEMBER_KICKED, 20L, "B", "B님이 내보내졌습니다."
+                )
+            );
+    }
+
+    @Test
     @DisplayName("첨부 파일은 한 번의 batch 조회로 URL을 채우고, storage에서 누락된 파일은 건너뛰되 원본 순서를 유지한다")
     void assembleResolvesFileUrlsInOneBatchAndKeepsOrderWhenSomeAreMissing() {
         CommunityThreadMessageInfoAssembler sut =

@@ -23,9 +23,14 @@ import com.umc.product.chat.application.port.out.LoadChatMemberPort;
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
+import com.umc.product.chat.application.port.out.SaveChatMessagePort;
 import com.umc.product.chat.domain.ChatMember;
+import com.umc.product.chat.domain.ChatMessage;
+import com.umc.product.chat.domain.MessageContentType;
+import com.umc.product.chat.domain.event.ChatMessageCreatedEvent;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
+import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChatMemberCommandService")
@@ -39,6 +44,10 @@ class ChatMemberCommandServiceTest {
     LoadChatMessagePort loadChatMessagePort;
     @Mock
     SaveChatMemberPort saveChatMemberPort;
+    @Mock
+    SaveChatMessagePort saveChatMessagePort;
+    @Mock
+    DomainEventPublisher domainEventPublisher;
 
     @InjectMocks
     ChatMemberCommandService sut;
@@ -137,6 +146,46 @@ class ChatMemberCommandServiceTest {
 
         then(loadChatRoomPort).should().getByIdForUpdate(1L);
         then(saveChatMemberPort).should().delete(1L, 10L);
+        then(saveChatMessagePort).shouldHaveNoInteractions();
+        then(domainEventPublisher).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("퇴장 기록 타입이 있으면 멤버 삭제 뒤 퇴장 메시지를 저장하고 생성 이벤트를 발행한다")
+    void leaveChatRoom_withExitMessage() {
+        given(loadChatMemberPort.existsByRoomIdAndMemberId(1L, 10L)).willReturn(true);
+        given(saveChatMessagePort.save(any(ChatMessage.class)))
+            .willAnswer(invocation -> invocation.getArgument(0));
+
+        sut.leaveChatRoom(LeaveChatRoomCommand.kicked(1L, 10L));
+
+        ArgumentCaptor<ChatMessage> messageCaptor = ArgumentCaptor.forClass(ChatMessage.class);
+        ArgumentCaptor<ChatMessageCreatedEvent> eventCaptor =
+            ArgumentCaptor.forClass(ChatMessageCreatedEvent.class);
+        InOrder order = Mockito.inOrder(saveChatMemberPort, saveChatMessagePort, domainEventPublisher);
+        order.verify(saveChatMemberPort).delete(1L, 10L);
+        order.verify(saveChatMessagePort).save(messageCaptor.capture());
+        order.verify(domainEventPublisher).publish(eventCaptor.capture());
+        assertThat(messageCaptor.getValue().getRoomId()).isEqualTo(1L);
+        assertThat(messageCaptor.getValue().getSenderMemberId()).isEqualTo(10L);
+        assertThat(messageCaptor.getValue().getContentType()).isEqualTo(MessageContentType.MEMBER_KICKED);
+        assertThat(eventCaptor.getValue().roomId()).isEqualTo(1L);
+        assertThat(eventCaptor.getValue().senderMemberId()).isEqualTo(10L);
+        assertThat(eventCaptor.getValue().contentType()).isEqualTo(MessageContentType.MEMBER_KICKED);
+    }
+
+    @Test
+    @DisplayName("멤버가 아니면 퇴장 기록을 남기지 않는다")
+    void leaveChatRoom_notMemberLeavesNoExitMessage() {
+        given(loadChatMemberPort.existsByRoomIdAndMemberId(1L, 10L)).willReturn(false);
+
+        assertThatThrownBy(() -> sut.leaveChatRoom(LeaveChatRoomCommand.left(1L, 10L)))
+            .isInstanceOf(ChatDomainException.class)
+            .extracting(e -> ((ChatDomainException) e).getBaseCode())
+            .isEqualTo(ChatErrorCode.CHAT_MEMBER_NOT_FOUND);
+
+        then(saveChatMessagePort).shouldHaveNoInteractions();
+        then(domainEventPublisher).shouldHaveNoInteractions();
     }
 
     @Test
