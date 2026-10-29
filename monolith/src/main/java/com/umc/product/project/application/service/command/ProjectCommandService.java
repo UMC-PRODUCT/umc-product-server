@@ -30,13 +30,11 @@ import com.umc.product.project.application.port.in.command.AbortProjectUseCase;
 import com.umc.product.project.application.port.in.command.CompleteProjectsUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
 import com.umc.product.project.application.port.in.command.PublishProjectUseCase;
-import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
 import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
 import com.umc.product.project.application.port.in.command.dto.AbortProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.CompleteProjectsCommand;
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.PublishProjectCommand;
-import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.TransferProjectOwnershipCommand;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
@@ -62,7 +60,6 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class ProjectCommandService implements
     CreateDraftProjectUseCase,
-    SubmitProjectUseCase,
     TransferProjectOwnershipUseCase,
     PublishProjectUseCase,
     AbortProjectUseCase,
@@ -158,17 +155,6 @@ public class ProjectCommandService implements
         }
 
         throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
-    }
-
-    @Override
-    public void submit(SubmitProjectCommand command) {
-        Project project = loadProjectPort.getById(command.projectId());
-
-        if (!loadProjectApplicationFormPort.existsByProjectId(project.getId())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_SUBMIT_VALIDATION_FAILED);
-        }
-
-        project.submit();
     }
 
     @Override

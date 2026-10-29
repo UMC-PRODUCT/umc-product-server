@@ -1,17 +1,22 @@
 package com.umc.product.project.adapter.in.web;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -41,7 +46,9 @@ import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
 import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
 import com.umc.product.project.application.port.in.command.UpdatePartQuotasUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
+import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
+import com.umc.product.project.domain.enums.ProjectStatus;
 
 @WebMvcTest(controllers = ProjectCommandController.class)
 @Import(JacksonConfig.class)
@@ -93,6 +100,20 @@ class ProjectCommandControllerTest {
         SecurityContextHolder.getContext().setAuthentication(
             new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
         );
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ProjectStatus.class, names = {"PENDING_REVIEW", "IN_PROGRESS"})
+    void 제출은_요청자와_실제_처리_상태를_반환한다(ProjectStatus result) throws Exception {
+        // given
+        given(submitProjectUseCase.submit(any())).willReturn(result);
+
+        // when & then
+        mockMvc.perform(post("/api/v1/projects/{id}/submit", PROJECT_ID))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.result.status").value(result.name()));
+        var captor = ArgumentCaptor.forClass(SubmitProjectCommand.class);
+        then(submitProjectUseCase).should().submit(captor.capture());
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().requesterMemberId()).isEqualTo(TEST_MEMBER_ID);
     }
 
     @Test
