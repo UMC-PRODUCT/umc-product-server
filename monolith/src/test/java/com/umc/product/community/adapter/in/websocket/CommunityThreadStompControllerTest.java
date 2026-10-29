@@ -190,7 +190,8 @@ class CommunityThreadStompControllerTest {
             CLIENT_MESSAGE_ID,
             Instant.EPOCH,
             null,
-            null
+            null,
+            false
         );
         return new CommunityThreadMessageMutationInfo(message, deduplicated);
     }

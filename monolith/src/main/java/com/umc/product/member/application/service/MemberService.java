@@ -16,6 +16,7 @@ import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthI
 import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.member.application.port.in.command.DeleteMemberBlocksUseCase;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
 import com.umc.product.member.application.port.in.command.RegisterOAuthMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
@@ -51,6 +52,7 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
     private final DomainEventPublisher eventPublisher;
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
     private final EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
+    private final DeleteMemberBlocksUseCase deleteMemberBlocksUseCase;
 
     @Override
     @Transactional
@@ -181,6 +183,7 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
 
         saveMemberPort.delete(memberToDelete);
         evictAuthoritySnapshotCacheUseCase.evictByMemberId(memberId);
+        deleteMemberBlocksUseCase.deleteAllInvolving(memberId);
 
         eventPublisher.publish(
             AuditLogEvent.builder()

@@ -21,6 +21,7 @@ import com.umc.product.community.application.port.in.query.thread.message.dto.Co
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageStatus;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageType;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadReactionInfo;
+import com.umc.product.member.application.port.in.query.GetBlockedMemberIdsUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
@@ -45,12 +46,40 @@ public class CommunityThreadMessageInfoAssembler {
 
     private final GetMemberUseCase getMemberUseCase;
     private final GetFileUseCase getFileUseCase;
+    private final GetBlockedMemberIdsUseCase getBlockedMemberIdsUseCase;
 
+    /**
+     * 조회자(viewer) 맥락이 없는 경로(발신자 본인에게 보내는 ACK 응답 등)에서 쓴다. 자기 자신의
+     * 메시지에는 차단 개념이 없으므로 isSenderBlocked는 항상 false다.
+     */
     public CommunityThreadMessageInfo assemble(Long threadId, ChatMessageInfo message) {
         return assemble(threadId, List.of(message)).get(0);
     }
 
     public List<CommunityThreadMessageInfo> assemble(Long threadId, List<ChatMessageInfo> messages) {
+        return assemble(threadId, messages, Set.of());
+    }
+
+    public CommunityThreadMessageInfo assemble(Long threadId, ChatMessageInfo message, Long viewerMemberId) {
+        return assemble(threadId, List.of(message), viewerMemberId).get(0);
+    }
+
+    public List<CommunityThreadMessageInfo> assemble(
+        Long threadId,
+        List<ChatMessageInfo> messages,
+        Long viewerMemberId
+    ) {
+        Set<Long> blockedMemberIds = messages.isEmpty()
+            ? Set.of()
+            : getBlockedMemberIdsUseCase.getBlockedMemberIds(viewerMemberId);
+        return assemble(threadId, messages, blockedMemberIds);
+    }
+
+    private List<CommunityThreadMessageInfo> assemble(
+        Long threadId,
+        List<ChatMessageInfo> messages,
+        Set<Long> blockedMemberIds
+    ) {
         if (messages == null || messages.isEmpty()) {
             return List.of();
         }
@@ -58,7 +87,7 @@ public class CommunityThreadMessageInfoAssembler {
         Map<Long, MemberInfo> members = loadMembers(messages);
         Map<String, FileInfo> files = loadFiles(messages);
         return messages.stream()
-            .map(message -> toInfo(threadId, message, members, files))
+            .map(message -> toInfo(threadId, message, members, files, blockedMemberIds))
             .toList();
     }
 
@@ -73,9 +102,14 @@ public class CommunityThreadMessageInfoAssembler {
         List<ChatMessageInfo> messages = List.copyOf(messagesByRecipient.values());
         Map<Long, MemberInfo> members = loadMembers(messages);
         Map<String, FileInfo> files = loadFiles(messages);
+        Map<Long, Set<Long>> blockedMemberIdsByRecipient = getBlockedMemberIdsUseCase
+            .getBlockedMemberIdsBatch(messagesByRecipient.keySet());
+
         Map<Long, CommunityThreadMessageInfo> result = new LinkedHashMap<>();
-        messagesByRecipient.forEach((recipientMemberId, message) ->
-            result.put(recipientMemberId, toInfo(threadId, message, members, files)));
+        messagesByRecipient.forEach((recipientMemberId, message) -> {
+            Set<Long> blockedMemberIds = blockedMemberIdsByRecipient.getOrDefault(recipientMemberId, Set.of());
+            result.put(recipientMemberId, toInfo(threadId, message, members, files, blockedMemberIds));
+        });
         return Collections.unmodifiableMap(result);
     }
 
@@ -115,7 +149,8 @@ public class CommunityThreadMessageInfoAssembler {
         Long threadId,
         ChatMessageInfo message,
         Map<Long, MemberInfo> members,
-        Map<String, FileInfo> files
+        Map<String, FileInfo> files,
+        Set<Long> blockedMemberIds
     ) {
         List<CommunityThreadMessageMentionInfo> mentions = message.mentionedMemberIds().stream()
             .map(memberId -> new CommunityThreadMessageMentionInfo(memberId, memberName(members, memberId)))
@@ -141,7 +176,8 @@ public class CommunityThreadMessageInfoAssembler {
             message.clientMessageId(),
             message.createdAt(),
             message.editedAt(),
-            message.deletedAt()
+            message.deletedAt(),
+            blockedMemberIds.contains(message.senderMemberId())
         );
     }
 

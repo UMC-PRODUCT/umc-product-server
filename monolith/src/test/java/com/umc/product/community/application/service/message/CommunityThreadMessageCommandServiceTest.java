@@ -3,6 +3,7 @@ package com.umc.product.community.application.service.message;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
@@ -136,7 +137,7 @@ class CommunityThreadMessageCommandServiceTest {
                 validation.validate(chatCommand);
                 return new ChatMessageMutationResult(chatInfo, false);
             });
-        given(infoAssembler.assemble(THREAD_ID, chatInfo)).willReturn(communityMessageInfo);
+        given(infoAssembler.assemble(THREAD_ID, chatInfo, OWNER_ID)).willReturn(communityMessageInfo);
         given(saveThreadPort.save(thread)).willReturn(thread);
         given(saveThreadMemberPort.saveAll(any())).willAnswer(invocation -> invocation.getArgument(0));
 
@@ -206,7 +207,7 @@ class CommunityThreadMessageCommandServiceTest {
             .willReturn(Optional.of(sender));
         given(createChatMessageUseCase.create(any(CreateChatMessageCommand.class), any()))
             .willReturn(new ChatMessageMutationResult(chatInfo, true));
-        given(infoAssembler.assemble(THREAD_ID, chatInfo)).willReturn(communityMessageInfo);
+        given(infoAssembler.assemble(THREAD_ID, chatInfo, OWNER_ID)).willReturn(communityMessageInfo);
 
         CommunityThreadMessageMutationInfo result = sut.create(new CreateCommunityThreadMessageCommand(
             THREAD_ID,
@@ -257,7 +258,7 @@ class CommunityThreadMessageCommandServiceTest {
         given(loadThreadMemberPort.listByThreadId(THREAD_ID)).willReturn(List.of(sender, recipient));
         given(createChatMessageUseCase.create(any(CreateChatMessageCommand.class), any()))
             .willReturn(new ChatMessageMutationResult(chatInfo, false));
-        given(infoAssembler.assemble(THREAD_ID, chatInfo)).willReturn(communityMessageInfo);
+        given(infoAssembler.assemble(THREAD_ID, chatInfo, OWNER_ID)).willReturn(communityMessageInfo);
         given(saveThreadPort.save(thread)).willReturn(thread);
         given(saveThreadMemberPort.saveAll(any())).willAnswer(invocation -> invocation.getArgument(0));
 
@@ -325,7 +326,7 @@ class CommunityThreadMessageCommandServiceTest {
             .willReturn(Optional.of(sender));
         given(editChatMessageUseCase.edit(any(EditChatMessageCommand.class)))
             .willReturn(new ChatMessageMutationResult(chatInfo, false));
-        given(infoAssembler.assemble(THREAD_ID, chatInfo)).willReturn(communityMessageInfo);
+        given(infoAssembler.assemble(THREAD_ID, chatInfo, OWNER_ID)).willReturn(communityMessageInfo);
         given(saveThreadPort.save(thread)).willReturn(thread);
 
         CommunityThreadMessageMutationInfo result = sut.edit(
@@ -354,7 +355,7 @@ class CommunityThreadMessageCommandServiceTest {
         ChatMessageInfo chatInfo = chatInfo(900L, OWNER_ID, "동일");
         given(editChatMessageUseCase.edit(any(EditChatMessageCommand.class)))
             .willReturn(new ChatMessageMutationResult(chatInfo, true));
-        given(infoAssembler.assemble(THREAD_ID, chatInfo)).willReturn(communityMessageInfo);
+        given(infoAssembler.assemble(THREAD_ID, chatInfo, OWNER_ID)).willReturn(communityMessageInfo);
 
         CommunityThreadMessageMutationInfo result = sut.edit(
             new EditCommunityThreadMessageCommand(THREAD_ID, 900L, OWNER_ID, "동일")
@@ -381,7 +382,7 @@ class CommunityThreadMessageCommandServiceTest {
         ChatMessageInfo chatInfo = chatInfo(900L, OWNER_ID, "삭제됨");
         given(tombstoneChatMessageUseCase.tombstone(any(TombstoneChatMessageCommand.class)))
             .willReturn(new ChatMessageMutationResult(chatInfo, false));
-        given(infoAssembler.assemble(THREAD_ID, chatInfo)).willReturn(communityMessageInfo);
+        given(infoAssembler.assemble(eq(THREAD_ID), eq(chatInfo), any())).willReturn(communityMessageInfo);
 
         sut.tombstone(new TombstoneCommunityThreadMessageCommand(THREAD_ID, 900L, OWNER_ID));
         sut.tombstone(new TombstoneCommunityThreadMessageCommand(THREAD_ID, 900L, ADMIN_ID));

@@ -119,6 +119,43 @@ class CommunityAlarmEventListenerTest {
     }
 
     @Test
+    @DisplayName("차단한 발신자의 메시지는 알림 대상에서 제외한다")
+    void handle_blockedSender_excludesRecipient() {
+        given(listMemberStatusUseCase.listMemberStatus(THREAD_ID)).willReturn(List.of(
+            status(SENDER_ID, true, false),
+            status(RECIPIENT_ID, true, false)
+        ));
+        given(getMessageForRecipientsUseCase.getMessageForRecipients(
+            new CommunityThreadMessageRecipientsQuery(THREAD_ID, MESSAGE_ID, List.of(RECIPIENT_ID))
+        )).willReturn(Map.of(
+            RECIPIENT_ID, blockedMessage("홍길동", "새 메시지", CommunityThreadMessageType.TEXT)
+        ));
+
+        sut.handle(CommunityThreadMessageCreatedEvent.of(THREAD_ID, MESSAGE_ID, SENDER_ID));
+
+        then(requestFcmNotificationUseCase).should(never()).request(any());
+    }
+
+    @Test
+    @DisplayName("차단한 발신자가 멘션해도 알림 대상에서 제외한다")
+    void handle_blockedSenderMention_excludesRecipient() {
+        given(listMemberStatusUseCase.listMemberStatus(THREAD_ID)).willReturn(List.of(
+            status(SENDER_ID, true, false),
+            status(RECIPIENT_ID, true, false)
+        ));
+        given(getMessageForRecipientsUseCase.getMessageForRecipients(
+            new CommunityThreadMessageRecipientsQuery(THREAD_ID, MESSAGE_ID, List.of(RECIPIENT_ID))
+        )).willReturn(Map.of(
+            RECIPIENT_ID,
+            messageWithMentions("홍길동", "@member 안녕", CommunityThreadMessageType.TEXT, List.of(RECIPIENT_ID), true)
+        ));
+
+        sut.handle(CommunityThreadMessageCreatedEvent.of(THREAD_ID, MESSAGE_ID, SENDER_ID));
+
+        then(requestFcmNotificationUseCase).should(never()).request(any());
+    }
+
+    @Test
     @DisplayName("발신자를 제외하면 활성 후보가 없으면 이후 조회 없이 종료한다")
     void handle_noActiveCandidates_doesNothing() {
         given(listMemberStatusUseCase.listMemberStatus(THREAD_ID)).willReturn(List.of(
@@ -306,8 +343,24 @@ class CommunityAlarmEventListenerTest {
         return messageWithMentions(senderName, content, type, List.of());
     }
 
+    private CommunityThreadMessageInfo blockedMessage(
+        String senderName, String content, CommunityThreadMessageType type
+    ) {
+        return messageWithMentions(senderName, content, type, List.of(), true);
+    }
+
     private CommunityThreadMessageInfo messageWithMentions(
         String senderName, String content, CommunityThreadMessageType type, List<Long> mentionedMemberIds
+    ) {
+        return messageWithMentions(senderName, content, type, mentionedMemberIds, false);
+    }
+
+    private CommunityThreadMessageInfo messageWithMentions(
+        String senderName,
+        String content,
+        CommunityThreadMessageType type,
+        List<Long> mentionedMemberIds,
+        boolean isSenderBlocked
     ) {
         List<CommunityThreadMessageMentionInfo> mentions = mentionedMemberIds.stream()
             .map(memberId -> new CommunityThreadMessageMentionInfo(memberId, "멘션멤버"))
@@ -327,7 +380,8 @@ class CommunityAlarmEventListenerTest {
             UUID.fromString("00000000-0000-0000-0000-000000000001"),
             NOW,
             null,
-            null
+            null,
+            isSenderBlocked
         );
     }
 }
