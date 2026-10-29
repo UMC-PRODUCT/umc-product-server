@@ -79,13 +79,15 @@ public class ProjectQuotaManagementQueryService implements GetProjectQuotaManage
         var now = clock.instant();
         List<Column> columns = parts.stream().map(part -> {
             var window = editPolicy.evaluate(part, rounds, now);
-            return new Column(part, part == ChallengerPart.PLAN ? "PM" : part.getDisplayName(),
+            return new Column(part, columnLabel(part),
                 window.capability(), window.editableAfter());
         }).toList();
         var columnsByPart = columns.stream().collect(Collectors.toMap(Column::part, Function.identity()));
         Set<Long> schoolIds = snapshot.projects().stream().map(Project::getProductOwnerSchoolId)
             .collect(Collectors.toSet());
-        var schoolNames = getSchoolUseCase.listDetailsByIds(schoolIds).stream()
+        // 학교명만 조회해 활성 기수의 중복 지부 연결이나 로고 파일 상태에 영향을 받지 않도록 한다.
+        Map<Long, String> schoolNames = schoolIds.isEmpty() ? Map.of() : getSchoolUseCase.getAllSchoolNames().stream()
+            .filter(school -> schoolIds.contains(school.schoolId()))
             .collect(Collectors.toMap(school -> school.schoolId(), school -> school.schoolName()));
         List<ProjectRow> rows = new ArrayList<>();
         for (Project project : filtered) {
@@ -101,6 +103,16 @@ public class ProjectQuotaManagementQueryService implements GetProjectQuotaManage
         return new ProjectQuotaManagementInfo(gisuId, selected.chapterId(), selected.chapterName(), options,
             schools, columns, summary, filteredSummary, totals(summary), totals(filteredSummary),
             snapshot.projects().size(), filtered.size(), rows);
+    }
+
+    private String columnLabel(ChallengerPart part) {
+        return switch (part) {
+            case PLAN -> "PM";
+            case DESIGN -> "Design";
+            case WEB_PRODUCT_ENGINEER -> "Web PE";
+            case MOBILE_PRODUCT_ENGINEER -> "Mobile PE";
+            default -> part.getDisplayName();
+        };
     }
 
     private Totals totals(List<PartSummary> summaries) {

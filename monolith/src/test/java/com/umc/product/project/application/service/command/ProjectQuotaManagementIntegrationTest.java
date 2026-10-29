@@ -99,6 +99,10 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         assertThat(info.path("chapters").size()).isEqualTo(1);
         assertThat(info.path("schools").get(0).path("schoolId").asLong()).isEqualTo(scenario.schoolId());
         assertThat(info.path("columns").size()).isEqualTo(4);
+        assertThat(part(info.path("columns"), "PLAN").path("label").asText()).isEqualTo("PM");
+        assertThat(part(info.path("columns"), "DESIGN").path("label").asText()).isEqualTo("Design");
+        assertThat(part(info.path("columns"), "WEB_PRODUCT_ENGINEER").path("label").asText()).isEqualTo("Web PE");
+        assertThat(part(info.path("columns"), "MOBILE_PRODUCT_ENGINEER").path("label").asText()).isEqualTo("Mobile PE");
         assertThat(cell(info, "PLAN").path("quota").asLong()).isEqualTo(1);
         assertThat(cell(info, "PLAN").path("canEdit").path("allowed").asBoolean()).isTrue();
         JsonNode design = part(info.path("summary"), "DESIGN");
@@ -497,6 +501,22 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         // when & then
         assertThat(cell(view(null), "DESIGN").path("minimumQuota").asLong()).isEqualTo(1);
         denied(save(List.of(change(scenario.projectId(), "DESIGN", 0))), "PROJECT-0252");
+    }
+
+    @Test
+    void 같은_학교가_활성_기수의_여러_지부에_연결되어도_TO를_조회한다() throws Exception {
+        // given
+        var other = projects.다른_지부(scenario);
+        jdbc.update("UPDATE gisu SET is_active=false WHERE is_active=true");
+        jdbc.update("UPDATE gisu SET is_active=true WHERE id=?", scenario.gisuId());
+        jdbc.update("INSERT INTO chapter_school (chapter_id,school_id,created_at,updated_at) VALUES (?,?,now(),now())",
+            other.chapterId(), scenario.schoolId());
+
+        // when & then
+        JsonNode info = view(null);
+        assertThat(info.path("projects").size()).isEqualTo(1);
+        assertThat(info.path("projects").get(0).path("schoolId").asLong()).isEqualTo(scenario.schoolId());
+        assertThat(info.path("projects").get(0).path("schoolName").asText()).isNotBlank();
     }
 
     private void schedule(MatchingType type, long firstStart, long thirdDeadline) {

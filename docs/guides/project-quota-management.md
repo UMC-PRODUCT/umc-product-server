@@ -31,7 +31,7 @@
 | `projects[].cells[]` | 파트별 입력값·현재 인원·최소 TO·편집 권한 |
 | `projects[].totalQuota` | 프로젝트의 파트 TO 합계 |
 
-인원 현황은 해당 기수의 활동 중인 챌린저를 사용하고 매칭 지부 이동을 반영한다. 새 기수의 기본 열은 PM·Design·Web PE·Mobile PE이며, 과거 파트의 인원이나 TO가 있으면 해당 열도 포함한다. 표의 각 행은 프로젝트이며 학교는 필터다.
+인원 현황은 해당 기수의 활동 중인 챌린저를 사용하고 매칭 지부 이동을 반영한다. 새 기수의 기본 열은 `columns[].label`에 `PM`, `Design`, `Web PE`, `Mobile PE`로 반환하며, 과거 파트의 인원이나 TO가 있으면 해당 열도 포함한다. 표의 각 행은 프로젝트이며 학교는 필터다.
 
 `summary`와 `filteredSummary`의 `availableCount`는 모두 지부 전체의 파트 인원이다. 학교 필터는 프로젝트를 골라 보는 용도이며, 모집 가능한 인원을 PM의 학교 인원으로 제한하지 않는다. `difference = allocatedQuota - availableCount`이며, `allocationStatus`는 `SHORTAGE`, `BALANCED`, `EXCESS`다. 검색 결과가 비어도 지부 전체 합계는 유지한다.
 

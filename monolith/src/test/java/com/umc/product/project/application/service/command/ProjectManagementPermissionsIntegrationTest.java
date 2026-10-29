@@ -231,6 +231,78 @@ class ProjectManagementPermissionsIntegrationTest extends IntegrationTestSupport
             .andExpect(status().isForbidden());
     }
 
+    @Test
+    void 총괄단은_선택한_지부만_필터하고_페이지_합계에도_반영한다() throws Exception {
+        // given
+        Scenario scenario = projects.준비();
+        Scenario other = projects.다른_지부(scenario);
+        fixture.모든_상태(scenario);
+        fixture.모든_상태(other);
+        Long actor = fixture.역할_회원(scenario, ChallengerRoleType.CENTRAL_PRESIDENT, ChallengerPart.DESIGN);
+        authenticate(actor);
+
+        // when & then
+        String body = mockMvc.perform(managed(scenario).param("chapterId", other.chapterId().toString()).param("size", "1"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.result.totalElements").value(4))
+            .andReturn().getResponse().getContentAsString();
+        assertThat(objectMapper.readTree(body).path("result").path("content").get(0).path("id").asLong())
+            .isEqualTo(other.projectId());
+    }
+
+    @Test
+    void 지부장에게_다른_지부를_요청하면_본인_지부_목록으로_대체하지_않고_빈_목록을_준다() throws Exception {
+        // given
+        Scenario scenario = projects.준비();
+        Scenario other = projects.다른_지부(scenario);
+        authenticate(scenario.staffId());
+
+        // when & then
+        content(managed(scenario).param("chapterId", other.chapterId().toString()), 0);
+        assertThat(content(managed(scenario).param("chapterId", scenario.chapterId().toString()), 1)
+            .get(0).path("id").asLong()).isEqualTo(scenario.projectId());
+    }
+
+    @Test
+    void PM의_지부_필터는_본인_프로젝트_범위를_넓히지_않는다() throws Exception {
+        // given
+        Scenario scenario = projects.준비();
+        Scenario other = projects.다른_지부(scenario);
+        authenticate(scenario.ownerId());
+
+        // when & then
+        content(managed(scenario).param("chapterId", other.chapterId().toString()), 0);
+        content(managed(scenario).param("chapterId", scenario.chapterId().toString()), 1);
+    }
+
+    @Test
+    void 지부장과_중앙운영진_겸직도_선택한_지부의_허용_상태만_조회한다() throws Exception {
+        // given
+        Scenario scenario = projects.준비();
+        Scenario other = projects.다른_지부(scenario);
+        fixture.모든_상태(scenario);
+        fixture.모든_상태(other);
+        fixture.역할_추가(scenario, scenario.staffId(), ChallengerRoleType.CENTRAL_EDUCATION_TEAM_MEMBER);
+        authenticate(scenario.staffId());
+
+        // when & then
+        List<JsonNode> rows = content(managed(scenario).param("chapterId", other.chapterId().toString()), 2);
+        assertThat(rows).extracting(row -> row.path("status").asText()).containsExactly("IN_PROGRESS", "PENDING_REVIEW");
+        assertThat(rows).extracting(row -> row.path("id").asLong()).contains(other.projectId()).doesNotContain(scenario.projectId());
+    }
+
+    @Test
+    void 다른_기수의_지부나_존재하지_않는_지부_필터는_빈_목록을_반환한다() throws Exception {
+        // given
+        Scenario scenario = projects.준비();
+        Scenario other = projects.다른_기수();
+        Long actor = fixture.역할_회원(scenario, ChallengerRoleType.CENTRAL_PRESIDENT, ChallengerPart.DESIGN);
+        authenticate(actor);
+
+        // when & then
+        content(managed(scenario).param("chapterId", other.chapterId().toString()), 0);
+        content(managed(scenario).param("chapterId", Long.toString(Long.MAX_VALUE)), 0);
+    }
+
     private List<JsonNode> content(MockHttpServletRequestBuilder request, int total) throws Exception {
         String body = mockMvc.perform(request).andExpect(status().isOk())
             .andExpect(jsonPath("$.result.totalElements").value(total))
