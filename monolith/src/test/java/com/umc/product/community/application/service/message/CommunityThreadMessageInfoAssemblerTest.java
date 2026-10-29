@@ -157,7 +157,7 @@ class CommunityThreadMessageInfoAssemblerTest {
     @DisplayName("퇴장 기록 메시지는 Community type으로 변환하고 sender 이름으로 표시 문구를 구성한다")
     void assembleMemberExitMessages() {
         CommunityThreadMessageInfoAssembler sut =
-            new CommunityThreadMessageInfoAssembler(getMemberUseCase, getFileUseCase);
+            new CommunityThreadMessageInfoAssembler(getMemberUseCase, getFileUseCase, getBlockedMemberIdsUseCase);
         ChatMessageInfo left = new ChatMessageInfo(
             902L, ROOM_ID, 10L, MessageContentType.MEMBER_LEFT, null, List.of(), CREATED_AT
         );
