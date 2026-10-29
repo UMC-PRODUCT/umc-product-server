@@ -519,6 +519,107 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         assertThat(info.path("projects").get(0).path("schoolName").asText()).isNotBlank();
     }
 
+    @Test
+    void Web과_Mobile_TO를_동시에_저장하면_거부하고_다른_변경도_롤백한다() throws Exception {
+        // given
+        Long other = fixture.프로젝트(scenario, "다른 프로젝트");
+
+        // when
+        String body = save(List.of(change(scenario.projectId(), "DESIGN", 0),
+            Map.of("projectId", other, "entries", List.of(
+                Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 1),
+                Map.of("part", "MOBILE_PRODUCT_ENGINEER", "quota", 1)))))
+            .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+
+        // then
+        assertThat(body).contains("PROJECT-0255");
+        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(1);
+        assertThat(quota(other, "WEB_PRODUCT_ENGINEER")).isZero();
+        assertThat(quota(other, "MOBILE_PRODUCT_ENGINEER")).isZero();
+    }
+
+    @Test
+    void 기존_Web_TO를_남겨둔_채_Mobile만_추가해도_거부한다() throws Exception {
+        // given
+        save(List.of(change(scenario.projectId(), "WEB_PRODUCT_ENGINEER", 1))).andExpect(status().isOk());
+
+        // when & then
+        String body = save(List.of(change(scenario.projectId(), "MOBILE_PRODUCT_ENGINEER", 1)))
+            .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+        assertThat(body).contains("PROJECT-0255");
+        assertThat(quota(scenario.projectId(), "WEB_PRODUCT_ENGINEER")).isEqualTo(1);
+        assertThat(quota(scenario.projectId(), "MOBILE_PRODUCT_ENGINEER")).isZero();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"WEB_PRODUCT_ENGINEER,MOBILE_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER,WEB_PRODUCT_ENGINEER"})
+    void 개발_파트를_전환하면_TO표_상세_카드에_같이_반영한다(String before, String after) throws Exception {
+        // given
+        save(List.of(change(scenario.projectId(), before, 1))).andExpect(status().isOk());
+
+        // when
+        save(List.of(Map.of("projectId", scenario.projectId(), "entries", List.of(
+            Map.of("part", before, "quota", 0), Map.of("part", after, "quota", 1)))))
+            .andExpect(status().isOk());
+
+        // then
+        JsonNode info = view(null);
+        assertThat(cell(info, before).path("quota").asLong()).isZero();
+        assertThat(cell(info, after).path("quota").asLong()).isEqualTo(1);
+        for (String url : List.of("/api/v1/projects/" + scenario.projectId(),
+            "/api/v1/projects?gisuId=" + scenario.gisuId())) {
+            JsonNode result = objectMapper.readTree(mockMvc.perform(get(url)).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString()).path("result");
+            JsonNode project = result.has("content") ? result.path("content").get(0) : result;
+            List<String> parts = new java.util.ArrayList<>();
+            project.path("partQuotas").forEach(quota -> parts.add(quota.path("part").asText()));
+            assertThat(parts).contains(after).doesNotContain(before);
+            assertThat(part(project.path("partQuotas"), after).path("quota").asLong()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void 두_개발_파트가_모두_영이어도_허용하고_두_셀을_조회할_수_있다() throws Exception {
+        // when
+        save(List.of(Map.of("projectId", scenario.projectId(), "entries", List.of(
+            Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 0),
+            Map.of("part", "MOBILE_PRODUCT_ENGINEER", "quota", 0)))))
+            .andExpect(status().isOk());
+
+        // then
+        JsonNode info = view(null);
+        assertThat(cell(info, "WEB_PRODUCT_ENGINEER").path("quota").asLong()).isZero();
+        assertThat(cell(info, "MOBILE_PRODUCT_ENGINEER").path("quota").asLong()).isZero();
+    }
+
+    @Test
+    void 배정된_Web_인원이_있으면_개발_파트를_전환할_수_없다() throws Exception {
+        // given
+        Long member = projects.회원(scenario, "웹 배정", ChallengerPart.WEB_PRODUCT_ENGINEER);
+        save(List.of(change(scenario.projectId(), "WEB_PRODUCT_ENGINEER", 1))).andExpect(status().isOk());
+        fixture.배정(scenario, member, ChallengerPart.WEB_PRODUCT_ENGINEER, true);
+
+        // when & then
+        denied(save(List.of(Map.of("projectId", scenario.projectId(), "entries", List.of(
+            Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 0),
+            Map.of("part", "MOBILE_PRODUCT_ENGINEER", "quota", 1))))), "PROJECT-0252");
+        assertThat(quota(scenario.projectId(), "WEB_PRODUCT_ENGINEER")).isEqualTo(1);
+        assertThat(quota(scenario.projectId(), "MOBILE_PRODUCT_ENGINEER")).isZero();
+    }
+
+    @Test
+    void 기존_PUT도_두_개발_파트의_동시_모집을_거부한다() throws Exception {
+        // when
+        String body = legacyPut(List.of(Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 1),
+            Map.of("part", "MOBILE_PRODUCT_ENGINEER", "quota", 1)))
+            .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+
+        // then
+        assertThat(body).contains("PROJECT-0255");
+        assertThat(quota(scenario.projectId(), "WEB_PRODUCT_ENGINEER")).isZero();
+        assertThat(quota(scenario.projectId(), "MOBILE_PRODUCT_ENGINEER")).isZero();
+    }
+
     private void schedule(MatchingType type, long firstStart, long thirdDeadline) {
         fixture.차수(scenario, type, MatchingPhase.FIRST, NOW.plusSeconds(firstStart),
             NOW.plusSeconds(firstStart + 600), NOW.plusSeconds(firstStart + 1200));

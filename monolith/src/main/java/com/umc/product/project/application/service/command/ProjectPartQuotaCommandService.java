@@ -176,5 +176,9 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_QUOTA_DUPLICATE);
             }
         }
+        if (seen.contains(ChallengerPart.WEB_PRODUCT_ENGINEER)
+            && seen.contains(ChallengerPart.MOBILE_PRODUCT_ENGINEER)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DEVELOPER_PART_QUOTA_CONFLICT);
+        }
     }
 }
