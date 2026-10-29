@@ -99,6 +99,10 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         assertThat(info.path("chapters").size()).isEqualTo(1);
         assertThat(info.path("schools").get(0).path("schoolId").asLong()).isEqualTo(scenario.schoolId());
         assertThat(info.path("columns").size()).isEqualTo(4);
+        assertThat(part(info.path("columns"), "PLAN").path("label").asText()).isEqualTo("PM");
+        assertThat(part(info.path("columns"), "DESIGN").path("label").asText()).isEqualTo("Design");
+        assertThat(part(info.path("columns"), "WEB_PRODUCT_ENGINEER").path("label").asText()).isEqualTo("Web PE");
+        assertThat(part(info.path("columns"), "MOBILE_PRODUCT_ENGINEER").path("label").asText()).isEqualTo("Mobile PE");
         assertThat(cell(info, "PLAN").path("quota").asLong()).isEqualTo(1);
         assertThat(cell(info, "PLAN").path("canEdit").path("allowed").asBoolean()).isTrue();
         JsonNode design = part(info.path("summary"), "DESIGN");
@@ -500,6 +504,22 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void 같은_학교가_활성_기수의_여러_지부에_연결되어도_TO를_조회한다() throws Exception {
+        // given
+        var other = projects.다른_지부(scenario);
+        jdbc.update("UPDATE gisu SET is_active=false WHERE is_active=true");
+        jdbc.update("UPDATE gisu SET is_active=true WHERE id=?", scenario.gisuId());
+        jdbc.update("INSERT INTO chapter_school (chapter_id,school_id,created_at,updated_at) VALUES (?,?,now(),now())",
+            other.chapterId(), scenario.schoolId());
+
+        // when & then
+        JsonNode info = view(null);
+        assertThat(info.path("projects").size()).isEqualTo(1);
+        assertThat(info.path("projects").get(0).path("schoolId").asLong()).isEqualTo(scenario.schoolId());
+        assertThat(info.path("projects").get(0).path("schoolName").asText()).isNotBlank();
+    }
+
+    @Test
     void Web과_Mobile_TO를_동시에_저장하면_거부하고_다른_변경도_롤백한다() throws Exception {
         // given
         Long other = fixture.프로젝트(scenario, "다른 프로젝트");
@@ -598,6 +618,21 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         assertThat(body).contains("PROJECT-0255");
         assertThat(quota(scenario.projectId(), "WEB_PRODUCT_ENGINEER")).isZero();
         assertThat(quota(scenario.projectId(), "MOBILE_PRODUCT_ENGINEER")).isZero();
+    }
+
+    @Test
+    void 수강_파트가_없는_기수_소속자는_파트별_모집_인원에서_제외한다() throws Exception {
+        // given — 수강 없이 기수에 소속된 운영진은 part가 null이다.
+        Long member = projects.회원(scenario, "미수강 운영진", ChallengerPart.PLAN);
+        jdbc.update("UPDATE challenger SET part=NULL WHERE member_id=? AND gisu_id=?", member, scenario.gisuId());
+
+        // when
+        JsonNode info = view(null);
+
+        // then
+        assertThat(part(info.path("summary"), "PLAN").path("availableCount").asLong()).isEqualTo(3);
+        assertThat(part(info.path("summary"), "DESIGN").path("availableCount").asLong()).isEqualTo(2);
+        assertThat(info.path("totals").path("availableCount").asLong()).isEqualTo(8);
     }
 
     private void schedule(MatchingType type, long firstStart, long thirdDeadline) {

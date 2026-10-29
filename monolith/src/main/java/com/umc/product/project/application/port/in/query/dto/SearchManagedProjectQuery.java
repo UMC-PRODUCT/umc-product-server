@@ -19,6 +19,7 @@ import lombok.Builder;
 public record SearchManagedProjectQuery(
     Long gisuId,
     String keyword,
+    Long chapterId,
     Pageable pageable
 ) {
     public SearchManagedProjectQuery {
