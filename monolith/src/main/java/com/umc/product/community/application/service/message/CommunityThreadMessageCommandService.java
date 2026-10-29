@@ -101,7 +101,9 @@ public class CommunityThreadMessageCommandService implements
             chatCommand,
             messagePolicy::validateAttachments
         );
-        CommunityThreadMessageInfo message = infoAssembler.assemble(thread.getId(), result.message());
+        CommunityThreadMessageInfo message = infoAssembler.assemble(
+            thread.getId(), result.message(), command.senderMemberId()
+        );
         if (result.deduplicated()) {
             return new CommunityThreadMessageMutationInfo(message, true);
         }
@@ -165,7 +167,9 @@ public class CommunityThreadMessageCommandService implements
             command.requesterMemberId(),
             command.content()
         ));
-        CommunityThreadMessageInfo message = infoAssembler.assemble(thread.getId(), result.message());
+        CommunityThreadMessageInfo message = infoAssembler.assemble(
+            thread.getId(), result.message(), command.requesterMemberId()
+        );
         refreshLastMessageProjection(thread, result);
         return new CommunityThreadMessageMutationInfo(message, result.deduplicated());
     }
@@ -189,7 +193,9 @@ public class CommunityThreadMessageCommandService implements
                 moderator
             )
         );
-        CommunityThreadMessageInfo message = infoAssembler.assemble(thread.getId(), result.message());
+        CommunityThreadMessageInfo message = infoAssembler.assemble(
+            thread.getId(), result.message(), command.requesterMemberId()
+        );
         refreshLastMessageProjection(thread, result);
         return new CommunityThreadMessageMutationInfo(message, result.deduplicated());
     }
