@@ -48,6 +48,7 @@ public class ProjectQuotaManagementController {
     @PatchMapping
     @Operation(operationId = "PROJECT-QUOTAS-002", summary = "변경한 프로젝트 TO 셀 일괄 저장", description = """
         변경한 프로젝트·셀만 전달합니다. 누락된 셀·프로젝트는 유지하며 quota=0은 해당 파트의 모집 TO를 제거합니다.
+        Web PE와 Mobile PE는 동시에 모집할 수 없습니다(PROJECT-0255). 기존 파트 TO 0과 새 파트 TO를 함께 전달해 전환합니다.
         PM TO도 수정할 수 있으나 실제 PM·공동 PM 인원 미만으로 줄일 수 없습니다.
         파트별 1차 시작~3차 PM 결정 마감에는 변경을 차단합니다. PM TO는 두 매칭 중 하나라도 잠겨 있으면 차단합니다.
         발표 대기를 포함한 기존 배정 인원 미만 축소와 지부 파트별 인원 초과를 거부합니다. 부족은 허용합니다.
