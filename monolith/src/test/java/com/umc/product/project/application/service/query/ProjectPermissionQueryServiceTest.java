@@ -101,6 +101,8 @@ class ProjectPermissionQueryServiceTest {
     @Spy
     ProjectMatchingAdjustmentPolicy projectMatchingAdjustmentPolicy = new ProjectMatchingAdjustmentPolicy();
 
+    @Mock com.umc.product.project.application.service.policy.ProjectDraftQuotaPolicy draftQuotaPolicy;
+
     @InjectMocks
     ProjectPermissionQueryService sut;
 
