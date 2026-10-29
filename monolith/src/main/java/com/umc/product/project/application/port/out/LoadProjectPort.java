@@ -39,6 +39,11 @@ public interface LoadProjectPort {
     List<Project> listByIds(Collection<Long> ids);
 
     /**
+     * 지부의 공개 프로젝트(IN_PROGRESS·COMPLETED)를 제출 시각·ID 오름차순으로 조회합니다.
+     */
+    List<Project> listPublicByChapterId(Long chapterId);
+
+    /**
      * 특정 지부의 특정 상태 프로젝트 목록을 반환합니다.
      */
     List<Project> listByChapterIdAndStatus(Long chapterId, ProjectStatus status);

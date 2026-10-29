@@ -27,12 +27,10 @@ import com.umc.product.project.adapter.in.web.dto.response.ManagedProjectSummary
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
-import com.umc.product.project.application.port.in.query.dto.ProjectMemberView;
 import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -104,10 +102,7 @@ public class ProjectQueryController {
     @Operation(
         operationId = "PROJECT-007",
         summary = "프로젝트 팀원 구성 일괄 조회",
-        description = """
-            복수의 projectId에 대한 팀원 구성을 조회합니다. 권한이 없거나 조회에 실패한 프로젝트는 결과에서 제외됩니다.
-            view=ADJUSTMENT는 랜덤 매칭 조정 기간의 운영진 조정 명단을 반환하며, 요청한 모든 프로젝트에 수동 배정 권한이 필요합니다(없으면 403).
-            """
+        description = "복수의 projectId에 대한 팀원 구성을 조회합니다. 권한이 없거나 조회에 실패한 프로젝트는 결과에서 제외됩니다."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
@@ -116,11 +111,9 @@ public class ProjectQueryController {
     )
     public Map<Long, ProjectMembersResponse> getBatchMembers(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @RequestParam List<Long> projectIds,
-        @Parameter(description = "명단 기준. PUBLISHED: 공개 명단(기본값), ADJUSTMENT: 운영진 조정 명단")
-        @RequestParam(defaultValue = "PUBLISHED") ProjectMemberView view
+        @RequestParam List<Long> projectIds
     ) {
-        return assembler.listProjectMembers(projectIds, memberPrincipal.getMemberId(), view);
+        return assembler.listProjectMembers(projectIds, memberPrincipal.getMemberId());
     }
 
     @GetMapping("/me/managed")
@@ -131,6 +124,7 @@ public class ProjectQueryController {
             최고관리자는 모든 기수, 총괄단은 해당 기수 전체 지부, 지부장은 해당 기수 본인 지부를 조회합니다.
             일반 중앙운영·교육국은 해당 기수 전체 지부의 승인대기·등록완료만, PM은 본인 프로젝트를 조회합니다.
             학교 운영진 역할만으로는 관리 목록이 제공되지 않으며, PM 등 다른 정상 역할의 권한은 유지합니다.
+            chapterId를 전달하면 기존 조회 권한 범위 안에서 해당 지부만 필터합니다. 생략 시 기존 범위를 유지하며, 범위 밖이면 빈 목록입니다.
             정렬: 등록완료(IN_PROGRESS) → 승인대기(PENDING_REVIEW) → 임시저장(DRAFT) → 기타 상태.
             임시저장은 생성 시각 내림차순이며, 나머지는 요청 정렬(기본: 생성 시각·이름 오름차순)을 적용합니다. 최종 동률은 ID 오름차순입니다.
             """
@@ -139,12 +133,14 @@ public class ProjectQueryController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam Long gisuId,
         @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) Long chapterId,
         @ParameterObject @PageableDefault(size = 20, sort = {"createdAt", "name"}, direction = Sort.Direction.ASC)
         Pageable pageable
     ) {
         SearchManagedProjectQuery query = SearchManagedProjectQuery.builder()
             .gisuId(gisuId)
             .keyword(keyword)
+            .chapterId(chapterId)
             .pageable(pageable)
             .build();
         return assembler.searchManagedFor(query, memberPrincipal.getMemberId());

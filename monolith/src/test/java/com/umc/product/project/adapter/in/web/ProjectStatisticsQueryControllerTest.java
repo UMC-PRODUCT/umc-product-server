@@ -79,6 +79,16 @@ class ProjectStatisticsQueryControllerTest {
 
 
     @Test
+    void 매칭_현황_표_잘못된_요청() throws Exception {
+        // when & then
+        mockMvc.perform(get("/api/v1/projects/statistics/matching-overview"))
+            .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/projects/statistics/matching-overview")
+                .param("chapterId", "3").param("view", "UNKNOWN"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("지부 지원 통계는 기준 매칭과 중복 없는 요약을 반환한다")
     void 지부_지원_통계_조회() throws Exception {
         // given

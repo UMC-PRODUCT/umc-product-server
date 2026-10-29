@@ -134,6 +134,17 @@ public class ProjectManualMatchingFixture {
         evictAuthoritySnapshotCacheUseCase.evictByMemberId(scenario.staffId());
     }
 
+    public void 배정_가능_기간(Scenario scenario) {
+        배정_가능_기간(scenario, MatchingType.PLAN_DESIGN);
+    }
+
+    public void 배정_가능_기간(Scenario scenario, MatchingType type) {
+        Instant now = Instant.now();
+        entityManager.persist(ProjectMatchingRound.create("1차", null, type,
+            MatchingPhase.FIRST, scenario.chapterId(), now.minusSeconds(3600), now.plusSeconds(3600),
+            now.plusSeconds(7200), now.plusSeconds(10800)));
+    }
+
     public ApplicationScenario 지원서_배정(Scenario scenario, boolean pending) {
         Instant now = Instant.now();
         ProjectMatchingRound round = ProjectMatchingRound.create("디자인 1차", null, MatchingType.PLAN_DESIGN,
@@ -146,6 +157,9 @@ public class ProjectManualMatchingFixture {
         saveProjectMemberPort.save(ProjectMember.createFromApplication(application, ChallengerPart.DESIGN,
             scenario.staffId()));
         round.executeAutoDecision(scenario.staffId());
+        entityManager.persist(ProjectMatchingRound.create("디자인 2차", null, MatchingType.PLAN_DESIGN,
+            MatchingPhase.SECOND, scenario.chapterId(), now.plusSeconds(3600), now.plusSeconds(7200),
+            now.plusSeconds(10800), now.plusSeconds(14400)));
         entityManager.flush();
         return result;
     }

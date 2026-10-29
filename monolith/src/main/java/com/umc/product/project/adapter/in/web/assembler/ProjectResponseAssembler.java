@@ -23,13 +23,14 @@ import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
 import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ManagedProjectSummaryResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
+import com.umc.product.project.adapter.in.web.dto.response.ProjectMatchingOverviewResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse.MatchedRoundInfo;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectApplicationStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectMatchingStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
-import com.umc.product.project.application.port.in.query.GetProjectMatchingAdjustmentUseCase;
+import com.umc.product.project.application.port.in.query.GetProjectMatchingOverviewUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectPublishedMembersUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
@@ -65,8 +66,8 @@ public class ProjectResponseAssembler {
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final GetProjectStatisticsUseCase getProjectStatisticsUseCase;
+    private final GetProjectMatchingOverviewUseCase getProjectMatchingOverviewUseCase;
     private final GetProjectPublishedMembersUseCase getProjectPublishedMembersUseCase;
-    private final GetProjectMatchingAdjustmentUseCase getProjectMatchingAdjustmentUseCase;
 
     /**
      * PROJECT-001 프로젝트 목록 조회.
@@ -162,19 +163,6 @@ public class ProjectResponseAssembler {
         return result;
     }
 
-    /**
-     * PROJECT-007 요청한 조회 방식에 따라 공개 명단 또는 운영진 조정 명단을 응답으로 변환한다.
-     */
-    public Map<Long, ProjectMembersResponse> listProjectMembers(List<Long> projectIds, Long memberId, ProjectMemberView view) {
-        if (view == ProjectMemberView.PUBLISHED) {
-            return listProjectMembers(projectIds, memberId);
-        }
-        Map<Long, ProjectMembersResponse> result = new LinkedHashMap<>();
-        getProjectMatchingAdjustmentUseCase.batchGetByProjectIds(projectIds, memberId)
-            .forEach((projectId, info) -> result.put(projectId, ProjectMembersResponse.from(info)));
-        return result;
-    }
-
     public PageResponse<DraftProjectResponse> draftsFor(Long memberId, Long gisuId, Pageable pageable) {
         Page<ProjectInfo> page = searchDraftProjectUseCase.searchDrafts(memberId, gisuId, pageable);
         Set<Long> memberIds = new HashSet<>();
@@ -215,6 +203,19 @@ public class ProjectResponseAssembler {
             .toList();
 
         return DraftProjectResponse.from(info, owner, coOwners, resolveApplicationFormId(info.id()));
+    }
+
+    /**
+     * PROJECT-STAT-004 지부별 프로젝트 매칭 현황.
+     */
+    public ProjectMatchingOverviewResponse matchingOverviewForChapter(
+        Long chapterId,
+        ProjectMemberView view,
+        Long requesterMemberId
+    ) {
+        return ProjectMatchingOverviewResponse.from(
+            getProjectMatchingOverviewUseCase.getByChapterId(chapterId, view, requesterMemberId)
+        );
     }
 
     /**

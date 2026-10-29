@@ -46,6 +46,7 @@ import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
@@ -78,9 +79,22 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 차수가_없는_기간에도_운영진이_즉시_배정하고_해제한_뒤_다시_배정한다() throws Exception {
+    void 매칭_차수가_없으면_수동_배정을_거부한다() throws Exception {
         // given
         Scenario scenario = fixture.준비();
+        authenticate(scenario.staffId());
+
+        // when & then
+        assign(scenario, scenario.candidateId()).andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("PROJECT-0103"));
+        assertThat(members.existsByGisuAndMember(scenario.gisuId(), scenario.candidateId())).isFalse();
+    }
+
+    @Test
+    void 허용_기간에_운영진이_즉시_배정하고_해제한_뒤_다시_배정한다() throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        fixture.배정_가능_기간(scenario);
         authenticate(scenario.staffId());
         mockMvc.perform(get(candidates(scenario)).param("part", "DESIGN"))
             .andExpect(status().isOk()).andExpect(jsonPath("$.result.totalElements").value(1));
@@ -106,6 +120,7 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
     void PM의_일반_팀원_조작은_기존_API에서도_막고_보조_PM_관리는_유지한다() throws Exception {
         // given
         Scenario scenario = fixture.준비();
+        fixture.배정_가능_기간(scenario);
         authenticate(scenario.ownerId());
 
         // when & then
@@ -137,6 +152,7 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         // given
         Scenario first = fixture.준비();
         Scenario other = fixture.다른_지부(first);
+        fixture.배정_가능_기간(other);
         authenticate(first.staffId());
 
         // when & then
@@ -151,13 +167,15 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
     void 정원_초과와_다른_기수의_권한과_잘못된_파트와_다른_지부_후보를_거부한다() throws Exception {
         // given
         Scenario scenario = fixture.준비();
+        fixture.배정_가능_기간(scenario);
         Scenario other = fixture.다른_지부(scenario);
         Long second = fixture.회원(scenario, "두번째", ChallengerPart.DESIGN);
+        Long developer = fixture.회원(scenario, "개발파트후보", ChallengerPart.WEB_PRODUCT_ENGINEER);
         authenticate(scenario.staffId());
 
         // when & then
-        mockMvc.perform(post(admin(scenario)).contentType(MediaType.APPLICATION_JSON)
-                .content(body(scenario.candidateId(), "WEB_PRODUCT_ENGINEER"))).andExpect(status().isForbidden());
+        assign(scenario, developer).andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value("PROJECT-0205"));
         assign(scenario, other.candidateId()).andExpect(status().isForbidden());
         assign(scenario, scenario.candidateId()).andExpect(status().isOk());
         assign(scenario, second).andExpect(status().isConflict())
@@ -324,6 +342,7 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
     @ValueSource(strings = {"WEB", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER"})
     void 개발_파트의_수동_배정_결과를_본인이_즉시_조회할_수_있다(String partName) throws Exception {
         Scenario scenario = fixture.준비();
+        fixture.배정_가능_기간(scenario, MatchingType.PLAN_DEVELOPER);
         ChallengerPart part = ChallengerPart.valueOf(partName);
         Long memberId = fixture.회원(scenario, "개발자", part);
         jdbc.update("UPDATE project_part_quota SET part = ? WHERE project_id = ?", partName, scenario.projectId());
@@ -371,7 +390,9 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
     @Test
     void 매칭지부를_옮긴_후보는_이동한_지부에서만_조회하고_배정한다() throws Exception {
         Scenario from = fixture.준비();
+        fixture.배정_가능_기간(from);
         Scenario to = fixture.다른_지부(from);
+        fixture.배정_가능_기간(to);
         fixture.매칭지부_이동(from, to);
         authenticate(from.staffId());
         mockMvc.perform(get(candidates(from)).param("part", "DESIGN"))
@@ -387,6 +408,7 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
     @ValueSource(strings = {"COMPLETED", "ABORTED"})
     void 종료된_프로젝트는_운영진도_배정이나_해제할_수_없다(String state) throws Exception {
         Scenario scenario = fixture.준비();
+        fixture.배정_가능_기간(scenario);
         authenticate(scenario.staffId());
         assign(scenario, scenario.candidateId()).andExpect(status().isOk());
         jdbc.update("UPDATE project SET status = ? WHERE id = ?", state, scenario.projectId());
@@ -415,6 +437,7 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
     @Test
     void 재배정_시_변경된_현재_파트를_팀원과_정원_검증에_적용한다() throws Exception {
         Scenario scenario = fixture.준비();
+        fixture.배정_가능_기간(scenario);
         authenticate(scenario.staffId());
         assign(scenario, scenario.candidateId()).andExpect(status().isOk());
         mockMvc.perform(patch("/api/v1/projects/{id}/members/{member}/status", scenario.projectId(),
@@ -424,6 +447,7 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         jdbc.update("UPDATE challenger SET part = 'WEB_PRODUCT_ENGINEER' WHERE member_id = ?", scenario.candidateId());
         jdbc.update("UPDATE project_part_quota SET part = 'WEB_PRODUCT_ENGINEER' WHERE project_id = ?",
             scenario.projectId());
+        jdbc.update("UPDATE project_matching_round SET type = 'PLAN_DEVELOPER' WHERE chapter_id = ?", scenario.chapterId());
         mockMvc.perform(post(admin(scenario)).contentType(MediaType.APPLICATION_JSON)
                 .content(body(scenario.candidateId(), "WEB_PRODUCT_ENGINEER"))).andExpect(status().isOk());
         assertThat(members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId()).getPart())
@@ -433,6 +457,7 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
     @Test
     void 권한_응답은_보조_PM_관리와_수동_매칭을_구분한다() {
         Scenario scenario = fixture.준비();
+        fixture.배정_가능_기간(scenario);
         var pm = permissions.listByProjectIds(scenario.ownerId(), java.util.List.of(scenario.projectId())).getFirst();
         var staff = permissions.listByProjectIds(scenario.staffId(),
             java.util.List.of(scenario.projectId())).getFirst();
@@ -448,6 +473,7 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
     void 동시_요청도_중복_배정이나_정원_초과를_만들지_않는다(boolean sameCandidate) throws Exception {
         // given
         Scenario scenario = fixture.준비();
+        fixture.배정_가능_기간(scenario);
         Long otherProject = sameCandidate ? fixture.프로젝트(scenario, 1L) : scenario.projectId();
         Long otherCandidate = sameCandidate ? scenario.candidateId() : fixture.회원(scenario, "동시후보",
             ChallengerPart.DESIGN);

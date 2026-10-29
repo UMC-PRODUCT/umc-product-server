@@ -55,6 +55,7 @@ public class ProjectQuotaManagementDataLoader {
         Map<ChallengerPart, Long> population = new EnumMap<>(ChallengerPart.class);
         matchingChapterResolver.deltaOf(chapterId).apply(getChallengerUseCase.listByChapterId(chapterId)).stream()
             .filter(challenger -> challenger.challengerStatus() == ChallengerStatus.ACTIVE)
+            .filter(challenger -> challenger.part() != null)
             .forEach(challenger -> population.merge(challenger.part(), 1L, Math::addExact));
         var assigned = loadProjectMemberPort.listAssignedByProjectIds(ids);
         var rounds = loadProjectMatchingRoundPort.listByChapterId(chapterId);

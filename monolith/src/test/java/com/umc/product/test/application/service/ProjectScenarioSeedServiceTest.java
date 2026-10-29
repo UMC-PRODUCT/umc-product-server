@@ -443,8 +443,7 @@ class ProjectScenarioSeedServiceTest {
             givenCreateDraftReturns(700L);
             given(upsertProjectApplicationFormUseCase.upsert(any()))
                 .willReturn(applicationFormInfo(700L, 9700L));
-            willThrow(new RuntimeException("submit boom"))
-                .given(submitProjectUseCase).submit(any());
+            given(submitProjectUseCase.submit(any())).willThrow(new RuntimeException("submit boom"));
 
             SeedProjectScenariosResult result = sut.seed(new SeedProjectScenariosCommand(
                 TargetProjectStatus.PENDING_REVIEW, 1, List.of(PO_MEMBER_ID)

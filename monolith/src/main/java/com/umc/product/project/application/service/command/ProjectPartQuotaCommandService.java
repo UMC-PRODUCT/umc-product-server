@@ -31,12 +31,14 @@ import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectPartQuotaPort;
+import com.umc.product.project.application.service.policy.ProjectDraftQuotaPolicy;
 import com.umc.product.project.application.service.policy.ProjectQuotaCapacityPolicy;
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
 import com.umc.product.project.application.service.policy.ProjectQuotaMemberPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
+import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
@@ -47,6 +49,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
 
+    private final ProjectDraftQuotaPolicy draftQuotaPolicy;
     private final Clock clock;
     private final CheckPermissionUseCase checkPermissionUseCase;
     private final LockProjectMatchingPort lockProjectMatchingPort;
@@ -86,8 +89,14 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
         if (!Objects.equals(chapterId, project.getChapterId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
         }
-        checkPermissionUseCase.checkOrThrow(command.requesterMemberId(),
-            ResourcePermission.of(ResourceType.PROJECT, project.getId(), PermissionType.MANAGE));
+        if (project.getStatus() == ProjectStatus.DRAFT) {
+            if (!draftQuotaPolicy.canEdit(project, checkPermissionUseCase.loadSubject(command.requesterMemberId()))) {
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
+            }
+        } else {
+            checkPermissionUseCase.checkOrThrow(command.requesterMemberId(),
+                ResourcePermission.of(ResourceType.PROJECT, project.getId(), PermissionType.MANAGE));
+        }
         project.validateMutable();
 
         validateEntries(command.entries());
@@ -166,6 +175,10 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
             if (!seen.add(entry.part())) {
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_QUOTA_DUPLICATE);
             }
+        }
+        if (seen.contains(ChallengerPart.WEB_PRODUCT_ENGINEER)
+            && seen.contains(ChallengerPart.MOBILE_PRODUCT_ENGINEER)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DEVELOPER_PART_QUOTA_CONFLICT);
         }
     }
 }
