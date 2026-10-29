@@ -18,7 +18,7 @@ import com.umc.product.report.domain.enums.ReportTargetType;
 import com.umc.product.support.PersistenceAdapterTest;
 
 @PersistenceAdapterTest
-@Import(ReportPersistenceAdapter.class)
+@Import({ReportPersistenceAdapter.class, ReportActionPersistenceAdapter.class})
 @DisplayName("재전송 대상 신고 조회")
 class ReportUndeliveredQueryTest {
 

@@ -34,7 +34,7 @@ import com.umc.product.report.domain.exception.ReportErrorCode;
 import com.umc.product.support.PersistenceAdapterTest;
 
 @PersistenceAdapterTest
-@Import(ReportPersistenceAdapter.class)
+@Import({ReportPersistenceAdapter.class, ReportActionPersistenceAdapter.class})
 @DisplayName("ReportPersistenceAdapter")
 class ReportPersistenceAdapterTest {
 
