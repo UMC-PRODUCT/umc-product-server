@@ -43,7 +43,6 @@ import com.umc.product.organization.application.port.in.query.dto.chapter.Chapte
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import com.umc.product.project.application.port.in.command.dto.CompleteProjectsCommand;
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectCommand;
-import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.TransferProjectOwnershipCommand;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
@@ -371,39 +370,6 @@ class ProjectCommandServiceTest {
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
-        }
-    }
-
-    @Nested
-    class submit {
-
-        @Test
-        void 프로젝트_제출_성공() {
-            Project project = createProject(ProjectStatus.DRAFT);
-            project.updateBasicInfo("프로젝트명", null, null, null, null);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-            given(loadProjectApplicationFormPort.existsByProjectId(1L)).willReturn(true);
-
-            sut.submit(SubmitProjectCommand.builder()
-                .projectId(1L)
-                .build());
-
-            assertThat(project.getStatus()).isEqualTo(ProjectStatus.PENDING_REVIEW);
-        }
-
-        @Test
-        void 지원폼_미연결이면_SUBMIT_VALIDATION_FAILED() {
-            Project project = createProject(ProjectStatus.DRAFT);
-            project.updateBasicInfo("프로젝트명", null, null, null, null);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-            given(loadProjectApplicationFormPort.existsByProjectId(1L)).willReturn(false);
-
-            assertThatThrownBy(() -> sut.submit(SubmitProjectCommand.builder()
-                .projectId(1L)
-                .build()))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_SUBMIT_VALIDATION_FAILED);
         }
     }
 

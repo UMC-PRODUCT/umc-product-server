@@ -285,11 +285,30 @@ class CommunityThreadListDetailQueryServiceTest {
     }
 
     @Test
-    @DisplayName("getPublicThread는 KICKED 요청자를 THREAD_ACCESS_DENIED로 거절한다")
-    void getPublicThread_강퇴된_요청자를_거절한다() {
+    @DisplayName("getPublicThread는 강퇴를 확인하지 않은(KICKED) 요청자에게는 membershipState와 함께 상세를 반환한다")
+    void getPublicThread_강퇴_미확인_요청자를_허용한다() {
         // given
         CommunityThreadQueryRow kicked = restrictedRow(CommunityThreadMemberState.KICKED, null);
         given(threadQueryPort.findThread(1L, 10L)).willReturn(Optional.of(kicked));
+
+        // when
+        var result = sut.getPublicThread(new GetThreadDetailQuery(1L, 10L));
+
+        // then
+        assertThat(result.threadId()).isEqualTo(1L);
+        assertThat(result.isJoined()).isFalse();
+        assertThat(result.membershipState()).isEqualTo(CommunityThreadMemberState.KICKED);
+    }
+
+    @Test
+    @DisplayName("getPublicThread는 강퇴를 확인한(KICKED_ACKNOWLEDGED) 요청자를 THREAD_ACCESS_DENIED로 거절한다")
+    void getPublicThread_강퇴_확인한_요청자를_거절한다() {
+        // given
+        CommunityThreadQueryRow kickAcknowledged = restrictedRow(
+            CommunityThreadMemberState.KICKED_ACKNOWLEDGED,
+            null
+        );
+        given(threadQueryPort.findThread(1L, 10L)).willReturn(Optional.of(kickAcknowledged));
 
         // when & then
         assertThatThrownBy(() -> sut.getPublicThread(new GetThreadDetailQuery(1L, 10L)))

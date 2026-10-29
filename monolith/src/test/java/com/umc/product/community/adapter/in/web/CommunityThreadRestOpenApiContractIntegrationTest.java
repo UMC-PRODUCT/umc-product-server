@@ -148,6 +148,7 @@ class CommunityThreadRestOpenApiContractIntegrationTest extends IntegrationTestS
             BASE + "/threads/{threadId}/members/{memberId}",
             Set.of(RequestMethod.DELETE)
         );
+        routes.put(BASE + "/threads/{threadId}/kick/acknowledge", Set.of(RequestMethod.POST));
         routes.put(BASE + "/threads/{threadId}/leave", Set.of(RequestMethod.POST));
         routes.put(
             BASE + "/threads/{threadId}/members/{memberId}/role",

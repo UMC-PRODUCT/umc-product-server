@@ -1,11 +1,15 @@
 package com.umc.product.report.domain;
 
+import java.time.Instant;
+
 import com.umc.product.common.BaseEntity;
+import com.umc.product.report.domain.enums.ReportDeliveryStatus;
 import com.umc.product.report.domain.enums.ReportReason;
 import com.umc.product.report.domain.enums.ReportStatus;
 import com.umc.product.report.domain.enums.ReportTargetType;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -53,6 +57,21 @@ public class Report extends BaseEntity {
     @Column(name = "reason_code", length = 32)
     private ReportReason reasonCode;
 
+    /** 운영 채널 전달 상태. 전달 기능 이전에 접수된 신고는 {@code null}. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "delivery_status", length = 20)
+    private ReportDeliveryStatus deliveryStatus;
+
+    /** 전달에 실패한 횟수. 성공한 시도는 세지 않습니다. */
+    @Column(name = "delivery_attempt_count", nullable = false)
+    private int deliveryAttemptCount;
+
+    @Column(name = "delivered_at")
+    private Instant deliveredAt;
+
+    @Embedded
+    private ReportTargetSnapshot targetSnapshot;
+
     @Builder
     private Report(
         Long reporterId,
@@ -60,7 +79,8 @@ public class Report extends BaseEntity {
         Long targetId,
         String reason,
         Long threadId,
-        ReportReason reasonCode
+        ReportReason reasonCode,
+        ReportTargetSnapshot targetSnapshot
     ) {
         this.reporterId = reporterId;
         this.targetType = targetType;
@@ -69,6 +89,9 @@ public class Report extends BaseEntity {
         this.reason = reason;
         this.threadId = threadId;
         this.reasonCode = reasonCode;
+        this.deliveryStatus = ReportDeliveryStatus.PENDING;
+        this.deliveryAttemptCount = 0;
+        this.targetSnapshot = targetSnapshot;
     }
 
     public static Report create(Long reporterId, ReportTargetType targetType, Long targetId, String reason) {
@@ -87,7 +110,8 @@ public class Report extends BaseEntity {
         Long reporterId,
         Long threadId,
         Long messageId,
-        ReportReason reason
+        ReportReason reason,
+        ReportTargetSnapshot targetSnapshot
     ) {
         return Report.builder()
             .reporterId(requirePositive(reporterId, "reporterId"))
@@ -95,7 +119,30 @@ public class Report extends BaseEntity {
             .targetId(requirePositive(messageId, "messageId"))
             .threadId(requirePositive(threadId, "threadId"))
             .reasonCode(requireReason(reason))
+            .targetSnapshot(targetSnapshot)
             .build();
+    }
+
+    /**
+     * 운영 채널 전달을 아직 시도해야 하는 신고인지 확인합니다. 전달 기능 이전 신고({@code null})는 대상이 아닙니다.
+     */
+    public boolean isDeliveryPending() {
+        return this.deliveryStatus == ReportDeliveryStatus.PENDING;
+    }
+
+    public void markDelivered(Instant deliveredAt) {
+        this.deliveryStatus = ReportDeliveryStatus.SENT;
+        this.deliveredAt = deliveredAt;
+    }
+
+    /**
+     * 전달 실패를 기록합니다. 시도 횟수가 {@code maxAttempts}에 닿으면 더 이상 자동으로 재시도하지 않도록 {@code FAILED}로 바꿉니다.
+     */
+    public void recordDeliveryFailure(int maxAttempts) {
+        this.deliveryAttemptCount++;
+        if (this.deliveryAttemptCount >= maxAttempts) {
+            this.deliveryStatus = ReportDeliveryStatus.FAILED;
+        }
     }
 
     public void approve() {

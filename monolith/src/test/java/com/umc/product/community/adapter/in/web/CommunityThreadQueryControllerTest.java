@@ -152,6 +152,7 @@ class CommunityThreadQueryControllerTest {
         given(getPublicThreadDetailUseCase.getPublicThread(any())).willReturn(new ThreadDetailInfo(
             42L, "스터디", null, CommunityThreadCategory.STUDY, "📚",
             3L, 0L, 100, false, true, true, CommunityThreadMemberRole.OWNER,
+            CommunityThreadMemberState.ACTIVE,
             null, 99L, NOW, NOW, "/api/v1/community/threads/42", null
         ));
 
@@ -254,6 +255,7 @@ class CommunityThreadQueryControllerTest {
         return new ThreadSummaryInfo(
             threadId, "스터디", null, CommunityThreadCategory.STUDY, "📚",
             3L, 2L, 100, pinned, false, true, CommunityThreadMemberRole.OWNER,
+            CommunityThreadMemberState.ACTIVE,
             new ThreadLastMessageInfo("최근 메시지", "하늘", NOW), 99L, NOW, NOW
         );
     }

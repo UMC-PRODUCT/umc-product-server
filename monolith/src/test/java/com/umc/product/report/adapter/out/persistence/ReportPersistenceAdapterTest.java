@@ -25,6 +25,8 @@ import com.umc.product.community.adapter.out.persistence.CommunityThreadReposito
 import com.umc.product.community.domain.CommunityThread;
 import com.umc.product.community.domain.enums.CommunityThreadCategory;
 import com.umc.product.report.domain.Report;
+import com.umc.product.report.domain.ReportTargetSnapshot;
+import com.umc.product.report.domain.enums.ReportDeliveryStatus;
 import com.umc.product.report.domain.enums.ReportReason;
 import com.umc.product.report.domain.enums.ReportTargetType;
 import com.umc.product.report.domain.exception.ReportDomainException;
@@ -59,7 +61,9 @@ class ReportPersistenceAdapterTest {
         // given
         Report legacy = Report.create(1L, ReportTargetType.COMMENT, 2L, "기존 사유");
         CommunityThread thread = threadRepository.save(createThread(130L));
-        Report threadMessage = Report.createThreadMessage(3L, thread.getId(), 5L, ReportReason.SPAM);
+        Report threadMessage = Report.createThreadMessage(
+            3L, thread.getId(), 5L, ReportReason.SPAM, ReportTargetSnapshot.of(7L, "신고 대상 메시지", "스레드 제목")
+        );
 
         // when
         sut.save(legacy);
@@ -77,6 +81,11 @@ class ReportPersistenceAdapterTest {
         assertThat(reloadedLegacy.getReason()).isEqualTo("기존 사유");
         assertThat(reloadedThreadMessage.getThreadId()).isEqualTo(thread.getId());
         assertThat(reloadedThreadMessage.getReasonCode()).isEqualTo(ReportReason.SPAM);
+        assertThat(reloadedThreadMessage.getDeliveryStatus()).isEqualTo(ReportDeliveryStatus.PENDING);
+        assertThat(reloadedThreadMessage.getTargetSnapshot().getAuthorId()).isEqualTo(7L);
+        assertThat(reloadedThreadMessage.getTargetSnapshot().getContent()).isEqualTo("신고 대상 메시지");
+        assertThat(reloadedThreadMessage.getTargetSnapshot().getContext()).isEqualTo("스레드 제목");
+        assertThat(reloadedLegacy.getTargetSnapshot()).isNull();
     }
 
     @Test
@@ -146,7 +155,7 @@ class ReportPersistenceAdapterTest {
         }
         try {
             transactionTemplate.executeWithoutResult(status -> sut.save(
-                Report.createThreadMessage(10L, threadId, 30L, ReportReason.ABUSE)
+                Report.createThreadMessage(10L, threadId, 30L, ReportReason.ABUSE, null)
             ));
             return SaveResult.SAVED;
         } catch (ReportDomainException exception) {

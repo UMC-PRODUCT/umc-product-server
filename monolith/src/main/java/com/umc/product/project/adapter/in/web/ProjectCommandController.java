@@ -116,7 +116,12 @@ public class ProjectCommandController {
     @Operation(
         operationId = "PROJECT-107",
         summary = "프로젝트 제출",
-        description = "DRAFT 상태의 프로젝트를 제출하여 PENDING_REVIEW로 전이합니다. 작성자(creator)만 호출 가능."
+        description = """
+            작성자(creator)가 DRAFT 프로젝트를 제출합니다. PM 제출은 PENDING_REVIEW(승인대기)로 전이합니다.
+            해당 프로젝트의 관리 권한이 있는 최고관리자·해당 기수 총괄단·해당 지부장이 제출하면
+            TO와 지원 폼을 검증한 뒤 IN_PROGRESS(승인완료)로 전이하고 지원 폼도 함께 공개합니다.
+            자동 공개 검증이 실패하면 초안 상태를 유지합니다. 응답의 status는 실제 처리 상태입니다.
+            """
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
@@ -125,12 +130,14 @@ public class ProjectCommandController {
         message = "프로젝트를 제출할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public ProjectStatusResponse submit(
+        @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long projectId
     ) {
-        submitProjectUseCase.submit(SubmitProjectCommand.builder()
+        ProjectStatus status = submitProjectUseCase.submit(SubmitProjectCommand.builder()
             .projectId(projectId)
+            .requesterMemberId(memberPrincipal.getMemberId())
             .build());
-        return ProjectStatusResponse.of(projectId, ProjectStatus.PENDING_REVIEW);
+        return ProjectStatusResponse.of(projectId, status);
     }
 
     @PostMapping("/{projectId}/transfer-ownership")
@@ -209,15 +216,17 @@ public class ProjectCommandController {
         summary = "파트별 정원 일괄 갱신",
         description = """
             본문의 파트 정원으로 전체 교체하며, 생략한 기존 파트는 삭제합니다. quota는 1 이상이어야 합니다.
-            최고관리자·해당 기수 총괄단·담당 지부장만 수정할 수 있습니다.
+            최고관리자·해당 기수 총괄단·담당 지부장만 수정할 수 있습니다. 운영진 본인이 작성한 초안에도 TO를 설정할 수 있습니다.
             파트별 1차 매칭 시작부터 3차 PM 판정 마감까지는 변경할 수 없으며, 배정 인원 미만·지부 인원 초과도 차단합니다.
+            Web PE와 Mobile PE는 동시에 모집할 수 없습니다.
+            초안은 최종 등록 시 공개 프로젝트를 포함한 지부 인원 상한을 검증합니다.
             변경한 셀만 저장하려면 PATCH /api/v1/projects/admin/part-quotas를 사용하세요.
             """
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
-        permission = PermissionType.MANAGE,
+        permission = PermissionType.EDIT,
         message = "프로젝트 파트 정원을 수정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public void updatePartQuotas(

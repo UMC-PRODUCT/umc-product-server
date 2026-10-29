@@ -16,6 +16,7 @@ import com.umc.product.community.adapter.in.web.dto.request.InviteCommunityThrea
 import com.umc.product.community.adapter.in.web.dto.response.CommunityThreadInvitationResponse;
 import com.umc.product.community.adapter.in.web.dto.response.CommunityThreadMemberMutationResponse;
 import com.umc.product.community.adapter.in.web.validation.PositiveDecimalId;
+import com.umc.product.community.application.port.in.command.thread.AcknowledgeCommunityThreadKickUseCase;
 import com.umc.product.community.application.port.in.command.thread.ChangeCommunityThreadMemberRoleUseCase;
 import com.umc.product.community.application.port.in.command.thread.InviteCommunityThreadMembersUseCase;
 import com.umc.product.community.application.port.in.command.thread.KickCommunityThreadMemberUseCase;
@@ -46,6 +47,7 @@ public class CommunityThreadMembershipController {
     private final KickCommunityThreadMemberUseCase kickMemberUseCase;
     private final LeaveCommunityThreadUseCase leaveThreadUseCase;
     private final ChangeCommunityThreadMemberRoleUseCase changeMemberRoleUseCase;
+    private final AcknowledgeCommunityThreadKickUseCase acknowledgeKickUseCase;
 
     @PostMapping("/threads/{threadId}/invite")
     @Operation(operationId = "COMMUNITY-THREAD-008", summary = "Community thread member 초대")
@@ -84,6 +86,17 @@ public class CommunityThreadMembershipController {
                 principal.getMemberId(),
                 CommunityWebNumbers.id(memberId)
             )
+        ));
+    }
+
+    @PostMapping("/threads/{threadId}/kick/acknowledge")
+    @Operation(operationId = "COMMUNITY-THREAD-012", summary = "Community thread 강퇴 확인")
+    public CommunityThreadMemberMutationResponse acknowledgeKick(
+        @PathVariable @PositiveDecimalId String threadId,
+        @CurrentMember MemberPrincipal principal
+    ) {
+        return CommunityThreadMemberMutationResponse.from(acknowledgeKickUseCase.acknowledgeKick(
+            new ThreadActorCommand(CommunityWebNumbers.id(threadId), principal.getMemberId())
         ));
     }
 

@@ -145,6 +145,7 @@ public class ProjectQueryService implements
         SearchProjectQuery base = SearchProjectQuery.builder()
             .gisuId(query.gisuId())
             .keyword(query.keyword())
+            .requestedChapterId(query.chapterId())
             .statuses(new ArrayList<>(requested))
             .pageable(query.pageable())
             .managedStatusOrder(true)

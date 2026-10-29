@@ -38,6 +38,7 @@ import com.umc.product.community.domain.CommunityThreadMember;
 import com.umc.product.community.domain.CommunityThreadProperties;
 import com.umc.product.community.domain.enums.CommunityThreadCategory;
 import com.umc.product.community.domain.enums.CommunityThreadMemberRole;
+import com.umc.product.community.domain.enums.CommunityThreadMemberState;
 import com.umc.product.community.domain.event.CommunityThreadInvitedEvent;
 import com.umc.product.community.domain.event.CommunityThreadMemberKickedEvent;
 import com.umc.product.community.domain.event.CommunityThreadMemberLeftEvent;
@@ -282,6 +283,7 @@ class CommunityThreadLifecycleRealtimeRelayTest {
             false,
             true,
             CommunityThreadMemberRole.MEMBER,
+            CommunityThreadMemberState.ACTIVE,
             null,
             10L,
             NOW,
