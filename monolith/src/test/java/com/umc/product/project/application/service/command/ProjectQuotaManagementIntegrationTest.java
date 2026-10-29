@@ -620,6 +620,21 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         assertThat(quota(scenario.projectId(), "MOBILE_PRODUCT_ENGINEER")).isZero();
     }
 
+    @Test
+    void 수강_파트가_없는_기수_소속자는_파트별_모집_인원에서_제외한다() throws Exception {
+        // given — 수강 없이 기수에 소속된 운영진은 part가 null이다.
+        Long member = projects.회원(scenario, "미수강 운영진", ChallengerPart.PLAN);
+        jdbc.update("UPDATE challenger SET part=NULL WHERE member_id=? AND gisu_id=?", member, scenario.gisuId());
+
+        // when
+        JsonNode info = view(null);
+
+        // then
+        assertThat(part(info.path("summary"), "PLAN").path("availableCount").asLong()).isEqualTo(3);
+        assertThat(part(info.path("summary"), "DESIGN").path("availableCount").asLong()).isEqualTo(2);
+        assertThat(info.path("totals").path("availableCount").asLong()).isEqualTo(8);
+    }
+
     private void schedule(MatchingType type, long firstStart, long thirdDeadline) {
         fixture.차수(scenario, type, MatchingPhase.FIRST, NOW.plusSeconds(firstStart),
             NOW.plusSeconds(firstStart + 600), NOW.plusSeconds(firstStart + 1200));
