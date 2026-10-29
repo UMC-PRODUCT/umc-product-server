@@ -25,6 +25,7 @@ import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageInfo;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageStatus;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageType;
+import com.umc.product.member.application.port.in.query.GetBlockedMemberIdsUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
@@ -45,6 +46,9 @@ class CommunityThreadMessageInfoAssemblerTest {
     @Mock
     GetFileUseCase getFileUseCase;
 
+    @Mock
+    GetBlockedMemberIdsUseCase getBlockedMemberIdsUseCase;
+
     @Test
     @DisplayName(
         "한 페이지의 sender·mention·reply 이름은 단 한 번의 Member batch 조회로 매핑되고 "
@@ -52,7 +56,7 @@ class CommunityThreadMessageInfoAssemblerTest {
     )
     void assembleBatchNamesOnceWithoutRawRoomId() {
         CommunityThreadMessageInfoAssembler sut =
-            new CommunityThreadMessageInfoAssembler(getMemberUseCase, getFileUseCase);
+            new CommunityThreadMessageInfoAssembler(getMemberUseCase, getFileUseCase, getBlockedMemberIdsUseCase);
         ChatMessageInfo first = chatMessage(
             900L,
             10L,
@@ -96,7 +100,7 @@ class CommunityThreadMessageInfoAssemblerTest {
     @DisplayName("IMAGE와 SYSTEM도 Community type으로 변환하고 서버 status는 항상 SENT로 고정한다")
     void assembleMapsImageAndSystemToSent() {
         CommunityThreadMessageInfoAssembler sut =
-            new CommunityThreadMessageInfoAssembler(getMemberUseCase, getFileUseCase);
+            new CommunityThreadMessageInfoAssembler(getMemberUseCase, getFileUseCase, getBlockedMemberIdsUseCase);
         ChatMessageInfo image = new ChatMessageInfo(
             900L,
             ROOM_ID,
@@ -153,7 +157,7 @@ class CommunityThreadMessageInfoAssemblerTest {
     @DisplayName("첨부 파일은 한 번의 batch 조회로 URL을 채우고, storage에서 누락된 파일은 건너뛰되 원본 순서를 유지한다")
     void assembleResolvesFileUrlsInOneBatchAndKeepsOrderWhenSomeAreMissing() {
         CommunityThreadMessageInfoAssembler sut =
-            new CommunityThreadMessageInfoAssembler(getMemberUseCase, getFileUseCase);
+            new CommunityThreadMessageInfoAssembler(getMemberUseCase, getFileUseCase, getBlockedMemberIdsUseCase);
         ChatMessageInfo first = imageMessage(900L, List.of("file-a", "file-b", "file-c"));
         ChatMessageInfo second = imageMessage(901L, List.of("file-d"));
         given(getMemberUseCase.findAllByIds(Set.of(10L))).willReturn(Map.of(10L, mockMember(10L, "보낸이")));

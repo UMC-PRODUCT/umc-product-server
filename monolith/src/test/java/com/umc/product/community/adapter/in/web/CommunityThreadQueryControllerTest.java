@@ -223,7 +223,7 @@ class CommunityThreadQueryControllerTest {
             List.of(new CommunityThreadMessageMentionInfo(8L, "구름")),
             new CommunityThreadMessageReplyInfo(499L, "구름", "이전 메시지"),
             List.of(new CommunityThreadReactionInfo("👍", 2L, true)), null,
-            NOW, null, null
+            NOW, null, null, false
         );
         given(getMessageHistoryUseCase.getHistory(any())).willReturn(
             new CommunityThreadMessagePageInfo(List.of(message), true, 499L)

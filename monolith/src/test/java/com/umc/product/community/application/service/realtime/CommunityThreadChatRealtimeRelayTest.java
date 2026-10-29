@@ -214,7 +214,8 @@ class CommunityThreadChatRealtimeRelayTest {
             CLIENT_MESSAGE_ID,
             NOW,
             null,
-            null
+            null,
+            false
         );
     }
 }

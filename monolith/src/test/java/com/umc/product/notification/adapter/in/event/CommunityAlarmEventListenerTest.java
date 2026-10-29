@@ -327,7 +327,8 @@ class CommunityAlarmEventListenerTest {
             UUID.fromString("00000000-0000-0000-0000-000000000001"),
             NOW,
             null,
-            null
+            null,
+            false
         );
     }
 }

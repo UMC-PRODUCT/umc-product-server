@@ -13,6 +13,8 @@ import com.umc.product.community.application.port.in.query.thread.message.dto.Co
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageType;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadReactionInfo;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public record CommunityThreadMessageResponse(
     String messageId,
     String threadId,
@@ -27,7 +29,10 @@ public record CommunityThreadMessageResponse(
     List<Reaction> reactions,
     Instant createdAt,
     Instant editedAt,
-    Instant deletedAt
+    Instant deletedAt,
+    @Schema(description = "발신자가 조회자(또는 수신자) 기준으로 차단된 회원인지 여부. "
+        + "true면 클라이언트가 자체적으로 숨김/블러 등을 처리해야 한다. 서버는 메시지 내용을 지우지 않는다.")
+    boolean isSenderBlocked
 ) {
 
     public static CommunityThreadMessageResponse from(CommunityThreadMessageInfo info) {
@@ -45,7 +50,8 @@ public record CommunityThreadMessageResponse(
             info.reactions().stream().map(Reaction::from).toList(),
             info.createdAt(),
             info.editedAt(),
-            info.deletedAt()
+            info.deletedAt(),
+            info.isSenderBlocked()
         );
     }
 
