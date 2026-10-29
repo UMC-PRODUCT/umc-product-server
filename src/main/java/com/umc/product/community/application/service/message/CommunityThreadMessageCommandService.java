@@ -310,6 +310,8 @@ public class CommunityThreadMessageCommandService implements
             case TEXT -> MessageContentType.TEXT;
             case IMAGE -> MessageContentType.IMAGE;
             case SYSTEM -> MessageContentType.SYSTEM;
+            case MEMBER_LEFT -> MessageContentType.MEMBER_LEFT;
+            case MEMBER_KICKED -> MessageContentType.MEMBER_KICKED;
         };
     }
 }

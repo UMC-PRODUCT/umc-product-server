@@ -16,7 +16,6 @@ import com.umc.product.chat.application.port.out.LoadChatMessageReactionPort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
 import com.umc.product.chat.application.port.out.SaveChatMessageReactionPort;
 import com.umc.product.chat.domain.ChatMessage;
-import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.chat.domain.event.ChatMessageReactionChangedEvent;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
@@ -52,7 +51,7 @@ public class ChatReactionCommandService implements ManageChatMessageReactionUseC
         loadChatRoomPort.getByIdForUpdate(command.roomId());
         chatRoomAccessPolicy.verifyMember(command.roomId(), command.memberId());
         ChatMessage message = loadChatMessagePort.getByIdAndRoomId(command.messageId(), command.roomId());
-        if (message.isDeleted() || message.getContentType() == MessageContentType.SYSTEM) {
+        if (message.isDeleted() || message.getContentType().isServerGenerated()) {
             throw new ChatDomainException(ChatErrorCode.CHAT_MESSAGE_REACTION_NOT_ALLOWED);
         }
 

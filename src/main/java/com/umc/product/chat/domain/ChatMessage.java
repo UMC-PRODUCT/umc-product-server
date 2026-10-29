@@ -183,7 +183,7 @@ public class ChatMessage extends BaseEntity {
         ChatErrorCode violation = switch (contentType) {
             case TEXT -> hasContent ? null : ChatErrorCode.CHAT_MESSAGE_EMPTY;
             case IMAGE, FILE -> hasFiles ? null : ChatErrorCode.CHAT_MESSAGE_ATTACHMENT_REQUIRED;
-            case SYSTEM -> ChatErrorCode.CHAT_MESSAGE_INVALID_CONTENT_TYPE;
+            case SYSTEM, MEMBER_LEFT, MEMBER_KICKED -> ChatErrorCode.CHAT_MESSAGE_INVALID_CONTENT_TYPE;
         };
 
         if (violation != null) {
@@ -200,6 +200,25 @@ public class ChatMessage extends BaseEntity {
             .senderMemberId(null)
             .contentType(MessageContentType.SYSTEM)
             .content(content)
+            .fileMetadataIds(List.of())
+            .replyToMessageId(null)
+            .build();
+    }
+
+    /**
+     * 멤버 퇴장(나가기/내보내기) 기록 메시지를 생성한다.
+     * <p>
+     * 표시 문구는 조회 측에서 sender 이름으로 구성하므로 content는 비워 둔다. sender는 퇴장한 멤버다.
+     */
+    public static ChatMessage createMemberExit(Long roomId, Long memberId, MessageContentType contentType) {
+        if (contentType == null || !contentType.isMemberExit()) {
+            throw new ChatDomainException(ChatErrorCode.CHAT_MESSAGE_INVALID_CONTENT_TYPE);
+        }
+        return ChatMessage.builder()
+            .roomId(roomId)
+            .senderMemberId(memberId)
+            .contentType(contentType)
+            .content(null)
             .fileMetadataIds(List.of())
             .replyToMessageId(null)
             .build();
@@ -259,7 +278,7 @@ public class ChatMessage extends BaseEntity {
                 ? ChatErrorCode.CHAT_MESSAGE_EMPTY
                 : null;
             case IMAGE, FILE -> null;
-            case SYSTEM -> ChatErrorCode.CHAT_MESSAGE_MUTATION_FORBIDDEN;
+            case SYSTEM, MEMBER_LEFT, MEMBER_KICKED -> ChatErrorCode.CHAT_MESSAGE_MUTATION_FORBIDDEN;
         };
         if (violation != null || deletedAt != null) {
             throw new ChatDomainException(

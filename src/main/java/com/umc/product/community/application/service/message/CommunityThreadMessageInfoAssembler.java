@@ -42,6 +42,8 @@ import lombok.RequiredArgsConstructor;
 public class CommunityThreadMessageInfoAssembler {
 
     private static final String UNKNOWN_MEMBER_NAME = "알 수 없음";
+    private static final String MEMBER_LEFT_SUFFIX = "님이 나갔습니다.";
+    private static final String MEMBER_KICKED_SUFFIX = "님이 내보내졌습니다.";
 
     private final GetMemberUseCase getMemberUseCase;
     private final GetFileUseCase getFileUseCase;
@@ -126,12 +128,13 @@ public class CommunityThreadMessageInfoAssembler {
             .map(this::toReactionInfo)
             .toList();
 
+        String senderName = memberName(members, message.senderMemberId());
         return new CommunityThreadMessageInfo(
             message.messageId(),
             threadId,
             message.senderMemberId(),
-            memberName(members, message.senderMemberId()),
-            message.content(),
+            senderName,
+            displayContent(message, senderName),
             toCommunityType(message.contentType()),
             CommunityThreadMessageStatus.SENT,
             toFileInfos(message.fileMetadataIds(), files),
@@ -195,6 +198,22 @@ public class CommunityThreadMessageInfoAssembler {
             case TEXT -> CommunityThreadMessageType.TEXT;
             case IMAGE, FILE -> CommunityThreadMessageType.IMAGE;
             case SYSTEM -> CommunityThreadMessageType.SYSTEM;
+            case MEMBER_LEFT -> CommunityThreadMessageType.MEMBER_LEFT;
+            case MEMBER_KICKED -> CommunityThreadMessageType.MEMBER_KICKED;
+        };
+    }
+
+    /**
+     * 퇴장 기록 메시지는 저장 시 content가 없으므로 sender 이름으로 표시 문구를 구성한다.
+     */
+    private String displayContent(ChatMessageInfo message, String senderName) {
+        if (message.contentType() == null) {
+            return message.content();
+        }
+        return switch (message.contentType()) {
+            case MEMBER_LEFT -> senderName + MEMBER_LEFT_SUFFIX;
+            case MEMBER_KICKED -> senderName + MEMBER_KICKED_SUFFIX;
+            default -> message.content();
         };
     }
 
