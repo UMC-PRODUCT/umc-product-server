@@ -30,6 +30,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.community.application.port.in.command.thread.AcknowledgeCommunityThreadKickUseCase;
 import com.umc.product.community.application.port.in.command.thread.ChangeCommunityThreadMemberRoleUseCase;
 import com.umc.product.community.application.port.in.command.thread.InviteCommunityThreadMembersUseCase;
 import com.umc.product.community.application.port.in.command.thread.KickCommunityThreadMemberUseCase;
@@ -76,6 +77,9 @@ class CommunityThreadMembershipControllerTest {
 
     @MockitoBean
     private ChangeCommunityThreadMemberRoleUseCase changeMemberRoleUseCase;
+
+    @MockitoBean
+    private AcknowledgeCommunityThreadKickUseCase acknowledgeKickUseCase;
 
     @BeforeEach
     void setUpCurrentMember() {
@@ -137,6 +141,24 @@ class CommunityThreadMembershipControllerTest {
             .andExpect(jsonPath("$.result.memberCount").value("3"));
 
         then(kickMemberUseCase).should().kick(any());
+    }
+
+    @Test
+    @DisplayName("강퇴 확인은 CurrentMember 자신을 KICKED_ACKNOWLEDGED 응답으로 반환한다")
+    void acknowledgeKick_mapsCurrentMember() throws Exception {
+        given(acknowledgeKickUseCase.acknowledgeKick(any())).willReturn(
+            new CommunityThreadMemberLifecycleInfo(
+                42L, REQUESTER_ID, CommunityThreadMemberRole.MEMBER,
+                CommunityThreadMemberState.KICKED_ACKNOWLEDGED, NOW, NOW, 3L
+            )
+        );
+
+        mockMvc.perform(post("/api/v1/community/threads/42/kick/acknowledge"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.memberId").value("99"))
+            .andExpect(jsonPath("$.result.state").value("KICKED_ACKNOWLEDGED"));
+
+        then(acknowledgeKickUseCase).should().acknowledgeKick(any());
     }
 
     @Test

@@ -64,7 +64,8 @@ public enum CommunityErrorCode implements BaseCode {
     THREAD_OWNER_CANNOT_BE_KICKED(HttpStatus.CONFLICT, "COMMUNITY-0042", "커뮤니티 스레드 소유자는 강퇴할 수 없어요."),
     THREAD_INVALID_ROLE_CHANGE(HttpStatus.BAD_REQUEST, "COMMUNITY-0043", "커뮤니티 스레드 역할 변경 요청이 올바르지 않아요."),
     THREAD_INVITEE_NOT_ELIGIBLE(HttpStatus.BAD_REQUEST, "COMMUNITY-0044", "존재하는 활성 회원만 초대할 수 있어요."),
-    THREAD_INVALID_COMMAND(HttpStatus.BAD_REQUEST, "COMMUNITY-0045", "커뮤니티 스레드 요청이 올바르지 않아요.");
+    THREAD_INVALID_COMMAND(HttpStatus.BAD_REQUEST, "COMMUNITY-0045", "커뮤니티 스레드 요청이 올바르지 않아요."),
+    THREAD_KICK_NOT_ACKNOWLEDGEABLE(HttpStatus.CONFLICT, "COMMUNITY-0047", "확인할 강퇴 내역이 없어요.");
 
     private final HttpStatus httpStatus;
     private final String code;

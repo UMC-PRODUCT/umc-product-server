@@ -172,6 +172,34 @@ class CommunityThreadInviteManagerTest {
     }
 
     @Test
+    @DisplayName("강퇴를 확인한 멤버도 재초대를 거절한다")
+    void invite_kickAcknowledgedMemberIsRejected() {
+        // given
+        CommunityThreadMember kickAcknowledgedMember = CommunityThreadLifecycleTestFixtures.member(
+            20L,
+            CommunityThreadMemberRole.MEMBER,
+            CommunityThreadMemberState.KICKED_ACKNOWLEDGED
+        );
+        given(loadMemberPort.listByThreadIdAndMemberIds(
+            THREAD_ID,
+            Set.of(20L)
+        )).willReturn(List.of(kickAcknowledgedMember));
+
+        // when & then
+        assertThatThrownBy(() -> sut.invite(
+            CommunityThreadLifecycleTestFixtures.thread(),
+            List.of(20L),
+            NOW
+        ))
+            .isInstanceOf(CommunityDomainException.class)
+            .extracting(error -> ((CommunityDomainException) error).getBaseCode())
+            .isEqualTo(CommunityErrorCode.THREAD_MEMBER_KICKED);
+        then(searchInvitationUseCase).shouldHaveNoInteractions();
+        then(joinChatRoomUseCase).shouldHaveNoInteractions();
+        then(saveMemberPort).shouldHaveNoInteractions();
+    }
+
+    @Test
     @DisplayName("존재하지 않거나 비활성인 회원이 포함되면 전체 초대를 거절한다")
     void invite_rejectsWhenAnyMemberIsNotInvitable() {
         // given

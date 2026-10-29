@@ -192,15 +192,17 @@ class CommunityThreadReadQueryRepositoryTest {
     }
 
     @Test
-    @DisplayName("browse는 강퇴된 스레드를 목록과 total에서 제외하고 탈퇴한 스레드는 남긴다")
-    void browseThreads_강퇴된_스레드를_제외한다() {
+    @DisplayName("browse는 강퇴를 확인한 스레드만 제외하고 미확인 강퇴/탈퇴 스레드는 남긴다")
+    void browseThreads_강퇴를_확인한_스레드만_제외한다() {
         // given
         CommunityThread open = persistThread(2_401L, "공개 스레드", CommunityThreadCategory.FREE);
-        CommunityThread kicked = persistThread(2_402L, "강퇴된 스레드", CommunityThreadCategory.FREE);
+        CommunityThread kickedPending = persistThread(2_402L, "강퇴 미확인 스레드", CommunityThreadCategory.FREE);
         CommunityThread left = persistThread(2_403L, "탈퇴한 스레드", CommunityThreadCategory.FREE);
+        CommunityThread kickedAcknowledged = persistThread(2_404L, "강퇴 확인된 스레드", CommunityThreadCategory.FREE);
         persistMembership(open, 999L);
-        persistKickedMembership(kicked);
+        persistKickedMembership(kickedPending);
         persistLeftMembership(left);
+        persistAcknowledgedKickedMembership(kickedAcknowledged);
         flushAndClear();
 
         // when
@@ -210,18 +212,18 @@ class CommunityThreadReadQueryRepositoryTest {
 
         // then
         assertThat(result.unpinned()).extracting(row -> row.threadId())
-            .containsExactlyInAnyOrder(open.getId(), left.getId());
-        assertThat(result.unpinnedTotal()).isEqualTo(2L);
+            .containsExactlyInAnyOrder(open.getId(), kickedPending.getId(), left.getId());
+        assertThat(result.unpinnedTotal()).isEqualTo(3L);
     }
 
     @Test
-    @DisplayName("browse 검색도 강퇴된 스레드를 제외한다")
-    void browseThreads_검색에서도_강퇴된_스레드를_제외한다() {
+    @DisplayName("browse 검색도 강퇴를 확인한 스레드를 제외한다")
+    void browseThreads_검색에서도_강퇴를_확인한_스레드를_제외한다() {
         // given
         CommunityThread open = persistThread(2_501L, "스터디 모집", CommunityThreadCategory.PROJECT);
-        CommunityThread kicked = persistThread(2_502L, "스터디 마감", CommunityThreadCategory.PROJECT);
+        CommunityThread kickedAcknowledged = persistThread(2_502L, "스터디 마감", CommunityThreadCategory.PROJECT);
         persistMembership(open, 999L);
-        persistKickedMembership(kicked);
+        persistAcknowledgedKickedMembership(kickedAcknowledged);
         flushAndClear();
 
         // when
@@ -383,6 +385,13 @@ class CommunityThreadReadQueryRepositoryTest {
     private CommunityThreadMember persistKickedMembership(CommunityThread thread) {
         CommunityThreadMember member = CommunityThreadMember.createMember(thread.getId(), REQUESTER_ID, NOW);
         member.kick(NOW.plusSeconds(1));
+        return memberRepository.save(member);
+    }
+
+    private CommunityThreadMember persistAcknowledgedKickedMembership(CommunityThread thread) {
+        CommunityThreadMember member = CommunityThreadMember.createMember(thread.getId(), REQUESTER_ID, NOW);
+        member.kick(NOW.plusSeconds(1));
+        member.acknowledgeKick();
         return memberRepository.save(member);
     }
 

@@ -285,7 +285,10 @@ public class CommunityThreadQueryService implements
     }
 
     /**
-     * 참여 여부와 무관하게 조회할 수 있는 스레드를 반환한다. 강퇴된 요청자만 차단한다.
+     * 참여 여부와 무관하게 조회할 수 있는 스레드를 반환한다.
+     *
+     * <p>강퇴 확인(acknowledge) 전({@code KICKED})에는 프론트가 강퇴 안내를 보여줄 수 있도록 조회를
+     * 허용한다. 확인 후({@code KICKED_ACKNOWLEDGED})에만 접근을 차단한다.</p>
      */
     private CommunityThreadQueryRow getPublicReadableThread(Long threadId, Long requesterMemberId) {
         CommunityThreadQueryRow row = threadQueryPort.findThread(threadId, requesterMemberId)
@@ -293,7 +296,7 @@ public class CommunityThreadQueryService implements
         if (row.deletedAt() != null) {
             throw new CommunityDomainException(CommunityErrorCode.THREAD_DELETED);
         }
-        if (row.requesterState() == CommunityThreadMemberState.KICKED) {
+        if (row.requesterState() == CommunityThreadMemberState.KICKED_ACKNOWLEDGED) {
             throw new CommunityDomainException(CommunityErrorCode.THREAD_ACCESS_DENIED);
         }
         return row;
@@ -406,7 +409,7 @@ public class CommunityThreadQueryService implements
         return new ThreadSummaryInfo(
             row.threadId(), row.title(), row.description(), row.category(), row.icon(),
             row.memberCount(), row.unreadCount(), threadProperties.maxMembers(),
-            row.pinned(), row.muted(), joined, row.requesterRole(), lastMessage,
+            row.pinned(), row.muted(), joined, row.requesterRole(), row.requesterState(), lastMessage,
             row.creatorMemberId(), row.createdAt(), row.updatedAt()
         );
     }

@@ -108,8 +108,8 @@ class CommunityThreadRealtimeDelivery {
         return new ThreadSummaryInfo(
             detail.threadId(), detail.title(), detail.description(), detail.category(), detail.icon(),
             detail.memberCount(), detail.unreadCount(), detail.maxMembers(), detail.isPinned(),
-            detail.isMuted(), detail.isJoined(), detail.myRole(), detail.lastMessage(), detail.createdBy(),
-            detail.createdAt(), detail.updatedAt()
+            detail.isMuted(), detail.isJoined(), detail.myRole(), detail.membershipState(),
+            detail.lastMessage(), detail.createdBy(), detail.createdAt(), detail.updatedAt()
         );
     }
 
