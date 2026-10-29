@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.member.application.port.in.command.BlockMemberUseCase;
+import com.umc.product.member.application.port.in.command.DeleteMemberBlocksUseCase;
 import com.umc.product.member.application.port.in.command.UnblockMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.MemberBlockCommand;
 import com.umc.product.member.application.port.in.command.dto.MemberBlockInfo;
@@ -20,7 +21,10 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class MemberBlockCommandService implements BlockMemberUseCase, UnblockMemberUseCase {
+public class MemberBlockCommandService implements
+    BlockMemberUseCase,
+    UnblockMemberUseCase,
+    DeleteMemberBlocksUseCase {
 
     private final GetMemberUseCase getMemberUseCase;
     private final LoadMemberBlockPort loadMemberBlockPort;
@@ -54,5 +58,10 @@ public class MemberBlockCommandService implements BlockMemberUseCase, UnblockMem
 
         deleteMemberBlockPort.delete(command.blockerMemberId(), command.blockedMemberId());
         return new MemberBlockInfo(command.blockerMemberId(), command.blockedMemberId(), false);
+    }
+
+    @Override
+    public void deleteAllInvolving(Long memberId) {
+        deleteMemberBlockPort.deleteAllInvolvingMember(memberId);
     }
 }

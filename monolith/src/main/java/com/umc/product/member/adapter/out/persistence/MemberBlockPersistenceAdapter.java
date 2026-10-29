@@ -66,6 +66,11 @@ public class MemberBlockPersistenceAdapter implements LoadMemberBlockPort, SaveM
         memberBlockJpaRepository.deleteByBlockerMemberIdAndBlockedMemberId(blockerMemberId, blockedMemberId);
     }
 
+    @Override
+    public void deleteAllInvolvingMember(Long memberId) {
+        memberBlockJpaRepository.deleteAllInvolvingMember(memberId);
+    }
+
     private boolean isBlockerBlockedDuplicate(DataIntegrityViolationException exception) {
         Throwable cause = exception;
         while (cause != null) {

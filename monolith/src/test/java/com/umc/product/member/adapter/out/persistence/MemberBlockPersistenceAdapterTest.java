@@ -66,4 +66,12 @@ class MemberBlockPersistenceAdapterTest {
 
         then(memberBlockJpaRepository).should().deleteByBlockerMemberIdAndBlockedMemberId(1L, 2L);
     }
+
+    @Test
+    @DisplayName("deleteAllInvolvingMember는 해당 memberId로 레포지토리 삭제를 호출한다")
+    void deleteAllInvolvingMember_레포지토리_삭제를_호출한다() {
+        sut.deleteAllInvolvingMember(1L);
+
+        then(memberBlockJpaRepository).should().deleteAllInvolvingMember(1L);
+    }
 }

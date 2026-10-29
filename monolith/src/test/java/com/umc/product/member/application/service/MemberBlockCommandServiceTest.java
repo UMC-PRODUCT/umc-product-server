@@ -128,4 +128,12 @@ class MemberBlockCommandServiceTest {
             );
         then(deleteMemberBlockPort).should(never()).delete(any(), any());
     }
+
+    @Test
+    @DisplayName("deleteAllInvolving은 해당 회원이 걸린 차단 행을 모두 지운다")
+    void deleteAllInvolving_회원이_걸린_차단_행을_모두_지운다() {
+        sut.deleteAllInvolving(BLOCKER_ID);
+
+        then(deleteMemberBlockPort).should().deleteAllInvolvingMember(BLOCKER_ID);
+    }
 }

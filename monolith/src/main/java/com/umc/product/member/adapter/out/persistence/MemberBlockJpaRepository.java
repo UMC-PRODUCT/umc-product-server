@@ -25,4 +25,8 @@ public interface MemberBlockJpaRepository extends JpaRepository<MemberBlock, Lon
         @Param("blockerMemberId") Long blockerMemberId,
         @Param("blockedMemberId") Long blockedMemberId
     );
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM MemberBlock b WHERE b.blockerMemberId = :memberId OR b.blockedMemberId = :memberId")
+    int deleteAllInvolvingMember(@Param("memberId") Long memberId);
 }
