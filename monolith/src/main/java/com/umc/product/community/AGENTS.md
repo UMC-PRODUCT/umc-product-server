@@ -71,6 +71,7 @@ GET        /api/v1/community/threads/{threadId}/members
 GET        /api/v1/community/threads/{threadId}/invitable
 POST       /api/v1/community/threads/{threadId}/invite
 DELETE     /api/v1/community/threads/{threadId}/members/{memberId}
+POST       /api/v1/community/threads/{threadId}/kick/acknowledge
 POST       /api/v1/community/threads/{threadId}/leave
 PATCH      /api/v1/community/threads/{threadId}/members/{memberId}/role
 GET        /api/v1/community/threads/{threadId}/messages

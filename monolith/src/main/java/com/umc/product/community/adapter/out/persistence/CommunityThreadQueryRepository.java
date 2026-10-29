@@ -127,7 +127,8 @@ public class CommunityThreadQueryRepository {
                 communityThreadMember.threadId.eq(threadId),
                 communityThreadMember.state.in(
                     CommunityThreadMemberState.ACTIVE,
-                    CommunityThreadMemberState.KICKED
+                    CommunityThreadMemberState.KICKED,
+                    CommunityThreadMemberState.KICKED_ACKNOWLEDGED
                 )
             )
             .orderBy(communityThreadMember.memberId.asc())
@@ -149,7 +150,10 @@ public class CommunityThreadQueryRepository {
             .join(requesterMembership).on(
                 requesterMembership.threadId.eq(communityThread.id),
                 requesterMembership.memberId.eq(condition.requesterMemberId()),
-                requesterMembership.state.eq(CommunityThreadMemberState.ACTIVE)
+                requesterMembership.state.in(
+                    CommunityThreadMemberState.ACTIVE,
+                    CommunityThreadMemberState.KICKED
+                )
             )
             .where(where)
             .orderBy(communityThread.lastActivityAt.desc(), communityThread.id.desc());
@@ -172,7 +176,10 @@ public class CommunityThreadQueryRepository {
             .leftJoin(requesterMembership).on(
                 requesterMembership.threadId.eq(communityThread.id),
                 requesterMembership.memberId.eq(condition.requesterMemberId()),
-                requesterMembership.state.eq(CommunityThreadMemberState.ACTIVE)
+                requesterMembership.state.in(
+                    CommunityThreadMemberState.ACTIVE,
+                    CommunityThreadMemberState.KICKED
+                )
             )
             .where(browseUnpinnedCondition(condition, requesterMembership))
             .orderBy(communityThread.lastActivityAt.desc(), communityThread.id.desc())
@@ -194,7 +201,10 @@ public class CommunityThreadQueryRepository {
             .leftJoin(requesterMembership).on(
                 requesterMembership.threadId.eq(communityThread.id),
                 requesterMembership.memberId.eq(condition.requesterMemberId()),
-                requesterMembership.state.eq(CommunityThreadMemberState.ACTIVE)
+                requesterMembership.state.in(
+                    CommunityThreadMemberState.ACTIVE,
+                    CommunityThreadMemberState.KICKED
+                )
             )
             .where(listCondition(condition, requesterMembership))
             .orderBy(
@@ -218,7 +228,10 @@ public class CommunityThreadQueryRepository {
             .leftJoin(requesterMembership).on(
                 requesterMembership.threadId.eq(communityThread.id),
                 requesterMembership.memberId.eq(condition.requesterMemberId()),
-                requesterMembership.state.eq(CommunityThreadMemberState.ACTIVE)
+                requesterMembership.state.in(
+                    CommunityThreadMemberState.ACTIVE,
+                    CommunityThreadMemberState.KICKED
+                )
             )
             .where(listCondition(condition, requesterMembership))
             .fetchOne();
@@ -233,7 +246,10 @@ public class CommunityThreadQueryRepository {
             .leftJoin(requesterMembership).on(
                 requesterMembership.threadId.eq(communityThread.id),
                 requesterMembership.memberId.eq(condition.requesterMemberId()),
-                requesterMembership.state.eq(CommunityThreadMemberState.ACTIVE)
+                requesterMembership.state.in(
+                    CommunityThreadMemberState.ACTIVE,
+                    CommunityThreadMemberState.KICKED
+                )
             )
             .where(browseUnpinnedCondition(condition, requesterMembership))
             .fetchOne();
@@ -248,7 +264,10 @@ public class CommunityThreadQueryRepository {
             .join(requesterMembership).on(
                 requesterMembership.threadId.eq(communityThread.id),
                 requesterMembership.memberId.eq(condition.requesterMemberId()),
-                requesterMembership.state.eq(CommunityThreadMemberState.ACTIVE)
+                requesterMembership.state.in(
+                    CommunityThreadMemberState.ACTIVE,
+                    CommunityThreadMemberState.KICKED
+                )
             )
             .where(
                 listCondition(condition, requesterMembership),
@@ -261,7 +280,7 @@ public class CommunityThreadQueryRepository {
     private BooleanBuilder baseCondition(CommunityThreadListCondition condition) {
         BooleanBuilder where = new BooleanBuilder()
             .and(communityThread.deletedAt.isNull())
-            .and(notKicked(condition.requesterMemberId()));
+            .and(notAcknowledgedKicked(condition.requesterMemberId()));
         if (condition.category() != null) {
             where.and(communityThread.category.eq(condition.category()));
         }
@@ -272,19 +291,20 @@ public class CommunityThreadQueryRepository {
     }
 
     /**
-     * 강퇴된 스레드를 목록에서 제외한다.
+     * 강퇴를 확인(acknowledge)한 스레드를 목록에서 제외한다.
      *
-     * <p>requester 멤버십 join은 ACTIVE만 매칭하므로 KICKED는 join 결과가 비어 "미참여 스레드"와
-     * 구분되지 않는다. 따라서 KICKED 행의 존재 여부를 별도 subquery로 확인한다.</p>
+     * <p>아직 확인하지 않은 {@code KICKED}는 비활성 상태로 노출해야 하므로 requester 멤버십 join
+     * 조건에 포함시켰다(join 메서드들 참고). 반면 {@code KICKED_ACKNOWLEDGED}는 join 결과와 무관하게
+     * 완전히 제외해야 해서 별도 subquery로 존재 여부를 확인한다.</p>
      */
-    private BooleanExpression notKicked(Long requesterMemberId) {
+    private BooleanExpression notAcknowledgedKicked(Long requesterMemberId) {
         QCommunityThreadMember kickedMembership = new QCommunityThreadMember("kickedMembership");
         return JPAExpressions.selectOne()
             .from(kickedMembership)
             .where(
                 kickedMembership.threadId.eq(communityThread.id),
                 kickedMembership.memberId.eq(requesterMemberId),
-                kickedMembership.state.eq(CommunityThreadMemberState.KICKED)
+                kickedMembership.state.eq(CommunityThreadMemberState.KICKED_ACKNOWLEDGED)
             )
             .notExists();
     }

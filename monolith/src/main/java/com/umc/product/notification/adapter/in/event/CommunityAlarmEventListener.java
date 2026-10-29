@@ -81,7 +81,10 @@ public class CommunityAlarmEventListener {
             .collect(Collectors.toSet());
 
         // 음소거한 멤버는 제외하되, 멘션당한 멤버는 음소거를 무시하고 그대로 포함한다.
-        Set<Long> finalTargetIds = infoByRecipient.keySet().stream()
+        // 차단한 발신자의 메시지는 멘션 여부와 무관하게 알림을 보내지 않는다.
+        Set<Long> finalTargetIds = infoByRecipient.entrySet().stream()
+            .filter(entry -> !entry.getValue().isSenderBlocked())
+            .map(Map.Entry::getKey)
             .filter(memberId -> !mutedMemberIds.contains(memberId) || mentionedMemberIds.contains(memberId))
             .collect(Collectors.toSet());
         if (finalTargetIds.isEmpty()) {

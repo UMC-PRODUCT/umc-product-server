@@ -105,6 +105,50 @@ class ChatMessageTest {
     }
 
     @Test
+    @DisplayName("퇴장 기록 메시지는 퇴장한 멤버를 sender로, content 없이 생성한다")
+    void createMemberExit() {
+        ChatMessage left = ChatMessage.createMemberExit(1L, 10L, MessageContentType.MEMBER_LEFT);
+        ChatMessage kicked = ChatMessage.createMemberExit(1L, 20L, MessageContentType.MEMBER_KICKED);
+
+        assertThat(left.getRoomId()).isEqualTo(1L);
+        assertThat(left.getSenderMemberId()).isEqualTo(10L);
+        assertThat(left.getContentType()).isEqualTo(MessageContentType.MEMBER_LEFT);
+        assertThat(left.getContent()).isNull();
+        assertThat(left.getFileMetadataIds()).isEmpty();
+        assertThat(kicked.getSenderMemberId()).isEqualTo(20L);
+        assertThat(kicked.getContentType()).isEqualTo(MessageContentType.MEMBER_KICKED);
+    }
+
+    @Test
+    @DisplayName("퇴장 기록 팩토리는 퇴장 타입 외에는 거부한다")
+    void createMemberExit_rejectsNonExitType() {
+        assertThatThrownBy(() -> ChatMessage.createMemberExit(1L, 10L, MessageContentType.TEXT))
+            .isInstanceOf(ChatDomainException.class)
+            .extracting(e -> ((ChatDomainException) e).getBaseCode())
+            .isEqualTo(ChatErrorCode.CHAT_MESSAGE_INVALID_CONTENT_TYPE);
+    }
+
+    @Test
+    @DisplayName("퇴장 기록 타입은 create 팩토리로 생성할 수 없다")
+    void create_memberExitRejected() {
+        assertThatThrownBy(() -> ChatMessage.create(1L, 10L, MessageContentType.MEMBER_LEFT, "x", List.of()))
+            .isInstanceOf(ChatDomainException.class)
+            .extracting(e -> ((ChatDomainException) e).getBaseCode())
+            .isEqualTo(ChatErrorCode.CHAT_MESSAGE_INVALID_CONTENT_TYPE);
+    }
+
+    @Test
+    @DisplayName("퇴장 기록 메시지는 수정할 수 없다")
+    void editContent_memberExitRejected() {
+        ChatMessage message = ChatMessage.createMemberExit(1L, 10L, MessageContentType.MEMBER_KICKED);
+
+        assertThatThrownBy(() -> message.editContent("수정"))
+            .isInstanceOf(ChatDomainException.class)
+            .extracting(e -> ((ChatDomainException) e).getBaseCode())
+            .isEqualTo(ChatErrorCode.CHAT_MESSAGE_MUTATION_FORBIDDEN);
+    }
+
+    @Test
     @DisplayName("SYSTEM 타입은 create 팩토리로 생성할 수 없다")
     void create_systemRejected() {
         assertThatThrownBy(() -> ChatMessage.create(1L, 10L, MessageContentType.SYSTEM, "x", List.of()))

@@ -80,7 +80,7 @@ class CommunityThreadMessageQueryServiceTest {
         CommunityThreadMessageInfo communityInfo = org.mockito.Mockito.mock(CommunityThreadMessageInfo.class);
         given(loadThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
         given(getChatMessagesUseCase.getMessages(any(GetChatMessagesQuery.class))).willReturn(chatPage);
-        given(infoAssembler.assemble(THREAD_ID, List.of(chatMessage))).willReturn(List.of(communityInfo));
+        given(infoAssembler.assemble(THREAD_ID, List.of(chatMessage), MEMBER_ID)).willReturn(List.of(communityInfo));
 
         CommunityThreadMessagePageInfo result = sut.getHistory(
             new CommunityThreadMessageHistoryQuery(THREAD_ID, MEMBER_ID, 1_000L, 30)
@@ -105,7 +105,7 @@ class CommunityThreadMessageQueryServiceTest {
         CommunityThreadMessageInfo communityInfo = org.mockito.Mockito.mock(CommunityThreadMessageInfo.class);
         given(loadThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread()));
         given(getChatMessageUseCase.getMessage(any(GetChatMessageQuery.class))).willReturn(chatMessage);
-        given(infoAssembler.assemble(THREAD_ID, chatMessage)).willReturn(communityInfo);
+        given(infoAssembler.assemble(THREAD_ID, chatMessage, MEMBER_ID)).willReturn(communityInfo);
 
         CommunityThreadMessageInfo result = sut.getMessage(
             new CommunityThreadMessageQuery(THREAD_ID, MEMBER_ID, 900L)
@@ -127,7 +127,7 @@ class CommunityThreadMessageQueryServiceTest {
         CommunityThreadMessageInfo communityInfo = org.mockito.Mockito.mock(CommunityThreadMessageInfo.class);
         given(loadThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread()));
         given(getChatMessagesUseCase.getMessages(any(GetChatMessagesQuery.class))).willReturn(chatPage);
-        given(infoAssembler.assemble(THREAD_ID, List.of(chatMessage))).willReturn(List.of(communityInfo));
+        given(infoAssembler.assemble(THREAD_ID, List.of(chatMessage), MEMBER_ID)).willReturn(List.of(communityInfo));
 
         CommunityThreadMessagePageInfo result = sut.recover(
             new CommunityThreadMessageRecoveryQuery(THREAD_ID, MEMBER_ID, null, 30)
@@ -196,7 +196,8 @@ class CommunityThreadMessageQueryServiceTest {
         given(loadThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, NON_MEMBER_ID))
             .willReturn(Optional.empty());
         given(getChatMessagesUseCase.getMessages(any(GetChatMessagesQuery.class))).willReturn(chatPage);
-        given(infoAssembler.assemble(THREAD_ID, List.of(chatMessage))).willReturn(List.of(communityInfo));
+        given(infoAssembler.assemble(THREAD_ID, List.of(chatMessage), NON_MEMBER_ID))
+            .willReturn(List.of(communityInfo));
 
         CommunityThreadMessagePageInfo result = sut.getHistory(
             new CommunityThreadMessageHistoryQuery(THREAD_ID, NON_MEMBER_ID, null, 30)
@@ -217,7 +218,7 @@ class CommunityThreadMessageQueryServiceTest {
         given(loadThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, NON_MEMBER_ID))
             .willReturn(Optional.empty());
         given(getChatMessageUseCase.getMessage(any(GetChatMessageQuery.class))).willReturn(chatMessage);
-        given(infoAssembler.assemble(THREAD_ID, chatMessage)).willReturn(communityInfo);
+        given(infoAssembler.assemble(THREAD_ID, chatMessage, NON_MEMBER_ID)).willReturn(communityInfo);
 
         CommunityThreadMessageInfo result = sut.getMessage(
             new CommunityThreadMessageQuery(THREAD_ID, NON_MEMBER_ID, 900L)
@@ -239,7 +240,7 @@ class CommunityThreadMessageQueryServiceTest {
         given(loadThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, MEMBER_ID))
             .willReturn(Optional.of(left));
         given(getChatMessagesUseCase.getMessages(any(GetChatMessagesQuery.class))).willReturn(chatPage);
-        given(infoAssembler.assemble(THREAD_ID, List.of(chatMessage))).willReturn(List.of(communityInfo));
+        given(infoAssembler.assemble(THREAD_ID, List.of(chatMessage), MEMBER_ID)).willReturn(List.of(communityInfo));
 
         CommunityThreadMessagePageInfo result = sut.getHistory(
             new CommunityThreadMessageHistoryQuery(THREAD_ID, MEMBER_ID, null, 30)

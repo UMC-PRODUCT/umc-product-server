@@ -10,9 +10,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
+import com.umc.product.community.application.port.out.thread.dto.CommunityThreadListCondition;
+import com.umc.product.community.application.port.out.thread.dto.CommunityThreadListRows;
+import com.umc.product.community.application.port.out.thread.dto.CommunityThreadQueryRow;
 import com.umc.product.community.domain.CommunityThread;
 import com.umc.product.community.domain.CommunityThreadMember;
 import com.umc.product.community.domain.enums.CommunityThreadCategory;
+import com.umc.product.community.domain.enums.CommunityThreadMemberState;
 import com.umc.product.support.PersistenceAdapterTest;
 
 @PersistenceAdapterTest
@@ -66,6 +70,61 @@ class CommunityThreadQueryRepositoryTest {
 
         // then
         assertThat(blockedMemberIds).containsExactly(10L, 30L);
+    }
+
+    @Test
+    @DisplayName("강퇴를 확인한 멤버도 초대 제외 대상이다")
+    void listInvitationBlockedMemberIds_kickAcknowledged도_포함한다() {
+        // given
+        CommunityThread thread = threadRepository.save(createThread(112L));
+        CommunityThreadMember kickAcknowledged = CommunityThreadMember.createMember(thread.getId(), 40L, NOW);
+        kickAcknowledged.kick(NOW.plusSeconds(1));
+        kickAcknowledged.acknowledgeKick();
+        memberRepository.save(kickAcknowledged);
+
+        // when
+        List<Long> blockedMemberIds = sut.listInvitationBlockedMemberIds(thread.getId());
+
+        // then
+        assertThat(blockedMemberIds).containsExactly(40L);
+    }
+
+    @Test
+    @DisplayName("강퇴를 확인하지 않은 스레드는 비활성 상태로 목록에 남고, 확인한 스레드는 목록에서 사라진다")
+    void browseThreads_강퇴_확인_여부에_따라_목록_노출이_달라진다() {
+        // given
+        CommunityThread pendingThread = threadRepository.save(createThread(113L));
+        CommunityThreadMember pendingKickMember = CommunityThreadMember.createMember(
+            pendingThread.getId(), 50L, NOW
+        );
+        pendingKickMember.kick(NOW.plusSeconds(1));
+        memberRepository.save(pendingKickMember);
+
+        CommunityThread acknowledgedThread = threadRepository.save(createThread(114L));
+        CommunityThreadMember acknowledgedKickMember = CommunityThreadMember.createMember(
+            acknowledgedThread.getId(), 50L, NOW
+        );
+        acknowledgedKickMember.kick(NOW.plusSeconds(1));
+        acknowledgedKickMember.acknowledgeKick();
+        memberRepository.save(acknowledgedKickMember);
+
+        // when
+        CommunityThreadListRows rows = sut.browseThreads(
+            new CommunityThreadListCondition(50L, null, false, null, 0, 20)
+        );
+
+        // then
+        List<Long> visibleThreadIds = rows.unpinned().stream()
+            .map(CommunityThreadQueryRow::threadId)
+            .toList();
+        assertThat(visibleThreadIds).contains(pendingThread.getId());
+        assertThat(visibleThreadIds).doesNotContain(acknowledgedThread.getId());
+
+        CommunityThreadQueryRow pendingRow = rows.unpinned().stream()
+            .filter(row -> row.threadId().equals(pendingThread.getId()))
+            .findFirst()
+            .orElseThrow();
+        assertThat(pendingRow.requesterState()).isEqualTo(CommunityThreadMemberState.KICKED);
     }
 
     private CommunityThread createThread(Long chatRoomId) {

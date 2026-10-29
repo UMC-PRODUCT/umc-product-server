@@ -19,7 +19,8 @@ public record CommunityThreadMessageInfo(
     UUID clientMessageId,
     Instant createdAt,
     Instant editedAt,
-    Instant deletedAt
+    Instant deletedAt,
+    boolean isSenderBlocked
 ) {
 
     public CommunityThreadMessageInfo {

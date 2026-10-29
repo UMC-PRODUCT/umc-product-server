@@ -90,6 +90,7 @@ public class ProjectQueryRepository {
     private BooleanBuilder buildCondition(SearchProjectQuery query) {
         BooleanBuilder common = new BooleanBuilder()
             .and(gisuIdEq(query.gisuId()))
+            .and(chapterIdEq(query.requestedChapterId()))
             .and(keywordContains(query.keyword()))
             .and(partAndQuotaFilter(query.parts(), query.partQuotaStatus()));
 

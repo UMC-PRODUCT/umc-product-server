@@ -88,7 +88,7 @@ public class CommunityThreadInviteManager {
             if (member.getState() == CommunityThreadMemberState.ACTIVE) {
                 throw new CommunityDomainException(CommunityErrorCode.THREAD_MEMBER_ALREADY_ACTIVE);
             }
-            if (member.getState() == CommunityThreadMemberState.KICKED) {
+            if (member.isKicked()) {
                 throw new CommunityDomainException(CommunityErrorCode.THREAD_MEMBER_KICKED);
             }
             existingMembers.put(member.getMemberId(), member);

@@ -170,7 +170,7 @@ class CommunityThreadMembershipCommandServiceTest {
         order.verify(loadMemberPort).findByThreadIdAndMemberId(THREAD_ID, OWNER_ID);
         order.verify(loadMemberPort).findByThreadIdAndMemberId(THREAD_ID, 20L);
         order.verify(loadMemberPort).listByThreadId(THREAD_ID);
-        order.verify(leaveChatRoomUseCase).leaveChatRoom(LeaveChatRoomCommand.of(100L, 20L));
+        order.verify(leaveChatRoomUseCase).leaveChatRoom(LeaveChatRoomCommand.kicked(100L, 20L));
         order.verify(saveMemberPort).save(target);
         order.verify(eventPublisher).publish(any(CommunityThreadMemberKickedEvent.class));
     }
@@ -200,6 +200,47 @@ class CommunityThreadMembershipCommandServiceTest {
             .extracting(error -> ((CommunityDomainException) error).getBaseCode())
             .isEqualTo(CommunityErrorCode.THREAD_OWNER_CANNOT_BE_KICKED);
         then(leaveChatRoomUseCase).shouldHaveNoInteractions();
+        then(saveMemberPort).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("강퇴 확인은 KICKED 멤버를 KICKED_ACKNOWLEDGED로 전환한다")
+    void acknowledgeKick_transitionsPendingKickToAcknowledged() {
+        // given
+        CommunityThreadMember kickedMember = CommunityThreadLifecycleTestFixtures.member(
+            20L,
+            CommunityThreadMemberRole.MEMBER,
+            CommunityThreadMemberState.KICKED
+        );
+        given(loadMemberPort.findByThreadIdAndMemberId(THREAD_ID, 20L)).willReturn(Optional.of(kickedMember));
+        given(saveMemberPort.save(kickedMember)).willReturn(kickedMember);
+        given(loadMemberPort.countActiveByThreadId(THREAD_ID)).willReturn(1L);
+
+        // when
+        CommunityThreadMemberLifecycleInfo result = sut.acknowledgeKick(
+            new ThreadActorCommand(THREAD_ID, 20L)
+        );
+
+        // then
+        assertThat(result.state()).isEqualTo(CommunityThreadMemberState.KICKED_ACKNOWLEDGED);
+        then(saveMemberPort).should().save(kickedMember);
+    }
+
+    @Test
+    @DisplayName("강퇴 상태가 아니면 강퇴 확인을 거절한다")
+    void acknowledgeKick_rejectsWhenNotKickPending() {
+        // given
+        CommunityThreadMember activeMember = CommunityThreadLifecycleTestFixtures.activeMember(
+            20L,
+            CommunityThreadMemberRole.MEMBER
+        );
+        given(loadMemberPort.findByThreadIdAndMemberId(THREAD_ID, 20L)).willReturn(Optional.of(activeMember));
+
+        // when & then
+        assertThatThrownBy(() -> sut.acknowledgeKick(new ThreadActorCommand(THREAD_ID, 20L)))
+            .isInstanceOf(CommunityDomainException.class)
+            .extracting(error -> ((CommunityDomainException) error).getBaseCode())
+            .isEqualTo(CommunityErrorCode.THREAD_KICK_NOT_ACKNOWLEDGEABLE);
         then(saveMemberPort).shouldHaveNoInteractions();
     }
 
@@ -248,6 +289,7 @@ class CommunityThreadMembershipCommandServiceTest {
         sut.leave(new ThreadActorCommand(THREAD_ID, 20L));
 
         // then
+        then(leaveChatRoomUseCase).should().leaveChatRoom(LeaveChatRoomCommand.left(100L, 20L));
         then(eventPublisher).should().publish(eventCaptor.capture());
         assertThat(eventCaptor.getValue().membershipJoinedAt()).isEqualTo(NOW);
         assertThat(eventCaptor.getValue().occurredAt()).isEqualTo(NOW);

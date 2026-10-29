@@ -43,6 +43,7 @@ import com.umc.product.community.application.port.in.query.thread.GetJoinedCommu
 import com.umc.product.community.application.port.in.query.thread.dto.ThreadDetailInfo;
 import com.umc.product.community.domain.enums.CommunityThreadCategory;
 import com.umc.product.community.domain.enums.CommunityThreadMemberRole;
+import com.umc.product.community.domain.enums.CommunityThreadMemberState;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
@@ -201,6 +202,7 @@ class CommunityThreadLifecycleControllerTest {
         return new ThreadDetailInfo(
             42L, "서버 스터디", "함께 공부해요", CommunityThreadCategory.STUDY, "📚",
             3L, 2L, 100, true, false, true, CommunityThreadMemberRole.OWNER,
+            CommunityThreadMemberState.ACTIVE,
             null, REQUESTER_ID, NOW, NOW, "/api/v1/community/threads/42", deletedAt
         );
     }

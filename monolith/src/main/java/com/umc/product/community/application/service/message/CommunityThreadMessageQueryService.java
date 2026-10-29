@@ -82,7 +82,7 @@ public class CommunityThreadMessageQueryService implements
         ChatMessageInfo message = getChatMessageUseCase.getMessage(
             new GetChatMessageQuery(thread.getChatRoomId(), query.requesterMemberId(), query.messageId())
         );
-        return infoAssembler.assemble(query.threadId(), message);
+        return infoAssembler.assemble(query.threadId(), message, query.requesterMemberId());
     }
 
     @Override
@@ -147,7 +147,7 @@ public class CommunityThreadMessageQueryService implements
             new GetChatMessagesQuery(thread.getChatRoomId(), requesterMemberId, beforeMessageId, limit)
         );
         return new CommunityThreadMessagePageInfo(
-            infoAssembler.assemble(threadId, chatPage.content()),
+            infoAssembler.assemble(threadId, chatPage.content(), requesterMemberId),
             chatPage.hasNext(),
             chatPage.nextCursor()
         );

@@ -18,6 +18,7 @@ import com.umc.product.authentication.application.port.in.command.OAuthAuthentic
 import com.umc.product.authentication.application.port.in.query.GetMemberOAuthUseCase;
 import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
+import com.umc.product.member.application.port.in.command.DeleteMemberBlocksUseCase;
 import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
@@ -64,6 +65,9 @@ class MemberServiceAuthorityCacheTest {
     @Mock
     EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
 
+    @Mock
+    DeleteMemberBlocksUseCase deleteMemberBlocksUseCase;
+
     @InjectMocks
     MemberService sut;
 
@@ -87,5 +91,6 @@ class MemberServiceAuthorityCacheTest {
 
         verify(saveMemberPort).delete(member);
         verify(evictAuthoritySnapshotCacheUseCase).evictByMemberId(MEMBER_ID);
+        verify(deleteMemberBlocksUseCase).deleteAllInvolving(MEMBER_ID);
     }
 }

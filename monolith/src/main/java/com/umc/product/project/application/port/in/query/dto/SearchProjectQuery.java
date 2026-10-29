@@ -25,6 +25,7 @@ import lombok.Builder;
  * {@link #withStatuses}, {@link #withChapterFilter}, {@link #withOwnerFilter}
  * 헬퍼로 새 인스턴스를 만들어 어댑터에 전달합니다.
  *
+ * @param requestedChapterId 관리 목록에서 요청한 지부. 권한 범위의 chapterId와 별도로 AND 필터를 적용한다.
  * @param matchingListOrder 팀 매칭 목록의 제출순·모집 완료 하단 정렬 여부.
  * @param matchingOrderAt 서버에서 결정하는 팀 매칭 기간 판정 시각.
  * @param managedStatusOrder 관리 목록 전용 상태 우선 정렬 여부. 공개 목록은 false 로 기존 정렬을 유지한다.
@@ -45,7 +46,8 @@ public record SearchProjectQuery(
     Pageable pageable,
     boolean managedStatusOrder,
     boolean matchingListOrder,
-    Instant matchingOrderAt
+    Instant matchingOrderAt,
+    Long requestedChapterId
 ) {
     public SearchProjectQuery {
         if (globalVisibleStatuses != null && !globalVisibleStatuses.isEmpty() && chapterId == null) {
@@ -178,7 +180,8 @@ public record SearchProjectQuery(
             .pageable(pageable)
             .managedStatusOrder(managedStatusOrder)
             .matchingListOrder(matchingListOrder)
-            .matchingOrderAt(matchingOrderAt);
+            .matchingOrderAt(matchingOrderAt)
+            .requestedChapterId(requestedChapterId);
     }
 
     private static List<ProjectStatus> toList(Set<ProjectStatus> set) {
