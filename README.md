@@ -15,6 +15,13 @@
 
 ## 👬 파트원 소개
 
+### 🥉 3rd
+
+#### 📅 2026.09 ~
+
+<img width="1000" alt="3rd-server-team" src="docs/images/3rd-server-team.webp" />
+
+
 ### 🥈 2nd
 
 #### 📅 2026.03 ~ 2026.08
@@ -27,12 +34,3 @@
 #### 📅 2025.12 ~ 2026.02
 
 <img width="1000" alt="1st-server-team" src="https://github.com/user-attachments/assets/79253c47-a8c6-444e-89fc-52d91b92e30e" />
-
-<div align="center">
-
-**_founded & maintained by_**
-
-  <a href="https://github.com/umc-product/cygnus-server/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=umc-product/cygnus-server" />
-  </a>
-</div>
