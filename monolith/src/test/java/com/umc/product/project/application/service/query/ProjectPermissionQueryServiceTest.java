@@ -279,10 +279,49 @@ class ProjectPermissionQueryServiceTest {
     }
 
     @Test
-    void 지원_생성은_모집중이고_폼_정원_오픈차수_챌린저_조건이_모두_맞으면_가능하다() {
+    void 운영진의_수강_파트가_NULL이면_지원만_거부하고_기존_운영_권한은_유지한다() {
+        // given
+        Project project = project(ProjectStatus.IN_PROGRESS, 999L, 999L, "서비스 리뉴얼");
+        SubjectAttributes subject = subjectWithRoles(List.of(new RoleAttribute(
+            ChallengerRoleType.CENTRAL_VICE_PRESIDENT, OrganizationType.CENTRAL, null, null, GISU_ID)));
+        givenBase(project, subject);
+        givenForms(ProjectApplicationForm.create(project, 500L));
+        givenProjectPermission(subject, PermissionType.READ, true);
+        givenProjectPermission(subject, PermissionType.EDIT, true);
+        givenProjectPermission(subject, PermissionType.DELETE, true);
+        givenProjectPermission(subject, PermissionType.MANAGE, true);
+        givenApplicationPermission(subject, true);
+        given(getChallengerUseCase.findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID))
+            .willReturn(Optional.of(challenger(null)));
+        given(projectApplicationAccessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(PROJECT_ID));
+        given(projectStatisticsAccessPolicy.canReadProjectStatistics(REQUESTER_ID, project)).willReturn(true);
+
+        // when
+        ProjectPermissionInfo result = sut.listByProjectIds(REQUESTER_ID, List.of(PROJECT_ID)).getFirst();
+
+        // then
+        assertThat(result.application().canCreate()).isEqualTo(ProjectPermissionCapabilityInfo.denied(
+            ProjectPermissionReason.NOT_PROJECT_GISU_CHALLENGER));
+        assertThat(result.canEditInfo().allowed()).isTrue();
+        assertThat(result.canTransferOwnership().allowed()).isTrue();
+        assertThat(result.canDelete().allowed()).isTrue();
+        assertThat(result.applicationForm().canEdit().allowed()).isTrue();
+        assertThat(result.partQuota().canEdit().allowed()).isTrue();
+        assertThat(result.status().canAbort().allowed()).isTrue();
+        assertThat(result.status().canComplete().allowed()).isTrue();
+        assertThat(result.application().canReadList().allowed()).isTrue();
+        assertThat(result.application().canDecide().allowed()).isTrue();
+        assertThat(result.member().canCreate().allowed()).isTrue();
+        assertThat(result.statistics().canRead().allowed()).isTrue();
+    }
+
+    @Test
+    void 운영진도_수강_파트와_지원_조건이_맞으면_지원할_수_있다() {
         Project project = project(ProjectStatus.IN_PROGRESS, 999L, 999L, "서비스 리뉴얼");
         ProjectApplicationForm form = ProjectApplicationForm.create(project, 500L);
-        SubjectAttributes subject = subject();
+        SubjectAttributes subject = subjectWithRoles(List.of(new RoleAttribute(
+            ChallengerRoleType.CENTRAL_VICE_PRESIDENT, OrganizationType.CENTRAL, null, null, GISU_ID)));
         givenBase(project, subject);
         givenForms(form);
         givenQuotas(project, ChallengerPart.WEB);
