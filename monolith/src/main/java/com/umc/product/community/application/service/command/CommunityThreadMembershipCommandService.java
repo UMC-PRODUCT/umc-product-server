@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.chat.application.port.in.command.LeaveChatRoomUseCase;
 import com.umc.product.chat.application.port.in.command.dto.LeaveChatRoomCommand;
+import com.umc.product.community.application.port.in.command.thread.AcknowledgeCommunityThreadKickUseCase;
 import com.umc.product.community.application.port.in.command.thread.ChangeCommunityThreadMemberRoleUseCase;
 import com.umc.product.community.application.port.in.command.thread.InviteCommunityThreadMembersUseCase;
 import com.umc.product.community.application.port.in.command.thread.KickCommunityThreadMemberUseCase;
@@ -41,7 +42,8 @@ public class CommunityThreadMembershipCommandService implements
     InviteCommunityThreadMembersUseCase,
     KickCommunityThreadMemberUseCase,
     LeaveCommunityThreadUseCase,
-    ChangeCommunityThreadMemberRoleUseCase {
+    ChangeCommunityThreadMemberRoleUseCase,
+    AcknowledgeCommunityThreadKickUseCase {
 
     private final LoadCommunityThreadPort loadThreadPort;
     private final LoadCommunityThreadMemberPort loadMemberPort;
@@ -88,7 +90,7 @@ public class CommunityThreadMembershipCommandService implements
             throw new CommunityDomainException(CommunityErrorCode.THREAD_OWNER_CANNOT_BE_KICKED);
         }
         List<Long> activeMemberIds = activeMemberIds(thread.getId());
-        leaveChatRoomUseCase.leaveChatRoom(LeaveChatRoomCommand.of(
+        leaveChatRoomUseCase.leaveChatRoom(LeaveChatRoomCommand.kicked(
             thread.getChatRoomId(),
             target.getMemberId()
         ));
@@ -106,6 +108,15 @@ public class CommunityThreadMembershipCommandService implements
     }
 
     @Override
+    public CommunityThreadMemberLifecycleInfo acknowledgeKick(ThreadActorCommand command) {
+        CommunityThreadMember target = loadKickPendingActor(command.threadId(), command.actorMemberId());
+        target.acknowledgeKick();
+        saveMemberPort.save(target);
+        long memberCount = loadMemberPort.countActiveByThreadId(command.threadId());
+        return CommunityThreadMemberLifecycleInfo.from(target, memberCount);
+    }
+
+    @Override
     public CommunityThreadMemberLifecycleInfo leave(ThreadActorCommand command) {
         CommunityThread thread = loadLockedThread(command.threadId());
         CommunityThreadMember actor = loadActiveActor(thread.getId(), command.actorMemberId());
@@ -113,7 +124,7 @@ public class CommunityThreadMembershipCommandService implements
             throw new CommunityDomainException(CommunityErrorCode.THREAD_OWNER_CANNOT_LEAVE);
         }
         List<Long> activeMemberIds = activeMemberIds(thread.getId());
-        leaveChatRoomUseCase.leaveChatRoom(LeaveChatRoomCommand.of(
+        leaveChatRoomUseCase.leaveChatRoom(LeaveChatRoomCommand.left(
             thread.getChatRoomId(),
             actor.getMemberId()
         ));
@@ -177,6 +188,15 @@ public class CommunityThreadMembershipCommandService implements
         return loadMemberPort.findByThreadIdAndMemberId(threadId, memberId)
             .filter(CommunityThreadMember::isActive)
             .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.THREAD_MEMBER_NOT_FOUND));
+    }
+
+    private CommunityThreadMember loadKickPendingActor(Long threadId, Long memberId) {
+        CommunityThreadMember member = loadMemberPort.findByThreadIdAndMemberId(threadId, memberId)
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.THREAD_MEMBER_NOT_FOUND));
+        if (!member.isKickPending()) {
+            throw new CommunityDomainException(CommunityErrorCode.THREAD_KICK_NOT_ACKNOWLEDGEABLE);
+        }
+        return member;
     }
 
     private void requireManager(CommunityThreadMember actor) {

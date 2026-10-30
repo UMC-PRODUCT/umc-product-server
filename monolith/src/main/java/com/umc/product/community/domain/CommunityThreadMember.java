@@ -114,6 +114,13 @@ public class CommunityThreadMember extends BaseEntity {
         this.leftAt = validKickedAt;
     }
 
+    public void acknowledgeKick() {
+        if (state != CommunityThreadMemberState.KICKED) {
+            throw new IllegalStateException("only KICKED members can acknowledge kick");
+        }
+        this.state = CommunityThreadMemberState.KICKED_ACKNOWLEDGED;
+    }
+
     public void rejoin(Instant joinedAt) {
         if (state != CommunityThreadMemberState.LEFT) {
             throw new IllegalStateException("only LEFT members can rejoin");
@@ -177,12 +184,13 @@ public class CommunityThreadMember extends BaseEntity {
         return state == CommunityThreadMemberState.ACTIVE;
     }
 
-    /**
-     * 강퇴된 멤버인지 판단한다.
-     *
-     * <p>LEFT와 달리 재초대할 수 없고, 스레드 목록/상세/메시지 조회가 모두 차단된다.</p>
-     */
+    /** {@code KICKED}, {@code KICKED_ACKNOWLEDGED} 둘 다 포함한다. */
     public boolean isKicked() {
+        return state == CommunityThreadMemberState.KICKED
+            || state == CommunityThreadMemberState.KICKED_ACKNOWLEDGED;
+    }
+
+    public boolean isKickPending() {
         return state == CommunityThreadMemberState.KICKED;
     }
 

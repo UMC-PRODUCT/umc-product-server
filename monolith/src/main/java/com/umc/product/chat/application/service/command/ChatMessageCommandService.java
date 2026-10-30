@@ -87,8 +87,8 @@ public class ChatMessageCommandService implements SendChatMessageUseCase, MarkCh
     }
 
     private void validate(SendChatMessageCommand command) {
-        // SYSTEM 메시지는 서버 내부에서만 생성한다(클라이언트 전송 불가).
-        if (command.contentType() == null || command.contentType() == MessageContentType.SYSTEM) {
+        // SYSTEM/퇴장 기록 메시지는 서버 내부에서만 생성한다(클라이언트 전송 불가).
+        if (command.contentType() == null || command.contentType().isServerGenerated()) {
             throw new ChatDomainException(ChatErrorCode.CHAT_MESSAGE_INVALID_CONTENT_TYPE);
         }
         boolean noContent = command.content() == null || command.content().isBlank();

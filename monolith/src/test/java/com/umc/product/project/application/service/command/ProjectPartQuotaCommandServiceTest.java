@@ -54,6 +54,7 @@ class ProjectPartQuotaCommandServiceTest {
     @Mock
     SaveProjectPartQuotaPort saveProjectPartQuotaPort;
 
+    @Mock com.umc.product.project.application.service.policy.ProjectDraftQuotaPolicy draftQuotaPolicy;
     @Mock Clock clock;
     @Mock CheckPermissionUseCase checkPermissionUseCase;
     @Mock LockProjectMatchingPort lockProjectMatchingPort;

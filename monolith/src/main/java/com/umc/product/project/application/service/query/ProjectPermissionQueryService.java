@@ -42,6 +42,7 @@ import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.application.service.policy.ProjectDraftQuotaPolicy;
 import com.umc.product.project.application.service.policy.ProjectManualMatchingAccessPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
@@ -72,6 +73,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
             "아직은 지원 폼 삭제를 별도로 지원하지 않아요."
         );
 
+    private final ProjectDraftQuotaPolicy draftQuotaPolicy;
     private final Clock clock;
     private final CheckPermissionUseCase checkPermissionUseCase;
     private final LoadProjectPort loadProjectPort;
@@ -152,8 +154,8 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
             canTransferOwnership,
             canDelete,
             applicationFormPermissions(requesterMemberId, subject, context),
-            partQuotaPermissions(context),
-            statusPermissions(context),
+            partQuotaPermissions(subject, context),
+            statusPermissions(subject, context),
             applicationPermissions(requesterMemberId, subject, context),
             memberPermissions(requesterMemberId, context),
             statisticsPermissions(requesterMemberId, project)
@@ -226,9 +228,12 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         return denied(ProjectPermissionReason.INVALID_PROJECT_STATUS);
     }
 
-    private PartQuotaPermissions partQuotaPermissions(ProjectCapabilityContext context) {
+    private PartQuotaPermissions partQuotaPermissions(SubjectAttributes subject, ProjectCapabilityContext context) {
+        boolean canEdit = context.project().getStatus() == ProjectStatus.DRAFT
+            ? draftQuotaPolicy.canEdit(context.project(), subject)
+            : context.projectPermission(PermissionType.MANAGE);
         return new PartQuotaPermissions(requirePermission(
-            context.projectPermission(PermissionType.MANAGE),
+            canEdit,
             () -> {
                 var rounds = context.permissionCache().allMatchingRounds(context.project().getChapterId());
                 var windows = java.util.Arrays.stream(ChallengerPart.values())
@@ -240,16 +245,16 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         ));
     }
 
-    private StatusPermissions statusPermissions(ProjectCapabilityContext context) {
+    private StatusPermissions statusPermissions(SubjectAttributes subject, ProjectCapabilityContext context) {
         return new StatusPermissions(
-            canRequestReview(context),
+            canRequestReview(subject, context),
             canPublishProject(context),
             canCompleteProject(context),
             canAbortProject(context)
         );
     }
 
-    private ProjectPermissionCapabilityInfo canRequestReview(ProjectCapabilityContext context) {
+    private ProjectPermissionCapabilityInfo canRequestReview(SubjectAttributes subject, ProjectCapabilityContext context) {
         return requirePermission(context.projectPermission(PermissionType.EDIT), () -> {
             Project project = context.project();
             if (project.getStatus() != ProjectStatus.DRAFT) {
@@ -260,6 +265,13 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
             }
             if (!context.hasForm()) {
                 return denied(ProjectPermissionReason.APPLICATION_FORM_NOT_FOUND);
+            }
+            boolean admin = draftQuotaPolicy.canEdit(project, subject);
+            if (!admin && !project.isOwner(subject.memberId())) {
+                return denied(ProjectPermissionReason.PERMISSION_DENIED);
+            }
+            if (admin && context.quotas().isEmpty()) {
+                return denied(ProjectPermissionReason.PART_QUOTA_REQUIRED);
             }
             return ProjectPermissionCapabilityInfo.allow();
         });

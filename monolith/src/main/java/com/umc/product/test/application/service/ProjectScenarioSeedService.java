@@ -236,6 +236,7 @@ public class ProjectScenarioSeedService implements SeedProjectScenariosUseCase {
         try {
             submitProjectUseCase.submit(SubmitProjectCommand.builder()
                 .projectId(projectId)
+                .requesterMemberId(poMemberId)
                 .build());
         } catch (Exception e) {
             return ScenarioOutcome.failure(failureOf(projectId, reached, target, "SUBMIT", e));

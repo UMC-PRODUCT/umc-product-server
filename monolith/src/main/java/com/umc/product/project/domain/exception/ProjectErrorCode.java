@@ -83,6 +83,9 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_PART_QUOTA_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "PROJECT-0254",
         "TO 수정 대상이나 입력값이 올바르지 않아요. 중복 항목과 지부·프로젝트를 확인해주세요."),
 
+    PROJECT_DEVELOPER_PART_QUOTA_CONFLICT(HttpStatus.BAD_REQUEST, "PROJECT-0255",
+        "Web PE와 Mobile PE는 동시에 모집할 수 없어요. 기존 파트 TO를 0명으로 변경한 뒤 다른 파트를 설정해주세요."),
+
     // ProjectMatchingRound
     PROJECT_MATCHING_ROUND_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0300", "매칭 차수를 찾을 수 없어요. 선택한 차수를 확인해주세요."),
     PROJECT_MATCHING_ROUND_INVALID_PERIOD(HttpStatus.BAD_REQUEST, "PROJECT-0301",

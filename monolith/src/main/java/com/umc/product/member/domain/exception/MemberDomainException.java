@@ -8,5 +8,7 @@ public class MemberDomainException extends BusinessException {
         super(Domain.MEMBER, memberErrorCode);
     }
 
-
+    public MemberDomainException(MemberErrorCode memberErrorCode, Throwable cause) {
+        super(Domain.MEMBER, memberErrorCode, cause);
+    }
 }
