@@ -11,49 +11,35 @@ import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 class S3ConfigTest {
 
     @Test
-    @DisplayName("S3와 SSM 정적 자격증명을 별도로 해석한다")
-    void S3와_SSM_정적_자격증명을_별도로_해석한다() {
+    @DisplayName("S3 정적 자격증명이 있으면 그 값을 사용한다")
+    void S3_정적_자격증명이_있으면_그_값을_사용한다() {
         // given
         S3Config sut = new S3Config();
-        S3StorageProperties storageProperties = storageProperties();
-        AppSsmProperties ssmProperties = new AppSsmProperties("us-east-1", "ssm-access-key", "ssm-secret-key");
+        S3StorageProperties storageProperties = storageProperties("s3-access-key", "s3-secret-key");
 
         // when
-        AwsCredentialsProvider s3CredentialsProvider = sut.resolveS3Credentials(storageProperties);
-        AwsCredentialsProvider ssmCredentialsProvider = sut.resolveSsmCredentials(ssmProperties);
+        AwsCredentialsProvider credentialsProvider = sut.resolveS3Credentials(storageProperties);
 
         // then
-        assertThat(s3CredentialsProvider.resolveCredentials().accessKeyId()).isEqualTo("s3-access-key");
-        assertThat(s3CredentialsProvider.resolveCredentials().secretAccessKey()).isEqualTo("s3-secret-key");
-        assertThat(ssmCredentialsProvider.resolveCredentials().accessKeyId()).isEqualTo("ssm-access-key");
-        assertThat(ssmCredentialsProvider.resolveCredentials().secretAccessKey()).isEqualTo("ssm-secret-key");
-        assertThat(sut.resolveSsmRegion(storageProperties, ssmProperties)).isEqualTo("us-east-1");
+        assertThat(credentialsProvider.resolveCredentials().accessKeyId()).isEqualTo("s3-access-key");
+        assertThat(credentialsProvider.resolveCredentials().secretAccessKey()).isEqualTo("s3-secret-key");
     }
 
     @Test
-    @DisplayName("SSM 정적 자격증명이 없으면 기본 자격증명 체인과 S3 리전을 사용한다")
-    void SSM_정적_자격증명이_없으면_기본_자격증명_체인과_S3_리전을_사용한다() {
+    @DisplayName("S3 정적 자격증명이 없으면 기본 자격증명 체인을 사용한다")
+    void S3_정적_자격증명이_없으면_기본_자격증명_체인을_사용한다() {
         // given
         S3Config sut = new S3Config();
-        S3StorageProperties storageProperties = storageProperties();
-        AppSsmProperties ssmProperties = new AppSsmProperties("", "", "");
+        S3StorageProperties storageProperties = storageProperties("", "");
 
         // when
-        AwsCredentialsProvider ssmCredentialsProvider = sut.resolveSsmCredentials(ssmProperties);
-        String ssmRegion = sut.resolveSsmRegion(storageProperties, ssmProperties);
+        AwsCredentialsProvider credentialsProvider = sut.resolveS3Credentials(storageProperties);
 
         // then
-        assertThat(ssmCredentialsProvider).isInstanceOf(DefaultCredentialsProvider.class);
-        assertThat(ssmRegion).isEqualTo("ap-northeast-2");
+        assertThat(credentialsProvider).isInstanceOf(DefaultCredentialsProvider.class);
     }
 
-    private S3StorageProperties storageProperties() {
-        return new S3StorageProperties(
-            "test-bucket",
-            "ap-northeast-2",
-            "s3-access-key",
-            "s3-secret-key",
-            new S3StorageProperties.CloudFront("cdn.example.com", false, null, null, null)
-        );
+    private S3StorageProperties storageProperties(String accessKeyId, String secretAccessKey) {
+        return new S3StorageProperties("test-bucket", "ap-northeast-2", accessKeyId, secretAccessKey);
     }
 }

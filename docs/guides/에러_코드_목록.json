@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "service": "umc-product-server",
   "generatedAt": null,
-  "totalCount": 701,
+  "totalCount": 698,
   "items": [
     {
       "sequence": 1,
@@ -15033,72 +15033,6 @@
     {
       "sequence": 684,
       "domain": "storage",
-      "code": "STORAGE-0010",
-      "name": "CDN_SIGNING_FAILED",
-      "httpStatus": 500,
-      "httpStatusName": "INTERNAL_SERVER_ERROR",
-      "message": "CDN 접근 링크를 만들지 못했어요. 관리자에게 문의해주세요.",
-      "description": null,
-      "clientAction": null,
-      "retryable": null,
-      "severity": null,
-      "deprecated": false,
-      "replacementCode": null,
-      "owners": [],
-      "tags": [],
-      "source": {
-        "enumName": "StorageErrorCode",
-        "file": "monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-        "line": 36
-      }
-    },
-    {
-      "sequence": 685,
-      "domain": "storage",
-      "code": "STORAGE-0011",
-      "name": "NO_ENV_KEYS",
-      "httpStatus": 500,
-      "httpStatusName": "INTERNAL_SERVER_ERROR",
-      "message": "CDN 설정이 누락됐어요. 관리자에게 문의해주세요.",
-      "description": null,
-      "clientAction": null,
-      "retryable": null,
-      "severity": null,
-      "deprecated": false,
-      "replacementCode": null,
-      "owners": [],
-      "tags": [],
-      "source": {
-        "enumName": "StorageErrorCode",
-        "file": "monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-        "line": 37
-      }
-    },
-    {
-      "sequence": 686,
-      "domain": "storage",
-      "code": "STORAGE-0012",
-      "name": "INVALID_SPRING_PROFILE",
-      "httpStatus": 500,
-      "httpStatusName": "INTERNAL_SERVER_ERROR",
-      "message": "서버 실행 환경이 올바르지 않아요. 관리자에게 문의해주세요.",
-      "description": null,
-      "clientAction": null,
-      "retryable": null,
-      "severity": null,
-      "deprecated": false,
-      "replacementCode": null,
-      "owners": [],
-      "tags": [],
-      "source": {
-        "enumName": "StorageErrorCode",
-        "file": "monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-        "line": 38
-      }
-    },
-    {
-      "sequence": 687,
-      "domain": "storage",
       "code": "STORAGE-0013",
       "name": "FILE_DELETE_FORBIDDEN",
       "httpStatus": 403,
@@ -15119,7 +15053,7 @@
       }
     },
     {
-      "sequence": 688,
+      "sequence": 685,
       "domain": "storage",
       "code": "STORAGE-0014",
       "name": "FILE_SIZE_MISMATCH",
@@ -15141,7 +15075,7 @@
       }
     },
     {
-      "sequence": 689,
+      "sequence": 686,
       "domain": "storage",
       "code": "STORAGE-0015",
       "name": "STORAGE_METADATA_READ_FAILED",
@@ -15163,7 +15097,7 @@
       }
     },
     {
-      "sequence": 690,
+      "sequence": 687,
       "domain": "storage",
       "code": "STORAGE-0016",
       "name": "FILE_USE_FORBIDDEN",
@@ -15185,7 +15119,7 @@
       }
     },
     {
-      "sequence": 691,
+      "sequence": 688,
       "domain": "term",
       "code": "TERMS-0001",
       "name": "TERMS_NOT_FOUND",
@@ -15207,7 +15141,7 @@
       }
     },
     {
-      "sequence": 692,
+      "sequence": 689,
       "domain": "term",
       "code": "TERMS-0002",
       "name": "TERMS_TYPE_REQUIRED",
@@ -15229,7 +15163,7 @@
       }
     },
     {
-      "sequence": 693,
+      "sequence": 690,
       "domain": "term",
       "code": "TERMS-0003",
       "name": "TERMS_TITLE_REQUIRED",
@@ -15251,7 +15185,7 @@
       }
     },
     {
-      "sequence": 694,
+      "sequence": 691,
       "domain": "term",
       "code": "TERMS-0004",
       "name": "TERMS_CONTENT_REQUIRED",
@@ -15273,7 +15207,7 @@
       }
     },
     {
-      "sequence": 695,
+      "sequence": 692,
       "domain": "term",
       "code": "TERMS-0005",
       "name": "TERMS_VERSION_REQUIRED",
@@ -15295,7 +15229,7 @@
       }
     },
     {
-      "sequence": 696,
+      "sequence": 693,
       "domain": "term",
       "code": "TERMS-0006",
       "name": "TERMS_CONSENT_NOT_FOUND",
@@ -15317,7 +15251,7 @@
       }
     },
     {
-      "sequence": 697,
+      "sequence": 694,
       "domain": "term",
       "code": "TERMS-0007",
       "name": "TERMS_CONSENT_ALREADY_EXISTS",
@@ -15339,7 +15273,7 @@
       }
     },
     {
-      "sequence": 698,
+      "sequence": 695,
       "domain": "term",
       "code": "TERMS-0008",
       "name": "MEMBER_ID_REQUIRED",
@@ -15361,7 +15295,7 @@
       }
     },
     {
-      "sequence": 699,
+      "sequence": 696,
       "domain": "term",
       "code": "TERMS-0009",
       "name": "TERM_ID_REQUIRED",
@@ -15383,7 +15317,7 @@
       }
     },
     {
-      "sequence": 700,
+      "sequence": 697,
       "domain": "term",
       "code": "TERMS-0010",
       "name": "MANDATORY_TERMS_NOT_AGREED",
@@ -15405,7 +15339,7 @@
       }
     },
     {
-      "sequence": 701,
+      "sequence": 698,
       "domain": "term",
       "code": "TERMS-0011",
       "name": "TERM_PERMISSION_DENIED",
