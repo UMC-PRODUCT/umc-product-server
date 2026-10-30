@@ -106,7 +106,7 @@ Apple은 기존 `APPLE_WEB_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_P
 
 Google·Kakao·Apple 콘솔의 redirect URI는 설정값과 정확히 일치해야 한다. 서버 callback은 HTTPS이며 query·fragment·userinfo가 없어야 한다. 운영 주소나 secret을 추정해서 코드에 넣지 않는다.
 
-Flyway 신규 테이블이 필요하다. prod/alpha는 저장소 런북대로 **migration 적용 후 앱 배포** 순서다. 기존 migration을 수정하지 않는다.
+Flyway 신규 테이블이 필요하다. prod/dev는 앱 부팅 시 Flyway가 migration을 적용한다. 기존 migration을 수정하지 않는다.
 
 ## 직접 확인하는 순서
 
