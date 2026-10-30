@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.report.application.port.in.command.ModerateReportUseCase;
 import com.umc.product.report.application.port.in.command.dto.ModerateReportCommand;
 import com.umc.product.report.application.port.in.command.dto.ModerateReportResult;
+import com.umc.product.report.domain.enums.ReportActionReason;
 import com.umc.product.report.domain.enums.ReportActionType;
 import com.umc.product.report.domain.enums.ReportStatus;
 import com.umc.product.report.domain.exception.ReportDomainException;
@@ -36,6 +38,7 @@ class DiscordInteractionHandlerTest {
     private static final String GUILD_ID = "100";
     private static final String MODERATOR_ROLE_ID = "200";
     private static final String APPROVE_BUTTON = "report:901:approve";
+    private static final String REJECT_BUTTON = "report:901:reject";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -66,7 +69,7 @@ class DiscordInteractionHandlerTest {
     }
 
     @Test
-    @DisplayName("신고처리 역할이 버튼을 누르면 아무것도 바꾸지 않고 사유 입력창을 띄운다")
+    @DisplayName("신고처리 역할이 버튼을 누르면 아무것도 바꾸지 않고 그 조치의 사유 목록과 메모 입력창을 띄운다")
     void 버튼_클릭_권한이_있으면_입력창() throws Exception {
         // when
         JsonNode response = respond(buttonClick(APPROVE_BUTTON, GUILD_ID, MODERATOR_ROLE_ID));
@@ -74,12 +77,40 @@ class DiscordInteractionHandlerTest {
         // then
         assertThat(response.path("type").asInt()).isEqualTo(DiscordInteractionResponses.MODAL);
         assertThat(response.at("/data/custom_id").asText()).isEqualTo(APPROVE_BUTTON);
-        assertThat(response.at("/data/title").asText()).isEqualTo("신고 #901 · 신고 승인");
-        JsonNode input = response.at("/data/components/0/components/0");
-        assertThat(input.path("custom_id").asText()).isEqualTo(DiscordInteractionHandler.REASON_INPUT_ID);
-        assertThat(input.path("max_length").asInt()).isEqualTo(500);
-        assertThat(input.path("required").asBoolean()).isTrue();
+        assertThat(response.at("/data/title").asText()).isEqualTo("신고 #901 · 처리 완료");
+
+        JsonNode reasonSelect = response.at("/data/components/0/component");
+        assertThat(reasonSelect.path("custom_id").asText()).isEqualTo(DiscordInteractionHandler.REASON_INPUT_ID);
+        assertThat(reasonSelect.path("required").asBoolean()).isTrue();
+        List<String> values = new ArrayList<>();
+        reasonSelect.path("options").forEach(option -> values.add(option.path("value").asText()));
+        assertThat(values).containsExactly("SPAM", "ABUSE", "INAPPROPRIATE", "PRIVACY", "OTHER_VIOLATION");
+        assertThat(reasonSelect.at("/options/1/label").asText()).isEqualTo("욕설·비방·혐오 표현");
+
+        JsonNode memoInput = response.at("/data/components/1/component");
+        assertThat(memoInput.path("custom_id").asText()).isEqualTo(DiscordInteractionHandler.MEMO_INPUT_ID);
+        assertThat(memoInput.path("max_length").asInt()).isEqualTo(500);
+        assertThat(memoInput.path("required").asBoolean()).isFalse();
         then(moderateReportUseCase).should(never()).moderate(any());
+    }
+
+    @Test
+    @DisplayName("반려 버튼이면 반려 사유 목록을 띄운다")
+    void 반려_버튼은_반려_사유를_띄운다() throws Exception {
+        // when
+        JsonNode response = respond(buttonClick(REJECT_BUTTON, GUILD_ID, MODERATOR_ROLE_ID));
+
+        // then
+        List<String> labels = new ArrayList<>();
+        response.at("/data/components/0/component/options")
+            .forEach(option -> labels.add(option.path("label").asText()));
+        assertThat(labels).containsExactly(
+            "운영 정책 위반 아님",
+            "신고 내용과 확인 결과가 일치하지 않음",
+            "신고 내용 확인 어려움",
+            "중복 신고 또는 이미 처리된 신고",
+            "기타"
+        );
     }
 
     @Test
@@ -120,26 +151,24 @@ class DiscordInteractionHandlerTest {
     @DisplayName("사유를 제출하면 조치를 적용하고 결과를 붙인 메시지로 바꾸며 버튼을 비활성으로 만든다")
     void 사유_제출_조치_적용() throws Exception {
         // given
-        given(moderateReportUseCase.moderate(any())).willReturn(new ModerateReportResult(
-            901L, ReportStatus.APPROVED, ReportActionType.APPROVE, "욕설 확인", "모루", Instant.now()
-        ));
+        given(moderateReportUseCase.moderate(any())).willReturn(approvedResult("욕설 확인"));
 
         // when
-        JsonNode response = respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "  욕설 확인  "));
+        JsonNode response = respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "ABUSE", "  욕설 확인  "));
 
         // then
         ArgumentCaptor<ModerateReportCommand> captor = ArgumentCaptor.forClass(ModerateReportCommand.class);
         then(moderateReportUseCase).should().moderate(captor.capture());
-        assertThat(captor.getValue()).isEqualTo(
-            new ModerateReportCommand(901L, ReportActionType.APPROVE, "  욕설 확인  ", "300", "모루")
-        );
+        assertThat(captor.getValue()).isEqualTo(new ModerateReportCommand(
+            901L, ReportActionType.APPROVE, ReportActionReason.ABUSE, "  욕설 확인  ", "300", "모루"
+        ));
 
         assertThat(response.path("type").asInt()).isEqualTo(DiscordInteractionResponses.UPDATE_MESSAGE);
         JsonNode embed = response.at("/data/embeds/0");
         assertThat(embed.path("title").asText()).isEqualTo("신고 접수 #901");
         assertThat(embed.at("/fields/0/name").asText()).isEqualTo("신고 ID");
         assertThat(embed.at("/fields/1/name").asText()).isEqualTo("처리 결과");
-        assertThat(embed.at("/fields/1/value").asText()).isEqualTo("신고 승인 by 모루 · 욕설 확인");
+        assertThat(embed.at("/fields/1/value").asText()).isEqualTo("처리 완료 by 모루 · 욕설·비방·혐오 표현\n메모: 욕설 확인");
         List<JsonNode> buttons = List.of(
             response.at("/data/components/0/components/0"),
             response.at("/data/components/0/components/1")
@@ -156,38 +185,69 @@ class DiscordInteractionHandlerTest {
             .willThrow(new ReportDomainException(ReportErrorCode.REPORT_ALREADY_MODERATED));
 
         // when & then
-        assertEphemeral(respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "욕설 확인")),
+        assertEphemeral(respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "ABUSE", null)),
             DiscordInteractionHandler.MESSAGE_ALREADY_MODERATED);
     }
 
     @Test
     @DisplayName("사유 제출도 권한을 다시 확인한다")
     void 사유_제출_권한_재확인() throws Exception {
-        assertEphemeral(respond(reasonSubmit(APPROVE_BUTTON, "999", "욕설 확인")),
+        assertEphemeral(respond(reasonSubmit(APPROVE_BUTTON, "999", "ABUSE", null)),
             DiscordInteractionHandler.MESSAGE_NO_PERMISSION);
         then(moderateReportUseCase).should(never()).moderate(any());
     }
 
     @Test
-    @DisplayName("사유가 비어 있거나 500자를 넘으면 처리하지 않고 안내한다")
+    @DisplayName("사유를 고르지 않았거나 다른 조치의 사유를 보내면 처리하지 않고 안내한다")
     void 사유_검증() throws Exception {
-        assertEphemeral(respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "   ")),
+        assertEphemeral(respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, null, "메모")),
             DiscordInteractionHandler.MESSAGE_REASON_REQUIRED);
-        assertEphemeral(respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "가".repeat(501))),
-            DiscordInteractionHandler.MESSAGE_REASON_TOO_LONG);
+        assertEphemeral(respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "UNKNOWN", null)),
+            DiscordInteractionHandler.MESSAGE_REASON_REQUIRED);
+        assertEphemeral(respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "NOT_VIOLATION", null)),
+            DiscordInteractionHandler.MESSAGE_REASON_REQUIRED);
         then(moderateReportUseCase).should(never()).moderate(any());
     }
 
     @Test
-    @DisplayName("사유 길이는 문자 단위로 세서 이모지 500개도 받아들인다")
-    void 사유_길이는_문자_단위로_센다() throws Exception {
+    @DisplayName("기타 사유에 메모가 없거나 메모가 500자를 넘으면 처리하지 않고 안내한다")
+    void 메모_검증() throws Exception {
+        assertEphemeral(respond(reasonSubmit(REJECT_BUTTON, MODERATOR_ROLE_ID, "OTHER_REJECTION", "   ")),
+            DiscordInteractionHandler.MESSAGE_MEMO_REQUIRED);
+        assertEphemeral(respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "SPAM", "가".repeat(501))),
+            DiscordInteractionHandler.MESSAGE_MEMO_TOO_LONG);
+        then(moderateReportUseCase).should(never()).moderate(any());
+    }
+
+    @Test
+    @DisplayName("메모 없이 사유만 골라도 처리하고, 결과에는 사유만 남긴다")
+    void 메모_없이_처리() throws Exception {
         // given
         given(moderateReportUseCase.moderate(any())).willReturn(new ModerateReportResult(
-            901L, ReportStatus.APPROVED, ReportActionType.APPROVE, "😀".repeat(500), "모루", Instant.now()
+            901L, ReportStatus.REJECTED, ReportActionType.REJECT, ReportActionReason.DUPLICATE, null, "모루",
+            Instant.now()
         ));
 
         // when
-        JsonNode response = respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "😀".repeat(500)));
+        JsonNode response = respond(reasonSubmit(REJECT_BUTTON, MODERATOR_ROLE_ID, "DUPLICATE", null));
+
+        // then
+        ArgumentCaptor<ModerateReportCommand> captor = ArgumentCaptor.forClass(ModerateReportCommand.class);
+        then(moderateReportUseCase).should().moderate(captor.capture());
+        assertThat(captor.getValue().reasonCode()).isEqualTo(ReportActionReason.DUPLICATE);
+        assertThat(captor.getValue().memo()).isNull();
+        assertThat(response.at("/data/embeds/0/fields/1/value").asText())
+            .isEqualTo("반려 by 모루 · 중복 신고 또는 이미 처리된 신고");
+    }
+
+    @Test
+    @DisplayName("메모 길이는 문자 단위로 세서 이모지 500개도 받아들인다")
+    void 메모_길이는_문자_단위로_센다() throws Exception {
+        // given
+        given(moderateReportUseCase.moderate(any())).willReturn(approvedResult("😀".repeat(500)));
+
+        // when
+        JsonNode response = respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "SPAM", "😀".repeat(500)));
 
         // then
         assertThat(response.path("type").asInt()).isEqualTo(DiscordInteractionResponses.UPDATE_MESSAGE);
@@ -200,7 +260,7 @@ class DiscordInteractionHandlerTest {
         given(moderateReportUseCase.moderate(any())).willThrow(new IllegalStateException("DB 오류"));
 
         // when & then
-        assertEphemeral(respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "욕설 확인")),
+        assertEphemeral(respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "ABUSE", null)),
             DiscordInteractionHandler.MESSAGE_FAILED);
     }
 
@@ -227,8 +287,18 @@ class DiscordInteractionHandlerTest {
             """.formatted(guildId, roleId, customId));
     }
 
-    private JsonNode reasonSubmit(String customId, String roleId, String reason) throws Exception {
-        String reasonJson = objectMapper.writeValueAsString(reason);
+    private static ModerateReportResult approvedResult(String memo) {
+        return new ModerateReportResult(
+            901L, ReportStatus.APPROVED, ReportActionType.APPROVE, ReportActionReason.ABUSE, memo, "모루", Instant.now()
+        );
+    }
+
+    /**
+     * Discord가 label 컴포넌트로 감싼 입력창을 제출하는 형식입니다. 고르지 않았거나 입력하지 않은 값은 {@code null}로 넘깁니다.
+     */
+    private JsonNode reasonSubmit(String customId, String roleId, String reason, String memo) throws Exception {
+        String reasonValues = objectMapper.writeValueAsString(reason == null ? List.of() : List.of(reason));
+        String memoJson = objectMapper.writeValueAsString(memo == null ? "" : memo);
         return json("""
             {
               "type": 5,
@@ -243,10 +313,13 @@ class DiscordInteractionHandlerTest {
               },
               "data": {
                 "custom_id": "%s",
-                "components": [{"type": 1, "components": [{"type": 4, "custom_id": "reason", "value": %s}]}]
+                "components": [
+                  {"type": 18, "component": {"type": 3, "custom_id": "reason", "values": %s}},
+                  {"type": 18, "component": {"type": 4, "custom_id": "memo", "value": %s}}
+                ]
               }
             }
-            """.formatted(GUILD_ID, roleId, customId, reasonJson));
+            """.formatted(GUILD_ID, roleId, customId, reasonValues, memoJson));
     }
 
     private JsonNode json(String value) throws Exception {

@@ -79,8 +79,8 @@ public final class ReportDiscordButtons {
      */
     public static String label(ReportActionType actionType) {
         return switch (actionType) {
-            case APPROVE -> "신고 승인";
-            case REJECT -> "문제 없음";
+            case APPROVE -> "처리 완료";
+            case REJECT -> "반려";
         };
     }
 

@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Import;
 
 import com.umc.product.report.domain.Report;
 import com.umc.product.report.domain.ReportAction;
+import com.umc.product.report.domain.enums.ReportActionReason;
 import com.umc.product.report.domain.enums.ReportActionType;
 import com.umc.product.report.domain.enums.ReportStatus;
 import com.umc.product.report.domain.enums.ReportTargetType;
@@ -46,7 +47,9 @@ class ReportActionPersistenceAdapterTest {
         Report report = reportPersistenceAdapter.findByIdForUpdate(reportId).orElseThrow();
 
         // when
-        ReportAction action = report.moderate(ReportActionType.REJECT, "신고 사유 아님", "1234567890", "모루", ACTED_AT);
+        ReportAction action = report.moderate(
+            ReportActionType.REJECT, ReportActionReason.OTHER_REJECTION, "신고 사유 아님", "1234567890", "모루", ACTED_AT
+        );
         reportPersistenceAdapter.save(report);
         sut.save(action);
         entityManager.flush();
@@ -58,7 +61,8 @@ class ReportActionPersistenceAdapterTest {
         List<ReportAction> actions = reportActionRepository.findAllByReportIdOrderByActedAtAsc(reportId);
         assertThat(actions).singleElement().satisfies(saved -> {
             assertThat(saved.getActionType()).isEqualTo(ReportActionType.REJECT);
-            assertThat(saved.getReason()).isEqualTo("신고 사유 아님");
+            assertThat(saved.getReasonCode()).isEqualTo(ReportActionReason.OTHER_REJECTION);
+            assertThat(saved.getMemo()).isEqualTo("신고 사유 아님");
             assertThat(saved.getModeratorExternalId()).isEqualTo("1234567890");
             assertThat(saved.getModeratorName()).isEqualTo("모루");
             assertThat(saved.getActedAt()).isEqualTo(ACTED_AT);

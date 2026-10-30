@@ -37,7 +37,8 @@ public class ReportModerationService implements ModerateReportUseCase {
 
         ReportAction action = report.moderate(
             command.actionType(),
-            command.reason(),
+            command.reasonCode(),
+            command.memo(),
             command.moderatorExternalId(),
             command.moderatorName(),
             Instant.now(clock)

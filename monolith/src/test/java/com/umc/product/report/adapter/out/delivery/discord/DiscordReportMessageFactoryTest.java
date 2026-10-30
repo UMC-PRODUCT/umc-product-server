@@ -65,7 +65,7 @@ class DiscordReportMessageFactoryTest {
     }
 
     @Test
-    @DisplayName("신고 승인과 문제 없음 버튼을 붙인다")
+    @DisplayName("처리 완료와 반려 버튼을 붙인다")
     @SuppressWarnings("unchecked")
     void create_조치_버튼을_붙인다() {
         // given

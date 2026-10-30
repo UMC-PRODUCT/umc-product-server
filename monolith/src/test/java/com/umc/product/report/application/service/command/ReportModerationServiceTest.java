@@ -28,6 +28,7 @@ import com.umc.product.report.application.port.out.SaveReportActionPort;
 import com.umc.product.report.application.port.out.SaveReportPort;
 import com.umc.product.report.domain.Report;
 import com.umc.product.report.domain.ReportAction;
+import com.umc.product.report.domain.enums.ReportActionReason;
 import com.umc.product.report.domain.enums.ReportActionType;
 import com.umc.product.report.domain.enums.ReportStatus;
 import com.umc.product.report.domain.enums.ReportTargetType;
@@ -83,7 +84,9 @@ class ReportModerationServiceTest {
         assertThat(result.reportId()).isEqualTo(REPORT_ID);
         assertThat(result.status()).isEqualTo(ReportStatus.REJECTED);
         assertThat(result.actionType()).isEqualTo(ReportActionType.REJECT);
-        assertThat(result.reason()).isEqualTo("신고 사유에 해당하지 않음");
+        assertThat(action.getReasonCode()).isEqualTo(ReportActionReason.NOT_VIOLATION);
+        assertThat(result.reasonCode()).isEqualTo(ReportActionReason.NOT_VIOLATION);
+        assertThat(result.memo()).isEqualTo("맥락상 농담");
         assertThat(result.moderatorName()).isEqualTo("모루");
         assertThat(result.actedAt()).isEqualTo(NOW);
     }
@@ -107,7 +110,7 @@ class ReportModerationServiceTest {
     void moderate_이미_처리된_신고면_예외() {
         // given
         Report report = pendingReport();
-        report.moderate(ReportActionType.APPROVE, "먼저 처리", "1", "다른 운영자", NOW);
+        report.moderate(ReportActionType.APPROVE, ReportActionReason.ABUSE, null, "1", "다른 운영자", NOW);
         given(loadReportPort.findByIdForUpdate(REPORT_ID)).willReturn(Optional.of(report));
 
         // when & then
@@ -120,7 +123,10 @@ class ReportModerationServiceTest {
     }
 
     private ModerateReportCommand command(ReportActionType actionType) {
-        return new ModerateReportCommand(REPORT_ID, actionType, "신고 사유에 해당하지 않음", "1234567890", "모루");
+        ReportActionReason reason = actionType == ReportActionType.APPROVE
+            ? ReportActionReason.ABUSE
+            : ReportActionReason.NOT_VIOLATION;
+        return new ModerateReportCommand(REPORT_ID, actionType, reason, "맥락상 농담", "1234567890", "모루");
     }
 
     private Report pendingReport() {

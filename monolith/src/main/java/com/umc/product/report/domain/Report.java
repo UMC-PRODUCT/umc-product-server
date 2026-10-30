@@ -3,6 +3,7 @@ package com.umc.product.report.domain;
 import java.time.Instant;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.report.domain.enums.ReportActionReason;
 import com.umc.product.report.domain.enums.ReportActionType;
 import com.umc.product.report.domain.enums.ReportDeliveryStatus;
 import com.umc.product.report.domain.enums.ReportReason;
@@ -168,7 +169,8 @@ public class Report extends BaseEntity {
      */
     public ReportAction moderate(
         ReportActionType actionType,
-        String reason,
+        ReportActionReason reasonCode,
+        String memo,
         String moderatorExternalId,
         String moderatorName,
         Instant actedAt
@@ -179,7 +181,8 @@ public class Report extends BaseEntity {
         ReportAction action = ReportAction.record(
             this.id,
             actionType,
-            reason,
+            reasonCode,
+            memo,
             moderatorExternalId,
             moderatorName,
             actedAt

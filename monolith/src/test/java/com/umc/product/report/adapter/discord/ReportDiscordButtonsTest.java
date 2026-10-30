@@ -14,13 +14,13 @@ import com.umc.product.report.domain.enums.ReportActionType;
 class ReportDiscordButtonsTest {
 
     @Test
-    @DisplayName("신고 승인과 문제 없음 버튼을 report:{id}:{조치} 형식으로 만든다")
+    @DisplayName("처리 완료와 반려 버튼을 report:{id}:{조치} 형식으로 만든다")
     void actionRows_버튼을_만든다() {
         // when
         List<Map<String, Object>> buttons = buttons(ReportDiscordButtons.actionRows(901L, false));
 
         // then
-        assertThat(buttons).extracting(button -> button.get("label")).containsExactly("신고 승인", "문제 없음");
+        assertThat(buttons).extracting(button -> button.get("label")).containsExactly("처리 완료", "반려");
         assertThat(buttons).extracting(button -> button.get("custom_id"))
             .containsExactly("report:901:approve", "report:901:reject");
         assertThat(buttons).extracting(button -> button.get("disabled")).containsOnly(false);

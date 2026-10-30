@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.report.domain.enums.ReportActionReason;
 import com.umc.product.report.domain.enums.ReportActionType;
 import com.umc.product.report.domain.enums.ReportDeliveryStatus;
 import com.umc.product.report.domain.enums.ReportReason;
@@ -117,13 +118,16 @@ class ReportTest {
         Instant actedAt = Instant.parse("2026-10-29T00:00:00Z");
 
         // when
-        ReportAction action = report.moderate(ReportActionType.APPROVE, " 욕설 확인 ", "1234567890", "모루", actedAt);
+        ReportAction action = report.moderate(
+            ReportActionType.APPROVE, ReportActionReason.ABUSE, " 욕설 확인 ", "1234567890", "모루", actedAt
+        );
 
         // then
         assertThat(report.getStatus()).isEqualTo(ReportStatus.APPROVED);
         assertThat(action.getReportId()).isEqualTo(901L);
         assertThat(action.getActionType()).isEqualTo(ReportActionType.APPROVE);
-        assertThat(action.getReason()).isEqualTo("욕설 확인");
+        assertThat(action.getReasonCode()).isEqualTo(ReportActionReason.ABUSE);
+        assertThat(action.getMemo()).isEqualTo("욕설 확인");
         assertThat(action.getModeratorExternalId()).isEqualTo("1234567890");
         assertThat(action.getModeratorName()).isEqualTo("모루");
         assertThat(action.getActedAt()).isEqualTo(actedAt);
@@ -136,10 +140,14 @@ class ReportTest {
         Report report = savedReport();
 
         // when
-        report.moderate(ReportActionType.REJECT, "신고 사유 아님", "1234567890", "모루", Instant.now());
+        ReportAction action = report.moderate(
+            ReportActionType.REJECT, ReportActionReason.NOT_VIOLATION, "  ", "1234567890", "모루", Instant.now()
+        );
 
         // then
         assertThat(report.getStatus()).isEqualTo(ReportStatus.REJECTED);
+        assertThat(action.getReasonCode()).isEqualTo(ReportActionReason.NOT_VIOLATION);
+        assertThat(action.getMemo()).isNull();
     }
 
     @Test
@@ -147,10 +155,12 @@ class ReportTest {
     void moderate_이미_처리된_신고는_거부한다() {
         // given
         Report report = savedReport();
-        report.moderate(ReportActionType.APPROVE, "욕설 확인", "1", "모루", Instant.now());
+        report.moderate(ReportActionType.APPROVE, ReportActionReason.ABUSE, null, "1", "모루", Instant.now());
 
         // when & then
-        assertThatThrownBy(() -> report.moderate(ReportActionType.REJECT, "번복", "2", "다른 운영자", Instant.now()))
+        assertThatThrownBy(() -> report.moderate(
+            ReportActionType.REJECT, ReportActionReason.NOT_VIOLATION, "번복", "2", "다른 운영자", Instant.now()
+        ))
             .isInstanceOfSatisfying(ReportDomainException.class, exception ->
                 assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_MODERATED)
             );
@@ -158,18 +168,64 @@ class ReportTest {
     }
 
     @Test
-    @DisplayName("사유가 비었거나 500자를 넘으면 조치하지 않고 상태도 그대로 둔다")
-    void moderate_사유가_잘못되면_거부한다() {
+    @DisplayName("사유가 없거나 다른 조치의 사유, 메모 없는 기타 사유, 500자를 넘는 메모면 조치하지 않고 상태도 그대로 둔다")
+    void moderate_사유와_메모가_잘못되면_거부한다() {
         // given
         Report report = savedReport();
-        String tooLong = "가".repeat(ReportAction.REASON_MAX_LENGTH + 1);
+        String tooLong = "가".repeat(ReportAction.MEMO_MAX_LENGTH + 1);
 
         // when & then
-        assertThatThrownBy(() -> report.moderate(ReportActionType.APPROVE, " ", "1", "모루", Instant.now()))
+        assertThatThrownBy(() -> report.moderate(ReportActionType.APPROVE, null, null, "1", "모루", Instant.now()))
             .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> report.moderate(ReportActionType.APPROVE, tooLong, "1", "모루", Instant.now()))
-            .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> report.moderate(
+            ReportActionType.APPROVE, ReportActionReason.NOT_VIOLATION, null, "1", "모루", Instant.now()
+        )).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> report.moderate(
+            ReportActionType.REJECT, ReportActionReason.OTHER_REJECTION, " ", "1", "모루", Instant.now()
+        )).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> report.moderate(
+            ReportActionType.APPROVE, ReportActionReason.SPAM, tooLong, "1", "모루", Instant.now()
+        )).isInstanceOf(IllegalArgumentException.class);
         assertThat(report.getStatus()).isEqualTo(ReportStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("기타 사유는 메모가 있으면 조치한다")
+    void moderate_기타_사유는_메모와_함께_조치한다() {
+        // given
+        Report report = savedReport();
+
+        // when
+        ReportAction action = report.moderate(
+            ReportActionType.APPROVE, ReportActionReason.OTHER_VIOLATION, "사칭 의심", "1", "모루", Instant.now()
+        );
+
+        // then
+        assertThat(action.getReasonCode()).isEqualTo(ReportActionReason.OTHER_VIOLATION);
+        assertThat(action.getMemo()).isEqualTo("사칭 의심");
+    }
+
+    @Test
+    @DisplayName("모든 사유는 처리와 반려 중 한 조치에만 속한다")
+    void 사유는_조치별로_나뉜다() {
+        assertThat(ReportActionReason.values()).filteredOn(reason -> reason.actionType() == ReportActionType.APPROVE)
+            .containsExactly(
+                ReportActionReason.SPAM,
+                ReportActionReason.ABUSE,
+                ReportActionReason.INAPPROPRIATE,
+                ReportActionReason.PRIVACY,
+                ReportActionReason.OTHER_VIOLATION
+            );
+        assertThat(ReportActionReason.values()).filteredOn(reason -> reason.actionType() == ReportActionType.REJECT)
+            .containsExactly(
+                ReportActionReason.NOT_VIOLATION,
+                ReportActionReason.CONTENT_MISMATCH,
+                ReportActionReason.UNVERIFIABLE,
+                ReportActionReason.DUPLICATE,
+                ReportActionReason.OTHER_REJECTION
+            );
+        assertThat(ReportActionReason.values()).filteredOn(ReportActionReason::isMemoRequired)
+            .containsExactly(ReportActionReason.OTHER_VIOLATION, ReportActionReason.OTHER_REJECTION);
     }
 
     @Test
@@ -202,16 +258,18 @@ class ReportTest {
     }
 
     @Test
-    @DisplayName("사유 길이는 문자 단위로 세서 이모지 500개도 받아들인다")
-    void moderate_사유_길이는_문자_단위로_센다() {
+    @DisplayName("메모 길이는 문자 단위로 세서 이모지 500개도 받아들인다")
+    void moderate_메모_길이는_문자_단위로_센다() {
         // given
         Report report = savedReport();
 
         // when
-        ReportAction action = report.moderate(ReportActionType.APPROVE, "😀".repeat(500), "1", "모루", Instant.now());
+        ReportAction action = report.moderate(
+            ReportActionType.APPROVE, ReportActionReason.SPAM, "😀".repeat(500), "1", "모루", Instant.now()
+        );
 
         // then
-        assertThat(action.getReason()).isEqualTo("😀".repeat(500));
+        assertThat(action.getMemo()).isEqualTo("😀".repeat(500));
     }
 
     private Report savedReport() {
