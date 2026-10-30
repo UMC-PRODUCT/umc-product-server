@@ -93,7 +93,9 @@ public class TestContainersConfig {
     }
 
     private static PostgreSQLContainer<?> startPostgisContainer() {
-        PostgreSQLContainer<?> container = new PostgreSQLContainer<>(POSTGIS_IMAGE);
+        // 컨텍스트 캐시마다 Hikari 풀이 따로 생기므로 기본값(100)으로는 연결이 부족해진다.
+        PostgreSQLContainer<?> container = new PostgreSQLContainer<>(POSTGIS_IMAGE)
+            .withCommand("postgres", "-c", "max_connections=300");
         container.start();
         return container;
     }

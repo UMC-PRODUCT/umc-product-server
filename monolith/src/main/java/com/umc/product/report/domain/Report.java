@@ -3,10 +3,14 @@ package com.umc.product.report.domain;
 import java.time.Instant;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.report.domain.enums.ReportActionReason;
+import com.umc.product.report.domain.enums.ReportActionType;
 import com.umc.product.report.domain.enums.ReportDeliveryStatus;
 import com.umc.product.report.domain.enums.ReportReason;
 import com.umc.product.report.domain.enums.ReportStatus;
 import com.umc.product.report.domain.enums.ReportTargetType;
+import com.umc.product.report.domain.exception.ReportDomainException;
+import com.umc.product.report.domain.exception.ReportErrorCode;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -145,12 +149,46 @@ public class Report extends BaseEntity {
         }
     }
 
-    public void approve() {
-        this.status = ReportStatus.APPROVED;
+    /**
+     * 전달 대기(PENDING)나 실패(FAILED) 신고를 다시 전달하도록 되돌립니다. 실패 횟수도 처음부터 다시 셉니다.
+     *
+     * @throws IllegalStateException 이미 전달했거나 전달 기능 이전에 접수된 신고
+     */
+    public void requeueDelivery() {
+        if (this.deliveryStatus != ReportDeliveryStatus.PENDING && this.deliveryStatus != ReportDeliveryStatus.FAILED) {
+            throw new IllegalStateException("only PENDING or FAILED reports can be requeued: " + this.deliveryStatus);
+        }
+        this.deliveryStatus = ReportDeliveryStatus.PENDING;
+        this.deliveryAttemptCount = 0;
     }
 
-    public void reject() {
-        this.status = ReportStatus.REJECTED;
+    /**
+     * 처리 대기(PENDING) 신고에 운영자 조치를 한 번만 적용하고, 남길 조치 이력을 돌려줍니다.
+     *
+     * @throws ReportDomainException 이미 처리되었거나 반려된 신고면 {@link ReportErrorCode#REPORT_ALREADY_MODERATED}
+     */
+    public ReportAction moderate(
+        ReportActionType actionType,
+        ReportActionReason reasonCode,
+        String memo,
+        String moderatorExternalId,
+        String moderatorName,
+        Instant actedAt
+    ) {
+        if (this.status != ReportStatus.PENDING) {
+            throw new ReportDomainException(ReportErrorCode.REPORT_ALREADY_MODERATED);
+        }
+        ReportAction action = ReportAction.record(
+            this.id,
+            actionType,
+            reasonCode,
+            memo,
+            moderatorExternalId,
+            moderatorName,
+            actedAt
+        );
+        this.status = actionType.resultStatus();
+        return action;
     }
 
     private static Long requirePositive(Long value, String name) {
