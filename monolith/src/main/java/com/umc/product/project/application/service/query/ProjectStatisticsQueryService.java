@@ -473,10 +473,9 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
     }
 
     private boolean isEligibleChallenger(ChallengerInfo challenger) {
-        // 지원 가능 모집단(지부 인원)은 활동 중인 챌린저만 집계한다. 수료/제명 인원은 제외.
+        // 활동 중이며 지원 가능한 수강 파트가 있는 인원만 집계한다.
         return challenger.challengerStatus() == ChallengerStatus.ACTIVE
-            && challenger.part() != ChallengerPart.ADMIN
-            && challenger.part() != ChallengerPart.PLAN;
+            && MatchingType.fromPart(challenger.part()).isPresent();
     }
 
     private StatisticsContext buildContext(
