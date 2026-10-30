@@ -710,6 +710,30 @@ app:
           - http://localhost:5173
 
 # ==================================================================
+# configuration override for dev profile
+# ==================================================================
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+app:
+  sso:
+    clients:
+      local:
+        name: local dev
+        service-type: UNKNOWN
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - http://localhost:5173/auth/callback
+        allowed-origins:
+          - http://localhost:5173
+
+# ==================================================================
 # configuration override for local profile
 # ==================================================================
 
