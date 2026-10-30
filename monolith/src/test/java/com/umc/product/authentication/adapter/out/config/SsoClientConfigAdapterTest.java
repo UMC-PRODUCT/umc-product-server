@@ -168,11 +168,11 @@ class SsoClientConfigAdapterTest {
         });
     }
 
-    @DisplayName("alpha profile은 웹 client를 localhost로 덮어쓰고 앱 client는 기본 설정을 유지한다")
+    @DisplayName("dev profile은 웹 client를 dev 주소로 덮어쓰고 local client를 추가하며 앱 client는 기본 설정을 유지한다")
     @Test
-    void application_yml_alpha_sso_client_binding_성공() {
+    void application_yml_dev_sso_client_binding_성공() {
         contextRunner
-            .withPropertyValues("spring.profiles.active=alpha")
+            .withPropertyValues("spring.profiles.active=dev")
             .run(context -> {
                 SsoClientConfigAdapter adapter = context.getBean(SsoClientConfigAdapter.class);
 
@@ -190,6 +190,11 @@ class SsoClientConfigAdapterTest {
                     adapter.getByClientId("tech"),
                     "https://dev.tech.university.neordinary.com/auth/callback",
                     "https://dev.tech.university.neordinary.com"
+                );
+                assertDevWebClient(
+                    adapter.getByClientId("local"),
+                    "http://localhost:5173/auth/callback",
+                    "http://localhost:5173"
                 );
 
                 SsoClient iosApp = adapter.getByClientId("ios-app");

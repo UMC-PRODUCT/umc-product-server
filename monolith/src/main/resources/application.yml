@@ -70,10 +70,7 @@ spring:
       keepalive-time: 60000 # DB에 1분마다 생존 신고 (유휴 커넥션 방지)
 
   flyway:
-    # 부팅 시 자동 migrate 여부. 로컬/테스트는 true(기본값), 배포 환경(prod/alpha)은
-    # SSM 에 FLYWAY_ENABLED=false 를 넣어 끈다. 배포 환경의 마이그레이션은
-    # `DB Migrate [Flyway]` 워크플로우(workflow_dispatch)로만 수행한다.
-    # 참고: docs/infra/flyway-migration-runbook.md
+    # 부팅 시 자동 migrate 여부. 기본값 true 이며 배포 환경(k3s prod/dev)도 부팅 시 migrate 한다.
     enabled: ${FLYWAY_ENABLED:true}
     baseline-version: 2026.02.25.01.30
     baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
@@ -206,7 +203,7 @@ springdoc:
 #     DB span 트레이싱은 그대로 동작한다 (SQL 원문 라인만 사라짐).
 #   - local 프로필은 파일 하단(on-profile: local)에서 enable-logging=true 로 재정의하므로,
 #     로컬 개발자는 별도 env 설정 없이 SQL 라인을 본다.
-# 환경변수 기본값: local=true / alpha·staging·prod·test=false
+# 환경변수 기본값: local=true / dev·staging·prod·test=false
 # ====================================================================
 decorator:
   datasource:
@@ -634,14 +631,14 @@ storage:
 
 
 # ==================================================================
-# configuration override for alpha profile
+# configuration override for dev profile
 # ==================================================================
 
 ---
 spring:
   config:
     activate:
-      on-profile: alpha
+      on-profile: dev
   graphql:
     schema:
       introspection:
@@ -669,7 +666,7 @@ app:
   sso:
     clients:
       backoffice:
-        name: alpha backoffice
+        name: dev backoffice
         service-type: UMC_BACKOFFICE
         environment: DEV
         require-pkce: true
@@ -679,7 +676,7 @@ app:
         allowed-origins:
           - https://dev.admin.university.neordinary.com
       website:
-        name: alpha website
+        name: dev website
         service-type: UMC_WEBSITE
         environment: DEV
         require-pkce: true
@@ -698,30 +695,6 @@ app:
           - https://dev.tech.university.neordinary.com/auth/callback
         allowed-origins:
           - https://dev.tech.university.neordinary.com
-      local:
-        name: local dev
-        service-type: UNKNOWN
-        environment: DEV
-        require-pkce: true
-        access-token-ttl: PT1H
-        redirect-uris:
-          - http://localhost:5173/auth/callback
-        allowed-origins:
-          - http://localhost:5173
-
-# ==================================================================
-# configuration override for dev profile
-# ==================================================================
-
----
-spring:
-  config:
-    activate:
-      on-profile: dev
-
-app:
-  sso:
-    clients:
       local:
         name: local dev
         service-type: UNKNOWN
