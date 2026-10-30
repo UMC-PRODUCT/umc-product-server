@@ -12,11 +12,10 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.ssm.SsmClient;
 
 @Configuration
 @ConditionalOnProperty(name = "storage.provider", havingValue = "s3")
-@EnableConfigurationProperties({S3StorageProperties.class, AppSsmProperties.class})
+@EnableConfigurationProperties(S3StorageProperties.class)
 public class S3Config {
 
     @Bean
@@ -35,14 +34,6 @@ public class S3Config {
             .build();
     }
 
-    @Bean
-    public SsmClient ssmClient(S3StorageProperties properties, AppSsmProperties ssmProperties) {
-        return SsmClient.builder()
-            .region(Region.of(resolveSsmRegion(properties, ssmProperties)))
-            .credentialsProvider(resolveSsmCredentials(ssmProperties))
-            .build();
-    }
-
     AwsCredentialsProvider resolveS3Credentials(S3StorageProperties properties) {
         if (properties.accessKeyId() != null && !properties.accessKeyId().isBlank()
             && properties.secretAccessKey() != null && !properties.secretAccessKey().isBlank()) {
@@ -52,23 +43,5 @@ public class S3Config {
         }
 
         return DefaultCredentialsProvider.builder().build();
-    }
-
-    AwsCredentialsProvider resolveSsmCredentials(AppSsmProperties ssmProperties) {
-        if (ssmProperties != null && ssmProperties.hasStaticCredentials()) {
-            return StaticCredentialsProvider.create(
-                AwsBasicCredentials.create(ssmProperties.accessKeyId(), ssmProperties.secretAccessKey())
-            );
-        }
-
-        return DefaultCredentialsProvider.builder().build();
-    }
-
-    String resolveSsmRegion(S3StorageProperties properties, AppSsmProperties ssmProperties) {
-        if (ssmProperties != null && ssmProperties.hasRegion()) {
-            return ssmProperties.region();
-        }
-
-        return properties.region();
     }
 }
