@@ -26,38 +26,6 @@ public record MemberInfo(
     MemberStatus status,
     List<ChallengerRoleInfo> roles
 ) {
-    @Deprecated
-    public static MemberInfo from(Member member) {
-        return new MemberInfo(
-            member.getId(),
-            member.getName(),
-            member.getNickname(),
-            member.getEmail(),
-            member.getSchoolId(),
-            "알 수 없음 ",
-            member.getProfileImageId(),
-            null,
-            member.getStatus(),
-            null
-        );
-    }
-
-    @Deprecated
-    public static MemberInfo from(Member member, String schoolName, String profileImageLink) {
-        return new MemberInfo(
-            member.getId(),
-            member.getName(),
-            member.getNickname(),
-            member.getEmail(),
-            member.getSchoolId(),
-            schoolName,
-            member.getProfileImageId(),
-            profileImageLink,
-            member.getStatus(),
-            null
-        );
-    }
-
     public static MemberInfo from(
         Member member, String schoolName, String profileImageLink, List<ChallengerRoleInfo> roles
     ) {
@@ -79,20 +47,5 @@ public record MemberInfo(
         if (schoolId == null) {
             throw new MemberDomainException(MemberErrorCode.MEMBER_SCHOOL_NOT_ASSIGNED);
         }
-    }
-
-    public MemberInfo toPublic() {
-        return MemberInfo.builder()
-            .id(this.id)
-            .name(this.name)
-            .nickname(this.nickname)
-            .email("알 수 없음")
-            .schoolId(this.schoolId)
-            .schoolName(this.schoolName)
-            .profileImageId(this.profileImageId)
-            .profileImageLink(this.profileImageLink)
-            .status(this.status)
-            .roles(this.roles)
-            .build();
     }
 }
