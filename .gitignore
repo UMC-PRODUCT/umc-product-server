@@ -269,5 +269,3 @@ scripts/
 !scripts/
 !scripts/build-app-image.sh
 !scripts/measure-boot-time.sh
-!scripts/aws-infra-inventory.sh
-docs/infra/aws-current-inventory/
