@@ -62,7 +62,7 @@ class DemodayVoteQrQueryServiceTest {
         // then
         assertThat(info.pollId()).isEqualTo(POLL_ID);
         assertThat(info.qrValue())
-            .isEqualTo("https://vote.test.umc.it.kr/demoday/polls/10/vote-authorization#token=signed-token");
+            .isEqualTo("https://vote.umc.test/demoday/polls/10/vote-authorization#token=signed-token");
         assertThat(info.generatedAt()).isEqualTo(WINDOW_START);
         assertThat(info.expiresAt()).isEqualTo(WINDOW_END);
         then(adminAccessChecker).should().validateAdminAccess(MEMBER_ID, GISU_ID);
@@ -104,7 +104,7 @@ class DemodayVoteQrQueryServiceTest {
             loadDemodayPollPort,
             adminAccessChecker,
             generateDemodayVoteQrCredentialPort,
-            new DemodayQrProperties("https://vote.test.umc.it.kr"),
+            new DemodayQrProperties("https://vote.umc.test"),
             clock);
     }
 
