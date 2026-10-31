@@ -24,20 +24,20 @@ public class FormSectionQueryService implements GetFormSectionUseCase {
     @Override
     public Optional<FormSectionInfo> findById(Long sectionId) {
         return loadFormSectionPort.findById(sectionId)
-            .map(FormSectionInfo::from);
+            .map(FormQueryInfoAssembler::toFormSectionInfo);
     }
 
     @Override
     public FormSectionInfo getById(Long sectionId) {
         return loadFormSectionPort.findById(sectionId)
-            .map(FormSectionInfo::from)
+            .map(FormQueryInfoAssembler::toFormSectionInfo)
             .orElseThrow(() -> new FormDomainException(FormErrorCode.FORM_NOT_FOUND));
     }
 
     @Override
     public List<FormSectionInfo> listByFormId(Long formId) {
         return loadFormSectionPort.listByFormId(formId).stream()
-            .map(FormSectionInfo::from)
+            .map(FormQueryInfoAssembler::toFormSectionInfo)
             .toList();
     }
 }

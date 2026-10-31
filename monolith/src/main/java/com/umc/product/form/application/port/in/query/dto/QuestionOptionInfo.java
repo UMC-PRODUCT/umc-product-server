@@ -2,8 +2,6 @@ package com.umc.product.form.application.port.in.query.dto;
 
 import java.time.Instant;
 
-import com.umc.product.form.domain.QuestionOption;
-
 import lombok.Builder;
 
 /**
@@ -20,17 +18,4 @@ public record QuestionOptionInfo(
     Instant createdAt,
     Instant updatedAt
 ) {
-
-    public static QuestionOptionInfo from(QuestionOption option) {
-        return QuestionOptionInfo.builder()
-            .id(option.getId())
-            .questionId(option.getQuestion().getId())
-            .content(option.getContent())
-            .orderNo(option.getOrderNo())
-            .isOther(option.isOther())
-            .nextSectionId(option.getNextSectionId())
-            .createdAt(option.getCreatedAt())
-            .updatedAt(option.getUpdatedAt())
-            .build();
-    }
 }
