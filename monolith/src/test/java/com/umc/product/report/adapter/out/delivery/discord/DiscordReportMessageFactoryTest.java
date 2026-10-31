@@ -152,16 +152,35 @@ class DiscordReportMessageFactoryTest {
     }
 
     private Report userReport(ReportReason reason, String detail, ReportTargetSnapshot snapshot) {
-        Report report = Report.createUser(1L, 7L, reason, detail, snapshot);
+        Report report = Report.createUser(1L, 7L, List.of(reason), detail, snapshot);
         ReflectionTestUtils.setField(report, "id", 901L);
         ReflectionTestUtils.setField(report, "createdAt", Instant.parse("2026-10-26T09:00:00Z"));
         return report;
     }
 
     private Report threadMessageReport(ReportTargetSnapshot snapshot) {
-        Report report = Report.createThreadMessage(1L, 11L, 33L, ReportReason.ABUSE, snapshot);
+        Report report = Report.createThreadMessage(1L, 11L, 33L, List.of(ReportReason.ABUSE), snapshot);
         ReflectionTestUtils.setField(report, "id", 901L);
         ReflectionTestUtils.setField(report, "createdAt", Instant.parse("2026-10-26T09:00:00Z"));
         return report;
+    }
+
+    @Test
+    @DisplayName("사유가 여러 개면 사유 라벨을 모두 쉼표로 이어서 보여 준다")
+    void create_여러_사유를_쉼표로_이어서_표시한다() {
+        // given
+        Report report = Report.createUser(
+            1L, 7L, List.of(ReportReason.HARASSMENT, ReportReason.SPAM, ReportReason.ETC), "상세",
+            ReportTargetSnapshot.of(7L, null, "대상닉네임")
+        );
+        ReflectionTestUtils.setField(report, "id", 901L);
+
+        // when
+        List<Map<String, Object>> fields = fields(sut.create(report));
+
+        // then
+        assertThat(fields).filteredOn(field -> "사유".equals(field.get("name")))
+            .extracting(field -> field.get("value"))
+            .containsExactly("괴롭힘·지속적인 불쾌 행위, 스팸, 기타");
     }
 }

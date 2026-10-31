@@ -62,7 +62,7 @@ class ReportPersistenceAdapterTest {
         Report legacy = Report.create(1L, ReportTargetType.COMMENT, 2L, "기존 사유");
         CommunityThread thread = threadRepository.save(createThread(130L));
         Report threadMessage = Report.createThreadMessage(
-            3L, thread.getId(), 5L, ReportReason.SPAM, ReportTargetSnapshot.of(7L, "신고 대상 메시지", "스레드 제목")
+            3L, thread.getId(), 5L, List.of(ReportReason.SPAM), ReportTargetSnapshot.of(7L, "신고 대상 메시지", "스레드 제목")
         );
 
         // when
@@ -155,7 +155,7 @@ class ReportPersistenceAdapterTest {
         }
         try {
             transactionTemplate.executeWithoutResult(status -> sut.save(
-                Report.createThreadMessage(10L, threadId, 30L, ReportReason.ABUSE, null)
+                Report.createThreadMessage(10L, threadId, 30L, List.of(ReportReason.ABUSE), null)
             ));
             return SaveResult.SAVED;
         } catch (ReportDomainException exception) {
@@ -169,7 +169,7 @@ class ReportPersistenceAdapterTest {
     void save_사용자_신고를_보존한다() {
         // given
         Report report = Report.createUser(
-            1L, 2L, ReportReason.HARASSMENT, "반복해서 불쾌한 메시지를 보내요.", ReportTargetSnapshot.of(2L, null, "대상닉네임")
+            1L, 2L, List.of(ReportReason.HARASSMENT), "반복해서 불쾌한 메시지를 보내요.", ReportTargetSnapshot.of(2L, null, "대상닉네임")
         );
 
         // when
@@ -195,11 +195,11 @@ class ReportPersistenceAdapterTest {
     @DisplayName("같은 신고자가 같은 사용자를 다시 신고하면 REPORT_ALREADY_EXISTS로 거부한다")
     void save_사용자_중복_신고를_거부한다() {
         // given
-        sut.save(Report.createUser(1L, 2L, ReportReason.SPAM, "첫 신고", null));
+        sut.save(Report.createUser(1L, 2L, List.of(ReportReason.SPAM), "첫 신고", null));
         reportRepository.flush();
 
         // when & then
-        assertThatThrownBy(() -> sut.save(Report.createUser(1L, 2L, ReportReason.ETC, "다시 신고", null)))
+        assertThatThrownBy(() -> sut.save(Report.createUser(1L, 2L, List.of(ReportReason.ETC), "다시 신고", null)))
             .isInstanceOfSatisfying(ReportDomainException.class, exception ->
                 assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS)
             );
@@ -220,5 +220,54 @@ class ReportPersistenceAdapterTest {
             10L,
             NOW
         );
+    }
+
+    @Test
+    @DisplayName("신고 사유를 report_reason에 고른 순서대로 저장하고 다시 조회한다")
+    void save_여러_사유를_순서대로_보존한다() {
+        // given
+        Report report = Report.createUser(
+            1L, 2L, List.of(ReportReason.SPAM, ReportReason.HARASSMENT, ReportReason.ETC), "상세", null
+        );
+
+        // when
+        sut.save(report);
+        reportRepository.flush();
+        Long reportId = report.getId();
+        entityManager.clear();
+
+        // then
+        Report reloaded = sut.findById(reportId).orElseThrow();
+        assertThat(reloaded.getReasons())
+            .containsExactly(ReportReason.SPAM, ReportReason.HARASSMENT, ReportReason.ETC);
+        assertThat(reloaded.getReasonCode()).isEqualTo(ReportReason.SPAM);
+        assertThat(entityManager.getEntityManager()
+            .createNativeQuery("select reason_code from report_reason where report_id = :id order by sort_order")
+            .setParameter("id", reportId)
+            .getResultList())
+            .containsExactly("SPAM", "HARASSMENT", "ETC");
+    }
+
+    @Test
+    @DisplayName("report_reason이 비어 있는(backfill 이전·예전 서버가 접수한) 신고도 reason_code로 조회한다")
+    void findById_report_reason이_없는_신고는_대표_사유로_조회한다() {
+        // given
+        CommunityThread thread = threadRepository.save(createThread(131L));
+        Report report = Report.createThreadMessage(1L, thread.getId(), 30L, List.of(ReportReason.ABUSE), null);
+        sut.save(report);
+        reportRepository.flush();
+        Long reportId = report.getId();
+        entityManager.getEntityManager()
+            .createNativeQuery("delete from report_reason where report_id = :id")
+            .setParameter("id", reportId)
+            .executeUpdate();
+        entityManager.clear();
+
+        // when
+        Report reloaded = sut.findById(reportId).orElseThrow();
+
+        // then
+        assertThat(reloaded.getReasons()).isEmpty();
+        assertThat(reloaded.getReasonCodes()).containsExactly(ReportReason.ABUSE);
     }
 }

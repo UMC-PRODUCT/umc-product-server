@@ -8,6 +8,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -66,7 +67,7 @@ class ReportSubmissionServiceTest {
 
         // when
         SubmitReportResult result = sut.submit(
-            SubmitReportCommand.threadMessage(REPORTER_ID, THREAD_ID, MESSAGE_ID, ReportReason.ABUSE, SNAPSHOT)
+            SubmitReportCommand.threadMessage(REPORTER_ID, THREAD_ID, MESSAGE_ID, List.of(ReportReason.ABUSE), SNAPSHOT)
         );
 
         // then
@@ -117,7 +118,7 @@ class ReportSubmissionServiceTest {
 
         // when & then
         assertThatThrownBy(() -> sut.submit(
-            SubmitReportCommand.threadMessage(REPORTER_ID, THREAD_ID, MESSAGE_ID, ReportReason.ABUSE, SNAPSHOT)
+            SubmitReportCommand.threadMessage(REPORTER_ID, THREAD_ID, MESSAGE_ID, List.of(ReportReason.ABUSE), SNAPSHOT)
         ))
             .isInstanceOfSatisfying(ReportDomainException.class, exception ->
                 assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS)
@@ -138,7 +139,7 @@ class ReportSubmissionServiceTest {
 
         // when & then
         assertThatThrownBy(() -> sut.submit(
-            SubmitReportCommand.threadMessage(REPORTER_ID, THREAD_ID, MESSAGE_ID, ReportReason.ABUSE, SNAPSHOT)
+            SubmitReportCommand.threadMessage(REPORTER_ID, THREAD_ID, MESSAGE_ID, List.of(ReportReason.ABUSE), SNAPSHOT)
         )).isSameAs(duplicate);
         then(domainEventPublisher).shouldHaveNoInteractions();
     }
@@ -154,7 +155,7 @@ class ReportSubmissionServiceTest {
 
         // when
         SubmitReportResult result = sut.submit(SubmitReportCommand.user(
-            REPORTER_ID, 8L, ReportReason.IMPERSONATION, " 다른 사람 사진을 써요 ",
+            REPORTER_ID, 8L, List.of(ReportReason.IMPERSONATION), " 다른 사람 사진을 써요 ",
             new SubmitReportCommand.TargetSnapshot(8L, null, "대상닉네임")
         ));
 
@@ -181,7 +182,7 @@ class ReportSubmissionServiceTest {
 
         // when & then
         assertThatThrownBy(() -> sut.submit(
-            SubmitReportCommand.user(REPORTER_ID, 8L, ReportReason.SPAM, "상세", null)
+            SubmitReportCommand.user(REPORTER_ID, 8L, List.of(ReportReason.SPAM), "상세", null)
         ))
             .isInstanceOfSatisfying(ReportDomainException.class, exception ->
                 assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS)
@@ -200,7 +201,7 @@ class ReportSubmissionServiceTest {
 
         // when & then
         assertThatThrownBy(() -> sut.submit(
-            SubmitReportCommand.user(REPORTER_ID, REPORTER_ID, ReportReason.SPAM, "상세", null)
+            SubmitReportCommand.user(REPORTER_ID, REPORTER_ID, List.of(ReportReason.SPAM), "상세", null)
         ))
             .isInstanceOfSatisfying(ReportDomainException.class, exception ->
                 assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_SELF_REPORT)
@@ -227,5 +228,27 @@ class ReportSubmissionServiceTest {
         then(domainEventPublisher).should().publish(captor.capture());
         assertThat(captor.getValue()).isInstanceOf(ReportSubmittedEvent.class);
         return ((ReportSubmittedEvent) captor.getValue()).reportId();
+    }
+
+    @Test
+    @DisplayName("사유를 여러 개 골라도 신고는 1건만 저장하고 사유를 순서대로 담는다")
+    void submit_여러_사유도_신고_1건으로_저장한다() {
+        // given
+        given(loadReportPort.existsByReporterIdAndTargetTypeAndTargetId(
+            REPORTER_ID, ReportTargetType.THREAD_MESSAGE, MESSAGE_ID
+        )).willReturn(false);
+        Report persisted = persisted(905L);
+        given(saveReportPort.save(any(Report.class))).willReturn(persisted);
+
+        // when
+        sut.submit(SubmitReportCommand.threadMessage(
+            REPORTER_ID, THREAD_ID, MESSAGE_ID, List.of(ReportReason.SPAM, ReportReason.ABUSE, ReportReason.SPAM),
+            SNAPSHOT
+        ));
+
+        // then
+        Report saved = capturedReport();
+        assertThat(saved.getReasons()).containsExactly(ReportReason.SPAM, ReportReason.ABUSE);
+        assertThat(saved.getReasonCode()).isEqualTo(ReportReason.SPAM);
     }
 }

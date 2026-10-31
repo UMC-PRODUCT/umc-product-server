@@ -10,6 +10,7 @@ import static org.mockito.Mockito.never;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -216,7 +217,7 @@ class ReportModerationServiceTest {
 
     private Report threadMessageReport() {
         Report report = Report.createThreadMessage(
-            1L, THREAD_ID, MESSAGE_ID, ReportReason.ABUSE, ReportTargetSnapshot.of(4L, "신고 대상 메시지", "스레드 제목")
+            1L, THREAD_ID, MESSAGE_ID, List.of(ReportReason.ABUSE), ReportTargetSnapshot.of(4L, "신고 대상 메시지", "스레드 제목")
         );
         ReflectionTestUtils.setField(report, "id", REPORT_ID);
         return report;

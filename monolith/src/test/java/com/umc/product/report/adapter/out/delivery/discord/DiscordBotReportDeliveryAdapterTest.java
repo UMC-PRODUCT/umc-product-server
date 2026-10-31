@@ -10,6 +10,8 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -87,7 +89,7 @@ class DiscordBotReportDeliveryAdapterTest {
 
     private Report report() {
         Report report = Report.createThreadMessage(
-            1L, 11L, 33L, ReportReason.ABUSE, ReportTargetSnapshot.of(4L, "신고 대상 메시지", "스레드 제목")
+            1L, 11L, 33L, List.of(ReportReason.ABUSE), ReportTargetSnapshot.of(4L, "신고 대상 메시지", "스레드 제목")
         );
         ReflectionTestUtils.setField(report, "id", 901L);
         return report;

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -38,7 +39,7 @@ public class DiscordReportMessageFactory {
     private Map<String, Object> embed(Report report) {
         List<Map<String, Object>> fields = new ArrayList<>();
         fields.add(field("신고 ID", String.valueOf(report.getId()), true));
-        fields.add(field("사유", reasonLabel(report.getReasonCode()), true));
+        fields.add(field("사유", reasonLabels(report.getReasonCodes()), true));
         fields.add(field("대상", targetLabel(report), true));
 
         ReportTargetSnapshot snapshot = report.getTargetSnapshot();
@@ -84,10 +85,16 @@ public class DiscordReportMessageFactory {
         return target;
     }
 
-    private static String reasonLabel(ReportReason reason) {
-        if (reason == null) {
+    private static String reasonLabels(List<ReportReason> reasons) {
+        if (reasons.isEmpty()) {
             return "사유 없음";
         }
+        return reasons.stream()
+            .map(DiscordReportMessageFactory::reasonLabel)
+            .collect(Collectors.joining(", "));
+    }
+
+    private static String reasonLabel(ReportReason reason) {
         return switch (reason) {
             case SPAM -> "스팸";
             case ABUSE -> "욕설/비방";

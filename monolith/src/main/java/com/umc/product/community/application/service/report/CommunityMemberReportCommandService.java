@@ -37,11 +37,11 @@ public class CommunityMemberReportCommandService implements ReportCommunityMembe
         SubmitReportResult submitted = submitReportUseCase.submit(SubmitReportCommand.user(
             command.requesterMemberId(),
             command.targetMemberId(),
-            command.reason(),
+            command.reasons(),
             command.detail(),
             // 사용자 신고는 내용 대신 신고 당시 닉네임을 위치(context)에 남깁니다.
             new SubmitReportCommand.TargetSnapshot(command.targetMemberId(), null, target.nickname())
         ));
-        return CommunityMemberReportReceiptInfo.from(submitted, command.targetMemberId(), command.reason());
+        return CommunityMemberReportReceiptInfo.from(submitted, command.targetMemberId());
     }
 }

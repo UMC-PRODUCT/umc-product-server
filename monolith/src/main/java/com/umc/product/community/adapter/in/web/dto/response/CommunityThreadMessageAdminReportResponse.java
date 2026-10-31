@@ -3,6 +3,7 @@ package com.umc.product.community.adapter.in.web.dto.response;
 import static com.umc.product.community.adapter.in.web.CommunityWebNumbers.text;
 
 import java.time.Instant;
+import java.util.List;
 
 import com.umc.product.community.application.port.in.query.thread.report.dto.CommunityThreadMessageAdminReportInfo;
 import com.umc.product.report.domain.enums.ReportReason;
@@ -13,6 +14,7 @@ public record CommunityThreadMessageAdminReportResponse(
     String threadId,
     String messageId,
     ReportReason reason,
+    List<ReportReason> reasons,
     ReportStatus status,
     String reporterId,
     Instant createdAt
@@ -26,6 +28,7 @@ public record CommunityThreadMessageAdminReportResponse(
             text(info.threadId()),
             text(info.messageId()),
             info.reason(),
+            info.reasons(),
             info.status(),
             text(info.reporterId()),
             info.createdAt()

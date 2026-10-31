@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -53,17 +54,17 @@ class CommunityMemberReportCommandServiceTest {
         // given
         given(getMemberUseCase.getById(TARGET_ID)).willReturn(member("대상닉네임"));
         given(submitReportUseCase.submit(any(SubmitReportCommand.class)))
-            .willReturn(new SubmitReportResult(901L, CREATED_AT));
+            .willReturn(new SubmitReportResult(901L, List.of(ReportReason.HARASSMENT, ReportReason.SPAM), CREATED_AT));
 
         // when
         CommunityMemberReportReceiptInfo receipt = sut.report(
-            new ReportCommunityMemberCommand(TARGET_ID, REQUESTER_ID, ReportReason.HARASSMENT, "상세 내용")
+            new ReportCommunityMemberCommand(TARGET_ID, REQUESTER_ID, List.of(ReportReason.HARASSMENT, ReportReason.SPAM), "상세 내용")
         );
 
         // then
         assertThat(receipt.reportId()).isEqualTo(901L);
         assertThat(receipt.memberId()).isEqualTo(TARGET_ID);
-        assertThat(receipt.reason()).isEqualTo(ReportReason.HARASSMENT);
+        assertThat(receipt.reasons()).containsExactly(ReportReason.HARASSMENT, ReportReason.SPAM);
         assertThat(receipt.createdAt()).isEqualTo(CREATED_AT);
 
         ArgumentCaptor<SubmitReportCommand> captor = ArgumentCaptor.forClass(SubmitReportCommand.class);
@@ -73,7 +74,7 @@ class CommunityMemberReportCommandServiceTest {
         assertThat(submitted.targetType()).isEqualTo(ReportTargetType.USER);
         assertThat(submitted.targetId()).isEqualTo(TARGET_ID);
         assertThat(submitted.threadId()).isNull();
-        assertThat(submitted.reasonCode()).isEqualTo(ReportReason.HARASSMENT);
+        assertThat(submitted.reasons()).containsExactly(ReportReason.HARASSMENT, ReportReason.SPAM);
         assertThat(submitted.detail()).isEqualTo("상세 내용");
         assertThat(submitted.targetSnapshot().authorId()).isEqualTo(TARGET_ID);
         assertThat(submitted.targetSnapshot().content()).isNull();
@@ -89,7 +90,7 @@ class CommunityMemberReportCommandServiceTest {
 
         // when & then
         assertThatThrownBy(() -> sut.report(
-            new ReportCommunityMemberCommand(TARGET_ID, REQUESTER_ID, ReportReason.SPAM, "상세")
+            new ReportCommunityMemberCommand(TARGET_ID, REQUESTER_ID, List.of(ReportReason.SPAM), "상세")
         )).isInstanceOfSatisfying(MemberDomainException.class, exception ->
             assertThat(exception.getBaseCode()).isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND)
         );
@@ -101,7 +102,7 @@ class CommunityMemberReportCommandServiceTest {
     void report_자기_자신_신고를_거부한다() {
         // when & then
         assertThatThrownBy(() -> sut.report(
-            new ReportCommunityMemberCommand(REQUESTER_ID, REQUESTER_ID, ReportReason.SPAM, "상세")
+            new ReportCommunityMemberCommand(REQUESTER_ID, REQUESTER_ID, List.of(ReportReason.SPAM), "상세")
         )).isInstanceOfSatisfying(ReportDomainException.class, exception ->
             assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_SELF_REPORT)
         );
@@ -119,7 +120,7 @@ class CommunityMemberReportCommandServiceTest {
 
         // when & then
         assertThatThrownBy(() -> sut.report(
-            new ReportCommunityMemberCommand(TARGET_ID, REQUESTER_ID, ReportReason.SPAM, "상세")
+            new ReportCommunityMemberCommand(TARGET_ID, REQUESTER_ID, List.of(ReportReason.SPAM), "상세")
         )).isInstanceOfSatisfying(ReportDomainException.class, exception ->
             assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS)
         );

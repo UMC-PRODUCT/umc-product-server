@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,6 +73,6 @@ class ReportPersistenceAdapterConstraintTranslationTest {
     }
 
     private Report report() {
-        return Report.createThreadMessage(10L, 20L, 30L, ReportReason.SPAM, null);
+        return Report.createThreadMessage(10L, 20L, 30L, List.of(ReportReason.SPAM), null);
     }
 }

@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -64,18 +65,19 @@ class CommunityMemberReportControllerTest {
     @DisplayName("사용자 신고는 CurrentMember와 사유, 상세 내용을 use case에 전달하고 접수 응답을 돌려준다")
     void reportMember_usesCurrentMemberAndReturnsReceipt() throws Exception {
         given(reportMemberUseCase.report(any())).willReturn(
-            new CommunityMemberReportReceiptInfo(700L, 500L, ReportReason.HARASSMENT, NOW)
+            new CommunityMemberReportReceiptInfo(700L, 500L, List.of(ReportReason.HARASSMENT, ReportReason.SPAM), NOW)
         );
 
         mockMvc.perform(post("/api/v1/community/members/500/reports")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"reason":"HARASSMENT","detail":"반복해서 불쾌한 메시지를 보내요."}
+                    {"reasons":["HARASSMENT","SPAM"],"detail":"반복해서 불쾌한 메시지를 보내요."}
                     """))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.result.reportId").value("700"))
             .andExpect(jsonPath("$.result.memberId").value("500"))
-            .andExpect(jsonPath("$.result.reason").value("HARASSMENT"))
+            .andExpect(jsonPath("$.result.reasons[0]").value("HARASSMENT"))
+            .andExpect(jsonPath("$.result.reasons[1]").value("SPAM"))
             .andExpect(jsonPath("$.result.reporterId").doesNotExist());
 
         ArgumentCaptor<ReportCommunityMemberCommand> captor =
@@ -83,7 +85,7 @@ class CommunityMemberReportControllerTest {
         then(reportMemberUseCase).should().report(captor.capture());
         assertThat(captor.getValue().targetMemberId()).isEqualTo(500L);
         assertThat(captor.getValue().requesterMemberId()).isEqualTo(REQUESTER_ID);
-        assertThat(captor.getValue().reason()).isEqualTo(ReportReason.HARASSMENT);
+        assertThat(captor.getValue().reasons()).containsExactly(ReportReason.HARASSMENT, ReportReason.SPAM);
         assertThat(captor.getValue().detail()).isEqualTo("반복해서 불쾌한 메시지를 보내요.");
     }
 
@@ -91,12 +93,12 @@ class CommunityMemberReportControllerTest {
     @DisplayName("상세 내용이 정확히 500자면 접수한다")
     void reportMember_acceptsDetailOfMaxLength() throws Exception {
         given(reportMemberUseCase.report(any())).willReturn(
-            new CommunityMemberReportReceiptInfo(700L, 500L, ReportReason.SPAM, NOW)
+            new CommunityMemberReportReceiptInfo(700L, 500L, List.of(ReportReason.SPAM), NOW)
         );
 
         mockMvc.perform(post("/api/v1/community/members/500/reports")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"reason\":\"SPAM\",\"detail\":\"" + "가".repeat(500) + "\"}"))
+                .content("{\"reasons\":[\"SPAM\"],\"detail\":\"" + "가".repeat(500) + "\"}"))
             .andExpect(status().isCreated());
     }
 
@@ -106,7 +108,7 @@ class CommunityMemberReportControllerTest {
     void reportMember_rejectsBlankDetail(String detail) throws Exception {
         mockMvc.perform(post("/api/v1/community/members/500/reports")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"reason\":\"SPAM\",\"detail\":\"" + detail + "\"}"))
+                .content("{\"reasons\":[\"SPAM\"],\"detail\":\"" + detail + "\"}"))
             .andExpect(status().isBadRequest());
 
         then(reportMemberUseCase).shouldHaveNoInteractions();
@@ -117,7 +119,7 @@ class CommunityMemberReportControllerTest {
     void reportMember_rejectsMissingDetail() throws Exception {
         mockMvc.perform(post("/api/v1/community/members/500/reports")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"reason\":\"SPAM\"}"))
+                .content("{\"reasons\":[\"SPAM\"]}"))
             .andExpect(status().isBadRequest());
 
         then(reportMemberUseCase).shouldHaveNoInteractions();
@@ -128,7 +130,7 @@ class CommunityMemberReportControllerTest {
     void reportMember_rejectsTooLongDetail() throws Exception {
         mockMvc.perform(post("/api/v1/community/members/500/reports")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"reason\":\"SPAM\",\"detail\":\"" + "가".repeat(501) + "\"}"))
+                .content("{\"reasons\":[\"SPAM\"],\"detail\":\"" + "가".repeat(501) + "\"}"))
             .andExpect(status().isBadRequest());
 
         then(reportMemberUseCase).shouldHaveNoInteractions();
@@ -140,7 +142,7 @@ class CommunityMemberReportControllerTest {
     void reportMember_rejectsInvalidReason(String reason) throws Exception {
         mockMvc.perform(post("/api/v1/community/members/500/reports")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"reason\":\"" + reason + "\",\"detail\":\"상세\"}"))
+                .content("{\"reasons\":[\"SPAM\",\"" + reason + "\"],\"detail\":\"상세\"}"))
             .andExpect(status().isBadRequest());
 
         then(reportMemberUseCase).shouldHaveNoInteractions();
@@ -152,6 +154,19 @@ class CommunityMemberReportControllerTest {
         mockMvc.perform(post("/api/v1/community/members/500/reports")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"detail\":\"상세\"}"))
+            .andExpect(status().isBadRequest());
+
+        then(reportMemberUseCase).shouldHaveNoInteractions();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{\"reasons\":[],\"detail\":\"상세\"}", "{\"reasons\":[null],\"detail\":\"상세\"}",
+        "{\"reason\":\"SPAM\",\"detail\":\"상세\"}"})
+    @DisplayName("사유 목록이 비었거나 예전 단일 reason만 보내면 400으로 거절한다")
+    void reportMember_rejectsEmptyOrLegacyReason(String body) throws Exception {
+        mockMvc.perform(post("/api/v1/community/members/500/reports")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
             .andExpect(status().isBadRequest());
 
         then(reportMemberUseCase).shouldHaveNoInteractions();

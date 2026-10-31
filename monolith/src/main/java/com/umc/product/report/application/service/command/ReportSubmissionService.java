@@ -50,7 +50,7 @@ public class ReportSubmissionService implements SubmitReportUseCase {
                 command.reporterId(),
                 command.threadId(),
                 command.targetId(),
-                command.reasonCode(),
+                command.reasons(),
                 toSnapshot(command.targetSnapshot())
             );
         }
@@ -58,7 +58,7 @@ public class ReportSubmissionService implements SubmitReportUseCase {
             return Report.createUser(
                 command.reporterId(),
                 command.targetId(),
-                command.reasonCode(),
+                command.reasons(),
                 command.detail(),
                 toSnapshot(command.targetSnapshot())
             );

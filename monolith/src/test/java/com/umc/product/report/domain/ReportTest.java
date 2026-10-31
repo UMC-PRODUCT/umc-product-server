@@ -52,7 +52,7 @@ class ReportTest {
     void createThreadMessage_식별자와_사유를_보존한다() {
         // given & when
         Report report = Report.createThreadMessage(
-            1L, 2L, 3L, ReportReason.ABUSE, ReportTargetSnapshot.of(4L, "신고 대상 메시지", "스레드 제목")
+            1L, 2L, 3L, List.of(ReportReason.ABUSE), ReportTargetSnapshot.of(4L, "신고 대상 메시지", "스레드 제목")
         );
 
         // then
@@ -324,7 +324,7 @@ class ReportTest {
     void removesTargetOn_스레드_메시지_처리만_true() {
         // given
         Report threadMessage = Report.createThreadMessage(
-            1L, 2L, 3L, ReportReason.ABUSE, ReportTargetSnapshot.of(4L, "신고 대상 메시지", "스레드 제목")
+            1L, 2L, 3L, List.of(ReportReason.ABUSE), ReportTargetSnapshot.of(4L, "신고 대상 메시지", "스레드 제목")
         );
         Report post = Report.create(1L, ReportTargetType.POST, 2L, null);
         Report comment = Report.create(1L, ReportTargetType.COMMENT, 2L, null);
@@ -358,7 +358,7 @@ class ReportTest {
     void createUser_사용자_신고를_만든다() {
         // given & when
         Report report = Report.createUser(
-            1L, 2L, ReportReason.HARASSMENT, "  반복해서 불쾌한 메시지를 보내요.  ",
+            1L, 2L, List.of(ReportReason.HARASSMENT), "  반복해서 불쾌한 메시지를 보내요.  ",
             ReportTargetSnapshot.of(2L, null, "대상닉네임")
         );
 
@@ -380,7 +380,7 @@ class ReportTest {
     @DisplayName("사용자 신고 상세 내용은 정확히 500자까지 받는다")
     void createUser_500자는_허용한다() {
         // given & when
-        Report report = Report.createUser(1L, 2L, ReportReason.ETC, "가".repeat(500), null);
+        Report report = Report.createUser(1L, 2L, List.of(ReportReason.ETC), "가".repeat(500), null);
 
         // then
         assertThat(report.getReason()).hasSize(500);
@@ -391,21 +391,21 @@ class ReportTest {
     @ValueSource(strings = {" ", "\n\t "})
     @DisplayName("사용자 신고는 상세 내용이 없거나 공백뿐이면 거절한다")
     void createUser_상세_내용이_비어_있으면_거절한다(String detail) {
-        assertThatThrownBy(() -> Report.createUser(1L, 2L, ReportReason.SPAM, detail, null))
+        assertThatThrownBy(() -> Report.createUser(1L, 2L, List.of(ReportReason.SPAM), detail, null))
             .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     @DisplayName("사용자 신고 상세 내용이 501자면 거절한다")
     void createUser_501자는_거절한다() {
-        assertThatThrownBy(() -> Report.createUser(1L, 2L, ReportReason.SPAM, "가".repeat(501), null))
+        assertThatThrownBy(() -> Report.createUser(1L, 2L, List.of(ReportReason.SPAM), "가".repeat(501), null))
             .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     @DisplayName("신고자와 대상이 같으면 REPORT_SELF_REPORT로 거절한다")
     void createUser_자기_자신_신고를_거절한다() {
-        assertThatThrownBy(() -> Report.createUser(1L, 1L, ReportReason.SPAM, "상세", null))
+        assertThatThrownBy(() -> Report.createUser(1L, 1L, List.of(ReportReason.SPAM), "상세", null))
             .isInstanceOfSatisfying(ReportDomainException.class, exception ->
                 assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_SELF_REPORT)
             );
@@ -415,7 +415,7 @@ class ReportTest {
     @EnumSource(value = ReportReason.class, names = {"ABUSE", "INAPPROPRIATE", "PRIVACY"})
     @DisplayName("사용자 신고에 쓸 수 없는 사유는 거절한다")
     void createUser_허용되지_않는_사유를_거절한다(ReportReason reason) {
-        assertThatThrownBy(() -> Report.createUser(1L, 2L, reason, "상세", null))
+        assertThatThrownBy(() -> Report.createUser(1L, 2L, List.of(reason), "상세", null))
             .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -436,7 +436,7 @@ class ReportTest {
     @Test
     @DisplayName("스레드 메시지 신고는 사용자 신고 전용 사유를 거절한다")
     void createThreadMessage_사용자_전용_사유를_거절한다() {
-        assertThatThrownBy(() -> Report.createThreadMessage(1L, 2L, 3L, ReportReason.HARASSMENT, null))
+        assertThatThrownBy(() -> Report.createThreadMessage(1L, 2L, 3L, List.of(ReportReason.HARASSMENT), null))
             .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -444,7 +444,7 @@ class ReportTest {
     @DisplayName("사용자 신고는 처리해도 대상을 삭제하지 않는다")
     void removesTargetOn_사용자_신고는_삭제하지_않는다() {
         // given
-        Report report = Report.createUser(1L, 2L, ReportReason.IMPERSONATION, "상세", null);
+        Report report = Report.createUser(1L, 2L, List.of(ReportReason.IMPERSONATION), "상세", null);
 
         // when & then
         assertThat(report.removesTargetOn(ReportActionType.APPROVE)).isFalse();
@@ -477,5 +477,71 @@ class ReportTest {
         Report report = Report.create(1L, ReportTargetType.POST, 2L, null);
         ReflectionTestUtils.setField(report, "id", 901L);
         return report;
+    }
+
+    @Test
+    @DisplayName("스레드 메시지 신고는 여러 사유를 고른 순서대로 담고 첫 사유를 대표 사유로 남긴다")
+    void createThreadMessage_여러_사유를_순서대로_담는다() {
+        // given & when
+        Report report = Report.createThreadMessage(
+            1L, 2L, 3L, List.of(ReportReason.PRIVACY, ReportReason.SPAM, ReportReason.ABUSE), null
+        );
+
+        // then
+        assertThat(report.getReasons()).containsExactly(ReportReason.PRIVACY, ReportReason.SPAM, ReportReason.ABUSE);
+        assertThat(report.getReasonCodes()).containsExactly(ReportReason.PRIVACY, ReportReason.SPAM, ReportReason.ABUSE);
+        assertThat(report.getReasonCode()).isEqualTo(ReportReason.PRIVACY);
+    }
+
+    @Test
+    @DisplayName("사용자 신고는 여러 사유를 담고, 중복은 고른 순서를 유지하면서 제거한다")
+    void createUser_중복을_제거하고_순서를_유지한다() {
+        // given & when
+        Report report = Report.createUser(
+            1L, 2L, List.of(ReportReason.SPAM, ReportReason.HARASSMENT, ReportReason.SPAM, ReportReason.ETC,
+                ReportReason.HARASSMENT), "상세", null
+        );
+
+        // then
+        assertThat(report.getReasons()).containsExactly(ReportReason.SPAM, ReportReason.HARASSMENT, ReportReason.ETC);
+        assertThat(report.getReasonCode()).isEqualTo(ReportReason.SPAM);
+    }
+
+    @Test
+    @DisplayName("사유 목록이 null이거나 비어 있으면 거절한다")
+    void 사유_목록이_비어_있으면_거절한다() {
+        assertThatThrownBy(() -> Report.createUser(1L, 2L, List.of(), "상세", null))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Report.createUser(1L, 2L, null, "상세", null))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Report.createThreadMessage(1L, 2L, 3L, List.of(), null))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Report.createThreadMessage(1L, 2L, 3L, null, null))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("사유 중 하나라도 대상 종류에서 쓸 수 없으면 거절한다")
+    void 허용되지_않는_사유가_섞이면_거절한다() {
+        assertThatThrownBy(() -> Report.createUser(
+            1L, 2L, List.of(ReportReason.SPAM, ReportReason.ABUSE), "상세", null
+        )).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ABUSE");
+        assertThatThrownBy(() -> Report.createThreadMessage(
+            1L, 2L, 3L, List.of(ReportReason.SPAM, ReportReason.HARASSMENT), null
+        )).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("HARASSMENT");
+    }
+
+    @Test
+    @DisplayName("reasons가 비어 있으면 대표 사유(reasonCode) 하나로 대체하고, 둘 다 없으면 빈 목록이다")
+    void getReasonCodes_reasons가_비면_reasonCode로_대체한다() {
+        // given
+        Report report = Report.createThreadMessage(1L, 2L, 3L, List.of(ReportReason.ABUSE, ReportReason.SPAM), null);
+        ReflectionTestUtils.setField(report, "reasons", new java.util.ArrayList<ReportReason>());
+
+        // when & then
+        assertThat(report.getReasonCodes()).containsExactly(ReportReason.ABUSE);
+
+        ReflectionTestUtils.setField(report, "reasonCode", null);
+        assertThat(report.getReasonCodes()).isEmpty();
     }
 }
