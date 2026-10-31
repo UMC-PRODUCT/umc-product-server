@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -44,8 +45,11 @@ import com.umc.product.project.application.port.in.query.GetRandomMatchedProject
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
+import com.umc.product.project.application.port.out.SaveProjectMatchingRoundPort;
 import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
@@ -70,6 +74,7 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
     @Autowired PublishProjectMatchingResultUseCase publisher;
     @Autowired EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
     @Autowired JdbcTemplate jdbc;
+    @Autowired SaveProjectMatchingRoundPort saveRoundPort;
     @Autowired PlatformTransactionManager transactionManager;
 
     @AfterEach
@@ -466,6 +471,67 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         assertThat(pm.member().canUnassign().allowed()).isFalse();
         assertThat(staff.member().canAssign().allowed()).isTrue();
         assertThat(staff.member().canUnassign().allowed()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER"})
+    void 랜덤_조정에서_TO를_초과_배정하고_최종_공개해도_설정_TO는_유지한다(String partName) throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        ChallengerPart part = ChallengerPart.valueOf(partName);
+        jdbc.update("UPDATE project_part_quota SET part=? WHERE project_id=?", partName, scenario.projectId());
+        Instant now = Instant.now();
+        var round = ProjectMatchingRound.create("랜덤 조정", null, MatchingType.fromPart(part).orElseThrow(),
+            MatchingPhase.RANDOM_MATCHING, scenario.chapterId(), now.minusSeconds(3600), now.plusSeconds(3600),
+            now.plusSeconds(3600), now.plusSeconds(7200));
+        round.executeAutoDecision(scenario.staffId());
+        Long roundId = saveRoundPort.save(round).getId();
+        Long first = fixture.회원(scenario, "조정후보1", part);
+        Long second = fixture.회원(scenario, "조정후보2", part);
+        authenticate(scenario.staffId());
+
+        // when
+        for (Long memberId : List.of(first, second)) {
+            mockMvc.perform(post(admin(scenario)).contentType(MediaType.APPLICATION_JSON)
+                .content(body(memberId, partName)))
+                .andExpect(status().isOk());
+        }
+
+        // then
+        assertThat(members.getByProjectIdAndMemberId(scenario.projectId(), second).getStatus())
+            .isEqualTo(ProjectMemberStatus.PENDING_PUBLICATION);
+        mockMvc.perform(post(admin(scenario)).contentType(MediaType.APPLICATION_JSON)
+            .content(body(second, partName)))
+            .andExpect(status().isConflict());
+        jdbc.update("UPDATE project_matching_round SET ends_at=now()-interval '20 minutes', "
+            + "decision_deadline=now()-interval '20 minutes', result_publish_at=now()-interval '10 minutes' WHERE id=?", roundId);
+        assertThat(publisher.publish(roundId)).isTrue();
+        assertThat(members.getByProjectIdAndMemberId(scenario.projectId(), first).getStatus())
+            .isEqualTo(ProjectMemberStatus.ACTIVE);
+        assertThat(members.getByProjectIdAndMemberId(scenario.projectId(), second).getStatus())
+            .isEqualTo(ProjectMemberStatus.ACTIVE);
+        assertThat(jdbc.queryForObject("SELECT quota FROM project_part_quota WHERE project_id=? AND part=?",
+            Long.class, scenario.projectId(), partName)).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"auto_decision_executed_at=NULL", "ends_at=now()-interval '1 minute'", "type='PLAN_DEVELOPER'"})
+    void 랜덤_미실행_조정종료_다른유형이면_초과배정을_허용하지_않는다(String update) throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        Instant now = Instant.now();
+        var round = ProjectMatchingRound.create("랜덤 조정", null, MatchingType.PLAN_DESIGN,
+            MatchingPhase.RANDOM_MATCHING, scenario.chapterId(), now.minusSeconds(3600), now.plusSeconds(3600),
+            now.plusSeconds(3600), now.plusSeconds(7200));
+        round.executeAutoDecision(scenario.staffId());
+        Long roundId = saveRoundPort.save(round).getId();
+        jdbc.update("UPDATE project_matching_round SET " + update + " WHERE id=?", roundId);
+        authenticate(scenario.staffId());
+
+        // when & then
+        assign(scenario, scenario.candidateId()).andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("PROJECT-0103"));
+        assertThat(members.existsByGisuAndMember(scenario.gisuId(), scenario.candidateId())).isFalse();
     }
 
     @ParameterizedTest

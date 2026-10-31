@@ -243,28 +243,25 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 디자인만_잠기면_개발_TO는_수정하고_잠긴_파트의_동일값은_그대로_유지한다() throws Exception {
+    void 디자인_시작부터_모든_TO를_잠그고_동일값_저장은_유지한다() throws Exception {
         // given
         schedule(MatchingType.PLAN_DESIGN, -7200, 3600);
 
         // when & then
         var info = view(null);
-        assertThat(cell(info, "DESIGN").path("canEdit").path("allowed").asBoolean()).isFalse();
-        assertThat(cell(info, "PLAN").path("canEdit").path("allowed").asBoolean()).isFalse();
-        assertThat(cell(info, "WEB_PRODUCT_ENGINEER").path("canEdit").path("allowed").asBoolean()).isTrue();
-        denied(save(List.of(change(scenario.projectId(), "DESIGN", 2))), "PROJECT-0250");
-        save(List.of(Map.of("projectId", scenario.projectId(), "entries", List.of(
-            Map.of("part", "PLAN", "quota", 1), Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 1)))))
-            .andExpect(status().isOk());
-        legacyPut(List.of(Map.of("part", "PLAN", "quota", 1), Map.of("part", "DESIGN", "quota", 1),
-            Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 2))).andExpect(status().isOk());
-        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(1);
-        assertThat(quota(scenario.projectId(), "WEB_PRODUCT_ENGINEER")).isEqualTo(2);
+        for (String part : List.of("DESIGN", "PLAN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER")) {
+            assertThat(cell(info, part).path("canEdit").path("allowed").asBoolean()).isFalse();
+        }
+        denied(save(List.of(change(scenario.projectId(), "WEB_PRODUCT_ENGINEER", 1))), "PROJECT-0250");
+        denied(legacyPut(List.of(Map.of("part", "DESIGN", "quota", 1),
+            Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 1))), "PROJECT-0250");
+        save(List.of(change(scenario.projectId(), "DESIGN", 1))).andExpect(status().isOk());
+        assertThat(quota(scenario.projectId(), "WEB_PRODUCT_ENGINEER")).isZero();
     }
 
     @ParameterizedTest
-    @CsvSource({"-1,true", "0,false", "1,false"})
-    void 삼차_판정_마감_후에는_발표를_기다리지_않고_수정을_재개한다(long deadlineOffset, boolean allowed) throws Exception {
+    @CsvSource({"-1,false", "0,false", "1,false"})
+    void 삼차_판정_마감이_지나도_TO_수정을_재개하지_않는다(long deadlineOffset, boolean allowed) throws Exception {
         // given
         schedule(MatchingType.PLAN_DESIGN, -7200, deadlineOffset);
 
@@ -292,7 +289,7 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 시작후_3차_일정이_없으면_잠금_사유와_미정인_재개시각을_내려준다() throws Exception {
+    void 시작후_3차_일정이_없어도_잠금_사유와_null_재개시각을_내려준다() throws Exception {
         // given
         fixture.차수(scenario, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST,
             NOW.minusSeconds(7200), NOW.minusSeconds(6000), NOW.minusSeconds(5000));
@@ -300,7 +297,7 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         // when & then
         JsonNode column = part(view(null).path("columns"), "DESIGN");
         assertThat(column.path("canEdit").path("reasonCode").asText())
-            .isEqualTo("PART_QUOTA_MATCHING_SCHEDULE_INCOMPLETE");
+            .isEqualTo("PART_QUOTA_MATCHING_IN_PROGRESS");
         assertThat(column.path("editableAfter").isNull()).isTrue();
         denied(save(List.of(change(scenario.projectId(), "DESIGN", 2))), "PROJECT-0250");
     }
@@ -423,7 +420,7 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 해제예약자는_공개인원에_남지만_TO를_영으로_줄일_수_있다() throws Exception {
+    void 해제예약자는_최소_TO에서_제외하지만_매칭후_TO_변경은_잠근다() throws Exception {
         // given
         fixture.해제예약(scenario, NOW);
 
@@ -433,8 +430,8 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         // then
         assertThat(design.path("currentCount").asLong()).isEqualTo(1);
         assertThat(design.path("minimumQuota").asLong()).isZero();
-        save(List.of(change(scenario.projectId(), "DESIGN", 0))).andExpect(status().isOk());
-        assertThat(quota(scenario.projectId(), "DESIGN")).isZero();
+        denied(save(List.of(change(scenario.projectId(), "DESIGN", 0))), "PROJECT-0250");
+        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(1);
         assertThat(cell(view(null), "DESIGN").path("currentCount").asLong()).isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT status FROM project_member WHERE project_id=? AND member_id=?",
             String.class, scenario.projectId(), scenario.candidateId())).isEqualTo("ACTIVE");
@@ -450,21 +447,21 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
 
         // when & then
         assertThat(cell(view(null), "DESIGN").path("minimumQuota").asLong()).isEqualTo(1);
-        save(List.of(change(scenario.projectId(), "DESIGN", 1))).andExpect(status().isOk());
-        denied(save(List.of(change(scenario.projectId(), "DESIGN", 0))), "PROJECT-0252");
-        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(1);
+        denied(save(List.of(change(scenario.projectId(), "DESIGN", 1))), "PROJECT-0250");
+        denied(save(List.of(change(scenario.projectId(), "DESIGN", 0))), "PROJECT-0250");
+        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(2);
     }
 
     @Test
-    void 기존_PUT도_해제예약된_파트의_TO를_제거할_수_있다() throws Exception {
+    void 기존_PUT도_조정기간에_TO를_변경할_수_없다() throws Exception {
         // given
         fixture.해제예약(scenario, NOW);
 
         // when
-        legacyPut(List.of(Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 1))).andExpect(status().isOk());
+        denied(legacyPut(List.of(Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 1))), "PROJECT-0250");
 
         // then
-        assertThat(quota(scenario.projectId(), "DESIGN")).isZero();
+        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(1);
     }
 
     @Test
@@ -475,7 +472,7 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
 
         // when & then
         assertThat(cell(view(null), "DESIGN").path("minimumQuota").asLong()).isEqualTo(1);
-        denied(save(List.of(change(scenario.projectId(), "DESIGN", 0))), "PROJECT-0252");
+        denied(save(List.of(change(scenario.projectId(), "DESIGN", 0))), "PROJECT-0250");
     }
 
     @Test
@@ -485,7 +482,7 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
 
         // when & then
         assertThat(cell(view(null), "DESIGN").path("minimumQuota").asLong()).isZero();
-        save(List.of(change(scenario.projectId(), "DESIGN", 0))).andExpect(status().isOk());
+        denied(save(List.of(change(scenario.projectId(), "DESIGN", 0))), "PROJECT-0250");
         assertThat(jdbc.queryForObject("SELECT result_published_at IS NULL FROM project_matching_round WHERE id=?",
             Boolean.class, roundId)).isTrue();
     }
@@ -500,7 +497,7 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
 
         // when & then
         assertThat(cell(view(null), "DESIGN").path("minimumQuota").asLong()).isEqualTo(1);
-        denied(save(List.of(change(scenario.projectId(), "DESIGN", 0))), "PROJECT-0252");
+        denied(save(List.of(change(scenario.projectId(), "DESIGN", 0))), update.contains("starts_at=starts_at") ? "PROJECT-0252" : "PROJECT-0250");
     }
 
     @Test
