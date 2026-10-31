@@ -24,10 +24,13 @@ public enum MatchingType {
      *   <li>{@code DESIGN} -> {@code PLAN_DESIGN}</li>
      *   <li>개발 파트(레거시 WEB/ANDROID/IOS/NODEJS/SPRINGBOOT, 신규 WEB_PRODUCT_ENGINEER/MOBILE_PRODUCT_ENGINEER)
      *       -> {@code PLAN_DEVELOPER}</li>
-     *   <li>{@code PLAN} / {@code ADMIN} -> {@link Optional#empty()} (지원 대상 아님)</li>
+     *   <li>{@code null} / {@code PLAN} / {@code ADMIN} -> {@link Optional#empty()} (수강 파트가 없거나 지원 대상 아님)</li>
      * </ul>
      */
     public static Optional<MatchingType> fromPart(ChallengerPart part) {
+        if (part == null) {
+            return Optional.empty();
+        }
         return switch (part) {
             case DESIGN -> Optional.of(PLAN_DESIGN);
             case WEB, ANDROID, IOS, NODEJS, SPRINGBOOT, WEB_PRODUCT_ENGINEER, MOBILE_PRODUCT_ENGINEER ->

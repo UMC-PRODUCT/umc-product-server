@@ -74,8 +74,6 @@ dependencies {
     // --- Cloud Service ---
     add("implementation", platform("software.amazon.awssdk:bom:${version("aws")}"))
     add("implementation", "software.amazon.awssdk:s3")
-    add("implementation", "software.amazon.awssdk:ssm")
-    add("implementation", "software.amazon.awssdk:cloudfront")
     add("implementation", "software.amazon.awssdk:sesv2")
 
     // --- Email ---

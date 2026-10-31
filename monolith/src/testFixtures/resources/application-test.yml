@@ -36,7 +36,7 @@ jwt:
 
 demoday:
   qr:
-    base-url: https://vote.test.umc.it.kr
+    base-url: https://vote.umc.test
   vote-qr:
     signing-key: test-dummy-vote-qr-signing-key-needs-32-bytes-min
   vote-authorization:

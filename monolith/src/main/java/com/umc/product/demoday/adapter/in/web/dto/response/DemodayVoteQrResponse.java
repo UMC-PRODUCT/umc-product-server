@@ -12,7 +12,7 @@ public record DemodayVoteQrResponse(
     Long pollId,
     @Schema(
         description = "FE가 그대로 QR 이미지로 렌더링할 완성된 전체 문자열. 조립하지 마세요.",
-        example = "https://vote.umc.it.kr/demoday/polls/1/vote-authorization#token=eyJ..."
+        example = "https://university.neordinary.com/demoday/polls/1/vote-authorization#token=eyJ..."
     )
     String qrValue,
     @Schema(description = "현재 QR 유효 구간의 시작 시각", example = "2026-08-17T15:00:00Z")

@@ -83,19 +83,16 @@ public record PostInfo(
     // ====================== 예은 작업본 ======================
     // ======================================================
 
-    @Deprecated
     public static PostInfo from(Post post, Long authorId, String authorName) {
         return from(post, authorId, authorName, null, null, 0);
     }
 
-    @Deprecated
     public static PostInfo from(
         Post post, Long authorId, String authorName, String authorProfileImage,
         ChallengerPart authorPart, int commentCount) {
         return from(post, authorId, authorName, authorProfileImage, authorPart, commentCount, false);
     }
 
-    @Deprecated
     public static PostInfo from(
         Post post, Long authorId, String authorName, String authorProfileImage,
         ChallengerPart authorPart, int commentCount, boolean liked) {

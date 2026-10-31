@@ -79,18 +79,6 @@ public class OpenApiConfig {
             > *Focus on Growth, We Handle the Ops*
 
             UMC PRODUCT 서버팀이 제작하여 제공하는, UMC WEB & APP을 위한 API 입니다.
-
-            ### Server Team Members
-
-            - 중앙대학교 **하늘/박경운** [1st Lead, 2nd Lead]
-            - 한양대학교 ERICA **와나/강하나** [1st, 2nd]
-            - 동국대학교 **박박지현/박지현** [1st, 2nd]
-            - 동국대학교 **갈래/김민서** [1st, 2nd]
-            - 동덕여자대학교 **세니/박세은** [1st, 2nd]
-            - 중앙대학교 **스읍/이예은** [1st, 2nd]
-            - 한양대학교 ERICA **라미/권도희** [2nd]
-            - 가천대학교 **우디/박성현** [2nd]
-            - 한성대학교 **리버/이재원** [2nd]
             """;
 
         return new Info()

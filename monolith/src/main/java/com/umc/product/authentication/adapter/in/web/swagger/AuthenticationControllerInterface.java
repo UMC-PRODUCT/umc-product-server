@@ -19,8 +19,8 @@ public interface AuthenticationControllerInterface {
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 
             [Local](http://localhost:8080/api/v1/auth/oauth2/authorization/google)
-            [Development](https://dev.api.umc.it.kr/api/v1/auth/oauth2/authorization/google)
-            [Production](https://api.umc.it.kr/api/v1/auth/oauth2/authorization/google)
+            [Development](https://api-dev.university.neordinary.com/api/v1/auth/oauth2/authorization/google)
+            [Production](https://api.university.neordinary.com/api/v1/auth/oauth2/authorization/google)
 
             Google 측에서 제공받은 `idToken`을 전달해주세요.
             기존 클라이언트 호환을 위해 `accessToken`도 일시적으로 허용하지만, 신규 클라이언트는 OIDC `idToken`을 사용해야 합니다.
@@ -38,8 +38,8 @@ public interface AuthenticationControllerInterface {
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 
             [Local](http://localhost:8080/api/v1/auth/oauth2/authorization/kakao)
-            [Development](https://dev.api.umc.it.kr/api/v1/auth/oauth2/authorization/kakao)
-            [Production](https://api.umc.it.kr/api/v1/auth/oauth2/authorization/kakao)
+            [Development](https://api-dev.university.neordinary.com/api/v1/auth/oauth2/authorization/kakao)
+            [Production](https://api.university.neordinary.com/api/v1/auth/oauth2/authorization/kakao)
 
             Kakao 측에서 제공받은 OIDC `idToken`을 전달해주세요.
             기존 클라이언트 호환을 위해 `accessToken`도 일시적으로 허용하지만, 신규 클라이언트는 OIDC `idToken`을 사용해야 합니다.
@@ -76,8 +76,8 @@ public interface AuthenticationControllerInterface {
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 
             [Local](http://localhost:8080/api/v1/auth/oauth2/authorization/apple)
-            [Development](https://dev.api.umc.it.kr/api/v1/auth/oauth2/authorization/apple)
-            [Production](https://api.umc.it.kr/api/v1/auth/oauth2/authorization/apple)
+            [Development](https://api-dev.university.neordinary.com/api/v1/auth/oauth2/authorization/apple)
+            [Production](https://api.university.neordinary.com/api/v1/auth/oauth2/authorization/apple)
 
             Apple 측에서 받은 authorization code와 함께 클라이언트 플랫폼(`clientType`)을 전달해주세요.
             Apple은 플랫폼별로 서로 다른 client_id(iOS Bundle ID vs Web Services ID)를 사용하므로

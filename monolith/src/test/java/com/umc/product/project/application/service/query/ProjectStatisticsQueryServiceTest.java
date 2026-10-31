@@ -138,7 +138,7 @@ class ProjectStatisticsQueryServiceTest {
         lenient().when(getChallengerUseCase.listByChapterId(CHAPTER_ID)).thenReturn(List.of(
             challenger(1L, ChallengerPart.WEB), challenger(2L, ChallengerPart.IOS),
             challenger(3L, ChallengerPart.WEB_PRODUCT_ENGINEER), challenger(4L, ChallengerPart.DESIGN),
-            challenger(5L, ChallengerPart.PLAN), challenger(6L, ChallengerPart.ADMIN)));
+            challenger(5L, ChallengerPart.PLAN), challenger(6L, ChallengerPart.ADMIN), challenger(9003L, null)));
         lenient().when(getMemberUseCase.findAllSchoolIdsByIds(Set.of(1L, 2L, 3L)))
             .thenReturn(Map.of(1L, 501L, 2L, 501L, 3L, 502L));
         lenient().when(getChapterUseCase.getChaptersWithSchoolsByGisuId(GISU_ID)).thenReturn(List.of(
@@ -185,6 +185,7 @@ class ProjectStatisticsQueryServiceTest {
                 challenger(1004L, gisuId, ChallengerPart.ANDROID),
                 challenger(9001L, gisuId, ChallengerPart.PLAN),
                 challenger(9002L, gisuId, ChallengerPart.ADMIN),
+                challenger(9003L, gisuId, null),
                 // 수료/제명 챌린저는 지부 모집단(지원 가능 인원)에서 제외되어야 한다.
                 challenger(1005L, gisuId, ChallengerPart.WEB, ChallengerStatus.GRADUATED),
                 challenger(1006L, gisuId, ChallengerPart.SPRINGBOOT, ChallengerStatus.EXPELLED)
@@ -261,7 +262,7 @@ class ProjectStatisticsQueryServiceTest {
             challenger(3L, ChallengerPart.WEB), challenger(4L, ChallengerPart.DESIGN),
             challenger(5L, ChallengerPart.WEB), challenger(6L, ChallengerPart.PLAN),
             challenger(7L, ChallengerPart.ADMIN), challenger(8L, 99L, ChallengerPart.WEB),
-            challenger(9L, GISU_ID, ChallengerPart.WEB, ChallengerStatus.WITHDRAWN)));
+            challenger(9L, GISU_ID, ChallengerPart.WEB, ChallengerStatus.WITHDRAWN), challenger(10L, null)));
         given(getMemberUseCase.findAllSchoolIdsByIds(Set.of(1L, 2L, 3L, 5L)))
             .willReturn(Map.of(1L, 501L, 2L, 501L, 3L, 502L, 5L, 502L));
         given(loadProjectMatchingRoundPort.listByChapterId(CHAPTER_ID)).willReturn(List.of(

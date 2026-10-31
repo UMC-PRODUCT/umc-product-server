@@ -79,7 +79,7 @@ class DemodayPollAdminControllerTest {
         Instant expiresAt = Instant.parse("2026-08-17T16:00:00Z");
         DemodayVoteQrInfo info = new DemodayVoteQrInfo(
             POLL_ID,
-            "https://vote.umc.it.kr/demoday/polls/10/vote-authorization#token=eyJ",
+            "https://university.neordinary.com/demoday/polls/10/vote-authorization#token=eyJ",
             generatedAt,
             expiresAt);
         given(getDemodayVoteQrUseCase.get(POLL_ID, MEMBER_ID)).willReturn(info);
