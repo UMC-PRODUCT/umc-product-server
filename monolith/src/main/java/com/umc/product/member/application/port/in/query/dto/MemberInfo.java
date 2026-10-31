@@ -48,19 +48,4 @@ public record MemberInfo(
             throw new MemberDomainException(MemberErrorCode.MEMBER_SCHOOL_NOT_ASSIGNED);
         }
     }
-
-    public MemberInfo toPublic() {
-        return MemberInfo.builder()
-            .id(this.id)
-            .name(this.name)
-            .nickname(this.nickname)
-            .email("알 수 없음")
-            .schoolId(this.schoolId)
-            .schoolName(this.schoolName)
-            .profileImageId(this.profileImageId)
-            .profileImageLink(this.profileImageLink)
-            .status(this.status)
-            .roles(this.roles)
-            .build();
-    }
 }
