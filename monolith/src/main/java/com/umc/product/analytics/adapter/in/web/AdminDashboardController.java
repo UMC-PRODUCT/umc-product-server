@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminDashboardActionQueueRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminDashboardRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsAttendanceRequest;
-import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsOverviewRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsPointsRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsSchoolsRequest;
 import com.umc.product.analytics.adapter.in.web.dto.request.AdminOperationsSignupsRequest;
@@ -19,7 +18,6 @@ import com.umc.product.analytics.adapter.in.web.dto.response.AdminDashboardActio
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminDashboardContextResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminDashboardSummaryResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsAttendanceResponse;
-import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsOverviewResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsPointsResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsSchoolsResponse;
 import com.umc.product.analytics.adapter.in.web.dto.response.AdminOperationsSignupsResponse;
@@ -29,7 +27,6 @@ import com.umc.product.analytics.application.port.in.query.GetAdminDashboardActi
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardContextUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminDashboardSummaryUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsAttendanceUseCase;
-import com.umc.product.analytics.application.port.in.query.GetAdminOperationsOverviewUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsPointsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSchoolsUseCase;
 import com.umc.product.analytics.application.port.in.query.GetAdminOperationsSignupsUseCase;
@@ -56,7 +53,6 @@ public class AdminDashboardController {
     private final GetAdminDashboardActionQueueUseCase getAdminDashboardActionQueueUseCase;
     private final GetAdminDashboardContextUseCase getAdminDashboardContextUseCase;
     private final GetAdminRiskChallengerUseCase getAdminRiskChallengerUseCase;
-    private final GetAdminOperationsOverviewUseCase getAdminOperationsOverviewUseCase;
     private final GetAdminOperationsSchoolsUseCase getAdminOperationsSchoolsUseCase;
     private final GetAdminOperationsPointsUseCase getAdminOperationsPointsUseCase;
     private final GetAdminOperationsAttendanceUseCase getAdminOperationsAttendanceUseCase;
@@ -95,19 +91,6 @@ public class AdminDashboardController {
     ) {
         return AdminDashboardContextResponse.from(
             getAdminDashboardContextUseCase.getContext(memberPrincipal.getMemberId())
-        );
-    }
-
-    @Operation(operationId = "DASHBOARD-005", summary = "운영 현황 집계 조회", deprecated = true)
-    @Deprecated
-    @GetMapping("operations")
-    @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
-    public AdminOperationsOverviewResponse getOperationsOverview(
-        @CurrentMember MemberPrincipal memberPrincipal,
-        @ParameterObject AdminOperationsOverviewRequest request
-    ) {
-        return AdminOperationsOverviewResponse.from(
-            getAdminOperationsOverviewUseCase.getOperationsOverview(request.toQuery(memberPrincipal.getMemberId()))
         );
     }
 
