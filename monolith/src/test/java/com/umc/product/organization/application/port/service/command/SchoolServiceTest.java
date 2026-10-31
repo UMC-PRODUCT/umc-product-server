@@ -18,8 +18,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.organization.application.port.in.command.dto.AssignSchoolCommand;
-import com.umc.product.organization.application.port.in.command.dto.UnassignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateSchoolCommand;
 import com.umc.product.organization.application.port.out.command.SaveChapterSchoolPort;
 import com.umc.product.organization.application.port.out.command.SaveSchoolPort;
@@ -58,29 +56,6 @@ class SchoolServiceTest {
 
     @InjectMocks
     SchoolService sut;
-
-    @Test
-    @DisplayName("학교를 지부에 배정하면 해당 학교 회원들의 권한 snapshot 캐시를 제거한다")
-    void evict_authority_snapshot_after_assign_school_to_chapter() {
-        given(loadSchoolPort.findSchoolDetailById(SCHOOL_ID)).willReturn(school());
-        given(loadChapterPort.findById(CHAPTER_ID)).willReturn(chapter());
-        given(getMemberUseCase.listIdsBySchoolId(SCHOOL_ID)).willReturn(Set.of(1L, 2L));
-
-        sut.assignToChapter(new AssignSchoolCommand(SCHOOL_ID, CHAPTER_ID));
-
-        then(evictAuthoritySnapshotCacheUseCase).should().evictByMemberIds(Set.of(1L, 2L));
-    }
-
-    @Test
-    @DisplayName("학교의 지부 배정을 해제하면 해당 학교 회원들의 권한 snapshot 캐시를 제거한다")
-    void evict_authority_snapshot_after_unassign_school_from_chapter() {
-        given(loadSchoolPort.findSchoolDetailById(SCHOOL_ID)).willReturn(school());
-        given(getMemberUseCase.listIdsBySchoolId(SCHOOL_ID)).willReturn(Set.of(1L, 2L));
-
-        sut.unassignFromChapter(new UnassignSchoolCommand(SCHOOL_ID, GISU_ID));
-
-        then(evictAuthoritySnapshotCacheUseCase).should().evictByMemberIds(Set.of(1L, 2L));
-    }
 
     @Test
     @DisplayName("학교의 지부를 변경하면 해당 학교 회원들의 권한 snapshot 캐시를 제거한다")

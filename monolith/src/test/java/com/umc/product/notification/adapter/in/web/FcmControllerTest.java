@@ -22,7 +22,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
-import com.umc.product.notification.application.port.in.ManageFcmTopicUseCase;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.RegisterFcmTokenCommand;
 import com.umc.product.notification.application.port.in.dto.UnregisterFcmTokenCommand;
@@ -42,9 +41,6 @@ class FcmControllerTest {
 
     @MockitoBean
     ManageFcmUseCase manageFcmUseCase;
-
-    @MockitoBean
-    ManageFcmTopicUseCase manageFcmTopicUseCase;
 
     @BeforeEach
     void setUpSecurityContext() {

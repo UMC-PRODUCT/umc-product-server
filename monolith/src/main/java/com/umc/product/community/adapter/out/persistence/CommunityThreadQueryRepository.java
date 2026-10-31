@@ -33,10 +33,9 @@ public class CommunityThreadQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     /**
-     * @deprecated 스레드 목록은 {@link #browseThreads}를 사용한다. requester가 ACTIVE 멤버인 스레드만 반환하는 이 조회는 "내 참여 스레드만 모아보기" 재사용을 위해
+     * 스레드 목록은 {@link #browseThreads}를 사용한다. requester가 ACTIVE 멤버인 스레드만 반환하는 이 조회는 "내 참여 스레드만 모아보기" 재사용을 위해
      * 보류한 상태다.
      */
-    @Deprecated
     public CommunityThreadListRows searchThreads(CommunityThreadListCondition condition) {
         List<CommunityThreadQueryRow> pinned = fetchThreadRows(condition, true);
         List<CommunityThreadQueryRow> unpinned = fetchThreadRows(condition, false);

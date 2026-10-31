@@ -92,7 +92,6 @@ public class CommunityThreadQueryService implements
     private final SearchMemberInvitationUseCase searchInvitationUseCase;
     private final CommunityThreadProperties threadProperties;
 
-    @Deprecated
     @Override
     public ThreadListInfo listThreads(ListThreadsQuery query) {
         CommunityThreadListRows rows = threadQueryPort.searchThreads(new CommunityThreadListCondition(
