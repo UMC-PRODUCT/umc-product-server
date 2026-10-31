@@ -228,13 +228,6 @@ public class ChallengerQueryService implements GetChallengerUseCase, CheckChalle
     }
 
     @Override
-    public List<ChallengerInfo> getAllByGisuIdWithoutChallengerPoints(Long gisuId) {
-        return loadChallengerPort.getAllByGisuId(gisuId).stream()
-            .map(c -> ChallengerInfo.from(c, List.of()))
-            .toList();
-    }
-
-    @Override
     public List<ChallengerInfo> getAllLatestGisuPerMemberWithoutChallengerPoints() {
         return loadChallengerPort.findLatestPerMember().stream()
             .map(ChallengerInfo::from)

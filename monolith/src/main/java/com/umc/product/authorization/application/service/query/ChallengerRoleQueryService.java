@@ -216,37 +216,6 @@ public class ChallengerRoleQueryService implements
     }
 
     @Override
-    public List<ChallengerRoleType> getAllRoleTypesByMemberIdAndGisuId(Long memberId, Long gisuId) {
-        if (gisuId == null) {
-            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE, "권한을 확인하려면 기수를 선택해주세요.");
-        }
-
-        List<ChallengerRole> roles = loadChallengerRolePort.findRolesByMemberIdAndGisuId(memberId, gisuId);
-
-        return roles.stream()
-            .map(ChallengerRole::getChallengerRoleType)
-            .distinct()
-            .toList();
-    }
-
-    @Override
-    public List<ChallengerRoleType> getAllRoleTypesByMemberIdAndSchoolId(Long memberId, Long schoolId) {
-        if (schoolId == null) {
-            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
-                "schoolId는 null일 수 없습니다.");
-        }
-
-        List<ChallengerRole> roles = loadChallengerRolePort.findByMemberId(memberId);
-
-        return roles.stream()
-            .filter(role -> role.getOrganizationType() == OrganizationType.SCHOOL)
-            .filter(role -> role.getOrganizationId().equals(schoolId))
-            .map(ChallengerRole::getChallengerRoleType)
-            .distinct()
-            .toList();
-    }
-
-    @Override
     public boolean hasRoleTypeInGisu(Long memberId, Long gisuId, ChallengerRoleType role) {
         if (gisuId == null) {
             throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,

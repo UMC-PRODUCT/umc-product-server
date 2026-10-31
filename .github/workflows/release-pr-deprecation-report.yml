@@ -1,0 +1,79 @@
+# main으로 가는 PR(정기 릴리스 PR)에서만 지원 중단 항목을 점검한다.
+# 코드의 `삭제 예정: YYYY-MM-DD 릴리스, 담당자: GitHub 아이디` 표기를 읽어 PR 댓글 하나로 알리고 담당자를 멘션한다.
+# 정책: docs/guides/API_호환성_정책.md 5절. 점검 결과로 CI를 실패시키지 않는다.
+
+name: Release PR Deprecation Report
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
+      - ready_for_review
+
+concurrency:
+  group: deprecation-report-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  report:
+    name: 지원 중단 항목 점검
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: 점검 결과 생성
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          # 11월처럼 매주 배포하는 기간에는 저장소 변수 RELEASE_INTERVAL_DAYS를 7로 둔다.
+          RELEASE_INTERVAL_DAYS: ${{ vars.RELEASE_INTERVAL_DAYS || '14' }}
+        run: |
+          set -euo pipefail
+
+          node .github/scripts/deprecation-report.mjs \
+            --root . \
+            --title "${PR_TITLE}" \
+            --interval "${RELEASE_INTERVAL_DAYS}" \
+            --repository "${GITHUB_REPOSITORY}" \
+            --sha "${HEAD_SHA}" \
+            > "${RUNNER_TEMP}/deprecation-report.md"
+
+          cat "${RUNNER_TEMP}/deprecation-report.md" >> "${GITHUB_STEP_SUMMARY}"
+
+          if grep -q '^### 이번 릴리스에서 지워야 하는 항목 ([1-9]' "${RUNNER_TEMP}/deprecation-report.md"; then
+            echo "::warning::이번 릴리스에서 삭제 예정일이 된 지원 중단 항목이 있습니다. PR 댓글을 확인해 주세요."
+          fi
+
+      - name: PR 댓글 갱신
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          comment_id="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- deprecation-report -->"))) | .id' \
+            | head -n 1)"
+
+          if [[ -n "${comment_id}" ]]; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" \
+              -F body=@"${RUNNER_TEMP}/deprecation-report.md" > /dev/null
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+              -F body=@"${RUNNER_TEMP}/deprecation-report.md" > /dev/null
+          fi

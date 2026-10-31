@@ -16,8 +16,6 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.challenger.application.port.in.query.GetChallengerPointUseCase;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-import com.umc.product.challenger.application.port.in.query.dto.GlobalSearchChallengerCursorResult;
-import com.umc.product.challenger.application.port.in.query.dto.GlobalSearchChallengerItemInfo;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerCursorResult;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerItemInfo;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
@@ -97,28 +95,6 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         Long nextCursor = hasNext ? result.getLast().challengerId() : null;
 
         return new SearchChallengerCursorResult(items, nextCursor, hasNext, bundle.partCounts());
-    }
-
-    // global API에서 사용하는 해당 메소드는 deprecate 예정입니다. (중복)
-    @Deprecated(since = "v1.2.5", forRemoval = true)
-    @Override
-    public GlobalSearchChallengerCursorResult globalCursorSearch(SearchChallengerQuery query, Long cursor, int size) {
-        ChallengerSearchBundle bundle = searchChallengerPort.cursorSearchWithCounts(query, cursor, size);
-        List<ChallengerSearchRow> rows = bundle.rows();
-
-        boolean hasNext = rows.size() > size;
-        List<ChallengerSearchRow> result = hasNext ? rows.subList(0, size) : rows;
-
-        Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(result);
-        Map<String, String> profileImageLinks = loadProfileImageLinks(result);
-
-        List<GlobalSearchChallengerItemInfo> items = result.stream()
-            .map(row -> toGlobalItemInfo(row, gisuGenerationMap, profileImageLinks))
-            .toList();
-
-        Long nextCursor = hasNext ? result.get(result.size() - 1).challengerId() : null;
-
-        return new GlobalSearchChallengerCursorResult(items, nextCursor, hasNext);
     }
 
     // TODO: 아래 V2 메소드들은 왜 사용되고 있지 않은지 파악 필요 - 경운
@@ -241,23 +217,4 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         );
     }
 
-    private GlobalSearchChallengerItemInfo toGlobalItemInfo(
-        ChallengerSearchRow row,
-        Map<Long, Long> gisuGenerationMap,
-        Map<String, String> profileImageLinks
-    ) {
-        String profileImageLink = row.profileImageId() != null
-            ? profileImageLinks.get(row.profileImageId())
-            : null;
-
-        return new GlobalSearchChallengerItemInfo(
-            row.memberId(),
-            row.memberNickname(),
-            row.memberName(),
-            row.schoolName(),
-            gisuGenerationMap.getOrDefault(row.gisuId(), null),
-            row.part(),
-            profileImageLink
-        );
-    }
 }

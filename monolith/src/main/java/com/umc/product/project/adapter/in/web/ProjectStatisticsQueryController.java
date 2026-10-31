@@ -3,7 +3,6 @@ package com.umc.product.project.adapter.in.web;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,7 +15,6 @@ import com.umc.product.project.adapter.in.web.assembler.ProjectResponseAssembler
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMatchingOverviewResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectApplicationStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectMatchingStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
 import com.umc.product.project.application.port.in.query.dto.ProjectMemberView;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,33 +29,6 @@ import lombok.RequiredArgsConstructor;
 public class ProjectStatisticsQueryController {
 
     private final ProjectResponseAssembler assembler;
-
-    @GetMapping("/{projectId}/statistics")
-    @Operation(
-        operationId = "PROJECT-STAT-001",
-        summary = "단건 프로젝트 지원/매칭 현황 조회 (Deprecated)",
-        deprecated = true,
-        description = """
-            deprecated: `/api/v1/projects/statistics/applications?projectIds={projectId}`를 사용해주세요.
-
-            프로젝트 ID와 함께 멤버 목록을 포함하고 있고, FE단 재가공을 최소화해드리기 위해서 `roundApplicationStatistics` 및 `schoolApplicationStatistics` 필드를 두고 있습니다.
-
-            각 항목이 매칭 차수별 지원률, N차 매칭에서의 학교별 및 총 지원자 수를 포함하고 있습니다.
-            프로젝트 멤버 목록의 경우 각 멤버가 해당 프로젝트에 작성한 지원 이력을 포함하고 있으며,
-            없거나 (강제배정/랜덤매칭) 여러 건 (떨어지고 재 지원하는 경우) 이 존재할 수 있어 배열로 구성되어 있습니다.
-
-            지원자 목록은(특정 프로젝트에 대한 지원서 조회) `/api/v1/projects/{projectId}/applications`를 호출하셔서 활용하셔야 합니다.
-
-            권한: 해당 프로젝트의 PO/Sub-PM(본인 프로젝트), 총괄단, 해당 지부장, 해당 지부 소속 학교 회장/부회장만 조회할 수 있습니다. 그 외에는 403.
-            """
-    )
-    @Deprecated(since = "v2.0.0", forRemoval = true)
-    public ProjectStatisticsResponse getProjectStatistics(
-        @CurrentMember MemberPrincipal memberPrincipal,
-        @Parameter(description = "프로젝트 ID", required = true) @PathVariable Long projectId
-    ) {
-        return assembler.statisticsForProject(projectId, memberPrincipal.getMemberId());
-    }
 
     @GetMapping("/statistics/applications")
     @Operation(

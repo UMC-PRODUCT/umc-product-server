@@ -54,9 +54,6 @@ public interface LoadChallengerPort {
      */
     List<Challenger> listByChapterId(Long chapterId);
 
-    @Deprecated(since = "v1.5.0", forRemoval = true)
-    Long countByIdIn(Set<Long> ids);
-
     /**
      * memberId로 가장 최근 챌린저 조회
      */

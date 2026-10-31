@@ -43,7 +43,6 @@ public class ChapterQueryController implements ChapterQueryControllerApi {
 
     @Public
     @Override
-    @Deprecated(since = "v2.0.0", forRemoval = true)
     @GetMapping("/with-schools")
     public ChapterWithSchoolsResponse getChaptersWithSchoolsByGisuId(@RequestParam Long gisuId) {
         List<ChapterWithSchoolsInfo> chapters = getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId);
