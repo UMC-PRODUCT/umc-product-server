@@ -26,7 +26,7 @@ notification/
 |------|----------|-------|
 | FCM API | `adapter/in/web/FcmController.java` | token/topic surface |
 | FCM sending | `FcmService.java`, `FcmOutboxService.java` | direct and outbox delivery |
-| Audience | `FcmAudienceService.java`, `FcmTopicService.java` | target expansion/topic behavior |
+| Audience | `FcmAudienceService.java` | target expansion |
 | Email | `SendEmailService.java`, `adapter/out/external/ses/SesEmailAdapter.java` | SES path |
 | Webhooks | `WebhookAlarmService.java`, `Discord/Slack/TelegramWebhookAdapter.java` | external alarm paths |
 | Persistence | `adapter/out/persistentce` | current persistence adapter package name |

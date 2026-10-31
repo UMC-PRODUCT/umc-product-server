@@ -23,19 +23,6 @@ public record ChallengerRoleInfo(
     Long gisuId,
     Long gisu
 ) {
-    @Deprecated(since = "2026-02-16", forRemoval = true)
-    public static ChallengerRoleInfo from(ChallengerRole challengerRole) {
-        return ChallengerRoleInfo.builder()
-            .id(challengerRole.getId())
-            .challengerId(challengerRole.getChallengerId())
-            .roleType(challengerRole.getChallengerRoleType())
-            .organizationType(challengerRole.getOrganizationType())
-            .organizationId(challengerRole.getOrganizationId())
-            .responsiblePart(challengerRole.getResponsiblePart())
-            .gisuId(challengerRole.getGisuId())
-            .build();
-    }
-
     public static ChallengerRoleInfo from(ChallengerRole challengerRole, GisuInfo gisuInfo) {
         return ChallengerRoleInfo.builder()
             .id(challengerRole.getId())

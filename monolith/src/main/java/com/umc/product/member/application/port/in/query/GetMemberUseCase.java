@@ -14,10 +14,7 @@ public interface GetMemberUseCase {
 
     /**
      * 멤버 ID로 멤버 정보를 조회합니다. 멤버가 존재하지 않을 경우 null을 반환합니다.
-     *
-     * @deprecated {@link #findById}를 사용해주세요.
      */
-    @Deprecated(since = "v1.5.0", forRemoval = true)
     MemberInfo findByIdOrNull(Long memberId);
 
     Map<Long, MemberInfo> findAllByIds(Set<Long> memberIds);
