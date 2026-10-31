@@ -284,21 +284,31 @@ public enum ExampleStatus {
 
 | 계약 | 대체 | 쓰는 클라이언트 | 지원 중단 | 삭제 예정 | 담당자 | 상태 | 관련 PR·이슈 |
 |---|---|---|---|---|---|---|---|
-| `GET /api/v1/gisu/{gisuId}` | 미기재 | iOS, Android | v2.0.0 | 미정 | 미정 | 지원 중단 | |
-| `GET /api/v1/gisu/all` | 미기재 | Android | v2.0.0 | 미정 | 미정 | 지원 중단 | |
-| `GET /api/v1/gisu/active` | `GET /api/v2/gisu?active=true` | Android | v2.0.0 | 미정 | 미정 | 지원 중단 | |
-| `GET /api/v1/chapters/with-schools` | `GET /api/v2/gisu?id={gisuId}&includeChapter=true&includeSchool=true` | iOS, Android | v2.0.0 | 미정 | 미정 | 지원 중단 | |
-| `GET /api/v1/chapters/{chapterId}` | 없음 (필요 시 다시 제작) | iOS, Android | v2.0.0 | 미정 | 미정 | 지원 중단 | |
-| `GET /api/v1/schools/link/{schoolId}` | 미기재 | Android | v2.0.0 | 미정 | 미정 | 지원 중단 | |
-| `GET /api/v1/schools/gisu/{gisuId}` | 미기재 | 확인 안 됨 | v2.0.0 | 미정 | 미정 | 지원 중단 | |
-| `GET /api/v1/schools/unassigned` | 미기재 | Android | v2.0.0 | 미정 | 미정 | 지원 중단 | |
-| `PATCH /api/v1/schools/{schoolId}/assign` | 미기재 | Android | v2.0.0 | 미정 | 미정 | 지원 중단 | |
-| `PATCH /api/v1/schools/{schoolId}/unassign` | 미기재 | Android | v2.0.0 | 미정 | 미정 | 지원 중단 | |
-| `GET /api/v1/authorization/challenger-role/{challengerRoleId}` | 내 프로필 조회 | 확인 안 됨 | v2.0.0 | 미정 | 미정 | 지원 중단 | |
-| `GET /api/v1/challenger/search/global` | `GET /api/v1/challenger/search/cursor`, `GET /api/v1/challenger/search/offset` | 확인 안 됨 | v1.2.5 | 미정 | 미정 | 지원 중단 | |
-| `GET /api/v1/analytics/admin/dashboard/operations` | 미기재 | 확인 안 됨 | 미기재 | 미정 | 미정 | 지원 중단 | |
-| `POST /api/v1/project/matching-rounds` | `PUT /api/v1/project/matching-rounds/chapters/{chapterId}` | iOS | 미배포 (develop) | 미정 | 미정 | 지원 중단 | |
-| `PATCH /api/v1/project/matching-rounds/{matchingRoundId}` | `PUT /api/v1/project/matching-rounds/chapters/{chapterId}` | iOS | 미배포 (develop) | 미정 | 미정 | 지원 중단 | |
-| `DELETE /api/v1/project/matching-rounds/{matchingRoundId}` | `DELETE /api/v1/project/matching-rounds/chapters/{chapterId}?type={type}` | iOS | 미배포 (develop) | 미정 | 미정 | 지원 중단 | |
+| `GET /api/v1/gisu/all` | 없음 | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
+| `GET /api/v1/schools/link/{schoolId}` | 없음 | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
+| `GET /api/v1/schools/gisu/{gisuId}` | `GET /api/v2/gisu?id={gisuId}&includeSchool=true` | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
+| `GET /api/v1/schools/unassigned` | 없음 | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
+| `PATCH /api/v1/schools/{schoolId}/assign` | `POST /api/v1/chapters/bulk` | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
+| `PATCH /api/v1/schools/{schoolId}/unassign` | `POST /api/v1/chapters/bulk` | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
+| `GET /api/v1/challenger/search/global` | `GET /api/v1/challenger/search/cursor`, `GET /api/v1/challenger/search/offset` | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
+| `GET /api/v1/projects/{projectId}/statistics` | `GET /api/v1/projects/statistics/applications?projectIds={projectId}` | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
+| `GET /api/v1/authorization/challenger-role/{challengerRoleId}` | 내 프로필 조회 | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
+| `GET /api/v1/analytics/admin/dashboard/operations` | `GET /api/v1/analytics/admin/dashboard/operations/*` 세부 API | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
+| `DELETE /api/v1/notification/fcm/topics/legacy` | 없음 (동작하지 않던 API) | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
 
-> 2026-10-31에 `develop`의 `@Deprecated` 표시를 기준으로 처음 채웠습니다. 이 정책 이전에 지원 중단된 항목이라 삭제 예정 릴리스가 정해져 있지 않습니다. 쓰는 클라이언트는 iOS 3.5.0과 Android 3.4.4 코드에 호출 정의가 있는지만 확인했고, 웹은 확인하지 않았습니다. "확인 안 됨"은 두 앱 코드에서 찾지 못했다는 뜻이며, 삭제 전에는 [지원 기간](#4-지원-기간)에 따라 로그로 다시 확인합니다.
+> 2026-10-31에 정책 도입 전부터 `@Deprecated`로 남아 있던 항목을 정리했습니다. iOS(3.5.0, `develop`), Android(3.4.4, `develop-compose`), 웹(Operations, Activity, Brand, Auth), macOS 코드에서 호출하지 않는 것을 확인하고 지웠습니다. 웹에서는 OpenAPI로 생성한 타입 정의(`api.d.ts`)에만 경로가 남아 있었습니다.
+
+### 지원 중단을 해제한 계약
+
+아래 계약은 클라이언트가 아직 호출하고 있어 `@Deprecated`를 뺐습니다. 대체 계약으로 옮기려면 해당 클라이언트 담당자와 일정을 정한 뒤 [지원 중단 절차](#5-지원-중단-절차)를 다시 밟습니다.
+
+| 계약 | 대체 후보 | 쓰는 클라이언트 |
+|---|---|---|
+| `GET /api/v1/gisu/{gisuId}` | `GET /api/v2/gisu?id={gisuId}` | iOS 홈, Android |
+| `GET /api/v1/gisu/active` | `GET /api/v2/gisu?active=true` | Android |
+| `GET /api/v1/chapters` | 없음 | iOS 공지 작성 |
+| `GET /api/v1/chapters/with-schools` | `GET /api/v2/gisu?id={gisuId}&includeChapter=true&includeSchool=true` | iOS 공지 작성 |
+| `GET /api/v1/chapters/{chapterId}` | 없음 | iOS 공지 작성, Android |
+| `POST /api/v1/project/matching-rounds` | `PUT /api/v1/project/matching-rounds/chapters/{chapterId}` | iOS 운영진 화면 |
+| `PATCH /api/v1/project/matching-rounds/{matchingRoundId}` | `PUT /api/v1/project/matching-rounds/chapters/{chapterId}` | iOS 운영진 화면 |
+| `DELETE /api/v1/project/matching-rounds/{matchingRoundId}` | `DELETE /api/v1/project/matching-rounds/chapters/{chapterId}?type={type}` | iOS 운영진 화면 |
