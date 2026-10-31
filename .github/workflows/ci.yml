@@ -36,6 +36,9 @@ jobs:
       - name: Validate Preview release updater
         run: node --test .github/scripts/update-preview-release.test.mjs
 
+      - name: Validate release automation scripts
+        run: node --test .github/scripts/deprecation-report.test.mjs .github/scripts/release-pr.test.mjs
+
       - name: Validate and build boot JAR
         run: ./gradlew clean check :app:bootJar
 
