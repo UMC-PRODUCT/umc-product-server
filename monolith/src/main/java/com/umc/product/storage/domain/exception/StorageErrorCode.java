@@ -31,12 +31,6 @@ public enum StorageErrorCode implements BaseCode {
     STORAGE_URL_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0009", "파일 접근 링크를 만들지 못했어요. 잠시 후 다시 시도해주세요."),
     STORAGE_METADATA_READ_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0015",
         "파일 정보를 확인하지 못했어요. 잠시 후 다시 시도해주세요."),
-
-    // CDN 에러
-    CDN_SIGNING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0010", "CDN 접근 링크를 만들지 못했어요. 관리자에게 문의해주세요."),
-    NO_ENV_KEYS(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0011", "CDN 설정이 누락됐어요. 관리자에게 문의해주세요."),
-    INVALID_SPRING_PROFILE(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0012",
-        "서버 실행 환경이 올바르지 않아요. 관리자에게 문의해주세요."),
     ;
 
 

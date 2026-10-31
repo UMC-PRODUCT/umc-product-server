@@ -85,7 +85,7 @@ public class SesEmailAdapter implements SendEmailPort {
     }
 
     /**
-     * RFC 5322 형식의 발신 주소 문자열을 구성한다. (예: {@code "University MakeUs Challenge" <noreply@umc.it.kr>})
+     * RFC 5322 형식의 발신 주소 문자열을 구성한다. (예: {@code "University MakeUs Challenge" <noreply@example.com>})
      *
      * <p>display-name 에 포함된 백슬래시와 쌍따옴표는 RFC 5322 quoted-string 규칙에 따라 이스케이프한다.
      * 백슬래시를 먼저 치환해야 이후 쌍따옴표 치환에서 삽입되는 백슬래시가 중복 이스케이프되지 않는다.
