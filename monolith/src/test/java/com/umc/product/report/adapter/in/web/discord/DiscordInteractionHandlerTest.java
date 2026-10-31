@@ -124,6 +124,28 @@ class DiscordInteractionHandlerTest {
     }
 
     @Test
+    @DisplayName("역할을 여러 개 설정하면 그중 하나만 가진 사람도 처리할 수 있고, 목록에 없는 역할과 다른 서버는 거절한다")
+    void 여러_역할_설정() throws Exception {
+        // given
+        DiscordInteractionHandler multiRole = new DiscordInteractionHandler(
+            moderateReportUseCase,
+            new ReportDiscordInteractionProperties("unused", GUILD_ID, "200, 201 ,,202"),
+            objectMapper
+        );
+
+        // when & then
+        Map<String, Object> second = multiRole.handle(buttonClick(APPROVE_BUTTON, GUILD_ID, "201")).orElseThrow();
+        assertThat(objectMapper.valueToTree(second).path("type").asInt()).isEqualTo(DiscordInteractionResponses.MODAL);
+
+        Map<String, Object> unlisted = multiRole.handle(buttonClick(APPROVE_BUTTON, GUILD_ID, "999")).orElseThrow();
+        assertEphemeral(objectMapper.valueToTree(unlisted), DiscordInteractionHandler.MESSAGE_NO_PERMISSION);
+
+        Map<String, Object> otherGuild = multiRole.handle(buttonClick(APPROVE_BUTTON, "other-guild", "201"))
+            .orElseThrow();
+        assertEphemeral(objectMapper.valueToTree(otherGuild), DiscordInteractionHandler.MESSAGE_NO_PERMISSION);
+    }
+
+    @Test
     @DisplayName("서버 ID나 역할 ID가 설정되지 않았으면 아무도 처리할 수 없다")
     void 설정이_없으면_아무도_처리할_수_없다() throws Exception {
         // given
