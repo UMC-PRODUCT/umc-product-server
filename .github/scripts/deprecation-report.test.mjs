@@ -96,6 +96,7 @@ test("릴리스 날짜 기준으로 지울 항목과 다음 릴리스 예정 항
     assert.deepEqual(result.due.map((item) => item.removalDate), ["2026-11-22", "2026-11-29"]);
     assert.deepEqual(result.upcoming.map((item) => item.removalDate), ["2026-12-06", "2026-12-13"]);
     assert.deepEqual(result.missingOwner.map((item) => item.removalDate), ["2026-11-29"]);
+    assert.deepEqual(result.all.map((item) => item.removalDate), ["2026-11-22", "2026-11-29", "2026-12-06", "2026-12-13", "2026-12-20"]);
 });
 
 test("릴리스 PR 제목에서 날짜를 읽고 없는 날짜는 거부한다", () => {
@@ -117,11 +118,12 @@ test("리포트에 담당자 멘션과 위치 링크를 넣는다", () => {
         owner: "github-id", replacement: "`GET /b`",
     };
     const report = renderReport({
-        releaseDate: "2026-11-29", intervalDays: 14, due: [item], upcoming: [], missingOwner: [], unscheduled: [],
+        releaseDate: "2026-11-29", intervalDays: 14, all: [item], due: [item], upcoming: [], missingOwner: [], unscheduled: [],
     }, { repository: "UMC-PRODUCT/umc-product-server", sha: "abc123" });
     assert.ok(report.startsWith(REPORT_MARKER));
     assert.match(report, /\| 2026-11-29 \| @github-id \| \[monolith\/src\/main\/java\/A\.java:4\]\(https:\/\/github\.com\/UMC-PRODUCT\/umc-product-server\/blob\/abc123\/monolith\/src\/main\/java\/A\.java#L4\)/);
     assert.match(report, /### 다음 릴리스에서 지울 예정인 항목 \(0\)\n\n없습니다\./);
+    assert.match(report, /### 전체 지원 중단 목록 \(1\)\n\n코드에 삭제 예정이 적힌 모든 항목입니다\./);
 });
 
 test("src/main/java 아래의 Java 파일만 훑는다", (t) => {

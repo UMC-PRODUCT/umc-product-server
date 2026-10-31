@@ -144,6 +144,7 @@ export function classify(scheduled, releaseDate, intervalDays) {
     const nextRelease = parseDate(addDays(releaseDate, intervalDays));
     const byDate = (left, right) => left.removalDate.localeCompare(right.removalDate) || left.path.localeCompare(right.path);
     return {
+        all: [...scheduled].sort(byDate),
         due: scheduled.filter((item) => parseDate(item.removalDate) <= release).sort(byDate),
         upcoming: scheduled
             .filter((item) => parseDate(item.removalDate) > release && parseDate(item.removalDate) <= nextRelease)
@@ -169,7 +170,7 @@ function scheduledRows(items, links) {
     return ["| 삭제 예정 | 담당자 | 위치 | 선언 | 대체 |", "|---|---|---|---|---|", ...rows].join("\n");
 }
 
-export function renderReport({ releaseDate, intervalDays, due, upcoming, missingOwner, unscheduled }, links = null) {
+export function renderReport({ releaseDate, intervalDays, all, due, upcoming, missingOwner, unscheduled }, links = null) {
     const policyPath = "docs/guides/API_호환성_정책.md";
     const policy = links
         ? `[API 호환성 정책](https://github.com/${links.repository}/blob/${links.sha}/${encodeURI(policyPath)})`
@@ -190,6 +191,12 @@ export function renderReport({ releaseDate, intervalDays, due, upcoming, missing
         "",
         upcoming.length
             ? `${addDays(releaseDate, intervalDays)}까지 삭제 예정인 항목입니다. 담당자는 영향받는 팀에 다시 알려 주세요.\n\n${scheduledRows(upcoming, links)}`
+            : "없습니다.",
+        "",
+        `### 전체 지원 중단 목록 (${all.length})`,
+        "",
+        all.length
+            ? `코드에 삭제 예정이 적힌 모든 항목입니다. 지워질 때까지 릴리스 PR마다 표시됩니다.\n\n${scheduledRows(all, links)}`
             : "없습니다.",
     ];
     if (missingOwner.length) {
