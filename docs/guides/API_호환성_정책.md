@@ -116,7 +116,7 @@ UMC PRODUCT 서버 하나를 iOS, Android, macOS 앱과 여러 웹 서비스가 
 
 ### 2단계: 코드에 표시
 
-지원 중단은 API뿐 아니라 백엔드 코드 전반에 표시합니다. `@Deprecated`의 `since`에는 지원 중단을 표시한 릴리스 날짜를 적고, 설명에는 다음 형식의 한 줄을 넣습니다. 릴리스 PR의 CI가 이 줄을 읽어 삭제 예정 항목을 알리고 담당자를 멘션합니다.
+지원 중단은 API뿐 아니라 백엔드 코드 전반에 표시합니다. `@Deprecated`의 `since`에는 지원 중단을 표시한 릴리스 날짜를 적고, 설명에는 다음 형식의 한 줄을 넣습니다. 이 줄이 [지원 중단 목록](#8-지원-중단-목록)의 기준이며, 릴리스 PR의 CI가 이 줄을 읽어 목록을 만들고 담당자를 멘션합니다. 별도 문서에 목록을 적지 않습니다.
 
 ```text
 지원 중단: {대체 대상}. 삭제 예정: {YYYY-MM-DD} 릴리스, 담당자: {GitHub 아이디}
@@ -187,11 +187,7 @@ public enum ExampleStatus {
 }
 ```
 
-### 3단계: 목록에 추가
-
-이 문서의 [지원 중단 목록](#8-지원-중단-목록)에 담당자와 함께 한 줄을 추가합니다. 2단계와 같은 PR에서 함께 수정합니다.
-
-### 4단계: 영향받는 팀에 공지
+### 3단계: 영향받는 팀에 공지
 
 영향받는 클라이언트 팀 채널에 다음 다섯 가지를 남깁니다. PR 본문에도 같은 내용을 적습니다.
 
@@ -201,17 +197,17 @@ public enum ExampleStatus {
 4. 누가 맡나요? (지원 중단 담당자, 클라이언트별 확인 담당자)
 5. 관련 PR·이슈 링크
 
-### 5단계: 삭제 전 확인
+### 4단계: 삭제 전 확인
 
 담당자는 **삭제 예정 릴리스 바로 전 정기 릴리스** 때 다음을 합니다. 이 시점에는 릴리스 PR의 [지원 중단 항목 점검](#릴리스-pr-자동화) 댓글이 담당자를 멘션합니다.
 
 - 로그로 아직 호출이 남아 있는지 확인합니다.
 - 영향받는 팀 채널에 다음 릴리스에서 지워진다는 것을 다시 알립니다.
-- 호출이 남아 있으면 이때 해당 클라이언트 담당자와 새 삭제 예정 릴리스를 정하고, 코드와 목록의 날짜를 고칩니다.
+- 호출이 남아 있으면 이때 해당 클라이언트 담당자와 새 삭제 예정 릴리스를 정하고, 코드의 삭제 예정 날짜를 고칩니다.
 
-### 6단계: 삭제 (Contract)
+### 5단계: 삭제 (Contract)
 
-담당자가 [지원 기간](#4-지원-기간) 조건을 확인한 뒤 기존 계약을 지우는 PR을 올립니다. 같은 PR에서 지원 중단 목록의 상태를 `삭제됨`으로 바꿉니다.
+담당자가 [지원 기간](#4-지원-기간) 조건을 확인한 뒤 기존 계약을 지우는 PR을 올립니다. 코드에서 지워지면 지원 중단 목록에서도 자동으로 빠집니다.
 
 ## 6. 정기 릴리스
 
@@ -245,14 +241,14 @@ public enum ExampleStatus {
   - 클라이언트를 담당하는 팀은 팀의 Backend 담당자가 이번 릴리스에 들어간 변경 중 팀 클라이언트(iOS, Android, Web, macOS)에 영향이 있는 것을 팀 내 클라이언트 담당자와 확인합니다.
   - 클라이언트가 없는 팀(Platform, Infrastructure, Design Platform 등)은 팀이 맡은 영역(공통 모듈, 배포·DB 마이그레이션, 디자인 시스템 등)에 영향이 있는 변경을 확인합니다.
   - 확인이 끝나면 Team DRI가 Approve합니다.
-- 릴리스 PR 본문에는 포함된 PR 목록과 함께, 이번 릴리스에서 바뀌는 계약을 따로 적습니다. [지원 중단 목록](#8-지원-중단-목록)에 새로 추가되거나 삭제된 항목이 여기에 해당합니다. **다음 정기 릴리스에서 삭제 예정인 항목**도 담당자와 함께 적습니다.
+- 릴리스 PR 본문에는 포함된 PR 목록과 함께, 이번 릴리스에서 새로 지원 중단하거나 지우는 계약을 따로 적습니다. 지원 중단 목록과 다음 정기 릴리스에서 삭제 예정인 항목은 점검 댓글에 자동으로 나옵니다.
 
 ### 릴리스 PR 자동화
 
 | 워크플로 | 언제 | 하는 일 |
 |---|---|---|
 | `Release PR` (`.github/workflows/release-pr.yml`) | `develop`에 변경이 합쳐질 때 | 열린 릴리스 PR이 없으면 다음 정기 릴리스 날짜로 `[Release] YYYY-MM-DD` draft PR을 만듭니다. 열려 있으면 본문의 "포함된 PR" 목록만 갱신하고, 사람이 쓴 "바뀌는 계약"은 그대로 둡니다. |
-| `Release PR Deprecation Report` (`.github/workflows/release-pr-deprecation-report.yml`) | `main`으로 가는 PR이 열리거나 바뀔 때 | 코드의 `삭제 예정: YYYY-MM-DD 릴리스, 담당자: GitHub 아이디` 표기를 읽어 PR 댓글 하나로 알립니다. 이번 릴리스에서 지울 항목, 다음 릴리스에서 지울 항목(담당자 멘션), 담당자가 없는 항목, 삭제 예정이 적히지 않은 `@Deprecated`를 보여 줍니다. CI를 실패시키지 않습니다. |
+| `Release PR Deprecation Report` (`.github/workflows/release-pr-deprecation-report.yml`) | `main`으로 가는 PR이 열리거나 바뀔 때 | 코드의 `삭제 예정: YYYY-MM-DD 릴리스, 담당자: GitHub 아이디` 표기를 읽어 PR 댓글 하나로 알립니다. 이번 릴리스에서 지울 항목, 다음 릴리스에서 지울 항목(담당자 멘션), 전체 지원 중단 목록, 담당자가 없는 항목, 삭제 예정이 적히지 않은 `@Deprecated`를 보여 줍니다. CI를 실패시키지 않습니다. |
 
 - 다음 릴리스 날짜는 직전 `[Release] YYYY-MM-DD` PR 날짜에 배포 주기를 더해 정합니다. 배포 주기는 저장소 변수 `RELEASE_INTERVAL_DAYS`로 정하며, 매주 배포하는 기간에는 `7`, 2주마다 배포하는 기간에는 `14`로 둡니다. 변수가 없으면 `14`를 씁니다.
 - 자동으로 정한 날짜가 실제 배포일과 다르면 PR 제목을 직접 고칩니다. 점검 댓글은 제목의 날짜를 기준으로 다시 계산합니다.
@@ -277,38 +273,4 @@ public enum ExampleStatus {
 
 ## 8. 지원 중단 목록
 
-지원 중단을 공지한 계약 목록입니다. [지원 중단 절차](#5-지원-중단-절차)의 3단계, 5단계, 6단계에서 이 표를 함께 수정합니다.
-
-- **쓰는 클라이언트**: 계약을 쓰는 클라이언트와 확인 근거를 적습니다.
-- **상태**: `지원 중단` → `삭제됨`
-
-| 계약 | 대체 | 쓰는 클라이언트 | 지원 중단 | 삭제 예정 | 담당자 | 상태 | 관련 PR·이슈 |
-|---|---|---|---|---|---|---|---|
-| `GET /api/v1/gisu/all` | 없음 | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
-| `GET /api/v1/schools/link/{schoolId}` | 없음 | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
-| `GET /api/v1/schools/gisu/{gisuId}` | `GET /api/v2/gisu?id={gisuId}&includeSchool=true` | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
-| `GET /api/v1/schools/unassigned` | 없음 | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
-| `PATCH /api/v1/schools/{schoolId}/assign` | `POST /api/v1/chapters/bulk` | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
-| `PATCH /api/v1/schools/{schoolId}/unassign` | `POST /api/v1/chapters/bulk` | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
-| `GET /api/v1/challenger/search/global` | `GET /api/v1/challenger/search/cursor`, `GET /api/v1/challenger/search/offset` | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
-| `GET /api/v1/projects/{projectId}/statistics` | `GET /api/v1/projects/statistics/applications?projectIds={projectId}` | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
-| `GET /api/v1/authorization/challenger-role/{challengerRoleId}` | 내 프로필 조회 | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
-| `GET /api/v1/analytics/admin/dashboard/operations` | `GET /api/v1/analytics/admin/dashboard/operations/*` 세부 API | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
-| `DELETE /api/v1/notification/fcm/topics/legacy` | 없음 (동작하지 않던 API) | 없음 | 정책 이전 | 2026-11-08 릴리스 | wlgusqkr | 삭제됨 | [#1460](https://github.com/UMC-PRODUCT/umc-product-server/pull/1460) |
-
-> 2026-10-31에 정책 도입 전부터 `@Deprecated`로 남아 있던 항목을 정리했습니다. iOS(3.5.0, `develop`), Android(3.4.4, `develop-compose`), 웹(Operations, Activity, Brand, Auth), macOS 코드에서 호출하지 않는 것을 확인하고 지웠습니다. 웹에서는 OpenAPI로 생성한 타입 정의(`api.d.ts`)에만 경로가 남아 있었습니다.
-
-### 지원 중단을 해제한 계약
-
-아래 계약은 클라이언트가 아직 호출하고 있어 `@Deprecated`를 뺐습니다. 대체 계약으로 옮기려면 해당 클라이언트 담당자와 일정을 정한 뒤 [지원 중단 절차](#5-지원-중단-절차)를 다시 밟습니다.
-
-| 계약 | 대체 후보 | 쓰는 클라이언트 |
-|---|---|---|
-| `GET /api/v1/gisu/{gisuId}` | `GET /api/v2/gisu?id={gisuId}` | iOS 홈, Android |
-| `GET /api/v1/gisu/active` | `GET /api/v2/gisu?active=true` | Android |
-| `GET /api/v1/chapters` | 없음 | iOS 공지 작성 |
-| `GET /api/v1/chapters/with-schools` | `GET /api/v2/gisu?id={gisuId}&includeChapter=true&includeSchool=true` | iOS 공지 작성 |
-| `GET /api/v1/chapters/{chapterId}` | 없음 | iOS 공지 작성, Android |
-| `POST /api/v1/project/matching-rounds` | `PUT /api/v1/project/matching-rounds/chapters/{chapterId}` | iOS 운영진 화면 |
-| `PATCH /api/v1/project/matching-rounds/{matchingRoundId}` | `PUT /api/v1/project/matching-rounds/chapters/{chapterId}` | iOS 운영진 화면 |
-| `DELETE /api/v1/project/matching-rounds/{matchingRoundId}` | `DELETE /api/v1/project/matching-rounds/chapters/{chapterId}?type={type}` | iOS 운영진 화면 |
+지원 중단 목록은 코드의 `삭제 예정: YYYY-MM-DD 릴리스, 담당자: GitHub 아이디` 표기로 자동으로 만듭니다. 현재 목록은 열린 릴리스 PR의 "지원 중단 항목 점검" 댓글에서 확인합니다. 항목은 코드에서 지워질 때까지 릴리스 PR마다 표시됩니다.
