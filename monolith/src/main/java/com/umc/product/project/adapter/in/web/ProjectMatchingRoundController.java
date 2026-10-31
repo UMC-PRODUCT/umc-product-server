@@ -146,17 +146,11 @@ public class ProjectMatchingRoundController {
         autoDecideProjectMatchingRoundUseCase.autoDecide(matchingRoundId, memberPrincipal.getMemberId());
     }
 
-    /**
-     * @deprecated PUT /api/v1/project/matching-rounds/chapters/{chapterId}를 사용하세요.
-     */
-    @Deprecated
     @PostMapping
     @Operation(
-        deprecated = true,
         operationId = "PROJECT-MATCHING-101",
         summary = "매칭 차수 생성",
         description = """
-            Deprecated: PUT /api/v1/project/matching-rounds/chapters/{chapterId}를 사용하세요.
             매칭 차수를 생성합니다.
             - 해당 지부·유형의 1차가 시작되면 최고관리자도 등록할 수 없으며 400 PROJECT-0314를 반환합니다.
             - 최고관리자, 해당 기수 총괄단, 해당 기수·지부의 지부장만 사용할 수 있습니다.
@@ -180,17 +174,11 @@ public class ProjectMatchingRoundController {
         return ProjectMatchingRoundCreateResponse.from(matchingRoundId);
     }
 
-    /**
-     * @deprecated PUT /api/v1/project/matching-rounds/chapters/{chapterId}를 사용하세요.
-     */
-    @Deprecated
     @PatchMapping("/{matchingRoundId}")
     @Operation(
-        deprecated = true,
         operationId = "PROJECT-MATCHING-102",
         summary = "매칭 차수 수정",
         description = """
-            Deprecated: PUT /api/v1/project/matching-rounds/chapters/{chapterId}를 사용하세요.
             매칭 차수 정보를 부분 수정합니다.
             - 해당 지부·유형의 1차가 시작되면 최고관리자도 수정할 수 없으며 400 PROJECT-0314를 반환합니다.
             - 최고관리자, 해당 기수 총괄단, 해당 기수·지부의 지부장만 사용할 수 있습니다.
@@ -215,17 +203,11 @@ public class ProjectMatchingRoundController {
             request.toCommand(matchingRoundId, memberPrincipal.getMemberId()));
     }
 
-    /**
-     * @deprecated DELETE /api/v1/project/matching-rounds/chapters/{chapterId}?type={type}를 사용하세요.
-     */
-    @Deprecated
     @DeleteMapping("/{matchingRoundId}")
     @Operation(
-        deprecated = true,
         operationId = "PROJECT-MATCHING-103",
         summary = "매칭 차수 삭제",
         description = """
-            Deprecated: DELETE /api/v1/project/matching-rounds/chapters/{chapterId}?type={type}를 사용하세요.
             매칭 차수를 삭제합니다.
             - 해당 지부·유형의 1차가 시작되면 최고관리자도 삭제할 수 없으며 400 PROJECT-0314를 반환합니다.
             - 최고관리자, 해당 기수 총괄단, 해당 기수·지부의 지부장만 사용할 수 있습니다.

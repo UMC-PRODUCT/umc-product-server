@@ -11,9 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.command.ManageSchoolUseCase;
-import com.umc.product.organization.application.port.in.command.dto.AssignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.CreateSchoolCommand;
-import com.umc.product.organization.application.port.in.command.dto.UnassignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateSchoolCommand;
 import com.umc.product.organization.application.port.out.command.SaveChapterSchoolPort;
 import com.umc.product.organization.application.port.out.command.SaveSchoolPort;
@@ -91,23 +89,6 @@ public class SchoolService implements ManageSchoolUseCase {
         saveSchoolPort.deleteAllLinksBySchoolIds(schoolIds);
         saveSchoolPort.deleteAllByIds(schoolIds);
         evictAuthoritySnapshotCacheUseCase.evictByMemberIds(memberIds);
-    }
-
-    @Override
-    public void assignToChapter(AssignSchoolCommand command) {
-        School school = loadSchoolPort.findSchoolDetailById(command.schoolId());
-        Chapter chapter = loadChapterPort.findById(command.chapterId());
-
-        school.assignToChapter(chapter);
-        evictAuthoritySnapshotsBySchoolId(command.schoolId());
-    }
-
-    @Override
-    public void unassignFromChapter(UnassignSchoolCommand command) {
-        School school = loadSchoolPort.findSchoolDetailById(command.schoolId());
-
-        school.unassignFromGisu(command.gisuId());
-        evictAuthoritySnapshotsBySchoolId(command.schoolId());
     }
 
     private void evictAuthoritySnapshotsBySchoolId(Long schoolId) {

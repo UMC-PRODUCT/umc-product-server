@@ -93,7 +93,6 @@ public record PostResponse(
     // ====================== 예은 작업본 ======================
     // ======================================================
 
-    @Deprecated(since = "v1.2.7", forRemoval = true)
     public static PostResponse from(PostInfo info) {
         LightningInfoResponse lightningInfoResponse = null;
 
