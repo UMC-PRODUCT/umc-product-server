@@ -25,22 +25,6 @@ public interface GetChallengerRoleUseCase extends ListChallengerRoleUseCase, Che
     }
 
     /**
-     * RoleType만 가져오는게 아니라, 전체 {@link com.umc.product.authorization.domain.ChallengerRole}을 가져오도록 구성해서 사용해주세요.
-     */
-    @Deprecated(since = "v1.5.0", forRemoval = true)
-    List<ChallengerRoleType> getAllRoleTypesByMemberIdAndGisuId(Long memberId, Long gisuId);
-
-    /**
-     * 특정 학교에서의 역할 타입 조회
-     *
-     * @param memberId 사용자 ID
-     * @param schoolId 학교 ID
-     * @return 해당 학교에서의 역할 타입 리스트
-     */
-    @Deprecated(since = "v1.5.0", forRemoval = true)
-    List<ChallengerRoleType> getAllRoleTypesByMemberIdAndSchoolId(Long memberId, Long schoolId);
-
-    /**
      * 여러 챌린저의 역할 타입을 일괄 조회
      *
      * @param challengerIds 챌린저 ID 목록

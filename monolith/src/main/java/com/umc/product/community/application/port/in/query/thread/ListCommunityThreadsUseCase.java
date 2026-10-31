@@ -10,9 +10,8 @@ import com.umc.product.community.application.port.in.query.thread.dto.ThreadList
  * <p>하지만 삭제하지 않고 남겨 둔다. requester가 ACTIVE 멤버인 스레드만 고정/일반으로 분리해 반환하는
  * 동작은 향후 "내 참여 스레드만 모아보기" 화면의 조회 기반으로 그대로 재사용할 가능성이 있기 때문이다.
  *
- * @deprecated 스레 목록은 {@link BrowseCommunityThreadsUseCase}를 사용한다. 본 UseCase는 참여 스레드 전용 조회 재사용을 위해 보류한 상태다.
+ * 스레 목록은 {@link BrowseCommunityThreadsUseCase}를 사용한다. 본 UseCase는 참여 스레드 전용 조회 재사용을 위해 보류한 상태다.
  */
-@Deprecated
 public interface ListCommunityThreadsUseCase {
 
     ThreadListInfo listThreads(ListThreadsQuery query);

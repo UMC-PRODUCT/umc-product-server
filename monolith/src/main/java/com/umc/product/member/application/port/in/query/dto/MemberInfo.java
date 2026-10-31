@@ -26,38 +26,6 @@ public record MemberInfo(
     MemberStatus status,
     List<ChallengerRoleInfo> roles
 ) {
-    @Deprecated
-    public static MemberInfo from(Member member) {
-        return new MemberInfo(
-            member.getId(),
-            member.getName(),
-            member.getNickname(),
-            member.getEmail(),
-            member.getSchoolId(),
-            "알 수 없음 ",
-            member.getProfileImageId(),
-            null,
-            member.getStatus(),
-            null
-        );
-    }
-
-    @Deprecated
-    public static MemberInfo from(Member member, String schoolName, String profileImageLink) {
-        return new MemberInfo(
-            member.getId(),
-            member.getName(),
-            member.getNickname(),
-            member.getEmail(),
-            member.getSchoolId(),
-            schoolName,
-            member.getProfileImageId(),
-            profileImageLink,
-            member.getStatus(),
-            null
-        );
-    }
-
     public static MemberInfo from(
         Member member, String schoolName, String profileImageLink, List<ChallengerRoleInfo> roles
     ) {
