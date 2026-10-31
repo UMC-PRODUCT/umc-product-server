@@ -32,6 +32,11 @@ public interface LoadMemberPort {
 
     boolean existsByNickname(String nickname);
 
+    /**
+     * 학교 내 모든 저장 회원을 대상으로 닉네임 존재 여부를 확인한다. 회원 상태와 기수는 제한하지 않는다.
+     */
+    boolean existsNicknameInSchool(Long schoolId, String nickname);
+
     List<Long> findAllIdsCursor(Long lastId, Pageable pageable);
 
     long countMembersByIds(Set<Long> memberIds);

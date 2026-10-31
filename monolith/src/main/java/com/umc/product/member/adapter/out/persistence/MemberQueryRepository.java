@@ -58,6 +58,15 @@ public class MemberQueryRepository {
         );
     }
 
+    public boolean existsNicknameInSchool(Long schoolId, String nickname) {
+        QMember member = QMember.member;
+        return queryFactory
+            .selectOne()
+            .from(member)
+            .where(member.schoolId.eq(schoolId), member.nickname.eq(nickname))
+            .fetchFirst() != null;
+    }
+
     /**
      * 검색 로직 (v1) — 챌린저 단위 row.
      */
