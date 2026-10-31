@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.report.domain.Report;
+import com.umc.product.report.domain.enums.ReportStatus;
 import com.umc.product.report.domain.enums.ReportTargetType;
 import com.umc.product.support.PersistenceAdapterTest;
 
@@ -46,6 +47,11 @@ class ReportUndeliveredQueryTest {
         Report retrying = Report.create(1L, ReportTargetType.POST, 6L, null);
         retrying.recordDeliveryFailure(5);
         save(retrying);
+        // 이미 처리된 신고는 전달 상태가 FAILED여도 다시 보내지 않는다.
+        Report moderated = Report.create(1L, ReportTargetType.POST, 7L, null);
+        moderated.recordDeliveryFailure(1);
+        ReflectionTestUtils.setField(moderated, "status", ReportStatus.APPROVED);
+        save(moderated);
         entityManager.clear();
         Instant future = Instant.now().plus(Duration.ofHours(1));
 

@@ -51,6 +51,7 @@ public class DiscordInteractionHandler {
     static final String MESSAGE_MEMO_TOO_LONG = "메모는 " + ReportAction.MEMO_MAX_LENGTH + "자까지 입력할 수 있어요.";
     static final String MESSAGE_ALREADY_MODERATED = "이미 다른 운영자가 처리한 신고예요.";
     static final String MESSAGE_NOT_FOUND = "신고를 찾을 수 없어요.";
+    static final String MESSAGE_APPLIED_WITHOUT_UPDATE = "처리는 완료됐지만 메시지를 갱신하지 못했어요. 버튼은 더 이상 동작하지 않아요.";
     static final String MESSAGE_FAILED = "신고를 처리하지 못했어요. 잠시 후 다시 시도해 주세요.";
 
     private static final String RESULT_FIELD_NAME = "처리 결과";
@@ -145,14 +146,21 @@ public class DiscordInteractionHandler {
             member.path("user").path("id").asText(),
             displayName(member)
         );
+        ModerateReportResult result;
         try {
-            ModerateReportResult result = moderateReportUseCase.moderate(command);
-            return resolvedMessage(interaction, result);
+            result = moderateReportUseCase.moderate(command);
         } catch (ReportDomainException exception) {
             return DiscordInteractionResponses.ephemeral(messageFor(exception));
         } catch (RuntimeException exception) {
             log.error("Discord 신고 조치 처리 실패: reportId={}", target.get().reportId(), exception);
             return DiscordInteractionResponses.ephemeral(MESSAGE_FAILED);
+        }
+        // 조치는 이미 커밋되었으므로, 메시지 조립에 실패해도 실패로 안내하지 않고 결과만 알립니다.
+        try {
+            return resolvedMessage(interaction, result);
+        } catch (RuntimeException exception) {
+            log.error("Discord 신고 처리 결과 메시지 조립 실패: reportId={}", result.reportId(), exception);
+            return DiscordInteractionResponses.ephemeral(MESSAGE_APPLIED_WITHOUT_UPDATE);
         }
     }
 

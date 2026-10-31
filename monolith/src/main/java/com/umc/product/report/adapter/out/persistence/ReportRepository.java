@@ -33,6 +33,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     @Query("""
         select r from Report r
         where r.createdAt < :createdBefore
+          and r.status = com.umc.product.report.domain.enums.ReportStatus.PENDING
           and (r.deliveryStatus = :failed
             or (r.deliveryStatus = :pending and r.deliveryAttemptCount = 0))
         order by r.id asc
