@@ -46,6 +46,7 @@ class CommunityThreadArchitectureTest {
     private static final Set<String> ALLOWED_REPORT_DOMAIN_CONTRACT_IMPORTS = Set.of(
         "import com.umc.product.report.domain.enums.reportreason;",
         "import com.umc.product.report.domain.enums.reportstatus;",
+        "import com.umc.product.report.domain.enums.reporttargetremoval;",
         "import com.umc.product.report.domain.enums.reporttargettype;",
         "import com.umc.product.report.domain.exception.reportdomainexception;",
         "import com.umc.product.report.domain.exception.reporterrorcode;"
