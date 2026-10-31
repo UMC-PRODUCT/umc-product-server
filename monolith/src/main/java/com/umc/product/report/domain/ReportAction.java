@@ -5,6 +5,7 @@ import java.time.Instant;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.report.domain.enums.ReportActionReason;
 import com.umc.product.report.domain.enums.ReportActionType;
+import com.umc.product.report.domain.enums.ReportTargetRemoval;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -53,6 +54,11 @@ public class ReportAction extends BaseEntity {
     @Column(name = "memo", length = MEMO_MAX_LENGTH)
     private String memo;
 
+    /** 조치 때 대상 콘텐츠를 삭제했는지 여부와 결과. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "target_removal", nullable = false, length = 32)
+    private ReportTargetRemoval targetRemoval;
+
     /** 조치자의 운영 채널 사용자 ID (현재 Discord 사용자 ID). */
     @Column(name = "moderator_external_id", nullable = false, length = MODERATOR_EXTERNAL_ID_MAX_LENGTH)
     private String moderatorExternalId;
@@ -69,6 +75,7 @@ public class ReportAction extends BaseEntity {
         ReportActionType actionType,
         ReportActionReason reasonCode,
         String memo,
+        ReportTargetRemoval targetRemoval,
         String moderatorExternalId,
         String moderatorName,
         Instant actedAt
@@ -77,6 +84,7 @@ public class ReportAction extends BaseEntity {
         this.actionType = actionType;
         this.reasonCode = reasonCode;
         this.memo = memo;
+        this.targetRemoval = targetRemoval;
         this.moderatorExternalId = moderatorExternalId;
         this.moderatorName = moderatorName;
         this.actedAt = actedAt;
@@ -87,12 +95,19 @@ public class ReportAction extends BaseEntity {
         ReportActionType actionType,
         ReportActionReason reasonCode,
         String memo,
+        ReportTargetRemoval targetRemoval,
         String moderatorExternalId,
         String moderatorName,
         Instant actedAt
     ) {
         if (reportId == null || actionType == null || reasonCode == null || actedAt == null) {
             throw new IllegalArgumentException("reportId, actionType, reasonCode, actedAt must not be null");
+        }
+        if (targetRemoval == null) {
+            throw new IllegalArgumentException("targetRemoval must not be null");
+        }
+        if (actionType == ReportActionType.REJECT && targetRemoval != ReportTargetRemoval.NONE) {
+            throw new IllegalArgumentException("targetRemoval must be NONE for " + actionType);
         }
         if (reasonCode.actionType() != actionType) {
             throw new IllegalArgumentException("reasonCode " + reasonCode + " cannot be used for " + actionType);
@@ -106,6 +121,7 @@ public class ReportAction extends BaseEntity {
             actionType,
             reasonCode,
             normalizedMemo,
+            targetRemoval,
             requireText(moderatorExternalId, "moderatorExternalId", MODERATOR_EXTERNAL_ID_MAX_LENGTH),
             requireText(moderatorName, "moderatorName", MODERATOR_NAME_MAX_LENGTH),
             actedAt

@@ -14,6 +14,7 @@ import com.umc.product.report.domain.enums.ReportActionType;
 import com.umc.product.report.domain.enums.ReportDeliveryStatus;
 import com.umc.product.report.domain.enums.ReportReason;
 import com.umc.product.report.domain.enums.ReportStatus;
+import com.umc.product.report.domain.enums.ReportTargetRemoval;
 import com.umc.product.report.domain.enums.ReportTargetType;
 import com.umc.product.report.domain.exception.ReportDomainException;
 import com.umc.product.report.domain.exception.ReportErrorCode;
@@ -119,7 +120,8 @@ class ReportTest {
 
         // when
         ReportAction action = report.moderate(
-            ReportActionType.APPROVE, ReportActionReason.ABUSE, " 욕설 확인 ", "1234567890", "모루", actedAt
+            ReportActionType.APPROVE, ReportActionReason.ABUSE, " 욕설 확인 ", ReportTargetRemoval.DELETED,
+            "1234567890", "모루", actedAt
         );
 
         // then
@@ -128,6 +130,7 @@ class ReportTest {
         assertThat(action.getActionType()).isEqualTo(ReportActionType.APPROVE);
         assertThat(action.getReasonCode()).isEqualTo(ReportActionReason.ABUSE);
         assertThat(action.getMemo()).isEqualTo("욕설 확인");
+        assertThat(action.getTargetRemoval()).isEqualTo(ReportTargetRemoval.DELETED);
         assertThat(action.getModeratorExternalId()).isEqualTo("1234567890");
         assertThat(action.getModeratorName()).isEqualTo("모루");
         assertThat(action.getActedAt()).isEqualTo(actedAt);
@@ -141,7 +144,8 @@ class ReportTest {
 
         // when
         ReportAction action = report.moderate(
-            ReportActionType.REJECT, ReportActionReason.NOT_VIOLATION, "  ", "1234567890", "모루", Instant.now()
+            ReportActionType.REJECT, ReportActionReason.NOT_VIOLATION, "  ", ReportTargetRemoval.NONE,
+            "1234567890", "모루", Instant.now()
         );
 
         // then
@@ -155,11 +159,15 @@ class ReportTest {
     void moderate_이미_처리된_신고는_거부한다() {
         // given
         Report report = savedReport();
-        report.moderate(ReportActionType.APPROVE, ReportActionReason.ABUSE, null, "1", "모루", Instant.now());
+        report.moderate(
+            ReportActionType.APPROVE, ReportActionReason.ABUSE, null, ReportTargetRemoval.NONE, "1", "모루",
+            Instant.now()
+        );
 
         // when & then
         assertThatThrownBy(() -> report.moderate(
-            ReportActionType.REJECT, ReportActionReason.NOT_VIOLATION, "번복", "2", "다른 운영자", Instant.now()
+            ReportActionType.REJECT, ReportActionReason.NOT_VIOLATION, "번복", ReportTargetRemoval.NONE, "2",
+            "다른 운영자", Instant.now()
         ))
             .isInstanceOfSatisfying(ReportDomainException.class, exception ->
                 assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_MODERATED)
@@ -175,16 +183,18 @@ class ReportTest {
         String tooLong = "가".repeat(ReportAction.MEMO_MAX_LENGTH + 1);
 
         // when & then
-        assertThatThrownBy(() -> report.moderate(ReportActionType.APPROVE, null, null, "1", "모루", Instant.now()))
+        assertThatThrownBy(() -> report.moderate(
+            ReportActionType.APPROVE, null, null, ReportTargetRemoval.NONE, "1", "모루", Instant.now()
+        ))
             .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> report.moderate(
-            ReportActionType.APPROVE, ReportActionReason.NOT_VIOLATION, null, "1", "모루", Instant.now()
+            ReportActionType.APPROVE, ReportActionReason.NOT_VIOLATION, null, ReportTargetRemoval.NONE, "1", "모루", Instant.now()
         )).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> report.moderate(
-            ReportActionType.REJECT, ReportActionReason.OTHER_REJECTION, " ", "1", "모루", Instant.now()
+            ReportActionType.REJECT, ReportActionReason.OTHER_REJECTION, " ", ReportTargetRemoval.NONE, "1", "모루", Instant.now()
         )).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> report.moderate(
-            ReportActionType.APPROVE, ReportActionReason.SPAM, tooLong, "1", "모루", Instant.now()
+            ReportActionType.APPROVE, ReportActionReason.SPAM, tooLong, ReportTargetRemoval.NONE, "1", "모루", Instant.now()
         )).isInstanceOf(IllegalArgumentException.class);
         assertThat(report.getStatus()).isEqualTo(ReportStatus.PENDING);
     }
@@ -197,7 +207,8 @@ class ReportTest {
 
         // when
         ReportAction action = report.moderate(
-            ReportActionType.APPROVE, ReportActionReason.OTHER_VIOLATION, "사칭 의심", "1", "모루", Instant.now()
+            ReportActionType.APPROVE, ReportActionReason.OTHER_VIOLATION, "사칭 의심", ReportTargetRemoval.NONE, "1",
+            "모루", Instant.now()
         );
 
         // then
@@ -265,11 +276,73 @@ class ReportTest {
 
         // when
         ReportAction action = report.moderate(
-            ReportActionType.APPROVE, ReportActionReason.SPAM, "😀".repeat(500), "1", "모루", Instant.now()
+            ReportActionType.APPROVE, ReportActionReason.SPAM, "😀".repeat(500), ReportTargetRemoval.NONE, "1",
+            "모루", Instant.now()
         );
 
         // then
         assertThat(action.getMemo()).isEqualTo("😀".repeat(500));
+    }
+
+    @Test
+    @DisplayName("반려하면서 대상을 삭제한 것으로 기록하면 거부하고 상태도 그대로 둔다")
+    void moderate_반려하면서_삭제로_기록하면_거부한다() {
+        // given
+        Report report = savedReport();
+
+        // when & then
+        assertThatThrownBy(() -> report.moderate(
+            ReportActionType.REJECT, ReportActionReason.NOT_VIOLATION, null, ReportTargetRemoval.DELETED, "1", "모루",
+            Instant.now()
+        )).isInstanceOf(IllegalArgumentException.class);
+        assertThat(report.getStatus()).isEqualTo(ReportStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("삭제 결과가 없으면 조치하지 않는다")
+    void moderate_삭제_결과가_없으면_거부한다() {
+        // given
+        Report report = savedReport();
+
+        // when & then
+        assertThatThrownBy(() -> report.moderate(
+            ReportActionType.APPROVE, ReportActionReason.ABUSE, null, null, "1", "모루", Instant.now()
+        )).isInstanceOf(IllegalArgumentException.class);
+        assertThat(report.getStatus()).isEqualTo(ReportStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("대상 삭제는 스레드 메시지 신고를 처리할 때만 동반한다")
+    void removesTargetOn_스레드_메시지_처리만_true() {
+        // given
+        Report threadMessage = Report.createThreadMessage(
+            1L, 2L, 3L, ReportReason.ABUSE, ReportTargetSnapshot.of(4L, "신고 대상 메시지", "스레드 제목")
+        );
+        Report post = Report.create(1L, ReportTargetType.POST, 2L, null);
+        Report comment = Report.create(1L, ReportTargetType.COMMENT, 2L, null);
+
+        // when & then
+        assertThat(threadMessage.removesTargetOn(ReportActionType.APPROVE)).isTrue();
+        assertThat(threadMessage.removesTargetOn(ReportActionType.REJECT)).isFalse();
+        assertThat(post.removesTargetOn(ReportActionType.APPROVE)).isFalse();
+        assertThat(comment.removesTargetOn(ReportActionType.APPROVE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("처리 대기가 아닌 신고는 requirePending에서 거부한다")
+    void requirePending_이미_처리된_신고는_거부한다() {
+        // given
+        Report report = savedReport();
+        report.moderate(
+            ReportActionType.APPROVE, ReportActionReason.ABUSE, null, ReportTargetRemoval.NONE, "1", "모루",
+            Instant.now()
+        );
+
+        // when & then
+        assertThatThrownBy(report::requirePending)
+            .isInstanceOfSatisfying(ReportDomainException.class, exception ->
+                assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_MODERATED)
+            );
     }
 
     private Report savedReport() {

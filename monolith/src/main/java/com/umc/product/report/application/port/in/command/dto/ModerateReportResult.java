@@ -7,6 +7,7 @@ import com.umc.product.report.domain.ReportAction;
 import com.umc.product.report.domain.enums.ReportActionReason;
 import com.umc.product.report.domain.enums.ReportActionType;
 import com.umc.product.report.domain.enums.ReportStatus;
+import com.umc.product.report.domain.enums.ReportTargetRemoval;
 
 public record ModerateReportResult(
     Long reportId,
@@ -14,6 +15,7 @@ public record ModerateReportResult(
     ReportActionType actionType,
     ReportActionReason reasonCode,
     String memo,
+    ReportTargetRemoval targetRemoval,
     String moderatorName,
     Instant actedAt
 ) {
@@ -25,6 +27,7 @@ public record ModerateReportResult(
             action.getActionType(),
             action.getReasonCode(),
             action.getMemo(),
+            action.getTargetRemoval(),
             action.getModeratorName(),
             action.getActedAt()
         );

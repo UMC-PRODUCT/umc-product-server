@@ -28,6 +28,7 @@ import com.umc.product.report.application.port.in.command.dto.ModerateReportResu
 import com.umc.product.report.domain.enums.ReportActionReason;
 import com.umc.product.report.domain.enums.ReportActionType;
 import com.umc.product.report.domain.enums.ReportStatus;
+import com.umc.product.report.domain.enums.ReportTargetRemoval;
 import com.umc.product.report.domain.exception.ReportDomainException;
 import com.umc.product.report.domain.exception.ReportErrorCode;
 
@@ -224,8 +225,8 @@ class DiscordInteractionHandlerTest {
     void 메모_없이_처리() throws Exception {
         // given
         given(moderateReportUseCase.moderate(any())).willReturn(new ModerateReportResult(
-            901L, ReportStatus.REJECTED, ReportActionType.REJECT, ReportActionReason.DUPLICATE, null, "모루",
-            Instant.now()
+            901L, ReportStatus.REJECTED, ReportActionType.REJECT, ReportActionReason.DUPLICATE, null,
+            ReportTargetRemoval.NONE, "모루", Instant.now()
         ));
 
         // when
@@ -264,6 +265,34 @@ class DiscordInteractionHandlerTest {
             DiscordInteractionHandler.MESSAGE_FAILED);
     }
 
+    @Test
+    @DisplayName("조치를 적용한 뒤 결과 메시지 조립에 실패하면 실패가 아니라 처리 완료로 본인에게 안내한다")
+    void 사유_제출_조치_후_메시지_조립_실패() throws Exception {
+        // given
+        given(moderateReportUseCase.moderate(any())).willReturn(new ModerateReportResult(
+            901L, ReportStatus.APPROVED, null, ReportActionReason.ABUSE, null, ReportTargetRemoval.NONE, "모루",
+            Instant.now()
+        ));
+
+        // when & then
+        assertEphemeral(respond(reasonSubmit(APPROVE_BUTTON, MODERATOR_ROLE_ID, "ABUSE", null)),
+            DiscordInteractionHandler.MESSAGE_APPLIED_WITHOUT_UPDATE);
+    }
+
+    @Test
+    @DisplayName("결과 문구는 사유 다음 줄에 삭제 결과를 붙이고, 삭제하지 않았으면 아무것도 붙이지 않는다")
+    void 결과_문구에_삭제_결과를_붙인다() {
+        // when & then
+        assertThat(DiscordInteractionHandler.resultText(approvedResult("욕설 확인", ReportTargetRemoval.DELETED)))
+            .isEqualTo("처리 완료 by 모루 · 욕설·비방·혐오 표현\n메시지를 삭제했어요.\n메모: 욕설 확인");
+        assertThat(DiscordInteractionHandler.resultText(approvedResult(null, ReportTargetRemoval.ALREADY_DELETED)))
+            .endsWith("\n메시지가 이미 삭제되어 있었어요.");
+        assertThat(DiscordInteractionHandler.resultText(approvedResult(null, ReportTargetRemoval.NOT_FOUND)))
+            .endsWith("\n메시지를 찾을 수 없어 삭제하지 않았어요.");
+        assertThat(DiscordInteractionHandler.resultText(approvedResult(null, ReportTargetRemoval.NONE)))
+            .doesNotContain("메시지");
+    }
+
     private JsonNode respond(JsonNode interaction) {
         Optional<Map<String, Object>> response = sut.handle(interaction);
         assertThat(response).isPresent();
@@ -288,8 +317,13 @@ class DiscordInteractionHandlerTest {
     }
 
     private static ModerateReportResult approvedResult(String memo) {
+        return approvedResult(memo, ReportTargetRemoval.NONE);
+    }
+
+    private static ModerateReportResult approvedResult(String memo, ReportTargetRemoval targetRemoval) {
         return new ModerateReportResult(
-            901L, ReportStatus.APPROVED, ReportActionType.APPROVE, ReportActionReason.ABUSE, memo, "모루", Instant.now()
+            901L, ReportStatus.APPROVED, ReportActionType.APPROVE, ReportActionReason.ABUSE, memo, targetRemoval,
+            "모루", Instant.now()
         );
     }
 

@@ -8,6 +8,7 @@ import com.umc.product.report.domain.enums.ReportActionType;
 import com.umc.product.report.domain.enums.ReportDeliveryStatus;
 import com.umc.product.report.domain.enums.ReportReason;
 import com.umc.product.report.domain.enums.ReportStatus;
+import com.umc.product.report.domain.enums.ReportTargetRemoval;
 import com.umc.product.report.domain.enums.ReportTargetType;
 import com.umc.product.report.domain.exception.ReportDomainException;
 import com.umc.product.report.domain.exception.ReportErrorCode;
@@ -163,6 +164,24 @@ public class Report extends BaseEntity {
     }
 
     /**
+     * 처리 대기(PENDING) 상태인지 확인합니다. 대상 콘텐츠를 삭제하기 전에 먼저 호출해, 이미 처리된 신고로 삭제하지 않게 합니다.
+     *
+     * @throws ReportDomainException 이미 처리되었거나 반려된 신고면 {@link ReportErrorCode#REPORT_ALREADY_MODERATED}
+     */
+    public void requirePending() {
+        if (this.status != ReportStatus.PENDING) {
+            throw new ReportDomainException(ReportErrorCode.REPORT_ALREADY_MODERATED);
+        }
+    }
+
+    /**
+     * 해당 조치가 대상 콘텐츠 삭제를 동반하는지 확인합니다. 스레드 메시지 신고를 처리(APPROVE)할 때만 삭제합니다.
+     */
+    public boolean removesTargetOn(ReportActionType actionType) {
+        return actionType == ReportActionType.APPROVE && this.targetType == ReportTargetType.THREAD_MESSAGE;
+    }
+
+    /**
      * 처리 대기(PENDING) 신고에 운영자 조치를 한 번만 적용하고, 남길 조치 이력을 돌려줍니다.
      *
      * @throws ReportDomainException 이미 처리되었거나 반려된 신고면 {@link ReportErrorCode#REPORT_ALREADY_MODERATED}
@@ -171,18 +190,18 @@ public class Report extends BaseEntity {
         ReportActionType actionType,
         ReportActionReason reasonCode,
         String memo,
+        ReportTargetRemoval targetRemoval,
         String moderatorExternalId,
         String moderatorName,
         Instant actedAt
     ) {
-        if (this.status != ReportStatus.PENDING) {
-            throw new ReportDomainException(ReportErrorCode.REPORT_ALREADY_MODERATED);
-        }
+        requirePending();
         ReportAction action = ReportAction.record(
             this.id,
             actionType,
             reasonCode,
             memo,
+            targetRemoval,
             moderatorExternalId,
             moderatorName,
             actedAt

@@ -16,6 +16,7 @@ import com.umc.product.report.domain.ReportAction;
 import com.umc.product.report.domain.enums.ReportActionReason;
 import com.umc.product.report.domain.enums.ReportActionType;
 import com.umc.product.report.domain.enums.ReportStatus;
+import com.umc.product.report.domain.enums.ReportTargetRemoval;
 import com.umc.product.report.domain.enums.ReportTargetType;
 import com.umc.product.support.PersistenceAdapterTest;
 
@@ -48,7 +49,8 @@ class ReportActionPersistenceAdapterTest {
 
         // when
         ReportAction action = report.moderate(
-            ReportActionType.REJECT, ReportActionReason.OTHER_REJECTION, "신고 사유 아님", "1234567890", "모루", ACTED_AT
+            ReportActionType.REJECT, ReportActionReason.OTHER_REJECTION, "신고 사유 아님", ReportTargetRemoval.NONE,
+            "1234567890", "모루", ACTED_AT
         );
         reportPersistenceAdapter.save(report);
         sut.save(action);
@@ -63,6 +65,7 @@ class ReportActionPersistenceAdapterTest {
             assertThat(saved.getActionType()).isEqualTo(ReportActionType.REJECT);
             assertThat(saved.getReasonCode()).isEqualTo(ReportActionReason.OTHER_REJECTION);
             assertThat(saved.getMemo()).isEqualTo("신고 사유 아님");
+            assertThat(saved.getTargetRemoval()).isEqualTo(ReportTargetRemoval.NONE);
             assertThat(saved.getModeratorExternalId()).isEqualTo("1234567890");
             assertThat(saved.getModeratorName()).isEqualTo("모루");
             assertThat(saved.getActedAt()).isEqualTo(ACTED_AT);

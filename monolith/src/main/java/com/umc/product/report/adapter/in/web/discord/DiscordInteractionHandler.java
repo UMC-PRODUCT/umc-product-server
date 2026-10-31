@@ -19,6 +19,7 @@ import com.umc.product.report.application.port.in.command.dto.ModerateReportResu
 import com.umc.product.report.domain.ReportAction;
 import com.umc.product.report.domain.enums.ReportActionReason;
 import com.umc.product.report.domain.enums.ReportActionType;
+import com.umc.product.report.domain.enums.ReportTargetRemoval;
 import com.umc.product.report.domain.exception.ReportDomainException;
 import com.umc.product.report.domain.exception.ReportErrorCode;
 
@@ -254,10 +255,23 @@ public class DiscordInteractionHandler {
         String text = ReportDiscordButtons.label(result.actionType())
             + " by " + result.moderatorName()
             + " · " + DiscordReportReasons.label(result.reasonCode());
+        String removalText = removalText(result.targetRemoval());
+        if (removalText != null) {
+            text += "\n" + removalText;
+        }
         if (result.memo() == null) {
             return text;
         }
         return text + "\n메모: " + result.memo();
+    }
+
+    private static String removalText(ReportTargetRemoval removal) {
+        return switch (removal) {
+            case DELETED -> "메시지를 삭제했어요.";
+            case ALREADY_DELETED -> "메시지가 이미 삭제되어 있었어요.";
+            case NOT_FOUND -> "메시지를 찾을 수 없어 삭제하지 않았어요.";
+            case NONE -> null;
+        };
     }
 
     private static String messageFor(ReportDomainException exception) {

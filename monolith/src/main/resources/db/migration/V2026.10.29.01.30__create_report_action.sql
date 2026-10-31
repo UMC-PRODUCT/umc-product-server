@@ -8,6 +8,7 @@ CREATE TABLE report_action
     action_type           VARCHAR(32)                             NOT NULL,
     reason_code           VARCHAR(32)                             NOT NULL,
     memo                  VARCHAR(500),
+    target_removal        VARCHAR(32)                             NOT NULL,
     moderator_external_id VARCHAR(64)                             NOT NULL,
     moderator_name        VARCHAR(100)                            NOT NULL,
     acted_at              TIMESTAMP(6) WITH TIME ZONE             NOT NULL,
@@ -18,6 +19,8 @@ CREATE TABLE report_action
         FOREIGN KEY (report_id) REFERENCES report (id),
     CONSTRAINT ck_report_action_type
         CHECK (action_type IN ('APPROVE', 'REJECT')),
+    CONSTRAINT ck_report_action_target_removal
+        CHECK (target_removal IN ('NONE', 'DELETED', 'ALREADY_DELETED', 'NOT_FOUND')),
     CONSTRAINT ck_report_action_reason_code
         CHECK (reason_code IN ('SPAM', 'ABUSE', 'INAPPROPRIATE', 'PRIVACY', 'OTHER_VIOLATION',
                                'NOT_VIOLATION', 'CONTENT_MISMATCH', 'UNVERIFIABLE', 'DUPLICATE',
@@ -28,6 +31,7 @@ COMMENT ON COLUMN report_action.moderator_external_id IS '조치자의 운영 �
 COMMENT ON COLUMN report_action.moderator_name IS '조치 시점의 조치자 표시 이름';
 COMMENT ON COLUMN report_action.reason_code IS '처리 사유(위반 유형) 또는 반려 사유';
 COMMENT ON COLUMN report_action.memo IS '운영자 메모. 기타 사유면 필수';
+COMMENT ON COLUMN report_action.target_removal IS '조치 때 대상 콘텐츠 삭제 결과 (NONE, DELETED, ALREADY_DELETED, NOT_FOUND)';
 
 CREATE INDEX idx_report_action_report
     ON report_action (report_id, acted_at);
