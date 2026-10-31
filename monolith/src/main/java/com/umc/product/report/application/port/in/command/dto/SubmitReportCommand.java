@@ -9,11 +9,12 @@ public record SubmitReportCommand(
     Long targetId,
     Long threadId,
     ReportReason reasonCode,
+    String detail,
     TargetSnapshot targetSnapshot
 ) {
 
     public static SubmitReportCommand of(Long reporterId, ReportTargetType targetType, Long targetId) {
-        return new SubmitReportCommand(reporterId, targetType, targetId, null, null, null);
+        return new SubmitReportCommand(reporterId, targetType, targetId, null, null, null, null);
     }
 
     public static SubmitReportCommand threadMessage(
@@ -29,6 +30,31 @@ public record SubmitReportCommand(
             messageId,
             threadId,
             reasonCode,
+            null,
+            targetSnapshot
+        );
+    }
+
+    /**
+     * 사용자 신고 명령을 만듭니다.
+     *
+     * @param targetMemberId 신고 대상 회원의 {@code member.id}
+     * @param detail         신고자가 적은 상세 내용 (필수)
+     */
+    public static SubmitReportCommand user(
+        Long reporterId,
+        Long targetMemberId,
+        ReportReason reasonCode,
+        String detail,
+        TargetSnapshot targetSnapshot
+    ) {
+        return new SubmitReportCommand(
+            reporterId,
+            ReportTargetType.USER,
+            targetMemberId,
+            null,
+            reasonCode,
+            detail,
             targetSnapshot
         );
     }

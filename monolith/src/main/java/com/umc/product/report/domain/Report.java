@@ -33,6 +33,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Report extends BaseEntity {
 
+    /** 사용자 신고 상세 내용의 최대 길이. {@code reason} 컬럼 길이와 같습니다. */
+    public static final int DETAIL_MAX_LENGTH = 500;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -103,6 +106,9 @@ public class Report extends BaseEntity {
         if (targetType == ReportTargetType.THREAD_MESSAGE) {
             throw new IllegalArgumentException("THREAD_MESSAGE reports require threadId and reasonCode");
         }
+        if (targetType == ReportTargetType.USER) {
+            throw new IllegalArgumentException("USER reports require reasonCode and detail");
+        }
         return Report.builder()
             .reporterId(reporterId)
             .targetType(targetType)
@@ -123,7 +129,35 @@ public class Report extends BaseEntity {
             .targetType(ReportTargetType.THREAD_MESSAGE)
             .targetId(requirePositive(messageId, "messageId"))
             .threadId(requirePositive(threadId, "threadId"))
-            .reasonCode(requireReason(reason))
+            .reasonCode(requireReasonFor(ReportTargetType.THREAD_MESSAGE, reason))
+            .targetSnapshot(targetSnapshot)
+            .build();
+    }
+
+    /**
+     * 사용자 신고를 만듭니다. 상세 내용은 앞뒤 공백을 지운 뒤 {@code reason} 컬럼에 저장합니다.
+     *
+     * @throws ReportDomainException 신고자와 대상이 같으면 {@link ReportErrorCode#REPORT_SELF_REPORT}
+     * @throws IllegalArgumentException 사용자 신고에 쓸 수 없는 사유이거나, 상세 내용이 비었거나 500자를 넘을 때
+     */
+    public static Report createUser(
+        Long reporterId,
+        Long targetMemberId,
+        ReportReason reasonCode,
+        String detail,
+        ReportTargetSnapshot targetSnapshot
+    ) {
+        requirePositive(reporterId, "reporterId");
+        requirePositive(targetMemberId, "targetMemberId");
+        if (reporterId.equals(targetMemberId)) {
+            throw new ReportDomainException(ReportErrorCode.REPORT_SELF_REPORT);
+        }
+        return Report.builder()
+            .reporterId(reporterId)
+            .targetType(ReportTargetType.USER)
+            .targetId(targetMemberId)
+            .reason(requireDetail(detail))
+            .reasonCode(requireReasonFor(ReportTargetType.USER, reasonCode))
             .targetSnapshot(targetSnapshot)
             .build();
     }
@@ -217,10 +251,24 @@ public class Report extends BaseEntity {
         return value;
     }
 
-    private static ReportReason requireReason(ReportReason reason) {
+    private static ReportReason requireReasonFor(ReportTargetType targetType, ReportReason reason) {
         if (reason == null) {
             throw new IllegalArgumentException("reason must not be null");
         }
+        if (!reason.isAllowedFor(targetType)) {
+            throw new IllegalArgumentException("reason " + reason + " is not allowed for " + targetType + " reports");
+        }
         return reason;
+    }
+
+    private static String requireDetail(String detail) {
+        if (detail == null || detail.isBlank()) {
+            throw new IllegalArgumentException("detail must not be blank");
+        }
+        String trimmed = detail.strip();
+        if (trimmed.length() > DETAIL_MAX_LENGTH) {
+            throw new IllegalArgumentException("detail must not exceed " + DETAIL_MAX_LENGTH + " characters");
+        }
+        return trimmed;
     }
 }

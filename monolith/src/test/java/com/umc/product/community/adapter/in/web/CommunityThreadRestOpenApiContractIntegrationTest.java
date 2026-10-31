@@ -157,6 +157,7 @@ class CommunityThreadRestOpenApiContractIntegrationTest extends IntegrationTestS
         routes.put(BASE + "/threads/{threadId}/messages", Set.of(RequestMethod.GET));
         routes.put(BASE + "/messages/{messageId}/report", Set.of(RequestMethod.POST));
         routes.put(BASE + "/admin/thread-message-reports", Set.of(RequestMethod.GET));
+        routes.put(BASE + "/members/{memberId}/reports", Set.of(RequestMethod.POST));
         return Map.copyOf(routes);
     }
 }

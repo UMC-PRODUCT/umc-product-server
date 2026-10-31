@@ -112,10 +112,50 @@ class DiscordReportMessageFactoryTest {
         assertThat(content).isEqualTo("😀".repeat(DiscordReportMessageFactory.CONTENT_PREVIEW_MAX_LENGTH) + "…");
     }
 
+    @Test
+    @DisplayName("사용자 신고는 대상을 사용자 #ID로 보여 주고 대상 닉네임과 200자로 자른 상세 내용을 담는다")
+    void create_사용자_신고를_표시한다() {
+        // given
+        String longDetail = "가".repeat(DiscordReportMessageFactory.CONTENT_PREVIEW_MAX_LENGTH + 50);
+        Report report = userReport(ReportReason.HARASSMENT, longDetail, ReportTargetSnapshot.of(7L, null, "대상닉네임"));
+
+        // when
+        List<Map<String, Object>> fields = fields(sut.create(report));
+
+        // then
+        assertThat(fields).extracting(field -> field.get("name"))
+            .containsExactly("신고 ID", "사유", "대상", "대상 닉네임", "상세 내용", "접수 시각");
+        assertThat(fields).extracting(field -> field.get("value"))
+            .contains("901", "괴롭힘·지속적인 불쾌 행위", "사용자 #7", "대상닉네임");
+        String detail = (String) fields.get(4).get("value");
+        assertThat(detail).hasSize(DiscordReportMessageFactory.CONTENT_PREVIEW_MAX_LENGTH + 1).endsWith("…");
+    }
+
+    @Test
+    @DisplayName("사용자 신고의 닉네임이 비어 있어도 Discord가 거절하지 않도록 닉네임 항목을 넣지 않는다")
+    void create_사용자_신고는_빈_닉네임을_넣지_않는다() {
+        // given
+        Report report = userReport(ReportReason.IMPERSONATION, "상세", ReportTargetSnapshot.of(7L, null, null));
+
+        // when
+        List<Map<String, Object>> fields = fields(sut.create(report));
+
+        // then
+        assertThat(fields).extracting(field -> field.get("name")).doesNotContain("대상 닉네임");
+        assertThat(fields).extracting(field -> field.get("value")).contains("사칭·허위 프로필", "상세");
+    }
+
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> fields(Map<String, Object> message) {
         Map<String, Object> embed = ((List<Map<String, Object>>) message.get("embeds")).get(0);
         return (List<Map<String, Object>>) embed.get("fields");
+    }
+
+    private Report userReport(ReportReason reason, String detail, ReportTargetSnapshot snapshot) {
+        Report report = Report.createUser(1L, 7L, reason, detail, snapshot);
+        ReflectionTestUtils.setField(report, "id", 901L);
+        ReflectionTestUtils.setField(report, "createdAt", Instant.parse("2026-10-26T09:00:00Z"));
+        return report;
     }
 
     private Report threadMessageReport(ReportTargetSnapshot snapshot) {

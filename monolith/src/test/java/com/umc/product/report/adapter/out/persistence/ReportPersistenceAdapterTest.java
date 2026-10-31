@@ -164,6 +164,47 @@ class ReportPersistenceAdapterTest {
         }
     }
 
+    @Test
+    @DisplayName("사용자 신고를 상세 내용·사유·닉네임 스냅샷과 함께 저장하고 다시 조회한다")
+    void save_사용자_신고를_보존한다() {
+        // given
+        Report report = Report.createUser(
+            1L, 2L, ReportReason.HARASSMENT, "반복해서 불쾌한 메시지를 보내요.", ReportTargetSnapshot.of(2L, null, "대상닉네임")
+        );
+
+        // when
+        sut.save(report);
+        reportRepository.flush();
+        Long reportId = report.getId();
+        entityManager.clear();
+
+        // then
+        Report reloaded = sut.findById(reportId).orElseThrow();
+        assertThat(sut.existsByReporterIdAndTargetTypeAndTargetId(1L, ReportTargetType.USER, 2L)).isTrue();
+        assertThat(reloaded.getTargetType()).isEqualTo(ReportTargetType.USER);
+        assertThat(reloaded.getTargetId()).isEqualTo(2L);
+        assertThat(reloaded.getThreadId()).isNull();
+        assertThat(reloaded.getReasonCode()).isEqualTo(ReportReason.HARASSMENT);
+        assertThat(reloaded.getReason()).isEqualTo("반복해서 불쾌한 메시지를 보내요.");
+        assertThat(reloaded.getTargetSnapshot().getAuthorId()).isEqualTo(2L);
+        assertThat(reloaded.getTargetSnapshot().getContent()).isNull();
+        assertThat(reloaded.getTargetSnapshot().getContext()).isEqualTo("대상닉네임");
+    }
+
+    @Test
+    @DisplayName("같은 신고자가 같은 사용자를 다시 신고하면 REPORT_ALREADY_EXISTS로 거부한다")
+    void save_사용자_중복_신고를_거부한다() {
+        // given
+        sut.save(Report.createUser(1L, 2L, ReportReason.SPAM, "첫 신고", null));
+        reportRepository.flush();
+
+        // when & then
+        assertThatThrownBy(() -> sut.save(Report.createUser(1L, 2L, ReportReason.ETC, "다시 신고", null)))
+            .isInstanceOfSatisfying(ReportDomainException.class, exception ->
+                assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS)
+            );
+    }
+
     private enum SaveResult {
         SAVED,
         DUPLICATE

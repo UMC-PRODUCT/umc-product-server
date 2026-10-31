@@ -143,6 +143,72 @@ class ReportSubmissionServiceTest {
         then(domainEventPublisher).shouldHaveNoInteractions();
     }
 
+    @Test
+    @DisplayName("사용자 신고는 상세 내용과 닉네임 스냅샷을 담아 저장한다")
+    void submit_사용자_신고를_저장한다() {
+        // given
+        given(loadReportPort.existsByReporterIdAndTargetTypeAndTargetId(REPORTER_ID, ReportTargetType.USER, 8L))
+            .willReturn(false);
+        Report persisted = persisted(903L);
+        given(saveReportPort.save(any(Report.class))).willReturn(persisted);
+
+        // when
+        SubmitReportResult result = sut.submit(SubmitReportCommand.user(
+            REPORTER_ID, 8L, ReportReason.IMPERSONATION, " 다른 사람 사진을 써요 ",
+            new SubmitReportCommand.TargetSnapshot(8L, null, "대상닉네임")
+        ));
+
+        // then
+        assertThat(result.reportId()).isEqualTo(903L);
+        Report saved = capturedReport();
+        assertThat(saved.getTargetType()).isEqualTo(ReportTargetType.USER);
+        assertThat(saved.getTargetId()).isEqualTo(8L);
+        assertThat(saved.getThreadId()).isNull();
+        assertThat(saved.getReasonCode()).isEqualTo(ReportReason.IMPERSONATION);
+        assertThat(saved.getReason()).isEqualTo("다른 사람 사진을 써요");
+        assertThat(saved.getTargetSnapshot().getAuthorId()).isEqualTo(8L);
+        assertThat(saved.getTargetSnapshot().getContent()).isNull();
+        assertThat(saved.getTargetSnapshot().getContext()).isEqualTo("대상닉네임");
+        assertThat(publishedReportId()).isEqualTo(903L);
+    }
+
+    @Test
+    @DisplayName("같은 신고자가 같은 사용자를 다시 신고하면 REPORT_ALREADY_EXISTS로 거부한다")
+    void submit_사용자_중복_신고를_거부한다() {
+        // given
+        given(loadReportPort.existsByReporterIdAndTargetTypeAndTargetId(REPORTER_ID, ReportTargetType.USER, 8L))
+            .willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> sut.submit(
+            SubmitReportCommand.user(REPORTER_ID, 8L, ReportReason.SPAM, "상세", null)
+        ))
+            .isInstanceOfSatisfying(ReportDomainException.class, exception ->
+                assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS)
+            );
+        then(saveReportPort).shouldHaveNoInteractions();
+        then(domainEventPublisher).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("자기 자신을 신고하면 REPORT_SELF_REPORT로 거부하고 저장하지 않는다")
+    void submit_자기_자신_신고를_거부한다() {
+        // given
+        given(loadReportPort.existsByReporterIdAndTargetTypeAndTargetId(
+            REPORTER_ID, ReportTargetType.USER, REPORTER_ID
+        )).willReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> sut.submit(
+            SubmitReportCommand.user(REPORTER_ID, REPORTER_ID, ReportReason.SPAM, "상세", null)
+        ))
+            .isInstanceOfSatisfying(ReportDomainException.class, exception ->
+                assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_SELF_REPORT)
+            );
+        then(saveReportPort).shouldHaveNoInteractions();
+        then(domainEventPublisher).shouldHaveNoInteractions();
+    }
+
     private Report persisted(Long id) {
         Report report = mock(Report.class);
         given(report.getId()).willReturn(id);
