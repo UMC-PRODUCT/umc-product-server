@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.organization.application.port.in.query.CheckSchoolExistenceUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolChapterNameInfo;
@@ -27,11 +28,16 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class SchoolQueryService implements GetSchoolUseCase {
+public class SchoolQueryService implements GetSchoolUseCase, CheckSchoolExistenceUseCase {
 
 
     private final LoadSchoolPort loadSchoolPort;
     private final GetFileUseCase getFileUseCase;
+
+    @Override
+    public boolean existsById(Long schoolId) {
+        return schoolId != null && loadSchoolPort.existsById(schoolId);
+    }
 
     @Override
     public List<SchoolNameInfo> getAllSchoolNames() {
