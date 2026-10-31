@@ -1,0 +1,77 @@
+# develop에 변경이 합쳐질 때마다 다음 정기 릴리스 PR(develop → main)을 준비한다.
+# - 열린 릴리스 PR이 없으면 `[Release] YYYY-MM-DD` 제목의 draft PR을 만든다.
+# - 열린 릴리스 PR이 있으면 본문의 자동 영역(포함된 PR 목록)만 갱신한다.
+# 정책: docs/guides/API_호환성_정책.md 6절.
+# GITHUB_TOKEN으로 만든 PR은 다른 워크플로를 실행시키지 않으므로 GitHub App token으로 만든다.
+
+name: Release PR
+
+on:
+  push:
+    branches:
+      - develop
+
+concurrency:
+  group: release-pr
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: 다음 릴리스 PR 준비
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: GitHub App token 생성
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.UMC_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.UMC_GITHUB_APP_PRIVATE_KEY }}
+
+      - name: 릴리스 PR 만들기 또는 갱신
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          # 11월처럼 매주 배포하는 기간에는 저장소 변수 RELEASE_INTERVAL_DAYS를 7로 둔다.
+          RELEASE_INTERVAL_DAYS: ${{ vars.RELEASE_INTERVAL_DAYS || '14' }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$(git rev-list --count origin/main..origin/develop)" == "0" ]]; then
+            echo "develop에 main보다 앞선 커밋이 없어 릴리스 PR을 만들지 않습니다."
+            exit 0
+          fi
+
+          git log --no-merges --format='%s' origin/main..origin/develop > "${RUNNER_TEMP}/subjects.txt"
+
+          pr_number="$(gh pr list --base main --head develop --state open --json number --jq '.[0].number // empty')"
+
+          if [[ -n "${pr_number}" ]]; then
+            gh pr view "${pr_number}" --json body --jq '.body' > "${RUNNER_TEMP}/existing-body.md"
+            node .github/scripts/release-pr.mjs body "${RUNNER_TEMP}/existing-body.md" "${RUNNER_TEMP}/subjects.txt" \
+              > "${RUNNER_TEMP}/body.md"
+            gh pr edit "${pr_number}" --body-file "${RUNNER_TEMP}/body.md"
+            echo "릴리스 PR #${pr_number}의 포함된 PR 목록을 갱신했습니다." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          gh pr list --base main --head develop --state merged --limit 30 --json title --jq '.[].title' \
+            > "${RUNNER_TEMP}/merged-titles.txt"
+          title="$(node .github/scripts/release-pr.mjs title "${RELEASE_INTERVAL_DAYS}" "${RUNNER_TEMP}/merged-titles.txt")"
+
+          : > "${RUNNER_TEMP}/existing-body.md"
+          node .github/scripts/release-pr.mjs body "${RUNNER_TEMP}/existing-body.md" "${RUNNER_TEMP}/subjects.txt" \
+            > "${RUNNER_TEMP}/body.md"
+
+          gh pr create --draft --base main --head develop --title "${title}" --body-file "${RUNNER_TEMP}/body.md"
+          echo "릴리스 PR \`${title}\`을 draft로 만들었습니다." >> "${GITHUB_STEP_SUMMARY}"
