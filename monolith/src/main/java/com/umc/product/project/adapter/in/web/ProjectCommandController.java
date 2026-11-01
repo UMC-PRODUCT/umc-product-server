@@ -1,0 +1,368 @@
+package com.umc.product.project.adapter.in.web;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.project.adapter.in.web.dto.request.AbortProjectRequest;
+import com.umc.product.project.adapter.in.web.dto.request.AddProjectMemberRequest;
+import com.umc.product.project.adapter.in.web.dto.request.ChangeProjectMemberStatusRequest;
+import com.umc.product.project.adapter.in.web.dto.request.CompleteProjectsRequest;
+import com.umc.product.project.adapter.in.web.dto.request.CreateDraftProjectRequest;
+import com.umc.product.project.adapter.in.web.dto.request.TransferProjectOwnershipRequest;
+import com.umc.product.project.adapter.in.web.dto.request.UpdatePartQuotasRequest;
+import com.umc.product.project.adapter.in.web.dto.request.UpdateProjectRequest;
+import com.umc.product.project.adapter.in.web.dto.response.ProjectStatusResponse;
+import com.umc.product.project.application.port.in.command.AbortProjectUseCase;
+import com.umc.product.project.application.port.in.command.AddProjectMemberUseCase;
+import com.umc.product.project.application.port.in.command.ChangeProjectMemberStatusUseCase;
+import com.umc.product.project.application.port.in.command.CompleteProjectsUseCase;
+import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
+import com.umc.product.project.application.port.in.command.DeleteProjectUseCase;
+import com.umc.product.project.application.port.in.command.PublishProjectUseCase;
+import com.umc.product.project.application.port.in.command.RemoveProjectMemberUseCase;
+import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
+import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
+import com.umc.product.project.application.port.in.command.UpdatePartQuotasUseCase;
+import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
+import com.umc.product.project.application.port.in.command.dto.DeleteProjectCommand;
+import com.umc.product.project.application.port.in.command.dto.PublishProjectCommand;
+import com.umc.product.project.application.port.in.command.dto.RemoveProjectMemberCommand;
+import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
+import com.umc.product.project.domain.enums.ProjectStatus;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/api/v1/projects")
+@RequiredArgsConstructor
+@Tag(name = "Project | 프로젝트 Command", description = "프로젝트와 참여자를 만들고 관리합니다.")
+public class ProjectCommandController {
+
+    private final CreateDraftProjectUseCase createDraftProjectUseCase;
+    private final UpdateProjectUseCase updateProjectUseCase;
+    private final SubmitProjectUseCase submitProjectUseCase;
+    private final TransferProjectOwnershipUseCase transferProjectOwnershipUseCase;
+    private final AddProjectMemberUseCase addProjectMemberUseCase;
+    private final RemoveProjectMemberUseCase removeProjectMemberUseCase;
+    private final ChangeProjectMemberStatusUseCase changeProjectMemberStatusUseCase;
+    private final UpdatePartQuotasUseCase updatePartQuotasUseCase;
+    private final PublishProjectUseCase publishProjectUseCase;
+    private final DeleteProjectUseCase deleteProjectUseCase;
+    private final AbortProjectUseCase abortProjectUseCase;
+    private final CompleteProjectsUseCase completeProjectsUseCase;
+
+    @PostMapping
+    @Operation(
+        operationId = "PROJECT-101",
+        summary = "프로젝트 초안 생성",
+        description = """
+            해당 기수 PLAN 챌린저가 본인을 PM으로 지정해 초안을 생성합니다. 임시저장 개수 제한은 없습니다.
+            최고관리자는 전체 기수, 총괄단은 해당 기수, 지부장은 해당 기수 본인 지부의 PLAN 챌린저를 대리 등록할 수 있습니다.
+            학교 운영진·일반 중앙운영진 역할만으로는 대리 등록할 수 없습니다.
+            """
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        permission = PermissionType.WRITE,
+        message = "프로젝트를 만들 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
+    )
+    public ProjectStatusResponse createDraft(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Valid @RequestBody CreateDraftProjectRequest request
+    ) {
+        Long projectId = createDraftProjectUseCase.create(
+            request.toCommand(memberPrincipal.getMemberId()));
+        return ProjectStatusResponse.of(projectId, ProjectStatus.DRAFT);
+    }
+
+    @PatchMapping("/{projectId}")
+    @Operation(
+        operationId = "PROJECT-102",
+        summary = "프로젝트 기본정보 수정",
+        description = "프로젝트 기본정보를 부분 업데이트합니다. DRAFT/PENDING_REVIEW/IN_PROGRESS 모두 허용, 종료 상태(COMPLETED/ABORTED)는 수정 불가. 지원기간에는 기본정보 수정 불가. 소유권 양도는 별도 엔드포인트."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트를 수정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
+    )
+    public ProjectStatusResponse update(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @Valid @RequestBody UpdateProjectRequest request
+    ) {
+        ProjectStatus status = updateProjectUseCase.update(
+            request.toCommand(projectId, memberPrincipal.getMemberId()));
+        return ProjectStatusResponse.of(projectId, status);
+    }
+
+    @PostMapping("/{projectId}/submit")
+    @Operation(
+        operationId = "PROJECT-107",
+        summary = "프로젝트 제출",
+        description = """
+            작성자(creator)가 DRAFT 프로젝트를 제출합니다. PM 제출은 PENDING_REVIEW(승인대기)로 전이합니다.
+            해당 프로젝트의 관리 권한이 있는 최고관리자·해당 기수 총괄단·해당 지부장이 제출하면
+            TO와 지원 폼을 검증한 뒤 IN_PROGRESS(승인완료)로 전이하고 지원 폼도 함께 공개합니다.
+            자동 공개 검증이 실패하면 초안 상태를 유지합니다. 응답의 status는 실제 처리 상태입니다.
+            """
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트를 제출할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
+    )
+    public ProjectStatusResponse submit(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId
+    ) {
+        ProjectStatus status = submitProjectUseCase.submit(SubmitProjectCommand.builder()
+            .projectId(projectId)
+            .requesterMemberId(memberPrincipal.getMemberId())
+            .build());
+        return ProjectStatusResponse.of(projectId, status);
+    }
+
+    @PostMapping("/{projectId}/transfer-ownership")
+    @Operation(
+        operationId = "PROJECT-104",
+        summary = "프로젝트 소유권 양도",
+        description = "메인 PM을 다른 PLAN 파트 챌린저에게 양도합니다. 현재 PM 또는 운영진이 호출 가능. 종료 상태에서는 호출 불가."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트 소유권을 양도할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
+    )
+    public ProjectStatusResponse transferOwnership(
+        @PathVariable Long projectId,
+        @Valid @RequestBody TransferProjectOwnershipRequest request
+    ) {
+        ProjectStatus status = transferProjectOwnershipUseCase.transfer(
+            request.toCommand(projectId));
+        return ProjectStatusResponse.of(projectId, status);
+    }
+
+    @PostMapping("/{projectId}/members")
+    @Operation(
+        operationId = "PROJECT-004",
+        summary = "프로젝트 팀원 추가",
+        description = """
+            PLAN 파트는 기존 보조 PM 관리 권한을 사용합니다.
+            일반 파트는 해당 기수 총괄단·담당 지부장만 수동 배정할 수 있으며, 기수·파트·매칭 지부·중복을 검증하며, 랜덤 매칭 후 조정 기간을 제외하면 정원도 검증합니다.
+            일반 파트의 배정 가능 기간과 반영 시점은 운영진 수동 배정[PROJECT-402]과 같습니다.
+            운영진 수동 배정 전용 경로는 /api/v1/projects/admin/{projectId}/members 입니다.
+            """
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트 팀원을 추가할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
+    )
+    public Long addMember(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @Valid @RequestBody AddProjectMemberRequest request
+    ) {
+        return addProjectMemberUseCase.add(
+            request.toCommand(projectId, memberPrincipal.getMemberId()));
+    }
+
+    @PostMapping("/{projectId}/publish")
+    @Operation(
+        operationId = "PROJECT-108",
+        summary = "프로젝트 공개",
+        description = "PENDING_REVIEW → IN_PROGRESS 전이. 같은 트랜잭션에서 지원 폼도 PUBLISHED 로 전환. 파트별 정원 1개 이상 + 지원 폼 등록 필수. 운영진(본인 지부장 또는 Central Core)만 호출 가능 — PM 도 차단."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.MANAGE,
+        message = "프로젝트를 공개할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
+    )
+    public ProjectStatusResponse publish(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId
+    ) {
+        ProjectStatus status = publishProjectUseCase.publish(PublishProjectCommand.builder()
+            .projectId(projectId)
+            .requesterMemberId(memberPrincipal.getMemberId())
+            .build());
+        return ProjectStatusResponse.of(projectId, status);
+    }
+
+    @PutMapping("/{projectId}/part-quotas")
+    @Operation(
+        operationId = "PROJECT-105",
+        summary = "파트별 정원 일괄 갱신",
+        description = """
+            본문의 파트 정원으로 전체 교체하며, 생략한 기존 파트는 삭제합니다. quota는 1 이상이어야 합니다.
+            최고관리자·해당 기수 총괄단·담당 지부장만 수정할 수 있습니다. 운영진 본인이 작성한 초안에도 TO를 설정할 수 있습니다.
+            해당 지부의 전체 첫 매칭 시작 이후에는 모든 파트 TO를 변경할 수 없으며, 배정 인원 미만·지부 인원 초과도 차단합니다.
+            Web PE와 Mobile PE는 동시에 모집할 수 없습니다.
+            초안은 최종 등록 시 공개 프로젝트를 포함한 지부 인원 상한을 검증합니다.
+            변경한 셀만 저장하려면 PATCH /api/v1/projects/admin/part-quotas를 사용하세요.
+            """
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트 파트 정원을 수정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
+    )
+    public void updatePartQuotas(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @Valid @RequestBody UpdatePartQuotasRequest request
+    ) {
+        updatePartQuotasUseCase.update(
+            request.toCommand(projectId, memberPrincipal.getMemberId()));
+    }
+
+    @DeleteMapping("/{projectId}")
+    @Operation(
+        operationId = "PROJECT-109",
+        summary = "프로젝트 삭제",
+        description = """
+            각 차수의 지원기간을 제외한 기간에 프로젝트를 삭제합니다. 랜덤 매칭은 지원기간에 포함하지 않습니다.
+            지원서·답변·팀 소속·정원·지원 폼을 함께 삭제합니다. 삭제된 프로젝트의 팀원은 해당 프로젝트의 배정에서 해제됩니다.
+            PO 본인 또는 운영진(본인 지부장 / 해당 기수 총괄단)만 호출할 수 있습니다.
+            """
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.DELETE,
+        message = "프로젝트를 삭제할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
+    )
+    public void delete(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId
+    ) {
+        deleteProjectUseCase.delete(DeleteProjectCommand.builder()
+            .projectId(projectId)
+            .requesterMemberId(memberPrincipal.getMemberId())
+            .build());
+    }
+
+    @PostMapping("/{projectId}/abort")
+    @Operation(
+        operationId = "PROJECT-110",
+        summary = "프로젝트 중단",
+        description = "IN_PROGRESS 상태의 프로젝트를 ABORTED 로 전이합니다. ACTIVE ProjectMember 는 WITHDRAWN, 진행 중(DRAFT/SUBMITTED) ProjectApplication 은 CANCELLED 로 일괄 동기화. 운영진(본인 지부장 또는 Central Core) 만 호출 가능."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.MANAGE,
+        message = "프로젝트를 중단할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
+    )
+    public void abort(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @Valid @RequestBody AbortProjectRequest request
+    ) {
+        abortProjectUseCase.abort(request.toCommand(projectId, memberPrincipal.getMemberId()));
+    }
+
+    @PostMapping("/complete")
+    @Operation(
+        operationId = "PROJECT-111",
+        summary = "프로젝트 완료 (배치)",
+        description = "기수 종료 시 IN_PROGRESS 상태의 프로젝트들을 COMPLETED 로 일괄 전이합니다. ACTIVE ProjectMember 는 COMPLETED, 진행 중(DRAFT/SUBMITTED) ProjectApplication 은 CANCELLED 로 동기화. 대상마다 MANAGE 권한을 검증하며 하나라도 조건 미충족 시 전체 롤백. 운영진(본인 지부장 또는 Central Core) 만 호출 가능."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        permission = PermissionType.MANAGE,
+        message = "프로젝트를 완료할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
+    )
+    public void complete(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Valid @RequestBody CompleteProjectsRequest request
+    ) {
+        completeProjectsUseCase.complete(request.toCommand(memberPrincipal.getMemberId()));
+    }
+
+    @DeleteMapping("/{projectId}/members/{memberId}")
+    @Operation(
+        operationId = "PROJECT-005",
+        summary = "프로젝트 팀원 제거 (hard delete)",
+        description = """
+            프로젝트에서 멤버 행을 완전히 삭제합니다. 동일 멤버를 같은 프로젝트에 재등록할 수 있습니다.
+            DRAFT/PENDING_REVIEW/IN_PROGRESS 프로젝트 단계에서만 가능하며, 종료(COMPLETED/ABORTED) 프로젝트는 이력 보존을 위해 거부됩니다.
+            상태 변경 히스토리를 남겨야 하면 [PROJECT-006] API 를 사용하세요.
+            일반 파트의 제거는 해당 기수 총괄단·담당 지부장만 가능하며 연결 지원서를 불합격으로 변경합니다.
+            일반 파트의 해제 가능 기간과 반영 시점은 운영진 매칭 해제[PROJECT-403]과 같습니다.
+            보조 PM 관리는 기존 권한을 유지합니다. 메인 PM 은 양도 API 로 변경해야 합니다.
+            reason 은 감사 로그와 연결 지원서의 불합격 사유로 기록됩니다.
+            """
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트 팀원을 제거할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
+    )
+    public void removeMember(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @PathVariable Long memberId,
+        @RequestParam(required = false) String reason
+    ) {
+        removeProjectMemberUseCase.remove(RemoveProjectMemberCommand.builder()
+            .projectId(projectId)
+            .memberId(memberId)
+            .reason(reason)
+            .requesterMemberId(memberPrincipal.getMemberId())
+            .build());
+    }
+
+    @PatchMapping("/{projectId}/members/{memberId}/status")
+    @Operation(
+        operationId = "PROJECT-006",
+        summary = "프로젝트 팀원 상태 변경",
+        description = """
+            팀원 기록을 보존하며 활동 완료(COMPLETED)·중도 이탈(WITHDRAWN)·퇴출(DISMISSED)을 처리합니다. 변경 사유(reason)는 필수입니다.
+            - ACTIVE는 세 상태로 변경할 수 있으며, PENDING_PUBLICATION은 WITHDRAWN·DISMISSED로만 변경할 수 있습니다.
+            - 종료 상태 간 변경은 불가하며, 동일 상태를 다시 요청하면 기존 사유와 처리 시각을 유지합니다.
+            - ACTIVE·PENDING_PUBLICATION으로 직접 변경할 수 없습니다. 디자인·개발 팀원의 재배정은 [PROJECT-402]를 사용하세요.
+            - 매칭 기간 제한 없이 즉시 반영하며, 해제 예약이 있으면 취소합니다. 디자인·개발 팀원의 이탈·퇴출은 연결 지원서를 불합격으로 변경합니다.
+            디자인·개발 파트는 슈퍼어드민·해당 기수 총괄단·담당 지부장만 변경할 수 있으며, 보조 PM 관리는 기존 권한을 유지합니다.
+            종료(COMPLETED/ABORTED) 프로젝트와 메인 PM의 상태 변경은 불가합니다.
+            """
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트 팀원 상태를 변경할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
+    )
+    public void changeMemberStatus(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @PathVariable Long memberId,
+        @Valid @RequestBody ChangeProjectMemberStatusRequest request
+    ) {
+        changeProjectMemberStatusUseCase.changeStatus(
+            request.toCommand(projectId, memberId, memberPrincipal.getMemberId()));
+    }
+}

@@ -34,7 +34,7 @@ TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-600}"
 MODE="${MODE:-log}"
 HEALTH_PATH="${HEALTH_PATH:-/actuator/health}"
 MANAGEMENT_PORT="${MANAGEMENT_PORT:-9090}"
-ENV_FILE="${ENV_FILE:-"src/main/resources/.env.local"}"
+ENV_FILE="${ENV_FILE:-"monolith/src/main/resources/.env.local"}"
 SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-local}"
 READY_PATTERN='Started .* in [0-9]+\.[0-9]+ seconds'
 

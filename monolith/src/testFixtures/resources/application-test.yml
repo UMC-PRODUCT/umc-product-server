@@ -1,0 +1,126 @@
+spring:
+  mail:
+    host: some_mail_host
+    port: 587
+    username: mail_username
+    password: mail_password
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+        show_sql: false
+
+  flyway:
+    enabled: true
+    out-of-order: true
+
+# 테스트(Testcontainers) 콘솔에서 SQL flood 제거 — 명시적으로 OFF 유지.
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: false
+
+jwt:
+  access-token-secret: access_token_secret
+  refresh-token-secret: refresh_token_secret
+  oauth-verification-token-secret: oauth_verification_token_secret
+  email-verification-token-secret: email_verification_token_secret
+  sso-login-token-secret: sso_login_token_secret
+  access-token-validity-in-seconds: 3600
+  refresh-token-validity-in-seconds: 604800
+  verification-token-validity-in-seconds: 600
+
+demoday:
+  qr:
+    base-url: https://vote.umc.test
+  vote-qr:
+    signing-key: test-dummy-vote-qr-signing-key-needs-32-bytes-min
+  vote-authorization:
+    signing-key: test-dummy-vote-authorization-signing-key-needs-32-bytes-min
+  stamp-credential:
+    encryption-key: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+  participant-token:
+    secret: test-dummy-participant-token-secret-needs-32-bytes-min
+  guest-rate-limit:
+    requests-per-second: 5
+    requests-per-minute: 150
+
+management:
+  tracing:
+    enabled: false
+  otlp:
+    tracing:
+      export:
+        enabled: false
+    logging:
+      export:
+        enabled: false
+    metrics:
+      export:
+        enabled: false
+  health:
+    mail:
+      enabled: false
+  server:
+    port: 9090
+
+logging:
+  level:
+    root: WARN
+    org.testcontainers: INFO
+  org:
+    testcontainers:
+      level: DEBUG
+
+app:
+  base-url: http://localhost:8080
+  websocket:
+    broker:
+      mode: simple
+  observability:
+    tracing:
+      enabled: false
+      use-case-spans: false
+      adapter-spans: false
+      db-spans: false
+  webhook:
+    buffer:
+      enabled: false
+    telegram:
+      bot-token: "false"
+      chat-id: "false"
+    slack:
+      url: "false"
+    discord:
+      url: "false"
+  cors:
+    allowed-origin-patterns: ""
+  llm:
+    provider: mock
+  fcm:
+    outbox-interval-ms: 30000
+    firebase-configuration: |
+      {
+          "type": "service_account",
+          "project_id": "test-project",
+          "private_key_id": "test-private
+      }
+
+  notification:
+    email:
+      ses:
+        region: ap-northeast-2
+        access-key-id: test-access-key
+        secret-access-key: test-secret-key
+      sender:
+        no-reply-address: noreply@test.umc.local
+        no-reply-display-name: UMC Test
+
+
+  oauth2:
+    google:
+      client-id-list: apps.googleusercontent.com

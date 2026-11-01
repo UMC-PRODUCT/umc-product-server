@@ -2,6 +2,7 @@ import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
 
 import { buildOptions } from "./config/profiles.js";
 import { parseSeed } from "./lib/data.js";
+import { chatRunConditions } from "./lib/chat/chat-run.js";
 
 import healthCheck, {
   requiresSeed as healthCheckSeed,
@@ -23,6 +24,19 @@ import soakProjectRead, {
 } from "./scenarios/soak/project-read.js";
 import smokeHome, { requiresSeed as smokeHomeSeed } from "./scenarios/smoke/home.js";
 import loadHome, { requiresSeed as loadHomeSeed } from "./scenarios/load/home.js";
+import chatMessage, {
+  requiresSeed as chatMessageSeed,
+  getOptions as chatMessageOptions,
+  validateSeed as validateSmokeChatSeed,
+  getRunConditions as smokeChatConditions,
+} from "./scenarios/smoke/chat-message.js";
+import loadChatMessage, {
+  requiresSeed as loadChatMessageSeed,
+  getOptions as loadChatMessageOptions,
+  validateSeed as validateLoadChatSeed,
+  prepareRun as prepareChatRun,
+  getRunConditions as loadChatConditions,
+} from "./scenarios/load/chat-message.js";
 
 // PROFILE(부하 유형) × SCENARIO(업무 시나리오) → 실제 실행 함수 매핑.
 // k6 는 런타임 동적 import 를 지원하지 않으므로, 정적 import 를 registry 로 모아 __ENV 로 고른다.
@@ -31,8 +45,13 @@ const REGISTRY = {
     "health-check": { fn: healthCheck, requiresSeed: healthCheckSeed },
     "project-read": { fn: smokeProjectRead, requiresSeed: smokeProjectReadSeed },
     home: { fn: smokeHome, requiresSeed: smokeHomeSeed },
+    "chat-message": { fn: chatMessage, requiresSeed: chatMessageSeed,
+      getOptions: chatMessageOptions, validateSeed: validateSmokeChatSeed, getRunConditions: smokeChatConditions },
   },
   load: {
+    "chat-message": { fn: loadChatMessage, requiresSeed: loadChatMessageSeed,
+      getOptions: loadChatMessageOptions, validateSeed: validateLoadChatSeed,
+      prepareRun: prepareChatRun, getRunConditions: loadChatConditions },
     "project-read": { fn: loadProjectRead, requiresSeed: loadProjectReadSeed },
     "application-submit": {
       fn: applicationSubmit,
@@ -72,11 +91,16 @@ if (!selected) {
   );
 }
 
-// options 는 init 단계에서 평가된다. RATE/DURATION 은 환경변수로 지정한다.
+// 실행별 기록을 요청한 시나리오는 자기 조건을 제공해야 한다. 지원하지 않는 조합은 부하를 주기 전에 거부한다.
+if (__ENV.CHAT_RUN_DIR && typeof selected.getRunConditions !== "function") {
+  throw new Error(`${PROFILE}/${SCENARIO}에 실행 조건 기록용 getRunConditions를 등록하세요`);
+}
+
+// options는 init 단계에서 평가된다. 전용 옵션이 없는 시나리오는 RATE/DURATION으로 공통 프로필을 선택한다.
 // systemTags 에서 url/name 을 제외한다 — 쿼리스트링(memberId 등)이 URL 마다 달라
 // Prometheus 시리즈가 요청 수만큼 폭발한다(카디널리티). 시나리오 구분은 우리 scenario 태그로 충분.
 export const options = {
-  ...buildOptions(PROFILE, __ENV.RATE, __ENV.DURATION),
+  ...(selected.getOptions ? selected.getOptions() : buildOptions(PROFILE, __ENV.RATE, __ENV.DURATION)),
   systemTags: [
     "scenario",
     "status",
@@ -88,6 +112,7 @@ export const options = {
     "group",
   ],
 };
+const configuredOptionsJson = JSON.stringify(options);
 
 // open() 은 init 단계에서만 동작한다. 시딩이 필요한 시나리오일 때만 seed.json 을 읽는다.
 // 파일이 없으면 여기서 실패한다 — prepare-data.sh 로 먼저 시딩하거나 seed.example.json 을 복사한다.
@@ -97,18 +122,32 @@ const seedRaw = selected.requiresSeed
 
 export function setup() {
   // setup 반환값은 default 함수 data 인자로 전달된다. k6 는 시딩하지 않고 seed 파일만 넘긴다.
-  return { seed: parseSeed(seedRaw) };
+  const seed = parseSeed(seedRaw);
+  if (selected.validateSeed) selected.validateSeed(seed);
+  return { seed, context: selected.prepareRun ? selected.prepareRun() : null };
 }
 
 export default function (data) {
-  selected.fn(data.seed);
+  // 비동기 STOMP 시나리오의 완료·실패를 k6가 기다리도록 Promise도 그대로 반환한다.
+  return selected.fn(data.seed, data.context);
 }
 
-// 실행마다 요약을 파일로 남긴다 (JMeter 리포트처럼). 터미널 출력은 그대로 유지하고,
-// JSON 은 실행 디렉터리의 ./out/last-summary.json 에 쓴다.
+// Chat 실행 래퍼가 지정한 폴더에 보존한다. 기존 직접 실행은 last-summary.json 경로를 유지한다.
 export function handleSummary(data) {
-  return {
-    stdout: textSummary(data, { indent: "  ", enableColors: true }),
-    "./out/last-summary.json": JSON.stringify(data, null, 2),
+  const directory = __ENV.CHAT_RUN_DIR;
+  const outputs = {
+    stdout: textSummary(data, { indent: "  ", enableColors: !directory }),
+    [directory ? `${directory}/summary.json` : "./out/last-summary.json"]: JSON.stringify(data, null, 2),
   };
+  if (directory) {
+    let conditions;
+    try {
+      conditions = chatRunConditions({ profile: PROFILE, scenario: SCENARIO, seed: parseSeed(seedRaw),
+        options: { ...JSON.parse(configuredOptionsJson), ...data.options } }, selected.getRunConditions);
+    } catch (_) {
+      conditions = { available: false, error: "설정 또는 시드 검증 실패. run-meta.json과 console.log를 확인하세요." };
+    }
+    outputs[`${directory}/conditions.json`] = JSON.stringify(conditions, null, 2);
+  }
+  return outputs;
 }

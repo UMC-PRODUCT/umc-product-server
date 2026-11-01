@@ -23,7 +23,7 @@
 | curriculum | `WorkbookAutoReleaseScheduler` | 매일 00:00 KST | scheduling enabled profile | 워크북 자동 배포. 저빈도 도메인 batch로 적절하다. |
 | notification | `FcmOutboxScheduler` | `app.fcm.outbox-interval-ms` | `app.fcm.enabled=true` | FCM outbox polling. FCM 미사용 환경에서는 scheduler bean 자체를 등록하지 않는다. |
 | notification | `FcmTokenValidationScheduler` | `app.fcm.token-validation-interval-ms` | `app.fcm.enabled=true`, `app.fcm.token-validation-enabled=true` | 오래 검증되지 않은 활성 토큰을 batch dry-run으로 검증한다. 다중 인스턴스에서는 전용 batch 인스턴스 한 곳에서만 활성화한다. |
-| global event | `EventOutboxPoller` | `app.event-outbox.poll-interval-ms` | `app.event-outbox.relay-enabled=true` (기본값) | persistent event outbox relay. 중지해도 publisher는 outbox 적재를 계속하며, 외부 broker 전환 전까지 허용되는 polling 작업이다. |
+| global event | `EventOutboxPoller` | `app.event-outbox.poll-interval-ms` | `app.event-outbox.relay-enabled=true` (기본값) | 그룹별 Worker 실행 신호 전달. REALTIME/BACKGROUND 전용 executor에서 선점·발행한다. 중지해도 publisher는 적재를 계속한다. |
 
 ## Project 매칭 데드라인
 
@@ -72,3 +72,12 @@ Event Outbox의 생성부터 listener 소비, 실패 재시도까지의 상세 �
 - 도메인별 1회성 동적 task가 필요하면 전역 `taskScheduler`를 공유할지 전용 `TaskScheduler`가 필요한지 먼저 판단한다.
 - 다중 인스턴스에서 중복 실행되면 안 되는 작업은 DB lease, unique constraint, outbox claim, ShedLock 중 하나로 방어한다.
 - 새 작업은 실행 주기, 활성 property, 멱등성 전략, 실패 재시도 전략을 이 문서에 추가한다.
+
+
+### 그룹별 Outbox polling 및 관측
+
+`EventOutboxPoller`는 realtime/background 별 설정 주기로 전용 Worker를 깨운다.
+각 주기는 `app.event-outbox.workers.<group>.poll-interval-ms`이며 미지정 시 기존 공통 주기를 사용한다.
+`OutboxBacklogMetricsPoller`는 `app.event-outbox.metrics.sample-interval-ms`(기본 30초)로
+그룹별 미처리 건수와 최고 대기 시간을 수집한다. `metrics.enabled=false`로 수집만 중지할 수 있다.
+설정·지표·배포 전환 절차는 [Outbox 처리 그룹과 관측](event-outbox-flow.md#처리-그룹과-실행-격리)을 참고한다.

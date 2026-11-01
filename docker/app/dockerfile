@@ -1,7 +1,7 @@
 FROM eclipse-temurin:21-jre-alpine AS builder
 WORKDIR /builder
 
-ARG JAR_FILE=build/libs/*.jar
+ARG JAR_FILE=app/build/libs/app.jar
 COPY ${JAR_FILE} application.jar
 
 # Spring Boot 3.5.x 기준

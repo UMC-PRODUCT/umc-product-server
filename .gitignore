@@ -1,6 +1,14 @@
-.claude
+# 팀 공통 Claude Code 설정(settings.json)과 프로젝트 스킬만 커밋하고 개인 설정·worktree는 제외
+.claude/*
+!.claude/settings.json
+!.claude/skills/
 .codex
 .omo/
+
+# pstack이 남기는 작업 기록과 verify 스킬 실행 기록
+.audit/
+decisions.tsv
+.verify/
 
 src/main/generated/
 
@@ -19,6 +27,7 @@ application-*.yml
 !.env.example
 
 .gradle
+/.pnpm-store/
 build/
 
 ### STS ###
@@ -268,5 +277,3 @@ scripts/
 !scripts/
 !scripts/build-app-image.sh
 !scripts/measure-boot-time.sh
-!scripts/aws-infra-inventory.sh
-docs/infra/aws-current-inventory/

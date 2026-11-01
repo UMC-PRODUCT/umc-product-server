@@ -1,0 +1,192 @@
+package com.umc.product.project.application.service.policy;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.ProjectApplicationForm;
+import com.umc.product.project.domain.enums.MatchingType;
+import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+
+class DesignerMatchingPolicyTest {
+
+    private static final long FIXED_SEED = 42L;
+
+    DesignerMatchingPolicy sut = new DesignerMatchingPolicy();
+
+    @Test
+    void supportedType은_PLAN_DESIGN을_반환한다() {
+        assertThat(sut.supportedType()).isEqualTo(MatchingType.PLAN_DESIGN);
+    }
+
+    /**
+     * 잔여 모집 정원과 지원자 수로 최소 선발 인원을 판정한다.
+     * <pre>
+     * 잔여 정원 없음 → 0 (추가 선발 불가)
+     * 잔여 정원 있음, 지원자 1명 이하 → 0 (선택 의무 없음)
+     * 잔여 정원 있음, 지원자 2명 이상 → 1
+     * </pre>
+     */
+    @Nested
+    class minimumRequired {
+
+        @ParameterizedTest(name = "지원자 {0}명 (잔여 정원 {1}) → 최소 {2}명")
+        @CsvSource({
+            "0, 0, 0",
+            "1, 0, 0",
+            "2, 0, 0",
+            "10, 0, 0",
+            "0, 1, 0",
+            "1, 1, 0",
+            "1, 2, 0",
+            "1, 5, 0",
+            "2, 1, 1",
+            "2, 5, 1",
+            "3, 2, 1",
+            "5, 1, 1",
+            "10, 3, 1"
+        })
+        void 잔여_정원과_지원자_수에_따라_최소_선발_인원을_결정한다(int applicants, int quota, int expectedMin) {
+            assertThat(sut.minimumRequired(applicants, quota)).isEqualTo(expectedMin);
+        }
+    }
+
+    @Nested
+    class decideAutomatically {
+
+        @Test
+        void 잔여_정원이_없으면_SUBMITTED와_REJECTED에서_추가_선발하지_않는다() {
+            List<ProjectApplication> applicants = List.of(
+                application(1L, ProjectApplicationStatus.SUBMITTED),
+                application(2L, ProjectApplicationStatus.REJECTED)
+            );
+
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 0, new Random(FIXED_SEED), schoolContext(applicants));
+
+            assertThat(result.approvedIds()).isEmpty();
+            assertThat(result.rejectedIds()).containsExactlyInAnyOrder(1L, 2L);
+        }
+
+        @Test
+        void 지원자_1명만_있고_의무_없음이면_SUBMITTED는_REJECTED로_확정() {
+            List<ProjectApplication> applicants = List.of(
+                application(1L, ProjectApplicationStatus.SUBMITTED)
+            );
+
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 1, new Random(FIXED_SEED), schoolContext(applicants));
+
+            assertThat(result.approvedIds()).isEmpty();
+            assertThat(result.rejectedIds()).containsExactly(1L);
+        }
+
+        @Test
+        void PM이_이미_충분히_APPROVED했으면_SUBMITTED는_REJECTED로_확정() {
+            List<ProjectApplication> applicants = List.of(
+                application(1L, ProjectApplicationStatus.APPROVED),
+                application(2L, ProjectApplicationStatus.SUBMITTED),
+                application(3L, ProjectApplicationStatus.SUBMITTED)
+            );
+
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 1, new Random(FIXED_SEED), schoolContext(applicants));
+
+            assertThat(result.approvedIds()).containsExactly(1L);
+            assertThat(result.rejectedIds()).containsExactlyInAnyOrder(2L, 3L);
+        }
+
+        @Test
+        void 지원자_2명이상이고_PM이_0명_APPROVED면_SUBMITTED중_random_1명_합격() {
+            List<ProjectApplication> applicants = List.of(
+                application(1L, ProjectApplicationStatus.SUBMITTED),
+                application(2L, ProjectApplicationStatus.SUBMITTED),
+                application(3L, ProjectApplicationStatus.SUBMITTED)
+            );
+
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 1, new Random(FIXED_SEED), schoolContext(applicants));
+
+            assertThat(result.approvedIds()).hasSize(1);
+            assertThat(result.rejectedIds()).hasSize(2);
+            assertThat(result.approvedIds()).isSubsetOf(1L, 2L, 3L);
+        }
+
+        @Test
+        void PM이_모두_REJECTED했고_SUBMITTED_없으면_REJECTED_중_random_1명_합격_override() {
+            List<ProjectApplication> applicants = List.of(
+                application(1L, ProjectApplicationStatus.REJECTED),
+                application(2L, ProjectApplicationStatus.REJECTED),
+                application(3L, ProjectApplicationStatus.REJECTED)
+            );
+
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 1, new Random(FIXED_SEED), schoolContext(applicants));
+
+            assertThat(result.approvedIds()).hasSize(1);
+            assertThat(result.rejectedIds()).hasSize(2);
+            assertThat(result.approvedIds()).isSubsetOf(1L, 2L, 3L);
+        }
+
+        @Test
+        void SUBMITTED와_REJECTED가_섞여있고_의무_미충족이면_SUBMITTED_우선_random_보충() {
+            List<ProjectApplication> applicants = List.of(
+                application(1L, ProjectApplicationStatus.REJECTED),
+                application(2L, ProjectApplicationStatus.SUBMITTED),
+                application(3L, ProjectApplicationStatus.REJECTED)
+            );
+
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 1, new Random(FIXED_SEED), schoolContext(applicants));
+
+            assertThat(result.approvedIds()).containsExactly(2L);
+            assertThat(result.rejectedIds()).containsExactlyInAnyOrder(1L, 3L);
+        }
+
+        @Test
+        void 동일_seed면_동일_결과를_반환한다() {
+            List<ProjectApplication> applicants = List.of(
+                application(1L, ProjectApplicationStatus.SUBMITTED),
+                application(2L, ProjectApplicationStatus.SUBMITTED),
+                application(3L, ProjectApplicationStatus.SUBMITTED)
+            );
+
+            AutoDecisionResult first = sut.decideAutomatically(applicants, 1, new Random(FIXED_SEED), schoolContext(applicants));
+            AutoDecisionResult second = sut.decideAutomatically(applicants, 1, new Random(FIXED_SEED), schoolContext(applicants));
+
+            assertThat(first).isEqualTo(second);
+        }
+
+        @Test
+        void approvedIds와_rejectedIds는_disjoint하다() {
+            List<ProjectApplication> applicants = List.of(
+                application(1L, ProjectApplicationStatus.APPROVED),
+                application(2L, ProjectApplicationStatus.SUBMITTED),
+                application(3L, ProjectApplicationStatus.REJECTED)
+            );
+
+            AutoDecisionResult result = sut.decideAutomatically(applicants, 1, new Random(FIXED_SEED), schoolContext(applicants));
+
+            assertThat(result.approvedIds()).doesNotContainAnyElementsOf(result.rejectedIds());
+        }
+    }
+
+    private MatchingSchoolContext schoolContext(List<ProjectApplication> applicants) {
+        return new MatchingSchoolContext(applicants.stream().collect(Collectors.toMap(
+            ProjectApplication::getApplicantMemberId, ProjectApplication::getApplicantMemberId)));
+    }
+
+    private ProjectApplication application(Long id, ProjectApplicationStatus status) {
+        Project project = Project.createDraft(1L, 1L, 100L, 1L, 100L);
+        ReflectionTestUtils.setField(project, "id", 100L);
+        ProjectApplicationForm form = ProjectApplicationForm.create(project, 1L);
+        ProjectApplication application = ProjectApplication.create(form, 1L, id, null);
+        ReflectionTestUtils.setField(application, "id", id);
+        ReflectionTestUtils.setField(application, "status", status);
+        return application;
+    }
+}

@@ -46,5 +46,11 @@ logs
 **/application-local.yml
 **/application-*.yml
 
-!build/libs
-!build/libs/*.jar
+# 배포 JAR 만 빌드 컨텍스트에 넣는다.
+# **/build 가 app/build 를 막으므로 부모부터 단계적으로 열고 다시 닫는다.
+# 한 번에 !app/build 만 쓰면 classes, tmp 까지 전부 딸려온다.
+!app/build
+app/build/*
+!app/build/libs
+app/build/libs/*
+!app/build/libs/app.jar

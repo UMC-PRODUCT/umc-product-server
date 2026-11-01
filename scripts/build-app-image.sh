@@ -6,7 +6,7 @@
 #
 # 환경변수:
 #   IMAGE_NAME    (default: umc-product-server)
-#   SKIP_GRADLE   (1이면 ./gradlew bootJar 단계를 건너뜀, 이미 build/libs/*.jar 있을 때)
+#   SKIP_GRADLE   (1이면 ./gradlew bootJar 단계를 건너뜀, 이미 app/build/libs/app.jar 있을 때)
 #   PLATFORM      (예: linux/amd64) — 비우면 호스트 native
 #
 # 정상 종료 시 마지막 라인에 "<image>:<tag>"만 출력되므로 다른 스크립트와 파이프 가능.
@@ -38,8 +38,8 @@ if [[ "$SKIP_GRADLE" != "1" ]]; then
   ./gradlew bootJar -x test >&2
 fi
 
-if ! ls build/libs/*.jar >/dev/null 2>&1; then
-  echo "✗ build/libs/*.jar 가 없습니다. SKIP_GRADLE=1 옵션을 끄거나 먼저 ./gradlew bootJar 를 실행하세요." >&2
+if ! ls app/build/libs/app.jar >/dev/null 2>&1; then
+  echo "✗ app/build/libs/app.jar 가 없습니다. SKIP_GRADLE=1 옵션을 끄거나 먼저 ./gradlew bootJar 를 실행하세요." >&2
   exit 1
 fi
 

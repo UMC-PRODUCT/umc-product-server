@@ -1,0 +1,82 @@
+package com.umc.product.project.adapter.out.persistence;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.ProjectMemberStatus;
+
+import jakarta.persistence.LockModeType;
+
+// TODO: 프로젝트 전반의 QueryDSL 일관성을 위해 ProjectMemberQueryRepository로 마이그레이션 필요.
+public interface ProjectMemberJpaRepository extends JpaRepository<ProjectMember, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select pm from ProjectMember pm join fetch pm.project
+        where pm.assignedMatchingRound.id = :roundId and pm.status = :status order by pm.id
+        """)
+    List<ProjectMember> findPendingByRoundId(@Param("roundId") Long roundId,
+        @Param("status") ProjectMemberStatus status);
+
+    /**
+     * 삭제할 해제 예약 팀원과 연결 지원서를 함께 조회한다.
+     */
+    @Query("""
+        select pm from ProjectMember pm left join fetch pm.application
+        where pm.pendingRemovalRoundId = :roundId order by pm.id
+        """)
+    List<ProjectMember> findPendingRemovalsByRoundId(@Param("roundId") Long roundId);
+
+    boolean existsByProject_GisuIdAndMemberIdAndStatusIn(Long gisuId, Long memberId,
+        Collection<ProjectMemberStatus> statuses);
+
+    List<ProjectMember> findByProjectIdAndPartAndStatusOrderByCreatedAtAscIdAsc(
+        Long projectId, ChallengerPart part, ProjectMemberStatus status
+    );
+
+    List<ProjectMember> findByProjectIdAndStatusOrderByCreatedAtAscIdAsc(Long projectId, ProjectMemberStatus status);
+
+    List<ProjectMember> findByProjectIdAndStatusInOrderByCreatedAtAscIdAsc(
+        Long projectId, Collection<ProjectMemberStatus> statuses);
+
+    /** 팀원과 선발 차수를 함께 조회한다. 선발 차수가 없는 수동 배정 팀원도 포함한다. */
+    @Query("""
+        select pm from ProjectMember pm left join fetch pm.assignedMatchingRound
+        where pm.project.id in :projectIds and pm.status = :status
+        order by pm.createdAt, pm.id
+        """)
+    List<ProjectMember> findByProjectIdInAndStatusOrderByCreatedAtAscIdAsc(
+        @Param("projectIds") Collection<Long> projectIds, @Param("status") ProjectMemberStatus status
+    );
+
+    Optional<ProjectMember> findByProjectIdAndMemberId(Long projectId, Long memberId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select pm from ProjectMember pm where pm.project.id = :projectId and pm.memberId = :memberId")
+    Optional<ProjectMember> findByProjectIdAndMemberIdForUpdate(@Param("projectId") Long projectId,
+        @Param("memberId") Long memberId);
+
+    @Query("SELECT pm.part, COUNT(pm) FROM ProjectMember pm "
+        + "WHERE pm.project.id = :projectId AND pm.status = :status "
+        + "GROUP BY pm.part")
+    List<Object[]> countByProjectIdGroupByPartRaw(@Param("projectId") Long projectId, @Param("status") ProjectMemberStatus status);
+
+    boolean existsByProject_GisuIdAndMemberIdAndStatus(Long gisuId, Long memberId, ProjectMemberStatus status);
+
+    boolean existsByProjectIdAndMemberIdAndPartAndStatus(
+        Long projectId, Long memberId, ChallengerPart part, ProjectMemberStatus status
+    );
+
+    @Modifying
+    @Query("DELETE FROM ProjectMember pm WHERE pm.project.id = :projectId")
+    void deleteAllByProjectId(@Param("projectId") Long projectId);
+}

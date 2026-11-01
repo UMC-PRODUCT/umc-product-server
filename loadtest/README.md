@@ -9,10 +9,15 @@
 
 두 하네스는 진입점·시나리오·결과 기록 방식이 다르다. 시나리오가 늘어나면 공통 k6 하네스(`k6/`) 쪽으로 통합하는 것이 방향이다.
 
+Chat WebSocket/STOMP는 공통 k6 하네스를 사용한다. 실행·확장은 [Chat 안내](k6/CHAT.md) 참조.
+연결을 유지하며 ACK를 기다리는 방식이므로 아래 HTTP의 arrival-rate 설정과 구분한다.
+
 | 위치 | 역할 |
 |------|------|
 | `loadtest/k6/` | 공통 k6 실행 코드 (구조는 `loadtest/k6/README.md`) |
 | `loadtest/scripts/prepare-data.sh` | API 시딩 후 `seed.json` 생성 |
+| `loadtest/scripts/prepare-chat-data.sh` | Chat 테스트 회원·방 생성 후 전용 시드 파일 저장 |
+| `loadtest/scripts/run-chat-test.sh` | Chat 시나리오 실행 및 실행별 조건·결과 저장 |
 | `loadtest/scripts/new-run.sh` | 실행 기록 템플릿 생성 |
 | `loadtest/run.sh` · `lib/` · `scenarios/notice/` | notice 전/후 비교 미니 하네스 (로컬 실행) |
 | `loadtest/compare.sh` | 두 실행(summary.json)의 p95/p99/에러율/RPS 비교 (jq 필요) |

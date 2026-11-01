@@ -13,6 +13,10 @@ extensions.configure<SourceSetContainer>("sourceSets") {
 
 tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.add("-Xlint:deprecation")
+}
+
+// main 과 테스트의 생성 소스가 섞이지 않도록 출력 경로를 compileJava 에만 지정한다.
+tasks.named<JavaCompile>("compileJava") {
     options.generatedSourceOutputDirectory.set(querydslDir)
 }
 

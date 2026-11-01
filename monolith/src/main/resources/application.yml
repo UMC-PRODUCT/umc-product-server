@@ -1,0 +1,747 @@
+# ==================================================================
+# 공통 설정 파일, 환경변수화 되어 있는 부분은 프로필별 설정에서 반드시 오버라이드할 것!
+# 환경변수 변경 시에는 반드시 GitHub Actions에 업데이트 할 것
+# ==================================================================
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  forward-headers-strategy: framework
+
+  # 톰캣 튜닝 옵션 - 부하테스트 하면서 수정할 것
+  tomcat:
+    # 스레드 지표(tomcat_threads_*)를 micrometer 로 노출한다 — 부하 테스트에서 스레드 포화 관측용
+    mbeanregistry:
+      enabled: true
+    threads:
+      max: ${TOMCAT_MAX_THREADS:200}
+      min-spare: ${TOMCAT_MIN_SPARE_THREADS:10}
+    max-connections: ${TOMCAT_MAX_CONNECTIONS:8192}
+    accept-count: ${TOMCAT_ACCEPT_COUNT:100}
+
+spring:
+  application:
+    name: ${SPRING_APPLICATION_NAME:x-umc-product}
+  profiles:
+    # 기본적으로 local 프로필을 활성화, 실수로 prod에 접근하는 것을 방지함
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+  docker:
+    compose:
+      # Local DB를 위한 Compose: 기본적으로 비활성화
+      enabled: false
+      lifecycle-management: start_and_stop
+
+  graphql:
+    http:
+      path: /graphql
+    schema:
+      introspection:
+        enabled: false
+    graphiql:
+      enabled: ${GRAPHQL_GRAPHIQL_ENABLED:false}
+
+  # Thymeleaf 템플릿 엔진 설정
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false # 개발 환경에서는 캐시 비활성화, 운영에서는 true로 변경 필요
+
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+    hikari:
+      auto-commit: true
+
+      maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:10}
+      minimum-idle: ${HIKARI_MIN_IDLE:2}
+      initialization-fail-timeout: ${HIKARI_INITIALIZATION_FAIL_TIMEOUT:-1}
+
+      # 3. 수명 및 타임아웃
+      max-lifetime: 1800000 # 30분
+      connection-timeout: 30000 # 30초
+      validation-timeout: 5000 # 5초
+
+      keepalive-time: 60000 # DB에 1분마다 생존 신고 (유휴 커넥션 방지)
+
+  flyway:
+    # 부팅 시 자동 migrate 여부. 기본값 true 이며 배포 환경(k3s prod/dev)도 부팅 시 migrate 한다.
+    enabled: ${FLYWAY_ENABLED:true}
+    baseline-version: 2026.02.25.01.30
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
+    out-of-order: ${FLYWAY_OUT_OF_ORDER:false}
+
+  jpa:
+    hibernate:
+      # validate 는 DB를 변경하지 않는 읽기 전용 검증이다. 마이그레이션 없이 신버전이 배포되면
+      # 부팅이 실패하고 ASG instance refresh 가 중단되므로 안전장치로 유지한다.
+      # expand-contract 중간 단계처럼 "스키마가 아직 안 맞아도 떠야 하는" 예외 상황에서만
+      # JPA_DDL_AUTO=none 으로 일시 완화한다. create/update 계열은 절대 주입하지 않는다.
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: public
+        # SQL 출력 포맷은 P6SpyConfig 가 담당하므로 hibernate.format_sql 은 두지 않는다.
+        # show_sql 도 P6Spy 라인 출력과의 중복을 막기 위해 끔.
+        show_sql: false
+
+  # ====================================================================
+  # Spring AI / LLM provider 설정
+  # ====================================================================
+  # 단 하나의 환경 변수 LLM_PROVIDER 가 다음 두 키를 동시에 결정한다.
+  #   - app.llm.provider           : 활성 어댑터 (ConditionalOnProperty 매칭 키)
+  #   - spring.ai.model.chat       : ChatModel 자동구성 활성화 키
+  # 따라서 두 키를 따로 신경 쓸 필요 없이 LLM_PROVIDER 만 정확히 주입하면 된다.
+  #
+  # LLM_PROVIDER 후보값과 함께 주입해야 하는 환경 변수:
+  #   ┌────────────────────┬──────────────────────────────────────────────────────────┐
+  #   │ LLM_PROVIDER       │ 추가로 주입해야 하는 환경 변수                           │
+  #   ├────────────────────┼──────────────────────────────────────────────────────────┤
+  #   │ mock (기본)        │ 없음 (외부 호출 없음, 운영 활성화 전 검증용)            │
+  #   │ openai             │ LLM_OPENAI_API_KEY                                       │
+  #   │                    │ OPENAI_BASE_URL (선택, 기본값 https://api.openai.com)    │
+  #   │                    │  → LMStudio: http://localhost:1234                       │
+  #   │                    │  → Ollama:   http://localhost:11434/v1                   │
+  #   │ vertexai-gemini    │ VERTEX_PROJECT_ID, VERTEX_LOCATION,                      │
+  #   │                    │ GOOGLE_APPLICATION_CREDENTIALS (service account JSON)    │
+  #   │ google-genai       │ LLM_GEMINI_API_KEY (Google AI Studio 무료 티어)         │
+  #   │                    │ ── 또는 ──                                               │
+  #   │                    │ LLM_GOOGLE_GENAI_VERTEX_AI=true + VERTEX_PROJECT_ID +    │
+  #   │                    │ VERTEX_LOCATION + GOOGLE_APPLICATION_CREDENTIALS         │
+  #   └────────────────────┴──────────────────────────────────────────────────────────┘
+  #
+  # LLM_PROVIDER 가 위 후보값이 아니거나 활성 provider 의 ChatModel 빈이 만들어지지 않으면
+  # LlmFallbackConfig 가 mock 어댑터로 fallback 하고 WARN 로그를 남긴다 (부팅 자체는 성공).
+  # 부팅 직후 INFO 로그 "LLM 활성 provider=..." 를 통해 실제 활성 provider 를 확인할 수 있다.
+  #
+  # 본 시스템은 chat 카테고리만 사용하므로 embedding/image/moderation/audio 자동구성은 항상 비활성화한다.
+  # ====================================================================
+  ai:
+    model:
+      chat: ${LLM_PROVIDER:mock}
+      embedding: none
+      image: none
+      moderation: none
+      audio:
+        speech: none
+        transcription: none
+    openai:
+      # LMStudio (http://localhost:1234) 또는 Ollama (http://localhost:11434/v1) 사용 시
+      # OPENAI_BASE_URL 환경변수를 해당 주소로 설정한다. api-key 는 임의 문자열을 주입하면 된다.
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      api-key: ${LLM_OPENAI_API_KEY:}
+    vertex:
+      ai:
+        gemini:
+          project-id: ${VERTEX_PROJECT_ID:}
+          location: ${VERTEX_LOCATION:asia-northeast3}
+          # 인증 자격은 GOOGLE_APPLICATION_CREDENTIALS 환경 변수를 통해 주입한다.
+    google:
+      genai:
+        # Google AI Studio (Gemini Developer API) 무료 티어 사용 시 api-key 만 주입한다.
+        # Vertex AI 모드로 전환하려면 vertex-ai=true + project-id/location/credentials 를 주입한다.
+        api-key: ${LLM_GEMINI_API_KEY:}
+        vertex-ai: ${LLM_GOOGLE_GENAI_VERTEX_AI:false}
+        project-id: ${VERTEX_PROJECT_ID:}
+        location: ${VERTEX_LOCATION:asia-northeast3}
+    # 일시 실패 retry 는 Spring AI 자동구성된 RetryTemplate 에 위임한다.
+    # app.llm.retry 와 동일한 환경변수를 공유해 두 곳의 정책이 어긋나지 않도록 한다.
+    retry:
+      max-attempts: ${LLM_RETRY_MAX_ATTEMPTS:3}
+      backoff:
+        initial-interval: ${LLM_RETRY_BACKOFF_MILLIS:200}
+
+jwt:
+  access-token-secret: ${JWT_ACCESS_TOKEN_SECRET}
+  refresh-token-secret: ${JWT_REFRESH_TOKEN_SECRET}
+  oauth-verification-token-secret: ${JWT_OAUTH_VERIFICATION_TOKEN_SECRET}
+  email-verification-token-secret: ${JWT_EMAIL_VERIFICATION_TOKEN_SECRET}
+  sso-login-token-secret: ${JWT_SSO_LOGIN_TOKEN_SECRET}
+  access-token-validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS:3600}
+  refresh-token-validity-in-seconds: ${JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS:604800}
+  verification-token-validity-in-seconds: ${JWT_VERIFICATION_TOKEN_VALIDITY_IN_SECONDS:600}
+
+demoday:
+  # 운영 외 환경의 데모데이 테스트 데이터 초기화 API. 기본은 비활성이고 prod에서는 빈 등록도 차단한다.
+  test-data-reset:
+    enabled: ${DEMODAY_TEST_DATA_RESET_ENABLED:false}
+  qr:
+    base-url: ${DEMODAY_QR_BASE_URL}
+  stamp-credential:
+    encryption-key: ${DEMODAY_STAMP_CREDENTIAL_ENCRYPTION_KEY}
+  vote-qr:
+    signing-key: ${DEMODAY_VOTE_QR_SIGNING_KEY}
+  vote-authorization:
+    signing-key: ${DEMODAY_VOTE_AUTHORIZATION_SIGNING_KEY}
+  participant-token:
+    secret: ${DEMODAY_PARTICIPANT_TOKEN_SECRET}
+  guest-rate-limit:
+    requests-per-second: ${DEMODAY_GUEST_RATE_LIMIT_PER_SECOND:5}
+    requests-per-minute: ${DEMODAY_GUEST_RATE_LIMIT_PER_MINUTE:150}
+
+# OpenAPI / Scalar 문서 설정
+springdoc:
+  swagger-ui:
+    enabled: false # Swagger UI는 노출하지 않고 /docs 는 Scalar로 고정한다.
+
+  api-docs:
+    path: /docs-json # Scalar가 읽는 OpenAPI JSON 경로
+    enabled: ${OPENAPI_ENABLE:${SWAGGER_ENABLE:false}}
+
+  show-actuator: ${OPENAPI_ENABLE_ACTUATOR:${SWAGGER_ENABLE_ACTUATOR:false}}
+
+# ====================================================================
+# P6Spy (datasource-decorator) — 라인 단위 SQL 로깅 제어
+# 기본값은 OFF(false) — fail-safe. 트래픽 환경에서 env 주입을 깜빡해도 로그 폭증이 발생하지 않는다.
+#   - 라인 로깅이 꺼져도 QueryStatsJdbcEventListener 통계(queryCount/queryTimeMs)와
+#     DB span 트레이싱은 그대로 동작한다 (SQL 원문 라인만 사라짐).
+#   - local 프로필은 파일 하단(on-profile: local)에서 enable-logging=true 로 재정의하므로,
+#     로컬 개발자는 별도 env 설정 없이 SQL 라인을 본다.
+# 환경변수 기본값: local=true / dev·staging·prod·test=false
+# ====================================================================
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: ${P6SPY_ENABLE_LOGGING:false}
+      tracing:
+        include-parameter-values: false
+
+logging:
+  level:
+    root: INFO
+
+    # 애플리케이션 기본값
+    com.umc.product: ${LOGGING_APP_LEVEL:INFO}
+
+    # Spring Framework
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+
+    # JPA/Hibernate
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN # 파라미터 숨김
+
+    # 트랜잭션
+    org.springframework.transaction: INFO
+    org.springframework.orm.jpa: INFO
+
+    # 시끄러운 로그 제거
+    org.springframework.web.client.DefaultRestClient: WARN
+    org.apache.http: WARN
+    com.zaxxer.hikari: WARN
+
+management:
+  server:
+    port: ${MANAGEMENT_PORT:9090}
+
+  health:
+    # 상태 조회마다 SMTP 인증을 반복하지 않는다. 메일 장애는 발송 실패 로그와 지표로 확인한다.
+    mail:
+      enabled: false
+
+  endpoint:
+    health:
+      show-details: always
+
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics,prometheus,tracing"
+
+  tracing:
+    enabled: true
+    sampling:
+      probability: ${TRACE_SAMPLING_PROBABILITY:1.0}
+
+  otlp:
+    logging:
+      endpoint: ${OTEL_LOGS_URL:${OTEL_URL:http://localhost:4318}/v1/logs}
+      headers:
+        Authorization: ${OTEL_LOGS_AUTH_HEADER:${OTEL_AUTH_HEADER:}}
+    tracing:
+      endpoint: ${TEMPO_URL:${OTEL_URL:http://localhost:4318}/v1/traces}
+      headers:
+        Authorization: ${TEMPO_AUTH_HEADER:${OTEL_AUTH_HEADER:}}
+    metrics:
+      export:
+        url: ${PROM_URL:${OTEL_URL:http://localhost:4318}/v1/metrics}
+        headers:
+          Authorization: ${PROM_AUTH_HEADER:${OTEL_AUTH_HEADER:}}
+        step: 30s
+
+  opentelemetry:
+    resource-attributes:
+      service.name: ${spring.application.name}
+      environment: ${spring.profiles.active}
+      service.instance.id: ${LOCAL_DEVELOPER_ID:${USER:${USERNAME:unknown}}}
+
+      # structured field에는 값이 적고 고정적인 것만 넣어야 한다.
+      loki.resource.labels: service.name, environment
+
+  metrics:
+    distribution:
+      # Prometheus에서 URI별 P95/P99를 집계할 수 있도록 HTTP 요청 duration histogram을 발행한다.
+      percentiles-histogram:
+        http.server.requests: true
+        graphql.request: true
+        graphql.datafetcher: true
+        graphql.dataloader: true
+
+    tags:
+      application: ${spring.application.name}
+      instance: ${HOSTNAME:${LOCAL_DEVELOPER_ID:${USER:${USERNAME:unknown}}}}
+      environment: ${spring.profiles.active}
+
+    enable:
+      spring.security: false # Spring Security 인증 메트릭
+
+      jvm: true
+      process: true
+      http: true
+      graphql: true # GraphQL 요청 및 datafetcher 메트릭
+      jdbc: true # DB 쿼리 메트릭
+      #      rabbitmq: true # messaging, 사용 시 추가
+      system: true # CPU, 메모리 등 시스템 메트릭
+      tomcat: true # 톰캣 스레드풀, 세션 메트릭
+      hikaricp: true # HikariCP 커넥션 풀 메트릭
+      logback: true # 로그 레벨별 카운트
+      cache: true # 캐시 사용 시
+
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+app:
+  # spring.profiles.active 가 콤마 구분 다중 profile 일 수 있으므로 운영자가 단일 라벨을 명시적으로 override 가능.
+  environment: ${APP_ENVIRONMENT:${SPRING_PROFILES_ACTIVE:local}}
+
+  graphql:
+    timeout: ${GRAPHQL_TIMEOUT:5s}
+    max-depth: ${GRAPHQL_MAX_DEPTH:15}
+    max-complexity: ${GRAPHQL_MAX_COMPLEXITY:200}
+
+  client-context:
+    origins:
+      - origin: https://university.neordinary.com
+        service-type: UMC_WEBSITE
+        environment: PROD
+      - origin: https://admin.university.neordinary.com
+        service-type: UMC_BACKOFFICE
+        environment: PROD
+      - origin: https://tech.university.neordinary.com
+        service-type: UMC_TECH_BLOG
+        environment: PROD
+
+  sso:
+    issuer: ${SSO_ISSUER:https://api.university.neordinary.com}
+    # 제공자 콘솔·HTTPS callback·비밀값 준비 후 각각 활성화한다. 기존 모바일 로그인 활성화 설정과는 별개다.
+    social:
+      providers:
+        google:
+          enabled: ${SSO_SOCIAL_GOOGLE_ENABLED:false}
+          callback-uri: ${SSO_SOCIAL_GOOGLE_CALLBACK_URI:}
+          client-id: ${SSO_SOCIAL_GOOGLE_CLIENT_ID:}
+          client-secret: ${SSO_SOCIAL_GOOGLE_CLIENT_SECRET:}
+        kakao:
+          enabled: ${SSO_SOCIAL_KAKAO_ENABLED:false}
+          callback-uri: ${SSO_SOCIAL_KAKAO_CALLBACK_URI:}
+          # true로 설정할 때는 Kakao 콘솔도 OIDC를 활성화해야 하며 ID Token nonce를 검증한다.
+          oidc: ${SSO_SOCIAL_KAKAO_OIDC:false}
+        apple:
+          enabled: ${SSO_SOCIAL_APPLE_ENABLED:false}
+          callback-uri: ${SSO_SOCIAL_APPLE_CALLBACK_URI:}
+    authorization-code-ttl: ${SSO_AUTHORIZATION_CODE_TTL:PT3M}
+    browser-login-ttl: ${SSO_BROWSER_LOGIN_TTL:PT12H}
+    cookie:
+      name: ${SSO_BROWSER_LOGIN_COOKIE_NAME:UMC_SSO_LOGIN}
+      domain: ${SSO_BROWSER_LOGIN_COOKIE_DOMAIN:}
+      secure: ${SSO_BROWSER_LOGIN_COOKIE_SECURE:true}
+      same-site: ${SSO_BROWSER_LOGIN_COOKIE_SAME_SITE:Lax}
+    clients:
+      backoffice:
+        name: backoffice
+        service-type: UMC_BACKOFFICE
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://admin.university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://admin.university.neordinary.com
+      website:
+        name: UMC Website
+        service-type: UMC_WEBSITE
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://university.neordinary.com
+      tech:
+        name: UMC Tech Blog
+        service-type: UMC_TECH_BLOG
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://tech.university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://tech.university.neordinary.com
+      # Mac은 공개 클라이언트이므로 client secret 대신 PKCE S256으로 코드 교환 요청자를 확인한다.
+      # redirect URI는 앱 복귀용 주소다. 위 social의 서버 HTTPS callback 주소와 혼동하지 않는다.
+      macos-app:
+        name: UMC macOS App
+        service-type: MACOS_APP
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - umc-macos://auth/callback
+        allowed-origins: []
+      ios-app:
+        name: UMC iOS App
+        service-type: IOS_APP
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - umc-ios://auth/callback
+          - https://auth.university.neordinary.com/ios/auth/callback
+        allowed-origins: []
+      android-app:
+        name: UMC Android App
+        service-type: ANDROID_APP
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - umc-android://auth/callback
+          - https://auth.university.neordinary.com/android/auth/callback
+        allowed-origins: []
+
+  project:
+    matching-round:
+      # FIRST, SECOND, THIRD 차수 사이 최소 간격. 환경변수 단위는 minute.
+      min-phase-interval-minutes: ${PROJECT_MATCHING_ROUND_MIN_PHASE_INTERVAL_MINUTES:1}
+      # 자동 선발 스케줄러가 decisionDeadline 이후 대기하는 buffer. 환경변수 단위는 minute.
+      deadline-buffer-minutes: ${PROJECT_MATCHING_ROUND_DEADLINE_BUFFER_MINUTES:1}
+
+  super-admin:
+    # true 면 SUPER_ADMIN 이 DRAFT 프로젝트/지원서 단건을 조회할 수 있다. 초기 배포 모니터링용으로만 켜고 안정화 후 끈다.
+    allow-draft-read: ${SUPER_ADMIN_ALLOW_DRAFT_READ:false}
+
+  observability:
+    tracing:
+      enabled: ${APP_OBSERVABILITY_TRACING_ENABLED:true}
+      use-case-spans: ${APP_OBSERVABILITY_USE_CASE_SPANS:true}
+      adapter-spans: ${APP_OBSERVABILITY_ADAPTER_SPANS:true}
+      db-spans: ${APP_OBSERVABILITY_DB_SPANS:true}
+      # SQL 원문에는 개인정보/토큰성 값이 포함될 수 있으므로 기본값은 비활성화한다.
+      include-sql: ${APP_OBSERVABILITY_INCLUDE_SQL:false}
+      max-sql-length: ${APP_OBSERVABILITY_MAX_SQL_LENGTH:500}
+
+  api-rate-limit:
+    enabled: ${API_RATE_LIMIT_ENABLED:true}
+    include-paths:
+      - /api/**
+      - /graphql
+    exclude-paths:
+      - /actuator/**
+      - /docs
+      - /docs/
+      - /docs/**
+      - /docs-json
+      - /docs-json/**
+      - /webjars/**
+      - /umc-logo.svg
+      - /error
+      # 데모데이 게스트 입장 코드 제출: 전역 anonymous-default(분당 60회)가 해당 도메인 전용
+      # demoday.guest-rate-limit(분당 150회)보다 먼저 실행되어 해당 경로의 정책을 사실상 무력화하기 때문에 제외한다.
+      # 해당 경로는 전용 인터셉터(DemodayGuestRateLimitInterceptor)가 단독으로 관장한다.
+      - /api/v1/demoday/polls/*/participations/guest
+    authenticated-default:
+      requests-per-second: ${API_RATE_LIMIT_AUTH_REQUESTS_PER_SECOND:20}
+      requests-per-minute: ${API_RATE_LIMIT_AUTH_REQUESTS_PER_MINUTE:300}
+    anonymous-default:
+      requests-per-second: ${API_RATE_LIMIT_ANON_REQUESTS_PER_SECOND:5}
+      requests-per-minute: ${API_RATE_LIMIT_ANON_REQUESTS_PER_MINUTE:60}
+    cache:
+      maximum-size: ${API_RATE_LIMIT_CACHE_MAXIMUM_SIZE:100000}
+      expire-after-access: ${API_RATE_LIMIT_CACHE_EXPIRE_AFTER_ACCESS:PT10M}
+
+  websocket:
+    broker:
+      mode: ${WEBSOCKET_BROKER_MODE:simple}
+      relay:
+        host: ${WEBSOCKET_BROKER_RELAY_HOST:}
+        port: ${WEBSOCKET_BROKER_RELAY_PORT:}
+        tls-enabled: ${WEBSOCKET_BROKER_RELAY_TLS_ENABLED:true}
+        virtual-host: ${WEBSOCKET_BROKER_RELAY_VIRTUAL_HOST:}
+        system-login: ${WEBSOCKET_BROKER_RELAY_SYSTEM_LOGIN:}
+        system-password: ${WEBSOCKET_BROKER_RELAY_SYSTEM_PASSWORD:}
+        client-login: ${WEBSOCKET_BROKER_RELAY_CLIENT_LOGIN:}
+        client-password: ${WEBSOCKET_BROKER_RELAY_CLIENT_PASSWORD:}
+        system-heartbeat-send-interval: ${WEBSOCKET_BROKER_RELAY_HEARTBEAT_SEND_INTERVAL:PT10S}
+        system-heartbeat-receive-interval: ${WEBSOCKET_BROKER_RELAY_HEARTBEAT_RECEIVE_INTERVAL:PT10S}
+        startup-timeout: ${WEBSOCKET_BROKER_RELAY_STARTUP_TIMEOUT:PT5S}
+
+  event-outbox:
+    relay-enabled: ${EVENT_OUTBOX_RELAY_ENABLED:true}
+    poll-interval-ms: ${EVENT_OUTBOX_POLL_INTERVAL_MS:1000}
+    batch-size: ${EVENT_OUTBOX_BATCH_SIZE:100}
+    max-attempts: ${EVENT_OUTBOX_MAX_ATTEMPTS:5}
+    metrics:
+      enabled: ${EVENT_OUTBOX_METRICS_ENABLED:true}
+      sample-interval-ms: ${EVENT_OUTBOX_METRICS_SAMPLE_INTERVAL_MS:30000}
+    workers:
+      realtime:
+        immediate-dispatch-enabled: ${EVENT_OUTBOX_REALTIME_IMMEDIATE_DISPATCH_ENABLED:true}
+        concurrency: ${EVENT_OUTBOX_REALTIME_CONCURRENCY:3}
+        poll-interval-ms: ${EVENT_OUTBOX_REALTIME_POLL_INTERVAL_MS:${app.event-outbox.poll-interval-ms}}
+        batch-size: ${EVENT_OUTBOX_REALTIME_BATCH_SIZE:${app.event-outbox.batch-size}}
+      background:
+        concurrency: ${EVENT_OUTBOX_BACKGROUND_CONCURRENCY:2}
+        poll-interval-ms: ${EVENT_OUTBOX_BACKGROUND_POLL_INTERVAL_MS:${app.event-outbox.poll-interval-ms}}
+        batch-size: ${EVENT_OUTBOX_BACKGROUND_BATCH_SIZE:${app.event-outbox.batch-size}}
+
+  fcm:
+    enabled: ${FCM_ENABLED:false}
+    outbox-interval-ms: ${FCM_OUTBOX_INTERVAL_MS:60000}
+    token-validation-enabled: ${FCM_TOKEN_VALIDATION_ENABLED:true}
+    token-validation-interval-ms: ${FCM_TOKEN_VALIDATION_INTERVAL_MS:86400000}
+    token-validation-batch-size: ${FCM_TOKEN_VALIDATION_BATCH_SIZE:500}
+    token-validation-stale-duration: ${FCM_TOKEN_VALIDATION_STALE_DURATION:P30D}
+    firebase-configuration: ${FIREBASE_CONFIGURATION:}
+
+  cors:
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:}
+
+  webhook:
+    telegram:
+      bot-token: ${TELEGRAM_BOT_TOKEN:}
+      chat-id: ${TELEGRAM_CHAT_ID:}
+    slack:
+      url: ${SLACK_WEBHOOK_URL:}
+    discord:
+      url: ${DISCORD_WEBHOOK_URL:}
+
+  # 신고 운영 채널(Discord 봇). 봇 토큰이나 채널 ID가 비어 있으면 신고를 보내지 않고 전달 대기(PENDING)로 남긴다.
+  # 앱 공개키(public-key)가 비어 있으면 상호작용 콜백을 모두 401로 거절한다.
+  # 서버 ID(guild-id)나 신고처리 역할 ID(moderator-role-id)가 비어 있으면 아무도 버튼으로 신고를 처리할 수 없다.
+  # moderator-role-id는 쉼표로 여러 역할 ID를 넣을 수 있다. 예: 111,222,333
+  report:
+    discord:
+      bot-token: ${REPORT_DISCORD_BOT_TOKEN:}
+      channel-id: ${REPORT_DISCORD_CHANNEL_ID:}
+      public-key: ${REPORT_DISCORD_PUBLIC_KEY:}
+      guild-id: ${REPORT_DISCORD_GUILD_ID:}
+      moderator-role-id: ${REPORT_DISCORD_MODERATOR_ROLE_ID:}
+
+  # 일반 테스트 및 인증서 PDF 미리보기 API. prod 프로필에서는 설정과 무관하게 비활성화된다.
+  test-api:
+    enabled: ${APP_TEST_API_ENABLED:false}
+
+  # test 도메인 시딩 API 설정. ADR-017 참조.
+  # 기본값은 비활성. prod 가 아닌 환경에서 APP_SEED_ENABLED=true 로 켜야 시딩 API 가 노출된다.
+  seed:
+    enabled: ${APP_SEED_ENABLED:false}
+    skip-if-member-count-greater-than: ${APP_SEED_SKIP_THRESHOLD:0}
+    email-domain: ${APP_SEED_EMAIL_DOMAIN:test.umc.it.kr}
+    default-password: ${APP_SEED_DEFAULT_PASSWORD:password12!}
+
+  oauth2:
+    google:
+      client-id-list: ${GOOGLE_CLIENT_ID_LIST:}
+      jwks-cache:
+        ttl: ${GOOGLE_JWKS_CACHE_TTL:PT6H}
+        max-size: ${GOOGLE_JWKS_CACHE_MAX_SIZE:1}
+    apple:
+      ios-client-id: ${APPLE_IOS_CLIENT_ID}
+      web-client-id: ${APPLE_WEB_CLIENT_ID}
+      team-id: ${APPLE_TEAM_ID}
+      key-id: ${APPLE_KEY_ID}
+      private-key: ${APPLE_PRIVATE_KEY}
+      jwks-cache:
+        ttl: ${APPLE_JWKS_CACHE_TTL:PT24H}
+        max-size: ${APPLE_JWKS_CACHE_MAX_SIZE:1}
+    kakao:
+      client-id: ${KAKAO_CLIENT_ID:}
+      client-secret: ${KAKAO_CLIENT_SECRET:}
+      admin-key: ${KAKAO_ADMIN_KEY:}
+      allowed-redirect-uris: ${KAKAO_ALLOWED_REDIRECT_URIS:}
+      # client-id 외에 클라이언트가 보낸 ID Token aud로 받을 앱 키 (웹 JavaScript 키, 네이티브 앱 키)
+      allowed-id-token-audiences: ${KAKAO_ALLOWED_ID_TOKEN_AUDIENCES:}
+      jwks-cache:
+        ttl: ${KAKAO_JWKS_CACHE_TTL:PT24H}
+        max-size: ${KAKAO_JWKS_CACHE_MAX_SIZE:1}
+
+  llm:
+    provider: ${LLM_PROVIDER:mock}
+    model: ${LLM_MODEL:gemini-2.5-flash-lite}
+    temperature: ${LLM_TEMPERATURE:0.0}
+    max-output-tokens: ${LLM_MAX_OUTPUT_TOKENS:32}
+    retry:
+      max-attempts: ${LLM_RETRY_MAX_ATTEMPTS:3}
+      backoff-millis: ${LLM_RETRY_BACKOFF_MILLIS:200}
+    circuit-breaker:
+      failure-threshold: ${LLM_CIRCUIT_BREAKER_FAILURE_THRESHOLD:5}
+      open-duration-millis: ${LLM_CIRCUIT_BREAKER_OPEN_DURATION_MILLIS:60000}
+    # token bucket 기반 사전 페이싱.
+    # Google AI Studio 무료 티어 (gemini-2.5-flash-lite, ~15 RPM) 기준 안전 마진으로 기본값 10 RPM / burst 5.
+    # 0 으로 설정하면 페이싱 비활성화.
+    rate-limit:
+      requests-per-minute: ${LLM_RATE_LIMIT_RPM:10}
+      burst: ${LLM_RATE_LIMIT_BURST:5}
+
+  notification:
+    # provider는 ses(기본), smtp, log(로컬 개발용, 실제로 보내지 않고 로그만 남김). 선택한 제공자의 자격증명만 필수다.
+    # local 프로필은 파일 하단에서 기본값을 log로 바꾼다.
+    # SMTP는 STARTTLS 인증 연결을 사용하며, Gmail에서는 sender 주소를 SMTP 계정 주소와 맞춘다.
+    email:
+      provider: ${EMAIL_PROVIDER:ses}
+      ses:
+        region: ${SES_REGION:ap-northeast-2}
+        access-key-id: ${SES_ACCESS_KEY_ID:}
+        secret-access-key: ${SES_SECRET_ACCESS_KEY:}
+        configuration-set: ${SES_CONFIGURATION_SET:}
+      smtp:
+        host: ${SMTP_HOST:smtp.gmail.com}
+        port: ${SMTP_PORT:587}
+        username: ${SMTP_USERNAME:}
+        password: ${SMTP_PASSWORD:}
+      sender:
+        no-reply-address: ${EMAIL_NO_REPLY_ADDRESS}
+        no-reply-display-name: ${EMAIL_NO_REPLY_DISPLAY_NAME:University MakeUs Challenge}
+
+certificate:
+  verification-url-template: "${CERTIFICATE_VERIFICATION_URL_TEMPLATE:/api/v1/certificates/verify/{serialNumber}}"
+
+storage:
+  provider: ${STORAGE_PROVIDER:s3}
+
+  s3:
+    bucket-name: ${S3_BUCKET_NAME}
+    region: ${S3_REGION:ap-northeast-2}
+    access-key-id: ${S3_ACCESS_KEY_ID}
+    secret-access-key: ${S3_SECRET_ACCESS_KEY}
+
+
+# ==================================================================
+# configuration override for dev profile
+# ==================================================================
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  graphql:
+    schema:
+      introspection:
+        enabled: true
+    graphiql:
+      enabled: ${GRAPHQL_GRAPHIQL_ENABLED:true}
+
+demoday:
+  test-data-reset:
+    enabled: ${DEMODAY_TEST_DATA_RESET_ENABLED:true}
+
+app:
+  client-context:
+    origins:
+      - origin: http://localhost:5173
+        service-type: UNKNOWN
+        environment: DEV
+
+  test-api:
+    enabled: ${APP_TEST_API_ENABLED:true}
+
+  seed:
+    enabled: ${APP_SEED_ENABLED:true}
+
+  sso:
+    clients:
+      backoffice:
+        name: dev backoffice
+        service-type: UMC_BACKOFFICE
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://dev.admin.university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://dev.admin.university.neordinary.com
+      website:
+        name: dev website
+        service-type: UMC_WEBSITE
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://dev.university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://dev.university.neordinary.com
+      tech:
+        name: UMC Tech Blog
+        service-type: UMC_TECH_BLOG
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://dev.tech.university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://dev.tech.university.neordinary.com
+      local:
+        name: local dev
+        service-type: UNKNOWN
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - http://localhost:5173/auth/callback
+        allowed-origins:
+          - http://localhost:5173
+
+# ==================================================================
+# configuration override for local profile
+# ==================================================================
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  graphql:
+    schema:
+      introspection:
+        enabled: true
+    graphiql:
+      enabled: ${GRAPHQL_GRAPHIQL_ENABLED:true}
+
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: ${P6SPY_ENABLE_LOGGING:true}
+
+app:
+  websocket:
+    broker:
+      mode: ${WEBSOCKET_BROKER_MODE:simple}
+
+  test-api:
+    enabled: ${APP_TEST_API_ENABLED:true}
+
+  notification:
+    email:
+      # 로컬은 SES·SMTP 자격증명 없이 뜨고 실제 메일을 보내지 않는다. 실제 발송을 확인할 때만 EMAIL_PROVIDER를 바꾼다.
+      provider: ${EMAIL_PROVIDER:log}
+      sender:
+        no-reply-address: ${EMAIL_NO_REPLY_ADDRESS:no-reply@localhost}

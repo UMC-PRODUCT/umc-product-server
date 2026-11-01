@@ -1,0 +1,50 @@
+package com.umc.product.project.adapter.out.persistence;
+
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+
+public interface ProjectApplicationJpaRepository extends JpaRepository<ProjectApplication, Long> {
+
+    @Query("select distinct a.applicantMemberId from ProjectApplication a "
+        + "where a.applicationForm.project.gisuId = :gisuId and a.status = :status")
+    List<Long> findApplicantMemberIdsByGisuIdAndStatus(@Param("gisuId") Long gisuId,
+        @Param("status") ProjectApplicationStatus status);
+
+    @Modifying
+    @Query("delete from ProjectApplication a where a.applicationForm.project.id = :projectId")
+    void deleteAllByProjectId(@Param("projectId") Long projectId);
+
+    boolean existsByAppliedMatchingRound_Id(Long matchingRoundId);
+
+    @Query("SELECT a FROM ProjectApplication a "
+        + "JOIN FETCH a.applicationForm f JOIN FETCH f.project "
+        + "WHERE a.appliedMatchingRound.id = :matchingRoundId")
+    List<ProjectApplication> findAllByAppliedMatchingRound_Id(@Param("matchingRoundId") Long matchingRoundId);
+
+    @Query("SELECT a FROM ProjectApplication a "
+        + "WHERE a.applicationForm.project.id = :projectId "
+        + "AND a.status IN :statuses")
+    List<ProjectApplication> findAllByProjectIdAndStatusIn(
+        @Param("projectId") Long projectId,
+        @Param("statuses") List<ProjectApplicationStatus> statuses
+    );
+
+    @Query("SELECT a FROM ProjectApplication a "
+        + "JOIN FETCH a.appliedMatchingRound "
+        + "WHERE a.applicantMemberId = :applicantMemberId "
+        + "AND a.applicationForm.project.gisuId = :gisuId "
+        + "AND a.status IN :statuses")
+    List<ProjectApplication> findAllByApplicantMemberIdAndGisuIdAndStatusIn(
+        @Param("applicantMemberId") Long applicantMemberId,
+        @Param("gisuId") Long gisuId,
+        @Param("statuses") Collection<ProjectApplicationStatus> statuses
+    );
+}

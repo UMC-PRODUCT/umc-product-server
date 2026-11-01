@@ -1,0 +1,48 @@
+package com.umc.product.report.application.service.command;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import com.umc.product.report.application.port.in.command.ReportMemberUseCase;
+import com.umc.product.report.application.port.in.command.SubmitReportUseCase;
+import com.umc.product.report.application.port.in.command.dto.ReportMemberCommand;
+import com.umc.product.report.application.port.in.command.dto.ReportMemberResult;
+import com.umc.product.report.application.port.in.command.dto.SubmitReportCommand;
+import com.umc.product.report.application.port.in.command.dto.SubmitReportResult;
+import com.umc.product.report.domain.exception.ReportDomainException;
+import com.umc.product.report.domain.exception.ReportErrorCode;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * 사용자 신고를 접수합니다. 대상 회원이 있는지 확인하고, 신고 당시 닉네임을 스냅샷으로 남겨 신고를 저장합니다.
+ * 대상 회원이 없으면 member 도메인의 {@code MEMBER_NOT_FOUND}를 그대로 전달합니다.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class ReportMemberService implements ReportMemberUseCase {
+
+    private final GetMemberUseCase getMemberUseCase;
+    private final SubmitReportUseCase submitReportUseCase;
+
+    @Override
+    public ReportMemberResult report(ReportMemberCommand command) {
+        if (command.targetMemberId().equals(command.requesterMemberId())) {
+            throw new ReportDomainException(ReportErrorCode.REPORT_SELF_REPORT);
+        }
+        MemberInfo target = getMemberUseCase.getById(command.targetMemberId());
+
+        SubmitReportResult submitted = submitReportUseCase.submit(SubmitReportCommand.user(
+            command.requesterMemberId(),
+            command.targetMemberId(),
+            command.reasons(),
+            command.detail(),
+            // 사용자 신고는 내용 대신 신고 당시 닉네임을 위치(context)에 남깁니다.
+            new SubmitReportCommand.TargetSnapshot(command.targetMemberId(), null, target.nickname())
+        ));
+        return ReportMemberResult.of(submitted, command.targetMemberId());
+    }
+}
