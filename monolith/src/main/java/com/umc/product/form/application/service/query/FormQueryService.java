@@ -44,13 +44,13 @@ public class FormQueryService implements GetFormUseCase {
     @Override
     public Optional<FormInfo> findById(Long formId) {
         return loadFormPort.findById(formId)
-            .map(FormInfo::from);
+            .map(FormQueryInfoAssembler::toFormInfo);
     }
 
     @Override
     public FormInfo getById(Long formId) {
         return loadFormPort.findById(formId)
-            .map(FormInfo::from)
+            .map(FormQueryInfoAssembler::toFormInfo)
             .orElseThrow(() -> new FormDomainException(FormErrorCode.FORM_NOT_FOUND));
     }
 
