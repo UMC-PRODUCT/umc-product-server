@@ -26,9 +26,101 @@ env:
   HEAD_SHA: ${{ github.event.pull_request.head.sha }}
 
 jobs:
+  # `preview` 라벨이 막 붙었을 때만 자리와 develop 마이그레이션 반영을 판정한다.
+  # 새 dev 복사는 이때만 일어나므로 새 커밋(synchronize) 배포에서는 판정하지 않는다.
+  # PR 코드는 실행하지 않고 API로 마이그레이션 파일 이름만 읽는다.
+  admit:
+    name: Admit Preview slot and develop migrations
+    if: >-
+      github.repository == 'UMC-PRODUCT/umc-product-server' &&
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'preview' &&
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.base.ref == 'develop' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      contains(fromJSON('["MEMBER", "OWNER", "COLLABORATOR"]'), github.event.pull_request.author_association)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    outputs:
+      admitted: ${{ steps.decide.outputs.admitted }}
+
+    steps:
+      - name: Checkout trusted default-branch automation
+        uses: actions/checkout@v4
+        with:
+          repository: UMC-PRODUCT/umc-product-server
+          ref: ${{ github.workflow_sha }}
+          path: backend
+          persist-credentials: false
+
+      - name: Decide admission and comment on the PR
+        id: decide
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { ADMISSION_COMMENT_MARKER, MIGRATION_DIRECTORY, decideAdmission } = await import(
+              `${process.env.GITHUB_WORKSPACE}/backend/.github/scripts/preview-admission.mjs`
+            );
+            const owner = 'UMC-PRODUCT';
+            const repo = 'umc-product-server';
+            const pr = context.payload.pull_request;
+
+            const openPullRequests = await github.paginate(github.rest.pulls.list, {
+              owner, repo, state: 'open', base: 'develop', per_page: 100,
+            });
+            const otherPreviewPrNumbers = openPullRequests
+              .filter(other => other.number !== pr.number && other.labels.some(label => label.name === 'preview'))
+              .map(other => other.number);
+
+            // contents API의 디렉터리 목록은 1,000개까지만 준다. 넘으면 판정하지 않고 실패한다.
+            const listMigrations = async ref => {
+              const { data } = await github.rest.repos.getContent({ owner, repo, path: MIGRATION_DIRECTORY, ref });
+              if (!Array.isArray(data) || data.length >= 1000) {
+                throw new Error('Cannot list the complete migration directory.');
+              }
+              return data.filter(entry => entry.type === 'file').map(entry => entry.name);
+            };
+
+            const decision = decideAdmission({
+              prNumber: pr.number,
+              otherPreviewPrNumbers,
+              baseFiles: await listMigrations('develop'),
+              headFiles: await listMigrations(pr.head.sha),
+            });
+
+            // 라벨을 떼면 새 실행이 이 실행을 취소할 수 있으므로 코멘트를 먼저 남긴다.
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number: pr.number, per_page: 100,
+            });
+            const previous = comments.find(comment =>
+              comment.user?.type === 'Bot' && comment.body?.startsWith(ADMISSION_COMMENT_MARKER));
+            if (previous) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: previous.id, body: decision.comment });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number: pr.number, body: decision.comment });
+            }
+
+            core.setOutput('admitted', String(decision.admitted));
+            if (!decision.admitted) {
+              try {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number: pr.number, name: 'preview' });
+              } catch (error) {
+                if (error.status !== 404) throw error;
+              }
+            }
+
   build:
     name: Validate and export trusted PR image
+    needs: admit
+    # admit은 라벨이 막 붙은 실행에서만 돈다. 그 외 실행은 건너뛴 admit을 통과로 보고,
+    # admit이 실패하거나 거절하면 발행하지 않는다.
     if: >-
+      !cancelled() &&
+      (needs.admit.result == 'skipped' || needs.admit.outputs.admitted == 'true') &&
       github.repository == 'UMC-PRODUCT/umc-product-server' &&
       github.event.pull_request.state == 'open' &&
       github.event.pull_request.base.ref == 'develop' &&

@@ -75,18 +75,22 @@ class CommunityThreadMessageReportControllerTest {
     @DisplayName("message 신고는 CurrentMember와 reason만 Community Port In에 전달한다")
     void reportMessage_usesCurrentMemberAndReturnsPublicReceipt() throws Exception {
         given(reportMessageUseCase.report(any())).willReturn(
-            new CommunityThreadMessageReportReceiptInfo(700L, 500L, ReportReason.ABUSE, NOW)
+            new CommunityThreadMessageReportReceiptInfo(
+                700L, 500L, ReportReason.ABUSE, List.of(ReportReason.ABUSE, ReportReason.SPAM), NOW
+            )
         );
 
         mockMvc.perform(post("/api/v1/community/messages/500/report")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"reason":"ABUSE"}
+                    {"reasons":["ABUSE","SPAM"]}
                     """))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.result.reportId").value("700"))
             .andExpect(jsonPath("$.result.messageId").value("500"))
             .andExpect(jsonPath("$.result.reason").value("ABUSE"))
+            .andExpect(jsonPath("$.result.reasons[0]").value("ABUSE"))
+            .andExpect(jsonPath("$.result.reasons[1]").value("SPAM"))
             .andExpect(jsonPath("$.result.reporterId").doesNotExist());
 
         ArgumentCaptor<ReportCommunityThreadMessageCommand> captor =
@@ -94,7 +98,7 @@ class CommunityThreadMessageReportControllerTest {
         then(reportMessageUseCase).should().report(captor.capture());
         assertThat(captor.getValue().messageId()).isEqualTo(500L);
         assertThat(captor.getValue().requesterMemberId()).isEqualTo(REQUESTER_ID);
-        assertThat(captor.getValue().reason()).isEqualTo(ReportReason.ABUSE);
+        assertThat(captor.getValue().reasons()).containsExactly(ReportReason.ABUSE, ReportReason.SPAM);
     }
 
     @Test
@@ -102,7 +106,8 @@ class CommunityThreadMessageReportControllerTest {
     void searchReports_mapsFiltersAndNumericValues() throws Exception {
         given(searchReportsUseCase.search(any())).willReturn(new CommunityThreadMessageReportPageInfo(
             List.of(new CommunityThreadMessageAdminReportInfo(
-                700L, 42L, 500L, ReportReason.SPAM, ReportStatus.PENDING, 88L, NOW
+                700L, 42L, 500L, ReportReason.SPAM, List.of(ReportReason.SPAM, ReportReason.ABUSE),
+                ReportStatus.PENDING, 88L, NOW
             )), 20, 21L
         ));
 
@@ -114,6 +119,8 @@ class CommunityThreadMessageReportControllerTest {
             .andExpect(jsonPath("$.result.items[0].reportId").value("700"))
             .andExpect(jsonPath("$.result.items[0].threadId").value("42"))
             .andExpect(jsonPath("$.result.items[0].messageId").value("500"))
+            .andExpect(jsonPath("$.result.items[0].reason").value("SPAM"))
+            .andExpect(jsonPath("$.result.items[0].reasons[1]").value("ABUSE"))
             .andExpect(jsonPath("$.result.items[0].reporterId").value("88"))
             .andExpect(jsonPath("$.result.nextOffset").value("20"))
             .andExpect(jsonPath("$.result.total").value("21"));
@@ -145,7 +152,8 @@ class CommunityThreadMessageReportControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"{}", "{\"reason\":null}", "{\"reason\":\"UNKNOWN\"}"})
+    @ValueSource(strings = {"{}", "{\"reason\":null}", "{\"reason\":\"UNKNOWN\"}", "{\"reasons\":[]}",
+        "{\"reasons\":[null]}", "{\"reasons\":[\"UNKNOWN\"]}"})
     @DisplayName("누락, null, 미지원 report reason은 Port In 전에 거절한다")
     void reportMessage_rejectsInvalidReason(String body) throws Exception {
         mockMvc.perform(post("/api/v1/community/messages/500/report")
@@ -176,5 +184,51 @@ class CommunityThreadMessageReportControllerTest {
             .andExpect(status().isBadRequest());
 
         then(searchReportsUseCase).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("예전 단일 reason 필드만 보내도 접수하며 [reason]으로 변환해 전달한다")
+    void reportMessage_acceptsDeprecatedSingleReason() throws Exception {
+        given(reportMessageUseCase.report(any())).willReturn(
+            new CommunityThreadMessageReportReceiptInfo(
+                700L, 500L, ReportReason.SPAM, List.of(ReportReason.SPAM), NOW
+            )
+        );
+
+        mockMvc.perform(post("/api/v1/community/messages/500/report")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"reason":"SPAM"}
+                    """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.result.reason").value("SPAM"))
+            .andExpect(jsonPath("$.result.reasons[0]").value("SPAM"));
+
+        ArgumentCaptor<ReportCommunityThreadMessageCommand> captor =
+            ArgumentCaptor.forClass(ReportCommunityThreadMessageCommand.class);
+        then(reportMessageUseCase).should().report(captor.capture());
+        assertThat(captor.getValue().reasons()).containsExactly(ReportReason.SPAM);
+    }
+
+    @Test
+    @DisplayName("reasons와 reason을 함께 보내면 reasons를 쓴다")
+    void reportMessage_prefersReasonsOverDeprecatedReason() throws Exception {
+        given(reportMessageUseCase.report(any())).willReturn(
+            new CommunityThreadMessageReportReceiptInfo(
+                700L, 500L, ReportReason.ABUSE, List.of(ReportReason.ABUSE), NOW
+            )
+        );
+
+        mockMvc.perform(post("/api/v1/community/messages/500/report")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"reasons":["ABUSE"],"reason":"SPAM"}
+                    """))
+            .andExpect(status().isCreated());
+
+        ArgumentCaptor<ReportCommunityThreadMessageCommand> captor =
+            ArgumentCaptor.forClass(ReportCommunityThreadMessageCommand.class);
+        then(reportMessageUseCase).should().report(captor.capture());
+        assertThat(captor.getValue().reasons()).containsExactly(ReportReason.ABUSE);
     }
 }
