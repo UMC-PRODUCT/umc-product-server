@@ -149,7 +149,7 @@ public class CommunityThreadQueryService implements
 
     @Override
     public ThreadDetailInfo getPublicThread(GetThreadDetailQuery query) {
-        CommunityThreadQueryRow row = getPublicReadableThread(query.threadId(), query.requesterMemberId());
+        CommunityThreadQueryRow row = getReadableThread(query.threadId(), query.requesterMemberId());
         Map<Long, MemberInfo> senders = loadVisibleSenders(List.of(row), List.of());
         return ThreadDetailInfo.from(
             toSummary(row, senders),
@@ -200,7 +200,7 @@ public class CommunityThreadQueryService implements
 
     @Override
     public ThreadMemberPageInfo listMembers(ListThreadMembersQuery query) {
-        CommunityThreadQueryRow thread = getPublicReadableThread(query.threadId(), query.requesterMemberId());
+        CommunityThreadQueryRow thread = getReadableThread(query.threadId(), query.requesterMemberId());
         List<CommunityThreadMemberRow> rows = threadQueryPort.listActiveThreadMembers(query.threadId());
         if (rows.isEmpty()) {
             return new ThreadMemberPageInfo(List.of(), null, 0L);
@@ -278,24 +278,6 @@ public class CommunityThreadQueryService implements
             throw new CommunityDomainException(CommunityErrorCode.THREAD_DELETED);
         }
         if (row.requesterState() != CommunityThreadMemberState.ACTIVE) {
-            throw new CommunityDomainException(CommunityErrorCode.THREAD_ACCESS_DENIED);
-        }
-        return row;
-    }
-
-    /**
-     * 참여 여부와 무관하게 조회할 수 있는 스레드를 반환한다.
-     *
-     * <p>강퇴 확인(acknowledge) 전({@code KICKED})에는 프론트가 강퇴 안내를 보여줄 수 있도록 조회를
-     * 허용한다. 확인 후({@code KICKED_ACKNOWLEDGED})에만 접근을 차단한다.</p>
-     */
-    private CommunityThreadQueryRow getPublicReadableThread(Long threadId, Long requesterMemberId) {
-        CommunityThreadQueryRow row = threadQueryPort.findThread(threadId, requesterMemberId)
-            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.THREAD_NOT_FOUND));
-        if (row.deletedAt() != null) {
-            throw new CommunityDomainException(CommunityErrorCode.THREAD_DELETED);
-        }
-        if (row.requesterState() == CommunityThreadMemberState.KICKED_ACKNOWLEDGED) {
             throw new CommunityDomainException(CommunityErrorCode.THREAD_ACCESS_DENIED);
         }
         return row;
