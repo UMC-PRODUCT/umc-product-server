@@ -11297,7 +11297,7 @@
       "name": "PROJECT_PART_QUOTA_MATCHING_LOCKED",
       "httpStatus": 409,
       "httpStatusName": "CONFLICT",
-      "message": "1차 매칭 시작부터 3차 합불 결정 마감까지는 해당 파트 TO를 수정할 수 없어요.",
+      "message": "전체 첫 매칭 시작 이후에는 TO를 수정할 수 없어요.",
       "description": null,
       "clientAction": null,
       "retryable": null,

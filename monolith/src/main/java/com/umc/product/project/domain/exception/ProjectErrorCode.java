@@ -73,7 +73,7 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_PART_QUOTA_DUPLICATE(HttpStatus.BAD_REQUEST, "PROJECT-0203", "동일한 파트가 중복됐어요. 파트별 정원을 확인해주세요."),
 
     PROJECT_PART_QUOTA_MATCHING_LOCKED(HttpStatus.CONFLICT, "PROJECT-0250",
-        "1차 매칭 시작부터 3차 합불 결정 마감까지는 해당 파트 TO를 수정할 수 없어요."),
+        "전체 첫 매칭 시작 이후에는 TO를 수정할 수 없어요."),
     PROJECT_PART_QUOTA_CAPACITY_EXCEEDED(HttpStatus.CONFLICT, "PROJECT-0251",
         "파트별 TO 합계가 해당 지부의 인원보다 많아요. TO를 조정해주세요."),
     PROJECT_PART_QUOTA_BELOW_ASSIGNED(HttpStatus.CONFLICT, "PROJECT-0252",
