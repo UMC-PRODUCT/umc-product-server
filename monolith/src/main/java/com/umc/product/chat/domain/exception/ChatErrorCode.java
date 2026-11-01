@@ -32,7 +32,8 @@ public enum ChatErrorCode implements BaseCode {
     CHAT_MESSAGE_REACTION_NOT_ALLOWED(HttpStatus.CONFLICT, "CHAT-0019", "삭제되었거나 시스템 메시지에는 리액션할 수 없습니다."),
     CHAT_MESSAGE_INVALID_ATTACHMENT_COUNT(HttpStatus.BAD_REQUEST, "CHAT-0020", "이미지는 1개 이상 4개 이하만 첨부할 수 있습니다."),
     CHAT_MESSAGE_ATTACHMENT_TOO_LARGE(HttpStatus.BAD_REQUEST, "CHAT-0021", "첨부파일 크기가 허용 범위를 초과했습니다."),
-    CHAT_MESSAGE_CLIENT_ID_REQUIRED(HttpStatus.BAD_REQUEST, "CHAT-0022", "클라이언트 메시지 식별자가 필요합니다.");
+    CHAT_MESSAGE_CLIENT_ID_REQUIRED(HttpStatus.BAD_REQUEST, "CHAT-0022", "클라이언트 메시지 식별자가 필요합니다."),
+    CHAT_MESSAGE_FORBIDDEN_WORD(HttpStatus.BAD_REQUEST, "CHAT-0023", "메시지에 사용할 수 없는 단어가 포함되어 있습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

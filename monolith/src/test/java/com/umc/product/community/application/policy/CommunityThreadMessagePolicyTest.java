@@ -35,6 +35,8 @@ class CommunityThreadMessagePolicyTest {
     GetFileUseCase getFileUseCase;
     @Mock
     ValidateChatAttachmentsUseCase validateChatAttachmentsUseCase;
+    @Mock
+    ForbiddenWordFilter forbiddenWordFilter;
 
     @InjectMocks
     CommunityThreadMessagePolicy sut;
@@ -164,6 +166,36 @@ class CommunityThreadMessagePolicyTest {
             ChatErrorCode.CHAT_MESSAGE_INVALID_CONTENT_LENGTH
         );
         assertThatCode(() -> sut.validateEdit("가".repeat(2_000))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("TEXT 본문에 금칙어가 포함되면 거부한다")
+    void create_rejectsForbiddenWordInText() {
+        CreateChatMessageCommand command = text("나쁜말이 섞인 메시지");
+        given(forbiddenWordFilter.containsForbiddenWord("나쁜말이 섞인 메시지")).willReturn(true);
+
+        assertError(() -> sut.validateCreate(command), ChatErrorCode.CHAT_MESSAGE_FORBIDDEN_WORD);
+    }
+
+    @Test
+    @DisplayName("IMAGE 캡션에 금칙어가 포함돼도 거부한다")
+    void create_rejectsForbiddenWordInImageCaption() {
+        CreateChatMessageCommand command = new CreateChatMessageCommand(
+            1L, 10L, UUID.randomUUID(), MessageContentType.IMAGE, "나쁜말 캡션",
+            List.of("file-1"), List.of(), null
+        );
+        given(forbiddenWordFilter.containsForbiddenWord("나쁜말 캡션")).willReturn(true);
+
+        assertError(() -> sut.validateCreate(command), ChatErrorCode.CHAT_MESSAGE_FORBIDDEN_WORD);
+        then(getFileUseCase).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("수정 본문에 금칙어가 포함되면 거부한다")
+    void edit_rejectsForbiddenWord() {
+        given(forbiddenWordFilter.containsForbiddenWord("나쁜말로 수정")).willReturn(true);
+
+        assertError(() -> sut.validateEdit("나쁜말로 수정"), ChatErrorCode.CHAT_MESSAGE_FORBIDDEN_WORD);
     }
 
     private CreateChatMessageCommand text(String content) {
