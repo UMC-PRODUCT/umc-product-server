@@ -163,12 +163,13 @@ public class NoticeQueryRepository {
     }
 
     /**
-     * 챌린저 공지 파트 조건(파트 미지정 조회 시). - 회장단(SCHOOL_CORE)/중앙운영진(CENTRAL_MEMBER): 파트 무관 전체 열람 (본인 지부/학교 공지를 파트 상관없이
-     * 봐야 함, 상세 조회 권한과 동일 규칙) - 그 외(일반 챌린저/파트장): 본인 파트 + 파트 미지정 공지만
+     * 챌린저 공지 파트 조건(파트 미지정 조회 시). 회장단, 중앙운영진, 교내 운영진은 파트 무관하게 조회하고, 일반 챌린저는 본인 파트 공지만 조회합니다.
      */
     private BooleanExpression buildChallengerPartCondition(NoticeViewerInfo viewerInfo) {
         NoticeTab viewerRole = viewerInfo.viewerRole();
-        if (viewerRole == NoticeTab.CENTRAL_MEMBER || viewerRole == NoticeTab.SCHOOL_CORE) {
+        if (viewerRole == NoticeTab.CENTRAL_MEMBER
+            || viewerRole == NoticeTab.SCHOOL_CORE
+            || viewerRole == NoticeTab.SCHOOL_PART_LEADER) {
             return Expressions.TRUE;
         }
         return targetPartIsEmptyOrContainsAny(viewerInfo.memberParts());

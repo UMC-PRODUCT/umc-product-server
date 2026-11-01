@@ -50,9 +50,9 @@ public class ProjectManualMatchingController {
     @PostMapping
     @Operation(operationId = "PROJECT-402", summary = "운영진 수동 배정",
         description = """
-            현재 파트와 매칭 지부를 검증하며 TO 초과·중복 배정은 거부합니다.
-            TO는 배정된 팀원과 PM이 합격 처리했지만 아직 팀원으로 반영되지 않은 지원자를 포함해 검증합니다.
-            배정된 팀원으로 TO가 가득 찼으면 409(PROJECT-0106), 미반영 합격자를 포함해 가득 찼으면 409(PROJECT-0107)를 반환합니다.
+            현재 파트와 매칭 지부·중복 배정을 검증합니다. 랜덤 매칭 실행 후 운영진 조정 기간에는 TO 초과 배정을 허용하며 저장된 TO는 유지합니다.
+            일반 차수의 TO는 배정된 팀원과 PM이 합격 처리했지만 아직 팀원으로 반영되지 않은 지원자를 포함해 검증합니다.
+            일반 차수에서 배정된 팀원으로 TO가 가득 찼으면 409(PROJECT-0106), 미반영 합격자를 포함해 가득 찼으면 409(PROJECT-0107)를 반환합니다.
 
             배정 가능 기간
             디자이너(DESIGN)는 PLAN_DESIGN 매칭 차수, 개발자(WEB 등 개발 파트)는 PLAN_DEVELOPER 매칭 차수일때만 수동 배정이 가능합니다.

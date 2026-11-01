@@ -24,6 +24,7 @@ import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.service.policy.ProjectQuotaCapacityPolicy;
+import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
 import com.umc.product.project.application.service.policy.ProjectQuotaMemberPolicy;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
@@ -44,6 +45,7 @@ public class ProjectQuotaManagementCommandService implements SaveProjectQuotaMan
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
     private final ProjectPartQuotaCommandService updateService;
     private final ProjectQuotaCapacityPolicy capacityPolicy;
+    private final ProjectQuotaEditPolicy editPolicy;
 
     @Override
     @Audited(domain = Domain.PROJECT, action = AuditAction.UPDATE, targetType = "ProjectQuotaManagement",
@@ -74,6 +76,11 @@ public class ProjectQuotaManagementCommandService implements SaveProjectQuotaMan
                 memberPolicy.reservedMembers(assigned.getOrDefault(project.getId(), List.of()), rounds, now).stream()
                     .filter(member -> member.getPart() == entry.part())
                     .map(com.umc.product.project.domain.ProjectMember::getMemberId).forEach(memberIds::add);
+                long before = quotas.getOrDefault(entry.part(), entry.part() == ChallengerPart.PLAN
+                    ? (long) memberIds.size() : 0L);
+                if (before != entry.quota()) {
+                    editPolicy.validate(entry.part(), rounds, now);
+                }
                 if (entry.quota() < memberIds.size()) {
                     throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_QUOTA_BELOW_ASSIGNED,
                         project.getId() + " / " + entry.part().getDisplayName() + ": 이미 배정된 인원보다 TO가 적어요.");
