@@ -18,5 +18,5 @@
 ## 주의
 
 - 새 필수 환경변수(기본값 없는 `${VAR}`)를 추가했다면 `scripts/verify.sh`의 `write_app_env`에도 더미 값을 넣어야 기동된다. 이 스크립트가 실패하는 것이 곧 "팀원 로컬 환경도 깨진다"는 신호다.
-- yml 기본값이 빈 값이어도 코드에서 공백을 막는 설정이 있다. 메일 제공자 기본값이 `ses`라서 `SES_ACCESS_KEY_ID`, `SES_SECRET_ACCESS_KEY`가 비어 있으면 기동이 실패한다. 이런 설정은 `@Validated` 붙은 `*Properties` 클래스의 `@NotBlank`를 보면 찾을 수 있다.
+- yml 기본값이 빈 값이어도 코드에서 공백을 막는 설정이 있다. `@Validated` 붙은 `*Properties` 클래스의 `@NotBlank`를 보면 찾을 수 있다. 예를 들어 메일 제공자가 `ses`이면 `SES_ACCESS_KEY_ID`, `SES_SECRET_ACCESS_KEY`가 비어 있을 때 기동이 실패한다. local 프로필은 메일 제공자 기본값이 `log`(보내지 않고 로그만 남김)라서 이 키가 필요 없다.
 - 값의 형식을 검사하는 설정이 있다. 데모데이 스탬프 암호화 키는 Base64로 디코딩해 32바이트여야 하고, JWT 비밀값은 HMAC 키로 쓸 만큼 길어야 한다.
