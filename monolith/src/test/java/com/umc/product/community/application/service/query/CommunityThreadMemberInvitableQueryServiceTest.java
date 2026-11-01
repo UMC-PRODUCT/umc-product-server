@@ -306,23 +306,19 @@ class CommunityThreadMemberInvitableQueryServiceTest {
     }
 
     @Test
-    @DisplayName("비멤버 요청자도 삭제되지 않은 스레드의 멤버 목록을 조회할 수 있다")
-    void listMembers_비멤버도_허용한다() {
+    @DisplayName("비멤버 요청자의 멤버 목록 조회는 THREAD_ACCESS_DENIED로 거절한다")
+    void listMembers_비멤버를_거절한다() {
         // given
         given(threadQueryPort.findThread(1L, 99L)).willReturn(Optional.of(nonMemberThread()));
-        given(threadQueryPort.listActiveThreadMembers(1L))
-            .willReturn(List.of(memberRow(10L, CommunityThreadMemberRole.OWNER)));
-        given(getMemberUseCase.findAllByIds(Set.of(10L))).willReturn(Map.of(10L, member(10L, "조이")));
-        given(getChallengerUseCase.getAllBasicByMemberIds(Set.of(10L))).willReturn(Map.of());
 
-        // when
-        ThreadMemberPageInfo result = sut.listMembers(new ListThreadMembersQuery(
+        // when & then
+        assertThatThrownBy(() -> sut.listMembers(new ListThreadMembersQuery(
             1L, 99L, null, null, null, null, 0, 20
-        ));
-
-        // then
-        assertThat(result.items()).extracting(info -> info.memberId()).containsExactly(10L);
-        assertThat(result.total()).isEqualTo(1L);
+        )))
+            .isInstanceOf(CommunityDomainException.class)
+            .extracting(exception -> ((CommunityDomainException) exception).getBaseCode())
+            .isEqualTo(CommunityErrorCode.THREAD_ACCESS_DENIED);
+        verifyNoInteractions(getMemberUseCase);
     }
 
     private CommunityThreadQueryRow nonMemberThread() {

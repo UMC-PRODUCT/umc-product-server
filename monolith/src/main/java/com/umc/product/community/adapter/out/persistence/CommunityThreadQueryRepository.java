@@ -172,7 +172,7 @@ public class CommunityThreadQueryRepository {
         return queryFactory
             .select(threadProjection(requesterMembership, memberCount))
             .from(communityThread)
-            .leftJoin(requesterMembership).on(
+            .join(requesterMembership).on(
                 requesterMembership.threadId.eq(communityThread.id),
                 requesterMembership.memberId.eq(condition.requesterMemberId()),
                 requesterMembership.state.in(
@@ -197,7 +197,7 @@ public class CommunityThreadQueryRepository {
         return queryFactory
             .select(threadProjection(requesterMembership, memberCount))
             .from(communityThread)
-            .leftJoin(requesterMembership).on(
+            .join(requesterMembership).on(
                 requesterMembership.threadId.eq(communityThread.id),
                 requesterMembership.memberId.eq(condition.requesterMemberId()),
                 requesterMembership.state.in(
@@ -224,7 +224,7 @@ public class CommunityThreadQueryRepository {
         Long count = queryFactory
             .select(communityThread.id.count())
             .from(communityThread)
-            .leftJoin(requesterMembership).on(
+            .join(requesterMembership).on(
                 requesterMembership.threadId.eq(communityThread.id),
                 requesterMembership.memberId.eq(condition.requesterMemberId()),
                 requesterMembership.state.in(
@@ -242,7 +242,7 @@ public class CommunityThreadQueryRepository {
         Long count = queryFactory
             .select(communityThread.id.count())
             .from(communityThread)
-            .leftJoin(requesterMembership).on(
+            .join(requesterMembership).on(
                 requesterMembership.threadId.eq(communityThread.id),
                 requesterMembership.memberId.eq(condition.requesterMemberId()),
                 requesterMembership.state.in(
