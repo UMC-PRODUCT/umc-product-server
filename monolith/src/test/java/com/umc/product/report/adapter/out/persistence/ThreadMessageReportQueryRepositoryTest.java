@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.community.adapter.out.persistence.CommunityThreadRepository;
 import com.umc.product.community.domain.CommunityThread;
@@ -51,9 +52,9 @@ class ThreadMessageReportQueryRepositoryTest {
         Report first = threadMessageReport(11L, firstThread.getId(), 1001L, ReportReason.ABUSE);
         Report second = threadMessageReport(12L, firstThread.getId(), 1002L, ReportReason.ABUSE);
         Report third = threadMessageReport(13L, firstThread.getId(), 1003L, ReportReason.ABUSE);
-        third.approve();
+        approve(third);
         Report fourth = threadMessageReport(14L, firstThread.getId(), 1004L, ReportReason.ABUSE);
-        fourth.approve();
+        approve(fourth);
         Report fifth = threadMessageReport(15L, secondThread.getId(), 1005L, ReportReason.SPAM);
         Report legacyPost = Report.create(99L, ReportTargetType.POST, 1001L, null);
         Report legacyComment = Report.create(99L, ReportTargetType.COMMENT, 1001L, null);
@@ -128,9 +129,9 @@ class ThreadMessageReportQueryRepositoryTest {
         // given
         CommunityThread thread = threadRepository.saveAndFlush(createThread(130L, "복합 필터 스레드"));
         Report approvedMatch = threadMessageReport(31L, thread.getId(), 3001L, ReportReason.ETC);
-        approvedMatch.approve();
+        approve(approvedMatch);
         Report approvedDifferentReporter = threadMessageReport(32L, thread.getId(), 3002L, ReportReason.ETC);
-        approvedDifferentReporter.approve();
+        approve(approvedDifferentReporter);
         Report pendingSameReporter = threadMessageReport(31L, thread.getId(), 3003L, ReportReason.ETC);
         reportRepository.saveAllAndFlush(List.of(
             approvedMatch,
@@ -162,7 +163,7 @@ class ThreadMessageReportQueryRepositoryTest {
         Long messageId,
         ReportReason reason
     ) {
-        return Report.createThreadMessage(reporterId, threadId, messageId, reason, null);
+        return Report.createThreadMessage(reporterId, threadId, messageId, List.of(reason), null);
     }
 
     private CommunityThread createThread(Long chatRoomId, String title) {
@@ -190,5 +191,46 @@ class ThreadMessageReportQueryRepositoryTest {
                 .setParameter("id", report.getId())
                 .executeUpdate();
         }
+    }
+
+    // 조회 필터 검증용으로 상태만 바꿉니다. 실제 처리는 Report.moderate()로만 합니다.
+    private static void approve(Report report) {
+        ReflectionTestUtils.setField(report, "status", ReportStatus.APPROVED);
+    }
+
+    @Test
+    @DisplayName("사유 필터는 선택한 사유가 하나라도 담긴 신고를 찾고, report_reason이 비어 있으면 대표 사유로 찾는다")
+    void search_사유가_하나라도_포함되면_조회한다() {
+        // given
+        CommunityThread thread = threadRepository.saveAndFlush(createThread(130L, "다중 사유 스레드"));
+        Report multi = Report.createThreadMessage(
+            31L, thread.getId(), 3001L, List.of(ReportReason.SPAM, ReportReason.ABUSE), null
+        );
+        Report spamOnly = threadMessageReport(32L, thread.getId(), 3002L, ReportReason.SPAM);
+        Report privacy = threadMessageReport(33L, thread.getId(), 3003L, ReportReason.PRIVACY);
+        Report legacy = threadMessageReport(34L, thread.getId(), 3004L, ReportReason.ABUSE);
+        reportRepository.saveAllAndFlush(List.of(multi, spamOnly, privacy, legacy));
+        entityManager.getEntityManager()
+            .createNativeQuery("delete from report_reason where report_id = :id")
+            .setParameter("id", legacy.getId())
+            .executeUpdate();
+        alignCreatedAt(List.of(multi, spamOnly, privacy, legacy));
+        entityManager.clear();
+
+        // when
+        ThreadMessageReportSearchResult abuse = sut.search(new ThreadMessageReportSearchQuery(
+            ReportStatus.PENDING, ReportReason.ABUSE, thread.getId(), null, 0, 20
+        ));
+        ThreadMessageReportSearchResult spam = sut.search(new ThreadMessageReportSearchQuery(
+            ReportStatus.PENDING, ReportReason.SPAM, thread.getId(), null, 0, 20
+        ));
+
+        // then
+        assertThat(abuse.total()).isEqualTo(2L);
+        assertThat(abuse.reports()).extracting(Report::getId)
+            .containsExactlyInAnyOrder(multi.getId(), legacy.getId());
+        assertThat(spam.total()).isEqualTo(2L);
+        assertThat(spam.reports()).extracting(Report::getId)
+            .containsExactlyInAnyOrder(multi.getId(), spamOnly.getId());
     }
 }
