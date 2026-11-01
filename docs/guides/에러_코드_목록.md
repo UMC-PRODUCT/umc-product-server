@@ -178,7 +178,7 @@
 | 138 | chat | `CHAT-0020` | `CHAT_MESSAGE_INVALID_ATTACHMENT_COUNT` | 400 BAD_REQUEST | 이미지는 1개 이상 4개 이하만 첨부할 수 있습니다. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/chat/domain/exception/ChatErrorCode.java:33` |
 | 139 | chat | `CHAT-0021` | `CHAT_MESSAGE_ATTACHMENT_TOO_LARGE` | 400 BAD_REQUEST | 첨부파일 크기가 허용 범위를 초과했습니다. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/chat/domain/exception/ChatErrorCode.java:34` |
 | 140 | chat | `CHAT-0022` | `CHAT_MESSAGE_CLIENT_ID_REQUIRED` | 400 BAD_REQUEST | 클라이언트 메시지 식별자가 필요합니다. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/chat/domain/exception/ChatErrorCode.java:35` |
-| 141 | chat | `CHAT-0023` | `CHAT_MESSAGE_FORBIDDEN_WORD` | 400 BAD_REQUEST | 메시지에 사용할 수 없는 단어가 포함되어 있습니다. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/chat/domain/exception/ChatErrorCode.java:36` |
+| 141 | chat | `CHAT-0023` | `CHAT_MESSAGE_FORBIDDEN_WORD` | 400 BAD_REQUEST | 부적절한 표현이 포함되어 있어 메시지를 전송할 수 없어요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/chat/domain/exception/ChatErrorCode.java:36` |
 
 ## community
 
