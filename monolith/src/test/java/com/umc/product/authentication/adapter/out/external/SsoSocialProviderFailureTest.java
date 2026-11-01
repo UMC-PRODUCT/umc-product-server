@@ -44,7 +44,7 @@ class SsoSocialProviderFailureTest {
         server.expect(requestTo("https://kauth.kakao.com/oauth/token")).andRespond(timeout ? withException(new java.net.SocketTimeoutException()) : withServerError());
         String callback = "https://api.example.com/callback";
         KakaoTokenVerifier verifier = new KakaoTokenVerifier(builder.build(),
-            new KakaoOAuthProperties("client", "", "", List.of(callback), null), null);
+            new KakaoOAuthProperties("client", "", "", List.of(callback), null, null), null);
         assertUnavailable(() -> verifier.verifyAuthorizationCode("code", callback, null));
         server.verify();
     }

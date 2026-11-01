@@ -577,6 +577,8 @@ app:
       client-secret: ${KAKAO_CLIENT_SECRET:}
       admin-key: ${KAKAO_ADMIN_KEY:}
       allowed-redirect-uris: ${KAKAO_ALLOWED_REDIRECT_URIS:}
+      # client-id 외에 클라이언트가 보낸 ID Token aud로 받을 앱 키 (웹 JavaScript 키, 네이티브 앱 키)
+      allowed-id-token-audiences: ${KAKAO_ALLOWED_ID_TOKEN_AUDIENCES:}
       jwks-cache:
         ttl: ${KAKAO_JWKS_CACHE_TTL:PT24H}
         max-size: ${KAKAO_JWKS_CACHE_MAX_SIZE:1}
