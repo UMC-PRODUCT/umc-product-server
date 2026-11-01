@@ -1,4 +1,4 @@
-package com.umc.product.community.application.service.report;
+package com.umc.product.report.application.service.command;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -17,13 +17,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.umc.product.community.application.port.in.command.report.dto.ReportCommunityMemberCommand;
-import com.umc.product.community.application.port.in.query.report.dto.CommunityMemberReportReceiptInfo;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.report.application.port.in.command.SubmitReportUseCase;
+import com.umc.product.report.application.port.in.command.dto.ReportMemberCommand;
+import com.umc.product.report.application.port.in.command.dto.ReportMemberResult;
 import com.umc.product.report.application.port.in.command.dto.SubmitReportCommand;
 import com.umc.product.report.application.port.in.command.dto.SubmitReportResult;
 import com.umc.product.report.domain.enums.ReportReason;
@@ -33,7 +33,7 @@ import com.umc.product.report.domain.exception.ReportErrorCode;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("사용자 신고 명령 서비스")
-class CommunityMemberReportCommandServiceTest {
+class ReportMemberServiceTest {
 
     private static final Long REQUESTER_ID = 44L;
     private static final Long TARGET_ID = 55L;
@@ -46,7 +46,7 @@ class CommunityMemberReportCommandServiceTest {
     SubmitReportUseCase submitReportUseCase;
 
     @InjectMocks
-    CommunityMemberReportCommandService sut;
+    ReportMemberService sut;
 
     @Test
     @DisplayName("대상 회원이 있으면 신고 당시 닉네임을 스냅샷으로 남겨 report에 넘기고 접수 정보를 돌려준다")
@@ -57,8 +57,8 @@ class CommunityMemberReportCommandServiceTest {
             .willReturn(new SubmitReportResult(901L, List.of(ReportReason.HARASSMENT, ReportReason.SPAM), CREATED_AT));
 
         // when
-        CommunityMemberReportReceiptInfo receipt = sut.report(
-            new ReportCommunityMemberCommand(TARGET_ID, REQUESTER_ID, List.of(ReportReason.HARASSMENT, ReportReason.SPAM), "상세 내용")
+        ReportMemberResult receipt = sut.report(
+            new ReportMemberCommand(TARGET_ID, REQUESTER_ID, List.of(ReportReason.HARASSMENT, ReportReason.SPAM), "상세 내용")
         );
 
         // then
@@ -90,7 +90,7 @@ class CommunityMemberReportCommandServiceTest {
 
         // when & then
         assertThatThrownBy(() -> sut.report(
-            new ReportCommunityMemberCommand(TARGET_ID, REQUESTER_ID, List.of(ReportReason.SPAM), "상세")
+            new ReportMemberCommand(TARGET_ID, REQUESTER_ID, List.of(ReportReason.SPAM), "상세")
         )).isInstanceOfSatisfying(MemberDomainException.class, exception ->
             assertThat(exception.getBaseCode()).isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND)
         );
@@ -102,7 +102,7 @@ class CommunityMemberReportCommandServiceTest {
     void report_자기_자신_신고를_거부한다() {
         // when & then
         assertThatThrownBy(() -> sut.report(
-            new ReportCommunityMemberCommand(REQUESTER_ID, REQUESTER_ID, List.of(ReportReason.SPAM), "상세")
+            new ReportMemberCommand(REQUESTER_ID, REQUESTER_ID, List.of(ReportReason.SPAM), "상세")
         )).isInstanceOfSatisfying(ReportDomainException.class, exception ->
             assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_SELF_REPORT)
         );
@@ -120,7 +120,7 @@ class CommunityMemberReportCommandServiceTest {
 
         // when & then
         assertThatThrownBy(() -> sut.report(
-            new ReportCommunityMemberCommand(TARGET_ID, REQUESTER_ID, List.of(ReportReason.SPAM), "상세")
+            new ReportMemberCommand(TARGET_ID, REQUESTER_ID, List.of(ReportReason.SPAM), "상세")
         )).isInstanceOfSatisfying(ReportDomainException.class, exception ->
             assertThat(exception.getBaseCode()).isEqualTo(ReportErrorCode.REPORT_ALREADY_EXISTS)
         );

@@ -1,9 +1,9 @@
-package com.umc.product.community.adapter.in.web.dto.request;
+package com.umc.product.report.adapter.in.web.dto;
 
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.umc.product.community.application.port.in.command.report.dto.ReportCommunityMemberCommand;
+import com.umc.product.report.application.port.in.command.dto.ReportMemberCommand;
 import com.umc.product.report.domain.enums.ReportReason;
 import com.umc.product.report.domain.enums.ReportTargetType;
 
@@ -14,7 +14,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public record ReportCommunityMemberRequest(
+public record ReportMemberRequest(
     @Schema(description = "신고 사유 목록. 최소 1개이며 HARASSMENT(괴롭힘·지속적인 불쾌 행위), IMPERSONATION(사칭·허위 프로필), "
         + "SPAM(스팸·광고 활동), ETC(기타) 중에서 여러 개 고를 수 있습니다. 중복은 제거하고 고른 순서를 유지합니다.",
         example = "[\"HARASSMENT\", \"SPAM\"]")
@@ -31,7 +31,7 @@ public record ReportCommunityMemberRequest(
             .allMatch(reason -> reason == null || reason.isAllowedFor(ReportTargetType.USER));
     }
 
-    public ReportCommunityMemberCommand toCommand(Long targetMemberId, Long requesterMemberId) {
-        return new ReportCommunityMemberCommand(targetMemberId, requesterMemberId, reasons, detail);
+    public ReportMemberCommand toCommand(Long targetMemberId, Long requesterMemberId) {
+        return new ReportMemberCommand(targetMemberId, requesterMemberId, reasons, detail);
     }
 }
