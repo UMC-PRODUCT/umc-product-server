@@ -600,7 +600,8 @@ app:
       burst: ${LLM_RATE_LIMIT_BURST:5}
 
   notification:
-    # provider는 ses(기본) 또는 smtp. 선택한 제공자의 자격증명만 필수다.
+    # provider는 ses(기본), smtp, log(로컬 개발용, 실제로 보내지 않고 로그만 남김). 선택한 제공자의 자격증명만 필수다.
+    # local 프로필은 파일 하단에서 기본값을 log로 바꾼다.
     # SMTP는 STARTTLS 인증 연결을 사용하며, Gmail에서는 sender 주소를 SMTP 계정 주소와 맞춘다.
     email:
       provider: ${EMAIL_PROVIDER:ses}
@@ -735,3 +736,10 @@ app:
 
   test-api:
     enabled: ${APP_TEST_API_ENABLED:true}
+
+  notification:
+    email:
+      # 로컬은 SES·SMTP 자격증명 없이 뜨고 실제 메일을 보내지 않는다. 실제 발송을 확인할 때만 EMAIL_PROVIDER를 바꾼다.
+      provider: ${EMAIL_PROVIDER:log}
+      sender:
+        no-reply-address: ${EMAIL_NO_REPLY_ADDRESS:no-reply@localhost}
