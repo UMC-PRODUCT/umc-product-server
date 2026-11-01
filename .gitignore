@@ -1,6 +1,12 @@
-.claude
+# 팀 공통 Claude Code 설정(settings.json)만 커밋하고 개인 설정·worktree는 제외
+.claude/*
+!.claude/settings.json
 .codex
 .omo/
+
+# pstack이 남기는 작업 기록
+.audit/
+decisions.tsv
 
 src/main/generated/
 
