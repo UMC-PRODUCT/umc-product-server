@@ -741,3 +741,5 @@ app:
     email:
       # 로컬은 SES·SMTP 자격증명 없이 뜨고 실제 메일을 보내지 않는다. 실제 발송을 확인할 때만 EMAIL_PROVIDER를 바꾼다.
       provider: ${EMAIL_PROVIDER:log}
+      sender:
+        no-reply-address: ${EMAIL_NO_REPLY_ADDRESS:no-reply@localhost}

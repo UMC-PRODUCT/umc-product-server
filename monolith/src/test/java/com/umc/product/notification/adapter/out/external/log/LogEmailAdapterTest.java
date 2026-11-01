@@ -16,8 +16,8 @@ import ch.qos.logback.core.read.ListAppender;
 class LogEmailAdapterTest {
 
     @Test
-    @DisplayName("LOG 제공자는 메일을 보내지 않고 가린 수신자와 제목만 로그에 남긴다")
-    void logs_masked_recipient_and_subject_without_body() {
+    @DisplayName("LOG 제공자는 메일을 보내지 않고 수신자 존재 여부와 제목만 로그에 남긴다")
+    void logs_recipient_presence_and_subject_without_address_or_body() {
         // given
         Logger logger = (Logger) LoggerFactory.getLogger(LogEmailAdapter.class);
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -36,10 +36,11 @@ class LogEmailAdapterTest {
             // then
             assertThat(appender.list).hasSize(1);
             assertThat(appender.list.get(0).getFormattedMessage())
-                .contains("uni*******@example.org", "이메일 인증 코드")
-                .doesNotContain("university@example.org", "123456");
+                .contains("recipientPresent=true", "이메일 인증 코드")
+                .doesNotContain("university", "example.org", "123456");
         } finally {
             logger.detachAppender(appender);
+            appender.stop();
             logger.setLevel(previousLevel);
         }
     }
