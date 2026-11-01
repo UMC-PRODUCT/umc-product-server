@@ -23,6 +23,37 @@ class ProjectMemberPublicationTest {
     private static final Instant PUBLISH_AT = Instant.parse("2026-11-14T13:00:00Z");
 
     @Test
+    void 일반_수동_배정은_발표_시각이_있어도_차수를_기록하고_즉시_활성화한다() {
+        // given
+        ProjectMatchingRound round = round(PUBLISH_AT);
+
+        // when
+        ProjectMember member = ProjectMember.createForManualAssignment(project(), 20L, ChallengerPart.WEB, round, 30L);
+
+        // then
+        assertThat(member.getAssignedMatchingRound()).isSameAs(round);
+        assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
+        assertThat(member.getApplication()).isNull();
+    }
+
+    @Test
+    void 수동_재배정은_과거_지원서를_끊고_새_차수로_즉시_활성화한다() {
+        // given
+        ProjectMember member = member(round(PUBLISH_AT));
+        member.dismiss("퇴출", 30L);
+        ProjectMatchingRound currentRound = round(PUBLISH_AT.plusSeconds(86400));
+
+        // when
+        member.assignManually(ChallengerPart.WEB, currentRound, 40L);
+
+        // then
+        assertThat(member.getAssignedMatchingRound()).isSameAs(currentRound);
+        assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
+        assertThat(member.getApplication()).isNull();
+        assertThat(member.getDecidedMemberId()).isEqualTo(40L);
+    }
+
+    @Test
     void 발표_시각_정각부터_PENDING_PUBLICATION을_ACTIVE로_변경할_수_있다() {
         // given
         ProjectMatchingRound round = round(PUBLISH_AT);

@@ -18,6 +18,8 @@ import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -180,6 +182,34 @@ class ProjectApplicationResponseAssemblerTest {
         assertThat(response.project().productOwner().nickname()).isEqualTo("랜덤피엠");
         assertThat(response.project().productOwner().name()).isEqualTo("박서은");
         assertThat(response.project().productOwner().schoolName()).isEqualTo("이화여대");
+    }
+
+    @ParameterizedTest
+    @EnumSource(MatchingPhase.class)
+    void 지원서_없는_배정도_저장된_차수로_카드를_합성한다(MatchingPhase phase) {
+        // given
+        GetMyProjectApplicationsQuery query = queryOf(null);
+        ProjectInfo project = projectInfoOf(2L, "배정 프로젝트", 88L);
+        ProjectMemberInfo member = ProjectMemberInfo.builder()
+            .projectId(2L).part(ChallengerPart.WEB).matchingRoundId(7L).build();
+        ProjectMatchingRoundInfo round = ProjectMatchingRoundInfo.builder()
+            .id(7L).type(MatchingType.PLAN_DEVELOPER).phase(phase).build();
+        given(getMyProjectApplicationsUseCase.listMyApplications(query)).willReturn(List.of());
+        given(getRandomMatchedProjectMemberUseCase.findRandomMatched(query.requesterMemberId(), query.gisuId()))
+            .willReturn(Optional.of(member));
+        given(getProjectUseCase.findAllByIds(any())).willReturn(Map.of(2L, project));
+        given(getProjectMatchingRoundUseCase.findAllByIds(Set.of(7L))).willReturn(Map.of(7L, round));
+        given(getMemberUseCase.findAllByIds(any())).willReturn(Map.of(88L, memberOf(88L, "PM", "이름", "학교")));
+
+        // when
+        List<MyProjectApplicationResponse> result = sut.myApplicationsFor(query);
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).applicationId()).isNull();
+        assertThat(result.get(0).matchingRound().id()).isEqualTo(7L);
+        assertThat(result.get(0).matchingRound().phase()).isEqualTo(MatchingRoundPhaseView.from(phase));
+        assertThat(result.get(0).status()).isEqualTo(ProjectApplicationViewStatus.APPROVED);
     }
 
     @Test

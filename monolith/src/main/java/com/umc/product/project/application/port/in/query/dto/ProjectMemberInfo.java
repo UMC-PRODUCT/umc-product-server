@@ -26,7 +26,8 @@ public record ProjectMemberInfo(
     boolean isLeader,
     String description,
     Instant decidedAt,
-    ProjectMemberStatus status
+    ProjectMemberStatus status,
+    Long matchingRoundId
 ) {
     public static ProjectMemberInfo from(ProjectMember entity) {
         return ProjectMemberInfo.builder()
@@ -41,6 +42,8 @@ public record ProjectMemberInfo(
             .description(entity.getDescription())
             .decidedAt(entity.getDecidedAt())
             .status(entity.getStatus())
+            .matchingRoundId(entity.getAssignedMatchingRound() == null
+                ? null : entity.getAssignedMatchingRound().getId())
             .build();
     }
 }
