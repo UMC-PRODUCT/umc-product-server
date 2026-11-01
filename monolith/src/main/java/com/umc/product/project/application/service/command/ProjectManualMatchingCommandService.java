@@ -70,7 +70,9 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
         Long adjustmentRoundId = adjustmentRound == null ? null : adjustmentRound.getId();
         project.validateApplicable();
         validateCandidate(project, command.memberId(), command.part(), adjustmentRoundId);
-        validateQuota(project, command.part(), adjustmentRoundId);
+        if (adjustmentRound == null) {
+            validateQuota(project, command.part(), null);
+        }
 
         ProjectMember member = loadProjectMemberPort
             .findByProjectIdAndMemberIdForUpdate(project.getId(), command.memberId()).orElse(null);

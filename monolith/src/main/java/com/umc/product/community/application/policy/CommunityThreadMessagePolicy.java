@@ -26,6 +26,7 @@ public class CommunityThreadMessagePolicy {
 
     private final GetFileUseCase getFileUseCase;
     private final ValidateChatAttachmentsUseCase validateChatAttachmentsUseCase;
+    private final ForbiddenWordFilter forbiddenWordFilter;
 
     public void validateCreate(CreateChatMessageCommand command) {
         if (command.clientMessageId() == null) {
@@ -37,6 +38,7 @@ public class CommunityThreadMessagePolicy {
         }
         validateContentLength(command.content());
         validateMentions(command.mentionedMemberIds());
+        validateForbiddenWords(command.content());
 
         if (command.contentType() == MessageContentType.TEXT) {
             validateText(command.content(), command.fileMetadataIds());
@@ -47,6 +49,7 @@ public class CommunityThreadMessagePolicy {
 
     public void validateEdit(String content) {
         validateContentLength(content);
+        validateForbiddenWords(content);
     }
 
     public void validateAttachments(CreateChatMessageCommand command) {
@@ -83,6 +86,13 @@ public class CommunityThreadMessagePolicy {
     private void validateMentions(List<Long> mentionedMemberIds) {
         if (mentionedMemberIds.size() > MAX_MENTIONS) {
             throw new ChatDomainException(ChatErrorCode.CHAT_MESSAGE_INVALID_MENTION);
+        }
+    }
+
+    // TEXT 본문과 IMAGE 캡션 둘 다 거쳐가므로, 타입 분기 이전에 검사한다.
+    private void validateForbiddenWords(String content) {
+        if (forbiddenWordFilter.containsForbiddenWord(content)) {
+            throw new ChatDomainException(ChatErrorCode.CHAT_MESSAGE_FORBIDDEN_WORD);
         }
     }
 
