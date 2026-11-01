@@ -5,7 +5,7 @@ when: UMC 서버에서 커밋을 만들거나 PR을 열 때이며, Feature·Bug 
 
 # UMC Opening a PR
 
-pstack의 Opening a PR을 UMC 서버 규칙에 맞춘다. 규칙의 원본은 루트 `AGENTS.md`의 REVIEW AND GIT 절이다.
+pstack의 Opening a PR을 UMC 서버 규칙에 맞춘다. 규칙의 원본은 루트 `AGENTS.md`의 `GIT-01`~`GIT-03`이다.
 이 파일과 `AGENTS.md`가 다르면 `AGENTS.md`를 따른다.
 
 - **Replace** "Work from a git worktree off main." develop 기준 git worktree에서 작업한다. 이 레포의 기본 브랜치는 `main`이지만 개발 PR은 `develop`을 향한다. `.claude/settings.json`이 `worktree.baseRef`를 `head`로 두므로 worktree는 현재 HEAD에서 갈라진다. 시작 전에 HEAD가 최신 `origin/develop`을 포함하는지 확인한다.
