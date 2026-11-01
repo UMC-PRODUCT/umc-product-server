@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { assertOnlyPreviewReleaseChanged, removePreviewRelease, updatePreviewRelease, validatePreviewRelease } from "./update-preview-release.mjs";
+import { assertOnlyPreviewReleaseChanged, updatePreviewRelease, validatePreviewRelease } from "./update-preview-release.mjs";
 
 const headSha = `123456789012${"a".repeat(28)}`;
 const release = () => ({
@@ -105,32 +105,4 @@ test("marker 파일이나 상위 디렉터리가 symlink이면 따라가지 않�
         }
         assert.throws(() => updatePreviewRelease(root, release()), /not symlinks/);
     }
-});
-
-test("라벨 제거·PR 종료 때 해당 PR marker만 지우고 없으면 변경하지 않는다", (t) => {
-    const root = repository(t);
-    const { markerPath } = updatePreviewRelease(root, release());
-    execFileSync("git", ["add", markerPath], { cwd: root });
-    execFileSync("git", ["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "--quiet", "-m", "release"], { cwd: root });
-    assert.deepEqual(removePreviewRelease(root, "42"), { markerPath, changed: true });
-    assert.throws(() => readFileSync(join(root, markerPath)), { code: "ENOENT" });
-    assertOnlyPreviewReleaseChanged(root, markerPath);
-    assert.deepEqual(removePreviewRelease(root, "42"), { markerPath, changed: false });
-    execFileSync("git", ["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "--quiet", "-am", "remove"], { cwd: root });
-    assert.deepEqual(removePreviewRelease(root, "7"), { markerPath: "argocd/preview-releases/pr-7.json", changed: false });
-});
-
-test("삭제도 변형된 PR 번호와 파일명이 다른 marker, 다른 변경을 거부한다", (t) => {
-    const root = repository(t);
-    for (const prNumber of ["0", "042", "../prod", 42]) {
-        assert.throws(() => removePreviewRelease(root, prNumber));
-    }
-    const { markerPath } = updatePreviewRelease(root, release());
-    const content = JSON.stringify({ release: { ...release().release, prNumber: "43" } });
-    writeFileSync(join(root, markerPath), content);
-    assert.throws(() => removePreviewRelease(root, "42"));
-    assert.equal(readFileSync(join(root, markerPath), "utf8"), content);
-    writeFileSync(join(root, markerPath), JSON.stringify(release()));
-    writeFileSync(join(root, "unexpected.txt"), "do not commit");
-    assert.throws(() => removePreviewRelease(root, "42"), /outside the selected Preview release/);
 });
