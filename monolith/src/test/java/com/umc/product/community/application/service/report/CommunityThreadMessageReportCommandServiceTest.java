@@ -92,7 +92,7 @@ class CommunityThreadMessageReportCommandServiceTest {
             new GetChatMessageQuery(CHAT_ROOM_ID, REQUESTER_MEMBER_ID, MESSAGE_ID)
         )).willReturn(chatMessage());
         given(submitReportUseCase.submit(any(SubmitReportCommand.class)))
-            .willReturn(new SubmitReportResult(901L, CREATED_AT));
+            .willReturn(new SubmitReportResult(901L, List.of(ReportReason.ABUSE), CREATED_AT));
 
         // when
         CommunityThreadMessageReportReceiptInfo result = sut.report(command());
@@ -101,6 +101,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         assertThat(result.reportId()).isEqualTo(901L);
         assertThat(result.messageId()).isEqualTo(MESSAGE_ID);
         assertThat(result.reason()).isEqualTo(ReportReason.ABUSE);
+        assertThat(result.reasons()).containsExactly(ReportReason.ABUSE);
         assertThat(result.createdAt()).isEqualTo(CREATED_AT);
         assertThat(Arrays.stream(CommunityThreadMessageReportReceiptInfo.class.getRecordComponents())
             .map(RecordComponent::getName)
@@ -114,7 +115,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         assertThat(submitted.targetType()).isEqualTo(ReportTargetType.THREAD_MESSAGE);
         assertThat(submitted.threadId()).isEqualTo(THREAD_ID);
         assertThat(submitted.targetId()).isEqualTo(MESSAGE_ID);
-        assertThat(submitted.reasonCode()).isEqualTo(ReportReason.ABUSE);
+        assertThat(submitted.reasons()).containsExactly(ReportReason.ABUSE);
         assertThat(submitted.targetSnapshot())
             .isEqualTo(new SubmitReportCommand.TargetSnapshot(66L, "신고 대상 메시지", "스레드 제목"));
 
@@ -353,7 +354,7 @@ class CommunityThreadMessageReportCommandServiceTest {
             new GetChatMessageQuery(CHAT_ROOM_ID, REQUESTER_MEMBER_ID, MESSAGE_ID)
         )).willReturn(message);
         given(submitReportUseCase.submit(any(SubmitReportCommand.class)))
-            .willReturn(new SubmitReportResult(901L, CREATED_AT));
+            .willReturn(new SubmitReportResult(901L, List.of(ReportReason.ABUSE), CREATED_AT));
     }
 
     private SubmitReportCommand.TargetSnapshot submittedSnapshot() {
@@ -366,7 +367,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         return new ReportCommunityThreadMessageCommand(
             MESSAGE_ID,
             REQUESTER_MEMBER_ID,
-            ReportReason.ABUSE
+            List.of(ReportReason.ABUSE)
         );
     }
 

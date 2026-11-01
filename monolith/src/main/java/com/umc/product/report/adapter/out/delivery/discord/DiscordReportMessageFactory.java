@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -38,11 +39,17 @@ public class DiscordReportMessageFactory {
     private Map<String, Object> embed(Report report) {
         List<Map<String, Object>> fields = new ArrayList<>();
         fields.add(field("신고 ID", String.valueOf(report.getId()), true));
-        fields.add(field("사유", reasonLabel(report.getReasonCode()), true));
+        fields.add(field("사유", reasonLabels(report.getReasonCodes()), true));
         fields.add(field("대상", targetLabel(report), true));
 
         ReportTargetSnapshot snapshot = report.getTargetSnapshot();
-        if (snapshot != null) {
+        if (report.getTargetType() == ReportTargetType.USER) {
+            // 사용자 신고는 신고자가 적은 상세 내용과 신고 당시 대상 닉네임을 보여 줍니다.
+            if (snapshot != null && snapshot.getContext() != null && !snapshot.getContext().isBlank()) {
+                fields.add(field("대상 닉네임", snapshot.getContext(), true));
+            }
+            fields.add(field("상세 내용", preview(report.getReason()), false));
+        } else if (snapshot != null) {
             // Discord는 빈 값의 항목을 거절하므로 내용이 없는 위치는 넣지 않습니다.
             if (snapshot.getContext() != null && !snapshot.getContext().isBlank()) {
                 fields.add(field("위치", snapshot.getContext(), true));
@@ -69,6 +76,7 @@ public class DiscordReportMessageFactory {
             case POST -> "게시글";
             case COMMENT -> "댓글";
             case THREAD_MESSAGE -> "스레드 메시지";
+            case USER -> "사용자";
         };
         String target = label + " #" + report.getTargetId();
         if (report.getTargetType() == ReportTargetType.THREAD_MESSAGE && report.getThreadId() != null) {
@@ -77,15 +85,23 @@ public class DiscordReportMessageFactory {
         return target;
     }
 
-    private static String reasonLabel(ReportReason reason) {
-        if (reason == null) {
+    private static String reasonLabels(List<ReportReason> reasons) {
+        if (reasons.isEmpty()) {
             return "사유 없음";
         }
+        return reasons.stream()
+            .map(DiscordReportMessageFactory::reasonLabel)
+            .collect(Collectors.joining(", "));
+    }
+
+    private static String reasonLabel(ReportReason reason) {
         return switch (reason) {
             case SPAM -> "스팸";
             case ABUSE -> "욕설/비방";
             case INAPPROPRIATE -> "부적절한 내용";
             case PRIVACY -> "개인정보";
+            case HARASSMENT -> "괴롭힘·지속적인 불쾌 행위";
+            case IMPERSONATION -> "사칭·허위 프로필";
             case ETC -> "기타";
         };
     }

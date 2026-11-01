@@ -1,6 +1,7 @@
 package com.umc.product.report.application.port.in.query.dto;
 
 import java.time.Instant;
+import java.util.List;
 
 import com.umc.product.report.domain.Report;
 import com.umc.product.report.domain.enums.ReportReason;
@@ -14,6 +15,7 @@ public record ReportInfo(
     Long targetId,
     Long threadId,
     ReportReason reasonCode,
+    List<ReportReason> reasons,
     ReportStatus status,
     Instant createdAt
 ) {
@@ -26,6 +28,7 @@ public record ReportInfo(
             report.getTargetId(),
             report.getThreadId(),
             report.getReasonCode(),
+            report.getReasonCodes(),
             report.getStatus(),
             report.getCreatedAt()
         );

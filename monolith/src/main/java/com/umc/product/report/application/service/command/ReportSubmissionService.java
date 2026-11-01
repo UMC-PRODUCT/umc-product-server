@@ -50,7 +50,16 @@ public class ReportSubmissionService implements SubmitReportUseCase {
                 command.reporterId(),
                 command.threadId(),
                 command.targetId(),
-                command.reasonCode(),
+                command.reasons(),
+                toSnapshot(command.targetSnapshot())
+            );
+        }
+        if (command.targetType() == ReportTargetType.USER) {
+            return Report.createUser(
+                command.reporterId(),
+                command.targetId(),
+                command.reasons(),
+                command.detail(),
                 toSnapshot(command.targetSnapshot())
             );
         }

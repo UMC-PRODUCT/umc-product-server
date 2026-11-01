@@ -39,6 +39,8 @@ final class DiscordReportReasons {
             case ABUSE -> "욕설·비방·혐오 표현";
             case INAPPROPRIATE -> "부적절하거나 불쾌한 내용";
             case PRIVACY -> "개인정보 노출";
+            case HARASSMENT -> "괴롭힘·지속적인 불쾌 행위";
+            case IMPERSONATION -> "사칭·허위 프로필";
             case OTHER_VIOLATION -> "기타 위반";
             case NOT_VIOLATION -> "운영 정책 위반 아님";
             case CONTENT_MISMATCH -> "신고 내용과 확인 결과가 일치하지 않음";

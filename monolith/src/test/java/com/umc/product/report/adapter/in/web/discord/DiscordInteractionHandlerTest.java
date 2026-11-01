@@ -85,7 +85,9 @@ class DiscordInteractionHandlerTest {
         assertThat(reasonSelect.path("required").asBoolean()).isTrue();
         List<String> values = new ArrayList<>();
         reasonSelect.path("options").forEach(option -> values.add(option.path("value").asText()));
-        assertThat(values).containsExactly("SPAM", "ABUSE", "INAPPROPRIATE", "PRIVACY", "OTHER_VIOLATION");
+        assertThat(values).containsExactly(
+            "SPAM", "ABUSE", "INAPPROPRIATE", "PRIVACY", "HARASSMENT", "IMPERSONATION", "OTHER_VIOLATION"
+        );
         assertThat(reasonSelect.at("/options/1/label").asText()).isEqualTo("욕설·비방·혐오 표현");
 
         JsonNode memoInput = response.at("/data/components/1/component");

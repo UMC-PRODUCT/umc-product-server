@@ -12,6 +12,8 @@ public enum ReportActionReason {
     ABUSE(ReportActionType.APPROVE, false),
     INAPPROPRIATE(ReportActionType.APPROVE, false),
     PRIVACY(ReportActionType.APPROVE, false),
+    HARASSMENT(ReportActionType.APPROVE, false),
+    IMPERSONATION(ReportActionType.APPROVE, false),
     OTHER_VIOLATION(ReportActionType.APPROVE, true),
 
     NOT_VIOLATION(ReportActionType.REJECT, false),
