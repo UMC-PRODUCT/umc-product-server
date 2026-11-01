@@ -46,9 +46,9 @@ public class ForbiddenWordFilter {
     }
 
     private static Set<String> load(Resource resource) {
-        try (BufferedReader reader = new BufferedReader(
+        try (BufferedReader csvReader = new BufferedReader(
             new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
-            return reader.lines()
+            return csvReader.lines()
                 .skip(1) // header: id,term,category
                 .map(line -> line.split(",", 3))
                 .filter(columns -> columns.length >= 2 && !columns[1].isBlank())
