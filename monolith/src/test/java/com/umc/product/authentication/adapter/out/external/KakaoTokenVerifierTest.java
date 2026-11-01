@@ -1,6 +1,7 @@
 package com.umc.product.authentication.adapter.out.external;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.ExpectedCount.never;
 import static org.springframework.test.web.client.ExpectedCount.once;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
@@ -23,6 +24,8 @@ import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.authentication.domain.OAuthAttributes;
+import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.cache.application.port.in.CacheUseCase;
 import com.umc.product.global.cache.domain.CacheKey;
@@ -89,6 +92,48 @@ class KakaoTokenVerifierTest {
             .isInstanceOf(com.umc.product.authentication.domain.exception.AuthenticationDomainException.class);
     }
 
+    @Test
+    @DisplayName("클라이언트가 보낸 ID Token은 허용 목록에 있는 다른 앱 키 audience도 받아들인다")
+    void 클라이언트_ID_Token_허용_audience() {
+        TestFixture fixture = new TestFixture();
+        KeyPair keys = OidcTokenTestSupport.rsaKeyPair();
+        fixture.expectKakaoJwks("kakao-kid", keys);
+        String token = OidcTokenTestSupport.signedIdToken(keys, "kakao-kid", "https://kauth.kakao.com",
+            "kakao-js-key", "123456789", Map.of("email", "kakao@example.com"));
+
+        OAuthAttributes attrs = fixture.verifier.verify(token);
+
+        assertThat(attrs.providerId()).isEqualTo("123456789");
+    }
+
+    @Test
+    @DisplayName("클라이언트가 보낸 ID Token의 audience가 어떤 허용 키와도 맞지 않으면 거절한다")
+    void 클라이언트_ID_Token_미허용_audience() {
+        TestFixture fixture = new TestFixture();
+        KeyPair keys = OidcTokenTestSupport.rsaKeyPair();
+        fixture.expectKakaoJwks("kakao-kid", keys);
+        String token = OidcTokenTestSupport.signedIdToken(keys, "kakao-kid", "https://kauth.kakao.com",
+            "other-app-key", "123456789", Map.of());
+
+        assertThatThrownBy(() -> fixture.verifier.verify(token))
+            .isInstanceOf(AuthenticationDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+    }
+
+    @Test
+    @DisplayName("서버가 직접 교환한 ID Token은 client-id audience만 받아들인다")
+    void 서버_ID_Token_허용_목록_미적용() {
+        TestFixture fixture = new TestFixture();
+        KeyPair keys = OidcTokenTestSupport.rsaKeyPair();
+        fixture.expectKakaoJwks("kakao-kid", keys);
+        String token = OidcTokenTestSupport.signedIdToken(keys, "kakao-kid", "https://kauth.kakao.com",
+            "kakao-js-key", "123456789", Map.of("nonce", "request-nonce"));
+
+        assertThatThrownBy(() -> fixture.verifier.verifyIdToken(token, "request-nonce"))
+            .isInstanceOf(AuthenticationDomainException.class);
+    }
+
     private static class TestFixture {
 
         private final RestClient.Builder builder = RestClient.builder();
@@ -109,6 +154,7 @@ class KakaoTokenVerifierTest {
                     "",
                     "",
                     List.of("https://app.example.com/oauth/kakao/callback"),
+                    List.of("kakao-js-key"),
                     new OidcJwksCacheProperties(Duration.ofHours(1), 1L)
                 ),
                 resolver
