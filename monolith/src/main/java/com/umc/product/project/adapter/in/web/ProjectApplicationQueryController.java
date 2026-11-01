@@ -56,10 +56,11 @@ public class ProjectApplicationQueryController {
             <ul>
               <li>지원서 카드: 본인이 제출한 지원서입니다.
                   `matchingRound.id`, `matchingRound.type`, `matchingRound.phase` 에 실제 매칭 차수 정보를 담습니다.</li>
-              <li>랜덤 매칭 카드: 지원서 없이 프로젝트 멤버로 확정된 경우입니다.
-                  `matchingRound.id` 는 `null`, `matchingRound.phase` 는 `RANDOM_MATCHING`,
+              <li>랜덤 매칭/수동 배정 카드: 지원서 없이 프로젝트 멤버로 확정된 경우입니다.
+                  `matchingRound.id`, `matchingRound.type`, `matchingRound.phase` 에 배정된 매칭 차수 정보를 담습니다.
                   `status` 는 `APPROVED` 입니다. 한 기수에서 최대 1건입니다.</li>
             </ul>
+            매칭 차수가 기록되지 않은 배정 결과는 `matchingRound.id: null`, `phase: RANDOM_MATCHING`으로 반환합니다.
             <p>
             정렬은 매칭 차수 시작일 오름차순, 지원서 갱신일 내림차순입니다. 랜덤 매칭 카드는 목록 마지막에 둡니다.
             <p>

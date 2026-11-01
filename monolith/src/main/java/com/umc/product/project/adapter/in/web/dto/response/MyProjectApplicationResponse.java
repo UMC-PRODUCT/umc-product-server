@@ -54,12 +54,13 @@ public record MyProjectApplicationResponse(
     /**
      * 랜덤 매칭/운영진 강제 배정으로 합류한 ProjectMember 기반 카드.
      * <p>
-     * applicationId/matchingRoundId 는 {@code null}, status 는 {@code APPROVED} 고정, phase 는 {@code RANDOM_MATCHING}, type
-     * 은 본인 챌린저 파트로부터 추론된다.
+     * applicationId 는 {@code null}, status 는 {@code APPROVED} 고정이며, 저장된 매칭 차수의 id/type/phase 를 반환한다.
+     * 기록된 차수가 없으면 phase 는 {@code RANDOM_MATCHING}, type 은 본인 챌린저 파트로부터 추론된다.
      */
-    public static MyProjectApplicationResponse fromRandomMatched(
+    public static MyProjectApplicationResponse fromAssignedMember(
         ProjectMemberInfo member,
         ProjectInfo project,
+        ProjectMatchingRoundInfo round,
         MemberBrief productOwner
     ) {
         return MyProjectApplicationResponse.builder()
@@ -67,9 +68,10 @@ public record MyProjectApplicationResponse(
             .projectId(member.projectId())
             .project(toProjectBrief(project, productOwner))
             .matchingRound(MatchingRoundBrief.builder()
-                .id(null)
-                .type(MatchingType.fromPart(member.part()).orElse(null))
-                .phase(MatchingRoundPhaseView.RANDOM_MATCHING)
+                .id(round == null ? null : round.id())
+                .type(round == null ? MatchingType.fromPart(member.part()).orElse(null) : round.type())
+                .phase(round == null
+                    ? MatchingRoundPhaseView.RANDOM_MATCHING : MatchingRoundPhaseView.from(round.phase()))
                 .build())
             .status(ProjectApplicationViewStatus.APPROVED)
             .build();
@@ -105,8 +107,8 @@ public record MyProjectApplicationResponse(
     /**
      * 매칭 라운드 식별 정보. 라벨 합성(예: "기획-개발자 1차 매칭")은 클라이언트가 type/phase 조합으로 처리한다.
      *
-     * @param id    지원서 기반 카드만 값을 가지며 랜덤 매칭 카드는 {@code null}
-     * @param phase 도메인 enum 대신 사용하는 표시용 enum. 랜덤 매칭/운영진 강제 배정은 {@code RANDOM_MATCHING} 으로 표시된다.
+     * @param id    매칭 차수 ID. 차수가 기록되지 않은 기존 배정 결과는 {@code null}
+     * @param phase 도메인 enum 대신 사용하는 표시용 enum. 차수가 기록되지 않은 기존 배정 결과는 {@code RANDOM_MATCHING} 으로 표시된다.
      */
     @Builder
     public record MatchingRoundBrief(

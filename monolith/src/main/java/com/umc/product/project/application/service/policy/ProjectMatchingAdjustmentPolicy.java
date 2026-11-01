@@ -52,6 +52,18 @@ public class ProjectMatchingAdjustmentPolicy {
             .findFirst();
     }
 
+    /** 수동 배정 시점에 시작된 가장 최근 1~3차를 반환한다. 1차 결과 공개 후 2차 시작 전의 배정은 1차로 기록한다. */
+    public ProjectMatchingRound getManualAssignmentRound(
+        List<ProjectMatchingRound> rounds, MatchingType type, Instant now
+    ) {
+        return rounds.stream()
+            .filter(round -> round.getType() == type && !round.isRandomMatching())
+            .filter(round -> !now.isBefore(round.getStartsAt()))
+            .max(Comparator.comparing(ProjectMatchingRound::getStartsAt))
+            .orElseThrow(() -> new ProjectDomainException(
+                ProjectErrorCode.PROJECT_MANUAL_MATCHING_NOT_ALLOWED_IN_PERIOD));
+    }
+
     /**
      * 해당 지부에서 디자인·개발 중 변경 가능한 유형이 있는지 판단한다.
      * 프로젝트 단위 권한 조회에 사용하며, 실제 변경 요청에서는 대상 파트의 유형을 검증한다.

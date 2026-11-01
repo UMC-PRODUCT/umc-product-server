@@ -73,11 +73,11 @@ public class ProjectApplicationResponseAssembler {
     public List<MyProjectApplicationResponse> myApplicationsFor(GetMyProjectApplicationsQuery query) {
         List<ProjectApplicationSummaryInfo> applications =
             getMyProjectApplicationsUseCase.listMyApplications(query);
-        Optional<ProjectMemberInfo> randomMatched = (query.status() == null)
+        Optional<ProjectMemberInfo> assignedMember = (query.status() == null)
             ? getRandomMatchedProjectMemberUseCase.findRandomMatched(query.requesterMemberId(), query.gisuId())
             : Optional.empty();
 
-        if (applications.isEmpty() && randomMatched.isEmpty()) {
+        if (applications.isEmpty() && assignedMember.isEmpty()) {
             return List.of();
         }
 
@@ -87,7 +87,12 @@ public class ProjectApplicationResponseAssembler {
             projectIds.add(application.projectId());
             roundIds.add(application.matchingRoundId());
         }
-        randomMatched.ifPresent(member -> projectIds.add(member.projectId()));
+        assignedMember.ifPresent(member -> {
+            projectIds.add(member.projectId());
+            if (member.matchingRoundId() != null) {
+                roundIds.add(member.matchingRoundId());
+            }
+        });
 
         Map<Long, ProjectInfo> projects = getProjectUseCase.findAllByIds(projectIds);
         Map<Long, ProjectMatchingRoundInfo> rounds = getProjectMatchingRoundUseCase.findAllByIds(roundIds);
@@ -107,10 +112,12 @@ public class ProjectApplicationResponseAssembler {
             MemberBrief owner = ownerBriefOf(project, memberMap);
             result.add(MyProjectApplicationResponse.fromApplication(application, project, round, owner));
         }
-        randomMatched.ifPresent(member -> {
+        assignedMember.ifPresent(member -> {
             ProjectInfo project = projects.get(member.projectId());
             MemberBrief owner = ownerBriefOf(project, memberMap);
-            result.add(MyProjectApplicationResponse.fromRandomMatched(member, project, owner));
+            ProjectMatchingRoundInfo round = member.matchingRoundId() == null
+                ? null : rounds.get(member.matchingRoundId());
+            result.add(MyProjectApplicationResponse.fromAssignedMember(member, project, round, owner));
         });
         return result;
     }
