@@ -14,7 +14,7 @@ Rules in this file carry stable IDs (`ARCH`, `CONV`, `AUTHZ`, `TEST`, `GIT`). Th
 each rule's text; reviews and other documents cite rules by ID. Never renumber or reuse an ID. To retire a rule,
 keep its ID and mark it `(retired)`.
 
-Review priorities, the rule-to-enforcement table, and rejected review findings live in
+Review priorities, the rule-to-enforcement table, and the review procedure live in
 [`docs/guides/코드_리뷰_기준.md`](docs/guides/코드_리뷰_기준.md).
 
 ## STRUCTURE
@@ -148,7 +148,7 @@ even when `:blog` is absent from the boot jar.
 ## REVIEW
 
 Review with [`docs/guides/코드_리뷰_기준.md`](docs/guides/코드_리뷰_기준.md). It defines finding priorities (P1-P5),
-which rules are enforced by tests or tooling, and findings the team has rejected.
+which rules are enforced by tests or tooling, and how AI reviews are recorded on the PR.
 
 ## COMMANDS
 
