@@ -22,6 +22,7 @@ public record ManagedProjectSummaryResponse(
     String name,
     String description,
     String thumbnailImageUrl,
+    String logoImageUrl,
     ProjectStatus status,
     MemberBrief productOwner,
     List<PartQuotaInfo> partQuotas,
@@ -36,6 +37,7 @@ public record ManagedProjectSummaryResponse(
             .name(info.name())
             .description(info.description())
             .thumbnailImageUrl(info.thumbnailImageUrl())
+            .logoImageUrl(info.logoImageUrl())
             .status(info.status())
             .productOwner(productOwner)
             .partQuotas(quotas)
