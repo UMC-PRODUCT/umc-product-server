@@ -142,7 +142,7 @@ even when `:blog` is absent from the boot jar.
 ## GIT
 
 - **GIT-01** Commit format is `<type>: <subject>` with `feat`, `fix`, `refactor`, `docs`, `test`, or `chore`.
-- **GIT-02** PR titles use `[Feat]`, `[Fix]`, `[HotFix]`, `[Refactor]`, `[Chore]`, `[Docs]`, or `[Release]`; development PRs target `develop`.
+- **GIT-02** PR titles use `[Feat]`, `[Fix]`, `[HotFix]`, `[Refactor]`, `[Chore]`, `[Docs]`, or `[Release]`; development PRs target `develop`. Only release PRs target `main`, and only they use `[Release]`.
 - **GIT-03** Never set AI authorship, AI committer metadata, or `Co-authored-by` trailers for AI tools.
 
 ## REVIEW
