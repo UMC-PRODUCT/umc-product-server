@@ -5,7 +5,7 @@
 # 사용법 (레포 루트에서):
 #   .claude/skills/verify/scripts/verify.sh up            # jar 빌드, DB 기동, 앱 기동, 준비 확인
 #   .claude/skills/verify/scripts/verify.sh doctor        # 지금 인스턴스가 쓸 만한지 읽기 전용 점검
-#   .claude/skills/verify/scripts/verify.sh call <이름> <curl 인자...>   # 요청과 응답을 증거로 저장
+#   .claude/skills/verify/scripts/verify.sh call <이름> <curl 인자...>   # 요청과 응답을 증거로 저장, {api}·{management}는 주소로 바뀜
 #   .claude/skills/verify/scripts/verify.sh token <memberId>             # local 전용 access token 발급
 #   .claude/skills/verify/scripts/verify.sh flyway        # 적용된 마이그레이션 수와 파일 수 비교
 #   .claude/skills/verify/scripts/verify.sh restart-app   # DB는 두고 앱만 다시 띄움
@@ -26,21 +26,36 @@ random_aes_key() { python3 -I -c 'import base64, secrets; print(base64.b64encode
 current_run() {
   [ -L "$VERIFY_DIR/current" ] || die "실행 중인 인스턴스가 없습니다. 먼저 up 을 실행하세요."
   RUN_DIR="$(cd "$VERIFY_DIR/current" && pwd -P)"
+  [ -f "$RUN_DIR/state.env" ] || die "$RUN_DIR/state.env 가 없습니다. 컨테이너 umc-verify-* 를 docker ps 로 찾아 직접 지우세요."
   # shellcheck disable=SC1091
   . "$RUN_DIR/state.env"
+  APP_PID="$(cat "$RUN_DIR/app.pid" 2>/dev/null || true)"
+}
+
+# 시간 제한 안에 명령이 성공할 때까지 기다린다. 실패하면 남은 정리는 down 이 맡는다.
+wait_until() {
+  local what="$1"; shift
+  local deadline=$(( $(date +%s) + READY_TIMEOUT_SECONDS ))
+  until "$@" >/dev/null 2>&1; do
+    [ "$(date +%s)" -lt "$deadline" ] || die "${READY_TIMEOUT_SECONDS}초 안에 ${what} 준비가 끝나지 않았습니다. down 으로 정리하세요."
+    sleep 1
+  done
 }
 
 postgis_image() {
-  if [ "$(uname -m)" = "arm64" ]; then
-    local image="umc-product-postgis-test:18.2-postgis"
-    if ! docker image inspect "$image" >/dev/null 2>&1; then
-      echo "verify: $image 이미지를 빌드합니다 (테스트와 같은 이미지)" >&2
-      docker build -q -t "$image" -f "$ROOT/docker/test/postgis/Dockerfile" "$ROOT/docker/test/postgis" >&2
-    fi
-    echo "$image"
-  else
-    echo "postgis/postgis:18-3.6"
-  fi
+  case "$(uname -m)" in
+    arm64|aarch64)
+      local image="umc-product-postgis-test:18.2-postgis"
+      if ! docker image inspect "$image" >/dev/null 2>&1; then
+        echo "verify: $image 이미지를 빌드합니다 (테스트와 같은 이미지)" >&2
+        docker build -q -t "$image" -f "$ROOT/docker/test/postgis/Dockerfile" "$ROOT/docker/test/postgis" >&2
+      fi
+      echo "$image"
+      ;;
+    *)
+      echo "postgis/postgis:18-3.6"
+      ;;
+  esac
 }
 
 write_app_env() {
@@ -71,7 +86,6 @@ APPLE_PRIVATE_KEY=verify-dummy-not-a-key
 S3_ACCESS_KEY_ID=verify
 S3_SECRET_ACCESS_KEY=verify
 S3_BUCKET_NAME=verify-bucket
-EMAIL_NO_REPLY_ADDRESS=no-reply@verify.local
 CORS_ALLOWED_ORIGIN_PATTERNS=http://localhost:3000
 APP_OBSERVABILITY_TRACING_ENABLED=false
 FCM_ENABLED=false
@@ -89,7 +103,7 @@ start_app() {
     exec java -jar "$JAR"
   ) >> "$RUN_DIR/app.log" 2>&1 &
   APP_PID=$!
-  sed -i '' -e "s/^APP_PID=.*/APP_PID=$APP_PID/" "$RUN_DIR/state.env"
+  echo "$APP_PID" > "$RUN_DIR/app.pid"
 }
 
 wait_ready() {
@@ -123,12 +137,8 @@ flyway_check() {
 cmd_up() {
   command -v docker >/dev/null || die "docker 가 필요합니다."
   command -v java >/dev/null || die "Java 21 이 필요합니다."
-  if [ -L "$VERIFY_DIR/current" ] && [ -f "$VERIFY_DIR/current/state.env" ]; then
-    # shellcheck disable=SC1091
-    . "$VERIFY_DIR/current/state.env"
-    if kill -0 "${APP_PID:-0}" 2>/dev/null; then
-      die "이미 띄운 인스턴스가 있습니다(PID $APP_PID). doctor 로 확인하거나 down 으로 정리하세요."
-    fi
+  if [ -L "$VERIFY_DIR/current" ]; then
+    die "이전 실행이 정리되지 않았습니다($(readlink "$VERIFY_DIR/current")). down 으로 먼저 정리하세요."
   fi
 
   echo "verify: app.jar 를 빌드합니다 (테스트 제외)" >&2
@@ -144,20 +154,21 @@ cmd_up() {
   local db_port; db_port="$(free_port)"
   DB_CONTAINER="umc-verify-$stamp"
 
-  docker run -d --name "$DB_CONTAINER" -p "127.0.0.1:$db_port:5432" \
-    -e POSTGRES_DB=umc_product -e POSTGRES_USER=verify -e POSTGRES_PASSWORD=verify \
-    "$(postgis_image)" >/dev/null
-  until docker exec "$DB_CONTAINER" pg_isready -U verify -d umc_product >/dev/null 2>&1; do sleep 1; done
-  # 초기화 스크립트가 끝나 재기동되는 동안 잠깐 응답하지 않으므로 실제 쿼리가 될 때까지 기다린다.
-  until docker exec "$DB_CONTAINER" psql -U verify -d umc_product -tAc 'select 1' >/dev/null 2>&1; do sleep 1; done
-
+  # 컨테이너를 띄우기 전에 상태를 먼저 남겨, 중간에 멈춰도 down 이 정리할 대상을 알게 한다.
   cat > "$RUN_DIR/state.env" <<EOF
 SERVER_PORT=$SERVER_PORT
 MANAGEMENT_PORT=$MANAGEMENT_PORT
 DB_PORT=$db_port
 DB_CONTAINER=$DB_CONTAINER
-APP_PID=
 EOF
+
+  docker run -d --name "$DB_CONTAINER" -p "127.0.0.1:$db_port:5432" \
+    -e POSTGRES_DB=umc_product -e POSTGRES_USER=verify -e POSTGRES_PASSWORD=verify \
+    "$(postgis_image)" >/dev/null
+  wait_until "DB" docker exec "$DB_CONTAINER" pg_isready -U verify -d umc_product
+  # 초기화 스크립트가 끝나 재기동되는 동안 잠깐 응답하지 않으므로 실제 쿼리가 될 때까지 기다린다.
+  wait_until "DB 쿼리" docker exec "$DB_CONTAINER" psql -U verify -d umc_product -tAc 'select 1'
+
   write_app_env "$db_port"
   start_app
   wait_ready
@@ -168,7 +179,8 @@ EOF
 cmd_doctor() {
   current_run
   local ok=1
-  if kill -0 "$APP_PID" 2>/dev/null; then echo "process: PID $APP_PID 실행 중"; else echo "process: PID $APP_PID 없음"; ok=0; fi
+  echo "ports: api=$SERVER_PORT management=$MANAGEMENT_PORT db=$DB_PORT"
+  if [ -n "$APP_PID" ] && kill -0 "$APP_PID" 2>/dev/null; then echo "process: PID $APP_PID 실행 중"; else echo "process: PID $APP_PID 없음"; ok=0; fi
   local owner; owner="$(lsof -nP -iTCP:"$SERVER_PORT" -sTCP:LISTEN -t 2>/dev/null | head -1 || true)"
   if [ "$owner" = "$APP_PID" ]; then echo "port: $SERVER_PORT 를 이번 프로세스가 사용 중"; else echo "port: $SERVER_PORT 소유자 ${owner:-없음} (기대 $APP_PID)"; ok=0; fi
   local health; health="$(curl -fsS "http://127.0.0.1:$MANAGEMENT_PORT/actuator/health" 2>/dev/null || true)"
@@ -189,7 +201,10 @@ cmd_call() {
   local name="$1"; shift
   local out="$RUN_DIR/evidence/$name.txt"
   local args=("$@")
-  for i in "${!args[@]}"; do args[$i]="${args[$i]//\{api\}/http://127.0.0.1:$SERVER_PORT}"; done
+  for i in "${!args[@]}"; do
+    args[$i]="${args[$i]//\{api\}/http://127.0.0.1:$SERVER_PORT}"
+    args[$i]="${args[$i]//\{management\}/http://127.0.0.1:$MANAGEMENT_PORT}"
+  done
   { printf '$ curl -sS -i'; printf ' %q' "${args[@]}"; printf '\n\n'; curl -sS -i "${args[@]}"; printf '\n'; } > "$out" 2>&1 || true
   sed -n '3p' "$out"
   echo "saved: $out"
@@ -206,7 +221,7 @@ cmd_flyway() { current_run; flyway_check; }
 
 cmd_restart_app() {
   current_run
-  if kill -0 "$APP_PID" 2>/dev/null; then kill "$APP_PID"; while kill -0 "$APP_PID" 2>/dev/null; do sleep 1; done; fi
+  if [ -n "$APP_PID" ] && kill -0 "$APP_PID" 2>/dev/null; then kill "$APP_PID"; while kill -0 "$APP_PID" 2>/dev/null; do sleep 1; done; fi
   cp "$RUN_DIR/app.log" "$RUN_DIR/evidence/app-before-restart.log"
   start_app
   wait_ready
@@ -215,7 +230,7 @@ cmd_restart_app() {
 
 cmd_down() {
   current_run
-  if [ -n "${APP_PID:-}" ] && kill -0 "$APP_PID" 2>/dev/null; then
+  if [ -n "$APP_PID" ] && kill -0 "$APP_PID" 2>/dev/null; then
     kill "$APP_PID"
     for _ in $(seq 1 30); do kill -0 "$APP_PID" 2>/dev/null || break; sleep 1; done
     kill -0 "$APP_PID" 2>/dev/null && kill -9 "$APP_PID"

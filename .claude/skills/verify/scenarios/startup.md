@@ -11,7 +11,7 @@
 
 1. `verify.sh up`이 성공하면 기동 자체는 증명된 것이다. `evidence/health.json`과 `evidence/flyway.txt`가 그 증거다.
 2. 바꾼 설정이 관측 가능한 곳을 하나 골라 호출한다.
-   - 관리 엔드포인트: `verify.sh call info -sS http://127.0.0.1:<MANAGEMENT_PORT>/actuator/info` (포트는 `doctor` 출력이나 `.verify/current/state.env`에 있다)
+   - 관리 엔드포인트: `verify.sh call info {management}/actuator/info` (포트는 `doctor` 첫 줄에도 나온다)
    - 설정에 따라 열리고 닫히는 경로: 예를 들어 `app.test-api.enabled`는 `verify.sh call test-health {api}/test/health-check`로 확인한다.
 3. 설정이 응답으로 드러나지 않으면 `app.log`에서 해당 빈이나 설정이 적용된 로그 줄을 찾아 증거에 적는다.
 
