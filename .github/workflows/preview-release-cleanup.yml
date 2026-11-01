@@ -1,0 +1,85 @@
+# `preview` 라벨을 떼거나 PR을 닫으면 infra의 PR별 성공 기록을 지운다.
+# 기록이 남아 있으면 라벨을 다시 붙이는 즉시 이전 이미지로 preview가 생겨
+# 자리·develop 마이그레이션 판정(publish-preview.yml의 admit)을 건너뛰기 때문이다.
+# 발행 workflow의 PR concurrency에 취소되지 않도록 별도 workflow로 둔다.
+name: Remove Preview Release
+
+on:
+  pull_request_target:
+    branches:
+      - develop
+    types: [unlabeled, closed]
+
+concurrency:
+  group: preview-release-cleanup-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+permissions: {}
+
+cache-mode: none
+
+jobs:
+  remove-release:
+    name: Remove Preview release record
+    if: >-
+      github.repository == 'UMC-PRODUCT/umc-product-server' &&
+      github.event.pull_request.base.ref == 'develop' &&
+      ((github.event.action == 'unlabeled' && github.event.label.name == 'preview') ||
+       (github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, 'preview')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # dev/prod·Preview 발행의 infra main 갱신과 같은 lock을 사용한다. force push는 하지 않는다.
+    concurrency:
+      group: umc-product-infra-main-update
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: read
+
+    steps:
+      # PR head의 script/action은 실행하지 않는다. 기본 브랜치 workflow의 정확한 commit에서 updater만 읽는다.
+      - name: Checkout trusted default-branch automation
+        uses: actions/checkout@v4
+        with:
+          repository: UMC-PRODUCT/umc-product-server
+          ref: ${{ github.workflow_sha }}
+          path: backend
+          persist-credentials: false
+
+      - name: Checkout infrastructure main
+        uses: actions/checkout@v4
+        with:
+          repository: UMC-PRODUCT/umc-product-infra
+          ref: main
+          token: ${{ secrets.UMC_INFRA_GITOPS_TOKEN }}
+          path: infra
+
+      - name: Remove only this PR's release record
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          git -C infra pull --ff-only origin main
+          node backend/.github/scripts/update-preview-release.mjs remove infra "$PR_NUMBER"
+
+      - name: Commit and push the removal
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        working-directory: infra
+        run: |
+          set -euo pipefail
+          marker="argocd/preview-releases/pr-${PR_NUMBER}.json"
+          git add -A -- "$marker"
+          changed_files="$(git diff --cached --name-only)"
+          if [[ -z "$changed_files" ]]; then
+            echo "No Preview release record to remove."
+            exit 0
+          fi
+          if [[ "$changed_files" != "$marker" ]]; then
+            echo "::error::Automation staged a file outside the selected Preview release."
+            exit 1
+          fi
+          git config user.name "umc-product-deploy-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(preview): remove PR ${PR_NUMBER} release"
+          git push origin HEAD:main
