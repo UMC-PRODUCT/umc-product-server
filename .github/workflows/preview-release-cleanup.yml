@@ -69,7 +69,9 @@ jobs:
         run: |
           set -euo pipefail
           marker="argocd/preview-releases/pr-${PR_NUMBER}.json"
-          git add -A -- "$marker"
+          # 기록이 처음부터 없으면 파일 경로 pathspec이 실패하므로 .gitkeep이 있는 디렉터리를 준다.
+          # 다른 PR 기록이 섞이면 아래 changed_files 검사가 막는다.
+          git add -A -- argocd/preview-releases
           changed_files="$(git diff --cached --name-only)"
           if [[ -z "$changed_files" ]]; then
             echo "No Preview release record to remove."
