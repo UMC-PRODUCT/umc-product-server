@@ -64,7 +64,7 @@ class ChatMemberCommandServiceTest {
         then(saveChatMemberPort).should().saveIfAbsent(captor.capture());
         assertThat(captor.getValue().getRoomId()).isEqualTo(1L);
         assertThat(captor.getValue().getMemberId()).isEqualTo(10L);
-        then(loadChatRoomPort).should().getByIdForUpdate(1L);
+        then(loadChatRoomPort).should().getById(1L);
         then(loadChatMemberPort).should().existsByRoomIdAndMemberId(1L, 10L);
         then(loadChatMessagePort).shouldHaveNoInteractions();
     }
@@ -84,7 +84,7 @@ class ChatMemberCommandServiceTest {
             loadChatMessagePort,
             saveChatMemberPort
         );
-        order.verify(loadChatRoomPort).getByIdForUpdate(1L);
+        order.verify(loadChatRoomPort).getById(1L);
         order.verify(loadChatMemberPort).existsByRoomIdAndMemberId(1L, 10L);
         order.verify(loadChatMessagePort).getByIdAndRoomId(50L, 1L);
         order.verify(saveChatMemberPort).saveIfAbsent(captor.capture());
@@ -108,7 +108,7 @@ class ChatMemberCommandServiceTest {
     }
 
     @Test
-    @DisplayName("채팅방 잠금 뒤 이미 참여 중인지 다시 확인한다")
+    @DisplayName("채팅방을 확인한 뒤 이미 참여 중이면 가입을 거부한다")
     void joinChatRoom_alreadyExists() {
         JoinChatRoomCommand command = new JoinChatRoomCommand(1L, 10L);
         given(loadChatMemberPort.existsByRoomIdAndMemberId(1L, 10L)).willReturn(true);
@@ -118,7 +118,7 @@ class ChatMemberCommandServiceTest {
             .extracting(e -> ((ChatDomainException) e).getBaseCode())
             .isEqualTo(ChatErrorCode.CHAT_MEMBER_ALREADY_EXISTS);
 
-        then(loadChatRoomPort).should().getByIdForUpdate(1L);
+        then(loadChatRoomPort).should().getById(1L);
         then(saveChatMemberPort).shouldHaveNoInteractions();
     }
 
@@ -127,7 +127,7 @@ class ChatMemberCommandServiceTest {
     void joinChatRoom_roomNotFound() {
         JoinChatRoomCommand command = new JoinChatRoomCommand(1L, 10L);
         willThrow(new ChatDomainException(ChatErrorCode.CHAT_ROOM_NOT_FOUND))
-            .given(loadChatRoomPort).getByIdForUpdate(1L);
+            .given(loadChatRoomPort).getById(1L);
 
         assertThatThrownBy(() -> sut.joinChatRoom(command))
             .isInstanceOf(ChatDomainException.class)
@@ -135,6 +135,21 @@ class ChatMemberCommandServiceTest {
             .isEqualTo(ChatErrorCode.CHAT_ROOM_NOT_FOUND);
 
         then(saveChatMemberPort).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("참여 확인 후 다른 가입이 먼저 저장되면 원자적 삽입 결과로 중복 가입을 거부한다")
+    void joinChatRoom_concurrentInsertRejected() {
+        given(loadChatMemberPort.existsByRoomIdAndMemberId(1L, 10L)).willReturn(false);
+        given(saveChatMemberPort.saveIfAbsent(any(ChatMember.class))).willReturn(false);
+
+        assertThatThrownBy(() -> sut.joinChatRoom(new JoinChatRoomCommand(1L, 10L)))
+            .isInstanceOf(ChatDomainException.class)
+            .extracting(e -> ((ChatDomainException) e).getBaseCode())
+            .isEqualTo(ChatErrorCode.CHAT_MEMBER_ALREADY_EXISTS);
+
+        then(loadChatRoomPort).should().getById(1L);
+        then(domainEventPublisher).shouldHaveNoInteractions();
     }
 
     @Test
