@@ -7,6 +7,11 @@ if [ "${1:-}" = "--help" ]; then
   printf '시드 경로는 명령을 실행한 디렉터리 기준입니다. PROFILE·SCENARIO는 script.js에 등록된 조합을 사용하세요.\n'
   printf '부하 설정: BASE_URL, CHAT_USERS, CHAT_ROOMS, CHAT_USERS_PER_VU 또는 CHAT_VU_USERS, CHAT_SENDERS\n'
   printf '시간 설정: DURATION, CHAT_MESSAGE_INTERVAL_MS, CHAT_TIMEOUT_MS, CHAT_STARTUP_TIMEOUT_MS\n'
+  printf '리액션: SCENARIO=chat-reaction CHAT_REACTION_MODE=load|duplicate CHAT_USERS=10|50\n'
+  printf '리액션 시간: CHAT_REACTION_INTERVAL_MS=1000 CHAT_REACTION_WARMUP=30s DURATION=2m (예비 실행용 기본값)\n'
+  printf '중복 검증: CHAT_REACTION_ROUNDS=10, 같은 회원의 연결 2개로 실행\n'
+  printf '버전 기록: CHAT_LOCK_VARIANT=baseline|removed CHAT_SERVER_REVISION=<실제 배포 SHA> (락을 바꾸는 설정 아님)\n'
+  printf '동일 메시지 재사용: 리액션 첫 실행의 conditions.json을 다음 SEED_FILE로 지정\n'
   printf '선택 성능 기준(ms): CHAT_ACK_P95_MS, CHAT_ACK_P99_MS, CHAT_DELIVERY_P95_MS, CHAT_DELIVERY_P99_MS\n'
   printf 'CHAT_RUN_NOTES에 앱·DB 버전, JVM 옵션, 실행 전 데이터 규모, 서버 지표 위치를 기록할 수 있습니다.\n'
   exit 0
@@ -50,7 +55,9 @@ trap finish EXIT
 INPUTS='{}'
 for name in BASE_URL CHAT_USERS CHAT_ROOMS CHAT_USERS_PER_VU CHAT_VU_USERS CHAT_SENDERS \
   DURATION CHAT_MESSAGE_INTERVAL_MS CHAT_TIMEOUT_MS CHAT_STARTUP_TIMEOUT_MS \
-  CHAT_ACK_P95_MS CHAT_ACK_P99_MS CHAT_DELIVERY_P95_MS CHAT_DELIVERY_P99_MS; do
+  CHAT_ACK_P95_MS CHAT_ACK_P99_MS CHAT_DELIVERY_P95_MS CHAT_DELIVERY_P99_MS \
+  CHAT_REACTION_MODE CHAT_REACTION_INTERVAL_MS CHAT_REACTION_WARMUP CHAT_REACTION_EMOJI CHAT_REACTION_ROUNDS \
+  CHAT_LOCK_VARIANT CHAT_SERVER_REVISION; do
   if printenv "$name" >/dev/null; then
     INPUTS="$(jq -c --arg name "$name" --arg value "$(printenv "$name")" '. + {($name): $value}' <<< "$INPUTS")"
   fi
@@ -65,8 +72,9 @@ jq -n --arg label "$LABEL" --arg startedAt "$STARTED_AT" --arg profile "$PROFILE
     platform: $platform, seedSource: $seedSource, inputs: $inputs, notes: $notes}' > "$RUN_DIR/run-meta.json"
 
 # 복사한 시드를 실제 입력으로 사용해, 원본 파일이 바뀌어도 사용한 데이터 구성이 남도록 한다.
-jq -e '{runId, baseUrl, schoolId, memberIds,
-  rooms: (if (.rooms | type) == "array" then [.rooms[] | {threadId, memberIds}] else .rooms end)}' \
+jq -e '(.reactionSeed // .) | {runId, baseUrl, schoolId, memberIds,
+  rooms: (if (.rooms | type) == "array" then [.rooms[] | {threadId, memberIds}
+    + (if has("messageIds") then {messageIds} else {} end)] else .rooms end)}' \
   "$SEED_FILE" > "$RUN_DIR/seed.json"
 cd "$K6_DIR"
 set +e
