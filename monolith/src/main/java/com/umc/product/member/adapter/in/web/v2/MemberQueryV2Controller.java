@@ -47,6 +47,7 @@ public class MemberQueryV2Controller {
             - 기본 프로필 및 소셜 링크
             - 모든 참여 기수의 활동 기간을 합산한 `totalActivityDays`
             - `isSuperAdmin` : 시스템 역할 SUPER_ADMIN 보유 여부
+            - `isUmcProduct` : 프로덕트 문의 답변·관리 가능 여부 (시스템 역할 UMC_PRODUCT 또는 SUPER_ADMIN 보유 시 true)
             - `currentGisuMemberInfo`
               - 활성 기수 정보 (gisuId, generation)
               - 활성 기수에 ACTIVE 상태인 챌린저 신분 (없으면 null)

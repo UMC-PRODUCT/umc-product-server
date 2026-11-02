@@ -29,6 +29,7 @@ import com.umc.product.member.application.port.in.query.dto.MemberSummaryV2Info;
 import com.umc.product.member.application.port.in.query.dto.MemberSummaryV2Info.ActiveChallenger;
 import com.umc.product.member.application.port.in.query.dto.MemberSummaryV2Info.ChallengerHistoryItem;
 import com.umc.product.member.application.port.in.query.dto.MemberSummaryV2Info.CurrentGisuMembership;
+import com.umc.product.member.application.port.in.query.dto.MemberSystemRoleInfo;
 import com.umc.product.member.domain.MemberSystemRoleType;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
@@ -63,8 +64,12 @@ public class MemberSummaryV2QueryService implements GetMemberSummaryV2UseCase {
         MemberInfo memberInfo = getMemberUseCase.getById(memberId);
         boolean hasLocalCredential = getMemberCredentialUseCase.findCredentialByMemberId(memberId).isPresent();
         MemberProfileInfo profileInfo = getMemberProfileUseCase.getMemberProfileById(memberId);
-        boolean isSuperAdmin = listMemberSystemRoleUseCase.listByMemberId(memberId).stream()
-            .anyMatch(role -> MemberSystemRoleType.SUPER_ADMIN.name().equals(role.roleType()));
+        Set<String> systemRoleTypes = listMemberSystemRoleUseCase.listByMemberId(memberId).stream()
+            .map(MemberSystemRoleInfo::roleType)
+            .collect(Collectors.toSet());
+        boolean isSuperAdmin = systemRoleTypes.contains(MemberSystemRoleType.SUPER_ADMIN.name());
+        // 문의 관리 권한은 SUPER_ADMIN 전역 override를 따르므로, 앱이 두 값을 조합하지 않도록 서버가 합쳐서 내린다.
+        boolean isUmcProduct = isSuperAdmin || systemRoleTypes.contains(MemberSystemRoleType.UMC_PRODUCT.name());
 
         // 챌린저 + 점수 일괄 로딩 (D13에서 batch로 교체됨)
         List<ChallengerInfo> challengers = getChallengerUseCase.getAllByMemberId(memberId);
@@ -123,6 +128,7 @@ public class MemberSummaryV2QueryService implements GetMemberSummaryV2UseCase {
             profileInfo,
             hasLocalCredential,
             isSuperAdmin,
+            isUmcProduct,
             activitySummary.totalActivityDays(),
             currentMembership,
             history
