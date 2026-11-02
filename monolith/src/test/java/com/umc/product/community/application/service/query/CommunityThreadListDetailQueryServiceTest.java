@@ -38,6 +38,7 @@ import com.umc.product.community.domain.enums.CommunityThreadMemberRole;
 import com.umc.product.community.domain.enums.CommunityThreadMemberState;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
+import com.umc.product.global.config.DeepLinkProperties;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.SearchMemberInvitationUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -82,7 +83,8 @@ class CommunityThreadListDetailQueryServiceTest {
             getChallengerUseCase,
             getGisuUseCase,
             searchInvitationUseCase,
-            new CommunityThreadProperties(75)
+            new CommunityThreadProperties(75),
+            new DeepLinkProperties("https://api.university.neordinary.com", null, null, null)
         );
     }
 
@@ -212,7 +214,7 @@ class CommunityThreadListDetailQueryServiceTest {
         assertThat(result.createdBy()).isEqualTo(10L);
         assertThat(result.createdAt()).isEqualTo(createdAt);
         assertThat(result.updatedAt()).isEqualTo(updatedAt);
-        assertThat(result.shareUrl()).isEqualTo("/api/v1/community/threads/1");
+        assertThat(result.shareUrl()).isEqualTo("https://api.university.neordinary.com/community/threads/1");
         assertThat(result.deletedAt()).isEqualTo(deletedAt);
         verify(getMemberUseCase).findAllByIds(Set.of(501L));
     }

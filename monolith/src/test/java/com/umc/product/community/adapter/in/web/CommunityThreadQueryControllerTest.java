@@ -153,7 +153,7 @@ class CommunityThreadQueryControllerTest {
             42L, "스터디", null, CommunityThreadCategory.STUDY, "📚",
             3L, 0L, 100, false, true, true, CommunityThreadMemberRole.OWNER,
             CommunityThreadMemberState.ACTIVE,
-            null, 99L, NOW, NOW, "/api/v1/community/threads/42", null
+            null, 99L, NOW, NOW, "https://api.university.neordinary.com/community/threads/42", null
         ));
 
         mockMvc.perform(get("/api/v1/community/threads/42"))
