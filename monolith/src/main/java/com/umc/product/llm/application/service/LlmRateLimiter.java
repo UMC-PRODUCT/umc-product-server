@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * Google AI Studio 무료 티어처럼 분당 RPM 제한이 강한 provider 환경에서, 단일 sync 가 다수의 댓글을 순회하며 호출 폭주를 일으키는 것을 막는다.
  * <p>
- * {@code requestsPerMinute=0} 이면 페이싱 비활성화 (즉시 통과). 다중 인스턴스 환경에서는 인스턴스 단위 격리만 보장한다 (분산 락은 도입 보류 — ADR-006 §Decision 4
+ * {@code requestsPerMinute=0} 이면 페이싱 비활성화 (즉시 통과). 다중 인스턴스 환경에서는 인스턴스 단위 격리만 보장한다 (분산 락은 도입 보류 — ADR-008 §Decision 4
  * 참조).
  */
 @Slf4j
