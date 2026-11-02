@@ -1,5 +1,6 @@
 package com.umc.product.member.domain;
 
 public enum MemberSystemRoleType {
-    SUPER_ADMIN
+    SUPER_ADMIN,
+    UMC_PRODUCT
 }

@@ -121,7 +121,7 @@ public class SeedController {
         summary = "테스트 회원 시스템 역할 부여",
         description = """
             회원 ID와 시스템 역할을 받아 비운영 환경의 테스트 회원에게 역할을 부여합니다.
-            현재 지원되는 역할은 SUPER_ADMIN이며, 같은 역할이 이미 있으면 새 행을 만들지 않습니다.
+            지원되는 역할은 SUPER_ADMIN, UMC_PRODUCT이며, 같은 역할이 이미 있으면 새 행을 만들지 않습니다.
             """
     )
     @PostMapping("/member-system-role")

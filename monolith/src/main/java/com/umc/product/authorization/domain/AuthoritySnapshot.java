@@ -58,6 +58,13 @@ public record AuthoritySnapshot(
         return systemRoles.contains(SystemRoleType.SUPER_ADMIN);
     }
 
+    /**
+     * 프로덕트 문의 답변·관리 권한입니다. UMC_PRODUCT는 이 판정에만 쓰이고 다른 권한을 더하지 않습니다.
+     */
+    public boolean isUmcProduct() {
+        return isSuperAdmin() || systemRoles.contains(SystemRoleType.UMC_PRODUCT);
+    }
+
     public boolean isCentralCoreInAnyGisu() {
         return isSuperAdmin() || challengerRoles.stream()
             .map(RoleAttribute::roleType)
