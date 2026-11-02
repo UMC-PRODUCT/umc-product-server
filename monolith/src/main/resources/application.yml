@@ -672,7 +672,7 @@ app:
         environment: DEV
 
   deep-link:
-    base-url: ${APP_DEEP_LINK_BASE_URL:https://dev.api.university.neordinary.com}
+    base-url: ${APP_DEEP_LINK_BASE_URL:https://api-dev.university.neordinary.com}
     android:
       package-name: ${APP_DEEP_LINK_ANDROID_PACKAGE_NAME:com.umc.product}
       sha256-cert-fingerprints: ${APP_DEEP_LINK_ANDROID_SHA256_CERT_FINGERPRINTS:D9:4A:F4:92:A2:57:D2:9D:DD:DA:0D:60:73:6B:08:19:DA:91:99:15:5F:9C:20:25:63:E1:E9:EB:E5:38:C7:28,4F:BB:55:BD:20:99:7C:BD:E4:92:E6:20:76:8C:EF:EC:34:85:07:C8:00:8A:78:61:2A:ED:A3:E9:18:6E:4D:0F}
