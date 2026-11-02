@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
 import com.umc.product.authorization.domain.ChallengerRole;
 import com.umc.product.authorization.domain.SubjectAttributes;
+import com.umc.product.authorization.domain.SystemRoleType;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -128,6 +129,36 @@ class AuthorizationServiceCacheTest {
         verify(getChapterUseCase, times(1)).byGisuAndSchool(GISU_ID, SCHOOL_ID);
         verify(loadChallengerRolePort, times(1)).findByMemberId(MEMBER_ID);
         verify(listMemberSystemRoleUseCase, times(1)).listByMemberId(MEMBER_ID);
+    }
+
+    @Test
+    @DisplayName("코드가 모르는 시스템 역할은 무시하고 나머지 시스템 역할로 subject를 만든다")
+    void load_subject_ignores_unknown_system_role() {
+        AuthorizationService sut = new AuthorizationService(
+            loadChallengerRolePort,
+            List.of(),
+            getMemberUseCase,
+            listMemberSystemRoleUseCase,
+            getChapterUseCase,
+            getChallengerUseCase,
+            operationalMetrics,
+            new InMemoryCacheUseCase(),
+            new AuthoritySnapshotCacheSerializer(new ObjectMapper().findAndRegisterModules())
+        );
+        given(getMemberUseCase.getById(MEMBER_ID)).willReturn(MemberInfo.builder()
+            .id(MEMBER_ID)
+            .schoolId(SCHOOL_ID)
+            .build());
+        given(getChallengerUseCase.getAllByMemberId(MEMBER_ID)).willReturn(List.of());
+        given(loadChallengerRolePort.findByMemberId(MEMBER_ID)).willReturn(List.of());
+        given(listMemberSystemRoleUseCase.listByMemberId(MEMBER_ID)).willReturn(List.of(
+            new MemberSystemRoleInfo(MEMBER_ID, "NOT_YET_DEPLOYED_ROLE"),
+            new MemberSystemRoleInfo(MEMBER_ID, "UMC_PRODUCT")
+        ));
+
+        SubjectAttributes subject = sut.loadSubject(MEMBER_ID);
+
+        assertThat(subject.systemRoles()).containsExactly(SystemRoleType.UMC_PRODUCT);
     }
 
     @Test

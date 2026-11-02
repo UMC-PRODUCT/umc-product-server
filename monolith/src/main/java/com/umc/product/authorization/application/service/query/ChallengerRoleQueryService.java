@@ -115,7 +115,7 @@ public class ChallengerRoleQueryService implements
 
     private boolean hasSystemSuperAdmin(Long memberId) {
         return listMemberSystemRoleUseCase.listByMemberId(memberId).stream()
-            .map(role -> SystemRoleType.from(role.roleType()))
+            .flatMap(role -> SystemRoleType.find(role.roleType()).stream())
             .anyMatch(roleType -> roleType == SystemRoleType.SUPER_ADMIN);
     }
 
