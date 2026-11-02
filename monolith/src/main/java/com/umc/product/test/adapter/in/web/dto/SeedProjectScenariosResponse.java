@@ -18,7 +18,7 @@ public record SeedProjectScenariosResponse(
         Long chapterId,
         Long schoolId,
         Long applicationFormId,
-        List<PartFill> partFills
+        List<PartQuota> partQuotas
     ) {
 
         public static CreatedProject from(SeedProjectScenariosResult.CreatedProject src) {
@@ -29,16 +29,15 @@ public record SeedProjectScenariosResponse(
                 src.chapterId(),
                 src.schoolId(),
                 src.applicationFormId(),
-                src.partFills() == null ? null
-                    : src.partFills().stream().map(PartFill::from).toList()
+                src.partQuotas().stream().map(PartQuota::from).toList()
             );
         }
     }
 
-    public record PartFill(ChallengerPart part, long quota, long filled) {
+    public record PartQuota(ChallengerPart part, long quota) {
 
-        public static PartFill from(SeedProjectScenariosResult.PartFill src) {
-            return new PartFill(src.part(), src.quota(), src.filled());
+        public static PartQuota from(SeedProjectScenariosResult.PartQuota src) {
+            return new PartQuota(src.part(), src.quota());
         }
     }
 

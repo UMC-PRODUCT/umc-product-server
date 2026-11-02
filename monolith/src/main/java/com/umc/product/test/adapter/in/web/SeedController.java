@@ -205,11 +205,16 @@ public class SeedController {
             활성 기수에 대해 DRAFT / PENDING_REVIEW / IN_PROGRESS 중 하나의 상태까지 도달한
             프로젝트를 N 개 생성합니다. SQL 직접 주입이 아니라 도메인 UseCase 시퀀스 호출로 만들기 때문에
             도메인 가드를 모두 통과한 데이터가 됩니다.
+            DRAFT / PENDING_REVIEW 는 PO 본인이 작성·제출합니다.
+            IN_PROGRESS 는 adminMemberId 가 필수입니다. 해당 운영진(총괄단 또는 지부장)이 PO 를 지정해
+            프로젝트를 직접 등록하고, TO 를 설정한 뒤 제출해 바로 공개합니다.
             productOwnerMemberIds 를 명시하면 그 리스트로만 PO 를 사용하고(size 가 projectCount 와
-            같아야 하며 각각 활성 기수 PLAN 챌린저여야 함), null 이면 활성 기수 PLAN 챌린저 풀에서
-            랜덤 픽 합니다. 시딩 측에서 챌린저를 강제로 만들지는 않습니다.
-            IN_PROGRESS 단계에서는 DESIGN×1~2 + FE 1 개×3~4 + BE 1 개×3~4 의 partQuota 가 자동 분배되고,
-            각 파트마다 PO 학교의 해당 파트 챌린저 풀에서 random(0, quota) 만큼 멤버가 충원됩니다.
+            같아야 하며 각각 활성 기수 PLAN 챌린저여야 함), null 이면 PLAN 챌린저 풀에서 랜덤 픽 합니다.
+            IN_PROGRESS 의 랜덤 픽은 운영진이 관리하는 지부의 PLAN 챌린저로 한정됩니다.
+            IN_PROGRESS 의 TO 는 지부의 파트별 여유 인원(활동 중인 파트 인원 - 승인 대기·공개 프로젝트 TO 합계)
+            안에서 Design 1~2 와 개발 파트 묶음마다 한 파트 3~4 로 정합니다. 웹·모바일 프로덕트 엔지니어는
+            한 프로젝트에 함께 걸지 않습니다. 지부에 여유가 없으면 그 프로젝트는 만들지 않고
+            failedProjects 에 failedStep=QUOTA 로 보고합니다. 팀원은 채우지 않습니다.
             """
     )
     @PostMapping("/projects/scenarios")
