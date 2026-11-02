@@ -1,5 +1,6 @@
 package com.umc.product.project.application.service.command;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,7 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
     private final ProjectMatchingChapterResolver matchingChapterResolver;
     private final ProjectManualMatchingAccessPolicy accessPolicy;
     private final ProjectMatchingAdjustmentPolicy adjustmentPolicy;
+    private final Clock clock;
 
     @Override
     public Long assign(AddProjectMemberCommand command) {
@@ -65,8 +67,11 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
         validateMatchingPart(command.part());
 
         MatchingType matchingType = MatchingType.fromPart(command.part()).orElseThrow();
+        Instant now = clock.instant();
         ProjectMatchingRound adjustmentRound = adjustmentPolicy.validateChange(
-            context.rounds(), matchingType, Instant.now()).orElse(null);
+            context.rounds(), matchingType, now).orElse(null);
+        ProjectMatchingRound assignmentRound = adjustmentRound == null
+            ? adjustmentPolicy.getManualAssignmentRound(context.rounds(), matchingType, now) : adjustmentRound;
         Long adjustmentRoundId = adjustmentRound == null ? null : adjustmentRound.getId();
         project.validateApplicable();
         validateCandidate(project, command.memberId(), command.part(), adjustmentRoundId);
@@ -78,7 +83,8 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
             .findByProjectIdAndMemberIdForUpdate(project.getId(), command.memberId()).orElse(null);
         if (member == null) {
             member = adjustmentRound == null
-                ? ProjectMember.create(project, command.memberId(), command.part(), command.requesterMemberId())
+                ? ProjectMember.createForManualAssignment(project, command.memberId(), command.part(), assignmentRound,
+                    command.requesterMemberId())
                 : ProjectMember.createForMatching(project, command.memberId(), command.part(), adjustmentRound,
                     command.requesterMemberId());
         } else if (adjustmentRound != null && adjustmentRoundId.equals(member.getPendingRemovalRoundId())) {
@@ -90,7 +96,7 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
         } else if (adjustmentRound != null) {
             member.assignForAdjustment(command.part(), adjustmentRound, command.requesterMemberId());
         } else {
-            member.assignManually(command.part(), command.requesterMemberId());
+            member.assignManually(command.part(), assignmentRound, command.requesterMemberId());
         }
         return saveProjectMemberPort.save(member).getId();
     }
@@ -103,7 +109,7 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
 
         MatchingType matchingType = MatchingType.fromPart(member.getPart()).orElseThrow();
         ProjectMatchingRound adjustmentRound = adjustmentPolicy.validateChange(
-            context.rounds(), matchingType, Instant.now()).orElse(null);
+            context.rounds(), matchingType, clock.instant()).orElse(null);
         if (adjustmentRound != null && member.getStatus() == ProjectMemberStatus.ACTIVE) {
             // 공개된 팀원은 최종 결과 공개 전까지 기존 명단에 남아 있어야 하므로 해제만 예약한다.
             member.scheduleRemoval(adjustmentRound, command.requesterMemberId(), command.reason());
@@ -197,7 +203,7 @@ public class ProjectManualMatchingCommandService implements ManageProjectMatchin
      * ACTIVE 또는 PENDING_PUBLICATION 팀원의 지원서는 제외하며, 해제 예약자의 지원서도 TO를 다시 차감하지 않는다.
      */
     private long countUnassignedApprovedApplicants(Project project, ChallengerPart part) {
-        Instant now = Instant.now();
+        Instant now = clock.instant();
         MatchingType type = MatchingType.fromPart(part).orElseThrow();
         Set<Long> approvedMemberIds = loadProjectApplicationPort.searchProjectApplications(
                 project.getId(), null, ProjectApplicationStatus.APPROVED, now, true).stream()

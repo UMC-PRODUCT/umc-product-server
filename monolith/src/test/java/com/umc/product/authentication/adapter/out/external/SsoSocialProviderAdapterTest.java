@@ -52,7 +52,7 @@ class SsoSocialProviderAdapterTest {
     private SsoSocialProviderAdapter adapter(String provider, boolean enabled, String callback) {
         return new SsoSocialProviderAdapter(new SsoSocialProperties(Map.of(provider,
             new SsoSocialProperties.Provider(enabled, URI.create(callback), "web-client", "web-secret", true))),
-            new KakaoOAuthProperties("kakao-client", "", "", List.of(callback("kakao")), null),
+            new KakaoOAuthProperties("kakao-client", "", "", List.of(callback("kakao")), null, null),
             new AppleOAuthProperties("apple-bundle-id", "apple-services-id", "team", "key", "private-key", null),
             null, null, null);
     }

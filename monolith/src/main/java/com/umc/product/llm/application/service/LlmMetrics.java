@@ -12,7 +12,7 @@ import io.micrometer.core.instrument.Timer;
 /**
  * LLM 호출 관측 메트릭 등록자.
  * <p>
- * cardinality 폭증을 막기 위해 라벨은 provider, status, type 으로만 제한한다 (ADR-006).
+ * cardinality 폭증을 막기 위해 라벨은 provider, status, type 으로만 제한한다 (ADR-008).
  *
  * <ul>
  *   <li>{@code llm_chat_completion_seconds{provider, status}} – 호출 latency</li>
