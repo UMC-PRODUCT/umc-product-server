@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMC PRODUCT 스레드 열기</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f6f8;
+            color: #1f1f1f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 32px 24px;
+            max-width: 360px;
+            width: calc(100% - 48px);
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        }
+        h1 {
+            font-size: 18px;
+            margin: 0 0 8px;
+        }
+        p {
+            font-size: 14px;
+            color: #6b6b6b;
+            margin: 0 0 24px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 14px;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .btn-primary {
+            background: #4b4bff;
+            color: #fff;
+        }
+        .btn-secondary {
+            background: #eef0ff;
+            color: #4b4bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>UMC PRODUCT 앱에서 스레드 열기</h1>
+        <p>앱이 설치되어 있다면 바로 스레드로 이동해요.</p>
+
+        <a class="btn btn-primary" th:href="${appDeepLink}">앱에서 열기</a>
+
+        <a class="btn btn-secondary"
+           th:if="${platform == 'IOS' and iosStoreUrl != null}"
+           th:href="${iosStoreUrl}">App Store에서 다운로드</a>
+        <a class="btn btn-secondary"
+           th:if="${platform != 'IOS'}"
+           th:href="${androidStoreUrl}">Play 스토어에서 다운로드</a>
+
+        <a class="btn btn-secondary" th:if="${platform == 'IOS' and iosStoreUrl == null}"
+           th:href="${fallbackUrl}">UMC PRODUCT 더 알아보기</a>
+    </div>
+</body>
+</html>
