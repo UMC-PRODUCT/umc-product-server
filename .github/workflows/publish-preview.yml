@@ -26,19 +26,52 @@ env:
   HEAD_SHA: ${{ github.event.pull_request.head.sha }}
 
 jobs:
+  # author_association은 조직 멤버십이 비공개면 write 권한자도 CONTRIBUTOR로 들어온다.
+  # 그래서 PR 작성자의 저장소 권한을 API로 읽어 write 이상만 통과시킨다.
+  # permission 값은 maintain을 write로, triage를 read로 묶어서 준다.
+  author:
+    name: Check PR author write access
+    if: >-
+      github.repository == 'UMC-PRODUCT/umc-product-server' &&
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.base.ref == 'develop' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      contains(github.event.pull_request.labels.*.name, 'preview')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    outputs:
+      allowed: ${{ steps.check.outputs.allowed }}
+
+    steps:
+      - name: Read the PR author's repository permission
+        id: check
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { data: access } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: 'UMC-PRODUCT',
+              repo: 'umc-product-server',
+              username: context.payload.pull_request.user.login,
+            });
+            const allowed = ['admin', 'write'].includes(access.permission);
+            core.setOutput('allowed', String(allowed));
+            if (!allowed) core.notice(`PR author has ${access.permission} access; Preview requires write.`);
+
   # `preview` 라벨이 막 붙었을 때만 자리와 develop 마이그레이션 반영을 판정한다.
   # 새 dev 복사는 이때만 일어나므로 새 커밋(synchronize) 배포에서는 판정하지 않는다.
   # PR 코드는 실행하지 않고 API로 마이그레이션 파일 이름만 읽는다.
   admit:
     name: Admit Preview slot and develop migrations
+    needs: author
     if: >-
+      needs.author.outputs.allowed == 'true' &&
       github.repository == 'UMC-PRODUCT/umc-product-server' &&
       github.event.action == 'labeled' &&
       github.event.label.name == 'preview' &&
       github.event.pull_request.state == 'open' &&
       github.event.pull_request.base.ref == 'develop' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      contains(fromJSON('["MEMBER", "OWNER", "COLLABORATOR"]'), github.event.pull_request.author_association)
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -115,17 +148,17 @@ jobs:
 
   build:
     name: Validate and export trusted PR image
-    needs: admit
+    needs: [author, admit]
     # admit은 라벨이 막 붙은 실행에서만 돈다. 그 외 실행은 건너뛴 admit을 통과로 보고,
     # admit이 실패하거나 거절하면 발행하지 않는다.
     if: >-
       !cancelled() &&
+      needs.author.outputs.allowed == 'true' &&
       (needs.admit.result == 'skipped' || needs.admit.outputs.admitted == 'true') &&
       github.repository == 'UMC-PRODUCT/umc-product-server' &&
       github.event.pull_request.state == 'open' &&
       github.event.pull_request.base.ref == 'develop' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      contains(fromJSON('["MEMBER", "OWNER", "COLLABORATOR"]'), github.event.pull_request.author_association) &&
       contains(github.event.pull_request.labels.*.name, 'preview')
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -252,12 +285,17 @@ jobs:
               repo: 'umc-product-server',
               pull_number: context.payload.pull_request.number,
             });
+            const { data: access } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: 'UMC-PRODUCT',
+              repo: 'umc-product-server',
+              username: pr.user.login,
+            });
             const eligible =
               pr.state === 'open' &&
               pr.base.repo.full_name === 'UMC-PRODUCT/umc-product-server' &&
               pr.base.ref === 'develop' &&
               pr.head.repo?.full_name === 'UMC-PRODUCT/umc-product-server' &&
-              ['MEMBER', 'OWNER', 'COLLABORATOR'].includes(pr.author_association) &&
+              ['admin', 'write'].includes(access.permission) &&
               pr.labels.some(label => label.name === 'preview') &&
               pr.head.sha === context.payload.pull_request.head.sha;
             core.setOutput('eligible', String(eligible));
@@ -392,12 +430,17 @@ jobs:
               repo: 'umc-product-server',
               pull_number: context.payload.pull_request.number,
             });
+            const { data: access } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: 'UMC-PRODUCT',
+              repo: 'umc-product-server',
+              username: pr.user.login,
+            });
             const eligible =
               pr.state === 'open' &&
               pr.base.repo.full_name === 'UMC-PRODUCT/umc-product-server' &&
               pr.base.ref === 'develop' &&
               pr.head.repo?.full_name === 'UMC-PRODUCT/umc-product-server' &&
-              ['MEMBER', 'OWNER', 'COLLABORATOR'].includes(pr.author_association) &&
+              ['admin', 'write'].includes(access.permission) &&
               pr.labels.some(label => label.name === 'preview') &&
               pr.head.sha === process.env.READY_HEAD_SHA &&
               pr.head.sha === context.payload.pull_request.head.sha;
