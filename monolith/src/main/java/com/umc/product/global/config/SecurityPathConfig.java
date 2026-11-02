@@ -20,6 +20,8 @@ public final class SecurityPathConfig {
     public static final String GRAPHIQL_PATH = "/graphiql";
     public static final String GRAPHIQL_PATTERN = "/graphiql/**";
     public static final String WELL_KNOWN_PATTERN = "/.well-known/**";
+    // global은 도메인 패키지를 참조하지 않으므로 문자열로 둔다. CommunityThreadLinks.WEB_PATH_PREFIX와
+    // 어긋나지 않는지는 CommunityThreadLinksTest가 검증한다.
     public static final String COMMUNITY_THREAD_DEEP_LINK_PATTERN = "/community/threads/**";
 
     public static final List<String> SWAGGER_BLOCKED_PATHS = List.of(

@@ -1,5 +1,6 @@
 package com.umc.product.global.web;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -49,13 +50,14 @@ class WellKnownControllerTest {
     }
 
     @Test
-    @DisplayName("apple-app-site-association은 application/json으로, TeamID.BundleID와 경로 패턴을 내려준다")
+    @DisplayName("apple-app-site-association은 application/json으로, TeamID.BundleID와 도메인이 등록한 경로를 중복 없이 내려준다")
     void appleAppSiteAssociation_returnsConfiguredAppId() throws Exception {
         mockMvc.perform(get("/.well-known/apple-app-site-association"))
             .andExpect(status().isOk())
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.applinks.details[0].appID").value("8B8B4462NV.com.umc.product"))
-            .andExpect(jsonPath("$.applinks.details[0].paths[0]").value("/community/threads/*"));
+            .andExpect(jsonPath("$.applinks.details[0].paths",
+                containsInAnyOrder("/community/threads/*", "/notices/*")));
     }
 
     @TestConfiguration
@@ -65,10 +67,20 @@ class WellKnownControllerTest {
         DeepLinkProperties deepLinkProperties() {
             return new DeepLinkProperties(
                 "https://api.university.neordinary.com",
-                null,
+                "https://university.neordinary.com",
                 new DeepLinkProperties.Android("com.umc.product", List.of("AA:BB", "CC:DD")),
                 new DeepLinkProperties.Ios("8B8B4462NV", "com.umc.product", null)
             );
+        }
+
+        @Bean
+        AppLinkPathProvider threadPathProvider() {
+            return () -> List.of("/community/threads/*");
+        }
+
+        @Bean
+        AppLinkPathProvider noticePathProvider() {
+            return () -> List.of("/notices/*", "/community/threads/*");
         }
     }
 }

@@ -49,6 +49,7 @@ import com.umc.product.community.application.port.out.thread.dto.CommunityThread
 import com.umc.product.community.application.port.out.thread.dto.CommunityThreadMemberRow;
 import com.umc.product.community.application.port.out.thread.dto.CommunityThreadQueryRow;
 import com.umc.product.community.domain.CommunityThread;
+import com.umc.product.community.domain.CommunityThreadLinks;
 import com.umc.product.community.domain.CommunityThreadProperties;
 import com.umc.product.community.domain.enums.CommunityThreadCategory;
 import com.umc.product.community.domain.enums.CommunityThreadMemberRole;
@@ -143,7 +144,7 @@ public class CommunityThreadQueryService implements
         Map<Long, MemberInfo> senders = loadVisibleSenders(List.of(row), List.of());
         return ThreadDetailInfo.from(
             toSummary(row, senders),
-            deepLinkProperties.communityThreadShareUrl(row.threadId()),
+            deepLinkProperties.webUrl(CommunityThreadLinks.webPath(row.threadId())),
             row.deletedAt()
         );
     }
@@ -154,7 +155,7 @@ public class CommunityThreadQueryService implements
         Map<Long, MemberInfo> senders = loadVisibleSenders(List.of(row), List.of());
         return ThreadDetailInfo.from(
             toSummary(row, senders),
-            deepLinkProperties.communityThreadShareUrl(row.threadId()),
+            deepLinkProperties.webUrl(CommunityThreadLinks.webPath(row.threadId())),
             row.deletedAt()
         );
     }
@@ -168,7 +169,7 @@ public class CommunityThreadQueryService implements
         Map<Long, MemberInfo> senders = loadVisibleSenders(List.of(row), List.of());
         return ThreadDetailInfo.from(
             toSummary(row, senders),
-            deepLinkProperties.communityThreadShareUrl(row.threadId()),
+            deepLinkProperties.webUrl(CommunityThreadLinks.webPath(row.threadId())),
             row.deletedAt()
         );
     }

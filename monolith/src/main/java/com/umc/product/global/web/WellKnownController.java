@@ -25,9 +25,9 @@ import lombok.RequiredArgsConstructor;
 public class WellKnownController {
 
     private static final String RELATION = "delegate_permission/common.handle_all_urls";
-    private static final List<String> APP_LINK_PATHS = List.of("/community/threads/*");
 
     private final DeepLinkProperties deepLinkProperties;
+    private final List<AppLinkPathProvider> appLinkPathProviders;
 
     @GetMapping(value = "/.well-known/assetlinks.json", produces = MediaType.APPLICATION_JSON_VALUE)
     @Public
@@ -52,7 +52,7 @@ public class WellKnownController {
         DeepLinkProperties.Ios ios = deepLinkProperties.ios();
         Map<String, Object> detail = Map.of(
             "appID", ios.appId(),
-            "paths", APP_LINK_PATHS
+            "paths", appLinkPaths()
         );
         Map<String, Object> applinks = Map.of(
             "apps", List.of(),
@@ -61,5 +61,12 @@ public class WellKnownController {
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_JSON)
             .body(Map.of("applinks", applinks));
+    }
+
+    private List<String> appLinkPaths() {
+        return appLinkPathProviders.stream()
+            .flatMap(provider -> provider.appLinkPaths().stream())
+            .distinct()
+            .toList();
     }
 }

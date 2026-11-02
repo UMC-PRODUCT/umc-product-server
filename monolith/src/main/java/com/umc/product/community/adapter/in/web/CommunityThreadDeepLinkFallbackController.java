@@ -1,7 +1,5 @@
 package com.umc.product.community.adapter.in.web;
 
-import java.util.Locale;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,6 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 
+import com.umc.product.community.domain.CommunityThreadLinks;
+import com.umc.product.global.client.ClientDeviceType;
 import com.umc.product.global.config.DeepLinkProperties;
 import com.umc.product.global.security.annotation.Public;
 
@@ -26,53 +26,31 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CommunityThreadDeepLinkFallbackController {
 
-    private static final String ANDROID_MARKER = "android";
-    private static final String IOS_MARKER_IPHONE = "iphone";
-    private static final String IOS_MARKER_IPAD = "ipad";
-
     private final DeepLinkProperties deepLinkProperties;
 
-    @GetMapping("/community/threads/{threadId}")
+    @GetMapping(CommunityThreadLinks.WEB_PATH_TEMPLATE)
     @Public
     public String show(
         @PathVariable Long threadId,
         @RequestHeader(value = HttpHeaders.USER_AGENT, required = false) String userAgent,
         Model model
     ) {
-        Platform platform = Platform.fromUserAgent(userAgent);
+        ClientDeviceType platform = ClientDeviceType.fromUserAgent(userAgent);
         DeepLinkProperties.Android android = deepLinkProperties.android();
-        DeepLinkProperties.Ios ios = deepLinkProperties.ios();
 
-        model.addAttribute("threadId", threadId);
-        model.addAttribute("appDeepLink", "umc://thread/" + threadId);
+        model.addAttribute("appDeepLink", appDeepLink(platform, threadId, android));
         model.addAttribute("platform", platform.name());
         model.addAttribute("androidStoreUrl", android.playStoreUrl());
-        model.addAttribute("iosStoreUrl", blankToNull(ios.appStoreUrl()));
+        model.addAttribute("iosStoreUrl", deepLinkProperties.ios().appStoreUrl());
         model.addAttribute("fallbackUrl", deepLinkProperties.fallbackUrl());
         return "community/thread-deep-link";
     }
 
-    private String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value;
-    }
-
-    private enum Platform {
-        ANDROID,
-        IOS,
-        UNKNOWN;
-
-        static Platform fromUserAgent(String userAgent) {
-            if (userAgent == null) {
-                return UNKNOWN;
-            }
-            String lower = userAgent.toLowerCase(Locale.ROOT);
-            if (lower.contains(ANDROID_MARKER)) {
-                return ANDROID;
-            }
-            if (lower.contains(IOS_MARKER_IPHONE) || lower.contains(IOS_MARKER_IPAD)) {
-                return IOS;
-            }
-            return UNKNOWN;
+    // Android는 앱이 없을 때 커스텀 스킴 링크가 무반응이라, 스토어로 넘어가는 intent URL을 쓴다.
+    private String appDeepLink(ClientDeviceType platform, Long threadId, DeepLinkProperties.Android android) {
+        if (platform == ClientDeviceType.ANDROID) {
+            return CommunityThreadLinks.androidIntentUrl(threadId, android.packageName(), android.playStoreUrl());
         }
+        return CommunityThreadLinks.appUrl(threadId);
     }
 }
