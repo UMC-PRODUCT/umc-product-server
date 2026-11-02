@@ -267,6 +267,23 @@ class MemberSummaryV2QueryServiceTest {
     }
 
     @Test
+    void isUmcProduct는_권한_판정_결과를_그대로_내린다() {
+        given(getMemberUseCase.getById(100L)).willReturn(member());
+        given(getMemberProfileUseCase.getMemberProfileById(100L)).willReturn(profile());
+        given(listMemberSystemRoleUseCase.listByMemberId(100L)).willReturn(List.of());
+        given(getChallengerRoleUseCase.isUmcProduct(100L)).willReturn(true);
+        given(getChallengerUseCase.getAllByMemberId(100L)).willReturn(List.of());
+        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.empty());
+        given(getChallengerActivityPeriodUseCase.calculateActivityPeriod(any(), any()))
+            .willReturn(new ActivityPeriodSummary(0L, List.of()));
+
+        MemberSummaryV2Info info = service.getSummaryByMemberId(100L);
+
+        assertThat(info.isUmcProduct()).isTrue();
+        assertThat(info.isSuperAdmin()).isFalse();
+    }
+
+    @Test
     void SUPER_ADMIN_역할이_없으면_isSuperAdmin이_false이다() {
         given(getMemberUseCase.getById(100L)).willReturn(member());
         given(getMemberProfileUseCase.getMemberProfileById(100L)).willReturn(profile());

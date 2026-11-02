@@ -32,8 +32,42 @@ class AuthoritySnapshotTest {
         );
 
         assertThat(snapshot.isSuperAdmin()).isTrue();
+        assertThat(snapshot.isUmcProduct()).isTrue();
         assertThat(snapshot.isCentralCoreInGisu(GISU_ID)).isTrue();
         assertThat(snapshot.isSchoolCoreInGisu(GISU_ID, OTHER_SCHOOL_ID)).isTrue();
+    }
+
+    @Test
+    @DisplayName("UMC_PRODUCT는 문의 관리 판정만 통과하고 다른 운영진 정책은 통과하지 않는다")
+    void umc_product_system_role_grants_inquiry_only() {
+        AuthoritySnapshot snapshot = AuthoritySnapshot.of(
+            MEMBER_ID,
+            SCHOOL_ID,
+            List.of(),
+            List.of(),
+            Set.of(SystemRoleType.UMC_PRODUCT)
+        );
+
+        assertThat(snapshot.isUmcProduct()).isTrue();
+        assertThat(snapshot.isSuperAdmin()).isFalse();
+        assertThat(snapshot.isCentralCoreInAnyGisu()).isFalse();
+        assertThat(snapshot.isCentralCoreInGisu(GISU_ID)).isFalse();
+        assertThat(snapshot.isCentralMemberInAnyGisu()).isFalse();
+        assertThat(snapshot.isCentralMemberInGisu(GISU_ID)).isFalse();
+        assertThat(snapshot.isSchoolCoreInAnyGisu(SCHOOL_ID)).isFalse();
+        assertThat(snapshot.isSchoolCoreInGisu(GISU_ID, SCHOOL_ID)).isFalse();
+        assertThat(snapshot.isSchoolAdminInAnyGisu(SCHOOL_ID)).isFalse();
+        assertThat(snapshot.isSchoolAdminInGisu(GISU_ID, SCHOOL_ID)).isFalse();
+        assertThat(snapshot.isChapterPresidentInAnyGisu(20L)).isFalse();
+        assertThat(snapshot.isChapterPresidentInGisu(GISU_ID, 20L)).isFalse();
+    }
+
+    @Test
+    @DisplayName("시스템 역할이 없으면 문의 관리 판정을 통과하지 않는다")
+    void no_system_role_cannot_manage_inquiry() {
+        AuthoritySnapshot snapshot = AuthoritySnapshot.of(MEMBER_ID, SCHOOL_ID, List.of(), List.of(), Set.of());
+
+        assertThat(snapshot.isUmcProduct()).isFalse();
     }
 
     @Test
