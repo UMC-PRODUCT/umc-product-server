@@ -37,6 +37,13 @@ import loadChatMessage, {
   prepareRun as prepareChatRun,
   getRunConditions as loadChatConditions,
 } from "./scenarios/load/chat-message.js";
+import loadChatReaction, {
+  requiresSeed as reactionSeed,
+  getOptions as reactionOptions,
+  validateSeed as validateReactionSeed,
+  prepareRun as prepareReactionRun,
+  getRunConditions as reactionConditions,
+} from "./scenarios/load/chat-reaction.js";
 
 // PROFILE(부하 유형) × SCENARIO(업무 시나리오) → 실제 실행 함수 매핑.
 // k6 는 런타임 동적 import 를 지원하지 않으므로, 정적 import 를 registry 로 모아 __ENV 로 고른다.
@@ -49,6 +56,8 @@ const REGISTRY = {
       getOptions: chatMessageOptions, validateSeed: validateSmokeChatSeed, getRunConditions: smokeChatConditions },
   },
   load: {
+    "chat-reaction": { fn: loadChatReaction, requiresSeed: reactionSeed, getOptions: reactionOptions,
+      validateSeed: validateReactionSeed, prepareRun: prepareReactionRun, getRunConditions: reactionConditions },
     "chat-message": { fn: loadChatMessage, requiresSeed: loadChatMessageSeed,
       getOptions: loadChatMessageOptions, validateSeed: validateLoadChatSeed,
       prepareRun: prepareChatRun, getRunConditions: loadChatConditions },
@@ -124,7 +133,9 @@ export function setup() {
   // setup 반환값은 default 함수 data 인자로 전달된다. k6 는 시딩하지 않고 seed 파일만 넘긴다.
   const seed = parseSeed(seedRaw);
   if (selected.validateSeed) selected.validateSeed(seed);
-  return { seed, context: selected.prepareRun ? selected.prepareRun() : null };
+  const context = selected.prepareRun ? selected.prepareRun(seed) : null;
+  if (context && typeof context.then === "function") return context.then((prepared) => ({ seed, context: prepared }));
+  return { seed, context };
 }
 
 export default function (data) {
@@ -143,6 +154,7 @@ export function handleSummary(data) {
     let conditions;
     try {
       conditions = chatRunConditions({ profile: PROFILE, scenario: SCENARIO, seed: parseSeed(seedRaw),
+        context: data.setup_data?.context, summary: data,
         options: { ...JSON.parse(configuredOptionsJson), ...data.options } }, selected.getRunConditions);
     } catch (_) {
       conditions = { available: false, error: "설정 또는 시드 검증 실패. run-meta.json과 console.log를 확인하세요." };
