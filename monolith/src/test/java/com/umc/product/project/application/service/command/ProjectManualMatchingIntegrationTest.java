@@ -111,8 +111,26 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         assertThat(members.listByProjectId(scenario.projectId())).extracting(m -> m.getMemberId()).contains(scenario.candidateId());
         ProjectMember member = members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId());
         assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
-        assertThat(member.getAssignedMatchingRound()).isNull();
-        assertThat(statistics.listPublicActiveMembersByChapterId(scenario.chapterId())).isEmpty();
+        assertThat(member.getAssignedMatchingRound()).isNotNull();
+        assertThat(member.getApplication()).isNull();
+        assertThat(statistics.listPublicActiveMembersByChapterId(scenario.chapterId()))
+            .extracting(row -> row.memberId()).containsExactly(scenario.candidateId());
+        mockMvc.perform(get("/api/v1/projects/{id}/members", scenario.projectId()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.partGroups[0].members[0].matchedRoundInfo.phase").value("FIRST"));
+        mockMvc.perform(get("/api/v1/projects/members").param("projectIds", scenario.projectId().toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result['" + scenario.projectId()
+                + "'].partGroups[0].members[0].matchedRoundInfo.phase")
+                .value("FIRST"));
+        authenticate(scenario.candidateId());
+        mockMvc.perform(get("/api/v1/projects/me/applications").param("gisuId", scenario.gisuId().toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result[0].applicationId").doesNotExist())
+            .andExpect(jsonPath("$.result[0].matchingRound.id")
+                .value(member.getAssignedMatchingRound().getId().toString()))
+            .andExpect(jsonPath("$.result[0].matchingRound.phase").value("FIRST"));
+        authenticate(scenario.staffId());
         mockMvc.perform(get(candidates(scenario)).param("part", "DESIGN"))
             .andExpect(status().isOk()).andExpect(jsonPath("$.result.totalElements").value(0));
         mockMvc.perform(delete(admin(scenario) + "/{memberId}", scenario.candidateId())).andExpect(status().isOk());
@@ -312,9 +330,12 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         assign(scenario, scenario.candidateId()).andExpect(status().isOk());
         ProjectMember member = members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId());
         assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
-        assertThat(member.getAssignedMatchingRound()).isNull();
+        assertThat(member.getAssignedMatchingRound().getId()).isEqualTo(application.roundId());
         assertThat(member.getApplication()).isNull();
         assertThat(members.listByProjectId(scenario.projectId())).hasSize(1);
+        mockMvc.perform(get("/api/v1/projects/statistics/matchings").param("chapterId", scenario.chapterId().toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.roundMatchingStatistics[0].matchedMemberCount").value(1));
     }
 
     @Test

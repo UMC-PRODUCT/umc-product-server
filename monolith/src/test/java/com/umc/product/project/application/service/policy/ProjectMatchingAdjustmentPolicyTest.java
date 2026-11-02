@@ -21,6 +21,41 @@ class ProjectMatchingAdjustmentPolicyTest {
     private static final Instant START = Instant.parse("2026-11-19T00:00:00+09:00");
     private final ProjectMatchingAdjustmentPolicy policy = new ProjectMatchingAdjustmentPolicy();
 
+    @ParameterizedTest
+    @EnumSource(MatchingType.class)
+    void 다음_차수_시작_전까지는_직전_차수를_기록하고_시작_정각부터_새_차수를_기록한다(MatchingType type) {
+        // given
+        ProjectMatchingRound first = assignmentRound(type, MatchingPhase.FIRST, START);
+        ProjectMatchingRound second = assignmentRound(type, MatchingPhase.SECOND, START.plusSeconds(14400));
+        ProjectMatchingRound third = assignmentRound(type, MatchingPhase.THIRD, START.plusSeconds(28800));
+        MatchingType otherType = type == MatchingType.PLAN_DESIGN ? MatchingType.PLAN_DEVELOPER : MatchingType.PLAN_DESIGN;
+        ProjectMatchingRound other = assignmentRound(otherType, MatchingPhase.THIRD, START.plusSeconds(18000));
+        List<ProjectMatchingRound> rounds = List.of(third, other, first, second);
+
+        // when & then
+        assertThat(policy.getManualAssignmentRound(rounds, type, first.getStartsAt())).isSameAs(first);
+        assertThat(policy.getManualAssignmentRound(rounds, type, second.getStartsAt().minusNanos(1))).isSameAs(first);
+        assertThat(policy.getManualAssignmentRound(rounds, type, second.getStartsAt())).isSameAs(second);
+        assertThat(policy.getManualAssignmentRound(rounds, type, third.getStartsAt().minusNanos(1))).isSameAs(second);
+        assertThat(policy.getManualAssignmentRound(rounds, type, third.getStartsAt())).isSameAs(third);
+    }
+
+    @Test
+    void 시작된_일반_차수가_없으면_배정_차수를_임의로_기록하지_않는다() {
+        // given
+        List<ProjectMatchingRound> rounds = List.of(regularRound(), randomRound());
+
+        // when & then
+        assertThatThrownBy(() -> policy.getManualAssignmentRound(rounds, MatchingType.PLAN_DESIGN, START.minusNanos(1)))
+            .isInstanceOf(ProjectDomainException.class).extracting("baseCode")
+            .isEqualTo(ProjectErrorCode.PROJECT_MANUAL_MATCHING_NOT_ALLOWED_IN_PERIOD);
+    }
+
+    private ProjectMatchingRound assignmentRound(MatchingType type, MatchingPhase phase, Instant startsAt) {
+        return ProjectMatchingRound.create(phase.name(), null, type, phase, 1L,
+            startsAt, startsAt.plusSeconds(3600), startsAt.plusSeconds(7200), startsAt.plusSeconds(10800));
+    }
+
     @Test
     void 첫_지원_시작부터_결정_마감_전까지_변경을_허용한다() {
         // given
