@@ -1,13 +1,13 @@
 # Test Seed 테스트 케이스
 
-- 테스트 파일: 11개
-- 테스트 케이스: 58개
+- 테스트 파일: 9개
+- 테스트 케이스: 44개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
 |---|---:|
-| Controller / Inbound Adapter | 1 |
-| UseCase / Application Service | 56 |
+| Controller / Inbound Adapter | 7 |
+| UseCase / Application Service | 36 |
 | Repository / Outbound Persistence | 1 |
 
 ## Controller / Inbound Adapter
@@ -17,7 +17,19 @@
 
 | 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
 |---:|---|---|---|
-| [31](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/SeedControllerBeanRegistrationTest.java#L31) | 모든 시딩 빈은 @Profile(!prod) + @ConditionalOnProperty(app.seed.enabled=true) 가드를 가진다 | 파라미터 @ValueSource classes = { SeedController.class, MemberSeedService.class, ChallengerSeedService.class, ProjectSeedService.class, ProjectSeedDataCleanupService.class, ProjectApplicationSeedService.class, CurriculumSeedService.class, NoticeSeedService.class, DummyMemberFactory.class, DummyCurriculumFactory.class, DummyNoticeFactory.class, PartAssignmentPolicy.class, SeedProperties.class } | 성공: 검증 assertThat(profile); .isNotNull(); assertThat(profile.value()); .contains("!prod"); |
+| [34](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/SeedControllerBeanRegistrationTest.java#L34) | 모든 시딩 빈은 @Profile(!prod) + @ConditionalOnProperty(app.seed.enabled=true) 가드를 가진다 | 파라미터 @ValueSource classes = { SeedController.class, MemberSeedService.class, MemberSystemRoleSeedService.class, MemberSystemRoleSeedPersistenceAdapter.class, ChallengerSeedService.class, ProjectScenarioSeedService.class, ProjectSeedDataCleanupService.class, ProjectApplicationSeedService.class, CurriculumSeedService.class, NoticeSeedService.class, DummyMemberFactory.class, DummyCurriculumFactory.class, DummyNoticeFactory.class, SeedProperties.class } | 성공: 검증 assertThat(profile); .isNotNull(); assertThat(profile.value()); .contains("!prod"); |
+
+### ProjectScenarioSeedIntegrationTest
+- 위치: `monolith/src/test/java/com/umc/product/test/adapter/in/web/ProjectScenarioSeedIntegrationTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [67](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/ProjectScenarioSeedIntegrationTest.java#L67) | 총괄단이 공개 시나리오를 시딩하면 지부 TO 상한 안에서 TO를 걸고 프로젝트를 공개한다 | PLAN 4 · Design 3 · Web PE 5 · Mobile PE 4, 총괄단, IN_PROGRESS 3건 | 성공: 3건 모두 IN_PROGRESS, 응답 partQuotas 와 저장된 TO 일치, 웹·모바일 PE 동시 TO 없음, 지부 파트별 TO 합계 ≤ 파트 인원 |
+| [104](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/ProjectScenarioSeedIntegrationTest.java#L104) | 지부에 남은 TO가 없으면 프로젝트를 만들지 않고 QUOTA 실패로 보고한다 | PLAN 3 · Mobile PE 3, 지부장, IN_PROGRESS 3건 | 성공: 1건 생성(Mobile PE 3), 2건 failedStep=QUOTA · projectId 없음, 프로젝트 1건만 저장 |
+| [127](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/ProjectScenarioSeedIntegrationTest.java#L127) | PO를 지정하지 않으면 운영진이 관리하는 지부의 PLAN 챌린저만 PO로 고른다 | 자기 지부 PLAN 2, 다른 지부 PLAN 3, 지부장, IN_PROGRESS 2건 | 성공: 2건 모두 자기 지부, PO 는 자기 지부 PLAN |
+| [151](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/ProjectScenarioSeedIntegrationTest.java#L151) | 운영진이 관리하지 않는 지부의 PO를 지정하면 프로젝트를 만들지 않고 QUOTA 실패로 보고한다 | 다른 지부 PLAN 을 productOwnerMemberIds 로 지정, 지부장 | 실패: failedStep=QUOTA · projectId 없음, 프로젝트 0건 |
+| [175](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/ProjectScenarioSeedIntegrationTest.java#L175) | adminMemberId 없이 공개 시나리오를 요청하면 400으로 거부하고 프로젝트를 만들지 않는다 | IN_PROGRESS, adminMemberId 없음 | 실패: 400, 프로젝트 0건 |
+| [192](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/ProjectScenarioSeedIntegrationTest.java#L192) | 승인 대기 시나리오는 PO가 직접 제출해 승인 대기 상태로 남고 TO를 걸지 않는다 | PLAN 1, PENDING_REVIEW 1건 | 성공: PENDING_REVIEW, partQuotas 빈 목록, 저장된 TO 없음 |
 
 ## UseCase / Application Service
 
@@ -31,6 +43,18 @@
 | [114](../../../monolith/src/test/java/com/umc/product/test/application/service/ChallengerSeedServiceTest.java#L114) | 한 셀에서 createChallengerBulk 가 실패해도 다른 셀 시딩은 진행된다 | 조건 한 셀에서 createChallengerBulk 가 실패해도 다른 셀 시딩은 진행된다 | 실패: 검증 assertThat(result.perCellSummary()).hasSize(2); assertThat(result.totalCreated()).isEqualTo(1); |
 | [141](../../../monolith/src/test/java/com/umc/product/test/application/service/ChallengerSeedServiceTest.java#L141) | 멤버 batch 생성 실패는 memberFailed 로 보고되고 챌린저 생성은 호출하지 않는다 | 조건 멤버 batch 생성 실패는 memberFailed 로 보고되고 챌린저 생성은 호출하지 않는다 | 실패: 검증 assertThat(result.perCellSummary()).hasSize(1); assertThat(cell.created()).isZero(); assertThat(cell.memberFailed()).isEqualTo(2); assertThat(cell.challengerFailed()).isZero(); |
 | [167](../../../monolith/src/test/java/com/umc/product/test/application/service/ChallengerSeedServiceTest.java#L167) | gisuId 가 null 이면 활성 기수를 사용한다 | 조건 gisuId 가 null 이면 활성 기수를 사용한다 | 성공: 검증 assertThat(result.gisuId()).isEqualTo(10L); |
+
+### ChapterQuotaBudgetTest
+- 위치: `monolith/src/test/java/com/umc/product/test/application/service/ChapterQuotaBudgetTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [31](../../../monolith/src/test/java/com/umc/product/test/application/service/ChapterQuotaBudgetTest.java#L31) | 여유가 바닥날 때까지 배정해도 파트별 TO 합계는 여유 인원을 넘지 않는다 | seed 50개, PLAN 100 · Design 3 · Web PE 7 · Mobile PE 5 | 성공: 파트별 배정 합계 ≤ 여유 인원 |
+| [54](../../../monolith/src/test/java/com/umc/product/test/application/service/ChapterQuotaBudgetTest.java#L54) | 한 프로젝트에 웹과 모바일 프로덕트 엔지니어 TO를 함께 걸지 않는다 | Web PE · Mobile PE 여유 1000, 200회 배정 | 성공: 한 배정에 두 파트가 함께 없음, 두 파트 모두 한 번 이상 선택 |
+| [78](../../../monolith/src/test/java/com/umc/product/test/application/service/ChapterQuotaBudgetTest.java#L78) | 여유 인원이 0 이하인 파트와 TO를 바꿀 수 없는 파트는 고르지 않는다 | Design 여유 음수, Web PE 여유 0, Spring Boot 잠금 | 성공: Mobile PE 만 배정 |
+| [101](../../../monolith/src/test/java/com/umc/product/test/application/service/ChapterQuotaBudgetTest.java#L101) | 파트 여유가 TO 범위 최솟값보다 작으면 남은 여유만큼만 TO를 건다 | Mobile PE 여유 2 | 성공: Mobile PE TO 2 |
+| [116](../../../monolith/src/test/java/com/umc/product/test/application/service/ChapterQuotaBudgetTest.java#L116) | 프로젝트마다 PLAN 1자리를 쓰고 PLAN 여유가 없으면 더 배정하지 않는다 | PLAN 여유 2 | 성공: 두 번 배정 후 세 번째는 Exhausted |
+| [136](../../../monolith/src/test/java/com/umc/product/test/application/service/ChapterQuotaBudgetTest.java#L136) | TO를 걸 파트가 하나도 없으면 PLAN 여유가 있어도 배정하지 않는다 | PLAN 5, 다른 파트 여유 0 | 실패: Exhausted |
 
 ### CurriculumSeedServiceTest
 - 위치: `monolith/src/test/java/com/umc/product/test/application/service/CurriculumSeedServiceTest.java`
@@ -73,34 +97,6 @@
 | [156](../../../monolith/src/test/java/com/umc/product/test/application/service/NoticeSeedServiceTest.java#L156) | parts 가 null 이면 ADMIN 제외 모든 파트가 사용된다 | 조건 parts 가 null 이면 ADMIN 제외 모든 파트가 사용된다 | 성공: 검증 assertThat(partCaptor.getAllValues()).noneMatch(p -> p == ChallengerPart.ADMIN); |
 | [177](../../../monolith/src/test/java/com/umc/product/test/application/service/NoticeSeedServiceTest.java#L177) | 제목·내용에 대상 범위 정보가 포함된 채로 생성된다 (DummyNoticeFactory 위임 확인) | 호출 seed(new SeedNoticeCommand(gisuId, 1L, 1, 1, 1, 1, List.of(ChallengerPart.WEB))) | 성공: 검증 assertThat(sent).anyMatch(c -> c.title().contains("[전체]")); assertThat(sent).anyMatch(c -> c.title().contains("[지부]")); assertThat(sent).anyMatch(c -> c.title().contains("[학교]")); assertThat(sent).anyMatch(c -> c.titl... |
 
-### PartAssignmentPolicyTest
-- 위치: `monolith/src/test/java/com/umc/product/test/application/service/PartAssignmentPolicyTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [21](../../../monolith/src/test/java/com/umc/product/test/application/service/PartAssignmentPolicyTest.java#L21) | 풀이 충분히 클 때 첫 슬롯은 항상 PLAN | 호출 nextProjectSlots(20).get(0)).isEqualTo(ChallengerPart.PLAN) | 성공: 검증 assertThat(sut.nextProjectSlots(20).get(0)).isEqualTo(ChallengerPart.PLAN); |
-| [45](../../../monolith/src/test/java/com/umc/product/test/application/service/PartAssignmentPolicyTest.java#L45) | 풀이 MIN_TOTAL(11) 미만이면 빈 슬롯 리스트를 반환한다 | 호출 nextProjectSlots(pool)) | 성공: 검증 assertThat(sut.nextProjectSlots(pool)); .isEmpty(); |
-| [79](../../../monolith/src/test/java/com/umc/product/test/application/service/PartAssignmentPolicyTest.java#L79) | 프론트엔드/백엔드 파트 외의 값은 PLAN 외에 등장하지 않는다 | 호출 nextProjectSlots(20) | 성공: 검증 assertThat(FRONTEND.contains(part) \|\| BACKEND.contains(part)); .isTrue(); |
-
-### ProjectScenarioSeedServiceTest
-- 위치: `monolith/src/test/java/com/umc/product/test/application/service/ProjectScenarioSeedServiceTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [161](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectScenarioSeedServiceTest.java#L161) | createDraft와 updateProject만 호출되고 form/submit/publish는 호출되지 않는다 | 조건 createDraft와 updateProject만 호출되고 form/submit/publish는 호출되지 않는다 | 성공: 검증 assertThat(result.createdProjects()).hasSize(1); assertThat(created.projectId()).isEqualTo(500L); assertThat(created.finalStatus()).isEqualTo(TargetProjectStatus.DRAFT); assertThat(created.productOwnerMemberId()).isEq... |
-| [197](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectScenarioSeedServiceTest.java#L197) | DRAFT 시나리오 / DRAFT 단계 호출에 더해 upsertForm + submit이 호출되고 publish는 호출되지 않는다 | 조건 DRAFT 시나리오 / DRAFT 단계 호출에 더해 upsertForm + submit이 호출되고 publish는 호출되지 않는다 | 성공: 검증 assertThat(result.createdProjects()).hasSize(1); assertThat(created.finalStatus()).isEqualTo(TargetProjectStatus.PENDING_REVIEW); assertThat(created.applicationFormId()).isEqualTo(9001L); assertThat(created.partFills(... |
-| [228](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectScenarioSeedServiceTest.java#L228) | PENDING_REVIEW 시나리오 / 전체 단계가 호출되고 PartFill이 quota 범위 내에서 채워진다 | 조건 PENDING_REVIEW 시나리오 / 전체 단계가 호출되고 PartFill이 quota 범위 내에서 채워진다 | 성공: 검증 assertThat(result.createdProjects()).hasSize(1); assertThat(created.finalStatus()).isEqualTo(TargetProjectStatus.IN_PROGRESS); assertThat(created.partFills()).hasSize(3); assertThat(created.partFills().get(0).part()).... |
-| [287](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectScenarioSeedServiceTest.java#L287) | PO 본인은 멤버 충원에서 제외된다 | 조건 PO 본인은 멤버 충원에서 제외된다 | 성공: PO 본인은 멤버 충원에서 제외된다 |
-| [312](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectScenarioSeedServiceTest.java#L312) | 멤버 풀이 비어있어도 partFills는 quota entry 수만큼 0으로 채워서 반환한다 | 조건 멤버 풀이 비어있어도 partFills는 quota entry 수만큼 0으로 채워서 반환한다 | 성공: 검증 assertThat(created.partFills()).hasSize(3); assertThat(created.partFills()).allMatch(f -> f.filled() == 0L); assertThat(created.partFills().get(0).quota()).isEqualTo(2L); assertThat(created.partFills().get(1).quota())... |
-| [343](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectScenarioSeedServiceTest.java#L343) | productOwnerMemberIds size가 projectCount와 다르면 IllegalArgumentException | 조건 productOwnerMemberIds size가 projectCount와 다르면 IllegalArgumentException | 실패: 예외 IllegalArgumentException |
-| [356](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectScenarioSeedServiceTest.java#L356) | PO 입력 검증 / 입력된 PO가 PLAN 챌린저가 아니면 IllegalArgumentException | 조건 PO 입력 검증 / 입력된 PO가 PLAN 챌린저가 아니면 IllegalArgumentException | 실패: 예외 IllegalArgumentException |
-| [371](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectScenarioSeedServiceTest.java#L371) | PO 입력 검증 / 입력된 PO가 챌린저가 아니면 IllegalArgumentException | 조건 PO 입력 검증 / 입력된 PO가 챌린저가 아니면 IllegalArgumentException | 실패: 예외 IllegalArgumentException |
-| [387](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectScenarioSeedServiceTest.java#L387) | PO 입력 검증 / PO 입력이 null이고 PLAN 풀이 부족하면 IllegalArgumentException | 조건 PO 입력 검증 / PO 입력이 null이고 PLAN 풀이 부족하면 IllegalArgumentException | 실패: 예외 IllegalArgumentException |
-| [402](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectScenarioSeedServiceTest.java#L402) | 랜덤 PO 픽 / PO 입력이 null이면 PLAN ACTIVE 챌린저 풀에서 N명 픽한다 | 조건 랜덤 PO 픽 / PO 입력이 null이면 PLAN ACTIVE 챌린저 풀에서 N명 픽한다 | 성공: 검증 assertThat(result.createdProjects()).hasSize(2); assertThat(result.createdProjects()) |
-| [431](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectScenarioSeedServiceTest.java#L431) | 랜덤 PO 픽 / submit 실패 시 reachedStatus=DRAFT, failedStep=SUBMIT으로 failedProjects에 기록된다 | 조건 랜덤 PO 픽 / submit 실패 시 reachedStatus=DRAFT, failedStep=SUBMIT으로 failedProjects에 기록된다 | 실패: 검증 assertThat(result.createdProjects()).isEmpty(); assertThat(result.failedProjects()).hasSize(1); assertThat(failed.projectId()).isEqualTo(700L); assertThat(failed.reachedStatus()).isEqualTo(TargetProjectStatus.DRAFT); |
-| [459](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectScenarioSeedServiceTest.java#L459) | 단계별 실패 격리 / publish 실패 시 reachedStatus=PENDING_REVIEW, failedStep=PUBLISH로 기록된다 | 조건 단계별 실패 격리 / publish 실패 시 reachedStatus=PENDING_REVIEW, failedStep=PUBLISH로 기록된다 | 실패: 검증 assertThat(result.createdProjects()).isEmpty(); assertThat(result.failedProjects()).hasSize(1); assertThat(failed.projectId()).isEqualTo(701L); assertThat(failed.reachedStatus()).isEqualTo(TargetProjectStatus.PENDING_... |
-| [488](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectScenarioSeedServiceTest.java#L488) | 한 프로젝트가 실패해도 다른 프로젝트의 시딩은 계속 진행된다 | 조건 한 프로젝트가 실패해도 다른 프로젝트의 시딩은 계속 진행된다 | 실패: 검증 assertThat(result.createdProjects()).hasSize(1); assertThat(result.createdProjects().get(0).productOwnerMemberId()).isEqualTo(poB); assertThat(result.failedProjects()).hasSize(1); assertThat(result.failedProjects().ge... |
-
 ### ProjectSeedDataCleanupServiceTest
 - 위치: `monolith/src/test/java/com/umc/product/test/application/service/ProjectSeedDataCleanupServiceTest.java`
 
@@ -108,28 +104,6 @@
 |---:|---|---|---|
 | [34](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectSeedDataCleanupServiceTest.java#L34) | gisuId가 지정되면 해당 기수 프로젝트 데이터를 삭제한다 | 호출 delete(DeleteSeedProjectDataCommand.of(9L)) | 성공: 검증 assertThat(result.gisuId()).isEqualTo(9L); assertThat(result.deletedProjects()).isEqualTo(2); assertThat(result.deletedProjectMembers()).isEqualTo(20); |
 | [56](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectSeedDataCleanupServiceTest.java#L56) | gisuId가 null이면 활성 기수 프로젝트 데이터를 삭제한다 | 호출 delete(DeleteSeedProjectDataCommand.of(null)) | 성공: 검증 assertThat(result.gisuId()).isEqualTo(10L); assertThat(result.deletedProjects()).isEqualTo(1); |
-
-### ProjectSeedServiceTest
-- 위치: `monolith/src/test/java/com/umc/product/test/application/service/ProjectSeedServiceTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [70](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectSeedServiceTest.java#L70) | 풀이 MIN_TOTAL(11) 미만인 school 은 시딩을 스킵한다 | 호출 seed(new SeedProjectsCommand(5, 9L)) | 성공: 검증 assertThat(result.createdProjectIds()).isEmpty(); assertThat(result.partialProjects()).isEmpty(); assertThat(result.skippedChapters()).isNotEmpty(); assertThat(result.skippedChapters().get(0).reason()).contains("INSUF... |
-| [92](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectSeedServiceTest.java#L92) | 정상 시딩 시 PO 가 PLAN 챌린저로 등록되지 않은 경우 자동 등록한다 | 호출 seed(new SeedProjectsCommand(1, gisuId)) | 성공: 검증 assertThat(result.createdProjectIds()).hasSize(1); assertThat(result.partialProjects()).isEmpty(); |
-| [118](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectSeedServiceTest.java#L118) | 같은 호출 안에서 한 멤버가 두 프로젝트에 중복 배정되지 않는다 | 호출 seed(new SeedProjectsCommand(2, gisuId)) | 실패: 검증 assertThat(result.createdProjectIds()).hasSize(2); assertThat(usedMemberIds.add(cmd.memberId())); .isTrue(); |
-| [149](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectSeedServiceTest.java#L149) | addProjectMember 가 중간에 실패하면 partialProjects 로 보고한다 | 호출 seed(new SeedProjectsCommand(1, gisuId)) | 실패: 검증 assertThat(result.createdProjectIds()).isEmpty(); assertThat(result.partialProjects()).hasSize(1); assertThat(partial.projectId()).isEqualTo(2000L); assertThat(partial.addedMemberCount()).isEqualTo(1); |
-| [180](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectSeedServiceTest.java#L180) | createDraft 자체 실패는 failedCount 로 분류된다 | 호출 seed(new SeedProjectsCommand(1, gisuId)) | 실패: 검증 assertThat(result.createdProjectIds()).isEmpty(); assertThat(result.partialProjects()).isEmpty(); assertThat(result.failedCount()).isGreaterThanOrEqualTo(1); |
-| [206](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectSeedServiceTest.java#L206) | school 풀과 후보 챌린저는 batch 로 한 번만 조회하고 캐시를 재사용한다 | 호출 seed(new SeedProjectsCommand(2, gisuId)) | 성공: 검증 assertThat(result.createdProjectIds()).hasSize(2); |
-| [240](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectSeedServiceTest.java#L240) | gisuId 가 null 이면 활성 기수를 사용한다 | 호출 seed(new SeedProjectsCommand(1, null)) | 성공: 검증 assertThat(result.createdProjectIds()).isEmpty(); |
-
-### ScenarioPartQuotaPolicyTest
-- 위치: `monolith/src/test/java/com/umc/product/test/application/service/ScenarioPartQuotaPolicyTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [21](../../../monolith/src/test/java/com/umc/product/test/application/service/ScenarioPartQuotaPolicyTest.java#L21) | pickQuotas는 DESIGN 1, FE 1, BE 1로 항상 3개 entry를 반환한다 | 호출 pickQuotas() | 성공: 검증 assertThat(quotas).hasSize(3); assertThat(quotas.get(0).part()).isEqualTo(ChallengerPart.DESIGN); assertThat(FRONTEND_PARTS).contains(quotas.get(1).part()); assertThat(BACKEND_PARTS).contains(quotas.get(2).part()); |
-| [34](../../../monolith/src/test/java/com/umc/product/test/application/service/ScenarioPartQuotaPolicyTest.java#L34) | DESIGN quota는 항상 1~2 사이 | 호출 pickQuotas() | 성공: 검증 assertThat(quotas.get(0).quota()).isBetween(1L, 2L); |
-| [43](../../../monolith/src/test/java/com/umc/product/test/application/service/ScenarioPartQuotaPolicyTest.java#L43) | FE quota와 BE quota는 항상 3~4 사이 | 호출 pickQuotas() | 성공: 검증 assertThat(quotas.get(1).quota()).isBetween(3L, 4L); assertThat(quotas.get(2).quota()).isBetween(3L, 4L); |
 
 ## Repository / Outbound Persistence
 

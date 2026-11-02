@@ -4,6 +4,11 @@
 
 Proposed
 
+프로젝트 시딩(`POST /test/seed/projects`)은 삭제됐다. 운영진 권한, 신규 파트, 지부 TO 상한, 수동 배정
+전환 이후 비-PLAN 팀원을 PM 권한으로 바로 추가할 수 없게 되어 동작하지 않았다. 프로젝트는
+시나리오 시딩(`POST /test/seed/projects/scenarios`, `SEED-003-S`)으로 만든다. 시딩 데이터 정리
+API(`DELETE /test/seed/projects`)는 유지한다. 아래 프로젝트 시딩 절은 도입 당시 기록이다.
+
 ## Context
 
 `feat/alpha-env-dummy-data-seeding` 브랜치의 일련의 커밋(`abbb8c71`,
@@ -241,6 +246,8 @@ Response:
 
 ### 프로젝트 시딩 (Project + ProjectMember)
 
+> 삭제됨. 시나리오 시딩(`POST /test/seed/projects/scenarios`)으로 대체했다. Status 절 참고.
+
 `POST /test/seed/projects`
 
 ```json
@@ -461,10 +468,10 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
 2. **`POST /test/seed/challengers`** — 활성 기수의 (Chapter, School, Part) 셀별로
    더미 Member + Challenger 를 함께 만든다. 멤버 시딩과 사실상 동일 효과지만 챌린저까지
    함께 생성되므로 챌린저 화면 검증에 유리하다.
-3. **`POST /test/seed/projects`** — 같은 school 의 Member 풀에서 슬롯(PLAN ×1 +
-   FE 5~6 + BE 5~6 = 11~13)을 뽑아 프로젝트를 N 개 만든다. 한 school 에 최소 11명이
-   있어야 하므로 1번에서 충분히 시딩하지 않으면 `partialProjects` / `skippedChapters`
-   에 잡힌다.
+3. **`POST /test/seed/projects/scenarios`** — 활성 기수에 DRAFT / PENDING_REVIEW /
+   IN_PROGRESS 상태의 프로젝트를 N 개 만든다. IN_PROGRESS 는 `adminMemberId`(총괄단 또는
+   지부장)가 PO 를 지정해 직접 등록하고, 지부 TO 상한 안에서 파트별 TO 를 정한 뒤 공개한다.
+   팀원은 채우지 않는다.
 4. **`POST /test/seed/curriculum`** — 활성 기수에 ADMIN 제외 파트별로 Curriculum →
    WeeklyCurriculum → OriginalWorkbook(MAIN, READY) → Mission 골격을 생성한다.
    `releaseRequesterMemberId` 를 함께 보내면 워크북을 READY → RELEASED 로 전환해
@@ -487,9 +494,9 @@ curl -X POST $BASE/test/seed/members -H 'Content-Type: application/json' \
 curl -X POST $BASE/test/seed/challengers -H 'Content-Type: application/json' \
   -d '{"countPerPartPerSchool": 2}'
 
-# 3. 프로젝트: 10건
-curl -X POST $BASE/test/seed/projects -H 'Content-Type: application/json' \
-  -d '{"projectCount": 10}'
+# 3. 프로젝트: 공개 상태 10건, 운영진(총괄단 또는 지부장) 멤버 ID 1
+curl -X POST $BASE/test/seed/projects/scenarios -H 'Content-Type: application/json' \
+  -d '{"targetStatus": "IN_PROGRESS", "projectCount": 10, "adminMemberId": 1}'
 
 # 4. 커리큘럼: 8 주차, 워크북당 미션 2개, releaseRequesterMemberId 지정 시 RELEASED 까지 전환
 curl -X POST $BASE/test/seed/curriculum -H 'Content-Type: application/json' \
@@ -509,10 +516,9 @@ curl -X POST $BASE/test/seed/notice -H 'Content-Type: application/json' \
   원인이다(필수 약관 변경 등).
 - `SeedChallengersResponse.perCellSummary[i].challengerFailed > 0` — 멤버는 만들었지만
   챌린저 bulk 생성이 트랜잭션 단위로 실패. 셀 전체 챌린저가 롤백됨.
-- `SeedProjectsResponse.skippedChapters[i].reason = "INSUFFICIENT_POOL ..."` —
-  해당 school 의 풀이 11명 미만. 1번 시딩을 늘려야 한다.
-- `SeedProjectsResponse.partialProjects[i]` — 프로젝트는 만들어졌지만 일부 멤버
-  add 가 실패. orphan project 가 잔존하므로 운영자 판단 후 정리 필요.
+- `SeedProjectScenariosResponse.failedProjects[i]` — 해당 프로젝트가 목표 상태에 도달하지
+  못했다. `failedStep=QUOTA` 이고 `projectId` 가 없으면 지부에 남은 TO 가 없어 만들지 않은
+  것이다. `projectId` 가 있으면 `reachedStatus` 상태로 DB 에 남아 있으므로 운영자 판단 후 정리한다.
 - `SeedCurriculumResponse.curriculumFailed > 0` — 동일 (gisuId, part) 의 커리큘럼이
   이미 존재하는 경우. 파트별 1개 unique 제약 위반.
 - `SeedCurriculumResponse.weeklyCurriculumFailed > 0` — 동일 커리큘럼 내 (week, isExtra)
@@ -536,7 +542,7 @@ curl -X POST $BASE/test/seed/notice -H 'Content-Type: application/json' \
 |---|---|---|
 | `skipped=true` 가 떨어진다 | 임계값 초과 (`skipIfMemberCountGreaterThan`) 또는 챌린저 풀 비어있음 | `force=true` 재호출 / 임계값 조정 / 챌린저 시딩 선행 |
 | 모든 셀 skip | 활성 기수 미설정 또는 ChapterSchool 매핑 비어있음 | `/api/v1/admin/gisu` / chapter-school seed 마이그레이션 확인 |
-| `INSUFFICIENT_POOL` 빈발 | school 당 멤버 < 11 | members 호출을 더 큰 수로 다시 |
+| `failedStep=QUOTA` 빈발 | 지부의 파트별 챌린저 수보다 공개 프로젝트 TO 합계가 이미 많음 | challengers 호출로 파트 인원을 늘린 뒤 다시 |
 
 ## References
 
