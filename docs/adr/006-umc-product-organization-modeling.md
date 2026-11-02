@@ -147,4 +147,6 @@ UMC PRODUCT의 기능 조직은 일반화된 tree가 아니라 Chapter 단일 �
 - Java `LocalDate`: https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/LocalDate.html
 - PostgreSQL 날짜 타입: https://www.postgresql.org/docs/current/datatype-datetime.html
 - PostgreSQL 범위 타입: https://www.postgresql.org/docs/current/rangetypes.html
-- 재구축 migration: `src/main/resources/db/migration/V2026.07.13.00.01__rebuild_umc_product_activity_period_model.sql`
+- 재구축 migration: `monolith/src/main/resources/db/migration/V2026.07.13.00.01__rebuild_umc_product_activity_period_model.sql`
+- 폐기 migration: `monolith/src/main/resources/db/migration/V2026.11.02.18.00__drop_umc_product_organization_tables.sql`
+- 폐기 PR: #1490
