@@ -19,6 +19,8 @@ public final class SecurityPathConfig {
     public static final String GRAPHQL_PATH = "/graphql";
     public static final String GRAPHIQL_PATH = "/graphiql";
     public static final String GRAPHIQL_PATTERN = "/graphiql/**";
+    public static final String WELL_KNOWN_PATTERN = "/.well-known/**";
+    public static final String COMMUNITY_THREAD_DEEP_LINK_PATTERN = "/community/threads/**";
 
     public static final List<String> SWAGGER_BLOCKED_PATHS = List.of(
         "/swagger-ui/**",
@@ -50,7 +52,8 @@ public final class SecurityPathConfig {
             Stream.of(
                 "/actuator/**",
                 "/error",
-                "/ws/**"
+                "/ws/**",
+                WELL_KNOWN_PATTERN
             ),
             DOCUMENTATION_PATHS.stream()
         ),
@@ -67,7 +70,11 @@ public final class SecurityPathConfig {
             "/api/v1/terms",
             "/api/v1/terms/**",
             "/actuator/**",
-            "/error"
+            "/error",
+            // App Link/Universal Link 소유권 검증과 공유 링크 fallback 은 점검 중에도 응답해야
+            // OS 재검증 주기나 외부에 공유된 링크가 깨지지 않는다(#1268).
+            WELL_KNOWN_PATTERN,
+            COMMUNITY_THREAD_DEEP_LINK_PATTERN
         ),
         DOCUMENTATION_PATHS.stream()
     ).toList();
