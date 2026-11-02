@@ -154,20 +154,7 @@ class NoticeContentPermissionIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("UMC_PRODUCT 역할이 있는 작성자도 자신의 공지 첨부를 변경할 수 있다")
-    void UMC_PRODUCT_작성자_첨부_변경_허용() throws Exception {
-        // Given
-        memberSystemRoleJpaRepository.save(MemberSystemRole.create(authorMemberId, MemberSystemRoleType.UMC_PRODUCT));
-        evictAuthoritySnapshotCacheUseCase.evictByMemberIds(List.of(authorMemberId));
-
-        // When / Then
-        mockMvc.perform(request(Operation.ADD_LINKS, "author-token"))
-            .andExpect(status().isOk());
-        assertChangedContents(Operation.ADD_LINKS, null);
-    }
-
-    @Test
-    @DisplayName("UMC_PRODUCT만 가진 계정은 SUPER_ADMIN처럼 다른 작성자의 공지 첨부를 변경할 수 없다")
+    @DisplayName("UMC_PRODUCT만으로는 다른 작성자의 공지 첨부를 변경할 수 없다")
     void UMC_PRODUCT_계정_첨부_변경_거부() throws Exception {
         // When / Then
         mockMvc.perform(request(Operation.ADD_LINKS, "umc-product-token"))

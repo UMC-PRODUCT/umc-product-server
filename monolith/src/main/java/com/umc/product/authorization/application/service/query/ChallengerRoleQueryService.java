@@ -98,6 +98,15 @@ public class ChallengerRoleQueryService implements
     }
 
     @Override
+    public boolean isUmcProduct(Long memberId) {
+        if (!memberExists(memberId)) {
+            return false;
+        }
+        Set<SystemRoleType> systemRoles = listSystemRoles(memberId);
+        return systemRoles.contains(SystemRoleType.SUPER_ADMIN) || systemRoles.contains(SystemRoleType.UMC_PRODUCT);
+    }
+
+    @Override
     public List<ChallengerRoleInfo> listByChallengerIdsAndGisuId(Set<Long> challengerIds, Long gisuId) {
         if (challengerIds.isEmpty()) {
             return List.of();
@@ -114,9 +123,13 @@ public class ChallengerRoleQueryService implements
     }
 
     private boolean hasSystemSuperAdmin(Long memberId) {
+        return listSystemRoles(memberId).contains(SystemRoleType.SUPER_ADMIN);
+    }
+
+    private Set<SystemRoleType> listSystemRoles(Long memberId) {
         return listMemberSystemRoleUseCase.listByMemberId(memberId).stream()
-            .flatMap(role -> SystemRoleType.find(role.roleType()).stream())
-            .anyMatch(roleType -> roleType == SystemRoleType.SUPER_ADMIN);
+            .map(role -> SystemRoleType.from(role.roleType()))
+            .collect(Collectors.toUnmodifiableSet());
     }
 
     @Override

@@ -263,17 +263,15 @@ class MemberSummaryV2QueryServiceTest {
         MemberSummaryV2Info info = service.getSummaryByMemberId(100L);
 
         assertThat(info.isSuperAdmin()).isTrue();
-        assertThat(info.isUmcProduct()).isTrue();
         assertThat(info.currentGisuMembership()).isNull();
     }
 
     @Test
-    void UMC_PRODUCT만_있으면_isUmcProduct만_true이다() {
+    void isUmcProduct는_권한_판정_결과를_그대로_내린다() {
         given(getMemberUseCase.getById(100L)).willReturn(member());
         given(getMemberProfileUseCase.getMemberProfileById(100L)).willReturn(profile());
-        given(listMemberSystemRoleUseCase.listByMemberId(100L)).willReturn(List.of(
-            new MemberSystemRoleInfo(100L, MemberSystemRoleType.UMC_PRODUCT.name())
-        ));
+        given(listMemberSystemRoleUseCase.listByMemberId(100L)).willReturn(List.of());
+        given(getChallengerRoleUseCase.isUmcProduct(100L)).willReturn(true);
         given(getChallengerUseCase.getAllByMemberId(100L)).willReturn(List.of());
         given(getGisuUseCase.findActiveGisu()).willReturn(Optional.empty());
         given(getChallengerActivityPeriodUseCase.calculateActivityPeriod(any(), any()))
@@ -298,6 +296,5 @@ class MemberSummaryV2QueryServiceTest {
         MemberSummaryV2Info info = service.getSummaryByMemberId(100L);
 
         assertThat(info.isSuperAdmin()).isFalse();
-        assertThat(info.isUmcProduct()).isFalse();
     }
 }

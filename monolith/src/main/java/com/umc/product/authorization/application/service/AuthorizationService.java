@@ -35,7 +35,6 @@ import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.ListMemberSystemRoleUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
-import com.umc.product.member.application.port.in.query.dto.MemberSystemRoleInfo;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
@@ -168,17 +167,8 @@ public class AuthorizationService implements CheckPermissionUseCase {
 
     private Set<SystemRoleType> listSystemRoles(Long memberId) {
         return listMemberSystemRoleUseCase.listByMemberId(memberId).stream()
-            .map(MemberSystemRoleInfo::roleType)
-            .flatMap(roleType -> findSystemRole(memberId, roleType).stream())
+            .map(role -> SystemRoleType.from(role.roleType()))
             .collect(Collectors.toUnmodifiableSet());
-    }
-
-    private Optional<SystemRoleType> findSystemRole(Long memberId, String roleType) {
-        Optional<SystemRoleType> systemRole = SystemRoleType.find(roleType);
-        if (systemRole.isEmpty()) {
-            log.warn("알 수 없는 시스템 역할을 무시합니다: memberId={}, roleType={}", memberId, roleType);
-        }
-        return systemRole;
     }
 
     private Optional<SubjectAttributes> readCachedSubject(CacheKey cacheKey, Long memberId) {
