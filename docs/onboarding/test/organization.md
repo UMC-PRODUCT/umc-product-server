@@ -1,15 +1,15 @@
 # Organization 테스트 케이스
 
-- 테스트 파일: 34개
-- 테스트 케이스: 193개
+- 테스트 파일: 25개
+- 테스트 케이스: 148개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
 |---|---:|
-| Controller / Inbound Adapter | 24 |
-| UseCase / Application Service | 100 |
-| Repository / Outbound Persistence | 33 |
-| Domain | 36 |
+| Controller / Inbound Adapter | 19 |
+| UseCase / Application Service | 89 |
+| Repository / Outbound Persistence | 22 |
+| Domain | 18 |
 
 ## Controller / Inbound Adapter
 
@@ -34,17 +34,6 @@
 | 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
 |---:|---|---|---|
 | [16](../../../monolith/src/test/java/com/umc/product/organization/adapter/in/web/ChapterQueryControllerTest.java#L16) | 지부 목록을 조회합니다 | HTTP GET /api/v1/chapters | 성공: HTTP 200 OK |
-
-### UmcProductRequestContractTest
-- 위치: `monolith/src/test/java/com/umc/product/organization/adapter/in/web/UmcProductRequestContractTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [41](../../../monolith/src/test/java/com/umc/product/organization/adapter/in/web/UmcProductRequestContractTest.java#L41) | 활동 날짜는 yyyy-MM-dd 형식으로 역직렬화한다 | 날짜만 포함한 활동 기간 JSON | 성공: `LocalDate`로 같은 날짜를 반환한다 |
-| [62](../../../monolith/src/test/java/com/umc/product/organization/adapter/in/web/UmcProductRequestContractTest.java#L62) | 활동 날짜에 시각이나 offset이 포함되면 역직렬화를 거부한다 | `2026-07-13T00:00:00Z` 입력 | 실패: `LocalDate` 형식 오류 |
-| [78](../../../monolith/src/test/java/com/umc/product/organization/adapter/in/web/UmcProductRequestContractTest.java#L78) | activeOn은 yyyy-MM-dd 형식만 허용한다 | offset 또는 Z가 포함된 query parameter | 실패: 날짜 변환 오류 |
-| [101](../../../monolith/src/test/java/com/umc/product/organization/adapter/in/web/UmcProductRequestContractTest.java#L101) | 멤버 생성에는 한 개 이상의 활동 기간이 필요하다 | 빈 `activityPeriods` | 실패: Jakarta Validation 위반 |
-| [135](../../../monolith/src/test/java/com/umc/product/organization/adapter/in/web/UmcProductRequestContractTest.java#L135) | Chapter 소속 요청에는 Part와 역할 필드가 없다 | Chapter membership record component 조회 | 성공: `chapterId`는 있고 `partId`, `role`은 없다 |
 
 ### GisuCommandControllerTest
 - 위치: `monolith/src/test/java/com/umc/product/organization/adapter/in/web/GisuCommandControllerTest.java`
@@ -260,35 +249,6 @@
 | [44](../../../monolith/src/test/java/com/umc/product/organization/application/service/StudyGroupScheduleQueryServiceTest.java#L44) | 권한 없는 사용자는 visible 그룹이 없어 DB 호출 없이 빈 Set | 호출 findScheduleIdsByStudyGroupIds(List.of()) | 성공: 검증 assertThat(result).isEmpty(); |
 | [59](../../../monolith/src/test/java/com/umc/product/organization/application/service/StudyGroupScheduleQueryServiceTest.java#L59) | 시야의 그룹에 등록된 일정이 없어도 정상 빈 Set 반환 | 호출 findScheduleIdsByStudyGroupIds(visibleGroupIds) | 성공: 검증 assertThat(result).isEmpty(); |
 
-### UmcProductAccessPolicyTest
-- 위치: `monolith/src/test/java/com/umc/product/organization/application/service/UmcProductAccessPolicyTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [36](../../../monolith/src/test/java/com/umc/product/organization/application/service/UmcProductAccessPolicyTest.java#L36) | 중앙 총괄단은 Leadership 조회 없이 조직을 관리할 수 있다 | 중앙 총괄단 역할 보유 | 성공: Leadership과 날짜 조회 없이 허용한다 |
-| [46](../../../monolith/src/test/java/com/umc/product/organization/application/service/UmcProductAccessPolicyTest.java#L46) | 오늘 유효한 Product Leadership이 있으면 조직을 관리할 수 있다 | KST 오늘에 유효한 Lead/Vice Lead | 성공: 관리를 허용한다 |
-| [60](../../../monolith/src/test/java/com/umc/product/organization/application/service/UmcProductAccessPolicyTest.java#L60) | 오늘 유효한 Product Leadership이 없으면 조직을 관리할 수 없다 | 기준일에 유효한 Leadership 없음 | 성공: 관리를 거부한다 |
-| [74](../../../monolith/src/test/java/com/umc/product/organization/application/service/UmcProductAccessPolicyTest.java#L74) | 본인은 Leadership이 없어도 자신의 프로필을 관리할 수 있다 | 요청자와 프로필 소유자가 같음 | 성공: 별도 권한 조회 없이 허용한다 |
-
-### UmcProductMemberCommandServiceTest
-- 위치: `monolith/src/test/java/com/umc/product/organization/application/service/UmcProductMemberCommandServiceTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [78](../../../monolith/src/test/java/com/umc/product/organization/application/service/UmcProductMemberCommandServiceTest.java#L78) | 본인은 Leadership이 없어도 프로필을 수정할 수 있다 | 본인 프로필 수정 | 성공: 멤버 프로필을 저장한다 |
-| [95](../../../monolith/src/test/java/com/umc/product/organization/application/service/UmcProductMemberCommandServiceTest.java#L95) | 관리 권한이 없으면 본인의 활동 기간도 추가할 수 없다 | 본인이나 Product 관리 권한 없음 | 실패: `UMC_PRODUCT_ACCESS_DENIED` |
-| [115](../../../monolith/src/test/java/com/umc/product/organization/application/service/UmcProductMemberCommandServiceTest.java#L115) | 기존 활동 기간과 겹치거나 인접한 기간은 추가할 수 없다 | 저장된 기간과 overlap 또는 adjacency 발생 | 실패: `UMC_PRODUCT_ACTIVITY_PERIOD_OVERLAPPED` |
-| [139](../../../monolith/src/test/java/com/umc/product/organization/application/service/UmcProductMemberCommandServiceTest.java#L139) | 멤버 생성 시 서로 겹치는 활동 기간을 등록할 수 없다 | 생성 요청 안의 두 기간이 중첩 | 실패: `UMC_PRODUCT_ACTIVITY_PERIOD_OVERLAPPED` |
-| [150](../../../monolith/src/test/java/com/umc/product/organization/application/service/UmcProductMemberCommandServiceTest.java#L150) | 멤버 생성 시 빈 날짜 없이 인접한 활동 기간을 등록할 수 없다 | 이전 종료일 다음 날에 새 기간 시작 | 실패: `UMC_PRODUCT_ACTIVITY_PERIOD_OVERLAPPED` |
-
-### UmcProductDateProviderTest
-- 위치: `monolith/src/test/java/com/umc/product/organization/application/service/UmcProductDateProviderTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [17](../../../monolith/src/test/java/com/umc/product/organization/application/service/UmcProductDateProviderTest.java#L17) | KST 자정 직전에는 이전 날짜를 반환한다 | UTC `14:59:59` 고정 Clock | 성공: KST 이전 날짜를 반환한다 |
-| [26](../../../monolith/src/test/java/com/umc/product/organization/application/service/UmcProductDateProviderTest.java#L26) | KST 자정부터는 다음 날짜를 반환한다 | UTC `15:00:00` 고정 Clock | 성공: KST 다음 날짜를 반환한다 |
-
 ## Repository / Outbound Persistence
 
 ### StudyGroupPersistenceAdapterTest
@@ -331,23 +291,6 @@
 | [75](../../../monolith/src/test/java/com/umc/product/organization/adapter/out/persistence/StudyGroupSchedulePersistenceAdapterTest.java#L75) | 스터디 그룹은 있지만 등록된 일정이 없으면 빈 결과 | 호출 findScheduleIdsByStudyGroupIds(List.of(groupWithNoSchedule)) | 성공: 검증 assertThat(result).isEmpty(); |
 | [88](../../../monolith/src/test/java/com/umc/product/organization/adapter/out/persistence/StudyGroupSchedulePersistenceAdapterTest.java#L88) | 권한 없는 사용자는 visible 그룹이 없어 빈 입력 DB 호출 없이 즉시 종료 | 호출 findScheduleIdsByStudyGroupIds(List.of()) | 성공: 검증 assertThat(result).isEmpty(); |
 
-### UmcProductPersistenceAdapterTest
-- 위치: `monolith/src/test/java/com/umc/product/organization/adapter/out/persistence/umcproduct/UmcProductPersistenceAdapterTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [78](../../../monolith/src/test/java/com/umc/product/organization/adapter/out/persistence/umcproduct/UmcProductPersistenceAdapterTest.java#L78) | 활동 기간의 LocalDate는 DATE로 그대로 왕복하고 종료일을 포함한다 | 저장 후 영속성 context 초기화 및 재조회 | 성공: 시작일·종료일과 포함 경계를 유지한다 |
-| [126](../../../monolith/src/test/java/com/umc/product/organization/adapter/out/persistence/umcproduct/UmcProductPersistenceAdapterTest.java#L126) | 멤버 활동 기간은 겹치거나 빈틈없이 인접할 수 없다 | 기존 종료일 다음 날 새 기간 시작 | 실패: `OrganizationDomainException`, `UMC_PRODUCT_ACTIVITY_PERIOD_OVERLAPPED` |
-| [153](../../../monolith/src/test/java/com/umc/product/organization/adapter/out/persistence/umcproduct/UmcProductPersistenceAdapterTest.java#L153) | Chapter는 활성 필터와 정렬 순서를 유지한다 | 활성·비활성 Chapter 저장 | 성공: 활성 Chapter만 정렬 조회한다 |
-| [166](../../../monolith/src/test/java/com/umc/product/organization/adapter/out/persistence/umcproduct/UmcProductPersistenceAdapterTest.java#L166) | 멤버는 같은 기간에 여러 Chapter에 소속될 수 있다 | 동일 멤버 기간에 Develop과 Client Chapter 소속 생성 | 성공: 두 Chapter 소속을 모두 조회한다 |
-| [199](../../../monolith/src/test/java/com/umc/product/organization/adapter/out/persistence/umcproduct/UmcProductPersistenceAdapterTest.java#L199) | 멤버 검색의 activeOn은 멤버와 Chapter 소속 기간을 모두 검사한다 | 현재 활동 멤버와 종료된 멤버 검색 | 성공: 기준일 유효 멤버만 반환한다 |
-| [242](../../../monolith/src/test/java/com/umc/product/organization/adapter/out/persistence/umcproduct/UmcProductPersistenceAdapterTest.java#L242) | 같은 멤버의 같은 Chapter 소속 기간은 겹칠 수 없다 | 종료일을 공유하는 두 Chapter 소속 | 실패: `OrganizationDomainException`, `UMC_PRODUCT_CHAPTER_MEMBERSHIP_OVERLAPPED` |
-| [282](../../../monolith/src/test/java/com/umc/product/organization/adapter/out/persistence/umcproduct/UmcProductPersistenceAdapterTest.java#L282) | Leadership은 멤버와 자체 기간이 모두 유효한 날에만 조회된다 | Leadership 종료일과 다음 날 조회 | 성공: 종료일만 유효하게 반환한다 |
-| [361](../../../monolith/src/test/java/com/umc/product/organization/adapter/out/persistence/umcproduct/UmcProductPersistenceAdapterTest.java#L361) | 동일한 Leadership 역할은 같은 날 한 명만 가질 수 있다 | 같은 날짜의 두 Vice Lead | 실패: `OrganizationDomainException`, `UMC_PRODUCT_LEADERSHIP_OVERLAPPED` |
-| [337](../../../monolith/src/test/java/com/umc/product/organization/adapter/out/persistence/umcproduct/UmcProductPersistenceAdapterTest.java#L337) | Squad activeOn은 종료일을 포함하고 기간 밖 Squad를 제외한다 | 현재·미래·비활성 Squad 조회 | 성공: 기준일에 유효한 활성 Squad만 반환한다 |
-| [355](../../../monolith/src/test/java/com/umc/product/organization/adapter/out/persistence/umcproduct/UmcProductPersistenceAdapterTest.java#L355) | 같은 Squad의 멤버 참여와 SquadLead 기간 중복을 조회한다 | 기존 SquadLead 종료일에 새 구간 검사 | 성공: 멤버·리더 중복을 모두 감지한다 |
-| [393](../../../monolith/src/test/java/com/umc/product/organization/adapter/out/persistence/umcproduct/UmcProductPersistenceAdapterTest.java#L393) | 멤버 하위 활동을 FK 안전 순서로 일괄 삭제할 수 있다 | 참여·소속·Leadership·활동 기간 순서로 삭제 | 성공: 멤버까지 삭제된다 |
-
 ## Domain
 
 ### GisuActivityDaysTest
@@ -381,44 +324,3 @@
 | [136](../../../monolith/src/test/java/com/umc/product/organization/domain/StudyGroupTest.java#L136) | removeMentor 마지막 멘토를 제거하면 STUDY GROUP MENTOR REQUIRED | 조건 removeMentor 마지막 멘토를 제거하면 STUDY GROUP MENTOR REQUIRED | 실패: 예외 OrganizationDomainException; 에러코드 OrganizationErrorCode.STUDY_GROUP_MENTOR_REQUIRED; 검증 .isEqualTo(OrganizationErrorCode.STUDY_GROUP_MENTOR_REQUIRED); |
 | [149](../../../monolith/src/test/java/com/umc/product/organization/domain/StudyGroupTest.java#L149) | addMembers 빈 Set이면 STUDY GROUP MEMBER REQUIRED | 조건 addMembers 빈 Set이면 STUDY GROUP MEMBER REQUIRED | 실패: 예외 OrganizationDomainException; 에러코드 OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED; 검증 .isEqualTo(OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED); |
 
-### UmcProductDatePeriodTest
-- 위치: `monolith/src/test/java/com/umc/product/organization/domain/UmcProductDatePeriodTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [20](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductDatePeriodTest.java#L20) | 같은 날 시작하고 종료하는 기간을 생성할 수 있다 | 동일한 `LocalDate` 시작일과 종료일 | 성공: 종료일을 포함해 활성 상태로 판단한다 |
-| [29](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductDatePeriodTest.java#L29) | 종료일이 없는 진행 중 기간을 생성할 수 있다 | `endDate=null` | 성공: 미래 날짜에도 활성 상태로 판단한다 |
-| [37](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductDatePeriodTest.java#L37) | 시작일이 없으면 기간을 생성할 수 없다 | `startDate=null` | 실패: `UMC_PRODUCT_START_DATE_REQUIRED` |
-| [45](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductDatePeriodTest.java#L45) | 종료일이 시작일보다 빠르면 기간을 생성할 수 없다 | `endDate < startDate` | 실패: `UMC_PRODUCT_PERIOD_INVALID` |
-| [53](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductDatePeriodTest.java#L53) | 기간 포함과 겹침은 종료일을 포함해서 판단한다 | 종료일이 같은 두 기간 | 성공: 포함 및 겹침으로 판단한다 |
-| [62](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductDatePeriodTest.java#L62) | 빈 날짜 없이 이어진 기간은 인접한 기간이다 | 이전 종료일 다음 날에 시작 | 성공: 중첩 없이 인접으로 판단한다 |
-
-### UmcProductMemberActivityTest
-- 위치: `monolith/src/test/java/com/umc/product/organization/domain/UmcProductMemberActivityTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [21](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductMemberActivityTest.java#L21) | 멤버 활동 기간과 그 안의 Chapter 소속을 생성한다 | Chapter 소속 기간이 멤버 기간 안에 있음 | 성공: Chapter·책임·기간을 보존한다 |
-| [45](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductMemberActivityTest.java#L45) | Chapter 소속 기간은 멤버 활동 기간 안에 있어야 한다 | 소속 시작일이 멤버 시작일보다 빠름 | 실패: `UMC_PRODUCT_ACTIVITY_PERIOD_OUT_OF_RANGE` |
-| [63](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductMemberActivityTest.java#L63) | Product Leadership은 Chapter 소속과 독립적으로 생성한다 | 별도 Chapter membership 없이 Leadership 생성 | 성공: Product Lead 이력을 독립적으로 보존한다 |
-| [83](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductMemberActivityTest.java#L83) | Product Leadership 기간은 멤버 활동 기간 안에 있어야 한다 | 무기한 Leadership이 유한 멤버 기간을 벗어남 | 실패: `UMC_PRODUCT_ACTIVITY_PERIOD_OUT_OF_RANGE` |
-
-### UmcProductOrganizationStructureTest
-- 위치: `monolith/src/test/java/com/umc/product/organization/domain/UmcProductOrganizationStructureTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [15](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductOrganizationStructureTest.java#L15) | 조직 역할은 Product Leadership만 제공한다 | Leadership role enum 조회 | 성공: Lead와 Vice Lead만 존재한다 |
-| [24](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductOrganizationStructureTest.java#L24) | Chapter를 생성한다 | Chapter 표시 정보 입력 | 성공: 공백을 정리해 저장한다 |
-| [33](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductOrganizationStructureTest.java#L33) | Chapter의 코드와 이름은 필수다 | 공백 코드 또는 이름 | 실패: 필수값 오류 코드를 반환한다 |
-| [45](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductOrganizationStructureTest.java#L45) | Chapter를 수정한다 | 표시·활성 정보 수정 | 성공: 변경 값을 반영한다 |
-
-### UmcProductSquadTest
-- 위치: `monolith/src/test/java/com/umc/product/organization/domain/UmcProductSquadTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [21](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductSquadTest.java#L21) | Squad는 필수 시작일과 nullable 종료일을 가진다 | `LocalDate startDate`, `endDate=null` | 성공: 미래 날짜에도 활성 상태로 판단한다 |
-| [38](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductSquadTest.java#L38) | Squad 종료일이 시작일보다 빠르면 생성할 수 없다 | `endDate < startDate` | 실패: `UMC_PRODUCT_PERIOD_INVALID` |
-| [54](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductSquadTest.java#L54) | Squad 참여 기간은 멤버와 Squad 기간 모두에 포함되어야 한다 | 참여 기간이 두 상위 기간을 벗어남 | 실패: `UMC_PRODUCT_ACTIVITY_PERIOD_OUT_OF_RANGE` |
-| [78](../../../monolith/src/test/java/com/umc/product/organization/domain/UmcProductSquadTest.java#L78) | Squad 참여자는 역할과 책임, 자체 기간을 가진다 | SquadLead 참여 생성 | 성공: 역할·책임·`LocalDate` 기간을 보존한다 |
