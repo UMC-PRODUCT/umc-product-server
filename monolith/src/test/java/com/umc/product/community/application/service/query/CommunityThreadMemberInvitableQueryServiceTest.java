@@ -42,6 +42,7 @@ import com.umc.product.community.domain.enums.CommunityThreadMemberRole;
 import com.umc.product.community.domain.enums.CommunityThreadMemberState;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
+import com.umc.product.global.config.DeepLinkProperties;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.SearchMemberInvitationUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -90,7 +91,8 @@ class CommunityThreadMemberInvitableQueryServiceTest {
             getChallengerUseCase,
             getGisuUseCase,
             searchInvitationUseCase,
-            new CommunityThreadProperties(100)
+            new CommunityThreadProperties(100),
+            new DeepLinkProperties("https://api.university.neordinary.com", null, null, null)
         );
     }
 

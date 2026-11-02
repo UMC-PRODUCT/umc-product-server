@@ -339,6 +339,19 @@ app:
         service-type: UMC_TECH_BLOG
         environment: PROD
 
+  # 커뮤니티 스레드 공유 링크 등 앱 딥링크 공통 설정(#1268). 기본값은 prod 기준이고, dev 프로필에서
+  # 호스트/서명 인증서만 재정의한다.
+  deep-link:
+    base-url: ${APP_DEEP_LINK_BASE_URL:https://api.university.neordinary.com}
+    fallback-url: ${APP_DEEP_LINK_FALLBACK_URL:https://university.neordinary.com}
+    android:
+      package-name: ${APP_DEEP_LINK_ANDROID_PACKAGE_NAME:com.umc.product}
+      sha256-cert-fingerprints: ${APP_DEEP_LINK_ANDROID_SHA256_CERT_FINGERPRINTS:77:6D:65:1D:14:23:7E:E6:52:3A:5E:A9:F2:A5:ED:6A:04:95:2F:02:C6:B8:F1:74:B4:00:47:EB:CF:29:E1:71}
+    ios:
+      team-id: ${APP_DEEP_LINK_IOS_TEAM_ID:8B8B4462NV}
+      bundle-id: ${APP_DEEP_LINK_IOS_BUNDLE_ID:com.umc.product}
+      app-store-url: ${APP_DEEP_LINK_IOS_APP_STORE_URL:}
+
   sso:
     issuer: ${SSO_ISSUER:https://api.university.neordinary.com}
     # 제공자 콘솔·HTTPS callback·비밀값 준비 후 각각 활성화한다. 기존 모바일 로그인 활성화 설정과는 별개다.
@@ -660,6 +673,12 @@ app:
       - origin: http://localhost:5173
         service-type: UNKNOWN
         environment: DEV
+
+  deep-link:
+    base-url: ${APP_DEEP_LINK_BASE_URL:https://dev.api.university.neordinary.com}
+    android:
+      package-name: ${APP_DEEP_LINK_ANDROID_PACKAGE_NAME:com.umc.product}
+      sha256-cert-fingerprints: ${APP_DEEP_LINK_ANDROID_SHA256_CERT_FINGERPRINTS:D9:4A:F4:92:A2:57:D2:9D:DD:DA:0D:60:73:6B:08:19:DA:91:99:15:5F:9C:20:25:63:E1:E9:EB:E5:38:C7:28,4F:BB:55:BD:20:99:7C:BD:E4:92:E6:20:76:8C:EF:EC:34:85:07:C8:00:8A:78:61:2A:ED:A3:E9:18:6E:4D:0F}
 
   test-api:
     enabled: ${APP_TEST_API_ENABLED:true}
