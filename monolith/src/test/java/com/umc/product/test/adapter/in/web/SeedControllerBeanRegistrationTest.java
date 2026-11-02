@@ -17,10 +17,8 @@ import com.umc.product.test.application.service.DummyNoticeFactory;
 import com.umc.product.test.application.service.MemberSeedService;
 import com.umc.product.test.application.service.MemberSystemRoleSeedService;
 import com.umc.product.test.application.service.NoticeSeedService;
-import com.umc.product.test.application.service.PartAssignmentPolicy;
 import com.umc.product.test.application.service.ProjectApplicationSeedService;
 import com.umc.product.test.application.service.ProjectSeedDataCleanupService;
-import com.umc.product.test.application.service.ProjectSeedService;
 import com.umc.product.test.application.service.SeedProperties;
 
 /**
@@ -39,7 +37,6 @@ class SeedControllerBeanRegistrationTest {
         MemberSystemRoleSeedService.class,
         MemberSystemRoleSeedPersistenceAdapter.class,
         ChallengerSeedService.class,
-        ProjectSeedService.class,
         ProjectSeedDataCleanupService.class,
         ProjectApplicationSeedService.class,
         CurriculumSeedService.class,
@@ -47,7 +44,6 @@ class SeedControllerBeanRegistrationTest {
         DummyMemberFactory.class,
         DummyCurriculumFactory.class,
         DummyNoticeFactory.class,
-        PartAssignmentPolicy.class,
         SeedProperties.class
     })
     @DisplayName("모든 시딩 빈은 @Profile(!prod) + @ConditionalOnProperty(app.seed.enabled=true) 가드를 가진다")

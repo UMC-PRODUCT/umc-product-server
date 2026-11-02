@@ -22,7 +22,7 @@ test/
 |------|----------|-------|
 | Seed API | `adapter/in/web/SeedController.java` | scenario seed surface |
 | Test API | `adapter/in/web/TestController.java` | utility/test endpoint surface |
-| Project seeds | `ProjectSeedService.java`, `ProjectScenarioSeedService.java` | project/application scenario data |
+| Project seeds | `ProjectScenarioSeedService.java`, `ProjectApplicationSeedService.java` | project/application scenario data |
 | Member/challenger seeds | `MemberSeedService.java`, `ChallengerSeedService.java` | member/challenger setup |
 | Curriculum seeds | `CurriculumSeedService.java` | curriculum/workbook setup |
 | Notice seeds | `NoticeSeedService.java` | notice setup |

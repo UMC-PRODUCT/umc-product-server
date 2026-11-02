@@ -33,8 +33,6 @@ import com.umc.product.test.adapter.in.web.dto.SeedProjectApplicationsRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectApplicationsResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectScenariosRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectScenariosResponse;
-import com.umc.product.test.adapter.in.web.dto.SeedProjectsRequest;
-import com.umc.product.test.adapter.in.web.dto.SeedProjectsResponse;
 import com.umc.product.test.application.port.in.command.CreateSeedChallengerRoleUseCase;
 import com.umc.product.test.application.port.in.command.CreateSeedChallengerUseCase;
 import com.umc.product.test.application.port.in.command.CreateSeedMemberSystemRoleUseCase;
@@ -47,7 +45,6 @@ import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
 import com.umc.product.test.application.port.in.command.SeedNoticeUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectApplicationsUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectScenariosUseCase;
-import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
 import com.umc.product.test.application.port.in.command.dto.DeleteSeedProjectDataCommand;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -78,7 +75,6 @@ public class SeedController {
     private final SeedChallengersUseCase seedChallengersUseCase;
     private final CreateSeedChallengerUseCase createSeedChallengerUseCase;
     private final CreateSeedChallengerRoleUseCase createSeedChallengerRoleUseCase;
-    private final SeedProjectsUseCase seedProjectsUseCase;
     private final DeleteSeedProjectDataUseCase deleteSeedProjectDataUseCase;
     private final SeedProjectScenariosUseCase seedProjectScenariosUseCase;
     private final SeedProjectApplicationsUseCase seedProjectApplicationsUseCase;
@@ -178,22 +174,6 @@ public class SeedController {
         @RequestBody @Valid CreateSeedChallengerRoleRequest request
     ) {
         return CreateSeedChallengerRoleResponse.from(createSeedChallengerRoleUseCase.create(request.toCommand()));
-    }
-
-    @Operation(
-        operationId = "SEED-003",
-        summary = "프로젝트 시딩",
-        description = """
-            활성 기수(또는 지정 기수)의 같은 school 멤버 풀에서 PLAN 1 + 프론트엔드 5~6 +
-            백엔드 5~6 의 멤버 슬롯을 추출해 프로젝트를 N 개 생성합니다.
-            School 단위 round-robin 으로 채우며, 풀이 부족한 셀은 skip 합니다.
-            PO 후보가 PLAN 챌린저로 등록되지 않은 경우 시딩 측에서 PLAN 챌린저로 등록한 뒤
-            createDraft 를 호출합니다.
-            """
-    )
-    @PostMapping("/projects")
-    public SeedProjectsResponse seedProjects(@RequestBody @Valid SeedProjectsRequest request) {
-        return SeedProjectsResponse.from(seedProjectsUseCase.seed(request.toCommand()));
     }
 
     @Operation(
