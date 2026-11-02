@@ -199,6 +199,33 @@ class ChallengerRoleQueryServiceTest {
     }
 
     @Test
+    @DisplayName("UMC_PRODUCT만 가진 회원은 문의 관리만 통과하고 SUPER_ADMIN과 운영진 판정은 거부한다")
+    void umc_product_member_can_manage_inquiry_only() {
+        ChallengerRoleQueryService sut = sut();
+        CheckChallengerAuthorityUseCase useCase = sut;
+        given(listMemberSystemRoleUseCase.listByMemberId(MEMBER_ID)).willReturn(List.of(
+            new MemberSystemRoleInfo(MEMBER_ID, "UMC_PRODUCT")
+        ));
+
+        assertThat(useCase.isUmcProduct(MEMBER_ID)).isTrue();
+        assertThat(useCase.isSuperAdmin(MEMBER_ID)).isFalse();
+        assertThat(useCase.isCentralCoreInAnyGisu(MEMBER_ID)).isFalse();
+        assertThat(useCase.isCentralCoreInGisu(MEMBER_ID, GISU_ID)).isFalse();
+    }
+
+    @Test
+    @DisplayName("SUPER_ADMIN은 문의 관리 판정도 통과한다")
+    void super_admin_can_manage_inquiry() {
+        ChallengerRoleQueryService sut = sut();
+        CheckChallengerAuthorityUseCase useCase = sut;
+        given(listMemberSystemRoleUseCase.listByMemberId(MEMBER_ID)).willReturn(List.of(
+            new MemberSystemRoleInfo(MEMBER_ID, "SUPER_ADMIN")
+        ));
+
+        assertThat(useCase.isUmcProduct(MEMBER_ID)).isTrue();
+    }
+
+    @Test
     @DisplayName("삭제된 회원은 역할 저장소를 조회하지 않고 SUPER_ADMIN 권한을 거부한다")
     void deleted_member_cannot_use_super_admin() {
         CheckMemberExistenceUseCase missingMember = memberId -> false;
@@ -206,6 +233,7 @@ class ChallengerRoleQueryServiceTest {
         CheckChallengerAuthorityUseCase useCase = sut;
 
         assertThat(useCase.isSuperAdmin(MEMBER_ID)).isFalse();
+        assertThat(useCase.isUmcProduct(MEMBER_ID)).isFalse();
         verifyNoInteractions(loadChallengerRolePort, listMemberSystemRoleUseCase);
     }
 

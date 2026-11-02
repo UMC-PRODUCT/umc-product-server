@@ -65,6 +65,7 @@ public class MemberSummaryV2QueryService implements GetMemberSummaryV2UseCase {
         MemberProfileInfo profileInfo = getMemberProfileUseCase.getMemberProfileById(memberId);
         boolean isSuperAdmin = listMemberSystemRoleUseCase.listByMemberId(memberId).stream()
             .anyMatch(role -> MemberSystemRoleType.SUPER_ADMIN.name().equals(role.roleType()));
+        boolean isUmcProduct = getChallengerRoleUseCase.isUmcProduct(memberId);
 
         // 챌린저 + 점수 일괄 로딩 (D13에서 batch로 교체됨)
         List<ChallengerInfo> challengers = getChallengerUseCase.getAllByMemberId(memberId);
@@ -123,6 +124,7 @@ public class MemberSummaryV2QueryService implements GetMemberSummaryV2UseCase {
             profileInfo,
             hasLocalCredential,
             isSuperAdmin,
+            isUmcProduct,
             activitySummary.totalActivityDays(),
             currentMembership,
             history

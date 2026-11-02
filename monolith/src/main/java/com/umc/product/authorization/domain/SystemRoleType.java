@@ -9,7 +9,8 @@ import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
  * 저장 위치는 member 도메인이 될 수 있지만, 권한 정책의 의미는 authorization 도메인에서 해석합니다.
  */
 public enum SystemRoleType {
-    SUPER_ADMIN;
+    SUPER_ADMIN,
+    UMC_PRODUCT;
 
     public static SystemRoleType from(String roleType) {
         try {
