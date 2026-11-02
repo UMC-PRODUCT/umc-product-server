@@ -80,7 +80,7 @@ even when `:blog` is absent from the boot jar.
 | Persistence | `{domain}/adapter/out/persistence` | JPA repositories plus QueryDSL query repositories |
 | Public contracts | `{domain}/application/port/in`, `{domain}/application/port/out` | UseCase and Port interfaces |
 | High-complexity project flows | `monolith/src/main/java/com/umc/product/project` | application forms, matching, statistics, permissions |
-| Organization model | `monolith/src/main/java/com/umc/product/organization` | school, chapter, gisu, study group, UMC PRODUCT org |
+| Organization model | `monolith/src/main/java/com/umc/product/organization` | school, chapter, gisu, study group |
 | Test infrastructure | `monolith/src/testFixtures/java/com/umc/product/support` | Testcontainers, fixtures, MockMvc, isolation |
 | Migrations | `monolith/src/main/resources/db/migration` | `VYYYY.MM.DD.HH.MM__snake_case.sql` |
 
