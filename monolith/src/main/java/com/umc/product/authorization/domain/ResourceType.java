@@ -91,7 +91,8 @@ public enum ResourceType {
 
     // 챌린저 관련
     CHALLENGER("challenger", "챌린저",
-        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT,
+            PermissionType.DELETE, PermissionType.MANAGE)),
     CHALLENGER_ROLE("challenger_role", "운영진 기록",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
 
