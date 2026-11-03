@@ -8,7 +8,6 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.support.StaticListableBeanFactory;
 import org.springframework.context.annotation.AnnotationConfigUtils;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.mock.web.MockServletContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -97,7 +96,8 @@ public final class InterceptorPipelineMockMvc {
         context.registerBean(name, (Class<T>) controller.getClass(), () -> controller);
     }
 
-    @Configuration(proxyBeanMethods = false)
+    // @Configuration 을 붙이면 com.umc.product 를 스캔하는 통합 테스트가 이 @EnableWebMvc 를 주워
+    // Boot MVC 자동 설정을 끄고 응답을 XML 로 바꾼다. registerBean 으로만 등록한다.
     @EnableWebMvc
     static class MvcConfig {
     }
