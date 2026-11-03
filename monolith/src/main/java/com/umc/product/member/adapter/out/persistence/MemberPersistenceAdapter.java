@@ -100,8 +100,13 @@ public class MemberPersistenceAdapter implements
     }
 
     @Override
-    public boolean existsNicknameInSchool(Long schoolId, String nickname) {
-        return memberQueryRepository.existsNicknameInSchool(schoolId, nickname);
+    public boolean existsNonWithdrawnNicknameInSchool(Long schoolId, String nickname) {
+        return memberQueryRepository.existsNonWithdrawnNicknameInSchool(schoolId, nickname);
+    }
+
+    @Override
+    public Set<Long> listWithdrawnIdsBySchoolAndNickname(Long schoolId, String nickname) {
+        return memberQueryRepository.listWithdrawnIdsBySchoolAndNickname(schoolId, nickname);
     }
 
     @Override

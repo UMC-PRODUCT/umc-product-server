@@ -1,7 +1,9 @@
 package com.umc.product.member.application.service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ import com.umc.product.member.application.port.in.command.dto.UpdateMemberComman
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.NicknamePolicy;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
@@ -53,6 +56,7 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
     private final EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
     private final DeleteMemberBlocksUseCase deleteMemberBlocksUseCase;
+    private final MemberNicknameRetentionService nicknameRetentionService;
 
     @Override
     @Transactional
@@ -60,6 +64,7 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
         registrationValidator.validateSchoolExists(command.schoolId());
         registrationValidator.validateProfileImageExists(command.profileImageId());
         registrationValidator.validateMandatoryTermsAgreed(command.termConsents());
+        registrationValidator.validateNicknameAvailable(command.schoolId(), command.nickname());
 
         Member savedMember = saveMemberPort.save(command.toEntity());
 
@@ -114,6 +119,17 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
             registrationValidator.validateProfileImageExists(command.profileImageId());
             registrationValidator.validateMandatoryTermsAgreed(command.termConsents());
         });
+
+        registrationValidator.lockSchoolsForRegistration(commands.stream()
+            .map(OAuthRegisterMemberCommand::schoolId).toList());
+        Set<String> requestedNicknames = new HashSet<>();
+        for (OAuthRegisterMemberCommand command : commands) {
+            NicknamePolicy.validate(command.nickname());
+            if (!requestedNicknames.add(command.schoolId() + ":" + command.nickname())) {
+                throw new MemberDomainException(MemberErrorCode.NICKNAME_ALREADY_EXISTS);
+            }
+            registrationValidator.validateNicknameAvailable(command.schoolId(), command.nickname());
+        }
 
         List<Member> savedMembers = saveMemberPort.saveAll(commands.stream()
             .map(OAuthRegisterMemberCommand::toEntity)
@@ -181,6 +197,7 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
             );
         }
 
+        nicknameRetentionService.retainOnWithdrawal(memberToDelete);
         saveMemberPort.delete(memberToDelete);
         evictAuthoritySnapshotCacheUseCase.evictByMemberId(memberId);
         deleteMemberBlocksUseCase.deleteAllInvolving(memberId);

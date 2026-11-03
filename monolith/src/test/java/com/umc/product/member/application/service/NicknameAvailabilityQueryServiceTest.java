@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.umc.product.member.application.port.out.LoadMemberPort;
+import com.umc.product.member.application.port.out.LoadNicknameReservationPort;
 import com.umc.product.organization.application.port.in.query.CheckSchoolExistenceUseCase;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
@@ -27,6 +28,12 @@ class NicknameAvailabilityQueryServiceTest {
     @Mock
     CheckSchoolExistenceUseCase checkSchoolExistenceUseCase;
 
+    @Mock
+    LoadNicknameReservationPort loadNicknameReservationPort;
+
+    @Mock
+    MemberGraduationQueryService graduationQueryService;
+
     @InjectMocks
     NicknameAvailabilityQueryService service;
 
@@ -35,7 +42,7 @@ class NicknameAvailabilityQueryServiceTest {
     void 미사용_닉네임은_사용_가능하다() {
         // given
         given(checkSchoolExistenceUseCase.existsById(7L)).willReturn(true);
-        given(loadMemberPort.existsNicknameInSchool(7L, "토리")).willReturn(false);
+        given(loadMemberPort.existsNonWithdrawnNicknameInSchool(7L, "토리")).willReturn(false);
 
         // when
         var result = service.check(7L, "토리");
@@ -49,7 +56,7 @@ class NicknameAvailabilityQueryServiceTest {
     void 사용_중인_닉네임은_사용_불가하다() {
         // given
         given(checkSchoolExistenceUseCase.existsById(7L)).willReturn(true);
-        given(loadMemberPort.existsNicknameInSchool(7L, "토리")).willReturn(true);
+        given(loadMemberPort.existsNonWithdrawnNicknameInSchool(7L, "토리")).willReturn(true);
 
         // when
         var result = service.check(7L, "토리");

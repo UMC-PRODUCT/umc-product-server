@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.challenger.application.port.out.SaveChallengerPort;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
@@ -45,6 +47,9 @@ class MemberNicknameQueryControllerIntegrationTest extends IntegrationTestSuppor
 
     @Autowired
     SaveSchoolPort saveSchoolPort;
+
+    @Autowired
+    SaveChallengerPort saveChallengerPort;
 
     @Test
     @DisplayName("학교 로고 파일이 없어도 닉네임 사용 가능 여부를 조회한다")
@@ -81,8 +86,8 @@ class MemberNicknameQueryControllerIntegrationTest extends IntegrationTestSuppor
     }
 
     @ParameterizedTest
-    @EnumSource(MemberStatus.class)
-    @DisplayName("챌린저 이력 없이도 활동·휴면·탈퇴 회원의 닉네임을 사용 불가로 판정한다")
+    @EnumSource(value = MemberStatus.class, names = {"ACTIVE", "INACTIVE"})
+    @DisplayName("챌린저 이력 없이도 활동·휴면 회원의 닉네임을 사용 불가로 판정한다")
     void 모든_상태의_저장_회원을_포함한다(MemberStatus memberStatus) throws Exception {
         // given
         School school = schoolFixture.학교("상태대학교");
@@ -145,8 +150,8 @@ class MemberNicknameQueryControllerIntegrationTest extends IntegrationTestSuppor
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"가", "가나다라마바"})
-    @DisplayName("기존 가입 규칙의 한글 한 자와 여섯 자 경계를 허용한다")
+    @ValueSource(strings = {"가", "가나다라"})
+    @DisplayName("새 입력 규칙의 한글 한 자와 네 자 경계를 허용한다")
     void 기존_입력_길이를_유지한다(String nickname) throws Exception {
         // given
         School school = schoolFixture.학교("길이대학교");
@@ -159,7 +164,7 @@ class MemberNicknameQueryControllerIntegrationTest extends IntegrationTestSuppor
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", " 토리", "토리 ", "토 리", "tory", "토리1", "ㄱ", "가나다라마바사"})
+    @ValueSource(strings = {"", " ", " 토리", "토리 ", "토 리", "tory", "토리1", "ㄱ", "가나다라마"})
     @DisplayName("빈 값·공백·한글 외 문자·길이 초과 닉네임은 거절한다")
     void 잘못된_닉네임은_거절한다(String nickname) throws Exception {
         // when & then
@@ -193,5 +198,53 @@ class MemberNicknameQueryControllerIntegrationTest extends IntegrationTestSuppor
         mockMvc.perform(get(PATH).param("schoolId", "9223372036854775807").param("nickname", "토리"))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value("ORGANIZATION-0018"));
+    }
+
+    @Test
+    @DisplayName("수료 이력이 없는 탈퇴 회원의 닉네임은 재사용할 수 있다")
+    void 미수료_탈퇴_닉네임은_재사용한다() throws Exception {
+        // given
+        School school = schoolFixture.학교("탈퇴대학교");
+        Member member = Member.create("탈퇴회원", "토리", "withdrawn@test.com", school.getId(), null);
+        ReflectionTestUtils.setField(member, "status", MemberStatus.WITHDRAWN);
+        saveMemberPort.save(member);
+
+        // when & then
+        mockMvc.perform(get(PATH).param("schoolId", school.getId().toString()).param("nickname", "토리"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.available").value(true));
+    }
+
+    @Test
+    @DisplayName("이전 기수 수료 이력이 있는 탈퇴 회원의 닉네임은 재사용할 수 없다")
+    void 수료_탈퇴_닉네임은_보존한다() throws Exception {
+        // given
+        School school = schoolFixture.학교("수료대학교");
+        Member member = Member.create("수료회원", "토리", "graduated@test.com", school.getId(), null);
+        ReflectionTestUtils.setField(member, "status", MemberStatus.WITHDRAWN);
+        Member saved = saveMemberPort.save(member);
+        Gisu gisu = gisuFixture.비활성_기수(10L);
+        var challenger = challengerFixture.웹(saved.getId(), gisu.getId());
+        challenger.changeStatus(ChallengerStatus.GRADUATED, null, "수료 테스트");
+        saveChallengerPort.save(challenger);
+
+        // when & then
+        mockMvc.perform(get(PATH).param("schoolId", school.getId().toString()).param("nickname", "토리"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.available").value(false));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"와나", "토"})
+    @DisplayName("같은 학교의 다른 닉네임이나 부분 일치는 중복으로 보지 않는다")
+    void 같은_학교에서도_정확히_일치해야_중복이다(String nickname) throws Exception {
+        // given
+        School school = schoolFixture.학교("일치대학교");
+        saveMemberPort.save(Member.create("기존회원", "토리", "exact@test.com", school.getId(), null));
+
+        // when & then
+        mockMvc.perform(get(PATH).param("schoolId", school.getId().toString()).param("nickname", nickname))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.available").value(true));
     }
 }
