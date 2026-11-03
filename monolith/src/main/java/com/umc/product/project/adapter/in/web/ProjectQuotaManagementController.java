@@ -32,6 +32,8 @@ public class ProjectQuotaManagementController {
     @Operation(operationId = "PROJECT-QUOTAS-001", summary = "프로젝트 TO 관리 화면 조회", description = """
         최고관리자·소속 기수 총괄단·소속 지부장만 접근할 수 있습니다. chapterId 생략 시 접근 가능한 첫 지부를 선택합니다.
         지부·학교 선택지, 파트별 인원·TO 합계, 필터 결과와 전체 지부 합계, 프로젝트별 셀을 한 번에 반환합니다.
+        프로젝트 표와 조회 합계는 승인완료(IN_PROGRESS)만 포함합니다. PM의 currentCount는 소유자·활동 중인 보조 PM 인원이며 PM TO 수정은 유지합니다.
+        cells.resetQuota는 Design·Web PE·Mobile PE는 0, 그 외는 현재 TO입니다. 초기화는 프런트의 미저장 입력에 적용하며 저장은 별도 PATCH를 사용합니다.
         columns.canEdit와 cells.canEdit에는 수정 가능 여부·거부 사유가 있으며 editableAfter는 null입니다.
         projects는 프로젝트명·ID순 전체 목록으로 내부 스크롤 표에 사용합니다. 숫자는 공통 JSON 규칙대로 문자열입니다.
         """)

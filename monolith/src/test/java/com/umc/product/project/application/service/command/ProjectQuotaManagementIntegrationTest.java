@@ -112,6 +112,48 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void 승인완료만_표와_필터와_조회합계에_포함하고_승인대기_TO의_저장검증은_유지한다() throws Exception {
+        // given
+        Long pending = fixture.프로젝트(scenario, "승인대기 QA");
+        fixture.정원(pending, ChallengerPart.DESIGN, 1);
+        jdbc.update("UPDATE project SET status='PENDING_REVIEW' WHERE id=?", pending);
+        for (String state : List.of("DRAFT", "COMPLETED", "ABORTED")) {
+            Long projectId = fixture.프로젝트(scenario, state + " QA");
+            jdbc.update("UPDATE project SET status=? WHERE id=?", state, projectId);
+        }
+
+        // when
+        JsonNode info = view(null);
+
+        // then
+        assertThat(info.path("totalProjectCount").asInt()).isEqualTo(1);
+        assertThat(info.path("projects").size()).isEqualTo(1);
+        assertThat(info.path("projects").get(0).path("status").asText()).isEqualTo("IN_PROGRESS");
+        assertThat(part(info.path("summary"), "DESIGN").path("allocatedQuota").asLong()).isEqualTo(1);
+        assertThat(view("승인대기 QA").path("filteredProjectCount").asInt()).isZero();
+        denied(save(List.of(change(scenario.projectId(), "DESIGN", 2))), "PROJECT-0251");
+    }
+
+    @Test
+    void 초기화값은_디자인과_신규개발파트만_영이고_조회로는_저장값을_바꾸지_않는다() throws Exception {
+        // given
+        fixture.정원(scenario.projectId(), ChallengerPart.WEB_PRODUCT_ENGINEER, 2);
+        fixture.정원(scenario.projectId(), ChallengerPart.PLAN, 2);
+
+        // when
+        JsonNode info = view(null);
+
+        // then
+        for (String part : List.of("DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER")) {
+            assertThat(cell(info, part).path("resetQuota").asText()).isEqualTo("0");
+        }
+        assertThat(cell(info, "PLAN").path("resetQuota").asLong()).isEqualTo(2);
+        assertThat(cell(info, "PLAN").path("currentCount").asLong()).isEqualTo(1);
+        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(1);
+        assertThat(quota(scenario.projectId(), "WEB_PRODUCT_ENGINEER")).isEqualTo(2);
+    }
+
+    @Test
     void 검색결과가_없어도_전체_지부_합계는_유지하고_필터_합계는_별도로_반환한다() throws Exception {
         // when
         JsonNode info = view("존재하지않는프로젝트");

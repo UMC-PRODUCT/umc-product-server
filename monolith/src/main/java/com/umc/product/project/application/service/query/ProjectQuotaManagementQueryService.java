@@ -66,7 +66,7 @@ public class ProjectQuotaManagementQueryService implements GetProjectQuotaManage
         if (schoolId != null && schools.stream().noneMatch(school -> Objects.equals(school.schoolId(), schoolId))) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_QUOTA_INVALID_REQUEST);
         }
-        var snapshot = dataLoader.load(gisuId, selected.chapterId());
+        var snapshot = dataLoader.loadApproved(gisuId, selected.chapterId());
         List<Project> filtered = (keyword == null || keyword.isBlank()) && schoolId == null ? snapshot.projects()
             : dataLoader.projects(gisuId, selected.chapterId(), keyword, schoolId);
         var allocated = snapshot.allocated(snapshot.projects());
@@ -92,7 +92,11 @@ public class ProjectQuotaManagementQueryService implements GetProjectQuotaManage
         List<ProjectRow> rows = new ArrayList<>();
         for (Project project : filtered) {
             List<Cell> cells = parts.stream().map(part -> new Cell(part, snapshot.quota(project, part),
-                snapshot.current(project, part), snapshot.minimum(project, part), columnsByPart.get(part).canEdit()))
+                snapshot.current(project, part), snapshot.minimum(project, part),
+                switch (part) {
+                    case DESIGN, WEB_PRODUCT_ENGINEER, MOBILE_PRODUCT_ENGINEER -> 0;
+                    default -> snapshot.quota(project, part);
+                }, columnsByPart.get(part).canEdit()))
                 .toList();
             rows.add(new ProjectRow(project.getId(), project.getName(), project.getStatus(),
                 project.getProductOwnerSchoolId(), schoolNames.get(project.getProductOwnerSchoolId()), cells,
