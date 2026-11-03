@@ -18,6 +18,8 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.project.application.access.ProjectQuotaAccessPolicy;
 import com.umc.product.project.application.port.in.query.GetProjectQuotaManagementUseCase;
+import com.umc.product.project.application.port.in.query.dto.ProjectPermissionCapabilityInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectPermissionReason;
 import com.umc.product.project.application.port.in.query.dto.ProjectQuotaManagementInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectQuotaManagementInfo.AllocationStatus;
 import com.umc.product.project.application.port.in.query.dto.ProjectQuotaManagementInfo.Cell;
@@ -81,7 +83,12 @@ public class ProjectQuotaManagementQueryService implements GetProjectQuotaManage
             .sorted(Comparator.comparingInt(ChallengerPart::getSortOrder)).toList();
         var rounds = loadProjectMatchingRoundPort.listByChapterId(selected.chapterId());
         var now = clock.instant();
+        boolean canManage = accessPolicy.canManage(memberId, gisuId, selected.chapterId());
         List<Column> columns = parts.stream().map(part -> {
+            if (!canManage) {
+                return new Column(part, columnLabel(part),
+                    ProjectPermissionCapabilityInfo.denied(ProjectPermissionReason.PERMISSION_DENIED), null);
+            }
             var window = editPolicy.evaluate(part, rounds, now);
             return new Column(part, columnLabel(part),
                 window.capability(), window.editableAfter());

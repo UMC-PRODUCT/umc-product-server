@@ -225,8 +225,8 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
 
     @ParameterizedTest
     @EnumSource(value = ChallengerRoleType.class, names = {"SCHOOL_PRESIDENT", "SCHOOL_VICE_PRESIDENT",
-        "SCHOOL_PART_LEADER", "SCHOOL_ETC_ADMIN", "CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER"})
-    void 학교운영진이나_중앙일반운영진이_PM을_겸해도_TO_관리에는_접근할_수_없다(ChallengerRoleType role) throws Exception {
+        "SCHOOL_PART_LEADER", "SCHOOL_ETC_ADMIN"})
+    void 학교운영진이_PM을_겸해도_TO_관리에는_접근할_수_없다(ChallengerRoleType role) throws Exception {
         // given
         Long actor = permissionFixture.역할_회원(scenario, role, ChallengerPart.PLAN);
         authenticate(actor);
@@ -234,6 +234,86 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         // when & then
         mockMvc.perform(get(PATH).param("gisuId", scenario.gisuId().toString())).andExpect(status().isForbidden());
         save(List.of(change(scenario.projectId(), "DESIGN", 2))).andExpect(status().isForbidden());
+        legacyPut(List.of(Map.of("part", "DESIGN", "quota", 1))).andExpect(status().isForbidden());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class,
+        names = {"CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER"})
+    void 중앙운영국원과_교육국원은_소속기수_전지부_TO를_조회만_할_수_있다(ChallengerRoleType role) throws Exception {
+        // given
+        Scenario foreign = projects.다른_지부(scenario);
+        Long actor = permissionFixture.역할_회원(scenario, role, ChallengerPart.PLAN);
+        authenticate(actor);
+
+        // when & then
+        assertThat(view(null).path("chapters").size()).isEqualTo(2);
+        for (Scenario target : List.of(scenario, foreign)) {
+            String body = mockMvc.perform(get(PATH).param("gisuId", target.gisuId().toString())
+                    .param("chapterId", target.chapterId().toString())).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+            JsonNode info = objectMapper.readTree(body).path("result");
+            for (JsonNode column : info.path("columns")) {
+                assertThat(column.path("canEdit").path("allowed").asBoolean()).isFalse();
+                assertThat(column.path("canEdit").path("reasonCode").asText()).isEqualTo("PERMISSION_DENIED");
+            }
+            for (JsonNode entry : info.path("projects")) {
+                for (JsonNode cell : entry.path("cells")) {
+                    assertThat(cell.path("canEdit").path("allowed").asBoolean()).isFalse();
+                }
+            }
+            mockMvc.perform(patch(PATH).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(Map.of("gisuId", target.gisuId(), "chapterId", target.chapterId(),
+                    "projects", List.of(change(target.projectId(), "DESIGN", 0)))))).andExpect(status().isForbidden());
+            mockMvc.perform(put("/api/v1/projects/{id}/part-quotas", target.projectId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(Map.of("entries", List.of(Map.of("part", "DESIGN", "quota", 2))))))
+                .andExpect(status().isForbidden());
+            assertThat(quota(target.projectId(), "DESIGN")).isEqualTo(1);
+            String permissions = mockMvc.perform(get("/api/v1/projects/permissions")
+                .param("ids", target.projectId().toString())).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+            assertThat(objectMapper.readTree(permissions).path("result").path("projects").get(0)
+                .path("partQuota").path("canEdit").path("allowed").asBoolean()).isFalse();
+        }
+        schedule(MatchingType.PLAN_DESIGN, -7200, 3600);
+        assertThat(cell(view(null), "DESIGN").path("canEdit").path("allowed").asBoolean()).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class,
+        names = {"CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER"})
+    void 중앙일반운영진이_지부장을_겸하면_소속지부_TO를_수정한다(ChallengerRoleType role) throws Exception {
+        // given
+        Long actor = permissionFixture.역할_회원(scenario, role, ChallengerPart.DESIGN);
+        permissionFixture.역할_추가(scenario, actor, ChallengerRoleType.CHAPTER_PRESIDENT);
+        authenticate(actor);
+
+        // when & then
+        assertThat(cell(view(null), "DESIGN").path("canEdit").path("allowed").asBoolean()).isTrue();
+        save(List.of(change(scenario.projectId(), "DESIGN", 2))).andExpect(status().isOk());
+        legacyPut(List.of(Map.of("part", "DESIGN", "quota", 1))).andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class,
+        names = {"CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER"})
+    void 중앙일반운영진도_다른기수_TO의_조회와_PATCH와_PUT는_거부한다(ChallengerRoleType role) throws Exception {
+        // given
+        Scenario other = projects.다른_기수();
+        Long actor = permissionFixture.역할_회원(scenario, role, ChallengerPart.DESIGN);
+        authenticate(actor);
+
+        // when & then
+        mockMvc.perform(get(PATH).param("gisuId", other.gisuId().toString())
+            .param("chapterId", other.chapterId().toString())).andExpect(status().isForbidden());
+        mockMvc.perform(patch(PATH).contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(Map.of("gisuId", other.gisuId(), "chapterId", other.chapterId(),
+                "projects", List.of(change(other.projectId(), "DESIGN", 0)))))).andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/v1/projects/{id}/part-quotas", other.projectId())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(Map.of("entries", List.of(Map.of("part", "DESIGN", "quota", 1))))))
+            .andExpect(status().isForbidden());
     }
 
     @Test
