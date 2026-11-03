@@ -34,6 +34,8 @@ dependencies {
     testFixturesApi("org.testcontainers:junit-jupiter")
     testFixturesApi("org.testcontainers:postgresql")
     testFixturesApi("com.navercorp.fixturemonkey:fixture-monkey-starter:${libs.versions.fixture.monkey.get()}")
+    // InterceptorPipelineMockMvc 가 WebMvcConfigurer 를 받고 운영 WebMvcConfig 를 돌려준다.
+    testFixturesApi("org.springframework.boot:spring-boot-starter-web")
 
     // 외부 시스템 모킹(@MockitoBean)과 테스트 메트릭 구성에 쓴다.
     testFixturesApi("org.springframework.boot:spring-boot-starter-mail")

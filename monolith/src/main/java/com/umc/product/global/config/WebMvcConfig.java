@@ -30,6 +30,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     private final CurrentMemberArgumentResolver currentMemberArgumentResolver;
     private final ObjectProvider<CurrentDemodayParticipantArgumentResolver> currentDemodayParticipantArgumentResolverProvider;
+    private final TraceIdHeaderInterceptor traceIdHeaderInterceptor;
     private final LoggingInterceptor loggingInterceptor;
     private final ObjectProvider<ApiRateLimitInterceptor> apiRateLimitInterceptorProvider;
 
@@ -57,13 +58,16 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // rate limit을 로깅보다 먼저 둔다. 차단된 요청은 LoggingInterceptor에 닿지 않아
-        // 요청 시작/완료 로그를 남기지 않는다.
+        registry.addInterceptor(traceIdHeaderInterceptor)
+            .order(InterceptorOrder.TRACE_ID_HEADER)
+            .addPathPatterns("/**");
         apiRateLimitInterceptorProvider.ifAvailable(apiRateLimitInterceptor ->
             registry.addInterceptor(apiRateLimitInterceptor)
+                .order(InterceptorOrder.RATE_LIMIT)
                 .addPathPatterns("/**")
         );
         registry.addInterceptor(loggingInterceptor)
+            .order(InterceptorOrder.LOGGING)
             .addPathPatterns("/**")
             .excludePathPatterns(SecurityPathConfig.loggingExcludedPaths());
     }
