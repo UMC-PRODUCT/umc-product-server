@@ -93,7 +93,7 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
             }
         } else {
-            quotaAccessPolicy.requireChapter(command.requesterMemberId(), project.getGisuId(), project.getChapterId());
+            quotaAccessPolicy.requireManageChapter(command.requesterMemberId(), project.getGisuId(), project.getChapterId());
         }
         project.validateMutable();
 

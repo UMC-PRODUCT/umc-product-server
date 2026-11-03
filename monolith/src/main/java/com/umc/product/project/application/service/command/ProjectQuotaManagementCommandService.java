@@ -51,7 +51,7 @@ public class ProjectQuotaManagementCommandService implements SaveProjectQuotaMan
     @Audited(domain = Domain.PROJECT, action = AuditAction.UPDATE, targetType = "ProjectQuotaManagement",
         targetId = "#command.chapterId()", description = "'프로젝트 TO를 일괄 저장했습니다.'")
     public List<Long> save(SaveProjectQuotaManagementCommand command) {
-        accessPolicy.requireChapter(command.requesterId(), command.gisuId(), command.chapterId());
+        accessPolicy.requireManageChapter(command.requesterId(), command.gisuId(), command.chapterId());
         validate(command);
         lockProjectMatchingPort.lockByGisuId(command.gisuId());
         var rounds = loadProjectMatchingRoundPort.listByChapterIdForUpdate(command.chapterId());
