@@ -4,6 +4,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.github.benmanes.caffeine.cache.Ticker;
 import com.umc.product.global.response.ApiErrorResponseWriter;
 
 @Configuration
@@ -25,7 +26,8 @@ public class ApiRateLimitConfig {
             policyResolver,
             bucketRegistry,
             errorResponseWriter,
-            metrics
+            metrics,
+            new RateLimitBlockLogSampler(Ticker.systemTicker())
         );
     }
 }

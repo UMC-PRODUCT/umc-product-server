@@ -16,7 +16,9 @@ Rate Limiter는 `HandlerInterceptor`로 동작한다.
 - 기본 활성화: `API_RATE_LIMIT_ENABLED`가 없으면 활성화된다.
 - 비활성화: `API_RATE_LIMIT_ENABLED=false`
 
-`WebMvcConfig`에서는 `LoggingInterceptor` 다음에 `ApiRateLimitInterceptor`를 등록한다. 이 순서 덕분에 rate limit으로 차단된 `429` 응답도 기존 요청 완료 로그에 남는다.
+`WebMvcConfig`에서는 `ApiRateLimitInterceptor`를 `LoggingInterceptor`보다 먼저 등록한다. 차단된 요청은 `LoggingInterceptor`에 닿지 않으므로 `api_request_started`·`api_request_completed` 로그와 `X-Trace-Id` 응답 헤더, client 요청 metric을 남기지 않는다.
+
+예전에는 반대 순서여서 차단된 요청마다 요청 시작·완료 로그와 차단 WARN이 함께 남았다. 2026년 9월 `/api/v1/projects`로 들어온 공격성 트래픽은 rate limiter가 막았지만 이 로그량 때문에 Loki가 여러 번 OOM에 빠졌다. 차단량은 아래 관측 절의 metric과 key별 차단 로그로 본다.
 
 ```mermaid
 flowchart TB
@@ -28,9 +30,9 @@ flowchart TB
     ErrorWriter["ApiErrorResponseWriter"]
 
     Client --> Dispatcher
-    Dispatcher --> Logging
-    Logging --> RateLimit
-    RateLimit -->|"allowed"| Controller
+    Dispatcher --> RateLimit
+    RateLimit -->|"allowed"| Logging
+    Logging --> Controller
     RateLimit -->|"blocked"| ErrorWriter
     ErrorWriter -->|"429 COMMON-429"| Client
 ```
@@ -263,7 +265,11 @@ tag는 다음과 같다.
 | `uriTemplate` | `/api/v1/projects/{projectId}`, `unmapped` |
 | `clientType` | `WEB`, `GUEST`, `ANONYMOUS`, `UNKNOWN` |
 
-metric tag에는 raw `memberId`, `entryCodeId`, IP를 넣지 않는다. 차단 로그도 `method`, `routePattern`, `clientType`, `retryAfterSeconds`, `keyHash`만 남긴다.
+metric tag에는 raw `memberId`, `entryCodeId`, IP를 넣지 않는다. 차단 로그도 `method`, `routePattern`, `clientType`, `retryAfterSeconds`, `keyHash`, `suppressedSinceLastLog`만 남긴다.
+
+차단 로그 `api_rate_limit_blocked`는 bucket key마다 1분에 한 줄만 남긴다. 그 1분 안의 나머지 차단은 개수만 세고, 다음 구간 첫 줄의 `suppressedSinceLastLog`에 담는다. 같은 `keyHash`가 매분 찍히고 `suppressedSinceLastLog`가 크면 그 key가 계속 한도를 넘고 있다는 뜻이다. 정확한 차단 총량은 `result=blocked` counter로 본다.
+
+`RateLimitBlockLogSampler`는 key별 구간을 Caffeine cache에 둔다. 출발지 IP가 많아도 메모리가 계속 늘지 않도록 최대 10,000개 key, 마지막 차단 뒤 10분 만료로 제한한다. 만료되거나 밀려난 key에 남아 있던 생략 개수는 로그에 남지 않고 counter에만 남는다.
 
 ## 운영 시 주의사항
 
