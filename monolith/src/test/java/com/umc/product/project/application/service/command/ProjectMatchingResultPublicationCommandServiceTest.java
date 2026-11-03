@@ -57,6 +57,8 @@ class ProjectMatchingResultPublicationCommandServiceTest {
     LockProjectMatchingPort lockProjectMatchingPort;
     @Mock
     ScheduleRandomMatchingPort scheduleRandomMatchingPort;
+    @Mock
+    ProjectMatchingQuotaPublicationService quotaPublicationService;
     @InjectMocks
     ProjectMatchingResultPublicationCommandService sut;
 
@@ -73,6 +75,7 @@ class ProjectMatchingResultPublicationCommandServiceTest {
         // then
         assertThat(round.getResultPublishedAt()).isNotNull();
         then(scheduleRandomMatchingPort).should().scheduleAfterPublication(round.getChapterId(), round.getType());
+        then(quotaPublicationService).shouldHaveNoInteractions();
     }
 
     @Test
@@ -283,6 +286,7 @@ class ProjectMatchingResultPublicationCommandServiceTest {
         then(saveProjectApplicationPort).should().save(previousApplication);
         assertThat(newMember.getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
         assertThat(randomRound.getResultPublishedAt()).isNotNull();
+        then(quotaPublicationService).should().synchronize(randomRound);
     }
 
     private Project project() {
