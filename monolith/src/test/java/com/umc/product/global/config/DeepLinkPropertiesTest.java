@@ -15,7 +15,6 @@ class DeepLinkPropertiesTest {
         .withUserConfiguration(TestConfiguration.class)
         .withPropertyValues(
             "app.deep-link.base-url=https://api.university.neordinary.com",
-            "app.deep-link.fallback-url=https://university.neordinary.com",
             "app.deep-link.android.package-name=com.umc.product",
             "app.deep-link.android.sha256-cert-fingerprints=AA:BB, CC:DD",
             "app.deep-link.ios.team-id=8B8B4462NV",
@@ -52,7 +51,6 @@ class DeepLinkPropertiesTest {
         for (String blank : new String[] {
             "app.deep-link.base-url=",
             "app.deep-link.base-url=/",
-            "app.deep-link.fallback-url=",
             "app.deep-link.android.package-name=",
             "app.deep-link.ios.team-id=",
             "app.deep-link.ios.bundle-id=",
@@ -76,8 +74,7 @@ class DeepLinkPropertiesTest {
         new ApplicationContextRunner()
             .withUserConfiguration(TestConfiguration.class)
             .withPropertyValues(
-                "app.deep-link.base-url=https://api.university.neordinary.com",
-                "app.deep-link.fallback-url=https://university.neordinary.com"
+                "app.deep-link.base-url=https://api.university.neordinary.com"
             )
             .run(context -> assertThat(context).hasFailed());
     }

@@ -67,7 +67,6 @@ class WellKnownControllerTest {
         DeepLinkProperties deepLinkProperties() {
             return new DeepLinkProperties(
                 "https://api.university.neordinary.com",
-                "https://university.neordinary.com",
                 new DeepLinkProperties.Android("com.umc.product", List.of("AA:BB", "CC:DD")),
                 new DeepLinkProperties.Ios("8B8B4462NV", "com.umc.product", "https://apps.apple.com/app/id6759412446")
             );

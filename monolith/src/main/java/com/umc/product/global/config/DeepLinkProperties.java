@@ -21,7 +21,6 @@ import jakarta.validation.constraints.NotNull;
 @ConfigurationProperties(prefix = "app.deep-link")
 public record DeepLinkProperties(
     @NotBlank String baseUrl,
-    @NotBlank String fallbackUrl,
     @Valid @NotNull Android android,
     @Valid @NotNull Ios ios
 ) {

@@ -92,7 +92,7 @@ class CommunityThreadMemberInvitableQueryServiceTest {
             getGisuUseCase,
             searchInvitationUseCase,
             new CommunityThreadProperties(100),
-            new DeepLinkProperties("https://api.university.neordinary.com", null, null, null)
+            new DeepLinkProperties("https://api.university.neordinary.com", null, null)
         );
     }
 
