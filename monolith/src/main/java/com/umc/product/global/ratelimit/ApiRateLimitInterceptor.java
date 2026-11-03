@@ -5,6 +5,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -34,6 +35,7 @@ public class ApiRateLimitInterceptor implements HandlerInterceptor {
     private final RateLimitBucketRegistry bucketRegistry;
     private final ApiErrorResponseWriter errorResponseWriter;
     private final ApiRateLimitMetrics metrics;
+    private final RateLimitBlockLogSampler blockLogSampler;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
@@ -67,15 +69,20 @@ public class ApiRateLimitInterceptor implements HandlerInterceptor {
         response.setHeader(HEADER_RETRY_AFTER, String.valueOf(retryAfterSeconds));
         response.setHeader(HEADER_RATE_LIMIT_REMAINING, "0");
         metrics.record("blocked", resolvedPolicy.name(), request.getMethod(), routePattern, clientKey.clientType());
-        log.warn(
-            "api_rate_limit_blocked rule={} method={} routePattern={} clientType={} keyHash={} retryAfterSeconds={}",
-            resolvedPolicy.name(),
-            request.getMethod(),
-            routePattern,
-            clientKey.clientType(),
-            hashKey(bucketKey),
-            retryAfterSeconds
-        );
+        OptionalLong suppressed = blockLogSampler.tryAcquire(bucketKey);
+        if (suppressed.isPresent()) {
+            log.warn(
+                "api_rate_limit_blocked rule={} method={} routePattern={} clientType={} keyHash={} "
+                    + "retryAfterSeconds={} suppressedSinceLastLog={}",
+                resolvedPolicy.name(),
+                request.getMethod(),
+                routePattern,
+                clientKey.clientType(),
+                hashKey(bucketKey),
+                retryAfterSeconds,
+                suppressed.getAsLong()
+            );
+        }
         errorResponseWriter.write(response, CommonErrorCode.TOO_MANY_REQUESTS);
         return false;
     }
