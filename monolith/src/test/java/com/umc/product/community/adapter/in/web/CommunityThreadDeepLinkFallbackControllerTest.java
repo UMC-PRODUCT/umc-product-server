@@ -36,6 +36,7 @@ class CommunityThreadDeepLinkFallbackControllerTest {
     private static final String IOS_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)";
     private static final String DESKTOP_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)";
     private static final String PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.umc.product";
+    private static final String APP_STORE_URL = "https://apps.apple.com/app/id6759412446";
 
     @Autowired
     MockMvc mockMvc;
@@ -57,13 +58,15 @@ class CommunityThreadDeepLinkFallbackControllerTest {
     }
 
     @Test
-    @DisplayName("iOS User-Agent면 커스텀 스킴을 쓰고, 앱스토어 URL이 없으면 홈페이지 안내를 보여준다")
-    void show_iosUserAgent_rendersCustomSchemeAndFallback() throws Exception {
+    @DisplayName("iOS User-Agent면 커스텀 스킴과 App Store 다운로드 버튼을 보여준다")
+    void show_iosUserAgent_rendersCustomSchemeAndAppStore() throws Exception {
         mockMvc.perform(get("/community/threads/42").header(HttpHeaders.USER_AGENT, IOS_UA))
             .andExpect(status().isOk())
             .andExpect(model().attribute("platform", "IOS"))
             .andExpect(model().attribute("appDeepLink", "umc://thread/42"))
-            .andExpect(content().string(containsString("UMC PRODUCT 더 알아보기")))
+            .andExpect(content().string(containsString("App Store에서 다운로드")))
+            .andExpect(content().string(containsString(APP_STORE_URL)))
+            .andExpect(content().string(not(containsString("UMC PRODUCT 더 알아보기"))))
             .andExpect(content().string(not(containsString(PLAY_STORE_URL))));
     }
 
@@ -94,7 +97,7 @@ class CommunityThreadDeepLinkFallbackControllerTest {
                 "https://api.university.neordinary.com",
                 "https://university.neordinary.com",
                 new DeepLinkProperties.Android("com.umc.product", List.of("AA:BB")),
-                new DeepLinkProperties.Ios("8B8B4462NV", "com.umc.product", null)
+                new DeepLinkProperties.Ios("8B8B4462NV", "com.umc.product", APP_STORE_URL)
             );
         }
     }

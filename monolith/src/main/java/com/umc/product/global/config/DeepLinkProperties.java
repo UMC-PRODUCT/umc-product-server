@@ -63,13 +63,8 @@ public record DeepLinkProperties(
     public record Ios(
         @NotBlank String teamId,
         @NotBlank String bundleId,
-        String appStoreUrl
+        @NotBlank String appStoreUrl
     ) {
-
-        /** 앱스토어 등록 전에는 비어 있을 수 있는 선택 값이라, 빈 문자열은 null로 정리한다. */
-        public Ios {
-            appStoreUrl = appStoreUrl == null || appStoreUrl.isBlank() ? null : appStoreUrl;
-        }
 
         /** apple-app-site-association의 {@code appID} 형식(TeamID.BundleID). */
         public String appId() {

@@ -20,7 +20,7 @@ class DeepLinkPropertiesTest {
             "app.deep-link.android.sha256-cert-fingerprints=AA:BB, CC:DD",
             "app.deep-link.ios.team-id=8B8B4462NV",
             "app.deep-link.ios.bundle-id=com.umc.product",
-            "app.deep-link.ios.app-store-url="
+            "app.deep-link.ios.app-store-url=https://apps.apple.com/app/id6759412446"
         );
 
     @Test
@@ -34,14 +34,8 @@ class DeepLinkPropertiesTest {
             assertThat(properties.ios().appId()).isEqualTo("8B8B4462NV.com.umc.product");
             assertThat(properties.android().playStoreUrl())
                 .isEqualTo("https://play.google.com/store/apps/details?id=com.umc.product");
+            assertThat(properties.ios().appStoreUrl()).isEqualTo("https://apps.apple.com/app/id6759412446");
         });
-    }
-
-    @Test
-    @DisplayName("선택 값인 appStoreUrl이 비어 있으면 null로 정리한다")
-    void appStoreUrl_blankToNull() {
-        contextRunner.run(context ->
-            assertThat(context.getBean(DeepLinkProperties.class).ios().appStoreUrl()).isNull());
     }
 
     @Test
@@ -61,7 +55,8 @@ class DeepLinkPropertiesTest {
             "app.deep-link.fallback-url=",
             "app.deep-link.android.package-name=",
             "app.deep-link.ios.team-id=",
-            "app.deep-link.ios.bundle-id="
+            "app.deep-link.ios.bundle-id=",
+            "app.deep-link.ios.app-store-url="
         }) {
             contextRunner.withPropertyValues(blank)
                 .run(context -> assertThat(context).as(blank).hasFailed());

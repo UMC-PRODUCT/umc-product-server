@@ -350,7 +350,7 @@ app:
     ios:
       team-id: ${APP_DEEP_LINK_IOS_TEAM_ID:8B8B4462NV}
       bundle-id: ${APP_DEEP_LINK_IOS_BUNDLE_ID:com.umc.product}
-      app-store-url: ${APP_DEEP_LINK_IOS_APP_STORE_URL:}
+      app-store-url: ${APP_DEEP_LINK_IOS_APP_STORE_URL:https://apps.apple.com/app/id6759412446}
 
   sso:
     issuer: ${SSO_ISSUER:https://api.university.neordinary.com}
