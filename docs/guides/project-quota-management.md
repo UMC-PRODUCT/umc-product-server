@@ -37,6 +37,10 @@
 
 `summary`와 `filteredSummary`의 `availableCount`는 모두 지부 전체의 파트 인원이다. 학교 필터는 프로젝트를 골라 보는 용도이며, 모집 가능한 인원을 PM의 학교 인원으로 제한하지 않는다. `difference = allocatedQuota - availableCount`이며, `allocationStatus`는 `SHORTAGE`, `BALANCED`, `EXCESS`다. 검색 결과가 비어도 지부 전체 합계는 유지한다.
 
+상단 파트 인원 현황은 `summary`와 `filteredSummary`를 사용한다. 두 배열은 모든 지부에서 `PLAN`(PM), `DESIGN`(Design), `WEB_PRODUCT_ENGINEER`(Web PE), `MOBILE_PRODUCT_ENGINEER`(Mobile PE) 순서의 4개 항목을 반환하며, 해당 인원이 없으면 0이다. `totals`와 `filteredTotals`도 이 4개 항목만 합산한다. 과거 Web·Android·iOS·Node·Spring 인원이나 TO를 신규 PE 항목에 합산하지 않는다.
+
+프로젝트별 TO 표의 `columns`와 `cells`는 과거 파트를 포함하는 기존 계약을 유지한다. 현황 카드를 `columns`로 생성하면 과거 파트가 노출될 수 있으므로 카드에는 `summary`를 사용한다. 과거 파트가 있는 경우 행의 `totalQuota`와 상단 4개 파트의 TO 합계는 다를 수 있다. 저장 시 인원 상한 검증과 원본 데이터는 바꾸지 않는다. 지부는 있으나 인원·프로젝트가 비어도 4개 현황 항목을 반환하며, 기수에 접근 가능한 지부 자체가 없으면 기존처럼 빈 배열과 `chapterId: null`을 반환한다.
+
 셀 필드:
 
 - `quota`: 편집할 TO. 미모집 파트는 0. PM TO가 아직 저장되지 않았으면 현재·발표 대기 PM 인원(소유자 포함)을 기본값으로 표시한다.

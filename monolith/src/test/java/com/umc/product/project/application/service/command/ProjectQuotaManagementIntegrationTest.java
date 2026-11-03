@@ -95,6 +95,7 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         JsonNode info = view(null);
 
         // then
+        assertPopulationParts(info);
         assertThat(info.path("chapterId").asLong()).isEqualTo(scenario.chapterId());
         assertThat(info.path("chapters").size()).isEqualTo(1);
         assertThat(info.path("schools").get(0).path("schoolId").asLong()).isEqualTo(scenario.schoolId());
@@ -109,6 +110,50 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         assertThat(design.path("availableCount").asLong()).isEqualTo(2);
         assertThat(design.path("allocatedQuota").asLong()).isEqualTo(1);
         assertThat(design.path("allocationStatus").asText()).isEqualTo("SHORTAGE");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerPart.class, names = {"WEB", "ANDROID", "IOS", "NODEJS", "SPRINGBOOT"})
+    void 과거파트_인원과_TO가_있어도_현황과_합계는_기본_네파트만_포함한다(ChallengerPart legacy) throws Exception {
+        // given
+        projects.회원(scenario, "과거파트 QA", legacy);
+        fixture.정원(scenario.projectId(), legacy, 5);
+
+        // when
+        JsonNode info = view(null);
+        JsonNode filtered = view("검색 결과 없음 QA");
+
+        // then
+        assertPopulationParts(info);
+        assertPopulationParts(filtered);
+        assertThat(info.path("totals").path("availableCount").asLong()).isEqualTo(8);
+        assertThat(info.path("totals").path("allocatedQuota").asLong()).isEqualTo(2);
+        assertThat(filtered.path("totals").path("allocatedQuota").asLong()).isEqualTo(2);
+        assertThat(filtered.path("filteredTotals").path("availableCount").asLong()).isEqualTo(8);
+        assertThat(filtered.path("filteredTotals").path("allocatedQuota").asLong()).isZero();
+        assertThat(cell(info, legacy.name()).path("quota").asLong()).isEqualTo(5);
+        assertThat(quota(scenario.projectId(), legacy.name())).isEqualTo(5);
+        assertThat(info.path("projects").get(0).path("totalQuota").asLong()).isEqualTo(7);
+    }
+
+    @Test
+    void 인원과_프로젝트가_없는_지부도_기본_네파트를_영으로_반환한다() throws Exception {
+        // given
+        jdbc.update("UPDATE challenger SET part=NULL WHERE gisu_id=?", scenario.gisuId());
+        jdbc.update("UPDATE project SET status='ABORTED' WHERE id=?", scenario.projectId());
+
+        // when
+        JsonNode info = view(null);
+
+        // then
+        assertPopulationParts(info);
+        assertThat(info.path("projects").isEmpty()).isTrue();
+        for (JsonNode summary : info.path("summary")) {
+            assertThat(summary.path("availableCount").asText()).isEqualTo("0");
+            assertThat(summary.path("allocatedQuota").asText()).isEqualTo("0");
+        }
+        assertThat(info.path("totals").path("availableCount").asLong()).isZero();
+        assertThat(info.path("totals").path("allocatedQuota").asLong()).isZero();
     }
 
     @Test
@@ -679,6 +724,16 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
             NOW.plusSeconds(firstStart + 600), NOW.plusSeconds(firstStart + 1200));
         fixture.차수(scenario, type, MatchingPhase.THIRD, NOW.plusSeconds(thirdDeadline - 1800),
             NOW.plusSeconds(thirdDeadline - 600), NOW.plusSeconds(thirdDeadline));
+    }
+
+    private void assertPopulationParts(JsonNode info) {
+        List<String> expected = List.of("PLAN", "DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER");
+        for (String field : List.of("summary", "filteredSummary")) {
+            assertThat(info.path(field).size()).isEqualTo(4);
+            for (int index = 0; index < expected.size(); index++) {
+                assertThat(info.path(field).get(index).path("part").asText()).isEqualTo(expected.get(index));
+            }
+        }
     }
 
     private JsonNode view(String keyword) throws Exception {
