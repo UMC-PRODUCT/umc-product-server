@@ -31,7 +31,7 @@ public record ProjectQuotaManagementInfo(
     public record ProjectRow(Long projectId, String projectName, ProjectStatus status, Long schoolId, String schoolName,
                              List<Cell> cells, long totalQuota) {
                              }
-    public record Cell(ChallengerPart part, long quota, long currentCount, long minimumQuota,
+    public record Cell(ChallengerPart part, long quota, long currentCount, long minimumQuota, long resetQuota,
                        ProjectPermissionCapabilityInfo canEdit) {
                        }
 }
