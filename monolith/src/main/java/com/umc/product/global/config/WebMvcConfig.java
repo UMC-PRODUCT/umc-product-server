@@ -57,12 +57,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(loggingInterceptor)
-            .addPathPatterns("/**")
-            .excludePathPatterns(SecurityPathConfig.loggingExcludedPaths());
+        // rate limit을 로깅보다 먼저 둔다. 차단된 요청은 LoggingInterceptor에 닿지 않아
+        // 요청 시작/완료 로그를 남기지 않는다.
         apiRateLimitInterceptorProvider.ifAvailable(apiRateLimitInterceptor ->
             registry.addInterceptor(apiRateLimitInterceptor)
                 .addPathPatterns("/**")
         );
+        registry.addInterceptor(loggingInterceptor)
+            .addPathPatterns("/**")
+            .excludePathPatterns(SecurityPathConfig.loggingExcludedPaths());
     }
 }

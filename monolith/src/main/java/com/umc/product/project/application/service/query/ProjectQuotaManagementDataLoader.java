@@ -43,14 +43,28 @@ public class ProjectQuotaManagementDataLoader {
     private final ProjectMatchingChapterResolver matchingChapterResolver;
 
     public List<Project> projects(Long gisuId, Long chapterId, String keyword, Long schoolId) {
+        return projects(gisuId, chapterId, keyword, schoolId, List.of(ProjectStatus.IN_PROGRESS));
+    }
+
+    private List<Project> projects(Long gisuId, Long chapterId, String keyword, Long schoolId,
+        List<ProjectStatus> statuses) {
         return loadProjectPort.search(SearchProjectQuery.forAdmin(gisuId, keyword, chapterId,
             schoolId == null ? null : List.of(schoolId), null, null,
-            List.of(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS),
+            statuses,
             Pageable.unpaged(Sort.by("name", "id")))).getContent();
     }
 
+    /** 저장 시 인원 상한 검증에는 기존처럼 승인대기 프로젝트의 TO도 포함한다. */
     public Snapshot load(Long gisuId, Long chapterId) {
-        List<Project> projects = projects(gisuId, chapterId, null, null);
+        return load(chapterId, projects(gisuId, chapterId, null, null,
+            List.of(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS)));
+    }
+
+    public Snapshot loadApproved(Long gisuId, Long chapterId) {
+        return load(chapterId, projects(gisuId, chapterId, null, null));
+    }
+
+    private Snapshot load(Long chapterId, List<Project> projects) {
         var ids = projects.stream().map(Project::getId).toList();
         Map<ChallengerPart, Long> population = new EnumMap<>(ChallengerPart.class);
         matchingChapterResolver.deltaOf(chapterId).apply(getChallengerUseCase.listByChapterId(chapterId)).stream()

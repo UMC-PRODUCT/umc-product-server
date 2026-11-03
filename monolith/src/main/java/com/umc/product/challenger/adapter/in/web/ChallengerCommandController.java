@@ -71,9 +71,18 @@ public class ChallengerCommandController {
 
     @CheckAccess(
         resourceType = ResourceType.CHALLENGER,
-        permission = PermissionType.DELETE
+        resourceId = "#challengerId",
+        permission = PermissionType.MANAGE
     )
-    @Operation(operationId = "CHALLENGER-003", summary = "챌린저 비활성화")
+    @Operation(
+        operationId = "CHALLENGER-003", summary = "챌린저 비활성화",
+        description = """
+            탈부(WITHDRAW)와 제명(EXPEL)에 동일한 권한을 적용합니다.
+            SUPER_ADMIN과 중앙운영사무국 총괄·부총괄은 기수와 학교에 관계없이 처리할 수 있습니다.
+            중앙운영사무국 운영국원·교육국원은 대상 챌린저와 같은 기수의 모든 학교를 처리할 수 있습니다.
+            교내 회장·부회장은 대상 챌린저와 같은 기수이면서 본인 역할의 소속 학교인 경우에만 처리할 수 있습니다.
+            """
+    )
     @PostMapping("{challengerId}/deactivate")
     void deactivateChallenger(
         @PathVariable Long challengerId,
