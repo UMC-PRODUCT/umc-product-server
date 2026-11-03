@@ -16,7 +16,13 @@ Rate Limiter는 `HandlerInterceptor`로 동작한다.
 - 기본 활성화: `API_RATE_LIMIT_ENABLED`가 없으면 활성화된다.
 - 비활성화: `API_RATE_LIMIT_ENABLED=false`
 
-`WebMvcConfig`에서는 `ApiRateLimitInterceptor`를 `LoggingInterceptor`보다 먼저 등록한다. 차단된 요청은 `LoggingInterceptor`에 닿지 않으므로 `api_request_started`·`api_request_completed` 로그와 `X-Trace-Id` 응답 헤더, client 요청 metric을 남기지 않는다.
+MVC 인터셉터 실행 순서는 `global/config/InterceptorOrder`의 값으로 정한다. Spring은 어느 configurer에서 몇 번째로 등록했는지와 관계없이 이 값으로 정렬한다.
+
+1. `TraceIdHeaderInterceptor` (`TRACE_ID_HEADER`): MDC의 `traceId`를 `X-Trace-Id` 응답 헤더로 붙인다.
+2. 모든 MVC rate limiter (`RATE_LIMIT`): `ApiRateLimitInterceptor`, `DemodayGuestRateLimitInterceptor`, `RecruitingCredentialRestRateLimitInterceptor`.
+3. `LoggingInterceptor` (`LOGGING`).
+
+차단된 요청은 `LoggingInterceptor`에 닿지 않으므로 `api_request_started`·`api_request_completed` 로그와 client 요청 metric을 남기지 않는다. `X-Trace-Id` 헤더는 limiter보다 먼저 붙으므로 429 응답에도 남는다. 새 rate limiter를 등록할 때는 `.order(InterceptorOrder.RATE_LIMIT)`를 붙인다.
 
 차단량은 아래 관측 절의 metric과 key별 차단 로그로 본다.
 
@@ -24,13 +30,15 @@ Rate Limiter는 `HandlerInterceptor`로 동작한다.
 flowchart TB
     Client["Client"]
     Dispatcher["DispatcherServlet"]
+    TraceId["TraceIdHeaderInterceptor"]
     Logging["LoggingInterceptor"]
     RateLimit["ApiRateLimitInterceptor"]
     Controller["Controller"]
     ErrorWriter["ApiErrorResponseWriter"]
 
     Client --> Dispatcher
-    Dispatcher --> RateLimit
+    Dispatcher --> TraceId
+    TraceId --> RateLimit
     RateLimit -->|"allowed"| Logging
     Logging --> Controller
     RateLimit -->|"blocked"| ErrorWriter
