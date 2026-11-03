@@ -1,23 +1,16 @@
 package com.umc.product.notification.adapter.out.external.smtp;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
-import java.util.Collection;
 import java.util.Properties;
 
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManagerFactory;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.ssl.SslBundle;
+import org.springframework.boot.ssl.pem.PemSslStoreBundle;
+import org.springframework.boot.ssl.pem.PemSslStoreDetails;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -54,26 +47,10 @@ public class SmtpEmailConfig {
     }
 
     private static SSLSocketFactory trustOnly(Path certificateFile) {
-        try (InputStream input = Files.newInputStream(certificateFile)) {
-            Collection<? extends Certificate> certificates =
-                CertificateFactory.getInstance("X.509").generateCertificates(input);
-            if (certificates.isEmpty()) {
-                throw new IllegalStateException(
-                    "app.notification.email.smtp.trusted-certificate에 인증서가 없습니다: " + certificateFile);
-            }
-            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            trustStore.load(null, null);
-            int index = 0;
-            for (Certificate certificate : certificates) {
-                trustStore.setCertificateEntry("smtp-trusted-" + index++, certificate);
-            }
-            TrustManagerFactory trustManagers =
-                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            trustManagers.init(trustStore);
-            SSLContext context = SSLContext.getInstance("TLS");
-            context.init(null, trustManagers.getTrustManagers(), null);
-            return context.getSocketFactory();
-        } catch (IOException | GeneralSecurityException e) {
+        PemSslStoreDetails trustStore = PemSslStoreDetails.forCertificates(certificateFile.toString());
+        try {
+            return SslBundle.of(new PemSslStoreBundle(null, trustStore)).createSslContext().getSocketFactory();
+        } catch (RuntimeException e) {
             throw new IllegalStateException(
                 "app.notification.email.smtp.trusted-certificate를 읽을 수 없습니다: " + certificateFile, e);
         }

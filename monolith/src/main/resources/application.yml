@@ -630,8 +630,7 @@ app:
         port: ${SMTP_PORT:587}
         username: ${SMTP_USERNAME:}
         password: ${SMTP_PASSWORD:}
-        # PEM 인증서 파일 경로. 설정하면 SMTP만 JVM 기본 CA 대신 이 인증서를 신뢰한다(Preview Pod 안 Mailpit용).
-        # 비워 두면 JVM 기본 truststore를 쓴다. 호스트 이름 검사는 어느 쪽이든 유지한다.
+        # SMTP 전용 신뢰 PEM 인증서 경로. 설명은 docs/onboarding/domain/notification.md 참고.
         trusted-certificate: ${SMTP_TRUSTED_CERTIFICATE:}
       sender:
         no-reply-address: ${EMAIL_NO_REPLY_ADDRESS}

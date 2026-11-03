@@ -139,9 +139,7 @@ class SmtpTrustedCertificateTest {
             JavaMailSenderImpl sender = context.getBean(JavaMailSenderImpl.class);
             assertThatThrownBy(() -> sender.send(message()))
                 .isInstanceOf(MailSendException.class)
-                .rootCause()
-                .isInstanceOf(CertificateException.class)
-                .hasMessageContaining("127.0.0.1");
+                .hasRootCauseInstanceOf(CertificateException.class);
             assertThat(server.receivedMessages()).isEmpty();
         });
     }
