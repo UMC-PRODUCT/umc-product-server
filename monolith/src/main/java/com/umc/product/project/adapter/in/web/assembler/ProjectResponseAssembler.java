@@ -29,7 +29,6 @@ import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersRespons
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectApplicationStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectMatchingStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
 import com.umc.product.project.application.port.in.query.GetProjectMatchingOverviewUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectPublishedMembersUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
@@ -216,14 +215,6 @@ public class ProjectResponseAssembler {
         return ProjectMatchingOverviewResponse.from(
             getProjectMatchingOverviewUseCase.getByChapterId(chapterId, view, requesterMemberId)
         );
-    }
-
-    /**
-     * PROJECT-STAT-001 단건 프로젝트 지원/매칭 현황.
-     */
-    public ProjectStatisticsResponse statisticsForProject(Long projectId, Long requesterMemberId) {
-        return ProjectStatisticsResponse.from(
-            getProjectStatisticsUseCase.getByProjectId(projectId, requesterMemberId));
     }
 
     /**

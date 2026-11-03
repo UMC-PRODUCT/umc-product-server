@@ -178,6 +178,7 @@ class CommunityThreadMessageReportQueryServiceTest {
             messageId,
             threadId,
             reason,
+            List.of(reason),
             status,
             CREATED_AT
         );

@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
+import com.umc.product.notification.adapter.out.external.log.LogEmailAdapter;
 import com.umc.product.notification.adapter.out.external.ses.SesEmailAdapter;
 import com.umc.product.notification.adapter.out.external.ses.SesEmailConfig;
 import com.umc.product.notification.adapter.out.external.ses.SesProperties;
@@ -82,6 +83,38 @@ class EmailProviderConfigurationTest {
     }
 
     @Test
+    @DisplayName("LOG 제공자는 SES와 SMTP 자격증명 없이 부팅하고 실제 발송 클라이언트를 만들지 않는다")
+    void log_provider_boots_without_any_credentials() {
+        // given / when
+        contextRunner.withPropertyValues("app.notification.email.provider=log").run(context -> {
+            // then
+            assertThat(context).hasNotFailed();
+            assertThat(context).hasSingleBean(SendEmailPort.class);
+            assertThat(context).hasSingleBean(LogEmailAdapter.class);
+            assertThat(context).doesNotHaveBean(SesProperties.class);
+            assertThat(context).doesNotHaveBean(SesV2Client.class);
+            assertThat(context).doesNotHaveBean(SmtpProperties.class);
+            assertThat(context).doesNotHaveBean(JavaMailSender.class);
+            assertThat(context.getBean(EmailProviderProperties.class).provider())
+                .isEqualTo(EmailProviderProperties.Provider.LOG);
+        });
+    }
+
+    @Test
+    @DisplayName("prod 프로필에서는 LOG 제공자를 골라도 메일을 버리는 어댑터를 등록하지 않는다")
+    void log_provider_is_not_registered_in_prod() {
+        // given / when
+        contextRunner
+            .withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
+            .withPropertyValues("app.notification.email.provider=log")
+            .run(context -> {
+                // then
+                assertThat(context).doesNotHaveBean(LogEmailAdapter.class);
+                assertThat(context).doesNotHaveBean(SendEmailPort.class);
+            });
+    }
+
+    @Test
     @DisplayName("잘못된 이메일 제공자는 설정 바인딩 오류로 부팅을 막는다")
     void unsupported_provider_fails_at_startup() {
         // given / when
@@ -122,7 +155,8 @@ class EmailProviderConfigurationTest {
 
     @Configuration(proxyBeanMethods = false)
     @ConfigurationPropertiesScan(basePackageClasses = EmailProviderProperties.class)
-    @Import({SesEmailConfig.class, SesEmailAdapter.class, SmtpEmailConfig.class, SmtpEmailAdapter.class})
+    @Import({SesEmailConfig.class, SesEmailAdapter.class, SmtpEmailConfig.class, SmtpEmailAdapter.class,
+        LogEmailAdapter.class})
     static class EmailConfiguration {
     }
 }

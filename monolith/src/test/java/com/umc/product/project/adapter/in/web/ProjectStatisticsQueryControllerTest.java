@@ -25,14 +25,7 @@ import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.project.adapter.in.web.assembler.ProjectResponseAssembler;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectApplicationStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectMatchingRoundStatisticsResponse;
 import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectMatchingStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.ProjectMemberApplicationStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.ProjectMemberStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.RoundSchoolApplicationStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.ProjectStatisticsResponse.SchoolApplicationStatisticsResponse;
-import com.umc.product.project.adapter.in.web.dto.response.statistics.RoundApplicationStatisticsResponse;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.ApplicationPhaseCountInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.ApplicationProjectStatisticsInfo;
@@ -48,8 +41,6 @@ import com.umc.product.project.application.port.in.query.dto.statistics.ProjectM
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundApplicationStatisticsInfo;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
-import com.umc.product.project.domain.enums.ProjectApplicationStatus;
-import com.umc.product.project.domain.enums.ProjectMemberStatus;
 
 @WebMvcTest(controllers = ProjectStatisticsQueryController.class)
 @Import(JacksonConfig.class)
@@ -161,61 +152,6 @@ class ProjectStatisticsQueryControllerTest {
         mockMvc.perform(get("/api/v1/projects/statistics/applications")
                 .param("chapterId", "3").param("projectIds", "10"))
             .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("GET_projectId_statistics_단건_프로젝트_지원_매칭_현황을_반환한다")
-    void 단건_프로젝트_통계_조회() throws Exception {
-        // given
-        given(assembler.statisticsForProject(10L, TEST_MEMBER_ID))
-            .willReturn(response(10L, 101L, 1001L, 201L));
-
-        // when & then
-        mockMvc.perform(get("/api/v1/projects/{projectId}/statistics", 10L))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.result.projectId").value(10L))
-            .andExpect(jsonPath("$.result.projectMembers[0].projectMemberId").value(101L))
-            .andExpect(jsonPath("$.result.projectMembers[0].applications[0].applicationId").value(201L))
-            .andExpect(jsonPath("$.result.projectMembers[0].applications[0].matchingRound.type")
-                .value("PLAN_DEVELOPER"))
-            .andExpect(jsonPath("$.result.projectMembers[0].applications[0].matchingRound.phase")
-                .value("FIRST"))
-            .andExpect(jsonPath("$.result.roundApplicationStatistics[0].appliedMemberCount").value(1))
-            .andExpect(jsonPath("$.result.roundApplicationStatistics[0].availableMemberCount").value(4))
-            .andExpect(jsonPath("$.result.schoolApplicationStatistics[0].schools[0].schoolId").value(501));
-    }
-
-    private static ProjectStatisticsResponse response(
-        Long projectId,
-        Long projectMemberId,
-        Long memberId,
-        Long applicationId
-    ) {
-        ProjectMatchingRoundStatisticsResponse round = new ProjectMatchingRoundStatisticsResponse(
-            1L,
-            MatchingType.PLAN_DEVELOPER,
-            MatchingPhase.FIRST
-        );
-
-        return new ProjectStatisticsResponse(
-            projectId,
-            List.of(new ProjectMemberStatisticsResponse(
-                projectMemberId,
-                memberId,
-                ChallengerPart.WEB,
-                ProjectMemberStatus.ACTIVE,
-                List.of(new ProjectMemberApplicationStatisticsResponse(
-                    applicationId,
-                    ProjectApplicationStatus.SUBMITTED,
-                    round
-                ))
-            )),
-            List.of(new RoundApplicationStatisticsResponse(round, 1L, 4L)),
-            List.of(new RoundSchoolApplicationStatisticsResponse(
-                round,
-                List.of(new SchoolApplicationStatisticsResponse(501L, 1L))
-            ))
-        );
     }
 
     private static ProjectApplicationStatisticsResponse applicationResponse() {

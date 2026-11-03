@@ -182,6 +182,7 @@ macOS는 `macos-app`으로 등록하며 서버가 Apple·Google·Kakao의 HTTPS 
 
 - `JWT_SSO_LOGIN_TOKEN_SECRET`은 access/refresh/oauth/email token secret과 다른 값이어야 한다.
 - `app.sso.clients.*.redirect-uris`와 `allowed-origins`는 배포 도메인 변경 시 함께 갱신한다.
+- Kakao ID Token의 `aud`는 토큰을 받을 때 쓴 앱 키다. Auth App(JavaScript 키)과 앱(네이티브 앱 키)이 보내는 ID Token을 받으려면 그 키를 `KAKAO_ALLOWED_ID_TOKEN_AUDIENCES`에 쉼표로 넣는다. `KAKAO_CLIENT_ID`는 code 교환에 쓰는 REST API 키이므로 그대로 둔다. 서버가 직접 교환한 ID Token은 `KAKAO_CLIENT_ID` audience만 받는다.
 - dev profile에서는 `http://localhost:5173`만 client context origin과 SSO allowed origin으로 연다.
 - 운영 `UMC_WEBSITE` origin은 `https://university.neordinary.com`이며 `www`를 붙이지 않는다.
 - SSO 보안 이벤트는 application event로 발행되고 listener에서 metric으로 기록된다.

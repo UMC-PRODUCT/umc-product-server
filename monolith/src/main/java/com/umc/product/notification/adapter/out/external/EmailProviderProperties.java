@@ -12,6 +12,8 @@ public record EmailProviderProperties(@DefaultValue("ses") @NotNull Provider pro
 
     public enum Provider {
         SES,
-        SMTP
+        SMTP,
+        // 로컬 개발용. 메일을 보내지 않고 로그만 남긴다.
+        LOG
     }
 }

@@ -78,11 +78,6 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     }
 
     @Override
-    public Long countByIdIn(Set<Long> ids) {
-        return (long) ids.size();
-    }
-
-    @Override
     public Challenger findTopByMemberIdOrderByCreatedAtDesc(Long memberId) {
         return repository.findTopByMemberIdOrderByCreatedAtDesc(memberId)
             .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_FOUND));

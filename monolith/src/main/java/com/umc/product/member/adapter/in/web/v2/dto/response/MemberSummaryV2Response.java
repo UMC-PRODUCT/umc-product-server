@@ -30,6 +30,8 @@ public record MemberSummaryV2Response(
     boolean hasLocalCredential,
     @Schema(description = "시스템 역할 SUPER_ADMIN 보유 여부")
     boolean isSuperAdmin,
+    @Schema(description = "프로덕트 문의 답변·관리 가능 여부. 시스템 역할 UMC_PRODUCT 또는 SUPER_ADMIN을 가지면 true")
+    boolean isUmcProduct,
 
     Long schoolId,
     String schoolName,
@@ -56,6 +58,7 @@ public record MemberSummaryV2Response(
             m.email(),
             info.hasLocalCredential(),
             info.isSuperAdmin(),
+            info.isUmcProduct(),
             m.schoolId(),
             m.schoolName(),
             m.profileImageLink(),

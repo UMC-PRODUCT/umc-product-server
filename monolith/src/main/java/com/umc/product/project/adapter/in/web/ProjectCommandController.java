@@ -167,7 +167,7 @@ public class ProjectCommandController {
         summary = "프로젝트 팀원 추가",
         description = """
             PLAN 파트는 기존 보조 PM 관리 권한을 사용합니다.
-            일반 파트는 해당 기수 총괄단·담당 지부장만 수동 배정할 수 있으며, 기수·파트·매칭 지부·중복·정원을 검증합니다.
+            일반 파트는 해당 기수 총괄단·담당 지부장만 수동 배정할 수 있으며, 기수·파트·매칭 지부·중복을 검증하며, 랜덤 매칭 후 조정 기간을 제외하면 정원도 검증합니다.
             일반 파트의 배정 가능 기간과 반영 시점은 운영진 수동 배정[PROJECT-402]과 같습니다.
             운영진 수동 배정 전용 경로는 /api/v1/projects/admin/{projectId}/members 입니다.
             """
@@ -216,18 +216,13 @@ public class ProjectCommandController {
         summary = "파트별 정원 일괄 갱신",
         description = """
             본문의 파트 정원으로 전체 교체하며, 생략한 기존 파트는 삭제합니다. quota는 1 이상이어야 합니다.
-            최고관리자·해당 기수 총괄단·담당 지부장만 수정할 수 있습니다. 운영진 본인이 작성한 초안에도 TO를 설정할 수 있습니다.
-            파트별 1차 매칭 시작부터 3차 PM 판정 마감까지는 변경할 수 없으며, 배정 인원 미만·지부 인원 초과도 차단합니다.
+            최고관리자·해당 기수 총괄단·담당 지부장이 수정할 수 있습니다.
+            운영국원·교육국원 역할만으로는 TO를 수정할 수 없습니다. 직접 등록 권한이 있는 운영진만 본인 초안의 TO도 설정할 수 있습니다.
+            해당 지부의 전체 첫 매칭 시작 이후에는 모든 파트 TO를 변경할 수 없으며, 배정 인원 미만·지부 인원 초과도 차단합니다.
             Web PE와 Mobile PE는 동시에 모집할 수 없습니다.
             초안은 최종 등록 시 공개 프로젝트를 포함한 지부 인원 상한을 검증합니다.
             변경한 셀만 저장하려면 PATCH /api/v1/projects/admin/part-quotas를 사용하세요.
             """
-    )
-    @CheckAccess(
-        resourceType = ResourceType.PROJECT,
-        resourceId = "#projectId",
-        permission = PermissionType.EDIT,
-        message = "프로젝트 파트 정원을 수정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
     )
     public void updatePartQuotas(
         @CurrentMember MemberPrincipal memberPrincipal,

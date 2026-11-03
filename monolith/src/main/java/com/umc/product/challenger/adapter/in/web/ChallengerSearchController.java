@@ -6,11 +6,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.umc.product.challenger.adapter.in.web.dto.request.GlobalSearchChallengerRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerCursorRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerRequest;
 import com.umc.product.challenger.adapter.in.web.dto.response.CursorSearchChallengerResponse;
-import com.umc.product.challenger.adapter.in.web.dto.response.GlobalSearchChallengerResponse;
 import com.umc.product.challenger.adapter.in.web.dto.response.SearchChallengerResponse;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
 
@@ -65,25 +63,4 @@ public class ChallengerSearchController {
         );
     }
 
-    @Operation(operationId = "CHALLENGER-104", summary = "사용 중단 예정 챌린저 전체 검색",
-        description = """
-            `search/cursor` 및 `search/offset` API를 사용해주세요.
-
-            전체 챌린저를 대상으로 이름 또는 닉네임을 이용해 챌린저를 검색합니다.
-            """)
-    @GetMapping("search/global")
-    @Deprecated(since = "v1.2.5", forRemoval = true)
-    GlobalSearchChallengerResponse globalSearchChallenger(
-        @ParameterObject GlobalSearchChallengerRequest searchRequest
-    ) {
-        log.warn("Deprecated API 호출: /api/v1/challenger/search/global");
-
-        return GlobalSearchChallengerResponse.from(
-            searchChallengerUseCase.globalCursorSearch(
-                searchRequest.toQuery(),
-                searchRequest.cursor(),
-                searchRequest.getSize()
-            )
-        );
-    }
 }

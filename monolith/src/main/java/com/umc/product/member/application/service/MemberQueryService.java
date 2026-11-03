@@ -84,6 +84,11 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
     }
 
     @Override
+    public MemberProfileInfo getPublicMemberProfileById(Long memberId) {
+        return MemberProfileInfo.publicFrom(getOrThrowMember(memberId).getProfile());
+    }
+
+    @Override
     public Map<Long, MemberInfo> findAllByIds(Set<Long> memberIds) {
         if (memberIds == null || memberIds.isEmpty()) {
             return Map.of();

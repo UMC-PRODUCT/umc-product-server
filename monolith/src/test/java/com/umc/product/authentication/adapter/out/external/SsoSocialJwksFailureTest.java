@@ -134,7 +134,7 @@ class SsoSocialJwksFailureTest {
             }
             case KAKAO -> {
                 KakaoTokenVerifier verifier = new KakaoTokenVerifier(restClient,
-                    new KakaoOAuthProperties(CLIENT_ID, "", "", List.of(CALLBACK), cache), resolver);
+                    new KakaoOAuthProperties(CLIENT_ID, "", "", List.of(CALLBACK), null, cache), resolver);
                 if (serverLogin) {
                     verifier.verifyAuthorizationCode("code", CALLBACK, oidc ? NONCE : null);
                 } else {

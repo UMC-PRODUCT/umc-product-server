@@ -116,7 +116,7 @@ class CommunityThreadLifecycleControllerTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.result.threadId").value("42"))
             .andExpect(jsonPath("$.result.memberCount").value("3"))
-            .andExpect(jsonPath("$.result.shareUrl").value("/api/v1/community/threads/42"));
+            .andExpect(jsonPath("$.result.shareUrl").value("https://api.university.neordinary.com/community/threads/42"));
 
         ArgumentCaptor<CreateCommunityThreadCommand> captor =
             ArgumentCaptor.forClass(CreateCommunityThreadCommand.class);
@@ -203,7 +203,7 @@ class CommunityThreadLifecycleControllerTest {
             42L, "서버 스터디", "함께 공부해요", CommunityThreadCategory.STUDY, "📚",
             3L, 2L, 100, true, false, true, CommunityThreadMemberRole.OWNER,
             CommunityThreadMemberState.ACTIVE,
-            null, REQUESTER_ID, NOW, NOW, "/api/v1/community/threads/42", deletedAt
+            null, REQUESTER_ID, NOW, NOW, "https://api.university.neordinary.com/community/threads/42", deletedAt
         );
     }
 

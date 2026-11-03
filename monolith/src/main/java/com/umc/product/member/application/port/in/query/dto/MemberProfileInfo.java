@@ -1,6 +1,7 @@
 package com.umc.product.member.application.port.in.query.dto;
 
 import com.umc.product.member.domain.MemberProfile;
+import com.umc.product.member.domain.MemberProfileLinkType;
 
 import lombok.Builder;
 
@@ -32,5 +33,27 @@ public record MemberProfileInfo(
             .blog(memberProfile.getBlog())
             .personal(memberProfile.getPersonal())
             .build();
+    }
+
+    /**
+     * 다른 회원에게 보여줄 프로필입니다. 비공개로 설정한 링크는 null로 채웁니다.
+     */
+    public static MemberProfileInfo publicFrom(MemberProfile memberProfile) {
+        if (memberProfile == null) {
+            return MemberProfileInfo.builder().build();
+        }
+
+        return MemberProfileInfo.builder()
+            .id(memberProfile.getId())
+            .linkedIn(publicLink(memberProfile, MemberProfileLinkType.LINKEDIN))
+            .instagram(publicLink(memberProfile, MemberProfileLinkType.INSTAGRAM))
+            .github(publicLink(memberProfile, MemberProfileLinkType.GITHUB))
+            .blog(publicLink(memberProfile, MemberProfileLinkType.BLOG))
+            .personal(publicLink(memberProfile, MemberProfileLinkType.PERSONAL))
+            .build();
+    }
+
+    private static String publicLink(MemberProfile memberProfile, MemberProfileLinkType type) {
+        return memberProfile.isLinkPublic(type) ? memberProfile.getLink(type) : null;
     }
 }

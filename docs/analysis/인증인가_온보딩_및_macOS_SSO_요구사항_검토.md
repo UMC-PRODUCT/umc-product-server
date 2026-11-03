@@ -331,11 +331,9 @@ Mac 담당자는 브라우저 인증 세션 시작, `umc-macos` scheme 처리, v
 ### 문서와 코드가 다를 때
 
 - `docs/backlog/OAuth_OIDC_통합_전환_계획.md`는 과거 Backlog 초안이다. 현재는 Google/Kakao ID Token·JWKS 캐시와 Apple revoke client ID 전달이 이미 구현된 부분이 있다. 전체 전환 계획을 이번 macOS 기능의 선행 작업으로 삼지 않는다.
-- `docs/guides/CASBIN_INTEGRATION.md`는 도입 예시다. 현재 인가를 Casbin이 수행한다고 설명하면 안 된다. 현재 Java 소스·Gradle 설정 검색에서는 Casbin 사용을 확인하지 못했다.
 - Kakao code ADR의 Status는 Proposed이지만 실제 code 로그인은 구현돼 있다. Accepted/Proposed만으로 현재 제공 기능을 판단하지 않는다.
 - 오래된 문서의 `src/main/java/...`는 현재 `monolith/src/main/java/...`로 찾아야 하는 경우가 있다. 실행 명령도 현재 `:app:bootRun`을 기준으로 한다.
 - 테스트 카탈로그의 파일 수·케이스 수·과거 SUPER_ADMIN 표현은 최신 구현과 다를 수 있다. 현재 테스트 소스와 root AGENTS 규칙을 함께 본다.
-- P6Spy 과거 실행 계획보다 현재 SQL 로그 보안 정책의 모든 환경 바인딩 값 비노출 규칙을 적용한다.
 - Outbox 과거 feature flag·rollback 설명은 현 publisher 고정 결정 및 코드와 비교한다. 이메일 도착까지 보장한다고 확대 해석하지 않는다.
 
 ## 12. 구현·검증 순서

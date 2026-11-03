@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -44,8 +45,11 @@ import com.umc.product.project.application.port.in.query.GetRandomMatchedProject
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectStatisticsPort;
+import com.umc.product.project.application.port.out.SaveProjectMatchingRoundPort;
 import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
@@ -56,10 +60,12 @@ import com.umc.product.support.concurrency.PostgreSqlTransactionRace;
 import com.umc.product.support.fixture.ProjectManualMatchingFixture;
 import com.umc.product.support.fixture.ProjectManualMatchingFixture.ApplicationScenario;
 import com.umc.product.support.fixture.ProjectManualMatchingFixture.Scenario;
+import com.umc.product.support.fixture.ProjectQuotaManagementFixture;
 
 @AutoConfigureMockMvc(addFilters = false)
 class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
     @Autowired ProjectManualMatchingFixture fixture;
+    @Autowired ProjectQuotaManagementFixture quotaFixture;
     @Autowired ManageProjectMatchingUseCase matching;
     @Autowired AutoDecideProjectMatchingRoundUseCase finalizer;
     @Autowired LoadProjectStatisticsPort statistics;
@@ -70,6 +76,7 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
     @Autowired PublishProjectMatchingResultUseCase publisher;
     @Autowired EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
     @Autowired JdbcTemplate jdbc;
+    @Autowired SaveProjectMatchingRoundPort saveRoundPort;
     @Autowired PlatformTransactionManager transactionManager;
 
     @AfterEach
@@ -106,8 +113,26 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         assertThat(members.listByProjectId(scenario.projectId())).extracting(m -> m.getMemberId()).contains(scenario.candidateId());
         ProjectMember member = members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId());
         assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
-        assertThat(member.getAssignedMatchingRound()).isNull();
-        assertThat(statistics.listPublicActiveMembersByChapterId(scenario.chapterId())).isEmpty();
+        assertThat(member.getAssignedMatchingRound()).isNotNull();
+        assertThat(member.getApplication()).isNull();
+        assertThat(statistics.listPublicActiveMembersByChapterId(scenario.chapterId()))
+            .extracting(row -> row.memberId()).containsExactly(scenario.candidateId());
+        mockMvc.perform(get("/api/v1/projects/{id}/members", scenario.projectId()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.partGroups[0].members[0].matchedRoundInfo.phase").value("FIRST"));
+        mockMvc.perform(get("/api/v1/projects/members").param("projectIds", scenario.projectId().toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result['" + scenario.projectId()
+                + "'].partGroups[0].members[0].matchedRoundInfo.phase")
+                .value("FIRST"));
+        authenticate(scenario.candidateId());
+        mockMvc.perform(get("/api/v1/projects/me/applications").param("gisuId", scenario.gisuId().toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result[0].applicationId").doesNotExist())
+            .andExpect(jsonPath("$.result[0].matchingRound.id")
+                .value(member.getAssignedMatchingRound().getId().toString()))
+            .andExpect(jsonPath("$.result[0].matchingRound.phase").value("FIRST"));
+        authenticate(scenario.staffId());
         mockMvc.perform(get(candidates(scenario)).param("part", "DESIGN"))
             .andExpect(status().isOk()).andExpect(jsonPath("$.result.totalElements").value(0));
         mockMvc.perform(delete(admin(scenario) + "/{memberId}", scenario.candidateId())).andExpect(status().isOk());
@@ -307,9 +332,12 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         assign(scenario, scenario.candidateId()).andExpect(status().isOk());
         ProjectMember member = members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId());
         assertThat(member.getStatus()).isEqualTo(ProjectMemberStatus.ACTIVE);
-        assertThat(member.getAssignedMatchingRound()).isNull();
+        assertThat(member.getAssignedMatchingRound().getId()).isEqualTo(application.roundId());
         assertThat(member.getApplication()).isNull();
         assertThat(members.listByProjectId(scenario.projectId())).hasSize(1);
+        mockMvc.perform(get("/api/v1/projects/statistics/matchings").param("chapterId", scenario.chapterId().toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.roundMatchingStatistics[0].matchedMemberCount").value(1));
     }
 
     @Test
@@ -466,6 +494,116 @@ class ProjectManualMatchingIntegrationTest extends IntegrationTestSupport {
         assertThat(pm.member().canUnassign().allowed()).isFalse();
         assertThat(staff.member().canAssign().allowed()).isTrue();
         assertThat(staff.member().canUnassign().allowed()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER"})
+    void 랜덤_조정에서는_TO를_유지하고_최종_공개시_초과_배정을_TO에도_반영한다(String partName) throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        ChallengerPart part = ChallengerPart.valueOf(partName);
+        jdbc.update("UPDATE project_part_quota SET part=? WHERE project_id=?", partName, scenario.projectId());
+        Instant now = Instant.now();
+        var round = ProjectMatchingRound.create("랜덤 조정", null, MatchingType.fromPart(part).orElseThrow(),
+            MatchingPhase.RANDOM_MATCHING, scenario.chapterId(), now.minusSeconds(3600), now.plusSeconds(3600),
+            now.plusSeconds(3600), now.plusSeconds(7200));
+        round.executeAutoDecision(scenario.staffId());
+        Long roundId = saveRoundPort.save(round).getId();
+        Long first = fixture.회원(scenario, "조정후보1", part);
+        Long second = fixture.회원(scenario, "조정후보2", part);
+        authenticate(scenario.staffId());
+
+        // when
+        for (Long memberId : List.of(first, second)) {
+            mockMvc.perform(post(admin(scenario)).contentType(MediaType.APPLICATION_JSON)
+                .content(body(memberId, partName)))
+                .andExpect(status().isOk());
+        }
+
+        // then
+        assertThat(members.getByProjectIdAndMemberId(scenario.projectId(), second).getStatus())
+            .isEqualTo(ProjectMemberStatus.PENDING_PUBLICATION);
+        assertThat(jdbc.queryForObject("SELECT quota FROM project_part_quota WHERE project_id=? AND part=?",
+            Long.class, scenario.projectId(), partName)).isEqualTo(1);
+        mockMvc.perform(post(admin(scenario)).contentType(MediaType.APPLICATION_JSON)
+            .content(body(second, partName)))
+            .andExpect(status().isConflict());
+        jdbc.update("UPDATE project_matching_round SET ends_at=now()-interval '20 minutes', "
+            + "decision_deadline=now()-interval '20 minutes', result_publish_at=now()-interval '10 minutes' WHERE id=?", roundId);
+        assertThat(publisher.publish(roundId)).isTrue();
+        assertThat(members.getByProjectIdAndMemberId(scenario.projectId(), first).getStatus())
+            .isEqualTo(ProjectMemberStatus.ACTIVE);
+        assertThat(members.getByProjectIdAndMemberId(scenario.projectId(), second).getStatus())
+            .isEqualTo(ProjectMemberStatus.ACTIVE);
+        assertThat(jdbc.queryForObject("SELECT assigned_matching_round_id FROM project_member WHERE project_id=? AND member_id=?",
+            Long.class, scenario.projectId(), second)).isEqualTo(roundId);
+        assertThat(jdbc.queryForObject("SELECT quota FROM project_part_quota WHERE project_id=? AND part=?",
+            Long.class, scenario.projectId(), partName)).isEqualTo(2);
+        assertThat(publisher.publish(roundId)).isFalse();
+        assertThat(jdbc.queryForObject("SELECT quota FROM project_part_quota WHERE project_id=? AND part=?",
+            Long.class, scenario.projectId(), partName)).isEqualTo(2);
+        mockMvc.perform(get("/api/v1/projects/{id}", scenario.projectId())).andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.partQuotas[0].quota").value("2"))
+            .andExpect(jsonPath("$.result.partQuotas[0].currentCount").value("2"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void 해제자를_제외해_TO를_확정하고_저장실패시_발표_전체를_롤백한다(boolean failSave) throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        Long roundId = quotaFixture.해제예약(scenario, Instant.now());
+        Long first = fixture.회원(scenario, "발표후보1", ChallengerPart.DESIGN);
+        Long second = fixture.회원(scenario, "발표후보2", ChallengerPart.DESIGN);
+        authenticate(scenario.staffId());
+        assign(scenario, first).andExpect(status().isOk());
+        assign(scenario, second).andExpect(status().isOk());
+        jdbc.update("UPDATE project_matching_round SET ends_at=now()-interval '20 minutes', "
+            + "decision_deadline=now()-interval '20 minutes', result_publish_at=now()-interval '10 minutes' WHERE id=?", roundId);
+
+        // when & then
+        if (failSave) {
+            jdbc.execute("ALTER TABLE project_part_quota ADD CONSTRAINT test_publication_quota CHECK (quota <= 1)");
+            try {
+                assertThatThrownBy(() -> publisher.publish(roundId)).hasStackTraceContaining("test_publication_quota");
+                assertThat(members.getByProjectIdAndMemberId(scenario.projectId(), first).getStatus())
+                    .isEqualTo(ProjectMemberStatus.PENDING_PUBLICATION);
+                assertThat(members.getByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId())
+                    .getPendingRemovalRoundId()).isEqualTo(roundId);
+                assertThat(jdbc.queryForObject("SELECT result_published_at IS NULL FROM project_matching_round WHERE id=?",
+                    Boolean.class, roundId)).isTrue();
+                assertThat(jdbc.queryForObject("SELECT quota FROM project_part_quota WHERE project_id=?",
+                    Long.class, scenario.projectId())).isEqualTo(1);
+            } finally {
+                jdbc.execute("ALTER TABLE project_part_quota DROP CONSTRAINT test_publication_quota");
+            }
+        }
+        assertThat(publisher.publish(roundId)).isTrue();
+        assertThat(members.findByProjectIdAndMemberId(scenario.projectId(), scenario.candidateId())).isEmpty();
+        assertThat(jdbc.queryForObject("SELECT quota FROM project_part_quota WHERE project_id=?",
+            Long.class, scenario.projectId())).isEqualTo(2);
+        assertThat(members.getByProjectIdAndMemberId(scenario.projectId(), second).getStatus())
+            .isEqualTo(ProjectMemberStatus.ACTIVE);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"auto_decision_executed_at=NULL", "ends_at=now()-interval '1 minute'", "type='PLAN_DEVELOPER'"})
+    void 랜덤_미실행_조정종료_다른유형이면_초과배정을_허용하지_않는다(String update) throws Exception {
+        // given
+        Scenario scenario = fixture.준비();
+        Instant now = Instant.now();
+        var round = ProjectMatchingRound.create("랜덤 조정", null, MatchingType.PLAN_DESIGN,
+            MatchingPhase.RANDOM_MATCHING, scenario.chapterId(), now.minusSeconds(3600), now.plusSeconds(3600),
+            now.plusSeconds(3600), now.plusSeconds(7200));
+        round.executeAutoDecision(scenario.staffId());
+        Long roundId = saveRoundPort.save(round).getId();
+        jdbc.update("UPDATE project_matching_round SET " + update + " WHERE id=?", roundId);
+        authenticate(scenario.staffId());
+
+        // when & then
+        assign(scenario, scenario.candidateId()).andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("PROJECT-0103"));
+        assertThat(members.existsByGisuAndMember(scenario.gisuId(), scenario.candidateId())).isFalse();
     }
 
     @ParameterizedTest

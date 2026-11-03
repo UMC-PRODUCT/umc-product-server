@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.response.gisu.ActiveGisuResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.gisu.GisuNameListResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.gisu.GisuPageResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.gisu.GisuResponse;
 import com.umc.product.organization.adapter.in.web.swagger.AdminGisuQueryControllerApi;
@@ -25,7 +24,6 @@ public class GisuQueryController implements AdminGisuQueryControllerApi {
     private final GetGisuUseCase getGisuUseCase;
 
     @Public
-    @Deprecated(since = "v2.0.0", forRemoval = true)
     @GetMapping("/{gisuId}")
     @Override
     public GisuResponse getGisu(@PathVariable Long gisuId) {
@@ -45,14 +43,6 @@ public class GisuQueryController implements AdminGisuQueryControllerApi {
 
     @Public
     @Override
-    @GetMapping("/all")
-    public GisuNameListResponse getAllGisu() {
-        return GisuNameListResponse.from(getGisuUseCase.getAllGisuNames());
-    }
-
-    @Public
-    @Override
-    @Deprecated(since = "v2.0.0", forRemoval = true)
     @GetMapping("/active")
     public ActiveGisuResponse getActiveGisu() {
         return ActiveGisuResponse.from(getGisuUseCase.getActiveGisu());

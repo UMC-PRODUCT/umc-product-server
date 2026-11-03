@@ -144,8 +144,7 @@ public class NoticeQueryRepository {
     }
 
     /**
-     * 운영진 공지 파트 조건. - classification.part() 명시 시: 해당 파트 또는 파트 미지정 공지 - 회장단 이상(CENTRAL_MEMBER, SCHOOL_CORE): 파트 미지정 시 전체
-     * 파트 조회 - 파트장: 담당 파트로만 필터링
+     * 운영진 공지 파트 조건. 명시한 파트 필터를 우선 적용하며, 교내 운영진은 본인 학교 공지를 파트 무관하게 조회합니다.
      */
     private BooleanExpression buildStaffPartCondition(NoticeClassification classification,
                                                       NoticeViewerInfo viewerInfo) {
@@ -158,17 +157,21 @@ public class NoticeQueryRepository {
         if (viewerRole == NoticeTab.CENTRAL_MEMBER || viewerRole == NoticeTab.SCHOOL_CORE) {
             return Expressions.TRUE;
         }
-        // 파트장 파트 미지정: 담당 파트 + 파트 미지정 공지
-        return targetPartIsEmptyOrContainsAny(viewerInfo.memberParts());
+        BooleanExpression partMatch = targetPartIsEmptyOrContainsAny(viewerInfo.memberParts());
+        if (viewerRole == NoticeTab.SCHOOL_PART_LEADER && viewerInfo.schoolRoleSchoolId() != null) {
+            return noticeTarget.targetSchoolId.eq(viewerInfo.schoolRoleSchoolId()).or(partMatch);
+        }
+        return partMatch;
     }
 
     /**
-     * 챌린저 공지 파트 조건(파트 미지정 조회 시). - 회장단(SCHOOL_CORE)/중앙운영진(CENTRAL_MEMBER): 파트 무관 전체 열람 (본인 지부/학교 공지를 파트 상관없이
-     * 봐야 함, 상세 조회 권한과 동일 규칙) - 그 외(일반 챌린저/파트장): 본인 파트 + 파트 미지정 공지만
+     * 챌린저 공지 파트 조건(파트 미지정 조회 시). 회장단, 중앙운영진, 교내 운영진은 파트 무관하게 조회하고, 일반 챌린저는 본인 파트 공지만 조회합니다.
      */
     private BooleanExpression buildChallengerPartCondition(NoticeViewerInfo viewerInfo) {
         NoticeTab viewerRole = viewerInfo.viewerRole();
-        if (viewerRole == NoticeTab.CENTRAL_MEMBER || viewerRole == NoticeTab.SCHOOL_CORE) {
+        if (viewerRole == NoticeTab.CENTRAL_MEMBER
+            || viewerRole == NoticeTab.SCHOOL_CORE
+            || viewerRole == NoticeTab.SCHOOL_PART_LEADER) {
             return Expressions.TRUE;
         }
         return targetPartIsEmptyOrContainsAny(viewerInfo.memberParts());

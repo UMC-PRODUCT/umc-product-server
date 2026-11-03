@@ -15,11 +15,8 @@ import com.umc.product.organization.application.port.in.query.dto.school.SchoolC
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolChapterNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolGisuChapterInfo;
-import com.umc.product.organization.application.port.in.query.dto.school.SchoolLinkInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
-import com.umc.product.organization.application.port.in.query.dto.school.UnassignedSchoolInfo;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
-import com.umc.product.organization.domain.School;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 
@@ -63,15 +60,6 @@ public class SchoolQueryService implements GetSchoolUseCase, CheckSchoolExistenc
     }
 
     @Override
-    public SchoolLinkInfo getSchoolLink(Long schoolId) {
-
-        School school = loadSchoolPort.findById(schoolId);
-
-        return SchoolLinkInfo.from(school);
-
-    }
-
-    @Override
     public List<SchoolDetailInfo> listDetailsByIds(Set<Long> schoolIds) {
         if (schoolIds.isEmpty()) {
             return List.of();
@@ -104,13 +92,6 @@ public class SchoolQueryService implements GetSchoolUseCase, CheckSchoolExistenc
                 logoImageUrl(logoImageUrls, school.logoImageId()),
                 linksMap.getOrDefault(school.schoolId(), List.of())
             ))
-            .toList();
-    }
-
-    @Override
-    public List<UnassignedSchoolInfo> getUnassignedSchools(Long gisuId) {
-        return loadSchoolPort.findUnassignedByGisuId(gisuId).stream()
-            .map(UnassignedSchoolInfo::from)
             .toList();
     }
 

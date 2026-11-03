@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.LocalDate;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -35,14 +34,11 @@ import com.umc.product.analytics.application.port.in.query.GetAdminRiskChallenge
 import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardActionQueueInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardContextInfo;
 import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardSummaryInfo;
-import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOverviewInfo;
 import com.umc.product.analytics.domain.AdminAnalyticsRoleType;
 import com.umc.product.analytics.domain.AdminAnalyticsScopeType;
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
-import com.umc.product.schedule.domain.enums.AttendanceStatus;
 
 @WebMvcTest(controllers = AdminDashboardController.class)
 @Import(JacksonConfig.class)
@@ -160,51 +156,5 @@ class AdminDashboardControllerTest {
                 .param("gisuId", "7"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.content").isArray());
-    }
-
-    @Test
-    @DisplayName("대시보드 operations API 응답")
-    void 대시보드_operations_API_응답() throws Exception {
-        given(getAdminOperationsOverviewUseCase.getOperationsOverview(any())).willReturn(
-            AdminOperationsOverviewInfo.of(
-                java.util.List.of(AdminOperationsOverviewInfo.ChapterSchoolStatusInfo.of(
-                    10L,
-                    "중앙",
-                    java.util.List.of(AdminOperationsOverviewInfo.SchoolChallengerStatusInfo.of(
-                        20L,
-                        "가천대학교",
-                        12L,
-                        Map.of(ChallengerPart.SPRINGBOOT, 7L)
-                    ))
-                )),
-                java.util.List.of(AdminOperationsOverviewInfo.ChapterPartPointGrantStatusInfo.of(
-                    10L,
-                    "중앙",
-                    ChallengerPart.SPRINGBOOT,
-                    3L,
-                    -12.0
-                )),
-                AdminOperationsOverviewInfo.ScheduleAttendanceStatusInfo.of(
-                    5L,
-                    4L,
-                    8L,
-                    Map.of(AttendanceStatus.PRESENT, 6L)
-                ),
-                AdminOperationsOverviewInfo.StudyGroupStatusInfo.of(9L, 11L),
-                java.util.List.of(AdminOperationsOverviewInfo.SignupBucketInfo.of(LocalDate.parse("2026-05-01"), 2L))
-            )
-        );
-
-        mockMvc.perform(get("/api/v1/analytics/admin/dashboard/operations")
-                .param("gisuId", "7")
-                .param("from", "2026-05-01T00:00:00Z")
-                .param("to", "2026-05-13T00:00:00Z"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.result.chapterSchoolStatuses[0].chapterId").value(10L))
-            .andExpect(jsonPath("$.result.chapterSchoolStatuses[0].schools[0].challengerPartCounts.SPRINGBOOT").value(7L))
-            .andExpect(jsonPath("$.result.pointGrantStatuses[0].grantCount").value(3L))
-            .andExpect(jsonPath("$.result.scheduleAttendanceStatus.attendanceRecordCount").value(8L))
-            .andExpect(jsonPath("$.result.studyGroupStatus.studyGroupCount").value(9L))
-            .andExpect(jsonPath("$.result.signupBuckets[0].count").value(2L));
     }
 }

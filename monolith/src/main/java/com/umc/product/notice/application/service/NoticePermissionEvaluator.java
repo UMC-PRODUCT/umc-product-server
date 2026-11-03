@@ -13,11 +13,11 @@ import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.authorization.domain.SubjectAttributes.GisuChallengerInfo;
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTargetInfo;
+import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
@@ -94,6 +94,13 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
     }
 
     private boolean canReadStaffNotice(SubjectAttributes subjectAttributes, NoticeTargetInfo targetInfo) {
+        // 교내 공지 열람은 모든 파트에 허용하되, 알림 수신자 선정에 쓰이는 isStaffTarget 규칙은 유지합니다.
+        if (targetInfo.targetNoticeTab() == NoticeTab.SCHOOL_PART_LEADER
+            && targetInfo.targetGisuId() != null && targetInfo.targetSchoolId() != null
+            && subjectAttributes.toAuthoritySnapshot()
+                .isSchoolAdminInGisu(targetInfo.targetGisuId(), targetInfo.targetSchoolId())) {
+            return true;
+        }
         return subjectAttributes.roleAttributes().stream()
             .anyMatch(role -> targetInfo.isStaffTarget(role.roleType(), role.gisuId(), role.organizationId(),
                 role.responsiblePart()));
@@ -110,8 +117,8 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
             case CENTRAL_OPERATING_TEAM_MEMBER, CENTRAL_EDUCATION_TEAM_MEMBER -> targetInfo.targetGisuId() == null
                 || targetInfo.targetGisuId().equals(role.gisuId());
             case CHAPTER_PRESIDENT -> chapterPresidentCanRead(role, targetInfo);
-            case SCHOOL_PRESIDENT, SCHOOL_VICE_PRESIDENT -> schoolCoreCanRead(role, targetInfo, subject);
-            case SCHOOL_PART_LEADER -> schoolPartLeaderCanRead(role, targetInfo, subject);
+            case SCHOOL_PRESIDENT, SCHOOL_VICE_PRESIDENT, SCHOOL_PART_LEADER, SCHOOL_ETC_ADMIN ->
+                schoolCoreCanRead(role, targetInfo, subject);
             default -> false;
         };
     }
@@ -175,26 +182,6 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
         // 학교 대상 공지는 본인 학교에 한정. 지부/전체 범위 공지(targetSchoolId == null)는
         // 기수·지부 일치 여부로만 판정하여 회장단이 본인 지부공지를 파트 무관하게 읽을 수 있도록 함.
         if (targetInfo.targetSchoolId() != null && !mySchoolId.equals(targetInfo.targetSchoolId())) {
-            return false;
-        }
-        return isInGisuAndChapter(role, targetInfo, subject);
-    }
-
-    private boolean schoolPartLeaderCanRead(RoleAttribute role, NoticeTargetInfo targetInfo,
-                                            SubjectAttributes subject) {
-        ChallengerPart responsiblePart = role.responsiblePart();
-        if (responsiblePart == null) {
-            return false;
-        }
-        Long mySchoolId = role.organizationId();
-        if (mySchoolId == null) {
-            return false;
-        }
-        if (targetInfo.targetSchoolId() != null && !mySchoolId.equals(targetInfo.targetSchoolId())) {
-            return false;
-        }
-        if (targetInfo.targetParts() == null || targetInfo.targetParts().isEmpty()
-            || !targetInfo.targetParts().contains(responsiblePart)) {
             return false;
         }
         return isInGisuAndChapter(role, targetInfo, subject);

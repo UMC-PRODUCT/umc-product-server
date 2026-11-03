@@ -9,15 +9,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuNameInfo;
 
 public interface GetGisuUseCase {
 
     List<GisuInfo> getList();
 
     Page<GisuInfo> getList(Pageable pageable);
-
-    List<GisuNameInfo> getAllGisuNames();
 
     GisuInfo getById(Long gisuId);
 

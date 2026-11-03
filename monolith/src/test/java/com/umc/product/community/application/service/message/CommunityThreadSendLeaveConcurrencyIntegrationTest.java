@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.TestPropertySource;
 
 import com.umc.product.community.application.port.in.command.thread.dto.CommunityThreadMemberLifecycleInfo;
 import com.umc.product.community.application.port.in.command.thread.dto.ThreadActorCommand;
@@ -19,6 +20,10 @@ import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.support.concurrency.PostgreSqlTransactionRace.TransactionCall;
 
+// 이 테스트는 outbox 행이 만들어졌는지만 센다. 컨텍스트의 outbox poller와 커밋 직후 즉시 전달 worker가 켜져 있으면
+// 테스트가 끝난 뒤에도 worker가 DB를 쓰고 있어, afterEach의 TRUNCATE와 락을 서로 기다리다 교착이 날 수 있다.
+// 그래서 이 테스트에서는 relay를 끈다(별도 컨텍스트가 하나 더 생긴다).
+@TestPropertySource(properties = "app.event-outbox.relay-enabled=false")
 @DisplayName("Community thread send/leave 실제 transaction 동시성")
 class CommunityThreadSendLeaveConcurrencyIntegrationTest
     extends CommunityThreadConcurrencyIntegrationSupport {

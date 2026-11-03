@@ -2,6 +2,7 @@ package com.umc.product.authentication.adapter.out.external;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -223,10 +224,17 @@ public class KakaoTokenVerifier {
                 // OIDC 미요청이어도 ID Token이 응답되면 검증하므로 nonce 유무와 서버 흐름 여부는 별개다.
                 .verifyWith(publicKeyResolver.getPublicKey(kakaoJwksSpec(), kid, serverFlow))
                 .requireIssuer(KAKAO_ISSUER)
-                .requireAudience(kakaoOAuthProperties.clientId())
                 .build()
                 .parseSignedClaims(idToken)
                 .getPayload();
+
+            Set<String> audience = claims.getAudience();
+            if (nonce != null
+                ? audience == null || !audience.contains(kakaoOAuthProperties.clientId())
+                : !kakaoOAuthProperties.isAllowedIdTokenAudience(audience)) {
+                log.warn("Kakao ID Token audience 불일치: actual={}", audience);
+                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+            }
 
             if (nonce != null) {
                 OidcLoginClaimsValidator.validate(claims, kakaoOAuthProperties.clientId(), nonce);

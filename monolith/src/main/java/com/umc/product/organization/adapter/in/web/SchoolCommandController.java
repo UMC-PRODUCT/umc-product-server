@@ -11,10 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.organization.adapter.in.web.dto.request.AssignSchoolRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateSchoolRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.DeleteSchoolsRequest;
-import com.umc.product.organization.adapter.in.web.dto.request.UnassignSchoolRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateSchoolRequest;
 import com.umc.product.organization.adapter.in.web.swagger.AdminSchoolControllerApi;
 import com.umc.product.organization.application.port.in.command.ManageSchoolUseCase;
@@ -62,25 +60,4 @@ public class SchoolCommandController implements AdminSchoolControllerApi {
         manageSchoolUseCase.deleteSchools(request.schoolIds());
     }
 
-    @CheckAccess(
-        resourceType = ResourceType.SCHOOL,
-        permission = PermissionType.EDIT,
-        message = "학교를 지부에 배정할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
-    )
-    @Override
-    @PatchMapping("/{schoolId}/assign")
-    public void assignToChapter(@PathVariable Long schoolId, @RequestBody @Valid AssignSchoolRequest request) {
-        manageSchoolUseCase.assignToChapter(request.toCommand(schoolId));
-    }
-
-    @CheckAccess(
-        resourceType = ResourceType.SCHOOL,
-        permission = PermissionType.EDIT,
-        message = "학교의 지부 배정을 해제할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."
-    )
-    @Override
-    @PatchMapping("/{schoolId}/unassign")
-    public void unassignFromChapter(@PathVariable Long schoolId, @RequestBody @Valid UnassignSchoolRequest request) {
-        manageSchoolUseCase.unassignFromChapter(request.toCommand(schoolId));
-    }
 }

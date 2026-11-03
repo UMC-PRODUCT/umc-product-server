@@ -1,7 +1,6 @@
 package com.umc.product.global.client;
 
 import java.net.URI;
-import java.util.Locale;
 
 import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.global.security.MemberPrincipal;
@@ -86,18 +85,7 @@ public class ClientRequestClassifier {
             return ClientDeviceType.DESKTOP;
         }
 
-        String userAgent = request.getHeader("User-Agent");
-        if (userAgent == null || userAgent.isBlank()) {
-            return ClientDeviceType.UNKNOWN;
-        }
-        String normalizedUserAgent = userAgent.toLowerCase(Locale.ROOT);
-        if (normalizedUserAgent.contains("iphone") || normalizedUserAgent.contains("ipad")) {
-            return ClientDeviceType.IOS;
-        }
-        if (normalizedUserAgent.contains("android")) {
-            return ClientDeviceType.ANDROID;
-        }
-        return ClientDeviceType.DESKTOP;
+        return ClientDeviceType.fromUserAgent(request.getHeader("User-Agent"));
     }
 
     private String resolveOrigin(HttpServletRequest request) {

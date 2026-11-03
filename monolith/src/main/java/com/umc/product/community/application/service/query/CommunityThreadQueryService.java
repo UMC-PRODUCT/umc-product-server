@@ -49,12 +49,14 @@ import com.umc.product.community.application.port.out.thread.dto.CommunityThread
 import com.umc.product.community.application.port.out.thread.dto.CommunityThreadMemberRow;
 import com.umc.product.community.application.port.out.thread.dto.CommunityThreadQueryRow;
 import com.umc.product.community.domain.CommunityThread;
+import com.umc.product.community.domain.CommunityThreadLinks;
 import com.umc.product.community.domain.CommunityThreadProperties;
 import com.umc.product.community.domain.enums.CommunityThreadCategory;
 import com.umc.product.community.domain.enums.CommunityThreadMemberRole;
 import com.umc.product.community.domain.enums.CommunityThreadMemberState;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
+import com.umc.product.global.config.DeepLinkProperties;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.SearchMemberInvitationUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -81,7 +83,6 @@ public class CommunityThreadQueryService implements
     SearchCommunityThreadInvitableUseCase {
 
     private static final String UNKNOWN_MEMBER_NAME = "알 수 없음";
-    private static final String SHARE_PATH_PREFIX = "/api/v1/community/threads/";
 
     private final CommunityThreadQueryPort threadQueryPort;
     private final LoadCommunityThreadPort loadThreadPort;
@@ -91,8 +92,8 @@ public class CommunityThreadQueryService implements
     private final GetGisuUseCase getGisuUseCase;
     private final SearchMemberInvitationUseCase searchInvitationUseCase;
     private final CommunityThreadProperties threadProperties;
+    private final DeepLinkProperties deepLinkProperties;
 
-    @Deprecated
     @Override
     public ThreadListInfo listThreads(ListThreadsQuery query) {
         CommunityThreadListRows rows = threadQueryPort.searchThreads(new CommunityThreadListCondition(
@@ -143,18 +144,18 @@ public class CommunityThreadQueryService implements
         Map<Long, MemberInfo> senders = loadVisibleSenders(List.of(row), List.of());
         return ThreadDetailInfo.from(
             toSummary(row, senders),
-            SHARE_PATH_PREFIX + row.threadId(),
+            deepLinkProperties.webUrl(CommunityThreadLinks.webPath(row.threadId())),
             row.deletedAt()
         );
     }
 
     @Override
     public ThreadDetailInfo getPublicThread(GetThreadDetailQuery query) {
-        CommunityThreadQueryRow row = getPublicReadableThread(query.threadId(), query.requesterMemberId());
+        CommunityThreadQueryRow row = getReadableThread(query.threadId(), query.requesterMemberId());
         Map<Long, MemberInfo> senders = loadVisibleSenders(List.of(row), List.of());
         return ThreadDetailInfo.from(
             toSummary(row, senders),
-            SHARE_PATH_PREFIX + row.threadId(),
+            deepLinkProperties.webUrl(CommunityThreadLinks.webPath(row.threadId())),
             row.deletedAt()
         );
     }
@@ -168,7 +169,7 @@ public class CommunityThreadQueryService implements
         Map<Long, MemberInfo> senders = loadVisibleSenders(List.of(row), List.of());
         return ThreadDetailInfo.from(
             toSummary(row, senders),
-            SHARE_PATH_PREFIX + row.threadId(),
+            deepLinkProperties.webUrl(CommunityThreadLinks.webPath(row.threadId())),
             row.deletedAt()
         );
     }
@@ -201,7 +202,7 @@ public class CommunityThreadQueryService implements
 
     @Override
     public ThreadMemberPageInfo listMembers(ListThreadMembersQuery query) {
-        CommunityThreadQueryRow thread = getPublicReadableThread(query.threadId(), query.requesterMemberId());
+        CommunityThreadQueryRow thread = getReadableThread(query.threadId(), query.requesterMemberId());
         List<CommunityThreadMemberRow> rows = threadQueryPort.listActiveThreadMembers(query.threadId());
         if (rows.isEmpty()) {
             return new ThreadMemberPageInfo(List.of(), null, 0L);
@@ -279,24 +280,6 @@ public class CommunityThreadQueryService implements
             throw new CommunityDomainException(CommunityErrorCode.THREAD_DELETED);
         }
         if (row.requesterState() != CommunityThreadMemberState.ACTIVE) {
-            throw new CommunityDomainException(CommunityErrorCode.THREAD_ACCESS_DENIED);
-        }
-        return row;
-    }
-
-    /**
-     * 참여 여부와 무관하게 조회할 수 있는 스레드를 반환한다.
-     *
-     * <p>강퇴 확인(acknowledge) 전({@code KICKED})에는 프론트가 강퇴 안내를 보여줄 수 있도록 조회를
-     * 허용한다. 확인 후({@code KICKED_ACKNOWLEDGED})에만 접근을 차단한다.</p>
-     */
-    private CommunityThreadQueryRow getPublicReadableThread(Long threadId, Long requesterMemberId) {
-        CommunityThreadQueryRow row = threadQueryPort.findThread(threadId, requesterMemberId)
-            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.THREAD_NOT_FOUND));
-        if (row.deletedAt() != null) {
-            throw new CommunityDomainException(CommunityErrorCode.THREAD_DELETED);
-        }
-        if (row.requesterState() == CommunityThreadMemberState.KICKED_ACKNOWLEDGED) {
             throw new CommunityDomainException(CommunityErrorCode.THREAD_ACCESS_DENIED);
         }
         return row;

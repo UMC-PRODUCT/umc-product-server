@@ -18,6 +18,7 @@ import com.umc.product.community.application.port.in.query.thread.message.dto.Co
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageMentionInfo;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageRecipientsQuery;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageType;
+import com.umc.product.community.domain.CommunityThreadLinks;
 import com.umc.product.community.domain.event.CommunityThreadInvitedEvent;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.notification.application.port.in.RequestFcmNotificationUseCase;
@@ -98,7 +99,7 @@ public class CommunityAlarmEventListener {
             .memberIds(List.copyOf(finalTargetIds))
             .title(title(threadTitle, sample))
             .body(body(sample))
-            .deepLink(threadDeepLink(threadId))
+            .deepLink(CommunityThreadLinks.appUrl(threadId))
             .build());
 
         log.info("Community 메시지 알림 요청: threadId={}, messageId={}, targetCount={}",
@@ -120,7 +121,7 @@ public class CommunityAlarmEventListener {
             .memberIds(invitedMemberIds)
             .title(inviteTitle(threadTitle))
             .body(inviteBody(inviterName))
-            .deepLink(threadDeepLink(event.threadId()))
+            .deepLink(CommunityThreadLinks.appUrl(event.threadId()))
             .build());
 
         log.info("Community 초대 알림 요청: threadId={}, inviterMemberId={}, targetCount={}",
@@ -134,11 +135,6 @@ public class CommunityAlarmEventListener {
     // 수락 대기가 아니라 초대 즉시 멤버가 되는 구조라, 문구도 이미 참여된 사실을 안내한다.
     private String inviteBody(String inviterName) {
         return StringUtils.abbreviate(inviterName + "님의 초대로 스레드에 참여했어요", BODY_MAX_LENGTH);
-    }
-
-    // 모바일 양 앱이 이미 처리하는 커스텀 스킴이다 (iOS MessageLink, Android 쪽은 별도 티켓에서 라우팅 추가 예정).
-    private String threadDeepLink(Long threadId) {
-        return "umc://thread/" + threadId;
     }
 
     private String title(String threadTitle, CommunityThreadMessageInfo info) {

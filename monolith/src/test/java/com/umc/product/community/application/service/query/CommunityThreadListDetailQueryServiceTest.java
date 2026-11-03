@@ -38,6 +38,7 @@ import com.umc.product.community.domain.enums.CommunityThreadMemberRole;
 import com.umc.product.community.domain.enums.CommunityThreadMemberState;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
+import com.umc.product.global.config.DeepLinkProperties;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.SearchMemberInvitationUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -82,7 +83,8 @@ class CommunityThreadListDetailQueryServiceTest {
             getChallengerUseCase,
             getGisuUseCase,
             searchInvitationUseCase,
-            new CommunityThreadProperties(75)
+            new CommunityThreadProperties(75),
+            new DeepLinkProperties("https://api.university.neordinary.com", null, null, null)
         );
     }
 
@@ -212,7 +214,7 @@ class CommunityThreadListDetailQueryServiceTest {
         assertThat(result.createdBy()).isEqualTo(10L);
         assertThat(result.createdAt()).isEqualTo(createdAt);
         assertThat(result.updatedAt()).isEqualTo(updatedAt);
-        assertThat(result.shareUrl()).isEqualTo("/api/v1/community/threads/1");
+        assertThat(result.shareUrl()).isEqualTo("https://api.university.neordinary.com/community/threads/1");
         assertThat(result.deletedAt()).isEqualTo(deletedAt);
         verify(getMemberUseCase).findAllByIds(Set.of(501L));
     }
@@ -269,35 +271,33 @@ class CommunityThreadListDetailQueryServiceTest {
     }
 
     @Test
-    @DisplayName("getPublicThread는 비멤버 요청자에게도 상세를 반환하고 isJoined=false로 매핑한다")
-    void getPublicThread_비멤버도_허용한다() {
+    @DisplayName("getPublicThread는 비멤버 요청자를 THREAD_ACCESS_DENIED로 거절한다")
+    void getPublicThread_비멤버를_거절한다() {
         // given
         CommunityThreadQueryRow nonMember = nonMemberRow(1L);
         given(threadQueryPort.findThread(1L, 10L)).willReturn(Optional.of(nonMember));
 
-        // when
-        var result = sut.getPublicThread(new GetThreadDetailQuery(1L, 10L));
-
-        // then
-        assertThat(result.threadId()).isEqualTo(1L);
-        assertThat(result.isJoined()).isFalse();
-        assertThat(result.myRole()).isNull();
+        // when & then
+        assertThatThrownBy(() -> sut.getPublicThread(new GetThreadDetailQuery(1L, 10L)))
+            .isInstanceOf(CommunityDomainException.class)
+            .extracting(exception -> ((CommunityDomainException) exception).getBaseCode())
+            .isEqualTo(CommunityErrorCode.THREAD_ACCESS_DENIED);
+        verifyNoInteractions(getMemberUseCase);
     }
 
     @Test
-    @DisplayName("getPublicThread는 강퇴를 확인하지 않은(KICKED) 요청자에게는 membershipState와 함께 상세를 반환한다")
-    void getPublicThread_강퇴_미확인_요청자를_허용한다() {
+    @DisplayName("getPublicThread는 강퇴를 확인하지 않은(KICKED) 요청자도 THREAD_ACCESS_DENIED로 거절한다")
+    void getPublicThread_강퇴_미확인_요청자를_거절한다() {
         // given
         CommunityThreadQueryRow kicked = restrictedRow(CommunityThreadMemberState.KICKED, null);
         given(threadQueryPort.findThread(1L, 10L)).willReturn(Optional.of(kicked));
 
-        // when
-        var result = sut.getPublicThread(new GetThreadDetailQuery(1L, 10L));
-
-        // then
-        assertThat(result.threadId()).isEqualTo(1L);
-        assertThat(result.isJoined()).isFalse();
-        assertThat(result.membershipState()).isEqualTo(CommunityThreadMemberState.KICKED);
+        // when & then
+        assertThatThrownBy(() -> sut.getPublicThread(new GetThreadDetailQuery(1L, 10L)))
+            .isInstanceOf(CommunityDomainException.class)
+            .extracting(exception -> ((CommunityDomainException) exception).getBaseCode())
+            .isEqualTo(CommunityErrorCode.THREAD_ACCESS_DENIED);
+        verifyNoInteractions(getMemberUseCase);
     }
 
     @Test
@@ -319,18 +319,18 @@ class CommunityThreadListDetailQueryServiceTest {
     }
 
     @Test
-    @DisplayName("getPublicThread는 LEFT 요청자에게는 상세를 반환한다")
-    void getPublicThread_탈퇴한_요청자를_허용한다() {
+    @DisplayName("getPublicThread는 LEFT 요청자를 THREAD_ACCESS_DENIED로 거절한다")
+    void getPublicThread_탈퇴한_요청자를_거절한다() {
         // given
         CommunityThreadQueryRow left = restrictedRow(CommunityThreadMemberState.LEFT, null);
         given(threadQueryPort.findThread(1L, 10L)).willReturn(Optional.of(left));
 
-        // when
-        var result = sut.getPublicThread(new GetThreadDetailQuery(1L, 10L));
-
-        // then
-        assertThat(result.threadId()).isEqualTo(1L);
-        assertThat(result.isJoined()).isFalse();
+        // when & then
+        assertThatThrownBy(() -> sut.getPublicThread(new GetThreadDetailQuery(1L, 10L)))
+            .isInstanceOf(CommunityDomainException.class)
+            .extracting(exception -> ((CommunityDomainException) exception).getBaseCode())
+            .isEqualTo(CommunityErrorCode.THREAD_ACCESS_DENIED);
+        verifyNoInteractions(getMemberUseCase);
     }
 
     @Test

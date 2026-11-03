@@ -1,4 +1,4 @@
-# ADR-006: 문의사항 도메인을 도입하고 메시지 송수신을 WebSocket + STOMP 로 구성한다
+# ADR-011: 문의사항 도메인을 도입하고 메시지 송수신을 WebSocket + STOMP 로 구성한다
 
 ## Status
 
@@ -579,7 +579,7 @@ REST 가 모든 동작을 커버하는 상태에서 실시간 채널을 추가. 
 15. `test: 문의 도메인 시나리오 통합 테스트`
     - 등록 → 운영진 첫 응답(자동 IN_PROGRESS) → 작성자 응답 → 운영진 종료 → 작성자 재오픈 전체 흐름.
     - WebSocket / REST 혼합 시나리오 (한쪽이 SUBSCRIBE, 다른 쪽이 REST 전송 — STOMP-only 정책일 경우 본 케이스 제외).
-16. `docs: ADR-006 운영 가이드 갱신 / Status 전환`
+16. `docs: ADR-011 운영 가이드 갱신 / Status 전환`
     - 본 ADR Status 를 `Accepted` 로 전환.
     - `UMC_PRODUCT` 매핑 후속 작업 항목을 별도 ADR / 이슈로 분리해 링크 추가.
     - 운영 가이드 문서가 있다면 미읽음 카운트 / 필터 사용법 / 종료 정책을 추가.

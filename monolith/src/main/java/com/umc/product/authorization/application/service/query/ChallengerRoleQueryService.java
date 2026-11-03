@@ -98,6 +98,15 @@ public class ChallengerRoleQueryService implements
     }
 
     @Override
+    public boolean isUmcProduct(Long memberId) {
+        if (!memberExists(memberId)) {
+            return false;
+        }
+        Set<SystemRoleType> systemRoles = listSystemRoles(memberId);
+        return systemRoles.contains(SystemRoleType.SUPER_ADMIN) || systemRoles.contains(SystemRoleType.UMC_PRODUCT);
+    }
+
+    @Override
     public List<ChallengerRoleInfo> listByChallengerIdsAndGisuId(Set<Long> challengerIds, Long gisuId) {
         if (challengerIds.isEmpty()) {
             return List.of();
@@ -114,9 +123,13 @@ public class ChallengerRoleQueryService implements
     }
 
     private boolean hasSystemSuperAdmin(Long memberId) {
+        return listSystemRoles(memberId).contains(SystemRoleType.SUPER_ADMIN);
+    }
+
+    private Set<SystemRoleType> listSystemRoles(Long memberId) {
         return listMemberSystemRoleUseCase.listByMemberId(memberId).stream()
             .map(role -> SystemRoleType.from(role.roleType()))
-            .anyMatch(roleType -> roleType == SystemRoleType.SUPER_ADMIN);
+            .collect(Collectors.toUnmodifiableSet());
     }
 
     @Override
@@ -213,37 +226,6 @@ public class ChallengerRoleQueryService implements
             .filter(role -> role.getOrganizationId().equals(chapterId))
             .map(ChallengerRole::getChallengerRoleType)
             .anyMatch(roleType -> roleType == ChallengerRoleType.CHAPTER_PRESIDENT);
-    }
-
-    @Override
-    public List<ChallengerRoleType> getAllRoleTypesByMemberIdAndGisuId(Long memberId, Long gisuId) {
-        if (gisuId == null) {
-            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE, "권한을 확인하려면 기수를 선택해주세요.");
-        }
-
-        List<ChallengerRole> roles = loadChallengerRolePort.findRolesByMemberIdAndGisuId(memberId, gisuId);
-
-        return roles.stream()
-            .map(ChallengerRole::getChallengerRoleType)
-            .distinct()
-            .toList();
-    }
-
-    @Override
-    public List<ChallengerRoleType> getAllRoleTypesByMemberIdAndSchoolId(Long memberId, Long schoolId) {
-        if (schoolId == null) {
-            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
-                "schoolId는 null일 수 없습니다.");
-        }
-
-        List<ChallengerRole> roles = loadChallengerRolePort.findByMemberId(memberId);
-
-        return roles.stream()
-            .filter(role -> role.getOrganizationType() == OrganizationType.SCHOOL)
-            .filter(role -> role.getOrganizationId().equals(schoolId))
-            .map(ChallengerRole::getChallengerRoleType)
-            .distinct()
-            .toList();
     }
 
     @Override

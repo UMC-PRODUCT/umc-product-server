@@ -339,6 +339,19 @@ app:
         service-type: UMC_TECH_BLOG
         environment: PROD
 
+  # 커뮤니티 스레드 공유 링크 등 앱 딥링크 공통 설정(#1268). 기본값은 prod 기준이고, dev 프로필에서
+  # 호스트/서명 인증서만 재정의한다.
+  deep-link:
+    base-url: ${APP_DEEP_LINK_BASE_URL:https://api.university.neordinary.com}
+    fallback-url: ${APP_DEEP_LINK_FALLBACK_URL:https://university.neordinary.com}
+    android:
+      package-name: ${APP_DEEP_LINK_ANDROID_PACKAGE_NAME:com.umc.product}
+      sha256-cert-fingerprints: ${APP_DEEP_LINK_ANDROID_SHA256_CERT_FINGERPRINTS:77:6D:65:1D:14:23:7E:E6:52:3A:5E:A9:F2:A5:ED:6A:04:95:2F:02:C6:B8:F1:74:B4:00:47:EB:CF:29:E1:71}
+    ios:
+      team-id: ${APP_DEEP_LINK_IOS_TEAM_ID:8B8B4462NV}
+      bundle-id: ${APP_DEEP_LINK_IOS_BUNDLE_ID:com.umc.product}
+      app-store-url: ${APP_DEEP_LINK_IOS_APP_STORE_URL:}
+
   sso:
     issuer: ${SSO_ISSUER:https://api.university.neordinary.com}
     # 제공자 콘솔·HTTPS callback·비밀값 준비 후 각각 활성화한다. 기존 모바일 로그인 활성화 설정과는 별개다.
@@ -533,6 +546,18 @@ app:
     discord:
       url: ${DISCORD_WEBHOOK_URL:}
 
+  # 신고 운영 채널(Discord 봇). 봇 토큰이나 채널 ID가 비어 있으면 신고를 보내지 않고 전달 대기(PENDING)로 남긴다.
+  # 앱 공개키(public-key)가 비어 있으면 상호작용 콜백을 모두 401로 거절한다.
+  # 서버 ID(guild-id)나 신고처리 역할 ID(moderator-role-id)가 비어 있으면 아무도 버튼으로 신고를 처리할 수 없다.
+  # moderator-role-id는 쉼표로 여러 역할 ID를 넣을 수 있다. 예: 111,222,333
+  report:
+    discord:
+      bot-token: ${REPORT_DISCORD_BOT_TOKEN:}
+      channel-id: ${REPORT_DISCORD_CHANNEL_ID:}
+      public-key: ${REPORT_DISCORD_PUBLIC_KEY:}
+      guild-id: ${REPORT_DISCORD_GUILD_ID:}
+      moderator-role-id: ${REPORT_DISCORD_MODERATOR_ROLE_ID:}
+
   # 일반 테스트 및 인증서 PDF 미리보기 API. prod 프로필에서는 설정과 무관하게 비활성화된다.
   test-api:
     enabled: ${APP_TEST_API_ENABLED:false}
@@ -565,6 +590,8 @@ app:
       client-secret: ${KAKAO_CLIENT_SECRET:}
       admin-key: ${KAKAO_ADMIN_KEY:}
       allowed-redirect-uris: ${KAKAO_ALLOWED_REDIRECT_URIS:}
+      # client-id 외에 클라이언트가 보낸 ID Token aud로 받을 앱 키 (웹 JavaScript 키, 네이티브 앱 키)
+      allowed-id-token-audiences: ${KAKAO_ALLOWED_ID_TOKEN_AUDIENCES:}
       jwks-cache:
         ttl: ${KAKAO_JWKS_CACHE_TTL:PT24H}
         max-size: ${KAKAO_JWKS_CACHE_MAX_SIZE:1}
@@ -588,7 +615,8 @@ app:
       burst: ${LLM_RATE_LIMIT_BURST:5}
 
   notification:
-    # provider는 ses(기본) 또는 smtp. 선택한 제공자의 자격증명만 필수다.
+    # provider는 ses(기본), smtp, log(로컬 개발용, 실제로 보내지 않고 로그만 남김). 선택한 제공자의 자격증명만 필수다.
+    # local 프로필은 파일 하단에서 기본값을 log로 바꾼다.
     # SMTP는 STARTTLS 인증 연결을 사용하며, Gmail에서는 sender 주소를 SMTP 계정 주소와 맞춘다.
     email:
       provider: ${EMAIL_PROVIDER:ses}
@@ -645,6 +673,12 @@ app:
       - origin: http://localhost:5173
         service-type: UNKNOWN
         environment: DEV
+
+  deep-link:
+    base-url: ${APP_DEEP_LINK_BASE_URL:https://api-dev.university.neordinary.com}
+    android:
+      package-name: ${APP_DEEP_LINK_ANDROID_PACKAGE_NAME:com.umc.product}
+      sha256-cert-fingerprints: ${APP_DEEP_LINK_ANDROID_SHA256_CERT_FINGERPRINTS:D9:4A:F4:92:A2:57:D2:9D:DD:DA:0D:60:73:6B:08:19:DA:91:99:15:5F:9C:20:25:63:E1:E9:EB:E5:38:C7:28,4F:BB:55:BD:20:99:7C:BD:E4:92:E6:20:76:8C:EF:EC:34:85:07:C8:00:8A:78:61:2A:ED:A3:E9:18:6E:4D:0F}
 
   test-api:
     enabled: ${APP_TEST_API_ENABLED:true}
@@ -723,3 +757,10 @@ app:
 
   test-api:
     enabled: ${APP_TEST_API_ENABLED:true}
+
+  notification:
+    email:
+      # 로컬은 SES·SMTP 자격증명 없이 뜨고 실제 메일을 보내지 않는다. 실제 발송을 확인할 때만 EMAIL_PROVIDER를 바꾼다.
+      provider: ${EMAIL_PROVIDER:log}
+      sender:
+        no-reply-address: ${EMAIL_NO_REPLY_ADDRESS:no-reply@localhost}

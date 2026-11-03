@@ -47,7 +47,10 @@ public class ThreadMessageReportQueryRepository implements SearchThreadMessageRe
             condition.and(report.status.eq(query.status()));
         }
         if (query.reason() != null) {
-            condition.and(report.reasonCode.eq(query.reason()));
+            // 선택한 사유가 하나라도 담긴 신고를 찾습니다(EXISTS 조회).
+            // 예전 서버가 접수해 report_reason이 비어 있는 신고는 대표 사유로 찾습니다.
+            condition.and(report.reasons.contains(query.reason())
+                .or(report.reasons.isEmpty().and(report.reasonCode.eq(query.reason()))));
         }
         if (query.threadId() != null) {
             condition.and(report.threadId.eq(query.threadId()));

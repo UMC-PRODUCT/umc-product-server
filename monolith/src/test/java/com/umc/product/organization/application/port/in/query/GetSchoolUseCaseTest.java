@@ -12,12 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
-import com.umc.product.organization.application.port.in.query.dto.school.UnassignedSchoolInfo;
 import com.umc.product.organization.application.port.out.command.SaveChapterPort;
 import com.umc.product.organization.application.port.out.command.SaveChapterSchoolPort;
 import com.umc.product.organization.application.port.out.command.SaveSchoolPort;
 import com.umc.product.organization.domain.Chapter;
-import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
 import com.umc.product.storage.application.port.out.SaveFileMetadataPort;
@@ -47,67 +45,6 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
     private SaveFileMetadataPort saveFileMetadataPort;
-
-    @Test
-    void 배정_대기_중인_학교_목록을_조회한다() {
-        // given
-        Gisu gisu9 = gisuFixture.활성_기수(9L);
-        Chapter scorpioChapter = saveChapterPort.save(Chapter.create(gisu9, "Scorpio"));
-
-        School assignedSchool = saveSchoolPort.save(School.create("한성대", null, null));
-        School unassignedSchool1 = saveSchoolPort.save(School.create("동국대", null, null));
-        School unassignedSchool2 = saveSchoolPort.save(School.create("중앙대", null, null));
-
-        saveChapterSchoolPort.save(ChapterSchool.create(scorpioChapter, assignedSchool));
-
-        // when
-        List<UnassignedSchoolInfo> result = getSchoolUseCase.getUnassignedSchools(gisu9.getId());
-
-        // then
-        assertThat(result).hasSize(2)
-            .extracting(UnassignedSchoolInfo::schoolName)
-            .containsExactlyInAnyOrder("동국대", "중앙대");
-    }
-
-    @Test
-    void 다른_기수에_배정된_학교는_배정_대기로_조회된다() {
-        // given
-        Gisu gisu9 = gisuFixture.활성_기수(9L);
-        Gisu gisu10 = gisuFixture.활성_기수(10L);
-
-        Chapter chapter9 = saveChapterPort.save(Chapter.create(gisu9, "Scorpio"));
-        Chapter chapter10 = saveChapterPort.save(Chapter.create(gisu10, "Leo"));
-
-        School school1 = saveSchoolPort.save(School.create("한성대", null, null));
-        School school2 = saveSchoolPort.save(School.create("동국대", null, null));
-
-        saveChapterSchoolPort.save(ChapterSchool.create(chapter9, school1));
-        saveChapterSchoolPort.save(ChapterSchool.create(chapter10, school2));
-
-        // when
-        List<UnassignedSchoolInfo> result = getSchoolUseCase.getUnassignedSchools(gisu9.getId());
-
-        // then
-        assertThat(result).hasSize(1)
-            .extracting(UnassignedSchoolInfo::schoolName)
-            .containsExactly("동국대");
-    }
-
-    @Test
-    void 모든_학교가_배정되어_있으면_빈_목록을_반환한다() {
-        // given
-        Gisu gisu = gisuFixture.활성_기수(9L);
-        Chapter chapter = saveChapterPort.save(Chapter.create(gisu, "Scorpio"));
-
-        School school = saveSchoolPort.save(School.create("한성대", null, null));
-        saveChapterSchoolPort.save(ChapterSchool.create(chapter, school));
-
-        // when
-        List<UnassignedSchoolInfo> result = getSchoolUseCase.getUnassignedSchools(gisu.getId());
-
-        // then
-        assertThat(result).isEmpty();
-    }
 
     @Test
     void 학교_상세를_조회한다_활성_기수_지부_정보를_포함한다() {

@@ -68,13 +68,12 @@ public class CommunityThreadMessageReportCommandService implements ReportCommuni
             command.requesterMemberId(),
             thread.getId(),
             command.messageId(),
-            command.reason(),
+            command.reasons(),
             targetSnapshot(message, thread)
         ));
         return CommunityThreadMessageReportReceiptInfo.from(
             submitted,
-            command.messageId(),
-            command.reason()
+            command.messageId()
         );
     }
 

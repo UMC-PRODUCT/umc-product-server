@@ -9,16 +9,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.umc.product.global.exception.BusinessException;
-import com.umc.product.organization.application.port.in.command.dto.AssignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.CreateSchoolCommand;
-import com.umc.product.organization.application.port.in.command.dto.UnassignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateSchoolCommand;
 import com.umc.product.organization.application.port.out.command.SaveChapterPort;
 import com.umc.product.organization.application.port.out.command.SaveChapterSchoolPort;
 import com.umc.product.organization.application.port.out.command.SaveSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.Chapter;
-import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
 import com.umc.product.organization.domain.enums.SchoolLinkType;
@@ -254,137 +251,5 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
 
         School remainingSchool = loadSchoolPort.findById(school3.getId());
         assertThat(remainingSchool.getName()).isEqualTo("중앙대");
-    }
-
-    @Test
-    void 학교를_지부에_배정한다() {
-        // given
-        Gisu gisu = gisuFixture.활성_기수(9L);
-        Chapter chapter = saveChapterPort.save(Chapter.create(gisu, "Scorpio"));
-        School school = saveSchoolPort.save(School.create("한성대", null, null));
-
-        AssignSchoolCommand command = new AssignSchoolCommand(school.getId(), chapter.getId());
-
-        // when
-        manageSchoolUseCase.assignToChapter(command);
-
-        // then
-        School updatedSchool = loadSchoolPort.findSchoolDetailById(school.getId());
-        assertThat(updatedSchool.getChapterSchools()).hasSize(1);
-        assertThat(updatedSchool.getChapterSchools().get(0).getChapter().getName()).isEqualTo("Scorpio");
-    }
-
-    @Test
-    void 이미_배정된_학교를_다른_지부로_이동한다() {
-        // given
-        Gisu gisu = gisuFixture.활성_기수(9L);
-        Chapter scorpioChapter = saveChapterPort.save(Chapter.create(gisu, "Scorpio"));
-        Chapter leoChapter = saveChapterPort.save(Chapter.create(gisu, "Leo"));
-
-        School school = saveSchoolPort.save(School.create("한성대", null, null));
-        saveChapterSchoolPort.save(ChapterSchool.create(scorpioChapter, school));
-
-        AssignSchoolCommand command = new AssignSchoolCommand(school.getId(), leoChapter.getId());
-
-        // when
-        manageSchoolUseCase.assignToChapter(command);
-
-        // then
-        School updatedSchool = loadSchoolPort.findSchoolDetailById(school.getId());
-        assertThat(updatedSchool.getChapterSchools()).hasSize(1);
-        assertThat(updatedSchool.getChapterSchools().get(0).getChapter().getName()).isEqualTo("Leo");
-    }
-
-    @Test
-    void 다른_기수_배정은_유지하면서_특정_기수_지부로_배정한다() {
-        // given
-        Gisu gisu9 = gisuFixture.활성_기수(9L);
-        Gisu gisu10 = gisuFixture.비활성_기수(10L);
-
-        Chapter chapter9 = saveChapterPort.save(Chapter.create(gisu9, "Scorpio"));
-        Chapter chapter10 = saveChapterPort.save(Chapter.create(gisu10, "Leo"));
-
-        School school = saveSchoolPort.save(School.create("한성대", null, null));
-        saveChapterSchoolPort.save(ChapterSchool.create(chapter10, school));
-
-        AssignSchoolCommand command = new AssignSchoolCommand(school.getId(), chapter9.getId());
-
-        // when
-        manageSchoolUseCase.assignToChapter(command);
-
-        // then
-        School updatedSchool = loadSchoolPort.findSchoolDetailById(school.getId());
-        assertThat(updatedSchool.getChapterSchools()).hasSize(2);
-        assertThat(updatedSchool.getChapterSchools())
-            .extracting(cs -> cs.getChapter().getName())
-            .containsExactlyInAnyOrder("Scorpio", "Leo");
-    }
-
-    @Test
-    void 학교의_지부_배정을_해제한다() {
-        // given
-        Gisu gisu = gisuFixture.활성_기수(9L);
-        Chapter chapter = saveChapterPort.save(Chapter.create(gisu, "Scorpio"));
-
-        School school = saveSchoolPort.save(School.create("한성대", null, null));
-        saveChapterSchoolPort.save(ChapterSchool.create(chapter, school));
-
-        UnassignSchoolCommand command = new UnassignSchoolCommand(school.getId(), gisu.getId());
-
-        // when
-        manageSchoolUseCase.unassignFromChapter(command);
-
-        // then
-        School updatedSchool = loadSchoolPort.findSchoolDetailById(school.getId());
-        assertThat(updatedSchool.getChapterSchools()).isEmpty();
-    }
-
-    @Test
-    void 특정_기수의_배정만_해제하고_다른_기수는_유지한다() {
-        // given
-        Gisu gisu9 = gisuFixture.활성_기수(9L);
-        Gisu gisu10 = gisuFixture.비활성_기수(10L);
-
-        Chapter chapter9 = saveChapterPort.save(Chapter.create(gisu9, "Scorpio"));
-        Chapter chapter10 = saveChapterPort.save(Chapter.create(gisu10, "Leo"));
-
-        School school = saveSchoolPort.save(School.create("한성대", null, null));
-        saveChapterSchoolPort.save(ChapterSchool.create(chapter9, school));
-        saveChapterSchoolPort.save(ChapterSchool.create(chapter10, school));
-
-        UnassignSchoolCommand command = new UnassignSchoolCommand(school.getId(), gisu9.getId());
-
-        // when
-        manageSchoolUseCase.unassignFromChapter(command);
-
-        // then
-        School updatedSchool = loadSchoolPort.findSchoolDetailById(school.getId());
-        assertThat(updatedSchool.getChapterSchools()).hasSize(1);
-        assertThat(updatedSchool.getChapterSchools().get(0).getChapter().getName()).isEqualTo("Leo");
-    }
-
-    @Test
-    void 존재하지_않는_학교를_배정하면_예외가_발생한다() {
-        // given
-        Gisu gisu = gisuFixture.활성_기수(9L);
-        Chapter chapter = saveChapterPort.save(Chapter.create(gisu, "Scorpio"));
-
-        AssignSchoolCommand command = new AssignSchoolCommand(999L, chapter.getId());
-
-        // when & then
-        assertThatThrownBy(() -> manageSchoolUseCase.assignToChapter(command))
-            .isInstanceOf(BusinessException.class);
-    }
-
-    @Test
-    void 존재하지_않는_지부에_배정하면_예외가_발생한다() {
-        // given
-        School school = saveSchoolPort.save(School.create("한성대", null, null));
-
-        AssignSchoolCommand command = new AssignSchoolCommand(school.getId(), 999L);
-
-        // when & then
-        assertThatThrownBy(() -> manageSchoolUseCase.assignToChapter(command))
-            .isInstanceOf(BusinessException.class);
     }
 }

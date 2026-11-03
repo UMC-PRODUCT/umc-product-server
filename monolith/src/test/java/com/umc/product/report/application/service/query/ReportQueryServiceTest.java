@@ -60,6 +60,7 @@ class ReportQueryServiceTest {
             701L,
             202L,
             ReportReason.ABUSE,
+            List.of(ReportReason.ABUSE, ReportReason.SPAM),
             ReportStatus.PENDING,
             CREATED_AT
         ));
@@ -73,6 +74,7 @@ class ReportQueryServiceTest {
         given(report.getTargetId()).willReturn(701L);
         given(report.getThreadId()).willReturn(202L);
         given(report.getReasonCode()).willReturn(ReportReason.ABUSE);
+        given(report.getReasonCodes()).willReturn(List.of(ReportReason.ABUSE, ReportReason.SPAM));
         given(report.getStatus()).willReturn(ReportStatus.PENDING);
         given(report.getCreatedAt()).willReturn(CREATED_AT);
         return report;

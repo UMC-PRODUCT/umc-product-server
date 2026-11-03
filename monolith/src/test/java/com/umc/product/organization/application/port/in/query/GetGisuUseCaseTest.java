@@ -12,7 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuNameInfo;
 import com.umc.product.organization.application.port.out.command.SaveGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
@@ -146,31 +145,6 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
         assertThat(result.getContent().get(0).generation()).isEqualTo(9L);
         assertThat(result.getContent().get(1).generation()).isEqualTo(8L);
         assertThat(result.getContent().get(2).generation()).isEqualTo(7L);
-    }
-
-    @Test
-    void 전체_기수_이름_목록을_조회한다() {
-        // given
-        gisuFixture.비활성_기수(7L);
-        gisuFixture.활성_기수(9L);
-        gisuFixture.비활성_기수(8L);
-
-        // when
-        List<GisuNameInfo> result = getGisuUseCase.getAllGisuNames();
-
-        // then
-        assertThat(result).hasSize(3);
-        assertThat(result).extracting(GisuNameInfo::generation)
-            .containsExactly(9L, 8L, 7L);
-    }
-
-    @Test
-    void 기수가_없으면_빈_이름_목록을_반환한다() {
-        // when
-        List<GisuNameInfo> result = getGisuUseCase.getAllGisuNames();
-
-        // then
-        assertThat(result).isEmpty();
     }
 
     @Test

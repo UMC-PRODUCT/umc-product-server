@@ -41,13 +41,12 @@ import lombok.RequiredArgsConstructor;
 /**
  * Community thread 메시지 조회.
  *
- * <p>사용자 조회 경로({@code getHistory}, {@code recover}, {@code getMessage})는 스레드 상세와 같은
- * 공개 범위를 따른다. 삭제되지 않은 스레드면 비참여자도 읽을 수 있고, 강퇴된 요청자만 차단한다.
- * Chat engine은 방의 조회 범위로 이를 다시 확인한다. 메시지 생성/수정/삭제, 리액션, 읽음, 신고와
- * 실시간 수신은 ACTIVE 멤버 전용이며 각 command 경로가 검증한다.</p>
+ * <p>사용자 조회 경로({@code getHistory}, {@code recover}, {@code getMessage})는 ACTIVE 멤버만
+ * 읽을 수 있다. Chat engine은 방의 조회 범위로 이를 다시 확인한다. 메시지 생성/수정/삭제, 리액션,
+ * 읽음, 신고와 실시간 수신도 ACTIVE 멤버 전용이며 각 command 경로가 검증한다.</p>
  *
- * <p>반면 실시간 fan-out용 {@code getMessageForRecipients}는 수신자가 모두 ACTIVE 멤버인지 검증한다.
- * 공개 조회와 달리 이 경로는 전달 대상 자체가 멤버로 한정되기 때문이다.</p>
+ * <p>실시간 fan-out용 {@code getMessageForRecipients}는 수신자가 모두 ACTIVE 멤버인지 검증한다.
+ * 이 경로는 전달 대상 자체가 멤버로 한정되기 때문이다.</p>
  */
 @Service
 @RequiredArgsConstructor
@@ -78,7 +77,7 @@ public class CommunityThreadMessageQueryService implements
 
     @Override
     public CommunityThreadMessageInfo getMessage(CommunityThreadMessageQuery query) {
-        CommunityThread thread = loadPubliclyReadableThread(query.threadId(), query.requesterMemberId());
+        CommunityThread thread = loadReadableThread(query.threadId(), query.requesterMemberId());
         ChatMessageInfo message = getChatMessageUseCase.getMessage(
             new GetChatMessageQuery(thread.getChatRoomId(), query.requesterMemberId(), query.messageId())
         );
@@ -142,7 +141,7 @@ public class CommunityThreadMessageQueryService implements
         Long beforeMessageId,
         int limit
     ) {
-        CommunityThread thread = loadPubliclyReadableThread(threadId, requesterMemberId);
+        CommunityThread thread = loadReadableThread(threadId, requesterMemberId);
         ChatMessageCursorResult chatPage = getChatMessagesUseCase.getMessages(
             new GetChatMessagesQuery(thread.getChatRoomId(), requesterMemberId, beforeMessageId, limit)
         );
@@ -154,14 +153,14 @@ public class CommunityThreadMessageQueryService implements
     }
 
     /**
-     * 참여 여부와 무관하게 읽을 수 있는 스레드를 반환한다. 강퇴된 요청자만 차단한다.
+     * ACTIVE 멤버만 읽을 수 있는 스레드를 반환한다. 비멤버·LEFT·KICKED(확인 전후 모두)는 차단한다.
      */
-    private CommunityThread loadPubliclyReadableThread(Long threadId, Long requesterMemberId) {
+    private CommunityThread loadReadableThread(Long threadId, Long requesterMemberId) {
         CommunityThread thread = loadActiveThread(threadId);
-        boolean kicked = loadThreadMemberPort.findByThreadIdAndMemberId(threadId, requesterMemberId)
-            .filter(CommunityThreadMember::isKicked)
+        boolean active = loadThreadMemberPort.findByThreadIdAndMemberId(threadId, requesterMemberId)
+            .filter(CommunityThreadMember::isActive)
             .isPresent();
-        if (kicked) {
+        if (!active) {
             throw new CommunityDomainException(CommunityErrorCode.THREAD_ACCESS_DENIED);
         }
         return thread;

@@ -9,6 +9,11 @@ public interface CheckChallengerAuthorityUseCase {
 
     boolean isSuperAdmin(Long memberId);
 
+    /**
+     * 프로덕트 문의 답변·관리 가능 여부입니다. 시스템 역할 UMC_PRODUCT 또는 SUPER_ADMIN(전역 override)이면 true입니다.
+     */
+    boolean isUmcProduct(Long memberId);
+
     boolean hasRoleTypeInGisu(Long memberId, Long gisuId, ChallengerRoleType role);
 
     boolean hasAnyRoleTypeInGisu(Long memberId, Long gisuId, ChallengerRoleType... roles);

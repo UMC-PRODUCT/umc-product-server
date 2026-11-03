@@ -117,6 +117,15 @@ public class ProjectMember extends BaseEntity {
         return pm;
     }
 
+    /** 운영진 수동 배정으로 팀원을 생성한다. 배정 차수를 기록하고 즉시 공개한다. */
+    public static ProjectMember createForManualAssignment(
+        Project project, Long memberId, ChallengerPart part, ProjectMatchingRound round, Long decidedByMemberId
+    ) {
+        ProjectMember pm = create(project, memberId, part, decidedByMemberId);
+        pm.assignedMatchingRound = round;
+        return pm;
+    }
+
     /**
      * 선발된 지원서에 연결된 신규 멤버를 생성합니다.
      * 발표 시각이 설정된 차수는 PENDING_PUBLICATION 상태로 생성하고, 지원서 합불은 발표 시 반영합니다.
@@ -150,8 +159,8 @@ public class ProjectMember extends BaseEntity {
         return pm;
     }
 
-    /** 재배정은 지원서·차수 선발 경로와 구분하여 즉시 ACTIVE로 반영한다. */
-    public void assignManually(ChallengerPart part, Long requesterMemberId) {
+    /** 재배정은 배정 시점의 차수를 기록하고 즉시 ACTIVE로 반영한다. */
+    public void assignManually(ChallengerPart part, ProjectMatchingRound round, Long requesterMemberId) {
         if (status == ProjectMemberStatus.ACTIVE || status == ProjectMemberStatus.PENDING_PUBLICATION) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_ALREADY_EXISTS);
         }
@@ -159,7 +168,7 @@ public class ProjectMember extends BaseEntity {
         this.pendingRemovalRoundId = null;
         this.part = part;
         this.application = null;
-        this.assignedMatchingRound = null;
+        this.assignedMatchingRound = round;
         this.decidedMemberId = requesterMemberId;
         this.decidedAt = Instant.now();
         this.statusUpdatedAt = decidedAt;
@@ -173,8 +182,7 @@ public class ProjectMember extends BaseEntity {
      */
     public void assignForAdjustment(ChallengerPart part, ProjectMatchingRound round, Long requesterMemberId) {
         validateAdjustmentRound(round, part);
-        assignManually(part, requesterMemberId);
-        this.assignedMatchingRound = round;
+        assignManually(part, round, requesterMemberId);
         this.status = ProjectMemberStatus.PENDING_PUBLICATION;
     }
 

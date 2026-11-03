@@ -26,7 +26,6 @@ public record ChallengerInfo(
 ) {
     // 성능 상 상벌점 정보가 필요하지 않은 경우 별도의 DTO를 생성할 것.
     // 아직 만들지 않았어요.
-    @Deprecated(since = "v1.5.0", forRemoval = true)
     public static ChallengerInfo from(Challenger challenger) {
         return ChallengerInfo.builder()
             .challengerId(challenger.getId())

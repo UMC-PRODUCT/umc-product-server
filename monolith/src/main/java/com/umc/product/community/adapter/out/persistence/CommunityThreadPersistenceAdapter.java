@@ -34,7 +34,6 @@ public class CommunityThreadPersistenceAdapter implements
     private final CommunityThreadMemberRepository memberRepository;
     private final CommunityThreadQueryRepository queryRepository;
 
-    @Deprecated
     @Override
     public CommunityThreadListRows searchThreads(CommunityThreadListCondition condition) {
         return queryRepository.searchThreads(condition);

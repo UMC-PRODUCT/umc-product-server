@@ -153,8 +153,8 @@ class CommunityThreadReadQueryRepositoryTest {
     }
 
     @Test
-    @DisplayName("browse는 공개 스레드 전체를 반환하고 내 핀은 고정으로 분리하며 비멤버 스레드도 전체에 포함한다")
-    void browseThreads_공개_전체와_내_핀_고정을_분리한다() {
+    @DisplayName("browse는 내 핀과 내 일반 스레드만 반환하고 비멤버 스레드는 제외한다")
+    void browseThreads_내_스레드만_반환하고_비멤버는_제외한다() {
         // given
         CommunityThread myPinned = persistThread(2_001L, "내 핀", CommunityThreadCategory.STUDY);
         CommunityThread myUnpinned = persistThread(2_002L, "내 일반", CommunityThreadCategory.STUDY);
@@ -177,14 +177,9 @@ class CommunityThreadReadQueryRepositoryTest {
         assertThat(result.pinned()).extracting(row -> row.threadId())
             .containsExactly(myPinned.getId());
         assertThat(result.unpinned()).extracting(row -> row.threadId())
-            .containsExactlyInAnyOrder(myUnpinned.getId(), foreign.getId());
-        assertThat(result.unpinnedTotal()).isEqualTo(2L);
+            .containsExactly(myUnpinned.getId());
+        assertThat(result.unpinnedTotal()).isEqualTo(1L);
         assertThat(result.unpinned())
-            .filteredOn(row -> row.threadId().equals(foreign.getId()))
-            .singleElement()
-            .satisfies(row -> assertThat(row.requesterState()).isNull());
-        assertThat(result.unpinned())
-            .filteredOn(row -> row.threadId().equals(myUnpinned.getId()))
             .singleElement()
             .satisfies(row -> assertThat(row.requesterState())
                 .isEqualTo(CommunityThreadMemberState.ACTIVE));
@@ -192,14 +187,14 @@ class CommunityThreadReadQueryRepositoryTest {
     }
 
     @Test
-    @DisplayName("browse는 강퇴를 확인한 스레드만 제외하고 미확인 강퇴/탈퇴 스레드는 남긴다")
-    void browseThreads_강퇴를_확인한_스레드만_제외한다() {
+    @DisplayName("browse는 ACTIVE·강퇴 미확인(KICKED) 스레드만 남기고 탈퇴·강퇴 확인 스레드는 제외한다")
+    void browseThreads_ACTIVE와_강퇴_미확인만_남긴다() {
         // given
         CommunityThread open = persistThread(2_401L, "공개 스레드", CommunityThreadCategory.FREE);
         CommunityThread kickedPending = persistThread(2_402L, "강퇴 미확인 스레드", CommunityThreadCategory.FREE);
         CommunityThread left = persistThread(2_403L, "탈퇴한 스레드", CommunityThreadCategory.FREE);
         CommunityThread kickedAcknowledged = persistThread(2_404L, "강퇴 확인된 스레드", CommunityThreadCategory.FREE);
-        persistMembership(open, 999L);
+        persistRequesterMembership(open, false, 0L);
         persistKickedMembership(kickedPending);
         persistLeftMembership(left);
         persistAcknowledgedKickedMembership(kickedAcknowledged);
@@ -212,8 +207,8 @@ class CommunityThreadReadQueryRepositoryTest {
 
         // then
         assertThat(result.unpinned()).extracting(row -> row.threadId())
-            .containsExactlyInAnyOrder(open.getId(), kickedPending.getId(), left.getId());
-        assertThat(result.unpinnedTotal()).isEqualTo(3L);
+            .containsExactlyInAnyOrder(open.getId(), kickedPending.getId());
+        assertThat(result.unpinnedTotal()).isEqualTo(2L);
     }
 
     @Test
@@ -222,7 +217,7 @@ class CommunityThreadReadQueryRepositoryTest {
         // given
         CommunityThread open = persistThread(2_501L, "스터디 모집", CommunityThreadCategory.PROJECT);
         CommunityThread kickedAcknowledged = persistThread(2_502L, "스터디 마감", CommunityThreadCategory.PROJECT);
-        persistMembership(open, 999L);
+        persistRequesterMembership(open, false, 0L);
         persistAcknowledgedKickedMembership(kickedAcknowledged);
         flushAndClear();
 
@@ -278,7 +273,7 @@ class CommunityThreadReadQueryRepositoryTest {
         CommunityThread noMatch = persistThread(2_204L, "야구 모임", CommunityThreadCategory.FREE);
         persistRequesterMembership(pinnedMatch, true, 0L);
         persistRequesterMembership(joinedMatch, false, 0L);
-        persistMembership(descriptionMatch, 999L);
+        persistRequesterMembership(descriptionMatch, false, 0L);
         persistRequesterMembership(noMatch, false, 0L);
         flushAndClear();
 
