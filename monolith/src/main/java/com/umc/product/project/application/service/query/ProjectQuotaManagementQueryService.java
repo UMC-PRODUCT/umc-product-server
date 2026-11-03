@@ -39,6 +39,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ProjectQuotaManagementQueryService implements GetProjectQuotaManagementUseCase {
+    private static final List<ChallengerPart> POPULATION_PARTS = List.of(
+        ChallengerPart.PLAN, ChallengerPart.DESIGN,
+        ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER);
+
     private final ProjectQuotaAccessPolicy accessPolicy;
     private final ProjectQuotaEditPolicy editPolicy;
     private final ProjectQuotaManagementDataLoader dataLoader;
@@ -98,8 +102,8 @@ public class ProjectQuotaManagementQueryService implements GetProjectQuotaManage
                 project.getProductOwnerSchoolId(), schoolNames.get(project.getProductOwnerSchoolId()), cells,
                 cells.stream().mapToLong(Cell::quota).reduce(0L, Math::addExact)));
         }
-        var summary = summary(parts, snapshot.population(), allocated);
-        var filteredSummary = summary(parts, snapshot.population(), snapshot.allocated(filtered));
+        var summary = summary(POPULATION_PARTS, snapshot.population(), allocated);
+        var filteredSummary = summary(POPULATION_PARTS, snapshot.population(), snapshot.allocated(filtered));
         return new ProjectQuotaManagementInfo(gisuId, selected.chapterId(), selected.chapterName(), options,
             schools, columns, summary, filteredSummary, totals(summary), totals(filteredSummary),
             snapshot.projects().size(), filtered.size(), rows);
