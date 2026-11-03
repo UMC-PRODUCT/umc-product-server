@@ -34,6 +34,7 @@ public class ChallengerPermissionEvaluator implements ResourcePermissionEvaluato
             case WRITE -> canCreateChallenger(subjectAttributes);
             case EDIT -> canUpdateChallenger(subjectAttributes, resourcePermission);
             case DELETE -> canDeleteChallenger(subjectAttributes);
+            case MANAGE -> canManageChallenger(subjectAttributes, resourcePermission);
             default -> throw new CommonException(CommonErrorCode.PERMISSION_TYPE_NOT_IMPLEMENTED); // 지원하지 않는 권한 유형은 거부
         };
     }
@@ -73,5 +74,13 @@ public class ChallengerPermissionEvaluator implements ResourcePermissionEvaluato
     private boolean canDeleteChallenger(SubjectAttributes subjectAttributes) {
         // 중앙운영사무국 총괄단만 가능함
         return subjectAttributes.toAuthoritySnapshot().isCentralCoreInAnyGisu();
+    }
+
+    private boolean canManageChallenger(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
+        if (canDeleteChallenger(subjectAttributes)) {
+            return true;
+        }
+
+        return resourcePermission.resourceId() != null && canReadChallenger(subjectAttributes, resourcePermission);
     }
 }
