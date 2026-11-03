@@ -1,12 +1,11 @@
-package com.umc.product.global.config;
+package com.umc.product.support.web;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.support.StaticListableBeanFactory;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.annotation.Configuration;
@@ -22,14 +21,13 @@ import com.umc.product.demoday.adapter.in.web.support.CurrentDemodayParticipantA
 import com.umc.product.global.client.ClientContextProperties;
 import com.umc.product.global.client.ClientOriginRegistry;
 import com.umc.product.global.client.ClientRequestClassifier;
+import com.umc.product.global.config.LoggingInterceptor;
+import com.umc.product.global.config.TraceIdHeaderInterceptor;
+import com.umc.product.global.config.WebMvcConfig;
 import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.global.ratelimit.ApiRateLimitInterceptor;
 import com.umc.product.global.security.resolver.CurrentMemberArgumentResolver;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -69,58 +67,34 @@ public final class InterceptorPipelineMockMvc {
             .build();
     }
 
+    /**
+     * API rate limiter 가 꺼진 운영 {@link WebMvcConfig}.
+     */
+    public static WebMvcConfig webMvcConfig() {
+        return webMvcConfig(new StaticListableBeanFactory().getBeanProvider(ApiRateLimitInterceptor.class));
+    }
+
     public static WebMvcConfig webMvcConfig(ApiRateLimitInterceptor apiRateLimitInterceptor) {
-        Map<String, Object> rateLimitBeans = apiRateLimitInterceptor == null
-            ? Map.of()
-            : Map.of("apiRateLimitInterceptor", apiRateLimitInterceptor);
+        return webMvcConfig(new StaticListableBeanFactory(Map.of("apiRateLimitInterceptor", apiRateLimitInterceptor))
+            .getBeanProvider(ApiRateLimitInterceptor.class));
+    }
+
+    private static WebMvcConfig webMvcConfig(ObjectProvider<ApiRateLimitInterceptor> apiRateLimitInterceptorProvider) {
         return new WebMvcConfig(
             new CurrentMemberArgumentResolver(null),
             new StaticListableBeanFactory().getBeanProvider(CurrentDemodayParticipantArgumentResolver.class),
             new TraceIdHeaderInterceptor(),
-            loggingInterceptor(),
-            new StaticListableBeanFactory(rateLimitBeans).getBeanProvider(ApiRateLimitInterceptor.class)
-        );
-    }
-
-    public static LoggingInterceptor loggingInterceptor() {
-        return new LoggingInterceptor(
-            new ClientRequestClassifier(new ClientOriginRegistry(new ClientContextProperties(List.of()))),
-            new OperationalMetrics(new SimpleMeterRegistry())
+            new LoggingInterceptor(
+                new ClientRequestClassifier(new ClientOriginRegistry(new ClientContextProperties(List.of()))),
+                new OperationalMetrics(new SimpleMeterRegistry())
+            ),
+            apiRateLimitInterceptorProvider
         );
     }
 
     @SuppressWarnings("unchecked")
     private static <T> void registerController(GenericWebApplicationContext context, String name, T controller) {
         context.registerBean(name, (Class<T>) controller.getClass(), () -> controller);
-    }
-
-    /**
-     * {@link LoggingInterceptor} 가 남긴 요청 로그의 event 이름을 모은다.
-     */
-    public static final class RequestLogCapture implements AutoCloseable {
-
-        private final Logger logger = (Logger) LoggerFactory.getLogger(LoggingInterceptor.class);
-        private final ListAppender<ILoggingEvent> appender = new ListAppender<>();
-        private final Level previousLevel;
-
-        public RequestLogCapture() {
-            previousLevel = logger.getLevel();
-            logger.setLevel(Level.INFO);
-            appender.start();
-            logger.addAppender(appender);
-        }
-
-        public List<String> events() {
-            return new ArrayList<>(appender.list).stream()
-                .map(event -> event.getMessage().split(" ", 2)[0])
-                .toList();
-        }
-
-        @Override
-        public void close() {
-            logger.detachAppender(appender);
-            logger.setLevel(previousLevel);
-        }
     }
 
     @Configuration(proxyBeanMethods = false)

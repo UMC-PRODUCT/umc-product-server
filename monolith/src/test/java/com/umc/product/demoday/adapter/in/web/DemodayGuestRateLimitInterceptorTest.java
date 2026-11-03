@@ -20,14 +20,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.umc.product.global.config.InterceptorPipelineMockMvc;
-import com.umc.product.global.config.InterceptorPipelineMockMvc.RequestLogCapture;
 import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.ratelimit.ApiRateLimitMetrics;
 import com.umc.product.global.ratelimit.ApiRateLimitProperties;
 import com.umc.product.global.ratelimit.RateLimitBucketRegistry;
 import com.umc.product.global.ratelimit.RateLimitPolicy;
 import com.umc.product.global.response.ApiErrorResponseWriter;
+import com.umc.product.support.web.InterceptorPipelineMockMvc;
+import com.umc.product.support.web.RequestLogCapture;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
@@ -78,7 +78,7 @@ class DemodayGuestRateLimitInterceptorTest {
             )).getBeanProvider(DemodayGuestRateLimitInterceptor.class)
         );
         MockMvc mockMvc = InterceptorPipelineMockMvc.build(
-            List.of(InterceptorPipelineMockMvc.webMvcConfig(null), demodayWebConfig),
+            List.of(InterceptorPipelineMockMvc.webMvcConfig(), demodayWebConfig),
             new GuestParticipationController()
         );
 

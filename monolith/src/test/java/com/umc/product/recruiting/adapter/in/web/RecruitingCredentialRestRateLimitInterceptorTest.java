@@ -23,13 +23,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.umc.product.global.config.InterceptorPipelineMockMvc;
-import com.umc.product.global.config.InterceptorPipelineMockMvc.RequestLogCapture;
 import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.ratelimit.ApiRateLimitMetrics;
 import com.umc.product.global.ratelimit.ApiRateLimitProperties;
 import com.umc.product.global.ratelimit.RateLimitBucketRegistry;
 import com.umc.product.global.response.ApiErrorResponseWriter;
+import com.umc.product.support.web.InterceptorPipelineMockMvc;
+import com.umc.product.support.web.RequestLogCapture;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
@@ -93,7 +93,7 @@ class RecruitingCredentialRestRateLimitInterceptorTest {
                 .getBeanProvider(RecruitingCredentialRestRateLimitInterceptor.class)
         );
         MockMvc mockMvc = InterceptorPipelineMockMvc.build(
-            List.of(InterceptorPipelineMockMvc.webMvcConfig(null), recruitingWebConfig),
+            List.of(InterceptorPipelineMockMvc.webMvcConfig(), recruitingWebConfig),
             new CredentialController()
         );
 

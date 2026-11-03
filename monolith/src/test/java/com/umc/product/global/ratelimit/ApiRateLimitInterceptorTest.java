@@ -30,11 +30,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Ticker;
 import com.umc.product.demoday.adapter.in.web.security.DemodayParticipationPrincipal;
-import com.umc.product.global.config.InterceptorPipelineMockMvc;
-import com.umc.product.global.config.LoggingInterceptor;
 import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.response.ApiErrorResponseWriter;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.support.web.InterceptorPipelineMockMvc;
+import com.umc.product.support.web.RequestLogCapture;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -45,30 +45,24 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 class ApiRateLimitInterceptorTest {
 
-    private final Logger requestLogger = (Logger) LoggerFactory.getLogger(LoggingInterceptor.class);
     private final Logger rateLimitLogger = (Logger) LoggerFactory.getLogger(ApiRateLimitInterceptor.class);
-    private final ListAppender<ILoggingEvent> requestLogs = new ListAppender<>();
     private final ListAppender<ILoggingEvent> rateLimitLogs = new ListAppender<>();
-    private Level requestLoggerLevel;
     private Level rateLimitLoggerLevel;
+    private RequestLogCapture requestLogs;
 
     @BeforeEach
     void captureLogs() {
-        requestLoggerLevel = requestLogger.getLevel();
+        requestLogs = new RequestLogCapture();
         rateLimitLoggerLevel = rateLimitLogger.getLevel();
-        requestLogger.setLevel(Level.INFO);
         rateLimitLogger.setLevel(Level.INFO);
-        requestLogs.start();
         rateLimitLogs.start();
-        requestLogger.addAppender(requestLogs);
         rateLimitLogger.addAppender(rateLimitLogs);
     }
 
     @AfterEach
     void clearSecurityContext() {
-        requestLogger.detachAppender(requestLogs);
+        requestLogs.close();
         rateLimitLogger.detachAppender(rateLimitLogs);
-        requestLogger.setLevel(requestLoggerLevel);
         rateLimitLogger.setLevel(rateLimitLoggerLevel);
         SecurityContextHolder.clearContext();
     }
@@ -208,10 +202,8 @@ class ApiRateLimitInterceptorTest {
         }
 
         // then
-        assertThat(requestLogs.list)
-            .extracting(ApiRateLimitInterceptorTest::eventName)
-            .containsExactly("api_request_started", "api_request_completed");
-        assertThat(requestLogs.list.get(1).getFormattedMessage()).contains("status=200");
+        assertThat(requestLogs.events()).containsExactly("api_request_started", "api_request_completed");
+        assertThat(requestLogs.statusCodes()).containsExactly("200");
         assertThat(blockWarnings())
             .singleElement()
             .extracting(ILoggingEvent::getFormattedMessage)
@@ -255,22 +247,16 @@ class ApiRateLimitInterceptorTest {
             .andExpect(status().isBadRequest());
 
         // then
-        assertThat(requestLogs.list)
-            .extracting(ApiRateLimitInterceptorTest::eventName)
-            .containsExactly("api_request_started", "api_request_completed");
-        assertThat(requestLogs.list.get(1).getFormattedMessage()).contains("status=400");
+        assertThat(requestLogs.events()).containsExactly("api_request_started", "api_request_completed");
+        assertThat(requestLogs.statusCodes()).containsExactly("400");
         assertThat(blockWarnings()).isEmpty();
     }
 
     private List<ILoggingEvent> blockWarnings() {
         return rateLimitLogs.list.stream()
             .filter(event -> event.getLevel() == Level.WARN)
-            .filter(event -> eventName(event).equals("api_rate_limit_blocked"))
+            .filter(event -> event.getMessage().startsWith("api_rate_limit_blocked "))
             .toList();
-    }
-
-    private static String eventName(ILoggingEvent event) {
-        return event.getMessage().split(" ", 2)[0];
     }
 
     private static String keyHash(String message) {

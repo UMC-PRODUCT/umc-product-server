@@ -15,14 +15,15 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class TraceIdHeaderInterceptor implements HandlerInterceptor {
 
-    private static final String TRACE_ID_HEADER = "X-Trace-Id";
+    public static final String HEADER_NAME = "X-Trace-Id";
+
     private static final String MDC_TRACE_ID = "traceId";
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String traceId = MDC.get(MDC_TRACE_ID);
         if (traceId != null) {
-            response.setHeader(TRACE_ID_HEADER, traceId);
+            response.setHeader(HEADER_NAME, traceId);
         }
         return true;
     }

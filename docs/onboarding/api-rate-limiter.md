@@ -22,7 +22,7 @@ MVC 인터셉터 실행 순서는 `global/config/InterceptorOrder`의 값으로 
 2. 모든 MVC rate limiter (`RATE_LIMIT`): `ApiRateLimitInterceptor`, `DemodayGuestRateLimitInterceptor`, `RecruitingCredentialRestRateLimitInterceptor`.
 3. `LoggingInterceptor` (`LOGGING`).
 
-차단된 요청은 `LoggingInterceptor`에 닿지 않으므로 `api_request_started`·`api_request_completed` 로그와 client 요청 metric을 남기지 않는다. `X-Trace-Id` 헤더는 limiter보다 먼저 붙으므로 429 응답에도 남는다. 새 rate limiter를 등록할 때는 `.order(InterceptorOrder.RATE_LIMIT)`를 붙인다.
+차단된 요청은 `LoggingInterceptor`에 닿지 않으므로 `api_request_started`·`api_request_completed` 로그와 client 요청 metric을 남기지 않는다. `X-Trace-Id` 헤더는 limiter보다 먼저 붙으므로 429 응답에도 남는다. 새 rate limiter를 등록할 때는 `.order(InterceptorOrder.RATE_LIMIT)`를 붙인다. `.order()`를 빠뜨려도 Spring 기본값 0이 `RATE_LIMIT`과 같아서 trace id 뒤, 로깅 앞에서 실행된다. 같은 값을 가진 인터셉터끼리는 등록 순서를 따른다. configurer는 패키지 이름 순으로 등록되므로 `DemodayGuestRateLimitInterceptor`가 `ApiRateLimitInterceptor`보다 먼저 돈다.
 
 차단량은 아래 관측 절의 metric과 key별 차단 로그로 본다.
 
