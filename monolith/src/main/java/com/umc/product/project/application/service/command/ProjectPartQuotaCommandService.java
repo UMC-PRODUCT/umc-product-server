@@ -17,11 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
-import com.umc.product.authorization.domain.PermissionType;
-import com.umc.product.authorization.domain.ResourcePermission;
-import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.project.application.access.ProjectQuotaAccessPolicy;
 import com.umc.product.project.application.port.in.command.UpdatePartQuotasUseCase;
 import com.umc.product.project.application.port.in.command.dto.UpdatePartQuotasCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdatePartQuotasCommand.Entry;
@@ -50,6 +48,7 @@ import lombok.RequiredArgsConstructor;
 public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
 
     private final ProjectDraftQuotaPolicy draftQuotaPolicy;
+    private final ProjectQuotaAccessPolicy quotaAccessPolicy;
     private final Clock clock;
     private final CheckPermissionUseCase checkPermissionUseCase;
     private final LockProjectMatchingPort lockProjectMatchingPort;
@@ -94,8 +93,7 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
             }
         } else {
-            checkPermissionUseCase.checkOrThrow(command.requesterMemberId(),
-                ResourcePermission.of(ResourceType.PROJECT, project.getId(), PermissionType.MANAGE));
+            quotaAccessPolicy.requireChapter(command.requesterMemberId(), project.getGisuId(), project.getChapterId());
         }
         project.validateMutable();
 
