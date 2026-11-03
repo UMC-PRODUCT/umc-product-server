@@ -58,7 +58,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // rate limit을 로깅보다 먼저 둔다. 차단된 요청은 LoggingInterceptor에 닿지 않아
-        // 요청 시작/완료 로그를 남기지 않는다. 공격성 트래픽의 로그가 Loki OOM을 일으켰기 때문이다.
+        // 요청 시작/완료 로그를 남기지 않는다.
         apiRateLimitInterceptorProvider.ifAvailable(apiRateLimitInterceptor ->
             registry.addInterceptor(apiRateLimitInterceptor)
                 .addPathPatterns("/**")

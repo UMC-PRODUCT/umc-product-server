@@ -303,7 +303,7 @@ class ApiRateLimitInterceptorTest {
             new RateLimitBucketRegistry(properties),
             new ApiErrorResponseWriter(new ObjectMapper()),
             new ApiRateLimitMetrics(registry),
-            new RateLimitBlockLogSampler(Ticker.systemTicker())
+            new RateLimitBlockLogSampler(properties.cache(), Ticker.systemTicker())
         );
         WebMvcConfig webMvcConfig = new WebMvcConfig(
             null,

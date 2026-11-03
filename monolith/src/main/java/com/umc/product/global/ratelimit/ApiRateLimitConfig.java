@@ -18,7 +18,8 @@ public class ApiRateLimitConfig {
         RateLimitPolicyResolver policyResolver,
         RateLimitBucketRegistry bucketRegistry,
         ApiErrorResponseWriter errorResponseWriter,
-        ApiRateLimitMetrics metrics
+        ApiRateLimitMetrics metrics,
+        ApiRateLimitProperties properties
     ) {
         return new ApiRateLimitInterceptor(
             clientKeyResolver,
@@ -27,7 +28,7 @@ public class ApiRateLimitConfig {
             bucketRegistry,
             errorResponseWriter,
             metrics,
-            new RateLimitBlockLogSampler(Ticker.systemTicker())
+            new RateLimitBlockLogSampler(properties.cache(), Ticker.systemTicker())
         );
     }
 }
