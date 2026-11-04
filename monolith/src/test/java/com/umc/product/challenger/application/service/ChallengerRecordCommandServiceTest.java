@@ -40,7 +40,6 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.command.LockMemberUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
-import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
@@ -73,9 +72,6 @@ class ChallengerRecordCommandServiceTest {
 
     @Mock
     EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
-
-    @Mock
-    SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
 
     @Mock
     GetGisuUseCase getGisuUseCase;

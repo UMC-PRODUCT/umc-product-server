@@ -29,8 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * {@link Audited} 어노테이션이 붙은 메서드 실행 성공 후 감사 로그 이벤트를 발행합니다.
- * <p>
- * 기존 {@code WebhookAlarmAspect} 패턴을 따릅니다.
  */
 @Slf4j
 @Aspect

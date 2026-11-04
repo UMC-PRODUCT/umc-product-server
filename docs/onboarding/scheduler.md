@@ -8,7 +8,6 @@
 | --- | --- | --- | --- |
 | 전역 scheduled pool | `taskScheduler` | `scheduled-` | 일반 `@Scheduled` 작업 실행 |
 | Project 매칭 데드라인 pool | `matchingDeadlineTaskScheduler` | `matching-deadline-` | project 매칭 차수 결정 마감 1회성 task |
-| Webhook async executor | `webhookTaskExecutor` | `webhook-` | webhook alarm event listener의 외부 webhook I/O |
 | Email async executor | `emailTaskExecutor` | `email-` | 인증 메일 발송 |
 | Audit async executor | `auditTaskExecutor` | `audit-` | 감사 로그 저장 |
 
@@ -39,16 +38,7 @@
 
 ## Webhook 알림
 
-기존 webhook buffer scheduler는 제거했다. `sendBuffered(...)`는 더 이상 JVM 메모리 큐에 적재하지 않고 `WebhookAlarmEvent`를 발행한다.
-
-흐름:
-
-1. application/controller 흐름에서 `SendWebhookAlarmUseCase.sendBuffered(command)` 호출
-2. `WebhookAlarmService`가 `WebhookAlarmEvent` 발행
-3. `WebhookAlarmEventListener`가 `@TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true)`로 수신
-4. listener가 `@Async("webhookTaskExecutor")`에서 기존 `send(...)` usecase 호출
-
-이 구조는 트랜잭션 rollback 후 유령 알림이 나가는 문제와 scheduler thread에서 외부 webhook I/O를 수행하는 문제를 줄인다. 여러 알림을 하나의 메시지로 묶는 기능이 다시 필요하면 메모리 큐가 아니라 event outbox 또는 별도 persistent aggregation 테이블을 사용한다.
+2026-11-04 웹훅 알림 기능(`@WebhookAlarm`, `SendWebhookAlarmUseCase`, `WebhookAlarmEvent`)을 제거했다. 운영 알림은 Discord 신고 봇(`report`)과 Alertmanager가 담당한다.
 
 ## FCM 배치 발송
 
