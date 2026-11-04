@@ -18,7 +18,7 @@ import com.umc.product.test.application.port.in.command.RunMatchingBotUseCase;
 import com.umc.product.test.application.port.in.command.dto.BotRunResult;
 import com.umc.product.test.application.port.in.command.dto.BotRunResult.Outcome;
 import com.umc.product.test.application.port.in.query.GetRoundSummaryUseCase;
-import com.umc.product.test.application.service.qa.SeedFailureCode;
+import com.umc.product.test.application.service.SeedFailureCode;
 import com.umc.product.test.domain.exception.SeedErrorCode;
 import com.umc.product.test.domain.exception.SeedRehearsalException;
 import com.umc.product.test.domain.rehearsal.ApplyPlan;

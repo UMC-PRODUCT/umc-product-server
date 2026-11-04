@@ -15,6 +15,7 @@ import com.umc.product.test.application.port.in.command.SeedQaDataUseCase;
 import com.umc.product.test.application.port.in.command.dto.QaSeedStep;
 import com.umc.product.test.application.port.in.command.dto.QaStepResult;
 import com.umc.product.test.application.port.in.command.dto.QaStepResult.Status;
+import com.umc.product.test.application.service.SeedFailureCode;
 
 import lombok.extern.slf4j.Slf4j;
 

@@ -6,7 +6,7 @@ dev DB를 초기화한 뒤 `/test/seed/...` API로 QA 계정과 프로젝트 출
 
 ## 사전 조건
 
-- 모든 API는 `/test/seed/...` 아래에 있고 dev ingress의 Basic Auth를 거친다. Swagger에서는 `Test | 시딩` 태그로 볼 수 있다.
+- 모든 API는 `/test/seed/...` 아래에 있고 dev ingress의 Basic Auth를 거친다. Swagger에서 출발선은 `Test | 시딩`, 차수 요약·봇·넘기기는 `Test | 매칭 리허설` 태그에 있다.
 - 시딩 API는 `app.seed.enabled=true`이고 `prod` 프로필이 아닌 서버에만 있다.
 - QA 계정 이메일 도메인은 `university.neordinary.com`으로 고정이다. `app.seed.email-domain` 설정은 다른 더미 시딩에만 쓴다.
 

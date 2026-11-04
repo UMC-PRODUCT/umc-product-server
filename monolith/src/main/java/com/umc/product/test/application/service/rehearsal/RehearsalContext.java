@@ -11,10 +11,6 @@ record RehearsalContext(Long gisuId, RehearsalCast cast, Map<String, Long> chapt
         chapterIds = Map.copyOf(chapterIds);
     }
 
-    String email(RosterKey key) {
-        return key.email();
-    }
-
     String superadminEmail() {
         return QaAccountPlan.legacyEmail(QaAccountPlan.SUPERADMIN);
     }

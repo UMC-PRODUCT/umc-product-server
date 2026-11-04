@@ -2,7 +2,6 @@ package com.umc.product.test.domain.rehearsal;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -18,13 +17,15 @@ public record ChapterRoles(Set<String> qaProjectOwnerEmails, List<ReservedSeat> 
     public record ReservedSeat(String email, ChallengerPart part, char label) {
     }
 
-    public static ChapterRoles of(RehearsalCast cast, String chapter, Function<RosterKey, String> email) {
+    public static ChapterRoles of(RehearsalCast cast, String chapter) {
         if (!cast.chapters().contains(chapter)) {
             return new ChapterRoles(Set.of(), List.of());
         }
-        Set<String> owners = cast.startingLine(chapter).qaOwners().stream().map(email).collect(Collectors.toSet());
+        Set<String> owners = cast.startingLine(chapter).qaOwners().stream()
+            .map(RosterKey::email)
+            .collect(Collectors.toSet());
         List<ReservedSeat> reserved = cast.qaReserved(chapter).stream()
-            .map(seat -> new ReservedSeat(email.apply(seat.key()), seat.part(), seat.label()))
+            .map(seat -> new ReservedSeat(seat.key().email(), seat.part(), seat.label()))
             .toList();
         return new ChapterRoles(owners, reserved);
     }

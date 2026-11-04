@@ -340,7 +340,8 @@ class AdvancePlannerTest {
                 advance(roundId, AdvanceStep.APPLICATION_CLOSE);
                 advance(roundId, AdvanceStep.DECISION_DEADLINE);
                 assertThat(AdvancePlanner.plan(sequence, roundId, AdvanceStep.RESULT_PUBLISH, now))
-                    .isEqualTo(new Refused(SeedErrorCode.AUTO_DECISION_NOT_EXECUTED, null));
+                    .isInstanceOfSatisfying(Refused.class, refused ->
+                        assertThat(refused.code()).isEqualTo(SeedErrorCode.AUTO_DECISION_NOT_EXECUTED));
                 tick(Duration.ofMinutes(1).plusSeconds(1));
                 autoDecide(roundId);
                 advance(roundId, AdvanceStep.RESULT_PUBLISH);

@@ -1,4 +1,4 @@
-package com.umc.product.test.application.service.matching;
+package com.umc.product.test.application.service.rehearsal;
 
 import java.time.Clock;
 import java.util.List;
@@ -70,9 +70,7 @@ public class MatchingRoundAdvanceService implements AdvanceMatchingRoundUseCase 
             .orElseThrow(() -> new SeedRehearsalException(SeedErrorCode.ROUND_NOT_FOUND));
         AdvanceDecision decision = AdvancePlanner.plan(sequence, roundId, step, clock.instant());
         return switch (decision) {
-            case Refused refused -> throw refused.reason() == null
-                ? new SeedRehearsalException(refused.code())
-                : new SeedRehearsalException(refused.code(), refused.reason());
+            case Refused refused -> throw new SeedRehearsalException(refused.code(), refused.reason());
             case AlreadyReached ignored -> new Planned(sequence, Outcome.ALREADY_REACHED, List.of());
             case Rewrite next -> {
                 rewriteMatchingRoundTimesPort.rewrite(next.next());

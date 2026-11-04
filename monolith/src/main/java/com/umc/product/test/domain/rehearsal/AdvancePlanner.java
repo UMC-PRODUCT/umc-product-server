@@ -45,15 +45,19 @@ public final class AdvancePlanner {
         if (sequence.rounds().stream().anyMatch(each -> each.resultPublishAt() == null)) {
             return refuse(SeedErrorCode.STEP_OUT_OF_ORDER, "발표 시각이 없는 기존 차수가 있는 묶음은 넘길 수 없습니다.");
         }
-        if (step == AdvanceStep.APPLICATION_START
-            && sequence.previous(round.roundId()).filter(previous -> !previous.published()).isPresent()) {
-            return refuse(SeedErrorCode.PREVIOUS_ROUND_NOT_PUBLISHED, null);
+        Optional<RoundTimes> unpublishedPrevious = sequence.previous(round.roundId())
+            .filter(previous -> !previous.published());
+        if (step == AdvanceStep.APPLICATION_START && unpublishedPrevious.isPresent()) {
+            return refuse(SeedErrorCode.PREVIOUS_ROUND_NOT_PUBLISHED,
+                "앞 차수 " + unpublishedPrevious.get().roundId() + "의 결과가 아직 발표되지 않았습니다.");
         }
         if (step == AdvanceStep.RESULT_PUBLISH && !round.autoDecided()) {
-            return refuse(SeedErrorCode.AUTO_DECISION_NOT_EXECUTED, null);
+            return refuse(SeedErrorCode.AUTO_DECISION_NOT_EXECUTED,
+                "차수 " + round.roundId() + "의 자동 선발이 아직 실행되지 않았습니다.");
         }
         if (round.phase() == MatchingPhase.RANDOM_MATCHING && !round.autoDecided()) {
-            return refuse(SeedErrorCode.RANDOM_NOT_ASSIGNED, null);
+            return refuse(SeedErrorCode.RANDOM_NOT_ASSIGNED,
+                "랜덤 차수 " + round.roundId() + "의 랜덤 배정이 아직 실행되지 않았습니다.");
         }
         Optional<AdvanceStep> previousStep = step.previous();
         if (previousStep.isPresent() && !reached(round, previousStep.get(), now)) {

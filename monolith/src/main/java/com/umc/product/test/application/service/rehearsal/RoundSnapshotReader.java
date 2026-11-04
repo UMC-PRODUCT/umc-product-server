@@ -32,7 +32,7 @@ class RoundSnapshotReader {
     /** 11기가 없으면 QA 몫이 없는 것으로 본다. */
     ChapterRoles roles(RoundSnapshot snapshot) {
         return contextLoader.find()
-            .map(context -> ChapterRoles.of(context.cast(), snapshot.round().chapterName(), context::email))
+            .map(context -> ChapterRoles.of(context.cast(), snapshot.round().chapterName()))
             .orElseGet(() -> new ChapterRoles(Set.of(), List.of()));
     }
 }

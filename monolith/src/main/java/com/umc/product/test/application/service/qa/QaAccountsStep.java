@@ -8,6 +8,7 @@ import com.umc.product.member.domain.MemberSystemRoleType;
 import com.umc.product.test.application.port.in.command.CreateSeedMemberSystemRoleUseCase;
 import com.umc.product.test.application.port.in.command.dto.CreateSeedMemberSystemRoleCommand;
 import com.umc.product.test.application.port.in.command.dto.QaSeedStep;
+import com.umc.product.test.application.service.SeedFailureCode;
 import com.umc.product.test.domain.roster.QaAccountPlan.Account;
 import com.umc.product.test.domain.roster.QaPersonas;
 

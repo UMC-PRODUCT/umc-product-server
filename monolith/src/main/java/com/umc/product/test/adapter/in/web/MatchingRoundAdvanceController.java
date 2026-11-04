@@ -24,13 +24,13 @@ import lombok.RequiredArgsConstructor;
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 @Public
-@Tag(name = "Test | 시딩")
+@Tag(name = "Test | 매칭 리허설")
 public class MatchingRoundAdvanceController {
 
     private final AdvanceMatchingRoundUseCase advanceMatchingRoundUseCase;
 
     @PostMapping("/{roundId}/advance")
-    @Operation(summary = "매칭 차수 한 단계 넘기기", description = """
+    @Operation(operationId = "SEED-010-N", summary = "매칭 차수 한 단계 넘기기", description = """
         차수 하나의 시각을 테스트 전용 SQL로 다음 단계로 당깁니다. 1차가 시작되면 운영진 화면으로는 시각을 바꿀 수 없기 때문입니다.
         1·2·3차는 APPLICATION_START → APPLICATION_CLOSE → DECISION_DEADLINE → RESULT_PUBLISH,
         랜덤 매칭은 ADJUSTMENT_START → ADJUSTMENT_END → FINAL_PUBLISH 순서로 한 칸씩만 넘깁니다.

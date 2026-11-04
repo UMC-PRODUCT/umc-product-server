@@ -1,4 +1,4 @@
-package com.umc.product.test.application.service.qa;
+package com.umc.product.test.application.service;
 
 import com.umc.product.global.exception.BusinessException;
 

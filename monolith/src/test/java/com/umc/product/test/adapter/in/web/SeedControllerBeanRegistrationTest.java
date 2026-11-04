@@ -23,8 +23,8 @@ import com.umc.product.test.application.service.MemberSystemRoleSeedService;
 import com.umc.product.test.application.service.NoticeSeedService;
 import com.umc.product.test.application.service.ProjectSeedDataCleanupService;
 import com.umc.product.test.application.service.SeedProperties;
-import com.umc.product.test.application.service.matching.MatchingRoundAdvanceService;
 import com.umc.product.test.application.service.qa.QaSeedOrchestrator;
+import com.umc.product.test.application.service.rehearsal.MatchingRoundAdvanceService;
 
 /**
  * 시딩 관련 빈들의 가드 어노테이션이 회귀 없이 유지되는지 검증한다.
