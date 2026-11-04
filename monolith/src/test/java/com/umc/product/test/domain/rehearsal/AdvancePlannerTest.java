@@ -264,7 +264,7 @@ class AdvancePlannerTest {
         assertValid(after);
         RoundTimes round = after.get(roundId);
         List<Instant> marks = marks(round);
-        int target = step.mark();
+        int target = AdvanceStep.of(round.phase()).indexOf(step);
         assertThat(marks.get(target)).as(context).isEqualTo(now);
         for (int i = 0; i < target; i++) {
             assertThat(marks.get(i)).as(context).isBeforeOrEqualTo(marks(before.get(roundId)).get(i));
@@ -439,10 +439,7 @@ class AdvancePlannerTest {
     }
 
     private static List<Instant> marks(RoundTimes round) {
-        if (round.phase() == MatchingPhase.RANDOM_MATCHING) {
-            return List.of(round.startsAt(), round.endsAt(), round.resultPublishAt());
-        }
-        return List.of(round.startsAt(), round.endsAt(), round.decisionDeadline(), round.resultPublishAt());
+        return AdvanceStep.of(round.phase()).stream().map(step -> step.timeOf(round)).toList();
     }
 
     private static RoundTimes regular(Long id, MatchingPhase phase, Instant startsAt, Instant endsAt,

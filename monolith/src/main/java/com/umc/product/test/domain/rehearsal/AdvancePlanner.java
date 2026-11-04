@@ -13,19 +13,14 @@ import com.umc.product.test.domain.rehearsal.AdvanceDecision.Refused;
 import com.umc.product.test.domain.rehearsal.AdvanceDecision.Rewrite;
 
 /**
- * 차수 시각을 순서 있는 표식 목록으로 본다. 1~3차는 [시작, 지원 마감, 선발 마감, 발표], 랜덤은 [시작, 조정 종료(= 선발 마감), 발표]다.
- * 넘기는 단계의 표식을 지금으로 당기고, 그 앞 표식은 간격을 지키도록 필요한 만큼만 앞으로 당긴다.
- * 그 뒤 표식과 같은 묶음 뒤 차수의 표식은 내일 같은 시각보다 이르면 내일 이후 슬롯으로 민다. 그보다 늦게 등록된 시각은 앞 표식과의
+ * 차수 시각을 {@link AdvanceStep#of(MatchingPhase)}의 순서 있는 표식 목록으로 본다. 넘기는 단계의 표식을 지금으로 당기고,
+ * 그 앞 표식은 간격을 지키도록 필요한 만큼만 앞으로 당긴다. 그 뒤 표식과 같은 묶음 뒤 차수의 표식은 내일 같은 시각보다 이르면 내일 이후 슬롯으로 민다. 그보다 늦게 등록된 시각은 앞 표식과의
  * 간격이 맞는 한 그대로 둔다. 원래 시각과 슬롯이 모두 도메인 간격을 지키므로 결과도 지킨다.
  */
 public final class AdvancePlanner {
 
     static final Duration NEXT_DAY = Duration.ofDays(1);
     static final Duration STEP_GAP = Duration.ofHours(1);
-    private static final Duration STRICT_GAP = Duration.ofSeconds(1);
-    private static final Duration PUBLISH_GAP = Duration.ofMinutes(5);
-    private static final List<Duration> REGULAR_GAPS = List.of(STRICT_GAP, STRICT_GAP, PUBLISH_GAP);
-    private static final List<Duration> RANDOM_GAPS = List.of(STRICT_GAP, PUBLISH_GAP);
 
     private AdvancePlanner() {
     }
@@ -73,33 +68,33 @@ public final class AdvancePlanner {
     }
 
     private static boolean reached(RoundTimes round, AdvanceStep step, Instant now) {
-        return !marks(round).get(step.mark()).isAfter(now);
+        return !step.timeOf(round).isAfter(now);
     }
 
     private static List<RoundTimes> rewrite(MatchingSequence sequence, RoundTimes round, AdvanceStep step,
         Instant now) {
+        List<AdvanceStep> steps = AdvanceStep.of(round.phase());
         List<Instant> marks = new ArrayList<>(marks(round));
-        List<Duration> gaps = gaps(round);
-        int target = step.mark();
+        int target = steps.indexOf(step);
         marks.set(target, now);
         for (int i = target - 1; i >= 0; i--) {
-            Instant latest = marks.get(i + 1).minus(gaps.get(i));
+            Instant latest = marks.get(i + 1).minus(steps.get(i + 1).minGapBefore());
             if (marks.get(i).isAfter(latest)) {
                 marks.set(i, latest);
             }
         }
         Slots slots = new Slots(now.plus(NEXT_DAY));
         for (int i = target + 1; i < marks.size(); i++) {
-            marks.set(i, slots.place(marks.get(i), gaps.get(i - 1)));
+            marks.set(i, slots.place(marks.get(i), steps.get(i).minGapBefore()));
         }
 
         List<RoundTimes> next = new ArrayList<>();
         next.add(withMarks(round, marks));
         for (RoundTimes later : sequence.after(round.roundId())) {
+            List<AdvanceStep> laterSteps = AdvanceStep.of(later.phase());
             List<Instant> laterMarks = new ArrayList<>(marks(later));
-            List<Duration> laterGaps = gaps(later);
             for (int i = 0; i < laterMarks.size(); i++) {
-                laterMarks.set(i, slots.place(laterMarks.get(i), i == 0 ? Duration.ZERO : laterGaps.get(i - 1)));
+                laterMarks.set(i, slots.place(laterMarks.get(i), laterSteps.get(i).minGapBefore()));
             }
             RoundTimes moved = withMarks(later, laterMarks);
             if (!moved.equals(later)) {
@@ -110,15 +105,7 @@ public final class AdvancePlanner {
     }
 
     private static List<Instant> marks(RoundTimes round) {
-        if (round.phase() == MatchingPhase.RANDOM_MATCHING) {
-            return List.of(round.startsAt(), round.endsAt(), round.resultPublishAt());
-        }
-        return List.of(round.startsAt(), round.endsAt(), round.decisionDeadline(), round.resultPublishAt());
-    }
-
-    /** i번째 값은 표식 i와 i+1 사이의 최소 간격이다. */
-    private static List<Duration> gaps(RoundTimes round) {
-        return round.phase() == MatchingPhase.RANDOM_MATCHING ? RANDOM_GAPS : REGULAR_GAPS;
+        return AdvanceStep.of(round.phase()).stream().map(step -> step.timeOf(round)).toList();
     }
 
     private static RoundTimes withMarks(RoundTimes round, List<Instant> marks) {
