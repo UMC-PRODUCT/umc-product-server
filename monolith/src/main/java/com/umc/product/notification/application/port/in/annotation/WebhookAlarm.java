@@ -15,7 +15,6 @@ import com.umc.product.notification.domain.WebhookPlatform;
  *
  * <pre>
  * &#64;WebhookAlarm(
- *     platforms = {WebhookPlatform.SLACK, WebhookPlatform.DISCORD},
  *     title = "'챌린저 등록'",
  *     content = "'새 챌린저가 등록되었습니다. ID: ' + #result"
  * )
@@ -24,7 +23,6 @@ import com.umc.product.notification.domain.WebhookPlatform;
  *
  * <pre>
  * &#64;WebhookAlarm(
- *     platforms = WebhookPlatform.SLACK,
  *     title = "'공지사항 생성'",
  *     content = "'제목: ' + #command.title() + ', 작성자: ' + #command.authorName()",
  *     buffered = true
@@ -39,7 +37,7 @@ public @interface WebhookAlarm {
     /**
      * 알람을 전송할 플랫폼 목록.
      */
-    WebhookPlatform[] platforms() default {WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD};
+    WebhookPlatform[] platforms() default {WebhookPlatform.DISCORD};
 
     /**
      * 알람 제목 (SpEL). 리터럴 문자열은 작은따옴표로 감싸야 합니다.
