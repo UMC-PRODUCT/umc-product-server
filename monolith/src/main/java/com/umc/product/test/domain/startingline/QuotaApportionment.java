@@ -15,8 +15,6 @@ import com.umc.product.test.domain.rehearsal.SeedHash;
 import com.umc.product.test.domain.roster.RosterKey;
 
 /**
- * 지부 매칭 파트 인원을 시딩 프로젝트별 TO로 나눈다.
- * <p>
  * 파트마다 합계는 시딩 프로젝트 수가 n일 때 {@code floor(인원 × n / (n + reserveSlots))}다. 나머지 몫은 QA가
  * QA 프로젝트와 직접 등록 프로젝트에 TO를 넣을 자리라, QA가 그 TO를 넣어도 지부 TO 상한(PROJECT-0251)에 걸리지 않는다.
  */
@@ -26,7 +24,6 @@ public final class QuotaApportionment {
     }
 
     /**
-     * @param headcount    지부 매칭 파트별 인원
      * @param owners       시딩 프로젝트 PO, 명단 순서
      * @param reserveSlots QA가 나중에 TO를 넣을 프로젝트 수
      * @return PO별 TO, owners 순서
@@ -76,9 +73,6 @@ public final class QuotaApportionment {
         return headcount.getOrDefault(part, 0) * projects / (projects + reserveSlots);
     }
 
-    /**
-     * 개발 파트 인원 비율로 Mobile PE 프로젝트 수를 정한다. 두 파트 모두 TO가 있으면 각각 1개 이상이다.
-     */
     private static int mobileProjectCount(int projects, int web, int mobile) {
         if (mobile == 0) {
             return 0;
@@ -91,9 +85,6 @@ public final class QuotaApportionment {
         return Math.min(bounded, mobile);
     }
 
-    /**
-     * total을 owners에 고르게 나눈다. 나머지는 owners 앞쪽부터 1씩 더한다.
-     */
     private static Map<RosterKey, Integer> split(int total, List<RosterKey> owners) {
         Map<RosterKey, Integer> shares = new HashMap<>();
         if (owners.isEmpty()) {

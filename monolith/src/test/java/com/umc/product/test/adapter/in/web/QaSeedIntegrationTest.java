@@ -37,8 +37,7 @@ import com.umc.product.test.domain.roster.QaTransfers.QaTransfer;
 import com.umc.product.test.domain.roster.RosterKey;
 
 /**
- * Flyway 골격만 있는 새 DB에서 QA 기본 데이터를 처음부터 만든다. 테스트가 끝나면 골격까지 지워지므로, 이 클래스만 쓰는
- * 속성으로 새 컨텍스트(새 DB)를 받고 시나리오를 한 테스트에 담는다.
+ * 테스트가 끝나면 골격까지 지워지므로, 이 클래스만 쓰는 속성으로 새 컨텍스트(새 DB)를 받고 시나리오를 한 테스트에 담는다.
  */
 @TestPropertySource(properties = {
     "app.seed.enabled=true",

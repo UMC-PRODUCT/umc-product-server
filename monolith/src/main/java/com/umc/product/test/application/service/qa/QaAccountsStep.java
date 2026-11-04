@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 계정 593개. 한 명 단위로 커밋하므로 중간에 끊겨도 다시 부르면 없는 사람만 이어서 만든다.
+ * 한 명 단위로 커밋하므로 중간에 끊겨도 다시 부르면 없는 사람만 이어서 만든다.
  */
 @Slf4j
 @Component

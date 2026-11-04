@@ -19,7 +19,7 @@ import com.umc.product.test.application.port.in.command.dto.QaStepResult.Status;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * QA 시딩 단계를 순서대로 실행한다. 트랜잭션을 열지 않으므로 단계마다 따로 커밋되고, 한 단계가 실패해도 앞 단계는 남는다.
+ * 단계마다 따로 커밋되므로 한 단계가 실패해도 앞 단계는 남는다.
  */
 @Slf4j
 @Service

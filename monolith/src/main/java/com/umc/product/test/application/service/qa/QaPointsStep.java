@@ -20,9 +20,6 @@ import com.umc.product.test.domain.roster.QaPersonas.Persona;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 상벌점 조회 확인용 상점·벌점 한 쌍. 같은 설명의 상벌점이 이미 있는 챌린저는 건너뛴다.
- */
 @Component
 @Profile("!prod")
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")

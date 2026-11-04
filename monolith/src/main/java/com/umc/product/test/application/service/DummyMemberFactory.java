@@ -52,10 +52,6 @@ public class DummyMemberFactory {
             .toList();
     }
 
-    /**
-     * 지정한 schoolId 로 이메일 회원가입 Command 를 만든다. email 은 alpha_user_0001@{properties.emailDomain} 형식.
-     * 챌린저 분포 시딩처럼 학교 정합성이 필요한 케이스에서 사용한다.
-     */
     public EmailRegisterMemberCommand nextEmailCommandWithSchool(
         long sequence, Long schoolId, List<TermConsents> termConsents
     ) {

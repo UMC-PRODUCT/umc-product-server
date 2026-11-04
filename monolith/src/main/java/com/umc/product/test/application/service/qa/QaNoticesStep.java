@@ -30,9 +30,6 @@ import com.umc.product.test.domain.roster.QaPersonas.Persona;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 공지, 읽음, 투표. 제목이 같은 공지가 있으면 그 공지는 건너뛴다.
- */
 @Component
 @Profile("!prod")
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")

@@ -21,7 +21,6 @@ import com.umc.product.test.domain.rehearsal.RoundSnapshot.ProjectSlot;
 import com.umc.product.test.domain.rehearsal.RoundSnapshot.Round;
 
 /**
- * 차수 하나의 지금 상태를 DB에서 직접 센 요약. 운영 화면(TO 관리, 매칭 현황, PM 지원자 목록)의 숫자를 판단하는 기준값이다.
  * 지원 수는 제출한 지원서만 센다(임시저장 제외).
  */
 public record RoundSummary(

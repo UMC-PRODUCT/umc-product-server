@@ -16,7 +16,6 @@ public record DecisionPlan(List<PlannedDecision> decisions, Map<SkipReason, Inte
 
     /**
      * @param decidedBy 프로젝트 PO
-     * @param target    APPROVED 또는 REJECTED
      */
     public record PlannedDecision(Long projectId, Long applicationId, Long decidedBy, ProjectApplicationStatus target) {
     }

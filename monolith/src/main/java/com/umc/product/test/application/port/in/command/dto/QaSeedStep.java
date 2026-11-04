@@ -6,7 +6,7 @@ import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
 
 /**
- * QA 시딩 단계. 선언 순서가 전체 시딩의 실행 순서이고, path가 {@code /test/seed/qa/{step}} 경로다.
+ * 선언 순서가 전체 시딩의 실행 순서다.
  */
 public enum QaSeedStep {
     ACCOUNTS("accounts"),
@@ -27,9 +27,6 @@ public enum QaSeedStep {
         return path;
     }
 
-    /**
-     * 계정 단계가 실패하면 뒤 단계는 계정을 찾지 못하므로 실행하지 않는다.
-     */
     public boolean blocksOthersOnFailure() {
         return this == ACCOUNTS;
     }

@@ -3,7 +3,7 @@ package com.umc.product.test.application.port.in.command.dto;
 import java.util.Map;
 
 /**
- * QA 시딩 단계 하나의 결과. failed는 개별 실패를 에러 코드별로 센 값이다.
+ * failed는 개별 실패를 에러 코드별로 센 값이다.
  */
 public record QaStepResult(
     QaSeedStep step,

@@ -4,9 +4,6 @@ import java.util.Map;
 
 import com.umc.product.test.adapter.out.resource.ClasspathQaRosterAdapter;
 
-/**
- * 단위 테스트가 실제 명단과 11기 지부 배치로 배역표를 만들 때 쓴다.
- */
 public final class QaCastFixtures {
 
     /** V2026.09.10.03.00 마이그레이션의 11기 지부 배치. */

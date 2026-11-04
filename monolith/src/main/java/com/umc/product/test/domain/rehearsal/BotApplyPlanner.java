@@ -17,7 +17,7 @@ import com.umc.product.test.domain.rehearsal.RoundSnapshot.ProjectSlot;
 import com.umc.product.test.domain.rehearsal.SeedHash.Purpose;
 
 /**
- * 봇 지원 계획. 같은 스냅샷 사실이면 몇 번을 불러도 같은 계획이 나온다.
+ * 같은 스냅샷 사실이면 몇 번을 불러도 같은 계획이 나온다.
  * <p>
  * 대상 풀은 "팀 없음, QA 몫 아님, 제외 아님"으로 고정한다. "이 차수 지원서 없음"으로 거르면 두 번째 호출에서 풀이 줄어
  * 다른 80%를 뽑게 되기 때문이다. 풀에서 해시 순위 상위 {@code round(applyRate × 풀)}명을 고르고, 풀에서 이미 지원한
@@ -93,7 +93,7 @@ public final class BotApplyPlanner {
     }
 
     /**
-     * 프로젝트 인기도. 프로젝트 ID 대신 PO 이메일과 고정 seed로 정해, 1·2·3차와 프로젝트 초기화 뒤에도 같다.
+     * 프로젝트 ID 대신 PO 이메일과 고정 seed로 정해, 1·2·3차와 프로젝트 초기화 뒤에도 같다.
      */
     static double popularity(String ownerEmail) {
         double first = Math.max(Double.MIN_VALUE, SeedHash.unit(SeedHash.FIXED_SEED, Purpose.POPULARITY, ownerEmail, "r"));

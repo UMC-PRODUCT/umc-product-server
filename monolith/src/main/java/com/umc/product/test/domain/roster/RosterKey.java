@@ -1,8 +1,5 @@
 package com.umc.product.test.domain.roster;
 
-/**
- * 학교 안 명단 순번. QA 계정의 이메일·이름·순서는 모두 이 키에서 나온다.
- */
 public record RosterKey(SchoolCode school, int seq) {
     public RosterKey {
         if (school == null) {

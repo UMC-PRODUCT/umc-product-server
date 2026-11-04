@@ -38,8 +38,7 @@ import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.support.IntegrationTestSupport;
 
 /**
- * 빈 DB에서 QA 계정 → 프로젝트 출발선 → 매칭 차수 하나의 봇 지원·결정까지 리허설을 한 번 돈다. 테스트가 끝나면 골격까지
- * 지워지므로, 이 클래스만 쓰는 속성으로 새 컨텍스트(새 DB)를 받고 시나리오를 한 테스트에 담는다.
+ * 테스트가 끝나면 골격까지 지워지므로, 이 클래스만 쓰는 속성으로 새 컨텍스트(새 DB)를 받고 시나리오를 한 테스트에 담는다.
  */
 @TestPropertySource(properties = {
     "app.seed.enabled=true",

@@ -18,9 +18,6 @@ import com.umc.product.test.application.port.out.dto.ProjectDataDeletionCounts;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * 기수의 프로젝트 데이터를 한 트랜잭션으로 지우고, 커밋한 뒤 지운 차수의 알람을 취소한다.
- */
 @Slf4j
 @Service
 @Profile("!prod")

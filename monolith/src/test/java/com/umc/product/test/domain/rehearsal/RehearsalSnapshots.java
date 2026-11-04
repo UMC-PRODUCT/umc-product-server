@@ -16,9 +16,6 @@ import com.umc.product.test.domain.rehearsal.RoundSnapshot.PartSlot;
 import com.umc.product.test.domain.rehearsal.RoundSnapshot.ProjectSlot;
 import com.umc.product.test.domain.rehearsal.RoundSnapshot.Round;
 
-/**
- * 순수 계획·요약 테스트용 스냅샷 조립기.
- */
 final class RehearsalSnapshots {
     static final Instant NOW = Instant.parse("2026-11-04T10:00:00Z");
     static final ChallengerPart WEB = ChallengerPart.WEB_PRODUCT_ENGINEER;

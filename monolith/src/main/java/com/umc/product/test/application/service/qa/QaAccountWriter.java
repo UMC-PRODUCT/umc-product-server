@@ -27,9 +27,6 @@ import com.umc.product.test.domain.roster.RosterRole;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * QA 계정 한 명을 자기 트랜잭션에서 맞춘다. 회원, 챌린저, 역할 중 없는 것만 만든다.
- */
 @Component
 @Profile("!prod")
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")
@@ -41,9 +38,6 @@ class QaAccountWriter {
     private final ListChallengerRoleUseCase listChallengerRoleUseCase;
     private final ManageChallengerRoleUseCase manageChallengerRoleUseCase;
 
-    /**
-     * @return 이 계정에 새로 만든 것이 있으면 true
-     */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean write(Account account, QaDirectory directory) {
         Long schoolId = directory.schoolId(account.schoolName());

@@ -4,9 +4,6 @@ import java.util.Optional;
 
 import com.umc.product.project.domain.enums.ProjectStatus;
 
-/**
- * 출발선 프로젝트 하나가 거치는 단계. 앞 네 단계는 PO, 뒤 두 단계는 superadmin이 실행한다.
- */
 public enum StartingLineStep {
     CREATE_DRAFT,
     UPDATE_INFO,

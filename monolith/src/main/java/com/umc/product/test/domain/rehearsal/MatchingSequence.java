@@ -6,9 +6,6 @@ import java.util.Optional;
 
 import com.umc.product.project.domain.enums.MatchingType;
 
-/**
- * 같은 지부·유형의 차수 묶음(1차, 2차, 3차, 랜덤). 넘기기는 차수 하나 단위지만 앞 차수 발표와 뒤 차수 시각 같은 규칙이 묶음에 걸린다.
- */
 public record MatchingSequence(MatchingType type, Long chapterId, List<RoundTimes> rounds) {
 
     public MatchingSequence {

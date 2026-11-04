@@ -17,7 +17,7 @@ import com.umc.product.test.application.port.in.command.dto.CreateSeedMemberResu
 import lombok.RequiredArgsConstructor;
 
 /**
- * 테스트 멤버 단건 생성 서비스. ADR-017 참조.
+ * ADR-017 참조.
  * <p>
  * Hexagonal 원칙을 따라 다른 도메인의 UseCase 만 호출하고 Port 는 직접 사용하지 않는다.
  */

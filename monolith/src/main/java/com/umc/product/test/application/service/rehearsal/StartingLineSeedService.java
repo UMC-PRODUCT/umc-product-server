@@ -51,12 +51,6 @@ import com.umc.product.test.domain.startingline.StartingLineStep;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * 지부마다 QA 프로젝트 2개는 제출까지, 나머지 PLAN 프로젝트는 TO를 넣고 공개까지 만든다. 마지막 PLAN 2명은 프로젝트 없이 둔다.
- * <p>
- * 트랜잭션을 열지 않아 단계마다 운영 UseCase가 각자 커밋한다. PO마다 지금 상태에서 남은 단계만 실행하므로 다시 부르면
- * 끝난 프로젝트는 건너뛰고 멈춘 프로젝트는 이어서 끝낸다.
- */
 @Slf4j
 @Service
 @Profile("!prod")

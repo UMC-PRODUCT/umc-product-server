@@ -9,7 +9,6 @@ public interface GetMatchingSelectionRuleUseCase {
 
     /**
      * @param applicantsCount 그 차수 그 프로젝트·파트 지원자 수(취소 제외, 상태 무관)
-     * @param remainingQuota  그 파트에 남은 TO
      */
     int minimumRequired(MatchingType type, int applicantsCount, int remainingQuota);
 }

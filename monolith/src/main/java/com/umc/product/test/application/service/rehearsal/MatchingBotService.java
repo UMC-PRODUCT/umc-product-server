@@ -36,8 +36,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 스냅샷 → 순수 계획 → 운영 UseCase 실행 → 새 스냅샷 요약. 지원자 한 명, 결정 하나가 각자 커밋되므로 하나가 실패해도
- * 나머지는 남고, 기수 잠금을 루프 내내 잡지 않는다.
+ * 지원자 한 명, 결정 하나가 각자 커밋되므로 하나가 실패해도 나머지는 남고, 기수 잠금을 루프 내내 잡지 않는다.
  */
 @Slf4j
 @Service

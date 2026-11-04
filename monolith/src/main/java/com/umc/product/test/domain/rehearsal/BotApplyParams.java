@@ -4,7 +4,6 @@ import java.util.Set;
 
 /**
  * @param applyRate        차수의 고정 대상 중 지원할 비율
- * @param excludeMemberIds 봇이 지원하지 않을 회원
  * @param seed             null이면 (지부, 유형, 차수 번호)로 정한 기본 seed
  */
 public record BotApplyParams(double applyRate, Set<Long> excludeMemberIds, Long seed) {

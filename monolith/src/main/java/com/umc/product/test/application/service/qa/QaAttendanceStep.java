@@ -34,7 +34,7 @@ import com.umc.product.test.domain.roster.QaPersonas.Persona;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 일정 4개와 출석 상태. 출석 요청이 두 일정에 걸쳐 있어 네 일정을 한 묶음으로 보고, 하나라도 있으면 건너뛴다.
+ * 출석 요청이 두 일정에 걸쳐 있어 네 일정을 한 묶음으로 보고, 하나라도 있으면 건너뛴다.
  */
 @Component
 @Profile("!prod")

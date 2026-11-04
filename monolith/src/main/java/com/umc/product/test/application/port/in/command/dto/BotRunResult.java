@@ -8,7 +8,6 @@ import com.umc.product.test.domain.rehearsal.SkipReason;
 /**
  * @param processed 이번 호출에 성공한 지원·결정 수
  * @param failed    운영 에러 코드별 실패 수. 다시 부르면 실패한 것만 다시 시도한다
- * @param summary   실행 뒤 차수 요약
  */
 public record BotRunResult(
     Outcome outcome,

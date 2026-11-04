@@ -3,9 +3,6 @@ package com.umc.product.test.domain.roster;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 
-/**
- * 명단의 운영진 역할 한 개. 파트장과 교육국원만 담당 파트를 갖는다.
- */
 public record RosterRole(ChallengerRoleType type, ChallengerPart responsiblePart) {
     public RosterRole {
         if (type == null) {

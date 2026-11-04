@@ -5,9 +5,6 @@ import java.util.List;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 
-/**
- * QA 시나리오가 쓰는 계정을 명단 좌석·역할 보유자·10기 기존 계정으로 옮긴 표. 시나리오 코드는 이 상수만 쓴다.
- */
 public final class QaPersonas {
 
     public static final Persona SUPERADMIN = new Legacy(QaAccountPlan.SUPERADMIN);
@@ -60,9 +57,6 @@ public final class QaPersonas {
         }
     }
 
-    /**
-     * 명단 역할 보유자. 보유자가 여럿이면 명단 순서상 첫 사람이다.
-     */
     public record RoleHolder(ChallengerRoleType type, ChallengerPart responsiblePart) implements Persona {
         @Override
         public String email(QaRoster roster) {

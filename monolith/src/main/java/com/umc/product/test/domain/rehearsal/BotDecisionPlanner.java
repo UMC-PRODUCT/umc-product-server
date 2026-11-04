@@ -15,11 +15,7 @@ import com.umc.product.test.domain.rehearsal.RoundSnapshot.ProjectSlot;
 import com.umc.product.test.domain.rehearsal.SeedHash.Purpose;
 
 /**
- * 봇 PM 결정 계획. 프로젝트·파트마다 목표 합격 인원을 정해 합격시키고, 남은 지원자의 절반은 불합격, 절반은 미결정으로 둔다.
- * <p>
- * 목표 = {@code max(올림(fillRate × 지터 × TO) − 이미 채운 인원, 최소 선발 인원)}이고 남은 TO와 지원자 수를 넘지 않는다.
- * 합격·불합격 수가 목표에 모자란 만큼만 미결정 지원서에서 해시 순서로 결정한다. 이미 결정된 지원서(사람이 바꾼 것 포함)는
- * 건드리지 않으므로, 다시 부르면 결정할 것이 남지 않는다.
+ * 이미 결정된 지원서(사람이 바꾼 것 포함)는 건드리지 않으므로, 다시 부르면 결정할 것이 남지 않는다.
  */
 public final class BotDecisionPlanner {
     private static final double CEIL_TOLERANCE = 1e-9;

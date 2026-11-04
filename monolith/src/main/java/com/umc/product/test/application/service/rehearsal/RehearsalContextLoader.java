@@ -18,9 +18,6 @@ import com.umc.product.test.domain.roster.RehearsalCast;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 커밋된 명단과 DB의 11기 지부 배치로 리허설 배역표를 만든다. 지부 배치는 골격 데이터라 호출마다 읽어도 싸다.
- */
 @Component
 @Profile("!prod")
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")

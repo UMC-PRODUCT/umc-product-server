@@ -88,7 +88,7 @@ class AdvancePlannerTest {
     @Test
     @DisplayName("1차 지원 시작은 시작을 지금으로, 내일보다 이른 뒤 단계와 뒤 차수 시각을 내일부터 한 시간 간격 슬롯으로 민다")
     void applicationStartPushesEarlierTimesIntoTomorrowSlots() {
-        // given: 모든 차수가 오늘 두 시간 뒤부터 몰려 등록됨
+        // given
         MatchingSequence sequence = cramped(NOW.plus(Duration.ofHours(2)));
 
         // when
@@ -108,7 +108,7 @@ class AdvancePlannerTest {
     @Test
     @DisplayName("QA가 내일 이후로 등록한 시각은 앞 시각과 간격이 맞으면 그대로 둔다")
     void keepsFutureTimesRegisteredByQa() {
-        // given: 1차 지원 마감이 사흘 뒤, 2차 이후는 그보다 뒤
+        // given
         Instant base = NOW.plus(Duration.ofDays(3));
         MatchingSequence sequence = registered(base);
         RoundTimes first = sequence.get(FIRST);
@@ -116,7 +116,7 @@ class AdvancePlannerTest {
         // when
         Rewrite rewrite = (Rewrite) AdvancePlanner.plan(sequence, FIRST, AdvanceStep.APPLICATION_START, NOW);
 
-        // then: 시작만 지금으로 당기고 나머지는 그대로
+        // then
         assertThat(rewrite.next()).containsExactly(first.withSchedule(
             NOW, first.endsAt(), first.decisionDeadline(), first.resultPublishAt()));
     }
@@ -124,7 +124,7 @@ class AdvancePlannerTest {
     @Test
     @DisplayName("내일 이후 시각이라도 민 앞 시각과 간격이 모자라면 앞 시각 한 시간 뒤로 민다")
     void pushesFutureTimeWhenPushedPredecessorLeavesNoGap() {
-        // given: 발표만 내일 2분 뒤로 등록됐고 나머지는 오늘
+        // given
         MatchingSequence sequence = sequence(
             regular(FIRST, MatchingPhase.FIRST, hours(NOW, 1), hours(NOW, 2), hours(NOW, 3),
                 TOMORROW.plus(Duration.ofMinutes(2))));
@@ -132,7 +132,7 @@ class AdvancePlannerTest {
         // when
         Rewrite rewrite = (Rewrite) AdvancePlanner.plan(sequence, FIRST, AdvanceStep.APPLICATION_START, NOW);
 
-        // then: 선발 마감이 내일 1시간 뒤로 밀려 발표는 5분 간격을 지키도록 그 한 시간 뒤로
+        // then
         assertThat(rewrite.next()).containsExactly(regular(FIRST, MatchingPhase.FIRST,
             NOW, TOMORROW, hours(TOMORROW, 1), hours(TOMORROW, 2)));
     }
@@ -140,7 +140,7 @@ class AdvancePlannerTest {
     @Test
     @DisplayName("발표로 넘기면 발표를 지금으로, 선발 마감을 5분 이상 앞으로 당긴다")
     void resultPublishPullsDecisionDeadlineFiveMinutesBack() {
-        // given: 선발 마감 2분 뒤 자동 선발까지 끝난 1차
+        // given
         Instant deadline = NOW.minus(Duration.ofMinutes(2));
         RoundTimes first = regular(FIRST, MatchingPhase.FIRST, deadline.minus(Duration.ofHours(2)),
             deadline.minusSeconds(30), deadline, TOMORROW);
@@ -161,7 +161,7 @@ class AdvancePlannerTest {
     @Test
     @DisplayName("3차를 발표로 넘기면 랜덤 차수 발표 시각을 내일 이후로 둬 랜덤 배정보다 먼저 돌지 않게 한다")
     void thirdPublishKeepsRandomPublicationInFuture() {
-        // given: 3차 자동 선발 끝, 랜덤 차수는 오늘 안에 몰려 있음
+        // given
         Instant deadline = NOW.minus(Duration.ofMinutes(10));
         MatchingSequence sequence = sequence(
             published(regular(FIRST, MatchingPhase.FIRST, days(NOW, -9), days(NOW, -8), hours(days(NOW, -8), 1),
@@ -184,7 +184,7 @@ class AdvancePlannerTest {
     @Test
     @DisplayName("랜덤 조정 시작·종료·최종 공개는 각 시각을 지금으로 두고 조정 종료와 선발 마감을 같게 유지한다")
     void randomStepsKeepEndsAtEqualToDecisionDeadline() {
-        // given: 3차 발표와 랜덤 배정이 끝난 랜덤 차수
+        // given
         MatchingSequence sequence = sequence(
             published(regular(THIRD, MatchingPhase.THIRD, days(NOW, -3), days(NOW, -2), hours(days(NOW, -2), 1),
                 hours(days(NOW, -2), 2))),
@@ -313,7 +313,6 @@ class AdvancePlannerTest {
         }
     }
 
-    /** 실제 스케줄러가 할 일(자동 선발, 발표)을 시각 규칙대로 흉내 내며 리허설을 처음부터 끝까지 넘긴다. */
     private static final class Rehearsal {
 
         private final State start;

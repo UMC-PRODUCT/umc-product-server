@@ -19,9 +19,6 @@ import com.umc.product.test.domain.roster.QaTransfers.QaTransfer;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 매칭 지부 이동 4명. 활성 이동이 이미 있는 사람은 건너뛰고, 나머지를 운영 이동 UseCase로 superadmin이 한 번에 등록한다.
- */
 @Component
 @Profile("!prod")
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")

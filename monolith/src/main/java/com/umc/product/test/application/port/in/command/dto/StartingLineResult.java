@@ -7,9 +7,6 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.test.domain.startingline.StartingLineStep;
 
-/**
- * 출발선 실행 결과. 프로젝트마다 이번 호출에 실행한 단계와, 실패했다면 그 단계와 운영 에러 코드를 담는다.
- */
 public record StartingLineResult(List<ChapterLine> chapters, List<ProjectOutcome> projects) {
     public StartingLineResult {
         chapters = List.copyOf(chapters);

@@ -29,10 +29,6 @@ import com.umc.product.test.domain.rehearsal.AdvanceStep;
 import com.umc.product.test.domain.rehearsal.MatchingSequence;
 import com.umc.product.test.domain.rehearsal.RoundTimeChange;
 
-/**
- * 차수 시각을 한 트랜잭션으로 고쳐 커밋한 뒤, 같은 묶음 차수의 알람을 새 시각으로 다시 맞춘다.
- * 자동 선발과 발표는 직접 실행하지 않고 실제 스케줄러에 맡긴다. 응답의 요약은 알람을 맞춘 뒤 DB를 새로 읽은 것이다.
- */
 @Service
 @Profile("!prod")
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")

@@ -35,9 +35,6 @@ import com.umc.product.test.domain.startingline.OwnedProject;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 
-/**
- * 리허설 판단용 네이티브 SELECT. 쓰기는 하지 않는다. 차수 스냅샷은 쿼리 7개로 읽는다(프로젝트·회원 수와 무관).
- */
 @Component
 @Profile("!prod")
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")

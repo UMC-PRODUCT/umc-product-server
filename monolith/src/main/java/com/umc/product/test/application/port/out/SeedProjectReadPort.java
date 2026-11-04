@@ -18,8 +18,5 @@ public interface SeedProjectReadPort {
      */
     List<OwnedProject> listOwnedProjects(Long gisuId, Collection<Long> ownerMemberIds);
 
-    /**
-     * 차수 하나의 스냅샷. 차수가 없으면 비어 있다.
-     */
     Optional<RoundSnapshot> findRoundSnapshot(Long roundId);
 }

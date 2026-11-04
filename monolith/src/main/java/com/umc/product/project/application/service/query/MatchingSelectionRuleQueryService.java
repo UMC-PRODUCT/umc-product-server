@@ -12,9 +12,6 @@ import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
-/**
- * 자동 선발과 같은 {@link MatchingDecisionPolicy} 빈으로 최소 선발 인원을 답한다. DB를 읽지 않는다.
- */
 @Service
 public class MatchingSelectionRuleQueryService implements GetMatchingSelectionRuleUseCase {
 

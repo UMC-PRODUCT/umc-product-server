@@ -9,9 +9,6 @@ import com.umc.product.project.application.port.in.query.dto.ApplicationFormInfo
 import com.umc.product.project.application.port.in.query.dto.ApplicationFormInfo.QuestionInfo;
 import com.umc.product.test.domain.rehearsal.RoundSnapshot;
 
-/**
- * 봇 지원서 답변. 주관식은 {@code [봇]}으로 시작하는 짧은 문장, 객관식은 첫 선택지다. 파일·일정 질문은 답하지 않는다.
- */
 final class BotAnswers {
 
     private BotAnswers() {

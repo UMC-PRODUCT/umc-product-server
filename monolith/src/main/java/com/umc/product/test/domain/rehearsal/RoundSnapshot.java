@@ -11,8 +11,6 @@ import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 
 /**
- * 매칭 차수 하나를 판단하는 데 필요한 DB 사실 전부. 요약, 봇 지원 계획, 봇 결정 계획이 모두 이 값 하나를 입력으로 받는다.
- *
  * @param candidates        이 지부를 매칭 지부로 가진 활동 중 챌린저 중 차수 유형 파트인 사람
  * @param projects          이 지부·기수의 공개(진행 중) 프로젝트
  * @param applications      이 차수 지원서. 취소는 뺀다
@@ -64,16 +62,12 @@ public record RoundSnapshot(
                 : Set.of(ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER);
         }
 
-        /**
-         * 지원서 생성·제출이 열린 때. 운영 규칙({@code ProjectMatchingRound.isOpenAt})과 같다.
-         */
+        /** 운영 규칙({@code ProjectMatchingRound.isOpenAt})과 같다. */
         public boolean isApplicationOpenAt(Instant now) {
             return phase != MatchingPhase.RANDOM_MATCHING && !now.isBefore(startsAt) && !now.isAfter(endsAt);
         }
 
-        /**
-         * PM이 결정할 수 있는 때. 운영 규칙({@code ProjectMatchingRound.validateIsMutableAt})과 같다.
-         */
+        /** 운영 규칙({@code ProjectMatchingRound.validateIsMutableAt})과 같다. */
         public boolean isDecisionOpenAt(Instant now) {
             return phase != MatchingPhase.RANDOM_MATCHING && now.isAfter(endsAt) && !now.isAfter(decisionDeadline)
                 && !autoDecided();
@@ -130,7 +124,7 @@ public record RoundSnapshot(
     }
 
     /**
-     * @param botAnswered 답변 중 하나가 {@code [봇]}으로 시작한다. 요약에서 봇·QA 지원을 나누는 데만 쓴다
+     * @param botAnswered 답변 중 하나가 {@code [봇]}으로 시작한다
      */
     public record ApplicationRow(Long applicationId, Long projectId, Long applicantMemberId, String applicantEmail,
                                  ChallengerPart part, ProjectApplicationStatus status, boolean botAnswered) {

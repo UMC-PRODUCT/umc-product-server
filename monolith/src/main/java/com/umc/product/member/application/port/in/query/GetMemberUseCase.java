@@ -45,11 +45,7 @@ public interface GetMemberUseCase {
 
     boolean existsByEmail(String email);
 
-    /**
-     * 이메일로 회원 ID를 일괄 조회한다. 없는 이메일은 결과에서 빠진다.
-     *
-     * @return email -> memberId
-     */
+    /** 없는 이메일은 결과에서 빠진다. */
     Map<String, Long> findIdsByEmails(Set<String> emails);
 
     /**

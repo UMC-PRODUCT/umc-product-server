@@ -17,9 +17,6 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.test.domain.roster.QaTransfers.QaTransfer;
 import com.umc.product.test.domain.startingline.StartingLinePlan;
 
-/**
- * 명단, 고정 이동 4건, 11기 지부 배치에서 계산한 리허설 배역. 계정 시딩, 출발선, 봇의 QA 몫, 요약은 이 객체만 본다.
- */
 public final class RehearsalCast {
     public static final List<ChallengerPart> MATCHING_PARTS = List.of(
         ChallengerPart.DESIGN, ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER);
@@ -81,9 +78,6 @@ public final class RehearsalCast {
         return Optional.ofNullable(chapterBySchool.get(key.school()));
     }
 
-    /**
-     * 고정 이동 대상이면 이동한 지부, 아니면 학교 지부. 지부가 없는 학교(명지·상명·인천가톨릭)는 매칭에서 빠진다.
-     */
     public Optional<String> matchingChapter(RosterKey key) {
         String transferred = transfers.get(key);
         return transferred != null ? Optional.of(transferred) : schoolChapter(key);
@@ -113,9 +107,6 @@ public final class RehearsalCast {
             planners.subList(QA_PROJECTS, owners));
     }
 
-    /**
-     * 매칭 파트마다 지부 안 학교 가나다순, 학교 안 순번으로 첫 일반 챌린저 3명. 고정 이동 대상은 빼고 고른다.
-     */
     public List<QaReservedApplicant> qaReserved(String chapter) {
         Collator collator = Collator.getInstance(Locale.KOREAN);
         Comparator<RosterEntry> order = Comparator

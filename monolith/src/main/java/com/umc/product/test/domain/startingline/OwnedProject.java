@@ -5,9 +5,6 @@ import java.util.Map;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.enums.ProjectStatus;
 
-/**
- * PO가 이 기수에 가진 프로젝트의 지금 상태. 출발선은 이 값에서 목표까지 남은 단계만 실행한다.
- */
 public record OwnedProject(
     Long projectId,
     Long ownerMemberId,

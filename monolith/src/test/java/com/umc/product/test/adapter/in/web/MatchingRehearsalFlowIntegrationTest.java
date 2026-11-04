@@ -46,9 +46,8 @@ import com.umc.product.test.domain.roster.QaTransfers;
 import com.umc.product.test.domain.roster.QaTransfers.QaTransfer;
 
 /**
- * dev에서 DB를 민 뒤 리허설 한 바퀴를 그대로 돈다. QA 계정 → 출발선 → QA 프로젝트 공개 → 운영 등록 API로 차수 4개 →
- * 1차를 넘기기·봇으로 발표까지 → 2차 시작 → 프로젝트 초기화 뒤 출발선 재실행. 자동 선발은 알람 등록 시각만 확인하고
- * 타이머가 부를 UseCase를 직접 부른다. 실제 스케줄러 대기는 {@link MatchingRoundAdvanceIntegrationTest}가 맡는다.
+ * 자동 선발은 알람 등록 시각만 확인하고 타이머가 부를 UseCase를 직접 부른다. 실제 스케줄러 대기는
+ * {@link MatchingRoundAdvanceIntegrationTest}가 맡는다.
  */
 @TestPropertySource(properties = {
     "app.seed.enabled=true",

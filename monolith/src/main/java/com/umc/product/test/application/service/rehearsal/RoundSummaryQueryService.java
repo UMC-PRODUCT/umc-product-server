@@ -39,9 +39,6 @@ public class RoundSummaryQueryService implements GetRoundSummaryUseCase {
             .orElseThrow(() -> new SeedRehearsalException(SeedErrorCode.ROUND_NOT_FOUND, "차수가 없습니다: " + roundId));
     }
 
-    /**
-     * 11기가 없는 DB의 차수는 배역표 지부일 수 없으니 QA 몫이 없다.
-     */
     static ChapterRoles roles(RehearsalContextLoader contextLoader, RoundSnapshot snapshot) {
         return contextLoader.find()
             .map(context -> ChapterRoles.of(context.cast(), snapshot.round().chapterName(), context::email))

@@ -30,9 +30,6 @@ import com.umc.product.test.domain.roster.QaPersonas;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 채팅방 4개. 제목이 같은 방이 있으면 그 방은 건너뛴다.
- */
 @Component
 @Profile("!prod")
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")

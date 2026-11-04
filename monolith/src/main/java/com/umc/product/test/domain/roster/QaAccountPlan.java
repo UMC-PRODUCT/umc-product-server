@@ -6,9 +6,6 @@ import java.util.List;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 
-/**
- * QA 계정 593개의 계획. 11기 명단 583명, superadmin, 10기 기존 QA 계정 9개다.
- */
 public record QaAccountPlan(List<Account> accounts) {
     public static final int CURRENT_GENERATION = 11;
     public static final int LEGACY_GENERATION = 10;

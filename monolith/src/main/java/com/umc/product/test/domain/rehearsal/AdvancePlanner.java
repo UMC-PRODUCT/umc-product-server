@@ -13,8 +13,6 @@ import com.umc.product.test.domain.rehearsal.AdvanceDecision.Refused;
 import com.umc.product.test.domain.rehearsal.AdvanceDecision.Rewrite;
 
 /**
- * 차수 하나를 다음 단계로 넘길 때 바뀔 시각을 계산한다. 순수 함수다.
- * <p>
  * 차수 시각을 순서 있는 표식 목록으로 본다. 1~3차는 [시작, 지원 마감, 선발 마감, 발표], 랜덤은 [시작, 조정 종료(= 선발 마감), 발표]다.
  * 넘기는 단계의 표식을 지금으로 당기고, 그 앞 표식은 간격을 지키도록 필요한 만큼만 앞으로 당긴다.
  * 그 뒤 표식과 같은 묶음 뒤 차수의 표식은 내일 같은 시각보다 이르면 내일 이후 슬롯으로 민다. 그보다 늦게 등록된 시각은 앞 표식과의
@@ -130,7 +128,6 @@ public final class AdvancePlanner {
         return round.withSchedule(marks.get(0), marks.get(1), marks.get(2), marks.get(3));
     }
 
-    /** 아직 오지 않은 표식을 차례로 받아, 내일 이후 슬롯보다 이르거나 앞 표식과 간격이 모자라면 슬롯으로 민다. */
     private static final class Slots {
 
         private final Instant firstSlot;
