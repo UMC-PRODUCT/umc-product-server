@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "app.webhook.slack.url")
+@ConditionalOnExpression("!'${app.webhook.slack.url:}'.isBlank()")
 public class SlackWebhookAdapter implements SendWebhookPort {
 
     private static final int MAX_TEXT_LENGTH = 3000;
