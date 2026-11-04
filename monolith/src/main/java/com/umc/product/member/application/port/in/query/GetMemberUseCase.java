@@ -46,6 +46,13 @@ public interface GetMemberUseCase {
     boolean existsByEmail(String email);
 
     /**
+     * 이메일로 회원 ID를 일괄 조회한다. 없는 이메일은 결과에서 빠진다.
+     *
+     * @return email -> memberId
+     */
+    Map<String, Long> findIdsByEmails(Set<String> emails);
+
+    /**
      * 커서 기반으로 멤버 ID 목록을 조회합니다. lastId보다 큰 ID를 가진 멤버를 최대 limit개 반환합니다. 전체 멤버를 메모리 효율적으로 순회할 때 사용합니다.
      */
     List<Long> findAllIdsCursor(Long lastId, int limit);
