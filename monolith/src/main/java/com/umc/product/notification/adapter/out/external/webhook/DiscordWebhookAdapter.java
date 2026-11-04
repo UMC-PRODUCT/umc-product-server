@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "app.webhook.discord.url")
+@ConditionalOnExpression("!'${app.webhook.discord.url:}'.isBlank()")
 public class DiscordWebhookAdapter implements SendWebhookPort {
 
     private static final int MAX_EMBED_DESCRIPTION_LENGTH = 4096;
