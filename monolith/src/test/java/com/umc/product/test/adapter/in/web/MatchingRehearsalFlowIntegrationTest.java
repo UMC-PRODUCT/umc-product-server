@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultActions;
@@ -50,10 +52,10 @@ import com.umc.product.test.domain.roster.QaTransfers.QaTransfer;
  * {@link MatchingRoundAdvanceIntegrationTest}가 맡는다.
  */
 @TestPropertySource(properties = {
-    "app.seed.enabled=true",
-    "test.context.key=matching-rehearsal-flow"
+    "app.seed.enabled=true"
 })
-@Import(QaSeedIntegrationTest.CheapPasswordEncoderConfig.class)
+@DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
+@Import(CheapPasswordEncoderConfig.class)
 class MatchingRehearsalFlowIntegrationTest extends IntegrationTestSupport {
 
     private static final String QUOKKA = "쿼카";

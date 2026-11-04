@@ -12,13 +12,9 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.TestPropertySource;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -37,14 +33,14 @@ import com.umc.product.test.domain.roster.QaTransfers.QaTransfer;
 import com.umc.product.test.domain.roster.RosterKey;
 
 /**
- * 테스트가 끝나면 골격까지 지워지므로, 이 클래스만 쓰는 속성으로 새 컨텍스트(새 DB)를 받고 시나리오를 한 테스트에 담는다.
+ * 테스트가 끝나면 골격까지 지워지므로, 클래스 시작 전에 컨텍스트를 버려 새 DB를 받고 시나리오를 한 테스트에 담는다.
  */
 @TestPropertySource(properties = {
     "app.seed.enabled=true",
-    "app.seed.email-domain=qa.test",
-    "test.context.key=qa-seed"
+    "app.seed.email-domain=qa.test"
 })
-@Import(QaSeedIntegrationTest.CheapPasswordEncoderConfig.class)
+@DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
+@Import(CheapPasswordEncoderConfig.class)
 class QaSeedIntegrationTest extends IntegrationTestSupport {
 
     private static final List<String> COUNTED_TABLES = List.of(
@@ -125,14 +121,5 @@ class QaSeedIntegrationTest extends IntegrationTestSupport {
 
     private long count(String sql) {
         return ((Number) entityManager.createNativeQuery(sql).getSingleResult()).longValue();
-    }
-
-    @TestConfiguration
-    static class CheapPasswordEncoderConfig {
-        @Bean
-        @Primary
-        PasswordEncoder cheapPasswordEncoder() {
-            return new DelegatingPasswordEncoder("bcrypt", Map.of("bcrypt", new BCryptPasswordEncoder(4)));
-        }
     }
 }
