@@ -1,7 +1,5 @@
 package com.umc.product.test.domain.roster;
 
-import java.util.Optional;
-
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 
@@ -36,10 +34,6 @@ public record RosterRole(ChallengerRoleType type, ChallengerPart responsiblePart
         ChallengerRoleType type = ChallengerRoleType.valueOf(parts[0]);
         ChallengerPart responsiblePart = parts.length == 2 ? ChallengerPart.valueOf(parts[1]) : null;
         return new RosterRole(type, responsiblePart);
-    }
-
-    public Optional<ChallengerPart> responsiblePartOptional() {
-        return Optional.ofNullable(responsiblePart);
     }
 
     private static boolean requiresResponsiblePart(ChallengerRoleType type) {

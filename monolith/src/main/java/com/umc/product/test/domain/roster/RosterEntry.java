@@ -1,7 +1,6 @@
 package com.umc.product.test.domain.roster;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 
@@ -20,10 +19,6 @@ public record RosterEntry(RosterKey key, ChallengerPart part, boolean infra, Lis
             throw new IllegalArgumentException("인프라 참여는 개발 파트만 가능합니다: " + key);
         }
         roles = List.copyOf(roles);
-    }
-
-    public Optional<ChallengerPart> partOptional() {
-        return Optional.ofNullable(part);
     }
 
     public boolean hasPart(ChallengerPart candidate) {

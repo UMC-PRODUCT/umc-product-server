@@ -12,7 +12,6 @@ public final class QaPersonas {
 
     public static final Persona SUPERADMIN = new Legacy(QaAccountPlan.SUPERADMIN);
     public static final Persona G10_CAU_SCHOOL_PRESIDENT = new Legacy("cau_schoolpresident");
-    public static final Persona G10_XENON_CHAPTER_PRESIDENT = new Legacy("xenon_chapterpresident");
     public static final Persona G10_CAU_PLAN = new Legacy("cau_plan");
     public static final Persona G10_CAU_DESIGN = new Legacy("cau_design");
     public static final Persona G10_CAU_WEB = new Legacy("cau_web");
