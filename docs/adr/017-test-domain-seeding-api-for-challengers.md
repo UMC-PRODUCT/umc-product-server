@@ -183,6 +183,9 @@ Port 직접 의존을 0으로 만든다.
 
 ### 멤버 시딩 (Member)
 
+> 삭제됨. 고정 QA 계정은 `POST /test/seed/qa`, 단건 멤버는 `POST /test/seed/member`로 만든다.
+> `app.seed.skip-if-member-count-greater-than` 설정도 함께 지웠다. Status 절 참고.
+
 `POST /test/seed/members`
 
 ```json
@@ -544,7 +547,6 @@ curl -X POST $BASE/test/seed/notice -H 'Content-Type: application/json' \
 
 | 증상 | 원인 | 대응 |
 |---|---|---|
-| `skipped=true` 가 떨어진다 | 임계값 초과 (`skipIfMemberCountGreaterThan`) 또는 챌린저 풀 비어있음 | `force=true` 재호출 / 임계값 조정 / 챌린저 시딩 선행 |
 | 모든 셀 skip | 활성 기수 미설정 또는 ChapterSchool 매핑 비어있음 | `/api/v1/admin/gisu` / chapter-school seed 마이그레이션 확인 |
 | `failedStep=QUOTA` 빈발 | 지부의 파트별 챌린저 수보다 공개 프로젝트 TO 합계가 이미 많음 | challengers 호출로 파트 인원을 늘린 뒤 다시 |
 

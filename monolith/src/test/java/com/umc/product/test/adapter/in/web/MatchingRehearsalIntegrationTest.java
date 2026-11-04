@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.TestPropertySource;
@@ -120,6 +121,10 @@ class MatchingRehearsalIntegrationTest extends IntegrationTestSupport {
         assertThat(summary.path("qaReserved")).hasSize(6);
         assertThat(summary.path("projectsWithoutApplicants")).hasSize(17);
         assertThat(postStatus("/test/seed/matching/rounds/" + roundId + "/bot-applications")).isEqualTo(409);
+        assertThat(postStatus("/test/seed/matching/rounds/" + roundId + "/bot-applications",
+            "{\"excludeMemberIds\": [null]}")).isEqualTo(400);
+        assertThat(postStatus("/test/seed/matching/rounds/" + roundId + "/bot-decisions",
+            "{\"excludeProjectIds\": [null]}")).isEqualTo(400);
 
         // given
         moveRound(roundId, "starts_at = now() - interval '1 minute'");
@@ -199,6 +204,11 @@ class MatchingRehearsalIntegrationTest extends IntegrationTestSupport {
 
     private int postStatus(String path) throws Exception {
         return mockMvc.perform(MockMvcRequestBuilders.post(path)).andReturn().getResponse().getStatus();
+    }
+
+    private int postStatus(String path, String json) throws Exception {
+        return mockMvc.perform(MockMvcRequestBuilders.post(path).contentType(MediaType.APPLICATION_JSON).content(json))
+            .andReturn().getResponse().getStatus();
     }
 
     private static int sum(List<String> values) {

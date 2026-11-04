@@ -6,6 +6,7 @@ import com.umc.product.test.domain.rehearsal.BotDecisionParams;
 
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * 모든 필드를 생략할 수 있다. fillRate 기본 1차 0.6·2차 0.85·3차 1.0, jitter 기본 0.2.
@@ -13,7 +14,7 @@ import jakarta.validation.constraints.DecimalMin;
 public record BotDecisionRequest(
     @DecimalMin("0.0") @DecimalMax("1.0") Double fillRate,
     @DecimalMin("0.0") @DecimalMax(value = "1.0", inclusive = false) Double jitter,
-    Set<Long> excludeProjectIds,
+    Set<@NotNull Long> excludeProjectIds,
     Long seed
 ) {
     public static BotDecisionParams defaults() {
