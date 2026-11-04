@@ -14,7 +14,8 @@ public record AdvanceMatchingRoundResponse(
     AdvanceStep step,
     Outcome outcome,
     List<TimeChange> timeChanges,
-    List<Timer> timers
+    List<Timer> timers,
+    RoundSummaryResponse summary
 ) {
 
     public static AdvanceMatchingRoundResponse from(AdvanceMatchingRoundResult result) {
@@ -23,7 +24,8 @@ public record AdvanceMatchingRoundResponse(
             result.step(),
             result.outcome(),
             result.timeChanges().stream().map(TimeChange::from).toList(),
-            result.timers().stream().map(Timer::from).toList()
+            result.timers().stream().map(Timer::from).toList(),
+            RoundSummaryResponse.from(result.summary())
         );
     }
 

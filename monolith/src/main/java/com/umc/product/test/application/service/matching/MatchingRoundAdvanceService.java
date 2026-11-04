@@ -16,6 +16,7 @@ import com.umc.product.project.application.port.out.dto.MatchingRoundTimers;
 import com.umc.product.test.application.port.in.command.AdvanceMatchingRoundUseCase;
 import com.umc.product.test.application.port.in.command.dto.AdvanceMatchingRoundResult;
 import com.umc.product.test.application.port.in.command.dto.AdvanceMatchingRoundResult.Outcome;
+import com.umc.product.test.application.port.in.query.GetRoundSummaryUseCase;
 import com.umc.product.test.application.port.out.RewriteMatchingRoundTimesPort;
 import com.umc.product.test.domain.exception.SeedErrorCode;
 import com.umc.product.test.domain.exception.SeedRehearsalException;
@@ -30,7 +31,7 @@ import com.umc.product.test.domain.rehearsal.RoundTimeChange;
 
 /**
  * 차수 시각을 한 트랜잭션으로 고쳐 커밋한 뒤, 같은 묶음 차수의 알람을 새 시각으로 다시 맞춘다.
- * 자동 선발과 발표는 직접 실행하지 않고 실제 스케줄러에 맡긴다.
+ * 자동 선발과 발표는 직접 실행하지 않고 실제 스케줄러에 맡긴다. 응답의 요약은 알람을 맞춘 뒤 DB를 새로 읽은 것이다.
  */
 @Service
 @Profile("!prod")
@@ -40,17 +41,20 @@ public class MatchingRoundAdvanceService implements AdvanceMatchingRoundUseCase 
 
     private final RewriteMatchingRoundTimesPort rewriteMatchingRoundTimesPort;
     private final ResyncMatchingRoundScheduleUseCase resyncMatchingRoundScheduleUseCase;
+    private final GetRoundSummaryUseCase getRoundSummaryUseCase;
     private final Clock clock;
     private final TransactionTemplate transactionTemplate;
 
     public MatchingRoundAdvanceService(
         RewriteMatchingRoundTimesPort rewriteMatchingRoundTimesPort,
         ResyncMatchingRoundScheduleUseCase resyncMatchingRoundScheduleUseCase,
+        GetRoundSummaryUseCase getRoundSummaryUseCase,
         Clock clock,
         PlatformTransactionManager transactionManager
     ) {
         this.rewriteMatchingRoundTimesPort = rewriteMatchingRoundTimesPort;
         this.resyncMatchingRoundScheduleUseCase = resyncMatchingRoundScheduleUseCase;
+        this.getRoundSummaryUseCase = getRoundSummaryUseCase;
         this.clock = clock;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
@@ -61,7 +65,8 @@ public class MatchingRoundAdvanceService implements AdvanceMatchingRoundUseCase 
         List<MatchingRoundTimers> timers = planned.sequence().rounds().stream()
             .map(round -> resyncMatchingRoundScheduleUseCase.resync(round.roundId()))
             .toList();
-        return new AdvanceMatchingRoundResult(roundId, step, planned.outcome(), planned.changes(), timers);
+        return new AdvanceMatchingRoundResult(roundId, step, planned.outcome(), planned.changes(), timers,
+            getRoundSummaryUseCase.get(roundId));
     }
 
     private Planned rewrite(Long roundId, AdvanceStep step) {

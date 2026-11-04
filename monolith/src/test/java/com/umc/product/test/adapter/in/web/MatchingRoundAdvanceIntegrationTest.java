@@ -91,6 +91,8 @@ class MatchingRoundAdvanceIntegrationTest extends IntegrationTestSupport {
         assertThat(round.isOpenAt(Instant.now())).isTrue();
         assertThat(round.getEndsAt()).isAfter(Instant.now().plus(Duration.ofHours(23)));
         assertThat(started.path("timers")).hasSize(4);
+        assertThat(started.path("summary").path("round").path("roundId").asLong()).isEqualTo(first);
+        assertThat(started.path("summary").path("round").path("stage").asText()).isEqualTo("APPLICATION_OPEN");
         assertTimer(started, first, round.getDecisionDeadline().plus(DEADLINE_BUFFER), round.getResultPublishAt());
         assertThat(scheduler.isScheduled(first)).isTrue();
 

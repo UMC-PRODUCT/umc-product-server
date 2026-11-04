@@ -1,5 +1,8 @@
 package com.umc.product.test.application.service.rehearsal;
 
+import java.util.List;
+import java.util.Set;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -28,7 +31,7 @@ public class RoundSummaryQueryService implements GetRoundSummaryUseCase {
     @Override
     public RoundSummary get(Long roundId) {
         RoundSnapshot snapshot = load(seedProjectReadPort, roundId);
-        return RoundSummary.of(snapshot, roles(contextLoader.load(), snapshot));
+        return RoundSummary.of(snapshot, roles(contextLoader, snapshot));
     }
 
     static RoundSnapshot load(SeedProjectReadPort port, Long roundId) {
@@ -36,7 +39,12 @@ public class RoundSummaryQueryService implements GetRoundSummaryUseCase {
             .orElseThrow(() -> new SeedRehearsalException(SeedErrorCode.ROUND_NOT_FOUND, "차수가 없습니다: " + roundId));
     }
 
-    static ChapterRoles roles(RehearsalContext context, RoundSnapshot snapshot) {
-        return ChapterRoles.of(context.cast(), snapshot.round().chapterName(), context::email);
+    /**
+     * 11기가 없는 DB의 차수는 배역표 지부일 수 없으니 QA 몫이 없다.
+     */
+    static ChapterRoles roles(RehearsalContextLoader contextLoader, RoundSnapshot snapshot) {
+        return contextLoader.find()
+            .map(context -> ChapterRoles.of(context.cast(), snapshot.round().chapterName(), context::email))
+            .orElseGet(() -> new ChapterRoles(Set.of(), List.of()));
     }
 }

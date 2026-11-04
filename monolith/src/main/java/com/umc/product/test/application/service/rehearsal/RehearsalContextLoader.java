@@ -2,6 +2,7 @@ package com.umc.product.test.application.service.rehearsal;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
@@ -31,11 +32,18 @@ class RehearsalContextLoader {
     private final GetChapterUseCase getChapterUseCase;
 
     RehearsalContext load() {
-        Long gisuId = getGisuUseCase.getList().stream()
+        return find().orElseThrow(() -> new IllegalStateException(QaAccountPlan.CURRENT_GENERATION + "기가 없습니다."));
+    }
+
+    Optional<RehearsalContext> find() {
+        return getGisuUseCase.getList().stream()
             .filter(gisu -> gisu.generation().intValue() == QaAccountPlan.CURRENT_GENERATION)
             .map(GisuInfo::gisuId)
             .findFirst()
-            .orElseThrow(() -> new IllegalStateException(QaAccountPlan.CURRENT_GENERATION + "기가 없습니다."));
+            .map(this::build);
+    }
+
+    private RehearsalContext build(Long gisuId) {
         Map<String, String> chapterBySchool = new HashMap<>();
         Map<String, Long> chapterIds = new HashMap<>();
         for (ChapterWithSchoolsInfo chapter : getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId)) {

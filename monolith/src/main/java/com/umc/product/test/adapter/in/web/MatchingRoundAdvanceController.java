@@ -41,6 +41,7 @@ public class MatchingRoundAdvanceController {
         이미 지난 단계를 다시 보내면 시각은 그대로 두고 알람만 다시 맞춥니다(ALREADY_REACHED).
         거부: 앞 차수 미발표 SEED-0301, 자동 선발 전 발표 SEED-0302, 순서 건너뛰기 SEED-0303, 랜덤 배정 전 조정 SEED-0304.
         알람은 서버 메모리에만 있어, 재시작하면 DB 시각 기준으로 다시 등록됩니다.
+        응답의 summary는 알람을 맞춘 뒤의 차수 요약으로, GET summary와 같은 모양입니다.
         """)
     public AdvanceMatchingRoundResponse advance(
         @PathVariable Long roundId,

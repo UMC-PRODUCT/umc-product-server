@@ -88,7 +88,7 @@ public class MatchingBotService implements RunMatchingBotUseCase {
     }
 
     private ChapterRoles roles(RoundSnapshot snapshot) {
-        return RoundSummaryQueryService.roles(contextLoader.load(), snapshot);
+        return RoundSummaryQueryService.roles(contextLoader, snapshot);
     }
 
     private static <T> int run(List<T> items, Map<String, Integer> failed, Consumer<T> action) {
