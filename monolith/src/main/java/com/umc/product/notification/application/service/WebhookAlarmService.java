@@ -36,6 +36,7 @@ public class WebhookAlarmService implements SendWebhookAlarmUseCase {
     ) {
         this.adapterMap = adapters.stream()
             .collect(Collectors.toMap(SendWebhookPort::platform, Function.identity()));
+        log.info("웹훅 어댑터를 등록했습니다: platforms={}", adapterMap.keySet());
         this.profilePrefix = buildProfilePrefix(environment);
         this.operationalMetrics = operationalMetrics;
         this.eventPublisher = eventPublisher;
