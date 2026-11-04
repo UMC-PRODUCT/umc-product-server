@@ -66,15 +66,11 @@ public final class BotDecisionPlanner {
                 int approve = Math.min(undecided.size(), Math.max(0, target - approved));
                 int rejectTarget = (applications.size() - Math.max(target, approved)) / 2;
                 int reject = Math.min(undecided.size() - approve, Math.max(0, rejectTarget - rejected));
-                undecided.subList(0, approve).forEach(row -> approvals.add(decision(project, row,
-                    ProjectApplicationStatus.APPROVED)));
-                undecided.subList(approve, approve + reject).forEach(row -> rejections.add(decision(project, row,
-                    ProjectApplicationStatus.REJECTED)));
+                undecided.subList(0, approve).forEach(row -> approvals.add(decision(project, row)));
+                undecided.subList(approve, approve + reject).forEach(row -> rejections.add(decision(project, row)));
             }
         }
-        List<PlannedDecision> decisions = new ArrayList<>(approvals);
-        decisions.addAll(rejections);
-        return new DecisionPlan(decisions, skipped);
+        return new DecisionPlan(approvals, rejections, skipped);
     }
 
     static int target(PartSlot slot, int applicants, double fillFactor, MinimumRule minimum) {
@@ -83,8 +79,8 @@ public final class BotDecisionPlanner {
         return Math.max(0, Math.min(Math.max(wanted, floor), Math.min(slot.remaining(), applicants)));
     }
 
-    private static PlannedDecision decision(ProjectSlot project, ApplicationRow row, ProjectApplicationStatus target) {
-        return new PlannedDecision(project.projectId(), row.applicationId(), project.ownerMemberId(), target);
+    private static PlannedDecision decision(ProjectSlot project, ApplicationRow row) {
+        return new PlannedDecision(project.projectId(), row.applicationId(), project.ownerMemberId());
     }
 
     private static int count(List<ApplicationRow> applications, ProjectApplicationStatus status) {

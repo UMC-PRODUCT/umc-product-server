@@ -29,6 +29,7 @@ import com.umc.product.test.domain.rehearsal.BotDecisionParams;
 import com.umc.product.test.domain.rehearsal.BotDecisionPlanner;
 import com.umc.product.test.domain.rehearsal.ChapterRoles;
 import com.umc.product.test.domain.rehearsal.DecisionPlan;
+import com.umc.product.test.domain.rehearsal.DecisionPlan.PlannedDecision;
 import com.umc.product.test.domain.rehearsal.RoundSnapshot;
 import com.umc.product.test.domain.rehearsal.SkipReason;
 
@@ -80,10 +81,14 @@ public class MatchingBotService implements RunMatchingBotUseCase {
             (applicants, remaining) -> getMatchingSelectionRuleUseCase.minimumRequired(
                 snapshot.round().type(), applicants, remaining));
         Map<String, Integer> failed = new HashMap<>();
-        int processed = run(plan.decisions(), failed, decision -> decideApplicationUseCase.decide(
-            decision.projectId(), decision.applicationId(), ApplicationDecisionStatus.valueOf(decision.target().name()),
-            DECISION_REASON, decision.decidedBy()));
-        return result(roundId, processed, plan.skipped(), failed);
+        int approved = run(plan.approvals(), failed, decision -> decide(decision, ApplicationDecisionStatus.APPROVED));
+        int rejected = run(plan.rejections(), failed, decision -> decide(decision, ApplicationDecisionStatus.REJECTED));
+        return result(roundId, approved + rejected, plan.skipped(), failed);
+    }
+
+    private void decide(PlannedDecision decision, ApplicationDecisionStatus status) {
+        decideApplicationUseCase.decide(decision.projectId(), decision.applicationId(), status, DECISION_REASON,
+            decision.decidedBy());
     }
 
     private ChapterRoles roles(RoundSnapshot snapshot) {

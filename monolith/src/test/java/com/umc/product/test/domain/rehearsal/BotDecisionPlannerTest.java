@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,9 +40,10 @@ class BotDecisionPlannerTest {
 
         DecisionPlan plan = BotDecisionPlanner.plan(snapshot, NO_ROLES, NO_JITTER, DEVELOPER);
 
-        assertThat(plan.decisions()).extracting(PlannedDecision::target).containsExactly(
-            APPROVED, APPROVED, APPROVED, APPROVED, REJECTED, REJECTED);
-        assertThat(plan.decisions()).extracting(PlannedDecision::decidedBy).containsOnly(1001L);
+        assertThat(plan.approvals()).hasSize(4);
+        assertThat(plan.rejections()).hasSize(2);
+        assertThat(Stream.concat(plan.approvals().stream(), plan.rejections().stream()))
+            .extracting(PlannedDecision::decidedBy).containsOnly(1001L);
     }
 
     @Test
@@ -70,22 +72,27 @@ class BotDecisionPlannerTest {
 
         DecisionPlan plan = BotDecisionPlanner.plan(before, roles, params, DEVELOPER);
 
-        assertThat(plan.decisions()).extracting(PlannedDecision::projectId).containsOnly(1L);
-        assertThat(plan.decisions()).extracting(PlannedDecision::applicationId).doesNotContain(applications.get(0)
+        List<PlannedDecision> decisions = Stream.concat(plan.approvals().stream(), plan.rejections().stream())
+            .toList();
+        assertThat(decisions).extracting(PlannedDecision::projectId).containsOnly(1L);
+        assertThat(decisions).extracting(PlannedDecision::applicationId).doesNotContain(applications.get(0)
             .applicationId());
-        assertThat(plan.decisions()).filteredOn(decision -> decision.target() == APPROVED).hasSize(4);
-        assertThat(plan.decisions()).filteredOn(decision -> decision.target() == REJECTED).hasSize(1);
+        assertThat(plan.approvals()).hasSize(4);
+        assertThat(plan.rejections()).hasSize(1);
         assertThat(plan.skipped()).containsEntry(SkipReason.QA_PROJECT, 1).containsEntry(SkipReason.EXCLUDED, 1)
             .containsEntry(SkipReason.ALREADY_DECIDED, 1);
 
         Map<Long, ProjectApplicationStatus> decided = new java.util.HashMap<>();
-        plan.decisions().forEach(decision -> decided.put(decision.applicationId(), decision.target()));
+        plan.approvals().forEach(decision -> decided.put(decision.applicationId(), APPROVED));
+        plan.rejections().forEach(decision -> decided.put(decision.applicationId(), REJECTED));
         List<ApplicationRow> afterRows = applications.stream()
             .map(row -> decided.containsKey(row.applicationId()) ? withStatus(row, decided.get(row.applicationId())) : row)
             .toList();
         RoundSnapshot after = RehearsalSnapshots.snapshot(RehearsalSnapshots.decisionOpen(), List.of(), projects,
             afterRows);
-        assertThat(BotDecisionPlanner.plan(after, roles, params, DEVELOPER).decisions()).isEmpty();
+        DecisionPlan replanned = BotDecisionPlanner.plan(after, roles, params, DEVELOPER);
+        assertThat(replanned.approvals()).isEmpty();
+        assertThat(replanned.rejections()).isEmpty();
     }
 
     @Test
