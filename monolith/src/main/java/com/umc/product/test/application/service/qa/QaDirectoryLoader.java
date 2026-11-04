@@ -18,7 +18,6 @@ import com.umc.product.organization.application.port.in.query.dto.chapter.Chapte
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
 import com.umc.product.test.application.port.out.LoadQaRosterPort;
-import com.umc.product.test.application.service.SeedProperties;
 import com.umc.product.test.domain.roster.QaAccountPlan;
 import com.umc.product.test.domain.roster.QaRoster;
 
@@ -32,7 +31,6 @@ class QaDirectoryLoader {
     private static final List<Integer> GENERATIONS = List.of(QaAccountPlan.LEGACY_GENERATION,
         QaAccountPlan.CURRENT_GENERATION);
 
-    private final SeedProperties seedProperties;
     private final LoadQaRosterPort loadQaRosterPort;
     private final GetMemberUseCase getMemberUseCase;
     private final GetGisuUseCase getGisuUseCase;
@@ -41,7 +39,7 @@ class QaDirectoryLoader {
 
     QaDirectory load() {
         QaRoster roster = loadQaRosterPort.load();
-        QaAccountPlan accounts = QaAccountPlan.from(roster, seedProperties.emailDomain());
+        QaAccountPlan accounts = QaAccountPlan.from(roster);
         Map<String, Long> memberIds = getMemberUseCase.findIdsByEmails(new HashSet<>(accounts.emails()));
 
         Map<Integer, Long> gisuIds = new HashMap<>();
@@ -70,7 +68,6 @@ class QaDirectoryLoader {
                     chapterIdsBySchool.put(gisu.getKey() + ":" + school.schoolId(), chapter.chapterId()));
             }
         }
-        return new QaDirectory(roster, accounts, seedProperties.emailDomain(), memberIds, gisuIds, schoolIds,
-            chapterIds, chapterIdsBySchool);
+        return new QaDirectory(roster, accounts, memberIds, gisuIds, schoolIds, chapterIds, chapterIdsBySchool);
     }
 }

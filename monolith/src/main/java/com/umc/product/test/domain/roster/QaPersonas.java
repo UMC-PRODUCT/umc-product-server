@@ -51,13 +51,13 @@ public final class QaPersonas {
     }
 
     public sealed interface Persona permits RosterSeat, RoleHolder, Legacy {
-        String email(QaRoster roster, String emailDomain);
+        String email(QaRoster roster);
     }
 
     public record RosterSeat(RosterKey key) implements Persona {
         @Override
-        public String email(QaRoster roster, String emailDomain) {
-            return roster.entry(key).key().email(emailDomain);
+        public String email(QaRoster roster) {
+            return roster.entry(key).key().email();
         }
     }
 
@@ -66,19 +66,19 @@ public final class QaPersonas {
      */
     public record RoleHolder(ChallengerRoleType type, ChallengerPart responsiblePart) implements Persona {
         @Override
-        public String email(QaRoster roster, String emailDomain) {
+        public String email(QaRoster roster) {
             List<RosterKey> holders = roster.holders(type, responsiblePart);
             if (holders.isEmpty()) {
                 throw new IllegalStateException("명단에 역할 보유자가 없습니다: " + type + ":" + responsiblePart);
             }
-            return holders.getFirst().email(emailDomain);
+            return holders.getFirst().email();
         }
     }
 
     public record Legacy(String alias) implements Persona {
         @Override
-        public String email(QaRoster roster, String emailDomain) {
-            return QaAccountPlan.legacyEmail(alias, emailDomain);
+        public String email(QaRoster roster) {
+            return QaAccountPlan.legacyEmail(alias);
         }
     }
 }

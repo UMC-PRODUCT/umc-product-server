@@ -100,7 +100,7 @@ class BotApplyPlannerTest {
             .flatMap(plan -> java.util.stream.Stream.concat(plan.qaOwners().stream(), plan.seededOwners().stream()))
             .toList();
         List<ProjectSlot> projects = LongStream.range(0, owners.size())
-            .mapToObj(index -> project(index + 1, owners.get((int) index).email("qa.test"), 10_000)).toList();
+            .mapToObj(index -> project(index + 1, owners.get((int) index).email(), 10_000)).toList();
         List<Candidate> candidates = LongStream.rangeClosed(1, 5_000).mapToObj(RehearsalSnapshots::candidate).toList();
         RoundSnapshot snapshot = RehearsalSnapshots.snapshot(RehearsalSnapshots.applicationOpen(), candidates, projects,
             List.of());

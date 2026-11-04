@@ -92,7 +92,8 @@ class MatchingRehearsalIntegrationTest extends IntegrationTestSupport {
         assertThat(List.of("DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER").stream()
             .map(part -> kangaroo.path("quotaTotals").path(part).asInt())).containsExactly(8, 37, 13);
         assertThat(kangaroo.path("withoutProject").toString())
-            .isEqualTo("[\"hansung_g11_qa13@qa.test\",\"hansung_g11_qa26@qa.test\"]");
+            .isEqualTo("[\"hansung_g11_qa13@university.neordinary.com\","
+                + "\"hansung_g11_qa26@university.neordinary.com\"]");
         Map<String, Long> afterLine = tableCounts();
 
         // when
@@ -103,7 +104,7 @@ class MatchingRehearsalIntegrationTest extends IntegrationTestSupport {
         assertThat(tableCounts()).isEqualTo(afterLine);
 
         // given
-        Long superadmin = memberId("superadmin@qa.test");
+        Long superadmin = memberId("superadmin@university.neordinary.com");
         publishQaProjects(QUOKKA, superadmin);
         Instant start = Instant.now().plus(1, ChronoUnit.DAYS);
         Long roundId = createProjectMatchingRoundUseCase.create(CreateProjectMatchingRoundCommand.builder()

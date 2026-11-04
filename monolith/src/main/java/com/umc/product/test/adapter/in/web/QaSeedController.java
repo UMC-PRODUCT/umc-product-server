@@ -36,7 +36,7 @@ public class QaSeedController {
         계정은 11기 명단 583명, superadmin, 10기 기존 QA 계정 9개로 모두 593개입니다.
         단계마다 따로 저장하므로 한 단계가 실패해도 앞 단계는 남습니다. 계정 단계가 실패하면 뒤 단계는 NOT_RUN입니다.
         다시 부르면 이미 있는 것은 건너뛰고 UNCHANGED를 돌려줍니다. 되돌리려면 DB를 초기화합니다.
-        비밀번호는 app.seed.default-password, 이메일 도메인은 app.seed.email-domain 설정을 씁니다.
+        비밀번호는 app.seed.default-password 설정을 쓰고, 이메일 도메인은 university.neordinary.com으로 고정입니다.
         """)
     public QaSeedResponse seedAll() {
         return QaSeedResponse.from(seedQaDataUseCase.seedAll());

@@ -16,29 +16,28 @@ import com.umc.product.test.domain.roster.QaPersonas.Persona;
 @DisplayName("QA 시나리오 계정 이전표")
 class QaPersonasTest {
 
-    private static final String DOMAIN = "qa.test";
     private final QaRoster roster = new ClasspathQaRosterAdapter().load();
 
     @Test
     @DisplayName("시나리오가 쓰는 계정은 모두 계정 계획 593개 안에 있다")
     void everyPersonaIsPlannedAccount() {
-        List<String> planned = QaAccountPlan.from(roster, DOMAIN).emails();
+        List<String> planned = QaAccountPlan.from(roster).emails();
 
         assertThat(personas()).allSatisfy(persona ->
-            assertThat(planned).contains(persona.email(roster, DOMAIN)));
+            assertThat(planned).contains(persona.email(roster)));
     }
 
     @Test
-    @DisplayName("옛 별칭은 계획 문서의 명단 계정으로 옮긴다")
+    @DisplayName("옛 별칭은 노션 로그인 문서와 같은 university.neordinary.com 명단 계정으로 옮긴다")
     void legacyAliasesMoveToRosterSeats() {
-        assertThat(QaPersonas.CAU_SCHOOL_PRESIDENT.email(roster, DOMAIN)).isEqualTo("cau_g11_qa01@qa.test");
-        assertThat(QaPersonas.CAU_PLAN_LEADER.email(roster, DOMAIN)).isEqualTo("cau_g11_qa03@qa.test");
-        assertThat(QaPersonas.CAU_MOBILE_LEADER.email(roster, DOMAIN)).isEqualTo("cau_g11_qa06@qa.test");
-        assertThat(QaPersonas.CAU_WEB_INFRA.email(roster, DOMAIN)).isEqualTo("cau_g11_qa12@qa.test");
-        assertThat(QaPersonas.CAU_MOBILE_INFRA.email(roster, DOMAIN)).isEqualTo("cau_g11_qa27@qa.test");
-        assertThat(QaPersonas.CENTRAL_PRESIDENT.email(roster, DOMAIN)).isEqualTo("duksung_g11_qa03@qa.test");
-        assertThat(QaPersonas.CENTRAL_EDUCATION.email(roster, DOMAIN)).isEqualTo("soongsil_g11_qa49@qa.test");
-        assertThat(QaPersonas.SUPERADMIN.email(roster, DOMAIN)).isEqualTo("superadmin@qa.test");
+        assertThat(QaPersonas.CAU_SCHOOL_PRESIDENT.email(roster)).isEqualTo("cau_g11_qa01@university.neordinary.com");
+        assertThat(QaPersonas.CAU_PLAN_LEADER.email(roster)).isEqualTo("cau_g11_qa03@university.neordinary.com");
+        assertThat(QaPersonas.CAU_MOBILE_LEADER.email(roster)).isEqualTo("cau_g11_qa06@university.neordinary.com");
+        assertThat(QaPersonas.CAU_WEB_INFRA.email(roster)).isEqualTo("cau_g11_qa12@university.neordinary.com");
+        assertThat(QaPersonas.CAU_MOBILE_INFRA.email(roster)).isEqualTo("cau_g11_qa27@university.neordinary.com");
+        assertThat(QaPersonas.CENTRAL_PRESIDENT.email(roster)).isEqualTo("duksung_g11_qa03@university.neordinary.com");
+        assertThat(QaPersonas.CENTRAL_EDUCATION.email(roster)).isEqualTo("soongsil_g11_qa49@university.neordinary.com");
+        assertThat(QaPersonas.SUPERADMIN.email(roster)).isEqualTo("superadmin@university.neordinary.com");
         assertThat(roster.entry(RosterKey.of("cau", 12)).infra()).isTrue();
         assertThat(roster.entry(RosterKey.of("cau", 27)).infra()).isTrue();
     }

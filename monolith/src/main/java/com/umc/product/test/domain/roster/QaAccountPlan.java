@@ -13,6 +13,8 @@ public record QaAccountPlan(List<Account> accounts) {
     public static final int CURRENT_GENERATION = 11;
     public static final int LEGACY_GENERATION = 10;
     public static final String SUPERADMIN = "superadmin";
+    /** 팀 노션의 QA 로그인 문서가 이 도메인의 주소를 쓴다. 더미 시딩용 app.seed.email-domain과 따로 둔다. */
+    public static final String EMAIL_DOMAIN = "university.neordinary.com";
     private static final String LEGACY_SCHOOL = "중앙대학교";
 
     private static final List<LegacyAccount> LEGACY_ACCOUNTS = List.of(
@@ -32,26 +34,26 @@ public record QaAccountPlan(List<Account> accounts) {
         accounts = List.copyOf(accounts);
     }
 
-    public static QaAccountPlan from(QaRoster roster, String emailDomain) {
+    public static QaAccountPlan from(QaRoster roster) {
         List<Account> accounts = new ArrayList<>();
         for (RosterEntry entry : roster.entries()) {
             QaRoster.School school = roster.school(entry.key().school());
             accounts.add(new Account(
-                entry.key().email(emailDomain),
+                entry.key().email(),
                 entry.key().displayName(school.shortName()),
                 school.name(),
                 List.of(new Enrollment(CURRENT_GENERATION, entry.part(), entry.infra(), entry.roles()))));
         }
         for (int index = 0; index < LEGACY_ACCOUNTS.size(); index++) {
             LegacyAccount legacy = LEGACY_ACCOUNTS.get(index);
-            accounts.add(new Account(legacyEmail(legacy.alias(), emailDomain), "QA" + (index + 1), LEGACY_SCHOOL,
+            accounts.add(new Account(legacyEmail(legacy.alias()), "QA" + (index + 1), LEGACY_SCHOOL,
                 legacy.enrollments()));
         }
         return new QaAccountPlan(accounts);
     }
 
-    public static String legacyEmail(String alias, String emailDomain) {
-        return alias + "@" + emailDomain;
+    public static String legacyEmail(String alias) {
+        return alias + "@" + EMAIL_DOMAIN;
     }
 
     public List<String> emails() {

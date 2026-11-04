@@ -17,8 +17,8 @@ public record RosterKey(SchoolCode school, int seq) {
         return new RosterKey(SchoolCode.of(school), seq);
     }
 
-    public String email(String emailDomain) {
-        return "%s_g11_qa%02d@%s".formatted(school.value(), seq, emailDomain);
+    public String email() {
+        return "%s_g11_qa%02d@%s".formatted(school.value(), seq, QaAccountPlan.EMAIL_DOMAIN);
     }
 
     public String displayName(String schoolShortName) {

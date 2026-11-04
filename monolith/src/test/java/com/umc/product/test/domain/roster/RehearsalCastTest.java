@@ -37,14 +37,15 @@ class RehearsalCastTest {
     @Test
     @DisplayName("명단 583행과 superadmin, 10기 9개를 합쳐 서로 다른 이메일의 계정 593개를 계획한다")
     void accountPlanHas593DistinctAccounts() {
-        QaAccountPlan plan = QaAccountPlan.from(roster, "qa.test");
+        QaAccountPlan plan = QaAccountPlan.from(roster);
 
         assertThat(roster.entries()).hasSize(583);
         assertThat(plan.accounts()).hasSize(593);
         assertThat(new HashSet<>(plan.emails())).hasSize(593);
-        assertThat(plan.accounts().getFirst().email()).isEqualTo("gachon_g11_qa01@qa.test");
+        assertThat(plan.accounts().getFirst().email()).isEqualTo("gachon_g11_qa01@university.neordinary.com");
         assertThat(plan.accounts().getFirst().displayName()).isEqualTo("가천QA1");
-        assertThat(plan.emails()).contains("superadmin@qa.test", "cau_springboot@qa.test", "cau_g11_qa38@qa.test");
+        assertThat(plan.emails()).contains("superadmin@university.neordinary.com", "cau_springboot@university.neordinary.com",
+            "cau_g11_qa38@university.neordinary.com");
     }
 
     @Test

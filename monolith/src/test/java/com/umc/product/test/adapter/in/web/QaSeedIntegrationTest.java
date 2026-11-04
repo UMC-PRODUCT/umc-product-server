@@ -48,7 +48,6 @@ import com.umc.product.test.domain.roster.RosterKey;
 @Import(QaSeedIntegrationTest.CheapPasswordEncoderConfig.class)
 class QaSeedIntegrationTest extends IntegrationTestSupport {
 
-    private static final String DOMAIN = "qa.test";
     private static final List<String> COUNTED_TABLES = List.of(
         "member", "challenger", "challenger_role", "member_system_role", "study_group", "weekly_curriculum",
         "schedule", "notice", "notice_read", "challenger_point", "community_thread", "chat_message",
@@ -70,7 +69,7 @@ class QaSeedIntegrationTest extends IntegrationTestSupport {
         assertThat(first.findValuesAsText("status")).as(first.toPrettyString()).doesNotContain("FAILED", "NOT_RUN");
         assertThat(first.get(0).path("created").asInt()).as(first.toPrettyString()).isEqualTo(593 + 1);
 
-        QaAccountPlan plan = QaAccountPlan.from(loadQaRosterPort.load(), DOMAIN);
+        QaAccountPlan plan = QaAccountPlan.from(loadQaRosterPort.load());
         Map<String, Long> memberIds = getMemberUseCase.findIdsByEmails(new HashSet<>(plan.emails()));
         assertThat(memberIds).hasSize(593);
         assertThat(getMemberUseCase.countAll()).isEqualTo(593);
@@ -88,11 +87,11 @@ class QaSeedIntegrationTest extends IntegrationTestSupport {
         assertThat(count("SELECT count(*) FROM challenger_role WHERE gisu_id = " + gisu11)).isEqualTo(152);
         assertThat(count("""
             SELECT count(*) FROM member_system_role r JOIN member m ON m.id = r.member_id
-            WHERE m.email = 'superadmin@qa.test' AND r.role_type = 'SUPER_ADMIN'
+            WHERE m.email = 'superadmin@university.neordinary.com' AND r.role_type = 'SUPER_ADMIN'
             """)).isEqualTo(1);
         for (QaTransfer transfer : QaTransfers.ALL) {
             ProjectMatchingAffiliationInfo affiliation = getMyMatchingAffiliationUseCase.get(
-                memberIds.get(transfer.member().email(DOMAIN)), gisu11);
+                memberIds.get(transfer.member().email()), gisu11);
             assertThat(affiliation.transferred()).isTrue();
             assertThat(affiliation.matchingChapter().name()).isEqualTo(transfer.toChapter());
         }
@@ -115,7 +114,7 @@ class QaSeedIntegrationTest extends IntegrationTestSupport {
     }
 
     private List<ChallengerRoleType> roles(Map<String, Long> memberIds, RosterKey key, Long gisuId) {
-        return listChallengerRoleUseCase.listByMemberIdAndGisuId(memberIds.get(key.email(DOMAIN)), gisuId).stream()
+        return listChallengerRoleUseCase.listByMemberIdAndGisuId(memberIds.get(key.email()), gisuId).stream()
             .map(ChallengerRoleInfo::roleType).toList();
     }
 

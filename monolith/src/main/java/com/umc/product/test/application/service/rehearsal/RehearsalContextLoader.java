@@ -12,7 +12,6 @@ import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import com.umc.product.test.application.port.out.LoadQaRosterPort;
-import com.umc.product.test.application.service.SeedProperties;
 import com.umc.product.test.domain.roster.QaAccountPlan;
 import com.umc.product.test.domain.roster.RehearsalCast;
 
@@ -27,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 class RehearsalContextLoader {
 
-    private final SeedProperties seedProperties;
     private final LoadQaRosterPort loadQaRosterPort;
     private final GetGisuUseCase getGisuUseCase;
     private final GetChapterUseCase getChapterUseCase;
@@ -45,6 +43,6 @@ class RehearsalContextLoader {
             chapter.schools().forEach(school -> chapterBySchool.put(school.schoolName(), chapter.chapterName()));
         }
         RehearsalCast cast = RehearsalCast.of(loadQaRosterPort.load(), chapterBySchool);
-        return new RehearsalContext(gisuId, cast, chapterIds, seedProperties.emailDomain());
+        return new RehearsalContext(gisuId, cast, chapterIds);
     }
 }

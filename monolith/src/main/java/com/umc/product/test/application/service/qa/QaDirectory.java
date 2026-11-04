@@ -12,7 +12,6 @@ import com.umc.product.test.domain.roster.QaRoster;
 record QaDirectory(
     QaRoster roster,
     QaAccountPlan accounts,
-    String emailDomain,
     Map<String, Long> memberIdsByEmail,
     Map<Integer, Long> gisuIds,
     Map<String, Long> schoolIds,
@@ -28,7 +27,7 @@ record QaDirectory(
     }
 
     Long memberId(Persona persona) {
-        String email = persona.email(roster, emailDomain);
+        String email = persona.email(roster);
         Long memberId = memberIdsByEmail.get(email);
         if (memberId == null) {
             throw new IllegalStateException("QA 계정이 없습니다. 계정 단계를 먼저 실행해주세요: " + email);
