@@ -125,6 +125,7 @@
                     <option value="schedule">schedule</option>
                     <option value="storage">storage</option>
                     <option value="term">term</option>
+                    <option value="test">test</option>
                     </select>
                     <select id="status">
                         <option value="">모든 상태</option>
@@ -166,7 +167,7 @@
   "schemaVersion": 1,
   "service": "umc-product-server",
   "generatedAt": null,
-  "totalCount": 670,
+  "totalCount": 675,
   "items": [
     {
       "sequence": 1,
@@ -14906,6 +14907,116 @@
         "enumName": "TermErrorCode",
         "file": "monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java",
         "line": 26
+      }
+    },
+    {
+      "sequence": 671,
+      "domain": "test",
+      "code": "SEED-0301",
+      "name": "PREVIOUS_ROUND_NOT_PUBLISHED",
+      "httpStatus": 409,
+      "httpStatusName": "CONFLICT",
+      "message": "앞 차수 결과가 아직 발표되지 않았어요. 앞 차수를 먼저 발표로 넘겨주세요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "SeedErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java",
+        "line": 15
+      }
+    },
+    {
+      "sequence": 672,
+      "domain": "test",
+      "code": "SEED-0302",
+      "name": "AUTO_DECISION_NOT_EXECUTED",
+      "httpStatus": 409,
+      "httpStatusName": "CONFLICT",
+      "message": "자동 선발이 아직 실행되지 않았어요. 선발 마감으로 넘긴 뒤 1분 정도 기다렸다가 다시 시도해주세요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "SeedErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java",
+        "line": 17
+      }
+    },
+    {
+      "sequence": 673,
+      "domain": "test",
+      "code": "SEED-0303",
+      "name": "STEP_OUT_OF_ORDER",
+      "httpStatus": 409,
+      "httpStatusName": "CONFLICT",
+      "message": "차수 단계는 한 칸씩만 넘길 수 있어요. 앞 단계를 먼저 넘겨주세요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "SeedErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java",
+        "line": 19
+      }
+    },
+    {
+      "sequence": 674,
+      "domain": "test",
+      "code": "SEED-0304",
+      "name": "RANDOM_NOT_ASSIGNED",
+      "httpStatus": 409,
+      "httpStatusName": "CONFLICT",
+      "message": "랜덤 배정이 아직 실행되지 않았어요. 3차 발표 뒤 1분 정도 기다렸다가 다시 시도해주세요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "SeedErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java",
+        "line": 21
+      }
+    },
+    {
+      "sequence": 675,
+      "domain": "test",
+      "code": "SEED-0307",
+      "name": "ROUND_NOT_FOUND",
+      "httpStatus": 404,
+      "httpStatusName": "NOT_FOUND",
+      "message": "매칭 차수를 찾을 수 없어요. 차수 ID를 확인해주세요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "SeedErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java",
+        "line": 23
       }
     }
   ]

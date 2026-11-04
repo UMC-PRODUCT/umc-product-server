@@ -8,6 +8,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 
+import com.umc.product.test.adapter.out.persistence.MatchingRoundTimeRewritePersistenceAdapter;
 import com.umc.product.test.adapter.out.persistence.MemberSystemRoleSeedPersistenceAdapter;
 import com.umc.product.test.adapter.out.persistence.QaSeedMarkerPersistenceAdapter;
 import com.umc.product.test.adapter.out.resource.ClasspathQaRosterAdapter;
@@ -22,6 +23,7 @@ import com.umc.product.test.application.service.NoticeSeedService;
 import com.umc.product.test.application.service.ProjectScenarioSeedService;
 import com.umc.product.test.application.service.ProjectSeedDataCleanupService;
 import com.umc.product.test.application.service.SeedProperties;
+import com.umc.product.test.application.service.matching.MatchingRoundAdvanceService;
 import com.umc.product.test.application.service.qa.QaSeedOrchestrator;
 
 /**
@@ -37,6 +39,9 @@ class SeedControllerBeanRegistrationTest {
     @ValueSource(classes = {
         SeedController.class,
         QaSeedController.class,
+        MatchingRoundAdvanceController.class,
+        MatchingRoundAdvanceService.class,
+        MatchingRoundTimeRewritePersistenceAdapter.class,
         QaSeedOrchestrator.class,
         QaSeedMarkerPersistenceAdapter.class,
         ClasspathQaRosterAdapter.class,

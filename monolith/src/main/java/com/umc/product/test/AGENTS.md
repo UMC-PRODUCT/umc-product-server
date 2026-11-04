@@ -10,6 +10,8 @@
 test/
 ├── dto/                            # seed request/response DTOs
 ├── domain/roster                   # pure QA roster, account plan, rehearsal cast (no IO)
+├── domain/rehearsal                # pure matching rehearsal rules (round advance planner, no IO)
+├── domain/exception                # SeedErrorCode (SEED-xxxx), SeedRehearsalException
 ├── application/port/in             # seed UseCases
 ├── application/port/out            # cleanup/persistence ports
 ├── application/service             # member/challenger/project/curriculum/notice seed flows
@@ -25,6 +27,7 @@ test/
 | Test API | `adapter/in/web/TestController.java` | utility/test endpoint surface |
 | QA seeds | `application/service/qa/*Step.java`, `QaSeedOrchestrator.java`, `domain/roster/*` | `/test/seed/qa`: committed 11th-gen roster -> accounts and per-domain QA data, one step per transaction |
 | Project seeds | `ProjectScenarioSeedService.java` | project scenario data |
+| Matching round advance | `MatchingRoundAdvanceController.java`, `matching/MatchingRoundAdvanceService.java`, `domain/rehearsal/AdvancePlanner.java` | `/test/seed/matching/rounds/{id}/advance`: rewrite round times by test SQL, then resync timers; the real scheduler runs auto-decide and publication |
 | Member/challenger seeds | `MemberSeedService.java`, `ChallengerSeedService.java` | member/challenger setup |
 | Curriculum seeds | `CurriculumSeedService.java` | curriculum/workbook setup |
 | Notice seeds | `NoticeSeedService.java` | notice setup |
