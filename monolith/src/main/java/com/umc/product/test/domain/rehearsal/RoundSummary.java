@@ -97,6 +97,7 @@ public record RoundSummary(
 
     public static RoundSummary of(RoundSnapshot snapshot, ChapterRoles roles) {
         Round round = snapshot.round();
+        RoundTimes times = round.times();
         Set<ChallengerPart> parts = round.parts();
         Map<Long, List<ApplicationRow>> applicationsByProject = snapshot.applications().stream()
             .collect(Collectors.groupingBy(ApplicationRow::projectId));
@@ -109,7 +110,7 @@ public record RoundSummary(
             List<ApplicationRow> applications = applicationsByProject.getOrDefault(project.projectId(), List.of());
             List<PartRow> rows = parts.stream().sorted()
                 .filter(part -> project.parts().containsKey(part))
-                .map(part -> partRow(part, project.parts().get(part), applications, round.autoDecided()))
+                .map(part -> partRow(part, project.parts().get(part), applications, times.autoDecided()))
                 .toList();
             if (rows.isEmpty()) {
                 continue;
@@ -124,9 +125,9 @@ public record RoundSummary(
             }
         }
 
-        Header header = new Header(round.roundId(), round.name(), round.chapterId(), round.chapterName(),
-            round.type(), round.phase(), round.startsAt(), round.endsAt(), round.decisionDeadline(),
-            round.resultPublishAt(), round.stageAt(snapshot.observedAt()), round.autoDecided(), round.published(),
+        Header header = new Header(times.roundId(), round.name(), round.chapterId(), round.chapterName(),
+            round.type(), times.phase(), times.startsAt(), times.endsAt(), times.decisionDeadline(),
+            times.resultPublishAt(), times.stageAt(snapshot.observedAt()), times.autoDecided(), times.published(),
             snapshot.observedAt());
         return new RoundSummary(header, projects, headcounts(snapshot, parts), reservedRows(snapshot, roles),
             underfilled, withoutApplicants);

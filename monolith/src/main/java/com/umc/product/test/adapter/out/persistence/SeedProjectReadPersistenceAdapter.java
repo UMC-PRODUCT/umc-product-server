@@ -1,8 +1,9 @@
 package com.umc.product.test.adapter.out.persistence;
 
-import java.sql.Timestamp;
+import static com.umc.product.test.adapter.out.persistence.MatchingRoundRows.toInt;
+import static com.umc.product.test.adapter.out.persistence.MatchingRoundRows.toLong;
+
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -63,14 +64,8 @@ public class SeedProjectReadPersistenceAdapter implements SeedProjectReadPort {
         if (projects.isEmpty()) {
             return List.of();
         }
-        List<Long> projectIds = projects.stream().map(row -> toLong(row[0])).toList();
-        Map<Long, Map<ChallengerPart, Integer>> quotas = new HashMap<>();
-        for (Object[] row : rows("""
-            SELECT ppq.project_id, ppq.part, ppq.quota FROM project_part_quota ppq WHERE ppq.project_id IN (:ids)
-            """, Map.of("ids", projectIds))) {
-            quotas.computeIfAbsent(toLong(row[0]), id -> new EnumMap<>(ChallengerPart.class))
-                .put(ChallengerPart.valueOf((String) row[1]), toInt(row[2]));
-        }
+        Map<Long, Map<ChallengerPart, Integer>> quotas = quotasByProject(
+            projects.stream().map(row -> toLong(row[0])).toList());
         List<OwnedProject> result = new ArrayList<>();
         for (Object[] row : projects) {
             Long projectId = toLong(row[0]);
@@ -85,20 +80,18 @@ public class SeedProjectReadPersistenceAdapter implements SeedProjectReadPort {
     public Optional<RoundSnapshot> findRoundSnapshot(Long roundId) {
         Instant observedAt = Instant.now();
         List<Object[]> roundRows = rows("""
-            SELECT r.id, r.name, r.chapter_id, c.name, c.gisu_id, r.type, r.phase, r.starts_at, r.ends_at,
-                   r.decision_deadline, r.result_publish_at, r.result_published_at, r.auto_decision_executed_at
+            SELECT r.name, r.chapter_id, c.name, c.gisu_id, r.type, %s
             FROM project_matching_round r
             JOIN chapter c ON c.id = r.chapter_id
             WHERE r.id = :roundId
-            """, Map.of("roundId", roundId));
+            """.formatted(MatchingRoundRows.TIME_COLUMNS), Map.of("roundId", roundId));
         if (roundRows.isEmpty()) {
             return Optional.empty();
         }
         Object[] row = roundRows.getFirst();
-        Long gisuId = toLong(row[4]);
-        Round round = new Round(toLong(row[0]), (String) row[1], toLong(row[2]), (String) row[3],
-            MatchingType.valueOf((String) row[5]), MatchingPhase.valueOf((String) row[6]), toInstant(row[7]),
-            toInstant(row[8]), toInstant(row[9]), toInstant(row[10]), toInstant(row[11]), toInstant(row[12]));
+        Long gisuId = toLong(row[3]);
+        Round round = new Round((String) row[0], toLong(row[1]), (String) row[2],
+            MatchingType.valueOf((String) row[4]), MatchingRoundRows.roundTimes(row, 5));
         return Optional.of(new RoundSnapshot(round, observedAt, candidates(round, gisuId), projects(round, gisuId),
             applications(round, gisuId), rejectedLastRound(round)));
     }
@@ -137,29 +130,24 @@ public class SeedProjectReadPersistenceAdapter implements SeedProjectReadPort {
             return List.of();
         }
         List<Long> projectIds = projectRows.stream().map(row -> toLong(row[0])).toList();
-        Map<Long, Map<ChallengerPart, Integer>> quotas = new HashMap<>();
-        for (Object[] row : rows("""
-            SELECT ppq.project_id, ppq.part, ppq.quota FROM project_part_quota ppq WHERE ppq.project_id IN (:ids)
-            """, Map.of("ids", projectIds))) {
-            quotas.computeIfAbsent(toLong(row[0]), id -> new EnumMap<>(ChallengerPart.class))
-                .put(ChallengerPart.valueOf((String) row[1]), toInt(row[2]));
-        }
-        Map<String, Integer> members = new HashMap<>();
+        Map<Long, Map<ChallengerPart, Integer>> quotas = quotasByProject(projectIds);
+        Map<MemberCountKey, Integer> members = new HashMap<>();
         for (Object[] row : rows("""
             SELECT pm.project_id, pm.part, COALESCE(pm.assigned_matching_round_id = :roundId, FALSE), count(*)
             FROM project_member pm
             WHERE pm.project_id IN (:ids) AND pm.status IN ('ACTIVE', 'PENDING_PUBLICATION')
             GROUP BY 1, 2, 3
-            """, Map.of("ids", projectIds, "roundId", round.roundId()))) {
-            members.put(toLong(row[0]) + ":" + row[1] + ":" + row[2], toInt(row[3]));
+            """, Map.of("ids", projectIds, "roundId", round.times().roundId()))) {
+            members.put(new MemberCountKey(toLong(row[0]), ChallengerPart.valueOf((String) row[1]), (Boolean) row[2]),
+                toInt(row[3]));
         }
         List<ProjectSlot> projects = new ArrayList<>();
         for (Object[] row : projectRows) {
             Long projectId = toLong(row[0]);
             Map<ChallengerPart, PartSlot> parts = new EnumMap<>(ChallengerPart.class);
             quotas.getOrDefault(projectId, Map.of()).forEach((part, quota) -> parts.put(part, new PartSlot(quota,
-                members.getOrDefault(projectId + ":" + part + ":false", 0),
-                members.getOrDefault(projectId + ":" + part + ":true", 0))));
+                members.getOrDefault(new MemberCountKey(projectId, part, false), 0),
+                members.getOrDefault(new MemberCountKey(projectId, part, true), 0))));
             projects.add(new ProjectSlot(projectId, (String) row[1], toLong(row[2]), (String) row[3], parts));
         }
         return projects;
@@ -176,7 +164,7 @@ public class SeedProjectReadPersistenceAdapter implements SeedProjectReadPort {
             LEFT JOIN challenger ch ON ch.member_id = pa.applicant_member_id AND ch.gisu_id = :gisuId
             WHERE pa.applied_matching_round_id = :roundId AND pa.status <> 'CANCELLED'
             ORDER BY pa.id
-            """, Map.of("roundId", round.roundId(), "gisuId", gisuId,
+            """, Map.of("roundId", round.times().roundId(), "gisuId", gisuId,
             "botPrefix", RoundSnapshot.BOT_ANSWER_PREFIX + "%"))
             .stream()
             .map(row -> new ApplicationRow(toLong(row[0]), toLong(row[1]), toLong(row[2]), (String) row[3],
@@ -186,7 +174,7 @@ public class SeedProjectReadPersistenceAdapter implements SeedProjectReadPort {
     }
 
     private Map<Long, Set<Long>> rejectedLastRound(Round round) {
-        Optional<MatchingPhase> previous = switch (round.phase()) {
+        Optional<MatchingPhase> previous = switch (round.times().phase()) {
             case SECOND -> Optional.of(MatchingPhase.FIRST);
             case THIRD -> Optional.of(MatchingPhase.SECOND);
             case FIRST, RANDOM_MATCHING -> Optional.empty();
@@ -219,21 +207,17 @@ public class SeedProjectReadPersistenceAdapter implements SeedProjectReadPort {
         return query.getResultList();
     }
 
-    private static Long toLong(Object value) {
-        return value == null ? null : ((Number) value).longValue();
+    private Map<Long, Map<ChallengerPart, Integer>> quotasByProject(List<Long> projectIds) {
+        Map<Long, Map<ChallengerPart, Integer>> quotas = new HashMap<>();
+        for (Object[] row : rows("""
+            SELECT ppq.project_id, ppq.part, ppq.quota FROM project_part_quota ppq WHERE ppq.project_id IN (:ids)
+            """, Map.of("ids", projectIds))) {
+            quotas.computeIfAbsent(toLong(row[0]), id -> new EnumMap<>(ChallengerPart.class))
+                .put(ChallengerPart.valueOf((String) row[1]), toInt(row[2]));
+        }
+        return quotas;
     }
 
-    private static int toInt(Object value) {
-        return ((Number) value).intValue();
-    }
-
-    private static Instant toInstant(Object value) {
-        return switch (value) {
-            case null -> null;
-            case Instant instant -> instant;
-            case Timestamp timestamp -> timestamp.toInstant();
-            case OffsetDateTime offsetDateTime -> offsetDateTime.toInstant();
-            default -> throw new IllegalStateException("시각 컬럼 타입을 알 수 없습니다: " + value.getClass());
-        };
+    private record MemberCountKey(Long projectId, ChallengerPart part, boolean selectedThisRound) {
     }
 }

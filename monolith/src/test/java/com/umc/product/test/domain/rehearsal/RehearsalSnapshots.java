@@ -24,8 +24,8 @@ final class RehearsalSnapshots {
     }
 
     static Round developerRound(MatchingPhase phase, Instant startsAt, Instant endsAt, Instant decisionDeadline) {
-        return new Round(77L, "쿼카 개발", 3L, "쿼카", MatchingType.PLAN_DEVELOPER, phase, startsAt, endsAt,
-            decisionDeadline, decisionDeadline.plus(Duration.ofHours(1)), null, null);
+        return new Round("쿼카 개발", 3L, "쿼카", MatchingType.PLAN_DEVELOPER, new RoundTimes(77L, phase, startsAt,
+            endsAt, decisionDeadline, decisionDeadline.plus(Duration.ofHours(1)), null, null));
     }
 
     static Round applicationOpen() {

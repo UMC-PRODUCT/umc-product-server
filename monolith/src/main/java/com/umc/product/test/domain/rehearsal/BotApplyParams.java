@@ -21,6 +21,6 @@ public record BotApplyParams(double applyRate, Set<Long> excludeMemberIds, Long 
     }
 
     long seedFor(RoundSnapshot.Round round) {
-        return seed != null ? seed : SeedHash.defaultSeed(round.chapterName(), round.type(), round.phase());
+        return seed != null ? seed : SeedHash.defaultSeed(round.chapterName(), round.type(), round.times().phase());
     }
 }

@@ -1,8 +1,6 @@
 package com.umc.product.test.adapter.out.persistence;
 
-import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,7 +8,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.test.application.port.out.RewriteMatchingRoundTimesPort;
 import com.umc.product.test.domain.rehearsal.MatchingSequence;
@@ -31,30 +28,23 @@ public class MatchingRoundTimeRewritePersistenceAdapter implements RewriteMatchi
     @SuppressWarnings("unchecked")
     public Optional<MatchingSequence> lockSequence(Long roundId) {
         List<Object[]> rows = entityManager.createNativeQuery("""
-                SELECT r.id, r.type, r.phase, r.chapter_id,
-                       r.starts_at, r.ends_at, r.decision_deadline, r.result_publish_at,
-                       r.auto_decision_executed_at, r.result_published_at
+                SELECT r.type, r.chapter_id, %s
                 FROM project_matching_round r
                 JOIN project_matching_round target
                     ON target.chapter_id = r.chapter_id AND target.type = r.type
                 WHERE target.id = :roundId
                 ORDER BY r.id
                 FOR UPDATE OF r
-                """)
+                """.formatted(MatchingRoundRows.TIME_COLUMNS))
             .setParameter("roundId", roundId)
             .getResultList();
         if (rows.isEmpty()) {
             return Optional.empty();
         }
         Object[] first = rows.getFirst();
-        List<RoundTimes> rounds = rows.stream()
-            .map(row -> new RoundTimes(
-                ((Number) row[0]).longValue(), MatchingPhase.valueOf((String) row[2]),
-                instant(row[4]), instant(row[5]), instant(row[6]), instant(row[7]),
-                instant(row[8]), instant(row[9])))
-            .toList();
+        List<RoundTimes> rounds = rows.stream().map(row -> MatchingRoundRows.roundTimes(row, 2)).toList();
         return Optional.of(new MatchingSequence(
-            MatchingType.valueOf((String) first[1]), ((Number) first[3]).longValue(), rounds));
+            MatchingType.valueOf((String) first[0]), MatchingRoundRows.toLong(first[1]), rounds));
     }
 
     @Override
@@ -75,15 +65,5 @@ public class MatchingRoundTimeRewritePersistenceAdapter implements RewriteMatchi
                 .setParameter("id", round.roundId())
                 .executeUpdate();
         }
-    }
-
-    private static Instant instant(Object value) {
-        return switch (value) {
-            case null -> null;
-            case Instant instant -> instant;
-            case OffsetDateTime offsetDateTime -> offsetDateTime.toInstant();
-            case Timestamp timestamp -> timestamp.toInstant();
-            default -> throw new IllegalStateException("시각 컬럼 타입을 알 수 없습니다: " + value.getClass());
-        };
     }
 }

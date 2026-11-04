@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 
@@ -34,68 +33,11 @@ public record RoundSnapshot(
         rejectedLastRound = Map.copyOf(rejectedLastRound);
     }
 
-    public record Round(
-        Long roundId,
-        String name,
-        Long chapterId,
-        String chapterName,
-        MatchingType type,
-        MatchingPhase phase,
-        Instant startsAt,
-        Instant endsAt,
-        Instant decisionDeadline,
-        Instant resultPublishAt,
-        Instant resultPublishedAt,
-        Instant autoDecisionExecutedAt
-    ) {
-        public boolean autoDecided() {
-            return autoDecisionExecutedAt != null;
-        }
-
-        public boolean published() {
-            return resultPublishedAt != null;
-        }
-
+    public record Round(String name, Long chapterId, String chapterName, MatchingType type, RoundTimes times) {
         public Set<ChallengerPart> parts() {
             return type == MatchingType.PLAN_DESIGN
                 ? Set.of(ChallengerPart.DESIGN)
                 : Set.of(ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER);
-        }
-
-        /** 운영 규칙({@code ProjectMatchingRound.isOpenAt})과 같다. */
-        public boolean isApplicationOpenAt(Instant now) {
-            return phase != MatchingPhase.RANDOM_MATCHING && !now.isBefore(startsAt) && !now.isAfter(endsAt);
-        }
-
-        /** 운영 규칙({@code ProjectMatchingRound.validateIsMutableAt})과 같다. */
-        public boolean isDecisionOpenAt(Instant now) {
-            return phase != MatchingPhase.RANDOM_MATCHING && now.isAfter(endsAt) && !now.isAfter(decisionDeadline)
-                && !autoDecided();
-        }
-
-        public RoundStage stageAt(Instant now) {
-            if (published()) {
-                return RoundStage.PUBLISHED;
-            }
-            if (phase == MatchingPhase.RANDOM_MATCHING) {
-                if (!autoDecided()) {
-                    return RoundStage.AWAITING_ASSIGNMENT;
-                }
-                if (now.isBefore(startsAt)) {
-                    return RoundStage.ASSIGNED;
-                }
-                return now.isBefore(endsAt) ? RoundStage.ADJUSTMENT_OPEN : RoundStage.ADJUSTMENT_CLOSED;
-            }
-            if (now.isBefore(startsAt)) {
-                return RoundStage.BEFORE_START;
-            }
-            if (!now.isAfter(endsAt)) {
-                return RoundStage.APPLICATION_OPEN;
-            }
-            if (!now.isAfter(decisionDeadline) && !autoDecided()) {
-                return RoundStage.DECISION_WINDOW;
-            }
-            return autoDecided() ? RoundStage.AWAITING_PUBLISH : RoundStage.AWAITING_AUTO_DECISION;
         }
     }
 

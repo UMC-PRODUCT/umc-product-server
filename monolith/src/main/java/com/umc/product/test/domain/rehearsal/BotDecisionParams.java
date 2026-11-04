@@ -39,6 +39,6 @@ public record BotDecisionParams(Double fillRate, double jitter, Set<Long> exclud
     }
 
     long seedFor(RoundSnapshot.Round round) {
-        return seed != null ? seed : SeedHash.defaultSeed(round.chapterName(), round.type(), round.phase());
+        return seed != null ? seed : SeedHash.defaultSeed(round.chapterName(), round.type(), round.times().phase());
     }
 }

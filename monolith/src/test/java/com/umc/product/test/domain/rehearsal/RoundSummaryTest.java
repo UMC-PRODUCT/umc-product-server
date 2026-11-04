@@ -65,10 +65,11 @@ class RoundSummaryTest {
     @Test
     @DisplayName("자동 선발 뒤 채움률은 지원서 합격 수 대신 이 차수가 선발한 팀원 수로 센다")
     void fillRateUsesSelectedMembersAfterAutoDecision() {
-        RoundSnapshot.Round decided = new RoundSnapshot.Round(77L, "쿼카 개발", 3L, "쿼카",
-            RehearsalSnapshots.decisionOpen().type(), MatchingPhase.FIRST, RehearsalSnapshots.NOW.minusSeconds(9000),
-            RehearsalSnapshots.NOW.minusSeconds(7200), RehearsalSnapshots.NOW.minusSeconds(60),
-            RehearsalSnapshots.NOW.plusSeconds(3600), null, RehearsalSnapshots.NOW.minusSeconds(30));
+        RoundSnapshot.Round decided = new RoundSnapshot.Round("쿼카 개발", 3L, "쿼카",
+            RehearsalSnapshots.decisionOpen().type(), new RoundTimes(77L, MatchingPhase.FIRST,
+            RehearsalSnapshots.NOW.minusSeconds(9000), RehearsalSnapshots.NOW.minusSeconds(7200),
+            RehearsalSnapshots.NOW.minusSeconds(60), RehearsalSnapshots.NOW.plusSeconds(3600),
+            RehearsalSnapshots.NOW.minusSeconds(30), null));
         ProjectSlot slot = new ProjectSlot(1L, "봇", 11L, "po1@qa.test", Map.of(WEB, new PartSlot(4, 0, 4)));
         RoundSnapshot snapshot = RehearsalSnapshots.snapshot(decided, List.<Candidate>of(), List.of(slot),
             List.of(application(1, 1, 1, SUBMITTED, true)));
@@ -83,7 +84,7 @@ class RoundSummaryTest {
     @Test
     @DisplayName("1~3차 지금 단계는 지원 전, 지원 중, 결정 중, 자동 선발 대기 순서로 시각에서 나온다")
     void stageFollowsTimes() {
-        RoundSnapshot.Round round = RehearsalSnapshots.applicationOpen();
+        RoundTimes round = RehearsalSnapshots.applicationOpen().times();
 
         assertThat(round.stageAt(round.startsAt().minusSeconds(1))).isEqualTo(RoundStage.BEFORE_START);
         assertThat(round.stageAt(round.endsAt())).isEqualTo(RoundStage.APPLICATION_OPEN);

@@ -26,7 +26,7 @@ public final class BotDecisionPlanner {
     public static DecisionPlan plan(RoundSnapshot snapshot, ChapterRoles roles, BotDecisionParams params,
                                     MinimumRule minimum) {
         long seed = params.seedFor(snapshot.round());
-        double fillRate = params.fillRateFor(snapshot.round().phase());
+        double fillRate = params.fillRateFor(snapshot.round().times().phase());
         Map<SkipReason, Integer> skipped = new EnumMap<>(SkipReason.class);
         List<PlannedDecision> approvals = new ArrayList<>();
         List<PlannedDecision> rejections = new ArrayList<>();

@@ -58,9 +58,9 @@ public class MatchingBotService implements RunMatchingBotUseCase {
     @Override
     public BotRunResult apply(Long roundId, BotApplyParams params) {
         RoundSnapshot snapshot = RoundSummaryQueryService.load(seedProjectReadPort, roundId);
-        if (!snapshot.round().isApplicationOpenAt(snapshot.observedAt())) {
+        if (!snapshot.round().times().isApplicationOpenAt(snapshot.observedAt())) {
             throw new SeedRehearsalException(SeedErrorCode.NOT_IN_APPLICATION_WINDOW,
-                "차수 " + roundId + "는 지금 " + snapshot.round().stageAt(snapshot.observedAt()) + " 단계입니다.");
+                "차수 " + roundId + "는 지금 " + snapshot.round().times().stageAt(snapshot.observedAt()) + " 단계입니다.");
         }
         ApplyPlan plan = BotApplyPlanner.plan(snapshot, roles(snapshot), params);
         Map<String, Integer> failed = new HashMap<>();
@@ -72,9 +72,9 @@ public class MatchingBotService implements RunMatchingBotUseCase {
     @Override
     public BotRunResult decide(Long roundId, BotDecisionParams params) {
         RoundSnapshot snapshot = RoundSummaryQueryService.load(seedProjectReadPort, roundId);
-        if (!snapshot.round().isDecisionOpenAt(snapshot.observedAt())) {
+        if (!snapshot.round().times().isDecisionOpenAt(snapshot.observedAt())) {
             throw new SeedRehearsalException(SeedErrorCode.NOT_IN_DECISION_WINDOW,
-                "차수 " + roundId + "는 지금 " + snapshot.round().stageAt(snapshot.observedAt()) + " 단계입니다.");
+                "차수 " + roundId + "는 지금 " + snapshot.round().times().stageAt(snapshot.observedAt()) + " 단계입니다.");
         }
         DecisionPlan plan = BotDecisionPlanner.plan(snapshot, roles(snapshot), params,
             (applicants, remaining) -> getMatchingSelectionRuleUseCase.minimumRequired(
