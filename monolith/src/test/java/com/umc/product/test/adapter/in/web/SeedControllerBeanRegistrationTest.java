@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Profile;
 
 import com.umc.product.test.adapter.out.persistence.MemberSystemRoleSeedPersistenceAdapter;
 import com.umc.product.test.adapter.out.persistence.QaSeedMarkerPersistenceAdapter;
+import com.umc.product.test.adapter.out.persistence.SeedProjectReadPersistenceAdapter;
 import com.umc.product.test.adapter.out.resource.ClasspathQaRosterAdapter;
 import com.umc.product.test.application.service.ChallengerSeedService;
 import com.umc.product.test.application.service.CurriculumSeedService;
@@ -19,10 +20,10 @@ import com.umc.product.test.application.service.DummyNoticeFactory;
 import com.umc.product.test.application.service.MemberSeedService;
 import com.umc.product.test.application.service.MemberSystemRoleSeedService;
 import com.umc.product.test.application.service.NoticeSeedService;
-import com.umc.product.test.application.service.ProjectScenarioSeedService;
 import com.umc.product.test.application.service.ProjectSeedDataCleanupService;
 import com.umc.product.test.application.service.SeedProperties;
 import com.umc.product.test.application.service.qa.QaSeedOrchestrator;
+import com.umc.product.test.application.service.rehearsal.StartingLineSeedService;
 
 /**
  * 시딩 관련 빈들의 가드 어노테이션이 회귀 없이 유지되는지 검증한다.
@@ -44,7 +45,9 @@ class SeedControllerBeanRegistrationTest {
         MemberSystemRoleSeedService.class,
         MemberSystemRoleSeedPersistenceAdapter.class,
         ChallengerSeedService.class,
-        ProjectScenarioSeedService.class,
+        StartingLineSeedService.class,
+        StartingLineSeedController.class,
+        SeedProjectReadPersistenceAdapter.class,
         ProjectSeedDataCleanupService.class,
         CurriculumSeedService.class,
         NoticeSeedService.class,

@@ -799,3 +799,9 @@
 | 669 | term | `TERMS-0010` | `MANDATORY_TERMS_NOT_AGREED` | 400 BAD_REQUEST | 필수 약관에 모두 동의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:24` |
 | 670 | term | `TERMS-0011` | `TERM_PERMISSION_DENIED` | 403 FORBIDDEN | 약관을 관리할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:26` |
 
+## test
+
+| 순번 | 도메인 | 코드 | 이름 | HTTP 상태 | 메시지 | 사용자 행동 | 재시도 | 심각도 | 사용 중단 | 담당자 | 태그 | 원본 |
+|---:|---|---|---|---|---|---|---|---|---|---|---|---|
+| 671 | test | `SEED-0101` | `ACCOUNT_NOT_SEEDED` | 400 BAD_REQUEST | QA 계정이 없어요. QA 시딩(/test/seed/qa)을 먼저 실행해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:14` |
+

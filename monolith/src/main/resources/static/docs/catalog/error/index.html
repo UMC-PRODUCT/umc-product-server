@@ -125,6 +125,7 @@
                     <option value="schedule">schedule</option>
                     <option value="storage">storage</option>
                     <option value="term">term</option>
+                    <option value="test">test</option>
                     </select>
                     <select id="status">
                         <option value="">모든 상태</option>
@@ -166,7 +167,7 @@
   "schemaVersion": 1,
   "service": "umc-product-server",
   "generatedAt": null,
-  "totalCount": 670,
+  "totalCount": 671,
   "items": [
     {
       "sequence": 1,
@@ -14906,6 +14907,28 @@
         "enumName": "TermErrorCode",
         "file": "monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java",
         "line": 26
+      }
+    },
+    {
+      "sequence": 671,
+      "domain": "test",
+      "code": "SEED-0101",
+      "name": "ACCOUNT_NOT_SEEDED",
+      "httpStatus": 400,
+      "httpStatusName": "BAD_REQUEST",
+      "message": "QA 계정이 없어요. QA 시딩(/test/seed/qa)을 먼저 실행해주세요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "SeedErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java",
+        "line": 14
       }
     }
   ]

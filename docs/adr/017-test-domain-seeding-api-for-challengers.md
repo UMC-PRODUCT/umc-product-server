@@ -5,8 +5,9 @@
 Proposed
 
 프로젝트 시딩(`POST /test/seed/projects`)은 삭제됐다. 운영진 권한, 신규 파트, 지부 TO 상한, 수동 배정
-전환 이후 비-PLAN 팀원을 PM 권한으로 바로 추가할 수 없게 되어 동작하지 않았다. 프로젝트는
-시나리오 시딩(`POST /test/seed/projects/scenarios`, `SEED-003-S`)으로 만든다. 시딩 데이터 정리
+전환 이후 비-PLAN 팀원을 PM 권한으로 바로 추가할 수 없게 되어 동작하지 않았다. 그 뒤에 둔 시나리오
+시딩(`POST /test/seed/projects/scenarios`, `SEED-003-S`)도 무작위·재현 불가라 삭제했다. 프로젝트는 QA
+계정 위에 프로젝트 출발선(`POST /test/seed/projects/starting-line`, `SEED-003-L`)으로 만든다. 시딩 데이터 정리
 API(`DELETE /test/seed/projects`)는 유지한다. 아래 프로젝트 시딩 절은 도입 당시 기록이다.
 
 멤버 대량 시딩(`POST /test/seed/members`)도 삭제됐다. 삭제된 학교 id를 무작위로 골라 한 건이라도 실패하면
@@ -253,7 +254,7 @@ Response:
 
 ### 프로젝트 시딩 (Project + ProjectMember)
 
-> 삭제됨. 시나리오 시딩(`POST /test/seed/projects/scenarios`)으로 대체했다. Status 절 참고.
+> 삭제됨. 프로젝트 출발선(`POST /test/seed/projects/starting-line`)으로 대체했다. Status 절 참고.
 
 `POST /test/seed/projects`
 
@@ -475,10 +476,9 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
 2. **`POST /test/seed/challengers`** — 활성 기수의 (Chapter, School, Part) 셀별로
    더미 Member + Challenger 를 함께 만든다. 멤버 시딩과 사실상 동일 효과지만 챌린저까지
    함께 생성되므로 챌린저 화면 검증에 유리하다.
-3. **`POST /test/seed/projects/scenarios`** — 활성 기수에 DRAFT / PENDING_REVIEW /
-   IN_PROGRESS 상태의 프로젝트를 N 개 만든다. IN_PROGRESS 는 `adminMemberId`(총괄단 또는
-   지부장)가 PO 를 지정해 직접 등록하고, 지부 TO 상한 안에서 파트별 TO 를 정한 뒤 공개한다.
-   팀원은 채우지 않는다.
+3. **`POST /test/seed/projects/starting-line`** — 11기 다섯 지부의 매칭 리허설 출발선을 만든다.
+   지부마다 마지막 PLAN 2명은 프로젝트 없이, 첫 PLAN 2명은 승인 대기·TO 비움, 나머지는 TO를 넣고 공개한다.
+   QA 계정(1번)이 있어야 하고, 다시 부르면 PO마다 남은 단계만 이어서 한다. 팀원은 채우지 않는다.
 4. **`POST /test/seed/curriculum`** — 활성 기수에 선택 가능한 파트별로 Curriculum →
    WeeklyCurriculum → OriginalWorkbook(MAIN, READY) → Mission 골격을 생성한다.
    `releaseRequesterMemberId` 를 함께 보내면 워크북을 READY → RELEASED 로 전환해
@@ -500,9 +500,8 @@ curl -X POST $BASE/test/seed/qa
 curl -X POST $BASE/test/seed/challengers -H 'Content-Type: application/json' \
   -d '{"countPerPartPerSchool": 2}'
 
-# 3. 프로젝트: 공개 상태 10건, 운영진(총괄단 또는 지부장) 멤버 ID 1
-curl -X POST $BASE/test/seed/projects/scenarios -H 'Content-Type: application/json' \
-  -d '{"targetStatus": "IN_PROGRESS", "projectCount": 10, "adminMemberId": 1}'
+# 3. 프로젝트 출발선: 공개 49개, 승인 대기 10개, 무프로젝트 PLAN 10명
+curl -X POST $BASE/test/seed/projects/starting-line
 
 # 4. 커리큘럼: 8 주차, 워크북당 미션 2개, releaseRequesterMemberId 지정 시 RELEASED 까지 전환
 curl -X POST $BASE/test/seed/curriculum -H 'Content-Type: application/json' \
@@ -522,9 +521,8 @@ curl -X POST $BASE/test/seed/notice -H 'Content-Type: application/json' \
   원인이다(필수 약관 변경 등).
 - `SeedChallengersResponse.perCellSummary[i].challengerFailed > 0` — 멤버는 만들었지만
   챌린저 bulk 생성이 트랜잭션 단위로 실패. 셀 전체 챌린저가 롤백됨.
-- `SeedProjectScenariosResponse.failedProjects[i]` — 해당 프로젝트가 목표 상태에 도달하지
-  못했다. `failedStep=QUOTA` 이고 `projectId` 가 없으면 지부에 남은 TO 가 없어 만들지 않은
-  것이다. `projectId` 가 있으면 `reachedStatus` 상태로 DB 에 남아 있으므로 운영자 판단 후 정리한다.
+- `StartingLineResponse.projects[i].failedStep` — 해당 프로젝트가 그 단계에서 멈췄다. `errorCode`는 운영
+  에러 코드다. 다시 부르면 그 단계부터 이어서 한다.
 - `SeedCurriculumResponse.curriculumFailed > 0` — 동일 (gisuId, part) 의 커리큘럼이
   이미 존재하는 경우. 파트별 1개 unique 제약 위반.
 - `SeedCurriculumResponse.weeklyCurriculumFailed > 0` — 동일 커리큘럼 내 (week, isExtra)

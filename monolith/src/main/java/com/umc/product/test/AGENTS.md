@@ -24,7 +24,7 @@ test/
 | Seed API | `adapter/in/web/SeedController.java` | scenario seed surface |
 | Test API | `adapter/in/web/TestController.java` | utility/test endpoint surface |
 | QA seeds | `application/service/qa/*Step.java`, `QaSeedOrchestrator.java`, `domain/roster/*` | `/test/seed/qa`: committed 11th-gen roster -> accounts and per-domain QA data, one step per transaction |
-| Project seeds | `ProjectScenarioSeedService.java` | project scenario data |
+| Matching rehearsal | `application/service/rehearsal/*`, `domain/startingline/*`, `domain/rehearsal/*` | `/test/seed/projects/starting-line`: per-PO convergence to the rehearsal starting line |
 | Member/challenger seeds | `MemberSeedService.java`, `ChallengerSeedService.java` | member/challenger setup |
 | Curriculum seeds | `CurriculumSeedService.java` | curriculum/workbook setup |
 | Notice seeds | `NoticeSeedService.java` | notice setup |
