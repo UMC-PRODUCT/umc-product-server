@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
  *
  * <h2>출력되는 JSON 필드</h2>
  * <ul>
+ *     <li>{@code event} — 고정 이벤트명 {@code external_api_called}. LogQL {@code | event=} 필터용 (ADR-016)</li>
  *     <li>{@code provider} — 외부 서비스 식별자 (예: {@code GITHUB}, {@code OPENAI})</li>
  *     <li>{@code operation} — 호출 동작 (예: {@code FETCH_PULL_REQUESTS})</li>
  *     <li>{@code result} — {@code SUCCESS} / {@code FAILURE}</li>
@@ -75,6 +76,7 @@ public final class ExternalApiCallLogger {
             recordMetric(provider, operation, "success", elapsedNanos);
             log.info(
                 EVENT,
+                kv("event", EVENT),
                 kv("provider", provider),
                 kv("operation", operation),
                 kv("result", "SUCCESS"),
@@ -86,6 +88,7 @@ public final class ExternalApiCallLogger {
             recordMetric(provider, operation, "failure", elapsedNanos);
             log.warn(
                 EVENT,
+                kv("event", EVENT),
                 kv("provider", provider),
                 kv("operation", operation),
                 kv("result", "FAILURE"),
