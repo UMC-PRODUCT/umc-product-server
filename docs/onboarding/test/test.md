@@ -1,13 +1,13 @@
 # Test Seed 테스트 케이스
 
-- 테스트 파일: 9개
-- 테스트 케이스: 44개
+- 테스트 파일: 7개
+- 테스트 케이스: 28개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
 |---|---:|
-| Controller / Inbound Adapter | 7 |
-| UseCase / Application Service | 36 |
+| Controller / Inbound Adapter | 1 |
+| UseCase / Application Service | 26 |
 | Repository / Outbound Persistence | 1 |
 
 ## Controller / Inbound Adapter
@@ -17,19 +17,7 @@
 
 | 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
 |---:|---|---|---|
-| [34](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/SeedControllerBeanRegistrationTest.java#L34) | 모든 시딩 빈은 @Profile(!prod) + @ConditionalOnProperty(app.seed.enabled=true) 가드를 가진다 | 파라미터 @ValueSource classes = { SeedController.class, MemberSeedService.class, MemberSystemRoleSeedService.class, MemberSystemRoleSeedPersistenceAdapter.class, ChallengerSeedService.class, ProjectScenarioSeedService.class, ProjectSeedDataCleanupService.class, ProjectApplicationSeedService.class, CurriculumSeedService.class, NoticeSeedService.class, DummyMemberFactory.class, DummyCurriculumFactory.class, DummyNoticeFactory.class, SeedProperties.class } | 성공: 검증 assertThat(profile); .isNotNull(); assertThat(profile.value()); .contains("!prod"); |
-
-### ProjectScenarioSeedIntegrationTest
-- 위치: `monolith/src/test/java/com/umc/product/test/adapter/in/web/ProjectScenarioSeedIntegrationTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [67](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/ProjectScenarioSeedIntegrationTest.java#L67) | 총괄단이 공개 시나리오를 시딩하면 지부 TO 상한 안에서 TO를 걸고 프로젝트를 공개한다 | PLAN 4 · Design 3 · Web PE 5 · Mobile PE 4, 총괄단, IN_PROGRESS 3건 | 성공: 3건 모두 IN_PROGRESS, 응답 partQuotas 와 저장된 TO 일치, 웹·모바일 PE 동시 TO 없음, 지부 파트별 TO 합계 ≤ 파트 인원 |
-| [104](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/ProjectScenarioSeedIntegrationTest.java#L104) | 지부에 남은 TO가 없으면 프로젝트를 만들지 않고 QUOTA 실패로 보고한다 | PLAN 3 · Mobile PE 3, 지부장, IN_PROGRESS 3건 | 성공: 1건 생성(Mobile PE 3), 2건 failedStep=QUOTA · projectId 없음, 프로젝트 1건만 저장 |
-| [127](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/ProjectScenarioSeedIntegrationTest.java#L127) | PO를 지정하지 않으면 운영진이 관리하는 지부의 PLAN 챌린저만 PO로 고른다 | 자기 지부 PLAN 2, 다른 지부 PLAN 3, 지부장, IN_PROGRESS 2건 | 성공: 2건 모두 자기 지부, PO 는 자기 지부 PLAN |
-| [151](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/ProjectScenarioSeedIntegrationTest.java#L151) | 운영진이 관리하지 않는 지부의 PO를 지정하면 프로젝트를 만들지 않고 QUOTA 실패로 보고한다 | 다른 지부 PLAN 을 productOwnerMemberIds 로 지정, 지부장 | 실패: failedStep=QUOTA · projectId 없음, 프로젝트 0건 |
-| [175](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/ProjectScenarioSeedIntegrationTest.java#L175) | adminMemberId 없이 공개 시나리오를 요청하면 400으로 거부하고 프로젝트를 만들지 않는다 | IN_PROGRESS, adminMemberId 없음 | 실패: 400, 프로젝트 0건 |
-| [192](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/ProjectScenarioSeedIntegrationTest.java#L192) | 승인 대기 시나리오는 PO가 직접 제출해 승인 대기 상태로 남고 TO를 걸지 않는다 | PLAN 1, PENDING_REVIEW 1건 | 성공: PENDING_REVIEW, partQuotas 빈 목록, 저장된 TO 없음 |
+| [38](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/SeedControllerBeanRegistrationTest.java#L38) | 모든 시딩 빈은 @Profile(!prod) + @ConditionalOnProperty(app.seed.enabled=true) 가드를 가진다 | 파라미터 @ValueSource classes = { SeedController, QaSeedController, MatchingRoundAdvanceController, MatchingRoundAdvanceService, MatchingRoundTimeRewritePersistenceAdapter, QaSeedOrchestrator, QaSeedMarkerPersistenceAdapter, ClasspathQaRosterAdapter, MemberSeedService, MemberSystemRoleSeedService, MemberSystemRoleSeedPersistenceAdapter, ChallengerSeedService, StartingLineSeedController, MatchingBotController, SeedProjectReadPersistenceAdapter, ProjectSeedDataCleanupService, CurriculumSeedService, NoticeSeedService, DummyMemberFactory, DummyCurriculumFactory, DummyNoticeFactory, SeedProperties } | 성공: 각 클래스에 @Profile("!prod")와 app.seed.enabled 조건이 있음 |
 
 ## UseCase / Application Service
 
@@ -43,18 +31,6 @@
 | [114](../../../monolith/src/test/java/com/umc/product/test/application/service/ChallengerSeedServiceTest.java#L114) | 한 셀에서 createChallengerBulk 가 실패해도 다른 셀 시딩은 진행된다 | 조건 한 셀에서 createChallengerBulk 가 실패해도 다른 셀 시딩은 진행된다 | 실패: 검증 assertThat(result.perCellSummary()).hasSize(2); assertThat(result.totalCreated()).isEqualTo(1); |
 | [141](../../../monolith/src/test/java/com/umc/product/test/application/service/ChallengerSeedServiceTest.java#L141) | 멤버 batch 생성 실패는 memberFailed 로 보고되고 챌린저 생성은 호출하지 않는다 | 조건 멤버 batch 생성 실패는 memberFailed 로 보고되고 챌린저 생성은 호출하지 않는다 | 실패: 검증 assertThat(result.perCellSummary()).hasSize(1); assertThat(cell.created()).isZero(); assertThat(cell.memberFailed()).isEqualTo(2); assertThat(cell.challengerFailed()).isZero(); |
 | [167](../../../monolith/src/test/java/com/umc/product/test/application/service/ChallengerSeedServiceTest.java#L167) | gisuId 가 null 이면 활성 기수를 사용한다 | 조건 gisuId 가 null 이면 활성 기수를 사용한다 | 성공: 검증 assertThat(result.gisuId()).isEqualTo(10L); |
-
-### ChapterQuotaBudgetTest
-- 위치: `monolith/src/test/java/com/umc/product/test/application/service/ChapterQuotaBudgetTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [31](../../../monolith/src/test/java/com/umc/product/test/application/service/ChapterQuotaBudgetTest.java#L31) | 여유가 바닥날 때까지 배정해도 파트별 TO 합계는 여유 인원을 넘지 않는다 | seed 50개, PLAN 100 · Design 3 · Web PE 7 · Mobile PE 5 | 성공: 파트별 배정 합계 ≤ 여유 인원 |
-| [54](../../../monolith/src/test/java/com/umc/product/test/application/service/ChapterQuotaBudgetTest.java#L54) | 한 프로젝트에 웹과 모바일 프로덕트 엔지니어 TO를 함께 걸지 않는다 | Web PE · Mobile PE 여유 1000, 200회 배정 | 성공: 한 배정에 두 파트가 함께 없음, 두 파트 모두 한 번 이상 선택 |
-| [78](../../../monolith/src/test/java/com/umc/product/test/application/service/ChapterQuotaBudgetTest.java#L78) | 여유 인원이 0 이하인 파트와 TO를 바꿀 수 없는 파트는 고르지 않는다 | Design 여유 음수, Web PE 여유 0, Spring Boot 잠금 | 성공: Mobile PE 만 배정 |
-| [101](../../../monolith/src/test/java/com/umc/product/test/application/service/ChapterQuotaBudgetTest.java#L101) | 파트 여유가 TO 범위 최솟값보다 작으면 남은 여유만큼만 TO를 건다 | Mobile PE 여유 2 | 성공: Mobile PE TO 2 |
-| [116](../../../monolith/src/test/java/com/umc/product/test/application/service/ChapterQuotaBudgetTest.java#L116) | 프로젝트마다 PLAN 1자리를 쓰고 PLAN 여유가 없으면 더 배정하지 않는다 | PLAN 여유 2 | 성공: 두 번 배정 후 세 번째는 Exhausted |
-| [136](../../../monolith/src/test/java/com/umc/product/test/application/service/ChapterQuotaBudgetTest.java#L136) | TO를 걸 파트가 하나도 없으면 PLAN 여유가 있어도 배정하지 않는다 | PLAN 5, 다른 파트 여유 0 | 실패: Exhausted |
 
 ### CurriculumSeedServiceTest
 - 위치: `monolith/src/test/java/com/umc/product/test/application/service/CurriculumSeedServiceTest.java`
@@ -78,12 +54,8 @@
 
 | 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
 |---:|---|---|---|
-| [57](../../../monolith/src/test/java/com/umc/product/test/application/service/MemberSeedServiceTest.java#L57) | force=false 이고 회원 수가 임계값 초과면 시딩을 스킵한다 | 호출 seed(new SeedMembersCommand(5, false)) | 실패: 검증 assertThat(result.skipped()).isTrue(); assertThat(result.reason()).contains("threshold"); |
-| [72](../../../monolith/src/test/java/com/umc/product/test/application/service/MemberSeedServiceTest.java#L72) | force=true 면 임계값 체크를 무시하고 시딩한다 | 호출 seed(new SeedMembersCommand(2, true)) | 성공: 검증 assertThat(result.skipped()).isFalse(); assertThat(result.registered()).isEqualTo(2); |
-| [88](../../../monolith/src/test/java/com/umc/product/test/application/service/MemberSeedServiceTest.java#L88) | 정상 시딩 시 email batchRegister 가 1번 호출된다 | 호출 seed(new SeedMembersCommand(5, false)) | 성공: 정상 시딩 시 email batchRegister 가 1번 호출된다 |
-| [103](../../../monolith/src/test/java/com/umc/product/test/application/service/MemberSeedServiceTest.java#L103) | email batchRegister 실패 시 등록 수는 0으로 반환된다 | 호출 seed(new SeedMembersCommand(3, false)) | 실패: 검증 assertThat(result.registered()).isZero(); |
-| [120](../../../monolith/src/test/java/com/umc/product/test/application/service/MemberSeedServiceTest.java#L120) | count=0 이면 register 가 호출되지 않는다 | 호출 seed(new SeedMembersCommand(0, false)) | 성공: 검증 assertThat(result.skipped()).isFalse(); assertThat(result.registered()).isZero(); |
-| [135](../../../monolith/src/test/java/com/umc/product/test/application/service/MemberSeedServiceTest.java#L135) | email 시퀀스는 현재 회원 수 + 1 부터 시작한다 | 호출 seed(new SeedMembersCommand(2, true)) | 성공: email 시퀀스는 현재 회원 수 + 1 부터 시작한다 |
+| [44](../../../monolith/src/test/java/com/umc/product/test/application/service/MemberSeedServiceTest.java#L44) | 비밀번호를 비워 보내면 기본 비밀번호와 활성 필수 약관 동의로 회원을 만든다 | 호출 create(CreateSeedMemberCommand.of(..., " ")) | 성공: 기본 비밀번호, 활성 필수 약관 동의, 요청한 schoolId 로 가입 |
+| [59](../../../monolith/src/test/java/com/umc/product/test/application/service/MemberSeedServiceTest.java#L59) | 비밀번호를 보내면 그 비밀번호로 회원을 만든다 | 호출 create(CreateSeedMemberCommand.of(..., "Custom!Pass1")) | 성공: 보낸 비밀번호로 가입 |
 
 ### NoticeSeedServiceTest
 - 위치: `monolith/src/test/java/com/umc/product/test/application/service/NoticeSeedServiceTest.java`
