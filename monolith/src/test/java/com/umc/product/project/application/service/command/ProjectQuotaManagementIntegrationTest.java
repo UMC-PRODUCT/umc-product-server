@@ -157,7 +157,7 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 승인완료만_표와_필터와_조회합계에_포함하고_승인대기_TO의_저장검증은_유지한다() throws Exception {
+    void 승인완료만_표와_필터와_조회합계와_저장상한에_포함한다() throws Exception {
         // given
         Long pending = fixture.프로젝트(scenario, "승인대기 QA");
         fixture.정원(pending, ChallengerPart.DESIGN, 1);
@@ -176,7 +176,40 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         assertThat(info.path("projects").get(0).path("status").asText()).isEqualTo("IN_PROGRESS");
         assertThat(part(info.path("summary"), "DESIGN").path("allocatedQuota").asLong()).isEqualTo(1);
         assertThat(view("승인대기 QA").path("filteredProjectCount").asInt()).isZero();
-        denied(save(List.of(change(scenario.projectId(), "DESIGN", 2))), "PROJECT-0251");
+        save(List.of(change(scenario.projectId(), "DESIGN", 2))).andExpect(status().isOk());
+        denied(save(List.of(change(scenario.projectId(), "DESIGN", 3))), "PROJECT-0251");
+        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(2);
+        assertThat(quota(pending, "DESIGN")).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"PENDING_REVIEW", "DRAFT", "COMPLETED", "ABORTED"})
+    void 관리대상이_아닌_프로젝트의_TO가_커도_승인완료_TO의_저장과_초기화는_가능하다(String state) throws Exception {
+        // given
+        Long excluded = fixture.프로젝트(scenario, "상한에서 제외할 프로젝트");
+        fixture.정원(excluded, ChallengerPart.PLAN, 100);
+        fixture.정원(excluded, ChallengerPart.DESIGN, 100);
+        fixture.정원(excluded, ChallengerPart.WEB_PRODUCT_ENGINEER, 100);
+        jdbc.update("UPDATE project SET status=? WHERE id=?", state, excluded);
+
+        // when & then
+        save(List.of(Map.of("projectId", scenario.projectId(), "entries", List.of(
+            Map.of("part", "PLAN", "quota", 3), Map.of("part", "DESIGN", "quota", 2),
+            Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 2))))).andExpect(status().isOk());
+        legacyPut(List.of(Map.of("part", "PLAN", "quota", 3), Map.of("part", "DESIGN", "quota", 2),
+            Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 2))).andExpect(status().isOk());
+        denied(save(List.of(change(scenario.projectId(), "PLAN", 4))), "PROJECT-0251");
+        save(List.of(Map.of("projectId", scenario.projectId(), "entries", List.of(
+            Map.of("part", "DESIGN", "quota", 0), Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 0),
+            Map.of("part", "MOBILE_PRODUCT_ENGINEER", "quota", 0))))).andExpect(status().isOk());
+        JsonNode info = view(null);
+        assertThat(cell(info, "PLAN").path("quota").asLong()).isEqualTo(3);
+        assertThat(part(info.path("summary"), "PLAN").path("allocatedQuota").asLong()).isEqualTo(3);
+        for (String part : List.of("DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER")) {
+            assertThat(cell(info, part).path("quota").asLong()).isZero();
+        }
+        assertThat(quota(excluded, "PLAN")).isEqualTo(100);
+        assertThat(quota(excluded, "DESIGN")).isEqualTo(100);
     }
 
     @Test
