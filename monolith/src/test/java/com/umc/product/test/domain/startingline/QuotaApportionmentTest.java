@@ -28,7 +28,7 @@ class QuotaApportionmentTest {
         for (String chapter : cast.chapters()) {
             StartingLinePlan plan = cast.startingLine(chapter);
             Map<ChallengerPart, Integer> headcount = cast.matchingHeadcount(chapter);
-            int n = plan.seededOwners().size();
+            int seeded = plan.seededOwners().size();
 
             Map<RosterKey, ProjectQuota> quotas = QuotaApportionment.apportion(headcount, plan.seededOwners(), 4);
 
@@ -36,7 +36,7 @@ class QuotaApportionmentTest {
             Map<ChallengerPart, Integer> totals = totals(quotas);
             for (ChallengerPart part : RehearsalCast.MATCHING_PARTS) {
                 assertThat(totals.getOrDefault(part, 0)).as(chapter + " " + part)
-                    .isEqualTo(headcount.get(part) * n / (n + 4));
+                    .isEqualTo(headcount.get(part) * seeded / (seeded + 4));
             }
             assertThat(quotas.values()).allSatisfy(quota -> {
                 assertThat(quota.engineer()).isPositive();
@@ -54,7 +54,8 @@ class QuotaApportionmentTest {
             QuotaApportionment.apportion(cast.matchingHeadcount("캥거루"), plan.seededOwners(), 4));
 
         assertThat(cast.matchingHeadcount("캥거루"))
-            .containsExactlyInAnyOrderEntriesOf(Map.of(DESIGN, 12, WEB_PRODUCT_ENGINEER, 54, MOBILE_PRODUCT_ENGINEER, 19));
+            .containsExactlyInAnyOrderEntriesOf(
+                Map.of(DESIGN, 12, WEB_PRODUCT_ENGINEER, 54, MOBILE_PRODUCT_ENGINEER, 19));
         assertThat(totals).containsExactlyInAnyOrderEntriesOf(
             Map.of(DESIGN, 8, WEB_PRODUCT_ENGINEER, 37, MOBILE_PRODUCT_ENGINEER, 13));
     }
@@ -83,7 +84,8 @@ class QuotaApportionmentTest {
 
     private static Map<ChallengerPart, Integer> totals(Map<RosterKey, ProjectQuota> quotas) {
         Map<ChallengerPart, Integer> totals = new EnumMap<>(ChallengerPart.class);
-        quotas.values().forEach(quota -> quota.entries().forEach((part, value) -> totals.merge(part, value, Integer::sum)));
+        quotas.values().forEach(quota -> quota.entries()
+            .forEach((part, value) -> totals.merge(part, value, Integer::sum)));
         return totals;
     }
 }

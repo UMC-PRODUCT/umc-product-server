@@ -34,8 +34,9 @@ class StartingLineStepTest {
 
         assertThat(StartingLineStep.next(pending, null)).isEmpty();
         assertThat(StartingLineStep.next(pending, QUOTA)).contains(StartingLineStep.SET_QUOTAS);
-        assertThat(StartingLineStep.next(pending.withQuotas(Map.of(
-            ChallengerPart.DESIGN, 1, ChallengerPart.WEB_PRODUCT_ENGINEER, 4)), QUOTA)).contains(StartingLineStep.PUBLISH);
+        OwnedProject withQuotas = pending.withQuotas(
+            Map.of(ChallengerPart.DESIGN, 1, ChallengerPart.WEB_PRODUCT_ENGINEER, 4));
+        assertThat(StartingLineStep.next(withQuotas, QUOTA)).contains(StartingLineStep.PUBLISH);
     }
 
     @Test

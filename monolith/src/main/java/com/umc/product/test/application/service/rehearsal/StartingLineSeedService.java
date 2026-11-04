@@ -125,7 +125,8 @@ public class StartingLineSeedService implements SeedStartingLineUseCase {
                                     Map<ChallengerPart, Integer> headcount, Map<RosterKey, ProjectQuota> quotas) {
         Map<ChallengerPart, Integer> totals = new EnumMap<>(ChallengerPart.class);
         RehearsalCast.MATCHING_PARTS.forEach(part -> totals.put(part, 0));
-        quotas.values().forEach(quota -> quota.entries().forEach((part, value) -> totals.merge(part, value, Integer::sum)));
+        quotas.values().forEach(quota -> quota.entries()
+            .forEach((part, value) -> totals.merge(part, value, Integer::sum)));
         Map<ChallengerPart, Integer> reserved = new EnumMap<>(ChallengerPart.class);
         totals.forEach((part, total) -> reserved.put(part, headcount.getOrDefault(part, 0) - total));
         return new ChapterLine(plan.chapter(), plan.withoutProject().stream().map(context::email).toList(),
@@ -161,8 +162,10 @@ public class StartingLineSeedService implements SeedStartingLineUseCase {
     private OwnedProject execute(StartingLineStep step, OwnedProject current, RehearsalContext context,
                                  RosterKey owner, Role role, ProjectQuota quota, Long ownerId, Long superadminId) {
         return switch (step) {
-            case CREATE_DRAFT -> OwnedProject.newDraft(createDraftProjectUseCase.create(CreateDraftProjectCommand.builder()
-                .gisuId(context.gisuId()).productOwnerMemberId(ownerId).requesterMemberId(ownerId).build()), ownerId);
+            case CREATE_DRAFT -> OwnedProject.newDraft(createDraftProjectUseCase.create(
+                CreateDraftProjectCommand.builder()
+                    .gisuId(context.gisuId()).productOwnerMemberId(ownerId).requesterMemberId(ownerId).build()),
+                ownerId);
             case UPDATE_INFO -> {
                 updateProjectUseCase.update(UpdateProjectCommand.builder()
                     .projectId(current.projectId()).requesterMemberId(ownerId)

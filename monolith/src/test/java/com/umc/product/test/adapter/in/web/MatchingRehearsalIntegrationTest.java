@@ -3,12 +3,16 @@ package com.umc.product.test.adapter.in.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -20,6 +24,16 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.project.application.port.in.command.CreateProjectMatchingRoundUseCase;
+import com.umc.product.project.application.port.in.command.PublishProjectUseCase;
+import com.umc.product.project.application.port.in.command.UpdatePartQuotasUseCase;
+import com.umc.product.project.application.port.in.command.dto.CreateProjectMatchingRoundCommand;
+import com.umc.product.project.application.port.in.command.dto.PublishProjectCommand;
+import com.umc.product.project.application.port.in.command.dto.UpdatePartQuotasCommand;
+import com.umc.product.project.domain.enums.MatchingPhase;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.support.IntegrationTestSupport;
 
 /**
@@ -34,6 +48,12 @@ import com.umc.product.support.IntegrationTestSupport;
 @Import(MatchingRehearsalIntegrationTest.CheapPasswordEncoderConfig.class)
 class MatchingRehearsalIntegrationTest extends IntegrationTestSupport {
 
+    @Autowired private GetMemberUseCase getMemberUseCase;
+    @Autowired private UpdatePartQuotasUseCase updatePartQuotasUseCase;
+    @Autowired private PublishProjectUseCase publishProjectUseCase;
+    @Autowired private CreateProjectMatchingRoundUseCase createProjectMatchingRoundUseCase;
+
+    private static final String QUOKKA = "쿼카";
     private static final List<String> PROJECT_TABLES = List.of(
         "project", "project_part_quota", "project_application_form", "form", "question", "project_member",
         "project_application", "form_response", "answer", "answer_choice");
@@ -79,6 +99,67 @@ class MatchingRehearsalIntegrationTest extends IntegrationTestSupport {
         // then
         assertThat(again.path("unchanged").asInt()).as(again.toPrettyString()).isEqualTo(59);
         assertThat(tableCounts()).isEqualTo(afterLine);
+
+        // given
+        Long superadmin = memberId("superadmin@qa.test");
+        publishQaProjects(QUOKKA, superadmin);
+        Instant start = Instant.now().plus(1, ChronoUnit.DAYS);
+        Long roundId = createProjectMatchingRoundUseCase.create(CreateProjectMatchingRoundCommand.builder()
+            .requesterMemberId(superadmin).name("쿼카 1차 개발").type(MatchingType.PLAN_DEVELOPER)
+            .phase(MatchingPhase.FIRST).chapterId(chapterId(QUOKKA)).startsAt(start)
+            .endsAt(start.plus(1, ChronoUnit.DAYS)).decisionDeadline(start.plus(2, ChronoUnit.DAYS))
+            .resultPublishAt(start.plus(3, ChronoUnit.DAYS)).build());
+
+        // when
+        JsonNode summary = get("/test/seed/matching/rounds/" + roundId + "/summary");
+
+        // then
+        assertThat(summary.path("round").path("stage").asText()).isEqualTo("BEFORE_START");
+        assertThat(summary.path("projects")).hasSize(15 + 2);
+        assertThat(summary.path("projects").findValuesAsText("qaProject")).filteredOn("true"::equals).hasSize(2);
+        assertThat(summary.path("parts").findValuesAsText("eligible")).containsExactly("61", "34");
+        assertThat(summary.path("parts").findValuesAsText("applied")).containsOnly("0");
+        assertThat(summary.path("qaReserved")).hasSize(6);
+        assertThat(summary.path("projectsWithoutApplicants")).hasSize(17);
+    }
+
+    private void publishQaProjects(String chapter, Long superadmin) {
+        List<Long> projectIds = ids("""
+            SELECT p.id FROM project p JOIN chapter c ON c.id = p.chapter_id
+            WHERE c.name = '%s' AND p.status = 'PENDING_REVIEW' ORDER BY p.id
+            """.formatted(chapter));
+        List<ChallengerPart> parts = List.of(
+            ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER);
+        for (int index = 0; index < projectIds.size(); index++) {
+            Long projectId = projectIds.get(index);
+            updatePartQuotasUseCase.update(UpdatePartQuotasCommand.builder().projectId(projectId)
+                .requesterMemberId(superadmin)
+                .entries(List.of(UpdatePartQuotasCommand.Entry.builder().part(parts.get(index)).quota(3L).build()))
+                .build());
+            publishProjectUseCase.publish(PublishProjectCommand.builder().projectId(projectId)
+                .requesterMemberId(superadmin).build());
+        }
+    }
+
+    private JsonNode get(String path) throws Exception {
+        String response = mockMvc.perform(MockMvcRequestBuilders.get(path))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        return objectMapper.readTree(response).path("result");
+    }
+
+    private Long memberId(String email) {
+        return getMemberUseCase.findIdsByEmails(Set.of(email)).get(email);
+    }
+
+    private Long chapterId(String chapter) {
+        return ids("SELECT id FROM chapter WHERE name = '%s'".formatted(chapter)).getFirst();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Long> ids(String sql) {
+        List<Object> rows = entityManager.createNativeQuery(sql).getResultList();
+        return rows.stream().map(row -> ((Number) row).longValue()).toList();
     }
 
     private JsonNode post(String path) throws Exception {
@@ -92,7 +173,8 @@ class MatchingRehearsalIntegrationTest extends IntegrationTestSupport {
     private Map<String, Long> countByChapterAndStatus() {
         Map<String, Long> counts = new LinkedHashMap<>();
         List<Object[]> rows = entityManager.createNativeQuery("""
-            SELECT c.name, p.status, count(*) FROM project p JOIN chapter c ON c.id = p.chapter_id GROUP BY c.name, p.status
+            SELECT c.name, p.status, count(*) FROM project p JOIN chapter c ON c.id = p.chapter_id
+            GROUP BY c.name, p.status
             """).getResultList();
         rows.forEach(row -> counts.put(row[0] + ":" + row[1], ((Number) row[2]).longValue()));
         return counts;

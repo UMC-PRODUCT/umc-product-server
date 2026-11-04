@@ -2,7 +2,9 @@ package com.umc.product.test.application.port.out;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
+import com.umc.product.test.domain.rehearsal.RoundSnapshot;
 import com.umc.product.test.domain.startingline.OwnedProject;
 
 /**
@@ -15,4 +17,9 @@ public interface SeedProjectReadPort {
      * PO들이 그 기수에 가진 DRAFT·승인 대기·진행 중 프로젝트. PO마다 가장 먼저 만든 하나만 돌려준다.
      */
     List<OwnedProject> listOwnedProjects(Long gisuId, Collection<Long> ownerMemberIds);
+
+    /**
+     * 차수 하나의 스냅샷. 차수가 없으면 비어 있다.
+     */
+    Optional<RoundSnapshot> findRoundSnapshot(Long roundId);
 }

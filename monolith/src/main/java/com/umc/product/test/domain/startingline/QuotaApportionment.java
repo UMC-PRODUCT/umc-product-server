@@ -17,8 +17,8 @@ import com.umc.product.test.domain.roster.RosterKey;
 /**
  * 지부 매칭 파트 인원을 시딩 프로젝트별 TO로 나눈다.
  * <p>
- * 파트마다 합계는 {@code floor(인원 × n / (n + reserveSlots))}다. 나머지 몫은 QA가 QA 프로젝트와 직접 등록 프로젝트에
- * TO를 넣을 자리라, QA가 그 TO를 넣어도 지부 TO 상한(PROJECT-0251)에 걸리지 않는다.
+ * 파트마다 합계는 시딩 프로젝트 수가 n일 때 {@code floor(인원 × n / (n + reserveSlots))}다. 나머지 몫은 QA가
+ * QA 프로젝트와 직접 등록 프로젝트에 TO를 넣을 자리라, QA가 그 TO를 넣어도 지부 TO 상한(PROJECT-0251)에 걸리지 않는다.
  */
 public final class QuotaApportionment {
 
@@ -34,27 +34,26 @@ public final class QuotaApportionment {
     public static Map<RosterKey, ProjectQuota> apportion(
         Map<ChallengerPart, Integer> headcount, List<RosterKey> owners, int reserveSlots
     ) {
-        int n = owners.size();
+        int projects = owners.size();
         Map<RosterKey, ProjectQuota> result = new LinkedHashMap<>();
-        if (n == 0) {
+        if (projects == 0) {
             return result;
         }
-        int design = budget(headcount, DESIGN, n, reserveSlots);
-        int web = budget(headcount, WEB_PRODUCT_ENGINEER, n, reserveSlots);
-        int mobile = budget(headcount, MOBILE_PRODUCT_ENGINEER, n, reserveSlots);
-        int mobileProjects = mobileProjectCount(n, web, mobile);
-        if (n - mobileProjects > web) {
+        int design = budget(headcount, DESIGN, projects, reserveSlots);
+        int web = budget(headcount, WEB_PRODUCT_ENGINEER, projects, reserveSlots);
+        int mobile = budget(headcount, MOBILE_PRODUCT_ENGINEER, projects, reserveSlots);
+        int mobileProjects = mobileProjectCount(projects, web, mobile);
+        if (projects - mobileProjects > web) {
             throw new IllegalStateException("Web PE TO가 프로젝트 수보다 적습니다: web=" + web + ", mobile=" + mobile
-                + ", projects=" + n);
+                + ", projects=" + projects);
         }
 
         List<RosterKey> hashed = owners.stream()
-            .sorted(Comparator.comparingDouble(
-                (RosterKey owner) -> SeedHash.unit(SeedHash.FIXED_SEED, SeedHash.Purpose.ENGINEER_PART, owner.toString()))
+            .sorted(Comparator.comparingDouble(QuotaApportionment::engineerPartOrder)
                 .thenComparing(RosterKey::toString))
             .toList();
         List<RosterKey> mobileOwners = hashed.subList(0, mobileProjects);
-        List<RosterKey> webOwners = hashed.subList(mobileProjects, n);
+        List<RosterKey> webOwners = hashed.subList(mobileProjects, projects);
         Map<RosterKey, Integer> designShares = split(design, hashed);
         Map<RosterKey, Integer> webShares = split(web, webOwners);
         Map<RosterKey, Integer> mobileShares = split(mobile, mobileOwners);
@@ -68,22 +67,27 @@ public final class QuotaApportionment {
         return result;
     }
 
-    private static int budget(Map<ChallengerPart, Integer> headcount, ChallengerPart part, int n, int reserveSlots) {
-        return headcount.getOrDefault(part, 0) * n / (n + reserveSlots);
+    private static double engineerPartOrder(RosterKey owner) {
+        return SeedHash.unit(SeedHash.FIXED_SEED, SeedHash.Purpose.ENGINEER_PART, owner.toString());
+    }
+
+    private static int budget(Map<ChallengerPart, Integer> headcount, ChallengerPart part, int projects,
+                              int reserveSlots) {
+        return headcount.getOrDefault(part, 0) * projects / (projects + reserveSlots);
     }
 
     /**
      * 개발 파트 인원 비율로 Mobile PE 프로젝트 수를 정한다. 두 파트 모두 TO가 있으면 각각 1개 이상이다.
      */
-    private static int mobileProjectCount(int n, int web, int mobile) {
+    private static int mobileProjectCount(int projects, int web, int mobile) {
         if (mobile == 0) {
             return 0;
         }
         if (web == 0) {
-            return Math.min(n, mobile);
+            return Math.min(projects, mobile);
         }
-        int byRatio = (int) Math.round((double) n * mobile / (web + mobile));
-        int bounded = Math.max(1, Math.min(n - 1, byRatio));
+        int byRatio = (int) Math.round((double) projects * mobile / (web + mobile));
+        int bounded = Math.max(1, Math.min(projects - 1, byRatio));
         return Math.min(bounded, mobile);
     }
 

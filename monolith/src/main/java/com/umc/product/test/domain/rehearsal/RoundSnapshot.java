@@ -1,0 +1,141 @@
+package com.umc.product.test.domain.rehearsal;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.domain.enums.MatchingPhase;
+import com.umc.product.project.domain.enums.MatchingType;
+import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+
+/**
+ * 매칭 차수 하나를 판단하는 데 필요한 DB 사실 전부. 요약, 봇 지원 계획, 봇 결정 계획이 모두 이 값 하나를 입력으로 받는다.
+ *
+ * @param candidates        이 지부를 매칭 지부로 가진 활동 중 챌린저 중 차수 유형 파트인 사람
+ * @param projects          이 지부·기수의 공개(진행 중) 프로젝트
+ * @param applications      이 차수 지원서. 취소는 뺀다
+ * @param rejectedLastRound 회원 ID → 같은 지부·유형 직전 차수에서 불합격한 프로젝트 ID
+ */
+public record RoundSnapshot(
+    Round round,
+    Instant observedAt,
+    List<Candidate> candidates,
+    List<ProjectSlot> projects,
+    List<ApplicationRow> applications,
+    Map<Long, Set<Long>> rejectedLastRound
+) {
+    /** 봇이 쓴 주관식 답변의 머리. 요약은 이것으로 봇 지원과 QA 지원을 나눈다. */
+    public static final String BOT_ANSWER_PREFIX = "[봇]";
+
+    public RoundSnapshot {
+        candidates = List.copyOf(candidates);
+        projects = List.copyOf(projects);
+        applications = List.copyOf(applications);
+        rejectedLastRound = Map.copyOf(rejectedLastRound);
+    }
+
+    public record Round(
+        Long roundId,
+        String name,
+        Long chapterId,
+        String chapterName,
+        MatchingType type,
+        MatchingPhase phase,
+        Instant startsAt,
+        Instant endsAt,
+        Instant decisionDeadline,
+        Instant resultPublishAt,
+        Instant resultPublishedAt,
+        Instant autoDecisionExecutedAt
+    ) {
+        public boolean autoDecided() {
+            return autoDecisionExecutedAt != null;
+        }
+
+        public boolean published() {
+            return resultPublishedAt != null;
+        }
+
+        public Set<ChallengerPart> parts() {
+            return type == MatchingType.PLAN_DESIGN
+                ? Set.of(ChallengerPart.DESIGN)
+                : Set.of(ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER);
+        }
+
+        /**
+         * 지원서 생성·제출이 열린 때. 운영 규칙({@code ProjectMatchingRound.isOpenAt})과 같다.
+         */
+        public boolean isApplicationOpenAt(Instant now) {
+            return phase != MatchingPhase.RANDOM_MATCHING && !now.isBefore(startsAt) && !now.isAfter(endsAt);
+        }
+
+        /**
+         * PM이 결정할 수 있는 때. 운영 규칙({@code ProjectMatchingRound.validateIsMutableAt})과 같다.
+         */
+        public boolean isDecisionOpenAt(Instant now) {
+            return phase != MatchingPhase.RANDOM_MATCHING && now.isAfter(endsAt) && !now.isAfter(decisionDeadline)
+                && !autoDecided();
+        }
+
+        public RoundStage stageAt(Instant now) {
+            if (published()) {
+                return RoundStage.PUBLISHED;
+            }
+            if (phase == MatchingPhase.RANDOM_MATCHING) {
+                if (!autoDecided()) {
+                    return RoundStage.AWAITING_ASSIGNMENT;
+                }
+                if (now.isBefore(startsAt)) {
+                    return RoundStage.ASSIGNED;
+                }
+                return now.isBefore(endsAt) ? RoundStage.ADJUSTMENT_OPEN : RoundStage.ADJUSTMENT_CLOSED;
+            }
+            if (now.isBefore(startsAt)) {
+                return RoundStage.BEFORE_START;
+            }
+            if (!now.isAfter(endsAt)) {
+                return RoundStage.APPLICATION_OPEN;
+            }
+            if (!now.isAfter(decisionDeadline) && !autoDecided()) {
+                return RoundStage.DECISION_WINDOW;
+            }
+            return autoDecided() ? RoundStage.AWAITING_PUBLISH : RoundStage.AWAITING_AUTO_DECISION;
+        }
+    }
+
+    public record Candidate(Long memberId, String email, ChallengerPart part, boolean hasTeam) {
+    }
+
+    public record ProjectSlot(Long projectId, String name, Long ownerMemberId, String ownerEmail,
+                              Map<ChallengerPart, PartSlot> parts) {
+        public ProjectSlot {
+            parts = Map.copyOf(parts);
+        }
+    }
+
+    /**
+     * @param existingMembers   이 차수 밖에서 들어온 팀원(활동 중 + 발표 대기)
+     * @param selectedThisRound 이 차수가 선발한 팀원(활동 중 + 발표 대기). 자동 선발 뒤에 생긴다
+     */
+    public record PartSlot(int quota, int existingMembers, int selectedThisRound) {
+        public int assigned() {
+            return existingMembers + selectedThisRound;
+        }
+
+        public int remaining() {
+            return Math.max(0, quota - assigned());
+        }
+    }
+
+    /**
+     * @param botAnswered 답변 중 하나가 {@code [봇]}으로 시작한다. 요약에서 봇·QA 지원을 나누는 데만 쓴다
+     */
+    public record ApplicationRow(Long applicationId, Long projectId, Long applicantMemberId, String applicantEmail,
+                                 ChallengerPart part, ProjectApplicationStatus status, boolean botAnswered) {
+        public boolean submitted() {
+            return status != ProjectApplicationStatus.DRAFT;
+        }
+    }
+}

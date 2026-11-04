@@ -23,6 +23,7 @@ import com.umc.product.test.application.service.NoticeSeedService;
 import com.umc.product.test.application.service.ProjectSeedDataCleanupService;
 import com.umc.product.test.application.service.SeedProperties;
 import com.umc.product.test.application.service.qa.QaSeedOrchestrator;
+import com.umc.product.test.application.service.rehearsal.RoundSummaryQueryService;
 import com.umc.product.test.application.service.rehearsal.StartingLineSeedService;
 
 /**
@@ -47,6 +48,8 @@ class SeedControllerBeanRegistrationTest {
         ChallengerSeedService.class,
         StartingLineSeedService.class,
         StartingLineSeedController.class,
+        MatchingBotController.class,
+        RoundSummaryQueryService.class,
         SeedProjectReadPersistenceAdapter.class,
         ProjectSeedDataCleanupService.class,
         CurriculumSeedService.class,

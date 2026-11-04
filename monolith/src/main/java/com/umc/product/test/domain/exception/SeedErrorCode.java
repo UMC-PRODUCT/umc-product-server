@@ -12,6 +12,7 @@ import lombok.Getter;
 public enum SeedErrorCode implements BaseCode {
 
     ACCOUNT_NOT_SEEDED(HttpStatus.BAD_REQUEST, "SEED-0101", "QA 계정이 없어요. QA 시딩(/test/seed/qa)을 먼저 실행해주세요."),
+    ROUND_NOT_FOUND(HttpStatus.NOT_FOUND, "SEED-0307", "매칭 차수를 찾을 수 없어요. 차수 ID를 확인해주세요."),
     ;
 
     private final HttpStatus httpStatus;

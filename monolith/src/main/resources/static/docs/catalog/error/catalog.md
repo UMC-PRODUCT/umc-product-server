@@ -804,4 +804,5 @@
 | 순번 | 도메인 | 코드 | 이름 | HTTP 상태 | 메시지 | 사용자 행동 | 재시도 | 심각도 | 사용 중단 | 담당자 | 태그 | 원본 |
 |---:|---|---|---|---|---|---|---|---|---|---|---|---|
 | 671 | test | `SEED-0101` | `ACCOUNT_NOT_SEEDED` | 400 BAD_REQUEST | QA 계정이 없어요. QA 시딩(/test/seed/qa)을 먼저 실행해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:14` |
+| 672 | test | `SEED-0307` | `ROUND_NOT_FOUND` | 404 NOT_FOUND | 매칭 차수를 찾을 수 없어요. 차수 ID를 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:15` |
 

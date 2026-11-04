@@ -51,9 +51,9 @@ public final class SeedHash {
     }
 
     private static long splitMix64(long value) {
-        long z = value + 0x9e3779b97f4a7c15L;
-        z = (z ^ (z >>> 30)) * 0xbf58476d1ce4e5b9L;
-        z = (z ^ (z >>> 27)) * 0x94d049bb133111ebL;
-        return z ^ (z >>> 31);
+        long mixed = value + 0x9e3779b97f4a7c15L;
+        mixed = (mixed ^ (mixed >>> 30)) * 0xbf58476d1ce4e5b9L;
+        mixed = (mixed ^ (mixed >>> 27)) * 0x94d049bb133111ebL;
+        return mixed ^ (mixed >>> 31);
     }
 }
