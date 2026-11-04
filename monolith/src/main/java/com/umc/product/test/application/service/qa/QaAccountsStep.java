@@ -23,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 class QaAccountsStep implements QaSeedStepRunner {
+    static final String SUPERADMIN_MISSING = "SUPERADMIN_MISSING";
+
     private final QaAccountWriter accountWriter;
     private final QaDirectoryLoader directoryLoader;
     private final CreateSeedMemberSystemRoleUseCase createSeedMemberSystemRoleUseCase;
@@ -47,7 +49,12 @@ class QaAccountsStep implements QaSeedStepRunner {
                 tally.failed(SeedFailureCode.of(e));
             }
         }
-        Long superAdminId = directoryLoader.load().memberId(QaPersonas.SUPERADMIN);
+        QaDirectory reloaded = directoryLoader.load();
+        Long superAdminId = reloaded.findMemberId(QaPersonas.SUPERADMIN.email(reloaded.roster()));
+        if (superAdminId == null) {
+            tally.failed(SUPERADMIN_MISSING);
+            return tally;
+        }
         boolean granted = createSeedMemberSystemRoleUseCase.create(
             new CreateSeedMemberSystemRoleCommand(superAdminId, MemberSystemRoleType.SUPER_ADMIN)).created();
         if (granted) {
