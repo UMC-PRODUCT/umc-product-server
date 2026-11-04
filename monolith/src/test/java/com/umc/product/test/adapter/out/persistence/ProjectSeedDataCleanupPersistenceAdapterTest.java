@@ -83,6 +83,7 @@ class ProjectSeedDataCleanupPersistenceAdapterTest {
         assertThat(result.deletedProjectApplicationFormPolicies()).isEqualTo(1);
         assertThat(result.deletedProjectPartQuotas()).isEqualTo(1);
         assertThat(result.deletedProjectMatchingRounds()).isEqualTo(1);
+        assertThat(result.deletedProjectMatchingRoundIds()).containsExactly(target.roundId());
         assertThat(result.deletedSurveyForms()).isEqualTo(1);
         assertThat(result.deletedSurveyFormSections()).isEqualTo(1);
         assertThat(result.deletedSurveyQuestions()).isEqualTo(1);

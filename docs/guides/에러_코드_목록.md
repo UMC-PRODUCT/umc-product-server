@@ -804,7 +804,11 @@
 | 순번 | 도메인 | 코드 | 이름 | HTTP 상태 | 메시지 | 사용자 행동 | 재시도 | 심각도 | 사용 중단 | 담당자 | 태그 | 원본 |
 |---:|---|---|---|---|---|---|---|---|---|---|---|---|
 | 671 | test | `SEED-0101` | `ACCOUNT_NOT_SEEDED` | 400 BAD_REQUEST | QA 계정이 없어요. QA 시딩(/test/seed/qa)을 먼저 실행해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:14` |
-| 672 | test | `SEED-0305` | `NOT_IN_APPLICATION_WINDOW` | 409 CONFLICT | 지원 기간이 아니에요. 봇 지원은 차수 지원 시작부터 지원 마감 전까지만 부를 수 있어요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:15` |
-| 673 | test | `SEED-0306` | `NOT_IN_DECISION_WINDOW` | 409 CONFLICT | PM 결정 기간이 아니에요. 봇 결정은 지원 마감 뒤부터 선발 마감 전, 자동 선발 전까지만 부를 수 있어요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:17` |
-| 674 | test | `SEED-0307` | `ROUND_NOT_FOUND` | 404 NOT_FOUND | 매칭 차수를 찾을 수 없어요. 차수 ID를 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:19` |
+| 672 | test | `SEED-0301` | `PREVIOUS_ROUND_NOT_PUBLISHED` | 409 CONFLICT | 앞 차수 결과가 아직 발표되지 않았어요. 앞 차수를 먼저 발표로 넘겨주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:15` |
+| 673 | test | `SEED-0302` | `AUTO_DECISION_NOT_EXECUTED` | 409 CONFLICT | 자동 선발이 아직 실행되지 않았어요. 선발 마감으로 넘긴 뒤 1분 정도 기다렸다가 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:17` |
+| 674 | test | `SEED-0303` | `STEP_OUT_OF_ORDER` | 409 CONFLICT | 차수 단계는 한 칸씩만 넘길 수 있어요. 앞 단계를 먼저 넘겨주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:19` |
+| 675 | test | `SEED-0304` | `RANDOM_NOT_ASSIGNED` | 409 CONFLICT | 랜덤 배정이 아직 실행되지 않았어요. 3차 발표 뒤 1분 정도 기다렸다가 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:21` |
+| 676 | test | `SEED-0305` | `NOT_IN_APPLICATION_WINDOW` | 409 CONFLICT | 지원 기간이 아니에요. 봇 지원은 차수 지원 시작부터 지원 마감 전까지만 부를 수 있어요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:23` |
+| 677 | test | `SEED-0306` | `NOT_IN_DECISION_WINDOW` | 409 CONFLICT | PM 결정 기간이 아니에요. 봇 결정은 지원 마감 뒤부터 선발 마감 전, 자동 선발 전까지만 부를 수 있어요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:25` |
+| 678 | test | `SEED-0307` | `ROUND_NOT_FOUND` | 404 NOT_FOUND | 매칭 차수를 찾을 수 없어요. 차수 ID를 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:27` |
 
