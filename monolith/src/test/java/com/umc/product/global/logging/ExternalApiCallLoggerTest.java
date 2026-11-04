@@ -23,6 +23,7 @@ import ch.qos.logback.core.read.ListAppender;
  *
  * <p>핵심 invariant:
  * <ul>
+ *     <li>성공·실패 모두 구조화 필드 event=external_api_called 포함 (LogQL {@code | event=} 필터용)</li>
  *     <li>성공 시: INFO, result=SUCCESS, durationMs 포함</li>
  *     <li>실패 시: WARN, result=FAILURE, errorClass 포함, 예외 그대로 재던짐</li>
  *     <li>예외 메시지는 어떤 필드에도 노출되지 않는다 (민감정보 정책)</li>
@@ -65,6 +66,7 @@ class ExternalApiCallLoggerTest {
         ILoggingEvent event = onlyEvent();
         assertThat(event.getLevel()).isEqualTo(Level.INFO);
         assertThat(event.getMessage()).isEqualTo("external_api_called");
+        assertThat(kvOf(event, "event")).isEqualTo("external_api_called");
         assertThat(kvOf(event, "provider")).isEqualTo("GITHUB");
         assertThat(kvOf(event, "operation")).isEqualTo("FETCH_PULL_REQUESTS");
         assertThat(kvOf(event, "result")).isEqualTo("SUCCESS");
@@ -87,6 +89,7 @@ class ExternalApiCallLoggerTest {
         ILoggingEvent event = onlyEvent();
         assertThat(event.getLevel()).isEqualTo(Level.WARN);
         assertThat(event.getMessage()).isEqualTo("external_api_called");
+        assertThat(kvOf(event, "event")).isEqualTo("external_api_called");
         assertThat(kvOf(event, "provider")).isEqualTo("OPENAI");
         assertThat(kvOf(event, "operation")).isEqualTo("CHAT_COMPLETION");
         assertThat(kvOf(event, "result")).isEqualTo("FAILURE");

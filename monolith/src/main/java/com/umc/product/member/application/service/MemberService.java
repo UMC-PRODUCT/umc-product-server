@@ -27,9 +27,6 @@ import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
-import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
-import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
-import com.umc.product.notification.domain.WebhookPlatform;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.term.application.port.in.command.ManageTermAgreementUseCase;
 
@@ -50,7 +47,6 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
     private final GetSchoolUseCase getSchoolUseCase;
 
     private final DomainEventPublisher eventPublisher;
-    private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
     private final EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
     private final DeleteMemberBlocksUseCase deleteMemberBlocksUseCase;
 
@@ -84,14 +80,6 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
         String logDescription = getSchoolUseCase.getSchoolDetail(command.schoolId()).schoolName()
             + "소속 " + command.nickname() + "/" + command.name() +
             " 님이 회원 가입하셨습니다.";
-
-        sendWebhookAlarmUseCase.sendBuffered(
-            SendWebhookAlarmCommand.builder()
-                .platforms(List.of(WebhookPlatform.TELEGRAM))
-                .title("새로운 회원이 가입하였습니다.")
-                .content(logDescription)
-                .build()
-        );
 
         eventPublisher.publish(
             AuditLogEvent.builder()

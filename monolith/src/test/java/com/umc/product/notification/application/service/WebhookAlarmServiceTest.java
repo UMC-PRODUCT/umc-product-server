@@ -36,7 +36,7 @@ class WebhookAlarmServiceTest {
     @Test
     @DisplayName("sendBuffered는 외부 웹훅을 즉시 호출하지 않고 이벤트를 발행한다")
     void sendBuffered는_웹훅을_즉시_호출하지_않고_이벤트를_발행한다() {
-        given(sendWebhookPort.platform()).willReturn(WebhookPlatform.TELEGRAM);
+        given(sendWebhookPort.platform()).willReturn(WebhookPlatform.DISCORD);
         given(environment.getActiveProfiles()).willReturn(new String[0]);
         CapturingDomainEventPublisher eventPublisher = new CapturingDomainEventPublisher();
         WebhookAlarmService sut = new WebhookAlarmService(
@@ -46,7 +46,7 @@ class WebhookAlarmServiceTest {
             eventPublisher
         );
         SendWebhookAlarmCommand command = SendWebhookAlarmCommand.builder()
-            .platforms(List.of(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD))
+            .platforms(List.of(WebhookPlatform.DISCORD))
             .title("테스트 알림")
             .content("테스트 본문")
             .build();
@@ -56,7 +56,7 @@ class WebhookAlarmServiceTest {
         assertThat(eventPublisher.events()).hasSize(1);
         assertThat(eventPublisher.events().get(0))
             .isInstanceOfSatisfying(WebhookAlarmEvent.class, event -> {
-                assertThat(event.platforms()).containsExactly(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD);
+                assertThat(event.platforms()).containsExactly(WebhookPlatform.DISCORD);
                 assertThat(event.title()).isEqualTo("테스트 알림");
                 assertThat(event.content()).isEqualTo("테스트 본문");
             });

@@ -40,6 +40,7 @@ import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope;
 import com.umc.product.project.application.access.ProjectApplicationAccessScopeResolver;
+import com.umc.product.project.application.access.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionCapabilityInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionReason;
@@ -52,7 +53,6 @@ import com.umc.product.project.application.service.policy.ProjectManualMatchingA
 import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
-import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.ProjectMatchingRound;
@@ -102,6 +102,7 @@ class ProjectPermissionQueryServiceTest {
     ProjectMatchingAdjustmentPolicy projectMatchingAdjustmentPolicy = new ProjectMatchingAdjustmentPolicy();
 
     @Mock com.umc.product.project.application.service.policy.ProjectDraftQuotaPolicy draftQuotaPolicy;
+    @Mock com.umc.product.project.application.access.ProjectQuotaAccessPolicy quotaAccessPolicy;
 
     @InjectMocks
     ProjectPermissionQueryService sut;

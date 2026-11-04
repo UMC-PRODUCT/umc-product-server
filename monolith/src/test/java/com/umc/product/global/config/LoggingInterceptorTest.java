@@ -68,10 +68,9 @@ class LoggingInterceptorTest {
     }
 
     @Test
-    @DisplayName("preHandle 시 method / path 가 MDC 에 들어가고 traceId 가 있으면 X-Trace-Id 헤더가 채워진다")
+    @DisplayName("preHandle 시 method / path 가 MDC 에 들어가고 별도 requestId 는 발급하지 않는다")
     void preHandle_MDC_등록_성공() {
-        // given — Micrometer Tracing 이 채웠을 traceId 를 시뮬레이션
-        MDC.put("traceId", "test-trace-abc123");
+        // given
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/forms/123/answers");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -82,24 +81,8 @@ class LoggingInterceptorTest {
         assertThat(result).isTrue();
         assertThat(MDC.get("method")).isEqualTo("GET");
         assertThat(MDC.get("path")).isEqualTo("/forms/123/answers");
-        assertThat(response.getHeader("X-Trace-Id")).isEqualTo("test-trace-abc123");
-        // 별도 requestId UUID 는 발급하지 않는다 (FE 호환성)
+        // 단일 요청 식별자는 traceId 하나만 쓴다 (FE 호환성)
         assertThat(MDC.get("requestId")).isNull();
-        assertThat(response.getHeader("X-Request-Id")).isNull();
-    }
-
-    @Test
-    @DisplayName("traceId 가 없으면 X-Trace-Id 헤더도 비어 있어야 한다")
-    void preHandle_traceId_없을_때_헤더_미설정() {
-        // given — traceId 미주입 상태 (테스트 환경에는 Micrometer Tracing 가 없을 수 있다)
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/forms");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        // when
-        interceptor.preHandle(request, response, new Object());
-
-        // then
-        assertThat(response.getHeader("X-Trace-Id")).isNull();
     }
 
     @Test

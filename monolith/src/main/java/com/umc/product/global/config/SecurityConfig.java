@@ -194,7 +194,7 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         // Trace ID와 재요청 대기 시간을 클라이언트에서 읽을 수 있도록 노출
-        configuration.setExposedHeaders(List.of("X-Trace-Id", "Retry-After"));
+        configuration.setExposedHeaders(List.of(TraceIdHeaderInterceptor.HEADER_NAME, "Retry-After"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         // Apple form POST는 Origin: https://appleid.apple.com을 포함할 수 있어 해당 callback에만 허용한다.

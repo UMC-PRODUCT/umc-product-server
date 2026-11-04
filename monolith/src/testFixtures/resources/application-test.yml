@@ -90,13 +90,9 @@ app:
   webhook:
     buffer:
       enabled: false
-    telegram:
-      bot-token: "false"
-      chat-id: "false"
-    slack:
-      url: "false"
+    # 빈 값이면 어댑터를 등록하지 않는다. 테스트에서 외부 웹훅으로 나가지 않도록 비워 둔다.
     discord:
-      url: "false"
+      url: ""
   cors:
     allowed-origin-patterns: ""
   llm:

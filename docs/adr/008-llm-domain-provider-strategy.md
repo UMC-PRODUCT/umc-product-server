@@ -1,4 +1,4 @@
-# ADR-006: LLM 도메인 구현은 Spring AI + Gemini 1차 도입으로 진행한다
+# ADR-008: LLM 도메인 구현은 Spring AI + Gemini 1차 도입으로 진행한다
 
 ## Status
 

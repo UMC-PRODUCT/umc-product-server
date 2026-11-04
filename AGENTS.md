@@ -80,7 +80,7 @@ even when `:blog` is absent from the boot jar.
 | Persistence | `{domain}/adapter/out/persistence` | JPA repositories plus QueryDSL query repositories |
 | Public contracts | `{domain}/application/port/in`, `{domain}/application/port/out` | UseCase and Port interfaces |
 | High-complexity project flows | `monolith/src/main/java/com/umc/product/project` | application forms, matching, statistics, permissions |
-| Organization model | `monolith/src/main/java/com/umc/product/organization` | school, chapter, gisu, study group, UMC PRODUCT org |
+| Organization model | `monolith/src/main/java/com/umc/product/organization` | school, chapter, gisu, study group |
 | Test infrastructure | `monolith/src/testFixtures/java/com/umc/product/support` | Testcontainers, fixtures, MockMvc, isolation |
 | Migrations | `monolith/src/main/resources/db/migration` | `VYYYY.MM.DD.HH.MM__snake_case.sql` |
 
@@ -128,8 +128,9 @@ even when `:blog` is absent from the boot jar.
 - **AUTHZ-05** Boolean authority checks must fail closed for nonexistent members through the member domain's dedicated existence Query UseCase before consulting legacy role data.
 - **AUTHZ-06** `ResourcePermissionEvaluator` implementations should evaluate `SubjectAttributes.toAuthoritySnapshot()` instead of re-querying ChallengerRole data or manually streaming raw role lists.
 - **AUTHZ-07** When ChallengerRole data or member system role data changes, evict the `AUTHORITY_SNAPSHOT` cache through the authorization cache usecase. Cache serialized DTOs, not domain entities. The current Caffeine adapter is instance-local, so do not claim cross-instance immediate revocation without distributed invalidation or authority version checks.
-- **AUTHZ-08** `SUPER_ADMIN` is a member-bound global system role stored only by the member domain (`member_system_role`). It must not be added to `ChallengerRoleType`, persisted in `challenger_role`, or exposed through ChallengerRole command/query APIs.
+- **AUTHZ-08** System roles (`SUPER_ADMIN`, `UMC_PRODUCT`) are member-bound, gisu-independent roles stored only by the member domain (`member_system_role`). They must not be added to `ChallengerRoleType`, persisted in `challenger_role`, or exposed through ChallengerRole command/query APIs. Add a new value to `MemberSystemRoleType`, `SystemRoleType`, and the `member_system_role_role_type_check` constraint together; `SystemRoleTypeTest` keeps the two enums equal. A stored value the code does not know fails role loading, so roll back past a new role only after deleting its rows.
 - **AUTHZ-09** Authorization refactors must preserve client-visible API paths, request/response shapes, and status semantics unless the issue explicitly includes a client contract change. Add tests that lock existing behavior before replacing predicates.
+- **AUTHZ-10** `UMC_PRODUCT` grants product inquiry answering and management only; it adds no other permission. Inquiry management is allowed for `UMC_PRODUCT` or `SUPER_ADMIN` (the AUTHZ-02 global override); decide it through `AuthoritySnapshot.isUmcProduct()` or `CheckChallengerAuthorityUseCase.isUmcProduct(...)`, not by comparing role strings.
 
 ## TESTING
 

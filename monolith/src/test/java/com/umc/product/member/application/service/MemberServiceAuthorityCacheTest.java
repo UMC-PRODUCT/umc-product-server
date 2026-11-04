@@ -23,7 +23,6 @@ import com.umc.product.member.application.port.in.command.dto.DeleteMemberComman
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
-import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.term.application.port.in.command.ManageTermAgreementUseCase;
@@ -58,9 +57,6 @@ class MemberServiceAuthorityCacheTest {
 
     @Mock
     DomainEventPublisher eventPublisher;
-
-    @Mock
-    SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
 
     @Mock
     EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
