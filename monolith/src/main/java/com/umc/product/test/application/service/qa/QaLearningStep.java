@@ -8,8 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -36,31 +35,36 @@ import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
 import com.umc.product.organization.application.port.in.command.ManageStudyGroupUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupCommand;
+import com.umc.product.test.application.port.in.command.dto.QaSeedStep;
+import com.umc.product.test.domain.roster.QaPersonas;
+import com.umc.product.test.domain.roster.QaPersonas.Persona;
 
 import lombok.RequiredArgsConstructor;
 
-@Service
+@Component
 @Profile("!prod")
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")
-@Transactional(propagation = Propagation.MANDATORY)
 @RequiredArgsConstructor
-public class QaLearningSeedScenario {
+class QaLearningStep implements QaSeedStepRunner {
 
+    private static final String EXTRA_WEEK_TITLE = "[QA] 미제출·제출·통과·재제출 실습";
     private static final List<Course> COURSES = List.of(
-        new Course(10, ChallengerPart.PLAN, "cau_schoolpresident", List.of("cau_plan")),
-        new Course(10, ChallengerPart.DESIGN, "cau_schoolpresident", List.of("cau_design")),
-        new Course(10, ChallengerPart.WEB, "cau_schoolpresident", List.of("cau_web")),
-        new Course(10, ChallengerPart.ANDROID, "cau_schoolpresident", List.of("cau_android")),
-        new Course(10, ChallengerPart.IOS, "cau_schoolpresident", List.of("cau_ios")),
-        new Course(10, ChallengerPart.NODEJS, "cau_schoolpresident", List.of("cau_node")),
-        new Course(10, ChallengerPart.SPRINGBOOT, "cau_schoolpresident",
-            List.of("cau_springboot", "cau_multigisu")),
-        new Course(11, ChallengerPart.PLAN, "cau_g11_plan_leader", List.of("cau_g11_plan")),
-        new Course(11, ChallengerPart.DESIGN, "cau_g11_design_leader", List.of("cau_g11_design")),
-        new Course(11, ChallengerPart.WEB_PRODUCT_ENGINEER, "cau_g11_web_leader",
-            List.of("cau_g11_web", "cau_g11_web_infra", "cau_multigisu")),
-        new Course(11, ChallengerPart.MOBILE_PRODUCT_ENGINEER, "cau_g11_mobile_leader",
-            List.of("cau_g11_mobile", "cau_g11_mobile_infra"))
+        new Course(10, ChallengerPart.PLAN, QaPersonas.G10_CAU_SCHOOL_PRESIDENT, List.of(QaPersonas.G10_CAU_PLAN)),
+        new Course(10, ChallengerPart.DESIGN, QaPersonas.G10_CAU_SCHOOL_PRESIDENT,
+            List.of(QaPersonas.G10_CAU_DESIGN)),
+        new Course(10, ChallengerPart.WEB, QaPersonas.G10_CAU_SCHOOL_PRESIDENT, List.of(QaPersonas.G10_CAU_WEB)),
+        new Course(10, ChallengerPart.ANDROID, QaPersonas.G10_CAU_SCHOOL_PRESIDENT,
+            List.of(QaPersonas.G10_CAU_ANDROID)),
+        new Course(10, ChallengerPart.IOS, QaPersonas.G10_CAU_SCHOOL_PRESIDENT, List.of(QaPersonas.G10_CAU_IOS)),
+        new Course(10, ChallengerPart.NODEJS, QaPersonas.G10_CAU_SCHOOL_PRESIDENT, List.of(QaPersonas.G10_CAU_NODE)),
+        new Course(10, ChallengerPart.SPRINGBOOT, QaPersonas.G10_CAU_SCHOOL_PRESIDENT,
+            List.of(QaPersonas.G10_CAU_SPRINGBOOT)),
+        new Course(11, ChallengerPart.PLAN, QaPersonas.CAU_PLAN_LEADER, List.of(QaPersonas.CAU_PLAN)),
+        new Course(11, ChallengerPart.DESIGN, QaPersonas.CAU_DESIGN_LEADER, List.of(QaPersonas.CAU_DESIGN)),
+        new Course(11, ChallengerPart.WEB_PRODUCT_ENGINEER, QaPersonas.CAU_WEB_LEADER,
+            List.of(QaPersonas.CAU_WEB, QaPersonas.CAU_WEB_INFRA)),
+        new Course(11, ChallengerPart.MOBILE_PRODUCT_ENGINEER, QaPersonas.CAU_MOBILE_LEADER,
+            List.of(QaPersonas.CAU_MOBILE, QaPersonas.CAU_MOBILE_INFRA))
     );
 
     private final ManageStudyGroupUseCase manageStudyGroupUseCase;
@@ -73,16 +77,37 @@ public class QaLearningSeedScenario {
     private final ManageMissionSubmissionUseCase manageMissionSubmissionUseCase;
     private final ManageMissionFeedbackUseCase manageMissionFeedbackUseCase;
 
-    public void seed(QaSeedContext context) {
-        for (Course course : COURSES) {
-            seedCourse(context, course);
-        }
+    @Override
+    public QaSeedStep step() {
+        return QaSeedStep.LEARNING;
     }
 
-    private void seedCourse(QaSeedContext context, Course course) {
-        Long gisuId = context.gisuId(course.generation());
-        Long mentorId = context.memberId(course.mentorAlias());
-        Set<Long> memberIds = course.learnerAliases().stream().map(context::memberId).collect(Collectors.toSet());
+    @Override
+    @Transactional
+    public StepTally run(QaDirectory directory) {
+        StepTally tally = new StepTally();
+        for (Course course : COURSES) {
+            if (isSeeded(directory, course)) {
+                tally.skipped();
+            } else {
+                seedCourse(directory, course);
+                tally.created();
+            }
+        }
+        return tally;
+    }
+
+    private boolean isSeeded(QaDirectory directory, Course course) {
+        Long gisuId = directory.gisuId(course.generation());
+        return getCurriculumUseCase.findIdByGisuIdAndPart(gisuId, course.part()).isPresent()
+            && getCurriculumUseCase.getCurriculumOverview(gisuId, course.part(), null).weeks().stream()
+            .anyMatch(week -> EXTRA_WEEK_TITLE.equals(week.title()));
+    }
+
+    private void seedCourse(QaDirectory directory, Course course) {
+        Long gisuId = directory.gisuId(course.generation());
+        Long mentorId = directory.memberId(course.mentor());
+        Set<Long> memberIds = course.learners().stream().map(directory::memberId).collect(Collectors.toSet());
         manageStudyGroupUseCase.create(new CreateStudyGroupCommand(
             "[QA] " + course.generation() + "기 " + course.part().getDisplayName(),
             gisuId, course.part(), Set.of(mentorId), memberIds));
@@ -96,9 +121,10 @@ public class QaLearningSeedScenario {
         Instant now = Instant.now();
         Long weeklyId = manageWeeklyCurriculumUseCase.create(CreateWeeklyCurriculumCommand.builder()
             .curriculumId(curriculumId).weekNo(weekNo).isExtra(true)
-            .title("[QA] 미제출·제출·통과·재제출 실습")
+            .title(EXTRA_WEEK_TITLE)
             .startsAt(now.minus(Duration.ofHours(1))).endsAt(now.plus(Duration.ofDays(30))).build());
-        Long releaseMemberId = context.memberId(course.generation() == 11 ? "central_g11_education" : "superadmin");
+        Long releaseMemberId = directory.memberId(
+            course.generation() == 11 ? QaPersonas.CENTRAL_EDUCATION : QaPersonas.SUPERADMIN);
         for (LearningState state : LearningState.values()) {
             seedWorkbook(weeklyId, state, memberIds, mentorId, releaseMemberId);
         }
@@ -155,7 +181,7 @@ public class QaLearningSeedScenario {
         }
     }
 
-    private record Course(int generation, ChallengerPart part, String mentorAlias, List<String> learnerAliases) {
+    private record Course(int generation, ChallengerPart part, Persona mentor, List<Persona> learners) {
     }
 
     private enum LearningState {

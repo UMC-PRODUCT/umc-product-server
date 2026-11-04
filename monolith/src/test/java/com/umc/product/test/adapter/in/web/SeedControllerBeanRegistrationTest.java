@@ -9,6 +9,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 
 import com.umc.product.test.adapter.out.persistence.MemberSystemRoleSeedPersistenceAdapter;
+import com.umc.product.test.adapter.out.persistence.QaSeedMarkerPersistenceAdapter;
+import com.umc.product.test.adapter.out.resource.ClasspathQaRosterAdapter;
 import com.umc.product.test.application.service.ChallengerSeedService;
 import com.umc.product.test.application.service.CurriculumSeedService;
 import com.umc.product.test.application.service.DummyCurriculumFactory;
@@ -21,6 +23,7 @@ import com.umc.product.test.application.service.ProjectApplicationSeedService;
 import com.umc.product.test.application.service.ProjectScenarioSeedService;
 import com.umc.product.test.application.service.ProjectSeedDataCleanupService;
 import com.umc.product.test.application.service.SeedProperties;
+import com.umc.product.test.application.service.qa.QaSeedOrchestrator;
 
 /**
  * 시딩 관련 빈들의 가드 어노테이션이 회귀 없이 유지되는지 검증한다.
@@ -34,6 +37,10 @@ class SeedControllerBeanRegistrationTest {
     @ParameterizedTest(name = "{0} 는 시딩 가드 어노테이션을 모두 가진다")
     @ValueSource(classes = {
         SeedController.class,
+        QaSeedController.class,
+        QaSeedOrchestrator.class,
+        QaSeedMarkerPersistenceAdapter.class,
+        ClasspathQaRosterAdapter.class,
         MemberSeedService.class,
         MemberSystemRoleSeedService.class,
         MemberSystemRoleSeedPersistenceAdapter.class,

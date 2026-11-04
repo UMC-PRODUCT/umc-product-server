@@ -2,12 +2,12 @@ package com.umc.product.test.application.service.qa;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.community.application.port.in.command.thread.CreateCommunityThreadUseCase;
@@ -24,15 +24,25 @@ import com.umc.product.community.application.port.in.command.thread.message.dto.
 import com.umc.product.community.application.port.in.command.thread.message.dto.UpdateCommunityThreadReadCommand;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageType;
 import com.umc.product.community.domain.enums.CommunityThreadCategory;
+import com.umc.product.test.application.port.in.command.dto.QaSeedStep;
+import com.umc.product.test.application.port.out.QaSeedMarkerPort;
+import com.umc.product.test.domain.roster.QaPersonas;
 
 import lombok.RequiredArgsConstructor;
 
-@Service
+/**
+ * 채팅방 4개. 제목이 같은 방이 있으면 그 방은 건너뛴다.
+ */
+@Component
 @Profile("!prod")
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")
-@Transactional(propagation = Propagation.MANDATORY)
 @RequiredArgsConstructor
-public class QaChatSeedScenario {
+class QaChatStep implements QaSeedStepRunner {
+
+    private static final String EMPTY_THREAD = "빈 채팅방";
+    private static final String CONVERSATION_THREAD = "스터디 대화 · 읽음 확인";
+    private static final String HISTORY_THREAD = "이전 메시지 불러오기";
+    private static final String FEATURES_THREAD = "답장 · 리액션 · 수정 · 삭제";
 
     private final CreateCommunityThreadUseCase createThreadUseCase;
     private final CreateCommunityThreadMessageUseCase createMessageUseCase;
@@ -40,22 +50,44 @@ public class QaChatSeedScenario {
     private final TombstoneCommunityThreadMessageUseCase tombstoneMessageUseCase;
     private final ManageCommunityThreadMessageReactionUseCase reactionUseCase;
     private final UpdateCommunityThreadReadUseCase updateReadUseCase;
+    private final QaSeedMarkerPort qaSeedMarkerPort;
 
-    public void seed(QaSeedContext context) {
+    @Override
+    public QaSeedStep step() {
+        return QaSeedStep.CHAT;
+    }
+
+    @Override
+    @Transactional
+    public StepTally run(QaDirectory directory) {
         Participants members = new Participants(
-            context.memberId("cau_g11_schoolpresident"),
-            context.memberId("cau_g11_web"),
-            context.memberId("cau_g11_mobile"),
-            context.memberId("cau_g11_design")
+            directory.memberId(QaPersonas.CAU_SCHOOL_PRESIDENT),
+            directory.memberId(QaPersonas.CAU_WEB),
+            directory.memberId(QaPersonas.CAU_MOBILE),
+            directory.memberId(QaPersonas.CAU_DESIGN)
         );
-        createThread("빈 채팅방", CommunityThreadCategory.FREE, members);
-        seedConversation(members);
-        seedMessageHistory(members);
-        seedMessageFeatures(members);
+        List<String> titles = List.of(EMPTY_THREAD, CONVERSATION_THREAD, HISTORY_THREAD, FEATURES_THREAD);
+        Set<String> existing = qaSeedMarkerPort.findExistingThreadTitles(
+            titles.stream().map(QaChatStep::title).toList());
+        StepTally tally = new StepTally();
+        for (String thread : titles) {
+            if (existing.contains(title(thread))) {
+                tally.skipped();
+                continue;
+            }
+            switch (thread) {
+                case EMPTY_THREAD -> createThread(EMPTY_THREAD, CommunityThreadCategory.FREE, members);
+                case CONVERSATION_THREAD -> seedConversation(members);
+                case HISTORY_THREAD -> seedMessageHistory(members);
+                default -> seedMessageFeatures(members);
+            }
+            tally.created();
+        }
+        return tally;
     }
 
     private void seedConversation(Participants members) {
-        Long threadId = createThread("스터디 대화 · 읽음 확인", CommunityThreadCategory.STUDY, members);
+        Long threadId = createThread(CONVERSATION_THREAD, CommunityThreadCategory.STUDY, members);
         send(threadId, members.owner(), "welcome", "이번 주 스터디 시간을 정해볼까요?", null);
         send(threadId, members.web(), "question", "화요일 저녁은 어떠세요?", null);
         Long thirdMessageId = send(threadId, members.mobile(), "suggestion", "저는 오후 7시부터 가능합니다.", null);
@@ -67,7 +99,7 @@ public class QaChatSeedScenario {
     }
 
     private void seedMessageHistory(Participants members) {
-        Long threadId = createThread("이전 메시지 불러오기", CommunityThreadCategory.FREE, members);
+        Long threadId = createThread(HISTORY_THREAD, CommunityThreadCategory.FREE, members);
         List<Long> senders = List.of(members.owner(), members.web(), members.mobile());
         // 기본 조회 크기 30개보다 많이 만들어 세 페이지와 마지막 페이지의 끝을 확인한다.
         for (int index = 1; index <= 65; index++) {
@@ -77,7 +109,7 @@ public class QaChatSeedScenario {
     }
 
     private void seedMessageFeatures(Participants members) {
-        Long threadId = createThread("답장 · 리액션 · 수정 · 삭제", CommunityThreadCategory.QNA, members);
+        Long threadId = createThread(FEATURES_THREAD, CommunityThreadCategory.QNA, members);
         Long originalId = send(threadId, members.owner(), "original", "워크북 제출 방법이 궁금하면 여기에 질문해주세요.", null);
         send(threadId, members.web(), "reply", "제출 후에도 내용을 수정할 수 있나요?", originalId);
         Long editedId = send(threadId, members.mobile(), "edit", "내일 확인하겠습니다.", null);
@@ -95,7 +127,7 @@ public class QaChatSeedScenario {
     private Long createThread(String title, CommunityThreadCategory category, Participants members) {
         // Chat room만 만들면 앱의 스레드 목록에 나타나지 않아 Community의 공개 생성 경로를 사용한다.
         return createThreadUseCase.create(new CreateCommunityThreadCommand(
-            members.owner(), "[QA] " + title, "개발 환경 채팅 QA용 데이터입니다.", category, "💬",
+            members.owner(), title(title), "개발 환경 채팅 QA용 데이터입니다.", category, "💬",
             List.of(members.web(), members.mobile(), members.design())
         )).threadId();
     }
@@ -111,5 +143,9 @@ public class QaChatSeedScenario {
     }
 
     private record Participants(Long owner, Long web, Long mobile, Long design) {
+    }
+
+    private static String title(String title) {
+        return "[QA] " + title;
     }
 }
