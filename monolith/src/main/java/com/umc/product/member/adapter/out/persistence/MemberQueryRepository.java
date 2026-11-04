@@ -58,6 +58,23 @@ public class MemberQueryRepository {
         );
     }
 
+    public boolean existsNonWithdrawnNicknameInSchool(Long schoolId, String nickname) {
+        QMember member = QMember.member;
+        return queryFactory
+            .selectOne()
+            .from(member)
+            .where(member.schoolId.eq(schoolId), member.nickname.eq(nickname),
+                member.status.ne(MemberStatus.WITHDRAWN))
+            .fetchFirst() != null;
+    }
+
+    public Set<Long> listWithdrawnIdsBySchoolAndNickname(Long schoolId, String nickname) {
+        QMember member = QMember.member;
+        return Set.copyOf(queryFactory.select(member.id).from(member)
+            .where(member.schoolId.eq(schoolId), member.nickname.eq(nickname),
+                member.status.eq(MemberStatus.WITHDRAWN)).fetch());
+    }
+
     /**
      * 검색 로직 (v1) — 챌린저 단위 row.
      */

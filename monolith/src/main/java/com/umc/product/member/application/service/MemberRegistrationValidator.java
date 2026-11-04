@@ -7,6 +7,11 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
+import com.umc.product.member.application.port.in.query.CheckNicknameAvailabilityUseCase;
+import com.umc.product.member.application.port.out.LockSchoolNicknamePort;
+import com.umc.product.member.domain.NicknamePolicy;
+import com.umc.product.member.domain.exception.MemberDomainException;
+import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.term.application.port.in.query.GetTermUseCase;
@@ -22,6 +27,20 @@ public class MemberRegistrationValidator {
     private final GetTermUseCase getTermUseCase;
     private final GetSchoolUseCase getSchoolUseCase;
     private final GetFileUseCase getFileUseCase;
+    private final LockSchoolNicknamePort lockSchoolNicknamePort;
+    private final CheckNicknameAvailabilityUseCase nicknameAvailabilityUseCase;
+
+    protected void lockSchoolsForRegistration(List<Long> schoolIds) {
+        schoolIds.stream().distinct().sorted().forEach(lockSchoolNicknamePort::lockSchool);
+    }
+
+    protected void validateNicknameAvailable(Long schoolId, String nickname) {
+        NicknamePolicy.validate(nickname);
+        lockSchoolNicknamePort.lockSchool(schoolId);
+        if (!nicknameAvailabilityUseCase.check(schoolId, nickname).available()) {
+            throw new MemberDomainException(MemberErrorCode.NICKNAME_ALREADY_EXISTS);
+        }
+    }
 
     /**
      * 사진 ID가 주어진 경우 해당 파일이 존재하는지 확인

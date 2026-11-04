@@ -100,6 +100,16 @@ public class MemberPersistenceAdapter implements
     }
 
     @Override
+    public boolean existsNonWithdrawnNicknameInSchool(Long schoolId, String nickname) {
+        return memberQueryRepository.existsNonWithdrawnNicknameInSchool(schoolId, nickname);
+    }
+
+    @Override
+    public Set<Long> listWithdrawnIdsBySchoolAndNickname(Long schoolId, String nickname) {
+        return memberQueryRepository.listWithdrawnIdsBySchoolAndNickname(schoolId, nickname);
+    }
+
+    @Override
     public Member save(Member member) {
         return memberJpaRepository.save(member);
     }

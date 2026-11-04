@@ -13,6 +13,7 @@ import net.datafaker.Faker;
 
 import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
+import com.umc.product.member.domain.NicknamePolicy;
 import com.umc.product.term.application.port.in.query.GetTermUseCase;
 
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class DummyMemberFactory {
 
     private static final long MIN_SCHOOL_ID = 1L;
     private static final long MAX_SCHOOL_ID = 38L;
-    private static final int MAX_NICKNAME_LENGTH = 20;
+    private static final int HANGUL_SYLLABLE_COUNT = '힣' - '가' + 1;
 
     private final SeedProperties properties;
     private final GetTermUseCase getTermUseCase;
@@ -75,7 +76,7 @@ public class DummyMemberFactory {
         return EmailRegisterMemberCommand.builder()
             .rawPassword(properties.defaultPassword())
             .name(faker.name().fullName())
-            .nickname(safeNickname(faker.name().firstName(), sequence))
+            .nickname(nicknameFromSequence(sequence))
             .email(email)
             .schoolId(schoolId)
             .termConsents(termConsents)
@@ -87,13 +88,21 @@ public class DummyMemberFactory {
     }
 
     /**
-     * Member.nickname 컬럼 길이 20 을 초과하지 않게 자르고, sequence 를 붙여 유일성을 보강한다.
+     * 시퀀스를 한글 4자로 표현해 신규 가입 규칙과 시딩 닉네임의 유일성을 함께 지킨다.
      */
-    private String safeNickname(String base, long sequence) {
-        String candidate = base + sequence;
-        if (candidate.length() > MAX_NICKNAME_LENGTH) {
-            return candidate.substring(0, MAX_NICKNAME_LENGTH);
+    private String nicknameFromSequence(long sequence) {
+        if (sequence < 0) {
+            throw new IllegalArgumentException("닉네임 시퀀스는 0 이상이어야 합니다.");
         }
-        return candidate;
+        char[] nickname = new char[NicknamePolicy.MAX_LENGTH];
+        long remaining = sequence;
+        for (int index = nickname.length - 1; index >= 0; index--) {
+            nickname[index] = (char) ('가' + remaining % HANGUL_SYLLABLE_COUNT);
+            remaining /= HANGUL_SYLLABLE_COUNT;
+        }
+        if (remaining != 0) {
+            throw new IllegalArgumentException("닉네임 시퀀스가 한글 4자로 표현 가능한 범위를 초과했습니다.");
+        }
+        return String.valueOf(nickname);
     }
 }

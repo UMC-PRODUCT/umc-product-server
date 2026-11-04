@@ -57,6 +57,8 @@ public class EmailMemberRegisterService implements RegisterEmailMemberUseCase {
         if (commands.isEmpty()) {
             return List.of();
         }
+        registrationValidator.lockSchoolsForRegistration(commands.stream()
+            .map(EmailRegisterMemberCommand::schoolId).toList());
         List<Long> registeredIds = new ArrayList<>(commands.size());
         for (EmailRegisterMemberCommand command : commands) {
             registeredIds.add(registerInternal(command));
@@ -67,6 +69,7 @@ public class EmailMemberRegisterService implements RegisterEmailMemberUseCase {
     private Long registerInternal(EmailRegisterMemberCommand command) {
         registrationValidator.validateSchoolExists(command.schoolId());
         registrationValidator.validateMandatoryTermsAgreed(command.termConsents());
+        registrationValidator.validateNicknameAvailable(command.schoolId(), command.nickname());
 
         Member created = saveMemberPort.save(command.toEntity());
 
