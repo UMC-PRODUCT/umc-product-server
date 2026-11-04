@@ -15,6 +15,7 @@ class RehearsalSeedBeanGuardTest {
         RehearsalContextLoader.class,
         StartingLineSeedService.class,
         RoundSummaryQueryService.class,
+        RoundSnapshotReader.class,
         MatchingBotService.class,
         BotApplicationWriter.class
     })

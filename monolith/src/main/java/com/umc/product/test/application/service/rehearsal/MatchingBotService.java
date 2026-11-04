@@ -18,7 +18,6 @@ import com.umc.product.test.application.port.in.command.RunMatchingBotUseCase;
 import com.umc.product.test.application.port.in.command.dto.BotRunResult;
 import com.umc.product.test.application.port.in.command.dto.BotRunResult.Outcome;
 import com.umc.product.test.application.port.in.query.GetRoundSummaryUseCase;
-import com.umc.product.test.application.port.out.SeedProjectReadPort;
 import com.umc.product.test.application.service.qa.SeedFailureCode;
 import com.umc.product.test.domain.exception.SeedErrorCode;
 import com.umc.product.test.domain.exception.SeedRehearsalException;
@@ -27,7 +26,6 @@ import com.umc.product.test.domain.rehearsal.BotApplyParams;
 import com.umc.product.test.domain.rehearsal.BotApplyPlanner;
 import com.umc.product.test.domain.rehearsal.BotDecisionParams;
 import com.umc.product.test.domain.rehearsal.BotDecisionPlanner;
-import com.umc.product.test.domain.rehearsal.ChapterRoles;
 import com.umc.product.test.domain.rehearsal.DecisionPlan;
 import com.umc.product.test.domain.rehearsal.DecisionPlan.PlannedDecision;
 import com.umc.product.test.domain.rehearsal.RoundSnapshot;
@@ -49,8 +47,7 @@ public class MatchingBotService implements RunMatchingBotUseCase {
 
     private static final String DECISION_REASON = "[봇] PM 결정";
 
-    private final SeedProjectReadPort seedProjectReadPort;
-    private final RehearsalContextLoader contextLoader;
+    private final RoundSnapshotReader snapshotReader;
     private final GetRoundSummaryUseCase getRoundSummaryUseCase;
     private final GetMatchingSelectionRuleUseCase getMatchingSelectionRuleUseCase;
     private final BotApplicationWriter botApplicationWriter;
@@ -58,12 +55,12 @@ public class MatchingBotService implements RunMatchingBotUseCase {
 
     @Override
     public BotRunResult apply(Long roundId, BotApplyParams params) {
-        RoundSnapshot snapshot = RoundSummaryQueryService.load(seedProjectReadPort, roundId);
+        RoundSnapshot snapshot = snapshotReader.load(roundId);
         if (!snapshot.round().times().isApplicationOpenAt(snapshot.observedAt())) {
             throw new SeedRehearsalException(SeedErrorCode.NOT_IN_APPLICATION_WINDOW,
                 "차수 " + roundId + "는 지금 " + snapshot.round().times().stageAt(snapshot.observedAt()) + " 단계입니다.");
         }
-        ApplyPlan plan = BotApplyPlanner.plan(snapshot, roles(snapshot), params);
+        ApplyPlan plan = BotApplyPlanner.plan(snapshot, snapshotReader.roles(snapshot), params);
         Map<String, Integer> failed = new HashMap<>();
         int processed = run(plan.applications(), failed,
             planned -> botApplicationWriter.write(planned, roundId));
@@ -72,12 +69,12 @@ public class MatchingBotService implements RunMatchingBotUseCase {
 
     @Override
     public BotRunResult decide(Long roundId, BotDecisionParams params) {
-        RoundSnapshot snapshot = RoundSummaryQueryService.load(seedProjectReadPort, roundId);
+        RoundSnapshot snapshot = snapshotReader.load(roundId);
         if (!snapshot.round().times().isDecisionOpenAt(snapshot.observedAt())) {
             throw new SeedRehearsalException(SeedErrorCode.NOT_IN_DECISION_WINDOW,
                 "차수 " + roundId + "는 지금 " + snapshot.round().times().stageAt(snapshot.observedAt()) + " 단계입니다.");
         }
-        DecisionPlan plan = BotDecisionPlanner.plan(snapshot, roles(snapshot), params,
+        DecisionPlan plan = BotDecisionPlanner.plan(snapshot, snapshotReader.roles(snapshot), params,
             (applicants, remaining) -> getMatchingSelectionRuleUseCase.minimumRequired(
                 snapshot.round().type(), applicants, remaining));
         Map<String, Integer> failed = new HashMap<>();
@@ -89,10 +86,6 @@ public class MatchingBotService implements RunMatchingBotUseCase {
     private void decide(PlannedDecision decision, ApplicationDecisionStatus status) {
         decideApplicationUseCase.decide(decision.projectId(), decision.applicationId(), status, DECISION_REASON,
             decision.decidedBy());
-    }
-
-    private ChapterRoles roles(RoundSnapshot snapshot) {
-        return RoundSummaryQueryService.roles(contextLoader, snapshot);
     }
 
     private static <T> int run(List<T> items, Map<String, Integer> failed, Consumer<T> action) {
