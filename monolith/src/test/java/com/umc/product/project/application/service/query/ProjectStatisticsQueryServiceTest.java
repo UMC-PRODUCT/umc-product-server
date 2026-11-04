@@ -37,6 +37,7 @@ import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
+import com.umc.product.project.application.access.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.ApplicationPhaseCountInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectMatchingStatisticsInfo;
@@ -55,7 +56,6 @@ import com.umc.product.project.application.port.out.dto.ProjectStatisticsProject
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsTargetProjectRow;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver.ChapterTransferDelta;
-import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectPartQuota;

@@ -116,7 +116,7 @@ Recruiting migration은 최초 배포 전이라는 전제에서 `V2026.07.15.13.
 | `RecruitingRestContractTest` 면접 세션 범위 | 세션 CRUD, KST 보드, batch confirmation 및 단건 confirmation의 `sessionId` contract |
 | `RecruitingApplicationReviewControllerTest` | Round 지원서 목록 필터·페이지와 CurrentMember 전달 |
 | `RecruitingEvaluationControllerTest` | 평가 `PUT`, stage/path scope, CurrentMember, 평가 조회 |
-| `RecruitingCredentialRestRateLimitInterceptorTest` | lookup/update/submit/cancel의 IP bucket 공유, 생성 제외, 429 header |
+| `RecruitingCredentialRestRateLimitInterceptorTest` | lookup/update/submit/cancel의 IP bucket 공유, 생성 제외, 429 header, 로깅보다 먼저 실행되어 요청 로그 없이 `X-Trace-Id`를 담은 429 |
 | `RecruitingRestContractTest` | 모든 admin prefix, OpenAPI description, 숫자형 operation ID의 중복·카테고리 대역, actor 및 파생 validation 필드 비노출, legacy route 제거 |
 | `RecruitingApplicationRandomPortIntegrationTest` | 실제 REST/GraphQL socket, JWT/익명 보안, malformed email, credential 조회, CSV actor, P6Spy 민감정보 비노출 |
 

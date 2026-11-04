@@ -1,15 +1,21 @@
 package com.umc.product.demoday.adapter.in.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.support.StaticListableBeanFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -20,6 +26,8 @@ import com.umc.product.global.ratelimit.ApiRateLimitProperties;
 import com.umc.product.global.ratelimit.RateLimitBucketRegistry;
 import com.umc.product.global.ratelimit.RateLimitPolicy;
 import com.umc.product.global.response.ApiErrorResponseWriter;
+import com.umc.product.support.web.InterceptorPipelineMockMvc;
+import com.umc.product.support.web.RequestLogCapture;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
@@ -60,17 +68,47 @@ class DemodayGuestRateLimitInterceptorTest {
             .andExpect(status().isOk());
     }
 
+    @Test
+    @DisplayName("로깅 configurer가 먼저 등록돼도 차단된 게스트 요청은 요청 로그 없이 X-Trace-Id를 담은 429를 받는다")
+    void blockedGuestRequestSkipsRequestLogsAndKeepsTraceId() throws Exception {
+        // given
+        DemodayWebConfig demodayWebConfig = new DemodayWebConfig(
+            new StaticListableBeanFactory(Map.of(
+                "interceptor", interceptor(new RateLimitPolicy("demoday-guest-participation", 10, 1))
+            )).getBeanProvider(DemodayGuestRateLimitInterceptor.class)
+        );
+        MockMvc mockMvc = InterceptorPipelineMockMvc.build(
+            List.of(InterceptorPipelineMockMvc.webMvcConfig(), demodayWebConfig),
+            new GuestParticipationController()
+        );
+
+        try (RequestLogCapture requestLogs = new RequestLogCapture()) {
+            // when
+            mockMvc.perform(post("/api/v1/demoday/polls/1/participations/guest"))
+                .andExpect(status().isOk());
+            mockMvc.perform(post("/api/v1/demoday/polls/1/participations/guest"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().string("X-Trace-Id", InterceptorPipelineMockMvc.TRACE_ID));
+
+            // then
+            assertThat(requestLogs.events()).containsExactly("api_request_started", "api_request_completed");
+        }
+    }
+
     private static MockMvc mockMvcWithPolicy(RateLimitPolicy policy) {
+        return MockMvcBuilders.standaloneSetup(new GuestController())
+            .addInterceptors(interceptor(policy))
+            .build();
+    }
+
+    private static DemodayGuestRateLimitInterceptor interceptor(RateLimitPolicy policy) {
         ApiRateLimitProperties properties = ApiRateLimitProperties.defaults();
-        DemodayGuestRateLimitInterceptor interceptor = new DemodayGuestRateLimitInterceptor(
+        return new DemodayGuestRateLimitInterceptor(
             new RateLimitBucketRegistry(properties),
             new ApiErrorResponseWriter(new ObjectMapper()),
             new ApiRateLimitMetrics(new SimpleMeterRegistry()),
             policy
         );
-        return MockMvcBuilders.standaloneSetup(new GuestController())
-            .addInterceptors(interceptor)
-            .build();
     }
 
     @Controller
@@ -79,6 +117,15 @@ class DemodayGuestRateLimitInterceptorTest {
 
         @PostMapping("/guest")
         void submit() {
+        }
+    }
+
+    @Controller
+    @ResponseBody
+    private static class GuestParticipationController {
+
+        @PostMapping("/api/v1/demoday/polls/{pollId}/participations/guest")
+        void submit(@PathVariable Long pollId) {
         }
     }
 }

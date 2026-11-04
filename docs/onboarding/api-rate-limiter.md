@@ -16,21 +16,31 @@ Rate Limiter는 `HandlerInterceptor`로 동작한다.
 - 기본 활성화: `API_RATE_LIMIT_ENABLED`가 없으면 활성화된다.
 - 비활성화: `API_RATE_LIMIT_ENABLED=false`
 
-`WebMvcConfig`에서는 `LoggingInterceptor` 다음에 `ApiRateLimitInterceptor`를 등록한다. 이 순서 덕분에 rate limit으로 차단된 `429` 응답도 기존 요청 완료 로그에 남는다.
+MVC 인터셉터 실행 순서는 `global/config/InterceptorOrder`의 값으로 정한다. Spring은 어느 configurer에서 몇 번째로 등록했는지와 관계없이 이 값으로 정렬한다.
+
+1. `TraceIdHeaderInterceptor` (`TRACE_ID_HEADER`): MDC의 `traceId`를 `X-Trace-Id` 응답 헤더로 붙인다.
+2. 모든 MVC rate limiter (`RATE_LIMIT`): `ApiRateLimitInterceptor`, `DemodayGuestRateLimitInterceptor`, `RecruitingCredentialRestRateLimitInterceptor`.
+3. `LoggingInterceptor` (`LOGGING`).
+
+차단된 요청은 `LoggingInterceptor`에 닿지 않으므로 `api_request_started`·`api_request_completed` 로그와 client 요청 metric을 남기지 않는다. `X-Trace-Id` 헤더는 limiter보다 먼저 붙으므로 429 응답에도 남는다. 새 rate limiter를 등록할 때는 `.order(InterceptorOrder.RATE_LIMIT)`를 붙인다. `.order()`를 빠뜨려도 Spring 기본값 0이 `RATE_LIMIT`과 같아서 trace id 뒤, 로깅 앞에서 실행된다. 같은 값을 가진 인터셉터끼리는 등록 순서를 따른다. configurer는 패키지 이름 순으로 등록되므로 `DemodayGuestRateLimitInterceptor`가 `ApiRateLimitInterceptor`보다 먼저 돈다.
+
+차단량은 아래 관측 절의 metric과 key별 차단 로그로 본다.
 
 ```mermaid
 flowchart TB
     Client["Client"]
     Dispatcher["DispatcherServlet"]
+    TraceId["TraceIdHeaderInterceptor"]
     Logging["LoggingInterceptor"]
     RateLimit["ApiRateLimitInterceptor"]
     Controller["Controller"]
     ErrorWriter["ApiErrorResponseWriter"]
 
     Client --> Dispatcher
-    Dispatcher --> Logging
-    Logging --> RateLimit
-    RateLimit -->|"allowed"| Controller
+    Dispatcher --> TraceId
+    TraceId --> RateLimit
+    RateLimit -->|"allowed"| Logging
+    Logging --> Controller
     RateLimit -->|"blocked"| ErrorWriter
     ErrorWriter -->|"429 COMMON-429"| Client
 ```
@@ -263,7 +273,11 @@ tag는 다음과 같다.
 | `uriTemplate` | `/api/v1/projects/{projectId}`, `unmapped` |
 | `clientType` | `WEB`, `GUEST`, `ANONYMOUS`, `UNKNOWN` |
 
-metric tag에는 raw `memberId`, `entryCodeId`, IP를 넣지 않는다. 차단 로그도 `method`, `routePattern`, `clientType`, `retryAfterSeconds`, `keyHash`만 남긴다.
+metric tag에는 raw `memberId`, `entryCodeId`, IP를 넣지 않는다. 차단 로그도 `rule`, `method`, `routePattern`, `clientType`, `retryAfterSeconds`, `keyHash`, `suppressedSinceLastLog`만 남긴다.
+
+차단 로그 `api_rate_limit_blocked`는 bucket key마다 1분에 한 줄만 남긴다. 그 1분 안의 나머지 차단은 개수만 세고, 다음 구간 첫 줄의 `suppressedSinceLastLog`에 담는다. 같은 `keyHash`가 매분 찍히고 `suppressedSinceLastLog`가 크면 그 key가 계속 한도를 넘고 있다는 뜻이다. 정확한 차단 총량은 `result=blocked` counter로 본다.
+
+`RateLimitBlockLogSampler`는 key별 구간을 Caffeine cache에 둔다. 항목 수 상한과 만료는 bucket cache와 같은 `API_RATE_LIMIT_CACHE_MAXIMUM_SIZE`, `API_RATE_LIMIT_CACHE_EXPIRE_AFTER_ACCESS` 값을 쓴다. sampler가 bucket cache보다 작으면 bucket이 남은 key의 구간만 먼저 밀려나 차단마다 로그가 다시 남기 때문이다. 만료되거나 밀려난 key에 남아 있던 생략 개수는 로그에 남지 않고 counter에만 남는다.
 
 ## 운영 시 주의사항
 

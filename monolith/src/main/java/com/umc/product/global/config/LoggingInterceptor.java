@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>단일 요청 식별자는 Micrometer Tracing 이 자동으로 MDC 에 넣는 {@code traceId} 를 그대로 재사용한다.
  * 별도의 UUID 기반 requestId 는 발급하지 않는다 — FE 등 외부 시스템이 이미 {@code X-Trace-Id} 응답 헤더로
- * 알고 있는 식별자를 변경하지 않기 위해서다.
+ * 알고 있는 식별자를 변경하지 않기 위해서다. 헤더 노출은 {@link TraceIdHeaderInterceptor} 가 맡는다.
  *
  * <p>ThreadLocal 누수를 막기 위해 {@link #afterCompletion} 의 finally 블록에서 반드시
  * {@link QueryStatsHolder#clear()} 와 {@link MDC#clear()} 를 호출한다 — 조기 반환 / 예외 경로 모두 포함.
@@ -42,8 +42,6 @@ public class LoggingInterceptor implements HandlerInterceptor {
     private static final String START_TIME_ATTR = "startTime";
     private static final String CLIENT_IP_ATTR = "clientIp";
     public static final String CLIENT_REQUEST_CONTEXT_ATTR = "clientRequestContext";
-
-    private static final String TRACE_ID_HEADER = "X-Trace-Id";
 
     // ===== MDC keys (ADR-016 §MDC 키 표준) =====
     private static final String MDC_MEMBER_ID = "memberId";
@@ -58,7 +56,6 @@ public class LoggingInterceptor implements HandlerInterceptor {
     private static final String MDC_CLIENT_IP = "clientIp";
     private static final String MDC_EVENT = "event";
     private static final String MDC_EXCEPTION = "exception";
-    private static final String MDC_TRACE_ID = "traceId";
     private static final String MDC_CLIENT_SERVICE = "clientService";
     private static final String MDC_CLIENT_DEVICE = "clientDevice";
     private static final String MDC_CLIENT_ENVIRONMENT = "clientEnvironment";
@@ -88,13 +85,6 @@ public class LoggingInterceptor implements HandlerInterceptor {
         MDC.put(MDC_METHOD, request.getMethod());
         MDC.put(MDC_PATH, request.getRequestURI());
         MDC.put(MDC_CLIENT_TYPE, UNKNOWN);
-
-        // Micrometer Tracing 이 채워 둔 traceId 를 FE 디버깅용으로 응답 헤더에 노출.
-        // 별도 requestId UUID 는 발급하지 않는다 (FE 호환성 — X-Trace-Id 가 이미 사용 중).
-        String traceId = MDC.get(MDC_TRACE_ID);
-        if (traceId != null) {
-            response.setHeader(TRACE_ID_HEADER, traceId);
-        }
 
         // 인증된 사용자라면 memberId / clientType 을 MDC 에 등록.
         // clientType 이 없으면 UNKNOWN 으로 남겨 메트릭에서 누락 트래픽을 집계할 수 있게 한다.

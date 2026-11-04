@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import com.umc.product.global.config.InterceptorOrder;
+
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -16,6 +18,7 @@ public class DemodayWebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         interceptorProvider.ifAvailable(interceptor -> registry.addInterceptor(interceptor)
+            .order(InterceptorOrder.RATE_LIMIT)
             .addPathPatterns("/api/v1/demoday/polls/*/participations/guest"));
     }
 }

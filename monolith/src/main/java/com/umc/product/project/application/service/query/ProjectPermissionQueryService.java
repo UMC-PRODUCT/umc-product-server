@@ -28,6 +28,7 @@ import com.umc.product.project.application.access.ProjectApplicationAccessScope;
 import com.umc.product.project.application.access.ProjectApplicationAccessScopeResolver;
 import com.umc.product.project.application.access.ProjectApplicationDecisionPolicy;
 import com.umc.product.project.application.access.ProjectQuotaAccessPolicy;
+import com.umc.product.project.application.access.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.application.port.in.query.GetProjectPermissionsUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionCapabilityInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionInfo;
@@ -48,7 +49,6 @@ import com.umc.product.project.application.service.policy.ProjectManualMatchingA
 import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
-import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.ProjectMatchingRound;

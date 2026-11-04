@@ -28,7 +28,7 @@ notification/
 | FCM sending | `FcmService.java`, `FcmOutboxService.java` | direct and outbox delivery |
 | Audience | `FcmAudienceService.java` | target expansion |
 | Email | `SendEmailService.java`, `adapter/out/external/{ses,smtp,log}/*EmailAdapter.java` | `app.notification.email.provider` picks one; `log` is the local default and sends nothing |
-| Webhooks | `WebhookAlarmService.java`, `Discord/Slack/TelegramWebhookAdapter.java` | external alarm paths |
+| Webhooks | `WebhookAlarmService.java`, `DiscordWebhookAdapter.java` | Discord 단일 플랫폼. 2026-11-04 다른 플랫폼 어댑터 제거 |
 | Persistence | `adapter/out/persistentce` | current persistence adapter package name |
 
 ## CONVENTIONS

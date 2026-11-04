@@ -1,5 +1,7 @@
 package com.umc.product.notification.adapter.out.external.smtp;
 
+import java.nio.file.Path;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
@@ -16,7 +18,8 @@ public record SmtpProperties(
     @DefaultValue("smtp.gmail.com") @NotBlank String host,
     @DefaultValue("587") @Min(1) @Max(65535) int port,
     @NotBlank String username,
-    @NotBlank String password
+    @NotBlank String password,
+    Path trustedCertificate
 ) {
 
     @Override

@@ -27,7 +27,7 @@ class WebhookAlarmEventListenerTest {
     void webhookAlarmEvent를_send_usecase로_위임한다() {
         WebhookAlarmEventListener sut = new WebhookAlarmEventListener(sendWebhookAlarmUseCase);
         WebhookAlarmEvent event = WebhookAlarmEvent.of(
-            List.of(WebhookPlatform.TELEGRAM),
+            List.of(WebhookPlatform.DISCORD),
             "테스트 알림",
             "테스트 본문"
         );
@@ -35,7 +35,7 @@ class WebhookAlarmEventListenerTest {
         sut.handle(event);
 
         then(sendWebhookAlarmUseCase).should().send(argThat(command ->
-            command.platforms().equals(List.of(WebhookPlatform.TELEGRAM))
+            command.platforms().equals(List.of(WebhookPlatform.DISCORD))
                 && command.title().equals("테스트 알림")
                 && command.content().equals("테스트 본문")
         ));

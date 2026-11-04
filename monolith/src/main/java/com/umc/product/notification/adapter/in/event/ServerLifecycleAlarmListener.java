@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ServerLifecycleAlarmListener {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final List<WebhookPlatform> PLATFORMS = List.of(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD);
+    private static final List<WebhookPlatform> PLATFORMS = List.of(WebhookPlatform.DISCORD);
 
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
 

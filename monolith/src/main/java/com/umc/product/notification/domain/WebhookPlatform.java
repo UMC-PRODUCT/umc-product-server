@@ -6,10 +6,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum WebhookPlatform {
-    SLACK("Slack"),
-    DISCORD("Discord"),
-    TELEGRAM("Telegram"),
-    ;
+    DISCORD("Discord");
 
     private final String displayName;
 }

@@ -161,7 +161,7 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
                 + " 님이 gisuId=" + record.getGisuId() + "의 코드를 등록했습니다."
                 + " part=" + record.getPart() + ", infra=" + record.isInfra()
                 + ", role=" + record.getChallengerRoleType())
-            .platforms(List.of(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD))
+            .platforms(List.of(WebhookPlatform.DISCORD))
             .build());
     }
 

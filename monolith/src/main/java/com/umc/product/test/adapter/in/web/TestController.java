@@ -96,7 +96,7 @@ public class TestController {
     @WebhookAlarm(
         title = "'알람 테스트 : ' + #title",
         content = "'내용 : ' + #result.content",
-        platforms = {WebhookPlatform.TELEGRAM}
+        platforms = {WebhookPlatform.DISCORD}
     )
     @Audited(
         domain = Domain.AUDIT_LOG,
@@ -128,7 +128,7 @@ public class TestController {
             SendWebhookAlarmCommand.builder()
                 .title(title == null ? "알람 테스트" : title)
                 .content(content == null ? "알람 테스트 내용입니다." : content)
-                .platforms(List.of(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD))
+                .platforms(List.of(WebhookPlatform.DISCORD))
                 .build()
         );
     }
@@ -149,7 +149,7 @@ public class TestController {
                 SendWebhookAlarmCommand.builder()
                     .title(bTitle)
                     .content(bContent)
-                    .platforms(List.of(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD))
+                    .platforms(List.of(WebhookPlatform.DISCORD))
                     .build()
             );
         }

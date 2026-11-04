@@ -1,15 +1,19 @@
 package com.umc.product.recruiting.adapter.in.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.support.StaticListableBeanFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -24,6 +28,8 @@ import com.umc.product.global.ratelimit.ApiRateLimitMetrics;
 import com.umc.product.global.ratelimit.ApiRateLimitProperties;
 import com.umc.product.global.ratelimit.RateLimitBucketRegistry;
 import com.umc.product.global.response.ApiErrorResponseWriter;
+import com.umc.product.support.web.InterceptorPipelineMockMvc;
+import com.umc.product.support.web.RequestLogCapture;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
@@ -78,16 +84,45 @@ class RecruitingCredentialRestRateLimitInterceptorTest {
             .andExpect(status().isTooManyRequests());
     }
 
+    @Test
+    @DisplayName("로깅 configurer가 먼저 등록돼도 차단된 credential 요청은 요청 로그 없이 X-Trace-Id를 담은 429를 받는다")
+    void blockedCredentialRequestSkipsRequestLogsAndKeepsTraceId() throws Exception {
+        // given
+        RecruitingWebConfig recruitingWebConfig = new RecruitingWebConfig(
+            new StaticListableBeanFactory(Map.of("interceptor", interceptor()))
+                .getBeanProvider(RecruitingCredentialRestRateLimitInterceptor.class)
+        );
+        MockMvc mockMvc = InterceptorPipelineMockMvc.build(
+            List.of(InterceptorPipelineMockMvc.webMvcConfig(), recruitingWebConfig),
+            new CredentialController()
+        );
+
+        try (RequestLogCapture requestLogs = new RequestLogCapture()) {
+            // when
+            mockMvc.perform(post("/api/v1/recruiting/public/applications/lookup"))
+                .andExpect(status().isOk());
+            mockMvc.perform(post("/api/v1/recruiting/public/applications/cancel"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().string("X-Trace-Id", InterceptorPipelineMockMvc.TRACE_ID));
+
+            // then
+            assertThat(requestLogs.events()).containsExactly("api_request_started", "api_request_completed");
+        }
+    }
+
     private static MockMvc mockMvc(CredentialController controller) {
+        return MockMvcBuilders.standaloneSetup(controller)
+            .addInterceptors(interceptor())
+            .build();
+    }
+
+    private static RecruitingCredentialRestRateLimitInterceptor interceptor() {
         ApiRateLimitProperties properties = ApiRateLimitProperties.defaults();
-        RecruitingCredentialRestRateLimitInterceptor interceptor = new RecruitingCredentialRestRateLimitInterceptor(
+        return new RecruitingCredentialRestRateLimitInterceptor(
             new RateLimitBucketRegistry(properties),
             new ApiErrorResponseWriter(new ObjectMapper()),
             new ApiRateLimitMetrics(new SimpleMeterRegistry())
         );
-        return MockMvcBuilders.standaloneSetup(controller)
-            .addInterceptors(interceptor)
-            .build();
     }
 
     @Controller
