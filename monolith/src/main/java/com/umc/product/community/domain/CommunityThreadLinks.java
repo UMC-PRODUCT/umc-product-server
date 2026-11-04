@@ -34,13 +34,13 @@ public final class CommunityThreadLinks {
 
     /**
      * Android Chrome·인앱 브라우저용 intent URL. 앱이 있으면 {@link #appUrl(Long)}과 같은 화면을 열고,
-     * 없으면 {@code fallbackUrl}로 이동한다. 커스텀 스킴 링크는 앱이 없을 때 아무 반응이 없어서 쓴다.
+     * 없으면 {@code storeUrl}(Play 스토어)로 이동한다. 커스텀 스킴 링크는 앱이 없을 때 아무 반응이 없어서 쓴다.
      */
-    public static String androidIntentUrl(Long threadId, String packageName, String fallbackUrl) {
+    public static String androidIntentUrl(Long threadId, String packageName, String storeUrl) {
         return "intent://" + APP_HOST + "/" + threadId
             + "#Intent;scheme=" + APP_SCHEME
             + ";package=" + packageName
-            + ";S.browser_fallback_url=" + URLEncoder.encode(fallbackUrl, StandardCharsets.UTF_8)
+            + ";S.browser_fallback_url=" + URLEncoder.encode(storeUrl, StandardCharsets.UTF_8)
             + ";end";
     }
 }

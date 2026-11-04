@@ -15,12 +15,16 @@ import com.umc.product.global.security.annotation.Public;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 커뮤니티 스레드 공유 링크가 앱이 가로채지 못하고 브라우저로 열렸을 때 보여줄 페이지(#1268).
+ * 커뮤니티 스레드 공유 링크가 앱이 가로채지 못하고 브라우저로 열렸을 때 응답하는 페이지(#1268).
  *
  * <p>App Link/Universal Link 검증을 통과한 기기에서는 이 요청 자체가 OS 레벨에서 가로채져
- * 서버까지 오지 않는다. 여기까지 도달했다는 건 앱이 없거나 검증 전이라는 뜻이라, "앱에서 열기"
- * 시도와 스토어 안내를 함께 보여준다. 단순 리다이렉트 대신 페이지를 쓰는 건, 리다이렉트는 스토어로
- * 바로 튕겨서 "앱에서 열기"를 다시 시도할 여지가 없기 때문이다.</p>
+ * 서버까지 오지 않는다. 여기까지 왔다면 앱이 없거나, 인앱 브라우저(카카오톡 등)·주소창 직접 입력처럼
+ * OS가 링크를 가로채지 않는 경로다.</p>
+ *
+ * <p>모바일에서는 버튼 없이 앱 실행을 자동으로 시도하고, 앱이 열리지 않으면 플랫폼 스토어로 이동한다.
+ * 서버 302로 스토어에 바로 보내지 않는 이유는, 인앱 브라우저로 들어온 사용자는 앱이 있어도 여기까지
+ * 오기 때문에 이미 설치한 앱의 스토어 페이지를 보게 되기 때문이다. 데스크톱 등 앱을 열 수 없는
+ * 환경에서는 두 스토어 링크만 보여준다.</p>
  */
 @Controller
 @RequiredArgsConstructor
@@ -36,19 +40,26 @@ public class CommunityThreadDeepLinkFallbackController {
         Model model
     ) {
         ClientDeviceType platform = ClientDeviceType.fromUserAgent(userAgent);
-        DeepLinkProperties.Android android = deepLinkProperties.android();
+        String playStoreUrl = deepLinkProperties.android().playStoreUrl();
+        String appStoreUrl = deepLinkProperties.ios().appStoreUrl();
 
-        model.addAttribute("appDeepLink", appDeepLink(platform, threadId, android));
         model.addAttribute("platform", platform.name());
-        model.addAttribute("androidStoreUrl", android.playStoreUrl());
-        model.addAttribute("iosStoreUrl", deepLinkProperties.ios().appStoreUrl());
-        model.addAttribute("fallbackUrl", deepLinkProperties.fallbackUrl());
+        model.addAttribute("autoLaunch", isMobile(platform));
+        model.addAttribute("appDeepLink", appDeepLink(platform, threadId));
+        model.addAttribute("storeUrl", platform == ClientDeviceType.IOS ? appStoreUrl : playStoreUrl);
+        model.addAttribute("androidStoreUrl", playStoreUrl);
+        model.addAttribute("iosStoreUrl", appStoreUrl);
         return "community/thread-deep-link";
     }
 
+    private static boolean isMobile(ClientDeviceType platform) {
+        return platform == ClientDeviceType.IOS || platform == ClientDeviceType.ANDROID;
+    }
+
     // Android는 앱이 없을 때 커스텀 스킴 링크가 무반응이라, 스토어로 넘어가는 intent URL을 쓴다.
-    private String appDeepLink(ClientDeviceType platform, Long threadId, DeepLinkProperties.Android android) {
+    private String appDeepLink(ClientDeviceType platform, Long threadId) {
         if (platform == ClientDeviceType.ANDROID) {
+            DeepLinkProperties.Android android = deepLinkProperties.android();
             return CommunityThreadLinks.androidIntentUrl(threadId, android.packageName(), android.playStoreUrl());
         }
         return CommunityThreadLinks.appUrl(threadId);
