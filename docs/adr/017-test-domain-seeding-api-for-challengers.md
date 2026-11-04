@@ -9,6 +9,13 @@ Proposed
 시나리오 시딩(`POST /test/seed/projects/scenarios`, `SEED-003-S`)으로 만든다. 시딩 데이터 정리
 API(`DELETE /test/seed/projects`)는 유지한다. 아래 프로젝트 시딩 절은 도입 당시 기록이다.
 
+멤버 대량 시딩(`POST /test/seed/members`)도 삭제됐다. 삭제된 학교 id를 무작위로 골라 한 건이라도 실패하면
+전체가 롤백되는데도 200으로 응답했다. 고정 QA 계정은 `POST /test/seed/qa`가 커밋된 11기 명단으로 만들고,
+단건 멤버는 `POST /test/seed/member`로 만든다. 지원서 시나리오 시딩(`POST /test/seed/project-applications`,
+`SEED-006`)은 11기 개발 파트를 몰라 늘 빈 결과를 내서 삭제했다. `/challengers`와 `/curriculum`의 기본 파트는
+PLAN, DESIGN, WEB_PRODUCT_ENGINEER, MOBILE_PRODUCT_ENGINEER다. 아래 멤버 시딩 절과 운영 가이드의 멤버 시딩
+설명은 도입 당시 기록이다.
+
 ## Context
 
 `feat/alpha-env-dummy-data-seeding` 브랜치의 일련의 커밋(`abbb8c71`,
@@ -463,8 +470,8 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
 
 다섯 API 는 의존성이 있어 다음 순서로 호출한다.
 
-1. **`POST /test/seed/members`** — Member 풀을 채운다. Challenger·Project 시딩이
-   사용할 Member 가 없으면 후속 시딩이 모두 skip 된다.
+1. **`POST /test/seed/qa`** — 고정 QA 계정 593개와 학습·출석·공지·상벌점·채팅·매칭 지부 이동을 만든다.
+   다시 불러도 이미 있는 것은 건너뛴다.
 2. **`POST /test/seed/challengers`** — 활성 기수의 (Chapter, School, Part) 셀별로
    더미 Member + Challenger 를 함께 만든다. 멤버 시딩과 사실상 동일 효과지만 챌린저까지
    함께 생성되므로 챌린저 화면 검증에 유리하다.
@@ -472,7 +479,7 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
    IN_PROGRESS 상태의 프로젝트를 N 개 만든다. IN_PROGRESS 는 `adminMemberId`(총괄단 또는
    지부장)가 PO 를 지정해 직접 등록하고, 지부 TO 상한 안에서 파트별 TO 를 정한 뒤 공개한다.
    팀원은 채우지 않는다.
-4. **`POST /test/seed/curriculum`** — 활성 기수에 ADMIN 제외 파트별로 Curriculum →
+4. **`POST /test/seed/curriculum`** — 활성 기수에 선택 가능한 파트별로 Curriculum →
    WeeklyCurriculum → OriginalWorkbook(MAIN, READY) → Mission 골격을 생성한다.
    `releaseRequesterMemberId` 를 함께 보내면 워크북을 READY → RELEASED 로 전환해
    Phase 2 (챌린저 워크북 배포·미션 제출) 작업의 입구를 열어둔다. Phase 2 시딩은
@@ -486,9 +493,8 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
 ### 권장 호출 예시 (alpha 환경 초기화)
 
 ```bash
-# 1. 풀 채우기: 200명 (chapter당 약 5명, school 마다 5~6명)
-curl -X POST $BASE/test/seed/members -H 'Content-Type: application/json' \
-  -d '{"count": 200, "force": false}'
+# 1. 고정 QA 계정과 QA 시나리오 데이터
+curl -X POST $BASE/test/seed/qa
 
 # 2. 챌린저 분포: 활성 기수, 셀당 2명
 curl -X POST $BASE/test/seed/challengers -H 'Content-Type: application/json' \
@@ -509,8 +515,8 @@ curl -X POST $BASE/test/seed/notice -H 'Content-Type: application/json' \
 
 ### 응답 해석
 
-- `SeedMembersResponse.skipped=true` — 이미 임계값 이상 회원이 존재. `force=true` 로
-  재호출하면 시딩한다(이전 회원 위에 시퀀스가 오프셋되어 충돌하지 않음).
+- `QaSeedResponse.steps[i].status` — `APPLIED`(새로 만듦), `UNCHANGED`(모두 이미 있음), `FAILED`(실패,
+  `failed`·`errorCode` 확인), `NOT_RUN`(계정 단계 실패로 실행 안 함).
 - `SeedChallengersResponse.perCellSummary[i].memberFailed > 0` — 해당 셀의 멤버
   생성에서 실패가 발생. 보통 `MemberRegistrationValidator` 의 dynamic 검증 실패가
   원인이다(필수 약관 변경 등).

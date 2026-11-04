@@ -3,7 +3,6 @@ package com.umc.product.test.application.service;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
@@ -20,14 +19,13 @@ import lombok.RequiredArgsConstructor;
 /**
  * datafaker 를 사용해 test 도메인 시딩용 더미 이메일 회원 Command 를 생성한다. ADR-017 참조.
  * <p>
- * V2026.02.28.06.00 마이그레이션이 school 1~38 을 시딩하므로 schoolId 무작위 추출은 그 범위에서 고른다.
  * email 은 sequence 번호로 고정해 멱등성과 유일성을 동시에 만족시킨다. 모든 더미 회원은
  * 같은 비밀번호({@link SeedProperties#defaultPassword()})를 사용한다.
  * <p>
  * <b>약관 동의 캐싱</b>: 시딩은 N 명을 한 번에 만들기 때문에 매 멤버마다
  * {@code GetTermUseCase.getRequiredTermIds()} 를 호출하면 N 회 SELECT 가 발생한다. 호출자가
  * {@link #snapshotMandatoryConsents()} 로 1 회만 조회하고 그 결과를
- * {@link #nextEmailCommand(long, List)} 등의 인자로 재사용하면 약관 조회 횟수가 1 회로 줄어든다.
+ * {@link #nextEmailCommandWithSchool(long, Long, List)} 의 인자로 재사용하면 약관 조회 횟수가 1 회로 줄어든다.
  */
 @Component
 @Profile("!prod")
@@ -35,8 +33,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DummyMemberFactory {
 
-    private static final long MIN_SCHOOL_ID = 1L;
-    private static final long MAX_SCHOOL_ID = 38L;
     private static final int MAX_NICKNAME_LENGTH = 20;
 
     private final SeedProperties properties;
@@ -57,16 +53,8 @@ public class DummyMemberFactory {
     }
 
     /**
-     * 이메일 회원가입용 Command 를 만든다. email 은 alpha_user_0001@{properties.emailDomain} 형식.
-     * schoolId 는 1~38 범위 무작위.
-     */
-    public EmailRegisterMemberCommand nextEmailCommand(long sequence, List<TermConsents> termConsents) {
-        return nextEmailCommandWithSchool(sequence, randomSchoolId(), termConsents);
-    }
-
-    /**
-     * 지정한 schoolId 로 이메일 회원가입 Command 를 만든다. 챌린저/프로젝트 분포 시딩처럼 학교 정합성이
-     * 필요한 케이스에서 사용한다.
+     * 지정한 schoolId 로 이메일 회원가입 Command 를 만든다. email 은 alpha_user_0001@{properties.emailDomain} 형식.
+     * 챌린저 분포 시딩처럼 학교 정합성이 필요한 케이스에서 사용한다.
      */
     public EmailRegisterMemberCommand nextEmailCommandWithSchool(
         long sequence, Long schoolId, List<TermConsents> termConsents
@@ -80,10 +68,6 @@ public class DummyMemberFactory {
             .schoolId(schoolId)
             .termConsents(termConsents)
             .build();
-    }
-
-    private long randomSchoolId() {
-        return ThreadLocalRandom.current().nextLong(MIN_SCHOOL_ID, MAX_SCHOOL_ID + 1);
     }
 
     /**

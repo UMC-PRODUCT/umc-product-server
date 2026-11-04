@@ -1,7 +1,6 @@
 package com.umc.product.test.application.service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -46,9 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ChallengerSeedService implements SeedChallengersUseCase, CreateSeedChallengerUseCase {
 
-    private static final List<ChallengerPart> DEFAULT_PARTS = Arrays.stream(ChallengerPart.values())
-        .filter(part -> part != ChallengerPart.ADMIN)
-        .toList();
+    private static final List<ChallengerPart> DEFAULT_PARTS = ChallengerPart.selectableValues();
 
     private final DummyMemberFactory dummyMemberFactory;
     private final GetMemberUseCase getMemberUseCase;

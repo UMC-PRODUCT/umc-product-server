@@ -9,6 +9,7 @@
 ```text
 test/
 ├── dto/                            # seed request/response DTOs
+├── domain/roster                   # pure QA roster, account plan, rehearsal cast (no IO)
 ├── application/port/in             # seed UseCases
 ├── application/port/out            # cleanup/persistence ports
 ├── application/service             # member/challenger/project/curriculum/notice seed flows
@@ -22,7 +23,8 @@ test/
 |------|----------|-------|
 | Seed API | `adapter/in/web/SeedController.java` | scenario seed surface |
 | Test API | `adapter/in/web/TestController.java` | utility/test endpoint surface |
-| Project seeds | `ProjectScenarioSeedService.java`, `ProjectApplicationSeedService.java` | project/application scenario data |
+| QA seeds | `application/service/qa/*Step.java`, `QaSeedOrchestrator.java`, `domain/roster/*` | `/test/seed/qa`: committed 11th-gen roster -> accounts and per-domain QA data, one step per transaction |
+| Project seeds | `ProjectScenarioSeedService.java` | project scenario data |
 | Member/challenger seeds | `MemberSeedService.java`, `ChallengerSeedService.java` | member/challenger setup |
 | Curriculum seeds | `CurriculumSeedService.java` | curriculum/workbook setup |
 | Notice seeds | `NoticeSeedService.java` | notice setup |
