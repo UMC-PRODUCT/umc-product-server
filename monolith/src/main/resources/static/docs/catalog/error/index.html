@@ -167,7 +167,7 @@
   "schemaVersion": 1,
   "service": "umc-product-server",
   "generatedAt": null,
-  "totalCount": 672,
+  "totalCount": 674,
   "items": [
     {
       "sequence": 1,
@@ -14934,6 +14934,50 @@
     {
       "sequence": 672,
       "domain": "test",
+      "code": "SEED-0305",
+      "name": "NOT_IN_APPLICATION_WINDOW",
+      "httpStatus": 409,
+      "httpStatusName": "CONFLICT",
+      "message": "지원 기간이 아니에요. 봇 지원은 차수 지원 시작부터 지원 마감 전까지만 부를 수 있어요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "SeedErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java",
+        "line": 15
+      }
+    },
+    {
+      "sequence": 673,
+      "domain": "test",
+      "code": "SEED-0306",
+      "name": "NOT_IN_DECISION_WINDOW",
+      "httpStatus": 409,
+      "httpStatusName": "CONFLICT",
+      "message": "PM 결정 기간이 아니에요. 봇 결정은 지원 마감 뒤부터 선발 마감 전, 자동 선발 전까지만 부를 수 있어요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "SeedErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java",
+        "line": 17
+      }
+    },
+    {
+      "sequence": 674,
+      "domain": "test",
       "code": "SEED-0307",
       "name": "ROUND_NOT_FOUND",
       "httpStatus": 404,
@@ -14950,7 +14994,7 @@
       "source": {
         "enumName": "SeedErrorCode",
         "file": "monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java",
-        "line": 15
+        "line": 19
       }
     }
   ]

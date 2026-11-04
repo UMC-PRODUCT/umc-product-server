@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -52,6 +53,7 @@ class MatchingRehearsalIntegrationTest extends IntegrationTestSupport {
     @Autowired private UpdatePartQuotasUseCase updatePartQuotasUseCase;
     @Autowired private PublishProjectUseCase publishProjectUseCase;
     @Autowired private CreateProjectMatchingRoundUseCase createProjectMatchingRoundUseCase;
+    @Autowired private TransactionTemplate transactionTemplate;
 
     private static final String QUOKKA = "쿼카";
     private static final List<String> PROJECT_TABLES = List.of(
@@ -59,7 +61,7 @@ class MatchingRehearsalIntegrationTest extends IntegrationTestSupport {
         "project_application", "form_response", "answer", "answer_choice");
 
     @Test
-    @DisplayName("QA 계정 다음 출발선을 만들면 지부마다 공개·승인 대기·무프로젝트 PLAN이 나뉘고, 다시 부르면 아무것도 바꾸지 않는다")
+    @DisplayName("빈 DB에서 QA 계정, 출발선, 쿼카 1차 개발 차수의 봇 지원·결정을 차례로 만들고, 각 단계를 다시 부르면 아무것도 바꾸지 않는다")
     void rehearsalFromEmptyDatabase() throws Exception {
         // given
         JsonNode qa = post("/test/seed/qa").path("steps");
@@ -121,6 +123,90 @@ class MatchingRehearsalIntegrationTest extends IntegrationTestSupport {
         assertThat(summary.path("parts").findValuesAsText("applied")).containsOnly("0");
         assertThat(summary.path("qaReserved")).hasSize(6);
         assertThat(summary.path("projectsWithoutApplicants")).hasSize(17);
+        assertThat(postStatus("/test/seed/matching/rounds/" + roundId + "/bot-applications")).isEqualTo(409);
+
+        // given
+        moveRound(roundId, "starts_at = now() - interval '1 minute'");
+
+        // when
+        JsonNode applied = post("/test/seed/matching/rounds/" + roundId + "/bot-applications");
+
+        // then
+        int pool = 61 + 34 - 6;
+        int expectedApplicants = Math.round(0.8f * pool);
+        assertThat(applied.path("failed").size()).as(applied.path("failed").toString()).isZero();
+        assertThat(applied.path("outcome").asText()).isEqualTo("APPLIED");
+        assertThat(applied.path("processed").asInt()).isEqualTo(expectedApplicants);
+        JsonNode afterApply = applied.path("summary");
+        assertThat(sum(afterApply.path("parts").findValuesAsText("applied"))).isEqualTo(expectedApplicants);
+        assertThat(sum(afterApply.path("projects").findValuesAsText("appliedBot"))).isEqualTo(expectedApplicants);
+        assertThat(afterApply.path("qaReserved").findValuesAsText("applicationStatus")).containsOnly("null");
+        assertThat(count("""
+            SELECT count(*) FROM project_application WHERE applied_matching_round_id = %d AND status = 'SUBMITTED'
+            """.formatted(roundId))).isEqualTo(expectedApplicants);
+        Map<String, Long> afterBotApply = tableCounts();
+
+        // when
+        JsonNode applyAgain = post("/test/seed/matching/rounds/" + roundId + "/bot-applications");
+
+        // then
+        assertThat(applyAgain.path("outcome").asText()).as(applyAgain.toPrettyString()).isEqualTo("UNCHANGED");
+        assertThat(applyAgain.path("skipped").path("ALREADY_APPLIED").asInt()).isEqualTo(expectedApplicants);
+        assertThat(tableCounts()).isEqualTo(afterBotApply);
+        assertThat(postStatus("/test/seed/matching/rounds/" + roundId + "/bot-decisions")).isEqualTo(409);
+
+        // given
+        moveRound(roundId, "ends_at = now() - interval '1 second'");
+        assertThat(postStatus("/test/seed/matching/rounds/" + roundId + "/bot-applications")).isEqualTo(409);
+
+        // when
+        JsonNode decided = post("/test/seed/matching/rounds/" + roundId + "/bot-decisions");
+
+        // then
+        assertThat(decided.path("failed").size()).as(decided.path("failed").toString()).isZero();
+        assertThat(decided.path("outcome").asText()).isEqualTo("APPLIED");
+        assertThat(decided.path("skipped").path("QA_PROJECT").asInt()).isEqualTo(2);
+        JsonNode afterDecide = decided.path("summary");
+        assertThat(afterDecide.path("round").path("stage").asText()).isEqualTo("DECISION_WINDOW");
+        int approved = 0;
+        for (JsonNode project : afterDecide.path("projects")) {
+            for (JsonNode part : project.path("parts")) {
+                int decidedCount = part.path("approved").asInt() + part.path("rejected").asInt();
+                int appliedCount = part.path("appliedBot").asInt() + part.path("appliedQa").asInt();
+                assertThat(part.path("approved").asInt()).isLessThanOrEqualTo(part.path("quota").asInt());
+                assertThat(decidedCount + part.path("undecided").asInt()).isEqualTo(appliedCount);
+                if (project.path("qaProject").asBoolean()) {
+                    assertThat(decidedCount).as("QA 프로젝트는 봇이 결정하지 않는다").isZero();
+                }
+                approved += part.path("approved").asInt();
+            }
+        }
+        assertThat(approved).isPositive();
+        assertThat(decided.path("processed").asInt()).isEqualTo(approved + sum(
+            afterDecide.path("projects").findValuesAsText("rejected")));
+        Map<String, Long> afterBotDecide = tableCounts();
+
+        // when
+        JsonNode decideAgain = post("/test/seed/matching/rounds/" + roundId + "/bot-decisions");
+
+        // then
+        assertThat(decideAgain.path("outcome").asText()).as(decideAgain.toPrettyString()).isEqualTo("UNCHANGED");
+        assertThat(decideAgain.path("summary").path("projects")).isEqualTo(afterDecide.path("projects"));
+        assertThat(tableCounts()).isEqualTo(afterBotDecide);
+    }
+
+    private void moveRound(Long roundId, String assignment) {
+        transactionTemplate.executeWithoutResult(status -> entityManager
+            .createNativeQuery("UPDATE project_matching_round SET " + assignment + " WHERE id = " + roundId)
+            .executeUpdate());
+    }
+
+    private int postStatus(String path) throws Exception {
+        return mockMvc.perform(MockMvcRequestBuilders.post(path)).andReturn().getResponse().getStatus();
+    }
+
+    private static int sum(List<String> values) {
+        return values.stream().mapToInt(Integer::parseInt).sum();
     }
 
     private void publishQaProjects(String chapter, Long superadmin) {

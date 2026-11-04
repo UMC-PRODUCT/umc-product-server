@@ -27,17 +27,16 @@ public class RoundSummaryQueryService implements GetRoundSummaryUseCase {
 
     @Override
     public RoundSummary get(Long roundId) {
-        RoundSnapshot snapshot = load(roundId);
-        return RoundSummary.of(snapshot, roles(snapshot));
+        RoundSnapshot snapshot = load(seedProjectReadPort, roundId);
+        return RoundSummary.of(snapshot, roles(contextLoader.load(), snapshot));
     }
 
-    RoundSnapshot load(Long roundId) {
-        return seedProjectReadPort.findRoundSnapshot(roundId)
+    static RoundSnapshot load(SeedProjectReadPort port, Long roundId) {
+        return port.findRoundSnapshot(roundId)
             .orElseThrow(() -> new SeedRehearsalException(SeedErrorCode.ROUND_NOT_FOUND, "차수가 없습니다: " + roundId));
     }
 
-    ChapterRoles roles(RoundSnapshot snapshot) {
-        RehearsalContext context = contextLoader.load();
+    static ChapterRoles roles(RehearsalContext context, RoundSnapshot snapshot) {
         return ChapterRoles.of(context.cast(), snapshot.round().chapterName(), context::email);
     }
 }
