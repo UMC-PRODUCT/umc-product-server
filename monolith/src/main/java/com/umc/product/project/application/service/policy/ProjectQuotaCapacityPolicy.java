@@ -23,7 +23,7 @@ public class ProjectQuotaCapacityPolicy {
     }
 
     private void validateSnapshot(Long gisuId, Long chapterId) {
-        var snapshot = dataLoader.load(gisuId, chapterId);
+        var snapshot = dataLoader.loadApproved(gisuId, chapterId);
         var allocated = snapshot.allocated(snapshot.projects());
         for (ChallengerPart part : ChallengerPart.values()) {
             if (part == ChallengerPart.ADMIN) {
