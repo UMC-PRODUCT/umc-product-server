@@ -1,4 +1,4 @@
-package com.umc.product.project.application.service.policy;
+package com.umc.product.project.application.access;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -13,6 +13,8 @@ import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -75,16 +77,18 @@ class ProjectStatisticsAccessPolicyTest {
         assertThat(result).isTrue();
     }
 
-    @Test
-    @DisplayName("중앙 운영진은 지부 통계를 조회할 수 있다")
-    void 중앙_운영진은_지부_통계를_조회할_수_있다() {
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class, names = {"CENTRAL_PRESIDENT", "CENTRAL_VICE_PRESIDENT",
+        "CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER"})
+    @DisplayName("중앙운영사무국 역할은 같은 기수의 지부·프로젝트 통계를 조회할 수 있다")
+    void 중앙운영사무국은_같은_기수의_통계를_조회할_수_있다(ChallengerRoleType roleType) {
+        // given
         given(getChapterUseCase.getGisuIdByChapterId(CHAPTER_ID)).willReturn(1L);
-        givenSubject(role(ChallengerRoleType.CENTRAL_PRESIDENT, OrganizationType.CENTRAL, null));
+        givenSubject(role(roleType, OrganizationType.CENTRAL, null));
 
-        boolean result = sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID);
-
-        assertThat(result).isTrue();
-        verify(checkPermissionUseCase).loadSubject(MEMBER_ID);
+        // when & then
+        assertThat(sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID)).isTrue();
+        assertThat(sut.canReadProjectStatistics(MEMBER_ID, project(999L))).isTrue();
     }
 
     @Test
@@ -98,37 +102,42 @@ class ProjectStatisticsAccessPolicyTest {
         assertThat(result).isTrue();
     }
 
-    @Test
-    @DisplayName("해당 지부 소속 학교 회장단은 지부 통계를 조회할 수 있다")
-    void 해당_지부_소속_학교_회장단은_지부_통계를_조회할_수_있다() {
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class, names = {"SCHOOL_PRESIDENT", "SCHOOL_VICE_PRESIDENT",
+        "SCHOOL_PART_LEADER", "SCHOOL_ETC_ADMIN"})
+    @DisplayName("해당 지부 소속 학교 운영진은 지부·프로젝트 통계를 조회할 수 있다")
+    void 해당_지부_소속_학교_운영진은_통계를_조회할_수_있다(ChallengerRoleType roleType) {
+        // given
         given(getChapterUseCase.getGisuIdByChapterId(CHAPTER_ID)).willReturn(1L);
-        givenSubject(role(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, SCHOOL_ID));
+        givenSubject(role(roleType, OrganizationType.SCHOOL, SCHOOL_ID));
         givenChapterSchools();
 
-        boolean result = sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID);
-
-        assertThat(result).isTrue();
+        // when & then
+        assertThat(sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID)).isTrue();
+        assertThat(sut.canReadProjectStatistics(MEMBER_ID, project(999L))).isTrue();
     }
 
     @Test
     @DisplayName("역할이 없으면 지부 통계를 조회할 수 없다")
     void 역할이_없으면_지부_통계를_조회할_수_없다() {
+        given(getChapterUseCase.getGisuIdByChapterId(CHAPTER_ID)).willReturn(1L);
         givenSubject();
 
         boolean result = sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID);
 
         assertThat(result).isFalse();
-        verifyNoInteractions(getChapterUseCase);
         verify(checkPermissionUseCase).loadSubject(MEMBER_ID);
     }
 
-    @Test
-    @DisplayName("이전 기수 총괄단 역할은 프로젝트와 지부 통계 권한으로 인정하지 않는다")
-    void 이전_기수_총괄단_거부() {
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class, names = {"CENTRAL_PRESIDENT", "CENTRAL_VICE_PRESIDENT",
+        "CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER"})
+    @DisplayName("이전 기수 중앙운영사무국 역할은 프로젝트와 지부 통계 권한으로 인정하지 않는다")
+    void 이전_기수_중앙운영사무국_거부(ChallengerRoleType roleType) {
         // given
         given(getChapterUseCase.getGisuIdByChapterId(CHAPTER_ID)).willReturn(1L);
-        givenSubject(
-            new RoleAttribute(ChallengerRoleType.CENTRAL_PRESIDENT, OrganizationType.CENTRAL, null, null, 2L));
+        givenSubject(new RoleAttribute(roleType, OrganizationType.CENTRAL, null, null, 2L));
+
         // when & then
         assertThat(sut.canReadProjectStatistics(MEMBER_ID, project(999L))).isFalse();
         assertThat(sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID)).isFalse();
@@ -159,16 +168,17 @@ class ProjectStatisticsAccessPolicyTest {
     }
 
     @Test
-    @DisplayName("통계 권한에 해당하지 않는 역할은 지부 존재 여부를 조회하지 않고 거절한다")
-    void 권한_없는_역할은_지부_조회_전에_거절한다() {
+    @DisplayName("운영진 역할이 없는 회원이 존재하지 않는 지부를 조회해도 지부 없음 오류를 반환한다")
+    void 권한_없는_회원의_없는_지부_조회는_대상_없음_오류를_반환한다() {
         // given
-        givenSubject(
-            role(ChallengerRoleType.CENTRAL_EDUCATION_TEAM_MEMBER, OrganizationType.CENTRAL, null));
+        givenSubject();
+        given(getChapterUseCase.getGisuIdByChapterId(999L))
+            .willThrow(new OrganizationDomainException(OrganizationErrorCode.CHAPTER_NOT_FOUND));
 
         // when & then
-        assertThat(sut.canReadChapterStatistics(MEMBER_ID, 999L)).isFalse();
-        verifyNoInteractions(getChapterUseCase);
-        verify(checkPermissionUseCase).loadSubject(MEMBER_ID);
+        assertThatThrownBy(() -> sut.canReadChapterStatistics(MEMBER_ID, 999L))
+            .isInstanceOfSatisfying(OrganizationDomainException.class,
+                exception -> assertThat(exception.getBaseCode()).isEqualTo(OrganizationErrorCode.CHAPTER_NOT_FOUND));
     }
 
     @Test
@@ -216,11 +226,13 @@ class ProjectStatisticsAccessPolicyTest {
         assertThat(result).isFalse();
     }
 
-    @Test
-    @DisplayName("다른 지부 소속 학교 회장은 대상 지부 통계를 조회할 수 없다")
-    void 다른_지부_소속_학교회장은_거절한다() {
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class, names = {"SCHOOL_PRESIDENT", "SCHOOL_VICE_PRESIDENT",
+        "SCHOOL_PART_LEADER", "SCHOOL_ETC_ADMIN"})
+    @DisplayName("다른 지부 소속 학교 운영진은 대상 지부 통계를 조회할 수 없다")
+    void 다른_지부_소속_학교_운영진은_거절한다(ChallengerRoleType roleType) {
         // given
-        givenSubject(role(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, SCHOOL_ID));
+        givenSubject(role(roleType, OrganizationType.SCHOOL, SCHOOL_ID));
         given(getChapterUseCase.getGisuIdByChapterId(CHAPTER_ID)).willReturn(1L);
         given(getChapterUseCase.getChaptersWithSchoolsByGisuId(1L)).willReturn(List.of(
             new ChapterWithSchoolsInfo(CHAPTER_ID, "대상 지부", List.of(new SchoolInfo(99L, "다른 학교"))),
@@ -238,13 +250,13 @@ class ProjectStatisticsAccessPolicyTest {
     void 지부장_조직_유형이_다르면_거절한다() {
         // given
         givenSubject(role(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.SCHOOL, CHAPTER_ID));
+        given(getChapterUseCase.getGisuIdByChapterId(CHAPTER_ID)).willReturn(1L);
 
         // when
         boolean result = sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID);
 
         // then
         assertThat(result).isFalse();
-        verifyNoInteractions(getChapterUseCase);
     }
 
     @Test
@@ -252,13 +264,14 @@ class ProjectStatisticsAccessPolicyTest {
     void 학교회장_조직_유형이_다르면_거절한다() {
         // given
         givenSubject(role(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.CHAPTER, SCHOOL_ID));
+        given(getChapterUseCase.getGisuIdByChapterId(CHAPTER_ID)).willReturn(1L);
+        givenChapterSchools();
 
         // when
         boolean result = sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID);
 
         // then
         assertThat(result).isFalse();
-        verifyNoInteractions(getChapterUseCase);
     }
 
     private static Project project(Long ownerMemberId) {

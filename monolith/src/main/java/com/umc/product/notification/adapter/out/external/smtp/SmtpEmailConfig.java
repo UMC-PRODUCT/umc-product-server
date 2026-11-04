@@ -1,10 +1,16 @@
 package com.umc.product.notification.adapter.out.external.smtp;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Properties;
+
+import javax.net.ssl.SSLSocketFactory;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.ssl.SslBundle;
+import org.springframework.boot.ssl.pem.PemSslStoreBundle;
+import org.springframework.boot.ssl.pem.PemSslStoreDetails;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -33,7 +39,20 @@ public class SmtpEmailConfig {
         mailProperties.setProperty("mail.smtp.timeout", "5000");
         mailProperties.setProperty("mail.smtp.writetimeout", "5000");
         mailProperties.setProperty("mail.debug", "false");
+        if (properties.trustedCertificate() != null) {
+            mailProperties.put("mail.smtp.ssl.socketFactory", trustOnly(properties.trustedCertificate()));
+        }
         sender.getSession().setDebug(false);
         return sender;
+    }
+
+    private static SSLSocketFactory trustOnly(Path certificateFile) {
+        PemSslStoreDetails trustStore = PemSslStoreDetails.forCertificates(certificateFile.toString());
+        try {
+            return SslBundle.of(new PemSslStoreBundle(null, trustStore)).createSslContext().getSocketFactory();
+        } catch (RuntimeException e) {
+            throw new IllegalStateException(
+                "app.notification.email.smtp.trusted-certificate를 읽을 수 없습니다: " + certificateFile, e);
+        }
     }
 }

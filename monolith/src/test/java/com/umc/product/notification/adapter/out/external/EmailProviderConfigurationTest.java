@@ -2,8 +2,12 @@ package com.umc.product.notification.adapter.out.external;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Configuration;
@@ -55,7 +59,8 @@ class EmailProviderConfigurationTest {
         contextRunner.withPropertyValues(
             "app.notification.email.provider=smtp",
             "app.notification.email.smtp.username=sender@example.org",
-            "app.notification.email.smtp.password=test-app-password"
+            "app.notification.email.smtp.password=test-app-password",
+            "app.notification.email.smtp.trusted-certificate="
         ).run(context -> {
             // then
             assertThat(context).hasNotFailed();
@@ -75,7 +80,8 @@ class EmailProviderConfigurationTest {
                 .containsEntry("mail.smtp.connectiontimeout", "5000")
                 .containsEntry("mail.smtp.timeout", "5000")
                 .containsEntry("mail.smtp.writetimeout", "5000")
-                .doesNotContainKey("mail.smtp.ssl.trust");
+                .doesNotContainKey("mail.smtp.ssl.trust")
+                .doesNotContainKey("mail.smtp.ssl.socketFactory");
             assertThat(sender.getSession().getDebug()).isFalse();
             assertThat(context.getBean(SmtpProperties.class).toString())
                 .doesNotContain("sender@example.org", "test-app-password");
@@ -136,6 +142,41 @@ class EmailProviderConfigurationTest {
             // then
             assertThat(context).hasFailed();
             assertThat(context.getStartupFailure()).hasStackTraceContaining("password");
+        });
+    }
+
+    @Test
+    @DisplayName("SMTP 신뢰 인증서 파일이 없으면 부팅을 막는다")
+    void smtp_trusted_certificate_must_exist(@TempDir Path tempDir) {
+        // given / when
+        contextRunner.withPropertyValues(
+            "app.notification.email.provider=smtp",
+            "app.notification.email.smtp.username=sender@example.org",
+            "app.notification.email.smtp.password=test-app-password",
+            "app.notification.email.smtp.trusted-certificate=" + tempDir.resolve("missing.crt")
+        ).run(context -> {
+            // then
+            assertThat(context).hasFailed();
+            assertThat(context.getStartupFailure()).hasStackTraceContaining("trusted-certificate");
+        });
+    }
+
+    @Test
+    @DisplayName("SMTP 신뢰 인증서 파일에 PEM 인증서가 없으면 부팅을 막는다")
+    void smtp_trusted_certificate_must_contain_certificate(@TempDir Path tempDir) throws Exception {
+        // given
+        Path notCertificate = Files.writeString(tempDir.resolve("smtp.crt"), "not a certificate");
+
+        // when
+        contextRunner.withPropertyValues(
+            "app.notification.email.provider=smtp",
+            "app.notification.email.smtp.username=sender@example.org",
+            "app.notification.email.smtp.password=test-app-password",
+            "app.notification.email.smtp.trusted-certificate=" + notCertificate
+        ).run(context -> {
+            // then
+            assertThat(context).hasFailed();
+            assertThat(context.getStartupFailure()).hasStackTraceContaining("trusted-certificate");
         });
     }
 
