@@ -114,7 +114,7 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
 
     @ParameterizedTest
     @EnumSource(value = ChallengerPart.class, names = {"WEB", "ANDROID", "IOS", "NODEJS", "SPRINGBOOT"})
-    void 과거파트_인원과_TO가_있어도_현황과_합계는_기본_네파트만_포함한다(ChallengerPart legacy) throws Exception {
+    void 과거파트_인원과_TO가_있어도_현황과_표와_합계는_기본_네파트만_포함한다(ChallengerPart legacy) throws Exception {
         // given
         projects.회원(scenario, "과거파트 QA", legacy);
         fixture.정원(scenario.projectId(), legacy, 5);
@@ -131,9 +131,16 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         assertThat(filtered.path("totals").path("allocatedQuota").asLong()).isEqualTo(2);
         assertThat(filtered.path("filteredTotals").path("availableCount").asLong()).isEqualTo(8);
         assertThat(filtered.path("filteredTotals").path("allocatedQuota").asLong()).isZero();
-        assertThat(cell(info, legacy.name()).path("quota").asLong()).isEqualTo(5);
+        assertThat(info.path("columns").findValuesAsText("part")).containsExactly(
+            "PLAN", "DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER");
+        assertThat(info.path("columns").findValuesAsText("label")).containsExactly(
+            "PM", "Design", "Web PE", "Mobile PE");
+        assertThat(info.path("projects").get(0).path("cells").findValuesAsText("part")).containsExactly(
+            "PLAN", "DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER");
+        assertThat(filtered.path("columns").findValuesAsText("part")).containsExactly(
+            "PLAN", "DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER");
         assertThat(quota(scenario.projectId(), legacy.name())).isEqualTo(5);
-        assertThat(info.path("projects").get(0).path("totalQuota").asLong()).isEqualTo(7);
+        assertThat(info.path("projects").get(0).path("totalQuota").asLong()).isEqualTo(2);
     }
 
     @Test
@@ -148,6 +155,8 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         // then
         assertPopulationParts(info);
         assertThat(info.path("projects").isEmpty()).isTrue();
+        assertThat(info.path("columns").findValuesAsText("part")).containsExactly(
+            "PLAN", "DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER");
         for (JsonNode summary : info.path("summary")) {
             assertThat(summary.path("availableCount").asText()).isEqualTo("0");
             assertThat(summary.path("allocatedQuota").asText()).isEqualTo("0");

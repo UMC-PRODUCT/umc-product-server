@@ -2,8 +2,6 @@ package com.umc.product.project.application.service.query;
 
 import java.time.Clock;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,7 +39,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ProjectQuotaManagementQueryService implements GetProjectQuotaManagementUseCase {
-    private static final List<ChallengerPart> POPULATION_PARTS = List.of(
+    private static final List<ChallengerPart> QUOTA_PARTS = List.of(
         ChallengerPart.PLAN, ChallengerPart.DESIGN,
         ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER);
 
@@ -76,15 +74,10 @@ public class ProjectQuotaManagementQueryService implements GetProjectQuotaManage
         List<Project> filtered = (keyword == null || keyword.isBlank()) && schoolId == null ? snapshot.projects()
             : dataLoader.projects(gisuId, selected.chapterId(), keyword, schoolId);
         var allocated = snapshot.allocated(snapshot.projects());
-        List<ChallengerPart> parts = Arrays.stream(ChallengerPart.values())
-            .filter(part -> part != ChallengerPart.ADMIN)
-            .filter(part -> part.isSelectable()
-                || snapshot.population().containsKey(part) || allocated.containsKey(part))
-            .sorted(Comparator.comparingInt(ChallengerPart::getSortOrder)).toList();
         var rounds = loadProjectMatchingRoundPort.listByChapterId(selected.chapterId());
         var now = clock.instant();
         boolean canManage = accessPolicy.canManage(memberId, gisuId, selected.chapterId());
-        List<Column> columns = parts.stream().map(part -> {
+        List<Column> columns = QUOTA_PARTS.stream().map(part -> {
             if (!canManage) {
                 return new Column(part, columnLabel(part),
                     ProjectPermissionCapabilityInfo.denied(ProjectPermissionReason.PERMISSION_DENIED), null);
@@ -102,7 +95,7 @@ public class ProjectQuotaManagementQueryService implements GetProjectQuotaManage
             .collect(Collectors.toMap(school -> school.schoolId(), school -> school.schoolName()));
         List<ProjectRow> rows = new ArrayList<>();
         for (Project project : filtered) {
-            List<Cell> cells = parts.stream().map(part -> new Cell(part, snapshot.quota(project, part),
+            List<Cell> cells = QUOTA_PARTS.stream().map(part -> new Cell(part, snapshot.quota(project, part),
                 snapshot.current(project, part), snapshot.minimum(project, part),
                 switch (part) {
                     case DESIGN, WEB_PRODUCT_ENGINEER, MOBILE_PRODUCT_ENGINEER -> 0;
@@ -113,8 +106,8 @@ public class ProjectQuotaManagementQueryService implements GetProjectQuotaManage
                 project.getProductOwnerSchoolId(), schoolNames.get(project.getProductOwnerSchoolId()), cells,
                 cells.stream().mapToLong(Cell::quota).reduce(0L, Math::addExact)));
         }
-        var summary = summary(POPULATION_PARTS, snapshot.population(), allocated);
-        var filteredSummary = summary(POPULATION_PARTS, snapshot.population(), snapshot.allocated(filtered));
+        var summary = summary(QUOTA_PARTS, snapshot.population(), allocated);
+        var filteredSummary = summary(QUOTA_PARTS, snapshot.population(), snapshot.allocated(filtered));
         return new ProjectQuotaManagementInfo(gisuId, selected.chapterId(), selected.chapterName(), options,
             schools, columns, summary, filteredSummary, totals(summary), totals(filteredSummary),
             snapshot.projects().size(), filtered.size(), rows);

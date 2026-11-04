@@ -35,19 +35,19 @@
 | `projects[].cells[]` | 파트별 입력값·현재 인원·최소 TO·편집 권한 |
 | `projects[].totalQuota` | 프로젝트의 파트 TO 합계 |
 
-인원 현황은 해당 기수의 활동 중인 챌린저 중 수강 파트가 있는 인원을 사용하고 매칭 지부 이동을 반영한다. 수강 없이 기수에만 소속된 운영진(part=null)은 파트별 모집 가능 인원과 전체 합계에서 제외한다. 새 기수의 기본 열은 `columns[].label`에 `PM`, `Design`, `Web PE`, `Mobile PE`로 반환하며, 과거 파트의 인원이나 TO가 있으면 해당 열도 포함한다. 표의 각 행은 프로젝트이며 학교는 필터다.
+인원 현황은 해당 기수의 활동 중인 챌린저 중 수강 파트가 있는 인원을 사용하고 매칭 지부 이동을 반영한다. 수강 없이 기수에만 소속된 운영진(part=null)은 파트별 모집 가능 인원과 전체 합계에서 제외한다. `columns`와 모든 프로젝트의 `cells`는 `PLAN`, `DESIGN`, `WEB_PRODUCT_ENGINEER`, `MOBILE_PRODUCT_ENGINEER` 순서의 4개 항목으로 고정한다. `columns[].label`은 `PM`, `Design`, `Web PE`, `Mobile PE`이며 해당 파트 인원이나 TO가 없어도 포함한다. 표의 각 행은 프로젝트이며 학교는 필터다.
 
 `summary`와 `filteredSummary`의 `availableCount`는 모두 지부 전체의 파트 인원이다. 학교 필터는 프로젝트를 골라 보는 용도이며, 모집 가능한 인원을 PM의 학교 인원으로 제한하지 않는다. `difference = allocatedQuota - availableCount`이며, `allocationStatus`는 `SHORTAGE`, `BALANCED`, `EXCESS`다. 검색 결과가 비어도 지부 전체 합계는 유지한다.
 
 상단 파트 인원 현황은 `summary`와 `filteredSummary`를 사용한다. 두 배열은 모든 지부에서 `PLAN`(PM), `DESIGN`(Design), `WEB_PRODUCT_ENGINEER`(Web PE), `MOBILE_PRODUCT_ENGINEER`(Mobile PE) 순서의 4개 항목을 반환하며, 해당 인원이 없으면 0이다. `totals`와 `filteredTotals`도 이 4개 항목만 합산한다. 과거 Web·Android·iOS·Node·Spring 인원이나 TO를 신규 PE 항목에 합산하지 않는다.
 
-프로젝트별 TO 표의 `columns`와 `cells`는 과거 파트를 포함하는 기존 계약을 유지한다. 현황 카드를 `columns`로 생성하면 과거 파트가 노출될 수 있으므로 카드에는 `summary`를 사용한다. 과거 파트가 있는 경우 행의 `totalQuota`와 상단 4개 파트의 TO 합계는 다를 수 있다. 저장 시 인원 상한 검증과 원본 데이터는 바꾸지 않는다. 지부는 있으나 인원·프로젝트가 비어도 4개 현황 항목을 반환하며, 기수에 접근 가능한 지부 자체가 없으면 기존처럼 빈 배열과 `chapterId: null`을 반환한다.
+프로젝트별 TO 표의 `columns`와 `cells`, 행 `totalQuota`도 동일한 4개 파트만 포함한다. 과거 파트의 인원이나 TO가 저장되어 있어도 응답 열·셀·합계에 노출하지 않으며 신규 PE 값으로 합치거나 원본 DB 값을 삭제하지 않는다. 상단 카드는 인원 정보가 포함된 `summary`를 사용한다. 지부는 있으나 인원·프로젝트가 비어도 4개 열과 현황 항목을 반환하며, 기수에 접근 가능한 지부 자체가 없으면 기존처럼 빈 배열과 `chapterId: null`을 반환한다.
 
 셀 필드:
 
 - `quota`: 편집할 TO. 미모집 파트는 0. PM TO가 아직 저장되지 않았으면 현재·발표 대기 PM 인원(소유자 포함)을 기본값으로 표시한다.
 - `currentCount`: 현재 활동 팀원 수. PM은 소유자를 포함하고 공동 PM과 중복 집계하지 않는다.
-- `resetQuota`: 초기화 버튼에 사용할 값. Design·Web PE·Mobile PE는 0이고, PM·과거 파트는 조회된 `quota`를 유지한다. 숫자는 공통 규칙대로 JSON 문자열이다.
+- `resetQuota`: 초기화 버튼에 사용할 값. Design·Web PE·Mobile PE는 0이고, PM은 조회된 `quota`를 유지한다. 숫자는 공통 규칙대로 JSON 문자열이다.
 - `minimumQuota`: 발표 대기까지 포함하되, 해당 파트의 랜덤 조정 차수에 해제 예약된 인원은 제외한 배정 인원. PM은 소유자를 포함한다. 랜덤 배정 완료 후 조정 시작부터 최종 공개 전까지 이 기준을 적용하며, `currentCount`는 공개 명단 기준을 유지한다.
 - `canEdit`: `{allowed, reasonCode, reason}`. 입력 활성화와 잠금 설명에 사용한다.
 
@@ -81,7 +81,7 @@ TO 표의 `WEB_PRODUCT_ENGINEER`와 `MOBILE_PRODUCT_ENGINEER` 셀은 모두 반�
 
 저장 성공 시 `result.updatedProjectIds`에 변경 대상 ID 목록을 반환한다. 이후 같은 필터의 GET을 다시 호출해 표·합계·최소 TO·권한을 갱신한다.
 
-초기화 버튼은 편집 가능한 Design·Web PE·Mobile PE의 미저장 입력을 `resetQuota`인 0으로 바꾼다. PM과 과거 파트의 현재 입력은 그대로 유지한다. 서버가 조회만으로 TO를 삭제하거나 저장하지 않으며, 사용자가 저장을 누를 때 변경한 셀만 기존 PATCH로 보낸다. `canEdit.allowed=false`인 셀은 초기화 대상에서 제외하고, 매칭 시작 이후 잠금과 최소 배정 인원 검증을 우회하지 않는다.
+초기화 버튼은 편집 가능한 Design·Web PE·Mobile PE의 미저장 입력을 `resetQuota`인 0으로 바꾼다. PM의 현재 입력은 그대로 유지한다. 서버가 조회만으로 TO를 삭제하거나 저장하지 않으며, 사용자가 저장을 누를 때 변경한 셀만 기존 PATCH로 보낸다. `canEdit.allowed=false`인 셀은 초기화 대상에서 제외하고, 매칭 시작 이후 잠금과 최소 배정 인원 검증을 우회하지 않는다.
 
 PM 인원은 시스템이 계산한 `cells[part=PLAN].currentCount`를 사용한다. PM TO인 `quota`는 별개이며 운영진이 수정할 수 있다. 예를 들어 PM TO가 3명이고 실제 PM·보조 PM이 2명이면 `quota=3`, `currentCount=2`, `resetQuota=3`이다. 초기화 때문에 PM TO를 0이나 실제 인원수로 덮어쓰지 않는다.
 
