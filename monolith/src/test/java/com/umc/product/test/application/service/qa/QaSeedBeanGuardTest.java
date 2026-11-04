@@ -19,7 +19,8 @@ class QaSeedBeanGuardTest {
         QaAttendanceStep.class,
         QaNoticesStep.class,
         QaPointsStep.class,
-        QaChatStep.class
+        QaChatStep.class,
+        QaProjectTransfersStep.class
     })
     @DisplayName("QA 시딩 단계 빈은 @Profile(!prod) + @ConditionalOnProperty(app.seed.enabled=true) 가드를 가진다")
     void stepBeansHaveSeedGuards(Class<?> beanClass) {

@@ -14,7 +14,8 @@ public enum QaSeedStep {
     ATTENDANCE("attendance"),
     NOTICES("notices"),
     POINTS("points"),
-    CHAT("chat");
+    CHAT("chat"),
+    PROJECT_TRANSFERS("project-transfers");
 
     private final String path;
 

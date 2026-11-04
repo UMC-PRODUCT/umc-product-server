@@ -32,7 +32,7 @@ public class QaSeedController {
 
     @PostMapping
     @Operation(summary = "QA 기본 데이터 전체 생성", description = """
-        계정 → 학습 → 출석 → 공지 → 상벌점 → 채팅 순서로 단계를 실행하고 단계별 결과를 돌려줍니다.
+        계정 → 학습 → 출석 → 공지 → 상벌점 → 채팅 → 매칭 지부 이동 순서로 단계를 실행하고 단계별 결과를 돌려줍니다.
         계정은 11기 명단 583명, superadmin, 10기 기존 QA 계정 9개로 모두 593개입니다.
         단계마다 따로 저장하므로 한 단계가 실패해도 앞 단계는 남습니다. 계정 단계가 실패하면 뒤 단계는 NOT_RUN입니다.
         다시 부르면 이미 있는 것은 건너뛰고 UNCHANGED를 돌려줍니다. 되돌리려면 DB를 초기화합니다.
@@ -47,7 +47,7 @@ public class QaSeedController {
         한 단계만 실행합니다. 이미 있는 것은 건너뜁니다. 계정 단계를 먼저 실행해야 나머지 단계가 계정을 찾습니다.
         """)
     public QaSeedResponse seed(
-        @Parameter(description = "accounts, learning, attendance, notices, points, chat")
+        @Parameter(description = "accounts, learning, attendance, notices, points, chat, project-transfers")
         @PathVariable String step
     ) {
         return QaSeedResponse.from(List.of(seedQaDataUseCase.seed(QaSeedStep.fromPath(step))));

@@ -27,9 +27,13 @@ import com.umc.product.authorization.application.port.in.query.dto.ChallengerRol
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.project.application.port.in.query.GetMyMatchingAffiliationUseCase;
+import com.umc.product.project.application.port.in.query.dto.ProjectMatchingAffiliationInfo;
 import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.test.application.port.out.LoadQaRosterPort;
 import com.umc.product.test.domain.roster.QaAccountPlan;
+import com.umc.product.test.domain.roster.QaTransfers;
+import com.umc.product.test.domain.roster.QaTransfers.QaTransfer;
 import com.umc.product.test.domain.roster.RosterKey;
 
 /**
@@ -54,6 +58,7 @@ class QaSeedIntegrationTest extends IntegrationTestSupport {
     @Autowired private GetMemberUseCase getMemberUseCase;
     @Autowired private GetGisuUseCase getGisuUseCase;
     @Autowired private ListChallengerRoleUseCase listChallengerRoleUseCase;
+    @Autowired private GetMyMatchingAffiliationUseCase getMyMatchingAffiliationUseCase;
 
     @Test
     @DisplayName("빈 DB에서 QA 시딩 전체를 부르면 계정 593개와 운영진 역할을 만들고, 다시 부르면 아무것도 바꾸지 않는다")
@@ -85,7 +90,14 @@ class QaSeedIntegrationTest extends IntegrationTestSupport {
             SELECT count(*) FROM member_system_role r JOIN member m ON m.id = r.member_id
             WHERE m.email = 'superadmin@qa.test' AND r.role_type = 'SUPER_ADMIN'
             """)).isEqualTo(1);
+        for (QaTransfer transfer : QaTransfers.ALL) {
+            ProjectMatchingAffiliationInfo affiliation = getMyMatchingAffiliationUseCase.get(
+                memberIds.get(transfer.member().email(DOMAIN)), gisu11);
+            assertThat(affiliation.transferred()).isTrue();
+            assertThat(affiliation.matchingChapter().name()).isEqualTo(transfer.toChapter());
+        }
         Map<String, Long> afterFirst = tableCounts();
+        assertThat(afterFirst.get("project_matching_chapter_transfer")).isEqualTo(4);
 
         // when
         JsonNode second = seedAll();
