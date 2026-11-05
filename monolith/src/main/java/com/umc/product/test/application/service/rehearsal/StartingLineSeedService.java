@@ -60,6 +60,7 @@ import lombok.extern.slf4j.Slf4j;
 public class StartingLineSeedService implements SeedStartingLineUseCase {
 
     private static final int MAX_STEPS = StartingLineStep.values().length;
+    private static final String PLAN_LINK = "https://example.com/umc-rehearsal/plan/%s-%02d";
 
     private final RehearsalContextLoader contextLoader;
     private final GetMemberUseCase getMemberUseCase;
@@ -166,6 +167,7 @@ public class StartingLineSeedService implements SeedStartingLineUseCase {
                     .name("%s %s의 프로젝트".formatted(job.role() == Role.QA ? "[QA]" : "[SEED]",
                         context.displayName(job.owner())))
                     .description("매칭 리허설용 프로젝트입니다.")
+                    .externalLink(PLAN_LINK.formatted(job.owner().school().value(), job.owner().seq()))
                     .build());
                 yield current.withName();
             }

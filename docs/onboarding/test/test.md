@@ -153,7 +153,7 @@
 
 | 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
 |---:|---|---|---|
-| [59](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/MatchingRehearsalIntegrationTest.java#L59) | 빈 DB에서 QA 계정, 출발선, 쿼카 1차 개발 차수의 봇 지원·결정을 차례로 만들고, 각 단계를 다시 부르면 아무것도 바꾸지 않는다 | Testcontainers DB, QA 시딩 → 출발선 → 차수 시각을 SQL로 옮기며 봇 지원·결정 | 성공: 출발선 59개 적용, 지원 기간 밖 봇 호출은 409, null 제외 목록은 400, 봇 지원·결정 결과가 차수 요약과 맞고 재호출은 UNCHANGED |
+| [59](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/MatchingRehearsalIntegrationTest.java#L59) | 빈 DB에서 QA 계정, 출발선, 쿼카 1차 개발 차수의 봇 지원·결정을 차례로 만들고, 각 단계를 다시 부르면 아무것도 바꾸지 않는다 | Testcontainers DB, QA 시딩 → 출발선 → 차수 시각을 SQL로 옮기며 봇 지원·결정 | 성공: 출발선 59개 적용, 59개 프로젝트에 서로 다른 기획서 링크, 지원 기간 밖 봇 호출은 409, null 제외 목록은 400, 봇 지원·결정 결과가 차수 요약과 맞고 재호출은 UNCHANGED |
 
 ### MatchingRehearsalFlowIntegrationTest
 - 위치: `monolith/src/test/java/com/umc/product/test/adapter/in/web/MatchingRehearsalFlowIntegrationTest.java`
