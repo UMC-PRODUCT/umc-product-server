@@ -4,11 +4,13 @@
 
 Proposed
 
+> 2026-11-04 참고: 이 문서가 전제한 운영 알람 webhook(`SendWebhookAlarmUseCase`, `ServerLifecycleAlarmListener`, `WebhookPlatform`)은 제거됐다. 아래 본문의 해당 언급은 작성 시점 기록이다.
+
 ## Context
 
 2026-05-08 기준, UMC PRODUCT 서버는 Discord 와 다음 두 경로로 통신한다.
 
-- [DiscordWebhookAdapter](../../src/main/java/com/umc/product/notification/adapter/out/external/webhook/DiscordWebhookAdapter.java) — 운영 알람용 webhook 발송 (`SLACK / DISCORD / TELEGRAM` 공용 인터페이스. 2026-11-04 Telegram·Slack 어댑터를 제거하고 Discord로 통일했다).
+- [DiscordWebhookAdapter](../../src/main/java/com/umc/product/notification/adapter/out/external/webhook/DiscordWebhookAdapter.java) — 운영 알람용 webhook 발송 (`SLACK / DISCORD / TELEGRAM` 공용 인터페이스. 2026-11-04 Telegram·Slack 어댑터를 제거하고 Discord로 통일한 뒤, 같은 날 웹훅 알림 기능 자체를 제거했다).
 - [DiscordMentionWebhookAdapter](../../src/main/java/com/umc/product/figma/adapter/out/external/DiscordMentionWebhookAdapter.java) — Figma 댓글 → Discord embed 묶음 발송.
 
 두 어댑터 모두 **Discord webhook URL 단방향 POST** 다. 즉 서버는 Discord 로 메시지를 "보내는" 채널만 갖고 있고, Discord 측 이벤트(슬래시 커맨드, 멘션 응답, reaction, DM, 채널 가입 등) 를 "받는" 채널이 없다. 이 구조에서 운영 / 기획 측에 다음 한계가 누적되어 있다.

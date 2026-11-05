@@ -22,7 +22,6 @@ public enum Domain {
     TERMS,
     EMAIL,
     STORAGE,
-    WEBHOOK,
     AUDIT_LOG,
     PROJECT,
     LLM,

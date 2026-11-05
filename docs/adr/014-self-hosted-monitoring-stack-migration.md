@@ -38,7 +38,7 @@ Proposed (2026-05-09)
 
 #### 1.6 알람 / 알림 채널
 
-- `app.webhook.discord/slack/telegram` 가 application 코드에 포함되어 비즈니스 알림에 이미 사용 ([application.yml §325-336](../../src/main/resources/application.yml#L325-L336)). 2026-11-04 Telegram·Slack을 제거하고 `app.webhook.discord`만 남겼다.
+- `app.webhook.discord/slack/telegram` 가 application 코드에 포함되어 비즈니스 알림에 이미 사용 ([application.yml §325-336](../../src/main/resources/application.yml#L325-L336)). 2026-11-04 Telegram·Slack을 제거하고 `app.webhook.discord`만 남긴 뒤, 같은 날 `app.webhook` 설정과 웹훅 알림 기능을 제거했다.
 - 인프라 알람 (CPU 높음, JVM heap 임계 등) 은 현재 Grafana Cloud Alerting 을 사용한다고 가정 (코드 외부 구성).
 
 ### 2. 결정이 필요한 이유
