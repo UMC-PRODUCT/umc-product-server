@@ -202,6 +202,16 @@ public class ProjectMatchingRound extends BaseEntity {
         }
     }
 
+    public static void validatePhaseSequence(
+        Instant earlierDecisionDeadline, Instant earlierResultPublishAt, Instant laterStartsAt,
+        Duration minPhaseInterval
+    ) {
+        if (laterStartsAt.isBefore(earlierDecisionDeadline.plus(minPhaseInterval))
+            || (earlierResultPublishAt != null && laterStartsAt.isBefore(earlierResultPublishAt))) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
+        }
+    }
+
     public boolean isRandomMatching() {
         return phase == MatchingPhase.RANDOM_MATCHING;
     }

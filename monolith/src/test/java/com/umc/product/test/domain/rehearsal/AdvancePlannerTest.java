@@ -293,7 +293,6 @@ class AdvancePlannerTest {
         return ((Refused) decision).code();
     }
 
-    /** 운영 차수 생성이 쓰는 엔티티 검증과 차수 순서 규칙(ProjectMatchingRoundCommandService.validatePhaseSequence). */
     static void assertValid(MatchingSequence sequence) {
         List<RoundTimes> rounds = sequence.rounds();
         for (RoundTimes round : rounds) {
@@ -306,9 +305,10 @@ class AdvancePlannerTest {
             for (int j = i + 1; j < rounds.size(); j++) {
                 RoundTimes earlier = rounds.get(i);
                 RoundTimes later = rounds.get(j);
-                assertThat(later.startsAt()).as("%s after %s", later, earlier)
-                    .isAfterOrEqualTo(earlier.decisionDeadline().plus(MIN_PHASE_INTERVAL))
-                    .isAfterOrEqualTo(earlier.resultPublishAt());
+                assertThatCode(() -> ProjectMatchingRound.validatePhaseSequence(earlier.decisionDeadline(),
+                    earlier.resultPublishAt(), later.startsAt(), MIN_PHASE_INTERVAL))
+                    .as("%s after %s", later, earlier)
+                    .doesNotThrowAnyException();
             }
         }
     }
