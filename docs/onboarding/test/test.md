@@ -1,25 +1,34 @@
 # Test Seed 테스트 케이스
 
-- 테스트 파일: 19개
-- 테스트 케이스: 68개
+- 테스트 파일: 27개
+- 테스트 케이스: 95개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
 |---|---:|
-| Controller / Inbound Adapter | 1 |
-| UseCase / Application Service | 29 |
+| Controller / Inbound Adapter | 4 |
+| UseCase / Application Service | 38 |
 | Repository / Outbound Persistence | 1 |
 | E2E / Integration | 6 |
-| Domain | 31 |
+| Domain | 46 |
 
 ## Controller / Inbound Adapter
+
+### QaSeedAutoRunnerTest
+- 위치: `monolith/src/test/java/com/umc/product/test/adapter/in/runner/QaSeedAutoRunnerTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [22](../../../monolith/src/test/java/com/umc/product/test/adapter/in/runner/QaSeedAutoRunnerTest.java#L22) | prod가 아니고 시딩과 QA 자동 실행이 모두 켜진 환경에서만 빈으로 등록된다 | QaSeedAutoRunner 클래스의 어노테이션 | 성공: @Profile에 !prod, @ConditionalOnProperty가 prefix app.seed, name enabled·qa-auto-run, havingValue true |
+| [32](../../../monolith/src/test/java/com/umc/product/test/adapter/in/runner/QaSeedAutoRunnerTest.java#L32) | QA 시딩 전체를 실행하고 단계별 결과를 돌려준다 | SeedQaDataUseCase.seedAll()이 단계 결과 1개를 돌려줌 | 성공: run()이 그 결과를 그대로 돌려줌 |
+| [48](../../../monolith/src/test/java/com/umc/product/test/adapter/in/runner/QaSeedAutoRunnerTest.java#L48) | QA 시딩이 예외를 던져도 기동을 깨지 않고 빈 결과를 돌려준다 | seedAll()이 IllegalStateException을 던짐 | 성공: 예외 없이 빈 목록을 돌려줌 |
 
 ### SeedControllerBeanRegistrationTest
 - 위치: `monolith/src/test/java/com/umc/product/test/adapter/in/web/SeedControllerBeanRegistrationTest.java`
 
 | 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
 |---:|---|---|---|
-| [38](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/SeedControllerBeanRegistrationTest.java#L38) | 모든 시딩 빈은 @Profile(!prod) + @ConditionalOnProperty(app.seed.enabled=true) 가드를 가진다 | 파라미터 @ValueSource classes = { SeedController, QaSeedController, MatchingRoundAdvanceController, MatchingRoundAdvanceService, MatchingRoundTimeRewritePersistenceAdapter, QaSeedOrchestrator, QaSeedMarkerPersistenceAdapter, ClasspathQaRosterAdapter, QaGisuIdLoader, MemberSeedService, MemberSystemRoleSeedService, MemberSystemRoleSeedPersistenceAdapter, ChallengerSeedService, StartingLineSeedController, MatchingBotController, SeedProjectReadPersistenceAdapter, ProjectSeedDataCleanupService, CurriculumSeedService, NoticeSeedService, DummyMemberFactory, DummyCurriculumFactory, DummyNoticeFactory, SeedProperties } | 성공: 각 클래스에 @Profile("!prod")와 app.seed.enabled 조건이 있음 |
+| [39](../../../monolith/src/test/java/com/umc/product/test/adapter/in/web/SeedControllerBeanRegistrationTest.java#L39) | 모든 시딩 빈은 @Profile(!prod) + @ConditionalOnProperty(app.seed.enabled=true) 가드를 가진다 | 파라미터 @ValueSource classes = { SeedController, QaSeedController, MatchingRoundAdvanceController, MatchingRoundAdvanceService, MatchingRoundTimeRewritePersistenceAdapter, QaSeedOrchestrator, QaSeedMarkerPersistenceAdapter, ClasspathQaRosterAdapter, QaGisuIdLoader, MemberSeedService, MemberSystemRoleSeedService, MemberSystemRoleSeedPersistenceAdapter, ChallengerSeedService, StartingLineSeedController, MatchingBotController, SeedProjectReadPersistenceAdapter, ProjectSeedDataCleanupService, CurriculumSeedService, NoticeSeedService, DummyMemberFactory, DummyCurriculumFactory, DummyNoticeFactory, SeedProperties } | 성공: 각 클래스에 @Profile("!prod")와 app.seed.enabled 조건이 있음 |
 
 ## UseCase / Application Service
 
@@ -51,15 +60,6 @@
 | [238](../../../monolith/src/test/java/com/umc/product/test/application/service/CurriculumSeedServiceTest.java#L238) | gisuId 가 null 이면 활성 기수를 사용한다 | 조건 gisuId 가 null 이면 활성 기수를 사용한다 | 성공: 검증 assertThat(result.gisuId()).isEqualTo(10L); |
 | [254](../../../monolith/src/test/java/com/umc/product/test/application/service/CurriculumSeedServiceTest.java#L254) | parts 에 ADMIN 이 포함되어도 ADMIN 은 시딩되지 않는다 | 조건 parts 에 ADMIN 이 포함되어도 ADMIN 은 시딩되지 않는다 | 성공: 검증 assertThat(result.createdCurriculumIds()).hasSize(1); |
 
-### QaGisuIdLoaderTest
-- 위치: `monolith/src/test/java/com/umc/product/test/application/service/QaGisuIdLoaderTest.java`
-
-| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
-|---:|---|---|---|
-| [22](../../../monolith/src/test/java/com/umc/product/test/application/service/QaGisuIdLoaderTest.java#L22) | 요청한 기수만 기수 번호별 ID로 돌려주고, 없는 기수는 빠진다 | 9·10·11기가 있을 때 10·11·12기를 요청 | 성공: 10기·11기 ID만 돌려줌 |
-| [31](../../../monolith/src/test/java/com/umc/product/test/application/service/QaGisuIdLoaderTest.java#L31) | 요청한 기수가 둘이면 어느 쪽도 고르지 않고 실패한다 | 11기가 두 개일 때 11기를 요청 | 실패: IllegalStateException, 메시지에 11기 |
-| [41](../../../monolith/src/test/java/com/umc/product/test/application/service/QaGisuIdLoaderTest.java#L41) | 요청하지 않은 기수의 중복은 무시한다 | 10기가 두 개, 11기가 하나일 때 11기만 요청 | 성공: 11기 ID만 돌려줌 |
-
 ### MemberSeedServiceTest
 - 위치: `monolith/src/test/java/com/umc/product/test/application/service/MemberSeedServiceTest.java`
 
@@ -87,6 +87,48 @@
 |---:|---|---|---|
 | [34](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectSeedDataCleanupServiceTest.java#L34) | gisuId가 지정되면 해당 기수 프로젝트 데이터를 삭제한다 | 호출 delete(DeleteSeedProjectDataCommand.of(9L)) | 성공: 검증 assertThat(result.gisuId()).isEqualTo(9L); assertThat(result.deletedProjects()).isEqualTo(2); assertThat(result.deletedProjectMembers()).isEqualTo(20); |
 | [56](../../../monolith/src/test/java/com/umc/product/test/application/service/ProjectSeedDataCleanupServiceTest.java#L56) | gisuId가 null이면 활성 기수 프로젝트 데이터를 삭제한다 | 호출 delete(DeleteSeedProjectDataCommand.of(null)) | 성공: 검증 assertThat(result.gisuId()).isEqualTo(10L); assertThat(result.deletedProjects()).isEqualTo(1); |
+
+### QaAccountsStepTest
+- 위치: `monolith/src/test/java/com/umc/product/test/application/service/qa/QaAccountsStepTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [50](../../../monolith/src/test/java/com/umc/product/test/application/service/qa/QaAccountsStepTest.java#L50) | superadmin 계정을 만들지 못하면 그 계정의 권한 부여만 건너뛰고 나머지 시스템 역할은 준다 | 계정 작성이 superadmin에서만 IllegalStateException, 다시 읽은 회원 ID에 superadmin 없음 | 부분 실패: 생성 수 = 계정 수 - 1 + 시스템 역할 19건 - 1, 실패 코드 IllegalStateException 1건·SYSTEM_ROLE_HOLDER_MISSING 1건, superadmin의 SUPER_ADMIN 부여는 호출하지 않음 |
+| [78](../../../monolith/src/test/java/com/umc/product/test/application/service/qa/QaAccountsStepTest.java#L78) | 계정과 시스템 역할이 이미 모두 있으면 하나도 만들지 않고 전부 건너뛴 것으로 센다 | 계정 작성과 시스템 역할 부여가 모두 이미 있음(false) | 성공: 생성 0, 건너뜀 = 계정 수 + 시스템 역할 19건, 실패 없음 |
+
+### QaGisuIdLoaderTest
+- 위치: `monolith/src/test/java/com/umc/product/test/application/service/QaGisuIdLoaderTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [27](../../../monolith/src/test/java/com/umc/product/test/application/service/QaGisuIdLoaderTest.java#L27) | 요청한 기수만 기수 번호별 ID로 돌려주고, 없는 기수는 빠진다 | 9·10·11기가 있을 때 10·11·12기를 요청 | 성공: 10기·11기 ID만 돌려줌 |
+| [40](../../../monolith/src/test/java/com/umc/product/test/application/service/QaGisuIdLoaderTest.java#L40) | 요청한 기수의 행이 둘이면 어느 쪽도 고르지 않고 실패한다 | 11기 행이 두 개일 때 11기를 요청 | 실패: IllegalStateException, 메시지에 11기 |
+| [52](../../../monolith/src/test/java/com/umc/product/test/application/service/QaGisuIdLoaderTest.java#L52) | 요청하지 않은 기수의 중복은 무시한다 | 10기가 두 개, 11기가 하나일 때 11기만 요청 | 성공: 11기 ID만 돌려줌 |
+| [65](../../../monolith/src/test/java/com/umc/product/test/application/service/QaGisuIdLoaderTest.java#L65) | 한 기수를 찾을 때 그 기수가 없으면 빈 값을 돌려준다 | 10기만 있을 때 find(11) | 성공: 빈 Optional |
+| [75](../../../monolith/src/test/java/com/umc/product/test/application/service/QaGisuIdLoaderTest.java#L75) | 한 기수를 찾을 때 그 기수의 행이 둘이면 실패한다 | 11기 행이 두 개일 때 find(11) | 실패: IllegalStateException, 메시지에 11기 |
+
+### QaSeedBeanGuardTest
+- 위치: `monolith/src/test/java/com/umc/product/test/application/service/qa/QaSeedBeanGuardTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [13](../../../monolith/src/test/java/com/umc/product/test/application/service/qa/QaSeedBeanGuardTest.java#L13) | QA 시딩 단계 빈은 @Profile(!prod) + @ConditionalOnProperty(app.seed.enabled=true) 가드를 가진다 | 파라미터 @ValueSource classes = { QaDirectoryLoader, QaAccountWriter, QaAccountsStep, QaLearningStep, QaAttendanceStep, QaNoticesStep, QaPointsStep, QaChatStep, QaProjectTransfersStep } | 성공: 각 클래스에 @Profile("!prod")와 app.seed.enabled=true 조건이 있음 |
+
+### QaSeedOrchestratorTest
+- 위치: `monolith/src/test/java/com/umc/product/test/application/service/qa/QaSeedOrchestratorTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [24](../../../monolith/src/test/java/com/umc/product/test/application/service/qa/QaSeedOrchestratorTest.java#L24) | 계정 단계가 실패하면 뒤 단계는 실행하지 않고 NOT_RUN으로 돌려준다 | ACCOUNTS 단계가 IllegalStateException을 던짐 | 실패: ACCOUNTS만 실행, 첫 결과 FAILED·errorCode IllegalStateException, 나머지 단계 NOT_RUN |
+| [44](../../../monolith/src/test/java/com/umc/product/test/application/service/qa/QaSeedOrchestratorTest.java#L44) | 계정 외 단계가 실패해도 다음 단계는 실행하고, 만든 것이 없으면 UNCHANGED다 | ACCOUNTS는 1건 생성, LEARNING은 IllegalArgumentException, 나머지는 건너뜀만 있음 | 성공: 모든 단계 결과가 순서대로 나오고 APPLIED, FAILED 다음 나머지는 UNCHANGED |
+| [68](../../../monolith/src/test/java/com/umc/product/test/application/service/qa/QaSeedOrchestratorTest.java#L68) | 단계 실행기가 빠지면 기동할 때 실패한다 | 단계 실행기 목록에서 마지막 하나를 빼고 생성 | 실패: IllegalStateException |
+
+### RehearsalSeedBeanGuardTest
+- 위치: `monolith/src/test/java/com/umc/product/test/application/service/rehearsal/RehearsalSeedBeanGuardTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [13](../../../monolith/src/test/java/com/umc/product/test/application/service/rehearsal/RehearsalSeedBeanGuardTest.java#L13) | 매칭 리허설 빈은 @Profile(!prod) + @ConditionalOnProperty(app.seed.enabled=true) 가드를 가진다 | 파라미터 @ValueSource classes = { RehearsalContextLoader, StartingLineSeedService, RoundSummaryQueryService, RoundSnapshotReader, MatchingBotService, BotApplicationWriter } | 성공: 각 클래스에 @Profile("!prod")와 app.seed.enabled=true 조건이 있음 |
 
 ## Repository / Outbound Persistence
 
@@ -184,6 +226,39 @@
 |---:|---|---|---|
 | [18](../../../monolith/src/test/java/com/umc/product/test/domain/rehearsal/SeedHashTest.java#L18) | 같은 seed·목적·키면 같은 값이고, 값은 [0, 1)에 고르게 퍼진다 | 키 1만 개, 같은 입력과 목적만 다른 입력 | 성공: 값은 [0, 1)이고 평균 0.5±0.02, 같은 입력은 같은 값, 목적이 다르면 다른 값 |
 | [33](../../../monolith/src/test/java/com/umc/product/test/domain/rehearsal/SeedHashTest.java#L33) | 기본 seed는 지부·유형·차수 번호로만 정해진다 | 지부·유형·차수 번호를 바꿔 계산 | 성공: 같은 입력은 같은 seed, 차수나 지부가 다르면 다른 seed |
+
+### QaPersonasTest
+- 위치: `monolith/src/test/java/com/umc/product/test/domain/roster/QaPersonasTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [22](../../../monolith/src/test/java/com/umc/product/test/domain/roster/QaPersonasTest.java#L22) | 시나리오가 쓰는 계정은 모두 계정 계획 597개 안에 있다 | QaPersonas의 모든 static Persona 필드 | 성공: 각 페르소나 이메일이 계정 계획 이메일 목록에 있음 |
+| [31](../../../monolith/src/test/java/com/umc/product/test/domain/roster/QaPersonasTest.java#L31) | 옛 별칭은 노션 로그인 문서와 같은 university.neordinary.com 명단 계정으로 옮긴다 | 중앙대 학교 회장·파트장·인프라 담당, 중앙 총괄·교육, superadmin 페르소나 | 성공: 각 페르소나가 정해진 명단 계정 이메일로 풀리고, 중앙대 12·27번은 인프라 |
+
+### QaSystemRolesTest
+- 위치: `monolith/src/test/java/com/umc/product/test/domain/roster/QaSystemRolesTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [27](../../../monolith/src/test/java/com/umc/product/test/domain/roster/QaSystemRolesTest.java#L27) | UMC_PRODUCT는 명단 밖 4명과 챌린저 역할 조합별 명단 계정 13명, 10기 계정 1명이 갖는다 | 클래스패스 명단과 시스템 역할 표로 만든 계정 계획 | 성공: UMC_PRODUCT 보유자 18명(명단 밖 4명, 명단 계정 13명, cau_springboot), SUPER_ADMIN은 superadmin 1명 |
+| [47](../../../monolith/src/test/java/com/umc/product/test/domain/roster/QaSystemRolesTest.java#L47) | 명단 밖 계정 4개는 챌린저 없이 중앙대학교 소속 플덕QA1~4로 계획에 들어간다 | 명단 밖 별칭 umcproduct01~04 | 성공: 표시 이름 플덕QA1~4 순서, 챌린저 등록 없음, 학교 중앙대학교 |
+| [61](../../../monolith/src/test/java/com/umc/product/test/domain/roster/QaSystemRolesTest.java#L61) | 시스템 역할을 받는 별칭은 모두 계획된 계정 하나에만 대응한다 | 계획의 모든 시스템 역할 부여 | 성공: 각 부여 이메일이 계정 이메일 목록에 정확히 1번 나옴 |
+| [70](../../../monolith/src/test/java/com/umc/product/test/domain/roster/QaSystemRolesTest.java#L70) | 계획에 없는 별칭에 시스템 역할을 주면 계획을 만들지 않는다 | 명단에 없는 별칭 duksung_g11_qa99에 UMC_PRODUCT 부여 | 실패: IllegalArgumentException, 메시지에 그 별칭 |
+| [81](../../../monolith/src/test/java/com/umc/product/test/domain/roster/QaSystemRolesTest.java#L81) | 명단 밖 계정 별칭이 이미 있는 계정과 겹치면 계획을 만들지 않는다 | 명단 밖 계정 별칭을 기존 계정 cau_springboot로 지정 | 실패: IllegalArgumentException, 메시지에 cau_springboot |
+
+### RehearsalCastTest
+- 위치: `monolith/src/test/java/com/umc/product/test/domain/roster/RehearsalCastTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [37](../../../monolith/src/test/java/com/umc/product/test/domain/roster/RehearsalCastTest.java#L37) | 명단 583행과 superadmin, 10기 9개, 명단 밖 4개를 합쳐 서로 다른 이메일의 계정 597개를 계획한다 | 클래스패스 명단과 시스템 역할 표 | 성공: 명단 583행, 계정 597개, 이메일 597개 모두 다름, 첫 계정은 가천 1번(가천QA1), superadmin·cau_springboot·중앙대 38번 포함 |
+| [51](../../../monolith/src/test/java/com/umc/product/test/domain/roster/RehearsalCastTest.java#L51) | 학교별 파트 인원이 계획 문서의 인원표와 같다 | 지부가 있는 학교 23곳의 PLAN·디자인·Web PE·Mobile PE 인원 | 성공: 인원표와 같고, 파트가 없는 행은 34 + 15 = 49개 |
+| [72](../../../monolith/src/test/java/com/umc/product/test/domain/roster/RehearsalCastTest.java#L72) | 지부별 PLAN은 캥거루 13, 쿼카 19, 수달 13, 아홀로틀 13, 티라노 11명이다 | 지부 5곳의 명단 순 PLAN | 성공: 지부 순서 캥거루·쿼카·수달·아홀로틀·티라노, PLAN 13·19·13·13·11명 |
+| [80](../../../monolith/src/test/java/com/umc/product/test/domain/roster/RehearsalCastTest.java#L80) | 출발선은 지부마다 QA 프로젝트 2개와 무프로젝트 PLAN 2명을 두고 프로젝트 59개 중 49개를 시딩한다 | 지부별 출발선 계획 | 성공: 지부마다 QA PO 2명·무프로젝트 PLAN 2명, QA·시딩 PO 합계 59명 중 시딩 49명, 캥거루 QA PO는 가천 9·10번, 무프로젝트는 한성 13·26번 |
+| [98](../../../monolith/src/test/java/com/umc/product/test/domain/roster/RehearsalCastTest.java#L98) | QA 몫 A·B·C는 지부마다 매칭 파트별 3명이고 지부 이동 4명은 들어가지 않는다 | 지부별 QA 몫 | 성공: 지부마다 9명, 지부 이동 4명 제외, 모두 일반 챌린저이고 매칭 지부가 그 지부, 라벨 A·B·C 세 번 반복, 캥거루·아홀로틀 앞 3명 고정 |
+| [120](../../../monolith/src/test/java/com/umc/product/test/domain/roster/RehearsalCastTest.java#L120) | 지부가 없는 명지·상명·인천가톨릭은 매칭에서 빠지고 이동 4명은 매칭 지부를 옮긴다 | mju·smu·iccu 1번, 동양미래 4번, 숭실 31번, 지부별 매칭 인원 | 성공: 세 학교는 매칭 지부 없음, 동양미래 4번은 학교 지부 쿼카·매칭 지부 캥거루, 숭실 31번은 수달, 매칭 인원 합계 디자인 72·Web 284·Mobile 109, 캥거루 디자인 12 |
+| [139](../../../monolith/src/test/java/com/umc/product/test/domain/roster/RehearsalCastTest.java#L139) | 중앙 총괄·부총괄과 지부장 5명이 명단 역할에서 나온다 | 명단 역할 컬럼 | 성공: 중앙 총괄 덕성 3번, 부총괄 가천 30번, 지부장 가천 2·숭실 1·중앙 1·홍익 1·동덕 1번, Web 학교 파트장 중앙 5번 |
+| [153](../../../monolith/src/test/java/com/umc/product/test/domain/roster/RehearsalCastTest.java#L153) | 담당 파트가 없는 파트장, 끊긴 순번, 학교표에 없는 학교는 명단 파싱에서 거부한다 | 파트 없는 SCHOOL_PART_LEADER, 순번 1 다음 3, 학교표에 없는 snu, 인프라 표시한 DESIGN 행 | 실패: 네 경우 모두 IllegalArgumentException |
 
 ### QuotaApportionmentTest
 - 위치: `monolith/src/test/java/com/umc/product/test/domain/startingline/QuotaApportionmentTest.java`
