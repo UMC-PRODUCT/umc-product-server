@@ -343,14 +343,13 @@ app:
   # 호스트/서명 인증서만 재정의한다.
   deep-link:
     base-url: ${APP_DEEP_LINK_BASE_URL:https://api.university.neordinary.com}
-    fallback-url: ${APP_DEEP_LINK_FALLBACK_URL:https://university.neordinary.com}
     android:
       package-name: ${APP_DEEP_LINK_ANDROID_PACKAGE_NAME:com.umc.product}
       sha256-cert-fingerprints: ${APP_DEEP_LINK_ANDROID_SHA256_CERT_FINGERPRINTS:77:6D:65:1D:14:23:7E:E6:52:3A:5E:A9:F2:A5:ED:6A:04:95:2F:02:C6:B8:F1:74:B4:00:47:EB:CF:29:E1:71}
     ios:
       team-id: ${APP_DEEP_LINK_IOS_TEAM_ID:8B8B4462NV}
       bundle-id: ${APP_DEEP_LINK_IOS_BUNDLE_ID:com.umc.product}
-      app-store-url: ${APP_DEEP_LINK_IOS_APP_STORE_URL:}
+      app-store-url: ${APP_DEEP_LINK_IOS_APP_STORE_URL:https://apps.apple.com/app/id6759412446}
 
   sso:
     issuer: ${SSO_ISSUER:https://api.university.neordinary.com}

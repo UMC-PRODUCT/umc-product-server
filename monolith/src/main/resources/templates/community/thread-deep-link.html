@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UMC PRODUCT 스레드 열기</title>
+    <title>UMC PRODUCT</title>
     <style>
         body {
             margin: 0;
@@ -17,22 +17,20 @@
             min-height: 100vh;
         }
         .card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 32px 24px;
             max-width: 360px;
             width: calc(100% - 48px);
             text-align: center;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-        }
-        h1 {
-            font-size: 18px;
-            margin: 0 0 8px;
         }
         p {
-            font-size: 14px;
+            font-size: 15px;
+            margin: 0 0 16px;
+        }
+        .hint {
+            font-size: 13px;
             color: #6b6b6b;
-            margin: 0 0 24px;
+        }
+        .hint a {
+            color: #4b4bff;
         }
         .btn {
             display: block;
@@ -44,33 +42,50 @@
             text-decoration: none;
             font-weight: 600;
             font-size: 15px;
-        }
-        .btn-primary {
             background: #4b4bff;
             color: #fff;
-        }
-        .btn-secondary {
-            background: #eef0ff;
-            color: #4b4bff;
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>UMC PRODUCT 앱에서 스레드 열기</h1>
-        <p>앱이 설치되어 있다면 바로 스레드로 이동해요.</p>
-
-        <a class="btn btn-primary" th:href="${appDeepLink}">앱에서 열기</a>
-
-        <a class="btn btn-secondary"
-           th:if="${platform == 'IOS' and iosStoreUrl != null}"
-           th:href="${iosStoreUrl}">App Store에서 다운로드</a>
-        <a class="btn btn-secondary"
-           th:if="${platform != 'IOS'}"
-           th:href="${androidStoreUrl}">Play 스토어에서 다운로드</a>
-
-        <a class="btn btn-secondary" th:if="${platform == 'IOS' and iosStoreUrl == null}"
-           th:href="${fallbackUrl}">UMC PRODUCT 더 알아보기</a>
+    <!-- 모바일: 앱 실행을 자동으로 시도하고, 앱이 열리지 않으면 스토어로 이동한다. -->
+    <div class="card" th:if="${autoLaunch}">
+        <p>UMC PRODUCT 앱으로 이동하고 있어요.</p>
+        <p class="hint">앱이 열리지 않나요? <a th:href="${storeUrl}">앱 다운로드</a></p>
     </div>
+
+    <!-- 데스크톱 등 앱을 열 수 없는 환경: 스토어 링크만 보여준다. -->
+    <div class="card" th:unless="${autoLaunch}">
+        <p>UMC PRODUCT 앱에서 확인할 수 있어요.</p>
+        <a class="btn" th:href="${iosStoreUrl}">App Store에서 다운로드</a>
+        <a class="btn" th:href="${androidStoreUrl}">Play 스토어에서 다운로드</a>
+    </div>
+
+    <script th:if="${autoLaunch}" th:inline="javascript">
+        (function () {
+            var appUrl = /*[[${appDeepLink}]]*/ '';
+            var storeUrl = /*[[${storeUrl}]]*/ '';
+
+            // 앱이 열리면 브라우저가 백그라운드로 가서(hidden/pagehide) 스토어 이동을 취소한다.
+            var timer = setTimeout(function () {
+                if (!document.hidden) {
+                    window.location.replace(storeUrl);
+                }
+            }, 1500);
+
+            function cancel() {
+                clearTimeout(timer);
+            }
+
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden) {
+                    cancel();
+                }
+            });
+            window.addEventListener('pagehide', cancel);
+
+            window.location.href = appUrl;
+        })();
+    </script>
 </body>
 </html>
