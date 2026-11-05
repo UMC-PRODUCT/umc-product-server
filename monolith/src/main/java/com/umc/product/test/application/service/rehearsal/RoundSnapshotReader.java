@@ -29,7 +29,7 @@ class RoundSnapshotReader {
             .orElseThrow(() -> new SeedRehearsalException(SeedErrorCode.ROUND_NOT_FOUND, "차수가 없습니다: " + roundId));
     }
 
-    /** 11기가 없으면 QA 몫이 없는 것으로 본다. */
+    /** 11기가 없으면 QA 몫이 없는 것으로 본다. 11기 행이 둘 이상이면 하나를 고르지 않고 실패한다. */
     ChapterRoles roles(RoundSnapshot snapshot) {
         return contextLoader.find()
             .map(context -> ChapterRoles.of(context.cast(), snapshot.round().chapterName()))

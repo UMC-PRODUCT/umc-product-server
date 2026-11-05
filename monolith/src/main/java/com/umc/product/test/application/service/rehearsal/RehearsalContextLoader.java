@@ -1,7 +1,6 @@
 package com.umc.product.test.application.service.rehearsal;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -33,8 +32,7 @@ class RehearsalContextLoader {
     }
 
     Optional<RehearsalContext> find() {
-        int generation = QaAccountPlan.CURRENT_GENERATION;
-        return Optional.ofNullable(qaGisuIdLoader.load(List.of(generation)).get(generation)).map(this::build);
+        return qaGisuIdLoader.find(QaAccountPlan.CURRENT_GENERATION).map(this::build);
     }
 
     private RehearsalContext build(Long gisuId) {

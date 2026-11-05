@@ -2,7 +2,9 @@ package com.umc.product.test.application.service;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
@@ -30,5 +32,9 @@ public class QaGisuIdLoader {
             }
         }
         return Map.copyOf(gisuIds);
+    }
+
+    public Optional<Long> find(int generation) {
+        return Optional.ofNullable(load(List.of(generation)).get(generation));
     }
 }
