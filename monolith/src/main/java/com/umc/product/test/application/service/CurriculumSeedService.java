@@ -1,7 +1,6 @@
 package com.umc.product.test.application.service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -57,9 +56,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class CurriculumSeedService implements SeedCurriculumUseCase {
 
-    private static final List<ChallengerPart> DEFAULT_PARTS = Arrays.stream(ChallengerPart.values())
-        .filter(p -> p != ChallengerPart.ADMIN)
-        .toList();
+    private static final List<ChallengerPart> DEFAULT_PARTS = ChallengerPart.selectableValues();
     private final DummyCurriculumFactory dummyCurriculumFactory;
     private final GetGisuUseCase getGisuUseCase;
     private final ManageCurriculumUseCase manageCurriculumUseCase;

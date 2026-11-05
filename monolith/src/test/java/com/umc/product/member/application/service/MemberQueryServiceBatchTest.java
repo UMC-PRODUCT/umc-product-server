@@ -57,6 +57,26 @@ class MemberQueryServiceBatchTest {
     }
 
     @Test
+    @DisplayName("이메일 일괄 조회는 빈 입력이면 저장소를 조회하지 않는다")
+    void findIdsByEmailsReturnsEmptyMapWithoutLookup() {
+        assertThat(sut.findIdsByEmails(Set.of())).isEmpty();
+        assertThat(sut.findIdsByEmails(null)).isEmpty();
+
+        then(loadMemberPort).should(never()).findIdsByEmails(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("이메일 일괄 조회는 있는 이메일의 회원 ID만 돌려준다")
+    void findIdsByEmailsReturnsFoundIds() {
+        given(loadMemberPort.findIdsByEmails(Set.of("a@test.com", "missing@test.com")))
+            .willReturn(Map.of("a@test.com", 1L));
+
+        Map<String, Long> result = sut.findIdsByEmails(Set.of("a@test.com", "missing@test.com"));
+
+        assertThat(result).containsExactly(Map.entry("a@test.com", 1L));
+    }
+
+    @Test
     @DisplayName("findAllByIds는 같은 schoolId와 profileImageId를 한 번만 조회한다")
     void findAllByIdsCachesRepeatedSchoolAndProfileLookups() {
         Member first = member(1L, "홍길동", 10L, "profile-file-id");

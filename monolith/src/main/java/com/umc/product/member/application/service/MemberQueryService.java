@@ -189,6 +189,14 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
     }
 
     @Override
+    public Map<String, Long> findIdsByEmails(Set<String> emails) {
+        if (emails == null || emails.isEmpty()) {
+            return Map.of();
+        }
+        return loadMemberPort.findIdsByEmails(emails);
+    }
+
+    @Override
     public List<Long> findAllIdsCursor(Long lastId, int limit) {
         return loadMemberPort.findAllIdsCursor(lastId, PageRequest.of(0, limit));
     }

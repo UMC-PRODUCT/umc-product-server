@@ -73,8 +73,8 @@ class ChallengerSeedServiceTest {
     }
 
     @Test
-    @DisplayName("parts 가 null 이면 ADMIN 제외 모든 파트가 대상이 된다")
-    void parts_기본값_ADMIN_제외() {
+    @DisplayName("parts 가 null 이면 선택 가능한 신규 파트 4개가 대상이 된다")
+    void parts_기본값_선택_가능_파트() {
         // Given
         Long gisuId = 9L;
         ChapterWithSchoolsInfo chapter = new ChapterWithSchoolsInfo(
@@ -87,11 +87,8 @@ class ChallengerSeedServiceTest {
         SeedChallengersResult result = sut.seed(new SeedChallengersCommand(gisuId, 1, null, null));
 
         // Then
-        long expectedParts = java.util.Arrays.stream(ChallengerPart.values())
-            .filter(p -> p != ChallengerPart.ADMIN).count();
-        assertThat(result.perCellSummary()).hasSize((int) expectedParts);
-        assertThat(result.perCellSummary())
-            .noneMatch(s -> s.part() == ChallengerPart.ADMIN);
+        assertThat(result.perCellSummary()).extracting(SeedChallengersResult.PerCellSummary::part)
+            .containsExactlyElementsOf(ChallengerPart.selectableValues());
     }
 
     @Test
@@ -201,7 +198,7 @@ class ChallengerSeedServiceTest {
     }
 
     @Test
-    @DisplayName("Part 목록을 생략하면 ADMIN을 제외한 파트의 챌린저를 생성한다")
+    @DisplayName("Part 목록을 생략하면 레거시 파트 없이 선택 가능한 파트의 챌린저를 생성한다")
     void seedDefaultParts() {
         // Given
         given(getGisuUseCase.getById(11L)).willReturn(
@@ -214,12 +211,12 @@ class ChallengerSeedServiceTest {
         SeedChallengersResult result = sut.seed(new SeedChallengersCommand(11L, 1, null, null));
 
         // Then
-        assertThat(result.totalCreated()).isEqualTo(9);
+        assertThat(result.totalCreated()).isEqualTo(4);
         assertThat(result.perCellSummary()).extracting(SeedChallengersResult.PerCellSummary::part)
-            .doesNotContain(ChallengerPart.ADMIN)
-            .contains(ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER);
+            .containsExactly(ChallengerPart.PLAN, ChallengerPart.DESIGN,
+                ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER);
         ArgumentCaptor<List<CreateChallengerCommand>> commands = ArgumentCaptor.forClass(List.class);
-        verify(manageChallengerUseCase, times(9)).createChallengerBulk(commands.capture());
+        verify(manageChallengerUseCase, times(4)).createChallengerBulk(commands.capture());
         assertThat(commands.getAllValues()).allSatisfy(batch -> {
             assertThat(batch).hasSize(1);
             assertThat(batch.getFirst().part()).isNotNull();

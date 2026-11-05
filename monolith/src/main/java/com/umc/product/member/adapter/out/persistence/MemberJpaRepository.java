@@ -43,6 +43,15 @@ public interface MemberJpaRepository extends JpaRepository<Member, Long> {
 
     long countByIdIn(Collection<Long> ids);
 
+    @Query("select m.email as email, m.id as memberId from Member m where m.email in :emails")
+    List<EmailMemberIdRow> findAllIdsByEmails(@Param("emails") Collection<String> emails);
+
+    interface EmailMemberIdRow {
+        String getEmail();
+
+        Long getMemberId();
+    }
+
     interface SchoolMemberIdRow {
         Long getSchoolId();
 

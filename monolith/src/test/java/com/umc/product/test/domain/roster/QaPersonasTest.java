@@ -1,0 +1,60 @@
+package com.umc.product.test.domain.roster;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import com.umc.product.test.adapter.out.resource.ClasspathQaRosterAdapter;
+import com.umc.product.test.domain.roster.QaPersonas.Persona;
+
+@DisplayName("QA 시나리오 계정 이전표")
+class QaPersonasTest {
+
+    private final ClasspathQaRosterAdapter adapter = new ClasspathQaRosterAdapter();
+    private final QaRoster roster = adapter.load();
+
+    @Test
+    @DisplayName("시나리오가 쓰는 계정은 모두 계정 계획 597개 안에 있다")
+    void everyPersonaIsPlannedAccount() {
+        List<String> planned = QaAccountPlan.from(roster, adapter.loadSystemRoles()).emails();
+
+        assertThat(personas()).allSatisfy(persona ->
+            assertThat(planned).contains(persona.email(roster)));
+    }
+
+    @Test
+    @DisplayName("옛 별칭은 노션 로그인 문서와 같은 university.neordinary.com 명단 계정으로 옮긴다")
+    void legacyAliasesMoveToRosterSeats() {
+        assertThat(QaPersonas.CAU_SCHOOL_PRESIDENT.email(roster)).isEqualTo("cau_g11_qa01@university.neordinary.com");
+        assertThat(QaPersonas.CAU_PLAN_LEADER.email(roster)).isEqualTo("cau_g11_qa03@university.neordinary.com");
+        assertThat(QaPersonas.CAU_MOBILE_LEADER.email(roster)).isEqualTo("cau_g11_qa06@university.neordinary.com");
+        assertThat(QaPersonas.CAU_WEB_INFRA.email(roster)).isEqualTo("cau_g11_qa12@university.neordinary.com");
+        assertThat(QaPersonas.CAU_MOBILE_INFRA.email(roster)).isEqualTo("cau_g11_qa27@university.neordinary.com");
+        assertThat(QaPersonas.CENTRAL_PRESIDENT.email(roster)).isEqualTo("duksung_g11_qa03@university.neordinary.com");
+        assertThat(QaPersonas.CENTRAL_EDUCATION.email(roster)).isEqualTo("soongsil_g11_qa49@university.neordinary.com");
+        assertThat(QaPersonas.SUPERADMIN.email(roster)).isEqualTo("superadmin@university.neordinary.com");
+        assertThat(roster.entry(RosterKey.of("cau", 12)).infra()).isTrue();
+        assertThat(roster.entry(RosterKey.of("cau", 27)).infra()).isTrue();
+    }
+
+    private static List<Persona> personas() {
+        return Arrays.stream(QaPersonas.class.getFields())
+            .filter(field -> Modifier.isStatic(field.getModifiers()) && field.getType() == Persona.class)
+            .map(QaPersonasTest::read)
+            .toList();
+    }
+
+    private static Persona read(Field field) {
+        try {
+            return (Persona) field.get(null);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+}

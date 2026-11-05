@@ -1,7 +1,12 @@
 package com.umc.product.test.application.port.in.command;
 
-import com.umc.product.test.application.port.in.command.dto.QaSeedResult;
+import java.util.List;
+
+import com.umc.product.test.application.port.in.command.dto.QaSeedStep;
+import com.umc.product.test.application.port.in.command.dto.QaStepResult;
 
 public interface SeedQaDataUseCase {
-    QaSeedResult seed();
+    List<QaStepResult> seedAll();
+
+    QaStepResult seed(QaSeedStep step);
 }

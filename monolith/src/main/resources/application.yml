@@ -560,9 +560,10 @@ app:
   # 기본값은 비활성. prod 가 아닌 환경에서 APP_SEED_ENABLED=true 로 켜야 시딩 API 가 노출된다.
   seed:
     enabled: ${APP_SEED_ENABLED:false}
-    skip-if-member-count-greater-than: ${APP_SEED_SKIP_THRESHOLD:0}
     email-domain: ${APP_SEED_EMAIL_DOMAIN:test.umc.it.kr}
     default-password: ${APP_SEED_DEFAULT_PASSWORD:password12!}
+    # true면 앱 기동 뒤 QA 시딩 전체(/test/seed/qa)를 한 번 실행한다. dev에서만 켠다.
+    qa-auto-run: ${APP_SEED_QA_AUTO_RUN:false}
 
   oauth2:
     google:

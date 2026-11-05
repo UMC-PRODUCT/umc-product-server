@@ -15,4 +15,5 @@
 ## 프로젝트별 운영 문서
 
 - [매칭 자동 선발과 랜덤 매칭·결과 발표](project/plan-developer-third-auto-assignment.md)
+- [dev 프로젝트 매칭 리허설 실행 방법](test/project-matching-rehearsal.md): DB 초기화 뒤 QA 계정·출발선을 만들고 차수를 넘기며 리허설하는 API 호출 순서
 - [Event Outbox 발행 및 소비 흐름](event-outbox-flow.md): 이벤트 저장, polling, relay, 상태 전이와 dispatch mode 선택 기준

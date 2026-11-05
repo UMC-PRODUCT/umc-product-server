@@ -35,6 +35,7 @@ import com.umc.product.global.observability.ScheduledTaskTracer;
 import com.umc.product.project.adapter.in.scheduler.MatchingResultPublicationHandler;
 import com.umc.product.project.adapter.in.scheduler.MatchingRoundDeadlineHandler;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
+import com.umc.product.project.application.port.out.dto.MatchingRoundTimers;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
@@ -92,9 +93,11 @@ class MatchingRoundDeadlineSchedulerTest {
                 .willAnswer(invocation -> scheduledFuture);
 
             // when
-            sut.schedule(round);
+            MatchingRoundTimers timers = sut.schedule(round);
 
             // then
+            assertThat(timers).isEqualTo(new MatchingRoundTimers(1L,
+                third.getResultPublishedAt().plus(TEST_DEADLINE_BUFFER), round.getResultPublishAt()));
             ArgumentCaptor<Runnable> matchingTask = ArgumentCaptor.forClass(Runnable.class);
             ArgumentCaptor<Runnable> publicationTask = ArgumentCaptor.forClass(Runnable.class);
             then(taskScheduler).should().schedule(matchingTask.capture(),
@@ -121,9 +124,10 @@ class MatchingRoundDeadlineSchedulerTest {
                 .willAnswer(invocation -> scheduledFuture);
 
             // when
-            sut.schedule(round);
+            MatchingRoundTimers timers = sut.schedule(round);
 
             // then
+            assertThat(timers).isEqualTo(new MatchingRoundTimers(1L, null, round.getResultPublishAt()));
             assertThat(sut.isScheduled(1L)).isFalse();
             then(taskScheduler).should().schedule(any(Runnable.class), eq(round.getResultPublishAt()));
             then(taskScheduler).shouldHaveNoMoreInteractions();
@@ -135,11 +139,28 @@ class MatchingRoundDeadlineSchedulerTest {
             given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
                 .willAnswer(invocation -> scheduledFuture);
 
-            sut.schedule(round);
+            MatchingRoundTimers timers = sut.schedule(round);
 
             assertThat(sut.isScheduled(1L)).isTrue();
             Instant expectedRunAt = round.getDecisionDeadline().plus(TEST_DEADLINE_BUFFER);
             then(taskScheduler).should().schedule(any(Runnable.class), eq(expectedRunAt));
+            assertThat(timers).isEqualTo(new MatchingRoundTimers(1L, expectedRunAt, null));
+        }
+
+        @Test
+        void 자동_선발이_끝난_차수는_발표_알람만_등록하고_그_시각을_돌려준다() {
+            ProjectMatchingRound round = roundWithId(1L);
+            Instant publishAt = round.getDecisionDeadline().plusSeconds(3600);
+            ReflectionTestUtils.setField(round, "resultPublishAt", publishAt);
+            round.executeAutoDecision(null);
+            given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+                .willAnswer(invocation -> scheduledFuture);
+
+            MatchingRoundTimers timers = sut.schedule(round);
+
+            assertThat(timers).isEqualTo(new MatchingRoundTimers(1L, null, publishAt));
+            assertThat(sut.isScheduled(1L)).isFalse();
+            then(taskScheduler).should().schedule(any(Runnable.class), eq(publishAt));
         }
 
         @Test

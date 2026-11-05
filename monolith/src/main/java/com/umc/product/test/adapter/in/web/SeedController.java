@@ -25,16 +25,8 @@ import com.umc.product.test.adapter.in.web.dto.SeedChallengersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedCurriculumRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedCurriculumResponse;
-import com.umc.product.test.adapter.in.web.dto.SeedMembersRequest;
-import com.umc.product.test.adapter.in.web.dto.SeedMembersResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedNoticeRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedNoticeResponse;
-import com.umc.product.test.adapter.in.web.dto.SeedProjectApplicationsRequest;
-import com.umc.product.test.adapter.in.web.dto.SeedProjectApplicationsResponse;
-import com.umc.product.test.adapter.in.web.dto.SeedProjectScenariosRequest;
-import com.umc.product.test.adapter.in.web.dto.SeedProjectScenariosResponse;
-import com.umc.product.test.adapter.in.web.dto.SeedProjectsRequest;
-import com.umc.product.test.adapter.in.web.dto.SeedProjectsResponse;
 import com.umc.product.test.application.port.in.command.CreateSeedChallengerRoleUseCase;
 import com.umc.product.test.application.port.in.command.CreateSeedChallengerUseCase;
 import com.umc.product.test.application.port.in.command.CreateSeedMemberSystemRoleUseCase;
@@ -43,11 +35,7 @@ import com.umc.product.test.application.port.in.command.DeleteSeedProjectDataUse
 import com.umc.product.test.application.port.in.command.SeedChallengerPointsUseCase;
 import com.umc.product.test.application.port.in.command.SeedChallengersUseCase;
 import com.umc.product.test.application.port.in.command.SeedCurriculumUseCase;
-import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
 import com.umc.product.test.application.port.in.command.SeedNoticeUseCase;
-import com.umc.product.test.application.port.in.command.SeedProjectApplicationsUseCase;
-import com.umc.product.test.application.port.in.command.SeedProjectScenariosUseCase;
-import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
 import com.umc.product.test.application.port.in.command.dto.DeleteSeedProjectDataCommand;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -72,35 +60,15 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "Test | 시딩", description = "운영 외 환경에서 시딩 데이터를 만듭니다. prod 환경에서는 비활성화됩니다.")
 public class SeedController {
 
-    private final SeedMembersUseCase seedMembersUseCase;
     private final CreateSeedMemberUseCase createSeedMemberUseCase;
     private final CreateSeedMemberSystemRoleUseCase createSeedMemberSystemRoleUseCase;
     private final SeedChallengersUseCase seedChallengersUseCase;
     private final CreateSeedChallengerUseCase createSeedChallengerUseCase;
     private final CreateSeedChallengerRoleUseCase createSeedChallengerRoleUseCase;
-    private final SeedProjectsUseCase seedProjectsUseCase;
     private final DeleteSeedProjectDataUseCase deleteSeedProjectDataUseCase;
-    private final SeedProjectScenariosUseCase seedProjectScenariosUseCase;
-    private final SeedProjectApplicationsUseCase seedProjectApplicationsUseCase;
     private final SeedCurriculumUseCase seedCurriculumUseCase;
     private final SeedNoticeUseCase seedNoticeUseCase;
     private final SeedChallengerPointsUseCase seedChallengerPointsUseCase;
-
-    @Operation(
-        operationId = "SEED-001",
-        summary = "더미 멤버 시딩",
-        description = """
-            ID/PW 더미 멤버를 N 명 즉시 생성합니다. 모든 더미 회원은 동일한 비밀번호
-            (app.seed.default-password)를 사용합니다.
-            force=false (기본) 이면 현재 회원 수가 임계값을 초과한 경우 시딩을 스킵합니다.
-            force=true 이면 임계값 체크를 무시하고 무조건 시딩합니다.
-            챌린저/프로젝트 시딩 전 호출이 필요합니다.
-            """
-    )
-    @PostMapping("/members")
-    public SeedMembersResponse seedMembers(@RequestBody @Valid SeedMembersRequest request) {
-        return SeedMembersResponse.from(seedMembersUseCase.seed(request.toCommand()));
-    }
 
     @Operation(
         operationId = "SEED-001-M",
@@ -137,9 +105,9 @@ public class SeedController {
         summary = "챌린저 분포 시딩",
         description = """
             특정 기수의 학교별로 더미 회원과 챌린저를 함께 생성합니다.
-            parts와 countPerPartPerSchool을 사용하며, parts 생략 시 ADMIN과 INFRA를 제외한 전 파트가 대상입니다.
+            parts와 countPerPartPerSchool을 사용하며, parts 생략 시 PLAN, DESIGN, WEB_PRODUCT_ENGINEER, MOBILE_PRODUCT_ENGINEER가 대상입니다.
             gisuId 생략 시 활성 기수, chapterIds 생략 시 해당 기수의 모든 지부가 대상입니다.
-            INFRA는 챌린저의 단독 파트가 아니므로 입력할 수 없습니다.
+            인프라는 파트가 아니라 챌린저의 infra 선택 트랙이므로 parts로 입력하지 않습니다.
             """
     )
     @PostMapping("/challengers")
@@ -181,22 +149,6 @@ public class SeedController {
     }
 
     @Operation(
-        operationId = "SEED-003",
-        summary = "프로젝트 시딩",
-        description = """
-            활성 기수(또는 지정 기수)의 같은 school 멤버 풀에서 PLAN 1 + 프론트엔드 5~6 +
-            백엔드 5~6 의 멤버 슬롯을 추출해 프로젝트를 N 개 생성합니다.
-            School 단위 round-robin 으로 채우며, 풀이 부족한 셀은 skip 합니다.
-            PO 후보가 PLAN 챌린저로 등록되지 않은 경우 시딩 측에서 PLAN 챌린저로 등록한 뒤
-            createDraft 를 호출합니다.
-            """
-    )
-    @PostMapping("/projects")
-    public SeedProjectsResponse seedProjects(@RequestBody @Valid SeedProjectsRequest request) {
-        return SeedProjectsResponse.from(seedProjectsUseCase.seed(request.toCommand()));
-    }
-
-    @Operation(
         operationId = "SEED-003-D",
         summary = "프로젝트 시딩 데이터 삭제",
         description = """
@@ -219,33 +171,11 @@ public class SeedController {
     }
 
     @Operation(
-        operationId = "SEED-003-S",
-        summary = "프로젝트 시나리오 시딩",
-        description = """
-            활성 기수에 대해 DRAFT / PENDING_REVIEW / IN_PROGRESS 중 하나의 상태까지 도달한
-            프로젝트를 N 개 생성합니다. SQL 직접 주입이 아니라 도메인 UseCase 시퀀스 호출로 만들기 때문에
-            도메인 가드를 모두 통과한 데이터가 됩니다.
-            productOwnerMemberIds 를 명시하면 그 리스트로만 PO 를 사용하고(size 가 projectCount 와
-            같아야 하며 각각 활성 기수 PLAN 챌린저여야 함), null 이면 활성 기수 PLAN 챌린저 풀에서
-            랜덤 픽 합니다. 시딩 측에서 챌린저를 강제로 만들지는 않습니다.
-            IN_PROGRESS 단계에서는 DESIGN×1~2 + FE 1 개×3~4 + BE 1 개×3~4 의 partQuota 가 자동 분배되고,
-            각 파트마다 PO 학교의 해당 파트 챌린저 풀에서 random(0, quota) 만큼 멤버가 충원됩니다.
-            """
-    )
-    @PostMapping("/projects/scenarios")
-    public SeedProjectScenariosResponse seedProjectScenarios(
-        @RequestBody @Valid SeedProjectScenariosRequest request
-    ) {
-        return SeedProjectScenariosResponse.from(seedProjectScenariosUseCase.seed(request.toCommand()));
-    }
-
-
-    @Operation(
         operationId = "SEED-004",
         summary = "Curriculum 시딩 (Curriculum · WeeklyCurriculum · OriginalWorkbook · Mission)",
         description = """
             활성 기수(또는 지정 기수)의 파트별로 다음 골격을 시딩합니다.
-            parts를 생략하면 ADMIN을 제외한 전 파트를 사용합니다.
+            parts를 생략하면 PLAN, DESIGN, WEB_PRODUCT_ENGINEER, MOBILE_PRODUCT_ENGINEER를 사용합니다.
             Curriculum (1/파트) → WeeklyCurriculum (1~N 주차) → OriginalWorkbook (MAIN, READY) → Mission (M개).
             releaseRequesterMemberId 가 지정되면 모든 워크북을 READY → RELEASED 로 전환합니다.
             스터디 그룹 배정이나 개인 워크북 수령은 포함하지 않습니다.
@@ -274,36 +204,6 @@ public class SeedController {
     @PostMapping("/notice")
     public SeedNoticeResponse seedNotice(@RequestBody @Valid SeedNoticeRequest request) {
         return SeedNoticeResponse.from(seedNoticeUseCase.seed(request.toCommand()));
-    }
-
-    @Operation(
-        operationId = "SEED-006",
-        summary = "지원서 시나리오 시딩",
-        description = """
-            지정 매칭 차수 + 지부를 기준으로, 아직 팀에 합류하지 않은 ACTIVE 챌린저들이
-            지부의 IN_PROGRESS 프로젝트에 지원서를 제출하는 시나리오를 실행합니다.
-
-            전제 조건:
-            - 매칭차수가 현재 OPEN 상태(startsAt <= now <= endsAt)여야 합니다.
-            - 지부 내 IN_PROGRESS 프로젝트가 존재해야 합니다. (SEED-003-S 선행 필요)
-            - 챌린저가 시딩되어 있어야 합니다. (SEED-002 선행 필요)
-
-            동작:
-            각 챌린저는 createDraft → fill → submit 까지 진행한 뒤, 최종 상태가
-            SUBMITTED / APPROVED / REJECTED 중 하나로 무작위 결정됩니다 (약 1/3 분포).
-            그 결과로 운영 화면의 "검토 대기 + 합격자 + 불합격자" 분포가 자연스럽게 채워집니다.
-
-            ProjectMember 등록은 시딩 책임 밖입니다. 매칭 완료(APPROVED → ProjectMember 일괄 등록)는
-            차수 종료 시점의 autoDecide 가 처리합니다.
-            """
-    )
-    @PostMapping("/project-applications")
-    public SeedProjectApplicationsResponse seedProjectApplications(
-        @RequestBody @Valid SeedProjectApplicationsRequest request
-    ) {
-        return SeedProjectApplicationsResponse.from(
-            seedProjectApplicationsUseCase.seed(request.toCommand())
-        );
     }
 
     @Operation(
