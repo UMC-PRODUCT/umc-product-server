@@ -20,6 +20,8 @@ dev DB를 초기화한 뒤 `/test/seed/...` API로 QA 계정과 프로젝트 출
 
 ## DB 초기화 직후 한 번
 
+Flyway는 골격만 넣고 QA 계정은 만들지 않는다. dev처럼 `APP_SEED_QA_AUTO_RUN=true`(`app.seed.qa-auto-run`)를 켠 환경에서는 앱이 뜬 뒤 QA 시딩 전체가 백그라운드에서 한 번 돈다. 처음에는 계정 비밀번호 해시 때문에 수십 초 걸리고, 결과는 `QA 시딩 자동 실행` 로그로 남는다. 이미 있으면 건너뛰므로 재시작마다 돌아도 결과가 같다. 이 설정을 켜지 않은 환경에서는 아래 API를 직접 부른다.
+
 1. `POST /test/seed/qa`를 부른다. 본문은 없다.
 
 응답의 `steps`는 계정, 학습, 출석, 공지, 상벌점, 채팅, 매칭 지부 이동 순서로 단계별 결과를 담는다. 단계마다 따로 저장하므로 한 단계가 실패해도 앞 단계는 남는다. 계정 단계가 `FAILED`이면 뒤 단계는 `NOT_RUN`이다. 다시 부르면 이미 있는 것은 건너뛰고 `UNCHANGED`를 돌려준다. 한 단계만 다시 하려면 `POST /test/seed/qa/{step}`을 부른다. `step`은 `accounts`, `learning`, `attendance`, `notices`, `points`, `chat`, `project-transfers` 중 하나다.
