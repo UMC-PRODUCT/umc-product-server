@@ -12,12 +12,11 @@ import org.springframework.stereotype.Component;
 
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
-import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
-import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
 import com.umc.product.test.application.port.out.LoadQaRosterPort;
+import com.umc.product.test.application.service.QaGisuIdLoader;
 import com.umc.product.test.domain.roster.QaAccountPlan;
 import com.umc.product.test.domain.roster.QaRoster;
 
@@ -33,7 +32,7 @@ class QaDirectoryLoader {
 
     private final LoadQaRosterPort loadQaRosterPort;
     private final GetMemberUseCase getMemberUseCase;
-    private final GetGisuUseCase getGisuUseCase;
+    private final QaGisuIdLoader qaGisuIdLoader;
     private final GetSchoolUseCase getSchoolUseCase;
     private final GetChapterUseCase getChapterUseCase;
 
@@ -42,13 +41,7 @@ class QaDirectoryLoader {
         QaAccountPlan accounts = QaAccountPlan.from(roster, loadQaRosterPort.loadSystemRoles());
         Map<String, Long> memberIds = getMemberUseCase.findIdsByEmails(new HashSet<>(accounts.emails()));
 
-        Map<Integer, Long> gisuIds = new HashMap<>();
-        for (GisuInfo gisu : getGisuUseCase.getList()) {
-            int generation = gisu.generation().intValue();
-            if (GENERATIONS.contains(generation) && gisuIds.put(generation, gisu.gisuId()) != null) {
-                throw new IllegalStateException("QA 시딩 기준 기수가 중복됐습니다: " + gisu.generation() + "기");
-            }
-        }
+        Map<Integer, Long> gisuIds = qaGisuIdLoader.load(GENERATIONS);
 
         Set<String> duplicatedNames = new HashSet<>();
         Map<String, Long> schoolIds = new HashMap<>();
