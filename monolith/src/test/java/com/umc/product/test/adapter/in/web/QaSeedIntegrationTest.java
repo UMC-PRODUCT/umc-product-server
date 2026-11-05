@@ -22,12 +22,14 @@ import com.umc.product.authorization.application.port.in.query.ListChallengerRol
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.domain.MemberSystemRoleType;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.project.application.port.in.query.GetMyMatchingAffiliationUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectMatchingAffiliationInfo;
 import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.test.application.port.out.LoadQaRosterPort;
 import com.umc.product.test.domain.roster.QaAccountPlan;
+import com.umc.product.test.domain.roster.QaAccountPlan.SystemRoleGrant;
 import com.umc.product.test.domain.roster.QaTransfers;
 import com.umc.product.test.domain.roster.QaTransfers.QaTransfer;
 import com.umc.product.test.domain.roster.RosterKey;
@@ -55,19 +57,19 @@ class QaSeedIntegrationTest extends IntegrationTestSupport {
     @Autowired private GetMyMatchingAffiliationUseCase getMyMatchingAffiliationUseCase;
 
     @Test
-    @DisplayName("빈 DB에서 QA 시딩 전체를 부르면 계정 593개와 운영진 역할을 만들고, 다시 부르면 아무것도 바꾸지 않는다")
+    @DisplayName("빈 DB에서 QA 시딩 전체를 부르면 계정 597개와 운영진·시스템 역할을 만들고, 다시 부르면 아무것도 바꾸지 않는다")
     void seedsQaBaseDataFromEmptyDatabaseAndSecondCallIsNoOp() throws Exception {
         // when
         JsonNode first = seedAll();
 
         // then
         assertThat(first.findValuesAsText("status")).as(first.toPrettyString()).doesNotContain("FAILED", "NOT_RUN");
-        assertThat(first.get(0).path("created").asInt()).as(first.toPrettyString()).isEqualTo(593 + 1);
+        assertThat(first.get(0).path("created").asInt()).as(first.toPrettyString()).isEqualTo(597 + 1 + 18);
 
-        QaAccountPlan plan = QaAccountPlan.from(loadQaRosterPort.load());
+        QaAccountPlan plan = QaAccountPlan.from(loadQaRosterPort.load(), loadQaRosterPort.loadSystemRoles());
         Map<String, Long> memberIds = getMemberUseCase.findIdsByEmails(new HashSet<>(plan.emails()));
-        assertThat(memberIds).hasSize(593);
-        assertThat(getMemberUseCase.countAll()).isEqualTo(593);
+        assertThat(memberIds).hasSize(597);
+        assertThat(getMemberUseCase.countAll()).isEqualTo(597);
 
         Long gisu11 = getGisuUseCase.getActiveGisuId();
         assertThat(roles(memberIds, RosterKey.of("duksung", 3), gisu11))
@@ -84,6 +86,13 @@ class QaSeedIntegrationTest extends IntegrationTestSupport {
             SELECT count(*) FROM member_system_role r JOIN member m ON m.id = r.member_id
             WHERE m.email = 'superadmin@university.neordinary.com' AND r.role_type = 'SUPER_ADMIN'
             """)).isEqualTo(1);
+        assertThat(umcProductHolderEmails()).hasSize(18).containsExactlyInAnyOrderElementsOf(
+            plan.systemRoles().stream().filter(grant -> grant.role() == MemberSystemRoleType.UMC_PRODUCT)
+                .map(SystemRoleGrant::email).toList());
+        assertThat(count("""
+            SELECT count(*) FROM member m LEFT JOIN challenger c ON c.member_id = m.id
+            WHERE m.email LIKE 'umcproduct%' AND c.id IS NULL
+            """)).isEqualTo(4);
         for (QaTransfer transfer : QaTransfers.ALL) {
             ProjectMatchingAffiliationInfo affiliation = getMyMatchingAffiliationUseCase.get(
                 memberIds.get(transfer.member().email()), gisu11);
@@ -98,6 +107,7 @@ class QaSeedIntegrationTest extends IntegrationTestSupport {
 
         // then
         assertThat(second.findValuesAsText("status")).as(second.toPrettyString()).containsOnly("UNCHANGED");
+        assertThat(second.get(0).path("skipped").asInt()).as(second.toPrettyString()).isEqualTo(597 + 1 + 18);
         assertThat(tableCounts()).isEqualTo(afterFirst);
     }
 
@@ -111,6 +121,14 @@ class QaSeedIntegrationTest extends IntegrationTestSupport {
     private List<ChallengerRoleType> roles(Map<String, Long> memberIds, RosterKey key, Long gisuId) {
         return listChallengerRoleUseCase.listByMemberIdAndGisuId(memberIds.get(key.email()), gisuId).stream()
             .map(ChallengerRoleInfo::roleType).toList();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> umcProductHolderEmails() {
+        return entityManager.createNativeQuery("""
+            SELECT m.email FROM member_system_role r JOIN member m ON m.id = r.member_id
+            WHERE r.role_type = 'UMC_PRODUCT'
+            """).getResultList();
     }
 
     private Map<String, Long> tableCounts() {

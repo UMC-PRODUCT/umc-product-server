@@ -16,12 +16,13 @@ import com.umc.product.test.domain.roster.QaPersonas.Persona;
 @DisplayName("QA 시나리오 계정 이전표")
 class QaPersonasTest {
 
-    private final QaRoster roster = new ClasspathQaRosterAdapter().load();
+    private final ClasspathQaRosterAdapter adapter = new ClasspathQaRosterAdapter();
+    private final QaRoster roster = adapter.load();
 
     @Test
-    @DisplayName("시나리오가 쓰는 계정은 모두 계정 계획 593개 안에 있다")
+    @DisplayName("시나리오가 쓰는 계정은 모두 계정 계획 597개 안에 있다")
     void everyPersonaIsPlannedAccount() {
-        List<String> planned = QaAccountPlan.from(roster).emails();
+        List<String> planned = QaAccountPlan.from(roster, adapter.loadSystemRoles()).emails();
 
         assertThat(personas()).allSatisfy(persona ->
             assertThat(planned).contains(persona.email(roster)));

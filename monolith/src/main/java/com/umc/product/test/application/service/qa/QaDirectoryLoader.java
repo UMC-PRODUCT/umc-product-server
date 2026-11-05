@@ -39,7 +39,7 @@ class QaDirectoryLoader {
 
     QaDirectory load() {
         QaRoster roster = loadQaRosterPort.load();
-        QaAccountPlan accounts = QaAccountPlan.from(roster);
+        QaAccountPlan accounts = QaAccountPlan.from(roster, loadQaRosterPort.loadSystemRoles());
         Map<String, Long> memberIds = getMemberUseCase.findIdsByEmails(new HashSet<>(accounts.emails()));
 
         Map<Integer, Long> gisuIds = new HashMap<>();

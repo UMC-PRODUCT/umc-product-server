@@ -71,7 +71,7 @@ public final class QaPersonas {
     public record Legacy(String alias) implements Persona {
         @Override
         public String email(QaRoster roster) {
-            return QaAccountPlan.legacyEmail(alias);
+            return QaAccountPlan.aliasEmail(alias);
         }
     }
 }

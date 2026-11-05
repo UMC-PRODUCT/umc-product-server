@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import com.umc.product.test.application.port.out.LoadQaRosterPort;
 import com.umc.product.test.domain.roster.QaRoster;
+import com.umc.product.test.domain.roster.QaSystemRoles;
 
 @Component
 @Profile("!prod")
@@ -20,8 +21,11 @@ import com.umc.product.test.domain.roster.QaRoster;
 public class ClasspathQaRosterAdapter implements LoadQaRosterPort {
     static final String ROSTER_PATH = "seed/qa/g11-roster.csv";
     static final String SCHOOLS_PATH = "seed/qa/g11-schools.csv";
+    static final String STANDALONE_ACCOUNTS_PATH = "seed/qa/standalone-accounts.csv";
+    static final String SYSTEM_ROLES_PATH = "seed/qa/system-roles.csv";
 
     private volatile QaRoster roster;
+    private volatile QaSystemRoles systemRoles;
 
     @Override
     public QaRoster load() {
@@ -33,11 +37,21 @@ public class ClasspathQaRosterAdapter implements LoadQaRosterPort {
         return loaded;
     }
 
+    @Override
+    public QaSystemRoles loadSystemRoles() {
+        QaSystemRoles loaded = systemRoles;
+        if (loaded == null) {
+            loaded = QaSystemRoles.parse(readLines(STANDALONE_ACCOUNTS_PATH), readLines(SYSTEM_ROLES_PATH));
+            systemRoles = loaded;
+        }
+        return loaded;
+    }
+
     private static List<String> readLines(String path) {
         try (InputStream input = new ClassPathResource(path).getInputStream()) {
             return new String(input.readAllBytes(), StandardCharsets.UTF_8).lines().toList();
         } catch (IOException e) {
-            throw new UncheckedIOException("QA 명단을 읽지 못했습니다: " + path, e);
+            throw new UncheckedIOException("QA 시딩 CSV를 읽지 못했습니다: " + path, e);
         }
     }
 }

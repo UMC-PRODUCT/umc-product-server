@@ -60,7 +60,7 @@ class MatchingRehearsalFlowIntegrationTest extends IntegrationTestSupport {
 
     private static final String QUOKKA = "쿼카";
     private static final Duration DEADLINE_BUFFER = Duration.ofMinutes(1);
-    private static final String SUPERADMIN = QaAccountPlan.legacyEmail(QaAccountPlan.SUPERADMIN);
+    private static final String SUPERADMIN = QaAccountPlan.aliasEmail(QaAccountPlan.SUPERADMIN);
 
     @Autowired private GetMemberUseCase getMemberUseCase;
     @Autowired private GetGisuUseCase getGisuUseCase;
@@ -155,7 +155,7 @@ class MatchingRehearsalFlowIntegrationTest extends IntegrationTestSupport {
         assertThat(rebuilt.path("applied").asInt()).isEqualTo(59);
         assertThat(rebuilt.path("chapters")).isEqualTo(line.path("chapters"));
         assertThat(countByChapterAndStatus()).isEqualTo(projectsAfterLine);
-        assertThat(getMemberUseCase.countAll()).isEqualTo(593);
+        assertThat(getMemberUseCase.countAll()).isEqualTo(597);
         Map<String, Long> memberIds = getMemberUseCase.findIdsByEmails(Set.copyOf(
             QaTransfers.ALL.stream().map(transfer -> transfer.member().email()).toList()));
         for (QaTransfer transfer : QaTransfers.ALL) {

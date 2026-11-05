@@ -12,7 +12,7 @@ record RehearsalContext(Long gisuId, RehearsalCast cast, Map<String, Long> chapt
     }
 
     String superadminEmail() {
-        return QaAccountPlan.legacyEmail(QaAccountPlan.SUPERADMIN);
+        return QaAccountPlan.aliasEmail(QaAccountPlan.SUPERADMIN);
     }
 
     String displayName(RosterKey key) {

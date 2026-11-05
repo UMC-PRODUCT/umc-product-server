@@ -15,7 +15,7 @@ dev DB를 초기화한 뒤 `/test/seed/...` API로 QA 계정과 프로젝트 출
 | 층 | 만드는 API | 지우는 시점 |
 |---|---|---|
 | 골격(기수, 학교, 지부, 약관, 11기 커리큘럼) | 앱 기동 시 Flyway | DB 초기화 때만 |
-| 기본 데이터(계정, 챌린저, 운영진 역할, 학습·출석·공지·상벌점·채팅, 매칭 지부 이동 4명) | `POST /test/seed/qa` | DB 초기화 때만 |
+| 기본 데이터(계정, 챌린저, 운영진 역할, 시스템 역할, 학습·출석·공지·상벌점·채팅, 매칭 지부 이동 4명) | `POST /test/seed/qa` | DB 초기화 때만 |
 | 프로젝트(프로젝트, 지원 폼, 지원서, 팀원, 매칭 차수) | `POST /test/seed/projects/starting-line` | 리허설마다 `DELETE /test/seed/projects` |
 
 ## DB 초기화 직후 한 번
@@ -25,6 +25,8 @@ Flyway는 골격만 넣고 QA 계정은 만들지 않는다. dev처럼 `APP_SEED
 1. `POST /test/seed/qa`를 부른다. 본문은 없다.
 
 응답의 `steps`는 계정, 학습, 출석, 공지, 상벌점, 채팅, 매칭 지부 이동 순서로 단계별 결과를 담는다. 단계마다 따로 저장하므로 한 단계가 실패해도 앞 단계는 남는다. 계정 단계가 `FAILED`이면 뒤 단계는 `NOT_RUN`이다. 다시 부르면 이미 있는 것은 건너뛰고 `UNCHANGED`를 돌려준다. 한 단계만 다시 하려면 `POST /test/seed/qa/{step}`을 부른다. `step`은 `accounts`, `learning`, `attendance`, `notices`, `points`, `chat`, `project-transfers` 중 하나다.
+
+계정 단계는 시스템 역할도 준다. 누가 어떤 역할(`SUPER_ADMIN`, `UMC_PRODUCT`)을 받는지는 `monolith/src/main/resources/seed/qa/system-roles.csv`가 계정 별칭(이메일 앞부분)으로 정한다. 챌린저 없이 시스템 역할만 갖는 계정은 같은 폴더의 `standalone-accounts.csv`에 있다. `UMC_PRODUCT`는 문의 답변·관리 권한만 더하므로, 챌린저 없는 계정과 일반 챌린저, 학교·지부·중앙 운영진, 10기 계정에 나눠 주어 조합마다 화면이 어떻게 다른지 확인한다. 이미 가진 역할은 다시 주지 않는다.
 
 리허설 중 지부 이동을 해제했으면 `POST /test/seed/qa/project-transfers`로 되돌린다.
 

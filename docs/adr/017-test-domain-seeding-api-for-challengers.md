@@ -474,7 +474,7 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
 
 다섯 API 는 의존성이 있어 다음 순서로 호출한다.
 
-1. **`POST /test/seed/qa`** — 고정 QA 계정 593개와 학습·출석·공지·상벌점·채팅·매칭 지부 이동을 만든다.
+1. **`POST /test/seed/qa`** — 고정 QA 계정 597개와 학습·출석·공지·상벌점·채팅·매칭 지부 이동을 만든다.
    다시 불러도 이미 있는 것은 건너뛴다.
 2. **`POST /test/seed/challengers`** — 활성 기수의 (Chapter, School, Part) 셀별로
    더미 Member + Challenger 를 함께 만든다. 멤버 시딩과 사실상 동일 효과지만 챌린저까지

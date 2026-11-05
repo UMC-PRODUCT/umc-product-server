@@ -35,13 +35,13 @@ class RehearsalCastTest {
     private final RehearsalCast cast = RehearsalCast.of(roster, CHAPTER_BY_SCHOOL);
 
     @Test
-    @DisplayName("명단 583행과 superadmin, 10기 9개를 합쳐 서로 다른 이메일의 계정 593개를 계획한다")
-    void accountPlanHas593DistinctAccounts() {
-        QaAccountPlan plan = QaAccountPlan.from(roster);
+    @DisplayName("명단 583행과 superadmin, 10기 9개, 명단 밖 4개를 합쳐 서로 다른 이메일의 계정 597개를 계획한다")
+    void accountPlanHas597DistinctAccounts() {
+        QaAccountPlan plan = QaAccountPlan.from(roster, new ClasspathQaRosterAdapter().loadSystemRoles());
 
         assertThat(roster.entries()).hasSize(583);
-        assertThat(plan.accounts()).hasSize(593);
-        assertThat(new HashSet<>(plan.emails())).hasSize(593);
+        assertThat(plan.accounts()).hasSize(597);
+        assertThat(new HashSet<>(plan.emails())).hasSize(597);
         assertThat(plan.accounts().getFirst().email()).isEqualTo("gachon_g11_qa01@university.neordinary.com");
         assertThat(plan.accounts().getFirst().displayName()).isEqualTo("가천QA1");
         assertThat(plan.emails()).contains("superadmin@university.neordinary.com", "cau_springboot@university.neordinary.com",
