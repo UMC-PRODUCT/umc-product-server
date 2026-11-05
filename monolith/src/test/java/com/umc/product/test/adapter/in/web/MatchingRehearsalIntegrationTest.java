@@ -83,6 +83,10 @@ class MatchingRehearsalIntegrationTest extends IntegrationTestSupport {
                    WHERE q.project_id = p.id AND q.part IN ('WEB_PRODUCT_ENGINEER', 'MOBILE_PRODUCT_ENGINEER')) <> 1
               AND p.status = 'IN_PROGRESS'
             """)).isZero();
+        assertThat(count("""
+            SELECT count(DISTINCT external_link) FROM project
+            WHERE external_link LIKE 'https://example.com/umc-rehearsal/plan/%'
+            """)).isEqualTo(59);
         JsonNode kangaroo = line.path("chapters").get(0);
         assertThat(kangaroo.path("chapter").asText()).isEqualTo("캥거루");
         assertThat(List.of("DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER").stream()

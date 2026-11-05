@@ -71,7 +71,7 @@ Flyway는 골격만 넣고 QA 계정은 만들지 않는다. dev처럼 `APP_SEED
 
 | API | 하는 일 |
 |---|---|
-| `POST /test/seed/projects/starting-line` | 지부마다 명단 순서상 마지막 PLAN 2명은 프로젝트 없이 둔다. 첫 PLAN 2명은 QA 프로젝트로 제출만 해 승인 대기·TO 비움으로 둔다. 나머지 PLAN은 PO가 제출하고 `superadmin`이 TO를 넣어 공개한다. 개발 파트는 Web PE와 Mobile PE 중 하나만 쓴다. |
+| `POST /test/seed/projects/starting-line` | 지부마다 명단 순서상 마지막 PLAN 2명은 프로젝트 없이 둔다. 첫 PLAN 2명은 QA 프로젝트로 제출만 해 승인 대기·TO 비움으로 둔다. 나머지 PLAN은 PO가 제출하고 `superadmin`이 TO를 넣어 공개한다. 개발 파트는 Web PE와 Mobile PE 중 하나만 쓴다. 프로젝트마다 PO별로 다른 기획서 링크(`https://example.com/umc-rehearsal/plan/<학교코드>-<순번>`)를 넣어 "기획 보기"를 확인할 수 있게 한다. |
 | `GET .../summary` | 차수 하나의 지금 상태를 DB에서 직접 센다. 운영 화면(TO 관리, 매칭 현황, PM 지원자 목록) 숫자가 맞는지 판단하는 기준값이다. 화면과 요약이 다르면 프론트나 운영 API 쪽 버그다. |
 | `POST .../bot-applications` | 차수 지부를 매칭 지부로 가진, 차수 유형 파트의 팀 없는 사람 중 `applyRate`(기본 0.8)만큼이 한 곳씩 지원한다. TO가 남은 공개 프로젝트 중 인기도에 비례해 고르고, 직전 차수에 떨어진 프로젝트는 고르지 않는다. 주관식 답변은 `[봇]`으로 시작한다. 다시 부르면 지원자가 늘지 않는다. |
 | `POST .../bot-decisions` | 프로젝트·파트마다 목표 = max(올림(`fillRate` × 지터 × TO) − 이미 채운 인원, 최소 선발 인원)만큼 합격시키고, 남은 지원자의 절반은 불합격, 절반은 미결정으로 둔다. `fillRate` 기본은 1차 0.6, 2차 0.85, 3차 1.0이다. 이미 결정된 지원서는 건드리지 않는다. 결정자는 프로젝트 PO다. |
