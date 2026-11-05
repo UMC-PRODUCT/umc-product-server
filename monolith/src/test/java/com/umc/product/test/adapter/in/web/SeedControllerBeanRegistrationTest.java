@@ -22,6 +22,7 @@ import com.umc.product.test.application.service.MemberSeedService;
 import com.umc.product.test.application.service.MemberSystemRoleSeedService;
 import com.umc.product.test.application.service.NoticeSeedService;
 import com.umc.product.test.application.service.ProjectSeedDataCleanupService;
+import com.umc.product.test.application.service.QaGisuIdLoader;
 import com.umc.product.test.application.service.SeedProperties;
 import com.umc.product.test.application.service.qa.QaSeedOrchestrator;
 import com.umc.product.test.application.service.rehearsal.MatchingRoundAdvanceService;
@@ -45,6 +46,7 @@ class SeedControllerBeanRegistrationTest {
         QaSeedOrchestrator.class,
         QaSeedMarkerPersistenceAdapter.class,
         ClasspathQaRosterAdapter.class,
+        QaGisuIdLoader.class,
         MemberSeedService.class,
         MemberSystemRoleSeedService.class,
         MemberSystemRoleSeedPersistenceAdapter.class,

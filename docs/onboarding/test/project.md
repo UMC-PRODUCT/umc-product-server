@@ -1,7 +1,7 @@
 # Project 테스트 케이스
 
 - 테스트 파일: 37개
-- 테스트 케이스: 524개
+- 테스트 케이스: 529개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
@@ -11,7 +11,7 @@
 | Repository / Outbound Persistence | 34 |
 | E2E / Integration | 12 |
 | Scheduler | 2 |
-| Domain | 82 |
+| Domain | 87 |
 | External Adapter | 11 |
 
 ## Controller / Inbound Adapter
@@ -705,6 +705,11 @@
 | [93](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L93) | validateIsViewableAt / 결정 마감 경과 후에도 정상 통과 | 조건 validateIsViewableAt / 결정 마감 경과 후에도 정상 통과 | 성공: validateIsViewableAt / 결정 마감 경과 후에도 정상 통과 |
 | [99](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L99) | validateIsViewableAt / 지원 진행 중이면 PROJECT MATCHING ROUND APPLICANTS NOT VIEWABLE | 조건 validateIsViewableAt / 지원 진행 중이면 PROJECT MATCHING ROUND APPLICANTS NOT VIEWABLE | 실패: 예외 ProjectDomainException; 에러코드 ProjectErrorCode.PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE; 검증 .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE); |
 | [109](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L109) | validateIsViewableAt / endsAt 정각이면 아직 지원 중이라 PROJECT MATCHING ROUND APPLICANTS NOT VIEWABLE | 조건 validateIsViewableAt / endsAt 정각이면 아직 지원 중이라 PROJECT MATCHING ROUND APPLICANTS NOT VIEWABLE | 실패: 예외 ProjectDomainException; 에러코드 ProjectErrorCode.PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE; 검증 .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE); |
+| [226](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L226) | validatePhaseSequence / 뒤 차수가 앞 차수 결정 마감에서 최소 간격 뒤에 정확히 시작하면 허용한다 | 간격 3시간, 뒤 차수 시작 = 앞 차수 결정 마감 + 3시간 | 성공: 예외 없음 |
+| [237](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L237) | validatePhaseSequence / 뒤 차수가 최소 간격보다 1초 먼저 시작하면 PROJECT MATCHING ROUND PHASE SEQUENCE INVALID | 간격 3시간, 뒤 차수 시작 = 앞 차수 결정 마감 + 3시간 - 1초 | 실패: 예외 ProjectDomainException; 에러코드 ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID |
+| [251](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L251) | validatePhaseSequence / 뒤 차수가 앞 차수 발표 시각에 정확히 시작하면 허용한다 | 간격 1시간, 뒤 차수 시작 = 앞 차수 발표 시각(결정 마감 + 2시간) | 성공: 예외 없음 |
+| [262](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L262) | validatePhaseSequence / 최소 간격은 지났어도 앞 차수 발표 전에 시작하면 PROJECT MATCHING ROUND PHASE SEQUENCE INVALID | 간격 1시간, 뒤 차수 시작 = 앞 차수 발표 시각 - 1초 | 실패: 예외 ProjectDomainException; 에러코드 ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID |
+| [276](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L276) | validatePhaseSequence / 앞 차수에 발표 시각이 없으면 발표 시각 검사를 생략한다 | 간격 1시간, 앞 차수 발표 시각 null, 뒤 차수 시작 = 결정 마감 + 1시간 | 성공: 예외 없음 |
 
 ### ProjectTest
 - 위치: `monolith/src/test/java/com/umc/product/project/domain/ProjectTest.java`
