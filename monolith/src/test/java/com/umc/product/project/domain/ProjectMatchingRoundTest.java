@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Duration;
 import java.time.Instant;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -216,6 +217,71 @@ class ProjectMatchingRoundTest {
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE);
+        }
+    }
+
+    @Nested
+    class validatePhaseSequence {
+
+        @Test
+        void 뒤_차수가_앞_차수_결정_마감에서_최소_간격_뒤에_정확히_시작하면_허용한다() {
+            // given
+            Duration interval = Duration.ofHours(3);
+
+            // when & then
+            assertThatCode(() -> ProjectMatchingRound.validatePhaseSequence(
+                DECISION_DEADLINE, RESULT_PUBLISH_AT, DECISION_DEADLINE.plus(interval), interval
+            )).doesNotThrowAnyException();
+        }
+
+        @Test
+        void 뒤_차수가_최소_간격보다_1초_먼저_시작하면_PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID() {
+            // given
+            Duration interval = Duration.ofHours(3);
+
+            // when & then
+            assertThatThrownBy(() -> ProjectMatchingRound.validatePhaseSequence(
+                DECISION_DEADLINE, RESULT_PUBLISH_AT, DECISION_DEADLINE.plus(interval).minusSeconds(1), interval
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
+        }
+
+        @Test
+        void 뒤_차수가_앞_차수_발표_시각에_정확히_시작하면_허용한다() {
+            // given
+            Duration interval = Duration.ofHours(1);
+
+            // when & then
+            assertThatCode(() -> ProjectMatchingRound.validatePhaseSequence(
+                DECISION_DEADLINE, RESULT_PUBLISH_AT, RESULT_PUBLISH_AT, interval
+            )).doesNotThrowAnyException();
+        }
+
+        @Test
+        void 최소_간격은_지났어도_앞_차수_발표_전에_시작하면_PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID() {
+            // given
+            Duration interval = Duration.ofHours(1);
+
+            // when & then
+            assertThatThrownBy(() -> ProjectMatchingRound.validatePhaseSequence(
+                DECISION_DEADLINE, RESULT_PUBLISH_AT, RESULT_PUBLISH_AT.minusSeconds(1), interval
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
+        }
+
+        @Test
+        void 앞_차수에_발표_시각이_없으면_발표_시각_검사를_생략한다() {
+            // given
+            Duration interval = Duration.ofHours(1);
+
+            // when & then
+            assertThatCode(() -> ProjectMatchingRound.validatePhaseSequence(
+                DECISION_DEADLINE, null, DECISION_DEADLINE.plus(interval), interval
+            )).doesNotThrowAnyException();
         }
     }
 }

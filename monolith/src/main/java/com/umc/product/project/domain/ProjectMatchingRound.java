@@ -202,6 +202,10 @@ public class ProjectMatchingRound extends BaseEntity {
         }
     }
 
+    /**
+     * 뒤 차수는 앞 차수 결정 마감으로부터 최소 간격 이후, 그리고 앞 차수 결과 발표 이후에 시작해야 합니다.
+     * 발표 시각이 없는 기존 차수는 발표 시각 검사를 생략합니다.
+     */
     public static void validatePhaseSequence(
         Instant earlierDecisionDeadline, Instant earlierResultPublishAt, Instant laterStartsAt,
         Duration minPhaseInterval
