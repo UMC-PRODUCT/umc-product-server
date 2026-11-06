@@ -1,34 +1,15 @@
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
-export const REVIEWERS = {
+const REVIEWERS = {
     bug: "🐛 버그·보안 리뷰어",
     quality: "🧹 코드 품질 리뷰어",
 };
 
 const PRIORITIES = ["P1", "P2", "P3", "P4", "P5"];
 const REVIEW_AUTHOR = "github-actions[bot]";
-
-// git은 한글 경로를 "b/docs/PR_\352\270\200.md"처럼 따옴표와 8진수로 적는다.
-function decodeDiffPath(path) {
-    if (!path.startsWith('"')) {
-        return path;
-    }
-    const bytes = [];
-    const inner = path.slice(1, -1);
-    for (let index = 0; index < inner.length; index += 1) {
-        if (inner[index] !== "\\") {
-            bytes.push(...Buffer.from(inner[index]));
-        } else if (/[0-7]/.test(inner[index + 1])) {
-            bytes.push(Number.parseInt(inner.slice(index + 1, index + 4), 8));
-            index += 3;
-        } else {
-            bytes.push(...Buffer.from(inner[index + 1]));
-            index += 1;
-        }
-    }
-    return Buffer.from(bytes).toString("utf8");
-}
+const ZERO_WIDTH_SPACE = String.fromCodePoint(0x200b);
+const SECRET_PATTERN = /(ghp_|ghs_|gho_|github_pat_|sk-ant-)[A-Za-z0-9_-]{10,}/;
 
 export function parseDiffLines(patch) {
     const linesByPath = new Map();
@@ -41,7 +22,7 @@ export function parseDiffLines(patch) {
             lines = null;
             inHunk = false;
         } else if (text.startsWith("+++ ") && !inHunk) {
-            const path = decodeDiffPath(text.slice(4).trim());
+            const path = text.slice(4).trim();
             lines = path === "/dev/null" ? null : new Set();
             if (lines) {
                 linesByPath.set(path.replace(/^b\//, ""), lines);
@@ -61,12 +42,18 @@ export function parseDiffLines(patch) {
 export function neutralizeMentions(text) {
     return text
         .split(/(```[\s\S]*?```|`[^`\n]*`)/)
-        .map((part, index) => (index % 2 === 1 ? part : part.replace(/@(?=[A-Za-z0-9-])/g, "@​")))
+        .map((part, index) => (index % 2 === 1 ? part : part.replace(/@(?=[A-Za-z0-9-])/g, `@${ZERO_WIDTH_SPACE}`)))
         .join("");
 }
 
+function fenced(info, content) {
+    const longest = Math.max(0, ...(content.match(/`+/g) ?? []).map((run) => run.length));
+    const fence = "`".repeat(Math.max(3, longest + 1));
+    return `${fence}${info}\n${content}\n${fence}`;
+}
+
 function findingTitle(finding) {
-    const tags = finding.rule ? `[${finding.priority}][${finding.rule}]` : `[${finding.priority}]`;
+    const tags = finding.rule ? `[${finding.priority}][${neutralizeMentions(finding.rule)}]` : `[${finding.priority}]`;
     const overlap = finding.also_by_other_reviewer ? " (다른 리뷰어와 겹침)" : "";
     return `**${tags} ${neutralizeMentions(finding.title)}**${overlap}`;
 }
@@ -74,17 +61,22 @@ function findingTitle(finding) {
 function findingExplanation(finding) {
     return [
         neutralizeMentions(finding.problem),
-        `**언제 터지나요:** ${neutralizeMentions(finding.when)}`,
+        ...(finding.when ? [`**언제 터지나요:** ${neutralizeMentions(finding.when)}`] : []),
         `**고치는 방법:** ${neutralizeMentions(finding.fix)}`,
     ].join("\n\n");
 }
 
+function isRange(finding) {
+    return Boolean(finding.start_line) && finding.start_line < finding.line;
+}
+
 function isInline(finding, diffLines) {
     const lines = diffLines.get(finding.path);
-    if (!lines) {
+    const start = finding.start_line ?? finding.line;
+    if (!lines || start > finding.line) {
         return false;
     }
-    for (let line = finding.start_line ?? finding.line; line <= finding.line; line += 1) {
+    for (let line = start; line <= finding.line; line += 1) {
         if (!lines.has(line)) {
             return false;
         }
@@ -93,29 +85,25 @@ function isInline(finding, diffLines) {
 }
 
 function toComment(finding) {
-    const suggestion = finding.suggestion ? `\n\n\`\`\`suggestion\n${finding.suggestion}\n\`\`\`` : "";
-    const range = finding.start_line && finding.start_line < finding.line
-        ? { start_line: finding.start_line, start_side: "RIGHT" }
-        : {};
+    const suggestion = finding.suggestion ? `\n\n${fenced("suggestion", finding.suggestion)}` : "";
     return {
         path: finding.path,
         line: finding.line,
         side: "RIGHT",
-        ...range,
+        ...(isRange(finding) ? { start_line: finding.start_line, start_side: "RIGHT" } : {}),
         body: `${findingTitle(finding)}\n\n${findingExplanation(finding)}${suggestion}`,
     };
 }
 
 function permalink(finding, { repository, head }) {
     const path = finding.path.split("/").map(encodeURIComponent).join("/");
-    const range = finding.start_line && finding.start_line < finding.line
-        ? `#L${finding.start_line}-L${finding.line}`
-        : `#L${finding.line}`;
+    const range = isRange(finding) ? `#L${finding.start_line}-L${finding.line}` : `#L${finding.line}`;
     return `https://github.com/${repository}/blob/${head}/${path}${range}`;
 }
 
 function toBodySection(finding, context) {
-    return `${findingTitle(finding)}\n\n${permalink(finding, context)}\n\n${findingExplanation(finding)}`;
+    const suggestion = finding.suggestion ? `\n\n${fenced("", finding.suggestion)}` : "";
+    return `${findingTitle(finding)}\n\n${permalink(finding, context)}\n\n${findingExplanation(finding)}${suggestion}`;
 }
 
 function details(summary, items) {
@@ -126,49 +114,29 @@ function details(summary, items) {
     return [`<details>\n<summary>${summary} ${items.length}건</summary>\n\n${list}\n\n</details>`];
 }
 
-function reviewBody(reviewer, outside, context) {
+export function buildReview(reviewer, context) {
+    const inline = reviewer.findings.filter((finding) => isInline(finding, context.diffLines));
+    const outside = reviewer.findings.filter((finding) => !isInline(finding, context.diffLines));
     const counts = PRIORITIES.map((priority) => reviewer.findings.filter((f) => f.priority === priority).length);
-    return [
+    const body = [
         REVIEWERS[reviewer.reviewer],
         `| ${PRIORITIES.join(" | ")} |\n|${"---|".repeat(PRIORITIES.length)}\n| ${counts.join(" | ")} |`,
         ...outside.map((finding) => toBodySection(finding, context)),
         ...details("문제없다고 확인한 것", reviewer.checked_ok),
         ...details("확인해 보니 문제가 아니어서 뺀 지적", reviewer.excluded.map((e) => `${e.title}: ${e.reason}`)),
     ].join("\n\n");
-}
 
-export function buildReview(reviewer, context) {
-    const inline = reviewer.findings.filter((finding) => isInline(finding, context.diffLines));
-    const outside = reviewer.findings.filter((finding) => !isInline(finding, context.diffLines));
-    return {
-        commit_id: context.head,
-        event: "COMMENT",
-        body: reviewBody(reviewer, outside, context),
-        comments: inline.map(toComment),
-    };
-}
-
-// 줄 판정이 GitHub와 어긋나 422가 나도 지적을 잃지 않도록 전부 본문으로 옮긴 판을 만든다.
-export function buildBodyOnlyReview(reviewer, context) {
-    return {
-        commit_id: context.head,
-        event: "COMMENT",
-        body: reviewBody(reviewer, reviewer.findings, context),
-        comments: [],
-    };
+    return { commit_id: context.head, event: "COMMENT", body, comments: inline.map(toComment) };
 }
 
 export function extractResult(raw) {
-    const parsed = JSON.parse(raw);
-    const entry = Array.isArray(parsed) ? parsed.findLast((item) => item.type === "result") : parsed;
-    const result = entry?.structured_output ?? entry;
-    if (!Array.isArray(result?.reviewers) || result.reviewers.length === 0) {
-        throw new Error("리뷰 결과에 reviewers가 없습니다.");
+    const result = JSON.parse(raw).findLast((entry) => entry.type === "result")?.structured_output;
+    const names = (result?.reviewers ?? []).map((reviewer) => reviewer.reviewer).sort();
+    if (names.join() !== "bug,quality") {
+        throw new Error(`리뷰 결과의 리뷰어가 bug와 quality 하나씩이 아닙니다: ${names.join()}`);
     }
-    for (const reviewer of result.reviewers) {
-        if (!REVIEWERS[reviewer.reviewer]) {
-            throw new Error(`알 수 없는 리뷰어입니다: ${reviewer.reviewer}`);
-        }
+    if (SECRET_PATTERN.test(JSON.stringify(result))) {
+        throw new Error("리뷰 결과에 토큰처럼 보이는 값이 있어 게시하지 않습니다.");
     }
     return result;
 }
@@ -208,22 +176,18 @@ async function listReviews(repository, number, token) {
 
 async function postReview(reviewer, context, number, token) {
     const url = `repos/${context.repository}/pulls/${number}/reviews`;
-    const first = await github("POST", url, token, buildReview(reviewer, context));
-    if (first.ok) {
-        return first.data.html_url;
+    let response = await github("POST", url, token, buildReview(reviewer, context));
+    if (response.status === 422) {
+        // 줄 판정이 GitHub와 어긋나도 지적을 잃지 않도록 전부 본문으로 옮겨 다시 보낸다.
+        response = await github("POST", url, token, buildReview(reviewer, { ...context, diffLines: new Map() }));
     }
-    if (first.status !== 422) {
-        throw new Error(`${reviewer.reviewer} 리뷰를 남기지 못했습니다: ${first.status} ${JSON.stringify(first.data)}`);
+    if (!response.ok) {
+        throw new Error(`${reviewer.reviewer} 리뷰를 남기지 못했습니다: ${response.status} ${JSON.stringify(response.data)}`);
     }
-    const second = await github("POST", url, token, buildBodyOnlyReview(reviewer, context));
-    if (!second.ok) {
-        throw new Error(`${reviewer.reviewer} 리뷰를 남기지 못했습니다: ${second.status} ${JSON.stringify(second.data)}`);
-    }
-    return second.data.html_url;
+    return response.data.html_url;
 }
 
-async function main() {
-    const { RESULT_FILE, DIFF_FILE, HEAD_SHA, PR_NUMBER, GITHUB_REPOSITORY, GITHUB_TOKEN } = process.env;
+export async function run({ RESULT_FILE, DIFF_FILE, HEAD_SHA, PR_NUMBER, GITHUB_REPOSITORY, GITHUB_TOKEN }) {
     const result = extractResult(readFileSync(RESULT_FILE, "utf8"));
     const context = {
         repository: GITHUB_REPOSITORY,
@@ -242,7 +206,7 @@ async function main() {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-    main().catch((error) => {
+    run(process.env).catch((error) => {
         console.error(`::error::${error.message}`);
         process.exit(1);
     });

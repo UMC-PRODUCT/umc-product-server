@@ -100,7 +100,8 @@ jobs:
           mkdir -p "${HOME}/.claude"
           echo 'session hook: off' > "${HOME}/.claude/pstack-models.md"
 
-      # AI 세션에 Bash를 주지 않으므로 diff를 미리 만든다. 기준은 PR이 고치지 못하게 base 브랜치 판을 쓴다.
+      # AI 세션에 Bash를 주지 않으므로 diff를 미리 만든다.
+      # 기준, 응답 형식, 게시 스크립트는 base 브랜치 판을 쓴다. PR이 고치지 못하고, 뒤처진 브랜치에서도 있다.
       - name: 리뷰 입력 준비
         id: input
         if: steps.gate.outputs.enabled == 'true'
@@ -110,13 +111,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          mkdir -p "${REVIEW_INPUT}/criteria"
-          git diff "origin/${BASE_REF}...HEAD" > "${REVIEW_INPUT}/diff.patch"
-          for path in AGENTS.md docs/guides/코드_리뷰_기준.md docs/guides/PR_글쓰기_기준.md; do
-            git show "origin/${BASE_REF}:${path}" > "${REVIEW_INPUT}/criteria/$(basename "${path}")"
-          done
+          mkdir -p "${REVIEW_INPUT}"
+          git -c core.quotepath=off diff "origin/${BASE_REF}...HEAD" > "${REVIEW_INPUT}/diff.patch"
+          git -c core.quotepath=off ls-tree -r --name-only "origin/${BASE_REF}" | grep -E '(^|/)AGENTS\.md$' > "${REVIEW_INPUT}/criteria.txt"
+          printf '%s\n' docs/guides/코드_리뷰_기준.md docs/guides/PR_글쓰기_기준.md >> "${REVIEW_INPUT}/criteria.txt"
+          while read -r path; do
+            mkdir -p "${REVIEW_INPUT}/criteria/$(dirname "${path}")"
+            git show "origin/${BASE_REF}:${path}" > "${REVIEW_INPUT}/criteria/${path}"
+          done < "${REVIEW_INPUT}/criteria.txt"
 
-          echo "schema=$(jq -c . .github/scripts/ai-review-schema.json)" >> "${GITHUB_OUTPUT}"
+          git show "origin/${BASE_REF}:.github/scripts/post-ai-review.mjs" > "${REVIEW_INPUT}/post-ai-review.mjs"
+          schema=$(git show "origin/${BASE_REF}:.github/scripts/ai-review-schema.json" | jq -c .)
+          echo "schema=${schema}" >> "${GITHUB_OUTPUT}"
 
       - name: Claude 리뷰
         id: claude
@@ -135,7 +141,7 @@ jobs:
             --max-turns 60
             --max-budget-usd 15
             --allowedTools "Read,Grep,Glob,Agent,Skill"
-            --disallowedTools "Bash,Edit,Write,NotebookEdit,WebFetch,WebSearch"
+            --disallowedTools "Bash,Edit,Write,NotebookEdit,WebFetch,WebSearch,Read(.git/**),Read(//proc/**)"
             --json-schema '${{ steps.input.outputs.schema }}'
 
       - name: 비용과 턴 기록
@@ -154,11 +160,17 @@ jobs:
           RESULT_FILE: ${{ steps.claude.outputs.execution_file }}
           DIFF_FILE: ${{ runner.temp }}/ai-review/diff.patch
           GITHUB_TOKEN: ${{ github.token }}
-        run: node .github/scripts/post-ai-review.mjs
+        run: node "${RUNNER_TEMP}/ai-review/post-ai-review.mjs"
 
       # 라벨이 남아 있으면 다시 붙일 수 없어 재실행을 요청할 수 없다.
       - name: ai-review 라벨 제거
-        if: always() && github.event.action == 'labeled'
+        if: always() && contains(github.event.pull_request.labels.*.name, 'ai-review')
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api --method DELETE "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels/ai-review" --silent
+        run: |
+          # 다시 실행하거나 겹친 실행이 먼저 지웠으면 404가 난다.
+          if ! error=$(gh api --method DELETE "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels/ai-review" --silent 2>&1) \
+            && [[ "${error}" != *"HTTP 404"* ]]; then
+            echo "::error::${error}"
+            exit 1
+          fi

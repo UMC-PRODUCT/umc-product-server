@@ -21,20 +21,20 @@
               "additionalProperties": false,
               "properties": {
                 "priority": { "enum": ["P1", "P2", "P3", "P4", "P5"] },
-                "rule": { "type": ["string", "null"], "description": "코드_리뷰_기준.md의 규칙 표기. 없으면 규칙 후보" },
+                "rule": { "type": ["string", "null"], "description": "코드_리뷰_기준.md의 규칙 표기. 규칙과 무관한 지적은 null" },
                 "title": { "type": "string", "description": "제목만 읽어도 결론을 알 수 있는 한 문장" },
                 "path": { "type": "string", "description": "저장소 루트 기준 경로" },
                 "start_line": { "type": ["integer", "null"], "description": "여러 줄이면 시작 줄, 한 줄이면 null" },
                 "line": { "type": "integer", "description": "PR head 기준 문제의 줄 또는 범위의 끝 줄" },
-                "problem": { "type": "string", "description": "이 코드의 무엇이 왜 문제인지. 코드 이름은 백틱으로 감싼다" },
-                "when": { "type": "string", "description": "언제 터지는지. 관찰하지 않았으면 추정이라고 적는다" },
+                "problem": { "type": "string", "description": "이 코드의 무엇이 왜 문제인지. 코드 이름은 백틱으로 감싼다. 보안 지적은 재현 방법을 적지 않는다" },
+                "when": { "type": ["string", "null"], "description": "언제 터지는지. 관찰하지 않았으면 추정이라고 적는다. 보안 지적과 오타, 질문은 null" },
                 "fix": { "type": "string", "description": "고치는 방법" },
                 "suggestion": { "type": ["string", "null"], "description": "start_line부터 line까지를 그대로 대체할 코드. 없으면 null" },
                 "also_by_other_reviewer": { "type": "boolean" }
               }
             }
           },
-          "checked_ok": { "type": "array", "items": { "type": "string" } },
+          "checked_ok": { "type": "array", "items": { "type": "string" }, "description": "실제로 확인했고 문제없던 것" },
           "excluded": {
             "type": "array",
             "items": {
