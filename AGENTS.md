@@ -150,6 +150,7 @@ even when `:blog` is absent from the boot jar.
 
 Review with [`docs/guides/코드_리뷰_기준.md`](docs/guides/코드_리뷰_기준.md). It defines finding priorities (P1-P5),
 which rules are enforced by tests or tooling, and how AI reviews are recorded on the PR.
+Write PR bodies and review comments with [`docs/guides/PR_글쓰기_기준.md`](docs/guides/PR_글쓰기_기준.md). AI review results go in GitHub reviews, never in the PR body.
 
 ## COMMANDS
 

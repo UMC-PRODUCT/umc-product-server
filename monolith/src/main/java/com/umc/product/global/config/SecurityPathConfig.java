@@ -5,13 +5,14 @@ import java.util.stream.Stream;
 
 public final class SecurityPathConfig {
 
-    public static final String SCALAR_ENTRY_PATH = "/docs";
-    public static final String SCALAR_ENTRY_SLASH_PATH = "/docs/";
+    public static final String DOCS_ENTRY_PATH = "/docs";
+    public static final String DOCS_ENTRY_SLASH_PATH = "/docs/";
+    public static final String SWAGGER_UI_PATH = "/docs/swagger-ui.html";
     public static final String ASYNCAPI_ENTRY_PATH = "/docs/asyncapi";
     public static final String ASYNCAPI_ENTRY_SLASH_PATH = "/docs/asyncapi/";
     public static final String ASYNCAPI_HTML_PATH = "/docs/asyncapi.html";
     public static final String ASYNCAPI_DOCUMENT_PATH = "/docs/asyncapi.yaml";
-    public static final String SCALAR_DOCUMENTATION_PATTERN = "/docs/**";
+    public static final String DOCUMENTATION_PATTERN = "/docs/**";
     public static final String OPENAPI_JSON_PATH = "/docs-json";
     public static final String OPENAPI_JSON_PATTERN = "/docs-json/**";
     public static final String MARKDOWN_IT_WEBJAR_PATTERN = "/webjars/markdown-it/**";
@@ -34,9 +35,9 @@ public final class SecurityPathConfig {
     );
 
     public static final List<String> DOCUMENTATION_PATHS = List.of(
-        SCALAR_ENTRY_PATH,
-        SCALAR_ENTRY_SLASH_PATH,
-        SCALAR_DOCUMENTATION_PATTERN,
+        DOCS_ENTRY_PATH,
+        DOCS_ENTRY_SLASH_PATH,
+        DOCUMENTATION_PATTERN,
         OPENAPI_JSON_PATH,
         OPENAPI_JSON_PATTERN,
         MARKDOWN_IT_WEBJAR_PATTERN,
