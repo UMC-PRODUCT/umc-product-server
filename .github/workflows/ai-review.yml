@@ -1,4 +1,5 @@
 # develop으로 가는 PR에 Claude 리뷰를 GitHub 리뷰로 남긴다. 필수 체크가 아니므로 머지를 막지 않는다.
+# AI 세션은 코드를 읽고 JSON만 내놓는다. 게시는 API 키가 없는 다음 단계의 스크립트가 맡는다.
 # 절차는 .claude/skills/umc-review/SKILL.md, 안내는 docs/guides/코드_리뷰_기준.md에 있다.
 
 name: AI Review
@@ -23,6 +24,7 @@ jobs:
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository
       && github.event.pull_request.user.type != 'Bot'
+      && github.event.pull_request.state == 'open'
       && !github.event.pull_request.draft
       && (github.event.action != 'labeled' || github.event.label.name == 'ai-review')
     runs-on: ubuntu-latest
@@ -31,6 +33,10 @@ jobs:
     concurrency:
       group: ai-review-${{ github.event.pull_request.number }}
       cancel-in-progress: true
+
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
 
     steps:
       - name: 실행 조건 확인
@@ -53,8 +59,18 @@ jobs:
           fi
 
           # 액션은 .claude/를 base 브랜치 것으로 되돌리므로, 스킬은 develop에 있어야 쓸 수 있다.
-          if ! gh api "repos/${GITHUB_REPOSITORY}/contents/.claude/skills/umc-review/SKILL.md?ref=develop" --silent; then
-            skip "develop에 umc-review 스킬이 없어 AI 리뷰를 건너뜁니다."
+          if ! error=$(gh api "repos/${GITHUB_REPOSITORY}/contents/.claude/skills/umc-review/SKILL.md?ref=develop" --silent 2>&1); then
+            if [[ "${error}" == *"HTTP 404"* ]]; then
+              skip "develop에 umc-review 스킬이 없어 AI 리뷰를 건너뜁니다."
+            fi
+            echo "::error::${error}"
+            exit 1
+          fi
+
+          reviewed=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" \
+            | jq -s --arg head "${HEAD_SHA}" '[.[][] | select(.commit_id == $head and .user.login == "github-actions[bot]")] | length')
+          if (( reviewed >= 2 )); then
+            skip "이 커밋은 이미 리뷰했습니다. 새 커밋을 올린 뒤 ai-review 라벨을 붙이면 다시 리뷰합니다."
           fi
 
           echo "enabled=true" >> "${GITHUB_OUTPUT}"
@@ -84,22 +100,43 @@ jobs:
           mkdir -p "${HOME}/.claude"
           echo 'session hook: off' > "${HOME}/.claude/pstack-models.md"
 
+      # AI 세션에 Bash를 주지 않으므로 diff를 미리 만든다. 기준은 PR이 고치지 못하게 base 브랜치 판을 쓴다.
+      - name: 리뷰 입력 준비
+        id: input
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          REVIEW_INPUT: ${{ runner.temp }}/ai-review
+        run: |
+          set -euo pipefail
+
+          mkdir -p "${REVIEW_INPUT}/criteria"
+          git diff "origin/${BASE_REF}...HEAD" > "${REVIEW_INPUT}/diff.patch"
+          for path in AGENTS.md docs/guides/코드_리뷰_기준.md docs/guides/PR_글쓰기_기준.md; do
+            git show "origin/${BASE_REF}:${path}" > "${REVIEW_INPUT}/criteria/$(basename "${path}")"
+          done
+
+          echo "schema=$(jq -c . .github/scripts/ai-review-schema.json)" >> "${GITHUB_OUTPUT}"
+
       - name: Claude 리뷰
         id: claude
         if: steps.gate.outputs.enabled == 'true'
         uses: anthropics/claude-code-action@c0949c50a78c1ec8ce2647db36629b870e715d0c # v1.0.268
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: "1"
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: /umc-review ${{ github.event.pull_request.number }}
-          # max-turns는 부모 세션 기준이다. 기준 읽기 10, 지적 확인 40, 리뷰 남기기 10으로 잡았다.
+          github_token: ${{ github.token }}
+          prompt: /umc-review ${{ runner.temp }}/ai-review
+          # max-turns는 부모 세션 기준이다. 기준 읽기 10, 지적 확인 40, 결과 정리 10으로 잡았다.
           claude_args: |
             --plugin-dir ${{ runner.temp }}/pstack/plugins/pstack
             --model claude-opus-5-5
             --max-turns 60
-            --allowedTools "Read,Grep,Glob,Agent,Skill,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh api:*),Bash(git diff:*),Bash(git log:*),Bash(git rev-parse:*)"
+            --max-budget-usd 15
+            --allowedTools "Read,Grep,Glob,Agent,Skill"
+            --disallowedTools "Bash,Edit,Write,NotebookEdit,WebFetch,WebSearch"
+            --json-schema '${{ steps.input.outputs.schema }}'
 
       - name: 비용과 턴 기록
         if: always() && steps.claude.outputs.execution_file != ''
@@ -108,13 +145,20 @@ jobs:
         run: |
           jq -r '
             map(select(.type == "result")) | last // empty
-            | "### AI 리뷰 실행 결과\n\n| 결과 | 턴 | 비용(USD) | 시간(초) |\n|---|---|---|---|\n| \(.subtype) | \(.num_turns) | \(.total_cost_usd) | \(.duration_ms / 1000 | floor) |"
+            | "### AI 리뷰 실행 결과\n\n| 결과 | 턴 | 비용(USD) | 시간(초) | 거부된 도구 호출 |\n|---|---|---|---|---|\n| \(.subtype) | \(.num_turns) | \(.total_cost_usd) | \(.duration_ms / 1000 | floor) | \(.permission_denials // [] | length) |"
           ' "${EXECUTION_FILE}" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: 리뷰 게시
+        if: steps.claude.outcome == 'success'
+        env:
+          RESULT_FILE: ${{ steps.claude.outputs.execution_file }}
+          DIFF_FILE: ${{ runner.temp }}/ai-review/diff.patch
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node .github/scripts/post-ai-review.mjs
 
       # 라벨이 남아 있으면 다시 붙일 수 없어 재실행을 요청할 수 없다.
       - name: ai-review 라벨 제거
-        if: always()
+        if: always() && github.event.action == 'labeled'
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: gh api --method DELETE "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels/ai-review" --silent || true
+        run: gh api --method DELETE "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels/ai-review" --silent
