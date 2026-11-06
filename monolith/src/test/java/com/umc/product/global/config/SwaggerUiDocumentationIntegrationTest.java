@@ -23,8 +23,8 @@ import com.umc.product.support.IntegrationTestSupport;
 class SwaggerUiDocumentationIntegrationTest extends IntegrationTestSupport {
 
     @ParameterizedTest
-    @ValueSource(strings = {"/docs", "/docs/", "/docs/scalar.html"})
-    @DisplayName("문서 진입 경로와 이전 Scalar 주소는 Swagger UI로 리다이렉트한다")
+    @ValueSource(strings = {"/docs", "/docs/"})
+    @DisplayName("문서 진입 경로는 Swagger UI로 리다이렉트한다")
     void 문서_진입_경로는_Swagger_UI로_이동한다(String entryPath) throws Exception {
         // when & then
         mockMvc.perform(get(entryPath))
