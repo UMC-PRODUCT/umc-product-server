@@ -42,8 +42,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addRedirectViewController(SecurityPathConfig.SCALAR_ENTRY_PATH, "/docs/scalar.html");
-        registry.addRedirectViewController(SecurityPathConfig.SCALAR_ENTRY_SLASH_PATH, "/docs/scalar.html");
+        registry.addRedirectViewController(SecurityPathConfig.DOCS_ENTRY_PATH, SecurityPathConfig.SWAGGER_UI_PATH);
+        registry.addRedirectViewController(
+            SecurityPathConfig.DOCS_ENTRY_SLASH_PATH,
+            SecurityPathConfig.SWAGGER_UI_PATH
+        );
+        // 이미 공유된 Scalar 문서 링크가 끊기지 않게 유지한다.
+        registry.addRedirectViewController("/docs/scalar.html", SecurityPathConfig.SWAGGER_UI_PATH);
         registry.addRedirectViewController(
             SecurityPathConfig.ASYNCAPI_ENTRY_PATH,
             SecurityPathConfig.ASYNCAPI_HTML_PATH

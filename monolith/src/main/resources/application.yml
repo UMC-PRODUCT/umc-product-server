@@ -185,13 +185,19 @@ demoday:
     requests-per-second: ${DEMODAY_GUEST_RATE_LIMIT_PER_SECOND:5}
     requests-per-minute: ${DEMODAY_GUEST_RATE_LIMIT_PER_MINUTE:150}
 
-# OpenAPI / Scalar 문서 설정
 springdoc:
   swagger-ui:
-    enabled: false # Swagger UI는 노출하지 않고 /docs 는 Scalar로 고정한다.
+    enabled: ${OPENAPI_ENABLE:${SWAGGER_ENABLE:false}}
+    path: /docs/swagger-ui.html
+    disable-swagger-default-url: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+    doc-expansion: none
+    filter: true
+    display-operation-id: true
 
   api-docs:
-    path: /docs-json # Scalar가 읽는 OpenAPI JSON 경로
+    path: /docs-json
     enabled: ${OPENAPI_ENABLE:${SWAGGER_ENABLE:false}}
 
   show-actuator: ${OPENAPI_ENABLE_ACTUATOR:${SWAGGER_ENABLE_ACTUATOR:false}}
