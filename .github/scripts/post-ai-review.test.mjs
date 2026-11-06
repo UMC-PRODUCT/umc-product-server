@@ -61,6 +61,29 @@ test("diff의 추가 줄과 맥락 줄만 코멘트 가능한 줄로 본다", ()
     assert.equal(lines.has("old.txt"), false);
 });
 
+test("git이 따옴표로 감싼 한글 경로도 코멘트 가능한 파일로 본다", () => {
+    const quoted = [
+        'diff --git "a/docs/\\352\\270\\200.md" "b/docs/\\352\\270\\200.md"',
+        '--- "a/docs/\\352\\270\\200.md"',
+        '+++ "b/docs/\\352\\270\\200.md"',
+        "@@ -1 +1 @@",
+        "-old",
+        "+new",
+    ].join("\n");
+
+    assert.deepEqual([...parseDiffLines(quoted).get("docs/글.md")], [1]);
+});
+
+test("실제 diff의 한글 파일 지적을 줄 코멘트로 보낸다", () => {
+    const review = buildReview(reviewer([finding({ path: "docs/글.md", line: 1 })]), {
+        ...context,
+        diffLines: parseDiffLines('+++ "b/docs/\\352\\270\\200.md"\n@@ -1 +1 @@\n+new'),
+    });
+
+    assert.equal(review.comments.length, 1);
+    assert.equal(review.comments[0].path, "docs/글.md");
+});
+
 test("바뀐 줄의 지적은 그 줄에 달고 문제, 시점, 수정을 모두 적는다", () => {
     const review = buildReview(reviewer([finding()]), context);
 

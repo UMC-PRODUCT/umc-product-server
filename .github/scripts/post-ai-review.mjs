@@ -9,6 +9,27 @@ export const REVIEWERS = {
 const PRIORITIES = ["P1", "P2", "P3", "P4", "P5"];
 const REVIEW_AUTHOR = "github-actions[bot]";
 
+// git은 한글 경로를 "b/docs/PR_\352\270\200.md"처럼 따옴표와 8진수로 적는다.
+function decodeDiffPath(path) {
+    if (!path.startsWith('"')) {
+        return path;
+    }
+    const bytes = [];
+    const inner = path.slice(1, -1);
+    for (let index = 0; index < inner.length; index += 1) {
+        if (inner[index] !== "\\") {
+            bytes.push(...Buffer.from(inner[index]));
+        } else if (/[0-7]/.test(inner[index + 1])) {
+            bytes.push(Number.parseInt(inner.slice(index + 1, index + 4), 8));
+            index += 3;
+        } else {
+            bytes.push(...Buffer.from(inner[index + 1]));
+            index += 1;
+        }
+    }
+    return Buffer.from(bytes).toString("utf8");
+}
+
 export function parseDiffLines(patch) {
     const linesByPath = new Map();
     let lines = null;
@@ -20,7 +41,7 @@ export function parseDiffLines(patch) {
             lines = null;
             inHunk = false;
         } else if (text.startsWith("+++ ") && !inHunk) {
-            const path = text.slice(4).trim();
+            const path = decodeDiffPath(text.slice(4).trim());
             lines = path === "/dev/null" ? null : new Set();
             if (lines) {
                 linesByPath.set(path.replace(/^b\//, ""), lines);
