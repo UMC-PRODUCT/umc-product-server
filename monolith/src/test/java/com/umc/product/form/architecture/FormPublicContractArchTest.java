@@ -20,8 +20,10 @@ class FormPublicContractArchTest {
     private static final String FORM_PACKAGE = "com.umc.product.form.";
     private static final String FORM_PORT_IN_PACKAGE = FORM_PACKAGE + "application.port.in.";
     private static final String TEST_FIXTURE_PACKAGE = "com.umc.product.support.fixture.";
-    private static final String PROJECT_SEED_FACTORY =
-        "com.umc.product.test.application.service.DummyApplicationFormFactory";
+    private static final List<String> NON_DOMAIN_FORM_CONSUMER_PACKAGES = List.of(
+        "com.umc.product.test.",
+        TEST_FIXTURE_PACKAGE
+    );
     private static final List<String> PRODUCT_CONSUMER_PACKAGES = List.of(
         "com.umc.product.project.",
         "com.umc.product.recruiting.",
@@ -57,7 +59,7 @@ class FormPublicContractArchTest {
                     && !name.startsWith(FORM_PACKAGE)
                     && !name.startsWith(TEST_FIXTURE_PACKAGE)
                     && PRODUCT_CONSUMER_PACKAGES.stream().noneMatch(name::startsWith)
-                    && !name.equals(PROJECT_SEED_FACTORY);
+                    && NON_DOMAIN_FORM_CONSUMER_PACKAGES.stream().noneMatch(name::startsWith);
             }
         };
 
