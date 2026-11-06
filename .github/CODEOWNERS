@@ -1,0 +1,58 @@
+# 플랫폼 팀의 담당 패키지와 대응 테스트·전용 설정을 등록한다.
+# 제품 도메인과 서버·인프라 공통 영역은 이 파일에서 일괄 지정하지 않는다.
+
+# 담당 범위 변경은 서버 챕터 리드가 검토한다.
+/.github/CODEOWNERS @wlgusqkr
+
+# Identity: 인증·인가·사용자 식별·클라이언트 컨텍스트
+/monolith/src/main/java/com/umc/product/authentication/ @hamtorygoals
+/monolith/src/main/java/com/umc/product/authorization/ @hamtorygoals
+/monolith/src/main/java/com/umc/product/global/security/ @hamtorygoals
+/monolith/src/main/java/com/umc/product/global/client/ @hamtorygoals
+/monolith/src/test/java/com/umc/product/authentication/ @hamtorygoals
+/monolith/src/test/java/com/umc/product/authorization/ @hamtorygoals
+/monolith/src/test/java/com/umc/product/global/security/ @hamtorygoals
+/monolith/src/test/java/com/umc/product/global/client/ @hamtorygoals
+/monolith/src/main/java/com/umc/product/global/config/SecurityConfig.java @hamtorygoals
+/monolith/src/main/java/com/umc/product/global/config/SecurityPathConfig.java @hamtorygoals
+/monolith/src/test/java/com/umc/product/global/config/SecurityConfigIntegrationTest.java @hamtorygoals
+
+# Messaging / Notification: FCM·이메일 발송 기반
+/monolith/src/main/java/com/umc/product/notification/ @jwon0523
+/monolith/src/test/java/com/umc/product/notification/ @jwon0523
+/monolith/src/main/java/com/umc/product/global/config/FcmConfig.java @jwon0523
+/monolith/src/main/java/com/umc/product/global/config/FcmProperties.java @jwon0523
+/monolith/src/test/java/com/umc/product/global/config/FcmDisabledConfigurationTest.java @jwon0523
+/monolith/src/testFixtures/java/com/umc/product/support/fixture/FcmTokenFixture.java @jwon0523
+
+# 마지막으로 일치하는 규칙을 적용하므로 Notification의 Outbox 전용 코드는 뒤에서 지정한다.
+/monolith/src/main/java/com/umc/product/notification/**/*Outbox*.java @UMC-PRODUCT/messaging-team
+/monolith/src/test/java/com/umc/product/notification/**/*Outbox*.java @UMC-PRODUCT/messaging-team
+/monolith/src/testFixtures/java/com/umc/product/support/fixture/FcmOutboxFixture.java @UMC-PRODUCT/messaging-team
+
+# Messaging / Chatting: 공통 채팅 기반
+/monolith/src/main/java/com/umc/product/chat/ @kanghana1 @seamooll
+/monolith/src/test/java/com/umc/product/chat/ @kanghana1 @seamooll
+
+# Messaging 공용: Outbox·Relay·Worker
+/monolith/src/main/java/com/umc/product/global/event/ @UMC-PRODUCT/messaging-team
+/monolith/src/test/java/com/umc/product/global/event/ @UMC-PRODUCT/messaging-team
+/monolith/src/main/java/com/umc/product/global/config/OutboxRoutingConfig.java @UMC-PRODUCT/messaging-team
+/monolith/src/main/java/com/umc/product/global/config/OutboxWorkerConfig.java @UMC-PRODUCT/messaging-team
+
+# Messaging 공용: WebSocket·STOMP 연결·인증·인가·전달 기반
+/monolith/src/main/java/com/umc/product/global/websocket/ @UMC-PRODUCT/messaging-team
+/monolith/src/test/java/com/umc/product/global/websocket/ @UMC-PRODUCT/messaging-team
+/monolith/src/main/java/com/umc/product/global/config/WebSocketMessageBrokerConfig.java @UMC-PRODUCT/messaging-team
+/monolith/src/main/java/com/umc/product/global/config/WebSocketBrokerProperties.java @UMC-PRODUCT/messaging-team
+/monolith/src/main/java/com/umc/product/global/config/WebSocketBrokerPropertiesValidator.java @UMC-PRODUCT/messaging-team
+/monolith/src/main/java/com/umc/product/global/config/StompRelayTcpClientFactory.java @UMC-PRODUCT/messaging-team
+/monolith/src/main/java/com/umc/product/global/config/StompSendAuthorizationConfig.java @UMC-PRODUCT/messaging-team
+/monolith/src/test/java/com/umc/product/global/config/WebSocketMessageBrokerConfigTest.java @UMC-PRODUCT/messaging-team
+/monolith/src/test/java/com/umc/product/global/config/WebSocketBrokerPortPolicyTest.java @UMC-PRODUCT/messaging-team
+/monolith/src/test/java/com/umc/product/global/config/WebSocketBrokerPropertiesValidatorTest.java @UMC-PRODUCT/messaging-team
+/monolith/src/test/java/com/umc/product/global/config/StompRelayTcpClientFactoryTest.java @UMC-PRODUCT/messaging-team
+
+# Forms Foundation: 공통 폼·응답 모델과 API
+/monolith/src/main/java/com/umc/product/form/ @galllee
+/monolith/src/test/java/com/umc/product/form/ @galllee
