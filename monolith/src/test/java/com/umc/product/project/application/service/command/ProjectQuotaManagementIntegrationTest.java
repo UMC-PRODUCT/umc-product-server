@@ -369,14 +369,14 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 지부장은_소속_범위만_관리하고_총괄단과_최고관리자는_정해진_범위를_관리한다() throws Exception {
+    void 지부장은_소속기수_전지부를_조회하고_총괄단과_최고관리자는_정해진_범위를_조회한다() throws Exception {
         // given
         Scenario foreign = projects.다른_지부(scenario);
         Scenario otherGisu = projects.다른_기수();
 
         // when & then
         mockMvc.perform(get(PATH).param("gisuId", scenario.gisuId().toString())
-            .param("chapterId", foreign.chapterId().toString())).andExpect(status().isForbidden());
+            .param("chapterId", foreign.chapterId().toString())).andExpect(status().isOk());
         projects.총괄단(scenario);
         authenticate(scenario.staffId());
         mockMvc.perform(get(PATH).param("gisuId", scenario.gisuId().toString())
@@ -385,6 +385,60 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         permissionFixture.최고관리자(scenario.staffId());
         authenticate(scenario.staffId());
         mockMvc.perform(get(PATH).param("gisuId", otherGisu.gisuId().toString())).andExpect(status().isOk());
+    }
+
+    @Test
+    void 지부장은_본인지부를_기본선택하고_타지부는_조회만_가능하며_다른기수는_거부한다() throws Exception {
+        // given
+        Scenario own = projects.다른_지부(scenario);
+        Scenario otherGisu = projects.다른_기수();
+        authenticate(own.staffId());
+
+        // when & then
+        JsonNode defaults = view(null);
+        assertThat(defaults.path("chapterId").asLong()).isEqualTo(own.chapterId());
+        assertThat(defaults.path("chapters").size()).isEqualTo(2);
+        assertThat(cell(defaults, "DESIGN").path("canEdit").path("allowed").asBoolean()).isTrue();
+        String body = mockMvc.perform(get(PATH).param("gisuId", scenario.gisuId().toString())
+                .param("chapterId", scenario.chapterId().toString())).andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        JsonNode foreign = objectMapper.readTree(body).path("result");
+        assertThat(foreign.path("projects").get(0).path("projectId").asLong()).isEqualTo(scenario.projectId());
+        for (JsonNode column : foreign.path("columns")) {
+            assertThat(column.path("canEdit").path("allowed").asBoolean()).isFalse();
+            assertThat(column.path("canEdit").path("reasonCode").asText()).isEqualTo("PERMISSION_DENIED");
+        }
+        for (JsonNode entry : foreign.path("projects")) {
+            for (JsonNode cell : entry.path("cells")) {
+                assertThat(cell.path("canEdit").path("allowed").asBoolean()).isFalse();
+            }
+        }
+        String permissions = mockMvc.perform(get("/api/v1/projects/permissions")
+            .param("ids", scenario.projectId().toString())).andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(objectMapper.readTree(permissions).path("result").path("projects").get(0)
+            .path("partQuota").path("canEdit").path("allowed").asBoolean()).isFalse();
+        save(List.of(change(scenario.projectId(), "DESIGN", 0))).andExpect(status().isForbidden());
+        legacyPut(List.of(Map.of("part", "DESIGN", "quota", 2))).andExpect(status().isForbidden());
+        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(1);
+
+        mockMvc.perform(patch(PATH).contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(Map.of("gisuId", own.gisuId(), "chapterId", own.chapterId(),
+                "projects", List.of(change(own.projectId(), "DESIGN", 0)))))).andExpect(status().isOk());
+        mockMvc.perform(put("/api/v1/projects/{id}/part-quotas", own.projectId())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(Map.of("entries", List.of(Map.of("part", "DESIGN", "quota", 1))))))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(get(PATH).param("gisuId", otherGisu.gisuId().toString())
+            .param("chapterId", otherGisu.chapterId().toString())).andExpect(status().isForbidden());
+        mockMvc.perform(patch(PATH).contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(Map.of("gisuId", otherGisu.gisuId(), "chapterId", otherGisu.chapterId(),
+                "projects", List.of(change(otherGisu.projectId(), "DESIGN", 0)))))).andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/v1/projects/{id}/part-quotas", otherGisu.projectId())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(Map.of("entries", List.of(Map.of("part", "DESIGN", "quota", 1))))))
+            .andExpect(status().isForbidden());
     }
 
     @Test

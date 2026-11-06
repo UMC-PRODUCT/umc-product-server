@@ -28,14 +28,15 @@ public class ProjectQuotaAccessPolicy {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
         var authority = checkPermissionUseCase.loadSubject(memberId).toAuthoritySnapshot();
-        boolean allChapters = authority.isCentralMemberInGisu(gisuId);
-        List<ChapterWithSchoolsInfo> chapters = getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId).stream()
-            .filter(chapter -> allChapters || authority.isChapterPresidentInGisu(gisuId, chapter.chapterId()))
-            .sorted(Comparator.comparing(ChapterWithSchoolsInfo::chapterId)).toList();
-        if (!allChapters && chapters.isEmpty()) {
+        List<ChapterWithSchoolsInfo> chapters = getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId);
+        boolean canView = authority.isCentralMemberInGisu(gisuId) || chapters.stream()
+            .anyMatch(chapter -> authority.isChapterPresidentInGisu(gisuId, chapter.chapterId()));
+        if (!canView) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
-        return chapters;
+        return chapters.stream().sorted(Comparator
+            .comparing((ChapterWithSchoolsInfo chapter) -> !authority.isChapterPresidentInGisu(gisuId, chapter.chapterId()))
+            .thenComparing(ChapterWithSchoolsInfo::chapterId)).toList();
     }
 
     public boolean canManage(AuthoritySnapshot authority, Long gisuId, Long chapterId) {
