@@ -30,7 +30,9 @@ public class ProjectQuotaManagementController {
 
     @GetMapping
     @Operation(operationId = "PROJECT-QUOTAS-001", summary = "프로젝트 TO 관리 화면 조회", description = """
-        최고관리자·소속 기수 총괄단·소속 지부장이 조회·수정·저장할 수 있습니다.
+        최고관리자·소속 기수 총괄단은 권한 범위에서 조회·수정·저장할 수 있습니다.
+        지부장은 소속 기수 전체 지부를 조회하고 본인 지부만 수정·저장할 수 있습니다. 타 지부는 편집 불가이며 PATCH·PUT 저장은 거부합니다.
+        지부장의 지부 탭은 본인 지부가 먼저이며 chapterId 생략 시 본인 지부를 선택합니다.
         운영국원·교육국원은 소속 기수 전체 지부를 조회만 할 수 있으며, 편집 가능 응답은 false이고 PATCH·PUT 저장은 거부됩니다. chapterId 생략 시 접근 가능한 첫 지부를 선택합니다.
         지부·학교 선택지, 파트별 인원·TO 합계, 필터 결과와 전체 지부 합계, 프로젝트별 셀을 한 번에 반환합니다.
         프로젝트 표와 조회 합계는 승인완료(IN_PROGRESS)만 포함합니다. PM의 currentCount는 소유자·활동 중인 보조 PM 인원이며 PM TO 수정은 유지합니다.
