@@ -12,6 +12,7 @@ import com.umc.product.authorization.application.port.in.query.dto.ChallengerRol
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
@@ -57,8 +58,10 @@ public class NoticeViewerInfoAssembler {
             chapterId = role.organizationId();
             chapterSchoolIds = loadChapterSchoolIds(gisuId, chapterId);
         }
+        Long schoolRoleSchoolId = role != null && role.organizationType() == OrganizationType.SCHOOL
+            && role.roleType().isAtLeastSchoolAdmin() ? role.organizationId() : null;
         return new NoticeViewerInfo(memberParts, schoolId, chapterId, viewerRole,
-            role == null ? null : role.roleType(), chapterSchoolIds);
+            role == null ? null : role.roleType(), chapterSchoolIds, schoolRoleSchoolId);
     }
 
     private NoticeTab resolveViewerRole(boolean superAdmin, ChallengerRoleInfo role) {

@@ -27,6 +27,8 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope;
 import com.umc.product.project.application.access.ProjectApplicationAccessScopeResolver;
 import com.umc.product.project.application.access.ProjectApplicationDecisionPolicy;
+import com.umc.product.project.application.access.ProjectQuotaAccessPolicy;
+import com.umc.product.project.application.access.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.application.port.in.query.GetProjectPermissionsUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionCapabilityInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionInfo;
@@ -47,7 +49,6 @@ import com.umc.product.project.application.service.policy.ProjectManualMatchingA
 import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
-import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.ProjectMatchingRound;
@@ -74,6 +75,7 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
         );
 
     private final ProjectDraftQuotaPolicy draftQuotaPolicy;
+    private final ProjectQuotaAccessPolicy quotaAccessPolicy;
     private final Clock clock;
     private final CheckPermissionUseCase checkPermissionUseCase;
     private final LoadProjectPort loadProjectPort;
@@ -231,7 +233,9 @@ public class ProjectPermissionQueryService implements GetProjectPermissionsUseCa
     private PartQuotaPermissions partQuotaPermissions(SubjectAttributes subject, ProjectCapabilityContext context) {
         boolean canEdit = context.project().getStatus() == ProjectStatus.DRAFT
             ? draftQuotaPolicy.canEdit(context.project(), subject)
-            : context.projectPermission(PermissionType.MANAGE);
+            : context.projectPermission(PermissionType.MANAGE)
+                || quotaAccessPolicy.canManage(subject.toAuthoritySnapshot(), context.project().getGisuId(),
+                    context.project().getChapterId());
         return new PartQuotaPermissions(requirePermission(
             canEdit,
             () -> {

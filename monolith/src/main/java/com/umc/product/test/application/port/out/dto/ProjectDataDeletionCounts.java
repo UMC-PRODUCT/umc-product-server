@@ -1,5 +1,7 @@
 package com.umc.product.test.application.port.out.dto;
 
+import java.util.List;
+
 import lombok.Builder;
 
 @Builder
@@ -11,6 +13,7 @@ public record ProjectDataDeletionCounts(
     int deletedProjectApplicationFormPolicies,
     int deletedProjectPartQuotas,
     int deletedProjectMatchingRounds,
+    List<Long> deletedProjectMatchingRoundIds,
     int deletedSurveyForms,
     int deletedSurveyFormSections,
     int deletedSurveyQuestions,
@@ -20,4 +23,9 @@ public record ProjectDataDeletionCounts(
     int deletedSurveyAnswerChoices,
     int deletedSurveySingleAnswers
 ) {
+
+    public ProjectDataDeletionCounts {
+        deletedProjectMatchingRoundIds = deletedProjectMatchingRoundIds == null
+            ? List.of() : List.copyOf(deletedProjectMatchingRoundIds);
+    }
 }

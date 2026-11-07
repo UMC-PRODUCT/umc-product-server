@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import com.umc.product.member.application.port.in.query.dto.MemberBasicInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 
 public interface GetMemberUseCase {
@@ -18,6 +19,9 @@ public interface GetMemberUseCase {
     MemberInfo findByIdOrNull(Long memberId);
 
     Map<Long, MemberInfo> findAllByIds(Set<Long> memberIds);
+
+    /** 학교·파일·역할 부가 조회 없이 회원 식별·검색에 필요한 기본 정보만 일괄 조회한다. */
+    Map<Long, MemberBasicInfo> findAllBasicByIds(Set<Long> memberIds);
 
     Map<Long, String> findAllNamesByIds(Set<Long> memberIds);
 
@@ -44,6 +48,9 @@ public interface GetMemberUseCase {
     boolean existsById(Long memberId);
 
     boolean existsByEmail(String email);
+
+    /** 없는 이메일은 결과에서 빠진다. */
+    Map<String, Long> findIdsByEmails(Set<String> emails);
 
     /**
      * 커서 기반으로 멤버 ID 목록을 조회합니다. lastId보다 큰 ID를 가진 멤버를 최대 limit개 반환합니다. 전체 멤버를 메모리 효율적으로 순회할 때 사용합니다.

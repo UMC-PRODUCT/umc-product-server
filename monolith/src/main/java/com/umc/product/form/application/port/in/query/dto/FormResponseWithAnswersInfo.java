@@ -3,7 +3,6 @@ package com.umc.product.form.application.port.in.query.dto;
 import java.time.Instant;
 import java.util.List;
 
-import com.umc.product.form.domain.FormResponse;
 import com.umc.product.form.domain.enums.FormResponseStatus;
 
 import lombok.Builder;
@@ -27,19 +26,4 @@ public record FormResponseWithAnswersInfo(
     Instant updatedAt,
     List<AnswerInfo> answers
 ) {
-
-    public static FormResponseWithAnswersInfo from(FormResponse formResponse, List<AnswerInfo> answers) {
-        return FormResponseWithAnswersInfo.builder()
-            .id(formResponse.getId())
-            .formId(formResponse.getForm().getId())
-            .respondentMemberId(formResponse.getRespondentMemberId())
-            .status(formResponse.getStatus())
-            .submittedAt(formResponse.getSubmittedAt())
-            .submittedIp(formResponse.getSubmittedIp())
-            .lastSavedAt(formResponse.getLastSavedAt())
-            .createdAt(formResponse.getCreatedAt())
-            .updatedAt(formResponse.getUpdatedAt())
-            .answers(answers)
-            .build();
-    }
 }

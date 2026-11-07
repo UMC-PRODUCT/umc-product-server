@@ -144,8 +144,7 @@ public class NoticeQueryRepository {
     }
 
     /**
-     * 운영진 공지 파트 조건. - classification.part() 명시 시: 해당 파트 또는 파트 미지정 공지 - 회장단 이상(CENTRAL_MEMBER, SCHOOL_CORE): 파트 미지정 시 전체
-     * 파트 조회 - 파트장: 담당 파트로만 필터링
+     * 운영진 공지 파트 조건. 명시한 파트 필터를 우선 적용하며, 교내 운영진은 본인 학교 공지를 파트 무관하게 조회합니다.
      */
     private BooleanExpression buildStaffPartCondition(NoticeClassification classification,
                                                       NoticeViewerInfo viewerInfo) {
@@ -158,8 +157,11 @@ public class NoticeQueryRepository {
         if (viewerRole == NoticeTab.CENTRAL_MEMBER || viewerRole == NoticeTab.SCHOOL_CORE) {
             return Expressions.TRUE;
         }
-        // 파트장 파트 미지정: 담당 파트 + 파트 미지정 공지
-        return targetPartIsEmptyOrContainsAny(viewerInfo.memberParts());
+        BooleanExpression partMatch = targetPartIsEmptyOrContainsAny(viewerInfo.memberParts());
+        if (viewerRole == NoticeTab.SCHOOL_PART_LEADER && viewerInfo.schoolRoleSchoolId() != null) {
+            return noticeTarget.targetSchoolId.eq(viewerInfo.schoolRoleSchoolId()).or(partMatch);
+        }
+        return partMatch;
     }
 
     /**

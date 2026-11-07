@@ -4,6 +4,8 @@
 
 Accepted
 
+> 2026-11-04 참고: 본문이 예시로 든 `ServerLifecycleAlarmListener`는 웹훅 알림 기능 제거와 함께 삭제됐다.
+
 기본 어댑터로 `SpringDomainEventPublisher`를 선택한 결정은
 [ADR-026](./026-enforce-event-outbox-publisher.md)으로 대체되었다. `DomainEventPublisher` Port Out
 추상화 결정은 계속 유효하다.

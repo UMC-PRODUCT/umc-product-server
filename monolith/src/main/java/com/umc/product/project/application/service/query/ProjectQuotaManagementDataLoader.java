@@ -45,12 +45,15 @@ public class ProjectQuotaManagementDataLoader {
     public List<Project> projects(Long gisuId, Long chapterId, String keyword, Long schoolId) {
         return loadProjectPort.search(SearchProjectQuery.forAdmin(gisuId, keyword, chapterId,
             schoolId == null ? null : List.of(schoolId), null, null,
-            List.of(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS),
+            List.of(ProjectStatus.IN_PROGRESS),
             Pageable.unpaged(Sort.by("name", "id")))).getContent();
     }
 
-    public Snapshot load(Long gisuId, Long chapterId) {
-        List<Project> projects = projects(gisuId, chapterId, null, null);
+    public Snapshot loadApproved(Long gisuId, Long chapterId) {
+        return load(chapterId, projects(gisuId, chapterId, null, null));
+    }
+
+    private Snapshot load(Long chapterId, List<Project> projects) {
         var ids = projects.stream().map(Project::getId).toList();
         Map<ChallengerPart, Long> population = new EnumMap<>(ChallengerPart.class);
         matchingChapterResolver.deltaOf(chapterId).apply(getChallengerUseCase.listByChapterId(chapterId)).stream()

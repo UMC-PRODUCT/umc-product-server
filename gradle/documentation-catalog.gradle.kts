@@ -737,10 +737,9 @@ tasks.register("generateErrorCodeCatalog") {
     }
 }
 
-// API 문서는 OpenAPI/Scalar가 담당하므로 이전 custom API catalog 산출물은 재생성하지 않고 제거한다.
 tasks.register("removeStaleCatalogArtifacts") {
     group = "documentation"
-    description = "더 이상 사용하지 않는 문서 산출물을 제거합니다. Scalar/OpenAPI 문서는 유지합니다."
+    description = "더 이상 사용하지 않는 문서 산출물을 제거합니다. Swagger UI/OpenAPI 문서는 유지합니다."
 
     doLast {
         staleCatalogFilesToRemove.filter { it.exists() }.forEach { it.delete() }

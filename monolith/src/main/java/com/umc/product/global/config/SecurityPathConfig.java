@@ -5,13 +5,14 @@ import java.util.stream.Stream;
 
 public final class SecurityPathConfig {
 
-    public static final String SCALAR_ENTRY_PATH = "/docs";
-    public static final String SCALAR_ENTRY_SLASH_PATH = "/docs/";
+    public static final String DOCS_ENTRY_PATH = "/docs";
+    public static final String DOCS_ENTRY_SLASH_PATH = "/docs/";
+    public static final String SWAGGER_UI_PATH = "/docs/swagger-ui.html";
     public static final String ASYNCAPI_ENTRY_PATH = "/docs/asyncapi";
     public static final String ASYNCAPI_ENTRY_SLASH_PATH = "/docs/asyncapi/";
     public static final String ASYNCAPI_HTML_PATH = "/docs/asyncapi.html";
     public static final String ASYNCAPI_DOCUMENT_PATH = "/docs/asyncapi.yaml";
-    public static final String SCALAR_DOCUMENTATION_PATTERN = "/docs/**";
+    public static final String DOCUMENTATION_PATTERN = "/docs/**";
     public static final String OPENAPI_JSON_PATH = "/docs-json";
     public static final String OPENAPI_JSON_PATTERN = "/docs-json/**";
     public static final String MARKDOWN_IT_WEBJAR_PATTERN = "/webjars/markdown-it/**";
@@ -19,6 +20,10 @@ public final class SecurityPathConfig {
     public static final String GRAPHQL_PATH = "/graphql";
     public static final String GRAPHIQL_PATH = "/graphiql";
     public static final String GRAPHIQL_PATTERN = "/graphiql/**";
+    public static final String WELL_KNOWN_PATTERN = "/.well-known/**";
+    // global은 도메인 패키지를 참조하지 않으므로 문자열로 둔다. CommunityThreadLinks.WEB_PATH_PREFIX와
+    // 어긋나지 않는지는 CommunityThreadLinksTest가 검증한다.
+    public static final String COMMUNITY_THREAD_DEEP_LINK_PATTERN = "/community/threads/**";
 
     public static final List<String> SWAGGER_BLOCKED_PATHS = List.of(
         "/swagger-ui/**",
@@ -30,9 +35,9 @@ public final class SecurityPathConfig {
     );
 
     public static final List<String> DOCUMENTATION_PATHS = List.of(
-        SCALAR_ENTRY_PATH,
-        SCALAR_ENTRY_SLASH_PATH,
-        SCALAR_DOCUMENTATION_PATTERN,
+        DOCS_ENTRY_PATH,
+        DOCS_ENTRY_SLASH_PATH,
+        DOCUMENTATION_PATTERN,
         OPENAPI_JSON_PATH,
         OPENAPI_JSON_PATTERN,
         MARKDOWN_IT_WEBJAR_PATTERN,
@@ -50,7 +55,8 @@ public final class SecurityPathConfig {
             Stream.of(
                 "/actuator/**",
                 "/error",
-                "/ws/**"
+                "/ws/**",
+                WELL_KNOWN_PATTERN
             ),
             DOCUMENTATION_PATHS.stream()
         ),
@@ -67,7 +73,11 @@ public final class SecurityPathConfig {
             "/api/v1/terms",
             "/api/v1/terms/**",
             "/actuator/**",
-            "/error"
+            "/error",
+            // App Link/Universal Link 소유권 검증과 공유 링크 fallback 은 점검 중에도 응답해야
+            // OS 재검증 주기나 외부에 공유된 링크가 깨지지 않는다(#1268).
+            WELL_KNOWN_PATTERN,
+            COMMUNITY_THREAD_DEEP_LINK_PATTERN
         ),
         DOCUMENTATION_PATHS.stream()
     ).toList();

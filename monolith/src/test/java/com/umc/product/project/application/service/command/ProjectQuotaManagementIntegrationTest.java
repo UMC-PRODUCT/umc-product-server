@@ -95,6 +95,7 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         JsonNode info = view(null);
 
         // then
+        assertPopulationParts(info);
         assertThat(info.path("chapterId").asLong()).isEqualTo(scenario.chapterId());
         assertThat(info.path("chapters").size()).isEqualTo(1);
         assertThat(info.path("schools").get(0).path("schoolId").asLong()).isEqualTo(scenario.schoolId());
@@ -109,6 +110,134 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         assertThat(design.path("availableCount").asLong()).isEqualTo(2);
         assertThat(design.path("allocatedQuota").asLong()).isEqualTo(1);
         assertThat(design.path("allocationStatus").asText()).isEqualTo("SHORTAGE");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerPart.class, names = {"WEB", "ANDROID", "IOS", "NODEJS", "SPRINGBOOT"})
+    void 과거파트_인원과_TO가_있어도_현황과_표와_합계는_기본_네파트만_포함한다(ChallengerPart legacy) throws Exception {
+        // given
+        projects.회원(scenario, "과거파트 QA", legacy);
+        fixture.정원(scenario.projectId(), legacy, 5);
+
+        // when
+        JsonNode info = view(null);
+        JsonNode filtered = view("검색 결과 없음 QA");
+
+        // then
+        assertPopulationParts(info);
+        assertPopulationParts(filtered);
+        assertThat(info.path("totals").path("availableCount").asLong()).isEqualTo(8);
+        assertThat(info.path("totals").path("allocatedQuota").asLong()).isEqualTo(2);
+        assertThat(filtered.path("totals").path("allocatedQuota").asLong()).isEqualTo(2);
+        assertThat(filtered.path("filteredTotals").path("availableCount").asLong()).isEqualTo(8);
+        assertThat(filtered.path("filteredTotals").path("allocatedQuota").asLong()).isZero();
+        assertThat(info.path("columns").findValuesAsText("part")).containsExactly(
+            "PLAN", "DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER");
+        assertThat(info.path("columns").findValuesAsText("label")).containsExactly(
+            "PM", "Design", "Web PE", "Mobile PE");
+        assertThat(info.path("projects").get(0).path("cells").findValuesAsText("part")).containsExactly(
+            "PLAN", "DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER");
+        assertThat(filtered.path("columns").findValuesAsText("part")).containsExactly(
+            "PLAN", "DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER");
+        assertThat(quota(scenario.projectId(), legacy.name())).isEqualTo(5);
+        assertThat(info.path("projects").get(0).path("totalQuota").asLong()).isEqualTo(2);
+    }
+
+    @Test
+    void 인원과_프로젝트가_없는_지부도_기본_네파트를_영으로_반환한다() throws Exception {
+        // given
+        jdbc.update("UPDATE challenger SET part=NULL WHERE gisu_id=?", scenario.gisuId());
+        jdbc.update("UPDATE project SET status='ABORTED' WHERE id=?", scenario.projectId());
+
+        // when
+        JsonNode info = view(null);
+
+        // then
+        assertPopulationParts(info);
+        assertThat(info.path("projects").isEmpty()).isTrue();
+        assertThat(info.path("columns").findValuesAsText("part")).containsExactly(
+            "PLAN", "DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER");
+        for (JsonNode summary : info.path("summary")) {
+            assertThat(summary.path("availableCount").asText()).isEqualTo("0");
+            assertThat(summary.path("allocatedQuota").asText()).isEqualTo("0");
+        }
+        assertThat(info.path("totals").path("availableCount").asLong()).isZero();
+        assertThat(info.path("totals").path("allocatedQuota").asLong()).isZero();
+    }
+
+    @Test
+    void 승인완료만_표와_필터와_조회합계와_저장상한에_포함한다() throws Exception {
+        // given
+        Long pending = fixture.프로젝트(scenario, "승인대기 QA");
+        fixture.정원(pending, ChallengerPart.DESIGN, 1);
+        jdbc.update("UPDATE project SET status='PENDING_REVIEW' WHERE id=?", pending);
+        for (String state : List.of("DRAFT", "COMPLETED", "ABORTED")) {
+            Long projectId = fixture.프로젝트(scenario, state + " QA");
+            jdbc.update("UPDATE project SET status=? WHERE id=?", state, projectId);
+        }
+
+        // when
+        JsonNode info = view(null);
+
+        // then
+        assertThat(info.path("totalProjectCount").asInt()).isEqualTo(1);
+        assertThat(info.path("projects").size()).isEqualTo(1);
+        assertThat(info.path("projects").get(0).path("status").asText()).isEqualTo("IN_PROGRESS");
+        assertThat(part(info.path("summary"), "DESIGN").path("allocatedQuota").asLong()).isEqualTo(1);
+        assertThat(view("승인대기 QA").path("filteredProjectCount").asInt()).isZero();
+        save(List.of(change(scenario.projectId(), "DESIGN", 2))).andExpect(status().isOk());
+        denied(save(List.of(change(scenario.projectId(), "DESIGN", 3))), "PROJECT-0251");
+        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(2);
+        assertThat(quota(pending, "DESIGN")).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"PENDING_REVIEW", "DRAFT", "COMPLETED", "ABORTED"})
+    void 관리대상이_아닌_프로젝트의_TO가_커도_승인완료_TO의_저장과_초기화는_가능하다(String state) throws Exception {
+        // given
+        Long excluded = fixture.프로젝트(scenario, "상한에서 제외할 프로젝트");
+        fixture.정원(excluded, ChallengerPart.PLAN, 100);
+        fixture.정원(excluded, ChallengerPart.DESIGN, 100);
+        fixture.정원(excluded, ChallengerPart.WEB_PRODUCT_ENGINEER, 100);
+        jdbc.update("UPDATE project SET status=? WHERE id=?", state, excluded);
+
+        // when & then
+        save(List.of(Map.of("projectId", scenario.projectId(), "entries", List.of(
+            Map.of("part", "PLAN", "quota", 3), Map.of("part", "DESIGN", "quota", 2),
+            Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 2))))).andExpect(status().isOk());
+        legacyPut(List.of(Map.of("part", "PLAN", "quota", 3), Map.of("part", "DESIGN", "quota", 2),
+            Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 2))).andExpect(status().isOk());
+        denied(save(List.of(change(scenario.projectId(), "PLAN", 4))), "PROJECT-0251");
+        save(List.of(Map.of("projectId", scenario.projectId(), "entries", List.of(
+            Map.of("part", "DESIGN", "quota", 0), Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 0),
+            Map.of("part", "MOBILE_PRODUCT_ENGINEER", "quota", 0))))).andExpect(status().isOk());
+        JsonNode info = view(null);
+        assertThat(cell(info, "PLAN").path("quota").asLong()).isEqualTo(3);
+        assertThat(part(info.path("summary"), "PLAN").path("allocatedQuota").asLong()).isEqualTo(3);
+        for (String part : List.of("DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER")) {
+            assertThat(cell(info, part).path("quota").asLong()).isZero();
+        }
+        assertThat(quota(excluded, "PLAN")).isEqualTo(100);
+        assertThat(quota(excluded, "DESIGN")).isEqualTo(100);
+    }
+
+    @Test
+    void 초기화값은_디자인과_신규개발파트만_영이고_조회로는_저장값을_바꾸지_않는다() throws Exception {
+        // given
+        fixture.정원(scenario.projectId(), ChallengerPart.WEB_PRODUCT_ENGINEER, 2);
+        fixture.정원(scenario.projectId(), ChallengerPart.PLAN, 2);
+
+        // when
+        JsonNode info = view(null);
+
+        // then
+        for (String part : List.of("DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER")) {
+            assertThat(cell(info, part).path("resetQuota").asText()).isEqualTo("0");
+        }
+        assertThat(cell(info, "PLAN").path("resetQuota").asLong()).isEqualTo(2);
+        assertThat(cell(info, "PLAN").path("currentCount").asLong()).isEqualTo(1);
+        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(1);
+        assertThat(quota(scenario.projectId(), "WEB_PRODUCT_ENGINEER")).isEqualTo(2);
     }
 
     @Test
@@ -138,8 +267,8 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
 
     @ParameterizedTest
     @EnumSource(value = ChallengerRoleType.class, names = {"SCHOOL_PRESIDENT", "SCHOOL_VICE_PRESIDENT",
-        "SCHOOL_PART_LEADER", "SCHOOL_ETC_ADMIN", "CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER"})
-    void 학교운영진이나_중앙일반운영진이_PM을_겸해도_TO_관리에는_접근할_수_없다(ChallengerRoleType role) throws Exception {
+        "SCHOOL_PART_LEADER", "SCHOOL_ETC_ADMIN"})
+    void 학교운영진이_PM을_겸해도_TO_관리에는_접근할_수_없다(ChallengerRoleType role) throws Exception {
         // given
         Long actor = permissionFixture.역할_회원(scenario, role, ChallengerPart.PLAN);
         authenticate(actor);
@@ -147,6 +276,86 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         // when & then
         mockMvc.perform(get(PATH).param("gisuId", scenario.gisuId().toString())).andExpect(status().isForbidden());
         save(List.of(change(scenario.projectId(), "DESIGN", 2))).andExpect(status().isForbidden());
+        legacyPut(List.of(Map.of("part", "DESIGN", "quota", 1))).andExpect(status().isForbidden());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class,
+        names = {"CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER"})
+    void 중앙운영국원과_교육국원은_소속기수_전지부_TO를_조회만_할_수_있다(ChallengerRoleType role) throws Exception {
+        // given
+        Scenario foreign = projects.다른_지부(scenario);
+        Long actor = permissionFixture.역할_회원(scenario, role, ChallengerPart.PLAN);
+        authenticate(actor);
+
+        // when & then
+        assertThat(view(null).path("chapters").size()).isEqualTo(2);
+        for (Scenario target : List.of(scenario, foreign)) {
+            String body = mockMvc.perform(get(PATH).param("gisuId", target.gisuId().toString())
+                    .param("chapterId", target.chapterId().toString())).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+            JsonNode info = objectMapper.readTree(body).path("result");
+            for (JsonNode column : info.path("columns")) {
+                assertThat(column.path("canEdit").path("allowed").asBoolean()).isFalse();
+                assertThat(column.path("canEdit").path("reasonCode").asText()).isEqualTo("PERMISSION_DENIED");
+            }
+            for (JsonNode entry : info.path("projects")) {
+                for (JsonNode cell : entry.path("cells")) {
+                    assertThat(cell.path("canEdit").path("allowed").asBoolean()).isFalse();
+                }
+            }
+            mockMvc.perform(patch(PATH).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(Map.of("gisuId", target.gisuId(), "chapterId", target.chapterId(),
+                    "projects", List.of(change(target.projectId(), "DESIGN", 0)))))).andExpect(status().isForbidden());
+            mockMvc.perform(put("/api/v1/projects/{id}/part-quotas", target.projectId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(Map.of("entries", List.of(Map.of("part", "DESIGN", "quota", 2))))))
+                .andExpect(status().isForbidden());
+            assertThat(quota(target.projectId(), "DESIGN")).isEqualTo(1);
+            String permissions = mockMvc.perform(get("/api/v1/projects/permissions")
+                .param("ids", target.projectId().toString())).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+            assertThat(objectMapper.readTree(permissions).path("result").path("projects").get(0)
+                .path("partQuota").path("canEdit").path("allowed").asBoolean()).isFalse();
+        }
+        schedule(MatchingType.PLAN_DESIGN, -7200, 3600);
+        assertThat(cell(view(null), "DESIGN").path("canEdit").path("allowed").asBoolean()).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class,
+        names = {"CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER"})
+    void 중앙일반운영진이_지부장을_겸하면_소속지부_TO를_수정한다(ChallengerRoleType role) throws Exception {
+        // given
+        Long actor = permissionFixture.역할_회원(scenario, role, ChallengerPart.DESIGN);
+        permissionFixture.역할_추가(scenario, actor, ChallengerRoleType.CHAPTER_PRESIDENT);
+        authenticate(actor);
+
+        // when & then
+        assertThat(cell(view(null), "DESIGN").path("canEdit").path("allowed").asBoolean()).isTrue();
+        save(List.of(change(scenario.projectId(), "DESIGN", 2))).andExpect(status().isOk());
+        legacyPut(List.of(Map.of("part", "DESIGN", "quota", 1))).andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class,
+        names = {"CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER"})
+    void 중앙일반운영진도_다른기수_TO의_조회와_PATCH와_PUT는_거부한다(ChallengerRoleType role) throws Exception {
+        // given
+        Scenario other = projects.다른_기수();
+        Long actor = permissionFixture.역할_회원(scenario, role, ChallengerPart.DESIGN);
+        authenticate(actor);
+
+        // when & then
+        mockMvc.perform(get(PATH).param("gisuId", other.gisuId().toString())
+            .param("chapterId", other.chapterId().toString())).andExpect(status().isForbidden());
+        mockMvc.perform(patch(PATH).contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(Map.of("gisuId", other.gisuId(), "chapterId", other.chapterId(),
+                "projects", List.of(change(other.projectId(), "DESIGN", 0)))))).andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/v1/projects/{id}/part-quotas", other.projectId())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(Map.of("entries", List.of(Map.of("part", "DESIGN", "quota", 1))))))
+            .andExpect(status().isForbidden());
     }
 
     @Test
@@ -160,14 +369,14 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 지부장은_소속_범위만_관리하고_총괄단과_최고관리자는_정해진_범위를_관리한다() throws Exception {
+    void 지부장은_소속기수_전지부를_조회하고_총괄단과_최고관리자는_정해진_범위를_조회한다() throws Exception {
         // given
         Scenario foreign = projects.다른_지부(scenario);
         Scenario otherGisu = projects.다른_기수();
 
         // when & then
         mockMvc.perform(get(PATH).param("gisuId", scenario.gisuId().toString())
-            .param("chapterId", foreign.chapterId().toString())).andExpect(status().isForbidden());
+            .param("chapterId", foreign.chapterId().toString())).andExpect(status().isOk());
         projects.총괄단(scenario);
         authenticate(scenario.staffId());
         mockMvc.perform(get(PATH).param("gisuId", scenario.gisuId().toString())
@@ -176,6 +385,60 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         permissionFixture.최고관리자(scenario.staffId());
         authenticate(scenario.staffId());
         mockMvc.perform(get(PATH).param("gisuId", otherGisu.gisuId().toString())).andExpect(status().isOk());
+    }
+
+    @Test
+    void 지부장은_본인지부를_기본선택하고_타지부는_조회만_가능하며_다른기수는_거부한다() throws Exception {
+        // given
+        Scenario own = projects.다른_지부(scenario);
+        Scenario otherGisu = projects.다른_기수();
+        authenticate(own.staffId());
+
+        // when & then
+        JsonNode defaults = view(null);
+        assertThat(defaults.path("chapterId").asLong()).isEqualTo(own.chapterId());
+        assertThat(defaults.path("chapters").size()).isEqualTo(2);
+        assertThat(cell(defaults, "DESIGN").path("canEdit").path("allowed").asBoolean()).isTrue();
+        String body = mockMvc.perform(get(PATH).param("gisuId", scenario.gisuId().toString())
+                .param("chapterId", scenario.chapterId().toString())).andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        JsonNode foreign = objectMapper.readTree(body).path("result");
+        assertThat(foreign.path("projects").get(0).path("projectId").asLong()).isEqualTo(scenario.projectId());
+        for (JsonNode column : foreign.path("columns")) {
+            assertThat(column.path("canEdit").path("allowed").asBoolean()).isFalse();
+            assertThat(column.path("canEdit").path("reasonCode").asText()).isEqualTo("PERMISSION_DENIED");
+        }
+        for (JsonNode entry : foreign.path("projects")) {
+            for (JsonNode cell : entry.path("cells")) {
+                assertThat(cell.path("canEdit").path("allowed").asBoolean()).isFalse();
+            }
+        }
+        String permissions = mockMvc.perform(get("/api/v1/projects/permissions")
+            .param("ids", scenario.projectId().toString())).andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(objectMapper.readTree(permissions).path("result").path("projects").get(0)
+            .path("partQuota").path("canEdit").path("allowed").asBoolean()).isFalse();
+        save(List.of(change(scenario.projectId(), "DESIGN", 0))).andExpect(status().isForbidden());
+        legacyPut(List.of(Map.of("part", "DESIGN", "quota", 2))).andExpect(status().isForbidden());
+        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(1);
+
+        mockMvc.perform(patch(PATH).contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(Map.of("gisuId", own.gisuId(), "chapterId", own.chapterId(),
+                "projects", List.of(change(own.projectId(), "DESIGN", 0)))))).andExpect(status().isOk());
+        mockMvc.perform(put("/api/v1/projects/{id}/part-quotas", own.projectId())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(Map.of("entries", List.of(Map.of("part", "DESIGN", "quota", 1))))))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(get(PATH).param("gisuId", otherGisu.gisuId().toString())
+            .param("chapterId", otherGisu.chapterId().toString())).andExpect(status().isForbidden());
+        mockMvc.perform(patch(PATH).contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(Map.of("gisuId", otherGisu.gisuId(), "chapterId", otherGisu.chapterId(),
+                "projects", List.of(change(otherGisu.projectId(), "DESIGN", 0)))))).andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/v1/projects/{id}/part-quotas", otherGisu.projectId())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(Map.of("entries", List.of(Map.of("part", "DESIGN", "quota", 1))))))
+            .andExpect(status().isForbidden());
     }
 
     @Test
@@ -637,6 +900,16 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
             NOW.plusSeconds(firstStart + 600), NOW.plusSeconds(firstStart + 1200));
         fixture.차수(scenario, type, MatchingPhase.THIRD, NOW.plusSeconds(thirdDeadline - 1800),
             NOW.plusSeconds(thirdDeadline - 600), NOW.plusSeconds(thirdDeadline));
+    }
+
+    private void assertPopulationParts(JsonNode info) {
+        List<String> expected = List.of("PLAN", "DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER");
+        for (String field : List.of("summary", "filteredSummary")) {
+            assertThat(info.path(field).size()).isEqualTo(4);
+            for (int index = 0; index < expected.size(); index++) {
+                assertThat(info.path(field).get(index).path("part").asText()).isEqualTo(expected.get(index));
+            }
+        }
     }
 
     private JsonNode view(String keyword) throws Exception {

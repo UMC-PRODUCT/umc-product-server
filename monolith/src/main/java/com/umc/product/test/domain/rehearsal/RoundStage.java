@@ -1,0 +1,14 @@
+package com.umc.product.test.domain.rehearsal;
+
+public enum RoundStage {
+    BEFORE_START,
+    APPLICATION_OPEN,
+    DECISION_WINDOW,
+    AWAITING_AUTO_DECISION,
+    AWAITING_PUBLISH,
+    AWAITING_ASSIGNMENT,
+    ASSIGNED,
+    ADJUSTMENT_OPEN,
+    ADJUSTMENT_CLOSED,
+    PUBLISHED
+}

@@ -28,9 +28,6 @@ import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.command.LockMemberUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
-import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
-import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
-import com.umc.product.notification.domain.WebhookPlatform;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
@@ -60,8 +57,6 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
     private final ListChallengerRoleUseCase listChallengerRoleUseCase;
     private final ManageChallengerRoleUseCase manageChallengerRoleUseCase;
     private final EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
-
-    private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
 
     @Audited(
         domain = Domain.CHALLENGER,
@@ -155,14 +150,6 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
         }
         record.markAsUsed(memberId);
         evictAuthoritySnapshotCacheUseCase.evictByMemberId(memberId);
-        sendWebhookAlarmUseCase.sendBuffered(SendWebhookAlarmCommand.builder()
-            .title("챌린저 코드가 등록되었습니다.")
-            .content(memberInfo.schoolName() + " " + memberInfo.nickname() + "/" + memberInfo.name()
-                + " 님이 gisuId=" + record.getGisuId() + "의 코드를 등록했습니다."
-                + " part=" + record.getPart() + ", infra=" + record.isInfra()
-                + ", role=" + record.getChallengerRoleType())
-            .platforms(List.of(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD))
-            .build());
     }
 
     private Challenger newMembership(ChallengerRecord record, Long memberId) {

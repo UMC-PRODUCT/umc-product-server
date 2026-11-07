@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
@@ -26,7 +25,6 @@ import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
-import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
 import com.umc.product.organization.application.port.out.command.SaveGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.IntegrationTestSupport;
@@ -45,8 +43,6 @@ class PartSeedIntegrationTest extends IntegrationTestSupport {
     @Autowired private GetCurriculumUseCase getCurriculumUseCase;
     @Autowired private LoadOriginalWorkbookPort loadOriginalWorkbookPort;
     @Autowired private LoadOriginalWorkbookMissionPort loadOriginalWorkbookMissionPort;
-
-    @MockitoBean private SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
 
     private Long gisuId;
     private Long chapterId;

@@ -13,13 +13,14 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,22 +28,42 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Ticker;
 import com.umc.product.demoday.adapter.in.web.security.DemodayParticipationPrincipal;
-import com.umc.product.global.client.ClientContextProperties;
-import com.umc.product.global.client.ClientOriginRegistry;
-import com.umc.product.global.client.ClientRequestClassifier;
-import com.umc.product.global.config.LoggingInterceptor;
 import com.umc.product.global.exception.constant.CommonErrorCode;
-import com.umc.product.global.logging.OperationalMetrics;
 import com.umc.product.global.response.ApiErrorResponseWriter;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.support.web.InterceptorPipelineMockMvc;
+import com.umc.product.support.web.RequestLogCapture;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 class ApiRateLimitInterceptorTest {
 
+    private final Logger rateLimitLogger = (Logger) LoggerFactory.getLogger(ApiRateLimitInterceptor.class);
+    private final ListAppender<ILoggingEvent> rateLimitLogs = new ListAppender<>();
+    private Level rateLimitLoggerLevel;
+    private RequestLogCapture requestLogs;
+
+    @BeforeEach
+    void captureLogs() {
+        requestLogs = new RequestLogCapture();
+        rateLimitLoggerLevel = rateLimitLogger.getLevel();
+        rateLimitLogger.setLevel(Level.INFO);
+        rateLimitLogs.start();
+        rateLimitLogger.addAppender(rateLimitLogs);
+    }
+
     @AfterEach
     void clearSecurityContext() {
+        requestLogs.close();
+        rateLimitLogger.detachAppender(rateLimitLogs);
+        rateLimitLogger.setLevel(rateLimitLoggerLevel);
         SecurityContextHolder.clearContext();
     }
 
@@ -164,30 +185,105 @@ class ApiRateLimitInterceptorTest {
         assertThat(controller.invocations()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("한도를 넘은 요청은 요청 시작·완료 로그 없이 X-Trace-Id를 담은 429를 반환하고 limiter key마다 차단 WARN 한 줄만 남긴다")
+    void blocked_requests_skip_request_logs_and_warn_once_per_key() throws Exception {
+        // given
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        MockMvc mockMvc = mockMvc(new ProductController(), limitedProperties(true), registry);
+        mockMvc.perform(get("/api/v1/products/1"))
+            .andExpect(status().isOk());
+
+        // when
+        for (int request = 0; request < 10; request++) {
+            mockMvc.perform(get("/api/v1/products/1"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().string("X-Trace-Id", InterceptorPipelineMockMvc.TRACE_ID));
+        }
+
+        // then
+        assertThat(requestLogs.events()).containsExactly("api_request_started", "api_request_completed");
+        assertThat(requestLogs.statusCodes()).containsExactly("200");
+        assertThat(blockWarnings())
+            .singleElement()
+            .extracting(ILoggingEvent::getFormattedMessage)
+            .asString()
+            .contains("suppressedSinceLastLog=0");
+        assertThat(rateLimitCount(registry, "blocked")).isEqualTo(10);
+        assertThat(rateLimitCount(registry, "allowed")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("서로 다른 IP의 차단은 limiter key마다 따로 WARN을 남겨 출발지를 구분한다")
+    void blocked_requests_from_different_ips_warn_separately() throws Exception {
+        // given
+        MockMvc mockMvc = mockMvc(new ProductController(), limitedProperties(true));
+
+        // when
+        for (String remoteAddr : List.of("10.0.0.1", "10.0.0.2")) {
+            for (int request = 0; request < 3; request++) {
+                mockMvc.perform(get("/api/v1/products/1").with(servletRequest -> {
+                    servletRequest.setRemoteAddr(remoteAddr);
+                    return servletRequest;
+                }));
+            }
+        }
+
+        // then
+        assertThat(blockWarnings())
+            .extracting(warning -> keyHash(warning.getFormattedMessage()))
+            .hasSize(2)
+            .doesNotHaveDuplicates();
+    }
+
+    @Test
+    @DisplayName("rate limit이 아닌 4xx 응답은 요청 시작·완료 로그를 그대로 남긴다")
+    void non_rate_limited_client_error_keeps_request_logs() throws Exception {
+        // given
+        MockMvc mockMvc = mockMvc(new ProductController(), limitedProperties(true));
+
+        // when
+        mockMvc.perform(get("/api/v1/products/invalid"))
+            .andExpect(status().isBadRequest());
+
+        // then
+        assertThat(requestLogs.events()).containsExactly("api_request_started", "api_request_completed");
+        assertThat(requestLogs.statusCodes()).containsExactly("400");
+        assertThat(blockWarnings()).isEmpty();
+    }
+
+    private List<ILoggingEvent> blockWarnings() {
+        return rateLimitLogs.list.stream()
+            .filter(event -> event.getLevel() == Level.WARN)
+            .filter(event -> event.getMessage().startsWith("api_rate_limit_blocked "))
+            .toList();
+    }
+
+    private static String keyHash(String message) {
+        return message.replaceAll(".*keyHash=(\\S+).*", "$1");
+    }
+
+    private static double rateLimitCount(MeterRegistry registry, String result) {
+        return registry.get("api.rate_limit.requests.total").tag("result", result).counter().count();
+    }
+
     private static MockMvc mockMvc(Object controller, ApiRateLimitProperties properties) {
-        ApiRateLimitMetrics metrics = new ApiRateLimitMetrics(new SimpleMeterRegistry());
+        return mockMvc(controller, properties, new SimpleMeterRegistry());
+    }
+
+    private static MockMvc mockMvc(Object controller, ApiRateLimitProperties properties, MeterRegistry registry) {
         ApiRateLimitInterceptor rateLimitInterceptor = new ApiRateLimitInterceptor(
             new RateLimitClientKeyResolver(),
             new RateLimitRouteResolver(),
             new RateLimitPolicyResolver(properties),
             new RateLimitBucketRegistry(properties),
             new ApiErrorResponseWriter(new ObjectMapper()),
-            metrics
+            new ApiRateLimitMetrics(registry),
+            new RateLimitBlockLogSampler(properties.cache(), Ticker.systemTicker())
         );
-
-        return MockMvcBuilders
-            .standaloneSetup(controller)
-            .addInterceptors(loggingInterceptor(), rateLimitInterceptor)
-            .setMessageConverters(new MappingJackson2HttpMessageConverter())
-            .build();
-    }
-
-    private static LoggingInterceptor loggingInterceptor() {
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        ClientContextProperties properties = new ClientContextProperties(List.of());
-        return new LoggingInterceptor(
-            new ClientRequestClassifier(new ClientOriginRegistry(properties)),
-            new OperationalMetrics(registry)
+        return InterceptorPipelineMockMvc.build(
+            List.of(InterceptorPipelineMockMvc.webMvcConfig(rateLimitInterceptor)),
+            controller
         );
     }
 
@@ -229,6 +325,11 @@ class ApiRateLimitInterceptorTest {
     private static class ProductController {
 
         private final AtomicInteger invocations = new AtomicInteger();
+
+        @GetMapping("/api/v1/products/invalid")
+        ResponseEntity<String> invalidProduct() {
+            return ResponseEntity.badRequest().body("invalid");
+        }
 
         @GetMapping("/api/v1/products/{productId}")
         String product(@PathVariable Long productId) {

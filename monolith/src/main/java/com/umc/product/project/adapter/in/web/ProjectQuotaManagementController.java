@@ -30,8 +30,15 @@ public class ProjectQuotaManagementController {
 
     @GetMapping
     @Operation(operationId = "PROJECT-QUOTAS-001", summary = "프로젝트 TO 관리 화면 조회", description = """
-        최고관리자·소속 기수 총괄단·소속 지부장만 접근할 수 있습니다. chapterId 생략 시 접근 가능한 첫 지부를 선택합니다.
+        최고관리자·소속 기수 총괄단은 권한 범위에서 조회·수정·저장할 수 있습니다.
+        지부장은 소속 기수 전체 지부를 조회하고 본인 지부만 수정·저장할 수 있습니다. 타 지부는 편집 불가이며 PATCH·PUT 저장은 거부합니다.
+        지부장의 지부 탭은 본인 지부가 먼저이며 chapterId 생략 시 본인 지부를 선택합니다.
+        운영국원·교육국원은 소속 기수 전체 지부를 조회만 할 수 있으며, 편집 가능 응답은 false이고 PATCH·PUT 저장은 거부됩니다. chapterId 생략 시 접근 가능한 첫 지부를 선택합니다.
         지부·학교 선택지, 파트별 인원·TO 합계, 필터 결과와 전체 지부 합계, 프로젝트별 셀을 한 번에 반환합니다.
+        프로젝트 표와 조회 합계는 승인완료(IN_PROGRESS)만 포함합니다. PM의 currentCount는 소유자·활동 중인 보조 PM 인원이며 PM TO 수정은 유지합니다.
+        cells.resetQuota는 Design·Web PE·Mobile PE는 0, 그 외는 현재 TO입니다. 초기화는 프런트의 미저장 입력에 적용하며 저장은 별도 PATCH를 사용합니다.
+        상단 현황 summary·filteredSummary는 PM·Design·Web PE·Mobile PE 순서의 4개 항목이며 인원이 없으면 0입니다.
+        columns·프로젝트별 cells도 위 4개 파트 순서로 고정합니다. 과거 파트 데이터가 있어도 추가하지 않습니다. totals·filteredTotals와 행 totalQuota도 위 4개 파트만 합산합니다.
         columns.canEdit와 cells.canEdit에는 수정 가능 여부·거부 사유가 있으며 editableAfter는 null입니다.
         projects는 프로젝트명·ID순 전체 목록으로 내부 스크롤 표에 사용합니다. 숫자는 공통 JSON 규칙대로 문자열입니다.
         """)
@@ -52,6 +59,7 @@ public class ProjectQuotaManagementController {
         PM TO도 수정할 수 있으나 실제 PM·공동 PM 인원 미만으로 줄일 수 없습니다.
         해당 지부의 디자인·개발 중 첫 매칭 시작 이후에는 PM을 포함한 모든 TO 변경을 계속 차단합니다.
         발표 대기를 포함한 기존 배정 인원 미만 축소와 지부 파트별 인원 초과를 거부합니다. 부족은 허용합니다.
+        지부 인원 상한은 조회와 동일하게 승인완료(IN_PROGRESS) 프로젝트의 TO만 합산합니다. 승인대기·임시저장·완료·중단 프로젝트는 합계에서 제외합니다.
         하나라도 실패하면 전체 저장을 롤백합니다. 저장 후 같은 GET을 재조회해 합계·권한을 갱신합니다.
         초기화는 프런트의 미저장 입력을 되돌리는 동작이며 별도 삭제 API를 호출하지 않습니다.
         """)

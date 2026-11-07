@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
@@ -57,6 +58,26 @@ class MemberQueryServiceBatchTest {
     }
 
     @Test
+    @DisplayName("이메일 일괄 조회는 빈 입력이면 저장소를 조회하지 않는다")
+    void findIdsByEmailsReturnsEmptyMapWithoutLookup() {
+        assertThat(sut.findIdsByEmails(Set.of())).isEmpty();
+        assertThat(sut.findIdsByEmails(null)).isEmpty();
+
+        then(loadMemberPort).should(never()).findIdsByEmails(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("이메일 일괄 조회는 있는 이메일의 회원 ID만 돌려준다")
+    void findIdsByEmailsReturnsFoundIds() {
+        given(loadMemberPort.findIdsByEmails(Set.of("a@test.com", "missing@test.com")))
+            .willReturn(Map.of("a@test.com", 1L));
+
+        Map<String, Long> result = sut.findIdsByEmails(Set.of("a@test.com", "missing@test.com"));
+
+        assertThat(result).containsExactly(Map.entry("a@test.com", 1L));
+    }
+
+    @Test
     @DisplayName("findAllByIds는 같은 schoolId와 profileImageId를 한 번만 조회한다")
     void findAllByIdsCachesRepeatedSchoolAndProfileLookups() {
         Member first = member(1L, "홍길동", 10L, "profile-file-id");
@@ -72,6 +93,45 @@ class MemberQueryServiceBatchTest {
         assertThat(result.get(2L).profileImageLink()).isEqualTo("https://cdn.example.com/profile-file-id");
         then(getSchoolUseCase).should(times(1)).getSchoolDetail(10L);
         then(getFileUseCase).should(times(1)).getById("profile-file-id");
+    }
+
+    @Test
+    void 학교가_없는_회원도_학교조회_없이_정보를_반환한다() {
+        // given
+        Member member = member(1L, "최고관리자", null, null);
+        given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
+
+        // when
+        var result = sut.getById(1L);
+
+        // then
+        assertThat(result.id()).isEqualTo(1L);
+        assertThat(result.schoolId()).isNull();
+        assertThat(result.schoolName()).isNull();
+        then(getSchoolUseCase).shouldHaveNoInteractions();
+        then(getFileUseCase).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void 회원_기본정보는_학교와_프로필파일_역할_추가조회_없이_반환한다() {
+        // given
+        Member member = member(1L, "홍길동", 10L, "누락된-프로필파일");
+        given(loadMemberPort.findAllByIds(Set.of(1L))).willReturn(List.of(member));
+
+        // when
+        var result = sut.findAllBasicByIds(Set.of(1L));
+
+        // then
+        assertThat(result.get(1L).memberId()).isEqualTo(1L);
+        assertThat(result.get(1L).name()).isEqualTo("홍길동");
+        assertThat(result.get(1L).nickname()).isEqualTo("홍길");
+        assertThat(result.get(1L).schoolId()).isEqualTo(10L);
+        assertThat(sut.findAllBasicByIds(Set.of())).isEmpty();
+        assertThat(sut.findAllBasicByIds(null)).isEmpty();
+        then(getSchoolUseCase).shouldHaveNoInteractions();
+        then(getFileUseCase).shouldHaveNoInteractions();
+        then(getChallengerRoleUseCase).shouldHaveNoInteractions();
+        then(loadMemberPort).should(times(1)).findAllByIds(Set.of(1L));
     }
 
     @Test
