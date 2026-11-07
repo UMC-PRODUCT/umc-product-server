@@ -13,8 +13,10 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.feedback.application.port.in.query.GetUserFeedbackTemplateUseCase;
 import com.umc.product.feedback.application.port.in.query.dto.UserFeedbackTemplateInfo;
 import com.umc.product.feedback.application.port.out.LoadUserFeedbackTemplatePort;
+import com.umc.product.feedback.domain.UserFeedbackTemplate;
 import com.umc.product.feedback.domain.enums.UserFeedbackContext;
 import com.umc.product.feedback.domain.enums.UserFeedbackTargetType;
+import com.umc.product.form.application.port.in.query.GetFormResponseUseCase;
 import com.umc.product.form.application.port.in.query.GetFormUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 
@@ -23,11 +25,13 @@ import lombok.RequiredArgsConstructor;
 /**
  * 사용자 피드백 템플릿 조회 서비스.
  * <p>
- * 요청자의 챌린저 이력과 운영진 역할을 기반으로 UserFeedbackTargetType을 판별하고,
- * 해당 context + targetType 조합의 활성 UserFeedbackTemplate을 조회하여 Form 폼 구조와 함께 반환합니다.
+ * 요청한 context 안에서 사용자의 이력·역할에 맞는 활성 템플릿을 선택합니다.
+ * 신규·기존 챌린저 전용 템플릿이 없으면 같은 context의 CHALLENGER 공통 템플릿을 선택합니다.
+ * ADMIN은 같은 context의 ADMIN 템플릿만 선택하며, 다른 context의 설문을 대신 반환하지 않습니다.
+ * 선택한 formId에 사용자가 이미 제출했다면 빈 결과를 반환하고, 미제출이면 템플릿과 폼 구조를 반환합니다.
  * <p>
- * <b>이번 기수 특수 케이스:</b> 신규 PM(기획 파트)은 이번 기수에서 기획-디자인 매칭을 경험했으므로 챌린저 이력이 이번 기수 하나뿐이더라도 EXPERIENCED_CHALLENGER로 분류합니다.
- * 이 판별 기준은 코드에 하드코딩되어 있어, 기수별 기준 변경 시 배포가 필요합니다.
+ * <b>10기 한정 분류 예외:</b> 기획-디자인 매칭 경험을 반영하여 10기 신규 PM은 EXPERIENCED_CHALLENGER로 분류합니다.
+ * 11기를 포함한 다른 기수에는 이 예외를 적용하지 않습니다.
  */
 @Service
 @RequiredArgsConstructor
@@ -41,12 +45,16 @@ public class UserFeedbackTemplateQueryService implements GetUserFeedbackTemplate
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetFormUseCase getFormUseCase;
+    private final GetFormResponseUseCase getFormResponseUseCase;
 
     @Override
     public Optional<UserFeedbackTemplateInfo> findTemplate(Long requesterMemberId, UserFeedbackContext context) {
         return getGisuUseCase.findActiveGisu()
             .flatMap(gisu -> resolveTargetType(requesterMemberId, gisu.gisuId(), gisu.generation())
-                .flatMap(targetType -> loadUserFeedbackTemplatePort.findByContextAndTargetType(context, targetType)
+                .flatMap(targetType -> findActiveTemplate(context, targetType)
+                    .filter(template -> getFormResponseUseCase
+                        .findSubmittedByFormIdAndRespondentMemberId(template.getFormId(), requesterMemberId)
+                        .isEmpty())
                     .map(template -> UserFeedbackTemplateInfo.builder()
                         .templateId(template.getId())
                         .context(template.getContext())
@@ -55,12 +63,25 @@ public class UserFeedbackTemplateQueryService implements GetUserFeedbackTemplate
                         .build())));
     }
 
+    private Optional<UserFeedbackTemplate> findActiveTemplate(
+        UserFeedbackContext context,
+        UserFeedbackTargetType targetType
+    ) {
+        Optional<UserFeedbackTemplate> template = loadUserFeedbackTemplatePort.findByContextAndTargetType(context, targetType);
+        if (targetType != UserFeedbackTargetType.NEW_CHALLENGER
+            && targetType != UserFeedbackTargetType.EXPERIENCED_CHALLENGER) {
+            return template;
+        }
+        return template.or(() -> loadUserFeedbackTemplatePort.findByContextAndTargetType(
+            context, UserFeedbackTargetType.CHALLENGER));
+    }
+
     /**
      * 요청자의 UserFeedbackTargetType을 판별합니다.
      * <p>
      * 판별 순서:
      * <ol>
-     *   <li>현재 기수 중앙 운영진(isCentralMemberInGisu) -> ADMIN</li>
+     *   <li>현재 기수 중앙 운영진 또는 SUPER_ADMIN -> ADMIN</li>
      *   <li>현재 기수 활성 챌린저가 아닌 경우 -> Optional.empty()</li>
      *   <li>이번 기수 외 챌린저 이력 보유 -> EXPERIENCED_CHALLENGER</li>
      *   <li>10기 한정: PM(기획) 파트 -> EXPERIENCED_CHALLENGER (기획-디자인 매칭 경험 특수 케이스)</li>
