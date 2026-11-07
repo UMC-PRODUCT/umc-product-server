@@ -34,14 +34,37 @@ public class UserFeedbackController {
     @Operation(
         summary = "사용자 피드백 템플릿 조회",
         description = """
-            요청자의 챌린저 이력 및 운영진 역할을 기반으로 TargetType을 자동 판별하여,
-            해당 context에 맞는 활성 피드백 템플릿(Form 폼 전체 구조 포함)을 반환합니다.
-            활성 기수가 없거나 해당 context + targetType 조합의 템플릿이 없으면 result = null.
+            로그인 사용자에게 제공할 만족도 설문을 조회합니다.
 
-            [조건부 렌더링 - ADMIN / APPLICATION_MONITORING 템플릿]
-            현재 Form 엔진은 조건부 렌더링을 지원하지 않으므로, 프론트엔드에서 직접 처리해야 합니다.
-            questions 및 options 배열은 orderNo 기준 오름차순으로 정렬되어 내려오며, 조건에 따라 숨길 질문도 포함되어 있습니다.
-            (예: '필요한 정보를 찾는 데 어려움이 있었나요?' 질문에서 '조금 있었어요' 또는 '많이 있었어요' 선택 시 자유 서술 텍스트 박스 표시)
+            사용자의 챌린저 이력과 운영진 역할에 맞는 활성 템플릿을 선택하고, 설문의 섹션·질문·선택지를 반환합니다.
+
+            ### 설문 구분: context
+
+            - `APPLICATION_SUBMITTED`: 프로젝트 지원과정 설문
+            - `MATCHING_COMPLETED`: 팀 매칭과정 설문
+            - `APPLICATION_MONITORING`: 운영진 지원 현황 설문
+
+            ### 설문을 반환하지 않는 경우
+
+            아래 조건에서는 서버가 `result = null`을 반환하며, 실제 JSON 응답에는 **result 필드가 포함되지 않습니다.**
+
+            - 현재 템플릿의 `formId`에 로그인 사용자가 이미 제출한 경우
+            - 활성 기수가 없는 경우
+            - 사용자가 설문 대상에 해당하지 않는 경우
+            - 해당 `context`와 사용자 유형에 맞는 활성 템플릿이 없는 경우
+
+            ### 제출 이력 확인 기준
+
+            - `formId`와 로그인 사용자 ID를 기준으로 제출 완료 이력을 확인합니다.
+            - 임시저장이나 다른 `formId`에 제출한 이력은 포함하지 않습니다.
+
+            ### 질문 표시
+
+            - 질문과 선택지는 `orderNo` 오름차순으로 반환합니다.
+            - 운영진 설문(`ADMIN` / `APPLICATION_MONITORING`)의 조건부 질문도 응답에 포함됩니다.
+            - 조건부 질문의 표시 여부는 프론트엔드에서 처리합니다.
+
+            예: '필요한 정보를 찾는 데 어려움이 있었나요?'에 '조금 있었어요' 또는 '많이 있었어요'를 선택하면 추가 서술란을 표시합니다.
             """
     )
     public GetUserFeedbackTemplateResponse getTemplate(
@@ -58,8 +81,16 @@ public class UserFeedbackController {
     @Operation(
         summary = "사용자 피드백 응답 제출",
         description = """
-            지정한 피드백 템플릿에 대한 응답을 즉시 제출합니다.
-            동일 폼에 이미 응답한 경우 Form 도메인에서 중복 응답 예외가 발생합니다.
+            지정한 만족도 설문에 로그인 사용자의 답변을 제출합니다.
+
+            ### 요청 및 응답
+
+            - 조회 API에서 받은 `templateId`와 질문·선택지 ID를 사용합니다.
+            - 제출에 성공하면 저장된 응답의 `formResponseId`를 반환합니다.
+
+            ### 중복 제출
+
+            동일한 `formId`에 이미 제출한 경우 HTTP 400과 `FORM-0027` 오류를 반환합니다.
             """
     )
     public UserFeedbackSubmitResponse submit(

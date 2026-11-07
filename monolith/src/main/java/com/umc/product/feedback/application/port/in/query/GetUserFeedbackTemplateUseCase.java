@@ -16,7 +16,7 @@ public interface GetUserFeedbackTemplateUseCase {
     /**
      * 요청자의 타입을 판별하여 context에 맞는 사용자 피드백 템플릿을 조회합니다.
      * <p>
-     * 활성 템플릿이 없거나 현재 기수가 없는 경우 {@link Optional#empty()}를 반환합니다.
+     * 활성 템플릿이 없거나 현재 기수가 없거나 현재 폼에 이미 제출한 경우 {@link Optional#empty()}를 반환합니다.
      *
      * @param requesterMemberId 요청자 Member ID (타입 판별 기준)
      * @param context           피드백 발생 컨텍스트
