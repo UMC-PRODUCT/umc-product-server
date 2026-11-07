@@ -15,6 +15,7 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.member.application.port.in.query.GetMemberProfileUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.dto.MemberBasicInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
 import com.umc.product.member.application.port.out.LoadMemberPort;
@@ -41,7 +42,8 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
 
     private MemberInfo toMemberInfo(Member member) {
         // 학교명 채워넣기
-        String schoolName = getSchoolUseCase.getSchoolDetail(member.getSchoolId()).schoolName();
+        String schoolName = member.getSchoolId() == null ? null
+            : getSchoolUseCase.getSchoolDetail(member.getSchoolId()).schoolName();
 
         // 프로필 이미지 링크 채워넣기
         String profileImageId = member.getProfileImageId();
@@ -123,6 +125,15 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
         }
 
         return results;
+    }
+
+    @Override
+    public Map<Long, MemberBasicInfo> findAllBasicByIds(Set<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+        return loadMemberPort.findAllByIds(memberIds).stream()
+            .collect(Collectors.toMap(Member::getId, MemberBasicInfo::from));
     }
 
     @Override

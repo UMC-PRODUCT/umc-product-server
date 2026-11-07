@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import com.umc.product.member.application.port.in.query.dto.MemberBasicInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 
 public interface GetMemberUseCase {
@@ -18,6 +19,9 @@ public interface GetMemberUseCase {
     MemberInfo findByIdOrNull(Long memberId);
 
     Map<Long, MemberInfo> findAllByIds(Set<Long> memberIds);
+
+    /** 학교·파일·역할 부가 조회 없이 회원 식별·검색에 필요한 기본 정보만 일괄 조회한다. */
+    Map<Long, MemberBasicInfo> findAllBasicByIds(Set<Long> memberIds);
 
     Map<Long, String> findAllNamesByIds(Set<Long> memberIds);
 
