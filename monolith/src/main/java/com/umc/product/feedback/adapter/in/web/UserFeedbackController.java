@@ -36,7 +36,7 @@ public class UserFeedbackController {
         description = """
             로그인 사용자에게 제공할 만족도 설문을 조회합니다.
 
-            사용자의 챌린저 이력과 운영진 역할에 맞는 활성 템플릿을 선택하고, 설문의 섹션·질문·선택지를 반환합니다.
+            `context`로 조회할 설문을 지정합니다. 응답에는 템플릿 ID와 설문의 섹션·질문·선택지가 포함됩니다.
 
             ### 설문 구분: context
 
@@ -48,15 +48,10 @@ public class UserFeedbackController {
 
             아래 조건에서는 서버가 `result = null`을 반환하며, 실제 JSON 응답에는 **result 필드가 포함되지 않습니다.**
 
-            - 현재 템플릿의 `formId`에 로그인 사용자가 이미 제출한 경우
+            - 해당 설문에 이미 응답한 경우
             - 활성 기수가 없는 경우
             - 사용자가 설문 대상에 해당하지 않는 경우
-            - 해당 `context`와 사용자 유형에 맞는 활성 템플릿이 없는 경우
-
-            ### 제출 이력 확인 기준
-
-            - `formId`와 로그인 사용자 ID를 기준으로 제출 완료 이력을 확인합니다.
-            - 임시저장이나 다른 `formId`에 제출한 이력은 포함하지 않습니다.
+            - 요청한 종류에 제공할 설문이 없는 경우
 
             ### 질문 표시
 
@@ -90,7 +85,7 @@ public class UserFeedbackController {
 
             ### 중복 제출
 
-            동일한 `formId`에 이미 제출한 경우 HTTP 400과 `FORM-0027` 오류를 반환합니다.
+            해당 설문에 이미 응답한 경우 HTTP 400과 `FORM-0027` 오류를 반환합니다.
             """
     )
     public UserFeedbackSubmitResponse submit(

@@ -13,6 +13,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -60,9 +62,10 @@ class UserFeedbackControllerTest {
         SecurityContextHolder.clearContext();
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(UserFeedbackTargetType.class)
     @DisplayName("미제출이면 기존 템플릿과 문항 구조를 반환한다")
-    void 미제출_폼_응답() throws Exception {
+    void 미제출_폼_응답(UserFeedbackTargetType targetType) throws Exception {
         // Given
         FormWithStructureInfo form = FormWithStructureInfo.builder()
             .formId(201L).title("프로젝트 지원 경험이 어떠셨나요?")
@@ -79,7 +82,7 @@ class UserFeedbackControllerTest {
         given(getUserFeedbackTemplateUseCase.findTemplate(1L, UserFeedbackContext.APPLICATION_SUBMITTED))
             .willReturn(Optional.of(UserFeedbackTemplateInfo.builder()
                 .templateId(101L).context(UserFeedbackContext.APPLICATION_SUBMITTED)
-                .targetType(UserFeedbackTargetType.NEW_CHALLENGER).form(form).build()));
+                .targetType(targetType).form(form).build()));
 
         // When / Then
         mockMvc.perform(get("/api/v1/user-feedbacks/templates").param("context", "APPLICATION_SUBMITTED"))
@@ -89,7 +92,7 @@ class UserFeedbackControllerTest {
             .andExpect(jsonPath("$.result.submitted").doesNotHaveJsonPath())
             .andExpect(jsonPath("$.result.templateId").value("101"))
             .andExpect(jsonPath("$.result.context").value("APPLICATION_SUBMITTED"))
-            .andExpect(jsonPath("$.result.targetType").value("NEW_CHALLENGER"))
+            .andExpect(jsonPath("$.result.targetType").value(targetType.name()))
             .andExpect(jsonPath("$.result.form.formId").value("201"))
             .andExpect(jsonPath("$.result.form.sections[0].questions[0].questionId").value("401"))
             .andExpect(jsonPath("$.result.form.sections[0].questions[0].isRequired").value(true))

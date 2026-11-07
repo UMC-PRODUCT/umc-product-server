@@ -8,19 +8,20 @@ import com.umc.product.feedback.domain.enums.UserFeedbackContext;
 /**
  * 사용자 피드백 템플릿 조회 UseCase.
  * <p>
- * 요청자의 memberId를 기반으로 UserFeedbackTargetType(신규/기존/어드민)을 판별한 뒤,
- * 해당 context에 맞는 활성 템플릿과 Form 폼 전체 구조를 반환합니다.
+ * 요청한 context 안에서 로그인 사용자의 이력·역할에 맞는 활성 템플릿과 폼 구조를 반환합니다.
+ * 신규·기존 챌린저는 각각의 전용 템플릿을 우선 사용하고, 없으면 같은 context의 CHALLENGER 공통 템플릿을 사용합니다.
+ * ADMIN으로 분류된 사용자는 같은 context의 ADMIN 템플릿을 조회합니다. 다른 context의 설문으로 대체하지 않습니다.
  */
 public interface GetUserFeedbackTemplateUseCase {
 
     /**
-     * 요청자의 타입을 판별하여 context에 맞는 사용자 피드백 템플릿을 조회합니다.
+     * 요청한 context의 템플릿을 선택한 뒤 해당 formId에 대한 사용자의 제출 이력을 확인합니다.
      * <p>
-     * 활성 템플릿이 없거나 현재 기수가 없거나 현재 폼에 이미 제출한 경우 {@link Optional#empty()}를 반환합니다.
+     * 활성 기수·설문 대상·선택 가능한 템플릿이 없거나, 선택한 폼에 이미 제출했다면 {@link Optional#empty()}를 반환합니다.
      *
-     * @param requesterMemberId 요청자 Member ID (타입 판별 기준)
-     * @param context           피드백 발생 컨텍스트
-     * @return 해당 context + targetType의 활성 템플릿, 없으면 Optional.empty()
+     * @param requesterMemberId 사용자 유형 판별 및 제출 이력 확인에 사용할 로그인 사용자 ID
+     * @param context           조회할 설문 종류
+     * @return 요청한 context에서 선택한 미제출 템플릿과 폼 구조, 제공할 설문이 없으면 Optional.empty()
      */
     Optional<UserFeedbackTemplateInfo> findTemplate(Long requesterMemberId, UserFeedbackContext context);
 }

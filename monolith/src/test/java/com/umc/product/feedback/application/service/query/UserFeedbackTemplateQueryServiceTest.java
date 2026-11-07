@@ -3,6 +3,7 @@ package com.umc.product.feedback.application.service.query;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -76,6 +78,8 @@ class UserFeedbackTemplateQueryServiceTest {
         assertThat(result.context()).isEqualTo(context);
         then(getFormResponseUseCase).should().findSubmittedByFormIdAndRespondentMemberId(FORM_ID, MEMBER_ID);
         then(getFormResponseUseCase).shouldHaveNoMoreInteractions();
+        then(loadUserFeedbackTemplatePort).should(never()).findByContextAndTargetType(
+            context, UserFeedbackTargetType.CHALLENGER);
     }
 
     @ParameterizedTest
@@ -94,12 +98,14 @@ class UserFeedbackTemplateQueryServiceTest {
         // Then
         assertThat(result).isEmpty();
         then(getFormUseCase).shouldHaveNoInteractions();
+        then(loadUserFeedbackTemplatePort).should(never()).findByContextAndTargetType(
+            context, UserFeedbackTargetType.CHALLENGER);
     }
 
     @ParameterizedTest
-    @EnumSource(UserFeedbackTargetType.class)
-    @DisplayName("제출 이력 확인 시 기존 사용자 분류를 유지한다")
-    void 사용자_분류를_유지한다(UserFeedbackTargetType targetType) {
+    @EnumSource(value = UserFeedbackTargetType.class, names = {"NEW_CHALLENGER", "EXPERIENCED_CHALLENGER", "ADMIN"})
+    @DisplayName("대상별 전용 템플릿이 있으면 공통 템플릿을 조회하지 않는다")
+    void 전용_템플릿을_우선_반환한다(UserFeedbackTargetType targetType) {
         // Given
         UserFeedbackContext context = targetType == UserFeedbackTargetType.ADMIN
             ? UserFeedbackContext.APPLICATION_MONITORING : UserFeedbackContext.APPLICATION_SUBMITTED;
@@ -112,6 +118,8 @@ class UserFeedbackTemplateQueryServiceTest {
 
         // Then
         assertThat(result.targetType()).isEqualTo(targetType);
+        then(loadUserFeedbackTemplatePort).should(never()).findByContextAndTargetType(
+            context, UserFeedbackTargetType.CHALLENGER);
     }
 
     @Test
@@ -157,6 +165,78 @@ class UserFeedbackTemplateQueryServiceTest {
         // Then
         assertThat(result).isEmpty();
         then(loadUserFeedbackTemplatePort).shouldHaveNoInteractions();
+        then(getFormResponseUseCase).shouldHaveNoInteractions();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "APPLICATION_SUBMITTED, NEW_CHALLENGER",
+        "APPLICATION_SUBMITTED, EXPERIENCED_CHALLENGER",
+        "MATCHING_COMPLETED, NEW_CHALLENGER",
+        "MATCHING_COMPLETED, EXPERIENCED_CHALLENGER"
+    })
+    @DisplayName("신규·기존 전용 템플릿이 없으면 CHALLENGER 공통 템플릿을 반환한다")
+    void 전용_템플릿이_없으면_공통_템플릿을_반환한다(UserFeedbackContext context, UserFeedbackTargetType targetType) {
+        // Given
+        givenRequester(targetType);
+        given(loadUserFeedbackTemplatePort.findByContextAndTargetType(context, targetType))
+            .willReturn(Optional.empty());
+        UserFeedbackTemplate common = UserFeedbackTemplate.create(context, UserFeedbackTargetType.CHALLENGER, FORM_ID);
+        ReflectionTestUtils.setField(common, "id", 102L);
+        given(loadUserFeedbackTemplatePort.findByContextAndTargetType(context, UserFeedbackTargetType.CHALLENGER))
+            .willReturn(Optional.of(common));
+        given(getFormUseCase.getFormWithStructure(FORM_ID)).willReturn(FormWithStructureInfo.builder()
+            .formId(FORM_ID).sections(List.of()).build());
+
+        // When
+        UserFeedbackTemplateInfo result = sut.findTemplate(MEMBER_ID, context).orElseThrow();
+
+        // Then
+        assertThat(result.templateId()).isEqualTo(102L);
+        assertThat(result.targetType()).isEqualTo(UserFeedbackTargetType.CHALLENGER);
+        assertThat(result.form().formId()).isEqualTo(FORM_ID);
+        then(loadUserFeedbackTemplatePort).should().findByContextAndTargetType(context, targetType);
+        then(getFormResponseUseCase).should().findSubmittedByFormIdAndRespondentMemberId(FORM_ID, MEMBER_ID);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = UserFeedbackTargetType.class, names = {"NEW_CHALLENGER", "EXPERIENCED_CHALLENGER"})
+    @DisplayName("공통 폼에 이미 제출했으면 신규·기존 챌린저 모두 빈 결과를 반환한다")
+    void 공통_폼에_제출했으면_빈_결과를_반환한다(UserFeedbackTargetType targetType) {
+        // Given
+        givenRequester(targetType);
+        given(loadUserFeedbackTemplatePort.findByContextAndTargetType(UserFeedbackContext.APPLICATION_SUBMITTED, targetType))
+            .willReturn(Optional.empty());
+        given(loadUserFeedbackTemplatePort.findByContextAndTargetType(
+            UserFeedbackContext.APPLICATION_SUBMITTED, UserFeedbackTargetType.CHALLENGER))
+            .willReturn(Optional.of(UserFeedbackTemplate.create(
+                UserFeedbackContext.APPLICATION_SUBMITTED, UserFeedbackTargetType.CHALLENGER, FORM_ID)));
+        given(getFormResponseUseCase.findSubmittedByFormIdAndRespondentMemberId(FORM_ID, MEMBER_ID))
+            .willReturn(Optional.of(FormResponseInfo.builder()
+                .formId(FORM_ID).respondentMemberId(MEMBER_ID).status(FormResponseStatus.SUBMITTED).build()));
+
+        // When
+        Optional<UserFeedbackTemplateInfo> result = sut.findTemplate(MEMBER_ID, UserFeedbackContext.APPLICATION_SUBMITTED);
+
+        // Then
+        assertThat(result).isEmpty();
+        then(getFormUseCase).shouldHaveNoInteractions();
+    }
+
+    @ParameterizedTest
+    @EnumSource(UserFeedbackContext.class)
+    @DisplayName("운영진 전용 템플릿이 없으면 공통 템플릿을 조회하지 않는다")
+    void 운영진에게는_공통_템플릿을_제공하지_않는다(UserFeedbackContext context) {
+        // Given
+        givenRequester(UserFeedbackTargetType.ADMIN);
+
+        // When
+        Optional<UserFeedbackTemplateInfo> result = sut.findTemplate(MEMBER_ID, context);
+
+        // Then
+        assertThat(result).isEmpty();
+        then(loadUserFeedbackTemplatePort).should().findByContextAndTargetType(context, UserFeedbackTargetType.ADMIN);
+        then(loadUserFeedbackTemplatePort).shouldHaveNoMoreInteractions();
         then(getFormResponseUseCase).shouldHaveNoInteractions();
     }
 
