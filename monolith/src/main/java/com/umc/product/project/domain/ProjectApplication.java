@@ -3,7 +3,6 @@ package com.umc.product.project.domain;
 import java.time.Instant;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.form.domain.FormResponse;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
@@ -25,7 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 지원자가 제출한 지원서의 실제 내용을 담고 있는 {@link FormResponse}과 매핑해주는 엔티티입니다.
+ * 지원자가 제출한 지원서의 실제 내용을 담고 있는 {@code FormResponse}를 {@code formResponseId}로 참조하는 프로젝트 지원 엔티티입니다.
  * <p>
  * 어떤 매칭 라운드에 지원한 폼인지와 지원 결과를 담고 있습니다.
  */
