@@ -306,7 +306,7 @@ public class ProjectApplicationQueryService
             return freeze(result);
         }
 
-        // 중앙총괄/SUPER_ADMIN scope 프로젝트만 진행 중 차수 지원서를 함께 조회한다.
+        // 목록 scope가 허용한 프로젝트는 진행 중 차수의 제출된 지원서도 함께 조회한다.
         Set<Long> includeOngoingProjectIds = scopes.entrySet().stream()
             .filter(entry -> entry.getValue() instanceof ProjectApplicationAccessScope.ProjectScoped projectScoped
                 && projectScoped.includeOngoingMatchingRounds())

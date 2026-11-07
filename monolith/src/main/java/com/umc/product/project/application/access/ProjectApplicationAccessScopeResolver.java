@@ -51,14 +51,14 @@ public class ProjectApplicationAccessScopeResolver {
      *   <li>해당 프로젝트의 PO</li>
      *   <li>해당 프로젝트의 보조 PM (ACTIVE PLAN 멤버)</li>
      *   <li>SUPER_ADMIN</li>
-     *   <li>해당 프로젝트 기수의 Central Core (총괄/부총괄)</li>
      *   <li>해당 프로젝트 지부의 지부장 (같은 기수)</li>
-     *   <li>해당 프로젝트 지부에 속한 학교 회장단 (SCHOOL_PRESIDENT/SCHOOL_VICE_PRESIDENT, 같은 기수)</li>
+     *   <li>해당 프로젝트 지부에 속한 학교 운영진 (회장/부회장/파트장/기타 운영진)</li>
      * </ul>
      * 그 외엔 {@link None} 반환 — 호출 측이 빈 목록 처리하여 권한 부재를 '지원자 0건' 으로 위장한다.
      * <p>
      * 진행 중인 차수(지원 기간 중)의 노출 범위는 역할마다 다르다. PO·보조 PM은 제출된 지원자 목록을 실시간으로 보되 지원서 내용은
-     * 지원 마감 후에 열람하고, SUPER_ADMIN·같은 기수 Central Core 는 목록과 내용 모두 즉시 본다. 지부장·학교 회장단은 둘 다 지원 마감 후다.
+     * 지원 마감 후에 열람하고, SUPER_ADMIN·같은 기수 Central Core 는 목록과 내용 모두 즉시 본다.
+     * 일반 중앙운영진·지부장·학교 운영진도 지원 기간 중 목록을 조회할 수 있다. 목록 허용이 지원서 상세 조회 권한을 부여하지는 않는다.
      * <p>
      * {@code project} 는 호출자(서비스 단)가 사전 로드한 인스턴스를 그대로 전달받는다. 동일 트랜잭션 내 중복 조회를 피하기 위함.
      */
@@ -83,13 +83,17 @@ public class ProjectApplicationAccessScopeResolver {
             return new ProjectScoped(projectId, true);
         }
 
-        if (rolesInGisu.stream().anyMatch(r -> r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
-            && Objects.equals(r.organizationId(), project.getChapterId()))) {
-            return new ProjectScoped(projectId);
+        if (rolesInGisu.stream().anyMatch(r -> r.roleType().isAtLeastCentralMember())) {
+            return new ProjectScoped(projectId, true, false);
         }
 
-        if (isSchoolCoreInProjectChapter(rolesInGisu, project)) {
-            return new ProjectScoped(projectId);
+        if (rolesInGisu.stream().anyMatch(r -> r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
+            && Objects.equals(r.organizationId(), project.getChapterId()))) {
+            return new ProjectScoped(projectId, true, false);
+        }
+
+        if (isSchoolAdminInProjectChapter(rolesInGisu, project)) {
+            return new ProjectScoped(projectId, true, false);
         }
 
         return new None();
@@ -98,7 +102,8 @@ public class ProjectApplicationAccessScopeResolver {
     /**
      * 복수 프로젝트 지원자 목록(APPLY-101 batch) 화면의 프로젝트별 scope 를 한 번에 결정한다.
      * <p>
-     * 단건 판정의 우선순위(PO/Sub-PM -> SUPER_ADMIN -> Central Core -> 지부장 -> 학교 회장단)를 유지하되, 역할/보조 PM/학교-지부 매핑 조회를 batch 로
+     * 단건 판정의 우선순위(PO/Sub-PM -> SUPER_ADMIN -> Central Core -> 일반 중앙운영진 -> 지부장 -> 학교 운영진)를 유지하되,
+     * 역할/보조 PM/학교-지부 매핑 조회를 batch 로
      * 수행한다.
      */
     public Map<Long, ProjectApplicationAccessScope> resolveForProjectApplicantLists(
@@ -124,12 +129,7 @@ public class ProjectApplicationAccessScopeResolver {
             .map(Project::getGisuId)
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
-        Set<Long> schoolIds = roles.stream()
-            .filter(r -> r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
-                || r.roleType() == ChallengerRoleType.SCHOOL_VICE_PRESIDENT)
-            .map(ChallengerRoleInfo::organizationId)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
+        Set<Long> schoolIds = schoolAdminSchoolIds(roles);
         Map<Long, Map<Long, ChapterInfo>> chapterByGisuAndSchool = schoolIds.isEmpty() || gisuIds.isEmpty()
             ? Map.of()
             : getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(gisuIds, schoolIds);
@@ -157,14 +157,19 @@ public class ProjectApplicationAccessScopeResolver {
                 continue;
             }
 
-            if (rolesInGisu.stream().anyMatch(r -> r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
-                && Objects.equals(r.organizationId(), project.getChapterId()))) {
-                result.put(projectId, new ProjectScoped(projectId));
+            if (rolesInGisu.stream().anyMatch(r -> r.roleType().isAtLeastCentralMember())) {
+                result.put(projectId, new ProjectScoped(projectId, true, false));
                 continue;
             }
 
-            if (isSchoolCoreInProjectChapter(rolesInGisu, project, chapterByGisuAndSchool)) {
-                result.put(projectId, new ProjectScoped(projectId));
+            if (rolesInGisu.stream().anyMatch(r -> r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
+                && Objects.equals(r.organizationId(), project.getChapterId()))) {
+                result.put(projectId, new ProjectScoped(projectId, true, false));
+                continue;
+            }
+
+            if (isSchoolAdminInProjectChapter(rolesInGisu, project, chapterByGisuAndSchool)) {
+                result.put(projectId, new ProjectScoped(projectId, true, false));
                 continue;
             }
 
@@ -173,17 +178,20 @@ public class ProjectApplicationAccessScopeResolver {
         return result;
     }
 
-    private boolean isSchoolCoreInProjectChapter(List<ChallengerRoleInfo> rolesInGisu, Project project) {
+    private Set<Long> schoolAdminSchoolIds(List<ChallengerRoleInfo> roles) {
+        return roles.stream()
+            .filter(role -> role.roleType().isAtLeastSchoolAdmin())
+            .map(ChallengerRoleInfo::organizationId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+    }
+
+    private boolean isSchoolAdminInProjectChapter(List<ChallengerRoleInfo> rolesInGisu, Project project) {
         if (project.getGisuId() == null) {
             return false;
         }
 
-        Set<Long> schoolIds = rolesInGisu.stream()
-            .filter(r -> r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
-                || r.roleType() == ChallengerRoleType.SCHOOL_VICE_PRESIDENT)
-            .map(ChallengerRoleInfo::organizationId)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
+        Set<Long> schoolIds = schoolAdminSchoolIds(rolesInGisu);
 
         if (schoolIds.isEmpty()) {
             return false;
@@ -191,15 +199,10 @@ public class ProjectApplicationAccessScopeResolver {
 
         Map<Long, Map<Long, ChapterInfo>> chapterByGisuAndSchool =
             getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(Set.of(project.getGisuId()), schoolIds);
-        Map<Long, ChapterInfo> chapterBySchool =
-            chapterByGisuAndSchool.getOrDefault(project.getGisuId(), Map.of());
-
-        return chapterBySchool.values().stream()
-            .filter(Objects::nonNull)
-            .anyMatch(chapter -> Objects.equals(chapter.id(), project.getChapterId()));
+        return isSchoolAdminInProjectChapter(rolesInGisu, project, chapterByGisuAndSchool);
     }
 
-    private boolean isSchoolCoreInProjectChapter(
+    private boolean isSchoolAdminInProjectChapter(
         List<ChallengerRoleInfo> rolesInGisu,
         Project project,
         Map<Long, Map<Long, ChapterInfo>> chapterByGisuAndSchool
@@ -208,12 +211,7 @@ public class ProjectApplicationAccessScopeResolver {
             return false;
         }
 
-        Set<Long> schoolIds = rolesInGisu.stream()
-            .filter(r -> r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
-                || r.roleType() == ChallengerRoleType.SCHOOL_VICE_PRESIDENT)
-            .map(ChallengerRoleInfo::organizationId)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
+        Set<Long> schoolIds = schoolAdminSchoolIds(rolesInGisu);
 
         if (schoolIds.isEmpty()) {
             return false;
