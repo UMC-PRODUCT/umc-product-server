@@ -10,6 +10,8 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -268,6 +270,23 @@ class ProjectApplicationPermissionEvaluatorTest {
         SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
 
         assertThat(sut.evaluate(subject, readPermission())).isTrue();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class, names = {
+        "CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER",
+        "SCHOOL_PRESIDENT", "SCHOOL_VICE_PRESIDENT", "SCHOOL_PART_LEADER", "SCHOOL_ETC_ADMIN"
+    })
+    void 목록_조회_운영진에게_지원서_상세와_합불_권한을_부여하지_않는다(ChallengerRoleType roleType) {
+        // given
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        RoleAttribute role = new RoleAttribute(
+            roleType, roleType.organizationType(), 1L, null, PROJECT_GISU_ID);
+        SubjectAttributes subject = subjectWith(30L, List.of(), List.of(role));
+
+        // when & then
+        assertThat(sut.evaluate(subject, readPermission())).isFalse();
+        assertThat(sut.evaluate(subject, approvePermission())).isFalse();
     }
 
     // --- EDIT ---
