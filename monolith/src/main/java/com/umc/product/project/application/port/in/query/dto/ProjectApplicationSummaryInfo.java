@@ -17,7 +17,7 @@ import lombok.Builder;
  * ({@code ProjectApplicationInfo(applicationId, status)}) 가 점유 중이라 충돌을 피하기 위해 {@code Summary} 접미를 붙였다. Command 쪽 정리 PR
  * 이후 본 이름이 표준으로 승격될 예정이다.
  */
-@Builder
+@Builder(toBuilder = true)
 public record ProjectApplicationSummaryInfo(
     Long id,
     Long applicantMemberId,
@@ -30,6 +30,14 @@ public record ProjectApplicationSummaryInfo(
     Instant createdAt,
     Instant updatedAt
 ) {
+    /** 실제 지원서 상태는 유지하고, 목록에 표시할 판정 결과와 처리 시각만 가린다. */
+    public ProjectApplicationSummaryInfo asPending() {
+        return toBuilder()
+            .status(ProjectApplicationStatus.SUBMITTED)
+            .statusChangedAt(null)
+            .build();
+    }
+
     public static ProjectApplicationSummaryInfo from(ProjectApplication application) {
         return from(application, true);
     }
