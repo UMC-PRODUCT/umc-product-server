@@ -228,28 +228,28 @@ class NoticeSeedServiceTest {
     private CreateNoticeCommand globalCommand(Long gisuId, Long authorMemberId) {
         return new CreateNoticeCommand(
             authorMemberId, "[전체] g title", "[전체] g content", false, false,
-            new NoticeTargetInfo(gisuId, null, null, List.of(), NoticeTab.CHALLENGER)
+            new NoticeTargetInfo(gisuId, null, null, List.of(), NoticeTab.CHALLENGER), null
         );
     }
 
     private CreateNoticeCommand chapterCommand(Long gisuId, Long authorMemberId, Long chapterId) {
         return new CreateNoticeCommand(
             authorMemberId, "[지부] c title", "[지부] c content", false, false,
-            new NoticeTargetInfo(gisuId, chapterId, null, List.of(), NoticeTab.CHALLENGER)
+            new NoticeTargetInfo(gisuId, chapterId, null, List.of(), NoticeTab.CHALLENGER), null
         );
     }
 
     private CreateNoticeCommand schoolCommand(Long gisuId, Long authorMemberId, Long schoolId) {
         return new CreateNoticeCommand(
             authorMemberId, "[학교] s title", "[학교] s content", false, false,
-            new NoticeTargetInfo(gisuId, null, schoolId, List.of(), NoticeTab.CHALLENGER)
+            new NoticeTargetInfo(gisuId, null, schoolId, List.of(), NoticeTab.CHALLENGER), null
         );
     }
 
     private CreateNoticeCommand partCommand(Long gisuId, Long authorMemberId, ChallengerPart part) {
         return new CreateNoticeCommand(
             authorMemberId, "[파트] p title", "[파트] p content", false, false,
-            new NoticeTargetInfo(gisuId, null, null, List.of(part), NoticeTab.CHALLENGER)
+            new NoticeTargetInfo(gisuId, null, null, List.of(part), NoticeTab.CHALLENGER), null
         );
     }
 }

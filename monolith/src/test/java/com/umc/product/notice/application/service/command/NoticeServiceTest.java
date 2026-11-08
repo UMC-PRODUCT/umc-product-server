@@ -17,7 +17,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -31,6 +33,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
+import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.ManageNoticeTargetPort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
@@ -40,6 +43,7 @@ import com.umc.product.notice.application.service.query.NoticeAudienceResolver;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.enums.NoticeTab;
+import com.umc.product.notice.domain.enums.UpmsNoticeType;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notification.application.port.in.RequestFcmNotificationUseCase;
@@ -112,7 +116,7 @@ class NoticeServiceTest {
 
         // When
         sut.createNotice(new CreateNoticeCommand(AUTHOR_MEMBER_ID, "제목", "내용", true, false,
-            new NoticeTargetInfo(GISU_ID, null, null, List.of(), NoticeTab.CHALLENGER)));
+            new NoticeTargetInfo(GISU_ID, null, null, List.of(), NoticeTab.CHALLENGER), null));
 
         // Then
         ArgumentCaptor<RequestFcmNotificationCommand> captor =
@@ -132,7 +136,7 @@ class NoticeServiceTest {
         when(saveNoticePort.save(any(Notice.class))).thenReturn(notice);
         when(noticeAudienceResolver.resolve(targetInfo)).thenReturn(List.of(70L));
         CreateNoticeCommand command = new CreateNoticeCommand(
-            AUTHOR_MEMBER_ID, "제목", "내용", true, false, targetInfo);
+            AUTHOR_MEMBER_ID, "제목", "내용", true, false, targetInfo, null);
 
         // When
         assertThat(sut.createNotice(command)).isEqualTo(42L);
@@ -160,7 +164,7 @@ class NoticeServiceTest {
 
         // When
         Long noticeId = sut.createNotice(new CreateNoticeCommand(
-            AUTHOR_MEMBER_ID, "제목", "내용", false, false, targetInfo));
+            AUTHOR_MEMBER_ID, "제목", "내용", false, false, targetInfo, null));
 
         // Then
         assertThat(noticeId).isEqualTo(42L);
@@ -178,7 +182,7 @@ class NoticeServiceTest {
     void 잘못된_대상은_관리자_권한으로도_우회하지_못한다(NoticeTargetInfo targetInfo) {
         // Given
         CreateNoticeCommand command = new CreateNoticeCommand(
-            AUTHOR_MEMBER_ID, "제목", "내용", false, false, targetInfo);
+            AUTHOR_MEMBER_ID, "제목", "내용", false, false, targetInfo, null);
 
         // When / Then
         assertThatThrownBy(() -> sut.createNotice(command))
@@ -213,7 +217,7 @@ class NoticeServiceTest {
     private CreateNoticeCommand createCommand(List<ChallengerPart> targetParts) {
         return new CreateNoticeCommand(
             AUTHOR_MEMBER_ID, "제목", "내용", false, false,
-            new NoticeTargetInfo(GISU_ID, null, null, targetParts, NoticeTab.CHALLENGER)
+            new NoticeTargetInfo(GISU_ID, null, null, targetParts, NoticeTab.CHALLENGER), null
         );
     }
 
@@ -267,5 +271,52 @@ class NoticeServiceTest {
             .isInstanceOf(NoticeDomainException.class)
             .extracting("baseCode")
             .isNotEqualTo(NoticeErrorCode.INVALID_TARGET_PART);
+    }
+
+    @ParameterizedTest
+    @EnumSource(UpmsNoticeType.class)
+    @NullSource
+    @DisplayName("공지 생성 시 전달받은 UPMS 유형을 그대로 저장한다")
+    void 공지_유형_저장(UpmsNoticeType type) {
+        // Given
+        when(getChallengerRoleUseCase.isSuperAdmin(AUTHOR_MEMBER_ID)).thenReturn(true);
+        when(saveNoticePort.save(any(Notice.class))).thenAnswer(invocation -> {
+            Notice notice = invocation.getArgument(0);
+            ReflectionTestUtils.setField(notice, "id", 42L);
+            return notice;
+        });
+        CreateNoticeCommand command = new CreateNoticeCommand(
+            AUTHOR_MEMBER_ID, "제목", "내용", false, false,
+            new NoticeTargetInfo(GISU_ID, null, null, List.of(), NoticeTab.CHALLENGER), type);
+
+        // When
+        Long noticeId = sut.createNotice(command);
+
+        // Then
+        ArgumentCaptor<Notice> captor = ArgumentCaptor.forClass(Notice.class);
+        verify(saveNoticePort).save(captor.capture());
+        assertThat(noticeId).isEqualTo(42L);
+        assertThat(captor.getValue().getUpmsNoticeType()).isEqualTo(type);
+        verify(saveNoticeTargetPort).save(any());
+        verifyNoInteractions(requestFcmNotificationUseCase);
+    }
+
+    @ParameterizedTest
+    @EnumSource(UpmsNoticeType.class)
+    @NullSource
+    @DisplayName("공지 제목과 본문을 수정해도 기존 UPMS 유형은 유지한다")
+    void 공지_수정_시_유형_유지(UpmsNoticeType type) {
+        // Given
+        Notice notice = Notice.create("제목", "내용", AUTHOR_MEMBER_ID, false, false, type);
+        when(loadNoticePort.findNoticeById(42L)).thenReturn(Optional.of(notice));
+
+        // When
+        sut.updateNoticeTitleOrContent(new UpdateNoticeCommand(AUTHOR_MEMBER_ID, 42L, "수정 제목", "수정 내용", true));
+
+        // Then
+        assertThat(notice.getTitle()).isEqualTo("수정 제목");
+        assertThat(notice.getContent()).isEqualTo("수정 내용");
+        assertThat(notice.isMustRead()).isTrue();
+        assertThat(notice.getUpmsNoticeType()).isEqualTo(type);
     }
 }

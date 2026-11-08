@@ -12,17 +12,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.umc.product.notice.adapter.in.web.dto.request.CreateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
 import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.enums.NoticeTab;
+import com.umc.product.notice.domain.enums.UpmsNoticeType;
 import com.umc.product.support.ControllerTestSupport;
 
 @DisplayName("공지 생성·수정 제목과 본문 입력 검증")
@@ -55,7 +60,7 @@ class NoticeCommandControllerValidationTest extends ControllerTestSupport {
         // Then
         if (operation == Operation.CREATE) {
             verify(manageNoticeUseCase).createNotice(
-                new CreateNoticeCommand(TEST_MEMBER_ID, title, content, false, false, TARGET_INFO));
+                new CreateNoticeCommand(TEST_MEMBER_ID, title, content, false, false, TARGET_INFO, null));
         } else {
             verify(manageNoticeUseCase).updateNoticeTitleOrContent(
                 new UpdateNoticeCommand(TEST_MEMBER_ID, NOTICE_ID, title, content, false));
@@ -94,10 +99,67 @@ class NoticeCommandControllerValidationTest extends ControllerTestSupport {
         verifyNoInteractions(manageNoticeUseCase);
     }
 
+    @ParameterizedTest
+    @EnumSource(UpmsNoticeType.class)
+    @NullSource
+    @DisplayName("공지 생성 요청의 UPMS 유형과 명시적 null을 서비스에 전달한다")
+    void 공지_유형_요청_전달(UpmsNoticeType type) throws Exception {
+        // Given
+        ObjectNode request = createRequest();
+        request.set("upmsNoticeType", objectMapper.valueToTree(type));
+        given(manageNoticeUseCase.createNotice(any())).willReturn(NOTICE_ID);
+
+        // When
+        mockMvc.perform(post("/api/v1/notices")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk());
+
+        // Then
+        verify(manageNoticeUseCase).createNotice(
+            new CreateNoticeCommand(TEST_MEMBER_ID, "제목", "내용", false, false, TARGET_INFO, type));
+    }
+
+    @Test
+    @DisplayName("UPMS 유형을 생략한 기존 생성 요청은 null을 전달한다")
+    void 공지_유형_생략_요청_전달() throws Exception {
+        // Given
+        ObjectNode request = createRequest();
+        request.remove("upmsNoticeType");
+        given(manageNoticeUseCase.createNotice(any())).willReturn(NOTICE_ID);
+
+        // When
+        mockMvc.perform(post("/api/v1/notices")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk());
+
+        // Then
+        verify(manageNoticeUseCase).createNotice(
+            new CreateNoticeCommand(TEST_MEMBER_ID, "제목", "내용", false, false, TARGET_INFO, null));
+    }
+
+    @Test
+    @DisplayName("잘못된 UPMS 유형은 400으로 거부하고 서비스를 호출하지 않는다")
+    void 잘못된_공지_유형_요청_거부() throws Exception {
+        // Given
+        ObjectNode request = createRequest();
+        request.put("upmsNoticeType", "INVALID");
+
+        // When
+        mockMvc.perform(post("/api/v1/notices")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+
+        // Then
+        verifyNoInteractions(manageNoticeUseCase);
+    }
+
     private MockHttpServletRequestBuilder request(Operation operation, String title, String content) throws Exception {
         MockHttpServletRequestBuilder builder = switch (operation) {
             case CREATE -> post("/api/v1/notices").content(objectMapper.writeValueAsString(
-                new CreateNoticeRequest(title, content, false, false, TARGET_INFO)));
+                new CreateNoticeRequest(title, content, false, false, TARGET_INFO, null)));
             case UPDATE -> patch("/api/v1/notices/{noticeId}", NOTICE_ID).content(objectMapper.writeValueAsString(
                 new UpdateNoticeRequest(title, content, false)));
         };
@@ -106,6 +168,10 @@ class NoticeCommandControllerValidationTest extends ControllerTestSupport {
 
     private String text(int length) {
         return length < 0 ? null : "가".repeat(length);
+    }
+
+    private ObjectNode createRequest() {
+        return objectMapper.valueToTree(new CreateNoticeRequest("제목", "내용", false, false, TARGET_INFO, null));
     }
 
     enum Operation {

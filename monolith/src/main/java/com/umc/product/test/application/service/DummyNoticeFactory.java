@@ -38,7 +38,7 @@ public class DummyNoticeFactory {
         String content = "대상: %d기 전체\n\n%s".formatted(gisuId, randomBody());
         return new CreateNoticeCommand(
             authorMemberId, title, content, false, mustReadRandom(),
-            new NoticeTargetInfo(gisuId, null, null, List.of(), NoticeTab.CHALLENGER)
+            new NoticeTargetInfo(gisuId, null, null, List.of(), NoticeTab.CHALLENGER), null
         );
     }
 
@@ -54,7 +54,7 @@ public class DummyNoticeFactory {
             .formatted(gisuId, chapterName, chapterId, randomBody());
         return new CreateNoticeCommand(
             authorMemberId, title, content, false, mustReadRandom(),
-            new NoticeTargetInfo(gisuId, chapterId, null, List.of(), NoticeTab.CHALLENGER)
+            new NoticeTargetInfo(gisuId, chapterId, null, List.of(), NoticeTab.CHALLENGER), null
         );
     }
 
@@ -70,7 +70,7 @@ public class DummyNoticeFactory {
             .formatted(gisuId, schoolName, schoolId, randomBody());
         return new CreateNoticeCommand(
             authorMemberId, title, content, false, mustReadRandom(),
-            new NoticeTargetInfo(gisuId, null, schoolId, List.of(), NoticeTab.CHALLENGER)
+            new NoticeTargetInfo(gisuId, null, schoolId, List.of(), NoticeTab.CHALLENGER), null
         );
     }
 
@@ -86,7 +86,7 @@ public class DummyNoticeFactory {
             .formatted(gisuId, part.name(), randomBody());
         return new CreateNoticeCommand(
             authorMemberId, title, content, false, mustReadRandom(),
-            new NoticeTargetInfo(gisuId, null, null, List.of(part), NoticeTab.CHALLENGER)
+            new NoticeTargetInfo(gisuId, null, null, List.of(part), NoticeTab.CHALLENGER), null
         );
     }
 

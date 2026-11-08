@@ -2,6 +2,7 @@ package com.umc.product.notice.adapter.in.web.dto.request;
 
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
 import com.umc.product.notice.domain.NoticeTargetInfo;
+import com.umc.product.notice.domain.enums.UpmsNoticeType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -24,9 +25,12 @@ public record CreateNoticeRequest(
     boolean mustRead,
 
     @Schema(description = "공지 대상 범위 설정. 어떤 기수/지부/학교/파트에 공지를 보낼지 지정")
-    @Valid @NotNull(message = "대상 정보는 필수입니다") NoticeTargetInfo targetInfo
+    @Valid @NotNull(message = "대상 정보는 필수입니다") NoticeTargetInfo targetInfo,
+
+    @Schema(description = "UPMS 공지 유형. 생략하거나 null이면 일반 공지로 저장합니다.")
+    UpmsNoticeType upmsNoticeType
 ) {
     public CreateNoticeCommand toCommand(Long memberId) {
-        return new CreateNoticeCommand(memberId, title, content, shouldNotify, mustRead, targetInfo);
+        return new CreateNoticeCommand(memberId, title, content, shouldNotify, mustRead, targetInfo, upmsNoticeType);
     }
 }
