@@ -25,9 +25,10 @@ import lombok.RequiredArgsConstructor;
 /**
  * 사용자 피드백 템플릿 조회 서비스.
  * <p>
- * 요청한 context 안에서 사용자의 이력·역할에 맞는 활성 템플릿을 선택합니다.
+ * 지원·매칭 설문은 현재 기수 챌린저 이력을 기준으로 대상을 판별합니다.
+ * 운영진 지원 현황 설문은 현재 기수 중앙 운영진 또는 SUPER_ADMIN에게 제공합니다.
  * 신규·기존 챌린저 전용 템플릿이 없으면 같은 context의 CHALLENGER 공통 템플릿을 선택합니다.
- * ADMIN은 같은 context의 ADMIN 템플릿만 선택하며, 다른 context의 설문을 대신 반환하지 않습니다.
+ * 운영진 설문은 ADMIN 템플릿만 선택하며, 다른 context의 설문을 대신 반환하지 않습니다.
  * 선택한 formId에 사용자가 이미 제출했다면 빈 결과를 반환하고, 미제출이면 템플릿과 폼 구조를 반환합니다.
  * <p>
  * <b>10기 한정 분류 예외:</b> 기획-디자인 매칭 경험을 반영하여 10기 신규 PM은 EXPERIENCED_CHALLENGER로 분류합니다.
@@ -50,7 +51,7 @@ public class UserFeedbackTemplateQueryService implements GetUserFeedbackTemplate
     @Override
     public Optional<UserFeedbackTemplateInfo> findTemplate(Long requesterMemberId, UserFeedbackContext context) {
         return getGisuUseCase.findActiveGisu()
-            .flatMap(gisu -> resolveTargetType(requesterMemberId, gisu.gisuId(), gisu.generation())
+            .flatMap(gisu -> resolveTargetType(requesterMemberId, gisu.gisuId(), gisu.generation(), context)
                 .flatMap(targetType -> findActiveTemplate(context, targetType)
                     .filter(template -> getFormResponseUseCase
                         .findSubmittedByFormIdAndRespondentMemberId(template.getFormId(), requesterMemberId)
@@ -81,16 +82,23 @@ public class UserFeedbackTemplateQueryService implements GetUserFeedbackTemplate
      * <p>
      * 판별 순서:
      * <ol>
-     *   <li>현재 기수 중앙 운영진 또는 SUPER_ADMIN -> ADMIN</li>
+     *   <li>APPLICATION_MONITORING: 현재 기수 중앙 운영진 또는 SUPER_ADMIN이면 ADMIN, 아니면 Optional.empty()</li>
+     *   <li>지원·매칭 설문: 운영진 역할과 관계없이 아래 챌린저 이력 기준 적용</li>
      *   <li>현재 기수 활성 챌린저가 아닌 경우 -> Optional.empty()</li>
      *   <li>이번 기수 외 챌린저 이력 보유 -> EXPERIENCED_CHALLENGER</li>
      *   <li>10기 한정: PM(기획) 파트 -> EXPERIENCED_CHALLENGER (기획-디자인 매칭 경험 특수 케이스)</li>
      *   <li>그 외 -> NEW_CHALLENGER</li>
      * </ol>
      */
-    private Optional<UserFeedbackTargetType> resolveTargetType(Long memberId, Long activeGisuId, Long generation) {
-        if (getChallengerRoleUseCase.isCentralMemberInGisu(memberId, activeGisuId)) {
-            return Optional.of(UserFeedbackTargetType.ADMIN);
+    private Optional<UserFeedbackTargetType> resolveTargetType(
+        Long memberId,
+        Long activeGisuId,
+        Long generation,
+        UserFeedbackContext context
+    ) {
+        if (context == UserFeedbackContext.APPLICATION_MONITORING) {
+            return getChallengerRoleUseCase.isCentralMemberInGisu(memberId, activeGisuId)
+                ? Optional.of(UserFeedbackTargetType.ADMIN) : Optional.empty();
         }
 
         List<ChallengerInfo> allHistory = getChallengerUseCase.getAllByMemberId(memberId);
