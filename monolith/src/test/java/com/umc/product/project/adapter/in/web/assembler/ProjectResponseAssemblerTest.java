@@ -15,6 +15,9 @@ import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -90,7 +93,7 @@ class ProjectResponseAssemblerTest {
         ProjectApplicationForm form = applicationForm(project, 100L, 500L);
         given(loadProjectApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
 
-        ProjectDetailResponse response = sut.detailFor(42L);
+        ProjectDetailResponse response = sut.detailFor(42L, null);
 
         assertThat(response.applicationFormId()).isEqualTo(100L);
     }
@@ -103,7 +106,7 @@ class ProjectResponseAssemblerTest {
             .willReturn(Map.of(99L, memberInfo(99L)));
         given(loadProjectApplicationFormPort.findByProjectId(42L)).willReturn(Optional.empty());
 
-        ProjectDetailResponse response = sut.detailFor(42L);
+        ProjectDetailResponse response = sut.detailFor(42L, null);
 
         assertThat(response.applicationFormId()).isNull();
     }
@@ -116,7 +119,7 @@ class ProjectResponseAssemblerTest {
             .willReturn(Map.of(99L, memberInfo(99L)));
         given(loadProjectApplicationFormPort.findByProjectId(42L)).willReturn(Optional.empty());
 
-        ProjectDetailResponse response = sut.detailFor(42L);
+        ProjectDetailResponse response = sut.detailFor(42L, null);
 
         assertThat(response.productOwner().nickname()).isEqualTo("이방토");
         assertThat(response.productOwner().name()).isNull();
@@ -313,27 +316,58 @@ class ProjectResponseAssemblerTest {
             ));
     }
 
-    @Test
-    void searchFor_는_owner_실명과_학교명을_노출하지_않는다() {
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(longs = {7L})
+    void 목록의_PM_실명과_학교명은_로그인한_사용자에게만_제공한다(Long requesterMemberId) {
         ProjectInfo info = projectInfo(42L);
         SearchProjectQuery query =
             SearchProjectQuery.forChallenger(
                 1L, null, null, null, null, null,
                 org.springframework.data.domain.PageRequest.of(0, 20));
 
-        given(searchProjectUseCase.search(query, 99L))
+        given(searchProjectUseCase.search(query, requesterMemberId))
             .willReturn(new org.springframework.data.domain.PageImpl<>(java.util.List.of(info),
                 query.pageable(), 1));
         given(getMemberUseCase.findAllByIds(java.util.Set.of(99L)))
             .willReturn(Map.of(99L, memberInfo(99L)));
 
         PageResponse<ProjectSummaryResponse> response =
-            sut.searchFor(query, 99L);
+            sut.searchFor(query, requesterMemberId);
 
         assertThat(response.content()).hasSize(1);
         assertThat(response.content().get(0).productOwner().nickname()).isEqualTo("이방토");
-        assertThat(response.content().get(0).productOwner().name()).isNull();
-        assertThat(response.content().get(0).productOwner().schoolName()).isNull();
+        assertThat(response.content().get(0).productOwner().name())
+            .isEqualTo(requesterMemberId == null ? null : "이예원");
+        assertThat(response.content().get(0).productOwner().schoolName())
+            .isEqualTo(requesterMemberId == null ? null : "한양대 ERICA");
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(longs = {7L})
+    void 상세의_PM과_보조PM_실명과_학교명은_로그인한_사용자에게만_제공한다(Long requesterMemberId) {
+        // given
+        ProjectInfo info = ProjectInfo.builder().id(42L).status(ProjectStatus.IN_PROGRESS)
+            .productOwnerMemberId(99L).coProductOwnerMemberIds(List.of(100L)).partQuotas(List.of()).build();
+        given(getProjectUseCase.getById(42L)).willReturn(info);
+        given(getMemberUseCase.findAllByIds(Set.of(99L, 100L)))
+            .willReturn(Map.of(99L, memberInfo(99L), 100L, memberInfoOf(100L, "공동PM", "김공동")));
+        given(loadProjectApplicationFormPort.findByProjectId(42L)).willReturn(Optional.empty());
+
+        // when
+        ProjectDetailResponse response = sut.detailFor(42L, requesterMemberId);
+
+        // then
+        assertThat(response.productOwner().memberId()).isEqualTo(99L);
+        assertThat(response.productOwner().nickname()).isEqualTo("이방토");
+        assertThat(response.productOwner().name()).isEqualTo(requesterMemberId == null ? null : "이예원");
+        assertThat(response.productOwner().schoolName()).isEqualTo(requesterMemberId == null ? null : "한양대 ERICA");
+        MemberBrief coOwner = response.coProductOwners().getFirst();
+        assertThat(coOwner.memberId()).isEqualTo(100L);
+        assertThat(coOwner.nickname()).isEqualTo("공동PM");
+        assertThat(coOwner.name()).isEqualTo(requesterMemberId == null ? null : "김공동");
+        assertThat(coOwner.schoolName()).isEqualTo(requesterMemberId == null ? null : "학교");
     }
 
     @Test

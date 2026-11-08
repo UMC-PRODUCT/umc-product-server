@@ -263,6 +263,15 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
                 .param("schoolId", scenario.schoolId().toString())).andExpect(status().isOk());
         mockMvc.perform(get(PATH).param("gisuId", scenario.gisuId().toString())
                 .param("schoolId", foreign.schoolId().toString())).andExpect(status().isBadRequest());
+        String stale = mockMvc.perform(get(PATH).param("gisuId", scenario.gisuId().toString())
+                .param("chapterId", foreign.chapterId().toString()).param("schoolId", scenario.schoolId().toString()))
+            .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+        assertThat(objectMapper.readTree(stale).path("code").asText()).isEqualTo("PROJECT-0254");
+        mockMvc.perform(get(PATH).param("gisuId", scenario.gisuId().toString())
+            .param("chapterId", foreign.chapterId().toString())).andExpect(status().isOk());
+        mockMvc.perform(get(PATH).param("gisuId", scenario.gisuId().toString())
+                .param("chapterId", foreign.chapterId().toString()).param("schoolId", foreign.schoolId().toString()))
+            .andExpect(status().isOk());
     }
 
     @ParameterizedTest
