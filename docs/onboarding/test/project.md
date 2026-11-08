@@ -1,17 +1,17 @@
 # Project 테스트 케이스
 
 - 테스트 파일: 37개
-- 테스트 케이스: 526개
+- 테스트 케이스: 529개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
 |---|---:|
 | Controller / Inbound Adapter | 47 |
-| UseCase / Application Service | 338 |
+| UseCase / Application Service | 336 |
 | Repository / Outbound Persistence | 34 |
 | E2E / Integration | 12 |
 | Scheduler | 2 |
-| Domain | 82 |
+| Domain | 87 |
 | External Adapter | 11 |
 
 ## Controller / Inbound Adapter
@@ -195,10 +195,8 @@
 | [243](../../../monolith/src/test/java/com/umc/product/project/application/service/command/ProjectApplicationCommandServiceTest.java#L243) | DRAFT가 아닌 applicationId로 submit하면 실패한다 | SubmitProjectApplicationCommand {projectId=PROJECT_ID, applicationId=APPLICATION_ID, requesterMemberId=APPLICANT_MEMBER_ID}; 호출 submit(SubmitProjectApplicationCommand.builder() | 실패: 예외 ProjectDomainException; 에러코드 ProjectErrorCode.PROJECT_DRAFT_APPLICATION_NOT_FOUND; 검증 .isEqualTo(ProjectErrorCode.PROJECT_DRAFT_APPLICATION_NOT_FOUND); |
 | [266](../../../monolith/src/test/java/com/umc/product/project/application/service/command/ProjectApplicationCommandServiceTest.java#L266) | decide / APPROVED 입력시 도메인 approve 호출 후 저장한다 | 조건 decide / APPROVED 입력시 도메인 approve 호출 후 저장한다 | 성공: 검증 assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED); assertThat(application.getStatusChangedMemberId()).isEqualTo(DECIDER_MEMBER_ID); assertThat(application.getStatusChangeReason()).isEqual... |
 | [283](../../../monolith/src/test/java/com/umc/product/project/application/service/command/ProjectApplicationCommandServiceTest.java#L283) | decide / REJECTED 입력시 도메인 reject 호출 후 저장한다 | 호출 decide(APPLICATION_ID, ApplicationDecisionStatus.REJECTED, "면접 결과", DECIDER_MEMBER_ID) | 성공: 검증 assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED); assertThat(application.getStatusChangeReason()).isEqualTo("면접 결과"); |
-| [297](../../../monolith/src/test/java/com/umc/product/project/application/service/command/ProjectApplicationCommandServiceTest.java#L297) | decide / 디자이너 지원자 2명 승인 0명에서 SUBMITTED를 REJECTED로 변경하면 MINIMUM SELECTION REQUIRED | 조건 decide / 디자이너 지원자 2명 승인 0명에서 SUBMITTED를 REJECTED로 변경하면 MINIMUM SELECTION REQUIRED | 실패: 예외 ProjectDomainException; 에러코드 ProjectErrorCode.PROJECT_APPLICATION_MINIMUM_SELECTION_REQUIRED; 검증 .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_MINIMUM_SELECTION_REQUIRED); assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.SUBMITTED); |
-| [327](../../../monolith/src/test/java/com/umc/product/project/application/service/command/ProjectApplicationCommandServiceTest.java#L327) | 디자이너 최소 1명이 이미 APPROVED면 다른 SUBMITTED를 REJECTED로 변경할 수 있다 | 호출 decide(APPLICATION_ID, ApplicationDecisionStatus.REJECTED, null, DECIDER_MEMBER_ID) | 성공: 검증 assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED); |
-| [352](../../../monolith/src/test/java/com/umc/product/project/application/service/command/ProjectApplicationCommandServiceTest.java#L352) | 개발자 TO6 지원자6명 승인3명에서 APPROVED를 REJECTED로 변경하면 MINIMUM SELECTION REQUIRED | 조건 개발자 TO6 지원자6명 승인3명에서 APPROVED를 REJECTED로 변경하면 MINIMUM SELECTION REQUIRED | 실패: 예외 ProjectDomainException; 에러코드 ProjectErrorCode.PROJECT_APPLICATION_MINIMUM_SELECTION_REQUIRED; 검증 .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_MINIMUM_SELECTION_REQUIRED); assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED); |
-| [392](../../../monolith/src/test/java/com/umc/product/project/application/service/command/ProjectApplicationCommandServiceTest.java#L392) | APPROVED 변경은 최소선발 미달 상태에서도 quota 검증만 통과하면 허용한다 | 호출 decide(APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID) | 성공: 검증 assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED); |
+| [374](../../../monolith/src/test/java/com/umc/product/project/application/service/command/ProjectApplicationCommandServiceTest.java#L374) | 불합격 처리는 최소 선발 인원과 무관하게 허용된다 | 합격자 1명뿐인 APPROVED 지원서를 REJECTED로 변경 | 성공: REJECTED로 저장. 최소 선발 인원은 결정 마감 뒤 자동 선발만 맞춘다 |
+| [386](../../../monolith/src/test/java/com/umc/product/project/application/service/command/ProjectApplicationCommandServiceTest.java#L386) | APPROVED 변경은 quota 검증만 통과하면 허용한다 | DESIGN TO 1, 다른 SUBMITTED 지원자 있음 | 성공: APPROVED로 저장 |
 | [414](../../../monolith/src/test/java/com/umc/product/project/application/service/command/ProjectApplicationCommandServiceTest.java#L414) | reason이 null이어도 정상 처리된다 | 호출 decide(APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID) | 성공: 검증 assertThat(application.getStatusChangeReason()).isNull(); |
 | [424](../../../monolith/src/test/java/com/umc/product/project/application/service/command/ProjectApplicationCommandServiceTest.java#L424) | 존재하지 않는 지원서면 PROJECT APPLICATION NOT FOUND | 조건 존재하지 않는 지원서면 PROJECT APPLICATION NOT FOUND | 실패: 예외 ProjectDomainException; 에러코드 ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND; 검증 .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND); |
 | [437](../../../monolith/src/test/java/com/umc/product/project/application/service/command/ProjectApplicationCommandServiceTest.java#L437) | DRAFT 상태 지원서면 도메인 예외 전파 후 저장하지 않는다 | 조건 DRAFT 상태 지원서면 도메인 예외 전파 후 저장하지 않는다 | 실패: 예외 ProjectDomainException; 에러코드 ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION; 검증 .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION); |
@@ -707,6 +705,11 @@
 | [93](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L93) | validateIsViewableAt / 결정 마감 경과 후에도 정상 통과 | 조건 validateIsViewableAt / 결정 마감 경과 후에도 정상 통과 | 성공: validateIsViewableAt / 결정 마감 경과 후에도 정상 통과 |
 | [99](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L99) | validateIsViewableAt / 지원 진행 중이면 PROJECT MATCHING ROUND APPLICANTS NOT VIEWABLE | 조건 validateIsViewableAt / 지원 진행 중이면 PROJECT MATCHING ROUND APPLICANTS NOT VIEWABLE | 실패: 예외 ProjectDomainException; 에러코드 ProjectErrorCode.PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE; 검증 .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE); |
 | [109](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L109) | validateIsViewableAt / endsAt 정각이면 아직 지원 중이라 PROJECT MATCHING ROUND APPLICANTS NOT VIEWABLE | 조건 validateIsViewableAt / endsAt 정각이면 아직 지원 중이라 PROJECT MATCHING ROUND APPLICANTS NOT VIEWABLE | 실패: 예외 ProjectDomainException; 에러코드 ProjectErrorCode.PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE; 검증 .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_APPLICANTS_NOT_VIEWABLE); |
+| [226](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L226) | validatePhaseSequence / 뒤 차수가 앞 차수 결정 마감에서 최소 간격 뒤에 정확히 시작하면 허용한다 | 간격 3시간, 뒤 차수 시작 = 앞 차수 결정 마감 + 3시간 | 성공: 예외 없음 |
+| [237](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L237) | validatePhaseSequence / 뒤 차수가 최소 간격보다 1초 먼저 시작하면 PROJECT MATCHING ROUND PHASE SEQUENCE INVALID | 간격 3시간, 뒤 차수 시작 = 앞 차수 결정 마감 + 3시간 - 1초 | 실패: 예외 ProjectDomainException; 에러코드 ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID |
+| [251](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L251) | validatePhaseSequence / 뒤 차수가 앞 차수 발표 시각에 정확히 시작하면 허용한다 | 간격 1시간, 뒤 차수 시작 = 앞 차수 발표 시각(결정 마감 + 2시간) | 성공: 예외 없음 |
+| [262](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L262) | validatePhaseSequence / 최소 간격은 지났어도 앞 차수 발표 전에 시작하면 PROJECT MATCHING ROUND PHASE SEQUENCE INVALID | 간격 1시간, 뒤 차수 시작 = 앞 차수 발표 시각 - 1초 | 실패: 예외 ProjectDomainException; 에러코드 ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID |
+| [276](../../../monolith/src/test/java/com/umc/product/project/domain/ProjectMatchingRoundTest.java#L276) | validatePhaseSequence / 앞 차수에 발표 시각이 없으면 발표 시각 검사를 생략한다 | 간격 1시간, 앞 차수 발표 시각 null, 뒤 차수 시작 = 결정 마감 + 1시간 | 성공: 예외 없음 |
 
 ### ProjectTest
 - 위치: `monolith/src/test/java/com/umc/product/project/domain/ProjectTest.java`

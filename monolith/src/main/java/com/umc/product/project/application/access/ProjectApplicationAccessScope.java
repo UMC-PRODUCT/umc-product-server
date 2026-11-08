@@ -25,6 +25,7 @@ public sealed interface ProjectApplicationAccessScope {
      *   <li>{@code includeOngoingApplicationDetails}: 진행 중인 차수 지원서의 <b>내용</b>(답변·첨부)까지 열람한다.</li>
      * </ul>
      * PM·보조 PM은 지원 기간에도 제출된 지원자 목록은 실시간으로 보지만, 지원서 열람은 지원 마감 후부터다.
+     * 일반 중앙운영진·지부장·학교 운영진도 목록은 실시간으로 보며, 상세 열람 권한과 시점은 별도로 검증한다.
      * 최고관리자와 같은 기수 총괄단은 둘 다 가능하다.
      */
     record ProjectScoped(

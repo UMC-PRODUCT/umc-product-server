@@ -44,7 +44,7 @@
 
 | 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
 |---:|---|---|---|
-| [13](../../../monolith/src/test/java/com/umc/product/global/config/SecurityConfigIntegrationTest.java#L13) | docs 진입 경로는 Scalar HTML로 리다이렉트한다 | HTTP GET /docs | 성공: is3xxRedirection |
+| [13](../../../monolith/src/test/java/com/umc/product/global/config/SecurityConfigIntegrationTest.java#L13) | docs 진입 경로는 Swagger UI로 리다이렉트한다 | HTTP GET /docs | 성공: is3xxRedirection |
 | [24](../../../monolith/src/test/java/com/umc/product/global/config/SecurityConfigIntegrationTest.java#L24) | SecurityConfig 통합 테스트 / 인증된 요청이어도 Swagger UI 경로는 접근할 수 없다 | HTTP GET /swagger-ui/index.html | 실패: HTTP 403 Forbidden |
 | [38](../../../monolith/src/test/java/com/umc/product/global/config/SecurityConfigIntegrationTest.java#L38) | SecurityConfig 통합 테스트 / 인증된 요청이어도 기존 OpenAPI JSON 경로는 접근할 수 없다 | HTTP GET /v3/api-docs | 실패: HTTP 403 Forbidden |
 

@@ -54,7 +54,7 @@ function admittedComment(prNumber) {
         "",
         `이 PR이 preview 자리(동시 최대 ${PREVIEW_SLOT_LIMIT}개)를 받았습니다. 이미지 발행이 끝나면 아래 주소가 열립니다.`,
         "",
-        `- API 문서: https://api-pr-${prNumber}.university.neordinary.com/docs/scalar.html (Preview 공용 Basic Auth)`,
+        `- API 문서: https://api-pr-${prNumber}.preview.university.neordinary.com/docs (Preview 공용 Basic Auth)`,
         "- `preview` 라벨을 떼거나 PR을 닫으면 이 PR의 preview DB가 삭제됩니다. 필요한 테스트 결과는 미리 저장하세요.",
         "- 라벨을 다시 붙이면 develop 마이그레이션 검사와 이미지 발행을 다시 거쳐 새로 만듭니다.",
     ].join("\n");

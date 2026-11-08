@@ -47,10 +47,6 @@ public class ChallengerRecordController {
             각 코드는 1회만 사용 가능하며, 어떤 계정에, 언제 사용되었는지 기록됩니다.
             """)
     @PostMapping("member")
-//    @WebhookAlarm(
-//        title = "'챌린저 기록이 추가되었어요!'",
-//        content = "'회원 ID: ' + #memberPrincipal.getMemberId() + '\n챌린저 코드: ' + #request.code"
-//    )
     public void addChallengerRecordToMember(
         @CurrentMember MemberPrincipal memberPrincipal,
         @Valid @RequestBody AddChallengerRecordToMemberRequest request) {

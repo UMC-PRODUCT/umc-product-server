@@ -19,16 +19,20 @@
 | Member | 20 | 100 | [member.md](member.md) |
 | Notification | 3 | 10 | [notification.md](notification.md) |
 | Organization | 25 | 148 | [organization.md](organization.md) |
-| Project | 37 | 526 | [project.md](project.md) |
+| Project | 37 | 529 | [project.md](project.md) |
 | Recruiting | 78 | 346 | [recruiting.md](recruiting.md) |
 | Schedule | 2 | 16 | [schedule.md](schedule.md) |
 | Storage | 5 | 40 | [storage.md](storage.md) |
 | Support | 1 | 1 | [support.md](support.md) |
 | Term | 8 | 23 | [term.md](term.md) |
-| Test Seed | 11 | 58 | [test.md](test.md) |
+| Test Seed | 27 | 95 | [test.md](test.md) |
 
-- 문서화된 20개 도메인 행 합계: 테스트 파일 266개, 테스트 케이스 1,669개
+- 문서화된 20개 도메인 행 합계: 테스트 파일 282개, 테스트 케이스 1,709개
 - 최신 전체 실행 합계: Task 12 격리 JUnit XML snapshot 기준 446 suites, 2,172 tests, failures 0, errors 0, skipped 40
+
+## 참고: 테스트 케이스가 아닌 문서
+
+- [dev 프로젝트 매칭 리허설 실행 방법](project-matching-rehearsal.md): 시딩 API로 dev에서 매칭 리허설을 돌리는 순서
 
 ## 참고: 실행 테스트 메서드가 없는 지원 파일
 

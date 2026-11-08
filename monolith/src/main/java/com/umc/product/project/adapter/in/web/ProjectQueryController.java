@@ -51,6 +51,7 @@ public class ProjectQueryController {
         description = """
             기수/지부/파트 등으로 필터링된 프로젝트 목록을 페이지 조회합니다.
             비회원도 조회 가능하며, 이 경우 공개 상태(IN_PROGRESS/COMPLETED) 프로젝트만 노출됩니다.
+            로그인 사용자는 PM의 실명·학교명을 조회할 수 있으며, 비회원에게는 회원 ID·닉네임만 제공합니다.
             PM 제출시각·ID 오름차순으로 정렬하고, 매칭 기간에는 모집 완료 프로젝트를 하단에 배치합니다.
             디자인·개발 구분은 기존 parts 필터를 사용하며, 생략하면 지부의 진행 중인 매칭 일정을 기준으로 판단합니다.
             """
@@ -71,12 +72,15 @@ public class ProjectQueryController {
     @Operation(
         operationId = "PROJECT-002",
         summary = "프로젝트 상세 조회",
-        description = "단건 프로젝트 상세 정보를 조회합니다. 비회원도 조회 가능합니다."
+        description = "단건 프로젝트 상세 정보를 조회합니다. 로그인 사용자에게는 PM·보조 PM의 실명·학교명을 제공하며, "
+            + "비회원에게는 회원 ID·닉네임만 제공합니다."
     )
     public ProjectDetailResponse getDetail(
-        @PathVariable Long projectId
+        @PathVariable Long projectId,
+        @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        return assembler.detailFor(projectId);
+        Long requesterMemberId = memberPrincipal == null ? null : memberPrincipal.getMemberId();
+        return assembler.detailFor(projectId, requesterMemberId);
     }
 
     @GetMapping("/{projectId}/members")

@@ -185,13 +185,19 @@ demoday:
     requests-per-second: ${DEMODAY_GUEST_RATE_LIMIT_PER_SECOND:5}
     requests-per-minute: ${DEMODAY_GUEST_RATE_LIMIT_PER_MINUTE:150}
 
-# OpenAPI / Scalar 문서 설정
 springdoc:
   swagger-ui:
-    enabled: false # Swagger UI는 노출하지 않고 /docs 는 Scalar로 고정한다.
+    enabled: ${OPENAPI_ENABLE:${SWAGGER_ENABLE:false}}
+    path: /docs/swagger-ui.html
+    disable-swagger-default-url: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+    doc-expansion: none
+    filter: true
+    display-operation-id: true
 
   api-docs:
-    path: /docs-json # Scalar가 읽는 OpenAPI JSON 경로
+    path: /docs-json
     enabled: ${OPENAPI_ENABLE:${SWAGGER_ENABLE:false}}
 
   show-actuator: ${OPENAPI_ENABLE_ACTUATOR:${SWAGGER_ENABLE_ACTUATOR:false}}
@@ -343,14 +349,13 @@ app:
   # 호스트/서명 인증서만 재정의한다.
   deep-link:
     base-url: ${APP_DEEP_LINK_BASE_URL:https://api.university.neordinary.com}
-    fallback-url: ${APP_DEEP_LINK_FALLBACK_URL:https://university.neordinary.com}
     android:
       package-name: ${APP_DEEP_LINK_ANDROID_PACKAGE_NAME:com.umc.product}
       sha256-cert-fingerprints: ${APP_DEEP_LINK_ANDROID_SHA256_CERT_FINGERPRINTS:77:6D:65:1D:14:23:7E:E6:52:3A:5E:A9:F2:A5:ED:6A:04:95:2F:02:C6:B8:F1:74:B4:00:47:EB:CF:29:E1:71}
     ios:
       team-id: ${APP_DEEP_LINK_IOS_TEAM_ID:8B8B4462NV}
       bundle-id: ${APP_DEEP_LINK_IOS_BUNDLE_ID:com.umc.product}
-      app-store-url: ${APP_DEEP_LINK_IOS_APP_STORE_URL:}
+      app-store-url: ${APP_DEEP_LINK_IOS_APP_STORE_URL:https://apps.apple.com/app/id6759412446}
 
   sso:
     issuer: ${SSO_ISSUER:https://api.university.neordinary.com}
@@ -537,10 +542,6 @@ app:
   cors:
     allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:}
 
-  webhook:
-    discord:
-      url: ${DISCORD_WEBHOOK_URL:}
-
   # 신고 운영 채널(Discord 봇). 봇 토큰이나 채널 ID가 비어 있으면 신고를 보내지 않고 전달 대기(PENDING)로 남긴다.
   # 앱 공개키(public-key)가 비어 있으면 상호작용 콜백을 모두 401로 거절한다.
   # 서버 ID(guild-id)나 신고처리 역할 ID(moderator-role-id)가 비어 있으면 아무도 버튼으로 신고를 처리할 수 없다.
@@ -561,9 +562,10 @@ app:
   # 기본값은 비활성. prod 가 아닌 환경에서 APP_SEED_ENABLED=true 로 켜야 시딩 API 가 노출된다.
   seed:
     enabled: ${APP_SEED_ENABLED:false}
-    skip-if-member-count-greater-than: ${APP_SEED_SKIP_THRESHOLD:0}
     email-domain: ${APP_SEED_EMAIL_DOMAIN:test.umc.it.kr}
     default-password: ${APP_SEED_DEFAULT_PASSWORD:password12!}
+    # true면 앱 기동 뒤 QA 시딩 전체(/test/seed/qa)를 한 번 실행한다. dev에서만 켠다.
+    qa-auto-run: ${APP_SEED_QA_AUTO_RUN:false}
 
   oauth2:
     google:

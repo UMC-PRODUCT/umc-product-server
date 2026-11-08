@@ -11,6 +11,8 @@ import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -190,20 +192,119 @@ class ProjectApplicationAccessScopeResolverTest {
         assertThat(scope).isInstanceOf(None.class);
     }
 
-    @Test
-    @DisplayName("projectApplicantList_중앙_운영국원은_권한_없음_None")
-    void projectApplicantList_운영국원_거부() {
-        // CENTRAL_OPERATING_TEAM_MEMBER 는 isAtLeastCentralCore() 미포함 -> 거부
-        Project project = project(OWNER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
-        given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, MEMBER_ID)).willReturn(false);
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class, names = {
+        "CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER"
+    })
+    @DisplayName("일반 중앙운영진은 단건과 일괄에서 해당 기수 전체 지부의 목록만 조회한다")
+    void 일반_중앙운영진은_해당_기수_전체_지부_목록을_조회한다(ChallengerRoleType roleType) {
+        // given
+        Project sameChapter = project(100L, OWNER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
+        Project otherChapter = project(101L, OWNER_ID, GISU_ID, OTHER_CHAPTER_ID, SCHOOL_ID);
+        Project otherGisu = project(102L, OWNER_ID, OTHER_GISU_ID, OTHER_CHAPTER_ID, SCHOOL_ID);
+        List<Project> projects = List.of(sameChapter, otherChapter, otherGisu);
         given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
-            roleInfo(ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, OrganizationType.CENTRAL, null, GISU_ID)
+            roleInfo(roleType, OrganizationType.CENTRAL, null, GISU_ID)
         ));
 
-        ProjectApplicationAccessScope scope =
-            sut.resolveForProjectApplicantList(MEMBER_ID, project);
+        // when
+        Map<Long, ProjectApplicationAccessScope> scopes = sut.resolveForProjectApplicantLists(MEMBER_ID, projects);
 
-        assertThat(scope).isInstanceOf(None.class);
+        // then
+        assertThat(scopes).containsExactly(
+            Map.entry(100L, new ProjectScoped(100L, true, false)),
+            Map.entry(101L, new ProjectScoped(101L, true, false)),
+            Map.entry(102L, new None())
+        );
+        for (Project project : projects) {
+            assertThat(sut.resolveForProjectApplicantList(MEMBER_ID, project)).isEqualTo(scopes.get(project.getId()));
+        }
+        verifyNoInteractions(getChapterUseCase);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class, names = {
+        "SCHOOL_PRESIDENT", "SCHOOL_VICE_PRESIDENT", "SCHOOL_PART_LEADER", "SCHOOL_ETC_ADMIN"
+    })
+    @DisplayName("학교 운영진은 단건과 일괄에서 소속 지부의 목록만 조회한다")
+    void 학교_운영진은_소속_지부_목록만_조회한다(ChallengerRoleType roleType) {
+        // given
+        Project sameChapter = project(100L, OWNER_ID, GISU_ID, CHAPTER_ID, OTHER_SCHOOL_ID);
+        Project otherChapter = project(101L, OWNER_ID, GISU_ID, OTHER_CHAPTER_ID, SCHOOL_ID);
+        Project otherGisu = project(102L, OWNER_ID, OTHER_GISU_ID, CHAPTER_ID, SCHOOL_ID);
+        List<Project> projects = List.of(sameChapter, otherChapter, otherGisu);
+        given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
+            roleInfo(roleType, OrganizationType.SCHOOL, SCHOOL_ID, GISU_ID)
+        ));
+        Map<Long, Map<Long, ChapterInfo>> chapters = Map.of(
+            GISU_ID, Map.of(SCHOOL_ID, new ChapterInfo(CHAPTER_ID, "소속 지부")),
+            OTHER_GISU_ID, Map.of(SCHOOL_ID, new ChapterInfo(CHAPTER_ID, "다른 기수 지부"))
+        );
+        given(getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(
+            Set.of(GISU_ID, OTHER_GISU_ID), Set.of(SCHOOL_ID))).willReturn(chapters);
+        given(getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(Set.of(GISU_ID), Set.of(SCHOOL_ID)))
+            .willReturn(Map.of(GISU_ID, chapters.get(GISU_ID)));
+
+        // when
+        Map<Long, ProjectApplicationAccessScope> scopes = sut.resolveForProjectApplicantLists(MEMBER_ID, projects);
+
+        // then
+        assertThat(scopes).containsExactly(
+            Map.entry(100L, new ProjectScoped(100L, true, false)),
+            Map.entry(101L, new None()),
+            Map.entry(102L, new None())
+        );
+        for (Project project : projects) {
+            assertThat(sut.resolveForProjectApplicantList(MEMBER_ID, project)).isEqualTo(scopes.get(project.getId()));
+        }
+    }
+
+    @Test
+    @DisplayName("최고관리자는 단건과 일괄에서 기수와 지부에 관계없이 조회한다")
+    void 최고관리자는_모든_기수와_지부_목록을_조회한다() {
+        // given
+        List<Project> projects = List.of(
+            project(100L, OWNER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID),
+            project(101L, OWNER_ID, OTHER_GISU_ID, OTHER_CHAPTER_ID, OTHER_SCHOOL_ID)
+        );
+        given(getChallengerRoleUseCase.isSuperAdmin(MEMBER_ID)).willReturn(true);
+
+        // when
+        Map<Long, ProjectApplicationAccessScope> scopes = sut.resolveForProjectApplicantLists(MEMBER_ID, projects);
+
+        // then
+        assertThat(scopes).containsExactly(
+            Map.entry(100L, new ProjectScoped(100L, true)),
+            Map.entry(101L, new ProjectScoped(101L, true))
+        );
+        for (Project project : projects) {
+            assertThat(sut.resolveForProjectApplicantList(MEMBER_ID, project)).isEqualTo(scopes.get(project.getId()));
+        }
+        verifyNoInteractions(getChapterUseCase);
+    }
+
+    @Test
+    @DisplayName("지부장은 단건과 일괄에서 지원 기간 중 소속 지부 목록을 조회한다")
+    void 지부장은_지원_기간_중에도_소속_지부_목록을_조회한다() {
+        // given
+        Project sameChapter = project(100L, OWNER_ID, GISU_ID, CHAPTER_ID, SCHOOL_ID);
+        Project otherChapter = project(101L, OWNER_ID, GISU_ID, OTHER_CHAPTER_ID, SCHOOL_ID);
+        List<Project> projects = List.of(sameChapter, otherChapter);
+        given(getChallengerRoleUseCase.findAllByMemberId(MEMBER_ID)).willReturn(List.of(
+            roleInfo(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER, CHAPTER_ID, GISU_ID)
+        ));
+
+        // when
+        Map<Long, ProjectApplicationAccessScope> scopes = sut.resolveForProjectApplicantLists(MEMBER_ID, projects);
+
+        // then
+        assertThat(scopes).containsExactly(
+            Map.entry(100L, new ProjectScoped(100L, true, false)),
+            Map.entry(101L, new None())
+        );
+        for (Project project : projects) {
+            assertThat(sut.resolveForProjectApplicantList(MEMBER_ID, project)).isEqualTo(scopes.get(project.getId()));
+        }
     }
 
     // --- 학교 회장단 (SCHOOL_PRESIDENT / SCHOOL_VICE_PRESIDENT) ---

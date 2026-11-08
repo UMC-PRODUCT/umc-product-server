@@ -85,7 +85,7 @@ public class ProjectResponseAssembler {
             : getMemberUseCase.findAllByIds(ownerIds);
 
         return PageResponse.of(page, info -> {
-            MemberBrief owner = toPublicBrief(memberMap.get(info.productOwnerMemberId()));
+            MemberBrief owner = toVisibleBrief(memberMap.get(info.productOwnerMemberId()), requesterMemberId);
             return ProjectSummaryResponse.from(info, owner);
         });
     }
@@ -93,14 +93,14 @@ public class ProjectResponseAssembler {
     /**
      * PROJECT-002 프로젝트 상세 조회.
      */
-    public ProjectDetailResponse detailFor(Long projectId) {
+    public ProjectDetailResponse detailFor(Long projectId, Long requesterMemberId) {
         ProjectInfo info = getProjectUseCase.getById(projectId);
 
         Map<Long, MemberInfo> memberMap = loadMembers(info);
 
-        MemberBrief owner = toPublicBrief(memberMap.get(info.productOwnerMemberId()));
+        MemberBrief owner = toVisibleBrief(memberMap.get(info.productOwnerMemberId()), requesterMemberId);
         List<MemberBrief> coOwners = info.coProductOwnerMemberIds().stream()
-            .map(id -> toPublicBrief(memberMap.get(id)))
+            .map(id -> toVisibleBrief(memberMap.get(id), requesterMemberId))
             .toList();
 
         return ProjectDetailResponse.from(info, owner, coOwners, resolveApplicationFormId(projectId));
@@ -311,9 +311,11 @@ public class ProjectResponseAssembler {
         return info == null ? null : MemberBrief.from(info);
     }
 
-    /**
-     * PROJECT-001/002 등 비인증 노출 경로에서 사용. 실명·학교명은 요청자 권한과 무관하게 항상 제외한다.
-     */
+    private MemberBrief toVisibleBrief(MemberInfo info, Long requesterMemberId) {
+        return requesterMemberId == null ? toPublicBrief(info) : toBrief(info);
+    }
+
+    /** 비회원 요청에는 회원 ID와 닉네임만 제공한다. */
     private MemberBrief toPublicBrief(MemberInfo info) {
         return info == null ? null : MemberBrief.builder()
             .memberId(info.id())

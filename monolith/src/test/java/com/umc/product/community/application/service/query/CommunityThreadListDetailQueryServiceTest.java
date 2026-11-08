@@ -84,7 +84,7 @@ class CommunityThreadListDetailQueryServiceTest {
             getGisuUseCase,
             searchInvitationUseCase,
             new CommunityThreadProperties(75),
-            new DeepLinkProperties("https://api.university.neordinary.com", null, null, null)
+            new DeepLinkProperties("https://api.university.neordinary.com", null, null)
         );
     }
 

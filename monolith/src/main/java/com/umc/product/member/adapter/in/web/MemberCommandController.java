@@ -39,7 +39,6 @@ import com.umc.product.member.application.port.in.command.dto.DeleteMemberComman
 import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
-import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -75,10 +74,6 @@ public class MemberCommandController {
             해당 토큰들을 첨부해서 회원가입을 진행해주세요.
             """)
     @PostMapping({"/register", "/register/oauth"})
-    @WebhookAlarm(
-        title = "'새로운 회원이 가입했어요!'",
-        content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
-    )
     RegisterResponse registerMemberByOAuth(@Valid @RequestBody OAuthRegisterMemberRequest request) {
         OAuthVerificationClaims claims = jwtTokenProvider.parseOAuthVerificationToken(request.oAuthVerificationToken());
         String email = jwtTokenProvider.parseEmailVerificationToken(
@@ -118,10 +113,6 @@ public class MemberCommandController {
             """)
     @PostMapping("/register/email")
     @Public
-    @WebhookAlarm(
-        title = "'새로운 회원이 가입했어요!'",
-        content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
-    )
     RegisterResponse registerMemberByEmail(@Valid @RequestBody EmailRegisterMemberRequest request) {
         String email = jwtTokenProvider.parseEmailVerificationToken(
             request.emailVerificationToken(),
@@ -186,10 +177,6 @@ public class MemberCommandController {
     @DeleteMapping
     @Operation(operationId = "MEMBER-003", summary = "회원 탈퇴",
         description = "Google/Kakao OAuth 연동이 있는 경우 해당 Provider의 Access Token을 함께 전달하면 Provider측 연결도 해제됩니다.")
-    @WebhookAlarm(
-        title = "'회원이 탈퇴하였습니다'",
-        content = "'회원 ID: ' + #memberPrincipal.getMemberId() + '\n닉네임/이름: ' + #result.nickname() + '/' + #result.name() + '\n학교: ' + #result.schoolName()"
-    )
     public MemberInfoResponse deleteMember(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody(required = false) DeleteMemberRequest request
@@ -203,10 +190,6 @@ public class MemberCommandController {
         resourceType = ResourceType.MEMBER,
         resourceId = "#memberId",
         permission = PermissionType.DELETE
-    )
-    @WebhookAlarm(
-        title = "'관리자가 계정을 삭제하였습니다.'",
-        content = "'회원 ID: ' + #memberId + '\n닉네임/이름: ' + #result.nickname() + '/' + #result.name() + '\n학교: ' + #result.schoolName()"
     )
     public MemberInfoResponse deleteMember(@PathVariable Long memberId) {
         return deleteMemberById(memberId, null);

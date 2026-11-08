@@ -30,6 +30,8 @@ public interface LoadMemberPort {
 
     boolean existsByEmail(String email);
 
+    Map<String, Long> findIdsByEmails(Set<String> emails);
+
     boolean existsByNickname(String nickname);
 
     boolean existsBySchoolIdAndNickname(Long schoolId, String nickname);

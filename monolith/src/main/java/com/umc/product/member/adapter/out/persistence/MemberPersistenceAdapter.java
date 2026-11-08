@@ -95,6 +95,18 @@ public class MemberPersistenceAdapter implements
     }
 
     @Override
+    public Map<String, Long> findIdsByEmails(Set<String> emails) {
+        if (emails == null || emails.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, Long> result = new HashMap<>();
+        for (MemberJpaRepository.EmailMemberIdRow row : memberJpaRepository.findAllIdsByEmails(emails)) {
+            result.put(row.getEmail(), row.getMemberId());
+        }
+        return result;
+    }
+
+    @Override
     public boolean existsByNickname(String nickname) {
         return memberJpaRepository.existsByNickname(nickname);
     }

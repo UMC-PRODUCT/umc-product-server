@@ -13,7 +13,7 @@ import lombok.Builder;
 /**
  * 사용자 피드백 템플릿 조회 응답.
  * <p>
- * 활성 템플릿이 없을 경우 Controller가 {@code ApiResponse.result = null}로 반환합니다.
+ * 활성 템플릿이 없거나 이미 제출한 경우 Controller가 {@code ApiResponse.result = null}로 반환합니다.
  */
 @Builder
 public record GetUserFeedbackTemplateResponse(

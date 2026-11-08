@@ -9,25 +9,38 @@ import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
+import com.umc.product.authorization.domain.RoleAttribute;
+import com.umc.product.authorization.domain.SubjectAttributes;
+import com.umc.product.authorization.domain.SystemRoleType;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.form.application.port.in.query.GetFormResponseUseCase;
 import com.umc.product.form.application.port.in.query.GetFormUseCase;
 import com.umc.product.form.application.port.in.query.dto.AnswerInfo;
@@ -67,6 +80,11 @@ class ProjectApplicationQueryServiceTest {
 
     private static final Long REQUESTER_ID = 100L;
     private static final Long GISU_ID = 10L;
+    private static final Instant LIST_NOW = Instant.parse("2026-11-07T09:00:00Z");
+    @Mock
+    Clock clock;
+    @Mock
+    CheckPermissionUseCase checkPermissionUseCase;
     @Mock
     LoadProjectApplicationPort loadProjectApplicationPort;
     @Mock
@@ -85,6 +103,11 @@ class ProjectApplicationQueryServiceTest {
     ProjectApplicationAccessScopeResolver accessScopeResolver;
     @InjectMocks
     ProjectApplicationQueryService sut;
+
+    @BeforeEach
+    void 목록_조회_기준_시각을_설정한다() {
+        lenient().when(clock.instant()).thenReturn(Instant.now());
+    }
 
     private static <T> T newInstance(Class<T> clazz) {
         try {
@@ -495,6 +518,9 @@ class ProjectApplicationQueryServiceTest {
             7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST);
         ProjectApplication application = createSubmittedApplication(
             55L, project, round, 200L, ProjectApplicationStatus.APPROVED);
+        given(checkPermissionUseCase.loadSubject(REQUESTER_ID)).willReturn(
+            SubjectAttributes.builder().memberId(REQUESTER_ID)
+                .systemRoles(Set.of(SystemRoleType.SUPER_ADMIN)).build());
 
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
             .requesterMemberId(REQUESTER_ID).projectId(1L).build();
@@ -528,6 +554,8 @@ class ProjectApplicationQueryServiceTest {
         ReflectionTestUtils.setField(round, "endsAt", java.time.Instant.now().plusSeconds(3_600));
         ProjectApplication application = createSubmittedApplication(
             55L, project, round, 200L, ProjectApplicationStatus.SUBMITTED);
+        given(checkPermissionUseCase.loadSubject(REQUESTER_ID))
+            .willReturn(SubjectAttributes.builder().memberId(REQUESTER_ID).build());
 
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
             .requesterMemberId(REQUESTER_ID).projectId(1L).build();
@@ -547,7 +575,7 @@ class ProjectApplicationQueryServiceTest {
     }
 
     @Test
-    @DisplayName("searchByProject_matchingRoundId_status_필터는_repository_로_그대로_전달")
+    @DisplayName("searchByProject_차수는_repository에_전달하고_상태는_표시_결과로_필터링한다")
     void searchByProject_필터_전달() {
         // given
         Project project = createProject(1L, "프로젝트A", null, 99L);
@@ -562,7 +590,7 @@ class ProjectApplicationQueryServiceTest {
         given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
             .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectApplicationPort.searchProjectApplications(
-            eq(1L), eq(7L), eq(ProjectApplicationStatus.APPROVED), any(), eq(false)))
+            eq(1L), eq(7L), isNull(), any(), eq(false)))
             .willReturn(List.of());
 
         // when
@@ -570,7 +598,7 @@ class ProjectApplicationQueryServiceTest {
 
         // then
         verify(loadProjectApplicationPort).searchProjectApplications(
-            eq(1L), eq(7L), eq(ProjectApplicationStatus.APPROVED), any(), eq(false));
+            eq(1L), eq(7L), isNull(), any(), eq(false));
     }
 
     @Test
@@ -583,6 +611,8 @@ class ProjectApplicationQueryServiceTest {
             7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST);
         ProjectApplication application = createSubmittedApplication(
             55L, projectA, round, 200L, ProjectApplicationStatus.SUBMITTED);
+        given(checkPermissionUseCase.loadSubject(REQUESTER_ID))
+            .willReturn(SubjectAttributes.builder().memberId(REQUESTER_ID).build());
         SearchProjectApplicationsBatchQuery query = SearchProjectApplicationsBatchQuery.builder()
             .requesterMemberId(REQUESTER_ID)
             .projectIds(List.of(1L, 2L, 3L))
@@ -635,7 +665,7 @@ class ProjectApplicationQueryServiceTest {
             eq(Set.of(1L, 2L)),
             eq(Set.of(2L)),
             eq(7L),
-            eq(ProjectApplicationStatus.APPROVED),
+            isNull(),
             any()
         )).willReturn(List.of());
 
@@ -647,7 +677,7 @@ class ProjectApplicationQueryServiceTest {
             eq(Set.of(1L, 2L)),
             eq(Set.of(2L)),
             eq(7L),
-            eq(ProjectApplicationStatus.APPROVED),
+            isNull(),
             any()
         );
     }
@@ -661,6 +691,136 @@ class ProjectApplicationQueryServiceTest {
             .status(ProjectApplicationStatus.DRAFT)
             .build())
             .isInstanceOf(ProjectDomainException.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class, names = {
+        "CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER",
+        "SCHOOL_PRESIDENT", "SCHOOL_VICE_PRESIDENT", "SCHOOL_PART_LEADER", "SCHOOL_ETC_ADMIN"
+    })
+    void 판정_권한이_없는_운영진은_이번_차수만_대기로_조회한다(ChallengerRoleType roleType) {
+        // given - 프로젝트 상태와 무관하게 차수별 결정 기간으로만 판단한다.
+        Project project = createProject(1L, "프로젝트", null, 99L);
+        ReflectionTestUtils.setField(project, "status", ProjectStatus.ABORTED);
+        ProjectMatchingRound previousRound = applicantListRound(7L, MatchingPhase.FIRST,
+            LIST_NOW.minusSeconds(7200), LIST_NOW.minusSeconds(3600));
+        ProjectMatchingRound currentRound = applicantListRound(8L, MatchingPhase.SECOND,
+            LIST_NOW.minusSeconds(3600), LIST_NOW.plusSeconds(3600));
+        List<ProjectApplication> applications = List.of(
+            createSubmittedApplication(51L, project, previousRound, 201L, ProjectApplicationStatus.APPROVED),
+            createSubmittedApplication(52L, project, currentRound, 202L, ProjectApplicationStatus.APPROVED),
+            createSubmittedApplication(53L, project, currentRound, 203L, ProjectApplicationStatus.REJECTED),
+            createSubmittedApplication(54L, project, currentRound, 204L, ProjectApplicationStatus.SUBMITTED)
+        );
+        SubjectAttributes subject = SubjectAttributes.builder().memberId(REQUESTER_ID)
+            .roleAttributes(List.of(new RoleAttribute(roleType, roleType.organizationType(), 1L, null, GISU_ID)))
+            .build();
+        givenApplicantListQueries(project, applications, subject, LIST_NOW);
+
+        // when
+        List<ProjectApplicationSummaryInfo> single = sut.searchByProject(applicantListQuery(null));
+        List<ProjectApplicationSummaryInfo> batch = sut.searchByProjects(applicantListBatchQuery(null)).get(1L);
+
+        // then
+        assertThat(single).isEqualTo(batch);
+        assertThat(single).extracting(ProjectApplicationSummaryInfo::status).containsExactly(
+            ProjectApplicationStatus.APPROVED, ProjectApplicationStatus.SUBMITTED,
+            ProjectApplicationStatus.SUBMITTED, ProjectApplicationStatus.SUBMITTED);
+        assertThat(single.get(0).statusChangedAt()).isEqualTo(applications.get(0).getStatusChangedAt());
+        assertThat(single.subList(1, 4)).allSatisfy(summary -> assertThat(summary.statusChangedAt()).isNull());
+        assertThat(applications).extracting(ProjectApplication::getStatus).containsExactly(
+            ProjectApplicationStatus.APPROVED, ProjectApplicationStatus.APPROVED,
+            ProjectApplicationStatus.REJECTED, ProjectApplicationStatus.SUBMITTED);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "PM", "SUPER_ADMIN", "CENTRAL_PRESIDENT", "CENTRAL_VICE_PRESIDENT", "CHAPTER_PRESIDENT"
+    })
+    void 판정_권한자는_결정_기간에도_실제_합불_결과를_조회한다(String authority) {
+        // given
+        Project project = createProject(1L, "프로젝트", null, authority.equals("PM") ? REQUESTER_ID : 99L);
+        ProjectMatchingRound round = applicantListRound(7L, MatchingPhase.FIRST,
+            LIST_NOW.minusSeconds(3600), LIST_NOW.plusSeconds(3600));
+        List<ProjectApplication> applications = List.of(
+            createSubmittedApplication(51L, project, round, 201L, ProjectApplicationStatus.APPROVED),
+            createSubmittedApplication(52L, project, round, 202L, ProjectApplicationStatus.REJECTED)
+        );
+        SubjectAttributes.SubjectAttributesBuilder subject = SubjectAttributes.builder().memberId(REQUESTER_ID);
+        if (authority.equals("SUPER_ADMIN")) {
+            subject.systemRoles(Set.of(SystemRoleType.SUPER_ADMIN));
+        } else if (!authority.equals("PM")) {
+            ChallengerRoleType role = ChallengerRoleType.valueOf(authority);
+            subject.roleAttributes(List.of(
+                new RoleAttribute(role, role.organizationType(), project.getChapterId(), null, GISU_ID)));
+        }
+        givenApplicantListQueries(project, applications, subject.build(), LIST_NOW);
+
+        // when
+        List<ProjectApplicationSummaryInfo> single = sut.searchByProject(applicantListQuery(null));
+        List<ProjectApplicationSummaryInfo> batch = sut.searchByProjects(applicantListBatchQuery(null)).get(1L);
+
+        // then
+        assertThat(single).isEqualTo(batch);
+        assertThat(single).extracting(ProjectApplicationSummaryInfo::status)
+            .containsExactly(ProjectApplicationStatus.APPROVED, ProjectApplicationStatus.REJECTED);
+        assertThat(single).extracting(ProjectApplicationSummaryInfo::statusChangedAt)
+            .containsExactly(applications.get(0).getStatusChangedAt(), applications.get(1).getStatusChangedAt());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0, APPROVED", "1, SUBMITTED", "3600, SUBMITTED", "3601, APPROVED"})
+    void 결과_가림은_지원_마감_직후부터_결정_마감까지_적용한다(
+        long secondsAfterEnd, ProjectApplicationStatus expectedStatus
+    ) {
+        // given
+        Project project = createProject(1L, "프로젝트", null, 99L);
+        ProjectMatchingRound round = applicantListRound(7L, MatchingPhase.FIRST,
+            LIST_NOW, LIST_NOW.plusSeconds(3600));
+        ProjectApplication application = createSubmittedApplication(
+            51L, project, round, 201L, ProjectApplicationStatus.APPROVED);
+        givenApplicantListQueries(project, List.of(application),
+            SubjectAttributes.builder().memberId(REQUESTER_ID).build(), LIST_NOW.plusSeconds(secondsAfterEnd));
+
+        // when
+        List<ProjectApplicationSummaryInfo> single = sut.searchByProject(applicantListQuery(null));
+        List<ProjectApplicationSummaryInfo> batch = sut.searchByProjects(applicantListBatchQuery(null)).get(1L);
+
+        // then
+        assertThat(single).isEqualTo(batch);
+        assertThat(single).extracting(ProjectApplicationSummaryInfo::status).containsExactly(expectedStatus);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ProjectApplicationStatus.class, names = {"SUBMITTED", "APPROVED", "REJECTED"})
+    void 상태_필터로_가려진_실제_합불_결과를_알아낼_수_없다(ProjectApplicationStatus filter) {
+        // given
+        Project project = createProject(1L, "프로젝트", null, 99L);
+        ProjectMatchingRound previousRound = applicantListRound(7L, MatchingPhase.FIRST,
+            LIST_NOW.minusSeconds(7200), LIST_NOW.minusSeconds(3600));
+        ProjectMatchingRound currentRound = applicantListRound(8L, MatchingPhase.SECOND,
+            LIST_NOW.minusSeconds(3600), LIST_NOW.plusSeconds(3600));
+        List<ProjectApplication> applications = List.of(
+            createSubmittedApplication(51L, project, previousRound, 201L, ProjectApplicationStatus.APPROVED),
+            createSubmittedApplication(52L, project, currentRound, 202L, ProjectApplicationStatus.APPROVED),
+            createSubmittedApplication(53L, project, currentRound, 203L, ProjectApplicationStatus.REJECTED),
+            createSubmittedApplication(54L, project, currentRound, 204L, ProjectApplicationStatus.SUBMITTED)
+        );
+        givenApplicantListQueries(project, applications,
+            SubjectAttributes.builder().memberId(REQUESTER_ID).build(), LIST_NOW);
+
+        // when
+        List<ProjectApplicationSummaryInfo> single = sut.searchByProject(applicantListQuery(filter));
+        List<ProjectApplicationSummaryInfo> batch = sut.searchByProjects(applicantListBatchQuery(filter)).get(1L);
+
+        // then
+        assertThat(single).isEqualTo(batch);
+        List<Long> expectedIds = switch (filter) {
+            case SUBMITTED -> List.of(52L, 53L, 54L);
+            case APPROVED -> List.of(51L);
+            default -> List.of();
+        };
+        assertThat(single).extracting(ProjectApplicationSummaryInfo::id).containsExactlyElementsOf(expectedIds);
     }
 
     // ============================================================
@@ -1242,6 +1402,40 @@ class ProjectApplicationQueryServiceTest {
     // ============================================================
     //                      Helper Methods
     // ============================================================
+
+    private ProjectMatchingRound applicantListRound(Long id, MatchingPhase phase, Instant endsAt, Instant deadline) {
+        ProjectMatchingRound round = createMatchingRound(id, MatchingType.PLAN_DEVELOPER, phase);
+        ReflectionTestUtils.setField(round, "endsAt", endsAt);
+        ReflectionTestUtils.setField(round, "decisionDeadline", deadline);
+        return round;
+    }
+
+    private void givenApplicantListQueries(
+        Project project, List<ProjectApplication> applications, SubjectAttributes subject, Instant now
+    ) {
+        given(clock.instant()).willReturn(now);
+        given(checkPermissionUseCase.loadSubject(REQUESTER_ID)).willReturn(subject);
+        given(loadProjectPort.getById(1L)).willReturn(project);
+        given(loadProjectPort.listByIds(List.of(1L))).willReturn(List.of(project));
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L, true, false));
+        given(accessScopeResolver.resolveForProjectApplicantLists(REQUESTER_ID, List.of(project)))
+            .willReturn(Map.of(1L, new ProjectApplicationAccessScope.ProjectScoped(1L, true, false)));
+        given(loadProjectApplicationPort.searchProjectApplications(eq(1L), isNull(), isNull(), eq(now), eq(true)))
+            .willReturn(applications);
+        given(loadProjectApplicationPort.searchProjectApplicationsByProjectIds(
+            eq(Set.of(1L)), eq(Set.of(1L)), isNull(), isNull(), eq(now))).willReturn(applications);
+    }
+
+    private SearchProjectApplicationsQuery applicantListQuery(ProjectApplicationStatus status) {
+        return SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(REQUESTER_ID).projectId(1L).status(status).build();
+    }
+
+    private SearchProjectApplicationsBatchQuery applicantListBatchQuery(ProjectApplicationStatus status) {
+        return SearchProjectApplicationsBatchQuery.builder()
+            .requesterMemberId(REQUESTER_ID).projectIds(List.of(1L)).status(status).build();
+    }
 
     private GetMyProjectApplicationsQuery queryOf(ProjectApplicationStatus status) {
         return GetMyProjectApplicationsQuery.builder()

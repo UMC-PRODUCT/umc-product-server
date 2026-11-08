@@ -2,16 +2,16 @@
 
 ## OVERVIEW
 
-`notification` owns FCM tokens/topics/outbox, email sending, webhook alarms, event listeners, and notification schedulers.
+`notification` owns FCM tokens/topics/outbox, email sending, event listeners, and notification schedulers. 2026-11-04 운영 알림(Discord 전송) 기능 제거.
 
 ## STRUCTURE
 
 ```text
 notification/
 ├── domain/                         # notification token/outbox models and exceptions
-├── application/port/in             # FCM, email, webhook UseCases
+├── application/port/in             # FCM, email UseCases
 ├── application/port/out            # external and persistence ports
-├── application/service             # FCM, outbox, topic, email, webhook services
+├── application/service             # FCM, outbox, topic, email services
 ├── application/service/evaluator   # audience/permission helpers
 ├── adapter/in/aop                  # notification-related aspects
 ├── adapter/in/event                # domain event listeners
@@ -28,14 +28,13 @@ notification/
 | FCM sending | `FcmService.java`, `FcmOutboxService.java` | direct and outbox delivery |
 | Audience | `FcmAudienceService.java` | target expansion |
 | Email | `SendEmailService.java`, `adapter/out/external/{ses,smtp,log}/*EmailAdapter.java` | `app.notification.email.provider` picks one; `log` is the local default and sends nothing |
-| Webhooks | `WebhookAlarmService.java`, `DiscordWebhookAdapter.java` | Discord 단일 플랫폼. 2026-11-04 다른 플랫폼 어댑터 제거 |
 | Persistence | `adapter/out/persistentce` | current persistence adapter package name |
 
 ## CONVENTIONS
 
 - External delivery should go through ports/adapters; services should not know provider HTTP details.
 - Outbox writes and sends must stay idempotency-aware.
-- Avoid logging tokens, provider credentials, webhook URLs, or raw message payload secrets.
+- Avoid logging tokens, provider credentials, or raw message payload secrets.
 - Event listeners should keep event handling thin and delegate to UseCases.
 - Scheduler retries need bounded failure handling and observable outcomes.
 - Keep FCM token ownership tied to member identity from trusted server context.
