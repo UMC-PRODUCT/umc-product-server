@@ -57,7 +57,8 @@ public class ProjectStatisticsAccessPolicy {
             return false;
         }
         return authority.isCentralMemberInGisu(gisuId)
-            || authority.isChapterPresidentInGisu(gisuId)
+            || authority.challengerRoles().stream()
+                .anyMatch(role -> authority.isChapterPresidentInGisu(gisuId, role.organizationId()))
             || isSchoolAdminOfChapter(authority, gisuId, chapterId);
     }
 
