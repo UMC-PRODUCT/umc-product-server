@@ -26,6 +26,11 @@ class ClientRequestClassifierTest {
                 ClientEnvironment.PROD
             ),
             new ClientContextProperties.Origin(
+                "https://activity.university.neordinary.com",
+                ClientServiceType.UMC_ACTIVITY,
+                ClientEnvironment.PROD
+            ),
+            new ClientContextProperties.Origin(
                 "http://localhost:5173",
                 ClientServiceType.UNKNOWN,
                 ClientEnvironment.DEV
@@ -59,6 +64,23 @@ class ClientRequestClassifierTest {
         assertThat(context.deviceType()).isEqualTo(ClientDeviceType.DESKTOP);
         assertThat(context.source()).isEqualTo("origin");
         assertThat(context.mismatched()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activity Origin은 UMC_ACTIVITY 운영 서비스로 판정한다")
+    void activity_origin_서비스_판정() {
+        // given
+        MockHttpServletRequest request = request("GET", "/api/v1/member/me");
+        request.addHeader("Origin", "https://activity.university.neordinary.com");
+
+        // when
+        ClientRequestContext context = classifier.classify(request, null);
+
+        // then
+        assertThat(context.serviceType()).isEqualTo(ClientServiceType.UMC_ACTIVITY);
+        assertThat(context.environment()).isEqualTo(ClientEnvironment.PROD);
+        assertThat(context.source()).isEqualTo("origin");
+        assertThat(context.mismatched()).isFalse();
     }
 
     @Test
