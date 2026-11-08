@@ -101,21 +101,6 @@ class UserFeedbackControllerTest {
     }
 
     @Test
-    @DisplayName("제출 완료로 조회 결과가 없으면 result를 생략한 성공 응답을 반환한다")
-    void 제출_완료_응답() throws Exception {
-        // Given
-        given(getUserFeedbackTemplateUseCase.findTemplate(1L, UserFeedbackContext.MATCHING_COMPLETED))
-            .willReturn(Optional.empty());
-
-        // When / Then
-        mockMvc.perform(get("/api/v1/user-feedbacks/templates").param("context", "MATCHING_COMPLETED"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.code").value("COMMON200"))
-            .andExpect(jsonPath("$.result").doesNotHaveJsonPath());
-    }
-
-    @Test
     @DisplayName("템플릿이 없으면 result 필드를 생략한다")
     void 템플릿_없음_응답() throws Exception {
         // Given
