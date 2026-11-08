@@ -126,7 +126,7 @@ public class ProjectApplicationController {
         operationId = "APPLY-103",
         summary = "지원서 합격 여부 결정",
         description = """
-            담당 PM, 해당 기수 총괄·부총괄, SUPER_ADMIN 이 지원서의 status 를 토글합니다.
+            담당 PM, 해당 기수 총괄·부총괄, 해당 기수·지부의 지부장, SUPER_ADMIN 이 지원서의 status 를 토글합니다.
             - 모두 지원 마감 후부터 결정 마감(decisionDeadline)까지만 가능 (SUPER_ADMIN 도 동일)
             - APPROVED / REJECTED / SUBMITTED(대기로 되돌리기) 사이 자유 변경 허용
             - SUBMITTED 로 되돌릴 때 같은 차수에 다른 활성 지원서가 있으면 거절

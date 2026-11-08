@@ -255,6 +255,31 @@ class ProjectPermissionQueryServiceTest {
         assertThat(result.application().canDecide().allowed()).isTrue();
     }
 
+    @ParameterizedTest
+    @CsvSource({"1, 7, true", "1, 8, false", "2, 7, false"})
+    void 지부장_판정_가능_플래그는_프로젝트_기수와_지부가_모두_같아야_허용한다(
+        Long gisuId, Long chapterId, boolean allowed
+    ) {
+        // given
+        Project project = project(ProjectStatus.IN_PROGRESS, 999L, 999L, "서비스 리뉴얼");
+        SubjectAttributes subject = subjectWithRoles(List.of(new RoleAttribute(
+            ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER, chapterId, null, gisuId)));
+        givenBase(project, subject);
+        givenForms(ProjectApplicationForm.create(project, 500L));
+        givenProjectPermission(subject, PermissionType.READ, true);
+        givenProjectPermission(subject, PermissionType.EDIT, false);
+        givenProjectPermission(subject, PermissionType.DELETE, false);
+        givenProjectPermission(subject, PermissionType.MANAGE, false);
+        given(projectApplicationAccessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(PROJECT_ID));
+
+        // when
+        ProjectPermissionInfo result = sut.listByProjectIds(REQUESTER_ID, List.of(PROJECT_ID)).get(0);
+
+        // then
+        assertThat(result.application().canDecide().allowed()).isEqualTo(allowed);
+    }
+
     @Test
     void 판정_가능_플래그는_다른_기수_총괄단이거나_역할이_없으면_거부한다() {
         Project project = project(ProjectStatus.IN_PROGRESS, 999L, 999L, "서비스 리뉴얼");

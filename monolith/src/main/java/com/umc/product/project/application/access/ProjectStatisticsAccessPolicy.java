@@ -41,7 +41,7 @@ public class ProjectStatisticsAccessPolicy {
     }
 
     /**
-     * SUPER_ADMIN 은 항상 허용하고, 그 외에는 해당 기수의 중앙운영사무국(총괄단·운영국원·교육국원), 해당 지부장,
+     * SUPER_ADMIN 은 항상 허용하고, 그 외에는 해당 기수의 중앙운영사무국(총괄단·운영국원·교육국원)과 지부장,
      * 해당 지부 소속 학교 운영진(회장·부회장·교내 파트장·기타 교내 운영진)만 허용한다.
      */
     private boolean isChapterOperator(Long memberId, Long chapterId, Supplier<Long> gisuIdSupplier) {
@@ -57,7 +57,7 @@ public class ProjectStatisticsAccessPolicy {
             return false;
         }
         return authority.isCentralMemberInGisu(gisuId)
-            || authority.isChapterPresidentInGisu(gisuId, chapterId)
+            || authority.isChapterPresidentInGisu(gisuId)
             || isSchoolAdminOfChapter(authority, gisuId, chapterId);
     }
 

@@ -212,18 +212,15 @@ class ProjectStatisticsAccessPolicyTest {
     }
 
     @Test
-    @DisplayName("다른 지부의 지부장은 대상 지부 통계를 조회할 수 없다")
-    void 다른_지부의_지부장은_거절한다() {
+    @DisplayName("같은 기수 지부장은 다른 지부와 프로젝트 통계를 조회할 수 있다")
+    void 같은_기수_지부장은_전체_지부_통계를_조회한다() {
         // given
         givenSubject(role(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER, 999L));
         given(getChapterUseCase.getGisuIdByChapterId(CHAPTER_ID)).willReturn(1L);
-        givenChapterSchools();
 
-        // when
-        boolean result = sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID);
-
-        // then
-        assertThat(result).isFalse();
+        // when & then
+        assertThat(sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID)).isTrue();
+        assertThat(sut.canReadProjectStatistics(MEMBER_ID, project(999L))).isTrue();
     }
 
     @ParameterizedTest
@@ -272,6 +269,19 @@ class ProjectStatisticsAccessPolicyTest {
 
         // then
         assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("이전 기수 지부장은 지부와 프로젝트 통계를 조회할 수 없다")
+    void 이전_기수_지부장은_통계를_조회할_수_없다() {
+        // given
+        givenSubject(new RoleAttribute(ChallengerRoleType.CHAPTER_PRESIDENT,
+            OrganizationType.CHAPTER, CHAPTER_ID, null, 2L));
+        given(getChapterUseCase.getGisuIdByChapterId(CHAPTER_ID)).willReturn(1L);
+
+        // when & then
+        assertThat(sut.canReadChapterStatistics(MEMBER_ID, CHAPTER_ID)).isFalse();
+        assertThat(sut.canReadProjectStatistics(MEMBER_ID, project(999L))).isFalse();
     }
 
     private static Project project(Long ownerMemberId) {

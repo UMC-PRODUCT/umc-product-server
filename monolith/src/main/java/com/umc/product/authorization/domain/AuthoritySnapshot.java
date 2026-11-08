@@ -132,6 +132,13 @@ public record AuthoritySnapshot(
             .anyMatch(role -> role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT);
     }
 
+    public boolean isChapterPresidentInGisu(Long gisuId) {
+        return isSuperAdmin() || challengerRoles.stream()
+            .filter(role -> Objects.equals(role.gisuId(), gisuId))
+            .filter(role -> role.organizationType() == OrganizationType.CHAPTER)
+            .anyMatch(role -> role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT);
+    }
+
     public boolean isChapterPresidentInGisu(Long gisuId, Long chapterId) {
         return isSuperAdmin() || challengerRoles.stream()
             .filter(role -> Objects.equals(role.gisuId(), gisuId))
