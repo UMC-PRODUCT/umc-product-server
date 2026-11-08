@@ -276,8 +276,8 @@ class NoticeServiceTest {
     @ParameterizedTest
     @EnumSource(UpmsNoticeType.class)
     @NullSource
-    @DisplayName("공지 생성 시 전달받은 UPMS 유형을 그대로 저장한다")
-    void 공지_유형_저장(UpmsNoticeType type) {
+    @DisplayName("공지 생성 시 UPMS 유형을 저장할 공지에 반영한다")
+    void upms_공지_생성_시_유형_반영(UpmsNoticeType type) {
         // Given
         when(getChallengerRoleUseCase.isSuperAdmin(AUTHOR_MEMBER_ID)).thenReturn(true);
         when(saveNoticePort.save(any(Notice.class))).thenAnswer(invocation -> {
@@ -305,7 +305,7 @@ class NoticeServiceTest {
     @EnumSource(UpmsNoticeType.class)
     @NullSource
     @DisplayName("공지 제목과 본문을 수정해도 기존 UPMS 유형은 유지한다")
-    void 공지_수정_시_유형_유지(UpmsNoticeType type) {
+    void upms_공지_수정_시_유형_유지(UpmsNoticeType type) {
         // Given
         Notice notice = Notice.create("제목", "내용", AUTHOR_MEMBER_ID, false, false, type);
         when(loadNoticePort.findNoticeById(42L)).thenReturn(Optional.of(notice));

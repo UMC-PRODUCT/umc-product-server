@@ -23,8 +23,8 @@ class NoticeUpmsNoticeTypePersistenceTest {
     TestEntityManager em;
 
     @Test
-    @DisplayName("기존 생성 메서드로 작성한 공지의 유형은 NULL로 저장된다")
-    void 기존_생성_경로는_NULL로_저장한다() {
+    @DisplayName("UPMS 유형을 지정하지 않고 생성한 공지는 유형을 null로 저장한다")
+    void upms_유형_미지정_공지_null_저장() {
         // given
         Notice notice = Notice.create("제목", "내용", 1L, false, false);
 
@@ -38,8 +38,8 @@ class NoticeUpmsNoticeTypePersistenceTest {
 
     @ParameterizedTest
     @EnumSource(UpmsNoticeType.class)
-    @DisplayName("UPMS 공지 유형을 문자열로 저장하고 동일한 enum으로 조회한다")
-    void 공지_유형을_문자열로_저장하고_조회한다(UpmsNoticeType type) {
+    @DisplayName("UPMS 유형을 DB에 문자열로 저장하고 동일한 enum으로 조회한다")
+    void upms_유형_문자열_저장과_enum_조회(UpmsNoticeType type) {
         // given
         Notice notice = Notice.create("제목", "내용", 1L, false, false, type);
 

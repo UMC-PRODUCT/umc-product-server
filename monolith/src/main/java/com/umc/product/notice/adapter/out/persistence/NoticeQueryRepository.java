@@ -25,6 +25,7 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeClassification;
 import com.umc.product.notice.domain.enums.NoticeTab;
+import com.umc.product.notice.domain.enums.UpmsNoticeType;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 
@@ -104,9 +105,18 @@ public class NoticeQueryRepository {
         NoticeViewerInfo viewerInfo
     ) {
         if (classification.isChallengerQuery()) {
-            return buildClassificationCondition(classification, viewerInfo);
+            return buildClassificationCondition(classification, viewerInfo)
+                .and(upmsNoticeTypeEq(classification.upmsNoticeType()));
         }
-        return buildStaffCondition(classification, viewerInfo);
+        return buildStaffCondition(classification, viewerInfo)
+            .and(upmsNoticeTypeEq(classification.upmsNoticeType()));
+    }
+
+    private BooleanExpression upmsNoticeTypeEq(UpmsNoticeType upmsNoticeType) {
+        if (upmsNoticeType == null) {
+            return null;
+        }
+        return notice.upmsNoticeType.eq(upmsNoticeType);
     }
 
     /**

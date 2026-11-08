@@ -4,12 +4,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -25,6 +32,8 @@ import com.umc.product.notice.adapter.in.web.dto.request.CreateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
+import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
+import com.umc.product.notice.domain.NoticeClassification;
 import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.enums.UpmsNoticeType;
@@ -103,7 +112,7 @@ class NoticeCommandControllerValidationTest extends ControllerTestSupport {
     @EnumSource(UpmsNoticeType.class)
     @NullSource
     @DisplayName("공지 생성 요청의 UPMS 유형과 명시적 null을 서비스에 전달한다")
-    void 공지_유형_요청_전달(UpmsNoticeType type) throws Exception {
+    void upms_공지_생성_유형_전달(UpmsNoticeType type) throws Exception {
         // Given
         ObjectNode request = createRequest();
         request.set("upmsNoticeType", objectMapper.valueToTree(type));
@@ -121,8 +130,8 @@ class NoticeCommandControllerValidationTest extends ControllerTestSupport {
     }
 
     @Test
-    @DisplayName("UPMS 유형을 생략한 기존 생성 요청은 null을 전달한다")
-    void 공지_유형_생략_요청_전달() throws Exception {
+    @DisplayName("공지 생성 시 UPMS 유형을 생략하면 서비스에 null을 전달한다")
+    void upms_공지_생성_유형_생략_시_null_전달() throws Exception {
         // Given
         ObjectNode request = createRequest();
         request.remove("upmsNoticeType");
@@ -140,8 +149,8 @@ class NoticeCommandControllerValidationTest extends ControllerTestSupport {
     }
 
     @Test
-    @DisplayName("잘못된 UPMS 유형은 400으로 거부하고 서비스를 호출하지 않는다")
-    void 잘못된_공지_유형_요청_거부() throws Exception {
+    @DisplayName("공지 생성 시 잘못된 UPMS 유형은 400으로 거부하고 서비스를 호출하지 않는다")
+    void upms_잘못된_공지_생성_유형_거부() throws Exception {
         // Given
         ObjectNode request = createRequest();
         request.put("upmsNoticeType", "INVALID");
@@ -154,6 +163,65 @@ class NoticeCommandControllerValidationTest extends ControllerTestSupport {
 
         // Then
         verifyNoInteractions(manageNoticeUseCase);
+    }
+
+    @ParameterizedTest
+    @EnumSource(UpmsNoticeType.class)
+    @NullSource
+    @DisplayName("공지 목록 조회 시 UPMS 유형을 서비스에 전달하고 생략하면 null을 전달한다")
+    void upms_공지_목록_조회_유형_전달(UpmsNoticeType type) throws Exception {
+        // Given
+        NoticeViewerInfo viewer = new NoticeViewerInfo(Set.of(), null, null, NoticeTab.CENTRAL_MEMBER);
+        NoticeClassification classification =
+            new NoticeClassification(9L, null, null, null, NoticeTab.CHALLENGER, type);
+        Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "createdAt");
+        given(noticeViewerInfoAssembler.toMemberIdAndGisuId(TEST_MEMBER_ID, 9L)).willReturn(viewer);
+        given(getNoticeUseCase.getAllNoticeSummaries(viewer, classification, pageable)).willReturn(Page.empty());
+
+        // When
+        mockMvc.perform(queryRequest("/api/v1/notices", type))
+            .andExpect(status().isOk());
+
+        // Then
+        verify(getNoticeUseCase).getAllNoticeSummaries(viewer, classification, pageable);
+    }
+
+    @ParameterizedTest
+    @EnumSource(UpmsNoticeType.class)
+    @NullSource
+    @DisplayName("공지 검색 시 UPMS 유형을 서비스에 전달하고 생략하면 null을 전달한다")
+    void upms_공지_검색_유형_전달(UpmsNoticeType type) throws Exception {
+        // Given
+        NoticeViewerInfo viewer = new NoticeViewerInfo(Set.of(), null, null, NoticeTab.CENTRAL_MEMBER);
+        NoticeClassification classification =
+            new NoticeClassification(9L, null, null, null, NoticeTab.CHALLENGER, type);
+        Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "createdAt");
+        given(noticeViewerInfoAssembler.toMemberIdAndGisuId(TEST_MEMBER_ID, 9L)).willReturn(viewer);
+        given(getNoticeUseCase.searchNoticesByKeyword("제목", viewer, classification, pageable)).willReturn(Page.empty());
+
+        // When
+        mockMvc.perform(queryRequest("/api/v1/notices/search", type).param("keyword", "제목"))
+            .andExpect(status().isOk());
+
+        // Then
+        verify(getNoticeUseCase).searchNoticesByKeyword("제목", viewer, classification, pageable);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/api/v1/notices", "/api/v1/notices/search"})
+    @DisplayName("공지 목록·검색에서 잘못된 UPMS 유형은 400으로 거부하고 서비스를 호출하지 않는다")
+    void upms_잘못된_공지_조회_유형_거부(String path) throws Exception {
+        // Given
+        MockHttpServletRequestBuilder request = queryRequest(path, null)
+            .param("keyword", "제목")
+            .param("upmsNoticeType", "INVALID");
+
+        // When
+        mockMvc.perform(request)
+            .andExpect(status().isBadRequest());
+
+        // Then
+        verifyNoInteractions(getNoticeUseCase);
     }
 
     private MockHttpServletRequestBuilder request(Operation operation, String title, String content) throws Exception {
@@ -172,6 +240,16 @@ class NoticeCommandControllerValidationTest extends ControllerTestSupport {
 
     private ObjectNode createRequest() {
         return objectMapper.valueToTree(new CreateNoticeRequest("제목", "내용", false, false, TARGET_INFO, null));
+    }
+
+    private MockHttpServletRequestBuilder queryRequest(String path, UpmsNoticeType type) {
+        MockHttpServletRequestBuilder builder = get(path)
+            .param("gisuId", "9")
+            .param("noticeTab", "CHALLENGER");
+        if (type != null) {
+            builder.param("upmsNoticeType", type.name());
+        }
+        return builder;
     }
 
     enum Operation {

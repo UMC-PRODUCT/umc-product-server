@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.domain.enums.NoticeTab;
+import com.umc.product.notice.domain.enums.UpmsNoticeType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -32,7 +33,10 @@ public record NoticeClassification(
 
     @Schema(description = "대상 역할 하한선. CHALLENGER면 일반 공지, 그 외 값이면 운영진 공지.",
         example = "CHALLENGER")
-    @NotNull(message = "대상 역할은 필수입니다.") NoticeTab noticeTab
+    @NotNull(message = "대상 역할은 필수입니다.") NoticeTab noticeTab,
+
+    @Schema(description = "UPMS 공지 유형. 생략하면 기존 공지 대상·권한 조건에 따라 조회합니다.")
+    UpmsNoticeType upmsNoticeType
 ) {
     public boolean isChallengerQuery() {
         return noticeTab == NoticeTab.CHALLENGER;
