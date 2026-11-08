@@ -18,6 +18,7 @@ import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.RoleAttribute;
 import com.umc.product.authorization.domain.SubjectAttributes;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
@@ -159,16 +160,6 @@ class NoticePermissionEvaluatorTest {
         assertThat(result).isFalse();
     }
 
-    private SubjectAttributes subjectWithRole(RoleAttribute roleAttribute) {
-        return SubjectAttributes.builder()
-            .memberId(1L)
-            .schoolId(SCHOOL_ID)
-            .gisuChallengerInfos(List.of())
-            .roleAttributes(List.of(roleAttribute))
-            .systemRoles(Set.of())
-            .build();
-    }
-
     @Test
     void 지부장은_중앙_발신_운영진_공지에만_접근한다() {
         // given: 학교 ID와 지부 ID가 같더라도 학교 운영진 공지 권한은 부여하지 않는다.
@@ -201,13 +192,15 @@ class NoticePermissionEvaluatorTest {
     }
 
     @Test
-    void 지부장은_소속_학교와_무관하게_담당_지부의_챌린저_공지를_열람한다() {
+    void 지부장은_모든_지부와_담당_지부_학교의_챌린저_공지를_열람한다() {
         // given
         NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort, getChapterUseCase);
         SubjectAttributes subject = subjectWithRole(new RoleAttribute(ChallengerRoleType.CHAPTER_PRESIDENT,
             OrganizationType.CHAPTER, CHAPTER_ID, null, 10L));
         given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID)).willReturn(
             new NoticeTargetInfo(10L, CHAPTER_ID, null, List.of(), NoticeTab.CHALLENGER),
+            new NoticeTargetInfo(10L, OTHER_CHAPTER_ID, null,
+                List.of(ChallengerPart.MOBILE_PRODUCT_ENGINEER), NoticeTab.CHALLENGER),
             new NoticeTargetInfo(10L, null, OTHER_SCHOOL_ID, List.of(), NoticeTab.CHALLENGER),
             new NoticeTargetInfo(9L, CHAPTER_ID, null, List.of(), NoticeTab.CHALLENGER));
         given(getChapterUseCase.findByGisuAndSchool(10L, OTHER_SCHOOL_ID))
@@ -216,6 +209,36 @@ class NoticePermissionEvaluatorTest {
         // when & then
         assertThat(sut.evaluate(subject, read)).isTrue();
         assertThat(sut.evaluate(subject, read)).isTrue();
+        assertThat(sut.evaluate(subject, read)).isTrue();
         assertThat(sut.evaluate(subject, read)).isFalse();
+    }
+
+    @Test
+    void 지부장은_타_지부_소속_학교_공지를_열람할_수_없다() {
+        // given
+        NoticePermissionEvaluator sut = new NoticePermissionEvaluator(getNoticeTargetUseCase, loadNoticePort, getChapterUseCase);
+        SubjectAttributes subject = subjectWithRole(new RoleAttribute(ChallengerRoleType.CHAPTER_PRESIDENT,
+            OrganizationType.CHAPTER, CHAPTER_ID, null, 10L));
+        given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID)).willReturn(
+            new NoticeTargetInfo(10L, null, OTHER_SCHOOL_ID, List.of(), NoticeTab.CHALLENGER));
+        given(getChapterUseCase.findByGisuAndSchool(10L, OTHER_SCHOOL_ID))
+            .willReturn(Optional.of(new ChapterInfo(OTHER_CHAPTER_ID, "다른 지부")));
+        ResourcePermission read = ResourcePermission.of(ResourceType.NOTICE, NOTICE_ID, PermissionType.READ);
+
+        // when
+        boolean result = sut.evaluate(subject, read);
+
+        // then
+        assertThat(result).isFalse();
+    }
+
+    private SubjectAttributes subjectWithRole(RoleAttribute roleAttribute) {
+        return SubjectAttributes.builder()
+            .memberId(1L)
+            .schoolId(SCHOOL_ID)
+            .gisuChallengerInfos(List.of())
+            .roleAttributes(List.of(roleAttribute))
+            .systemRoles(Set.of())
+            .build();
     }
 }
