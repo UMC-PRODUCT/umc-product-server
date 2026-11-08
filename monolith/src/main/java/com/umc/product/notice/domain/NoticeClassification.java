@@ -35,7 +35,9 @@ public record NoticeClassification(
         example = "CHALLENGER")
     @NotNull(message = "대상 역할은 필수입니다.") NoticeTab noticeTab,
 
-    @Schema(description = "UPMS 공지 유형. 생략하면 기존 공지 대상·권한 조건에 따라 조회합니다.")
+    @Schema(description = "UPMS 공지 유형. 지정하면 해당 유형만 조회하며, "
+        + "생략하면 대상·권한 조건에 맞는 일반 공지와 UPMS 공지를 함께 조회합니다.",
+        example = "TEAM_MATCHING", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     UpmsNoticeType upmsNoticeType
 ) {
     public boolean isChallengerQuery() {

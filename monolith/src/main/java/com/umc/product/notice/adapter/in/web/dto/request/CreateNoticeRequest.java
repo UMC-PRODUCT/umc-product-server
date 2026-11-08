@@ -27,7 +27,9 @@ public record CreateNoticeRequest(
     @Schema(description = "공지 대상 범위 설정. 어떤 기수/지부/학교/파트에 공지를 보낼지 지정")
     @Valid @NotNull(message = "대상 정보는 필수입니다") NoticeTargetInfo targetInfo,
 
-    @Schema(description = "UPMS 공지 유형. 생략하거나 null이면 일반 공지로 저장합니다.")
+    @Schema(description = "UPMS 공지 유형. TEAM_MATCHING: 팀 매칭, PROJECT_SETTING: 프로젝트 설정. "
+        + "생략하거나 null이면 일반 공지로 저장합니다.",
+        example = "TEAM_MATCHING", nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     UpmsNoticeType upmsNoticeType
 ) {
     public CreateNoticeCommand toCommand(Long memberId) {
