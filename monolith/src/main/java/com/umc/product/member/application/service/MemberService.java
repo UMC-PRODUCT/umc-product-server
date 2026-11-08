@@ -57,10 +57,11 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
     @Override
     @Transactional
     public Long register(OAuthRegisterMemberCommand command) {
+        registrationValidator.validateName(command.name());
         registrationValidator.validateSchoolExists(command.schoolId());
         registrationValidator.validateProfileImageExists(command.profileImageId());
         registrationValidator.validateMandatoryTermsAgreed(command.termConsents());
-        registrationValidator.validateNicknameAvailable(command.schoolId(), command.nickname());
+        registrationValidator.validateNicknameAvailable(command.schoolId(), command.nickname(), command.email());
 
         Member savedMember = saveMemberPort.save(command.toEntity());
 
@@ -103,6 +104,7 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
     @Transactional
     public List<Long> batchRegister(List<OAuthRegisterMemberCommand> commands) {
         commands.forEach(command -> {
+            registrationValidator.validateName(command.name());
             registrationValidator.validateSchoolExists(command.schoolId());
             registrationValidator.validateProfileImageExists(command.profileImageId());
             registrationValidator.validateMandatoryTermsAgreed(command.termConsents());
@@ -116,7 +118,7 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
             if (!requestedNicknames.add(command.schoolId() + ":" + command.nickname())) {
                 throw new MemberDomainException(MemberErrorCode.NICKNAME_ALREADY_EXISTS);
             }
-            registrationValidator.validateNicknameAvailable(command.schoolId(), command.nickname());
+            registrationValidator.validateNicknameAvailable(command.schoolId(), command.nickname(), command.email());
         }
 
         List<Member> savedMembers = saveMemberPort.saveAll(commands.stream()

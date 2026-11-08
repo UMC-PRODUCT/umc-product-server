@@ -67,9 +67,10 @@ public class EmailMemberRegisterService implements RegisterEmailMemberUseCase {
     }
 
     private Long registerInternal(EmailRegisterMemberCommand command) {
+        registrationValidator.validateName(command.name());
         registrationValidator.validateSchoolExists(command.schoolId());
         registrationValidator.validateMandatoryTermsAgreed(command.termConsents());
-        registrationValidator.validateNicknameAvailable(command.schoolId(), command.nickname());
+        registrationValidator.validateNicknameAvailable(command.schoolId(), command.nickname(), command.email());
 
         Member created = saveMemberPort.save(command.toEntity());
 

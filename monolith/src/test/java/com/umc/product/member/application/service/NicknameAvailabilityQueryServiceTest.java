@@ -31,9 +31,6 @@ class NicknameAvailabilityQueryServiceTest {
     @Mock
     LoadNicknameReservationPort loadNicknameReservationPort;
 
-    @Mock
-    MemberGraduationQueryService graduationQueryService;
-
     @InjectMocks
     NicknameAvailabilityQueryService service;
 
@@ -42,7 +39,7 @@ class NicknameAvailabilityQueryServiceTest {
     void 미사용_닉네임은_사용_가능하다() {
         // given
         given(checkSchoolExistenceUseCase.existsById(7L)).willReturn(true);
-        given(loadMemberPort.existsNonWithdrawnNicknameInSchool(7L, "토리")).willReturn(false);
+        given(loadMemberPort.existsBySchoolIdAndNickname(7L, "토리")).willReturn(false);
 
         // when
         var result = service.check(7L, "토리");
@@ -56,7 +53,7 @@ class NicknameAvailabilityQueryServiceTest {
     void 사용_중인_닉네임은_사용_불가하다() {
         // given
         given(checkSchoolExistenceUseCase.existsById(7L)).willReturn(true);
-        given(loadMemberPort.existsNonWithdrawnNicknameInSchool(7L, "토리")).willReturn(true);
+        given(loadMemberPort.existsBySchoolIdAndNickname(7L, "토리")).willReturn(true);
 
         // when
         var result = service.check(7L, "토리");

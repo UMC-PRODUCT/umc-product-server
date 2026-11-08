@@ -22,7 +22,6 @@ public class NicknameAvailabilityQueryService implements CheckNicknameAvailabili
     private final LoadMemberPort loadMemberPort;
     private final CheckSchoolExistenceUseCase checkSchoolExistenceUseCase;
     private final LoadNicknameReservationPort loadNicknameReservationPort;
-    private final MemberGraduationQueryService graduationQueryService;
 
     @Override
     public NicknameAvailabilityInfo check(Long schoolId, String nickname) {
@@ -30,9 +29,7 @@ public class NicknameAvailabilityQueryService implements CheckNicknameAvailabili
         if (!checkSchoolExistenceUseCase.existsById(schoolId)) {
             throw new OrganizationDomainException(OrganizationErrorCode.SCHOOL_NOT_FOUND);
         }
-        if (loadMemberPort.existsNonWithdrawnNicknameInSchool(schoolId, nickname)
-            || graduationQueryService.hasGraduatedHistory(
-                loadMemberPort.listWithdrawnIdsBySchoolAndNickname(schoolId, nickname))) {
+        if (loadMemberPort.existsBySchoolIdAndNickname(schoolId, nickname)) {
             return NicknameAvailabilityInfo.of(false);
         }
         // 회원 삭제와 예약 저장은 같은 트랜잭션이다. 회원 조회 이후 예약을 확인해 전환 중의 누락을 막는다.

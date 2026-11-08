@@ -201,8 +201,8 @@ class MemberNicknameQueryControllerIntegrationTest extends IntegrationTestSuppor
     }
 
     @Test
-    @DisplayName("수료 이력이 없는 탈퇴 회원의 닉네임은 재사용할 수 있다")
-    void 미수료_탈퇴_닉네임은_재사용한다() throws Exception {
+    @DisplayName("수료 이력이 없는 탈퇴 회원의 닉네임도 재사용할 수 없다")
+    void 미수료_탈퇴_닉네임도_보존한다() throws Exception {
         // given
         School school = schoolFixture.학교("탈퇴대학교");
         Member member = Member.create("탈퇴회원", "토리", "withdrawn@test.com", school.getId(), null);
@@ -212,7 +212,7 @@ class MemberNicknameQueryControllerIntegrationTest extends IntegrationTestSuppor
         // when & then
         mockMvc.perform(get(PATH).param("schoolId", school.getId().toString()).param("nickname", "토리"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.result.available").value(true));
+            .andExpect(jsonPath("$.result.available").value(false));
     }
 
     @Test

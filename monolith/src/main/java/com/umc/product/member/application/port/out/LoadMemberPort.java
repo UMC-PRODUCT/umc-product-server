@@ -32,9 +32,7 @@ public interface LoadMemberPort {
 
     boolean existsByNickname(String nickname);
 
-    boolean existsNonWithdrawnNicknameInSchool(Long schoolId, String nickname);
-
-    Set<Long> listWithdrawnIdsBySchoolAndNickname(Long schoolId, String nickname);
+    boolean existsBySchoolIdAndNickname(Long schoolId, String nickname);
 
     List<Long> findAllIdsCursor(Long lastId, Pageable pageable);
 

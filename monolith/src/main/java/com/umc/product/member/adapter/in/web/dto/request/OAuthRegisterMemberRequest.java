@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 @Schema(description = "회원가입 요청")
@@ -16,10 +15,10 @@ public record OAuthRegisterMemberRequest(
     @NotBlank(message = "OAuth 인증 토큰은 필수입니다") String oAuthVerificationToken,
 
     @Schema(description = "이름", example = "홍길동")
-    @NotBlank(message = "이름은 필수입니다") @Size(max = 10, message = "이름은 10자 이하여야 합니다") String name,
+    @NotBlank(message = "이름은 필수입니다") @Size(max = 5, message = "이름은 5자 이하여야 합니다") String name,
 
-    @Schema(description = "닉네임 (한글 1~4자)", example = "닉넴")
-    @NotBlank(message = "닉네임은 필수입니다") @Size(min = 1, max = 4, message = "닉네임은 한글 1~4자여야 합니다") @Pattern(regexp = "^[가-힣]+$", message = "한글만 입력 가능합니다") String nickname,
+    @Schema(description = "신규 닉네임은 한글 1~4자. 수료 재가입은 기존 닉네임", example = "닉넴")
+    @NotBlank(message = "닉네임은 필수입니다") String nickname,
 
     @Schema(description = "이메일 인증 토큰", example = "YOUR_JWT_TOKEN")
     @NotBlank(message = "이메일 인증 토큰은 필수입니다") String emailVerificationToken,

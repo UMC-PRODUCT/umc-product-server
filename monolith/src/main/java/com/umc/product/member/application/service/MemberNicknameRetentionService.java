@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.umc.product.member.application.port.out.LockSchoolNicknamePort;
 import com.umc.product.member.application.port.out.ReserveNicknamePort;
 import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.MemberRejoinKey;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,8 +27,11 @@ public class MemberNicknameRetentionService {
             return;
         }
         lockSchoolNicknamePort.lockSchool(member.getSchoolId());
-        if (graduationQueryService.hasGraduatedHistory(Set.of(member.getId()))) {
-            reserveNicknamePort.reserve(member.getSchoolId(), member.getNickname());
-        }
+        reserveNicknamePort.reserve(
+            member.getSchoolId(),
+            member.getNickname(),
+            MemberRejoinKey.fromVerifiedEmail(member.getEmail()),
+            graduationQueryService.hasGraduatedHistory(Set.of(member.getId()))
+        );
     }
 }
