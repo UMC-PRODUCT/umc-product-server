@@ -9,8 +9,10 @@ import com.umc.product.feedback.domain.enums.UserFeedbackContext;
  * 사용자 피드백 템플릿 조회 UseCase.
  * <p>
  * 요청한 context 안에서 로그인 사용자에게 제공할 활성 템플릿과 폼 구조를 반환합니다.
- * 지원·매칭 설문은 현재 기수 챌린저에게, 운영진 지원 현황 설문은 운영진에게 제공합니다.
- * 신규·기존 챌린저는 각각의 전용 템플릿을 우선 사용하고, 없으면 같은 context의 CHALLENGER 공통 템플릿을 사용합니다.
+ * 지원 설문은 현재 기수 챌린저에게, 매칭 설문은 역할·챌린저 이력과 관계없이 모든 로그인 사용자에게 제공합니다.
+ * 운영진 지원 현황 설문은 기존처럼 운영진에게 제공합니다.
+ * 지원 설문은 신규·기존 전용 템플릿을 우선 사용하고, 없으면 CHALLENGER 공통 템플릿을 사용합니다.
+ * 매칭 설문은 ALL 템플릿을 사용합니다.
  * 운영진 지원 현황 설문은 같은 context의 ADMIN 템플릿을 조회합니다. 다른 context의 설문으로 대체하지 않습니다.
  */
 public interface GetUserFeedbackTemplateUseCase {

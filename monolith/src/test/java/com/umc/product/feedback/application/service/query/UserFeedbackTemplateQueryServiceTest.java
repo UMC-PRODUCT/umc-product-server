@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -59,11 +60,11 @@ class UserFeedbackTemplateQueryServiceTest {
     @InjectMocks
     UserFeedbackTemplateQueryService sut;
 
-    @ParameterizedTest
-    @EnumSource(value = UserFeedbackContext.class, names = {"APPLICATION_SUBMITTED", "MATCHING_COMPLETED"})
+    @Test
     @DisplayName("해당 폼에 제출한 이력이 없으면 템플릿과 폼을 반환한다")
-    void 미제출이면_폼을_반환한다(UserFeedbackContext context) {
+    void 미제출이면_폼을_반환한다() {
         // Given
+        UserFeedbackContext context = UserFeedbackContext.APPLICATION_SUBMITTED;
         givenTemplate(context, UserFeedbackTargetType.NEW_CHALLENGER);
         FormWithStructureInfo form = FormWithStructureInfo.builder()
             .formId(FORM_ID).title("사용자 조사").sections(List.of()).build();
@@ -82,11 +83,11 @@ class UserFeedbackTemplateQueryServiceTest {
             context, UserFeedbackTargetType.CHALLENGER);
     }
 
-    @ParameterizedTest
-    @EnumSource(value = UserFeedbackContext.class, names = {"APPLICATION_SUBMITTED", "MATCHING_COMPLETED"})
+    @Test
     @DisplayName("해당 폼에 제출 완료한 사용자는 빈 결과를 반환하고 폼을 조회하지 않는다")
-    void 제출했으면_폼을_반환하지_않는다(UserFeedbackContext context) {
+    void 제출했으면_폼을_반환하지_않는다() {
         // Given
+        UserFeedbackContext context = UserFeedbackContext.APPLICATION_SUBMITTED;
         givenTemplate(context, UserFeedbackTargetType.NEW_CHALLENGER);
         given(getFormResponseUseCase.findSubmittedByFormIdAndRespondentMemberId(FORM_ID, MEMBER_ID))
             .willReturn(Optional.of(FormResponseInfo.builder()
@@ -153,14 +154,15 @@ class UserFeedbackTemplateQueryServiceTest {
     }
 
     @Test
-    @DisplayName("현재 기수 챌린저가 아니면 빈 결과를 반환한다")
+    @DisplayName("현재 기수 챌린저가 아니면 지원 설문을 반환하지 않는다")
     void 대상_사용자가_아니면_빈_결과를_반환한다() {
         // Given
+        UserFeedbackContext context = UserFeedbackContext.APPLICATION_SUBMITTED;
         given(getGisuUseCase.findActiveGisu()).willReturn(Optional.of(new GisuInfo(GISU_ID, 11L, null, null, true)));
         given(getChallengerUseCase.getAllByMemberId(MEMBER_ID)).willReturn(List.of());
 
         // When
-        Optional<UserFeedbackTemplateInfo> result = sut.findTemplate(MEMBER_ID, UserFeedbackContext.APPLICATION_SUBMITTED);
+        Optional<UserFeedbackTemplateInfo> result = sut.findTemplate(MEMBER_ID, context);
 
         // Then
         assertThat(result).isEmpty();
@@ -171,9 +173,7 @@ class UserFeedbackTemplateQueryServiceTest {
     @ParameterizedTest
     @CsvSource({
         "APPLICATION_SUBMITTED, NEW_CHALLENGER",
-        "APPLICATION_SUBMITTED, EXPERIENCED_CHALLENGER",
-        "MATCHING_COMPLETED, NEW_CHALLENGER",
-        "MATCHING_COMPLETED, EXPERIENCED_CHALLENGER"
+        "APPLICATION_SUBMITTED, EXPERIENCED_CHALLENGER"
     })
     @DisplayName("신규·기존 전용 템플릿이 없으면 CHALLENGER 공통 템플릿을 반환한다")
     void 전용_템플릿이_없으면_공통_템플릿을_반환한다(UserFeedbackContext context, UserFeedbackTargetType targetType) {
@@ -223,11 +223,11 @@ class UserFeedbackTemplateQueryServiceTest {
         then(getFormUseCase).shouldHaveNoInteractions();
     }
 
-    @ParameterizedTest
-    @EnumSource(value = UserFeedbackContext.class, names = "APPLICATION_MONITORING")
+    @Test
     @DisplayName("운영진 설문의 전용 템플릿이 없으면 공통 템플릿을 조회하지 않는다")
-    void 운영진_설문은_공통_템플릿으로_대체하지_않는다(UserFeedbackContext context) {
+    void 운영진_설문은_공통_템플릿으로_대체하지_않는다() {
         // Given
+        UserFeedbackContext context = UserFeedbackContext.APPLICATION_MONITORING;
         givenRequester(UserFeedbackTargetType.ADMIN);
 
         // When
@@ -243,9 +243,7 @@ class UserFeedbackTemplateQueryServiceTest {
     @ParameterizedTest
     @CsvSource({
         "APPLICATION_SUBMITTED, NEW_CHALLENGER",
-        "APPLICATION_SUBMITTED, EXPERIENCED_CHALLENGER",
-        "MATCHING_COMPLETED, NEW_CHALLENGER",
-        "MATCHING_COMPLETED, EXPERIENCED_CHALLENGER"
+        "APPLICATION_SUBMITTED, EXPERIENCED_CHALLENGER"
     })
     @DisplayName("운영진이 현재 기수 챌린저를 겸하면 챌린저 설문과 운영진 설문을 각각 제공한다")
     void 운영진_챌린저_겸임자는_각_설문을_받는다(UserFeedbackContext context, UserFeedbackTargetType targetType) {
@@ -293,6 +291,44 @@ class UserFeedbackTemplateQueryServiceTest {
         then(getChallengerRoleUseCase).should().isCentralMemberInGisu(MEMBER_ID, GISU_ID);
         then(getChallengerUseCase).shouldHaveNoInteractions();
         then(loadUserFeedbackTemplatePort).shouldHaveNoInteractions();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @DisplayName("매칭 설문은 ALL 템플릿을 제공하고 이미 제출했으면 제외한다")
+    void 매칭_설문은_제출_여부로_판별한다(boolean submitted) {
+        // Given
+        given(getGisuUseCase.findActiveGisu()).willReturn(Optional.of(new GisuInfo(GISU_ID, 11L, null, null, true)));
+        given(loadUserFeedbackTemplatePort.findByContextAndTargetType(
+            UserFeedbackContext.MATCHING_COMPLETED, UserFeedbackTargetType.ALL))
+            .willReturn(Optional.of(UserFeedbackTemplate.create(
+                UserFeedbackContext.MATCHING_COMPLETED, UserFeedbackTargetType.ALL, FORM_ID)));
+        if (submitted) {
+            given(getFormResponseUseCase.findSubmittedByFormIdAndRespondentMemberId(FORM_ID, MEMBER_ID))
+                .willReturn(Optional.of(FormResponseInfo.builder()
+                    .formId(FORM_ID).respondentMemberId(MEMBER_ID).status(FormResponseStatus.SUBMITTED).build()));
+        } else {
+            given(getFormUseCase.getFormWithStructure(FORM_ID)).willReturn(FormWithStructureInfo.builder()
+                .formId(FORM_ID).sections(List.of()).build());
+        }
+
+        // When
+        Optional<UserFeedbackTemplateInfo> result = sut.findTemplate(MEMBER_ID, UserFeedbackContext.MATCHING_COMPLETED);
+
+        // Then
+        if (submitted) {
+            assertThat(result).isEmpty();
+            then(getFormUseCase).shouldHaveNoInteractions();
+        } else {
+            assertThat(result).isPresent();
+            assertThat(result.orElseThrow().targetType()).isEqualTo(UserFeedbackTargetType.ALL);
+            assertThat(result.orElseThrow().form().formId()).isEqualTo(FORM_ID);
+        }
+        then(loadUserFeedbackTemplatePort).should().findByContextAndTargetType(
+            UserFeedbackContext.MATCHING_COMPLETED, UserFeedbackTargetType.ALL);
+        then(loadUserFeedbackTemplatePort).shouldHaveNoMoreInteractions();
+        then(getChallengerUseCase).shouldHaveNoInteractions();
+        then(getChallengerRoleUseCase).shouldHaveNoInteractions();
     }
 
     private void givenTemplate(UserFeedbackContext context, UserFeedbackTargetType targetType) {

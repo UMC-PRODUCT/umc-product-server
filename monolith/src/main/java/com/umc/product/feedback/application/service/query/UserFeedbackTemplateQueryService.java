@@ -25,9 +25,10 @@ import lombok.RequiredArgsConstructor;
 /**
  * 사용자 피드백 템플릿 조회 서비스.
  * <p>
- * 지원·매칭 설문은 현재 기수 챌린저 이력을 기준으로 대상을 판별합니다.
+ * 지원 설문은 현재 기수 챌린저 이력을 기준으로 대상을 판별합니다.
+ * 매칭 설문은 역할·챌린저 이력과 관계없이 모든 로그인 사용자에게 ALL 템플릿을 제공합니다.
  * 운영진 지원 현황 설문은 현재 기수 중앙 운영진 또는 SUPER_ADMIN에게 제공합니다.
- * 신규·기존 챌린저 전용 템플릿이 없으면 같은 context의 CHALLENGER 공통 템플릿을 선택합니다.
+ * 지원 설문은 신규·기존 챌린저 전용 템플릿이 없으면 같은 context의 CHALLENGER 공통 템플릿을 선택합니다.
  * 운영진 설문은 ADMIN 템플릿만 선택하며, 다른 context의 설문을 대신 반환하지 않습니다.
  * 선택한 formId에 사용자가 이미 제출했다면 빈 결과를 반환하고, 미제출이면 템플릿과 폼 구조를 반환합니다.
  * <p>
@@ -78,16 +79,15 @@ public class UserFeedbackTemplateQueryService implements GetUserFeedbackTemplate
     }
 
     /**
-     * 요청자의 UserFeedbackTargetType을 판별합니다.
+     * 요청한 설문 종류와 사용자 이력에 따라 설문 대상을 판별합니다.
      * <p>
-     * 판별 순서:
+     * 설문 종류별 판별 기준:
      * <ol>
-     *   <li>APPLICATION_MONITORING: 현재 기수 중앙 운영진 또는 SUPER_ADMIN이면 ADMIN, 아니면 Optional.empty()</li>
-     *   <li>지원·매칭 설문: 운영진 역할과 관계없이 아래 챌린저 이력 기준 적용</li>
-     *   <li>현재 기수 활성 챌린저가 아닌 경우 -> Optional.empty()</li>
-     *   <li>이번 기수 외 챌린저 이력 보유 -> EXPERIENCED_CHALLENGER</li>
-     *   <li>10기 한정: PM(기획) 파트 -> EXPERIENCED_CHALLENGER (기획-디자인 매칭 경험 특수 케이스)</li>
-     *   <li>그 외 -> NEW_CHALLENGER</li>
+     *   <li>매칭 설문: 전체 사용자 대상(ALL)으로 분류합니다.</li>
+     *   <li>운영진 설문: 현재 기수 중앙 운영진 또는 최고 관리자이면 운영진 대상(ADMIN)으로 분류하고, 아니면 제외합니다.</li>
+     *   <li>지원 설문: 현재 기수 챌린저만 대상으로 하며, 다른 기수 이력도 있으면 기존 챌린저(EXPERIENCED_CHALLENGER)로 분류합니다.</li>
+     *   <li>지원 설문의 10기 예외: 기획·디자인 매칭 경험을 반영해 기획 파트는 기존 챌린저(EXPERIENCED_CHALLENGER)로 분류합니다.</li>
+     *   <li>지원 설문의 나머지 대상자는 신규 챌린저(NEW_CHALLENGER)로 분류합니다.</li>
      * </ol>
      */
     private Optional<UserFeedbackTargetType> resolveTargetType(
@@ -96,11 +96,23 @@ public class UserFeedbackTemplateQueryService implements GetUserFeedbackTemplate
         Long generation,
         UserFeedbackContext context
     ) {
-        if (context == UserFeedbackContext.APPLICATION_MONITORING) {
-            return getChallengerRoleUseCase.isCentralMemberInGisu(memberId, activeGisuId)
-                ? Optional.of(UserFeedbackTargetType.ADMIN) : Optional.empty();
-        }
+        return switch (context) {
+            case APPLICATION_SUBMITTED -> resolveApplicationTargetType(memberId, activeGisuId, generation);
+            case MATCHING_COMPLETED -> resolveMatchingTargetType();
+            case APPLICATION_MONITORING -> resolveMonitoringTargetType(memberId, activeGisuId);
+        };
+    }
 
+    private Optional<UserFeedbackTargetType> resolveMatchingTargetType() {
+        return Optional.of(UserFeedbackTargetType.ALL);
+    }
+
+    private Optional<UserFeedbackTargetType> resolveMonitoringTargetType(Long memberId, Long activeGisuId) {
+        return getChallengerRoleUseCase.isCentralMemberInGisu(memberId, activeGisuId)
+            ? Optional.of(UserFeedbackTargetType.ADMIN) : Optional.empty();
+    }
+
+    private Optional<UserFeedbackTargetType> resolveApplicationTargetType(Long memberId, Long activeGisuId, Long generation) {
         List<ChallengerInfo> allHistory = getChallengerUseCase.getAllByMemberId(memberId);
 
         boolean isActiveChallenger = allHistory.stream()
