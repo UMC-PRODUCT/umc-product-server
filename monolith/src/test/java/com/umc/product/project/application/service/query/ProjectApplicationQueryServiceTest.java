@@ -695,7 +695,7 @@ class ProjectApplicationQueryServiceTest {
 
     @ParameterizedTest
     @EnumSource(value = ChallengerRoleType.class, names = {
-        "CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER", "CHAPTER_PRESIDENT",
+        "CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER",
         "SCHOOL_PRESIDENT", "SCHOOL_VICE_PRESIDENT", "SCHOOL_PART_LEADER", "SCHOOL_ETC_ADMIN"
     })
     void 판정_권한이_없는_운영진은_이번_차수만_대기로_조회한다(ChallengerRoleType roleType) {
@@ -734,7 +734,9 @@ class ProjectApplicationQueryServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"PM", "SUPER_ADMIN", "CENTRAL_PRESIDENT", "CENTRAL_VICE_PRESIDENT"})
+    @ValueSource(strings = {
+        "PM", "SUPER_ADMIN", "CENTRAL_PRESIDENT", "CENTRAL_VICE_PRESIDENT", "CHAPTER_PRESIDENT"
+    })
     void 판정_권한자는_결정_기간에도_실제_합불_결과를_조회한다(String authority) {
         // given
         Project project = createProject(1L, "프로젝트", null, authority.equals("PM") ? REQUESTER_ID : 99L);
@@ -749,7 +751,8 @@ class ProjectApplicationQueryServiceTest {
             subject.systemRoles(Set.of(SystemRoleType.SUPER_ADMIN));
         } else if (!authority.equals("PM")) {
             ChallengerRoleType role = ChallengerRoleType.valueOf(authority);
-            subject.roleAttributes(List.of(new RoleAttribute(role, role.organizationType(), null, null, GISU_ID)));
+            subject.roleAttributes(List.of(
+                new RoleAttribute(role, role.organizationType(), project.getChapterId(), null, GISU_ID)));
         }
         givenApplicantListQueries(project, applications, subject.build(), LIST_NOW);
 

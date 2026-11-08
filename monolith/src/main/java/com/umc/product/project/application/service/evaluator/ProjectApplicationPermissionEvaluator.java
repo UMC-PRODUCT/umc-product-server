@@ -126,7 +126,7 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
 
     /**
      * 합불 결정. SUBMITTED / APPROVED / REJECTED 상태의 지원서에 대해
-     * {@link ProjectApplicationDecisionPolicy}(담당 PM, 프로젝트 기수의 총괄·부총괄, SUPER_ADMIN)가 허용하는 사람만 가능하다.
+     * {@link ProjectApplicationDecisionPolicy}(담당 PM, 프로젝트 기수의 총괄·부총괄, 담당 지부장, SUPER_ADMIN)가 허용하는 사람만 가능하다.
      * 판정 가능 시간은 도메인 메서드({@code ProjectMatchingRound.validateIsMutableAt}) 가 책임진다.
      * (자동 매칭 스케줄러는 권한 모델 외)
      */

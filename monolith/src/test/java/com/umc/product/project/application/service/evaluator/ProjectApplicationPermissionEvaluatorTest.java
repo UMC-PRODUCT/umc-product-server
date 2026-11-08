@@ -442,12 +442,41 @@ class ProjectApplicationPermissionEvaluatorTest {
         assertThat(sut.evaluate(subject, approvePermission())).isFalse();
     }
 
-    @Test
-    void APPROVE는_같은_기수_지부장_거부() {
-        givenApplication(ProjectApplicationStatus.SUBMITTED);
+    @ParameterizedTest
+    @EnumSource(value = ProjectApplicationStatus.class, names = {"SUBMITTED", "APPROVED", "REJECTED"})
+    void APPROVE는_같은_기수_소속_지부장_허용(ProjectApplicationStatus status) {
+        // given
+        givenApplication(status);
         SubjectAttributes subject = subjectWith(30L, List.of(),
             List.of(chapterPresidentRole(PROJECT_CHAPTER_ID, PROJECT_GISU_ID)));
 
+        // when & then
+        assertThat(sut.evaluate(subject, approvePermission())).isTrue();
+    }
+
+    @Test
+    void APPROVE는_다른_지부나_다른_기수_지부장_거부() {
+        // given
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        SubjectAttributes otherChapter = subjectWith(30L, List.of(),
+            List.of(chapterPresidentRole(PROJECT_CHAPTER_ID + 1, PROJECT_GISU_ID)));
+        SubjectAttributes otherGisu = subjectWith(30L, List.of(),
+            List.of(chapterPresidentRole(PROJECT_CHAPTER_ID, PROJECT_GISU_ID + 1)));
+
+        // when & then
+        assertThat(sut.evaluate(otherChapter, approvePermission())).isFalse();
+        assertThat(sut.evaluate(otherGisu, approvePermission())).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ProjectApplicationStatus.class, names = {"DRAFT", "CANCELLED"})
+    void APPROVE는_소속_지부장도_임시저장과_철회_지원서는_거부(ProjectApplicationStatus status) {
+        // given
+        givenApplication(status);
+        SubjectAttributes subject = subjectWith(30L, List.of(),
+            List.of(chapterPresidentRole(PROJECT_CHAPTER_ID, PROJECT_GISU_ID)));
+
+        // when & then
         assertThat(sut.evaluate(subject, approvePermission())).isFalse();
     }
 
