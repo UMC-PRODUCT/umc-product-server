@@ -7,5 +7,6 @@ public enum ClientServiceType {
     UMC_WEBSITE,
     UMC_BACKOFFICE,
     UMC_TECH_BLOG,
+    UMC_ACTIVITY,
     UNKNOWN
 }
