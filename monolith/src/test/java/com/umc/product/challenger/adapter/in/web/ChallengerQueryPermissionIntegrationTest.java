@@ -34,7 +34,7 @@ import com.umc.product.support.fixture.ChapterFixture;
 import com.umc.product.support.fixture.GisuFixture;
 import com.umc.product.support.fixture.SchoolFixture;
 
-@DisplayName("챌린저 상세 조회 권한 통합 테스트")
+@DisplayName("챌린저 상세 조회 호환성 통합 테스트")
 @Execution(ExecutionMode.SAME_THREAD)
 class ChallengerQueryPermissionIntegrationTest extends IntegrationTestSupport {
 
@@ -72,6 +72,7 @@ class ChallengerQueryPermissionIntegrationTest extends IntegrationTestSupport {
         School otherGisuSchool = schoolFixture.지부에_소속된_학교("이전 기수 학교", otherGisuChapter);
 
         Long targetMemberId = saveMember("target", targetSchool.getId());
+        Long generalMemberId = saveMember("general", targetSchool.getId());
         Long superAdminMemberId = saveMember("super-admin", targetSchool.getId());
         Long centralMemberId = saveMember("central", targetSchool.getId());
         Long sameSchoolCoreMemberId = saveMember("same-school-core", targetSchool.getId());
@@ -107,6 +108,7 @@ class ChallengerQueryPermissionIntegrationTest extends IntegrationTestSupport {
 
         memberIds = List.of(
             targetMemberId,
+            generalMemberId,
             superAdminMemberId,
             centralMemberId,
             sameSchoolCoreMemberId,
@@ -119,6 +121,7 @@ class ChallengerQueryPermissionIntegrationTest extends IntegrationTestSupport {
         evictAuthoritySnapshotCacheUseCase.evictByMemberIds(memberIds);
 
         setUpToken("super-admin-token", superAdminMemberId);
+        setUpToken("general-token", generalMemberId);
         setUpToken("central-token", centralMemberId);
         setUpToken("same-school-core-token", sameSchoolCoreMemberId);
         setUpToken("other-school-core-token", otherSchoolCoreMemberId);
@@ -134,9 +137,9 @@ class ChallengerQueryPermissionIntegrationTest extends IntegrationTestSupport {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"super-admin-token", "central-token", "same-school-core-token"})
-    @DisplayName("SUPER_ADMIN과 대상 기수 중앙운영사무국 및 동일 학교 회장단은 상세를 조회한다")
-    void 허용된_운영진은_챌린저_상세를_조회한다(String token) throws Exception {
+    @ValueSource(strings = {"general-token", "super-admin-token", "central-token", "same-school-core-token"})
+    @DisplayName("일반 계정과 운영진 계정은 기존 상세 API를 조회한다")
+    void 일반_계정과_운영진_계정은_기존_챌린저_상세를_조회한다(String token) throws Exception {
         mockMvc.perform(get("/api/v1/challenger/{challengerId}", targetChallengerId)
                 .header("Authorization", "Bearer " + token))
             .andExpect(status().isOk());
@@ -150,11 +153,11 @@ class ChallengerQueryPermissionIntegrationTest extends IntegrationTestSupport {
         "school-etc-admin-token",
         "other-gisu-central-token"
     })
-    @DisplayName("다른 학교 회장단과 권한 밖 운영진은 상세를 조회할 수 없다")
-    void 권한이_없는_운영진은_챌린저_상세를_조회할_수_없다(String token) throws Exception {
+    @DisplayName("역할 범위와 무관하게 기존 상세 API를 조회한다")
+    void 역할_범위와_무관하게_기존_챌린저_상세를_조회한다(String token) throws Exception {
         mockMvc.perform(get("/api/v1/challenger/{challengerId}", targetChallengerId)
                 .header("Authorization", "Bearer " + token))
-            .andExpect(status().isForbidden());
+            .andExpect(status().isOk());
     }
 
     private Long saveMember(String name, Long schoolId) {
