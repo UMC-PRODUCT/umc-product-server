@@ -149,6 +149,10 @@ jobs:
         env:
           EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
         run: |
+          jq '
+            map(select(.type == "result" and .is_error == true)) | last // empty
+            | {subtype, is_error, result, errors}
+          ' "${EXECUTION_FILE}"
           jq -r '
             map(select(.type == "result")) | last // empty
             | "### AI 리뷰 실행 결과\n\n| 결과 | 턴 | 비용(USD) | 시간(초) | 거부된 도구 호출 |\n|---|---|---|---|---|\n| \(.subtype) | \(.num_turns) | \(.total_cost_usd) | \(.duration_ms / 1000 | floor) | \(.permission_denials // [] | length) |"
