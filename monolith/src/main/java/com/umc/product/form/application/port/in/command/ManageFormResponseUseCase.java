@@ -16,6 +16,7 @@ import com.umc.product.form.application.port.in.command.dto.UpdateAnonymousDraft
 import com.umc.product.form.application.port.in.command.dto.UpdateAnonymousFormResponseCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateDraftFormResponseCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateFormResponseCommand;
+import com.umc.product.form.application.port.in.command.dto.UpdateSubmittedFormResponseCommand;
 import com.umc.product.form.domain.exception.FormErrorCode;
 
 /**
@@ -68,6 +69,13 @@ public interface ManageFormResponseUseCase {
      * 해당 폼에 대한 기존 SUBMITTED 응답이 없으면 예외.
      */
     void updateResponse(UpdateFormResponseCommand command);
+
+    /**
+     * 응답 ID로 본인의 기명 SUBMITTED 응답을 지정해 답변을 전체 교체한다. 중복 응답 허용 폼에서도 사용 가능하다.
+     * 형식과 필수 답변을 검증하며, 제출 상태와 최초 제출 시각은 유지한다.
+     * 소비 도메인은 호출 전에 수정 가능 기간과 자체 상태를 검증해야 한다.
+     */
+    void updateSubmittedResponse(UpdateSubmittedFormResponseCommand command);
 
     /**
      * (기명 전용) 본인이 제출한 SUBMITTED 응답을 삭제한다. (FormResponse + 연관 Answer 모두 삭제)

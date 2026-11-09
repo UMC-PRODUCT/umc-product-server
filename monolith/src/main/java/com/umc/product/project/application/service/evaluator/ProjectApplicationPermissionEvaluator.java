@@ -105,11 +105,11 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
             || isChapterPresidentOf(subject, project.getChapterId(), project.getGisuId());
     }
 
-    /** 임시저장(DRAFT) 상태에서만 본인이 수정 가능. */
+    /** 본인이 DRAFT/SUBMITTED 지원서를 수정 가능. 수정 기간은 커맨드 서비스가 검증한다. */
     private boolean canEdit(SubjectAttributes subject, ResourcePermission permission) {
         ProjectApplication application = loadApplication(permission);
         return isApplicant(subject, application)
-            && application.getStatus() == ProjectApplicationStatus.DRAFT;
+            && (application.isDraft() || application.isSubmitted());
     }
 
     /** 본인이 DRAFT/SUBMITTED 단계에서 철회 가능. 종결 상태(APPROVED/REJECTED)와 이미 철회된 CANCELLED 는 차단. */

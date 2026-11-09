@@ -23,6 +23,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
@@ -31,6 +33,8 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
+import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -38,6 +42,7 @@ import com.umc.product.form.application.port.in.command.ManageFormResponseUseCas
 import com.umc.product.form.application.port.in.command.dto.AnswerCommand;
 import com.umc.product.form.application.port.in.command.dto.SubmitDraftFormResponseCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateDraftFormResponseCommand;
+import com.umc.product.form.application.port.in.command.dto.UpdateSubmittedFormResponseCommand;
 import com.umc.product.form.application.port.in.query.GetFormUseCase;
 import com.umc.product.form.application.port.in.query.dto.FormWithStructureInfo;
 import com.umc.product.form.domain.enums.FormStatus;
@@ -190,8 +195,8 @@ class ProjectApplicationCommandServiceTest {
     class updateAndSubmit {
 
         @Test
-        @DisplayName("update는 applicationId로 지정한 DRAFT만 수정한다")
-        void update는_applicationId로_지정한_DRAFT만_수정한다() {
+        @DisplayName("update는 마감 후에도 지정한 DRAFT를 임시저장한다")
+        void update는_마감_후에도_지정한_DRAFT를_임시저장한다() {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.DRAFT);
             given(loadProjectApplicationPort.findByIdWithDetails(APPLICATION_ID))
                 .willReturn(Optional.of(application));
@@ -208,17 +213,128 @@ class ProjectApplicationCommandServiceTest {
                 ArgumentCaptor.forClass(UpdateDraftFormResponseCommand.class);
             then(manageFormResponseUseCase).should().updateDraft(captor.capture());
             assertThat(result.applicationId()).isEqualTo(APPLICATION_ID);
+            assertThat(result.status()).isEqualTo(ProjectApplicationStatus.DRAFT);
             assertThat(captor.getValue().formResponseId()).isEqualTo(FORM_RESPONSE_ID);
             assertThat(captor.getValue().answers())
                 .extracting(AnswerCommand::questionId)
                 .containsExactly(COMMON_QUESTION_ID);
             then(loadProjectApplicationPort).should(never()).getDraftByProjectAndMember(anyLong(), anyLong());
+            then(manageFormResponseUseCase).should(never()).updateSubmittedResponse(any());
         }
 
         @Test
-        @DisplayName("update 요청에 노출되지 않은 questionId가 있으면 실패한다")
-        void update_요청에_노출되지_않은_questionId가_있으면_실패한다() {
+        void 제출본_수정은_지정한_응답과_파트별_검증_범위를_전달하고_최초_제출_시각을_유지한다() {
+            // given
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.DRAFT);
+            application.submit();
+            Instant submittedAt = application.getSubmittedAt();
+            ReflectionTestUtils.setField(application.getAppliedMatchingRound(), "endsAt", NOW.plusSeconds(43_200));
+            given(loadProjectApplicationPort.findByIdWithDetails(APPLICATION_ID))
+                .willReturn(Optional.of(application));
+            givenVisibleScope(application);
+
+            // when
+            ProjectApplicationInfo result = sut.update(updateCommand(APPLICANT_MEMBER_ID));
+
+            // then
+            ArgumentCaptor<UpdateSubmittedFormResponseCommand> captor =
+                ArgumentCaptor.forClass(UpdateSubmittedFormResponseCommand.class);
+            then(manageFormResponseUseCase).should().updateSubmittedResponse(captor.capture());
+            assertThat(captor.getValue().formResponseId()).isEqualTo(FORM_RESPONSE_ID);
+            assertThat(captor.getValue().requesterMemberId()).isEqualTo(APPLICANT_MEMBER_ID);
+            assertThat(captor.getValue().answers()).extracting(AnswerCommand::questionId)
+                .containsExactly(COMMON_QUESTION_ID, WEB_QUESTION_ID);
+            assertThat(captor.getValue().requiredQuestionIds())
+                .containsExactlyInAnyOrder(COMMON_QUESTION_ID, WEB_QUESTION_ID);
+            assertThat(captor.getValue().allowedQuestionIds())
+                .containsExactlyInAnyOrder(COMMON_QUESTION_ID, WEB_QUESTION_ID);
+            assertThat(result.applicationId()).isEqualTo(APPLICATION_ID);
+            assertThat(result.status()).isEqualTo(ProjectApplicationStatus.SUBMITTED);
+            assertThat(application.getSubmittedAt()).isEqualTo(submittedAt);
+            then(manageFormResponseUseCase).should(never()).updateDraft(any());
+            then(manageFormResponseUseCase).should(never()).submitDraft(any());
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        void 제출본은_해당_차수_마감_후_수정할_수_없다() {
+            // given
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findByIdWithDetails(APPLICATION_ID))
+                .willReturn(Optional.of(application));
+
+            // when & then
+            assertThatThrownBy(() -> sut.update(updateCommand(APPLICANT_MEMBER_ID)))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_ROUND_NOT_OPEN);
+            then(manageFormResponseUseCase).should(never()).updateSubmittedResponse(any());
+        }
+
+        @Test
+        void 제출본은_해당_차수_시작_전_수정할_수_없다() {
+            // given
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            ReflectionTestUtils.setField(application.getAppliedMatchingRound(), "startsAt", NOW.plusSeconds(3600));
+            ReflectionTestUtils.setField(application.getAppliedMatchingRound(), "endsAt", NOW.plusSeconds(43_200));
+            given(loadProjectApplicationPort.findByIdWithDetails(APPLICATION_ID))
+                .willReturn(Optional.of(application));
+
+            // when & then
+            assertThatThrownBy(() -> sut.update(updateCommand(APPLICANT_MEMBER_ID)))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_ROUND_NOT_OPEN);
+            then(manageFormResponseUseCase).should(never()).updateSubmittedResponse(any());
+        }
+
+        @Test
+        void 타인의_제출본은_수정할_수_없다() {
+            // given
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findByIdWithDetails(APPLICATION_ID))
+                .willReturn(Optional.of(application));
+
+            // when & then
+            assertThatThrownBy(() -> sut.update(updateCommand(DECIDER_MEMBER_ID)))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_DRAFT_APPLICATION_NOT_FOUND);
+            then(manageFormResponseUseCase).should(never()).updateSubmittedResponse(any());
+        }
+
+        @ParameterizedTest
+        @EnumSource(value = ProjectApplicationStatus.class, names = {"APPROVED", "REJECTED", "CANCELLED"})
+        void 판정되거나_철회된_지원서는_수정할_수_없다(ProjectApplicationStatus status) {
+            // given
+            ProjectApplication application = applicationWithStatus(status);
+            given(loadProjectApplicationPort.findByIdWithDetails(APPLICATION_ID))
+                .willReturn(Optional.of(application));
+
+            // when & then
+            assertThatThrownBy(() -> sut.update(updateCommand(APPLICANT_MEMBER_ID)))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_DRAFT_APPLICATION_NOT_FOUND);
+            then(manageFormResponseUseCase).should(never()).updateDraft(any());
+            then(manageFormResponseUseCase).should(never()).updateSubmittedResponse(any());
+        }
+
+        private UpdateProjectApplicationDraftCommand updateCommand(Long requesterMemberId) {
+            return UpdateProjectApplicationDraftCommand.builder()
+                .projectId(PROJECT_ID)
+                .applicationId(APPLICATION_ID)
+                .requesterMemberId(requesterMemberId)
+                .answers(List.of(answerEntry(COMMON_QUESTION_ID), answerEntry(WEB_QUESTION_ID)))
+                .build();
+        }
+
+        @ParameterizedTest
+        @EnumSource(value = ProjectApplicationStatus.class, names = {"DRAFT", "SUBMITTED"})
+        @DisplayName("update 요청에 노출되지 않은 questionId가 있으면 실패한다")
+        void update_요청에_노출되지_않은_questionId가_있으면_실패한다(ProjectApplicationStatus status) {
+            ProjectApplication application = applicationWithStatus(status);
+            ReflectionTestUtils.setField(application.getAppliedMatchingRound(), "endsAt", NOW.plusSeconds(43_200));
             given(loadProjectApplicationPort.findByIdWithDetails(APPLICATION_ID))
                 .willReturn(Optional.of(application));
             givenVisibleScope(application);
@@ -234,6 +350,7 @@ class ProjectApplicationCommandServiceTest {
                 .isEqualTo(ProjectErrorCode.APPLICATION_FORM_INVALID_QUESTION_ID);
 
             then(manageFormResponseUseCase).should(never()).updateDraft(any());
+            then(manageFormResponseUseCase).should(never()).updateSubmittedResponse(any());
         }
 
         @Test
@@ -284,8 +401,8 @@ class ProjectApplicationCommandServiceTest {
         }
 
         @Test
-        @DisplayName("DRAFT가 아닌 applicationId로 submit하면 실패한다")
-        void DRAFT가_아닌_applicationId로_submit하면_실패한다() {
+        @DisplayName("제출본을 재제출하면 기존과 같은 접근 거절 예외가 발생한다")
+        void 제출본을_재제출하면_기존과_같은_접근_거절_예외가_발생한다() {
             ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
             given(loadProjectApplicationPort.findByIdWithDetails(APPLICATION_ID))
                 .willReturn(Optional.of(application));
@@ -295,9 +412,9 @@ class ProjectApplicationCommandServiceTest {
                 .applicationId(APPLICATION_ID)
                 .requesterMemberId(APPLICANT_MEMBER_ID)
                 .build()))
-                .isInstanceOf(ProjectDomainException.class)
+                .isInstanceOf(AuthorizationDomainException.class)
                 .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_DRAFT_APPLICATION_NOT_FOUND);
+                .isEqualTo(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
 
             then(manageFormResponseUseCase).should(never()).submitDraft(any());
         }
