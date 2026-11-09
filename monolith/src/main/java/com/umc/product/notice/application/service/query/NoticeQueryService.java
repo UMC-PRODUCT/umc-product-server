@@ -382,7 +382,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             : (hasPart && isChallengerQuery ? viewerInfo.schoolId() : null);
 
         return new NoticeClassification(classification.gisuId(), filteredChapterId, filteredSchoolId,
-            classification.part(), classification.noticeTab());
+            classification.part(), classification.noticeTab(), classification.upmsNoticeType());
     }
 
     private Page<NoticeSummary> toNoticeSummaryPage(Page<Notice> notices) {

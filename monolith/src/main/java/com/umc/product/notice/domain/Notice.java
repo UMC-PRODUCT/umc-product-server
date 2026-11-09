@@ -3,11 +3,14 @@ package com.umc.product.notice.domain;
 import java.time.Instant;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.notice.domain.enums.UpmsNoticeType;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -51,13 +54,26 @@ public class Notice extends BaseEntity {
     @Column(name = "must_read", nullable = false)
     private boolean mustRead;
 
-    public static Notice create(String title, String content, Long authorMemberId, boolean shouldNotify, boolean mustRead) {
+    @Enumerated(EnumType.STRING)
+    @Column(name = "upms_notice_type", length = 32)
+    private UpmsNoticeType upmsNoticeType;
+
+    // 일반 공지를 생성한다.
+    public static Notice create(String title, String content, Long authorMemberId, boolean shouldNotify,
+        boolean mustRead) {
+        return create(title, content, authorMemberId, shouldNotify, mustRead, null);
+    }
+
+    // UPMS 유형을 지정하여 공지를 생성한다.
+    public static Notice create(String title, String content, Long authorMemberId, boolean shouldNotify,
+        boolean mustRead, UpmsNoticeType upmsNoticeType) {
         return Notice.builder()
             .title(title)
             .content(content)
             .authorMemberId(authorMemberId)
             .shouldSendNotification(shouldNotify)
             .mustRead(mustRead)
+            .upmsNoticeType(upmsNoticeType)
             .build();
     }
 

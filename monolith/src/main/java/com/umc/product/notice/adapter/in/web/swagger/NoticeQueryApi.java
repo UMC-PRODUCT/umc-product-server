@@ -71,12 +71,24 @@ public interface NoticeQueryApi {
             - `hasImages`: 이미지 첨부 존재 여부
             - `hasLinks`: 링크 첨부 존재 여부
             - `hasVote`: 투표 첨부 존재 여부. 투표 시작 전이나 종료 후에도 첨부가 있으면 true입니다.
+
+            ### UPMS 공지 유형
+
+            - 선택 쿼리 파라미터 `upmsNoticeType`은 `TEAM_MATCHING` 또는 `PROJECT_SETTING`을 받습니다.
+            - 지정하면 기존 대상·권한 조건에 맞는 공지 중 해당 유형만 조회합니다.
+            - 생략하면 기존처럼 대상·권한 조건에 맞는 일반 공지와 UPMS 공지를 함께 조회합니다.
+            - 유형 조건은 목록과 전체 개수 집계에 동일하게 적용되며, 응답 형식은 기존과 동일합니다.
+            - 허용되지 않은 유형은 400을 반환합니다.
             """
     )
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
             description = "조회 성공"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "잘못된 조회 조건 또는 UPMS 공지 유형"
         ),
         @ApiResponse(
             responseCode = "403",
@@ -109,12 +121,23 @@ public interface NoticeQueryApi {
             - `hasImages`: 이미지 첨부 존재 여부
             - `hasLinks`: 링크 첨부 존재 여부
             - `hasVote`: 투표 첨부 존재 여부. 투표 시작 전이나 종료 후에도 첨부가 있으면 true입니다.
+
+            ### UPMS 공지 유형
+
+            선택 쿼리 파라미터 `upmsNoticeType`에 `TEAM_MATCHING` 또는 `PROJECT_SETTING`을 지정하면
+            기존 검색어·대상·권한 조건에 유형 조건을 추가합니다. 생략하면 일반 공지와 UPMS 공지를 함께 검색합니다.
+            유형 조건은 검색 결과와 전체 개수 집계에 동일하게 적용되며, 허용되지 않은 유형은 400을 반환합니다.
+            응답 형식은 기존과 동일합니다.
             """
     )
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
             description = "검색 성공"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "잘못된 조회 조건 또는 UPMS 공지 유형"
         ),
         @ApiResponse(
             responseCode = "403",

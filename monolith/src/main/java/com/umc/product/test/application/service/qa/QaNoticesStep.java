@@ -112,7 +112,7 @@ class QaNoticesStep implements QaSeedStepRunner {
         Long noticeId = manageNoticeUseCase.createNotice(
             new CreateNoticeCommand(directory.memberId(notice.author()), notice.title(),
                 "개발 환경 QA용 공지입니다. 대상 범위, 읽음 여부와 권한을 확인합니다.",
-                false, notice.mustRead(), notice.target()));
+                false, notice.mustRead(), notice.target(), null));
         manageNoticeReadUseCase.recordRead(noticeId, directory.memberId(notice.reader()));
         return noticeId;
     }

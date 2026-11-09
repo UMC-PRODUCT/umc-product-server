@@ -102,7 +102,8 @@ public class NoticeService implements ManageNoticeUseCase {
             command.content(),
             command.memberId(),
             command.shouldNotify(),
-            command.mustRead()
+            command.mustRead(),
+            command.upmsNoticeType()
         );
 
         Notice savedNotice = saveNoticePort.save(notice);
