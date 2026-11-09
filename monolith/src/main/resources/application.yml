@@ -417,7 +417,7 @@ app:
         allowed-origins:
           - https://tech.university.neordinary.com
       activity:
-        name: UMC Activity
+        name: activity
         service-type: UMC_ACTIVITY
         environment: PROD
         require-pkce: true
@@ -730,6 +730,16 @@ app:
           - https://dev.tech.university.neordinary.com/auth/callback
         allowed-origins:
           - https://dev.tech.university.neordinary.com
+      activity:
+        name: dev activity
+        service-type: UMC_ACTIVITY
+        environment: DEV
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://dev.activity.university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://dev.activity.university.neordinary.com
       local:
         name: local dev
         service-type: UNKNOWN
