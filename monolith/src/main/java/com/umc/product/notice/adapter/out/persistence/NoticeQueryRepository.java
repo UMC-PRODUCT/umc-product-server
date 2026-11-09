@@ -232,6 +232,10 @@ public class NoticeQueryRepository {
             BooleanExpression scopeCondition = noticeTarget.targetChapterId.isNull()
                 .and(noticeTarget.targetSchoolId.isNull());
 
+            if (!hasChapter && !hasSchool && viewerInfo.isChapterPresident()) {
+                scopeCondition = buildReadableOrganizationCondition(viewerInfo);
+            }
+
             if (chapterId != null) {
                 scopeCondition = scopeCondition.or(
                     noticeTarget.targetChapterId.eq(chapterId)
@@ -263,7 +267,9 @@ public class NoticeQueryRepository {
         }
         BooleanExpression condition = noticeTarget.targetChapterId.isNull()
             .and(noticeTarget.targetSchoolId.isNull());
-        if (viewerInfo.chapterId() != null) {
+        if (viewerInfo.isChapterPresident()) {
+            condition = noticeTarget.targetSchoolId.isNull();
+        } else if (viewerInfo.chapterId() != null) {
             condition = condition.or(noticeTarget.targetChapterId.eq(viewerInfo.chapterId())
                 .and(noticeTarget.targetSchoolId.isNull()));
         }
