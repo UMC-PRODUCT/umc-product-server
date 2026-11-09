@@ -344,6 +344,9 @@ app:
       - origin: https://tech.university.neordinary.com
         service-type: UMC_TECH_BLOG
         environment: PROD
+      - origin: https://activity.university.neordinary.com
+        service-type: UMC_ACTIVITY
+        environment: PROD
 
   # 커뮤니티 스레드 공유 링크 등 앱 딥링크 공통 설정(#1268). 기본값은 prod 기준이고, dev 프로필에서
   # 호스트/서명 인증서만 재정의한다.
@@ -413,6 +416,16 @@ app:
           - https://tech.university.neordinary.com/auth/callback
         allowed-origins:
           - https://tech.university.neordinary.com
+      activity:
+        name: UMC Activity
+        service-type: UMC_ACTIVITY
+        environment: PROD
+        require-pkce: true
+        access-token-ttl: PT1H
+        redirect-uris:
+          - https://activity.university.neordinary.com/auth/callback
+        allowed-origins:
+          - https://activity.university.neordinary.com
       # Mac은 공개 클라이언트이므로 client secret 대신 PKCE S256으로 코드 교환 요청자를 확인한다.
       # redirect URI는 앱 복귀용 주소다. 위 social의 서버 HTTPS callback 주소와 혼동하지 않는다.
       macos-app:

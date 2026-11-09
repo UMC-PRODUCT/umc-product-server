@@ -44,19 +44,6 @@ class NoticeQueryRepositoryPartFilterIntegrationTest extends IntegrationTestSupp
     @Autowired
     SaveNoticeTargetPort saveNoticeTargetPort;
 
-    private Long persistChallengerNotice(List<ChallengerPart> targetParts) {
-        Notice notice = saveNoticePort.save(Notice.create("제목", "내용", 1L, false, false));
-        saveNoticeTargetPort.save(NoticeTarget.builder()
-            .noticeId(notice.getId())
-            .targetGisuId(GISU_ID)
-            .targetChapterId(CHAPTER_ID)
-            .targetSchoolId(null)
-            .targetChallengerPart(targetParts)
-            .targetNoticeTab(NoticeTab.CHALLENGER)
-            .build());
-        return notice.getId();
-    }
-
     @Test
     @DisplayName("일반 챌린저는 본인 파트 공지와 파트 미지정 공지만 조회된다 (다른 파트 제외)")
     void 일반_챌린저_본인_파트만() {
@@ -164,9 +151,64 @@ class NoticeQueryRepositoryPartFilterIntegrationTest extends IntegrationTestSupp
             .doesNotContain(schoolStaff, centralOnly);
     }
 
+    @Test
+    void 지부장의_전체_목록과_검색은_타_지부_공지를_포함하고_타_지부_학교_공지를_제외한다() {
+        // given
+        Long global = persistNotice(null, null, List.of(), NoticeTab.CHALLENGER);
+        Long chapter = persistNotice(4L, null, List.of(ChallengerPart.MOBILE_PRODUCT_ENGINEER), NoticeTab.CHALLENGER);
+        Long ownChapterSchool = persistNotice(null, 7L, List.of(ChallengerPart.WEB_PRODUCT_ENGINEER), NoticeTab.CHALLENGER);
+        Long otherSchool = persistNotice(null, 6L, List.of(), NoticeTab.CHALLENGER);
+        Long otherGisu = persistNotice(8L, 4L, null, List.of(), NoticeTab.CHALLENGER);
+        NoticeViewerInfo viewer = new NoticeViewerInfo(Set.of(), 5L, CHAPTER_ID, NoticeTab.SCHOOL_CORE,
+            ChallengerRoleType.CHAPTER_PRESIDENT, Set.of(5L, 7L));
+        NoticeClassification classification = new NoticeClassification(GISU_ID, null, null, null, NoticeTab.CHALLENGER);
+
+        // when
+        Page<Notice> list = noticeQueryRepository.findByClassification(classification, viewer, PageRequest.of(0, 10));
+        Page<Notice> search = noticeQueryRepository.findByKeyword("제목", classification, viewer, PageRequest.of(0, 2));
+
+        // then
+        assertThat(list.getContent()).extracting(Notice::getId).containsExactlyInAnyOrder(global, chapter, ownChapterSchool)
+            .doesNotContain(otherSchool, otherGisu);
+        assertThat(list.getTotalElements()).isEqualTo(3);
+        assertThat(search.getContent()).hasSize(2).extracting(Notice::getId).isSubsetOf(global, chapter, ownChapterSchool);
+        assertThat(search.getTotalElements()).isEqualTo(3);
+        assertThat(search.hasNext()).isTrue();
+    }
+
+    @Test
+    void 지부장의_파트_조회는_타_지부_공지를_포함하고_타_지부_학교_공지를_제외한다() {
+        // given
+        List<ChallengerPart> web = List.of(ChallengerPart.WEB_PRODUCT_ENGINEER);
+        Long global = persistNotice(null, null, web, NoticeTab.CHALLENGER);
+        Long chapter = persistNotice(4L, null, web, NoticeTab.CHALLENGER);
+        Long ownChapterSchool = persistNotice(null, 7L, web, NoticeTab.CHALLENGER);
+        persistNotice(null, 6L, web, NoticeTab.CHALLENGER);
+        persistNotice(CHAPTER_ID, null, List.of(ChallengerPart.MOBILE_PRODUCT_ENGINEER), NoticeTab.CHALLENGER);
+        NoticeViewerInfo viewer = new NoticeViewerInfo(Set.of(), 5L, CHAPTER_ID, NoticeTab.SCHOOL_CORE,
+            ChallengerRoleType.CHAPTER_PRESIDENT, Set.of(5L, 7L));
+        NoticeClassification classification =
+            new NoticeClassification(GISU_ID, null, null, ChallengerPart.WEB_PRODUCT_ENGINEER, NoticeTab.CHALLENGER);
+
+        // when
+        Page<Notice> result = noticeQueryRepository.findByClassification(classification, viewer, PageRequest.of(0, 10));
+
+        // then
+        assertThat(result.getContent()).extracting(Notice::getId)
+            .containsExactlyInAnyOrder(global, chapter, ownChapterSchool);
+    }
+
+    private Long persistChallengerNotice(List<ChallengerPart> targetParts) {
+        return persistNotice(CHAPTER_ID, null, targetParts, NoticeTab.CHALLENGER);
+    }
+
     private Long persistNotice(Long chapterId, Long schoolId, List<ChallengerPart> parts, NoticeTab tab) {
+        return persistNotice(GISU_ID, chapterId, schoolId, parts, tab);
+    }
+
+    private Long persistNotice(Long gisuId, Long chapterId, Long schoolId, List<ChallengerPart> parts, NoticeTab tab) {
         Notice notice = saveNoticePort.save(Notice.create("제목", "내용", 1L, false, false));
-        saveNoticeTargetPort.save(NoticeTarget.builder().noticeId(notice.getId()).targetGisuId(GISU_ID)
+        saveNoticeTargetPort.save(NoticeTarget.builder().noticeId(notice.getId()).targetGisuId(gisuId)
             .targetChapterId(chapterId).targetSchoolId(schoolId).targetChallengerPart(parts).targetNoticeTab(tab).build());
         return notice.getId();
     }

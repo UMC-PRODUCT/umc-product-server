@@ -307,15 +307,17 @@ public class NoticeQueryService implements GetNoticeUseCase {
     /**
      * 조회 범위(지부/학교) 권한 검증.
      * <p>
-     * 총괄/중앙운영진(CENTRAL_MEMBER)은 타 학교/지부 공지까지 자유롭게 조회할 수 있습니다. 그 외 역할(회장단/지부장/파트장/일반 챌린저)은 본인 소속 지부/학교 범위만 조회할 수
-     * 있습니다. 목록 조회와 상세 조회(@CheckAccess)의 접근 범위를 일치시켜, 임의의 학교/지부 ID를 넣어 타 범위 공지를 열람하는 우회를 차단합니다.
+     * 총괄/중앙운영진(CENTRAL_MEMBER)은 타 학교/지부 공지까지 조회할 수 있습니다. 지부장은 타 지부의 챌린저 공지도 조회할 수 있으나,
+     * 학교 전용 챌린저 공지는 담당 지부 소속 학교로 제한합니다. 그 외 역할은 본인 소속 지부/학교 범위만 조회할 수 있습니다.
+     * 목록 조회와 상세 조회(@CheckAccess)의 접근 범위를 일치시킵니다.
      */
     private void validateViewerScope(NoticeClassification classification, NoticeViewerInfo viewerInfo) {
         if (viewerInfo.viewerRole() == NoticeTab.CENTRAL_MEMBER) {
             return;
         }
         if (classification.chapterId() != null
-            && !classification.chapterId().equals(viewerInfo.chapterId())) {
+            && !classification.chapterId().equals(viewerInfo.chapterId())
+            && !(classification.isChallengerQuery() && viewerInfo.isChapterPresident())) {
             throw new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION,
                 "본인 소속 지부의 공지만 조회할 수 있습니다.");
         }
@@ -353,12 +355,16 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
     /**
      * 챌린저 공지 한정으로 파트 필터 시 지부/학교 ID를 보완합니다.
+     * 지부장은 타 지부도 조회할 수 있으므로 권한 검증을 통과한 필터를 그대로 사용합니다.
      * <p>
      * - chapterId/schoolId가 이미 명시된 경우: 그대로 사용 (총괄단 등이 특정 범위 지정 가능) - 챌린저 공지에서 part만 있고 chapterId/schoolId 없는 경우:
      * viewerInfo로 보완 - 운영진 공지는 schoolId를 자동 보완하지 않습니다. schoolId 유무로 중앙공지/교내공지를 명확히 구분하므로, 반드시 클라이언트가 명시해야 합니다.
      */
     private NoticeClassification enrichClassification(NoticeViewerInfo viewerInfo,
                                                       NoticeClassification classification) {
+        if (classification.isChallengerQuery() && viewerInfo.isChapterPresident()) {
+            return classification;
+        }
         if (classification.chapterId() == null
             && classification.schoolId() == null
             && classification.part() == null) {
