@@ -166,6 +166,7 @@ class SsoClientConfigAdapterTest {
             assertThat(website.allowedOrigins())
                 .containsExactly("https://university.neordinary.com")
                 .doesNotContain("https://www.university.neordinary.com");
+            assertThat(activity.name()).isEqualTo("activity");
             assertThat(activity.serviceType()).isEqualTo(ClientServiceType.UMC_ACTIVITY);
             assertThat(activity.environment()).isEqualTo(ClientEnvironment.PROD);
             assertThat(activity.redirectUris())
@@ -197,6 +198,11 @@ class SsoClientConfigAdapterTest {
                     adapter.getByClientId("tech"),
                     "https://dev.tech.university.neordinary.com/auth/callback",
                     "https://dev.tech.university.neordinary.com"
+                );
+                assertDevWebClient(
+                    adapter.getByClientId("activity"),
+                    "https://dev.activity.university.neordinary.com/auth/callback",
+                    "https://dev.activity.university.neordinary.com"
                 );
                 assertDevWebClient(
                     adapter.getByClientId("local"),
