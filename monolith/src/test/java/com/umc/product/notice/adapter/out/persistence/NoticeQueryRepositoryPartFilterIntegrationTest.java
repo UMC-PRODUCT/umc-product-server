@@ -161,7 +161,8 @@ class NoticeQueryRepositoryPartFilterIntegrationTest extends IntegrationTestSupp
         Long otherGisu = persistNotice(8L, 4L, null, List.of(), NoticeTab.CHALLENGER);
         NoticeViewerInfo viewer = new NoticeViewerInfo(Set.of(), 5L, CHAPTER_ID, NoticeTab.SCHOOL_CORE,
             ChallengerRoleType.CHAPTER_PRESIDENT, Set.of(5L, 7L));
-        NoticeClassification classification = new NoticeClassification(GISU_ID, null, null, null, NoticeTab.CHALLENGER);
+        NoticeClassification classification =
+            new NoticeClassification(GISU_ID, null, null, null, NoticeTab.CHALLENGER, null);
 
         // when
         Page<Notice> list = noticeQueryRepository.findByClassification(classification, viewer, PageRequest.of(0, 10));
@@ -188,7 +189,8 @@ class NoticeQueryRepositoryPartFilterIntegrationTest extends IntegrationTestSupp
         NoticeViewerInfo viewer = new NoticeViewerInfo(Set.of(), 5L, CHAPTER_ID, NoticeTab.SCHOOL_CORE,
             ChallengerRoleType.CHAPTER_PRESIDENT, Set.of(5L, 7L));
         NoticeClassification classification =
-            new NoticeClassification(GISU_ID, null, null, ChallengerPart.WEB_PRODUCT_ENGINEER, NoticeTab.CHALLENGER);
+            new NoticeClassification(GISU_ID, null, null, ChallengerPart.WEB_PRODUCT_ENGINEER,
+                NoticeTab.CHALLENGER, null);
 
         // when
         Page<Notice> result = noticeQueryRepository.findByClassification(classification, viewer, PageRequest.of(0, 10));
