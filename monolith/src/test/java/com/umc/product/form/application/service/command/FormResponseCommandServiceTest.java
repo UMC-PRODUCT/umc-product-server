@@ -40,6 +40,7 @@ import com.umc.product.form.application.port.in.command.dto.UpdateAnonymousDraft
 import com.umc.product.form.application.port.in.command.dto.UpdateAnonymousFormResponseCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateDraftFormResponseCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateFormResponseCommand;
+import com.umc.product.form.application.port.in.command.dto.UpdateSubmittedFormResponseCommand;
 import com.umc.product.form.application.port.out.LoadAnswerPort;
 import com.umc.product.form.application.port.out.LoadFormPort;
 import com.umc.product.form.application.port.out.LoadFormResponsePort;
@@ -54,6 +55,7 @@ import com.umc.product.form.domain.FormResponse;
 import com.umc.product.form.domain.FormSection;
 import com.umc.product.form.domain.Question;
 import com.umc.product.form.domain.QuestionOption;
+import com.umc.product.form.domain.enums.FormResponseStatus;
 import com.umc.product.form.domain.enums.QuestionType;
 import com.umc.product.form.domain.exception.DraftSchemaMismatchException;
 import com.umc.product.form.domain.exception.FormDomainException;
@@ -182,6 +184,157 @@ class   FormResponseCommandServiceTest {
 
         then(loadFormResponsePort).should(never())
             .findSubmittedByFormIdAndRespondentMemberId(anyLong(), anyLong());
+    }
+
+    @Test
+    void 응답_ID로_지정한_제출본만_수정하고_최초_제출_시각을_유지한다() {
+        // given
+        FormResponse response = draftResponse();
+        Instant submittedAt = Instant.now().minusSeconds(3600);
+        response.submit(submittedAt, "127.0.0.1");
+        ReflectionTestUtils.setField(response, "lastSavedAt", submittedAt);
+        FormSection section = section(1L, 1L);
+        Question required = questionInSection(10L, section, true);
+        Question optional = questionInSection(20L, section, false);
+        Question otherPartRequired = questionInSection(30L, section, true);
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(response));
+        given(loadFormSectionPort.listByFormId(FORM_ID)).willReturn(List.of(section));
+        given(loadQuestionPort.listByFormId(FORM_ID)).willReturn(List.of(required, optional, otherPartRequired));
+        given(loadQuestionPort.listByIdIn(Set.of(20L))).willReturn(List.of(optional));
+        given(saveAnswerPort.saveAll(any())).willAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        sut.updateSubmittedResponse(UpdateSubmittedFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .answers(List.of(AnswerCommand.builder().questionId(10L).textValue("수정한 답변").build()))
+            .requiredQuestionIds(Set.of(10L))
+            .allowedQuestionIds(Set.of(10L, 20L))
+            .build());
+
+        // then
+        then(saveAnswerPort).should().deleteAllByFormResponseId(FORM_RESPONSE_ID);
+        then(saveAnswerPort).should().saveAll(argThat(answers -> answers.size() == 1
+            && answers.get(0).getFormResponse() == response
+            && "수정한 답변".equals(answers.get(0).getTextValue())));
+        then(saveAnswerPort).should().saveAll(argThat(answers -> answers.size() == 1
+            && answers.get(0).getQuestion().getId().equals(20L)
+            && answers.get(0).getTextValue() == null));
+        then(loadFormResponsePort).should(never()).findSubmittedByFormIdAndRespondentMemberId(anyLong(), anyLong());
+        then(saveFormResponsePort).should().save(response);
+        assertThat(response.getStatus()).isEqualTo(FormResponseStatus.SUBMITTED);
+        assertThat(response.getSubmittedAt()).isEqualTo(submittedAt);
+        assertThat(response.getSubmittedIp()).isEqualTo("127.0.0.1");
+        assertThat(response.getLastSavedAt()).isAfter(submittedAt);
+    }
+
+    @Test
+    void 제출본_수정에서_필수_답변을_누락하면_기존_답변을_삭제하지_않는다() {
+        // given
+        FormResponse response = draftResponse();
+        response.submit(Instant.now(), null);
+        FormSection section = section(1L, 1L);
+        Question required = questionInSection(10L, section, true);
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(response));
+        given(loadFormSectionPort.listByFormId(FORM_ID)).willReturn(List.of(section));
+        given(loadQuestionPort.listByFormId(FORM_ID)).willReturn(List.of(required));
+
+        // when & then
+        assertThatThrownBy(() -> sut.updateSubmittedResponse(UpdateSubmittedFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .answers(List.of())
+            .requiredQuestionIds(Set.of(10L))
+            .allowedQuestionIds(Set.of(10L))
+            .build()))
+            .isInstanceOf(FormDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(FormErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+        then(saveAnswerPort).should(never()).deleteAllByFormResponseId(any());
+        then(saveAnswerPort).should(never()).saveAll(any());
+        then(saveFormResponsePort).should(never()).save(any());
+    }
+
+    @Test
+    void 제출본_수정에서_형식이_잘못되면_기존_답변을_삭제하지_않는다() {
+        // given
+        FormResponse response = draftResponse();
+        response.submit(Instant.now(), null);
+        Question required = questionInSection(10L, section(1L, 1L), true);
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(response));
+        given(loadQuestionPort.listByFormId(FORM_ID)).willReturn(List.of(required));
+
+        // when & then
+        assertThatThrownBy(() -> sut.updateSubmittedResponse(UpdateSubmittedFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .answers(List.of(AnswerCommand.builder().questionId(10L).textValue(" ").build()))
+            .build()))
+            .isInstanceOf(FormDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(FormErrorCode.INVALID_ANSWER_FORMAT);
+        then(saveAnswerPort).should(never()).deleteAllByFormResponseId(any());
+    }
+
+    @Test
+    void 제출본_수정에서_허용_범위_밖의_질문이면_기존_답변을_삭제하지_않는다() {
+        // given
+        FormResponse response = draftResponse();
+        response.submit(Instant.now(), null);
+        FormSection section = section(1L, 1L);
+        Question allowed = questionInSection(10L, section, true);
+        Question forbidden = questionInSection(20L, section, true);
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(response));
+        given(loadQuestionPort.listByFormId(FORM_ID)).willReturn(List.of(allowed, forbidden));
+
+        // when & then
+        assertThatThrownBy(() -> sut.updateSubmittedResponse(UpdateSubmittedFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .answers(List.of(AnswerCommand.builder().questionId(20L).textValue("다른 파트 답변").build()))
+            .requiredQuestionIds(Set.of(10L))
+            .allowedQuestionIds(Set.of(10L))
+            .build()))
+            .isInstanceOf(FormDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(FormErrorCode.QUESTION_IS_NOT_OWNED_BY_FORM);
+        then(saveAnswerPort).should(never()).deleteAllByFormResponseId(any());
+    }
+
+    @Test
+    void 제출본_수정은_타인_소유의_응답을_거절한다() {
+        // given
+        FormResponse response = draftResponse();
+        response.submit(Instant.now(), null);
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(response));
+
+        // when & then
+        assertThatThrownBy(() -> sut.updateSubmittedResponse(UpdateSubmittedFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID + 1)
+            .answers(List.of())
+            .build()))
+            .isInstanceOf(FormDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(FormErrorCode.FORM_RESPONSE_FORBIDDEN);
+        then(saveAnswerPort).should(never()).deleteAllByFormResponseId(any());
+    }
+
+    @Test
+    void 제출본_수정_경로는_초안을_거절한다() {
+        // given
+        given(loadFormResponsePort.findById(FORM_RESPONSE_ID)).willReturn(Optional.of(draftResponse()));
+
+        // when & then
+        assertThatThrownBy(() -> sut.updateSubmittedResponse(UpdateSubmittedFormResponseCommand.builder()
+            .formResponseId(FORM_RESPONSE_ID)
+            .requesterMemberId(MEMBER_ID)
+            .answers(List.of())
+            .build()))
+            .isInstanceOf(FormDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(FormErrorCode.FORM_RESPONSE_NOT_SUBMITTED);
+        then(saveAnswerPort).should(never()).deleteAllByFormResponseId(any());
     }
 
     @Test

@@ -15,6 +15,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -27,6 +29,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
+import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
@@ -90,10 +94,12 @@ class ProjectApplicationControllerTest {
     @Nested
     class updateAndSubmit {
 
-        @Test
-        void PUT_applicationId_경로는_command에_applicationId를_전달한다() throws Exception {
+        @ParameterizedTest
+        @EnumSource(value = ProjectApplicationStatus.class, names = {"DRAFT", "SUBMITTED"})
+        void PUT_applicationId_경로는_지원서_상태를_유지하고_식별자를_전달한다(ProjectApplicationStatus applicationStatus)
+            throws Exception {
             given(updateProjectApplicationDraftUseCase.update(any()))
-                .willReturn(ProjectApplicationInfo.of(APPLICATION_ID, ProjectApplicationStatus.DRAFT));
+                .willReturn(ProjectApplicationInfo.of(APPLICATION_ID, applicationStatus));
             String body = """
                 {
                   "answers": [
@@ -111,7 +117,7 @@ class ProjectApplicationControllerTest {
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.applicationId").value(APPLICATION_ID))
-                .andExpect(jsonPath("$.result.status").value("DRAFT"));
+                .andExpect(jsonPath("$.result.status").value(applicationStatus.name()));
 
             ArgumentCaptor<UpdateProjectApplicationDraftCommand> captor =
                 ArgumentCaptor.forClass(UpdateProjectApplicationDraftCommand.class);
@@ -119,6 +125,19 @@ class ProjectApplicationControllerTest {
             assertThat(captor.getValue().projectId()).isEqualTo(PROJECT_ID);
             assertThat(captor.getValue().applicationId()).isEqualTo(APPLICATION_ID);
             assertThat(captor.getValue().requesterMemberId()).isEqualTo(TEST_MEMBER_ID);
+        }
+
+        @Test
+        void 제출본_재제출_거절은_403을_반환한다() throws Exception {
+            // given
+            given(submitProjectApplicationUseCase.submit(any()))
+                .willThrow(new AuthorizationDomainException(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED,
+                    "지원서를 제출할 권한이 없어요. 지원 가능한 프로젝트인지 확인해주세요."));
+
+            // when & then
+            mockMvc.perform(post("/api/v1/projects/{projectId}/applications/{applicationId}/submit",
+                    PROJECT_ID, APPLICATION_ID))
+                .andExpect(status().isForbidden());
         }
 
         @Test

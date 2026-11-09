@@ -36,6 +36,7 @@ import com.umc.product.form.application.port.in.command.dto.UpdateAnonymousDraft
 import com.umc.product.form.application.port.in.command.dto.UpdateAnonymousFormResponseCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateDraftFormResponseCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateFormResponseCommand;
+import com.umc.product.form.application.port.in.command.dto.UpdateSubmittedFormResponseCommand;
 import com.umc.product.form.application.port.out.LoadAnswerPort;
 import com.umc.product.form.application.port.out.LoadFormPort;
 import com.umc.product.form.application.port.out.LoadFormResponsePort;
@@ -134,28 +135,55 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
             .findSubmittedByFormIdAndRespondentMemberId(command.formId(), command.respondentMemberId())
             .orElseThrow(() -> new FormDomainException(FormErrorCode.FORM_RESPONSE_NOT_FOUND));
 
-        validateSubmitScope(command.formId(), command.allowedQuestionIds(), command.requiredQuestionIds());
-        validateAnswers(command.formId(), command.answers());
-        Set<Long> answeredQuestionIds = extractQuestionIds(command.answers());
-        if (command.allowedQuestionIds() != null) {
-            validateAnsweredQuestionsAllowed(command.allowedQuestionIds(), answeredQuestionIds);
+        replaceSubmittedAnswers(
+            existing, command.answers(), command.requiredQuestionIds(), command.allowedQuestionIds()
+        );
+    }
+
+    @Override
+    public void updateSubmittedResponse(UpdateSubmittedFormResponseCommand command) {
+        requireRespondentMemberId(command.requesterMemberId());
+        FormResponse response = loadFormResponsePort.findById(command.formResponseId())
+            .orElseThrow(() -> new FormDomainException(FormErrorCode.FORM_RESPONSE_NOT_FOUND));
+        if (!command.requesterMemberId().equals(response.getRespondentMemberId())) {
+            throw new FormDomainException(FormErrorCode.FORM_RESPONSE_FORBIDDEN);
+        }
+        requirePublished(response.getForm());
+        if (response.getStatus() != FormResponseStatus.SUBMITTED) {
+            throw new FormDomainException(FormErrorCode.FORM_RESPONSE_NOT_SUBMITTED);
+        }
+
+        replaceSubmittedAnswers(
+            response, command.answers(), command.requiredQuestionIds(), command.allowedQuestionIds()
+        );
+    }
+
+    private void replaceSubmittedAnswers(
+        FormResponse existing, List<AnswerCommand> answers, Set<Long> requiredQuestionIds, Set<Long> allowedQuestionIds
+    ) {
+        Long formId = existing.getForm().getId();
+        validateSubmitScope(formId, allowedQuestionIds, requiredQuestionIds);
+        validateAnswers(formId, answers);
+        Set<Long> answeredQuestionIds = extractQuestionIds(answers);
+        if (allowedQuestionIds != null) {
+            validateAnsweredQuestionsAllowed(allowedQuestionIds, answeredQuestionIds);
         }
         Set<Long> visitedSectionIds = resolveVisitedSectionIds(
-            command.formId(),
-            extractSingleSelectedOptionIds(command.answers())
+            formId,
+            extractSingleSelectedOptionIds(answers)
         );
         validateAllRequiredAnsweredWithVisited(
-            command.formId(),
+            formId,
             answeredQuestionIds,
             visitedSectionIds,
-            command.requiredQuestionIds()
+            requiredQuestionIds
         );
 
         saveAnswerPort.deleteAllByFormResponseId(existing.getId());
 
-        List<AnswerWithOptions> data = buildAnswerData(existing, command.answers());
+        List<AnswerWithOptions> data = buildAnswerData(existing, answers);
         saveAnswers(data);
-        saveEmptyAnswersForUnanswered(existing, command.allowedQuestionIds(), answeredQuestionIds);
+        saveEmptyAnswersForUnanswered(existing, allowedQuestionIds, answeredQuestionIds);
 
         existing.updateLastSavedAt(Instant.now());
         saveFormResponsePort.save(existing);
