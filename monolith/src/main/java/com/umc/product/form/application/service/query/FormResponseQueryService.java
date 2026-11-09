@@ -42,27 +42,27 @@ public class FormResponseQueryService implements GetFormResponseUseCase {
     @Override
     public Optional<FormResponseInfo> findById(Long formResponseId) {
         return loadFormResponsePort.findById(formResponseId)
-            .map(FormResponseInfo::from);
+            .map(FormQueryInfoAssembler::toFormResponseInfo);
     }
 
     @Override
     public FormResponseInfo getById(Long formResponseId) {
         return loadFormResponsePort.findById(formResponseId)
-            .map(FormResponseInfo::from)
+            .map(FormQueryInfoAssembler::toFormResponseInfo)
             .orElseThrow(() -> new FormDomainException(FormErrorCode.FORM_RESPONSE_NOT_FOUND));
     }
 
     @Override
     public List<FormResponseInfo> listByFormId(Long formId) {
         return loadFormResponsePort.listByFormId(formId).stream()
-            .map(FormResponseInfo::from)
+            .map(FormQueryInfoAssembler::toFormResponseInfo)
             .toList();
     }
 
     @Override
     public List<FormResponseInfo> listSubmittedByFormId(Long formId) {
         return loadFormResponsePort.listSubmittedByFormId(formId).stream()
-            .map(FormResponseInfo::from)
+            .map(FormQueryInfoAssembler::toFormResponseInfo)
             .toList();
     }
 
@@ -70,7 +70,7 @@ public class FormResponseQueryService implements GetFormResponseUseCase {
     public List<FormResponseInfo> listDraftByRespondentMemberId(Long respondentMemberId) {
         requireRespondentMemberId(respondentMemberId);
         return loadFormResponsePort.findAllDraftByRespondentMemberId(respondentMemberId).stream()
-            .map(FormResponseInfo::from)
+            .map(FormQueryInfoAssembler::toFormResponseInfo)
             .toList();
     }
 
@@ -78,14 +78,14 @@ public class FormResponseQueryService implements GetFormResponseUseCase {
     public Optional<FormResponseInfo> findDraftByFormIdAndRespondentMemberId(Long formId, Long respondentMemberId) {
         requireRespondentMemberId(respondentMemberId);
         return loadFormResponsePort.findDraftByFormIdAndRespondentMemberId(formId, respondentMemberId)
-            .map(FormResponseInfo::from);
+            .map(FormQueryInfoAssembler::toFormResponseInfo);
     }
 
     @Override
     public Optional<FormResponseInfo> findSubmittedByFormIdAndRespondentMemberId(Long formId, Long respondentMemberId) {
         requireRespondentMemberId(respondentMemberId);
         return loadFormResponsePort.findSubmittedByFormIdAndRespondentMemberId(formId, respondentMemberId)
-            .map(FormResponseInfo::from);
+            .map(FormQueryInfoAssembler::toFormResponseInfo);
     }
 
     @Override
@@ -98,7 +98,7 @@ public class FormResponseQueryService implements GetFormResponseUseCase {
     public Optional<FormResponseWithAnswersInfo> findResponseWithAnswers(Long formResponseId) {
         return loadFormResponsePort.findById(formResponseId)
             .filter(fr -> fr.getRespondentMemberId() != null)
-            .map(formResponse -> FormResponseWithAnswersInfo.from(
+            .map(formResponse -> FormQueryInfoAssembler.toFormResponseWithAnswersInfo(
                 formResponse,
                 getAnswerUseCase.listByFormResponseId(formResponseId)
             ));
@@ -113,14 +113,14 @@ public class FormResponseQueryService implements GetFormResponseUseCase {
     @Override
     public Optional<FormResponseInfo> findByAccessKey(String rawKey) {
         return loadAnonymousResponseByAccessKey(rawKey)
-            .map(FormResponseInfo::from);
+            .map(FormQueryInfoAssembler::toFormResponseInfo);
     }
 
     @Override
     public FormResponseWithAnswersInfo getResponseWithAnswersByAccessKey(String rawKey) {
         FormResponse response = loadAnonymousResponseByAccessKey(rawKey)
             .orElseThrow(() -> new FormDomainException(FormErrorCode.FORM_RESPONSE_NOT_FOUND));
-        return FormResponseWithAnswersInfo.from(
+        return FormQueryInfoAssembler.toFormResponseWithAnswersInfo(
             response,
             getAnswerUseCase.listByFormResponseIdAsAnonymous(response.getId(), rawKey)
         );
@@ -153,7 +153,7 @@ public class FormResponseQueryService implements GetFormResponseUseCase {
             getAnswerUseCase.listByFormResponseIds(formResponseIds);
 
         return formResponses.stream()
-            .map(formResponse -> FormResponseWithAnswersInfo.from(
+            .map(formResponse -> FormQueryInfoAssembler.toFormResponseWithAnswersInfo(
                 formResponse,
                 answersByFormResponseId.getOrDefault(formResponse.getId(), List.of())
             ))

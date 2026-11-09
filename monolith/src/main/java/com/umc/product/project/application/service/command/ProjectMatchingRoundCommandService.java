@@ -344,14 +344,12 @@ public class ProjectMatchingRoundCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
         }
 
-        if (phaseOrder < 0 && (startsAt.isBefore(existingRound.getDecisionDeadline().plus(minPhaseInterval))
-            || (existingRound.getResultPublishAt() != null && startsAt.isBefore(existingRound.getResultPublishAt())))) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
-        }
-
-        if (phaseOrder > 0 && (existingRound.getStartsAt().isBefore(decisionDeadline.plus(minPhaseInterval))
-            || (resultPublishAt != null && existingRound.getStartsAt().isBefore(resultPublishAt)))) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PHASE_SEQUENCE_INVALID);
+        if (phaseOrder < 0) {
+            ProjectMatchingRound.validatePhaseSequence(existingRound.getDecisionDeadline(),
+                existingRound.getResultPublishAt(), startsAt, minPhaseInterval);
+        } else {
+            ProjectMatchingRound.validatePhaseSequence(decisionDeadline, resultPublishAt,
+                existingRound.getStartsAt(), minPhaseInterval);
         }
     }
 }

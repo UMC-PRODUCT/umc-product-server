@@ -10,6 +10,8 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -270,6 +272,23 @@ class ProjectApplicationPermissionEvaluatorTest {
         assertThat(sut.evaluate(subject, readPermission())).isTrue();
     }
 
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class, names = {
+        "CENTRAL_OPERATING_TEAM_MEMBER", "CENTRAL_EDUCATION_TEAM_MEMBER",
+        "SCHOOL_PRESIDENT", "SCHOOL_VICE_PRESIDENT", "SCHOOL_PART_LEADER", "SCHOOL_ETC_ADMIN"
+    })
+    void 목록_조회_운영진에게_지원서_상세와_합불_권한을_부여하지_않는다(ChallengerRoleType roleType) {
+        // given
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        RoleAttribute role = new RoleAttribute(
+            roleType, roleType.organizationType(), 1L, null, PROJECT_GISU_ID);
+        SubjectAttributes subject = subjectWith(30L, List.of(), List.of(role));
+
+        // when & then
+        assertThat(sut.evaluate(subject, readPermission())).isFalse();
+        assertThat(sut.evaluate(subject, approvePermission())).isFalse();
+    }
+
     // --- EDIT ---
 
     @Test
@@ -281,10 +300,31 @@ class ProjectApplicationPermissionEvaluatorTest {
     }
 
     @Test
-    void EDIT는_SUBMITTED_지원서를_본인이라도_거부() {
+    void EDIT는_SUBMITTED_지원서를_본인_허용() {
         givenApplication(ProjectApplicationStatus.SUBMITTED);
         SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
 
+        assertThat(sut.evaluate(subject, editPermission())).isTrue();
+    }
+
+    @Test
+    void EDIT는_SUBMITTED_지원서를_타인_거부() {
+        // given
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        SubjectAttributes subject = subjectWith(PO_MEMBER_ID, List.of(), List.of());
+
+        // when & then
+        assertThat(sut.evaluate(subject, editPermission())).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ProjectApplicationStatus.class, names = {"APPROVED", "REJECTED"})
+    void EDIT는_판정된_지원서를_본인이라도_거부(ProjectApplicationStatus status) {
+        // given
+        givenApplication(status);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        // when & then
         assertThat(sut.evaluate(subject, editPermission())).isFalse();
     }
 
@@ -423,12 +463,41 @@ class ProjectApplicationPermissionEvaluatorTest {
         assertThat(sut.evaluate(subject, approvePermission())).isFalse();
     }
 
-    @Test
-    void APPROVE는_같은_기수_지부장_거부() {
-        givenApplication(ProjectApplicationStatus.SUBMITTED);
+    @ParameterizedTest
+    @EnumSource(value = ProjectApplicationStatus.class, names = {"SUBMITTED", "APPROVED", "REJECTED"})
+    void APPROVE는_같은_기수_소속_지부장_허용(ProjectApplicationStatus status) {
+        // given
+        givenApplication(status);
         SubjectAttributes subject = subjectWith(30L, List.of(),
             List.of(chapterPresidentRole(PROJECT_CHAPTER_ID, PROJECT_GISU_ID)));
 
+        // when & then
+        assertThat(sut.evaluate(subject, approvePermission())).isTrue();
+    }
+
+    @Test
+    void APPROVE는_다른_지부나_다른_기수_지부장_거부() {
+        // given
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        SubjectAttributes otherChapter = subjectWith(30L, List.of(),
+            List.of(chapterPresidentRole(PROJECT_CHAPTER_ID + 1, PROJECT_GISU_ID)));
+        SubjectAttributes otherGisu = subjectWith(30L, List.of(),
+            List.of(chapterPresidentRole(PROJECT_CHAPTER_ID, PROJECT_GISU_ID + 1)));
+
+        // when & then
+        assertThat(sut.evaluate(otherChapter, approvePermission())).isFalse();
+        assertThat(sut.evaluate(otherGisu, approvePermission())).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ProjectApplicationStatus.class, names = {"DRAFT", "CANCELLED"})
+    void APPROVE는_소속_지부장도_임시저장과_철회_지원서는_거부(ProjectApplicationStatus status) {
+        // given
+        givenApplication(status);
+        SubjectAttributes subject = subjectWith(30L, List.of(),
+            List.of(chapterPresidentRole(PROJECT_CHAPTER_ID, PROJECT_GISU_ID)));
+
+        // when & then
         assertThat(sut.evaluate(subject, approvePermission())).isFalse();
     }
 

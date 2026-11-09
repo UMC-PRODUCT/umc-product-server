@@ -1,7 +1,5 @@
 package com.umc.product.test.adapter.in.web;
 
-import java.util.List;
-
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,8 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.umc.product.audit.application.port.in.annotation.Audited;
-import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authentication.adapter.out.external.AppleOAuthProperties;
 import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier;
 import com.umc.product.authentication.application.port.in.command.ManageAuthenticationUseCase;
@@ -21,7 +17,6 @@ import com.umc.product.authentication.application.port.in.command.dto.IssueAuthe
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
@@ -29,16 +24,11 @@ import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.notification.application.port.in.SendEmailUseCase;
 import com.umc.product.notification.application.port.in.SendNotificationToAudienceUseCase;
-import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
-import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
 import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;
-import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
-import com.umc.product.notification.domain.WebhookPlatform;
 import com.umc.product.storage.adapter.in.web.dto.FileResponse;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import com.umc.product.test.dto.FcmTestSendRequest;
-import com.umc.product.test.dto.TestAopAlarmResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -59,7 +49,6 @@ public class TestController {
     private final ManageAuthenticationUseCase manageAuthenticationUseCase;
     private final AppleTokenVerifier appleTokenVerifier;
     private final AppleOAuthProperties appleOAuthProperties;
-    private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
     private final GetFileUseCase getFileUseCase;
     private final SendEmailUseCase sendEmailUseCase;
     private final SendNotificationToAudienceUseCase sendNotificationToAudienceUseCase;
@@ -91,68 +80,6 @@ public class TestController {
         @RequestBody SendVerificationEmailCommand command
     ) {
         sendEmailUseCase.sendVerificationEmail(command);
-    }
-
-    @WebhookAlarm(
-        title = "'알람 테스트 : ' + #title",
-        content = "'내용 : ' + #result.content",
-        platforms = {WebhookPlatform.TELEGRAM}
-    )
-    @Audited(
-        domain = Domain.AUDIT_LOG,
-        action = AuditAction.CREATE,
-        targetType = "Test",
-        targetId = "'TEST'",
-        description = "'내용 : ' + #result.content"
-    )
-    @GetMapping("webhook/aop-test")
-    @Operation(operationId = "TEST-003", summary = "AOP로 전송하는 알람 테스트")
-    public TestAopAlarmResponse sendAopWebhookAlarm(
-        @RequestParam String title,
-        @RequestParam String content
-    ) {
-        log.debug("웹훅 알람 AOP 테스트를 호출했습니다.");
-
-        return TestAopAlarmResponse.builder()
-            .content(content)
-            .build();
-    }
-
-    @PostMapping("webhook/alarm")
-    @Operation(operationId = "TEST-004", summary = "웹훅 알람 전송 테스트")
-    public void sendWebhookAlarm(
-        @RequestParam String title,
-        @RequestParam String content
-    ) {
-        sendWebhookAlarmUseCase.send(
-            SendWebhookAlarmCommand.builder()
-                .title(title == null ? "알람 테스트" : title)
-                .content(content == null ? "알람 테스트 내용입니다." : content)
-                .platforms(List.of(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD))
-                .build()
-        );
-    }
-
-    // buffer alarm test
-    @PostMapping("webhook/alarm/buffer")
-    @Operation(operationId = "TEST-005", summary = "웹훅 알람 버퍼 전송 테스트")
-    public void sendBufferedWebhookAlarm(
-        @RequestParam String title,
-        @RequestParam String content,
-        @RequestParam int repeatCount
-    ) {
-        for (int i = 0; i < repeatCount; i++) {
-            String bTitle = title == null ? "버퍼 알람 테스트" : title + " #" + (i + 1);
-            String bContent = content == null ? "버퍼 알람 테스트 내용입니다." : content + " #" + (i + 1);
-
-            sendWebhookAlarmUseCase.sendBuffered(
-                SendWebhookAlarmCommand.builder()
-                    .title(bTitle)
-                    .content(bContent)
-                    .platforms(List.of(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD))
-                    .build()
-            );
-        }
     }
 
     @GetMapping("apple-client-secret")

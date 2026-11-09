@@ -1,6 +1,7 @@
 package com.umc.product.notice.application.port.in.command.dto;
 
 import com.umc.product.notice.domain.NoticeTargetInfo;
+import com.umc.product.notice.domain.enums.UpmsNoticeType;
 
 public record CreateNoticeCommand(
     Long memberId, /* 공지 작성자 멤버 ID */
@@ -8,6 +9,7 @@ public record CreateNoticeCommand(
     String content,
     Boolean shouldNotify, /* 알림 발송 여부 */
     boolean mustRead, /* 필독 여부 */
-    NoticeTargetInfo targetInfo
+    NoticeTargetInfo targetInfo,
+    UpmsNoticeType upmsNoticeType
 ) {
 }

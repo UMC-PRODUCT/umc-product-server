@@ -4,18 +4,20 @@
 
 Proposed
 
+> 2026-11-04 참고: 이 문서가 전제한 운영 알람 webhook(`SendWebhookAlarmUseCase`, `ServerLifecycleAlarmListener`, `WebhookPlatform`)은 제거됐다. 아래 본문의 해당 언급은 작성 시점 기록이다.
+
 ## Context
 
 2026-05-08 기준, UMC PRODUCT 서버는 Discord 와 다음 두 경로로 통신한다.
 
-- [DiscordWebhookAdapter](../../src/main/java/com/umc/product/notification/adapter/out/external/webhook/DiscordWebhookAdapter.java) — 운영 알람용 webhook 발송 (`SLACK / DISCORD / TELEGRAM` 공용 인터페이스).
+- [DiscordWebhookAdapter](../../src/main/java/com/umc/product/notification/adapter/out/external/webhook/DiscordWebhookAdapter.java) — 운영 알람용 webhook 발송 (`SLACK / DISCORD / TELEGRAM` 공용 인터페이스. 2026-11-04 Telegram·Slack 어댑터를 제거하고 Discord로 통일한 뒤, 같은 날 웹훅 알림 기능 자체를 제거했다).
 - [DiscordMentionWebhookAdapter](../../src/main/java/com/umc/product/figma/adapter/out/external/DiscordMentionWebhookAdapter.java) — Figma 댓글 → Discord embed 묶음 발송.
 
 두 어댑터 모두 **Discord webhook URL 단방향 POST** 다. 즉 서버는 Discord 로 메시지를 "보내는" 채널만 갖고 있고, Discord 측 이벤트(슬래시 커맨드, 멘션 응답, reaction, DM, 채널 가입 등) 를 "받는" 채널이 없다. 이 구조에서 운영 / 기획 측에 다음 한계가 누적되어 있다.
 
 1. **운영진 명령(action) 채널 부재**: "지금 figma digest 를 임의 시간창으로 다시 돌려줘" 같은 운영 액션은 `POST /admin/figma/digest?from&to` 같은 admin REST 가 있어야만 가능하다. Discord 안에서 슬래시 커맨드로 같은 동작을 트리거할 수 있으면 운영 회의 도중 즉시 호출하는 흐름이 자연스럽다.
 2. **양방향 Q&A 채널 부재**: 알림이 Discord 로 도달했을 때 운영진이 그 메시지에 답해도(혹은 reaction 을 달아도) 서버는 어떤 신호도 받지 못한다. "확인됨" 표시, 자동 ack, FAQ 응답 같은 시나리오가 모두 닫혀 있다.
-3. **신규 도메인(문의, ADR-006)** 의 **운영진 측 입력 채널을 Discord 로 확장**할 가능성이 보인다. 문의 도메인이 도입되더라도 운영진은 자체 앱 화면보다 Discord 에서 즉시 응답하는 흐름을 더 선호할 가능성이 크다.
+3. **신규 도메인(문의, ADR-011)** 의 **운영진 측 입력 채널을 Discord 로 확장**할 가능성이 보인다. 문의 도메인이 도입되더라도 운영진은 자체 앱 화면보다 Discord 에서 즉시 응답하는 흐름을 더 선호할 가능성이 크다.
 4. **서버 상태 조회 / 운영 도구**: 캐시 invalidation, FCM 토픽 토글, watched-file 강제 sync 등 Admin REST 로 노출하기엔 무거운 작업을 Discord 에서 슬래시 커맨드로 호출할 수 있다면 운영 비용이 줄어든다.
 
 이 한계들을 풀려면 Discord 의 **Gateway WebSocket 연결**(즉 bot 계정) 이 필요하다. webhook 은 본질적으로 outbound 만 가능하고, inbound 이벤트(=상호작용) 는 Discord Gateway 또는 Interactions endpoint(HTTP) 로만 들어온다.
@@ -36,7 +38,7 @@ Proposed
 - 프로젝트는 Hexagonal Architecture + CQRS 컨벤션 (`{Domain}CommandService` / `{Domain}QueryService`).
 - 도메인은 ID 참조로만 다른 도메인과 통신하고, `adapter/in` 은 여러 종류 (REST 컨트롤러, 스케줄러, 이벤트 리스너) 가 이미 공존한다.
 - 단일 인스턴스로 운영 중이지만 모집/이벤트 시즌에 다중 인스턴스로 확장하는 시나리오가 가까이 있다.
-- ADR-006 으로 WebSocket + STOMP (서버 ↔ 클라이언트) 도입이 검토되고 있다 — Discord Gateway 연결과는 별개의 WebSocket 이지만 운영 측면에서 "한 프로세스 안에 두 개의 영구 연결" 이 공존하는 점은 인지가 필요하다.
+- ADR-011 으로 WebSocket + STOMP (서버 ↔ 클라이언트) 도입이 검토되고 있다 — Discord Gateway 연결과는 별개의 WebSocket 이지만 운영 측면에서 "한 프로세스 안에 두 개의 영구 연결" 이 공존하는 점은 인지가 필요하다.
 - `application.yml` 에 이미 `app.webhook.discord.url` 이 있고, profile 은 `local / dev / prod`. 운영 알람은 `local` 외 모든 환경에서 발송되는 컨벤션이 자리잡혀 있다.
 
 ### 배경 기술 — WebFlux · Reactor · RestClient (이 결정의 기술적 전제)
@@ -282,7 +284,7 @@ JDA 보다 가벼운 Discord 라이브러리.
 
 ### Negative
 
-- 한 프로세스 안에 영구 WebSocket 연결(Discord Gateway) 이 추가된다 — 모니터링 / 메트릭 / 재연결 정책을 새로 운영해야 한다 (ADR-006 의 STOMP WebSocket 도 도입되면 영구 연결이 두 종류).
+- 한 프로세스 안에 영구 WebSocket 연결(Discord Gateway) 이 추가된다 — 모니터링 / 메트릭 / 재연결 정책을 새로 운영해야 한다 (ADR-011 의 STOMP WebSocket 도 도입되면 영구 연결이 두 종류).
 - bot token 이라는 새 secret 이 운영 비밀 목록에 추가된다 (rotation 절차 / 회수 절차 정의 필요).
 - 멀티 인스턴스 환경 도입 시 leader-only 토글을 수동으로 관리해야 한다 (자동 leader-election 미도입 — 후속 ADR).
 - JDA 의 Java agent / reflection 기반 동작으로 startup 비용이 약간 증가한다 (수백 ms 단위).
@@ -556,7 +558,7 @@ bot 코드 추가 전, 의존성 / 환경변수 / 공용 enum 을 정리한다. 
 ## References
 
 - 관련 ADR
-    - [ADR-006: 문의사항 도메인 + WebSocket + STOMP](006-inquiry-domain-with-websocket-stomp.md) — 한 프로세스 안에 두 종류의 영구 WebSocket 연결이 공존하는 운영 컨텍스트.
+    - [ADR-011: 문의사항 도메인 + WebSocket + STOMP](011-inquiry-domain-with-websocket-stomp.md) — 한 프로세스 안에 두 종류의 영구 WebSocket 연결이 공존하는 운영 컨텍스트.
 - 기존 코드
     - [DiscordWebhookAdapter](../../src/main/java/com/umc/product/notification/adapter/out/external/webhook/DiscordWebhookAdapter.java)
     - [DiscordMentionWebhookAdapter](../../src/main/java/com/umc/product/figma/adapter/out/external/DiscordMentionWebhookAdapter.java)

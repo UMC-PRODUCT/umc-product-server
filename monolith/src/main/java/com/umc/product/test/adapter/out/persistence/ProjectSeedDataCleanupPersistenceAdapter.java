@@ -1,5 +1,7 @@
 package com.umc.product.test.adapter.out.persistence;
 
+import java.util.List;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -50,6 +52,8 @@ public class ProjectSeedDataCleanupPersistenceAdapter implements DeleteSeedProje
 
     @Override
     public ProjectDataDeletionCounts deleteByGisuId(Long gisuId) {
+        List<Long> matchingRoundIds = listMatchingRoundIds(gisuId);
+
         int deletedProjectMembers = execute("""
             DELETE FROM project_member pm
             WHERE pm.project_id IN (
@@ -206,6 +210,7 @@ public class ProjectSeedDataCleanupPersistenceAdapter implements DeleteSeedProje
             .deletedProjectApplicationFormPolicies(deletedProjectApplicationFormPolicies)
             .deletedProjectPartQuotas(deletedProjectPartQuotas)
             .deletedProjectMatchingRounds(deletedProjectMatchingRounds)
+            .deletedProjectMatchingRoundIds(matchingRoundIds)
             .deletedSurveyForms(deletedSurveyForms)
             .deletedSurveyFormSections(deletedSurveyFormSections)
             .deletedSurveyQuestions(deletedSurveyQuestions)
@@ -215,6 +220,19 @@ public class ProjectSeedDataCleanupPersistenceAdapter implements DeleteSeedProje
             .deletedSurveyAnswerChoices(deletedSurveyAnswerChoices)
             .deletedSurveySingleAnswers(deletedSurveySingleAnswers)
             .build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Long> listMatchingRoundIds(Long gisuId) {
+        List<Number> ids = entityManager.createNativeQuery("""
+                SELECT pmr.id
+                FROM project_matching_round pmr
+                JOIN chapter c ON c.id = pmr.chapter_id
+                WHERE c.gisu_id = :gisuId
+                """)
+            .setParameter("gisuId", gisuId)
+            .getResultList();
+        return ids.stream().map(Number::longValue).toList();
     }
 
     private int execute(String sql, Long gisuId) {

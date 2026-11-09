@@ -22,6 +22,7 @@ import com.umc.product.project.adapter.in.scheduler.MatchingRoundDeadlineHandler
 import com.umc.product.project.adapter.out.scheduler.RandomMatchingSchedulingAdapter.RandomMatchingScheduleRequested;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.ScheduleMatchingRoundDeadlinePort;
+import com.umc.product.project.application.port.out.dto.MatchingRoundTimers;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.enums.MatchingPhase;
 
@@ -105,20 +106,18 @@ public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDead
     }
 
     @Override
-    public void schedule(ProjectMatchingRound round) {
+    public MatchingRoundTimers schedule(ProjectMatchingRound round) {
         Long roundId = round.getId();
         cancel(roundId);
 
         if (round.isAutoDecisionExecuted()) {
-            schedulePublication(round);
-            return;
+            return new MatchingRoundTimers(roundId, null, schedulePublication(round));
         }
         // 랜덤 매칭은 3차 결과 공개 완료, 일반 차수는 PM 마감을 기준으로 같은 buffer를 적용한다.
         Instant baseAt = round.isRandomMatching()
             ? findThirdPublishedAt(round).orElse(null) : round.getDecisionDeadline();
         if (baseAt == null) {
-            schedulePublication(round);
-            return;
+            return new MatchingRoundTimers(roundId, null, schedulePublication(round));
         }
         Instant runAt = baseAt.plus(deadlineBuffer);
         // 동적 등록 task 는 @Scheduled 가 아니라 Spring 의 관측 span 이 붙지 않는다.
@@ -134,20 +133,24 @@ public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDead
             runAt
         );
         pendingTasks.put(roundId, future);
-        schedulePublication(round);
+        return new MatchingRoundTimers(roundId, runAt, schedulePublication(round));
     }
 
     /**
      * 발표 시각에 공개 작업을 예약한다. 기존 예약이 있으면 교체한다.
+     *
+     * @return 등록한 발표 시각. 발표 시각이 없거나 이미 공개했으면 null
      */
-    public void schedulePublication(ProjectMatchingRound round) {
+    public Instant schedulePublication(ProjectMatchingRound round) {
         ScheduledFuture<?> previous = publicationTasks.remove(round.getId());
         if (previous != null) {
             previous.cancel(false);
         }
-        if (round.getResultPublishAt() != null && round.getResultPublishedAt() == null) {
-            registerPublication(round.getId(), round.getResultPublishAt());
+        if (round.getResultPublishAt() == null || round.getResultPublishedAt() != null) {
+            return null;
         }
+        registerPublication(round.getId(), round.getResultPublishAt());
+        return round.getResultPublishAt();
     }
 
     private void registerPublication(Long roundId, Instant runAt) {

@@ -66,19 +66,18 @@ class CurriculumSeedServiceTest {
     }
 
     @Test
-    @DisplayName("기본 파트 사용 시 ADMIN 제외 모든 파트의 커리큘럼을 생성한다")
-    void 기본_파트_ADMIN_제외() {
+    @DisplayName("기본 파트 사용 시 선택 가능한 파트 4개의 커리큘럼만 생성한다")
+    void 기본_파트_선택_가능_파트() {
         AtomicLong ids = new AtomicLong(1L);
         given(manageCurriculumUseCase.create(any())).willAnswer(invocation -> ids.getAndIncrement());
 
         SeedCurriculumResult result = sut.seed(new SeedCurriculumCommand(9L, 0, 0, null, null));
 
         ArgumentCaptor<CreateCurriculumCommand> captor = ArgumentCaptor.forClass(CreateCurriculumCommand.class);
-        verify(manageCurriculumUseCase, org.mockito.Mockito.times(9)).create(captor.capture());
+        verify(manageCurriculumUseCase, org.mockito.Mockito.times(4)).create(captor.capture());
         assertThat(captor.getAllValues()).extracting(CreateCurriculumCommand::part)
-            .doesNotContain(ChallengerPart.ADMIN)
-            .contains(ChallengerPart.WEB_PRODUCT_ENGINEER, ChallengerPart.MOBILE_PRODUCT_ENGINEER);
-        assertThat(result.createdCurriculumIds()).hasSize(9);
+            .containsExactlyElementsOf(ChallengerPart.selectableValues());
+        assertThat(result.createdCurriculumIds()).hasSize(4);
     }
 
     @Test

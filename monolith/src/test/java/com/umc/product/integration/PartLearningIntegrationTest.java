@@ -10,7 +10,6 @@ import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.umc.product.challenger.application.port.in.command.ManageChallengerRecordUseCase;
 import com.umc.product.challenger.application.port.in.command.dto.ConsumeChallengerRecordCommand;
@@ -38,7 +37,6 @@ import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
-import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
 import com.umc.product.organization.application.port.in.command.ManageGisuUseCase;
 import com.umc.product.organization.application.port.in.command.ManageStudyGroupUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateGisuCommand;
@@ -71,9 +69,6 @@ class PartLearningIntegrationTest extends IntegrationTestSupport {
     @Autowired private ManageMissionSubmissionUseCase manageMissionSubmissionUseCase;
     @Autowired private GetCurriculumUseCase getCurriculumUseCase;
     @Autowired private GetOriginalWorkbookUseCase getOriginalWorkbookUseCase;
-
-    @MockitoBean
-    private SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
 
     @Test
     @DisplayName("단일 파트 코드 등록부터 스터디 배정과 워크북 제출까지 연결된다")

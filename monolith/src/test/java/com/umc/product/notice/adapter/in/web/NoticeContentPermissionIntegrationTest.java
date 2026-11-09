@@ -17,6 +17,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,13 +98,17 @@ class NoticeContentPermissionIntegrationTest extends IntegrationTestSupport {
         authorMemberId = saveMember("notice-author", schoolId);
         Long superAdminMemberId = saveMember("notice-super-admin", schoolId);
         Long otherMemberId = saveMember("notice-other", schoolId);
+        Long umcProductMemberId = saveMember("notice-umc-product", schoolId);
         memberSystemRoleJpaRepository.save(MemberSystemRole.create(superAdminMemberId, MemberSystemRoleType.SUPER_ADMIN));
-        memberIds = List.of(authorMemberId, superAdminMemberId, otherMemberId);
+        memberSystemRoleJpaRepository.save(
+            MemberSystemRole.create(umcProductMemberId, MemberSystemRoleType.UMC_PRODUCT));
+        memberIds = List.of(authorMemberId, superAdminMemberId, otherMemberId, umcProductMemberId);
         evictAuthoritySnapshotCacheUseCase.evictByMemberIds(memberIds);
 
         setUpToken("author-token", authorMemberId);
         setUpToken("super-admin-token", superAdminMemberId);
         setUpToken("other-token", otherMemberId);
+        setUpToken("umc-product-token", umcProductMemberId);
 
         Notice notice = saveNoticePort.save(Notice.create("제목", "내용", authorMemberId, false, false));
         noticeId = notice.getId();
@@ -146,6 +151,17 @@ class NoticeContentPermissionIntegrationTest extends IntegrationTestSupport {
         mockMvc.perform(request(operation, "super-admin-token"))
             .andExpect(status().isOk());
         assertChangedContents(operation, formId);
+    }
+
+    @Test
+    @DisplayName("UMC_PRODUCT만으로는 다른 작성자의 공지 첨부를 변경할 수 없다")
+    void UMC_PRODUCT_계정_첨부_변경_거부() throws Exception {
+        // When / Then
+        mockMvc.perform(request(Operation.ADD_LINKS, "umc-product-token"))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value("NOTICE-0008"));
+        assertThat(loadNoticeLinkPort.findLinksByNoticeId(noticeId))
+            .extracting(NoticeLink::getLink).containsExactly("https://example.com/old");
     }
 
     @ParameterizedTest

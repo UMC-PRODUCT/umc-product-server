@@ -64,7 +64,8 @@ public class ProjectStatisticsQueryController {
             - summary.projectRoundStatistics: 프로젝트별 차수별 지원 인원입니다. 프로젝트 등록순으로 정렬합니다.
 
             권한
-            - SUPER_ADMIN, 해당 기수 총괄단, 해당 지부장, 해당 지부 소속 학교 회장·부회장은 chapterId·projectIds 모두 조회할 수 있습니다.
+            - SUPER_ADMIN, 해당 기수 중앙운영사무국(총괄단·운영국원·교육국원)과 지부장은 전체 지부의 chapterId·projectIds를 조회할 수 있습니다.
+            - 학교 운영진(회장·부회장·교내 파트장·기타 교내 운영진)은 해당 기수 소속 지부만 조회할 수 있습니다.
             - PO·Sub-PM은 본인 프로젝트만 projectIds로 조회할 수 있습니다.
             - 권한이 없으면 403, 존재하지 않는 프로젝트가 포함되면 404를 반환합니다.
             """

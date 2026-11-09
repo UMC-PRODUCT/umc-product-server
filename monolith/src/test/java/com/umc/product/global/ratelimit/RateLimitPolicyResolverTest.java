@@ -90,7 +90,7 @@ class RateLimitPolicyResolverTest {
 
         assertThat(resolver.resolve("OPTIONS", "/api/v1/projects", "/api/v1/projects", false)).isEmpty();
         assertThat(resolver.resolve("OPTIONS", "/graphql", "/graphql", false)).isEmpty();
-        assertThat(resolver.resolve("GET", "/docs/scalar.html", "/docs/scalar.html", false)).isEmpty();
+        assertThat(resolver.resolve("GET", "/docs/swagger-ui.html", "/docs/swagger-ui.html", false)).isEmpty();
         assertThat(resolver.resolve("GET", "/actuator/health", "/actuator/health", false)).isEmpty();
     }
 

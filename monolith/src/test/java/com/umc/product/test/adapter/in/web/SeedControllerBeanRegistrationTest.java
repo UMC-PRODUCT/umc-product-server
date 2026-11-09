@@ -8,7 +8,11 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 
+import com.umc.product.test.adapter.out.persistence.MatchingRoundTimeRewritePersistenceAdapter;
 import com.umc.product.test.adapter.out.persistence.MemberSystemRoleSeedPersistenceAdapter;
+import com.umc.product.test.adapter.out.persistence.QaSeedMarkerPersistenceAdapter;
+import com.umc.product.test.adapter.out.persistence.SeedProjectReadPersistenceAdapter;
+import com.umc.product.test.adapter.out.resource.ClasspathQaRosterAdapter;
 import com.umc.product.test.application.service.ChallengerSeedService;
 import com.umc.product.test.application.service.CurriculumSeedService;
 import com.umc.product.test.application.service.DummyCurriculumFactory;
@@ -17,11 +21,11 @@ import com.umc.product.test.application.service.DummyNoticeFactory;
 import com.umc.product.test.application.service.MemberSeedService;
 import com.umc.product.test.application.service.MemberSystemRoleSeedService;
 import com.umc.product.test.application.service.NoticeSeedService;
-import com.umc.product.test.application.service.PartAssignmentPolicy;
-import com.umc.product.test.application.service.ProjectApplicationSeedService;
 import com.umc.product.test.application.service.ProjectSeedDataCleanupService;
-import com.umc.product.test.application.service.ProjectSeedService;
+import com.umc.product.test.application.service.QaGisuIdLoader;
 import com.umc.product.test.application.service.SeedProperties;
+import com.umc.product.test.application.service.qa.QaSeedOrchestrator;
+import com.umc.product.test.application.service.rehearsal.MatchingRoundAdvanceService;
 
 /**
  * 시딩 관련 빈들의 가드 어노테이션이 회귀 없이 유지되는지 검증한다.
@@ -35,19 +39,27 @@ class SeedControllerBeanRegistrationTest {
     @ParameterizedTest(name = "{0} 는 시딩 가드 어노테이션을 모두 가진다")
     @ValueSource(classes = {
         SeedController.class,
+        QaSeedController.class,
+        MatchingRoundAdvanceController.class,
+        MatchingRoundAdvanceService.class,
+        MatchingRoundTimeRewritePersistenceAdapter.class,
+        QaSeedOrchestrator.class,
+        QaSeedMarkerPersistenceAdapter.class,
+        ClasspathQaRosterAdapter.class,
+        QaGisuIdLoader.class,
         MemberSeedService.class,
         MemberSystemRoleSeedService.class,
         MemberSystemRoleSeedPersistenceAdapter.class,
         ChallengerSeedService.class,
-        ProjectSeedService.class,
+        StartingLineSeedController.class,
+        MatchingBotController.class,
+        SeedProjectReadPersistenceAdapter.class,
         ProjectSeedDataCleanupService.class,
-        ProjectApplicationSeedService.class,
         CurriculumSeedService.class,
         NoticeSeedService.class,
         DummyMemberFactory.class,
         DummyCurriculumFactory.class,
         DummyNoticeFactory.class,
-        PartAssignmentPolicy.class,
         SeedProperties.class
     })
     @DisplayName("모든 시딩 빈은 @Profile(!prod) + @ConditionalOnProperty(app.seed.enabled=true) 가드를 가진다")

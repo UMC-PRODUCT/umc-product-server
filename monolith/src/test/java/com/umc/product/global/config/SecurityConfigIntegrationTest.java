@@ -17,11 +17,11 @@ import com.umc.product.support.IntegrationTestSupport;
 class SecurityConfigIntegrationTest extends IntegrationTestSupport {
 
     @Test
-    @DisplayName("docs 진입 경로는 Scalar HTML로 리다이렉트한다")
-    void docsEntryRedirectsToScalar() throws Exception {
+    @DisplayName("docs 진입 경로는 Swagger UI로 리다이렉트한다")
+    void docsEntryRedirectsToSwaggerUi() throws Exception {
         mockMvc.perform(get("/docs"))
             .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrl("/docs/scalar.html"));
+            .andExpect(redirectedUrl("/docs/swagger-ui.html"));
     }
 
     @Test

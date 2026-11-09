@@ -2,8 +2,6 @@ package com.umc.product.form.application.port.in.query.dto;
 
 import java.time.Instant;
 
-import com.umc.product.form.domain.FormSection;
-
 import lombok.Builder;
 
 /**
@@ -19,16 +17,4 @@ public record FormSectionInfo(
     Instant createdAt,
     Instant updatedAt
 ) {
-
-    public static FormSectionInfo from(FormSection section) {
-        return FormSectionInfo.builder()
-            .sectionId(section.getId())
-            .formId(section.getForm().getId())
-            .title(section.getTitle())
-            .description(section.getDescription())
-            .orderNo(section.getOrderNo())
-            .createdAt(section.getCreatedAt())
-            .updatedAt(section.getUpdatedAt())
-            .build();
-    }
 }

@@ -37,7 +37,7 @@ class DevTestApiOpenApiIntegrationTest extends IntegrationTestSupport {
         JsonNode basicAuth = openApi.path("components").path("securitySchemes").path("Test API Basic Auth");
 
         // then
-        assertThat(paths.path("/test/seed/members").path("post").path("security")).isEqualTo(expectedSecurity);
+        assertThat(paths.path("/test/seed/member").path("post").path("security")).isEqualTo(expectedSecurity);
         assertThat(paths.path("/test/token/access").path("get").path("security")).isEqualTo(expectedSecurity);
         assertThat(paths.path("/test/health-check").path("get").path("security")).isEqualTo(expectedSecurity);
         assertThat(basicAuth.path("type").asText()).isEqualTo("http");
@@ -66,14 +66,14 @@ class DevTestApiOpenApiIntegrationTest extends IntegrationTestSupport {
 
     @Test
     @DisplayName("JWT 없는 시딩 요청은 인증 오류 대신 입력값 검증까지 도달한다")
-    void 익명_시딩_요청은_잘못된_건수에_검증_오류를_반환한다() throws Exception {
+    void 익명_시딩_요청은_빈_이메일에_검증_오류를_반환한다() throws Exception {
         // given
         String invalidRequest = """
-            {"count": -1, "force": false}
+            {"name": "시딩", "nickname": "시딩", "schoolId": 1, "email": ""}
             """;
 
         // when & then
-        mockMvc.perform(post("/test/seed/members")
+        mockMvc.perform(post("/test/seed/member")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidRequest))
             .andExpect(status().isBadRequest())

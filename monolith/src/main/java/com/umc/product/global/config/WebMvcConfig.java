@@ -30,6 +30,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     private final CurrentMemberArgumentResolver currentMemberArgumentResolver;
     private final ObjectProvider<CurrentDemodayParticipantArgumentResolver> currentDemodayParticipantArgumentResolverProvider;
+    private final TraceIdHeaderInterceptor traceIdHeaderInterceptor;
     private final LoggingInterceptor loggingInterceptor;
     private final ObjectProvider<ApiRateLimitInterceptor> apiRateLimitInterceptorProvider;
 
@@ -41,8 +42,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addRedirectViewController(SecurityPathConfig.SCALAR_ENTRY_PATH, "/docs/scalar.html");
-        registry.addRedirectViewController(SecurityPathConfig.SCALAR_ENTRY_SLASH_PATH, "/docs/scalar.html");
+        registry.addRedirectViewController(SecurityPathConfig.DOCS_ENTRY_PATH, SecurityPathConfig.SWAGGER_UI_PATH);
+        registry.addRedirectViewController(
+            SecurityPathConfig.DOCS_ENTRY_SLASH_PATH,
+            SecurityPathConfig.SWAGGER_UI_PATH
+        );
         registry.addRedirectViewController(
             SecurityPathConfig.ASYNCAPI_ENTRY_PATH,
             SecurityPathConfig.ASYNCAPI_HTML_PATH
@@ -57,12 +61,17 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(loggingInterceptor)
-            .addPathPatterns("/**")
-            .excludePathPatterns(SecurityPathConfig.loggingExcludedPaths());
+        registry.addInterceptor(traceIdHeaderInterceptor)
+            .order(InterceptorOrder.TRACE_ID_HEADER)
+            .addPathPatterns("/**");
         apiRateLimitInterceptorProvider.ifAvailable(apiRateLimitInterceptor ->
             registry.addInterceptor(apiRateLimitInterceptor)
+                .order(InterceptorOrder.RATE_LIMIT)
                 .addPathPatterns("/**")
         );
+        registry.addInterceptor(loggingInterceptor)
+            .order(InterceptorOrder.LOGGING)
+            .addPathPatterns("/**")
+            .excludePathPatterns(SecurityPathConfig.loggingExcludedPaths());
     }
 }

@@ -27,6 +27,10 @@ notification은 메시지를 전달할 뿐, 메시지를 보내야 하는 업무
   사용하며, 일반 로그인 비밀번호를 넣지 않는다. `EMAIL_NO_REPLY_ADDRESS`는 해당 Gmail 주소와 맞춘다.
 - 선택하지 않은 제공자의 자격증명은 필요하지 않다. SMTP는 인증과 STARTTLS를 필수로 사용하고,
   서버 인증서의 호스트 이름을 검사하며 연결·읽기·쓰기 대기에 각각 5초 제한을 둔다.
+- 자체 서명 SMTP 서버(Preview Pod 안 Mailpit): `SMTP_TRUSTED_CERTIFICATE`에 PEM 인증서 파일 경로를 넣는다.
+  값이 있으면 SMTP STARTTLS만 JVM 기본 CA 대신 이 파일의 인증서를 신뢰한다. S3·OAuth·FCM 같은 다른 TLS
+  연결은 계속 JVM 기본 truststore를 쓴다. 호스트 이름 검사는 그대로라 인증서 SAN이 `SMTP_HOST`와 맞아야 한다.
+  파일이 없거나 인증서가 들어 있지 않으면 애플리케이션이 기동하지 않는다. prod·dev는 값을 비워 둔다.
 
 실제 자격증명은 배포 Secret 또는 Git에서 제외된 로컬 env에만 보관한다. SMTP 프로토콜 디버그를 켜거나
 인증코드·수신 주소·메일 본문·비밀번호를 로그에 기록하지 않는다.

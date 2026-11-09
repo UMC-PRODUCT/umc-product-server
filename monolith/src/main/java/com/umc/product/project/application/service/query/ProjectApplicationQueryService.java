@@ -1,5 +1,6 @@
 package com.umc.product.project.application.service.query;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,6 +18,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
+import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -27,6 +30,7 @@ import com.umc.product.form.application.port.in.query.dto.FormResponseWithAnswer
 import com.umc.product.form.application.port.in.query.dto.FormWithStructureInfo;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope;
 import com.umc.product.project.application.access.ProjectApplicationAccessScopeResolver;
+import com.umc.product.project.application.access.ProjectApplicationResultVisibilityPolicy;
 import com.umc.product.project.application.port.in.query.GetMyProjectApplicationsUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectApplicationDetailUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectApplicationsUseCase;
@@ -65,6 +69,8 @@ public class ProjectApplicationQueryService
     private final LoadProjectPort loadProjectPort;
     private final LoadProjectApplicationFormPolicyPort loadProjectApplicationFormPolicyPort;
     private final ProjectApplicationAccessScopeResolver accessScopeResolver;
+    private final CheckPermissionUseCase checkPermissionUseCase;
+    private final Clock clock;
 
     // Cross-domain
     private final GetChallengerUseCase getChallengerUseCase;
@@ -263,16 +269,16 @@ public class ProjectApplicationQueryService
             scope instanceof ProjectApplicationAccessScope.ProjectScoped projectScoped
                 && projectScoped.includeOngoingMatchingRounds();
 
+        Instant now = clock.instant();
+        // 실제 상태로 먼저 필터링하면 결과를 가린 지원서의 합불이 목록 포함 여부로 드러날 수 있다.
         List<ProjectApplication> applications = loadProjectApplicationPort.searchProjectApplications(
             query.projectId(),
             query.matchingRoundId(),
-            query.status(),
-            Instant.now(),
+            null,
+            now,
             includeOngoingMatchingRounds
         );
-        return applications.stream()
-            .map(ProjectApplicationSummaryInfo::from)
-            .toList();
+        return buildVisibleApplicantList(applications, query.requesterMemberId(), query.status(), now);
     }
 
     /**
@@ -306,7 +312,7 @@ public class ProjectApplicationQueryService
             return freeze(result);
         }
 
-        // 중앙총괄/SUPER_ADMIN scope 프로젝트만 진행 중 차수 지원서를 함께 조회한다.
+        // 목록 scope가 허용한 프로젝트는 진행 중 차수의 제출된 지원서도 함께 조회한다.
         Set<Long> includeOngoingProjectIds = scopes.entrySet().stream()
             .filter(entry -> entry.getValue() instanceof ProjectApplicationAccessScope.ProjectScoped projectScoped
                 && projectScoped.includeOngoingMatchingRounds())
@@ -314,16 +320,18 @@ public class ProjectApplicationQueryService
             .collect(Collectors.toSet());
 
         // 권한이 확인된 프로젝트만 DB 조회 대상에 넣어 권한 없는 프로젝트의 존재 여부가 결과로 새지 않게 한다.
+        Instant now = clock.instant();
         List<ProjectApplication> applications = loadProjectApplicationPort.searchProjectApplicationsByProjectIds(
             accessibleProjectIds,
             includeOngoingProjectIds,
             query.matchingRoundId(),
-            query.status(),
-            Instant.now()
+            null,
+            now
         );
 
-        for (ProjectApplication application : applications) {
-            ProjectApplicationSummaryInfo info = ProjectApplicationSummaryInfo.from(application);
+        List<ProjectApplicationSummaryInfo> summaries =
+            buildVisibleApplicantList(applications, query.requesterMemberId(), query.status(), now);
+        for (ProjectApplicationSummaryInfo info : summaries) {
             List<ProjectApplicationSummaryInfo> projectApplications = result.get(info.projectId());
             if (projectApplications != null) {
                 projectApplications.add(info);
@@ -336,6 +344,26 @@ public class ProjectApplicationQueryService
     // ==============================================================
     //                      Helper Method
     // ==============================================================
+
+    private List<ProjectApplicationSummaryInfo> buildVisibleApplicantList(
+        List<ProjectApplication> applications,
+        Long requesterMemberId,
+        ProjectApplicationStatus status,
+        Instant now
+    ) {
+        if (applications.isEmpty()) {
+            return List.of();
+        }
+        SubjectAttributes subject = checkPermissionUseCase.loadSubject(requesterMemberId);
+        return applications.stream()
+            .map(application -> {
+                ProjectApplicationSummaryInfo summary = ProjectApplicationSummaryInfo.from(application);
+                return ProjectApplicationResultVisibilityPolicy.canViewDecisionResult(subject, application, now)
+                    ? summary : summary.asPending();
+            })
+            .filter(summary -> status == null || summary.status() == status)
+            .toList();
+    }
 
     /**
      * 요청자의 챌린저 파트로부터 매칭 종류를 결정한다.

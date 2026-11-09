@@ -109,13 +109,22 @@ class ProjectQueryControllerTest {
     @Test
     void GET_프로젝트_상세_비회원도_조회_가능() throws Exception {
         SecurityContextHolder.clearContext();
-        given(assembler.detailFor(42L)).willReturn(null);
+        given(assembler.detailFor(42L, null)).willReturn(null);
 
         mockMvc.perform(get("/api/v1/projects/42"))
             .andExpect(status().isOk());
 
-        then(assembler).should().detailFor(42L);
+        then(assembler).should().detailFor(42L, null);
     }
+    @Test
+    void GET_프로젝트_상세는_로그인_사용자_ID를_전달한다() throws Exception {
+        given(assembler.detailFor(42L, TEST_MEMBER_ID)).willReturn(null);
+
+        mockMvc.perform(get("/api/v1/projects/42")).andExpect(status().isOk());
+
+        then(assembler).should().detailFor(42L, TEST_MEMBER_ID);
+    }
+
     @Test
     void 내_초안_목록은_로그인한_작성자의_페이지만_조회한다() throws Exception {
         given(assembler.draftsFor(eq(TEST_MEMBER_ID), eq(1L), any()))

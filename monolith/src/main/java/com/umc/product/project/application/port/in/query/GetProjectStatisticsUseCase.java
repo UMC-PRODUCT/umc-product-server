@@ -14,15 +14,16 @@ public interface GetProjectStatisticsUseCase {
     /**
      * 단건 프로젝트의 활성 멤버와 해당 멤버들이 작성한 지원 이력을 조회합니다.
      * <p>
-     * 접근 권한: 해당 프로젝트의 PO/Sub-PM(본인 프로젝트), 총괄단, 해당 지부장, 해당 지부 소속 학교 회장·부회장만
-     * 조회할 수 있다. 그 외는 {@code PROJECT_ACCESS_DENIED}.
+     * 접근 권한: 해당 프로젝트의 PO/Sub-PM(본인 프로젝트), 해당 기수 중앙운영사무국(총괄단·운영국원·교육국원), 해당 지부장,
+     * 해당 지부 소속 학교 운영진(회장·부회장·교내 파트장·기타 교내 운영진)만 조회할 수 있다. 그 외는 {@code PROJECT_ACCESS_DENIED}.
      */
     ProjectStatisticsInfo getByProjectId(Long projectId, Long requesterMemberId);
 
     /**
      * 지부 전체 프로젝트의 지원 통계를 조회합니다. 현재 또는 최근 종료된 지원 차수의 유형을 사용합니다.
      * <p>
-     * 접근 권한: 총괄단 / 해당 지부장 / 해당 지부 소속 학교 회장·부회장만 조회할 수 있다.
+     * 접근 권한: 해당 기수 중앙운영사무국(총괄단·운영국원·교육국원), 해당 지부장,
+     * 해당 지부 소속 학교 운영진(회장·부회장·교내 파트장·기타 교내 운영진)만 조회할 수 있다.
      * 그 외는 {@code PROJECT_ACCESS_DENIED}. PO/Sub-PM 은 {@link #getApplicationStatisticsByProjectIds}로 본인 프로젝트만 조회한다.
      */
     ProjectApplicationStatisticsInfo getApplicationStatisticsByChapterId(Long chapterId, Long requesterMemberId);

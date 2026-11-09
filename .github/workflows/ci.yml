@@ -34,7 +34,7 @@ jobs:
           cache: gradle
 
       - name: Validate Preview release updater
-        run: node --test .github/scripts/update-preview-release.test.mjs
+        run: node --test .github/scripts/*.test.mjs
 
       - name: Validate and build boot JAR
         run: ./gradlew clean check :app:bootJar

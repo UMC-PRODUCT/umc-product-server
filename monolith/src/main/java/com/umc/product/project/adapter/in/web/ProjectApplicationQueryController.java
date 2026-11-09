@@ -56,10 +56,11 @@ public class ProjectApplicationQueryController {
             <ul>
               <li>지원서 카드: 본인이 제출한 지원서입니다.
                   `matchingRound.id`, `matchingRound.type`, `matchingRound.phase` 에 실제 매칭 차수 정보를 담습니다.</li>
-              <li>랜덤 매칭 카드: 지원서 없이 프로젝트 멤버로 확정된 경우입니다.
-                  `matchingRound.id` 는 `null`, `matchingRound.phase` 는 `RANDOM_MATCHING`,
+              <li>랜덤 매칭/수동 배정 카드: 지원서 없이 프로젝트 멤버로 확정된 경우입니다.
+                  `matchingRound.id`, `matchingRound.type`, `matchingRound.phase` 에 배정된 매칭 차수 정보를 담습니다.
                   `status` 는 `APPROVED` 입니다. 한 기수에서 최대 1건입니다.</li>
             </ul>
+            매칭 차수가 기록되지 않은 배정 결과는 `matchingRound.id: null`, `phase: RANDOM_MATCHING`으로 반환합니다.
             <p>
             정렬은 매칭 차수 시작일 오름차순, 지원서 갱신일 내림차순입니다. 랜덤 매칭 카드는 목록 마지막에 둡니다.
             <p>
@@ -100,7 +101,10 @@ public class ProjectApplicationQueryController {
         description = """
             복수 프로젝트의 제출된 지원자 목록을 프로젝트별로 조회합니다. 임시저장(DRAFT) 지원서는 포함하지 않습니다.
             권한이 없거나 존재하지 않는 프로젝트는 해당 projectId 의 값을 빈 목록으로 반환합니다.
-            진행 중인 차수의 노출 규칙은 APPLY-101 과 같습니다. 담당 PM·보조 PM·최고관리자·같은 기수 총괄단은 실시간, 지부장·학교 회장단은 지원 마감 후.
+            조회 권한과 진행 중인 차수의 노출 규칙은 APPLY-101 과 같습니다.
+            목록 조회 권한이 있으면 지원 기간 중에도 제출된 지원자를 실시간으로 봅니다.
+            각 지원서 차수의 PM 결정 기간에는 판정 권한이 없는 호출자에게 합불 결과를 SUBMITTED(대기)로 표시하고 처리 시각을 숨깁니다.
+            상태 필터도 표시 상태를 기준으로 적용합니다. 이전 차수의 결정 기간이 끝났으면 실제 결과를 표시합니다.
             <p>
             필터:
             <ul>
@@ -142,8 +146,12 @@ public class ProjectApplicationQueryController {
         summary = "PM/운영진 단일 프로젝트 지원자 목록 조회",
         description = """
             단일 프로젝트의 제출된 지원자 목록을 조회합니다. 임시저장(DRAFT) 지원서는 포함하지 않습니다.
-            담당 PM·보조 PM·최고관리자·같은 기수 총괄단은 지원 기간 중에도 제출된 지원자를 실시간으로 봅니다.
-            지부장·학교 회장단은 지원 마감 후의 차수만 봅니다. 지원서 내용 열람(APPLY-102)은 PM 도 지원 마감 후부터 가능합니다.
+            목록 조회 권한이 있으면 지원 기간 중에도 제출된 지원자를 실시간으로 봅니다.
+            목록 조회 권한은 지원서 내용 열람(APPLY-102) 권한과 별개입니다.
+            <p>
+            각 지원서 차수의 PM 결정 기간(지원 마감 직후부터 결정 마감까지)에는 담당 PM·해당 기수 총괄단·최고관리자만 실제 합불 결과를 봅니다.
+            그 외 호출자에게는 SUBMITTED(대기)로 표시하고 statusChangedAt은 null로 반환합니다. 프로젝트 상태는 판단 조건에 포함하지 않습니다.
+            결정 기간이 끝난 이전 차수의 결과는 그대로 표시하며, status 필터는 표시 상태를 기준으로 적용합니다.
 
             정렬은 매칭 차수, 지원 파트, 제출 시각 순입니다. 같은 차수와 파트 안에서는 먼저 제출한 지원서를 먼저 보여줍니다.
             <p>
@@ -159,10 +167,10 @@ public class ProjectApplicationQueryController {
             <ul>
               <li>해당 프로젝트의 PO</li>
               <li>해당 프로젝트의 보조 PM (ACTIVE PLAN 멤버)</li>
-              <li>SUPER_ADMIN</li>
-              <li>해당 프로젝트 기수의 Central Core (총괄/부총괄)</li>
+              <li>SUPER_ADMIN (기수 제한 없음)</li>
+              <li>해당 프로젝트 기수의 중앙운영사무국 (총괄/부총괄/운영국원/교육국원)</li>
               <li>해당 프로젝트 지부의 지부장 (같은 기수)</li>
-              <li>해당 프로젝트 지부에 속한 학교 회장단 (SCHOOL_PRESIDENT/SCHOOL_VICE_PRESIDENT, 같은 기수)</li>
+              <li>해당 프로젝트 지부에 속한 학교 운영진 (회장/부회장/파트장/기타 운영진)</li>
             </ul>
             """
     )

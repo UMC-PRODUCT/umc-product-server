@@ -150,13 +150,14 @@ class SsoClientConfigAdapterTest {
             .isEqualTo(AuthenticationErrorCode.INVALID_SSO_CLIENT);
     }
 
-    @DisplayName("기본 설정은 website client의 prod redirect URI와 origin을 바인딩한다")
+    @DisplayName("기본 설정은 웹 client의 prod redirect URI와 origin을 바인딩한다")
     @Test
     void application_yml_base_sso_client_binding_성공() {
         contextRunner.run(context -> {
             SsoClientConfigAdapter adapter = context.getBean(SsoClientConfigAdapter.class);
 
             SsoClient website = adapter.getByClientId("website");
+            SsoClient activity = adapter.getByClientId("activity");
 
             assertThat(website.environment()).isEqualTo(ClientEnvironment.PROD);
             assertThat(website.redirectUris())
@@ -165,6 +166,13 @@ class SsoClientConfigAdapterTest {
             assertThat(website.allowedOrigins())
                 .containsExactly("https://university.neordinary.com")
                 .doesNotContain("https://www.university.neordinary.com");
+            assertThat(activity.name()).isEqualTo("activity");
+            assertThat(activity.serviceType()).isEqualTo(ClientServiceType.UMC_ACTIVITY);
+            assertThat(activity.environment()).isEqualTo(ClientEnvironment.PROD);
+            assertThat(activity.redirectUris())
+                .containsExactly("https://activity.university.neordinary.com/auth/callback");
+            assertThat(activity.allowedOrigins())
+                .containsExactly("https://activity.university.neordinary.com");
         });
     }
 
@@ -190,6 +198,11 @@ class SsoClientConfigAdapterTest {
                     adapter.getByClientId("tech"),
                     "https://dev.tech.university.neordinary.com/auth/callback",
                     "https://dev.tech.university.neordinary.com"
+                );
+                assertDevWebClient(
+                    adapter.getByClientId("activity"),
+                    "https://dev.activity.university.neordinary.com/auth/callback",
+                    "https://dev.activity.university.neordinary.com"
                 );
                 assertDevWebClient(
                     adapter.getByClientId("local"),

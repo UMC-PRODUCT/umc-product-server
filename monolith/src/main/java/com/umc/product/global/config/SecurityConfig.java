@@ -118,7 +118,7 @@ public class SecurityConfig {
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> {
-                // Swagger UI와 기존 Swagger 문서 경로는 인증 여부와 무관하게 차단
+                // 문서용 Basic Auth가 걸리지 않는 Swagger 기본 경로는 인증 여부와 무관하게 차단
                 auth.requestMatchers(SecurityPathConfig.swaggerBlockedPaths()).denyAll();
 
                 // 공통 공개 경로
@@ -194,7 +194,7 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         // Trace ID와 재요청 대기 시간을 클라이언트에서 읽을 수 있도록 노출
-        configuration.setExposedHeaders(List.of("X-Trace-Id", "Retry-After"));
+        configuration.setExposedHeaders(List.of(TraceIdHeaderInterceptor.HEADER_NAME, "Retry-After"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         // Apple form POST는 Origin: https://appleid.apple.com을 포함할 수 있어 해당 callback에만 허용한다.

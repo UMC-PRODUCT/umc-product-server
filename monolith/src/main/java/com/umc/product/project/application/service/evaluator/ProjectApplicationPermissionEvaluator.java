@@ -105,11 +105,11 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
             || isChapterPresidentOf(subject, project.getChapterId(), project.getGisuId());
     }
 
-    /** 임시저장(DRAFT) 상태에서만 본인이 수정 가능. */
+    /** 본인이 DRAFT/SUBMITTED 지원서를 수정 가능. 수정 기간은 커맨드 서비스가 검증한다. */
     private boolean canEdit(SubjectAttributes subject, ResourcePermission permission) {
         ProjectApplication application = loadApplication(permission);
         return isApplicant(subject, application)
-            && application.getStatus() == ProjectApplicationStatus.DRAFT;
+            && (application.isDraft() || application.isSubmitted());
     }
 
     /** 본인이 DRAFT/SUBMITTED 단계에서 철회 가능. 종결 상태(APPROVED/REJECTED)와 이미 철회된 CANCELLED 는 차단. */
@@ -126,7 +126,7 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
 
     /**
      * 합불 결정. SUBMITTED / APPROVED / REJECTED 상태의 지원서에 대해
-     * {@link ProjectApplicationDecisionPolicy}(담당 PM, 프로젝트 기수의 총괄·부총괄, SUPER_ADMIN)가 허용하는 사람만 가능하다.
+     * {@link ProjectApplicationDecisionPolicy}(담당 PM, 프로젝트 기수의 총괄·부총괄, 담당 지부장, SUPER_ADMIN)가 허용하는 사람만 가능하다.
      * 판정 가능 시간은 도메인 메서드({@code ProjectMatchingRound.validateIsMutableAt}) 가 책임진다.
      * (자동 매칭 스케줄러는 권한 모델 외)
      */

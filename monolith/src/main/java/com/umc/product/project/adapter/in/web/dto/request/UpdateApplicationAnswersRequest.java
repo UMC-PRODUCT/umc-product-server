@@ -10,10 +10,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 /**
- * 챌린저 지원서 임시저장 요청 (APPLY-002).
+ * 챌린저 지원서 답변 수정 및 임시저장 요청 (APPLY-002).
  * <p>
  * PUT 시멘틱 — {@code answers} 가 곧 새 전체 상태. 빠진 questionId 의 기존 답변은 삭제됨.
- * 빈 리스트 허용 (모든 답변 제거).
+ * 빈 리스트는 요청 형식상 허용하지만, SUBMITTED 수정 시 필수 답변이 누락되면 저장을 거절한다.
  */
 @Builder
 public record UpdateApplicationAnswersRequest(

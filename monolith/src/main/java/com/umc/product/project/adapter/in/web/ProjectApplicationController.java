@@ -71,14 +71,19 @@ public class ProjectApplicationController {
     @PutMapping("/{projectId}/applications/{applicationId}")
     @Operation(
         operationId = "APPLY-002",
-        summary = "챌린저 지원서 임시저장",
-        description = "요청 본문을 답변의 새 전체 상태로 저장합니다. 본인의 초안 지원서에서만 호출할 수 있습니다."
+        summary = "챌린저 지원서 답변 수정 및 임시저장",
+        description = """
+            요청 본문을 답변의 새 전체 상태로 저장합니다. 본인의 DRAFT 또는 SUBMITTED 지원서만 수정할 수 있습니다.
+            DRAFT는 필수 답변 누락을 허용하며 기존 임시저장 정책을 유지합니다.
+            SUBMITTED는 해당 지원 차수의 지원 기간에만 수정할 수 있고, 제출과 같은 답변 검증을 적용합니다.
+            수정 후에도 제출 상태와 최초 제출 시각을 유지하며, 저장한 답변은 재제출 없이 즉시 반영됩니다.
+            """
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT_APPLICATION,
         resourceId = "#applicationId",
         permission = PermissionType.EDIT,
-        message = "지원서를 임시저장할 권한이 없어요. 지원 가능한 프로젝트인지 확인해주세요."
+        message = "지원서를 수정할 권한이 없어요. 본인의 수정 가능한 지원서인지 확인해주세요."
     )
     public ProjectApplicationStatusResponse updateDraft(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -126,7 +131,7 @@ public class ProjectApplicationController {
         operationId = "APPLY-103",
         summary = "지원서 합격 여부 결정",
         description = """
-            담당 PM, 해당 기수 총괄·부총괄, SUPER_ADMIN 이 지원서의 status 를 토글합니다.
+            담당 PM, 해당 기수 총괄·부총괄, 해당 기수·지부의 지부장, SUPER_ADMIN 이 지원서의 status 를 토글합니다.
             - 모두 지원 마감 후부터 결정 마감(decisionDeadline)까지만 가능 (SUPER_ADMIN 도 동일)
             - APPROVED / REJECTED / SUBMITTED(대기로 되돌리기) 사이 자유 변경 허용
             - SUBMITTED 로 되돌릴 때 같은 차수에 다른 활성 지원서가 있으면 거절

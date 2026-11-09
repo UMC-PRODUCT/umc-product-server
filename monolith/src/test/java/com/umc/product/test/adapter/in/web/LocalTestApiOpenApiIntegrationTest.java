@@ -40,7 +40,7 @@ class LocalTestApiOpenApiIntegrationTest extends IntegrationTestSupport {
         JsonNode globalSecurity = openApi.path("security");
 
         // then
-        assertThat(paths.path("/test/seed/members").path("post").path("security"))
+        assertThat(paths.path("/test/seed/member").path("post").path("security"))
             .isEqualTo(expectedPublicSecurity);
         assertThat(paths.path("/test/token/access").path("get").path("security"))
             .isEqualTo(expectedPublicSecurity);

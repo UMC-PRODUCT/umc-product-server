@@ -8,10 +8,11 @@ import com.umc.product.project.domain.Project;
 /**
  * 지원서 합/불 판정 권한 규칙 (UPMS 권한 정리 '팀 매칭' 권한표).
  * <p>
- * 판정할 수 있는 사람은 다음 셋이다. 지부장·중앙운영진·보조 PM 은 판정하지 못한다.
+ * 판정할 수 있는 권한은 다음과 같다.
  * <ul>
  *   <li>프로젝트의 담당 PM(PO)</li>
  *   <li>프로젝트 기수의 총괄·부총괄</li>
+ *   <li>프로젝트 기수·지부의 지부장</li>
  *   <li>최고관리자(SUPER_ADMIN)</li>
  * </ul>
  * 판정 가능 시간(지원 마감 후 ~ 결정 마감)은 도메인({@code ProjectMatchingRound.validateIsMutableAt})이 책임진다.
@@ -24,6 +25,7 @@ public final class ProjectApplicationDecisionPolicy {
 
     public static boolean canDecide(SubjectAttributes subject, Project project) {
         return Objects.equals(subject.memberId(), project.getProductOwnerMemberId())
-            || subject.toAuthoritySnapshot().isCentralCoreInGisu(project.getGisuId());
+            || subject.toAuthoritySnapshot().isCentralCoreInGisu(project.getGisuId())
+            || subject.toAuthoritySnapshot().isChapterPresidentInGisu(project.getGisuId(), project.getChapterId());
     }
 }

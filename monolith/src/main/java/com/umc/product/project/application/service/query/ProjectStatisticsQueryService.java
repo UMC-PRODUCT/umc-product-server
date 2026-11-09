@@ -29,6 +29,7 @@ import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
+import com.umc.product.project.application.access.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.application.port.in.query.GetProjectStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectApplicationStatisticsInfo.ApplicationPhaseCountInfo;
@@ -60,7 +61,6 @@ import com.umc.product.project.application.port.out.dto.ProjectStatisticsMemberR
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsProjectRow;
 import com.umc.product.project.application.port.out.dto.ProjectStatisticsTargetProjectRow;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
-import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectPartQuota;
@@ -410,10 +410,10 @@ public class ProjectStatisticsQueryService implements GetProjectStatisticsUseCas
     }
 
     /**
-     * 지부 단위 통계 접근 권한 검증. SUPER_ADMIN / 총괄단 / 해당 지부장 / 해당 지부 소속 학교 회장·부회장이면 통과,
+p     * 지부 단위 통계 접근 권한 검증. SUPER_ADMIN, 중앙운영사무국, 해당 지부장, 해당 지부 소속 학교 운영진이면 통과,
      * 그 외에는 {@code PROJECT_ACCESS_DENIED}.
      * <p>
-     * 요청 chapterId 는 치환하지 않고 통과/거부만 판정한다(총괄단의 타 지부 조회 보장).
+     * 요청 chapterId 는 치환하지 않고 통과/거부만 판정한다(중앙운영사무국의 타 지부 조회 보장).
      */
     private void validateChapterAccess(Long memberId, Long chapterId) {
         if (!projectStatisticsAccessPolicy.canReadChapterStatistics(memberId, chapterId)) {

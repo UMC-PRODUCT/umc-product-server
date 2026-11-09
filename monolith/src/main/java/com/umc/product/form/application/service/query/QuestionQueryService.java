@@ -24,20 +24,20 @@ public class QuestionQueryService implements GetQuestionUseCase {
     @Override
     public Optional<QuestionInfo> findById(Long questionId) {
         return loadQuestionPort.findById(questionId)
-            .map(QuestionInfo::from);
+            .map(FormQueryInfoAssembler::toQuestionInfo);
     }
 
     @Override
     public QuestionInfo getById(Long questionId) {
         return loadQuestionPort.findById(questionId)
-            .map(QuestionInfo::from)
+            .map(FormQueryInfoAssembler::toQuestionInfo)
             .orElseThrow(() -> new FormDomainException(FormErrorCode.QUESTION_NOT_FOUND));
     }
 
     @Override
     public List<QuestionInfo> listBySectionId(Long sectionId) {
         return loadQuestionPort.listBySectionId(sectionId).stream()
-            .map(QuestionInfo::from)
+            .map(FormQueryInfoAssembler::toQuestionInfo)
             .toList();
     }
 }

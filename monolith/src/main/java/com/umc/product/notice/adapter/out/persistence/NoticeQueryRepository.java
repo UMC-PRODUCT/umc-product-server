@@ -25,6 +25,7 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeClassification;
 import com.umc.product.notice.domain.enums.NoticeTab;
+import com.umc.product.notice.domain.enums.UpmsNoticeType;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 
@@ -104,9 +105,18 @@ public class NoticeQueryRepository {
         NoticeViewerInfo viewerInfo
     ) {
         if (classification.isChallengerQuery()) {
-            return buildClassificationCondition(classification, viewerInfo);
+            return buildClassificationCondition(classification, viewerInfo)
+                .and(upmsNoticeTypeEq(classification.upmsNoticeType()));
         }
-        return buildStaffCondition(classification, viewerInfo);
+        return buildStaffCondition(classification, viewerInfo)
+            .and(upmsNoticeTypeEq(classification.upmsNoticeType()));
+    }
+
+    private BooleanExpression upmsNoticeTypeEq(UpmsNoticeType upmsNoticeType) {
+        if (upmsNoticeType == null) {
+            return null;
+        }
+        return notice.upmsNoticeType.eq(upmsNoticeType);
     }
 
     /**
@@ -144,8 +154,7 @@ public class NoticeQueryRepository {
     }
 
     /**
-     * 운영진 공지 파트 조건. - classification.part() 명시 시: 해당 파트 또는 파트 미지정 공지 - 회장단 이상(CENTRAL_MEMBER, SCHOOL_CORE): 파트 미지정 시 전체
-     * 파트 조회 - 파트장: 담당 파트로만 필터링
+     * 운영진 공지 파트 조건. 명시한 파트 필터를 우선 적용하며, 교내 운영진은 본인 학교 공지를 파트 무관하게 조회합니다.
      */
     private BooleanExpression buildStaffPartCondition(NoticeClassification classification,
                                                       NoticeViewerInfo viewerInfo) {
@@ -158,8 +167,11 @@ public class NoticeQueryRepository {
         if (viewerRole == NoticeTab.CENTRAL_MEMBER || viewerRole == NoticeTab.SCHOOL_CORE) {
             return Expressions.TRUE;
         }
-        // 파트장 파트 미지정: 담당 파트 + 파트 미지정 공지
-        return targetPartIsEmptyOrContainsAny(viewerInfo.memberParts());
+        BooleanExpression partMatch = targetPartIsEmptyOrContainsAny(viewerInfo.memberParts());
+        if (viewerRole == NoticeTab.SCHOOL_PART_LEADER && viewerInfo.schoolRoleSchoolId() != null) {
+            return noticeTarget.targetSchoolId.eq(viewerInfo.schoolRoleSchoolId()).or(partMatch);
+        }
+        return partMatch;
     }
 
     /**
@@ -230,6 +242,10 @@ public class NoticeQueryRepository {
             BooleanExpression scopeCondition = noticeTarget.targetChapterId.isNull()
                 .and(noticeTarget.targetSchoolId.isNull());
 
+            if (!hasChapter && !hasSchool && viewerInfo.isChapterPresident()) {
+                scopeCondition = buildReadableOrganizationCondition(viewerInfo);
+            }
+
             if (chapterId != null) {
                 scopeCondition = scopeCondition.or(
                     noticeTarget.targetChapterId.eq(chapterId)
@@ -261,7 +277,9 @@ public class NoticeQueryRepository {
         }
         BooleanExpression condition = noticeTarget.targetChapterId.isNull()
             .and(noticeTarget.targetSchoolId.isNull());
-        if (viewerInfo.chapterId() != null) {
+        if (viewerInfo.isChapterPresident()) {
+            condition = noticeTarget.targetSchoolId.isNull();
+        } else if (viewerInfo.chapterId() != null) {
             condition = condition.or(noticeTarget.targetChapterId.eq(viewerInfo.chapterId())
                 .and(noticeTarget.targetSchoolId.isNull()));
         }

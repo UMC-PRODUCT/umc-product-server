@@ -40,6 +40,7 @@ import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope;
 import com.umc.product.project.application.access.ProjectApplicationAccessScopeResolver;
+import com.umc.product.project.application.access.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionCapabilityInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectPermissionReason;
@@ -52,7 +53,6 @@ import com.umc.product.project.application.service.policy.ProjectManualMatchingA
 import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
-import com.umc.product.project.application.service.policy.ProjectStatisticsAccessPolicy;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.ProjectMatchingRound;
@@ -102,6 +102,7 @@ class ProjectPermissionQueryServiceTest {
     ProjectMatchingAdjustmentPolicy projectMatchingAdjustmentPolicy = new ProjectMatchingAdjustmentPolicy();
 
     @Mock com.umc.product.project.application.service.policy.ProjectDraftQuotaPolicy draftQuotaPolicy;
+    @Mock com.umc.product.project.application.access.ProjectQuotaAccessPolicy quotaAccessPolicy;
 
     @InjectMocks
     ProjectPermissionQueryService sut;
@@ -252,6 +253,31 @@ class ProjectPermissionQueryServiceTest {
         ProjectPermissionInfo result = sut.listByProjectIds(REQUESTER_ID, List.of(PROJECT_ID)).get(0);
 
         assertThat(result.application().canDecide().allowed()).isTrue();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"1, 7, true", "1, 8, false", "2, 7, false"})
+    void 지부장_판정_가능_플래그는_프로젝트_기수와_지부가_모두_같아야_허용한다(
+        Long gisuId, Long chapterId, boolean allowed
+    ) {
+        // given
+        Project project = project(ProjectStatus.IN_PROGRESS, 999L, 999L, "서비스 리뉴얼");
+        SubjectAttributes subject = subjectWithRoles(List.of(new RoleAttribute(
+            ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER, chapterId, null, gisuId)));
+        givenBase(project, subject);
+        givenForms(ProjectApplicationForm.create(project, 500L));
+        givenProjectPermission(subject, PermissionType.READ, true);
+        givenProjectPermission(subject, PermissionType.EDIT, false);
+        givenProjectPermission(subject, PermissionType.DELETE, false);
+        givenProjectPermission(subject, PermissionType.MANAGE, false);
+        given(projectApplicationAccessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(PROJECT_ID));
+
+        // when
+        ProjectPermissionInfo result = sut.listByProjectIds(REQUESTER_ID, List.of(PROJECT_ID)).get(0);
+
+        // then
+        assertThat(result.application().canDecide().allowed()).isEqualTo(allowed);
     }
 
     @Test

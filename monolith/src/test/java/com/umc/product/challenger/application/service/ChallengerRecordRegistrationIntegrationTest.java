@@ -11,10 +11,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.umc.product.authorization.adapter.out.persistence.ChallengerRoleJpaRepository;
 import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
+import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
 import com.umc.product.authorization.application.port.in.command.ManageChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.command.dto.CreateChallengerRoleCommand;
 import com.umc.product.challenger.adapter.out.persistence.ChallengerJpaRepository;
@@ -31,7 +32,6 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
-import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
 import com.umc.product.organization.application.port.out.command.SaveGisuPort;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.Gisu;
@@ -54,7 +54,7 @@ class ChallengerRecordRegistrationIntegrationTest extends IntegrationTestSupport
     @Autowired private ChallengerRoleJpaRepository roles;
     @Autowired private ManageChallengerRoleUseCase manageRoles;
     @Autowired private CheckPermissionUseCase permissions;
-    @MockitoBean private SendWebhookAlarmUseCase notifications;
+    @MockitoSpyBean private EvictAuthoritySnapshotCacheUseCase authorityCache;
 
     private Gisu gisu;
     private Chapter chapter;
@@ -172,7 +172,7 @@ class ChallengerRecordRegistrationIntegrationTest extends IntegrationTestSupport
     @DisplayName("등록 중 실패하면 파트와 역할 및 코드 사용을 모두 롤백한다")
     void 등록_전체_롤백() {
         ChallengerRecord record = issue(ChallengerPart.DESIGN, false, ChallengerRoleType.SCHOOL_PRESIDENT);
-        doThrow(new IllegalStateException("등록 후처리 실패")).when(notifications).sendBuffered(any());
+        doThrow(new IllegalStateException("등록 후처리 실패")).when(authorityCache).evictByMemberId(any());
 
         assertThatThrownBy(() -> consume(record)).isInstanceOf(IllegalStateException.class);
 

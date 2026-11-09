@@ -1,7 +1,10 @@
 package com.umc.product.test.adapter.in.web;
 
+import java.util.List;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,13 +12,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.test.adapter.in.web.dto.QaSeedResponse;
 import com.umc.product.test.application.port.in.command.SeedQaDataUseCase;
+import com.umc.product.test.application.port.in.command.dto.QaSeedStep;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/test/seed/qa")
+@RequestMapping("/test/seed/qa")
 @Profile("!prod")
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
@@ -26,14 +31,26 @@ public class QaSeedController {
     private final SeedQaDataUseCase seedQaDataUseCase;
 
     @PostMapping
-    @Operation(summary = "고정 QA 계정과 업무 데이터 생성", description = """
-        요청값 없이 고정 계정 35개와 학습·스터디·출석·공지·상벌점·채팅을 생성합니다.
-        채팅은 빈 방, 읽음 상태, 이전 메시지 조회, 답장·리액션·수정·삭제를 확인할 방 4개를 생성합니다.
-        비밀번호는 기존 app.seed.default-password 설정을 사용합니다.
-        대상 이메일이 하나라도 존재하면 중단하며, 생성 중 실패하면 전체 롤백합니다.
-        프로젝트·리크루팅은 생성하지 않습니다.
+    @Operation(summary = "QA 기본 데이터 전체 생성", description = """
+        계정 → 학습 → 출석 → 공지 → 상벌점 → 채팅 → 매칭 지부 이동 순서로 단계를 실행하고 단계별 결과를 돌려줍니다.
+        계정은 11기 명단 583명, superadmin, 10기 기존 QA 계정 9개, 명단 밖 UMC_PRODUCT 계정 4개로 모두 597개입니다.
+        시스템 역할(SUPER_ADMIN, UMC_PRODUCT)은 seed/qa/system-roles.csv대로 줍니다.
+        단계마다 따로 저장하므로 한 단계가 실패해도 앞 단계는 남습니다. 계정 단계가 실패하면 뒤 단계는 NOT_RUN입니다.
+        다시 부르면 이미 있는 것은 건너뛰고 UNCHANGED를 돌려줍니다. 되돌리려면 DB를 초기화합니다.
+        비밀번호는 app.seed.default-password 설정을 쓰고, 이메일 도메인은 university.neordinary.com으로 고정입니다.
         """)
-    public QaSeedResponse seed() {
-        return QaSeedResponse.from(seedQaDataUseCase.seed());
+    public QaSeedResponse seedAll() {
+        return QaSeedResponse.from(seedQaDataUseCase.seedAll());
+    }
+
+    @PostMapping("/{step}")
+    @Operation(summary = "QA 기본 데이터 한 단계 생성", description = """
+        한 단계만 실행합니다. 이미 있는 것은 건너뜁니다. 계정 단계를 먼저 실행해야 나머지 단계가 계정을 찾습니다.
+        """)
+    public QaSeedResponse seed(
+        @Parameter(description = "accounts, learning, attendance, notices, points, chat, project-transfers")
+        @PathVariable String step
+    ) {
+        return QaSeedResponse.from(List.of(seedQaDataUseCase.seed(QaSeedStep.fromPath(step))));
     }
 }

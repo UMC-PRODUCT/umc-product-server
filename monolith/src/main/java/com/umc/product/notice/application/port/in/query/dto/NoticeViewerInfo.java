@@ -21,10 +21,16 @@ public record NoticeViewerInfo(
     Long chapterId,
     NoticeTab viewerRole,
     ChallengerRoleType roleType,
-    Set<Long> chapterSchoolIds
+    Set<Long> chapterSchoolIds,
+    Long schoolRoleSchoolId
 ) {
+    public NoticeViewerInfo(Set<ChallengerPart> memberParts, Long schoolId, Long chapterId, NoticeTab viewerRole,
+                            ChallengerRoleType roleType, Set<Long> chapterSchoolIds) {
+        this(memberParts, schoolId, chapterId, viewerRole, roleType, chapterSchoolIds, null);
+    }
+
     public NoticeViewerInfo(Set<ChallengerPart> memberParts, Long schoolId, Long chapterId, NoticeTab viewerRole) {
-        this(memberParts, schoolId, chapterId, viewerRole, null, Set.of());
+        this(memberParts, schoolId, chapterId, viewerRole, null, Set.of(), null);
     }
 
     public boolean isChapterPresident() {
