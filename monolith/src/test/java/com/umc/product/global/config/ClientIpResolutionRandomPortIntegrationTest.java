@@ -2,16 +2,12 @@ package com.umc.product.global.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -24,6 +20,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
@@ -50,6 +49,9 @@ class ClientIpResolutionRandomPortIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @MockitoBean
     private JavaMailSender mailSender;
 
@@ -64,53 +66,51 @@ class ClientIpResolutionRandomPortIntegrationTest {
 
     @Test
     @DisplayName("프록시가 넣은 X-Forwarded-* 값으로 클라이언트 IP와 요청 주소를 판별한다")
-    void 프록시_전달_헤더로_클라이언트_IP와_요청_주소를_판별한다() {
-        ResponseEntity<Map<String, Object>> response = echo(proxyHeaders("198.51.100.7"));
+    void 프록시_전달_헤더로_클라이언트_IP와_요청_주소를_판별한다() throws JsonProcessingException {
+        // given
+        HttpHeaders headers = proxyHeaders("198.51.100.7");
 
+        // when
+        ResponseEntity<JsonNode> response = echo(headers);
+
+        // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(seenByServer(response))
-            .containsEntry("remoteAddr", "198.51.100.7")
-            .containsEntry("remoteHost", "198.51.100.7")
-            .containsEntry("scheme", "https")
-            .containsEntry("secure", "true")
-            .containsEntry("serverName", "api.example.test")
-            .containsEntry("serverPort", "443")
-            .containsEntry("xForwardedFor", null);
+        assertThat(seenByServer(response)).isEqualTo(seenThroughProxy("198.51.100.7"));
     }
 
     @Test
     @DisplayName("프록시가 넣지 않은 표준 전달 헤더는 클라이언트 IP와 요청 주소 판별에 쓰지 않는다")
-    void 표준_전달_헤더는_판별에_쓰지_않는다() {
+    void 표준_전달_헤더는_판별에_쓰지_않는다() throws JsonProcessingException {
+        // given
         HttpHeaders headers = proxyHeaders("198.51.100.8");
         headers.add("Forwarded", "for=203.0.113.9;host=evil.example;proto=http");
 
-        ResponseEntity<Map<String, Object>> response = echo(headers);
+        // when
+        ResponseEntity<JsonNode> response = echo(headers);
 
+        // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(seenByServer(response))
-            .containsEntry("remoteAddr", "198.51.100.8")
-            .containsEntry("remoteHost", "198.51.100.8")
-            .containsEntry("scheme", "https")
-            .containsEntry("secure", "true")
-            .containsEntry("serverName", "api.example.test")
-            .containsEntry("serverPort", "443");
+        assertThat(seenByServer(response)).isEqualTo(seenThroughProxy("198.51.100.8"));
     }
 
     @Test
     @DisplayName("같은 공인 IP의 비로그인 요청은 다른 전달 헤더와 관계없이 한 제한 버킷을 나눠 쓴다")
     void 같은_공인_IP는_한_제한_버킷을_나눠_쓴다() {
+        // given
         HttpHeaders plain = proxyHeaders("198.51.100.20");
         HttpHeaders forgedA = proxyHeaders("198.51.100.20");
         forgedA.add("Forwarded", "for=203.0.113.20");
         HttpHeaders forgedB = proxyHeaders("198.51.100.20");
         forgedB.add("Forwarded", "for=203.0.113.21");
 
-        ResponseEntity<Map<String, Object>> first = echo(plain);
-        ResponseEntity<Map<String, Object>> second = echo(forgedA);
-        ResponseEntity<Map<String, Object>> third = echo(forgedB);
-        ResponseEntity<Map<String, Object>> fourth = echo(plain);
-        ResponseEntity<Map<String, Object>> otherClient = echo(proxyHeaders("198.51.100.21"));
+        // when
+        ResponseEntity<JsonNode> first = echo(plain);
+        ResponseEntity<JsonNode> second = echo(forgedA);
+        ResponseEntity<JsonNode> third = echo(forgedB);
+        ResponseEntity<JsonNode> fourth = echo(plain);
+        ResponseEntity<JsonNode> otherClient = echo(proxyHeaders("198.51.100.21"));
 
+        // then
         assertThat(remaining(first)).isEqualTo("2");
         assertThat(remaining(second)).isEqualTo("1");
         assertThat(remaining(third)).isEqualTo("0");
@@ -119,14 +119,16 @@ class ClientIpResolutionRandomPortIntegrationTest {
         assertThat(remaining(otherClient)).isEqualTo("2");
     }
 
-    private ResponseEntity<Map<String, Object>> echo(HttpHeaders headers) {
-        return restTemplate.exchange(
-            ECHO_PATH,
-            HttpMethod.GET,
-            new HttpEntity<>(headers),
-            new ParameterizedTypeReference<>() {
-            }
-        );
+    private ResponseEntity<JsonNode> echo(HttpHeaders headers) {
+        return restTemplate.exchange(ECHO_PATH, HttpMethod.GET, new HttpEntity<>(headers), JsonNode.class);
+    }
+
+    private SeenRequest seenByServer(ResponseEntity<JsonNode> response) throws JsonProcessingException {
+        return objectMapper.treeToValue(response.getBody().path("result"), SeenRequest.class);
+    }
+
+    private static SeenRequest seenThroughProxy(String clientIp) {
+        return new SeenRequest(clientIp, clientIp, "https", true, "api.example.test", 443, null);
     }
 
     private static HttpHeaders proxyHeaders(String clientIp) {
@@ -138,13 +140,19 @@ class ClientIpResolutionRandomPortIntegrationTest {
         return headers;
     }
 
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> seenByServer(ResponseEntity<Map<String, Object>> response) {
-        return (Map<String, Object>) response.getBody().get("result");
-    }
-
     private static String remaining(ResponseEntity<?> response) {
         return response.getHeaders().getFirst("X-RateLimit-Remaining");
+    }
+
+    record SeenRequest(
+        String remoteAddr,
+        String remoteHost,
+        String scheme,
+        boolean secure,
+        String serverName,
+        int serverPort,
+        String xForwardedFor
+    ) {
     }
 
     @RestController
@@ -152,16 +160,16 @@ class ClientIpResolutionRandomPortIntegrationTest {
 
         @Public
         @GetMapping(ECHO_PATH)
-        Map<String, Object> echo(HttpServletRequest request) {
-            Map<String, Object> body = new LinkedHashMap<>();
-            body.put("remoteAddr", request.getRemoteAddr());
-            body.put("remoteHost", request.getRemoteHost());
-            body.put("scheme", request.getScheme());
-            body.put("secure", String.valueOf(request.isSecure()));
-            body.put("serverName", request.getServerName());
-            body.put("serverPort", String.valueOf(request.getServerPort()));
-            body.put("xForwardedFor", request.getHeader("X-Forwarded-For"));
-            return body;
+        SeenRequest echo(HttpServletRequest request) {
+            return new SeenRequest(
+                request.getRemoteAddr(),
+                request.getRemoteHost(),
+                request.getScheme(),
+                request.isSecure(),
+                request.getServerName(),
+                request.getServerPort(),
+                request.getHeader("X-Forwarded-For")
+            );
         }
     }
 }

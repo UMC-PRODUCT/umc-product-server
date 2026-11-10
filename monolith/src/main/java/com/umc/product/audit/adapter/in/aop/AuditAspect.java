@@ -23,7 +23,6 @@ import com.umc.product.audit.domain.AuditLogEvent;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.security.MemberPrincipal;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -106,12 +105,7 @@ public class AuditAspect {
             ServletRequestAttributes attrs =
                 (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attrs != null) {
-                HttpServletRequest request = attrs.getRequest();
-                String xForwardedFor = request.getHeader("X-Forwarded-For");
-                if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-                    return xForwardedFor.split(",")[0].trim();
-                }
-                return request.getRemoteAddr();
+                return attrs.getRequest().getRemoteAddr();
             }
         } catch (Exception e) {
             log.debug("IP 주소 추출 실패: {}", e.getMessage());
