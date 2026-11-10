@@ -196,9 +196,7 @@ public class JwtTokenProvider {
             .expiration(validityDate)
             .signWith(accessTokenSecret);
 
-        if (clientType != null) {
-            builder.claim(CLIENT_TYPE_KEY, clientType.name());
-        }
+        addClientTypeClaim(builder, clientType);
 
         return builder.compact();
     }
@@ -230,9 +228,7 @@ public class JwtTokenProvider {
             .expiration(validityDate)
             .signWith(accessTokenSecret);
 
-        if (clientType != null) {
-            builder.claim(CLIENT_TYPE_KEY, clientType.name());
-        }
+        addClientTypeClaim(builder, clientType);
         addClientContextClaims(builder, clientContext);
 
         return builder.compact();
@@ -253,8 +249,17 @@ public class JwtTokenProvider {
 
     // 2. Refresh Token 생성
     // 재발급 때 Access Token에 같은 clientType을 넣으려고 Refresh Token에도 담는다.
-    // clientContext가 null이면 SSO client claim 없이 발급한다.
+    public String createRefreshToken(Long memberId, ClientType clientType) {
+        return refreshTokenBuilder(memberId, clientType).compact();
+    }
+
     public String createRefreshToken(Long memberId, ClientType clientType, ClientContextClaims clientContext) {
+        var builder = refreshTokenBuilder(memberId, clientType);
+        addClientContextClaims(builder, clientContext);
+        return builder.compact();
+    }
+
+    private io.jsonwebtoken.JwtBuilder refreshTokenBuilder(Long memberId, ClientType clientType) {
         Date now = new Date();
         Date validityDate = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
 
@@ -264,15 +269,8 @@ public class JwtTokenProvider {
             .issuedAt(now)
             .expiration(validityDate)
             .signWith(refreshTokenSecret);
-
-        if (clientType != null) {
-            builder.claim(CLIENT_TYPE_KEY, clientType.name());
-        }
-        if (clientContext != null) {
-            addClientContextClaims(builder, clientContext);
-        }
-
-        return builder.compact();
+        addClientTypeClaim(builder, clientType);
+        return builder;
     }
 
     public List<String> getRolesFromAccessToken(String token) {
@@ -295,7 +293,7 @@ public class JwtTokenProvider {
         return getClientType(parseAccessTokenClaims(token));
     }
 
-    // 알 수 없는 enum 값이 들어와도 통계 집계가 깨지지 않도록 null 처리한다.
+    // 모르는 값이어도 인증과 재발급을 막지 않고 null(통계에서는 UNKNOWN)로 둔다.
     private ClientType getClientType(Claims claims) {
         String clientTypeStr = claims.get(CLIENT_TYPE_KEY, String.class);
         if (clientTypeStr == null) {
@@ -444,6 +442,12 @@ public class JwtTokenProvider {
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_REFRESH_TOKEN);
         }
         return date.toInstant();
+    }
+
+    private void addClientTypeClaim(io.jsonwebtoken.JwtBuilder builder, ClientType clientType) {
+        if (clientType != null) {
+            builder.claim(CLIENT_TYPE_KEY, clientType.name());
+        }
     }
 
     private void addClientContextClaims(io.jsonwebtoken.JwtBuilder builder, ClientContextClaims clientContext) {

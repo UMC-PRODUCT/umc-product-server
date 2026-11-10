@@ -26,7 +26,7 @@ public class AuthenticationTokenIssuer {
     @Transactional
     public NewTokens issue(Long memberId, ClientType clientType) {
         String accessToken = jwtTokenProvider.createAccessToken(memberId, Collections.emptyList(), clientType);
-        String refreshToken = jwtTokenProvider.createRefreshToken(memberId, clientType, null);
+        String refreshToken = jwtTokenProvider.createRefreshToken(memberId, clientType);
         RefreshTokenClaims claims = jwtTokenProvider.parseRefreshToken(refreshToken);
 
         saveRefreshTokenPort.save(RefreshToken.create(

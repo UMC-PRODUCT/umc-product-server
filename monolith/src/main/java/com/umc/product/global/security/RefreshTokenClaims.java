@@ -17,10 +17,6 @@ public record RefreshTokenClaims(
         this(memberId, jti, expiresAt, ClientContextClaims.empty(), null);
     }
 
-    public RefreshTokenClaims(Long memberId, UUID jti, Instant expiresAt, ClientContextClaims clientContext) {
-        this(memberId, jti, expiresAt, clientContext, null);
-    }
-
     public RefreshTokenClaims {
         clientContext = clientContext == null ? ClientContextClaims.empty() : clientContext;
     }

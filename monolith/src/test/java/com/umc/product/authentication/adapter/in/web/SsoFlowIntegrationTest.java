@@ -124,14 +124,15 @@ class SsoFlowIntegrationTest extends IntegrationTestSupport {
             argThat(BACKOFFICE_DEV_CONTEXT::equals),
             eq(3600L)
         )).willReturn(ACCESS_TOKEN);
-        given(jwtTokenProvider.createRefreshToken(eq(member.getId()), any(), argThat(BACKOFFICE_DEV_CONTEXT::equals)))
+        given(jwtTokenProvider.createRefreshToken(eq(member.getId()), eq(ClientType.WEB), argThat(BACKOFFICE_DEV_CONTEXT::equals)))
             .willReturn(REFRESH_TOKEN);
         given(jwtTokenProvider.parseRefreshToken(REFRESH_TOKEN))
             .willReturn(new RefreshTokenClaims(
                 member.getId(),
                 UUID.randomUUID(),
                 Instant.now().plusSeconds(604800),
-                BACKOFFICE_DEV_CONTEXT
+                BACKOFFICE_DEV_CONTEXT,
+                ClientType.WEB
             ));
 
         String codeVerifier = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG";
@@ -224,14 +225,15 @@ class SsoFlowIntegrationTest extends IntegrationTestSupport {
             argThat(BACKOFFICE_DEV_CONTEXT::equals),
             eq(3600L)
         )).willReturn(ACCESS_TOKEN);
-        given(jwtTokenProvider.createRefreshToken(eq(member.getId()), any(), argThat(BACKOFFICE_DEV_CONTEXT::equals)))
+        given(jwtTokenProvider.createRefreshToken(eq(member.getId()), eq(ClientType.WEB), argThat(BACKOFFICE_DEV_CONTEXT::equals)))
             .willReturn(REFRESH_TOKEN);
         given(jwtTokenProvider.parseRefreshToken(REFRESH_TOKEN))
             .willReturn(new RefreshTokenClaims(
                 member.getId(),
                 UUID.randomUUID(),
                 Instant.now().plusSeconds(604800),
-                BACKOFFICE_DEV_CONTEXT
+                BACKOFFICE_DEV_CONTEXT,
+                ClientType.WEB
             ));
 
         String codeVerifier = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG";
@@ -316,14 +318,15 @@ class SsoFlowIntegrationTest extends IntegrationTestSupport {
             argThat(macContext::equals),
             eq(3600L)
         )).willReturn(ACCESS_TOKEN);
-        given(jwtTokenProvider.createRefreshToken(eq(member.getId()), any(), argThat(macContext::equals)))
+        given(jwtTokenProvider.createRefreshToken(eq(member.getId()), eq(ClientType.MACOS), argThat(macContext::equals)))
             .willReturn(REFRESH_TOKEN);
         given(jwtTokenProvider.parseRefreshToken(REFRESH_TOKEN))
             .willReturn(new RefreshTokenClaims(
                 member.getId(),
                 UUID.randomUUID(),
                 Instant.now().plusSeconds(604800),
-                macContext
+                macContext,
+                ClientType.MACOS
             ));
 
         String codeVerifier = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG";

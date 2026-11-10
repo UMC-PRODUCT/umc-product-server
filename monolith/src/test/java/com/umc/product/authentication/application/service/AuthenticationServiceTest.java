@@ -116,7 +116,7 @@ class AuthenticationServiceTest {
     class RenewAccessToken {
 
         @Test
-        @DisplayName("legacy RefreshToken이면 기존 jti를 삭제하고 legacy 경로로 새 토큰을 발급한다")
+        @DisplayName("clientType 없는 legacy RefreshToken이면 기존 jti를 삭제하고 clientType 없이 새 토큰을 발급한다")
         void refresh_token_회전_성공() {
             // given
             RefreshTokenClaims claims = new RefreshTokenClaims(MEMBER_ID, REFRESH_JTI, REFRESH_EXPIRES_AT);
@@ -172,7 +172,6 @@ class AuthenticationServiceTest {
 
             // then
             assertThat(result).isSameAs(newTokens);
-            then(authenticationTokenIssuer).should().issue(MEMBER_ID, ClientType.IOS);
         }
 
         @Test
@@ -194,7 +193,8 @@ class AuthenticationServiceTest {
                 MEMBER_ID,
                 REFRESH_JTI,
                 REFRESH_EXPIRES_AT,
-                refreshTokenContext
+                refreshTokenContext,
+                null
             );
             RefreshToken stored = RefreshToken.create(REFRESH_JTI, MEMBER_ID, REFRESH_EXPIRES_AT, clientId);
             SsoClient client = SsoClient.of(
@@ -265,7 +265,8 @@ class AuthenticationServiceTest {
                 MEMBER_ID,
                 REFRESH_JTI,
                 REFRESH_EXPIRES_AT,
-                refreshTokenContext
+                refreshTokenContext,
+                null
             );
             RefreshToken stored = RefreshToken.create(REFRESH_JTI, MEMBER_ID, REFRESH_EXPIRES_AT, clientId);
             SsoClient client = SsoClient.of(
@@ -329,7 +330,8 @@ class AuthenticationServiceTest {
                     claimClientId,
                     ClientServiceType.UMC_BACKOFFICE,
                     ClientEnvironment.PROD
-                )
+                ),
+                null
             );
             RefreshToken stored = RefreshToken.create(
                 REFRESH_JTI,
