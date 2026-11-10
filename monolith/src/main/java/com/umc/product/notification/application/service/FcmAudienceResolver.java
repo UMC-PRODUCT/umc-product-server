@@ -84,7 +84,8 @@ public class FcmAudienceResolver {
         boolean gisuMatch = event.targetGisuId() == null || event.targetGisuId().equals(gisuId);
         boolean chapterMatch = event.targetChapterId() == null || event.targetChapterId().equals(chapterId);
         boolean schoolMatch = event.targetSchoolId() == null || event.targetSchoolId().equals(schoolId);
-        boolean partMatch = event.targetParts().isEmpty() || event.targetParts().contains(part);
+        boolean partMatch = event.targetParts().isEmpty()
+            || (part != null && event.targetParts().contains(part));
         return gisuMatch && chapterMatch && schoolMatch && partMatch;
     }
 }

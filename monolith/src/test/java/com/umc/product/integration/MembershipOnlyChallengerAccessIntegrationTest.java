@@ -259,6 +259,16 @@ class MembershipOnlyChallengerAccessIntegrationTest extends IntegrationTestSuppo
         assertThat(chapterRecipients).containsExactlyInAnyOrder(assignedMemberId, learner.getId());
     }
 
+    @Test
+    @DisplayName("파트 대상 푸시는 기수에 파트 없는 챌린저가 있어도 해당 파트 수강생에게만 간다")
+    void 파트_대상_푸시_수신자() {
+        // When
+        List<Long> recipients = fcmAudienceResolver.resolve(pushEvent(null, Set.of(ChallengerPart.WEB)));
+
+        // Then
+        assertThat(recipients).containsExactly(learner.getId());
+    }
+
     @ParameterizedTest(name = "{0}")
     @EnumSource(소속_학교.class)
     @DisplayName("회원 검색 v1·v2 결과에 이 챌린저가 파트 없이 나온다")
@@ -433,7 +443,11 @@ class MembershipOnlyChallengerAccessIntegrationTest extends IntegrationTestSuppo
     }
 
     private FcmNotificationRequestedEvent pushEvent(Long targetChapterId) {
+        return pushEvent(targetChapterId, Set.of());
+    }
+
+    private FcmNotificationRequestedEvent pushEvent(Long targetChapterId, Set<ChallengerPart> targetParts) {
         return new FcmNotificationRequestedEvent(null, null, null, learner.getId(), List.of(),
-            gisu.getId(), targetChapterId, null, Set.of(), "제목", "본문", null, null, null);
+            gisu.getId(), targetChapterId, null, targetParts, "제목", "본문", null, null, null);
     }
 }
