@@ -152,7 +152,6 @@ public class ChallengerRecord extends BaseEntity {
     }
 
     /**
-     * 참여하지 않는 학교의 프로덕트팀처럼 수강 없는 소속은 지부 없이 발급한다.
      * 학교·지부 역할은 그 조직의 지부가 있어야 하므로 지부를 생략할 수 없다.
      */
     public static boolean canOmitChapter(ChallengerPart part, ChallengerRoleType challengerRoleType) {
