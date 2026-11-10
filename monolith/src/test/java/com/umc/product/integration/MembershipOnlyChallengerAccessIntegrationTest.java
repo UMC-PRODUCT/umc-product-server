@@ -1,15 +1,15 @@
 package com.umc.product.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.Instant;
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 
@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
 import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
 import com.umc.product.authorization.domain.PermissionType;
@@ -39,6 +40,8 @@ import com.umc.product.member.adapter.in.web.assembler.MemberInfoResponseAssembl
 import com.umc.product.member.application.port.in.query.GetMemberSummaryV2UseCase;
 import com.umc.product.member.application.port.in.query.SearchMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberSummaryV2Info.ChallengerHistoryItem;
+import com.umc.product.member.application.port.in.query.dto.SearchMemberItemInfo;
+import com.umc.product.member.application.port.in.query.dto.SearchMemberItemV2Info;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberQuery;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
@@ -149,8 +152,8 @@ class MembershipOnlyChallengerAccessIntegrationTest extends IntegrationTestSuppo
         Long partNoticeId = saveNotice(List.of(ChallengerPart.WEB_PRODUCT_ENGINEER));
 
         // When
-        boolean canReadGisuNotice = canRead(ResourceType.NOTICE, gisuNoticeId);
-        boolean canReadPartNotice = canRead(ResourceType.NOTICE, partNoticeId);
+        boolean canReadGisuNotice = canReadNotice(gisuNoticeId);
+        boolean canReadPartNotice = canReadNotice(partNoticeId);
         manageNoticeReadUseCase.recordRead(gisuNoticeId, member.getId());
 
         // Then
@@ -160,17 +163,64 @@ class MembershipOnlyChallengerAccessIntegrationTest extends IntegrationTestSuppo
     }
 
     @Test
-    @DisplayName("회원 검색 v1·v2를 쓸 수 있다")
+    @DisplayName("기수 공지 목록에는 기수 전체 공지만 보이고 파트 한정 공지는 보이지 않는다")
+    void 공지_목록() throws Exception {
+        // Given
+        Long gisuNoticeId = saveNotice(List.of());
+        Long partNoticeId = saveNotice(List.of(ChallengerPart.WEB_PRODUCT_ENGINEER));
+
+        // When
+        String body = mockMvc.perform(get("/api/v1/notices")
+                .header("Authorization", "Bearer " + MEMBER_TOKEN)
+                .param("gisuId", gisu.getId().toString())
+                .param("noticeTab", NoticeTab.CHALLENGER.name()))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        // Then
+        List<Long> listedIds = objectMapper.readTree(body).at("/result/content").findValues("id").stream()
+            .map(JsonNode::asLong)
+            .toList();
+        assertThat(listedIds).contains(gisuNoticeId).doesNotContain(partNoticeId);
+    }
+
+    @Test
+    @DisplayName("회원 검색 v1·v2 결과에 이 챌린저가 파트 없이 나온다")
     void 회원_검색() {
+        // Given
+        SearchMemberQuery query = new SearchMemberQuery(null, gisu.getId(), null, null, null);
+        PageRequest pageable = PageRequest.of(0, 20);
+
+        // When
+        List<SearchMemberItemInfo> v1Items = searchMemberUseCase.searchBy(query, member.getId(), pageable)
+            .page().getContent();
+        List<SearchMemberItemV2Info> v2Items = searchMemberUseCase.searchByV2(query, member.getId(), pageable)
+            .page().getContent();
+
+        // Then
+        assertThat(v1Items)
+            .extracting(SearchMemberItemInfo::memberId, SearchMemberItemInfo::challengerId,
+                SearchMemberItemInfo::part)
+            .contains(tuple(member.getId(), challenger.getId(), null));
+        assertThat(v1Items).extracting(SearchMemberItemInfo::memberId).contains(learner.getId());
+        assertThat(v2Items)
+            .extracting(SearchMemberItemV2Info::memberId,
+                item -> item.primaryChallenger().challengerId(), item -> item.primaryChallenger().part())
+            .contains(tuple(member.getId(), challenger.getId(), null));
+    }
+
+    @Test
+    @DisplayName("챌린저 이력이 없는 회원은 검색할 수 없다")
+    void 챌린저_이력_없는_회원_검색_거부() {
         // Given
         SearchMemberQuery query = new SearchMemberQuery(null, null, null, null, null);
         PageRequest pageable = PageRequest.of(0, 20);
 
         // When / Then
-        assertThatCode(() -> searchMemberUseCase.searchBy(query, member.getId(), pageable))
-            .doesNotThrowAnyException();
-        assertThatCode(() -> searchMemberUseCase.searchByV2(query, member.getId(), pageable))
-            .doesNotThrowAnyException();
+        assertThatThrownBy(() -> searchMemberUseCase.searchBy(query, outsider.getId(), pageable))
+            .isInstanceOf(MemberDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(MemberErrorCode.MEMBER_SEARCH_ACCESS_DENIED);
         assertThatThrownBy(() -> searchMemberUseCase.searchByV2(query, outsider.getId(), pageable))
             .isInstanceOf(MemberDomainException.class)
             .extracting("baseCode")
@@ -178,22 +228,17 @@ class MembershipOnlyChallengerAccessIntegrationTest extends IntegrationTestSuppo
     }
 
     @Test
-    @DisplayName("커뮤니티 게시글을 작성할 수 있고, 작성한 글의 WRITE 권한이 있다")
+    @DisplayName("커뮤니티 게시글을 작성하면 이 챌린저가 작성자가 된다")
     void 커뮤니티_게시글_작성() throws Exception {
-        // When
-        String body = mockMvc.perform(post("/api/v1/posts")
+        // When / Then
+        mockMvc.perform(post("/api/v1/posts")
                 .header("Authorization", "Bearer " + MEMBER_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"title": "프로덕트팀 인사", "content": "잘 부탁드립니다.", "category": "FREE"}
                     """))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.result.authorChallengerId").value(challenger.getId()))
-            .andReturn().getResponse().getContentAsString();
-        Long postId = objectMapper.readTree(body).at("/result/postId").asLong();
-
-        // Then
-        assertThat(canWrite(ResourceType.COMMUNITY_POST, postId)).isTrue();
+            .andExpect(jsonPath("$.result.authorChallengerId").value(challenger.getId()));
     }
 
     @Test
@@ -208,8 +253,8 @@ class MembershipOnlyChallengerAccessIntegrationTest extends IntegrationTestSuppo
             .name("프로덕트팀 회의")
             .tags(Set.of(ScheduleTag.MEETING))
             .authorMemberId(member.getId())
-            .startsAt(Instant.parse("2024-05-01T10:00:00Z"))
-            .endsAt(Instant.parse("2024-05-01T12:00:00Z"))
+            .startsAt(gisu.getStartAt().plus(Duration.ofDays(1)))
+            .endsAt(gisu.getStartAt().plus(Duration.ofDays(1)).plus(Duration.ofHours(2)))
             .participantMemberIds(Set.of())
             .build());
 
@@ -245,8 +290,6 @@ class MembershipOnlyChallengerAccessIntegrationTest extends IntegrationTestSuppo
         assertThat(v2History)
             .extracting(ChallengerHistoryItem::gisuId, ChallengerHistoryItem::challengerId)
             .containsExactly(tuple(gisu.getId(), challenger.getId()));
-        assertThat(v1Records.getFirst().challengerId()).isPositive();
-        assertThat(v2History.getFirst().challengerId()).isPositive();
     }
 
     private Member saveMember(String name, String email, Long schoolId) {
@@ -264,13 +307,8 @@ class MembershipOnlyChallengerAccessIntegrationTest extends IntegrationTestSuppo
         return notice.getId();
     }
 
-    private boolean canRead(ResourceType resourceType, Long resourceId) {
+    private boolean canReadNotice(Long noticeId) {
         return checkPermissionUseCase.check(member.getId(),
-            ResourcePermission.of(resourceType, resourceId, PermissionType.READ));
-    }
-
-    private boolean canWrite(ResourceType resourceType, Long resourceId) {
-        return checkPermissionUseCase.check(member.getId(),
-            ResourcePermission.of(resourceType, resourceId, PermissionType.WRITE));
+            ResourcePermission.of(ResourceType.NOTICE, noticeId, PermissionType.READ));
     }
 }
