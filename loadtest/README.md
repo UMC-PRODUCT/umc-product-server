@@ -39,6 +39,29 @@ BASE_URL=http://localhost:8080 PROFILE=smoke SCENARIO=health-check k6 run script
 `health-check`는 시딩 없이 실행할 수 있다. `BASE_URL`을 대상 앱 주소로 바꾸고,
 `PROFILE`, `SCENARIO`, `RATE`, `DURATION`으로 부하를 선택한다. 요약은 `out/last-summary.json`에 저장된다.
 
+## 결과를 Grafana로 보내기
+
+k6 결과를 Prometheus remote write로 보내면 Grafana `부하 테스트 (k6)` 대시보드의 ① 행이 채워진다.
+Prometheus에는 공개 경로가 없다. 인프라 관리자가
+[부하 테스트 결과 보내기](https://github.com/UMC-PRODUCT/umc-infra/blob/main/docs/operations/tool-access.md#부하-테스트-결과-보내기)
+절차로 port-forward와 SSH tunnel을 연 PC에서 실행한다. 부하 대상은 dev와 Preview 앱뿐이다.
+
+```bash
+cd loadtest/k6
+mkdir -p out
+export K6_PROMETHEUS_RW_SERVER_URL=http://127.0.0.1:19090/api/v1/write
+export K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM=true
+export K6_PROMETHEUS_RW_STALE_MARKERS=true
+testid="$(date +%Y%m%d-%H%M)-health-check"
+BASE_URL="${DEV_BASE_URL:?DEV_BASE_URL에 dev 앱 주소를 지정하세요}" PROFILE=smoke SCENARIO=health-check \
+  k6 run --out experimental-prometheus-rw --tag env=dev --tag "testid=$testid" script.js
+```
+
+- `K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM=true`는 응답시간 같은 trend 지표를 native histogram으로 보낸다. 대시보드는 이 값으로 구간별 p95를 계산한다.
+  빼면 k6가 p95를 gauge로 보내는데, 이 값은 실행 시작부터의 누적값이라 지연 변화가 늦게 보인다.
+- `K6_PROMETHEUS_RW_STALE_MARKERS=true`는 실행이 끝난 시점에 시계열을 끊는다. 빼면 VUs 같은 패널에 마지막 값이 최대 5분간 남는다.
+- 대시보드는 `env`와 `testid` 태그로 환경과 실행을 거른다. Preview에 걸 때는 `--tag env=preview`로 바꾼다.
+
 ## 핵심 결정 기록
 
 각 항목: **비교군 → 결정 → 이유.** 상세 근거가 더 필요하면 ADR-013 과 커밋 로그.
