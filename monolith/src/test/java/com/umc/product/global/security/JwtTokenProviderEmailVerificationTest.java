@@ -160,7 +160,7 @@ class JwtTokenProviderEmailVerificationTest {
     void refresh_token_claims_파싱() {
         // given
         Long memberId = 10L;
-        String token = provider.createRefreshToken(memberId);
+        String token = provider.createRefreshToken(memberId, null);
 
         // when
         RefreshTokenClaims claims = provider.parseRefreshToken(token);
@@ -169,6 +169,20 @@ class JwtTokenProviderEmailVerificationTest {
         assertThat(claims.memberId()).isEqualTo(memberId);
         assertThat(claims.jti()).isNotNull();
         assertThat(claims.expiresAt()).isNotNull();
+        assertThat(claims.clientType()).isNull();
+    }
+
+    @Test
+    @DisplayName("RefreshToken에 담은 clientType을 파싱 결과로 돌려준다")
+    void refresh_token_client_type_파싱() {
+        // given
+        String token = provider.createRefreshToken(10L, ClientType.IOS);
+
+        // when
+        RefreshTokenClaims claims = provider.parseRefreshToken(token);
+
+        // then
+        assertThat(claims.clientType()).isEqualTo(ClientType.IOS);
     }
 
     @Test

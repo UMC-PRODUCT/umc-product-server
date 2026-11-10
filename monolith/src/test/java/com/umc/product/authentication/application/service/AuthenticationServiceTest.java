@@ -146,6 +146,36 @@ class AuthenticationServiceTest {
         }
 
         @Test
+        @DisplayName("legacy RefreshToken에 담긴 clientType을 새 토큰에 그대로 넘긴다")
+        void legacy_refresh_token_client_type_보존() {
+            // given
+            RefreshTokenClaims claims = new RefreshTokenClaims(
+                MEMBER_ID, REFRESH_JTI, REFRESH_EXPIRES_AT, ClientContextClaims.empty(), ClientType.IOS
+            );
+            RefreshToken stored = RefreshToken.create(REFRESH_JTI, MEMBER_ID, REFRESH_EXPIRES_AT);
+            NewTokens newTokens = NewTokens.builder()
+                .accessToken("new-access-token")
+                .refreshToken("new-refresh-token")
+                .build();
+
+            given(jwtTokenProvider.parseRefreshToken(REFRESH_TOKEN)).willReturn(claims);
+            given(loadRefreshTokenPort.findByJti(REFRESH_JTI)).willReturn(Optional.of(stored));
+            given(deleteRefreshTokenPort.deleteByJti(REFRESH_JTI)).willReturn(true);
+            given(authenticationTokenIssuer.issue(eq(MEMBER_ID), eq(ClientType.IOS))).willReturn(newTokens);
+
+            // when
+            NewTokens result = service.renewAccessToken(
+                RenewAccessTokenCommand.builder()
+                    .refreshToken(REFRESH_TOKEN)
+                    .build()
+            );
+
+            // then
+            assertThat(result).isSameAs(newTokens);
+            then(authenticationTokenIssuer).should().issue(MEMBER_ID, ClientType.IOS);
+        }
+
+        @Test
         @DisplayName("SSO RefreshToken이면 client context를 보존해서 새 토큰을 발급한다")
         void sso_refresh_token_context_보존_재발급() {
             // given
