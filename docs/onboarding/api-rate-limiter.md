@@ -155,6 +155,7 @@ guest:{entryCodeId}
 ```
 
 따라서 공용 Wi-Fi나 NAT 환경에서도 인증된 데모데이 게스트는 같은 IP의 다른 게스트와 bucket을 공유하지 않는다.
+반대로 같은 공인 IP를 쓰는 비로그인 사용자(행사장 Wi-Fi, NAT)는 아래 `ip:{remoteAddr}` bucket 하나를 나눠 쓴다.
 게스트 입장 코드 제출은 인증 전 요청이므로 이 전역 정책에서 제외하고, 별도의 IP 기반
 `DemodayGuestRateLimitInterceptor`와 `demoday.guest-rate-limit` 설정으로 제한한다.
 
@@ -164,7 +165,15 @@ guest:{entryCodeId}
 ip:{remoteAddr}
 ```
 
-애플리케이션 코드는 `X-Forwarded-For`를 직접 파싱하지 않는다. 프록시 헤더 처리는 `server.forward-headers-strategy=framework` 같은 WAS/Spring Boot 설정을 통해 처리하고, rate limiter는 컨테이너가 정리한 `remoteAddr`만 신뢰한다.
+애플리케이션 코드는 프록시 헤더를 직접 파싱하지 않는다. `server.forward-headers-strategy=native`로 Tomcat `RemoteIpValve`가
+요청을 정리하고, rate limiter와 감사 로그, 지원서 제출 IP, 요청 로그 `clientIp`는 모두 그 결과인 `remoteAddr`를 쓴다.
+
+- `RemoteIpValve`는 바로 앞 요청자가 내부 프록시일 때만 다음 네 헤더를 반영한다: `X-Forwarded-For`, `X-Forwarded-Proto`,
+  `X-Forwarded-Host`, `X-Forwarded-Port`. 내부 프록시 기준은 Spring Boot `server.tomcat.remoteip.internal-proxies` 기본값이며,
+  K3s Pod 대역(`10.42.0.0/16`)의 Traefik이 여기에 든다.
+- 운영 Traefik은 클라이언트가 보낸 `X-Forwarded-*` 값을 지우고 실제 접속 IP로 다시 채운다(umc-product-infra
+  `ansible/roles/k3s/templates/traefik-config.yaml.j2`의 `forwardedHeaders`). 그래서 `X-Forwarded-For`에는 값이 하나만 온다.
+- 요청 주소가 필요하면 `HttpServletRequest`의 scheme, host, port를 쓴다. 요청 헤더를 읽어 클라이언트 IP나 절대 URL을 직접 만들지 않는다.
 
 ## 정책 선택
 

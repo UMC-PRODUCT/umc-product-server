@@ -28,6 +28,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "challenger_record")
 public class ChallengerRecord extends BaseEntity {
+    public static final String CHAPTER_OMISSION_RULE =
+        "파트 없는 코드 중 역할이 없거나 중앙 역할인 코드만 지부를 생략할 수 있습니다.";
     private static final SecureRandom CODE_RANDOM = new SecureRandom();
 
     @Id
@@ -115,10 +117,6 @@ public class ChallengerRecord extends BaseEntity {
         if (infra && (part == null || !part.canHaveInfra())) {
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
         }
-        // 운영진 코드가 아닌 수강 코드는 파트가 필수다.
-        if (challengerRoleType == null && part == null) {
-            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
-        }
         ChallengerRecord record = new ChallengerRecord();
         record.code = generateUniqueCode();
         record.createdMemberId = createdMemberId;
@@ -132,7 +130,7 @@ public class ChallengerRecord extends BaseEntity {
         record.organizationId = organizationId;
         if (chapterId == null && !record.canOmitChapter()) {
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST,
-                "수강하지 않는 중앙 운영진 코드만 지부를 생략할 수 있습니다.");
+                CHAPTER_OMISSION_RULE);
         }
         return record;
     }
@@ -150,8 +148,15 @@ public class ChallengerRecord extends BaseEntity {
     }
 
     public boolean canOmitChapter() {
-        return isAdminRecord() && challengerRoleType.organizationType() == OrganizationType.CENTRAL
-            && part == null;
+        return canOmitChapter(part, challengerRoleType);
+    }
+
+    /**
+     * 학교·지부 역할은 그 조직의 지부가 있어야 하므로 지부를 생략할 수 없다.
+     */
+    public static boolean canOmitChapter(ChallengerPart part, ChallengerRoleType challengerRoleType) {
+        return part == null && (challengerRoleType == null
+            || challengerRoleType.organizationType() == OrganizationType.CENTRAL);
     }
 
     /**
@@ -160,10 +165,6 @@ public class ChallengerRecord extends BaseEntity {
     public void validateLearningSelection() {
         if (infra && (part == null || !part.canHaveInfra())) {
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
-        }
-        if (!isAdminRecord() && part == null) {
-            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST,
-                "학습 파트를 선택해주세요.");
         }
     }
 

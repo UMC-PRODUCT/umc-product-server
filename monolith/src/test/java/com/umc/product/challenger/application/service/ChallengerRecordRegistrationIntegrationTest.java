@@ -121,6 +121,55 @@ class ChallengerRecordRegistrationIntegrationTest extends IntegrationTestSupport
     }
 
     @Test
+    @DisplayName("파트와 역할 없는 코드로 수강 없는 소속 챌린저가 된다")
+    void 수강_없는_소속_등록() {
+        ChallengerRecord record = issue(null, false, null);
+
+        consume(record);
+
+        assertThat(membership().getPart()).isNull();
+        assertThat(membership().isInfra()).isFalse();
+        assertThat(roles.findByChallengerId(membership().getId())).isEmpty();
+        assertUsed(record);
+    }
+
+    @Test
+    @DisplayName("이 기수 지부가 없는 학교의 회원도 지부 없는 수강 없는 소속 코드로 챌린저가 된다")
+    void 지부_없는_학교의_수강_없는_소속_등록() {
+        School unassignedSchool = schoolFixture.학교("미참여학교");
+        Member productMember = saveMemberPort.save(
+            Member.create("프덕회원", "프덕", "product@test.com", unassignedSchool.getId(), null));
+        Long id = records.create(command(productMember, unassignedSchool, null, false, null)
+            .chapterId(null).build());
+        ChallengerRecord record = recordRepository.findById(id).orElseThrow();
+
+        consume(record, productMember);
+
+        Challenger membership = membership(productMember);
+        assertThat(record.getChapterId()).isNull();
+        assertThat(membership.getPart()).isNull();
+        assertThat(membership.isInfra()).isFalse();
+        assertThat(roles.findByChallengerId(membership.getId())).isEmpty();
+        assertThat(permissions.loadSubject(productMember.getId()).gisuChallengerInfos()).singleElement()
+            .satisfies(info -> assertThat(info.chapterId()).isNull());
+        assertUsed(record, productMember);
+    }
+
+    @Test
+    @DisplayName("수강 없는 소속 챌린저는 같은 기수의 파트 코드로 파트를 추가한다")
+    void 수강_없는_소속에_파트_추가() {
+        consume(issue(null, false, null));
+        Long membershipId = membership().getId();
+        ChallengerRecord partRecord = issue(ChallengerPart.WEB_PRODUCT_ENGINEER, false, null);
+
+        consume(partRecord);
+
+        assertThat(membership().getId()).isEqualTo(membershipId);
+        assertThat(membership().getPart()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
+        assertUsed(partRecord);
+    }
+
+    @Test
     @DisplayName("기존 파트 수강생은 같은 파트 코드로 역할만 추가하고 기존 역할을 보존한다")
     void 기존_소속과_수강과_역할_보존() {
         Challenger existing = saveChallengerPort.save(Challenger.builder().memberId(member.getId())
@@ -184,9 +233,15 @@ class ChallengerRecordRegistrationIntegrationTest extends IntegrationTestSupport
     private CreateChallengerRecordCommand.CreateChallengerRecordCommandBuilder command(
         ChallengerPart part, boolean infra, ChallengerRoleType role
     ) {
-        return CreateChallengerRecordCommand.builder().creatorMemberId(member.getId())
-            .gisuId(gisu.getId()).chapterId(chapter.getId()).schoolId(school.getId())
-            .memberName(member.getName()).part(part).infra(infra).challengerRoleType(role);
+        return command(member, school, part, infra, role);
+    }
+
+    private CreateChallengerRecordCommand.CreateChallengerRecordCommandBuilder command(
+        Member target, School targetSchool, ChallengerPart part, boolean infra, ChallengerRoleType role
+    ) {
+        return CreateChallengerRecordCommand.builder().creatorMemberId(target.getId())
+            .gisuId(gisu.getId()).chapterId(chapter.getId()).schoolId(targetSchool.getId())
+            .memberName(target.getName()).part(part).infra(infra).challengerRoleType(role);
     }
 
     private ChallengerRecord issue(ChallengerPart part, boolean infra, ChallengerRoleType role) {
@@ -194,17 +249,29 @@ class ChallengerRecordRegistrationIntegrationTest extends IntegrationTestSupport
     }
 
     private void consume(ChallengerRecord record) {
+        consume(record, member);
+    }
+
+    private void consume(ChallengerRecord record, Member target) {
         records.consumeCode(ConsumeChallengerRecordCommand.builder()
-            .targetMemberId(member.getId()).code(record.getCode()).build());
+            .targetMemberId(target.getId()).code(record.getCode()).build());
     }
 
     private Challenger membership() {
-        return challengers.findByMemberIdAndGisuId(member.getId(), gisu.getId()).orElseThrow();
+        return membership(member);
+    }
+
+    private Challenger membership(Member target) {
+        return challengers.findByMemberIdAndGisuId(target.getId(), gisu.getId()).orElseThrow();
     }
 
     private void assertUsed(ChallengerRecord record) {
+        assertUsed(record, member);
+    }
+
+    private void assertUsed(ChallengerRecord record, Member target) {
         ChallengerRecord saved = recordRepository.findById(record.getId()).orElseThrow();
         assertThat(saved.isUsed()).isTrue();
-        assertThat(saved.getUsedMemberId()).isEqualTo(member.getId());
+        assertThat(saved.getUsedMemberId()).isEqualTo(target.getId());
     }
 }

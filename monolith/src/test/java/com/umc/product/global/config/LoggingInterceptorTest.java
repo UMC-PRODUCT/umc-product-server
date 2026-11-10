@@ -201,10 +201,11 @@ class LoggingInterceptorTest {
     }
 
     @Test
-    @DisplayName("X-Forwarded-For 헤더가 있으면 첫 번째 IP 가 clientIp 로 채워진다")
-    void clientIp_X_Forwarded_For_우선() {
+    @DisplayName("clientIp 는 X-Forwarded-For 헤더가 아니라 컨테이너가 정리한 remoteAddr 로 채워진다")
+    void clientIp_remoteAddr_사용() {
         // given
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/forms");
+        request.setRemoteAddr("198.51.100.7");
         request.addHeader("X-Forwarded-For", "203.0.113.7, 10.0.0.1");
         MockHttpServletResponse response = new MockHttpServletResponse();
         interceptor.preHandle(request, response, new Object());
@@ -215,7 +216,7 @@ class LoggingInterceptorTest {
         // then
         Map<String, String> snapshot = findEventMdc("api_request_completed");
         assertThat(snapshot).isNotNull();
-        assertThat(snapshot).containsEntry("clientIp", "203.0.113.7");
+        assertThat(snapshot).containsEntry("clientIp", "198.51.100.7");
     }
 
     private Map<String, String> findEventMdc(String message) {

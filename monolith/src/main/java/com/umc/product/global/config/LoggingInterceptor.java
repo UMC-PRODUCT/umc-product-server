@@ -78,7 +78,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
         // Instant.now / currentTimeMillis 는 NTP 동기화 등 wall-clock 보정 시
         // 뒤로 점프할 수 있어 durationMs 가 음수/왜곡으로 찍힌다.
         request.setAttribute(START_TIME_ATTR, System.nanoTime());
-        request.setAttribute(CLIENT_IP_ATTR, extractClientIp(request));
+        request.setAttribute(CLIENT_IP_ATTR, request.getRemoteAddr());
 
         QueryStatsHolder.init();
 
@@ -213,17 +213,6 @@ public class LoggingInterceptor implements HandlerInterceptor {
             QueryStatsHolder.clear();
             MDC.clear();
         }
-    }
-
-    private String extractClientIp(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-
-        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
-            // 다중 프록시 경유 시 첫 번째 IP가 실제 클라이언트 IP
-            return xForwardedFor.split(",")[0].trim();
-        }
-
-        return request.getRemoteAddr();
     }
 
     private void putClientRequestContextToMdc(ClientRequestContext context) {

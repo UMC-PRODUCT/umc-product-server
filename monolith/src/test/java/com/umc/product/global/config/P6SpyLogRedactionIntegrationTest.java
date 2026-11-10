@@ -37,6 +37,8 @@ class P6SpyLogRedactionIntegrationTest extends IntegrationTestSupport {
     @Test
     @DisplayName("실제 PostgreSQL INSERT와 SELECT 로그는 바인딩 값을 노출하지 않는다")
     void 실제_PostgreSQL_INSERT와_SELECT_로그는_바인딩_값을_노출하지_않는다() {
+        // 다른 테스트 컨텍스트가 닫히면 datasource-decorator가 JVM 전역 P6Spy 설정을 지우므로 SQL 실행 직전에 다시 건다.
+        P6SpyLoggingInitializer.useSlf4jSqlLogging();
         ch.qos.logback.classic.Logger p6spyLogger =
             (ch.qos.logback.classic.Logger)LoggerFactory.getLogger("p6spy");
         Level previousLevel = p6spyLogger.getLevel();
@@ -100,6 +102,10 @@ class P6SpyLogRedactionIntegrationTest extends IntegrationTestSupport {
         public void initialize(ConfigurableApplicationContext applicationContext) {
             previousP6SpyModuleList = System.getProperty("p6spy.config.modulelist");
             previousP6SpyAppender = System.getProperty("p6spy.config.appender");
+            useSlf4jSqlLogging();
+        }
+
+        static void useSlf4jSqlLogging() {
             System.setProperty(
                 "p6spy.config.modulelist",
                 String.join(",", P6SpyFactory.class.getName(), P6LogFactory.class.getName())
