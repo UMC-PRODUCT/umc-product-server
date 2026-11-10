@@ -43,22 +43,34 @@ BASE_URL=http://localhost:8080 PROFILE=smoke SCENARIO=health-check k6 run script
 
 k6 결과를 Prometheus remote write로 보내면 Grafana `부하 테스트 (k6)` 대시보드의 ① 행이 채워진다.
 Prometheus에는 공개 경로가 없다. 인프라 관리자가
-[부하 테스트 결과 보내기](https://github.com/UMC-PRODUCT/umc-infra/blob/main/docs/operations/tool-access.md#부하-테스트-결과-보내기)
-절차로 port-forward와 SSH tunnel을 연 PC에서 실행한다. 부하 대상은 dev와 Preview 앱뿐이다.
+[부하 테스트 결과 보내기](https://github.com/UMC-PRODUCT/umc-product-infra/blob/main/docs/operations/tool-access.md#부하-테스트-결과-보내기)
+절차로 port-forward와 SSH tunnel을 연 PC에서 실행한다.
+
+부하 대상은 dev와 Preview 앱뿐이다. `BASE_URL`이 운영 API 주소면 harness가 시작 전에 실행을 거부한다.
+dev와 Preview도 운영과 같은 노드와 Traefik을 쓰므로 처음에는 낮은 `RATE`로 시작한다.
+
+dev와 Preview의 `/test/**`는 문서 계정의 Basic 인증으로 보호된다. `아이디:비밀번호`를 Base64로 인코딩한 값을
+승인된 비밀 전달 수단으로 받아 `TEST_API_BASIC_AUTH` 환경변수에 넣는다. 토큰 발급과 `health-check` 같은
+`/test/**` 요청에만 적용하며, 일반 API는 회원 JWT로 인증한다. 인코딩한 값도 비밀이므로 커밋하거나 실행 메모에 넣지 않는다.
 
 ```bash
 cd loadtest/k6
 mkdir -p out
-export K6_PROMETHEUS_RW_SERVER_URL=http://127.0.0.1:19090/api/v1/write
+export K6_PROMETHEUS_RW_SERVER_URL=http://127.0.0.1:19095/api/v1/write
 export K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM=true
 export K6_PROMETHEUS_RW_STALE_MARKERS=true
-testid="$(date +%Y%m%d-%H%M)-health-check"
-BASE_URL=https://api-dev.university.neordinary.com PROFILE=smoke SCENARIO=health-check \
+SCENARIO=health-check
+testid="$(date +%Y%m%d-%H%M)-$SCENARIO"
+TEST_API_BASIC_AUTH="${TEST_API_BASIC_AUTH:?dev 문서 계정의 아이디:비밀번호를 Base64로 인코딩해 넣으세요}" \
+  BASE_URL=https://api-dev.university.neordinary.com PROFILE=smoke SCENARIO="$SCENARIO" \
   k6 run --out experimental-prometheus-rw --tag env=dev --tag "testid=$testid" script.js
 ```
 
+시작 후 1분 안에 Grafana ① 행에 값이 들어오는지 확인한다. 값이 들어오지 않거나 tunnel이 끊기면 k6를 멈춘다.
+k6는 결과 전송에 실패해도 부하를 계속 건다.
+
 - `K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM=true`는 응답시간 같은 trend 지표를 native histogram으로 보낸다. 대시보드는 이 값으로 구간별 p95를 계산한다.
-  빼면 k6가 p95를 gauge로 보내는데, 이 값은 실행 시작부터의 누적값이라 지연 변화가 늦게 보인다.
+  빼면 k6 v2 기본 trend 통계인 `p(99)`만 `_p99` gauge로 나간다. 대시보드의 p95 패널은 비고, `_p99` 값도 실행 시작부터의 누적값이라 지연 변화가 늦게 보인다.
 - `K6_PROMETHEUS_RW_STALE_MARKERS=true`는 실행이 끝난 시점에 시계열을 끊는다. 빼면 VUs 같은 패널에 마지막 값이 최대 5분간 남는다.
 - 대시보드는 `env`와 `testid` 태그로 환경과 실행을 거른다. Preview에 걸 때는 `BASE_URL`을 `https://api-pr-<PR번호>.preview.university.neordinary.com`으로, 태그를 `--tag env=preview`로 바꾼다.
 

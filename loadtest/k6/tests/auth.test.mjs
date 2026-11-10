@@ -36,7 +36,7 @@ test("dev 테스트 토큰 요청에만 지정한 Basic 인증을 적용한다",
 test("기존 호출은 전역 BASE_URL과 auth 태그를 유지한다", () => {
   getAccessToken("101");
   assert.equal(state.requests[0].url, "http://default-server:8080/test/token/access?memberId=101");
-  assert.deepEqual(state.requests[0].params, { tags: { scenario: "auth" } });
+  assert.deepEqual(state.requests[0].params, { headers: {}, tags: { scenario: "auth" } });
 });
 
 test("클라이언트 서버로 인증하고 같은 서버·회원의 토큰만 재사용한다", () => {
@@ -63,4 +63,9 @@ test("실패한 토큰 응답은 캐시하지 않는다", () => {
   state.status = 200;
   assert.ok(getAccessToken("105"));
   assert.equal(state.requests.length, 2);
+});
+
+test("운영 API 주소로는 토큰을 요청하지 않는다", () => {
+  assert.throws(() => getAccessToken("107", { baseUrl: "https://api.university.neordinary.com" }), /운영 API/);
+  assert.equal(state.requests.length, 0);
 });

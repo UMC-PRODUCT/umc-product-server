@@ -1,3 +1,5 @@
+import { loadTestOrigin } from "../lib/target.js";
+
 export function positiveInteger(value, fallback, name, min, max) {
   const raw = value === undefined ? String(fallback) : String(value);
   const number = Number(raw);
@@ -19,7 +21,7 @@ export function durationMs(value) {
 }
 
 export function readChatConfig(env) {
-  const baseUrl = (env.BASE_URL || "http://localhost:8080").replace(/\/+$/, "");
+  const baseUrl = loadTestOrigin(env.BASE_URL || "http://localhost:8080");
   if (!/^https?:\/\/[^/?#\s]+$/.test(baseUrl)) throw new Error("BASE_URL에는 앱의 http(s) 주소만 지정하세요");
   const timeoutMs = positiveInteger(env.CHAT_TIMEOUT_MS, 10000, "CHAT_TIMEOUT_MS", 100, 60000);
   return { baseUrl, timeoutMs };
