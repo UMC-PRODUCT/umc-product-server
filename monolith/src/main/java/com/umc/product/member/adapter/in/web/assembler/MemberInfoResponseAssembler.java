@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.umc.product.authorization.application.port.in.query.CheckChallengerAuthorityUseCase;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
@@ -32,17 +33,19 @@ public class MemberInfoResponseAssembler {
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final GetChapterUseCase getChapterUseCase;
+    private final CheckChallengerAuthorityUseCase checkChallengerAuthorityUseCase;
 
     public MemberInfoResponse fromMemberId(Long memberId) {
-        return assemble(memberId, getMemberProfileUseCase.getMemberProfileById(memberId));
+        return assemble(memberId, getMemberProfileUseCase.getMemberProfileById(memberId),
+            checkChallengerAuthorityUseCase.isUmcProduct(memberId));
     }
 
     public MemberInfoResponse fromMemberIdToPublic(Long memberId) {
         // 비공개로 설정한 프로필 링크는 다른 회원에게 내려주지 않습니다.
-        return assemble(memberId, getMemberProfileUseCase.getPublicMemberProfileById(memberId)).toPublic();
+        return assemble(memberId, getMemberProfileUseCase.getPublicMemberProfileById(memberId), null).toPublic();
     }
 
-    private MemberInfoResponse assemble(Long memberId, MemberProfileInfo memberProfileInfo) {
+    private MemberInfoResponse assemble(Long memberId, MemberProfileInfo memberProfileInfo, Boolean isUmcProduct) {
         MemberInfo memberInfo = getMemberUseCase.getById(memberId);
 
         // 챌린저 별로 gisu/chapter를 매번 조회하면 N+1이 발생하므로, 두 도메인의 batch 메서드로 한 번에 조회합니다.
@@ -71,7 +74,7 @@ public class MemberInfoResponseAssembler {
             ))
             .toList();
 
-        return MemberInfoResponse.from(memberInfo, memberProfileInfo, challengerInfoResponses);
+        return MemberInfoResponse.from(memberInfo, memberProfileInfo, challengerInfoResponses, isUmcProduct);
     }
 
     private ChapterInfo getChapterInfo(
