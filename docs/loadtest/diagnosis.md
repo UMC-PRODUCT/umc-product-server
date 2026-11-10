@@ -7,12 +7,12 @@
 
 | 증상 조합 | 병목 | 다음 확인 |
 |----------|------|----------|
-| TPS 평탄 + 앱 CPU ≈100% | **CPU 바운드** — 연산·JSON 직렬화·GC | ② GC pause 같이 증가하면 힙 문제, 아니면 순수 연산 비용 |
+| TPS 평탄 + 앱 CPU ≈100% | **CPU 바운드** — 연산·JSON 직렬화·GC | ② `GC overhead`가 같이 오르고 `JVM 힙`이 max 에 자주 닿으면 힙 문제, 아니면 순수 연산 비용 |
 | TPS 평탄 + **앱 CPU 낮음**(<50%) + p95 급등 | **대기 병목** — CPU 가 아닌 무언가에 줄 서 있음. 가장 흔한 케이스 | ② Hikari pending → ③ DB → 외부 API 순서로 추적 |
 | Hikari pending>0 + DB CPU 높음 | DB 가 못 받아줌 — 쿼리/인덱스 문제 | ③ 락·④ `Disk — S avg queue` 확인. 쿼리 튜닝 대상 |
 | Hikari pending>0 + DB CPU 낮음 | 풀 크기 부족 또는 **트랜잭션이 커넥션을 오래 점유** | ③ 커넥션 상태별 — `idle in transaction` 누적이면 트랜잭션 범위 문제 |
 | Tomcat busy=max + Hikari 여유 | 스레드풀 병목 — DB 아닌 느린 것(외부 API 등)에 스레드가 묶임 | 트레이싱으로 느린 구간 특정 |
-| p95 만 튀고 avg 정상 | **tail latency** — GC stop-the-world, 락 경합, 특정 느린 쿼리 | ② GC pause 스파이크와 시각 일치 확인 |
+| p95 만 튀고 avg 정상 | **tail latency** — GC stop-the-world, 락 경합, 특정 느린 쿼리 | ② `GC overhead` 스파이크와 시각 비교. 이 패널은 구간 평균이라 짧은 stop-the-world 는 묻힐 수 있다 |
 | VUs 급증 (arrival-rate 실행 중) | SUT 지연으로 동시성이 축적되는 중 — 그 자체가 포화 신호 | 포화점을 이미 지났다는 뜻 |
 | ④ `CPU — U 사용률` ≈100% | **측정 무효 가능** — 호스트가 포화. 이 패널은 호스트 전체라 운영 앱·DB 부하가 섞이고, k6 를 같은 서버에서 돌리면 그 몫도 섞인다. 생성기만 따로 보는 패널은 없다 | rate 를 낮추거나 k6 를 다른 머신에서 돌린다. 시험 대상 몫은 ② `앱 컨테이너 CPU (limit 대비)`·⑤ `DB 컨테이너 CPU (limit 대비)`로 따로 본다 |
 | ④ `Disk — S avg queue` 1 이상 지속 + `Disk — U busy` 상승 | 디스크 한계 — IO 대기 큐 형성. DB 데이터도 이 서버 디스크에 있다 | ③ 임시파일 쓰기와 시각 비교. 스토리지 설정 |
@@ -42,7 +42,7 @@
 ```
 
 - Hikari 고갈은 Tomcat 스레드 고갈로 **연쇄**된다. pending 이 0 이 아니면 이미 병목.
-- 비용은 DB 쪽이 크다: PostgreSQL 은 **커넥션당 OS 프로세스 1개** + 커넥션당 수 MB 메모리(work_mem 등). t4g.small(2GB) 기준 커넥션 수십 개면 메모리 압박.
+- 비용은 DB 쪽이 크다: PostgreSQL 은 **커넥션당 OS 프로세스 1개** + 커넥션당 수 MB 메모리(work_mem 등). dev·preview DB 컨테이너는 memory limit 2Gi(shared_buffers 512MB), max_connections 는 dev 30·preview 40 이라 커넥션 수십 개면 메모리 압박. ⑤ `DB 컨테이너 메모리 (limit 대비)`로 본다.
 - **풀을 키운다고 빨라지지 않는다.** DB CPU 가 한계면 커넥션 추가는 컨텍스트 스위칭만 늘린다. Hikari 권장 공식: `코어 수 × 2 + 디스크 수` — 작게 유지가 정석.
 - 실효 동시성 = min(Tomcat max threads, Hikari pool, DB max_connections). **셋 중 최솟값이 시스템의 동시 처리 한도.**
 
