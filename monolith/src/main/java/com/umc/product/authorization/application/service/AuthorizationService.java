@@ -132,7 +132,7 @@ public class AuthorizationService implements CheckPermissionUseCase {
         List<GisuChallengerInfo> chapterIds = memberChallengerList.stream().map((challengerInfo) ->
             GisuChallengerInfo.builder()
                 .gisuId(challengerInfo.gisuId())
-                .chapterId(resolveChapterId(challengerInfo, schoolId, roles))
+                .chapterId(resolveChapterId(challengerInfo, schoolId))
                 .part(challengerInfo.part())
                 .challengerId(challengerInfo.challengerId())
                 .build()
@@ -153,11 +153,9 @@ public class AuthorizationService implements CheckPermissionUseCase {
         return subjectAttributes;
     }
 
-    private Long resolveChapterId(ChallengerInfo challengerInfo, Long schoolId, List<RoleAttribute> roles) {
-        boolean isNonLearningCentralStaff = challengerInfo.part() == null
-            && roles.stream().anyMatch(role -> Objects.equals(role.gisuId(), challengerInfo.gisuId())
-                && role.roleType().isAtLeastCentralMember());
-        if (isNonLearningCentralStaff) {
+    private Long resolveChapterId(ChallengerInfo challengerInfo, Long schoolId) {
+        // 수강 없는 소속(중앙 운영진, 참여하지 않는 학교의 프로덕트팀)은 학교에 이 기수 지부가 없을 수 있다.
+        if (challengerInfo.part() == null) {
             return getChapterUseCase.findByGisuAndSchool(challengerInfo.gisuId(), schoolId)
                 .map(ChapterInfo::id)
                 .orElse(null);
