@@ -141,3 +141,11 @@ test("잘못된 서버 주소를 거부한다", () => {
     assert.throws(() => readLoadConfig({ BASE_URL: baseUrl }), /BASE_URL/);
   }
 });
+
+test("Chat 실행도 운영 API 주소를 거부한다", () => {
+  for (const read of [readPairConfig, readLoadConfig]) {
+    assert.throws(() => read({ BASE_URL: "https://api.university.neordinary.com/" }), /운영 API/);
+  }
+  assert.equal(readChatConfig({ BASE_URL: "https://api-dev.university.neordinary.com" }).baseUrl,
+    "https://api-dev.university.neordinary.com");
+});
