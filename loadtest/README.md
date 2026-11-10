@@ -53,14 +53,14 @@ export K6_PROMETHEUS_RW_SERVER_URL=http://127.0.0.1:19090/api/v1/write
 export K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM=true
 export K6_PROMETHEUS_RW_STALE_MARKERS=true
 testid="$(date +%Y%m%d-%H%M)-health-check"
-BASE_URL="${DEV_BASE_URL:?DEV_BASE_URL에 dev 앱 주소를 지정하세요}" PROFILE=smoke SCENARIO=health-check \
+BASE_URL=https://api-dev.university.neordinary.com PROFILE=smoke SCENARIO=health-check \
   k6 run --out experimental-prometheus-rw --tag env=dev --tag "testid=$testid" script.js
 ```
 
 - `K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM=true`는 응답시간 같은 trend 지표를 native histogram으로 보낸다. 대시보드는 이 값으로 구간별 p95를 계산한다.
   빼면 k6가 p95를 gauge로 보내는데, 이 값은 실행 시작부터의 누적값이라 지연 변화가 늦게 보인다.
 - `K6_PROMETHEUS_RW_STALE_MARKERS=true`는 실행이 끝난 시점에 시계열을 끊는다. 빼면 VUs 같은 패널에 마지막 값이 최대 5분간 남는다.
-- 대시보드는 `env`와 `testid` 태그로 환경과 실행을 거른다. Preview에 걸 때는 `--tag env=preview`로 바꾼다.
+- 대시보드는 `env`와 `testid` 태그로 환경과 실행을 거른다. Preview에 걸 때는 `BASE_URL`을 `https://api-pr-<PR번호>.preview.university.neordinary.com`으로, 태그를 `--tag env=preview`로 바꾼다.
 
 ## 핵심 결정 기록
 
