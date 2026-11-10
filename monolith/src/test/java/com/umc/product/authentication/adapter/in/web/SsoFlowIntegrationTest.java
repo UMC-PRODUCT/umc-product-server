@@ -124,7 +124,7 @@ class SsoFlowIntegrationTest extends IntegrationTestSupport {
             argThat(BACKOFFICE_DEV_CONTEXT::equals),
             eq(3600L)
         )).willReturn(ACCESS_TOKEN);
-        given(jwtTokenProvider.createRefreshToken(eq(member.getId()), argThat(BACKOFFICE_DEV_CONTEXT::equals)))
+        given(jwtTokenProvider.createRefreshToken(eq(member.getId()), any(), argThat(BACKOFFICE_DEV_CONTEXT::equals)))
             .willReturn(REFRESH_TOKEN);
         given(jwtTokenProvider.parseRefreshToken(REFRESH_TOKEN))
             .willReturn(new RefreshTokenClaims(
@@ -224,7 +224,7 @@ class SsoFlowIntegrationTest extends IntegrationTestSupport {
             argThat(BACKOFFICE_DEV_CONTEXT::equals),
             eq(3600L)
         )).willReturn(ACCESS_TOKEN);
-        given(jwtTokenProvider.createRefreshToken(eq(member.getId()), argThat(BACKOFFICE_DEV_CONTEXT::equals)))
+        given(jwtTokenProvider.createRefreshToken(eq(member.getId()), any(), argThat(BACKOFFICE_DEV_CONTEXT::equals)))
             .willReturn(REFRESH_TOKEN);
         given(jwtTokenProvider.parseRefreshToken(REFRESH_TOKEN))
             .willReturn(new RefreshTokenClaims(
@@ -316,7 +316,7 @@ class SsoFlowIntegrationTest extends IntegrationTestSupport {
             argThat(macContext::equals),
             eq(3600L)
         )).willReturn(ACCESS_TOKEN);
-        given(jwtTokenProvider.createRefreshToken(eq(member.getId()), argThat(macContext::equals)))
+        given(jwtTokenProvider.createRefreshToken(eq(member.getId()), any(), argThat(macContext::equals)))
             .willReturn(REFRESH_TOKEN);
         given(jwtTokenProvider.parseRefreshToken(REFRESH_TOKEN))
             .willReturn(new RefreshTokenClaims(

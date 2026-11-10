@@ -252,33 +252,25 @@ public class JwtTokenProvider {
     }
 
     // 2. Refresh Token 생성
-    public String createRefreshToken(Long memberId) {
-        // Refresh Token에는 권한 정보 등을 담지 않는 것이 일반적입니다.
-        // 필요하다면 roles를 null 대신 넣어도 됩니다.
-        Date now = new Date();
-        Date validityDate = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
-
-        return Jwts.builder()
-            .subject(String.valueOf(memberId)) // 사용자 식별자 (ID)
-            .id(UUID.randomUUID().toString())
-            .issuedAt(now)
-            .expiration(validityDate)
-            .signWith(refreshTokenSecret)
-            .compact();
-    }
-
-    public String createRefreshToken(Long memberId, ClientContextClaims clientContext) {
+    // 재발급 때 Access Token에 같은 clientType을 넣으려고 Refresh Token에도 담는다.
+    // clientContext가 null이면 SSO client claim 없이 발급한다.
+    public String createRefreshToken(Long memberId, ClientType clientType, ClientContextClaims clientContext) {
         Date now = new Date();
         Date validityDate = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
 
         var builder = Jwts.builder()
-            .subject(String.valueOf(memberId))
+            .subject(String.valueOf(memberId)) // 사용자 식별자 (ID)
             .id(UUID.randomUUID().toString())
             .issuedAt(now)
             .expiration(validityDate)
             .signWith(refreshTokenSecret);
 
-        addClientContextClaims(builder, clientContext);
+        if (clientType != null) {
+            builder.claim(CLIENT_TYPE_KEY, clientType.name());
+        }
+        if (clientContext != null) {
+            addClientContextClaims(builder, clientContext);
+        }
 
         return builder.compact();
     }
@@ -300,7 +292,11 @@ public class JwtTokenProvider {
      * 통계에서는 "UNKNOWN" 으로 집계한다. 절대 예외를 던지지 않는다.
      */
     public ClientType getClientTypeFromAccessToken(String token) {
-        Claims claims = parseAccessTokenClaims(token);
+        return getClientType(parseAccessTokenClaims(token));
+    }
+
+    // 알 수 없는 enum 값이 들어와도 통계 집계가 깨지지 않도록 null 처리한다.
+    private ClientType getClientType(Claims claims) {
         String clientTypeStr = claims.get(CLIENT_TYPE_KEY, String.class);
         if (clientTypeStr == null) {
             return null;
@@ -308,8 +304,7 @@ public class JwtTokenProvider {
         try {
             return ClientType.valueOf(clientTypeStr);
         } catch (IllegalArgumentException e) {
-            // 알 수 없는 enum 값이 들어와도 통계 집계가 깨지지 않도록 null 처리.
-            log.warn("AccessToken 의 clientType claim 값을 해석할 수 없습니다: {}", clientTypeStr);
+            log.warn("토큰의 clientType claim 값을 해석할 수 없습니다: {}", clientTypeStr);
             return null;
         }
     }
@@ -331,17 +326,7 @@ public class JwtTokenProvider {
             Object rolesObj = claims.get(AUTHORITIES_KEY);
             List<String> roles = (rolesObj instanceof List<?>) ? (List<String>) rolesObj : Collections.emptyList();
 
-            String clientTypeStr = claims.get(CLIENT_TYPE_KEY, String.class);
-            ClientType clientType = null;
-            if (clientTypeStr != null) {
-                try {
-                    clientType = ClientType.valueOf(clientTypeStr);
-                } catch (IllegalArgumentException e) {
-                    log.warn("AccessToken 의 clientType claim 값을 해석할 수 없습니다: {}", clientTypeStr);
-                }
-            }
-
-            return new ParsedAccessToken(memberId, roles, clientType);
+            return new ParsedAccessToken(memberId, roles, getClientType(claims));
         } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
             log.info("잘못된 JWT 서명입니다.");
             throw new AuthenticationDomainException(AuthenticationErrorCode.WRONG_JWT_SIGNATURE);
@@ -446,7 +431,8 @@ public class JwtTokenProvider {
                 Long.parseLong(claims.getSubject()),
                 UUID.fromString(jti),
                 toInstant(claims.getExpiration()),
-                getClientContextClaims(claims)
+                getClientContextClaims(claims),
+                getClientType(claims)
             );
         } catch (IllegalArgumentException e) {
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_REFRESH_TOKEN);

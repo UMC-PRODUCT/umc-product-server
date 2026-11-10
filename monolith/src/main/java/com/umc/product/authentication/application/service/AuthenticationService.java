@@ -97,7 +97,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
             );
         }
 
-        return authenticationTokenIssuer.issue(claims.memberId(), null);
+        return authenticationTokenIssuer.issue(claims.memberId(), claims.clientType());
     }
 
     @Override
