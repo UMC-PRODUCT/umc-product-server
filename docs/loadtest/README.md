@@ -12,11 +12,11 @@
 
 ## 구조
 
-- `diagnosis.md` — 메트릭 읽는 법 (증상 조합 매트릭스·커넥션 풀·시나리오 설계·혼합 테스트)
 - `runs/_template/` — summary.md 템플릿 (new-run.sh 가 사용)
 - `runs/<날짜>-<이름>/` — 실행 단위 기록. 스크린샷도 같은 디렉터리에 둔다.
 
 실행 방법은 [loadtest/README.md](../../loadtest/README.md), 전략 배경은 `docs/adr/013` 참조.
+대시보드 읽는 법(증상 조합 매트릭스·커넥션 풀·시나리오 설계·혼합 테스트)은 대시보드와 같은 곳인 infra 저장소의 [부하 테스트 진단 가이드](https://github.com/UMC-PRODUCT/umc-product-infra/blob/main/observability/load-test-diagnosis.md)에 있다.
 
 ## 실행 목록
 
