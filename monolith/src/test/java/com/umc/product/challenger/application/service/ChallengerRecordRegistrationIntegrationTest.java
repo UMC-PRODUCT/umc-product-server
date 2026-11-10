@@ -134,6 +134,25 @@ class ChallengerRecordRegistrationIntegrationTest extends IntegrationTestSupport
     }
 
     @Test
+    @DisplayName("이 기수 지부가 없는 학교의 회원도 지부 없는 수강 없는 소속 코드로 챌린저가 된다")
+    void 지부_없는_학교의_수강_없는_소속_등록() {
+        school = schoolFixture.학교("미참여학교");
+        member = saveMemberPort.save(Member.create("프덕회원", "프덕", "product@test.com", school.getId(), null));
+        Long id = records.create(command(null, false, null).chapterId(null).build());
+        ChallengerRecord record = recordRepository.findById(id).orElseThrow();
+
+        consume(record);
+
+        assertThat(record.getChapterId()).isNull();
+        assertThat(membership().getPart()).isNull();
+        assertThat(membership().isInfra()).isFalse();
+        assertThat(roles.findByChallengerId(membership().getId())).isEmpty();
+        assertThat(permissions.loadSubject(member.getId()).gisuChallengerInfos()).singleElement()
+            .satisfies(info -> assertThat(info.chapterId()).isNull());
+        assertUsed(record);
+    }
+
+    @Test
     @DisplayName("수강 없는 소속 챌린저는 같은 기수의 파트 코드로 파트를 추가한다")
     void 수강_없는_소속에_파트_추가() {
         consume(issue(null, false, null));

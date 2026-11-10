@@ -52,9 +52,28 @@ class ChallengerRecordTest {
     }
 
     @Test
-    @DisplayName("역할 없는 수강 없는 코드는 지부를 생략할 수 없다")
-    void 역할_없는_수강_없는_코드는_지부를_생략할_수_없다() {
-        assertThatThrownBy(() -> ChallengerRecord.create(1L, 9L, null, 3L, null, "홍길동"))
+    @DisplayName("역할 없는 수강 없는 소속 코드는 지부를 생략할 수 있다")
+    void 역할_없는_수강_없는_소속_코드는_지부를_생략할_수_있다() {
+        ChallengerRecord record = ChallengerRecord.create(1L, 9L, null, 3L, null, "홍길동");
+
+        assertThat(record.getChapterId()).isNull();
+        assertThat(record.canOmitChapter()).isTrue();
+    }
+
+    @Test
+    @DisplayName("파트 없는 학교 역할 코드는 지부를 생략할 수 없다")
+    void 파트_없는_학교_역할_코드는_지부를_생략할_수_없다() {
+        assertThatThrownBy(() -> ChallengerRecord.createAdmin(
+            1L, 9L, null, 3L, null, "홍길동", ChallengerRoleType.SCHOOL_PRESIDENT, 3L))
+            .isInstanceOf(ChallengerDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
+    }
+
+    @Test
+    @DisplayName("파트가 있는 코드는 지부를 생략할 수 없다")
+    void 파트가_있는_코드는_지부를_생략할_수_없다() {
+        assertThatThrownBy(() -> ChallengerRecord.create(1L, 9L, null, 3L, ChallengerPart.WEB, "홍길동"))
             .isInstanceOf(ChallengerDomainException.class)
             .extracting("baseCode")
             .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);

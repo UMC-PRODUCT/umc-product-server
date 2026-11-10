@@ -92,9 +92,12 @@ public class ChallengerRecordController {
         description = """
             중앙운영사무국 총괄단이 단일 part와 선택 트랙 여부인 infra로 6자리 코드를 발급합니다.
             이름과 학교가 일치하는 회원에게 수강 파트와 challengerRoleType 역할을 한 코드로 부여합니다.
-            운영진 코드의 part는 수강이 아닌 담당 파트이며, 수강하지 않는 중앙 운영진만 chapterId를 생략할 수 있습니다.
+            운영진 코드의 part는 수강이 아닌 담당 파트입니다.
             part와 challengerRoleType을 모두 비우면 수강 없는 소속 코드가 발급됩니다.
-            이 코드를 사용한 회원은 파트와 역할 없이 해당 기수 챌린저가 되며, chapterId는 생략할 수 없습니다.
+            이 코드를 사용한 회원은 파트와 역할 없이 해당 기수 챌린저가 됩니다.
+            part가 없고 challengerRoleType이 없거나 중앙 역할이면 chapterId를 생략할 수 있습니다.
+            학교가 해당 기수 지부에 속하지 않아도 이 코드는 발급할 수 있습니다.
+            chapterId를 지정하면 학교가 해당 기수에 그 지부에 속해야 합니다.
             infra=true는 웹/모바일 프로덕트 엔지니어 파트에만 지정할 수 있습니다.
             """)
     @PostMapping
@@ -125,7 +128,7 @@ public class ChallengerRecordController {
             Response는 생성된 챌린저 기록의 ID 리스트입니다. (성능 상 이슈로 각각에 대해서는 id 및 code로 조회하는 API 이용)
 
             중앙운영사무국 총괄단이 단건 발급과 동일한 기수·학교·지부 및 학습 유형 검증으로 코드를 일괄 발급합니다.
-            단건 발급처럼 part와 challengerRoleType을 모두 비운 항목은 수강 없는 소속 코드이며, chapterId는 생략할 수 없습니다.
+            단건 발급처럼 part와 challengerRoleType을 모두 비운 항목은 수강 없는 소속 코드이며, chapterId를 생략할 수 있습니다.
             """)
     @PostMapping("bulk")
     @CheckAccess(

@@ -505,13 +505,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
     }
 
     private ChapterInfo getCachedChapterInfo(Long gisuId, Long schoolId, Map<ChapterKey, ChapterInfo> cache) {
-        if (gisuId == null || schoolId == null) {
-            return null;
-        }
-        return cache.computeIfAbsent(
-            new ChapterKey(gisuId, schoolId),
-            key -> getChapterUseCase.byGisuAndSchool(key.gisuId(), key.schoolId())
-        );
+        // 대상 챌린저의 모든 (기수, 학교) 조합을 미리 채웠으므로, 없는 키는 그 기수에 지부가 없는 학교다.
+        return cache.get(new ChapterKey(gisuId, schoolId));
     }
 
     private NoticeReadStatusInfo toReadStatusInfo(

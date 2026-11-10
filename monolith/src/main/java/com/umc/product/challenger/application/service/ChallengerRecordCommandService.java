@@ -188,7 +188,7 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
                 return;
             }
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST,
-                "수강 없는 중앙 운영진만 지부를 생략할 수 있습니다.");
+                ChallengerRecord.CHAPTER_OMISSION_RULE);
         }
         Long gisuId = record.getGisuId();
         Long schoolId = record.getSchoolId();

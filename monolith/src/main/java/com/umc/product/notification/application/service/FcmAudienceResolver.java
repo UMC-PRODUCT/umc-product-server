@@ -64,11 +64,9 @@ public class FcmAudienceResolver {
             ChapterInfo chapter = chapterMap
                 .getOrDefault(challenger.gisuId(), Map.of())
                 .get(schoolId);
-            if (chapter == null) {
-                continue;
-            }
+            Long chapterId = chapter == null ? null : chapter.id();
 
-            if (matches(event, challenger.gisuId(), chapter.id(), schoolId, challenger.part())) {
+            if (matches(event, challenger.gisuId(), chapterId, schoolId, challenger.part())) {
                 targetMemberIds.add(challenger.memberId());
             }
         }

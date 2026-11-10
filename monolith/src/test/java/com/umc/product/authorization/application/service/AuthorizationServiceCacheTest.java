@@ -269,9 +269,39 @@ class AuthorizationServiceCacheTest {
     }
 
     @ParameterizedTest(name = "{0}")
+    @MethodSource("지부_없이_허용되는_파트_없는_소속")
+    @DisplayName("파트 없는 소속은 역할과 무관하게 학교에 이 기수 지부가 없어도 권한을 로드한다")
+    void 파트_없는_소속은_지부_없이_권한을_로드한다(
+        String description, ChallengerRoleType roleType, Long roleGisuId
+    ) {
+        // given
+        AuthorizationService sut = authorizationService(new InMemoryCacheUseCase());
+        givenSubject(null, false, roleType, roleGisuId);
+        given(getChapterUseCase.findByGisuAndSchool(GISU_ID, SCHOOL_ID)).willReturn(Optional.empty());
+
+        // when
+        SubjectAttributes subject = sut.loadSubject(MEMBER_ID);
+
+        // then
+        assertThat(subject.gisuChallengerInfos()).singleElement().satisfies(info -> {
+            assertThat(info.chapterId()).isNull();
+            assertThat(info.part()).isNull();
+        });
+        verify(getChapterUseCase, never()).byGisuAndSchool(GISU_ID, SCHOOL_ID);
+    }
+
+    private static Stream<Arguments> 지부_없이_허용되는_파트_없는_소속() {
+        return Stream.of(
+            Arguments.of("운영진 역할 없음", null, GISU_ID),
+            Arguments.of("비수강 학교 회장", ChallengerRoleType.SCHOOL_PRESIDENT, GISU_ID),
+            Arguments.of("다른 기수 중앙 운영진", ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, GISU_ID + 1)
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
     @MethodSource("지부가_필요한_소속")
-    @DisplayName("같은 기수 비수강 중앙 운영진 이외의 소속은 지부 누락을 허용하지 않는다")
-    void 지부_누락_허용을_다른_소속으로_확대하지_않는다(
+    @DisplayName("파트를 수강하는 소속은 지부 누락을 허용하지 않는다")
+    void 파트를_수강하는_소속은_지부_누락을_허용하지_않는다(
         String description, ChallengerPart part, boolean infra,
         ChallengerRoleType roleType, Long roleGisuId
     ) {
@@ -292,10 +322,7 @@ class AuthorizationServiceCacheTest {
 
     private static Stream<Arguments> 지부가_필요한_소속() {
         return Stream.of(
-            Arguments.of("운영진 역할 없음", null, false, null, GISU_ID),
-            Arguments.of("비수강 학교 회장", null, false, ChallengerRoleType.SCHOOL_PRESIDENT, GISU_ID),
-            Arguments.of("다른 기수 중앙 운영진", null, false,
-                ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, GISU_ID + 1),
+            Arguments.of("역할 없는 수강생", ChallengerPart.WEB_PRODUCT_ENGINEER, false, null, GISU_ID),
             Arguments.of("파트 수강 중인 중앙 운영진", ChallengerPart.WEB_PRODUCT_ENGINEER, false,
                 ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, GISU_ID),
             Arguments.of("레거시 ADMIN 소속 중앙 운영진", ChallengerPart.ADMIN, false,

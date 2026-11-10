@@ -1,9 +1,9 @@
 package com.umc.product.challenger.adapter.in.web.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.umc.product.challenger.domain.ChallengerRecord;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.common.domain.enums.OrganizationType;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
@@ -24,10 +24,8 @@ public record CreateChallengerRecordRequest(
         return !infra || (part != null && part.canHaveInfra());
     }
 
-    @AssertTrue(message = "수강하지 않는 중앙 운영진 코드만 지부를 생략할 수 있습니다") @JsonIgnore
+    @AssertTrue(message = ChallengerRecord.CHAPTER_OMISSION_RULE) @JsonIgnore
     public boolean isChapterSelectionValid() {
-        return chapterId != null || (challengerRoleType != null
-            && challengerRoleType.organizationType() == OrganizationType.CENTRAL
-            && part == null);
+        return chapterId != null || ChallengerRecord.canOmitChapter(part, challengerRoleType);
     }
 }
