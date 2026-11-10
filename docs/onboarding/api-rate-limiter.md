@@ -164,7 +164,18 @@ guest:{entryCodeId}
 ip:{remoteAddr}
 ```
 
-애플리케이션 코드는 `X-Forwarded-For`를 직접 파싱하지 않는다. 프록시 헤더 처리는 `server.forward-headers-strategy=framework` 같은 WAS/Spring Boot 설정을 통해 처리하고, rate limiter는 컨테이너가 정리한 `remoteAddr`만 신뢰한다.
+애플리케이션 코드는 프록시 헤더를 직접 파싱하지 않는다. `server.forward-headers-strategy=native`로 Tomcat `RemoteIpValve`가
+요청을 정리하고, rate limiter는 그 결과인 `remoteAddr`만 신뢰한다.
+
+- `RemoteIpValve`는 바로 앞 요청자가 내부 프록시일 때만 `X-Forwarded-For`, `X-Forwarded-Proto`, `X-Forwarded-Host`,
+  `X-Forwarded-Port`를 반영한다. 내부 프록시 기준은 Spring Boot 기본값(사설 대역과 loopback)이며, Traefik Pod 주소가 여기에 든다.
+- 운영 Traefik은 클라이언트가 보낸 `X-Forwarded-*` 값을 지우고 실제 접속 IP로 다시 채운다. 그래서 `X-Forwarded-For`에는 값이 하나만 온다.
+- 이 네 헤더 말고는 프록시 관련 헤더를 클라이언트 IP나 요청 주소 판별에 쓰지 않는다.
+- 같은 공인 IP를 쓰는 비로그인 사용자(행사장 Wi-Fi, NAT)는 한 bucket을 나눠 쓴다.
+
+실제 내장 서버에서의 판별 결과는 `ClientIpResolutionRandomPortIntegrationTest`가 검증한다. 감사 로그 IP, 지원서 제출 IP,
+요청 로그 `clientIp`도 같은 값이 된다. 감사 로그와 요청 로그는 `X-Forwarded-For`를 먼저 읽지만, `RemoteIpValve`가 반영한 뒤
+요청에서 이 헤더를 지우므로 `remoteAddr`로 넘어간다.
 
 ## 정책 선택
 
