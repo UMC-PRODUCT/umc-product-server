@@ -153,7 +153,7 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
     }
 
     private Challenger newMembership(ChallengerRecord record, Long memberId) {
-        // 파트 없는 코드(예: 순수 중앙 운영진)는 수강 없는 소속으로, 파트가 있으면 파트 + infra로 생성한다.
+        // 파트 없는 코드(예: 순수 중앙 운영진, 프로덕트팀)는 수강 없는 소속으로, 파트가 있으면 파트 + infra로 생성한다.
         if (record.getPart() == null) {
             return Challenger.createWithoutEnrollment(memberId, record.getGisuId());
         }

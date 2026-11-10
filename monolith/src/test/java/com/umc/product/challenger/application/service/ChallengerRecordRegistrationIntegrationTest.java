@@ -121,6 +121,33 @@ class ChallengerRecordRegistrationIntegrationTest extends IntegrationTestSupport
     }
 
     @Test
+    @DisplayName("파트와 역할 없는 코드로 수강 없는 소속 챌린저가 된다")
+    void 수강_없는_소속_등록() {
+        ChallengerRecord record = issue(null, false, null);
+
+        consume(record);
+
+        assertThat(membership().getPart()).isNull();
+        assertThat(membership().isInfra()).isFalse();
+        assertThat(roles.findByChallengerId(membership().getId())).isEmpty();
+        assertUsed(record);
+    }
+
+    @Test
+    @DisplayName("수강 없는 소속 챌린저는 같은 기수의 파트 코드로 파트를 추가한다")
+    void 수강_없는_소속에_파트_추가() {
+        consume(issue(null, false, null));
+        Long membershipId = membership().getId();
+        ChallengerRecord partRecord = issue(ChallengerPart.WEB_PRODUCT_ENGINEER, false, null);
+
+        consume(partRecord);
+
+        assertThat(membership().getId()).isEqualTo(membershipId);
+        assertThat(membership().getPart()).isEqualTo(ChallengerPart.WEB_PRODUCT_ENGINEER);
+        assertUsed(partRecord);
+    }
+
+    @Test
     @DisplayName("기존 파트 수강생은 같은 파트 코드로 역할만 추가하고 기존 역할을 보존한다")
     void 기존_소속과_수강과_역할_보존() {
         Challenger existing = saveChallengerPort.save(Challenger.builder().memberId(member.getId())

@@ -134,12 +134,33 @@ class ChallengerRecordControllerTest {
     }
 
     @Test
-    @DisplayName("일반 수강 코드에 파트가 없으면 거부한다")
-    void 일반_수강_코드에_파트가_없으면_거부한다() throws Exception {
+    @DisplayName("파트와 역할 없이 수강 없는 소속 코드를 발급한다")
+    void 파트와_역할_없이_수강_없는_소속_코드를_발급한다() throws Exception {
+        given(manageChallengerRecordUseCase.create(any())).willReturn(10L);
+        given(assembler.from(10L)).willReturn(ChallengerRecordResponse.builder().code("ABC123").build());
+
         mockMvc.perform(post("/api/v1/challenger-record")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"gisuId":1,"chapterId":2,"schoolId":3,"memberName":"홍길동"}
+                    """))
+            .andExpect(status().isOk());
+
+        ArgumentCaptor<CreateChallengerRecordCommand> captor =
+            ArgumentCaptor.forClass(CreateChallengerRecordCommand.class);
+        then(manageChallengerRecordUseCase).should().create(captor.capture());
+        assertThat(captor.getValue().part()).isNull();
+        assertThat(captor.getValue().challengerRoleType()).isNull();
+        assertThat(captor.getValue().chapterId()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("수강 없는 소속 코드에 지부가 없으면 거부한다")
+    void 수강_없는_소속_코드에_지부가_없으면_거부한다() throws Exception {
+        mockMvc.perform(post("/api/v1/challenger-record")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"gisuId":1,"schoolId":3,"memberName":"홍길동"}
                     """))
             .andExpect(status().isBadRequest());
 

@@ -115,10 +115,6 @@ public class ChallengerRecord extends BaseEntity {
         if (infra && (part == null || !part.canHaveInfra())) {
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
         }
-        // 운영진 코드가 아닌 수강 코드는 파트가 필수다.
-        if (challengerRoleType == null && part == null) {
-            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
-        }
         ChallengerRecord record = new ChallengerRecord();
         record.code = generateUniqueCode();
         record.createdMemberId = createdMemberId;
@@ -160,10 +156,6 @@ public class ChallengerRecord extends BaseEntity {
     public void validateLearningSelection() {
         if (infra && (part == null || !part.canHaveInfra())) {
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST);
-        }
-        if (!isAdminRecord() && part == null) {
-            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST,
-                "학습 파트를 선택해주세요.");
         }
     }
 
