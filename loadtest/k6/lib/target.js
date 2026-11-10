@@ -11,7 +11,7 @@ function hostOf(url) {
 export function loadTestOrigin(url) {
   const origin = url.replace(/\/+$/, "");
   if (hostOf(origin) === PRODUCTION_API_HOST) {
-    throw new Error(`운영 API(${origin})에는 부하를 걸 수 없습니다. dev나 Preview 앱 주소를 지정하세요 (ADR-013)`);
+    throw new Error(`운영 API(${PRODUCTION_API_HOST})에는 부하를 걸 수 없습니다. dev나 Preview 앱 주소를 지정하세요 (ADR-013)`);
   }
   return origin;
 }

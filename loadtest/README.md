@@ -60,7 +60,7 @@ export K6_PROMETHEUS_RW_SERVER_URL=http://127.0.0.1:19095/api/v1/write
 export K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM=true
 export K6_PROMETHEUS_RW_STALE_MARKERS=true
 SCENARIO=health-check
-testid="$(date +%Y%m%d-%H%M)-$SCENARIO"
+testid="$(date +%Y%m%d-%H%M%S)-$SCENARIO"
 TEST_API_BASIC_AUTH="${TEST_API_BASIC_AUTH:?dev 문서 계정의 아이디:비밀번호를 Base64로 인코딩해 넣으세요}" \
   BASE_URL=https://api-dev.university.neordinary.com PROFILE=smoke SCENARIO="$SCENARIO" \
   k6 run --out experimental-prometheus-rw --tag env=dev --tag "testid=$testid" script.js

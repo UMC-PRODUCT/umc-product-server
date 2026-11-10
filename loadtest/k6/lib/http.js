@@ -7,10 +7,15 @@ import { loadTestOrigin } from "./target.js";
 // BASE_URL 환경변수로 부하를 보낼 앱 주소를 지정한다. 운영 API면 init 단계에서 실패한다.
 const BASE_URL = loadTestOrigin(__ENV.BASE_URL || "http://localhost:8080");
 
-// dev·Preview의 /test/**는 Traefik Basic 인증 뒤에 있다. 회원 토큰이 있으면 그 토큰으로 인증한다.
+// dev·Preview의 /test/**는 Traefik Basic 인증 뒤에 있고, Traefik은 Authorization 헤더를 앱에 넘기지 않는다.
+// 그래서 그 경로에는 회원 토큰을 함께 보낼 수 없다.
 export function authorizationHeaders(path, token) {
+  const basicProtected = path.startsWith("/test/") && __ENV.TEST_API_BASIC_AUTH;
+  if (basicProtected && token) {
+    throw new Error(`${path}는 Basic 인증 뒤에 있어 회원 토큰을 함께 보낼 수 없습니다`);
+  }
   if (token) return { Authorization: `Bearer ${token}` };
-  if (path.startsWith("/test/") && __ENV.TEST_API_BASIC_AUTH) {
+  if (basicProtected) {
     return { Authorization: `Basic ${__ENV.TEST_API_BASIC_AUTH}` };
   }
   return {};

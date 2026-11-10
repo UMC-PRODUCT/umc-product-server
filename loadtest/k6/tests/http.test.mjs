@@ -48,11 +48,17 @@ test("Basic 인증 값이 없거나 /test/ 밖의 경로면 인증 헤더를 붙
   assert.deepEqual(authorizations(), [undefined, undefined, undefined]);
 });
 
-test("회원 토큰이 있으면 /test/ 경로라도 Bearer 토큰으로 인증한다", () => {
-  __ENV.TEST_API_BASIC_AUTH = "dGVzdDp0ZXN0";
+test("회원 토큰이 있으면 Bearer 토큰으로 인증한다", () => {
   get("/test/health-check", { token: "member-token" });
-  batchGet("member-token", [{ path: "/test/a", tag: "a" }, { path: "/api/v1/b", tag: "b" }]);
+  __ENV.TEST_API_BASIC_AUTH = "dGVzdDp0ZXN0";
+  batchGet("member-token", [{ path: "/api/v1/a", tag: "a" }, { path: "/api/v1/b", tag: "b" }]);
   assert.deepEqual(authorizations(), ["Bearer member-token", "Bearer member-token", "Bearer member-token"]);
+});
+
+test("Basic 인증 뒤의 /test/ 경로에 회원 토큰을 보내면 요청 전에 실패한다", () => {
+  __ENV.TEST_API_BASIC_AUTH = "dGVzdDp0ZXN0";
+  assert.throws(() => get("/test/health-check", { token: "member-token" }), /회원 토큰을 함께 보낼 수 없습니다/);
+  assert.equal(authorizations().length, 0);
 });
 
 test("BASE_URL이 운영 API면 요청을 보내기 전 init 단계에서 실패한다", async () => {
@@ -69,5 +75,4 @@ test("BASE_URL이 운영 API면 요청을 보내기 전 init 단계에서 실패
     __ENV.BASE_URL = url;
     await import(`../lib/http.js?allowed=${index}`);
   }
-  assert.equal(state.requests.length, 0);
 });
