@@ -16,11 +16,18 @@ if [ "${SEED_STRATEGY:-api}" != "api" ]; then
   exit 1
 fi
 
+# dev·Preview의 /test/**는 Traefik Basic 인증 뒤에 있다. 값이 있으면 /test/ 요청에만 붙인다.
+test_api_auth=()
+if [ -n "${TEST_API_BASIC_AUTH:-}" ]; then
+  test_api_auth=(-H "Authorization: Basic $TEST_API_BASIC_AUTH")
+fi
+
 # seed API 는 도메인 가드를 통과하는 baseline "골격"만 만든다(대용량 아님). 실패 시 즉시 중단.
 api_post() {
   local path="$1" body="$2"
   curl -fsS -X POST "$BASE_URL$path" \
     -H 'Content-Type: application/json' \
+    ${test_api_auth[@]+"${test_api_auth[@]}"} \
     -d "$body"
 }
 
@@ -152,7 +159,7 @@ seed_home_data() {
 
   # 2) 운영진 토큰 (TEST-007, String 반환이라 래핑 없음)
   local token
-  token="$(curl -fsS "$BASE_URL/test/token/access?memberId=$admin_mid")" || {
+  token="$(curl -fsS ${test_api_auth[@]+"${test_api_auth[@]}"} "$BASE_URL/test/token/access?memberId=$admin_mid")" || {
     echo "  운영진 토큰 발급 실패 — 일정·공지 시딩 건너뜀" >&2
     return 0
   }

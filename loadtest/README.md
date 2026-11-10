@@ -38,6 +38,8 @@ BASE_URL=http://localhost:8080 PROFILE=smoke SCENARIO=health-check k6 run script
 
 `health-check`는 시딩 없이 실행할 수 있다. `BASE_URL`을 대상 앱 주소로 바꾸고,
 `PROFILE`, `SCENARIO`, `RATE`, `DURATION`으로 부하를 선택한다. 요약은 `out/last-summary.json`에 저장된다.
+dev·Preview의 `/test/**`는 Basic 인증 뒤에 있어 `TEST_API_BASIC_AUTH`가 필요하고([Chat 안내](k6/CHAT.md#실행) 참조), 운영 API 주소는 시작 단계에서 거부한다.
+결과를 Grafana로 보내는 방법은 infra 저장소의 [부하 테스트 결과 보내기](https://github.com/UMC-PRODUCT/umc-product-infra/blob/main/docs/operations/tool-access.md#부하-테스트-결과-보내기)에 있다.
 
 ## 핵심 결정 기록
 
