@@ -287,7 +287,6 @@ class AuthorizationServiceCacheTest {
             assertThat(info.chapterId()).isNull();
             assertThat(info.part()).isNull();
         });
-        verify(getChapterUseCase, never()).byGisuAndSchool(GISU_ID, SCHOOL_ID);
     }
 
     private static Stream<Arguments> 지부_없이_허용되는_파트_없는_소속() {
