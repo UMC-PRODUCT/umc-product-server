@@ -27,4 +27,8 @@ public class ChallengerFixture extends FixtureSupport {
     public Challenger 스프링(Long memberId, Long gisuId) {
         return saveChallengerPort.save(new Challenger(memberId, ChallengerPart.SPRINGBOOT, gisuId));
     }
+
+    public Challenger 수강_없는_소속(Long memberId, Long gisuId) {
+        return saveChallengerPort.save(Challenger.createWithoutEnrollment(memberId, gisuId));
+    }
 }
