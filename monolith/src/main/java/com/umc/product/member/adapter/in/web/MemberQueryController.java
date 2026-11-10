@@ -43,7 +43,10 @@ public class MemberQueryController {
         return assembler.fromMemberIdToPublic(memberId);
     }
 
-    @Operation(operationId = "MEMBER-102", summary = "내 프로필 조회")
+    @Operation(operationId = "MEMBER-102", summary = "내 프로필 조회", description = """
+        isUmcProduct는 프로덕트 문의 답변·관리 가능 여부입니다.
+        기수 및 챌린저 이력과 무관하게 시스템 역할 UMC_PRODUCT 또는 SUPER_ADMIN을 보유하면 true입니다.
+        """)
     @GetMapping("me")
     MemberInfoResponse getMyProfile(@CurrentMember MemberPrincipal memberPrincipal) {
         return assembler.fromMemberId(memberPrincipal.getMemberId());
