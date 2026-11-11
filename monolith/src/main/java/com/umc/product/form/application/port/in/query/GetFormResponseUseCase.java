@@ -7,7 +7,6 @@ import java.util.Set;
 
 import com.umc.product.form.application.port.in.query.dto.FormResponseInfo;
 import com.umc.product.form.application.port.in.query.dto.FormResponseWithAnswersInfo;
-import com.umc.product.form.domain.exception.FormErrorCode;
 
 /**
  * FormResponse 조회 UseCase.
@@ -42,7 +41,7 @@ public interface GetFormResponseUseCase {
      * (기명 전용) 특정 사용자의 모든 draft 응답을 반환한다. "내가 작성 중인 응답 목록" 용도.
      * <p>
      * {@code respondentMemberId} 가 필수이며 null 을 넘기면
-     * {@link FormErrorCode#RESPONDENT_MEMBER_ID_REQUIRED} 예외.
+     * {@code RESPONDENT_MEMBER_ID_REQUIRED} 예외.
      */
     List<FormResponseInfo> listDraftByRespondentMemberId(Long respondentMemberId);
 
@@ -52,7 +51,7 @@ public interface GetFormResponseUseCase {
      * 중복 응답을 허용하지 않는 폼 전용 단건 조회다. 중복 허용 폼은 {@code formResponseId} 기준으로 조회해야 한다.
      * <p>
      * {@code respondentMemberId} 가 필수이며 null 을 넘기면
-     * {@link FormErrorCode#RESPONDENT_MEMBER_ID_REQUIRED} 예외.
+     * {@code RESPONDENT_MEMBER_ID_REQUIRED} 예외.
      */
     Optional<FormResponseInfo> findDraftByFormIdAndRespondentMemberId(Long formId, Long respondentMemberId);
 
@@ -62,7 +61,7 @@ public interface GetFormResponseUseCase {
      * 중복 응답을 허용하지 않는 폼 전용 단건 조회다. 중복 허용 폼은 {@code formResponseId} 기준으로 조회해야 한다.
      * <p>
      * {@code respondentMemberId} 가 필수이며 null 을 넘기면
-     * {@link FormErrorCode#RESPONDENT_MEMBER_ID_REQUIRED} 예외.
+     * {@code RESPONDENT_MEMBER_ID_REQUIRED} 예외.
      */
     Optional<FormResponseInfo> findSubmittedByFormIdAndRespondentMemberId(Long formId, Long respondentMemberId);
 
@@ -97,7 +96,7 @@ public interface GetFormResponseUseCase {
      * (익명 전용) {@code responseAccessKey}(raw) 의 sha256 매칭으로 응답 단건 조회.
      * <p>
      * 매칭 없으면 Optional.empty. 기명 응답이 매칭되면 방어 목적으로 Optional.empty.
-     * {@code rawKey} 가 null 이면 {@link FormErrorCode#RESPONSE_ACCESS_KEY_REQUIRED}.
+     * {@code rawKey} 가 null 이면 {@code RESPONSE_ACCESS_KEY_REQUIRED}.
      * <p>
      * 소비 도메인(리크루팅 등) 이 응답 존재 확인 용도로 사용.
      */
@@ -106,8 +105,8 @@ public interface GetFormResponseUseCase {
     /**
      * (익명 전용) {@code responseAccessKey}(raw) 의 sha256 매칭으로 응답 + 답변 상세 조회.
      * <p>
-     * 매칭 없거나 기명 응답이 매칭되면 {@link FormErrorCode#FORM_RESPONSE_NOT_FOUND}.
-     * {@code rawKey} 가 null 이면 {@link FormErrorCode#RESPONSE_ACCESS_KEY_REQUIRED}.
+     * 매칭 없거나 기명 응답이 매칭되면 {@code FORM_RESPONSE_NOT_FOUND}.
+     * {@code rawKey} 가 null 이면 {@code RESPONSE_ACCESS_KEY_REQUIRED}.
      * <p>
      * 응답자 본인이 자기 응답 상세를 확인하는 용도.
      */
