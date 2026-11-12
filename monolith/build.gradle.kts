@@ -24,6 +24,9 @@ dependencies {
 
     // === testFixtures API: 공통 테스트 지원 코드와 소비자에게 노출하는 의존성 ===
 
+    // testFixtures 는 main 의 implementation 의존을 상속하지 않는다.
+    testFixturesImplementation(project(":form-api"))
+
     // monolith의 fixture가 shared를 사용하고,
     // fixture 소비자도 shared의 타입을 사용할 수 있게 한다.
     testFixturesApi(project(":shared"))
