@@ -15,6 +15,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+import com.umc.product.global.observability.chat.ChatWebSocketMetrics;
 import com.umc.product.global.websocket.handler.ApiResponseStompErrorHandler;
 import com.umc.product.global.websocket.interceptor.ShutdownAwareHandshakeInterceptor;
 import com.umc.product.global.websocket.interceptor.StompAuthChannelInterceptor;
@@ -52,6 +53,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
     private final WebSocketBrokerProperties brokerProperties;
     private final Environment environment;
     private final RelayDestinationChannelInterceptors relayDestinationChannelInterceptors;
+    private final ChatWebSocketMetrics chatWebSocketMetrics;
 
     @Bean
     public ThreadPoolTaskScheduler webSocketHeartbeatScheduler() {
@@ -122,10 +124,19 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
             webSocketInboundMetricInterceptor,
             relayDestinationChannelInterceptors.toBroker()
         );
-        registration.taskExecutor()
-            .corePoolSize(32)
-            .maxPoolSize(32)
-            .queueCapacity(2048);
+        registration.taskExecutor(webSocketInboundExecutor());
+    }
+
+    @Bean
+    public ThreadPoolTaskExecutor webSocketInboundExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(32);
+        executor.setMaxPoolSize(32);
+        executor.setQueueCapacity(2048);
+        executor.setAllowCoreThreadTimeOut(true);
+        executor.setThreadNamePrefix("clientInboundChannel-");
+        executor.setTaskDecorator(task -> chatWebSocketMetrics.decorate("inbound", task));
+        return executor;
     }
 
     @Bean
@@ -137,7 +148,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
         executor.setThreadNamePrefix("ws-outbound-");
         executor.setTaskDecorator(runnable -> {
             ContextSnapshot snapshot = snapshotFactory.captureAll();
-            return snapshot.wrap(() -> {
+            return chatWebSocketMetrics.decorate("outbound", snapshot.wrap(() -> {
                 Observation parent = observationRegistry.getCurrentObservation();
                 if (parent != null) {
                     Observation.createNotStarted("websocket.outbound", observationRegistry)
@@ -147,7 +158,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
                 } else {
                     runnable.run();
                 }
-            });
+            }));
         });
         return executor;
     }
