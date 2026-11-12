@@ -69,10 +69,13 @@ public class ProjectQuotaManagementDataLoader {
             assigned, reserved, population);
     }
 
+    /**
+     * @param population 지원 중단: 대체 없음. 삭제 예정: 2026-12-13 릴리스, 담당자: wlgusqkr
+     */
     public record Snapshot(
         List<Project> projects, Map<Long, List<ProjectPartQuota>> quotas,
         Map<Long, List<ProjectMember>> assignedMembers, Map<Long, List<ProjectMember>> reservedMembers,
-        Map<ChallengerPart, Long> population
+        @Deprecated(since = "2026-11-12", forRemoval = true) Map<ChallengerPart, Long> population
     ) {
         public long quota(Project project, ChallengerPart part) {
             return quotas.getOrDefault(project.getId(), List.of()).stream().filter(quota -> quota.getPart() == part)

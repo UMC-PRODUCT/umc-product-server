@@ -14,7 +14,6 @@ import com.umc.product.project.application.port.in.command.dto.SubmitProjectComm
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.LockProjectMatchingPort;
-import com.umc.product.project.application.service.policy.ProjectQuotaCapacityPolicy;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
@@ -26,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class ProjectSubmissionCommandService implements SubmitProjectUseCase {
     private final LockProjectMatchingPort lockProjectMatchingPort;
-    private final ProjectQuotaCapacityPolicy capacityPolicy;
     private final LoadProjectPort loadProjectPort;
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     private final CheckPermissionUseCase checkPermissionUseCase;
@@ -47,10 +45,8 @@ public class ProjectSubmissionCommandService implements SubmitProjectUseCase {
         boolean canPublish = checkPermissionUseCase.check(command.requesterMemberId(),
             ResourcePermission.of(ResourceType.PROJECT, project.getId(), PermissionType.MANAGE));
         if (canPublish) {
-            ProjectStatus status = publishProjectUseCase.publish(PublishProjectCommand.builder()
+            return publishProjectUseCase.publish(PublishProjectCommand.builder()
                 .projectId(project.getId()).requesterMemberId(command.requesterMemberId()).build());
-            capacityPolicy.validate(project.getGisuId(), project.getChapterId());
-            return status;
         }
         if (!project.isOwner(command.requesterMemberId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);

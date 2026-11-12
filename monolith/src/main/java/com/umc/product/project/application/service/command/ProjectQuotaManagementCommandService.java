@@ -23,9 +23,9 @@ import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.LockProjectMatchingPort;
-import com.umc.product.project.application.service.policy.ProjectQuotaCapacityPolicy;
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
 import com.umc.product.project.application.service.policy.ProjectQuotaMemberPolicy;
+import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
@@ -44,7 +44,6 @@ public class ProjectQuotaManagementCommandService implements SaveProjectQuotaMan
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
     private final ProjectPartQuotaCommandService updateService;
-    private final ProjectQuotaCapacityPolicy capacityPolicy;
     private final ProjectQuotaEditPolicy editPolicy;
 
     @Override
@@ -96,8 +95,6 @@ public class ProjectQuotaManagementCommandService implements SaveProjectQuotaMan
                 .entries(quotas.entrySet().stream()
                     .map(entry -> new UpdatePartQuotasCommand.Entry(entry.getKey(), entry.getValue())).toList()).build());
         }
-        // 프로젝트 간 TO 이동은 중간 상태가 아니라 모든 변경을 합친 최종 상태로 검증한다.
-        capacityPolicy.validate(command.gisuId(), command.chapterId());
         return command.projects().stream().map(SaveProjectQuotaManagementCommand.ProjectChange::projectId).toList();
     }
 
@@ -115,7 +112,7 @@ public class ProjectQuotaManagementCommandService implements SaveProjectQuotaMan
                 if (entry.part() == ChallengerPart.ADMIN) {
                     throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_QUOTA_READ_ONLY);
                 }
-                if (!parts.add(entry.part()) || entry.quota() < 0) {
+                if (!parts.add(entry.part()) || entry.quota() < 0 || entry.quota() > ProjectPartQuota.MAX_QUOTA) {
                     throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_QUOTA_INVALID_REQUEST);
                 }
             }
