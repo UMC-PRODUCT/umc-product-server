@@ -112,6 +112,11 @@ public class MemberPersistenceAdapter implements
     }
 
     @Override
+    public boolean existsBySchoolIdAndNickname(Long schoolId, String nickname) {
+        return memberQueryRepository.existsBySchoolIdAndNickname(schoolId, nickname);
+    }
+
+    @Override
     public Member save(Member member) {
         return memberJpaRepository.save(member);
     }

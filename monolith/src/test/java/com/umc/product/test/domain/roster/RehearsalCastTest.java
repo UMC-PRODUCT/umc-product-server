@@ -18,7 +18,10 @@ import org.junit.jupiter.api.Test;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.member.domain.MemberNamePolicy;
+import com.umc.product.member.domain.NicknamePolicy;
 import com.umc.product.test.adapter.out.resource.ClasspathQaRosterAdapter;
+import com.umc.product.test.domain.roster.QaAccountPlan.Account;
 import com.umc.product.test.domain.startingline.StartingLinePlan;
 
 @DisplayName("11기 QA 명단과 리허설 배역")
@@ -46,6 +49,11 @@ class RehearsalCastTest {
         assertThat(plan.accounts().getFirst().displayName()).isEqualTo("가천QA1");
         assertThat(plan.emails()).contains("superadmin@university.neordinary.com", "cau_springboot@university.neordinary.com",
             "cau_g11_qa38@university.neordinary.com");
+        assertThat(plan.accounts()).allSatisfy(account -> {
+            MemberNamePolicy.validate(account.memberName());
+            NicknamePolicy.validate(account.nickname());
+        });
+        assertThat(plan.accounts()).extracting(Account::nickname).doesNotHaveDuplicates();
     }
 
     @Test
