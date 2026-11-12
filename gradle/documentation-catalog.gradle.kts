@@ -35,7 +35,8 @@ data class ErrorCodeDocumentationEntry(
 // 빠져도 빌드는 성공하므로 눈치채기 어렵다.
 val documentationSourceRoots = listOf(
     file("monolith/src/main/java"),
-    file("blog/src/main/java")
+    file("blog/src/main/java"),
+    file("form-api/src/main/java")
 ).filter { it.isDirectory }
 
 // 정적 산출물은 서버가 서빙하는 자원이라 resources 를 가진 :monolith 에 둔다.
