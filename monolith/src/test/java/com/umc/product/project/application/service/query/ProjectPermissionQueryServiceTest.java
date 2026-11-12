@@ -53,6 +53,7 @@ import com.umc.product.project.application.service.policy.ProjectManualMatchingA
 import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
 import com.umc.product.project.application.service.policy.ProjectMatchingChapterResolver;
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
+import com.umc.product.project.application.service.policy.ProjectQuotaEditProperties;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.ProjectMatchingRound;
@@ -92,7 +93,7 @@ class ProjectPermissionQueryServiceTest {
     @Mock
     ProjectMatchingChapterResolver projectMatchingChapterResolver;
 
-    @Spy ProjectQuotaEditPolicy projectQuotaEditPolicy = new ProjectQuotaEditPolicy();
+    @Spy ProjectQuotaEditPolicy projectQuotaEditPolicy = new ProjectQuotaEditPolicy(new ProjectQuotaEditProperties(null));
     @Mock Clock clock;
 
     @Mock

@@ -3,6 +3,7 @@ package com.umc.product.project.application.service.command;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -17,12 +18,15 @@ import org.springframework.transaction.annotation.Transactional;
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.project.application.access.ProjectQuotaAccessPolicy;
 import com.umc.product.project.application.port.in.command.UpdatePartQuotasUseCase;
 import com.umc.product.project.application.port.in.command.dto.UpdatePartQuotasCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdatePartQuotasCommand.Entry;
+import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
@@ -33,8 +37,11 @@ import com.umc.product.project.application.service.policy.ProjectDraftQuotaPolic
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
 import com.umc.product.project.application.service.policy.ProjectQuotaMemberPolicy;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
+import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
@@ -53,6 +60,8 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
     private final LockProjectMatchingPort lockProjectMatchingPort;
     private final LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
+    private final LoadProjectApplicationPort loadProjectApplicationPort;
+    private final GetChallengerUseCase getChallengerUseCase;
     private final ProjectQuotaEditPolicy editPolicy;
     private final ProjectQuotaMemberPolicy memberPolicy;
     private final LoadProjectPort loadProjectPort;
@@ -106,25 +115,14 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
             .collect(Collectors.toSet());
 
         Instant now = clock.instant();
-        var reserved = memberPolicy.reservedMembers(
-            loadProjectMemberPort.listActiveAndPendingPublicationByProjectId(project.getId()), rounds, now);
-        Map<ChallengerPart, Long> assigned = reserved.stream()
-            .collect(Collectors.groupingBy(ProjectMember::getPart, Collectors.counting()));
+        Map<ChallengerPart, Long> minimums = minimumQuotas(project, rounds, now);
         Map<ChallengerPart, Long> requested = command.entries().stream()
             .collect(Collectors.toMap(Entry::part, Entry::quota));
         Set<ChallengerPart> changed = EnumSet.noneOf(ChallengerPart.class);
         changed.addAll(existingByPart.keySet());
         changed.addAll(requested.keySet());
         for (ChallengerPart part : changed) {
-            long minimum = assigned.getOrDefault(part, 0L);
-            if (part == ChallengerPart.PLAN) {
-                var ids = new HashSet<Long>();
-                ids.add(project.getProductOwnerMemberId());
-                reserved.stream()
-                    .filter(member -> member.getPart() == ChallengerPart.PLAN)
-                    .map(ProjectMember::getMemberId).forEach(ids::add);
-                minimum = ids.size();
-            }
+            long minimum = minimums.getOrDefault(part, 0L);
             long defaultQuota = part == ChallengerPart.PLAN ? minimum : 0;
             long before = existingByPart.containsKey(part) ? existingByPart.get(part).getQuota() : defaultQuota;
             long after = requested.getOrDefault(part, 0L);
@@ -137,7 +135,7 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
             editPolicy.validate(part, rounds, now);
             if (after < minimum) {
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_QUOTA_BELOW_ASSIGNED,
-                    part.getDisplayName() + ": 이미 배정된 인원보다 TO를 줄일 수 없어요.");
+                    part.getDisplayName() + ": 배정·합격 인원보다 TO를 줄일 수 없어요.");
             }
         }
 
@@ -157,6 +155,42 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
             }
         }
         saveProjectPartQuotaPort.saveAll(toSave);
+    }
+
+    /**
+     * 파트별 최소 TO. 배정·발표 대기 인원(해제 예약자 제외)에 아직 자동 선발하지 않은 차수의 PM 합격 인원을 더한다.
+     * 합격자는 자동 선발 때 팀원이 되므로 그 전에 TO를 줄이면 자리 없는 합격자가 생긴다. PM은 대표 PM을 포함한다.
+     */
+    Map<ChallengerPart, Long> minimumQuotas(Project project, List<ProjectMatchingRound> rounds, Instant now) {
+        List<ProjectMember> members = loadProjectMemberPort.listActiveAndPendingPublicationByProjectId(project.getId());
+        List<ProjectMember> reserved = memberPolicy.reservedMembers(members, rounds, now);
+        Map<ChallengerPart, Long> minimums = reserved.stream()
+            .filter(member -> member.getPart() != ChallengerPart.PLAN)
+            .collect(Collectors.groupingBy(ProjectMember::getPart, () -> new EnumMap<>(ChallengerPart.class),
+                Collectors.counting()));
+        Set<Long> planMemberIds = new HashSet<>();
+        planMemberIds.add(project.getProductOwnerMemberId());
+        reserved.stream()
+            .filter(member -> member.getPart() == ChallengerPart.PLAN)
+            .map(ProjectMember::getMemberId).forEach(planMemberIds::add);
+        minimums.put(ChallengerPart.PLAN, (long) planMemberIds.size());
+
+        Set<Long> memberIds = members.stream().map(ProjectMember::getMemberId).collect(Collectors.toSet());
+        List<ProjectApplication> approved = loadProjectApplicationPort.searchProjectApplications(
+                project.getId(), null, ProjectApplicationStatus.APPROVED, now, true).stream()
+            .filter(application -> !application.getAppliedMatchingRound().isAutoDecisionExecuted())
+            .filter(application -> !memberIds.contains(application.getApplicantMemberId()))
+            .toList();
+        if (!approved.isEmpty()) {
+            Map<Long, ChallengerInfo> challengers = getChallengerUseCase.batchGetByMemberIdsAndGisuId(
+                approved.stream().map(ProjectApplication::getApplicantMemberId).collect(Collectors.toSet()),
+                project.getGisuId());
+            approved.stream()
+                .map(application -> challengers.get(application.getApplicantMemberId()).part())
+                .filter(Objects::nonNull)
+                .forEach(part -> minimums.merge(part, 1L, Long::sum));
+        }
+        return minimums;
     }
 
     private void validateEntries(List<Entry> entries) {
