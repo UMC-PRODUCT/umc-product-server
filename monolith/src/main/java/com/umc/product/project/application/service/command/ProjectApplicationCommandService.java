@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
+import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -22,6 +24,7 @@ import com.umc.product.form.application.port.in.command.dto.AnswerCommand;
 import com.umc.product.form.application.port.in.command.dto.CreateDraftFormResponseCommand;
 import com.umc.product.form.application.port.in.command.dto.SubmitDraftFormResponseCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateDraftFormResponseCommand;
+import com.umc.product.form.application.port.in.command.dto.UpdateSubmittedFormResponseCommand;
 import com.umc.product.form.application.port.in.query.GetFormUseCase;
 import com.umc.product.form.application.port.in.query.dto.FormWithStructureInfo;
 import com.umc.product.global.exception.constant.Domain;
@@ -166,19 +169,37 @@ public class ProjectApplicationCommandService implements
 
     @Override
     public ProjectApplicationInfo update(UpdateProjectApplicationDraftCommand command) {
-        ProjectApplication application = loadDraftApplication(
+        ProjectApplication application = loadOwnedApplication(
             command.projectId(), command.applicationId(), command.requesterMemberId()
         );
+        if (!application.isDraft() && !application.isSubmitted()) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DRAFT_APPLICATION_NOT_FOUND);
+        }
+        if (application.isSubmitted() && !application.getAppliedMatchingRound().isOpenAt(Instant.now())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_ROUND_NOT_OPEN);
+        }
         VisibleQuestionScope questionScope = resolveVisibleQuestionScope(application);
         validateAnswerQuestionIdsAllowed(command.answers(), questionScope.allowedQuestionIds());
 
-        manageFormResponseUseCase.updateDraft(
-            UpdateDraftFormResponseCommand.builder()
-                .formResponseId(application.getFormResponseId())
-                .requesterMemberId(command.requesterMemberId())
-                .answers(toAnswerCommands(command.answers()))
-                .build()
-        );
+        if (application.isDraft()) {
+            manageFormResponseUseCase.updateDraft(
+                UpdateDraftFormResponseCommand.builder()
+                    .formResponseId(application.getFormResponseId())
+                    .requesterMemberId(command.requesterMemberId())
+                    .answers(toAnswerCommands(command.answers()))
+                    .build()
+            );
+        } else {
+            manageFormResponseUseCase.updateSubmittedResponse(
+                UpdateSubmittedFormResponseCommand.builder()
+                    .formResponseId(application.getFormResponseId())
+                    .requesterMemberId(command.requesterMemberId())
+                    .answers(toAnswerCommands(command.answers()))
+                    .requiredQuestionIds(questionScope.requiredQuestionIds())
+                    .allowedQuestionIds(questionScope.allowedQuestionIds())
+                    .build()
+            );
+        }
 
         return ProjectApplicationInfo.of(application.getId(), application.getStatus());
     }
@@ -407,6 +428,23 @@ public class ProjectApplicationCommandService implements
         Long applicationId,
         Long requesterMemberId
     ) {
+        ProjectApplication application = loadOwnedApplication(projectId, applicationId, requesterMemberId);
+        // EDIT 권한의 제출본 수정 허용과 별개로 APPLY-003의 재제출 거절(403)을 유지한다.
+        if (application.isSubmitted()) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED,
+                "지원서를 제출할 권한이 없어요. 지원 가능한 프로젝트인지 확인해주세요.");
+        }
+        if (!application.isDraft()) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DRAFT_APPLICATION_NOT_FOUND);
+        }
+        return application;
+    }
+
+    private ProjectApplication loadOwnedApplication(
+        Long projectId,
+        Long applicationId,
+        Long requesterMemberId
+    ) {
         if (applicationId == null) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
         }
@@ -418,7 +456,7 @@ public class ProjectApplicationCommandService implements
         if (!Objects.equals(actualProjectId, projectId)) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
         }
-        if (!Objects.equals(application.getApplicantMemberId(), requesterMemberId) || !application.isDraft()) {
+        if (!Objects.equals(application.getApplicantMemberId(), requesterMemberId)) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_DRAFT_APPLICATION_NOT_FOUND);
         }
 

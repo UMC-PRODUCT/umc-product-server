@@ -164,9 +164,6 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
             || targetInfo.targetGisuId() != null && !role.gisuId().equals(targetInfo.targetGisuId())) {
             return false;
         }
-        if (targetInfo.targetChapterId() != null && !myChapterId.equals(targetInfo.targetChapterId())) {
-            return false;
-        }
         if (targetInfo.targetSchoolId() != null) {
             return getChapterUseCase.findByGisuAndSchool(role.gisuId(), targetInfo.targetSchoolId())
                 .map(chapter -> myChapterId.equals(chapter.id())).orElse(false);

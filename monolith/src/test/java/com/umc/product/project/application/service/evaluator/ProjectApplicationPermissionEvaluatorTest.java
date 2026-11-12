@@ -300,10 +300,31 @@ class ProjectApplicationPermissionEvaluatorTest {
     }
 
     @Test
-    void EDIT는_SUBMITTED_지원서를_본인이라도_거부() {
+    void EDIT는_SUBMITTED_지원서를_본인_허용() {
         givenApplication(ProjectApplicationStatus.SUBMITTED);
         SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
 
+        assertThat(sut.evaluate(subject, editPermission())).isTrue();
+    }
+
+    @Test
+    void EDIT는_SUBMITTED_지원서를_타인_거부() {
+        // given
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        SubjectAttributes subject = subjectWith(PO_MEMBER_ID, List.of(), List.of());
+
+        // when & then
+        assertThat(sut.evaluate(subject, editPermission())).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ProjectApplicationStatus.class, names = {"APPROVED", "REJECTED"})
+    void EDIT는_판정된_지원서를_본인이라도_거부(ProjectApplicationStatus status) {
+        // given
+        givenApplication(status);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        // when & then
         assertThat(sut.evaluate(subject, editPermission())).isFalse();
     }
 

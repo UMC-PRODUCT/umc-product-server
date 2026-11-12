@@ -27,8 +27,6 @@ public interface NoticeCommandControllerApi {
             제목은 필수이며 최대 255자, 본문은 필수이며 최대 3,000자입니다.
             길이를 초과하거나 비어 있으면 400(COMMON-400)을 반환하고 공지를 저장하지 않습니다.
 
-            - `mustRead=true`: 필독 공지로 지정 → 목록 최상단 고정 (UPMS에서 사용, 앱공지에서는 false로 설정)
-
             ### 작성 권한
 
             작성 권한은 대상 기수와 별개로 현재 활성 기수의 역할을 기준으로 확인합니다.
@@ -68,6 +66,13 @@ public interface NoticeCommandControllerApi {
             |---|---|---|---|---|
             | 해당 학교 파트장 전체 + 상위 운영진 | `SCHOOL_PART_LEADER` | schoolId | null 또는 `[]` | 해당 학교 회장단 |
             | 해당 학교 특정 파트 파트장 + 상위 운영진 | `SCHOOL_PART_LEADER` | schoolId | `["WEB_PRODUCT_ENGINEER"]` | 해당 학교 교내 운영진 |
+
+            ### UPMS 공지 유형
+
+            선택 필드 `upmsNoticeType`으로 UPMS 공지를 구분합니다.
+            - `TEAM_MATCHING`: UPMS 팀 매칭 공지
+            - `PROJECT_SETTING`: UPMS 프로젝트 설정 공지
+            - 생략 또는 `null`: 일반 공지로 저장하며 기존 등록 처리를 유지합니다.
             """
     )
     @ApiResponses({

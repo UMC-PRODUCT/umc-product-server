@@ -25,6 +25,7 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeClassification;
 import com.umc.product.notice.domain.enums.NoticeTab;
+import com.umc.product.notice.domain.enums.UpmsNoticeType;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 
@@ -104,9 +105,18 @@ public class NoticeQueryRepository {
         NoticeViewerInfo viewerInfo
     ) {
         if (classification.isChallengerQuery()) {
-            return buildClassificationCondition(classification, viewerInfo);
+            return buildClassificationCondition(classification, viewerInfo)
+                .and(upmsNoticeTypeEq(classification.upmsNoticeType()));
         }
-        return buildStaffCondition(classification, viewerInfo);
+        return buildStaffCondition(classification, viewerInfo)
+            .and(upmsNoticeTypeEq(classification.upmsNoticeType()));
+    }
+
+    private BooleanExpression upmsNoticeTypeEq(UpmsNoticeType upmsNoticeType) {
+        if (upmsNoticeType == null) {
+            return null;
+        }
+        return notice.upmsNoticeType.eq(upmsNoticeType);
     }
 
     /**
@@ -232,6 +242,10 @@ public class NoticeQueryRepository {
             BooleanExpression scopeCondition = noticeTarget.targetChapterId.isNull()
                 .and(noticeTarget.targetSchoolId.isNull());
 
+            if (!hasChapter && !hasSchool && viewerInfo.isChapterPresident()) {
+                scopeCondition = buildReadableOrganizationCondition(viewerInfo);
+            }
+
             if (chapterId != null) {
                 scopeCondition = scopeCondition.or(
                     noticeTarget.targetChapterId.eq(chapterId)
@@ -263,7 +277,9 @@ public class NoticeQueryRepository {
         }
         BooleanExpression condition = noticeTarget.targetChapterId.isNull()
             .and(noticeTarget.targetSchoolId.isNull());
-        if (viewerInfo.chapterId() != null) {
+        if (viewerInfo.isChapterPresident()) {
+            condition = noticeTarget.targetSchoolId.isNull();
+        } else if (viewerInfo.chapterId() != null) {
             condition = condition.or(noticeTarget.targetChapterId.eq(viewerInfo.chapterId())
                 .and(noticeTarget.targetSchoolId.isNull()));
         }

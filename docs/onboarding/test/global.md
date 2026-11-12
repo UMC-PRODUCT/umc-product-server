@@ -176,7 +176,7 @@
 | [144](../../../monolith/src/test/java/com/umc/product/global/config/LoggingInterceptorTest.java#L144) | 인증된 MemberPrincipal 의 clientType 이 없으면 MDC clientType 을 UNKNOWN 으로 채운다 | HTTP GET memberId; HTTP GET clientType; HTTP GET userId | 성공: 검증 assertThat(MDC.get("memberId")).isEqualTo("42"); assertThat(MDC.get("clientType")).isEqualTo("UNKNOWN"); assertThat(MDC.get("userId")).isNull(); |
 | [167](../../../monolith/src/test/java/com/umc/product/global/config/LoggingInterceptorTest.java#L167) | 인증된 MemberPrincipal 의 clientType 이 있으면 해당 값을 MDC 에 채운다 | HTTP GET memberId; HTTP GET clientType | 성공: 검증 assertThat(MDC.get("memberId")).isEqualTo("42"); assertThat(MDC.get("clientType")).isEqualTo("IOS"); |
 | [188](../../../monolith/src/test/java/com/umc/product/global/config/LoggingInterceptorTest.java#L188) | 익명 사용자는 MDC memberId 가 채워지지 않는다 | HTTP GET memberId; HTTP GET clientType | 성공: 검증 assertThat(MDC.get("memberId")).isNull(); assertThat(MDC.get("clientType")).isEqualTo("UNKNOWN"); |
-| [203](../../../monolith/src/test/java/com/umc/product/global/config/LoggingInterceptorTest.java#L203) | X-Forwarded-For 헤더가 있으면 첫 번째 IP 가 clientIp 로 채워진다 | 조건 X-Forwarded-For 헤더가 있으면 첫 번째 IP 가 clientIp 로 채워진다 | 성공: 검증 assertThat(snapshot).isNotNull(); assertThat(snapshot).containsEntry("clientIp", "203.0.113.7"); |
+| [203](../../../monolith/src/test/java/com/umc/product/global/config/LoggingInterceptorTest.java#L203) | clientIp 는 X-Forwarded-For 헤더가 아니라 컨테이너가 정리한 remoteAddr 로 채워진다 | 조건 X-Forwarded-For 헤더와 remoteAddr 가 함께 있다 | 성공: 검증 assertThat(snapshot).isNotNull(); assertThat(snapshot).containsEntry("clientIp", "198.51.100.7"); |
 
 ### TraceIdHeaderInterceptorTest
 - 위치: `monolith/src/test/java/com/umc/product/global/config/TraceIdHeaderInterceptorTest.java`

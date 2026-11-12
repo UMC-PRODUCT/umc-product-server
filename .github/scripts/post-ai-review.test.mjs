@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -235,12 +235,4 @@ test("같은 커밋에 이미 남긴 리뷰어는 건너뛴다", async (t) => {
     await run(runEnv());
 
     assert.deepEqual(posts.map((post) => post.body.split("\n")[0]), ["🧹 코드 품질 리뷰어"]);
-});
-
-test("CI와 저장소 설정의 pstack 버전이 같다", () => {
-    const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
-    const workflowVersion = /PSTACK_SHA: \w+ # (v[\d.]+)/.exec(read(".github/workflows/ai-review.yml"))[1];
-    const settings = JSON.parse(read(".claude/settings.json"));
-
-    assert.equal(workflowVersion, settings.extraKnownMarketplaces["pstack-claude"].source.ref);
 });

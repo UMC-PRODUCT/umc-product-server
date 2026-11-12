@@ -2,12 +2,14 @@ package com.umc.product.member.adapter.in.web.dto.response;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 /**
@@ -29,7 +31,10 @@ public record MemberInfoResponse(
     MemberStatus status,
     List<ChallengerRoleInfo> roles, // TODO: 이거 그대로 써도 괜찮은거 맞나?
     List<ChallengerInfoResponse> challengerRecords,
-    MemberProfileInfo profile
+    MemberProfileInfo profile,
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Schema(description = "본인 응답에만 포함하는 프로덕트 문의 관리 가능 여부. UMC_PRODUCT 또는 SUPER_ADMIN이면 true")
+    Boolean isUmcProduct
     // TODO: 활동 이력이나 각종 링크들 추가해야 함
 ) {
     public static MemberInfoResponse from(MemberInfo info, List<ChallengerInfoResponse> challengerRecords) {
@@ -49,7 +54,7 @@ public record MemberInfoResponse(
 
     public static MemberInfoResponse from(
         MemberInfo info, MemberProfileInfo profileInfo,
-        List<ChallengerInfoResponse> challengerRecords
+        List<ChallengerInfoResponse> challengerRecords, Boolean isUmcProduct
     ) {
         return MemberInfoResponse.builder()
             .id(info.id())
@@ -63,6 +68,7 @@ public record MemberInfoResponse(
             .roles(info.roles())
             .challengerRecords(challengerRecords)
             .profile(profileInfo)
+            .isUmcProduct(isUmcProduct)
             .build();
     }
 

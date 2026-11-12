@@ -64,11 +64,9 @@ public class FcmAudienceResolver {
             ChapterInfo chapter = chapterMap
                 .getOrDefault(challenger.gisuId(), Map.of())
                 .get(schoolId);
-            if (chapter == null) {
-                continue;
-            }
+            Long chapterId = chapter == null ? null : chapter.id();
 
-            if (matches(event, challenger.gisuId(), chapter.id(), schoolId, challenger.part())) {
+            if (matches(event, challenger.gisuId(), chapterId, schoolId, challenger.part())) {
                 targetMemberIds.add(challenger.memberId());
             }
         }
@@ -86,7 +84,8 @@ public class FcmAudienceResolver {
         boolean gisuMatch = event.targetGisuId() == null || event.targetGisuId().equals(gisuId);
         boolean chapterMatch = event.targetChapterId() == null || event.targetChapterId().equals(chapterId);
         boolean schoolMatch = event.targetSchoolId() == null || event.targetSchoolId().equals(schoolId);
-        boolean partMatch = event.targetParts().isEmpty() || event.targetParts().contains(part);
+        boolean partMatch = event.targetParts().isEmpty()
+            || (part != null && event.targetParts().contains(part));
         return gisuMatch && chapterMatch && schoolMatch && partMatch;
     }
 }
