@@ -41,6 +41,7 @@ import org.springframework.web.socket.sockjs.client.SockJsClient;
 import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 import com.umc.product.global.config.WebSocketMessageBrokerConfig;
+import com.umc.product.global.observability.chat.ChatWebSocketMetrics;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.ParsedAccessToken;
 import com.umc.product.global.websocket.adapter.out.StompBroadcastAdapter;
@@ -208,6 +209,7 @@ class StompSubscriptionAuthorizationIntegrationTest {
     })
     @Import({
         WebSocketMessageBrokerConfig.class,
+        ChatWebSocketMetrics.class,
         ApiResponseStompErrorHandler.class,
         WebSocketErrorPublisher.class,
         StompBroadcastAdapter.class,
