@@ -34,6 +34,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProjectPartQuota extends BaseEntity {
 
+    /** 상한이 없으면 큰 값의 합계가 TO 관리 조회에서 넘친다. */
+    public static final long MAX_QUOTA = 999L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

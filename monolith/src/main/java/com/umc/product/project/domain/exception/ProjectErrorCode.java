@@ -74,8 +74,6 @@ public enum ProjectErrorCode implements BaseCode {
 
     PROJECT_PART_QUOTA_MATCHING_LOCKED(HttpStatus.CONFLICT, "PROJECT-0250",
         "전체 첫 매칭 시작 이후에는 TO를 수정할 수 없어요."),
-    PROJECT_PART_QUOTA_CAPACITY_EXCEEDED(HttpStatus.CONFLICT, "PROJECT-0251",
-        "파트별 TO 합계가 해당 지부의 인원보다 많아요. TO를 조정해주세요."),
     PROJECT_PART_QUOTA_BELOW_ASSIGNED(HttpStatus.CONFLICT, "PROJECT-0252",
         "이미 배정된 인원보다 TO를 줄일 수 없어요. 발표 대기 인원도 포함됩니다."),
     PROJECT_PART_QUOTA_READ_ONLY(HttpStatus.BAD_REQUEST, "PROJECT-0253",

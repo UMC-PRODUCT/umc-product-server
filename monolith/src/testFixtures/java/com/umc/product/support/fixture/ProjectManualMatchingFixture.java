@@ -1,9 +1,11 @@
 package com.umc.product.support.fixture;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.stereotype.Component;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
@@ -176,7 +178,25 @@ public class ProjectManualMatchingFixture {
         return result;
     }
 
+    /** 자동 선발 전 PM 결정 기간인 차수를 now 기준으로 만들고 지원자들을 PM 합격 상태로 둔다. */
+    public void PM_합격_처리(Scenario scenario, MatchingType type, Instant now, List<Long> applicantIds) {
+        ProjectMatchingRound round = ProjectMatchingRound.create("PM 결정 기간", null, type, MatchingPhase.FIRST,
+            scenario.chapterId(), now.minusSeconds(10800), now.minusSeconds(7200), now.plusSeconds(3600),
+            now.plusSeconds(10800));
+        entityManager.persist(round);
+        for (Long applicantId : applicantIds) {
+            ApplicationScenario result = 지원서_등록(scenario, round, applicantId);
+            ReflectionTestUtils.setField(entityManager.find(ProjectApplication.class, result.applicationId()),
+                "status", ProjectApplicationStatus.APPROVED);
+        }
+        entityManager.flush();
+    }
+
     private ApplicationScenario 지원서_등록(Scenario scenario, ProjectMatchingRound round) {
+        return 지원서_등록(scenario, round, scenario.candidateId());
+    }
+
+    private ApplicationScenario 지원서_등록(Scenario scenario, ProjectMatchingRound round, Long applicantId) {
         Project project = loadProjectPort.getById(scenario.projectId());
         Instant now = Instant.now();
         Form form = Form.createPublished(scenario.ownerId(), "지원서", false);
@@ -186,7 +206,7 @@ public class ProjectManualMatchingFixture {
         Question question = Question.create("소개", QuestionType.SHORT_TEXT, true, 1L);
         question.assignTo(section);
         entityManager.persist(question);
-        FormResponse response = FormResponse.createDraft(form, scenario.candidateId());
+        FormResponse response = FormResponse.createDraft(form, applicantId);
         response.submit(now.minusSeconds(8000), null);
         entityManager.persist(response);
         Answer answer = Answer.create(response, question, QuestionType.SHORT_TEXT, "보존할 답변", Set.of(), Set.of());
@@ -194,7 +214,7 @@ public class ProjectManualMatchingFixture {
         ProjectApplicationForm applicationForm = ProjectApplicationForm.create(project, form.getId());
         entityManager.persist(applicationForm);
         ProjectApplication application = ProjectApplication.create(applicationForm, response.getId(),
-            scenario.candidateId(), round);
+            applicantId, round);
         application.submit();
         entityManager.persist(application);
         entityManager.flush();

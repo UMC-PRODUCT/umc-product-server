@@ -1,6 +1,7 @@
 package com.umc.product.project.application.service.command;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -11,10 +12,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +31,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
@@ -43,12 +39,12 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.project.application.port.in.command.SaveProjectQuotaManagementUseCase;
 import com.umc.product.project.application.port.in.command.dto.SaveProjectQuotaManagementCommand;
+import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import com.umc.product.support.IntegrationTestSupport;
-import com.umc.product.support.concurrency.PostgreSqlTransactionRace;
 import com.umc.product.support.fixture.ProjectManagementPermissionFixture;
 import com.umc.product.support.fixture.ProjectManualMatchingFixture;
 import com.umc.product.support.fixture.ProjectManualMatchingFixture.Scenario;
@@ -65,7 +61,6 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
     @Autowired EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
     @Autowired JdbcTemplate jdbc;
     @Autowired SaveProjectQuotaManagementUseCase saveProjectQuotaManagementUseCase;
-    @Autowired PlatformTransactionManager transactionManager;
     private Scenario scenario;
 
     @TestConfiguration
@@ -166,7 +161,7 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 승인완료만_표와_필터와_조회합계와_저장상한에_포함한다() throws Exception {
+    void 승인완료만_표와_필터와_조회합계에_포함한다() throws Exception {
         // given
         Long pending = fixture.프로젝트(scenario, "승인대기 QA");
         fixture.정원(pending, ChallengerPart.DESIGN, 1);
@@ -186,39 +181,8 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
         assertThat(part(info.path("summary"), "DESIGN").path("allocatedQuota").asLong()).isEqualTo(1);
         assertThat(view("승인대기 QA").path("filteredProjectCount").asInt()).isZero();
         save(List.of(change(scenario.projectId(), "DESIGN", 2))).andExpect(status().isOk());
-        denied(save(List.of(change(scenario.projectId(), "DESIGN", 3))), "PROJECT-0251");
         assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(2);
         assertThat(quota(pending, "DESIGN")).isEqualTo(1);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"PENDING_REVIEW", "DRAFT", "COMPLETED", "ABORTED"})
-    void 관리대상이_아닌_프로젝트의_TO가_커도_승인완료_TO의_저장과_초기화는_가능하다(String state) throws Exception {
-        // given
-        Long excluded = fixture.프로젝트(scenario, "상한에서 제외할 프로젝트");
-        fixture.정원(excluded, ChallengerPart.PLAN, 100);
-        fixture.정원(excluded, ChallengerPart.DESIGN, 100);
-        fixture.정원(excluded, ChallengerPart.WEB_PRODUCT_ENGINEER, 100);
-        jdbc.update("UPDATE project SET status=? WHERE id=?", state, excluded);
-
-        // when & then
-        save(List.of(Map.of("projectId", scenario.projectId(), "entries", List.of(
-            Map.of("part", "PLAN", "quota", 3), Map.of("part", "DESIGN", "quota", 2),
-            Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 2))))).andExpect(status().isOk());
-        legacyPut(List.of(Map.of("part", "PLAN", "quota", 3), Map.of("part", "DESIGN", "quota", 2),
-            Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 2))).andExpect(status().isOk());
-        denied(save(List.of(change(scenario.projectId(), "PLAN", 4))), "PROJECT-0251");
-        save(List.of(Map.of("projectId", scenario.projectId(), "entries", List.of(
-            Map.of("part", "DESIGN", "quota", 0), Map.of("part", "WEB_PRODUCT_ENGINEER", "quota", 0),
-            Map.of("part", "MOBILE_PRODUCT_ENGINEER", "quota", 0))))).andExpect(status().isOk());
-        JsonNode info = view(null);
-        assertThat(cell(info, "PLAN").path("quota").asLong()).isEqualTo(3);
-        assertThat(part(info.path("summary"), "PLAN").path("allocatedQuota").asLong()).isEqualTo(3);
-        for (String part : List.of("DESIGN", "WEB_PRODUCT_ENGINEER", "MOBILE_PRODUCT_ENGINEER")) {
-            assertThat(cell(info, part).path("quota").asLong()).isZero();
-        }
-        assertThat(quota(excluded, "PLAN")).isEqualTo(100);
-        assertThat(quota(excluded, "DESIGN")).isEqualTo(100);
     }
 
     @Test
@@ -479,27 +443,21 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 인원_초과가_있으면_여러_프로젝트의_변경을_전부_롤백한다() throws Exception {
+    void TO_합계가_지부_파트_인원을_넘어도_여러_프로젝트의_변경을_저장한다() throws Exception {
         // given
         Long other = fixture.프로젝트(scenario, "다른 프로젝트");
 
-        // when & then
-        denied(save(List.of(change(scenario.projectId(), "DESIGN", 2), change(other, "DESIGN", 1))), "PROJECT-0251");
-        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(1);
-        assertThat(quota(other, "DESIGN")).isZero();
-    }
-
-    @Test
-    void 프로젝트_사이의_TO_이동은_최종_합계로_검증한다() throws Exception {
-        // given
-        Long other = fixture.프로젝트(scenario, "다른 프로젝트");
-        fixture.정원(other, ChallengerPart.DESIGN, 1);
-
-        // when & then
-        save(List.of(change(scenario.projectId(), "DESIGN", 2), change(other, "DESIGN", 0)))
+        // when
+        save(List.of(change(scenario.projectId(), "DESIGN", 2), change(other, "DESIGN", 1)))
             .andExpect(status().isOk());
+
+        // then
         assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(2);
-        assertThat(quota(other, "DESIGN")).isZero();
+        assertThat(quota(other, "DESIGN")).isEqualTo(1);
+        JsonNode design = part(view(null).path("summary"), "DESIGN");
+        assertThat(design.path("availableCount").asLong()).isEqualTo(2);
+        assertThat(design.path("allocatedQuota").asLong()).isEqualTo(3);
+        assertThat(design.path("allocationStatus").asText()).isEqualTo("EXCESS");
     }
 
     @Test
@@ -613,61 +571,18 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 지부_이동을_인원_현황과_상한에_반영한다() throws Exception {
+    void 지부_이동을_인원_현황에_반영한다() throws Exception {
         // given
         Scenario destination = projects.다른_지부(scenario);
         projects.매칭지부_이동(scenario, destination);
 
         // when & then
         assertThat(part(view(null).path("summary"), "DESIGN").path("availableCount").asLong()).isEqualTo(1);
-        denied(save(List.of(change(scenario.projectId(), "DESIGN", 2))), "PROJECT-0251");
         authenticate(destination.staffId());
         JsonNode result = objectMapper.readTree(mockMvc.perform(get(PATH).param("gisuId", scenario.gisuId().toString())
             .param("chapterId", destination.chapterId().toString())).andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString()).path("result");
         assertThat(part(result.path("summary"), "DESIGN").path("availableCount").asLong()).isEqualTo(2);
-    }
-
-    @Test
-    void 동시_저장도_지부의_파트_인원을_초과할_수_없다() throws Exception {
-        // given
-        fixture.정원(scenario.projectId(), ChallengerPart.DESIGN, 0);
-        Long other = fixture.프로젝트(scenario, "동시 수정");
-        CountDownLatch ready = new CountDownLatch(2);
-        CountDownLatch start = new CountDownLatch(1);
-
-        // when
-        try (var race = new PostgreSqlTransactionRace(transactionManager, jdbc)) {
-            var first = race.submit(() -> raceSave(race, ready, start, scenario.projectId()));
-            var second = race.submit(() -> raceSave(race, ready, start, other));
-            race.await(ready, "두 TO 저장 준비");
-            start.countDown();
-            boolean one = succeeded(first.future());
-            boolean two = succeeded(second.future());
-
-            // then
-            assertThat(one ^ two).isTrue();
-            assertThat(quota(scenario.projectId(), "DESIGN") + quota(other, "DESIGN")).isEqualTo(2);
-        }
-    }
-
-    private boolean raceSave(PostgreSqlTransactionRace race, CountDownLatch ready, CountDownLatch start, Long id) {
-        ready.countDown();
-        race.await(start, "동시 TO 저장 시작");
-        saveProjectQuotaManagementUseCase.save(new SaveProjectQuotaManagementCommand(scenario.staffId(),
-            scenario.gisuId(), scenario.chapterId(), List.of(new SaveProjectQuotaManagementCommand.ProjectChange(id,
-                List.of(new SaveProjectQuotaManagementCommand.CellChange(ChallengerPart.DESIGN, 2L))))));
-        return true;
-    }
-
-    private boolean succeeded(Future<Boolean> future) throws Exception {
-        try {
-            return future.get(20, TimeUnit.SECONDS);
-        } catch (ExecutionException exception) {
-            assertThat(exception.getCause()).isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode").isEqualTo(ProjectErrorCode.PROJECT_PART_QUOTA_CAPACITY_EXCEEDED);
-            return false;
-        }
     }
 
     @Test
@@ -680,15 +595,22 @@ class ProjectQuotaManagementIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 합계가_Long_범위를_넘어도_입력오류로_거부하고_롤백한다() throws Exception {
+    void 상한을_넘는_TO는_거부되고_저장되지_않는다() throws Exception {
         // given
-        Long other = fixture.프로젝트(scenario, "다른 프로젝트");
+        long over = ProjectPartQuota.MAX_QUOTA + 1;
+        var command = new SaveProjectQuotaManagementCommand(scenario.staffId(), scenario.gisuId(),
+            scenario.chapterId(), List.of(new SaveProjectQuotaManagementCommand.ProjectChange(scenario.projectId(),
+                List.of(new SaveProjectQuotaManagementCommand.CellChange(ChallengerPart.DESIGN, over)))));
 
         // when & then
-        denied(save(List.of(change(scenario.projectId(), "DESIGN", Long.MAX_VALUE),
-            change(other, "DESIGN", Long.MAX_VALUE))), "PROJECT-0251");
+        save(List.of(change(scenario.projectId(), "DESIGN", over))).andExpect(status().isBadRequest());
+        legacyPut(List.of(Map.of("part", "DESIGN", "quota", over))).andExpect(status().isBadRequest());
+        assertThatThrownBy(() -> saveProjectQuotaManagementUseCase.save(command))
+            .isInstanceOf(ProjectDomainException.class)
+            .extracting("baseCode").isEqualTo(ProjectErrorCode.PROJECT_PART_QUOTA_INVALID_REQUEST);
         assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(1);
-        assertThat(quota(other, "DESIGN")).isZero();
+        save(List.of(change(scenario.projectId(), "DESIGN", ProjectPartQuota.MAX_QUOTA))).andExpect(status().isOk());
+        assertThat(quota(scenario.projectId(), "DESIGN")).isEqualTo(ProjectPartQuota.MAX_QUOTA);
     }
 
     @Test
