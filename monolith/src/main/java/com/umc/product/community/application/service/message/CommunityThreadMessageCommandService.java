@@ -204,7 +204,7 @@ public class CommunityThreadMessageCommandService implements
     public CommunityThreadReactionMutationInfo add(
         ChangeCommunityThreadMessageReactionCommand command
     ) {
-        CommunityThread thread = loadThread(command.threadId());
+        CommunityThread thread = loadLockedThread(command.threadId());
         loadActiveMember(thread.getId(), command.memberId());
         return toCommunityResult(reactionUseCase.add(toChatCommand(thread, command)));
     }
@@ -213,7 +213,7 @@ public class CommunityThreadMessageCommandService implements
     public CommunityThreadReactionMutationInfo remove(
         ChangeCommunityThreadMessageReactionCommand command
     ) {
-        CommunityThread thread = loadThread(command.threadId());
+        CommunityThread thread = loadLockedThread(command.threadId());
         loadActiveMember(thread.getId(), command.memberId());
         return toCommunityResult(reactionUseCase.remove(toChatCommand(thread, command)));
     }

@@ -400,9 +400,9 @@ class CommunityThreadMessageCommandServiceTest {
     }
 
     @Test
-    @DisplayName("reaction은 일반 스레드 조회와 ACTIVE 멤버 검증 뒤 Chat public UseCase를 호출한다")
+    @DisplayName("reaction은 스레드 락 조회와 ACTIVE 멤버 검증 뒤 Chat public UseCase를 호출한다")
     void reactionValidatesThreadAndMemberBeforeChat() {
-        given(loadThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread()));
+        given(loadThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread()));
         given(loadThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, MEMBER_ID))
             .willReturn(Optional.of(active(MEMBER_ID, CommunityThreadMemberRole.MEMBER)));
         given(reactionUseCase.add(any(ChangeChatMessageReactionCommand.class))).willReturn(
@@ -415,15 +415,15 @@ class CommunityThreadMessageCommandServiceTest {
 
         assertThat(result.deduplicated()).isFalse();
         InOrder order = inOrder(loadThreadPort, loadThreadMemberPort, reactionUseCase);
-        order.verify(loadThreadPort).findById(THREAD_ID);
+        order.verify(loadThreadPort).findByIdForUpdate(THREAD_ID);
         order.verify(loadThreadMemberPort).findByThreadIdAndMemberId(THREAD_ID, MEMBER_ID);
         order.verify(reactionUseCase).add(any(ChangeChatMessageReactionCommand.class));
     }
 
     @Test
-    @DisplayName("reaction remove도 일반 스레드 조회와 멤버 검증 뒤 Chat public UseCase를 호출한다")
+    @DisplayName("reaction remove도 스레드 락 조회와 멤버 검증 뒤 Chat public UseCase를 호출한다")
     void reactionRemoveValidatesThreadAndMemberBeforeChat() {
-        given(loadThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread()));
+        given(loadThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread()));
         given(loadThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, MEMBER_ID))
             .willReturn(Optional.of(active(MEMBER_ID, CommunityThreadMemberRole.MEMBER)));
         given(reactionUseCase.remove(any(ChangeChatMessageReactionCommand.class))).willReturn(
@@ -436,7 +436,7 @@ class CommunityThreadMessageCommandServiceTest {
 
         assertThat(result.deduplicated()).isFalse();
         InOrder order = inOrder(loadThreadPort, loadThreadMemberPort, reactionUseCase);
-        order.verify(loadThreadPort).findById(THREAD_ID);
+        order.verify(loadThreadPort).findByIdForUpdate(THREAD_ID);
         order.verify(loadThreadMemberPort).findByThreadIdAndMemberId(THREAD_ID, MEMBER_ID);
         order.verify(reactionUseCase).remove(any(ChangeChatMessageReactionCommand.class));
     }

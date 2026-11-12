@@ -19,7 +19,7 @@ import com.umc.product.community.application.port.in.command.thread.message.dto.
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadReactionMutationInfo;
 import com.umc.product.support.concurrency.PostgreSqlTransactionRace.TransactionCall;
 
-@DisplayName("방 배타 락을 제거한 명령의 실제 트랜잭션 동시성")
+@DisplayName("리액션 락 비교 baseline의 실제 트랜잭션 동시성")
 @TestPropertySource(properties = "app.event-outbox.relay-enabled=false")
 class CommunityThreadUnlockedCommandConcurrencyIntegrationTest
     extends CommunityThreadConcurrencyIntegrationSupport {
@@ -30,8 +30,8 @@ class CommunityThreadUnlockedCommandConcurrencyIntegrationTest
     UpdateChatReadUseCase updateChatReadUseCase;
 
     @Test
-    @DisplayName("리액션과 Chat 읽음은 다른 트랜잭션이 보유한 두 방의 배타 락을 기다리지 않는다")
-    void reactionAndChatRead_completeWhileRoomLocksAreHeld() throws Exception {
+    @DisplayName("리액션은 다른 트랜잭션이 보유한 방 락이 해제된 뒤 완료된다")
+    void reaction_waitsUntilRoomLocksAreReleased() throws Exception {
         // Given
         ThreadContext thread = createThread();
         Long messageId = createThreadMessageUseCase.create(
@@ -63,18 +63,14 @@ class CommunityThreadUnlockedCommandConcurrencyIntegrationTest
             return result;
         });
         try {
-            // Then: 락을 해제하기 전에 실제 저장과 커밋이 끝나야 한다.
-            CommunityThreadReactionMutationInfo result = changed.future().get(
-                TIMEOUT_SECONDS / 2,
-                TimeUnit.SECONDS
-            );
-            assertThat(result.deduplicated()).isFalse();
-            assertThat(loadChatMemberPort.getByRoomIdAndMemberId(thread.roomId(), MEMBER_ID)
-                .getLastReadMessageId()).isEqualTo(messageId);
+            // Then: DB가 실제로 방 락을 기다리는 것을 확인한다.
+            race.awaitPostgreSqlLockWait(changed);
+            assertThat(changed.future().isDone()).isFalse();
         } finally {
             release.countDown();
             blocker.future().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         }
+        assertThat(changed.future().get(TIMEOUT_SECONDS, TimeUnit.SECONDS).deduplicated()).isFalse();
     }
 
     @Test
