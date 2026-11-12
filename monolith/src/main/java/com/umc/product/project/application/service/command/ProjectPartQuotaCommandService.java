@@ -30,7 +30,6 @@ import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectPartQuotaPort;
 import com.umc.product.project.application.service.policy.ProjectDraftQuotaPolicy;
-import com.umc.product.project.application.service.policy.ProjectQuotaCapacityPolicy;
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
 import com.umc.product.project.application.service.policy.ProjectQuotaMemberPolicy;
 import com.umc.product.project.domain.Project;
@@ -56,7 +55,6 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final ProjectQuotaEditPolicy editPolicy;
     private final ProjectQuotaMemberPolicy memberPolicy;
-    private final ProjectQuotaCapacityPolicy capacityPolicy;
     private final LoadProjectPort loadProjectPort;
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
     private final SaveProjectPartQuotaPort saveProjectPartQuotaPort;
@@ -74,11 +72,8 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
     @Override
     public void update(UpdatePartQuotasCommand command) {
         updateWithinBatch(command);
-        Project project = loadProjectPort.getById(command.projectId());
-        capacityPolicy.validate(project.getGisuId(), project.getChapterId());
     }
 
-    // 일괄 저장은 모든 프로젝트를 갱신한 뒤 지부 TO 상한을 검증한다.
     void updateWithinBatch(UpdatePartQuotasCommand command) {
         lockProjectMatchingPort.lockByProjectId(command.projectId());
         Project target = loadProjectPort.getById(command.projectId());
@@ -169,6 +164,10 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
         for (Entry entry : entries) {
             if (entry.quota() < 1) {
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_QUOTA_INVALID);
+            }
+            if (entry.quota() > ProjectPartQuota.MAX_QUOTA) {
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_QUOTA_INVALID_REQUEST,
+                    "TO는 " + ProjectPartQuota.MAX_QUOTA + "명 이하로 입력해주세요.");
             }
             if (!seen.add(entry.part())) {
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_QUOTA_DUPLICATE);

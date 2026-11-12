@@ -35,7 +35,6 @@ import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.LockProjectMatchingPort;
 import com.umc.product.project.application.port.out.SaveProjectPartQuotaPort;
 import com.umc.product.project.application.service.policy.ProjectMatchingAdjustmentPolicy;
-import com.umc.product.project.application.service.policy.ProjectQuotaCapacityPolicy;
 import com.umc.product.project.application.service.policy.ProjectQuotaEditPolicy;
 import com.umc.product.project.application.service.policy.ProjectQuotaMemberPolicy;
 import com.umc.product.project.domain.Project;
@@ -62,7 +61,6 @@ class ProjectPartQuotaCommandServiceTest {
     @Mock LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
     @Mock LoadProjectMemberPort loadProjectMemberPort;
     @Mock ProjectQuotaEditPolicy editPolicy;
-    @Mock ProjectQuotaCapacityPolicy capacityPolicy;
     @Spy ProjectQuotaMemberPolicy memberPolicy = new ProjectQuotaMemberPolicy(new ProjectMatchingAdjustmentPolicy());
 
     @InjectMocks
@@ -156,6 +154,23 @@ class ProjectPartQuotaCommandServiceTest {
             .isInstanceOf(ProjectDomainException.class)
             .extracting("baseCode")
             .isEqualTo(ProjectErrorCode.PROJECT_PART_QUOTA_INVALID);
+    }
+
+    @Test
+    void update_quota_상한을_넘으면_거부() {
+        Long projectId = 42L;
+        Project project = project(projectId, ProjectStatus.PENDING_REVIEW);
+        given(loadProjectPort.getById(projectId)).willReturn(project);
+
+        assertThatThrownBy(() -> sut.update(UpdatePartQuotasCommand.builder()
+                .projectId(projectId)
+                .entries(List.of(Entry.builder().part(ChallengerPart.WEB).quota(ProjectPartQuota.MAX_QUOTA + 1).build()))
+                .requesterMemberId(99L)
+                .build()))
+            .isInstanceOf(ProjectDomainException.class)
+            .extracting("baseCode")
+            .isEqualTo(ProjectErrorCode.PROJECT_PART_QUOTA_INVALID_REQUEST);
+        verify(saveProjectPartQuotaPort, never()).saveAll(any());
     }
 
     @Test
