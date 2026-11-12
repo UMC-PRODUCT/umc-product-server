@@ -12,11 +12,17 @@ import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class ProjectQuotaEditPolicy {
+    private final ProjectQuotaEditProperties properties;
+
     public EditWindow evaluate(ChallengerPart part, List<ProjectMatchingRound> rounds, Instant now) {
         Instant start = rounds.stream().map(ProjectMatchingRound::getStartsAt).min(Instant::compareTo).orElse(null);
-        if (start == null || now.isBefore(start)) {
+        Instant openUntil = properties.openUntil();
+        if (start == null || now.isBefore(start) || (openUntil != null && now.isBefore(openUntil))) {
             return new EditWindow(ProjectPermissionCapabilityInfo.allow(), null);
         }
         return new EditWindow(

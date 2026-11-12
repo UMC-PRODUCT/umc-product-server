@@ -219,6 +219,8 @@ public class ProjectCommandController {
             최고관리자·해당 기수 총괄단·담당 지부장이 수정할 수 있습니다.
             운영국원·교육국원 역할만으로는 TO를 수정할 수 없습니다. 직접 등록 권한이 있는 운영진만 본인 초안의 TO도 설정할 수 있습니다.
             해당 지부의 전체 첫 매칭 시작 이후에는 모든 파트 TO를 변경할 수 없으며, 배정 인원 미만도 차단합니다.
+            app.project.quota-edit.open-until 전에는 첫 매칭 시작 후에도 허용합니다(임시).
+            배정 인원에는 발표 대기와 자동 선발 전 PM 합격 인원을 포함합니다.
             Web PE와 Mobile PE는 동시에 모집할 수 없습니다.
             변경한 셀만 저장하려면 PATCH /api/v1/projects/admin/part-quotas를 사용하세요.
             """

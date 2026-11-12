@@ -25,9 +25,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.command.dto.UpdatePartQuotasCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdatePartQuotasCommand.Entry;
+import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
@@ -60,6 +62,8 @@ class ProjectPartQuotaCommandServiceTest {
     @Mock LockProjectMatchingPort lockProjectMatchingPort;
     @Mock LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
     @Mock LoadProjectMemberPort loadProjectMemberPort;
+    @Mock LoadProjectApplicationPort loadProjectApplicationPort;
+    @Mock GetChallengerUseCase getChallengerUseCase;
     @Mock ProjectQuotaEditPolicy editPolicy;
     @Spy ProjectQuotaMemberPolicy memberPolicy = new ProjectQuotaMemberPolicy(new ProjectMatchingAdjustmentPolicy());
 
