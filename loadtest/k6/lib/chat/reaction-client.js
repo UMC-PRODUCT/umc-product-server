@@ -3,12 +3,14 @@ import http from "k6/http";
 import { getAccessToken } from "../auth.js";
 import { ChatClient } from "./chat-client.js";
 import { StompError, StompTimeoutError } from "../stomp/stomp.js";
-import { reactionAttempt, reactionResult } from "./reaction-metrics.js";
+import { reactionAttempt, reactionResult, reactionNoop } from "./reaction-metrics.js";
+import { ReactionIntegrity } from "./reaction-integrity.js";
 
 export class ReactionClient extends ChatClient {
   constructor(target, config, label) {
     super(target.memberId, config, { label });
     this.target = target;
+    this.integrity = new ReactionIntegrity();
   }
 
   async changeReaction(operation, phase = "prepare", timeoutMs = this.config.timeoutMs) {
@@ -44,7 +46,11 @@ export class ReactionClient extends ChatClient {
           || ack.command !== "REACTION_" + operation.toUpperCase() || typeof ack.deduplicated !== "boolean") {
         throw new StompError("리액션 ACK의 식별 정보가 다릅니다", "mismatch");
       }
-      if (measured) reactionResult(tags, frame.receivedAt - startedAt, true);
+      if (measured) {
+        reactionResult(tags, frame.receivedAt - startedAt, true);
+        this.integrity.record(operation, ack.deduplicated);
+        if (ack.deduplicated) reactionNoop(tags);
+      }
       return ack;
     } catch (error) {
       if (measured) reactionResult(tags, 0, false);
@@ -77,8 +83,8 @@ export class ReactionClient extends ChatClient {
   }
 
   async getReaction() {
-    let before = "";
-    // 준비에서 만든 최신 메시지를 우선 조회하고 재사용 시드는 제한된 페이지 내에서 찾는다.
+    // 새 메시지가 계속 쌓여도 대상 메시지 바로 다음 ID부터 조회해 최신 목록을 전부 훑지 않는다.
+    let before = String(BigInt(this.target.messageId) + 1n);
     for (let page = 0; page < 20; page++) {
       const result = await this.read("/api/v1/community/threads/" + this.target.threadId
         + "/messages?limit=100" + (before ? "&before=" + before : ""));

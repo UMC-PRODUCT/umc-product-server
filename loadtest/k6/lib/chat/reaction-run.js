@@ -3,7 +3,9 @@ import { check } from "k6";
 import { ReactionClient } from "./reaction-client.js";
 import { StompError } from "../stomp/stomp.js";
 import { createReactionPlan } from "../../config/chat-reaction.js";
-import { initializeReactionMetrics, reactionFailure, reactionReady } from "./reaction-metrics.js";
+import { initializeReactionMetrics, reactionFailure, reactionReady, reactionIntegrity } from "./reaction-metrics.js";
+import { runFixedSchedule } from "./fixed-schedule.js";
+import { recordSchedule } from "./schedule-metrics.js";
 
 const pause = (milliseconds) => milliseconds > 0
   ? new Promise((resolve) => setTimeout(resolve, milliseconds)) : Promise.resolve();
@@ -54,31 +56,39 @@ export async function prepareReactionRun(seed, config) {
 }
 
 async function repeatReactions(client, window) {
-  let operation = "add";
-  let sent = 0;
-  while (Date.now() < window.endAt) {
-    if (client.failure) throw client.failure;
-    const startedAt = Date.now();
-    const ack = await client.changeReaction(operation, window.phase);
-    requireCheck(!ack.deduplicated, "교대로 보낸 리액션 요청이 실제 상태를 변경함", client.config.tags);
-    sent++;
-    operation = operation === "add" ? "remove" : "add";
-    await pause(Math.min(startedAt + client.config.intervalMs, window.endAt) - Date.now());
-  }
-  return sent;
+  const config = client.config;
+  const measured = window.phase === "measure";
+  const results = await runFixedSchedule({ startAt: window.startAt,
+    measureAt: measured ? window.startAt : window.endAt, endAt: window.endAt,
+    intervalMs: config.intervalMs, offsetMs: window.offsetMs,
+    maxInflight: config.maxInflight }, {
+    healthy() { if (client.failure) throw client.failure; },
+    send: (slot) => client.changeReaction(slot % 2 === 0 ? "add" : "remove", window.phase),
+    record: (sample) => recordSchedule(sample, { ...config.tags,
+      phase: sample.phase, user_slot: window.userSlot }),
+  }, { now: () => Date.now(), pause });
+  return results.reduce((total, phase) => total + phase.issued, 0);
 }
 
 async function measureReactions(client, run) {
-  requireCheck(Date.now() < run.warmupStartAt, "공통 시작 전 구독과 준비 완료", client.config.tags);
+  const config = client.config;
+  const userSlot = run.plan.targets.findIndex((target) => target.memberId === client.target.memberId);
+  const offsetMs = Math.floor(userSlot * config.intervalMs / run.plan.targets.length);
+  requireCheck(Date.now() < run.warmupStartAt, "공통 시작 전 구독과 준비 완료", config.tags);
   await pause(run.warmupStartAt - Date.now());
-  await repeatReactions(client, { phase: "warmup", endAt: run.warmupEndAt });
+  await repeatReactions(client, { phase: "warmup", startAt: run.warmupStartAt,
+    endAt: run.warmupEndAt, offsetMs, userSlot: userSlot + 1 });
   await client.changeReaction("remove");
   await verifyCount(client, 0);
-  requireCheck(Date.now() < run.startAt, "공통 측정 시작 전 초기 상태 복구 완료", client.config.tags);
-  reactionReady(client.config.tags);
+  requireCheck(Date.now() < run.startAt, "공통 측정 시작 전 초기 상태 복구 완료", config.tags);
+  reactionReady(config.tags);
   await pause(run.startAt - Date.now());
-  const count = await repeatReactions(client, { phase: "measure", endAt: run.endAt });
-  requireCheck(count > 0, "측정 리액션 ACK 한 건 이상", client.config.tags);
+  const count = await repeatReactions(client, { phase: "measure", startAt: run.startAt,
+    endAt: run.endAt, offsetMs, userSlot: userSlot + 1 });
+  requireCheck(count > 0, "측정 리액션 ACK 한 건 이상", config.tags);
+  const valid = client.integrity.matches(await client.getReaction());
+  reactionIntegrity(valid, config.tags);
+  requireCheck(valid, "정리 전 저장 상태와 실제 변경 ACK 일치", config.tags);
   await client.changeReaction("remove");
   await verifyCount(client, 0);
 }

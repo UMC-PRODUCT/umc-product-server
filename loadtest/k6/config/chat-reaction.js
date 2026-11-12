@@ -16,6 +16,7 @@ export function readReactionConfig(env) {
     emoji: env.CHAT_REACTION_EMOJI || "👍",
     intervalMs: positiveInteger(env.CHAT_REACTION_INTERVAL_MS, 1000, "CHAT_REACTION_INTERVAL_MS",
       mode === "duplicate" ? 250 : 100, 60000),
+    maxInflight: positiveInteger(env.CHAT_MAX_INFLIGHT, 128, "CHAT_MAX_INFLIGHT", 1, 256),
     startupMs: positiveInteger(env.CHAT_STARTUP_TIMEOUT_MS, 30000, "CHAT_STARTUP_TIMEOUT_MS", 100, 120000),
     warmupMs: warmup === "0s" ? 0 : durationMs(warmup),
     durationMs: durationMs(env.DURATION || "2m"),
@@ -64,8 +65,17 @@ export function buildReactionOptions(config) {
     summaryTrendStats: ["avg", "min", "med", "max", "p(95)", "p(99)", "count"],
     thresholds: { checks: ["rate==1"], iterations: ["count==" + config.users],
       umc_chat_reaction_failures: ["count==0"], umc_chat_reaction_error_rate: ["rate==0"],
+      umc_chat_reaction_invalid_timing: ["count==0"],
+      umc_chat_reaction_integrity_failures: ["count==0"],
       "umc_chat_reaction_ack_latency_ms{operation:add}": [],
       "umc_chat_reaction_ack_latency_ms{operation:remove}": [],
-      umc_chat_reaction_ready_users: ["count==" + config.users] },
+      umc_chat_reaction_ready_users: ["count==" + config.users],
+      ...(config.mode === "load" ? {
+        umc_chat_reaction_integrity_checks: ["count==" + config.users],
+        umc_chat_schedule_dropped: ["count==0"],
+        "umc_chat_scheduled{phase:measurement}": [],
+        "umc_chat_issued{phase:measurement}": [],
+        "umc_chat_schedule_dropped{phase:measurement}": [],
+      } : {}) },
   };
 }

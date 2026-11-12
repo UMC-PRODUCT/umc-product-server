@@ -154,7 +154,7 @@ export function handleSummary(data) {
     let conditions;
     try {
       conditions = chatRunConditions({ profile: PROFILE, scenario: SCENARIO, seed: parseSeed(seedRaw),
-        context: data.setup_data?.context, summary: data,
+        context: data.setup_data?.context, summary: data, env: __ENV,
         options: { ...JSON.parse(configuredOptionsJson), ...data.options } }, selected.getRunConditions);
     } catch (_) {
       conditions = { available: false, error: "설정 또는 시드 검증 실패. run-meta.json과 console.log를 확인하세요." };
