@@ -64,6 +64,9 @@ class MemberServiceAuthorityCacheTest {
     @Mock
     DeleteMemberBlocksUseCase deleteMemberBlocksUseCase;
 
+    @Mock
+    MemberNicknameRetentionService nicknameRetentionService;
+
     @InjectMocks
     MemberService sut;
 

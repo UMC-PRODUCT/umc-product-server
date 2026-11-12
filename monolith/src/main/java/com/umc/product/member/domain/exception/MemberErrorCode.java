@@ -30,6 +30,11 @@ public enum MemberErrorCode implements BaseCode {
     MEMBER_BLOCK_SELF_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "MEMBER-0016", "자기 자신은 차단할 수 없어요."),
     MEMBER_BLOCK_ALREADY_EXISTS(HttpStatus.CONFLICT, "MEMBER-0017", "이미 차단한 사용자예요."),
     MEMBER_BLOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER-0018", "차단하지 않은 사용자예요."),
+    INVALID_NICKNAME(HttpStatus.BAD_REQUEST, "MEMBER-0019", "닉네임은 공백 없이 한글 1~4자로 입력해주세요."),
+    NICKNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "MEMBER-0020", "같은 학교에서 이미 사용 중인 닉네임이에요. 다른 닉네임을 입력해주세요."),
+    INVALID_NAME(HttpStatus.BAD_REQUEST, "MEMBER-0021", "이름은 1~5자로 입력해주세요."),
+    GRADUATED_REJOIN_NICKNAME_MISMATCH(HttpStatus.CONFLICT, "MEMBER-0022",
+        "수료 이력이 있는 탈퇴 회원은 기존 학교와 닉네임으로 재가입해야 해요."),
     ;
 
     private final HttpStatus httpStatus;

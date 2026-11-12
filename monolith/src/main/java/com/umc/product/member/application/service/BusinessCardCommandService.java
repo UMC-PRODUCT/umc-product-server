@@ -42,7 +42,7 @@ public class BusinessCardCommandService implements EditBusinessCardUseCase {
 
         if (command.profileImageId() != null) {
             registrationValidator.validateProfileImageExists(command.profileImageId());
-            member.updateProfile(null, command.profileImageId());
+            member.updateProfile(command.profileImageId());
         }
 
         MemberProfile profile = member.getProfile();

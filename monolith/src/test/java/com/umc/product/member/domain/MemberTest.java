@@ -60,14 +60,13 @@ class MemberTest {
     class UpdateProfile {
 
         @Test
-        @DisplayName("nickname과 profileImageId를 부분 수정한다")
-        void nickname과_profileImageId를_부분_수정한다() {
+        @DisplayName("프로필 이미지를 수정해도 닉네임은 유지한다")
+        void 프로필_이미지만_수정한다() {
             Member member = Member.create("홍길동", "길동", "gildong@example.com", 1L, "old-file-id");
 
-            member.updateProfile("하늘", null);
             member.updateProfile("new-file-id");
 
-            assertThat(member.getNickname()).isEqualTo("하늘");
+            assertThat(member.getNickname()).isEqualTo("길동");
             assertThat(member.getProfileImageId()).isEqualTo("new-file-id");
         }
 
@@ -77,7 +76,7 @@ class MemberTest {
             Member member = Member.create("홍길동", "길동", "gildong@example.com", 1L, null);
             ReflectionTestUtils.setField(member, "status", MemberStatus.INACTIVE);
 
-            assertThatThrownBy(() -> member.updateProfile("하늘", null))
+            assertThatThrownBy(() -> member.updateProfile("new-file-id"))
                 .isInstanceOf(MemberDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(MemberErrorCode.MEMBER_NOT_ACTIVE);
