@@ -2,6 +2,7 @@ package com.umc.product.authentication.application.port.out;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import com.umc.product.authentication.domain.MemberOAuth;
 import com.umc.product.common.domain.enums.OAuthProvider;
@@ -24,6 +25,8 @@ public interface LoadMemberOAuthPort {
      * memberId에 연동된 모든 MemberOAuth를 가져옵니다.
      */
     List<MemberOAuth> findAllByMemberId(Long memberId);
+
+    List<MemberOAuth> findAllByMemberIdIn(Set<Long> memberIds);
 
     Optional<MemberOAuth> findByMemberIdAndProvider(Long memberId, OAuthProvider provider);
 

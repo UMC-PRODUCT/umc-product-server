@@ -17,6 +17,7 @@ import com.umc.product.member.application.port.in.query.GetMemberProfileUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberBasicInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberLoginAccountInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
@@ -134,6 +135,16 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
         }
         return loadMemberPort.findAllByIds(memberIds).stream()
             .collect(Collectors.toMap(Member::getId, MemberBasicInfo::from));
+    }
+
+    @Override
+    public List<MemberLoginAccountInfo> listLoginAccountsByNameAndSchoolId(String name, Long schoolId) {
+        if (name == null || schoolId == null) {
+            return List.of();
+        }
+        return loadMemberPort.listByNameAndSchoolId(name, schoolId).stream()
+            .map(MemberLoginAccountInfo::from)
+            .toList();
     }
 
     @Override

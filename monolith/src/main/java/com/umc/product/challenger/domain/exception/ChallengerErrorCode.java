@@ -32,6 +32,8 @@ public enum ChallengerErrorCode implements BaseCode {
     INVALID_POINT_VALUE(HttpStatus.BAD_REQUEST, "CHALLENGER-0020", "선택한 상벌점 유형의 정해진 배점과 일치하지 않아요."),
     LEGACY_POINT_TYPE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "CHALLENGER-0021", "해당 기수에서 사용할 수 없는 상벌점 항목이에요."),
     CUSTOM_POINT_VALUE_MUST_BE_NON_ZERO(HttpStatus.BAD_REQUEST, "CHALLENGER-0022", "기타 상벌점은 0이 아닌 점수를 입력해주세요."),
+    OTHER_ACCOUNT_HAS_CHALLENGER_HISTORY(HttpStatus.CONFLICT, "CHALLENGER-0023",
+        "같은 학교·이름으로 가입한 다른 계정에 활동 기록이 있어요. 그 계정으로 로그인해서 코드를 입력해주세요. 본인 계정이 아니면 운영진에게 문의해주세요."),
     ;
 
     private final HttpStatus httpStatus;

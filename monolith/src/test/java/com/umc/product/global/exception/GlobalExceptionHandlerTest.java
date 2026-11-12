@@ -26,6 +26,7 @@ import org.springframework.web.context.request.ServletWebRequest;
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.global.exception.constant.CommonErrorCode;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.response.ApiResponse;
 
 class GlobalExceptionHandlerTest {
@@ -49,6 +50,23 @@ class GlobalExceptionHandlerTest {
                 assertThat(body.getCode()).isEqualTo(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED.getCode());
                 assertThat(body.getMessage()).isEqualTo(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED.getMessage());
                 assertThat(body.getResult()).isEqualTo(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED.getMessage());
+            });
+    }
+
+    @Test
+    @DisplayName("사용자에게 보여 줄 예외 문구는 오류 코드 문구 대신 message로 내려간다")
+    void userFacingMessageReplacesCodeMessage() {
+        UserFacingTestException exception = new UserFacingTestException("앱 화면에 그대로 보일 문구예요.");
+
+        ResponseEntity<Object> response = handler.onThrowException(
+            exception,
+            new ServletWebRequest(new MockHttpServletRequest())
+        );
+
+        assertThat(response.getBody())
+            .isInstanceOfSatisfying(ApiResponse.class, body -> {
+                assertThat(body.getCode()).isEqualTo(CommonErrorCode.BAD_REQUEST.getCode());
+                assertThat(body.getMessage()).isEqualTo("앱 화면에 그대로 보일 문구예요.");
             });
     }
 
@@ -146,5 +164,11 @@ class GlobalExceptionHandlerTest {
     }
 
     private record TestRequest(String name) {
+    }
+
+    private static class UserFacingTestException extends BusinessException implements UserFacingMessage {
+        UserFacingTestException(String message) {
+            super(Domain.COMMON, CommonErrorCode.BAD_REQUEST, message);
+        }
     }
 }

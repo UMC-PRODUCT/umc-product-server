@@ -1,6 +1,7 @@
 package com.umc.product.authentication.application.service;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -39,5 +40,15 @@ public class MemberOAuthQueryService implements GetMemberOAuthUseCase {
     public List<MemberOAuthInfo> getOAuthList(Long memberId) {
         return loadMemberOAuthPort.findAllByMemberId(memberId)
             .stream().map(MemberOAuthInfo::fromEntity).toList();
+    }
+
+    @Override
+    public List<MemberOAuthInfo> listByMemberIds(Set<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return List.of();
+        }
+        return loadMemberOAuthPort.findAllByMemberIdIn(memberIds).stream()
+            .map(MemberOAuthInfo::fromEntity)
+            .toList();
     }
 }

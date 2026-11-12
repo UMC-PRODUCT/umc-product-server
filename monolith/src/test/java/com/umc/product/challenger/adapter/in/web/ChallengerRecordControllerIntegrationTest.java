@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -20,8 +21,11 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import com.umc.product.authentication.application.port.out.SaveMemberOAuthPort;
+import com.umc.product.authentication.domain.MemberOAuth;
 import com.umc.product.authorization.adapter.out.persistence.ChallengerRoleJpaRepository;
 import com.umc.product.challenger.adapter.in.web.assembler.ChallengerRecordResponseAssembler;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerRecordResponse;
@@ -38,6 +42,8 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.MemberStatus;
+import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
@@ -48,6 +54,7 @@ import com.umc.product.organization.domain.School;
 import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.support.concurrency.PostgreSqlTransactionRace;
 import com.umc.product.support.concurrency.PostgreSqlTransactionRace.TransactionCall;
+import com.umc.product.support.fixture.ChallengerFixture;
 import com.umc.product.support.fixture.ChapterFixture;
 import com.umc.product.support.fixture.GisuFixture;
 import com.umc.product.support.fixture.SchoolFixture;
@@ -63,10 +70,16 @@ class ChallengerRecordControllerIntegrationTest extends IntegrationTestSupport {
     private ChapterFixture chapterFixture;
 
     @Autowired
+    private ChallengerFixture challengerFixture;
+
+    @Autowired
     private SchoolFixture schoolFixture;
 
     @Autowired
     private SaveMemberPort saveMemberPort;
+
+    @Autowired
+    private SaveMemberOAuthPort saveMemberOAuthPort;
 
     @Autowired
     private SaveChallengerPort saveChallengerPort;
@@ -340,6 +353,164 @@ class ChallengerRecordControllerIntegrationTest extends IntegrationTestSupport {
             .isEmpty();
         assertThat(challengerRecordJpaRepository.findById(record.getId()).orElseThrow().getUsedMemberId())
             .isEqualTo(firstMember.getId());
+    }
+
+    @Test
+    @DisplayName("기록 없는 새 계정은 같은 학교와 이름의 다른 계정에 챌린저 기록이 있으면 코드를 쓸 수 없다")
+    void 기록_없는_새_계정은_같은_학교와_이름의_다른_계정에_챌린저_기록이_있으면_코드를_쓸_수_없다() throws Exception {
+        // given
+        RecordContext context = recordContext(9211L, "중복차단");
+        Member oldMember = member("중복회원", "기존", "dup-old@test.com", context.school().getId());
+        challengerFixture.웹(oldMember.getId(), context.gisu().getId());
+        Member newMember = member("중복회원", "새계정", "dup-new@test.com", context.school().getId());
+        ChallengerRecord record = normalRecord(context, newMember);
+        authenticate(newMember.getId());
+
+        // when & then
+        mockMvc.perform(post("/api/v1/challenger-record/member")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(codeRequest(record.getCode())))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.code").value("CHALLENGER-0023"));
+
+        assertThat(challengerJpaRepository.findByMemberId(newMember.getId())).isEmpty();
+        assertThat(challengerRecordJpaRepository.findByCode(record.getCode()).orElseThrow().isUsed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("코드 사용이 막히면 기록 있는 계정마다 가입 수단과 가린 이메일을 message로 안내한다")
+    void 코드_사용이_막히면_기록_있는_계정마다_가입_수단과_가린_이메일을_message로_안내한다() throws Exception {
+        // given
+        RecordContext context = recordContext(9212L, "중복안내");
+        Member socialMember = member("안내회원", "소셜", "kakao-old@test.com", context.school().getId());
+        oauth(socialMember, OAuthProvider.KAKAO);
+        oauth(socialMember, OAuthProvider.GOOGLE);
+        challengerFixture.웹(socialMember.getId(), context.gisu().getId());
+        Member emailMember = member("안내회원", "메일", "mail-old@test.com", context.school().getId());
+        emailMember.registerCredential("{noop}password");
+        saveMemberPort.save(emailMember);
+        challengerFixture.웹(emailMember.getId(), gisuFixture.비활성_기수(9213L).getId());
+        Member unknownMethodMember = member("안내회원", "수단없음", "bare-old@test.com", context.school().getId());
+        challengerFixture.웹(unknownMethodMember.getId(), gisuFixture.비활성_기수(9219L).getId());
+        Member newMember = member("안내회원", "새계정", "guide-new@test.com", context.school().getId());
+        ChallengerRecord record = normalRecord(context, newMember);
+        authenticate(newMember.getId());
+
+        // when & then
+        mockMvc.perform(post("/api/v1/challenger-record/member")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(codeRequest(record.getCode())))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.message").value(
+                "구글·카카오로 가입한 계정(kak******@test.com), 이메일로 가입한 계정(mai*****@test.com), "
+                    + "가입한 계정(bar*****@test.com)에 활동 기록이 있어요. "
+                    + "그 계정으로 로그인해서 코드를 입력해주세요. 본인 계정이 아니면 운영진에게 문의해주세요."));
+    }
+
+    @Test
+    @DisplayName("같은 학교와 이름의 다른 계정에 챌린저 기록이 없으면 새 계정도 코드를 쓸 수 있다")
+    void 같은_학교와_이름의_다른_계정에_챌린저_기록이_없으면_새_계정도_코드를_쓸_수_있다() throws Exception {
+        // given
+        RecordContext context = recordContext(9214L, "기록없는중복");
+        member("무기록회원", "기존", "no-record-old@test.com", context.school().getId());
+        Member newMember = member("무기록회원", "새계정", "no-record-new@test.com", context.school().getId());
+        ChallengerRecord record = normalRecord(context, newMember);
+        authenticate(newMember.getId());
+
+        // when & then
+        mockMvc.perform(post("/api/v1/challenger-record/member")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(codeRequest(record.getCode())))
+            .andExpect(status().isOk());
+
+        assertThat(challengerJpaRepository.findByMemberIdAndGisuId(newMember.getId(), context.gisu().getId()))
+            .isPresent();
+    }
+
+    @Test
+    @DisplayName("코드를 쓰는 계정에 이미 챌린저 기록이 있으면 다른 계정에 기록이 있어도 역할을 추가한다")
+    void 코드를_쓰는_계정에_이미_챌린저_기록이_있으면_다른_계정에_기록이_있어도_역할을_추가한다() throws Exception {
+        // given
+        RecordContext context = recordContext(9215L, "기존계정");
+        Member member = member("갈라진회원", "본계정", "split-main@test.com", context.school().getId());
+        Challenger challenger = challengerFixture.웹(member.getId(), context.gisu().getId());
+        Member otherMember = member("갈라진회원", "다른계정", "split-other@test.com", context.school().getId());
+        challengerFixture.웹(otherMember.getId(), gisuFixture.비활성_기수(9216L).getId());
+        ChallengerRecord record = saveChallengerRecordPort.save(ChallengerRecord.createAdmin(
+            member.getId(), context.gisu().getId(), context.chapter().getId(), context.school().getId(),
+            ChallengerPart.WEB, member.getName(), ChallengerRoleType.SCHOOL_PRESIDENT, context.school().getId()));
+        authenticate(member.getId());
+
+        // when & then
+        mockMvc.perform(post("/api/v1/challenger-record/member")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(codeRequest(record.getCode())))
+            .andExpect(status().isOk());
+
+        assertThat(challengerRoleJpaRepository.findByChallengerId(challenger.getId()))
+            .extracting(role -> role.getChallengerRoleType())
+            .containsExactly(ChallengerRoleType.SCHOOL_PRESIDENT);
+    }
+
+    @Test
+    @DisplayName("기록 있는 같은 학교와 이름의 계정이 휴면이어도 새 계정은 코드를 쓸 수 없다")
+    void 기록_있는_같은_학교와_이름의_계정이_휴면이어도_새_계정은_코드를_쓸_수_없다() throws Exception {
+        // given
+        RecordContext context = recordContext(9220L, "휴면계정");
+        Member inactiveMember = member("휴면회원", "기존", "inactive-old@test.com", context.school().getId());
+        challengerFixture.웹(inactiveMember.getId(), gisuFixture.비활성_기수(9221L).getId());
+        ReflectionTestUtils.setField(inactiveMember, "status", MemberStatus.INACTIVE);
+        saveMemberPort.save(inactiveMember);
+        Member newMember = member("휴면회원", "새계정", "inactive-new@test.com", context.school().getId());
+        ChallengerRecord record = normalRecord(context, newMember);
+        authenticate(newMember.getId());
+
+        // when & then
+        mockMvc.perform(post("/api/v1/challenger-record/member")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(codeRequest(record.getCode())))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("CHALLENGER-0023"));
+
+        assertThat(challengerJpaRepository.findByMemberId(newMember.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("기록 있는 같은 학교와 이름의 계정이 탈퇴했으면 새 계정도 코드를 쓸 수 있다")
+    void 기록_있는_같은_학교와_이름의_계정이_탈퇴했으면_새_계정도_코드를_쓸_수_있다() throws Exception {
+        // given
+        RecordContext context = recordContext(9217L, "탈퇴계정");
+        Member withdrawnMember = member("탈퇴회원", "기존", "withdrawn-old@test.com", context.school().getId());
+        challengerFixture.웹(withdrawnMember.getId(), gisuFixture.비활성_기수(9218L).getId());
+        ReflectionTestUtils.setField(withdrawnMember, "status", MemberStatus.WITHDRAWN);
+        saveMemberPort.save(withdrawnMember);
+        Member newMember = member("탈퇴회원", "새계정", "withdrawn-new@test.com", context.school().getId());
+        ChallengerRecord record = normalRecord(context, newMember);
+        authenticate(newMember.getId());
+
+        // when & then
+        mockMvc.perform(post("/api/v1/challenger-record/member")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(codeRequest(record.getCode())))
+            .andExpect(status().isOk());
+
+        assertThat(challengerJpaRepository.findByMemberIdAndGisuId(newMember.getId(), context.gisu().getId()))
+            .isPresent();
+    }
+
+    private ChallengerRecord normalRecord(RecordContext context, Member target) {
+        return saveChallengerRecordPort.save(ChallengerRecord.create(
+            target.getId(), context.gisu().getId(), context.chapter().getId(), context.school().getId(),
+            ChallengerPart.WEB, target.getName()));
+    }
+
+    private void oauth(Member member, OAuthProvider provider) {
+        saveMemberOAuthPort.save(MemberOAuth.builder()
+            .memberId(member.getId())
+            .provider(provider)
+            .providerId(UUID.randomUUID().toString())
+            .build());
     }
 
     private RecordContext recordContext(Long generation, String prefix) {

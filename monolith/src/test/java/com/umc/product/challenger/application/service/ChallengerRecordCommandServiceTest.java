@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.authentication.application.port.in.query.GetMemberOAuthUseCase;
 import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
 import com.umc.product.authorization.application.port.in.command.ManageChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.command.dto.CreateChallengerRoleCommand;
@@ -84,6 +85,9 @@ class ChallengerRecordCommandServiceTest {
 
     @Mock
     ListChallengerRoleUseCase listChallengerRoleUseCase;
+
+    @Mock
+    GetMemberOAuthUseCase getMemberOAuthUseCase;
 
     @BeforeEach
     void 기본_기수는_파트_학습을_사용한다() {

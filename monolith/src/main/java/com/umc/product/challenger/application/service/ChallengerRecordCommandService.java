@@ -1,13 +1,22 @@
 package com.umc.product.challenger.application.service;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.authentication.application.port.in.query.GetMemberOAuthUseCase;
+import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
 import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
 import com.umc.product.authorization.application.port.in.command.ManageChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.command.dto.CreateChallengerRoleCommand;
@@ -23,11 +32,16 @@ import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.ChallengerRecord;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
+import com.umc.product.challenger.domain.exception.OtherAccountHasChallengerHistoryException;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.MemberStatus;
+import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.global.util.EmailMasker;
 import com.umc.product.member.application.port.in.command.LockMemberUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberLoginAccountInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
@@ -57,6 +71,7 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
     private final ListChallengerRoleUseCase listChallengerRoleUseCase;
     private final ManageChallengerRoleUseCase manageChallengerRoleUseCase;
     private final EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
+    private final GetMemberOAuthUseCase getMemberOAuthUseCase;
 
     @Audited(
         domain = Domain.CHALLENGER,
@@ -123,6 +138,7 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
         MemberInfo memberInfo = getMemberUseCase.getById(memberId);
         record.validateMember(memberInfo.name(), memberInfo.schoolId());
         validateRecord(record);
+        rejectIfOtherAccountHasChallengerHistory(memberId, record);
 
         Optional<Challenger> existing = loadChallengerPort.findByMemberIdAndGisuId(memberId, record.getGisuId());
         existing.ifPresent(Challenger::validateChallengerStatus);
@@ -150,6 +166,58 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
         }
         record.markAsUsed(memberId);
         evictAuthoritySnapshotCacheUseCase.evictByMemberId(memberId);
+    }
+
+    private void rejectIfOtherAccountHasChallengerHistory(Long memberId, ChallengerRecord record) {
+        boolean memberAlreadyHasChallengerHistory = loadChallengerPort.existsByMemberId(memberId);
+        if (memberAlreadyHasChallengerHistory) {
+            return;
+        }
+        Map<Long, MemberLoginAccountInfo> otherAccounts = getMemberUseCase
+            .listLoginAccountsByNameAndSchoolId(record.getMemberName(), record.getSchoolId()).stream()
+            .filter(account -> !account.memberId().equals(memberId) && account.status() != MemberStatus.WITHDRAWN)
+            .collect(Collectors.toMap(MemberLoginAccountInfo::memberId, Function.identity()));
+        if (otherAccounts.isEmpty()) {
+            return;
+        }
+        Set<Long> historyOwnerIds = loadChallengerPort.listAllByMemberIds(otherAccounts.keySet()).stream()
+            .map(Challenger::getMemberId)
+            .collect(Collectors.toCollection(TreeSet::new));
+        if (historyOwnerIds.isEmpty()) {
+            return;
+        }
+        Map<Long, Set<OAuthProvider>> providersByMemberId = getMemberOAuthUseCase.listByMemberIds(historyOwnerIds)
+            .stream()
+            .collect(Collectors.groupingBy(MemberOAuthInfo::memberId, Collectors.mapping(MemberOAuthInfo::provider,
+                Collectors.toCollection(() -> EnumSet.noneOf(OAuthProvider.class)))));
+        List<MemberLoginAccountInfo> accountsWithHistory = historyOwnerIds.stream().map(otherAccounts::get).toList();
+        throw new OtherAccountHasChallengerHistoryException(
+            otherAccountGuide(accountsWithHistory, providersByMemberId));
+    }
+
+    private static String otherAccountGuide(
+        List<MemberLoginAccountInfo> accounts, Map<Long, Set<OAuthProvider>> providersByMemberId
+    ) {
+        String accountList = accounts.stream()
+            .map(account -> {
+                String loginMethods = Stream.concat(
+                        providersByMemberId.getOrDefault(account.memberId(), Set.of()).stream()
+                            .map(ChallengerRecordCommandService::providerName),
+                        account.hasPassword() ? Stream.of("이메일") : Stream.empty())
+                    .collect(Collectors.joining("·"));
+                return (loginMethods.isEmpty() ? "" : loginMethods + "로 ")
+                    + "가입한 계정(" + EmailMasker.mask(account.email()) + ")";
+            })
+            .collect(Collectors.joining(", "));
+        return accountList + "에 활동 기록이 있어요. 그 계정으로 로그인해서 코드를 입력해주세요. 본인 계정이 아니면 운영진에게 문의해주세요.";
+    }
+
+    private static String providerName(OAuthProvider provider) {
+        return switch (provider) {
+            case KAKAO -> "카카오";
+            case GOOGLE -> "구글";
+            case APPLE -> "애플";
+        };
     }
 
     private Challenger newMembership(ChallengerRecord record, Long memberId) {

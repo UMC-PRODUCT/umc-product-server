@@ -17,20 +17,23 @@ final class BusinessExceptionResponseResolver {
     }
 
     private static String resolveMessage(BusinessException exception) {
-        if (requiresDefaultMessageFallback(exception)) {
+        if (exposesExceptionMessage(exception)) {
             return ApiErrorResponseFactory.resolveMessage(exception.getBaseCode(), exception.getMessage());
         }
         return exception.getBaseCode().getMessage();
     }
 
     private static Object resolveDetail(BusinessException exception) {
-        if (requiresDefaultMessageFallback(exception)) {
+        if (exposesExceptionMessage(exception)) {
             return ApiErrorResponseFactory.resolveMessage(exception.getBaseCode(), exception.getMessage());
         }
         return exception.getMessage();
     }
 
-    private static boolean requiresDefaultMessageFallback(BusinessException exception) {
+    private static boolean exposesExceptionMessage(BusinessException exception) {
+        if (exception instanceof UserFacingMessage) {
+            return true;
+        }
         return exception instanceof AuthorizationDomainException
             && exception.getBaseCode().equals(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
     }

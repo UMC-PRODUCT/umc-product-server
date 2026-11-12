@@ -1,6 +1,7 @@
 package com.umc.product.authentication.application.port.in.query;
 
 import java.util.List;
+import java.util.Set;
 
 import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
 import com.umc.product.common.domain.enums.OAuthProvider;
@@ -13,6 +14,8 @@ public interface GetMemberOAuthUseCase {
      * @return 연동된 OAuth 정보 리스트
      */
     List<MemberOAuthInfo> getOAuthList(Long memberId);
+
+    List<MemberOAuthInfo> listByMemberIds(Set<Long> memberIds);
 
     MemberOAuthInfo getByProviderAndProviderId(OAuthProvider provider, String providerId);
 }

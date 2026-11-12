@@ -20,6 +20,8 @@ public interface LoadMemberPort {
 
     List<Member> findAllByIds(Set<Long> ids);
 
+    List<Member> listByNameAndSchoolId(String name, Long schoolId);
+
     Set<Long> searchIdsByName(Set<Long> candidateMemberIds, String name);
 
     Set<Long> listIdsBySchoolId(Long schoolId);

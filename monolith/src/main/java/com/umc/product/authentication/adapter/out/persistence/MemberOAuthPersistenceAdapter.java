@@ -2,6 +2,7 @@ package com.umc.product.authentication.adapter.out.persistence;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
@@ -33,6 +34,11 @@ public class MemberOAuthPersistenceAdapter implements LoadMemberOAuthPort, SaveM
     @Override
     public List<MemberOAuth> findAllByMemberId(Long memberId) {
         return memberOAuthRepository.findAllByMemberId(memberId);
+    }
+
+    @Override
+    public List<MemberOAuth> findAllByMemberIdIn(Set<Long> memberIds) {
+        return memberOAuthRepository.findAllByMemberIdIn(memberIds);
     }
 
     @Override

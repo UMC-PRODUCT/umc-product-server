@@ -2,6 +2,7 @@ package com.umc.product.authentication.adapter.out.persistence;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -12,6 +13,8 @@ public interface MemberOAuthRepository extends JpaRepository<MemberOAuth, Long> 
     Optional<MemberOAuth> findByProviderAndProviderId(OAuthProvider provider, String providerId);
 
     List<MemberOAuth> findAllByMemberId(Long memberId);
+
+    List<MemberOAuth> findAllByMemberIdIn(Set<Long> memberIds);
 
     Optional<MemberOAuth> findByMemberIdAndProvider(Long memberId, OAuthProvider provider);
 
