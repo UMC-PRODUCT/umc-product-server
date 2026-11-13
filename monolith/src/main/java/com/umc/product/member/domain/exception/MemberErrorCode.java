@@ -26,7 +26,7 @@ public enum MemberErrorCode implements BaseCode {
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "MEMBER-0013", "비밀번호가 올바르지 않아요. 다시 입력해주세요."),
     MEMBER_SEARCH_ACCESS_DENIED(HttpStatus.FORBIDDEN, "MEMBER-0014",
         "챌린저 기록이 있는 회원만 회원 검색을 사용할 수 있어요."),
-    CHALLENGER_MANAGEMENT_SEARCH_ACCESS_DENIED(HttpStatus.FORBIDDEN, "MEMBER-0015", "챌린저 검색 권한이 없어요. 검색 기수와 학교 범위를 확인해주세요."),
+    CHALLENGER_MANAGEMENT_SEARCH_ACCESS_DENIED(HttpStatus.FORBIDDEN, "MEMBER-0015", "챌린저 검색 권한이 없어요. 검색 기수와 소속 범위를 확인해주세요."),
     MEMBER_BLOCK_SELF_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "MEMBER-0016", "자기 자신은 차단할 수 없어요."),
     MEMBER_BLOCK_ALREADY_EXISTS(HttpStatus.CONFLICT, "MEMBER-0017", "이미 차단한 사용자예요."),
     MEMBER_BLOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER-0018", "차단하지 않은 사용자예요."),

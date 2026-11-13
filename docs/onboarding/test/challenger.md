@@ -1,12 +1,12 @@
 # Challenger 테스트 케이스
 
-- 테스트 파일: 13개
-- 테스트 케이스: 56개
+- 테스트 파일: 14개
+- 테스트 케이스: 59개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
 |---|---:|
-| Controller / Inbound Adapter | 16 |
+| Controller / Inbound Adapter | 19 |
 | UseCase / Application Service | 23 |
 | E2E / Integration | 3 |
 | Domain | 14 |
@@ -62,6 +62,16 @@
 |---:|---|---|---|
 | [35](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerSearchControllerTest.java#L35) | 커서 검색 size는 최대 50으로 제한된다 | HTTP GET /api/v1/challenger/search/cursor; param size="100" | 성공: HTTP 200 OK |
 | [60](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerSearchControllerTest.java#L60) | ChallengerSearchController / offset 검색 결과를 반환한다 | HTTP GET /api/v1/challenger/search/offset; param page="0"; param size="10" | 성공: HTTP 200 OK |
+
+### ChallengerAdminSearchV2ControllerTest
+- 테스트 설명: ChallengerAdminSearchV2Controller
+- 위치: `monolith/src/test/java/com/umc/product/challenger/adapter/in/web/v2/ChallengerAdminSearchV2ControllerTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [66](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/v2/ChallengerAdminSearchV2ControllerTest.java#L66) | 관리자용 챌린저 검색은 권한 범위가 적용된 검색을 호출하고 이메일을 마스킹한다 | HTTP GET /api/v2/challenger/admin/search; param gisuId="9"; param page="0"; param size="10" | 성공: HTTP 200 OK; 이메일 마스킹 |
+| [96](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/v2/ChallengerAdminSearchV2ControllerTest.java#L96) | 관리자용 챌린저 검색의 기본 페이지 크기는 10이다 | HTTP GET /api/v2/challenger/admin/search | 성공: HTTP 200 OK; 기본 size 10 |
+| [114](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/v2/ChallengerAdminSearchV2ControllerTest.java#L114) | 관리자용 챌린저 검색 권한이 없으면 403을 반환한다 | HTTP GET /api/v2/challenger/admin/search; param page="0"; param size="10" | 실패: HTTP 403 Forbidden; 에러코드 MEMBER-0015 |
 
 ### ChallengerSearchV2ControllerTest
 - 테스트 설명: ChallengerSearchV2Controller

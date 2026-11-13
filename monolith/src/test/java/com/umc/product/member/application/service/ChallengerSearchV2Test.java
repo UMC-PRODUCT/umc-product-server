@@ -54,7 +54,7 @@ class ChallengerSearchV2Test {
     @Mock GetChallengerUseCase getChallengerUseCase;
     @Mock GetChallengerRoleUseCase getChallengerRoleUseCase;
     @Mock GetGisuUseCase getGisuUseCase;
-    @Mock ChallengerManagementSearchPolicy challengerManagementSearchPolicy;
+    @Mock AdminChallengerSearchScopePolicy adminChallengerSearchScopePolicy;
 
     @InjectMocks MemberSearchService memberSearchService;
 
@@ -69,7 +69,7 @@ class ChallengerSearchV2Test {
         SearchMemberQuery original = new SearchMemberQuery(null, 11L, null, null, null);
         SearchMemberQuery scoped = new SearchMemberQuery(null, 11L, null, null, 10L);
         Pageable pageable = PageRequest.of(0, 10);
-        given(challengerManagementSearchPolicy.scope(original, REQUESTER_MEMBER_ID)).willReturn(scoped);
+        given(adminChallengerSearchScopePolicy.scope(original, REQUESTER_MEMBER_ID)).willReturn(scoped);
         given(searchMemberPort.search(scoped, pageable)).willReturn(Page.empty(pageable));
         given(searchMemberPort.search(original, pageable)).willReturn(Page.empty(pageable));
 

@@ -60,7 +60,7 @@ class MemberSearchAccessScopeTest {
     MemberSearchAccessScopeResolver memberSearchAccessScopeResolver;
 
     @Mock
-    ChallengerManagementSearchPolicy challengerManagementSearchPolicy;
+    AdminChallengerSearchScopePolicy adminChallengerSearchScopePolicy;
 
     @InjectMocks
     MemberSearchService sut;
@@ -182,7 +182,7 @@ class MemberSearchAccessScopeTest {
         sut.searchChallengersByV2(query, REQUESTER_MEMBER_ID, pageable);
 
         then(searchMemberPort).should().search(query, pageable);
-        then(challengerManagementSearchPolicy).shouldHaveNoInteractions();
+        then(adminChallengerSearchScopePolicy).shouldHaveNoInteractions();
     }
 
     @Test
