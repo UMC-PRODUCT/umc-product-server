@@ -69,7 +69,7 @@ class ChatReadCommandServiceTest {
             loadChatMemberPort,
             saveChatMemberPort
         );
-        order.verify(loadChatRoomPort).getByIdForUpdate(1L);
+        order.verify(loadChatRoomPort).getById(1L);
         order.verify(chatRoomAccessPolicy).verifyMember(1L, 10L);
         order.verify(loadChatMessagePort).getByIdAndRoomId(40L, 1L);
         order.verify(loadChatMemberPort).getByRoomIdAndMemberId(1L, 10L);

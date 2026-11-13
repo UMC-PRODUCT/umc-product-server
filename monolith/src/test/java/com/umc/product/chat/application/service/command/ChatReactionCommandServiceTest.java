@@ -83,7 +83,7 @@ class ChatReactionCommandServiceTest {
             loadChatMessagePort,
             saveChatMessageReactionPort
         );
-        order.verify(loadChatRoomPort).getByIdForUpdate(1L);
+        order.verify(loadChatRoomPort).getById(1L);
         order.verify(chatRoomAccessPolicy).verifyMember(1L, 10L);
         order.verify(loadChatMessagePort).getByIdAndRoomId(100L, 1L);
         order.verify(saveChatMessageReactionPort).addIfAbsent(100L, 10L, "👍");
