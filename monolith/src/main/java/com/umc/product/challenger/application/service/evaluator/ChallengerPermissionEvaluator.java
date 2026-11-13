@@ -12,6 +12,8 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +23,7 @@ public class ChallengerPermissionEvaluator implements ResourcePermissionEvaluato
 
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetMemberUseCase getMemberUseCase;
+    private final GetChapterUseCase getChapterUseCase;
 
     @Override
     public ResourceType supportedResourceType() {
@@ -46,17 +49,25 @@ public class ChallengerPermissionEvaluator implements ResourcePermissionEvaluato
         Long targetSchoolId = getMemberUseCase.getById(targetChallenger.memberId()).schoolId();
         AuthoritySnapshot snapshot = subjectAttributes.toAuthoritySnapshot();
 
-        // 요청자가 SUPER_ADMIN이거나 대상 기수의 중앙운영사무국 소속인지 확인
+        // SUPER_ADMIN 또는 대상 기수의 중앙운영사무국 소속
         if (snapshot.isCentralMemberInGisu(targetGisuId)) {
             return true;
         }
 
-        // 요청자가 대상 기수에서 대상과 같은 학교의 회장단인지 확인
-        if (targetSchoolId != null) {
-            return snapshot.isSchoolCoreInGisu(targetGisuId, targetSchoolId);
+        if (targetSchoolId == null) {
+            return false;
         }
 
-        return false;
+        // 대상 기수에서 대상과 같은 학교의 교내 운영진
+        if (snapshot.isSchoolAdminInGisu(targetGisuId, targetSchoolId)) {
+            return true;
+        }
+
+        // 대상 기수에서 대상 학교가 속한 지부의 지부장
+        return getChapterUseCase.findByGisuAndSchool(targetGisuId, targetSchoolId)
+            .map(ChapterInfo::id)
+            .map(chapterId -> snapshot.isChapterPresidentInGisu(targetGisuId, chapterId))
+            .orElse(false);
     }
 
     private boolean canCreateChallenger(SubjectAttributes subjectAttributes) {
@@ -81,6 +92,19 @@ public class ChallengerPermissionEvaluator implements ResourcePermissionEvaluato
             return true;
         }
 
-        return resourcePermission.resourceId() != null && canReadChallenger(subjectAttributes, resourcePermission);
+        if (resourcePermission.resourceId() == null) {
+            return false;
+        }
+
+        ChallengerInfo targetChallenger = getChallengerUseCase.getById(resourcePermission.getResourceIdAsLong());
+        Long targetGisuId = targetChallenger.gisuId();
+        AuthoritySnapshot snapshot = subjectAttributes.toAuthoritySnapshot();
+
+        if (snapshot.isCentralMemberInGisu(targetGisuId)) {
+            return true;
+        }
+
+        Long targetSchoolId = getMemberUseCase.getById(targetChallenger.memberId()).schoolId();
+        return targetSchoolId != null && snapshot.isSchoolCoreInGisu(targetGisuId, targetSchoolId);
     }
 }
