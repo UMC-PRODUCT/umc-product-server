@@ -43,7 +43,7 @@ public class CommunityThreadMessageReportCommandService implements ReportCommuni
         Long chatRoomId = getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(command.messageId()));
         CommunityThread mappedThread = loadThreadPort.findByChatRoomId(chatRoomId)
             .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.THREAD_NOT_FOUND));
-        CommunityThread thread = loadThreadPort.findById(mappedThread.getId())
+        CommunityThread thread = loadThreadPort.findByIdForUpdate(mappedThread.getId())
             .filter(foundThread -> Objects.equals(foundThread.getChatRoomId(), chatRoomId))
             .filter(foundThread -> !foundThread.isDeleted())
             .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.THREAD_NOT_FOUND));

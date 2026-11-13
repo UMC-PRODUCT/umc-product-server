@@ -20,3 +20,12 @@ RESULT="$("$PSQL_BIN" -X --no-password --dbname="$PGDATABASE" --quiet --no-align
   --file="$SCRIPT_DIR/chat-consistency.sql")"
 printf '%s\n' "$RESULT"
 jq -e '.passed == true' <<< "$RESULT" >/dev/null || fail '정합성 위반이 있습니다. 결과 JSON을 확인하세요.'
+if [ "$(jq -r '.dataModel // ""' "$1")" = lock-suite-v1 ]; then
+  EXPECTATIONS="$(jq -c '.members.actors as $actors | .config.roles as $roles |
+    [.rooms[] | . + {readerIds: [$roles | to_entries[] | select(.value == "read") | $actors[.key]],
+      reporterIds: [$roles | to_entries[] | select(.value == "report") | $actors[.key]]}]' "$1")"
+  RESULT="$("$PSQL_BIN" -X --no-password --dbname="$PGDATABASE" --quiet --no-align --tuples-only --set=ON_ERROR_STOP=1 \
+    --set="expectations=$EXPECTATIONS" --file="$SCRIPT_DIR/lock-suite-consistency.sql")"
+  printf '%s\n' "$RESULT"
+  jq -e '.passed == true' <<< "$RESULT" >/dev/null || fail '락 비교의 가입, 읽음, 신고 결과가 예상과 다릅니다.'
+fi

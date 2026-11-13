@@ -85,7 +85,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
             .willReturn(Optional.of(member));
         given(getChatMessageUseCase.getMessage(
@@ -129,7 +129,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         order.verify(getChatMessageRoomUseCase)
             .getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID));
         order.verify(loadCommunityThreadPort).findByChatRoomId(CHAT_ROOM_ID);
-        order.verify(loadCommunityThreadPort).findById(THREAD_ID);
+        order.verify(loadCommunityThreadPort).findByIdForUpdate(THREAD_ID);
         order.verify(loadCommunityThreadMemberPort)
             .findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID);
         order.verify(getChatMessageUseCase)
@@ -169,7 +169,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(mappedThread));
-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(reloadedThread));
+        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(reloadedThread));
 
         // when & then
         assertThatThrownBy(() -> sut.report(command()))
@@ -194,7 +194,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(mappedThread));
-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(reloadedThread));
+        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(reloadedThread));
 
         // when & then
         assertThatThrownBy(() -> sut.report(command()))
@@ -215,7 +215,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
             .willReturn(Optional.empty());
 
@@ -239,7 +239,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
             .willReturn(Optional.of(inactiveMember));
 
@@ -262,7 +262,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
             .willReturn(Optional.of(member));
         given(getChatMessageUseCase.getMessage(
@@ -288,7 +288,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
             .willReturn(Optional.of(member));
         given(getChatMessageUseCase.getMessage(
@@ -347,7 +347,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
             .willReturn(Optional.of(member));
         given(getChatMessageUseCase.getMessage(

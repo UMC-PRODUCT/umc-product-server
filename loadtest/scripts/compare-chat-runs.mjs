@@ -42,9 +42,12 @@ export function compareRuns(baseline, removed) {
       throw new ComparisonError("두 실행의 부하 코드 또는 서버 계측 코드가 다릅니다: " + key);
     }
   }
-  const targets = (run) => ({ profile: run.profile, scenario: run.scenario, config: settings(run.config),
-    rooms: run.rooms, targets: run.targets, reactionSeed: run.reactionSeed,
-    vuMemberIds: run.vuMemberIds, senderMemberIds: run.senderMemberIds });
+  const targets = (run) => run.dataModel === "lock-suite-v1"
+    ? { profile: run.profile, scenario: run.scenario, config: settings(run.config),
+      dataModel: run.dataModel, initialState: run.initialState }
+    : { profile: run.profile, scenario: run.scenario, config: settings(run.config),
+      rooms: run.rooms, targets: run.targets, reactionSeed: run.reactionSeed,
+      vuMemberIds: run.vuMemberIds, senderMemberIds: run.senderMemberIds };
   if (!isDeepStrictEqual(targets(before), targets(after))) {
     throw new ComparisonError("부하 설정 또는 방, 회원, 대상 메시지가 다릅니다. 동일한 시드를 재사용하세요");
   }

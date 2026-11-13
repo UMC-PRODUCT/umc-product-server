@@ -64,7 +64,7 @@ class ChatMemberCommandServiceTest {
         then(saveChatMemberPort).should().saveIfAbsent(captor.capture());
         assertThat(captor.getValue().getRoomId()).isEqualTo(1L);
         assertThat(captor.getValue().getMemberId()).isEqualTo(10L);
-        then(loadChatRoomPort).should().getById(1L);
+        then(loadChatRoomPort).should().getByIdForUpdate(1L);
         then(loadChatMemberPort).should().existsByRoomIdAndMemberId(1L, 10L);
         then(loadChatMessagePort).shouldHaveNoInteractions();
     }
@@ -84,7 +84,7 @@ class ChatMemberCommandServiceTest {
             loadChatMessagePort,
             saveChatMemberPort
         );
-        order.verify(loadChatRoomPort).getById(1L);
+        order.verify(loadChatRoomPort).getByIdForUpdate(1L);
         order.verify(loadChatMemberPort).existsByRoomIdAndMemberId(1L, 10L);
         order.verify(loadChatMessagePort).getByIdAndRoomId(50L, 1L);
         order.verify(saveChatMemberPort).saveIfAbsent(captor.capture());
@@ -118,7 +118,7 @@ class ChatMemberCommandServiceTest {
             .extracting(e -> ((ChatDomainException) e).getBaseCode())
             .isEqualTo(ChatErrorCode.CHAT_MEMBER_ALREADY_EXISTS);
 
-        then(loadChatRoomPort).should().getById(1L);
+        then(loadChatRoomPort).should().getByIdForUpdate(1L);
         then(saveChatMemberPort).shouldHaveNoInteractions();
     }
 
@@ -127,7 +127,7 @@ class ChatMemberCommandServiceTest {
     void joinChatRoom_roomNotFound() {
         JoinChatRoomCommand command = new JoinChatRoomCommand(1L, 10L);
         willThrow(new ChatDomainException(ChatErrorCode.CHAT_ROOM_NOT_FOUND))
-            .given(loadChatRoomPort).getById(1L);
+            .given(loadChatRoomPort).getByIdForUpdate(1L);
 
         assertThatThrownBy(() -> sut.joinChatRoom(command))
             .isInstanceOf(ChatDomainException.class)
@@ -148,7 +148,7 @@ class ChatMemberCommandServiceTest {
             .extracting(e -> ((ChatDomainException) e).getBaseCode())
             .isEqualTo(ChatErrorCode.CHAT_MEMBER_ALREADY_EXISTS);
 
-        then(loadChatRoomPort).should().getById(1L);
+        then(loadChatRoomPort).should().getByIdForUpdate(1L);
         then(domainEventPublisher).shouldHaveNoInteractions();
     }
 

@@ -13,7 +13,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 
-/** 커뮤니티 메시지 명령의 실제 트랜잭션을 관측한다. 중첩 REQUIRED 호출은 중복 집계하지 않는다. */
+/** 채팅 락 비교 대상의 실제 트랜잭션을 관측한다. 중첩 REQUIRED 호출은 중복 집계하지 않는다. */
 @Component
 @RequiredArgsConstructor
 public class ChatTransactionMetrics implements TransactionExecutionListener {
@@ -132,6 +132,14 @@ public class ChatTransactionMetrics implements TransactionExecutionListener {
     }
 
     private String operation(String name) {
+        if (("com.umc.product.community.application.service.command."
+            + "CommunityThreadMembershipCommandService.invite").equals(name)) {
+            return "member_invite";
+        }
+        if (("com.umc.product.community.application.service.report."
+            + "CommunityThreadMessageReportCommandService.report").equals(name)) {
+            return "message_report";
+        }
         if (name == null || !name.startsWith(SERVICE)) {
             return null;
         }

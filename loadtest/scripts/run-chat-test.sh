@@ -52,7 +52,13 @@ export CHAT_INSTRUMENTATION_HASH="$(fingerprint \
   monolith/src/main/resources/application.yml)"
 mkdir -p "$K6_DIR/out/chat"
 # 같은 이름으로 연속 실행해도 이전 결과를 덮어쓰지 않도록 mktemp로 폴더를 생성한다.
-RUN_DIR="$(mktemp -d "$K6_DIR/out/chat/$(date -u +%Y%m%dT%H%M%SZ)-$LABEL.XXXXXX")"
+if [ -n "${CHAT_RUN_DIR:-}" ]; then
+  [ ! -e "$CHAT_RUN_DIR" ] || fail 'CHAT_RUN_DIR이 이미 존재합니다. 새 경로를 지정하세요.'
+  mkdir -p "$CHAT_RUN_DIR"
+  RUN_DIR="$(cd "$CHAT_RUN_DIR" && pwd)"
+else
+  RUN_DIR="$(mktemp -d "$K6_DIR/out/chat/$(date -u +%Y%m%dT%H%M%SZ)-$LABEL.XXXXXX")"
+fi
 K6_EXIT=""
 STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 printf '결과 폴더: %s\n' "$RUN_DIR"
@@ -78,6 +84,7 @@ for name in BASE_URL CHAT_USERS CHAT_ROOMS CHAT_USERS_PER_VU CHAT_VU_USERS CHAT_
   DURATION CHAT_MESSAGE_INTERVAL_MS CHAT_TIMEOUT_MS CHAT_STARTUP_TIMEOUT_MS CHAT_CONTROL_INTERVAL_MS CHAT_WARMUP CHAT_MAX_INFLIGHT \
   CHAT_ACK_P95_MS CHAT_ACK_P99_MS CHAT_DELIVERY_P95_MS CHAT_DELIVERY_P99_MS \
   CHAT_REACTION_MODE CHAT_REACTION_INTERVAL_MS CHAT_REACTION_WARMUP CHAT_REACTION_EMOJI CHAT_REACTION_ROUNDS \
+  CHAT_LOCK_OPERATION CHAT_LOCK_INTERVAL_MS \
   CHAT_LOCK_VARIANT CHAT_SERVER_REVISION CHAT_TEST_ID CHAT_COMPARISON CHAT_HARNESS_HASH CHAT_INSTRUMENTATION_HASH; do
   if printenv "$name" >/dev/null; then
     INPUTS="$(jq -c --arg name "$name" --arg value "$(printenv "$name")" '. + {($name): $value}' <<< "$INPUTS")"
@@ -98,10 +105,18 @@ jq -e '(.reactionSeed // .) | {runId, baseUrl, schoolId, memberIds,
     + (if has("messageIds") then {messageIds} else {} end)] else .rooms end)}' \
   "$SEED_FILE" > "$RUN_DIR/seed.json"
 cd "$K6_DIR"
+K6_OUTPUT_ARGS=(--out "json=$RUN_DIR/metrics.json.gz")
+if [ -n "${CHAT_K6_OUTPUT:-}" ]; then
+  [ "$CHAT_K6_OUTPUT" = experimental-prometheus-rw ] || fail 'CHAT_K6_OUTPUT은 experimental-prometheus-rw만 지원합니다.'
+  K6_OUTPUT_ARGS+=(--out "$CHAT_K6_OUTPUT")
+fi
+K6_TAG_ARGS=(--tag "testid=$CHAT_TEST_ID")
+if [ -n "${CHAT_SERVICE:-}" ]; then K6_TAG_ARGS+=(--tag "service=$CHAT_SERVICE"); fi
 set +e
 # 선택한 이름을 그대로 전달한다. 지원 여부는 공통 러너의 등록 정보와 조건 기록 함수로 확인한다.
 PROFILE="$PROFILE" SCENARIO="$SCENARIO" SEED_FILE="$RUN_DIR/seed.json" CHAT_RUN_DIR="$RUN_DIR" \
-  k6 run --no-usage-report --no-color --out "json=$RUN_DIR/metrics.json.gz" script.js 2>&1 | tee "$RUN_DIR/console.log"
+  k6 run --no-usage-report --no-color "${K6_TAG_ARGS[@]}" \
+    "${K6_OUTPUT_ARGS[@]}" script.js 2>&1 | tee "$RUN_DIR/console.log"
 PIPE_CODES=("${PIPESTATUS[@]}")
 set -e
 K6_EXIT="${PIPE_CODES[0]}"

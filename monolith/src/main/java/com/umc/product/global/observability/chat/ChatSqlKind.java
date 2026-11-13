@@ -9,7 +9,8 @@ record ChatSqlKind(String table, String statement) {
 
     private static final Pattern TABLE = Pattern.compile(
         "\\b(?:from|update|into|join)\\s+(?:[\\w\"]+\\.)?\"?"
-            + "(community_thread_member|community_thread|chat_message_reaction|chat_message|chat_member|chat_room|event_outbox)"
+            + "(community_thread_member|community_thread|chat_message_reaction|chat_message|chat_member|chat_room"
+            + "|event_outbox|report_reason|report)"
             + "\"?\\b", Pattern.CASE_INSENSITIVE
     );
     private static final Pattern OPERATION = Pattern.compile("^\\s*(select|update|insert|delete)\\b",

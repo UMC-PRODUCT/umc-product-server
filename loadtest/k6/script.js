@@ -44,6 +44,10 @@ import loadChatReaction, {
   prepareRun as prepareReactionRun,
   getRunConditions as reactionConditions,
 } from "./scenarios/load/chat-reaction.js";
+import loadChatLocks, {
+  getOptions as lockOptions, validateSeed as validateLockSeed,
+  prepareRun as prepareLockRun, getRunConditions as lockConditions,
+} from "./scenarios/load/chat-locks.js";
 
 // PROFILE(부하 유형) × SCENARIO(업무 시나리오) → 실제 실행 함수 매핑.
 // k6 는 런타임 동적 import 를 지원하지 않으므로, 정적 import 를 registry 로 모아 __ENV 로 고른다.
@@ -56,6 +60,8 @@ const REGISTRY = {
       getOptions: chatMessageOptions, validateSeed: validateSmokeChatSeed, getRunConditions: smokeChatConditions },
   },
   load: {
+    "chat-locks": { fn: loadChatLocks, requiresSeed: true, getOptions: lockOptions,
+      validateSeed: validateLockSeed, prepareRun: prepareLockRun, getRunConditions: lockConditions },
     "chat-reaction": { fn: loadChatReaction, requiresSeed: reactionSeed, getOptions: reactionOptions,
       validateSeed: validateReactionSeed, prepareRun: prepareReactionRun, getRunConditions: reactionConditions },
     "chat-message": { fn: loadChatMessage, requiresSeed: loadChatMessageSeed,

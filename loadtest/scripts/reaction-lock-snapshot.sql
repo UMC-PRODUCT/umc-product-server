@@ -18,6 +18,8 @@ WITH observed AS MATERIALIZED (
            WHEN query ~* '\mchat_message\M' THEN 'chat_message'
            WHEN query ~* '\mchat_member\M' THEN 'chat_member'
            WHEN query ~* '\mchat_room\M' THEN 'chat_room'
+           WHEN query ~* '\mreport_reason\M' THEN 'report_reason'
+           WHEN query ~* '\mreport\M' THEN 'report'
            WHEN query ~* '\mevent_outbox\M' THEN 'event_outbox'
            ELSE 'other'
          END AS inferred_table,

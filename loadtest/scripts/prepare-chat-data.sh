@@ -59,7 +59,7 @@ ROOM_LAYOUT="$(printf '%s' "$ROOM_LAYOUT" | jq -ce --argjson users "$USER_COUNT"
 REPO_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 RUN_ID="$(uuidgen | tr '[:upper:]' '[:lower:]')"
 OUTPUT_DIR="$REPO_ROOT/loadtest/k6/data/chat"
-OUTPUT_FILE="$OUTPUT_DIR/$RUN_ID.json"
+OUTPUT_FILE="${CHAT_SEED_OUTPUT:-$OUTPUT_DIR/$RUN_ID.json}"
 TEMP_FILE=""
 ROOMS_TEMP_FILE=""
 CREATED_IDS=""
@@ -171,6 +171,14 @@ for ((USER_INDEX = 1; USER_INDEX <= USER_COUNT; USER_INDEX++)); do
   TOKENS+=("$(get_token "$MEMBER_ID")")
 done
 ALL_MEMBERS="$(printf '%s\n' "${MEMBER_IDS[@]}" | jq -R . | jq -s .)"
+
+if [ "${CHAT_SEED_MEMBERS_ONLY:-0}" = 1 ]; then
+  jq -n --arg runId "$RUN_ID" --arg baseUrl "$BASE_URL" --arg schoolId "$SCHOOL_ID" \
+    --argjson members "$ALL_MEMBERS" \
+    '{runId:$runId,baseUrl:$baseUrl,schoolId:$schoolId,memberIds:$members,rooms:[]}' > "$OUTPUT_FILE"
+  printf '준비 완료: %s\n' "$OUTPUT_FILE"
+  exit 0
+fi
 
 printf '[3/5] 방 %s개 생성\n' "$ROOM_COUNT" >&2
 for ((ROOM_INDEX = 0; ROOM_INDEX < ROOM_COUNT; ROOM_INDEX++)); do
