@@ -32,10 +32,10 @@
 
 ## 관찰 — 대시보드 행별로 본 것
 
-- ② 앱 (Hikari·Tomcat·JVM):
-- ③ DB 내부 (커넥션·락·캐시):
-- ④ 호스트 USE (SUT vs generator):
-- ⑤ DB 호스트:
+- ② 앱 내부 (Hikari·Tomcat·JVM·앱 컨테이너 CPU·메모리):
+- ③ DB 내부 (커넥션·락·캐시, preview만):
+- ④ $env 컨테이너 자원 (컨테이너 메모리·재시작·OOMKilled·PSI·DB 컨테이너):
+- ⑤ 운영 영향 — 같은 서버 전체 (서버 PSI·메모리·OOM·운영 앱 p95·5xx):
 
 ## 결론 / 다음 액션
 
