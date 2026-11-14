@@ -83,7 +83,7 @@ class SanitizingAppenderTest {
         logger.error("지원서 저장 실패", error);
 
         ILoggingEvent event = appender.list.getFirst();
-        String throwableText = throwableText(event.getThrowableProxy());
+        String throwableText = ThrowableProxyUtil.asString(event.getThrowableProxy());
         assertThat(throwableText).doesNotContain(PROBE_EMAIL, PROBE_KEY);
     }
 
@@ -115,9 +115,11 @@ class SanitizingAppenderTest {
         logger.error("작업 실패", error);
 
         IThrowableProxy proxy = appender.list.getFirst().getThrowableProxy();
-        assertThat(proxy.getClassName()).isEqualTo(IllegalStateException.class.getName());
-        assertThat(proxy.getStackTraceElementProxyArray()).isNotEmpty();
-        assertThat(proxy.getMessage()).doesNotContain(PROBE_EMAIL).contains("[REDACTED]");
+        assertThat(ThrowableProxyUtil.asString(proxy))
+            .startsWith("java.lang.IllegalStateException: email=[REDACTED]")
+            .contains("at " + getClass().getName() + ".")
+            .doesNotContain(PROBE_EMAIL);
+        assertThat(proxy.getMessage()).isEqualTo("email=[REDACTED]");
     }
 
     @Test
@@ -322,16 +324,5 @@ class SanitizingAppenderTest {
         return new LoggingEvent(
             SanitizingAppenderTest.class.getName(), logger, Level.ERROR, message, null, null
         );
-    }
-
-    private String throwableText(IThrowableProxy throwable) {
-        if (throwable == null) {
-            return "";
-        }
-        StringBuilder text = new StringBuilder();
-        for (IThrowableProxy current = throwable; current != null; current = current.getCause()) {
-            text.append(current.getClassName()).append(' ').append(current.getMessage()).append('\n');
-        }
-        return text.toString();
     }
 }
