@@ -7,7 +7,6 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,7 +57,7 @@ public class ProjectQueryController {
             """
     )
     public PageResponse<ProjectSummaryResponse> searchProjects(
-        @Nullable @CurrentMember MemberPrincipal memberPrincipal,
+        @CurrentMember(required = false) MemberPrincipal memberPrincipal,
         @ParameterObject @Valid SearchProjectRequest request,
         @ParameterObject @PageableDefault(size = 20, sort = {"submittedAt", "id"}, direction = Sort.Direction.ASC)
         Pageable pageable
@@ -78,7 +77,7 @@ public class ProjectQueryController {
     )
     public ProjectDetailResponse getDetail(
         @PathVariable Long projectId,
-        @Nullable @CurrentMember MemberPrincipal memberPrincipal
+        @CurrentMember(required = false) MemberPrincipal memberPrincipal
     ) {
         Long requesterMemberId = memberPrincipal == null ? null : memberPrincipal.getMemberId();
         return assembler.detailFor(projectId, requesterMemberId);

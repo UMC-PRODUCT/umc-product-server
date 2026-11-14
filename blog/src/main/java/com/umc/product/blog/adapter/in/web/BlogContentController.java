@@ -2,7 +2,6 @@ package com.umc.product.blog.adapter.in.web;
 
 import java.util.List;
 
-import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -60,7 +59,7 @@ public class BlogContentController {
         @RequestParam(required = false) Long cursor,
         @RequestParam(defaultValue = "20") int size,
         @RequestParam(defaultValue = "publishedAt,desc") String sort,
-        @Nullable @CurrentMember MemberPrincipal memberPrincipal
+        @CurrentMember(required = false) MemberPrincipal memberPrincipal
     ) {
         BlogContentCursorInfo info = getBlogContentUseCase.getPublicContents(
             BlogContentListQuery.of(type, seriesSlug, hashtagSlug, cursor, size, sort, getNullableMemberId(memberPrincipal))
@@ -77,7 +76,7 @@ public class BlogContentController {
     public BlogContentResponse getPublicContent(
         @PathVariable String type,
         @PathVariable String slug,
-        @Nullable @CurrentMember MemberPrincipal memberPrincipal
+        @CurrentMember(required = false) MemberPrincipal memberPrincipal
     ) {
         return BlogContentResponse.from(
             getBlogContentUseCase.getPublicContent(type, slug, getNullableMemberId(memberPrincipal))
