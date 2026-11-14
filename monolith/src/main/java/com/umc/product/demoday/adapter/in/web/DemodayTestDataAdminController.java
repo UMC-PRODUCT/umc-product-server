@@ -3,7 +3,6 @@ package com.umc.product.demoday.adapter.in.web;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -65,14 +64,7 @@ public class DemodayTestDataAdminController {
     public DemodayTestDataResetResponse reset(
         @Parameter(hidden = true) @CurrentMember MemberPrincipal principal
     ) {
-        DemodayTestDataResetInfo info = resetDemodayTestDataUseCase.reset(requireMemberId(principal));
+        DemodayTestDataResetInfo info = resetDemodayTestDataUseCase.reset(principal.getMemberId());
         return DemodayTestDataResetResponse.from(info);
-    }
-
-    private Long requireMemberId(MemberPrincipal principal) {
-        if (principal == null) {
-            throw new AccessDeniedException("회원 인증이 필요한 데모데이 관리자 API입니다.");
-        }
-        return principal.getMemberId();
     }
 }

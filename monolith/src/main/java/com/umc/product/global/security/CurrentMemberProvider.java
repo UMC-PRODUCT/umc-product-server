@@ -30,10 +30,7 @@ public class CurrentMemberProvider {
         return null;
     }
 
-    /**
-     * 인증 정보가 아예 없는 요청인지 확인한다. 데모데이 게스트처럼 회원이 아닌 인증은 익명으로 보지 않는다.
-     */
-    public boolean isAnonymous() {
+    public boolean hasNoAuthentication() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication == null || authentication instanceof AnonymousAuthenticationToken;
     }

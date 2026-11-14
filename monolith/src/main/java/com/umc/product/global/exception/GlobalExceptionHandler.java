@@ -27,7 +27,9 @@ import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.response.ApiErrorResponseFactory;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.code.BaseCode;
+import com.umc.product.global.security.ApiAuthenticationEntryPoint;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
@@ -51,13 +53,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponse(e, CommonErrorCode.FORBIDDEN, HttpHeaders.EMPTY, request, null);
     }
 
-    /**
-     * 인증 실패는 Security 필터의 ApiAuthenticationEntryPoint 가 응답 코드를 고른다. 여기서 응답을 만들면 만료 토큰(JWT-0002)도
-     * 인증 정보 없음으로 바뀌므로, 아래 Exception 핸들러가 500 으로 삼키지 않게 다시 던진다.
-     */
     @ExceptionHandler(AuthenticationException.class)
-    public void rethrowAuthenticationException(AuthenticationException e) {
-        throw e;
+    public ResponseEntity<Object> handleAuthenticationException(
+        AuthenticationException e,
+        HttpServletRequest servletRequest,
+        WebRequest request
+    ) {
+        BaseCode errorCode = ApiAuthenticationEntryPoint.resolveErrorCode(servletRequest, e);
+        log.warn("[AUTHENTICATION FAILED] URI: {}, ErrorCode: {}", servletRequest.getRequestURI(), errorCode.getCode());
+
+        return buildResponse(e, errorCode, HttpHeaders.EMPTY, request, null);
     }
 
     /**

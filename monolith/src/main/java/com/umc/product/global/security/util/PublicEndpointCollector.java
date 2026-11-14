@@ -25,11 +25,7 @@ public class PublicEndpointCollector {
         for (Map.Entry<RequestMappingInfo, HandlerMethod> entry : handlerMethods.entrySet()) {
             HandlerMethod handlerMethod = entry.getValue();
 
-            // 메서드 또는 클래스에 @Public이 있는지 확인
-            boolean isPublic = AnnotationUtils.findAnnotation(handlerMethod.getMethod(), Public.class) != null
-                    || AnnotationUtils.findAnnotation(handlerMethod.getBeanType(), Public.class) != null;
-
-            if (isPublic) {
+            if (isPublic(handlerMethod)) {
                 RequestMappingInfo mappingInfo = entry.getKey();
                 Set<String> patterns = mappingInfo.getPatternValues();
                 Set<RequestMethod> methods = mappingInfo.getMethodsCondition().getMethods();
@@ -52,6 +48,11 @@ public class PublicEndpointCollector {
         }
 
         return publicEndpoints;
+    }
+
+    public static boolean isPublic(HandlerMethod handlerMethod) {
+        return AnnotationUtils.findAnnotation(handlerMethod.getMethod(), Public.class) != null
+            || AnnotationUtils.findAnnotation(handlerMethod.getBeanType(), Public.class) != null;
     }
 
     /**
