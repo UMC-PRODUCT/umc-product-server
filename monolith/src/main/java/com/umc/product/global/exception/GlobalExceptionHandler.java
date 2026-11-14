@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -48,6 +49,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("[ACCESS DENIED] {}", e.getMessage());
 
         return buildResponse(e, CommonErrorCode.FORBIDDEN, HttpHeaders.EMPTY, request, null);
+    }
+
+    /**
+     * 인증 실패는 Security 필터의 ApiAuthenticationEntryPoint 가 응답 코드를 고른다. 여기서 응답을 만들면 만료 토큰(JWT-0002)도
+     * 인증 정보 없음으로 바뀌므로, 아래 Exception 핸들러가 500 으로 삼키지 않게 다시 던진다.
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public void rethrowAuthenticationException(AuthenticationException e) {
+        throw e;
     }
 
     /**

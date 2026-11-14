@@ -1,6 +1,7 @@
 package com.umc.product.global.security.resolver;
 
 import org.springframework.core.MethodParameter;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -30,6 +31,10 @@ public class CurrentMemberArgumentResolver implements HandlerMethodArgumentResol
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
                                   NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-        return currentMemberProvider.getNullableCurrentMember();
+        MemberPrincipal memberPrincipal = currentMemberProvider.getNullableCurrentMember();
+        if (memberPrincipal == null && !parameter.isOptional() && currentMemberProvider.isAnonymous()) {
+            throw new AuthenticationCredentialsNotFoundException("로그인 정보가 없는 요청입니다.");
+        }
+        return memberPrincipal;
     }
 }

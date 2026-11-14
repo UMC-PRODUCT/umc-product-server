@@ -2,6 +2,7 @@ package com.umc.product.blog.adapter.in.web;
 
 import java.util.List;
 
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -62,7 +63,7 @@ public class BlogSeriesController {
         @RequestParam(required = false) Long cursor,
         @RequestParam(defaultValue = "20") int size,
         @RequestParam(defaultValue = "createdAt,desc") String sort,
-        @CurrentMember MemberPrincipal memberPrincipal
+        @Nullable @CurrentMember MemberPrincipal memberPrincipal
     ) {
         BlogSeriesCursorInfo info = getBlogSeriesUseCase.getPublicSeries(
             BlogSeriesListQuery.of(type, cursor, size, sort, getNullableMemberId(memberPrincipal))
@@ -79,7 +80,7 @@ public class BlogSeriesController {
     public BlogSeriesResponse getPublicSeries(
         @PathVariable String type,
         @PathVariable String slug,
-        @CurrentMember MemberPrincipal memberPrincipal
+        @Nullable @CurrentMember MemberPrincipal memberPrincipal
     ) {
         return BlogSeriesResponse.from(
             getBlogSeriesUseCase.getPublicSeries(type, slug, getNullableMemberId(memberPrincipal))
@@ -95,7 +96,7 @@ public class BlogSeriesController {
         @RequestParam(required = false) Long cursor,
         @RequestParam(defaultValue = "20") int size,
         @RequestParam(defaultValue = "displayOrder,asc") String sort,
-        @CurrentMember MemberPrincipal memberPrincipal
+        @Nullable @CurrentMember MemberPrincipal memberPrincipal
     ) {
         BlogContentCursorInfo info = getBlogSeriesUseCase.getPublicSeriesContents(
             type,

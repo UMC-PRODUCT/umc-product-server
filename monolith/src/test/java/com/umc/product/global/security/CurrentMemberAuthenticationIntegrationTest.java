@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -28,6 +29,13 @@ class CurrentMemberAuthenticationIntegrationTest extends IntegrationTestSupport 
         mockMvc.perform(get(uri))
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.code").value("SECURITY-0001"));
+    }
+
+    @Test
+    @DisplayName("비로그인도 허용하는 프로젝트 상세 조회는 토큰 없이 처리한다")
+    void 비로그인_허용_API는_토큰_없이_처리한다() throws Exception {
+        mockMvc.perform(get("/api/v1/projects/999999"))
+            .andExpect(status().isNotFound());
     }
 
     @ParameterizedTest
