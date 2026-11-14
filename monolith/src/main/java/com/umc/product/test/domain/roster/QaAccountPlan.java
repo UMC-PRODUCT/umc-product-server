@@ -7,7 +7,9 @@ import java.util.Set;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.member.domain.MemberNamePolicy;
 import com.umc.product.member.domain.MemberSystemRoleType;
+import com.umc.product.member.domain.NicknamePolicy;
 
 public record QaAccountPlan(List<Account> accounts, List<SystemRoleGrant> systemRoles) {
     public static final int CURRENT_GENERATION = 11;
@@ -16,6 +18,7 @@ public record QaAccountPlan(List<Account> accounts, List<SystemRoleGrant> system
     /** 팀 노션의 QA 로그인 문서가 이 도메인의 주소를 쓴다. 더미 시딩용 app.seed.email-domain과 따로 둔다. */
     public static final String EMAIL_DOMAIN = "university.neordinary.com";
     private static final String OFF_ROSTER_SCHOOL = "중앙대학교";
+    private static final int HANGUL_SYLLABLE_COUNT = '힣' - '가' + 1;
 
     private static final List<LegacyAccount> LEGACY_ACCOUNTS = List.of(
         new LegacyAccount(SUPERADMIN, null, null),
@@ -39,7 +42,7 @@ public record QaAccountPlan(List<Account> accounts, List<SystemRoleGrant> system
         List<Account> accounts = new ArrayList<>();
         for (RosterEntry entry : roster.entries()) {
             QaRoster.School school = roster.school(entry.key().school());
-            accounts.add(new Account(
+            accounts.add(account(accounts.size(),
                 entry.key().email(),
                 entry.key().displayName(school.shortName()),
                 school.name(),
@@ -47,11 +50,12 @@ public record QaAccountPlan(List<Account> accounts, List<SystemRoleGrant> system
         }
         for (int index = 0; index < LEGACY_ACCOUNTS.size(); index++) {
             LegacyAccount legacy = LEGACY_ACCOUNTS.get(index);
-            accounts.add(new Account(aliasEmail(legacy.alias()), "QA" + (index + 1), OFF_ROSTER_SCHOOL,
-                legacy.enrollments()));
+            accounts.add(account(accounts.size(), aliasEmail(legacy.alias()), "QA" + (index + 1),
+                OFF_ROSTER_SCHOOL, legacy.enrollments()));
         }
         for (QaSystemRoles.StandaloneAccount standalone : systemRoles.standaloneAccounts()) {
-            accounts.add(new Account(aliasEmail(standalone.alias()), standalone.name(), OFF_ROSTER_SCHOOL, List.of()));
+            accounts.add(account(accounts.size(), aliasEmail(standalone.alias()), standalone.name(),
+                OFF_ROSTER_SCHOOL, List.of()));
         }
         Set<String> emails = new HashSet<>();
         for (Account account : accounts) {
@@ -84,9 +88,32 @@ public record QaAccountPlan(List<Account> accounts, List<SystemRoleGrant> system
         return accounts.stream().map(Account::email).toList();
     }
 
-    public record Account(String email, String displayName, String schoolName, List<Enrollment> enrollments) {
+    private static Account account(int sequence, String email, String displayName, String schoolName,
+        List<Enrollment> enrollments) {
+        return new Account(email, displayName, nicknameFromSequence(sequence), schoolName, enrollments);
+    }
+
+    private static String nicknameFromSequence(int sequence) {
+        char[] nickname = new char[NicknamePolicy.MAX_LENGTH];
+        int remaining = sequence;
+        for (int index = nickname.length - 1; index >= 0; index--) {
+            nickname[index] = (char) ('가' + remaining % HANGUL_SYLLABLE_COUNT);
+            remaining /= HANGUL_SYLLABLE_COUNT;
+        }
+        if (remaining != 0) {
+            throw new IllegalArgumentException("QA 계정 순번이 한글 4자로 표현 가능한 범위를 초과했습니다.");
+        }
+        return String.valueOf(nickname);
+    }
+
+    public record Account(String email, String displayName, String nickname, String schoolName,
+                          List<Enrollment> enrollments) {
         public Account {
             enrollments = List.copyOf(enrollments);
+        }
+
+        public String memberName() {
+            return displayName.substring(0, Math.min(displayName.length(), MemberNamePolicy.MAX_LENGTH));
         }
     }
 

@@ -59,6 +59,9 @@ class MemberSearchAccessScopeTest {
     @Mock
     MemberSearchAccessScopeResolver memberSearchAccessScopeResolver;
 
+    @Mock
+    ChallengerManagementSearchPolicy challengerManagementSearchPolicy;
+
     @InjectMocks
     MemberSearchService sut;
 
@@ -165,6 +168,21 @@ class MemberSearchAccessScopeTest {
         then(searchMemberPort).shouldHaveNoInteractions();
         then(getChallengerUseCase).shouldHaveNoInteractions();
         then(getChallengerRoleUseCase).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("챌린저 기록이 있으면 관리자 권한 검사 없이 요청 필터 그대로 챌린저 검색 v2를 허용한다")
+    void 챌린저_기록이_있으면_관리자_권한_검사_없이_요청_필터_그대로_챌린저_검색_v2를_허용한다() {
+        SearchMemberQuery query = new SearchMemberQuery("검색어", 11L, null, 3L, 7L);
+        Pageable pageable = PageRequest.of(0, 10);
+
+        given(checkChallengerHistoryUseCase.hasChallengerHistory(REQUESTER_MEMBER_ID)).willReturn(true);
+        given(searchMemberPort.search(query, pageable)).willReturn(Page.empty(pageable));
+
+        sut.searchChallengersByV2(query, REQUESTER_MEMBER_ID, pageable);
+
+        then(searchMemberPort).should().search(query, pageable);
+        then(challengerManagementSearchPolicy).shouldHaveNoInteractions();
     }
 
     @Test
