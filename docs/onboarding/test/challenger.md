@@ -1,15 +1,16 @@
 # Challenger 테스트 케이스
 
-- 테스트 파일: 13개
-- 테스트 케이스: 56개
+- 테스트 파일: 15개
+- 테스트 케이스: 69개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
 |---|---:|
 | Controller / Inbound Adapter | 16 |
 | UseCase / Application Service | 23 |
+| Repository / Outbound Persistence | 2 |
 | E2E / Integration | 3 |
-| Domain | 14 |
+| Domain | 25 |
 
 ## Controller / Inbound Adapter
 
@@ -125,6 +126,17 @@
 | [180](../../../monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerRecordCommandServiceTest.java#L180) | 운영진 기록 코드는 기존 챌린저에 역할을 부여하고 코드를 사용 처리한다 | 호출 consumeCode(consumeCommand()) | 성공: 검증 assertThat(record.isUsed()).isTrue(); |
 | [199](../../../monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerRecordCommandServiceTest.java#L199) | 운영진 기록 코드 소비 시 해당 기수 챌린저가 없으면 실패한다 | 호출 consumeCode(consumeCommand())) | 실패: 예외 ChallengerDomainException; 에러코드 ChallengerErrorCode.NO_CHALLENGER_IN_MEMBER_GISU; 검증 .isEqualTo(ChallengerErrorCode.NO_CHALLENGER_IN_MEMBER_GISU); assertThat(record.isUsed()).isFalse(); |
 
+## Repository / Outbound Persistence
+
+### ChallengerDeactivationPersistenceTest
+- 테스트 설명: 탈부 관리 JPA 매핑
+- 위치: `monolith/src/test/java/com/umc/product/challenger/adapter/out/persistence/ChallengerDeactivationPersistenceTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [29](../../../monolith/src/test/java/com/umc/product/challenger/adapter/out/persistence/ChallengerDeactivationPersistenceTest.java#L29) | 탈부 기록과 진행 기록 및 근거 자료를 함께 저장한다 | 탈부 등록 History에 이미지와 링크를 연결해 저장 | 성공: History를 통해 탈부 기록과 작업자를 조회한다 |
+| [71](../../../monolith/src/test/java/com/umc/product/challenger/adapter/out/persistence/ChallengerDeactivationPersistenceTest.java#L71) | 같은 챌린저의 탈부 기록은 한 번만 저장한다 | 동일 challengerId로 탈부 기록 2건 저장 | 실패: DB 유니크 제약 위반 |
+
 ## E2E / Integration
 
 ### ChallengerRecordControllerIntegrationTest
@@ -138,6 +150,24 @@
 | [159](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerRecordControllerIntegrationTest.java#L159) | 이미 사용된 챌린저 기록 코드는 재사용할 수 없다 | HTTP POST /api/v1/challenger-record/member | 실패: HTTP 200 OK; HTTP 400 Bad Request; 검증 assertThat(challengerJpaRepository.findByMemberId(member.getId())); .hasSize(1); .isEqualTo(ChallengerPart.ANDROID); assertThat(usedRecord.isUsed()).isTrue(); |
 
 ## Domain
+
+### ChallengerDeactivationTest
+- 테스트 설명: ChallengerDeactivation 도메인
+- 위치: `monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [20](../../../monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java#L20) | 탈부 사유에 대응하는 상태로 탈부 기록을 생성한다 | 모든 탈부 사유 enum | 성공: 사유의 상태와 저장 상태가 일치한다 |
+| [43](../../../monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java#L43) | 탈부 사유와 상태가 다르면 생성을 거절한다 | 자진 탈부 사유와 EXPELLED 상태 | 실패: 탈부 등록 요청 오류 |
+| [58](../../../monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java#L58) | 기타 사유는 상세 사유가 필수다 | 기타 사유와 공백 상세 사유 | 실패: 도메인 예외 |
+| [71](../../../monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java#L71) | 기타가 아닌 사유에는 상세 사유를 입력할 수 없다 | 정형 사유와 상세 사유 | 실패: 도메인 예외 |
+| [84](../../../monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java#L84) | 상세 사유는 100자를 초과할 수 없다 | 상세 사유 101자 | 실패: 도메인 예외 |
+| [97](../../../monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java#L97) | 메모는 100자를 초과할 수 없다 | 메모 101자 | 실패: 도메인 예외 |
+| [110](../../../monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java#L110) | 사진은 자신을 추가한 진행 기록과 연결된다 | 사진과 EVIDENCE_ADDED History | 성공: 작업자와 탈부 기록을 History로 조회한다 |
+| [136](../../../monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java#L136) | 탈부 등록 기록은 근거 자료가 없어도 생성할 수 있다 | REGISTERED, 사진 0장, 링크 0개 | 성공: 진행 기록을 생성한다 |
+| [151](../../../monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java#L151) | 근거 추가 기록에는 사진이나 링크가 하나 이상 필요하다 | EVIDENCE_ADDED, 사진 0장, 링크 0개 | 실패: 도메인 예외 |
+| [163](../../../monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java#L163) | 한 번의 진행 기록도 사진 5장과 링크 3개를 초과할 수 없다 | 사진 6장 또는 링크 4개 | 실패: 도메인 예외 |
+| [183](../../../monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java#L183) | 링크는 자신을 추가한 진행 기록과 연결된다 | 링크와 EVIDENCE_ADDED History | 성공: 작업자를 History로 조회한다 |
 
 ### ChallengerPointTest
 - 테스트 설명: ChallengerPoint 도메인
