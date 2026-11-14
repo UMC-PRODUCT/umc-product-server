@@ -13,7 +13,8 @@ import com.umc.product.member.application.port.in.query.dto.ChallengerSearchV2Re
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * GET /api/v2/challenger/search 응답 DTO. 챌린저 단위 페이지네이션이며,
+ * GET /api/v2/challenger/search 및 GET /api/v2/challenger/admin/search 응답 DTO.
+ * 챌린저 단위 페이지네이션이며,
  * 같은 회원이 여러 기수 챌린저 이력을 가지면 별도 row로 분리되어 반환됩니다.
  */
 public record ChallengerSearchV2Response(

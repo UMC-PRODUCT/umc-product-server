@@ -12,6 +12,8 @@ import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -109,6 +111,75 @@ class ChallengerRoleQueryServiceTest {
 
         boolean result = useCase.isSchoolCoreInGisu(MEMBER_ID, GISU_ID, SCHOOL_ID);
 
+        assertThat(result).isTrue();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class, names = {
+        "SCHOOL_PRESIDENT",
+        "SCHOOL_VICE_PRESIDENT",
+        "SCHOOL_PART_LEADER",
+        "SCHOOL_ETC_ADMIN"
+    })
+    @DisplayName("학교 회장단·파트장·기타 운영진은 해당 기수와 학교의 관리자 권한을 가진다")
+    void check_school_admin_in_gisu(ChallengerRoleType roleType) {
+        // given
+        ChallengerRoleQueryService sut = sut();
+        CheckChallengerAuthorityUseCase useCase = sut;
+        ChallengerRole role = ChallengerRole.create(10L, roleType, SCHOOL_ID, null, GISU_ID);
+        given(loadChallengerRolePort.findRolesByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
+            .willReturn(List.of(role));
+
+        // when
+        boolean result = useCase.isSchoolAdminInGisu(MEMBER_ID, GISU_ID, SCHOOL_ID);
+
+        // then
+        assertThat(result).isTrue();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class, names = {
+        "CENTRAL_PRESIDENT",
+        "CENTRAL_VICE_PRESIDENT",
+        "CENTRAL_OPERATING_TEAM_MEMBER",
+        "CENTRAL_EDUCATION_TEAM_MEMBER"
+    })
+    @DisplayName("총괄단·중앙 운영국·교육국은 해당 기수의 중앙 운영진 권한을 가진다")
+    void check_central_member_in_gisu(ChallengerRoleType roleType) {
+        // given
+        ChallengerRoleQueryService sut = sut();
+        CheckChallengerAuthorityUseCase useCase = sut;
+        ChallengerRole role = ChallengerRole.create(10L, roleType, null, null, GISU_ID);
+        given(loadChallengerRolePort.findRolesByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
+            .willReturn(List.of(role));
+
+        // when
+        boolean result = useCase.isCentralMemberInGisu(MEMBER_ID, GISU_ID);
+
+        // then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("지부장은 해당 기수와 지부의 지부장 권한을 가진다")
+    void check_chapter_president_in_gisu() {
+        // given
+        ChallengerRoleQueryService sut = sut();
+        CheckChallengerAuthorityUseCase useCase = sut;
+        ChallengerRole role = ChallengerRole.create(
+            10L,
+            ChallengerRoleType.CHAPTER_PRESIDENT,
+            20L,
+            null,
+            GISU_ID
+        );
+        given(loadChallengerRolePort.findRolesByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
+            .willReturn(List.of(role));
+
+        // when
+        boolean result = useCase.isChapterPresidentInGisu(MEMBER_ID, GISU_ID, 20L);
+
+        // then
         assertThat(result).isTrue();
     }
 

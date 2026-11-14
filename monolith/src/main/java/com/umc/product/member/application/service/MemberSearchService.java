@@ -53,7 +53,7 @@ public class MemberSearchService implements SearchMemberUseCase {
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final MemberSearchAccessScopeResolver memberSearchAccessScopeResolver;
-    private final ChallengerManagementSearchPolicy challengerManagementSearchPolicy;
+    private final AdminChallengerSearchScopePolicy adminChallengerSearchScopePolicy;
 
     @Override
     public SearchMemberResult searchBy(SearchMemberQuery query, Long requesterMemberId, Pageable pageable) {
@@ -87,7 +87,7 @@ public class MemberSearchService implements SearchMemberUseCase {
     public ChallengerSearchV2Result searchChallengersByV2WithScope(
         SearchMemberQuery query, Long requesterMemberId, Pageable pageable
     ) {
-        SearchMemberQuery scopedQuery = challengerManagementSearchPolicy.scope(query, requesterMemberId);
+        SearchMemberQuery scopedQuery = adminChallengerSearchScopePolicy.scope(query, requesterMemberId);
         Page<Challenger> challengers = searchMemberPort.search(scopedQuery, pageable);
         return assembleChallengerSearchResult(challengers);
     }
