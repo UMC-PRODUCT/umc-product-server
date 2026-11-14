@@ -131,6 +131,7 @@ dependencies {
     add("testImplementation", "org.testcontainers:postgresql")
     add("testImplementation", "com.navercorp.fixturemonkey:fixture-monkey-starter:${version("fixture-monkey")}")
     add("testImplementation", "io.micrometer:micrometer-tracing-test")
+    add("testImplementation", "io.opentelemetry:opentelemetry-sdk-testing")
     add("testRuntimeOnly", "jakarta.mail:jakarta.mail-api")
 
     add("testCompileOnly", "org.projectlombok:lombok")
