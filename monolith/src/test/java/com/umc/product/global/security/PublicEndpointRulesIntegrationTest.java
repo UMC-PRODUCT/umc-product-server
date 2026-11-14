@@ -42,8 +42,8 @@ class PublicEndpointRulesIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("@Public 핸들러의 @CurrentMember 파라미터는 비로그인 요청을 받도록 @Nullable 이다")
-    void 공개_핸들러의_현재_회원은_Nullable이다() {
+    @DisplayName("@Public 핸들러의 @CurrentMember 는 비로그인 요청을 받도록 required = false 다")
+    void 공개_핸들러의_현재_회원은_필수가_아니다() {
         // When
         List<String> requiredMemberParameters = handlerMapping.getHandlerMethods().values().stream()
             .filter(PublicEndpointCollector::isPublic)
@@ -86,7 +86,7 @@ class PublicEndpointRulesIntegrationTest extends IntegrationTestSupport {
     private List<String> requiredCurrentMemberParameters(HandlerMethod handler) {
         return List.of(handler.getMethodParameters()).stream()
             .filter(parameter -> parameter.hasParameterAnnotation(CurrentMember.class))
-            .filter(parameter -> !parameter.isOptional())
+            .filter(parameter -> parameter.getParameterAnnotation(CurrentMember.class).required())
             .map(parameter -> handler.getShortLogMessage() + " #" + parameter.getParameterIndex())
             .toList();
     }

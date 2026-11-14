@@ -11,7 +11,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
-import org.springframework.lang.Nullable;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -65,10 +64,10 @@ class CurrentMemberArgumentResolverTest {
     }
 
     @Test
-    @DisplayName("로그인하지 않은 요청도 @Nullable 파라미터에는 null을 넘긴다")
-    void 익명_요청은_Nullable_파라미터에_null을_넘긴다() throws Exception {
+    @DisplayName("로그인하지 않은 요청도 required = false 파라미터에는 null을 넘긴다")
+    void 익명_요청은_선택_파라미터에_null을_넘긴다() throws Exception {
         // When
-        Object result = resolve(nullableParameter());
+        Object result = resolve(optionalParameter());
 
         // Then
         assertThat(result).isNull();
@@ -111,8 +110,8 @@ class CurrentMemberArgumentResolverTest {
         return parameterOf("required");
     }
 
-    private MethodParameter nullableParameter() throws NoSuchMethodException {
-        return parameterOf("nullable");
+    private MethodParameter optionalParameter() throws NoSuchMethodException {
+        return parameterOf("optional");
     }
 
     private MethodParameter parameterOf(String methodName) throws NoSuchMethodException {
@@ -126,7 +125,7 @@ class CurrentMemberArgumentResolverTest {
         void required(@CurrentMember MemberPrincipal memberPrincipal) {
         }
 
-        void nullable(@Nullable @CurrentMember MemberPrincipal memberPrincipal) {
+        void optional(@CurrentMember(required = false) MemberPrincipal memberPrincipal) {
         }
     }
 }

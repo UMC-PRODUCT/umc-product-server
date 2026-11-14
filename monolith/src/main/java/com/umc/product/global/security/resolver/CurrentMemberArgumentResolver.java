@@ -37,7 +37,8 @@ public class CurrentMemberArgumentResolver implements HandlerMethodArgumentResol
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
                                   NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
         MemberPrincipal memberPrincipal = currentMemberProvider.getNullableCurrentMember();
-        if (memberPrincipal != null || parameter.isOptional()) {
+        CurrentMember currentMember = parameter.getParameterAnnotation(CurrentMember.class);
+        if (memberPrincipal != null || !currentMember.required()) {
             return memberPrincipal;
         }
         if (memberLoginMissingOrFailed(webRequest)) {

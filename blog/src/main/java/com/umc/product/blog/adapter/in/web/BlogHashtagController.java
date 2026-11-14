@@ -1,6 +1,5 @@
 package com.umc.product.blog.adapter.in.web;
 
-import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -55,7 +54,7 @@ public class BlogHashtagController {
         @RequestParam(required = false) Long cursor,
         @RequestParam(defaultValue = "20") int size,
         @RequestParam(defaultValue = "publishedAt,desc") String sort,
-        @Nullable @CurrentMember MemberPrincipal memberPrincipal
+        @CurrentMember(required = false) MemberPrincipal memberPrincipal
     ) {
         BlogContentCursorInfo info = getBlogHashtagUseCase.getPublicHashtagContents(
             slug,
