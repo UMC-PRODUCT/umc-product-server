@@ -41,7 +41,7 @@ public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
         errorResponseWriter.write(res, errorCode);
     }
 
-    private BaseCode resolveErrorCode(HttpServletRequest req, AuthenticationException ex) {
+    public static BaseCode resolveErrorCode(HttpServletRequest req, AuthenticationException ex) {
         // 1. JwtAuthenticationFilter에서 저장한 JWT 에러 확인
         Object jwtError = req.getAttribute(JWT_ERROR_ATTRIBUTE);
         if (jwtError instanceof AuthenticationDomainException domainException) {

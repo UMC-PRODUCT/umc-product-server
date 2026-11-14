@@ -59,7 +59,7 @@ public class BlogContentController {
         @RequestParam(required = false) Long cursor,
         @RequestParam(defaultValue = "20") int size,
         @RequestParam(defaultValue = "publishedAt,desc") String sort,
-        @CurrentMember MemberPrincipal memberPrincipal
+        @CurrentMember(required = false) MemberPrincipal memberPrincipal
     ) {
         BlogContentCursorInfo info = getBlogContentUseCase.getPublicContents(
             BlogContentListQuery.of(type, seriesSlug, hashtagSlug, cursor, size, sort, getNullableMemberId(memberPrincipal))
@@ -76,7 +76,7 @@ public class BlogContentController {
     public BlogContentResponse getPublicContent(
         @PathVariable String type,
         @PathVariable String slug,
-        @CurrentMember MemberPrincipal memberPrincipal
+        @CurrentMember(required = false) MemberPrincipal memberPrincipal
     ) {
         return BlogContentResponse.from(
             getBlogContentUseCase.getPublicContent(type, slug, getNullableMemberId(memberPrincipal))

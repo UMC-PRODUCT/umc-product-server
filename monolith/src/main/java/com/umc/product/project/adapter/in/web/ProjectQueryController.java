@@ -57,7 +57,7 @@ public class ProjectQueryController {
             """
     )
     public PageResponse<ProjectSummaryResponse> searchProjects(
-        @CurrentMember MemberPrincipal memberPrincipal,
+        @CurrentMember(required = false) MemberPrincipal memberPrincipal,
         @ParameterObject @Valid SearchProjectRequest request,
         @ParameterObject @PageableDefault(size = 20, sort = {"submittedAt", "id"}, direction = Sort.Direction.ASC)
         Pageable pageable
@@ -67,7 +67,7 @@ public class ProjectQueryController {
         return assembler.searchFor(query, requesterMemberId);
     }
 
-    @GetMapping("/{projectId}")
+    @GetMapping("/{projectId:\\d+}")
     @Public
     @Operation(
         operationId = "PROJECT-002",
@@ -77,7 +77,7 @@ public class ProjectQueryController {
     )
     public ProjectDetailResponse getDetail(
         @PathVariable Long projectId,
-        @CurrentMember MemberPrincipal memberPrincipal
+        @CurrentMember(required = false) MemberPrincipal memberPrincipal
     ) {
         Long requesterMemberId = memberPrincipal == null ? null : memberPrincipal.getMemberId();
         return assembler.detailFor(projectId, requesterMemberId);
