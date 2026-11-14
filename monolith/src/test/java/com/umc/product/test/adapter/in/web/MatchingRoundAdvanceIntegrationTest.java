@@ -93,7 +93,8 @@ class MatchingRoundAdvanceIntegrationTest extends IntegrationTestSupport {
         assertThat(started.path("timers")).hasSize(4);
         assertThat(started.path("summary").path("round").path("roundId").asLong()).isEqualTo(first);
         assertThat(started.path("summary").path("round").path("stage").asText()).isEqualTo("APPLICATION_OPEN");
-        assertTimer(started, first, round.getDecisionDeadline().plus(DEADLINE_BUFFER), round.getResultPublishAt());
+        assertTimer(started, first, round.getDecisionDeadline().plus(DEADLINE_BUFFER),
+            round.getResultPublishAt().plusSeconds(3));
         assertThat(scheduler.isScheduled(first)).isTrue();
 
         JsonNode again = advanceOk(first, "APPLICATION_START");
@@ -113,7 +114,8 @@ class MatchingRoundAdvanceIntegrationTest extends IntegrationTestSupport {
         round = round(first);
         assertThat(round.getDecisionDeadline()).isBetween(beforeDeadline, Instant.now());
         assertThat(round.getResultPublishAt()).isAfter(Instant.now().plus(Duration.ofHours(23)));
-        assertTimer(deadline, first, round.getDecisionDeadline().plus(DEADLINE_BUFFER), round.getResultPublishAt());
+        assertTimer(deadline, first, round.getDecisionDeadline().plus(DEADLINE_BUFFER),
+            round.getResultPublishAt().plusSeconds(3));
 
         advance(first, "RESULT_PUBLISH").andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value("SEED-0302"));
@@ -137,7 +139,7 @@ class MatchingRoundAdvanceIntegrationTest extends IntegrationTestSupport {
         ProjectMatchingRound round = round(first);
         assertThat(round.getResultPublishAt()).isAfterOrEqualTo(
             round.getDecisionDeadline().plus(Duration.ofMinutes(5)));
-        assertTimer(publish, first, null, round.getResultPublishAt());
+        assertTimer(publish, first, null, round.getResultPublishAt().plusSeconds(3));
         await().atMost(Duration.ofSeconds(10))
             .until(() -> round(first).getResultPublishedAt() != null);
 

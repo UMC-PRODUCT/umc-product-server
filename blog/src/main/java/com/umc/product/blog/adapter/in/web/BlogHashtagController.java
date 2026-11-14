@@ -54,7 +54,7 @@ public class BlogHashtagController {
         @RequestParam(required = false) Long cursor,
         @RequestParam(defaultValue = "20") int size,
         @RequestParam(defaultValue = "publishedAt,desc") String sort,
-        @CurrentMember MemberPrincipal memberPrincipal
+        @CurrentMember(required = false) MemberPrincipal memberPrincipal
     ) {
         BlogContentCursorInfo info = getBlogHashtagUseCase.getPublicHashtagContents(
             slug,

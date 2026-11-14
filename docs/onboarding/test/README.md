@@ -11,12 +11,12 @@
 | Authentication | 14 | 71 | [authentication.md](authentication.md) |
 | Authorization | 2 | 19 | [authorization.md](authorization.md) |
 | Blog | 3 | 33 | [blog.md](blog.md) |
-| Challenger | 13 | 56 | [challenger.md](challenger.md) |
+| Challenger | 15 | 69 | [challenger.md](challenger.md) |
 | Curriculum | 5 | 61 | [curriculum.md](curriculum.md) |
 | Global | 18 | 69 | [global.md](global.md) |
 | LLM | 4 | 15 | [llm.md](llm.md) |
 | Maintenance | 8 | 47 | [maintenance.md](maintenance.md) |
-| Member | 20 | 100 | [member.md](member.md) |
+| Member | 21 | 103 | [member.md](member.md) |
 | Notification | 3 | 10 | [notification.md](notification.md) |
 | Organization | 25 | 148 | [organization.md](organization.md) |
 | Project | 37 | 529 | [project.md](project.md) |
@@ -27,7 +27,7 @@
 | Term | 8 | 23 | [term.md](term.md) |
 | Test Seed | 27 | 95 | [test.md](test.md) |
 
-- 문서화된 20개 도메인 행 합계: 테스트 파일 282개, 테스트 케이스 1,709개
+- 문서화된 20개 도메인 행 합계: 테스트 파일 285개, 테스트 케이스 1,725개
 - 최신 전체 실행 합계: Task 12 격리 JUnit XML snapshot 기준 446 suites, 2,172 tests, failures 0, errors 0, skipped 40
 
 ## 참고: 테스트 케이스가 아닌 문서

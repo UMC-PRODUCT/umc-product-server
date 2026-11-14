@@ -10,11 +10,13 @@
 
 최고관리자는 모든 기수·지부, 총괄·부총괄은 소속 기수 전체 지부의 TO를 조회·수정·저장할 수 있다. 지부장은 소속 기수 전체 지부를 조회하고, 본인 지부만 수정·저장할 수 있다. 다른 지부의 columns/cells 및 프로젝트 권한의 `partQuota.canEdit`은 false이며 PATCH·PUT 저장은 403으로 거부한다. 지부장은 지부를 생략하면 본인 지부를 기본 선택하고, 지부 탭도 본인 지부를 먼저 반환한다. 운영국원(`CENTRAL_OPERATING_TEAM_MEMBER`)·교육국원(`CENTRAL_EDUCATION_TEAM_MEMBER`)은 소속 기수 전체 지부를 조회만 할 수 있다. 학교 운영진·PM 역할만으로는 이 관리 API에 접근할 수 없다. 수정 권한이 있는 운영진 역할을 겸하면 해당 범위에서 수정할 수 있다.
 
-운영국원·교육국원의 조회 범위는 지부 탭·지부 생략/선택 조회에 동일하게 적용한다. 해당 역할만 보유하면 매칭 시작 전에도 columns/cells와 프로젝트 권한 응답의 `partQuota.canEdit`은 false이며, PATCH 일괄 저장과 기존 PUT 전체 교체는 403으로 거부한다. 다른 기수 접근도 거부한다. 기존 편집자의 첫 매칭 시작 이후 잠금·인원 상한·최소 배정 인원·Web/Mobile 동시 모집 금지 검증은 유지한다. 프로젝트 승인·삭제·기본정보 수정·대리 등록·수동 배정 및 초안 TO 권한은 추가하지 않는다.
+운영국원·교육국원의 조회 범위는 지부 탭·지부 생략/선택 조회에 동일하게 적용한다. 해당 역할만 보유하면 매칭 시작 전에도 columns/cells와 프로젝트 권한 응답의 `partQuota.canEdit`은 false이며, PATCH 일괄 저장과 기존 PUT 전체 교체는 403으로 거부한다. 다른 기수 접근도 거부한다. 기존 편집자의 첫 매칭 시작 이후 잠금·최소 배정 인원·Web/Mobile 동시 모집 금지 검증은 유지한다. 프로젝트 승인·삭제·기본정보 수정·대리 등록·수동 배정 및 초안 TO 권한은 추가하지 않는다.
 
 첫 GET에는 `gisuId`만 전달해도 된다. 서버가 접근 가능한 첫 지부를 선택하고 지부 탭·학교 선택지·표·합계·편집 가능 여부를 함께 반환한다. 요청한 지부에 권한이 없으면 403이며, 지부가 전혀 없는 기수는 `chapterId: null`과 빈 배열을 반환한다.
 
-표·프로젝트 수·조회 합계는 승인완료(`IN_PROGRESS`) 프로젝트만 포함한다. 검색과 학교 필터에도 같은 기준을 적용하며 승인대기·초안·종료·중단 프로젝트는 표시하지 않는다. 저장 시에도 동일하게 승인완료 프로젝트만 합산한다. 각 파트의 TO 합계가 지부 해당 파트 인원 이하이면 허용하며, 승인대기·초안·종료·중단 프로젝트의 TO는 상한 합계에서 제외한다.
+표·프로젝트 수·조회 합계는 승인완료(`IN_PROGRESS`) 프로젝트만 포함한다. 검색과 학교 필터에도 같은 기준을 적용하며 승인대기·초안·종료·중단 프로젝트는 표시하지 않는다.
+
+TO는 지부장이 정하는 모집 계획이다. 파트별 TO 합계가 지부에 등록된 파트 인원보다 많아도 저장과 프로젝트 등록을 막지 않는다. 가입이나 코드 입력을 마치지 않은 챌린저는 등록 인원에 잡히지 않기 때문이다.
 
 지부를 변경할 때는 이전 지부의 `schoolId`를 제거하거나 새 지부의 학교로 다시 선택해야 한다. 선택한 지부에 속하지 않는 학교를 보내면 400(`PROJECT-0254`)을 반환하며 자동으로 학교 필터를 무시하지 않는다.
 
@@ -28,22 +30,24 @@
 | `chapters[]` | 접근 가능한 지부 탭 |
 | `schools[]` | 선택한 지부의 학교 필터 |
 | `columns[]` | 파트·라벨·공통 편집 권한·재개 시각 |
-| `summary[]` | 지부 전체 프로젝트의 파트별 인원·TO 합계·과부족 |
+| `summary[]` | 지부 전체 프로젝트의 파트별 TO 합계(인원·과부족은 지원 중단) |
 | `filteredSummary[]` | 검색·학교 필터에 해당하는 프로젝트의 파트별 합계 |
-| `totals`, `filteredTotals` | 각 합계의 전체 파트 총인원·총TO·과부족 |
+| `totals`, `filteredTotals` | 각 합계의 전체 파트 총TO(총인원·과부족은 지원 중단) |
 | `totalProjectCount`, `filteredProjectCount` | 지부 전체/필터 프로젝트 수 |
 | `projects[]` | 프로젝트명·ID순 표 전체 목록. 내부 스크롤에 사용 |
 | `projects[].schoolId`, `schoolName` | 프로젝트 PM의 소속 학교 |
 | `projects[].cells[]` | 파트별 입력값·현재 인원·최소 TO·편집 권한 |
 | `projects[].totalQuota` | 프로젝트의 파트 TO 합계 |
 
-인원 현황은 해당 기수의 활동 중인 챌린저 중 수강 파트가 있는 인원을 사용하고 매칭 지부 이동을 반영한다. 수강 없이 기수에만 소속된 운영진(part=null)은 파트별 모집 가능 인원과 전체 합계에서 제외한다. `columns`와 모든 프로젝트의 `cells`는 `PLAN`, `DESIGN`, `WEB_PRODUCT_ENGINEER`, `MOBILE_PRODUCT_ENGINEER` 순서의 4개 항목으로 고정한다. `columns[].label`은 `PM`, `Design`, `Web PE`, `Mobile PE`이며 해당 파트 인원이나 TO가 없어도 포함한다. 표의 각 행은 프로젝트이며 학교는 필터다.
+지원 중단된 인원 현황(`availableCount`)은 해당 기수의 활동 중인 챌린저 중 수강 파트가 있는 인원을 사용하고 매칭 지부 이동을 반영한다. 수강 없이 기수에만 소속된 운영진(part=null)은 파트별 모집 가능 인원과 전체 합계에서 제외한다. `columns`와 모든 프로젝트의 `cells`는 `PLAN`, `DESIGN`, `WEB_PRODUCT_ENGINEER`, `MOBILE_PRODUCT_ENGINEER` 순서의 4개 항목으로 고정한다. `columns[].label`은 `PM`, `Design`, `Web PE`, `Mobile PE`이며 해당 파트 인원이나 TO가 없어도 포함한다. 표의 각 행은 프로젝트이며 학교는 필터다.
 
-`summary`와 `filteredSummary`의 `availableCount`는 모두 지부 전체의 파트 인원이다. 학교 필터는 프로젝트를 골라 보는 용도이며, 모집 가능한 인원을 PM의 학교 인원으로 제한하지 않는다. `difference = allocatedQuota - availableCount`이며, `allocationStatus`는 `SHORTAGE`, `BALANCED`, `EXCESS`다. 검색 결과가 비어도 지부 전체 합계는 유지한다.
+`summary`와 `filteredSummary`의 `availableCount`는 지원 중단 필드이며 2026-12-13 릴리스 전까지만 제공한다. 두 배열 모두 지부 전체의 파트 인원이다. 학교 필터는 프로젝트를 골라 보는 용도이며, 모집 가능한 인원을 PM의 학교 인원으로 제한하지 않는다. `difference = allocatedQuota - availableCount`이며, `allocationStatus`는 `SHORTAGE`, `BALANCED`, `EXCESS`다. 검색 결과가 비어도 지부 전체 합계는 유지한다.
 
-상단 파트 인원 현황은 `summary`와 `filteredSummary`를 사용한다. 두 배열은 모든 지부에서 `PLAN`(PM), `DESIGN`(Design), `WEB_PRODUCT_ENGINEER`(Web PE), `MOBILE_PRODUCT_ENGINEER`(Mobile PE) 순서의 4개 항목을 반환하며, 해당 인원이 없으면 0이다. `totals`와 `filteredTotals`도 이 4개 항목만 합산한다. 과거 Web·Android·iOS·Node·Spring 인원이나 TO를 신규 PE 항목에 합산하지 않는다.
+`summary`, `filteredSummary`, `totals`, `filteredTotals`의 `availableCount`, `difference`, `allocationStatus`는 지원 중단이다. 지금은 같은 방식으로 계산해 내려주지만 2026-12-13 릴리스에서 지운다. 대체 필드는 없다. 화면은 이 값으로 TO 입력을 막거나 경고하지 않는다.
 
-프로젝트별 TO 표의 `columns`와 `cells`, 행 `totalQuota`도 동일한 4개 파트만 포함한다. 과거 파트의 인원이나 TO가 저장되어 있어도 응답 열·셀·합계에 노출하지 않으며 신규 PE 값으로 합치거나 원본 DB 값을 삭제하지 않는다. 상단 카드는 인원 정보가 포함된 `summary`를 사용한다. 지부는 있으나 인원·프로젝트가 비어도 4개 열과 현황 항목을 반환하며, 기수에 접근 가능한 지부 자체가 없으면 기존처럼 빈 배열과 `chapterId: null`을 반환한다.
+상단 파트별 TO 합계는 `summary`와 `filteredSummary`를 사용한다. 이 중 인원 현황(`availableCount`, `difference`, `allocationStatus`)은 지원 중단 필드이며 2026-12-13 릴리스 전까지만 제공한다. 두 배열은 모든 지부에서 `PLAN`(PM), `DESIGN`(Design), `WEB_PRODUCT_ENGINEER`(Web PE), `MOBILE_PRODUCT_ENGINEER`(Mobile PE) 순서의 4개 항목을 반환하며, 해당 TO나 인원이 없으면 0이다. `totals`와 `filteredTotals`도 이 4개 항목만 합산한다. 과거 Web·Android·iOS·Node·Spring 인원이나 TO를 신규 PE 항목에 합산하지 않는다.
+
+프로젝트별 TO 표의 `columns`와 `cells`, 행 `totalQuota`도 동일한 4개 파트만 포함한다. 과거 파트의 인원이나 TO가 저장되어 있어도 응답 열·셀·합계에 노출하지 않으며 신규 PE 값으로 합치거나 원본 DB 값을 삭제하지 않는다. 상단 카드는 `summary`의 TO 합계를 사용한다. 지부는 있으나 인원·프로젝트가 비어도 4개 열과 현황 항목을 반환하며, 기수에 접근 가능한 지부 자체가 없으면 기존처럼 빈 배열과 `chapterId: null`을 반환한다.
 
 셀 필드:
 
@@ -61,7 +65,7 @@ TO 표의 `WEB_PRODUCT_ENGINEER`와 `MOBILE_PRODUCT_ENGINEER` 셀은 모두 반�
 
 - 두 파트 중 하나만 양수로 저장할 수 있다. 프런트는 Web TO가 양수이면 Mobile 입력을 비활성화하고, Mobile TO가 양수이면 Web 입력을 비활성화한다. 둘 다 0이면 둘 다 입력 가능하다. 미저장 입력값으로 즉시 판단하며 기간·권한에 따른 `canEdit` 제한도 함께 적용한다.
 - Web → Mobile 전환은 같은 프로젝트의 `entries`에 `WEB_PRODUCT_ENGINEER: 0`, `MOBILE_PRODUCT_ENGINEER: N`을 함께 전달한다. 반대 방향도 같다. 기존 양수 TO를 생략하면 그대로 보존되므로 다른 파트만 추가하면 `PROJECT-0255`로 거부한다.
-- 기존 파트의 발표 대기를 포함한 최소 배정 인원이 남아 있으면 TO를 0으로 바꿀 수 없다. 기간·권한·지부 인원 상한 검증도 그대로 적용한다.
+- 기존 파트의 발표 대기를 포함한 최소 배정 인원이 남아 있으면 TO를 0으로 바꿀 수 없다. 기간·권한 검증도 그대로 적용한다.
 - 등록 Step 2 상세와 프로젝트 카드의 `partQuotas`는 같은 저장 데이터를 사용한다. 저장 후 관리 표와 해당 상세·목록 API를 재조회하거나 프런트 캐시를 갱신하면 변경된 모집 파트·TO가 반영된다. 상세·카드의 `partQuotas`에서는 TO 0으로 제거한 파트가 제외된다.
 
 ## 저장 예시
@@ -79,7 +83,7 @@ TO 표의 `WEB_PRODUCT_ENGINEER`와 `MOBILE_PRODUCT_ENGINEER` 셀은 모두 반�
 }
 ```
 
-숫자·숫자 문자열 모두 요청할 수 있다. PM TO도 `part: "PLAN"`으로 수정한다. `quota: 0`은 모집 TO를 제거하지만 팀원은 삭제하지 않는다. 배정된 인원이 있으면 그 인원 미만으로 줄일 수 없다.
+숫자·숫자 문자열 모두 요청할 수 있다. PM TO도 `part: "PLAN"`으로 수정한다. `quota: 0`은 모집 TO를 제거하지만 팀원은 삭제하지 않는다. 배정된 인원이나 자동 선발 전 PM 합격 인원이 있으면 그 인원 미만으로 줄일 수 없다.
 
 저장 성공 시 `result.updatedProjectIds`에 변경 대상 ID 목록을 반환한다. 이후 같은 필터의 GET을 다시 호출해 표·합계·최소 TO·권한을 갱신한다.
 
@@ -90,17 +94,18 @@ PM 인원은 시스템이 계산한 `cells[part=PLAN].currentCount`를 사용한
 ## 검증과 동시 저장
 
 - 해당 지부 전체 첫 매칭 시작부터 모든 파트의 TO 변경을 계속 차단한다. 차수 사이·3차 종료 후·운영진 조정 기간에도 잠금을 유지한다. 같은 값만 저장하는 요청은 기존처럼 허용한다.
+- `app.project.quota-edit.open-until` 전에는 첫 매칭 시작 후에도 TO 변경을 허용한다(임시). 기본값은 2026-11-13 12:00 KST이며, 이 시각부터 재배포 없이 다시 잠근다.
+- 아직 자동 선발하지 않은 차수의 PM 합격(`APPROVED`) 인원도 최소 TO에 더한다. 합격자가 있는 파트는 합격 인원 미만으로 줄이거나 0·전환으로 없앨 수 없다. 조회의 `minimumQuota`에는 아직 포함하지 않는다.
 - 랜덤 매칭 실행 후 운영진 조정 기간의 수동 배정은 설정 TO를 초과할 수 있다. 조정 중에는 기존 TO를 유지하므로 `minimumQuota`가 저장 TO보다 클 수 있다. 최종 발표에서 해제 예약자를 제외한 활동 인원이 TO보다 많으면 발표 유형의 파트 TO를 확정 인원까지 자동 증가시킨다. 기존 TO 이하이면 줄이지 않는다. 이 자동 갱신은 운영진의 TO 설정 잠금을 해제하지 않는다.
-- 지부의 파트별 인원을 넘는 TO 합계는 거부하고 부족은 허용한다. 검색·학교 필터로 숨겨진 승인완료 프로젝트의 TO도 전체 지부 상한에 포함한다.
-- 모든 변경을 합친 최종 상태를 검증하므로 프로젝트 사이의 TO 이동을 한 번에 저장할 수 있다. 하나라도 실패하면 전체 요청을 롤백한다.
+- 지부 파트 인원과 TO 합계를 비교하지 않는다. 인원보다 많거나 적어도 저장한다.
+- 여러 프로젝트의 변경은 한 번에 저장하며, 하나라도 실패하면 전체 요청을 롤백한다.
 - 기수 단위 매칭 잠금으로 수동 배정·자동 선발·지부 이동과 정원 변경을 직렬화한다. 발표 대기 배정도 최소 TO에 포함해 이미 확보한 자리를 줄이지 않는다. 해제 예약자는 조회·PATCH·PUT의 최소 TO에서 동일하게 제외하고, 해제 예약을 취소하면 다시 포함한다.
-- 기존 `PUT /api/v1/projects/{projectId}/part-quotas`에도 같은 기간·인원 상한·기존 배정 인원 검증을 적용한다. 이 PUT은 기존대로 전체 교체이며 입력값은 1 이상이다. 운영진 직접 등록 시에는 해당 기수·지부의 운영 권한을 가진 작성자만 이 PUT으로 본인 초안의 TO도 설정할 수 있다. 초안은 관리 표 합계에 포함하지 않고 최종 등록 시 인원 상한을 검증한다. 일반 PM은 초안 TO를 수정할 수 없다. 관리 화면은 변경 셀을 보존하는 PATCH를 사용한다.
+- 기존 `PUT /api/v1/projects/{projectId}/part-quotas`에도 같은 기간·기존 배정 인원 검증을 적용한다. 이 PUT은 기존대로 전체 교체이며 입력값은 1 이상이다. 운영진 직접 등록 시에는 해당 기수·지부의 운영 권한을 가진 작성자만 이 PUT으로 본인 초안의 TO도 설정할 수 있다. 초안은 관리 표 합계에 포함하지 않는다. 일반 PM은 초안 TO를 수정할 수 없다. 관리 화면은 변경 셀을 보존하는 PATCH를 사용한다.
 
 | HTTP | 코드 | 의미 |
 | --- | --- | --- |
 | 409 | `PROJECT-0250` | 전체 첫 매칭 시작 이후 TO 설정 변경 불가 |
-| 409 | `PROJECT-0251` | 지부 파트 인원보다 TO 합계가 많음 |
-| 409 | `PROJECT-0252` | 기존 배정 인원보다 TO가 적음 |
+| 409 | `PROJECT-0252` | 기존 배정·PM 합격 인원보다 TO가 적음 |
 | 400 | `PROJECT-0253` | ADMIN 등 직접 수정할 수 없는 파트 |
 | 400 | `PROJECT-0254` | 중복 프로젝트·파트, 잘못된 대상·입력 |
 | 400 | `PROJECT-0255` | Web PE와 Mobile PE를 동시에 모집하도록 저장함 |

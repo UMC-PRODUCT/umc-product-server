@@ -2,6 +2,7 @@ package com.umc.product.project.adapter.out.scheduler;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,6 +21,7 @@ import com.umc.product.global.observability.ScheduledTaskTracer;
 import com.umc.product.project.adapter.in.scheduler.MatchingResultPublicationHandler;
 import com.umc.product.project.adapter.in.scheduler.MatchingRoundDeadlineHandler;
 import com.umc.product.project.adapter.out.scheduler.RandomMatchingSchedulingAdapter.RandomMatchingScheduleRequested;
+import com.umc.product.project.application.port.in.command.PublishProjectMatchingResultUseCase.PublicationAttempt;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.ScheduleMatchingRoundDeadlinePort;
 import com.umc.product.project.application.port.out.dto.MatchingRoundTimers;
@@ -48,6 +50,9 @@ import lombok.extern.slf4j.Slf4j;
 )
 public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDeadlinePort {
 
+    private static final Duration PUBLICATION_BUFFER = Duration.ofSeconds(3);
+    private static final int MAX_PUBLICATION_RETRIES = 3;
+
     /**
      * 1~3차는 결정 마감, 랜덤 매칭은 3차 결과 공개 완료 시각에서 buffer 만큼 뒤로 미룬다.
      * <p>
@@ -64,7 +69,7 @@ public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDead
     private final ScheduledTaskTracer scheduledTaskTracer;
 
     private final Map<Long, ScheduledFuture<?>> pendingTasks = new ConcurrentHashMap<>();
-    private final Map<Long, ScheduledFuture<?>> publicationTasks = new ConcurrentHashMap<>();
+    private final Map<Long, PublicationTask> publicationTasks = new HashMap<>();
 
     public MatchingRoundDeadlineScheduler(
         @Qualifier("matchingDeadlineTaskScheduler") TaskScheduler taskScheduler,
@@ -141,37 +146,66 @@ public class MatchingRoundDeadlineScheduler implements ScheduleMatchingRoundDead
      *
      * @return 등록한 발표 시각. 발표 시각이 없거나 이미 공개했으면 null
      */
-    public Instant schedulePublication(ProjectMatchingRound round) {
-        ScheduledFuture<?> previous = publicationTasks.remove(round.getId());
+    public synchronized Instant schedulePublication(ProjectMatchingRound round) {
+        PublicationTask previous = publicationTasks.remove(round.getId());
         if (previous != null) {
-            previous.cancel(false);
+            previous.future.cancel(false);
         }
         if (round.getResultPublishAt() == null || round.getResultPublishedAt() != null) {
             return null;
         }
-        registerPublication(round.getId(), round.getResultPublishAt());
-        return round.getResultPublishAt();
+        Instant runAt = round.getResultPublishAt().plus(PUBLICATION_BUFFER);
+        registerPublication(round.getId(), runAt, 0);
+        return runAt;
     }
 
-    private void registerPublication(Long roundId, Instant runAt) {
-        ScheduledFuture<?> future = taskScheduler.schedule(
+    private void registerPublication(Long roundId, Instant runAt, int retries) {
+        PublicationTask task = new PublicationTask();
+        task.future = taskScheduler.schedule(
             scheduledTaskTracer.trace("matchingResultPublication", () -> {
+                PublicationAttempt attempt = null;
                 try {
-                    publicationHandler.handle(roundId);
+                    attempt = publicationHandler.handle(roundId);
                 } finally {
-                    publicationTasks.remove(roundId);
+                    completePublicationTask(roundId, task, retries, attempt);
                 }
             }),
             runAt
         );
-        publicationTasks.put(roundId, future);
+        publicationTasks.put(roundId, task);
+    }
+
+    private synchronized void completePublicationTask(
+        Long roundId, PublicationTask task, int retries, PublicationAttempt attempt
+    ) {
+        // 일정 변경이나 삭제로 교체된 작업은 새 예약을 건드리지 않는다.
+        if (!publicationTasks.remove(roundId, task) || attempt == null || !attempt.tooEarly()) {
+            return;
+        }
+        if (retries >= MAX_PUBLICATION_RETRIES) {
+            log.error("batch job retries exhausted: jobName=matching_result_publication, matchingRoundId={}, "
+                + "resultPublishAt={}, checkedAt={}, retries={}",
+                roundId, attempt.scheduledAt(), attempt.checkedAt(), retries);
+            return;
+        }
+        Instant bufferedPublishAt = attempt.scheduledAt().plus(PUBLICATION_BUFFER);
+        Instant minimumRetryAt = taskScheduler.getClock().instant().plusSeconds(1);
+        Instant retryAt = bufferedPublishAt.isAfter(minimumRetryAt) ? bufferedPublishAt : minimumRetryAt;
+        log.warn("batch job rescheduled: jobName=matching_result_publication, matchingRoundId={}, "
+            + "resultPublishAt={}, checkedAt={}, retryAt={}, retry={}",
+            roundId, attempt.scheduledAt(), attempt.checkedAt(), retryAt, retries + 1);
+        registerPublication(roundId, retryAt, retries + 1);
+    }
+
+    private static final class PublicationTask {
+        private ScheduledFuture<?> future;
     }
 
     @Override
-    public void cancel(Long roundId) {
-        ScheduledFuture<?> publication = publicationTasks.remove(roundId);
+    public synchronized void cancel(Long roundId) {
+        PublicationTask publication = publicationTasks.remove(roundId);
         if (publication != null) {
-            publication.cancel(false);
+            publication.future.cancel(false);
         }
         ScheduledFuture<?> future = pendingTasks.remove(roundId);
         if (future != null) {
