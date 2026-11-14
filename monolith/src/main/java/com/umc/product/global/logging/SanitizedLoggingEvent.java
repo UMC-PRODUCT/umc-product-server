@@ -20,7 +20,6 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
-import ch.qos.logback.classic.spi.ThrowableProxy;
 
 /**
  * 민감정보가 제거된 값을 돌려주는 {@link ILoggingEvent} 읽기 전용 데코레이터다.
@@ -47,7 +46,7 @@ final class SanitizedLoggingEvent implements ILoggingEvent {
         this.message = safely(() -> ObservabilityErrorSanitizer.sanitizeMessage(delegate.getMessage()), null);
         this.formattedMessage =
             safely(() -> ObservabilityErrorSanitizer.sanitizeMessage(delegate.getFormattedMessage()), null);
-        this.throwableProxy = safely(() -> sanitizeThrowable(delegate.getThrowableProxy()), null);
+        this.throwableProxy = safely(() -> SanitizedThrowable.proxyOf(delegate.getThrowableProxy()), null);
         this.argumentArray = safely(() -> sanitizeArguments(delegate.getArgumentArray()), null);
         this.mdcPropertyMap = safely(() -> sanitizeValues(delegate.getMDCPropertyMap()), Map.of());
         this.keyValuePairs = safely(() -> sanitizeKeyValuePairs(delegate.getKeyValuePairs()), List.of());
@@ -73,19 +72,6 @@ final class SanitizedLoggingEvent implements ILoggingEvent {
         } catch (RuntimeException | StackOverflowError failure) {
             return fallback;
         }
-    }
-
-    /**
-     * 정제한 예외 사본을 logback 의 {@link ThrowableProxy}로 다시 감싼다.
-     *
-     * <p>원본 예외가 없는 프록시(네트워크로 받은 {@code ThrowableProxyVO} 등)는 사본을 만들 수 없으므로 버린다.
-     * 이 앱의 이벤트는 모두 로거에서 바로 오므로 항상 {@link ThrowableProxy}를 갖는다.
-     */
-    private static IThrowableProxy sanitizeThrowable(IThrowableProxy proxy) {
-        if (!(proxy instanceof ThrowableProxy original)) {
-            return null;
-        }
-        return new ThrowableProxy(SanitizedThrowable.copyOf(original.getThrowable()));
     }
 
     /**

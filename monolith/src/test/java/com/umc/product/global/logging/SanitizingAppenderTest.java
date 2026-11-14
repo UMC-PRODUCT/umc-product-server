@@ -108,7 +108,7 @@ class SanitizingAppenderTest {
     }
 
     @Test
-    @DisplayName("예외 정제 후에도 스택트레이스와 클래스명이 원형을 유지한다")
+    @DisplayName("렌더링된 스택은 원래 클래스명과 정제된 메시지, 원래 프레임을 보여 준다")
     void 스택트레이스_보존() {
         IllegalStateException error = new IllegalStateException("email=" + PROBE_EMAIL);
 
