@@ -6,10 +6,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.Mockito.never;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -18,7 +18,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +39,6 @@ import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.application.port.out.SaveChatMessagePort;
-import com.umc.product.chat.domain.ChatMember;
 import com.umc.product.chat.domain.ChatMessage;
 import com.umc.product.chat.domain.ChatRoom;
 import com.umc.product.chat.domain.MessageContentType;
@@ -163,69 +161,55 @@ class ChatRoomLockRevalidationTest {
     }
 
     @Test
-    @DisplayName("send lock 동안 exact read는 멤버십 검증보다 room lock을 먼저 기다린다")
-    void sendAndRead_readWaitsAtRoomLockBeforeValidation() throws Exception {
-        AtomicInteger lockAttempt = new AtomicInteger();
-        AtomicReference<ChatMessage> storedMessage = new AtomicReference<>();
+    @DisplayName("읽음은 전송의 방 락을 기다리지 않으며 아직 조회되지 않는 메시지를 거부한다")
+    void sendAndRead_readRejectsUncommittedMessageWithoutWaitingForRoomLock() throws Exception {
+        // Given
         CountDownLatch sendAtMembership = new CountDownLatch(1);
         CountDownLatch allowSend = new CountDownLatch(1);
-        CountDownLatch sendCompleted = new CountDownLatch(1);
-        CompletableFuture<ReadSeam> observedReadSeam = new CompletableFuture<>();
         given(loadChatMemberPort.existsByRoomIdAndMemberId(any(Long.class), any(Long.class)))
             .willAnswer(invocation -> {
                 Long memberId = invocation.getArgument(1);
                 if (SENDER_ID.equals(memberId)) {
                     sendAtMembership.countDown();
                     await(allowSend, "send membership release");
-                } else if (sendCompleted.getCount() > 0L) {
-                    observedReadSeam.complete(ReadSeam.MEMBERSHIP_VALIDATION);
                 }
                 return true;
             });
-        willAnswer(invocation -> {
-            if (lockAttempt.incrementAndGet() > 1) {
-                observedReadSeam.complete(ReadSeam.ROOM_LOCK);
-                await(sendCompleted, "send completion");
-            }
-            return ChatRoom.create();
-        }).given(loadChatRoomPort).getByIdForUpdate(ROOM_ID);
+        given(loadChatRoomPort.getByIdForUpdate(ROOM_ID)).willReturn(ChatRoom.create());
+        given(loadChatRoomPort.getById(ROOM_ID)).willReturn(ChatRoom.create());
         given(saveChatMessagePort.save(any(ChatMessage.class))).willAnswer(invocation -> {
             ChatMessage message = invocation.getArgument(0);
             ReflectionTestUtils.setField(message, "id", MESSAGE_ID);
             ReflectionTestUtils.setField(message, "createdAt", Instant.parse("2026-07-18T00:00:00Z"));
-            storedMessage.set(message);
             return message;
         });
-        given(loadChatMessagePort.getByIdAndRoomId(MESSAGE_ID, ROOM_ID)).willAnswer(invocation -> {
-            ChatMessage message = storedMessage.get();
-            if (message == null) {
-                observedReadSeam.complete(ReadSeam.MESSAGE_VALIDATION);
-                throw new ChatDomainException(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND);
-            }
-            return message;
-        });
-        given(loadChatMemberPort.getByRoomIdAndMemberId(ROOM_ID, READER_ID))
-            .willReturn(ChatMember.of(ROOM_ID, READER_ID));
+        given(loadChatMessagePort.getByIdAndRoomId(MESSAGE_ID, ROOM_ID))
+            .willThrow(new ChatDomainException(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND));
 
-        Future<?> send = executor.submit(() -> {
-            try {
-                return sendService.send(text("read race"));
-            } finally {
-                sendCompleted.countDown();
-            }
-        });
+        Future<?> send = executor.submit(() -> sendService.send(text("read race")));
         await(sendAtMembership, "send membership validation");
+
+        // When
         Future<?> read = executor.submit(() -> readService.update(
             new UpdateChatReadCommand(ROOM_ID, READER_ID, MESSAGE_ID)
         ));
-        ReadSeam firstReadSeam = observedReadSeam.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        allowSend.countDown();
-
-        assertThat(firstReadSeam).isEqualTo(ReadSeam.ROOM_LOCK);
+        try {
+            // Then: 전송을 재개하기 전에 읽음 검증이 끝나야 한다.
+            ExecutionException failure = assertThrows(
+                ExecutionException.class,
+                () -> read.get(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            );
+            assertThat(failure.getCause())
+                .isInstanceOf(ChatDomainException.class)
+                .extracting(error -> ((ChatDomainException) error).getBaseCode())
+                .isEqualTo(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND);
+        } finally {
+            allowSend.countDown();
+        }
         send.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        read.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        assertThat(lockAttempt).hasValue(2);
-        then(saveChatMemberPort).should().bumpLastReadMessageId(ROOM_ID, READER_ID, MESSAGE_ID);
+        then(loadChatRoomPort).should().getByIdForUpdate(ROOM_ID);
+        then(loadChatRoomPort).should().getById(ROOM_ID);
+        then(saveChatMemberPort).should(never()).bumpLastReadMessageId(ROOM_ID, READER_ID, MESSAGE_ID);
     }
 
     private SendChatMessageCommand text(String content) {
@@ -238,9 +222,4 @@ class ChatRoomLockRevalidationTest {
         }
     }
 
-    private enum ReadSeam {
-        ROOM_LOCK,
-        MEMBERSHIP_VALIDATION,
-        MESSAGE_VALIDATION
-    }
 }

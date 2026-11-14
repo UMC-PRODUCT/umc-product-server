@@ -1,3 +1,6 @@
+import { runFixedSchedule } from "../../lib/chat/fixed-schedule.js";
+import { recordSchedule } from "../../lib/chat/schedule-metrics.js";
+
 export function repeatMessages(intervalMs) {
   return {
     async act({ target, run, sendMessage, pause, healthy }) {
@@ -19,5 +22,19 @@ export function receiveMessages() {
     // 측정 메시지는 보내지 않고 수신을 기다린다. 구독·완료 신호는 공통 실행부에서 처리한다.
     async act({ waitUntilEnd }) { await waitUntilEnd(); },
     checks: { "측정 메시지 수신 한 건 이상": (state) => state.received > 0 },
+  };
+}
+
+export function fixedMessages(offsetMs, userSlot) {
+  return {
+    async act({ target, config, run, sendMessage, pause, healthy }) {
+      return runFixedSchedule({ startAt: run.startAt, measureAt: run.measureAt, endAt: run.endAt,
+        intervalMs: config.intervalMs, offsetMs, maxInflight: config.maxInflight }, {
+        healthy,
+        send: (slot, phase) => sendMessage(target.rooms[slot % target.rooms.length], phase),
+        record: (sample) => recordSchedule(sample, { ...config.tags, phase: sample.phase, user_slot: userSlot }),
+      }, { now: () => Date.now(), pause });
+    },
+    checks: { "측정 메시지 ACK 한 건 이상": (state) => state.sent > 0 },
   };
 }

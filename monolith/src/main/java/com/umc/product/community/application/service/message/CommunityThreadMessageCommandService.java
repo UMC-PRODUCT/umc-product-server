@@ -204,7 +204,7 @@ public class CommunityThreadMessageCommandService implements
     public CommunityThreadReactionMutationInfo add(
         ChangeCommunityThreadMessageReactionCommand command
     ) {
-        CommunityThread thread = loadLockedThread(command.threadId());
+        CommunityThread thread = loadThread(command.threadId());
         loadActiveMember(thread.getId(), command.memberId());
         return toCommunityResult(reactionUseCase.add(toChatCommand(thread, command)));
     }
@@ -213,7 +213,7 @@ public class CommunityThreadMessageCommandService implements
     public CommunityThreadReactionMutationInfo remove(
         ChangeCommunityThreadMessageReactionCommand command
     ) {
-        CommunityThread thread = loadLockedThread(command.threadId());
+        CommunityThread thread = loadThread(command.threadId());
         loadActiveMember(thread.getId(), command.memberId());
         return toCommunityResult(reactionUseCase.remove(toChatCommand(thread, command)));
     }
@@ -245,6 +245,12 @@ public class CommunityThreadMessageCommandService implements
             result.lastReadMessageId(),
             result.deduplicated()
         );
+    }
+
+    private CommunityThread loadThread(Long threadId) {
+        return loadThreadPort.findById(threadId)
+            .filter(thread -> !thread.isDeleted())
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.THREAD_NOT_FOUND));
     }
 
     private CommunityThread loadLockedThread(Long threadId) {

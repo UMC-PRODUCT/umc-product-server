@@ -1,6 +1,6 @@
 import { getAccessToken } from "../auth.js";
 import { StompClient, StompError, StompTimeoutError } from "../stomp/stomp.js";
-import { recordAttempt, recordDuplicate, recordLatency } from "./chat-metrics.js";
+import { recordAttempt, recordTransmitted, recordDuplicate, recordLatency } from "./chat-metrics.js";
 
 const EVENTS = "/user/queue/community/threads/events";
 const ERRORS = "/user/queue/errors";
@@ -129,6 +129,7 @@ export class ChatClient {
         this.stomp.send(`/app/community/threads/${message.threadId}/messages`,
           { clientMessageId: message.clientMessageId, type: "TEXT", content: message.content },
           { "x-command-id": message.commandId });
+        if (message.measured) recordTransmitted(this.config.tags);
       } catch (error) {
         this.cancelMessage(message);
         await pending.catch(() => {});

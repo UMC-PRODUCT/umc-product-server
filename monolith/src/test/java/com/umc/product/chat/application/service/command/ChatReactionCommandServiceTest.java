@@ -57,7 +57,7 @@ class ChatReactionCommandServiceTest {
     ChatReactionCommandService sut;
 
     @Test
-    @DisplayName("room lock 아래에서 새 reaction을 추가하고 stable event를 발행한다")
+    @DisplayName("방과 참여자를 검증한 뒤 새 reaction을 추가하고 stable event를 발행한다")
     void add_fresh() {
         ChangeChatMessageReactionCommand command = command();
         ChatMessage message = message();
@@ -83,7 +83,7 @@ class ChatReactionCommandServiceTest {
             loadChatMessagePort,
             saveChatMessageReactionPort
         );
-        order.verify(loadChatRoomPort).getByIdForUpdate(1L);
+        order.verify(loadChatRoomPort).getById(1L);
         order.verify(chatRoomAccessPolicy).verifyMember(1L, 10L);
         order.verify(loadChatMessagePort).getByIdAndRoomId(100L, 1L);
         order.verify(saveChatMessageReactionPort).addIfAbsent(100L, 10L, "👍");

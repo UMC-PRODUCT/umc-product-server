@@ -48,7 +48,7 @@ public class ChatReactionCommandService implements ManageChatMessageReactionUseC
 
     private ChatReactionMutationResult change(ChangeChatMessageReactionCommand command, boolean add) {
         chatReactionPolicy.validate(command.emoji());
-        loadChatRoomPort.getByIdForUpdate(command.roomId());
+        loadChatRoomPort.getById(command.roomId());
         chatRoomAccessPolicy.verifyMember(command.roomId(), command.memberId());
         ChatMessage message = loadChatMessagePort.getByIdAndRoomId(command.messageId(), command.roomId());
         if (message.isDeleted() || message.getContentType().isServerGenerated()) {

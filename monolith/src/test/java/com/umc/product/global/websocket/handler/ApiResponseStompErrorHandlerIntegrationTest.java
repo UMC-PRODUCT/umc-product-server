@@ -49,6 +49,7 @@ import com.umc.product.authentication.domain.exception.AuthenticationDomainExcep
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.config.WebSocketMessageBrokerConfig;
 import com.umc.product.global.exception.constant.CommonErrorCode;
+import com.umc.product.global.observability.chat.ChatWebSocketMetrics;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.ParsedAccessToken;
 import com.umc.product.global.websocket.application.service.StompSubscriptionAuthorizerRegistry;
@@ -286,6 +287,7 @@ class ApiResponseStompErrorHandlerIntegrationTest {
     })
     @Import({
         WebSocketMessageBrokerConfig.class,
+        ChatWebSocketMetrics.class,
         ApiResponseStompErrorHandler.class,
         WebSocketErrorPublisher.class,
         StompSubscriptionAuthorizerRegistry.class,

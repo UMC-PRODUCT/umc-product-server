@@ -85,7 +85,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
-        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
             .willReturn(Optional.of(member));
         given(getChatMessageUseCase.getMessage(
@@ -129,7 +129,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         order.verify(getChatMessageRoomUseCase)
             .getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID));
         order.verify(loadCommunityThreadPort).findByChatRoomId(CHAT_ROOM_ID);
-        order.verify(loadCommunityThreadPort).findByIdForUpdate(THREAD_ID);
+        order.verify(loadCommunityThreadPort).findById(THREAD_ID);
         order.verify(loadCommunityThreadMemberPort)
             .findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID);
         order.verify(getChatMessageUseCase)
@@ -159,17 +159,17 @@ class CommunityThreadMessageReportCommandServiceTest {
     }
 
     @Test
-    @DisplayName("room reverse mapping 뒤 잠금 스레드의 chatRoomId가 다르면 멤버 검증 전에 THREAD_NOT_FOUND로 종료한다")
-    void report_잠금_스레드_room이_다르면_접근할수없다() {
+    @DisplayName("room reverse mapping 뒤 조회한 스레드의 chatRoomId가 다르면 멤버 검증 전에 THREAD_NOT_FOUND로 종료한다")
+    void report_조회한_스레드_room이_다르면_접근할수없다() {
         // given
         CommunityThread mappedThread = mock(CommunityThread.class);
         given(mappedThread.getId()).willReturn(THREAD_ID);
-        CommunityThread lockedThread = mock(CommunityThread.class);
-        given(lockedThread.getChatRoomId()).willReturn(99L);
+        CommunityThread reloadedThread = mock(CommunityThread.class);
+        given(reloadedThread.getChatRoomId()).willReturn(99L);
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(mappedThread));
-        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(lockedThread));
+        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(reloadedThread));
 
         // when & then
         assertThatThrownBy(() -> sut.report(command()))
@@ -183,18 +183,18 @@ class CommunityThreadMessageReportCommandServiceTest {
     }
 
     @Test
-    @DisplayName("room reverse mapping 뒤 잠금 스레드가 삭제되면 멤버 검증 전에 THREAD_NOT_FOUND로 종료한다")
-    void report_잠금_스레드가_삭제되면_접근할수없다() {
+    @DisplayName("room reverse mapping 뒤 조회한 스레드가 삭제되면 멤버 검증 전에 THREAD_NOT_FOUND로 종료한다")
+    void report_조회한_스레드가_삭제되면_접근할수없다() {
         // given
         CommunityThread mappedThread = mock(CommunityThread.class);
         given(mappedThread.getId()).willReturn(THREAD_ID);
-        CommunityThread lockedThread = mock(CommunityThread.class);
-        given(lockedThread.getChatRoomId()).willReturn(CHAT_ROOM_ID);
-        given(lockedThread.isDeleted()).willReturn(true);
+        CommunityThread reloadedThread = mock(CommunityThread.class);
+        given(reloadedThread.getChatRoomId()).willReturn(CHAT_ROOM_ID);
+        given(reloadedThread.isDeleted()).willReturn(true);
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(mappedThread));
-        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(lockedThread));
+        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(reloadedThread));
 
         // when & then
         assertThatThrownBy(() -> sut.report(command()))
@@ -215,7 +215,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
-        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
             .willReturn(Optional.empty());
 
@@ -239,7 +239,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
-        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
             .willReturn(Optional.of(inactiveMember));
 
@@ -262,7 +262,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
-        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
             .willReturn(Optional.of(member));
         given(getChatMessageUseCase.getMessage(
@@ -288,7 +288,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
-        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
             .willReturn(Optional.of(member));
         given(getChatMessageUseCase.getMessage(
@@ -347,7 +347,7 @@ class CommunityThreadMessageReportCommandServiceTest {
         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
             .willReturn(CHAT_ROOM_ID);
         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
-        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
             .willReturn(Optional.of(member));
         given(getChatMessageUseCase.getMessage(
