@@ -1,6 +1,7 @@
 package com.umc.product.global.security;
 
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -27,6 +28,11 @@ public class CurrentMemberProvider {
             return principal;
         }
         return null;
+    }
+
+    public boolean hasNoAuthentication() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication == null || authentication instanceof AnonymousAuthenticationToken;
     }
 
     public Long getNullableCurrentMemberId() {

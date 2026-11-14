@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -26,7 +27,9 @@ import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.response.ApiErrorResponseFactory;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.code.BaseCode;
+import com.umc.product.global.security.ApiAuthenticationEntryPoint;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +51,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("[ACCESS DENIED] {}", e.getMessage());
 
         return buildResponse(e, CommonErrorCode.FORBIDDEN, HttpHeaders.EMPTY, request, null);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Object> handleAuthenticationException(
+        AuthenticationException e,
+        HttpServletRequest servletRequest,
+        WebRequest request
+    ) {
+        BaseCode errorCode = ApiAuthenticationEntryPoint.resolveErrorCode(servletRequest, e);
+        log.warn("[AUTHENTICATION FAILED] URI: {}, ErrorCode: {}", servletRequest.getRequestURI(), errorCode.getCode());
+
+        return buildResponse(e, errorCode, HttpHeaders.EMPTY, request, null);
     }
 
     /**
