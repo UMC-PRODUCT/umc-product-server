@@ -464,6 +464,9 @@ app:
       min-phase-interval-minutes: ${PROJECT_MATCHING_ROUND_MIN_PHASE_INTERVAL_MINUTES:1}
       # 자동 선발 스케줄러가 decisionDeadline 이후 대기하는 buffer. 환경변수 단위는 minute.
       deadline-buffer-minutes: ${PROJECT_MATCHING_ROUND_DEADLINE_BUFFER_MINUTES:1}
+    quota-edit:
+      # 중앙과 합의한 TO 배정 기간 임시 연장. 2026-11-13 12:00 KST 이후 제거한다.
+      open-until: ${PROJECT_QUOTA_EDIT_OPEN_UNTIL:2026-11-13T12:00:00+09:00}
 
   super-admin:
     # true 면 SUPER_ADMIN 이 DRAFT 프로젝트/지원서 단건을 조회할 수 있다. 초기 배포 모니터링용으로만 켜고 안정화 후 끈다.

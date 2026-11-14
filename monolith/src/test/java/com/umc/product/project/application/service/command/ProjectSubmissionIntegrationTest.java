@@ -33,14 +33,12 @@ import com.umc.product.support.fixture.ProjectDraftFixture;
 import com.umc.product.support.fixture.ProjectManagementPermissionFixture;
 import com.umc.product.support.fixture.ProjectManualMatchingFixture;
 import com.umc.product.support.fixture.ProjectManualMatchingFixture.Scenario;
-import com.umc.product.support.fixture.ProjectQuotaManagementFixture;
 
 @AutoConfigureMockMvc(addFilters = false)
 class ProjectSubmissionIntegrationTest extends IntegrationTestSupport {
     @Autowired ProjectManualMatchingFixture projects;
     @Autowired ProjectManagementPermissionFixture permissions;
     @Autowired ProjectDraftFixture drafts;
-    @Autowired ProjectQuotaManagementFixture quotas;
     @Autowired EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
     @Autowired JdbcTemplate jdbc;
     private Scenario scenario;
@@ -48,7 +46,6 @@ class ProjectSubmissionIntegrationTest extends IntegrationTestSupport {
     @BeforeEach
     void 등록할_지부와_인원을_준비한다() {
         scenario = projects.준비();
-        quotas.정원(scenario.projectId(), ChallengerPart.DESIGN, 0);
     }
 
     @AfterEach
@@ -190,14 +187,23 @@ class ProjectSubmissionIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 공개되는_프로젝트까지_합쳐_지부_TO_상한을_초과하면_전체_롤백한다() throws Exception {
+    void 공개되는_프로젝트까지_합친_TO가_지부_파트_인원을_넘어도_공개한다() throws Exception {
         // given
         Long id = prepare(scenario.staffId(), scenario.ownerId());
         quota(id, 2).andExpect(status().isOk());
+        Long designMembers = jdbc.queryForObject(
+            "SELECT count(*) FROM challenger WHERE gisu_id=? AND part='DESIGN'", Long.class, scenario.gisuId());
+        Long designQuota = jdbc.queryForObject(
+            "SELECT sum(quota) FROM project_part_quota WHERE part='DESIGN' AND project_id IN (?, ?)",
+            Long.class, scenario.projectId(), id);
+        assertThat(designMembers).isLessThan(designQuota);
 
-        // when & then
-        submit(id).andExpect(status().isConflict());
-        assertDraft(id);
+        // when
+        submit(id).andExpect(status().isOk()).andExpect(jsonPath("$.result.status").value("IN_PROGRESS"));
+
+        // then
+        assertThat(projectStatus(id)).isEqualTo("IN_PROGRESS");
+        assertThat(formStatus(id)).isEqualTo("PUBLISHED");
     }
 
     @Test
