@@ -20,6 +20,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
+import ch.qos.logback.classic.spi.ThrowableProxy;
 
 /**
  * 민감정보가 제거된 값을 돌려주는 {@link ILoggingEvent} 읽기 전용 데코레이터다.
@@ -46,7 +47,13 @@ final class SanitizedLoggingEvent implements ILoggingEvent {
         this.message = safely(() -> ObservabilityErrorSanitizer.sanitizeMessage(delegate.getMessage()), null);
         this.formattedMessage =
             safely(() -> ObservabilityErrorSanitizer.sanitizeMessage(delegate.getFormattedMessage()), null);
-        this.throwableProxy = safely(() -> SanitizedThrowable.proxyOf(delegate.getThrowableProxy()), null);
+        // 원본 예외가 없는 프록시(ThrowableProxyVO 등)는 정제할 사본을 만들 수 없어 버린다.
+        this.throwableProxy = safely(
+            () -> delegate.getThrowableProxy() instanceof ThrowableProxy original
+                ? SanitizedThrowable.proxyOf(original)
+                : null,
+            null
+        );
         this.argumentArray = safely(() -> sanitizeArguments(delegate.getArgumentArray()), null);
         this.mdcPropertyMap = safely(() -> sanitizeValues(delegate.getMDCPropertyMap()), Map.of());
         this.keyValuePairs = safely(() -> sanitizeKeyValuePairs(delegate.getKeyValuePairs()), List.of());

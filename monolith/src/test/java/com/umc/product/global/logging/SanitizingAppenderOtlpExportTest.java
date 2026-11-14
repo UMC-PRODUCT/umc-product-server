@@ -22,9 +22,6 @@ import io.opentelemetry.sdk.logs.SdkLoggerProviderBuilder;
 import io.opentelemetry.sdk.logs.export.SimpleLogRecordProcessor;
 import io.opentelemetry.sdk.testing.exporter.InMemoryLogRecordExporter;
 
-/**
- * 운영과 같은 배선(SanitizingAppender → OpenTelemetryAppender)으로 Loki 에 실리는 로그 레코드를 검증한다.
- */
 class SanitizingAppenderOtlpExportTest {
 
     private static final String PROBE_EMAIL = "log-probe@example.invalid";
