@@ -31,6 +31,8 @@
 - GraphQL failures use `GraphQlExceptionAdvice`; do not assume MVC advice covers GraphQL resolver errors.
 - Public APIs should use `@Public`; avoid duplicating permitAll paths by hand unless `SecurityPathConfig` is the intended source.
 - Request-member access should use `@CurrentMember`, not direct `SecurityContextHolder` reads in controllers.
+- In REST controllers `@CurrentMember` requires a member: no authentication returns 401 and a non-member authentication (demoday guest) returns 403. Only `@Public` handlers that serve anonymous callers use `@CurrentMember(required = false)`. GraphQL resolves it through Spring GraphQL, which ignores `required`, so GraphQL parameters stay `@Nullable` and check login in the body.
+- A path variable on a `@Public` route must not cover a sibling route, so constrain its format (for example `{projectId:\d+}`). `PublicEndpointRulesIntegrationTest` checks both rules.
 - New cross-cutting configuration belongs in `global/config`; domain-specific config stays inside the domain package.
 - Client classification belongs in `global/client`; domain code should consume the resolved context instead of reparsing headers.
 - `BaseEntity` provides `createdAt` and `updatedAt` only. Do not move domain IDs or domain state into it.

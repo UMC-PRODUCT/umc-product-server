@@ -16,7 +16,7 @@ import com.umc.product.test.domain.roster.RosterKey;
 
 /**
  * 파트마다 합계는 시딩 프로젝트 수가 n일 때 {@code floor(인원 × n / (n + reserveSlots))}다. 나머지 몫은 QA가
- * QA 프로젝트와 직접 등록 프로젝트에 TO를 넣을 자리라, QA가 그 TO를 넣어도 지부 TO 상한(PROJECT-0251)에 걸리지 않는다.
+ * QA 프로젝트와 직접 등록 프로젝트에 TO를 넣을 자리다.
  */
 public final class QuotaApportionment {
 

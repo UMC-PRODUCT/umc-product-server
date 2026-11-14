@@ -78,6 +78,9 @@ logging:
 
 app:
   base-url: http://localhost:8080
+  project:
+    quota-edit:
+      open-until: ""
   websocket:
     broker:
       mode: simple

@@ -4,8 +4,10 @@ import java.util.List;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.command.dto.SaveProjectQuotaManagementCommand;
+import com.umc.product.project.domain.ProjectPartQuota;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -21,7 +23,10 @@ public record SaveProjectQuotaManagementRequest(
         @NotEmpty @Size(max = 10) List<@NotNull @Valid CellChange> entries
     ) {
     }
-    public record CellChange(@NotNull ChallengerPart part, @NotNull @PositiveOrZero Long quota) {
+    public record CellChange(
+        @NotNull ChallengerPart part,
+        @NotNull @PositiveOrZero @Max(ProjectPartQuota.MAX_QUOTA) Long quota
+    ) {
     }
 
     public SaveProjectQuotaManagementCommand toCommand(Long requesterId) {

@@ -61,7 +61,7 @@ public class BlogInteractionController {
     public BlogLikeResponse getContentLike(
         @PathVariable String type,
         @PathVariable String slug,
-        @CurrentMember MemberPrincipal memberPrincipal
+        @CurrentMember(required = false) MemberPrincipal memberPrincipal
     ) {
         Long viewerMemberId = getNullableMemberId(memberPrincipal);
         return BlogLikeResponse.from(
@@ -90,7 +90,7 @@ public class BlogInteractionController {
         @RequestParam(required = false) Long cursor,
         @RequestParam(defaultValue = "20") int size,
         @RequestParam(defaultValue = "createdAt,desc") String sort,
-        @CurrentMember MemberPrincipal memberPrincipal
+        @CurrentMember(required = false) MemberPrincipal memberPrincipal
     ) {
         BlogCommentCursorInfo info = getBlogCommentListUseCase.getComments(
             BlogCommentListQuery.of(type, slug, cursor, size, sort, getNullableMemberId(memberPrincipal))
@@ -109,7 +109,7 @@ public class BlogInteractionController {
         @PathVariable String type,
         @PathVariable String slug,
         @Valid @RequestBody CreateBlogCommentRequest request,
-        @CurrentMember MemberPrincipal memberPrincipal
+        @CurrentMember(required = false) MemberPrincipal memberPrincipal
     ) {
         return BlogCommentResponse.from(
             createBlogCommentUseCase.create(request.toCommand(type, slug, getNullableMemberId(memberPrincipal)))
