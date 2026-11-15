@@ -43,6 +43,14 @@
 |---:|---|---|---|
 | [24](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerQueryControllerTest.java#L24) | 챌린저 단건 정보를 조회한다 | HTTP GET /api/v1/challenger/{challengerId} | 성공: HTTP 200 OK |
 
+### ChallengerAdminQueryV2ControllerTest
+
+- 위치: `monolith/src/test/java/com/umc/product/challenger/adapter/in/web/v2/ChallengerAdminQueryV2ControllerTest.java`
+
+| 테스트 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 관리자용 챌린저 상세 정보를 조회한다 | HTTP GET /api/v2/challenger/admin/{challengerId} | 성공: HTTP 200 OK |
+
 ### ChallengerRecordControllerTest
 - 테스트 설명: ChallengerRecordController
 - 위치: `monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerRecordControllerTest.java`

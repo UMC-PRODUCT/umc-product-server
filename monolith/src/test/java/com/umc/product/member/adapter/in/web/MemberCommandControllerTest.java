@@ -144,6 +144,77 @@ class MemberCommandControllerTest {
     }
 
     @Test
+    @DisplayName("이메일 회원가입은 6자 이름을 거절한다")
+    void 이메일_회원가입은_6자_이름을_거절한다() throws Exception {
+        mockMvc.perform(post("/api/v1/member/register/email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "rawPassword": "Password123!",
+                      "name": "가나다라마바",
+                      "nickname": "길동",
+                      "emailVerificationToken": "email-token",
+                      "schoolId": 1,
+                      "termsAgreements": [
+                        {"termsId": 10, "isAgreed": true}
+                      ]
+                    }
+                    """))
+            .andExpect(status().isBadRequest());
+
+        then(registerEmailMemberUseCase).should(never()).register(any());
+    }
+
+    @Test
+    @DisplayName("OAuth 회원가입은 6자 이름을 거절한다")
+    void OAuth_회원가입은_6자_이름을_거절한다() throws Exception {
+        mockMvc.perform(post("/api/v1/member/register/oauth")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "oAuthVerificationToken": "oauth-token",
+                      "name": "가나다라마바",
+                      "nickname": "길동",
+                      "emailVerificationToken": "email-token",
+                      "schoolId": 1,
+                      "termsAgreements": [
+                        {"termsId": 10, "isAgreed": true}
+                      ]
+                    }
+                    """))
+            .andExpect(status().isBadRequest());
+
+        then(registerOAuthMemberUseCase).should(never()).register(any());
+    }
+
+    @Test
+    @DisplayName("기존 4자 초과 닉네임은 수료 재가입 판정을 위해 UseCase로 전달한다")
+    void 기존_4자_초과_닉네임을_UseCase로_전달한다() throws Exception {
+        given(jwtTokenProvider.parseEmailVerificationToken(any(), any())).willReturn("legacy@example.com");
+        given(registerEmailMemberUseCase.register(any(EmailRegisterMemberCommand.class))).willReturn(100L);
+        given(manageAuthenticationUseCase.issueTokens(any()))
+            .willReturn(NewTokens.builder().accessToken("access-token").refreshToken("refresh-token").build());
+
+        mockMvc.perform(post("/api/v1/member/register/email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "rawPassword": "Password123!",
+                      "name": "홍길동",
+                      "nickname": "기존긴닉네임",
+                      "emailVerificationToken": "email-token",
+                      "schoolId": 1,
+                      "termsAgreements": [
+                        {"termsId": 10, "isAgreed": true}
+                      ]
+                    }
+                    """))
+            .andExpect(status().isOk());
+
+        then(registerEmailMemberUseCase).should().register(any(EmailRegisterMemberCommand.class));
+    }
+
+    @Test
     @DisplayName("내 회원 정보 수정은 로그인 회원 ID로 UseCase를 호출한다")
     void 내_회원_정보_수정은_로그인_회원_ID로_UseCase를_호출한다() throws Exception {
         given(assembler.fromMemberId(TEST_MEMBER_ID)).willReturn(MemberInfoResponse.builder()

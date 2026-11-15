@@ -34,7 +34,7 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 30) // 한글 10자까지 고려
     private String name;
 
-    @Column(nullable = false, length = 20) // 회원가입 입력은 한글 1~6자
+    @Column(nullable = false, length = 20) // 회원가입 입력은 한글 1~4자
     private String nickname;
 
     @Column(nullable = false, length = 100, unique = true)
@@ -80,18 +80,6 @@ public class Member extends BaseEntity {
             .schoolId(schoolId)
             .profileImageId(profileImageId)
             .build();
-    }
-
-    // Domain Logic: 프로필 업데이트
-    public void updateProfile(String nickname, String profileImageId) {
-        validateActive();
-        if (nickname != null) {
-            this.nickname = nickname;
-        }
-
-        if (profileImageId != null) {
-            this.profileImageId = profileImageId;
-        }
     }
 
     public void updateProfile(String profileImageId) {

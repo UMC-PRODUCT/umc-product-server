@@ -160,6 +160,31 @@ class ChallengerQueryPermissionIntegrationTest extends IntegrationTestSupport {
             .andExpect(status().isOk());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "super-admin-token",
+        "central-token",
+        "same-school-core-token",
+        "chapter-president-token",
+        "school-part-leader-token",
+        "school-etc-admin-token"
+    })
+    @DisplayName("권한 범위 안의 운영진은 관리자용 챌린저 상세를 조회한다")
+    void authorizedStaffCanReadAdminChallengerDetail(String token) throws Exception {
+        mockMvc.perform(get("/api/v2/challenger/admin/{challengerId}", targetChallengerId)
+                .header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"general-token", "other-school-core-token", "other-gisu-central-token"})
+    @DisplayName("권한이 없거나 범위 밖인 계정은 관리자용 챌린저 상세를 조회할 수 없다")
+    void unauthorizedOrOutOfScopeMemberCannotReadAdminChallengerDetail(String token) throws Exception {
+        mockMvc.perform(get("/api/v2/challenger/admin/{challengerId}", targetChallengerId)
+                .header("Authorization", "Bearer " + token))
+            .andExpect(status().isForbidden());
+    }
+
     private Long saveMember(String name, Long schoolId) {
         return saveMemberPort.save(Member.create(name, name, name + "@test.com", schoolId, null)).getId();
     }

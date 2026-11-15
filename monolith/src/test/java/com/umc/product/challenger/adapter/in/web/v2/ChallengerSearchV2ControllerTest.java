@@ -64,7 +64,7 @@ class ChallengerSearchV2ControllerTest {
     @Test
     @DisplayName("챌린저 검색 v2 응답은 이메일을 마스킹한다")
     void 챌린저_검색_v2_응답은_이메일을_마스킹한다() throws Exception {
-        given(searchMemberUseCase.searchChallengersByV2WithScope(any(), any(), any()))
+        given(searchMemberUseCase.searchChallengersByV2(any(), any(), any()))
             .willReturn(new ChallengerSearchV2Result(
                 new PageImpl<>(
                     List.of(new ChallengerSearchItemV2Info(
@@ -87,7 +87,7 @@ class ChallengerSearchV2ControllerTest {
     @Test
     @DisplayName("챌린저 검색 v2는 현재 로그인 memberId를 별도 인자로 전달한다")
     void 챌린저_검색_v2는_현재_로그인_memberId를_별도_인자로_전달한다() throws Exception {
-        given(searchMemberUseCase.searchChallengersByV2WithScope(any(), any(), any()))
+        given(searchMemberUseCase.searchChallengersByV2(any(), any(), any()))
             .willReturn(new ChallengerSearchV2Result(
                 new PageImpl<>(List.of(), PageRequest.of(0, 10), 0)
             ));
@@ -97,13 +97,13 @@ class ChallengerSearchV2ControllerTest {
                 .param("size", "10"))
             .andExpect(status().isOk());
 
-        then(searchMemberUseCase).should().searchChallengersByV2WithScope(any(), eq(99L), any());
+        then(searchMemberUseCase).should().searchChallengersByV2(any(), eq(99L), any());
     }
 
     @Test
     @DisplayName("챌린저 검색 v2의 기본 페이지 크기는 10이다")
     void 챌린저_검색_v2의_기본_페이지_크기는_10이다() throws Exception {
-        given(searchMemberUseCase.searchChallengersByV2WithScope(any(), any(), any()))
+        given(searchMemberUseCase.searchChallengersByV2(any(), any(), any()))
             .willReturn(new ChallengerSearchV2Result(
                 new PageImpl<>(List.of(), PageRequest.of(0, 10), 0)
             ));
@@ -111,7 +111,7 @@ class ChallengerSearchV2ControllerTest {
         mockMvc.perform(get("/api/v2/challenger/search"))
             .andExpect(status().isOk());
 
-        then(searchMemberUseCase).should().searchChallengersByV2WithScope(
+        then(searchMemberUseCase).should().searchChallengersByV2(
             any(),
             eq(99L),
             argThat(pageable -> pageable.getPageNumber() == 0 && pageable.getPageSize() == 10)
@@ -119,15 +119,15 @@ class ChallengerSearchV2ControllerTest {
     }
 
     @Test
-    @DisplayName("챌린저 검색 v2 권한이 없으면 403을 반환한다")
-    void 챌린저_검색_v2_권한이_없으면_403을_반환한다() throws Exception {
-        given(searchMemberUseCase.searchChallengersByV2WithScope(any(), any(), any()))
-            .willThrow(new MemberDomainException(MemberErrorCode.CHALLENGER_MANAGEMENT_SEARCH_ACCESS_DENIED));
+    @DisplayName("챌린저 기록이 없으면 챌린저 검색 v2는 403을 반환한다")
+    void 챌린저_기록이_없으면_챌린저_검색_v2는_403을_반환한다() throws Exception {
+        given(searchMemberUseCase.searchChallengersByV2(any(), any(), any()))
+            .willThrow(new MemberDomainException(MemberErrorCode.MEMBER_SEARCH_ACCESS_DENIED));
 
         mockMvc.perform(get("/api/v2/challenger/search")
                 .param("page", "0")
                 .param("size", "10"))
             .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.code").value("MEMBER-0015"));
+            .andExpect(jsonPath("$.code").value("MEMBER-0014"));
     }
 }

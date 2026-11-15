@@ -45,7 +45,7 @@ class QaAccountWriter {
         boolean changed = false;
         if (memberId == null) {
             memberId = createSeedMemberUseCase.create(CreateSeedMemberCommand.of(
-                account.displayName(), account.displayName(), schoolId, account.email(), null)).memberId();
+                account.memberName(), account.nickname(), schoolId, account.email(), null)).memberId();
             changed = true;
         }
         for (Enrollment enrollment : account.enrollments()) {
