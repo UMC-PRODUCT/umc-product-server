@@ -3,6 +3,9 @@ package com.umc.product.member.application.service;
 import org.springframework.stereotype.Component;
 
 import com.umc.product.authorization.application.port.in.query.CheckChallengerAuthorityUseCase;
+import com.umc.product.authorization.application.port.in.query.ListChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.CheckMemberExistenceUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -21,6 +24,7 @@ public class AdminChallengerSearchScopePolicy {
 
     private final CheckMemberExistenceUseCase checkMemberExistenceUseCase;
     private final CheckChallengerAuthorityUseCase checkChallengerAuthorityUseCase;
+    private final ListChallengerRoleUseCase listChallengerRoleUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final GetChapterUseCase getChapterUseCase;
@@ -41,6 +45,16 @@ public class AdminChallengerSearchScopePolicy {
         if (checkChallengerAuthorityUseCase.isCentralMemberInGisu(memberId, gisuId)) {
             return withScope(query, gisuId, query.chapterId(), query.schoolId());
         }
+        Long chapterPresidentChapterId = listChallengerRoleUseCase.listByMemberIdAndGisuId(memberId, gisuId)
+            .stream()
+            .filter(role -> role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT)
+            .map(ChallengerRoleInfo::organizationId)
+            .findFirst()
+            .orElse(null);
+        if (chapterPresidentChapterId != null) {
+            validateChapterScope(query, gisuId, chapterPresidentChapterId);
+            return withScope(query, gisuId, chapterPresidentChapterId, query.schoolId());
+        }
         MemberInfo member = getMemberUseCase.getById(memberId);
         Long schoolId = member.schoolId();
         if (schoolId == null) {
@@ -49,11 +63,6 @@ public class AdminChallengerSearchScopePolicy {
         Long chapterId = getChapterUseCase.findByGisuAndSchool(gisuId, schoolId)
             .map(chapter -> chapter.id())
             .orElseThrow(this::accessDenied);
-
-        if (checkChallengerAuthorityUseCase.isChapterPresidentInGisu(memberId, gisuId, chapterId)) {
-            validateChapterScope(query, gisuId, chapterId);
-            return withScope(query, gisuId, chapterId, query.schoolId());
-        }
 
         if (!checkChallengerAuthorityUseCase.isSchoolAdminInGisu(memberId, gisuId, schoolId)
             || query.schoolId() != null && !query.schoolId().equals(schoolId)) {

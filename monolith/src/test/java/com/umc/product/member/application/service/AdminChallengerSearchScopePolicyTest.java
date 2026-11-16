@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.umc.product.authorization.application.port.in.query.CheckChallengerAuthorityUseCase;
+import com.umc.product.authorization.application.port.in.query.ListChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.member.application.port.in.query.CheckMemberExistenceUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -31,6 +36,7 @@ class AdminChallengerSearchScopePolicyTest {
 
     @Mock CheckMemberExistenceUseCase checkMemberExistenceUseCase;
     @Mock CheckChallengerAuthorityUseCase checkChallengerAuthorityUseCase;
+    @Mock ListChallengerRoleUseCase listChallengerRoleUseCase;
     @Mock GetMemberUseCase getMemberUseCase;
     @Mock GetGisuUseCase getGisuUseCase;
     @Mock GetChapterUseCase getChapterUseCase;
@@ -147,10 +153,8 @@ class AdminChallengerSearchScopePolicyTest {
     void 지부장은_대상_기수의_본인_지부로_검색_범위를_제한한다() {
         // given
         given(checkMemberExistenceUseCase.existsById(1L)).willReturn(true);
-        given(getMemberUseCase.getById(1L)).willReturn(MemberInfo.builder().schoolId(10L).build());
-        given(getChapterUseCase.findByGisuAndSchool(11L, 10L))
-            .willReturn(Optional.of(new ChapterInfo(3L, "서울")));
-        given(checkChallengerAuthorityUseCase.isChapterPresidentInGisu(1L, 11L, 3L)).willReturn(true);
+        given(listChallengerRoleUseCase.listByMemberIdAndGisuId(1L, 11L))
+            .willReturn(List.of(chapterPresidentRole(3L)));
 
         // when
         SearchMemberQuery result = policy.scope(new SearchMemberQuery("검색어", 11L,
@@ -159,18 +163,17 @@ class AdminChallengerSearchScopePolicyTest {
         // then
         assertThat(result).isEqualTo(new SearchMemberQuery("검색어", 11L,
             ChallengerPart.WEB, 3L, null));
+        verifyNoInteractions(getMemberUseCase);
     }
 
     @Test
     void 지부장은_본인_지부에_속한_학교를_필터링할_수_있다() {
         // given
         given(checkMemberExistenceUseCase.existsById(1L)).willReturn(true);
-        given(getMemberUseCase.getById(1L)).willReturn(MemberInfo.builder().schoolId(10L).build());
-        given(getChapterUseCase.findByGisuAndSchool(11L, 10L))
-            .willReturn(Optional.of(new ChapterInfo(3L, "서울")));
+        given(listChallengerRoleUseCase.listByMemberIdAndGisuId(1L, 11L))
+            .willReturn(List.of(chapterPresidentRole(3L)));
         given(getChapterUseCase.findByGisuAndSchool(11L, 20L))
             .willReturn(Optional.of(new ChapterInfo(3L, "서울")));
-        given(checkChallengerAuthorityUseCase.isChapterPresidentInGisu(1L, 11L, 3L)).willReturn(true);
 
         // when
         SearchMemberQuery result = policy.scope(new SearchMemberQuery("검색어", 11L,
@@ -185,12 +188,10 @@ class AdminChallengerSearchScopePolicyTest {
     void 지부장이_다른_지부의_학교를_지정하면_거부한다() {
         // given
         given(checkMemberExistenceUseCase.existsById(1L)).willReturn(true);
-        given(getMemberUseCase.getById(1L)).willReturn(MemberInfo.builder().schoolId(10L).build());
-        given(getChapterUseCase.findByGisuAndSchool(11L, 10L))
-            .willReturn(Optional.of(new ChapterInfo(3L, "서울")));
+        given(listChallengerRoleUseCase.listByMemberIdAndGisuId(1L, 11L))
+            .willReturn(List.of(chapterPresidentRole(3L)));
         given(getChapterUseCase.findByGisuAndSchool(11L, 20L))
             .willReturn(Optional.of(new ChapterInfo(4L, "경기")));
-        given(checkChallengerAuthorityUseCase.isChapterPresidentInGisu(1L, 11L, 3L)).willReturn(true);
 
         // when & then
         assertThatThrownBy(() -> policy.scope(new SearchMemberQuery("검색어", 11L,
@@ -202,10 +203,8 @@ class AdminChallengerSearchScopePolicyTest {
     void 지부장이_다른_지부_필터를_지정하면_거부한다() {
         // given
         given(checkMemberExistenceUseCase.existsById(1L)).willReturn(true);
-        given(getMemberUseCase.getById(1L)).willReturn(MemberInfo.builder().schoolId(10L).build());
-        given(getChapterUseCase.findByGisuAndSchool(11L, 10L))
-            .willReturn(Optional.of(new ChapterInfo(3L, "서울")));
-        given(checkChallengerAuthorityUseCase.isChapterPresidentInGisu(1L, 11L, 3L)).willReturn(true);
+        given(listChallengerRoleUseCase.listByMemberIdAndGisuId(1L, 11L))
+            .willReturn(List.of(chapterPresidentRole(3L)));
 
         // when & then
         assertAccessDenied(() -> policy.scope(new SearchMemberQuery("검색어", 11L,
@@ -243,6 +242,15 @@ class AdminChallengerSearchScopePolicyTest {
 
     private SearchMemberQuery query(Long gisuId, Long schoolId) {
         return new SearchMemberQuery("검색어", gisuId, ChallengerPart.WEB, 3L, schoolId);
+    }
+
+    private ChallengerRoleInfo chapterPresidentRole(Long chapterId) {
+        return ChallengerRoleInfo.builder()
+            .roleType(ChallengerRoleType.CHAPTER_PRESIDENT)
+            .organizationType(OrganizationType.CHAPTER)
+            .organizationId(chapterId)
+            .gisuId(11L)
+            .build();
     }
 
     private void assertAccessDenied(org.assertj.core.api.ThrowableAssert.ThrowingCallable callable) {
