@@ -7535,7 +7535,7 @@
       "name": "CHALLENGER_MANAGEMENT_SEARCH_ACCESS_DENIED",
       "httpStatus": 403,
       "httpStatusName": "FORBIDDEN",
-      "message": "챌린저 검색 권한이 없어요. 검색 기수와 학교 범위를 확인해주세요.",
+      "message": "챌린저 검색 권한이 없어요. 검색 기수와 소속 범위를 확인해주세요.",
       "description": null,
       "clientAction": null,
       "retryable": null,
