@@ -1,6 +1,8 @@
 package com.umc.product.challenger.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,22 @@ class ChallengerDeactivationQueryServiceTest {
 
     @InjectMocks
     ChallengerDeactivationQueryService sut;
+
+    @Test
+    @DisplayName("탈부 근거에 연결된 이미지인지 확인한다")
+    void checkImageInUse() {
+        given(loadChallengerDeactivationPort.existsByImageId("image-id")).willReturn(true);
+
+        assertThat(sut.isImageInUse("image-id")).isTrue();
+    }
+
+    @Test
+    @DisplayName("이미지 ID가 없으면 저장소를 조회하지 않는다")
+    void doNotQueryNullImageId() {
+        assertThat(sut.isImageInUse(null)).isFalse();
+
+        then(loadChallengerDeactivationPort).shouldHaveNoInteractions();
+    }
 
     @Test
     @DisplayName("자진 탈부와 타의 탈부 사유를 화면 표시 순서대로 조회한다")

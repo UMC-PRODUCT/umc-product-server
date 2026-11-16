@@ -1,13 +1,13 @@
 # Challenger 테스트 케이스
 
-- 테스트 파일: 17개
-- 테스트 케이스: 75개
+- 테스트 파일: 21개
+- 테스트 케이스: 83개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
 |---|---:|
-| Controller / Inbound Adapter | 18 |
-| UseCase / Application Service | 27 |
+| Controller / Inbound Adapter | 23 |
+| UseCase / Application Service | 30 |
 | Repository / Outbound Persistence | 2 |
 | E2E / Integration | 3 |
 | Domain | 25 |
@@ -61,6 +61,14 @@
 | 현재 로그인한 운영진으로 탈부를 등록한다 | HTTP POST /api/v1/challenger/admin/{challengerId}/deactivations | 성공: HTTP 201 Created, 탈부 기록 ID 반환 |
 | 사진이 5장을 초과하면 400을 반환한다 | imageIds 6개 | 실패: HTTP 400 Bad Request |
 
+### ChallengerDeactivationQueryControllerTest
+
+- 위치: `monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerDeactivationQueryControllerTest.java`
+
+| 테스트 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 자진 탈부와 타의 탈부 사유 목록을 조회한다 | HTTP GET /api/v1/challenger/admin/deactivations/reasons | 성공: HTTP 200 OK, 유형별 사유와 상세 입력 필수 여부 반환 |
+
 ### ChallengerRecordControllerTest
 - 테스트 설명: ChallengerRecordController
 - 위치: `monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerRecordControllerTest.java`
@@ -80,6 +88,16 @@
 |---:|---|---|---|
 | [35](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerSearchControllerTest.java#L35) | 커서 검색 size는 최대 50으로 제한된다 | HTTP GET /api/v1/challenger/search/cursor; param size="100" | 성공: HTTP 200 OK |
 | [60](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerSearchControllerTest.java#L60) | ChallengerSearchController / offset 검색 결과를 반환한다 | HTTP GET /api/v1/challenger/search/offset; param page="0"; param size="10" | 성공: HTTP 200 OK |
+
+### ChallengerAdminSearchV2ControllerTest
+- 테스트 설명: ChallengerAdminSearchV2Controller
+- 위치: `monolith/src/test/java/com/umc/product/challenger/adapter/in/web/v2/ChallengerAdminSearchV2ControllerTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [66](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/v2/ChallengerAdminSearchV2ControllerTest.java#L66) | 관리자용 챌린저 검색은 권한 범위가 적용된 검색을 호출하고 이메일을 마스킹한다 | HTTP GET /api/v2/challenger/admin/search; param gisuId="9"; param page="0"; param size="10" | 성공: HTTP 200 OK; 이메일 마스킹 |
+| [96](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/v2/ChallengerAdminSearchV2ControllerTest.java#L96) | 관리자용 챌린저 검색의 기본 페이지 크기는 10이다 | HTTP GET /api/v2/challenger/admin/search | 성공: HTTP 200 OK; 기본 size 10 |
+| [114](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/v2/ChallengerAdminSearchV2ControllerTest.java#L114) | 관리자용 챌린저 검색 권한이 없으면 403을 반환한다 | HTTP GET /api/v2/challenger/admin/search; param page="0"; param size="10" | 실패: HTTP 403 Forbidden; 에러코드 MEMBER-0015 |
 
 ### ChallengerSearchV2ControllerTest
 - 테스트 설명: ChallengerSearchV2Controller
@@ -129,6 +147,16 @@
 | 이미 탈부 등록된 챌린저는 다시 등록할 수 없다 | 동일 challengerId의 탈부 기록 존재 | 실패: 중복 탈부 등록 예외 |
 | 같은 근거 자료를 중복 등록할 수 없다 | 동일 imageId 2개 | 실패: 탈부 등록 요청 오류 |
 | 탈부 근거 사진 카테고리가 아닌 파일은 등록할 수 없다 | 게시글 이미지 카테고리 파일 | 실패: 탈부 등록 요청 오류 |
+
+### ChallengerDeactivationQueryServiceTest
+
+- 위치: `monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerDeactivationQueryServiceTest.java`
+
+| 테스트 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 탈부 근거에 연결된 이미지인지 확인한다 | 사용 중인 이미지 ID 조회 | 성공: 사용 여부 `true` 반환 |
+| 이미지 ID가 없으면 저장소를 조회하지 않는다 | imageId가 `null` | 성공: `false` 반환, 저장소 미호출 |
+| 자진 탈부와 타의 탈부 사유를 화면 표시 순서대로 조회한다 | 탈부 사유 목록 조회 | 성공: 유형별 사유와 상세 입력 필수 여부 반환 |
 
 ### ChallengerRecordCommandServiceTest
 - 테스트 설명: ChallengerRecordCommandService
