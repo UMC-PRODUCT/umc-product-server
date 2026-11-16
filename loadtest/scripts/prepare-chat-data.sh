@@ -7,10 +7,10 @@ set -euo pipefail
 
 if [ "${1:-}" = "--help" ]; then
   printf '사용법: SUT_URL=http://localhost:8080 bash loadtest/scripts/prepare-chat-data.sh\n'
-  printf '필요 도구: curl, jq, uuidgen, git\n'
+  printf '필요 도구: curl, jq, uuidgen, git, openssl\n'
   printf 'CHAT_USERS=2 CHAT_ROOMS=1: 사용자 수와 방 수\n'
   printf 'CHAT_ROOM_MEMBERS=\x27[[1,2,3],[2,4]]\x27: 방별 사용자 번호 (생략하면 균등 분배)\n'
-  printf '앱 설정: APP_TEST_API_ENABLED=true, APP_SEED_ENABLED=true\n'
+  printf '앱 설정: APP_TEST_API_ENABLED=true. 테스트 이메일 토큰과 일반 회원가입 API를 사용합니다.\n'
   printf '재실행마다 새 데이터를 추가하며 기존 데이터를 삭제하지 않습니다.\n'
   exit 0
 fi
@@ -35,7 +35,7 @@ for count in "$USER_COUNT" "$ROOM_COUNT"; do
     && [ "$count" -le 1000 ] || fail 'CHAT_USERS·CHAT_ROOMS는 1~1000 사이 정수여야 합니다.'
 done
 
-for tool in curl jq uuidgen git; do
+for tool in curl jq uuidgen git openssl; do
   command -v "$tool" >/dev/null 2>&1 || fail "필요한 명령어가 없습니다: $tool"
 done
 
@@ -58,8 +58,10 @@ ROOM_LAYOUT="$(printf '%s' "$ROOM_LAYOUT" | jq -ce --argjson users "$USER_COUNT"
 # 실행한 디렉터리와 관계없이 저장 위치를 고정하고, UUID로 회원 정보와 결과 파일의 충돌을 피한다.
 REPO_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 RUN_ID="$(uuidgen | tr '[:upper:]' '[:lower:]')"
+NICKNAME_START="${RUN_ID//-/}"
+NICKNAME_START="$((16#${NICKNAME_START:0:12}))"
 OUTPUT_DIR="$REPO_ROOT/loadtest/k6/data/chat"
-OUTPUT_FILE="$OUTPUT_DIR/$RUN_ID.json"
+OUTPUT_FILE="${CHAT_SEED_OUTPUT:-$OUTPUT_DIR/$RUN_ID.json}"
 TEMP_FILE=""
 ROOMS_TEMP_FILE=""
 CREATED_IDS=""
@@ -118,18 +120,34 @@ SCHOOL_ID="$(api GET '/api/v1/schools/all' | jq -er '
   | .[0].schoolId | select(. != null) | tostring | select(test("^[1-9][0-9]*$"))
 ')" || fail '유효한 학교를 조회하지 못했습니다. API 응답과 Flyway 마이그레이션을 확인하세요.'
 
-# 2. 기존 회원 시딩 API로 생성한다. jq --arg가 문자열을 JSON에 맞게 이스케이프하며,
-# 학교 ID만 API 요청 형식에 맞춰 숫자로 변환한다. 함수의 stdout에는 생성된 memberId만 남긴다.
+TERM_AGREEMENTS="$(api GET '/api/v1/terms' | jq -ce '
+  select(.success == true) | .result.terms
+  | map(select(.isMandatory == true) | {termsId: (.id | tonumber), isAgreed: true})
+  | select(length > 0 and all(.[]; .termsId > 0 and (.termsId | floor) == .termsId))
+')" || fail '가입에 필요한 활성 필수 약관을 조회하지 못했습니다.'
+
+# 시딩 API 없이 가입한다. 비밀번호와 토큰은 준비 과정에서만 사용하고 저장하지 않는다.
 create_member() {
-  local label="$1" body member_id
+  local label="$1" body member_id email email_query email_token nickname password
+  email="chat-$RUN_ID-$label@example.com"
+  email_query="$(jq -nr --arg email "$email" '$email | @uri')"
+  email_token="$(api GET "/test/token/email?email=$email_query&purpose=REGISTER")" || return 1
+  [[ "$email_token" =~ ^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$ ]] \
+    || fail '테스트 이메일 토큰 발급 응답이 올바르지 않습니다.'
+  nickname="$(jq -nr --argjson value "$((NICKNAME_START + label))" '
+    [range(0; 4) | (($value / pow(11172; .) | floor) % 11172 + 44032)] | implode
+  ')"
+  password="Ct1!$(openssl rand -hex 24)"
   body="$(jq -n \
-    --arg name "Chat 테스트 $label" \
-    --arg nickname "ct${RUN_ID:0:12}-$label" \
-    --arg email "chat-$RUN_ID-$label@example.com" \
+    --arg nickname "$nickname" \
+    --arg password "$password" \
+    --arg emailToken "$email_token" \
     --arg schoolId "$SCHOOL_ID" \
-    '{name: $name, nickname: $nickname, email: $email, schoolId: ($schoolId | tonumber)}')"
-  member_id="$(api POST '/test/seed/member' "$body" | response_id memberId)" || {
-    printf '[오류] 회원 %s 생성 실패. APP_SEED_ENABLED와 시딩 설정을 확인하세요.\n' "$label" >&2
+    --argjson terms "$TERM_AGREEMENTS" \
+    '{name: "부하시험", nickname: $nickname, rawPassword: $password,
+      emailVerificationToken: $emailToken, schoolId: ($schoolId | tonumber), termsAgreements: $terms}')"
+  member_id="$(api POST '/api/v1/member/register/email' "$body" | response_id memberId)" || {
+    printf '[오류] 회원 %s 가입 실패. 테스트 API 인증과 가입 요청 조건을 확인하세요.\n' "$label" >&2
     return 1
   }
   printf '회원 %s 생성: memberId=%s\n' "$label" "$member_id" >&2
@@ -169,8 +187,21 @@ for ((USER_INDEX = 1; USER_INDEX <= USER_COUNT; USER_INDEX++)); do
   CREATED_IDS="$CREATED_IDS $MEMBER_ID"
   MEMBER_IDS+=("$MEMBER_ID")
   TOKENS+=("$(get_token "$MEMBER_ID")")
+  # 회원가입은 비인증 API의 기본 분당 60회 제한 안에서 준비한다.
+  sleep 1
 done
 ALL_MEMBERS="$(printf '%s\n' "${MEMBER_IDS[@]}" | jq -R . | jq -s .)"
+
+if [ "${CHAT_SEED_MEMBERS_ONLY:-0}" = 1 ]; then
+  TEMP_FILE="$(mktemp "$OUTPUT_DIR/.$RUN_ID.XXXXXX")"
+  jq -n --arg runId "$RUN_ID" --arg baseUrl "$BASE_URL" --arg schoolId "$SCHOOL_ID" \
+    --argjson members "$ALL_MEMBERS" \
+    '{runId:$runId,baseUrl:$baseUrl,schoolId:$schoolId,memberIds:$members,rooms:[]}' > "$TEMP_FILE"
+  mv "$TEMP_FILE" "$OUTPUT_FILE"
+  TEMP_FILE=""
+  printf '준비 완료: %s\n' "$OUTPUT_FILE"
+  exit 0
+fi
 
 printf '[3/5] 방 %s개 생성\n' "$ROOM_COUNT" >&2
 for ((ROOM_INDEX = 0; ROOM_INDEX < ROOM_COUNT; ROOM_INDEX++)); do
