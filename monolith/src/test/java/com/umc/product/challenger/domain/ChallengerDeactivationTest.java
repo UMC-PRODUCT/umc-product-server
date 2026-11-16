@@ -201,6 +201,43 @@ class ChallengerDeactivationTest {
         assertThat(link.getAddedHistory().getActorMemberId()).isEqualTo(3L);
     }
 
+    @Test
+    @DisplayName("링크는 1000자까지 저장할 수 있다")
+    void 링크는_1000자까지_저장할_수_있다() {
+        ChallengerDeactivationHistory history = ChallengerDeactivationHistory.create(
+            deactivation(),
+            ChallengerDeactivationHistoryAction.EVIDENCE_ADDED,
+            0,
+            1,
+            3L
+        );
+        String link = "https://example.com/" + "a".repeat(
+            1000 - "https://example.com/".length()
+        );
+
+        ChallengerDeactivationLink created = ChallengerDeactivationLink.create(history, link, 0);
+
+        assertThat(created.getLink()).hasSize(1000);
+    }
+
+    @Test
+    @DisplayName("링크는 1000자를 초과할 수 없다")
+    void 링크는_1000자를_초과할_수_없다() {
+        ChallengerDeactivationHistory history = ChallengerDeactivationHistory.create(
+            deactivation(),
+            ChallengerDeactivationHistoryAction.EVIDENCE_ADDED,
+            0,
+            1,
+            3L
+        );
+        String link = "https://example.com/" + "a".repeat(
+            1000 - "https://example.com/".length() + 1
+        );
+
+        assertThatThrownBy(() -> ChallengerDeactivationLink.create(history, link, 0))
+            .isInstanceOf(ChallengerDomainException.class);
+    }
+
     private ChallengerDeactivation deactivation() {
         return ChallengerDeactivation.create(
             1L,

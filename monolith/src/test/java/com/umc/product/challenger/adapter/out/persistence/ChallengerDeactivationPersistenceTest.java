@@ -91,6 +91,32 @@ class ChallengerDeactivationPersistenceTest {
     }
 
     @Test
+    @DisplayName("1000자인 근거 링크를 저장한다")
+    void persistThousandCharacterLink() {
+        ChallengerDeactivation deactivation = deactivation(1L);
+        entityManager.persist(deactivation);
+        ChallengerDeactivationHistory history = ChallengerDeactivationHistory.create(
+            deactivation,
+            ChallengerDeactivationHistoryAction.EVIDENCE_ADDED,
+            0,
+            1,
+            10L
+        );
+        entityManager.persist(history);
+        String link = "https://example.com/" + "a".repeat(
+            1000 - "https://example.com/".length()
+        );
+        ChallengerDeactivationLink evidenceLink = ChallengerDeactivationLink.create(history, link, 0);
+
+        entityManager.persist(evidenceLink);
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(entityManager.find(ChallengerDeactivationLink.class, evidenceLink.getId()).getLink())
+            .hasSize(1000);
+    }
+
+    @Test
     @DisplayName("같은 챌린저의 탈부 기록은 한 번만 저장한다")
     void 같은_챌린저의_탈부_기록은_한_번만_저장한다() {
         entityManager.persist(deactivation(1L));
