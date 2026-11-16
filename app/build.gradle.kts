@@ -28,3 +28,11 @@ tasks.named<BootJar>("bootJar") {
         enabled.set(true)
     }
 }
+
+tasks.named<Test>("test") {
+    val bootJarTask = tasks.named<BootJar>("bootJar")
+    dependsOn(bootJarTask)
+    doFirst {
+        systemProperty("app.bootJar", bootJarTask.get().archiveFile.get().asFile.absolutePath)
+    }
+}
