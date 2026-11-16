@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.challenger.application.port.in.query.CheckChallengerDeactivationEvidenceUseCase;
 import com.umc.product.storage.application.port.in.command.dto.DeleteFileCommand;
 import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
 import com.umc.product.storage.application.port.in.command.dto.PrepareFileUploadCommand;
@@ -52,6 +53,9 @@ class FileCommandServiceUnitTest {
 
     @Mock
     GetChallengerRoleUseCase getChallengerRoleUseCase;
+
+    @Mock
+    CheckChallengerDeactivationEvidenceUseCase checkChallengerDeactivationEvidenceUseCase;
 
     @InjectMocks
     FileCommandService sut;
@@ -228,6 +232,43 @@ class FileCommandServiceUnitTest {
         // then
         then(storagePort).should().delete(metadata.getStorageKey());
         then(saveFileMetadataPort).should().deleteByFileId("file-id");
+    }
+
+    @Test
+    @DisplayName("탈부 근거로 사용 중인 파일은 작성자도 삭제할 수 없다")
+    void ownerCannotDeleteFileUsedAsDeactivationEvidence() {
+        // given
+        FileMetadata metadata = uploadedFile("file-id", 1L);
+        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.of(metadata));
+        given(checkChallengerDeactivationEvidenceUseCase.isImageInUse("file-id")).willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> sut.deleteFile(deleteCommand("file-id", 1L)))
+            .isInstanceOf(StorageException.class)
+            .extracting("baseCode")
+            .isEqualTo(StorageErrorCode.DEACTIVATION_EVIDENCE_DELETE_FORBIDDEN);
+
+        then(storagePort).should(never()).delete(anyString());
+        then(saveFileMetadataPort).should(never()).deleteByFileId(anyString());
+    }
+
+    @Test
+    @DisplayName("탈부 근거로 사용 중인 파일은 최고 관리자도 공통 API로 삭제할 수 없다")
+    void superAdminCannotDeleteFileUsedAsDeactivationEvidenceThroughPublicApi() {
+        // given
+        FileMetadata metadata = uploadedFile("file-id", 1L);
+        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.of(metadata));
+        given(checkChallengerDeactivationEvidenceUseCase.isImageInUse("file-id")).willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> sut.deleteFile(deleteCommand("file-id", 2L)))
+            .isInstanceOf(StorageException.class)
+            .extracting("baseCode")
+            .isEqualTo(StorageErrorCode.DEACTIVATION_EVIDENCE_DELETE_FORBIDDEN);
+
+        then(getChallengerRoleUseCase).shouldHaveNoInteractions();
+        then(storagePort).should(never()).delete(anyString());
+        then(saveFileMetadataPort).should(never()).deleteByFileId(anyString());
     }
 
     @Test

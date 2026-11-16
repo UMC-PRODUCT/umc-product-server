@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.umc.product.challenger.domain.ChallengerDeactivation;
 import com.umc.product.challenger.domain.ChallengerDeactivationHistory;
@@ -25,6 +26,9 @@ class ChallengerDeactivationPersistenceTest {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Autowired
+    private ChallengerDeactivationImageJpaRepository imageRepository;
 
     @Test
     @DisplayName("탈부 기록과 진행 기록 및 근거 자료를 함께 저장한다")
@@ -66,6 +70,8 @@ class ChallengerDeactivationPersistenceTest {
         assertThat(foundImage.getAddedHistory().getDeactivation().getId())
             .isEqualTo(deactivation.getId());
         assertThat(foundLink.getAddedHistory().getActorMemberId()).isEqualTo(10L);
+        assertThat(imageRepository.existsByImageId("image-id")).isTrue();
+        assertThat(imageRepository.existsByImageId("unknown-image-id")).isFalse();
     }
 
     @Test

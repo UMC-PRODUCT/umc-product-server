@@ -32,6 +32,11 @@ public class ChallengerDeactivationPersistenceAdapter
     }
 
     @Override
+    public boolean existsByImageId(String imageId) {
+        return imageRepository.existsByImageId(imageId);
+    }
+
+    @Override
     public ChallengerDeactivation save(ChallengerDeactivation deactivation) {
         try {
             return deactivationRepository.saveAndFlush(deactivation);

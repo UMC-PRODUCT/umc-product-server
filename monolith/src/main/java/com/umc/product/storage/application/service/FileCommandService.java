@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.challenger.application.port.in.query.CheckChallengerDeactivationEvidenceUseCase;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.storage.application.port.in.command.ManageFileUseCase;
 import com.umc.product.storage.application.port.in.command.StoreGeneratedFileUseCase;
@@ -41,6 +42,7 @@ public class FileCommandService implements ManageFileUseCase, StoreGeneratedFile
     private final LoadFileMetadataPort loadFileMetadataPort;
     private final SaveFileMetadataPort saveFileMetadataPort;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+    private final CheckChallengerDeactivationEvidenceUseCase checkChallengerDeactivationEvidenceUseCase;
 
     @Audited(
         domain = Domain.STORAGE,
@@ -174,6 +176,7 @@ public class FileCommandService implements ManageFileUseCase, StoreGeneratedFile
         FileMetadata metadata = loadFileMetadataPort.findByFileId(command.fileId())
             .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
 
+        validateNotUsedAsChallengerDeactivationEvidence(command.fileId());
         validateDeletePermission(metadata, command.requesterMemberId());
 
         // 스토리지에서 파일 삭제
@@ -183,6 +186,12 @@ public class FileCommandService implements ManageFileUseCase, StoreGeneratedFile
         saveFileMetadataPort.deleteByFileId(command.fileId());
 
         log.info("파일을 삭제했습니다: fileId={}", command.fileId());
+    }
+
+    private void validateNotUsedAsChallengerDeactivationEvidence(String fileId) {
+        if (checkChallengerDeactivationEvidenceUseCase.isImageInUse(fileId)) {
+            throw new StorageException(StorageErrorCode.DEACTIVATION_EVIDENCE_DELETE_FORBIDDEN);
+        }
     }
 
     private void validateDeletePermission(FileMetadata metadata, Long requesterMemberId) {

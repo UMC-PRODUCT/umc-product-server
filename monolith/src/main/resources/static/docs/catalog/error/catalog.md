@@ -775,43 +775,44 @@
 | 650 | storage | `STORAGE-0001` | `FILE_NOT_FOUND` | 404 NOT_FOUND | 파일을 찾을 수 없어요. 선택한 파일을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:15` |
 | 651 | storage | `STORAGE-0002` | `FILE_UPLOAD_NOT_COMPLETED` | 400 BAD_REQUEST | 파일 업로드가 아직 끝나지 않았어요. 업로드를 완료한 뒤 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:16` |
 | 652 | storage | `STORAGE-0003` | `FILE_ALREADY_UPLOADED` | 400 BAD_REQUEST | 이미 업로드가 끝난 파일이에요. 파일 정보를 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:17` |
-| 653 | storage | `STORAGE-0004` | `INVALID_FILE_EXTENSION` | 400 BAD_REQUEST | 지원하지 않는 파일 형식이에요. 다른 파일을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:23` |
-| 654 | storage | `STORAGE-0005` | `FILE_SIZE_EXCEEDED` | 400 BAD_REQUEST | 파일 크기가 너무 커요. 더 작은 파일을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:24` |
-| 655 | storage | `STORAGE-0006` | `INVALID_CONTENT_TYPE` | 400 BAD_REQUEST | 파일 형식 정보가 올바르지 않아요. 파일을 다시 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:25` |
-| 656 | storage | `STORAGE-0007` | `STORAGE_UPLOAD_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일을 업로드하지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:29` |
-| 657 | storage | `STORAGE-0008` | `STORAGE_DELETE_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일을 삭제하지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:30` |
-| 658 | storage | `STORAGE-0009` | `STORAGE_URL_GENERATION_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일 접근 링크를 만들지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:31` |
+| 653 | storage | `STORAGE-0004` | `INVALID_FILE_EXTENSION` | 400 BAD_REQUEST | 지원하지 않는 파일 형식이에요. 다른 파일을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:28` |
+| 654 | storage | `STORAGE-0005` | `FILE_SIZE_EXCEEDED` | 400 BAD_REQUEST | 파일 크기가 너무 커요. 더 작은 파일을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:29` |
+| 655 | storage | `STORAGE-0006` | `INVALID_CONTENT_TYPE` | 400 BAD_REQUEST | 파일 형식 정보가 올바르지 않아요. 파일을 다시 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:30` |
+| 656 | storage | `STORAGE-0007` | `STORAGE_UPLOAD_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일을 업로드하지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:34` |
+| 657 | storage | `STORAGE-0008` | `STORAGE_DELETE_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일을 삭제하지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:35` |
+| 658 | storage | `STORAGE-0009` | `STORAGE_URL_GENERATION_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일 접근 링크를 만들지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:36` |
 | 659 | storage | `STORAGE-0013` | `FILE_DELETE_FORBIDDEN` | 403 FORBIDDEN | 파일을 삭제할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:18` |
-| 660 | storage | `STORAGE-0014` | `FILE_SIZE_MISMATCH` | 400 BAD_REQUEST | 요청한 파일 크기와 실제 업로드된 파일 크기가 달라요. 다시 업로드해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:26` |
-| 661 | storage | `STORAGE-0015` | `STORAGE_METADATA_READ_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일 정보를 확인하지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:32` |
+| 660 | storage | `STORAGE-0014` | `FILE_SIZE_MISMATCH` | 400 BAD_REQUEST | 요청한 파일 크기와 실제 업로드된 파일 크기가 달라요. 다시 업로드해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:31` |
+| 661 | storage | `STORAGE-0015` | `STORAGE_METADATA_READ_FAILED` | 500 INTERNAL_SERVER_ERROR | 파일 정보를 확인하지 못했어요. 잠시 후 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:37` |
 | 662 | storage | `STORAGE-0016` | `FILE_USE_FORBIDDEN` | 403 FORBIDDEN | 이 파일을 사용할 권한이 없어요. 본인이 업로드한 파일만 사용할 수 있어요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:20` |
+| 663 | storage | `STORAGE-0017` | `DEACTIVATION_EVIDENCE_DELETE_FORBIDDEN` | 409 CONFLICT | 탈부 근거 자료로 등록된 파일은 삭제할 수 없어요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java:21` |
 
 ## term
 
 | 순번 | 도메인 | 코드 | 이름 | HTTP 상태 | 메시지 | 사용자 행동 | 재시도 | 심각도 | 사용 중단 | 담당자 | 태그 | 원본 |
 |---:|---|---|---|---|---|---|---|---|---|---|---|---|
-| 663 | term | `TERMS-0001` | `TERMS_NOT_FOUND` | 404 NOT_FOUND | 약관을 찾을 수 없어요. 선택한 약관을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:14` |
-| 664 | term | `TERMS-0002` | `TERMS_TYPE_REQUIRED` | 400 BAD_REQUEST | 약관 타입을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:15` |
-| 665 | term | `TERMS-0003` | `TERMS_TITLE_REQUIRED` | 400 BAD_REQUEST | 약관 제목을 입력해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:16` |
-| 666 | term | `TERMS-0004` | `TERMS_CONTENT_REQUIRED` | 400 BAD_REQUEST | 약관 내용을 입력해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:17` |
-| 667 | term | `TERMS-0005` | `TERMS_VERSION_REQUIRED` | 400 BAD_REQUEST | 약관 버전을 입력해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:18` |
-| 668 | term | `TERMS-0006` | `TERMS_CONSENT_NOT_FOUND` | 404 NOT_FOUND | 약관 동의 정보를 찾을 수 없어요. 동의 내역을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:20` |
-| 669 | term | `TERMS-0007` | `TERMS_CONSENT_ALREADY_EXISTS` | 400 BAD_REQUEST | 이미 동의한 약관이에요. 동의 내역을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:21` |
-| 670 | term | `TERMS-0008` | `MEMBER_ID_REQUIRED` | 400 BAD_REQUEST | 회원을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:22` |
-| 671 | term | `TERMS-0009` | `TERM_ID_REQUIRED` | 400 BAD_REQUEST | 약관을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:23` |
-| 672 | term | `TERMS-0010` | `MANDATORY_TERMS_NOT_AGREED` | 400 BAD_REQUEST | 필수 약관에 모두 동의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:24` |
-| 673 | term | `TERMS-0011` | `TERM_PERMISSION_DENIED` | 403 FORBIDDEN | 약관을 관리할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:26` |
+| 664 | term | `TERMS-0001` | `TERMS_NOT_FOUND` | 404 NOT_FOUND | 약관을 찾을 수 없어요. 선택한 약관을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:14` |
+| 665 | term | `TERMS-0002` | `TERMS_TYPE_REQUIRED` | 400 BAD_REQUEST | 약관 타입을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:15` |
+| 666 | term | `TERMS-0003` | `TERMS_TITLE_REQUIRED` | 400 BAD_REQUEST | 약관 제목을 입력해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:16` |
+| 667 | term | `TERMS-0004` | `TERMS_CONTENT_REQUIRED` | 400 BAD_REQUEST | 약관 내용을 입력해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:17` |
+| 668 | term | `TERMS-0005` | `TERMS_VERSION_REQUIRED` | 400 BAD_REQUEST | 약관 버전을 입력해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:18` |
+| 669 | term | `TERMS-0006` | `TERMS_CONSENT_NOT_FOUND` | 404 NOT_FOUND | 약관 동의 정보를 찾을 수 없어요. 동의 내역을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:20` |
+| 670 | term | `TERMS-0007` | `TERMS_CONSENT_ALREADY_EXISTS` | 400 BAD_REQUEST | 이미 동의한 약관이에요. 동의 내역을 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:21` |
+| 671 | term | `TERMS-0008` | `MEMBER_ID_REQUIRED` | 400 BAD_REQUEST | 회원을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:22` |
+| 672 | term | `TERMS-0009` | `TERM_ID_REQUIRED` | 400 BAD_REQUEST | 약관을 선택해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:23` |
+| 673 | term | `TERMS-0010` | `MANDATORY_TERMS_NOT_AGREED` | 400 BAD_REQUEST | 필수 약관에 모두 동의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:24` |
+| 674 | term | `TERMS-0011` | `TERM_PERMISSION_DENIED` | 403 FORBIDDEN | 약관을 관리할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/term/domain/exception/TermErrorCode.java:26` |
 
 ## test
 
 | 순번 | 도메인 | 코드 | 이름 | HTTP 상태 | 메시지 | 사용자 행동 | 재시도 | 심각도 | 사용 중단 | 담당자 | 태그 | 원본 |
 |---:|---|---|---|---|---|---|---|---|---|---|---|---|
-| 674 | test | `SEED-0101` | `ACCOUNT_NOT_SEEDED` | 400 BAD_REQUEST | QA 계정이 없어요. QA 시딩(/test/seed/qa)을 먼저 실행해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:14` |
-| 675 | test | `SEED-0301` | `PREVIOUS_ROUND_NOT_PUBLISHED` | 409 CONFLICT | 앞 차수 결과가 아직 발표되지 않았어요. 앞 차수를 먼저 발표로 넘겨주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:15` |
-| 676 | test | `SEED-0302` | `AUTO_DECISION_NOT_EXECUTED` | 409 CONFLICT | 자동 선발이 아직 실행되지 않았어요. 선발 마감으로 넘긴 뒤 1분 정도 기다렸다가 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:17` |
-| 677 | test | `SEED-0303` | `STEP_OUT_OF_ORDER` | 409 CONFLICT | 차수 단계는 한 칸씩만 넘길 수 있어요. 앞 단계를 먼저 넘겨주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:19` |
-| 678 | test | `SEED-0304` | `RANDOM_NOT_ASSIGNED` | 409 CONFLICT | 랜덤 배정이 아직 실행되지 않았어요. 3차 발표 뒤 1분 정도 기다렸다가 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:21` |
-| 679 | test | `SEED-0305` | `NOT_IN_APPLICATION_WINDOW` | 409 CONFLICT | 지원 기간이 아니에요. 봇 지원은 차수 지원 시작부터 지원 마감 전까지만 부를 수 있어요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:23` |
-| 680 | test | `SEED-0306` | `NOT_IN_DECISION_WINDOW` | 409 CONFLICT | PM 결정 기간이 아니에요. 봇 결정은 지원 마감 뒤부터 선발 마감 전, 자동 선발 전까지만 부를 수 있어요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:25` |
-| 681 | test | `SEED-0307` | `ROUND_NOT_FOUND` | 404 NOT_FOUND | 매칭 차수를 찾을 수 없어요. 차수 ID를 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:27` |
+| 675 | test | `SEED-0101` | `ACCOUNT_NOT_SEEDED` | 400 BAD_REQUEST | QA 계정이 없어요. QA 시딩(/test/seed/qa)을 먼저 실행해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:14` |
+| 676 | test | `SEED-0301` | `PREVIOUS_ROUND_NOT_PUBLISHED` | 409 CONFLICT | 앞 차수 결과가 아직 발표되지 않았어요. 앞 차수를 먼저 발표로 넘겨주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:15` |
+| 677 | test | `SEED-0302` | `AUTO_DECISION_NOT_EXECUTED` | 409 CONFLICT | 자동 선발이 아직 실행되지 않았어요. 선발 마감으로 넘긴 뒤 1분 정도 기다렸다가 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:17` |
+| 678 | test | `SEED-0303` | `STEP_OUT_OF_ORDER` | 409 CONFLICT | 차수 단계는 한 칸씩만 넘길 수 있어요. 앞 단계를 먼저 넘겨주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:19` |
+| 679 | test | `SEED-0304` | `RANDOM_NOT_ASSIGNED` | 409 CONFLICT | 랜덤 배정이 아직 실행되지 않았어요. 3차 발표 뒤 1분 정도 기다렸다가 다시 시도해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:21` |
+| 680 | test | `SEED-0305` | `NOT_IN_APPLICATION_WINDOW` | 409 CONFLICT | 지원 기간이 아니에요. 봇 지원은 차수 지원 시작부터 지원 마감 전까지만 부를 수 있어요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:23` |
+| 681 | test | `SEED-0306` | `NOT_IN_DECISION_WINDOW` | 409 CONFLICT | PM 결정 기간이 아니에요. 봇 결정은 지원 마감 뒤부터 선발 마감 전, 자동 선발 전까지만 부를 수 있어요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:25` |
+| 682 | test | `SEED-0307` | `ROUND_NOT_FOUND` | 404 NOT_FOUND | 매칭 차수를 찾을 수 없어요. 차수 ID를 확인해주세요. |  |  |  | false |  |  | `monolith/src/main/java/com/umc/product/test/domain/exception/SeedErrorCode.java:27` |
 

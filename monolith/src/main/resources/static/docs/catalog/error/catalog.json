@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "service": "umc-product-server",
   "generatedAt": null,
-  "totalCount": 681,
+  "totalCount": 682,
   "items": [
     {
       "sequence": 1,
@@ -14367,7 +14367,7 @@
       "source": {
         "enumName": "StorageErrorCode",
         "file": "monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-        "line": 23
+        "line": 28
       }
     },
     {
@@ -14389,7 +14389,7 @@
       "source": {
         "enumName": "StorageErrorCode",
         "file": "monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-        "line": 24
+        "line": 29
       }
     },
     {
@@ -14411,7 +14411,7 @@
       "source": {
         "enumName": "StorageErrorCode",
         "file": "monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-        "line": 25
+        "line": 30
       }
     },
     {
@@ -14433,7 +14433,7 @@
       "source": {
         "enumName": "StorageErrorCode",
         "file": "monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-        "line": 29
+        "line": 34
       }
     },
     {
@@ -14455,7 +14455,7 @@
       "source": {
         "enumName": "StorageErrorCode",
         "file": "monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-        "line": 30
+        "line": 35
       }
     },
     {
@@ -14477,7 +14477,7 @@
       "source": {
         "enumName": "StorageErrorCode",
         "file": "monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-        "line": 31
+        "line": 36
       }
     },
     {
@@ -14521,7 +14521,7 @@
       "source": {
         "enumName": "StorageErrorCode",
         "file": "monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-        "line": 26
+        "line": 31
       }
     },
     {
@@ -14543,7 +14543,7 @@
       "source": {
         "enumName": "StorageErrorCode",
         "file": "monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
-        "line": 32
+        "line": 37
       }
     },
     {
@@ -14570,6 +14570,28 @@
     },
     {
       "sequence": 663,
+      "domain": "storage",
+      "code": "STORAGE-0017",
+      "name": "DEACTIVATION_EVIDENCE_DELETE_FORBIDDEN",
+      "httpStatus": 409,
+      "httpStatusName": "CONFLICT",
+      "message": "탈부 근거 자료로 등록된 파일은 삭제할 수 없어요.",
+      "description": null,
+      "clientAction": null,
+      "retryable": null,
+      "severity": null,
+      "deprecated": false,
+      "replacementCode": null,
+      "owners": [],
+      "tags": [],
+      "source": {
+        "enumName": "StorageErrorCode",
+        "file": "monolith/src/main/java/com/umc/product/storage/domain/exception/StorageErrorCode.java",
+        "line": 21
+      }
+    },
+    {
+      "sequence": 664,
       "domain": "term",
       "code": "TERMS-0001",
       "name": "TERMS_NOT_FOUND",
@@ -14591,7 +14613,7 @@
       }
     },
     {
-      "sequence": 664,
+      "sequence": 665,
       "domain": "term",
       "code": "TERMS-0002",
       "name": "TERMS_TYPE_REQUIRED",
@@ -14613,7 +14635,7 @@
       }
     },
     {
-      "sequence": 665,
+      "sequence": 666,
       "domain": "term",
       "code": "TERMS-0003",
       "name": "TERMS_TITLE_REQUIRED",
@@ -14635,7 +14657,7 @@
       }
     },
     {
-      "sequence": 666,
+      "sequence": 667,
       "domain": "term",
       "code": "TERMS-0004",
       "name": "TERMS_CONTENT_REQUIRED",
@@ -14657,7 +14679,7 @@
       }
     },
     {
-      "sequence": 667,
+      "sequence": 668,
       "domain": "term",
       "code": "TERMS-0005",
       "name": "TERMS_VERSION_REQUIRED",
@@ -14679,7 +14701,7 @@
       }
     },
     {
-      "sequence": 668,
+      "sequence": 669,
       "domain": "term",
       "code": "TERMS-0006",
       "name": "TERMS_CONSENT_NOT_FOUND",
@@ -14701,7 +14723,7 @@
       }
     },
     {
-      "sequence": 669,
+      "sequence": 670,
       "domain": "term",
       "code": "TERMS-0007",
       "name": "TERMS_CONSENT_ALREADY_EXISTS",
@@ -14723,7 +14745,7 @@
       }
     },
     {
-      "sequence": 670,
+      "sequence": 671,
       "domain": "term",
       "code": "TERMS-0008",
       "name": "MEMBER_ID_REQUIRED",
@@ -14745,7 +14767,7 @@
       }
     },
     {
-      "sequence": 671,
+      "sequence": 672,
       "domain": "term",
       "code": "TERMS-0009",
       "name": "TERM_ID_REQUIRED",
@@ -14767,7 +14789,7 @@
       }
     },
     {
-      "sequence": 672,
+      "sequence": 673,
       "domain": "term",
       "code": "TERMS-0010",
       "name": "MANDATORY_TERMS_NOT_AGREED",
@@ -14789,7 +14811,7 @@
       }
     },
     {
-      "sequence": 673,
+      "sequence": 674,
       "domain": "term",
       "code": "TERMS-0011",
       "name": "TERM_PERMISSION_DENIED",
@@ -14811,7 +14833,7 @@
       }
     },
     {
-      "sequence": 674,
+      "sequence": 675,
       "domain": "test",
       "code": "SEED-0101",
       "name": "ACCOUNT_NOT_SEEDED",
@@ -14833,7 +14855,7 @@
       }
     },
     {
-      "sequence": 675,
+      "sequence": 676,
       "domain": "test",
       "code": "SEED-0301",
       "name": "PREVIOUS_ROUND_NOT_PUBLISHED",
@@ -14855,7 +14877,7 @@
       }
     },
     {
-      "sequence": 676,
+      "sequence": 677,
       "domain": "test",
       "code": "SEED-0302",
       "name": "AUTO_DECISION_NOT_EXECUTED",
@@ -14877,7 +14899,7 @@
       }
     },
     {
-      "sequence": 677,
+      "sequence": 678,
       "domain": "test",
       "code": "SEED-0303",
       "name": "STEP_OUT_OF_ORDER",
@@ -14899,7 +14921,7 @@
       }
     },
     {
-      "sequence": 678,
+      "sequence": 679,
       "domain": "test",
       "code": "SEED-0304",
       "name": "RANDOM_NOT_ASSIGNED",
@@ -14921,7 +14943,7 @@
       }
     },
     {
-      "sequence": 679,
+      "sequence": 680,
       "domain": "test",
       "code": "SEED-0305",
       "name": "NOT_IN_APPLICATION_WINDOW",
@@ -14943,7 +14965,7 @@
       }
     },
     {
-      "sequence": 680,
+      "sequence": 681,
       "domain": "test",
       "code": "SEED-0306",
       "name": "NOT_IN_DECISION_WINDOW",
@@ -14965,7 +14987,7 @@
       }
     },
     {
-      "sequence": 681,
+      "sequence": 682,
       "domain": "test",
       "code": "SEED-0307",
       "name": "ROUND_NOT_FOUND",
