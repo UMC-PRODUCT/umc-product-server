@@ -63,6 +63,11 @@ public enum FileCategory {
     PROJECT_LOGO("public/project-logo", 10 * 1024 * 1024, new String[]{"jpg", "jpeg", "png", "svg"}),
 
     /**
+     * 챌린저 탈부 근거 사진
+     */
+    CHALLENGER_DEACTIVATION_EVIDENCE("private/challenger-deactivation", 5 * 1024 * 1024, new String[]{"jpg", "jpeg", "png"}),
+
+    /**
      * 기타
      */
     ETC("public/etc", 10 * 1024 * 1024, new String[]{});

@@ -1,13 +1,13 @@
 # Challenger 테스트 케이스
 
-- 테스트 파일: 15개
-- 테스트 케이스: 69개
+- 테스트 파일: 17개
+- 테스트 케이스: 75개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
 |---|---:|
-| Controller / Inbound Adapter | 16 |
-| UseCase / Application Service | 23 |
+| Controller / Inbound Adapter | 18 |
+| UseCase / Application Service | 27 |
 | Repository / Outbound Persistence | 2 |
 | E2E / Integration | 3 |
 | Domain | 25 |
@@ -51,6 +51,15 @@
 | 테스트 | 입력/조건 | 기대 결과 |
 |---|---|---|
 | 관리자용 챌린저 상세 정보를 조회한다 | HTTP GET /api/v2/challenger/admin/{challengerId} | 성공: HTTP 200 OK |
+
+### ChallengerDeactivationCommandControllerTest
+
+- 위치: `monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerDeactivationCommandControllerTest.java`
+
+| 테스트 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 현재 로그인한 운영진으로 탈부를 등록한다 | HTTP POST /api/v1/challenger/admin/{challengerId}/deactivations | 성공: HTTP 201 Created, 탈부 기록 ID 반환 |
+| 사진이 5장을 초과하면 400을 반환한다 | imageIds 6개 | 실패: HTTP 400 Bad Request |
 
 ### ChallengerRecordControllerTest
 - 테스트 설명: ChallengerRecordController
@@ -109,6 +118,17 @@
 | [140](../../../monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerCommandServiceTest.java#L140) | updateChallenger / deactivateChallenger는 EXPEL 타입을 EXPELLED 상태로 매핑한다 | 조건 updateChallenger / deactivateChallenger는 EXPEL 타입을 EXPELLED 상태로 매핑한다 | 성공: 검증 assertThat(challenger.getStatus()).isEqualTo(ChallengerStatus.EXPELLED); assertThat(challenger.getModifiedBy()).isEqualTo(99L); assertThat(challenger.getModificationReason()).isEqualTo("징계"); |
 | [158](../../../monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerCommandServiceTest.java#L158) | updateChallenger / 비활성 챌린저에게 상벌점을 부여할 수 없다 | GrantChallengerPointCommand {challengerId=1L, pointType=PointType.CUSTOM, pointValue=1, description="조정"}; 호출 grantChallengerPoint(GrantChallengerPointCommand.builder() | 실패: 예외 ChallengerDomainException; 에러코드 ChallengerErrorCode.CHALLENGER_NOT_ACTIVE; 검증 .isEqualTo(ChallengerErrorCode.CHALLENGER_NOT_ACTIVE); |
 | [176](../../../monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerCommandServiceTest.java#L176) | 상벌점 설명을 수정한다 | 호출 updateChallengerPoint(UpdateChallengerPointCommand.of(10L, "수정")) | 성공: 검증 assertThat(point.getDescription()).isEqualTo("수정"); |
+
+### ChallengerDeactivationCommandServiceTest
+
+- 위치: `monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerDeactivationCommandServiceTest.java`
+
+| 테스트 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 탈부 정보와 근거 자료를 저장하고 챌린저 상태를 변경한다 | 타의 탈부, 사진 2장, 링크 1개 | 성공: `EXPELLED` 변경 및 등록 이력 저장 |
+| 이미 탈부 등록된 챌린저는 다시 등록할 수 없다 | 동일 challengerId의 탈부 기록 존재 | 실패: 중복 탈부 등록 예외 |
+| 같은 근거 자료를 중복 등록할 수 없다 | 동일 imageId 2개 | 실패: 탈부 등록 요청 오류 |
+| 탈부 근거 사진 카테고리가 아닌 파일은 등록할 수 없다 | 게시글 이미지 카테고리 파일 | 실패: 탈부 등록 요청 오류 |
 
 ### ChallengerRecordCommandServiceTest
 - 테스트 설명: ChallengerRecordCommandService
