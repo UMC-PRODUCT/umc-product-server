@@ -26,7 +26,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.umc.product.challenger.application.port.in.command.AddChallengerDeactivationEvidenceUseCase;
 import com.umc.product.challenger.application.port.in.command.RegisterChallengerDeactivationUseCase;
+import com.umc.product.challenger.application.port.in.command.dto.AddChallengerDeactivationEvidenceCommand;
 import com.umc.product.challenger.application.port.in.command.dto.RegisterChallengerDeactivationCommand;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -46,6 +48,9 @@ class ChallengerDeactivationCommandControllerTest {
 
     @MockitoBean
     RegisterChallengerDeactivationUseCase registerChallengerDeactivationUseCase;
+
+    @MockitoBean
+    AddChallengerDeactivationEvidenceUseCase addChallengerDeactivationEvidenceUseCase;
 
     @BeforeEach
     void setUp() {
@@ -139,5 +144,40 @@ class ChallengerDeactivationCommandControllerTest {
 
         then(registerChallengerDeactivationUseCase).should(never())
             .register(any(RegisterChallengerDeactivationCommand.class));
+    }
+
+    @Test
+    @DisplayName("현재 로그인한 운영진으로 탈부 근거 자료를 추가한다")
+    void addEvidence() throws Exception {
+        mockMvc.perform(post("/api/v1/challenger/admin/{challengerId}/deactivations/evidence", 100L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "imageIds": ["image-2"],
+                      "links": ["https://example.com/evidence-2"]
+                    }
+                    """))
+            .andExpect(status().isCreated());
+
+        ArgumentCaptor<AddChallengerDeactivationEvidenceCommand> captor =
+            ArgumentCaptor.forClass(AddChallengerDeactivationEvidenceCommand.class);
+        then(addChallengerDeactivationEvidenceUseCase).should().addEvidence(captor.capture());
+        assertThat(captor.getValue().challengerId()).isEqualTo(100L);
+        assertThat(captor.getValue().addedByMemberId()).isEqualTo(10L);
+    }
+
+    @Test
+    @DisplayName("추가할 사진이 5장을 초과하면 400을 반환한다")
+    void rejectTooManyAddedImages() throws Exception {
+        mockMvc.perform(post("/api/v1/challenger/admin/{challengerId}/deactivations/evidence", 100L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "imageIds": ["1", "2", "3", "4", "5", "6"]
+                    }
+                    """))
+            .andExpect(status().isBadRequest());
+
+        then(addChallengerDeactivationEvidenceUseCase).should(never()).addEvidence(any());
     }
 }

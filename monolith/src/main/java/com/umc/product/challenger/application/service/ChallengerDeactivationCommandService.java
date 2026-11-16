@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
+import com.umc.product.challenger.application.port.in.command.AddChallengerDeactivationEvidenceUseCase;
 import com.umc.product.challenger.application.port.in.command.RegisterChallengerDeactivationUseCase;
+import com.umc.product.challenger.application.port.in.command.dto.AddChallengerDeactivationEvidenceCommand;
 import com.umc.product.challenger.application.port.in.command.dto.RegisterChallengerDeactivationCommand;
 import com.umc.product.challenger.application.port.out.LoadChallengerDeactivationPort;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
@@ -32,7 +34,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ChallengerDeactivationCommandService implements RegisterChallengerDeactivationUseCase {
+public class ChallengerDeactivationCommandService
+    implements RegisterChallengerDeactivationUseCase, AddChallengerDeactivationEvidenceUseCase {
 
     private final LoadChallengerPort loadChallengerPort;
     private final SaveChallengerPort saveChallengerPort;
@@ -86,6 +89,51 @@ public class ChallengerDeactivationCommandService implements RegisterChallengerD
         return savedDeactivation.getId();
     }
 
+    @Override
+    public void addEvidence(AddChallengerDeactivationEvidenceCommand command) {
+        ChallengerDeactivation deactivation = loadChallengerDeactivationPort
+            .getByChallengerIdForUpdate(command.challengerId());
+        List<String> imageIds = normalizeValues(command.imageIds());
+        List<String> links = normalizeValues(command.links());
+        validateEvidenceAdditionRequest(imageIds, links);
+        validateNoDuplicateEvidence(imageIds, links);
+
+        long existingImageCount = loadChallengerDeactivationPort
+            .countImagesByDeactivationId(deactivation.getId());
+        long existingLinkCount = loadChallengerDeactivationPort
+            .countLinksByDeactivationId(deactivation.getId());
+        validateEvidenceCapacity(existingImageCount, existingLinkCount, imageIds.size(), links.size());
+        validateEvidenceNotAlreadyRegistered(deactivation.getId(), imageIds, links);
+
+        List<FileMetadataInfo> files = getFileUseCase.batchGetUsableByIds(
+            imageIds,
+            command.addedByMemberId()
+        );
+        validateEvidenceFileCategory(files);
+
+        ChallengerDeactivationHistory history = ChallengerDeactivationHistory.create(
+            deactivation,
+            ChallengerDeactivationHistoryAction.EVIDENCE_ADDED,
+            imageIds.size(),
+            links.size(),
+            command.addedByMemberId()
+        );
+        List<ChallengerDeactivationImage> images = createImages(
+            history,
+            imageIds,
+            Math.toIntExact(existingImageCount)
+        );
+        List<ChallengerDeactivationLink> addedLinks = createLinks(
+            history,
+            links,
+            Math.toIntExact(existingLinkCount)
+        );
+
+        saveChallengerDeactivationPort.saveHistory(history);
+        saveChallengerDeactivationPort.saveImages(images);
+        saveChallengerDeactivationPort.saveLinks(addedLinks);
+    }
+
     private void validateNotRegistered(Long challengerId) {
         if (loadChallengerDeactivationPort.existsByChallengerId(challengerId)) {
             throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_DEACTIVATION_ALREADY_EXISTS);
@@ -101,6 +149,44 @@ public class ChallengerDeactivationCommandService implements RegisterChallengerD
         }
     }
 
+    private void validateEvidenceAdditionRequest(List<String> imageIds, List<String> links) {
+        if (imageIds.isEmpty() && links.isEmpty()) {
+            throw new ChallengerDomainException(
+                ChallengerErrorCode.INVALID_CHALLENGER_DEACTIVATION_REQUEST,
+                "추가할 사진이나 링크가 하나 이상 필요합니다."
+            );
+        }
+    }
+
+    private void validateEvidenceCapacity(
+        long existingImageCount,
+        long existingLinkCount,
+        int addedImageCount,
+        int addedLinkCount
+    ) {
+        if (existingImageCount + addedImageCount > ChallengerDeactivation.MAX_IMAGE_COUNT
+            || existingLinkCount + addedLinkCount > ChallengerDeactivation.MAX_LINK_COUNT) {
+            throw new ChallengerDomainException(
+                ChallengerErrorCode.INVALID_CHALLENGER_DEACTIVATION_REQUEST,
+                "근거 자료 등록 가능 개수를 초과했습니다."
+            );
+        }
+    }
+
+    private void validateEvidenceNotAlreadyRegistered(
+        Long deactivationId,
+        List<String> imageIds,
+        List<String> links
+    ) {
+        if (loadChallengerDeactivationPort.existsAnyImageByDeactivationId(deactivationId, imageIds)
+            || loadChallengerDeactivationPort.existsAnyLinkByDeactivationId(deactivationId, links)) {
+            throw new ChallengerDomainException(
+                ChallengerErrorCode.INVALID_CHALLENGER_DEACTIVATION_REQUEST,
+                "이미 등록된 근거 자료를 다시 추가할 수 없습니다."
+            );
+        }
+    }
+
     private boolean hasDuplicateNormalizedValue(List<String> values) {
         Set<String> normalizedValues = new HashSet<>();
         for (String value : values) {
@@ -110,6 +196,12 @@ public class ChallengerDeactivationCommandService implements RegisterChallengerD
             }
         }
         return false;
+    }
+
+    private List<String> normalizeValues(List<String> values) {
+        return values.stream()
+            .map(value -> value == null ? null : value.trim())
+            .toList();
     }
 
     private void validateEvidenceFileCategory(List<FileMetadataInfo> files) {
@@ -125,8 +217,20 @@ public class ChallengerDeactivationCommandService implements RegisterChallengerD
         ChallengerDeactivationHistory history,
         List<String> imageIds
     ) {
+        return createImages(history, imageIds, 0);
+    }
+
+    private List<ChallengerDeactivationImage> createImages(
+        ChallengerDeactivationHistory history,
+        List<String> imageIds,
+        int startDisplayOrder
+    ) {
         return IntStream.range(0, imageIds.size())
-            .mapToObj(index -> ChallengerDeactivationImage.create(history, imageIds.get(index), index))
+            .mapToObj(index -> ChallengerDeactivationImage.create(
+                history,
+                imageIds.get(index),
+                startDisplayOrder + index
+            ))
             .toList();
     }
 
@@ -134,8 +238,20 @@ public class ChallengerDeactivationCommandService implements RegisterChallengerD
         ChallengerDeactivationHistory history,
         List<String> links
     ) {
+        return createLinks(history, links, 0);
+    }
+
+    private List<ChallengerDeactivationLink> createLinks(
+        ChallengerDeactivationHistory history,
+        List<String> links,
+        int startDisplayOrder
+    ) {
         return IntStream.range(0, links.size())
-            .mapToObj(index -> ChallengerDeactivationLink.create(history, links.get(index), index))
+            .mapToObj(index -> ChallengerDeactivationLink.create(
+                history,
+                links.get(index),
+                startDisplayOrder + index
+            ))
             .toList();
     }
 }

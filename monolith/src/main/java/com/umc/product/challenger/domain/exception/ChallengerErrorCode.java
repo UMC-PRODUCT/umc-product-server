@@ -34,6 +34,11 @@ public enum ChallengerErrorCode implements BaseCode {
     CUSTOM_POINT_VALUE_MUST_BE_NON_ZERO(HttpStatus.BAD_REQUEST, "CHALLENGER-0022", "기타 상벌점은 0이 아닌 점수를 입력해주세요."),
     INVALID_CHALLENGER_DEACTIVATION_REQUEST(HttpStatus.BAD_REQUEST, "CHALLENGER-0023", "탈부 등록 정보를 확인해주세요."),
     CHALLENGER_DEACTIVATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "CHALLENGER-0024", "이미 탈부 등록된 챌린저예요. 기존 기록을 확인해주세요."),
+    CHALLENGER_DEACTIVATION_NOT_FOUND(
+        HttpStatus.NOT_FOUND,
+        "CHALLENGER-0025",
+        "탈부 기록을 찾을 수 없어요. 선택한 챌린저를 확인해주세요."
+    ),
     ;
 
     private final HttpStatus httpStatus;

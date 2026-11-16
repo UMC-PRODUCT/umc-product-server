@@ -39,6 +39,36 @@ public class ChallengerDeactivationPersistenceAdapter
     }
 
     @Override
+    public ChallengerDeactivation getByChallengerIdForUpdate(Long challengerId) {
+        return deactivationRepository.findByChallengerId(challengerId)
+            .orElseThrow(() -> new ChallengerDomainException(
+                ChallengerErrorCode.CHALLENGER_DEACTIVATION_NOT_FOUND
+            ));
+    }
+
+    @Override
+    public long countImagesByDeactivationId(Long deactivationId) {
+        return imageRepository.countByAddedHistoryDeactivationId(deactivationId);
+    }
+
+    @Override
+    public long countLinksByDeactivationId(Long deactivationId) {
+        return linkRepository.countByAddedHistoryDeactivationId(deactivationId);
+    }
+
+    @Override
+    public boolean existsAnyImageByDeactivationId(Long deactivationId, List<String> imageIds) {
+        return !imageIds.isEmpty()
+            && imageRepository.existsByImageIdInAndAddedHistoryDeactivationId(imageIds, deactivationId);
+    }
+
+    @Override
+    public boolean existsAnyLinkByDeactivationId(Long deactivationId, List<String> links) {
+        return !links.isEmpty()
+            && linkRepository.existsByLinkInAndAddedHistoryDeactivationId(links, deactivationId);
+    }
+
+    @Override
     public boolean existsByImageId(String imageId) {
         return imageRepository.existsByImageId(imageId);
     }

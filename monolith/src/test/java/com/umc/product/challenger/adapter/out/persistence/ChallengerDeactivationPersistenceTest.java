@@ -20,6 +20,8 @@ import com.umc.product.challenger.domain.ChallengerDeactivationImage;
 import com.umc.product.challenger.domain.ChallengerDeactivationLink;
 import com.umc.product.challenger.domain.enums.ChallengerDeactivationHistoryAction;
 import com.umc.product.challenger.domain.enums.ChallengerDeactivationReason;
+import com.umc.product.challenger.domain.exception.ChallengerDomainException;
+import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.support.PersistenceAdapterTest;
 
@@ -98,6 +100,15 @@ class ChallengerDeactivationPersistenceTest {
     }
 
     @Test
+    @DisplayName("존재하지 않는 챌린저의 탈부 기록을 잠금 조회하면 찾을 수 없음 오류가 발생한다")
+    void failToLockMissingDeactivation() {
+        assertThatThrownBy(() -> loadChallengerDeactivationPort.getByChallengerIdForUpdate(999L))
+            .isInstanceOf(ChallengerDomainException.class)
+            .satisfies(exception -> assertThat(((ChallengerDomainException) exception).getBaseCode())
+                .isEqualTo(ChallengerErrorCode.CHALLENGER_DEACTIVATION_NOT_FOUND));
+    }
+
+    @Test
     @DisplayName("보관 만료 대상과 근거 사진을 조회하고 외래 키 순서로 삭제한다")
     void listAndDeleteRetentionTarget() {
         ChallengerDeactivation deactivation = deactivation(1L);
@@ -120,6 +131,20 @@ class ChallengerDeactivationPersistenceTest {
         assertThat(targets).containsExactly(
             new ChallengerDeactivationRetentionTarget(deactivation.getId(), List.of("image-id"))
         );
+        assertThat(loadChallengerDeactivationPort.getByChallengerIdForUpdate(1L).getId())
+            .isEqualTo(deactivation.getId());
+        assertThat(loadChallengerDeactivationPort.countImagesByDeactivationId(deactivation.getId()))
+            .isEqualTo(1L);
+        assertThat(loadChallengerDeactivationPort.countLinksByDeactivationId(deactivation.getId()))
+            .isEqualTo(1L);
+        assertThat(loadChallengerDeactivationPort.existsAnyImageByDeactivationId(
+            deactivation.getId(),
+            List.of("unknown", "image-id")
+        )).isTrue();
+        assertThat(loadChallengerDeactivationPort.existsAnyLinkByDeactivationId(
+            deactivation.getId(),
+            List.of("https://example.com")
+        )).isTrue();
 
         entityManager.clear();
         deleteChallengerDeactivationPort.deleteImagesByDeactivationId(deactivation.getId());

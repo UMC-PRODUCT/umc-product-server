@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
+import com.umc.product.challenger.application.port.in.command.dto.AddChallengerDeactivationEvidenceCommand;
 import com.umc.product.challenger.application.port.in.command.dto.RegisterChallengerDeactivationCommand;
 import com.umc.product.challenger.application.port.out.LoadChallengerDeactivationPort;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
@@ -227,6 +228,190 @@ class ChallengerDeactivationCommandServiceTest {
         then(saveChallengerDeactivationPort).shouldHaveNoInteractions();
     }
 
+    @Test
+    @DisplayName("기존 탈부 기록에 근거 자료와 근거 추가 진행 기록을 저장한다")
+    void addEvidence() {
+        ChallengerDeactivation deactivation = deactivation();
+        AddChallengerDeactivationEvidenceCommand command = evidenceCommand(
+            List.of(" image-2 ", "image-3"),
+            List.of(" https://example.com/2 ")
+        );
+        given(loadChallengerDeactivationPort.getByChallengerIdForUpdate(100L))
+            .willReturn(deactivation);
+        given(loadChallengerDeactivationPort.countImagesByDeactivationId(500L)).willReturn(1L);
+        given(loadChallengerDeactivationPort.countLinksByDeactivationId(500L)).willReturn(1L);
+        given(getFileUseCase.batchGetUsableByIds(List.of("image-2", "image-3"), 10L))
+            .willReturn(List.of(evidenceFile("image-2"), evidenceFile("image-3")));
+        sut.addEvidence(command);
+
+        then(saveChallengerDeactivationPort).should().saveHistory(historyCaptor.capture());
+        then(saveChallengerDeactivationPort).should().saveImages(imagesCaptor.capture());
+        then(saveChallengerDeactivationPort).should().saveLinks(linksCaptor.capture());
+        assertThat(historyCaptor.getValue().getAction())
+            .isEqualTo(ChallengerDeactivationHistoryAction.EVIDENCE_ADDED);
+        assertThat(historyCaptor.getValue().getImageCount()).isEqualTo(2);
+        assertThat(historyCaptor.getValue().getLinkCount()).isEqualTo(1);
+        assertThat(historyCaptor.getValue().getActorMemberId()).isEqualTo(10L);
+        assertThat(imagesCaptor.getValue()).extracting(ChallengerDeactivationImage::getDisplayOrder)
+            .containsExactly(1, 2);
+        assertThat(linksCaptor.getValue()).extracting(ChallengerDeactivationLink::getDisplayOrder)
+            .containsExactly(1);
+    }
+
+    @Test
+    @DisplayName("사진 없이 링크만 근거 자료로 추가할 수 있다")
+    void addLinkEvidenceWithoutImages() {
+        ChallengerDeactivation deactivation = deactivation();
+        given(loadChallengerDeactivationPort.getByChallengerIdForUpdate(100L))
+            .willReturn(deactivation);
+        given(getFileUseCase.batchGetUsableByIds(List.of(), 10L)).willReturn(List.of());
+
+        sut.addEvidence(evidenceCommand(
+            null,
+            List.of("https://example.com/link-only")
+        ));
+
+        then(saveChallengerDeactivationPort).should().saveHistory(historyCaptor.capture());
+        then(saveChallengerDeactivationPort).should().saveImages(List.of());
+        then(saveChallengerDeactivationPort).should().saveLinks(linksCaptor.capture());
+        assertThat(historyCaptor.getValue().getImageCount()).isZero();
+        assertThat(historyCaptor.getValue().getLinkCount()).isEqualTo(1);
+        assertThat(linksCaptor.getValue()).extracting(ChallengerDeactivationLink::getLink)
+            .containsExactly("https://example.com/link-only");
+    }
+
+    @Test
+    @DisplayName("근거 추가에서도 탈부 근거 사진 카테고리가 아닌 파일은 등록할 수 없다")
+    void rejectInvalidEvidenceFileCategoryWhenAddingEvidence() {
+        given(loadChallengerDeactivationPort.getByChallengerIdForUpdate(100L))
+            .willReturn(deactivation());
+        given(getFileUseCase.batchGetUsableByIds(List.of("image-2"), 10L)).willReturn(List.of(
+            new FileMetadataInfo(
+                "image-2",
+                "evidence.jpg",
+                "jpg",
+                FileCategory.POST_IMAGE,
+                "image/jpeg",
+                100L,
+                true,
+                10L,
+                Instant.now()
+            )
+        ));
+
+        assertThatThrownBy(() -> sut.addEvidence(evidenceCommand(
+            List.of("image-2"),
+            List.of()
+        )))
+            .isInstanceOf(ChallengerDomainException.class)
+            .satisfies(exception -> assertThat(((ChallengerDomainException) exception).getBaseCode())
+                .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_DEACTIVATION_REQUEST));
+
+        then(saveChallengerDeactivationPort).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("기존 자료와 합쳐 사진 5장 또는 링크 3개를 초과할 수 없다")
+    void rejectEvidenceCapacityExceeded() {
+        ChallengerDeactivation deactivation = deactivation();
+        given(loadChallengerDeactivationPort.getByChallengerIdForUpdate(100L))
+            .willReturn(deactivation);
+        given(loadChallengerDeactivationPort.countImagesByDeactivationId(500L)).willReturn(4L);
+        given(loadChallengerDeactivationPort.countLinksByDeactivationId(500L)).willReturn(3L);
+
+        assertThatThrownBy(() -> sut.addEvidence(evidenceCommand(
+            List.of("image-5", "image-6"),
+            List.of()
+        )))
+            .isInstanceOf(ChallengerDomainException.class)
+            .satisfies(exception -> assertThat(((ChallengerDomainException) exception).getBaseCode())
+                .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_DEACTIVATION_REQUEST));
+
+        then(getFileUseCase).shouldHaveNoInteractions();
+        then(saveChallengerDeactivationPort).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("기존 링크와 합쳐 3개를 초과할 수 없다")
+    void rejectLinkCapacityExceeded() {
+        ChallengerDeactivation deactivation = deactivation();
+        given(loadChallengerDeactivationPort.getByChallengerIdForUpdate(100L))
+            .willReturn(deactivation);
+        given(loadChallengerDeactivationPort.countLinksByDeactivationId(500L)).willReturn(2L);
+
+        assertThatThrownBy(() -> sut.addEvidence(evidenceCommand(
+            List.of(),
+            List.of("https://example.com/3", "https://example.com/4")
+        )))
+            .isInstanceOf(ChallengerDomainException.class)
+            .satisfies(exception -> assertThat(((ChallengerDomainException) exception).getBaseCode())
+                .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_DEACTIVATION_REQUEST));
+
+        then(getFileUseCase).shouldHaveNoInteractions();
+        then(saveChallengerDeactivationPort).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("기존 탈부 기록에 등록된 근거 자료를 다시 추가할 수 없다")
+    void rejectAlreadyRegisteredEvidence() {
+        ChallengerDeactivation deactivation = deactivation();
+        given(loadChallengerDeactivationPort.getByChallengerIdForUpdate(100L))
+            .willReturn(deactivation);
+        given(loadChallengerDeactivationPort.existsAnyImageByDeactivationId(
+            500L,
+            List.of("image-1")
+        )).willReturn(true);
+
+        assertThatThrownBy(() -> sut.addEvidence(evidenceCommand(
+            List.of("image-1"),
+            List.of()
+        )))
+            .isInstanceOf(ChallengerDomainException.class)
+            .satisfies(exception -> assertThat(((ChallengerDomainException) exception).getBaseCode())
+                .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_DEACTIVATION_REQUEST));
+
+        then(getFileUseCase).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("기존 탈부 기록에 등록된 링크를 다시 추가할 수 없다")
+    void rejectAlreadyRegisteredLinkEvidence() {
+        ChallengerDeactivation deactivation = deactivation();
+        String existingLink = "https://example.com/existing";
+        given(loadChallengerDeactivationPort.getByChallengerIdForUpdate(100L))
+            .willReturn(deactivation);
+        given(loadChallengerDeactivationPort.existsAnyLinkByDeactivationId(
+            500L,
+            List.of(existingLink)
+        )).willReturn(true);
+
+        assertThatThrownBy(() -> sut.addEvidence(evidenceCommand(
+            List.of(),
+            List.of(existingLink)
+        )))
+            .isInstanceOf(ChallengerDomainException.class)
+            .satisfies(exception -> assertThat(((ChallengerDomainException) exception).getBaseCode())
+                .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_DEACTIVATION_REQUEST));
+
+        then(getFileUseCase).shouldHaveNoInteractions();
+        then(saveChallengerDeactivationPort).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("사진과 링크가 모두 없으면 근거 추가 기록을 만들 수 없다")
+    void rejectEmptyEvidenceAddition() {
+        given(loadChallengerDeactivationPort.getByChallengerIdForUpdate(100L))
+            .willReturn(deactivation());
+
+        assertThatThrownBy(() -> sut.addEvidence(evidenceCommand(List.of(), List.of())))
+            .isInstanceOf(ChallengerDomainException.class)
+            .satisfies(exception -> assertThat(((ChallengerDomainException) exception).getBaseCode())
+                .isEqualTo(ChallengerErrorCode.INVALID_CHALLENGER_DEACTIVATION_REQUEST));
+
+        then(getFileUseCase).shouldHaveNoInteractions();
+        then(saveChallengerDeactivationPort).shouldHaveNoInteractions();
+    }
+
     private Challenger challenger() {
         Challenger challenger = Challenger.builder()
             .memberId(1L)
@@ -235,6 +420,26 @@ class ChallengerDeactivationCommandServiceTest {
             .build();
         ReflectionTestUtils.setField(challenger, "id", 100L);
         return challenger;
+    }
+
+    private ChallengerDeactivation deactivation() {
+        ChallengerDeactivation deactivation = ChallengerDeactivation.create(
+            100L,
+            ChallengerStatus.WITHDRAWN,
+            ChallengerDeactivationReason.VOLUNTARY_PERSONAL_CIRCUMSTANCES,
+            null,
+            null,
+            10L
+        );
+        ReflectionTestUtils.setField(deactivation, "id", 500L);
+        return deactivation;
+    }
+
+    private AddChallengerDeactivationEvidenceCommand evidenceCommand(
+        List<String> imageIds,
+        List<String> links
+    ) {
+        return AddChallengerDeactivationEvidenceCommand.of(100L, imageIds, links, 10L);
     }
 
     private RegisterChallengerDeactivationCommand command(
