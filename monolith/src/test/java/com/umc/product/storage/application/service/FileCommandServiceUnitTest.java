@@ -308,6 +308,29 @@ class FileCommandServiceUnitTest {
         then(saveFileMetadataPort).should(never()).deleteByFileId(anyString());
     }
 
+    @Test
+    @DisplayName("시스템 삭제는 파일이 존재하면 스토리지와 메타데이터를 삭제한다")
+    void systemDeletionRemovesStoredObjectAndMetadata() {
+        FileMetadata metadata = uploadedFile("file-id", 1L);
+        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.of(metadata));
+
+        sut.deleteIfExists("file-id");
+
+        then(storagePort).should().delete(metadata.getStorageKey());
+        then(saveFileMetadataPort).should().deleteByFileId("file-id");
+    }
+
+    @Test
+    @DisplayName("시스템 삭제는 파일이 이미 없으면 성공으로 처리한다")
+    void systemDeletionIsIdempotentWhenFileIsAbsent() {
+        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.empty());
+
+        sut.deleteIfExists("file-id");
+
+        then(storagePort).shouldHaveNoInteractions();
+        then(saveFileMetadataPort).shouldHaveNoInteractions();
+    }
+
     private DeleteFileCommand deleteCommand(String fileId, Long requesterMemberId) {
         return DeleteFileCommand.builder()
             .fileId(fileId)

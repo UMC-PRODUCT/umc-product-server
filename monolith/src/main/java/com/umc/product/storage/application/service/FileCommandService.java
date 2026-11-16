@@ -11,6 +11,7 @@ import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.CheckChallengerDeactivationEvidenceUseCase;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.storage.application.port.in.command.DeleteStoredFileUseCase;
 import com.umc.product.storage.application.port.in.command.ManageFileUseCase;
 import com.umc.product.storage.application.port.in.command.StoreGeneratedFileUseCase;
 import com.umc.product.storage.application.port.in.command.dto.DeleteFileCommand;
@@ -34,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class FileCommandService implements ManageFileUseCase, StoreGeneratedFileUseCase {
+public class FileCommandService implements ManageFileUseCase, StoreGeneratedFileUseCase, DeleteStoredFileUseCase {
 
     private static final long UPLOAD_URL_DURATION_MINUTES = 15;
 
@@ -186,6 +187,15 @@ public class FileCommandService implements ManageFileUseCase, StoreGeneratedFile
         saveFileMetadataPort.deleteByFileId(command.fileId());
 
         log.info("파일을 삭제했습니다: fileId={}", command.fileId());
+    }
+
+    @Override
+    public void deleteIfExists(String fileId) {
+        loadFileMetadataPort.findByFileId(fileId).ifPresent(metadata -> {
+            storagePort.delete(metadata.getStorageKey());
+            saveFileMetadataPort.deleteByFileId(fileId);
+            log.info("시스템 작업으로 파일을 삭제했습니다: fileId={}", fileId);
+        });
     }
 
     private void validateNotUsedAsChallengerDeactivationEvidence(String fileId) {
