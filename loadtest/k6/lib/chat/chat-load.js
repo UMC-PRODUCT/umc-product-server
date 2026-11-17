@@ -39,7 +39,7 @@ export function loadContent(runId, kind, message, sentAt, sequence = 0) {
 /**
  * 반복 부하에서 수신자 한 명이 참여한 방별·발신자별 전달 상태를 추적한다. 연결이나 전송은 수행하지 않는다.
  * 대상 사용자와 공통 runId로 생성한 뒤, ChatClient.onEvent에서 observe(event, receivedAt)를 호출한다.
- * ready·armed로 모든 참여자의 수신 준비를 확인하고, observe의 반환값으로 전달 지연·중복을 집계한다.
+ * 방별 대표의 ready, 참여자의 응답, 대표의 armed로 수신 준비를 확인한다.
  * 종료 시 summary()가 ACK 완료 순번에 따른 예상·누락 건수와 완료 신호 누락을 반환한다.
  * 다른 VU의 전송 시각은 메시지 본문에서 읽는다. 지연 비교를 위해 부하 발생기들의 시계가 맞아야 한다.
  */
@@ -78,6 +78,7 @@ export class DeliveryTracker {
       stream.done = wire.sequence;
       return null;
     }
+    if (wire.kind === "warmup") return null;
     if (wire.kind !== "message" || wire.sequence < 1) throw mismatch();
     if (wire.senderId === this.target.memberId) return null;
     if (wire.sequence <= stream.through || stream.gaps.has(wire.sequence)) return { duplicate: true };
@@ -95,7 +96,11 @@ export class DeliveryTracker {
   }
 
   get ready() { return [...this.streams.values()].every((stream) => stream.ready); }
-  get armed() { return [...this.streams.values()].every((stream) => stream.armed); }
+  hasReady(threadId, memberId) { return this.streams.get(key(threadId, memberId)).ready; }
+  roomReady(room) { return room.memberIds.every((memberId) => this.hasReady(room.threadId, memberId)); }
+  get armed() {
+    return this.target.rooms.every((room) => this.streams.get(key(room.threadId, room.memberIds[0])).armed);
+  }
 
   summary() {
     let expected = 0, missing = 0, completionMissing = 0;

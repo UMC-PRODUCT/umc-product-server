@@ -41,10 +41,17 @@ function readVuUsers(env, users) {
 // 새 시나리오는 이름만 전달해 같은 부하 설정과 측정 코드를 다른 지표 태그로 재사용할 수 있다.
 export function readLoadConfig(env, scenario = env.SCENARIO || "chat-message") {
   const users = positiveInteger(env.CHAT_USERS, 2, "CHAT_USERS", 1, 1000);
+  const startupMs = positiveInteger(env.CHAT_STARTUP_TIMEOUT_MS, 10000, "CHAT_STARTUP_TIMEOUT_MS", 100, 120000);
   return { ...readChatConfig(env), users, vuUsers: readVuUsers(env, users), senders: readSenders(env, users),
+    warmupMs: env.CHAT_WARMUP === "0s" ? 0 : durationMs(env.CHAT_WARMUP || "30s"),
+    maxInflight: positiveInteger(env.CHAT_MAX_INFLIGHT, 128, "CHAT_MAX_INFLIGHT", 1, 256),
+    lockVariant: env.CHAT_LOCK_VARIANT || "unverified",
+    serverRevision: env.CHAT_SERVER_REVISION || "unverified",
     rooms: positiveInteger(env.CHAT_ROOMS, 1, "CHAT_ROOMS", 1, 1000),
     intervalMs: positiveInteger(env.CHAT_MESSAGE_INTERVAL_MS, 1000, "CHAT_MESSAGE_INTERVAL_MS", 1, 60000),
-    startupMs: positiveInteger(env.CHAT_STARTUP_TIMEOUT_MS, 10000, "CHAT_STARTUP_TIMEOUT_MS", 100, 120000),
+    startupMs,
+    controlIntervalMs: env.CHAT_CONTROL_INTERVAL_MS === undefined ? Math.min(500, Math.max(20, startupMs / 10))
+      : positiveInteger(env.CHAT_CONTROL_INTERVAL_MS, 500, "CHAT_CONTROL_INTERVAL_MS", 1, 60000),
     durationMs: durationMs(env.DURATION || "30s"),
     latencyThresholds: readLatencyThresholds(env),
     tags: { scenario, profile: "load" } };
@@ -52,13 +59,17 @@ export function readLoadConfig(env, scenario = env.SCENARIO || "chat-message") {
 
 export function buildLoadOptions(config) {
   const vus = config.vuUsers.length;
+  const scheduleThresholds = {};
+  for (const name of ["umc_chat_scheduled", "umc_chat_issued", "umc_chat_schedule_dropped"]) {
+    scheduleThresholds[`${name}{phase:measurement}`] = [];
+  }
   return {
     // 반복 횟수는 VU 수를 기준으로 검사하고 실제 연결 수는 ws_sessions에서 별도로 확인한다.
     scenarios: { chat_load: { executor: "per-vu-iterations", vus, iterations: 1,
-      maxDuration: `${config.startupMs + config.durationMs + config.timeoutMs * 3 + 3000}ms` } },
+      maxDuration: `${config.startupMs + config.warmupMs + config.durationMs + config.timeoutMs * 3 + 3000}ms` } },
     summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)", "count"],
     thresholds: { checks: ["rate==1"], iterations: [`count==${vus}`],
       umc_chat_failures: ["count==0"], umc_chat_delivery_missing: ["count==0"],
-      umc_chat_completion_missing: ["count==0"], ...config.latencyThresholds },
+      umc_chat_completion_missing: ["count==0"], umc_chat_schedule_dropped: ["count==0"], ...config.latencyThresholds, ...scheduleThresholds },
   };
 }
