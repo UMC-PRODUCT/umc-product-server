@@ -2,7 +2,11 @@ package com.umc.product.challenger.adapter.in.scheduler;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -10,24 +14,46 @@ import com.umc.product.challenger.application.port.in.command.PurgeExpiredChalle
 import com.umc.product.challenger.application.port.in.command.dto.ChallengerDeactivationPurgeResult;
 import com.umc.product.global.logging.OperationalMetrics;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
+@ConditionalOnProperty(
+    prefix = "app.challenger.deactivation-retention",
+    name = "enabled",
+    havingValue = "true"
+)
 public class ChallengerDeactivationRetentionScheduler {
 
     private static final String JOB_NAME = "challenger_deactivation_retention";
 
     private final PurgeExpiredChallengerDeactivationsUseCase purgeExpiredChallengerDeactivationsUseCase;
     private final OperationalMetrics operationalMetrics;
+    private final Executor executor;
+
+    public ChallengerDeactivationRetentionScheduler(
+        PurgeExpiredChallengerDeactivationsUseCase purgeExpiredChallengerDeactivationsUseCase,
+        OperationalMetrics operationalMetrics,
+        @Qualifier("challengerDeactivationRetentionExecutor") Executor executor
+    ) {
+        this.purgeExpiredChallengerDeactivationsUseCase = purgeExpiredChallengerDeactivationsUseCase;
+        this.operationalMetrics = operationalMetrics;
+        this.executor = executor;
+    }
 
     @Scheduled(
-        cron = "${app.challenger.deactivation-retention.cron:0 0 4 * * *}",
+        cron = "${app.challenger.deactivation-retention.cron}",
         zone = "Asia/Seoul"
     )
     public void purge() {
+        try {
+            executor.execute(this::executePurge);
+        } catch (RejectedExecutionException exception) {
+            log.warn("batch job execution skipped because previous run is still active: jobName={}", JOB_NAME);
+        }
+    }
+
+    void executePurge() {
         Instant startedAt = Instant.now();
         try {
             ChallengerDeactivationPurgeResult result = purgeExpiredChallengerDeactivationsUseCase.purgeExpired();

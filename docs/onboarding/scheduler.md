@@ -10,6 +10,7 @@
 | Project 매칭 데드라인 pool | `matchingDeadlineTaskScheduler` | `matching-deadline-` | project 매칭 차수 결정 마감 1회성 task |
 | Email async executor | `emailTaskExecutor` | `email-` | 인증 메일 발송 |
 | Audit async executor | `auditTaskExecutor` | `audit-` | 감사 로그 저장 |
+| Challenger 탈부 만료 executor | `challengerDeactivationRetentionExecutor` | `challenger-deactivation-retention-` | 탈부 기록과 S3 근거 파일 만료 삭제 |
 
 전역 `@Scheduled` 작업은 반드시 `taskScheduler`를 사용한다. Project 매칭 데드라인은 `@Scheduled`가 아니라 `TaskScheduler.schedule(...)`로 동적 등록되며, `@Qualifier("matchingDeadlineTaskScheduler")`로 전용 풀을 주입받는다.
 
@@ -19,6 +20,7 @@
 | --- | --- | --- | --- | --- |
 | maintenance | `MaintenanceStateRefreshScheduler` | `fixedDelay = 10s` | scheduling enabled profile | 다중 인스턴스 점검 상태 동기화를 위한 짧은 polling. 실제 DB 조회는 `MaintenanceStateHolder.refresh()`에 위임한다. |
 | authentication | `EmailVerificationRetentionScheduler` | 매일 03:00 KST | scheduling enabled profile | 만료 인증 세션 회수. 저빈도 정리 잡으로 적절하다. |
+| challenger | `ChallengerDeactivationRetentionScheduler` | 매일 04:00 KST (`app.challenger.deactivation-retention.cron`) | `app.challenger.deactivation-retention.enabled=true`, scheduling enabled profile (`!test`) | 전역 scheduler는 실행 요청만 전달하고 전용 단일 스레드 executor가 등록 후 5년이 지난 탈부 기록을 100건 단위로 삭제한다. 개별 실패는 다음 실행에서 재시도한다. |
 | curriculum | `WorkbookAutoReleaseScheduler` | 매일 00:00 KST | scheduling enabled profile | 워크북 자동 배포. 저빈도 도메인 batch로 적절하다. |
 | notification | `FcmOutboxScheduler` | `app.fcm.outbox-interval-ms` | `app.fcm.enabled=true` | FCM outbox polling. FCM 미사용 환경에서는 scheduler bean 자체를 등록하지 않는다. |
 | notification | `FcmTokenValidationScheduler` | `app.fcm.token-validation-interval-ms` | `app.fcm.enabled=true`, `app.fcm.token-validation-enabled=true` | 오래 검증되지 않은 활성 토큰을 batch dry-run으로 검증한다. 다중 인스턴스에서는 전용 batch 인스턴스 한 곳에서만 활성화한다. |
@@ -62,6 +64,25 @@ Event Outbox의 생성부터 listener 소비, 실패 재시도까지의 상세 �
 - 도메인별 1회성 동적 task가 필요하면 전역 `taskScheduler`를 공유할지 전용 `TaskScheduler`가 필요한지 먼저 판단한다.
 - 다중 인스턴스에서 중복 실행되면 안 되는 작업은 DB lease, unique constraint, outbox claim, ShedLock 중 하나로 방어한다.
 - 새 작업은 실행 주기, 활성 property, 멱등성 전략, 실패 재시도 전략을 이 문서에 추가한다.
+
+## Challenger 탈부 기록 보관 만료
+
+`ChallengerDeactivationRetentionScheduler`는 매일 04:00 KST에 실행되며,
+`app.challenger.deactivation-retention.cron`으로 실행 시각을 바꿀 수 있다.
+기본값은 비활성화이며, 전용 배치 인스턴스에서만
+`app.challenger.deactivation-retention.enabled=true`로 설정하고 스케줄링이 활성화된 `!test` 프로필에서
+전역 `taskScheduler`를 사용한다.
+
+- 전역 scheduler thread는 실행 요청만 전용 단일 스레드 `challengerDeactivationRetentionExecutor`에 전달하고 즉시 반환한다.
+- 전용 executor는 큐를 두지 않으며 이전 실행이 끝나지 않았다면 새 실행 요청을 거절해 같은 인스턴스의 중복 실행을 막는다.
+- 탈부 등록 시각으로부터 5년이 지난 기록을 ID 커서 기준 100건씩 조회한다.
+- 탈부 기록마다 별도 트랜잭션으로 사진·링크·진행 기록·탈부 기록을 삭제한다.
+- 탈부 기록과 파일 메타데이터에 비관적 쓰기 잠금을 적용하고, 잠금 안에서 최신 사진 목록과 다른 탈부 기록의 참조 여부를 다시 확인한다.
+- 다른 탈부 기록에서도 사용하는 원본 파일은 삭제하지 않는다.
+- 한 기록의 삭제가 실패해도 다음 기록을 계속 처리하며, 실패한 기록은 다음 스케줄 실행에서 다시 조회한다.
+- 여러 원본 중 일부를 삭제한 뒤 후속 삭제가 실패하면 DB 변경은 롤백되지만 이미 삭제된 원본은 복구되지 않는다. 원본이 없는 파일은 새 근거로 등록할 수 없으며, 만료 기록은 다음 실행에서 다시 삭제를 시도한다.
+- 다중 인스턴스 환경에서는 전용 배치 인스턴스 한 곳만 `CHALLENGER_DEACTIVATION_RETENTION_ENABLED=true`로 설정한다. 다른 인스턴스에서는 `false`로 설정해 scheduler bean 자체를 등록하지 않는다.
+- 설정 오류로 여러 인스턴스에서 동시에 실행되더라도 탈부 기록과 파일 단위 DB 잠금으로 중복 삭제에 따른 데이터 충돌을 방어한다.
 
 
 ### 그룹별 Outbox polling 및 관측
