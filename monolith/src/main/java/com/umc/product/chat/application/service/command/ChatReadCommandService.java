@@ -31,7 +31,7 @@ public class ChatReadCommandService implements UpdateChatReadUseCase {
 
     @Override
     public ChatReadMutationResult update(UpdateChatReadCommand command) {
-        loadChatRoomPort.getByIdForUpdate(command.roomId());
+        loadChatRoomPort.getById(command.roomId());
         chatRoomAccessPolicy.verifyMember(command.roomId(), command.memberId());
         loadChatMessagePort.getByIdAndRoomId(command.lastReadMessageId(), command.roomId());
         ChatMember member = loadChatMemberPort.getByRoomIdAndMemberId(command.roomId(), command.memberId());

@@ -1,6 +1,6 @@
 import { getAccessToken } from "../auth.js";
 import { StompClient, StompError, StompTimeoutError } from "../stomp/stomp.js";
-import { recordAttempt, recordDuplicate, recordLatency } from "./chat-metrics.js";
+import { recordAttempt, recordTransmitted, recordDuplicate, recordLatency } from "./chat-metrics.js";
 
 const EVENTS = "/user/queue/community/threads/events";
 const ERRORS = "/user/queue/errors";
@@ -46,7 +46,8 @@ export class ChatClient {
       const token = getAccessToken(this.memberId,
         { baseUrl: this.config.baseUrl, timeout: `${this.config.timeoutMs}ms` });
       this.stomp = new StompClient(`${this.config.baseUrl.replace(/^http/, "ws")}/ws/websocket`,
-        { token, label: this.label, timeoutMs: this.config.timeoutMs });
+        { token, label: this.label, timeoutMs: this.config.timeoutMs,
+          diagnostics: { testId: __ENV.CHAT_TEST_ID, memberId: this.memberId } });
       stage = "connect";
       await this.stomp.connect();
       this.stomp.observe((frame) => this.route(frame));
@@ -129,6 +130,7 @@ export class ChatClient {
         this.stomp.send(`/app/community/threads/${message.threadId}/messages`,
           { clientMessageId: message.clientMessageId, type: "TEXT", content: message.content },
           { "x-command-id": message.commandId });
+        if (message.measured) recordTransmitted(this.config.tags);
       } catch (error) {
         this.cancelMessage(message);
         await pending.catch(() => {});

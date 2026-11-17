@@ -46,7 +46,7 @@ class ChatReadCommandServiceTest {
     ChatReadCommandService sut;
 
     @Test
-    @DisplayName("room lock 아래에서 exact message와 membership을 확인하고 watermark를 전진시킨다")
+    @DisplayName("방과 exact message 및 membership을 확인하고 watermark를 전진시킨다")
     void update_advances() {
         ChatMember member = ChatMember.of(1L, 10L);
         member.markRead(30L);
@@ -69,7 +69,7 @@ class ChatReadCommandServiceTest {
             loadChatMemberPort,
             saveChatMemberPort
         );
-        order.verify(loadChatRoomPort).getByIdForUpdate(1L);
+        order.verify(loadChatRoomPort).getById(1L);
         order.verify(chatRoomAccessPolicy).verifyMember(1L, 10L);
         order.verify(loadChatMessagePort).getByIdAndRoomId(40L, 1L);
         order.verify(loadChatMemberPort).getByRoomIdAndMemberId(1L, 10L);
