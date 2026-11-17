@@ -111,4 +111,12 @@ public class NoticeContentController implements NoticeContentApi {
         manageNoticeContentUseCase.deleteVote(noticeId, memberPrincipal.getMemberId());
     }
 
+    @PostMapping("/{noticeId}/vote/closure")
+    public void closeNoticeVote(
+        @PathVariable Long noticeId,
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        manageNoticeContentUseCase.closeVote(noticeId, memberPrincipal.getMemberId());
+    }
+
 }
