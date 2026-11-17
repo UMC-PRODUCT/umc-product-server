@@ -1,7 +1,7 @@
 package com.umc.product.notice.application.service.query;
 
 
-import java.time.Instant;
+import java.time.Clock;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +37,7 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
     private final LoadNoticeLinkPort loadNoticeLinkPort;
     private final GetFileUseCase getFileUseCase;
     private final GetVoteUseCase getVoteUseCase;
+    private final Clock clock;
 
     @Override
     public List<NoticeLinkInfo> findLinkByNoticeId(Long noticeId) {
@@ -79,7 +80,7 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
             formInfo.title(),
             formInfo.isAnonymous(),
             formInfo.allowMultipleChoice(),
-            vote.getOpenStatus(Instant.now()),
+            vote.getOpenStatus(clock.instant()),
             vote.getStartsAt(),
             vote.getEndsAtExclusive(),
             formInfo.totalParticipants(),

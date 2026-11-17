@@ -93,6 +93,11 @@ public class NoticeContentPersistenceAdapter implements
     }
 
     @Override
+    public Optional<NoticeVote> findVoteByNoticeIdForUpdate(Long noticeId) {
+        return voteJpaRepository.findByNoticeIdForUpdate(noticeId);
+    }
+
+    @Override
     public boolean existsVoteByNoticeId(Long noticeId) {
         return voteJpaRepository.existsByNoticeId(noticeId);
     }

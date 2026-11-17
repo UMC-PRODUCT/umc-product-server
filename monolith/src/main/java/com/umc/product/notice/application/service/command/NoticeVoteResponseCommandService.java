@@ -1,6 +1,6 @@
 package com.umc.product.notice.application.service.command;
 
-import java.time.Instant;
+import java.time.Clock;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -34,6 +34,7 @@ public class NoticeVoteResponseCommandService implements ManageNoticeVoteRespons
     private final LoadNoticeVotePort loadNoticeVotePort;
     private final GetVoteUseCase getVoteUseCase;
     private final ManageFormResponseUseCase manageFormResponseUseCase;
+    private final Clock clock;
 
     @Audited(
         domain = Domain.NOTICE,
@@ -85,10 +86,11 @@ public class NoticeVoteResponseCommandService implements ManageNoticeVoteRespons
     }
 
     private NoticeVote loadOpenNoticeVote(Long noticeId) {
-        NoticeVote noticeVote = loadNoticeVotePort.findVoteByNoticeId(noticeId)
+        // 종료와 응답 변경이 같은 투표 행을 잠가, 종료 완료 후 응답이 저장되는 것을 방지합니다.
+        NoticeVote noticeVote = loadNoticeVotePort.findVoteByNoticeIdForUpdate(noticeId)
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
 
-        VoteStatus status = noticeVote.getOpenStatus(Instant.now());
+        VoteStatus status = noticeVote.getOpenStatus(clock.instant());
         if (status == VoteStatus.NOT_STARTED) {
             throw new NoticeDomainException(NoticeErrorCode.VOTE_NOT_STARTED);
         }

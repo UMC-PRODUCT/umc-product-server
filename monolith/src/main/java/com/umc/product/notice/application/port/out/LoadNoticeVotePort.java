@@ -10,6 +10,8 @@ public interface LoadNoticeVotePort {
 
     Optional<NoticeVote> findVoteByNoticeId(Long noticeId);
 
+    Optional<NoticeVote> findVoteByNoticeIdForUpdate(Long noticeId);
+
     boolean existsVoteByNoticeId(Long noticeId);
 
     List<Long> listNoticeIdsWithVotes(List<Long> noticeIds);
