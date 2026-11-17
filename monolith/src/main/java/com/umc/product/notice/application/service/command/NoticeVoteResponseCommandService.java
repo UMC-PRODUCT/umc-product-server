@@ -19,6 +19,7 @@ import com.umc.product.notice.application.port.in.command.ManageNoticeVoteRespon
 import com.umc.product.notice.application.port.in.command.dto.SubmitNoticeVoteResponseCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeVoteResponseCommand;
 import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
+import com.umc.product.notice.application.port.out.LockNoticeVoteResponsePort;
 import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.notice.domain.enums.VoteStatus;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
@@ -32,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 public class NoticeVoteResponseCommandService implements ManageNoticeVoteResponseUseCase {
 
     private final LoadNoticeVotePort loadNoticeVotePort;
+    private final LockNoticeVoteResponsePort lockNoticeVoteResponsePort;
     private final GetVoteUseCase getVoteUseCase;
     private final ManageFormResponseUseCase manageFormResponseUseCase;
     private final Clock clock;
@@ -45,7 +47,7 @@ public class NoticeVoteResponseCommandService implements ManageNoticeVoteRespons
     )
     @Override
     public Long submit(SubmitNoticeVoteResponseCommand command) {
-        NoticeVote noticeVote = loadOpenNoticeVote(command.noticeId());
+        NoticeVote noticeVote = loadOpenNoticeVote(command.noticeId(), command.respondentMemberId());
         Long questionId = getVoteUseCase.getPrimaryQuestionId(noticeVote.getVoteId());
 
         return manageFormResponseUseCase.submitImmediately(
@@ -63,7 +65,7 @@ public class NoticeVoteResponseCommandService implements ManageNoticeVoteRespons
             throw new NoticeDomainException(NoticeErrorCode.SELECTED_OPTION_IDS_REQUIRED);
         }
 
-        NoticeVote noticeVote = loadOpenNoticeVote(command.noticeId());
+        NoticeVote noticeVote = loadOpenNoticeVote(command.noticeId(), command.respondentMemberId());
 
         if (command.selectedOptionIds().isEmpty()) {
             manageFormResponseUseCase.deleteResponse(
@@ -85,9 +87,10 @@ public class NoticeVoteResponseCommandService implements ManageNoticeVoteRespons
         );
     }
 
-    private NoticeVote loadOpenNoticeVote(Long noticeId) {
-        // 종료와 응답 변경이 같은 투표 행을 잠가, 종료 완료 후 응답이 저장되는 것을 방지합니다.
-        NoticeVote noticeVote = loadNoticeVotePort.findVoteByNoticeIdForUpdate(noticeId)
+    private NoticeVote loadOpenNoticeVote(Long noticeId, Long respondentMemberId) {
+        lockNoticeVoteResponsePort.lockResponse(noticeId, respondentMemberId);
+        // 응답끼리는 공유 잠금으로 병렬 처리하고, 종료의 배타 잠금과는 순서를 보장한다.
+        NoticeVote noticeVote = loadNoticeVotePort.findVoteByNoticeIdForShare(noticeId)
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
 
         VoteStatus status = noticeVote.getOpenStatus(clock.instant());

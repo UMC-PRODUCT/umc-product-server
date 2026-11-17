@@ -38,6 +38,8 @@ import com.umc.product.form.application.port.in.command.dto.CreateVoteCommand;
 import com.umc.product.form.application.port.in.query.GetVoteUseCase;
 import com.umc.product.form.application.port.in.query.dto.VoteInfo;
 import com.umc.product.form.application.port.out.LoadFormResponsePort;
+import com.umc.product.form.domain.exception.FormDomainException;
+import com.umc.product.form.domain.exception.FormErrorCode;
 import com.umc.product.maintenance.application.port.in.command.RefreshMaintenanceStateUseCase;
 import com.umc.product.member.adapter.out.persistence.MemberSystemRoleJpaRepository;
 import com.umc.product.member.application.port.out.SaveMemberPort;
@@ -305,6 +307,92 @@ class NoticeVoteCloseIntegrationTest extends IntegrationTestSupport {
                 allowCommit.countDown();
             }
         }
+    }
+
+    @Test
+    @DisplayName("다른 사용자의 응답은 동시에 처리되고 종료는 진행 중인 응답의 커밋을 기다린다")
+    void 응답_병렬_처리와_종료_대기() throws Exception {
+        // Given
+        Long voteId = createOpenVote();
+        Long optionId = getVoteUseCase.getVoteInfo(voteId, respondentMemberId).options().getFirst().optionId();
+        CountDownLatch submitted = new CountDownLatch(1);
+        CountDownLatch allowCommit = new CountDownLatch(1);
+        try (PostgreSqlTransactionRace race = new PostgreSqlTransactionRace(transactionManager, jdbcTemplate)) {
+            TransactionCall<Long> first = race.submit(() -> {
+                Long responseId = submitVote(respondentMemberId, optionId);
+                submitted.countDown();
+                race.await(allowCommit, "첫 응답 커밋 대기");
+                return responseId;
+            });
+            try {
+                race.await(submitted, "첫 응답 제출");
+
+                // When
+                TransactionCall<Long> second = race.submit(() -> submitVote(authorMemberId, optionId));
+                assertThat(second.future().get(5, TimeUnit.SECONDS)).isNotNull();
+                assertThat(first.future().isDone()).isFalse();
+
+                TransactionCall<Void> closure = race.submit(() -> {
+                    manageNoticeContentUseCase.closeVote(noticeId, authorMemberId);
+                    return null;
+                });
+                race.awaitPostgreSqlLockWait(closure);
+                assertThat(closure.future().isDone()).isFalse();
+                allowCommit.countDown();
+                assertThat(first.future().get(10, TimeUnit.SECONDS)).isNotNull();
+                closure.future().get(10, TimeUnit.SECONDS);
+
+                // Then
+                assertThat(loadNoticeVotePort.findVoteByNoticeId(noticeId).orElseThrow().getOpenStatus(NOW))
+                    .isEqualTo(VoteStatus.CLOSED);
+                assertThat(getVoteUseCase.getVoteInfo(voteId, respondentMemberId).totalParticipants()).isEqualTo(2);
+            } finally {
+                allowCommit.countDown();
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("같은 사용자의 동시 제출은 첫 응답 커밋 후 중복으로 거부되고 한 건만 저장된다")
+    void 동일_사용자_동시_제출_중복_방지() throws Exception {
+        // Given
+        Long voteId = createOpenVote();
+        Long optionId = getVoteUseCase.getVoteInfo(voteId, respondentMemberId).options().getFirst().optionId();
+        CountDownLatch submitted = new CountDownLatch(1);
+        CountDownLatch allowCommit = new CountDownLatch(1);
+        try (PostgreSqlTransactionRace race = new PostgreSqlTransactionRace(transactionManager, jdbcTemplate)) {
+            TransactionCall<Long> first = race.submit(() -> {
+                Long responseId = submitVote(respondentMemberId, optionId);
+                submitted.countDown();
+                race.await(allowCommit, "첫 응답 커밋 대기");
+                return responseId;
+            });
+            try {
+                race.await(submitted, "첫 응답 제출");
+
+                // When
+                TransactionCall<Long> second = race.submit(() -> submitVote(respondentMemberId, optionId));
+                race.awaitPostgreSqlLockWait(second);
+                assertThat(second.future().isDone()).isFalse();
+                allowCommit.countDown();
+                assertThat(first.future().get(10, TimeUnit.SECONDS)).isNotNull();
+
+                // Then
+                ExecutionException failure = assertThrows(ExecutionException.class,
+                    () -> second.future().get(10, TimeUnit.SECONDS));
+                assertThat(failure.getCause()).isInstanceOf(FormDomainException.class)
+                    .extracting(error -> ((FormDomainException) error).getBaseCode())
+                    .isEqualTo(FormErrorCode.FORM_RESPONSE_ALREADY_EXISTS);
+                assertThat(getVoteUseCase.getVoteInfo(voteId, respondentMemberId).totalParticipants()).isEqualTo(1);
+            } finally {
+                allowCommit.countDown();
+            }
+        }
+    }
+
+    private Long submitVote(Long memberId, Long optionId) {
+        return manageNoticeVoteResponseUseCase.submit(SubmitNoticeVoteResponseCommand.builder()
+            .noticeId(noticeId).respondentMemberId(memberId).selectedOptionIds(List.of(optionId)).build());
     }
 
     private Long createOpenVote() {

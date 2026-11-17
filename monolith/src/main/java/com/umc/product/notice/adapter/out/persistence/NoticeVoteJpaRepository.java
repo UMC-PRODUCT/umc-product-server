@@ -16,6 +16,10 @@ public interface NoticeVoteJpaRepository extends JpaRepository<NoticeVote, Long>
 
     Optional<NoticeVote> findByNoticeId(Long noticeId);
 
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("SELECT nv FROM NoticeVote nv WHERE nv.notice.id = :noticeId")
+    Optional<NoticeVote> findByNoticeIdForShare(@Param("noticeId") Long noticeId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT nv FROM NoticeVote nv WHERE nv.notice.id = :noticeId")
     Optional<NoticeVote> findByNoticeIdForUpdate(@Param("noticeId") Long noticeId);
