@@ -13,7 +13,6 @@ import com.umc.product.challenger.application.port.in.command.PurgeExpiredChalle
 import com.umc.product.challenger.application.port.in.command.dto.ChallengerDeactivationPurgeResult;
 import com.umc.product.challenger.application.port.out.LoadChallengerDeactivationPort;
 import com.umc.product.challenger.application.port.out.dto.ChallengerDeactivationRetentionTarget;
-import com.umc.product.storage.application.port.in.command.DeleteStoredFileUseCase;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +28,6 @@ public class ChallengerDeactivationRetentionService implements PurgeExpiredChall
 
     private final LoadChallengerDeactivationPort loadChallengerDeactivationPort;
     private final DeleteChallengerDeactivationDataUseCase deleteChallengerDeactivationDataUseCase;
-    private final DeleteStoredFileUseCase deleteStoredFileUseCase;
     private final Clock clock;
 
     @Override
@@ -52,7 +50,6 @@ public class ChallengerDeactivationRetentionService implements PurgeExpiredChall
             for (ChallengerDeactivationRetentionTarget target : targets) {
                 afterId = target.deactivationId();
                 try {
-                    deleteExclusiveEvidenceFiles(target);
                     deleteChallengerDeactivationDataUseCase.delete(target.deactivationId());
                     deletedCount++;
                 } catch (RuntimeException exception) {
@@ -72,15 +69,5 @@ public class ChallengerDeactivationRetentionService implements PurgeExpiredChall
         }
 
         return new ChallengerDeactivationPurgeResult(deletedCount, failedCount);
-    }
-
-    private void deleteExclusiveEvidenceFiles(ChallengerDeactivationRetentionTarget target) {
-        target.imageIds().stream()
-            .distinct()
-            .filter(imageId -> !loadChallengerDeactivationPort.existsImageReferenceOutsideDeactivation(
-                imageId,
-                target.deactivationId()
-            ))
-            .forEach(deleteStoredFileUseCase::deleteIfExists);
     }
 }

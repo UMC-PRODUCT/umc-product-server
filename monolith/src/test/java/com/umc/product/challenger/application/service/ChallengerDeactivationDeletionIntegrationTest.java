@@ -25,6 +25,10 @@ import com.umc.product.challenger.domain.ChallengerDeactivationLink;
 import com.umc.product.challenger.domain.enums.ChallengerDeactivationHistoryAction;
 import com.umc.product.challenger.domain.enums.ChallengerDeactivationReason;
 import com.umc.product.common.domain.enums.ChallengerStatus;
+import com.umc.product.storage.adapter.out.persistence.FileMetadataRepository;
+import com.umc.product.storage.domain.FileMetadata;
+import com.umc.product.storage.domain.enums.FileCategory;
+import com.umc.product.storage.domain.enums.StorageProvider;
 import com.umc.product.support.IntegrationTestSupport;
 
 @DisplayName("탈부 보관 만료 삭제 트랜잭션")
@@ -47,6 +51,9 @@ class ChallengerDeactivationDeletionIntegrationTest extends IntegrationTestSuppo
 
     @Autowired
     ChallengerDeactivationLinkJpaRepository linkRepository;
+
+    @Autowired
+    FileMetadataRepository fileMetadataRepository;
 
     @MockitoSpyBean
     DeleteChallengerDeactivationPort deleteChallengerDeactivationPort;
@@ -91,5 +98,57 @@ class ChallengerDeactivationDeletionIntegrationTest extends IntegrationTestSuppo
         assertThat(historyRepository.count()).isOne();
         assertThat(imageRepository.count()).isOne();
         assertThat(linkRepository.count()).isOne();
+    }
+
+    @Test
+    @DisplayName("스토리지 원본 삭제에 실패하면 탈부 기록과 근거 자료를 복구한다")
+    void rollbackAllDataWhenStorageDeletionFails() {
+        ChallengerDeactivation deactivation = saveChallengerDeactivationPort.save(
+            ChallengerDeactivation.create(
+                1L,
+                ChallengerStatus.WITHDRAWN,
+                ChallengerDeactivationReason.VOLUNTARY_PERSONAL_CIRCUMSTANCES,
+                null,
+                null,
+                10L
+            )
+        );
+        ChallengerDeactivationHistory history = saveChallengerDeactivationPort.saveHistory(
+            ChallengerDeactivationHistory.create(
+                deactivation,
+                ChallengerDeactivationHistoryAction.REGISTERED,
+                1,
+                0,
+                10L
+            )
+        );
+        saveChallengerDeactivationPort.saveImages(List.of(
+            ChallengerDeactivationImage.create(history, "image-id", 0)
+        ));
+        fileMetadataRepository.saveAndFlush(fileMetadata("image-id"));
+        doThrow(new IllegalStateException("스토리지 삭제 실패"))
+            .when(storagePort).delete("private/challenger-deactivation/image-id.png");
+
+        assertThatThrownBy(() -> deleteChallengerDeactivationDataUseCase.delete(deactivation.getId()))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("스토리지 삭제 실패");
+
+        assertThat(deactivationRepository.existsById(deactivation.getId())).isTrue();
+        assertThat(historyRepository.count()).isOne();
+        assertThat(imageRepository.count()).isOne();
+        assertThat(fileMetadataRepository.existsById("image-id")).isTrue();
+    }
+
+    private FileMetadata fileMetadata(String fileId) {
+        return FileMetadata.builder()
+            .fileId(fileId)
+            .originalFileName("evidence.png")
+            .category(FileCategory.CHALLENGER_DEACTIVATION_EVIDENCE)
+            .contentType("image/png")
+            .fileSize(100L)
+            .storageProvider(StorageProvider.AWS_S3)
+            .storageKey("private/challenger-deactivation/" + fileId + ".png")
+            .uploadedMemberId(10L)
+            .build();
     }
 }

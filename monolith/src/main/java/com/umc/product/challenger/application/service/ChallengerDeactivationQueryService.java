@@ -30,6 +30,12 @@ public class ChallengerDeactivationQueryService
     }
 
     @Override
+    public boolean isImageInUseOutsideDeactivation(String imageId, Long deactivationId) {
+        return imageId != null
+            && loadChallengerDeactivationPort.existsImageReferenceOutsideDeactivation(imageId, deactivationId);
+    }
+
+    @Override
     public ChallengerDeactivationReasonListInfo listReasons() {
         return new ChallengerDeactivationReasonListInfo(
             listReasonsByStatus(ChallengerStatus.WITHDRAWN),

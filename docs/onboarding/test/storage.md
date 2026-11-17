@@ -1,14 +1,15 @@
 # Storage 테스트 케이스
 
-- 테스트 파일: 5개
-- 테스트 케이스: 40개
+- 테스트 파일: 9개
+- 테스트 케이스: 58개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
 |---|---:|
-| UseCase / Application Service | 22 |
+| UseCase / Application Service | 34 |
+| Repository / Outbound Persistence | 1 |
 | Domain | 14 |
-| External Adapter | 4 |
+| External Adapter | 9 |
 
 ## UseCase / Application Service
 
@@ -32,7 +33,7 @@
 
 | 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
 |---:|---|---|---|
-| [70](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileCommandServiceUnitTest.java#L70) | 파일 삭제는 클래스 공통 트랜잭션으로 외부 스토리지 I/O를 감싸지 않는다 | 조건 파일 삭제는 클래스 공통 트랜잭션으로 외부 스토리지 I/O를 감싸지 않는다 | 성공: 검증 assertThat(FileCommandService.class.getAnnotation(Transactional.class)).isNull(); assertThat(getFileUploadUrl.getAnnotation(Transactional.class)).isNotNull(); assertThat(confirmUpload.getAnnotation(Transactional.class)... |
+| [73](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileCommandServiceUnitTest.java#L73) | 파일 명령은 메타데이터 잠금이 필요한 작업에 트랜잭션을 적용한다 | 업로드 확인·파일 삭제 메서드의 트랜잭션 선언 확인 | 성공: 잠금이 필요한 명령 메서드에 `@Transactional` 적용 |
 | [88](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileCommandServiceUnitTest.java#L88) | 업로드 URL 생성은 요청 파일 크기를 스토리지 서명에 포함한다 | PrepareFileUploadCommand("portfolio.pdf", "application/pdf", 1024L, FileCategory.PORTFOLIO, 1L); 호출 getFileUploadUrl(command) | 성공: 업로드 URL 생성은 요청 파일 크기를 스토리지 서명에 포함한다 |
 | [124](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileCommandServiceUnitTest.java#L124) | 업로드 완료 확인 시 S3 객체가 없으면 완료 처리하지 않는다 | 호출 confirmUpload("file-id")) | 실패: 예외 StorageException; 에러코드 StorageErrorCode.FILE_UPLOAD_NOT_COMPLETED; 검증 .isEqualTo(StorageErrorCode.FILE_UPLOAD_NOT_COMPLETED); |
 | [142](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileCommandServiceUnitTest.java#L142) | 실제 S3 객체 크기가 카테고리 제한을 초과하면 업로드 완료 처리하지 않고 객체를 삭제한다 | 호출 confirmUpload("file-id")) | 실패: 예외 StorageException; 에러코드 StorageErrorCode.FILE_SIZE_EXCEEDED; 검증 .isEqualTo(StorageErrorCode.FILE_SIZE_EXCEEDED); |
@@ -42,6 +43,19 @@
 | [219](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileCommandServiceUnitTest.java#L219) | 작성자가 아니어도 SUPER_ADMIN이면 파일을 삭제한다 | 호출 deleteFile(deleteCommand("file-id", 2L)) | 성공: 작성자가 아니어도 SUPER_ADMIN이면 파일을 삭제한다 |
 | [235](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileCommandServiceUnitTest.java#L235) | 작성자도 SUPER_ADMIN도 아니면 파일을 삭제할 수 없다 | 호출 deleteFile(deleteCommand("file-id", 2L))) | 실패: 예외 StorageException; 에러코드 StorageErrorCode.FILE_DELETE_FORBIDDEN; 검증 .isEqualTo(StorageErrorCode.FILE_DELETE_FORBIDDEN); |
 | [253](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileCommandServiceUnitTest.java#L253) | S3 삭제가 실패하면 파일 메타데이터를 삭제하지 않는다 | 호출 deleteFile(deleteCommand("file-id", 1L))) | 실패: 예외 StorageException; 에러코드 StorageErrorCode.STORAGE_DELETE_FAILED; 검증 .isEqualTo(StorageErrorCode.STORAGE_DELETE_FAILED); |
+| [238](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileCommandServiceUnitTest.java#L238) | 탈부 근거로 사용 중인 파일은 작성자도 삭제할 수 없다 | 공통 삭제 API로 탈부 근거 파일 삭제 | 실패: 탈부 근거 파일 삭제 금지 |
+| [256](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileCommandServiceUnitTest.java#L256) | 탈부 근거로 사용 중인 파일은 최고 관리자도 공통 API로 삭제할 수 없다 | 최고 관리자가 공통 삭제 API 호출 | 실패: 탈부 근거 파일 삭제 금지 |
+| [312](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileCommandServiceUnitTest.java#L312) | 시스템 삭제는 파일이 존재하면 스토리지와 메타데이터를 삭제한다 | 다른 탈부 기록의 참조가 없는 파일 | 성공: 원본과 메타데이터 삭제 |
+| [324](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileCommandServiceUnitTest.java#L324) | 다른 탈부 기록이 참조하는 파일은 시스템 삭제하지 않는다 | 다른 탈부 기록의 동일 fileId 참조 존재 | 성공: 원본과 메타데이터 유지 |
+| [339](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileCommandServiceUnitTest.java#L339) | 시스템 삭제는 파일이 이미 없으면 성공으로 처리한다 | 존재하지 않는 fileId | 성공: 멱등 처리 |
+
+### FileLockServiceTest
+- 위치: `monolith/src/test/java/com/umc/product/storage/application/service/FileLockServiceTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [34](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileLockServiceTest.java#L34) | 정렬된 파일 ID로 잠근 뒤 사용 가능한 파일 정보를 반환한다 | 역순으로 전달된 파일 ID 목록 | 성공: 정렬된 순서로 잠금 획득 후 요청 순서로 반환 |
+| [47](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileLockServiceTest.java#L47) | 잠근 파일 중 존재하지 않는 파일이 있으면 실패한다 | 일부 파일 ID가 존재하지 않음 | 실패: `FILE_NOT_FOUND` |
 
 ### FileQueryServiceTest
 - 위치: `monolith/src/test/java/com/umc/product/storage/application/service/FileQueryServiceTest.java`
@@ -51,6 +65,15 @@
 | [35](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileQueryServiceTest.java#L35) | 파일 ID로 파일 정보를 조회한다 | 조건 파일 ID로 파일 정보를 조회한다 | 성공: 검증 assertThat(result).isNotNull(); assertThat(result.fileId()).isEqualTo(savedMetadata.getId()); assertThat(result.originalFileName()).isEqualTo("profile.jpg"); assertThat(result.category()).isEqualTo(FileCategory.PROFIL... |
 | [60](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileQueryServiceTest.java#L60) | 존재하지 않는 파일 ID로 조회하면 예외가 발생한다 | 조건 존재하지 않는 파일 ID로 조회하면 예외가 발생한다 | 실패: 예외 StorageException |
 | [69](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileQueryServiceTest.java#L69) | 파일 존재 여부를 확인한다 | 조건 파일 존재 여부를 확인한다 | 성공: 검증 assertThat(exists).isTrue(); assertThat(notExists).isFalse(); |
+
+## Repository / Outbound Persistence
+
+### FileMetadataLockIntegrationTest
+- 위치: `monolith/src/test/java/com/umc/product/storage/adapter/out/persistence/FileMetadataLockIntegrationTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [32](../../../monolith/src/test/java/com/umc/product/storage/adapter/out/persistence/FileMetadataLockIntegrationTest.java#L32) | 같은 파일의 쓰기 잠금은 앞선 트랜잭션이 끝날 때까지 대기한다 | 두 트랜잭션이 같은 fileId에 쓰기 잠금 요청 | 성공: 두 번째 트랜잭션은 첫 번째 트랜잭션 종료 후 잠금 획득 |
 
 ## Domain
 

@@ -25,7 +25,7 @@ import com.umc.product.challenger.domain.ChallengerDeactivationLink;
 import com.umc.product.challenger.domain.enums.ChallengerDeactivationHistoryAction;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
-import com.umc.product.storage.application.port.in.query.GetFileUseCase;
+import com.umc.product.storage.application.port.in.command.LockStoredFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileMetadataInfo;
 import com.umc.product.storage.domain.enums.FileCategory;
 
@@ -41,7 +41,7 @@ public class ChallengerDeactivationCommandService
     private final SaveChallengerPort saveChallengerPort;
     private final LoadChallengerDeactivationPort loadChallengerDeactivationPort;
     private final SaveChallengerDeactivationPort saveChallengerDeactivationPort;
-    private final GetFileUseCase getFileUseCase;
+    private final LockStoredFileUseCase lockStoredFileUseCase;
     private final EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
 
     @Override
@@ -50,7 +50,7 @@ public class ChallengerDeactivationCommandService
         validateNotRegistered(command.challengerId());
         validateNoDuplicateEvidence(command.imageIds(), command.links());
 
-        List<FileMetadataInfo> files = getFileUseCase.batchGetUsableByIds(
+        List<FileMetadataInfo> files = lockStoredFileUseCase.lockUsableByIds(
             command.imageIds(),
             command.registeredByMemberId()
         );
@@ -105,7 +105,7 @@ public class ChallengerDeactivationCommandService
         validateEvidenceCapacity(existingImageCount, existingLinkCount, imageIds.size(), links.size());
         validateEvidenceNotAlreadyRegistered(deactivation.getId(), imageIds, links);
 
-        List<FileMetadataInfo> files = getFileUseCase.batchGetUsableByIds(
+        List<FileMetadataInfo> files = lockStoredFileUseCase.lockUsableByIds(
             imageIds,
             command.addedByMemberId()
         );

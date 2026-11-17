@@ -12,6 +12,10 @@ public interface LoadChallengerDeactivationPort {
 
     ChallengerDeactivation getByChallengerIdForUpdate(Long challengerId);
 
+    ChallengerDeactivation getByIdForUpdate(Long deactivationId);
+
+    List<String> listImageIdsByDeactivationId(Long deactivationId);
+
     long countImagesByDeactivationId(Long deactivationId);
 
     long countLinksByDeactivationId(Long deactivationId);

@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import java.time.Clock;
@@ -28,7 +27,6 @@ import com.umc.product.challenger.application.port.in.command.DeleteChallengerDe
 import com.umc.product.challenger.application.port.in.command.dto.ChallengerDeactivationPurgeResult;
 import com.umc.product.challenger.application.port.out.LoadChallengerDeactivationPort;
 import com.umc.product.challenger.application.port.out.dto.ChallengerDeactivationRetentionTarget;
-import com.umc.product.storage.application.port.in.command.DeleteStoredFileUseCase;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChallengerDeactivationRetentionService")
@@ -42,9 +40,6 @@ class ChallengerDeactivationRetentionServiceTest {
     @Mock
     DeleteChallengerDeactivationDataUseCase deleteChallengerDeactivationDataUseCase;
 
-    @Mock
-    DeleteStoredFileUseCase deleteStoredFileUseCase;
-
     ChallengerDeactivationRetentionService sut;
 
     @BeforeEach
@@ -52,23 +47,18 @@ class ChallengerDeactivationRetentionServiceTest {
         sut = new ChallengerDeactivationRetentionService(
             loadChallengerDeactivationPort,
             deleteChallengerDeactivationDataUseCase,
-            deleteStoredFileUseCase,
             Clock.fixed(NOW, ZoneOffset.UTC)
         );
     }
 
     @Test
-    @DisplayName("등록일로부터 5년이 지난 탈부 기록과 단독 근거 파일을 삭제한다")
+    @DisplayName("등록일로부터 5년이 지난 탈부 기록을 삭제한다")
     void purgeExpiredDeactivationsAndExclusiveEvidenceFiles() {
         given(loadChallengerDeactivationPort.listRetentionTargets(any(), anyLong(), anyInt()))
             .willReturn(List.of(
-                new ChallengerDeactivationRetentionTarget(1L, List.of("exclusive", "shared")),
-                new ChallengerDeactivationRetentionTarget(2L, List.of())
+                new ChallengerDeactivationRetentionTarget(1L),
+                new ChallengerDeactivationRetentionTarget(2L)
             ));
-        given(loadChallengerDeactivationPort.existsImageReferenceOutsideDeactivation("exclusive", 1L))
-            .willReturn(false);
-        given(loadChallengerDeactivationPort.existsImageReferenceOutsideDeactivation("shared", 1L))
-            .willReturn(true);
 
         ChallengerDeactivationPurgeResult result = sut.purgeExpired();
 
@@ -78,8 +68,6 @@ class ChallengerDeactivationRetentionServiceTest {
             .listRetentionTargets(thresholdCaptor.capture(), org.mockito.ArgumentMatchers.eq(0L),
                 org.mockito.ArgumentMatchers.eq(100));
         assertThat(thresholdCaptor.getValue()).isEqualTo(Instant.parse("2021-11-16T00:00:00Z"));
-        then(deleteStoredFileUseCase).should().deleteIfExists("exclusive");
-        then(deleteStoredFileUseCase).should(never()).deleteIfExists("shared");
         then(deleteChallengerDeactivationDataUseCase).should().delete(1L);
         then(deleteChallengerDeactivationDataUseCase).should().delete(2L);
     }
@@ -89,18 +77,15 @@ class ChallengerDeactivationRetentionServiceTest {
     void continueAfterTargetFailure() {
         given(loadChallengerDeactivationPort.listRetentionTargets(any(), anyLong(), anyInt()))
             .willReturn(List.of(
-                new ChallengerDeactivationRetentionTarget(1L, List.of("failed-image")),
-                new ChallengerDeactivationRetentionTarget(2L, List.of())
+                new ChallengerDeactivationRetentionTarget(1L),
+                new ChallengerDeactivationRetentionTarget(2L)
             ));
-        given(loadChallengerDeactivationPort.existsImageReferenceOutsideDeactivation("failed-image", 1L))
-            .willReturn(false);
         org.mockito.BDDMockito.willThrow(new IllegalStateException("스토리지 삭제 실패"))
-            .given(deleteStoredFileUseCase).deleteIfExists("failed-image");
+            .given(deleteChallengerDeactivationDataUseCase).delete(1L);
 
         ChallengerDeactivationPurgeResult result = sut.purgeExpired();
 
         assertThat(result).isEqualTo(new ChallengerDeactivationPurgeResult(1, 1));
-        then(deleteChallengerDeactivationDataUseCase).should(never()).delete(1L);
         then(deleteChallengerDeactivationDataUseCase).should().delete(2L);
     }
 
@@ -108,19 +93,18 @@ class ChallengerDeactivationRetentionServiceTest {
     @DisplayName("100건 단위로 다음 배치를 조회하고 전체 성공과 실패 건수를 합산한다")
     void paginateAndAccumulateResult() {
         List<ChallengerDeactivationRetentionTarget> firstBatch = LongStream.rangeClosed(1, 100)
-            .mapToObj(id -> new ChallengerDeactivationRetentionTarget(id, List.of()))
+            .mapToObj(ChallengerDeactivationRetentionTarget::new)
             .toList();
         List<ChallengerDeactivationRetentionTarget> secondBatch = List.of(
-            new ChallengerDeactivationRetentionTarget(101L, List.of("failed-image")),
-            new ChallengerDeactivationRetentionTarget(102L, List.of())
+            new ChallengerDeactivationRetentionTarget(101L),
+            new ChallengerDeactivationRetentionTarget(102L)
         );
         given(loadChallengerDeactivationPort.listRetentionTargets(any(), anyLong(), anyInt()))
             .willReturn(firstBatch)
             .willReturn(secondBatch);
-        given(loadChallengerDeactivationPort.existsImageReferenceOutsideDeactivation("failed-image", 101L))
-            .willReturn(false);
-        org.mockito.BDDMockito.willThrow(new IllegalStateException("스토리지 삭제 실패"))
-            .given(deleteStoredFileUseCase).deleteIfExists("failed-image");
+        org.mockito.Mockito.lenient()
+            .doThrow(new IllegalStateException("스토리지 삭제 실패"))
+            .when(deleteChallengerDeactivationDataUseCase).delete(101L);
 
         ChallengerDeactivationPurgeResult result = sut.purgeExpired();
 
@@ -131,25 +115,4 @@ class ChallengerDeactivationRetentionServiceTest {
             .listRetentionTargets(any(), anyLong(), anyInt());
     }
 
-    @Test
-    @DisplayName("공유 근거 사진은 마지막 탈부 기록을 삭제할 때 스토리지에서도 삭제한다")
-    void deleteSharedEvidenceFileWithLastReference() {
-        List<ChallengerDeactivationRetentionTarget> targets = List.of(
-            new ChallengerDeactivationRetentionTarget(1L, List.of("shared-image")),
-            new ChallengerDeactivationRetentionTarget(2L, List.of("shared-image"))
-        );
-        given(loadChallengerDeactivationPort.listRetentionTargets(any(), anyLong(), anyInt()))
-            .willReturn(targets);
-        given(loadChallengerDeactivationPort.existsImageReferenceOutsideDeactivation("shared-image", 1L))
-            .willReturn(true);
-        given(loadChallengerDeactivationPort.existsImageReferenceOutsideDeactivation("shared-image", 2L))
-            .willReturn(false);
-
-        ChallengerDeactivationPurgeResult result = sut.purgeExpired();
-
-        assertThat(result).isEqualTo(new ChallengerDeactivationPurgeResult(2, 0));
-        then(deleteStoredFileUseCase).should(times(1)).deleteIfExists("shared-image");
-        then(deleteChallengerDeactivationDataUseCase).should().delete(1L);
-        then(deleteChallengerDeactivationDataUseCase).should().delete(2L);
-    }
 }

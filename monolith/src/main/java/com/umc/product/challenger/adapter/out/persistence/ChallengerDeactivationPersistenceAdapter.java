@@ -1,10 +1,7 @@
 package com.umc.product.challenger.adapter.out.persistence;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
@@ -44,6 +41,19 @@ public class ChallengerDeactivationPersistenceAdapter
             .orElseThrow(() -> new ChallengerDomainException(
                 ChallengerErrorCode.CHALLENGER_DEACTIVATION_NOT_FOUND
             ));
+    }
+
+    @Override
+    public ChallengerDeactivation getByIdForUpdate(Long deactivationId) {
+        return deactivationRepository.findByIdForUpdate(deactivationId)
+            .orElseThrow(() -> new ChallengerDomainException(
+                ChallengerErrorCode.CHALLENGER_DEACTIVATION_NOT_FOUND
+            ));
+    }
+
+    @Override
+    public List<String> listImageIdsByDeactivationId(Long deactivationId) {
+        return imageRepository.findImageIdsByDeactivationId(deactivationId);
     }
 
     @Override
@@ -90,26 +100,8 @@ public class ChallengerDeactivationPersistenceAdapter
                 afterId,
                 PageRequest.of(0, limit)
             );
-        if (deactivations.isEmpty()) {
-            return List.of();
-        }
-
-        Map<Long, List<String>> imageIdsByDeactivationId = new LinkedHashMap<>();
-        deactivations.forEach(deactivation -> imageIdsByDeactivationId.put(
-            deactivation.getId(),
-            new ArrayList<>()
-        ));
-        imageRepository.findAllWithDeactivationByDeactivationIdIn(
-            deactivations.stream().map(ChallengerDeactivation::getId).toList()
-        ).forEach(image -> imageIdsByDeactivationId
-            .get(image.getAddedHistory().getDeactivation().getId())
-            .add(image.getImageId()));
-
         return deactivations.stream()
-            .map(deactivation -> new ChallengerDeactivationRetentionTarget(
-                deactivation.getId(),
-                List.copyOf(imageIdsByDeactivationId.get(deactivation.getId()))
-            ))
+            .map(deactivation -> new ChallengerDeactivationRetentionTarget(deactivation.getId()))
             .toList();
     }
 

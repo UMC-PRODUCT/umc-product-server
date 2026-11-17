@@ -149,7 +149,7 @@ public class FileCommandService implements ManageFileUseCase, StoreGeneratedFile
     @Override
     @Transactional
     public void confirmUpload(String fileId) {
-        FileMetadata metadata = loadFileMetadataPort.findByFileId(fileId)
+        FileMetadata metadata = loadFileMetadataPort.findByFileIdForUpdate(fileId)
             .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
 
         if (metadata.isUploaded()) {
@@ -173,8 +173,9 @@ public class FileCommandService implements ManageFileUseCase, StoreGeneratedFile
         description = "'파일을 삭제했습니다.'"
     )
     @Override
+    @Transactional
     public void deleteFile(DeleteFileCommand command) {
-        FileMetadata metadata = loadFileMetadataPort.findByFileId(command.fileId())
+        FileMetadata metadata = loadFileMetadataPort.findByFileIdForUpdate(command.fileId())
             .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
 
         validateNotUsedAsChallengerDeactivationEvidence(command.fileId());
@@ -190,8 +191,13 @@ public class FileCommandService implements ManageFileUseCase, StoreGeneratedFile
     }
 
     @Override
-    public void deleteIfExists(String fileId) {
-        loadFileMetadataPort.findByFileId(fileId).ifPresent(metadata -> {
+    @Transactional
+    public void deleteIfNotReferencedOutsideDeactivation(String fileId, Long deactivationId) {
+        loadFileMetadataPort.findByFileIdForUpdate(fileId).ifPresent(metadata -> {
+            if (checkChallengerDeactivationEvidenceUseCase
+                .isImageInUseOutsideDeactivation(fileId, deactivationId)) {
+                return;
+            }
             storagePort.delete(metadata.getStorageKey());
             saveFileMetadataPort.deleteByFileId(fileId);
             log.info("시스템 작업으로 파일을 삭제했습니다: fileId={}", fileId);

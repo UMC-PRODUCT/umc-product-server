@@ -70,8 +70,8 @@ class FileCommandServiceUnitTest {
     }
 
     @Test
-    @DisplayName("파일 삭제는 클래스 공통 트랜잭션으로 외부 스토리지 I/O를 감싸지 않는다")
-    void 파일_삭제는_클래스_공통_트랜잭션으로_외부_스토리지_IO를_감싸지_않는다() throws NoSuchMethodException {
+    @DisplayName("파일 명령은 메타데이터 잠금이 필요한 작업에 트랜잭션을 적용한다")
+    void 파일_명령은_메타데이터_잠금이_필요한_작업에_트랜잭션을_적용한다() throws NoSuchMethodException {
         // when
         Method getFileUploadUrl = FileCommandService.class.getMethod(
             "getFileUploadUrl",
@@ -84,7 +84,7 @@ class FileCommandServiceUnitTest {
         assertThat(FileCommandService.class.getAnnotation(Transactional.class)).isNull();
         assertThat(getFileUploadUrl.getAnnotation(Transactional.class)).isNotNull();
         assertThat(confirmUpload.getAnnotation(Transactional.class)).isNotNull();
-        assertThat(deleteFile.getAnnotation(Transactional.class)).isNull();
+        assertThat(deleteFile.getAnnotation(Transactional.class)).isNotNull();
     }
 
     @Test
@@ -128,7 +128,7 @@ class FileCommandServiceUnitTest {
     void 업로드_완료_확인_시_S3_객체가_없으면_완료_처리하지_않는다() {
         // given
         FileMetadata metadata = pendingFile("file-id", FileCategory.PORTFOLIO, 1024L, "application/pdf");
-        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.of(metadata));
+        given(loadFileMetadataPort.findByFileIdForUpdate("file-id")).willReturn(Optional.of(metadata));
         given(storagePort.findObjectInfoByStorageKey(metadata.getStorageKey())).willReturn(Optional.empty());
 
         // when & then
@@ -147,7 +147,7 @@ class FileCommandServiceUnitTest {
         // given
         long actualSize = 310L * 1024 * 1024;
         FileMetadata metadata = pendingFile("file-id", FileCategory.PORTFOLIO, 1024L, "application/pdf");
-        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.of(metadata));
+        given(loadFileMetadataPort.findByFileIdForUpdate("file-id")).willReturn(Optional.of(metadata));
         given(storagePort.findObjectInfoByStorageKey(metadata.getStorageKey()))
             .willReturn(Optional.of(StorageObjectInfo.of(metadata.getStorageKey(), actualSize, "application/pdf")));
 
@@ -166,7 +166,7 @@ class FileCommandServiceUnitTest {
     void 실제_S3_객체_크기가_요청_크기와_다르면_업로드_완료_처리하지_않고_객체를_삭제한다() {
         // given
         FileMetadata metadata = pendingFile("file-id", FileCategory.PORTFOLIO, 1024L, "application/pdf");
-        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.of(metadata));
+        given(loadFileMetadataPort.findByFileIdForUpdate("file-id")).willReturn(Optional.of(metadata));
         given(storagePort.findObjectInfoByStorageKey(metadata.getStorageKey()))
             .willReturn(Optional.of(StorageObjectInfo.of(metadata.getStorageKey(), 2048L, "application/pdf")));
 
@@ -185,7 +185,7 @@ class FileCommandServiceUnitTest {
     void 실제_S3_객체_Content_Type이_요청값과_다르면_업로드_완료_처리하지_않고_객체를_삭제한다() {
         // given
         FileMetadata metadata = pendingFile("file-id", FileCategory.PORTFOLIO, 1024L, "application/pdf");
-        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.of(metadata));
+        given(loadFileMetadataPort.findByFileIdForUpdate("file-id")).willReturn(Optional.of(metadata));
         given(storagePort.findObjectInfoByStorageKey(metadata.getStorageKey()))
             .willReturn(Optional.of(StorageObjectInfo.of(metadata.getStorageKey(), 1024L, "text/plain")));
 
@@ -204,7 +204,7 @@ class FileCommandServiceUnitTest {
     void 실제_S3_객체_정보가_요청값과_일치하면_업로드_완료_처리한다() {
         // given
         FileMetadata metadata = pendingFile("file-id", FileCategory.PORTFOLIO, 1024L, "application/pdf");
-        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.of(metadata));
+        given(loadFileMetadataPort.findByFileIdForUpdate("file-id")).willReturn(Optional.of(metadata));
         given(storagePort.findObjectInfoByStorageKey(metadata.getStorageKey()))
             .willReturn(Optional.of(StorageObjectInfo.of(metadata.getStorageKey(), 1024L, "application/pdf")));
 
@@ -223,7 +223,7 @@ class FileCommandServiceUnitTest {
     void 작성자가_아니어도_SUPER_ADMIN이면_파일을_삭제한다() {
         // given
         FileMetadata metadata = uploadedFile("file-id", 1L);
-        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.of(metadata));
+        given(loadFileMetadataPort.findByFileIdForUpdate("file-id")).willReturn(Optional.of(metadata));
         given(getChallengerRoleUseCase.isSuperAdmin(2L)).willReturn(true);
 
         // when
@@ -239,7 +239,7 @@ class FileCommandServiceUnitTest {
     void ownerCannotDeleteFileUsedAsDeactivationEvidence() {
         // given
         FileMetadata metadata = uploadedFile("file-id", 1L);
-        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.of(metadata));
+        given(loadFileMetadataPort.findByFileIdForUpdate("file-id")).willReturn(Optional.of(metadata));
         given(checkChallengerDeactivationEvidenceUseCase.isImageInUse("file-id")).willReturn(true);
 
         // when & then
@@ -257,7 +257,7 @@ class FileCommandServiceUnitTest {
     void superAdminCannotDeleteFileUsedAsDeactivationEvidenceThroughPublicApi() {
         // given
         FileMetadata metadata = uploadedFile("file-id", 1L);
-        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.of(metadata));
+        given(loadFileMetadataPort.findByFileIdForUpdate("file-id")).willReturn(Optional.of(metadata));
         given(checkChallengerDeactivationEvidenceUseCase.isImageInUse("file-id")).willReturn(true);
 
         // when & then
@@ -276,7 +276,7 @@ class FileCommandServiceUnitTest {
     void 작성자도_SUPER_ADMIN도_아니면_파일을_삭제할_수_없다() {
         // given
         FileMetadata metadata = uploadedFile("file-id", 1L);
-        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.of(metadata));
+        given(loadFileMetadataPort.findByFileIdForUpdate("file-id")).willReturn(Optional.of(metadata));
         given(getChallengerRoleUseCase.isSuperAdmin(2L)).willReturn(false);
 
         // when & then
@@ -294,7 +294,7 @@ class FileCommandServiceUnitTest {
     void S3_삭제가_실패하면_파일_메타데이터를_삭제하지_않는다() {
         // given
         FileMetadata metadata = uploadedFile("file-id", 1L);
-        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.of(metadata));
+        given(loadFileMetadataPort.findByFileIdForUpdate("file-id")).willReturn(Optional.of(metadata));
         willThrow(new StorageException(StorageErrorCode.STORAGE_DELETE_FAILED))
             .given(storagePort)
             .delete(metadata.getStorageKey());
@@ -312,20 +312,35 @@ class FileCommandServiceUnitTest {
     @DisplayName("시스템 삭제는 파일이 존재하면 스토리지와 메타데이터를 삭제한다")
     void systemDeletionRemovesStoredObjectAndMetadata() {
         FileMetadata metadata = uploadedFile("file-id", 1L);
-        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.of(metadata));
+        given(loadFileMetadataPort.findByFileIdForUpdate("file-id")).willReturn(Optional.of(metadata));
 
-        sut.deleteIfExists("file-id");
+        sut.deleteIfNotReferencedOutsideDeactivation("file-id", 1L);
 
         then(storagePort).should().delete(metadata.getStorageKey());
         then(saveFileMetadataPort).should().deleteByFileId("file-id");
     }
 
     @Test
+    @DisplayName("다른 탈부 기록이 참조하는 파일은 시스템 삭제하지 않는다")
+    void systemDeletionKeepsFileReferencedByAnotherDeactivation() {
+        FileMetadata metadata = uploadedFile("file-id", 1L);
+        given(loadFileMetadataPort.findByFileIdForUpdate("file-id")).willReturn(Optional.of(metadata));
+        given(checkChallengerDeactivationEvidenceUseCase
+            .isImageInUseOutsideDeactivation("file-id", 1L))
+            .willReturn(true);
+
+        sut.deleteIfNotReferencedOutsideDeactivation("file-id", 1L);
+
+        then(storagePort).shouldHaveNoInteractions();
+        then(saveFileMetadataPort).shouldHaveNoInteractions();
+    }
+
+    @Test
     @DisplayName("시스템 삭제는 파일이 이미 없으면 성공으로 처리한다")
     void systemDeletionIsIdempotentWhenFileIsAbsent() {
-        given(loadFileMetadataPort.findByFileId("file-id")).willReturn(Optional.empty());
+        given(loadFileMetadataPort.findByFileIdForUpdate("file-id")).willReturn(Optional.empty());
 
-        sut.deleteIfExists("file-id");
+        sut.deleteIfNotReferencedOutsideDeactivation("file-id", 1L);
 
         then(storagePort).shouldHaveNoInteractions();
         then(saveFileMetadataPort).shouldHaveNoInteractions();

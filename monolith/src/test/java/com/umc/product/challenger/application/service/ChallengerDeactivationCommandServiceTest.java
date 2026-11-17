@@ -38,7 +38,7 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
-import com.umc.product.storage.application.port.in.query.GetFileUseCase;
+import com.umc.product.storage.application.port.in.command.LockStoredFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileMetadataInfo;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
@@ -61,7 +61,7 @@ class ChallengerDeactivationCommandServiceTest {
     SaveChallengerDeactivationPort saveChallengerDeactivationPort;
 
     @Mock
-    GetFileUseCase getFileUseCase;
+    LockStoredFileUseCase getFileUseCase;
 
     @Mock
     EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
@@ -88,7 +88,7 @@ class ChallengerDeactivationCommandServiceTest {
             List.of("https://example.com/evidence")
         );
         given(loadChallengerPort.getById(100L)).willReturn(challenger);
-        given(getFileUseCase.batchGetUsableByIds(command.imageIds(), 10L)).willReturn(List.of(
+        given(getFileUseCase.lockUsableByIds(command.imageIds(), 10L)).willReturn(List.of(
             evidenceFile("image-1"),
             evidenceFile("image-2")
         ));
@@ -105,7 +105,7 @@ class ChallengerDeactivationCommandServiceTest {
         assertThat(challenger.getStatus()).isEqualTo(ChallengerStatus.EXPELLED);
         assertThat(challenger.getModifiedBy()).isEqualTo(10L);
         assertThat(challenger.getModificationReason()).isEqualTo("INVOLUNTARY_EVENT_NO_SHOW");
-        then(getFileUseCase).should().batchGetUsableByIds(command.imageIds(), 10L);
+        then(getFileUseCase).should().lockUsableByIds(command.imageIds(), 10L);
         then(saveChallengerDeactivationPort).should().saveHistory(historyCaptor.capture());
         then(saveChallengerDeactivationPort).should().saveImages(imagesCaptor.capture());
         then(saveChallengerDeactivationPort).should().saveLinks(linksCaptor.capture());
@@ -165,7 +165,7 @@ class ChallengerDeactivationCommandServiceTest {
             List.of()
         );
         given(loadChallengerPort.getById(100L)).willReturn(challenger);
-        given(getFileUseCase.batchGetUsableByIds(command.imageIds(), 10L)).willReturn(List.of(
+        given(getFileUseCase.lockUsableByIds(command.imageIds(), 10L)).willReturn(List.of(
             new FileMetadataInfo(
                 "image-1",
                 "evidence.jpg",
@@ -215,7 +215,7 @@ class ChallengerDeactivationCommandServiceTest {
             List.of()
         );
         given(loadChallengerPort.getById(100L)).willReturn(challenger);
-        given(getFileUseCase.batchGetUsableByIds(command.imageIds(), 10L))
+        given(getFileUseCase.lockUsableByIds(command.imageIds(), 10L))
             .willThrow(new StorageException(StorageErrorCode.FILE_UPLOAD_NOT_COMPLETED));
 
         assertThatThrownBy(() -> sut.register(command))
@@ -240,7 +240,7 @@ class ChallengerDeactivationCommandServiceTest {
             .willReturn(deactivation);
         given(loadChallengerDeactivationPort.countImagesByDeactivationId(500L)).willReturn(1L);
         given(loadChallengerDeactivationPort.countLinksByDeactivationId(500L)).willReturn(1L);
-        given(getFileUseCase.batchGetUsableByIds(List.of("image-2", "image-3"), 10L))
+        given(getFileUseCase.lockUsableByIds(List.of("image-2", "image-3"), 10L))
             .willReturn(List.of(evidenceFile("image-2"), evidenceFile("image-3")));
         sut.addEvidence(command);
 
@@ -264,7 +264,7 @@ class ChallengerDeactivationCommandServiceTest {
         ChallengerDeactivation deactivation = deactivation();
         given(loadChallengerDeactivationPort.getByChallengerIdForUpdate(100L))
             .willReturn(deactivation);
-        given(getFileUseCase.batchGetUsableByIds(List.of(), 10L)).willReturn(List.of());
+        given(getFileUseCase.lockUsableByIds(List.of(), 10L)).willReturn(List.of());
 
         sut.addEvidence(evidenceCommand(
             null,
@@ -285,7 +285,7 @@ class ChallengerDeactivationCommandServiceTest {
     void rejectInvalidEvidenceFileCategoryWhenAddingEvidence() {
         given(loadChallengerDeactivationPort.getByChallengerIdForUpdate(100L))
             .willReturn(deactivation());
-        given(getFileUseCase.batchGetUsableByIds(List.of("image-2"), 10L)).willReturn(List.of(
+        given(getFileUseCase.lockUsableByIds(List.of("image-2"), 10L)).willReturn(List.of(
             new FileMetadataInfo(
                 "image-2",
                 "evidence.jpg",

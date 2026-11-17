@@ -155,7 +155,7 @@ class ChallengerDeactivationPersistenceTest {
             .listRetentionTargets(Instant.now().plusSeconds(60), 0L, 100);
 
         assertThat(targets).containsExactly(
-            new ChallengerDeactivationRetentionTarget(deactivation.getId(), List.of("image-id"))
+            new ChallengerDeactivationRetentionTarget(deactivation.getId())
         );
         assertThat(loadChallengerDeactivationPort.getByChallengerIdForUpdate(1L).getId())
             .isEqualTo(deactivation.getId());
