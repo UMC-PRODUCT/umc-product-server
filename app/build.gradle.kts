@@ -32,6 +32,8 @@ tasks.named<BootJar>("bootJar") {
 tasks.named<Test>("test") {
     val bootJarTask = tasks.named<BootJar>("bootJar")
     dependsOn(bootJarTask)
+    inputs.file(bootJarTask.flatMap { it.archiveFile })
+        .withPropertyName("bootJar")
     doFirst {
         systemProperty("app.bootJar", bootJarTask.get().archiveFile.get().asFile.absolutePath)
     }
