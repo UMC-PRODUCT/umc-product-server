@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.umc.product.storage.application.port.in.command.LockStoredFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileMetadataInfo;
 import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
+import com.umc.product.storage.application.port.out.StoragePort;
 import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
@@ -26,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class FileLockService implements LockStoredFileUseCase {
 
     private final LoadFileMetadataPort loadFileMetadataPort;
+    private final StoragePort storagePort;
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
@@ -63,6 +65,9 @@ public class FileLockService implements LockStoredFileUseCase {
         }
         if (!metadata.isUploaded()) {
             throw new StorageException(StorageErrorCode.FILE_UPLOAD_NOT_COMPLETED);
+        }
+        if (!storagePort.exists(metadata.getStorageKey())) {
+            throw new StorageException(StorageErrorCode.FILE_NOT_FOUND);
         }
         return FileMetadataInfo.from(metadata);
     }

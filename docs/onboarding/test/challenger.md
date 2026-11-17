@@ -1,7 +1,7 @@
 # Challenger 테스트 케이스
 
-- 테스트 파일: 21개
-- 테스트 케이스: 83개
+- 테스트 파일: 23개
+- 테스트 케이스: 89개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
@@ -9,7 +9,7 @@
 | Controller / Inbound Adapter | 23 |
 | UseCase / Application Service | 30 |
 | Repository / Outbound Persistence | 2 |
-| E2E / Integration | 3 |
+| E2E / Integration | 9 |
 | Domain | 25 |
 
 ## Controller / Inbound Adapter
@@ -186,6 +186,24 @@
 | [71](../../../monolith/src/test/java/com/umc/product/challenger/adapter/out/persistence/ChallengerDeactivationPersistenceTest.java#L71) | 같은 챌린저의 탈부 기록은 한 번만 저장한다 | 동일 challengerId로 탈부 기록 2건 저장 | 실패: DB 유니크 제약 위반 |
 
 ## E2E / Integration
+
+### ChallengerDeactivationRegistrationIntegrationTest
+- 위치: `monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerDeactivationRegistrationIntegrationTest.java`
+
+| 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 진행 기록 저장에 실패하면 챌린저 상태와 탈부 기록을 모두 롤백한다 | 탈부 등록 중 진행 기록 저장 실패 | 챌린저 상태와 탈부 기록 롤백 |
+| 근거 링크 저장에 실패하면 근거 추가 진행 기록도 롤백한다 | 근거 추가 중 링크 저장 실패 | 진행 기록과 링크 롤백 |
+| 동시에 근거 자료를 추가해도 비관적 락으로 링크 개수 제한을 지킨다 | 같은 탈부 기록에 링크를 동시에 추가 | 한 요청만 성공하고 최대 개수 유지 |
+
+### ChallengerDeactivationDeletionIntegrationTest
+- 위치: `monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerDeactivationDeletionIntegrationTest.java`
+
+| 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 자식 기록 삭제 중 실패하면 탈부 기록과 모든 근거 자료를 복구한다 | 진행 기록 삭제 실패 | 탈부 기록·진행 기록·근거 자료 롤백 |
+| 스토리지 원본 삭제에 실패하면 탈부 기록과 근거 자료를 복구한다 | 첫 원본 삭제 실패 | DB 변경 롤백 |
+| 일부 원본 삭제 후 롤백된 파일은 다른 탈부 기록에 다시 등록할 수 없다 | A 삭제 성공 후 B 삭제 실패, A 재등록 시도 | S3 원본이 없는 A 등록 거부 |
 
 ### ChallengerRecordControllerIntegrationTest
 - 테스트 설명: ChallengerRecordController 통합 테스트

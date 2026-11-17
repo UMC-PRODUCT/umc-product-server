@@ -15,7 +15,9 @@ import com.umc.product.challenger.adapter.out.persistence.ChallengerDeactivation
 import com.umc.product.challenger.adapter.out.persistence.ChallengerDeactivationImageJpaRepository;
 import com.umc.product.challenger.adapter.out.persistence.ChallengerDeactivationJpaRepository;
 import com.umc.product.challenger.adapter.out.persistence.ChallengerDeactivationLinkJpaRepository;
+import com.umc.product.challenger.application.port.in.command.AddChallengerDeactivationEvidenceUseCase;
 import com.umc.product.challenger.application.port.in.command.DeleteChallengerDeactivationDataUseCase;
+import com.umc.product.challenger.application.port.in.command.dto.AddChallengerDeactivationEvidenceCommand;
 import com.umc.product.challenger.application.port.out.DeleteChallengerDeactivationPort;
 import com.umc.product.challenger.application.port.out.SaveChallengerDeactivationPort;
 import com.umc.product.challenger.domain.ChallengerDeactivation;
@@ -29,6 +31,8 @@ import com.umc.product.storage.adapter.out.persistence.FileMetadataRepository;
 import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
+import com.umc.product.storage.domain.exception.StorageErrorCode;
+import com.umc.product.storage.domain.exception.StorageException;
 import com.umc.product.support.IntegrationTestSupport;
 
 @DisplayName("탈부 보관 만료 삭제 트랜잭션")
@@ -36,6 +40,9 @@ class ChallengerDeactivationDeletionIntegrationTest extends IntegrationTestSuppo
 
     @Autowired
     DeleteChallengerDeactivationDataUseCase deleteChallengerDeactivationDataUseCase;
+
+    @Autowired
+    AddChallengerDeactivationEvidenceUseCase addChallengerDeactivationEvidenceUseCase;
 
     @Autowired
     SaveChallengerDeactivationPort saveChallengerDeactivationPort;
@@ -139,8 +146,78 @@ class ChallengerDeactivationDeletionIntegrationTest extends IntegrationTestSuppo
         assertThat(fileMetadataRepository.existsById("image-id")).isTrue();
     }
 
+    @Test
+    @DisplayName("일부 원본 삭제 후 롤백된 파일은 다른 탈부 기록에 다시 등록할 수 없다")
+    void rejectReusingFileDeletedBeforeLaterStorageFailure() {
+        ChallengerDeactivation expired = saveChallengerDeactivationPort.save(
+            ChallengerDeactivation.create(
+                1L,
+                ChallengerStatus.WITHDRAWN,
+                ChallengerDeactivationReason.VOLUNTARY_PERSONAL_CIRCUMSTANCES,
+                null,
+                null,
+                10L
+            )
+        );
+        ChallengerDeactivationHistory expiredHistory = saveChallengerDeactivationPort.saveHistory(
+            ChallengerDeactivationHistory.create(
+                expired,
+                ChallengerDeactivationHistoryAction.REGISTERED,
+                2,
+                0,
+                10L
+            )
+        );
+        saveChallengerDeactivationPort.saveImages(List.of(
+            ChallengerDeactivationImage.create(expiredHistory, "a-image", 0),
+            ChallengerDeactivationImage.create(expiredHistory, "b-image", 1)
+        ));
+        fileMetadataRepository.saveAllAndFlush(List.of(
+            fileMetadata("a-image"),
+            fileMetadata("b-image")
+        ));
+
+        ChallengerDeactivation other = saveChallengerDeactivationPort.save(
+            ChallengerDeactivation.create(
+                2L,
+                ChallengerStatus.WITHDRAWN,
+                ChallengerDeactivationReason.VOLUNTARY_PERSONAL_CIRCUMSTANCES,
+                null,
+                null,
+                10L
+            )
+        );
+        saveChallengerDeactivationPort.saveHistory(ChallengerDeactivationHistory.create(
+            other,
+            ChallengerDeactivationHistoryAction.REGISTERED,
+            0,
+            0,
+            10L
+        ));
+        doThrow(new IllegalStateException("두 번째 스토리지 삭제 실패"))
+            .when(storagePort).delete("private/challenger-deactivation/b-image.png");
+
+        assertThatThrownBy(() -> deleteChallengerDeactivationDataUseCase.delete(expired.getId()))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("두 번째 스토리지 삭제 실패");
+        assertThat(imageRepository.count()).isEqualTo(2L);
+        assertThat(fileMetadataRepository.existsById("a-image")).isTrue();
+
+        AddChallengerDeactivationEvidenceCommand command = AddChallengerDeactivationEvidenceCommand.of(
+            2L,
+            List.of("a-image"),
+            List.of(),
+            10L
+        );
+        assertThatThrownBy(() -> addChallengerDeactivationEvidenceUseCase.addEvidence(command))
+            .isInstanceOf(StorageException.class)
+            .extracting("baseCode")
+            .isEqualTo(StorageErrorCode.FILE_NOT_FOUND);
+        assertThat(imageRepository.count()).isEqualTo(2L);
+    }
+
     private FileMetadata fileMetadata(String fileId) {
-        return FileMetadata.builder()
+        FileMetadata metadata = FileMetadata.builder()
             .fileId(fileId)
             .originalFileName("evidence.png")
             .category(FileCategory.CHALLENGER_DEACTIVATION_EVIDENCE)
@@ -150,5 +227,7 @@ class ChallengerDeactivationDeletionIntegrationTest extends IntegrationTestSuppo
             .storageKey("private/challenger-deactivation/" + fileId + ".png")
             .uploadedMemberId(10L)
             .build();
+        metadata.markAsUploaded();
+        return metadata;
     }
 }

@@ -1,12 +1,12 @@
 # Storage 테스트 케이스
 
 - 테스트 파일: 9개
-- 테스트 케이스: 58개
+- 테스트 케이스: 59개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
 |---|---:|
-| UseCase / Application Service | 34 |
+| UseCase / Application Service | 35 |
 | Repository / Outbound Persistence | 1 |
 | Domain | 14 |
 | External Adapter | 9 |
@@ -56,6 +56,7 @@
 |---:|---|---|---|
 | [34](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileLockServiceTest.java#L34) | 정렬된 파일 ID로 잠근 뒤 사용 가능한 파일 정보를 반환한다 | 역순으로 전달된 파일 ID 목록 | 성공: 정렬된 순서로 잠금 획득 후 요청 순서로 반환 |
 | [47](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileLockServiceTest.java#L47) | 잠근 파일 중 존재하지 않는 파일이 있으면 실패한다 | 일부 파일 ID가 존재하지 않음 | 실패: `FILE_NOT_FOUND` |
+| [60](../../../monolith/src/test/java/com/umc/product/storage/application/service/FileLockServiceTest.java#L60) | 메타데이터가 남아 있어도 스토리지 원본이 없으면 사용할 수 없다 | 업로드 완료 메타데이터만 존재하고 원본 객체는 없음 | 실패: `FILE_NOT_FOUND` |
 
 ### FileQueryServiceTest
 - 위치: `monolith/src/test/java/com/umc/product/storage/application/service/FileQueryServiceTest.java`
