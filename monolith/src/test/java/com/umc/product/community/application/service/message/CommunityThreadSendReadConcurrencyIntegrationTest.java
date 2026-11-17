@@ -9,20 +9,22 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.TestPropertySource;
 
-import com.umc.product.chat.application.port.in.command.dto.ChatMessageMutationResult;
 import com.umc.product.chat.application.port.in.query.dto.ChatRoomSummaryInfo;
 import com.umc.product.community.application.port.in.command.thread.message.dto.UpdateCommunityThreadReadCommand;
+import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageMutationInfo;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadReadMutationInfo;
 import com.umc.product.community.domain.CommunityThreadMember;
 import com.umc.product.support.concurrency.PostgreSqlTransactionRace.TransactionCall;
 
 @DisplayName("Community thread send/read 실제 transaction 동시성")
+@TestPropertySource(properties = "app.event-outbox.relay-enabled=false")
 class CommunityThreadSendReadConcurrencyIntegrationTest
     extends CommunityThreadConcurrencyIntegrationSupport {
 
     @Test
-    @DisplayName("send와 exact read는 ChatRoom lock으로 직렬화되고 watermark 이후 unread를 보존한다")
+    @DisplayName("Community 메시지 생성과 읽음은 스레드 락으로 직렬화되고 읽음 위치 이후 미읽음 수를 보존한다")
     void sendAndExactRead_keepWatermarkDerivedCommunityUnreadConsistent() throws Exception {
         ThreadContext thread = createThread();
         Long watermark = createThreadMessageUseCase.create(communityText(
@@ -30,18 +32,20 @@ class CommunityThreadSendReadConcurrencyIntegrationTest
             OWNER_ID,
             UUID.fromString("36967e84-30f3-475a-b5ea-77d65bf0b552")
         )).message().messageId();
-        createChatMessageUseCase.create(chatText(
+        createThreadMessageUseCase.create(communityText(
             thread,
+            OWNER_ID,
             UUID.fromString("ae4d37ee-34ff-4bff-9e55-4acc353f4adb")
-        ), ignored -> { });
-        assertThat(threadMember(thread.threadId(), MEMBER_ID).getUnreadCount()).isEqualTo(1L);
+        ));
+        assertThat(threadMember(thread.threadId(), MEMBER_ID).getUnreadCount()).isEqualTo(2L);
         CountDownLatch sendApplied = new CountDownLatch(1);
         CountDownLatch allowSendCommit = new CountDownLatch(1);
-        TransactionCall<ChatMessageMutationResult> send = race.submit(() -> {
-            ChatMessageMutationResult result = createChatMessageUseCase.create(chatText(
+        TransactionCall<CommunityThreadMessageMutationInfo> send = race.submit(() -> {
+            CommunityThreadMessageMutationInfo result = createThreadMessageUseCase.create(communityText(
                 thread,
+                OWNER_ID,
                 UUID.fromString("6cde6397-d664-40a0-826b-05b1b82a23ea")
-            ), ignored -> { });
+            ));
             sendApplied.countDown();
             race.await(allowSendCommit, "send commit release");
             return result;
@@ -61,7 +65,7 @@ class CommunityThreadSendReadConcurrencyIntegrationTest
         } finally {
             allowSendCommit.countDown();
         }
-        ChatMessageMutationResult secondMessage = send.future().get(
+        CommunityThreadMessageMutationInfo secondMessage = send.future().get(
             TIMEOUT_SECONDS,
             TimeUnit.SECONDS
         );

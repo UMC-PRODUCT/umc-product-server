@@ -2,7 +2,7 @@ import { check } from "k6";
 
 import { ChatClient } from "./chat-client.js";
 import { initializeLoadMetrics, recordAckResult, recordDelivery, recordDeliverySummary,
-  recordFailure } from "./chat-metrics.js";
+  recordFailure, recordPreparationRequest, recordPreparationReady } from "./chat-metrics.js";
 import { DeliveryTracker, loadContent } from "./chat-load.js";
 
 /**
@@ -47,7 +47,7 @@ async function runChatUser(target, config, run, behavior) {
   const tracker = new DeliveryTracker(target, run.runId, config.timeoutMs);
   const sequences = new Map(target.rooms.map((room) => [room.threadId, 0]));
   const acknowledged = new Map(sequences);
-  const controlInterval = Math.min(500, Math.max(20, config.startupMs / 10));
+  const controlInterval = config.controlIntervalMs;
   let failure = null, observerFailure = null;
   let connected = false, ready = false, closed = false, sent = 0, received = 0, stage = "connect";
   let actionResult;
@@ -74,28 +74,32 @@ async function runChatUser(target, config, run, behavior) {
   };
   const send = async (room, kind, sequence = 0) => {
     const message = client.createMessage(room.threadId, { measured: kind === "message" });
-    const remaining = (kind === "done" ? run.drainUntil : kind === "message"
+    const remaining = (kind === "done" ? run.drainUntil : ["message", "warmup"].includes(kind)
       ? run.drainUntil : run.startAt) - Date.now();
     if (remaining <= 0) throw timeout("전송 단계의 대기 기한 초과");
+    if (kind === "ready" || kind === "armed") recordPreparationRequest(kind, config.tags);
     return client.sendMessage(message, { timeoutMs: Math.min(config.timeoutMs, remaining),
       contentAtSend: (sentAt) => loadContent(run.runId, kind, message, sentAt, sequence) });
   };
-  const sendMessage = async (room) => {
+  const sendMessage = async (room, phase = "measurement") => {
     healthy();
     if (!target.rooms.some((joined) => joined.threadId === room?.threadId)) {
       throw new Error("사용자가 참여한 방에만 측정 메시지를 보낼 수 있습니다");
     }
     if (Date.now() >= run.endAt) throw timeout("측정 메시지 전송 기간이 끝났습니다");
-    const sequence = sequences.get(room.threadId) + 1;
-    sequences.set(room.threadId, sequence);
+    const measured = phase === "measurement";
+    const sequence = measured ? sequences.get(room.threadId) + 1 : 0;
+    if (measured) sequences.set(room.threadId, sequence);
     try {
-      const ack = await send(room, "message", sequence);
-      acknowledged.set(room.threadId, sequence);
-      sent++;
-      recordAckResult(true, config.tags);
+      const ack = await send(room, measured ? "message" : "warmup", sequence);
+      if (measured) {
+        acknowledged.set(room.threadId, Math.max(acknowledged.get(room.threadId), sequence));
+        sent++;
+        recordAckResult(true, config.tags);
+      }
       return ack;
     } catch (error) {
-      recordAckResult(false, config.tags);
+      if (measured) recordAckResult(false, config.tags);
       report(error, "ack");
       throw error;
     }
@@ -110,14 +114,29 @@ async function runChatUser(target, config, run, behavior) {
     await client.open();
     connected = true;
     stage = "subscription";
+    const respondedRooms = new Set();
+    const announcedRooms = new Set();
     while (Date.now() < run.startAt && !tracker.armed) {
       healthy();
-      for (const room of target.rooms) await send(room, "ready");
-      if (tracker.ready) for (const room of target.rooms) await send(room, "armed");
+      for (const room of target.rooms) {
+        const leaderId = room.memberIds[0];
+        if (target.memberId === leaderId) {
+          if (!tracker.roomReady(room)) await send(room, "ready");
+          else if (!announcedRooms.has(room.threadId)) {
+            await send(room, "armed");
+            announcedRooms.add(room.threadId);
+          }
+        } else if (!respondedRooms.has(room.threadId) && tracker.hasReady(room.threadId, leaderId)) {
+          // 대표의 신호를 수신한 뒤 한 번만 응답한다. 늦은 구독자를 위한 재전송은 대표만 맡는다.
+          await send(room, "ready");
+          respondedRooms.add(room.threadId);
+        }
+      }
       await pause(Math.min(controlInterval, run.startAt - Date.now()));
     }
     if (!tracker.armed) throw timeout("모든 방 참여자의 구독 준비 확인 실패");
     ready = true;
+    recordPreparationReady(config.tags);
     await pause(run.startAt - Date.now());
     stage = "action";
     try {
@@ -144,9 +163,11 @@ async function runChatUser(target, config, run, behavior) {
     if (error !== observerFailure) report(error, stage);
   } finally {
     const summary = tracker.summary();
-    recordDeliverySummary(summary, config.tags);
-    if (summary.missing) report(timeout("ACK 완료 메시지의 수신 누락"), "delivery");
-    if (summary.completionMissing) report(timeout("송신 완료 신호 수신 누락"), "completion");
+    if (ready) {
+      recordDeliverySummary(summary, config.tags);
+      if (summary.missing) report(timeout("ACK 완료 메시지의 수신 누락"), "delivery");
+      if (summary.completionMissing) report(timeout("송신 완료 신호 수신 누락"), "completion");
+    }
     if (client.failure && !failure) report(client.failure, "connection");
     try { await client.close(); closed = true; } catch (error) { report(error, "cleanup"); }
     const state = { target, connected, ready, closed, sent, received, delivery: summary, failure, actionResult };

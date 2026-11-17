@@ -2,6 +2,13 @@ import { WebSocket } from "k6/websockets";
 
 import { encodeFrame, StompDecoder } from "./stomp-protocol.js";
 
+function diagnosticText(value) {
+  return String(value ?? "")
+    .replace(/Bearer\s+[^\s"']+/gi, "Bearer <redacted>")
+    .replace(/[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]+/g, "<redacted>")
+    .slice(0, 2048);
+}
+
 // 통신 실패 원인을 reason으로 전달한다. 호출부는 오류 원문 대신 이 값을 사용해 실패 지표를 분류한다.
 export class StompError extends Error {
   constructor(message, reason) {
@@ -26,7 +33,7 @@ export class StompTimeoutError extends StompError {
  * 특정 응답은 waitFor로 기다리고, 연속 이벤트는 observe로 받는다. 대기는 전송 전에 등록해야 응답을 놓치지 않는다.
  */
 export class StompClient {
-  constructor(url, { token, label, timeoutMs = 10000 }) {
+  constructor(url, { token, label, timeoutMs = 10000, diagnostics }) {
     this.url = url;
     this.token = token;
     this.label = label;
@@ -43,6 +50,13 @@ export class StompClient {
     this.closeWaiter = null;
     this.lastActivity = Date.now();
     this.observers = new Set();
+    this.diagnostics = /^[A-Za-z0-9_-]{1,128}$/.test(diagnostics?.testId ?? "")
+      ? { ...diagnostics, connectionId: crypto.randomUUID() } : null;
+    this.startedAt = this.lastActivity;
+    this.openedAt = null;
+    this.lastSentAt = null;
+    this.lastReceivedAt = null;
+    this.closeRequestedAt = null;
   }
 
   async connect() {
@@ -51,8 +65,15 @@ export class StompClient {
     // WebSocket open은 전송 경로만 열린 상태다. STOMP CONNECTED까지 받아야 인증이 완료된다.
     const ready = this.waitFor((frame) => frame.command === "CONNECTED", "STOMP 인증");
     try {
-      this.socket = new WebSocket(this.url, [], { tags: { client: this.label } });
+      this.logConnection("connecting");
+      this.socket = new WebSocket(this.url, [], { tags: { client: this.label },
+        ...(this.diagnostics ? { headers: {
+          "X-Chat-Test-Id": this.diagnostics.testId,
+          "X-Chat-Connection-Id": this.diagnostics.connectionId,
+        } } : {}) });
       this.socket.onopen = () => {
+        this.openedAt = Date.now();
+        this.logConnection("opened");
         try {
           this.write("CONNECT", {
             "accept-version": "1.2", host, Authorization: `Bearer ${this.token}`,
@@ -65,6 +86,7 @@ export class StompClient {
       this.socket.onmessage = (event) => {
         const receivedAt = Date.now();
         this.lastActivity = receivedAt;
+        this.lastReceivedAt = receivedAt;
         try {
           if (typeof event.data !== "string") throw new Error("텍스트 STOMP 프레임이 아닙니다");
           for (const frame of this.decoder.push(event.data)) {
@@ -81,24 +103,39 @@ export class StompClient {
           this.fail(new StompError(`${this.label}: STOMP 수신 프레임 처리 실패`, "frame_error"));
         }
       };
-      this.socket.onerror = () => {
+      this.socket.onerror = (event) => {
+        this.logConnection("transport_error", {
+          error: diagnosticText(event.error?.message ?? event.error ?? event.message),
+        });
         // DISCONNECT 이후 서버가 먼저 닫는 경우도 있다. 실제 종료 여부는 close()가 확인한다.
         if (!this.closing) this.fail(new StompError(`${this.label}: WebSocket 연결 오류`, "connection_error"));
       };
-      this.socket.onclose = () => {
+      this.socket.onclose = (event) => {
+        this.logConnection("closed", { code: event.code ?? null, reason: diagnosticText(event.reason),
+          wasClean: event.wasClean ?? null, expected: this.closing });
         this.stopHeartbeats();
         if (this.closeWaiter) this.closeWaiter();
         if (!this.closing) this.fail(new StompError(`${this.label}: 예상하지 못한 연결 종료`, "connection_closed"));
         this.observers.clear();
       };
-    } catch (_) {
+    } catch (error) {
+      this.logConnection("creation_error", { error: diagnosticText(error instanceof Error ? error.message : error) });
       this.fail(new StompError(`${this.label}: WebSocket 생성 실패`, "connection_error"));
     }
     const frame = await ready;
     this.connected = true;
     this.token = null;
     this.startHeartbeats(frame.headers["heart-beat"]);
+    this.logConnection("stomp_connected");
     return this;
+  }
+
+  logConnection(event, details = {}) {
+    if (!this.diagnostics) return;
+    console.log("[DEBUG-ws-connection] " + JSON.stringify({ event, at: new Date().toISOString(),
+      ...this.diagnostics, label: this.label, startedAt: this.startedAt, openedAt: this.openedAt,
+      lastSentAt: this.lastSentAt, lastReceivedAt: this.lastReceivedAt, closeRequestedAt: this.closeRequestedAt,
+      readyState: this.socket?.readyState ?? null, failureReason: this.failure?.reason ?? null, ...details }));
   }
 
   subscribe(destination) {
@@ -114,7 +151,14 @@ export class StompClient {
   }
 
   write(command, headers, body = "") {
-    this.socket.send(encodeFrame(command, headers, body));
+    try {
+      this.socket.send(encodeFrame(command, headers, body));
+    } catch (error) {
+      this.logConnection("send_error", { command,
+        error: diagnosticText(error instanceof Error ? error.message : error) });
+      throw error;
+    }
+    this.lastSentAt = Date.now();
   }
 
   requireConnected() {
@@ -169,8 +213,13 @@ export class StompClient {
     const [serverSends, serverReceives] = intervals;
     if (serverReceives > 0) {
       this.timers.push(setInterval(() => {
-        try { this.socket.send("\n"); }
-        catch (_) { this.fail(new StompError(`${this.label}: heartbeat 전송 실패`, "send_error")); }
+        try { this.socket.send("\n"); this.lastSentAt = Date.now(); }
+        catch (error) {
+          this.logConnection("heartbeat_send_error", {
+            error: diagnosticText(error instanceof Error ? error.message : error),
+          });
+          this.fail(new StompError(`${this.label}: heartbeat 전송 실패`, "send_error"));
+        }
       }, Math.max(10000, serverReceives)));
     }
     if (serverSends > 0) {
@@ -204,10 +253,18 @@ export class StompClient {
   fail(error) {
     if (this.failure) return;
     this.failure = error;
+    this.logConnection("failure", { reason: error.reason ?? null, error: diagnosticText(error.message) });
     this.stopHeartbeats();
     this.rejectWaiters(error);
-    try { this.socket?.close(); }
-    catch (_) { /* 연결 생성 전 실패한 경우에도 원래 오류를 유지한다. */ }
+    try {
+      this.closeRequestedAt = Date.now();
+      this.logConnection("close_requested", { cause: "failure" });
+      this.socket?.close();
+    } catch (closeError) {
+      this.logConnection("close_error", {
+        error: diagnosticText(closeError instanceof Error ? closeError.message : closeError),
+      });
+    }
   }
 
   async close() {
@@ -220,6 +277,7 @@ export class StompClient {
     }
     await new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
+        this.logConnection("close_timeout");
         this.closeWaiter = null;
         this.observers.clear();
         reject(new StompTimeoutError(`${this.label}: 연결 종료 시간 초과`));
@@ -232,8 +290,13 @@ export class StompClient {
       try {
         // SIMPLE broker에서는 DISCONNECT의 RECEIPT도 기다리지 않고 실제 소켓 종료를 확인한다.
         if (this.socket.readyState === WebSocket.OPEN) this.write("DISCONNECT", {});
+        this.closeRequestedAt = Date.now();
+        this.logConnection("close_requested", { cause: "cleanup", code: 1000 });
         this.socket.close(1000);
-      } catch (_) {
+      } catch (error) {
+        this.logConnection("close_error", {
+          error: diagnosticText(error instanceof Error ? error.message : error),
+        });
         clearTimeout(timer);
         this.closeWaiter = null;
         this.observers.clear();
