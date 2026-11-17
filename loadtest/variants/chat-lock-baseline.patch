@@ -1,0 +1,454 @@
+--- a/monolith/src/main/java/com/umc/product/community/application/service/message/CommunityThreadMessageCommandService.java
++++ b/monolith/src/main/java/com/umc/product/community/application/service/message/CommunityThreadMessageCommandService.java
+@@ -204,7 +204,7 @@
+     public CommunityThreadReactionMutationInfo add(
+         ChangeCommunityThreadMessageReactionCommand command
+     ) {
+-        CommunityThread thread = loadThread(command.threadId());
++        CommunityThread thread = loadLockedThread(command.threadId());
+         loadActiveMember(thread.getId(), command.memberId());
+         return toCommunityResult(reactionUseCase.add(toChatCommand(thread, command)));
+     }
+@@ -213,7 +213,7 @@
+     public CommunityThreadReactionMutationInfo remove(
+         ChangeCommunityThreadMessageReactionCommand command
+     ) {
+-        CommunityThread thread = loadThread(command.threadId());
++        CommunityThread thread = loadLockedThread(command.threadId());
+         loadActiveMember(thread.getId(), command.memberId());
+         return toCommunityResult(reactionUseCase.remove(toChatCommand(thread, command)));
+     }
+--- a/monolith/src/main/java/com/umc/product/chat/application/service/command/ChatReactionCommandService.java
++++ b/monolith/src/main/java/com/umc/product/chat/application/service/command/ChatReactionCommandService.java
+@@ -48,7 +48,7 @@
+
+     private ChatReactionMutationResult change(ChangeChatMessageReactionCommand command, boolean add) {
+         chatReactionPolicy.validate(command.emoji());
+-        loadChatRoomPort.getById(command.roomId());
++        loadChatRoomPort.getByIdForUpdate(command.roomId());
+         chatRoomAccessPolicy.verifyMember(command.roomId(), command.memberId());
+         ChatMessage message = loadChatMessagePort.getByIdAndRoomId(command.messageId(), command.roomId());
+         if (message.isDeleted() || message.getContentType().isServerGenerated()) {
+--- a/monolith/src/test/java/com/umc/product/community/application/service/message/CommunityThreadMessageCommandServiceTest.java
++++ b/monolith/src/test/java/com/umc/product/community/application/service/message/CommunityThreadMessageCommandServiceTest.java
+@@ -400,9 +400,9 @@
+     }
+
+     @Test
+-    @DisplayName("reaction은 일반 스레드 조회와 ACTIVE 멤버 검증 뒤 Chat public UseCase를 호출한다")
++    @DisplayName("reaction은 스레드 락 조회와 ACTIVE 멤버 검증 뒤 Chat public UseCase를 호출한다")
+     void reactionValidatesThreadAndMemberBeforeChat() {
+-        given(loadThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread()));
++        given(loadThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread()));
+         given(loadThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, MEMBER_ID))
+             .willReturn(Optional.of(active(MEMBER_ID, CommunityThreadMemberRole.MEMBER)));
+         given(reactionUseCase.add(any(ChangeChatMessageReactionCommand.class))).willReturn(
+@@ -415,15 +415,15 @@
+
+         assertThat(result.deduplicated()).isFalse();
+         InOrder order = inOrder(loadThreadPort, loadThreadMemberPort, reactionUseCase);
+-        order.verify(loadThreadPort).findById(THREAD_ID);
++        order.verify(loadThreadPort).findByIdForUpdate(THREAD_ID);
+         order.verify(loadThreadMemberPort).findByThreadIdAndMemberId(THREAD_ID, MEMBER_ID);
+         order.verify(reactionUseCase).add(any(ChangeChatMessageReactionCommand.class));
+     }
+
+     @Test
+-    @DisplayName("reaction remove도 일반 스레드 조회와 멤버 검증 뒤 Chat public UseCase를 호출한다")
++    @DisplayName("reaction remove도 스레드 락 조회와 멤버 검증 뒤 Chat public UseCase를 호출한다")
+     void reactionRemoveValidatesThreadAndMemberBeforeChat() {
+-        given(loadThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread()));
++        given(loadThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread()));
+         given(loadThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, MEMBER_ID))
+             .willReturn(Optional.of(active(MEMBER_ID, CommunityThreadMemberRole.MEMBER)));
+         given(reactionUseCase.remove(any(ChangeChatMessageReactionCommand.class))).willReturn(
+@@ -436,7 +436,7 @@
+
+         assertThat(result.deduplicated()).isFalse();
+         InOrder order = inOrder(loadThreadPort, loadThreadMemberPort, reactionUseCase);
+-        order.verify(loadThreadPort).findById(THREAD_ID);
++        order.verify(loadThreadPort).findByIdForUpdate(THREAD_ID);
+         order.verify(loadThreadMemberPort).findByThreadIdAndMemberId(THREAD_ID, MEMBER_ID);
+         order.verify(reactionUseCase).remove(any(ChangeChatMessageReactionCommand.class));
+     }
+--- a/monolith/src/test/java/com/umc/product/chat/application/service/command/ChatReactionCommandServiceTest.java
++++ b/monolith/src/test/java/com/umc/product/chat/application/service/command/ChatReactionCommandServiceTest.java
+@@ -83,7 +83,7 @@
+             loadChatMessagePort,
+             saveChatMessageReactionPort
+         );
+-        order.verify(loadChatRoomPort).getById(1L);
++        order.verify(loadChatRoomPort).getByIdForUpdate(1L);
+         order.verify(chatRoomAccessPolicy).verifyMember(1L, 10L);
+         order.verify(loadChatMessagePort).getByIdAndRoomId(100L, 1L);
+         order.verify(saveChatMessageReactionPort).addIfAbsent(100L, 10L, "👍");
+--- a/monolith/src/test/java/com/umc/product/community/application/service/message/CommunityThreadUnlockedCommandConcurrencyIntegrationTest.java
++++ b/monolith/src/test/java/com/umc/product/community/application/service/message/CommunityThreadUnlockedCommandConcurrencyIntegrationTest.java
+@@ -19,7 +19,7 @@
+ import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadReactionMutationInfo;
+ import com.umc.product.support.concurrency.PostgreSqlTransactionRace.TransactionCall;
+
+-@DisplayName("방 배타 락을 제거한 명령의 실제 트랜잭션 동시성")
++@DisplayName("리액션 락 비교 baseline의 실제 트랜잭션 동시성")
+ @TestPropertySource(properties = "app.event-outbox.relay-enabled=false")
+ class CommunityThreadUnlockedCommandConcurrencyIntegrationTest
+     extends CommunityThreadConcurrencyIntegrationSupport {
+@@ -30,8 +30,8 @@
+     UpdateChatReadUseCase updateChatReadUseCase;
+
+     @Test
+-    @DisplayName("리액션과 Chat 읽음은 다른 트랜잭션이 보유한 두 방의 배타 락을 기다리지 않는다")
+-    void reactionAndChatRead_completeWhileRoomLocksAreHeld() throws Exception {
++    @DisplayName("리액션은 다른 트랜잭션이 보유한 방 락이 해제된 뒤 완료된다")
++    void reaction_waitsUntilRoomLocksAreReleased() throws Exception {
+         // Given
+         ThreadContext thread = createThread();
+         Long messageId = createThreadMessageUseCase.create(
+@@ -63,18 +63,14 @@
+             return result;
+         });
+         try {
+-            // Then: 락을 해제하기 전에 실제 저장과 커밋이 끝나야 한다.
+-            CommunityThreadReactionMutationInfo result = changed.future().get(
+-                TIMEOUT_SECONDS / 2,
+-                TimeUnit.SECONDS
+-            );
+-            assertThat(result.deduplicated()).isFalse();
+-            assertThat(loadChatMemberPort.getByRoomIdAndMemberId(thread.roomId(), MEMBER_ID)
+-                .getLastReadMessageId()).isEqualTo(messageId);
++            // Then: DB가 실제로 방 락을 기다리는 것을 확인한다.
++            race.awaitPostgreSqlLockWait(changed);
++            assertThat(changed.future().isDone()).isFalse();
+         } finally {
+             release.countDown();
+             blocker.future().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+         }
++        assertThat(changed.future().get(TIMEOUT_SECONDS, TimeUnit.SECONDS).deduplicated()).isFalse();
+     }
+
+     @Test
+diff --git a/monolith/src/main/java/com/umc/product/chat/application/service/command/ChatMemberCommandService.java b/monolith/src/main/java/com/umc/product/chat/application/service/command/ChatMemberCommandService.java
+index 24142b903..8c1f23643 100644
+--- a/monolith/src/main/java/com/umc/product/chat/application/service/command/ChatMemberCommandService.java
++++ b/monolith/src/main/java/com/umc/product/chat/application/service/command/ChatMemberCommandService.java
+@@ -35,7 +35,7 @@ public class ChatMemberCommandService implements JoinChatRoomUseCase, LeaveChatR
+ 
+     @Override
+     public void joinChatRoom(JoinChatRoomCommand command) {
+-        loadChatRoomPort.getById(command.roomId());
++        loadChatRoomPort.getByIdForUpdate(command.roomId());
+         if (loadChatMemberPort.existsByRoomIdAndMemberId(command.roomId(), command.memberId())) {
+             throw new ChatDomainException(ChatErrorCode.CHAT_MEMBER_ALREADY_EXISTS);
+         }
+diff --git a/monolith/src/main/java/com/umc/product/chat/application/service/command/ChatReadCommandService.java b/monolith/src/main/java/com/umc/product/chat/application/service/command/ChatReadCommandService.java
+index 6fdba1854..3afd37450 100644
+--- a/monolith/src/main/java/com/umc/product/chat/application/service/command/ChatReadCommandService.java
++++ b/monolith/src/main/java/com/umc/product/chat/application/service/command/ChatReadCommandService.java
+@@ -31,7 +31,7 @@ public class ChatReadCommandService implements UpdateChatReadUseCase {
+ 
+     @Override
+     public ChatReadMutationResult update(UpdateChatReadCommand command) {
+-        loadChatRoomPort.getById(command.roomId());
++        loadChatRoomPort.getByIdForUpdate(command.roomId());
+         chatRoomAccessPolicy.verifyMember(command.roomId(), command.memberId());
+         loadChatMessagePort.getByIdAndRoomId(command.lastReadMessageId(), command.roomId());
+         ChatMember member = loadChatMemberPort.getByRoomIdAndMemberId(command.roomId(), command.memberId());
+diff --git a/monolith/src/main/java/com/umc/product/community/application/service/report/CommunityThreadMessageReportCommandService.java b/monolith/src/main/java/com/umc/product/community/application/service/report/CommunityThreadMessageReportCommandService.java
+index 930e34df9..4425109f7 100644
+--- a/monolith/src/main/java/com/umc/product/community/application/service/report/CommunityThreadMessageReportCommandService.java
++++ b/monolith/src/main/java/com/umc/product/community/application/service/report/CommunityThreadMessageReportCommandService.java
+@@ -43,7 +43,7 @@ public class CommunityThreadMessageReportCommandService implements ReportCommuni
+         Long chatRoomId = getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(command.messageId()));
+         CommunityThread mappedThread = loadThreadPort.findByChatRoomId(chatRoomId)
+             .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.THREAD_NOT_FOUND));
+-        CommunityThread thread = loadThreadPort.findById(mappedThread.getId())
++        CommunityThread thread = loadThreadPort.findByIdForUpdate(mappedThread.getId())
+             .filter(foundThread -> Objects.equals(foundThread.getChatRoomId(), chatRoomId))
+             .filter(foundThread -> !foundThread.isDeleted())
+             .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.THREAD_NOT_FOUND));
+diff --git a/monolith/src/test/java/com/umc/product/chat/application/service/command/ChatMemberCommandServiceTest.java b/monolith/src/test/java/com/umc/product/chat/application/service/command/ChatMemberCommandServiceTest.java
+index 38472c67c..00c45f76f 100644
+--- a/monolith/src/test/java/com/umc/product/chat/application/service/command/ChatMemberCommandServiceTest.java
++++ b/monolith/src/test/java/com/umc/product/chat/application/service/command/ChatMemberCommandServiceTest.java
+@@ -64,7 +64,7 @@ class ChatMemberCommandServiceTest {
+         then(saveChatMemberPort).should().saveIfAbsent(captor.capture());
+         assertThat(captor.getValue().getRoomId()).isEqualTo(1L);
+         assertThat(captor.getValue().getMemberId()).isEqualTo(10L);
+-        then(loadChatRoomPort).should().getById(1L);
++        then(loadChatRoomPort).should().getByIdForUpdate(1L);
+         then(loadChatMemberPort).should().existsByRoomIdAndMemberId(1L, 10L);
+         then(loadChatMessagePort).shouldHaveNoInteractions();
+     }
+@@ -84,7 +84,7 @@ class ChatMemberCommandServiceTest {
+             loadChatMessagePort,
+             saveChatMemberPort
+         );
+-        order.verify(loadChatRoomPort).getById(1L);
++        order.verify(loadChatRoomPort).getByIdForUpdate(1L);
+         order.verify(loadChatMemberPort).existsByRoomIdAndMemberId(1L, 10L);
+         order.verify(loadChatMessagePort).getByIdAndRoomId(50L, 1L);
+         order.verify(saveChatMemberPort).saveIfAbsent(captor.capture());
+@@ -118,7 +118,7 @@ class ChatMemberCommandServiceTest {
+             .extracting(e -> ((ChatDomainException) e).getBaseCode())
+             .isEqualTo(ChatErrorCode.CHAT_MEMBER_ALREADY_EXISTS);
+ 
+-        then(loadChatRoomPort).should().getById(1L);
++        then(loadChatRoomPort).should().getByIdForUpdate(1L);
+         then(saveChatMemberPort).shouldHaveNoInteractions();
+     }
+ 
+@@ -127,7 +127,7 @@ class ChatMemberCommandServiceTest {
+     void joinChatRoom_roomNotFound() {
+         JoinChatRoomCommand command = new JoinChatRoomCommand(1L, 10L);
+         willThrow(new ChatDomainException(ChatErrorCode.CHAT_ROOM_NOT_FOUND))
+-            .given(loadChatRoomPort).getById(1L);
++            .given(loadChatRoomPort).getByIdForUpdate(1L);
+ 
+         assertThatThrownBy(() -> sut.joinChatRoom(command))
+             .isInstanceOf(ChatDomainException.class)
+@@ -148,7 +148,7 @@ class ChatMemberCommandServiceTest {
+             .extracting(e -> ((ChatDomainException) e).getBaseCode())
+             .isEqualTo(ChatErrorCode.CHAT_MEMBER_ALREADY_EXISTS);
+ 
+-        then(loadChatRoomPort).should().getById(1L);
++        then(loadChatRoomPort).should().getByIdForUpdate(1L);
+         then(domainEventPublisher).shouldHaveNoInteractions();
+     }
+ 
+diff --git a/monolith/src/test/java/com/umc/product/chat/application/service/command/ChatReadCommandServiceTest.java b/monolith/src/test/java/com/umc/product/chat/application/service/command/ChatReadCommandServiceTest.java
+index 1d2d0c832..b29074520 100644
+--- a/monolith/src/test/java/com/umc/product/chat/application/service/command/ChatReadCommandServiceTest.java
++++ b/monolith/src/test/java/com/umc/product/chat/application/service/command/ChatReadCommandServiceTest.java
+@@ -69,7 +69,7 @@ class ChatReadCommandServiceTest {
+             loadChatMemberPort,
+             saveChatMemberPort
+         );
+-        order.verify(loadChatRoomPort).getById(1L);
++        order.verify(loadChatRoomPort).getByIdForUpdate(1L);
+         order.verify(chatRoomAccessPolicy).verifyMember(1L, 10L);
+         order.verify(loadChatMessagePort).getByIdAndRoomId(40L, 1L);
+         order.verify(loadChatMemberPort).getByRoomIdAndMemberId(1L, 10L);
+diff --git a/monolith/src/test/java/com/umc/product/chat/application/service/command/ChatRoomLockRevalidationTest.java b/monolith/src/test/java/com/umc/product/chat/application/service/command/ChatRoomLockRevalidationTest.java
+index cdcd9a812..32ab9fdc2 100644
+--- a/monolith/src/test/java/com/umc/product/chat/application/service/command/ChatRoomLockRevalidationTest.java
++++ b/monolith/src/test/java/com/umc/product/chat/application/service/command/ChatRoomLockRevalidationTest.java
+@@ -6,10 +6,10 @@ import static org.mockito.ArgumentMatchers.any;
+ import static org.mockito.BDDMockito.given;
+ import static org.mockito.BDDMockito.then;
+ import static org.mockito.BDDMockito.willAnswer;
+-import static org.mockito.Mockito.never;
+ 
+ import java.time.Instant;
+ import java.util.List;
++import java.util.concurrent.CompletableFuture;
+ import java.util.concurrent.CountDownLatch;
+ import java.util.concurrent.ExecutionException;
+ import java.util.concurrent.ExecutorService;
+@@ -18,6 +18,7 @@ import java.util.concurrent.Future;
+ import java.util.concurrent.TimeUnit;
+ import java.util.concurrent.atomic.AtomicBoolean;
+ import java.util.concurrent.atomic.AtomicInteger;
++import java.util.concurrent.atomic.AtomicReference;
+ 
+ import org.junit.jupiter.api.AfterEach;
+ import org.junit.jupiter.api.BeforeEach;
+@@ -39,6 +40,7 @@ import com.umc.product.chat.application.port.out.LoadChatMessagePort;
+ import com.umc.product.chat.application.port.out.LoadChatRoomPort;
+ import com.umc.product.chat.application.port.out.SaveChatMemberPort;
+ import com.umc.product.chat.application.port.out.SaveChatMessagePort;
++import com.umc.product.chat.domain.ChatMember;
+ import com.umc.product.chat.domain.ChatMessage;
+ import com.umc.product.chat.domain.ChatRoom;
+ import com.umc.product.chat.domain.MessageContentType;
+@@ -161,55 +163,69 @@ class ChatRoomLockRevalidationTest {
+     }
+ 
+     @Test
+-    @DisplayName("읽음은 전송의 방 락을 기다리지 않으며 아직 조회되지 않는 메시지를 거부한다")
+-    void sendAndRead_readRejectsUncommittedMessageWithoutWaitingForRoomLock() throws Exception {
+-        // Given
++    @DisplayName("send lock 동안 exact read는 멤버십 검증보다 room lock을 먼저 기다린다")
++    void sendAndRead_readWaitsAtRoomLockBeforeValidation() throws Exception {
++        AtomicInteger lockAttempt = new AtomicInteger();
++        AtomicReference<ChatMessage> storedMessage = new AtomicReference<>();
+         CountDownLatch sendAtMembership = new CountDownLatch(1);
+         CountDownLatch allowSend = new CountDownLatch(1);
++        CountDownLatch sendCompleted = new CountDownLatch(1);
++        CompletableFuture<ReadSeam> observedReadSeam = new CompletableFuture<>();
+         given(loadChatMemberPort.existsByRoomIdAndMemberId(any(Long.class), any(Long.class)))
+             .willAnswer(invocation -> {
+                 Long memberId = invocation.getArgument(1);
+                 if (SENDER_ID.equals(memberId)) {
+                     sendAtMembership.countDown();
+                     await(allowSend, "send membership release");
++                } else if (sendCompleted.getCount() > 0L) {
++                    observedReadSeam.complete(ReadSeam.MEMBERSHIP_VALIDATION);
+                 }
+                 return true;
+             });
+-        given(loadChatRoomPort.getByIdForUpdate(ROOM_ID)).willReturn(ChatRoom.create());
+-        given(loadChatRoomPort.getById(ROOM_ID)).willReturn(ChatRoom.create());
++        willAnswer(invocation -> {
++            if (lockAttempt.incrementAndGet() > 1) {
++                observedReadSeam.complete(ReadSeam.ROOM_LOCK);
++                await(sendCompleted, "send completion");
++            }
++            return ChatRoom.create();
++        }).given(loadChatRoomPort).getByIdForUpdate(ROOM_ID);
+         given(saveChatMessagePort.save(any(ChatMessage.class))).willAnswer(invocation -> {
+             ChatMessage message = invocation.getArgument(0);
+             ReflectionTestUtils.setField(message, "id", MESSAGE_ID);
+             ReflectionTestUtils.setField(message, "createdAt", Instant.parse("2026-07-18T00:00:00Z"));
++            storedMessage.set(message);
+             return message;
+         });
+-        given(loadChatMessagePort.getByIdAndRoomId(MESSAGE_ID, ROOM_ID))
+-            .willThrow(new ChatDomainException(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND));
+-
+-        Future<?> send = executor.submit(() -> sendService.send(text("read race")));
++        given(loadChatMessagePort.getByIdAndRoomId(MESSAGE_ID, ROOM_ID)).willAnswer(invocation -> {
++            ChatMessage message = storedMessage.get();
++            if (message == null) {
++                observedReadSeam.complete(ReadSeam.MESSAGE_VALIDATION);
++                throw new ChatDomainException(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND);
++            }
++            return message;
++        });
++        given(loadChatMemberPort.getByRoomIdAndMemberId(ROOM_ID, READER_ID))
++            .willReturn(ChatMember.of(ROOM_ID, READER_ID));
++
++        Future<?> send = executor.submit(() -> {
++            try {
++                return sendService.send(text("read race"));
++            } finally {
++                sendCompleted.countDown();
++            }
++        });
+         await(sendAtMembership, "send membership validation");
+-
+-        // When
+         Future<?> read = executor.submit(() -> readService.update(
+             new UpdateChatReadCommand(ROOM_ID, READER_ID, MESSAGE_ID)
+         ));
+-        try {
+-            // Then: 전송을 재개하기 전에 읽음 검증이 끝나야 한다.
+-            ExecutionException failure = assertThrows(
+-                ExecutionException.class,
+-                () -> read.get(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+-            );
+-            assertThat(failure.getCause())
+-                .isInstanceOf(ChatDomainException.class)
+-                .extracting(error -> ((ChatDomainException) error).getBaseCode())
+-                .isEqualTo(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND);
+-        } finally {
+-            allowSend.countDown();
+-        }
++        ReadSeam firstReadSeam = observedReadSeam.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
++        allowSend.countDown();
++
++        assertThat(firstReadSeam).isEqualTo(ReadSeam.ROOM_LOCK);
+         send.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+-        then(loadChatRoomPort).should().getByIdForUpdate(ROOM_ID);
+-        then(loadChatRoomPort).should().getById(ROOM_ID);
+-        then(saveChatMemberPort).should(never()).bumpLastReadMessageId(ROOM_ID, READER_ID, MESSAGE_ID);
++        read.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
++        assertThat(lockAttempt).hasValue(2);
++        then(saveChatMemberPort).should().bumpLastReadMessageId(ROOM_ID, READER_ID, MESSAGE_ID);
+     }
+ 
+     private SendChatMessageCommand text(String content) {
+@@ -222,4 +238,9 @@ class ChatRoomLockRevalidationTest {
+         }
+     }
+ 
++    private enum ReadSeam {
++        ROOM_LOCK,
++        MEMBERSHIP_VALIDATION,
++        MESSAGE_VALIDATION
++    }
+ }
+diff --git a/monolith/src/test/java/com/umc/product/community/application/service/report/CommunityThreadMessageReportCommandServiceTest.java b/monolith/src/test/java/com/umc/product/community/application/service/report/CommunityThreadMessageReportCommandServiceTest.java
+index d77cef8c1..5072625f1 100644
+--- a/monolith/src/test/java/com/umc/product/community/application/service/report/CommunityThreadMessageReportCommandServiceTest.java
++++ b/monolith/src/test/java/com/umc/product/community/application/service/report/CommunityThreadMessageReportCommandServiceTest.java
+@@ -85,7 +85,7 @@ class CommunityThreadMessageReportCommandServiceTest {
+         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
+             .willReturn(CHAT_ROOM_ID);
+         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
+-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
++        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
+             .willReturn(Optional.of(member));
+         given(getChatMessageUseCase.getMessage(
+@@ -129,7 +129,7 @@ class CommunityThreadMessageReportCommandServiceTest {
+         order.verify(getChatMessageRoomUseCase)
+             .getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID));
+         order.verify(loadCommunityThreadPort).findByChatRoomId(CHAT_ROOM_ID);
+-        order.verify(loadCommunityThreadPort).findById(THREAD_ID);
++        order.verify(loadCommunityThreadPort).findByIdForUpdate(THREAD_ID);
+         order.verify(loadCommunityThreadMemberPort)
+             .findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID);
+         order.verify(getChatMessageUseCase)
+@@ -169,7 +169,7 @@ class CommunityThreadMessageReportCommandServiceTest {
+         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
+             .willReturn(CHAT_ROOM_ID);
+         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(mappedThread));
+-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(reloadedThread));
++        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(reloadedThread));
+ 
+         // when & then
+         assertThatThrownBy(() -> sut.report(command()))
+@@ -194,7 +194,7 @@ class CommunityThreadMessageReportCommandServiceTest {
+         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
+             .willReturn(CHAT_ROOM_ID);
+         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(mappedThread));
+-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(reloadedThread));
++        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(reloadedThread));
+ 
+         // when & then
+         assertThatThrownBy(() -> sut.report(command()))
+@@ -215,7 +215,7 @@ class CommunityThreadMessageReportCommandServiceTest {
+         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
+             .willReturn(CHAT_ROOM_ID);
+         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
+-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
++        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
+             .willReturn(Optional.empty());
+ 
+@@ -239,7 +239,7 @@ class CommunityThreadMessageReportCommandServiceTest {
+         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
+             .willReturn(CHAT_ROOM_ID);
+         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
+-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
++        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
+             .willReturn(Optional.of(inactiveMember));
+ 
+@@ -262,7 +262,7 @@ class CommunityThreadMessageReportCommandServiceTest {
+         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
+             .willReturn(CHAT_ROOM_ID);
+         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
+-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
++        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
+             .willReturn(Optional.of(member));
+         given(getChatMessageUseCase.getMessage(
+@@ -288,7 +288,7 @@ class CommunityThreadMessageReportCommandServiceTest {
+         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
+             .willReturn(CHAT_ROOM_ID);
+         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
+-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
++        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
+             .willReturn(Optional.of(member));
+         given(getChatMessageUseCase.getMessage(
+@@ -347,7 +347,7 @@ class CommunityThreadMessageReportCommandServiceTest {
+         given(getChatMessageRoomUseCase.getRoomId(new GetChatMessageRoomQuery(MESSAGE_ID)))
+             .willReturn(CHAT_ROOM_ID);
+         given(loadCommunityThreadPort.findByChatRoomId(CHAT_ROOM_ID)).willReturn(Optional.of(thread));
+-        given(loadCommunityThreadPort.findById(THREAD_ID)).willReturn(Optional.of(thread));
++        given(loadCommunityThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
+         given(loadCommunityThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, REQUESTER_MEMBER_ID))
+             .willReturn(Optional.of(member));
+         given(getChatMessageUseCase.getMessage(

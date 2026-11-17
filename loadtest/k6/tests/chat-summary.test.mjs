@@ -30,9 +30,13 @@ registerHooks({
         chat_load: { executor: "per-vu-iterations", vus: 2, iterations: 1 }
       } });
       export function validateSeed() {}
-      export function prepareRun() {}
-      export function getRunConditions(seed) {
+      export function prepareRun(seed) {
+        const context = { memberIds: seed.memberIds };
+        return __ENV.ASYNC_PREPARE === "true" ? Promise.resolve(context) : context;
+      }
+      export function getRunConditions(seed, runtime) {
         return { config: readLoadConfig(__ENV), vuMemberIds: seed.memberIds.map(id => [id]),
+          preparedMembers: runtime?.memberIds,
           customMeasurement: { batchSize: Number(__ENV.CUSTOM_BATCH) } };
       }
     ` };
@@ -68,4 +72,16 @@ test("기록 함수가 없는 조합은 부하 전에 거부하고 기존 HTTP �
   delete __ENV.CHAT_RUN_DIR;
   const http = await import("../script.js?http-direct");
   assert.ok(http.handleSummary({ metrics: {} })["./out/last-summary.json"]);
+});
+
+test("비동기 준비 결과를 VU와 최종 조건 기록에 같은 값으로 전달한다", async () => {
+  // Given
+  globalThis.__ENV = { PROFILE: "load", SCENARIO: "chat-reaction", ASYNC_PREPARE: "true", CHAT_RUN_DIR: "/runs/async" };
+  const scenario = await import("../script.js?async-preparation");
+  // When
+  const data = await scenario.setup();
+  const output = scenario.handleSummary({ metrics: {}, setup_data: data });
+  // Then
+  assert.deepEqual(data.context.memberIds, ["1", "2"]);
+  assert.deepEqual(JSON.parse(output["/runs/async/conditions.json"]).preparedMembers, ["1", "2"]);
 });

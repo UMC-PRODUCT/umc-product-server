@@ -3,6 +3,7 @@ import { Counter, Rate, Trend } from "k6/metrics";
 // 지연 값의 단위는 ms다. 준비 메시지는 제외하고 검증에 통과한 응답만 표본으로 남긴다.
 export const ackLatency = new Trend("umc_chat_ack_latency_ms", true);
 export const deliveryLatency = new Trend("umc_chat_delivery_latency_ms", true);
+const transmitted = new Counter("umc_chat_message_transmitted");
 const attempts = new Counter("umc_chat_message_attempts");
 const successes = new Counter("umc_chat_message_successes");
 const failures = new Counter("umc_chat_message_failures");
@@ -17,6 +18,8 @@ const deliveryReceived = new Counter("umc_chat_delivery_received");
 const deliveryMissing = new Counter("umc_chat_delivery_missing");
 const deliveryLate = new Counter("umc_chat_delivery_late");
 const completionMissing = new Counter("umc_chat_completion_missing");
+const preparationRequests = new Counter("umc_chat_preparation_requests");
+const preparationReady = new Counter("umc_chat_preparation_ready");
 const TAGS = { scenario: "chat-message" };
 
 // ID나 오류 원문을 태그로 쓰지 않아 실행할수록 시계열 종류가 늘어나지 않게 한다.
@@ -27,6 +30,8 @@ export function initializeMetrics(tags = TAGS) {
   for (const counter of [attempts, successes, failures, stageFailures, duplicates]) counter.add(0, tags);
   // Rate에 임의의 성공 표본을 넣으면 실패율의 분모가 바뀐다. 실제 전송 시도 결과만 추가한다.
 }
+
+export function recordTransmitted(tags) { transmitted.add(1, tags); }
 
 export function recordAttempt(tags = TAGS) {
   attempts.add(1, tags);
@@ -53,9 +58,13 @@ export function recordDuplicate(kind, tags = TAGS) {
 
 export function initializeLoadMetrics(tags) {
   // Smoke의 메시지 성공은 ACK+상대방 수신이다. 분리된 VU에서는 ACK와 전달 결과를 따로 집계한다.
-  for (const counter of [attempts, stageFailures, duplicates, ackSuccesses, ackFailures,
-    deliveryExpected, deliveryReceived, deliveryMissing, deliveryLate, completionMissing]) counter.add(0, tags);
+  for (const counter of [attempts, transmitted, stageFailures, duplicates, ackSuccesses, ackFailures,
+    deliveryExpected, deliveryReceived, deliveryMissing, deliveryLate, completionMissing,
+    preparationRequests, preparationReady]) counter.add(0, tags);
 }
+
+export function recordPreparationRequest(kind, tags) { preparationRequests.add(1, { ...tags, kind }); }
+export function recordPreparationReady(tags) { preparationReady.add(1, tags); }
 
 export function recordAckResult(success, tags) {
   (success ? ackSuccesses : ackFailures).add(1, tags);
