@@ -2,8 +2,13 @@ package com.umc.product.app;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
+import java.util.zip.ZipEntry;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,6 +49,39 @@ class ApplicationAssemblyTest extends IntegrationTestSupport {
         assertThat(missing)
             .as("모듈이 app/build.gradle.kts 의 의존에서 빠졌는지 확인한다")
             .isEmpty();
+    }
+
+    @Test
+    @DisplayName("배포 JAR에 Form API 공개 계약이 포함된다")
+    void includesFormApiInBootJar() throws IOException {
+        String bootJarPath = System.getProperty("app.bootJar");
+        assertThat(bootJarPath).as("app:bootJar 산출물 경로").isNotBlank();
+
+        try (JarFile bootJar = new JarFile(bootJarPath)) {
+            List<JarEntry> formApiJars = bootJar.stream()
+                .filter(entry -> entry.getName().startsWith("BOOT-INF/lib/form-api-")
+                    && entry.getName().endsWith(".jar"))
+                .toList();
+
+            assertThat(formApiJars)
+                .as("배포 JAR의 라이브러리에 form-api 모듈이 포함되어야 한다")
+                .hasSize(1);
+
+            try (JarInputStream formApi = new JarInputStream(bootJar.getInputStream(formApiJars.getFirst()))) {
+                boolean containsFormInfo = false;
+                ZipEntry entry;
+                while ((entry = formApi.getNextEntry()) != null) {
+                    if (entry.getName().equals("com/umc/product/form/application/port/in/query/dto/FormInfo.class")) {
+                        containsFormInfo = true;
+                        break;
+                    }
+                }
+
+                assertThat(containsFormInfo)
+                    .as("form-api JAR에 대표 공개 계약 FormInfo가 있어야 한다")
+                    .isTrue();
+            }
+        }
     }
 
     @Test
