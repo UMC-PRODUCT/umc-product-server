@@ -9,8 +9,10 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 
@@ -34,6 +36,7 @@ import org.springframework.transaction.support.TransactionSynchronizationUtils;
 import com.umc.product.global.observability.ScheduledTaskTracer;
 import com.umc.product.project.adapter.in.scheduler.MatchingResultPublicationHandler;
 import com.umc.product.project.adapter.in.scheduler.MatchingRoundDeadlineHandler;
+import com.umc.product.project.application.port.in.command.PublishProjectMatchingResultUseCase.PublicationAttempt;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.dto.MatchingRoundTimers;
 import com.umc.product.project.domain.ProjectMatchingRound;
@@ -97,12 +100,13 @@ class MatchingRoundDeadlineSchedulerTest {
 
             // then
             assertThat(timers).isEqualTo(new MatchingRoundTimers(1L,
-                third.getResultPublishedAt().plus(TEST_DEADLINE_BUFFER), round.getResultPublishAt()));
+                third.getResultPublishedAt().plus(TEST_DEADLINE_BUFFER), round.getResultPublishAt().plusSeconds(3)));
             ArgumentCaptor<Runnable> matchingTask = ArgumentCaptor.forClass(Runnable.class);
             ArgumentCaptor<Runnable> publicationTask = ArgumentCaptor.forClass(Runnable.class);
             then(taskScheduler).should().schedule(matchingTask.capture(),
                 eq(third.getResultPublishedAt().plus(TEST_DEADLINE_BUFFER)));
-            then(taskScheduler).should().schedule(publicationTask.capture(), eq(round.getResultPublishAt()));
+            then(taskScheduler).should().schedule(publicationTask.capture(),
+                eq(round.getResultPublishAt().plusSeconds(3)));
             matchingTask.getValue().run();
             then(handler).should().handle(1L);
             then(publicationHandler).should(never()).handle(any());
@@ -127,9 +131,9 @@ class MatchingRoundDeadlineSchedulerTest {
             MatchingRoundTimers timers = sut.schedule(round);
 
             // then
-            assertThat(timers).isEqualTo(new MatchingRoundTimers(1L, null, round.getResultPublishAt()));
+            assertThat(timers).isEqualTo(new MatchingRoundTimers(1L, null, round.getResultPublishAt().plusSeconds(3)));
             assertThat(sut.isScheduled(1L)).isFalse();
-            then(taskScheduler).should().schedule(any(Runnable.class), eq(round.getResultPublishAt()));
+            then(taskScheduler).should().schedule(any(Runnable.class), eq(round.getResultPublishAt().plusSeconds(3)));
             then(taskScheduler).shouldHaveNoMoreInteractions();
         }
 
@@ -158,9 +162,9 @@ class MatchingRoundDeadlineSchedulerTest {
 
             MatchingRoundTimers timers = sut.schedule(round);
 
-            assertThat(timers).isEqualTo(new MatchingRoundTimers(1L, null, publishAt));
+            assertThat(timers).isEqualTo(new MatchingRoundTimers(1L, null, publishAt.plusSeconds(3)));
             assertThat(sut.isScheduled(1L)).isFalse();
-            then(taskScheduler).should().schedule(any(Runnable.class), eq(publishAt));
+            then(taskScheduler).should().schedule(any(Runnable.class), eq(publishAt.plusSeconds(3)));
         }
 
         @Test
@@ -279,7 +283,7 @@ class MatchingRoundDeadlineSchedulerTest {
 
         // then
         then(publicationHandler).should().handle(1L);
-        then(taskScheduler).should().schedule(any(Runnable.class), eq(publishAt));
+        then(taskScheduler).should().schedule(any(Runnable.class), eq(publishAt.plusSeconds(3)));
     }
 
     @ParameterizedTest
@@ -337,10 +341,37 @@ class MatchingRoundDeadlineSchedulerTest {
         sut.recoverPendingTasks();
 
         // then
-        then(taskScheduler).should().schedule(any(Runnable.class), eq(publishAt));
+        then(taskScheduler).should().schedule(any(Runnable.class), eq(publishAt.plusSeconds(3)));
         taskCaptor.getValue().run();
         then(publicationHandler).should().handle(1L);
         then(handler).should(never()).handle(any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void 조기_실행만_최대_세_번_재예약한다(boolean tooEarly) {
+        ProjectMatchingRound round = roundWithId(1L);
+        Instant publishAt = round.getDecisionDeadline().plusSeconds(3600);
+        Instant checkedAt = publishAt.minusMillis(380);
+        ReflectionTestUtils.setField(round, "resultPublishAt", publishAt);
+        ArgumentCaptor<Runnable> tasks = ArgumentCaptor.forClass(Runnable.class);
+        given(taskScheduler.schedule(tasks.capture(), any(Instant.class)))
+            .willAnswer(invocation -> scheduledFuture);
+        given(publicationHandler.handle(1L)).willReturn(tooEarly
+            ? new PublicationAttempt(false, checkedAt, publishAt)
+            : new PublicationAttempt(false, null, null));
+        if (tooEarly) {
+            given(taskScheduler.getClock()).willReturn(Clock.fixed(checkedAt, ZoneOffset.UTC));
+        }
+
+        sut.schedulePublication(round);
+        int attempts = tooEarly ? 4 : 1;
+        for (int index = 0; index < attempts; index++) {
+            tasks.getAllValues().get(index).run();
+        }
+
+        then(publicationHandler).should(times(attempts)).handle(1L);
+        then(taskScheduler).should(times(attempts)).schedule(any(Runnable.class), eq(publishAt.plusSeconds(3)));
     }
 
     private ProjectMatchingRound thirdRound(boolean published) {

@@ -22,18 +22,20 @@ public interface GetScheduleOverlapUseCase {
      * 한 폼에 SCHEDULE 질문이 여러 개일 수 있으므로 (예: 1차/2차 면접 시간) 소비자는 대상 질문을 명시해야 한다.
      * 다른 질문의 답변은 결과에 포함되지 않는다.
      *
+     * <p>다음 조건에서는 해당 오류 코드에 대응하는 Form 업무 예외가 발생한다.
+     * <ul>
+     *   <li>QUESTION_NOT_FOUND — 존재하지 않는 questionId</li>
+     *   <li>QUESTION_IS_NOT_OWNED_BY_FORM — questionId 가 formId 에 속하지 않음</li>
+     *   <li>QUESTION_TYPE_MISMATCH — questionId 가 SCHEDULE 타입이 아님</li>
+     *   <li>FORM_RESPONSE_NOT_FOUND — 존재하지 않는 responseId 포함</li>
+     *   <li>FORM_RESPONSE_NOT_IN_FORM — formId 에 속하지 않는 responseId 포함</li>
+     *   <li>FORM_RESPONSE_NOT_SUBMITTED — SUBMITTED 상태가 아닌 responseId 포함</li>
+     * </ul>
+     *
      * @param formId 응답과 질문이 속해야 할 Form ID
      * @param questionId 교집합을 계산할 SCHEDULE 질문 ID
      * @param formResponseIds 계산 대상 FormResponse ID 집합. 빈 Set 이면 빈 List 반환.
      * @return 각 15분 슬롯별 available responseId 집합, startsAt 오름차순.
-     *
-     * @throws com.umc.product.form.domain.exception.FormDomainException
-     *   QUESTION_NOT_FOUND — 존재하지 않는 questionId<br>
-     *   QUESTION_IS_NOT_OWNED_BY_FORM — questionId 가 formId 에 속하지 않음<br>
-     *   QUESTION_TYPE_MISMATCH — questionId 가 SCHEDULE 타입이 아님<br>
-     *   FORM_RESPONSE_NOT_FOUND — 존재하지 않는 responseId 포함<br>
-     *   FORM_RESPONSE_NOT_IN_FORM — formId 에 속하지 않는 responseId 포함<br>
-     *   FORM_RESPONSE_NOT_SUBMITTED — SUBMITTED 상태가 아닌 responseId 포함
      */
     List<ScheduleOverlapSlotInfo> getOverlap(Long formId, Long questionId, Set<Long> formResponseIds);
 }

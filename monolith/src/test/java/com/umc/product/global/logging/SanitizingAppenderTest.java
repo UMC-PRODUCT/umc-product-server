@@ -83,7 +83,7 @@ class SanitizingAppenderTest {
         logger.error("지원서 저장 실패", error);
 
         ILoggingEvent event = appender.list.getFirst();
-        String throwableText = throwableText(event.getThrowableProxy());
+        String throwableText = ThrowableProxyUtil.asString(event.getThrowableProxy());
         assertThat(throwableText).doesNotContain(PROBE_EMAIL, PROBE_KEY);
     }
 
@@ -108,16 +108,18 @@ class SanitizingAppenderTest {
     }
 
     @Test
-    @DisplayName("예외 정제 후에도 스택트레이스와 클래스명이 원형을 유지한다")
+    @DisplayName("렌더링된 스택은 원래 클래스명과 정제된 메시지, 원래 프레임을 보여 준다")
     void 스택트레이스_보존() {
         IllegalStateException error = new IllegalStateException("email=" + PROBE_EMAIL);
 
         logger.error("작업 실패", error);
 
         IThrowableProxy proxy = appender.list.getFirst().getThrowableProxy();
-        assertThat(proxy.getClassName()).isEqualTo(IllegalStateException.class.getName());
-        assertThat(proxy.getStackTraceElementProxyArray()).isNotEmpty();
-        assertThat(proxy.getMessage()).doesNotContain(PROBE_EMAIL).contains("[REDACTED]");
+        assertThat(ThrowableProxyUtil.asString(proxy))
+            .startsWith("java.lang.IllegalStateException: email=[REDACTED]")
+            .contains("at " + getClass().getName() + ".")
+            .doesNotContain(PROBE_EMAIL);
+        assertThat(proxy.getMessage()).isEqualTo("email=[REDACTED]");
     }
 
     @Test
@@ -322,16 +324,5 @@ class SanitizingAppenderTest {
         return new LoggingEvent(
             SanitizingAppenderTest.class.getName(), logger, Level.ERROR, message, null, null
         );
-    }
-
-    private String throwableText(IThrowableProxy throwable) {
-        if (throwable == null) {
-            return "";
-        }
-        StringBuilder text = new StringBuilder();
-        for (IThrowableProxy current = throwable; current != null; current = current.getCause()) {
-            text.append(current.getClassName()).append(' ').append(current.getMessage()).append('\n');
-        }
-        return text.toString();
     }
 }

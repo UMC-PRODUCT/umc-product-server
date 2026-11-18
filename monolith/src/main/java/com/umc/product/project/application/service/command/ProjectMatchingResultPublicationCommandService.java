@@ -48,19 +48,28 @@ public class ProjectMatchingResultPublicationCommandService implements PublishPr
 
     @Override
     public boolean publish(Long matchingRoundId) {
+        return publishWithOutcome(matchingRoundId).published();
+    }
+
+    @Override
+    public PublicationAttempt publishWithOutcome(Long matchingRoundId) {
         lockProjectMatchingPort.lockByRoundId(matchingRoundId);
         ProjectMatchingRound round;
         try {
             round = loadProjectMatchingRoundPort.getByIdForUpdate(matchingRoundId);
         } catch (ProjectDomainException e) {
             if (e.getBaseCode() == ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FOUND) {
-                return false;
+                return new PublicationAttempt(false, null, null);
             }
             throw e;
         }
         Instant now = Instant.now();
+        if (round.getResultPublishAt() != null && now.isBefore(round.getResultPublishAt())
+            && round.isAutoDecisionExecuted() && round.getResultPublishedAt() == null) {
+            return new PublicationAttempt(false, now, round.getResultPublishAt());
+        }
         if (!round.canPublishAt(now)) {
-            return false;
+            return new PublicationAttempt(false, null, null);
         }
 
         // 최종 결과 공개 시 해제 예약을 먼저 반영하고 새 배정을 공개한다.
@@ -107,6 +116,6 @@ public class ProjectMatchingResultPublicationCommandService implements PublishPr
             // 랜덤 매칭은 공개 트랜잭션 커밋 후 별도 작업으로 예약한다.
             scheduleRandomMatchingPort.scheduleAfterPublication(round.getChapterId(), round.getType());
         }
-        return true;
+        return new PublicationAttempt(true, null, null);
     }
 }

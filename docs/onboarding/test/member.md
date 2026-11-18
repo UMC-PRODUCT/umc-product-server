@@ -1,7 +1,7 @@
 # Member 테스트 케이스
 
-- 테스트 파일: 20개
-- 테스트 케이스: 100개
+- 테스트 파일: 21개
+- 테스트 케이스: 103개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
@@ -10,7 +10,7 @@
 | UseCase / Application Service | 71 |
 | Repository / Outbound Persistence | 1 |
 | E2E / Integration | 1 |
-| Domain | 19 |
+| Domain | 22 |
 
 ## Controller / Inbound Adapter
 
@@ -216,6 +216,16 @@
 | [39](../../../monolith/src/test/java/com/umc/product/member/adapter/in/web/MemberCommandControllerIntegrationTest.java#L39) | 이메일 회원가입에 성공하면 회원, 자격증명, 필수 약관 동의가 저장된다 | HTTP POST /api/v1/member/register/email | 성공: HTTP 200 OK; 검증 assertThat(savedMember.getName()).isEqualTo("홍길동"); assertThat(savedMember.getNickname()).isEqualTo("길동"); assertThat(savedMember.getSchoolId()).isEqualTo(school.getId()); assertThat(savedMember.getPasswordHash()) |
 
 ## Domain
+
+### WithdrawnMemberIdentityTest
+- 테스트 설명: WithdrawnMemberIdentity 도메인
+- 위치: `monolith/src/test/java/com/umc/product/member/domain/WithdrawnMemberIdentityTest.java`
+
+| 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---:|---|---|---|
+| [12](../../../monolith/src/test/java/com/umc/product/member/domain/WithdrawnMemberIdentityTest.java#L12) | 탈퇴 회원의 기존 ID와 이메일 식별키를 보존한다 | formerMemberId, SHA-256 키 | 성공: 입력값을 보존한다 |
+| [26](../../../monolith/src/test/java/com/umc/product/member/domain/WithdrawnMemberIdentityTest.java#L26) | 이메일 식별키는 SHA-256 길이여야 한다 | 짧은 식별키 | 실패: IllegalArgumentException |
+| [35](../../../monolith/src/test/java/com/umc/product/member/domain/WithdrawnMemberIdentityTest.java#L35) | 이메일 식별키는 소문자 16진수여야 한다 | 16진수가 아닌 64자 식별키 | 실패: IllegalArgumentException |
 
 ### MemberCredentialTest
 - 위치: `monolith/src/test/java/com/umc/product/member/domain/MemberCredentialTest.java`
