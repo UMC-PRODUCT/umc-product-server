@@ -23,6 +23,7 @@ import com.umc.product.chat.application.port.out.LoadChatMemberPort;
 import com.umc.product.chat.application.port.out.LoadChatMessageMentionPort;
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
+import com.umc.product.chat.application.port.out.PublishChatMessageRealtimePort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.application.port.out.SaveChatMessageMentionPort;
 import com.umc.product.chat.application.port.out.SaveChatMessagePort;
@@ -57,6 +58,7 @@ public class ChatMessageLifecycleCommandService implements
     private final SaveChatMessageReactionPort saveChatMessageReactionPort;
     private final ChatRoomAccessPolicy chatRoomAccessPolicy;
     private final ChatMessageInfoAssembler chatMessageInfoAssembler;
+    private final PublishChatMessageRealtimePort publishChatMessageRealtimePort;
     private final DomainEventPublisher domainEventPublisher;
 
     @Override
@@ -98,7 +100,9 @@ public class ChatMessageLifecycleCommandService implements
             command.senderMemberId(),
             saved.getId()
         );
-        domainEventPublisher.publish(ChatMessageCreatedEvent.from(saved, command.mentionedMemberIds()));
+        publishChatMessageRealtimePort.publishAfterCommit(
+            ChatMessageCreatedEvent.from(saved, command.mentionedMemberIds())
+        );
 
         return new ChatMessageMutationResult(
             chatMessageInfoAssembler.assemble(saved, command.senderMemberId()),
