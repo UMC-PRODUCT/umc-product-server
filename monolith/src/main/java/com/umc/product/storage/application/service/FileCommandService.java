@@ -9,7 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.challenger.application.port.in.query.CheckChallengerDeactivationEvidenceUseCase;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.storage.application.port.in.command.DeleteStoredFileUseCase;
 import com.umc.product.storage.application.port.in.command.ManageFileUseCase;
 import com.umc.product.storage.application.port.in.command.StoreGeneratedFileUseCase;
 import com.umc.product.storage.application.port.in.command.dto.DeleteFileCommand;
@@ -33,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class FileCommandService implements ManageFileUseCase, StoreGeneratedFileUseCase {
+public class FileCommandService implements ManageFileUseCase, StoreGeneratedFileUseCase, DeleteStoredFileUseCase {
 
     private static final long UPLOAD_URL_DURATION_MINUTES = 15;
 
@@ -41,6 +43,7 @@ public class FileCommandService implements ManageFileUseCase, StoreGeneratedFile
     private final LoadFileMetadataPort loadFileMetadataPort;
     private final SaveFileMetadataPort saveFileMetadataPort;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+    private final CheckChallengerDeactivationEvidenceUseCase checkChallengerDeactivationEvidenceUseCase;
 
     @Audited(
         domain = Domain.STORAGE,
@@ -146,7 +149,7 @@ public class FileCommandService implements ManageFileUseCase, StoreGeneratedFile
     @Override
     @Transactional
     public void confirmUpload(String fileId) {
-        FileMetadata metadata = loadFileMetadataPort.findByFileId(fileId)
+        FileMetadata metadata = loadFileMetadataPort.findByFileIdForUpdate(fileId)
             .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
 
         if (metadata.isUploaded()) {
@@ -170,10 +173,12 @@ public class FileCommandService implements ManageFileUseCase, StoreGeneratedFile
         description = "'파일을 삭제했습니다.'"
     )
     @Override
+    @Transactional
     public void deleteFile(DeleteFileCommand command) {
-        FileMetadata metadata = loadFileMetadataPort.findByFileId(command.fileId())
+        FileMetadata metadata = loadFileMetadataPort.findByFileIdForUpdate(command.fileId())
             .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
 
+        validateNotUsedAsChallengerDeactivationEvidence(command.fileId());
         validateDeletePermission(metadata, command.requesterMemberId());
 
         // 스토리지에서 파일 삭제
@@ -183,6 +188,26 @@ public class FileCommandService implements ManageFileUseCase, StoreGeneratedFile
         saveFileMetadataPort.deleteByFileId(command.fileId());
 
         log.info("파일을 삭제했습니다: fileId={}", command.fileId());
+    }
+
+    @Override
+    @Transactional
+    public void deleteIfNotReferencedOutsideDeactivation(String fileId, Long deactivationId) {
+        loadFileMetadataPort.findByFileIdForUpdate(fileId).ifPresent(metadata -> {
+            if (checkChallengerDeactivationEvidenceUseCase
+                .isImageInUseOutsideDeactivation(fileId, deactivationId)) {
+                return;
+            }
+            storagePort.delete(metadata.getStorageKey());
+            saveFileMetadataPort.deleteByFileId(fileId);
+            log.info("시스템 작업으로 파일을 삭제했습니다: fileId={}", fileId);
+        });
+    }
+
+    private void validateNotUsedAsChallengerDeactivationEvidence(String fileId) {
+        if (checkChallengerDeactivationEvidenceUseCase.isImageInUse(fileId)) {
+            throw new StorageException(StorageErrorCode.DEACTIVATION_EVIDENCE_DELETE_FORBIDDEN);
+        }
     }
 
     private void validateDeletePermission(FileMetadata metadata, Long requesterMemberId) {

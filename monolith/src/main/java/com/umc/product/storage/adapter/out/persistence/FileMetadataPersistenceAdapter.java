@@ -24,8 +24,18 @@ public class FileMetadataPersistenceAdapter implements LoadFileMetadataPort, Sav
     }
 
     @Override
+    public Optional<FileMetadata> findByFileIdForUpdate(String fileId) {
+        return fileMetadataRepository.findByIdForUpdate(fileId);
+    }
+
+    @Override
     public List<FileMetadata> findByFileIds(List<String> fileIds) {
         return fileMetadataRepository.findByIdIn(fileIds);
+    }
+
+    @Override
+    public List<FileMetadata> findByFileIdsForUpdate(List<String> fileIds) {
+        return fileMetadataRepository.findAllByIdsForUpdate(fileIds);
     }
 
     @Override

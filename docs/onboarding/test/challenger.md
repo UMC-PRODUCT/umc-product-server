@@ -1,16 +1,17 @@
 # Challenger 테스트 케이스
 
-- 테스트 파일: 17개
-- 테스트 케이스: 72개
+- 테스트 파일: 26개
+- 테스트 케이스: 121개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
 |---|---:|
-| Controller / Inbound Adapter | 19 |
-| UseCase / Application Service | 23 |
-| Repository / Outbound Persistence | 2 |
-| E2E / Integration | 3 |
-| Domain | 25 |
+| Controller / Inbound Adapter | 26 |
+| UseCase / Application Service | 45 |
+| Repository / Outbound Persistence | 7 |
+| E2E / Integration | 9 |
+| Scheduler | 7 |
+| Domain | 27 |
 
 ## Controller / Inbound Adapter
 
@@ -51,6 +52,27 @@
 | 테스트 | 입력/조건 | 기대 결과 |
 |---|---|---|
 | 관리자용 챌린저 상세 정보를 조회한다 | HTTP GET /api/v2/challenger/admin/{challengerId} | 성공: HTTP 200 OK |
+
+### ChallengerDeactivationCommandControllerTest
+
+- 위치: `monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerDeactivationCommandControllerTest.java`
+
+| 테스트 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 현재 로그인한 운영진으로 탈부를 등록한다 | HTTP POST /api/v1/challenger/admin/{challengerId}/deactivations | 성공: HTTP 201 Created, 탈부 기록 ID 반환 |
+| 사진이 5장을 초과하면 400을 반환한다 | imageIds 6개 | 실패: HTTP 400 Bad Request |
+| 링크가 3개를 초과하면 400을 반환한다 | links 4개 | 실패: HTTP 400 Bad Request |
+| 탈부 사유가 없으면 400을 반환한다 | reason 누락 | 실패: HTTP 400 Bad Request |
+| 현재 로그인한 운영진으로 탈부 근거 자료를 추가한다 | HTTP POST /api/v1/challenger/admin/{challengerId}/deactivations/evidence | 성공: HTTP 201 Created |
+| 추가할 사진이 5장을 초과하면 400을 반환한다 | imageIds 6개 | 실패: HTTP 400 Bad Request |
+
+### ChallengerDeactivationQueryControllerTest
+
+- 위치: `monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerDeactivationQueryControllerTest.java`
+
+| 테스트 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 자진 탈부와 타의 탈부 사유 목록을 조회한다 | HTTP GET /api/v1/challenger/admin/deactivations/reasons | 성공: HTTP 200 OK, 유형별 사유와 상세 입력 필수 여부 반환 |
 
 ### ChallengerRecordControllerTest
 - 테스트 설명: ChallengerRecordController
@@ -120,6 +142,66 @@
 | [158](../../../monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerCommandServiceTest.java#L158) | updateChallenger / 비활성 챌린저에게 상벌점을 부여할 수 없다 | GrantChallengerPointCommand {challengerId=1L, pointType=PointType.CUSTOM, pointValue=1, description="조정"}; 호출 grantChallengerPoint(GrantChallengerPointCommand.builder() | 실패: 예외 ChallengerDomainException; 에러코드 ChallengerErrorCode.CHALLENGER_NOT_ACTIVE; 검증 .isEqualTo(ChallengerErrorCode.CHALLENGER_NOT_ACTIVE); |
 | [176](../../../monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerCommandServiceTest.java#L176) | 상벌점 설명을 수정한다 | 호출 updateChallengerPoint(UpdateChallengerPointCommand.of(10L, "수정")) | 성공: 검증 assertThat(point.getDescription()).isEqualTo("수정"); |
 
+### ChallengerDeactivationCommandServiceTest
+
+- 위치: `monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerDeactivationCommandServiceTest.java`
+
+| 테스트 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 탈부 정보와 근거 자료를 저장하고 챌린저 상태를 변경한다 | 타의 탈부, 사진 2장, 링크 1개 | 성공: `EXPELLED` 변경 및 등록 이력 저장 |
+| 이미 탈부 등록된 챌린저는 다시 등록할 수 없다 | 동일 challengerId의 탈부 기록 존재 | 실패: 중복 탈부 등록 예외 |
+| 같은 근거 자료를 중복 등록할 수 없다 | 동일 imageId 2개 | 실패: 탈부 등록 요청 오류 |
+| 탈부 근거 사진 카테고리가 아닌 파일은 등록할 수 없다 | 게시글 이미지 카테고리 파일 | 실패: 탈부 등록 요청 오류 |
+| 탈부 사유가 없으면 챌린저 상태를 변경하지 않는다 | reason 누락 | 실패: 상태 미변경 |
+| 근거 사진을 사용할 수 없으면 챌린저 상태를 변경하지 않는다 | Storage 파일 검증 실패 | 실패: 상태 미변경 |
+| 기존 탈부 기록에 근거 자료와 진행 기록을 저장한다 | 사진과 링크 추가 | 성공: 근거 자료와 진행 기록 저장 |
+| 사진 없이 링크만 추가할 수 있다 | imageIds 없음, links 존재 | 성공: 링크와 진행 기록 저장 |
+| 근거 추가에서도 잘못된 파일 카테고리를 거부한다 | 게시글 이미지 카테고리 파일 | 실패: 탈부 등록 요청 오류 |
+| 기존 자료와 합쳐 사진 상한을 초과할 수 없다 | 총 사진 수 5장 초과 | 실패: 탈부 등록 요청 오류 |
+| 기존 자료와 합쳐 링크 상한을 초과할 수 없다 | 총 링크 수 3개 초과 | 실패: 탈부 등록 요청 오류 |
+| 기존 사진을 다시 추가할 수 없다 | 동일 imageId 재등록 | 실패: 탈부 등록 요청 오류 |
+| 기존 링크를 다시 추가할 수 없다 | 동일 링크 재등록 | 실패: 탈부 등록 요청 오류 |
+| 사진과 링크가 모두 없으면 근거를 추가할 수 없다 | 빈 근거 추가 요청 | 실패: 탈부 등록 요청 오류 |
+
+### ChallengerDeactivationDataDeletionServiceTest
+
+- 위치: `monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerDeactivationDataDeletionServiceTest.java`
+
+| 테스트 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 외래 키 참조 순서에 맞춰 탈부 기록을 삭제한다 | 만료 탈부 기록 삭제 | 사진·링크·파일·진행 기록·탈부 기록 순서로 삭제 |
+
+### ChallengerDeactivationQueryServiceTest
+
+- 위치: `monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerDeactivationQueryServiceTest.java`
+
+| 테스트 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 탈부 근거에 연결된 이미지인지 확인한다 | 사용 중인 이미지 ID 조회 | 성공: 사용 여부 `true` 반환 |
+| 이미지 ID가 없으면 저장소를 조회하지 않는다 | imageId가 `null` | 성공: `false` 반환, 저장소 미호출 |
+| 자진 탈부와 타의 탈부 사유를 화면 표시 순서대로 조회한다 | 탈부 사유 목록 조회 | 성공: 유형별 사유와 상세 입력 필수 여부 반환 |
+
+### ChallengerDeactivationRetentionServiceTest
+
+- 위치: `monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerDeactivationRetentionServiceTest.java`
+
+| 테스트 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 등록일로부터 5년이 지난 탈부 기록을 삭제한다 | 보관 만료 대상 2건 | 성공: 두 기록 삭제 |
+| 한 기록 삭제에 실패해도 다음 기록을 계속 처리한다 | 첫 기록 삭제 실패 | 다음 기록 처리 및 성공·실패 건수 집계 |
+| 100건 단위로 다음 배치를 조회한다 | 첫 배치 100건, 두 번째 배치 2건 | 커서 기반 조회 및 전체 건수 합산 |
+
+### ChallengerPermissionEvaluatorTest
+
+- 위치: `monolith/src/test/java/com/umc/product/challenger/application/service/evaluator/ChallengerPermissionEvaluatorTest.java`
+
+| 테스트 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| SUPER_ADMIN은 기수와 학교에 관계없이 관리할 수 있다 | 전역 SUPER_ADMIN 권한 | 성공: 관리 허용 |
+| 대상 기수 중앙 운영진은 관리할 수 있다 | 대상 기수 중앙 운영·교육국원 | 성공: 관리 허용 |
+| 다른 기수 중앙 운영진은 관리할 수 없다 | 다른 기수 중앙 운영·교육국원 | 실패: 관리 거부 |
+| 중앙 총괄은 다른 기수의 챌린저도 관리할 수 있다 | 중앙 총괄단 | 성공: 관리 허용 |
+
 ### ChallengerRecordCommandServiceTest
 - 테스트 설명: ChallengerRecordCommandService
 - 위치: `monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerRecordCommandServiceTest.java`
@@ -146,8 +228,31 @@
 |---:|---|---|---|
 | [29](../../../monolith/src/test/java/com/umc/product/challenger/adapter/out/persistence/ChallengerDeactivationPersistenceTest.java#L29) | 탈부 기록과 진행 기록 및 근거 자료를 함께 저장한다 | 탈부 등록 History에 이미지와 링크를 연결해 저장 | 성공: History를 통해 탈부 기록과 작업자를 조회한다 |
 | [71](../../../monolith/src/test/java/com/umc/product/challenger/adapter/out/persistence/ChallengerDeactivationPersistenceTest.java#L71) | 같은 챌린저의 탈부 기록은 한 번만 저장한다 | 동일 challengerId로 탈부 기록 2건 저장 | 실패: DB 유니크 제약 위반 |
+| 1000자인 근거 링크를 저장한다 | 길이 1000인 URL | 성공: 전체 링크 보존 |
+| 존재하지 않는 탈부 기록을 잠금 조회한다 | 존재하지 않는 challengerId | 실패: 탈부 기록 없음 오류 |
+| 보관 만료 대상과 근거 자료를 조회하고 삭제한다 | 만료 대상 1건 | 성공: 외래 키 순서로 전체 삭제 |
+| 보관 만료 시각·커서·조회 개수를 적용한다 | 경계 시각과 afterId, limit | 성공: 조건에 맞는 대상만 반환 |
+| 다른 탈부 기록의 동일 사진 참조를 확인한다 | 같은 imageId를 두 기록이 참조 | 성공: 외부 참조 여부 반환 |
 
 ## E2E / Integration
+
+### ChallengerDeactivationRegistrationIntegrationTest
+- 위치: `monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerDeactivationRegistrationIntegrationTest.java`
+
+| 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 진행 기록 저장에 실패하면 챌린저 상태와 탈부 기록을 모두 롤백한다 | 탈부 등록 중 진행 기록 저장 실패 | 챌린저 상태와 탈부 기록 롤백 |
+| 근거 링크 저장에 실패하면 근거 추가 진행 기록도 롤백한다 | 근거 추가 중 링크 저장 실패 | 진행 기록과 링크 롤백 |
+| 동시에 근거 자료를 추가해도 비관적 락으로 링크 개수 제한을 지킨다 | 같은 탈부 기록에 링크를 동시에 추가 | 한 요청만 성공하고 최대 개수 유지 |
+
+### ChallengerDeactivationDeletionIntegrationTest
+- 위치: `monolith/src/test/java/com/umc/product/challenger/application/service/ChallengerDeactivationDeletionIntegrationTest.java`
+
+| 테스트 케이스 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 자식 기록 삭제 중 실패하면 탈부 기록과 모든 근거 자료를 복구한다 | 진행 기록 삭제 실패 | 탈부 기록·진행 기록·근거 자료 롤백 |
+| 스토리지 원본 삭제에 실패하면 탈부 기록과 근거 자료를 복구한다 | 첫 원본 삭제 실패 | DB 변경 롤백 |
+| 일부 원본 삭제 후 롤백된 파일은 다른 탈부 기록에 다시 등록할 수 없다 | A 삭제 성공 후 B 삭제 실패, A 재등록 시도 | S3 원본이 없는 A 등록 거부 |
 
 ### ChallengerRecordControllerIntegrationTest
 - 테스트 설명: ChallengerRecordController 통합 테스트
@@ -158,6 +263,22 @@
 | [75](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerRecordControllerIntegrationTest.java#L75) | ChallengerRecordController 통합 테스트 / 일반 챌린저 기록 코드를 소비하면 챌린저가 생성되고 코드가 사용 처리된다 | HTTP POST /api/v1/challenger-record/member | 성공: HTTP 200 OK; 검증 assertThat(savedChallenger.getPart()).isEqualTo(ChallengerPart.SPRINGBOOT); assertThat(usedRecord.isUsed()).isTrue(); assertThat(usedRecord.getUsedMemberId()).isEqualTo(member.getId()); assertThat(usedRecord.getUsedAt... |
 | [110](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerRecordControllerIntegrationTest.java#L110) | 운영진 기록 코드를 소비하면 기존 챌린저에 역할이 부여되고 새 챌린저는 만들지 않는다 | HTTP POST /api/v1/challenger-record/member | 성공: HTTP 200 OK; 검증 assertThat(challengerJpaRepository.findByMemberId(member.getId())); .containsExactly(challenger.getId()); assertThat(challengerRoleJpaRepository.findByChallengerId(challenger.getId())); .hasSize(1) |
 | [159](../../../monolith/src/test/java/com/umc/product/challenger/adapter/in/web/ChallengerRecordControllerIntegrationTest.java#L159) | 이미 사용된 챌린저 기록 코드는 재사용할 수 없다 | HTTP POST /api/v1/challenger-record/member | 실패: HTTP 200 OK; HTTP 400 Bad Request; 검증 assertThat(challengerJpaRepository.findByMemberId(member.getId())); .hasSize(1); .isEqualTo(ChallengerPart.ANDROID); assertThat(usedRecord.isUsed()).isTrue(); |
+
+## Scheduler
+
+### ChallengerDeactivationRetentionSchedulerTest
+
+- 위치: `monolith/src/test/java/com/umc/product/challenger/adapter/in/scheduler/ChallengerDeactivationRetentionSchedulerTest.java`
+
+| 테스트 | 입력/조건 | 기대 결과 |
+|---|---|---|
+| 보관 만료 기능이 비활성화되면 스케줄러 빈을 등록하지 않는다 | 활성 속성 `false` | 스케줄러 빈 미등록 |
+| 보관 만료 기능이 활성화되면 스케줄러 빈을 등록한다 | 활성 속성 `true` | 스케줄러 빈 등록 |
+| 스케줄러는 만료 삭제 작업을 전용 실행기에 제출한다 | 스케줄 실행 | 전용 executor에 작업 제출, scheduler thread에서 직접 실행하지 않음 |
+| 이전 만료 삭제 작업이 실행 중이면 새 실행 요청을 건너뛴다 | executor가 실행 요청 거절 | 중복 만료 삭제 미실행 |
+| 만료 기록을 모두 삭제하면 성공 지표를 기록한다 | 성공 3건, 실패 0건 | `success` 지표 기록 |
+| 일부 삭제에 실패하면 부분 실패 지표를 기록한다 | 성공 2건, 실패 1건 | `partial_failure` 지표 기록 |
+| 만료 처리 자체가 실패하면 실패 지표를 기록한다 | purge 예외 발생 | `failure` 지표 기록 및 예외 전파 |
 
 ## Domain
 
@@ -178,6 +299,8 @@
 | [151](../../../monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java#L151) | 근거 추가 기록에는 사진이나 링크가 하나 이상 필요하다 | EVIDENCE_ADDED, 사진 0장, 링크 0개 | 실패: 도메인 예외 |
 | [163](../../../monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java#L163) | 한 번의 진행 기록도 사진 5장과 링크 3개를 초과할 수 없다 | 사진 6장 또는 링크 4개 | 실패: 도메인 예외 |
 | [183](../../../monolith/src/test/java/com/umc/product/challenger/domain/ChallengerDeactivationTest.java#L183) | 링크는 자신을 추가한 진행 기록과 연결된다 | 링크와 EVIDENCE_ADDED History | 성공: 작업자를 History로 조회한다 |
+| 링크는 1000자까지 저장할 수 있다 | 1000자 링크 | 성공: 링크 생성 |
+| 링크는 1000자를 초과할 수 없다 | 1001자 링크 | 실패: 도메인 예외 |
 
 ### ChallengerPointTest
 - 테스트 설명: ChallengerPoint 도메인

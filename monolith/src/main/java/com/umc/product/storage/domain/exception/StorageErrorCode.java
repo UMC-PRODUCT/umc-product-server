@@ -18,6 +18,7 @@ public enum StorageErrorCode implements BaseCode {
     FILE_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "STORAGE-0013",
         "파일을 삭제할 권한이 없어요. 필요한 권한이 있다면 운영진에게 문의해주세요."),
     FILE_USE_FORBIDDEN(HttpStatus.FORBIDDEN, "STORAGE-0016", "이 파일을 사용할 권한이 없어요. 본인이 업로드한 파일만 사용할 수 있어요."),
+    DEACTIVATION_EVIDENCE_DELETE_FORBIDDEN(HttpStatus.CONFLICT, "STORAGE-0017", "탈부 근거 자료로 등록된 파일은 삭제할 수 없어요."),
 
     // 파일 검증 에러
     INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "STORAGE-0004", "지원하지 않는 파일 형식이에요. 다른 파일을 선택해주세요."),
