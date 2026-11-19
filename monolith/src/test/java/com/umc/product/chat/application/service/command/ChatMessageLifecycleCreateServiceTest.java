@@ -33,6 +33,7 @@ import com.umc.product.chat.application.port.out.LoadChatMemberPort;
 import com.umc.product.chat.application.port.out.LoadChatMessageMentionPort;
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
+import com.umc.product.chat.application.port.out.PublishChatMessageRealtimePort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.application.port.out.SaveChatMessageMentionPort;
 import com.umc.product.chat.application.port.out.SaveChatMessagePort;
@@ -73,6 +74,8 @@ class ChatMessageLifecycleCreateServiceTest {
     @Mock
     ChatMessageInfoAssembler chatMessageInfoAssembler;
     @Mock
+    PublishChatMessageRealtimePort publishChatMessageRealtimePort;
+    @Mock
     DomainEventPublisher domainEventPublisher;
 
     @InjectMocks
@@ -105,7 +108,8 @@ class ChatMessageLifecycleCreateServiceTest {
         then(saveChatMessageMentionPort).should().saveAll(100L, List.of(20L, 30L));
         then(saveChatMemberPort).should().bumpLastReadMessageId(1L, 10L, 100L);
         ArgumentCaptor<ChatMessageCreatedEvent> event = ArgumentCaptor.forClass(ChatMessageCreatedEvent.class);
-        then(domainEventPublisher).should().publish(event.capture());
+        then(publishChatMessageRealtimePort).should().publishAfterCommit(event.capture());
+        then(domainEventPublisher).shouldHaveNoInteractions();
         assertThat(event.getValue().clientMessageId()).isEqualTo(clientMessageId);
         assertThat(event.getValue().mentionedMemberIds()).containsExactly(20L, 30L);
 
@@ -174,6 +178,7 @@ class ChatMessageLifecycleCreateServiceTest {
         then(saveChatMessagePort).shouldHaveNoInteractions();
         then(saveChatMessageMentionPort).shouldHaveNoInteractions();
         then(saveChatMemberPort).shouldHaveNoInteractions();
+        then(publishChatMessageRealtimePort).shouldHaveNoInteractions();
         then(domainEventPublisher).shouldHaveNoInteractions();
     }
 
@@ -209,6 +214,7 @@ class ChatMessageLifecycleCreateServiceTest {
             .isEqualTo(ChatErrorCode.CHAT_MESSAGE_IDEMPOTENCY_CONFLICT);
 
         then(saveChatMessagePort).shouldHaveNoInteractions();
+        then(publishChatMessageRealtimePort).shouldHaveNoInteractions();
         then(domainEventPublisher).shouldHaveNoInteractions();
     }
 

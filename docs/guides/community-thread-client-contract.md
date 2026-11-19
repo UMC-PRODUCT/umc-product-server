@@ -193,15 +193,13 @@ message/reaction/read gap은 history/latest query로, metadata/member/settings g
 member query로 복구한다. kick/leave/delete의 terminal event는 broker replay 대상이 아니므로 REST가
 terminal state를 반영하거나 거부하는지 확인한다.
 
-fan-out은 transaction outbox commit 이후에 수행한다. relay는 at-least-once이며 stable event ID와
-partial-fan-out retry를 사용한다. broker failure는 original business row를 rollback하지 않는다.
+새 채팅 메시지 생성의 실시간 팬아웃은 메시지 저장 트랜잭션이 커밋된 뒤 전용 실행기에서 비동기로
+처리한다. 작업 등록이나 전송이 실패하면 서버 로그에 남기며, 클라이언트는 메시지 조회 API로 누락된
+내용을 복구한다. 커밋 직후 서버가 종료되면 실시간 전송 작업이 유실될 수 있다.
 
-outbox relay-enabled 경로에서 `EventOutboxRelayService`가 commit 이후 event를 publish해
-`CommunityThreadRealtimeEventListener`를 호출하고,
-`CommunityThreadRealtimeDelivery`는 모든 recipient를 시도한 뒤 실패를 aggregate/rethrow한다. 따라서
-message/reaction/read gap은 history endpoint로, metadata/member/settings gap은 thread detail/list/member
-query로 backfill한다. kick/leave/delete terminal event는 broker replay가 아니라 REST terminal state를
-기준으로 한다.
+전환 이전에 저장된 메시지 생성 이벤트와 수정·삭제·리액션·읽음·스레드 상태 변경 이벤트는 기존
+아웃박스 릴레이를 사용한다. 아웃박스 릴레이는 일부 수신자에 대한 전송이 실패하면 같은 이벤트 ID로
+재시도한다. Community 메시지 생성 알림과 멘션 후속 이벤트도 기존 아웃박스에 기록한다.
 
 ## Broker 운영 전제와 확장 조건
 

@@ -2,6 +2,9 @@ package com.umc.product.community.application.service.message;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -20,9 +23,7 @@ import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.support.concurrency.PostgreSqlTransactionRace.TransactionCall;
 
-// 이 테스트는 outbox 행이 만들어졌는지만 센다. 컨텍스트의 outbox poller와 커밋 직후 즉시 전달 worker가 켜져 있으면
-// 테스트가 끝난 뒤에도 worker가 DB를 쓰고 있어, afterEach의 TRUNCATE와 락을 서로 기다리다 교착이 날 수 있다.
-// 그래서 이 테스트에서는 relay를 끈다(별도 컨텍스트가 하나 더 생긴다).
+// 아웃박스 릴레이를 꺼 비동기 DB 작업과 테스트 정리가 겹치지 않게 한다.
 @TestPropertySource(properties = "app.event-outbox.relay-enabled=false")
 @DisplayName("Community thread send/leave 실제 transaction 동시성")
 class CommunityThreadSendLeaveConcurrencyIntegrationTest
@@ -37,6 +38,9 @@ class CommunityThreadSendLeaveConcurrencyIntegrationTest
             OWNER_ID,
             UUID.fromString("b13f39d5-12f1-49d5-9947-a0d90b996ab3")
         ));
+        then(realtimeExecutor).should().execute(any(Runnable.class));
+        assertThat(countEvent("chat.message.created")).isZero();
+        assertThat(countEvent("community.thread.message.created")).isEqualTo(1L);
         long messagesBefore = chatMessageRepository.count();
         long outboxesBefore = eventOutboxRepository.count();
         long chatEventsBefore = countEvent("chat.message.created");
@@ -83,6 +87,7 @@ class CommunityThreadSendLeaveConcurrencyIntegrationTest
         assertThat(countEvent("chat.message.created")).isEqualTo(chatEventsBefore + 1L);
         assertThat(countEvent("community.thread.message.created")).isEqualTo(communityEventsBefore);
         assertThat(countEvent("community.thread.member.left")).isEqualTo(leaveEventsBefore + 1L);
+        then(realtimeExecutor).should(times(1)).execute(any(Runnable.class));
         assertThat(threadMember(thread.threadId(), OWNER_ID).getUnreadCount()).isZero();
         assertThat(threadMember(thread.threadId(), MEMBER_ID).getUnreadCount()).isEqualTo(1L);
         assertThat(threadMember(thread.threadId(), MEMBER_ID).getState())

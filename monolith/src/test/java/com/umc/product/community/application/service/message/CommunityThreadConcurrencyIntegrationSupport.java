@@ -8,6 +8,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import com.umc.product.chat.adapter.out.persistence.ChatMessageJpaRepository;
@@ -41,6 +43,10 @@ abstract class CommunityThreadConcurrencyIntegrationSupport extends IntegrationT
     static final Long MEMBER_ID = 20L;
     static final long TIMEOUT_SECONDS = 10L;
     private static final Instant NOW = Instant.parse("2026-07-18T00:00:00Z");
+
+    // 전송 실행을 모킹해 비동기 DB 작업과 동시성 테스트의 데이터 정리가 겹치지 않게 한다.
+    @MockitoBean(name = "communityChatRealtimeExecutor")
+    ThreadPoolTaskExecutor realtimeExecutor;
 
     @Autowired
     CreateChatRoomUseCase createChatRoomUseCase;
