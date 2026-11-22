@@ -17,7 +17,6 @@ import com.umc.product.form.application.port.in.command.dto.UpdateAnonymousFormR
 import com.umc.product.form.application.port.in.command.dto.UpdateDraftFormResponseCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateFormResponseCommand;
 import com.umc.product.form.application.port.in.command.dto.UpdateSubmittedFormResponseCommand;
-import com.umc.product.form.domain.exception.FormErrorCode;
 
 /**
  * FormResponse(폼 응답) 관리 UseCase.
@@ -102,7 +101,7 @@ public interface ManageFormResponseUseCase {
      * <p>
      * draft가 아닌 응답(SUBMITTED) 또는 존재하지 않는 응답 ID면 예외.
      * {@code requesterMemberId} 가 draft 소유자와 일치해야 한다.
-     * 익명 draft 이거나, 소유자와 다르거나, null 이면 {@link FormErrorCode#FORM_RESPONSE_FORBIDDEN} 예외.
+     * 익명 draft 이거나, 소유자와 다르거나, null 이면 {@code FORM_RESPONSE_FORBIDDEN} 예외.
      * 익명 draft 조작은 {@link #updateAnonymousDraft} 사용.
      */
     void updateDraft(UpdateDraftFormResponseCommand command);
@@ -115,7 +114,7 @@ public interface ManageFormResponseUseCase {
      * <p>
      * draft 가 아닌 응답이면 예외.
      * {@code requesterMemberId} 가 draft 소유자와 일치해야 한다.
-     * 익명 draft 이거나, 소유자와 다르거나, null 이면 {@link FormErrorCode#FORM_RESPONSE_FORBIDDEN} 예외.
+     * 익명 draft 이거나, 소유자와 다르거나, null 이면 {@code FORM_RESPONSE_FORBIDDEN} 예외.
      * 익명 draft 조작은 {@link #submitAnonymousDraft} 사용.
      */
     void submitDraft(SubmitDraftFormResponseCommand command);
@@ -125,7 +124,7 @@ public interface ManageFormResponseUseCase {
      * SUBMITTED 상태인 응답을 이 메서드로 삭제하면 예외 — SUBMITTED 삭제는 {@link #deleteResponse} 사용.
      * <p>
      * {@code requesterMemberId} 가 draft 소유자와 일치해야 한다.
-     * 익명 draft 이거나, 소유자와 다르거나, null 이면 {@link FormErrorCode#FORM_RESPONSE_FORBIDDEN} 예외.
+     * 익명 draft 이거나, 소유자와 다르거나, null 이면 {@code FORM_RESPONSE_FORBIDDEN} 예외.
      * 익명 draft 조작은 {@link #deleteAnonymousDraft} 사용.
      */
     void deleteDraft(DeleteDraftFormResponseCommand command);
@@ -146,8 +145,8 @@ public interface ManageFormResponseUseCase {
      * (익명 전용) 이미 SUBMITTED 상태인 익명 응답의 답변을 전체 교체한다 (재제출).
      * <p>
      * {@code responseAccessKey}(raw) 의 sha256 매칭으로 응답을 찾는다.
-     * 매칭 실패, SUBMITTED 아님, 기명 응답인 경우 모두 {@link FormErrorCode#FORM_RESPONSE_FORBIDDEN}.
-     * null 은 {@link FormErrorCode#RESPONSE_ACCESS_KEY_REQUIRED}.
+     * 매칭 실패, SUBMITTED 아님, 기명 응답인 경우 모두 {@code FORM_RESPONSE_FORBIDDEN}.
+     * null 은 {@code RESPONSE_ACCESS_KEY_REQUIRED}.
      * <p>
      * 검증 정책은 기명 {@link #updateResponse} 와 동일 — 형식 + 필수 답변 누락 검증.
      */
@@ -157,8 +156,8 @@ public interface ManageFormResponseUseCase {
      * (익명 전용) 이미 SUBMITTED 상태인 익명 응답을 삭제한다. (FormResponse + 연관 Answer 모두 삭제)
      * <p>
      * {@code responseAccessKey}(raw) 의 sha256 매칭으로 응답을 찾는다.
-     * 매칭 실패, SUBMITTED 아님, 기명 응답인 경우 모두 {@link FormErrorCode#FORM_RESPONSE_FORBIDDEN}.
-     * null 은 {@link FormErrorCode#RESPONSE_ACCESS_KEY_REQUIRED}.
+     * 매칭 실패, SUBMITTED 아님, 기명 응답인 경우 모두 {@code FORM_RESPONSE_FORBIDDEN}.
+     * null 은 {@code RESPONSE_ACCESS_KEY_REQUIRED}.
      * DRAFT 상태 익명 응답 삭제는 {@link #deleteAnonymousDraft} 사용.
      */
     void deleteAnonymousResponse(DeleteAnonymousFormResponseCommand command);
@@ -177,8 +176,8 @@ public interface ManageFormResponseUseCase {
      * (익명 전용) 익명 draft 응답의 답변을 전체 교체한다 (익명 임시저장).
      * <p>
      * {@code responseAccessKey}(raw) 의 sha256 매칭으로 draft 를 찾는다.
-     * 매칭 실패, DRAFT 아님, 기명 draft 인 경우 모두 {@link FormErrorCode#FORM_RESPONSE_FORBIDDEN}.
-     * null 은 {@link FormErrorCode#RESPONSE_ACCESS_KEY_REQUIRED}.
+     * 매칭 실패, DRAFT 아님, 기명 draft 인 경우 모두 {@code FORM_RESPONSE_FORBIDDEN}.
+     * null 은 {@code RESPONSE_ACCESS_KEY_REQUIRED}.
      * <p>
      * 답변 검증 정책은 {@link #updateDraft} 와 동일 — 형식만, 필수 누락은 submit 시점 검증.
      */
@@ -188,8 +187,8 @@ public interface ManageFormResponseUseCase {
      * (익명 전용) 익명 draft 응답을 SUBMITTED 로 전환(최종 제출)한다.
      * <p>
      * {@code responseAccessKey}(raw) 의 sha256 매칭으로 draft 를 찾는다.
-     * 매칭 실패, DRAFT 아님, 기명 draft 인 경우 모두 {@link FormErrorCode#FORM_RESPONSE_FORBIDDEN}.
-     * null 은 {@link FormErrorCode#RESPONSE_ACCESS_KEY_REQUIRED}.
+     * 매칭 실패, DRAFT 아님, 기명 draft 인 경우 모두 {@code FORM_RESPONSE_FORBIDDEN}.
+     * null 은 {@code RESPONSE_ACCESS_KEY_REQUIRED}.
      * <p>
      * 검증 정책은 {@link #submitDraft} 와 동일 — 저장된 답변 기준으로 필수 답변 누락 검증 수행.
      */
@@ -199,8 +198,8 @@ public interface ManageFormResponseUseCase {
      * (익명 전용) 익명 draft 응답을 삭제한다. (연관 Answer 포함)
      * <p>
      * {@code responseAccessKey}(raw) 의 sha256 매칭으로 draft 를 찾는다.
-     * 매칭 실패, DRAFT 아님, 기명 draft 인 경우 모두 {@link FormErrorCode#FORM_RESPONSE_FORBIDDEN}.
-     * null 은 {@link FormErrorCode#RESPONSE_ACCESS_KEY_REQUIRED}.
+     * 매칭 실패, DRAFT 아님, 기명 draft 인 경우 모두 {@code FORM_RESPONSE_FORBIDDEN}.
+     * null 은 {@code RESPONSE_ACCESS_KEY_REQUIRED}.
      */
     void deleteAnonymousDraft(DeleteAnonymousDraftFormResponseCommand command);
 
@@ -215,11 +214,11 @@ public interface ManageFormResponseUseCase {
      * 인증: {@code requesterMemberId}(로그인 세션) 와 {@code responseAccessKey}(raw) 모두 필수.
      * 서버는 raw key 를 sha256 로 해시해 {@code response_access_key_hash} 와 매칭한다.
      * <ul>
-     *   <li>대상 응답이 이미 기명({@code respondentMemberId != null}) 이면 재등록 금지 — {@link FormErrorCode#FORM_RESPONSE_ALREADY_CLAIMED}</li>
-     *   <li>rawKey 해시 매칭 실패 → {@link FormErrorCode#FORM_RESPONSE_FORBIDDEN}</li>
-     *   <li>rawKey 가 null 이면 {@link FormErrorCode#RESPONSE_ACCESS_KEY_REQUIRED},
-     *       requesterMemberId 가 null 이면 {@link FormErrorCode#RESPONDENT_MEMBER_ID_REQUIRED}</li>
-     *   <li>{@code Form.allowDuplicateResponses = false} 이고 requester 가 같은 폼에 다른 응답을 갖고 있으면 {@link FormErrorCode#FORM_RESPONSE_ALREADY_EXISTS}</li>
+     *   <li>대상 응답이 이미 기명({@code respondentMemberId != null}) 이면 재등록 금지 — {@code FORM_RESPONSE_ALREADY_CLAIMED}</li>
+     *   <li>rawKey 해시 매칭 실패 → {@code FORM_RESPONSE_FORBIDDEN}</li>
+     *   <li>rawKey 가 null 이면 {@code RESPONSE_ACCESS_KEY_REQUIRED},
+     *       requesterMemberId 가 null 이면 {@code RESPONDENT_MEMBER_ID_REQUIRED}</li>
+     *   <li>{@code Form.allowDuplicateResponses = false} 이고 requester 가 같은 폼에 다른 응답을 갖고 있으면 {@code FORM_RESPONSE_ALREADY_EXISTS}</li>
      * </ul>
      * @return 등록된 FormResponse ID (호출자 편의를 위해 입력과 동일 ID 반환)
      */

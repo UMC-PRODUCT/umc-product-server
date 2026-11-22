@@ -88,7 +88,8 @@ public class ChallengerPermissionEvaluator implements ResourcePermissionEvaluato
     }
 
     private boolean canManageChallenger(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
-        if (canDeleteChallenger(subjectAttributes)) {
+        AuthoritySnapshot snapshot = subjectAttributes.toAuthoritySnapshot();
+        if (snapshot.isSuperAdmin() || canDeleteChallenger(subjectAttributes)) {
             return true;
         }
 
@@ -98,7 +99,6 @@ public class ChallengerPermissionEvaluator implements ResourcePermissionEvaluato
 
         ChallengerInfo targetChallenger = getChallengerUseCase.getById(resourcePermission.getResourceIdAsLong());
         Long targetGisuId = targetChallenger.gisuId();
-        AuthoritySnapshot snapshot = subjectAttributes.toAuthoritySnapshot();
 
         if (snapshot.isCentralMemberInGisu(targetGisuId)) {
             return true;

@@ -39,7 +39,7 @@ public class ChallengerDeactivationLink extends BaseEntity {
     @JoinColumn(name = "deactivation_history_id", nullable = false)
     private ChallengerDeactivationHistory addedHistory;
 
-    @Column(name = "link", nullable = false)
+    @Column(name = "link", nullable = false, columnDefinition = "TEXT")
     private String link;
 
     @Column(name = "display_order", nullable = false)
@@ -78,6 +78,12 @@ public class ChallengerDeactivationLink extends BaseEntity {
             throw new ChallengerDomainException(
                 ChallengerErrorCode.INVALID_CHALLENGER_DEACTIVATION_REQUEST,
                 "근거 추가 기록과 링크 정보는 필수입니다."
+            );
+        }
+        if (link.trim().length() > 1000) {
+            throw new ChallengerDomainException(
+                ChallengerErrorCode.INVALID_CHALLENGER_DEACTIVATION_REQUEST,
+                "링크 길이 제한을 초과했습니다."
             );
         }
         if (!addedHistory.canOwnAddedEvidence()) {
