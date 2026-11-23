@@ -2,6 +2,7 @@ package com.umc.product.challenger.adapter.out.persistence;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
@@ -49,6 +50,26 @@ public class ChallengerDeactivationPersistenceAdapter
             .orElseThrow(() -> new ChallengerDomainException(
                 ChallengerErrorCode.CHALLENGER_DEACTIVATION_NOT_FOUND
             ));
+    }
+
+    @Override
+    public Optional<ChallengerDeactivation> findById(Long deactivationId) {
+        return deactivationRepository.findById(deactivationId);
+    }
+
+    @Override
+    public List<ChallengerDeactivationHistory> listHistoriesByDeactivationId(Long deactivationId) {
+        return historyRepository.findAllByDeactivationIdOrderByCreatedAtDescIdDesc(deactivationId);
+    }
+
+    @Override
+    public List<String> listOrderedImageIdsByDeactivationId(Long deactivationId) {
+        return imageRepository.findOrderedImageIdsByDeactivationId(deactivationId);
+    }
+
+    @Override
+    public List<String> listOrderedLinksByDeactivationId(Long deactivationId) {
+        return linkRepository.findOrderedLinksByDeactivationId(deactivationId);
     }
 
     @Override

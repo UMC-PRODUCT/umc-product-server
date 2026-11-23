@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerDeactivationDetailUseCase;
 import com.umc.product.challenger.application.port.in.query.ListChallengerDeactivationReasonUseCase;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerDeactivationUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerDeactivationReasonInfo;
@@ -41,6 +42,9 @@ class ChallengerDeactivationQueryControllerTest {
 
     @MockitoBean
     SearchChallengerDeactivationUseCase searchChallengerDeactivationUseCase;
+
+    @MockitoBean
+    GetChallengerDeactivationDetailUseCase getChallengerDeactivationDetailUseCase;
 
     @Test
     @DisplayName("자진 탈부와 타의 탈부 사유 목록을 조회한다")

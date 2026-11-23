@@ -5,13 +5,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerDeactivationRequest;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerDeactivationReasonListResponse;
+import com.umc.product.challenger.application.port.in.query.GetChallengerDeactivationDetailUseCase;
 import com.umc.product.challenger.application.port.in.query.ListChallengerDeactivationReasonUseCase;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerDeactivationUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerDeactivationDetailInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerDeactivationListItemInfo;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.MemberPrincipal;
@@ -30,6 +33,7 @@ public class ChallengerDeactivationQueryController {
 
     private final ListChallengerDeactivationReasonUseCase listChallengerDeactivationReasonUseCase;
     private final SearchChallengerDeactivationUseCase searchChallengerDeactivationUseCase;
+    private final GetChallengerDeactivationDetailUseCase getChallengerDeactivationDetailUseCase;
 
     @GetMapping
     @Operation(
@@ -55,6 +59,27 @@ public class ChallengerDeactivationQueryController {
         return PageResponse.of(searchChallengerDeactivationUseCase.searchDeactivations(
             memberPrincipal.getMemberId(), request.toQuery(), pageable
         ));
+    }
+
+    @GetMapping("/{deactivationId}")
+    @Operation(
+        operationId = "CHALLENGER-106",
+        summary = "탈부 상세 조회",
+        description = """
+            탈부 목록의 deactivationId로 등록 정보, 근거 자료, 진행 기록을 조회합니다.
+            - 활성 기수 중앙운영진과 SUPER_ADMIN은 과거 기록도 조회할 수 있습니다.
+            - 교내 회장·부회장은 활성 기수 본교 기록만 조회할 수 있습니다. 범위 위반 시 403을 반환합니다.
+            - 등록 전 후보와 상세 기록이 없는 기존 탈부·제명자는 목록에 deactivationId가 없습니다.
+            - 존재하지 않는 상세 기록은 404를 반환합니다.
+            - 사진과 링크는 등록 순서, 진행 기록은 최신순입니다. 사진 URL은 유효 시간이 있습니다.
+            - 진행 기록의 사진과 링크 수는 해당 작업 한 번에 등록한 개수입니다.
+            """
+    )
+    public ChallengerDeactivationDetailInfo getDetail(
+        @PathVariable Long deactivationId,
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        return getChallengerDeactivationDetailUseCase.getDetail(memberPrincipal.getMemberId(), deactivationId);
     }
 
     @GetMapping("/reasons")

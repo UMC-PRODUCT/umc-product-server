@@ -28,6 +28,14 @@ public interface ChallengerDeactivationImageJpaRepository extends JpaRepository<
     List<String> findImageIdsByDeactivationId(@Param("deactivationId") Long deactivationId);
 
     @Query("""
+        select image.imageId
+        from ChallengerDeactivationImage image
+        where image.addedHistory.deactivation.id = :deactivationId
+        order by image.displayOrder, image.id
+        """)
+    List<String> findOrderedImageIdsByDeactivationId(@Param("deactivationId") Long deactivationId);
+
+    @Query("""
         select image
         from ChallengerDeactivationImage image
         join fetch image.addedHistory history
