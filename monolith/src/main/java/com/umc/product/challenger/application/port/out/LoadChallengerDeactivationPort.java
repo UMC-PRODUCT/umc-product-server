@@ -3,6 +3,7 @@ package com.umc.product.challenger.application.port.out;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import com.umc.product.challenger.application.port.out.dto.ChallengerDeactivationRetentionTarget;
 import com.umc.product.challenger.domain.ChallengerDeactivation;
@@ -11,6 +12,10 @@ import com.umc.product.challenger.domain.ChallengerDeactivationHistory;
 public interface LoadChallengerDeactivationPort {
 
     boolean existsByChallengerId(Long challengerId);
+
+    boolean existsByMemberId(Long memberId);
+
+    Optional<ChallengerDeactivation> findLatestByMemberIdsAfter(Set<Long> memberIds, Instant recordedAfter);
 
     ChallengerDeactivation getByChallengerIdForUpdate(Long challengerId);
 

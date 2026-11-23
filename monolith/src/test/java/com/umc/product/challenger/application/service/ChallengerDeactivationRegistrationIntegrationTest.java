@@ -37,6 +37,7 @@ import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.support.IntegrationTestSupport;
+import com.umc.product.support.fixture.MemberFixture;
 
 @DisplayName("탈부 등록 트랜잭션")
 class ChallengerDeactivationRegistrationIntegrationTest extends IntegrationTestSupport {
@@ -44,6 +45,7 @@ class ChallengerDeactivationRegistrationIntegrationTest extends IntegrationTestS
     @Autowired private RegisterChallengerDeactivationUseCase registerDeactivation;
     @Autowired private AddChallengerDeactivationEvidenceUseCase addDeactivationEvidence;
     @Autowired private SaveChallengerPort saveChallengerPort;
+    @Autowired private MemberFixture memberFixture;
     @Autowired private ChallengerJpaRepository challengerRepository;
     @Autowired private ChallengerDeactivationJpaRepository deactivationRepository;
     @Autowired private ChallengerDeactivationHistoryJpaRepository historyRepository;
@@ -54,7 +56,7 @@ class ChallengerDeactivationRegistrationIntegrationTest extends IntegrationTestS
     @DisplayName("진행 기록 저장에 실패하면 챌린저 상태와 탈부 기록을 모두 롤백한다")
     void rollbackAllChangesWhenHistorySaveFails() {
         Challenger challenger = saveChallengerPort.save(Challenger.builder()
-            .memberId(1L)
+            .memberId(memberFixture.일반("withdrawal-test").getId())
             .gisuId(11L)
             .part(ChallengerPart.SPRINGBOOT)
             .build());
@@ -84,7 +86,7 @@ class ChallengerDeactivationRegistrationIntegrationTest extends IntegrationTestS
     @DisplayName("근거 링크 저장에 실패하면 근거 추가 진행 기록도 롤백한다")
     void rollbackEvidenceHistoryWhenLinkSaveFails() {
         Challenger challenger = saveChallengerPort.save(Challenger.builder()
-            .memberId(1L)
+            .memberId(memberFixture.일반("withdrawal-test").getId())
             .gisuId(11L)
             .part(ChallengerPart.SPRINGBOOT)
             .build());
@@ -117,7 +119,7 @@ class ChallengerDeactivationRegistrationIntegrationTest extends IntegrationTestS
     @DisplayName("동시에 근거 자료를 추가해도 비관적 락으로 링크 개수 제한을 지킨다")
     void keepEvidenceCapacityUnderConcurrentRequests() throws Exception {
         Challenger challenger = saveChallengerPort.save(Challenger.builder()
-            .memberId(1L)
+            .memberId(memberFixture.일반("withdrawal-test").getId())
             .gisuId(11L)
             .part(ChallengerPart.SPRINGBOOT)
             .build());

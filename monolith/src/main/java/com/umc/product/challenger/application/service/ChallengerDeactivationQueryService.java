@@ -1,5 +1,8 @@
 package com.umc.product.challenger.application.service;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +19,8 @@ import com.umc.product.authorization.application.port.in.query.CheckChallengerAu
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.challenger.application.port.in.query.CheckChallengerDeactivationEvidenceUseCase;
+import com.umc.product.challenger.application.port.in.query.CheckChallengerDeactivationUseCase;
+import com.umc.product.challenger.application.port.in.query.CheckChallengerReadmissionUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerDeactivationDetailUseCase;
 import com.umc.product.challenger.application.port.in.query.ListChallengerDeactivationReasonUseCase;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerDeactivationUseCase;
@@ -27,6 +32,7 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerDeacti
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerDeactivationListItemInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerDeactivationReasonInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerDeactivationReasonListInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerReadmissionInfo;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerDeactivationQuery;
 import com.umc.product.challenger.application.port.out.LoadChallengerDeactivationPort;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
@@ -38,6 +44,7 @@ import com.umc.product.challenger.domain.enums.ChallengerDeactivationReason;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerStatus;
+import com.umc.product.member.application.port.in.query.FindMemberIdsForReadmissionUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberBasicInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
@@ -56,7 +63,10 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class ChallengerDeactivationQueryService
     implements CheckChallengerDeactivationEvidenceUseCase, ListChallengerDeactivationReasonUseCase,
-    SearchChallengerDeactivationUseCase, GetChallengerDeactivationDetailUseCase {
+    SearchChallengerDeactivationUseCase, GetChallengerDeactivationDetailUseCase, CheckChallengerDeactivationUseCase,
+    CheckChallengerReadmissionUseCase {
+
+    private static final int READMISSION_RESTRICTION_YEARS = 1;
 
     private final LoadChallengerDeactivationPort loadChallengerDeactivationPort;
     private final LoadChallengerPort loadChallengerPort;
@@ -67,6 +77,8 @@ public class ChallengerDeactivationQueryService
     private final GetChapterUseCase getChapterUseCase;
     private final GetSchoolUseCase getSchoolUseCase;
     private final GetFileUseCase getFileUseCase;
+    private final FindMemberIdsForReadmissionUseCase findMemberIdsForReadmissionUseCase;
+    private final Clock clock;
 
     @Override
     public Page<ChallengerDeactivationListItemInfo> searchDeactivations(
@@ -118,6 +130,39 @@ public class ChallengerDeactivationQueryService
                 ))
                 .toList()
         );
+    }
+
+    @Override
+    public boolean hasRecordsForMember(Long memberId) {
+        return loadChallengerDeactivationPort.existsByMemberId(memberId);
+    }
+
+    @Override
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    public ChallengerReadmissionInfo checkReadmission(Long requesterMemberId, String email) {
+        Long activeGisuId = getGisuUseCase.findActiveGisu().map(GisuInfo::gisuId).orElse(null);
+        resolveAllowedSchoolId(requesterMemberId, activeGisuId);
+        Set<Long> memberIds = findMemberIdsForReadmissionUseCase.findMemberIds(email);
+        if (memberIds.isEmpty()) {
+            return new ChallengerReadmissionInfo(false, false, null);
+        }
+        Instant now = clock.instant();
+        return loadChallengerDeactivationPort.findLatestByMemberIdsAfter(
+                memberIds, ChallengerDeactivationRetentionService.retentionThreshold(now)
+            )
+            .map(deactivation -> toReadmissionInfo(deactivation, now))
+            .orElseGet(() -> new ChallengerReadmissionInfo(false, false, null));
+    }
+
+    private ChallengerReadmissionInfo toReadmissionInfo(ChallengerDeactivation deactivation, Instant now) {
+        Challenger challenger = loadChallengerPort.getById(deactivation.getChallengerId());
+        ZonedDateTime registeredAt = deactivation.getCreatedAt()
+            .atZone(ChallengerDeactivationRetentionService.RETENTION_ZONE);
+        boolean restricted = now.isBefore(registeredAt.plusYears(READMISSION_RESTRICTION_YEARS).toInstant());
+        ChallengerReadmissionInfo.HistoryInfo history = new ChallengerReadmissionInfo.HistoryInfo(
+            findGeneration(challenger.getGisuId()), deactivation.getStatus(), registeredAt.toLocalDate()
+        );
+        return new ChallengerReadmissionInfo(true, restricted, history);
     }
 
     @Override
@@ -191,10 +236,6 @@ public class ChallengerDeactivationQueryService
 
     private ChallengerInfo toChallengerInfo(Challenger challenger, MemberBasicInfo member, Long schoolId) {
         Long gisuId = challenger.getGisuId();
-        Long generation = getGisuUseCase.getByIds(Set.of(gisuId)).stream()
-            .map(GisuInfo::generation)
-            .findFirst()
-            .orElse(null);
         String schoolName = null;
         String chapterName = null;
         if (schoolId != null) {
@@ -206,8 +247,15 @@ public class ChallengerDeactivationQueryService
         }
         return new ChallengerInfo(
             challenger.getId(), member == null ? null : member.name(), member == null ? null : member.nickname(),
-            gisuId, generation, schoolId, schoolName, chapterName, challenger.getPart()
+            gisuId, findGeneration(gisuId), schoolId, schoolName, chapterName, challenger.getPart()
         );
+    }
+
+    private Long findGeneration(Long gisuId) {
+        return getGisuUseCase.getByIds(Set.of(gisuId)).stream()
+            .map(GisuInfo::generation)
+            .findFirst()
+            .orElse(null);
     }
 
     private ActorInfo toActorInfo(Long memberId, Map<Long, MemberBasicInfo> members) {

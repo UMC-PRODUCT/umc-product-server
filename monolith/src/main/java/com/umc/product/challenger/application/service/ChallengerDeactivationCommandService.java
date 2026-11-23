@@ -25,6 +25,7 @@ import com.umc.product.challenger.domain.ChallengerDeactivationLink;
 import com.umc.product.challenger.domain.enums.ChallengerDeactivationHistoryAction;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
+import com.umc.product.member.application.port.in.command.LockMemberUseCase;
 import com.umc.product.storage.application.port.in.command.LockStoredFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileMetadataInfo;
 import com.umc.product.storage.domain.enums.FileCategory;
@@ -42,11 +43,13 @@ public class ChallengerDeactivationCommandService
     private final LoadChallengerDeactivationPort loadChallengerDeactivationPort;
     private final SaveChallengerDeactivationPort saveChallengerDeactivationPort;
     private final LockStoredFileUseCase lockStoredFileUseCase;
+    private final LockMemberUseCase lockMemberUseCase;
     private final EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
 
     @Override
     public Long register(RegisterChallengerDeactivationCommand command) {
         Challenger challenger = loadChallengerPort.getById(command.challengerId());
+        lockMemberUseCase.lockById(challenger.getMemberId());
         validateNotRegistered(command.challengerId());
         validateNoDuplicateEvidence(command.imageIds(), command.links());
 

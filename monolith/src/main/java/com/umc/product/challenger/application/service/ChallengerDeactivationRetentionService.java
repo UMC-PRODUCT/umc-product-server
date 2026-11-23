@@ -3,7 +3,6 @@ package com.umc.product.challenger.application.service;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -24,18 +23,19 @@ public class ChallengerDeactivationRetentionService implements PurgeExpiredChall
 
     static final int RETENTION_YEARS = 5;
     static final int BATCH_SIZE = 100;
-    private static final ZoneId RETENTION_ZONE = ZoneId.of("Asia/Seoul");
+    static final ZoneId RETENTION_ZONE = ZoneId.of("Asia/Seoul");
 
     private final LoadChallengerDeactivationPort loadChallengerDeactivationPort;
     private final DeleteChallengerDeactivationDataUseCase deleteChallengerDeactivationDataUseCase;
     private final Clock clock;
 
+    static Instant retentionThreshold(Instant now) {
+        return now.atZone(RETENTION_ZONE).minusYears(RETENTION_YEARS).toInstant();
+    }
+
     @Override
     public ChallengerDeactivationPurgeResult purgeExpired() {
-        Instant threshold = ZonedDateTime.now(clock)
-            .withZoneSameInstant(RETENTION_ZONE)
-            .minusYears(RETENTION_YEARS)
-            .toInstant();
+        Instant threshold = retentionThreshold(clock.instant());
         long afterId = 0L;
         int deletedCount = 0;
         int failedCount = 0;

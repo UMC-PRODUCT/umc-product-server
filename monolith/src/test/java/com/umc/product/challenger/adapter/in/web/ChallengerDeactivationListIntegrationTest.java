@@ -1,5 +1,6 @@
 package com.umc.product.challenger.adapter.in.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -7,10 +8,15 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,10 +24,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.umc.product.challenger.application.port.in.command.AddChallengerDeactivationEvidenceUseCase;
+import com.umc.product.challenger.application.port.in.command.DeleteChallengerDeactivationDataUseCase;
 import com.umc.product.challenger.application.port.in.command.RegisterChallengerDeactivationUseCase;
 import com.umc.product.challenger.application.port.in.command.dto.AddChallengerDeactivationEvidenceCommand;
 import com.umc.product.challenger.application.port.in.command.dto.RegisterChallengerDeactivationCommand;
@@ -35,6 +45,9 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.maintenance.application.port.in.command.RefreshMaintenanceStateUseCase;
 import com.umc.product.member.adapter.out.persistence.MemberSystemRoleJpaRepository;
+import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
+import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
+import com.umc.product.member.application.port.in.query.FindMemberIdsForReadmissionUseCase;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.MemberSystemRole;
@@ -71,6 +84,10 @@ class ChallengerDeactivationListIntegrationTest extends IntegrationTestSupport {
     @Autowired private ChallengerFixture challengerFixture;
     @Autowired private ChallengerRoleFixture challengerRoleFixture;
     @Autowired private SaveMemberPort saveMemberPort;
+    @Autowired private ManageMemberUseCase manageMemberUseCase;
+    @Autowired private FindMemberIdsForReadmissionUseCase findMemberIdsForReadmissionUseCase;
+    @Autowired private DeleteChallengerDeactivationDataUseCase deleteChallengerDeactivationDataUseCase;
+    @Autowired private JdbcTemplate jdbcTemplate;
     @Autowired private SaveChallengerPort saveChallengerPort;
     @Autowired private SaveChallengerPointPort saveChallengerPointPort;
     @Autowired private MemberSystemRoleJpaRepository memberSystemRoleJpaRepository;
@@ -398,6 +415,90 @@ class ChallengerDeactivationListIntegrationTest extends IntegrationTestSupport {
             .andExpect(jsonPath("$.result.deactivationId").value(deactivationId))
             .andExpect(jsonPath("$.result.challenger.gisuId").value(deletedGisu.getId()))
             .andExpect(jsonPath("$.result.challenger.generation").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("회장단은 다른 학교의 탈퇴 회원도 이메일로 제한 여부를 확인하고 마지막 기록 삭제 시 키도 정리한다")
+    void 이메일로_다른_학교_탈퇴_회원의_재가입을_확인한다() throws Exception {
+        // Given
+        Challenger president = 챌린저_저장("president", ownSchool, activeGisu, ChallengerPart.WEB_PRODUCT_ENGINEER);
+        challengerRoleFixture.학교_회장(president.getId(), ownSchool.getId(), activeGisu.getId());
+        인증_설정("school-token", president.getMemberId());
+
+        String email = "applicant@test.com";
+        Challenger latest = 챌린저_저장("applicant", otherSchool, activeGisu, ChallengerPart.WEB_PRODUCT_ENGINEER);
+        Challenger past = challengerFixture.챌린저(latest.getMemberId(), ChallengerPart.WEB_PRODUCT_ENGINEER,
+            pastGisu.getId());
+        Long pastRecordId = 탈부_등록(past);
+        Long latestRecordId = 탈부_등록(latest);
+        jdbcTemplate.update("UPDATE challenger_deactivation SET created_at = ? WHERE id = ?",
+            Timestamp.from(ZonedDateTime.now().minusYears(2).toInstant()), pastRecordId);
+
+        // When / Then
+        mockMvc.perform(재가입_조회_요청("school-token", email))
+            .andExpect(status().isOk())
+            .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "no-store"))
+            .andExpect(jsonPath("$.result.hasHistory").value(true))
+            .andExpect(jsonPath("$.result.restricted").value(true))
+            .andExpect(jsonPath("$.result.mostRecent.generation").value(activeGisu.getGeneration()))
+            .andExpect(jsonPath("$.result.mostRecent.status").value("WITHDRAWN"))
+            .andExpect(jsonPath("$.result.mostRecent.registeredDate").isString())
+            .andExpect(jsonPath("$.result.mostRecent.reason").doesNotExist())
+            .andExpect(jsonPath("$.result.mostRecent.memo").doesNotExist())
+            .andExpect(jsonPath("$.result.mostRecent.schoolId").doesNotExist())
+            .andExpect(jsonPath("$.result.email").doesNotExist());
+
+        manageMemberUseCase.deleteMember(DeleteMemberCommand.builder().memberId(latest.getMemberId()).build());
+        Long newMemberId = saveMemberPort.save(Member.create("new", "new", email, ownSchool.getId(), null)).getId();
+
+        mockMvc.perform(재가입_조회_요청("school-token", "applicant@TEST.COM"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.restricted").value(true));
+        assertThat(findMemberIdsForReadmissionUseCase.findMemberIds(email))
+            .containsExactlyInAnyOrder(latest.getMemberId(), newMemberId);
+
+        deleteChallengerDeactivationDataUseCase.delete(latestRecordId);
+        mockMvc.perform(재가입_조회_요청("school-token", email))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.hasHistory").value(true))
+            .andExpect(jsonPath("$.result.restricted").value(false))
+            .andExpect(jsonPath("$.result.mostRecent.generation").value(pastGisu.getGeneration()));
+
+        deleteChallengerDeactivationDataUseCase.delete(pastRecordId);
+        assertThat(findMemberIdsForReadmissionUseCase.findMemberIds(email)).containsExactly(newMemberId);
+        mockMvc.perform(재가입_조회_요청("school-token", email))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.hasHistory").value(false))
+            .andExpect(jsonPath("$.result.restricted").value(false))
+            .andExpect(jsonPath("$.result.mostRecent").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("재가입 조회는 일반 챌린저를 거부하고 5년이 지난 기록을 표시하지 않는다")
+    void 재가입_조회에서_역할과_오래된_기록을_검증한다() throws Exception {
+        // Given
+        Challenger target = 챌린저_저장("expired", otherSchool, activeGisu, ChallengerPart.WEB_PRODUCT_ENGINEER);
+        Long recordId = 탈부_등록(target);
+        jdbcTemplate.update("UPDATE challenger_deactivation SET created_at = ? WHERE id = ?",
+            Timestamp.from(ZonedDateTime.now().minusYears(6).toInstant()), recordId);
+        Challenger ordinary = 챌린저_저장("ordinary", ownSchool, activeGisu, ChallengerPart.WEB_PRODUCT_ENGINEER);
+        인증_설정("ordinary-token", ordinary.getMemberId());
+
+        // When / Then
+        접근_거부(mockMvc.perform(재가입_조회_요청("ordinary-token", "expired@test.com")));
+        mockMvc.perform(재가입_조회_요청(SUPER_ADMIN_TOKEN, "expired@test.com"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.hasHistory").value(false))
+            .andExpect(jsonPath("$.result.restricted").value(false));
+        mockMvc.perform(재가입_조회_요청(SUPER_ADMIN_TOKEN, "invalid-address"))
+            .andExpect(status().isBadRequest());
+    }
+
+    private MockHttpServletRequestBuilder 재가입_조회_요청(String token, String email) throws Exception {
+        return post(PATH + "/readmission-check")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(Map.of("email", email)));
     }
 
     private void 접근_거부(ResultActions result) throws Exception {

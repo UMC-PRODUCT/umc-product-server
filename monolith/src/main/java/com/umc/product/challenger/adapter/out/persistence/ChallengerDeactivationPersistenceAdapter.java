@@ -3,6 +3,7 @@ package com.umc.product.challenger.adapter.out.persistence;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +35,17 @@ public class ChallengerDeactivationPersistenceAdapter
     @Override
     public boolean existsByChallengerId(Long challengerId) {
         return deactivationRepository.existsByChallengerId(challengerId);
+    }
+
+    @Override
+    public boolean existsByMemberId(Long memberId) {
+        return deactivationRepository.existsByMemberId(memberId);
+    }
+
+    @Override
+    public Optional<ChallengerDeactivation> findLatestByMemberIdsAfter(Set<Long> memberIds, Instant recordedAfter) {
+        return deactivationRepository.findByMemberIdsAfter(memberIds, recordedAfter, PageRequest.of(0, 1))
+            .stream().findFirst();
     }
 
     @Override
