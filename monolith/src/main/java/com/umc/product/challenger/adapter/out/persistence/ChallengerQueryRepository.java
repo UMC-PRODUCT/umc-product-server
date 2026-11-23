@@ -140,7 +140,7 @@ public class ChallengerQueryRepository {
             return Map.of();
         }
 
-        NumberExpression<Double> pointSum = pointValueExpression(challengerPoint).sum();
+        NumberExpression<Double> pointSum = defaultPointValue(challengerPoint).sum();
 
         List<Tuple> tuples = queryFactory
             .select(challengerPoint.challenger.id, pointSum)
@@ -299,7 +299,7 @@ public class ChallengerQueryRepository {
 
     // ========== PRIVATE METHODS ==========
 
-    private NumberExpression<Double> pointValueExpression(QChallengerPoint point) {
+    static NumberExpression<Double> defaultPointValue(QChallengerPoint point) {
         CaseBuilder.Cases<Double, NumberExpression<Double>> caseBuilder = null;
 
         // PointType enum의 모든 타입에 대해 case문을 추가
