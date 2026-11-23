@@ -7,6 +7,7 @@ import static com.umc.product.member.domain.QMember.member;
 import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
 import static com.umc.product.organization.domain.QSchool.school;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -25,8 +26,10 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerDeactivationListItemInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ExportChallengerDeactivationQuery;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerDeactivationQuery;
 import com.umc.product.challenger.application.port.out.SearchChallengerDeactivationPort;
+import com.umc.product.challenger.application.port.out.dto.ChallengerDeactivationExportRow;
 import com.umc.product.challenger.domain.enums.ChallengerDeactivationListStatus;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 
@@ -65,6 +68,48 @@ public class ChallengerDeactivationQueryRepository implements SearchChallengerDe
         );
     }
 
+    @Override
+    public List<ChallengerDeactivationExportRow> listExportRows(
+        SearchChallengerDeactivationQuery scope,
+        ExportChallengerDeactivationQuery query,
+        Instant startInclusive,
+        Instant endExclusive,
+        int limit
+    ) {
+        BooleanBuilder conditions = scopedConditions(scope).and(challengerDeactivation.id.isNotNull());
+        if (!query.deactivationIds().isEmpty()) {
+            conditions.and(challengerDeactivation.id.in(query.deactivationIds()));
+        }
+        if (startInclusive != null) {
+            conditions.and(challengerDeactivation.createdAt.goe(startInclusive));
+        }
+        if (endExclusive != null) {
+            conditions.and(challengerDeactivation.createdAt.lt(endExclusive));
+        }
+        if (!query.types().isEmpty()) {
+            BooleanBuilder typeConditions = new BooleanBuilder();
+            query.types().forEach(type -> typeConditions.or(
+                type == ExportChallengerDeactivationQuery.Type.VOLUNTARY
+                    ? challengerDeactivation.status.eq(ChallengerStatus.WITHDRAWN)
+                    : challengerDeactivation.reason.eq(type.reason())
+            ));
+            conditions.and(typeConditions);
+        }
+
+        return withListJoins(queryFactory.select(
+                school.name, challenger.part, challengerDeactivation.status, challengerDeactivation.reason,
+                challengerDeactivation.reasonDetail, challengerDeactivation.createdAt, challengerDeactivation.memo,
+                member.name, member.nickname
+            ))
+            .leftJoin(school).on(school.id.eq(member.schoolId))
+            .where(conditions)
+            .orderBy(challengerDeactivation.createdAt.desc(), challengerDeactivation.id.desc())
+            .limit(limit)
+            .fetch().stream()
+            .map(this::toExportRow)
+            .toList();
+    }
+
     private <T> JPAQuery<T> withListJoins(JPAQuery<T> query) {
         return query.from(challenger)
             .join(member).on(member.id.eq(challenger.memberId))
@@ -77,15 +122,17 @@ public class ChallengerDeactivationQueryRepository implements SearchChallengerDe
     }
 
     private BooleanBuilder searchConditions(SearchChallengerDeactivationQuery query) {
-        BooleanBuilder conditions = new BooleanBuilder(challenger.gisuId.eq(query.gisuId()));
         BooleanExpression registered = challengerDeactivation.id.isNotNull()
             .or(challenger.status.in(DEACTIVATED_STATUSES));
-        conditions.and(switch (query.status()) {
+        return scopedConditions(query).and(switch (query.status()) {
             case PENDING -> pending(query.gisuId());
             case REGISTERED -> registered;
             case null -> registered.or(pending(query.gisuId()));
         });
+    }
 
+    private BooleanBuilder scopedConditions(SearchChallengerDeactivationQuery query) {
+        BooleanBuilder conditions = new BooleanBuilder(challenger.gisuId.eq(query.gisuId()));
         if (query.chapterId() != null) {
             conditions.and(JPAExpressions.selectOne()
                 .from(chapterSchool)
@@ -169,6 +216,15 @@ public class ChallengerDeactivationQueryRepository implements SearchChallengerDe
             status,
             row.get(challengerDeactivation.reason),
             row.get(challengerDeactivation.createdAt)
+        );
+    }
+
+    private ChallengerDeactivationExportRow toExportRow(Tuple row) {
+        return new ChallengerDeactivationExportRow(
+            row.get(school.name), row.get(challenger.part), row.get(challengerDeactivation.status),
+            row.get(challengerDeactivation.reason), row.get(challengerDeactivation.reasonDetail),
+            row.get(challengerDeactivation.createdAt), row.get(challengerDeactivation.memo),
+            row.get(member.name), row.get(member.nickname)
         );
     }
 }

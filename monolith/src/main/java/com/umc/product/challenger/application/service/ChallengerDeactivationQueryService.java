@@ -146,7 +146,7 @@ public class ChallengerDeactivationQueryService
             .toList();
     }
 
-    private SearchChallengerDeactivationQuery resolveSearchScope(
+    SearchChallengerDeactivationQuery resolveSearchScope(
         Long memberId, SearchChallengerDeactivationQuery query
     ) {
         Long activeGisuId = getGisuUseCase.findActiveGisu().map(GisuInfo::gisuId).orElse(null);
