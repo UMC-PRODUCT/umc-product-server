@@ -23,7 +23,8 @@ public class OutboxRoutingConfig {
             new Rule("community.thread.deleted", realtime),
             new Rule("community.thread.invited", realtime),
             new Rule("community.thread.member.left", realtime),
-            new Rule("community.thread.member.kicked", realtime)
+            new Rule("community.thread.member.kicked", realtime),
+            new Rule("inquiry.status.changed", realtime)
         ), "chat.", realtime);
     }
 }

@@ -15,6 +15,8 @@ public interface LoadInquiryPort {
 
     Optional<Inquiry> findByIdForUpdate(Long inquiryId);
 
+    Optional<Inquiry> findByChatRoomId(Long chatRoomId);
+
     Optional<Inquiry> findByAuthorMemberIdAndClientRequestId(Long authorMemberId, UUID clientRequestId);
 
     /**

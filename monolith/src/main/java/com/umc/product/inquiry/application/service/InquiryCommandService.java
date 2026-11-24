@@ -18,6 +18,7 @@ import com.umc.product.chat.application.port.in.query.CheckChatRoomAccessUseCase
 import com.umc.product.chat.domain.ChatRoomReadScope;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.inquiry.application.event.InquiryStaffRepliedEvent;
+import com.umc.product.inquiry.application.event.InquiryStatusChangedEvent;
 import com.umc.product.inquiry.application.policy.InquiryAccessPolicy;
 import com.umc.product.inquiry.application.policy.InquiryMessagePolicy;
 import com.umc.product.inquiry.application.port.in.command.CloseInquiryUseCase;
@@ -33,6 +34,7 @@ import com.umc.product.inquiry.application.port.out.SaveInquiryPort;
 import com.umc.product.inquiry.domain.Inquiry;
 import com.umc.product.inquiry.domain.InquiryCategory;
 import com.umc.product.inquiry.domain.enums.InquiryParticipant;
+import com.umc.product.inquiry.domain.enums.InquiryStatus;
 import com.umc.product.inquiry.domain.exception.InquiryDomainException;
 import com.umc.product.inquiry.domain.exception.InquiryErrorCode;
 
@@ -118,8 +120,12 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
             return message;
         }
 
+        InquiryStatus before = inquiry.getStatus();
         inquiry.recordMessage(sender, result.message().createdAt());
         saveInquiryPort.save(inquiry);
+        if (inquiry.getStatus() != before) {
+            domainEventPublisher.publish(InquiryStatusChangedEvent.from(inquiry));
+        }
         if (sender == InquiryParticipant.STAFF) {
             domainEventPublisher.publish(InquiryStaffRepliedEvent.of(
                 inquiry.getId(),
@@ -137,6 +143,7 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
         Inquiry inquiry = loadLockedInquiry(command.inquiryId());
         inquiry.close(clock.instant());
         saveInquiryPort.save(inquiry);
+        domainEventPublisher.publish(InquiryStatusChangedEvent.from(inquiry));
     }
 
     private Inquiry loadLockedInquiry(Long inquiryId) {

@@ -14,6 +14,8 @@ import jakarta.persistence.LockModeType;
 
 public interface InquiryJpaRepository extends JpaRepository<Inquiry, Long> {
 
+    Optional<Inquiry> findByChatRoomId(Long chatRoomId);
+
     Optional<Inquiry> findByAuthorMemberIdAndClientRequestId(Long authorMemberId, UUID clientRequestId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
