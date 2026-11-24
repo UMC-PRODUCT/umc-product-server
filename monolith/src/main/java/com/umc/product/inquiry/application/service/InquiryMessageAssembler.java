@@ -12,7 +12,6 @@ import com.umc.product.chat.application.port.in.query.dto.ChatMessageInfo;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryAttachmentInfo;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryMessageInfo;
 import com.umc.product.inquiry.domain.Inquiry;
-import com.umc.product.inquiry.domain.enums.InquiryParticipant;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
@@ -51,7 +50,7 @@ class InquiryMessageAssembler {
         return messages.stream()
             .map(message -> new InquiryMessageInfo(
                 message.messageId(),
-                inquiry.isAuthor(message.senderMemberId()) ? InquiryParticipant.AUTHOR : InquiryParticipant.STAFF,
+                inquiry.participantOf(message.senderMemberId()),
                 message.senderMemberId(),
                 names.get(message.senderMemberId()),
                 message.content(),

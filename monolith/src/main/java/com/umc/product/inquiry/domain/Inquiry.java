@@ -103,8 +103,15 @@ public class Inquiry extends BaseEntity {
         return inquiry;
     }
 
-    public boolean isAuthor(Long memberId) {
-        return authorMemberId.equals(memberId);
+    /**
+     * 대화에서 이 회원이 맡는 자리. 작성자가 아니면 운영진 자리로 본다. 운영진 권한이 있는지는 호출 쪽이 확인한다.
+     */
+    public InquiryParticipant participantOf(Long memberId) {
+        return authorMemberId.equals(memberId) ? InquiryParticipant.AUTHOR : InquiryParticipant.STAFF;
+    }
+
+    public boolean isClosable() {
+        return status.isClosable();
     }
 
     public void recordMessage(InquiryParticipant sender, Instant sentAt) {
@@ -119,7 +126,7 @@ public class Inquiry extends BaseEntity {
     }
 
     public void close(Instant now) {
-        if (!status.isClosable()) {
+        if (!isClosable()) {
             throw new InquiryDomainException(InquiryErrorCode.INQUIRY_ALREADY_CLOSED);
         }
         status = InquiryStatus.CLOSED;

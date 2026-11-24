@@ -12,7 +12,6 @@ import com.umc.product.chat.application.port.in.query.GetChatMessagesUseCase;
 import com.umc.product.chat.application.port.in.query.dto.ChatMessageCursorResult;
 import com.umc.product.chat.application.port.in.query.dto.GetChatMessagesQuery;
 import com.umc.product.inquiry.application.policy.InquiryAccessPolicy;
-import com.umc.product.inquiry.application.policy.InquiryAccessPolicy.InquiryAccess;
 import com.umc.product.inquiry.application.port.in.query.GetInquiryDetailUseCase;
 import com.umc.product.inquiry.application.port.in.query.GetInquiryMessagesUseCase;
 import com.umc.product.inquiry.application.port.in.query.ListInquiryCategoriesUseCase;
@@ -30,6 +29,7 @@ import com.umc.product.inquiry.application.port.out.LoadInquiryCategoryPort;
 import com.umc.product.inquiry.application.port.out.LoadInquiryPort;
 import com.umc.product.inquiry.domain.Inquiry;
 import com.umc.product.inquiry.domain.InquiryCategory;
+import com.umc.product.inquiry.domain.enums.InquiryParticipant;
 import com.umc.product.inquiry.domain.exception.InquiryDomainException;
 import com.umc.product.inquiry.domain.exception.InquiryErrorCode;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -87,7 +87,7 @@ public class InquiryQueryService implements
     @Override
     public InquiryDetailInfo getDetail(InquiryDetailQuery query) {
         Inquiry inquiry = loadInquiry(query.inquiryId());
-        InquiryAccess access = accessPolicy.resolve(inquiry, query.requesterMemberId());
+        InquiryParticipant requester = accessPolicy.requireParticipant(inquiry, query.requesterMemberId());
         InquiryCategoryInfo category = categoriesOf(Set.of(inquiry.getCategoryId())).get(inquiry.getCategoryId());
         InquiryAuthorInfo author = getMemberUseCase.findById(inquiry.getAuthorMemberId())
             .map(member -> new InquiryAuthorInfo(
@@ -105,15 +105,14 @@ public class InquiryQueryService implements
             inquiry.getCreatedAt(),
             inquiry.getClosedAt(),
             inquiry.getLastMessageAt(),
-            true,
-            access.staff() && inquiry.getStatus().isClosable()
+            accessPolicy.canClose(inquiry, query.requesterMemberId(), requester)
         );
     }
 
     @Override
     public InquiryMessagePageInfo getMessages(InquiryMessagesQuery query) {
         Inquiry inquiry = loadInquiry(query.inquiryId());
-        accessPolicy.resolve(inquiry, query.requesterMemberId());
+        accessPolicy.requireParticipant(inquiry, query.requesterMemberId());
         ChatMessageCursorResult page = getChatMessagesUseCase.getMessages(new GetChatMessagesQuery(
             inquiry.getChatRoomId(),
             query.requesterMemberId(),
