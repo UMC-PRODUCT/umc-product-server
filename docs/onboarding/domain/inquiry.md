@@ -11,6 +11,8 @@
 - 문의를 등록하고 `RECEIVED`, `IN_PROGRESS`, `CLOSED` 상태를 바꾼다.
 - 작성자와 운영진(`UMC_PRODUCT` 또는 `SUPER_ADMIN`)만 문의를 읽고 쓰게 한다.
 - 운영진이 답하면 작성자 푸시용 이벤트를 남긴다.
+- 새 문의와 작성자 메시지는 알림을 켠 `UMC_PRODUCT` 운영진에게 푸시한다(ADR-031 10번). 운영진은 자기 알림을
+  `GET`·`PUT /api/v1/inquiries/admin/alarm-setting`으로 켜고 끈다. 기본값은 켜짐이다.
 - 문의 화면을 연 작성자·운영진에게 새 메시지와 상태 변화를 STOMP `/topic/inquiries/{inquiryId}`로 보낸다.
   보내기는 REST만 받는다.
 
@@ -27,6 +29,19 @@
 
 흐름은 `ChatMessageCreatedEvent`·`InquiryStatusChangedEvent` → `InquiryRealtimeEventListener` →
 `InquiryRealtimeRelayService` → `BroadcastPort`다. 둘 다 outbox REALTIME 그룹에서 커밋 뒤 보낸다.
+
+## 푸시 알림
+
+| 언제 | 받는 사람 | `data.type` | 제목 / 본문 |
+| --- | --- | --- | --- |
+| 운영진 메시지 | 작성자 | `INQUIRY_REPLY` | 문의 답변이 도착했어요 / 고정 문구 |
+| 새 문의 등록 | 운영진 | `INQUIRY_NEW` | 새 문의가 왔어요 / 문의 제목 |
+| 작성자 메시지(재오픈 포함) | 운영진 | `INQUIRY_AUTHOR_MESSAGE` | 문의에 새 메시지가 왔어요 / 문의 제목 |
+
+모두 `data.inquiryId`와 딥링크 `umc://inquiry/{inquiryId}`를 담는다. 운영진은 `UMC_PRODUCT` 시스템 역할을 직접 가진
+회원 중 알림을 끄지 않은 사람이고 보낸 사람은 뺀다. `SUPER_ADMIN`만 가진 회원은 받지 않는다. 계산은
+`ListInquiryStaffAlarmRecipientsUseCase`가 하고, 받는 사람이 없으면 FCM 요청을 만들지 않는다. 같은 `clientRequestId`·
+`clientMessageId` 재전송에는 보내지 않는다.
 
 ## 경계
 

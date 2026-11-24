@@ -46,7 +46,7 @@ ADR-011은 문의 전용 메시지 테이블과 STOMP 구독을 전제로 했다
    거절하지 않는다.
 6. 1차 전달은 REST, 커서 조회, FCM이다. 운영진의 중복 아닌 메시지는 `inquiry.staff.replied` 이벤트를 outbox에 남기고,
    커밋 뒤 notification 리스너가 작성자에게 푸시한다(`data.type=INQUIRY_REPLY`, `data.inquiryId`,
-   딥링크 `umc://inquiry/{inquiryId}`). 작성자 메시지는 이번 단계에서 알리지 않는다. API·딥링크·푸시 데이터에
+   딥링크 `umc://inquiry/{inquiryId}`). 운영진에게 가는 푸시는 10번이다. API·딥링크·푸시 데이터에
    플랫폼 구분을 넣지 않는다.
 7. 첨부는 `FileCategory.INQUIRY_ATTACHMENT`(`private/inquiry`)로 올린, 보낸 사람 본인의 업로드 완료 파일만 받는다.
    첨부 링크는 문의 메시지 응답에서만 만들어지므로 문의 접근 정책이 곧 첨부 열람 권한이다.
@@ -79,6 +79,21 @@ ADR-011은 문의 전용 메시지 테이블과 STOMP 구독을 전제로 했다
      다시 불러 `messageId`로 합친다.
    - 첨부 `fileLink`는 REST 응답처럼 60분짜리 presigned 링크다. 화면을 오래 열어 두어 만료되면 REST로 다시 불러온다.
    - FCM 푸시(6번)는 앱이 꺼져 있을 때를 위해 그대로 둔다.
+10. 운영진도 새 문의를 FCM으로 받는다(2026-11-24 추가). 화면을 열어 두지 않아도 새 문의를 놓치지 않게 하기 위해서다.
+    - 받는 사람은 `UMC_PRODUCT` 시스템 역할을 직접 가진 회원 중 알림을 끄지 않은 사람이다. 보낸 사람 본인은 뺀다.
+      `SUPER_ADMIN`만 가진 회원은 문의를 볼 수 있지만(3번) 알림은 받지 않는다. 목록은 member의
+      `ListMemberSystemRoleUseCase.listUmcProductMemberIds`로 읽고, 계산은 inquiry의
+      `ListInquiryStaffAlarmRecipientsUseCase` 한 곳에서 한다.
+    - 새 문의 등록(`inquiry.created`, `data.type=INQUIRY_NEW`)과 작성자 쪽 메시지(`inquiry.author.messaged`,
+      `data.type=INQUIRY_AUTHOR_MESSAGE`, 종료된 문의 재오픈 포함) 때 보낸다. 운영진끼리의 메시지, 같은
+      `clientRequestId`·`clientMessageId` 재전송에는 보내지 않는다. 운영진이 자기 문의에 쓰면 2번대로 작성자로 보고
+      본인은 뺀다. 제목은 고정 문구, 본문은 문의 제목이다. 문의 내용은 넣지 않는다. 받는 사람이 없으면 FCM 요청을
+      만들지 않는다. 받는 사람은 outbox relay 때 계산하므로 그 사이 바꾼 설정이 반영된다.
+    - 설정은 운영진마다 켜기/끄기 하나다(`inquiry_staff_alarm_setting`). 행이 없으면 켜짐으로 본다. 문의별로 끄는 설정은
+      없다. 운영진(3번 판정)이 `GET`·`PUT /api/v1/inquiries/admin/alarm-setting`으로 자기 설정만 보고 바꾼다. 같은 값을
+      다시 보내도 결과가 같다. 운영진이 아니면 403 `INQUIRY_STAFF_ONLY`다.
+    - 2단계에서 담당자를 만들면 "배정된 문의는 담당자에게만 알린다" 규칙을 이 계산에 더한다. 이번에는 담당자 개념이 없어
+      운영진 전원에게 보낸다.
 
 ## 후속
 
