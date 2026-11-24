@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
 import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
+import com.umc.product.notice.application.port.out.LockNoticeVoteResponsePort;
 import com.umc.product.notice.application.port.out.SaveNoticeImagePort;
 import com.umc.product.notice.application.port.out.SaveNoticeLinkPort;
 import com.umc.product.notice.application.port.out.SaveNoticeVotePort;
@@ -15,6 +16,7 @@ import com.umc.product.notice.domain.NoticeImage;
 import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.notice.domain.NoticeVote;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 
 @Component
@@ -25,12 +27,14 @@ public class NoticeContentPersistenceAdapter implements
     SaveNoticeLinkPort,
     LoadNoticeImagePort,
     LoadNoticeVotePort,
-    LoadNoticeLinkPort {
+    LoadNoticeLinkPort,
+    LockNoticeVoteResponsePort {
 
     private final NoticeVoteJpaRepository voteJpaRepository;
     private final NoticeLinkJpaRepository linkJpaRepository;
     private final NoticeImageJpaRepository imageJpaRepository;
     private final NoticeContentsQueryRepository contentsQueryRepository;
+    private final EntityManager entityManager;
 
     @Override
     public Optional<NoticeImage> findImageById(Long id) {
@@ -90,6 +94,25 @@ public class NoticeContentPersistenceAdapter implements
     @Override
     public Optional<NoticeVote> findVoteByNoticeId(Long noticeId) {
         return voteJpaRepository.findByNoticeId(noticeId);
+    }
+
+    @Override
+    public Optional<NoticeVote> findVoteByNoticeIdForShare(Long noticeId) {
+        return voteJpaRepository.findByNoticeIdForShare(noticeId);
+    }
+
+    @Override
+    public void lockResponse(Long noticeId, Long respondentMemberId) {
+        // 최초 응답은 행이 없으므로 투표·응답자 조합을 잠가 중복 제출을 막는다.
+        String scopeKey = "notice-vote-response|" + noticeId + '|' + respondentMemberId;
+        entityManager.createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(:scopeKey, 0))")
+            .setParameter("scopeKey", scopeKey)
+            .getSingleResult();
+    }
+
+    @Override
+    public Optional<NoticeVote> findVoteByNoticeIdForUpdate(Long noticeId) {
+        return voteJpaRepository.findByNoticeIdForUpdate(noticeId);
     }
 
     @Override

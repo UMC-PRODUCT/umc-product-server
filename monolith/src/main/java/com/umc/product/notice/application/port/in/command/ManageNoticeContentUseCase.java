@@ -34,6 +34,8 @@ public interface ManageNoticeContentUseCase {
 
     void deleteVote(Long noticeId, Long memberId);
 
+    void closeVote(Long noticeId, Long memberId);
+
     void removeContentsByNoticeId(Long noticeId, Long memberId);
 
     void replaceImages(ReplaceNoticeImagesCommand command, Long noticeId, Long memberId);

@@ -16,11 +16,16 @@ dependencies {
 
     // monolith의 main 코드가 shared를 사용한다.
     implementation(project(":shared"))
+    // Form 구현과 소비 도메인이 공개 계약 타입을 사용한다.
+    implementation(project(":form-api"))
 
     // === test: 테스트 코드 의존성 ===
     testImplementation("com.tngtech.archunit:archunit-junit5:${libs.versions.archunit.get()}")
 
     // === testFixtures API: 공통 테스트 지원 코드와 소비자에게 노출하는 의존성 ===
+
+    // testFixtures 는 main 의 implementation 의존을 상속하지 않는다.
+    testFixturesImplementation(project(":form-api"))
 
     // monolith의 fixture가 shared를 사용하고,
     // fixture 소비자도 shared의 타입을 사용할 수 있게 한다.

@@ -62,7 +62,12 @@ subprojects {
         }
     }
 
-    apply(from = rootProject.file("gradle/dependencies.gradle.kts"))
+    val dependencyScript = if (name == "form-api") {
+        "gradle/form-api-dependencies.gradle.kts"
+    } else {
+        "gradle/dependencies.gradle.kts"
+    }
+    apply(from = rootProject.file(dependencyScript))
     apply(from = rootProject.file("gradle/querydsl.gradle.kts"))
     apply(from = rootProject.file("gradle/quality.gradle.kts"))
     apply(from = rootProject.file("gradle/testing.gradle.kts"))

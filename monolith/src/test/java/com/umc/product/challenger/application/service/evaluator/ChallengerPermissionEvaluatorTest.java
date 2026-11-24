@@ -209,6 +209,14 @@ class ChallengerPermissionEvaluatorTest {
     }
 
     @Test
+    @DisplayName("SUPER_ADMIN은 기수와 학교에 관계없이 챌린저를 관리할 수 있다")
+    void superAdminCanManageChallenger() {
+        SubjectAttributes subject = subject(List.of(), Set.of(SystemRoleType.SUPER_ADMIN));
+
+        assertThat(evaluateManage(subject)).isTrue();
+    }
+
+    @Test
     @DisplayName("대상 기수 중앙 운영진은 챌린저를 관리할 수 있다")
     void centralMemberInTargetGisuCanManageChallenger() {
         SubjectAttributes subject = subject(List.of(role(

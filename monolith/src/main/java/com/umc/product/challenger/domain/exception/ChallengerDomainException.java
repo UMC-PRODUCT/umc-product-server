@@ -11,4 +11,8 @@ public class ChallengerDomainException extends BusinessException {
     public ChallengerDomainException(ChallengerErrorCode challengerErrorCode, String message) {
         super(Domain.CHALLENGER, challengerErrorCode, message);
     }
+
+    public ChallengerDomainException(ChallengerErrorCode challengerErrorCode, Throwable cause) {
+        super(Domain.CHALLENGER, challengerErrorCode, cause);
+    }
 }
