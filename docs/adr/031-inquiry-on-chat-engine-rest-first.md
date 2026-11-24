@@ -38,10 +38,12 @@ ADR-011은 문의 전용 메시지 테이블과 STOMP 구독을 전제로 했다
    그래서 운영진이 읽기만 할 때 방 멤버로 넣는 쓰기를 GET에 만들 필요가 없다. 운영진이 처음 메시지를 보낼 때만
    `JoinChatRoomUseCase`로 조용히 넣는다. 문의 행을 비관적 잠금한 뒤 멤버 여부를 먼저 확인하므로 같은 방 join이 겹치지
    않는다. Chat의 `CHAT_MEMBER_ALREADY_EXISTS`를 잡아 넘기면 바깥 트랜잭션이 rollback-only가 되므로 예외에 기대지 않는다.
-   Chat 방을 `chatRoomId`만으로 읽는 새 경로를 만들면 이 결정을 다시 봐야 한다.
+   Chat 방을 `chatRoomId`만으로 읽는 새 경로를 만들면 이 결정을 다시 봐야 한다. Chat 메시지 조회 UseCase를 Chat과
+   소비 도메인 밖에서 쓰면 `ChatConsumerDependencyArchTest`가 실패한다.
 5. 등록은 `unique(author_member_id, client_request_id)`로, 메시지는 Chat 엔진의 `clientMessageId` dedup으로 멱등이다.
    dedup 결과면 상태 전이와 알림을 다시 하지 않는다. 같은 등록 요청이 동시에 오면 늦은 쪽은 409를 받고, 재시도하면
-   기존 문의를 받는다.
+   기존 문의를 받는다. 같은 `clientRequestId`는 내용 비교 없이 기존 문의를 돌려준다. 제목·본문이 달라도 새로 만들거나
+   거절하지 않는다.
 6. 1차 전달은 REST, 커서 조회, FCM이다. 운영진의 중복 아닌 메시지는 `inquiry.staff.replied` 이벤트를 outbox에 남기고,
    커밋 뒤 notification 리스너가 작성자에게 푸시한다(`data.type=INQUIRY_REPLY`, `data.inquiryId`,
    딥링크 `umc://inquiry/{inquiryId}`). 작성자 메시지는 이번 단계에서 알리지 않는다. API·딥링크·푸시 데이터에
