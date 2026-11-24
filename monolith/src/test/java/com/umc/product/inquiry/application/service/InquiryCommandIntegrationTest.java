@@ -161,7 +161,7 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("작성자 메시지는 상태를 바꾸지 않고 알림 이벤트도 남기지 않는다")
+    @DisplayName("작성자 메시지는 상태를 바꾸지 않고 작성자 답변 알림 이벤트도 남기지 않는다")
     void 작성자_추가_메시지() {
         // given
         Long inquiryId = 문의_등록();
