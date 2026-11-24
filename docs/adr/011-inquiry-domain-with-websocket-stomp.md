@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Superseded by [ADR-031](031-inquiry-on-chat-engine-rest-first.md)
 
 ## Context
 
