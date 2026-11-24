@@ -1,4 +1,4 @@
-# ADR-031: 문의 도메인을 Chat 엔진 소비 도메인으로 만들고 1차는 REST로 연다
+# ADR-031: 문의 도메인을 Chat 엔진 소비 도메인으로 만들고 보내기는 REST로 연다
 
 ## 상태
 
@@ -54,8 +54,27 @@ ADR-011은 문의 전용 메시지 테이블과 STOMP 구독을 전제로 했다
    첨부 검증(`ValidateChatAttachmentsUseCase`)을 거친다. Chat 메시지 하나는 한 종류만 담으므로 이미지와 문서를 섞은
    첨부는 400 `INQUIRY_ATTACHMENT_MIXED_TYPES`로 거절한다.
 8. 카테고리는 `inquiry_category` 테이블에 두고 관리 API 없이 SQL로 추가·비활성화한다.
+9. 실시간 수신은 STOMP로 받기만 한다(2026-11-24 추가). 보내기는 6번의 REST
+   (`POST /api/v1/inquiries/{inquiryId}/messages`, `clientMessageId` 멱등)를 그대로 쓰고 STOMP SEND 경로는 만들지 않는다.
+   - 주소는 문의마다 하나인 `/topic/inquiries/{inquiryId}`다. 서버가 받는 사람을 계산하지 않고, 문의 화면을 연
+     작성자·운영진이 그 주소를 구독한다. Community의 per-member fan-out은 쓰지 않는다. 문의는 받는 사람이 작성자와
+     운영진뿐이고 운영진 목록이 바뀌어도 구독 시점 권한으로 충분하기 때문이다.
+   - 구독 권한은 `InquiryStompSubscriptionAuthorizer`가 3번 열람 정책(`InquiryAccessPolicy.canAccess`)으로 판정한다.
+     REST와 같은 정책 한 벌을 쓴다. 숫자가 아닌 id, 없는 문의, 제3자는 거절한다.
+   - 한 주소로 두 종류가 오고 `type`으로 구분한다. `MESSAGE_CREATED`는 `inquiryId`와 REST 메시지 응답과 같은 모양의
+     `message`를 담는다. `STATUS_CHANGED`는 `inquiryId`, `status`, `closedAt`, `lastMessageAt`을 담고 운영진 첫 답변,
+     종료, 재오픈 때 보낸다. 상태가 그대로인 메시지에는 보내지 않는다. dedup된 재전송에는 아무것도 보내지 않는다.
+   - 메시지는 Chat의 `chat.message.created`를, 상태는 `inquiry.status.changed`를 outbox에 남기고 커밋 뒤 REALTIME
+     그룹에서 보낸다. 상태 이벤트는 커밋 시점 스냅숏을 담으므로 relay 때 문의를 다시 읽지 않는다. 문의 방이 아닌 Chat
+     이벤트는 무시한다. 전달은 at-least-once다. 같은 `messageId`가 두 번 올 수 있고, 메시지와 상태 이벤트의 도착 순서는
+     보장하지 않는다.
+   - 외부 RabbitMQ relay는 `/topic` 이름에 `/`를 받지 않으므로 `RelayDestinationCodec`이 broker 쪽에서
+     `/topic/inquiries.{inquiryId}`로 바꾼다. 클라이언트는 항상 `/topic/inquiries/{inquiryId}`를 쓴다.
+   - 연결이 끊긴 동안의 이벤트는 다시 보내지 않는다. 클라이언트는 다시 연결해 구독한 뒤 REST 메시지 첫 페이지와 상세를
+     다시 불러 `messageId`로 합친다.
+   - 첨부 `fileLink`는 REST 응답처럼 60분짜리 presigned 링크다. 화면을 오래 열어 두어 만료되면 REST로 다시 불러온다.
+   - FCM 푸시(6번)는 앱이 꺼져 있을 때를 위해 그대로 둔다.
 
 ## 후속
 
-- 실시간(STOMP) 전달은 2차에서 Community처럼 per-member fan-out으로 붙인다. 그때 구독 권한도 4번 정책을 쓴다.
 - 2단계(담당자·라벨·운영 목록), 3단계(FAQ), 4단계(인기 순위)는 별도 결정으로 다룬다.
