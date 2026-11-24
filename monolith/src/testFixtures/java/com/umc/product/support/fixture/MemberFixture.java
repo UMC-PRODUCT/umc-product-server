@@ -37,9 +37,6 @@ public class MemberFixture extends FixtureSupport {
         return 일반(fixtureString("member", 10));
     }
 
-    /**
-     * 시스템 역할은 운영에서 SQL로만 부여해 저장 Port 가 없으므로 JPA repository 로 저장한다.
-     */
     public void 시스템_역할_부여(Long memberId, MemberSystemRoleType roleType) {
         memberSystemRoleJpaRepository.save(MemberSystemRole.create(memberId, roleType));
     }

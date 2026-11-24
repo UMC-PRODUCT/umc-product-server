@@ -14,9 +14,6 @@ import com.umc.product.notification.application.port.in.dto.RequestFcmNotificati
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * 운영진 답변이 커밋된 뒤 outbox 를 거쳐 들어오며, 문의 작성자에게만 푸시를 보낸다.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor

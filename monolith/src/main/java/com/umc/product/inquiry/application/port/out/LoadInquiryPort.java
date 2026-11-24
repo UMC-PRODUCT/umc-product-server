@@ -13,7 +13,6 @@ public interface LoadInquiryPort {
 
     Optional<Inquiry> findById(Long inquiryId);
 
-    /** 상태 전이 경쟁을 막기 위해 문의 행을 잠근다. */
     Optional<Inquiry> findByIdForUpdate(Long inquiryId);
 
     Optional<Inquiry> findByAuthorMemberIdAndClientRequestId(Long authorMemberId, UUID clientRequestId);

@@ -25,9 +25,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 문의 한 건. 대화 본문은 Chat 엔진의 방({@code chatRoomId})에 저장하고, 이 엔티티는 상태와 목록 정렬 값만 갖는다.
- */
 @Entity
 @Table(
     name = "inquiry",
@@ -103,9 +100,6 @@ public class Inquiry extends BaseEntity {
         return inquiry;
     }
 
-    /**
-     * 대화에서 이 회원이 맡는 자리. 작성자가 아니면 운영진 자리로 본다. 운영진 권한이 있는지는 호출 쪽이 확인한다.
-     */
     public InquiryParticipant participantOf(Long memberId) {
         return authorMemberId.equals(memberId) ? InquiryParticipant.AUTHOR : InquiryParticipant.STAFF;
     }

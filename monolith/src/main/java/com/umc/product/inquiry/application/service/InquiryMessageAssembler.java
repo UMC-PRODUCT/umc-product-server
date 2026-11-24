@@ -18,9 +18,6 @@ import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * Chat 메시지를 문의 메시지로 바꾼다. 보낸 사람 이름과 첨부 링크는 각각 한 번에 모아 조회한다.
- */
 @Component
 @RequiredArgsConstructor
 class InquiryMessageAssembler {

@@ -12,6 +12,6 @@ public interface LoadInquiryCategoryPort {
 
     List<InquiryCategory> listActive();
 
-    /** 비활성 카테고리도 포함한다. 이미 등록된 문의의 표시용이다. */
+    /** 비활성 카테고리도 포함한다. */
     List<InquiryCategory> listByIds(Collection<Long> categoryIds);
 }

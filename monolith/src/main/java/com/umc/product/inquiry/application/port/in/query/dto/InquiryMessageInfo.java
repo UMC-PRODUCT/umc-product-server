@@ -5,9 +5,6 @@ import java.util.List;
 
 import com.umc.product.inquiry.domain.enums.InquiryParticipant;
 
-/**
- * @param senderType 작성자가 보냈으면 AUTHOR, 운영진이 보냈으면 STAFF.
- */
 public record InquiryMessageInfo(
     Long messageId,
     InquiryParticipant senderType,

@@ -68,7 +68,7 @@ public enum FileCategory {
     CHALLENGER_DEACTIVATION_EVIDENCE("private/challenger-deactivation", 5 * 1024 * 1024, new String[]{"jpg", "jpeg", "png"}),
 
     /**
-     * 문의 첨부파일. 링크는 문의 작성자와 운영진에게만 내려간다. Chat 첨부 정책이 받는 확장자만 연다.
+     * 문의 첨부파일
      */
     INQUIRY_ATTACHMENT("private/inquiry", 20 * 1024 * 1024,
         new String[]{"jpg", "jpeg", "png", "webp", "gif", "pdf", "zip"}),

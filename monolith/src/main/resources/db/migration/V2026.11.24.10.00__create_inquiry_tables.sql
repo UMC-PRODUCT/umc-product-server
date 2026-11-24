@@ -12,7 +12,6 @@ CREATE TABLE inquiry_category
         CHECK (char_length(btrim(name)) BETWEEN 1 AND 50)
 );
 
--- 카테고리는 관리 API 없이 운영자가 SQL로 추가하거나 active 를 끈다.
 INSERT INTO inquiry_category (name, display_order, active, created_at, updated_at)
 VALUES ('UMC 서비스', 1, TRUE, now(), now()),
        ('기타', 2, TRUE, now(), now())

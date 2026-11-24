@@ -12,9 +12,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 문의 유형. 관리 API 없이 운영자가 SQL로 추가하거나 비활성화한다.
- */
 @Entity
 @Table(name = "inquiry_category")
 @Getter

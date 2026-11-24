@@ -11,9 +11,6 @@ import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
 
-/**
- * 문의 테스트 데이터. 카테고리는 운영에서 SQL로만 넣으므로 저장 Port 가 없어 JPA repository 로 저장한다.
- */
 @Component
 public class InquiryFixture extends FixtureSupport {
 
@@ -28,9 +25,6 @@ public class InquiryFixture extends FixtureSupport {
         this.saveFileMetadataPort = saveFileMetadataPort;
     }
 
-    /**
-     * 테스트 DB 의 첫 테스트에는 마이그레이션 시드가 남아 있으므로 같은 이름이 있으면 그대로 쓴다.
-     */
     public InquiryCategory 카테고리(String name, int displayOrder) {
         return inquiryCategoryJpaRepository.findAll().stream()
             .filter(category -> category.getName().equals(name))

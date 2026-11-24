@@ -17,9 +17,6 @@ import com.umc.product.storage.domain.enums.FileCategory;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 문의 메시지의 본문·첨부 규칙. 검증을 마친 Chat 메시지 명령만 돌려준다.
- */
 @Component
 @RequiredArgsConstructor
 public class InquiryMessagePolicy {
@@ -30,9 +27,6 @@ public class InquiryMessagePolicy {
     private final GetFileUseCase getFileUseCase;
     private final ValidateChatAttachmentsUseCase validateChatAttachmentsUseCase;
 
-    /**
-     * 문의 등록의 첫 메시지. 본문이 곧 문의 내용이라 첨부가 있어도 비울 수 없다.
-     */
     public CreateChatMessageCommand openingMessage(
         Long chatRoomId,
         Long senderMemberId,
@@ -46,9 +40,6 @@ public class InquiryMessagePolicy {
         return message(chatRoomId, senderMemberId, clientMessageId, content, fileMetadataIds);
     }
 
-    /**
-     * 등록 뒤 대화 메시지. 첨부가 있으면 본문은 설명이라 비워도 된다.
-     */
     public CreateChatMessageCommand reply(
         Long chatRoomId,
         Long senderMemberId,
@@ -85,9 +76,6 @@ public class InquiryMessagePolicy {
         );
     }
 
-    /**
-     * 첨부 구성으로 Chat 콘텐츠 종류를 정한다. 한 메시지는 한 종류만 담을 수 있어 이미지와 문서를 섞으면 거절한다.
-     */
     private MessageContentType contentTypeOf(Long senderMemberId, List<String> fileMetadataIds) {
         if (fileMetadataIds.isEmpty()) {
             return MessageContentType.TEXT;
