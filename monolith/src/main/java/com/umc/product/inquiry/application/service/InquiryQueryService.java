@@ -61,10 +61,7 @@ public class InquiryQueryService implements
 
     @Override
     public InquirySummaryPageInfo listMine(MyInquiriesQuery query) {
-        LoadInquiryPort.Cursor cursor = query.cursor() == null ? null : loadInquiryPort.findById(query.cursor())
-            .filter(inquiry -> inquiry.isAuthor(query.authorMemberId()))
-            .map(inquiry -> new LoadInquiryPort.Cursor(inquiry.getLastMessageAt(), inquiry.getId()))
-            .orElseThrow(() -> new InquiryDomainException(InquiryErrorCode.INQUIRY_NOT_FOUND));
+        LoadInquiryPort.Cursor cursor = query.cursor() == null ? null : InquiryListCursorCodec.decode(query.cursor());
 
         List<Inquiry> rows = loadInquiryPort.listByAuthor(
             query.authorMemberId(),
@@ -82,7 +79,7 @@ public class InquiryQueryService implements
             page.stream()
                 .map(inquiry -> InquirySummaryInfo.of(inquiry, categories.get(inquiry.getCategoryId())))
                 .toList(),
-            hasNext ? page.get(page.size() - 1).getId() : null,
+            hasNext ? nextCursorOf(page.get(page.size() - 1)) : null,
             hasNext
         );
     }
@@ -128,6 +125,10 @@ public class InquiryQueryService implements
             page.nextCursor(),
             page.hasNext()
         );
+    }
+
+    private static String nextCursorOf(Inquiry last) {
+        return InquiryListCursorCodec.encode(new LoadInquiryPort.Cursor(last.getLastMessageAt(), last.getId()));
     }
 
     private Inquiry loadInquiry(Long inquiryId) {

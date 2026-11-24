@@ -240,6 +240,37 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    @DisplayName("커서 문의에 새 메시지가 와도 다음 페이지에 이미 본 문의가 다시 나오지 않는다")
+    void 내_문의_목록_커서_고정() {
+        // given
+        Long oldest = 문의_등록();
+        Long middle = 문의_등록();
+        Long newest = 문의_등록();
+        InquirySummaryPageInfo firstPage = listMyInquiriesUseCase.listMine(
+            new MyInquiriesQuery(authorId, InquiryStatusGroup.OPEN, null, 2)
+        );
+        보내기(middle, authorId, "추가 내용이에요", UUID.randomUUID());
+
+        // when
+        InquirySummaryPageInfo secondPage = listMyInquiriesUseCase.listMine(
+            new MyInquiriesQuery(authorId, InquiryStatusGroup.OPEN, firstPage.nextCursor(), 2)
+        );
+
+        // then
+        assertThat(firstPage.inquiries()).extracting(InquirySummaryInfo::inquiryId).containsExactly(newest, middle);
+        assertThat(secondPage.inquiries()).extracting(InquirySummaryInfo::inquiryId).containsExactly(oldest);
+        assertThat(secondPage.hasNext()).isFalse();
+    }
+
+    @Test
+    @DisplayName("해석할 수 없는 커서로 목록을 조회하면 거절한다")
+    void 내_문의_목록_잘못된_커서() {
+        assertThatThrownBy(() -> listMyInquiriesUseCase.listMine(
+            new MyInquiriesQuery(authorId, InquiryStatusGroup.OPEN, "not-a-cursor", 20)
+        )).extracting("baseCode").isEqualTo(InquiryErrorCode.INVALID_INQUIRY_CURSOR);
+    }
+
+    @Test
     @DisplayName("문의 첨부파일은 메시지에 담기고, 다른 용도로 올린 파일은 첨부할 수 없다")
     void 첨부파일() {
         // given

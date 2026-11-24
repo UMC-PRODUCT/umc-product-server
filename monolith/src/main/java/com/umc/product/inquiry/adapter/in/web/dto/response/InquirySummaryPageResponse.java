@@ -6,7 +6,7 @@ import com.umc.product.inquiry.application.port.in.query.dto.InquirySummaryPageI
 
 public record InquirySummaryPageResponse(
     List<InquirySummaryResponse> inquiries,
-    Long nextCursor,
+    String nextCursor,
     boolean hasNext
 ) {
     public static InquirySummaryPageResponse from(InquirySummaryPageInfo info) {

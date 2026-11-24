@@ -86,11 +86,11 @@ public class InquiryController {
     @Operation(
         operationId = "INQUIRY-102",
         summary = "내 문의 목록 조회",
-        description = "OPEN은 접수·진행 중, CLOSED는 종료된 문의다. 마지막 메시지 최신순이며 cursor는 이전 응답의 nextCursor다."
+        description = "OPEN은 접수·진행 중, CLOSED는 종료된 문의다. 마지막 메시지 최신순이며 cursor는 이전 응답의 nextCursor를 그대로 넘긴다."
     )
     public InquirySummaryPageResponse listMine(
         @RequestParam(defaultValue = "OPEN") InquiryStatusGroup status,
-        @RequestParam(required = false) @Positive Long cursor,
+        @RequestParam(required = false) String cursor,
         @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size,
         @CurrentMember MemberPrincipal principal
     ) {
