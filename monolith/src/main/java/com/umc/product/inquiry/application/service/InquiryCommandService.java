@@ -19,7 +19,6 @@ import com.umc.product.chat.domain.ChatRoomReadScope;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.inquiry.application.event.InquiryStaffRepliedEvent;
 import com.umc.product.inquiry.application.policy.InquiryAccessPolicy;
-import com.umc.product.inquiry.application.policy.InquiryAccessPolicy.InquiryAccess;
 import com.umc.product.inquiry.application.policy.InquiryMessagePolicy;
 import com.umc.product.inquiry.application.port.in.command.CloseInquiryUseCase;
 import com.umc.product.inquiry.application.port.in.command.CreateInquiryUseCase;
@@ -101,7 +100,7 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
     @Override
     public InquiryMessageInfo send(SendInquiryMessageCommand command) {
         Inquiry inquiry = loadLockedInquiry(command.inquiryId());
-        InquiryAccess access = accessPolicy.resolve(inquiry, command.senderMemberId());
+        InquiryParticipant sender = accessPolicy.requireParticipant(inquiry, command.senderMemberId());
         CreateChatMessageCommand chatMessage = messagePolicy.reply(
             inquiry.getChatRoomId(),
             command.senderMemberId(),
@@ -120,9 +119,9 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
             return message;
         }
 
-        inquiry.recordMessage(access.participant(), result.message().createdAt());
+        inquiry.recordMessage(sender, result.message().createdAt());
         saveInquiryPort.save(inquiry);
-        if (access.participant() == InquiryParticipant.STAFF) {
+        if (sender == InquiryParticipant.STAFF) {
             domainEventPublisher.publish(InquiryStaffRepliedEvent.of(
                 inquiry.getId(),
                 result.message().messageId(),

@@ -65,7 +65,6 @@ class InquiryApiIntegrationTest extends IntegrationTestSupport {
             .andExpect(jsonPath("$.result.status").value("RECEIVED"))
             .andExpect(jsonPath("$.result.targetTeam").value("PLATFORM"))
             .andExpect(jsonPath("$.result.category.name").value("UMC 서비스"))
-            .andExpect(jsonPath("$.result.canSendMessage").value(true))
             .andExpect(jsonPath("$.result.canClose").value(false));
     }
 

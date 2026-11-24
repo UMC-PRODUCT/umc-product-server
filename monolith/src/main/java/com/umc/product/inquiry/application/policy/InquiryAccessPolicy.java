@@ -21,15 +21,22 @@ public class InquiryAccessPolicy {
 
     private final CheckChallengerAuthorityUseCase checkChallengerAuthorityUseCase;
 
-    public InquiryAccess resolve(Inquiry inquiry, Long memberId) {
-        boolean staff = isStaff(memberId);
-        if (inquiry.isAuthor(memberId)) {
-            return new InquiryAccess(InquiryParticipant.AUTHOR, staff);
+    /**
+     * 요청자의 자리를 돌려준다. 작성자는 운영진 여부를 조회하지 않는다.
+     */
+    public InquiryParticipant requireParticipant(Inquiry inquiry, Long memberId) {
+        InquiryParticipant participant = inquiry.participantOf(memberId);
+        if (participant == InquiryParticipant.STAFF && !isStaff(memberId)) {
+            throw new InquiryDomainException(InquiryErrorCode.INQUIRY_ACCESS_DENIED);
         }
-        if (staff) {
-            return new InquiryAccess(InquiryParticipant.STAFF, true);
-        }
-        throw new InquiryDomainException(InquiryErrorCode.INQUIRY_ACCESS_DENIED);
+        return participant;
+    }
+
+    /**
+     * @param participant {@link #requireParticipant}가 돌려준 자리. STAFF 면 이미 운영진임을 확인했다.
+     */
+    public boolean canClose(Inquiry inquiry, Long memberId, InquiryParticipant participant) {
+        return inquiry.isClosable() && (participant == InquiryParticipant.STAFF || isStaff(memberId));
     }
 
     public void requireStaff(Long memberId) {
@@ -40,12 +47,5 @@ public class InquiryAccessPolicy {
 
     private boolean isStaff(Long memberId) {
         return checkChallengerAuthorityUseCase.isUmcProduct(memberId);
-    }
-
-    /**
-     * @param participant 대화에서 요청자의 자리. 운영진이 자기 문의를 보면 AUTHOR 다.
-     * @param staff       요청자가 운영진인지. 종료 권한은 자리와 무관하게 이 값으로 정한다.
-     */
-    public record InquiryAccess(InquiryParticipant participant, boolean staff) {
     }
 }

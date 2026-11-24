@@ -17,7 +17,6 @@ public record InquiryDetailResponse(
     Instant createdAt,
     Instant closedAt,
     Instant lastMessageAt,
-    boolean canSendMessage,
     boolean canClose
 ) {
     public static InquiryDetailResponse from(InquiryDetailInfo info) {
@@ -31,7 +30,6 @@ public record InquiryDetailResponse(
             info.createdAt(),
             info.closedAt(),
             info.lastMessageAt(),
-            info.canSendMessage(),
             info.canClose()
         );
     }

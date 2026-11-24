@@ -126,6 +126,25 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    @DisplayName("운영진이 자기 문의에 쓰면 작성자로 남고, 상세에서는 종료할 수 있다")
+    void 운영진_본인_문의() {
+        // given
+        Long inquiryId = createInquiryUseCase.create(new CreateInquiryCommand(
+            staffId, categoryId, null, "운영진 본인 문의", "직접 남겨요", List.of(), UUID.randomUUID()
+        ));
+
+        // when
+        InquiryMessageInfo sent = 보내기(inquiryId, staffId, "추가 내용", UUID.randomUUID());
+
+        // then
+        assertThat(sent.senderType()).isEqualTo(InquiryParticipant.AUTHOR);
+        InquiryDetailInfo detail = 상세(inquiryId, staffId);
+        assertThat(detail.status()).isEqualTo(InquiryStatus.RECEIVED);
+        assertThat(detail.canClose()).isTrue();
+        assertThat(이벤트_수(STAFF_REPLIED)).isZero();
+    }
+
+    @Test
     @DisplayName("운영진이 처음 답하면 진행 중이 되고 작성자 알림 이벤트가 한 번 남는다")
     void 운영진_첫_답변() {
         // given
