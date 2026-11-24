@@ -4,7 +4,7 @@ import java.util.List;
 
 public record InquirySummaryPageInfo(
     List<InquirySummaryInfo> inquiries,
-    Long nextCursor,
+    String nextCursor,
     boolean hasNext
 ) {
 }

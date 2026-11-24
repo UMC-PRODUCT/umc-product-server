@@ -121,6 +121,16 @@ class InquiryApiIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    @DisplayName("해석할 수 없는 목록 커서는 400과 문의 에러 코드를 돌려준다")
+    void 잘못된_목록_커서() throws Exception {
+        mockMvc.perform(get("/api/v1/inquiries/me")
+                .param("cursor", "%%%")
+                .header("Authorization", "Bearer " + AUTHOR))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("INQUIRY-0014"));
+    }
+
+    @Test
     @DisplayName("제목·본문 길이와 첨부 개수 한도를 넘으면 400과 문의 에러 코드를 돌려준다")
     void 길이와_개수_한도() throws Exception {
         long inquiryId = 등록();
