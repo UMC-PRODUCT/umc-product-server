@@ -39,7 +39,7 @@ public record ExportChallengerDeactivationRequest(
     public ExportChallengerDeactivationQuery toQuery() {
         return new ExportChallengerDeactivationQuery(
             new SearchChallengerDeactivationQuery(
-                gisuId, chapterId, schoolId, part, keyword, reason, ChallengerDeactivationListStatus.REGISTERED
+                gisuId, chapterId, schoolId, part, keyword, reason, ChallengerDeactivationListStatus.REGISTERED, null
             ),
             startDate, endDate, deactivationIds == null ? Set.of() : new HashSet<>(deactivationIds), types, columns
         );
