@@ -199,7 +199,8 @@ public interface NoticeQueryApi {
     @Operation(
         operationId = "NOTICE-004",
         summary = "공지사항 읽음 통계 조회",
-        description = "공지사항의 전체 대상자 수, 읽은 수, 안 읽은 수 통계를 조회합니다."
+        description = "챌린저 이력이 있는 회원 중 이 공지를 열람할 수 있는 사람을 한 명씩 집계합니다. "
+            + "운영진 공지는 대상 역할과 소속을 반영하며, 읽음·미확인 명단에도 같은 기준을 적용합니다."
     )
     GetNoticeStaticsResponse getNoticeReadStatics(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
@@ -210,11 +211,12 @@ public interface NoticeQueryApi {
         operationId = "NOTICE-005",
         summary = "공지사항 읽음 현황 상세 조회",
         description = """
-            공지사항을 읽은/안읽은 사용자 목록을 커서 기반 페이징으로 조회합니다.
+            공지 읽음 통계와 같은 열람 가능자 중에서 조건에 맞는 회원을 커서로 조회합니다.
+            수강 파트나 학교·지부 정보가 없는 경우 해당 표시 문자열은 비어 있습니다.
 
             - `status=READ` → 읽은 사람 목록
             - `status=UNREAD` → 안 읽은 사람 목록
-            - `filterType`으로 지부/학교별 필터링 가능 (리마인더 발송 대상 선택에 활용)
+            - `filterType`으로 지부/학교별 필터링 가능
             """
     )
     @ApiResponses({

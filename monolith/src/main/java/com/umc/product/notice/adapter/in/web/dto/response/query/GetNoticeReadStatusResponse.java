@@ -1,7 +1,10 @@
 package com.umc.product.notice.adapter.in.web.dto.response.query;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
+import java.util.Objects;
+
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusInfo;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * 공지사항 수신 현황 확인 응답
@@ -12,7 +15,7 @@ public record GetNoticeReadStatusResponse(
     Long challengerId,
     String name,
     String profileImageUrl,
-    ChallengerPart part,
+    @Schema(description = "파트 코드. 수강 파트가 없으면 빈 문자열") String part,
     Long schoolId,
     String schoolName,
     Long chapterId,
@@ -21,13 +24,13 @@ public record GetNoticeReadStatusResponse(
     public static GetNoticeReadStatusResponse from(NoticeReadStatusInfo info) {
         return new GetNoticeReadStatusResponse(
             info.challengerId(),
-            info.name(),
+            Objects.toString(info.name(), ""),
             info.profileImageUrl(),
-            info.part(),
+            info.part() == null ? "" : info.part().name(),
             info.schoolId(),
-            info.schoolName(),
+            Objects.toString(info.schoolName(), ""),
             info.chapterId(),
-            info.chapterName()
+            Objects.toString(info.chapterName(), "")
         );
     }
 }

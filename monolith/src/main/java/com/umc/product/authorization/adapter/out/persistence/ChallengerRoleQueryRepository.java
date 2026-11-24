@@ -4,11 +4,16 @@ import static com.umc.product.authorization.domain.QChallengerRole.challengerRol
 import static com.umc.product.challenger.domain.QChallenger.challenger;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.authorization.domain.ChallengerRole;
+import com.umc.product.authorization.domain.RoleAttribute;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -51,5 +56,18 @@ public class ChallengerRoleQueryRepository {
                 challengerRole.gisuId.eq(gisuId)
             )
             .fetch();
+    }
+
+    public Map<Long, List<RoleAttribute>> mapRolesByMemberIncludingCentralCore(Long gisuId) {
+        return queryFactory.select(challenger.memberId, challengerRole)
+            .from(challengerRole)
+            .join(challenger).on(challenger.id.eq(challengerRole.challengerId))
+            .where(gisuId == null ? null : challengerRole.gisuId.eq(gisuId)
+                .or(challengerRole.challengerRoleType.in(
+                    ChallengerRoleType.CENTRAL_PRESIDENT, ChallengerRoleType.CENTRAL_VICE_PRESIDENT)))
+            .fetch().stream()
+            .collect(Collectors.groupingBy(row -> Objects.requireNonNull(row.get(challenger.memberId)),
+                Collectors.mapping(row -> RoleAttribute.from(Objects.requireNonNull(row.get(challengerRole))),
+                    Collectors.toList())));
     }
 }

@@ -4,7 +4,7 @@ import com.umc.product.notice.domain.NoticeRead;
 
 public interface SaveNoticeReadPort {
 
-    NoticeRead saveRead(NoticeRead noticeRead);
+    void recordReadIfAbsent(Long noticeId, Long challengerId);
 
     void deleteRead(NoticeRead noticeRead);
 

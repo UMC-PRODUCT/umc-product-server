@@ -260,4 +260,18 @@ public class ChallengerQueryService implements GetChallengerUseCase, CheckChalle
             .map(c -> ChallengerInfo.from(c, pointsMap.getOrDefault(c.getId(), List.of())))
             .toList();
     }
+
+    @Override
+    public List<ChallengerBasicInfo> listBasicByGisuOrMemberIds(Long gisuId, Set<Long> memberIds) {
+        return loadChallengerPort.listByGisuOrMemberIds(gisuId, memberIds).stream()
+            .map(ChallengerBasicInfo::from).toList();
+    }
+
+    @Override
+    public List<ChallengerBasicInfo> listBasicByIds(Set<Long> challengerIds) {
+        if (challengerIds.isEmpty()) {
+            return List.of();
+        }
+        return loadChallengerPort.getAllByIds(challengerIds).stream().map(ChallengerBasicInfo::from).toList();
+    }
 }

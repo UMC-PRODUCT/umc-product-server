@@ -157,4 +157,9 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     public void delete(Challenger challenger) {
         repository.delete(challenger);
     }
+
+    @Override
+    public List<Challenger> listByGisuOrMemberIds(Long gisuId, Set<Long> memberIds) {
+        return queryRepository.listByGisuOrMemberIds(gisuId, memberIds);
+    }
 }

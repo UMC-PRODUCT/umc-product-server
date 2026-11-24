@@ -108,8 +108,8 @@ public class NoticePersistenceAdapter implements
     }
 
     @Override
-    public NoticeRead saveRead(NoticeRead noticeRead) {
-        return noticeReadJpaRepository.save(noticeRead);
+    public void recordReadIfAbsent(Long noticeId, Long challengerId) {
+        noticeReadJpaRepository.insertIfAbsent(noticeId, challengerId);
     }
 
     @Override

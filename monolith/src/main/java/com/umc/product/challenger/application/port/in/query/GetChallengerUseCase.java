@@ -138,4 +138,8 @@ public interface GetChallengerUseCase {
      */
     List<ChallengerInfo> getAllLatestGisuPerMemberWithoutChallengerPoints();
 
+    /** 기수 소속 및 추가 회원들의 이력을 기수 내림차순으로 조회한다. 기수가 없으면 모든 기수를 조회한다. */
+    List<ChallengerBasicInfo> listBasicByGisuOrMemberIds(Long gisuId, Set<Long> memberIds);
+
+    List<ChallengerBasicInfo> listBasicByIds(Set<Long> challengerIds);
 }
