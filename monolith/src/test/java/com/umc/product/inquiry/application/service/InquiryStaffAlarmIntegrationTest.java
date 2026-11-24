@@ -5,6 +5,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +19,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import com.umc.product.global.event.adapter.out.EventPayloadDeserializer;
 import com.umc.product.global.event.adapter.out.persistence.EventOutboxJpaRepository;
 import com.umc.product.global.event.domain.EventOutbox;
+import com.umc.product.inquiry.adapter.out.persistence.InquiryStaffAlarmSettingJpaRepository;
 import com.umc.product.inquiry.application.port.in.command.CloseInquiryUseCase;
 import com.umc.product.inquiry.application.port.in.command.CreateInquiryUseCase;
 import com.umc.product.inquiry.application.port.in.command.SendInquiryMessageUseCase;
@@ -23,6 +28,7 @@ import com.umc.product.inquiry.application.port.in.command.dto.CloseInquiryComma
 import com.umc.product.inquiry.application.port.in.command.dto.CreateInquiryCommand;
 import com.umc.product.inquiry.application.port.in.command.dto.SendInquiryMessageCommand;
 import com.umc.product.inquiry.application.port.in.command.dto.UpdateInquiryStaffAlarmSettingCommand;
+import com.umc.product.inquiry.application.port.in.query.dto.InquiryStaffAlarmSettingInfo;
 import com.umc.product.member.domain.MemberSystemRoleType;
 import com.umc.product.notification.application.event.FcmNotificationRequestedEvent;
 import com.umc.product.support.IntegrationTestSupport;
@@ -46,6 +52,8 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
     CloseInquiryUseCase closeInquiryUseCase;
     @Autowired
     UpdateInquiryStaffAlarmSettingUseCase updateInquiryStaffAlarmSettingUseCase;
+    @Autowired
+    InquiryStaffAlarmSettingJpaRepository inquiryStaffAlarmSettingJpaRepository;
     @Autowired
     EventOutboxJpaRepository eventOutboxJpaRepository;
     @Autowired
@@ -175,6 +183,51 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
 
         // then
         assertThat(알림_요청()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("설정 행이 없는 운영진이 알림 끄기를 동시에 두 번 보내도 둘 다 성공하고 설정 행은 하나다")
+    void 첫_설정_동시_변경() throws Exception {
+        // given
+        Long racingStaffId = 운영진("racing-staff");
+        var command = new UpdateInquiryStaffAlarmSettingCommand(racingStaffId, false);
+        var ready = new CountDownLatch(2);
+        var start = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var first = CompletableFuture.supplyAsync(() -> 동시_변경(ready, start, command), executor);
+            var second = CompletableFuture.supplyAsync(() -> 동시_변경(ready, start, command), executor);
+            assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
+
+            // when
+            start.countDown();
+            var results = List.of(first.get(30, TimeUnit.SECONDS), second.get(30, TimeUnit.SECONDS));
+
+            // then
+            assertThat(results).extracting(InquiryStaffAlarmSettingInfo::enabled).containsExactly(false, false);
+            assertThat(inquiryStaffAlarmSettingJpaRepository.findAll())
+                .filteredOn(setting -> setting.getMemberId().equals(racingStaffId))
+                .singleElement()
+                .satisfies(setting -> assertThat(setting.isEnabled()).isFalse());
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    private InquiryStaffAlarmSettingInfo 동시_변경(
+        CountDownLatch ready, CountDownLatch start, UpdateInquiryStaffAlarmSettingCommand command
+    ) {
+        ready.countDown();
+        try {
+            if (!start.await(10, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("동시 설정 변경 시작 대기 시간 초과");
+            }
+            return updateInquiryStaffAlarmSettingUseCase.update(command);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(exception);
+        }
     }
 
     private Long 운영진(String name) {
