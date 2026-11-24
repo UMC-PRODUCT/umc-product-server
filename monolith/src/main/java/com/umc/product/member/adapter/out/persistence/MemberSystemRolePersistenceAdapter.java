@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import com.umc.product.member.application.port.out.LoadMemberSystemRolePort;
 import com.umc.product.member.domain.MemberSystemRole;
+import com.umc.product.member.domain.MemberSystemRoleType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,5 +19,10 @@ public class MemberSystemRolePersistenceAdapter implements LoadMemberSystemRoleP
     @Override
     public List<MemberSystemRole> listByMemberId(Long memberId) {
         return memberSystemRoleJpaRepository.findAllByMemberId(memberId);
+    }
+
+    @Override
+    public List<MemberSystemRole> listByRoleType(MemberSystemRoleType roleType) {
+        return memberSystemRoleJpaRepository.findAllByRoleType(roleType);
     }
 }

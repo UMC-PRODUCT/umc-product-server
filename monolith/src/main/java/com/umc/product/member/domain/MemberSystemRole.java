@@ -9,6 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -27,7 +28,8 @@ import lombok.NoArgsConstructor;
     uniqueConstraints = @UniqueConstraint(
         name = "uk_member_system_role_member_role",
         columnNames = {"member_id", "role_type"}
-    )
+    ),
+    indexes = @Index(name = "idx_member_system_role_role_type", columnList = "role_type")
 )
 public class MemberSystemRole extends BaseEntity {
 
