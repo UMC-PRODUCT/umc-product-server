@@ -17,6 +17,8 @@ import com.umc.product.chat.application.port.in.command.dto.JoinChatRoomCommand;
 import com.umc.product.chat.application.port.in.query.CheckChatRoomAccessUseCase;
 import com.umc.product.chat.domain.ChatRoomReadScope;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
+import com.umc.product.inquiry.application.event.InquiryAuthorMessagedEvent;
+import com.umc.product.inquiry.application.event.InquiryCreatedEvent;
 import com.umc.product.inquiry.application.event.InquiryStaffRepliedEvent;
 import com.umc.product.inquiry.application.event.InquiryStatusChangedEvent;
 import com.umc.product.inquiry.application.policy.InquiryAccessPolicy;
@@ -87,7 +89,7 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
             ),
             ATTACHMENTS_VALIDATED_BY_POLICY
         );
-        return saveInquiryPort.create(Inquiry.create(
+        Inquiry inquiry = saveInquiryPort.create(Inquiry.create(
             command.authorMemberId(),
             category.getId(),
             command.targetTeam(),
@@ -95,7 +97,13 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
             chatRoomId,
             command.clientRequestId(),
             first.message().createdAt()
-        )).getId();
+        ));
+        domainEventPublisher.publish(InquiryCreatedEvent.of(
+            inquiry.getId(),
+            inquiry.getAuthorMemberId(),
+            inquiry.getTitle()
+        ));
+        return inquiry.getId();
     }
 
     @Override
@@ -132,6 +140,13 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
                 result.message().messageId(),
                 inquiry.getAuthorMemberId(),
                 command.senderMemberId()
+            ));
+        } else {
+            domainEventPublisher.publish(InquiryAuthorMessagedEvent.of(
+                inquiry.getId(),
+                result.message().messageId(),
+                inquiry.getAuthorMemberId(),
+                inquiry.getTitle()
             ));
         }
         return message;

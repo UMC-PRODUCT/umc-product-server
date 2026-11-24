@@ -3,6 +3,7 @@ package com.umc.product.inquiry.adapter.in.web;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -161,6 +162,54 @@ class InquiryApiIntegrationTest extends IntegrationTestSupport {
         ))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("INQUIRY-0010"));
+    }
+
+    @Test
+    @DisplayName("운영진 문의 알림은 처음엔 켜져 있고, 끄고 켤 수 있으며 같은 값을 다시 보내도 결과가 같다")
+    void 알림_설정() throws Exception {
+        알림_설정_조회(STAFF)
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.enabled").value(true));
+
+        알림_설정_변경(STAFF, Map.of("enabled", false))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.enabled").value(false));
+        알림_설정_변경(STAFF, Map.of("enabled", false))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.enabled").value(false));
+        알림_설정_조회(STAFF)
+            .andExpect(jsonPath("$.result.enabled").value(false));
+
+        알림_설정_변경(STAFF, Map.of("enabled", true))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.enabled").value(true));
+        알림_설정_조회(STAFF)
+            .andExpect(jsonPath("$.result.enabled").value(true));
+    }
+
+    @Test
+    @DisplayName("운영진이 아니면 문의 알림 설정을 보거나 바꿀 수 없고, enabled 없이 바꾸면 400이다")
+    void 알림_설정_권한과_검증() throws Exception {
+        알림_설정_조회(AUTHOR)
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value("INQUIRY-0003"));
+        알림_설정_변경(AUTHOR, Map.of("enabled", false))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value("INQUIRY-0003"));
+        알림_설정_변경(STAFF, Map.of())
+            .andExpect(status().isBadRequest());
+    }
+
+    private ResultActions 알림_설정_조회(String token) throws Exception {
+        return mockMvc.perform(get("/api/v1/inquiries/admin/alarm-setting")
+            .header("Authorization", "Bearer " + token));
+    }
+
+    private ResultActions 알림_설정_변경(String token, Map<String, Object> body) throws Exception {
+        return mockMvc.perform(put("/api/v1/inquiries/admin/alarm-setting")
+            .header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(body)));
     }
 
     private long 등록() throws Exception {
