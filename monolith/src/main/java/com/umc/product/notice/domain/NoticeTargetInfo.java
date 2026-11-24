@@ -62,7 +62,8 @@ public record NoticeTargetInfo(
         boolean gisuMatch = (this.targetGisuId == null || this.targetGisuId.equals(gisuId));
         boolean chapterMatch = (this.targetChapterId == null || this.targetChapterId.equals(chapterId));
         boolean schoolMatch = (this.targetSchoolId == null || this.targetSchoolId.equals(schoolId));
-        boolean partMatch = (this.targetParts == null || this.targetParts.isEmpty() || this.targetParts.contains(part));
+        boolean partMatch = targetParts == null || targetParts.isEmpty()
+            || (part != null && targetParts.contains(part));
 
         return gisuMatch && chapterMatch && schoolMatch && partMatch;
     }
