@@ -29,7 +29,7 @@ public class InquiryStaffAlarmSettingPersistenceAdapter
     }
 
     @Override
-    public InquiryStaffAlarmSetting save(InquiryStaffAlarmSetting setting) {
-        return repository.save(setting);
+    public void upsert(Long memberId, boolean enabled) {
+        repository.upsert(memberId, enabled);
     }
 }

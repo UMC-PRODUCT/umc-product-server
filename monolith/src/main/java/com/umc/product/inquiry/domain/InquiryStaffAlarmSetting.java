@@ -36,17 +36,4 @@ public class InquiryStaffAlarmSetting extends BaseEntity {
 
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
-
-    private InquiryStaffAlarmSetting(Long memberId, boolean enabled) {
-        this.memberId = memberId;
-        this.enabled = enabled;
-    }
-
-    public static InquiryStaffAlarmSetting create(Long memberId, boolean enabled) {
-        return new InquiryStaffAlarmSetting(memberId, enabled);
-    }
-
-    public void changeEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
 }

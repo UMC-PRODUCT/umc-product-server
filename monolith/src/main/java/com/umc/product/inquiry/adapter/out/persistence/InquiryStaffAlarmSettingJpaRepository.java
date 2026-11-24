@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.umc.product.inquiry.domain.InquiryStaffAlarmSetting;
 
@@ -14,4 +16,12 @@ public interface InquiryStaffAlarmSettingJpaRepository extends JpaRepository<Inq
 
     @Query("select setting.memberId from InquiryStaffAlarmSetting setting where setting.enabled = false")
     List<Long> findAllDisabledMemberIds();
+
+    @Modifying
+    @Query(value = """
+        INSERT INTO inquiry_staff_alarm_setting (member_id, enabled, created_at, updated_at)
+        VALUES (:memberId, :enabled, now(), now())
+        ON CONFLICT (member_id) DO UPDATE SET enabled = EXCLUDED.enabled, updated_at = now()
+        """, nativeQuery = true)
+    void upsert(@Param("memberId") Long memberId, @Param("enabled") boolean enabled);
 }
