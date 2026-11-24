@@ -21,7 +21,7 @@
 | 구독 주소 | `/topic/inquiries/{inquiryId}` (연결은 커뮤니티와 같은 `/ws/websocket`) |
 | 구독 권한 | 작성자 또는 운영진. `InquiryStompSubscriptionAuthorizer`가 REST와 같은 `InquiryAccessPolicy`로 판정 |
 | `MESSAGE_CREATED` | `inquiryId`, `message`(REST 메시지 응답과 같은 필드) |
-| `STATUS_CHANGED` | `inquiryId`, `status`, `closedAt`, `lastMessageAt`. 운영진 첫 답변, 종료, 재오픈 때 |
+| `STATUS_CHANGED` | `inquiryId`, `status`, `closedAt`, `lastMessageAt`, `occurredAt`. 운영진 첫 답변, 종료, 재오픈 때. 이미 반영한 것보다 `occurredAt`이 오래되면 버린다 |
 | 보내지 않는 경우 | 같은 `clientMessageId` 재전송, 상태가 그대로인 메시지 |
 | 재연결 | 다시 구독한 뒤 REST 메시지 첫 페이지와 상세를 다시 불러 `messageId`로 합친다 |
 
