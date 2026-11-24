@@ -49,15 +49,24 @@ public class InquiryFixture extends FixtureSupport {
     }
 
     public FileMetadata 업로드된_파일(Long uploaderMemberId, FileCategory category) {
+        return 업로드된_파일(uploaderMemberId, category, "screenshot.png", "image/png");
+    }
+
+    public FileMetadata 업로드된_파일(
+        Long uploaderMemberId,
+        FileCategory category,
+        String originalFileName,
+        String contentType
+    ) {
         String fileId = UUID.randomUUID().toString();
         FileMetadata metadata = FileMetadata.builder()
             .fileId(fileId)
-            .originalFileName("screenshot.png")
+            .originalFileName(originalFileName)
             .category(category)
-            .contentType("image/png")
+            .contentType(contentType)
             .fileSize(1024L)
             .storageProvider(StorageProvider.AWS_S3)
-            .storageKey(category.getPathPrefix() + "/" + fileId + ".png")
+            .storageKey(category.getPathPrefix() + "/" + fileId + "-" + originalFileName)
             .uploadedMemberId(uploaderMemberId)
             .build();
         metadata.markAsUploaded();

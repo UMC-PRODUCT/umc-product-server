@@ -22,7 +22,9 @@ public enum InquiryErrorCode implements BaseCode {
     INVALID_INQUIRY_ATTACHMENT(HttpStatus.BAD_REQUEST, "INQUIRY-0009", "문의 첨부파일로 올린 파일만 첨부할 수 있어요. 파일을 다시 올려주세요."),
     INQUIRY_ATTACHMENT_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "INQUIRY-0010", "첨부파일은 5개까지 올릴 수 있어요."),
     INQUIRY_REQUEST_CONFLICT(HttpStatus.CONFLICT, "INQUIRY-0011", "같은 문의를 처리하고 있어요. 잠시 후 다시 시도해주세요."),
-    INQUIRY_CONTENT_REQUIRED(HttpStatus.BAD_REQUEST, "INQUIRY-0012", "문의 내용을 입력해주세요.");
+    INQUIRY_CONTENT_REQUIRED(HttpStatus.BAD_REQUEST, "INQUIRY-0012", "문의 내용을 입력해주세요."),
+    INQUIRY_ATTACHMENT_MIXED_TYPES(HttpStatus.BAD_REQUEST, "INQUIRY-0013", "사진과 파일은 나눠서 보내주세요."),
+    INVALID_INQUIRY_CURSOR(HttpStatus.BAD_REQUEST, "INQUIRY-0014", "목록 위치를 확인할 수 없어요. 목록을 새로고침해주세요.");
 
     private final HttpStatus httpStatus;
     private final String code;

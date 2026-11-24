@@ -127,7 +127,7 @@ public class Inquiry extends BaseEntity {
     }
 
     private static String normalizeTitle(String title) {
-        String trimmed = title == null ? "" : title.strip();
+        String trimmed = Objects.requireNonNull(title).strip();
         int length = trimmed.codePointCount(0, trimmed.length());
         if (length < 1 || length > MAX_TITLE_CODE_POINTS) {
             throw new InquiryDomainException(InquiryErrorCode.INVALID_INQUIRY_TITLE);

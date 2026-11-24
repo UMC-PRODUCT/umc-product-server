@@ -48,6 +48,9 @@ ADR-011은 문의 전용 메시지 테이블과 STOMP 구독을 전제로 했다
    플랫폼 구분을 넣지 않는다.
 7. 첨부는 `FileCategory.INQUIRY_ATTACHMENT`(`private/inquiry`)로 올린, 보낸 사람 본인의 업로드 완료 파일만 받는다.
    첨부 링크는 문의 메시지 응답에서만 만들어지므로 문의 접근 정책이 곧 첨부 열람 권한이다.
+   메시지 종류는 첨부 구성으로 정한다. 첨부가 없으면 `TEXT`, 모두 이미지면 `IMAGE`, 그 외는 `FILE`이고, Chat 공통
+   첨부 검증(`ValidateChatAttachmentsUseCase`)을 거친다. Chat 메시지 하나는 한 종류만 담으므로 이미지와 문서를 섞은
+   첨부는 400 `INQUIRY_ATTACHMENT_MIXED_TYPES`로 거절한다.
 8. 카테고리는 `inquiry_category` 테이블에 두고 관리 API 없이 SQL로 추가·비활성화한다.
 
 ## 후속

@@ -11,6 +11,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.umc.product.chat.adapter.out.persistence.ChatMessageJpaRepository;
+import com.umc.product.chat.domain.MessageContentType;
+import com.umc.product.chat.domain.exception.ChatErrorCode;
 import com.umc.product.global.event.adapter.out.persistence.EventOutboxJpaRepository;
 import com.umc.product.inquiry.application.port.in.command.CloseInquiryUseCase;
 import com.umc.product.inquiry.application.port.in.command.CreateInquiryUseCase;
@@ -59,6 +62,8 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
     ListMyInquiriesUseCase listMyInquiriesUseCase;
     @Autowired
     EventOutboxJpaRepository eventOutboxJpaRepository;
+    @Autowired
+    ChatMessageJpaRepository chatMessageJpaRepository;
     @Autowired
     MemberFixture memberFixture;
     @Autowired
@@ -251,6 +256,49 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
         assertThatThrownBy(() -> sendInquiryMessageUseCase.send(new SendInquiryMessageCommand(
             inquiryId, authorId, "프로필 사진", List.of(profileImage.getId()), UUID.randomUUID()
         ))).extracting("baseCode").isEqualTo(InquiryErrorCode.INVALID_INQUIRY_ATTACHMENT);
+    }
+
+    @Test
+    @DisplayName("첨부가 모두 이미지면 IMAGE, 문서면 FILE 메시지로 남기고, 둘을 섞으면 거절한다")
+    void 첨부_종류() {
+        // given
+        Long inquiryId = 문의_등록();
+        FileMetadata image = inquiryFixture.업로드된_파일(authorId, FileCategory.INQUIRY_ATTACHMENT);
+        FileMetadata pdf = inquiryFixture.업로드된_파일(
+            authorId, FileCategory.INQUIRY_ATTACHMENT, "manual.pdf", "application/pdf"
+        );
+
+        // when
+        InquiryMessageInfo imageMessage = 첨부_보내기(inquiryId, List.of(image.getId()));
+        InquiryMessageInfo fileMessage = 첨부_보내기(inquiryId, List.of(pdf.getId()));
+
+        // then
+        assertThat(chatMessageJpaRepository.findById(imageMessage.messageId()).orElseThrow().getContentType())
+            .isEqualTo(MessageContentType.IMAGE);
+        assertThat(chatMessageJpaRepository.findById(fileMessage.messageId()).orElseThrow().getContentType())
+            .isEqualTo(MessageContentType.FILE);
+        assertThatThrownBy(() -> 첨부_보내기(inquiryId, List.of(image.getId(), pdf.getId())))
+            .extracting("baseCode").isEqualTo(InquiryErrorCode.INQUIRY_ATTACHMENT_MIXED_TYPES);
+    }
+
+    @Test
+    @DisplayName("Chat 첨부 정책이 받지 않는 파일은 문의 첨부로 올렸어도 보낼 수 없다")
+    void 첨부_Chat_정책() {
+        // given
+        Long inquiryId = 문의_등록();
+        FileMetadata disguised = inquiryFixture.업로드된_파일(
+            authorId, FileCategory.INQUIRY_ATTACHMENT, "notes.pdf", "text/plain"
+        );
+
+        // when & then
+        assertThatThrownBy(() -> 첨부_보내기(inquiryId, List.of(disguised.getId())))
+            .extracting("baseCode").isEqualTo(ChatErrorCode.CHAT_MESSAGE_INVALID_FILE_TYPE);
+    }
+
+    private InquiryMessageInfo 첨부_보내기(Long inquiryId, List<String> fileMetadataIds) {
+        return sendInquiryMessageUseCase.send(new SendInquiryMessageCommand(
+            inquiryId, authorId, null, fileMetadataIds, UUID.randomUUID()
+        ));
     }
 
     private Long 문의_등록() {
