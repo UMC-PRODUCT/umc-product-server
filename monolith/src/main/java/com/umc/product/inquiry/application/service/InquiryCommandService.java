@@ -77,16 +77,6 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
         Long chatRoomId = createChatRoomUseCase.create(
             CreateChatRoomCommand.of(command.authorMemberId(), ChatRoomReadScope.PUBLIC)
         ).roomId();
-        Inquiry inquiry = saveInquiryPort.save(Inquiry.create(
-            command.authorMemberId(),
-            category.getId(),
-            command.targetTeam(),
-            command.title(),
-            chatRoomId,
-            command.clientRequestId(),
-            clock.instant()
-        ));
-
         ChatMessageMutationResult first = createChatMessageUseCase.create(
             messagePolicy.openingMessage(
                 chatRoomId,
@@ -97,9 +87,15 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
             ),
             ATTACHMENTS_VALIDATED_BY_POLICY
         );
-        inquiry.recordMessage(InquiryParticipant.AUTHOR, first.message().createdAt());
-        saveInquiryPort.save(inquiry);
-        return inquiry.getId();
+        return saveInquiryPort.create(Inquiry.create(
+            command.authorMemberId(),
+            category.getId(),
+            command.targetTeam(),
+            command.title(),
+            chatRoomId,
+            command.clientRequestId(),
+            first.message().createdAt()
+        )).getId();
     }
 
     @Override

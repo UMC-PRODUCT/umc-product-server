@@ -84,7 +84,7 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("같은 clientRequestId로 다시 등록하면 새로 만들지 않고 기존 문의를 돌려준다")
+    @DisplayName("등록은 첫 메시지 시각으로 문의를 만들고, 같은 clientRequestId로 다시 등록하면 기존 문의를 돌려준다")
     void 등록_멱등() {
         // given
         UUID clientRequestId = UUID.randomUUID();
@@ -101,7 +101,9 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
                 assertThat(message.content()).isEqualTo("로그인 버튼을 눌러도 반응이 없어요");
                 assertThat(message.senderType()).isEqualTo(InquiryParticipant.AUTHOR);
             });
-        assertThat(상세(first, authorId).status()).isEqualTo(InquiryStatus.RECEIVED);
+        InquiryDetailInfo detail = 상세(first, authorId);
+        assertThat(detail.status()).isEqualTo(InquiryStatus.RECEIVED);
+        assertThat(detail.lastMessageAt()).isEqualTo(messages.messages().get(0).createdAt());
     }
 
     @Test

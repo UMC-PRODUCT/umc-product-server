@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class InquiryPersistenceAdapter implements LoadInquiryPort, SaveInquiryPort {
+
+    private static final String AUTHOR_CLIENT_REQUEST_CONSTRAINT = "uq_inquiry_author_client_request";
 
     private final InquiryJpaRepository inquiryJpaRepository;
     private final InquiryQueryRepository inquiryQueryRepository;
@@ -45,11 +48,29 @@ public class InquiryPersistenceAdapter implements LoadInquiryPort, SaveInquiryPo
     }
 
     @Override
-    public Inquiry save(Inquiry inquiry) {
+    public Inquiry create(Inquiry inquiry) {
         try {
             return inquiryJpaRepository.saveAndFlush(inquiry);
         } catch (DataIntegrityViolationException exception) {
-            throw new InquiryDomainException(InquiryErrorCode.INQUIRY_REQUEST_CONFLICT, exception);
+            if (violates(exception, AUTHOR_CLIENT_REQUEST_CONSTRAINT)) {
+                throw new InquiryDomainException(InquiryErrorCode.INQUIRY_REQUEST_CONFLICT, exception);
+            }
+            throw exception;
         }
+    }
+
+    @Override
+    public Inquiry save(Inquiry inquiry) {
+        return inquiryJpaRepository.save(inquiry);
+    }
+
+    private static boolean violates(DataIntegrityViolationException exception, String constraintName) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (cause instanceof ConstraintViolationException violation
+                && constraintName.equalsIgnoreCase(violation.getConstraintName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
