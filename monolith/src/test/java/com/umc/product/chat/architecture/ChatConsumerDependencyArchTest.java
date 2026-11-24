@@ -17,9 +17,6 @@ import com.umc.product.chat.application.port.in.query.GetChatMessageRoomUseCase;
 import com.umc.product.chat.application.port.in.query.GetChatMessageUseCase;
 import com.umc.product.chat.application.port.in.query.GetChatMessagesUseCase;
 
-/**
- * Chat 엔진과 그 소비 도메인(Chat 방을 자기 리소스로 감싸는 도메인) 사이의 경계. 새 소비 도메인은 {@code CONSUMERS}에 추가한다.
- */
 @DisplayName("Chat과 소비 도메인의 의존 경계")
 class ChatConsumerDependencyArchTest {
 
@@ -65,8 +62,6 @@ class ChatConsumerDependencyArchTest {
             .check(CLASSES);
     }
 
-    // 문의 방은 Chat 조회 범위 PUBLIC 이라 엔진 조회만으로는 막히지 않는다. 메시지 조회는 리소스 권한을 확인하는
-    // 소비 도메인만 부를 수 있어야 한다.
     @Test
     @DisplayName("Chat 메시지 조회 UseCase는 Chat과 소비 도메인만 참조한다")
     void onlyConsumersReadChatMessages() {

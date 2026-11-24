@@ -43,7 +43,6 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryMessageUseCase, CloseInquiryUseCase {
 
-    // InquiryMessagePolicy 가 Chat 첨부 검증까지 마친 명령만 만들므로 엔진 안에서 다시 검사하지 않는다.
     private static final ChatMessageAttachmentValidation ATTACHMENTS_VALIDATED_BY_POLICY = command -> {
     };
 
@@ -145,8 +144,7 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
             .orElseThrow(() -> new InquiryDomainException(InquiryErrorCode.INQUIRY_NOT_FOUND));
     }
 
-    // 문의 행을 잠근 뒤에만 부르므로 같은 방에 대한 동시 join 은 없다. Chat 엔진의 ALREADY_EXISTS 를 잡아 넘기면
-    // 바깥 트랜잭션이 rollback-only 가 되므로, 예외를 받지 않도록 먼저 멤버인지 확인한다.
+    // Chat 엔진의 ALREADY_EXISTS 를 잡아 넘기면 바깥 트랜잭션이 rollback-only 가 되므로, 예외를 받지 않도록 먼저 멤버인지 확인한다.
     private void joinIfAbsent(Long chatRoomId, Long memberId) {
         if (!checkChatRoomAccessUseCase.hasChatRoomAccess(memberId, chatRoomId)) {
             joinChatRoomUseCase.joinChatRoom(new JoinChatRoomCommand(chatRoomId, memberId));
