@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -51,9 +52,17 @@ public class NoticeReadAudienceService {
     private final GetChapterUseCase getChapterUseCase;
 
     public List<Long> listUnreadRecipientMemberIds(Long noticeId, Set<Long> requestedChallengerIds) {
+        return listUnreadRecipientMemberIds(noticeId, requestedChallengerIds::contains);
+    }
+
+    public List<Long> listAllUnreadRecipientMemberIds(Long noticeId) {
+        return listUnreadRecipientMemberIds(noticeId, id -> true);
+    }
+
+    private List<Long> listUnreadRecipientMemberIds(Long noticeId, Predicate<Long> includesChallenger) {
         return listReaders(noticeId).stream()
             .filter(reader -> reader.readId() == null)
-            .filter(reader -> requestedChallengerIds.contains(reader.challenger().challengerId()))
+            .filter(reader -> includesChallenger.test(reader.challenger().challengerId()))
             .map(reader -> reader.challenger().memberId())
             .toList();
     }

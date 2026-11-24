@@ -1,6 +1,7 @@
 package com.umc.product.notice.adapter.out.persistence;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +76,11 @@ public class NoticePersistenceAdapter implements
     @Override
     public void updateUpdatedAt(Long noticeId, Instant updatedAt) {
         noticeJpaRepository.updateUpdatedAt(noticeId, updatedAt);
+    }
+
+    @Override
+    public boolean tryReserveReminder(Long noticeId, LocalDate reminderDate) {
+        return noticeJpaRepository.reserveReminder(noticeId, reminderDate) == 1;
     }
 
     @Override

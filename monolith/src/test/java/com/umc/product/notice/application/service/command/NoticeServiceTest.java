@@ -3,10 +3,15 @@ package com.umc.product.notice.application.service.command;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -26,20 +31,26 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourcePermission;
+import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
+import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
+import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.ManageNoticeTargetPort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
 import com.umc.product.notice.application.service.query.NoticeAudienceResolver;
+import com.umc.product.notice.application.service.query.NoticeReadAudienceService;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.enums.NoticeTab;
@@ -70,7 +81,13 @@ class NoticeServiceTest {
     @Mock
     GetChallengerRoleUseCase getChallengerRoleUseCase;
     @Mock
-    GetChallengerUseCase getChallengerUseCase;
+    CheckPermissionUseCase checkPermissionUseCase;
+    @Mock
+    GetNoticeTargetUseCase getNoticeTargetUseCase;
+    @Mock
+    NoticeReadAudienceService noticeReadAudienceService;
+    @Mock
+    Clock clock;
     @Mock
     ManageNoticeContentUseCase manageNoticeContentUseCase;
     @Mock
@@ -84,24 +101,119 @@ class NoticeServiceTest {
     NoticeService sut;
 
     @Test
-    @DisplayName("재알림에 공지 상세 딥링크와 변환된 수신자를 포함한다")
-    void 재알림_딥링크_포함() {
+    @DisplayName("요청한 챌린저 ID 중 공지 게시 대상이며 아직 읽지 않은 회원에게만 상세 딥링크를 보낸다")
+    void 재알림_미확인_게시_대상에게만_발송() {
         // Given
-        Notice notice = Notice.create("제목", "내용", AUTHOR_MEMBER_ID, false, false);
-        ReflectionTestUtils.setField(notice, "id", 42L);
-        when(loadNoticePort.findNoticeById(42L)).thenReturn(Optional.of(notice));
-        when(getChallengerUseCase.getAllByIds(Set.of(7L)))
-            .thenReturn(List.of(ChallengerInfo.builder().challengerId(7L).memberId(70L).build()));
+        NoticeTargetInfo target = 재알림_대상_준비(NoticeTab.CHALLENGER);
+        when(noticeAudienceResolver.resolve(target)).thenReturn(List.of(70L, 80L));
+        when(noticeReadAudienceService.listUnreadRecipientMemberIds(42L, Set.of(7L, 8L, 9L)))
+            .thenReturn(List.of(70L, 90L));
 
         // When
-        sut.remindNotice(new SendNoticeReminderCommand(AUTHOR_MEMBER_ID, 42L, List.of(7L)));
+        sut.remindNotice(new SendNoticeReminderCommand(AUTHOR_MEMBER_ID, 42L, List.of(7L, 8L, 9L, 7L)));
 
         // Then
+        verify(checkPermissionUseCase).checkOrThrow(AUTHOR_MEMBER_ID,
+            ResourcePermission.of(ResourceType.NOTICE, 42L, PermissionType.EDIT));
         ArgumentCaptor<RequestFcmNotificationCommand> captor =
             ArgumentCaptor.forClass(RequestFcmNotificationCommand.class);
         verify(requestFcmNotificationUseCase).request(captor.capture());
         assertThat(captor.getValue().deepLink()).isEqualTo("umc://notice/42");
         assertThat(captor.getValue().memberIds()).containsExactly(70L);
+    }
+
+    @Test
+    @DisplayName("공지 수정 권한이 없는 회원의 재알림 요청은 수신자를 조회하기 전에 거부한다")
+    void 재알림_발송_권한_없음() {
+        공지_조회_준비();
+        doThrow(new AuthorizationDomainException(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED))
+            .when(checkPermissionUseCase).checkOrThrow(200L,
+                ResourcePermission.of(ResourceType.NOTICE, 42L, PermissionType.EDIT));
+
+        assertThatThrownBy(() -> sut.remindNotice(new SendNoticeReminderCommand(200L, 42L, List.of(7L))))
+            .isInstanceOf(AuthorizationDomainException.class);
+        verifyNoInteractions(getNoticeTargetUseCase, noticeReadAudienceService, saveNoticePort,
+            requestFcmNotificationUseCase);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = NoticeTab.class, names = "CHALLENGER", mode = EnumSource.Mode.EXCLUDE)
+    @DisplayName("작성자도 운영진 공지 재알림을 보낼 수 없다")
+    void 운영진_공지_재알림_차단(NoticeTab tab) {
+        재알림_대상_준비(tab);
+
+        assertThatThrownBy(() -> sut.remindNotice(new SendNoticeReminderCommand(AUTHOR_MEMBER_ID, 42L, List.of(7L))))
+            .isInstanceOf(NoticeDomainException.class)
+            .extracting("baseCode").isEqualTo(NoticeErrorCode.INVALID_NOTICE_STATUS_FOR_REMINDER);
+        verifyNoInteractions(noticeAudienceResolver, noticeReadAudienceService, saveNoticePort,
+            requestFcmNotificationUseCase);
+    }
+
+    @Test
+    @DisplayName("요청한 회원 중 미확인 게시 대상이 없으면 일일 횟수를 차감하지 않고 거부한다")
+    void 재알림_실제_대상_없음() {
+        NoticeTargetInfo target = 재알림_대상_준비(NoticeTab.CHALLENGER);
+        when(noticeAudienceResolver.resolve(target)).thenReturn(List.of(70L));
+        when(noticeReadAudienceService.listUnreadRecipientMemberIds(42L, Set.of(7L, 8L))).thenReturn(List.of(80L));
+
+        SendNoticeReminderCommand command = new SendNoticeReminderCommand(AUTHOR_MEMBER_ID, 42L, List.of(7L, 8L));
+        assertThatThrownBy(() -> sut.remindNotice(command))
+            .isInstanceOf(NoticeDomainException.class)
+            .extracting("baseCode").isEqualTo(NoticeErrorCode.NO_UNREAD_REMINDER_TARGET);
+
+        verifyNoInteractions(saveNoticePort, requestFcmNotificationUseCase);
+    }
+
+    @ParameterizedTest
+    @MethodSource("한국_날짜_자정_경계")
+    @DisplayName("같은 한국 날짜에 전체 재알림을 이미 보낸 공지는 다시 발송하지 않는다")
+    void 재알림_일일_한도(Instant now, LocalDate koreanDate) {
+        NoticeTargetInfo target = 재알림_대상_준비(NoticeTab.CHALLENGER);
+        when(noticeAudienceResolver.resolve(target)).thenReturn(List.of(70L));
+        when(noticeReadAudienceService.listAllUnreadRecipientMemberIds(42L)).thenReturn(List.of(70L));
+        when(clock.instant()).thenReturn(now);
+        when(saveNoticePort.tryReserveReminder(42L, koreanDate)).thenReturn(false);
+
+        assertThatThrownBy(() -> sut.remindAllUnread(42L, AUTHOR_MEMBER_ID))
+            .isInstanceOf(NoticeDomainException.class)
+            .extracting("baseCode").isEqualTo(NoticeErrorCode.REMINDER_DAILY_LIMIT_REACHED);
+        verifyNoInteractions(requestFcmNotificationUseCase);
+    }
+
+    private static Stream<Arguments> 한국_날짜_자정_경계() {
+        return Stream.of(
+            Arguments.of(Instant.parse("2026-11-23T14:59:59Z"), LocalDate.of(2026, 11, 23)),
+            Arguments.of(Instant.parse("2026-11-23T15:00:00Z"), LocalDate.of(2026, 11, 24)));
+    }
+
+    @Test
+    @DisplayName("선택 재알림은 권한과 대상을 검증하고 일일 한도를 사용하지 않는다")
+    void 기존_재알림_요청은_반복_발송할_수_있다() {
+        NoticeTargetInfo target = 재알림_대상_준비(NoticeTab.CHALLENGER);
+        when(noticeAudienceResolver.resolve(target)).thenReturn(List.of(70L));
+        when(noticeReadAudienceService.listUnreadRecipientMemberIds(42L, Set.of(7L))).thenReturn(List.of(70L));
+        SendNoticeReminderCommand command = new SendNoticeReminderCommand(AUTHOR_MEMBER_ID, 42L, List.of(7L));
+
+        sut.remindNotice(command);
+        sut.remindNotice(command);
+
+        verify(checkPermissionUseCase, times(2)).checkOrThrow(AUTHOR_MEMBER_ID,
+            ResourcePermission.of(ResourceType.NOTICE, 42L, PermissionType.EDIT));
+        verify(requestFcmNotificationUseCase, times(2)).request(any());
+        verifyNoInteractions(saveNoticePort, clock);
+    }
+
+    private NoticeTargetInfo 재알림_대상_준비(NoticeTab tab) {
+        공지_조회_준비();
+        NoticeTargetInfo target = new NoticeTargetInfo(GISU_ID, null, null, List.of(), tab);
+        when(getNoticeTargetUseCase.findByNoticeId(42L)).thenReturn(target);
+        return target;
+    }
+
+    private void 공지_조회_준비() {
+        Notice notice = Notice.create("제목", "내용", AUTHOR_MEMBER_ID, false, false);
+        ReflectionTestUtils.setField(notice, "id", 42L);
+        when(loadNoticePort.findNoticeById(42L)).thenReturn(Optional.of(notice));
     }
 
     @Test
