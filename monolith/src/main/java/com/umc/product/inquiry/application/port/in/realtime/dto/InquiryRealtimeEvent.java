@@ -33,18 +33,20 @@ public sealed interface InquiryRealtimeEvent {
         }
     }
 
-    @JsonPropertyOrder({"type", "inquiryId", "status", "closedAt", "lastMessageAt"})
+    @JsonPropertyOrder({"type", "inquiryId", "status", "closedAt", "lastMessageAt", "occurredAt"})
     record StatusChanged(
         Long inquiryId,
         InquiryStatus status,
         Instant closedAt,
-        Instant lastMessageAt
+        Instant lastMessageAt,
+        Instant occurredAt
     ) implements InquiryRealtimeEvent {
 
         public StatusChanged {
             Objects.requireNonNull(inquiryId, "inquiryId");
             Objects.requireNonNull(status, "status");
             Objects.requireNonNull(lastMessageAt, "lastMessageAt");
+            Objects.requireNonNull(occurredAt, "occurredAt");
         }
 
         @Override

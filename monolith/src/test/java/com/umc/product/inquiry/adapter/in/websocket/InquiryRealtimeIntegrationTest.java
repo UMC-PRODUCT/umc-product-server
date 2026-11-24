@@ -144,6 +144,7 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
         assertThat(status.get("status").asText()).isEqualTo("IN_PROGRESS");
         assertThat(status.get("closedAt").isNull()).isTrue();
         assertThat(status.get("lastMessageAt").asText()).isEqualTo(reply.createdAt().toString());
+        assertThat(status.hasNonNull("occurredAt")).isTrue();
     }
 
     @Test

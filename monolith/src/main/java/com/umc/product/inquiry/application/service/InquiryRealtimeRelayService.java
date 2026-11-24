@@ -36,7 +36,8 @@ public class InquiryRealtimeRelayService implements RelayInquiryRealtimeEventUse
                 event.inquiryId(),
                 event.status(),
                 event.closedAt(),
-                event.lastMessageAt()
+                event.lastMessageAt(),
+                event.occurredAt()
             )
         );
     }

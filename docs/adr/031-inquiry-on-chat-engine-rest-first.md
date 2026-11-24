@@ -58,16 +58,21 @@ ADR-011은 문의 전용 메시지 테이블과 STOMP 구독을 전제로 했다
    (`POST /api/v1/inquiries/{inquiryId}/messages`, `clientMessageId` 멱등)를 그대로 쓰고 STOMP SEND 경로는 만들지 않는다.
    - 주소는 문의마다 하나인 `/topic/inquiries/{inquiryId}`다. 서버가 받는 사람을 계산하지 않고, 문의 화면을 연
      작성자·운영진이 그 주소를 구독한다. Community의 per-member fan-out은 쓰지 않는다. 문의는 받는 사람이 작성자와
-     운영진뿐이고 운영진 목록이 바뀌어도 구독 시점 권한으로 충분하기 때문이다.
+     운영진뿐이기 때문이다. 권한은 구독할 때 한 번만 본다. 운영진 권한을 회수해도 이미 열린 구독은 연결이 끊길
+     때까지(상한 없음) 그 문의의 새 이벤트를 받는다. 회수 전에 REST로 볼 수 있던 문의라 남겨 두고, 토큰 만료 때 세션을
+     닫는 일은 공통 websocket 과제로 따로 다룬다.
    - 구독 권한은 `InquiryStompSubscriptionAuthorizer`가 3번 열람 정책(`InquiryAccessPolicy.canAccess`)으로 판정한다.
      REST와 같은 정책 한 벌을 쓴다. 숫자가 아닌 id, 없는 문의, 제3자는 거절한다.
    - 한 주소로 두 종류가 오고 `type`으로 구분한다. `MESSAGE_CREATED`는 `inquiryId`와 REST 메시지 응답과 같은 모양의
-     `message`를 담는다. `STATUS_CHANGED`는 `inquiryId`, `status`, `closedAt`, `lastMessageAt`을 담고 운영진 첫 답변,
+     `message`를 담는다. `STATUS_CHANGED`는 `inquiryId`, `status`, `closedAt`, `lastMessageAt`, `occurredAt`을 담고 운영진 첫 답변,
      종료, 재오픈 때 보낸다. 상태가 그대로인 메시지에는 보내지 않는다. dedup된 재전송에는 아무것도 보내지 않는다.
    - 메시지는 Chat의 `chat.message.created`를, 상태는 `inquiry.status.changed`를 outbox에 남기고 커밋 뒤 REALTIME
      그룹에서 보낸다. 상태 이벤트는 커밋 시점 스냅숏을 담으므로 relay 때 문의를 다시 읽지 않는다. 문의 방이 아닌 Chat
      이벤트는 무시한다. 전달은 at-least-once다. 같은 `messageId`가 두 번 올 수 있고, 메시지와 상태 이벤트의 도착 순서는
-     보장하지 않는다.
+     보장하지 않는다. 클라이언트는 이미 반영한 것보다 `occurredAt`이 오래된 `STATUS_CHANGED`를 버린다.
+     `occurredAt`은 문의 행을 잠근 트랜잭션에서 정하므로 문의 하나 안에서는 커밋 순서대로 늘어난다.
+   - `chat.message.created`는 Community와 문의 리스너가 함께 받는다. 한쪽이 실패하면 outbox 행 전체가 다시 시도되어
+     다른 쪽도 다시 보낼 수 있다. 둘 다 at-least-once라 중복 전달로 끝난다.
    - 외부 RabbitMQ relay는 `/topic` 이름에 `/`를 받지 않으므로 `RelayDestinationCodec`이 broker 쪽에서
      `/topic/inquiries.{inquiryId}`로 바꾼다. 클라이언트는 항상 `/topic/inquiries/{inquiryId}`를 쓴다.
    - 연결이 끊긴 동안의 이벤트는 다시 보내지 않는다. 클라이언트는 다시 연결해 구독한 뒤 REST 메시지 첫 페이지와 상세를
