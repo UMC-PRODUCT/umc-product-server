@@ -17,11 +17,14 @@ public class InquiryAccessPolicy {
     private final CheckChallengerAuthorityUseCase checkChallengerAuthorityUseCase;
 
     public InquiryParticipant requireParticipant(Inquiry inquiry, Long memberId) {
-        InquiryParticipant participant = inquiry.participantOf(memberId);
-        if (participant == InquiryParticipant.STAFF && !isStaff(memberId)) {
+        if (!canAccess(inquiry, memberId)) {
             throw new InquiryDomainException(InquiryErrorCode.INQUIRY_ACCESS_DENIED);
         }
-        return participant;
+        return inquiry.participantOf(memberId);
+    }
+
+    public boolean canAccess(Inquiry inquiry, Long memberId) {
+        return inquiry.participantOf(memberId) == InquiryParticipant.AUTHOR || isStaff(memberId);
     }
 
     public boolean canClose(Inquiry inquiry, Long memberId, InquiryParticipant participant) {
