@@ -38,6 +38,11 @@ public class InquiryPersistenceAdapter implements LoadInquiryPort, SaveInquiryPo
     }
 
     @Override
+    public Optional<Inquiry> findByChatRoomId(Long chatRoomId) {
+        return inquiryJpaRepository.findByChatRoomId(chatRoomId);
+    }
+
+    @Override
     public Optional<Inquiry> findByAuthorMemberIdAndClientRequestId(Long authorMemberId, UUID clientRequestId) {
         return inquiryJpaRepository.findByAuthorMemberIdAndClientRequestId(authorMemberId, clientRequestId);
     }
