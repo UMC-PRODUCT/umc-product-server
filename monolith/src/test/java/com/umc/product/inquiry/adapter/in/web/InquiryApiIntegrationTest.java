@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.umc.product.maintenance.application.port.in.command.RefreshMaintenanceStateUseCase;
+import com.umc.product.member.domain.MemberSystemRoleType;
 import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.support.fixture.InquiryFixture;
 import com.umc.product.support.fixture.MemberFixture;
@@ -44,7 +45,7 @@ class InquiryApiIntegrationTest extends IntegrationTestSupport {
         Long authorId = memberFixture.일반("author").getId();
         Long staffId = memberFixture.일반("staff").getId();
         Long strangerId = memberFixture.일반("stranger").getId();
-        inquiryFixture.운영진으로_지정(staffId);
+        memberFixture.시스템_역할_부여(staffId, MemberSystemRoleType.UMC_PRODUCT);
         categoryId = inquiryFixture.카테고리("UMC 서비스", 1).getId();
         inquiryFixture.카테고리("기타", 2);
         토큰(AUTHOR, authorId);

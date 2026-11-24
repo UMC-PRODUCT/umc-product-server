@@ -6,31 +6,25 @@ import org.springframework.stereotype.Component;
 
 import com.umc.product.inquiry.adapter.out.persistence.InquiryCategoryJpaRepository;
 import com.umc.product.inquiry.domain.InquiryCategory;
-import com.umc.product.member.adapter.out.persistence.MemberSystemRoleJpaRepository;
-import com.umc.product.member.domain.MemberSystemRole;
-import com.umc.product.member.domain.MemberSystemRoleType;
 import com.umc.product.storage.application.port.out.SaveFileMetadataPort;
 import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
 
 /**
- * 문의 테스트 데이터. 카테고리와 시스템 역할은 운영에서 SQL로만 넣으므로 저장 Port 가 없어 JPA repository 로 저장한다.
+ * 문의 테스트 데이터. 카테고리는 운영에서 SQL로만 넣으므로 저장 Port 가 없어 JPA repository 로 저장한다.
  */
 @Component
 public class InquiryFixture extends FixtureSupport {
 
     private final InquiryCategoryJpaRepository inquiryCategoryJpaRepository;
-    private final MemberSystemRoleJpaRepository memberSystemRoleJpaRepository;
     private final SaveFileMetadataPort saveFileMetadataPort;
 
     public InquiryFixture(
         InquiryCategoryJpaRepository inquiryCategoryJpaRepository,
-        MemberSystemRoleJpaRepository memberSystemRoleJpaRepository,
         SaveFileMetadataPort saveFileMetadataPort
     ) {
         this.inquiryCategoryJpaRepository = inquiryCategoryJpaRepository;
-        this.memberSystemRoleJpaRepository = memberSystemRoleJpaRepository;
         this.saveFileMetadataPort = saveFileMetadataPort;
     }
 
@@ -42,10 +36,6 @@ public class InquiryFixture extends FixtureSupport {
             .filter(category -> category.getName().equals(name))
             .findFirst()
             .orElseGet(() -> inquiryCategoryJpaRepository.save(InquiryCategory.create(name, displayOrder)));
-    }
-
-    public void 운영진으로_지정(Long memberId) {
-        memberSystemRoleJpaRepository.save(MemberSystemRole.create(memberId, MemberSystemRoleType.UMC_PRODUCT));
     }
 
     public FileMetadata 업로드된_파일(Long uploaderMemberId, FileCategory category) {

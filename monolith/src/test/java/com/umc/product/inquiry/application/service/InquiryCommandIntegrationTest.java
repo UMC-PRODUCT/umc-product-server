@@ -38,6 +38,7 @@ import com.umc.product.inquiry.domain.enums.InquiryStatusGroup;
 import com.umc.product.inquiry.domain.enums.InquiryTeam;
 import com.umc.product.inquiry.domain.exception.InquiryDomainException;
 import com.umc.product.inquiry.domain.exception.InquiryErrorCode;
+import com.umc.product.member.domain.MemberSystemRoleType;
 import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.support.IntegrationTestSupport;
@@ -79,7 +80,7 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
         authorId = memberFixture.일반("author").getId();
         staffId = memberFixture.일반("staff").getId();
         strangerId = memberFixture.일반("stranger").getId();
-        inquiryFixture.운영진으로_지정(staffId);
+        memberFixture.시스템_역할_부여(staffId, MemberSystemRoleType.UMC_PRODUCT);
         categoryId = inquiryFixture.카테고리("UMC 서비스", 1).getId();
     }
 
