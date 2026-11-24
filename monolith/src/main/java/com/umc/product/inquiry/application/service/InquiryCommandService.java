@@ -1,13 +1,12 @@
 package com.umc.product.inquiry.application.service;
 
 import java.time.Clock;
-import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.umc.product.chat.application.port.in.command.ChatMessageAttachmentValidation;
 import com.umc.product.chat.application.port.in.command.CreateChatMessageUseCase;
 import com.umc.product.chat.application.port.in.command.CreateChatRoomUseCase;
 import com.umc.product.chat.application.port.in.command.JoinChatRoomUseCase;
@@ -17,7 +16,6 @@ import com.umc.product.chat.application.port.in.command.dto.CreateChatRoomComman
 import com.umc.product.chat.application.port.in.command.dto.JoinChatRoomCommand;
 import com.umc.product.chat.application.port.in.query.CheckChatRoomAccessUseCase;
 import com.umc.product.chat.domain.ChatRoomReadScope;
-import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.inquiry.application.event.InquiryStaffRepliedEvent;
 import com.umc.product.inquiry.application.policy.InquiryAccessPolicy;
@@ -46,6 +44,10 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryMessageUseCase, CloseInquiryUseCase {
 
+    // InquiryMessagePolicy 가 Chat 첨부 검증까지 마친 명령만 만들므로 엔진 안에서 다시 검사하지 않는다.
+    private static final ChatMessageAttachmentValidation ATTACHMENTS_VALIDATED_BY_POLICY = command -> {
+    };
+
     private final LoadInquiryPort loadInquiryPort;
     private final SaveInquiryPort saveInquiryPort;
     private final LoadInquiryCategoryPort loadInquiryCategoryPort;
@@ -72,10 +74,6 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
         InquiryCategory category = loadInquiryCategoryPort.findById(command.categoryId())
             .filter(InquiryCategory::isActive)
             .orElseThrow(() -> new InquiryDomainException(InquiryErrorCode.INQUIRY_CATEGORY_NOT_FOUND));
-        MessageContentType contentType = messagePolicy.contentTypeOf(
-            command.content(), command.fileMetadataIds(), true
-        );
-
         Long chatRoomId = createChatRoomUseCase.create(
             CreateChatRoomCommand.of(command.authorMemberId(), ChatRoomReadScope.PUBLIC)
         ).roomId();
@@ -90,9 +88,14 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
         ));
 
         ChatMessageMutationResult first = createChatMessageUseCase.create(
-            chatMessage(chatRoomId, command.authorMemberId(), command.clientRequestId(), contentType,
-                command.content(), command.fileMetadataIds()),
-            messagePolicy::validateAttachments
+            messagePolicy.openingMessage(
+                chatRoomId,
+                command.authorMemberId(),
+                command.clientRequestId(),
+                command.content(),
+                command.fileMetadataIds()
+            ),
+            ATTACHMENTS_VALIDATED_BY_POLICY
         );
         inquiry.recordMessage(InquiryParticipant.AUTHOR, first.message().createdAt());
         saveInquiryPort.save(inquiry);
@@ -103,15 +106,18 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
     public InquiryMessageInfo send(SendInquiryMessageCommand command) {
         Inquiry inquiry = loadLockedInquiry(command.inquiryId());
         InquiryAccess access = accessPolicy.resolve(inquiry, command.senderMemberId());
-        MessageContentType contentType = messagePolicy.contentTypeOf(
-            command.content(), command.fileMetadataIds(), false
+        CreateChatMessageCommand chatMessage = messagePolicy.reply(
+            inquiry.getChatRoomId(),
+            command.senderMemberId(),
+            command.clientMessageId(),
+            command.content(),
+            command.fileMetadataIds()
         );
         joinIfAbsent(inquiry.getChatRoomId(), command.senderMemberId());
 
         ChatMessageMutationResult result = createChatMessageUseCase.create(
-            chatMessage(inquiry.getChatRoomId(), command.senderMemberId(), command.clientMessageId(), contentType,
-                command.content(), command.fileMetadataIds()),
-            messagePolicy::validateAttachments
+            chatMessage,
+            ATTACHMENTS_VALIDATED_BY_POLICY
         );
         InquiryMessageInfo message = messageAssembler.assemble(inquiry, result.message());
         if (result.deduplicated()) {
@@ -150,26 +156,5 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
         if (!checkChatRoomAccessUseCase.hasChatRoomAccess(memberId, chatRoomId)) {
             joinChatRoomUseCase.joinChatRoom(new JoinChatRoomCommand(chatRoomId, memberId));
         }
-    }
-
-    private CreateChatMessageCommand chatMessage(
-        Long chatRoomId,
-        Long senderMemberId,
-        UUID clientMessageId,
-        MessageContentType contentType,
-        String content,
-        List<String> fileMetadataIds
-    ) {
-        String body = content == null || content.isBlank() ? null : content;
-        return new CreateChatMessageCommand(
-            chatRoomId,
-            senderMemberId,
-            clientMessageId,
-            contentType,
-            body,
-            fileMetadataIds,
-            List.of(),
-            null
-        );
     }
 }
