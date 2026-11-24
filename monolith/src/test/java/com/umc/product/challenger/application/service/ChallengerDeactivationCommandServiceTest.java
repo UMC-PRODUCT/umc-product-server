@@ -38,6 +38,7 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
+import com.umc.product.member.application.port.in.command.LockMemberUseCase;
 import com.umc.product.storage.application.port.in.command.LockStoredFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileMetadataInfo;
 import com.umc.product.storage.domain.enums.FileCategory;
@@ -59,6 +60,9 @@ class ChallengerDeactivationCommandServiceTest {
 
     @Mock
     SaveChallengerDeactivationPort saveChallengerDeactivationPort;
+
+    @Mock
+    LockMemberUseCase lockMemberUseCase;
 
     @Mock
     LockStoredFileUseCase getFileUseCase;

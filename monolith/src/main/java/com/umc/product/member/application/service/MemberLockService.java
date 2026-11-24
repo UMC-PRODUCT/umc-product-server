@@ -23,4 +23,9 @@ public class MemberLockService implements LockMemberUseCase {
         loadMemberPort.findByIdForUpdate(memberId)
             .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
+
+    @Override
+    public void lockByIdIfExists(Long memberId) {
+        loadMemberPort.findByIdForUpdate(memberId);
+    }
 }

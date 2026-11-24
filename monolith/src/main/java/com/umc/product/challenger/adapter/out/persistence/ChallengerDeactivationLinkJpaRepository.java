@@ -15,6 +15,14 @@ public interface ChallengerDeactivationLinkJpaRepository extends JpaRepository<C
 
     boolean existsByLinkInAndAddedHistoryDeactivationId(List<String> links, Long deactivationId);
 
+    @Query("""
+        select link.link
+        from ChallengerDeactivationLink link
+        where link.addedHistory.deactivation.id = :deactivationId
+        order by link.displayOrder, link.id
+        """)
+    List<String> findOrderedLinksByDeactivationId(@Param("deactivationId") Long deactivationId);
+
     @Modifying
     @Query("""
         delete from ChallengerDeactivationLink link

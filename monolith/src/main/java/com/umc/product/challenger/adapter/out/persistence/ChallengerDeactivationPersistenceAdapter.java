@@ -2,6 +2,8 @@ package com.umc.product.challenger.adapter.out.persistence;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +38,17 @@ public class ChallengerDeactivationPersistenceAdapter
     }
 
     @Override
+    public boolean existsByMemberId(Long memberId) {
+        return deactivationRepository.existsByMemberId(memberId);
+    }
+
+    @Override
+    public Optional<ChallengerDeactivation> findLatestByMemberIdsAfter(Set<Long> memberIds, Instant recordedAfter) {
+        return deactivationRepository.findByMemberIdsAfter(memberIds, recordedAfter, PageRequest.of(0, 1))
+            .stream().findFirst();
+    }
+
+    @Override
     public ChallengerDeactivation getByChallengerIdForUpdate(Long challengerId) {
         return deactivationRepository.findByChallengerId(challengerId)
             .orElseThrow(() -> new ChallengerDomainException(
@@ -49,6 +62,26 @@ public class ChallengerDeactivationPersistenceAdapter
             .orElseThrow(() -> new ChallengerDomainException(
                 ChallengerErrorCode.CHALLENGER_DEACTIVATION_NOT_FOUND
             ));
+    }
+
+    @Override
+    public Optional<ChallengerDeactivation> findById(Long deactivationId) {
+        return deactivationRepository.findById(deactivationId);
+    }
+
+    @Override
+    public List<ChallengerDeactivationHistory> listHistoriesByDeactivationId(Long deactivationId) {
+        return historyRepository.findAllByDeactivationIdOrderByCreatedAtDescIdDesc(deactivationId);
+    }
+
+    @Override
+    public List<String> listOrderedImageIdsByDeactivationId(Long deactivationId) {
+        return imageRepository.findOrderedImageIdsByDeactivationId(deactivationId);
+    }
+
+    @Override
+    public List<String> listOrderedLinksByDeactivationId(Long deactivationId) {
+        return linkRepository.findOrderedLinksByDeactivationId(deactivationId);
     }
 
     @Override

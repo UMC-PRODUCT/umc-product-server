@@ -16,6 +16,7 @@ import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAut
 import com.umc.product.authentication.application.port.in.query.GetMemberOAuthUseCase;
 import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
 import com.umc.product.authorization.application.port.in.command.EvictAuthoritySnapshotCacheUseCase;
+import com.umc.product.challenger.application.port.in.query.CheckChallengerDeactivationUseCase;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.command.DeleteMemberBlocksUseCase;
@@ -26,8 +27,11 @@ import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMembe
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
+import com.umc.product.member.application.port.out.WithdrawnMemberIdentityPort;
 import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.MemberRejoinKey;
 import com.umc.product.member.domain.NicknamePolicy;
+import com.umc.product.member.domain.WithdrawnMemberIdentity;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
@@ -53,6 +57,8 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
     private final EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
     private final DeleteMemberBlocksUseCase deleteMemberBlocksUseCase;
     private final MemberNicknameRetentionService nicknameRetentionService;
+    private final CheckChallengerDeactivationUseCase checkChallengerDeactivationUseCase;
+    private final WithdrawnMemberIdentityPort withdrawnMemberIdentityPort;
 
     @Override
     @Transactional
@@ -169,7 +175,7 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
     public void deleteMember(DeleteMemberCommand command) {
         Long memberId = command.memberId();
 
-        Member memberToDelete = loadMemberPort.findById(memberId)
+        Member memberToDelete = loadMemberPort.findByIdForUpdate(memberId)
             .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         List<MemberOAuthInfo> linkedOAuths = getMemberOAuthUseCase.getOAuthList(memberId);
@@ -188,6 +194,11 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
         }
 
         nicknameRetentionService.retainOnWithdrawal(memberToDelete);
+        if (checkChallengerDeactivationUseCase.hasRecordsForMember(memberId)) {
+            withdrawnMemberIdentityPort.saveIfAbsent(WithdrawnMemberIdentity.create(
+                memberId, MemberRejoinKey.fromVerifiedEmail(memberToDelete.getEmail())
+            ));
+        }
         saveMemberPort.delete(memberToDelete);
         evictAuthoritySnapshotCacheUseCase.evictByMemberId(memberId);
         deleteMemberBlocksUseCase.deleteAllInvolving(memberId);

@@ -12,10 +12,7 @@ public final class MemberRejoinKey {
     }
 
     public static String fromVerifiedEmail(String email) {
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("verified email must not be blank");
-        }
-        String normalizedEmail = normalizeDomain(email.trim());
+        String normalizedEmail = normalizeVerifiedEmail(email);
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256")
                 .digest(normalizedEmail.getBytes(StandardCharsets.UTF_8));
@@ -25,12 +22,16 @@ public final class MemberRejoinKey {
         }
     }
 
-    private static String normalizeDomain(String email) {
-        int atIndex = email.lastIndexOf('@');
-        if (atIndex < 0) {
-            return email;
+    public static String normalizeVerifiedEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("verified email must not be blank");
         }
-        return email.substring(0, atIndex + 1)
-            + email.substring(atIndex + 1).toLowerCase(Locale.ROOT);
+        String trimmedEmail = email.trim();
+        int atIndex = trimmedEmail.lastIndexOf('@');
+        if (atIndex < 0) {
+            return trimmedEmail;
+        }
+        return trimmedEmail.substring(0, atIndex + 1)
+            + trimmedEmail.substring(atIndex + 1).toLowerCase(Locale.ROOT);
     }
 }
