@@ -13,6 +13,8 @@ public final class RelayDestinationCodec {
         "/queue/community/threads/events-user";
     private static final String BROKER_COMMUNITY_USER_QUEUE =
         "/queue/community.threads.events-user";
+    private static final String PUBLIC_INQUIRY_TOPIC = "/topic/inquiries/";
+    private static final String BROKER_INQUIRY_TOPIC = "/topic/inquiries.";
 
     public String toBroker(String destination) {
         if (PUBLIC_USER_DESTINATION.equals(destination)) {
@@ -21,12 +23,15 @@ public final class RelayDestinationCodec {
         if (PUBLIC_USER_REGISTRY.equals(destination)) {
             return BROKER_USER_REGISTRY;
         }
-        if (hasSessionSuffix(destination, PUBLIC_COMMUNITY_USER_QUEUE)) {
+        if (hasSuffix(destination, PUBLIC_COMMUNITY_USER_QUEUE)) {
             return replacePrefix(
                 destination,
                 PUBLIC_COMMUNITY_USER_QUEUE,
                 BROKER_COMMUNITY_USER_QUEUE
             );
+        }
+        if (hasSuffix(destination, PUBLIC_INQUIRY_TOPIC)) {
+            return replacePrefix(destination, PUBLIC_INQUIRY_TOPIC, BROKER_INQUIRY_TOPIC);
         }
         return destination;
     }
@@ -38,17 +43,20 @@ public final class RelayDestinationCodec {
         if (BROKER_USER_REGISTRY.equals(destination)) {
             return PUBLIC_USER_REGISTRY;
         }
-        if (hasSessionSuffix(destination, BROKER_COMMUNITY_USER_QUEUE)) {
+        if (hasSuffix(destination, BROKER_COMMUNITY_USER_QUEUE)) {
             return replacePrefix(
                 destination,
                 BROKER_COMMUNITY_USER_QUEUE,
                 PUBLIC_COMMUNITY_USER_QUEUE
             );
         }
+        if (hasSuffix(destination, BROKER_INQUIRY_TOPIC)) {
+            return replacePrefix(destination, BROKER_INQUIRY_TOPIC, PUBLIC_INQUIRY_TOPIC);
+        }
         return destination;
     }
 
-    private boolean hasSessionSuffix(String destination, String prefix) {
+    private boolean hasSuffix(String destination, String prefix) {
         return destination != null && destination.startsWith(prefix)
             && destination.length() > prefix.length();
     }

@@ -39,6 +39,17 @@ class RelayDestinationCodecTest {
         assertThat(sut.toPublic(brokerDestination)).isEqualTo(publicDestination);
     }
 
+    @Test
+    @DisplayName("문의 topic은 RabbitMQ가 받는 slash 없는 broker key로 가역 변환한다")
+    void translateInquiryTopic() {
+        String publicDestination = "/topic/inquiries/12";
+
+        String brokerDestination = sut.toBroker(publicDestination);
+
+        assertThat(brokerDestination).isEqualTo("/topic/inquiries.12");
+        assertThat(sut.toPublic(brokerDestination)).isEqualTo(publicDestination);
+    }
+
     @ParameterizedTest
     @NullSource
     @ValueSource(strings = {
