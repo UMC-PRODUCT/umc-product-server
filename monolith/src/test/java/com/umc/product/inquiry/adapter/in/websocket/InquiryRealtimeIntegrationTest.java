@@ -26,6 +26,7 @@ import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
@@ -47,6 +48,8 @@ import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.support.fixture.InquiryFixture;
 import com.umc.product.support.fixture.MemberFixture;
 
+// 실제 포트로 띄운 별도 컨텍스트의 outbox 폴러가 다른 테스트의 TRUNCATE와 교착하지 않게 클래스가 끝나면 닫는다.
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DisplayName("문의 실시간 구독과 전달")
 class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
