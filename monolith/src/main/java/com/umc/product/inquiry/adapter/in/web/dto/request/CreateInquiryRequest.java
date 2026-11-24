@@ -18,7 +18,7 @@ public record CreateInquiryRequest(
     @NotNull String title,
     @NotNull String content,
     List<@NotBlank String> fileMetadataIds,
-    @Schema(description = "등록 재시도 시 같은 값을 보내면 기존 문의를 돌려준다")
+    @Schema(description = "등록 재시도 시 같은 값을 보내면 내용 비교 없이 기존 문의를 돌려준다")
     @NotNull UUID clientRequestId
 ) {
 

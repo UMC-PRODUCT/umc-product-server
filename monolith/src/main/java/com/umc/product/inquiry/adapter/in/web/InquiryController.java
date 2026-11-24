@@ -71,7 +71,7 @@ public class InquiryController {
         summary = "문의 등록",
         description = """
             문의를 등록하고 내용을 첫 메시지로 남긴다.
-            같은 `clientRequestId`로 다시 요청하면 새로 만들지 않고 기존 문의 ID를 돌려준다.
+            같은 `clientRequestId`로 다시 요청하면 내용 비교 없이 기존 문의 ID를 돌려준다. 제목·본문이 달라도 새로 만들지 않는다.
             첨부파일은 storage 업로드 시 `category`에 `INQUIRY_ATTACHMENT`를 전달해 올린 파일만 쓸 수 있다.
             """
     )
