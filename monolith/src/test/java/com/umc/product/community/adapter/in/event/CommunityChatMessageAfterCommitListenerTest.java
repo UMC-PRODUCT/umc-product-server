@@ -83,7 +83,7 @@ class CommunityChatMessageAfterCommitListenerTest {
         // given
         willThrow(new RejectedExecutionException("대기열 포화")).given(executor).execute(any());
         CommunityChatMessageAfterCommitListener listener =
-            new CommunityChatMessageAfterCommitListener(relayUseCase, executor);
+            new CommunityChatMessageAfterCommitListener(relayUseCase, executor, false);
 
         // when, then
         assertThatCode(() -> listener.onMessageCreated(new ChatMessageCreatedAfterCommitEvent(messageCreated)))
@@ -97,7 +97,7 @@ class CommunityChatMessageAfterCommitListenerTest {
         // given
         willThrow(new IllegalStateException("브로커 전송 실패")).given(relayUseCase).relay(messageCreated);
         CommunityChatMessageAfterCommitListener listener =
-            new CommunityChatMessageAfterCommitListener(relayUseCase, executor);
+            new CommunityChatMessageAfterCommitListener(relayUseCase, executor, true);
         ArgumentCaptor<Runnable> task = ArgumentCaptor.forClass(Runnable.class);
 
         // when
