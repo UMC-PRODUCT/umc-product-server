@@ -1,6 +1,7 @@
 package com.umc.product.member.adapter.in.web;
 
 import static org.hamcrest.Matchers.aMapWithSize;
+import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -61,7 +62,7 @@ class MemberEmailLookupIntegrationTest extends IntegrationTestSupport {
             .andExpect(jsonPath("$.result.maskedEmail").value("2e***3@example.org"))
             .andExpect(jsonPath("$.result.joinedOn").value(
                 LocalDate.ofInstant(member.getCreatedAt(), ZoneId.of("Asia/Seoul")).toString()))
-            .andExpect(jsonPath("$.result.linkedProviders").value(providers.stream().map(Enum::name).toList()));
+            .andExpect(jsonPath("$.result.linkedProviders", equalTo(providers.stream().map(Enum::name).toList())));
     }
 
     @Test
