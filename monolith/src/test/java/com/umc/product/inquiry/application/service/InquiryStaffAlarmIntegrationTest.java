@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.umc.product.global.event.adapter.out.EventPayloadDeserializer;
 import com.umc.product.global.event.adapter.out.persistence.EventOutboxJpaRepository;
@@ -61,6 +62,8 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
     @Autowired
     ApplicationEventPublisher applicationEventPublisher;
     @Autowired
+    JdbcTemplate jdbcTemplate;
+    @Autowired
     MemberFixture memberFixture;
     @Autowired
     InquiryFixture inquiryFixture;
@@ -68,7 +71,7 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
     private Long authorId;
     private Long staffId;
     private Long otherStaffId;
-    private Long mutedStaffId;
+    private Long quietStaffId;
     private Long categoryId;
     private long seenOutboxId;
 
@@ -77,15 +80,17 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
         authorId = memberFixture.일반("author").getId();
         staffId = 운영진("staff");
         otherStaffId = 운영진("other-staff");
-        mutedStaffId = 운영진("muted-staff");
+        quietStaffId = 운영진("quiet-staff");
         Long superAdminId = memberFixture.일반("super-admin").getId();
         memberFixture.시스템_역할_부여(superAdminId, MemberSystemRoleType.SUPER_ADMIN);
-        updateInquiryStaffAlarmSettingUseCase.update(new UpdateInquiryStaffAlarmSettingCommand(mutedStaffId, false));
+        알림(staffId, true);
+        알림(otherStaffId, true);
+        알림(superAdminId, true);
         categoryId = inquiryFixture.카테고리("UMC 서비스", 1).getId();
     }
 
     @Test
-    @DisplayName("새 문의는 알림을 켠 UMC_PRODUCT 운영진에게만 보내고, SUPER_ADMIN만 가진 회원과 알림을 끈 운영진은 뺀다")
+    @DisplayName("새 문의는 알림을 켠 UMC_PRODUCT 운영진에게만 보내고, 설정한 적 없는 운영진과 SUPER_ADMIN만 가진 회원은 뺀다")
     void 새_문의_알림() {
         // when
         Long inquiryId = 등록(authorId, UUID.randomUUID());
@@ -102,10 +107,25 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("작성자가 종료된 문의에 다시 쓰면 같은 운영진에게 새 메시지 알림을 보낸다")
-    void 작성자_메시지_알림() {
+    @DisplayName("새 문의 알림을 켠 운영진이 없으면 FCM 요청을 만들지 않는다")
+    void 새_문의_대상_없음() {
+        // given
+        알림(staffId, false);
+        알림(otherStaffId, false);
+
+        // when
+        등록(authorId, UUID.randomUUID());
+
+        // then
+        assertThat(알림_요청()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("작성자가 다시 쓰면 그 문의에 답한 운영진에게 알림 설정과 상관없이 보내고, 종료 뒤 재오픈도 같다")
+    void 작성자_메시지_참여_운영진() {
         // given
         Long inquiryId = 등록(authorId, UUID.randomUUID());
+        보내기(inquiryId, quietStaffId, UUID.randomUUID());
         closeInquiryUseCase.close(new CloseInquiryCommand(inquiryId, staffId));
         이전_이벤트_건너뛰기();
 
@@ -114,12 +134,49 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
 
         // then
         assertThat(알림_요청()).singleElement().satisfies(request -> {
-            assertThat(request.memberIds()).containsExactlyInAnyOrder(staffId, otherStaffId);
+            assertThat(request.memberIds()).containsExactly(quietStaffId);
             assertThat(request.data()).containsEntry("type", "INQUIRY_AUTHOR_MESSAGE")
                 .containsEntry("inquiryId", String.valueOf(inquiryId));
             assertThat(request.title()).isEqualTo("문의에 새 메시지가 왔어요");
             assertThat(request.body()).isEqualTo(TITLE);
         });
+    }
+
+    @Test
+    @DisplayName("답한 운영진이 없는 문의에 작성자가 다시 쓰면 새 문의 알림을 켠 운영진에게 보낸다")
+    void 작성자_메시지_참여자_없음() {
+        // given
+        Long inquiryId = 등록(authorId, UUID.randomUUID());
+        이전_이벤트_건너뛰기();
+
+        // when
+        보내기(inquiryId, authorId, UUID.randomUUID());
+
+        // then
+        assertThat(알림_요청()).singleElement().satisfies(request -> {
+            assertThat(request.memberIds()).containsExactlyInAnyOrder(staffId, otherStaffId);
+            assertThat(request.data()).containsEntry("type", "INQUIRY_AUTHOR_MESSAGE");
+        });
+    }
+
+    @Test
+    @DisplayName("답했던 운영진이 UMC_PRODUCT 역할을 잃으면 작성자 메시지 알림에서 뺀다")
+    void 권한_잃은_참여자() {
+        // given
+        Long inquiryId = 등록(authorId, UUID.randomUUID());
+        보내기(inquiryId, quietStaffId, UUID.randomUUID());
+        보내기(inquiryId, otherStaffId, UUID.randomUUID());
+        jdbcTemplate.update(
+            "delete from member_system_role where member_id = ? and role_type = 'UMC_PRODUCT'", quietStaffId
+        );
+        이전_이벤트_건너뛰기();
+
+        // when
+        보내기(inquiryId, authorId, UUID.randomUUID());
+
+        // then
+        assertThat(알림_요청()).singleElement()
+            .satisfies(request -> assertThat(request.memberIds()).containsExactly(otherStaffId));
     }
 
     @Test
@@ -158,7 +215,7 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("운영진이 자기 문의를 쓰면 작성자로 보고 다른 운영진에게만 알린다")
+    @DisplayName("운영진이 자기 문의를 쓰면 작성자로 보고 본인을 빼고 알린다")
     void 운영진_본인_문의() {
         // when
         Long inquiryId = 등록(staffId, UUID.randomUUID());
@@ -172,25 +229,11 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("알릴 운영진이 없으면 FCM 요청을 만들지 않는다")
-    void 대상_없음() {
-        // given
-        updateInquiryStaffAlarmSettingUseCase.update(new UpdateInquiryStaffAlarmSettingCommand(staffId, false));
-        updateInquiryStaffAlarmSettingUseCase.update(new UpdateInquiryStaffAlarmSettingCommand(otherStaffId, false));
-
-        // when
-        등록(authorId, UUID.randomUUID());
-
-        // then
-        assertThat(알림_요청()).isEmpty();
-    }
-
-    @Test
-    @DisplayName("설정 행이 없는 운영진이 알림 끄기를 동시에 두 번 보내도 둘 다 성공하고 설정 행은 하나다")
+    @DisplayName("설정 행이 없는 운영진이 알림 켜기를 동시에 두 번 보내도 둘 다 성공하고 설정 행은 하나다")
     void 첫_설정_동시_변경() throws Exception {
         // given
         Long racingStaffId = 운영진("racing-staff");
-        var command = new UpdateInquiryStaffAlarmSettingCommand(racingStaffId, false);
+        var command = new UpdateInquiryStaffAlarmSettingCommand(racingStaffId, true);
         var ready = new CountDownLatch(2);
         var start = new CountDownLatch(1);
         var executor = Executors.newFixedThreadPool(2);
@@ -204,15 +247,19 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
             var results = List.of(first.get(30, TimeUnit.SECONDS), second.get(30, TimeUnit.SECONDS));
 
             // then
-            assertThat(results).extracting(InquiryStaffAlarmSettingInfo::enabled).containsExactly(false, false);
+            assertThat(results).extracting(InquiryStaffAlarmSettingInfo::enabled).containsExactly(true, true);
             assertThat(inquiryStaffAlarmSettingJpaRepository.findAll())
                 .filteredOn(setting -> setting.getMemberId().equals(racingStaffId))
                 .singleElement()
-                .satisfies(setting -> assertThat(setting.isEnabled()).isFalse());
+                .satisfies(setting -> assertThat(setting.isEnabled()).isTrue());
         } finally {
             start.countDown();
             executor.shutdownNow();
         }
+    }
+
+    private void 알림(Long memberId, boolean enabled) {
+        updateInquiryStaffAlarmSettingUseCase.update(new UpdateInquiryStaffAlarmSettingCommand(memberId, enabled));
     }
 
     private InquiryStaffAlarmSettingInfo 동시_변경(

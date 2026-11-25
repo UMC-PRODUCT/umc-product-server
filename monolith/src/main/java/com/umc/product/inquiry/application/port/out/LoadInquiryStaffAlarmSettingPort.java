@@ -9,5 +9,5 @@ public interface LoadInquiryStaffAlarmSettingPort {
 
     Optional<InquiryStaffAlarmSetting> findByMemberId(Long memberId);
 
-    List<Long> listDisabledMemberIds();
+    List<Long> listEnabledMemberIds();
 }

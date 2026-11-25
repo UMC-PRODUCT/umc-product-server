@@ -24,8 +24,8 @@ public class InquiryStaffAlarmSettingPersistenceAdapter
     }
 
     @Override
-    public List<Long> listDisabledMemberIds() {
-        return repository.findAllDisabledMemberIds();
+    public List<Long> listEnabledMemberIds() {
+        return repository.findAllEnabledMemberIds();
     }
 
     @Override
