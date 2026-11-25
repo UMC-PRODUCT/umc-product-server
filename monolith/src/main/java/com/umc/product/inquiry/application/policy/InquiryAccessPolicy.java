@@ -23,7 +23,7 @@ public class InquiryAccessPolicy {
         return inquiry.participantOf(memberId);
     }
 
-    public boolean canAccess(Inquiry inquiry, Long memberId) {
+    private boolean canAccess(Inquiry inquiry, Long memberId) {
         return inquiry.participantOf(memberId) == InquiryParticipant.AUTHOR || isStaff(memberId);
     }
 
@@ -37,7 +37,7 @@ public class InquiryAccessPolicy {
         }
     }
 
-    private boolean isStaff(Long memberId) {
+    public boolean isStaff(Long memberId) {
         return checkChallengerAuthorityUseCase.isUmcProduct(memberId);
     }
 }

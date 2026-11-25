@@ -54,7 +54,7 @@ import com.umc.product.support.fixture.MemberFixture;
 @DisplayName("문의 실시간 구독과 전달")
 class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
 
-    private static final String AUTHOR_TOKEN = "author-token";
+    private static final String USER_QUEUE = "/user/queue/inquiries/events";
     private static final String PROBE = "PROBE";
     private static final long FRAME_TIMEOUT_MILLIS = 10_000;
     private static final long QUIET_MILLIS = 500;
@@ -81,96 +81,112 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
 
     private Long authorId;
     private Long staffId;
+    private Long otherStaffId;
+    private Long superAdminId;
     private Long strangerId;
     private Long categoryId;
     private WebSocketStompClient stompClient;
-    private StompSession session;
+    private final List<StompSession> sessions = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
         authorId = memberFixture.일반("author").getId();
-        staffId = memberFixture.일반("staff").getId();
+        staffId = 운영진("staff");
+        otherStaffId = 운영진("other-staff");
+        superAdminId = memberFixture.일반("super-admin").getId();
+        memberFixture.시스템_역할_부여(superAdminId, MemberSystemRoleType.SUPER_ADMIN);
         strangerId = memberFixture.일반("stranger").getId();
-        memberFixture.시스템_역할_부여(staffId, MemberSystemRoleType.UMC_PRODUCT);
         categoryId = inquiryFixture.카테고리("UMC 서비스", 1).getId();
-        when(jwtTokenProvider.parseAndValidateAccessToken(eq(AUTHOR_TOKEN)))
-            .thenReturn(new ParsedAccessToken(authorId, List.of(), null));
         stompClient = new WebSocketStompClient(new StandardWebSocketClient());
     }
 
     @AfterEach
     void tearDown() {
-        if (session != null && session.isConnected()) {
-            session.disconnect();
-        }
+        sessions.stream().filter(StompSession::isConnected).forEach(StompSession::disconnect);
+        sessions.clear();
         stompClient.stop();
     }
 
     @Test
-    @DisplayName("작성자와 운영진은 문의 주소를 구독할 수 있고, 제3자와 없는 문의는 거절한다")
+    @DisplayName("로그인한 회원은 자기 문의 큐를 구독할 수 있고, 예전 문의별 주소는 거절한다")
     void 구독_권한() {
-        // given
-        Long inquiryId = 문의_등록();
-        String topic = "/topic/inquiries/" + inquiryId;
-
         // when & then
-        assertThat(subscriptionAuthorizerRegistry.isAuthorized(authorId, topic)).isTrue();
-        assertThat(subscriptionAuthorizerRegistry.isAuthorized(staffId, topic)).isTrue();
-        assertThat(subscriptionAuthorizerRegistry.isAuthorized(strangerId, topic)).isFalse();
-        assertThat(subscriptionAuthorizerRegistry.isAuthorized(authorId, "/topic/inquiries/" + (inquiryId + 1000)))
-            .isFalse();
+        assertThat(subscriptionAuthorizerRegistry.isAuthorized(authorId, USER_QUEUE)).isTrue();
+        assertThat(subscriptionAuthorizerRegistry.isAuthorized(strangerId, USER_QUEUE)).isTrue();
+        assertThat(subscriptionAuthorizerRegistry.isAuthorized(null, USER_QUEUE)).isFalse();
+        assertThat(subscriptionAuthorizerRegistry.isAuthorized(authorId, "/topic/inquiries/1")).isFalse();
     }
 
     @Test
-    @DisplayName("운영진이 처음 답하면 구독자는 새 메시지와 진행 중 상태를 받는다")
+    @DisplayName("운영진이 처음 답하면 작성자는 UMC PRODUCT로, 다른 운영진은 실명으로 받고, SUPER_ADMIN만 가진 회원과 제3자는 받지 않는다")
     void 운영진_첫_답변() throws Exception {
         // given
-        Long inquiryId = 문의_등록();
-        BlockingQueue<JsonNode> frames = 구독(inquiryId);
+        Long inquiryId = 문의_등록(authorId);
+        BlockingQueue<JsonNode> authorFrames = 구독(authorId);
+        BlockingQueue<JsonNode> staffFrames = 구독(otherStaffId);
+        BlockingQueue<JsonNode> superAdminFrames = 구독(superAdminId);
+        BlockingQueue<JsonNode> strangerFrames = 구독(strangerId);
 
         // when
         InquiryMessageInfo reply = 보내기(inquiryId, staffId, "확인해 볼게요", UUID.randomUUID());
 
         // then
-        List<JsonNode> received = 받기(frames, 2);
-        JsonNode message = 종류(received, "MESSAGE_CREATED");
-        assertThat(message.get("inquiryId").asLong()).isEqualTo(inquiryId);
-        assertThat(message.at("/message/messageId").asLong()).isEqualTo(reply.messageId());
-        assertThat(message.at("/message/senderType").asText()).isEqualTo("STAFF");
-        assertThat(message.at("/message/senderMemberId").asLong()).isEqualTo(staffId);
-        assertThat(message.at("/message/content").asText()).isEqualTo("확인해 볼게요");
-        assertThat(message.at("/message/attachments").isArray()).isTrue();
-        assertThat(message.at("/message/createdAt").asText()).isEqualTo(reply.createdAt().toString());
+        List<JsonNode> toAuthor = 받기(authorFrames, 2);
+        JsonNode hidden = 종류(toAuthor, "MESSAGE_CREATED");
+        assertThat(hidden.get("inquiryId").asLong()).isEqualTo(inquiryId);
+        assertThat(hidden.at("/message/messageId").asLong()).isEqualTo(reply.messageId());
+        assertThat(hidden.at("/message/senderType").asText()).isEqualTo("STAFF");
+        assertThat(hidden.at("/message/senderMemberId").isNull()).isTrue();
+        assertThat(hidden.at("/message/senderName").asText()).isEqualTo("UMC PRODUCT");
+        assertThat(hidden.at("/message/content").asText()).isEqualTo("확인해 볼게요");
+        assertThat(hidden.at("/message/attachments").isArray()).isTrue();
+        assertThat(hidden.at("/message/createdAt").asText()).isEqualTo(reply.createdAt().toString());
 
-        JsonNode status = 종류(received, "STATUS_CHANGED");
+        JsonNode status = 종류(toAuthor, "STATUS_CHANGED");
         assertThat(status.get("inquiryId").asLong()).isEqualTo(inquiryId);
         assertThat(status.get("status").asText()).isEqualTo("IN_PROGRESS");
         assertThat(status.get("closedAt").isNull()).isTrue();
         assertThat(status.get("lastMessageAt").asText()).isEqualTo(reply.createdAt().toString());
         assertThat(status.hasNonNull("occurredAt")).isTrue();
+
+        List<JsonNode> toStaff = 받기(staffFrames, 2);
+        JsonNode named = 종류(toStaff, "MESSAGE_CREATED");
+        assertThat(named.at("/message/messageId").asLong()).isEqualTo(reply.messageId());
+        assertThat(named.at("/message/senderMemberId").asLong()).isEqualTo(staffId);
+        assertThat(named.at("/message/senderName").asText()).isEqualTo("staff");
+        assertThat(종류(toStaff, "STATUS_CHANGED").get("status").asText()).isEqualTo("IN_PROGRESS");
+
+        assertThat(받기(superAdminFrames, 0)).isEmpty();
+        assertThat(받기(strangerFrames, 0)).isEmpty();
     }
 
     @Test
-    @DisplayName("작성자 메시지는 상태를 바꾸지 않으므로 새 메시지만 보낸다")
+    @DisplayName("작성자 메시지는 상태를 바꾸지 않으므로 새 메시지만 보내고, 작성자는 자기 이름을 그대로 본다")
     void 작성자_메시지() throws Exception {
         // given
-        Long inquiryId = 문의_등록();
-        BlockingQueue<JsonNode> frames = 구독(inquiryId);
+        Long inquiryId = 문의_등록(authorId);
+        BlockingQueue<JsonNode> authorFrames = 구독(authorId);
+        BlockingQueue<JsonNode> staffFrames = 구독(staffId);
 
         // when
         보내기(inquiryId, authorId, "추가로 스크린샷도 보내요", UUID.randomUUID());
 
         // then
-        assertThat(받기(frames, 1)).extracting(frame -> frame.get("type").asText())
+        JsonNode own = 받기(authorFrames, 1).get(0);
+        assertThat(own.get("type").asText()).isEqualTo("MESSAGE_CREATED");
+        assertThat(own.at("/message/senderType").asText()).isEqualTo("AUTHOR");
+        assertThat(own.at("/message/senderMemberId").asLong()).isEqualTo(authorId);
+        assertThat(own.at("/message/senderName").asText()).isEqualTo("author");
+        assertThat(받기(staffFrames, 1)).extracting(frame -> frame.get("type").asText())
             .containsExactly("MESSAGE_CREATED");
     }
 
     @Test
-    @DisplayName("종료하면 종료 상태를, 종료 뒤 메시지가 오면 다시 진행 중 상태를 보낸다")
+    @DisplayName("종료하면 종료 상태를, 종료 뒤 메시지가 오면 다시 진행 중 상태를 작성자에게 보낸다")
     void 종료와_재오픈() throws Exception {
         // given
-        Long inquiryId = 문의_등록();
-        BlockingQueue<JsonNode> frames = 구독(inquiryId);
+        Long inquiryId = 문의_등록(authorId);
+        BlockingQueue<JsonNode> frames = 구독(authorId);
 
         // when
         closeInquiryUseCase.close(new CloseInquiryCommand(inquiryId, staffId));
@@ -192,12 +208,27 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    @DisplayName("운영진이 자기 문의에 쓰면 이벤트를 한 번만 받는다")
+    void 운영진_본인_문의() throws Exception {
+        // given
+        Long inquiryId = 문의_등록(staffId);
+        BlockingQueue<JsonNode> frames = 구독(staffId);
+
+        // when
+        보내기(inquiryId, staffId, "추가 내용이에요", UUID.randomUUID());
+
+        // then
+        assertThat(받기(frames, 1)).extracting(frame -> frame.get("type").asText())
+            .containsExactly("MESSAGE_CREATED");
+    }
+
+    @Test
     @DisplayName("같은 clientMessageId로 다시 보내면 아무것도 보내지 않는다")
     void 재전송() throws Exception {
         // given
-        Long inquiryId = 문의_등록();
+        Long inquiryId = 문의_등록(authorId);
         UUID clientMessageId = UUID.randomUUID();
-        BlockingQueue<JsonNode> frames = 구독(inquiryId);
+        BlockingQueue<JsonNode> frames = 구독(authorId);
         보내기(inquiryId, staffId, "확인해 볼게요", clientMessageId);
         받기(frames, 2);
 
@@ -208,30 +239,40 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
         assertThat(받기(frames, 0)).isEmpty();
     }
 
-    private BlockingQueue<JsonNode> 구독(Long inquiryId) throws Exception {
+    private Long 운영진(String name) {
+        Long memberId = memberFixture.일반(name).getId();
+        memberFixture.시스템_역할_부여(memberId, MemberSystemRoleType.UMC_PRODUCT);
+        return memberId;
+    }
+
+    private BlockingQueue<JsonNode> 구독(Long memberId) throws Exception {
         실시간_전달_대기();
+        String token = "token-" + memberId;
+        when(jwtTokenProvider.parseAndValidateAccessToken(eq(token)))
+            .thenReturn(new ParsedAccessToken(memberId, List.of(), null));
         StompHeaders connectHeaders = new StompHeaders();
-        connectHeaders.add("Authorization", "Bearer " + AUTHOR_TOKEN);
-        session = stompClient.connectAsync(
+        connectHeaders.add("Authorization", "Bearer " + token);
+        StompSession session = stompClient.connectAsync(
             "ws://localhost:%d/ws/websocket".formatted(port),
             new WebSocketHttpHeaders(),
             connectHeaders,
             new StompSessionHandlerAdapter() {
             }
         ).get(5, TimeUnit.SECONDS);
+        sessions.add(session);
 
-        String topic = "/topic/inquiries/" + inquiryId;
         BlockingQueue<JsonNode> frames = new LinkedBlockingQueue<>();
-        session.subscribe(topic, frameHandler(frames));
+        session.subscribe(USER_QUEUE, frameHandler(frames));
         for (int attempt = 0; attempt < 40; attempt++) {
-            broadcastPort.broadcast(topic, Map.of("type", PROBE));
+            broadcastPort.broadcastToUser(memberId.toString(), "/queue/inquiries/events", Map.of("type", PROBE));
             JsonNode frame = frames.poll(250, TimeUnit.MILLISECONDS);
             if (frame != null) {
+                Thread.sleep(QUIET_MILLIS);
                 frames.removeIf(it -> PROBE.equals(it.get("type").asText()));
                 return frames;
             }
         }
-        throw new AssertionError("문의 주소 구독이 준비되지 않았습니다: " + topic);
+        throw new AssertionError("문의 큐 구독이 준비되지 않았습니다: memberId=" + memberId);
     }
 
     private List<JsonNode> 받기(BlockingQueue<JsonNode> frames, int expected) throws InterruptedException {
@@ -293,9 +334,9 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
         };
     }
 
-    private Long 문의_등록() {
+    private Long 문의_등록(Long memberId) {
         return createInquiryUseCase.create(new CreateInquiryCommand(
-            authorId,
+            memberId,
             categoryId,
             InquiryTeam.PLATFORM,
             "앱 로그인이 안 돼요",

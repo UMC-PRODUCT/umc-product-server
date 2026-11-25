@@ -123,7 +123,7 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
             chatMessage,
             ATTACHMENTS_VALIDATED_BY_POLICY
         );
-        InquiryMessageInfo message = messageAssembler.assemble(inquiry, result.message());
+        InquiryMessageInfo message = messageAssembler.assemble(inquiry, result.message(), command.senderMemberId());
         if (result.deduplicated()) {
             return message;
         }

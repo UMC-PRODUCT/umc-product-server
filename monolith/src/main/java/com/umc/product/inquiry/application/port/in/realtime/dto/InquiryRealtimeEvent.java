@@ -9,7 +9,8 @@ import com.umc.product.inquiry.application.port.in.query.dto.InquiryMessageInfo;
 import com.umc.product.inquiry.domain.enums.InquiryStatus;
 
 /**
- * {@code /topic/inquiries/{inquiryId}}로 보내는 이벤트. 한 주소에 여러 종류가 오므로 {@code type}으로 구분한다.
+ * 사람별 큐 {@code /user/queue/inquiries/events}로 보내는 이벤트. 한 주소에 모든 문의와 여러 종류가 오므로
+ * {@code inquiryId}와 {@code type}으로 구분한다.
  */
 public sealed interface InquiryRealtimeEvent {
 
