@@ -32,6 +32,7 @@ import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.umc.product.global.event.application.service.OutboxProcessingGroup;
 import com.umc.product.global.security.ParsedAccessToken;
 import com.umc.product.global.websocket.application.port.out.BroadcastPort;
 import com.umc.product.global.websocket.application.service.StompSubscriptionAuthorizerRegistry;
@@ -298,8 +299,9 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
         long deadline = System.currentTimeMillis() + FRAME_TIMEOUT_MILLIS;
         while (System.currentTimeMillis() < deadline) {
             Integer pending = jdbcTemplate.queryForObject(
-                "select count(*) from event_outbox where processing_group = 'REALTIME' and status <> 'PUBLISHED'",
-                Integer.class
+                "select count(*) from event_outbox where processing_group = ? and status <> 'PUBLISHED'",
+                Integer.class,
+                OutboxProcessingGroup.REALTIME.name()
             );
             if (pending != null && pending == 0) {
                 return;
