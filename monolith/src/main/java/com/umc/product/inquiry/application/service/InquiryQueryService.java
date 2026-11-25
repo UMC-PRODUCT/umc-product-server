@@ -12,7 +12,6 @@ import com.umc.product.chat.application.port.in.query.GetChatMessagesUseCase;
 import com.umc.product.chat.application.port.in.query.dto.ChatMessageCursorResult;
 import com.umc.product.chat.application.port.in.query.dto.GetChatMessagesQuery;
 import com.umc.product.inquiry.application.policy.InquiryAccessPolicy;
-import com.umc.product.inquiry.application.port.in.query.CheckInquiryAccessUseCase;
 import com.umc.product.inquiry.application.port.in.query.GetInquiryDetailUseCase;
 import com.umc.product.inquiry.application.port.in.query.GetInquiryMessagesUseCase;
 import com.umc.product.inquiry.application.port.in.query.ListInquiryCategoriesUseCase;
@@ -44,8 +43,7 @@ public class InquiryQueryService implements
     ListInquiryCategoriesUseCase,
     ListMyInquiriesUseCase,
     GetInquiryDetailUseCase,
-    GetInquiryMessagesUseCase,
-    CheckInquiryAccessUseCase {
+    GetInquiryMessagesUseCase {
 
     private final LoadInquiryPort loadInquiryPort;
     private final LoadInquiryCategoryPort loadInquiryCategoryPort;
@@ -112,13 +110,6 @@ public class InquiryQueryService implements
     }
 
     @Override
-    public boolean canAccess(Long memberId, Long inquiryId) {
-        return loadInquiryPort.findById(inquiryId)
-            .map(inquiry -> accessPolicy.canAccess(inquiry, memberId))
-            .orElse(false);
-    }
-
-    @Override
     public InquiryMessagePageInfo getMessages(InquiryMessagesQuery query) {
         Inquiry inquiry = loadInquiry(query.inquiryId());
         accessPolicy.requireParticipant(inquiry, query.requesterMemberId());
@@ -129,7 +120,7 @@ public class InquiryQueryService implements
             query.size()
         ));
         return new InquiryMessagePageInfo(
-            messageAssembler.assemble(inquiry, page.content()),
+            messageAssembler.assemble(inquiry, page.content(), query.requesterMemberId()),
             page.nextCursor(),
             page.hasNext()
         );

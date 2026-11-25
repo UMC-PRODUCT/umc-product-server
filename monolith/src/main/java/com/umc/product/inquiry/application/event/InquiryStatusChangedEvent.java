@@ -15,6 +15,7 @@ public record InquiryStatusChangedEvent(
     UUID eventId,
     Instant occurredAt,
     Long inquiryId,
+    Long authorMemberId,
     InquiryStatus status,
     Instant closedAt,
     Instant lastMessageAt
@@ -30,6 +31,7 @@ public record InquiryStatusChangedEvent(
             null,
             null,
             inquiry.getId(),
+            inquiry.getAuthorMemberId(),
             inquiry.getStatus(),
             inquiry.getClosedAt(),
             inquiry.getLastMessageAt()

@@ -1,5 +1,6 @@
 package com.umc.product.inquiry.adapter.in.web;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -38,13 +39,15 @@ class InquiryApiIntegrationTest extends IntegrationTestSupport {
     @Autowired
     RefreshMaintenanceStateUseCase refreshMaintenanceStateUseCase;
 
+    private Long authorId;
+    private Long staffId;
     private Long categoryId;
 
     @BeforeEach
     void setUp() {
         refreshMaintenanceStateUseCase.refresh();
-        Long authorId = memberFixture.일반("author").getId();
-        Long staffId = memberFixture.일반("staff").getId();
+        authorId = memberFixture.일반("author").getId();
+        staffId = memberFixture.일반("staff").getId();
         Long strangerId = memberFixture.일반("stranger").getId();
         memberFixture.시스템_역할_부여(staffId, MemberSystemRoleType.UMC_PRODUCT);
         categoryId = inquiryFixture.카테고리("UMC 서비스", 1).getId();
@@ -107,6 +110,39 @@ class InquiryApiIntegrationTest extends IntegrationTestSupport {
         mockMvc.perform(post("/api/v1/inquiries/admin/{inquiryId}/close", inquiryId)
                 .header("Authorization", "Bearer " + STAFF))
             .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("작성자에게는 운영진 메시지가 UMC PRODUCT로만 보이고, 운영진에게는 실명과 회원 ID로 보인다")
+    void 보낸_사람_표시() throws Exception {
+        // given
+        long inquiryId = 등록();
+
+        // when & then
+        메시지_전송(STAFF, inquiryId, "확인해 볼게요")
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.senderType").value("STAFF"))
+            .andExpect(jsonPath("$.result.senderMemberId").value(staffId))
+            .andExpect(jsonPath("$.result.senderName").value("staff"));
+        메시지_전송(AUTHOR, inquiryId, "추가로 보내요")
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.senderType").value("AUTHOR"))
+            .andExpect(jsonPath("$.result.senderMemberId").value(authorId))
+            .andExpect(jsonPath("$.result.senderName").value("author"));
+
+        메시지_조회(AUTHOR, inquiryId)
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.messages[0].senderMemberId").value(authorId))
+            .andExpect(jsonPath("$.result.messages[0].senderName").value("author"))
+            .andExpect(jsonPath("$.result.messages[1].senderType").value("STAFF"))
+            .andExpect(jsonPath("$.result.messages[1].senderMemberId").value(nullValue()))
+            .andExpect(jsonPath("$.result.messages[1].senderName").value("UMC PRODUCT"))
+            .andExpect(jsonPath("$.result.messages[1].content").value("확인해 볼게요"));
+        메시지_조회(STAFF, inquiryId)
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.messages[0].senderName").value("author"))
+            .andExpect(jsonPath("$.result.messages[1].senderMemberId").value(staffId))
+            .andExpect(jsonPath("$.result.messages[1].senderName").value("staff"));
     }
 
     @Test
@@ -198,6 +234,20 @@ class InquiryApiIntegrationTest extends IntegrationTestSupport {
             .andExpect(jsonPath("$.code").value("INQUIRY-0003"));
         알림_설정_변경(STAFF, Map.of())
             .andExpect(status().isBadRequest());
+    }
+
+    private ResultActions 메시지_전송(String token, long inquiryId, String content) throws Exception {
+        return mockMvc.perform(post("/api/v1/inquiries/{inquiryId}/messages", inquiryId)
+            .header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(Map.of(
+                "content", content, "clientMessageId", UUID.randomUUID().toString()
+            ))));
+    }
+
+    private ResultActions 메시지_조회(String token, long inquiryId) throws Exception {
+        return mockMvc.perform(get("/api/v1/inquiries/{inquiryId}/messages", inquiryId)
+            .header("Authorization", "Bearer " + token));
     }
 
     private ResultActions 알림_설정_조회(String token) throws Exception {

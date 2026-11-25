@@ -114,7 +114,8 @@ public class InquiryController {
     @Operation(
         operationId = "INQUIRY-104",
         summary = "문의 메시지 조회",
-        description = "최신 메시지부터 돌려준다. 이전 메시지는 nextCursor를 cursor로 넘겨 이어서 조회한다."
+        description = "최신 메시지부터 돌려준다. 이전 메시지는 nextCursor를 cursor로 넘겨 이어서 조회한다. "
+            + "운영진이 아닌 사람에게는 운영진 메시지의 senderName이 \"UMC PRODUCT\", senderMemberId가 null이다."
     )
     public InquiryMessagePageResponse getMessages(
         @PathVariable @Positive Long inquiryId,
@@ -134,6 +135,7 @@ public class InquiryController {
         description = """
             작성자 또는 UMC PRODUCT 운영진이 메시지를 보낸다. 종료된 문의에 보내면 다시 진행 중이 된다.
             같은 `clientMessageId`로 다시 보내면 메시지를 새로 만들지 않고 처음 결과를 돌려준다.
+            응답의 보낸 사람 표시는 메시지 조회와 같다.
             """
     )
     public InquiryMessageResponse sendMessage(
