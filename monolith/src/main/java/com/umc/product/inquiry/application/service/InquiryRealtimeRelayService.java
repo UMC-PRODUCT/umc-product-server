@@ -1,9 +1,9 @@
 package com.umc.product.inquiry.application.service;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -32,51 +32,29 @@ public class InquiryRealtimeRelayService implements RelayInquiryRealtimeEventUse
 
     @Override
     public void relayMessageCreated(ChatMessageInfo message) {
-        loadInquiryPort.findByChatRoomId(message.roomId()).ifPresent(inquiry -> {
-            InquiryMessageAssembler.Views views = messageAssembler.assembleViews(inquiry, message);
-            List<Long> staffIds = listMemberSystemRoleUseCase.listUmcProductMemberIds();
-            InquiryRealtimeEvent staffEvent = new InquiryRealtimeEvent.MessageCreated(inquiry.getId(), views.staff());
-
-            Long authorId = inquiry.getAuthorMemberId();
-            InquiryRealtimeEvent authorEvent = staffIds.contains(authorId)
-                ? staffEvent
-                : new InquiryRealtimeEvent.MessageCreated(
-                    inquiry.getId(),
-                    views.forViewer(messageAssembler.seesStaffIdentity(authorId))
-                );
-            deliver(authorFirst(authorId, authorEvent, staffIds, staffEvent));
-        });
+        loadInquiryPort.findByChatRoomId(message.roomId()).ifPresent(inquiry -> deliver(
+            inquiry.getAuthorMemberId(),
+            new InquiryRealtimeEvent.MessageCreated(inquiry.getId(), messageAssembler.assemble(inquiry, message))
+        ));
     }
 
     @Override
     public void relayStatusChanged(InquiryStatusChangedEvent event) {
-        InquiryRealtimeEvent statusEvent = new InquiryRealtimeEvent.StatusChanged(
+        deliver(event.authorMemberId(), new InquiryRealtimeEvent.StatusChanged(
             event.inquiryId(),
             event.status(),
             event.closedAt(),
             event.lastMessageAt(),
             event.occurredAt()
-        );
-        deliver(authorFirst(
-            event.authorMemberId(), statusEvent, listMemberSystemRoleUseCase.listUmcProductMemberIds(), statusEvent
         ));
     }
 
-    private static Map<Long, InquiryRealtimeEvent> authorFirst(
-        Long authorId,
-        InquiryRealtimeEvent authorEvent,
-        List<Long> staffIds,
-        InquiryRealtimeEvent staffEvent
-    ) {
-        Map<Long, InquiryRealtimeEvent> deliveries = new LinkedHashMap<>();
-        deliveries.put(authorId, authorEvent);
-        staffIds.forEach(staffId -> deliveries.putIfAbsent(staffId, staffEvent));
-        return deliveries;
-    }
-
-    private void deliver(Map<Long, InquiryRealtimeEvent> deliveries) {
+    private void deliver(Long authorId, InquiryRealtimeEvent event) {
+        Set<Long> recipients = new LinkedHashSet<>();
+        recipients.add(authorId);
+        recipients.addAll(listMemberSystemRoleUseCase.listUmcProductMemberIds());
         List<RuntimeException> failures = new ArrayList<>();
-        deliveries.forEach((memberId, event) -> {
+        recipients.forEach(memberId -> {
             try {
                 broadcastPort.sendToMember(memberId, event);
             } catch (RuntimeException exception) {

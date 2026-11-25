@@ -49,21 +49,27 @@ class InquiryTest {
     }
 
     @Test
-    @DisplayName("제목이 비었거나 100자를 넘으면 문의를 만들 수 없다")
-    void 제목_검증() {
-        assertThatThrownBy(() -> 문의("   "))
+    @DisplayName("제목은 내용의 첫 번째 비지 않은 줄을 앞뒤 공백 없이 쓰고, 50자를 넘으면 자른다")
+    void 내용으로_제목_만들기() {
+        assertThat(문의("  출석 체크가 안 돼요  \n어제부터요").getTitle()).isEqualTo("출석 체크가 안 돼요");
+        assertThat(문의("\n   \n  두 번째 줄이 제목\n세 번째").getTitle()).isEqualTo("두 번째 줄이 제목");
+        assertThat(문의("가".repeat(60)).getTitle()).isEqualTo("가".repeat(50));
+        assertThat(문의("😀".repeat(51)).getTitle()).isEqualTo("😀".repeat(50));
+    }
+
+    @Test
+    @DisplayName("내용이 공백뿐이면 문의를 만들 수 없다")
+    void 빈_내용() {
+        assertThatThrownBy(() -> 문의(" \n  "))
             .extracting("baseCode")
-            .isEqualTo(InquiryErrorCode.INVALID_INQUIRY_TITLE);
-        assertThatThrownBy(() -> 문의("가".repeat(101)))
-            .extracting("baseCode")
-            .isEqualTo(InquiryErrorCode.INVALID_INQUIRY_TITLE);
+            .isEqualTo(InquiryErrorCode.INQUIRY_CONTENT_REQUIRED);
     }
 
     private Inquiry 문의() {
         return 문의("앱 로그인이 안 돼요");
     }
 
-    private Inquiry 문의(String title) {
-        return Inquiry.create(1L, 1L, null, title, 10L, UUID.randomUUID(), CREATED_AT);
+    private Inquiry 문의(String content) {
+        return Inquiry.create(1L, 1L, null, content, 10L, UUID.randomUUID(), CREATED_AT);
     }
 }

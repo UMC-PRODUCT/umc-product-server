@@ -120,7 +120,7 @@ public class InquiryQueryService implements
             query.size()
         ));
         return new InquiryMessagePageInfo(
-            messageAssembler.assemble(inquiry, page.content(), query.requesterMemberId()),
+            messageAssembler.assemble(inquiry, page.content()),
             page.nextCursor(),
             page.hasNext()
         );

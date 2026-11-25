@@ -13,9 +13,7 @@ public record InquiryMessageResponse(
     Long messageId,
     @Schema(description = "AUTHOR: 문의 작성자, STAFF: UMC PRODUCT 운영진")
     InquiryParticipant senderType,
-    @Schema(description = "운영진이 아닌 사람이 보는 운영진 메시지는 null")
     Long senderMemberId,
-    @Schema(description = "운영진이 아닌 사람이 보는 운영진 메시지는 \"UMC PRODUCT\"")
     String senderName,
     String content,
     List<Attachment> attachments,

@@ -81,7 +81,7 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
         staffId = memberFixture.일반("staff").getId();
         strangerId = memberFixture.일반("stranger").getId();
         memberFixture.시스템_역할_부여(staffId, MemberSystemRoleType.UMC_PRODUCT);
-        categoryId = inquiryFixture.카테고리("UMC 서비스", 1).getId();
+        categoryId = inquiryFixture.카테고리("계정·로그인", 2).getId();
     }
 
     @Test
@@ -99,7 +99,7 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
         InquiryMessagePageInfo messages = 메시지_조회(first, authorId);
         assertThat(messages.messages()).singleElement()
             .satisfies(message -> {
-                assertThat(message.content()).isEqualTo("로그인 버튼을 눌러도 반응이 없어요");
+                assertThat(message.content()).isEqualTo("앱 로그인이 안 돼요\n로그인 버튼을 눌러도 반응이 없어요");
                 assertThat(message.senderType()).isEqualTo(InquiryParticipant.AUTHOR);
             });
         InquiryDetailInfo detail = 상세(first, authorId);
@@ -131,7 +131,7 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
     void 운영진_본인_문의() {
         // given
         Long inquiryId = createInquiryUseCase.create(new CreateInquiryCommand(
-            staffId, categoryId, null, "운영진 본인 문의", "직접 남겨요", List.of(), UUID.randomUUID()
+            staffId, categoryId, null, "운영진 본인 문의", List.of(), UUID.randomUUID()
         ));
 
         // when
@@ -254,7 +254,7 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
         assertThat(secondPage.inquiries()).extracting(InquirySummaryInfo::inquiryId).containsExactly(newer);
         assertThat(secondPage.hasNext()).isFalse();
         assertThat(closedPage.inquiries()).extracting(InquirySummaryInfo::inquiryId).containsExactly(closed);
-        assertThat(firstPage.inquiries().get(0).category().name()).isEqualTo("UMC 서비스");
+        assertThat(firstPage.inquiries().get(0).category().name()).isEqualTo("계정·로그인");
         assertThat(listMyInquiriesUseCase.listMine(new MyInquiriesQuery(staffId, InquiryStatusGroup.OPEN, null, 20))
             .inquiries()).isEmpty();
     }
@@ -363,8 +363,7 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
             authorId,
             categoryId,
             InquiryTeam.PLATFORM,
-            "앱 로그인이 안 돼요",
-            "로그인 버튼을 눌러도 반응이 없어요",
+            "앱 로그인이 안 돼요\n로그인 버튼을 눌러도 반응이 없어요",
             List.of(),
             clientRequestId
         );

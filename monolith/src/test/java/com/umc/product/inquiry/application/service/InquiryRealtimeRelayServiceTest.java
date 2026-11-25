@@ -62,15 +62,12 @@ class InquiryRealtimeRelayServiceTest {
         ChatMessageInfo message = new ChatMessageInfo(
             1L, ROOM_ID, 101L, MessageContentType.TEXT, "확인해 볼게요", List.of(), NOW
         );
-        InquiryMessageInfo staffView = view(101L, "staff");
-        InquiryMessageInfo requesterView = view(null, InquiryMessageAssembler.STAFF_DISPLAY_NAME);
+        InquiryMessageInfo view = view(101L, "staff");
         Inquiry inquiry = 문의();
         given(loadInquiryPort.findByChatRoomId(ROOM_ID)).willReturn(Optional.of(inquiry));
-        given(messageAssembler.assembleViews(inquiry, message))
-            .willReturn(new InquiryMessageAssembler.Views(staffView, requesterView));
-        given(messageAssembler.seesStaffIdentity(AUTHOR_ID)).willReturn(false);
+        given(messageAssembler.assemble(inquiry, message)).willReturn(view);
         given(listMemberSystemRoleUseCase.listUmcProductMemberIds()).willReturn(STAFF_IDS);
-        InquiryRealtimeEvent staffEvent = new InquiryRealtimeEvent.MessageCreated(INQUIRY_ID, staffView);
+        InquiryRealtimeEvent event = new InquiryRealtimeEvent.MessageCreated(INQUIRY_ID, view);
         brokerFailsFor(102L);
 
         // when & then
@@ -81,11 +78,10 @@ class InquiryRealtimeRelayServiceTest {
                 .satisfies(suppressed -> assertThat(suppressed)
                     .hasMessage("broker down")));
         InOrder order = inOrder(broadcastPort);
-        order.verify(broadcastPort)
-            .sendToMember(AUTHOR_ID, new InquiryRealtimeEvent.MessageCreated(INQUIRY_ID, requesterView));
-        order.verify(broadcastPort).sendToMember(101L, staffEvent);
-        order.verify(broadcastPort).sendToMember(102L, staffEvent);
-        order.verify(broadcastPort).sendToMember(103L, staffEvent);
+        order.verify(broadcastPort).sendToMember(AUTHOR_ID, event);
+        order.verify(broadcastPort).sendToMember(101L, event);
+        order.verify(broadcastPort).sendToMember(102L, event);
+        order.verify(broadcastPort).sendToMember(103L, event);
         order.verifyNoMoreInteractions();
     }
 

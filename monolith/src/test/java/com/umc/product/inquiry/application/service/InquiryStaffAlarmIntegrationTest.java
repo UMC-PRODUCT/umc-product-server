@@ -87,7 +87,7 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
         알림(staffId, true);
         알림(otherStaffId, true);
         알림(superAdminId, true);
-        categoryId = inquiryFixture.카테고리("UMC 서비스", 1).getId();
+        categoryId = inquiryFixture.카테고리("계정·로그인", 2).getId();
     }
 
     @Test
@@ -304,7 +304,7 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
 
     private Long 등록(Long memberId, UUID clientRequestId) {
         return createInquiryUseCase.create(new CreateInquiryCommand(
-            memberId, categoryId, null, TITLE, "로그인 버튼을 눌러도 반응이 없어요", List.of(), clientRequestId
+            memberId, categoryId, null, TITLE + "\n로그인 버튼을 눌러도 반응이 없어요", List.of(), clientRequestId
         ));
     }
 

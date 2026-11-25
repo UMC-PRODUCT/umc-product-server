@@ -44,7 +44,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Inquiry extends BaseEntity {
 
-    public static final int MAX_TITLE_CODE_POINTS = 100;
+    public static final int MAX_TITLE_CODE_POINTS = 50;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -83,7 +83,7 @@ public class Inquiry extends BaseEntity {
         Long authorMemberId,
         Long categoryId,
         InquiryTeam targetTeam,
-        String title,
+        String content,
         Long chatRoomId,
         UUID clientRequestId,
         Instant createdAt
@@ -92,7 +92,7 @@ public class Inquiry extends BaseEntity {
         inquiry.authorMemberId = Objects.requireNonNull(authorMemberId);
         inquiry.categoryId = Objects.requireNonNull(categoryId);
         inquiry.targetTeam = targetTeam;
-        inquiry.title = normalizeTitle(title);
+        inquiry.title = titleOf(content);
         inquiry.status = InquiryStatus.RECEIVED;
         inquiry.chatRoomId = Objects.requireNonNull(chatRoomId);
         inquiry.lastMessageAt = Objects.requireNonNull(createdAt);
@@ -127,12 +127,18 @@ public class Inquiry extends BaseEntity {
         closedAt = now;
     }
 
-    private static String normalizeTitle(String title) {
-        String trimmed = Objects.requireNonNull(title).strip();
-        int length = trimmed.codePointCount(0, trimmed.length());
-        if (length < 1 || length > MAX_TITLE_CODE_POINTS) {
-            throw new InquiryDomainException(InquiryErrorCode.INVALID_INQUIRY_TITLE);
+    /**
+     * 등록 화면에 제목 칸이 없어서 내용의 첫 번째 비지 않은 줄을 제목으로 쓴다. 목록 한 줄에 들어가도록 자른다.
+     */
+    static String titleOf(String content) {
+        String firstLine = Objects.requireNonNull(content).lines()
+            .map(String::strip)
+            .filter(line -> !line.isEmpty())
+            .findFirst()
+            .orElseThrow(() -> new InquiryDomainException(InquiryErrorCode.INQUIRY_CONTENT_REQUIRED));
+        if (firstLine.codePointCount(0, firstLine.length()) <= MAX_TITLE_CODE_POINTS) {
+            return firstLine;
         }
-        return trimmed;
+        return firstLine.substring(0, firstLine.offsetByCodePoints(0, MAX_TITLE_CODE_POINTS)).strip();
     }
 }

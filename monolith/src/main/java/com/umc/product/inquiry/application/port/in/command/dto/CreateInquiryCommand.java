@@ -9,7 +9,6 @@ public record CreateInquiryCommand(
     Long authorMemberId,
     Long categoryId,
     InquiryTeam targetTeam,
-    String title,
     String content,
     List<String> fileMetadataIds,
     UUID clientRequestId

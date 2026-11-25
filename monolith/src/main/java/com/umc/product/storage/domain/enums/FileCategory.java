@@ -70,7 +70,7 @@ public enum FileCategory {
     /**
      * 문의 첨부파일
      */
-    INQUIRY_ATTACHMENT("private/inquiry", 20 * 1024 * 1024,
+    INQUIRY_ATTACHMENT("private/inquiry", 50 * 1024 * 1024,
         new String[]{"jpg", "jpeg", "png", "webp", "gif", "pdf", "zip"}),
 
     /**

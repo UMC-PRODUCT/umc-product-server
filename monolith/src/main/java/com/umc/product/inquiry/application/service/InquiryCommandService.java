@@ -93,7 +93,7 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
             command.authorMemberId(),
             category.getId(),
             command.targetTeam(),
-            command.title(),
+            command.content(),
             chatRoomId,
             command.clientRequestId(),
             first.message().createdAt()
@@ -123,7 +123,7 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
             chatMessage,
             ATTACHMENTS_VALIDATED_BY_POLICY
         );
-        InquiryMessageInfo message = messageAssembler.assemble(inquiry, result.message(), command.senderMemberId());
+        InquiryMessageInfo message = messageAssembler.assemble(inquiry, result.message());
         if (result.deduplicated()) {
             return message;
         }

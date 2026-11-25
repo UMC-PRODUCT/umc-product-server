@@ -97,7 +97,7 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
         superAdminId = memberFixture.일반("super-admin").getId();
         memberFixture.시스템_역할_부여(superAdminId, MemberSystemRoleType.SUPER_ADMIN);
         strangerId = memberFixture.일반("stranger").getId();
-        categoryId = inquiryFixture.카테고리("UMC 서비스", 1).getId();
+        categoryId = inquiryFixture.카테고리("계정·로그인", 2).getId();
         stompClient = new WebSocketStompClient(new StandardWebSocketClient());
     }
 
@@ -119,7 +119,7 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("운영진이 처음 답하면 작성자는 UMC PRODUCT로, 다른 운영진은 실명으로 받고, SUPER_ADMIN만 가진 회원과 제3자는 받지 않는다")
+    @DisplayName("운영진이 처음 답하면 작성자와 다른 운영진이 같은 실명 메시지를 받고, SUPER_ADMIN만 가진 회원과 제3자는 받지 않는다")
     void 운영진_첫_답변() throws Exception {
         // given
         Long inquiryId = 문의_등록(authorId);
@@ -133,15 +133,15 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
 
         // then
         List<JsonNode> toAuthor = 받기(authorFrames, 2);
-        JsonNode hidden = 종류(toAuthor, "MESSAGE_CREATED");
-        assertThat(hidden.get("inquiryId").asLong()).isEqualTo(inquiryId);
-        assertThat(hidden.at("/message/messageId").asLong()).isEqualTo(reply.messageId());
-        assertThat(hidden.at("/message/senderType").asText()).isEqualTo("STAFF");
-        assertThat(hidden.at("/message/senderMemberId").isNull()).isTrue();
-        assertThat(hidden.at("/message/senderName").asText()).isEqualTo("UMC PRODUCT");
-        assertThat(hidden.at("/message/content").asText()).isEqualTo("확인해 볼게요");
-        assertThat(hidden.at("/message/attachments").isArray()).isTrue();
-        assertThat(hidden.at("/message/createdAt").asText()).isEqualTo(reply.createdAt().toString());
+        JsonNode toAuthorMessage = 종류(toAuthor, "MESSAGE_CREATED");
+        assertThat(toAuthorMessage.get("inquiryId").asLong()).isEqualTo(inquiryId);
+        assertThat(toAuthorMessage.at("/message/messageId").asLong()).isEqualTo(reply.messageId());
+        assertThat(toAuthorMessage.at("/message/senderType").asText()).isEqualTo("STAFF");
+        assertThat(toAuthorMessage.at("/message/senderMemberId").asLong()).isEqualTo(staffId);
+        assertThat(toAuthorMessage.at("/message/senderName").asText()).isEqualTo("staff");
+        assertThat(toAuthorMessage.at("/message/content").asText()).isEqualTo("확인해 볼게요");
+        assertThat(toAuthorMessage.at("/message/attachments").isArray()).isTrue();
+        assertThat(toAuthorMessage.at("/message/createdAt").asText()).isEqualTo(reply.createdAt().toString());
 
         JsonNode status = 종류(toAuthor, "STATUS_CHANGED");
         assertThat(status.get("inquiryId").asLong()).isEqualTo(inquiryId);
@@ -341,8 +341,7 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
             memberId,
             categoryId,
             InquiryTeam.PLATFORM,
-            "앱 로그인이 안 돼요",
-            "로그인 버튼을 눌러도 반응이 없어요",
+            "앱 로그인이 안 돼요\n로그인 버튼을 눌러도 반응이 없어요",
             List.of(),
             UUID.randomUUID()
         ));

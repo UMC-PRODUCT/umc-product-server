@@ -15,7 +15,7 @@ public record CreateInquiryRequest(
     @NotNull @Positive Long categoryId,
     @Schema(description = "담당 팀. 모르면 null", nullable = true)
     InquiryTeam targetTeam,
-    @NotNull String title,
+    @Schema(description = "문의 내용. 첫 번째 비지 않은 줄(최대 50자)이 제목이 된다")
     @NotNull String content,
     List<@NotBlank String> fileMetadataIds,
     @Schema(description = "등록 재시도 시 같은 값을 보내면 내용 비교 없이 기존 문의를 돌려준다")
@@ -27,7 +27,6 @@ public record CreateInquiryRequest(
             authorMemberId,
             categoryId,
             targetTeam,
-            title,
             content,
             fileMetadataIds,
             clientRequestId
