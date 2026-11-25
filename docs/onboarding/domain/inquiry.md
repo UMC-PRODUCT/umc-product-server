@@ -19,19 +19,21 @@
 ## API
 
 모든 API는 로그인이 필요하다. "운영진"은 `UMC_PRODUCT` 또는 `SUPER_ADMIN`이고, 아니면 403 `INQUIRY-0003`이다.
+담당자가 될 수 있는 사람은 `UMC_PRODUCT` 역할을 직접 가진 회원뿐이다(`InquiryStaffRoster`). `SUPER_ADMIN`만 가진 회원은
+문의를 처리할 수 있지만 담당자 후보가 아니고, "내 담당"은 늘 비며, 운영 상세의 `canBeAssignee`가 false다.
 
 | 메서드·경로 | 누가 | 내용 |
 | --- | --- | --- |
 | `GET /api/v1/inquiries/categories` | 누구나 | 활성 문의 분류 |
 | `GET /api/v1/inquiries/teams` | 누구나 | 받는 팀 7개와 담당 범위, 맨 뒤 `team=null` "어느 팀인지 모르겠어요" |
-| `POST /api/v1/inquiries` | 누구나 | 등록. `categoryId`, `targetTeam`, `content`, `fileMetadataIds`, `clientRequestId`, `referencedFaqId`(선택) |
+| `POST /api/v1/inquiries` | 누구나 | 등록. `categoryId`, `targetTeam`, `content`, `fileMetadataIds`, `clientRequestId`, `referencedFaqId`(선택, 공개 중이 아니면 비워 저장) |
 | `GET /api/v1/inquiries/me` | 누구나 | 내 문의 목록 |
 | `GET /api/v1/inquiries/{id}` | 작성자·운영진 | 상세. 라벨·담당자·이력은 없다 |
 | `GET`·`POST /api/v1/inquiries/{id}/messages` | 작성자·운영진 | 메시지 조회·전송 |
 | `POST /api/v1/inquiries/admin/{id}/close` | 운영진 | 종료 |
 | `GET`·`PUT /api/v1/inquiries/admin/alarm-setting` | 운영진 | 새 문의 알림 설정 |
-| `GET /api/v1/inquiries/admin` | 운영진 | 운영 목록. `tab`(ALL·MINE·UNASSIGNED), `status`, `categoryId`, `labelId`(여러 번), `unclassified`, `cursor`, `size`. 탭별 개수 포함 |
-| `GET /api/v1/inquiries/admin/{id}` | 운영진 | 운영 상세. 상세 + 담당자, 라벨, 이력, 연결된 대표 질문, 참고한 대표 질문 |
+| `GET /api/v1/inquiries/admin` | 운영진 | 운영 목록. `tab`(ALL·MINE·UNASSIGNED), `status`, `categoryId`, `labelId`(여러 번), `unclassified`, `cursor`, `size`. 탭별 개수는 첫 페이지에만, 다음 페이지 `counts`는 null |
+| `GET /api/v1/inquiries/admin/{id}` | 운영진 | 운영 상세. 상세 + 담당자, `canBeAssignee`, 라벨, 이력, 연결된 대표 질문, 참고한 대표 질문(질문은 발행본 우선) |
 | `GET /api/v1/inquiries/admin/assignee-candidates` | 운영진 | 담당자 후보(`UMC_PRODUCT` 전원) |
 | `PUT /api/v1/inquiries/admin/{id}/assignee` | 운영진 | `assigneeMemberId`, `expectedAssigneeMemberId`. 본 담당자와 다르면 409 `INQUIRY-0015` |
 | `PUT /api/v1/inquiries/admin/{id}/team` | 운영진 | 받는 팀 변경 |
@@ -40,11 +42,11 @@
 | `POST /api/v1/inquiries/admin/{id}/faq/draft` | 운영진 | 문의 제목·분류로 새 초안을 만들어 연결 |
 | `GET`·`POST /api/v1/inquiries/admin/labels`, `PATCH`·`DELETE .../labels/{labelId}` | 운영진 | 라벨 관리. 이름 중복 409 |
 | `GET /api/v1/inquiries/admin/faqs` | 운영진 | 대표 질문 목록(`status`, `categoryId`). 해결 수 포함 |
-| `GET /api/v1/inquiries/admin/faqs/{faqId}` | 운영진 | 수정본·발행본·발행한 사람·해결 수 |
+| `GET /api/v1/inquiries/admin/faqs/{faqId}` | 운영진 | `version`, 수정본·발행본·발행한 사람·해결 수 |
 | `POST /api/v1/inquiries/admin/faqs` | 운영진 | 초안 만들기 |
-| `PUT /api/v1/inquiries/admin/faqs/{faqId}/draft` | 운영진 | 초안 저장(수정본 통째로 바꾸기) |
-| `POST /api/v1/inquiries/admin/faqs/{faqId}/publish` | 운영진 | 검증 체크 3개 모두 true로 발행 |
-| `POST /api/v1/inquiries/admin/faqs/{faqId}/archive` | 운영진 | 보관(발행 중일 때만) |
+| `PUT /api/v1/inquiries/admin/faqs/{faqId}/draft` | 운영진 | 초안 저장(수정본 통째로 바꾸기). `expectedVersion` 필수 |
+| `POST /api/v1/inquiries/admin/faqs/{faqId}/publish` | 운영진 | 검증 체크 3개 모두 true로 발행. `expectedVersion` 필수 |
+| `POST /api/v1/inquiries/admin/faqs/{faqId}/archive` | 운영진 | 보관(발행 중일 때만). 본문 `{"expectedVersion"}` 필수 |
 | `GET /api/v1/inquiries/admin/faqs/answer-needed` | 운영진 | 답변 준비 필요 초안 |
 | `GET /api/v1/inquiries/admin/faq-audiences` | 운영진 | 대상 목록 |
 | `GET /api/v1/inquiries/faqs` | 누구나 | 공개 대표 질문 목록(`categoryId`) |
@@ -71,6 +73,10 @@
 | `ARCHIVED` | 수정본만 바뀜 | `PUBLISHED` | 409 `INQUIRY-0028` |
 
 사용자에게는 `PUBLISHED`이고 종료일(한국 날짜)이 지나지 않은 것만 보인다. 순위·검색·추천도 같은 조건이다.
+
+초안 저장·발행·보관은 화면에서 본 `version`을 `expectedVersion`으로 보낸다. 그사이 다른 운영진이 먼저 고쳤으면
+409 `INQUIRY-0029`이고 덮어쓰지 않는다. 앱은 상세를 다시 불러와 재시도한다. 발행 직전에는 카테고리·대상이 아직
+쓰이는지 다시 확인한다.
 
 ## 실시간 수신
 
