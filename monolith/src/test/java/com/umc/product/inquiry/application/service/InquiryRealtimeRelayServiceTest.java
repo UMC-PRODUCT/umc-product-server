@@ -122,7 +122,7 @@ class InquiryRealtimeRelayServiceTest {
     }
 
     private static Inquiry 문의() {
-        Inquiry inquiry = Inquiry.create(AUTHOR_ID, 1L, null, "앱 로그인이 안 돼요", ROOM_ID, UUID.randomUUID(), NOW);
+        Inquiry inquiry = Inquiry.create(AUTHOR_ID, 1L, null, "앱 로그인이 안 돼요", ROOM_ID, UUID.randomUUID(), null, NOW);
         ReflectionTestUtils.setField(inquiry, "id", INQUIRY_ID);
         return inquiry;
     }

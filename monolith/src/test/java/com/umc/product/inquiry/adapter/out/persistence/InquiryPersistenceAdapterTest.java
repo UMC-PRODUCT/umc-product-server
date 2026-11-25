@@ -63,7 +63,7 @@ class InquiryPersistenceAdapterTest {
 
     private Inquiry 문의(UUID clientRequestId, Long chatRoomId) {
         return Inquiry.create(
-            AUTHOR_ID, categoryId, null, "로그인이 안 돼요", chatRoomId, clientRequestId, Instant.now()
+            AUTHOR_ID, categoryId, null, "로그인이 안 돼요", chatRoomId, clientRequestId, null, Instant.now()
         );
     }
 }

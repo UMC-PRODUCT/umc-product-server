@@ -6,6 +6,7 @@ import java.util.Set;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,12 +17,14 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.inquiry.adapter.in.web.dto.request.ChangeInquiryAssigneeRequest;
 import com.umc.product.inquiry.adapter.in.web.dto.request.ChangeInquiryTeamRequest;
+import com.umc.product.inquiry.adapter.in.web.dto.request.LinkInquiryFaqRequest;
 import com.umc.product.inquiry.adapter.in.web.dto.request.ReplaceInquiryLabelsRequest;
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryStaffDetailResponse;
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryStaffMemberResponse;
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryStaffPageResponse;
 import com.umc.product.inquiry.application.port.in.command.ChangeInquiryAssigneeUseCase;
 import com.umc.product.inquiry.application.port.in.command.ChangeInquiryTeamUseCase;
+import com.umc.product.inquiry.application.port.in.command.LinkInquiryFaqUseCase;
 import com.umc.product.inquiry.application.port.in.command.ReplaceInquiryLabelsUseCase;
 import com.umc.product.inquiry.application.port.in.query.GetInquiryStaffDetailUseCase;
 import com.umc.product.inquiry.application.port.in.query.ListInquiryAssigneeCandidatesUseCase;
@@ -52,6 +55,7 @@ public class InquiryStaffController {
     private final ChangeInquiryAssigneeUseCase changeInquiryAssigneeUseCase;
     private final ChangeInquiryTeamUseCase changeInquiryTeamUseCase;
     private final ReplaceInquiryLabelsUseCase replaceInquiryLabelsUseCase;
+    private final LinkInquiryFaqUseCase linkInquiryFaqUseCase;
 
     @GetMapping
     @Operation(
@@ -60,6 +64,7 @@ public class InquiryStaffController {
         description = """
             탭(전체·내 담당·미배정)과 탭별 개수를 함께 돌려준다. 탭 말고 다른 필터는 개수에도 똑같이 적용한다.
             status·categoryId는 그중 하나에 해당하면, labelId는 그중 하나라도 붙어 있으면 고른다. 여러 번 넘길 수 있다.
+            unclassified=true면 대표 질문에 연결되지 않은 문의만 고른다.
             담당자가 UMC_PRODUCT 권한을 잃은 문의는 미배정으로 본다.
             마지막 메시지 최신순이며 cursor는 이전 응답의 nextCursor를 그대로 넘긴다.
             """
@@ -69,12 +74,13 @@ public class InquiryStaffController {
         @RequestParam(name = "status", required = false) Set<InquiryStatus> statuses,
         @RequestParam(name = "categoryId", required = false) Set<@Positive Long> categoryIds,
         @RequestParam(name = "labelId", required = false) Set<@Positive Long> labelIds,
+        @RequestParam(defaultValue = "false") boolean unclassified,
         @RequestParam(required = false) String cursor,
         @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size,
         @CurrentMember MemberPrincipal principal
     ) {
         return InquiryStaffPageResponse.from(searchStaffInquiriesUseCase.search(new StaffInquiriesQuery(
-            principal.getMemberId(), tab, statuses, categoryIds, labelIds, cursor, size
+            principal.getMemberId(), tab, statuses, categoryIds, labelIds, unclassified, cursor, size
         )));
     }
 
@@ -82,7 +88,7 @@ public class InquiryStaffController {
     @Operation(
         operationId = "INQUIRY-ADMIN-103",
         summary = "운영 문의 상세 조회",
-        description = "질문자용 상세에 담당자, 라벨, 처리 이력을 더해 돌려준다."
+        description = "질문자용 상세에 담당자, 라벨, 처리 이력, 연결된 대표 질문(없으면 미분류), 질문자가 참고한 대표 질문을 더해 돌려준다."
     )
     public InquiryStaffDetailResponse getDetail(
         @PathVariable @Positive Long inquiryId,
@@ -149,6 +155,35 @@ public class InquiryStaffController {
         @CurrentMember MemberPrincipal principal
     ) {
         replaceInquiryLabelsUseCase.replaceLabels(request.toCommand(inquiryId, principal.getMemberId()));
+        return staffDetail(inquiryId, principal);
+    }
+
+    @PutMapping("/{inquiryId:\\d+}/faq")
+    @Operation(
+        operationId = "INQUIRY-ADMIN-009",
+        summary = "대표 질문 연결·해제",
+        description = "문의를 대표 질문 하나에 연결한다. faqId가 null이면 연결을 끊어 미분류로 돌린다. 초안에도 연결할 수 있다."
+    )
+    public InquiryStaffDetailResponse linkFaq(
+        @PathVariable @Positive Long inquiryId,
+        @Valid @RequestBody LinkInquiryFaqRequest request,
+        @CurrentMember MemberPrincipal principal
+    ) {
+        linkInquiryFaqUseCase.linkFaq(request.toCommand(inquiryId, principal.getMemberId()));
+        return staffDetail(inquiryId, principal);
+    }
+
+    @PostMapping("/{inquiryId:\\d+}/faq/draft")
+    @Operation(
+        operationId = "INQUIRY-ADMIN-010",
+        summary = "새 대표 질문 초안 만들어 연결",
+        description = "문의 제목을 질문으로, 문의 분류를 카테고리로 한 초안을 만들고 이 문의에 연결한다."
+    )
+    public InquiryStaffDetailResponse linkNewDraftFaq(
+        @PathVariable @Positive Long inquiryId,
+        @CurrentMember MemberPrincipal principal
+    ) {
+        linkInquiryFaqUseCase.linkNewDraftFaq(inquiryId, principal.getMemberId());
         return staffDetail(inquiryId, principal);
     }
 

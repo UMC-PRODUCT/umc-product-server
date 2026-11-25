@@ -28,7 +28,16 @@ public enum InquiryErrorCode implements BaseCode {
     INQUIRY_ASSIGNEE_NOT_STAFF(HttpStatus.BAD_REQUEST, "INQUIRY-0016", "UMC PRODUCT 운영진만 담당자로 지정할 수 있어요."),
     INQUIRY_LABEL_NOT_FOUND(HttpStatus.NOT_FOUND, "INQUIRY-0017", "라벨을 찾을 수 없어요. 목록을 새로고침해주세요."),
     INQUIRY_LABEL_NAME_DUPLICATED(HttpStatus.CONFLICT, "INQUIRY-0018", "같은 이름의 라벨이 이미 있어요."),
-    INVALID_INQUIRY_LABEL_NAME(HttpStatus.BAD_REQUEST, "INQUIRY-0019", "라벨 이름은 1자 이상 30자 이하로 입력해주세요.");
+    INVALID_INQUIRY_LABEL_NAME(HttpStatus.BAD_REQUEST, "INQUIRY-0019", "라벨 이름은 1자 이상 30자 이하로 입력해주세요."),
+    INQUIRY_FAQ_NOT_FOUND(HttpStatus.NOT_FOUND, "INQUIRY-0020", "대표 질문을 찾을 수 없어요. 목록을 새로고침해주세요."),
+    INVALID_INQUIRY_FAQ_QUESTION(HttpStatus.BAD_REQUEST, "INQUIRY-0021", "질문은 1자 이상 200자 이하로 입력해주세요."),
+    INVALID_INQUIRY_FAQ_ANSWER(HttpStatus.BAD_REQUEST, "INQUIRY-0022", "답변은 5,000자 이하로 입력해주세요."),
+    INVALID_INQUIRY_FAQ_ALIASES(HttpStatus.BAD_REQUEST, "INQUIRY-0023", "별칭은 20개까지, 하나에 50자 이하로 입력해주세요."),
+    INVALID_INQUIRY_FAQ_RELATED(HttpStatus.BAD_REQUEST, "INQUIRY-0024", "자기 자신은 관련 안내로 연결할 수 없어요."),
+    INQUIRY_FAQ_AUDIENCE_NOT_FOUND(HttpStatus.BAD_REQUEST, "INQUIRY-0025", "선택한 대상을 찾을 수 없어요. 대상을 다시 선택해주세요."),
+    INQUIRY_FAQ_INCOMPLETE(HttpStatus.BAD_REQUEST, "INQUIRY-0026", "답변, 카테고리, 대상을 모두 채워야 발행할 수 있어요."),
+    INQUIRY_FAQ_VERIFICATION_REQUIRED(HttpStatus.BAD_REQUEST, "INQUIRY-0027", "검증 항목 3개를 모두 확인해야 발행할 수 있어요."),
+    INQUIRY_FAQ_NOT_ARCHIVABLE(HttpStatus.CONFLICT, "INQUIRY-0028", "발행 중인 대표 질문만 보관할 수 있어요. 목록을 새로고침해주세요.");
 
     private final HttpStatus httpStatus;
     private final String code;

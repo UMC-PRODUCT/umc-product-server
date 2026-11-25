@@ -84,6 +84,12 @@ public class Inquiry extends BaseEntity {
     @Column(name = "assignee_member_id")
     private Long assigneeMemberId;
 
+    @Column(name = "faq_id")
+    private Long faqId;
+
+    @Column(name = "referenced_faq_id")
+    private Long referencedFaqId;
+
     public static Inquiry create(
         Long authorMemberId,
         Long categoryId,
@@ -91,6 +97,7 @@ public class Inquiry extends BaseEntity {
         String content,
         Long chatRoomId,
         UUID clientRequestId,
+        Long referencedFaqId,
         Instant createdAt
     ) {
         Inquiry inquiry = new Inquiry();
@@ -102,6 +109,7 @@ public class Inquiry extends BaseEntity {
         inquiry.chatRoomId = Objects.requireNonNull(chatRoomId);
         inquiry.lastMessageAt = Objects.requireNonNull(createdAt);
         inquiry.clientRequestId = Objects.requireNonNull(clientRequestId);
+        inquiry.referencedFaqId = referencedFaqId;
         return inquiry;
     }
 
@@ -160,6 +168,11 @@ public class Inquiry extends BaseEntity {
             return Optional.empty();
         }
         return Optional.of(InquiryHistory.assigneeChanged(id, actorMemberId, current, newAssigneeId));
+    }
+
+    /** 대표 질문 연결. null이면 연결을 끊어 미분류로 돌린다. */
+    public void linkFaq(Long faqId) {
+        this.faqId = faqId;
     }
 
     public Optional<InquiryHistory> changeTeam(Long actorMemberId, InquiryTeam newTeam) {

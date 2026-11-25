@@ -45,10 +45,13 @@ public interface LoadInquiryPort {
         Set<Long> staffMemberIds,
         Set<InquiryStatus> statuses,
         Set<Long> categoryIds,
-        Set<Long> labelIds
+        Set<Long> labelIds,
+        boolean unclassifiedOnly
     ) {
         public StaffSearch withTab(InquiryStaffTab otherTab) {
-            return new StaffSearch(otherTab, viewerMemberId, staffMemberIds, statuses, categoryIds, labelIds);
+            return new StaffSearch(
+                otherTab, viewerMemberId, staffMemberIds, statuses, categoryIds, labelIds, unclassifiedOnly
+            );
         }
     }
 }

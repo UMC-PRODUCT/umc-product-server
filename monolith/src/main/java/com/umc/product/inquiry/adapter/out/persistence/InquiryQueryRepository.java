@@ -58,6 +58,7 @@ public class InquiryQueryRepository {
             tab(search),
             search.statuses().isEmpty() ? null : inquiry.status.in(search.statuses()),
             search.categoryIds().isEmpty() ? null : inquiry.categoryId.in(search.categoryIds()),
+            search.unclassifiedOnly() ? inquiry.faqId.isNull() : null,
             search.labelIds().isEmpty() ? null : inquiry.id.in(
                 JPAExpressions.select(inquiryLabelAssignment.inquiryId)
                     .from(inquiryLabelAssignment)

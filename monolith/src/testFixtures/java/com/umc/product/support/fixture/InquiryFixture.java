@@ -5,9 +5,11 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 import com.umc.product.inquiry.adapter.out.persistence.InquiryCategoryJpaRepository;
+import com.umc.product.inquiry.adapter.out.persistence.InquiryFaqAudienceJpaRepository;
 import com.umc.product.inquiry.application.port.out.LoadInquiryLabelPort;
 import com.umc.product.inquiry.application.port.out.SaveInquiryLabelPort;
 import com.umc.product.inquiry.domain.InquiryCategory;
+import com.umc.product.inquiry.domain.InquiryFaqAudience;
 import com.umc.product.inquiry.domain.InquiryLabel;
 import com.umc.product.storage.application.port.out.SaveFileMetadataPort;
 import com.umc.product.storage.domain.FileMetadata;
@@ -21,17 +23,27 @@ public class InquiryFixture extends FixtureSupport {
     private final SaveFileMetadataPort saveFileMetadataPort;
     private final LoadInquiryLabelPort loadInquiryLabelPort;
     private final SaveInquiryLabelPort saveInquiryLabelPort;
+    private final InquiryFaqAudienceJpaRepository inquiryFaqAudienceJpaRepository;
 
     public InquiryFixture(
         InquiryCategoryJpaRepository inquiryCategoryJpaRepository,
         SaveFileMetadataPort saveFileMetadataPort,
         LoadInquiryLabelPort loadInquiryLabelPort,
-        SaveInquiryLabelPort saveInquiryLabelPort
+        SaveInquiryLabelPort saveInquiryLabelPort,
+        InquiryFaqAudienceJpaRepository inquiryFaqAudienceJpaRepository
     ) {
+        this.inquiryFaqAudienceJpaRepository = inquiryFaqAudienceJpaRepository;
         this.inquiryCategoryJpaRepository = inquiryCategoryJpaRepository;
         this.saveFileMetadataPort = saveFileMetadataPort;
         this.loadInquiryLabelPort = loadInquiryLabelPort;
         this.saveInquiryLabelPort = saveInquiryLabelPort;
+    }
+
+    public InquiryFaqAudience 대상(String name) {
+        return inquiryFaqAudienceJpaRepository.findAll().stream()
+            .filter(audience -> audience.getName().equals(name))
+            .findFirst()
+            .orElseGet(() -> inquiryFaqAudienceJpaRepository.save(InquiryFaqAudience.create(name, 1)));
     }
 
     public InquiryLabel 라벨(String name) {

@@ -131,7 +131,7 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
     void 운영진_본인_문의() {
         // given
         Long inquiryId = createInquiryUseCase.create(new CreateInquiryCommand(
-            staffId, categoryId, null, "운영진 본인 문의", List.of(), UUID.randomUUID()
+            staffId, categoryId, null, "운영진 본인 문의", List.of(), UUID.randomUUID(), null
         ));
 
         // when
@@ -365,7 +365,8 @@ class InquiryCommandIntegrationTest extends IntegrationTestSupport {
             InquiryTeam.PLATFORM,
             "앱 로그인이 안 돼요\n로그인 버튼을 눌러도 반응이 없어요",
             List.of(),
-            clientRequestId
+            clientRequestId,
+            null
         );
     }
 

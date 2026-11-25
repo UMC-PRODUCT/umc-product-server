@@ -21,6 +21,7 @@ import com.umc.product.inquiry.application.port.in.query.SearchStaffInquiriesUse
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryCategoryInfo;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryDetailInfo;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryDetailQuery;
+import com.umc.product.inquiry.application.port.in.query.dto.InquiryFaqRefInfo;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryHistoryInfo;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryLabelInfo;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryStaffDetailInfo;
@@ -29,6 +30,7 @@ import com.umc.product.inquiry.application.port.in.query.dto.InquiryStaffPageInf
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryStaffSummaryInfo;
 import com.umc.product.inquiry.application.port.in.query.dto.StaffInquiriesQuery;
 import com.umc.product.inquiry.application.port.out.LoadInquiryCategoryPort;
+import com.umc.product.inquiry.application.port.out.LoadInquiryFaqPort;
 import com.umc.product.inquiry.application.port.out.LoadInquiryHistoryPort;
 import com.umc.product.inquiry.application.port.out.LoadInquiryLabelPort;
 import com.umc.product.inquiry.application.port.out.LoadInquiryPort;
@@ -58,6 +60,7 @@ public class InquiryStaffQueryService implements
     private final LoadInquiryCategoryPort loadInquiryCategoryPort;
     private final LoadInquiryLabelPort loadInquiryLabelPort;
     private final LoadInquiryHistoryPort loadInquiryHistoryPort;
+    private final LoadInquiryFaqPort loadInquiryFaqPort;
     private final GetInquiryDetailUseCase getInquiryDetailUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final ListMemberSystemRoleUseCase listMemberSystemRoleUseCase;
@@ -74,7 +77,8 @@ public class InquiryStaffQueryService implements
             staffIds,
             query.statuses(),
             query.categoryIds(),
-            query.labelIds()
+            query.labelIds(),
+            query.unclassifiedOnly()
         );
 
         List<Inquiry> rows = loadInquiryPort.searchForStaff(search, cursor, query.size() + 1);
@@ -161,7 +165,9 @@ public class InquiryStaffQueryService implements
                 .getOrDefault(inquiry.getId(), List.of()).stream()
                 .map(InquiryLabelInfo::from)
                 .toList(),
-            List.copyOf(historyInfos)
+            List.copyOf(historyInfos),
+            faqRef(inquiry.getFaqId()),
+            faqRef(inquiry.getReferencedFaqId())
         );
     }
 
@@ -184,6 +190,15 @@ public class InquiryStaffQueryService implements
 
     private static LoadInquiryPort.Cursor cursorOf(Inquiry last) {
         return new LoadInquiryPort.Cursor(last.getLastMessageAt(), last.getId());
+    }
+
+    private InquiryFaqRefInfo faqRef(Long faqId) {
+        if (faqId == null) {
+            return null;
+        }
+        return loadInquiryFaqPort.findById(faqId)
+            .map(faq -> new InquiryFaqRefInfo(faq.getId(), faq.getDraft().getQuestion()))
+            .orElse(null);
     }
 
     private Set<Long> staffIds() {

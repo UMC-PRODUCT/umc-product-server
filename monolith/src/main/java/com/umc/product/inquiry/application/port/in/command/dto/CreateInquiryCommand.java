@@ -11,7 +11,8 @@ public record CreateInquiryCommand(
     InquiryTeam targetTeam,
     String content,
     List<String> fileMetadataIds,
-    UUID clientRequestId
+    UUID clientRequestId,
+    Long referencedFaqId
 ) {
     public CreateInquiryCommand {
         fileMetadataIds = fileMetadataIds == null ? List.of() : List.copyOf(fileMetadataIds);

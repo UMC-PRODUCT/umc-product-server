@@ -70,6 +70,6 @@ class InquiryTest {
     }
 
     private Inquiry 문의(String content) {
-        return Inquiry.create(1L, 1L, null, content, 10L, UUID.randomUUID(), CREATED_AT);
+        return Inquiry.create(1L, 1L, null, content, 10L, UUID.randomUUID(), null, CREATED_AT);
     }
 }

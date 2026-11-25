@@ -376,7 +376,7 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
 
     private Long 등록(Long memberId, UUID clientRequestId) {
         return createInquiryUseCase.create(new CreateInquiryCommand(
-            memberId, categoryId, null, TITLE + "\n로그인 버튼을 눌러도 반응이 없어요", List.of(), clientRequestId
+            memberId, categoryId, null, TITLE + "\n로그인 버튼을 눌러도 반응이 없어요", List.of(), clientRequestId, null
         ));
     }
 

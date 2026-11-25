@@ -6,7 +6,8 @@ import com.umc.product.inquiry.domain.enums.InquiryStaffTab;
 import com.umc.product.inquiry.domain.enums.InquiryStatus;
 
 /**
- * @param labelIds 하나라도 붙은 문의만 고른다.
+ * @param labelIds         하나라도 붙은 문의만 고른다.
+ * @param unclassifiedOnly 대표 질문에 연결되지 않은 문의만 고른다.
  * @param cursor   이전 응답의 nextCursor 를 그대로 받은 불투명 문자열. 첫 페이지는 null.
  */
 public record StaffInquiriesQuery(
@@ -15,6 +16,7 @@ public record StaffInquiriesQuery(
     Set<InquiryStatus> statuses,
     Set<Long> categoryIds,
     Set<Long> labelIds,
+    boolean unclassifiedOnly,
     String cursor,
     int size
 ) {

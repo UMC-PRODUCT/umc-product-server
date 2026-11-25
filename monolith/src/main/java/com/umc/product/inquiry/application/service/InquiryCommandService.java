@@ -31,6 +31,7 @@ import com.umc.product.inquiry.application.port.in.command.dto.CreateInquiryComm
 import com.umc.product.inquiry.application.port.in.command.dto.SendInquiryMessageCommand;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryMessageInfo;
 import com.umc.product.inquiry.application.port.out.LoadInquiryCategoryPort;
+import com.umc.product.inquiry.application.port.out.LoadInquiryFaqPort;
 import com.umc.product.inquiry.application.port.out.LoadInquiryPort;
 import com.umc.product.inquiry.application.port.out.SaveInquiryPort;
 import com.umc.product.inquiry.domain.Inquiry;
@@ -53,6 +54,7 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
     private final LoadInquiryPort loadInquiryPort;
     private final SaveInquiryPort saveInquiryPort;
     private final LoadInquiryCategoryPort loadInquiryCategoryPort;
+    private final LoadInquiryFaqPort loadInquiryFaqPort;
     private final CreateChatRoomUseCase createChatRoomUseCase;
     private final JoinChatRoomUseCase joinChatRoomUseCase;
     private final CheckChatRoomAccessUseCase checkChatRoomAccessUseCase;
@@ -73,6 +75,9 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
             return existing.get().getId();
         }
 
+        if (command.referencedFaqId() != null && loadInquiryFaqPort.findById(command.referencedFaqId()).isEmpty()) {
+            throw new InquiryDomainException(InquiryErrorCode.INQUIRY_FAQ_NOT_FOUND);
+        }
         InquiryCategory category = loadInquiryCategoryPort.findById(command.categoryId())
             .filter(InquiryCategory::isActive)
             .orElseThrow(() -> new InquiryDomainException(InquiryErrorCode.INQUIRY_CATEGORY_NOT_FOUND));
@@ -96,6 +101,7 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
             command.content(),
             chatRoomId,
             command.clientRequestId(),
+            command.referencedFaqId(),
             first.message().createdAt()
         ));
         domainEventPublisher.publish(InquiryCreatedEvent.of(

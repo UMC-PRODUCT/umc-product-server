@@ -19,7 +19,9 @@ public record CreateInquiryRequest(
     @NotNull String content,
     List<@NotBlank String> fileMetadataIds,
     @Schema(description = "등록 재시도 시 같은 값을 보내면 내용 비교 없이 기존 문의를 돌려준다")
-    @NotNull UUID clientRequestId
+    @NotNull UUID clientRequestId,
+    @Schema(description = "문의 전에 \"먼저 확인해 보세요\"로 본 대표 질문 ID. 없으면 null", nullable = true)
+    @Positive Long referencedFaqId
 ) {
 
     public CreateInquiryCommand toCommand(Long authorMemberId) {
@@ -29,7 +31,8 @@ public record CreateInquiryRequest(
             targetTeam,
             content,
             fileMetadataIds,
-            clientRequestId
+            clientRequestId,
+            referencedFaqId
         );
     }
 }

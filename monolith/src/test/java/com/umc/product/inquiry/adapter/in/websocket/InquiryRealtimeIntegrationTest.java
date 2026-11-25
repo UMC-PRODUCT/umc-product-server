@@ -343,7 +343,8 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
             InquiryTeam.PLATFORM,
             "앱 로그인이 안 돼요\n로그인 버튼을 눌러도 반응이 없어요",
             List.of(),
-            UUID.randomUUID()
+            UUID.randomUUID(),
+            null
         ));
     }
 
