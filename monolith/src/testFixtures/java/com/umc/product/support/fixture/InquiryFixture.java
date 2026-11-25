@@ -5,7 +5,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 import com.umc.product.inquiry.adapter.out.persistence.InquiryCategoryJpaRepository;
+import com.umc.product.inquiry.application.port.out.LoadInquiryLabelPort;
+import com.umc.product.inquiry.application.port.out.SaveInquiryLabelPort;
 import com.umc.product.inquiry.domain.InquiryCategory;
+import com.umc.product.inquiry.domain.InquiryLabel;
 import com.umc.product.storage.application.port.out.SaveFileMetadataPort;
 import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.enums.FileCategory;
@@ -16,13 +19,26 @@ public class InquiryFixture extends FixtureSupport {
 
     private final InquiryCategoryJpaRepository inquiryCategoryJpaRepository;
     private final SaveFileMetadataPort saveFileMetadataPort;
+    private final LoadInquiryLabelPort loadInquiryLabelPort;
+    private final SaveInquiryLabelPort saveInquiryLabelPort;
 
     public InquiryFixture(
         InquiryCategoryJpaRepository inquiryCategoryJpaRepository,
-        SaveFileMetadataPort saveFileMetadataPort
+        SaveFileMetadataPort saveFileMetadataPort,
+        LoadInquiryLabelPort loadInquiryLabelPort,
+        SaveInquiryLabelPort saveInquiryLabelPort
     ) {
         this.inquiryCategoryJpaRepository = inquiryCategoryJpaRepository;
         this.saveFileMetadataPort = saveFileMetadataPort;
+        this.loadInquiryLabelPort = loadInquiryLabelPort;
+        this.saveInquiryLabelPort = saveInquiryLabelPort;
+    }
+
+    public InquiryLabel 라벨(String name) {
+        return loadInquiryLabelPort.listAll().stream()
+            .filter(label -> label.getName().equals(name))
+            .findFirst()
+            .orElseGet(() -> saveInquiryLabelPort.save(InquiryLabel.create(name)));
     }
 
     public InquiryCategory 카테고리(String name, int displayOrder) {

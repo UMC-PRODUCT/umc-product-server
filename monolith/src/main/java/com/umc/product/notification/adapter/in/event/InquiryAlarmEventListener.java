@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import com.umc.product.inquiry.application.event.InquiryAssignedEvent;
 import com.umc.product.inquiry.application.event.InquiryAuthorMessagedEvent;
 import com.umc.product.inquiry.application.event.InquiryCreatedEvent;
 import com.umc.product.inquiry.application.event.InquiryStaffRepliedEvent;
@@ -25,10 +26,12 @@ public class InquiryAlarmEventListener {
     static final String TYPE_INQUIRY_REPLY = "INQUIRY_REPLY";
     static final String TYPE_INQUIRY_NEW = "INQUIRY_NEW";
     static final String TYPE_INQUIRY_AUTHOR_MESSAGE = "INQUIRY_AUTHOR_MESSAGE";
+    static final String TYPE_INQUIRY_ASSIGNED = "INQUIRY_ASSIGNED";
     private static final String REPLY_TITLE = "문의 답변이 도착했어요";
     private static final String REPLY_BODY = "UMC PRODUCT 팀이 문의에 답변했어요.";
     private static final String NEW_INQUIRY_TITLE = "새 문의가 왔어요";
     private static final String AUTHOR_MESSAGE_TITLE = "문의에 새 메시지가 왔어요";
+    private static final String ASSIGNED_TITLE = "문의를 맡았어요";
 
     private final RequestFcmNotificationUseCase requestFcmNotificationUseCase;
     private final ListInquiryStaffAlarmRecipientsUseCase listInquiryStaffAlarmRecipientsUseCase;
@@ -54,6 +57,14 @@ public class InquiryAlarmEventListener {
         notifyStaff(
             listInquiryStaffAlarmRecipientsUseCase.listAuthorMessageRecipientMemberIds(event.inquiryId()),
             event.authorMemberId(), AUTHOR_MESSAGE_TITLE, event.title(), TYPE_INQUIRY_AUTHOR_MESSAGE, event.inquiryId()
+        );
+    }
+
+    @EventListener
+    public void handle(InquiryAssignedEvent event) {
+        notifyStaff(
+            List.of(event.assigneeMemberId()),
+            event.actorMemberId(), ASSIGNED_TITLE, event.title(), TYPE_INQUIRY_ASSIGNED, event.inquiryId()
         );
     }
 

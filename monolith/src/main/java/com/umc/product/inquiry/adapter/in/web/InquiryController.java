@@ -23,11 +23,13 @@ import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryDetailResponse
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryMessagePageResponse;
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryMessageResponse;
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquirySummaryPageResponse;
+import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryTeamResponse;
 import com.umc.product.inquiry.application.port.in.command.CreateInquiryUseCase;
 import com.umc.product.inquiry.application.port.in.command.SendInquiryMessageUseCase;
 import com.umc.product.inquiry.application.port.in.query.GetInquiryDetailUseCase;
 import com.umc.product.inquiry.application.port.in.query.GetInquiryMessagesUseCase;
 import com.umc.product.inquiry.application.port.in.query.ListInquiryCategoriesUseCase;
+import com.umc.product.inquiry.application.port.in.query.ListInquiryTeamsUseCase;
 import com.umc.product.inquiry.application.port.in.query.ListMyInquiriesUseCase;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryDetailQuery;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryMessagesQuery;
@@ -50,6 +52,7 @@ import lombok.RequiredArgsConstructor;
 public class InquiryController {
 
     private final ListInquiryCategoriesUseCase listInquiryCategoriesUseCase;
+    private final ListInquiryTeamsUseCase listInquiryTeamsUseCase;
     private final CreateInquiryUseCase createInquiryUseCase;
     private final ListMyInquiriesUseCase listMyInquiriesUseCase;
     private final GetInquiryDetailUseCase getInquiryDetailUseCase;
@@ -62,6 +65,16 @@ public class InquiryController {
         return listInquiryCategoriesUseCase.listActive().stream()
             .map(InquiryCategoryResponse::from)
             .toList();
+    }
+
+    @GetMapping("/teams")
+    @Operation(
+        operationId = "INQUIRY-105",
+        summary = "받는 팀 목록 조회",
+        description = "받는 팀 7개와 담당 범위를 돌려주고, 맨 뒤에 team=null인 \"어느 팀인지 모르겠어요\"를 붙인다."
+    )
+    public List<InquiryTeamResponse> listTeams() {
+        return listInquiryTeamsUseCase.listTeams().stream().map(InquiryTeamResponse::from).toList();
     }
 
     @PostMapping

@@ -1,9 +1,11 @@
 package com.umc.product.inquiry.application.service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,7 @@ import com.umc.product.inquiry.application.policy.InquiryAccessPolicy;
 import com.umc.product.inquiry.application.port.in.query.GetInquiryDetailUseCase;
 import com.umc.product.inquiry.application.port.in.query.GetInquiryMessagesUseCase;
 import com.umc.product.inquiry.application.port.in.query.ListInquiryCategoriesUseCase;
+import com.umc.product.inquiry.application.port.in.query.ListInquiryTeamsUseCase;
 import com.umc.product.inquiry.application.port.in.query.ListMyInquiriesUseCase;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryAuthorInfo;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryCategoryInfo;
@@ -24,12 +27,14 @@ import com.umc.product.inquiry.application.port.in.query.dto.InquiryMessagePageI
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryMessagesQuery;
 import com.umc.product.inquiry.application.port.in.query.dto.InquirySummaryInfo;
 import com.umc.product.inquiry.application.port.in.query.dto.InquirySummaryPageInfo;
+import com.umc.product.inquiry.application.port.in.query.dto.InquiryTeamInfo;
 import com.umc.product.inquiry.application.port.in.query.dto.MyInquiriesQuery;
 import com.umc.product.inquiry.application.port.out.LoadInquiryCategoryPort;
 import com.umc.product.inquiry.application.port.out.LoadInquiryPort;
 import com.umc.product.inquiry.domain.Inquiry;
 import com.umc.product.inquiry.domain.InquiryCategory;
 import com.umc.product.inquiry.domain.enums.InquiryParticipant;
+import com.umc.product.inquiry.domain.enums.InquiryTeam;
 import com.umc.product.inquiry.domain.exception.InquiryDomainException;
 import com.umc.product.inquiry.domain.exception.InquiryErrorCode;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -43,7 +48,8 @@ public class InquiryQueryService implements
     ListInquiryCategoriesUseCase,
     ListMyInquiriesUseCase,
     GetInquiryDetailUseCase,
-    GetInquiryMessagesUseCase {
+    GetInquiryMessagesUseCase,
+    ListInquiryTeamsUseCase {
 
     private final LoadInquiryPort loadInquiryPort;
     private final LoadInquiryCategoryPort loadInquiryCategoryPort;
@@ -57,6 +63,14 @@ public class InquiryQueryService implements
         return loadInquiryCategoryPort.listActive().stream()
             .map(InquiryCategoryInfo::from)
             .toList();
+    }
+
+    @Override
+    public List<InquiryTeamInfo> listTeams() {
+        return Stream.concat(
+            Arrays.stream(InquiryTeam.values()).map(InquiryTeamInfo::from),
+            Stream.of(InquiryTeamInfo.unknown())
+        ).toList();
     }
 
     @Override

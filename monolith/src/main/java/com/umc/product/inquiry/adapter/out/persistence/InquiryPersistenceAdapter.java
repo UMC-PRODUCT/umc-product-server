@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
@@ -53,11 +52,21 @@ public class InquiryPersistenceAdapter implements LoadInquiryPort, SaveInquiryPo
     }
 
     @Override
+    public List<Inquiry> searchForStaff(StaffSearch search, Cursor cursor, int limit) {
+        return inquiryQueryRepository.searchForStaff(search, cursor, limit);
+    }
+
+    @Override
+    public long countForStaff(StaffSearch search) {
+        return inquiryQueryRepository.countForStaff(search);
+    }
+
+    @Override
     public Inquiry create(Inquiry inquiry) {
         try {
             return inquiryJpaRepository.saveAndFlush(inquiry);
         } catch (DataIntegrityViolationException exception) {
-            if (violates(exception, AUTHOR_CLIENT_REQUEST_CONSTRAINT)) {
+            if (ConstraintViolations.violates(exception, AUTHOR_CLIENT_REQUEST_CONSTRAINT)) {
                 throw new InquiryDomainException(InquiryErrorCode.INQUIRY_REQUEST_CONFLICT, exception);
             }
             throw exception;
@@ -67,15 +76,5 @@ public class InquiryPersistenceAdapter implements LoadInquiryPort, SaveInquiryPo
     @Override
     public Inquiry save(Inquiry inquiry) {
         return inquiryJpaRepository.save(inquiry);
-    }
-
-    private static boolean violates(DataIntegrityViolationException exception, String constraintName) {
-        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
-            if (cause instanceof ConstraintViolationException violation
-                && constraintName.equalsIgnoreCase(violation.getConstraintName())) {
-                return true;
-            }
-        }
-        return false;
     }
 }

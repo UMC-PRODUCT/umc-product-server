@@ -21,10 +21,12 @@ import com.umc.product.global.event.adapter.out.EventPayloadDeserializer;
 import com.umc.product.global.event.adapter.out.persistence.EventOutboxJpaRepository;
 import com.umc.product.global.event.domain.EventOutbox;
 import com.umc.product.inquiry.adapter.out.persistence.InquiryStaffAlarmSettingJpaRepository;
+import com.umc.product.inquiry.application.port.in.command.ChangeInquiryAssigneeUseCase;
 import com.umc.product.inquiry.application.port.in.command.CloseInquiryUseCase;
 import com.umc.product.inquiry.application.port.in.command.CreateInquiryUseCase;
 import com.umc.product.inquiry.application.port.in.command.SendInquiryMessageUseCase;
 import com.umc.product.inquiry.application.port.in.command.UpdateInquiryStaffAlarmSettingUseCase;
+import com.umc.product.inquiry.application.port.in.command.dto.ChangeInquiryAssigneeCommand;
 import com.umc.product.inquiry.application.port.in.command.dto.CloseInquiryCommand;
 import com.umc.product.inquiry.application.port.in.command.dto.CreateInquiryCommand;
 import com.umc.product.inquiry.application.port.in.command.dto.SendInquiryMessageCommand;
@@ -40,7 +42,7 @@ import com.umc.product.support.fixture.MemberFixture;
 class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
 
     private static final Set<String> INQUIRY_ALARM_EVENTS = Set.of(
-        "inquiry.created", "inquiry.author.messaged", "inquiry.staff.replied"
+        "inquiry.created", "inquiry.author.messaged", "inquiry.staff.replied", "inquiry.assigned"
     );
     private static final String FCM_REQUESTED = "notification.fcm.requested";
     private static final String TITLE = "앱 로그인이 안 돼요";
@@ -51,6 +53,8 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
     SendInquiryMessageUseCase sendInquiryMessageUseCase;
     @Autowired
     CloseInquiryUseCase closeInquiryUseCase;
+    @Autowired
+    ChangeInquiryAssigneeUseCase changeInquiryAssigneeUseCase;
     @Autowired
     UpdateInquiryStaffAlarmSettingUseCase updateInquiryStaffAlarmSettingUseCase;
     @Autowired
@@ -199,6 +203,68 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    @DisplayName("담당자가 있는 문의에 작성자가 다시 쓰면 답한 운영진이 있어도 담당자에게만 보낸다")
+    void 작성자_메시지_담당자() {
+        // given
+        Long inquiryId = 등록(authorId, UUID.randomUUID());
+        보내기(inquiryId, otherStaffId, UUID.randomUUID());
+        담당(inquiryId, staffId, quietStaffId, null);
+        이전_이벤트_건너뛰기();
+
+        // when
+        보내기(inquiryId, authorId, UUID.randomUUID());
+
+        // then
+        assertThat(알림_요청()).singleElement().satisfies(request -> {
+            assertThat(request.memberIds()).containsExactly(quietStaffId);
+            assertThat(request.data()).containsEntry("type", "INQUIRY_AUTHOR_MESSAGE");
+        });
+    }
+
+    @Test
+    @DisplayName("담당자가 UMC_PRODUCT 역할을 잃으면 미배정으로 보고 답한 운영진에게 보낸다")
+    void 작성자_메시지_권한_잃은_담당자() {
+        // given
+        Long inquiryId = 등록(authorId, UUID.randomUUID());
+        보내기(inquiryId, otherStaffId, UUID.randomUUID());
+        담당(inquiryId, staffId, quietStaffId, null);
+        jdbcTemplate.update(
+            "delete from member_system_role where member_id = ? and role_type = 'UMC_PRODUCT'", quietStaffId
+        );
+        이전_이벤트_건너뛰기();
+
+        // when
+        보내기(inquiryId, authorId, UUID.randomUUID());
+
+        // then
+        assertThat(알림_요청()).singleElement()
+            .satisfies(request -> assertThat(request.memberIds()).containsExactly(otherStaffId));
+    }
+
+    @Test
+    @DisplayName("다른 운영진이 담당자로 지정하면 지정된 사람에게 알리고, 스스로 맡으면 알리지 않는다")
+    void 담당자_지정_알림() {
+        // given
+        Long inquiryId = 등록(authorId, UUID.randomUUID());
+        Long selfAssignedId = 등록(authorId, UUID.randomUUID());
+        이전_이벤트_건너뛰기();
+
+        // when
+        담당(inquiryId, staffId, quietStaffId, null);
+        담당(selfAssignedId, staffId, staffId, null);
+
+        // then
+        assertThat(알림_요청()).singleElement().satisfies(request -> {
+            assertThat(request.memberIds()).containsExactly(quietStaffId);
+            assertThat(request.data()).containsEntry("type", "INQUIRY_ASSIGNED")
+                .containsEntry("inquiryId", String.valueOf(inquiryId));
+            assertThat(request.title()).isEqualTo("문의를 맡았어요");
+            assertThat(request.body()).isEqualTo(TITLE);
+            assertThat(request.deepLink()).isEqualTo("umc://inquiry/" + inquiryId);
+        });
+    }
+
+    @Test
     @DisplayName("운영진 메시지는 작성자에게만 알리고 운영진에게는 알리지 않는다")
     void 운영진_메시지() {
         // given
@@ -275,6 +341,12 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
             start.countDown();
             executor.shutdownNow();
         }
+    }
+
+    private void 담당(Long inquiryId, Long actorId, Long assigneeId, Long expectedAssigneeId) {
+        changeInquiryAssigneeUseCase.changeAssignee(
+            new ChangeInquiryAssigneeCommand(inquiryId, actorId, assigneeId, expectedAssigneeId)
+        );
     }
 
     private void 알림(Long memberId, boolean enabled) {

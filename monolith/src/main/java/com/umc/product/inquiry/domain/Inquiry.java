@@ -1,7 +1,9 @@
 package com.umc.product.inquiry.domain;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.umc.product.common.BaseEntity;
@@ -79,6 +81,9 @@ public class Inquiry extends BaseEntity {
     @Column(name = "client_request_id", nullable = false)
     private UUID clientRequestId;
 
+    @Column(name = "assignee_member_id")
+    private Long assigneeMemberId;
+
     public static Inquiry create(
         Long authorMemberId,
         Long categoryId,
@@ -125,6 +130,45 @@ public class Inquiry extends BaseEntity {
         }
         status = InquiryStatus.CLOSED;
         closedAt = now;
+    }
+
+    /**
+     * 담당자가 운영진 권한을 잃으면 저장된 값과 상관없이 미배정으로 본다.
+     */
+    public Long effectiveAssigneeId(Collection<Long> staffMemberIds) {
+        return assigneeMemberId != null && staffMemberIds.contains(assigneeMemberId) ? assigneeMemberId : null;
+    }
+
+    /**
+     * 요청자가 본 담당자와 지금 담당자가 다르면 덮어쓰지 않고 거절한다. 담당자가 그대로면 이력을 남기지 않는다.
+     */
+    public Optional<InquiryHistory> changeAssignee(
+        Long actorMemberId,
+        Long newAssigneeId,
+        Long expectedAssigneeId,
+        Collection<Long> staffMemberIds
+    ) {
+        Long current = effectiveAssigneeId(staffMemberIds);
+        if (!Objects.equals(current, expectedAssigneeId)) {
+            throw new InquiryDomainException(InquiryErrorCode.INQUIRY_ASSIGNEE_CHANGED);
+        }
+        if (newAssigneeId != null && !staffMemberIds.contains(newAssigneeId)) {
+            throw new InquiryDomainException(InquiryErrorCode.INQUIRY_ASSIGNEE_NOT_STAFF);
+        }
+        assigneeMemberId = newAssigneeId;
+        if (Objects.equals(current, newAssigneeId)) {
+            return Optional.empty();
+        }
+        return Optional.of(InquiryHistory.assigneeChanged(id, actorMemberId, current, newAssigneeId));
+    }
+
+    public Optional<InquiryHistory> changeTeam(Long actorMemberId, InquiryTeam newTeam) {
+        if (targetTeam == newTeam) {
+            return Optional.empty();
+        }
+        InquiryHistory history = InquiryHistory.teamChanged(id, actorMemberId, targetTeam, newTeam);
+        targetTeam = newTeam;
+        return Optional.of(history);
     }
 
     /**

@@ -13,7 +13,8 @@ public interface ListInquiryStaffAlarmRecipientsUseCase {
     List<Long> listNewInquiryRecipientMemberIds(Long authorMemberId);
 
     /**
-     * 그 문의에 메시지를 보낸 적 있는 운영진. 알림 설정과 상관없다. 한 명도 없으면 새 문의 알림을 켠 운영진이다.
+     * 담당자가 있으면 담당자만 받는다. 없으면 그 문의에 메시지를 보낸 적 있는 운영진이고, 한 명도 없으면 새 문의 알림을 켠
+     * 운영진이다. 담당자와 참여 운영진은 알림 설정과 상관없다.
      */
     List<Long> listAuthorMessageRecipientMemberIds(Long inquiryId);
 }

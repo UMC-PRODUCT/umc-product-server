@@ -28,31 +28,41 @@ public class InquiryStaffAlarmRecipientQueryService implements ListInquiryStaffA
 
     @Override
     public List<Long> listNewInquiryRecipientMemberIds(Long authorMemberId) {
-        return staffExceptAuthor(Set.copyOf(loadSettingPort.listEnabledMemberIds()), authorMemberId);
+        return staffExceptAuthor(staffIds(), Set.copyOf(loadSettingPort.listEnabledMemberIds()), authorMemberId);
     }
 
     @Override
     public List<Long> listAuthorMessageRecipientMemberIds(Long inquiryId) {
         return loadInquiryPort.findById(inquiryId)
-            .map(inquiry -> {
-                List<Long> participants = participatingStaff(inquiry);
-                return participants.isEmpty()
-                    ? listNewInquiryRecipientMemberIds(inquiry.getAuthorMemberId())
-                    : participants;
-            })
+            .map(this::authorMessageRecipients)
             .orElse(List.of());
     }
 
-    // 운영진은 첫 메시지를 보낼 때만 문의 방에 들어가므로, 방 멤버가 곧 그 문의에 답한 사람이다.
-    private List<Long> participatingStaff(Inquiry inquiry) {
-        Set<Long> roomMembers = Set.copyOf(
-            getChatRoomUseCase.getById(inquiry.getChatRoomId(), inquiry.getAuthorMemberId()).memberIds()
-        );
-        return staffExceptAuthor(roomMembers, inquiry.getAuthorMemberId());
+    private List<Long> authorMessageRecipients(Inquiry inquiry) {
+        List<Long> staffIds = staffIds();
+        Long authorId = inquiry.getAuthorMemberId();
+        Long assigneeId = inquiry.effectiveAssigneeId(staffIds);
+        if (assigneeId != null && !assigneeId.equals(authorId)) {
+            return List.of(assigneeId);
+        }
+        List<Long> participants = staffExceptAuthor(staffIds, roomMembers(inquiry), authorId);
+        if (!participants.isEmpty()) {
+            return participants;
+        }
+        return staffExceptAuthor(staffIds, Set.copyOf(loadSettingPort.listEnabledMemberIds()), authorId);
     }
 
-    private List<Long> staffExceptAuthor(Set<Long> candidates, Long authorMemberId) {
-        return listMemberSystemRoleUseCase.listUmcProductMemberIds().stream()
+    // 운영진은 첫 메시지를 보낼 때만 문의 방에 들어가므로, 방 멤버가 곧 그 문의에 답한 사람이다.
+    private Set<Long> roomMembers(Inquiry inquiry) {
+        return Set.copyOf(getChatRoomUseCase.getById(inquiry.getChatRoomId(), inquiry.getAuthorMemberId()).memberIds());
+    }
+
+    private List<Long> staffIds() {
+        return listMemberSystemRoleUseCase.listUmcProductMemberIds();
+    }
+
+    private static List<Long> staffExceptAuthor(List<Long> staffIds, Set<Long> candidates, Long authorMemberId) {
+        return staffIds.stream()
             .filter(candidates::contains)
             .filter(memberId -> !Objects.equals(memberId, authorMemberId))
             .toList();
