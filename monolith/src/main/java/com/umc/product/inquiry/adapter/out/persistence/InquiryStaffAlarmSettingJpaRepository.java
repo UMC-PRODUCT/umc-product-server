@@ -14,8 +14,8 @@ public interface InquiryStaffAlarmSettingJpaRepository extends JpaRepository<Inq
 
     Optional<InquiryStaffAlarmSetting> findByMemberId(Long memberId);
 
-    @Query("select setting.memberId from InquiryStaffAlarmSetting setting where setting.enabled = false")
-    List<Long> findAllDisabledMemberIds();
+    @Query("select setting.memberId from InquiryStaffAlarmSetting setting where setting.enabled = true")
+    List<Long> findAllEnabledMemberIds();
 
     @Modifying
     @Query(value = """

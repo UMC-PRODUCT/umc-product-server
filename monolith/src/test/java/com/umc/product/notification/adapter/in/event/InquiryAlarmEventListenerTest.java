@@ -53,10 +53,10 @@ class InquiryAlarmEventListenerTest {
     }
 
     @Test
-    @DisplayName("새 문의가 오면 작성자를 뺀 알림 대상 운영진에게 문의 제목을 본문으로 푸시를 요청한다")
+    @DisplayName("새 문의가 오면 새 문의 알림 대상 운영진에게 문의 제목을 본문으로 푸시를 요청한다")
     void 새_문의_알림() {
         // given
-        given(listInquiryStaffAlarmRecipientsUseCase.listRecipientMemberIds(1L)).willReturn(List.of(3L, 4L));
+        given(listInquiryStaffAlarmRecipientsUseCase.listNewInquiryRecipientMemberIds(1L)).willReturn(List.of(3L, 4L));
 
         // when
         listener.handle(InquiryCreatedEvent.of(7L, 1L, "앱 로그인이 안 돼요"));
@@ -71,10 +71,10 @@ class InquiryAlarmEventListenerTest {
     }
 
     @Test
-    @DisplayName("작성자 메시지가 오면 알림 대상 운영진에게 새 메시지 푸시를 요청한다")
+    @DisplayName("작성자 메시지가 오면 그 문의의 작성자 메시지 알림 대상 운영진에게 새 메시지 푸시를 요청한다")
     void 작성자_메시지_알림() {
         // given
-        given(listInquiryStaffAlarmRecipientsUseCase.listRecipientMemberIds(1L)).willReturn(List.of(3L));
+        given(listInquiryStaffAlarmRecipientsUseCase.listAuthorMessageRecipientMemberIds(7L)).willReturn(List.of(3L));
 
         // when
         listener.handle(InquiryAuthorMessagedEvent.of(7L, 100L, 1L, "앱 로그인이 안 돼요"));
@@ -90,7 +90,7 @@ class InquiryAlarmEventListenerTest {
     @DisplayName("알릴 운영진이 없으면 푸시를 요청하지 않는다")
     void 대상_없음() {
         // given
-        given(listInquiryStaffAlarmRecipientsUseCase.listRecipientMemberIds(1L)).willReturn(List.of());
+        given(listInquiryStaffAlarmRecipientsUseCase.listNewInquiryRecipientMemberIds(1L)).willReturn(List.of());
 
         // when
         listener.handle(InquiryCreatedEvent.of(7L, 1L, "앱 로그인이 안 돼요"));

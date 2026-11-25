@@ -2,10 +2,18 @@ package com.umc.product.inquiry.application.port.in.query;
 
 import java.util.List;
 
+/**
+ * 문의 푸시를 받을 운영진을 계산한다. 운영진은 {@code UMC_PRODUCT} 시스템 역할을 직접 가진 회원이고, 작성자는 늘 뺀다.
+ */
 public interface ListInquiryStaffAlarmRecipientsUseCase {
 
     /**
-     * 작성자 쪽 메시지를 알릴 운영진: {@code UMC_PRODUCT} 회원 중 알림을 끄지 않은 사람에서 보낸 사람을 뺀다.
+     * 새 문의 알림을 켠 운영진.
      */
-    List<Long> listRecipientMemberIds(Long senderMemberId);
+    List<Long> listNewInquiryRecipientMemberIds(Long authorMemberId);
+
+    /**
+     * 그 문의에 메시지를 보낸 적 있는 운영진. 알림 설정과 상관없다. 한 명도 없으면 새 문의 알림을 켠 운영진이다.
+     */
+    List<Long> listAuthorMessageRecipientMemberIds(Long inquiryId);
 }

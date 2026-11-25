@@ -201,26 +201,26 @@ class InquiryApiIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("운영진 문의 알림은 처음엔 켜져 있고, 끄고 켤 수 있으며 같은 값을 다시 보내도 결과가 같다")
+    @DisplayName("운영진 새 문의 알림은 처음엔 꺼져 있고, 켜고 끌 수 있으며 같은 값을 다시 보내도 결과가 같다")
     void 알림_설정() throws Exception {
         알림_설정_조회(STAFF)
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.result.enabled").value(true));
-
-        알림_설정_변경(STAFF, Map.of("enabled", false))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.result.enabled").value(false));
-        알림_설정_변경(STAFF, Map.of("enabled", false))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.result.enabled").value(false));
-        알림_설정_조회(STAFF)
             .andExpect(jsonPath("$.result.enabled").value(false));
 
         알림_설정_변경(STAFF, Map.of("enabled", true))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.enabled").value(true));
+        알림_설정_변경(STAFF, Map.of("enabled", true))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.enabled").value(true));
         알림_설정_조회(STAFF)
             .andExpect(jsonPath("$.result.enabled").value(true));
+
+        알림_설정_변경(STAFF, Map.of("enabled", false))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.enabled").value(false));
+        알림_설정_조회(STAFF)
+            .andExpect(jsonPath("$.result.enabled").value(false));
     }
 
     @Test

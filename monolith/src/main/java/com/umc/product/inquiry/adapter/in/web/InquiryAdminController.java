@@ -59,7 +59,7 @@ public class InquiryAdminController {
     @Operation(
         operationId = "INQUIRY-ADMIN-101",
         summary = "내 문의 알림 설정 조회",
-        description = "새 문의와 작성자 메시지 푸시를 받는지 돌려준다. 바꾼 적이 없으면 켜짐이다. "
+        description = "새 문의 푸시를 받는지 돌려준다. 바꾼 적이 없으면 꺼짐이다. "
             + "UMC_PRODUCT 역할이나 SUPER_ADMIN이 있어야 한다. UMC_PRODUCT 역할이 없는 SUPER_ADMIN은 이 설정과 상관없이 "
             + "운영진 알림을 받지 않는다."
     )
@@ -71,7 +71,9 @@ public class InquiryAdminController {
     @Operation(
         operationId = "INQUIRY-ADMIN-002",
         summary = "내 문의 알림 설정 변경",
-        description = "새 문의와 작성자 메시지 푸시를 켜거나 끈다. 같은 값을 다시 보내도 결과는 같다. "
+        description = "새 문의 푸시를 켜거나 끈다. 기본값은 꺼짐이다. 같은 값을 다시 보내도 결과는 같다. "
+            + "자기가 메시지를 보낸 문의에 작성자가 다시 쓰면 이 설정과 상관없이 푸시를 받는다. "
+            + "참여한 운영진이 없는 문의의 작성자 메시지는 이 설정을 켠 운영진이 받는다. "
             + "UMC_PRODUCT 역할이나 SUPER_ADMIN이 있어야 한다. UMC_PRODUCT 역할이 없는 SUPER_ADMIN은 이 설정과 상관없이 "
             + "운영진 알림을 받지 않는다."
     )

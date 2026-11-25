@@ -43,17 +43,22 @@ public class InquiryAlarmEventListener {
 
     @EventListener
     public void handle(InquiryCreatedEvent event) {
-        notifyStaff(event.authorMemberId(), NEW_INQUIRY_TITLE, event.title(), TYPE_INQUIRY_NEW, event.inquiryId());
+        notifyStaff(
+            listInquiryStaffAlarmRecipientsUseCase.listNewInquiryRecipientMemberIds(event.authorMemberId()),
+            event.authorMemberId(), NEW_INQUIRY_TITLE, event.title(), TYPE_INQUIRY_NEW, event.inquiryId()
+        );
     }
 
     @EventListener
     public void handle(InquiryAuthorMessagedEvent event) {
-        notifyStaff(event.authorMemberId(), AUTHOR_MESSAGE_TITLE, event.title(), TYPE_INQUIRY_AUTHOR_MESSAGE,
-            event.inquiryId());
+        notifyStaff(
+            listInquiryStaffAlarmRecipientsUseCase.listAuthorMessageRecipientMemberIds(event.inquiryId()),
+            event.authorMemberId(), AUTHOR_MESSAGE_TITLE, event.title(), TYPE_INQUIRY_AUTHOR_MESSAGE, event.inquiryId()
+        );
     }
 
-    private void notifyStaff(Long senderMemberId, String title, String body, String type, Long inquiryId) {
-        List<Long> recipients = listInquiryStaffAlarmRecipientsUseCase.listRecipientMemberIds(senderMemberId);
+    private void notifyStaff(List<Long> recipients, Long senderMemberId, String title, String body, String type,
+        Long inquiryId) {
         if (recipients.isEmpty()) {
             return;
         }
