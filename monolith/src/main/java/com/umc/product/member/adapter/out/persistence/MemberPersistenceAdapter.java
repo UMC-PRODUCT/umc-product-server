@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import com.umc.product.challenger.domain.Challenger;
+import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.dto.MemberSearchAccessScope;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberQuery;
 import com.umc.product.member.application.port.out.LoadMemberPort;
@@ -43,6 +44,13 @@ public class MemberPersistenceAdapter implements
     @Override
     public Optional<Member> findByIdForUpdate(Long id) {
         return memberQueryRepository.findByIdWithPessimisticLock(id);
+    }
+
+    @Override
+    public Optional<Member> findUniqueForEmailLookup(Long schoolId, String name, String nickname) {
+        List<Member> matches = memberJpaRepository.findTop2BySchoolIdAndNameAndNicknameAndStatusNot(
+            schoolId, name, nickname, MemberStatus.WITHDRAWN);
+        return matches.size() == 1 ? Optional.of(matches.getFirst()) : Optional.empty();
     }
 
     @Override

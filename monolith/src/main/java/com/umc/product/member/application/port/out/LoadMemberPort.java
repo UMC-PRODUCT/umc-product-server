@@ -14,6 +14,8 @@ public interface LoadMemberPort {
 
     Optional<Member> findByIdForUpdate(Long id);
 
+    Optional<Member> findUniqueForEmailLookup(Long schoolId, String name, String nickname);
+
     Optional<Member> findByEmail(String email);
 
     Optional<Member> findByNickname(String nickname);
