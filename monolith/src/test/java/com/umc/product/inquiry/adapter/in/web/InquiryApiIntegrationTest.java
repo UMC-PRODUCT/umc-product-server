@@ -31,6 +31,7 @@ class InquiryApiIntegrationTest extends IntegrationTestSupport {
     private static final String AUTHOR = "author-token";
     private static final String STAFF = "staff-token";
     private static final String STRANGER = "stranger-token";
+    private static final String SUPER_ADMIN = "super-admin-token";
 
     @Autowired
     MemberFixture memberFixture;
@@ -55,6 +56,9 @@ class InquiryApiIntegrationTest extends IntegrationTestSupport {
         토큰(AUTHOR, authorId);
         토큰(STAFF, staffId);
         토큰(STRANGER, strangerId);
+        Long superAdminId = memberFixture.일반("super-admin").getId();
+        memberFixture.시스템_역할_부여(superAdminId, MemberSystemRoleType.SUPER_ADMIN);
+        토큰(SUPER_ADMIN, superAdminId);
     }
 
     @Test
@@ -143,6 +147,21 @@ class InquiryApiIntegrationTest extends IntegrationTestSupport {
             .andExpect(jsonPath("$.result.messages[0].senderName").value("author"))
             .andExpect(jsonPath("$.result.messages[1].senderMemberId").value(staffId))
             .andExpect(jsonPath("$.result.messages[1].senderName").value("staff"));
+    }
+
+    @Test
+    @DisplayName("SUPER_ADMIN만 가진 회원도 메시지를 조회하면 운영진 실명과 회원 ID를 본다")
+    void 슈퍼_어드민_보낸_사람_표시() throws Exception {
+        // given
+        long inquiryId = 등록();
+        메시지_전송(STAFF, inquiryId, "확인해 볼게요").andExpect(status().isOk());
+
+        // when & then
+        메시지_조회(SUPER_ADMIN, inquiryId)
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.messages[0].senderType").value("STAFF"))
+            .andExpect(jsonPath("$.result.messages[0].senderMemberId").value(staffId))
+            .andExpect(jsonPath("$.result.messages[0].senderName").value("staff"));
     }
 
     @Test

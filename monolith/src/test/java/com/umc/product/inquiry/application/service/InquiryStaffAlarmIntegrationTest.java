@@ -72,6 +72,7 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
     private Long staffId;
     private Long otherStaffId;
     private Long quietStaffId;
+    private Long superAdminId;
     private Long categoryId;
     private long seenOutboxId;
 
@@ -81,7 +82,7 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
         staffId = 운영진("staff");
         otherStaffId = 운영진("other-staff");
         quietStaffId = 운영진("quiet-staff");
-        Long superAdminId = memberFixture.일반("super-admin").getId();
+        superAdminId = memberFixture.일반("super-admin").getId();
         memberFixture.시스템_역할_부여(superAdminId, MemberSystemRoleType.SUPER_ADMIN);
         알림(staffId, true);
         알림(otherStaffId, true);
@@ -147,6 +148,24 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
     void 작성자_메시지_참여자_없음() {
         // given
         Long inquiryId = 등록(authorId, UUID.randomUUID());
+        이전_이벤트_건너뛰기();
+
+        // when
+        보내기(inquiryId, authorId, UUID.randomUUID());
+
+        // then
+        assertThat(알림_요청()).singleElement().satisfies(request -> {
+            assertThat(request.memberIds()).containsExactlyInAnyOrder(staffId, otherStaffId);
+            assertThat(request.data()).containsEntry("type", "INQUIRY_AUTHOR_MESSAGE");
+        });
+    }
+
+    @Test
+    @DisplayName("SUPER_ADMIN만 가진 회원만 답한 문의에 작성자가 다시 쓰면 참여 운영진이 없다고 보고 새 문의 알림을 켠 운영진에게 보낸다")
+    void 슈퍼_어드민만_답한_문의() {
+        // given
+        Long inquiryId = 등록(authorId, UUID.randomUUID());
+        보내기(inquiryId, superAdminId, UUID.randomUUID());
         이전_이벤트_건너뛰기();
 
         // when
