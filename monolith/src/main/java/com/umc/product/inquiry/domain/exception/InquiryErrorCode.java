@@ -37,7 +37,8 @@ public enum InquiryErrorCode implements BaseCode {
     INQUIRY_FAQ_AUDIENCE_NOT_FOUND(HttpStatus.BAD_REQUEST, "INQUIRY-0025", "선택한 대상을 찾을 수 없어요. 대상을 다시 선택해주세요."),
     INQUIRY_FAQ_INCOMPLETE(HttpStatus.BAD_REQUEST, "INQUIRY-0026", "답변, 카테고리, 대상을 모두 채워야 발행할 수 있어요."),
     INQUIRY_FAQ_VERIFICATION_REQUIRED(HttpStatus.BAD_REQUEST, "INQUIRY-0027", "검증 항목 3개를 모두 확인해야 발행할 수 있어요."),
-    INQUIRY_FAQ_NOT_ARCHIVABLE(HttpStatus.CONFLICT, "INQUIRY-0028", "발행 중인 대표 질문만 보관할 수 있어요. 목록을 새로고침해주세요.");
+    INQUIRY_FAQ_NOT_ARCHIVABLE(HttpStatus.CONFLICT, "INQUIRY-0028", "발행 중인 대표 질문만 보관할 수 있어요. 목록을 새로고침해주세요."),
+    INQUIRY_FAQ_CHANGED(HttpStatus.CONFLICT, "INQUIRY-0029", "다른 운영진이 먼저 고쳤어요. 최신 내용을 다시 불러와 주세요.");
 
     private final HttpStatus httpStatus;
     private final String code;

@@ -3,7 +3,7 @@ package com.umc.product.inquiry.application.port.in.query.dto;
 import java.util.List;
 
 /**
- * @param counts 탭별 개수. 탭 말고 다른 필터는 똑같이 적용한다.
+ * @param counts 탭별 개수. 탭 말고 다른 필터는 똑같이 적용한다. 다음 페이지(커서가 있는 요청)는 세지 않아 null이다.
  */
 public record InquiryStaffPageInfo(
     TabCounts counts,

@@ -5,7 +5,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.inquiry.application.policy.InquiryAccessPolicy;
 import com.umc.product.inquiry.application.port.in.command.ManageInquiryLabelUseCase;
-import com.umc.product.inquiry.application.port.in.command.dto.SaveInquiryLabelCommand;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryLabelInfo;
 import com.umc.product.inquiry.application.port.out.LoadInquiryLabelPort;
 import com.umc.product.inquiry.application.port.out.SaveInquiryLabelPort;
@@ -25,15 +24,15 @@ public class InquiryLabelCommandService implements ManageInquiryLabelUseCase {
     private final InquiryAccessPolicy accessPolicy;
 
     @Override
-    public InquiryLabelInfo create(SaveInquiryLabelCommand command) {
-        accessPolicy.requireStaff(command.actorMemberId());
-        return InquiryLabelInfo.from(saveInquiryLabelPort.save(InquiryLabel.create(command.name())));
+    public InquiryLabelInfo create(Long actorMemberId, String name) {
+        accessPolicy.requireStaff(actorMemberId);
+        return InquiryLabelInfo.from(saveInquiryLabelPort.save(InquiryLabel.create(name)));
     }
 
     @Override
-    public InquiryLabelInfo rename(SaveInquiryLabelCommand command) {
-        InquiryLabel label = loadForStaff(command.actorMemberId(), command.labelId());
-        label.rename(command.name());
+    public InquiryLabelInfo rename(Long actorMemberId, Long labelId, String name) {
+        InquiryLabel label = loadForStaff(actorMemberId, labelId);
+        label.rename(name);
         return InquiryLabelInfo.from(saveInquiryLabelPort.save(label));
     }
 

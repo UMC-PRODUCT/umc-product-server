@@ -21,6 +21,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -84,6 +85,10 @@ public class InquiryFaq extends BaseEntity {
     @Column(name = "created_by_member_id", nullable = false)
     private Long createdByMemberId;
 
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     public static InquiryFaq create(InquiryFaqContent draft, Long createdByMemberId) {
         InquiryFaq faq = new InquiryFaq();
         faq.status = InquiryFaqStatus.DRAFT;
@@ -120,16 +125,21 @@ public class InquiryFaq extends BaseEntity {
         status = status.archive();
     }
 
-    /** 발행 중이고 종료일이 지나지 않았을 때만 사용자에게 보인다. */
-    public boolean isPublicOn(LocalDate today) {
-        return status == InquiryFaqStatus.PUBLISHED && published.isVisibleOn(today);
+    /** 발행 중이고 종료일(한국 시간)이 지나지 않았을 때만 사용자에게 보인다. */
+    public boolean isPublicAt(Instant now) {
+        return status == InquiryFaqStatus.PUBLISHED && published.isVisibleOn(LocalDate.ofInstant(now, SERVICE_ZONE));
+    }
+
+    /**
+     * 운영진 여럿이 같은 대표 질문을 고칠 때 앞사람의 변경을 덮어쓰지 않도록, 요청자가 본 버전과 지금 버전이 다르면 거절한다.
+     */
+    public void requireVersion(long expectedVersion) {
+        if (version == null || version != expectedVersion) {
+            throw new InquiryDomainException(InquiryErrorCode.INQUIRY_FAQ_CHANGED);
+        }
     }
 
     public boolean hasUnpublishedChanges() {
         return published != null && !published.equals(draft);
-    }
-
-    public static LocalDate today(Instant now) {
-        return LocalDate.ofInstant(now, SERVICE_ZONE);
     }
 }

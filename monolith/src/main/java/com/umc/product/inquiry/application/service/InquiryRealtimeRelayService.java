@@ -9,11 +9,11 @@ import org.springframework.stereotype.Service;
 
 import com.umc.product.chat.application.port.in.query.dto.ChatMessageInfo;
 import com.umc.product.inquiry.application.event.InquiryStatusChangedEvent;
+import com.umc.product.inquiry.application.policy.InquiryStaffRoster;
 import com.umc.product.inquiry.application.port.in.realtime.RelayInquiryRealtimeEventUseCase;
 import com.umc.product.inquiry.application.port.in.realtime.dto.InquiryRealtimeEvent;
 import com.umc.product.inquiry.application.port.out.InquiryRealtimeBroadcastPort;
 import com.umc.product.inquiry.application.port.out.LoadInquiryPort;
-import com.umc.product.member.application.port.in.query.ListMemberSystemRoleUseCase;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,7 +27,7 @@ public class InquiryRealtimeRelayService implements RelayInquiryRealtimeEventUse
 
     private final LoadInquiryPort loadInquiryPort;
     private final InquiryMessageAssembler messageAssembler;
-    private final ListMemberSystemRoleUseCase listMemberSystemRoleUseCase;
+    private final InquiryStaffRoster staffRoster;
     private final InquiryRealtimeBroadcastPort broadcastPort;
 
     @Override
@@ -52,7 +52,7 @@ public class InquiryRealtimeRelayService implements RelayInquiryRealtimeEventUse
     private void deliver(Long authorId, InquiryRealtimeEvent event) {
         Set<Long> recipients = new LinkedHashSet<>();
         recipients.add(authorId);
-        recipients.addAll(listMemberSystemRoleUseCase.listUmcProductMemberIds());
+        recipients.addAll(staffRoster.memberIds());
         List<RuntimeException> failures = new ArrayList<>();
         recipients.forEach(memberId -> {
             try {

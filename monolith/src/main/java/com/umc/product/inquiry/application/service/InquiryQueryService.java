@@ -19,7 +19,6 @@ import com.umc.product.inquiry.application.port.in.query.GetInquiryMessagesUseCa
 import com.umc.product.inquiry.application.port.in.query.ListInquiryCategoriesUseCase;
 import com.umc.product.inquiry.application.port.in.query.ListInquiryTeamsUseCase;
 import com.umc.product.inquiry.application.port.in.query.ListMyInquiriesUseCase;
-import com.umc.product.inquiry.application.port.in.query.dto.InquiryAuthorInfo;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryCategoryInfo;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryDetailInfo;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryDetailQuery;
@@ -37,7 +36,6 @@ import com.umc.product.inquiry.domain.enums.InquiryParticipant;
 import com.umc.product.inquiry.domain.enums.InquiryTeam;
 import com.umc.product.inquiry.domain.exception.InquiryDomainException;
 import com.umc.product.inquiry.domain.exception.InquiryErrorCode;
-import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 
 import lombok.RequiredArgsConstructor;
 
@@ -54,9 +52,9 @@ public class InquiryQueryService implements
     private final LoadInquiryPort loadInquiryPort;
     private final LoadInquiryCategoryPort loadInquiryCategoryPort;
     private final GetChatMessagesUseCase getChatMessagesUseCase;
-    private final GetMemberUseCase getMemberUseCase;
     private final InquiryAccessPolicy accessPolicy;
     private final InquiryMessageAssembler messageAssembler;
+    private final InquiryDetailAssembler detailAssembler;
 
     @Override
     public List<InquiryCategoryInfo> listActive() {
@@ -102,25 +100,7 @@ public class InquiryQueryService implements
     public InquiryDetailInfo getDetail(InquiryDetailQuery query) {
         Inquiry inquiry = loadInquiry(query.inquiryId());
         InquiryParticipant requester = accessPolicy.requireParticipant(inquiry, query.requesterMemberId());
-        InquiryCategoryInfo category = categoriesOf(Set.of(inquiry.getCategoryId())).get(inquiry.getCategoryId());
-        InquiryAuthorInfo author = getMemberUseCase.findById(inquiry.getAuthorMemberId())
-            .map(member -> new InquiryAuthorInfo(
-                member.id(), member.name(), member.nickname(), member.profileImageLink()
-            ))
-            .orElseGet(() -> new InquiryAuthorInfo(inquiry.getAuthorMemberId(), null, null, null));
-
-        return new InquiryDetailInfo(
-            inquiry.getId(),
-            inquiry.getTitle(),
-            category,
-            inquiry.getTargetTeam(),
-            inquiry.getStatus(),
-            author,
-            inquiry.getCreatedAt(),
-            inquiry.getClosedAt(),
-            inquiry.getLastMessageAt(),
-            accessPolicy.canClose(inquiry, query.requesterMemberId(), requester)
-        );
+        return detailAssembler.assemble(inquiry, query.requesterMemberId(), requester);
     }
 
     @Override

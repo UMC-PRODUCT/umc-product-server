@@ -7,7 +7,7 @@ import com.umc.product.inquiry.application.port.in.query.dto.InquiryStaffPageInf
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record InquiryStaffPageResponse(
-    @Schema(description = "탭별 개수. 탭 말고 다른 필터는 똑같이 적용한다")
+    @Schema(description = "탭별 개수. 탭 말고 다른 필터는 똑같이 적용한다. 첫 페이지에만 있고 cursor를 넘긴 요청에서는 null", nullable = true)
     TabCounts counts,
     List<InquiryStaffSummaryResponse> inquiries,
     String nextCursor,
@@ -15,7 +15,9 @@ public record InquiryStaffPageResponse(
 ) {
     public static InquiryStaffPageResponse from(InquiryStaffPageInfo info) {
         return new InquiryStaffPageResponse(
-            new TabCounts(info.counts().all(), info.counts().mine(), info.counts().unassigned()),
+            info.counts() == null
+                ? null
+                : new TabCounts(info.counts().all(), info.counts().mine(), info.counts().unassigned()),
             info.inquiries().stream().map(InquiryStaffSummaryResponse::from).toList(),
             info.nextCursor(),
             info.hasNext()

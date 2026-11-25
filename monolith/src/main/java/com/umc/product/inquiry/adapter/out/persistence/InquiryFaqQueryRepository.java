@@ -31,8 +31,9 @@ public class InquiryFaqQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    /** {@link InquiryFaq#isPublicOn}과 같은 조건이다. */
-    static BooleanExpression publicOn(LocalDate today) {
+    /** {@link InquiryFaq#isPublicAt}과 같은 조건이다. 종료일은 한국 시간 날짜로 비교한다. */
+    static BooleanExpression publicAt(Instant now) {
+        LocalDate today = LocalDate.ofInstant(now, InquiryFaq.SERVICE_ZONE);
         return inquiryFaq.status.eq(InquiryFaqStatus.PUBLISHED)
             .and(inquiryFaq.published.endDate.isNull().or(inquiryFaq.published.endDate.goe(today)));
     }
@@ -47,23 +48,23 @@ public class InquiryFaqQueryRepository {
             .fetch();
     }
 
-    public List<InquiryFaq> listPublic(Long categoryId, LocalDate today) {
+    public List<InquiryFaq> listPublic(Long categoryId, Instant now) {
         return queryFactory.selectFrom(inquiryFaq)
-            .where(publicOn(today), categoryId == null ? null : inquiryFaq.published.categoryId.eq(categoryId))
+            .where(publicAt(now), categoryId == null ? null : inquiryFaq.published.categoryId.eq(categoryId))
             .orderBy(inquiryFaq.publishedAt.desc(), inquiryFaq.id.desc())
             .fetch();
     }
 
-    public List<InquiryFaq> searchPublic(String keyword, LocalDate today, int limit) {
+    public List<InquiryFaq> searchPublic(String keyword, Instant now, int limit) {
         return queryFactory.selectFrom(inquiryFaq)
-            .where(publicOn(today), inquiryFaq.publishedSearchText.containsIgnoreCase(keyword))
+            .where(publicAt(now), inquiryFaq.publishedSearchText.containsIgnoreCase(keyword))
             .orderBy(inquiryFaq.publishedAt.desc(), inquiryFaq.id.desc())
             .limit(limit)
             .fetch();
     }
 
     public List<FaqDemand> rankByDistinctAuthors(
-        DemandTarget target, LocalDate today, Instant since, Long categoryId, int limit
+        DemandTarget target, Instant now, Instant since, Long categoryId, int limit
     ) {
         NumberExpression<Long> authors = inquiry.authorMemberId.countDistinct();
         DateTimeExpression<Instant> latest = inquiry.createdAt.max();
@@ -72,7 +73,7 @@ public class InquiryFaqQueryRepository {
             .join(inquiryFaq).on(inquiryFaq.id.eq(inquiry.faqId))
             .where(
                 inquiry.createdAt.goe(since),
-                target == DemandTarget.PUBLIC ? publicOn(today) : inquiryFaq.status.eq(InquiryFaqStatus.DRAFT),
+                target == DemandTarget.PUBLIC ? publicAt(now) : inquiryFaq.status.eq(InquiryFaqStatus.DRAFT),
                 categoryId == null ? null : categoryOf(target).eq(categoryId)
             )
             .groupBy(inquiry.faqId)

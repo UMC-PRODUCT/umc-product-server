@@ -9,6 +9,7 @@ import com.umc.product.inquiry.domain.enums.InquiryFaqStatus;
  */
 public record InquiryFaqStaffDetailInfo(
     Long faqId,
+    long version,
     InquiryFaqStatus status,
     boolean hasUnpublishedChanges,
     InquiryFaqContentInfo draft,

@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
+import com.umc.product.global.persistence.ConstraintViolationInspector;
 import com.umc.product.inquiry.application.port.out.LoadInquiryLabelPort;
 import com.umc.product.inquiry.application.port.out.SaveInquiryLabelPort;
 import com.umc.product.inquiry.domain.InquiryLabel;
@@ -55,13 +56,16 @@ public class InquiryLabelPersistenceAdapter implements LoadInquiryLabelPort, Sav
         Map<Long, InquiryLabel> labels = listByIds(
             assignments.stream().map(InquiryLabelAssignment::getLabelId).collect(Collectors.toSet())
         ).stream().collect(Collectors.toMap(InquiryLabel::getId, Function.identity()));
-        return assignments.stream().collect(Collectors.groupingBy(
-            InquiryLabelAssignment::getInquiryId,
-            Collectors.collectingAndThen(
-                Collectors.mapping(assignment -> labels.get(assignment.getLabelId()), Collectors.toList()),
-                list -> list.stream().sorted(BY_NAME).toList()
-            )
-        ));
+        // 연결 행을 읽은 뒤 라벨이 지워질 수 있어, 라벨이 없는 연결은 건너뛴다.
+        return assignments.stream()
+            .filter(assignment -> labels.containsKey(assignment.getLabelId()))
+            .collect(Collectors.groupingBy(
+                InquiryLabelAssignment::getInquiryId,
+                Collectors.collectingAndThen(
+                    Collectors.mapping(assignment -> labels.get(assignment.getLabelId()), Collectors.toList()),
+                    list -> list.stream().sorted(BY_NAME).toList()
+                )
+            ));
     }
 
     @Override
@@ -69,7 +73,7 @@ public class InquiryLabelPersistenceAdapter implements LoadInquiryLabelPort, Sav
         try {
             return labelRepository.saveAndFlush(label);
         } catch (DataIntegrityViolationException exception) {
-            if (ConstraintViolations.violates(exception, NAME_CONSTRAINT)) {
+            if (ConstraintViolationInspector.matches(exception, NAME_CONSTRAINT)) {
                 throw new InquiryDomainException(InquiryErrorCode.INQUIRY_LABEL_NAME_DUPLICATED, exception);
             }
             throw exception;

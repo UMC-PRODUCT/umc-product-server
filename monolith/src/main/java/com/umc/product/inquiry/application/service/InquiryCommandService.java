@@ -36,6 +36,7 @@ import com.umc.product.inquiry.application.port.out.LoadInquiryPort;
 import com.umc.product.inquiry.application.port.out.SaveInquiryPort;
 import com.umc.product.inquiry.domain.Inquiry;
 import com.umc.product.inquiry.domain.InquiryCategory;
+import com.umc.product.inquiry.domain.InquiryFaq;
 import com.umc.product.inquiry.domain.enums.InquiryParticipant;
 import com.umc.product.inquiry.domain.enums.InquiryStatus;
 import com.umc.product.inquiry.domain.exception.InquiryDomainException;
@@ -75,9 +76,6 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
             return existing.get().getId();
         }
 
-        if (command.referencedFaqId() != null && loadInquiryFaqPort.findById(command.referencedFaqId()).isEmpty()) {
-            throw new InquiryDomainException(InquiryErrorCode.INQUIRY_FAQ_NOT_FOUND);
-        }
         InquiryCategory category = loadInquiryCategoryPort.findById(command.categoryId())
             .filter(InquiryCategory::isActive)
             .orElseThrow(() -> new InquiryDomainException(InquiryErrorCode.INQUIRY_CATEGORY_NOT_FOUND));
@@ -101,7 +99,7 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
             command.content(),
             chatRoomId,
             command.clientRequestId(),
-            command.referencedFaqId(),
+            publicFaqIdOrNull(command.referencedFaqId()),
             first.message().createdAt()
         ));
         domainEventPublisher.publish(InquiryCreatedEvent.of(
@@ -165,6 +163,18 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
         inquiry.close(clock.instant());
         saveInquiryPort.save(inquiry);
         domainEventPublisher.publish(InquiryStatusChangedEvent.from(inquiry));
+    }
+
+    // 참고한 대표 질문은 운영진이 보는 참고 정보일 뿐이라, 공개 중이 아니면 문의 등록을 막지 않고 버린다.
+    // 존재 여부를 404로 드러내면 비공개 대표 질문 ID를 찔러 볼 수 있다.
+    private Long publicFaqIdOrNull(Long faqId) {
+        if (faqId == null) {
+            return null;
+        }
+        return loadInquiryFaqPort.findById(faqId)
+            .filter(faq -> faq.isPublicAt(clock.instant()))
+            .map(InquiryFaq::getId)
+            .orElse(null);
     }
 
     private Inquiry loadLockedInquiry(Long inquiryId) {

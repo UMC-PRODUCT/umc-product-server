@@ -182,7 +182,8 @@ class InquiryStaffApiIntegrationTest extends IntegrationTestSupport {
         운영(get("/api/v1/inquiries/admin").param("categoryId", accountCategoryId.toString()), STAFF)
             .andExpect(jsonPath("$.result.counts.all").value(2))
             .andExpect(jsonPath("$.result.counts.mine").value(1))
-            .andExpect(jsonPath("$.result.inquiries[*].inquiryId", contains(String.valueOf(unassigned), String.valueOf(mine))));
+            .andExpect(jsonPath("$.result.inquiries[*].inquiryId",
+                contains(String.valueOf(unassigned), String.valueOf(mine))));
         운영(get("/api/v1/inquiries/admin").param("labelId", String.valueOf(labelId)), STAFF)
             .andExpect(jsonPath("$.result.inquiries[*].inquiryId", contains(String.valueOf(others))))
             .andExpect(jsonPath("$.result.inquiries[0].labels[0].name").value("출석 오류"))
@@ -193,6 +194,52 @@ class InquiryStaffApiIntegrationTest extends IntegrationTestSupport {
         운영(get("/api/v1/inquiries/admin").param("size", "2"), STAFF)
             .andExpect(jsonPath("$.result.inquiries", hasSize(2)))
             .andExpect(jsonPath("$.result.hasNext").value(true));
+    }
+
+    @Test
+    @DisplayName("탭별 개수는 첫 페이지에만 주고, 다음 페이지에서는 null이다")
+    void 다음_페이지_개수() throws Exception {
+        // given
+        등록(accountCategoryId, "첫 번째 문의");
+        등록(accountCategoryId, "두 번째 문의");
+        등록(accountCategoryId, "세 번째 문의");
+        String first = 운영(get("/api/v1/inquiries/admin").param("size", "2"), STAFF)
+            .andExpect(jsonPath("$.result.counts.all").value(3))
+            .andReturn().getResponse().getContentAsString();
+        String cursor = objectMapper.readTree(first).at("/result/nextCursor").asText();
+
+        // when & then
+        운영(get("/api/v1/inquiries/admin").param("size", "2").param("cursor", cursor), STAFF)
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.counts").value(nullValue()))
+            .andExpect(jsonPath("$.result.inquiries", hasSize(1)))
+            .andExpect(jsonPath("$.result.hasNext").value(false));
+    }
+
+    @Test
+    @DisplayName("SUPER_ADMIN만 가진 회원은 문의를 처리할 수 있지만 담당자가 될 수 없어, 내 담당은 비고 상세에서 맡을 수 없다고 알린다")
+    void SUPER_ADMIN은_담당자가_아니다() throws Exception {
+        // given
+        long inquiryId = 등록(accountCategoryId, "로그인이 안 돼요");
+        담당자_변경(STAFF, inquiryId, staffId, null).andExpect(status().isOk());
+
+        // when & then
+        운영(get("/api/v1/inquiries/admin/{inquiryId}", inquiryId), SUPER_ADMIN)
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.canBeAssignee").value(false))
+            .andExpect(jsonPath("$.result.assignee.memberId").value(staffId));
+        운영(get("/api/v1/inquiries/admin/{inquiryId}", inquiryId), STAFF)
+            .andExpect(jsonPath("$.result.canBeAssignee").value(true));
+        운영(get("/api/v1/inquiries/admin").param("tab", "MINE"), SUPER_ADMIN)
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.counts.all").value(1))
+            .andExpect(jsonPath("$.result.counts.mine").value(0))
+            .andExpect(jsonPath("$.result.inquiries", hasSize(0)));
+        운영(get("/api/v1/inquiries/admin/assignee-candidates"), SUPER_ADMIN)
+            .andExpect(jsonPath("$.result[*].memberId", not(hasItem(superAdminId.toString()))));
+        담당자_변경(SUPER_ADMIN, inquiryId, superAdminId, staffId)
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("INQUIRY-0016"));
     }
 
     @Test

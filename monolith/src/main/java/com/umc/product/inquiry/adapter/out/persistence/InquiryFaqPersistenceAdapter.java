@@ -1,18 +1,20 @@
 package com.umc.product.inquiry.adapter.out.persistence;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
 import com.umc.product.inquiry.application.port.out.LoadInquiryFaqPort;
 import com.umc.product.inquiry.application.port.out.SaveInquiryFaqPort;
 import com.umc.product.inquiry.domain.InquiryFaq;
 import com.umc.product.inquiry.domain.enums.InquiryFaqStatus;
+import com.umc.product.inquiry.domain.exception.InquiryDomainException;
+import com.umc.product.inquiry.domain.exception.InquiryErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,13 +42,13 @@ public class InquiryFaqPersistenceAdapter implements LoadInquiryFaqPort, SaveInq
     }
 
     @Override
-    public List<InquiryFaq> listPublic(Long categoryId, LocalDate today) {
-        return queryRepository.listPublic(categoryId, today);
+    public List<InquiryFaq> listPublic(Long categoryId, Instant now) {
+        return queryRepository.listPublic(categoryId, now);
     }
 
     @Override
-    public List<InquiryFaq> searchPublic(String keyword, LocalDate today, int limit) {
-        return queryRepository.searchPublic(keyword, today, limit);
+    public List<InquiryFaq> searchPublic(String keyword, Instant now, int limit) {
+        return queryRepository.searchPublic(keyword, now, limit);
     }
 
     @Override
@@ -56,14 +58,18 @@ public class InquiryFaqPersistenceAdapter implements LoadInquiryFaqPort, SaveInq
 
     @Override
     public List<FaqDemand> rankByDistinctAuthors(
-        DemandTarget target, LocalDate today, Instant since, Long categoryId, int limit
+        DemandTarget target, Instant now, Instant since, Long categoryId, int limit
     ) {
-        return queryRepository.rankByDistinctAuthors(target, today, since, categoryId, limit);
+        return queryRepository.rankByDistinctAuthors(target, now, since, categoryId, limit);
     }
 
     @Override
     public InquiryFaq save(InquiryFaq faq) {
-        return faqRepository.saveAndFlush(faq);
+        try {
+            return faqRepository.saveAndFlush(faq);
+        } catch (OptimisticLockingFailureException exception) {
+            throw new InquiryDomainException(InquiryErrorCode.INQUIRY_FAQ_CHANGED, exception);
+        }
     }
 
     @Override

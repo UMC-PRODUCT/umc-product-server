@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 public record InquiryFaqStaffSummaryResponse(
     Long faqId,
+    @Schema(description = "대표 질문 버전. 초안 저장·발행·보관 요청의 expectedVersion에 그대로 넣는다. 고칠 때마다 바뀐다")
+    long version,
     InquiryFaqStatus status,
     @Schema(description = "수정본 질문")
     String question,
@@ -24,6 +26,7 @@ public record InquiryFaqStaffSummaryResponse(
     public static InquiryFaqStaffSummaryResponse from(InquiryFaqStaffSummaryInfo info) {
         return new InquiryFaqStaffSummaryResponse(
             info.faqId(),
+            info.version(),
             info.status(),
             info.question(),
             InquiryCategoryResponse.from(info.category()),

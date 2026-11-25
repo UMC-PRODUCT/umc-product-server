@@ -41,7 +41,7 @@ public class InquiryFaqRankingQueryService implements GetInquiryFaqRankingUseCas
     public InquiryFaqRankingInfo getRanking(InquiryFaqRankingPeriod period) {
         Instant now = clock.instant();
         List<FaqDemand> demands = loadInquiryFaqPort.rankByDistinctAuthors(
-            DemandTarget.PUBLIC, InquiryFaq.today(now), period.since(now), null, RANKING_SIZE
+            DemandTarget.PUBLIC, now, period.since(now), null, RANKING_SIZE
         );
         Map<Long, InquiryFaqSummaryInfo> summaries = faqAssembler.publicSummaries(
                 loadInquiryFaqPort.listByIds(demands.stream().map(FaqDemand::faqId).toList())
@@ -62,7 +62,7 @@ public class InquiryFaqRankingQueryService implements GetInquiryFaqRankingUseCas
         accessPolicy.requireStaff(staffMemberId);
         Instant now = clock.instant();
         List<FaqDemand> demands = loadInquiryFaqPort.rankByDistinctAuthors(
-            DemandTarget.DRAFT, InquiryFaq.today(now), InquiryFaqRankingPeriod.DAY.since(now), null, ANSWER_NEEDED_SIZE
+            DemandTarget.DRAFT, now, InquiryFaqRankingPeriod.DAY.since(now), null, ANSWER_NEEDED_SIZE
         );
         Map<Long, InquiryFaq> faqs = loadInquiryFaqPort.listByIds(demands.stream().map(FaqDemand::faqId).toList())
             .stream()

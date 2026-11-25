@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.inquiry.adapter.in.web.dto.request.ArchiveInquiryFaqRequest;
+import com.umc.product.inquiry.adapter.in.web.dto.request.CreateInquiryFaqRequest;
 import com.umc.product.inquiry.adapter.in.web.dto.request.PublishInquiryFaqRequest;
-import com.umc.product.inquiry.adapter.in.web.dto.request.SaveInquiryFaqRequest;
+import com.umc.product.inquiry.adapter.in.web.dto.request.SaveInquiryFaqDraftRequest;
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryFaqAudienceResponse;
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryFaqDemandResponse;
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryFaqStaffDetailResponse;
@@ -93,24 +95,28 @@ public class InquiryFaqAdminController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(operationId = "INQUIRY-ADMIN-FAQ-001", summary = "대표 질문 초안 만들기", description = "질문만 있으면 초안으로 저장한다.")
     public InquiryFaqStaffDetailResponse create(
-        @Valid @RequestBody SaveInquiryFaqRequest request,
+        @Valid @RequestBody CreateInquiryFaqRequest request,
         @CurrentMember MemberPrincipal principal
     ) {
-        return detail(principal, manageInquiryFaqUseCase.create(principal.getMemberId(), request.toCommand()));
+        return detail(principal, manageInquiryFaqUseCase.create(request.toCommand(principal.getMemberId())));
     }
 
     @PutMapping("/faqs/{faqId:\\d+}/draft")
     @Operation(
         operationId = "INQUIRY-ADMIN-FAQ-002",
         summary = "대표 질문 초안 저장",
-        description = "수정본을 보낸 내용으로 통째로 바꾼다. 발행 중이면 기존 발행본이 그대로 공개되고 hasUnpublishedChanges가 true가 된다."
+        description = """
+            수정본을 보낸 내용으로 통째로 바꾼다. 발행 중이면 기존 발행본이 그대로 공개되고 hasUnpublishedChanges가 true가 된다.
+            expectedVersion에는 화면에서 본 version을 넣는다. 그사이 다른 운영진이 고쳤으면 409 INQUIRY-0029이고 덮어쓰지 않으니,
+            상세를 다시 불러와 재시도한다.
+            """
     )
     public InquiryFaqStaffDetailResponse saveDraft(
         @PathVariable @Positive Long faqId,
-        @Valid @RequestBody SaveInquiryFaqRequest request,
+        @Valid @RequestBody SaveInquiryFaqDraftRequest request,
         @CurrentMember MemberPrincipal principal
     ) {
-        manageInquiryFaqUseCase.saveDraft(principal.getMemberId(), faqId, request.toCommand());
+        manageInquiryFaqUseCase.saveDraft(request.toCommand(principal.getMemberId(), faqId));
         return detail(principal, faqId);
     }
 
@@ -120,7 +126,9 @@ public class InquiryFaqAdminController {
         summary = "대표 질문 검증 후 발행",
         description = """
             수정본을 발행본으로 만든다. 검증 체크 3개가 모두 true여야 하고, 답변·카테고리·대상이 있어야 한다.
+            발행 직전에 카테고리·대상이 아직 쓰이는지 다시 확인한다.
             보관된 대표 질문도 다시 발행할 수 있다. UMC_PRODUCT 운영진 누구나 할 수 있다.
+            expectedVersion이 지금 version과 다르면 409 INQUIRY-0029다.
             """
     )
     public InquiryFaqStaffDetailResponse publish(
@@ -136,17 +144,23 @@ public class InquiryFaqAdminController {
     @Operation(
         operationId = "INQUIRY-ADMIN-FAQ-004",
         summary = "대표 질문 보관",
-        description = "발행 중인 대표 질문만 보관할 수 있다. 공개·검색·추천·순위에서 바로 빠지고 연결된 문의는 그대로다."
+        description = """
+            발행 중인 대표 질문만 보관할 수 있다. 공개·검색·추천·순위에서 바로 빠지고 연결된 문의는 그대로다.
+            expectedVersion이 지금 version과 다르면 409 INQUIRY-0029다.
+            """
     )
     public InquiryFaqStaffDetailResponse archive(
         @PathVariable @Positive Long faqId,
+        @Valid @RequestBody ArchiveInquiryFaqRequest request,
         @CurrentMember MemberPrincipal principal
     ) {
-        manageInquiryFaqUseCase.archive(principal.getMemberId(), faqId);
+        manageInquiryFaqUseCase.archive(request.toCommand(principal.getMemberId(), faqId));
         return detail(principal, faqId);
     }
 
     private InquiryFaqStaffDetailResponse detail(MemberPrincipal principal, Long faqId) {
-        return InquiryFaqStaffDetailResponse.from(getInquiryFaqForStaffUseCase.getForStaff(principal.getMemberId(), faqId));
+        return InquiryFaqStaffDetailResponse.from(
+            getInquiryFaqForStaffUseCase.getForStaff(principal.getMemberId(), faqId)
+        );
     }
 }

@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
+import com.umc.product.global.persistence.ConstraintViolationInspector;
 import com.umc.product.inquiry.application.port.out.LoadInquiryPort;
 import com.umc.product.inquiry.application.port.out.SaveInquiryPort;
 import com.umc.product.inquiry.domain.Inquiry;
@@ -66,7 +67,7 @@ public class InquiryPersistenceAdapter implements LoadInquiryPort, SaveInquiryPo
         try {
             return inquiryJpaRepository.saveAndFlush(inquiry);
         } catch (DataIntegrityViolationException exception) {
-            if (ConstraintViolations.violates(exception, AUTHOR_CLIENT_REQUEST_CONSTRAINT)) {
+            if (ConstraintViolationInspector.matches(exception, AUTHOR_CLIENT_REQUEST_CONSTRAINT)) {
                 throw new InquiryDomainException(InquiryErrorCode.INQUIRY_REQUEST_CONFLICT, exception);
             }
             throw exception;

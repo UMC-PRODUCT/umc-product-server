@@ -52,7 +52,7 @@ public class InquiryLabelAdminController {
         @Valid @RequestBody SaveInquiryLabelRequest request,
         @CurrentMember MemberPrincipal principal
     ) {
-        return InquiryLabelResponse.from(manageInquiryLabelUseCase.create(request.toCommand(principal.getMemberId(), null)));
+        return InquiryLabelResponse.from(manageInquiryLabelUseCase.create(principal.getMemberId(), request.name()));
     }
 
     @PatchMapping("/{labelId:\\d+}")
@@ -63,7 +63,7 @@ public class InquiryLabelAdminController {
         @CurrentMember MemberPrincipal principal
     ) {
         return InquiryLabelResponse.from(
-            manageInquiryLabelUseCase.rename(request.toCommand(principal.getMemberId(), labelId))
+            manageInquiryLabelUseCase.rename(principal.getMemberId(), labelId, request.name())
         );
     }
 

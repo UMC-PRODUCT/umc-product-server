@@ -71,9 +71,7 @@ public class InquiryQueryRepository {
         Set<Long> staff = search.staffMemberIds();
         return switch (search.tab()) {
             case ALL -> null;
-            case MINE -> staff.contains(search.viewerMemberId())
-                ? inquiry.assigneeMemberId.eq(search.viewerMemberId())
-                : inquiry.id.isNull();
+            case MINE -> inquiry.assigneeMemberId.eq(search.viewerMemberId());
             case UNASSIGNED -> staff.isEmpty()
                 ? null
                 : inquiry.assigneeMemberId.isNull().or(inquiry.assigneeMemberId.notIn(staff));

@@ -43,6 +43,7 @@ import com.umc.product.inquiry.application.port.in.command.ManageInquiryFaqUseCa
 import com.umc.product.inquiry.application.port.in.command.SendInquiryMessageUseCase;
 import com.umc.product.inquiry.application.port.in.command.dto.CloseInquiryCommand;
 import com.umc.product.inquiry.application.port.in.command.dto.CreateInquiryCommand;
+import com.umc.product.inquiry.application.port.in.command.dto.CreateInquiryFaqCommand;
 import com.umc.product.inquiry.application.port.in.command.dto.InquiryFaqContentCommand;
 import com.umc.product.inquiry.application.port.in.command.dto.LinkInquiryFaqCommand;
 import com.umc.product.inquiry.application.port.in.command.dto.PublishInquiryFaqCommand;
@@ -262,10 +263,10 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
         refreshInquiryFaqRankingUseCase.refresh();
         BlockingQueue<JsonNode> frames = 순위_구독(strangerId);
         Long audienceId = inquiryFixture.대상("UMC 서비스 사용자").getId();
-        Long faqId = manageInquiryFaqUseCase.create(staffId, new InquiryFaqContentCommand(
+        Long faqId = manageInquiryFaqUseCase.create(new CreateInquiryFaqCommand(staffId, new InquiryFaqContentCommand(
             "로그인이 안 돼요", "다시 로그인하세요", List.of(), categoryId, audienceId, null, null
-        ));
-        manageInquiryFaqUseCase.publish(new PublishInquiryFaqCommand(staffId, faqId, true, true, true));
+        )));
+        manageInquiryFaqUseCase.publish(new PublishInquiryFaqCommand(staffId, faqId, 0, true, true, true));
         linkInquiryFaqUseCase.linkFaq(new LinkInquiryFaqCommand(문의_등록(authorId), staffId, faqId));
 
         // when

@@ -2,7 +2,6 @@ package com.umc.product.inquiry.application.service;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +61,7 @@ public class InquiryFaqQueryService implements GetInquiryFaqForStaffUseCase, Get
         return faqs.stream()
             .map(faq -> new InquiryFaqStaffSummaryInfo(
                 faq.getId(),
+                faq.getVersion(),
                 faq.getStatus(),
                 faq.getDraft().getQuestion(),
                 lookup.category(faq.getDraft().getCategoryId()),
@@ -85,6 +85,7 @@ public class InquiryFaqQueryService implements GetInquiryFaqForStaffUseCase, Get
         Long publisherId = faq.getPublishedByMemberId();
         return new InquiryFaqStaffDetailInfo(
             faq.getId(),
+            faq.getVersion(),
             faq.getStatus(),
             faq.hasUnpublishedChanges(),
             lookup.staffContent(faq.getDraft()),
@@ -106,14 +107,14 @@ public class InquiryFaqQueryService implements GetInquiryFaqForStaffUseCase, Get
 
     @Override
     public List<InquiryFaqSummaryInfo> listPublic(Long categoryId) {
-        return faqAssembler.publicSummaries(loadInquiryFaqPort.listPublic(categoryId, today()));
+        return faqAssembler.publicSummaries(loadInquiryFaqPort.listPublic(categoryId, clock.instant()));
     }
 
     @Override
     public InquiryFaqDetailInfo getPublic(Long faqId) {
-        LocalDate today = today();
+        Instant now = clock.instant();
         InquiryFaq faq = loadInquiryFaqPort.findById(faqId)
-            .filter(found -> found.isPublicOn(today))
+            .filter(found -> found.isPublicAt(now))
             .orElseThrow(() -> new InquiryDomainException(InquiryErrorCode.INQUIRY_FAQ_NOT_FOUND));
         InquiryFaqContent content = faq.getPublished();
         InquiryFaqAssembler.Lookup lookup = faqAssembler.lookup(List.of(content));
@@ -127,7 +128,7 @@ public class InquiryFaqQueryService implements GetInquiryFaqForStaffUseCase, Get
             summary.audience(),
             InquiryFaq.VERIFIED_BY,
             faq.getPublishedAt(),
-            related != null && related.isPublicOn(today)
+            related != null && related.isPublicAt(now)
                 ? new InquiryFaqRefInfo(related.getId(), related.getPublished().getQuestion())
                 : null
         );
@@ -139,23 +140,18 @@ public class InquiryFaqQueryService implements GetInquiryFaqForStaffUseCase, Get
         if (trimmed.isEmpty()) {
             return List.of();
         }
-        return faqAssembler.publicSummaries(loadInquiryFaqPort.searchPublic(trimmed, today(), SEARCH_LIMIT));
+        return faqAssembler.publicSummaries(loadInquiryFaqPort.searchPublic(trimmed, clock.instant(), SEARCH_LIMIT));
     }
 
     @Override
     public Optional<InquiryFaqSummaryInfo> suggest(Long categoryId) {
         Instant now = clock.instant();
-        LocalDate today = InquiryFaq.today(now);
         Optional<InquiryFaq> mostAsked = loadInquiryFaqPort.rankByDistinctAuthors(
-                DemandTarget.PUBLIC, today, SUGGESTION_PERIOD.since(now), categoryId, 1
+                DemandTarget.PUBLIC, now, SUGGESTION_PERIOD.since(now), categoryId, 1
             ).stream()
             .findFirst()
             .flatMap(demand -> loadInquiryFaqPort.findById(demand.faqId()));
-        return mostAsked.or(() -> loadInquiryFaqPort.listPublic(categoryId, today).stream().findFirst())
+        return mostAsked.or(() -> loadInquiryFaqPort.listPublic(categoryId, now).stream().findFirst())
             .map(faq -> faqAssembler.publicSummaries(List.of(faq)).get(0));
-    }
-
-    private LocalDate today() {
-        return InquiryFaq.today(clock.instant());
     }
 }

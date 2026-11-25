@@ -8,6 +8,7 @@ import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.inOrder;
 
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,6 +25,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.umc.product.chat.application.port.in.query.dto.ChatMessageInfo;
 import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.inquiry.application.event.InquiryStatusChangedEvent;
+import com.umc.product.inquiry.application.policy.InquiryStaffRoster;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryMessageInfo;
 import com.umc.product.inquiry.application.port.in.realtime.dto.InquiryRealtimeEvent;
 import com.umc.product.inquiry.application.port.out.InquiryRealtimeBroadcastPort;
@@ -31,7 +33,6 @@ import com.umc.product.inquiry.application.port.out.LoadInquiryPort;
 import com.umc.product.inquiry.domain.Inquiry;
 import com.umc.product.inquiry.domain.enums.InquiryParticipant;
 import com.umc.product.inquiry.domain.enums.InquiryStatus;
-import com.umc.product.member.application.port.in.query.ListMemberSystemRoleUseCase;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("문의 실시간 전달")
@@ -48,7 +49,7 @@ class InquiryRealtimeRelayServiceTest {
     @Mock
     InquiryMessageAssembler messageAssembler;
     @Mock
-    ListMemberSystemRoleUseCase listMemberSystemRoleUseCase;
+    InquiryStaffRoster staffRoster;
     @Mock
     InquiryRealtimeBroadcastPort broadcastPort;
 
@@ -66,7 +67,7 @@ class InquiryRealtimeRelayServiceTest {
         Inquiry inquiry = 문의();
         given(loadInquiryPort.findByChatRoomId(ROOM_ID)).willReturn(Optional.of(inquiry));
         given(messageAssembler.assemble(inquiry, message)).willReturn(view);
-        given(listMemberSystemRoleUseCase.listUmcProductMemberIds()).willReturn(STAFF_IDS);
+        given(staffRoster.memberIds()).willReturn(new LinkedHashSet<>(STAFF_IDS));
         InquiryRealtimeEvent event = new InquiryRealtimeEvent.MessageCreated(INQUIRY_ID, view);
         brokerFailsFor(102L);
 
@@ -95,7 +96,7 @@ class InquiryRealtimeRelayServiceTest {
         InquiryRealtimeEvent statusEvent = new InquiryRealtimeEvent.StatusChanged(
             INQUIRY_ID, InquiryStatus.CLOSED, NOW, NOW, NOW
         );
-        given(listMemberSystemRoleUseCase.listUmcProductMemberIds()).willReturn(STAFF_IDS);
+        given(staffRoster.memberIds()).willReturn(new LinkedHashSet<>(STAFF_IDS));
         brokerFailsFor(102L);
 
         // when & then
@@ -128,6 +129,8 @@ class InquiryRealtimeRelayServiceTest {
     }
 
     private static InquiryMessageInfo view(Long senderMemberId, String senderName) {
-        return new InquiryMessageInfo(1L, InquiryParticipant.STAFF, senderMemberId, senderName, "확인해 볼게요", List.of(), NOW);
+        return new InquiryMessageInfo(
+            1L, InquiryParticipant.STAFF, senderMemberId, senderName, "확인해 볼게요", List.of(), NOW
+        );
     }
 }

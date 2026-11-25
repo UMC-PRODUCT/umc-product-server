@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.chat.application.port.in.query.GetChatRoomUseCase;
+import com.umc.product.inquiry.application.policy.InquiryStaffRoster;
 import com.umc.product.inquiry.application.port.in.query.ListInquiryStaffAlarmRecipientsUseCase;
 import com.umc.product.inquiry.application.port.out.LoadInquiryPort;
 import com.umc.product.inquiry.application.port.out.LoadInquiryStaffAlarmSettingPort;
 import com.umc.product.inquiry.domain.Inquiry;
-import com.umc.product.member.application.port.in.query.ListMemberSystemRoleUseCase;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,12 +23,13 @@ public class InquiryStaffAlarmRecipientQueryService implements ListInquiryStaffA
 
     private final LoadInquiryPort loadInquiryPort;
     private final LoadInquiryStaffAlarmSettingPort loadSettingPort;
-    private final ListMemberSystemRoleUseCase listMemberSystemRoleUseCase;
+    private final InquiryStaffRoster staffRoster;
     private final GetChatRoomUseCase getChatRoomUseCase;
 
     @Override
     public List<Long> listNewInquiryRecipientMemberIds(Long authorMemberId) {
-        return staffExceptAuthor(staffIds(), Set.copyOf(loadSettingPort.listEnabledMemberIds()), authorMemberId);
+        Set<Long> enabled = Set.copyOf(loadSettingPort.listEnabledMemberIds());
+        return staffExceptAuthor(staffRoster.memberIds(), enabled, authorMemberId);
     }
 
     @Override
@@ -39,7 +40,7 @@ public class InquiryStaffAlarmRecipientQueryService implements ListInquiryStaffA
     }
 
     private List<Long> authorMessageRecipients(Inquiry inquiry) {
-        List<Long> staffIds = staffIds();
+        Set<Long> staffIds = staffRoster.memberIds();
         Long authorId = inquiry.getAuthorMemberId();
         Long assigneeId = inquiry.effectiveAssigneeId(staffIds);
         if (assigneeId != null && !assigneeId.equals(authorId)) {
@@ -57,11 +58,7 @@ public class InquiryStaffAlarmRecipientQueryService implements ListInquiryStaffA
         return Set.copyOf(getChatRoomUseCase.getById(inquiry.getChatRoomId(), inquiry.getAuthorMemberId()).memberIds());
     }
 
-    private List<Long> staffIds() {
-        return listMemberSystemRoleUseCase.listUmcProductMemberIds();
-    }
-
-    private static List<Long> staffExceptAuthor(List<Long> staffIds, Set<Long> candidates, Long authorMemberId) {
+    private static List<Long> staffExceptAuthor(Set<Long> staffIds, Set<Long> candidates, Long authorMemberId) {
         return staffIds.stream()
             .filter(candidates::contains)
             .filter(memberId -> !Objects.equals(memberId, authorMemberId))

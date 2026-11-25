@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 public record InquiryFaqStaffDetailResponse(
     Long faqId,
+    @Schema(description = "대표 질문 버전. 초안 저장·발행·보관 요청의 expectedVersion에 그대로 넣는다. 고칠 때마다 바뀐다")
+    long version,
     InquiryFaqStatus status,
     @Schema(description = "발행 중에 고친 내용이 있어 기존 발행본이 공개 중인지")
     boolean hasUnpublishedChanges,
@@ -27,6 +29,7 @@ public record InquiryFaqStaffDetailResponse(
     public static InquiryFaqStaffDetailResponse from(InquiryFaqStaffDetailInfo info) {
         return new InquiryFaqStaffDetailResponse(
             info.faqId(),
+            info.version(),
             info.status(),
             info.hasUnpublishedChanges(),
             InquiryFaqContentResponse.from(info.draft()),

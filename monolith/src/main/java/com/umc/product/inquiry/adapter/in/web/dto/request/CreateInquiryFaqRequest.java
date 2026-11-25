@@ -3,13 +3,14 @@ package com.umc.product.inquiry.adapter.in.web.dto.request;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.umc.product.inquiry.application.port.in.command.dto.CreateInquiryFaqCommand;
 import com.umc.product.inquiry.application.port.in.command.dto.InquiryFaqContentCommand;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
-public record SaveInquiryFaqRequest(
+public record CreateInquiryFaqRequest(
     @Schema(description = "공개용 질문. 1~200자")
     @NotNull String question,
     @Schema(description = "공개용 답변. 초안에서는 비워도 되고, 발행하려면 있어야 한다", nullable = true)
@@ -26,7 +27,9 @@ public record SaveInquiryFaqRequest(
     @Positive Long relatedFaqId
 ) {
 
-    public InquiryFaqContentCommand toCommand() {
-        return new InquiryFaqContentCommand(question, answer, aliases, categoryId, audienceId, endDate, relatedFaqId);
+    public CreateInquiryFaqCommand toCommand(Long actorMemberId) {
+        return new CreateInquiryFaqCommand(actorMemberId, new InquiryFaqContentCommand(
+            question, answer, aliases, categoryId, audienceId, endDate, relatedFaqId
+        ));
     }
 }
