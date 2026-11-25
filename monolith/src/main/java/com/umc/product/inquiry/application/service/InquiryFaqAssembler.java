@@ -24,9 +24,6 @@ import com.umc.product.inquiry.domain.InquiryFaqContent;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 대표 질문 내용의 카테고리·대상·관련 안내를 한 번에 모아 읽어 응답 모양으로 만든다.
- */
 @Component
 @RequiredArgsConstructor
 class InquiryFaqAssembler {
@@ -50,7 +47,6 @@ class InquiryFaqAssembler {
         return new Lookup(categories, audiences, related);
     }
 
-    /** 사용자에게 보이는 발행본 요약. */
     List<InquiryFaqSummaryInfo> publicSummaries(List<InquiryFaq> faqs) {
         Lookup lookup = lookup(faqs.stream().map(InquiryFaq::getPublished).toList());
         return faqs.stream().map(faq -> lookup.summary(faq.getId(), faq.getPublished())).toList();
@@ -79,7 +75,6 @@ class InquiryFaqAssembler {
             );
         }
 
-        /** 운영진이 보는 내용. 관련 안내는 상태와 상관없이 수정본 질문으로 보여 준다. */
         InquiryFaqContentInfo staffContent(InquiryFaqContent content) {
             if (content == null) {
                 return null;

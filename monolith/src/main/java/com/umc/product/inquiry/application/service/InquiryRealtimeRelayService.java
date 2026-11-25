@@ -17,10 +17,6 @@ import com.umc.product.inquiry.application.port.out.LoadInquiryPort;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 받는 사람은 문의 작성자와 {@code UMC_PRODUCT} 운영진 전원이다. 알림 설정과 상관없고, {@code SUPER_ADMIN}만 가진 회원은 받지 않는다.
- * 작성자에게 먼저 보내고, 한 명에게 실패해도 나머지에게 끝까지 보낸 뒤 실패를 한 번에 던져 outbox가 다시 시도하게 한다.
- */
 @Service
 @RequiredArgsConstructor
 public class InquiryRealtimeRelayService implements RelayInquiryRealtimeEventUseCase {

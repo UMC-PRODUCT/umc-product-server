@@ -25,9 +25,6 @@ import com.umc.product.inquiry.domain.exception.InquiryErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 대표 질문 작성·발행·보관. 운영진(AUTHZ-10) 누구나 할 수 있고 별도 발행 권한은 없다.
- */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -54,7 +51,6 @@ public class InquiryFaqCommandService implements ManageInquiryFaqUseCase, MarkIn
         saveInquiryFaqPort.save(faq);
     }
 
-    // 초안을 저장한 뒤 분류·대상이 비활성으로 바뀌었을 수 있어 발행 직전에 다시 확인한다.
     @Override
     public void publish(PublishInquiryFaqCommand command) {
         InquiryFaq faq = loadForStaff(command.actorMemberId(), command.faqId(), command.expectedVersion());

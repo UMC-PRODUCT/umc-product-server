@@ -6,7 +6,6 @@ import com.umc.product.global.websocket.application.port.in.StompSubscriptionAut
 
 /**
  * 사람별 큐는 서버가 받는 사람을 정해 보내므로 로그인한 회원이면 구독할 수 있고, 자기에게 보낸 이벤트만 받는다.
- * 인기 순위 신호 주소는 개인정보 없이 "새 순위 있음"만 보내므로 로그인한 누구나 구독한다.
  */
 @Component
 public class InquiryStompSubscriptionAuthorizer implements StompSubscriptionAuthorizer {

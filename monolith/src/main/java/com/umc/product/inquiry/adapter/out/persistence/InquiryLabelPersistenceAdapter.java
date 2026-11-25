@@ -56,7 +56,6 @@ public class InquiryLabelPersistenceAdapter implements LoadInquiryLabelPort, Sav
         Map<Long, InquiryLabel> labels = listByIds(
             assignments.stream().map(InquiryLabelAssignment::getLabelId).collect(Collectors.toSet())
         ).stream().collect(Collectors.toMap(InquiryLabel::getId, Function.identity()));
-        // 연결 행을 읽은 뒤 라벨이 지워질 수 있어, 라벨이 없는 연결은 건너뛴다.
         return assignments.stream()
             .filter(assignment -> labels.containsKey(assignment.getLabelId()))
             .collect(Collectors.groupingBy(

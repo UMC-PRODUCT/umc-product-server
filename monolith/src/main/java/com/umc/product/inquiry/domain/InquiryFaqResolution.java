@@ -14,9 +14,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 회원이 대표 질문에서 "해결됐어요"를 누른 기록. 회원마다 대표 질문 하나에 한 번만 센다.
- */
 @Entity
 @Table(name = "inquiry_faq_resolution")
 @Getter

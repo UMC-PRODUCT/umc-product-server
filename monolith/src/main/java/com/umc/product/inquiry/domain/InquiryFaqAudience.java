@@ -12,9 +12,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 대표 질문이 누구에게 해당하는지. 관리 API 없이 SQL로 추가·비활성화한다.
- */
 @Entity
 @Table(name = "inquiry_faq_audience")
 @Getter

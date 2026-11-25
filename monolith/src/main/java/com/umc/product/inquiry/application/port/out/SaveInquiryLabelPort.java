@@ -14,6 +14,5 @@ public interface SaveInquiryLabelPort {
     /** 붙어 있던 문의에서도 함께 빠진다. */
     void delete(InquiryLabel label);
 
-    /** 문의의 라벨을 주어진 집합으로 통째로 바꾼다. */
     void replaceAssignments(Long inquiryId, Collection<Long> labelIds);
 }

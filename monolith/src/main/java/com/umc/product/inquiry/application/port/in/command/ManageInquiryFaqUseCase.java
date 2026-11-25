@@ -10,7 +10,6 @@ import com.umc.product.inquiry.application.port.in.command.dto.SaveInquiryFaqDra
  */
 public interface ManageInquiryFaqUseCase {
 
-    /** 초안을 만들고 ID를 돌려준다. */
     Long create(CreateInquiryFaqCommand command);
 
     /** 수정본만 바꾼다. 발행 중이면 기존 발행본이 그대로 공개된다. */

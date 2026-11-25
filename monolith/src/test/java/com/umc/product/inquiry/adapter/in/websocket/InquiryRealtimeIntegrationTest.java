@@ -56,7 +56,6 @@ import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.support.fixture.InquiryFixture;
 import com.umc.product.support.fixture.MemberFixture;
 
-// 실제 포트로 띄운 별도 컨텍스트의 outbox 폴러가 다른 테스트의 TRUNCATE와 교착하지 않게 클래스가 끝나면 닫는다.
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DisplayName("문의 실시간 구독과 전달")
@@ -361,7 +360,6 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
         return received;
     }
 
-    // 실시간 outbox 행이 모두 PUBLISHED면 relay가 broadcast를 마친 것이다.
     private void 실시간_전달_대기() throws InterruptedException {
         long deadline = System.currentTimeMillis() + FRAME_TIMEOUT_MILLIS;
         while (System.currentTimeMillis() < deadline) {

@@ -140,16 +140,10 @@ public class Inquiry extends BaseEntity {
         closedAt = now;
     }
 
-    /**
-     * 담당자가 운영진 권한을 잃으면 저장된 값과 상관없이 미배정으로 본다.
-     */
     public Long effectiveAssigneeId(Collection<Long> staffMemberIds) {
         return assigneeMemberId != null && staffMemberIds.contains(assigneeMemberId) ? assigneeMemberId : null;
     }
 
-    /**
-     * 요청자가 본 담당자와 지금 담당자가 다르면 덮어쓰지 않고 거절한다. 담당자가 그대로면 이력을 남기지 않는다.
-     */
     public Optional<InquiryHistory> changeAssignee(
         Long actorMemberId,
         Long newAssigneeId,
@@ -170,7 +164,6 @@ public class Inquiry extends BaseEntity {
         return Optional.of(InquiryHistory.assigneeChanged(id, actorMemberId, current, newAssigneeId));
     }
 
-    /** 대표 질문 연결. null이면 연결을 끊어 미분류로 돌린다. */
     public void linkFaq(Long faqId) {
         this.faqId = faqId;
     }
@@ -184,9 +177,6 @@ public class Inquiry extends BaseEntity {
         return Optional.of(history);
     }
 
-    /**
-     * 등록 화면에 제목 칸이 없어서 내용의 첫 번째 비지 않은 줄을 제목으로 쓴다. 목록 한 줄에 들어가도록 자른다.
-     */
     static String titleOf(String content) {
         String firstLine = Objects.requireNonNull(content).lines()
             .map(String::strip)

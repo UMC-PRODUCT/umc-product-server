@@ -16,9 +16,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 운영진만 보는 문의 분류 표시. 질문자 응답에는 나오지 않는다.
- */
 @Entity
 @Table(name = "inquiry_label")
 @Getter

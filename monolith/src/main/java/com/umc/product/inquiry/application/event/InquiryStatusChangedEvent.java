@@ -9,7 +9,7 @@ import com.umc.product.inquiry.domain.Inquiry;
 import com.umc.product.inquiry.domain.enums.InquiryStatus;
 
 /**
- * 문의 상태가 바뀐 뒤의 스냅숏. relay 시점에 문의를 다시 읽지 않으므로 그 사이 바뀐 상태가 섞이지 않는다.
+ * 문의 상태가 바뀐 뒤의 스냅숏.
  */
 public record InquiryStatusChangedEvent(
     UUID eventId,

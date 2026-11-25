@@ -72,7 +72,6 @@ public class InquiryStaffQueryService implements
         accessPolicy.requireStaff(query.staffMemberId());
         LoadInquiryPort.Cursor cursor = query.cursor() == null ? null : InquiryListCursorCodec.decode(query.cursor());
         Set<Long> staffIds = staffRoster.memberIds();
-        // 담당자가 될 수 없는 운영진(SUPER_ADMIN만 가진 회원)에게 "내 담당"은 늘 비어 있다.
         boolean viewerAssignable = staffIds.contains(query.staffMemberId());
         LoadInquiryPort.StaffSearch search = new LoadInquiryPort.StaffSearch(
             query.tab(),
@@ -120,7 +119,6 @@ public class InquiryStaffQueryService implements
         );
     }
 
-    // 개수는 탭을 처음 열 때만 센다. 다음 페이지마다 세 번씩 다시 세지 않는다.
     private InquiryStaffPageInfo.TabCounts tabCounts(LoadInquiryPort.StaffSearch search, boolean viewerAssignable) {
         return new InquiryStaffPageInfo.TabCounts(
             loadInquiryPort.countForStaff(search.withTab(InquiryStaffTab.ALL)),
@@ -191,7 +189,6 @@ public class InquiryStaffQueryService implements
         return new LoadInquiryPort.Cursor(last.getLastMessageAt(), last.getId());
     }
 
-    /** 사용자에게 보였던 질문을 앞세우려고 발행본이 있으면 발행본 질문, 없으면 수정본 질문을 쓴다. */
     private Map<Long, InquiryFaqRefInfo> faqRefs(Long... faqIds) {
         Set<Long> ids = Stream.of(faqIds).filter(Objects::nonNull).collect(Collectors.toSet());
         if (ids.isEmpty()) {

@@ -3,9 +3,6 @@ package com.umc.product.inquiry.domain.enums;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-/**
- * 문의를 받는 팀. 질문자가 고르는 화면의 이름과 담당 범위 설명을 함께 둔다. 팀을 모르면 null로 저장한다.
- */
 @Getter
 @RequiredArgsConstructor
 public enum InquiryTeam {

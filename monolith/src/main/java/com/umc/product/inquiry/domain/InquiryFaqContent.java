@@ -20,10 +20,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 대표 질문 한 벌의 내용. 수정본과 발행본이 같은 모양이라 둘 다 이 값으로 들고, 발행은 수정본을 발행본으로 복사하는 일이다.
- * 초안에서는 질문만 있으면 되고, 발행하려면 답변·카테고리·대상이 모두 있어야 한다.
- */
 @Embeddable
 @Getter
 @EqualsAndHashCode
@@ -89,7 +85,6 @@ public class InquiryFaqContent {
         return endDate == null || !today.isAfter(endDate);
     }
 
-    /** 검색은 질문·별칭·답변 중 하나에 들어 있으면 찾는다. 줄바꿈으로 나눠 칸을 넘는 일치를 막는다. */
     String searchText() {
         return Stream.concat(Stream.concat(Stream.of(question), aliases.stream()), Stream.of(answer))
             .filter(Objects::nonNull)

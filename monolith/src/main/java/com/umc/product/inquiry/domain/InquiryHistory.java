@@ -66,7 +66,6 @@ public class InquiryHistory extends BaseEntity {
         return history;
     }
 
-    /** 다른 사람이 지정했을 때만 새 담당자에게 알린다. 스스로 맡거나 해제하면 알리지 않는다. */
     public boolean notifiesNewAssignee() {
         return newAssigneeMemberId != null && !newAssigneeMemberId.equals(actorMemberId);
     }

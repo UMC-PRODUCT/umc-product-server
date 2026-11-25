@@ -31,7 +31,6 @@ public class InquiryFaqQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    /** {@link InquiryFaq#isPublicAt}과 같은 조건이다. 종료일은 한국 시간 날짜로 비교한다. */
     static BooleanExpression publicAt(Instant now) {
         LocalDate today = LocalDate.ofInstant(now, InquiryFaq.SERVICE_ZONE);
         return inquiryFaq.status.eq(InquiryFaqStatus.PUBLISHED)

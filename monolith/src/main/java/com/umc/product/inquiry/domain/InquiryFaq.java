@@ -26,10 +26,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 대표 질문(FAQ). 운영진은 수정본({@link #draft})을 고치고, 발행할 때만 수정본이 공개되는 발행본({@link #published})이 된다.
- * 그래서 발행 중에 고쳐도 기존 발행본이 그대로 공개된다. 검증 조직은 늘 UMC PRODUCT라 저장하지 않는다.
- */
 @Entity
 @Table(name = "inquiry_faq")
 @Getter
@@ -104,9 +100,6 @@ public class InquiryFaq extends BaseEntity {
         draft = content;
     }
 
-    /**
-     * 수정본을 발행본으로 만든다. 검증 항목은 발행 순간의 확인일 뿐이라 저장하지 않는다.
-     */
     public void publish(Long publisherMemberId, boolean verified, Instant now) {
         if (!verified) {
             throw new InquiryDomainException(InquiryErrorCode.INQUIRY_FAQ_VERIFICATION_REQUIRED);
@@ -125,14 +118,10 @@ public class InquiryFaq extends BaseEntity {
         status = status.archive();
     }
 
-    /** 발행 중이고 종료일(한국 시간)이 지나지 않았을 때만 사용자에게 보인다. */
     public boolean isPublicAt(Instant now) {
         return status == InquiryFaqStatus.PUBLISHED && published.isVisibleOn(LocalDate.ofInstant(now, SERVICE_ZONE));
     }
 
-    /**
-     * 운영진 여럿이 같은 대표 질문을 고칠 때 앞사람의 변경을 덮어쓰지 않도록, 요청자가 본 버전과 지금 버전이 다르면 거절한다.
-     */
     public void requireVersion(long expectedVersion) {
         if (version == null || version != expectedVersion) {
             throw new InquiryDomainException(InquiryErrorCode.INQUIRY_FAQ_CHANGED);

@@ -53,7 +53,6 @@ public class InquiryStaffAlarmRecipientQueryService implements ListInquiryStaffA
         return staffExceptAuthor(staffIds, Set.copyOf(loadSettingPort.listEnabledMemberIds()), authorId);
     }
 
-    // 운영진은 첫 메시지를 보낼 때만 문의 방에 들어가므로, 방 멤버가 곧 그 문의에 답한 사람이다.
     private Set<Long> roomMembers(Inquiry inquiry) {
         return Set.copyOf(getChatRoomUseCase.getById(inquiry.getChatRoomId(), inquiry.getAuthorMemberId()).memberIds());
     }

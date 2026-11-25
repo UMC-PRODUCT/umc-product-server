@@ -165,8 +165,6 @@ public class InquiryCommandService implements CreateInquiryUseCase, SendInquiryM
         domainEventPublisher.publish(InquiryStatusChangedEvent.from(inquiry));
     }
 
-    // 참고한 대표 질문은 운영진이 보는 참고 정보일 뿐이라, 공개 중이 아니면 문의 등록을 막지 않고 버린다.
-    // 존재 여부를 404로 드러내면 비공개 대표 질문 ID를 찔러 볼 수 있다.
     private Long publicFaqIdOrNull(Long faqId) {
         if (faqId == null) {
             return null;

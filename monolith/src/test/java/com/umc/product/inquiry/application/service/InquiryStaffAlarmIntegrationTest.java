@@ -386,9 +386,6 @@ class InquiryStaffAlarmIntegrationTest extends IntegrationTestSupport {
         );
     }
 
-    /**
-     * 테스트 컨텍스트는 outbox relay를 끄므로, relay가 하듯 문의 이벤트를 꺼내 발행하고 그 결과로 남은 FCM 요청을 읽는다.
-     */
     private List<FcmNotificationRequestedEvent> 알림_요청() {
         outbox().stream()
             .filter(row -> INQUIRY_ALARM_EVENTS.contains(row.getEventType()))

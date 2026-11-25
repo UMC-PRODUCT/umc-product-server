@@ -32,9 +32,6 @@ import com.umc.product.inquiry.domain.exception.InquiryErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 운영진이 문의를 처리하며 바꾸는 담당자·받는 팀·라벨·대표 질문 연결. 모두 문의 행을 잠근 뒤 바꾼다.
- */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -112,7 +109,6 @@ public class InquiryManagementCommandService implements
         return faq.getId();
     }
 
-    // 지금은 쓰지 않는 옛 분류로 접수된 문의면 초안에 분류를 넣지 않는다. 발행 전에 운영진이 고른다.
     private Long activeCategoryIdOf(Inquiry inquiry) {
         return loadInquiryCategoryPort.findById(inquiry.getCategoryId())
             .filter(InquiryCategory::isActive)

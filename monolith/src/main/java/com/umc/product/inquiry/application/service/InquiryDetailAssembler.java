@@ -13,9 +13,6 @@ import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 질문자용 상세. 운영진 상세도 이 모양을 그대로 담아서, 문의를 이미 읽은 쪽이 다시 읽지 않고 만들 수 있게 둔다.
- */
 @Component
 @RequiredArgsConstructor
 class InquiryDetailAssembler {

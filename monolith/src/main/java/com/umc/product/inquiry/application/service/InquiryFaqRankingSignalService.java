@@ -16,11 +16,6 @@ import com.umc.product.inquiry.domain.enums.InquiryFaqRankingPeriod;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * 순위가 바뀌었을 때만 신호를 보낸다. 마지막으로 본 순위는 인스턴스 메모리에만 두므로 여러 인스턴스가 같은 변화를 각각
- * 알리거나 재시작 뒤 한 번 더 알릴 수 있다. 신호는 "다시 불러오라"는 뜻뿐이라 중복돼도 괜찮고, 보내기에 실패하면 기억을
- * 바꾸지 않아 다음 주기에 다시 보낸다.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
