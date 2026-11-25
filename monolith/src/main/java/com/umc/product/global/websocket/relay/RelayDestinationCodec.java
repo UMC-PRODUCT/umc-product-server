@@ -15,6 +15,8 @@ public final class RelayDestinationCodec {
         "/queue/community.threads.events-user";
     private static final String PUBLIC_INQUIRY_USER_QUEUE = "/queue/inquiries/events-user";
     private static final String BROKER_INQUIRY_USER_QUEUE = "/queue/inquiries.events-user";
+    private static final String PUBLIC_INQUIRY_RANKING_TOPIC = "/topic/inquiries/ranking";
+    private static final String BROKER_INQUIRY_RANKING_TOPIC = "/topic/inquiries.ranking";
 
     public String toBroker(String destination) {
         if (PUBLIC_USER_DESTINATION.equals(destination)) {
@@ -22,6 +24,9 @@ public final class RelayDestinationCodec {
         }
         if (PUBLIC_USER_REGISTRY.equals(destination)) {
             return BROKER_USER_REGISTRY;
+        }
+        if (PUBLIC_INQUIRY_RANKING_TOPIC.equals(destination)) {
+            return BROKER_INQUIRY_RANKING_TOPIC;
         }
         if (hasSuffix(destination, PUBLIC_COMMUNITY_USER_QUEUE)) {
             return replacePrefix(
@@ -42,6 +47,9 @@ public final class RelayDestinationCodec {
         }
         if (BROKER_USER_REGISTRY.equals(destination)) {
             return PUBLIC_USER_REGISTRY;
+        }
+        if (BROKER_INQUIRY_RANKING_TOPIC.equals(destination)) {
+            return PUBLIC_INQUIRY_RANKING_TOPIC;
         }
         if (hasSuffix(destination, BROKER_COMMUNITY_USER_QUEUE)) {
             return replacePrefix(

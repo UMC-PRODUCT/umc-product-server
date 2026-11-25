@@ -1,5 +1,6 @@
 package com.umc.product.inquiry.application.port.out;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -25,4 +26,22 @@ public interface LoadInquiryFaqPort {
     List<InquiryFaq> searchPublic(String keyword, LocalDate today, int limit);
 
     Map<Long, Long> countResolutionsByFaqIds(Collection<Long> faqIds);
+
+    /**
+     * {@code since} 뒤에 접수된 문의를 대표 질문별로 묶어, 서로 다른 작성자가 많은 순으로 돌려준다. 같은 수면 최근 문의가 더
+     * 최근인 쪽, 그다음 대표 질문 ID가 작은 쪽이 앞이다. 대표 질문에 연결되지 않은 문의는 세지 않는다.
+     * {@code today}는 공개 여부를 가리는 날짜이고 {@code categoryId}가 null이면 전체다.
+     */
+    List<FaqDemand> rankByDistinctAuthors(
+        DemandTarget target, LocalDate today, Instant since, Long categoryId, int limit
+    );
+
+    /** 공개 중인 대표 질문만, 또는 한 번도 발행하지 않은 초안만 센다. */
+    enum DemandTarget {
+        PUBLIC,
+        DRAFT
+    }
+
+    record FaqDemand(Long faqId, long authorCount, Instant latestInquiryAt) {
+    }
 }

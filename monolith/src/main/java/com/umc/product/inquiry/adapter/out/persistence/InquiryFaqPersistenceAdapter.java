@@ -1,5 +1,6 @@
 package com.umc.product.inquiry.adapter.out.persistence;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -51,6 +52,13 @@ public class InquiryFaqPersistenceAdapter implements LoadInquiryFaqPort, SaveInq
     @Override
     public Map<Long, Long> countResolutionsByFaqIds(Collection<Long> faqIds) {
         return queryRepository.countResolutionsByFaqIds(faqIds);
+    }
+
+    @Override
+    public List<FaqDemand> rankByDistinctAuthors(
+        DemandTarget target, LocalDate today, Instant since, Long categoryId, int limit
+    ) {
+        return queryRepository.rankByDistinctAuthors(target, today, since, categoryId, limit);
     }
 
     @Override

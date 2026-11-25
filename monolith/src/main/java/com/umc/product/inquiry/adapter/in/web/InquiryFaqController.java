@@ -13,10 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryFaqDetailResponse;
+import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryFaqRankingResponse;
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryFaqSuggestionResponse;
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryFaqSummaryResponse;
 import com.umc.product.inquiry.application.port.in.command.MarkInquiryFaqResolvedUseCase;
+import com.umc.product.inquiry.application.port.in.query.GetInquiryFaqRankingUseCase;
 import com.umc.product.inquiry.application.port.in.query.GetInquiryFaqUseCase;
+import com.umc.product.inquiry.domain.enums.InquiryFaqRankingPeriod;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,6 +37,7 @@ public class InquiryFaqController {
 
     private final GetInquiryFaqUseCase getInquiryFaqUseCase;
     private final MarkInquiryFaqResolvedUseCase markInquiryFaqResolvedUseCase;
+    private final GetInquiryFaqRankingUseCase getInquiryFaqRankingUseCase;
 
     @GetMapping
     @Operation(
@@ -75,6 +79,21 @@ public class InquiryFaqController {
         return new InquiryFaqSuggestionResponse(
             getInquiryFaqUseCase.suggest(categoryId).map(InquiryFaqSummaryResponse::from).orElse(null)
         );
+    }
+
+    @GetMapping("/rankings")
+    @Operation(
+        operationId = "INQUIRY-FAQ-105",
+        summary = "대표 질문 인기 순위",
+        description = """
+            공개 중인 대표 질문 상위 5개. DAY는 최근 24시간, WEEK는 최근 7일 동안 그 대표 질문에 연결된 문의를 남긴
+            서로 다른 회원 수(askedMemberCount)로 센다. 같은 사람이 여러 번 물어도 한 번이다. 기준은 문의 접수 시각이다.
+            같은 수면 최근 문의가 더 최근인 쪽이 앞이다. 부를 때마다 지금 기준으로 계산하고 refreshedAt은 계산 시각이다.
+            순위가 바뀌면 /topic/inquiries/ranking 으로 "새 순위 있음" 신호가 온다.
+            """
+    )
+    public InquiryFaqRankingResponse rankings(@RequestParam(defaultValue = "DAY") InquiryFaqRankingPeriod period) {
+        return InquiryFaqRankingResponse.from(getInquiryFaqRankingUseCase.getRanking(period));
     }
 
     @PostMapping("/{faqId:\\d+}/resolution")

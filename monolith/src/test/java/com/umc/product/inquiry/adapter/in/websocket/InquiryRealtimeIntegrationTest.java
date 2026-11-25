@@ -38,11 +38,17 @@ import com.umc.product.global.websocket.application.port.out.BroadcastPort;
 import com.umc.product.global.websocket.application.service.StompSubscriptionAuthorizerRegistry;
 import com.umc.product.inquiry.application.port.in.command.CloseInquiryUseCase;
 import com.umc.product.inquiry.application.port.in.command.CreateInquiryUseCase;
+import com.umc.product.inquiry.application.port.in.command.LinkInquiryFaqUseCase;
+import com.umc.product.inquiry.application.port.in.command.ManageInquiryFaqUseCase;
 import com.umc.product.inquiry.application.port.in.command.SendInquiryMessageUseCase;
 import com.umc.product.inquiry.application.port.in.command.dto.CloseInquiryCommand;
 import com.umc.product.inquiry.application.port.in.command.dto.CreateInquiryCommand;
+import com.umc.product.inquiry.application.port.in.command.dto.InquiryFaqContentCommand;
+import com.umc.product.inquiry.application.port.in.command.dto.LinkInquiryFaqCommand;
+import com.umc.product.inquiry.application.port.in.command.dto.PublishInquiryFaqCommand;
 import com.umc.product.inquiry.application.port.in.command.dto.SendInquiryMessageCommand;
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryMessageInfo;
+import com.umc.product.inquiry.application.port.in.realtime.RefreshInquiryFaqRankingUseCase;
 import com.umc.product.inquiry.domain.enums.InquiryTeam;
 import com.umc.product.member.domain.MemberSystemRoleType;
 import com.umc.product.support.IntegrationTestSupport;
@@ -56,6 +62,7 @@ import com.umc.product.support.fixture.MemberFixture;
 class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
 
     private static final String USER_QUEUE = "/user/queue/inquiries/events";
+    private static final String RANKING_TOPIC = "/topic/inquiries/ranking";
     private static final String PROBE = "PROBE";
     private static final long FRAME_TIMEOUT_MILLIS = 10_000;
     private static final long QUIET_MILLIS = 500;
@@ -69,6 +76,12 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
     SendInquiryMessageUseCase sendInquiryMessageUseCase;
     @Autowired
     CloseInquiryUseCase closeInquiryUseCase;
+    @Autowired
+    ManageInquiryFaqUseCase manageInquiryFaqUseCase;
+    @Autowired
+    LinkInquiryFaqUseCase linkInquiryFaqUseCase;
+    @Autowired
+    RefreshInquiryFaqRankingUseCase refreshInquiryFaqRankingUseCase;
     @Autowired
     StompSubscriptionAuthorizerRegistry subscriptionAuthorizerRegistry;
     @Autowired
@@ -116,6 +129,8 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
         assertThat(subscriptionAuthorizerRegistry.isAuthorized(strangerId, USER_QUEUE)).isTrue();
         assertThat(subscriptionAuthorizerRegistry.isAuthorized(null, USER_QUEUE)).isFalse();
         assertThat(subscriptionAuthorizerRegistry.isAuthorized(authorId, "/topic/inquiries/1")).isFalse();
+        assertThat(subscriptionAuthorizerRegistry.isAuthorized(strangerId, RANKING_TOPIC)).isTrue();
+        assertThat(subscriptionAuthorizerRegistry.isAuthorized(null, RANKING_TOPIC)).isFalse();
     }
 
     @Test
@@ -240,6 +255,52 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
         assertThat(받기(frames, 0)).isEmpty();
     }
 
+    @Test
+    @DisplayName("인기 순위가 바뀌면 로그인한 누구에게나 기간과 계산 시각만 담은 새 순위 신호를 보내고, 그대로면 보내지 않는다")
+    void 인기_순위_신호() throws Exception {
+        // given
+        refreshInquiryFaqRankingUseCase.refresh();
+        BlockingQueue<JsonNode> frames = 순위_구독(strangerId);
+        Long audienceId = inquiryFixture.대상("UMC 서비스 사용자").getId();
+        Long faqId = manageInquiryFaqUseCase.create(staffId, new InquiryFaqContentCommand(
+            "로그인이 안 돼요", "다시 로그인하세요", List.of(), categoryId, audienceId, null, null
+        ));
+        manageInquiryFaqUseCase.publish(new PublishInquiryFaqCommand(staffId, faqId, true, true, true));
+        linkInquiryFaqUseCase.linkFaq(new LinkInquiryFaqCommand(문의_등록(authorId), staffId, faqId));
+
+        // when
+        refreshInquiryFaqRankingUseCase.refresh();
+
+        // then
+        List<JsonNode> signals = 받기(frames, 2);
+        assertThat(signals).extracting(signal -> signal.get("period").asText())
+            .containsExactlyInAnyOrder("DAY", "WEEK");
+        assertThat(signals).allSatisfy(signal -> {
+            assertThat(signal.get("type").asText()).isEqualTo("RANKING_UPDATED");
+            assertThat(signal.hasNonNull("refreshedAt")).isTrue();
+            assertThat(signal.size()).isEqualTo(3);
+        });
+
+        refreshInquiryFaqRankingUseCase.refresh();
+        assertThat(받기(frames, 0)).isEmpty();
+    }
+
+    private BlockingQueue<JsonNode> 순위_구독(Long memberId) throws Exception {
+        StompSession session = 연결(memberId);
+        BlockingQueue<JsonNode> frames = new LinkedBlockingQueue<>();
+        session.subscribe(RANKING_TOPIC, frameHandler(frames));
+        for (int attempt = 0; attempt < 40; attempt++) {
+            broadcastPort.broadcast(RANKING_TOPIC, Map.of("type", PROBE));
+            JsonNode frame = frames.poll(250, TimeUnit.MILLISECONDS);
+            if (frame != null) {
+                Thread.sleep(QUIET_MILLIS);
+                frames.removeIf(it -> PROBE.equals(it.get("type").asText()));
+                return frames;
+            }
+        }
+        throw new AssertionError("순위 신호 구독이 준비되지 않았습니다: memberId=" + memberId);
+    }
+
     private Long 운영진(String name) {
         Long memberId = memberFixture.일반(name).getId();
         memberFixture.시스템_역할_부여(memberId, MemberSystemRoleType.UMC_PRODUCT);
@@ -248,19 +309,7 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
 
     private BlockingQueue<JsonNode> 구독(Long memberId) throws Exception {
         실시간_전달_대기();
-        String token = "token-" + memberId;
-        when(jwtTokenProvider.parseAndValidateAccessToken(eq(token)))
-            .thenReturn(new ParsedAccessToken(memberId, List.of(), null));
-        StompHeaders connectHeaders = new StompHeaders();
-        connectHeaders.add("Authorization", "Bearer " + token);
-        StompSession session = stompClient.connectAsync(
-            "ws://localhost:%d/ws/websocket".formatted(port),
-            new WebSocketHttpHeaders(),
-            connectHeaders,
-            new StompSessionHandlerAdapter() {
-            }
-        ).get(5, TimeUnit.SECONDS);
-        sessions.add(session);
+        StompSession session = 연결(memberId);
 
         BlockingQueue<JsonNode> frames = new LinkedBlockingQueue<>();
         session.subscribe(USER_QUEUE, frameHandler(frames));
@@ -274,6 +323,23 @@ class InquiryRealtimeIntegrationTest extends IntegrationTestSupport {
             }
         }
         throw new AssertionError("문의 큐 구독이 준비되지 않았습니다: memberId=" + memberId);
+    }
+
+    private StompSession 연결(Long memberId) throws Exception {
+        String token = "token-" + memberId;
+        when(jwtTokenProvider.parseAndValidateAccessToken(eq(token)))
+            .thenReturn(new ParsedAccessToken(memberId, List.of(), null));
+        StompHeaders connectHeaders = new StompHeaders();
+        connectHeaders.add("Authorization", "Bearer " + token);
+        StompSession session = stompClient.connectAsync(
+            "ws://localhost:%d/ws/websocket".formatted(port),
+            new WebSocketHttpHeaders(),
+            connectHeaders,
+            new StompSessionHandlerAdapter() {
+            }
+        ).get(5, TimeUnit.SECONDS);
+        sessions.add(session);
+        return session;
     }
 
     private List<JsonNode> 받기(BlockingQueue<JsonNode> frames, int expected) throws InterruptedException {

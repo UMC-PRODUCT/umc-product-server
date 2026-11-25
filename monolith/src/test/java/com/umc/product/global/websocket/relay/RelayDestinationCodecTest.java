@@ -51,6 +51,13 @@ class RelayDestinationCodecTest {
         assertThat(sut.toPublic(brokerDestination)).isEqualTo(publicDestination);
     }
 
+    @Test
+    @DisplayName("문의 인기 순위 topic을 slash 없는 broker key로 가역 변환한다")
+    void translateInquiryRankingTopic() {
+        assertThat(sut.toBroker("/topic/inquiries/ranking")).isEqualTo("/topic/inquiries.ranking");
+        assertThat(sut.toPublic("/topic/inquiries.ranking")).isEqualTo("/topic/inquiries/ranking");
+    }
+
     @ParameterizedTest
     @NullSource
     @ValueSource(strings = {

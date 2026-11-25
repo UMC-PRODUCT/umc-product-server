@@ -23,6 +23,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -37,6 +38,7 @@ class InquiryFaqApiIntegrationTest extends IntegrationTestSupport {
 
     private static final String USER = "user-token";
     private static final String OTHER_USER = "other-user-token";
+    private static final String THIRD_USER = "third-user-token";
     private static final String STAFF = "staff-token";
     private static final Map<String, Boolean> ALL_CHECKED = Map.of(
         "noPersonalInformation", true, "scopeConfirmed", true, "answerVerified", true
@@ -48,6 +50,8 @@ class InquiryFaqApiIntegrationTest extends IntegrationTestSupport {
     InquiryFixture inquiryFixture;
     @Autowired
     RefreshMaintenanceStateUseCase refreshMaintenanceStateUseCase;
+    @Autowired
+    JdbcTemplate jdbcTemplate;
 
     private Long staffId;
     private Long categoryId;
@@ -66,6 +70,7 @@ class InquiryFaqApiIntegrationTest extends IntegrationTestSupport {
         audienceId = inquiryFixture.대상("UMC 서비스 사용자").getId();
         토큰(USER, userId);
         토큰(OTHER_USER, otherUserId);
+        토큰(THIRD_USER, memberFixture.일반("third").getId());
         토큰(STAFF, staffId);
     }
 
@@ -272,6 +277,67 @@ class InquiryFaqApiIntegrationTest extends IntegrationTestSupport {
                 ))))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value("INQUIRY-0020"));
+    }
+
+    @Test
+    @DisplayName("인기 순위는 공개 중인 대표 질문을 서로 다른 문의자 수로 세고, 같은 수면 최근 문의가 앞이며, 기간 밖과 미분류는 세지 않는다")
+    void 인기_순위() throws Exception {
+        // given
+        long popular = 발행된_대표_질문("로그인이 안 돼요", "다시 로그인하세요", categoryId);
+        long older = 발행된_대표_질문("출석이 안 찍혀요", "새로고침하세요", otherCategoryId);
+        long newer = 발행된_대표_질문("수료증은 어디서 받나요", "마이페이지에서 받아요", otherCategoryId);
+        long archived = 발행된_대표_질문("보관할 안내", "보관해요", categoryId);
+        long draft = 초안(내용("아직 답이 없는 질문", null, categoryId));
+        연결된_문의(USER, popular);
+        연결된_문의(USER, popular);
+        연결된_문의(OTHER_USER, popular);
+        연결된_문의(USER, older);
+        연결된_문의(OTHER_USER, newer);
+        long weekOld = 연결된_문의(THIRD_USER, older);
+        jdbcTemplate.update("update inquiry set created_at = now() - interval '3 days' where id = ?", weekOld);
+        연결된_문의(USER, archived);
+        연결된_문의(OTHER_USER, archived);
+        연결된_문의(THIRD_USER, archived);
+        운영(post("/api/v1/inquiries/admin/faqs/{faqId}/archive", archived), STAFF).andExpect(status().isOk());
+        연결된_문의(USER, draft);
+        연결된_문의(OTHER_USER, draft);
+        문의_등록("미분류 문의", null);
+
+        // when & then
+        사용자(get("/api/v1/inquiries/faqs/rankings").param("period", "DAY"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.period").value("DAY"))
+            .andExpect(jsonPath("$.result.refreshedAt").exists())
+            .andExpect(jsonPath("$.result.items[*].faqId",
+                contains(String.valueOf(popular), String.valueOf(newer), String.valueOf(older))))
+            .andExpect(jsonPath("$.result.items[*].askedMemberCount", contains("2", "1", "1")))
+            .andExpect(jsonPath("$.result.items[0].rank").value(1))
+            .andExpect(jsonPath("$.result.items[0].question").value("로그인이 안 돼요"))
+            .andExpect(jsonPath("$.result.items[0].category.name").value("계정·로그인"))
+            .andExpect(jsonPath("$.result.items[0].audience.name").value("UMC 서비스 사용자"));
+        사용자(get("/api/v1/inquiries/faqs/rankings").param("period", "WEEK"))
+            .andExpect(jsonPath("$.result.items[*].faqId",
+                contains(String.valueOf(older), String.valueOf(popular), String.valueOf(newer))))
+            .andExpect(jsonPath("$.result.items[*].askedMemberCount", contains("2", "2", "1")));
+        운영(get("/api/v1/inquiries/admin/faqs/answer-needed"), STAFF)
+            .andExpect(jsonPath("$.result[*].faqId", contains(String.valueOf(draft))))
+            .andExpect(jsonPath("$.result[0].question").value("아직 답이 없는 질문"))
+            .andExpect(jsonPath("$.result[0].askedMemberCount").value(2));
+        운영(get("/api/v1/inquiries/admin/faqs/answer-needed"), USER).andExpect(status().isForbidden());
+        사용자(get("/api/v1/inquiries/faqs/suggestion").param("categoryId", otherCategoryId.toString()))
+            .andExpect(jsonPath("$.result.faq.faqId").value(older));
+    }
+
+    private long 연결된_문의(String token, long faqId) throws Exception {
+        String response = 운영(post("/api/v1/inquiries"), token, Map.of(
+                "categoryId", categoryId, "content", "문의", "clientRequestId", UUID.randomUUID().toString()
+            ))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+        long inquiryId = objectMapper.readTree(response).at("/result/inquiryId").asLong();
+        운영(put("/api/v1/inquiries/admin/{inquiryId}/faq", inquiryId), STAFF, Map.of("faqId", faqId))
+            .andExpect(status().isOk());
+        return inquiryId;
     }
 
     private long 발행된_대표_질문(String question, String answer, Long category) throws Exception {

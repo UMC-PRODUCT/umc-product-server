@@ -5,16 +5,18 @@ import org.springframework.stereotype.Component;
 import com.umc.product.global.websocket.application.port.in.StompSubscriptionAuthorizer;
 
 /**
- * 사람별 큐라서 서버가 받는 사람을 정해 보낸다. 로그인한 회원이면 구독할 수 있고, 자기에게 보낸 이벤트만 받는다.
+ * 사람별 큐는 서버가 받는 사람을 정해 보내므로 로그인한 회원이면 구독할 수 있고, 자기에게 보낸 이벤트만 받는다.
+ * 인기 순위 신호 주소는 개인정보 없이 "새 순위 있음"만 보내므로 로그인한 누구나 구독한다.
  */
 @Component
 public class InquiryStompSubscriptionAuthorizer implements StompSubscriptionAuthorizer {
 
     static final String USER_EVENT_DESTINATION = "/user/queue/inquiries/events";
+    static final String RANKING_DESTINATION = "/topic/inquiries/ranking";
 
     @Override
     public boolean supports(String destination) {
-        return USER_EVENT_DESTINATION.equals(destination);
+        return USER_EVENT_DESTINATION.equals(destination) || RANKING_DESTINATION.equals(destination);
     }
 
     @Override

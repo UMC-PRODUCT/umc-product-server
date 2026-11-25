@@ -19,10 +19,12 @@ import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.inquiry.adapter.in.web.dto.request.PublishInquiryFaqRequest;
 import com.umc.product.inquiry.adapter.in.web.dto.request.SaveInquiryFaqRequest;
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryFaqAudienceResponse;
+import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryFaqDemandResponse;
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryFaqStaffDetailResponse;
 import com.umc.product.inquiry.adapter.in.web.dto.response.InquiryFaqStaffSummaryResponse;
 import com.umc.product.inquiry.application.port.in.command.ManageInquiryFaqUseCase;
 import com.umc.product.inquiry.application.port.in.query.GetInquiryFaqForStaffUseCase;
+import com.umc.product.inquiry.application.port.in.query.GetInquiryFaqRankingUseCase;
 import com.umc.product.inquiry.domain.enums.InquiryFaqStatus;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,6 +42,7 @@ public class InquiryFaqAdminController {
 
     private final GetInquiryFaqForStaffUseCase getInquiryFaqForStaffUseCase;
     private final ManageInquiryFaqUseCase manageInquiryFaqUseCase;
+    private final GetInquiryFaqRankingUseCase getInquiryFaqRankingUseCase;
 
     @GetMapping("/faqs")
     @Operation(
@@ -71,6 +74,18 @@ public class InquiryFaqAdminController {
     public List<InquiryFaqAudienceResponse> listAudiences(@CurrentMember MemberPrincipal principal) {
         return getInquiryFaqForStaffUseCase.listAudiences(principal.getMemberId()).stream()
             .map(InquiryFaqAudienceResponse::from)
+            .toList();
+    }
+
+    @GetMapping("/faqs/answer-needed")
+    @Operation(
+        operationId = "INQUIRY-ADMIN-FAQ-104",
+        summary = "답변 준비 필요",
+        description = "아직 발행하지 않은 초안 중 최근 24시간 동안 연결된 문의를 남긴 회원이 많은 순으로 10개. 공개 순위에는 나오지 않는다."
+    )
+    public List<InquiryFaqDemandResponse> listAnswerNeeded(@CurrentMember MemberPrincipal principal) {
+        return getInquiryFaqRankingUseCase.listAnswerNeeded(principal.getMemberId()).stream()
+            .map(InquiryFaqDemandResponse::from)
             .toList();
     }
 

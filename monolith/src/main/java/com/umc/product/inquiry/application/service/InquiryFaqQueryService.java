@@ -1,6 +1,7 @@
 package com.umc.product.inquiry.application.service;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +25,10 @@ import com.umc.product.inquiry.application.port.in.query.dto.InquiryFaqSummaryIn
 import com.umc.product.inquiry.application.port.in.query.dto.InquiryStaffMemberInfo;
 import com.umc.product.inquiry.application.port.out.LoadInquiryFaqAudiencePort;
 import com.umc.product.inquiry.application.port.out.LoadInquiryFaqPort;
+import com.umc.product.inquiry.application.port.out.LoadInquiryFaqPort.DemandTarget;
 import com.umc.product.inquiry.domain.InquiryFaq;
 import com.umc.product.inquiry.domain.InquiryFaqContent;
+import com.umc.product.inquiry.domain.enums.InquiryFaqRankingPeriod;
 import com.umc.product.inquiry.domain.enums.InquiryFaqStatus;
 import com.umc.product.inquiry.domain.exception.InquiryDomainException;
 import com.umc.product.inquiry.domain.exception.InquiryErrorCode;
@@ -39,6 +42,7 @@ import lombok.RequiredArgsConstructor;
 public class InquiryFaqQueryService implements GetInquiryFaqForStaffUseCase, GetInquiryFaqUseCase {
 
     static final int SEARCH_LIMIT = 20;
+    static final InquiryFaqRankingPeriod SUGGESTION_PERIOD = InquiryFaqRankingPeriod.WEEK;
 
     private final LoadInquiryFaqPort loadInquiryFaqPort;
     private final LoadInquiryFaqAudiencePort loadInquiryFaqAudiencePort;
@@ -140,8 +144,14 @@ public class InquiryFaqQueryService implements GetInquiryFaqForStaffUseCase, Get
 
     @Override
     public Optional<InquiryFaqSummaryInfo> suggest(Long categoryId) {
-        return loadInquiryFaqPort.listPublic(categoryId, today()).stream()
+        Instant now = clock.instant();
+        LocalDate today = InquiryFaq.today(now);
+        Optional<InquiryFaq> mostAsked = loadInquiryFaqPort.rankByDistinctAuthors(
+                DemandTarget.PUBLIC, today, SUGGESTION_PERIOD.since(now), categoryId, 1
+            ).stream()
             .findFirst()
+            .flatMap(demand -> loadInquiryFaqPort.findById(demand.faqId()));
+        return mostAsked.or(() -> loadInquiryFaqPort.listPublic(categoryId, today).stream().findFirst())
             .map(faq -> faqAssembler.publicSummaries(List.of(faq)).get(0));
     }
 
