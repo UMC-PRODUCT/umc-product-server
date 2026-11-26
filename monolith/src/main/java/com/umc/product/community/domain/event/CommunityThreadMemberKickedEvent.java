@@ -12,7 +12,7 @@ public record CommunityThreadMemberKickedEvent(
     Long actorMemberId,
     Long memberId,
     List<Long> activeMemberIds
-) implements CommunityThreadLifecycleEvent {
+) implements CommunityThreadLifecycleEvent.RealtimeOnly {
 
     public CommunityThreadMemberKickedEvent {
         eventId = CommunityThreadEventSupport.eventId(eventId);

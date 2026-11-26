@@ -23,6 +23,7 @@ import com.umc.product.chat.application.port.out.LoadChatMemberPort;
 import com.umc.product.chat.application.port.out.LoadChatMessageMentionPort;
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
+import com.umc.product.chat.application.port.out.PublishChatRealtimePort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.application.port.out.SaveChatMessageMentionPort;
 import com.umc.product.chat.application.port.out.SaveChatMessagePort;
@@ -57,6 +58,8 @@ class ChatMessageLifecycleReplyValidationTest {
     ChatRoomAccessPolicy chatRoomAccessPolicy;
     @Mock
     ChatMessageInfoAssembler chatMessageInfoAssembler;
+    @Mock
+    PublishChatRealtimePort publishChatRealtimePort;
     @Mock
     DomainEventPublisher domainEventPublisher;
 

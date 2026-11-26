@@ -20,6 +20,7 @@ import com.umc.product.community.application.port.in.command.thread.dto.ThreadAc
 import com.umc.product.community.application.port.in.command.thread.dto.UpdateCommunityThreadCommand;
 import com.umc.product.community.application.port.out.thread.LoadCommunityThreadMemberPort;
 import com.umc.product.community.application.port.out.thread.LoadCommunityThreadPort;
+import com.umc.product.community.application.port.out.thread.PublishCommunityThreadRealtimePort;
 import com.umc.product.community.application.port.out.thread.SaveCommunityThreadMemberPort;
 import com.umc.product.community.application.port.out.thread.SaveCommunityThreadPort;
 import com.umc.product.community.domain.CommunityThread;
@@ -50,6 +51,7 @@ public class CommunityThreadLifecycleCommandService implements
     private final CreateChatRoomUseCase createChatRoomUseCase;
     private final CommunityThreadInviteManager inviteManager;
     private final DomainEventPublisher eventPublisher;
+    private final PublishCommunityThreadRealtimePort publishRealtimePort;
     private final CommunityThreadProperties properties;
     private final Clock clock;
 
@@ -110,7 +112,7 @@ public class CommunityThreadLifecycleCommandService implements
             command.icon() == null ? thread.getIcon() : command.icon()
         );
         saveThreadPort.save(thread);
-        eventPublisher.publish(CommunityThreadUpdatedEvent.of(
+        publishRealtimePort.publishAfterCommit(CommunityThreadUpdatedEvent.of(
             thread.getId(),
             actor.getMemberId(),
             clock.instant()
@@ -132,7 +134,7 @@ public class CommunityThreadLifecycleCommandService implements
         Instant deletedAt = clock.instant();
         thread.delete(deletedAt);
         saveThreadPort.save(thread);
-        eventPublisher.publish(CommunityThreadDeletedEvent.of(
+        publishRealtimePort.publishAfterCommit(CommunityThreadDeletedEvent.of(
             thread.getId(),
             actor.getMemberId(),
             activeMemberIds,

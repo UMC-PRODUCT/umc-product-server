@@ -130,7 +130,7 @@ class CommunityThreadMessageCommandServiceTest {
             .willReturn(Optional.of(sender));
         given(loadThreadMemberPort.listByThreadId(THREAD_ID))
             .willReturn(List.of(sender, recipient, secondRecipient, left));
-        given(createChatMessageUseCase.create(any(CreateChatMessageCommand.class), any()))
+        given(createChatMessageUseCase.createWithRealtimeAfterCommit(any(CreateChatMessageCommand.class), any()))
             .willAnswer(invocation -> {
                 CreateChatMessageCommand chatCommand = invocation.getArgument(0);
                 ChatMessageAttachmentValidation validation = invocation.getArgument(1);
@@ -166,7 +166,8 @@ class CommunityThreadMessageCommandServiceTest {
         order.verify(loadThreadPort).findByIdForUpdate(THREAD_ID);
         order.verify(loadThreadMemberPort).findByThreadIdAndMemberId(THREAD_ID, OWNER_ID);
         order.verify(messagePolicy).validateCreate(any(CreateChatMessageCommand.class));
-        order.verify(createChatMessageUseCase).create(any(CreateChatMessageCommand.class), any());
+        order.verify(createChatMessageUseCase)
+            .createWithRealtimeAfterCommit(any(CreateChatMessageCommand.class), any());
         order.verify(messagePolicy).validateAttachments(any(CreateChatMessageCommand.class));
         order.verify(saveThreadPort).save(thread);
         order.verify(saveThreadMemberPort).saveAll(any());
@@ -205,7 +206,7 @@ class CommunityThreadMessageCommandServiceTest {
         given(loadThreadPort.findByIdForUpdate(THREAD_ID)).willReturn(Optional.of(thread));
         given(loadThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, OWNER_ID))
             .willReturn(Optional.of(sender));
-        given(createChatMessageUseCase.create(any(CreateChatMessageCommand.class), any()))
+        given(createChatMessageUseCase.createWithRealtimeAfterCommit(any(CreateChatMessageCommand.class), any()))
             .willReturn(new ChatMessageMutationResult(chatInfo, true));
         given(infoAssembler.assemble(THREAD_ID, chatInfo, OWNER_ID)).willReturn(communityMessageInfo);
 
@@ -256,7 +257,7 @@ class CommunityThreadMessageCommandServiceTest {
         given(loadThreadMemberPort.findByThreadIdAndMemberId(THREAD_ID, OWNER_ID))
             .willReturn(Optional.of(sender));
         given(loadThreadMemberPort.listByThreadId(THREAD_ID)).willReturn(List.of(sender, recipient));
-        given(createChatMessageUseCase.create(any(CreateChatMessageCommand.class), any()))
+        given(createChatMessageUseCase.createWithRealtimeAfterCommit(any(CreateChatMessageCommand.class), any()))
             .willReturn(new ChatMessageMutationResult(chatInfo, false));
         given(infoAssembler.assemble(THREAD_ID, chatInfo, OWNER_ID)).willReturn(communityMessageInfo);
         given(saveThreadPort.save(thread)).willReturn(thread);

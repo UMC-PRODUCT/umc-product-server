@@ -11,7 +11,7 @@ public record CommunityThreadDeletedEvent(
     Long threadId,
     Long actorMemberId,
     List<Long> activeMemberIds
-) implements CommunityThreadLifecycleEvent {
+) implements CommunityThreadLifecycleEvent.RealtimeOnly {
 
     public CommunityThreadDeletedEvent {
         eventId = CommunityThreadEventSupport.eventId(eventId);

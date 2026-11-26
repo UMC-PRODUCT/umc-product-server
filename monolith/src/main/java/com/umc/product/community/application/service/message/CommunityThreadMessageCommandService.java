@@ -97,7 +97,7 @@ public class CommunityThreadMessageCommandService implements
             command.replyToMessageId()
         );
         messagePolicy.validateCreate(chatCommand);
-        ChatMessageMutationResult result = createChatMessageUseCase.create(
+        ChatMessageMutationResult result = createChatMessageUseCase.createWithRealtimeAfterCommit(
             chatCommand,
             messagePolicy::validateAttachments
         );

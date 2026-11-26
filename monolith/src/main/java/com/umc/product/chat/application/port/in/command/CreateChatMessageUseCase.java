@@ -9,4 +9,9 @@ public interface CreateChatMessageUseCase {
         CreateChatMessageCommand command,
         ChatMessageAttachmentValidation attachmentValidation
     );
+
+    ChatMessageMutationResult createWithRealtimeAfterCommit(
+        CreateChatMessageCommand command,
+        ChatMessageAttachmentValidation attachmentValidation
+    );
 }

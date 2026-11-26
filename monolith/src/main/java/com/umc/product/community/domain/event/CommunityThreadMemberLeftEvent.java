@@ -13,7 +13,7 @@ public record CommunityThreadMemberLeftEvent(
     Long memberId,
     Instant membershipJoinedAt,
     List<Long> activeMemberIds
-) implements CommunityThreadLifecycleEvent {
+) implements CommunityThreadLifecycleEvent.RealtimeOnly {
 
     public CommunityThreadMemberLeftEvent {
         eventId = CommunityThreadEventSupport.eventId(eventId);

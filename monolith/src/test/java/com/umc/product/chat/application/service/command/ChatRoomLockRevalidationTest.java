@@ -37,6 +37,7 @@ import com.umc.product.chat.application.port.in.command.dto.UpdateChatReadComman
 import com.umc.product.chat.application.port.out.LoadChatMemberPort;
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
+import com.umc.product.chat.application.port.out.PublishChatRealtimePort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.application.port.out.SaveChatMessagePort;
 import com.umc.product.chat.domain.ChatMessage;
@@ -75,6 +76,8 @@ class ChatRoomLockRevalidationTest {
     UpdateChatReadUseCase updateChatReadUseCase;
     @Mock
     DomainEventPublisher domainEventPublisher;
+    @Mock
+    PublishChatRealtimePort publishChatRealtimePort;
 
     private ExecutorService executor;
     private ChatMessageCommandService sendService;
@@ -102,7 +105,7 @@ class ChatRoomLockRevalidationTest {
             loadChatMemberPort,
             saveChatMemberPort,
             accessPolicy,
-            domainEventPublisher
+            publishChatRealtimePort
         );
         memberService = new ChatMemberCommandService(
             loadChatRoomPort,
@@ -110,7 +113,7 @@ class ChatRoomLockRevalidationTest {
             loadChatMessagePort,
             saveChatMemberPort,
             saveChatMessagePort,
-            domainEventPublisher
+            publishChatRealtimePort
         );
     }
 

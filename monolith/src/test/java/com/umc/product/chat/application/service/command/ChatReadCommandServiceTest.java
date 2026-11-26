@@ -20,10 +20,10 @@ import com.umc.product.chat.application.port.in.command.dto.UpdateChatReadComman
 import com.umc.product.chat.application.port.out.LoadChatMemberPort;
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
+import com.umc.product.chat.application.port.out.PublishChatRealtimePort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.domain.ChatMember;
 import com.umc.product.chat.domain.event.ChatReadUpdatedEvent;
-import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChatReadCommandService")
@@ -40,7 +40,7 @@ class ChatReadCommandServiceTest {
     @Mock
     ChatRoomAccessPolicy chatRoomAccessPolicy;
     @Mock
-    DomainEventPublisher domainEventPublisher;
+    PublishChatRealtimePort publishChatRealtimePort;
 
     @InjectMocks
     ChatReadCommandService sut;
@@ -58,7 +58,7 @@ class ChatReadCommandServiceTest {
         assertThat(result.lastReadMessageId()).isEqualTo(40L);
         then(saveChatMemberPort).should().bumpLastReadMessageId(1L, 10L, 40L);
         ArgumentCaptor<ChatReadUpdatedEvent> event = ArgumentCaptor.forClass(ChatReadUpdatedEvent.class);
-        then(domainEventPublisher).should().publish(event.capture());
+        then(publishChatRealtimePort).should().publishAfterCommit(event.capture());
         assertThat(event.getValue().eventId()).isNotNull();
         assertThat(event.getValue().lastReadMessageId()).isEqualTo(40L);
 
@@ -88,6 +88,6 @@ class ChatReadCommandServiceTest {
         assertThat(result.deduplicated()).isTrue();
         assertThat(result.lastReadMessageId()).isEqualTo(50L);
         then(saveChatMemberPort).shouldHaveNoInteractions();
-        then(domainEventPublisher).shouldHaveNoInteractions();
+        then(publishChatRealtimePort).shouldHaveNoInteractions();
     }
 }

@@ -8,7 +8,7 @@ public record CommunityThreadUpdatedEvent(
     Instant occurredAt,
     Long threadId,
     Long actorMemberId
-) implements CommunityThreadLifecycleEvent {
+) implements CommunityThreadLifecycleEvent.RealtimeOnly {
 
     public CommunityThreadUpdatedEvent {
         eventId = CommunityThreadEventSupport.eventId(eventId);

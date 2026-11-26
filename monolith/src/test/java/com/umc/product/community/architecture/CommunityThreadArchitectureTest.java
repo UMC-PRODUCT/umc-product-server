@@ -20,6 +20,17 @@ class CommunityThreadArchitectureTest {
     private static final Path PRODUCTION_SOURCE_ROOT = Path.of("src/main/java/com/umc/product");
     private static final Path COMMUNITY_SOURCE_ROOT = PRODUCTION_SOURCE_ROOT.resolve("community");
     private static final Path COMMUNITY_ADAPTER_IN_ROOT = COMMUNITY_SOURCE_ROOT.resolve("adapter/in");
+    private static final Path CHAT_AFTER_COMMIT_LISTENER = COMMUNITY_SOURCE_ROOT
+        .resolve("adapter/in/event/CommunityChatMessageAfterCommitListener.java");
+    private static final Set<String> CHAT_AFTER_COMMIT_EVENT_TYPES = Set.of(
+        "com.umc.product.chat.application.event.ChatRealtimeAfterCommitEvent",
+        "com.umc.product.chat.domain.event.ChatRealtimeEvent",
+        "com.umc.product.chat.domain.event.ChatMessageCreatedEvent",
+        "com.umc.product.chat.domain.event.ChatMessageUpdatedEvent",
+        "com.umc.product.chat.domain.event.ChatMessageDeletedEvent",
+        "com.umc.product.chat.domain.event.ChatMessageReactionChangedEvent",
+        "com.umc.product.chat.domain.event.ChatReadUpdatedEvent"
+    );
     private static final Set<Path> ALLOWED_CHAT_EVENT_IMPORT_SOURCES = Set.of(
         COMMUNITY_SOURCE_ROOT.resolve("adapter/in/event/CommunityThreadRealtimeEventListener.java"),
         COMMUNITY_SOURCE_ROOT.resolve("application/port/in/realtime/RelayCommunityThreadRealtimeEventUseCase.java"),
@@ -108,7 +119,11 @@ class CommunityThreadArchitectureTest {
             return false;
         }
         String importedType = importLine.substring("import ".length(), importLine.length() - 1).trim();
-        return ALLOWED_CHAT_EVENT_IMPORT_SOURCES.contains(sourcePath.normalize())
+        Path normalizedSourcePath = sourcePath.normalize();
+        if (CHAT_AFTER_COMMIT_LISTENER.equals(normalizedSourcePath)) {
+            return CHAT_AFTER_COMMIT_EVENT_TYPES.contains(importedType);
+        }
+        return ALLOWED_CHAT_EVENT_IMPORT_SOURCES.contains(normalizedSourcePath)
             && ALLOWED_CHAT_EVENT_TYPES.contains(importedType);
     }
 
@@ -189,13 +204,13 @@ class CommunityThreadArchitectureTest {
         assertThat(foreignPersistenceImports)
             .as(
                 "Community production source의 foreign repository/entity import "
-                    + "(realtime Chat event는 승인된 4개 source와 5개 FQCN만 허용)"
+                    + "(실시간 Chat 이벤트는 승인된 파일과 타입의 조합만 허용)"
             )
             .isEmpty();
         assertThat(controllerChatImports)
             .as(
                 "Community inbound adapter의 Chat 직접 참조 "
-                    + "(realtime listener의 승인된 5개 event import만 허용)"
+                    + "(실시간 리스너에 승인된 이벤트 import만 허용)"
             )
             .isEmpty();
         assertThat(javaSources(CHAT_ADAPTER_IN_ROOT))

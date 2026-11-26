@@ -39,6 +39,7 @@ import com.umc.product.community.application.port.in.command.thread.dto.ThreadAc
 import com.umc.product.community.application.port.in.command.thread.dto.UpdateCommunityThreadCommand;
 import com.umc.product.community.application.port.out.thread.LoadCommunityThreadMemberPort;
 import com.umc.product.community.application.port.out.thread.LoadCommunityThreadPort;
+import com.umc.product.community.application.port.out.thread.PublishCommunityThreadRealtimePort;
 import com.umc.product.community.application.port.out.thread.SaveCommunityThreadMemberPort;
 import com.umc.product.community.application.port.out.thread.SaveCommunityThreadPort;
 import com.umc.product.community.domain.CommunityThread;
@@ -71,6 +72,8 @@ class CommunityThreadLifecycleCommandServiceTest {
     CommunityThreadInviteManager inviteManager;
     @Mock
     DomainEventPublisher eventPublisher;
+    @Mock
+    PublishCommunityThreadRealtimePort publishRealtimePort;
 
     CommunityThreadLifecycleCommandService sut;
 
@@ -84,6 +87,7 @@ class CommunityThreadLifecycleCommandServiceTest {
             createChatRoomUseCase,
             inviteManager,
             eventPublisher,
+            publishRealtimePort,
             new CommunityThreadProperties(100),
             Clock.fixed(NOW, ZoneOffset.UTC)
         );
@@ -157,6 +161,7 @@ class CommunityThreadLifecycleCommandServiceTest {
             createChatRoomUseCase,
             inviteManager,
             eventPublisher,
+            publishRealtimePort,
             new CommunityThreadProperties(2),
             Clock.fixed(NOW, ZoneOffset.UTC)
         );
@@ -206,14 +211,14 @@ class CommunityThreadLifecycleCommandServiceTest {
         // then
         assertThat(result.title()).isEqualTo("수정 제목");
         assertThat(result.category()).isEqualTo(CommunityThreadCategory.STUDY);
-        InOrder order = Mockito.inOrder(loadThreadPort, loadMemberPort, saveThreadPort, eventPublisher);
+        InOrder order = Mockito.inOrder(loadThreadPort, loadMemberPort, saveThreadPort, publishRealtimePort);
         order.verify(loadThreadPort).findByIdForUpdate(THREAD_ID);
         order.verify(loadMemberPort).findByThreadIdAndMemberId(THREAD_ID, 20L);
         order.verify(saveThreadPort).save(thread);
         ArgumentCaptor<CommunityThreadUpdatedEvent> eventCaptor = ArgumentCaptor.forClass(
             CommunityThreadUpdatedEvent.class
         );
-        order.verify(eventPublisher).publish(eventCaptor.capture());
+        order.verify(publishRealtimePort).publishAfterCommit(eventCaptor.capture());
         assertThat(eventCaptor.getValue().actorMemberId()).isEqualTo(20L);
     }
 
@@ -322,6 +327,7 @@ class CommunityThreadLifecycleCommandServiceTest {
             .isEqualTo(CommunityErrorCode.THREAD_ACCESS_DENIED);
         then(saveThreadPort).shouldHaveNoInteractions();
         then(eventPublisher).shouldHaveNoInteractions();
+        then(publishRealtimePort).shouldHaveNoInteractions();
     }
 
     @Test
@@ -353,7 +359,7 @@ class CommunityThreadLifecycleCommandServiceTest {
         ArgumentCaptor<CommunityThreadDeletedEvent> eventCaptor = ArgumentCaptor.forClass(
             CommunityThreadDeletedEvent.class
         );
-        then(eventPublisher).should().publish(eventCaptor.capture());
+        then(publishRealtimePort).should().publishAfterCommit(eventCaptor.capture());
         assertThat(eventCaptor.getValue().activeMemberIds()).containsExactly(10L, 20L);
     }
 
