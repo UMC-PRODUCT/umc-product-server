@@ -39,12 +39,34 @@ class RelayDestinationCodecTest {
         assertThat(sut.toPublic(brokerDestination)).isEqualTo(publicDestination);
     }
 
+    @Test
+    @DisplayName("문의 user destination의 session queue를 slash 없는 broker key로 가역 변환한다")
+    void translateResolvedInquiryUserQueue() {
+        String publicDestination = "/queue/inquiries/events-userabc-123";
+
+        String brokerDestination = sut.toBroker(publicDestination);
+
+        assertThat(brokerDestination).isEqualTo("/queue/inquiries.events-userabc-123");
+        assertThat(brokerDestination.substring("/queue/".length())).doesNotContain("/");
+        assertThat(sut.toPublic(brokerDestination)).isEqualTo(publicDestination);
+    }
+
+    @Test
+    @DisplayName("문의 인기 순위 topic을 slash 없는 broker key로 가역 변환한다")
+    void translateInquiryRankingTopic() {
+        assertThat(sut.toBroker("/topic/inquiries/ranking")).isEqualTo("/topic/inquiries.ranking");
+        assertThat(sut.toPublic("/topic/inquiries.ranking")).isEqualTo("/topic/inquiries/ranking");
+    }
+
     @ParameterizedTest
     @NullSource
     @ValueSource(strings = {
         "",
         "/user/queue/community/threads/events",
         "/queue/community/threads/events-user",
+        "/user/queue/inquiries/events",
+        "/queue/inquiries/events-user",
+        "/topic/inquiries/12",
         "/topic/community/threads/12/members/41/events",
         "/topic/community/members/41/events",
         "/topic/community/unowned/path",

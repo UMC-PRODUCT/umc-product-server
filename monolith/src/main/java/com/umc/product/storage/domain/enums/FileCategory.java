@@ -68,6 +68,12 @@ public enum FileCategory {
     CHALLENGER_DEACTIVATION_EVIDENCE("private/challenger-deactivation", 5 * 1024 * 1024, new String[]{"jpg", "jpeg", "png"}),
 
     /**
+     * 문의 첨부파일
+     */
+    INQUIRY_ATTACHMENT("private/inquiry", 50 * 1024 * 1024,
+        new String[]{"jpg", "jpeg", "png", "webp", "gif", "pdf", "zip"}),
+
+    /**
      * 기타
      */
     ETC("public/etc", 10 * 1024 * 1024, new String[]{});

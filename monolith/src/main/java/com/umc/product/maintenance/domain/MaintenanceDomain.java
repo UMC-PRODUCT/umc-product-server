@@ -44,6 +44,9 @@ public enum MaintenanceDomain {
     )),
     AUTHORIZATION(List.of(
         "/api/v1/authorization/**"
+    )),
+    INQUIRY(List.of(
+        "/api/v1/inquiries/**"
     ));
 
     private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();

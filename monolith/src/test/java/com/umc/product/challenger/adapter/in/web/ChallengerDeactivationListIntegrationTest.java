@@ -231,6 +231,19 @@ class ChallengerDeactivationListIntegrationTest extends IntegrationTestSupport {
             .andExpect(jsonPath("$.result.content[0].deactivationId").doesNotExist())
             .andExpect(jsonPath("$.result.content[0].reason").doesNotExist());
 
+        mockMvc.perform(목록_요청(SUPER_ADMIN_TOKEN).param("type", "INVOLUNTARY").param("status", "PENDING"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.totalElements").value(1))
+            .andExpect(jsonPath("$.result.content[0].challengerId").value(pending.getId()))
+            .andExpect(jsonPath("$.result.content[0].status").value("PENDING"));
+        mockMvc.perform(목록_요청(SUPER_ADMIN_TOKEN).param("type", "INVOLUNTARY"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.totalElements").value(1))
+            .andExpect(jsonPath("$.result.content[0].challengerId").value(pending.getId()));
+        mockMvc.perform(목록_요청(SUPER_ADMIN_TOKEN).param("type", "VOLUNTARY").param("status", "PENDING"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.totalElements").value(0));
+
         saveChallengerPointPort.save(ChallengerPoint.create(pending, PointType.BLOG_CHALLENGE, null));
 
         mockMvc.perform(목록_요청(SUPER_ADMIN_TOKEN))
@@ -285,6 +298,10 @@ class ChallengerDeactivationListIntegrationTest extends IntegrationTestSupport {
         mockMvc.perform(목록_요청(SUPER_ADMIN_TOKEN).param("reason", VOLUNTARY_REASON.name()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.totalElements").value(0));
+        mockMvc.perform(목록_요청(SUPER_ADMIN_TOKEN).param("type", "INVOLUNTARY"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.totalElements").value(1))
+            .andExpect(jsonPath("$.result.content[0].challengerStatus").value("EXPELLED"));
     }
 
     @Test
@@ -311,7 +328,7 @@ class ChallengerDeactivationListIntegrationTest extends IntegrationTestSupport {
                 .param("part", ChallengerPart.WEB_PRODUCT_ENGINEER.name())
                 .param("keyword", "TARGET")
                 .param("status", "REGISTERED")
-                .param("reason", VOLUNTARY_REASON.name())
+                .param("type", "VOLUNTARY")
                 .param("page", "1")
                 .param("size", "1")
                 .param("sort", "name,asc"))
@@ -319,6 +336,18 @@ class ChallengerDeactivationListIntegrationTest extends IntegrationTestSupport {
             .andExpect(jsonPath("$.result.totalElements").value(2))
             .andExpect(jsonPath("$.result.content", hasSize(1)))
             .andExpect(jsonPath("$.result.content[0].name").value("target-b"));
+
+        mockMvc.perform(목록_요청(SUPER_ADMIN_TOKEN)
+                .param("type", "INVOLUNTARY")
+                .param("reason", ChallengerDeactivationReason.INVOLUNTARY_EVENT_NO_SHOW.name()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.totalElements").value(1))
+            .andExpect(jsonPath("$.result.content[0].name").value("target-e"));
+        mockMvc.perform(목록_요청(SUPER_ADMIN_TOKEN)
+                .param("type", "INVOLUNTARY")
+                .param("reason", VOLUNTARY_REASON.name()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.totalElements").value(0));
     }
 
     @Test
