@@ -27,6 +27,7 @@ import com.umc.product.chat.application.port.out.LoadChatMemberPort;
 import com.umc.product.chat.application.port.out.LoadChatMessageMentionPort;
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
+import com.umc.product.chat.application.port.out.PublishChatRealtimePort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.application.port.out.SaveChatMessageMentionPort;
 import com.umc.product.chat.application.port.out.SaveChatMessagePort;
@@ -38,7 +39,6 @@ import com.umc.product.chat.domain.event.ChatMessageDeletedEvent;
 import com.umc.product.chat.domain.event.ChatMessageUpdatedEvent;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
-import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChatMessageLifecycleCommandService edit/tombstone")
@@ -65,7 +65,7 @@ class ChatMessageLifecycleMutationServiceTest {
     @Mock
     ChatMessageInfoAssembler chatMessageInfoAssembler;
     @Mock
-    DomainEventPublisher domainEventPublisher;
+    PublishChatRealtimePort publishChatRealtimePort;
 
     @InjectMocks
     ChatMessageLifecycleCommandService sut;
@@ -86,7 +86,7 @@ class ChatMessageLifecycleMutationServiceTest {
         assertThat(message.getContent()).isEqualTo("수정");
         assertThat(message.getEditedAt()).isNotNull();
         ArgumentCaptor<ChatMessageUpdatedEvent> event = ArgumentCaptor.forClass(ChatMessageUpdatedEvent.class);
-        then(domainEventPublisher).should().publish(event.capture());
+        then(publishChatRealtimePort).should().publishAfterCommit(event.capture());
         assertThat(event.getValue().eventId()).isNotNull();
         assertThat(event.getValue().message().mentionedMemberIds()).containsExactly(20L);
     }
@@ -106,7 +106,7 @@ class ChatMessageLifecycleMutationServiceTest {
         assertThat(result.deduplicated()).isTrue();
         assertThat(message.getEditedAt()).isNull();
         then(saveChatMessagePort).shouldHaveNoInteractions();
-        then(domainEventPublisher).shouldHaveNoInteractions();
+        then(publishChatRealtimePort).shouldHaveNoInteractions();
     }
 
     @Test
@@ -121,7 +121,7 @@ class ChatMessageLifecycleMutationServiceTest {
             .isEqualTo(ChatErrorCode.CHAT_MESSAGE_MUTATION_FORBIDDEN);
 
         then(saveChatMessagePort).shouldHaveNoInteractions();
-        then(domainEventPublisher).shouldHaveNoInteractions();
+        then(publishChatRealtimePort).shouldHaveNoInteractions();
     }
 
     @Test
@@ -152,7 +152,7 @@ class ChatMessageLifecycleMutationServiceTest {
         then(saveChatMessageMentionPort).should().deleteByMessageId(100L);
         then(saveChatMessageReactionPort).should().deleteByMessageId(100L);
         ArgumentCaptor<ChatMessageDeletedEvent> event = ArgumentCaptor.forClass(ChatMessageDeletedEvent.class);
-        then(domainEventPublisher).should().publish(event.capture());
+        then(publishChatRealtimePort).should().publishAfterCommit(event.capture());
         assertThat(event.getValue().eventId()).isNotNull();
         assertThat(event.getValue().message().replyToMessageId()).isEqualTo(90L);
     }
@@ -172,7 +172,7 @@ class ChatMessageLifecycleMutationServiceTest {
         assertThat(result.deduplicated()).isTrue();
         then(saveChatMessageMentionPort).shouldHaveNoInteractions();
         then(saveChatMessageReactionPort).shouldHaveNoInteractions();
-        then(domainEventPublisher).shouldHaveNoInteractions();
+        then(publishChatRealtimePort).shouldHaveNoInteractions();
     }
 
     private ChatMessage message(

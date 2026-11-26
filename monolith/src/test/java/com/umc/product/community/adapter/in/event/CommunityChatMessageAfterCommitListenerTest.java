@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.times;
 
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -23,9 +24,15 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionSynchronizationUtils;
 
-import com.umc.product.chat.application.event.ChatMessageCreatedAfterCommitEvent;
+import com.umc.product.chat.application.event.ChatRealtimeAfterCommitEvent;
 import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.chat.domain.event.ChatMessageCreatedEvent;
+import com.umc.product.chat.domain.event.ChatMessageDeletedEvent;
+import com.umc.product.chat.domain.event.ChatMessageReactionChangedEvent;
+import com.umc.product.chat.domain.event.ChatMessageSnapshot;
+import com.umc.product.chat.domain.event.ChatMessageUpdatedEvent;
+import com.umc.product.chat.domain.event.ChatReadUpdatedEvent;
+import com.umc.product.chat.domain.event.ChatRealtimeEvent;
 import com.umc.product.community.application.port.in.realtime.RelayCommunityThreadRealtimeEventUseCase;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,9 +50,18 @@ class CommunityChatMessageAfterCommitListenerTest {
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
-    @DisplayName("메시지 저장이 커밋된 경우에만 전송 작업을 등록한다")
+    @DisplayName("채팅 상태 변경이 커밋된 경우에만 이벤트별 전파 작업을 등록한다")
     void submitsOnlyAfterCommit(boolean committed) {
         // given
+        ChatMessageSnapshot snapshot = new ChatMessageSnapshot(
+            1L, 2L, 3L, MessageContentType.TEXT, "수정된 내용", List.of(), null, null, List.of(), null, null, null
+        );
+        ChatMessageUpdatedEvent messageUpdated = new ChatMessageUpdatedEvent(null, null, snapshot);
+        ChatMessageDeletedEvent messageDeleted = new ChatMessageDeletedEvent(null, null, snapshot);
+        ChatMessageReactionChangedEvent reactionChanged = ChatMessageReactionChangedEvent.of(2L, 1L, 3L, "👍", true);
+        ChatReadUpdatedEvent readUpdated = ChatReadUpdatedEvent.of(2L, 3L, 1L);
+        List<ChatRealtimeEvent> events = List.of(messageCreated, messageUpdated, messageDeleted, reactionChanged,
+            readUpdated);
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
             context.registerBean(TransactionalEventListenerFactory.class);
             context.registerBean("communityChatRealtimeExecutor", Executor.class, () -> executor);
@@ -56,7 +72,7 @@ class CommunityChatMessageAfterCommitListenerTest {
             TransactionSynchronizationManager.initSynchronization();
             try {
                 // when
-                context.publishEvent(new ChatMessageCreatedAfterCommitEvent(messageCreated));
+                events.forEach(event -> context.publishEvent(new ChatRealtimeAfterCommitEvent(event)));
                 then(executor).shouldHaveNoInteractions();
                 TransactionSynchronizationUtils.triggerAfterCompletion(committed
                     ? TransactionSynchronization.STATUS_COMMITTED : TransactionSynchronization.STATUS_ROLLED_BACK);
@@ -65,9 +81,13 @@ class CommunityChatMessageAfterCommitListenerTest {
                 then(relayUseCase).shouldHaveNoInteractions();
                 if (committed) {
                     ArgumentCaptor<Runnable> task = ArgumentCaptor.forClass(Runnable.class);
-                    then(executor).should().execute(task.capture());
-                    task.getValue().run();
+                    then(executor).should(times(events.size())).execute(task.capture());
+                    task.getAllValues().forEach(Runnable::run);
                     then(relayUseCase).should().relay(messageCreated);
+                    then(relayUseCase).should().relay(messageUpdated);
+                    then(relayUseCase).should().relay(messageDeleted);
+                    then(relayUseCase).should().relay(reactionChanged);
+                    then(relayUseCase).should().relay(readUpdated);
                 } else {
                     then(executor).shouldHaveNoInteractions();
                 }
@@ -86,7 +106,7 @@ class CommunityChatMessageAfterCommitListenerTest {
             new CommunityChatMessageAfterCommitListener(relayUseCase, executor, false);
 
         // when, then
-        assertThatCode(() -> listener.onMessageCreated(new ChatMessageCreatedAfterCommitEvent(messageCreated)))
+        assertThatCode(() -> listener.onChatRealtimeEvent(new ChatRealtimeAfterCommitEvent(messageCreated)))
             .doesNotThrowAnyException();
         then(relayUseCase).shouldHaveNoInteractions();
     }
@@ -101,7 +121,7 @@ class CommunityChatMessageAfterCommitListenerTest {
         ArgumentCaptor<Runnable> task = ArgumentCaptor.forClass(Runnable.class);
 
         // when
-        listener.onMessageCreated(new ChatMessageCreatedAfterCommitEvent(messageCreated));
+        listener.onChatRealtimeEvent(new ChatRealtimeAfterCommitEvent(messageCreated));
 
         // then
         then(executor).should().execute(task.capture());

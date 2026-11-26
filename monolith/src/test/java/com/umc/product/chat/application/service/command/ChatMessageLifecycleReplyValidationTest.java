@@ -23,6 +23,7 @@ import com.umc.product.chat.application.port.out.LoadChatMemberPort;
 import com.umc.product.chat.application.port.out.LoadChatMessageMentionPort;
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
+import com.umc.product.chat.application.port.out.PublishChatRealtimePort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.application.port.out.SaveChatMessageMentionPort;
 import com.umc.product.chat.application.port.out.SaveChatMessagePort;
@@ -31,7 +32,6 @@ import com.umc.product.chat.application.service.query.ChatMessageInfoAssembler;
 import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
-import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChatMessage lifecycle reply 검증")
@@ -58,7 +58,7 @@ class ChatMessageLifecycleReplyValidationTest {
     @Mock
     ChatMessageInfoAssembler chatMessageInfoAssembler;
     @Mock
-    DomainEventPublisher domainEventPublisher;
+    PublishChatRealtimePort publishChatRealtimePort;
 
     @InjectMocks
     ChatMessageLifecycleCommandService sut;

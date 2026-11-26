@@ -25,6 +25,7 @@ import com.umc.product.chat.application.port.in.command.dto.ChatReactionMutation
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatMessageReactionPort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
+import com.umc.product.chat.application.port.out.PublishChatRealtimePort;
 import com.umc.product.chat.application.port.out.SaveChatMessageReactionPort;
 import com.umc.product.chat.application.port.out.dto.ChatReactionSummary;
 import com.umc.product.chat.domain.ChatMessage;
@@ -32,7 +33,6 @@ import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.chat.domain.event.ChatMessageReactionChangedEvent;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
-import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChatReactionCommandService")
@@ -51,7 +51,7 @@ class ChatReactionCommandServiceTest {
     @Mock
     ChatReactionPolicy chatReactionPolicy;
     @Mock
-    DomainEventPublisher domainEventPublisher;
+    PublishChatRealtimePort publishChatRealtimePort;
 
     @InjectMocks
     ChatReactionCommandService sut;
@@ -73,7 +73,7 @@ class ChatReactionCommandServiceTest {
         assertThat(result.reactions().get(0).reactedByMe()).isTrue();
         ArgumentCaptor<ChatMessageReactionChangedEvent> event =
             ArgumentCaptor.forClass(ChatMessageReactionChangedEvent.class);
-        then(domainEventPublisher).should().publish(event.capture());
+        then(publishChatRealtimePort).should().publishAfterCommit(event.capture());
         assertThat(event.getValue().eventId()).isNotNull();
         assertThat(event.getValue().added()).isTrue();
 
@@ -100,7 +100,7 @@ class ChatReactionCommandServiceTest {
         ChatReactionMutationResult result = sut.add(command());
 
         assertThat(result.deduplicated()).isTrue();
-        then(domainEventPublisher).shouldHaveNoInteractions();
+        then(publishChatRealtimePort).shouldHaveNoInteractions();
     }
 
     @Test
@@ -115,7 +115,7 @@ class ChatReactionCommandServiceTest {
 
         assertThat(result.deduplicated()).isTrue();
         assertThat(result.reactions()).isEmpty();
-        then(domainEventPublisher).shouldHaveNoInteractions();
+        then(publishChatRealtimePort).shouldHaveNoInteractions();
     }
 
     @Test
@@ -131,7 +131,7 @@ class ChatReactionCommandServiceTest {
             .isEqualTo(ChatErrorCode.CHAT_MESSAGE_REACTION_NOT_ALLOWED);
 
         then(saveChatMessageReactionPort).shouldHaveNoInteractions();
-        then(domainEventPublisher).shouldHaveNoInteractions();
+        then(publishChatRealtimePort).shouldHaveNoInteractions();
     }
 
     private ChangeChatMessageReactionCommand command() {

@@ -14,12 +14,12 @@ import com.umc.product.chat.application.port.in.query.dto.ChatReactionInfo;
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatMessageReactionPort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
+import com.umc.product.chat.application.port.out.PublishChatRealtimePort;
 import com.umc.product.chat.application.port.out.SaveChatMessageReactionPort;
 import com.umc.product.chat.domain.ChatMessage;
 import com.umc.product.chat.domain.event.ChatMessageReactionChangedEvent;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
-import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,7 +34,7 @@ public class ChatReactionCommandService implements ManageChatMessageReactionUseC
     private final SaveChatMessageReactionPort saveChatMessageReactionPort;
     private final ChatRoomAccessPolicy chatRoomAccessPolicy;
     private final ChatReactionPolicy chatReactionPolicy;
-    private final DomainEventPublisher domainEventPublisher;
+    private final PublishChatRealtimePort publishChatRealtimePort;
 
     @Override
     public ChatReactionMutationResult add(ChangeChatMessageReactionCommand command) {
@@ -59,7 +59,7 @@ public class ChatReactionCommandService implements ManageChatMessageReactionUseC
             ? saveChatMessageReactionPort.addIfAbsent(message.getId(), command.memberId(), command.emoji())
             : saveChatMessageReactionPort.remove(message.getId(), command.memberId(), command.emoji());
         if (changed) {
-            domainEventPublisher.publish(ChatMessageReactionChangedEvent.of(
+            publishChatRealtimePort.publishAfterCommit(ChatMessageReactionChangedEvent.of(
                 command.roomId(),
                 command.messageId(),
                 command.memberId(),

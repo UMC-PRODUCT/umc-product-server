@@ -23,8 +23,13 @@ class CommunityThreadArchitectureTest {
     private static final Path CHAT_AFTER_COMMIT_LISTENER = COMMUNITY_SOURCE_ROOT
         .resolve("adapter/in/event/CommunityChatMessageAfterCommitListener.java");
     private static final Set<String> CHAT_AFTER_COMMIT_EVENT_TYPES = Set.of(
-        "com.umc.product.chat.application.event.ChatMessageCreatedAfterCommitEvent",
-        "com.umc.product.chat.domain.event.ChatMessageCreatedEvent"
+        "com.umc.product.chat.application.event.ChatRealtimeAfterCommitEvent",
+        "com.umc.product.chat.domain.event.ChatRealtimeEvent",
+        "com.umc.product.chat.domain.event.ChatMessageCreatedEvent",
+        "com.umc.product.chat.domain.event.ChatMessageUpdatedEvent",
+        "com.umc.product.chat.domain.event.ChatMessageDeletedEvent",
+        "com.umc.product.chat.domain.event.ChatMessageReactionChangedEvent",
+        "com.umc.product.chat.domain.event.ChatReadUpdatedEvent"
     );
     private static final Set<Path> ALLOWED_CHAT_EVENT_IMPORT_SOURCES = Set.of(
         COMMUNITY_SOURCE_ROOT.resolve("adapter/in/event/CommunityThreadRealtimeEventListener.java"),

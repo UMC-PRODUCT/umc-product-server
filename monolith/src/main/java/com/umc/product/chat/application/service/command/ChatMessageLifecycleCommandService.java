@@ -23,7 +23,7 @@ import com.umc.product.chat.application.port.out.LoadChatMemberPort;
 import com.umc.product.chat.application.port.out.LoadChatMessageMentionPort;
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
-import com.umc.product.chat.application.port.out.PublishChatMessageRealtimePort;
+import com.umc.product.chat.application.port.out.PublishChatRealtimePort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.application.port.out.SaveChatMessageMentionPort;
 import com.umc.product.chat.application.port.out.SaveChatMessagePort;
@@ -36,7 +36,6 @@ import com.umc.product.chat.domain.event.ChatMessageDeletedEvent;
 import com.umc.product.chat.domain.event.ChatMessageUpdatedEvent;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
-import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 
 import lombok.RequiredArgsConstructor;
 
@@ -58,8 +57,7 @@ public class ChatMessageLifecycleCommandService implements
     private final SaveChatMessageReactionPort saveChatMessageReactionPort;
     private final ChatRoomAccessPolicy chatRoomAccessPolicy;
     private final ChatMessageInfoAssembler chatMessageInfoAssembler;
-    private final PublishChatMessageRealtimePort publishChatMessageRealtimePort;
-    private final DomainEventPublisher domainEventPublisher;
+    private final PublishChatRealtimePort publishChatRealtimePort;
 
     @Override
     public ChatMessageMutationResult create(
@@ -100,7 +98,7 @@ public class ChatMessageLifecycleCommandService implements
             command.senderMemberId(),
             saved.getId()
         );
-        publishChatMessageRealtimePort.publishAfterCommit(
+        publishChatRealtimePort.publishAfterCommit(
             ChatMessageCreatedEvent.from(saved, command.mentionedMemberIds())
         );
 
@@ -127,7 +125,7 @@ public class ChatMessageLifecycleCommandService implements
 
         ChatMessage saved = saveChatMessagePort.save(message);
         List<Long> mentions = loadChatMessageMentionPort.listMemberIdsByMessageId(saved.getId());
-        domainEventPublisher.publish(ChatMessageUpdatedEvent.from(saved, mentions));
+        publishChatRealtimePort.publishAfterCommit(ChatMessageUpdatedEvent.from(saved, mentions));
         return new ChatMessageMutationResult(
             chatMessageInfoAssembler.assemble(saved, command.editorMemberId()),
             false
@@ -152,7 +150,7 @@ public class ChatMessageLifecycleCommandService implements
         ChatMessage saved = saveChatMessagePort.save(message);
         saveChatMessageMentionPort.deleteByMessageId(saved.getId());
         saveChatMessageReactionPort.deleteByMessageId(saved.getId());
-        domainEventPublisher.publish(ChatMessageDeletedEvent.from(saved));
+        publishChatRealtimePort.publishAfterCommit(ChatMessageDeletedEvent.from(saved));
         return new ChatMessageMutationResult(
             chatMessageInfoAssembler.assemble(saved, command.requesterMemberId()),
             false

@@ -10,10 +10,10 @@ import com.umc.product.chat.application.port.in.command.dto.UpdateChatReadComman
 import com.umc.product.chat.application.port.out.LoadChatMemberPort;
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
+import com.umc.product.chat.application.port.out.PublishChatRealtimePort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.domain.ChatMember;
 import com.umc.product.chat.domain.event.ChatReadUpdatedEvent;
-import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,7 +27,7 @@ public class ChatReadCommandService implements UpdateChatReadUseCase {
     private final LoadChatMemberPort loadChatMemberPort;
     private final SaveChatMemberPort saveChatMemberPort;
     private final ChatRoomAccessPolicy chatRoomAccessPolicy;
-    private final DomainEventPublisher domainEventPublisher;
+    private final PublishChatRealtimePort publishChatRealtimePort;
 
     @Override
     public ChatReadMutationResult update(UpdateChatReadCommand command) {
@@ -46,7 +46,7 @@ public class ChatReadCommandService implements UpdateChatReadUseCase {
             command.memberId(),
             command.lastReadMessageId()
         );
-        domainEventPublisher.publish(ChatReadUpdatedEvent.of(
+        publishChatRealtimePort.publishAfterCommit(ChatReadUpdatedEvent.of(
             command.roomId(),
             command.memberId(),
             command.lastReadMessageId()
