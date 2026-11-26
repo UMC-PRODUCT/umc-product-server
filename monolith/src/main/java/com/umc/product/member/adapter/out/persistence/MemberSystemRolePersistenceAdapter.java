@@ -26,4 +26,9 @@ public class MemberSystemRolePersistenceAdapter implements LoadMemberSystemRoleP
     public Set<Long> listSuperAdminMemberIds() {
         return memberSystemRoleJpaRepository.findMemberIdsByRoleType(MemberSystemRoleType.SUPER_ADMIN);
     }
+
+    @Override
+    public List<MemberSystemRole> listByRoleType(MemberSystemRoleType roleType) {
+        return memberSystemRoleJpaRepository.findAllByRoleType(roleType);
+    }
 }

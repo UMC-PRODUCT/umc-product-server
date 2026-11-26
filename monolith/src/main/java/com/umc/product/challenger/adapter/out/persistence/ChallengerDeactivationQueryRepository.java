@@ -21,6 +21,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -124,10 +125,19 @@ public class ChallengerDeactivationQueryRepository implements SearchChallengerDe
     private BooleanBuilder searchConditions(SearchChallengerDeactivationQuery query) {
         BooleanExpression registered = challengerDeactivation.id.isNotNull()
             .or(challenger.status.in(DEACTIVATED_STATUSES));
+        BooleanExpression candidates = pending(query.gisuId());
+        if (query.type() != null) {
+            ChallengerStatus groupStatus = query.type().getStatus();
+            registered = registered.and(challengerDeactivation.status.eq(groupStatus)
+                .or(challengerDeactivation.id.isNull().and(challenger.status.eq(groupStatus))));
+            if (groupStatus == ChallengerStatus.WITHDRAWN) {
+                candidates = Expressions.FALSE;
+            }
+        }
         return scopedConditions(query).and(switch (query.status()) {
-            case PENDING -> pending(query.gisuId());
+            case PENDING -> candidates;
             case REGISTERED -> registered;
-            case null -> registered.or(pending(query.gisuId()));
+            case null -> registered.or(candidates);
         });
     }
 

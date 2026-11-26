@@ -19,6 +19,7 @@
 - [Community](community.md)
 - [Curriculum](curriculum.md)
 - [Feedback](feedback.md)
+- [Inquiry](inquiry.md)
 - [LLM](llm.md)
 - [Maintenance](maintenance.md)
 - [Member](member.md)

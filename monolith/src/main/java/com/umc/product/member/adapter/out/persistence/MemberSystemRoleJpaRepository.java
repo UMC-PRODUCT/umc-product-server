@@ -16,4 +16,6 @@ public interface MemberSystemRoleJpaRepository extends JpaRepository<MemberSyste
 
     @Query("select role.memberId from MemberSystemRole role where role.roleType = :roleType")
     Set<Long> findMemberIdsByRoleType(@Param("roleType") MemberSystemRoleType roleType);
+
+    List<MemberSystemRole> findAllByRoleType(MemberSystemRoleType roleType);
 }
