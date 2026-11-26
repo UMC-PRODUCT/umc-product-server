@@ -173,6 +173,8 @@ public interface NoticeQueryApi {
             특정 공지사항의 상세 정보를 조회합니다. READ 권한이 없으면 403을 반환합니다.
             교내 파트장과 기타 교내 운영진은 본인 기수·학교의 `SCHOOL_PART_LEADER` 대상 운영진 공지를 담당 파트와 무관하게 열람합니다.
 
+            `shouldNotify`는 공지 생성 시 선택한 알림 발송 설정입니다.
+
             ### 수정 일시
 
             - `updatedAt`: 공지 수정 일시. ISO 8601 UTC 형식으로 반환합니다.

@@ -15,6 +15,7 @@ public record NoticeInfo(
     String content,
     Long authorMemberId,
     boolean mustRead,
+    boolean shouldNotify,
     NoticeVoteInfo vote,
     List<NoticeImageInfo> images,
     List<NoticeLinkInfo> links,
