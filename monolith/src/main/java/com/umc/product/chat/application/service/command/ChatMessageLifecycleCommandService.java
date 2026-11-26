@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,7 @@ import com.umc.product.chat.domain.event.ChatMessageDeletedEvent;
 import com.umc.product.chat.domain.event.ChatMessageUpdatedEvent;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
+import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 
 import lombok.RequiredArgsConstructor;
 
@@ -58,11 +60,28 @@ public class ChatMessageLifecycleCommandService implements
     private final ChatRoomAccessPolicy chatRoomAccessPolicy;
     private final ChatMessageInfoAssembler chatMessageInfoAssembler;
     private final PublishChatRealtimePort publishChatRealtimePort;
+    private final DomainEventPublisher domainEventPublisher;
 
     @Override
     public ChatMessageMutationResult create(
         CreateChatMessageCommand command,
         ChatMessageAttachmentValidation attachmentValidation
+    ) {
+        return create(command, attachmentValidation, domainEventPublisher::publish);
+    }
+
+    @Override
+    public ChatMessageMutationResult createWithRealtimeAfterCommit(
+        CreateChatMessageCommand command,
+        ChatMessageAttachmentValidation attachmentValidation
+    ) {
+        return create(command, attachmentValidation, publishChatRealtimePort::publishAfterCommit);
+    }
+
+    private ChatMessageMutationResult create(
+        CreateChatMessageCommand command,
+        ChatMessageAttachmentValidation attachmentValidation,
+        Consumer<ChatMessageCreatedEvent> publishEvent
     ) {
         Objects.requireNonNull(attachmentValidation, "attachmentValidation");
         String payloadFingerprint = ChatMessagePayloadFingerprint.from(command);
@@ -98,9 +117,7 @@ public class ChatMessageLifecycleCommandService implements
             command.senderMemberId(),
             saved.getId()
         );
-        publishChatRealtimePort.publishAfterCommit(
-            ChatMessageCreatedEvent.from(saved, command.mentionedMemberIds())
-        );
+        publishEvent.accept(ChatMessageCreatedEvent.from(saved, command.mentionedMemberIds()));
 
         return new ChatMessageMutationResult(
             chatMessageInfoAssembler.assemble(saved, command.senderMemberId()),

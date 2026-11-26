@@ -16,6 +16,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
@@ -45,6 +47,7 @@ import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.chat.domain.event.ChatMessageCreatedEvent;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
+import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChatMessageLifecycleCommandService.create")
@@ -74,13 +77,16 @@ class ChatMessageLifecycleCreateServiceTest {
     ChatMessageInfoAssembler chatMessageInfoAssembler;
     @Mock
     PublishChatRealtimePort publishChatRealtimePort;
+    @Mock
+    DomainEventPublisher domainEventPublisher;
 
     @InjectMocks
     ChatMessageLifecycleCommandService sut;
 
-    @Test
-    @DisplayName("room lock 아래에서 멤버십과 멘션과 idempotency를 재검증한 뒤 한 번만 생성한다")
-    void create_fresh() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @DisplayName("room lock 아래에서 메시지를 한 번만 생성하고 선택한 경로로 발행한다")
+    void create_fresh(boolean realtimeAfterCommit) {
         UUID clientMessageId = UUID.fromString("6f2189d2-b356-4cd0-877f-c16558bbca98");
         CreateChatMessageCommand command = text(clientMessageId, List.of(30L, 20L, 30L));
         ChatMessage saved = savedText(100L, clientMessageId, "본문", null);
@@ -95,7 +101,9 @@ class ChatMessageLifecycleCreateServiceTest {
         given(saveChatMessagePort.save(any(ChatMessage.class))).willReturn(saved);
         given(chatMessageInfoAssembler.assemble(saved, 10L)).willReturn(info);
 
-        ChatMessageMutationResult result = sut.create(command, attachmentValidation);
+        ChatMessageMutationResult result = realtimeAfterCommit
+            ? sut.createWithRealtimeAfterCommit(command, attachmentValidation)
+            : sut.create(command, attachmentValidation);
 
         assertThat(result.deduplicated()).isFalse();
         assertThat(command.mentionedMemberIds()).containsExactly(20L, 30L);
@@ -105,7 +113,13 @@ class ChatMessageLifecycleCreateServiceTest {
         then(saveChatMessageMentionPort).should().saveAll(100L, List.of(20L, 30L));
         then(saveChatMemberPort).should().bumpLastReadMessageId(1L, 10L, 100L);
         ArgumentCaptor<ChatMessageCreatedEvent> event = ArgumentCaptor.forClass(ChatMessageCreatedEvent.class);
-        then(publishChatRealtimePort).should().publishAfterCommit(event.capture());
+        if (realtimeAfterCommit) {
+            then(publishChatRealtimePort).should().publishAfterCommit(event.capture());
+            then(domainEventPublisher).shouldHaveNoInteractions();
+        } else {
+            then(domainEventPublisher).should().publish(event.capture());
+            then(publishChatRealtimePort).shouldHaveNoInteractions();
+        }
         assertThat(event.getValue().clientMessageId()).isEqualTo(clientMessageId);
         assertThat(event.getValue().mentionedMemberIds()).containsExactly(20L, 30L);
 
